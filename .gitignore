@@ -5,8 +5,7 @@ dist/
 *.js
 *.js.map
 *.d.ts
-*.d.ts.map
-*.md
+*.d.ts.map 
 .env
 .env.*
 .DS_Store
@@ -19,6 +18,8 @@ sviluppo/
 scripts/
 deploy/
 nginx-api.conf
+CLAUDE.md
+DEPLOY*.md
 
 # Environment files (local development)
 .env.local
