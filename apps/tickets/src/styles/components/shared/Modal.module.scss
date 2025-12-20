@@ -1,0 +1,350 @@
+// Import shared design system variables (CSS Modules compatibility)
+@import 'variables/colors';
+@import 'variables/typography';
+@import 'variables/spacing';
+@import 'variables/breakpoints';
+@import 'variables/shadows';
+@import 'variables/borders';
+
+
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: $spacing-xl;
+  animation: fadeIn 0.2s ease-out;
+  backdrop-filter: blur(4px);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal {
+  background: linear-gradient(145deg, $admin-bg 0%, darken($admin-bg, 5%) 100%);
+  border: 2px solid $border-secondary;
+  border-radius: $radius-xl;
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba($gold-primary, 0.1);
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: slideIn 0.3s ease-out;
+  position: relative;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    background: linear-gradient(45deg, $gold-primary, transparent, $gold-primary);
+    border-radius: $radius-xl;
+    z-index: -1;
+    opacity: 0.2;
+  }
+  
+  // Size variants
+  &.size-small {
+    width: 90%;
+    max-width: 400px;
+  }
+  
+  &.size-medium {
+    width: 90%;
+    max-width: 600px;
+  }
+  
+  &.size-large {
+    width: 95%;
+    max-width: 900px;
+  }
+  
+  &.size-fullscreen {
+    width: 95vw;
+    height: 95vh;
+    max-width: none;
+    max-height: none;
+  }
+}
+
+@keyframes slideIn {
+  from { 
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95); 
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0) scale(1); 
+  }
+}
+
+// Modal Header
+.modalHeader {
+  padding: $spacing-xl $spacing-2xl;
+  background: linear-gradient(135deg, $admin-bg 0%, darken($admin-bg, 5%) 100%);
+  border-bottom: 2px solid $border-secondary;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-lg;
+  flex-shrink: 0;
+}
+
+.modalTitle {
+  margin: 0;
+  color: $gold-primary;
+  font-family: $font-secondary;
+  font-size: $font-size-xl;
+  font-weight: 600;
+  text-shadow: $text-shadow;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  color: $text-tertiary;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: $spacing-sm;
+  border-radius: $radius-sm;
+  transition: all $transition-fast;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  
+  &:hover {
+    background: rgba($bg-secondary, 0.5);
+    color: $text-primary;
+    transform: scale(1.1);
+  }
+}
+
+// Modal Content
+.modalContent {
+  flex: 1;
+  overflow-y: auto;
+  padding: $spacing-2xl;
+  
+  /* Custom scrollbar */
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: rgba($bg-tertiary, 0.3);
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: rgba($gold-primary, 0.4);
+    border-radius: 3px;
+    
+    &:hover {
+      background: rgba($gold-primary, 0.6);
+    }
+  }
+}
+
+// Modal Actions
+.modalActions {
+  padding: $spacing-xl $spacing-2xl;
+  background: rgba($admin-bg, 0.3);
+  border-top: 1px solid $border-secondary;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: $spacing-md;
+  flex-shrink: 0;
+}
+
+.actionButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-sm;
+  padding: $spacing-sm $spacing-lg;
+  border-radius: $radius-md;
+  font-size: $font-size-sm;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all $transition-fast;
+  border: 2px solid;
+  min-width: 100px;
+  position: relative;
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+  }
+  
+  // Variants
+  &.variant-primary {
+    background: linear-gradient(135deg, $gold-primary, darken($gold-primary, 10%));
+    border-color: $gold-primary;
+    color: white;
+    
+    &:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba($gold-primary, 0.4);
+    }
+  }
+  
+  &.variant-secondary {
+    background: transparent;
+    border-color: $border-secondary;
+    color: $text-primary;
+    
+    &:hover:not(:disabled) {
+      background: rgba($bg-secondary, 0.8);
+      border-color: $border-secondary;
+      color: $gold-primary;
+    }
+  }
+  
+  &.variant-danger {
+    background: linear-gradient(135deg, #e53e3e, #c53030);
+    border-color: #e53e3e;
+    color: white;
+    
+    &:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(#e53e3e, 0.4);
+    }
+  }
+}
+
+.loadingSpinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(white, 0.3);
+  border-left: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+// Responsive Design
+@media (max-width: $breakpoint-lg) {
+  .modalOverlay {
+    padding: $spacing-lg;
+  }
+  
+  .modal {
+    &.size-medium {
+      max-width: 500px;
+    }
+    
+    &.size-large {
+      max-width: 700px;
+    }
+  }
+  
+  .modalHeader {
+    padding: $spacing-lg $spacing-xl;
+  }
+  
+  .modalContent {
+    padding: $spacing-xl;
+  }
+  
+  .modalActions {
+    padding: $spacing-lg $spacing-xl;
+  }
+}
+
+@media (max-width: $breakpoint-md) {
+  .modalOverlay {
+    padding: $spacing-md;
+  }
+  
+  .modal {
+    &.size-small,
+    &.size-medium,
+    &.size-large {
+      width: 100%;
+      max-width: none;
+    }
+    
+    &.size-fullscreen {
+      width: 100vw;
+      height: 100vh;
+      border-radius: 0;
+    }
+  }
+  
+  .modalHeader {
+    padding: $spacing-md $spacing-lg;
+  }
+  
+  .modalTitle {
+    font-size: $font-size-lg;
+  }
+  
+  .modalContent {
+    padding: $spacing-lg;
+  }
+  
+  .modalActions {
+    padding: $spacing-md $spacing-lg;
+    flex-direction: column-reverse;
+    
+    .actionButton {
+      width: 100%;
+    }
+  }
+}
+
+@media (max-width: $breakpoint-sm) {
+  .modalOverlay {
+    padding: 0;
+  }
+  
+  .modal {
+    border-radius: 0;
+    height: 100vh;
+    width: 100vw;
+    max-height: none;
+    
+    &::before {
+      border-radius: 0;
+    }
+  }
+  
+  .modalHeader {
+    padding: $spacing-sm $spacing-md;
+  }
+  
+  .modalTitle {
+    font-size: $font-size-base;
+  }
+  
+  .closeButton {
+    width: 32px;
+    height: 32px;
+    font-size: 1.2rem;
+  }
+  
+  .modalContent {
+    padding: $spacing-md;
+  }
+  
+  .modalActions {
+    padding: $spacing-sm $spacing-md;
+    gap: $spacing-sm;
+  }
+}

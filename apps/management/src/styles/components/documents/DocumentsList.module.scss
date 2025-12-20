@@ -1,0 +1,191 @@
+// =============================================================================
+// Documents List Component Styles
+// =============================================================================
+
+@import 'variables/breakpoints';
+@import 'variables/colors';
+@import 'variables/spacing';
+@import 'variables/typography';
+@import 'variables/shadows';
+@import 'variables/borders'; 
+@import 'mixins/buttons';
+@import 'mixins/cards';
+@import 'mixins/animations';
+
+.documentsList {
+  .actionBar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: $spacing-lg;
+    padding: $spacing-md $spacing-lg;
+    background: $bg-secondary;
+    border: 1px solid $border-secondary;
+    border-radius: $radius-md;
+    
+    .actionButtons {
+      display: flex;
+      gap: $spacing-sm;
+      
+      .actionButton {
+        @include victorian-button('secondary');
+        display: flex;
+        align-items: center;
+        gap: $spacing-xs;
+        font-size: $font-size-sm;
+        padding: $spacing-sm $spacing-md;
+        
+        .buttonIcon {
+          font-size: $font-size-base;
+        }
+        
+        &.primary {
+          @include victorian-button('primary');
+        }
+        
+        &.secondary {
+          @include victorian-button('secondary');
+        }
+        
+        &.ghost {
+          @include victorian-button('ghost');
+        }
+        
+        &:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+      }
+    }
+    
+    .stats {
+      display: flex;
+      gap: $spacing-lg;
+      
+      .stat {
+        color: $text-tertiary;
+        font-size: $font-size-sm;
+        white-space: nowrap;
+      }
+    }
+    
+    @include tablet-down {
+      flex-direction: column;
+      gap: $spacing-md;
+      align-items: stretch;
+      
+      .actionButtons {
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+      
+      .stats {
+        justify-content: center;
+        gap: $spacing-md;
+      }
+    }
+  }
+  
+  .groupsList {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-lg;
+  }
+  
+  .loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: $spacing-3xl;
+    color: $text-tertiary;
+    
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid $border-secondary;
+      border-top: 3px solid $gold-primary;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: $spacing-md;
+    }
+    
+    p {
+      margin: 0;
+      font-size: $font-size-base;
+    }
+  }
+  
+  .error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: $spacing-3xl;
+    text-align: center;
+    
+    .errorIcon {
+      font-size: $font-size-3xl;
+      margin-bottom: $spacing-md;
+    }
+    
+    p {
+      color: $error-text;
+      margin: 0 0 $spacing-lg;
+      font-size: $font-size-base;
+    }
+    
+    .retryButton {
+      @include victorian-button('primary');
+    }
+  }
+  
+  .emptyState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: $spacing-4xl;
+    text-align: center;
+    background: $bg-secondary;
+    border: 2px dashed $border-secondary;
+    border-radius: $radius-lg;
+    
+    .emptyIcon {
+      font-size: 4rem;
+      margin-bottom: $spacing-lg;
+      opacity: 0.6;
+    }
+    
+    h3 {
+      color: $text-primary;
+      font-size: $font-size-xl;
+      margin: 0 0 $spacing-sm;
+    }
+    
+    p {
+      color: $text-tertiary;
+      font-size: $font-size-base;
+      margin: 0 0 $spacing-lg;
+      max-width: 400px;
+      line-height: 1.6;
+    }
+    
+    .emptyActionButton {
+      @include victorian-button('primary');
+      font-size: $font-size-base;
+      padding: $spacing-md $spacing-xl;
+      
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+    }
+  }
+}
+
+// Animations
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

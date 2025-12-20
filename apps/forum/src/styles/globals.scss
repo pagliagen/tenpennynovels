@@ -1,0 +1,105 @@
+// Forum App Global Styles
+// Using shared design system
+@import 'main';
+
+// Global styles and resets
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: $font-primary;
+  background: $bg-primary;
+  color: $text-primary;
+  line-height: $line-height-normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+// Button styles using Victorian theme
+.button {
+  @include victorian-button('primary');
+  
+  &.button-secondary {
+    @include victorian-button('secondary');
+  }
+  
+  &.button-ghost {
+    @include victorian-button('ghost');
+  }
+  
+  &.button-small {
+    @include victorian-button('primary', 'small');
+  }
+  
+  &.button-large {
+    @include victorian-button('primary', 'large');
+  }
+}
+
+// Input styles to match Victorian theme
+input, textarea, select {
+  font-family: $font-primary;
+  font-size: $font-size-base; 
+  color: rgba(255, 255, 255, 0.9);
+  transition: all 0.3s ease; 
+  
+  &::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+    font-style: italic;
+  }
+  
+  &:focus {
+    outline: none;
+    border-color: $gold-primary;
+    box-shadow: 
+      0 0 0 3px rgba($gold-primary, 0.3),
+      inset 0 0 20px rgba($gold-primary, 0.1);
+    background: rgba(20, 20, 20, 0.95);
+    color: rgba(255, 255, 255, 1);
+  }
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+// Link styles
+a {
+  color: $gold-primary;
+  transition: all $transition-fast;
+  
+  &:hover {
+    color: $gold-light;
+    text-shadow: $text-shadow;
+  }
+}
+
+// Scrollbar styling
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba($bg-secondary, 0.3);
+  border-radius: $radius-full;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba($gold-primary, 0.5);
+  border-radius: $radius-full;
+  
+  &:hover {
+    background: rgba($gold-primary, 0.7);
+  }
+}

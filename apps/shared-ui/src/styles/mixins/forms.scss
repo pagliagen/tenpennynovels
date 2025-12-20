@@ -1,0 +1,129 @@
+// =============================================================================
+// TenpennyNovels Design System - Form Mixins
+// =============================================================================
+
+// Base input styles
+@mixin input-base {
+  font-family: $font-primary;
+  font-size: $font-size-base;
+  background: $input-bg;
+  border: $border-input;
+  border-radius: $radius-base;
+  color: $input-text;
+  transition: all 0.3s ease;
+  backdrop-filter: $backdrop-victorian;
+  
+  &::placeholder {
+    color: $input-placeholder;
+    font-style: italic;
+  }
+  
+  &:focus {
+    outline: none;
+    border-color: $input-border-focus;
+    box-shadow: $shadow-input-focus;
+    background: rgba(20, 20, 20, 0.95);
+    color: $text-primary;
+  }
+  
+  &:disabled {
+    opacity: $opacity-disabled;
+    cursor: not-allowed;
+    background: rgba(40, 40, 40, 0.5);
+    border-color: rgba($gold-primary, 0.2);
+  }
+}
+
+// Input sizes
+@mixin input-size($size: 'md') {
+  @if $size == 'sm' {
+    padding: $input-padding-sm;
+    font-size: $font-size-sm;
+  } @else if $size == 'lg' {
+    padding: $input-padding-lg;
+    font-size: $font-size-lg;
+  } @else {
+    // Default 'md'
+    padding: $input-padding-md;
+    font-size: $font-size-base;
+  }
+}
+
+// Victorian input style
+@mixin victorian-input($size: 'md') {
+  @include input-base;
+  @include input-size($size);
+}
+
+// Textarea specific styles
+@mixin victorian-textarea($size: 'md') {
+  @include victorian-input($size);
+  resize: vertical;
+  min-height: 4rem;
+  line-height: $line-height-normal;
+}
+
+// Select specific styles
+@mixin victorian-select($size: 'md') {
+  @include victorian-input($size);
+  cursor: pointer;
+  
+  // Hide default arrow
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='#{$gold-primary}' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6,9 12,15 18,9'></polyline></svg>");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1rem;
+  padding-right: 2.5rem;
+}
+
+// Checkbox styles
+@mixin victorian-checkbox {
+  width: 1.125rem;
+  height: 1.125rem;
+  accent-color: $gold-primary;
+  cursor: pointer;
+  
+  &:checked {
+    background-color: rgba($gold-primary, 0.8);
+    border-color: $gold-primary;
+  }
+  
+  &:focus-visible {
+    outline: 2px solid $gold-primary;
+    outline-offset: 2px;
+  }
+}
+
+// Radio button styles
+@mixin victorian-radio {
+  @include victorian-checkbox;
+  border-radius: $radius-full;
+}
+
+// Form group spacing
+@mixin form-group {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+  margin-bottom: $spacing-4;
+}
+
+// Label styles
+@mixin form-label {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: $text-secondary;
+  margin-bottom: $spacing-1;
+}
+
+// Error state for inputs
+@mixin input-error {
+  border-color: $error-border;
+  box-shadow: 0 0 0 3px rgba(255, 68, 68, 0.3);
+  
+  &:focus {
+    border-color: $error-border;
+    box-shadow: 0 0 0 3px rgba(255, 68, 68, 0.3);
+  }
+}

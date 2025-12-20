@@ -1,0 +1,642 @@
+// Import shared design system variables (CSS Modules compatibility)
+@import 'variables/colors';
+@import 'variables/typography';
+@import 'variables/spacing';
+@import 'variables/breakpoints';
+@import 'variables/shadows';
+@import 'variables/borders';
+
+.characterListPage {
+  margin: 0 auto;
+}
+
+.pageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: $spacing-2xl;
+  padding-bottom: $spacing-xl;
+  border-bottom: 2px solid $border-secondary;
+}
+
+.pageActions {
+  display: flex;
+  align-items: flex-end;
+  gap: $spacing-xl;
+}
+
+.headerButtons {
+  display: flex;
+  gap: $spacing-md;
+  align-items: center;
+}
+
+.headerContent {
+  .pageTitle {
+    display: flex;
+    align-items: center;
+    gap: $spacing-md;
+    margin: 0 0 $spacing-sm 0;
+    color: $gold-primary;
+    font-family: $font-secondary;
+    font-size: $font-size-3xl;
+    font-weight: bold;
+    
+    .titleIcon {
+      font-size: 1.8rem;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+    }
+  }
+  
+  .pageDescription {
+    margin: 0;
+    color: $text-secondary;
+    font-size: $font-size-base;
+    font-style: italic;
+  }
+}
+
+.statsPanel {
+  display: flex;
+  gap: $spacing-lg;
+  
+  .statItem {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: linear-gradient(135deg, rgba($gold-primary, 0.2), rgba($gold-primary, 0.1));
+    border: 1px solid rgba($gold-primary, 0.4);
+    border-radius: $radius-lg;
+    padding: $spacing-md $spacing-lg;
+    min-width: 80px;
+    
+    .statValue {
+      font-size: $font-size-2xl;
+      font-weight: bold;
+      color: $gold-primary;
+      font-family: $font-monospace;
+      line-height: 1;
+      margin-bottom: $spacing-xs;
+    }
+    
+    .statLabel {
+      font-size: $font-size-xs;
+      color: $text-secondary;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+  }
+}
+
+.filtersContainer {
+  background: rgba($admin-bg, 0.8);
+  border: 1px solid $border-secondary;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-xl;
+}
+
+.filtersRow {
+  display: flex;
+  gap: $spacing-lg;
+  align-items: flex-end;
+  
+  .filterSelect {
+    min-width: 200px;
+  }
+}
+
+.charactersTable {
+  background: $admin-bg;
+  border-radius: $radius-xl;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+// Error banner
+.errorBanner {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  background: $error-bg;
+  border: 1px solid $error-border;
+  border-radius: $radius-lg;
+  padding: $spacing-md;
+  margin-bottom: $spacing-xl;
+  color: $error-text;
+  
+  .errorIcon {
+    font-size: $font-size-lg;
+  }
+  
+  .closeError {
+    margin-left: auto;
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    padding: $spacing-xs;
+    border-radius: $radius-sm;
+    
+    &:hover {
+      background: $error-bg;
+    }
+  }
+}
+
+// Refresh button
+.refreshButton {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+  padding: $spacing-sm $spacing-md;
+  background: rgba($gold-primary, 0.1);
+  border: 1px solid rgba($gold-primary, 0.3);
+  border-radius: $radius-md;
+  color: $gold-primary;
+  cursor: pointer;
+  font-size: $font-size-sm;
+  font-weight: 500;
+  transition: all $transition-fast;
+  
+  &:hover {
+    background: rgba($gold-primary, 0.2);
+    border-color: rgba($gold-primary, 0.5);
+  }
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  
+  .refreshIcon {
+    font-size: $font-size-lg;
+    transition: transform $transition-normal;
+  }
+  
+  &:hover .refreshIcon {
+    transform: rotate(180deg);
+  }
+}
+
+// Table cell custom content
+.characterInfo {
+  .characterName {
+    font-weight: 600;
+    color: $text-primary;
+    margin-bottom: $spacing-xs;
+  }
+  
+  .characterMeta {
+    font-size: $font-size-xs;
+    color: $text-tertiary;
+    margin-bottom: $spacing-xs;
+  }
+  
+  .characterRoles {
+    margin-top: $spacing-xs;
+  }
+}
+
+.playerName {
+  font-weight: 500;
+  color: $text-secondary;
+}
+
+.dateInfo {
+  .dateValue {
+    font-size: $font-size-sm;
+    color: $text-primary;
+    font-family: $font-monospace;
+  }
+}
+
+.statusBadge {
+  display: inline-block;
+  padding: $spacing-xs $spacing-sm;
+  border-radius: $radius-sm;
+  font-size: $font-size-xs;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  
+  &.statusDraft {
+    background: rgba($text-tertiary, 0.2);
+    color: $text-tertiary;
+  }
+  
+  &.statusPending {
+    background: rgba(#ed8936, 0.2);
+    color: #ed8936;
+    border: 1px solid rgba(#ed8936, 0.4);
+  }
+  
+  &.statusApproved {
+    background: rgba(#38a169, 0.2);
+    color: #38a169;
+    border: 1px solid rgba(#38a169, 0.4);
+  }
+  
+  &.statusRejected {
+    background: rgba(#e53e3e, 0.2);
+    color: #e53e3e;
+    border: 1px solid rgba(#e53e3e, 0.4);
+  }
+  
+  &.statusDeleted {
+    background: rgba(#2d3748, 0.3);
+    color: #718096;
+    border: 1px solid rgba(#718096, 0.4);
+  }
+}
+
+.rolesBadges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-xs;
+}
+
+.roleBadge {
+  display: inline-block;
+  padding: 2px $spacing-xs;
+  border-radius: $radius-sm;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: capitalize;
+  letter-spacing: 0.3px;
+  
+  &.rolePersonaggio {
+    background: rgba(#3182ce, 0.2);
+    color: #3182ce;
+    border: 1px solid rgba(#3182ce, 0.4);
+  }
+  
+  &.roleMaster {
+    background: rgba(#805ad5, 0.2);
+    color: #805ad5;
+    border: 1px solid rgba(#805ad5, 0.4);
+  }
+  
+  &.roleModeratore {
+    background: rgba(#d69e2e, 0.2);
+    color: #d69e2e;
+    border: 1px solid rgba(#d69e2e, 0.4);
+  }
+  
+  &.roleAmministratore {
+    background: rgba(#e53e3e, 0.2);
+    color: #e53e3e;
+    border: 1px solid rgba(#e53e3e, 0.4);
+  }
+}
+
+.statsPreview {
+  .statTotal {
+    display: block;
+    font-weight: 600;
+    color: $text-primary;
+    margin-bottom: $spacing-xs;
+  }
+  
+  .statBreakdown {
+    font-size: $font-size-xs;
+    color: $text-tertiary;
+    font-family: $font-primary;
+  }
+}
+
+// Action buttons
+.viewAction {
+  background: rgba($gold-primary, 0.1) !important;
+  border-color: rgba($gold-primary, 0.3) !important;
+  color: $gold-primary !important;
+  
+  &:hover {
+    background: rgba($gold-primary, 0.2) !important;
+  }
+}
+
+// Character Detail Modal Content
+.characterDetail {
+  .detailSection {
+    margin-bottom: $spacing-2xl;
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+    
+    h3 {
+      margin: 0 0 $spacing-lg 0;
+      color: $gold-primary;
+      font-family: $font-secondary;
+      font-size: $font-size-lg;
+      font-weight: 600;
+      padding-bottom: $spacing-sm;
+      border-bottom: 1px solid $border-secondary;
+    }
+  }
+}
+
+.infoGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: $spacing-md;
+  
+  div {
+    color: $text-primary;
+    line-height: 1.5;
+    
+    strong {
+      color: $text-secondary;
+      font-weight: 500;
+    }
+  }
+}
+
+.rolesDetail {
+  margin-bottom: $spacing-md;
+  
+  .roleBadge {
+    margin-right: $spacing-sm;
+    margin-bottom: $spacing-xs;
+    padding: $spacing-xs $spacing-sm;
+    font-size: $font-size-xs;
+  }
+}
+
+.corporationsDetail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-sm;
+  
+  .corporationBadge {
+    display: inline-block;
+    padding: $spacing-xs $spacing-sm;
+    background: rgba($gold-primary, 0.2);
+    border: 1px solid rgba($gold-primary, 0.4);
+    border-radius: $radius-sm;
+    color: $text-secondary;
+    font-size: $font-size-xs;
+    font-weight: 500;
+  }
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: $spacing-md;
+  margin-bottom: $spacing-lg;
+}
+
+.statItem {
+  background: rgba($bg-secondary, 0.5);
+  border: 1px solid rgba($border-secondary, 0.5);
+  border-radius: $radius-md;
+  padding: $spacing-sm $spacing-md;
+  text-align: center;
+  
+  .statLabel {
+    display: block;
+    font-size: $font-size-xs;
+    color: $text-tertiary;
+    font-weight: 600;
+    margin-bottom: $spacing-xs;
+  }
+  
+  .statValue {
+    display: block;
+    font-size: $font-size-lg;
+    color: $text-primary;
+    font-weight: bold;
+    font-family: $font-monospace;
+  }
+}
+
+.statTotal {
+  text-align: center;
+  padding: $spacing-md;
+  background: rgba($gold-primary, 0.1);
+  border: 1px solid rgba($gold-primary, 0.3);
+  border-radius: $radius-md;
+  color: $gold-primary;
+  font-family: $font-monospace;
+}
+
+.backstory,
+.notes,
+.rejectionReason {
+  background: rgba($bg-secondary, 0.3);
+  border: 1px solid rgba($border-secondary, 0.5);
+  border-radius: $radius-md;
+  padding: $spacing-lg;
+  color: $text-primary;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.rejectionReason {
+  background: rgba(#e53e3e, 0.1);
+  border-color: rgba(#e53e3e, 0.3);
+  color: $text-primary;
+}
+
+.timeline {
+  .timelineItem {
+    padding: $spacing-sm 0;
+    border-left: 2px solid rgba($border-secondary, 0.5);
+    padding-left: $spacing-md;
+    margin-bottom: $spacing-sm;
+    color: $text-primary;
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+    
+    strong {
+      color: $text-secondary;
+    }
+  }
+}
+
+// Corporations styles
+.corporationsDetail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-xs;
+}
+
+.corporationBadge {
+  display: inline-block;
+  padding: $spacing-xs $spacing-sm;
+  border-radius: $radius-sm;
+  font-size: $font-size-xs;
+  font-weight: 600;
+  background: rgba($gold-primary, 0.2);
+  color: $gold-primary;
+  border: 1px solid rgba($gold-primary, 0.4);
+  text-transform: capitalize;
+}
+
+// Skills and equipment styles
+.skillsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: $spacing-sm;
+  
+  .skillItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: $spacing-xs $spacing-sm;
+    background: rgba($bg-secondary, 0.3);
+    border: 1px solid rgba($border-secondary, 0.5);
+    border-radius: $radius-sm;
+    
+    .skillName {
+      font-weight: 500;
+      color: $text-secondary;
+    }
+    
+    .skillValue {
+      font-weight: bold;
+      color: $text-primary;
+      font-family: $font-monospace;
+    }
+  }
+}
+
+.equipmentList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-xs;
+  
+  .equipmentItem {
+    display: inline-block;
+    padding: $spacing-xs $spacing-sm;
+    background: rgba($success-text, 0.2);
+    color: $success-text;
+    border: 1px solid rgba($success-text, 0.4);
+    border-radius: $radius-sm;
+    font-size: $font-size-xs;
+    font-weight: 500;
+  }
+}
+
+.noStats {
+  text-align: center;
+  padding: $spacing-xl;
+  background: rgba($warning-text, 0.1);
+  border: 1px solid rgba($warning-text, 0.3);
+  border-radius: $radius-md;
+  color: $warning-text;
+  font-style: italic;
+}
+
+// Responsive Design
+@media (max-width: $breakpoint-lg) {
+  .pageHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: $spacing-lg;
+  }
+  
+  .pageActions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: $spacing-lg;
+    width: 100%;
+  }
+  
+  .headerButtons {
+    justify-content: flex-end;
+  }
+  
+  .statsPanel {
+    align-self: stretch;
+    justify-content: space-around;
+  }
+  
+  .filtersRow {
+    flex-direction: column;
+    align-items: stretch;
+    gap: $spacing-md;
+    
+    .filterSelect {
+      min-width: unset;
+    }
+  }
+  
+  .infoGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .statsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: $breakpoint-md) {
+  .characterListPage {
+    padding: 0;
+  }
+  
+  .pageHeader {
+    margin-bottom: $spacing-xl;
+    padding-bottom: $spacing-lg;
+  }
+  
+  .headerContent .pageTitle {
+    font-size: $font-size-2xl;
+    
+    .titleIcon {
+      font-size: 1.5rem;
+    }
+  }
+  
+  .statsPanel {
+    gap: $spacing-sm;
+    
+    .statItem {
+      padding: $spacing-sm $spacing-md;
+      min-width: 60px;
+      
+      .statValue {
+        font-size: $font-size-xl;
+      }
+    }
+  }
+  
+  .statsGrid {
+    grid-template-columns: 1fr;
+    gap: $spacing-sm;
+  }
+  
+  .statItem {
+    padding: $spacing-xs $spacing-sm;
+  }
+}
+
+@media (max-width: $breakpoint-sm) {
+  .characterInfo {
+    .characterName {
+      font-size: $font-size-sm;
+    }
+    
+    .characterMeta {
+      font-size: 0.65rem;
+    }
+  }
+  
+  .statsPreview .statBreakdown {
+    font-size: 0.6rem;
+  }
+  
+  .statsPanel .statItem {
+    padding: $spacing-xs $spacing-sm;
+  }
+  
+  .roleBadge {
+    font-size: 8px !important;
+    padding: 1px 4px !important;
+  }
+}

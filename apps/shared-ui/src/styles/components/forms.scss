@@ -1,0 +1,89 @@
+// =============================================================================
+// TenpennyNovels Design System - Form Components
+// =============================================================================
+
+// Victorian form input classes
+.input-victorian {
+  @include victorian-input();
+  
+  &.input-sm {
+    @include victorian-input('sm');
+  }
+  
+  &.input-lg {
+    @include victorian-input('lg');
+  }
+  
+  &.input-error {
+    @include input-error;
+  }
+}
+
+.textarea-victorian {
+  @include victorian-textarea();
+  
+  &.textarea-sm {
+    @include victorian-textarea('sm');
+  }
+  
+  &.textarea-lg {
+    @include victorian-textarea('lg');
+  }
+  
+  &.textarea-error {
+    @include input-error;
+  }
+}
+
+.select-victorian {
+  @include victorian-select();
+  
+  &.select-sm {
+    @include victorian-select('sm');
+  }
+  
+  &.select-lg {
+    @include victorian-select('lg');
+  }
+  
+  &.select-error {
+    @include input-error;
+  }
+}
+
+.checkbox-victorian {
+  @include victorian-checkbox;
+}
+
+.radio-victorian {
+  @include victorian-radio;
+}
+
+// Form group wrapper
+.form-group {
+  @include form-group;
+}
+
+// Form labels
+.form-label {
+  @include form-label;
+}
+
+// Fieldset styling
+.fieldset-victorian {
+  border: $border-victorian;
+  border-radius: $radius-base;
+  padding: $spacing-md;
+  margin-bottom: $spacing-md;
+  background: rgba($bg-secondary, 0.3);
+  
+  legend {
+    font-family: $font-secondary;
+    font-weight: $font-weight-semibold;
+    color: $gold-primary;
+    padding: 0 $spacing-sm;
+    font-size: $font-size-sm;
+    text-transform: uppercase;
+    letter-spacing: $letter-spacing-wide;
+  }
+}

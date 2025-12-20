@@ -1,0 +1,349 @@
+
+// Import shared design system variables and local variables (CSS Modules compatibility)
+@import 'variables/colors';
+@import 'variables/typography';
+@import 'variables/spacing';
+@import 'variables/breakpoints';
+@import 'variables/shadows';
+@import 'variables/borders';
+
+.documentHome {
+  // Hero Section
+  .heroSection {
+    background: $bg-secondary;
+    border-radius: $radius-lg;
+    padding: $spacing-3xl $spacing-xl;
+    margin-bottom: $spacing-3xl;
+    text-align: center;
+    border: 2px solid $gold-primary;
+  }
+
+  .heroContent {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .heroTitle {
+    font-family: $font-secondary;
+    font-size: $font-size-4xl;
+    color: $gold-primary;
+    margin-bottom: $spacing-lg;
+    text-shadow: $text-shadow;
+  }
+
+  .heroDescription {
+    font-size: $font-size-xl;
+    color: $text-secondary;
+    line-height: $line-height-relaxed;
+    margin-bottom: 0;
+  }
+
+  // Categories Section
+  .categoriesSection {
+    margin-bottom: $spacing-3xl;
+  }
+
+  .categoryGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: $spacing-xl;
+  }
+
+  .categoryCard {
+    background: $bg-secondary;
+    border: 2px solid $border-secondary;
+    border-radius: $radius-xl;
+    padding: $spacing-xl;
+    box-shadow: $shadow-lg;
+    transition: all $transition-normal;
+
+    &:hover {
+      border-color: $gold-primary;
+      box-shadow: $shadow-xl;
+      transform: translateY(-2px);
+    }
+  }
+
+  .categoryHeader {
+    display: flex;
+    align-items: flex-start;
+    gap: $spacing-lg;
+    margin-bottom: $spacing-xl;
+    padding-bottom: $spacing-lg;
+    border-bottom: 2px solid $gold-primary;
+  }
+
+  .categoryIcon {
+    font-size: $font-size-4xl;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+
+  .categoryTitle {
+    font-family: $font-secondary;
+    font-size: $font-size-3xl;
+    color: $gold-primary;
+    margin-bottom: $spacing-sm;
+  }
+
+  .categoryDescription {
+    color: $text-secondary;
+    font-size: $font-size-lg;
+    line-height: $line-height-relaxed;
+    margin: 0;
+  }
+
+  // Document List
+  .documentList {
+    margin-bottom: $spacing-xl;
+  }
+
+  .documentItem {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: $spacing-lg;
+    background: rgba($bg-primary, 0.5);
+    border: 1px solid $border-secondary;
+    border-radius: $radius-lg;
+    margin-bottom: $spacing-md;
+    text-decoration: none;
+    color: $text-primary;
+    transition: all $transition-normal;
+
+    &:hover {
+      background: $bg-primary;
+      border-color: $gold-primary;
+      box-shadow: $shadow-md;
+      text-decoration: none;
+      color: $text-primary;
+    }
+  }
+
+  .documentInfo {
+    flex: 1;
+  }
+
+  .documentTitle {
+    font-family: $font-secondary;
+    font-size: $font-size-xl;
+    color: $gold-primary;
+    margin-bottom: $spacing-sm;
+    font-weight: 600;
+  }
+ 
+  .sectionCount {
+    &::before {
+      content: "📄 ";
+    }
+  }
+
+  .lastUpdated {
+    &::before {
+      content: "🕒 ";
+    }
+  }
+
+  .documentArrow {
+    font-size: $font-size-2xl;
+    color: $gold-primary;
+    transition: transform $transition-normal;
+
+    .documentItem:hover & {
+      transform: translateX(5px);
+    }
+  }
+
+  .emptyState {
+    text-align: center;
+    color: $text-secondary;
+    font-style: italic;
+    padding: $spacing-xl;
+  }
+
+  // Category Footer
+  .categoryFooter {
+    text-align: center;
+  }
+
+  .viewAllLink {
+    color: $gold-primary;
+    font-weight: 600;
+    text-decoration: none;
+    font-size: $font-size-lg;
+    transition: color $transition-normal;
+
+    &:hover {
+      color: $gold-light;
+      text-decoration: underline;
+    }
+  }
+
+  // Quick Access Section
+  .quickAccessSection {
+    margin-bottom: $spacing-3xl;
+  }
+
+  .sectionTitle {
+    font-family: $font-secondary;
+    font-size: $font-size-3xl;
+    color: $gold-primary;
+    text-align: center;
+    margin-bottom: $spacing-xl;
+    position: relative;
+
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: -$spacing-sm;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100px;
+      height: 3px;
+      background: $gold-primary;
+      border-radius: $radius-sm;
+    }
+  }
+
+  .quickAccessGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: $spacing-lg;
+  }
+
+  .quickAccessCard {
+    display: flex;
+    align-items: center;
+    gap: $spacing-lg;
+    padding: $spacing-xl;
+    background: $bg-secondary;
+    border: 2px solid $border-secondary;
+    border-radius: $radius-lg;
+    text-decoration: none;
+    color: $text-primary;
+    transition: all $transition-normal;
+    cursor: pointer;
+
+    &:hover {
+      border-color: $gold-primary;
+      box-shadow: $shadow-lg;
+      transform: translateY(-2px);
+      text-decoration: none;
+      color: $text-primary;
+    }
+  }
+
+  .quickAccessIcon {
+    font-size: $font-size-3xl;
+    flex-shrink: 0;
+  }
+
+  .quickAccessInfo {
+    h3 {
+      font-family: $font-secondary;
+      font-size: $font-size-xl;
+      color: $gold-primary;
+      margin-bottom: $spacing-sm;
+    }
+
+    p {
+      color: $text-secondary;
+      margin: 0;
+      line-height: $line-height-normal;
+    }
+  }
+
+  // Statistics Section
+  .statsSection {
+    background: $bg-tertiary;
+    border-radius: $radius-lg;
+    padding: $spacing-xl;
+  }
+
+  .statsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: $spacing-lg;
+  }
+
+  .statCard {
+    text-align: center;
+    padding: $spacing-lg;
+    background: rgba($bg-primary, 0.8);
+    border-radius: $radius-lg;
+    border: 1px solid $border-secondary;
+  }
+
+  .statNumber {
+    font-family: $font-secondary;
+    font-size: $font-size-4xl;
+    font-weight: 700;
+    color: $gold-primary;
+    margin-bottom: $spacing-sm;
+  }
+
+  .statLabel {
+    font-size: $font-size-base;
+    color: $text-secondary;
+    font-weight: 500;
+  }
+}
+
+// Responsive Design
+@media (max-width: $breakpoint-lg) {
+  .documentHome {
+    .categoryGrid {
+      grid-template-columns: 1fr;
+    }
+
+    .heroSection {
+      padding: $spacing-2xl $spacing-lg;
+    }
+
+    .heroTitle {
+      font-size: $font-size-3xl;
+    }
+
+    .heroDescription {
+      font-size: $font-size-lg;
+    }
+  }
+}
+
+@media (max-width: $breakpoint-md) {
+  .documentHome {
+    .categoryHeader {
+      flex-direction: column;
+      text-align: center;
+      gap: $spacing-md;
+    }
+
+    .categoryIcon {
+      font-size: $font-size-3xl;
+    }
+
+    .categoryTitle {
+      font-size: $font-size-2xl;
+    }
+
+    .documentItem {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: $spacing-md;
+    }
+
+    .documentArrow {
+      align-self: flex-end;
+    }
+
+    .quickAccessCard {
+      flex-direction: column;
+      text-align: center;
+      gap: $spacing-md;
+    }
+
+    .statsGrid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+}

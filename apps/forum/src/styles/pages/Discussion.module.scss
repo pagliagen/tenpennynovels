@@ -1,0 +1,671 @@
+// Import shared design system variables (CSS Modules compatibility)
+@import 'variables/colors';
+@import 'variables/typography';
+@import 'variables/spacing';
+@import 'variables/breakpoints';
+@import 'variables/shadows';
+@import 'variables/borders';
+
+.discussionContainer {
+  min-height: 100%;
+}
+
+// LOADING & ERROR STATES
+.loadingContainer,
+.errorContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-3xl;
+  text-align: center;
+  color: $text-secondary;
+  min-height: 400px;
+}
+
+.loadingSpinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid $border-secondary;
+  border-top: 4px solid $gold-primary;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: $spacing-lg;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.errorContainer {
+  h2 {
+    color: $gold-light;
+    margin-bottom: $spacing-lg;
+  }
+  
+  p {
+    margin-bottom: $spacing-lg;
+    max-width: 500px;
+  }
+}
+
+// BREADCRUMB OVERRIDE
+.breadcrumbOverride {
+  background: $bg-secondary;
+  border: 1px solid $border-secondary;
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  margin-bottom: $spacing-lg;
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  font-size: 0.9rem;
+}
+
+.breadcrumbLink {
+  color: $gold-primary;
+  text-decoration: none;
+  transition: color $transition-fast;
+  
+  &:hover {
+    color: $gold-light;
+    text-decoration: underline;
+  }
+}
+
+.breadcrumbSeparator {
+  color: $text-secondary;
+  font-weight: bold;
+}
+
+.breadcrumbCurrent {
+  color: $text-primary;
+  font-weight: 600;
+}
+
+// DISCUSSION HEADER
+.discussionHeader {
+  background: $bg-tertiary;
+  border: 1px solid $border-secondary;
+  border-radius: $radius-lg;
+  padding: $spacing-xl;
+  margin-bottom: $spacing-xl;
+  position: relative;
+  
+  &:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, $gold-primary, $gold-light);
+    border-radius: $radius-lg $radius-lg 0 0;
+  }
+}
+
+.discussionInfo {
+  margin-bottom: $spacing-lg;
+}
+
+.discussionTitle {
+  margin: 0 0 $spacing-lg 0;
+  color: $gold-primary;
+  font-size: 2.2rem;
+  font-weight: bold;
+  font-family: $font-secondary;
+  line-height: 1.2;
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.pinnedBadge,
+.lockedBadge {
+  font-size: 1.2rem;
+  opacity: 0.8;
+}
+
+.discussionMeta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: $spacing-lg;
+  margin-bottom: $spacing-lg;
+}
+
+.metaItem {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+}
+
+.metaLabel {
+  color: $text-secondary;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.metaValue {
+  color: $text-primary;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.tags {
+  display: flex;
+  gap: $spacing-sm;
+  flex-wrap: wrap;
+}
+
+.tag {
+  color: $gold-primary;
+  font-size: 0.85rem;
+  background: rgba($gold-primary, 0.1);
+  border: 1px solid rgba($gold-primary, 0.3);
+  padding: $spacing-xs $spacing-sm;
+  border-radius: $radius-sm;
+  font-weight: 600;
+}
+
+.discussionActions {
+  display: flex;
+  gap: $spacing-md;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.replyButton,
+.manageButton,
+.favoriteButton {
+  white-space: nowrap;
+}
+
+.favoriteButton {
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+  
+  &.btn-warning {
+    background-color: $warning-text;
+    color: $bg-primary;
+    
+    &:hover:not(:disabled) {
+      background-color: darken($warning-text, 10%);
+    }
+  }
+}
+
+// POSTS LIST
+.postsList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+}
+
+.emptyState {
+  text-align: center;
+  padding: $spacing-3xl;
+  color: $text-secondary;
+  background: $bg-tertiary;
+  border: 1px solid $border-secondary;
+  border-radius: $radius-lg;
+  
+  h3 {
+    margin: 0 0 $spacing-md 0;
+    color: $text-primary;
+    font-size: 1.5rem;
+  }
+  
+  p {
+    margin: 0 0 $spacing-lg 0;
+    font-size: 1rem;
+  }
+}
+
+// POST CARDS
+.postCard {
+  background: $bg-tertiary;
+  border: 1px solid $border-secondary;
+  border-radius: $radius-lg;
+  overflow: hidden;
+  transition: all $transition-normal;
+  position: relative;
+  
+  &:hover {
+    border-color: $border-secondary;
+    box-shadow: $shadow-sm;
+  }
+  
+  &:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: $border-secondary;
+    transition: background $transition-fast;
+  }
+  
+  &:hover:before {
+    background: $gold-primary;
+  }
+}
+
+.postHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: $spacing-lg $spacing-lg $spacing-md $spacing-lg;
+  border-bottom: 1px solid $border-secondary;
+  background: rgba($bg-secondary, 0.5);
+}
+
+.authorInfo {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+}
+
+.authorAvatar {
+  width: 50px;
+  height: 50px;
+  background: $gold-primary;
+  color: $bg-primary;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.authorDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.authorName {
+  color: $gold-primary;
+  font-weight: bold;
+  font-size: 1rem;
+}
+
+.authorUsername {
+  color: $text-secondary;
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+.postMeta {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  color: $text-secondary;
+  font-size: 0.85rem;
+}
+
+.postNumber {
+  background: rgba($gold-primary, 0.1);
+  border: 1px solid rgba($gold-primary, 0.3);
+  padding: $spacing-xs $spacing-sm;
+  border-radius: $radius-sm;
+  font-weight: bold;
+  color: $gold-primary;
+}
+
+.postDate {
+  color: $text-secondary;
+}
+
+.editedBadge {
+  color: $warning-text;
+  opacity: 0.7;
+}
+
+// POST CONTENT
+.postContent {
+  padding: $spacing-lg;
+}
+
+.replyReference {
+  background: rgba($gold-primary, 0.05);
+  border-left: 3px solid rgba($gold-primary, 0.3);
+  padding: $spacing-sm $spacing-md;
+  margin-bottom: $spacing-md;
+  border-radius: 0 $radius-sm $radius-sm 0;
+  
+  span {
+    color: $text-secondary;
+    font-size: 0.9rem;
+    font-style: italic;
+  }
+}
+
+.postBody {
+  color: $text-primary;
+  font-size: 1rem;
+  line-height: 1.6;
+  word-wrap: break-word;
+  
+  // Style for line breaks
+  br {
+    margin: $spacing-xs 0;
+  }
+  
+  // Style for basic formatting
+  strong, b {
+    color: $gold-primary;
+  }
+  
+  em, i {
+    color: $text-secondary;
+  }
+  
+  code {
+    background: rgba($bg-tertiary, 0.8);
+    border: 1px solid $border-secondary;
+    padding: 2px $spacing-xs;
+    border-radius: $radius-sm;
+    font-family: $font-monospace;
+    font-size: 0.9em;
+  }
+}
+
+// POST ACTIONS
+.postActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: $spacing-sm;
+  padding: $spacing-md $spacing-lg;
+  border-top: 1px solid $border-secondary;
+  background: rgba($bg-secondary, 0.3);
+}
+
+.replyActionButton,
+.editActionButton,
+.deleteActionButton {
+  padding: $spacing-xs $spacing-sm;
+  background: transparent;
+  border: 1px solid $border-secondary;
+  border-radius: $radius-sm;
+  color: $text-secondary;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all $transition-fast;
+  
+  &:hover {
+    border-color: $border-secondary;
+    color: $text-primary;
+    background: rgba($gold-primary, 0.1);
+  }
+}
+
+.deleteActionButton {
+  &:hover {
+    border-color: $gold-light;
+    color: $gold-light;
+    background: rgba($gold-light, 0.1);
+  }
+}
+
+// PAGINATION
+.pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: $spacing-xl 0;
+  padding: $spacing-lg;
+  background: $bg-tertiary;
+  border: 1px solid $border-secondary;
+  border-radius: $radius-lg;
+}
+
+.paginationButton {
+  min-width: 120px;
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.paginationInfo {
+  color: $text-secondary;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+// QUICK REPLY
+.quickReplyContainer {
+  position: sticky;
+  bottom: $spacing-lg;
+  display: flex;
+  justify-content: center;
+  z-index: 1020;
+}
+
+.quickReplyButton {
+  box-shadow: $shadow-xl;
+  border: 2px solid $border-secondary;
+  font-size: 1.1rem;
+  padding: $spacing-md $spacing-xl;
+}
+
+// REPLY MODAL
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba($bg-primary, 0.95);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050;
+  padding: $spacing-lg;
+}
+
+.modal {
+  background: $bg-tertiary;
+  border: 2px solid $border-secondary;
+  border-radius: $radius-lg;
+  width: 100%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow: hidden;
+  box-shadow: $shadow-xl;
+  display: flex;
+  flex-direction: column;
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: $spacing-lg $spacing-xl;
+  border-bottom: 1px solid $border-secondary;
+  background: rgba($gold-primary, 0.05);
+  
+  h3 {
+    margin: 0;
+    color: $gold-primary;
+    font-size: 1.3rem;
+    font-family: $font-secondary;
+  }
+}
+
+.modalCloseButton {
+  background: transparent;
+  border: 1px solid $border-secondary;
+  color: $text-secondary;
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.2rem;
+  transition: all $transition-fast;
+  
+  &:hover {
+    border-color: $gold-light;
+    color: $gold-light;
+    background: rgba($gold-light, 0.1);
+  }
+}
+
+.modalBody {
+  flex: 1;
+  padding: $spacing-xl;
+  overflow-y: auto;
+}
+
+.replyTextarea {
+  width: 100%;
+  min-height: 200px;
+  resize: vertical;
+  background: $input-bg;
+  border: 1px solid $border-secondary;
+  color: $input-text;
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  font-family: $font-primary;
+  font-size: 1rem;
+  line-height: 1.5;
+  
+  &:focus {
+    border-color: $gold-primary;
+    background: rgba($bg-tertiary, 0.9);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba($gold-primary, 0.2);
+  }
+  
+  &::placeholder {
+    color: $input-placeholder;
+  }
+}
+
+.modalFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: $spacing-md;
+  padding: $spacing-lg $spacing-xl;
+  border-top: 1px solid $border-secondary;
+  background: rgba($bg-secondary, 0.3);
+}
+
+// RESPONSIVE DESIGN
+@include mobile-only {
+  .discussionHeader {
+    flex-direction: column;
+    gap: $spacing-lg;
+    align-items: stretch;
+  }
+  
+  .discussionActions {
+    justify-content: center;
+  }
+  
+  .discussionMeta {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: $spacing-md;
+  }
+}
+
+@include tablet-down {
+  .discussionTitle {
+    font-size: 1.8rem;
+  }
+  
+  .postHeader {
+    flex-direction: column;
+    gap: $spacing-md;
+    align-items: stretch;
+  }
+  
+  .postMeta {
+    justify-content: space-between;
+  }
+  
+  .postActions {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  
+  .pagination {
+    flex-direction: column;
+    gap: $spacing-md;
+    text-align: center;
+  }
+  
+  .breadcrumbOverride {
+    flex-wrap: wrap;
+  }
+  
+  .modal {
+    margin: $spacing-sm;
+    max-width: none;
+    width: calc(100% - #{$spacing-lg});
+  }
+}
+
+@include small-mobile-only {
+  .discussionContainer {
+    padding: 0;
+  }
+  
+  .discussionHeader {
+    padding: $spacing-lg;
+    border-radius: $radius-md;
+  }
+  
+  .discussionTitle {
+    font-size: 1.5rem;
+  }
+  
+  .discussionMeta {
+    grid-template-columns: 1fr;
+    gap: $spacing-sm;
+  }
+  
+  .postCard {
+    border-radius: $radius-md;
+  }
+  
+  .postHeader,
+  .postContent,
+  .postActions {
+    padding: $spacing-md;
+  }
+  
+  .authorInfo {
+    gap: $spacing-sm;
+  }
+  
+  .authorAvatar {
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
+  }
+  
+  .quickReplyButton {
+    padding: $spacing-sm $spacing-lg;
+    font-size: 1rem;
+  }
+  
+  .modalHeader,
+  .modalBody,
+  .modalFooter {
+    padding: $spacing-md;
+  }
+}

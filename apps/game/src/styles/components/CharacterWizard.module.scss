@@ -1,0 +1,320 @@
+@import "../../../../shared-ui/src/styles/variables/colors";
+@import "../../../../shared-ui/src/styles/variables/typography";
+@import "../../../../shared-ui/src/styles/variables/spacing";
+@import "../../../../shared-ui/src/styles/variables/breakpoints";
+@import "../../../../shared-ui/src/styles/variables/shadows";
+@import "../../../../shared-ui/src/styles/variables/borders";
+
+.wizardContainer {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 15px;
+  background: linear-gradient(145deg, #1a1a1a 0%, #2d2d2d 100%);
+  min-height: 100vh;
+  color: #ffffff;
+}
+
+.wizardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #ff9500;
+  
+  .wizardTitle {
+    font-family: 'Times New Roman', serif;
+    font-size: 2rem;
+    color: #ff9500;
+    margin: 0;
+    text-shadow: $text-shadow;
+  }
+  
+  .characterInfo {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 5px;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.7);
+    
+    strong {
+      color: #ff9500;
+    }
+  }
+}
+
+.progressContainer {
+  margin-bottom: 20px;
+}
+
+.progressBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 20px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-color: rgba(255, 149, 0, 0.3);
+    z-index: 1;
+  }
+}
+
+.progressStep {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 70px;
+  position: relative;
+  z-index: 2;
+  background: linear-gradient(145deg, #1a1a1a 0%, #2d2d2d 100%);
+  padding: 0 8px;
+  transition: all 0.3s ease;
+  width: 100px;
+  
+  &.clickable {
+    cursor: pointer;
+    
+    &:hover .stepNumber {
+      background-color: rgba(255, 149, 0, 0.8);
+      border-color: #ff9500;
+    }
+  }
+  
+  &.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    
+    .stepNumber {
+      background-color: rgba(100, 100, 100, 0.5);
+      border-color: rgba(100, 100, 100, 0.5);
+      color: rgba(255, 255, 255, 0.5);
+    }
+    
+    .stepTitle {
+      color: rgba(255, 255, 255, 0.5);
+    }
+  }
+  
+  &.active .stepNumber {
+    background-color: #ff9500;
+    border-color: #ff9500;
+    color: #000000;
+    transform: scale(1.1);
+  }
+  
+  &.completed .stepNumber {
+    background-color: #00aa00;
+    border-color: #00aa00;
+    color: white;
+  }
+  
+  &.invalid .stepNumber {
+    background-color: #cc3333;
+    border-color: #cc3333;
+    color: white;
+    animation: pulse-red 1.5s infinite;
+  }
+  
+  .stepNumber {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 149, 0, 0.3);
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px;
+    color: #ffffff;
+    transition: all 0.3s ease;
+  }
+  
+  .stepTitle {
+    font-size: 11px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.7);
+    text-align: center;
+    max-width: 90px;
+    line-height: 1.1;
+    height: 24px;
+  }
+  
+  &.active .stepTitle {
+    color: #ff9500;
+    font-weight: bold;
+  }
+  
+  &.completed .stepTitle {
+    color: #00aa00;
+  }
+}
+
+.stepContent {
+  background: linear-gradient(145deg, #2a2a2a 0%, #1a1a1a 100%);
+  border: 1px solid rgba(255, 149, 0, 0.3);
+  border-radius: 8px;
+  padding: 24px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  min-height: 400px;
+  max-height: calc(100vh - 300px);
+  overflow-y: auto;
+  color: #ffffff;
+}
+
+.wizardFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 0;
+  border-top: 1px solid rgba(255, 149, 0, 0.3);
+  
+  .prevButton, .nextButton, .submitButton {
+    padding: 10px 20px;
+    border: 1px solid rgba(255, 149, 0, 0.3);
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+  
+  .prevButton {
+    background: rgba(108, 117, 125, 0.8);
+    color: white;
+    
+    &:hover:not(:disabled) {
+      background: rgba(84, 91, 98, 0.9);
+      border-color: #ff9500;
+    }
+  }
+  
+  .nextButton {
+    background: rgba(255, 149, 0, 0.8);
+    color: #000000;
+    border-color: #ff9500;
+    
+    &:hover:not(:disabled) {
+      background: #ff9500;
+    }
+  }
+  
+  .submitButton {
+    background: rgba(0, 170, 0, 0.8);
+    color: white;
+    
+    &:hover:not(:disabled) {
+      background: #00aa00;
+      border-color: #ff9500;
+    }
+  }
+  
+  .stepIndicator {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 500;
+  }
+}
+
+
+// Responsive design
+@media (max-width: 768px) {
+  .wizardContainer {
+    padding: 10px;
+  }
+  
+  .wizardHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+    
+    .wizardTitle {
+      font-size: 2rem;
+    }
+    
+    .characterInfo {
+      align-items: flex-start;
+    }
+  }
+  
+  .progressBar {
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+    
+    &::before {
+      display: none;
+    }
+  }
+  
+  .progressStep {
+    .stepTitle {
+      font-size: 11px;
+      max-width: 80px;
+    }
+  }
+  
+  .stepContent {
+    padding: 20px;
+  }
+  
+  .wizardFooter {
+    flex-direction: column;
+    gap: 15px;
+    
+    .stepIndicator {
+      order: -1;
+    }
+    
+    .prevButton, .nextButton, .submitButton {
+      width: 100%;
+      max-width: 200px;
+    }
+  }
+}
+
+// Custom scrollbar styling for step content
+.stepContent::-webkit-scrollbar {
+  width: 8px;
+}
+
+.stepContent::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+}
+
+.stepContent::-webkit-scrollbar-thumb {
+  background: rgba(255, 149, 0, 0.6);
+  border-radius: 4px;
+  
+  &:hover {
+    background: rgba(255, 149, 0, 0.8);
+  }
+}
+
+@keyframes pulse-red {
+  0% {
+    box-shadow: 0 0 0 0 rgba(204, 51, 51, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(204, 51, 51, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(204, 51, 51, 0);
+  }
+}

@@ -1,0 +1,458 @@
+@import "../../../../shared-ui/src/styles/variables/colors";
+@import "../../../../shared-ui/src/styles/variables/typography";
+@import "../../../../shared-ui/src/styles/variables/spacing";
+@import "../../../../shared-ui/src/styles/variables/breakpoints";
+@import "../../../../shared-ui/src/styles/variables/shadows";
+@import "../../../../shared-ui/src/styles/variables/borders";
+// Game Layout Component Styles
+// Victorian London RPG Theme - Dark Atmospheric Design
+
+.gameContainer {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: row; // Horizontal layout: sidebar | right container
+  background: $bg-primary;
+  color: $text-primary;
+  overflow: hidden;
+}
+
+// Sidebar styles - Full Height
+.sidebar {
+  flex: 0 0 300px; // Fixed width sidebar 
+  overflow-y: auto;
+  height: 100vh; // Full viewport height
+  background: $bg-secondary;
+  border-right: 2px solid $border-secondary;
+  
+  @media (max-width: $breakpoint-md) {
+    flex: 0 0 250px; // Narrower on mobile
+  }
+  
+  .sidebarContent {
+    padding: $spacing-md;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-md;
+  }
+  
+  .clockSection {
+    flex: 0 0 auto; // Fixed size for clock
+  }
+  
+  .charactersSection {
+    flex: 1; // Takes remaining space
+    display: flex;
+    flex-direction: column;
+    min-height: 0; // Allow shrinking
+  }
+  
+  .chatSection, .mailSection {
+    flex: 0 0 auto; // Fixed size for chat/mail buttons
+    padding-top: $spacing-sm;
+    border-top: 1px solid rgba($border-secondary, 0.3);
+  }
+
+  .chatSection {
+    margin-top: auto; // Push to bottom
+    padding-top: $spacing-md;
+  }
+  
+  .offGameChatButton {
+    width: 100%;
+    background: linear-gradient(135deg, rgba($gold-primary, 0.15), rgba($gold-primary, 0.08));
+    border: 1px solid rgba($gold-primary, 0.3);
+    color: $gold-primary;
+    padding: $spacing-md;
+    border-radius: $radius-md;
+    font-family: $font-primary;
+    font-size: 0.9rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all all 0.15s ease;
+    text-shadow: $text-shadow;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: $spacing-xs;
+    position: relative;
+    
+    &:hover {
+      background: linear-gradient(135deg, rgba($gold-primary, 0.25), rgba($gold-primary, 0.15));
+      border-color: rgba($gold-primary, 0.5);
+      transform: translateY(-1px);
+      box-shadow: 0 3px 12px rgba($gold-primary, 0.2);
+    }
+    
+    &:active {
+      transform: translateY(0);
+      background: linear-gradient(135deg, rgba($gold-primary, 0.3), rgba($gold-primary, 0.2));
+    }
+    
+    .chatIcon {
+      font-size: 1.1rem;
+    }
+    
+    .unreadBadge {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background: $error-text;
+      color: white;
+      border-radius: 50%;
+      font-size: 0.85rem;
+      font-weight: bold;
+      min-width: 24px;
+      height: 24px;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid $bg-secondary;
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+  }
+
+  // OnGame Mail Button (Victorian Post Office style)
+  .onGameMailButton {
+    width: 100%;
+    background: linear-gradient(135deg, rgba($gold-light, 0.2), rgba($gold-light, 0.1));
+    border: 1px solid rgba($gold-light, 0.4);
+    color: $gold-primary;
+    padding: $spacing-md;
+    border-radius: $radius-md;
+    font-family: $font-primary;
+    font-size: 0.9rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all all 0.15s ease;
+    text-shadow: $text-shadow;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: $spacing-xs;
+    position: relative;
+    
+    &:hover {
+      background: linear-gradient(135deg, rgba($gold-light, 0.3), rgba($gold-light, 0.2));
+      border-color: rgba($gold-light, 0.6);
+      transform: translateY(-1px);
+      box-shadow: 0 3px 12px rgba($gold-light, 0.3);
+    }
+    
+    &:active {
+      transform: translateY(0);
+      background: linear-gradient(135deg, rgba($gold-light, 0.4), rgba($gold-light, 0.3));
+    }
+    
+    .mailIcon {
+      font-size: 1.2rem;
+    }
+    
+    .unreadBadge {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background: $error-text;
+      color: white;
+      border-radius: 50%;
+      font-size: 0.85rem;
+      font-weight: bold;
+      min-width: 24px;
+      height: 24px;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid $bg-secondary;
+      animation: pulse 2s infinite;
+    }
+  }
+}
+
+// Right container - Header + Body stacked vertically
+.rightContainer {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  min-height: 0; // Allow flex items to shrink
+  background: $bg-secondary;
+}
+
+// Header styles - Inside right container
+.header {
+  flex: 0 0 auto;
+  height: 80px; // Fixed header height
+  background: $bg-tertiary;
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid $border-secondary;
+  z-index: 100;
+  
+  .headerContent {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 $spacing-lg;
+    max-width: 100%;
+    gap: $spacing-lg;
+  }
+  
+  .headerLeft {
+    flex-shrink: 0;
+  }
+  
+  .description {
+    margin: $spacing-xs 0 0 0;
+    color: $text-secondary;
+    font-size: 0.9rem;
+    font-style: italic;
+  }
+  
+  .headerRight {
+    display: flex;
+    align-items: center;
+    gap: $spacing-lg;
+  }
+  
+  .gameTitle {
+    font-family: $font-secondary;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: $gold-primary;
+    margin: 0;
+    text-shadow: $text-shadow;
+    
+    @media (max-width: $breakpoint-md) {
+      font-size: 1.25rem;
+    }
+  }
+  
+  .headerActions {
+    display: flex;
+    align-items: center;
+    gap: $spacing-md;
+    flex: 1;
+    justify-content: center;
+  }
+  
+  .userInfo {
+    flex-shrink: 0;
+  }
+  
+  .userCard {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: $spacing-xs;
+  }
+  
+  .userDetails {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+  }
+  
+  .username {
+    color: $gold-primary;
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+  
+  .characterName {
+    color: $gold-primary;
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+  
+  .occupation {
+    color: $text-secondary;
+    font-size: 0.85rem;
+    font-style: italic;
+  }
+  
+  .userBadges {
+    display: flex;
+    gap: $spacing-xs;
+  }
+  
+  .adminBadge,
+  .masterBadge,
+  .modBadge {
+    padding: 2px $spacing-xs;
+    border-radius: $radius-sm;
+    font-size: 0.7rem;
+    font-weight: bold;
+    text-transform: uppercase;
+  }
+  
+  .adminBadge {
+    background: linear-gradient(135deg, #e53e3e, #c53030);
+    color: white;
+  }
+  
+  .masterBadge {
+    background: linear-gradient(135deg, $gold-primary, $gold-light);
+    color: $bg-primary;
+  }
+  
+  .modBadge {
+    background: linear-gradient(135deg, #38a169, #2f855a);
+    color: white;
+  }
+  
+  .loginPrompt {
+    color: $text-tertiary;
+    font-size: 0.9rem;
+    font-style: italic;
+  }
+  
+  .headerButton {
+    background: linear-gradient(135deg, rgba($gold-primary, 0.2), rgba($gold-primary, 0.1));
+    border: 1px solid rgba($gold-primary, 0.6);
+    color: $gold-primary;
+    padding: $spacing-sm $spacing-md;
+    border-radius: $radius-md;
+    font-family: $font-primary;
+    font-size: 0.9rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all all 0.15s ease;
+    text-shadow: $text-shadow;
+    
+    &:hover {
+      background: linear-gradient(135deg, rgba($gold-primary, 0.3), rgba($gold-primary, 0.2));
+      border-color: rgba($gold-primary, 0.8);
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba($gold-primary, 0.3);
+    }
+    
+    &:active {
+      transform: translateY(0);
+      background: linear-gradient(135deg, rgba($gold-primary, 0.4), rgba($gold-primary, 0.3));
+    }
+    
+    @media (max-width: $breakpoint-md) {
+      padding: $spacing-xs $spacing-sm;
+      font-size: 0.8rem;
+    }
+  }
+}
+
+// Body container styles - Below header in right container
+.bodyContainer {
+  flex: 1; 
+  overflow: hidden;
+  position: relative;
+  min-height: 0; // Allow flex item to shrink below content size
+  height: 100%; // Force flex to calculate available space
+  background: $bg-primary;
+  
+  // Custom scrollbar styling to match theme
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: $radius-sm;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: rgba($gold-primary, 0.3);
+    border-radius: $radius-sm;
+    
+    &:hover {
+      background: rgba($gold-primary, 0.5);
+    }
+  }
+}
+
+// Responsive design
+@media (max-width: $breakpoint-lg) {
+  .rightContainer {
+    // Dynamic padding handled in component
+  }
+}
+
+@media (max-width: $breakpoint-md) {
+  .gameContainer {
+    flex-direction: column; // Stack sidebar above right container on mobile
+  }
+  
+  .sidebar {
+    flex: 0 0 auto;
+    height: 200px; // Fixed height on mobile
+    width: 100%;
+    border-right: none;
+    border-bottom: 2px solid $border-secondary;
+  }
+  
+  .rightContainer {
+    flex: 1;
+    min-height: 0;
+  }
+  
+  .bodyContainer {
+    flex: 1;
+    min-height: 0;
+  }
+}
+
+// Custom scrollbar for sidebar
+.sidebar {
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: rgba($gold-primary, 0.3);
+    border-radius: 9999px;
+    
+    &:hover {
+      background: rgba($gold-primary, 0.5);
+    }
+  }
+}
+
+// Additional atmospheric effects
+.header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba($gold-primary, 0.03) 50%, 
+    transparent 100%);
+  pointer-events: none;
+}
+
+.sidebar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, 
+    rgba($gold-primary, 0.02) 0%, 
+    transparent 50%, 
+    rgba($gold-primary, 0.02) 100%);
+  pointer-events: none;
+  z-index: -1;
+}

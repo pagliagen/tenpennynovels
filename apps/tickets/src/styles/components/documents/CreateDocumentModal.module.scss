@@ -1,0 +1,196 @@
+// =============================================================================
+// Create Document Modal Component Styles
+// =============================================================================
+
+@import 'variables/breakpoints';
+@import 'variables/colors';
+@import 'variables/spacing';
+@import 'variables/typography';
+@import 'variables/shadows';
+@import 'variables/borders'; 
+@import 'mixins/buttons';
+@import 'mixins/forms';
+
+.form {
+  .formSection {
+    margin-bottom: $spacing-lg;
+    
+    .typeInfo {
+      display: flex;
+      align-items: center;
+      gap: $spacing-sm;
+      padding: $spacing-md;
+      background: rgba($gold-primary, 0.1);
+      border: 1px solid rgba($gold-primary, 0.2);
+      border-radius: $radius-md;
+      
+      .typeIcon {
+        font-size: $font-size-lg;
+      }
+      
+      .typeLabel {
+        color: $gold-primary;
+        font-weight: $font-weight-semibold;
+        font-size: $font-size-sm;
+      }
+    }
+  }
+  
+  .row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: $spacing-md;
+    
+    @include tablet-down {
+      grid-template-columns: 1fr;
+    }
+  }
+  
+  .formGroup {
+    margin-bottom: $spacing-lg;
+    
+    .label {
+      display: block;
+      color: $text-primary;
+      font-weight: $font-weight-semibold;
+      font-size: $font-size-sm;
+      margin-bottom: $spacing-xs;
+    }
+    
+    .input,
+    .textarea,
+    .select {
+      width: 100%;
+      background: $bg-secondary;
+      border: 1px solid $border-secondary;
+      border-radius: $radius-md;
+      padding: $spacing-sm $spacing-md;
+      color: $text-primary;
+      font-size: $font-size-sm;
+      transition: all 0.2s ease;
+      
+      &:focus {
+        outline: none;
+        border-color: $gold-primary;
+        box-shadow: 0 0 0 2px rgba($gold-primary, 0.2);
+      }
+      
+      &.error {
+        border-color: $error-text;
+        box-shadow: 0 0 0 2px rgba($error-text, 0.2);
+      }
+      
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+      
+      &::placeholder {
+        color: $text-tertiary;
+      }
+    }
+    
+    .textarea {
+      resize: vertical;
+      min-height: 80px;
+      font-family: inherit;
+      
+      &.contentArea {
+        min-height: 200px;
+        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        font-size: $font-size-xs;
+        line-height: 1.6;
+      }
+    }
+    
+    .select {
+      cursor: pointer;
+    }
+    
+    .errorText {
+      color: $error-text;
+      font-size: $font-size-xs;
+      margin-top: $spacing-xs;
+      display: block;
+    }
+    
+    .warningText {
+      color: $warning-text;
+      font-size: $font-size-xs;
+      margin-top: $spacing-xs;
+      display: block;
+    }
+    
+    .helpText {
+      color: $text-tertiary;
+      font-size: $font-size-xs;
+      line-height: 1.4;
+      margin-top: $spacing-xs;
+      display: flex;
+      align-items: center;
+      gap: $spacing-xs;
+    }
+    
+    .charCount {
+      color: $text-tertiary;
+      font-size: $font-size-xs;
+      text-align: right;
+      margin-top: $spacing-xs;
+    }
+  }
+  
+  .actions {
+    display: flex;
+    gap: $spacing-md;
+    justify-content: flex-end;
+    margin-top: $spacing-xl;
+    padding-top: $spacing-lg;
+    border-top: 1px solid $border-secondary;
+    
+    .button {
+      @include victorian-button('secondary');
+      display: flex;
+      align-items: center;
+      gap: $spacing-xs;
+      font-size: $font-size-sm;
+      padding: $spacing-sm $spacing-lg;
+      min-width: 140px;
+      justify-content: center;
+      
+      &.primary {
+        @include victorian-button('primary');
+      }
+      
+      &.secondary {
+        @include victorian-button('ghost');
+      }
+      
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+      
+      .spinner {
+        width: 16px;
+        height: 16px;
+        border: 2px solid transparent;
+        border-top: 2px solid currentColor;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+    }
+    
+    @include tablet-down {
+      flex-direction: column-reverse;
+      
+      .button {
+        width: 100%;
+      }
+    }
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

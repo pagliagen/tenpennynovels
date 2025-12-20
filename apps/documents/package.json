@@ -1,0 +1,36 @@
+{
+  "name": "@tenpennynovels/documents",
+  "version": "1.0.0",
+  "description": "TenpennyNovels Documents App - Victorian London RPG Documentation",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 4002 -H 0.0.0.0",
+    "build": "next build",
+    "start": "next start -p 4002 -H 0.0.0.0",
+    "lint": "next lint",
+    "test": "jest",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@tenpennynovels/shared-ui": "file:../shared-ui",
+    "classnames": "^2.3.2",
+    "cookie": "^0.5.0",
+    "js-cookie": "^3.0.5",
+    "next": "^14.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/cookie": "^0.5.0",
+    "@types/js-cookie": "^3.0.0",
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.0.0",
+    "eslint-config-next": "^14.0.0",
+    "sass": "^1.69.0",
+    "typescript": "^5.0.0"
+  }
+}

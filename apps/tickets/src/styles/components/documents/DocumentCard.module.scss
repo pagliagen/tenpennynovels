@@ -1,0 +1,365 @@
+// =============================================================================
+// Document Card Component Styles
+// =============================================================================
+
+@import 'variables/breakpoints';
+@import 'variables/colors';
+@import 'variables/spacing';
+@import 'variables/typography';
+@import 'variables/shadows';
+@import 'variables/borders'; 
+@import 'mixins/buttons';
+@import 'mixins/cards';
+@import 'mixins/animations';
+
+.documentCard {
+  background: $bg-primary;
+  border: 1px solid $border-secondary;
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-sm;
+  position: relative;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    border-color: rgba($gold-primary, 0.3);
+    box-shadow: $shadow-sm;
+  }
+  
+  &.dragging {
+    background: rgba($gold-primary, 0.1);
+    border-color: $gold-primary;
+    transform: rotate(1deg);
+    box-shadow: $shadow-md;
+  }
+  
+  .dragHandle {
+    color: $text-tertiary;
+    font-size: $font-size-lg;
+    cursor: grab;
+    padding: $spacing-xs;
+    border-radius: $radius-sm;
+    transition: all 0.2s ease;
+    user-select: none;
+    line-height: 1;
+    
+    &:hover {
+      color: $gold-primary;
+      background: rgba($gold-primary, 0.1);
+    }
+    
+    &:active {
+      cursor: grabbing;
+    }
+  }
+  
+  .documentInfo {
+    flex: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: $spacing-md;
+    
+    .mainInfo {
+      flex: 1;
+      
+      .title {
+        font-size: $font-size-base;
+        font-weight: $font-weight-semibold;
+        color: $text-primary;
+        margin: 0 0 $spacing-xs;
+        display: flex;
+        align-items: center;
+        gap: $spacing-xs;
+        line-height: 1.3;
+        
+        .statusIcon {
+          font-size: $font-size-sm;
+          flex-shrink: 0;
+        }
+      }
+      
+      .summary {
+        color: $text-tertiary;
+        font-size: $font-size-sm;
+        line-height: 1.4;
+        margin: 0 0 $spacing-sm;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      
+      .metadata {
+        display: flex;
+        gap: $spacing-md;
+        margin-bottom: $spacing-sm;
+        
+        .author,
+        .date,
+        .version {
+          color: $text-tertiary;
+          font-size: $font-size-xs;
+          display: flex;
+          align-items: center;
+          gap: 2px;
+          white-space: nowrap;
+        }
+        
+        .version {
+          background: rgba($gold-primary, 0.2);
+          color: $gold-primary;
+          padding: 2px $spacing-xs;
+          border-radius: $radius-sm;
+          font-weight: $font-weight-semibold;
+        }
+        
+        @include tablet-down {
+          flex-direction: column;
+          gap: 2px;
+        }
+      }
+      
+      .tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: $spacing-xs;
+        
+        .tag {
+          background: rgba($info-text, 0.2);
+          color: $info-text;
+          font-size: $font-size-xs;
+          padding: 2px $spacing-xs;
+          border-radius: $radius-sm;
+          font-weight: $font-weight-medium;
+        }
+      }
+    }
+    
+    .visibilitySection {
+      position: relative;
+      
+      .visibilityBadge {
+        display: flex;
+        align-items: center;
+        gap: $spacing-xs;
+        padding: $spacing-xs $spacing-sm;
+        border-radius: $radius-md;
+        font-size: $font-size-xs;
+        font-weight: $font-weight-semibold;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+        border: 1px solid transparent;
+        
+        .visibilityIcon {
+          font-size: $font-size-sm;
+        }
+        
+        .visibilityLabel {
+          font-size: $font-size-xs;
+        }
+        
+        .dropdownArrow {
+          font-size: 10px;
+          margin-left: 2px;
+          transition: transform 0.2s ease;
+        }
+        
+        &.success {
+          background: rgba($success-text, 0.2);
+          color: $success-text;
+          border-color: rgba($success-text, 0.3);
+          
+          &:hover {
+            background: rgba($success-text, 0.3);
+          }
+        }
+        
+        &.warning {
+          background: rgba($warning-text, 0.2);
+          color: $warning-text;
+          border-color: rgba($warning-text, 0.3);
+          
+          &:hover {
+            background: rgba($warning-text, 0.3);
+          }
+        }
+        
+        &.danger {
+          background: rgba($error-text, 0.2);
+          color: $error-text;
+          border-color: rgba($error-text, 0.3);
+          
+          &:hover {
+            background: rgba($error-text, 0.3);
+          }
+        }
+        
+        &.neutral {
+          background: rgba($text-tertiary, 0.2);
+          color: $text-tertiary;
+          border-color: rgba($text-tertiary, 0.3);
+          
+          &:hover {
+            background: rgba($text-tertiary, 0.3);
+          }
+        }
+      }
+      
+      .visibilityMenu {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        background: $bg-secondary;
+        border: 1px solid $border-secondary;
+        border-radius: $radius-md;
+        box-shadow: $shadow-lg;
+        z-index: 100;
+        min-width: 120px;
+        padding: $spacing-xs 0;
+        margin-top: $spacing-xs;
+        
+        .visibilityOption {
+          width: 100%;
+          background: none;
+          border: none;
+          color: $text-primary;
+          font-size: $font-size-sm;
+          padding: $spacing-sm $spacing-md;
+          text-align: left;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: $spacing-xs;
+          transition: all 0.2s ease;
+          
+          &:hover {
+            background: rgba($gold-primary, 0.1);
+            color: $gold-primary;
+          }
+          
+          &.current {
+            background: rgba($gold-primary, 0.2);
+            color: $gold-primary;
+            font-weight: $font-weight-semibold;
+          }
+        }
+      }
+    }
+    
+    @include tablet-down {
+      flex-direction: column;
+      gap: $spacing-sm;
+    }
+  }
+  
+  .actions {
+    display: flex;
+    gap: $spacing-xs;
+    
+    .actionButton {
+      background: none;
+      border: none;
+      color: $text-tertiary;
+      font-size: $font-size-base;
+      cursor: pointer;
+      padding: $spacing-xs;
+      border-radius: $radius-sm;
+      transition: all 0.2s ease;
+      
+      &:hover {
+        background: rgba($gold-primary, 0.1);
+        color: $gold-primary;
+      }
+      
+      &.edit {
+        &:hover {
+          color: $info-text;
+          background: rgba($info-text, 0.1);
+        }
+      }
+      
+      &.content {
+        &:hover {
+          color: $warning-text;
+          background: rgba($warning-text, 0.1);
+        }
+        
+        &:disabled {
+          opacity: 0.3;
+          cursor: not-allowed;
+          
+          &:hover {
+            background: none;
+            color: $text-tertiary;
+          }
+        }
+      }
+      
+      &.delete {
+        &:hover {
+          color: $error-text;
+          background: rgba($error-text, 0.1);
+        }
+      }
+    }
+  }
+  
+  .overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 99;
+    background: transparent;
+  }
+}
+
+@include tablet-down {
+  .documentCard {
+    padding: $spacing-sm;
+    
+    .dragHandle {
+      font-size: $font-size-base;
+    }
+    
+    .documentInfo {
+      .mainInfo {
+        .title {
+          font-size: $font-size-sm;
+        }
+        
+        .metadata {
+          gap: $spacing-sm;
+          
+          .author,
+          .date,
+          .version {
+            font-size: 10px;
+          }
+        }
+      }
+      
+      .visibilitySection {
+        .visibilityBadge {
+          padding: $spacing-xs;
+          
+          .visibilityLabel {
+            display: none;
+          }
+        }
+      }
+    }
+    
+    .actions {
+      .actionButton {
+        font-size: $font-size-sm;
+        padding: 6px;
+      }
+    }
+  }
+}

@@ -1,0 +1,286 @@
+// =============================================================================
+// Document Group Card Component Styles
+// =============================================================================
+
+@import 'variables/breakpoints';
+@import 'variables/colors';
+@import 'variables/spacing';
+@import 'variables/typography';
+@import 'variables/shadows';
+@import 'variables/borders'; 
+@import 'mixins/buttons';
+@import 'mixins/cards';
+@import 'mixins/animations';
+
+.groupCard {
+  @include victorian-card;
+  background: $bg-secondary;
+  border: 1px solid $border-secondary;
+  border-radius: $radius-lg;
+  overflow: hidden;
+  position: relative;
+  
+  &.inactive {
+    opacity: 0.6;
+    border-color: $text-tertiary;
+    
+    .header {
+      background: linear-gradient(135deg, $bg-primary 0%, rgba($text-tertiary, 0.1) 100%);
+    }
+  }
+  
+  .header {
+    background: linear-gradient(135deg, $bg-primary 0%, rgba($gold-primary, 0.1) 100%);
+    border-bottom: 1px solid $border-secondary;
+    padding: $spacing-lg;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    
+    .headerLeft {
+      display: flex;
+      align-items: flex-start;
+      gap: $spacing-md;
+      flex: 1;
+      
+      .collapseButton {
+        background: none;
+        border: none;
+        color: $gold-primary;
+        font-size: $font-size-lg;
+        cursor: pointer;
+        padding: $spacing-xs;
+        border-radius: $radius-sm;
+        transition: all 0.2s ease;
+        margin-top: 2px;
+        
+        &:hover {
+          background: rgba($gold-primary, 0.1);
+          color: $gold-light;
+        }
+        
+        .collapseIcon {
+          transition: transform 0.2s ease;
+          display: inline-block;
+          
+          &.collapsed {
+            transform: rotate(-90deg);
+          }
+        }
+      }
+      
+      .groupInfo {
+        flex: 1;
+        
+        .groupName {
+          font-size: $font-size-lg;
+          font-weight: $font-weight-semibold;
+          color: $text-primary;
+          margin: 0 0 $spacing-xs;
+          display: flex;
+          align-items: center;
+          gap: $spacing-sm;
+          
+          .inactiveLabel {
+            background: $text-tertiary;
+            color: $bg-primary;
+            font-size: $font-size-xs;
+            font-weight: $font-weight-bold;
+            padding: 2px $spacing-xs;
+            border-radius: $radius-sm;
+            letter-spacing: 0.5px;
+          }
+        }
+        
+        .groupDescription {
+          color: $text-tertiary;
+          font-size: $font-size-sm;
+          margin: 0;
+          line-height: 1.4;
+        }
+      }
+    }
+    
+    .headerRight {
+      display: flex;
+      align-items: center;
+      gap: $spacing-lg;
+      
+      .stats {
+        .stat {
+          color: $text-tertiary;
+          font-size: $font-size-sm;
+          white-space: nowrap;
+        }
+      }
+      
+      .actions {
+        display: flex;
+        gap: $spacing-xs;
+        
+        .actionButton {
+          background: none;
+          border: none;
+          color: $text-tertiary;
+          font-size: $font-size-base;
+          cursor: pointer;
+          padding: $spacing-xs;
+          border-radius: $radius-sm;
+          transition: all 0.2s ease;
+          
+          &:hover {
+            background: rgba($gold-primary, 0.1);
+            color: $gold-primary;
+          }
+          
+          &.toggleActive {
+            &:hover {
+              color: $info-text;
+            }
+          }
+          
+          &.delete {
+            &:hover {
+              color: $error-text;
+              background: rgba($error-text, 0.1);
+            }
+            
+            &:disabled {
+              opacity: 0.3;
+              cursor: not-allowed;
+            }
+          }
+        }
+      }
+    }
+    
+    @include tablet-down {
+      flex-direction: column;
+      gap: $spacing-md;
+      align-items: stretch;
+      
+      .headerRight {
+        justify-content: space-between;
+        gap: $spacing-md;
+      }
+    }
+  }
+  
+  .documentsSection {
+    .documentsList {
+      padding: $spacing-lg;
+      display: flex;
+      flex-direction: column;
+      gap: $spacing-md;
+      min-height: 60px;
+      
+      
+      .documentWrapper {
+        display: flex;
+        align-items: stretch;
+        gap: $spacing-xs;
+        
+        .arrowControls {
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+          justify-content: center;
+          padding: $spacing-xs;
+          
+          .arrowButton {
+            background: none;
+            border: 1px solid $border-secondary;
+            color: $text-tertiary;
+            font-size: 14px;
+            line-height: 1;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: $radius-sm;
+            transition: all 0.2s ease;
+            min-width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            
+            &:hover:not(:disabled) {
+              color: $gold-primary;
+              background: rgba($gold-primary, 0.1);
+              border-color: $gold-primary;
+            }
+            
+            &:active:not(:disabled) {
+              transform: scale(0.95);
+            }
+            
+            &:disabled {
+              opacity: 0.3;
+              cursor: not-allowed;
+              color: $text-tertiary;
+              background: transparent;
+              border-color: $border-secondary;
+            }
+          }
+        }
+      }
+    }
+    
+    .emptyDocuments {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: $spacing-3xl;
+      color: $text-tertiary;
+      
+      .emptyIcon {
+        font-size: $font-size-3xl;
+        margin-bottom: $spacing-md;
+        opacity: 0.6;
+      }
+      
+      p {
+        margin: 0;
+        font-size: $font-size-base;
+        font-style: italic;
+      }
+    }
+    
+  }
+  
+  .reorderingOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba($bg-primary, 0.8);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+    
+    .spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid $border-secondary;
+      border-top: 3px solid $gold-primary;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: $spacing-md;
+    }
+    
+    p {
+      color: $text-primary;
+      font-size: $font-size-sm;
+      margin: 0;
+    }
+  }
+}
+
+// Animations
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

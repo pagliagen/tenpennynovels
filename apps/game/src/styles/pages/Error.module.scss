@@ -1,0 +1,39 @@
+.errorContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem;
+  text-align: center;
+  background: #0d0d0d;
+  color: #ffffff;
+
+  h1 {
+    font-size: 2.5rem;
+    color: #ffa748;
+    margin-bottom: 1.5rem;
+  }
+
+  p {
+    font-size: 1.2rem;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 2rem;
+  }
+
+  button {
+    padding: 0.75rem 2rem;
+    font-size: 1.1rem;
+    background: #ffa748;
+    color: #0d0d0d;
+    border: 2px solid #ffa748;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:hover {
+      background: #daddc4;
+      transform: translateY(-1px);
+    }
+  }
+}

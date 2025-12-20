@@ -1,0 +1,217 @@
+// Import shared design system variables (CSS Modules compatibility)
+@import 'variables/colors';
+@import 'variables/typography';
+@import 'variables/spacing';
+@import 'variables/breakpoints';
+@import 'variables/shadows';
+@import 'variables/borders';
+
+.accessDeniedContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 60vh;
+  padding: $spacing-xl;
+}
+
+.accessDeniedCard {
+  background: $bg-tertiary;
+  border: 2px solid $border-secondary;
+  border-radius: $radius-lg;
+  padding: $spacing-3xl;
+  max-width: 600px;
+  width: 100%;
+  text-align: center;
+  box-shadow: $shadow-xl;
+  position: relative;
+  
+  &:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, $gold-primary, $gold-light);
+    border-radius: $radius-lg $radius-lg 0 0;
+  }
+}
+
+.iconContainer {
+  margin-bottom: $spacing-lg;
+}
+
+.lockIcon {
+  font-size: 4rem;
+  color: $gold-light;
+  display: block;
+  opacity: 0.8;
+}
+
+.title {
+  margin: 0 0 $spacing-lg 0;
+  color: $gold-light;
+  font-size: 2rem;
+  font-weight: bold;
+  font-family: $font-secondary;
+}
+
+.message {
+  margin: 0 0 $spacing-lg 0;
+  color: $text-primary;
+  font-size: 1.1rem;
+  line-height: 1.5;
+}
+
+.suggestion {
+  margin: 0 0 $spacing-xl 0;
+  color: $text-secondary;
+  font-size: 1rem;
+  line-height: 1.4;
+  font-style: italic;
+}
+
+.userInfo {
+  background: rgba($bg-secondary, 0.5);
+  border: 1px solid $border-secondary;
+  border-radius: $radius-md;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-xl;
+  text-align: left;
+  
+  h3 {
+    margin: 0 0 $spacing-md 0;
+    color: $gold-primary;
+    font-size: 1.2rem;
+    text-align: center;
+  }
+}
+
+.accountDetails {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+  
+  p {
+    margin: 0;
+    color: $text-secondary;
+    font-size: 0.95rem;
+    
+    strong {
+      color: $text-primary;
+      margin-right: $spacing-sm;
+    }
+  }
+}
+
+.approved {
+  color: $success-text;
+  font-weight: bold;
+}
+
+.pending {
+  color: $warning-text;
+  font-weight: bold;
+}
+
+.none {
+  color: $text-secondary;
+  font-style: italic;
+}
+
+.loginPrompt {
+  background: rgba($gold-primary, 0.05);
+  border: 1px solid rgba($gold-primary, 0.2);
+  border-radius: $radius-md;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-xl;
+  
+  h3 {
+    margin: 0 0 $spacing-sm 0;
+    color: $gold-primary;
+    font-size: 1.2rem;
+  }
+  
+  p {
+    margin: 0;
+    color: $text-secondary;
+  }
+}
+
+.actions {
+  display: flex;
+  gap: $spacing-md;
+  justify-content: center;
+  margin-bottom: $spacing-xl;
+  flex-wrap: wrap;
+}
+
+.helpText {
+  border-top: 1px solid $border-secondary;
+  padding-top: $spacing-lg;
+  
+  p {
+    margin: 0;
+    color: $text-secondary;
+    font-size: 0.9rem;
+  }
+}
+
+.helpLink {
+  color: $gold-primary;
+  text-decoration: none;
+  
+  &:hover {
+    color: $gold-light;
+    text-decoration: underline;
+  }
+}
+
+// RESPONSIVE DESIGN
+@include tablet-down {
+  .accessDeniedContainer {
+    padding: $spacing-lg;
+  }
+  
+  .accessDeniedCard {
+    padding: $spacing-xl;
+  }
+  
+  .title {
+    font-size: 1.5rem;
+  }
+  
+  .message {
+    font-size: 1rem;
+  }
+  
+  .actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+@media (max-width: 480px) {
+  .accessDeniedContainer {
+    padding: $spacing-md;
+    align-items: flex-start;
+    padding-top: $spacing-xl;
+  }
+  
+  .accessDeniedCard {
+    padding: $spacing-lg;
+  }
+  
+  .lockIcon {
+    font-size: 3rem;
+  }
+  
+  .title {
+    font-size: 1.3rem;
+  }
+  
+  .userInfo,
+  .loginPrompt {
+    padding: $spacing-md;
+  }
+}

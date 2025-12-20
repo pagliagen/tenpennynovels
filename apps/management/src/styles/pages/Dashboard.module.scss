@@ -1,0 +1,574 @@
+// Import shared design system variables (CSS Modules compatibility)
+@import 'variables/colors';
+@import 'variables/typography';
+@import 'variables/spacing';
+@import 'variables/breakpoints';
+@import 'variables/shadows';
+@import 'variables/borders';
+// =============================================================================
+// Dashboard Styles - Modern Analytics Layout 
+// =============================================================================
+
+.modernDashboard {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+  color: #e8e8e8;
+  padding: 2rem;
+  font-family: $font-primary;
+
+  @include tablet-down {
+    padding: 1rem;
+  }
+}
+
+// Loading States
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  gap: 1rem;
+
+  p {
+    color: #d4af37;
+    font-size: 1.125rem;
+    font-weight: 500;
+  }
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(212, 175, 55, 0.2);
+  border-top: 3px solid #d4af37;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+// Error States
+.errorContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  gap: 1rem;
+
+  p {
+    color: #ff6b6b;
+    font-size: 1.125rem;
+    font-weight: 500;
+    text-align: center;
+  }
+
+  button {
+    background: #d4af37;
+    border: none;
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    color: #1a1a1a;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:hover {
+      background: #e6c547;
+      transform: translateY(-1px);
+    }
+  }
+}
+
+.errorMessage {
+  font-size: 0.875rem !important;
+  color: #ff8a8a !important;
+  font-style: italic;
+}
+
+.warningBanner {
+  background: rgba(255, 193, 7, 0.1);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.5rem;
+  color: #ffc107;
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+// Header Section
+.dashboardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid rgba(212, 175, 55, 0.2);
+}
+
+.pageTitle {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #d4af37;
+  margin: 0;
+  letter-spacing: -0.02em;
+
+  @include tablet-down {
+    font-size: 2rem;
+  }
+}
+
+.refreshButton {
+  background: rgba(212, 175, 55, 0.1);
+  border: 2px solid rgba(212, 175, 55, 0.3);
+  border-radius: 12px;
+  padding: 0.75rem 1.5rem;
+  color: #d4af37;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  &:hover {
+    background: rgba(212, 175, 55, 0.2);
+    border-color: rgba(212, 175, 55, 0.5);
+    transform: translateY(-2px);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+}
+
+.refreshIcon {
+  font-size: 1.2rem;
+  transition: transform 0.3s ease;
+
+  &.spinning {
+    animation: spin 1s linear infinite;
+  }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+// Main Stats Grid - 4 Large Cards
+.mainStatsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+
+.statCard {
+  background: linear-gradient(145deg, #2a2a2a, #1f1f1f);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #d4af37, #f4d03f);
+  }
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 
+      0 12px 40px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    border-color: rgba(212, 175, 55, 0.4);
+  }
+}
+
+.statHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.statIcon {
+  font-size: 1.5rem;
+  opacity: 0.8;
+}
+
+.statLabel {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #b8b8b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.statValue {
+  font-size: 3rem;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1;
+  margin-bottom: 1rem;
+
+  @include tablet-down {
+    font-size: 2.5rem;
+  }
+}
+
+.statChange {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  opacity: 0.9;
+
+  &.up {
+    color: #10b981;
+  }
+
+  &.down {
+    color: #ef4444;
+  }
+}
+
+.changeIcon {
+  font-size: 0.8rem;
+}
+
+// Secondary Grid - Charts and Additional Stats
+.secondaryGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+  gap: 2rem;
+
+  @include tablet-down {
+    grid-template-columns: 1fr;
+  }
+}
+
+.chartCard, .infoCard {
+  background: linear-gradient(145deg, #2a2a2a, #1f1f1f);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+      0 12px 40px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  }
+}
+
+.cardHeader {
+  margin-bottom: 2rem;
+  
+  h3 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #d4af37;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+}
+
+// Browser Chart Styles
+.chartContainer {
+  display: flex;
+  align-items: center;
+  gap: 3rem;
+
+  @include large-screen-down {
+    flex-direction: column;
+    gap: 2rem;
+  }
+}
+
+.donutChart {
+  flex-shrink: 0;
+  width: 200px;
+  height: 200px;
+}
+
+.donutSvg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+}
+
+.browserLegend {
+  flex: 1;
+  min-width: 0;
+}
+
+.legendHeader {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #b8b8b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.legendItem {
+  display: grid;
+  grid-template-columns: 16px 2fr 1fr;
+  gap: 1rem;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(212, 175, 55, 0.05);
+    border-radius: 8px;
+    margin: 0 -0.5rem;
+    padding: 0.75rem 0.5rem;
+  }
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.legendColor {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.browserName {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #e8e8e8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.browserPercentage {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #d4af37;
+  text-align: right;
+}
+
+// Gameplay Stats
+.gameplayStats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.gameplayStat {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: rgba(212, 175, 55, 0.05);
+  border: 1px solid rgba(212, 175, 55, 0.1);
+  border-radius: 12px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(212, 175, 55, 0.1);
+    border-color: rgba(212, 175, 55, 0.2);
+    transform: translateY(-1px);
+  }
+}
+
+.gameplayIcon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.gameplayInfo {
+  min-width: 0;
+}
+
+.gameplayValue {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1;
+  margin-bottom: 0.25rem;
+}
+
+.gameplayLabel {
+  font-size: 0.8rem;
+  color: #b8b8b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 500;
+}
+
+// Geographic Stats
+.geoStats {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.geoItem {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(212, 175, 55, 0.05);
+  }
+}
+
+.countryFlag {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #d4af37;
+  min-width: 40px;
+  text-align: center;
+  background: rgba(212, 175, 55, 0.1);
+  border-radius: 6px;
+  padding: 0.25rem;
+}
+
+.geoInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.countryName {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #e8e8e8;
+  margin-bottom: 0.5rem;
+}
+
+.geoBar {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.geoBarFill {
+  height: 100%;
+  background: linear-gradient(90deg, #d4af37, #f4d03f);
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.geoPercentage {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #d4af37;
+  min-width: 50px;
+  text-align: right;
+}
+
+.locationName {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.locationPercentage {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #d4af37;
+  min-width: 50px;
+  text-align: right;
+}
+
+.countryFlag {
+  font-size: 0.8rem;
+  margin-left: 0.25rem;
+}
+
+// Responsive Adjustments
+@include large-screen-down {
+  .mainStatsGrid {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  }
+  
+  .secondaryGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@include tablet-down {
+  .modernDashboard {
+    padding: 1rem;
+  }
+  
+  .mainStatsGrid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .statCard {
+    padding: 1.5rem;
+  }
+  
+  .statValue {
+    font-size: 2rem;
+  }
+  
+  .gameplayStats {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .chartCard, .infoCard {
+    padding: 1.5rem;
+  }
+}
+
+// Dark theme consistency
+@media (prefers-color-scheme: dark) {
+  .modernDashboard {
+    background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
+  }
+  
+  .statCard, .chartCard, .infoCard {
+    background: linear-gradient(145deg, #1f1f1f, #151515);
+    border-color: rgba(212, 175, 55, 0.15);
+  }
+}

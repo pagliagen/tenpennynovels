@@ -1,0 +1,31 @@
+# Allow access to JSON files in config directory
+<FilesMatch "\.(json)$">
+    <IfModule mod_authz_core.c>
+        Require all granted
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Allow from all
+    </IfModule>
+</FilesMatch>
+
+# Set correct MIME type for JSON files
+<IfModule mod_mime.c>
+    AddType application/json .json
+</IfModule>
+
+# Enable CORS for JSON files if needed
+<IfModule mod_headers.c>
+    <FilesMatch "\.(json)$">
+        Header set Access-Control-Allow-Origin "*"
+        Header set Access-Control-Allow-Methods "GET, OPTIONS"
+        Header set Access-Control-Allow-Headers "Content-Type"
+    </FilesMatch>
+</IfModule>
+
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.html [L]
+</IfModule>

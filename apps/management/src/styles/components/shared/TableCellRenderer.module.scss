@@ -1,0 +1,572 @@
+// Import shared design system variables (CSS Modules compatibility)
+@import 'variables/colors';
+@import 'variables/typography';
+@import 'variables/spacing';
+@import 'variables/breakpoints';
+@import 'variables/shadows';
+@import 'variables/borders';
+// =============================================================================
+// Table Cell Renderer Styles
+// =============================================================================
+
+// User Cell Styling
+.userCell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.username {
+  font-weight: 600;
+  color: #ffffff;
+  // font-size: 0.95rem;
+}
+
+.userMeta {
+  // font-size: 0.8rem;
+  color: #888;
+  font-style: italic;
+}
+
+.emailColumn {
+  font-family: 'Monaco', 'Menlo', monospace;
+  // font-size: 0.85rem;
+  color: #b8b8b8;
+}
+
+// Badges
+.badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  // font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.adminBadge {
+  background: rgba(212, 175, 55, 0.2);
+  color: #d4af37;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+}
+
+.userBadge {
+  background: rgba(148, 163, 184, 0.2);
+  color: #94a3b8;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+.bannedBadge {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.activeBadge {
+  background: rgba(34, 197, 94, 0.2);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.statusBadge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  // font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+
+  &.active {
+    background: rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+  }
+
+  &.banned {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+  }
+
+  &.inactive {
+    background: rgba(148, 163, 184, 0.2);
+    color: #94a3b8;
+    border: 1px solid rgba(148, 163, 184, 0.3);
+  }
+
+  &.unknown {
+    background: rgba(156, 163, 175, 0.2);
+    color: #9ca3af;
+    border: 1px solid rgba(156, 163, 175, 0.3);
+  }
+
+  &.clickable {
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    &.banned:hover {
+      background: rgba(239, 68, 68, 0.3);
+      border-color: rgba(239, 68, 68, 0.5);
+    }
+  }
+}
+
+// Roles List
+.rolesList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.roleBadge {
+  padding: 0.2rem 0.5rem;
+  border-radius: 8px;
+  // font-size: 0.7rem;
+  font-weight: 500;
+  text-transform: lowercase;
+
+  &.role-gestore {
+    background: rgba(168, 85, 247, 0.2);
+    color: #a855f7;
+    border: 1px solid rgba(168, 85, 247, 0.3);
+  }
+
+  &.role-master {
+    background: rgba(59, 130, 246, 0.2);
+    color: #3b82f6;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+  }
+
+  &.role-moderatore {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+  }
+
+  &.role-amministratore {
+    background: rgba(245, 101, 101, 0.2);
+    color: #f56565;
+    border: 1px solid rgba(245, 101, 101, 0.3);
+  }
+}
+
+.noRoles {
+  color: #666;
+  font-style: italic;
+  // font-size: 0.8rem;
+}
+
+.moreRoles {
+  padding: 0.2rem 0.5rem;
+  border-radius: 8px;
+  // font-size: 0.7rem;
+  font-weight: 500;
+  background: rgba(148, 163, 184, 0.2);
+  color: #94a3b8;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+// Scope Badges
+.scopesList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.scopeBadge {
+  padding: 0.2rem 0.5rem;
+  border-radius: 8px;
+  // font-size: 0.7rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  
+  &.chatBanBadge {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+  }
+  
+  &.gameBanBadge {
+    background: rgba(168, 85, 247, 0.2);
+    color: #a855f7;
+    border: 1px solid rgba(168, 85, 247, 0.3);
+  }
+  
+  &.forumBanBadge {
+    background: rgba(59, 130, 246, 0.2);
+    color: #3b82f6;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+  }
+  
+  &.docsBanBadge {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+  }
+  
+  &.fullBanBadge {
+    background: rgba(245, 101, 101, 0.2);
+    color: #f56565;
+    border: 1px solid rgba(245, 101, 101, 0.3);
+  }
+  
+  &.defaultScopeBadge {
+    background: rgba(156, 163, 175, 0.2);
+    color: #9ca3af;
+    border: 1px solid rgba(156, 163, 175, 0.3);
+  }
+}
+
+.moreScopes {
+  padding: 0.2rem 0.5rem;
+  border-radius: 8px;
+  // font-size: 0.7rem;
+  font-weight: 500;
+  background: rgba(148, 163, 184, 0.2);
+  color: #94a3b8;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+.characterCount {
+  font-weight: 600;
+  color: #d4af37;
+  // font-size: 0.9rem;
+}
+
+// Ticket Status Badges
+.statusBadge {
+  &.open {
+    background: rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+  }
+
+  &.in_progress {
+    background: rgba(251, 146, 60, 0.2);
+    color: #fb923c;
+    border: 1px solid rgba(251, 146, 60, 0.3);
+  }
+
+  &.waiting_for_user {
+    background: rgba(59, 130, 246, 0.2);
+    color: #3b82f6;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+  }
+
+  &.escalated {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+  }
+
+  &.closed {
+    background: rgba(148, 163, 184, 0.2);
+    color: #94a3b8;
+    border: 1px solid rgba(148, 163, 184, 0.3);
+  }
+}
+
+// Ticket Priority Badges
+.priorityBadge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+
+  &.low {
+    background: rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+  }
+
+  &.medium {
+    background: rgba(251, 146, 60, 0.2);
+    color: #fb923c;
+    border: 1px solid rgba(251, 146, 60, 0.3);
+  }
+
+  &.high {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+  }
+
+  &.urgent {
+    background: rgba(220, 38, 127, 0.2);
+    color: #dc2626;
+    border: 1px solid rgba(220, 38, 127, 0.3);
+    animation: pulse 2s infinite;
+  }
+
+  &.critical {
+    background: rgba(220, 38, 127, 0.2);
+    color: #dc2626;
+    border: 1px solid rgba(220, 38, 127, 0.3);
+    animation: pulse 2s infinite;
+  }
+}
+
+// Color-based generic badges
+.badge {
+  &.greenBadge {
+    background: rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+  }
+
+  &.orangeBadge {
+    background: rgba(251, 146, 60, 0.2);
+    color: #fb923c;
+    border: 1px solid rgba(251, 146, 60, 0.3);
+  }
+
+  &.blueBadge {
+    background: rgba(59, 130, 246, 0.2);
+    color: #3b82f6;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+  }
+
+  &.redBadge {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+  }
+
+  &.grayBadge {
+    background: rgba(148, 163, 184, 0.2);
+    color: #94a3b8;
+    border: 1px solid rgba(148, 163, 184, 0.3);
+  }
+
+  &.defaultBadge {
+    background: rgba(156, 163, 175, 0.2);
+    color: #9ca3af;
+    border: 1px solid rgba(156, 163, 175, 0.3);
+  }
+
+  // Occupation Category Badges
+  &.adventurerBadge {
+    background: rgba(251, 146, 60, 0.2);
+    color: #fb923c;
+    border: 1px solid rgba(251, 146, 60, 0.3);
+  }
+
+  &.creativeBadge {
+    background: rgba(168, 85, 247, 0.2);
+    color: #a855f7;
+    border: 1px solid rgba(168, 85, 247, 0.3);
+  }
+
+  &.entertainmentBadge {
+    background: rgba(236, 72, 153, 0.2);
+    color: #ec4899;
+    border: 1px solid rgba(236, 72, 153, 0.3);
+  }
+
+  &.sportBadge {
+    background: rgba(132, 204, 22, 0.2);
+    color: #84cc16;
+    border: 1px solid rgba(132, 204, 22, 0.3);
+  }
+
+  &.businessBadge {
+    background: rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+  }
+
+  &.religiousBadge {
+    background: rgba(250, 204, 21, 0.2);
+    color: #facc15;
+    border: 1px solid rgba(250, 204, 21, 0.3);
+  }
+
+  &.criminalBadge {
+    background: rgba(220, 38, 38, 0.2);
+    color: #dc2626;
+    border: 1px solid rgba(220, 38, 38, 0.3);
+  }
+
+  &.journalismBadge {
+    background: rgba(59, 130, 246, 0.2);
+    color: #3b82f6;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+  }
+
+  &.ruralBadge {
+    background: rgba(161, 98, 7, 0.2);
+    color: #a16207;
+    border: 1px solid rgba(161, 98, 7, 0.3);
+  }
+
+  &.urbanBadge {
+    background: rgba(107, 114, 128, 0.2);
+    color: #6b7280;
+    border: 1px solid rgba(107, 114, 128, 0.3);
+  }
+
+  &.lawBadge {
+    background: rgba(30, 58, 138, 0.2);
+    color: #1e3a8a;
+    border: 1px solid rgba(30, 58, 138, 0.3);
+  }
+
+  &.legalBadge {
+    background: rgba(37, 99, 235, 0.2);
+    color: #2563eb;
+    border: 1px solid rgba(37, 99, 235, 0.3);
+  }
+
+  &.medicalBadge {
+    background: rgba(5, 150, 105, 0.2);
+    color: #059669;
+    border: 1px solid rgba(5, 150, 105, 0.3);
+  }
+
+  &.mentalBadge {
+    background: rgba(20, 184, 166, 0.2);
+    color: #14b8a6;
+    border: 1px solid rgba(20, 184, 166, 0.3);
+  }
+
+  &.militaryBadge {
+    background: rgba(153, 27, 27, 0.2);
+    color: #991b1b;
+    border: 1px solid rgba(153, 27, 27, 0.3);
+  }
+
+  &.politicalBadge {
+    background: rgba(126, 34, 206, 0.2);
+    color: #7e22ce;
+    border: 1px solid rgba(126, 34, 206, 0.3);
+  }
+
+  &.scholarBadge {
+    background: rgba(79, 70, 229, 0.2);
+    color: #4f46e5;
+    border: 1px solid rgba(79, 70, 229, 0.3);
+  }
+
+  &.miscBadge {
+    background: rgba(148, 163, 184, 0.2);
+    color: #94a3b8;
+    border: 1px solid rgba(148, 163, 184, 0.3);
+  }
+
+  // Skill Category Badges
+  &.generalBadge {
+    background: rgba(59, 130, 246, 0.2);
+    color: #3b82f6;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+  }
+
+  &.combatBadge {
+    background: rgba(220, 38, 38, 0.2);
+    color: #dc2626;
+    border: 1px solid rgba(220, 38, 38, 0.3);
+  }
+
+  &.knowledgeBadge {
+    background: rgba(14, 165, 233, 0.2);
+    color: #0ea5e9;
+    border: 1px solid rgba(14, 165, 233, 0.3);
+  }
+
+  &.socialBadge {
+    background: rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+  }
+
+  &.technicalBadge {
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+  }
+
+  &.specialBadge {
+    background: rgba(55, 65, 81, 0.2);
+    color: #6b7280;
+    border: 1px solid rgba(55, 65, 81, 0.3);
+  }
+
+  &.physicalBadge {
+    background: rgba(132, 204, 22, 0.2);
+    color: #84cc16;
+    border: 1px solid rgba(132, 204, 22, 0.3);
+  }
+
+  &.artisticBadge {
+    background: rgba(236, 72, 153, 0.2);
+    color: #ec4899;
+    border: 1px solid rgba(236, 72, 153, 0.3);
+  }
+
+  &.financialBadge {
+    background: rgba(212, 175, 55, 0.2);
+    color: #d4af37;
+    border: 1px solid rgba(212, 175, 55, 0.3);
+  }
+
+  &.occultBadge {
+    background: rgba(168, 85, 247, 0.2);
+    color: #a855f7;
+    border: 1px solid rgba(168, 85, 247, 0.3);
+  }
+
+  // Skill Visibility Badges
+  &.visibleBadge {
+    background: rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+  }
+
+  &.hiddenBadge {
+    background: rgba(107, 114, 128, 0.2);
+    color: #6b7280;
+    border: 1px solid rgba(107, 114, 128, 0.3);
+  }
+}
+
+// Pulse animation for urgent items
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+// Empty text styling
+.emptyText {
+  color: #666;
+  font-style: italic;
+  // font-size: 0.85rem;
+}
+
+// Responsive Adjustments
+@media (max-width: 768px) {
+  .userCell {
+    .username {
+      // font-size: 0.9rem;
+    }
+
+    .userMeta {
+      // font-size: 0.75rem;
+    }
+  }
+
+  .rolesList {
+    .roleBadge {
+      // font-size: 0.65rem;
+      padding: 0.15rem 0.4rem;
+    }
+  }
+}

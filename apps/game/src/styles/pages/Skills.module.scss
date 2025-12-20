@@ -1,0 +1,769 @@
+@import 'modules';
+
+.skillsPage {
+  padding: $spacing-lg;
+  margin: 0 auto;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: $spacing-xl;
+  
+  h1 {
+    @include victorian-title();
+    color: $gold-primary;
+    margin-bottom: $spacing-sm;
+  }
+  
+  .subtitle {
+    color: $text-secondary;
+    font-style: italic;
+    font-size: 1.1rem;
+  }
+}
+
+.loading, .error {
+  text-align: center;
+  padding: $spacing-xl;
+  color: $text-secondary;
+  font-style: italic;
+}
+
+.tabs {
+  display: flex;
+  margin-bottom: $spacing-lg;
+  border-bottom: 2px solid $border-color;
+  
+  .tab {
+    @include victorian-button('secondary');
+    border: none;
+    border-radius: 0;
+    border-bottom: 3px solid transparent;
+    background: transparent;
+    color: $text-secondary;
+    padding: $spacing-md $spacing-lg;
+    margin-right: $spacing-sm;
+    transition: all 0.3s ease;
+    
+    &:hover {
+      color: $gold-primary;
+      background: rgba($gold-primary, 0.1);
+    }
+    
+    &.active {
+      color: $gold-primary;
+      border-bottom-color: $gold-primary;
+      background: rgba($gold-primary, 0.1);
+    }
+  }
+}
+
+.filters {
+  @include victorian-card();
+  margin-bottom: $spacing-lg;
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-md;
+  align-items: flex-end;
+  
+  .filterGroup {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-xs;
+    min-width: 150px;
+    
+    label {
+      color: $text-primary;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+    
+    .select {
+      @include victorian-input();
+      width: 100%;
+    }
+  }
+}
+
+.searchBar {
+  margin-bottom: $spacing-lg;
+  
+  .searchInput {
+    @include victorian-input();
+    width: 100%;
+    font-size: 1rem;
+  }
+}
+
+.skillsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: $spacing-lg;
+  
+  .emptyState {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: $spacing-xl;
+    
+    h3 {
+      color: $text-primary;
+      margin-bottom: $spacing-md;
+    }
+    
+    p {
+      color: $text-secondary;
+    }
+  }
+}
+
+.skillCard {
+  @include victorian-card();
+  cursor: pointer;
+  transition: all 0.3s ease;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+    border-color: rgba($gold-primary, 0.4);
+  }
+  
+  .cardHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: $spacing-md;
+    
+    .skillTitle {
+      display: flex;
+      align-items: center;
+      gap: $spacing-sm;
+      flex: 1;
+      
+      .categoryIcon {
+        font-size: 1.3rem;
+        flex-shrink: 0;
+      }
+      
+      h3 {
+        color: $gold-primary;
+        margin: 0;
+        font-size: 1.1rem;
+        line-height: 1.3;
+      }
+    }
+    
+    .difficulty {
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+  }
+  
+  .skillMeta {
+    display: flex;
+    gap: $spacing-md;
+    margin-bottom: $spacing-md;
+    
+    .category, .baseChance {
+      background: rgba($gold-primary, 0.1);
+      color: $gold-primary;
+      padding: $spacing-xs $spacing-sm;
+      border-radius: $border-radius-sm;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    
+    .baseChance {
+      background: rgba($info-color, 0.1);
+      color: $info-color;
+    }
+  }
+  
+  .description {
+    color: $text-primary;
+    margin-bottom: $spacing-md;
+    flex: 1;
+    line-height: 1.5;
+    font-size: 0.95rem;
+  }
+  
+  .skillProperties {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $spacing-xs;
+    margin-bottom: $spacing-sm;
+    
+    .property {
+      background: rgba($success-color, 0.1);
+      color: $success-color;
+      padding: $spacing-xs $spacing-sm;
+      border-radius: $border-radius-sm;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+  }
+  
+  .specializations {
+    font-size: 0.9rem;
+    color: $text-primary;
+    border-top: 1px solid $border-light;
+    padding-top: $spacing-sm;
+    
+    strong {
+      color: $gold-primary;
+    }
+  }
+}
+
+.calculatorSection {
+  .calculatorForm {
+    @include victorian-card();
+    max-width: 800px;
+    margin: 0 auto;
+    
+    h3 {
+      color: $gold-primary;
+      margin-bottom: $spacing-lg;
+      text-align: center;
+    }
+    
+    .formGroup {
+      margin-bottom: $spacing-md;
+      
+      label {
+        display: block;
+        margin-bottom: $spacing-xs;
+        color: $text-primary;
+        font-weight: 600;
+      }
+      
+      .input, .select {
+        @include victorian-input();
+        width: 100%;
+      }
+    }
+    
+    .formRow {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: $spacing-md;
+      margin-bottom: $spacing-lg;
+    }
+    
+    .modifiersSection {
+      margin-bottom: $spacing-lg;
+      
+      .modifiersHeader {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: $spacing-md;
+        
+        h4 {
+          color: $gold-primary;
+          margin: 0;
+        }
+        
+        .addBtn {
+          @include victorian-button('secondary');
+          padding: $spacing-sm $spacing-md;
+          font-size: 0.9rem;
+        }
+      }
+      
+      .modifierRow {
+        display: grid;
+        grid-template-columns: 2fr 1fr 2fr auto;
+        gap: $spacing-sm;
+        margin-bottom: $spacing-sm;
+        align-items: center;
+        
+        .removeBtn {
+          @include victorian-button('secondary');
+          background: $error-color;
+          border-color: $error-color;
+          color: white;
+          padding: $spacing-xs $spacing-sm;
+          font-size: 0.8rem;
+          
+          &:hover {
+            background: darken($error-color, 10%);
+            border-color: darken($error-color, 10%);
+          }
+        }
+      }
+    }
+    
+    .calculateBtn {
+      @include victorian-button('primary');
+      width: 100%;
+      padding: $spacing-md;
+      font-size: 1.1rem;
+      
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+    }
+    
+    .calculationResults {
+      margin-top: $spacing-xl;
+      padding: $spacing-lg;
+      background: rgba($gold-primary, 0.05);
+      border: 1px solid rgba($gold-primary, 0.2);
+      border-radius: $border-radius;
+      
+      h4 {
+        color: $gold-primary;
+        margin-bottom: $spacing-lg;
+        text-align: center;
+      }
+      
+      .resultsGrid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: $spacing-md;
+        margin-bottom: $spacing-lg;
+        
+        .resultCard {
+          @include victorian-card();
+          text-align: center;
+          padding: $spacing-md;
+          
+          .resultLabel {
+            display: block;
+            color: $text-secondary;
+            font-size: 0.9rem;
+            margin-bottom: $spacing-xs;
+          }
+          
+          .resultValue {
+            display: block;
+            color: $gold-primary;
+            font-size: 1.8rem;
+            font-weight: bold;
+          }
+        }
+      }
+      
+      .appliedModifiers {
+        h5 {
+          color: $gold-primary;
+          margin-bottom: $spacing-md;
+        }
+        
+        .appliedModifier {
+          color: $text-primary;
+          padding: $spacing-sm;
+          border-bottom: 1px solid rgba($gold-primary, 0.2);
+          font-size: 0.9rem;
+          
+          &:last-child {
+            border-bottom: none;
+          }
+        }
+      }
+    }
+  }
+}
+
+.categoriesSection {
+  h3 {
+    color: $gold-primary;
+    margin-bottom: $spacing-lg;
+    text-align: center;
+  }
+  
+  .categoriesGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: $spacing-lg;
+  }
+  
+  .categoryCard {
+    @include victorian-card();
+    cursor: pointer;
+    transition: all 0.3s ease;
+    
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+      border-color: rgba($gold-primary, 0.3);
+    }
+    
+    .categoryHeader {
+      display: flex;
+      align-items: center;
+      gap: $spacing-md;
+      margin-bottom: $spacing-lg;
+      
+      .categoryIcon {
+        font-size: 2rem;
+      }
+      
+      h4 {
+        color: $gold-primary;
+        margin: 0;
+        font-size: 1.3rem;
+      }
+    }
+    
+    .categoryStats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: $spacing-md;
+      margin-bottom: $spacing-lg;
+      
+      .stat {
+        text-align: center;
+        
+        .label {
+          display: block;
+          color: $text-secondary;
+          font-size: 0.85rem;
+          margin-bottom: $spacing-xs;
+        }
+        
+        .value {
+          color: $gold-primary;
+          font-weight: bold;
+          font-size: 1.2rem;
+        }
+      }
+    }
+    
+    .categorySkills {
+      font-size: 0.9rem;
+      color: $text-primary;
+      border-top: 1px solid $border-light;
+      padding-top: $spacing-md;
+      
+      strong {
+        color: $gold-primary;
+        display: block;
+        margin-bottom: $spacing-xs;
+      }
+    }
+  }
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: $spacing-md;
+  
+  .modalContent {
+    @include victorian-card();
+    max-width: 1000px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    background: $bg-primary;
+    
+    .modalHeader {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: $spacing-lg;
+      padding-bottom: $spacing-md;
+      border-bottom: 2px solid $border-color;
+      
+      .modalTitle {
+        display: flex;
+        align-items: center;
+        gap: $spacing-md;
+        
+        .categoryIcon {
+          font-size: 2rem;
+        }
+        
+        h2 {
+          color: $gold-primary;
+          margin: 0;
+        }
+      }
+      
+      .closeBtn {
+        background: none;
+        border: none;
+        font-size: 2rem;
+        color: $text-secondary;
+        cursor: pointer;
+        padding: 0;
+        line-height: 1;
+        
+        &:hover {
+          color: $error-color;
+        }
+      }
+    }
+    
+    .modalBody {
+      .skillDetails {
+        .detailSection {
+          margin-bottom: $spacing-xl;
+          
+          &:last-child {
+            margin-bottom: 0;
+          }
+          
+          h3 {
+            color: $gold-primary;
+            margin-bottom: $spacing-md;
+            font-size: 1.2rem;
+            border-bottom: 1px solid $border-light;
+            padding-bottom: $spacing-sm;
+          }
+          
+          .basicInfo {
+            .infoCard {
+              background: rgba($gold-primary, 0.05);
+              border: 1px solid rgba($gold-primary, 0.2);
+              border-radius: $border-radius;
+              padding: $spacing-md;
+              
+              h3 {
+                border: none;
+                margin-bottom: $spacing-sm;
+                padding-bottom: 0;
+                font-size: 1.1rem;
+              }
+              
+              p {
+                color: $text-primary;
+                margin-bottom: $spacing-sm;
+                
+                strong {
+                  color: $gold-primary;
+                  margin-right: $spacing-sm;
+                  min-width: 120px;
+                  display: inline-block;
+                }
+              }
+            }
+          }
+          
+          .fullDescription {
+            color: $text-primary;
+            line-height: 1.6;
+            font-size: 1.05rem;
+            margin-bottom: 0;
+          }
+          
+          .historicalNotes {
+            color: $text-primary;
+            line-height: 1.6;
+            font-style: italic;
+            background: rgba($info-color, 0.05);
+            border-left: 3px solid $info-color;
+            padding: $spacing-md;
+            border-radius: 0 $border-radius $border-radius 0;
+          }
+          
+          .improvementNotes {
+            color: $text-primary;
+            background: rgba($warning-color, 0.05);
+            border: 1px solid rgba($warning-color, 0.3);
+            border-radius: $border-radius;
+            padding: $spacing-md;
+            font-style: italic;
+            line-height: 1.5;
+          }
+          
+          .specializationsList, .relatedSkills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: $spacing-sm;
+            
+            .specializationBadge, .relatedSkillBadge {
+              background: rgba($success-color, 0.1);
+              color: $success-color;
+              padding: $spacing-xs $spacing-sm;
+              border-radius: $border-radius-sm;
+              font-size: 0.9rem;
+              font-weight: 600;
+            }
+            
+            .relatedSkillBadge {
+              background: rgba($info-color, 0.1);
+              color: $info-color;
+            }
+          }
+          
+          .equipmentList, .examplesList {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            
+            li {
+              color: $text-primary;
+              padding: $spacing-sm;
+              border-bottom: 1px solid $border-light;
+              position: relative;
+              padding-left: $spacing-lg;
+              
+              &:before {
+                content: '•';
+                color: $gold-primary;
+                font-weight: bold;
+                position: absolute;
+                left: $spacing-sm;
+              }
+              
+              &:last-child {
+                border-bottom: none;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: $breakpoint-desktop) {
+  .skillsGrid {
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  }
+  
+  .categoriesGrid {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  }
+}
+
+@media (max-width: $breakpoint-tablet) {
+  .skillsPage {
+    padding: $spacing-md;
+  }
+  
+  .tabs {
+    flex-direction: column;
+    
+    .tab {
+      margin-right: 0;
+      margin-bottom: $spacing-xs;
+    }
+  }
+  
+  .filters {
+    flex-direction: column;
+    align-items: stretch;
+    
+    .filterGroup {
+      min-width: auto;
+    }
+  }
+  
+  .skillsGrid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: $spacing-md;
+  }
+  
+  .calculatorSection {
+    .calculatorForm {
+      .formRow {
+        grid-template-columns: 1fr;
+      }
+      
+      .modifiersSection {
+        .modifierRow {
+          grid-template-columns: 1fr;
+          gap: $spacing-xs;
+          
+          .removeBtn {
+            justify-self: flex-end;
+          }
+        }
+      }
+      
+      .calculationResults {
+        .resultsGrid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+    }
+  }
+  
+  .modal {
+    padding: $spacing-sm;
+    
+    .modalContent {
+      .modalHeader {
+        .modalTitle {
+          gap: $spacing-sm;
+          
+          .categoryIcon {
+            font-size: 1.5rem;
+          }
+          
+          h2 {
+            font-size: 1.3rem;
+          }
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: $breakpoint-mobile) {
+  .skillsGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .skillCard {
+    .cardHeader {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: $spacing-sm;
+      
+      .skillTitle {
+        width: 100%;
+      }
+    }
+    
+    .skillMeta {
+      flex-wrap: wrap;
+    }
+  }
+  
+  .calculatorSection {
+    .calculatorForm {
+      .calculationResults {
+        .resultsGrid {
+          grid-template-columns: 1fr;
+        }
+      }
+    }
+  }
+  
+  .categoriesGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .categoryCard {
+    .categoryStats {
+      grid-template-columns: 1fr;
+      
+      .stat {
+        text-align: left;
+        
+        .label, .value {
+          display: inline;
+          margin-right: $spacing-sm;
+        }
+      }
+    }
+  }
+}

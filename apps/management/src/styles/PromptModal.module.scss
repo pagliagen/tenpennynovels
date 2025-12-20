@@ -1,0 +1,77 @@
+@import 'main';
+
+.promptContent {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+  padding: $spacing-sm 0;
+}
+
+.textarea {
+  width: 100%;
+  min-height: 120px;
+  padding: $spacing-md;
+  border: 2px solid $border-color;
+  border-radius: $border-radius-sm;
+  font-family: $font-family-base;
+  font-size: $font-size-base;
+  line-height: 1.5;
+  resize: vertical;
+  transition: border-color $transition-base, box-shadow $transition-base;
+
+  &:focus {
+    outline: none;
+    border-color: $gold-primary;
+    box-shadow: 0 0 0 3px rgba($gold-primary, 0.1);
+  }
+
+  &::placeholder {
+    color: $text-muted;
+    font-style: italic;
+  }
+
+  @include responsive('mobile') {
+    min-height: 100px;
+    padding: $spacing-sm;
+    font-size: $font-size-sm;
+  }
+}
+
+.footer {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+}
+
+.charCounter {
+  text-align: right;
+  font-size: $font-size-sm;
+  color: $text-muted;
+  font-weight: 500;
+
+  .overLimit {
+    color: $error-text;
+    font-weight: 600;
+  }
+}
+
+.validation {
+  font-size: $font-size-sm;
+  color: $error-text;
+  padding: $spacing-xs $spacing-sm;
+  background-color: $error-bg;
+  border-left: 3px solid $error-border;
+  border-radius: $border-radius-xs;
+}
+
+.hint {
+  font-size: $font-size-xs;
+  color: $text-muted;
+  font-style: italic;
+  text-align: center;
+  padding-top: $spacing-xs;
+
+  @include responsive('mobile') {
+    font-size: 0.7rem;
+  }
+}

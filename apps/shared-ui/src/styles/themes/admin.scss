@@ -1,0 +1,83 @@
+// =============================================================================
+// TenpennyNovels Design System - Admin Theme
+// =============================================================================
+
+// Admin theme class for management interfaces
+.theme-admin {
+  background: $admin-bg;
+  color: $admin-text;
+  
+  // Typography
+  h1, h2, h3, h4, h5, h6 {
+    color: $admin-primary;
+  }
+  
+  // Links
+  a {
+    color: $admin-primary;
+    
+    &:hover {
+      color: lighten($admin-primary, 10%);
+    }
+  }
+  
+  // Admin-specific elements
+  .admin-badge {
+    background: rgba($admin-primary, 0.2);
+    color: $admin-primary;
+    padding: $spacing-1 $spacing-2;
+    border-radius: $radius-base;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-semibold;
+    text-transform: uppercase;
+    letter-spacing: $letter-spacing-wide;
+  }
+  
+  .admin-highlight {
+    background: rgba($admin-primary, 0.1);
+    border-left: 3px solid $admin-primary;
+    padding: $spacing-md;
+    border-radius: $radius-base;
+  }
+  
+  // Status indicators
+  .status-active {
+    color: #22c55e;
+  }
+  
+  .status-inactive {
+    color: #ef4444;
+  }
+  
+  .status-pending {
+    color: #f59e0b;
+  }
+  
+  // Data tables
+  .admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: rgba($admin-bg, 0.5);
+    border-radius: $radius-base;
+    overflow: hidden;
+    
+    th, td {
+      padding: $spacing-3 $spacing-4;
+      text-align: left;
+      border-bottom: 1px solid rgba($admin-primary, 0.1);
+    }
+    
+    th {
+      background: rgba($admin-primary, 0.1);
+      font-weight: $font-weight-semibold;
+      color: $admin-primary;
+      font-size: $font-size-sm;
+      text-transform: uppercase;
+      letter-spacing: $letter-spacing-wide;
+    }
+    
+    tr:hover {
+      background: rgba($admin-primary, 0.05);
+    }
+  }
+}

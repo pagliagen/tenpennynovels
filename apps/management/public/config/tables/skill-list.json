@@ -1,0 +1,473 @@
+{
+  "_meta": {
+    "version": "1.0.0",
+    "description": "Skill management table configuration",
+    "lastUpdated": "2025-12-14"
+  },
+
+  "table": {
+    "name": "skill-list",
+    "title": "Skill Management",
+    "icon": "🎯",
+    "searchable": true,
+    "selectable": true,
+    "pagination": {
+      "defaultPageSize": 50,
+      "pageSizeOptions": [25, 50, 100, 200]
+    }
+  },
+
+  "columns": [
+    {
+      "key": "name",
+      "label": "Nome",
+      "type": "text",
+      "visible": true,
+      "defaultVisible": true,
+      "alwaysVisible": true,
+      "sortable": true,
+      "filterable": true,
+      "editable": true,
+      "required": true,
+      "width": "200px",
+      "validation": {
+        "minLength": 2,
+        "maxLength": 100
+      },
+      "render": {
+        "type": "skill_cell",
+        "showSubtext": true,
+        "subtextField": "description"
+      }
+    },
+    {
+      "key": "category",
+      "label": "Categoria",
+      "type": "select",
+      "visible": true,
+      "defaultVisible": true,
+      "alwaysVisible": false,
+      "sortable": true,
+      "filterable": true,
+      "editable": true,
+      "required": true,
+      "width": "130px",
+      "options": [
+        { "value": "general", "label": "General" },
+        { "value": "combat", "label": "Combat" },
+        { "value": "knowledge", "label": "Knowledge" },
+        { "value": "social", "label": "Social" },
+        { "value": "technical", "label": "Technical" },
+        { "value": "special", "label": "Special" },
+        { "value": "criminal", "label": "Criminal" },
+        { "value": "physical", "label": "Physical" },
+        { "value": "artistic", "label": "Artistic" },
+        { "value": "financial", "label": "Financial" },
+        { "value": "occult", "label": "Occult" }
+      ],
+      "render": {
+        "type": "badge",
+        "colorMap": {
+          "general": "general",
+          "combat": "combat",
+          "knowledge": "knowledge",
+          "social": "social",
+          "technical": "technical",
+          "special": "special",
+          "criminal": "criminal",
+          "physical": "physical",
+          "artistic": "artistic",
+          "financial": "financial",
+          "occult": "occult"
+        }
+      }
+    },
+    {
+      "key": "baseValue",
+      "label": "Valore Base",
+      "type": "number",
+      "visible": true,
+      "defaultVisible": true,
+      "alwaysVisible": false,
+      "sortable": true,
+      "filterable": false,
+      "editable": true,
+      "required": true,
+      "width": "110px",
+      "align": "center",
+      "validation": {
+        "min": 0,
+        "max": 100
+      }
+    },
+    {
+      "key": "visible",
+      "label": "Visibile",
+      "type": "boolean",
+      "visible": true,
+      "defaultVisible": true,
+      "alwaysVisible": false,
+      "sortable": true,
+      "filterable": true,
+      "editable": true,
+      "required": false,
+      "width": "100px",
+      "align": "center",
+      "render": {
+        "type": "badge",
+        "trueValue": { "text": "Visibile", "className": "visibleBadge" },
+        "falseValue": { "text": "Nascosta", "className": "hiddenBadge" }
+      }
+    },
+    {
+      "key": "defaultSkill",
+      "label": "Default",
+      "type": "boolean",
+      "visible": true,
+      "defaultVisible": true,
+      "alwaysVisible": false,
+      "sortable": true,
+      "filterable": true,
+      "editable": true,
+      "required": false,
+      "width": "90px",
+      "align": "center",
+      "render": {
+        "type": "icon",
+        "trueValue": "✓",
+        "falseValue": "✗"
+      }
+    },
+    {
+      "key": "canRollWithoutPoints",
+      "label": "Rollabile",
+      "type": "boolean",
+      "visible": true,
+      "defaultVisible": false,
+      "alwaysVisible": false,
+      "sortable": true,
+      "filterable": false,
+      "editable": true,
+      "required": false,
+      "width": "100px",
+      "align": "center",
+      "render": {
+        "type": "icon",
+        "trueValue": "🎲",
+        "falseValue": "🚫"
+      }
+    },
+    {
+      "key": "isPlaceholder",
+      "label": "Placeholder",
+      "type": "boolean",
+      "visible": true,
+      "defaultVisible": false,
+      "alwaysVisible": false,
+      "sortable": true,
+      "filterable": true,
+      "editable": true,
+      "required": false,
+      "width": "110px",
+      "align": "center",
+      "render": {
+        "type": "icon",
+        "trueValue": "📝",
+        "falseValue": ""
+      }
+    },
+    {
+      "key": "sortOrder",
+      "label": "Ordine",
+      "type": "number",
+      "visible": true,
+      "defaultVisible": false,
+      "alwaysVisible": false,
+      "sortable": true,
+      "filterable": false,
+      "editable": true,
+      "required": false,
+      "width": "90px",
+      "align": "center"
+    },
+    {
+      "key": "updatedAt",
+      "label": "Ultima Modifica",
+      "type": "nested_datetime",
+      "visible": true,
+      "defaultVisible": false,
+      "alwaysVisible": false,
+      "sortable": true,
+      "filterable": false,
+      "editable": false,
+      "required": false,
+      "width": "140px",
+      "align": "center",
+      "render": {
+        "type": "datetime",
+        "format": "short"
+      }
+    }
+  ],
+
+  "actions": [
+    {
+      "key": "edit",
+      "label": "Modifica",
+      "icon": "✏️",
+      "type": "edit",
+      "visible": true,
+      "className": "editAction",
+      "permission": "skills.update"
+    },
+    {
+      "key": "toggle_visible",
+      "label": {
+        "type": "conditional",
+        "field": "visible",
+        "trueValue": "Nascondi",
+        "falseValue": "Mostra"
+      },
+      "icon": {
+        "type": "conditional",
+        "field": "visible",
+        "trueValue": "👁️",
+        "falseValue": "🙈"
+      },
+      "type": "toggle",
+      "visible": true,
+      "className": {
+        "type": "conditional",
+        "field": "visible",
+        "trueValue": "hideAction",
+        "falseValue": "showAction"
+      },
+      "permission": "skills.update",
+      "confirmMessage": {
+        "type": "conditional",
+        "field": "visible",
+        "trueValue": "Sei sicuro di voler nascondere questa skill?",
+        "falseValue": "Sei sicuro di voler rendere visibile questa skill?"
+      }
+    }
+  ],
+
+  "bulkActions": [
+    {
+      "key": "show",
+      "label": "Mostra Selezionate",
+      "icon": "👁️",
+      "type": "bulk_action",
+      "className": "bulkShow",
+      "permission": "skills.update",
+      "confirmMessage": "Sei sicuro di voler rendere visibili le skill selezionate?",
+      "filter": {
+        "field": "visible",
+        "value": false
+      }
+    },
+    {
+      "key": "hide",
+      "label": "Nascondi Selezionate",
+      "icon": "🙈",
+      "type": "bulk_action",
+      "className": "bulkHide",
+      "permission": "skills.update",
+      "confirmMessage": "Sei sicuro di voler nascondere le skill selezionate?",
+      "filter": {
+        "field": "visible",
+        "value": true
+      }
+    },
+    {
+      "key": "update_category",
+      "label": "Aggiorna Categoria",
+      "icon": "📂",
+      "type": "bulk_action",
+      "className": "bulkUpdateCategory",
+      "permission": "skills.update",
+      "confirmMessage": "Sei sicuro di voler aggiornare la categoria per le skill selezionate?"
+    }
+  ],
+
+  "editModal": {
+    "title": "Modifica Skill: {name}",
+    "size": "medium",
+    "fields": []
+  },
+
+  "sidePanels": {
+    "edit": {
+      "title": "Modifica Skill: {name}",
+      "subtitle": "Modifica le informazioni della skill selezionata",
+      "width": "medium",
+      "fields": [
+        {
+          "key": "name",
+          "label": "Nome",
+          "type": "text",
+          "required": true,
+          "defaultVisible": true,
+          "placeholder": "es: Medicina, Sparare, Convincere"
+        },
+        {
+          "key": "category",
+          "label": "Categoria",
+          "type": "select",
+          "required": true,
+          "defaultVisible": true,
+          "options": [
+            { "value": "general", "label": "General" },
+            { "value": "combat", "label": "Combat" },
+            { "value": "knowledge", "label": "Knowledge" },
+            { "value": "social", "label": "Social" },
+            { "value": "technical", "label": "Technical" },
+            { "value": "special", "label": "Special" },
+            { "value": "criminal", "label": "Criminal" },
+            { "value": "physical", "label": "Physical" },
+            { "value": "artistic", "label": "Artistic" },
+            { "value": "financial", "label": "Financial" },
+            { "value": "occult", "label": "Occult" }
+          ]
+        },
+        {
+          "key": "description",
+          "label": "Descrizione",
+          "type": "textarea",
+          "required": true,
+          "defaultVisible": true,
+          "rows": 3,
+          "placeholder": "Descrizione breve della skill"
+        },
+        {
+          "key": "baseValue",
+          "label": "Valore Base (%)",
+          "type": "number",
+          "required": true,
+          "defaultVisible": true,
+          "placeholder": "0-100",
+          "min": 0,
+          "max": 100
+        },
+        {
+          "key": "visible",
+          "label": "Skill Visibile",
+          "type": "checkbox",
+          "required": false,
+          "defaultVisible": true,
+          "helpText": "Se disabilitato, la skill non sarà visibile ai giocatori"
+        },
+        {
+          "key": "defaultSkill",
+          "label": "Skill di Default",
+          "type": "checkbox",
+          "required": false,
+          "defaultVisible": true,
+          "helpText": "Skill automaticamente assegnata a tutti i personaggi"
+        },
+        {
+          "key": "canRollWithoutPoints",
+          "label": "Rollabile Senza Punti",
+          "type": "checkbox",
+          "required": false,
+          "defaultVisible": true,
+          "helpText": "Permette il roll anche senza punti assegnati"
+        },
+        {
+          "key": "isPlaceholder",
+          "label": "È Placeholder",
+          "type": "checkbox",
+          "required": false,
+          "defaultVisible": true,
+          "helpText": "Skill placeholder per specializzazioni (es: Lingua [specifica])"
+        },
+        {
+          "key": "placeholderType",
+          "label": "Tipo Placeholder",
+          "type": "text",
+          "required": false,
+          "defaultVisible": true,
+          "placeholder": "es: language, weapon, expertise",
+          "condition": {
+            "field": "isPlaceholder",
+            "value": true
+          }
+        },
+        {
+          "key": "predefinedValues",
+          "label": "Valori Predefiniti",
+          "type": "custom",
+          "required": false,
+          "defaultVisible": true,
+          "helpText": "Lista valori selezionabili nel wizard (opzionale). Se vuoto, campo libero.",
+          "condition": {
+            "field": "isPlaceholder",
+            "value": true
+          }
+        },
+        {
+          "key": "sortOrder",
+          "label": "Ordine Visualizzazione",
+          "type": "number",
+          "required": false,
+          "defaultVisible": true,
+          "placeholder": "Numero per ordinamento",
+          "min": 0
+        }
+      ],
+      "actions": [
+        {
+          "key": "save",
+          "label": "Salva Modifiche",
+          "type": "primary",
+          "icon": "💾"
+        }
+      ]
+    }
+  },
+
+  "filters": [
+    {
+      "key": "category",
+      "label": "Categoria",
+      "type": "select",
+      "field": "category",
+      "options": [
+        { "value": "all", "label": "Tutte le Categorie" },
+        { "value": "general", "label": "General" },
+        { "value": "combat", "label": "Combat" },
+        { "value": "knowledge", "label": "Knowledge" },
+        { "value": "social", "label": "Social" },
+        { "value": "technical", "label": "Technical" },
+        { "value": "special", "label": "Special" },
+        { "value": "criminal", "label": "Criminal" },
+        { "value": "physical", "label": "Physical" },
+        { "value": "artistic", "label": "Artistic" },
+        { "value": "financial", "label": "Financial" },
+        { "value": "occult", "label": "Occult" }
+      ]
+    },
+    {
+      "key": "visibility",
+      "label": "Visibilità",
+      "type": "select",
+      "field": "visible",
+      "options": [
+        { "value": "all", "label": "Tutte" },
+        { "value": true, "label": "Solo Visibili" },
+        { "value": false, "label": "Solo Nascoste" }
+      ]
+    },
+    {
+      "key": "type",
+      "label": "Tipo",
+      "type": "select",
+      "field": "isPlaceholder",
+      "options": [
+        { "value": "all", "label": "Tutte" },
+        { "value": false, "label": "Solo Skills Standard" },
+        { "value": true, "label": "Solo Placeholder" }
+      ]
+    }
+  ]
+}

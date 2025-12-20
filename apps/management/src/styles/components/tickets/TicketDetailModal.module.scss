@@ -1,0 +1,593 @@
+// Import shared design system variables (CSS Modules compatibility)
+@import 'variables/colors';
+@import 'variables/typography';
+@import 'variables/spacing';
+@import 'variables/breakpoints';
+@import 'variables/shadows';
+@import 'variables/borders';
+
+
+// TicketDetailModal.module.scss
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: $spacing-lg;
+}
+
+.modal {
+  background: #2a2a2a;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  max-width: 1000px;
+  width: 100%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  padding: $spacing-lg $spacing-xl;
+  border-bottom: 1px solid $border-secondary;
+  background: $admin-bg;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.headerContent {
+  flex: 1;
+}
+
+.title {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-semibold;
+  margin: 0;
+  color: $text-primary;
+}
+
+.subtitle {
+  font-size: $font-size-sm;
+  color: $text-secondary;
+  margin: $spacing-xs 0 0 0;
+}
+
+.closeButton {
+  padding: $spacing-sm;
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: $text-secondary;
+  border-radius: $radius-sm;
+  
+  &:hover:not(:disabled) {
+    background-color: $shadow-btn-hover;
+    color: $text-primary;
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.body {
+  flex: 1;
+  overflow-y: auto;
+  padding: $spacing-xl;
+  background: $bg-secondary;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xl;
+}
+
+.section {
+  .sectionTitle {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+    margin: 0 0 $spacing-md 0;
+    color: $gold-primary;
+    padding-bottom: $spacing-sm;
+    border-bottom: 1px solid $border-secondary;
+  }
+}
+
+.infoGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: $spacing-md;
+}
+
+.infoItem {
+  display: flex;
+  
+  .infoLabel {
+    font-weight: $font-weight-medium;
+    color: $text-secondary;
+    min-width: 120px;
+    margin-right: $spacing-sm;
+  }
+  
+  .infoValue {
+    color: $text-primary;
+  }
+}
+
+
+// Status badges
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: $spacing-xs $spacing-sm;
+  border-radius: $radius-full;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  
+  &.statusOpen {
+    background-color: rgba($success-text, 0.2);
+    color: $success-text;
+    border: 1px solid rgba($success-text, 0.3);
+  }
+  
+  &.statusInProgress {
+    background-color: rgba($warning-text, 0.2);
+    color: $warning-text;
+    border: 1px solid rgba($warning-text, 0.3);
+  }
+  
+  &.statusWaiting {
+    background-color: rgba($gold-primary, 0.2);
+    color: $gold-primary;
+    border: 1px solid rgba($gold-primary, 0.3);
+  }
+  
+  &.statusEscalated {
+    background-color: rgba($error-text, 0.2);
+    color: $error-text;
+    border: 1px solid rgba($error-text, 0.3);
+  }
+  
+  &.statusClosed {
+    background-color: rgba($text-tertiary, 0.2);
+    color: $text-tertiary;
+    border: 1px solid rgba($text-tertiary, 0.3);
+  }
+}
+
+// Priority badges
+.priorityBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: $spacing-xs $spacing-sm;
+  border-radius: $radius-full;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  
+  &.priorityLow {
+    background-color: rgba($success-text, 0.2);
+    color: $success-text;
+    border: 1px solid rgba($success-text, 0.3);
+  }
+  
+  &.priorityMedium {
+    background-color: rgba($warning-text, 0.2);
+    color: $warning-text;
+    border: 1px solid rgba($warning-text, 0.3);
+  }
+  
+  &.priorityHigh {
+    background-color: rgba($error-text, 0.2);
+    color: $error-text;
+    border: 1px solid rgba($error-text, 0.3);
+  }
+  
+  &.priorityUrgent {
+    background-color: rgba($error-text, 0.3);
+    color: $error-text;
+    border: 1px solid $error-text;
+    box-shadow: 0 0 8px rgba($error-text, 0.4);
+  }
+  
+  &.priorityCritical {
+    background-color: rgba($error-text, 0.3);
+    color: $error-text;
+    border: 1px solid $error-text;
+    animation: pulse 2s infinite;
+    box-shadow: 0 0 12px rgba($error-text, 0.5);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+// Messages
+.messagesContainer {
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid $border-secondary;
+  border-radius: $radius-md;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-lg;
+  background: $bg-tertiary;
+}
+
+.message {
+  margin-bottom: $spacing-lg;
+  padding: $spacing-md;
+  border-radius: $radius-md;
+  
+  &.messageUser {
+    background-color: rgba($gold-primary, 0.1);
+    border-left: 3px solid $gold-primary;
+  }
+  
+  &.messageStaff {
+    background-color: rgba($gold-primary, 0.15);
+    border-left: 3px solid $gold-primary;
+  }
+  
+  &.messageInternal {
+    background-color: rgba($error-text, 0.1);
+    border-left: 3px solid $error-text;
+  }
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.messageHeader {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-sm;
+  font-size: $font-size-xs;
+}
+
+.messageAuthor {
+  font-weight: $font-weight-semibold;
+  color: $text-primary;
+}
+
+.authorRoles {
+  font-weight: $font-weight-normal;
+  color: $text-secondary;
+  font-size: 11px;
+}
+
+.messageTime {
+  color: $text-tertiary;
+  margin-left: auto;
+}
+
+.internalBadge {
+  background-color: rgba($error-text, 0.2);
+  color: $error-text;
+  padding: $spacing-xs $spacing-sm;
+  border-radius: $radius-sm;
+  font-size: 10px;
+  font-weight: $font-weight-medium;
+  border: 1px solid rgba($error-text, 0.3);
+}
+
+.messageContent {
+  color: $text-primary;
+  line-height: $line-height-normal;
+  white-space: pre-wrap;
+}
+
+// Message form
+.messageForm {
+  border-top: 1px solid $border-secondary;
+  padding-top: $spacing-lg;
+}
+
+.messageInputGroup {
+  margin-bottom: $spacing-md;
+}
+
+.messageInput {
+  width: 100%;
+  padding: $spacing-md;
+  border: 1px solid $border-secondary;
+  border-radius: $radius-md;
+  resize: vertical;
+  font-family: $font-primary;
+  font-size: $font-size-sm;
+  background: $input-bg;
+  color: $text-primary;
+  
+  &::placeholder {
+    color: $text-tertiary;
+  }
+  
+  &:focus {
+    outline: none;
+    border-color: $input-border-focus;
+    box-shadow: 0 0 0 1px $input-border-focus;
+  }
+  
+  &:disabled {
+    background-color: rgba($bg-tertiary, 0.5);
+    cursor: not-allowed;
+  }
+}
+
+.messageOptions {
+  margin-top: $spacing-sm;
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  font-size: $font-size-sm;
+  color: $text-primary;
+  cursor: pointer;
+  
+  input[type="checkbox"] {
+    cursor: pointer;
+    accent-color: $gold-primary;
+  }
+}
+
+.sendButton {
+  padding: $spacing-sm $spacing-lg;
+  background: $btn-primary-bg;
+  color: white;
+  border: none;
+  border-radius: $radius-md;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  transition: $transition-normal;
+  
+  &:hover:not(:disabled) {
+    background: $btn-primary-hover;
+    box-shadow: 0 2px 8px rgba($gold-primary, 0.3);
+  }
+  
+  &:disabled {
+    background-color: $text-tertiary;
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
+
+// Footer
+.footer {
+  padding: $spacing-lg $spacing-xl;
+  border-top: 1px solid $border-secondary;
+  background: $admin-bg;
+}
+
+.actions {
+  display: flex;
+  gap: $spacing-md;
+  justify-content: flex-end;
+}
+
+.actionButton {
+  padding: $spacing-sm $spacing-lg;
+  border-radius: $radius-md;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  border: 1px solid transparent;
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  transition: $transition-normal;
+  
+  &.secondary {
+    background-color: $btn-secondary-bg;
+    color: $text-primary;
+    border-color: $border-secondary;
+    
+    &:hover:not(:disabled) {
+      background-color: $btn-secondary-hover-bg;
+      border-color: $border-secondary;
+      box-shadow: 0 2px 8px rgba($gold-primary, 0.2);
+    }
+  }
+  
+  &.danger {
+    background-color: $error-text;
+    color: white;
+    
+    &:hover:not(:disabled) {
+      background-color: darken($error-text, 10%);
+      box-shadow: 0 2px 8px rgba($error-text, 0.3);
+    }
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  &.primary {
+    background: $btn-primary-bg;
+    color: white;
+    
+    &:hover:not(:disabled) {
+      background: $btn-primary-hover;
+      box-shadow: 0 2px 8px rgba($gold-primary, 0.3);
+    }
+  }
+}
+
+// Dynamic actions footer
+.dynamicActions {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.leftSection {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  flex: 1;
+}
+
+.rightSection {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+}
+
+.actionLabel {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: $text-primary;
+  white-space: nowrap;
+}
+
+.actionSelect {
+  padding: $spacing-sm $spacing-md;
+  border: 1px solid $border-secondary;
+  border-radius: $radius-md;
+  background: $input-bg;
+  color: $text-primary;
+  font-size: $font-size-sm;
+  min-width: 200px;
+  
+  &:focus {
+    outline: none;
+    border-color: $input-border-focus;
+    box-shadow: 0 0 0 1px $input-border-focus;
+  }
+  
+  &:disabled {
+    background-color: rgba($bg-tertiary, 0.5);
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  option {
+    background: $input-bg;
+    color: $text-primary;
+  }
+}
+
+.actionInput {
+  padding: $spacing-sm $spacing-md;
+  border: 1px solid $border-secondary;
+  border-radius: $radius-md;
+  background: $input-bg;
+  color: $text-primary;
+  font-size: $font-size-sm;
+  min-width: 250px;
+  
+  &::placeholder {
+    color: $text-tertiary;
+  }
+  
+  &:focus {
+    outline: none;
+    border-color: $input-border-focus;
+    box-shadow: 0 0 0 1px $input-border-focus;
+  }
+  
+  &:disabled {
+    background-color: rgba($bg-tertiary, 0.5);
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
+
+// Loading and error states
+.loadingState, .errorState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-3xl;
+  text-align: center;
+}
+
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba($gold-primary, 0.3);
+  border-top: 3px solid $gold-primary;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: $spacing-lg;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.errorState p {
+  color: $error-text;
+  margin-bottom: $spacing-lg;
+}
+
+.retryButton {
+  padding: $spacing-sm $spacing-lg;
+  background: $btn-primary-bg;
+  color: white;
+  border: none;
+  border-radius: $radius-md;
+  cursor: pointer;
+  font-weight: $font-weight-medium;
+  transition: $transition-normal;
+  
+  &:hover {
+    background: $btn-primary-hover;
+    box-shadow: 0 2px 8px rgba($gold-primary, 0.3);
+  }
+}
+
+// Message form notices
+.autoAssignNotice {
+  margin-top: $spacing-sm;
+  padding: $spacing-sm $spacing-md;
+  background-color: rgba($gold-primary, 0.15);
+  color: $gold-primary;
+  border-radius: $radius-md;
+  font-size: $font-size-xs;
+  border-left: 3px solid $gold-primary;
+}
+
+.reassignNotice {
+  margin-top: $spacing-sm;
+  padding: $spacing-sm $spacing-md;
+  background-color: rgba($warning-text, 0.15);
+  color: $warning-text;
+  border-radius: $radius-md;
+  font-size: $font-size-xs;
+  border-left: 3px solid $warning-text;
+  line-height: $line-height-normal;
+}
+
+.cannotRespondNotice {
+  padding: $spacing-lg;
+  background-color: rgba($error-text, 0.1);
+  color: $error-text;
+  border-radius: $radius-md;
+  border-left: 3px solid $error-text;
+  font-size: $font-size-sm;
+  line-height: $line-height-normal;
+  text-align: center;
+}

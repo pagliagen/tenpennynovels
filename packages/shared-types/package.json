@@ -1,0 +1,15 @@
+{
+  "name": "@tenpennynovels/shared-types",
+  "version": "1.0.0",
+  "description": "Shared TypeScript types for TenpennyNovels",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

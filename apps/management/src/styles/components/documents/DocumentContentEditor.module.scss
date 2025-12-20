@@ -1,0 +1,659 @@
+// =============================================================================
+// Document Content Editor - Compact Layout Styles
+// =============================================================================
+
+@import 'variables/breakpoints';
+@import 'variables/colors';
+@import 'variables/spacing';
+@import 'variables/typography';
+@import 'variables/shadows';
+@import 'variables/borders'; 
+@import 'mixins/buttons';
+@import 'mixins/forms';
+
+// =============================================================================
+// OVERLAY E CONTAINER COMPATTO
+// =============================================================================
+
+.editorOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: $spacing-lg;
+}
+
+.editorContainer {
+  background: $bg-primary;
+  border: 2px solid $border-primary;
+  border-radius: $radius-lg;
+  width: 95vw;
+  height: 85vh;
+  max-height: 900px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: $shadow-xl;
+  
+  @media (max-width: 767px) {
+    width: 98vw;
+    height: 95vh;
+  }
+}
+
+// =============================================================================
+// HEADER
+// =============================================================================
+
+.editorHeader {
+  background: linear-gradient(135deg, $bg-secondary 0%, rgba($gold-primary, 0.1) 100%);
+  border-bottom: 2px solid $border-primary;
+  padding: $spacing-md $spacing-lg;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  
+  h2 {
+    color: $text-primary;
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+    margin: 0;
+    
+    @media (max-width: 767px) {
+      font-size: $font-size-base;
+    }
+  }
+  
+  .closeButton {
+    @include btn-base;
+    background: $error-bg;
+    color: $error-text;
+    border: 1px solid $error-border;
+    padding: $spacing-xs $spacing-sm;
+    font-size: $font-size-lg;
+    min-width: 32px;
+    height: 32px;
+    
+    &:hover {
+      background: $error-text;
+      color: $bg-primary;
+    }
+  }
+}
+
+// =============================================================================
+// TOOLBAR COMPATTA
+// =============================================================================
+
+.toolbar {
+  background: $bg-secondary;
+  border-bottom: 1px solid $border-secondary;
+  padding: $spacing-sm $spacing-lg;
+  display: flex;
+  gap: $spacing-lg;
+  align-items: center;
+  flex-wrap: wrap;
+  
+  @media (max-width: 767px) {
+    padding: $spacing-xs $spacing-sm;
+    gap: $spacing-sm;
+  }
+}
+
+.toolbarSection {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  
+  .sectionLabel {
+    font-size: $font-size-xs;
+    color: $text-tertiary;
+    font-weight: $font-weight-semibold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-right: $spacing-xs;
+    
+    @media (max-width: 767px) {
+      display: none;
+    }
+  }
+}
+
+.toolButton {
+  @include btn-base;
+  background: $bg-primary;
+  border: 1px solid $border-secondary;
+  color: $text-secondary;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  padding: $spacing-xs $spacing-sm;
+  min-width: 28px;
+  height: 28px;
+  
+  &:hover {
+    background: rgba($gold-primary, 0.1);
+    border-color: $gold-primary;
+    color: $gold-primary;
+  }
+  
+  @media (max-width: 767px) {
+    min-width: 24px;
+    height: 24px;
+    padding: $spacing-xs;
+    font-size: $font-size-xs;
+  }
+}
+
+.classSelect {
+  background: $bg-primary;
+  color: $text-primary;
+  border: 1px solid $border-secondary;
+  padding: $spacing-xs $spacing-sm;
+  font-size: $font-size-sm;
+  min-width: 150px;
+  
+  &:focus {
+    border-color: $gold-primary;
+    outline: none;
+  }
+  
+  @media (max-width: 767px) {
+    min-width: 120px;
+    font-size: $font-size-xs;
+  }
+}
+
+.tabButton {
+  @include btn-base;
+  background: transparent;
+  border: 1px solid transparent;
+  color: $text-tertiary;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  padding: $spacing-sm $spacing-md;
+  border-radius: $radius-md;
+  
+  &:hover {
+    background: rgba($gold-primary, 0.1);
+    color: $gold-primary;
+  }
+  
+  &.active {
+    background: $gold-primary;
+    color: $bg-primary;
+    font-weight: $font-weight-semibold;
+    border-color: $gold-primary;
+  }
+  
+  @media (max-width: 767px) {
+    padding: $spacing-xs $spacing-sm;
+    font-size: $font-size-xs;
+  }
+}
+
+// =============================================================================
+// MAIN CONTENT - LAYOUT SIDE BY SIDE
+// =============================================================================
+
+.mainContent {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  
+  @media (max-width: 767px) {
+    flex-direction: column;
+  }
+}
+
+.editorPanel,
+.previewPanel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.editorPanel {
+  flex: 1;
+  border-right: 2px solid $border-primary;
+  background: $bg-secondary;
+  
+  @media (max-width: 767px) {
+    border-right: none;
+    border-bottom: 2px solid $border-primary;
+    flex: 0 0 50%;
+  }
+}
+
+.previewPanel {
+  flex: 1;
+  background: $bg-primary;
+  
+  @media (max-width: 767px) {
+    flex: 0 0 50%;
+  }
+}
+
+// =============================================================================
+// EDITOR CONTENT
+// =============================================================================
+
+.contentEditor,
+.cssEditor {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: $spacing-md;
+  
+  @media (max-width: 767px) {
+    padding: $spacing-sm;
+  }
+}
+
+.editorInfo {
+  background: rgba($gold-primary, 0.1);
+  color: $text-secondary;
+  padding: $spacing-xs $spacing-sm;
+  border-radius: $radius-sm;
+  font-size: $font-size-xs;
+  margin-bottom: $spacing-md;
+  border-left: 3px solid $gold-primary;
+  
+  code {
+    background: rgba($gold-primary, 0.2);
+    color: $gold-primary;
+    padding: 2px 4px;
+    border-radius: 2px;
+    font-family: monospace;
+  }
+  
+  @media (max-width: 767px) {
+    font-size: $font-size-xs;
+    padding: $spacing-xs;
+    margin-bottom: $spacing-sm;
+  }
+}
+
+.codeEditor {
+  flex: 1;
+  background: $bg-primary;
+  color: $text-primary;
+  border: 1px solid $border-secondary;
+  border-radius: $radius-sm;
+  padding: $spacing-md;
+  font-family: 'Monaco', 'Consolas', monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  resize: none;
+  margin-bottom: $spacing-md;
+  
+  &:focus {
+    outline: none;
+    border-color: $gold-primary;
+  }
+  
+  &::placeholder {
+    color: $text-tertiary;
+    opacity: 0.7;
+  }
+  
+  @media (max-width: 767px) {
+    font-size: 12px;
+    padding: $spacing-sm;
+  }
+}
+
+// =============================================================================
+// CSS CLASSES FORM
+// =============================================================================
+
+.cssClassesList {
+  flex: 1;
+  overflow-y: auto;
+  margin-bottom: $spacing-md;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.cssClassForm {
+  background: $bg-primary;
+  border: 1px solid $border-secondary;
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  
+  &:hover {
+    border-color: $gold-primary;
+  }
+}
+
+.cssClassHeader {
+  display: flex;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-sm;
+  align-items: center;
+}
+
+.classTitleInput {
+  flex: 1;
+  background: $bg-secondary;
+  color: $text-primary;
+  border: 1px solid $border-secondary;
+  padding: $spacing-xs $spacing-sm;
+  font-size: $font-size-sm;
+  
+  &:focus {
+    border-color: $gold-primary;
+    outline: none;
+  }
+  
+  &::placeholder {
+    color: $text-tertiary;
+  }
+}
+
+.classElementInput {
+  flex: 1;
+  background: $bg-secondary;
+  color: $text-primary;
+  border: 1px solid $border-secondary;
+  padding: $spacing-xs $spacing-sm;
+  font-size: $font-size-sm;
+  
+  &:focus {
+    border-color: $gold-primary;
+    outline: none;
+  }
+  
+  &::placeholder {
+    color: $text-tertiary;
+  }
+}
+
+// Readonly styles for predefined classes
+.readonly {
+  background: rgba($bg-secondary, 0.6) !important;
+  color: $text-secondary !important;
+  cursor: not-allowed !important;
+  opacity: 0.7;
+  
+  &:focus {
+    border-color: $border-secondary !important;
+  }
+}
+
+// Predefined class styles
+.cssClassForm.predefined {
+  border-left: 3px solid $gold-primary;
+  background: rgba($gold-primary, 0.05);
+}
+
+.predefinedLabel {
+  font-size: $font-size-xs;
+  font-weight: bold;
+  color: $gold-primary;
+  background: rgba($gold-primary, 0.1);
+  padding: 2px 6px;
+  border-radius: 3px;
+  margin-right: $spacing-xs;
+  white-space: nowrap;
+}
+
+.removeClassButton {
+  @include btn-base;
+  background: $error-bg;
+  color: $error-text;
+  border: 1px solid $error-border;
+  padding: $spacing-xs;
+  font-size: $font-size-sm;
+  min-width: 28px;
+  height: 28px;
+  
+  &:hover {
+    background: $error-text;
+    color: $bg-primary;
+  }
+}
+
+.cssTextarea {
+  width: 100%;
+  background: $bg-secondary;
+  color: $text-primary;
+  border: 1px solid $border-secondary;
+  border-radius: $radius-sm;
+  padding: $spacing-sm;
+  font-family: 'Monaco', 'Consolas', monospace;
+  font-size: 13px;
+  line-height: 1.4;
+  resize: vertical;
+  min-height: 80px;
+  
+  &:focus {
+    outline: none;
+    border-color: $gold-primary;
+  }
+  
+  &::placeholder {
+    color: $text-tertiary;
+    opacity: 0.7;
+  }
+}
+
+.addClassButton {
+  @include btn-base;
+  background: rgba($success-bg, 0.1);
+  color: $success-text;
+  border: 1px solid $success-border;
+  padding: $spacing-sm $spacing-md;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  align-self: flex-start;
+  
+  &:hover {
+    background: rgba($success-bg, 0.2);
+    border-color: $success-text;
+  }
+}
+
+// =============================================================================
+// SAVE BUTTON
+// =============================================================================
+
+.saveButton {
+  @include btn-base;
+  background: linear-gradient(135deg, $gold-primary 0%, $gold-light 100%);
+  color: $bg-primary;
+  border: none;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  padding: $spacing-md $spacing-lg;
+  box-shadow: $shadow-sm;
+  align-self: flex-start;
+  
+  &:hover {
+    background: linear-gradient(135deg, $gold-light 0%, $gold-primary 100%);
+    transform: translateY(-1px);
+    box-shadow: $shadow-md;
+  }
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+  }
+  
+  @media (max-width: 767px) {
+    align-self: stretch;
+    text-align: center;
+  }
+}
+
+// =============================================================================
+// PREVIEW
+// =============================================================================
+
+.previewHeader {
+  background: rgba($bg-primary, 0.9);
+  border-bottom: 1px solid $border-secondary;
+  padding: $spacing-sm $spacing-md;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  
+  color: $text-primary;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  
+  .previewInfo {
+    font-size: $font-size-xs;
+    color: $text-tertiary;
+    font-style: italic;
+    
+    @media (max-width: 767px) {
+      display: none;
+    }
+  }
+}
+
+.preview {
+  flex: 1;
+  padding: $spacing-lg;
+  overflow-y: auto;
+  background: #E3E3D2; // Sfondo carta come nell'app documents
+  color: #2c1810;
+  font-family: 'MedievalSharp', cursive;
+  line-height: 1.6;
+  
+  // Stili base per elementi HTML
+  h1, h2, h3, h4, h5, h6 {
+    color: #8B4513;
+    margin: $spacing-lg 0 $spacing-md;
+    
+    &:first-child {
+      margin-top: 0;
+    }
+  }
+  
+  h1 { font-size: 28px; }
+  h2 { font-size: 24px; }
+  h3 { font-size: 20px; }
+  
+  p {
+    margin: $spacing-md 0;
+    
+    &:first-child {
+      margin-top: 0;
+    }
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+  
+  ul, ol {
+    margin: $spacing-md 0;
+    padding-left: $spacing-lg;
+  }
+  
+  li {
+    margin: $spacing-xs 0;
+  }
+  
+  strong {
+    font-weight: bold;
+    color: #654321;
+  }
+  
+  em {
+    font-style: italic;
+    color: #8B4513;
+  }
+  
+  @media (max-width: 767px) {
+    padding: $spacing-md;
+    font-size: 16px;
+  }
+}
+
+// =============================================================================
+// MESSAGE BAR
+// =============================================================================
+
+.messageBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-sm $spacing-md;
+  margin: 0;
+  border-left: 4px solid transparent;
+  font-size: $font-size-sm;
+  font-weight: 500;
+  
+  &.success {
+    background: rgba($success-bg, 0.1);
+    border-color: $success-border;
+    color: $success-text;
+  }
+  
+  &.error {
+    background: rgba($error-bg, 0.1);
+    border-color: $error-border;
+    color: $error-text;
+  }
+  
+  span {
+    flex: 1;
+  }
+}
+
+.messageClose {
+  @include btn-base;
+  background: transparent;
+  border: none;
+  color: inherit;
+  padding: 0 $spacing-xs;
+  margin-left: $spacing-sm;
+  opacity: 0.7;
+  
+  &:hover {
+    opacity: 1;
+  }
+}
+
+// =============================================================================
+// RESPONSIVE ADJUSTMENTS
+// =============================================================================
+
+@media (max-width: 767px) {
+  .editorOverlay {
+    padding: 0;
+    align-items: stretch;
+    justify-content: stretch;
+  }
+  
+  .editorContainer {
+    border-radius: 0;
+    width: 100vw;
+    height: 100vh;
+    max-width: none;
+    max-height: none;
+  }
+  
+  .toolbar {
+    flex-wrap: wrap;
+    padding: $spacing-xs $spacing-sm;
+  }
+  
+  .toolbarSection {
+    &:not(:last-child) {
+      border-right: 1px solid $border-secondary;
+      padding-right: $spacing-sm;
+      margin-right: $spacing-sm;
+    }
+  }
+}

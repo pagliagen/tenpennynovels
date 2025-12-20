@@ -1,0 +1,114 @@
+// =============================================================================
+// TenpennyNovels Design System - Admin Panel Layout
+// =============================================================================
+
+// Admin panel container
+.layout-admin-panel {
+  min-height: 100vh;
+  display: flex;
+  background: $admin-bg;
+  color: $admin-text;
+  
+  // Sidebar
+  .admin-sidebar {
+    width: 250px;
+    background: rgba($admin-bg, 0.95);
+    border-right: 1px solid rgba($admin-primary, 0.2);
+    padding: $spacing-md;
+    
+    @include mobile-only {
+      position: fixed;
+      top: 0;
+      left: -250px;
+      height: 100vh;
+      z-index: 1000;
+      transition: left 0.3s ease;
+      
+      &.mobile-open {
+        left: 0;
+      }
+    }
+    
+    .admin-nav-link {
+      display: flex;
+      align-items: center;
+      gap: $spacing-3;
+      padding: $spacing-3 $spacing-4;
+      color: $admin-text;
+      text-decoration: none;
+      border-radius: $radius-base;
+      margin-bottom: $spacing-2;
+      transition: all 0.3s ease;
+      
+      &:hover {
+        background: rgba($admin-primary, 0.1);
+        color: $admin-primary;
+      }
+      
+      &.active {
+        background: rgba($admin-primary, 0.2);
+        color: $admin-primary;
+        border-left: 3px solid $admin-primary;
+      }
+    }
+  }
+  
+  // Main content area
+  .admin-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    
+    // Header
+    .admin-header {
+      background: rgba($admin-bg, 0.95);
+      border-bottom: 1px solid rgba($admin-primary, 0.2);
+      padding: $spacing-md $spacing-lg;
+      display: flex;
+      justify-content: between;
+      align-items: center;
+      
+      .admin-title {
+        font-size: $font-size-2xl;
+        font-weight: $font-weight-bold;
+        color: $admin-primary;
+      }
+      
+      .admin-user-menu {
+        display: flex;
+        align-items: center;
+        gap: $spacing-md;
+      }
+    }
+    
+    // Content
+    .admin-content {
+      flex: 1;
+      padding: $spacing-lg;
+      overflow-y: auto;
+      
+      @include custom-scrollbar(rgba($admin-primary, 0.1), rgba($admin-primary, 0.3));
+    }
+  }
+}
+
+// Admin cards
+.admin-card {
+  @include admin-card('md');
+  margin-bottom: $spacing-md;
+  
+  .admin-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: $spacing-md;
+    border-bottom: 1px solid rgba($admin-primary, 0.2);
+    margin-bottom: $spacing-md;
+    
+    .admin-card-title {
+      font-size: $font-size-lg;
+      font-weight: $font-weight-semibold;
+      color: $admin-primary;
+    }
+  }
+}

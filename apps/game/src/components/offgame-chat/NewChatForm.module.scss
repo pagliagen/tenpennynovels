@@ -1,0 +1,306 @@
+@import "../../../shared-ui/src/styles/variables/colors";
+@import "../../../shared-ui/src/styles/variables/typography";
+@import "../../../shared-ui/src/styles/variables/spacing";
+@import "../../../shared-ui/src/styles/variables/breakpoints";
+@import "../../../shared-ui/src/styles/variables/shadows";
+@import "../../../shared-ui/src/styles/variables/borders";
+// New Chat Form Styles
+// Victorian London RPG Theme
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(5px);
+  z-index: 1100; // Higher than chat panel
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-lg;
+}
+
+.formContainer {
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  background: $bg-secondary;
+  border: 2px solid $border-secondary;
+  border-radius: $radius-lg;
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.6),
+    0 0 30px rgba($gold-primary, 0.15);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  
+  @media (max-width: 768px) {
+    width: 95vw;
+    max-height: 95vh;
+  }
+}
+
+.header {
+  background: linear-gradient(135deg, rgba($gold-primary, 0.25), rgba($gold-primary, 0.15));
+  border-bottom: 1px solid $border-secondary;
+  padding: $spacing-md $spacing-lg;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.title {
+  font-family: $font-primary;
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: $gold-primary;
+  margin: 0;
+  text-shadow: $text-shadow;
+}
+
+.closeButton {
+  background: transparent;
+  border: none;
+  color: $text-secondary;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: $spacing-xs;
+  border-radius: $radius-sm;
+  transition: all all 0.15s ease;
+  
+  &:hover {
+    background: rgba($error-text, 0.2);
+    color: $error-text;
+    transform: scale(1.1);
+  }
+}
+
+.form {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: $spacing-lg;
+}
+
+.formGroup {
+  margin-bottom: $spacing-lg;
+  
+  &:last-of-type {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+}
+
+.label {
+  display: block;
+  font-family: $font-primary;
+  font-weight: bold;
+  color: $gold-primary;
+  margin-bottom: $spacing-sm;
+  font-size: 0.95rem;
+}
+
+.counter {
+  font-weight: normal;
+  color: $text-secondary;
+  font-size: 0.85rem;
+  margin-left: $spacing-sm;
+}
+
+.input, .searchInput {
+  width: 100%;
+  background: $input-bg;
+  border: 1px solid $border-secondary;
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  color: $input-text;
+  font-family: $font-primary;
+  font-size: 0.9rem;
+  transition: all all 0.15s ease;
+  
+  &:focus {
+    outline: none;
+    border-color: $input-border-focus;
+    box-shadow: 0 0 0 2px rgba($gold-primary, 0.2);
+  }
+  
+  &::placeholder {
+    color: $input-placeholder;
+  }
+}
+
+.searchInput {
+  margin-bottom: $spacing-md;
+}
+
+.charactersList {
+  flex: 1;
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid $border-secondary;
+  border-radius: $radius-md;
+  background: rgba($bg-tertiary, 0.3);
+  
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: rgba($gold-primary, 0.3);
+    border-radius: 9999px;
+    
+    &:hover {
+      background: rgba($gold-primary, 0.5);
+    }
+  }
+}
+
+.loading, .emptyState {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-xl;
+  color: $text-secondary;
+  font-style: italic;
+  text-align: center;
+}
+
+.characterItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-md;
+  border-bottom: 1px solid rgba($border-secondary, 0.3);
+  cursor: pointer;
+  transition: all all 0.15s ease;
+  
+  &:hover {
+    background: rgba($gold-primary, 0.05);
+  }
+  
+  &.selected {
+    background: rgba($gold-primary, 0.15);
+    border-color: rgba($gold-primary, 0.4);
+  }
+  
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.characterInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+}
+
+.characterName {
+  font-weight: bold;
+  color: $text-primary;
+  font-size: 0.95rem;
+}
+
+.statusBadge {
+  display: inline-block;
+  padding: 2px $spacing-sm;
+  border-radius: $radius-sm;
+  font-size: 0.7rem;
+  font-weight: bold;
+  color: white;
+  text-transform: uppercase;
+  width: fit-content;
+}
+
+.selectedIcon {
+  color: $success-text;
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.actions {
+  display: flex;
+  gap: $spacing-md;
+  padding-top: $spacing-md;
+  border-top: 1px solid rgba($border-secondary, 0.3);
+  margin-top: $spacing-md;
+}
+
+.cancelButton, .submitButton {
+  flex: 1;
+  padding: $spacing-md;
+  border-radius: $radius-md;
+  font-family: $font-primary;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all all 0.15s ease;
+  border: 1px solid;
+}
+
+.cancelButton {
+  background: transparent;
+  border-color: $border-secondary;
+  color: $text-secondary;
+  
+  &:hover:not(:disabled) {
+    background: rgba($text-secondary, 0.1);
+    border-color: $text-secondary;
+    color: $text-primary;
+  }
+}
+
+.submitButton {
+  background: linear-gradient(135deg, rgba($gold-primary, 0.3), rgba($gold-primary, 0.2));
+  border-color: rgba($gold-primary, 0.6);
+  color: $gold-primary;
+  
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, rgba($gold-primary, 0.4), rgba($gold-primary, 0.3));
+    border-color: rgba($gold-primary, 0.8);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 12px rgba($gold-primary, 0.3);
+  }
+  
+  &:disabled {
+    opacity: $opacity-disabled;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .form {
+    padding: $spacing-md;
+  }
+  
+  .header {
+    padding: $spacing-sm $spacing-md;
+  }
+  
+  .title {
+    font-size: 1.1rem;
+  }
+  
+  .charactersList {
+    max-height: 250px;
+  }
+  
+  .actions {
+    flex-direction: column;
+  }
+  
+  .cancelButton, .submitButton {
+    width: 100%;
+  }
+}

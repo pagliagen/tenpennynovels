@@ -1,0 +1,76 @@
+// =============================================================================
+// Documents Page Styles
+// =============================================================================
+
+@import 'variables/breakpoints';
+@import 'variables/colors';
+@import 'variables/spacing';
+@import 'variables/typography';
+@import 'variables/shadows';
+@import 'mixins/buttons';
+@import 'mixins/cards';
+
+.documentsPage {
+  min-height: 100vh;
+  
+  .header {
+    background: linear-gradient(135deg, $bg-primary 0%, $bg-secondary 100%);
+    border-bottom: 1px solid $border-secondary;
+    padding: $spacing-xl $spacing-lg;
+    margin-bottom: $spacing-lg;
+    
+    .titleSection {
+      max-width: 1200px;
+      margin: 0 auto;
+      
+      .title {
+        display: flex;
+        align-items: center;
+        gap: $spacing-md;
+        font-size: $font-size-2xl;
+        font-weight: $font-weight-bold;
+        color: $gold-primary;
+        margin: 0 0 $spacing-sm;
+        
+        .icon {
+          font-size: $font-size-3xl;
+        }
+      }
+      
+      .subtitle {
+        color: $text-tertiary;
+        font-size: $font-size-base;
+        margin: 0;
+        line-height: 1.5;
+      }
+    }
+    
+    @include tablet-down {
+      padding: $spacing-lg $spacing-md;
+      
+      .titleSection {
+        .title {
+          font-size: $font-size-xl;
+          gap: $spacing-sm;
+          
+          .icon {
+            font-size: $font-size-2xl;
+          }
+        }
+        
+        .subtitle {
+          font-size: $font-size-sm;
+        }
+      }
+    }
+  }
+  
+  .content {
+    margin: 0 auto;
+    padding: 0 $spacing-lg;
+    
+    @include tablet-down {
+      padding: 0 $spacing-md;
+    }
+  }
+}

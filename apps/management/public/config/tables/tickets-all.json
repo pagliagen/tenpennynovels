@@ -1,0 +1,453 @@
+{
+  "_meta": {
+    "version": "1.0.0",
+    "description": "All tickets table configuration for Management Panel",
+    "lastUpdated": "2025-08-10"
+  },
+  
+  "table": {
+    "name": "tickets-all",
+    "title": "Tutti i Ticket",
+    "icon": "🎫",
+    "searchable": true,
+    "selectable": false,
+    "pagination": {
+      "defaultPageSize": 25,
+      "pageSizeOptions": [10, 25, 50, 100]
+    }
+  },
+
+  "columns": [
+    {
+      "key": "ticketId",
+      "label": "ID",
+      "type": "text",
+      "visible": false,
+      "defaultVisible": false,
+      "alwaysVisible": false,
+      "sortable": false,
+      "filterable": false,
+      "required": false,
+      "width": "80px",
+      "render": {
+        "type": "text",
+        "prefix": "#"
+      }
+    },
+    {
+      "key": "title",
+      "label": "Titolo",
+      "type": "text",
+      "visible": true,
+      "defaultVisible": true,
+      "alwaysVisible": true,
+      "sortable": true,
+      "filterable": true,
+      "required": true,
+      "width": "200px"
+    },
+    {
+      "key": "characterName",
+      "label": "Personaggio",
+      "type": "text",
+      "visible": true,
+      "defaultVisible": true,
+      "alwaysVisible": false,
+      "sortable": true,
+      "filterable": true,
+      "required": true,
+      "width": "120px"
+    },
+    {
+      "key": "category",
+      "label": "Categoria",
+      "type": "select",
+      "visible": true,
+      "defaultVisible": true,
+      "alwaysVisible": false,
+      "sortable": true,
+      "filterable": true,
+      "required": true,
+      "width": "120px",
+      "options": [
+        { "value": "character_approval", "label": "Approvazione Personaggio" },
+        { "value": "game_bug_report", "label": "Bug Sistema di Gioco" },
+        { "value": "performance_problem", "label": "Problema Performance" },
+        { "value": "general_support", "label": "Supporto Generale" },
+        { "value": "rule_violation", "label": "Violazione Regole" },
+        { "value": "account_issue", "label": "Problemi Account" },
+        { "value": "content_report", "label": "Segnalazione Contenuti" }
+      ]
+    },
+    {
+      "key": "status",
+      "label": "Stato",
+      "type": "select",
+      "visible": true,
+      "defaultVisible": true,
+      "alwaysVisible": false,
+      "sortable": true,
+      "filterable": true,
+      "required": true,
+      "width": "100px",
+      "options": [
+        { "value": "OPEN", "label": "Aperto" },
+        { "value": "IN_PROGRESS", "label": "In Lavorazione" },
+        { "value": "WAITING_FOR_USER", "label": "In Attesa" },
+        { "value": "ESCALATED", "label": "Escalato" },
+        { "value": "CLOSED", "label": "Chiuso" }
+      ],
+      "render": {
+        "type": "badge",
+        "className": "statusBadge",
+        "colorMap": {
+          "OPEN": "green",
+          "IN_PROGRESS": "orange", 
+          "WAITING_FOR_USER": "blue",
+          "ESCALATED": "red",
+          "CLOSED": "gray"
+        }
+      }
+    },
+    {
+      "key": "priority",
+      "label": "Priorità",
+      "type": "select",
+      "visible": true,
+      "defaultVisible": false,
+      "alwaysVisible": false,
+      "sortable": true,
+      "filterable": true,
+      "required": true,
+      "width": "80px",
+      "options": [
+        { "value": "low", "label": "Bassa" },
+        { "value": "medium", "label": "Media" },
+        { "value": "high", "label": "Alta" },
+        { "value": "urgent", "label": "Urgente" },
+        { "value": "critical", "label": "Critica" }
+      ],
+      "render": {
+        "type": "priority_badge",
+        "priorityMap": {
+          "low": { "text": "Bassa", "className": "low" },
+          "medium": { "text": "Media", "className": "medium" },
+          "high": { "text": "Alta", "className": "high" },
+          "urgent": { "text": "Urgente", "className": "urgent" },
+          "critical": { "text": "Critica", "className": "critical" }
+        }
+      }
+    },
+    {
+      "key": "assignedToName",
+      "label": "Assegnato a",
+      "type": "text",
+      "visible": true,
+      "defaultVisible": true,
+      "alwaysVisible": false,
+      "sortable": false,
+      "filterable": false,
+      "required": false,
+      "width": "120px",
+      "render": {
+        "type": "text",
+        "emptyText": "Non assegnato"
+      }
+    },
+    {
+      "key": "department",
+      "label": "Reparto",
+      "type": "select",
+      "visible": true,
+      "defaultVisible": false,
+      "alwaysVisible": false,
+      "sortable": false,
+      "filterable": false,
+      "required": false,
+      "width": "120px",
+      "options": [
+        { "value": "administration", "label": "Amministrazione" },
+        { "value": "technical", "label": "Supporto Tecnico" },
+        { "value": "master", "label": "Game Master" },
+        { "value": "general", "label": "Supporto Generale" },
+        { "value": "moderation", "label": "Moderazione" }
+      ]
+    },
+    {
+      "key": "unreadMessagesCount",
+      "label": "Non letti",
+      "type": "number",
+      "visible": true,
+      "defaultVisible": false,
+      "alwaysVisible": false,
+      "sortable": true,
+      "filterable": false,
+      "required": false,
+      "width": "80px",
+      "align": "center",
+      "render": {
+        "type": "unread_badge",
+        "emptyText": "—",
+        "className": "unreadBadge"
+      }
+    },
+    {
+      "key": "updatedAt",
+      "label": "Ultimo aggiornamento",
+      "type": "datetime",
+      "visible": true,
+      "defaultVisible": true,
+      "alwaysVisible": false,
+      "sortable": true,
+      "filterable": false,
+      "required": false,
+      "width": "140px",
+      "align": "center",
+      "render": {
+        "type": "datetime",
+        "format": "short"
+      }
+    }
+  ],
+
+  "actions": [
+    {
+      "key": "view",
+      "label": "Visualizza",
+      "icon": "👁️",
+      "type": "view",
+      "visible": true,
+      "className": "viewAction",
+      "permission": "tickets.view"
+    } 
+  ],
+
+  "bulkActions": [],
+
+  "filters": [
+    {
+      "key": "search",
+      "label": "Cerca ticket",
+      "type": "text",
+      "placeholder": "Cerca ticket...",
+      "field": "search"
+    },
+    {
+      "key": "status",
+      "label": "Stato",
+      "type": "select",
+      "field": "status",
+      "options": [
+        { "value": "", "label": "Tutti gli stati" },
+        { "value": "OPEN", "label": "Aperto" },
+        { "value": "IN_PROGRESS", "label": "In Lavorazione" },
+        { "value": "WAITING_FOR_USER", "label": "In Attesa" },
+        { "value": "ESCALATED", "label": "Escalato" },
+        { "value": "CLOSED", "label": "Chiuso" }
+      ]
+    },
+    {
+      "key": "priority",
+      "label": "Priorità",
+      "type": "select",
+      "field": "priority",
+      "options": [
+        { "value": "", "label": "Tutte le priorità" },
+        { "value": "LOW", "label": "Bassa" },
+        { "value": "MEDIUM", "label": "Media" },
+        { "value": "HIGH", "label": "Alta" },
+        { "value": "URGENT", "label": "Urgente" }
+      ]
+    },
+    {
+      "key": "category",
+      "label": "Categoria",
+      "type": "select",
+      "field": "category",
+      "options": [
+        { "value": "", "label": "Tutte le categorie" },
+        { "value": "character_approval", "label": "Approvazione Personaggio" },
+        { "value": "game_bug_report", "label": "Bug Sistema di Gioco" },
+        { "value": "performance_problem", "label": "Problema Performance" },
+        { "value": "general_support", "label": "Supporto Generale" },
+        { "value": "rule_violation", "label": "Violazione Regole" },
+        { "value": "account_issue", "label": "Problemi Account" },
+        { "value": "content_report", "label": "Segnalazione Contenuti" }
+      ]
+    },
+    {
+      "key": "department",
+      "label": "Reparto",
+      "type": "select",
+      "field": "department",
+      "options": [
+        { "value": "", "label": "Tutti i reparti" },
+        { "value": "administration", "label": "Amministrazione" },
+        { "value": "technical", "label": "Supporto Tecnico" },
+        { "value": "master", "label": "Game Master" },
+        { "value": "general", "label": "Supporto Generale" },
+        { "value": "moderation", "label": "Moderazione" }
+      ]
+    }
+  ],
+
+  "modals": {
+    "assign": {
+      "title": "Assegna Ticket #{ticketId}",
+      "size": "medium",
+      "fields": [
+        {
+          "key": "staffMember",
+          "label": "Seleziona membro staff",
+          "type": "staff_selector",
+          "required": true,
+          "departmentFilter": true
+        }
+      ],
+      "actions": [
+        {
+          "key": "assign",
+          "label": "Assegna Ticket",
+          "type": "primary",
+          "icon": "👨‍💼"
+        }
+      ]
+    }
+  },
+
+  "sidePanels": {
+    "view": {
+      "title": "Dettagli Ticket #{ticketId}",
+      "subtitle": "Visualizza informazioni complete del ticket",
+      "width": "large",
+      "fields": [
+        {
+          "key": "ticketId",
+          "label": "ID Ticket",
+          "type": "text",
+          "readonly": true,
+          "defaultVisible": true,
+          "render": {
+            "type": "text",
+            "prefix": "#"
+          }
+        },
+        {
+          "key": "title",
+          "label": "Titolo",
+          "type": "text",
+          "readonly": true,
+          "defaultVisible": true
+        },
+        {
+          "key": "characterName",
+          "label": "Personaggio",
+          "type": "text",
+          "readonly": true,
+          "defaultVisible": true
+        },
+        {
+          "key": "category",
+          "label": "Categoria",
+          "type": "select",
+          "readonly": true,
+          "defaultVisible": true,
+          "options": [
+            { "value": "character_approval", "label": "Approvazione Personaggio" },
+            { "value": "game_bug_report", "label": "Bug Sistema di Gioco" },
+            { "value": "performance_problem", "label": "Problema Performance" },
+            { "value": "general_support", "label": "Supporto Generale" },
+            { "value": "rule_violation", "label": "Violazione Regole" },
+            { "value": "account_issue", "label": "Problemi Account" },
+            { "value": "content_report", "label": "Segnalazione Contenuti" }
+          ]
+        },
+        {
+          "key": "status",
+          "label": "Stato",
+          "type": "select",
+          "readonly": true,
+          "defaultVisible": true,
+          "options": [
+            { "value": "open", "label": "Aperto" },
+            { "value": "in_progress", "label": "In Lavorazione" },
+            { "value": "waiting_for_user", "label": "In Attesa" },
+            { "value": "escalated", "label": "Escalato" },
+            { "value": "closed", "label": "Chiuso" }
+          ]
+        },
+        {
+          "key": "priority",
+          "label": "Priorità",
+          "type": "select",
+          "readonly": true,
+          "defaultVisible": true,
+          "options": [
+            { "value": "low", "label": "Bassa" },
+            { "value": "medium", "label": "Media" },
+            { "value": "high", "label": "Alta" },
+            { "value": "urgent", "label": "Urgente" },
+            { "value": "critical", "label": "Critica" }
+          ]
+        },
+        {
+          "key": "assignedToName",
+          "label": "Assegnato a",
+          "type": "text",
+          "readonly": true,
+          "defaultVisible": true,
+          "emptyText": "Non assegnato"
+        },
+        {
+          "key": "department",
+          "label": "Reparto",
+          "type": "select",
+          "readonly": true,
+          "defaultVisible": true,
+          "options": [
+            { "value": "administration", "label": "Amministrazione" },
+            { "value": "technical", "label": "Supporto Tecnico" },
+            { "value": "master", "label": "Game Master" },
+            { "value": "general", "label": "Supporto Generale" },
+            { "value": "moderation", "label": "Moderazione" }
+          ]
+        },
+        {
+          "key": "unreadMessagesCount",
+          "label": "Messaggi non letti",
+          "type": "number",
+          "readonly": true,
+          "defaultVisible": true
+        },
+        {
+          "key": "createdAt",
+          "label": "Creato il",
+          "type": "datetime",
+          "readonly": true,
+          "defaultVisible": true
+        },
+        {
+          "key": "updatedAt",
+          "label": "Ultimo aggiornamento",
+          "type": "datetime",
+          "readonly": true,
+          "defaultVisible": true
+        }
+      ],
+      "actions": [
+        {
+          "key": "assign_staff",
+          "label": "Assegna Staff",
+          "type": "secondary",
+          "icon": "👨‍💼"
+        },
+        {
+          "key": "open_thread",
+          "label": "Apri Conversazione",
+          "type": "primary",
+          "icon": "💬"
+        }
+      ]
+    }
+  }
+}

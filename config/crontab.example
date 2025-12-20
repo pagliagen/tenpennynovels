@@ -1,0 +1,68 @@
+# =============================================================================
+# TenpennyNovels Analytics Cron Jobs
+# =============================================================================
+# 
+# To install these cron jobs:
+# 1. Copy this file: cp config/crontab.example /tmp/tenpennynovels-cron
+# 2. Edit paths to match your installation
+# 3. Install: crontab /tmp/tenpennynovels-cron
+#
+# To view current cron jobs: crontab -l
+# To edit cron jobs: crontab -e
+
+# Set environment variables for cron jobs
+SHELL=/bin/bash
+PATH=/usr/local/bin:/usr/bin:/bin
+NODE_ENV=production
+
+# Project paths - UPDATE THESE TO MATCH YOUR INSTALLATION
+PROJECT_ROOT=/home/user/tenpennynovels
+CD_CMD=cd $PROJECT_ROOT
+
+# =============================================================================
+# Analytics Aggregation Jobs
+# =============================================================================
+
+# Daily analytics aggregation - runs at 1:30 AM every day
+# Aggregates previous day's analytics data into daily summaries
+30 1 * * * $CD_CMD && npm run analytics:aggregate >> logs/cron-analytics.log 2>&1
+
+# Weekly cleanup - runs at 2:00 AM every Sunday
+# Removes old analytics data according to retention policies
+0 2 * * 0 $CD_CMD && npm run analytics:aggregate && echo "Weekly analytics cleanup completed" >> logs/cron-analytics.log 2>&1
+
+# =============================================================================
+# System Health Monitoring (Optional)
+# =============================================================================
+
+# Check service health every 5 minutes during business hours (9 AM - 6 PM)
+# */5 9-18 * * 1-5 $CD_CMD && curl -s http://localhost:8000/health > /dev/null || echo "Health check failed at $(date)" >> logs/cron-health.log
+
+# =============================================================================
+# Database Maintenance (Optional)
+# =============================================================================
+
+# Database optimization - runs at 3:00 AM every Sunday
+# 0 3 * * 0 $CD_CMD && npm run db:optimize >> logs/cron-db.log 2>&1
+
+# =============================================================================
+# Log Rotation (Optional)
+# =============================================================================
+
+# Rotate application logs - runs at 4:00 AM daily
+# 0 4 * * * find $PROJECT_ROOT/logs -name "*.log" -size +100M -exec gzip {} \; 2>/dev/null
+
+# =============================================================================
+# Example Manual Commands:
+# =============================================================================
+# 
+# Run analytics aggregation for specific date:
+# cd /path/to/tenpennynovels && npm run analytics:aggregate:date 2024-01-15
+# 
+# Test cron job locally:
+# cd /path/to/tenpennynovels && npm run analytics:aggregate
+# 
+# View analytics logs:
+# tail -f logs/cron-analytics.log
+# 
+# =============================================================================

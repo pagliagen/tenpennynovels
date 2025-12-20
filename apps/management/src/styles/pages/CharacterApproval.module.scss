@@ -1,0 +1,352 @@
+// Import shared design system variables (CSS Modules compatibility)
+@import 'variables/colors';
+@import 'variables/typography';
+@import 'variables/spacing';
+@import 'variables/breakpoints';
+@import 'variables/shadows';
+@import 'variables/borders';
+
+.approvalPage {
+  margin: 0 auto;
+}
+
+.pageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: $spacing-2xl;
+  padding-bottom: $spacing-xl;
+  border-bottom: 2px solid $border-secondary;
+}
+
+.headerContent {
+  .pageTitle {
+    display: flex;
+    align-items: center;
+    gap: $spacing-md;
+    margin: 0 0 $spacing-sm 0;
+    color: $gold-primary;
+    font-family: $font-secondary;
+    font-size: $font-size-3xl;
+    font-weight: bold;
+    
+    .titleIcon {
+      font-size: 1.8rem;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+    }
+  }
+  
+  .pageDescription {
+    margin: 0;
+    color: $text-secondary;
+    font-size: $font-size-base;
+    font-style: italic;
+  }
+}
+
+.pendingAlert {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  background: linear-gradient(135deg, rgba(#ed8936, 0.2), rgba(#ed8936, 0.1));
+  border: 1px solid rgba(#ed8936, 0.4);
+  border-radius: $radius-lg;
+  padding: $spacing-md $spacing-lg;
+  color: $text-primary;
+  font-weight: 600;
+  
+  .alertIcon {
+    font-size: 1.2rem;
+    animation: pulse 2s infinite;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.tableContainer {
+  background: $admin-bg;
+  border-radius: $radius-xl;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+// Table cell custom content
+.characterInfo {
+  .characterName {
+    font-weight: 600;
+    color: $text-primary;
+    margin-bottom: $spacing-xs;
+  }
+  
+  .characterMeta {
+    font-size: $font-size-xs;
+    color: $text-tertiary;
+  }
+}
+
+.playerName {
+  font-weight: 500;
+  color: $text-secondary;
+}
+
+.statusBadge {
+  display: inline-block;
+  padding: $spacing-xs $spacing-sm;
+  border-radius: $radius-sm;
+  font-size: $font-size-xs;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  
+  &.statusDraft {
+    background: rgba($text-tertiary, 0.2);
+    color: $text-tertiary;
+  }
+  
+  &.statusPending {
+    background: rgba(#ed8936, 0.2);
+    color: #ed8936;
+    border: 1px solid rgba(#ed8936, 0.4);
+  }
+  
+  &.statusApproved {
+    background: rgba(#38a169, 0.2);
+    color: #38a169;
+    border: 1px solid rgba(#38a169, 0.4);
+  }
+  
+  &.statusRejected {
+    background: rgba(#e53e3e, 0.2);
+    color: #e53e3e;
+    border: 1px solid rgba(#e53e3e, 0.4);
+  }
+}
+
+.statsPreview {
+  .statTotal {
+    display: block;
+    font-weight: 600;
+    color: $text-primary;
+    margin-bottom: $spacing-xs;
+  }
+  
+  .statBreakdown {
+    font-size: $font-size-xs;
+    color: $text-tertiary;
+    font-family: $font-primary;
+  }
+}
+
+// Action buttons
+.viewAction {
+  background: rgba($gold-primary, 0.1) !important;
+  border-color: rgba($gold-primary, 0.3) !important;
+  color: $gold-primary !important;
+  
+  &:hover {
+    background: rgba($gold-primary, 0.2) !important;
+  }
+}
+
+.approveAction {
+  background: rgba(#38a169, 0.1) !important;
+  border-color: rgba(#38a169, 0.3) !important;
+  color: #38a169 !important;
+  
+  &:hover {
+    background: rgba(#38a169, 0.2) !important;
+  }
+}
+
+.rejectAction {
+  background: rgba(#e53e3e, 0.1) !important;
+  border-color: rgba(#e53e3e, 0.3) !important;
+  color: #e53e3e !important;
+  
+  &:hover {
+    background: rgba(#e53e3e, 0.2) !important;
+  }
+}
+
+// Character Detail Modal Content
+.characterDetail {
+  .detailSection {
+    margin-bottom: $spacing-2xl;
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+    
+    h3 {
+      margin: 0 0 $spacing-lg 0;
+      color: $gold-primary;
+      font-family: $font-secondary;
+      font-size: $font-size-lg;
+      font-weight: 600;
+      padding-bottom: $spacing-sm;
+      border-bottom: 1px solid $border-secondary;
+    }
+  }
+}
+
+.infoGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: $spacing-md;
+  
+  div {
+    color: $text-primary;
+    line-height: 1.5;
+    
+    strong {
+      color: $text-secondary;
+      font-weight: 500;
+    }
+  }
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: $spacing-md;
+  margin-bottom: $spacing-lg;
+}
+
+.statItem {
+  background: rgba($bg-secondary, 0.5);
+  border: 1px solid rgba($border-secondary, 0.5);
+  border-radius: $radius-md;
+  padding: $spacing-sm $spacing-md;
+  text-align: center;
+  
+  .statLabel {
+    display: block;
+    font-size: $font-size-xs;
+    color: $text-tertiary;
+    font-weight: 600;
+    margin-bottom: $spacing-xs;
+  }
+  
+  .statValue {
+    display: block;
+    font-size: $font-size-lg;
+    color: $text-primary;
+    font-weight: bold;
+    font-family: $font-monospace;
+  }
+}
+
+.statTotal {
+  text-align: center;
+  padding: $spacing-md;
+  background: rgba($gold-primary, 0.1);
+  border: 1px solid rgba($gold-primary, 0.3);
+  border-radius: $radius-md;
+  color: $gold-primary;
+  font-family: $font-monospace;
+}
+
+.backstory,
+.notes,
+.rejectionReason {
+  background: rgba($bg-secondary, 0.3);
+  border: 1px solid rgba($border-secondary, 0.5);
+  border-radius: $radius-md;
+  padding: $spacing-lg;
+  color: $text-primary;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.rejectionReason {
+  background: rgba(#e53e3e, 0.1);
+  border-color: rgba(#e53e3e, 0.3);
+  color: $text-primary;
+}
+
+// Modal Forms
+.approvalForm,
+.rejectionForm {
+  p {
+    margin: 0 0 $spacing-lg 0;
+    color: $text-primary;
+    line-height: 1.6;
+    
+    strong {
+      color: $gold-primary;
+    }
+  }
+}
+
+// Responsive Design
+@media (max-width: $breakpoint-lg) {
+  .pageHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: $spacing-lg;
+  }
+  
+  .pendingAlert {
+    align-self: stretch;
+    justify-content: center;
+  }
+  
+  .infoGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .statsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: $breakpoint-md) {
+  .approvalPage {
+    padding: 0;
+  }
+  
+  .pageHeader {
+    margin-bottom: $spacing-xl;
+    padding-bottom: $spacing-lg;
+  }
+  
+  .headerContent .pageTitle {
+    font-size: $font-size-2xl;
+    
+    .titleIcon {
+      font-size: 1.5rem;
+    }
+  }
+  
+  .statsGrid {
+    grid-template-columns: 1fr;
+    gap: $spacing-sm;
+  }
+  
+  .statItem {
+    padding: $spacing-xs $spacing-sm;
+  }
+}
+
+@media (max-width: $breakpoint-sm) {
+  .characterInfo {
+    .characterName {
+      font-size: $font-size-sm;
+    }
+    
+    .characterMeta {
+      font-size: 0.65rem;
+    }
+  }
+  
+  .statsPreview .statBreakdown {
+    font-size: 0.6rem;
+  }
+  
+  .pendingAlert {
+    padding: $spacing-sm $spacing-md;
+    font-size: $font-size-sm;
+  }
+}

@@ -1,0 +1,27 @@
+/**
+ * Shared Types Package - Main Export File
+ * Consolidates all shared type definitions
+ */
+
+// API Response Types
+export * from './api';
+
+// Validation Types  
+export * from './validation';
+
+// User Types
+export * from './user';
+
+// Re-export existing types for backward compatibility
+export * from './auth';
+export * from './character';
+export * from './corporation';
+export * from './economy';
+export * from './item';
+export * from './location';
+export * from './messaging';
+export * from './occupation';
+export * from './relationships';
+export * from './security';
+export * from './websocket';
+// export * from './ai'; // TODO: Create AI types when needed

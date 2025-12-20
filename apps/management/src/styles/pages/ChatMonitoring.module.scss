@@ -1,0 +1,529 @@
+// Import variables only for CSS Modules
+@import '../../../../shared-ui/src/styles/variables/colors';
+@import '../../../../shared-ui/src/styles/variables/spacing';
+@import '../../../../shared-ui/src/styles/variables/typography';
+@import '../../../../shared-ui/src/styles/variables/shadows';
+@import '../../../../shared-ui/src/styles/variables/borders';
+@import '../../../../shared-ui/src/styles/variables/breakpoints';
+@import '../../../../shared-ui/src/styles/mixins/buttons';
+
+// Define missing variables locally
+$cream-primary: #daddc4;
+$dark-red: #8b0000;
+$dark-brown: #2a1810;
+$medium-brown: #3e2723;
+$text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+$transition-speed: 0.3s;
+
+.chatMonitoringPage {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0d0d0d 0%, #1a1a1a 100%);
+  padding: 2rem;
+  
+  @include respond-to(mobile) {
+    padding: $spacing-md;
+  }
+}
+
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  color: $cream-primary;
+  
+  p {
+    margin-top: $spacing-md;
+    font-size: 1.1rem;
+    opacity: 0.8;
+  }
+}
+
+.errorContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+}
+
+.errorCard {
+  background: rgba($cream-primary, 0.95);
+  border: 2px solid $dark-red;
+  border-radius: $border-radius-lg;
+  padding: $spacing-xl;
+  text-align: center;
+  color: $dark-brown;
+  max-width: 500px;
+  
+  h2 {
+    color: $dark-red;
+    margin-bottom: $spacing-md;
+    font-family: $font-secondary;
+  }
+  
+  p {
+    font-size: 1.1rem;
+    line-height: 1.6;
+  }
+}
+
+.header {
+  background: rgba($cream-primary, 0.95);
+  border: 2px solid $gold-light;
+  border-radius: $border-radius-lg;
+  padding: $spacing-xl;
+  margin-bottom: $spacing-xl;
+  
+  .titleSection {
+    text-align: center;
+    
+    h1 {
+      font-family: $font-secondary;
+      font-size: 2.5rem;
+      color: $dark-brown;
+      margin-bottom: $spacing-sm;
+      text-shadow: $text-shadow;
+      
+      @include respond-to(mobile) {
+        font-size: 2rem;
+      }
+    }
+    
+    p {
+      font-size: 1.2rem;
+      color: $medium-brown;
+      font-style: italic;
+    }
+  }
+}
+
+.tabNavigation {
+  background: rgba($cream-primary, 0.95);
+  border: 2px solid $gold-light;
+  border-radius: $border-radius-lg;
+  padding: $spacing-md;
+  margin-bottom: $spacing-xl;
+  display: flex;
+  gap: $spacing-md;
+  
+  @include respond-to(mobile) {
+    flex-direction: column;
+  }
+  
+  .tabButton {
+    @include victorian-button;
+    flex: 1;
+    padding: $spacing-lg;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: $spacing-sm;
+    border: 2px solid transparent;
+    transition: all $transition-speed ease;
+    
+    &:not(.active) {
+      background: rgba($medium-brown, 0.1);
+      color: $medium-brown;
+      
+      &:hover {
+        background: rgba($gold-primary, 0.1);
+        border-color: rgba($gold-light, 0.3);
+      }
+    }
+    
+    &.active {
+      @include victorian-button('primary');
+      border-color: $gold-light;
+      transform: none;
+      
+      &:hover {
+        transform: none;
+      }
+    }
+    
+    .tabIcon {
+      font-size: 1.3rem;
+    }
+  }
+}
+
+.content {
+  background: rgba($cream-primary, 0.98);
+  border: 2px solid $gold-light;
+  border-radius: $border-radius-lg;
+  padding: $spacing-xl;
+  min-height: 600px;
+}
+
+// Overview Tab
+.overviewTab {
+  h2 {
+    font-family: $font-secondary;
+    color: $dark-brown;
+    margin-bottom: $spacing-xl;
+    text-align: center;
+  }
+}
+
+.activityCards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: $spacing-lg;
+  
+  @include respond-to(mobile) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.activityCard {
+  background: linear-gradient(135deg, rgba($gold-primary, 0.1), rgba($gold-light, 0.05));
+  border: 2px solid rgba($gold-light, 0.3);
+  border-radius: $border-radius-lg;
+  padding: $spacing-lg;
+  transition: all $transition-speed ease;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: $shadow-lg;
+    border-color: $gold-light;
+  }
+  
+  h3 {
+    font-family: $font-secondary;
+    color: $dark-brown;
+    margin-bottom: $spacing-md;
+    text-align: center;
+    font-size: 1.3rem;
+  }
+}
+
+.stats {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: $spacing-sm;
+  background: rgba($cream-primary, 0.3);
+  border-radius: $border-radius-sm;
+  
+  .label {
+    color: $medium-brown;
+    font-weight: 500;
+  }
+  
+  .value {
+    color: $dark-brown;
+    font-weight: bold;
+    font-size: 1.1rem;
+  }
+}
+
+.statTotal {
+  @extend .stat;
+  background: rgba($gold-light, 0.2);
+  border: 1px solid $gold-light;
+  font-weight: bold;
+  
+  .value {
+    color: $dark-brown;
+    font-size: 1.3rem;
+  }
+}
+
+// Search Tab
+.searchTab {
+  .searchForm {
+    margin-bottom: $spacing-xl;
+    
+    .searchRow {
+      display: flex;
+      gap: $spacing-md;
+      align-items: center;
+      
+      @include respond-to(mobile) {
+        flex-direction: column;
+        align-items: stretch;
+      }
+    }
+    
+    .searchInput {
+      flex: 2;
+      padding: $spacing-md;
+      border: 2px solid $gold-light;
+      border-radius: $border-radius-md;
+      font-size: 1rem;
+      
+      &:focus {
+        outline: none;
+        border-color: $gold-primary;
+        box-shadow: 0 0 0 3px rgba($gold-primary, 0.1);
+      }
+    }
+    
+    .searchSelect {
+      flex: 1;
+      padding: $spacing-md;
+      border: 2px solid $gold-light;
+      border-radius: $border-radius-md;
+      font-size: 1rem;
+      background: $cream-primary;
+    }
+    
+    .searchButton {
+      @include victorian-button('primary');
+      padding: $spacing-md $spacing-lg;
+      font-size: 1rem;
+      
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+    }
+  }
+}
+
+.messagesList {
+  h3 {
+    font-family: $font-secondary;
+    color: $dark-brown;
+    margin-bottom: $spacing-lg;
+  }
+}
+
+.messageCard {
+  background: rgba($cream-primary, 0.8);
+  border: 1px solid rgba($gold-light, 0.5);
+  border-radius: $border-radius-md;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+  transition: all $transition-speed ease;
+  
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: $shadow-md;
+    border-color: $gold-light;
+  }
+}
+
+.messageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-sm;
+  
+  .messageType {
+    background: $gold-light;
+    color: $dark-brown;
+    padding: 2px 8px;
+    border-radius: $border-radius-sm;
+    font-size: 0.8rem;
+    font-weight: bold;
+  }
+  
+  .messageDate {
+    color: $medium-brown;
+    font-size: 0.9rem;
+  }
+}
+
+.messageSubject {
+  margin-bottom: $spacing-sm;
+  font-size: 1.1rem;
+  color: $dark-brown;
+}
+
+.messageContent {
+  color: $medium-brown;
+  line-height: 1.6;
+  margin-bottom: $spacing-md;
+}
+
+.messageFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: $spacing-sm;
+  border-top: 1px solid rgba($gold-light, 0.3);
+  
+  .senderId, .messageSubtype {
+    font-size: 0.85rem;
+    color: $medium-brown;
+  }
+}
+
+// Reports Tab
+.reportsTab {
+  h2 {
+    font-family: $font-secondary;
+    color: $dark-brown;
+    margin-bottom: $spacing-xl;
+    text-align: center;
+  }
+}
+
+.reportCard {
+  background: rgba($cream-primary, 0.9);
+  border: 2px solid rgba($gold-light, 0.5);
+  border-radius: $border-radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-lg;
+  transition: all $transition-speed ease;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: $shadow-lg;
+    border-color: $gold-light;
+  }
+}
+
+.reportHeader {
+  display: flex;
+  gap: $spacing-md;
+  align-items: center;
+  margin-bottom: $spacing-md;
+  flex-wrap: wrap;
+}
+
+.reportSeverity {
+  padding: 4px 8px;
+  border-radius: $border-radius-sm;
+  font-size: 0.8rem;
+  font-weight: bold;
+  
+  &.low {
+    background: #10b981;
+    color: white;
+  }
+  
+  &.medium {
+    background: #f59e0b;
+    color: white;
+  }
+  
+  &.high {
+    background: #ef4444;
+    color: white;
+  }
+  
+  &.urgent {
+    background: $dark-red;
+    color: white;
+  }
+}
+
+.reportCategory {
+  background: rgba($gold-light, 0.2);
+  padding: 4px 8px;
+  border-radius: $border-radius-sm;
+  font-size: 0.85rem;
+  color: $dark-brown;
+}
+
+.reportDate {
+  color: $medium-brown;
+  font-size: 0.85rem;
+  margin-left: auto;
+}
+
+.reportContent {
+  margin-bottom: $spacing-md;
+}
+
+.reportDetail {
+  margin-bottom: $spacing-sm;
+  
+  strong {
+    color: $dark-brown;
+  }
+}
+
+.reportReason {
+  background: rgba($gold-primary, 0.1);
+  padding: $spacing-md;
+  border-radius: $border-radius-sm;
+  border-left: 4px solid $gold-light;
+  margin-top: $spacing-sm;
+  
+  strong {
+    color: $dark-brown;
+  }
+}
+
+.reportFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: $spacing-sm;
+  border-top: 1px solid rgba($gold-light, 0.3);
+  flex-wrap: wrap;
+  gap: $spacing-sm;
+}
+
+.reportStatus {
+  padding: 4px 8px;
+  border-radius: $border-radius-sm;
+  font-size: 0.8rem;
+  
+  &.pending {
+    background: #fbbf24;
+    color: $dark-brown;
+  }
+  
+  &.investigating {
+    background: #3b82f6;
+    color: white;
+  }
+  
+  &.resolved {
+    background: #10b981;
+    color: white;
+  }
+  
+  &.dismissed {
+    background: #6b7280;
+    color: white;
+  }
+}
+
+.reportScore {
+  font-size: 0.85rem;
+  color: $medium-brown;
+}
+
+.reportUrgent {
+  color: $dark-red;
+  font-weight: bold;
+  font-size: 0.85rem;
+}
+
+// Common states
+.loadingState, .errorState, .emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-xl;
+  color: $medium-brown;
+  
+  p {
+    margin-top: $spacing-md;
+    font-size: 1.1rem;
+    text-align: center;
+  }
+}
+
+.errorState {
+  color: $dark-red;
+}
+
+.emptyState {
+  font-style: italic;
+  opacity: 0.8;
+}

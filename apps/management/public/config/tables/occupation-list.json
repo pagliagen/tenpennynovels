@@ -1,0 +1,445 @@
+{
+  "_meta": {
+    "version": "1.0.0",
+    "description": "Occupation management table configuration",
+    "lastUpdated": "2025-12-14"
+  },
+
+  "table": {
+    "name": "occupation-list",
+    "title": "Occupation Management",
+    "icon": "💼",
+    "searchable": true,
+    "selectable": true,
+    "pagination": {
+      "defaultPageSize": 25,
+      "pageSizeOptions": [10, 25, 50, 100]
+    }
+  },
+
+  "columns": [
+    {
+      "key": "name",
+      "label": "Nome",
+      "type": "text",
+      "visible": true,
+      "defaultVisible": true,
+      "alwaysVisible": true,
+      "sortable": true,
+      "filterable": true,
+      "editable": true,
+      "required": true,
+      "width": "200px",
+      "validation": {
+        "minLength": 3,
+        "maxLength": 100
+      },
+      "render": {
+        "type": "occupation_cell",
+        "showSubtext": true,
+        "subtextField": "description"
+      }
+    },
+    {
+      "key": "category",
+      "label": "Categoria",
+      "type": "select",
+      "visible": true,
+      "defaultVisible": true,
+      "alwaysVisible": false,
+      "sortable": true,
+      "filterable": true,
+      "editable": true,
+      "required": true,
+      "width": "150px",
+      "options": [
+        { "value": "avventurieri", "label": "Avventurieri" },
+        { "value": "arti_creative", "label": "Arti Creative" },
+        { "value": "artisti_spettacolo", "label": "Artisti Spettacolo" },
+        { "value": "sport", "label": "Sport" },
+        { "value": "affari", "label": "Affari" },
+        { "value": "religiosi", "label": "Religiosi" },
+        { "value": "criminali", "label": "Criminali" },
+        { "value": "giornalismo", "label": "Giornalismo" },
+        { "value": "lavoro_rurale", "label": "Lavoro Rurale" },
+        { "value": "lavoro_urbano", "label": "Lavoro Urbano" },
+        { "value": "tutori_ordine", "label": "Tutori dell'Ordine" },
+        { "value": "professione_legale", "label": "Professione Legale" },
+        { "value": "operatori_sanitari", "label": "Operatori Sanitari" },
+        { "value": "salute_mentale", "label": "Salute Mentale" },
+        { "value": "forze_armate", "label": "Forze Armate" },
+        { "value": "politica", "label": "Politica" },
+        { "value": "studiosi", "label": "Studiosi" },
+        { "value": "professioni_varie", "label": "Professioni Varie" }
+      ],
+      "render": {
+        "type": "badge",
+        "colorMap": {
+          "avventurieri": "adventurer",
+          "arti_creative": "creative",
+          "artisti_spettacolo": "entertainment",
+          "sport": "sport",
+          "affari": "business",
+          "religiosi": "religious",
+          "criminali": "criminal",
+          "giornalismo": "journalism",
+          "lavoro_rurale": "rural",
+          "lavoro_urbano": "urban",
+          "tutori_ordine": "law",
+          "professione_legale": "legal",
+          "operatori_sanitari": "medical",
+          "salute_mentale": "mental",
+          "forze_armate": "military",
+          "politica": "political",
+          "studiosi": "scholar",
+          "professioni_varie": "misc"
+        }
+      }
+    },
+    {
+      "key": "requiredSkills",
+      "label": "Required Skills",
+      "type": "array_length",
+      "visible": true,
+      "defaultVisible": true,
+      "alwaysVisible": false,
+      "sortable": true,
+      "filterable": false,
+      "editable": false,
+      "required": false,
+      "width": "120px",
+      "align": "center",
+      "render": {
+        "type": "skills_count",
+        "className": "requiredSkillsCount",
+        "emptyText": "No required"
+      }
+    },
+    {
+      "key": "bonusSkills",
+      "label": "Bonus Skills",
+      "type": "array_length",
+      "visible": true,
+      "defaultVisible": true,
+      "alwaysVisible": false,
+      "sortable": true,
+      "filterable": false,
+      "editable": false,
+      "required": false,
+      "width": "110px",
+      "align": "center",
+      "render": {
+        "type": "skills_count",
+        "className": "bonusSkillsCount",
+        "emptyText": "No bonus"
+      }
+    },
+    {
+      "key": "socialClass",
+      "label": "Classe Sociale",
+      "type": "multi_select",
+      "visible": true,
+      "defaultVisible": true,
+      "alwaysVisible": false,
+      "sortable": false,
+      "filterable": true,
+      "editable": true,
+      "required": true,
+      "width": "140px",
+      "options": [
+        { "value": "working", "label": "Working" },
+        { "value": "middle", "label": "Middle" },
+        { "value": "upper", "label": "Upper" }
+      ],
+      "render": {
+        "type": "multi_badges",
+        "className": "socialClassList",
+        "maxVisible": 3
+      }
+    },
+    {
+      "key": "isActive",
+      "label": "Stato",
+      "type": "boolean",
+      "visible": true,
+      "defaultVisible": true,
+      "alwaysVisible": false,
+      "sortable": true,
+      "filterable": true,
+      "editable": true,
+      "required": false,
+      "width": "100px",
+      "align": "center",
+      "render": {
+        "type": "badge",
+        "trueValue": { "text": "Attiva", "className": "activeBadge" },
+        "falseValue": { "text": "Inattiva", "className": "inactiveBadge" }
+      }
+    },
+    {
+      "key": "createdBy.username",
+      "label": "Creato Da",
+      "type": "text",
+      "visible": true,
+      "defaultVisible": false,
+      "alwaysVisible": false,
+      "sortable": false,
+      "filterable": false,
+      "editable": false,
+      "required": false,
+      "width": "120px"
+    },
+    {
+      "key": "updatedAt",
+      "label": "Ultima Modifica",
+      "type": "nested_datetime",
+      "visible": true,
+      "defaultVisible": false,
+      "alwaysVisible": false,
+      "sortable": true,
+      "filterable": false,
+      "editable": false,
+      "required": false,
+      "width": "140px",
+      "align": "center",
+      "render": {
+        "type": "datetime",
+        "format": "short"
+      }
+    }
+  ],
+
+  "actions": [
+    {
+      "key": "edit",
+      "label": "Modifica",
+      "icon": "✏️",
+      "type": "edit",
+      "visible": true,
+      "className": "editAction",
+      "permission": "occupations.update"
+    },
+    {
+      "key": "toggle_active",
+      "label": {
+        "type": "conditional",
+        "field": "isActive",
+        "trueValue": "Disattiva",
+        "falseValue": "Attiva"
+      },
+      "icon": {
+        "type": "conditional",
+        "field": "isActive",
+        "trueValue": "🔴",
+        "falseValue": "🟢"
+      },
+      "type": "toggle",
+      "visible": true,
+      "className": {
+        "type": "conditional",
+        "field": "isActive",
+        "trueValue": "deactivateAction",
+        "falseValue": "activateAction"
+      },
+      "permission": "occupations.update",
+      "confirmMessage": {
+        "type": "conditional",
+        "field": "isActive",
+        "trueValue": "Sei sicuro di voler disattivare questa occupazione?",
+        "falseValue": "Sei sicuro di voler attivare questa occupazione?"
+      }
+    }
+  ],
+
+  "bulkActions": [
+    {
+      "key": "activate",
+      "label": "Attiva Selezionate",
+      "icon": "🟢",
+      "type": "bulk_action",
+      "className": "bulkActivate",
+      "permission": "occupations.update",
+      "confirmMessage": "Sei sicuro di voler attivare le occupazioni selezionate?",
+      "filter": {
+        "field": "isActive",
+        "value": false
+      }
+    },
+    {
+      "key": "deactivate",
+      "label": "Disattiva Selezionate",
+      "icon": "🔴",
+      "type": "bulk_action",
+      "className": "bulkDeactivate",
+      "permission": "occupations.update",
+      "confirmMessage": "Sei sicuro di voler disattivare le occupazioni selezionate?",
+      "filter": {
+        "field": "isActive",
+        "value": true
+      }
+    },
+    {
+      "key": "update_category",
+      "label": "Aggiorna Categoria",
+      "icon": "📂",
+      "type": "bulk_action",
+      "className": "bulkUpdateCategory",
+      "permission": "occupations.update",
+      "confirmMessage": "Sei sicuro di voler aggiornare la categoria per le occupazioni selezionate?"
+    }
+  ],
+
+  "editModal": {
+    "title": "Modifica Occupazione: {name}",
+    "size": "large",
+    "fields": []
+  },
+
+  "sidePanels": {
+    "edit": {
+      "title": "Modifica Occupazione: {name}",
+      "subtitle": "Modifica le informazioni dell'occupazione selezionata",
+      "width": "large",
+      "fields": [
+        {
+          "key": "name",
+          "label": "Nome",
+          "type": "text",
+          "required": true,
+          "defaultVisible": true
+        },
+        {
+          "key": "category",
+          "label": "Categoria",
+          "type": "select",
+          "required": true,
+          "defaultVisible": true,
+          "options": [
+            { "value": "avventurieri", "label": "Avventurieri" },
+            { "value": "arti_creative", "label": "Arti Creative" },
+            { "value": "artisti_spettacolo", "label": "Artisti Spettacolo" },
+            { "value": "sport", "label": "Sport" },
+            { "value": "affari", "label": "Affari" },
+            { "value": "religiosi", "label": "Religiosi" },
+            { "value": "criminali", "label": "Criminali" },
+            { "value": "giornalismo", "label": "Giornalismo" },
+            { "value": "lavoro_rurale", "label": "Lavoro Rurale" },
+            { "value": "lavoro_urbano", "label": "Lavoro Urbano" },
+            { "value": "tutori_ordine", "label": "Tutori dell'Ordine" },
+            { "value": "professione_legale", "label": "Professione Legale" },
+            { "value": "operatori_sanitari", "label": "Operatori Sanitari" },
+            { "value": "salute_mentale", "label": "Salute Mentale" },
+            { "value": "forze_armate", "label": "Forze Armate" },
+            { "value": "politica", "label": "Politica" },
+            { "value": "studiosi", "label": "Studiosi" },
+            { "value": "professioni_varie", "label": "Professioni Varie" }
+          ]
+        },
+        {
+          "key": "description",
+          "label": "Descrizione",
+          "type": "textarea",
+          "required": true,
+          "defaultVisible": true,
+          "rows": 4
+        },
+        {
+          "key": "socialClass",
+          "label": "Classe Sociale",
+          "type": "multi_checkbox",
+          "required": true,
+          "defaultVisible": true,
+          "options": [
+            { "value": "working", "label": "Working Class" },
+            { "value": "middle", "label": "Middle Class" },
+            { "value": "upper", "label": "Upper Class" }
+          ]
+        },
+        {
+          "key": "contacts",
+          "label": "Contatti Tipici",
+          "type": "text",
+          "required": true,
+          "defaultVisible": true,
+          "placeholder": "es: altri medici, alta società, polizia locale"
+        },
+        {
+          "key": "earnings",
+          "label": "Guadagni",
+          "type": "text",
+          "required": true,
+          "defaultVisible": true,
+          "placeholder": "es: Lower Middle Class - Alta Borghesia"
+        },
+        {
+          "key": "isActive",
+          "label": "Occupazione Attiva",
+          "type": "checkbox",
+          "required": false,
+          "defaultVisible": true
+        }
+      ],
+      "actions": [
+        {
+          "key": "save",
+          "label": "Salva Modifiche",
+          "type": "primary",
+          "icon": "💾"
+        }
+      ]
+    }
+  },
+
+  "filters": [
+    {
+      "key": "category",
+      "label": "Categoria",
+      "type": "select",
+      "field": "category",
+      "options": [
+        { "value": "all", "label": "Tutte le Categorie" },
+        { "value": "avventurieri", "label": "Avventurieri" },
+        { "value": "arti_creative", "label": "Arti Creative" },
+        { "value": "artisti_spettacolo", "label": "Artisti Spettacolo" },
+        { "value": "sport", "label": "Sport" },
+        { "value": "affari", "label": "Affari" },
+        { "value": "religiosi", "label": "Religiosi" },
+        { "value": "criminali", "label": "Criminali" },
+        { "value": "giornalismo", "label": "Giornalismo" },
+        { "value": "lavoro_rurale", "label": "Lavoro Rurale" },
+        { "value": "lavoro_urbano", "label": "Lavoro Urbano" },
+        { "value": "tutori_ordine", "label": "Tutori dell'Ordine" },
+        { "value": "professione_legale", "label": "Professione Legale" },
+        { "value": "operatori_sanitari", "label": "Operatori Sanitari" },
+        { "value": "salute_mentale", "label": "Salute Mentale" },
+        { "value": "forze_armate", "label": "Forze Armate" },
+        { "value": "politica", "label": "Politica" },
+        { "value": "studiosi", "label": "Studiosi" },
+        { "value": "professioni_varie", "label": "Professioni Varie" }
+      ]
+    },
+    {
+      "key": "socialClass",
+      "label": "Classe Sociale",
+      "type": "select",
+      "field": "socialClass",
+      "options": [
+        { "value": "all", "label": "Tutte le Classi" },
+        { "value": "working", "label": "Working" },
+        { "value": "middle", "label": "Middle" },
+        { "value": "upper", "label": "Upper" }
+      ]
+    },
+    {
+      "key": "status",
+      "label": "Stato",
+      "type": "select",
+      "field": "isActive",
+      "options": [
+        { "value": "all", "label": "Tutte" },
+        { "value": true, "label": "Solo Attive" },
+        { "value": false, "label": "Solo Inattive" }
+      ]
+    }
+  ]
+}

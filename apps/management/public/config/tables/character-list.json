@@ -1,0 +1,195 @@
+{
+  "table": {
+    "name": "character-list",
+    "title": "Lista Personaggi",
+    "description": "Gestione completa di tutti i personaggi del gioco",
+    "pagination": {
+      "defaultPageSize": 25,
+      "pageSizeOptions": [10, 25, 50, 100]
+    },
+    "search": {
+      "enabled": true,
+      "placeholder": "Cerca per nome personaggio, giocatore, occupazione..."
+    },
+    "selectable": true,
+    "sortable": true
+  },
+  "columns": [
+    {
+      "key": "characterInfo",
+      "label": "Personaggio",
+      "sortable": true,
+      "filterable": true,
+      "searchable": true,
+      "defaultVisible": true,
+      "alwaysVisible": true,
+      "width": "280px",
+      "render": {
+        "type": "custom",
+        "template": "characterInfo"
+      },
+      "tooltip": "Nome, cognome, occupazione e classe sociale del personaggio"
+    },
+    {
+      "key": "username",
+      "label": "Giocatore",
+      "sortable": true,
+      "filterable": true,
+      "searchable": true,
+      "defaultVisible": true,
+      "width": "150px",
+      "render": {
+        "type": "text",
+        "className": "playerName"
+      },
+      "tooltip": "Username del giocatore proprietario del personaggio"
+    },
+    {
+      "key": "status",
+      "label": "Stato",
+      "sortable": true,
+      "filterable": true,
+      "defaultVisible": true,
+      "width": "120px",
+      "render": {
+        "type": "custom",
+        "template": "statusBadge"
+      },
+      "tooltip": "Stato di approvazione del personaggio"
+    },
+    {
+      "key": "createdAt",
+      "label": "Creato",
+      "sortable": true,
+      "defaultVisible": true,
+      "width": "140px",
+      "render": {
+        "type": "custom",
+        "template": "dateInfo"
+      },
+      "tooltip": "Data di creazione del personaggio"
+    },
+    {
+      "key": "lastActivity",
+      "label": "Ultima Attività",
+      "sortable": true,
+      "defaultVisible": false,
+      "width": "140px",
+      "render": {
+        "type": "custom",
+        "template": "dateInfo"
+      },
+      "tooltip": "Data dell'ultima attività del personaggio"
+    },
+    {
+      "key": "submittedAt",
+      "label": "Inviato",
+      "sortable": true,
+      "defaultVisible": false,
+      "width": "140px",
+      "render": {
+        "type": "custom",
+        "template": "dateInfo"
+      },
+      "tooltip": "Data di invio per approvazione"
+    },
+    {
+      "key": "reviewedAt",
+      "label": "Revisionato",
+      "sortable": true,
+      "defaultVisible": false,
+      "width": "140px",
+      "render": {
+        "type": "custom",
+        "template": "dateInfo"
+      },
+      "tooltip": "Data di revisione da parte dello staff"
+    },
+    {
+      "key": "characterRoles",
+      "label": "Ruoli",
+      "sortable": false,
+      "defaultVisible": false,
+      "width": "200px",
+      "render": {
+        "type": "custom",
+        "template": "rolesBadges"
+      },
+      "tooltip": "Ruoli di gioco assegnati al personaggio"
+    },
+    {
+      "key": "corporationMemberships",
+      "label": "Corporazioni",
+      "sortable": false,
+      "defaultVisible": false,
+      "width": "200px",
+      "render": {
+        "type": "custom",
+        "template": "corporationsList"
+      },
+      "tooltip": "Corporazioni di cui il personaggio è membro"
+    },
+    {
+      "key": "stats",
+      "label": "Statistiche",
+      "sortable": false,
+      "defaultVisible": true,
+      "width": "160px",
+      "render": {
+        "type": "custom",
+        "template": "statsPreview"
+      },
+      "tooltip": "Anteprima delle statistiche del personaggio"
+    }
+  ],
+  "actions": [
+    {
+      "key": "view",
+      "label": "Visualizza",
+      "icon": "👁️",
+      "variant": "secondary",
+      "tooltip": "Visualizza dettagli completi del personaggio",
+      "visible": true,
+      "permissions": ["characters.read"]
+    }
+  ],
+  "bulkActions": [],
+  "filters": [
+    {
+      "key": "status",
+      "label": "Stato",
+      "type": "select",
+      "options": [
+        { "value": "ALL", "label": "Tutti gli stati" },
+        { "value": "DRAFT", "label": "Bozza" },
+        { "value": "PENDING_APPROVAL", "label": "In Attesa" },
+        { "value": "APPROVED", "label": "Approvato" },
+        { "value": "REJECTED", "label": "Respinto" },
+        { "value": "DELETED", "label": "Eliminato" }
+      ]
+    },
+    {
+      "key": "roles",
+      "label": "Ruolo",
+      "type": "select",
+      "options": [
+        { "value": "ALL", "label": "Tutti i ruoli" },
+        { "value": "NO_ROLES", "label": "Nessun ruolo" },
+        { "value": "personaggio", "label": "Personaggio" },
+        { "value": "master", "label": "Master" },
+        { "value": "moderatore", "label": "Moderatore" },
+        { "value": "amministratore", "label": "Amministratore" }
+      ]
+    }
+  ],
+  "export": {
+    "enabled": true,
+    "formats": ["csv", "json"],
+    "filename": "character-list"
+  },
+  "refresh": {
+    "enabled": true,
+    "autoRefresh": false,
+    "interval": 30000
+  }
+}

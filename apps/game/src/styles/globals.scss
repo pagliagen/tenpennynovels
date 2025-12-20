@@ -1,0 +1,26 @@
+// Game App Global Styles 
+// Note: main.scss contains global selectors incompatible with CSS Modules
+// Individual components import required variables directly
+ 
+// Game-specific overflow override (prevent scrolling for game interface)
+// Overrides shared-ui body overflow-x: hidden with complete overflow: hidden
+body {
+  overflow: hidden !important; // More restrictive than shared-ui overflow-x: hidden
+}
+
+// Game interface specific styles
+.game-interface {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+} 
+
+// Game-specific print styles
+@media print {
+  .game-interface {
+    display: none !important;
+  }
+}
+
+@import "../../../shared-ui/src/styles/index.scss";

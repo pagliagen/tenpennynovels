@@ -1,0 +1,110 @@
+// =============================================================================
+// TenpennyNovels Design System - Animation Mixins
+// =============================================================================
+
+// Victorian spinner for loading states
+@mixin victorian-spinner($size: 18px) {
+  width: $size;
+  height: $size;
+  border: 2px solid rgba($gold-primary, 0.3);
+  border-radius: 50%;
+  border-top-color: $gold-primary;
+  animation: spin 1s linear infinite;
+}
+
+// Spin animation
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Gold glow effect (static)
+@mixin gold-glow {
+  text-shadow: $text-shadow;
+}
+
+// Gold glow animation for text
+@mixin gold-glow-animation($duration: 3s) {
+  animation: goldGlow $duration ease-in-out infinite;
+}
+
+@keyframes goldGlow {
+  0%, 100% {
+    text-shadow: 
+      0 0 20px rgba($gold-primary, 0.6),
+      0 0 40px rgba($gold-primary, 0.4),
+      0 0 60px rgba($gold-primary, 0.2);
+  }
+  50% {
+    text-shadow: 
+      0 0 30px rgba($gold-primary, 0.8),
+      0 0 60px rgba($gold-primary, 0.6),
+      0 0 90px rgba($gold-primary, 0.4);
+  }
+}
+
+// Fade in animation
+@mixin fade-in($duration: 0.3s) {
+  opacity: 0;
+  animation: fadeIn $duration ease forwards;
+}
+
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+  }
+}
+
+// Slide in from top
+@mixin slide-in-top($duration: 0.3s) {
+  transform: translateY(-20px);
+  opacity: 0;
+  animation: slideInTop $duration ease forwards;
+}
+
+@keyframes slideInTop {
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+// Scale in animation
+@mixin scale-in($duration: 0.2s) {
+  transform: scale(0.95);
+  opacity: 0;
+  animation: scaleIn $duration ease forwards;
+}
+
+@keyframes scaleIn {
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+// Hover lift effect
+@mixin hover-lift {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-2px);
+  }
+}
+
+// Pulse animation
+@mixin pulse($color: $gold-primary, $duration: 2s) {
+  animation: pulse-#{$color} $duration ease-in-out infinite;
+}
+
+// Generate pulse keyframes for different colors
+@keyframes pulse-#{$gold-primary} {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba($gold-primary, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba($gold-primary, 0.8);
+  }
+}
+

@@ -1,0 +1,98 @@
+// =============================================================================
+// TenpennyNovels Design System - Victorian Frame Layout
+// =============================================================================
+
+// Full-screen Victorian layout
+.layout-victorian-fullscreen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  
+  // Victorian study background
+  background: 
+    linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.4));
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  
+  // Texture overlay
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    z-index: 1;
+  }
+  
+  // Header area
+  .layout-header {
+    position: relative;
+    z-index: 2;
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: $spacing-xl $spacing-md;
+    min-height: 20vh;
+    
+    .game-title {
+      @include victorian-title(clamp(2.5rem, 7vw, 5rem));
+      margin: 0;
+      text-align: center;
+      
+      @include mobile-only {
+        font-size: clamp(2rem, 10vw, 3.5rem);
+      }
+    }
+  }
+  
+  // Main content area
+  .layout-main {
+    position: relative;
+    z-index: 2;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: $spacing-md;
+  }
+  
+  // Footer area
+  .layout-footer {
+    position: relative;
+    z-index: 2;
+    flex: 0 0 auto;
+    background: rgba(0, 0, 0, 0.8);
+    border-top: 1px solid $input-border;
+    padding: $spacing-md $spacing-xl;
+  }
+}
+
+// Victorian content card
+.content-card-victorian {
+  @include victorian-card('xl');
+  width: 100%;
+  max-width: 500px;
+  
+  @include mobile-only {
+    max-width: 90vw;
+  }
+}
+
+// Victorian ornate frame for important content
+.ornate-frame-victorian {
+  @include victorian-ornate-frame('xl');
+  width: 100%;
+  max-width: 500px;
+  
+  @include mobile-only {
+    max-width: 90vw;
+    padding: $card-padding-md;
+  }
+}

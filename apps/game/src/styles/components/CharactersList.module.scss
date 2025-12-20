@@ -1,0 +1,266 @@
+@import "../../../../shared-ui/src/styles/variables/colors";
+@import "../../../../shared-ui/src/styles/variables/typography";
+@import "../../../../shared-ui/src/styles/variables/spacing";
+@import "../../../../shared-ui/src/styles/variables/breakpoints";
+@import "../../../../shared-ui/src/styles/variables/shadows";
+@import "../../../../shared-ui/src/styles/variables/borders";
+
+// Victorian-themed characters list
+.container {
+  display: flex;
+  flex-direction: column;
+  background: $bg-secondary;
+  border: 2px solid rgba($gold-primary, 0.6);
+  border-radius: $radius-lg;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  height: 100%;
+  overflow: hidden;
+}
+
+.header {
+  padding: $spacing-md;
+  border-bottom: 1px solid $border-secondary;
+  background: $bg-tertiary;
+}
+
+.title {
+  font-family: $font-primary;
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: $gold-primary;
+  margin: 0 0 $spacing-sm 0;
+  text-shadow: $text-shadow;
+}
+
+.location {
+  font-family: $font-primary;
+  font-size: 0.85rem;
+  color: $text-secondary;
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+  text-shadow: $text-shadow;
+}
+
+.charactersList {
+  flex: 1;
+  overflow-y: auto;
+  padding: $spacing-sm;
+  
+  // Custom scrollbar for Victorian theme
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: $radius-sm;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: rgba($gold-primary, 0.3);
+    border-radius: $radius-sm;
+    
+    &:hover {
+      background: rgba($gold-primary, 0.5);
+    }
+  }
+}
+
+.character {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  padding: $spacing-md;
+  margin-bottom: $spacing-sm;
+  background: $bg-tertiary;
+  border: 1px solid $border-secondary;
+  border-radius: $radius-md;
+  cursor: pointer;
+  transition: all all 0.15s ease;
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba($gold-primary, 0.6);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.currentCharacter {
+  background: rgba($gold-primary, 0.15);
+  border-color: rgba($gold-primary, 0.6);
+  box-shadow: 0 0 20px rgba($gold-primary, 0.3);
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 20px rgba($gold-primary, 0.3);
+  }
+}
+
+.characterIcon {
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: $bg-tertiary;
+  border: 1px solid $border-secondary;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+}
+
+.avatarImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.defaultIcon {
+  font-size: 1.5rem;
+}
+
+.currentCharacter .characterIcon {
+  background: linear-gradient(145deg, $gold-primary, $gold-light);
+  border-color: $gold-light;
+  box-shadow: 0 0 20px rgba($gold-primary, 0.3);
+}
+
+.characterInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.characterName {
+  font-family: $font-primary;
+  font-size: 0.95rem;
+  font-weight: bold;
+  color: $text-primary;
+  text-shadow: $text-shadow;
+  display: flex;
+  align-items: center;
+}
+
+.currentCharacter .characterName {
+  color: $gold-light;
+}
+
+.youLabel {
+  font-size: 0.75rem;
+  color: $gold-primary;
+  font-weight: normal;
+  font-style: italic;
+  margin-left: $spacing-xs;
+}
+
+.characterStatus {
+  font-family: $font-monospace;
+  font-size: 0.7rem;
+  color: $success-text;
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+  text-shadow: $text-shadow;
+}
+
+// Character status styles
+.draftStatus {
+  font-size: 0.7rem;
+  color: $warning-text;
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+  flex-wrap: wrap;
+}
+
+.wizardLink {
+  color: $gold-primary;
+  text-decoration: underline;
+  font-weight: bold;
+  font-size: 0.7rem;
+  transition: color all 0.15s ease;
+  
+  &:hover {
+    color: $gold-light;
+    text-decoration: none;
+  }
+}
+
+.pendingStatus {
+  font-size: 0.7rem;
+  color: $error-text;
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+}
+
+.approvedStatus {
+  font-size: 0.7rem;
+  color: $success-text;
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+}
+
+.unknownStatus {
+  font-size: 0.7rem;
+  color: $success-text;
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+}
+
+.otherPlayerStatus {
+  font-size: 0.7rem;
+  color: $success-text;
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-2xl;
+  text-align: center;
+  gap: $spacing-sm;
+}
+
+.emptyIcon {
+  font-size: 2rem;
+  opacity: 0.5;
+}
+
+.emptyText {
+  font-family: $font-primary;
+  font-size: 0.9rem;
+  color: $text-tertiary;
+  font-style: italic;
+  text-shadow: $text-shadow;
+}
+
+.footer {
+  padding: $spacing-md;
+  border-top: 1px solid $border-secondary;
+  background: $bg-secondary;
+  text-align: center;
+}
+
+.count {
+  font-family: $font-primary;
+  font-size: 0.8rem;
+  color: $text-secondary;
+  font-style: italic;
+  text-shadow: $text-shadow;
+}

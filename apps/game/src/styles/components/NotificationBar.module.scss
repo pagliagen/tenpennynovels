@@ -1,0 +1,900 @@
+@import "../../../../shared-ui/src/styles/variables/colors";
+@import "../../../../shared-ui/src/styles/variables/typography";
+@import "../../../../shared-ui/src/styles/variables/spacing";
+@import "../../../../shared-ui/src/styles/variables/breakpoints";
+@import "../../../../shared-ui/src/styles/variables/shadows";
+@import "../../../../shared-ui/src/styles/variables/borders";
+
+// NotificationBar.module.scss
+.settingsIcon {
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  width: 50px;
+  height: 50px;
+  background: rgba($warning-text, 0.9);
+  border: 2px solid rgba($warning-text, 0.9);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba($warning-text, 0.4);
+  backdrop-filter: blur(10px);
+  z-index: 6001;
+  
+  &:hover, &.expanded {
+    background: rgba($warning-text, 0.95);
+    border-color: rgba($warning-text, 0.95);
+    transform: scale(1.1);
+    box-shadow: 0 6px 16px rgba($warning-text, 0.6);
+  }
+  
+  .icon {
+    font-size: 20px;
+    color: $text-primary;
+  }
+}
+
+.notificationsContainer {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 50px;
+  padding-top: 10px;
+  padding-bottom: 70px; // Leave space for settings button
+  background-color: rgba($bg-primary, 0.6);
+  z-index: 5000;
+}
+ 
+.notificationIcon {
+  position: relative;
+  width: 60px;
+  transform: translateX(0);
+  height: 50px; 
+  background: rgba($bg-primary, 0.9);
+  border-top-left-radius: 50px;
+  border-bottom-left-radius: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 2px solid rgba($bg-primary, 0.9);
+  margin-left: 0;
+  padding-left: 8px;
+  box-shadow: -4px 0 8px rgba($bg-primary, 0.4);
+  backdrop-filter: blur(10px);
+  margin-bottom: 10px;
+  
+  &:hover {
+    transform: translateX(-10px);
+    background: rgba($bg-primary, 0.95);
+    box-shadow: -8px 0 16px rgba($bg-primary, 0.6);
+  }
+  
+  &.expanded {
+    transform: translateX(-10px);
+    background: rgba($bg-primary, 0.95);
+    box-shadow: -8px 0 16px rgba($bg-primary, 0.6);
+  }
+  
+  &.adminButton {
+    background: rgba($success-text, 0.9);
+    border-color: rgba($success-text, 0.9);
+    
+    &:hover, &.expanded {
+      background: rgba($success-text, 0.95);
+      border-color: rgba($success-text, 0.95);
+    }
+  }
+  
+  &.ticketsButton {
+    background: rgba($warning-text, 0.9);
+    border-color: rgba($warning-text, 0.9);
+    
+    &:hover, &.expanded {
+      background: rgba($warning-text, 0.95);
+      border-color: rgba($warning-text, 0.95);
+    }
+  }
+  
+  &.debugButton {
+    background: rgba(33, 150, 243, 0.9);
+    border-color: rgba(33, 150, 243, 0.9);
+    
+    &:hover, &.expanded {
+      background: rgba(33, 150, 243, 0.95);
+      border-color: rgba(33, 150, 243, 0.95);
+    }
+  }
+  
+  &.unread {
+    background: rgba($text-primary, 0.15);
+    border-color: rgba($text-primary, 0.3);
+    
+    &:hover, &.expanded {
+      background: rgba($text-primary, 0.2);
+      border-color: rgba($text-primary, 0.4);
+    }
+  }
+}
+
+.icon {
+  font-size: 18px;
+  line-height: 1;
+  color: $text-primary;
+}
+
+.unreadDot {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 8px;
+  height: 8px;
+  background: $error-text;
+  border-radius: 50%;
+  border: 1px solid $text-primary;
+  z-index: 5002;
+}
+
+.typeUnreadBadge {
+  position: absolute;
+  top: 50%;
+  left: 4px;
+  transform: translateY(-50%);
+  background: $error-text;
+  color: $text-primary;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 5px;
+  border-radius: 10px;
+  min-width: 16px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 4px rgba($error-text, 0.4);
+  border: 1px solid $text-primary;
+  z-index: 5002;
+  line-height: 1;
+}
+
+.notificationBubble {
+  position: absolute;
+  right: 50px;
+  top: 0;
+  min-width: 280px;
+  max-width: 320px;
+  background: $bg-secondary;
+  border: 1px solid $border-secondary;
+  border-radius: $radius-xl;
+  padding: $spacing-md;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(15px);
+  animation: slideIn 0.3s ease-out;
+  z-index: 1001;
+  
+  // Arrow pointing to the icon
+  &::after {
+    content: '';
+    position: absolute;
+    right: -8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-left: 8px solid rgba($bg-secondary, 0.95);
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+  }
+}
+
+.bubbleHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+  gap: 8px;
+}
+
+.bubbleTitle {
+  font-weight: 600;
+  color: $text-primary;
+  font-size: 14px;
+  line-height: 1.3;
+  flex: 1;
+}
+
+.bubbleTime {
+  font-size: 11px;
+  color: $text-tertiary;
+  white-space: nowrap;
+}
+
+.newIndicator {
+  font-size: 9px;
+  font-weight: 700;
+  color: $error-text;
+  background: rgba($error-text, 0.1);
+  padding: 2px 6px;
+  border-radius: $radius-sm;
+  border: 1px solid rgba($error-text, 0.3);
+  white-space: nowrap;
+}
+
+.bubbleContent {
+  color: $text-secondary;
+  font-size: 13px;
+  line-height: 1.4;
+  margin-bottom: 8px;
+}
+
+.bubbleFooter {
+  border-top: 1px solid $border-secondary;
+  padding-top: 6px;
+}
+
+.volatileIndicator {
+  font-size: 11px;
+  color: rgba($warning-text, 0.8);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.notificationItem {
+  margin-bottom: 8px;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.notificationItemHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 4px;
+  gap: 8px;
+}
+
+.notificationItemTitle {
+  font-weight: 500;
+  color: $text-primary;
+  font-size: 12px;
+  line-height: 1.3;
+  flex: 1;
+}
+
+.notificationItemTime {
+  font-size: 10px;
+  color: $text-tertiary;
+  white-space: nowrap;
+}
+
+.newDot {
+  color: $error-text;
+  font-size: 16px;
+  line-height: 1;
+  margin-left: 4px;
+}
+
+.notificationItemContent {
+  color: $text-secondary;
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+.notificationDivider {
+  border: none;
+  border-top: 1px solid $border-secondary;
+  margin: 8px 0;
+}
+
+.moreNotifications {
+  color: $text-tertiary;
+  font-size: 11px;
+  font-style: italic;
+  text-align: center;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid $border-secondary;
+}
+
+.unreadBadge {
+  position: fixed;
+  top: 8px;
+  right: 8px;
+  background: $error-text;
+  color: $text-primary;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 10px;
+  min-width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba($error-text, 0.4);
+  border: 2px solid $text-primary;
+  z-index: 5001;
+}
+
+.debugOverlay {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 400px;
+  height: 100vh;
+  background: $bg-secondary;
+  backdrop-filter: blur(10px);
+  z-index: 1002;
+  animation: slideIn 0.3s ease-out;
+  overflow-y: auto;
+}
+
+.debugHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: $spacing-md;
+  border-bottom: 1px solid $border-secondary;
+  background: $bg-tertiary;
+  
+  h3 {
+    color: $text-primary;
+    margin: 0;
+    font-size: 16px;
+  }
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  color: $text-tertiary;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: $radius-sm;
+  transition: all all 0.15s ease;
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: $text-primary;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+// Responsive design
+@media (max-width: 1024px) {
+  .settingsIcon {
+    width: 48px;
+    height: 48px;
+    
+    .icon {
+      font-size: 18px;
+    }
+  }
+  
+  .notificationsContainer {
+    width: 48px;
+    padding-bottom: 68px;
+  }
+  
+  .notificationIcon {
+    width: 58px;
+    height: 48px;
+    
+    &:hover {
+      transform: translateX(-9px);
+    }
+    
+    &.expanded {
+      transform: translateX(-9px);
+    }
+  }
+  
+  .notificationBubble {
+    right: 58px;
+  }
+}
+
+@media (max-width: 768px) {
+  .settingsIcon {
+    width: 45px;
+    height: 45px;
+    bottom: 8px;
+    right: 8px;
+    
+    .icon {
+      font-size: 16px;
+    }
+  }
+  
+  .notificationsContainer {
+    width: 45px;
+    padding-top: 8px;
+    padding-bottom: 65px;
+  }
+  
+  .notificationIcon {
+    width: 55px;
+    height: 45px;
+    padding-left: 6px;
+    margin-bottom: 8px;
+    
+    &:hover {
+      transform: translateX(-8px);
+    }
+    
+    &.expanded {
+      transform: translateX(-8px);
+    }
+  }
+  
+  .icon {
+    font-size: 16px;
+  }
+  
+  .notificationBubble {
+    min-width: 240px;
+    max-width: 280px;
+    right: 55px;
+    padding: 12px;
+    
+    &::after {
+      right: -6px;
+      border-left: 6px solid rgba(0, 0, 0, 0.95);
+      border-top: 6px solid transparent;
+      border-bottom: 6px solid transparent;
+    }
+  }
+  
+  .debugOverlay {
+    width: 100vw;
+  }
+  
+  .unreadBadge {
+    right: 6px;
+    top: 6px;
+  }
+}
+
+@media (max-width: 550px) {
+  .settingsIcon {
+    width: 40px;
+    height: 40px;
+    bottom: 6px;
+    right: 6px;
+    
+    .icon {
+      font-size: 14px;
+    }
+  }
+  
+  .notificationsContainer {
+    width: 40px;
+    padding-top: 6px;
+    padding-bottom: 60px;
+  }
+  
+  .notificationIcon {
+    width: 50px;
+    height: 40px;
+    padding-left: 4px;
+    margin-bottom: 6px;
+    
+    &:hover {
+      transform: translateX(-6px);
+    }
+    
+    &.expanded {
+      transform: translateX(-6px);
+    }
+  }
+  
+  .icon {
+    font-size: 14px;
+  }
+  
+  .notificationBubble {
+    min-width: 200px;
+    max-width: 240px;
+    right: 50px;
+    padding: 10px;
+    font-size: 12px;
+    
+    &::after {
+      right: -5px;
+      border-left: 5px solid rgba(0, 0, 0, 0.95);
+      border-top: 5px solid transparent;
+      border-bottom: 5px solid transparent;
+    }
+  }
+  
+  .bubbleTitle {
+    font-size: 13px;
+  }
+  
+  .bubbleContent {
+    font-size: 12px;
+  }
+  
+  .bubbleTime {
+    font-size: 10px;
+  }
+  
+  .volatileIndicator {
+    font-size: 10px;
+  }
+  
+  .unreadBadge {
+    right: 4px;
+    top: 4px;
+    min-width: 16px;
+    height: 16px;
+    font-size: 9px;
+    padding: 1px 4px;
+  }
+}
+
+// Admin icon - positioned to the left of settings icon
+.adminIcon {
+  bottom: 10px;
+  right: 70px; // To the left of settings icon
+  background: rgba($success-text, 0.9);
+  border-color: rgba($success-text, 0.9);
+  
+  &:hover, &.expanded {
+    background: rgba($success-text, 0.95);
+    border-color: rgba($success-text, 0.95);
+  }
+}
+
+// Tickets icon - positioned to the left of admin icon (or settings if admin not present)
+.ticketsIcon {
+  bottom: 10px;
+  right: 130px; // To the left of admin icon
+  background: rgba($warning-text, 0.9);
+  border-color: rgba($warning-text, 0.9);
+  
+  &:hover, &.expanded {
+    background: rgba($warning-text, 0.95);
+    border-color: rgba($warning-text, 0.95);
+  }
+  
+  // When no admin button is present, position closer to settings
+  &.ticketsIconNoAdmin {
+    right: 70px;
+  }
+}
+
+// Settings icon styles for ticket badge
+.settingsIcon.hasTickets {
+  animation: pulse 2s infinite;
+}
+
+.settingsBadge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  background: $error-text;
+  color: $text-primary;
+  font-size: 10px;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 10px;
+  min-width: 16px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba($error-text, 0.5);
+  border: 1px solid $text-primary;
+  z-index: 6002;
+  line-height: 1;
+}
+
+.ticketsBadge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  background: $error-text;
+  color: $text-primary;
+  font-size: 10px;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 10px;
+  min-width: 16px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba($error-text, 0.5);
+  border: 1px solid $text-primary;
+  z-index: 6002;
+  line-height: 1;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 4px 12px rgba($warning-text, 0.4), 0 0 0 0 rgba($error-text, 0.7);
+  }
+  
+  70% {
+    box-shadow: 0 4px 12px rgba($warning-text, 0.4), 0 0 0 8px rgba($error-text, 0);
+  }
+  
+  100% {
+    box-shadow: 0 4px 12px rgba($warning-text, 0.4), 0 0 0 0 rgba($error-text, 0);
+  }
+}
+
+// Responsive design for admin and tickets icons
+@media (max-width: 1024px) {
+  .adminIcon {
+    width: 48px;
+    height: 48px;
+    right: 68px;
+    
+    .icon {
+      font-size: 18px;
+    }
+  }
+  
+  .ticketsIcon {
+    width: 48px;
+    height: 48px;
+    right: 126px;
+    
+    &.ticketsIconNoAdmin {
+      right: 68px;
+    }
+    
+    .icon {
+      font-size: 18px;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .adminIcon {
+    width: 45px;
+    height: 45px;
+    bottom: 8px;
+    right: 63px;
+    
+    .icon {
+      font-size: 16px;
+    }
+  }
+  
+  .ticketsIcon {
+    width: 45px;
+    height: 45px;
+    bottom: 8px;
+    right: 118px;
+    
+    &.ticketsIconNoAdmin {
+      right: 63px;
+    }
+    
+    .icon {
+      font-size: 16px;
+    }
+  }
+  
+  .settingsBadge {
+    top: -1px;
+    right: -1px;
+    min-width: 14px;
+    font-size: 9px;
+    padding: 1px 4px;
+  }
+}
+
+@media (max-width: 550px) {
+  .adminIcon {
+    width: 40px;
+    height: 40px;
+    bottom: 6px;
+    right: 56px;
+    
+    .icon {
+      font-size: 14px;
+    }
+  }
+  
+  .ticketsIcon {
+    width: 40px;
+    height: 40px;
+    bottom: 6px;
+    right: 106px;
+    
+    &.ticketsIconNoAdmin {
+      right: 56px;
+    }
+    
+    .icon {
+      font-size: 14px;
+    }
+  }
+  
+  .settingsBadge {
+    top: -1px;
+    right: -1px;
+    min-width: 12px;
+    font-size: 8px;
+    padding: 1px 3px;
+  }
+}
+
+// Admin popup modal styles
+.adminPopupOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  backdrop-filter: blur(5px);
+}
+
+.adminPopupContainer {
+  width: 95vw;
+  height: 95vh;
+  background: $bg-secondary;
+  border: 2px solid $border-secondary;
+  border-radius: $radius-xl;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+.adminPopupHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: $spacing-md $spacing-lg;
+  background: $bg-tertiary;
+  border-bottom: 1px solid $border-secondary;
+  
+  h3 {
+    margin: 0;
+    color: $text-primary;
+    font-size: 18px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+}
+
+.adminPopupControls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.openInTabButton {
+  background: rgba($success-text, 0.9);
+  border: 1px solid rgba($success-text, 0.9);
+  color: $text-primary;
+  padding: 8px 12px;
+  border-radius: $radius-md;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all all 0.15s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  
+  &:hover {
+    background: rgba($success-text, 1);
+    border-color: rgba($success-text, 1);
+    transform: translateY(-1px);
+  }
+}
+
+.closePopupButton {
+  background: rgba($error-text, 0.9);
+  border: 1px solid rgba($error-text, 0.9);
+  color: $text-primary;
+  padding: 8px 12px;
+  border-radius: $radius-md;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all all 0.15s ease;
+  
+  &:hover {
+    background: rgba($error-text, 1);
+    border-color: rgba($error-text, 1);
+    transform: translateY(-1px);
+  }
+}
+
+.adminPopupContent {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.adminIframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: white;
+}
+
+// Responsive design for admin popup
+@media (max-width: 1024px) {
+  .adminPopupContainer {
+    width: 98vw;
+    height: 98vh;
+  }
+  
+  .adminPopupHeader {
+    padding: $spacing-sm $spacing-md;
+    
+    h3 {
+      font-size: 16px;
+    }
+  }
+  
+  .openInTabButton {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+  
+  .closePopupButton {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 768px) {
+  .adminPopupContainer {
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0;
+  }
+  
+  .adminPopupHeader {
+    padding: $spacing-xs $spacing-sm;
+    
+    h3 {
+      font-size: 14px;
+    }
+  }
+  
+  .openInTabButton {
+    padding: 4px 8px;
+    font-size: 10px;
+  }
+  
+  .closePopupButton {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+}

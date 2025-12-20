@@ -1,0 +1,94 @@
+// =============================================================================
+// TenpennyNovels Design System - Typography Mixins
+// =============================================================================
+
+// Heading styles
+@mixin heading($level: 1) {
+  @if $level == 1 {
+    font-family: $h1-font-family;
+    font-size: $h1-font-size;
+    font-weight: $h1-font-weight;
+    line-height: $h1-line-height;
+    letter-spacing: $h1-letter-spacing;
+  } @else if $level == 2 {
+    font-family: $h2-font-family;
+    font-size: $h2-font-size;
+    font-weight: $h2-font-weight;
+    line-height: $h2-line-height;
+  } @else if $level == 3 {
+    font-family: $h3-font-family;
+    font-size: $h3-font-size;
+    font-weight: $h3-font-weight;
+    line-height: $h3-line-height;
+  } @else if $level == 4 {
+    font-family: $h4-font-family;
+    font-size: $h4-font-size;
+    font-weight: $h4-font-weight;
+  } @else if $level == 5 {
+    font-family: $h5-font-family;
+    font-size: $h5-font-size;
+    font-weight: $h5-font-weight;
+  } @else if $level == 6 {
+    font-family: $h6-font-family;
+    font-size: $h6-font-size;
+    font-weight: $h6-font-weight;
+  }
+}
+
+// Victorian title with gold glow
+@mixin victorian-title($size: $font-size-4xl) {
+  font-family: $font-secondary;
+  font-size: $size;
+  font-weight: $font-weight-bold;
+  color: $gold-primary;
+  text-shadow: $text-shadow;
+  line-height: $line-height-tight;
+  letter-spacing: $letter-spacing-tight;
+  @include gold-glow-animation();
+}
+
+// Responsive text sizes
+@mixin responsive-text($min-size, $max-size, $min-viewport: 320px, $max-viewport: 1200px) {
+  font-size: clamp(#{$min-size}, #{$min-size} + (#{strip-unit($max-size)} - #{strip-unit($min-size)}) * ((100vw - #{$min-viewport}) / (#{strip-unit($max-viewport)} - #{strip-unit($min-viewport)})), #{$max-size});
+}
+
+// Remove unit from number (helper function)
+@function strip-unit($number) {
+  @if type-of($number) == 'number' and not unitless($number) {
+    @return $number / ($number * 0 + 1);
+  }
+  @return $number;
+}
+
+// Body text styles
+@mixin body-text($size: 'base') {
+  font-family: $font-primary;
+  color: $text-primary;
+  line-height: $line-height-normal;
+  
+  @if $size == 'sm' {
+    font-size: $font-size-sm;
+  } @else if $size == 'lg' {
+    font-size: $font-size-lg;
+  } @else {
+    font-size: $font-size-base;
+  }
+}
+
+// Victorian accent text
+@mixin victorian-accent {
+  font-family: $font-secondary;
+  color: $gold-primary;
+  font-style: italic;
+  letter-spacing: $letter-spacing-wide;
+}
+
+// Monospace code text
+@mixin code-text {
+  font-family: $font-monospace;
+  font-size: $font-size-sm;
+  background: rgba($bg-tertiary, 0.5);
+  padding: $spacing-1 $spacing-2;
+  border-radius: $radius-sm;
+  border: 1px solid $input-border;
+}

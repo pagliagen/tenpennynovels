@@ -1,0 +1,34 @@
+node_modules/
+logs/
+.next/
+dist/
+*.js
+*.js.map
+*.d.ts
+*.d.ts.map
+*.md
+.env
+.env.*
+.DS_Store
+*.sh
+dbviewer/
+docs/
+log-monitor/
+process-dashboard/
+sviluppo/
+scripts/
+deploy/
+nginx-api.conf
+
+# Environment files (local development)
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Deployment credentials (NEVER commit)
+.env.deploy
+.deploy-backup/
+.deploy-staging/
+
+out/

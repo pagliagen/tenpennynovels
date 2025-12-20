@@ -1,0 +1,297 @@
+// =============================================================================
+// Edit Document Modal Component Styles
+// =============================================================================
+
+@import 'variables/breakpoints';
+@import 'variables/colors';
+@import 'variables/spacing';
+@import 'variables/typography';
+@import 'variables/shadows';
+@import 'variables/borders'; 
+@import 'mixins/buttons';
+@import 'mixins/forms';
+
+.form {
+  .documentInfo {
+    margin-bottom: $spacing-xl;
+    padding: $spacing-lg;
+    background: $bg-secondary;
+    border: 1px solid $border-secondary;
+    border-radius: $radius-md;
+    
+    .typeInfo {
+      display: flex;
+      align-items: center;
+      gap: $spacing-sm;
+      margin-bottom: $spacing-md;
+      
+      .typeIcon {
+        font-size: $font-size-lg;
+      }
+      
+      .typeLabel {
+        color: $gold-primary;
+        font-weight: $font-weight-semibold;
+        font-size: $font-size-sm;
+      }
+    }
+    
+    .metadata {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: $spacing-md;
+      
+      .metaItem {
+        display: flex;
+        flex-direction: column;
+        gap: $spacing-xs;
+        
+        .metaLabel {
+          color: $text-tertiary;
+          font-size: $font-size-xs;
+          font-weight: $font-weight-semibold;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+        
+        .metaValue {
+          color: $text-primary;
+          font-size: $font-size-sm;
+          font-weight: $font-weight-medium;
+        }
+      }
+      
+      @media (max-width: 767px) {
+        grid-template-columns: 1fr;
+        gap: $spacing-sm;
+      }
+    }
+  }
+  
+  .row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: $spacing-md;
+    
+    @media (max-width: 767px) {
+      grid-template-columns: 1fr;
+    }
+  }
+  
+  .formGroup {
+    margin-bottom: $spacing-lg;
+    
+    .label {
+      display: block;
+      color: $text-primary;
+      font-weight: $font-weight-semibold;
+      font-size: $font-size-sm;
+      margin-bottom: $spacing-xs;
+    }
+    
+    .input,
+    .textarea,
+    .select {
+      width: 100%;
+      background: $bg-secondary;
+      border: 1px solid $border-secondary;
+      border-radius: $radius-md;
+      padding: $spacing-sm $spacing-md;
+      color: $text-primary;
+      font-size: $font-size-sm;
+      transition: all 0.2s ease;
+      
+      &:focus {
+        outline: none;
+        border-color: $gold-primary;
+        box-shadow: 0 0 0 2px rgba($gold-primary, 0.2);
+      }
+      
+      &.error {
+        border-color: $error-text;
+        box-shadow: 0 0 0 2px rgba($error-text, 0.2);
+      }
+      
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+      
+      &::placeholder {
+        color: $text-tertiary;
+      }
+    }
+    
+    .textarea {
+      resize: vertical;
+      min-height: 80px;
+      font-family: inherit;
+    }
+    
+    .select {
+      cursor: pointer;
+    }
+    
+    .errorText {
+      color: $error-text;
+      font-size: $font-size-xs;
+      margin-top: $spacing-xs;
+      display: block;
+    }
+    
+    .charCount {
+      color: $text-tertiary;
+      font-size: $font-size-xs;
+      text-align: right;
+      margin-top: $spacing-xs;
+    }
+  }
+  
+  .contentNote {
+    display: flex;
+    gap: $spacing-md;
+    padding: $spacing-md;
+    background: rgba($info-text, 0.1);
+    border: 1px solid rgba($info-text, 0.2);
+    border-radius: $radius-md;
+    margin-bottom: $spacing-lg;
+    
+    .noteIcon {
+      font-size: $font-size-xl;
+      flex-shrink: 0;
+    }
+    
+    .noteText {
+      color: $text-primary;
+      font-size: $font-size-sm;
+      line-height: 1.5;
+      
+      strong {
+        color: $info-text;
+        font-weight: $font-weight-semibold;
+      }
+    }
+    
+    @media (max-width: 767px) {
+      flex-direction: column;
+      gap: $spacing-sm;
+      text-align: center;
+    }
+  }
+  
+  .actions {
+    display: flex;
+    gap: $spacing-md;
+    justify-content: flex-end;
+    margin-top: $spacing-xl;
+    padding-top: $spacing-lg;
+    border-top: 1px solid $border-secondary;
+    
+    .button {
+      @include victorian-button('secondary');
+      display: flex;
+      align-items: center;
+      gap: $spacing-xs;
+      font-size: $font-size-sm;
+      padding: $spacing-sm $spacing-lg;
+      min-width: 140px;
+      justify-content: center;
+      
+      &.primary {
+        @include victorian-button('primary');
+      }
+      
+      &.secondary {
+        @include victorian-button('ghost');
+      }
+      
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+      
+      .spinner {
+        width: 16px;
+        height: 16px;
+        border: 2px solid transparent;
+        border-top: 2px solid currentColor;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+    }
+    
+    @media (max-width: 767px) {
+      flex-direction: column-reverse;
+      
+      .button {
+        width: 100%;
+      }
+    }
+  }
+}
+
+// Content Section
+.contentSection {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-md;
+  margin: $spacing-lg 0;
+  padding: $spacing-lg;
+  background: rgba($gold-primary, 0.05);
+  border: 1px solid rgba($gold-primary, 0.2);
+  border-radius: $radius-md;
+  
+  @media (max-width: 767px) {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
+}
+
+.contentButton {
+  @include btn-base;
+  background: linear-gradient(135deg, $gold-primary 0%, $gold-light 100%);
+  color: $bg-primary;
+  border: none;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  padding: $spacing-md $spacing-lg;
+  border-radius: $radius-md;
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  transition: all 0.3s ease;
+  box-shadow: $shadow-sm;
+  white-space: nowrap;
+  
+  &:hover {
+    background: linear-gradient(135deg, $gold-light 0%, $gold-primary 100%);
+    transform: translateY(-2px);
+    box-shadow: $shadow-md;
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+  }
+  
+  span {
+    font-size: $font-size-base;
+  }
+  
+  @media (max-width: 767px) {
+    justify-content: center;
+    width: 100%;
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

@@ -1,0 +1,108 @@
+@import 'main';
+
+.cookieBanner {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, rgba($burgundy-dark, 0.98), rgba($burgundy-dark, 0.95));
+  border-top: 2px solid $gold-primary;
+  padding: $spacing-lg;
+  z-index: 9999;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
+  animation: slideUp 0.4s ease-out;
+
+  @keyframes slideUp {
+    from {
+      transform: translateY(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  .bannerContent {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: $spacing-lg;
+
+    @media (max-width: 768px) {
+      flex-direction: column;
+      text-align: center;
+      gap: $spacing-md;
+    }
+  }
+
+  .bannerText {
+    flex: 1;
+
+    .bannerTitle {
+      color: $gold-primary;
+      margin: 0 0 $spacing-sm 0;
+      font-family: $font-heading;
+      font-size: 1.1rem;
+      font-weight: 600;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    }
+
+    .bannerDescription {
+      margin: 0;
+      color: rgba(white, 0.95);
+      font-size: 0.95rem;
+      line-height: 1.5;
+
+      strong {
+        color: $gold-primary;
+        font-weight: 600;
+      }
+    }
+  }
+
+  .bannerActions {
+    display: flex;
+    gap: $spacing-md;
+    align-items: center;
+
+    @media (max-width: 768px) {
+      flex-direction: column;
+      width: 100%;
+    }
+
+    .acceptButton {
+      @include victorian-button('primary');
+      padding: $spacing-sm $spacing-xl;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 1rem;
+      white-space: nowrap;
+      transition: all 0.3s ease;
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba($gold-primary, 0.3);
+      }
+
+      @media (max-width: 768px) {
+        width: 100%;
+      }
+    }
+
+    .privacyLink {
+      color: $gold-primary;
+      text-decoration: underline;
+      font-size: 0.9rem;
+      transition: color 0.2s ease;
+      white-space: nowrap;
+
+      &:hover {
+        color: lighten($gold-primary, 10%);
+        text-decoration: none;
+      }
+    }
+  }
+}
