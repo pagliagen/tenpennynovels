@@ -59,17 +59,28 @@ export class EmailService {
     try {
       const verificationUrl = `${process.env.BASE_URL || 'http://localhost:4000'}/verify-email/${token}`;
 
-      // Get template from database
-      const template = await this.configService.getConfig('email_template_verification');
+      let subject: string;
+      let html: string;
+      let text: string;
 
-      if (!template) {
-        throw new Error('Email template not found: email_template_verification');
+      // Get template from database if ConfigurationService is available
+      if (this.configService) {
+        const template = await this.configService.getConfig('email_template_verification');
+
+        if (!template) {
+          throw new Error('Email template not found: email_template_verification');
+        }
+
+        // Replace placeholders
+        subject = template.subject;
+        html = this.replacePlaceholders(template.html, { displayName, verificationUrl });
+        text = this.replacePlaceholders(template.text, { displayName, verificationUrl });
+      } else {
+        // Fallback template when ConfigurationService is not available
+        subject = 'Verifica il tuo account - TenpennyNovels';
+        text = `Caro ${displayName},\n\nBenvenuto su TenpennyNovels!\n\nPer favore verifica il tuo account cliccando sul seguente link:\n${verificationUrl}\n\nSe non hai richiesto questa registrazione, ignora questa email.\n\nCordiali saluti,\nIl Team di TenpennyNovels`;
+        html = `<h2>Benvenuto su TenpennyNovels!</h2><p>Caro ${displayName},</p><p>Per favore verifica il tuo account cliccando sul pulsante qui sotto:</p><p><a href="${verificationUrl}" style="background-color: #8B4513; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Verifica Account</a></p><p>Oppure copia e incolla questo link nel tuo browser:</p><p>${verificationUrl}</p><p>Se non hai richiesto questa registrazione, ignora questa email.</p><p>Cordiali saluti,<br>Il Team di TenpennyNovels</p>`;
       }
-
-      // Replace placeholders
-      const subject = template.subject;
-      const html = this.replacePlaceholders(template.html, { displayName, verificationUrl });
-      const text = this.replacePlaceholders(template.text, { displayName, verificationUrl });
 
       if (this.isMockMode) {
         logger.info('=== MOCK EMAIL - Email Verification ===');
@@ -117,17 +128,28 @@ export class EmailService {
     try {
       const resetUrl = `${process.env.BASE_URL || 'http://localhost:4000'}/reset-password/${token}`;
 
-      // Get template from database
-      const template = await this.configService.getConfig('email_template_password_reset');
+      let subject: string;
+      let html: string;
+      let text: string;
 
-      if (!template) {
-        throw new Error('Email template not found: email_template_password_reset');
+      // Get template from database if ConfigurationService is available
+      if (this.configService) {
+        const template = await this.configService.getConfig('email_template_password_reset');
+
+        if (!template) {
+          throw new Error('Email template not found: email_template_password_reset');
+        }
+
+        // Replace placeholders
+        subject = template.subject;
+        html = this.replacePlaceholders(template.html, { displayName, resetUrl });
+        text = this.replacePlaceholders(template.text, { displayName, resetUrl });
+      } else {
+        // Fallback template when ConfigurationService is not available
+        subject = 'Reset Password - TenpennyNovels';
+        text = `Caro ${displayName},\n\nHai richiesto il reset della tua password.\n\nClicca sul seguente link per reimpostare la password:\n${resetUrl}\n\nQuesto link scadrà tra 1 ora.\n\nSe non hai richiesto questo reset, ignora questa email.\n\nCordiali saluti,\nIl Team di TenpennyNovels`;
+        html = `<h2>Reset Password</h2><p>Caro ${displayName},</p><p>Hai richiesto il reset della tua password.</p><p><a href="${resetUrl}" style="background-color: #8B4513; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Reset Password</a></p><p>Oppure copia e incolla questo link:</p><p>${resetUrl}</p><p><strong>Questo link scadrà tra 1 ora.</strong></p><p>Se non hai richiesto questo reset, ignora questa email.</p><p>Cordiali saluti,<br>Il Team di TenpennyNovels</p>`;
       }
-
-      // Replace placeholders
-      const subject = template.subject;
-      const html = this.replacePlaceholders(template.html, { displayName, resetUrl });
-      const text = this.replacePlaceholders(template.text, { displayName, resetUrl });
 
       if (this.isMockMode) {
         logger.info('=== MOCK EMAIL - Password Reset ===');
@@ -167,20 +189,31 @@ export class EmailService {
    */
   static async sendSecurityAlert(email: string, displayName: string, alertType: string, details: any): Promise<void> {
     try {
-      // Get template from database
-      const template = await this.configService.getConfig('email_template_security_alert');
-
-      if (!template) {
-        throw new Error('Email template not found: email_template_security_alert');
-      }
-
       // Convert details object to string if needed
       const detailsString = typeof details === 'object' ? JSON.stringify(details, null, 2) : String(details);
 
-      // Replace placeholders
-      const subject = template.subject;
-      const html = this.replacePlaceholders(template.html, { displayName, alertType, details: detailsString });
-      const text = this.replacePlaceholders(template.text, { displayName, alertType, details: detailsString });
+      let subject: string;
+      let html: string;
+      let text: string;
+
+      // Get template from database if ConfigurationService is available
+      if (this.configService) {
+        const template = await this.configService.getConfig('email_template_security_alert');
+
+        if (!template) {
+          throw new Error('Email template not found: email_template_security_alert');
+        }
+
+        // Replace placeholders
+        subject = template.subject;
+        html = this.replacePlaceholders(template.html, { displayName, alertType, details: detailsString });
+        text = this.replacePlaceholders(template.text, { displayName, alertType, details: detailsString });
+      } else {
+        // Fallback template when ConfigurationService is not available
+        subject = 'Avviso di Sicurezza - TenpennyNovels';
+        text = `Caro ${displayName},\n\nAbbiamo rilevato un'attività sospetta sul tuo account.\n\nTipo di allerta: ${alertType}\n\nDettagli:\n${detailsString}\n\nSe riconosci questa attività, puoi ignorare questa email. Altrimenti, ti consigliamo di cambiare la tua password immediatamente.\n\nCordiali saluti,\nIl Team di TenpennyNovels`;
+        html = `<h2>Avviso di Sicurezza</h2><p>Caro ${displayName},</p><p>Abbiamo rilevato un'attività sospetta sul tuo account.</p><p><strong>Tipo di allerta:</strong> ${alertType}</p><p><strong>Dettagli:</strong></p><pre>${detailsString}</pre><p>Se riconosci questa attività, puoi ignorare questa email. Altrimenti, ti consigliamo di <strong>cambiare la tua password immediatamente</strong>.</p><p>Cordiali saluti,<br>Il Team di TenpennyNovels</p>`;
+      }
 
       if (this.isMockMode) {
         logger.info('=== MOCK EMAIL - Security Alert ===');
@@ -222,17 +255,28 @@ export class EmailService {
     try {
       const deletionUrl = `${process.env.BASE_URL || 'http://localhost:4000'}/delete-account/${token}`;
 
-      // Get template from database
-      const template = await this.configService.getConfig('email_template_account_deletion');
+      let subject: string;
+      let html: string;
+      let text: string;
 
-      if (!template) {
-        throw new Error('Email template not found: email_template_account_deletion');
+      // Get template from database if ConfigurationService is available
+      if (this.configService) {
+        const template = await this.configService.getConfig('email_template_account_deletion');
+
+        if (!template) {
+          throw new Error('Email template not found: email_template_account_deletion');
+        }
+
+        // Replace placeholders
+        subject = template.subject;
+        html = this.replacePlaceholders(template.html, { displayName, deletionUrl });
+        text = this.replacePlaceholders(template.text, { displayName, deletionUrl });
+      } else {
+        // Fallback template when ConfigurationService is not available
+        subject = 'Conferma Cancellazione Account - TenpennyNovels';
+        text = `Caro ${displayName},\n\nHai richiesto la cancellazione del tuo account TenpennyNovels.\n\nPer confermare questa operazione, clicca sul seguente link:\n${deletionUrl}\n\nQuesta azione è irreversibile e tutti i tuoi dati verranno eliminati permanentemente.\n\nSe non hai richiesto questa cancellazione, ignora questa email.\n\nCordiali saluti,\nIl Team di TenpennyNovels`;
+        html = `<h2>Conferma Cancellazione Account</h2><p>Caro ${displayName},</p><p>Hai richiesto la cancellazione del tuo account TenpennyNovels.</p><p><a href="${deletionUrl}" style="background-color: #8B4513; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Conferma Cancellazione</a></p><p>Oppure copia e incolla questo link:</p><p>${deletionUrl}</p><p><strong>⚠️ Questa azione è irreversibile e tutti i tuoi dati verranno eliminati permanentemente.</strong></p><p>Se non hai richiesto questa cancellazione, ignora questa email.</p><p>Cordiali saluti,<br>Il Team di TenpennyNovels</p>`;
       }
-
-      // Replace placeholders
-      const subject = template.subject;
-      const html = this.replacePlaceholders(template.html, { displayName, deletionUrl });
-      const text = this.replacePlaceholders(template.text, { displayName, deletionUrl });
 
       if (this.isMockMode) {
         logger.info('=== MOCK EMAIL - Account Deletion ===');

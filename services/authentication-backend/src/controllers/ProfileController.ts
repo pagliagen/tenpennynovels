@@ -220,10 +220,13 @@ export class ProfileController {
       const userId = req.user!.userId;
 
       // Parallel queries for performance
-      const [user, characters] = await Promise.all([
+      const [userResult, charactersResult] = await Promise.all([
         User.findById(userId).select('-passwordHash -emailVerificationToken -passwordResetToken -ipAddress').lean(),
         Character.find({ userId }).lean()
       ]);
+
+      const user = userResult as any;
+      const characters = charactersResult as any[];
 
       if (!user) {
         const response: ApiResponse = {

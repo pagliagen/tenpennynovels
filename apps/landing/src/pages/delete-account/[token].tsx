@@ -6,7 +6,7 @@ import { VictorianLayout } from '@/components/VictorianLayout';
 
 export default function DeleteAccountPage() {
   const router = useRouter();
-  const { token } = router.query;
+  const [token, setToken] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [confirming, setConfirming] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -14,11 +14,19 @@ export default function DeleteAccountPage() {
   const [showConfirmation, setShowConfirmation] = useState(true);
 
   useEffect(() => {
-    if (token && typeof token === 'string') {
-      // Don't auto-delete, wait for user confirmation
+    // Parse token from URL pathname (workaround for Next.js static export)
+    const pathParts = window.location.pathname.split('/').filter(Boolean);
+    const tokenFromUrl = pathParts[pathParts.length - 1];
+    const cleanToken = tokenFromUrl?.replace(/\/$/, '');
+
+    if (cleanToken && cleanToken !== 'delete-account') {
+      setToken(cleanToken);
+      setLoading(false);
+    } else {
+      setError('Token mancante nell\'URL');
       setLoading(false);
     }
-  }, [token]);
+  }, []);
 
   const confirmDeletion = async () => {
     if (!token || typeof token !== 'string') {

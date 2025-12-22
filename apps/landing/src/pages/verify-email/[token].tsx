@@ -7,31 +7,55 @@ import { VictorianLayout } from '@/components/VictorianLayout';
 
 export default function VerifyEmailPage() {
   const router = useRouter();
-  const { token } = router.query;
   const [loading, setLoading] = useState(true);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string>('');
 
   useEffect(() => {
-    if (token && typeof token === 'string') {
-      verifyEmail(token);
+    // Parse token from URL pathname (workaround for Next.js static export)
+    // router.query doesn't work with static export (output: 'export')
+    const pathParts = window.location.pathname.split('/').filter(Boolean);
+    const tokenFromUrl = pathParts[pathParts.length - 1];
+
+    // Clean trailing slash if present
+    const cleanToken = tokenFromUrl?.replace(/\/$/, '');
+
+    if (cleanToken && cleanToken !== 'verify-email') {
+      console.log('🔍 Verifying email with token:', cleanToken);
+      console.log('🔗 API Gateway URL:', process.env.NEXT_PUBLIC_API_GATEWAY_URL);
+      verifyEmail(cleanToken);
+    } else {
+      console.error('❌ No token found in URL');
+      setError('Token di verifica mancante nell\'URL');
+      setLoading(false);
     }
-  }, [token]);
+  }, []); // Run once on mount
 
   const verifyEmail = async (verificationToken: string) => {
     try {
       setLoading(true);
-      
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/auth/verify-email/${verificationToken}`, {
+
+      const apiUrl = `${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/auth/verify-email/${verificationToken}`;
+      console.log('📡 Making API call to:', apiUrl);
+
+      const response = await fetch(apiUrl, {
         method: 'GET',
+        credentials: 'include', // Include cookies for CORS
+        headers: {
+          'Content-Type': 'application/json'
+        }
       });
 
+      console.log('✅ Response status:', response.status);
+      console.log('📦 Response headers:', response.headers);
+
       const data = await response.json();
-      
+      console.log('📥 Response data:', data);
+
       if (data.success) {
         setSuccess(true);
         setError('');
-        
+
         // Redirect to login after 3 seconds
         setTimeout(() => {
           router.push('/?verified=true');
@@ -40,11 +64,11 @@ export default function VerifyEmailPage() {
         setSuccess(false);
         setError(data.error || 'Errore durante la verifica email');
       }
-      
+
     } catch (error) {
       setSuccess(false);
       setError('Errore di connessione durante la verifica');
-      console.error('Errore verifica email:', error);
+      console.error('❌ Errore verifica email:', error);
     } finally {
       setLoading(false);
     }

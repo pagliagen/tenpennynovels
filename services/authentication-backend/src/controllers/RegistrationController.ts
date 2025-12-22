@@ -130,7 +130,7 @@ export class RegistrationController {
 
       const response: ApiResponse = {
         success: true,
-        message: 'Registration successful. Please check your email to verify your account.',
+        message: 'Registrazione completata con successo. Controlla la tua email per verificare il tuo account.',
         data: {
           user: {
             id: user.id,
@@ -300,9 +300,15 @@ export class RegistrationController {
    */
   static async resendVerification(req: Request, res: Response): Promise<void> {
     try {
-      const { email } = req.body;
+      const { username } = req.body;
 
-      const user = await User.findOne({ email: email.toLowerCase() });
+      // Find user by username or email (like login does)
+      const user = await User.findOne({
+        $or: [
+          { username: username.toLowerCase() },
+          { email: username.toLowerCase() }
+        ]
+      });
 
       if (!user) {
         // Don't reveal if email exists or not for security

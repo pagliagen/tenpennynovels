@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { AuthTokenPayload, CharacterContextPayload } from '../../../../packages/shared/types';
 import { logger } from '../utils/logger';
+import { validationConfig } from '../config/validation';
 
 const BCRYPT_ROUNDS = parseInt(process.env.BCRYPT_ROUNDS || '12');
 
@@ -204,37 +205,45 @@ export class CryptoUtils {
   // Password strength validation
   static validatePasswordStrength(password: string): { isValid: boolean; violations: string[] } {
     const violations: string[] = [];
-    
-    if (password.length < 8) {
-      violations.push('Password must be at least 8 characters long');
+    const config = validationConfig.password;
+
+    // Minimum length check (always enforced)
+    if (password.length < config.minLength) {
+      violations.push(`Password must be at least ${config.minLength} characters long`);
     }
-    
-    if (!/[A-Z]/.test(password)) {
+
+    // Optional: Uppercase letter check
+    if (config.requireUppercase && !/[A-Z]/.test(password)) {
       violations.push('Password must contain at least one uppercase letter');
     }
-    
-    if (!/[a-z]/.test(password)) {
+
+    // Optional: Lowercase letter check
+    if (config.requireLowercase && !/[a-z]/.test(password)) {
       violations.push('Password must contain at least one lowercase letter');
     }
-    
-    if (!/\d/.test(password)) {
+
+    // Optional: Number check
+    if (config.requireNumber && !/\d/.test(password)) {
       violations.push('Password must contain at least one number');
     }
-    
-    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+
+    // Optional: Special character check
+    if (config.requireSpecialChar && !config.specialCharPattern.test(password)) {
       violations.push('Password must contain at least one special character');
     }
-    
-    // Check for common passwords (basic check)
-    const commonPasswords = [
-      'password', '123456', '123456789', 'qwerty', 'abc123', 
-      'password123', 'admin', 'letmein', 'welcome', '123123'
-    ];
-    
-    if (commonPasswords.includes(password.toLowerCase())) {
-      violations.push('Password is too common');
+
+    // Optional: Common passwords check
+    if (config.checkCommonPasswords) {
+      const commonPasswords = [
+        'password', '123456', '123456789', 'qwerty', 'abc123',
+        'password123', 'admin', 'letmein', 'welcome', '123123'
+      ];
+
+      if (commonPasswords.includes(password.toLowerCase())) {
+        violations.push('Password is too common');
+      }
     }
-    
+
     return {
       isValid: violations.length === 0,
       violations

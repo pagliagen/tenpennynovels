@@ -20,11 +20,12 @@ async function setupDatabaseConnections() {
     console.log('✅ Redis connected');
     logger.info('Connected to Redis successfully');
 
-    // Initialize email service with Redis for configuration caching
+    // Initialize email service
+    // Note: ConfigurationService caching disabled due to redis/ioredis library mismatch
     const { EmailService } = await import('./services/EmailService');
-    EmailService.initialize(redis);
-    console.log('✅ Email service initialized with ConfigurationService');
-    logger.info('Email service initialized with ConfigurationService');
+    EmailService.initialize();
+    console.log('✅ Email service initialized');
+    logger.info('Email service initialized');
     
   } catch (error: any) {
     console.error('❌ Failed to setup database connections:', error);

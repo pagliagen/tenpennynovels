@@ -57,12 +57,11 @@ export const WizardStep1_BasicInfo: React.FC<WizardStep1Props> = ({
 
     if (age !== null) {
       updates.age = age;
-      // If apparentAge is not set yet, auto-populate it
-      if (characterData.apparentAge === null) {
-        updates.apparentAge = age;
-      }
+      // Auto-update apparentAge to match real age whenever birthdate changes
+      updates.apparentAge = age;
     } else {
       updates.age = null;
+      updates.apparentAge = null;
     }
 
     // Single update call with all changes batched together
@@ -78,6 +77,7 @@ export const WizardStep1_BasicInfo: React.FC<WizardStep1Props> = ({
     if (!characterData.lastName.trim()) errors.push('Cognome richiesto');
     if (!characterData.birthDate?.trim()) errors.push('Data di nascita richiesta');
     else if (!/^\d{2}\/\d{2}\/\d{4}$/.test(characterData.birthDate)) errors.push('Formato data invalido (gg/mm/yyyy)');
+    else if (parseInt(characterData.birthDate.split('/')[2]) >= 1895) errors.push('Anno di nascita deve essere inferiore al 1895');
     if (age === null) errors.push('Età richiesta');
     else if (age < 18) errors.push('Età minima: 18 anni');
     else if (age > 80) errors.push('Età massima: 80 anni');
@@ -86,7 +86,15 @@ export const WizardStep1_BasicInfo: React.FC<WizardStep1Props> = ({
     else if (apparentAge > 80) errors.push('Età apparente massima: 80 anni');
     if (!characterData.gender) errors.push('Genere richiesto');
     if (!characterData.height?.trim()) errors.push('Altezza richiesta');
+    else {
+      const heightNum = parseInt(characterData.height);
+      if (isNaN(heightNum) || heightNum < 100 || heightNum > 250) errors.push('Altezza deve essere tra 100 e 250 cm');
+    }
     if (!characterData.weight?.trim()) errors.push('Peso richiesto');
+    else {
+      const weightNum = parseInt(characterData.weight);
+      if (isNaN(weightNum) || weightNum < 30 || weightNum > 200) errors.push('Peso deve essere tra 30 e 200 kg');
+    }
     if (!characterData.eyeColor?.trim()) errors.push('Colore occhi richiesto');
     if (!characterData.hairColor?.trim()) errors.push('Colore capelli richiesto');
     if (!characterData.visibleMarks?.trim()) errors.push('Segni particolari visibili richiesti');
@@ -159,7 +167,7 @@ export const WizardStep1_BasicInfo: React.FC<WizardStep1Props> = ({
         {/* Data di nascita */}
         <div className={styles.formGroup}>
           <label className={styles.label}>
-            Data di nascita <span className={styles.required}>*</span>
+            Data di nascita (gg/mm/aaaa) <span className={styles.required}>*</span>
             <small className={styles.privateLabel}>(non visibile agli altri)</small>
           </label>
           <input
@@ -173,17 +181,18 @@ export const WizardStep1_BasicInfo: React.FC<WizardStep1Props> = ({
                 ? styles.inputError
                 : ''
             }`}
+            placeholder="es. 15/03/1870"
             required
           />
           {characterData.birthDate &&
            /^\d{2}\/\d{2}\/\d{4}$/.test(characterData.birthDate) &&
            parseInt(characterData.birthDate.split('/')[2]) >= 1895 ? (
             <small className={styles.errorText}>
-              ⚠️ L'anno di nascita deve essere inferiore al 1895 (ambientazione vittoriana)
+              ⛔ ERRORE: L'anno di nascita deve essere inferiore al 1895 (ambientazione vittoriana del 1895)
             </small>
           ) : (
             <small className={styles.helpText}>
-              Anno &lt; 1895. Età al 1895: {characterData.age ? `${characterData.age} anni` : '-'}
+              Anno &lt; 1895. Età al 1895: {characterData.age ? `${characterData.age} anni` : '-'}. Età apparente: {characterData.apparentAge ? `${characterData.apparentAge} anni` : '-'}
             </small>
           )}
         </div>
@@ -229,33 +238,43 @@ export const WizardStep1_BasicInfo: React.FC<WizardStep1Props> = ({
         {/* Altezza */}
         <div className={styles.formGroup}>
           <label className={styles.label}>
-            Altezza <span className={styles.required}>*</span>
+            Altezza (cm) <span className={styles.required}>*</span>
             <small className={styles.privateLabel}>&nbsp;</small>
           </label>
           <input
-            type="text"
+            type="number"
             value={characterData.height || ''}
             onChange={(e) => handleInputChange('height', e.target.value)}
             className={styles.input}
-            maxLength={50}
+            min={100}
+            max={250}
+            placeholder="es. 175"
             required
           />
+          <small className={styles.helpText}>
+            Altezza in centimetri (100-250 cm)
+          </small>
         </div>
 
         {/* Peso */}
         <div className={styles.formGroup}>
           <label className={styles.label}>
-            Peso <span className={styles.required}>*</span>
+            Peso (kg) <span className={styles.required}>*</span>
             <small className={styles.privateLabel}>&nbsp;</small>
           </label>
           <input
-            type="text"
+            type="number"
             value={characterData.weight || ''}
             onChange={(e) => handleInputChange('weight', e.target.value)}
             className={styles.input}
-            maxLength={50}
+            min={30}
+            max={200}
+            placeholder="es. 70"
             required
           />
+          <small className={styles.helpText}>
+            Peso in kilogrammi (30-200 kg)
+          </small>
         </div>
 
         {/* Colore occhi */}

@@ -35,7 +35,7 @@ export class RateLimitMiddleware {
 
           const response: ApiResponse = {
             success: false,
-            error: 'Too many requests',
+            error: 'Troppe richieste',
             code: 'RATE_LIMITED',
             details: {
               retryAfter: Math.ceil(timeUntilReset / 1000),
@@ -153,13 +153,13 @@ export class RateLimitMiddleware {
   }
 
   /**
-   * Email verification rate limit - 3 requests per hour per email
+   * Email verification rate limit - 3 requests per hour per username/email
    */
   static emailVerificationLimit() {
     return this.createRateLimit({
       windowMs: 60 * 60 * 1000, // 1 hour
       maxRequests: 3,
-      keyGenerator: (req: Request) => `email_verification:${req.body.email?.toLowerCase() || req.ip}`
+      keyGenerator: (req: Request) => `email_verification:${req.body.username?.toLowerCase() || req.body.email?.toLowerCase() || req.ip}`
     });
   }
 

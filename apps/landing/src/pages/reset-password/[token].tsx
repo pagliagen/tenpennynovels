@@ -13,12 +13,12 @@ interface ResetPasswordFormData {
 
 export default function ResetPasswordPage() {
   const router = useRouter();
-  const { token } = router.query;
+  const [token, setToken] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
   const [success, setSuccess] = useState<string>('');
   const [tokenValid, setTokenValid] = useState<boolean | null>(null);
-  
+
   const {
     register,
     handleSubmit,
@@ -28,12 +28,21 @@ export default function ResetPasswordPage() {
 
   const newPassword = watch('newPassword');
 
-  // Verify token validity when component mounts
+  // Parse token from URL and verify validity when component mounts
   useEffect(() => {
-    if (token && typeof token === 'string') {
-      verifyToken(token);
+    // Parse token from URL pathname (workaround for Next.js static export)
+    const pathParts = window.location.pathname.split('/').filter(Boolean);
+    const tokenFromUrl = pathParts[pathParts.length - 1];
+    const cleanToken = tokenFromUrl?.replace(/\/$/, '');
+
+    if (cleanToken && cleanToken !== 'reset-password') {
+      setToken(cleanToken);
+      verifyToken(cleanToken);
+    } else {
+      setTokenValid(false);
+      setError('Token mancante nell\'URL');
     }
-  }, [token]);
+  }, []);
 
   const verifyToken = async (resetToken: string) => {
     try {

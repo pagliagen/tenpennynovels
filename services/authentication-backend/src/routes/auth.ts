@@ -30,7 +30,7 @@ router.get('/verify-email/:token',
 
 router.post('/resend-verification',
   RateLimitMiddleware.emailVerificationLimit(),
-  ValidationMiddleware.validateEmail,
+  ValidationMiddleware.validateResendVerification,
   RegistrationController.resendVerification
 );
 

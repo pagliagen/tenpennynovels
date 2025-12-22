@@ -146,7 +146,7 @@ const apiLimiter = rateLimit({
   max: 1000, // limit each IP to 1000 requests per windowMs
   message: {
     success: false,
-    error: 'Too many requests from this IP, please try again later.',
+    error: 'Troppe richieste da questo indirizzo IP, riprova più tardi.',
     code: 'RATE_LIMIT_EXCEEDED',
     timestamp: new Date().toISOString()
   },
@@ -163,7 +163,7 @@ const strictLimiter = rateLimit({
   max: 50, // limit each IP to 50 requests per windowMs
   message: {
     success: false,
-    error: 'Too many requests for this operation, please try again later.',
+    error: 'Troppe richieste per questa operazione, riprova più tardi.',
     code: 'STRICT_RATE_LIMIT_EXCEEDED',
     timestamp: new Date().toISOString()
   }

@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { body, validationResult } from 'express-validator';
 import { ApiResponse, ValidationError } from '../../../../packages/shared/types';
 import { CryptoUtils } from '../utils/crypto';
+import { validationConfig } from '../config/validation';
 
 export class ValidationMiddleware {
   /**
@@ -49,7 +50,7 @@ export class ValidationMiddleware {
     body('email')
       .isEmail()
       .withMessage('Please provide a valid email address')
-      .normalizeEmail()
+      .normalizeEmail(validationConfig.normalizeEmail)
       .notEmpty()
       .withMessage('Email is required'),
 
@@ -124,7 +125,7 @@ export class ValidationMiddleware {
     body('email')
       .isEmail()
       .withMessage('Please provide a valid email address')
-      .normalizeEmail()
+      .normalizeEmail(validationConfig.normalizeEmail)
       .notEmpty()
       .withMessage('Email is required'),
 
@@ -249,7 +250,7 @@ export class ValidationMiddleware {
       .optional()
       .isEmail()
       .withMessage('Please provide a valid email address')
-      .normalizeEmail(),
+      .normalizeEmail(validationConfig.normalizeEmail),
 
     // At least one field must be provided
     body()
@@ -307,6 +308,18 @@ export class ValidationMiddleware {
       .optional()
       .isObject()
       .withMessage('Details must be an object'),
+
+    ValidationMiddleware.handleValidationErrors
+  ];
+
+  /**
+   * Resend verification validation (accepts username or email)
+   */
+  static validateResendVerification = [
+    body('username')
+      .notEmpty()
+      .withMessage('Username or email is required')
+      .trim(),
 
     ValidationMiddleware.handleValidationErrors
   ];

@@ -20,7 +20,7 @@ export function setupMiddleware(app: Express): void {
     max: 100, // limit each IP to 100 requests per windowMs
     message: {
       success: false,
-      error: 'Too many requests from this IP, please try again later.',
+      error: 'Troppe richieste da questo indirizzo IP, riprova più tardi.',
       code: 'RATE_LIMIT_EXCEEDED'
     },
     standardHeaders: true,

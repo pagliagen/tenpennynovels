@@ -104,7 +104,7 @@ const limiter = rateLimit({
   max: 1000, // Limit each IP to 1000 requests per windowMs
   message: {
     success: false,
-    error: 'Too many requests from this IP, please try again later',
+    error: 'Troppe richieste da questo indirizzo IP, riprova più tardi.',
     code: 'RATE_LIMITED',
     timestamp: new Date().toISOString()
   },
