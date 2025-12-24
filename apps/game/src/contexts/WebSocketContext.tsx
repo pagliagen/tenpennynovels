@@ -231,8 +231,8 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
     }
 
     // console.log('🔌 WebSocket: Connecting to game backend...');
-    
-    const socketInstance = io('http://localhost:3001', {
+
+    const socketInstance = io(process.env.NEXT_PUBLIC_WEBSOCKET_URL || 'http://localhost:3001', {
       withCredentials: true, // This will send cookies automatically
       transports: ['websocket', 'polling'],
       timeout: 10000

@@ -40,11 +40,20 @@ const server = app.listen(PORT, async () => {
     const io = new Server(server, {
       cors: {
         origin: [
+          // Development origins
           'http://localhost:4000',
           'http://localhost:4001',
           'http://localhost:4002',
           'http://localhost:4003',
-          'http://localhost:4004'
+          'http://localhost:4004',
+          'http://localhost:4005',
+          // Production origins
+          'https://tenpennynovels.com',
+          'https://game.tenpennynovels.com',
+          'https://documenti.tenpennynovels.com',
+          'https://forum.tenpennynovels.com',
+          'https://gestione.tenpennynovels.com',
+          'https://supporto.tenpennynovels.com'
         ],
         methods: ['GET', 'POST'],
         credentials: true
