@@ -1,0 +1,570 @@
+// Management Pages Styles - Victorian Theme with Design System
+// Used by system configuration pages and general management interfaces
+
+// Import shared design system variables
+@import 'variables/colors';
+@import 'variables/typography';
+@import 'variables/spacing';
+@import 'variables/breakpoints';
+@import 'variables/shadows';
+@import 'variables/borders';
+
+// Page Container
+.pageContainer {
+  padding: $spacing-2xl;
+  max-width: 1400px;
+  margin: 0 auto;
+
+  @media (max-width: $breakpoint-md) {
+    padding: $spacing-lg;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $spacing-md;
+  }
+}
+
+.container {
+  @extend .pageContainer;
+}
+
+// Header Section
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: $spacing-2xl;
+  padding-bottom: $spacing-xl;
+  border-bottom: 2px solid $border-secondary;
+
+  h1 {
+    font-size: $font-size-3xl;
+    color: $gold-primary;
+    margin: 0 0 $spacing-sm 0;
+    font-family: $font-secondary;
+    font-weight: bold;
+  }
+
+  .subtitle {
+    color: $text-secondary;
+    font-size: $font-size-base;
+    margin: 0;
+    font-style: italic;
+  }
+
+  .metadata {
+    display: flex;
+    gap: $spacing-lg;
+    font-size: $font-size-sm;
+    color: $text-tertiary;
+    margin-top: $spacing-sm;
+
+    span {
+      strong {
+        color: $text-secondary;
+      }
+    }
+  }
+
+  @media (max-width: $breakpoint-md) {
+    flex-direction: column;
+    gap: $spacing-lg;
+  }
+}
+
+.headerActions {
+  display: flex;
+  gap: $spacing-md;
+  align-items: center;
+
+  @media (max-width: $breakpoint-md) {
+    width: 100%;
+    flex-wrap: wrap;
+
+    button {
+      flex: 1;
+      min-width: 120px;
+    }
+  }
+}
+
+// Card Component
+.card {
+  background: rgba($admin-bg, 0.4);
+  border: 1px solid rgba($border-secondary, 0.5);
+  border-radius: $radius-xl;
+  padding: $spacing-xl;
+  margin-bottom: $spacing-xl;
+  box-shadow: $shadow-md;
+
+  h2 {
+    margin: 0 0 $spacing-lg 0;
+    color: $gold-primary;
+    font-family: $font-secondary;
+    font-size: $font-size-2xl;
+    font-weight: 600;
+  }
+
+  h3 {
+    margin: $spacing-lg 0 $spacing-md 0;
+    color: $text-primary;
+    font-size: $font-size-lg;
+    border-bottom: 1px solid rgba($border-secondary, 0.5);
+    padding-bottom: $spacing-sm;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $spacing-lg;
+  }
+}
+
+// Buttons
+.primaryButton,
+.secondaryButton {
+  padding: $spacing-sm $spacing-lg;
+  border: none;
+  border-radius: $radius-md;
+  font-size: $font-size-base;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all $transition-fast;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.primaryButton {
+  background: linear-gradient(135deg, $gold-primary 0%, $gold-dark 100%);
+  color: white;
+  box-shadow: $shadow-sm;
+
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, lighten($gold-primary, 5%) 0%, lighten($gold-dark, 5%) 100%);
+    box-shadow: $shadow-md;
+  }
+}
+
+.secondaryButton {
+  background: rgba($admin-bg, 0.5);
+  color: $text-primary;
+  border: 1px solid rgba($border-secondary, 0.6);
+
+  &:hover:not(:disabled) {
+    background: rgba($admin-bg, 0.7);
+    border-color: $gold-primary;
+    color: $gold-primary;
+  }
+}
+
+// Form Controls
+.input,
+.select,
+.textarea {
+  padding: $spacing-sm $spacing-md;
+  border: 1px solid $border-secondary;
+  border-radius: $radius-md;
+  font-size: $font-size-base;
+  font-family: $font-primary;
+  background: rgba($admin-bg, 0.6);
+  color: $text-primary;
+  transition: all $transition-fast;
+  width: 100%;
+
+  &:focus {
+    outline: none;
+    border-color: $gold-primary;
+    background: rgba($admin-bg, 0.8);
+    box-shadow: 0 0 0 2px rgba($gold-primary, 0.2);
+  }
+
+  &:disabled {
+    background: rgba($bg-secondary, 0.3);
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  &::placeholder {
+    color: $text-tertiary;
+    opacity: 0.6;
+  }
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 100px;
+  font-family: $font-primary;
+  line-height: 1.5;
+}
+
+// Table Container & Table
+.tableContainer {
+  background: rgba($admin-bg, 0.4);
+  border-radius: $radius-xl;
+  overflow: hidden;
+  box-shadow: $shadow-md;
+  border: 1px solid rgba($border-secondary, 0.5);
+  margin-bottom: $spacing-xl;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: $font-size-sm;
+
+  thead {
+    background: rgba($gold-primary, 0.1);
+
+    tr {
+      border-bottom: 2px solid $border-secondary;
+    }
+
+    th {
+      padding: $spacing-md;
+      text-align: left;
+      font-weight: 600;
+      color: $text-primary;
+      font-size: $font-size-sm;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 2px solid $border-secondary;
+
+      &:first-child {
+        padding-left: $spacing-lg;
+      }
+
+      &:last-child {
+        padding-right: $spacing-lg;
+      }
+    }
+  }
+
+  tbody {
+    tr {
+      border-bottom: 1px solid $border-secondary;
+      transition: background-color $transition-fast;
+
+      &:hover {
+        background: rgba($gold-primary, 0.05);
+      }
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      td {
+        padding: $spacing-md;
+        vertical-align: middle;
+        color: $text-primary;
+
+        &:first-child {
+          padding-left: $spacing-lg;
+        }
+
+        &:last-child {
+          padding-right: $spacing-lg;
+        }
+
+        code {
+          background: rgba($text-tertiary, 0.1);
+          padding: 2px $spacing-xs;
+          border-radius: $radius-sm;
+          font-family: $font-monospace;
+          font-size: $font-size-xs;
+          color: $text-primary;
+        }
+      }
+    }
+  }
+}
+
+// Filter Section
+.filterSection {
+  background: rgba($admin-bg, 0.4);
+  border: 1px solid rgba($border-secondary, 0.5);
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-xl;
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-xs;
+    font-weight: 500;
+    color: $text-primary;
+
+    select {
+      @extend .select;
+    }
+  }
+}
+
+// Empty State
+.emptyState {
+  text-align: center;
+  padding: $spacing-3xl;
+  background: rgba($admin-bg, 0.3);
+  border: 2px dashed rgba($border-secondary, 0.4);
+  border-radius: $radius-lg;
+  color: $text-secondary;
+  font-size: $font-size-base;
+  font-style: italic;
+
+  p {
+    margin: 0;
+  }
+}
+
+// Validation Messages
+.validationMessages {
+  margin-bottom: $spacing-xl;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.errorBox,
+.warningBox,
+.successBox,
+.infoBox {
+  padding: $spacing-md $spacing-lg;
+  border-radius: $radius-md;
+  border: 2px solid;
+
+  strong {
+    font-weight: 600;
+  }
+
+  h3 {
+    margin: 0 0 $spacing-sm 0;
+    font-size: $font-size-base;
+  }
+
+  ul {
+    margin: 0;
+    padding-left: $spacing-xl;
+
+    li {
+      margin-bottom: $spacing-xs;
+    }
+  }
+}
+
+.errorBox {
+  background: $error-bg;
+  border-color: $error-border;
+  color: $error-text;
+}
+
+.warningBox {
+  background: $warning-bg;
+  border-color: $warning-border;
+  color: $warning-text;
+}
+
+.successBox {
+  background: $success-bg;
+  border-color: $success-border;
+  color: $success-text;
+}
+
+.infoBox {
+  background: rgba($gold-primary, 0.1);
+  border-color: rgba($gold-primary, 0.3);
+  color: $text-primary;
+
+  strong {
+    color: $gold-primary;
+  }
+}
+
+// JSON Preview
+.jsonPreview {
+  background: #1e1e1e;
+  color: #d4d4d4;
+  padding: $spacing-xl;
+  border-radius: $radius-md;
+  margin-bottom: $spacing-xl;
+  overflow-x: auto;
+
+  h3 {
+    color: #569cd6;
+    margin-top: 0;
+    margin-bottom: $spacing-md;
+  }
+
+  pre {
+    margin: 0;
+    font-family: $font-monospace;
+    font-size: $font-size-sm;
+    line-height: 1.5;
+  }
+}
+
+// Tabs
+.tabsContainer {
+  display: flex;
+  gap: $spacing-xs;
+  margin-bottom: $spacing-xl;
+  border-bottom: 2px solid $border-secondary;
+  overflow-x: auto;
+}
+
+.tab {
+  padding: $spacing-sm $spacing-lg;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  font-size: $font-size-base;
+  font-weight: 500;
+  color: $text-secondary;
+  transition: all $transition-fast;
+  white-space: nowrap;
+
+  &:hover {
+    color: $text-primary;
+    background: $bg-secondary;
+  }
+
+  &.activeTab {
+    color: $gold-primary;
+    border-bottom-color: $gold-primary;
+    background: rgba($gold-primary, 0.05);
+  }
+}
+
+// Tab Content
+.tabContent {
+  background: rgba($admin-bg, 0.4);
+  padding: $spacing-xl;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-sm;
+  border: 1px solid rgba($border-secondary, 0.5);
+}
+
+.tabDescription {
+  color: $text-secondary;
+  margin-bottom: $spacing-lg;
+  font-size: $font-size-base;
+}
+
+// Forms
+.formGrid {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xl;
+
+  h2 {
+    margin: 0 0 $spacing-sm 0;
+    color: $gold-primary;
+    font-family: $font-secondary;
+    font-size: $font-size-2xl;
+  }
+
+  h3 {
+    margin: $spacing-lg 0 $spacing-md 0;
+    color: $text-primary;
+    font-size: $font-size-lg;
+    border-bottom: 1px solid $border-secondary;
+    padding-bottom: $spacing-sm;
+  }
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: $spacing-lg;
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-xs;
+    font-weight: 500;
+    color: $text-primary;
+
+    small {
+      font-weight: normal;
+      color: $text-tertiary;
+      font-size: $font-size-sm;
+      font-style: italic;
+    }
+
+    input,
+    select {
+      @extend .input;
+    }
+
+    input[type="number"] {
+      max-width: 150px;
+    }
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// Tables with editable inputs
+.socialClassesTable,
+.damageBonusTable {
+  overflow-x: auto;
+  margin-top: $spacing-md;
+
+  table {
+    @extend .table;
+
+    tbody {
+      tr {
+        td {
+          input {
+            padding: $spacing-xs $spacing-sm;
+            border: 1px solid $border-secondary;
+            border-radius: $radius-sm;
+            font-size: $font-size-sm;
+            font-family: inherit;
+            background: rgba($admin-bg, 0.6);
+            color: $text-primary;
+            transition: all $transition-fast;
+
+            &:focus {
+              outline: none;
+              border-color: $gold-primary;
+              background: rgba($admin-bg, 0.8);
+              box-shadow: 0 0 0 2px rgba($gold-primary, 0.2);
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// Loading State
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-3xl;
+  color: $text-secondary;
+
+  p {
+    margin-top: $spacing-md;
+    font-size: $font-size-base;
+  }
+}
+
+.spinner {
+  border: 3px solid $border-secondary;
+  border-top-color: $gold-primary;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

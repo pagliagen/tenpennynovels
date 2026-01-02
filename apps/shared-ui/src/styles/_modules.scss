@@ -1,0 +1,20 @@
+// =============================================================================
+// TenpennyNovels Design System - For CSS Modules
+// Import ONLY variables and mixins, NO global styles
+// =============================================================================
+
+// 1. Variables
+@import 'variables/colors';
+@import 'variables/typography';
+@import 'variables/spacing';
+@import 'variables/breakpoints';
+@import 'variables/shadows';
+@import 'variables/borders';
+
+// 2. Mixins only (no global styles)
+@import 'mixins/buttons';
+@import 'mixins/cards';
+@import 'mixins/forms';
+@import 'mixins/animations';
+@import 'mixins/utilities';
+@import 'mixins/typography';

@@ -1,4 +1,4 @@
-@import 'main';
+@import '_modules';
 
 // Toast container - fixed top center
 .toast-container {
@@ -14,7 +14,7 @@
   width: 90%;
   pointer-events: none; // Allow clicks through container
 
-  @include responsive('mobile') {
+  @include mobile-only {
     width: 95%;
     top: 10px;
     max-width: 100%;
@@ -33,7 +33,7 @@
     width: 100%;
     min-height: 60px;
 
-    @include responsive('mobile') {
+    @include mobile-only {
       padding: $spacing-sm $spacing-md;
       min-height: 50px;
     }
@@ -52,7 +52,7 @@
     font-size: 1.25rem;
     flex-shrink: 0;
 
-    @include responsive('mobile') {
+    @include mobile-only {
       font-size: 1.1rem;
     }
   }
@@ -63,7 +63,7 @@
     word-wrap: break-word;
     font-size: $font-size-base;
 
-    @include responsive('mobile') {
+    @include mobile-only {
       font-size: $font-size-sm;
     }
   }
@@ -79,7 +79,7 @@
   padding: $spacing-xs;
   line-height: 1;
   opacity: 0.6;
-  transition: opacity $transition-base;
+  transition: opacity $transition-normal;
   flex-shrink: 0;
   margin-left: $spacing-sm;
 
@@ -92,9 +92,9 @@
     outline-offset: 2px;
   }
 
-  @include responsive('mobile') {
+  @include mobile-only {
     font-size: 1.1rem;
-    padding: $spacing-2xs;
+    padding: $spacing-xs;
   }
 }
 

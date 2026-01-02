@@ -1,4 +1,4 @@
-@import 'main';
+@import '_modules';
 
 .promptContent {
   display: flex;
@@ -13,11 +13,11 @@
   padding: $spacing-md;
   border: 2px solid $border-color;
   border-radius: $border-radius-sm;
-  font-family: $font-family-base;
+  font-family: $font-primary;
   font-size: $font-size-base;
   line-height: 1.5;
   resize: vertical;
-  transition: border-color $transition-base, box-shadow $transition-base;
+  transition: border-color $transition-normal, box-shadow $transition-normal;
 
   &:focus {
     outline: none;
@@ -26,11 +26,11 @@
   }
 
   &::placeholder {
-    color: $text-muted;
+    color: $text-secondary;
     font-style: italic;
   }
 
-  @include responsive('mobile') {
+  @include mobile-only {
     min-height: 100px;
     padding: $spacing-sm;
     font-size: $font-size-sm;
@@ -46,7 +46,7 @@
 .charCounter {
   text-align: right;
   font-size: $font-size-sm;
-  color: $text-muted;
+  color: $text-secondary;
   font-weight: 500;
 
   .overLimit {
@@ -61,17 +61,17 @@
   padding: $spacing-xs $spacing-sm;
   background-color: $error-bg;
   border-left: 3px solid $error-border;
-  border-radius: $border-radius-xs;
+  border-radius: $border-radius-sm;
 }
 
 .hint {
   font-size: $font-size-xs;
-  color: $text-muted;
+  color: $text-secondary;
   font-style: italic;
   text-align: center;
   padding-top: $spacing-xs;
 
-  @include responsive('mobile') {
+  @include mobile-only {
     font-size: 0.7rem;
   }
 }

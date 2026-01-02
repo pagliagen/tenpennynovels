@@ -376,7 +376,44 @@
       "icon": "⚙️",
       "label": "Sistema",
       "permission": "system.access",
-      "children": []
+      "children": [
+        {
+          "icon": "📝",
+          "label": "Configurazione Sistema",
+          "permission": "system.broadcast_messages",
+          "url": "/system/configurations"
+        },
+        {
+          "icon": "🎮",
+          "label": "Configurazione Personaggi",
+          "permission": "system.broadcast_messages",
+          "url": "/system/character-creation-config"
+        },
+        {
+          "icon": "🔧",
+          "label": "Manutenzione",
+          "permission": "system.maintenance_mode",
+          "url": "/system/maintenance"
+        },
+        {
+          "icon": "📊",
+          "label": "Statistiche Sistema",
+          "permission": "system.view_logs",
+          "url": "/system/stats"
+        },
+        {
+          "icon": "📜",
+          "label": "Log di Audit",
+          "permission": "system.view_logs",
+          "url": "/system/audit-logs"
+        },
+        {
+          "icon": "📢",
+          "label": "Messaggi Broadcast",
+          "permission": "system.broadcast_messages",
+          "url": "/system/broadcast"
+        }
+      ]
     },
     "tickets": {
       "icon": "🎫",

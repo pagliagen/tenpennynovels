@@ -4,6 +4,7 @@ import { ApiResponse, DiceResult, LocationActionType } from '../types/game';
 import { logger } from '../utils/logger';
 import { LocationService } from '../services/LocationService';
 import { getRedisPublisher } from '../config/redis';
+import { CharacterCreationConfigService } from '../../../../packages/shared/src/services/CharacterCreationConfigService';
 
 export class GameController {
   /**
@@ -182,9 +183,12 @@ export class GameController {
           });
         }
 
+        // Load character creation configuration
+        const configService = CharacterCreationConfigService.getInstance();
+        const characterConfig = await configService.loadConfig();
 
         responseData.draftConfiguration = {
-          characterStatTotalPoints: parseInt(process.env.CHARACTER_STAT_TOTAL_POINTS || '400'),
+          characterStatTotalPoints: characterConfig.stats.totalPoints,
           baseSkills: baseSkills.map((skill: any) => ({
             id: skill._id.toString(),
             name: skill.name,
@@ -231,7 +235,8 @@ export class GameController {
               skillName: bonus.skillName,
               bonusValue: bonus.bonusValue
             }))
-          }))
+          })),
+          characterCreationConfig: characterConfig
         };
       }
 

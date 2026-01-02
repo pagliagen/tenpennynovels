@@ -8,6 +8,7 @@ import {
   SkillBreakdown
 } from '@/pages/character/wizard';
 import { useGame } from '@/contexts/GameContext';
+import { calculateIntelligenceBonus } from '@/lib/intelligenceBonusFormula';
 import styles from './WizardSteps.module.scss';
 
 // Component for adding dynamic skills
@@ -230,9 +231,23 @@ export const WizardStep3_Skills: React.FC<WizardStep3Props> = ({
     pointsRemaining
   });
 
-  // Social class ranges will be fetched from API
-  // TODO: Replace hardcoded data with API call to /api/game/social-class-configs
-  const socialClassRanges = [
+  // Extract character creation config from gameData
+  const skillsConfig = gameData?.draftConfiguration?.characterCreationConfig?.skills;
+  const socialClassesConfig = gameData?.draftConfiguration?.characterCreationConfig?.socialClasses || [];
+
+  // Social class ranges from configuration
+  const socialClassRanges = socialClassesConfig.length > 0 ? socialClassesConfig.map((sc: any) => ({
+    min: sc.financeSkillRange.min,
+    max: sc.financeSkillRange.max,
+    name: sc.id,
+    label: sc.name,
+    weeklyCredit: sc.weeklyCredit,
+    initialWealth: {
+      minCash: sc.initialWealth.minCash,
+      maxCash: sc.initialWealth.maxCash
+    }
+  })) : [
+    // Fallback to defaults if config not available
     { min: 1, max: 9, name: 'destitute', label: 'Indigente', weeklyCredit: 2, initialWealth: { minCash: 5, maxCash: 15 } },
     { min: 10, max: 19, name: 'poor', label: 'Povero', weeklyCredit: 5, initialWealth: { minCash: 20, maxCash: 40 } },
     { min: 20, max: 39, name: 'modest', label: 'Modesto', weeklyCredit: 15, initialWealth: { minCash: 50, maxCash: 100 } },
@@ -247,14 +262,30 @@ export const WizardStep3_Skills: React.FC<WizardStep3Props> = ({
   const calculateSocialClass = (finanzaValue: number) => {
     return socialClassRanges.find(range => finanzaValue >= range.min && finanzaValue <= range.max) || socialClassRanges[0];
   };
-  // Calculate skill points: 200 + (INT ÷ 2) as per Call of Cthulhu rules
+  // Calculate skill points from config
   const calculateSkillPoints = (intelligence: number) => {
-    const basePoints = gameData?.draftConfiguration?.characterSkillTotalPoints || 200;
-    const intBonus = Math.floor(intelligence / 2);
+    const formula = skillsConfig?.totalPointsFormula || 'constant:200';
+    let basePoints = 200;
+    if (formula.startsWith('constant:')) {
+      basePoints = parseInt(formula.replace('constant:', '')) || 200;
+    }
+    const intelligenceBonusFormula = skillsConfig?.intelligenceBonusFormula || 'INT/2';
+    const intBonus = calculateIntelligenceBonus(intelligenceBonusFormula, intelligence);
     return basePoints + intBonus;
   };
 
   const maxSkillPoints = calculateSkillPoints(characterData.stats.intelligence || 50);
+
+  // Extract base points for display
+  const formula = skillsConfig?.totalPointsFormula || 'constant:200';
+  let baseSkillPoints = 200;
+  if (formula.startsWith('constant:')) {
+    baseSkillPoints = parseInt(formula.replace('constant:', '')) || 200;
+  }
+
+  // Extract skill caps from config
+  const skillCreationCap = skillsConfig?.creationCap || 75;
+  const skillCreationCapWithOccupation = skillsConfig?.creationCapWithOccupation || 80;
 
   // 🔧 AUTO-ASSIGN manualPoints for mandatory skills on mount
   // This ensures that if a user returns to Step 3 with an occupation already selected,
@@ -519,8 +550,8 @@ export const WizardStep3_Skills: React.FC<WizardStep3Props> = ({
     return baseValue;
   };
 
-  // Cap for player-allocated skill points (Call of Cthulhu rules)
-  const getMaxValueForSkill = () => 75;
+  // Cap for player-allocated skill points (from config)
+  const getMaxValueForSkill = () => skillCreationCap;
 
 
   return (
@@ -602,8 +633,8 @@ export const WizardStep3_Skills: React.FC<WizardStep3Props> = ({
             <div>
               <h4>Riepilogo Punti Abilità</h4>
               <div className={styles.skillsInfo}>
-                <small>Punti disponibili: 200 + {Math.floor((characterData.stats.intelligence || 50) / 2)} (bonus INT) = {maxSkillPoints}</small>
-                <small>Limite per singola abilità: 75</small>
+                <small>Punti disponibili: {baseSkillPoints} + {calculateIntelligenceBonus(skillsConfig?.intelligenceBonusFormula || 'INT/2', characterData.stats.intelligence || 50)} (bonus INT) = {maxSkillPoints}</small>
+                <small>Limite per singola abilità: {skillCreationCap}</small>
               </div>
             </div>
             <div>
@@ -612,7 +643,7 @@ export const WizardStep3_Skills: React.FC<WizardStep3Props> = ({
                 <div className={styles.pointsRow}>
                   <span className={styles.pointsLabel}>Punti Base Usati:</span>
                   <span className={styles.pointsValue}>
-                    {basePointsUsed || 0} / {basePointsTotal || 200}
+                    {basePointsUsed || 0} / {basePointsTotal || baseSkillPoints}
                   </span>
                 </div>
                 <div className={styles.pointsRow}>
@@ -734,7 +765,7 @@ export const WizardStep3_Skills: React.FC<WizardStep3Props> = ({
                       <input
                         type="number"
                         min={0}
-                        max={75}
+                        max={skillCreationCap}
                         value={currentManual}
                         onChange={(e) => handleSkillChange(skill.name, parseInt(e.target.value) || 0)}
                         className={styles.input}
@@ -816,7 +847,7 @@ export const WizardStep3_Skills: React.FC<WizardStep3Props> = ({
                       <input
                         type="number"
                         min={0}
-                        max={75}
+                        max={skillCreationCap}
                         value={currentManual}
                         onChange={(e) => handleSkillChange(skill.name, parseInt(e.target.value) || 0)}
                         className={styles.input}
@@ -898,7 +929,7 @@ export const WizardStep3_Skills: React.FC<WizardStep3Props> = ({
                       <input
                         type="number"
                         min={0}
-                        max={75}
+                        max={skillCreationCap}
                         value={currentManual}
                         onChange={(e) => handleSkillChange(skill.name, parseInt(e.target.value) || 0)}
                         className={styles.input}
@@ -980,7 +1011,7 @@ export const WizardStep3_Skills: React.FC<WizardStep3Props> = ({
                       <input
                         type="number"
                         min={0}
-                        max={75}
+                        max={skillCreationCap}
                         value={currentManual}
                         onChange={(e) => handleSkillChange(skill.name, parseInt(e.target.value) || 0)}
                         className={styles.input}
@@ -1062,7 +1093,7 @@ export const WizardStep3_Skills: React.FC<WizardStep3Props> = ({
                       <input
                         type="number"
                         min={0}
-                        max={75}
+                        max={skillCreationCap}
                         value={currentManual}
                         onChange={(e) => handleSkillChange(skill.name, parseInt(e.target.value) || 0)}
                         className={styles.input}
@@ -1163,7 +1194,7 @@ export const WizardStep3_Skills: React.FC<WizardStep3Props> = ({
                                     <input
                                       type="number"
                                       min={0}
-                                      max={75}
+                                      max={skillCreationCap}
                                       value={currentManual}
                                       onChange={(e) => handleDynamicSkillChange(
                                         dynamicSkill.skillName,
@@ -1258,7 +1289,7 @@ export const WizardStep3_Skills: React.FC<WizardStep3Props> = ({
                       <input
                         type="number"
                         min={0}
-                        max={75}
+                        max={skillCreationCap}
                         value={currentManual}
                         onChange={(e) => handleSkillChange(finanzaSkill.name, parseInt(e.target.value) || 0)}
                         className={`${styles.input} ${styles.finanzaInput}`}

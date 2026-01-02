@@ -1,4 +1,5 @@
 import mongoose, { Schema, model, Document } from 'mongoose';
+import { calculateAllDerivedStats, getCharacterCreationConfig, type CharacterStats, type DerivedStats } from '../../shared/src/services/CharacterCreationConfigService';
 
 // Granular skill tracking interface for occupation bonuses
 export interface SkillBreakdown {
@@ -63,6 +64,7 @@ export interface ICharacter extends Document {
     hitPoints: number;      // Punti Ferita = (TAG + COS) / 10 arrotondato per difetto
     sanityPoints: number;   // Punti Sanità = POT iniziali
     magicPoints: number;    // Punti Magia = POT / 5 arrotondato per difetto
+    movementRate: number;   // Tasso di Movimento = dipendente da DES e FOR (default 8)
     damageBonus: string;    // Bonus al Danno da tabella FOR + TAG
     build: number;          // Corporatura da tabella FOR + TAG
   };
@@ -315,6 +317,7 @@ const CharacterSchema = new Schema<ICharacter>({
     hitPoints: { type: Number, default: 10 },     // PF = (TAG + COS) / 10
     sanityPoints: { type: Number, default: 50 },  // SAN = POT iniziali
     magicPoints: { type: Number, default: 10 },   // PM = POT / 5
+    movementRate: { type: Number, default: 8 },   // Tasso di Movimento (default 8)
     damageBonus: { type: String, default: "0" },  // Bonus Danno da tabella
     build: { type: Number, default: 0 }           // Corporatura da tabella
   },
@@ -665,49 +668,38 @@ CharacterSchema.methods.getBackgroundResponsesByVisibility = function(visibility
   return responses;
 };
 
-// Helper functions for Call of Cthulhu calculations
-function calculateDamageBonus(strength: number, size: number): { damageBonus: string, build: number } {
-  const total = strength + size;
-  
-  if (total <= 64) return { damageBonus: "-2", build: -2 };
-  if (total <= 84) return { damageBonus: "-1", build: -1 };
-  if (total <= 124) return { damageBonus: "0", build: 0 };
-  if (total <= 164) return { damageBonus: "+1d4", build: 1 };
-  if (total <= 204) return { damageBonus: "+1d6", build: 2 };
-  if (total <= 284) return { damageBonus: "+2d6", build: 3 };
-  if (total <= 364) return { damageBonus: "+3d6", build: 4 };
-  if (total <= 444) return { damageBonus: "+4d6", build: 5 };
-  
-  // Per valori superiori a 444
-  return { damageBonus: "+5d6", build: 6 };
-}
-
 // Pre-save middleware
 CharacterSchema.pre('save', async function(this: ICharacter, next) {
   // Calculate derived statistics when base stats change
   if (this.isModified('stats')) {
-    // Tiro Idea = INT
-    this.derived.ideaRoll = this.stats.intelligence;
-    
-    // Tiro Fortuna = POT
-    this.derived.luckRoll = this.stats.power;
-    
-    // Conoscenze = EDU
-    this.derived.knowledge = this.stats.education;
-    
-    // Punti Ferita = (TAG + COS) / 10 arrotondato per difetto
-    this.derived.hitPoints = Math.floor((this.stats.size + this.stats.constitution) / 10);
-    
-    // Punti Sanità = POT iniziali
-    this.derived.sanityPoints = this.stats.power;
+    const configService = getCharacterCreationConfig();
+    const config = await configService.loadConfig();
 
-    // Punti Magia = POT / 5 arrotondato per difetto
-    this.derived.magicPoints = Math.floor(this.stats.power / 5);
+    // Prepare stats in CharacterStats format
+    const characterStats: CharacterStats = {
+      strength: this.stats.strength,
+      dexterity: this.stats.dexterity,
+      constitution: this.stats.constitution,
+      size: this.stats.size,
+      intelligence: this.stats.intelligence,
+      education: this.stats.education,
+      power: this.stats.power,
+      charm: this.stats.charm
+    };
 
-    // Bonus al Danno e Corporatura da tabella FOR + TAG
-    const damageData = calculateDamageBonus(this.stats.strength, this.stats.size);
-    this.derived.damageBonus = damageData.damageBonus;
-    this.derived.build = damageData.build;
+    // Calculate all derived stats using config-based parser
+    const derived = calculateAllDerivedStats(characterStats, config);
+
+    // Assign calculated values to character
+    this.derived.ideaRoll = derived.ideaRoll;
+    this.derived.luckRoll = derived.luckRoll;
+    this.derived.knowledge = derived.knowledge;
+    this.derived.hitPoints = derived.hitPoints;
+    this.derived.sanityPoints = derived.sanityPoints;
+    this.derived.magicPoints = derived.magicPoints;
+    this.derived.movementRate = derived.movementRate;
+    this.derived.damageBonus = derived.damageBonus;
+    this.derived.build = derived.build;
   }
   
   // If character becomes active, deactivate other characters for this user

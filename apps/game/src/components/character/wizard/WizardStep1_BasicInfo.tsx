@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { CharacterWizardData } from '@/pages/character/wizard';
+import { useGame } from '@/contexts/GameContext';
 import styles from './WizardSteps.module.scss';
 
 interface WizardStep1Props {
@@ -21,6 +22,15 @@ export const WizardStep1_BasicInfo: React.FC<WizardStep1Props> = ({
   onManualSave,
   onValidationChange
 }) => {
+  const { gameData } = useGame();
+
+  // Get limits from character creation config
+  const limits = gameData?.draftConfiguration?.characterCreationConfig?.limits;
+  const ageMin = limits?.age?.min || 16;
+  const ageMax = limits?.age?.max || 80;
+  const weightMin = limits?.weight?.min || 30;
+  const weightMax = limits?.weight?.max || 200;
+
   const handleInputChange = (field: keyof CharacterWizardData, value: any) => {
     updateCharacterData({ [field]: value });
   };
@@ -208,12 +218,12 @@ export const WizardStep1_BasicInfo: React.FC<WizardStep1Props> = ({
             value={characterData.apparentAge || ''}
             onChange={(e) => handleInputChange('apparentAge', e.target.value ? parseInt(e.target.value) : null)}
             className={styles.input}
-            min={18}
-            max={80}
+            min={ageMin}
+            max={ageMax}
             required
           />
           <small className={styles.helpText}>
-            Può differire dall'età reale (min 18, max 80)
+            Può differire dall'età reale (min {ageMin}, max {ageMax})
           </small>
         </div>
 
@@ -267,13 +277,13 @@ export const WizardStep1_BasicInfo: React.FC<WizardStep1Props> = ({
             value={characterData.weight || ''}
             onChange={(e) => handleInputChange('weight', e.target.value)}
             className={styles.input}
-            min={30}
-            max={200}
+            min={weightMin}
+            max={weightMax}
             placeholder="es. 70"
             required
           />
           <small className={styles.helpText}>
-            Peso in kilogrammi (30-200 kg)
+            Peso in kilogrammi ({weightMin}-{weightMax} kg)
           </small>
         </div>
 

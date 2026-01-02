@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNotification, Toast } from '../contexts/NotificationContext';
-import '../styles/toast.scss';
+import styles from '../styles/toast.module.scss';
 
 // Toast item component with animations
 const ToastItem: React.FC<{ toast: Toast; onDismiss: (id: string) => void }> = ({ toast, onDismiss }) => {
@@ -32,16 +32,16 @@ const ToastItem: React.FC<{ toast: Toast; onDismiss: (id: string) => void }> = (
 
   return (
     <div
-      className={`message message-toast message-${toast.type} ${isExiting ? 'toast-exit' : 'toast-enter'}`}
+      className={`${styles.messageToast} ${styles[`message-${toast.type}`]} ${isExiting ? styles.toastExit : styles.toastEnter}`}
       role="alert"
       aria-live="polite"
     >
-      <div className="toast-content">
-        <span className="toast-icon">{getIcon()}</span>
-        <span className="toast-message">{toast.message}</span>
+      <div className={styles.toastContent}>
+        <span className={styles.toastIcon}>{getIcon()}</span>
+        <span className={styles.toastMessage}>{toast.message}</span>
       </div>
       <button
-        className="toast-close"
+        className={styles.toastClose}
         onClick={handleDismiss}
         aria-label="Chiudi notifica"
         type="button"
@@ -57,7 +57,7 @@ export const ToastContainer: React.FC = () => {
   const { toasts, dismissToast } = useNotification();
 
   return (
-    <div className="toast-container" aria-label="Notifiche">
+    <div className={styles.toastContainer} aria-label="Notifiche">
       {toasts.map((toast) => (
         <ToastItem key={toast.id} toast={toast} onDismiss={dismissToast} />
       ))}

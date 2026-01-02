@@ -6,6 +6,7 @@ import { AuthMiddleware } from '../middleware/auth';
 import { CharacterValidationMiddleware } from '../middleware/characterValidation';
 import { CharacterVisibilityFilter } from '../../../../packages/shared/utils/characterVisibility';
 import { FinancialUtils } from '../utils/financialUtils';
+import { CharacterCreationConfigService } from '../../../../packages/shared/src/services/CharacterCreationConfigService';
 import {
   calculateAvailableSkillPoints,
   applyOccupationBonuses,
@@ -637,8 +638,12 @@ export class CharacterController {
         return;
       }
 
+      // Load character creation config
+      const configService = CharacterCreationConfigService.getInstance();
+      const characterConfig = await configService.loadConfig();
+
       // Comprehensive validation using new system
-      const validationResult = await validateCharacterSubmission(character);
+      const validationResult = await validateCharacterSubmission(character, characterConfig);
 
       if (!validationResult.isValid) {
         logger.warn('Character submission failed validation', {
@@ -1171,7 +1176,11 @@ export class CharacterController {
         return;
       }
 
-      const skillPoints = calculateAvailableSkillPoints(character);
+      // Load character creation config
+      const configService = CharacterCreationConfigService.getInstance();
+      const characterConfig = await configService.loadConfig();
+
+      const skillPoints = calculateAvailableSkillPoints(character, characterConfig);
 
       logger.info('Skill points calculated', {
         characterId,
@@ -1290,8 +1299,12 @@ export class CharacterController {
         return;
       }
 
+      // Load character creation config
+      const configService = CharacterCreationConfigService.getInstance();
+      const characterConfig = await configService.loadConfig();
+
       // Apply bonuses
-      const result = await applyOccupationBonuses(character, occupation, selectedAlternatives);
+      const result = await applyOccupationBonuses(character, occupation, characterConfig, selectedAlternatives);
 
       // Update character occupation
       character.occupation = occupation._id;

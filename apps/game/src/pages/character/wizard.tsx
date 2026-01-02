@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import { useGame } from '@/contexts/GameContext';
 import { GameLayout } from '@/components/GameLayout';
+import { calculateIntelligenceBonus, calculateAllDerivedStats, type CharacterStats } from '@/lib/intelligenceBonusFormula';
 import { WizardStep1_BasicInfo } from '@/components/character/wizard/WizardStep1_BasicInfo';
 import { WizardStep2_Stats } from '@/components/character/wizard/WizardStep2_Stats';
 import { WizardStep3_Skills } from '@/components/character/wizard/WizardStep3_Skills';
@@ -83,26 +84,25 @@ export function migrateSkillToGranular(
   baseValue: number,
   occupation: OccupationData | null | undefined
 ): SkillBreakdown {
-  // Only apply requiredBonus if isFixed === true
-  // If isFixed === false, the user must manually choose which alternative to develop
-  const isFixedRequired = occupation?.requiredSkills?.some(
+  // Find if this skill is a required skill (fixed, no alternatives)
+  const requiredSkill = occupation?.requiredSkills?.find(
     req => req.skillName === skillName && req.isFixed === true
   );
 
-  const isBonusSelected = occupation?.bonusSkills?.some(
+  // Find if this skill is a bonus skill
+  const bonusSkill = occupation?.bonusSkills?.find(
     bonus => bonus.skillName === skillName
   );
 
-  const REQUIRED_SKILL_MINIMUM = parseInt(
-    process.env.NEXT_PUBLIC_OCCUPATION_REQUIRED_SKILL_MINIMUM || '40'
-  );
-  const BONUS_SKILL_POINTS = parseInt(
-    process.env.NEXT_PUBLIC_OCCUPATION_BONUS_SKILL_POINTS || '30'
-  );
+  // Get the required minimum from the occupation's required skill definition (default 40)
+  const requiredMinimum = requiredSkill?.baseValue || 40;
+
+  // Get the bonus points from the occupation's bonus skill definition (default 30)
+  const bonusPoints = bonusSkill?.bonusValue || 30;
 
   // Only apply requiredBonus if it's a FIXED required skill (no alternatives)
-  const requiredBonus = isFixedRequired ? Math.max(0, REQUIRED_SKILL_MINIMUM - baseValue) : 0;
-  const occupationBonus = isBonusSelected ? BONUS_SKILL_POINTS : 0;
+  const requiredBonus = requiredSkill ? Math.max(0, requiredMinimum - baseValue) : 0;
+  const occupationBonus = bonusSkill ? bonusPoints : 0;
   const manualPoints = Math.max(0, currentValue - baseValue - requiredBonus - occupationBonus);
 
   return {
@@ -176,6 +176,7 @@ export interface CharacterWizardData {
     hitPoints: number;      // Punti Ferita = (TAG + COS) / 10
     sanityPoints: number;   // Punti Sanità = POT iniziali
     magicPoints: number;    // Punti Magia = POT / 5
+    movementRate: number;   // Tasso di Movimento = 8 (default Call of Cthulhu)
     damageBonus: string;    // Bonus al Danno da tabella FOR + TAG
     build: number;          // Corporatura da tabella FOR + TAG
   };
@@ -272,6 +273,7 @@ export default function CharacterWizard() {
       hitPoints: 4,       // = (TAG + COS) / 10 → (20 + 20) / 10 = 4
       sanityPoints: 20,   // = POT
       magicPoints: 4,     // = POT / 5 → 20 / 5 = 4
+      movementRate: 8,    // = Default Call of Cthulhu movement rate
       damageBonus: "-2",  // calcolato (20+20=40 ≤ 64)
       build: -2           // calcolato
     },
@@ -288,35 +290,53 @@ export default function CharacterWizard() {
     invalidSteps: new Set([2, 3, 4, 5]) // Initially mark occupation, stats, skills and background steps as invalid
   });
 
-  // Helper function to calculate damage bonus and build
-  const calculateDamageBonus = (strength: number, size: number): { damageBonus: string, build: number } => {
-    const total = strength + size;
-    
-    if (total <= 64) return { damageBonus: "-2", build: -2 };
-    if (total <= 84) return { damageBonus: "-1", build: -1 };
-    if (total <= 124) return { damageBonus: "0", build: 0 };
-    if (total <= 164) return { damageBonus: "+1d4", build: 1 };
-    if (total <= 204) return { damageBonus: "+1d6", build: 2 };
-    if (total <= 284) return { damageBonus: "+2d6", build: 3 };
-    if (total <= 364) return { damageBonus: "+3d6", build: 4 };
-    if (total <= 444) return { damageBonus: "+4d6", build: 5 };
-    
-    return { damageBonus: "+5d6", build: 6 };
-  };
-
-  // Helper function to calculate derived stats
+  // Helper function to calculate derived stats using config-based parser
   const calculateDerivedStats = (stats: typeof characterData.stats) => {
-    const damageData = calculateDamageBonus(stats.strength, stats.size);
+    // Get character creation config from game context
+    const config = gameData?.draftConfiguration?.characterCreationConfig;
+
+    // Prepare stats in CharacterStats format for parser
+    const characterStats: CharacterStats = {
+      strength: stats.strength,
+      dexterity: stats.dexterity,
+      constitution: stats.constitution,
+      size: stats.size,
+      intelligence: stats.intelligence,
+      education: stats.education,
+      power: stats.power,
+      charm: stats.charm
+    };
+
+    // Use config-based parser if available, otherwise use defaults
+    if (config) {
+      return calculateAllDerivedStats(characterStats, config);
+    }
+
+    // Fallback to default Call of Cthulhu calculations if config not available
+    const total = stats.strength + stats.size;
+    let damageBonus = "0";
+    let build = 0;
+
+    if (total <= 64) { damageBonus = "-2"; build = -2; }
+    else if (total <= 84) { damageBonus = "-1"; build = -1; }
+    else if (total <= 124) { damageBonus = "0"; build = 0; }
+    else if (total <= 164) { damageBonus = "+1d4"; build = 1; }
+    else if (total <= 204) { damageBonus = "+1d6"; build = 2; }
+    else if (total <= 284) { damageBonus = "+2d6"; build = 3; }
+    else if (total <= 364) { damageBonus = "+3d6"; build = 4; }
+    else if (total <= 444) { damageBonus = "+4d6"; build = 5; }
+    else { damageBonus = "+5d6"; build = 6; }
 
     return {
-      ideaRoll: stats.intelligence,                               // Tiro Idea = INT
-      luckRoll: stats.power,                                     // Tiro Fortuna = POT
-      knowledge: stats.education,                                // Conoscenze = EDU
-      hitPoints: Math.floor((stats.size + stats.constitution) / 10), // PF = (TAG + COS) / 10
-      sanityPoints: stats.power,                                 // SAN = POT iniziali
-      magicPoints: Math.floor(stats.power / 5),                 // PM = POT / 5
-      damageBonus: damageData.damageBonus,                      // Bonus Danno
-      build: damageData.build                                   // Corporatura
+      ideaRoll: stats.intelligence,
+      luckRoll: stats.power,
+      knowledge: stats.education,
+      hitPoints: Math.floor((stats.size + stats.constitution) / 10),
+      sanityPoints: stats.power,
+      magicPoints: Math.floor(stats.power / 5),
+      movementRate: 8,
+      damageBonus: damageBonus,
+      build: build
     };
   };
 
@@ -688,7 +708,7 @@ export default function CharacterWizard() {
     };
 
     // Step 3: Caratteristiche (Stats)
-    const maxStatPoints = gameData?.draftConfiguration?.characterStatTotalPoints || 400;
+    const maxStatPoints = gameData?.draftConfiguration?.characterCreationConfig?.stats?.totalPoints || 400;
     const basePoints = 20;
     const pointsAboveBase = Object.entries(data.stats).reduce((sum, [stat, value]) => {
       const statValue = typeof value === 'number' ? value : basePoints;
@@ -723,8 +743,15 @@ export default function CharacterWizard() {
     };
 
     // Step 4: Abilità (Skills) - Separated INT and Base Points Logic
-    const baseSkillPoints = gameData?.draftConfiguration?.characterSkillTotalPoints || 200;
-    const intelligenceBonus = Math.floor((data.stats.intelligence || 50) / 2);
+    const skillsConfig = gameData?.draftConfiguration?.characterCreationConfig?.skills;
+    // Parse skill points formula (constant:200 or formula:EDU*4)
+    const formula = skillsConfig?.totalPointsFormula || 'constant:200';
+    let baseSkillPoints = 200;
+    if (formula.startsWith('constant:')) {
+      baseSkillPoints = parseInt(formula.replace('constant:', '')) || 200;
+    }
+    const intelligenceBonusFormula = skillsConfig?.intelligenceBonusFormula || 'INT/2';
+    const intelligenceBonus = calculateIntelligenceBonus(intelligenceBonusFormula, data.stats.intelligence || 50);
     const maxSkillPoints = baseSkillPoints + intelligenceBonus;
     const baseSkills = gameData?.draftConfiguration?.baseSkills || [];
 
@@ -836,27 +863,30 @@ export default function CharacterWizard() {
       step4Errors.push(`Assegna ancora ${totalPointsRemaining} punti abilità (${baseSkillPoints - basePointsUsed} base + ${intelligenceBonus - intPointsUsed} INT)`);
     }
 
-    // Validate individual skill caps (75 general, 80 with occupation bonus)
+    // Validate individual skill caps (from config: creationCap, creationCapWithOccupation)
+    const skillCreationCap = skillsConfig?.creationCap || 75;
+    const skillCreationCapWithOccupation = skillsConfig?.creationCapWithOccupation || 80;
+
     Object.entries(data.skills).forEach(([skillName, skillValue]) => {
       const total = getSkillTotal(skillValue);
 
       // Standard cap during creation
-      if (total > 75) {
-        // Check if occupation bonus allows up to 80
+      if (total > skillCreationCap) {
+        // Check if occupation bonus allows higher cap
         if (isGranularSkill(skillValue) && skillValue.occupationBonus > 0) {
-          if (total > 80) {
-            step4Errors.push(`${skillName}: ${total} punti (massimo 80 con bonus occupazione)`);
+          if (total > skillCreationCapWithOccupation) {
+            step4Errors.push(`${skillName}: ${total} punti (massimo ${skillCreationCapWithOccupation} con bonus occupazione)`);
           }
         } else {
-          step4Errors.push(`${skillName}: ${total} punti (massimo 75 durante creazione)`);
+          step4Errors.push(`${skillName}: ${total} punti (massimo ${skillCreationCap} durante creazione)`);
         }
       }
     });
 
     // Also check dynamic skills
     data.dynamicSkills.forEach((dynamicSkill) => {
-      if (dynamicSkill.value > 75) {
-        step4Errors.push(`${dynamicSkill.skillName}: ${dynamicSkill.value} punti (massimo 75 durante creazione)`);
+      if (dynamicSkill.value > skillCreationCap) {
+        step4Errors.push(`${dynamicSkill.skillName}: ${dynamicSkill.value} punti (massimo ${skillCreationCap} durante creazione)`);
       }
     });
 

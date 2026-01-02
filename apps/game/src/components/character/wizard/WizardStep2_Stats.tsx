@@ -55,10 +55,12 @@ export const WizardStep2_Stats: React.FC<WizardStep2Props> = ({
   pointsRemaining
 }) => {
   const { gameData } = useGame();
-  const maxStatPoints = gameData?.draftConfiguration?.characterStatTotalPoints || 400;
 
-  // New system: 20 base points for all characteristics + 400 to distribute
-  const basePoints = 20;
+  // Get stats config from character creation config
+  const statsConfig = gameData?.draftConfiguration?.characterCreationConfig?.stats;
+  const maxStatPoints = statsConfig?.totalPoints || 400;
+  const basePoints = statsConfig?.basePoints || 20;
+  const statCreationCap = statsConfig?.creationCap || 85;
 
   // Calculate points used above base (20 for each stat)
   // Remove local calculation - use centralized data
@@ -66,25 +68,13 @@ export const WizardStep2_Stats: React.FC<WizardStep2Props> = ({
   // Total points for display (20 base × 8 characteristics + 400 distributed = 560 total)
   const totalPointsForDisplay = (basePoints * 8) + maxStatPoints; // 560 total
 
-  // Calculate derived stats when primary stats change
-  const calculateDerivedStats = (stats: typeof characterData.stats) => {
-    // PF = media di Costituzione e Taglia (assumendo Taglia = Forza per semplicità)
-    const hitPoints = Math.floor((stats.constitution + stats.strength) / 2);
-    // Sanità Mentale = Potere
-    const sanity = stats.power;
-    // Fortuna = Potere (come specificato)
-    const luck = stats.power;
-
-    return { hitPoints, sanity, luck };
-  };
-
   const handleStatChange = (statName: keyof typeof characterData.stats, value: number) => {
     const newStats = { ...characterData.stats, [statName]: value };
-    const newDerivedStats = calculateDerivedStats(newStats);
 
+    // Update stats - derived stats will be auto-calculated by parent wizard
+    // using config-based parser from CharacterCreationConfig
     updateCharacterData({
       stats: newStats
-      // derived stats will be auto-calculated by updateCharacterData
     });
   };
 
@@ -107,13 +97,13 @@ export const WizardStep2_Stats: React.FC<WizardStep2Props> = ({
 
   // Stats min/max values per new system
   const getMinValueForStat = () => {
-    return basePoints; // All stats minimum 20
+    return basePoints; // All stats minimum from config
   };
-  const getMaxValueForStat = () => 85; // Cap at 85 (20 base + 65 max invested)
+  const getMaxValueForStat = () => statCreationCap; // Cap from config (creationCap)
 
-  // Validate no stats above 85
-  const getStatsAbove85Count = () => {
-    return Object.values(characterData.stats).filter(value => value > 85).length;
+  // Validate no stats above creation cap
+  const getStatsAboveCapCount = () => {
+    return Object.values(characterData.stats).filter(value => value > statCreationCap).length;
   };
 
   return (
@@ -124,9 +114,9 @@ export const WizardStep2_Stats: React.FC<WizardStep2Props> = ({
           Distribuisci i punti caratteristica secondo il sistema Call of Cthulhu (d100).
         </p>
         <div className={styles.rulesInfo}>
-          <small>• Tutte le caratteristiche partono da 20 punti base</small>
-          <small>• Punti da distribuire: {maxStatPoints} (sopra i 20 base)</small>
-          <small>• Massimo 85 punti per caratteristica (20 base + 65 investiti)</small>
+          <small>• Tutte le caratteristiche partono da {basePoints} punti base</small>
+          <small>• Punti da distribuire: {maxStatPoints} (sopra i {basePoints} base)</small>
+          <small>• Massimo {statCreationCap} punti per caratteristica ({basePoints} base + {statCreationCap - basePoints} investiti)</small>
         </div>
       </div>
 
@@ -430,6 +420,10 @@ export const WizardStep2_Stats: React.FC<WizardStep2Props> = ({
           <div className={styles.derivedStat}>
             <span className={styles.derivedLabel}>Punti Magia</span>
             <span className={styles.derivedValue}>{characterData.derived.magicPoints}</span>
+          </div>
+          <div className={styles.derivedStat}>
+            <span className={styles.derivedLabel}>Movimento</span>
+            <span className={styles.derivedValue}>{characterData.derived.movementRate}</span>
           </div>
           <div className={styles.derivedStat}>
             <span className={styles.derivedLabel}>Fortuna</span>

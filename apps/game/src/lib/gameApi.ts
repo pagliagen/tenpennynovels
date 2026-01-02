@@ -2,6 +2,7 @@
 // Handles authentication validation and game initialization
 
 import { CacheManager, CACHE_KEYS, CACHE_TTL } from '@/utils/cache';
+import type { CharacterCreationConfig } from '../../../../packages/shared/src/services/CharacterCreationConfigService';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'https://api.tenpennynovels.com';
 
@@ -100,6 +101,7 @@ export interface GameInitResponse {
       workingConditions: string;
       rarity: string;
     }>;
+    characterCreationConfig?: CharacterCreationConfig;
   };
   error?: string;
 }

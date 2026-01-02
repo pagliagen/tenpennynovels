@@ -1,6 +1,7 @@
 import { Character, Occupation, Skill } from '../../../../packages/database/models';
 import { ICharacter } from '../../../../packages/database/models/Character';
 import { IOccupation } from '../../../../packages/database/models/Occupation';
+import { CharacterCreationConfig, calculateIntelligenceBonus } from '../../../../packages/shared/src/services/CharacterCreationConfigService';
 import { logger } from './logger';
 
 /**
@@ -39,26 +40,36 @@ interface CharacterValidationResult {
 /**
  * Calculate available skill points for a character
  *
- * Formula: 200 base points + INT/2 bonus
+ * Formula: base points (from config) + INT/intelligenceBonusDivisor bonus
  *
  * @param character - The character object
+ * @param config - Character creation configuration
  * @returns Skill points calculation breakdown
  */
-export function calculateAvailableSkillPoints(character: ICharacter): SkillPointsCalculation {
-  const basePoints = 200;
-  const intBonus = Math.floor((character.stats.intelligence || 0) / 2);
+export function calculateAvailableSkillPoints(character: ICharacter, config: CharacterCreationConfig): SkillPointsCalculation {
+  // Parse base points from formula (currently constant, future: formula)
+  const formula = config.skills.totalPointsFormula || 'constant:200';
+  let basePoints = 200;
+  if (formula.startsWith('constant:')) {
+    basePoints = parseInt(formula.replace('constant:', '')) || 200;
+  }
+
+  const intelligenceBonusFormula = config.skills.intelligenceBonusFormula || 'INT/2';
+  const intBonus = calculateIntelligenceBonus(intelligenceBonusFormula, character.stats.intelligence || 0);
   const totalAvailable = basePoints + intBonus;
 
-  // Environment variables for caps (from .env)
-  const skillCap = parseInt(process.env.CHARACTER_SKILL_CAP || '75');
-  const finalSkillCap = parseInt(process.env.CHARACTER_FINAL_SKILL_CAP || '80');
+  // Skill caps from config
+  const skillCap = config.skills.creationCap || 75;
+  const finalSkillCap = config.skills.creationCapWithOccupation || 80;
 
   logger.debug('Calculating skill points', {
     characterId: character.id,
     intelligence: character.stats.intelligence,
     basePoints,
     intBonus,
-    totalAvailable
+    totalAvailable,
+    skillCap,
+    finalSkillCap
   });
 
   return {
@@ -76,16 +87,18 @@ export function calculateAvailableSkillPoints(character: ICharacter): SkillPoint
  *
  * The new system grants 1-2 automatic bonus skills that don't count against
  * the character's skill point budget. These bonuses can push skills above
- * the normal cap (75) up to the final cap (80).
+ * the normal cap (creationCap) up to the final cap (creationCapWithOccupation).
  *
  * @param character - The character to apply bonuses to
  * @param occupation - The occupation with bonus skills
+ * @param config - Character creation configuration
  * @param selectedAlternatives - Map of requirement ID to selected alternative skill ID (for choice skills)
  * @returns Result of bonus application with details
  */
 export async function applyOccupationBonuses(
   character: ICharacter,
   occupation: IOccupation,
+  config: CharacterCreationConfig,
   selectedAlternatives?: { [requirementId: string]: string }
 ): Promise<OccupationBonusResult> {
   const result: OccupationBonusResult = {
@@ -94,7 +107,7 @@ export async function applyOccupationBonuses(
     warnings: []
   };
 
-  const finalSkillCap = parseInt(process.env.CHARACTER_FINAL_SKILL_CAP || '80');
+  const finalSkillCap = config.skills.creationCapWithOccupation || 80;
 
   // Validate occupation has bonusSkills
   if (!occupation.bonusSkills || occupation.bonusSkills.length === 0) {
@@ -188,7 +201,7 @@ export async function applyOccupationBonuses(
  *
  * Checks:
  * - All required fields are present
- * - Stats total is within allowed range (400 points + minimums)
+ * - Stats total is within allowed range (config points + minimums)
  * - Skills total doesn't exceed available points
  * - All required skills for occupation have been improved
  * - No skill exceeds the cap
@@ -196,9 +209,10 @@ export async function applyOccupationBonuses(
  * - Background is complete
  *
  * @param character - The character to validate
+ * @param config - Character creation configuration
  * @returns Validation result with errors and warnings
  */
-export async function validateCharacterSubmission(character: ICharacter): Promise<CharacterValidationResult> {
+export async function validateCharacterSubmission(character: ICharacter, config: CharacterCreationConfig): Promise<CharacterValidationResult> {
   const result: CharacterValidationResult = {
     isValid: true,
     errors: [],
@@ -243,19 +257,20 @@ export async function validateCharacterSubmission(character: ICharacter): Promis
   }
 
   // ====== STATS VALIDATION ======
-  const statTotal = parseInt(process.env.CHARACTER_STAT_TOTAL_POINTS || '400');
-  const maxStatsAbove80 = parseInt(process.env.CHARACTER_MAX_STATS_ABOVE_80 || '2');
+  const statTotal = config.stats.totalPoints || 400;
+  const maxStatsAbove80 = config.stats.maxStatsAbove80 || 2;
+  const statCreationCap = config.stats.creationCap || 85;
 
-  // Calculate minimum points from environment variables
+  // Calculate minimum points from config
   const minStats = {
-    strength: parseInt(process.env.CHARACTER_MIN_STR || '20'),
-    size: parseInt(process.env.CHARACTER_MIN_SIZ || '20'),
-    dexterity: parseInt(process.env.CHARACTER_MIN_DEX || '30'),
-    constitution: parseInt(process.env.CHARACTER_MIN_CON || '30'),
-    intelligence: parseInt(process.env.CHARACTER_MIN_INT || '15'),
-    education: parseInt(process.env.CHARACTER_MIN_EDU || '15'),
-    power: parseInt(process.env.CHARACTER_MIN_POW || '15'),
-    appearance: parseInt(process.env.CHARACTER_MIN_CHA || '15')
+    strength: config.stats.basePoints || 20,
+    size: config.stats.basePoints || 20,
+    dexterity: config.stats.basePoints || 20,
+    constitution: config.stats.basePoints || 20,
+    intelligence: config.stats.basePoints || 20,
+    education: config.stats.basePoints || 20,
+    power: config.stats.basePoints || 20,
+    appearance: config.stats.basePoints || 20
   };
 
   const minimumTotal = Object.values(minStats).reduce((sum, val) => sum + val, 0);
@@ -308,7 +323,7 @@ export async function validateCharacterSubmission(character: ICharacter): Promis
   }
 
   // ====== SKILLS VALIDATION ======
-  const skillPoints = calculateAvailableSkillPoints(character);
+  const skillPoints = calculateAvailableSkillPoints(character, config);
   const skillCap = skillPoints.skillCap;
   const finalSkillCap = skillPoints.finalSkillCap;
 

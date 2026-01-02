@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { SystemConfigController } from '../controllers/SystemConfigController';
+import { CharacterCreationConfigController } from '../controllers/CharacterCreationConfigController';
 import { AdminAuthMiddleware } from '../middleware/adminAuth';
 import { requireViewPermission } from '../utils/permissions';
 
@@ -108,6 +109,42 @@ router.post(
   AdminAuthMiddleware.logAdminAction('invalidate_config_cache', 'system_configuration'),
   AdminAuthMiddleware.sensitiveOperationLimit(),
   SystemConfigController.invalidateConfigCache
+);
+
+// ============================================================================
+// Character Creation Configuration Management (JSON File Based)
+// ============================================================================
+
+// Get character creation configuration
+router.get(
+  '/character-creation-config',
+  requireViewPermission('system.broadcast_messages'),
+  AdminAuthMiddleware.logAdminAction('view_character_creation_config', 'system_configuration'),
+  CharacterCreationConfigController.getConfig
+);
+
+// Update character creation configuration
+router.put(
+  '/character-creation-config',
+  requireViewPermission('system.broadcast_messages'),
+  AdminAuthMiddleware.logAdminAction('update_character_creation_config', 'system_configuration'),
+  AdminAuthMiddleware.sensitiveOperationLimit(),
+  CharacterCreationConfigController.updateConfig
+);
+
+// Invalidate character creation config cache
+router.post(
+  '/character-creation-config/invalidate-cache',
+  requireViewPermission('system.broadcast_messages'),
+  AdminAuthMiddleware.logAdminAction('invalidate_character_creation_cache', 'system_configuration'),
+  CharacterCreationConfigController.invalidateCache
+);
+
+// Validate character creation configuration
+router.post(
+  '/character-creation-config/validate',
+  requireViewPermission('system.broadcast_messages'),
+  CharacterCreationConfigController.validateConfig
 );
 
 export { router as systemRoutes };
