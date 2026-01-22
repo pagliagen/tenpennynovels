@@ -12,7 +12,7 @@ console.log('Environment loaded, importing app...');
 console.log('🔍 JWT_SECRET:', process.env.JWT_SECRET ? `${process.env.JWT_SECRET.substring(0, 10)}...` : 'MISSING');
 
 // Import the Express app
-import app, { setupProcessHandlers, setupDatabaseConnections } from './app';
+import app, { setupProcessHandlers, setupDatabaseConnections, initializeRateLimiters } from './app';
 
 // Import controllers to register decorators
 import './controllers/CharacterController';
@@ -32,7 +32,13 @@ const server = app.listen(PORT, async () => {
   try {
     // Setup database connections
     await setupDatabaseConnections();
-    
+
+    // Ensure models are loaded before accessing configurations
+    await import('../../../packages/database/models');
+
+    // Initialize rate limiters with values from database
+    await initializeRateLimiters();
+
     // Setup WebSocket server
     const { Server } = await import('socket.io');
     const { setupWebSocket } = await import('./websocket');
@@ -68,14 +74,18 @@ const server = app.listen(PORT, async () => {
     // Initialize postal delivery service
     const { postalDeliveryService } = await import('./cron/postalDelivery');
     postalDeliveryService.initialize();
-    
+
+    // Initialize daily experience cron jobs
+    const { initializeDailyExperienceCrons } = await import('./cron/dailyExperience');
+    await initializeDailyExperienceCrons();
+
     // Initialize credit line reset service
     const { CreditLineResetService } = await import('./services/CreditLineResetService');
-    CreditLineResetService.initialize();
+    await CreditLineResetService.initialize();
     
     // Initialize automated rent collection system
     const { startRentCollectionCron } = await import('./cron/rentCollection');
-    startRentCollectionCron();
+    await startRentCollectionCron();
     
     // Start analytics system metrics tracking
     console.log('📊 Starting analytics metrics tracking...');
@@ -84,11 +94,13 @@ const server = app.listen(PORT, async () => {
     
     console.log('🔌 WebSocket server initialized');
     console.log('📮 Postal delivery service initialized');
+    console.log('⭐ Daily experience system initialized');
     console.log('💰 Credit line reset service initialized');
     console.log('🏠 Rent collection system initialized');
     console.log('📊 Analytics metrics tracking started');
     logger.info('WebSocket server initialized');
     logger.info('Postal delivery service initialized');
+    logger.info('Daily experience system initialized');
     logger.info('Credit line reset service initialized');
     logger.info('Rent collection system initialized');
     logger.info('Analytics metrics tracking started');

@@ -396,12 +396,6 @@
           "url": "/system/maintenance"
         },
         {
-          "icon": "📊",
-          "label": "Statistiche Sistema",
-          "permission": "system.view_logs",
-          "url": "/system/stats"
-        },
-        {
           "icon": "📜",
           "label": "Log di Audit",
           "permission": "system.view_logs",

@@ -140,40 +140,9 @@ app.use(AnalyticsMiddleware.trackUserAction());
 // HTTP request logging
 // app.use(morgan('combined', { stream: httpLoggerStream }));
 
-// Rate limiting for API endpoints
-const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 1000, // limit each IP to 1000 requests per windowMs
-  message: {
-    success: false,
-    error: 'Troppe richieste da questo indirizzo IP, riprova più tardi.',
-    code: 'RATE_LIMIT_EXCEEDED',
-    timestamp: new Date().toISOString()
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-// Apply rate limiting to all routes
-app.use('/', apiLimiter);
-
-// Specific rate limiting for expensive operations
-const strictLimiter = rateLimit({
-  windowMs: 5 * 60 * 1000, // 5 minutes
-  max: 50, // limit each IP to 50 requests per windowMs
-  message: {
-    success: false,
-    error: 'Troppe richieste per questa operazione, riprova più tardi.',
-    code: 'STRICT_RATE_LIMIT_EXCEEDED',
-    timestamp: new Date().toISOString()
-  }
-});
-
-// Apply strict rate limiting to resource-intensive endpoints
-app.use('/game/characters/create', strictLimiter);
-app.use('/game/messages/send', strictLimiter);
-app.use('/game/economy/purchase', strictLimiter);
-app.use('/game/locations/actions', strictLimiter);
+// Rate limiting - NOW INITIALIZED DYNAMICALLY IN initializeRateLimiters()
+// See initializeRateLimiters() function below for dynamic rate limiter setup
+// Rate limiters are applied after database connection is established
 
 // Game routes under /game prefix  
 app.use('/game', characterRoutes);
@@ -233,6 +202,68 @@ export const setupDatabaseConnections = async () => {
 
   } catch (error: any) {
     console.error('❌ Failed to setup database connections:', error);
+    throw error;
+  }
+};
+
+// Rate limiter initialization (will be used by index.ts)
+export const initializeRateLimiters = async () => {
+  try {
+    const { ConfigurationService } = await import('../../../packages/shared/src/services/ConfigurationService');
+    const { getRedisClient } = await import('./config/redis');
+    const { logger } = await import('./utils/logger');
+    const redis = getRedisClient();
+    const configService = new ConfigurationService(redis, logger);
+
+    // Fetch rate limit configurations from database
+    const apiWindowMs = await configService.getConfig('rate_limit_api_window') || 900000; // 15 min
+    const apiMax = await configService.getConfig('rate_limit_api_max') || 1000;
+    const strictWindowMs = await configService.getConfig('rate_limit_strict_window') || 300000; // 5 min
+    const strictMax = await configService.getConfig('rate_limit_strict_max') || 50;
+
+    console.log(`✅ Initializing Rate Limiters:`);
+    console.log(`   API: ${apiMax} requests per ${apiWindowMs / 60000} minutes`);
+    console.log(`   Strict: ${strictMax} requests per ${strictWindowMs / 60000} minutes`);
+
+    // General API rate limiter
+    const apiLimiter = rateLimit({
+      windowMs: apiWindowMs,
+      max: apiMax,
+      message: {
+        success: false,
+        error: 'Troppe richieste da questo indirizzo IP, riprova più tardi.',
+        code: 'RATE_LIMIT_EXCEEDED',
+        timestamp: new Date().toISOString()
+      },
+      standardHeaders: true,
+      legacyHeaders: false,
+    });
+
+    // Strict rate limiter for expensive operations
+    const strictLimiter = rateLimit({
+      windowMs: strictWindowMs,
+      max: strictMax,
+      message: {
+        success: false,
+        error: 'Troppe richieste per questa operazione, riprova più tardi.',
+        code: 'STRICT_RATE_LIMIT_EXCEEDED',
+        timestamp: new Date().toISOString()
+      }
+    });
+
+    // Apply rate limiting to all routes
+    app.use('/', apiLimiter);
+
+    // Apply strict rate limiting to resource-intensive endpoints
+    app.use('/game/characters/create', strictLimiter);
+    app.use('/game/messages/send', strictLimiter);
+    app.use('/game/economy/purchase', strictLimiter);
+    app.use('/game/locations/actions', strictLimiter);
+
+    console.log('✅ Rate limiters initialized successfully');
+
+  } catch (error: any) {
+    console.error('❌ Failed to initialize rate limiters:', error);
     throw error;
   }
 };

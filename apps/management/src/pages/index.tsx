@@ -2,17 +2,17 @@ import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { ManagementLayout } from '@/components/ManagementLayout';
 import { AuthContext } from '@/lib/auth';
-import { ChartBadge, ChartDataItem } from '@/components/ChartBadge';
+import { PersonalAdminMetrics, PersonalMetricsData } from '@/components/dashboard/PersonalAdminMetrics';
+import { GeneralGameStats } from '@/components/dashboard/GeneralGameStats';
 import styles from '@/styles/pages/Dashboard.module.scss';
 
 const API_GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'https://api.tenpennynovels.com';
 
 interface SystemMetrics {
-  // Statistiche principali (4 card grandi in alto)
   mainStats: {
     uniqueVisitors: {
       current: number;
-      change: number; // percentuale cambio dal mese scorso
+      change: number;
       trend: 'up' | 'down';
     };
     pageViews: {
@@ -31,8 +31,6 @@ interface SystemMetrics {
       trend: 'up' | 'down';
     };
   };
-
-  // Browser/Device Analytics
   browserStats: {
     browsers: Array<{
       name: string;
@@ -52,8 +50,6 @@ interface SystemMetrics {
       percentage: number;
     }>;
   };
-
-  // Gameplay Stats
   gameplayStats: {
     charactersOnline: number;
     activeLocations: number;
@@ -62,26 +58,22 @@ interface SystemMetrics {
     lettersDelivered: number;
     corporationsActive: number;
   };
-
-  // Geographic data
   geographicStats: {
     countries: Array<{
-      location: string;  // City name or Country name
+      location: string;
       country: string;
       code: string;
       count: number;
       percentage: number;
-      color: string;     // For chart rendering
+      color: string;
     }>;
     cities: Array<{
-      city: string;      // Es: "Terni"
-      region?: string;   // Es: "Umbria"
-      country: string;   // Es: "Italia"
+      city: string;
+      region?: string;
+      country: string;
       count: number;
     }>;
   };
-
-  // Time-based activity
   activityStats: {
     hourlyActivity: Array<{
       hour: number;
@@ -102,210 +94,157 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ authContext }: DashboardProps) {
-  const [refreshedMetrics, setRefreshedMetrics] = useState<SystemMetrics | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [personalMetrics, setPersonalMetrics] = useState<PersonalMetricsData | null>(null);
+  const [generalMetrics, setGeneralMetrics] = useState<SystemMetrics | null>(null);
+  const [loadingPersonal, setLoadingPersonal] = useState(true);
+  const [loadingGeneral, setLoadingGeneral] = useState(true);
+  const [errorPersonal, setErrorPersonal] = useState<string | null>(null);
+  const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
 
-  // Fetch real analytics data from API
-  useEffect(() => {
-    async function fetchAnalyticsData() {
-      try {
-        setLoading(true);
-        setError(null);
+  // Check if user has 'gestore' role
+  const hasRole = (roles: string[]) => {
+    if (!authContext?.user?.userRoles) return false;
+    return roles.some(role => authContext.user?.userRoles?.includes(role) ?? false);
+  };
 
-        // console.log('🔄 Fetching analytics data from API Gateway...');
+  const isGestore = hasRole(['gestore']);
 
-        const response = await fetch(`${API_GATEWAY_URL}/admin/analytics/dashboard`, {
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        });
-
-        // console.log('📊 Analytics API response status:', response.status);
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('❌ Analytics API error:', response.status, errorText);
-          throw new Error(`Analytics API error: ${response.status} - ${errorText}`);
-        }
-
-        const result = await response.json();
-
-        if (!result.success) {
-          throw new Error(result.error || 'Failed to fetch analytics data');
-        }
-
-        // Transform API response to match expected format
-        const apiData = result.data;
-        const transformedMetrics: SystemMetrics = {
-          mainStats: {
-            uniqueVisitors: apiData.visitatori_unici,
-            pageViews: apiData.pagine_viste,
-            registeredUsers: apiData.utenti_iscritti,
-            sentActions: apiData.azioni_inviate
-          },
-          browserStats: {
-            browsers: apiData.browser_stats?.browsers || [],
-            devices: [], // Will be added when available
-            operatingSystems: [] // Will be added when available
-          },
-          gameplayStats: apiData.gameplay_activity,
-          geographicStats: {
-            countries: apiData.geographic_distribution?.locations || [],
-            cities: [] // Will be added when available
-          },
-          activityStats: {
-            hourlyActivity: [],
-            dailyActivity: []
-          }
-        };
-
-        setRefreshedMetrics(transformedMetrics);
-
-      } catch (err) {
-        console.error('Failed to fetch analytics:', err);
-        setError(err instanceof Error ? err.message : 'Unknown error');
-
-        // Show error state without fallback data
-        console.error('Analytics API error, no fallback data available');
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchAnalyticsData();
-  }, []);
-
-  const [lastUpdated, setLastUpdated] = useState(new Date());
-  const [isRefreshing, setIsRefreshing] = useState(false);
-
-  const refreshMetrics = async () => {
-    setIsRefreshing(true);
+  // Fetch personal metrics (for all admin users)
+  const fetchPersonalMetrics = async () => {
     try {
-      // console.log('🔄 Refreshing analytics data...');
+      setLoadingPersonal(true);
+      setErrorPersonal(null);
+
+      const [pendingChars, reviewStats, pendingSessions] = await Promise.all([
+        fetch(`${API_GATEWAY_URL}/admin/characters/pending-for-me?limit=3`, {
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' }
+        }),
+        fetch(`${API_GATEWAY_URL}/admin/characters/review-stats?period=week`, {
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' }
+        }),
+        fetch(`${API_GATEWAY_URL}/admin/sessions/pending-xp-assignment?limit=3`, {
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' }
+        })
+      ]);
+
+      const [pendingData, reviewData, sessionsData] = await Promise.all([
+        pendingChars.json(),
+        reviewStats.json(),
+        pendingSessions.json()
+      ]);
+
+      // Transform API response to PersonalMetricsData
+      const transformedMetrics: PersonalMetricsData = {
+        pendingCharacters: pendingData.success ? {
+          count: pendingData.data.count,
+          totalPending: pendingData.data.totalPending,
+          characters: pendingData.data.characters
+        } : undefined,
+        approvedByMe: reviewData.success ? {
+          weeklyCount: reviewData.data.weeklyApproved || 0,
+          approvalRate: reviewData.data.approvalRate || 0,
+          recentApprovals: reviewData.data.recentApprovals || []
+        } : undefined,
+        pendingXP: sessionsData.success ? {
+          count: sessionsData.data.count,
+          sessions: sessionsData.data.sessions
+        } : undefined,
+        assignedTickets: {
+          count: 0,
+          tickets: []
+        }
+      };
+
+      setPersonalMetrics(transformedMetrics);
+    } catch (error) {
+      console.error('Failed to fetch personal metrics:', error);
+      setErrorPersonal(error instanceof Error ? error.message : 'Errore nel caricamento');
+    } finally {
+      setLoadingPersonal(false);
+    }
+  };
+
+  // Fetch general game statistics (only for 'gestore')
+  const fetchGeneralMetrics = async () => {
+    if (!isGestore) return;
+
+    try {
+      setLoadingGeneral(true);
+      setErrorGeneral(null);
 
       const response = await fetch(`${API_GATEWAY_URL}/admin/analytics/dashboard`, {
         credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json'
-        }
+        headers: { 'Content-Type': 'application/json' }
       });
 
-      // console.log('📊 Refresh API response status:', response.status);
-
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success) {
-          // Transform API response to match expected format
-          const apiData = result.data;
-          const transformedMetrics: SystemMetrics = {
-            mainStats: {
-              uniqueVisitors: apiData.visitatori_unici,
-              pageViews: apiData.pagine_viste,
-              registeredUsers: apiData.utenti_iscritti,
-              sentActions: apiData.azioni_inviate
-            },
-            browserStats: {
-              browsers: apiData.browser_stats?.browsers || [],
-              devices: [],
-              operatingSystems: []
-            },
-            gameplayStats: apiData.gameplay_activity,
-            geographicStats: {
-              countries: apiData.geographic_distribution?.locations || [],
-              cities: []
-            },
-            activityStats: {
-              hourlyActivity: [],
-              dailyActivity: []
-            }
-          };
-          setRefreshedMetrics(transformedMetrics);
-          setLastUpdated(new Date());
-          setError(null);
-        }
+      if (!response.ok) {
+        throw new Error(`Analytics API error: ${response.status}`);
       }
+
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch analytics data');
+      }
+
+      // Transform API response to SystemMetrics
+      const apiData = result.data;
+      const transformedMetrics: SystemMetrics = {
+        mainStats: {
+          uniqueVisitors: apiData.visitatori_unici,
+          pageViews: apiData.pagine_viste,
+          registeredUsers: apiData.utenti_iscritti,
+          sentActions: apiData.azioni_inviate
+        },
+        browserStats: {
+          browsers: apiData.browser_stats?.browsers || [],
+          devices: [],
+          operatingSystems: []
+        },
+        gameplayStats: apiData.gameplay_activity,
+        geographicStats: {
+          countries: apiData.geographic_distribution?.locations || [],
+          cities: []
+        },
+        activityStats: {
+          hourlyActivity: [],
+          dailyActivity: []
+        }
+      };
+
+      setGeneralMetrics(transformedMetrics);
     } catch (error) {
-      console.error('Failed to refresh metrics:', error);
-      setError('Failed to refresh analytics data');
+      console.error('Failed to fetch general metrics:', error);
+      setErrorGeneral(error instanceof Error ? error.message : 'Errore nel caricamento');
     } finally {
-      setIsRefreshing(false);
+      setLoadingGeneral(false);
     }
   };
 
-  // Auto-refresh every 5 minutes (less frequent for analytics data)
+  // Initial fetch on mount
   useEffect(() => {
-    const interval = setInterval(refreshMetrics, 300000);
+    fetchPersonalMetrics();
+    if (isGestore) {
+      fetchGeneralMetrics();
+    }
+  }, [isGestore]);
+
+  // Auto-refresh personal metrics every 60 seconds
+  useEffect(() => {
+    const interval = setInterval(fetchPersonalMetrics, 60000);
     return () => clearInterval(interval);
-  }, [refreshedMetrics]);
+  }, []);
 
-  const formatNumber = (num: number) => {
-    return new Intl.NumberFormat('it-IT').format(num);
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('it-IT', {
-      style: 'currency',
-      currency: 'GBP',
-      minimumFractionDigits: 0
-    }).format(amount);
-  };
-
-  const formatUptime = (seconds: number) => {
-    const days = Math.floor(seconds / 86400);
-    const hours = Math.floor((seconds % 86400) / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    return `${days}g ${hours}h ${minutes}m`;
-  };
-
-  const getHealthStatus = (value: number, thresholds: { warning: number; critical: number }) => {
-    if (value >= thresholds.critical) return 'critical';
-    if (value >= thresholds.warning) return 'warning';
-    return 'good';
-  };
-
-  const hasRole = (requiredRoles: string[]) => {
-    if (requiredRoles.length === 0) return true;
-    const userRoles = authContext.user?.userRoles || [];
-    const characterRoles = authContext.user?.characterRoles || [];
-    return requiredRoles.some(role => userRoles.includes(role));
-  };
-
-  // Show loading state
-  if (loading) {
-    return (
-      <ManagementLayout authContext={authContext}>
-        <Head>
-          <title>TenpennyNovels Management - Dashboard</title>
-        </Head>
-        <div className={styles.modernDashboard}>
-          <div className={styles.loadingContainer}>
-            <div className={styles.spinner}></div>
-            <p>Caricamento dati analytics...</p>
-          </div>
-        </div>
-      </ManagementLayout>
-    );
-  }
-
-  // Show error state (with fallback to mock data)
-  if (!refreshedMetrics) {
-    return (
-      <ManagementLayout authContext={authContext}>
-        <Head>
-          <title>TenpennyNovels Management - Dashboard</title>
-        </Head>
-        <div className={styles.modernDashboard}>
-          <div className={styles.errorContainer}>
-            <p>Errore nel caricamento dati analytics</p>
-            {error && <p className={styles.errorMessage}>{error}</p>}
-            <button onClick={() => window.location.reload()}>Riprova</button>
-          </div>
-        </div>
-      </ManagementLayout>
-    );
-  }
+  // Auto-refresh general metrics every 5 minutes (only for gestore)
+  useEffect(() => {
+    if (isGestore) {
+      const interval = setInterval(fetchGeneralMetrics, 300000);
+      return () => clearInterval(interval);
+    }
+  }, [isGestore]);
 
   return (
     <ManagementLayout authContext={authContext}>
@@ -314,184 +253,44 @@ export default function Dashboard({ authContext }: DashboardProps) {
       </Head>
 
       <div className={styles.modernDashboard}>
-        {error && (
-          <div className={styles.warningBanner}>
-            <span>⚠️ Usando dati di fallback: {error}</span>
-          </div>
-        )}
-        {/* Header minimal */}
-        <div className={styles.dashboardHeader}>
-          <h1 className={styles.pageTitle}>Statistiche mensili</h1>
-          <button
-            onClick={refreshMetrics}
-            disabled={isRefreshing}
-            className={styles.refreshButton}
-          >
-            <span className={`${styles.refreshIcon} ${isRefreshing ? styles.spinning : ''}`}>
-              ↻
-            </span>
-          </button>
-        </div>
-
-        {/* 4 Main Stats Cards */}
-        {refreshedMetrics.mainStats && (
-          <div className={styles.mainStatsGrid}>
-            {refreshedMetrics.mainStats.uniqueVisitors && (
-              <div className={styles.statCard}>
-                <div className={styles.statHeader}>
-                  <span className={styles.statIcon}>👁️</span>
-                  <span className={styles.statLabel}>Visitatori unici</span>
-                </div>
-                <div className={styles.statValue}>{formatNumber(refreshedMetrics.mainStats.uniqueVisitors.current)}</div>
-                <div className={`${styles.statChange} ${styles[refreshedMetrics.mainStats.uniqueVisitors.trend]}`}>
-                  <span className={styles.changeIcon}>
-                    {refreshedMetrics.mainStats.uniqueVisitors.trend === 'down' ? '▼' : '▲'}
-                  </span>
-                  {Math.abs(refreshedMetrics.mainStats.uniqueVisitors.change)}% dall'ultimo mese
-                </div>
-              </div>
-            )}
-
-            {refreshedMetrics.mainStats.pageViews && (
-              <div className={styles.statCard}>
-                <div className={styles.statHeader}>
-                  <span className={styles.statIcon}>📄</span>
-                  <span className={styles.statLabel}>Pagine viste</span>
-                </div>
-                <div className={styles.statValue}>{formatNumber(refreshedMetrics.mainStats.pageViews.current)}</div>
-                <div className={`${styles.statChange} ${styles[refreshedMetrics.mainStats.pageViews.trend]}`}>
-                  <span className={styles.changeIcon}>
-                    {refreshedMetrics.mainStats.pageViews.trend === 'down' ? '▼' : '▲'}
-                  </span>
-                  {Math.abs(refreshedMetrics.mainStats.pageViews.change)}% dall'ultimo mese
-                </div>
-              </div>
-            )}
-
-            {refreshedMetrics.mainStats.registeredUsers && (
-              <div className={styles.statCard}>
-                <div className={styles.statHeader}>
-                  <span className={styles.statIcon}>👥</span>
-                  <span className={styles.statLabel}>Utenti iscritti</span>
-                </div>
-                <div className={styles.statValue}>{formatNumber(refreshedMetrics.mainStats.registeredUsers.current)}</div>
-                <div className={`${styles.statChange} ${styles[refreshedMetrics.mainStats.registeredUsers.trend]}`}>
-                  <span className={styles.changeIcon}>
-                    {refreshedMetrics.mainStats.registeredUsers.trend === 'down' ? '▼' : '▲'}
-                  </span>
-                  {Math.abs(refreshedMetrics.mainStats.registeredUsers.change)}% dall'ultimo mese
-                </div>
-              </div>
-            )}
-
-            {refreshedMetrics.mainStats.sentActions && (
-              <div className={styles.statCard}>
-                <div className={styles.statHeader}>
-                  <span className={styles.statIcon}>⚡</span>
-                  <span className={styles.statLabel}>Azioni inviate</span>
-                </div>
-                <div className={styles.statValue}>{formatNumber(refreshedMetrics.mainStats.sentActions.current)}</div>
-                <div className={`${styles.statChange} ${styles[refreshedMetrics.mainStats.sentActions.trend]}`}>
-                  <span className={styles.changeIcon}>
-                    {refreshedMetrics.mainStats.sentActions.trend === 'down' ? '▼' : '▲'}
-                  </span>
-                  {Math.abs(refreshedMetrics.mainStats.sentActions.change)} dall'ultimo mese
-                </div>
-              </div>
+        {/* Personal Admin Section - Always Visible */}
+        <section className={styles.personalSection}>
+          <div className={styles.sectionHeader}>
+            <h2>👤 La tua Dashboard Amministrativa</h2>
+            {errorPersonal && (
+              <span className={styles.errorBadge}>
+                ⚠️ {errorPersonal}
+              </span>
             )}
           </div>
-        )}
-
-        {/* Secondary Grid for Charts and Stats */}
-        <div className={styles.secondaryGrid}>
-          {/* Browser Stats with Chart */}
-          <ChartBadge
-            title="Browser utilizzati"
-            icon=""
-            data={refreshedMetrics?.browserStats?.browsers?.map((browser): ChartDataItem => ({
-              name: browser.name,
-              version: browser.version,
-              count: browser.count,
-              percentage: browser.percentage,
-              color: browser.color
-            })) || []}
-            displayField="name"
-            secondaryField="version"
-            topCount={5}
+          <PersonalAdminMetrics
+            characterId={authContext.character?.id}
+            metrics={personalMetrics}
+            loading={loadingPersonal}
+            onRefresh={fetchPersonalMetrics}
           />
+        </section>
 
-          {/* Gameplay Stats */}
-          {hasRole(['master', 'gestore']) && (
-            <div className={styles.infoCard}>
-              <div className={styles.cardHeader}>
-                <h3>🎮 Attività Gameplay</h3>
-              </div>
-              <div className={styles.gameplayStats}>
-                <div className={styles.gameplayStat}>
-                  <span className={styles.gameplayIcon}>🟢</span>
-                  <div className={styles.gameplayInfo}>
-                    <div className={styles.gameplayValue}>{refreshedMetrics.gameplayStats.charactersOnline}</div>
-                    <div className={styles.gameplayLabel}>Personaggi online</div>
-                  </div>
-                </div>
-                <div className={styles.gameplayStat}>
-                  <span className={styles.gameplayIcon}>🏛️</span>
-                  <div className={styles.gameplayInfo}>
-                    <div className={styles.gameplayValue}>{refreshedMetrics.gameplayStats.activeLocations}</div>
-                    <div className={styles.gameplayLabel}>Location attive</div>
-                  </div>
-                </div>
-                <div className={styles.gameplayStat}>
-                  <span className={styles.gameplayIcon}>💬</span>
-                  <div className={styles.gameplayInfo}>
-                    <div className={styles.gameplayValue}>{formatNumber(refreshedMetrics.gameplayStats.messagesLast24h)}</div>
-                    <div className={styles.gameplayLabel}>Messaggi (24h)</div>
-                  </div>
-                </div>
-                <div className={styles.gameplayStat}>
-                  <span className={styles.gameplayIcon}>🎲</span>
-                  <div className={styles.gameplayInfo}>
-                    <div className={styles.gameplayValue}>{refreshedMetrics.gameplayStats.diceRollsLast24h}</div>
-                    <div className={styles.gameplayLabel}>Tiri dado (24h)</div>
-                  </div>
-                </div>
-                <div className={styles.gameplayStat}>
-                  <span className={styles.gameplayIcon}>✉️</span>
-                  <div className={styles.gameplayInfo}>
-                    <div className={styles.gameplayValue}>{refreshedMetrics.gameplayStats.lettersDelivered}</div>
-                    <div className={styles.gameplayLabel}>Lettere consegnate</div>
-                  </div>
-                </div>
-                <div className={styles.gameplayStat}>
-                  <span className={styles.gameplayIcon}>🏢</span>
-                  <div className={styles.gameplayInfo}>
-                    <div className={styles.gameplayValue}>{refreshedMetrics.gameplayStats.corporationsActive}</div>
-                    <div className={styles.gameplayLabel}>Corporazioni attive</div>
-                  </div>
-                </div>
-              </div>
+        {/* General Game Statistics - Only for 'gestore' Role */}
+        {isGestore && (
+          <section className={styles.generalStatsSection}>
+            <div className={styles.sectionHeader}>
+              <h2>📊 Statistiche Generali del Gioco</h2>
+              {errorGeneral && (
+                <span className={styles.errorBadge}>
+                  ⚠️ {errorGeneral}
+                </span>
+              )}
             </div>
-          )}
-
-          {/* Geographic Stats */}
-          <ChartBadge
-            title="Distribuzione Geografica"
-            icon="🌍"
-            data={refreshedMetrics?.geographicStats?.countries?.map((location): ChartDataItem => ({
-              location: location.location,
-              country: location.country,
-              code: location.code,
-              count: location.count,
-              percentage: location.percentage,
-              color: location.color,
-              name: location.location // Required field but we'll display 'location'
-            })) || []}
-            displayField="location"
-            topCount={5}
-          />
-        </div>
+            <GeneralGameStats
+              metrics={generalMetrics}
+              loading={loadingGeneral}
+              onRefresh={fetchGeneralMetrics}
+              showGameplayStats={hasRole(['master', 'gestore'])}
+            />
+          </section>
+        )}
       </div>
-    </ManagementLayout >
+    </ManagementLayout>
   );
 }
-

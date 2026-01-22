@@ -7,6 +7,7 @@ import { AuthContext } from '@/lib/auth';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { NotificationBell } from './NotificationBell';
 import { Sidebar } from './Sidebar';
+import { ToastContainer } from './ToastContainer';
 
 interface ManagementLayoutProps {
   children: React.ReactNode;
@@ -87,24 +88,16 @@ export const ManagementLayout: React.FC<ManagementLayoutProps> = ({
             {/* Top Header */}
             <header className={styles.header}>
               <div className={styles.headerLeft}></div>
-              
+
               <div className={styles.headerRight}>
                 <NotificationBell authContext={authContext} />
-                
-                <div className={styles.userProfile}>
-                  <button 
-                    onClick={() => window.location.href = process.env.GAME_URL || 'https://documenti.tenpennynovels.com'}
-                    className={styles.backToGameButton}
-                    title="Torna al Gioco"
-                  >
-                    🎭 Torna al Gioco
-                  </button>
-                </div>
               </div>
             </header>
 
             {/* Main Content */}
             <main className={styles.mainContent}>
+              {/* Toast Notifications - must be placed here to avoid z-index issues */}
+              <ToastContainer />
               {children}
             </main>
           </div>

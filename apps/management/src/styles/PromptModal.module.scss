@@ -1,10 +1,31 @@
-@import '_modules';
+@import '../../../shared-ui/src/styles/modules';
 
 .promptContent {
   display: flex;
   flex-direction: column;
   gap: $spacing-md;
   padding: $spacing-sm 0;
+}
+
+.confirmMessage {
+  padding: $spacing-lg $spacing-md;
+  text-align: center;
+
+  p {
+    margin: 0;
+    font-size: $font-size-base;
+    line-height: 1.6;
+    color: $text-primary;
+    white-space: pre-wrap; // Preserve line breaks
+  }
+
+  @include mobile-only {
+    padding: $spacing-md $spacing-sm;
+
+    p {
+      font-size: $font-size-sm;
+    }
+  }
 }
 
 .textarea {

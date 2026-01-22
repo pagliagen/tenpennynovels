@@ -561,6 +561,64 @@
   }
 }
 
+// Dashboard Sections (Personal + General)
+.personalSection {
+  margin-bottom: 4rem;
+  padding-bottom: 2rem;
+  border-bottom: 2px solid rgba(212, 175, 55, 0.2);
+
+  @include tablet-down {
+    margin-bottom: 3rem;
+    padding-bottom: 1.5rem;
+  }
+}
+
+.generalStatsSection {
+  margin-top: 2rem;
+
+  @include tablet-down {
+    margin-top: 1.5rem;
+  }
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+
+  h2 {
+    font-size: 1.75rem;
+    color: #d4af37;
+    margin: 0;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+
+    @include tablet-down {
+      font-size: 1.5rem;
+    }
+
+    @include mobile-only {
+      font-size: 1.25rem;
+    }
+  }
+}
+
+.errorBadge {
+  background: rgba(255, 107, 107, 0.1);
+  border: 1px solid rgba(255, 107, 107, 0.3);
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  color: #ff6b6b;
+  font-size: 0.875rem;
+  font-weight: 500;
+
+  @include mobile-only {
+    font-size: 0.75rem;
+    padding: 0.4rem 0.8rem;
+  }
+}
+
 // Dark theme consistency
 @media (prefers-color-scheme: dark) {
   .modernDashboard {

@@ -1,17 +1,31 @@
 import cron from 'node-cron';
-import { 
-  Character, 
-  CharacterProgression, 
+import {
+  Character,
+  CharacterProgression,
   ExperienceGrant,
   OnGameMessage,
   OffGameChatMessage,
   GamingSession
 } from '../../../../packages/database/models';
 import { logger } from '../utils/logger';
+import { ConfigurationService } from '../../../../packages/shared/src/services/ConfigurationService';
+import { getRedisClient } from '../config/redis';
 
-// Daily experience grants (every day at 2:00 AM)
-cron.schedule('0 2 * * *', async () => {
-  logger.info('Starting daily experience grant process');
+// Initialize cron jobs with dynamic schedules from database
+async function initializeDailyExperienceCrons(): Promise<void> {
+  const redis = getRedisClient();
+  const configService = new ConfigurationService(redis, logger);
+
+  // Fetch cron schedules from database
+  const dailyXpSchedule = await configService.getConfig('cron_schedule_daily_xp') || '0 2 * * *';
+  const weeklyResetSchedule = await configService.getConfig('cron_schedule_weekly_credit') || '0 3 * * 1';
+
+  logger.info(`✅ Initializing Daily XP cron with schedule: ${dailyXpSchedule}`);
+  logger.info(`✅ Initializing Weekly Reset cron with schedule: ${weeklyResetSchedule}`);
+
+  // Daily experience grants (configurable schedule, default: 2:00 AM)
+  cron.schedule(dailyXpSchedule, async () => {
+    logger.info('Starting daily experience grant process');
   
   try {
     // Get all active characters
@@ -223,9 +237,9 @@ async function calculateActivityScore(characterId: string): Promise<number> {
   }
 }
 
-// Weekly activity reset (every Monday at 3:00 AM)
-cron.schedule('0 3 * * 1', async () => {
-  logger.info('Starting weekly activity metrics reset');
+  // Weekly activity reset (configurable schedule, default: Monday 3:00 AM)
+  cron.schedule(weeklyResetSchedule, async () => {
+    logger.info('Starting weekly activity metrics reset');
   
   try {
     await CharacterProgression.updateMany(
@@ -242,6 +256,9 @@ cron.schedule('0 3 * * 1', async () => {
       error: error instanceof Error ? error.message : String(error)
     });
   }
-});
+  });
 
-export { processDailyExperienceGrant, calculateActivityScore };
+  logger.info('✅ Daily experience cron jobs initialized successfully');
+}
+
+export { initializeDailyExperienceCrons, processDailyExperienceGrant, calculateActivityScore };

@@ -138,12 +138,13 @@ async function processOverdueRent(property: OverdueProperty): Promise<void> {
       const configService = new ConfigurationService(redis, logger);
 
       const evictionNoticeDays = await configService.getConfig('housing_eviction_notice_days') || 30;
+      const evictionWarningDays = await configService.getConfig('housing_eviction_warning_days') || 7;
 
       if (daysOverdue >= evictionNoticeDays) {
         // Evict tenant after notice period
         await evictTenant(property, tenantFinances);
-      } else if (daysOverdue >= 7) {
-        // Send warning after 7 days
+      } else if (daysOverdue >= evictionWarningDays) {
+        // Send warning after configured days
         await sendRentWarning(property, tenantFinances, daysOverdue);
       }
       
@@ -314,11 +315,21 @@ async function sendRentWarning(property: OverdueProperty, tenantFinances: any, d
 
 /**
  * Daily rent collection cron job
- * Runs every day at 6:00 AM
+ * Configurable schedule (default: 6:00 AM)
  */
-function startRentCollectionCron(): void {
-  // Daily rent collection check (every day at 6:00 AM)
-  cron.schedule('0 6 * * *', async () => {
+async function startRentCollectionCron(): Promise<void> {
+  // Fetch cron schedule from database
+  const { ConfigurationService } = await import('../../../../packages/shared/src/services/ConfigurationService');
+  const { getRedisClient } = await import('../config/redis');
+  const redis = getRedisClient();
+  const configService = new ConfigurationService(redis, logger);
+
+  const rentCollectionSchedule = await configService.getConfig('cron_schedule_rent_collection') || '0 6 * * *';
+
+  logger.info(`✅ Initializing Rent Collection cron with schedule: ${rentCollectionSchedule}`);
+
+  // Daily rent collection check (configurable schedule)
+  cron.schedule(rentCollectionSchedule, async () => {
     logger.info('Starting daily rent collection process');
     
     try {
@@ -366,8 +377,8 @@ function startRentCollectionCron(): void {
       });
     }
   });
-  
-  logger.info('Rent collection cron job scheduled (daily at 6:00 AM)');
+
+  logger.info('✅ Rent collection cron job initialized successfully');
 }
 
 /**

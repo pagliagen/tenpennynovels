@@ -738,4 +738,69 @@ export class SessionManagementController {
       });
     }
   }
+
+  /**
+   * Get sessions pending XP assignment for current master
+   * GET /admin/sessions/pending-xp-assignment
+   */
+  static async getPendingXPAssignment(req: Request, res: Response): Promise<void> {
+    try {
+      const limit = parseInt(req.query.limit as string) || 10;
+
+      // Get masterId from authenticated user
+      const masterId = (req as any).user?.characterId || (req as any).character?.id;
+
+      if (!masterId) {
+        return res.status(400).json({
+          success: false,
+          error: 'Master ID not found in request',
+          code: 'MASTER_ID_MISSING'
+        });
+      }
+
+      // Find completed sessions without XP assigned
+      const sessions = await GamingSession.find({
+        status: 'completed',
+        experienceAssigned: false,
+        masterId: masterId
+      })
+      .sort({ sessionDate: 1 }) // Oldest first
+      .limit(limit)
+      .select('title sessionDate completedAt participants')
+      .lean();
+
+      // Transform data
+      const transformedSessions = sessions.map((s: any) => ({
+        id: s._id.toString(),
+        title: s.title,
+        sessionDate: s.sessionDate,
+        completedAt: s.completedAt,
+        participantCount: s.participants?.length || 0,
+        daysOverdue: s.completedAt
+          ? Math.floor((Date.now() - new Date(s.completedAt).getTime()) / (1000 * 60 * 60 * 24))
+          : 0
+      }));
+
+      res.json({
+        success: true,
+        data: {
+          sessions: transformedSessions,
+          count: transformedSessions.length
+        },
+        timestamp: new Date().toISOString()
+      });
+    } catch (error: any) {
+      logger.error('Error getting pending XP assignment sessions:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
+
+      res.status(500).json({
+        success: false,
+        error: 'Impossibile recuperare le sessioni in attesa di assegnazione XP',
+        code: 'GET_PENDING_XP_ERROR',
+        timestamp: new Date().toISOString()
+      });
+    }
+  }
 }

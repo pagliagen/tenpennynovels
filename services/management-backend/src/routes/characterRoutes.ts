@@ -18,10 +18,18 @@ router.get(
 
 // Character approval routes - require characters.read permission
 router.get(
-  '/pending', 
-  requireViewPermission('characters.detail.read'), 
+  '/pending',
+  requireViewPermission('characters.detail.read'),
   AdminAuthMiddleware.logAdminAction('view_pending_characters', 'character_management'),
   CharacterApprovalController.getPendingCharacters
+);
+
+// Get pending characters for current admin to review
+router.get(
+  '/pending-for-me',
+  requireViewPermission('characters.detail.read'),
+  AdminAuthMiddleware.logAdminAction('view_my_pending_characters', 'character_management'),
+  CharacterApprovalController.getPendingCharactersForMe
 );
 
 // Get complete character details with populated references

@@ -48,6 +48,8 @@
     "seed:users": "tsx scripts/seed.ts users",
     "seed:skills": "tsx scripts/seed.ts skills",
     "seed:items": "tsx scripts/seed.ts items",
+    "db:seed:system-configs": "tsx scripts/migrations/seed-system-configurations.ts",
+    "db:check:configs": "tsx scripts/migrations/check-existing-configs.ts",
     "seed:documents": "tsx scripts/seed.ts documents",
     "seed:occupations": "tsx scripts/seed.ts occupations",
     "seed:system-config": "tsx scripts/seed-system-config.ts",

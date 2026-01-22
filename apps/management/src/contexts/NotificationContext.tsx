@@ -14,8 +14,10 @@ export interface Toast {
 interface PromptState {
   isOpen: boolean;
   title: string;
+  message?: string; // Optional message for confirm mode
   defaultValue: string;
-  resolve: ((value: string | null) => void) | null;
+  mode: 'prompt' | 'confirm'; // prompt = with textarea, confirm = simple yes/no
+  resolve: ((value: string | null | boolean) => void) | null;
 }
 
 // Context type
@@ -24,8 +26,9 @@ interface NotificationContextType {
   showToast: (message: string, type: ToastType, duration?: number) => void;
   dismissToast: (id: string) => void;
   showPrompt: (title: string, defaultValue?: string) => Promise<string | null>;
+  showConfirm: (title: string, message: string) => Promise<boolean>; // New confirm function
   promptState: PromptState;
-  handlePromptConfirm: (value: string) => void;
+  handlePromptConfirm: (value: string | boolean) => void;
   handlePromptCancel: () => void;
 }
 
@@ -49,7 +52,9 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
   const [promptState, setPromptState] = useState<PromptState>({
     isOpen: false,
     title: '',
+    message: '',
     defaultValue: '',
+    mode: 'prompt',
     resolve: null,
   });
 
@@ -82,27 +87,45 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
     setToasts((prev) => prev.filter((toast) => toast.id !== id));
   }, []);
 
-  // Show prompt modal
+  // Show prompt modal (with textarea)
   const showPrompt = useCallback((title: string, defaultValue: string = 'Aggiornamento Manutenzione'): Promise<string | null> => {
     return new Promise((resolve) => {
       setPromptState({
         isOpen: true,
         title,
+        message: '',
         defaultValue,
-        resolve,
+        mode: 'prompt',
+        resolve: resolve as (value: string | boolean | null) => void, // Cast to match PromptState type
+      });
+    });
+  }, []);
+
+  // Show confirm modal (simple yes/no, no textarea)
+  const showConfirm = useCallback((title: string, message: string): Promise<boolean> => {
+    return new Promise((resolve) => {
+      setPromptState({
+        isOpen: true,
+        title,
+        message,
+        defaultValue: '',
+        mode: 'confirm',
+        resolve: (value) => resolve(value === true), // Convert to boolean
       });
     });
   }, []);
 
   // Handle prompt confirm
-  const handlePromptConfirm = useCallback((value: string) => {
+  const handlePromptConfirm = useCallback((value: string | boolean) => {
     if (promptState.resolve) {
       promptState.resolve(value);
     }
     setPromptState({
       isOpen: false,
       title: '',
+      message: '',
       defaultValue: '',
+      mode: 'prompt',
       resolve: null,
     });
   }, [promptState]);
@@ -110,12 +133,14 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
   // Handle prompt cancel
   const handlePromptCancel = useCallback(() => {
     if (promptState.resolve) {
-      promptState.resolve(null);
+      promptState.resolve(promptState.mode === 'confirm' ? false : null);
     }
     setPromptState({
       isOpen: false,
       title: '',
+      message: '',
       defaultValue: '',
+      mode: 'prompt',
       resolve: null,
     });
   }, [promptState]);
@@ -125,6 +150,7 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
     showToast,
     dismissToast,
     showPrompt,
+    showConfirm,
     promptState,
     handlePromptConfirm,
     handlePromptCancel,

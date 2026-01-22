@@ -27,8 +27,8 @@
  * ```
  */
 
-import { Redis } from 'ioredis';
-import { SystemConfiguration, ISystemConfiguration } from '../../../database/models';
+import type { RedisClientType } from 'redis';
+import type { ISystemConfiguration } from '../../../database/models';
 
 const CACHE_PREFIX = 'system_config:';
 const CACHE_TTL = 3600; // 1 hour in seconds
@@ -40,7 +40,7 @@ interface Logger {
 }
 
 export class ConfigurationService {
-  private redis: Redis;
+  private redis: RedisClientType;
   private logger: Logger;
 
   /**
@@ -81,7 +81,8 @@ export class ConfigurationService {
 
       this.logger.info(`Configuration cache miss: ${configKey}, fetching from database`);
 
-      // Fetch from database
+      // Fetch from database - dynamic import to ensure model is loaded
+      const { SystemConfiguration } = await import('../../../database/models');
       const config = await SystemConfiguration.findOne({
         configKey,
         isActive: true,
@@ -95,7 +96,7 @@ export class ConfigurationService {
       const value = config.value || config.defaultValue;
 
       // Cache for future requests
-      await this.redis.setex(cacheKey, CACHE_TTL, JSON.stringify(value));
+      await this.redis.setEx(cacheKey, CACHE_TTL, JSON.stringify(value));
 
       this.logger.info(`Configuration fetched and cached: ${configKey}`);
       return value;
@@ -121,6 +122,8 @@ export class ConfigurationService {
     try {
       this.logger.info(`Fetching configurations for section: ${section}`);
 
+      // Fetch from database - dynamic import to ensure model is loaded
+      const { SystemConfiguration } = await import('../../../database/models');
       const configs = await SystemConfiguration.find({
         configSection: section,
         isActive: true,
@@ -167,6 +170,8 @@ export class ConfigurationService {
     try {
       this.logger.info(`Updating configuration: ${configKey} by ${updatedBy}`);
 
+      // Fetch from database - dynamic import to ensure model is loaded
+      const { SystemConfiguration } = await import('../../../database/models');
       const config = await SystemConfiguration.findOneAndUpdate(
         { configKey },
         {

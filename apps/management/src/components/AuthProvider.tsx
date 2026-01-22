@@ -20,6 +20,19 @@ export default function AuthProvider({ children }: AuthProviderProps) {
 
   // Update auth context when component mounts or route changes
   useEffect(() => {
+    // GUARD: Skip auth check if already on access-denied page
+    // This prevents infinite loop when user is not authenticated
+    if (router.pathname === '/access-denied') {
+      setAuthContext({
+        isAuthenticated: false,
+        user: null,
+        character: null,
+        availableCharacters: [],
+        isLoading: false
+      });
+      return; // Exit early - don't call /admin/me
+    }
+
     const updateAuthContext = async () => {
       try {
         // Check for characterId in URL params

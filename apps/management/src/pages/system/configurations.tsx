@@ -25,16 +25,16 @@ export default function ConfigurationsPage({ authContext }: PageProps) {
   const { showPrompt, showToast } = useNotification();
   const [loading, setLoading] = useState(true);
   const [configurations, setConfigurations] = useState<SystemConfiguration[]>([]);
-  const [sectionFilter, setSectionFilter] = useState<string>('all');
+  const [activeTab, setActiveTab] = useState<string>('cron_schedules');
   const [editingConfig, setEditingConfig] = useState<SystemConfiguration | null>(null);
   const [editValue, setEditValue] = useState<string>('');
 
   const fetchConfigurations = async () => {
     try {
       setLoading(true);
-      const url = sectionFilter === 'all'
+      const url = activeTab === 'all'
         ? `${API_BASE_URL}/admin/system/configurations`
-        : `${API_BASE_URL}/admin/system/configurations?section=${sectionFilter}`;
+        : `${API_BASE_URL}/admin/system/configurations?section=${activeTab}`;
 
       const response = await fetch(url, {
         credentials: 'include',
@@ -45,7 +45,17 @@ export default function ConfigurationsPage({ authContext }: PageProps) {
 
       const result = await response.json();
       if (result.success && result.data) {
-        setConfigurations(result.data.configurations || []);
+        // Map backend field names (configKey, configSection, configType) to frontend field names (key, section, type)
+        const mappedConfigs = (result.data.configs || []).map((config: any) => ({
+          key: config.configKey,
+          section: config.configSection,
+          type: config.configType,
+          value: config.value,
+          description: config.description,
+          lastModified: config.updatedAt,
+          modifiedBy: config.metadata?.lastUpdatedBy
+        }));
+        setConfigurations(mappedConfigs);
       }
     } catch (error: any) {
       showToast(`Errore: ${error.message}`, 'error');
@@ -126,7 +136,7 @@ export default function ConfigurationsPage({ authContext }: PageProps) {
 
   useEffect(() => {
     fetchConfigurations();
-  }, [sectionFilter]);
+  }, [activeTab]);
 
   if (loading) {
     return (
@@ -142,7 +152,13 @@ export default function ConfigurationsPage({ authContext }: PageProps) {
     );
   }
 
-  const sections = ['all', ...Array.from(new Set(configurations.map(c => c.section)))];
+  const tabs = [
+    { key: 'cron_schedules', label: 'Cron Schedules' },
+    { key: 'rate_limits', label: 'Rate Limits' },
+    { key: 'character_limits', label: 'Character Limits' },
+    { key: 'housing_config', label: 'Housing' },
+    { key: 'experience_config', label: 'Experience' }
+  ];
 
   return (
     <ManagementLayout authContext={authContext}>
@@ -167,21 +183,17 @@ export default function ConfigurationsPage({ authContext }: PageProps) {
         </div>
       </div>
 
-      <div className={styles.filterSection}>
-        <label>
-          Filtra per Sezione:
-          <select
-            value={sectionFilter}
-            onChange={(e) => setSectionFilter(e.target.value)}
-            className={styles.select}
+      {/* Tabs Navigation */}
+      <div className={styles.tabsContainer}>
+        {tabs.map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            className={`${styles.tab} ${activeTab === tab.key ? styles.activeTab : ''}`}
           >
-            {sections.map(section => (
-              <option key={section} value={section}>
-                {section === 'all' ? 'Tutte le sezioni' : section}
-              </option>
-            ))}
-          </select>
-        </label>
+            {tab.label}
+          </button>
+        ))}
       </div>
 
       <div className={styles.tableContainer}>
@@ -204,11 +216,11 @@ export default function ConfigurationsPage({ authContext }: PageProps) {
                 <td>{config.type}</td>
                 <td>
                   {editingConfig?.key === config.key ? (
-                    <textarea
+                    <input
+                      type="text"
                       value={editValue}
                       onChange={(e) => setEditValue(e.target.value)}
-                      rows={config.type === 'json' || config.type === 'email_template' ? 5 : 2}
-                      className={styles.textarea}
+                      className={styles.input}
                       style={{ width: '100%', fontFamily: 'monospace' }}
                     />
                   ) : (

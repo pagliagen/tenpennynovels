@@ -6,18 +6,33 @@ import morgan from 'morgan';
 /**
  * Setup all middleware for the application
  */
-export function setupMiddleware(app: Express): void {
+export async function setupMiddleware(app: Express): Promise<void> {
   // HTTP request logging
   if (process.env.NODE_ENV === 'development') {
     app.use(morgan('combined', { stream: httpLoggerStream }));
   } else {
     app.use(morgan('common', { stream: httpLoggerStream }));
   }
-  
-  // Rate limiting
-  const generalLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // limit each IP to 100 requests per windowMs
+
+  // Fetch rate limit configurations from database
+  const { ConfigurationService } = await import('../../../../packages/shared/src/services/ConfigurationService');
+  const { getRedisClient } = await import('../config/redis');
+  const redis = getRedisClient();
+  const configService = new ConfigurationService(redis, logger);
+
+  const authWindowMs = await configService.getConfig('rate_limit_auth_window') || 900000; // 15 min
+  const authMax = await configService.getConfig('rate_limit_auth_max') || 100;
+  const loginWindowMs = await configService.getConfig('rate_limit_login_window') || 900000; // 15 min
+  const loginMax = await configService.getConfig('rate_limit_login_max') || 10;
+
+  logger.info(`✅ Initializing Auth/Login Rate Limiters:`);
+  logger.info(`   Auth: ${authMax} requests per ${authWindowMs / 60000} minutes`);
+  logger.info(`   Login: ${loginMax} requests per ${loginWindowMs / 60000} minutes`);
+
+  // Rate limiting - Auth endpoints (general API protection)
+  const authLimiter = rateLimit({
+    windowMs: authWindowMs,
+    max: authMax,
     message: {
       success: false,
       error: 'Troppe richieste da questo indirizzo IP, riprova più tardi.',
@@ -30,10 +45,11 @@ export function setupMiddleware(app: Express): void {
       return req.user?.role === 'admin';
     }
   });
-  
-  const authLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 10, // limit each IP to 10 auth requests per windowMs
+
+  // Rate limiting - Login attempts (strict brute force protection)
+  const loginLimiter = rateLimit({
+    windowMs: loginWindowMs,
+    max: loginMax,
     message: {
       success: false,
       error: 'Too many authentication attempts, please try again later.',
@@ -42,10 +58,10 @@ export function setupMiddleware(app: Express): void {
     standardHeaders: true,
     legacyHeaders: false
   });
-  
+
   // Apply rate limiting
-  app.use('/api/', generalLimiter);
-  app.use('/api/auth/', authLimiter);
+  app.use('/api/', authLimiter);
+  app.use('/api/auth/', loginLimiter);
   
   // Security headers middleware
   app.use((req, res, next) => {

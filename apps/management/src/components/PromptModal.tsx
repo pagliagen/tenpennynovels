@@ -36,6 +36,13 @@ export const PromptModal: React.FC = () => {
   };
 
   const handleConfirm = () => {
+    // In confirm mode, just pass true
+    if (promptState.mode === 'confirm') {
+      handlePromptConfirm(true);
+      return;
+    }
+
+    // In prompt mode, validate and pass the text
     if (value.trim().length >= MIN_CHARS) {
       handlePromptConfirm(value.trim());
       setValue('');
@@ -47,7 +54,7 @@ export const PromptModal: React.FC = () => {
     setValue('');
   };
 
-  const isValid = value.trim().length >= MIN_CHARS;
+  const isValid = promptState.mode === 'confirm' || value.trim().length >= MIN_CHARS;
   const charCount = value.length;
   const isOverLimit = charCount > MAX_CHARS;
 
@@ -74,35 +81,45 @@ export const PromptModal: React.FC = () => {
       ]}
     >
       <div className={styles.promptContent}>
-        <textarea
-          ref={textareaRef}
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          onKeyDown={handleKeyDown}
-          className={styles.textarea}
-          rows={4}
-          maxLength={MAX_CHARS}
-          placeholder="Inserisci il motivo dell'operazione..."
-          aria-label="Motivo dell'operazione"
-        />
-
-        <div className={styles.footer}>
-          <div className={styles.charCounter}>
-            <span className={isOverLimit ? styles.overLimit : ''}>
-              {charCount}/{MAX_CHARS}
-            </span>
+        {promptState.mode === 'confirm' ? (
+          // Confirm mode: show message only
+          <div className={styles.confirmMessage}>
+            <p>{promptState.message}</p>
           </div>
+        ) : (
+          // Prompt mode: show textarea
+          <>
+            <textarea
+              ref={textareaRef}
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              onKeyDown={handleKeyDown}
+              className={styles.textarea}
+              rows={4}
+              maxLength={MAX_CHARS}
+              placeholder="Inserisci il motivo dell'operazione..."
+              aria-label="Motivo dell'operazione"
+            />
 
-          {!isValid && value.length > 0 && (
-            <div className={styles.validation}>
-              Minimo {MIN_CHARS} caratteri richiesti
+            <div className={styles.footer}>
+              <div className={styles.charCounter}>
+                <span className={isOverLimit ? styles.overLimit : ''}>
+                  {charCount}/{MAX_CHARS}
+                </span>
+              </div>
+
+              {!isValid && value.length > 0 && (
+                <div className={styles.validation}>
+                  Minimo {MIN_CHARS} caratteri richiesti
+                </div>
+              )}
+
+              <div className={styles.hint}>
+                Suggerimento: Premi CTRL+Invio per confermare rapidamente
+              </div>
             </div>
-          )}
-
-          <div className={styles.hint}>
-            Suggerimento: Premi CTRL+Invio per confermare rapidamente
-          </div>
-        </div>
+          </>
+        )}
       </div>
     </Modal>
   );

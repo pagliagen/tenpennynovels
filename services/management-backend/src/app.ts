@@ -94,14 +94,25 @@ app.use((req, res, next) => {
   res.send = function(data) {
     const duration = Date.now() - startTime;
     const statusCode = res.statusCode;
-    const statusEmoji = statusCode >= 200 && statusCode < 300 ? '✅' : 
+    const statusEmoji = statusCode >= 200 && statusCode < 300 ? '✅' :
                        statusCode >= 400 && statusCode < 500 ? '⚠️' : '❌';
-    
+
     console.log(`   CallInfo: ${req.method} ${req.originalUrl} | Duration: ${duration}ms`);
     console.log(`   ${statusEmoji} RESPONSE: ${statusCode} | Duration: ${duration}ms`);
-    console.log(`   📊 Data size: ${data ? Buffer.byteLength(data, 'utf8') : 0} bytes`);
+
+    // Calculate data size - handle objects by stringifying them first
+    let dataSize = 0;
+    if (data) {
+      try {
+        const dataStr = typeof data === 'string' ? data : JSON.stringify(data);
+        dataSize = Buffer.byteLength(dataStr, 'utf8');
+      } catch (e) {
+        dataSize = 0;
+      }
+    }
+    console.log(`   📊 Data size: ${dataSize} bytes`);
     console.log('   ─────────────────────────────────────────────────────────────');
-    
+
     return originalSend.call(this, data);
   };
   
@@ -116,7 +127,7 @@ app.use(morgan('combined', {
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 1000, // Limit each IP to 1000 requests per windowMs
+  max: process.env.NODE_ENV === 'development' ? 10000 : 1000, // Higher limit for development
   message: {
     success: false,
     error: 'Troppe richieste da questo indirizzo IP, riprova più tardi.',

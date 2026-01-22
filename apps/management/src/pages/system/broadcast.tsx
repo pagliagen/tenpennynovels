@@ -26,9 +26,10 @@ type Priority = 'info' | 'warning' | 'critical';
 type TargetAudience = 'all' | 'online' | 'role_specific';
 
 export default function BroadcastPage({ authContext }: PageProps) {
-  const { showPrompt, showToast } = useNotification();
+  const { showToast, showConfirm } = useNotification();
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState<BroadcastMessage[]>([]);
+  const [composeExpanded, setComposeExpanded] = useState(false);
 
   // Form state
   const [message, setMessage] = useState('');
@@ -47,7 +48,6 @@ export default function BroadcastPage({ authContext }: PageProps) {
 
   const fetchBroadcastHistory = async () => {
     try {
-      // Note: This endpoint might not exist yet, but follows the pattern
       const response = await fetch(`${API_BASE_URL}/admin/system/broadcast/history?limit=10`, {
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' }
@@ -60,7 +60,7 @@ export default function BroadcastPage({ authContext }: PageProps) {
         }
       }
     } catch (error) {
-      // Silently fail if endpoint doesn't exist
+      console.error('Failed to fetch broadcast history:', error);
     }
   };
 
@@ -99,19 +99,20 @@ export default function BroadcastPage({ authContext }: PageProps) {
       return;
     }
 
-    const confirmed = await showPrompt(
-      'Conferma Invio Broadcast',
-      `Sei sicuro di voler inviare questo messaggio ${priority === 'critical' ? 'CRITICO' : priority} a ${
-        targetAudience === 'all' ? 'tutti gli utenti' :
-        targetAudience === 'online' ? 'gli utenti online' :
-        `gli utenti con ruoli: ${selectedRoles.join(', ')}`
-      }?`
-    );
+    const confirmMessage = `Sei sicuro di voler inviare questo messaggio ${priority === 'critical' ? 'CRITICO' : priority} a ${
+      targetAudience === 'all' ? 'tutti gli utenti' :
+      targetAudience === 'online' ? 'gli utenti online' :
+      `gli utenti con ruoli: ${selectedRoles.join(', ')}`
+    }?`;
 
+    const confirmed = await showConfirm('Conferma Invio Broadcast', confirmMessage);
     if (!confirmed) return;
 
     try {
       setLoading(true);
+
+      // Map frontend priority to backend type
+      const backendType = priority === 'critical' ? 'emergency' : priority;
 
       const response = await fetch(`${API_BASE_URL}/admin/system/broadcast`, {
         method: 'POST',
@@ -119,15 +120,14 @@ export default function BroadcastPage({ authContext }: PageProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: message.trim(),
-          priority,
-          targetAudience,
-          ...(targetAudience === 'role_specific' && { targetRoles: selectedRoles })
+          type: backendType,
+          urgent: priority === 'critical'
         })
       });
 
       const result = await response.json();
       if (result.success) {
-        showToast(`Messaggio broadcast inviato con successo a ${result.data?.recipientCount || 0} utenti`, 'success');
+        showToast(`Messaggio broadcast inviato con successo a ${result.data?.targetCount || 0} utenti`, 'success');
         setMessage('');
         setPriority('info');
         setTargetAudience('all');
@@ -182,9 +182,21 @@ export default function BroadcastPage({ authContext }: PageProps) {
         </div>
       </div>
 
-      {/* Compose Message Card */}
+      {/* Compose Message Card - Collapsible */}
       <div className={styles.card}>
-        <h2>Componi Messaggio</h2>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: composeExpanded ? '20px' : '0' }}>
+          <h2 style={{ margin: 0 }}>Componi Messaggio</h2>
+          <button
+            onClick={() => setComposeExpanded(!composeExpanded)}
+            className={styles.secondaryButton}
+            style={{ padding: '0.5rem 1rem' }}
+          >
+            {composeExpanded ? '🔼 Nascondi' : '🔽 Mostra Form'}
+          </button>
+        </div>
+
+        {composeExpanded && (
+          <div>
 
         <div style={{ marginTop: '20px' }}>
           <label>
@@ -300,14 +312,29 @@ export default function BroadcastPage({ authContext }: PageProps) {
             </div>
           </div>
         )}
+          </div>
+        )}
       </div>
 
-      {/* History */}
-      {history.length > 0 && (
-        <div className={styles.card} style={{ marginTop: '30px' }}>
-          <h2>Ultimi Broadcast Inviati</h2>
-          <div style={{ marginTop: '15px' }}>
-            {history.map((msg) => (
+      {/* Broadcast History - Always Visible */}
+      <div className={styles.card} style={{ marginTop: '30px' }}>
+        <h2>📜 Cronologia Broadcast</h2>
+        <div style={{ marginTop: '15px' }}>
+          {history.length === 0 ? (
+            <div style={{
+              textAlign: 'center',
+              padding: '40px 20px',
+              color: 'var(--text-secondary)',
+              fontSize: '0.95rem'
+            }}>
+              <div style={{ fontSize: '3rem', marginBottom: '10px', opacity: 0.5 }}>📭</div>
+              <p>Nessun messaggio broadcast inviato ancora.</p>
+              <p style={{ fontSize: '0.85rem', marginTop: '5px' }}>
+                I messaggi inviati appariranno qui in ordine cronologico.
+              </p>
+            </div>
+          ) : (
+            history.map((msg) => (
               <div
                 key={msg._id}
                 style={{
@@ -337,10 +364,10 @@ export default function BroadcastPage({ authContext }: PageProps) {
                   {msg.message}
                 </div>
               </div>
-            ))}
-          </div>
+            ))
+          )}
         </div>
-      )}
+      </div>
 
       <div className={styles.infoBox} style={{ marginTop: '30px' }}>
         <strong>⚠️ Attenzione:</strong> I messaggi broadcast vengono inviati immediatamente a tutti i destinatari

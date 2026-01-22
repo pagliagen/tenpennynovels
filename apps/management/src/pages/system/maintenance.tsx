@@ -20,7 +20,7 @@ interface MaintenanceStatus {
 }
 
 export default function MaintenancePage({ authContext }: PageProps) {
-  const { showPrompt, showToast } = useNotification();
+  const { showConfirm, showToast } = useNotification();
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState<MaintenanceStatus>({
     isEnabled: false,
@@ -68,11 +68,11 @@ export default function MaintenancePage({ authContext }: PageProps) {
       return;
     }
 
-    const confirmed = await showPrompt(
+    const confirmed = await showConfirm(
       enable ? 'Attiva Manutenzione' : 'Disattiva Manutenzione',
       enable
-        ? 'Sei sicuro di voler attivare la modalità manutenzione? Gli utenti non potranno accedere al sito.'
-        : 'Sei sicuro di voler disattivare la modalità manutenzione?'
+        ? 'Il sito necessita di manutenzione.'
+        : 'Fine della manutenzione.'
     );
 
     if (!confirmed) return;
@@ -83,7 +83,7 @@ export default function MaintenancePage({ authContext }: PageProps) {
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          isEnabled: enable,
+          enabled: enable, // Backend expects 'enabled', not 'isEnabled'
           message: message.trim(),
           startTime: startTime || undefined,
           endTime: endTime || undefined,

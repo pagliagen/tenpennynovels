@@ -8,8 +8,13 @@ const router = Router();
 router.use(AdminAuthMiddleware.requireAdminAccess);
 
 // Session management overview and statistics
-router.get('/sessions/overview', 
+router.get('/sessions/overview',
   SessionManagementController.getSessionOverview
+);
+
+// Get sessions pending XP assignment for current master
+router.get('/sessions/pending-xp-assignment',
+  SessionManagementController.getPendingXPAssignment
 );
 
 // Session management and monitoring

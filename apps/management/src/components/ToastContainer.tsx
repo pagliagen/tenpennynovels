@@ -30,9 +30,12 @@ const ToastItem: React.FC<{ toast: Toast; onDismiss: (id: string) => void }> = (
     }
   };
 
+  // Convert toast type to camelCase for CSS Modules
+  const typeClassName = `message${toast.type.charAt(0).toUpperCase()}${toast.type.slice(1)}`;
+
   return (
     <div
-      className={`${styles.messageToast} ${styles[`message-${toast.type}`]} ${isExiting ? styles.toastExit : styles.toastEnter}`}
+      className={`${styles.messageToast} ${styles[typeClassName as keyof typeof styles]} ${isExiting ? styles.toastExit : styles.toastEnter}`}
       role="alert"
       aria-live="polite"
     >

@@ -481,47 +481,118 @@ audit_2,2024-01-15T13:15:00Z,admin,user_banned,user_management,user,user123,high
    */
   static async getSystemStats(req: Request, res: Response): Promise<void> {
     try {
-      // TODO: Implement system statistics queries
-      const mockStats = {
+      // Dynamic imports to avoid circular dependencies
+      const { User } = await import('../models/User');
+      const { Character } = await import('../models/Character');
+      const { Location } = await import('../models/Location');
+      const { CharacterWallet, Transaction } = await import('../../../../packages/database/models/Economy');
+
+      // Calculate date ranges
+      const now = new Date();
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+      // Query real data from database
+      const [
+        totalUsers,
+        activeUsers,
+        onlineUsers,
+        adminUsers,
+        totalCharacters,
+        approvedCharacters,
+        pendingCharacters,
+        rejectedCharacters,
+        totalLocations,
+        visibleLocations,
+        privateLocations,
+        wallets,
+        transactionsToday,
+        charactersApprovedToday,
+        usersRegisteredToday
+      ] = await Promise.all([
+        // Users
+        User.countDocuments({}),
+        User.countDocuments({ lastActive: { $gte: thirtyDaysAgo } }),
+        User.countDocuments({ isOnline: true }),
+        User.countDocuments({ userRoles: { $in: ['gestore', 'master', 'moderatore'] } }),
+
+        // Characters
+        Character.countDocuments({}),
+        Character.countDocuments({ state: 'APPROVED' }),
+        Character.countDocuments({ state: 'PENDING_APPROVAL' }),
+        Character.countDocuments({ state: 'DELETED' }),
+
+        // Locations
+        Location.countDocuments({}),
+        Location.countDocuments({ isVisible: true }),
+        Location.countDocuments({ isPrivate: true }),
+
+        // Economy
+        CharacterWallet.find({}).select('balance').lean(),
+        Transaction.countDocuments({ createdAt: { $gte: startOfToday } }),
+
+        // Events today
+        Character.countDocuments({
+          state: 'APPROVED',
+          updatedAt: { $gte: startOfToday }
+        }),
+        User.countDocuments({ createdAt: { $gte: startOfToday } })
+      ]);
+
+      // Calculate economy stats
+      const totalSupply = wallets.reduce((sum: number, wallet: any) => sum + (wallet.balance || 0), 0);
+      const avgBalance = wallets.length > 0 ? Math.round(totalSupply / wallets.length) : 0;
+
+      // Calculate uptime (from process start)
+      const uptimeSeconds = Math.floor(process.uptime());
+      const uptimeDays = Math.floor(uptimeSeconds / 86400);
+      const uptimeHours = Math.floor((uptimeSeconds % 86400) / 3600);
+      const uptimeMinutes = Math.floor((uptimeSeconds % 3600) / 60);
+
+      // Get memory usage
+      const memUsage = process.memoryUsage();
+      const memoryUsagePercent = Math.round((memUsage.heapUsed / memUsage.heapTotal) * 100);
+
+      const stats = {
         uptime: {
-          start: '2024-01-01T00:00:00Z',
-          uptime: '15d 14h 30m',
-          lastRestart: '2024-01-01T00:00:00Z'
+          start: new Date(Date.now() - uptimeSeconds * 1000).toISOString(),
+          uptime: `${uptimeDays}d ${uptimeHours}h ${uptimeMinutes}m`,
+          lastRestart: new Date(Date.now() - uptimeSeconds * 1000).toISOString()
         },
         users: {
-          total: 1250,
-          active: 890,
-          online: 45,
-          adminUsers: 12
+          total: totalUsers,
+          active: activeUsers,
+          online: onlineUsers,
+          adminUsers: adminUsers
         },
         characters: {
-          total: 2100,
-          approved: 1950,
-          pending: 35,
-          rejected: 115
+          total: totalCharacters,
+          approved: approvedCharacters,
+          pending: pendingCharacters,
+          rejected: rejectedCharacters
         },
         locations: {
-          total: 45,
-          visible: 42,
-          private: 8,
-          active: 25
+          total: totalLocations,
+          visible: visibleLocations,
+          private: privateLocations,
+          active: visibleLocations // Active = visible locations
         },
         economy: {
-          totalSupply: 975000,
-          avgBalance: 780,
-          transactionsToday: 156
+          totalSupply: totalSupply,
+          avgBalance: avgBalance,
+          transactionsToday: transactionsToday
         },
         performance: {
-          avgResponseTime: '120ms',
-          errorRate: '0.02%',
-          memoryUsage: '65%',
-          cpuUsage: '25%'
+          avgResponseTime: 'N/A', // Would require APM integration
+          errorRate: 'N/A', // Would require error tracking
+          memoryUsage: `${memoryUsagePercent}%`,
+          cpuUsage: 'N/A' // Would require OS-level monitoring
         },
         events: {
-          todayTotal: 2450,
-          charactersApproved: 8,
-          usersRegistered: 12,
-          transactionsProcessed: 156
+          todayTotal: charactersApprovedToday + usersRegisteredToday + transactionsToday,
+          charactersApproved: charactersApprovedToday,
+          usersRegistered: usersRegisteredToday,
+          transactionsProcessed: transactionsToday
         }
       };
 
@@ -530,21 +601,24 @@ audit_2,2024-01-15T13:15:00Z,admin,user_banned,user_management,user,user123,high
 
       const response: ApiResponse<any> = {
         success: true,
-        data: mockStats,
+        data: stats,
         timestamp: new Date().toISOString()
       };
 
       res.json(response);
     } catch (error: any) {
-      logger.error('Error fetching system stats:', { error: error instanceof Error ? error.message : String(error) });
-      
+      logger.error('Error fetching system stats:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
+
       const response: ApiResponse = {
         success: false,
         error: 'Impossibile recuperare le statistiche di sistema',
         code: 'FETCH_SYSTEM_STATS_ERROR',
         timestamp: new Date().toISOString()
       };
-      
+
       res.status(500).json(response);
     }
   }
@@ -555,7 +629,7 @@ audit_2,2024-01-15T13:15:00Z,admin,user_banned,user_management,user,user123,high
    */
   static async broadcastMessage(req: Request, res: Response): Promise<void> {
     try {
-      const { message, type, targetUsers, urgent } = req.body;
+      const { message, type, targetAudience = 'all', targetRoles = [], urgent = false } = req.body;
 
       if (!message || message.trim().length === 0) {
         const response: ApiResponse = {
@@ -579,21 +653,65 @@ audit_2,2024-01-15T13:15:00Z,admin,user_banned,user_management,user,user123,high
         return;
       }
 
-      // TODO: Implement broadcast logic
+      // Dynamic imports to avoid circular dependencies
+      const { BroadcastMessage } = await import('../../../../packages/database/models/BroadcastMessage');
+      const { User } = await import('../models/User');
+
+      // Calculate target count based on audience
+      let targetCount = 0;
+
+      if (targetAudience === 'all') {
+        // Count all users
+        targetCount = await User.countDocuments({});
+      } else if (targetAudience === 'online') {
+        // Count only online users
+        targetCount = await User.countDocuments({ isOnline: true });
+      } else if (targetAudience === 'role_specific' && targetRoles.length > 0) {
+        // Count users with specific character roles
+        const { Character } = await import('../models/Character');
+        const characters = await Character.find({
+          state: 'APPROVED',
+          gameplayRoles: { $in: targetRoles }
+        }).distinct('userId');
+        targetCount = characters.length;
+      }
+
+      // Get sender information from request
+      const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
+      const user = (req as any).user;
+      const character = (req as any).character;
+
+      // Save broadcast message to database
+      const broadcastDoc = await BroadcastMessage.create({
+        message: message.trim(),
+        type,
+        urgent: !!urgent,
+        targetAudience,
+        targetRoles: targetAudience === 'role_specific' ? targetRoles : [],
+        targetCount,
+        sentBy: {
+          userId: user?._id || user?.id,
+          characterId: character?._id || character?.id,
+          username: user?.username || 'System',
+          characterName: character ? `${character.name}${character.surname ? ' ' + character.surname : ''}` : undefined,
+          userRoles: user?.userRoles || []
+        },
+        sentAt: new Date()
+      });
+
+      // TODO: Future enhancements:
       // - Send message to all connected users via WebSocket
       // - Store message for users who are offline
-      // - Create audit log entry
-      // - Publish Redis event
+      // - Publish Redis event for real-time notifications
 
-      const broadcastId = 'broadcast_' + Date.now();
-
-      const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
-      logger.info('System broadcast sent by admin', {
+      logger.info('System broadcast sent and saved', {
         ...auditInfo,
-        broadcastId,
+        broadcastId: broadcastDoc._id.toString(),
         message,
         type,
-        targetUsers: targetUsers || 'all',
+        targetAudience,
+        targetRoles,
+        targetCount,
         urgent: !!urgent,
         category: 'system_configuration'
       });
@@ -601,8 +719,8 @@ audit_2,2024-01-15T13:15:00Z,admin,user_banned,user_management,user,user123,high
       const response: ApiResponse<{ broadcastId: string; targetCount: number }> = {
         success: true,
         data: {
-          broadcastId,
-          targetCount: targetUsers ? targetUsers.length : 890
+          broadcastId: broadcastDoc._id.toString(),
+          targetCount
         },
         timestamp: new Date().toISOString()
       };
@@ -610,14 +728,97 @@ audit_2,2024-01-15T13:15:00Z,admin,user_banned,user_management,user,user123,high
       res.json(response);
     } catch (error: any) {
       logger.error('Error broadcasting message:', { error: error instanceof Error ? error.message : String(error) });
-      
+
       const response: ApiResponse = {
         success: false,
         error: 'Impossibile trasmettere il messaggio',
         code: 'BROADCAST_MESSAGE_ERROR',
         timestamp: new Date().toISOString()
       };
-      
+
+      res.status(500).json(response);
+    }
+  }
+
+  /**
+   * Get broadcast message history
+   * GET /admin/system/broadcast/history
+   */
+  static async getBroadcastHistory(req: Request, res: Response): Promise<void> {
+    try {
+      const limit = parseInt(req.query.limit as string) || 10;
+      const offset = parseInt(req.query.offset as string) || 0;
+      const type = req.query.type as string; // Optional filter by type
+
+      // Dynamic import to avoid circular dependencies
+      const { BroadcastMessage } = await import('../../../../packages/database/models/BroadcastMessage');
+
+      // Build query
+      const query: any = {};
+      if (type && ['info', 'warning', 'emergency'].includes(type)) {
+        query.type = type;
+      }
+
+      // Fetch messages with pagination
+      const [messages, totalCount] = await Promise.all([
+        BroadcastMessage.find(query)
+          .sort({ sentAt: -1 }) // Most recent first
+          .skip(offset)
+          .limit(limit)
+          .lean(),
+        BroadcastMessage.countDocuments(query)
+      ]);
+
+      // Transform data to match frontend interface
+      const transformedMessages = messages.map((msg: any) => ({
+        _id: msg._id.toString(),
+        message: msg.message,
+        priority: msg.type === 'emergency' ? 'critical' : msg.type, // Map 'emergency' back to 'critical' for frontend
+        targetAudience: msg.targetAudience,
+        targetRoles: msg.targetRoles,
+        sentBy: msg.sentBy.username || 'System',
+        sentAt: msg.sentAt,
+        recipientCount: msg.targetCount
+      }));
+
+      const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
+      logger.info('Broadcast history retrieved', {
+        ...auditInfo,
+        limit,
+        offset,
+        type,
+        resultCount: messages.length,
+        category: 'system_configuration'
+      });
+
+      const response: ApiResponse<{
+        messages: any[];
+        pagination: { total: number; limit: number; offset: number; hasMore: boolean }
+      }> = {
+        success: true,
+        data: {
+          messages: transformedMessages,
+          pagination: {
+            total: totalCount,
+            limit,
+            offset,
+            hasMore: offset + messages.length < totalCount
+          }
+        },
+        timestamp: new Date().toISOString()
+      };
+
+      res.json(response);
+    } catch (error: any) {
+      logger.error('Error retrieving broadcast history:', { error: error instanceof Error ? error.message : String(error) });
+
+      const response: ApiResponse = {
+        success: false,
+        error: 'Impossibile recuperare la cronologia dei broadcast',
+        code: 'BROADCAST_HISTORY_ERROR',
+        timestamp: new Date().toISOString()
+      };
+
       res.status(500).json(response);
     }
   }
@@ -751,8 +952,8 @@ audit_2,2024-01-15T13:15:00Z,admin,user_banned,user_management,user,user123,high
 
       // Initialize ConfigurationService
       const { ConfigurationService } = await import('../../../../packages/shared/src/services/ConfigurationService');
-      const { redis } = await import('../config/redis');
-      const configService = new ConfigurationService(redis, logger);
+      const { getRedisClient } = await import('../config/redis');
+      const configService = new ConfigurationService(getRedisClient(), logger);
 
       // Get user ID from request
       const userId = req.user?.userId || 'unknown';
@@ -820,8 +1021,8 @@ audit_2,2024-01-15T13:15:00Z,admin,user_banned,user_management,user,user123,high
     try {
       // Initialize ConfigurationService
       const { ConfigurationService } = await import('../../../../packages/shared/src/services/ConfigurationService');
-      const { redis } = await import('../config/redis');
-      const configService = new ConfigurationService(redis, logger);
+      const { getRedisClient } = await import('../config/redis');
+      const configService = new ConfigurationService(getRedisClient(), logger);
 
       // Invalidate all cache
       await configService.invalidateAllCache();

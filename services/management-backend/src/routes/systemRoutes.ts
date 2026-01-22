@@ -73,6 +73,13 @@ router.post(
   SystemConfigController.broadcastMessage
 );
 
+router.get(
+  '/broadcast/history',
+  requireViewPermission('system.broadcast_messages'),
+  AdminAuthMiddleware.logAdminAction('view_broadcast_history', 'system_configuration'),
+  SystemConfigController.getBroadcastHistory
+);
+
 // ============================================================================
 // System Configuration Management (Email Templates & Constants)
 // ============================================================================

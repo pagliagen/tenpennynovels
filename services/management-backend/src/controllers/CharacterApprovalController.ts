@@ -928,4 +928,70 @@ export class CharacterApprovalController {
       res.status(500).json(response);
     }
   }
+
+  /**
+   * Get pending characters for current admin to review
+   * GET /admin/characters/pending-for-me
+   */
+  static async getPendingCharactersForMe(req: Request, res: Response): Promise<void> {
+    try {
+      const limit = parseInt(req.query.limit as string) || 10;
+
+      // Use local model with proper imports
+      const { Character } = await import('../models/Character');
+
+      const characters = await Character.find({
+        state: 'PENDING_APPROVAL'
+      })
+      .sort({ createdAt: 1 }) // Oldest first
+      .limit(limit)
+      .select('characterName characterSurname occupation createdAt userId')
+      .populate('userId', 'username')
+      .lean();
+
+      // Get total pending count
+      const totalPending = await Character.countDocuments({ state: 'PENDING_APPROVAL' });
+
+      // Transform data
+      const transformedCharacters = characters.map((c: any) => ({
+        id: c._id.toString(),
+        characterName: c.characterName,
+        characterSurname: c.characterSurname,
+        username: c.userId?.username || 'N/A',
+        occupation: c.occupation || 'N/A',
+        submittedAt: c.createdAt,
+        daysWaiting: Math.floor((Date.now() - new Date(c.createdAt).getTime()) / (1000 * 60 * 60 * 24))
+      }));
+
+      const response: ApiResponse<{
+        characters: any[];
+        count: number;
+        totalPending: number;
+      }> = {
+        success: true,
+        data: {
+          characters: transformedCharacters,
+          count: transformedCharacters.length,
+          totalPending
+        },
+        timestamp: new Date().toISOString()
+      };
+
+      res.json(response);
+    } catch (error: any) {
+      logger.error('Error getting pending characters for review:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
+
+      const response: ApiResponse = {
+        success: false,
+        error: 'Impossibile recuperare i personaggi in attesa',
+        code: 'GET_PENDING_CHARACTERS_ERROR',
+        timestamp: new Date().toISOString()
+      };
+
+      res.status(500).json(response);
+    }
+  }
 }

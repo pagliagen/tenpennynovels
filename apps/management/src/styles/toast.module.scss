@@ -1,7 +1,7 @@
-@import '_modules';
+@import '../../../shared-ui/src/styles/modules';
 
 // Toast container - fixed top center
-.toast-container {
+.toastContainer {
   position: fixed;
   top: 20px;
   left: 50%;
@@ -21,7 +21,7 @@
   }
 
   // Individual toast items
-  .message-toast {
+  .messageToast {
     pointer-events: all; // Re-enable clicks on toasts
     display: flex;
     align-items: center;
@@ -41,14 +41,14 @@
 }
 
 // Toast content layout
-.toast-content {
+.toastContent {
   display: flex;
   align-items: center;
   gap: $spacing-sm;
   flex: 1;
   min-width: 0; // Allow text truncation
 
-  .toast-icon {
+  .toastIcon {
     font-size: 1.25rem;
     flex-shrink: 0;
 
@@ -57,7 +57,7 @@
     }
   }
 
-  .toast-message {
+  .toastMessage {
     flex: 1;
     font-weight: 500;
     word-wrap: break-word;
@@ -70,7 +70,7 @@
 }
 
 // Close button
-.toast-close {
+.toastClose {
   background: transparent;
   border: none;
   color: inherit;
@@ -99,12 +99,12 @@
 }
 
 // Entrance animation
-.toast-enter {
+.toastEnter {
   animation: slideDown 0.3s ease-out;
 }
 
 // Exit animation
-.toast-exit {
+.toastExit {
   animation: fadeOut 0.2s ease-in forwards;
 }
 
@@ -131,22 +131,33 @@
   }
 }
 
-// Victorian-specific enhancements (if needed)
-.message-toast {
-  // Add subtle border glow for each type
-  &.message-success {
-    border: 1px solid $success-border;
+// Victorian-specific enhancements
+.messageToast {
+  // Success message
+  &.messageSuccess {
+    background-color: rgba($success-bg, 0.95);
+    border: 1px solid $success-text;
+    color: $success-text;
   }
 
-  &.message-error {
-    border: 1px solid $error-border;
+  // Error message
+  &.messageError {
+    background-color: rgba($error-bg, 0.95);
+    border: 1px solid $error-text;
+    color: $error-text;
   }
 
-  &.message-warning {
-    border: 1px solid $warning-border;
+  // Warning message
+  &.messageWarning {
+    background-color: rgba($warning-bg, 0.95);
+    border: 1px solid $warning-text;
+    color: $warning-text;
   }
 
-  &.message-info {
-    border: 1px solid $info-border;
+  // Info message
+  &.messageInfo {
+    background-color: rgba($info-bg, 0.95);
+    border: 1px solid $info-text;
+    color: $info-text;
   }
 }

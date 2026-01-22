@@ -4,29 +4,39 @@ import { FinancialUtils } from '../utils/financialUtils';
 
 export class CreditLineResetService {
   private static isInitialized = false;
-  
+
   /**
    * Initialize the credit line reset service with cron job
    */
-  static initialize(): void {
+  static async initialize(): Promise<void> {
     if (this.isInitialized) {
       logger.warn('CreditLineResetService already initialized, skipping');
       return;
     }
-    
+
     try {
-      // Schedule job every Sunday at midnight (0 0 0 * * SUN)
-      cron.schedule('0 0 0 * * SUN', async () => {
+      // Fetch cron schedule from database
+      const { ConfigurationService } = await import('../../../../packages/shared/src/services/ConfigurationService');
+      const { getRedisClient } = await import('../config/redis');
+      const redis = getRedisClient();
+      const configService = new ConfigurationService(redis, logger);
+
+      const creditResetSchedule = await configService.getConfig('cron_schedule_credit_reset') || '0 0 0 * * SUN';
+
+      logger.info(`✅ Initializing Credit Line Reset cron with schedule: ${creditResetSchedule}`);
+
+      // Schedule job with dynamic schedule (default: every Sunday at midnight)
+      cron.schedule(creditResetSchedule, async () => {
         logger.info('Starting weekly credit line reset process');
         await this.resetWeeklyCreditLines();
       }, {
         scheduled: true,
         timezone: 'Europe/London' // UK timezone for Victorian London setting
       });
-      
+
       this.isInitialized = true;
-      logger.info('CreditLineResetService initialized successfully - scheduled for every Sunday at midnight');
-      
+      logger.info('✅ CreditLineResetService initialized successfully');
+
     } catch (error: any) {
       logger.error('Failed to initialize CreditLineResetService', error);
       throw error;

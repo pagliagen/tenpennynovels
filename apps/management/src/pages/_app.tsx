@@ -5,7 +5,6 @@ import Head from 'next/head';
 import { AuthContext } from '@/lib/auth';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { NotificationProvider } from '@/contexts/NotificationContext';
-import { ToastContainer } from '@/components/ToastContainer';
 import { PromptModal } from '@/components/PromptModal';
 import '@/styles/globals.scss';
 
@@ -242,7 +241,6 @@ export default function App({ Component, pageProps }: AppProps) {
       </Head>
 
       <NotificationProvider>
-        <ToastContainer />
         <PromptModal />
         <AuthProvider authContext={authContext}>
           <Component {...pageProps} authContext={authContext} />
