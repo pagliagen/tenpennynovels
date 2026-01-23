@@ -2,7 +2,8 @@ import { Request, Response } from 'express';
 import { ApiResponse } from '../types/management';
 import { AdminAuthMiddleware } from '../middleware/adminAuth';
 import { logger } from '../utils/logger';
-import { Occupation } from '../../../../packages/database/models/Occupation';
+import { Occupation } from '../../../database/models/Occupation';
+import { listResponse, successResponse, errorResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
 
 export class OccupationManagementController {
   /**
@@ -39,48 +40,12 @@ export class OccupationManagementController {
         .limit(limit)
         .lean();
 
-      const response: ApiResponse<{
-        occupations: any[];
-        pagination: {
-          currentPage: number;
-          totalPages: number;
-          totalItems: number;
-          limit: number;
-          hasMore: boolean;
-        };
-      }> = {
-        success: true,
-        data: {
-          occupations: occupations.map(occ => ({
-            _id: occ._id,
-            name: occ.name,
-            description: occ.description,
-            category: occ.category,
-            socialClass: occ.socialClass,
-            contacts: occ.contacts,
-            earnings: occ.earnings,
-            isActive: occ.isActive,
-            // Skills system
-            requiredSkills: occ.requiredSkills || [],
-            bonusSkills: occ.bonusSkills || [],
-            typicalEmployers: occ.typicalEmployers || [],
-            careerProgression: occ.careerProgression || [],
-            createdBy: occ.createdBy,
-            createdAt: occ.createdAt,
-            updatedAt: occ.updatedAt,
-            // Skills count
-            requiredSkillsCount: (occ.requiredSkills || []).length,
-            bonusSkillsCount: (occ.bonusSkills || []).length
-          })),
-          pagination: {
-            currentPage: page,
-            totalPages: Math.ceil(totalItems / limit),
-            totalItems,
-            limit,
-            hasMore: page < Math.ceil(totalItems / limit)
-          }
-        },
-        timestamp: new Date().toISOString()
+      const pagination = {
+        currentPage: page,
+        totalPages: Math.ceil(totalItems / limit),
+        totalItems,
+        limit,
+        hasMore: page < Math.ceil(totalItems / limit)
       };
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
@@ -92,20 +57,44 @@ export class OccupationManagementController {
         totalResults: totalItems
       });
 
-      res.json(response);
+      res.json(listResponse(
+        occupations.map(occ => ({
+          _id: occ._id,
+          name: occ.name,
+          description: occ.description,
+          category: occ.category,
+          socialClass: occ.socialClass,
+          contacts: occ.contacts,
+          earnings: occ.earnings,
+          isActive: occ.isActive,
+          // Skills system
+          requiredSkills: occ.requiredSkills || [],
+          bonusSkills: occ.bonusSkills || [],
+          typicalEmployers: occ.typicalEmployers || [],
+          careerProgression: occ.careerProgression || [],
+          createdBy: occ.createdBy,
+          createdAt: occ.createdAt,
+          updatedAt: occ.updatedAt,
+          // Skills count
+          requiredSkillsCount: (occ.requiredSkills || []).length,
+          bonusSkillsCount: (occ.bonusSkills || []).length
+        })),
+        pagination,
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error fetching occupations:', { 
         error: error instanceof Error ? error.message : String(error) 
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare le occupazioni',
-        code: 'FETCH_OCCUPATIONS_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare le occupazioni',
+        'FETCH_OCCUPATIONS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -149,26 +138,23 @@ export class OccupationManagementController {
         ...auditInfo
       });
 
-      const response: ApiResponse<any> = {
-        success: true,
-        data: stats,
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+      res.json(successResponse(
+        stats,
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error fetching occupation stats:', { 
         error: error instanceof Error ? error.message : String(error) 
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare le statistiche delle occupazioni',
-        code: 'FETCH_OCCUPATION_STATS_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare le statistiche delle occupazioni',
+        'FETCH_OCCUPATION_STATS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -185,13 +171,13 @@ export class OccupationManagementController {
         .lean();
 
       if (!occupation) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Occupazione non trovata',
-          code: 'OCCUPATION_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Occupazione non trovata',
+          'OCCUPATION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -202,27 +188,24 @@ export class OccupationManagementController {
         occupationName: Array.isArray(occupation) ? 'Multiple Occupations' : occupation.name
       });
 
-      const response: ApiResponse<any> = {
-        success: true,
-        data: occupation,
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+      res.json(successResponse(
+        occupation,
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error fetching occupation details:', { 
         error: error instanceof Error ? error.message : String(error), 
         occupationId: req.params.occupationId 
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare i dettagli dell\'occupazione',
-        code: 'FETCH_OCCUPATION_DETAILS_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare i dettagli dell\'occupazione',
+        'FETCH_OCCUPATION_DETAILS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -248,16 +231,14 @@ export class OccupationManagementController {
         category: 'occupation_management'
       });
 
-      const response: ApiResponse<{ occupationId: string; action: string }> = {
-        success: true,
-        data: {
+      res.status(201).json(createResponse(
+        {
           occupationId: savedOccupation._id.toString(),
           action: 'occupation_created'
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(201).json(response);
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       // Enhanced error logging
       logger.error('Error creating occupation:', {
@@ -290,14 +271,13 @@ export class OccupationManagementController {
         statusCode = 409;
       }
 
-      const response: ApiResponse = {
-        success: false,
-        error: errorMessage,
-        code: errorCode,
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(statusCode).json(response);
+      res.status(statusCode).json(errorResponse(
+        errorMessage,
+        errorCode,
+        undefined,
+        statusCode,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -311,13 +291,13 @@ export class OccupationManagementController {
       const { reason, ...updateData } = req.body;
 
       if (!reason || reason.trim().length === 0) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Il motivo dell\'aggiornamento è richiesto',
-          code: 'UPDATE_REASON_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Il motivo dell\'aggiornamento è richiesto',
+          'UPDATE_REASON_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -328,13 +308,13 @@ export class OccupationManagementController {
       );
 
       if (!occupation) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Occupazione non trovata',
-          code: 'OCCUPATION_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Occupazione non trovata',
+          'OCCUPATION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -347,30 +327,27 @@ export class OccupationManagementController {
         category: 'occupation_management'
       });
 
-      const response: ApiResponse<{ occupationId: string; action: string }> = {
-        success: true,
-        data: {
+      res.json(updateResponse(
+        {
           occupationId,
           action: 'occupation_updated'
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error updating occupation:', { 
         error: error instanceof Error ? error.message : String(error), 
         occupationId: req.params.occupationId 
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile aggiornare l\'occupazione',
-        code: 'UPDATE_OCCUPATION_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile aggiornare l\'occupazione',
+        'UPDATE_OCCUPATION_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -384,25 +361,25 @@ export class OccupationManagementController {
       const { reason } = req.body;
 
       if (!reason || reason.trim().length === 0) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Il motivo dell\'eliminazione è richiesto',
-          code: 'DELETION_REASON_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Il motivo dell\'eliminazione è richiesto',
+          'DELETION_REASON_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       const occupation = await Occupation.findById(occupationId);
       if (!occupation) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Occupazione non trovata',
-          code: 'OCCUPATION_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Occupazione non trovata',
+          'OCCUPATION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -418,30 +395,23 @@ export class OccupationManagementController {
         category: 'occupation_management'
       });
 
-      const response: ApiResponse<{ occupationId: string; action: string }> = {
-        success: true,
-        data: {
-          occupationId,
-          action: 'occupation_deactivated'
-        },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+      res.json(deleteResponse(
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error deactivating occupation:', { 
         error: error instanceof Error ? error.message : String(error), 
         occupationId: req.params.occupationId 
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile disattivare l\'occupazione',
-        code: 'DELETE_OCCUPATION_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile disattivare l\'occupazione',
+        'DELETE_OCCUPATION_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -454,13 +424,13 @@ export class OccupationManagementController {
       const { operation, occupationIds, data, reason } = req.body;
 
       if (!reason || reason.trim().length === 0) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Il motivo dell\'operazione bulk è richiesto',
-          code: 'BULK_REASON_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Il motivo dell\'operazione bulk è richiesto',
+          'BULK_REASON_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -485,13 +455,13 @@ export class OccupationManagementController {
           );
           break;
         default:
-          const response: ApiResponse = {
-            success: false,
-            error: 'Operazione bulk non valida',
-            code: 'INVALID_BULK_OPERATION',
-            timestamp: new Date().toISOString()
-          };
-          res.status(400).json(response);
+          res.status(400).json(errorResponse(
+            'Operazione bulk non valida',
+            'INVALID_BULK_OPERATION',
+            undefined,
+            400,
+            getRequestId(req)
+          ));
           return;
       }
 
@@ -505,30 +475,27 @@ export class OccupationManagementController {
         category: 'occupation_management'
       });
 
-      const response: ApiResponse<{ operation: string; processed: number; modified: number }> = {
-        success: true,
-        data: {
+      res.json(updateResponse(
+        {
           operation,
           processed: occupationIds?.length || 0,
           modified: result?.modifiedCount || 0
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error in bulk occupation operation:', { 
         error: error instanceof Error ? error.message : String(error)
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile eseguire l\'operazione bulk',
-        code: 'BULK_OCCUPATION_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile eseguire l\'operazione bulk',
+        'BULK_OCCUPATION_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -541,35 +508,35 @@ export class OccupationManagementController {
       const { skillType, fieldToUpdate, newValue, reason } = req.body;
 
       if (!reason || reason.trim().length === 0) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Il motivo dell\'aggiornamento bulk è richiesto',
-          code: 'BULK_UPDATE_REASON_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Il motivo dell\'aggiornamento bulk è richiesto',
+          'BULK_UPDATE_REASON_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       if (!skillType || !fieldToUpdate || newValue === undefined) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'skillType, fieldToUpdate e newValue sono richiesti',
-          code: 'MISSING_PARAMETERS',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'skillType, fieldToUpdate e newValue sono richiesti',
+          'MISSING_PARAMETERS',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       if (typeof newValue !== 'number' || newValue < 0 || newValue > 100) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'newValue deve essere un numero tra 0 e 100',
-          code: 'INVALID_VALUE',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'newValue deve essere un numero tra 0 e 100',
+          'INVALID_VALUE',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -587,13 +554,13 @@ export class OccupationManagementController {
           { $set: { 'bonusSkills.$[].bonusValue': newValue } }
         );
       } else {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Combinazione skillType o fieldToUpdate non valida',
-          code: 'INVALID_SKILL_TYPE',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Combinazione skillType o fieldToUpdate non valida',
+          'INVALID_SKILL_TYPE',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -608,28 +575,25 @@ export class OccupationManagementController {
         category: 'occupation_management'
       });
 
-      const response: ApiResponse<{ updatedCount: number }> = {
-        success: true,
-        data: {
+      res.json(updateResponse(
+        {
           updatedCount: result?.modifiedCount || 0
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error in bulk skill values update:', {
         error: error instanceof Error ? error.message : String(error)
       });
 
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile eseguire l\'aggiornamento bulk dei valori delle abilità',
-        code: 'BULK_SKILL_UPDATE_ERROR',
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile eseguire l\'aggiornamento bulk dei valori delle abilità',
+        'BULK_SKILL_UPDATE_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 }

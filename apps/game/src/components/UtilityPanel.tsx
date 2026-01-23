@@ -340,7 +340,7 @@ export const UtilityPanel: React.FC<UtilityPanelProps> = ({ onClose, unreadTicke
 
       const data = await response.json();
 
-      if (data.success) {
+      if (data.result) {
         setDeletionMessage({
           type: 'success',
           text: data.message || 'Email di conferma inviata con successo! Controlla la tua casella di posta.'

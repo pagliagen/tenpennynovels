@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { AdminUser, ApiResponse } from '../types/management';
 import { logger } from '../utils/logger';
+import { errorResponse, getRequestId } from '../utils/apiResponse';
 
 // Helper function to get JWT_SECRET with validation
 function getJwtSecret(): string {
@@ -32,13 +33,13 @@ export class AdminAuthMiddleware {
       const authToken = req.cookies?.auth_token;
       
       if (!authToken) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Authentication required',
-          code: 'NO_AUTH_TOKEN',
-          timestamp: new Date().toISOString()
-        };
-        res.status(401).json(response);
+        res.status(401).json(errorResponse(
+          'Authentication required',
+          'NO_AUTH_TOKEN',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -58,13 +59,13 @@ export class AdminAuthMiddleware {
           userAgent: req.get('User-Agent')
         });
 
-        const response: ApiResponse = {
-          success: false,
-          error: 'Admin access required',
-          code: 'ADMIN_ACCESS_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(403).json(response);
+        res.status(403).json(errorResponse(
+          'Admin access required',
+          'ADMIN_ACCESS_REQUIRED',
+          undefined,
+          403,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -98,14 +99,13 @@ export class AdminAuthMiddleware {
         userAgent: req.get('User-Agent')
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Invalid authentication token',
-        code: 'INVALID_AUTH_TOKEN',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(401).json(response);
+      res.status(401).json(errorResponse(
+        'Invalid authentication token',
+        'INVALID_AUTH_TOKEN',
+        undefined,
+        401,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -116,13 +116,13 @@ export class AdminAuthMiddleware {
   static requirePermissions(permissions: string[]) {
     return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
       if (!req.user?.canAccessAdminPanel) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Admin access required',
-          code: 'ADMIN_ACCESS_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(403).json(response);
+        res.status(403).json(errorResponse(
+          'Admin access required',
+          'ADMIN_ACCESS_REQUIRED',
+          undefined,
+          403,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -132,13 +132,13 @@ export class AdminAuthMiddleware {
         const fullUser = await User.findById(req.user.userId);
         
         if (!fullUser) {
-          const response: ApiResponse = {
-            success: false,
-            error: 'User not found',
-            code: 'USER_NOT_FOUND',
-            timestamp: new Date().toISOString()
-          };
-          res.status(404).json(response);
+          res.status(404).json(errorResponse(
+            'User not found',
+            'USER_NOT_FOUND',
+            undefined,
+            404,
+            getRequestId(req)
+          ));
           return;
         }
 
@@ -157,17 +157,16 @@ export class AdminAuthMiddleware {
             endpoint: req.originalUrl
           });
 
-          const response: ApiResponse = {
-            success: false,
-            error: 'Insufficient permissions',
-            code: 'INSUFFICIENT_PERMISSIONS',
-            details: { 
+          res.status(403).json(errorResponse(
+            'Insufficient permissions',
+            'INSUFFICIENT_PERMISSIONS',
+            { 
               requiredPermissions: permissions,
               missingPermissions 
             },
-            timestamp: new Date().toISOString()
-          };
-          res.status(403).json(response);
+            403,
+            getRequestId(req)
+          ));
           return;
         }
 
@@ -182,13 +181,13 @@ export class AdminAuthMiddleware {
           permissions
         });
 
-        const response: ApiResponse = {
-          success: false,
-          error: 'Permission check failed',
-          code: 'PERMISSION_CHECK_ERROR',
-          timestamp: new Date().toISOString()
-        };
-        res.status(500).json(response);
+        res.status(500).json(errorResponse(
+          'Permission check failed',
+          'PERMISSION_CHECK_ERROR',
+          undefined,
+          500,
+          getRequestId(req)
+        ));
       }
     };
   }
@@ -200,13 +199,13 @@ export class AdminAuthMiddleware {
   static requireGranularPermission(permission: string) {
     return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
       if (!req.user) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Authentication required',
-          code: 'AUTHENTICATION_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(401).json(response);
+        res.status(401).json(errorResponse(
+          'Authentication required',
+          'AUTHENTICATION_REQUIRED',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -216,13 +215,13 @@ export class AdminAuthMiddleware {
         const fullUser = await User.findById(req.user.userId);
         
         if (!fullUser) {
-          const response: ApiResponse = {
-            success: false,
-            error: 'User not found',
-            code: 'USER_NOT_FOUND',
-            timestamp: new Date().toISOString()
-          };
-          res.status(404).json(response);
+          res.status(404).json(errorResponse(
+            'User not found',
+            'USER_NOT_FOUND',
+            undefined,
+            404,
+            getRequestId(req)
+          ));
           return;
         }
 
@@ -237,18 +236,17 @@ export class AdminAuthMiddleware {
             endpoint: req.originalUrl
           });
 
-          const response: ApiResponse = {
-            success: false,
-            error: `Insufficient permissions for ${permission}`,
-            code: 'INSUFFICIENT_GRANULAR_PERMISSIONS',
-            details: { 
+          res.status(403).json(errorResponse(
+            `Insufficient permissions for ${permission}`,
+            'INSUFFICIENT_GRANULAR_PERMISSIONS',
+            { 
               requiredPermission: permission,
               userRoles: fullUser.userRoles,
               characterRoles: fullUser.characterRoles
             },
-            timestamp: new Date().toISOString()
-          };
-          res.status(403).json(response);
+            403,
+            getRequestId(req)
+          ));
           return;
         }
 
@@ -263,13 +261,13 @@ export class AdminAuthMiddleware {
           permission
         });
 
-        const response: ApiResponse = {
-          success: false,
-          error: 'Permission check failed',
-          code: 'PERMISSION_CHECK_ERROR',
-          timestamp: new Date().toISOString()
-        };
-        res.status(500).json(response);
+        res.status(500).json(errorResponse(
+          'Permission check failed',
+          'PERMISSION_CHECK_ERROR',
+          undefined,
+          500,
+          getRequestId(req)
+        ));
       }
     };
   }
@@ -366,13 +364,13 @@ export class AdminAuthMiddleware {
             attempts: userAttempts.count
           });
 
-          const response: ApiResponse = {
-            success: false,
-            error: 'Too many sensitive operations. Please wait before trying again.',
-            code: 'ADMIN_RATE_LIMITED',
-            timestamp: new Date().toISOString()
-          };
-          res.status(429).json(response);
+          res.status(429).json(errorResponse(
+            'Too many sensitive operations. Please wait before trying again.',
+            'ADMIN_RATE_LIMITED',
+            undefined,
+            429,
+            getRequestId(req)
+          ));
           return;
         } else {
           userAttempts.count++;

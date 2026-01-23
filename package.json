@@ -4,7 +4,6 @@
   "description": "Victorian London RPG by Chat platform based on Call of Cthulhu",
   "private": true,
   "workspaces": [
-    "packages/*",
     "apps/*",
     "services/*"
   ],

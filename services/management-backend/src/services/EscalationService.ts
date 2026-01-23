@@ -1,5 +1,5 @@
 import cron from 'node-cron';
-import { Ticket } from '../../../../packages/database/models';
+import { Ticket } from '../../../database/models';
 import { redisService } from '../utils/redis';
 import { logger } from '../utils/logger';
 

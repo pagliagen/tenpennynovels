@@ -27,14 +27,14 @@
     "baseUrl": "./src",
     "paths": {
       "@/*": ["*"],
-      "@shared/*": ["../../packages/shared/*"],
-      "@database/*": ["../../packages/database/*"]
+      "@shared/*": ["../../../shared/*"],
+      "@database/*": ["../../../database/*"]
     }
   },
   "include": [
     "src/**/*",
-    "../../packages/shared/**/*",
-    "../../packages/database/**/*"
+    "../../../shared/**/*",
+    "../../../database/**/*"
   ],
   "exclude": [
     "node_modules",

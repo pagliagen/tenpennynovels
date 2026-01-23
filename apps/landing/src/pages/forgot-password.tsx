@@ -47,7 +47,7 @@ export default function ForgotPasswordPage() {
       
       const result = await AuthService.forgotPassword(data.identifier);
       
-      if (result.success) {
+      if (result.result) {
         setSuccessMessage(result.message || 'Email di reset inviata con successo!');
       } else {
         setError(result.error || 'Errore durante l\'invio della richiesta di reset');

@@ -1,9 +1,10 @@
 import { Request, Response } from 'express';
-import { Item } from '../../../../packages/database/models/Item';
-import { Location } from '../../../../packages/database/models/Location';
-import { Character } from '../../../../packages/database/models/Character';
+import { Item } from '../../../database/models/Item';
+import { Location } from '../../../database/models/Location';
+import { Character } from '../../../database/models/Character';
 import { logger } from '../utils/logger';
 import { AuthUtils } from '../utils/auth';
+import { successResponse, errorResponse, listResponse, getRequestId } from '../utils/apiResponse';
 
 export class ItemController {
 
@@ -11,10 +12,13 @@ export class ItemController {
     try {
       const authResult = AuthUtils.authenticate(req);
       if (!authResult.success) {
-        res.status(401).json({
-          success: false,
-          error: authResult.error
-        });
+        res.status(401).json(errorResponse(
+          authResult.error || 'Authentication failed',
+          'AUTHENTICATION_FAILED',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -114,29 +118,29 @@ export class ItemController {
         filters: { category, locationId, maxPrice, minPrice, search }
       });
 
-      res.json({
-        success: true,
-        data: {
-          items: itemsWithEligibility,
-          pagination: {
-            total,
-            page: Number(page),
-            limit: Number(limit),
-            pages: Math.ceil(total / Number(limit))
-          },
-          filters: {
-            categories: await getAvailableCategories(),
-            priceRange: await getPriceRange(filter)
-          }
-        }
-      });
+      res.json(listResponse(
+        itemsWithEligibility,
+        {
+          page: Number(page),
+          pageSize: Number(limit),
+          total,
+          totalPages: Math.ceil(total / Number(limit)),
+          hasNext: Number(page) < Math.ceil(total / Number(limit)),
+          hasPrev: Number(page) > 1
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error retrieving available items:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Errore interno del server'
-      });
+      res.status(500).json(errorResponse(
+        'Errore interno del server',
+        'INTERNAL_SERVER_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -144,10 +148,13 @@ export class ItemController {
     try {
       const authResult = AuthUtils.authenticate(req);
       if (!authResult.success) {
-        res.status(401).json({
-          success: false,
-          error: authResult.error
-        });
+        res.status(401).json(errorResponse(
+          authResult.error || 'Authentication failed',
+          'AUTHENTICATION_FAILED',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -158,19 +165,25 @@ export class ItemController {
         .populate('availableLocations', 'name type description');
 
       if (!item) {
-        res.status(404).json({
-          success: false,
-          error: 'Oggetto non trovato'
-        });
+        res.status(404).json(errorResponse(
+          'Oggetto non trovato',
+          'ITEM_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Check if item is accessible to player (not admin-only)
       if (item.isAdminOnly) {
-        res.status(403).json({
-          success: false,
-          error: 'Oggetto non disponibile per l\'acquisto'
-        });
+        res.status(403).json(errorResponse(
+          'Oggetto non disponibile per l\'acquisto',
+          'ITEM_NOT_AVAILABLE',
+          undefined,
+          403,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -235,19 +248,23 @@ export class ItemController {
         canPurchase: eligibility.canPurchase
       });
 
-      res.json({
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           item: itemDetails
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error retrieving item details:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Errore interno del server'
-      });
+      res.status(500).json(errorResponse(
+        'Errore interno del server',
+        'INTERNAL_SERVER_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -255,10 +272,13 @@ export class ItemController {
     try {
       const authResult = AuthUtils.authenticate(req);
       if (!authResult.success) {
-        res.status(401).json({
-          success: false,
-          error: authResult.error
-        });
+        res.status(401).json(errorResponse(
+          authResult.error || 'Authentication failed',
+          'AUTHENTICATION_FAILED',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -317,20 +337,24 @@ export class ItemController {
         description: getCategoryDescription(cat.category)
       }));
 
-      res.json({
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           categories: formattedCategories,
           totalCategories: categories.length
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error retrieving item categories:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Errore interno del server'
-      });
+      res.status(500).json(errorResponse(
+        'Errore interno del server',
+        'INTERNAL_SERVER_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -338,10 +362,13 @@ export class ItemController {
     try {
       const authResult = AuthUtils.authenticate(req);
       if (!authResult.success) {
-        res.status(401).json({
-          success: false,
-          error: authResult.error
-        });
+        res.status(401).json(errorResponse(
+          authResult.error || 'Authentication failed',
+          'AUTHENTICATION_FAILED',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -351,10 +378,13 @@ export class ItemController {
       // Verify location exists
       const location = await Location.findById(locationId);
       if (!location) {
-        res.status(404).json({
-          success: false,
-          error: 'Location non trovata'
-        });
+        res.status(404).json(errorResponse(
+          'Location non trovata',
+          'LOCATION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -399,9 +429,8 @@ export class ItemController {
         characterId: character._id
       });
 
-      res.json({
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           location: {
             id: location._id,
             name: location.name,
@@ -410,15 +439,20 @@ export class ItemController {
           },
           items: itemsWithEligibility,
           totalItems: itemsWithEligibility.length
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error retrieving location items:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Errore interno del server'
-      });
+      res.status(500).json(errorResponse(
+        'Errore interno del server',
+        'INTERNAL_SERVER_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -426,20 +460,26 @@ export class ItemController {
     try {
       const authResult = AuthUtils.authenticate(req);
       if (!authResult.success) {
-        res.status(401).json({
-          success: false,
-          error: authResult.error
-        });
+        res.status(401).json(errorResponse(
+          authResult.error || 'Authentication failed',
+          'AUTHENTICATION_FAILED',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
         return;
       }
 
       const { q: query, category, maxPrice, limit = 10 } = req.query;
 
       if (!query || typeof query !== 'string' || query.trim().length < 2) {
-        res.status(400).json({
-          success: false,
-          error: 'La query di ricerca deve contenere almeno 2 caratteri'
-        });
+        res.status(400).json(errorResponse(
+          'La query di ricerca deve contenere almeno 2 caratteri',
+          'INVALID_SEARCH_QUERY',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -473,21 +513,25 @@ export class ItemController {
         characterId: authResult.character._id
       });
 
-      res.json({
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           query,
           results: searchResults,
           totalResults: searchResults.length
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error searching items:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Errore interno del server'
-      });
+      res.status(500).json(errorResponse(
+        'Errore interno del server',
+        'INTERNAL_SERVER_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 }

@@ -50,8 +50,9 @@ export interface Character {
 }
 
 export interface ApiResponse<T = any> {
-  success: boolean;
+  result: boolean;
   data?: T;
+  list?: T[];
   error?: string;
   code?: string;
   details?: any;

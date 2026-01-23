@@ -97,7 +97,7 @@ const ItemsPage: NextPage = () => {
       });
       
       const data = await response.json();
-      if (data.success) {
+      if (data.result) {
         setItems(data.data.items);
         setTotalPages(data.data.pagination.pages);
       }
@@ -114,7 +114,7 @@ const ItemsPage: NextPage = () => {
         credentials: 'include'
       });
       const data = await response.json();
-      if (data.success) {
+      if (data.result) {
         setCategories(data.data.categories);
       }
     } catch (error) {

@@ -1,4 +1,4 @@
-import { SocialClassConfig } from '../../../../packages/database/models';
+import { SocialClassConfig } from '../../../database/models';
 
 export interface SocialClass {
   name: string;
@@ -71,7 +71,7 @@ export class FinancialUtils {
    */
   static async initializeCharacterFinances(characterId: string, socialClass: SocialClass): Promise<void> {
     try {
-      const { CharacterFinances } = require('../../../../packages/database/models');
+      const { CharacterFinances } = require('../../../database/models');
       
       // Generate random initial cash within the social class range
       const initialCash = Math.floor(
@@ -142,7 +142,7 @@ export class FinancialUtils {
     itemId?: string
   ): Promise<void> {
     try {
-      const { FinancialTransaction } = require('../../../../packages/database/models');
+      const { FinancialTransaction } = require('../../../database/models');
       
       const transaction = new FinancialTransaction({
         characterId,

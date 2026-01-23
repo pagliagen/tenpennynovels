@@ -4,6 +4,7 @@ import { ApiResponse } from '../types/management';
 import { AdminAuthMiddleware } from '../middleware/adminAuth';
 import { logger } from '../utils/logger';
 import { ChatModerationAction, UserReport, IChatModerationAction, IUserReport } from '../models/ChatModeration';
+import { listResponse, successResponse, errorResponse, getRequestId } from '../utils/apiResponse';
 
 export class ChatMonitoringController {
   
@@ -26,13 +27,13 @@ export class ChatMonitoringController {
       } = req.body;
 
       if (!query || query.trim().length === 0) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'La query di ricerca è richiesta',
-          code: 'SEARCH_QUERY_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'La query di ricerca è richiesta',
+          'SEARCH_QUERY_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -216,28 +217,18 @@ export class ChatMonitoringController {
         totalCount
       });
 
-      const response: ApiResponse<{
-        messages: any[];
-        pagination: {
-          currentPage: number;
-          totalPages: number;
-          totalItems: number;
-          limit: number;
-          hasMore: boolean;
-        };
-        searchQuery: string;
-        searchFilters: any;
-      }> = {
-        success: true,
-        data: {
+      const pagination = {
+        currentPage: page,
+        totalPages: Math.ceil(totalCount / limit),
+        totalItems: totalCount,
+        limit,
+        hasMore: page < Math.ceil(totalCount / limit)
+      };
+
+      res.json(successResponse(
+        {
           messages: searchResults,
-          pagination: {
-            currentPage: page,
-            totalPages: Math.ceil(totalCount / limit),
-            totalItems: totalCount,
-            limit,
-            hasMore: page < Math.ceil(totalCount / limit)
-          },
+          pagination,
           searchQuery: query,
           searchFilters: {
             messageType,
@@ -248,23 +239,21 @@ export class ChatMonitoringController {
             dateTo
           }
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error searching messages:', { 
         error: error instanceof Error ? error.message : String(error) 
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile cercare i messaggi',
-        code: 'SEARCH_MESSAGES_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile cercare i messaggi',
+        'SEARCH_MESSAGES_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -321,28 +310,8 @@ export class ChatMonitoringController {
         category: 'chat_monitoring'
       });
 
-      const response: ApiResponse<{
-        recentActivity: {
-          lastHour: {
-            ongame: number;
-            offgame: number;
-            location: number;
-            total: number;
-          };
-          last24Hours: {
-            ongame: number;
-            offgame: number;
-            total: number;
-          };
-        };
-        moderation: {
-          activeModerationActions: number;
-          pendingReports: number;
-        };
-        timestamp: string;
-      }> = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           recentActivity: {
             lastHour: {
               ongame: recentOngame,
@@ -362,23 +331,21 @@ export class ChatMonitoringController {
           },
           timestamp: new Date().toISOString()
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error getting real-time activity:', { 
         error: error instanceof Error ? error.message : String(error) 
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare l\'attività in tempo reale',
-        code: 'REALTIME_ACTIVITY_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare l\'attività in tempo reale',
+        'REALTIME_ACTIVITY_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -430,44 +397,34 @@ export class ChatMonitoringController {
         totalResults: totalItems
       });
 
-      const response: ApiResponse<{
-        reports: any[];
-        pagination: {
-          currentPage: number;
-          totalPages: number;
-          totalItems: number;
-          limit: number;
-          hasMore: boolean;
-        };
-      }> = {
-        success: true,
-        data: {
-          reports,
-          pagination: {
-            currentPage: parseInt(page as string),
-            totalPages: Math.ceil(totalItems / parseInt(limit as string)),
-            totalItems,
-            limit: parseInt(limit as string),
-            hasMore: parseInt(page as string) < Math.ceil(totalItems / parseInt(limit as string))
-          }
-        },
-        timestamp: new Date().toISOString()
+      const pagination = {
+        currentPage: parseInt(page as string),
+        totalPages: Math.ceil(totalItems / parseInt(limit as string)),
+        totalItems,
+        limit: parseInt(limit as string),
+        hasMore: parseInt(page as string) < Math.ceil(totalItems / parseInt(limit as string))
       };
 
-      res.json(response);
+      res.json(successResponse(
+        {
+          reports,
+          pagination
+        },
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error fetching user reports:', { 
         error: error instanceof Error ? error.message : String(error) 
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare le segnalazioni utente',
-        code: 'FETCH_REPORTS_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare le segnalazioni utente',
+        'FETCH_REPORTS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -500,17 +457,8 @@ export class ChatMonitoringController {
         category: 'chat_monitoring'
       });
 
-      const response: ApiResponse<{
-        history: any[];
-        pagination: {
-          total: number;
-          limit: number;
-          skip: number;
-          hasMore: boolean;
-        };
-      }> = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           history: moderationHistory,
           pagination: {
             total: totalCount,
@@ -519,23 +467,21 @@ export class ChatMonitoringController {
             hasMore: totalCount > parseInt(skip as string) + parseInt(limit as string)
           }
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error fetching moderation history:', { 
         error: error instanceof Error ? error.message : String(error) 
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare lo storico delle moderazioni',
-        code: 'MODERATION_HISTORY_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare lo storico delle moderazioni',
+        'MODERATION_HISTORY_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 }

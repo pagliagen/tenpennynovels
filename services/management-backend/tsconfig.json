@@ -23,8 +23,8 @@
     "baseUrl": "./src",
     "paths": {
       "@/*": ["*"],
-      "@shared/*": ["../../packages/shared/*"],
-      "@database/*": ["../../packages/database/*"]
+      "@shared/*": ["../../../shared/*"],
+      "@database/*": ["../../../database/*"]
     },
     "allowSyntheticDefaultImports": true,
     "experimentalDecorators": true,
@@ -32,7 +32,8 @@
   },
   "include": [
     "src/**/*",
-    "../../packages/shared/**/*"
+    "../../../shared/**/*",
+    "../../../database/**/*"
   ],
   "exclude": [
     "node_modules",

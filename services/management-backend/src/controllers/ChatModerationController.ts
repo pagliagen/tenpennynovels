@@ -1,11 +1,12 @@
 import { Request, Response } from 'express';
-import { ChatModerationAction } from '../../../../packages/database/models/ChatModerationAction';
-import { MessageReport } from '../../../../packages/database/models/MessageReport';
-import { OnGameMessage } from '../../../../packages/database/models/OnGameMessage';
-import { OffGameChatMessage } from '../../../../packages/database/models/OffGameChatMessage';
-import { Character } from '../../../../packages/database/models/Character';
-import { User } from '../../../../packages/database/models/User';
+import { ChatModerationAction } from '../../../database/models/ChatModerationAction';
+import { MessageReport } from '../../../database/models/MessageReport';
+import { OnGameMessage } from '../../../database/models/OnGameMessage';
+import { OffGameChatMessage } from '../../../database/models/OffGameChatMessage';
+import { Character } from '../../../database/models/Character';
+import { User } from '../../../database/models/User';
 import { logger } from '../utils/logger';
+import { successResponse, errorResponse, listResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
 
 export class ChatModerationController {
 
@@ -137,21 +138,24 @@ export class ChatModerationController {
         responseTimeStats: responseTimeStats[0] || null
       };
       
-      res.json({
-        success: true,
-        data: { overview }
-      });
+      res.json(successResponse(
+        { overview },
+        undefined,
+        getRequestId(req)
+      ));
       
     } catch (error: any) {
       logger.error('Failed to get chat moderation overview', {
         error: error instanceof Error ? error.message : String(error)
       });
       
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile recuperare la panoramica della moderazione chat',
-        code: 'GET_OVERVIEW_ERROR'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare la panoramica della moderazione chat',
+        'GET_OVERVIEW_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -197,29 +201,34 @@ export class ChatModerationController {
       
       const totalCount = await MessageReport.countDocuments(filter);
       
-      res.json({
-        success: true,
-        data: {
+      const pagination = {
+        total: totalCount,
+        limit: parseInt(limit as string),
+        skip: parseInt(skip as string),
+        hasMore: totalCount > parseInt(skip as string) + parseInt(limit as string)
+      };
+
+      res.json(successResponse(
+        {
           reports,
-          pagination: {
-            total: totalCount,
-            limit: parseInt(limit as string),
-            skip: parseInt(skip as string),
-            hasMore: totalCount > parseInt(skip as string) + parseInt(limit as string)
-          }
-        }
-      });
+          pagination
+        },
+        undefined,
+        getRequestId(req)
+      ));
       
     } catch (error: any) {
       logger.error('Failed to get reports', {
         error: error instanceof Error ? error.message : String(error)
       });
       
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile recuperare le segnalazioni',
-        code: 'GET_REPORTS_ERROR'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare le segnalazioni',
+        'GET_REPORTS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -246,11 +255,13 @@ export class ChatModerationController {
       // Validate action type
       const validActions = ['hide', 'delete', 'warn_sender', 'ban_sender', 'edit_content', 'flag_inappropriate', 'restore'];
       if (!validActions.includes(action)) {
-        res.status(400).json({
-          success: false,
-          error: 'Azione di moderazione non valida',
-          code: 'INVALID_ACTION'
-        });
+        res.status(400).json(errorResponse(
+          'Azione di moderazione non valida',
+          'INVALID_ACTION',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
       
@@ -274,20 +285,24 @@ export class ChatModerationController {
           break;
         
         default:
-          res.status(400).json({
-            success: false,
-            error: 'Tipo di messaggio non supportato per la moderazione',
-            code: 'UNSUPPORTED_MESSAGE_TYPE'
-          });
+          res.status(400).json(errorResponse(
+            'Tipo di messaggio non supportato per la moderazione',
+            'UNSUPPORTED_MESSAGE_TYPE',
+            undefined,
+            400,
+            getRequestId(req)
+          ));
           return;
       }
       
       if (!originalMessage) {
-        res.status(404).json({
-          success: false,
-          error: 'Messaggio non trovato',
-          code: 'MESSAGE_NOT_FOUND'
-        });
+        res.status(404).json(errorResponse(
+          'Messaggio non trovato',
+          'MESSAGE_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
       
@@ -372,15 +387,15 @@ export class ChatModerationController {
         moderatorId
       });
       
-      res.json({
-        success: true,
-        message: 'Azione di moderazione eseguita con successo',
-        data: {
+      res.json(updateResponse(
+        {
           actionId: moderationAction._id,
           action,
           targetCharacter: senderName
-        }
-      });
+        },
+        'Azione di moderazione eseguita con successo',
+        getRequestId(req)
+      ));
       
     } catch (error: any) {
       logger.error('Failed to take moderation action', {
@@ -390,11 +405,13 @@ export class ChatModerationController {
         error: error instanceof Error ? error.message : String(error)
       });
       
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile eseguire l\'azione di moderazione',
-        code: 'MODERATION_ACTION_ERROR'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile eseguire l\'azione di moderazione',
+        'MODERATION_ACTION_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -444,29 +461,34 @@ export class ChatModerationController {
       
       const totalCount = await ChatModerationAction.countDocuments(filter);
       
-      res.json({
-        success: true,
-        data: {
+      const pagination = {
+        total: totalCount,
+        limit: parseInt(limit as string),
+        skip: parseInt(skip as string),
+        hasMore: totalCount > parseInt(skip as string) + parseInt(limit as string)
+      };
+
+      res.json(successResponse(
+        {
           actions,
-          pagination: {
-            total: totalCount,
-            limit: parseInt(limit as string),
-            skip: parseInt(skip as string),
-            hasMore: totalCount > parseInt(skip as string) + parseInt(limit as string)
-          }
-        }
-      });
+          pagination
+        },
+        undefined,
+        getRequestId(req)
+      ));
       
     } catch (error: any) {
       logger.error('Failed to get moderation actions', {
         error: error instanceof Error ? error.message : String(error)
       });
       
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile recuperare le azioni di moderazione',
-        code: 'GET_ACTIONS_ERROR'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare le azioni di moderazione',
+        'GET_ACTIONS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -486,11 +508,13 @@ export class ChatModerationController {
       } = req.query;
       
       if (!query || typeof query !== 'string' || query.length < 3) {
-        res.status(400).json({
-          success: false,
-          error: 'La query di ricerca deve contenere almeno 3 caratteri',
-          code: 'INVALID_SEARCH_QUERY'
-        });
+        res.status(400).json(errorResponse(
+          'La query di ricerca deve contenere almeno 3 caratteri',
+          'INVALID_SEARCH_QUERY',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
       
@@ -559,14 +583,15 @@ export class ChatModerationController {
       // Sort all results by timestamp
       results.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
       
-      res.json({
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           messages: results.slice(0, parseInt(limit as string)),
           totalFound: results.length,
           searchQuery: query
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
       
     } catch (error: any) {
       logger.error('Failed to search messages', {
@@ -574,11 +599,13 @@ export class ChatModerationController {
         error: error instanceof Error ? error.message : String(error)
       });
       
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile cercare i messaggi',
-        code: 'MESSAGE_SEARCH_ERROR'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile cercare i messaggi',
+        'MESSAGE_SEARCH_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -600,11 +627,13 @@ export class ChatModerationController {
       });
       
       if (!action) {
-        res.status(404).json({
-          success: false,
-          error: 'Ricorso non trovato o già risolto',
-          code: 'APPEAL_NOT_FOUND'
-        });
+        res.status(404).json(errorResponse(
+          'Ricorso non trovato o già risolto',
+          'APPEAL_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
       
@@ -628,15 +657,15 @@ export class ChatModerationController {
         targetCharacter: action.targetCharacterName
       });
       
-      res.json({
-        success: true,
-        message: 'Ricorso risolto con successo',
-        data: {
+      res.json(updateResponse(
+        {
           actionId,
           resolution,
           resolvedAt: action.appealResolvedAt
-        }
-      });
+        },
+        'Ricorso risolto con successo',
+        getRequestId(req)
+      ));
       
     } catch (error: any) {
       logger.error('Failed to resolve appeal', {
@@ -645,11 +674,13 @@ export class ChatModerationController {
         error: error instanceof Error ? error.message : String(error)
       });
       
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile risolvere il ricorso',
-        code: 'RESOLVE_APPEAL_ERROR'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile risolvere il ricorso',
+        'RESOLVE_APPEAL_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 

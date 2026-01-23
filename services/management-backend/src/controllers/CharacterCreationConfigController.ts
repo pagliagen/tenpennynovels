@@ -7,10 +7,11 @@
  */
 
 import { Request, Response } from 'express';
-import { CharacterCreationConfigService } from '../../../../packages/shared/src/services/CharacterCreationConfigService';
+import { CharacterCreationConfigService } from '../../../shared/src/services/CharacterCreationConfigService';
 import { ApiResponse } from '../types/management';
 import { AdminAuthMiddleware } from '../middleware/adminAuth';
 import { logger } from '../utils/logger';
+import { successResponse, errorResponse, updateResponse, getRequestId } from '../utils/apiResponse';
 
 export class CharacterCreationConfigController {
   /**
@@ -25,13 +26,11 @@ export class CharacterCreationConfigController {
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       logger.info('Admin viewed character creation config', auditInfo);
 
-      const response: ApiResponse<any> = {
-        success: true,
-        data: { config },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+      res.json(successResponse(
+        { config },
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error fetching character creation config:', {
         error: error instanceof Error ? error.message : String(error),
@@ -40,14 +39,13 @@ export class CharacterCreationConfigController {
         params: req.params
       });
 
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare la configurazione creazione personaggio',
-        code: 'FETCH_CHARACTER_CONFIG_ERROR',
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare la configurazione creazione personaggio',
+        'FETCH_CHARACTER_CONFIG_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -61,24 +59,24 @@ export class CharacterCreationConfigController {
 
       // Validate required fields
       if (!config) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Dati configurazione mancanti',
-          code: 'CONFIG_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Dati configurazione mancanti',
+          'CONFIG_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       if (!reason || reason.trim().length === 0) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Il motivo della modifica è richiesto',
-          code: 'REASON_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Il motivo della modifica è richiesto',
+          'REASON_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -99,15 +97,13 @@ export class CharacterCreationConfigController {
         category: 'character_creation_config'
       });
 
-      const response: ApiResponse<{ message: string }> = {
-        success: true,
-        data: {
+      res.json(updateResponse(
+        {
           message: 'Configurazione creazione personaggio aggiornata con successo'
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error updating character creation config:', {
         error: error instanceof Error ? error.message : String(error),
@@ -115,14 +111,13 @@ export class CharacterCreationConfigController {
         body: req.body
       });
 
-      const response: ApiResponse = {
-        success: false,
-        error: `Impossibile aggiornare la configurazione: ${error instanceof Error ? error.message : 'Errore sconosciuto'}`,
-        code: 'UPDATE_CHARACTER_CONFIG_ERROR',
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        `Impossibile aggiornare la configurazione: ${error instanceof Error ? error.message : 'Errore sconosciuto'}`,
+        'UPDATE_CHARACTER_CONFIG_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -141,29 +136,26 @@ export class CharacterCreationConfigController {
         category: 'character_creation_config'
       });
 
-      const response: ApiResponse<{ message: string }> = {
-        success: true,
-        data: {
+      res.json(updateResponse(
+        {
           message: 'Cache invalidata con successo'
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error invalidating character creation config cache:', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined
       });
 
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile invalidare la cache',
-        code: 'INVALIDATE_CACHE_ERROR',
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile invalidare la cache',
+        'INVALIDATE_CACHE_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -176,13 +168,13 @@ export class CharacterCreationConfigController {
       const { config } = req.body;
 
       if (!config) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Configurazione mancante',
-          code: 'CONFIG_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Configurazione mancante',
+          'CONFIG_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -288,31 +280,28 @@ export class CharacterCreationConfigController {
         }
       }
 
-      const response: ApiResponse<{ isValid: boolean; errors: string[]; warnings: string[] }> = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           isValid: errors.length === 0,
           errors,
           warnings
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error validating character creation config:', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined
       });
 
-      const response: ApiResponse = {
-        success: false,
-        error: 'Errore nella validazione della configurazione',
-        code: 'VALIDATION_ERROR',
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Errore nella validazione della configurazione',
+        'VALIDATION_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 }

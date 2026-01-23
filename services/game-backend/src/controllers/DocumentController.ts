@@ -6,7 +6,8 @@ import { ObjectId } from 'mongodb';
 import slugify from 'slugify';
 import mongoose from 'mongoose';
 import logger from '../utils/logger';
-import { getEmbeddingsService } from '../../../../packages/shared/src/utils/embeddings';
+import { getEmbeddingsService } from '../../../shared/src/utils/embeddings';
+import { successResponse, errorResponse, createResponse, updateResponse, deleteResponse, listResponse, getRequestId } from '../utils/apiResponse';
 
 export type DocumentType = 'ambientazione' | 'regolamento';
 
@@ -124,16 +125,20 @@ export async function getDocuments(req: Request, res: Response) {
     const character = req.character;
     const filteredDocuments = documents.filter(doc => canAccessDocument(doc, user, character));
     
-    res.json({
-      success: true,
-      data: filteredDocuments
-    });
+    res.json(successResponse(
+      filteredDocuments,
+      undefined,
+      getRequestId(req)
+    ));
   } catch (error: any) {
     console.log('Error fetching documents:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Errore nel recupero dei documenti'
-    });
+    res.status(500).json(errorResponse(
+      'Errore nel recupero dei documenti',
+      'GET_DOCUMENTS_ERROR',
+      undefined,
+      500,
+      getRequestId(req)
+    ));
   }
 }
 
@@ -142,10 +147,13 @@ export async function getDocument(req: Request, res: Response) {
     const { type, slug } = req.params;
     
     if (!['ambientazione', 'regolamento'].includes(type)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Tipo di documento non valido'
-      });
+      return res.status(400).json(errorResponse(
+        'Tipo di documento non valido',
+        'INVALID_DOCUMENT_TYPE',
+        undefined,
+        400,
+        getRequestId(req)
+      ));
     }
     
     const db = mongoose.connection.db;
@@ -157,18 +165,24 @@ export async function getDocument(req: Request, res: Response) {
     });
     
     if (!document) {
-      return res.status(404).json({
-        success: false,
-        message: 'Documento non trovato'
-      });
+      return res.status(404).json(errorResponse(
+        'Documento non trovato',
+        'DOCUMENT_NOT_FOUND',
+        undefined,
+        404,
+        getRequestId(req)
+      ));
     }
     
     // Check permissions
     if (!canAccessDocument(document, req.user, req.character)) {
-      return res.status(404).json({
-        success: false,
-        message: 'Documento non trovato'
-      });
+      return res.status(404).json(errorResponse(
+        'Documento non trovato',
+        'DOCUMENT_NOT_FOUND',
+        undefined,
+        404,
+        getRequestId(req)
+      ));
     }
     
     // Get active sections
@@ -178,13 +192,14 @@ export async function getDocument(req: Request, res: Response) {
       isActive: true
     }).sort({ order: 1 }).toArray();
     
-    res.json({
-      success: true,
-      data: {
+    res.json(successResponse(
+      {
         document,
         sections
-      }
-    });
+      },
+      undefined,
+      getRequestId(req)
+    ));
   } catch (error: any) {
     logger.error('Error fetching document:', { 
       error: error instanceof Error ? error.message : String(error),
@@ -195,10 +210,13 @@ export async function getDocument(req: Request, res: Response) {
       params: req.params,
       query: req.query
     });
-    res.status(500).json({
-      success: false,
-      message: 'Errore nel recupero del documento'
-    });
+    res.status(500).json(errorResponse(
+      'Errore nel recupero del documento',
+      'GET_DOCUMENT_ERROR',
+      undefined,
+      500,
+      getRequestId(req)
+    ));
   }
 }
 
@@ -207,10 +225,13 @@ export async function searchDocuments(req: Request, res: Response) {
     const { q: query, type, page = 1, limit = 20 } = req.query;
     
     if (!query || typeof query !== 'string' || query.trim().length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Query di ricerca richiesta'
-      });
+      return res.status(400).json(errorResponse(
+        'Query di ricerca richiesta',
+        'MISSING_QUERY',
+        undefined,
+        400,
+        getRequestId(req)
+      ));
     }
     
     const db = mongoose.connection.db;
@@ -369,18 +390,19 @@ export async function searchDocuments(req: Request, res: Response) {
     
     const totalPages = Math.ceil(totalResults / Number(limit));
     
-    res.json({
-      success: true,
-      data: filteredResults,
-      pagination: {
+    res.json(listResponse(
+      filteredResults,
+      {
         page: Number(page),
-        limit: Number(limit),
+        pageSize: Number(limit),
         total: totalResults,
         totalPages,
-        hasNextPage: Number(page) < totalPages,
-        hasPrevPage: Number(page) > 1
-      }
-    });
+        hasNext: Number(page) < totalPages,
+        hasPrev: Number(page) > 1
+      },
+      undefined,
+      getRequestId(req)
+    ));
   } catch (error: any) {
     logger.error('Error searching documents:', { 
       error: error instanceof Error ? error.message : String(error),
@@ -391,10 +413,13 @@ export async function searchDocuments(req: Request, res: Response) {
       params: req.params,
       query: req.query
     });
-    res.status(500).json({
-      success: false,
-      message: 'Errore nella ricerca'
-    });
+    res.status(500).json(errorResponse(
+      'Errore nella ricerca',
+      'SEARCH_ERROR',
+      undefined,
+      500,
+      getRequestId(req)
+    ));
   }
 }
 
@@ -403,19 +428,25 @@ export async function searchDocuments(req: Request, res: Response) {
 export async function createDocument(req: Request, res: Response) {
   try {
     if (!canManageDocuments(req.user)) {
-      return res.status(403).json({
-        success: false,
-        message: 'Accesso negato'
-      });
+      return res.status(403).json(errorResponse(
+        'Accesso negato',
+        'ACCESS_DENIED',
+        undefined,
+        403,
+        getRequestId(req)
+      ));
     }
     
     const { title, type, isPublic, sections } = req.body;
     
     if (!title || !type || !['ambientazione', 'regolamento'].includes(type) || !sections || !Array.isArray(sections)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Dati richiesti mancanti'
-      });
+      return res.status(400).json(errorResponse(
+        'Dati richiesti mancanti',
+        'VALIDATION_ERROR',
+        undefined,
+        400,
+        getRequestId(req)
+      ));
     }
     
     const db = mongoose.connection.db;
@@ -424,10 +455,13 @@ export async function createDocument(req: Request, res: Response) {
     // Check if slug already exists
     const existingDoc = await db.collection('documents').findOne({ type, slug });
     if (existingDoc) {
-      return res.status(400).json({
-        success: false,
-        message: 'Un documento con questo titolo esiste già'
-      });
+      return res.status(400).json(errorResponse(
+        'Un documento con questo titolo esiste già',
+        'DUPLICATE_DOCUMENT',
+        undefined,
+        400,
+        getRequestId(req)
+      ));
     }
     
     // Create document
@@ -469,29 +503,36 @@ export async function createDocument(req: Request, res: Response) {
     
     await db.collection('documentSections').insertMany(documentSections);
     
-    res.status(201).json({
-      success: true,
-      data: {
+    res.status(201).json(createResponse(
+      {
         ...document,
         _id: documentId
-      }
-    });
+      },
+      undefined,
+      getRequestId(req)
+    ));
   } catch (error: any) {
     logger.error('Error creating document:', { error: error instanceof Error ? error.message : String(error) });
-    res.status(500).json({
-      success: false,
-      message: 'Errore nella creazione del documento'
-    });
+    res.status(500).json(errorResponse(
+      'Errore nella creazione del documento',
+      'CREATE_DOCUMENT_ERROR',
+      undefined,
+      500,
+      getRequestId(req)
+    ));
   }
 }
 
 export async function updateDocument(req: Request, res: Response) {
   try {
     if (!canManageDocuments(req.user)) {
-      return res.status(403).json({
-        success: false,
-        message: 'Accesso negato'
-      });
+      return res.status(403).json(errorResponse(
+        'Accesso negato',
+        'ACCESS_DENIED',
+        undefined,
+        403,
+        getRequestId(req)
+      ));
     }
     
     const { documentId } = req.params;
@@ -501,10 +542,13 @@ export async function updateDocument(req: Request, res: Response) {
     const document = await db.collection('documents').findOne({ _id: new ObjectId(documentId) });
     
     if (!document) {
-      return res.status(404).json({
-        success: false,
-        message: 'Documento non trovato'
-      });
+      return res.status(404).json(errorResponse(
+        'Documento non trovato',
+        'DOCUMENT_NOT_FOUND',
+        undefined,
+        404,
+        getRequestId(req)
+      ));
     }
     
     // Create new version
@@ -562,29 +606,36 @@ export async function updateDocument(req: Request, res: Response) {
       isActive: true
     }).sort({ order: 1 }).toArray();
     
-    res.json({
-      success: true,
-      data: {
+    res.json(updateResponse(
+      {
         document: updatedDocument,
         sections: activeSections
-      }
-    });
+      },
+      undefined,
+      getRequestId(req)
+    ));
   } catch (error: any) {
     logger.error('Error updating document:', { error: error instanceof Error ? error.message : String(error) });
-    res.status(500).json({
-      success: false,
-      message: 'Errore nell\'aggiornamento del documento'
-    });
+    res.status(500).json(errorResponse(
+      'Errore nell\'aggiornamento del documento',
+      'UPDATE_DOCUMENT_ERROR',
+      undefined,
+      500,
+      getRequestId(req)
+    ));
   }
 }
 
 export async function publishDocumentVersion(req: Request, res: Response) {
   try {
     if (!canManageDocuments(req.user)) {
-      return res.status(403).json({
-        success: false,
-        message: 'Accesso negato'
-      });
+      return res.status(403).json(errorResponse(
+        'Accesso negato',
+        'ACCESS_DENIED',
+        undefined,
+        403,
+        getRequestId(req)
+      ));
     }
     
     const { documentId, version } = req.params;
@@ -592,10 +643,13 @@ export async function publishDocumentVersion(req: Request, res: Response) {
     
     const document = await db.collection('documents').findOne({ _id: new ObjectId(documentId) });
     if (!document) {
-      return res.status(404).json({
-        success: false,
-        message: 'Documento non trovato'
-      });
+      return res.status(404).json(errorResponse(
+        'Documento non trovato',
+        'DOCUMENT_NOT_FOUND',
+        undefined,
+        404,
+        getRequestId(req)
+      ));
     }
     
     // Check if version exists
@@ -605,10 +659,13 @@ export async function publishDocumentVersion(req: Request, res: Response) {
     });
     
     if (!versionExists) {
-      return res.status(404).json({
-        success: false,
-        message: 'Versione non trovata'
-      });
+      return res.status(404).json(errorResponse(
+        'Versione non trovata',
+        'VERSION_NOT_FOUND',
+        undefined,
+        404,
+        getRequestId(req)
+      ));
     }
     
     // Update active version
@@ -622,26 +679,33 @@ export async function publishDocumentVersion(req: Request, res: Response) {
       }
     );
     
-    res.json({
-      success: true,
-      message: 'Versione pubblicata con successo'
-    });
+    res.json(successResponse(
+      undefined,
+      'Versione pubblicata con successo',
+      getRequestId(req)
+    ));
   } catch (error: any) {
     logger.error('Error publishing document version:', { error: error instanceof Error ? error.message : String(error) });
-    res.status(500).json({
-      success: false,
-      message: 'Errore nella pubblicazione della versione'
-    });
+    res.status(500).json(errorResponse(
+      'Errore nella pubblicazione della versione',
+      'PUBLISH_VERSION_ERROR',
+      undefined,
+      500,
+      getRequestId(req)
+    ));
   }
 }
 
 export async function deleteDocument(req: Request, res: Response) {
   try {
     if (!canManageDocuments(req.user)) {
-      return res.status(403).json({
-        success: false,
-        message: 'Accesso negato'
-      });
+      return res.status(403).json(errorResponse(
+        'Accesso negato',
+        'ACCESS_DENIED',
+        undefined,
+        403,
+        getRequestId(req)
+      ));
     }
     
     const { documentId } = req.params;
@@ -653,26 +717,32 @@ export async function deleteDocument(req: Request, res: Response) {
       db.collection('documentSections').deleteMany({ documentId: new ObjectId(documentId) })
     ]);
     
-    res.json({
-      success: true,
-      message: 'Documento eliminato con successo'
-    });
+    res.json(deleteResponse(
+      'Documento eliminato con successo',
+      getRequestId(req)
+    ));
   } catch (error: any) {
     logger.error('Error deleting document:', { error: error instanceof Error ? error.message : String(error) });
-    res.status(500).json({
-      success: false,
-      message: 'Errore nell\'eliminazione del documento'
-    });
+    res.status(500).json(errorResponse(
+      'Errore nell\'eliminazione del documento',
+      'DELETE_DOCUMENT_ERROR',
+      undefined,
+      500,
+      getRequestId(req)
+    ));
   }
 }
 
 export async function getDocumentVersions(req: Request, res: Response) {
   try {
     if (!canManageDocuments(req.user)) {
-      return res.status(403).json({
-        success: false,
-        message: 'Accesso negato'
-      });
+      return res.status(403).json(errorResponse(
+        'Accesso negato',
+        'ACCESS_DENIED',
+        undefined,
+        403,
+        getRequestId(req)
+      ));
     }
     
     const { documentId } = req.params;
@@ -699,28 +769,35 @@ export async function getDocumentVersions(req: Request, res: Response) {
       isActive: v._id === document?.activeVersion
     }));
     
-    res.json({
-      success: true,
-      data: {
+    res.json(successResponse(
+      {
         versions: versionData
-      }
-    });
+      },
+      undefined,
+      getRequestId(req)
+    ));
   } catch (error: any) {
     logger.error('Error fetching document versions:', { error: error instanceof Error ? error.message : String(error) });
-    res.status(500).json({
-      success: false,
-      message: 'Errore nel recupero delle versioni'
-    });
+    res.status(500).json(errorResponse(
+      'Errore nel recupero delle versioni',
+      'GET_VERSIONS_ERROR',
+      undefined,
+      500,
+      getRequestId(req)
+    ));
   }
 }
 
 export async function getDocumentVersion(req: Request, res: Response) {
   try {
     if (!canManageDocuments(req.user)) {
-      return res.status(403).json({
-        success: false,
-        message: 'Accesso negato'
-      });
+      return res.status(403).json(errorResponse(
+        'Accesso negato',
+        'ACCESS_DENIED',
+        undefined,
+        403,
+        getRequestId(req)
+      ));
     }
     
     const { documentId, version } = req.params;
@@ -728,10 +805,13 @@ export async function getDocumentVersion(req: Request, res: Response) {
     
     const document = await db.collection('documents').findOne({ _id: new ObjectId(documentId) });
     if (!document) {
-      return res.status(404).json({
-        success: false,
-        message: 'Documento non trovato'
-      });
+      return res.status(404).json(errorResponse(
+        'Documento non trovato',
+        'DOCUMENT_NOT_FOUND',
+        undefined,
+        404,
+        getRequestId(req)
+      ));
     }
     
     const sections = await db.collection('documentSections').find({
@@ -740,25 +820,32 @@ export async function getDocumentVersion(req: Request, res: Response) {
     }).sort({ order: 1 }).toArray();
     
     if (sections.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'Versione non trovata'
-      });
+      return res.status(404).json(errorResponse(
+        'Versione non trovata',
+        'VERSION_NOT_FOUND',
+        undefined,
+        404,
+        getRequestId(req)
+      ));
     }
     
-    res.json({
-      success: true,
-      data: {
+    res.json(successResponse(
+      {
         document,
         sections
-      }
-    });
+      },
+      undefined,
+      getRequestId(req)
+    ));
   } catch (error: any) {
     logger.error('Error fetching document version:', { error: error instanceof Error ? error.message : String(error) });
-    res.status(500).json({
-      success: false,
-      message: 'Errore nel recupero della versione'
-    });
+    res.status(500).json(errorResponse(
+      'Errore nel recupero della versione',
+      'GET_VERSION_ERROR',
+      undefined,
+      500,
+      getRequestId(req)
+    ));
   }
 }
 
@@ -767,10 +854,13 @@ export async function getDocumentVersion(req: Request, res: Response) {
 export async function getFavoriteDocuments(req: Request, res: Response) {
   try {
     if (!req.user) {
-      return res.status(401).json({
-        success: false,
-        message: 'Autenticazione richiesta'
-      });
+      return res.status(401).json(errorResponse(
+        'Autenticazione richiesta',
+        'AUTHENTICATION_REQUIRED',
+        undefined,
+        401,
+        getRequestId(req)
+      ));
     }
 
     const db = mongoose.connection.db;
@@ -802,38 +892,48 @@ export async function getFavoriteDocuments(req: Request, res: Response) {
       { $sort: { addedAt: -1 } }
     ]).toArray();
 
-    res.json({
-      success: true,
-      data: favorites
-    });
+    res.json(successResponse(
+      favorites,
+      undefined,
+      getRequestId(req)
+    ));
   } catch (error: any) {
     logger.error('Error fetching favorite documents:', { 
       error: error instanceof Error ? error.message : String(error),
       userId: req.user?.userId
     });
-    res.status(500).json({
-      success: false,
-      message: 'Errore nel recupero dei preferiti'
-    });
+    res.status(500).json(errorResponse(
+      'Errore nel recupero dei preferiti',
+      'GET_FAVORITES_ERROR',
+      undefined,
+      500,
+      getRequestId(req)
+    ));
   }
 }
 
 export async function addDocumentToFavorites(req: Request, res: Response) {
   try {
     if (!req.user) {
-      return res.status(401).json({
-        success: false,
-        message: 'Autenticazione richiesta'
-      });
+      return res.status(401).json(errorResponse(
+        'Autenticazione richiesta',
+        'AUTHENTICATION_REQUIRED',
+        undefined,
+        401,
+        getRequestId(req)
+      ));
     }
 
     const { type, slug } = req.params;
     
     if (!['ambientazione', 'regolamento'].includes(type)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Tipo di documento non valido'
-      });
+      return res.status(400).json(errorResponse(
+        'Tipo di documento non valido',
+        'INVALID_DOCUMENT_TYPE',
+        undefined,
+        400,
+        getRequestId(req)
+      ));
     }
 
     const db = mongoose.connection.db;
@@ -842,10 +942,13 @@ export async function addDocumentToFavorites(req: Request, res: Response) {
     // Find the document
     const document = await db.collection('documents').findOne({ type, slug });
     if (!document) {
-      return res.status(404).json({
-        success: false,
-        message: 'Documento non trovato'
-      });
+      return res.status(404).json(errorResponse(
+        'Documento non trovato',
+        'DOCUMENT_NOT_FOUND',
+        undefined,
+        404,
+        getRequestId(req)
+      ));
     }
 
     // Check if already favorited
@@ -855,10 +958,13 @@ export async function addDocumentToFavorites(req: Request, res: Response) {
     });
 
     if (existingFavorite) {
-      return res.status(400).json({
-        success: false,
-        message: 'Documento già nei preferiti'
-      });
+      return res.status(400).json(errorResponse(
+        'Documento già nei preferiti',
+        'ALREADY_FAVORITED',
+        undefined,
+        400,
+        getRequestId(req)
+      ));
     }
 
     // Add to favorites
@@ -868,10 +974,11 @@ export async function addDocumentToFavorites(req: Request, res: Response) {
       createdAt: new Date()
     });
 
-    res.json({
-      success: true,
-      message: 'Documento aggiunto ai preferiti'
-    });
+    res.json(successResponse(
+      undefined,
+      'Documento aggiunto ai preferiti',
+      getRequestId(req)
+    ));
   } catch (error: any) {
     logger.error('Error adding document to favorites:', { 
       error: error instanceof Error ? error.message : String(error),
@@ -879,29 +986,38 @@ export async function addDocumentToFavorites(req: Request, res: Response) {
       type: req.params?.type,
       slug: req.params?.slug
     });
-    res.status(500).json({
-      success: false,
-      message: 'Errore nell\'aggiunta ai preferiti'
-    });
+    res.status(500).json(errorResponse(
+      'Errore nell\'aggiunta ai preferiti',
+      'ADD_FAVORITE_ERROR',
+      undefined,
+      500,
+      getRequestId(req)
+    ));
   }
 }
 
 export async function removeDocumentFromFavorites(req: Request, res: Response) {
   try {
     if (!req.user) {
-      return res.status(401).json({
-        success: false,
-        message: 'Autenticazione richiesta'
-      });
+      return res.status(401).json(errorResponse(
+        'Autenticazione richiesta',
+        'AUTHENTICATION_REQUIRED',
+        undefined,
+        401,
+        getRequestId(req)
+      ));
     }
 
     const { type, slug } = req.params;
     
     if (!['ambientazione', 'regolamento'].includes(type)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Tipo di documento non valido'
-      });
+      return res.status(400).json(errorResponse(
+        'Tipo di documento non valido',
+        'INVALID_DOCUMENT_TYPE',
+        undefined,
+        400,
+        getRequestId(req)
+      ));
     }
 
     const db = mongoose.connection.db;
@@ -910,10 +1026,13 @@ export async function removeDocumentFromFavorites(req: Request, res: Response) {
     // Find the document
     const document = await db.collection('documents').findOne({ type, slug });
     if (!document) {
-      return res.status(404).json({
-        success: false,
-        message: 'Documento non trovato'
-      });
+      return res.status(404).json(errorResponse(
+        'Documento non trovato',
+        'DOCUMENT_NOT_FOUND',
+        undefined,
+        404,
+        getRequestId(req)
+      ));
     }
 
     // Remove from favorites
@@ -923,16 +1042,20 @@ export async function removeDocumentFromFavorites(req: Request, res: Response) {
     });
 
     if (result.deletedCount === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'Documento non presente nei preferiti'
-      });
+      return res.status(404).json(errorResponse(
+        'Documento non presente nei preferiti',
+        'FAVORITE_NOT_FOUND',
+        undefined,
+        404,
+        getRequestId(req)
+      ));
     }
 
-    res.json({
-      success: true,
-      message: 'Documento rimosso dai preferiti'
-    });
+    res.json(successResponse(
+      undefined,
+      'Documento rimosso dai preferiti',
+      getRequestId(req)
+    ));
   } catch (error: any) {
     logger.error('Error removing document from favorites:', { 
       error: error instanceof Error ? error.message : String(error),
@@ -940,29 +1063,38 @@ export async function removeDocumentFromFavorites(req: Request, res: Response) {
       type: req.params?.type,
       slug: req.params?.slug
     });
-    res.status(500).json({
-      success: false,
-      message: 'Errore nella rimozione dai preferiti'
-    });
+    res.status(500).json(errorResponse(
+      'Errore nella rimozione dai preferiti',
+      'REMOVE_FAVORITE_ERROR',
+      undefined,
+      500,
+      getRequestId(req)
+    ));
   }
 }
 
 export async function isDocumentFavorited(req: Request, res: Response) {
   try {
     if (!req.user) {
-      return res.status(401).json({
-        success: false,
-        message: 'Autenticazione richiesta'
-      });
+      return res.status(401).json(errorResponse(
+        'Autenticazione richiesta',
+        'AUTHENTICATION_REQUIRED',
+        undefined,
+        401,
+        getRequestId(req)
+      ));
     }
 
     const { type, slug } = req.params;
     
     if (!['ambientazione', 'regolamento'].includes(type)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Tipo di documento non valido'
-      });
+      return res.status(400).json(errorResponse(
+        'Tipo di documento non valido',
+        'INVALID_DOCUMENT_TYPE',
+        undefined,
+        400,
+        getRequestId(req)
+      ));
     }
 
     const db = mongoose.connection.db;
@@ -971,10 +1103,13 @@ export async function isDocumentFavorited(req: Request, res: Response) {
     // Find the document
     const document = await db.collection('documents').findOne({ type, slug });
     if (!document) {
-      return res.status(404).json({
-        success: false,
-        message: 'Documento non trovato'
-      });
+      return res.status(404).json(errorResponse(
+        'Documento non trovato',
+        'DOCUMENT_NOT_FOUND',
+        undefined,
+        404,
+        getRequestId(req)
+      ));
     }
 
     // Check if favorited
@@ -983,12 +1118,13 @@ export async function isDocumentFavorited(req: Request, res: Response) {
       documentId: document._id
     });
 
-    res.json({
-      success: true,
-      data: {
+    res.json(successResponse(
+      {
         isFavorited: !!favorite
-      }
-    });
+      },
+      undefined,
+      getRequestId(req)
+    ));
   } catch (error: any) {
     logger.error('Error checking document favorite status:', {
       error: error instanceof Error ? error.message : String(error),
@@ -996,10 +1132,13 @@ export async function isDocumentFavorited(req: Request, res: Response) {
       type: req.params?.type,
       slug: req.params?.slug
     });
-    res.status(500).json({
-      success: false,
-      message: 'Errore nella verifica dei preferiti'
-    });
+    res.status(500).json(errorResponse(
+      'Errore nella verifica dei preferiti',
+      'CHECK_FAVORITE_ERROR',
+      undefined,
+      500,
+      getRequestId(req)
+    ));
   }
 }
 
@@ -1015,10 +1154,13 @@ export async function semanticSearchDocuments(req: Request, res: Response) {
     const type = req.query.type as DocumentType | undefined;
 
     if (!query) {
-      return res.status(400).json({
-        success: false,
-        message: 'Il parametro query q è obbligatorio'
-      });
+      return res.status(400).json(errorResponse(
+        'Il parametro query q è obbligatorio',
+        'MISSING_QUERY',
+        undefined,
+        400,
+        getRequestId(req)
+      ));
     }
 
     logger.info('Semantic search request:', {
@@ -1034,10 +1176,13 @@ export async function semanticSearchDocuments(req: Request, res: Response) {
     const queryEmbedding = await embeddingsService.generateEmbedding(query);
 
     if (!queryEmbedding) {
-      return res.status(503).json({
-        success: false,
-        message: 'Servizio embeddings non disponibile. Installa sentence-transformers.'
-      });
+      return res.status(503).json(errorResponse(
+        'Servizio embeddings non disponibile. Installa sentence-transformers.',
+        'EMBEDDINGS_SERVICE_UNAVAILABLE',
+        undefined,
+        503,
+        getRequestId(req)
+      ));
     }
 
     // Build query filter
@@ -1065,15 +1210,16 @@ export async function semanticSearchDocuments(req: Request, res: Response) {
     const documents = await db.collection('documents').find(filter).toArray();
 
     if (documents.length === 0) {
-      return res.json({
-        success: true,
-        data: {
+      return res.json(successResponse(
+        {
           results: [],
           totalResults: 0,
           query: query,
           message: 'Nessun documento con embeddings trovato. Esegui npm run seed per generare gli embeddings.'
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
     }
 
     // Calculate similarity for each document
@@ -1121,9 +1267,8 @@ export async function semanticSearchDocuments(req: Request, res: Response) {
       returningTop: topResults.length
     });
 
-    res.json({
-      success: true,
-      data: {
+    res.json(successResponse(
+      {
         results: topResults.map(r => ({
           ...r.document,
           matchScore: (r.similarity * 100).toFixed(1) + '%',
@@ -1133,19 +1278,23 @@ export async function semanticSearchDocuments(req: Request, res: Response) {
         returnedResults: topResults.length,
         query: query,
         minSimilarity: minSimilarity
-      }
-    });
+      },
+      undefined,
+      getRequestId(req)
+    ));
 
   } catch (error: any) {
     logger.error('Error in semantic search:', {
       error: error instanceof Error ? error.message : String(error),
       query: req.query.q
     });
-    res.status(500).json({
-      success: false,
-      message: 'Errore nella ricerca semantica',
-      error: error.message
-    });
+    res.status(500).json(errorResponse(
+      'Errore nella ricerca semantica',
+      'SEMANTIC_SEARCH_ERROR',
+      { error: error.message },
+      500,
+      getRequestId(req)
+    ));
   }
 }
 

@@ -7,8 +7,9 @@ import {
   GamingSession,
   OnGameMessage,
   OffGameChatMessage
-} from '../../../../packages/database/models';
+} from '../../../database/models';
 import { logger } from '../utils/logger';
+import { successResponse, errorResponse, getRequestId } from '../utils/apiResponse';
 
 export class ExperienceController {
   
@@ -27,11 +28,13 @@ export class ExperienceController {
         // Initialize progression for existing character
         const character = await Character.findById(characterId);
         if (!character) {
-          return res.status(404).json({
-            success: false,
-            error: 'Personaggio non trovato',
-            code: 'CHARACTER_NOT_FOUND'
-          });
+          return res.status(404).json(errorResponse(
+            'Personaggio non trovato',
+            'CHARACTER_NOT_FOUND',
+            undefined,
+            404,
+            getRequestId(req)
+          ));
         }
         
         progression = await this.initializeProgression(character);
@@ -47,14 +50,15 @@ export class ExperienceController {
       // Get available spending opportunities
       const spendingOptions = await this.getSpendingOptions(characterId, progression);
       
-      res.json({
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           progression,
           recentGrants,
           spendingOptions
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
       
     } catch (error: any) {
       logger.error('Failed to get character progression:', {
@@ -62,11 +66,13 @@ export class ExperienceController {
         error: error instanceof Error ? error.message : String(error)
       });
       
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile recuperare i dati di progressione',
-        code: 'PROGRESSION_FETCH_ERROR'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare i dati di progressione',
+        'PROGRESSION_FETCH_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -191,16 +197,16 @@ export class ExperienceController {
         pointsSpent: pointsToSpend
       });
       
-      res.json({
-        success: true,
-        message: `${target} migliorato con successo`,
-        data: {
+      res.json(successResponse(
+        {
           spendingType,
           target,
           pointsSpent: pointsToSpend,
           newValue: result.newValue
-        }
-      });
+        },
+        `${target} migliorato con successo`,
+        getRequestId(req)
+      ));
       
     } catch (error: any) {
       logger.error('Character improvement failed', {
@@ -210,11 +216,13 @@ export class ExperienceController {
         error: error instanceof Error ? error.message : String(error)
       });
       
-      res.status(400).json({
-        success: false,
-        error: error instanceof Error ? error.message : 'Improvement failed',
-        code: 'IMPROVEMENT_ERROR'
-      });
+      res.status(400).json(errorResponse(
+        error instanceof Error ? error.message : 'Improvement failed',
+        'IMPROVEMENT_ERROR',
+        undefined,
+        400,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -239,20 +247,24 @@ export class ExperienceController {
       // Verify master permissions
       const master = await Character.findById(masterId);
       if (!master || !master.gameplayRoles.includes('master')) {
-        return res.status(403).json({
-          success: false,
-          error: 'Permessi di Master richiesti',
-          code: 'INSUFFICIENT_PERMISSIONS'
-        });
+        return res.status(403).json(errorResponse(
+          'Permessi di Master richiesti',
+          'INSUFFICIENT_PERMISSIONS',
+          undefined,
+          403,
+          getRequestId(req)
+        ));
       }
       
       // Validate inputs
       if (!targetCharacterIds || targetCharacterIds.length === 0) {
-        return res.status(400).json({
-          success: false,
-          error: 'Almeno un personaggio destinatario richiesto',
-          code: 'INVALID_INPUT'
-        });
+        return res.status(400).json(errorResponse(
+          'Almeno un personaggio destinatario richiesto',
+          'INVALID_INPUT',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
       }
       
       const results = [];
@@ -304,11 +316,11 @@ export class ExperienceController {
         reason
       });
       
-      res.json({
-        success: true,
-        message: 'Concessioni di esperienza elaborate',
-        data: { results }
-      });
+      res.json(successResponse(
+        { results },
+        'Concessioni di esperienza elaborate',
+        getRequestId(req)
+      ));
       
     } catch (error: any) {
       logger.error('Experience grant failed', {
@@ -317,11 +329,13 @@ export class ExperienceController {
         error: error instanceof Error ? error.message : String(error)
       });
       
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile concedere l\'esperienza',
-        code: 'GRANT_EXPERIENCE_ERROR'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile concedere l\'esperienza',
+        'GRANT_EXPERIENCE_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -343,11 +357,13 @@ export class ExperienceController {
       ]);
       
       if (!progression) {
-        return res.status(404).json({
-          success: false,
-          error: 'Dati di progressione non trovati',
-          code: 'PROGRESSION_NOT_FOUND'
-        });
+        return res.status(404).json(errorResponse(
+          'Dati di progressione non trovati',
+          'PROGRESSION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
       }
       
       // Calculate statistics
@@ -369,17 +385,20 @@ export class ExperienceController {
         recentSessions: sessions
       };
       
-      res.json({
-        success: true,
-        data: stats
-      });
+      res.json(successResponse(
+        stats,
+        undefined,
+        getRequestId(req)
+      ));
       
     } catch (error: any) {
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile recuperare le statistiche di progressione',
-        code: 'STATS_ERROR'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare le statistiche di progressione',
+        'STATS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 

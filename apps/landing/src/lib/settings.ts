@@ -7,7 +7,7 @@ export interface DeleteAccountData {
 }
 
 export interface ApiResponse<T = any> {
-  success: boolean;
+  result: boolean;
   data?: T;
   message?: string;
   error?: string;

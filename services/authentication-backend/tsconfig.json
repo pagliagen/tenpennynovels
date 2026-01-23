@@ -30,8 +30,8 @@
   },
   "include": [
     "src/**/*",
-    "../../packages/shared/**/*",
-    "../../packages/database/**/*"
+    "../../../shared/**/*",
+    "../../../database/**/*"
   ],
   "exclude": [
     "node_modules",

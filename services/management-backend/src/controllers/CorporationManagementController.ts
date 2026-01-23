@@ -6,6 +6,7 @@ import {
 import { AdminAuthMiddleware } from '../middleware/adminAuth';
 import { logger } from '../utils/logger';
 import { getRedisClient } from '../config/redis';
+import { successResponse, listResponse, errorResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
 
 export class CorporationManagementController {
   /**
@@ -25,7 +26,7 @@ export class CorporationManagementController {
       // Note: Corporation model doesn't have status field, so we'll ignore status filter for now
 
       // Use local model with proper imports
-      const { Corporation } = await import('../../../../packages/database/models/Corporation');
+      const { Corporation } = await import('../database/models/Corporation');
       
       // Get total count for pagination with error handling
       let totalItems;
@@ -112,16 +113,14 @@ export class CorporationManagementController {
         category: 'corporation_management'
       });
 
-      const response: ApiResponse<{ corporations: any[]; pagination: PaginationInfo }> = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           corporations: transformedCorporations,
           pagination: paginationInfo
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error in getAllCorporations method:', { 
         error: error instanceof Error ? error.message : String(error),
@@ -131,14 +130,13 @@ export class CorporationManagementController {
         params: req.params
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: error instanceof Error ? error.message : 'Impossibile recuperare le corporazioni',
-        code: 'FETCH_ALL_CORPORATIONS_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        error instanceof Error ? error.message : 'Impossibile recuperare le corporazioni',
+        'FETCH_ALL_CORPORATIONS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -151,8 +149,8 @@ export class CorporationManagementController {
       const corporationId = req.params.corporationId;
       
       // Use local model with proper imports
-      const { Corporation } = await import('../../../../packages/database/models/Corporation');
-      const { Character } = await import('../../../../packages/database/models/Character');
+      const { Corporation } = await import('../database/models/Corporation');
+      const { Character } = await import('../database/models/Character');
       
       // Get corporation with populated references
       const corporation = await Corporation.findById(corporationId)
@@ -175,13 +173,13 @@ export class CorporationManagementController {
         .exec() as any;
 
       if (!corporation) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Corporazione non trovata',
-          code: 'CORPORATION_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Corporazione non trovata',
+          'CORPORATION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -275,15 +273,13 @@ export class CorporationManagementController {
         category: 'corporation_management'
       });
 
-      const response: ApiResponse<any> = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           corporation: transformedCorporation
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error fetching corporation details:', { 
         error: error instanceof Error ? error.message : String(error), 
@@ -294,14 +290,13 @@ export class CorporationManagementController {
         params: req.params
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare i dettagli della corporazione',
-        code: 'FETCH_CORPORATION_DETAILS_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare i dettagli della corporazione',
+        'FETCH_CORPORATION_DETAILS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -318,7 +313,7 @@ export class CorporationManagementController {
       const skip = (page - 1) * limit;
       
       // Use local model with proper imports
-      const { CorporationMembershipRequest } = await import('../../../../packages/database/models/Corporation');
+      const { CorporationMembershipRequest } = await import('../database/models/Corporation');
       
       // Build query filter
       let filter: any = { status: 'pending' };
@@ -397,16 +392,14 @@ export class CorporationManagementController {
         category: 'corporation_management'
       });
 
-      const response: ApiResponse<{ requests: any[]; pagination: PaginationInfo }> = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           requests: transformedRequests,
           pagination: paginationInfo
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error fetching membership requests:', { 
         error: error instanceof Error ? error.message : String(error),
@@ -416,14 +409,13 @@ export class CorporationManagementController {
         params: req.params
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare le richieste di iscrizione',
-        code: 'FETCH_MEMBERSHIP_REQUESTS_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare le richieste di iscrizione',
+        'FETCH_MEMBERSHIP_REQUESTS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -438,18 +430,18 @@ export class CorporationManagementController {
 
       // Validate review data
       if (!action || !['approve', 'reject'].includes(action)) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Azione di revisione non valida. Deve essere "approve" o "reject"',
-          code: 'INVALID_REVIEW_ACTION',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Azione di revisione non valida. Deve essere "approve" o "reject"',
+          'INVALID_REVIEW_ACTION',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Use local model with proper imports
-      const { CorporationMembershipRequest, Corporation } = await import('../../../../packages/database/models/Corporation');
+      const { CorporationMembershipRequest, Corporation } = await import('../database/models/Corporation');
       
       // Get request with populated data
       const request = await CorporationMembershipRequest.findOne({
@@ -461,25 +453,25 @@ export class CorporationManagementController {
       .exec() as any;
 
       if (!request) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Richiesta di iscrizione non trovata o già elaborata',
-          code: 'REQUEST_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Richiesta di iscrizione non trovata o già elaborata',
+          'REQUEST_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       if (!auditInfo) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Autenticazione richiesta',
-          code: 'AUTHENTICATION_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(401).json(response);
+        res.status(401).json(errorResponse(
+          'Autenticazione richiesta',
+          'AUTHENTICATION_REQUIRED',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -612,13 +604,11 @@ export class CorporationManagementController {
         });
       }
 
-      const response: ApiResponse<any> = {
-        success: true,
-        data: result,
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+      res.json(successResponse(
+        result,
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error reviewing membership request:', { 
         error: error instanceof Error ? error.message : String(error),
@@ -629,14 +619,13 @@ export class CorporationManagementController {
         auditInfo: AdminAuthMiddleware.getAuditInfo(req)
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile revisionare la richiesta di iscrizione',
-        code: 'REVIEW_MEMBERSHIP_REQUEST_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile revisionare la richiesta di iscrizione',
+        'REVIEW_MEMBERSHIP_REQUEST_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -650,51 +639,51 @@ export class CorporationManagementController {
       const { status, reason } = req.body;
 
       if (!status || !['active', 'inactive', 'disbanded'].includes(status)) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Valore di stato non valido. Deve essere "active", "inactive" o "disbanded"',
-          code: 'INVALID_STATUS',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Valore di stato non valido. Deve essere "active", "inactive" o "disbanded"',
+          'INVALID_STATUS',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       if (!reason || reason.trim().length === 0) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Il motivo del cambio stato è richiesto',
-          code: 'REASON_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Il motivo del cambio stato è richiesto',
+          'REASON_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
-      const { Corporation } = await import('../../../../packages/database/models/Corporation');
+      const { Corporation } = await import('../database/models/Corporation');
       
       const corporation = await Corporation.findById(corporationId).exec() as any;
 
       if (!corporation) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Corporazione non trovata',
-          code: 'CORPORATION_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Corporazione non trovata',
+          'CORPORATION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       if (!auditInfo) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Autenticazione richiesta',
-          code: 'AUTHENTICATION_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(401).json(response);
+        res.status(401).json(errorResponse(
+          'Autenticazione richiesta',
+          'AUTHENTICATION_REQUIRED',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -758,17 +747,15 @@ export class CorporationManagementController {
         });
       }
 
-      const response: ApiResponse<{ corporationId: string; status: string; reason: string }> = {
-        success: true,
-        data: {
+      res.json(updateResponse(
+        {
           corporationId,
           status,
           reason
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error updating corporation status:', { 
         error: error instanceof Error ? error.message : String(error),
@@ -779,14 +766,13 @@ export class CorporationManagementController {
         params: req.params
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile aggiornare lo stato della corporazione',
-        code: 'UPDATE_CORPORATION_STATUS_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile aggiornare lo stato della corporazione',
+        'UPDATE_CORPORATION_STATUS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -800,40 +786,40 @@ export class CorporationManagementController {
 
       // Validate required fields
       if (!name || !description || !type) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Campi obbligatori mancanti: name, description, type',
-          code: 'MISSING_REQUIRED_FIELDS',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Campi obbligatori mancanti: name, description, type',
+          'MISSING_REQUIRED_FIELDS',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       if (!auditInfo) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Autenticazione richiesta',
-          code: 'AUTHENTICATION_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(401).json(response);
+        res.status(401).json(errorResponse(
+          'Autenticazione richiesta',
+          'AUTHENTICATION_REQUIRED',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
         return;
       }
 
-      const { Corporation } = await import('../../../../packages/database/models/Corporation');
+      const { Corporation } = await import('../database/models/Corporation');
 
       // Check if corporation name already exists
       const existingCorporation = await Corporation.findOne({ name });
       if (existingCorporation) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Il nome della corporazione esiste già',
-          code: 'CORPORATION_NAME_EXISTS',
-          timestamp: new Date().toISOString()
-        };
-        res.status(409).json(response);
+        res.status(409).json(errorResponse(
+          'Il nome della corporazione esiste già',
+          'CORPORATION_NAME_EXISTS',
+          undefined,
+          409,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -902,18 +888,16 @@ export class CorporationManagementController {
         category: 'corporation_management'
       });
 
-      const response: ApiResponse<any> = {
-        success: true,
-        data: {
+      res.status(201).json(createResponse(
+        {
           corporationId: newCorporation._id.toString(),
           name,
           type,
           status: 'active'
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(201).json(response);
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error creating corporation:', { 
         error: error instanceof Error ? error.message : String(error),
@@ -921,14 +905,13 @@ export class CorporationManagementController {
         body: req.body
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile creare la corporazione',
-        code: 'CREATE_CORPORATION_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile creare la corporazione',
+        'CREATE_CORPORATION_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -943,27 +926,27 @@ export class CorporationManagementController {
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       if (!auditInfo) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Autenticazione richiesta',
-          code: 'AUTHENTICATION_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(401).json(response);
+        res.status(401).json(errorResponse(
+          'Autenticazione richiesta',
+          'AUTHENTICATION_REQUIRED',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
         return;
       }
 
-      const { Corporation } = await import('../../../../packages/database/models/Corporation');
+      const { Corporation } = await import('../database/models/Corporation');
       
       const corporation = await Corporation.findById(corporationId);
       if (!corporation) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Corporazione non trovata',
-          code: 'CORPORATION_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Corporazione non trovata',
+          'CORPORATION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -985,32 +968,29 @@ export class CorporationManagementController {
         category: 'corporation_management'
       });
 
-      const response: ApiResponse<any> = {
-        success: true,
-        data: {
+      res.json(updateResponse(
+        {
           corporationId,
           name: corporation.name,
           description: corporation.description,
           type: corporation.type
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error updating corporation:', { 
         error: error instanceof Error ? error.message : String(error),
         corporationId: req.params.corporationId
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile aggiornare la corporazione',
-        code: 'UPDATE_CORPORATION_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile aggiornare la corporazione',
+        'UPDATE_CORPORATION_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -1024,27 +1004,27 @@ export class CorporationManagementController {
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       if (!auditInfo) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Autenticazione richiesta',
-          code: 'AUTHENTICATION_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(401).json(response);
+        res.status(401).json(errorResponse(
+          'Autenticazione richiesta',
+          'AUTHENTICATION_REQUIRED',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
         return;
       }
 
-      const { Corporation } = await import('../../../../packages/database/models/Corporation');
+      const { Corporation } = await import('../database/models/Corporation');
       
       const corporation = await Corporation.findById(corporationId);
       if (!corporation) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Corporazione non trovata',
-          code: 'CORPORATION_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Corporazione non trovata',
+          'CORPORATION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -1072,30 +1052,23 @@ export class CorporationManagementController {
         category: 'corporation_management'
       });
 
-      const response: ApiResponse<any> = {
-        success: true,
-        data: {
-          corporationId,
-          status: 'disbanded'
-        },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+      res.json(deleteResponse(
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error deleting corporation:', { 
         error: error instanceof Error ? error.message : String(error),
         corporationId: req.params.corporationId
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile eliminare la corporazione',
-        code: 'DELETE_CORPORATION_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile eliminare la corporazione',
+        'DELETE_CORPORATION_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -1111,7 +1084,7 @@ export class CorporationManagementController {
       
       const skip = (page - 1) * limit;
       
-      const { CorporationMembershipRequest } = await import('../../../../packages/database/models/Corporation');
+      const { CorporationMembershipRequest } = await import('../database/models/Corporation');
       
       // Build query filter
       let filter: any = { corporationId, status: 'pending' };
@@ -1167,30 +1140,27 @@ export class CorporationManagementController {
         hasMore
       };
 
-      const response: ApiResponse<{ requests: any[]; pagination: PaginationInfo }> = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           requests: transformedRequests,
           pagination: paginationInfo
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error fetching corporation membership requests:', { 
         error: error instanceof Error ? error.message : String(error),
         corporationId: req.params.corporationId
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare le richieste di iscrizione alla corporazione',
-        code: 'FETCH_CORP_MEMBERSHIP_REQUESTS_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare le richieste di iscrizione alla corporazione',
+        'FETCH_CORP_MEMBERSHIP_REQUESTS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -1214,50 +1184,50 @@ export class CorporationManagementController {
       const { action, amount, reason } = req.body;
 
       if (!action || !['add', 'remove'].includes(action)) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Azione non valida. Deve essere "add" o "remove"',
-          code: 'INVALID_TREASURY_ACTION',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Azione non valida. Deve essere "add" o "remove"',
+          'INVALID_TREASURY_ACTION',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       if (!amount || isNaN(amount) || amount <= 0) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Importo non valido. Deve essere un numero positivo',
-          code: 'INVALID_AMOUNT',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Importo non valido. Deve essere un numero positivo',
+          'INVALID_AMOUNT',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       if (!auditInfo) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Autenticazione richiesta',
-          code: 'AUTHENTICATION_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(401).json(response);
+        res.status(401).json(errorResponse(
+          'Autenticazione richiesta',
+          'AUTHENTICATION_REQUIRED',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
         return;
       }
 
-      const { Corporation } = await import('../../../../packages/database/models/Corporation');
+      const { Corporation } = await import('../database/models/Corporation');
       
       const corporation = await Corporation.findById(corporationId);
       if (!corporation) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Corporazione non trovata',
-          code: 'CORPORATION_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Corporazione non trovata',
+          'CORPORATION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -1309,9 +1279,8 @@ export class CorporationManagementController {
         category: 'corporation_management'
       });
 
-      const response: ApiResponse<any> = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           corporationId,
           action,
           amount,
@@ -1319,10 +1288,9 @@ export class CorporationManagementController {
           newBalance,
           reason: reason || 'Admin adjustment'
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error managing corporation treasury:', { 
         error: error instanceof Error ? error.message : String(error),
@@ -1330,14 +1298,13 @@ export class CorporationManagementController {
         body: req.body
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile gestire la tesoreria della corporazione',
-        code: 'MANAGE_TREASURY_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile gestire la tesoreria della corporazione',
+        'MANAGE_TREASURY_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -1350,29 +1317,29 @@ export class CorporationManagementController {
       const { operation, corporationIds, ...operationData } = req.body;
 
       if (!operation || !corporationIds || !Array.isArray(corporationIds)) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Campi obbligatori mancanti: operation, corporationIds',
-          code: 'MISSING_BULK_OPERATION_DATA',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Campi obbligatori mancanti: operation, corporationIds',
+          'MISSING_BULK_OPERATION_DATA',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       if (!auditInfo) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Autenticazione richiesta',
-          code: 'AUTHENTICATION_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(401).json(response);
+        res.status(401).json(errorResponse(
+          'Autenticazione richiesta',
+          'AUTHENTICATION_REQUIRED',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
         return;
       }
 
-      const { Corporation } = await import('../../../../packages/database/models/Corporation');
+      const { Corporation } = await import('../database/models/Corporation');
       
       let results: any[] = [];
       let errors: any[] = [];
@@ -1381,13 +1348,13 @@ export class CorporationManagementController {
         case 'treasury_adjustment':
           const { amount, reason } = operationData;
           if (!amount || isNaN(amount)) {
-            const response: ApiResponse = {
-              success: false,
-              error: 'Importo non valido per l\'adeguamento della tesoreria',
-              code: 'INVALID_TREASURY_AMOUNT',
-              timestamp: new Date().toISOString()
-            };
-            res.status(400).json(response);
+            res.status(400).json(errorResponse(
+              'Importo non valido per l\'adeguamento della tesoreria',
+              'INVALID_TREASURY_AMOUNT',
+              undefined,
+              400,
+              getRequestId(req)
+            ));
             return;
           }
 
@@ -1443,13 +1410,13 @@ export class CorporationManagementController {
           break;
 
         default:
-          const response: ApiResponse = {
-            success: false,
-            error: `Operazione bulk non supportata: ${operation}`,
-            code: 'UNSUPPORTED_BULK_OPERATION',
-            timestamp: new Date().toISOString()
-          };
-          res.status(400).json(response);
+          res.status(400).json(errorResponse(
+            `Operazione bulk non supportata: ${operation}`,
+            'UNSUPPORTED_BULK_OPERATION',
+            undefined,
+            400,
+            getRequestId(req)
+          ));
           return;
       }
 
@@ -1462,9 +1429,8 @@ export class CorporationManagementController {
         category: 'corporation_management'
       });
 
-      const response: ApiResponse<any> = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           operation,
           results,
           errors,
@@ -1474,24 +1440,22 @@ export class CorporationManagementController {
             failed: errors.length
           }
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error in bulk corporation operation:', { 
         error: error instanceof Error ? error.message : String(error),
         body: req.body
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile eseguire l\'operazione bulk',
-        code: 'BULK_OPERATION_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile eseguire l\'operazione bulk',
+        'BULK_OPERATION_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -1503,7 +1467,7 @@ export class CorporationManagementController {
     try {
       const period = req.query.period as 'day' | 'week' | 'month' | 'year' || 'month';
 
-      const { Corporation, CorporationMembershipRequest } = await import('../../../../packages/database/models/Corporation');
+      const { Corporation, CorporationMembershipRequest } = await import('../database/models/Corporation');
       
       // Calculate date range based on period
       const now = new Date();
@@ -1591,13 +1555,11 @@ export class CorporationManagementController {
         category: 'corporation_management'
       });
 
-      const response: ApiResponse<any> = {
-        success: true,
-        data: stats,
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+      res.json(successResponse(
+        stats,
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error fetching corporation stats:', { 
         error: error instanceof Error ? error.message : String(error),
@@ -1607,14 +1569,13 @@ export class CorporationManagementController {
         params: req.params
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare le statistiche della corporazione',
-        code: 'FETCH_CORPORATION_STATS_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare le statistiche della corporazione',
+        'FETCH_CORPORATION_STATS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -1676,21 +1637,6 @@ export class CorporationManagementController {
 
       const totalPages = Math.ceil(totalRequests / pageSize);
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
-          requests: transformedRequests,
-          pagination: {
-            currentPage: page,
-            totalPages,
-            totalItems: totalRequests,
-            limit: pageSize,
-            hasMore: page < totalPages
-          }
-        },
-        timestamp: new Date().toISOString()
-      };
-
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       logger.info('Admin fetched all membership requests', {
         ...auditInfo,
@@ -1701,7 +1647,20 @@ export class CorporationManagementController {
         category: 'membership_request_management'
       });
 
-      res.json(response);
+      res.json(successResponse(
+        {
+          requests: transformedRequests,
+          pagination: {
+            currentPage: page,
+            totalPages,
+            totalItems: totalRequests,
+            limit: pageSize,
+            hasMore: page < totalPages
+          }
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error fetching all membership requests:', { 
@@ -1711,14 +1670,13 @@ export class CorporationManagementController {
         params: req.params
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare le richieste di iscrizione',
-        code: 'FETCH_ALL_MEMBERSHIP_REQUESTS_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare le richieste di iscrizione',
+        'FETCH_ALL_MEMBERSHIP_REQUESTS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 }

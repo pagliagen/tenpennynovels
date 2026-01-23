@@ -118,7 +118,7 @@ export default function RegisterPage() {
       // Registrazione tramite API Gateway
       const result = await AuthService.register(registerData);
       
-      if (result.success) {
+      if (result.result) {
         setRegisterSuccess(result.message || 'Registrazione completata con successo!');
         // Redirect alla pagina login dopo 3 secondi
         setTimeout(() => {

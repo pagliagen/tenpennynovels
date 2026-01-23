@@ -39,7 +39,7 @@ export default function CharacterSelectPage() {
       setLoading(true);
       const result = await AuthService.getProfile();
       
-      if (result.success && result.user) {
+      if (result.result && result.user) {
         setUser(result.user as User);
       } else {
         // User not authenticated, redirect to login
@@ -60,7 +60,7 @@ export default function CharacterSelectPage() {
       
       const result = await AuthService.selectCharacter(characterId);
       
-      if (result.success) {
+      if (result.result) {
         // Redirect to game
         window.location.href = process.env.NEXT_PUBLIC_GAME_URL || 'https://game.tenpennynovels.com';
       } else {

@@ -106,18 +106,19 @@ export default function CharacterList({ authContext }: CharacterListProps) {
 
       if (response.ok) {
         const data = await response.json();
-        setCharactersData(data.data?.characters || []);
+        const characters = data.list || [];
+        setCharactersData(characters);
         
         setPagination(prev => ({
           ...prev,
-          page: data.data?.pagination?.page || page,
-          total: data.data?.pagination?.total || (data.data?.characters || []).length
+          page: data.pagination?.page || page,
+          total: data.pagination?.total || characters.length
         }));
         
         // Log successful data fetch
         auditLogger.logPageAccess('characters/character-list', {
-          totalCharacters: (data.data?.characters || []).length,
-          statusCounts: getStatusCounts(data.data?.characters || [])
+          totalCharacters: characters.length,
+          statusCounts: getStatusCounts(characters)
         });
       } else {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);

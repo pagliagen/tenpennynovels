@@ -134,8 +134,8 @@ export const OnGameThreadPanel: React.FC<OnGameThreadPanelProps> = ({
       
       if (response.ok) {
         const data = await response.json();
-        if (data.success) {
-          setThreads(data.data.threads || []);
+        if (data.result) {
+          setThreads(data.data?.threads || data.list || []);
         }
       }
     } catch (error) {
@@ -154,7 +154,7 @@ export const OnGameThreadPanel: React.FC<OnGameThreadPanelProps> = ({
       
       if (response.ok) {
         const data = await response.json();
-        if (data.success) {
+        if (data.result) {
           setCurrentThread({
             partner: data.data.partner,
             messages: data.data.messages || []
@@ -184,7 +184,7 @@ export const OnGameThreadPanel: React.FC<OnGameThreadPanelProps> = ({
       
       if (response.ok) {
         const data = await response.json();
-        if (data.success) {
+        if (data.result) {
           setMessageTypes(data.data);
         }
       }
@@ -201,8 +201,8 @@ export const OnGameThreadPanel: React.FC<OnGameThreadPanelProps> = ({
       
       if (response.ok) {
         const data = await response.json();
-        if (data.success) {
-          const characters = data.data.characters || [];
+        if (data.result) {
+          const characters = data.data?.characters || data.list || [];
           setAvailableCharacters(characters.map((char: any) => ({
             id: char.id,
             name: char.name
@@ -234,7 +234,7 @@ export const OnGameThreadPanel: React.FC<OnGameThreadPanelProps> = ({
 
       if (response.ok) {
         const data = await response.json();
-        if (data.success) {
+        if (data.result) {
           // console.log('✅ Message sent successfully');
           return true;
         } else {

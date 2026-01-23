@@ -1,9 +1,10 @@
 import { Request, Response } from 'express';
-import { OnGameMessage, OnGameMessageView, Character, CharacterWallet } from '../../../../packages/database/models';
+import { OnGameMessage, OnGameMessageView, Character, CharacterWallet } from '../../../database/models';
 import { ApiResponse } from '../types/game';
 import { logger } from '../utils/logger';
 import { postalSystem } from '../utils/postalSystem';
 import mongoose from 'mongoose';
+import { successResponse, errorResponse, listResponse, createResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
 
 export class OnGameMessageController {
   /**
@@ -28,61 +29,57 @@ export class OnGameMessageController {
 
       // Validation
       if (!messageType || !to || !Array.isArray(to) || to.length === 0) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Validation failed',
-          code: 'VALIDATION_ERROR',
-          details: {
+        res.status(400).json(errorResponse(
+          'Validation failed',
+          'VALIDATION_ERROR',
+          {
             ...((!messageType) && { messageType: 'Tipo di messaggio richiesto' }),
             ...((!to || !Array.isArray(to) || to.length === 0) && { recipients: 'Almeno un destinatario è richiesto' })
           },
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       if (!subject || subject.trim().length === 0) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Validation failed',
-          code: 'VALIDATION_ERROR',
-          details: {
+        res.status(400).json(errorResponse(
+          'Validation failed',
+          'VALIDATION_ERROR',
+          {
             subject: 'Oggetto del messaggio richiesto'
           },
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       if (!content || content.trim().length === 0) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Validation failed',
-          code: 'VALIDATION_ERROR',
-          details: {
+        res.status(400).json(errorResponse(
+          'Validation failed',
+          'VALIDATION_ERROR',
+          {
             content: 'Contenuto del messaggio richiesto'
           },
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Validate message type and permissions (without recipients count for now)
       const validation = postalSystem.validateMessage(messageType, content, characterRoles);
       if (!validation.valid) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Validation failed',
-          code: 'VALIDATION_ERROR',
-          details: {
+        res.status(400).json(errorResponse(
+          'Validation failed',
+          'VALIDATION_ERROR',
+          {
             message: validation.error || 'Errore di validazione del messaggio'
           },
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -95,16 +92,15 @@ export class OnGameMessageController {
         const wallet = await CharacterWallet.findOne({ characterId });
         if (!wallet || (wallet.cash + wallet.deposit) < postageRequired) {
           const available = wallet ? (wallet.cash + wallet.deposit) : 0;
-          const response: ApiResponse = {
-            success: false,
-            error: 'Validation failed',
-            code: 'VALIDATION_ERROR',
-            details: {
+          res.status(400).json(errorResponse(
+            'Validation failed',
+            'VALIDATION_ERROR',
+            {
               postage: `Fondi insufficienti. Richiesti: ${postageRequired} pence, disponibili: ${available} pence`
             },
-            timestamp: new Date().toISOString()
-          };
-          res.status(400).json(response);
+            400,
+            getRequestId(req)
+          ));
           return;
         }
 
@@ -132,32 +128,30 @@ export class OnGameMessageController {
         const validIds = recipients.map(r => r._id.toString());
         const invalidIds = recipientIds.filter(id => !validIds.includes(id));
         
-        const response: ApiResponse = {
-          success: false,
-          error: 'Validation failed',
-          code: 'VALIDATION_ERROR',
-          details: {
+        res.status(400).json(errorResponse(
+          'Validation failed',
+          'VALIDATION_ERROR',
+          {
             recipients: `Destinatari non validi o non esistenti: ${invalidIds.length > 0 ? invalidIds.join(', ') : 'alcuni destinatari non sono stati trovati'}`
           },
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Validate recipient count after we have recipientIds
       const recipientValidation = postalSystem.validateMessage(messageType, content, characterRoles, to);
       if (!recipientValidation.valid) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Validation failed',
-          code: 'VALIDATION_ERROR',
-          details: {
+        res.status(400).json(errorResponse(
+          'Validation failed',
+          'VALIDATION_ERROR',
+          {
             recipients: recipientValidation.error || 'Errore di validazione dei destinatari'
           },
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -269,34 +263,29 @@ export class OnGameMessageController {
         scheduledDelivery: deliveryTime
       });
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
+      res.status(201).json(createResponse(
+        {
           messageId: message._id,
           scheduledDelivery: deliveryTime,
           postageCharged: postageRequired,
           deliveryStatus: deliveryTime ? 'sent' : 'delivered'
         },
-        message: 'Message sent successfully',
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(201).json(response);
+        'Message sent successfully',
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Send OnGame message error:', error);
 
-      const response: ApiResponse = {
-        success: false,
-        error: 'Internal server error',
-        code: 'INTERNAL_ERROR',
-        details: {
+      res.status(500).json(errorResponse(
+        'Internal server error',
+        'INTERNAL_ERROR',
+        {
           system: 'Errore interno durante l\'invio del messaggio. Riprova più tardi.'
         },
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -362,9 +351,8 @@ export class OnGameMessageController {
         icon: postalSystem.getMessageType(view.messageId.messageType)?.icon || '📬'
       }));
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           messages,
           pagination: {
             page,
@@ -374,22 +362,20 @@ export class OnGameMessageController {
           },
           unreadCount
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Get inbox error:', error);
 
-      const response: ApiResponse = {
-        success: false,
-        error: 'Failed to get inbox',
-        code: 'GET_INBOX_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Failed to get inbox',
+        'GET_INBOX_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -444,33 +430,30 @@ export class OnGameMessageController {
         icon: postalSystem.getMessageType(view.messageId.messageType)?.icon || '📬'
       }));
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
-          messages,
-          pagination: {
-            page,
-            limit,
-            total: totalCount,
-            hasMore: skip + messages.length < totalCount
-          }
+      res.json(listResponse(
+        messages,
+        {
+          page,
+          pageSize: limit,
+          total: totalCount,
+          totalPages: Math.ceil(totalCount / limit),
+          hasNext: skip + messages.length < totalCount,
+          hasPrev: page > 1
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Get outbox error:', error);
 
-      const response: ApiResponse = {
-        success: false,
-        error: 'Failed to get outbox',
-        code: 'GET_OUTBOX_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Failed to get outbox',
+        'GET_OUTBOX_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -490,13 +473,13 @@ export class OnGameMessageController {
       }).populate('messageId');
 
       if (!messageView) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Message not found',
-          code: 'MESSAGE_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Message not found',
+          'MESSAGE_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -527,25 +510,22 @@ export class OnGameMessageController {
         });
       }
 
-      const response: ApiResponse = {
-        success: true,
-        message: 'Message marked as read',
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+      res.json(successResponse(
+        undefined,
+        'Message marked as read',
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Mark as read error:', error);
 
-      const response: ApiResponse = {
-        success: false,
-        error: 'Failed to mark message as read',
-        code: 'MARK_READ_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Failed to mark message as read',
+        'MARK_READ_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -564,13 +544,13 @@ export class OnGameMessageController {
       });
 
       if (!messageView) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Message not found',
-          code: 'MESSAGE_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Message not found',
+          'MESSAGE_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -583,25 +563,21 @@ export class OnGameMessageController {
         viewType: messageView.viewType
       });
 
-      const response: ApiResponse = {
-        success: true,
-        message: 'Message deleted successfully',
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+      res.json(deleteResponse(
+        'Message deleted successfully',
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Delete message error:', error);
 
-      const response: ApiResponse = {
-        success: false,
-        error: 'Failed to delete message',
-        code: 'DELETE_MESSAGE_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Failed to delete message',
+        'DELETE_MESSAGE_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -694,9 +670,8 @@ export class OnGameMessageController {
         thread.unreadCount = unreadCount;
       }
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           threads: threads.map(thread => ({
             partnerId: thread.partnerId,
             partnerName: thread.partnerName,
@@ -713,24 +688,21 @@ export class OnGameMessageController {
             unreadCount: thread.unreadCount
           }))
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Get threads error:', error);
 
-      const response: ApiResponse = {
-        success: false,
-        error: 'Internal server error',
-        code: 'INTERNAL_ERROR',
-        details: {
+      res.status(500).json(errorResponse(
+        'Internal server error',
+        'INTERNAL_ERROR',
+        {
           system: 'Errore interno durante il caricamento dei thread. Riprova più tardi.'
         },
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -765,13 +737,13 @@ export class OnGameMessageController {
       // Get partner info
       const partner = await (Character.findById(partnerId).select('name avatar') as any);
       if (!partner) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Partner not found',
-          code: 'PARTNER_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Partner not found',
+          'PARTNER_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -786,9 +758,8 @@ export class OnGameMessageController {
         readAt: new Date()
       });
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           partner: {
             id: partner._id,
             name: partner.name,
@@ -806,24 +777,21 @@ export class OnGameMessageController {
             postageCharged: message.postageCharged || 0
           }))
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Get thread messages error:', error);
 
-      const response: ApiResponse = {
-        success: false,
-        error: 'Internal server error',
-        code: 'INTERNAL_ERROR',
-        details: {
+      res.status(500).json(errorResponse(
+        'Internal server error',
+        'INTERNAL_ERROR',
+        {
           system: 'Errore interno durante il caricamento della conversazione. Riprova più tardi.'
         },
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -836,25 +804,22 @@ export class OnGameMessageController {
       const characterRoles = req.character!.gameplayRoles;
       const availableTypes = postalSystem.getAvailableMessageTypes(characterRoles);
 
-      const response: ApiResponse = {
-        success: true,
-        data: availableTypes,
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+      res.json(successResponse(
+        availableTypes,
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Get message types error:', error);
 
-      const response: ApiResponse = {
-        success: false,
-        error: 'Failed to get message types',
-        code: 'GET_MESSAGE_TYPES_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Failed to get message types',
+        'GET_MESSAGE_TYPES_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 }

@@ -1,9 +1,10 @@
 import { Request, Response } from 'express';
-import { LocationAction } from '../../../../packages/database/models/LocationAction';
-import { Location } from '../../../../packages/database/models/Location';
-import { Character } from '../../../../packages/database/models/Character';
+import { LocationAction } from '../../../database/models/LocationAction';
+import { Location } from '../../../database/models/Location';
+import { Character } from '../../../database/models/Character';
 import { logger } from '../utils/logger';
 import { auditLogger } from '../utils/auditLogger';
+import { listResponse, successResponse, errorResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
 
 export class LocationActionManagementController {
 
@@ -96,25 +97,30 @@ export class LocationActionManagementController {
         filters: { locationId, actionType, characterId, visibility }
       });
 
-      res.json({
-        success: true,
-        data: {
-          actions: actionsWithDetails,
-          pagination: {
-            total,
-            page: Number(page),
-            limit: Number(limit),
-            pages: Math.ceil(total / Number(limit))
-          }
-        }
-      });
+      const pagination = {
+        currentPage: Number(page),
+        totalPages: Math.ceil(total / Number(limit)),
+        totalItems: total,
+        limit: Number(limit),
+        hasMore: Number(page) < Math.ceil(total / Number(limit))
+      };
+
+      res.json(listResponse(
+        actionsWithDetails,
+        pagination,
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error retrieving location actions:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Internal server error'
-      });
+      res.status(500).json(errorResponse(
+        'Internal server error',
+        'GET_LOCATION_ACTIONS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -275,19 +281,21 @@ export class LocationActionManagementController {
         locationId
       });
 
-      res.json({
-        success: true,
-        data: {
-          statistics
-        }
-      });
+      res.json(successResponse(
+        { statistics },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error retrieving location action statistics:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Internal server error'
-      });
+      res.status(500).json(errorResponse(
+        'Internal server error',
+        'GET_LOCATION_ACTION_STATS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -298,10 +306,13 @@ export class LocationActionManagementController {
 
       const action = await LocationAction.findById(actionId);
       if (!action) {
-        res.status(404).json({
-          success: false,
-          error: 'Location action not found'
-        });
+        res.status(404).json(errorResponse(
+          'Location action not found',
+          'LOCATION_ACTION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -339,26 +350,20 @@ export class LocationActionManagementController {
         reason
       });
 
-      res.json({
-        success: true,
-        data: {
-          message: 'Location action deleted successfully',
-          deletedAction: {
-            id: actionId,
-            actionType: action.actionType,
-            characterName: character ? `${character.name} ${character.surname}` : action.characterName,
-            locationName: location?.name || 'Unknown',
-            timestamp: action.timestamp
-          }
-        }
-      });
+      res.json(deleteResponse(
+        'Location action deleted successfully',
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error deleting location action:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Internal server error'
-      });
+      res.status(500).json(errorResponse(
+        'Internal server error',
+        'DELETE_LOCATION_ACTION_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -374,10 +379,13 @@ export class LocationActionManagementController {
       } = req.body;
 
       if (!locationId && !characterId && !actionType && !startDate && !endDate) {
-        res.status(400).json({
-          success: false,
-          error: 'At least one filter criteria is required for bulk deletion'
-        });
+        res.status(400).json(errorResponse(
+          'At least one filter criteria is required for bulk deletion',
+          'BULK_DELETE_FILTER_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -397,13 +405,14 @@ export class LocationActionManagementController {
       const actionCount = await LocationAction.countDocuments(filter);
       
       if (actionCount === 0) {
-        res.status(200).json({
-          success: true,
-          data: {
+        res.json(successResponse(
+          {
             message: 'No actions found matching the criteria',
             deletedCount: 0
-          }
-        });
+          },
+          undefined,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -431,21 +440,20 @@ export class LocationActionManagementController {
         reason
       });
 
-      res.json({
-        success: true,
-        data: {
-          message: `Successfully deleted ${deleteResult.deletedCount} location actions`,
-          deletedCount: deleteResult.deletedCount,
-          criteria: filter
-        }
-      });
+      res.json(deleteResponse(
+        `Successfully deleted ${deleteResult.deletedCount} location actions`,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error bulk deleting location actions:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Internal server error'
-      });
+      res.status(500).json(errorResponse(
+        'Internal server error',
+        'BULK_DELETE_LOCATION_ACTIONS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -482,20 +490,24 @@ export class LocationActionManagementController {
         description: actionTypeDescriptions[type._id] || 'Unknown action type'
       }));
 
-      res.json({
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           actionTypes: formattedActionTypes,
           totalTypes: actionTypes.length
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error retrieving action types:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Internal server error'
-      });
+      res.status(500).json(errorResponse(
+        'Internal server error',
+        'GET_ACTION_TYPES_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -573,25 +585,29 @@ export class LocationActionManagementController {
         res.send(headers + csvData);
       } else {
         // JSON export
-        res.json({
-          success: true,
-          data: {
+        res.json(successResponse(
+          {
             actions: exportData,
             exportInfo: {
               totalActions: exportData.length,
               exportDate: new Date(),
               filter
             }
-          }
-        });
+          },
+          undefined,
+          getRequestId(req)
+        ));
       }
 
     } catch (error: any) {
       logger.error('Error exporting location actions:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Internal server error'
-      });
+      res.status(500).json(errorResponse(
+        'Internal server error',
+        'EXPORT_LOCATION_ACTIONS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 }

@@ -19,7 +19,7 @@ import skillRoutes from './skills';
 import itemRoutes from './items';
 import sessionRoutes from './sessions';
 import { housingRoutes } from './housing-simple';
-import apiDocsRoute from '../../../../packages/shared/src/routes/ApiDocsRoute';
+import apiDocsRoute from '../../../shared/src/routes/ApiDocsRoute';
 
 const router = Router();
 

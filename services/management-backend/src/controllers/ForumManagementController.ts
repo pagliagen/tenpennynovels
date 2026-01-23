@@ -1,10 +1,11 @@
 import { Request, Response } from 'express';
-import { OnGameMessage } from '../../../../packages/database/models/OnGameMessage';
-import { OnGameMessageView } from '../../../../packages/database/models/OnGameMessageView';
-import { Character } from '../../../../packages/database/models/Character';
-import { Location } from '../../../../packages/database/models/Location';
+import { OnGameMessage } from '../../../database/models/OnGameMessage';
+import { OnGameMessageView } from '../../../database/models/OnGameMessageView';
+import { Character } from '../../../database/models/Character';
+import { Location } from '../../../database/models/Location';
 import { logger } from '../utils/logger';
 import { auditLogger } from '../utils/auditLogger';
+import { listResponse, successResponse, errorResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
 
 export class ForumManagementController {
   
@@ -98,33 +99,36 @@ export class ForumManagementController {
 
       const totalPages = Math.ceil(total / limitNum);
 
-      res.json({
-        success: true,
-        data: {
-          messages: messages.map(msg => ({
-            ...msg,
-            from: msg.from ? `${(msg.from as any).name} ${(msg.from as any).surname || ''}`.trim() : 'Unknown',
-            to: (msg.to as any[]).map((char: any) => `${char.name} ${char.surname || ''}`.trim()),
-            sentFromLocation: (msg.sentFromLocation as any)?.name || 'Unknown Location',
-            status: this.getMessageStatus(msg)
-          })),
-          pagination: {
-            currentPage: pageNum,
-            totalPages,
-            totalItems: total,
-            limit: limitNum,
-            hasNext: pageNum < totalPages,
-            hasPrev: pageNum > 1
-          }
-        }
-      });
+      const pagination = {
+        currentPage: pageNum,
+        totalPages,
+        totalItems: total,
+        limit: limitNum,
+        hasMore: pageNum < totalPages
+      };
+
+      res.json(listResponse(
+        messages.map(msg => ({
+          ...msg,
+          from: msg.from ? `${(msg.from as any).name} ${(msg.from as any).surname || ''}`.trim() : 'Unknown',
+          to: (msg.to as any[]).map((char: any) => `${char.name} ${char.surname || ''}`.trim()),
+          sentFromLocation: (msg.sentFromLocation as any)?.name || 'Unknown Location',
+          status: this.getMessageStatus(msg)
+        })),
+        pagination,
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error fetching messages:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to fetch messages'
-      });
+      res.status(500).json(errorResponse(
+        'Failed to fetch messages',
+        'GET_MESSAGES_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -274,17 +278,21 @@ export class ForumManagementController {
         }
       };
 
-      res.json({
-        success: true,
-        data: stats
-      });
+      res.json(successResponse(
+        stats,
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error fetching message statistics:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to fetch statistics'
-      });
+      res.status(500).json(errorResponse(
+        'Failed to fetch statistics',
+        'GET_MESSAGE_STATS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -303,10 +311,13 @@ export class ForumManagementController {
         .lean();
 
       if (!message) {
-        res.status(404).json({
-          success: false,
-          error: 'Message not found'
-        });
+        res.status(404).json(errorResponse(
+          'Message not found',
+          'MESSAGE_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -328,9 +339,8 @@ export class ForumManagementController {
           .lean();
       }
 
-      res.json({
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           message: {
             ...message,
             from: (message as any).from ? `${((message as any).from as any).name} ${((message as any).from as any).surname || ''}`.trim() : 'Unknown',
@@ -346,15 +356,20 @@ export class ForumManagementController {
             ...msg,
             from: `${(msg.from as any).name} ${(msg.from as any).surname || ''}`.trim()
           }))
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error fetching message details:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to fetch message details'
-      });
+      res.status(500).json(errorResponse(
+        'Failed to fetch message details',
+        'GET_MESSAGE_DETAILS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -367,18 +382,25 @@ export class ForumManagementController {
       const { reason } = req.body;
 
       if (!reason) {
-        res.status(400).json({
-          success: false,
-          error: 'Deletion reason is required'
-        });
+        res.status(400).json(errorResponse(
+          'Deletion reason is required',
+          'DELETION_REASON_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
       }
 
       const message = await OnGameMessage.findById(messageId);
       if (!message) {
-        res.status(404).json({
-          success: false,
-          error: 'Message not found'
-        });
+        res.status(404).json(errorResponse(
+          'Message not found',
+          'MESSAGE_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -402,19 +424,20 @@ export class ForumManagementController {
         }
       });
 
-      res.json({
-        success: true,
-        data: {
-          message: 'Message deleted successfully'
-        }
-      });
+      res.json(deleteResponse(
+        'Message deleted successfully',
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error deleting message:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to delete message'
-      });
+      res.status(500).json(errorResponse(
+        'Failed to delete message',
+        'DELETE_MESSAGE_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -426,17 +449,25 @@ export class ForumManagementController {
       const { operation, messageIds, reason } = req.body;
 
       if (!operation || !messageIds || !Array.isArray(messageIds)) {
-        res.status(400).json({
-          success: false,
-          error: 'Operation and messageIds are required'
-        });
+        res.status(400).json(errorResponse(
+          'Operation and messageIds are required',
+          'BULK_OPERATION_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
       }
 
       if (operation === 'delete' && !reason) {
-        res.status(400).json({
-          success: false,
-          error: 'Deletion reason is required'
-        });
+        res.status(400).json(errorResponse(
+          'Deletion reason is required',
+          'DELETION_REASON_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
       }
 
       let result;
@@ -468,10 +499,13 @@ export class ForumManagementController {
           break;
 
         default:
-          res.status(400).json({
-            success: false,
-            error: 'Invalid operation'
-          });
+          res.status(400).json(errorResponse(
+            'Invalid operation',
+            'INVALID_BULK_OPERATION',
+            undefined,
+            400,
+            getRequestId(req)
+          ));
           return;
       }
 
@@ -488,20 +522,24 @@ export class ForumManagementController {
         }
       });
 
-      res.json({
-        success: true,
-        data: {
+      res.json(updateResponse(
+        {
           message: `Bulk ${operation} completed successfully`,
           affected: (result as any)[0]?.deletedCount || (result as any)?.modifiedCount || messageIds.length
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error in bulk message operations:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to perform bulk operation'
-      });
+      res.status(500).json(errorResponse(
+        'Failed to perform bulk operation',
+        'BULK_OPERATION_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -530,9 +568,8 @@ export class ForumManagementController {
         .limit(50)
         .lean();
 
-      res.json({
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           pending: pendingMessages.map(msg => ({
             ...msg,
             from: `${(msg.from as any).name} ${(msg.from as any).surname || ''}`.trim(),
@@ -545,15 +582,20 @@ export class ForumManagementController {
             to: (msg.to as any[]).map((char: any) => `${char.name} ${char.surname || ''}`.trim()),
             minutesOverdue: Math.floor((Date.now() - msg.scheduledDelivery!.getTime()) / (1000 * 60))
           }))
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error fetching delivery queue:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to fetch delivery queue'
-      });
+      res.status(500).json(errorResponse(
+        'Failed to fetch delivery queue',
+        'GET_DELIVERY_QUEUE_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -565,10 +607,14 @@ export class ForumManagementController {
       const { messageIds } = req.body;
 
       if (!messageIds || !Array.isArray(messageIds)) {
-        res.status(400).json({
-          success: false,
-          error: 'Message IDs are required'
-        });
+        res.status(400).json(errorResponse(
+          'Message IDs are required',
+          'MESSAGE_IDS_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
       }
 
       const result = await OnGameMessage.updateMany(
@@ -612,20 +658,24 @@ export class ForumManagementController {
         }
       });
 
-      res.json({
-        success: true,
-        data: {
+      res.json(updateResponse(
+        {
           message: 'Manual delivery completed',
           delivered: result.modifiedCount
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error in manual delivery:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to trigger manual delivery'
-      });
+      res.status(500).json(errorResponse(
+        'Failed to trigger manual delivery',
+        'MANUAL_DELIVERY_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 

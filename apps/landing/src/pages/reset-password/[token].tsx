@@ -87,7 +87,7 @@ export default function ResetPasswordPage() {
 
       const result = await response.json();
       
-      if (result.success) {
+      if (result.result) {
         setSuccess(result.message || 'Password cambiata con successo!');
         // Redirect to login after 3 seconds
         setTimeout(() => {

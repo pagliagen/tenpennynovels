@@ -40,7 +40,7 @@ const CorporationDashboard: React.FC<CorporationDashboardProps> = ({ characterId
 
       if (response.ok) {
         const data = await response.json();
-        if (data.success) {
+        if (data.result) {
           setMemberships(data.data?.memberships || []);
         } else {
           setError('Failed to load corporation memberships');
@@ -65,7 +65,7 @@ const CorporationDashboard: React.FC<CorporationDashboardProps> = ({ characterId
 
       if (response.ok) {
         const data = await response.json();
-        if (data.success) {
+        if (data.result) {
           // Filter out corporations the character is already a member of
           const available = (data.data || []).filter((corp: any) => 
             !memberships.find(m => m.corporationId === corp.id) &&
@@ -93,7 +93,7 @@ const CorporationDashboard: React.FC<CorporationDashboardProps> = ({ characterId
 
       if (response.ok) {
         const data = await response.json();
-        if (data.success) {
+        if (data.result) {
           // Refresh memberships
           await fetchMemberships();
           setShowJoinCorporation(false);
@@ -126,7 +126,7 @@ const CorporationDashboard: React.FC<CorporationDashboardProps> = ({ characterId
 
       if (response.ok) {
         const data = await response.json();
-        if (data.success) {
+        if (data.result) {
           // Refresh memberships
           await fetchMemberships();
         } else {

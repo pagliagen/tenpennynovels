@@ -1,10 +1,11 @@
 import { Request, Response } from 'express';
-import { ChatModerationAction } from '../../../../packages/database/models/ChatModerationAction';
-import { MessageReport } from '../../../../packages/database/models/MessageReport';
-import { OnGameMessage } from '../../../../packages/database/models/OnGameMessage';
-import { OffGameChatMessage } from '../../../../packages/database/models/OffGameChatMessage';
-import { Character } from '../../../../packages/database/models/Character';
+import { ChatModerationAction } from '../../../database/models/ChatModerationAction';
+import { MessageReport } from '../../../database/models/MessageReport';
+import { OnGameMessage } from '../../../database/models/OnGameMessage';
+import { OffGameChatMessage } from '../../../database/models/OffGameChatMessage';
+import { Character } from '../../../database/models/Character';
 import { logger } from '../utils/logger';
+import { successResponse, errorResponse, listResponse, createResponse, getRequestId } from '../utils/apiResponse';
 
 export class ChatModerationController {
 
@@ -29,22 +30,26 @@ export class ChatModerationController {
 
       // Validate message type
       if (!['location', 'ongame', 'offgame'].includes(messageType)) {
-        res.status(400).json({
-          success: false,
-          error: 'Tipo di messaggio non valido',
-          code: 'INVALID_MESSAGE_TYPE'
-        });
+        res.status(400).json(errorResponse(
+          'Tipo di messaggio non valido',
+          'INVALID_MESSAGE_TYPE',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Get reporter's user ID
       const reporter = await Character.findById(reporterCharacterId).populate('userId');
       if (!reporter) {
-        res.status(404).json({
-          success: false,
-          error: 'Personaggio segnalante non trovato',
-          code: 'REPORTER_NOT_FOUND'
-        });
+        res.status(404).json(errorResponse(
+          'Personaggio segnalante non trovato',
+          'REPORTER_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -71,11 +76,13 @@ export class ChatModerationController {
           case 'location':
             // Location messages might be stored differently - this is a placeholder
             // In a real implementation, we'd need to fetch from the location chat system
-            res.status(501).json({
-              success: false,
-              error: 'Segnalazione messaggi location non ancora implementata',
-              code: 'LOCATION_REPORTING_NOT_IMPLEMENTED'
-            });
+            res.status(501).json(errorResponse(
+              'Segnalazione messaggi location non ancora implementata',
+              'LOCATION_REPORTING_NOT_IMPLEMENTED',
+              undefined,
+              501,
+              getRequestId(req)
+            ));
             return;
         }
       } catch (error: any) {
@@ -85,20 +92,24 @@ export class ChatModerationController {
           error: error instanceof Error ? error.message : String(error)
         });
         
-        res.status(404).json({
-          success: false,
-          error: 'Messaggio originale non trovato o inaccessibile',
-          code: 'MESSAGE_NOT_FOUND'
-        });
+        res.status(404).json(errorResponse(
+          'Messaggio originale non trovato o inaccessibile',
+          'MESSAGE_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
       if (!originalMessage) {
-        res.status(404).json({
-          success: false,
-          error: 'Messaggio non trovato',
-          code: 'MESSAGE_NOT_FOUND'
-        });
+        res.status(404).json(errorResponse(
+          'Messaggio non trovato',
+          'MESSAGE_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -109,11 +120,13 @@ export class ChatModerationController {
       });
 
       if (existingReport) {
-        res.status(400).json({
-          success: false,
-          error: 'Hai già segnalato questo messaggio',
-          code: 'ALREADY_REPORTED'
-        });
+        res.status(400).json(errorResponse(
+          'Hai già segnalato questo messaggio',
+          'ALREADY_REPORTED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -190,14 +203,14 @@ export class ChatModerationController {
         priority
       });
 
-      res.json({
-        success: true,
-        message: 'Messaggio segnalato con successo',
-        data: {
+      res.json(createResponse(
+        {
           reportId: report._id,
           status: 'pending'
-        }
-      });
+        },
+        'Messaggio segnalato con successo',
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Failed to report message', {
@@ -206,11 +219,13 @@ export class ChatModerationController {
         error: error instanceof Error ? error.message : String(error)
       });
 
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile segnalare il messaggio',
-        code: 'REPORT_MESSAGE_ERROR'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile segnalare il messaggio',
+        'REPORT_MESSAGE_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -237,18 +252,19 @@ export class ChatModerationController {
 
       const totalCount = await MessageReport.countDocuments(filter);
 
-      res.json({
-        success: true,
-        data: {
-          reports,
-          pagination: {
-            total: totalCount,
-            limit: parseInt(limit as string),
-            skip: parseInt(skip as string),
-            hasMore: totalCount > parseInt(skip as string) + parseInt(limit as string)
-          }
-        }
-      });
+      res.json(listResponse(
+        reports,
+        {
+          page: Math.floor(parseInt(skip as string) / parseInt(limit as string)) + 1,
+          pageSize: parseInt(limit as string),
+          total: totalCount,
+          totalPages: Math.ceil(totalCount / parseInt(limit as string)),
+          hasNext: totalCount > parseInt(skip as string) + parseInt(limit as string),
+          hasPrev: parseInt(skip as string) > 0
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Failed to get user reports', {
@@ -256,11 +272,13 @@ export class ChatModerationController {
         error: error instanceof Error ? error.message : String(error)
       });
 
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile recuperare le segnalazioni',
-        code: 'GET_REPORTS_ERROR'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare le segnalazioni',
+        'GET_REPORTS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -299,18 +317,19 @@ export class ChatModerationController {
           : null
       }));
 
-      res.json({
-        success: true,
-        data: {
-          actions: actionsWithTimeRemaining,
-          pagination: {
-            total: totalCount,
-            limit: parseInt(limit as string),
-            skip: parseInt(skip as string),
-            hasMore: totalCount > parseInt(skip as string) + parseInt(limit as string)
-          }
-        }
-      });
+      res.json(listResponse(
+        actionsWithTimeRemaining,
+        {
+          page: Math.floor(parseInt(skip as string) / parseInt(limit as string)) + 1,
+          pageSize: parseInt(limit as string),
+          total: totalCount,
+          totalPages: Math.ceil(totalCount / parseInt(limit as string)),
+          hasNext: totalCount > parseInt(skip as string) + parseInt(limit as string),
+          hasPrev: parseInt(skip as string) > 0
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Failed to get moderation actions', {
@@ -318,11 +337,13 @@ export class ChatModerationController {
         error: error instanceof Error ? error.message : String(error)
       });
 
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile recuperare le azioni di moderazione',
-        code: 'GET_MODERATION_ACTIONS_ERROR'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare le azioni di moderazione',
+        'GET_MODERATION_ACTIONS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -343,20 +364,24 @@ export class ChatModerationController {
       });
 
       if (!action) {
-        res.status(404).json({
-          success: false,
-          error: 'Azione di moderazione non trovata o non applicabile a te',
-          code: 'ACTION_NOT_FOUND'
-        });
+        res.status(404).json(errorResponse(
+          'Azione di moderazione non trovata o non applicabile a te',
+          'ACTION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
       if (action.wasAppealed) {
-        res.status(400).json({
-          success: false,
-          error: 'Questa azione è già stata appellata',
-          code: 'ALREADY_APPEALED'
-        });
+        res.status(400).json(errorResponse(
+          'Questa azione è già stata appellata',
+          'ALREADY_APPEALED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -365,11 +390,13 @@ export class ChatModerationController {
       const appealDeadline = new Date(action.actionTakenAt.getTime() + (appealWindowDays * 24 * 60 * 60 * 1000));
       
       if (new Date() > appealDeadline) {
-        res.status(400).json({
-          success: false,
-          error: 'La finestra per l\'appello è scaduta',
-          code: 'APPEAL_WINDOW_EXPIRED'
-        });
+        res.status(400).json(errorResponse(
+          'La finestra per l\'appello è scaduta',
+          'APPEAL_WINDOW_EXPIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -395,14 +422,14 @@ export class ChatModerationController {
         appealReason: appealReason?.substring(0, 100)
       });
 
-      res.json({
-        success: true,
-        message: 'Appello inviato con successo',
-        data: {
+      res.json(createResponse(
+        {
           actionId,
           appealedAt: action.appealedAt
-        }
-      });
+        },
+        'Appello inviato con successo',
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Failed to appeal moderation action', {
@@ -411,11 +438,13 @@ export class ChatModerationController {
         error: error instanceof Error ? error.message : String(error)
       });
 
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile inviare l\'appello',
-        code: 'APPEAL_ACTION_ERROR'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile inviare l\'appello',
+        'APPEAL_ACTION_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -450,9 +479,8 @@ export class ChatModerationController {
         }
       }
 
-      res.json({
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           canChat: !isBanned,
           isBanned,
           hasWarnings,
@@ -461,8 +489,10 @@ export class ChatModerationController {
             ? Math.max(0, Math.round((banExpiresAt.getTime() - Date.now()) / (1000 * 60)))
             : null,
           restrictionCount: restrictions.length
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Failed to check chat permissions', {
@@ -470,11 +500,13 @@ export class ChatModerationController {
         error: error instanceof Error ? error.message : String(error)
       });
 
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile verificare i permessi di chat',
-        code: 'CHECK_CHAT_PERMISSIONS_ERROR'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile verificare i permessi di chat',
+        'CHECK_CHAT_PERMISSIONS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 

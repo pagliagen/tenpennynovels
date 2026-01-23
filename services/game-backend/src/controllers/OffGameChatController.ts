@@ -1,8 +1,9 @@
 import { Request, Response } from 'express';
-import { OffGameChat, OffGameChatMessage, OffGameChatParticipant, Character } from '../../../../packages/database/models';
+import { OffGameChat, OffGameChatMessage, OffGameChatParticipant, Character } from '../../../database/models';
 import { ApiResponse } from '../types/game';
 import { logger } from '../utils/logger';
 import mongoose from 'mongoose';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
 
 export class OffGameChatController {
   /**
@@ -24,59 +25,59 @@ export class OffGameChatController {
 
       // Validation
       if (!type || !['direct', 'group'].includes(type)) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Invalid chat type. Must be "direct" or "group"',
-          code: 'INVALID_CHAT_TYPE',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Invalid chat type. Must be "direct" or "group"',
+          'INVALID_CHAT_TYPE',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       if (type === 'group' && (!name || name.trim().length === 0)) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Group name is required for group chats',
-          code: 'GROUP_NAME_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Group name is required for group chats',
+          'GROUP_NAME_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       if (!participants || !Array.isArray(participants) || participants.length === 0) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'At least one participant is required',
-          code: 'PARTICIPANTS_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'At least one participant is required',
+          'PARTICIPANTS_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Group size limit
       if (type === 'group' && participants.length > 5) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Group chats are limited to 5 participants maximum',
-          code: 'GROUP_SIZE_LIMIT_EXCEEDED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Group chats are limited to 5 participants maximum',
+          'GROUP_SIZE_LIMIT_EXCEEDED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Direct chat can only have 1 other participant
       if (type === 'direct' && participants.length !== 1) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Direct chats must have exactly one other participant',
-          code: 'INVALID_DIRECT_CHAT_SIZE',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Direct chats must have exactly one other participant',
+          'INVALID_DIRECT_CHAT_SIZE',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -91,13 +92,13 @@ export class OffGameChatController {
       }) as any);
 
       if (characters.length !== allParticipants.length) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'One or more participants are invalid',
-          code: 'INVALID_PARTICIPANTS',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'One or more participants are invalid',
+          'INVALID_PARTICIPANTS',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -110,13 +111,11 @@ export class OffGameChatController {
         });
 
         if (existingChat) {
-          const response: ApiResponse = {
-            success: true,
-            data: existingChat.toJSON(),
-            message: 'Direct chat already exists',
-            timestamp: new Date().toISOString()
-          };
-          res.json(response);
+          res.json(successResponse(
+            existingChat.toJSON(),
+            'Direct chat already exists',
+            getRequestId(req)
+          ));
           return;
         }
       }
@@ -189,26 +188,22 @@ export class OffGameChatController {
         participantCount: allParticipants.length
       });
 
-      const response: ApiResponse = {
-        success: true,
-        data: chat.toJSON(),
-        message: 'Chat created successfully',
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(201).json(response);
+      res.status(201).json(createResponse(
+        chat.toJSON(),
+        'Chat created successfully',
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Create chat error:', error);
 
-      const response: ApiResponse = {
-        success: false,
-        error: 'Failed to create chat',
-        code: 'CREATE_CHAT_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Failed to create chat',
+        'CREATE_CHAT_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -268,33 +263,30 @@ export class OffGameChatController {
         };
       }));
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
-          chats: chatData,
-          pagination: {
-            page,
-            limit,
-            total: chatData.length,
-            hasMore: chatData.length === limit
-          }
+      res.json(listResponse(
+        chatData,
+        {
+          page,
+          pageSize: limit,
+          total: chatData.length,
+          totalPages: Math.ceil(chatData.length / limit),
+          hasNext: chatData.length === limit,
+          hasPrev: page > 1
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Get chats error:', error);
 
-      const response: ApiResponse = {
-        success: false,
-        error: 'Failed to get chats',
-        code: 'GET_CHATS_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Failed to get chats',
+        'GET_CHATS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -318,13 +310,13 @@ export class OffGameChatController {
       });
 
       if (!chat) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Chat not found or access denied',
-          code: 'CHAT_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Chat not found or access denied',
+          'CHAT_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -348,9 +340,8 @@ export class OffGameChatController {
         }
       );
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           chatId,
           messages: messages.reverse(), // Reverse to show oldest first
           pagination: {
@@ -359,22 +350,20 @@ export class OffGameChatController {
             hasMore: messages.length === limit
           }
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Get chat messages error:', error);
 
-      const response: ApiResponse = {
-        success: false,
-        error: 'Failed to get chat messages',
-        code: 'GET_CHAT_MESSAGES_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Failed to get chat messages',
+        'GET_CHAT_MESSAGES_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -390,24 +379,24 @@ export class OffGameChatController {
 
       // Validation
       if (!content || content.trim().length === 0) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Message content is required',
-          code: 'MESSAGE_CONTENT_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Message content is required',
+          'MESSAGE_CONTENT_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       if (content.length > 2000) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Message too long (max 2000 characters)',
-          code: 'MESSAGE_TOO_LONG',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Message too long (max 2000 characters)',
+          'MESSAGE_TOO_LONG',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -419,13 +408,13 @@ export class OffGameChatController {
       });
 
       if (!chat) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Chat not found or access denied',
-          code: 'CHAT_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Chat not found or access denied',
+          'CHAT_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -437,13 +426,13 @@ export class OffGameChatController {
       });
 
       if (participant?.isMuted) {
-        const response: ApiResponse = {
-          success: false,
-          error: `You are muted until ${participant.mutedUntil?.toISOString()}`,
-          code: 'USER_MUTED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(403).json(response);
+        res.status(403).json(errorResponse(
+          `You are muted until ${participant.mutedUntil?.toISOString()}`,
+          'USER_MUTED',
+          undefined,
+          403,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -511,26 +500,22 @@ export class OffGameChatController {
         senderId: characterId
       });
 
-      const response: ApiResponse = {
-        success: true,
-        data: populatedMessage?.toJSON(),
-        message: 'Message sent successfully',
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(201).json(response);
+      res.status(201).json(createResponse(
+        populatedMessage?.toJSON(),
+        'Message sent successfully',
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Send message error:', error);
 
-      const response: ApiResponse = {
-        success: false,
-        error: 'Failed to send message',
-        code: 'SEND_MESSAGE_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Failed to send message',
+        'SEND_MESSAGE_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -546,24 +531,24 @@ export class OffGameChatController {
 
       // Validation
       if (!name || name.trim().length === 0) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Chat name is required',
-          code: 'NAME_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Chat name is required',
+          'NAME_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       if (name.trim().length > 50) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Chat name too long (max 50 characters)',
-          code: 'NAME_TOO_LONG',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Chat name too long (max 50 characters)',
+          'NAME_TOO_LONG',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -576,26 +561,26 @@ export class OffGameChatController {
       });
 
       if (!chat) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Group chat not found or access denied',
-          code: 'CHAT_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Group chat not found or access denied',
+          'CHAT_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Check if user is admin of the group
       const characterObjectId = new mongoose.Types.ObjectId(characterId);
       if (!chat.admins.some(admin => admin.equals(characterObjectId))) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Only group admins can rename the chat',
-          code: 'INSUFFICIENT_PERMISSIONS',
-          timestamp: new Date().toISOString()
-        };
-        res.status(403).json(response);
+        res.status(403).json(errorResponse(
+          'Only group admins can rename the chat',
+          'INSUFFICIENT_PERMISSIONS',
+          undefined,
+          403,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -652,25 +637,22 @@ export class OffGameChatController {
 
       logger.info(`Chat ${chatId} renamed to "${name.trim()}" by ${characterId}`);
 
-      const response: ApiResponse = {
-        success: true,
-        message: 'Chat name updated successfully',
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+      res.json(updateResponse(
+        undefined,
+        'Chat name updated successfully',
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Update chat name error:', error);
 
-      const response: ApiResponse = {
-        success: false,
-        error: 'Failed to update chat name',
-        code: 'UPDATE_CHAT_NAME_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Failed to update chat name',
+        'UPDATE_CHAT_NAME_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -691,13 +673,13 @@ export class OffGameChatController {
       });
 
       if (!participant) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'You are not a participant in this chat',
-          code: 'NOT_PARTICIPANT',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'You are not a participant in this chat',
+          'NOT_PARTICIPANT',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -728,25 +710,22 @@ export class OffGameChatController {
         characterId
       });
 
-      const response: ApiResponse = {
-        success: true,
-        message: 'Left chat successfully',
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+      res.json(successResponse(
+        undefined,
+        'Left chat successfully',
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Leave chat error:', error);
 
-      const response: ApiResponse = {
-        success: false,
-        error: 'Failed to leave chat',
-        code: 'LEAVE_CHAT_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Failed to leave chat',
+        'LEAVE_CHAT_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 }

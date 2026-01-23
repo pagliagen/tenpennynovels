@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { ApiResponse } from '../types/auth';
 import { logger } from '../utils/logger';
+import { errorResponse, getRequestId } from '../utils/apiResponse';
 
 export class ErrorHandler {
   /**
@@ -19,32 +20,25 @@ export class ErrorHandler {
     // Don't expose internal errors in production
     const isDevelopment = process.env.NODE_ENV === 'development';
     
-    const response: ApiResponse = {
-      success: false,
-      error: isDevelopment ? error.message : 'Internal server error',
-      code: 'INTERNAL_SERVER_ERROR',
-      timestamp: new Date().toISOString()
-    };
-
-    // Add stack trace in development
-    if (isDevelopment && error.stack) {
-      response.details = {
+    res.status(500).json(errorResponse(
+      isDevelopment ? error.message : 'Internal server error',
+      'INTERNAL_SERVER_ERROR',
+      isDevelopment && error.stack ? {
         stack: error.stack.split('\n').slice(0, 10) // Limit stack trace
-      };
-    }
-
-    res.status(500).json(response);
+      } : undefined,
+      500,
+      getRequestId(req)
+    ));
   }
 
   /**
    * Handle 404 errors for unmatched routes
    */
   static notFound(req: Request, res: Response): void {
-    const response: ApiResponse = {
-      success: false,
-      error: 'Endpoint not found',
-      code: 'NOT_FOUND',
-      details: {
+    res.status(404).json(errorResponse(
+      'Endpoint not found',
+      'NOT_FOUND',
+      {
         method: req.method,
         path: req.path,
         availableEndpoints: {
@@ -54,10 +48,9 @@ export class ErrorHandler {
           DELETE: ['/auth/security/sessions/:sessionId']
         }
       },
-      timestamp: new Date().toISOString()
-    };
-
-    res.status(404).json(response);
+      404,
+      getRequestId(req)
+    ));
   }
 
   /**

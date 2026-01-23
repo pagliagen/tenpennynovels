@@ -1,8 +1,9 @@
 import { Request, Response } from 'express';
-import { BackgroundQuestion } from '../../../../packages/database/models/BackgroundQuestion';
-import { Character } from '../../../../packages/database/models';
+import { BackgroundQuestion } from '../../../database/models/BackgroundQuestion';
+import { Character } from '../../../database/models';
 import { ApiResponse } from '../types/game';
 import { logger } from '../utils/logger';
+import { successResponse, errorResponse, updateResponse, getRequestId } from '../utils/apiResponse';
 
 export class BackgroundQuestionController {
   /**
@@ -15,9 +16,8 @@ export class BackgroundQuestionController {
         .sort({ order: 1 })
         .select('-createdBy -createdAt -updatedAt -__v').exec();
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           questions: questions.map((q: any) => ({
             questionId: q.questionId,
             questionText: q.questionText,
@@ -34,10 +34,9 @@ export class BackgroundQuestionController {
           totalQuestions: questions.length,
           requiredQuestions: questions.filter((q: any) => q.isRequired).length
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -47,14 +46,13 @@ export class BackgroundQuestionController {
         name: err.name
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare le domande di background',
-        code: 'GET_BACKGROUND_QUESTIONS_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare le domande di background',
+        'GET_BACKGROUND_QUESTIONS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -68,13 +66,13 @@ export class BackgroundQuestionController {
       
       const validCategories = ['phobias', 'traumas', 'beliefs', 'bonds', 'secrets', 'personality', 'history'];
       if (!validCategories.includes(category)) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Categoria non valida',
-          code: 'INVALID_CATEGORY',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Categoria non valida',
+          'INVALID_CATEGORY',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -83,9 +81,8 @@ export class BackgroundQuestionController {
         isActive: true 
       }) as any).sort({ order: 1 }).exec();
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           category,
           questions: questions.map((q: any) => ({
             questionId: q.questionId,
@@ -99,10 +96,9 @@ export class BackgroundQuestionController {
             maxLength: q.maxLength
           }))
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -112,14 +108,13 @@ export class BackgroundQuestionController {
         name: err.name
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare le domande per categoria',
-        code: 'GET_QUESTIONS_BY_CATEGORY_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare le domande per categoria',
+        'GET_QUESTIONS_BY_CATEGORY_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -145,13 +140,13 @@ export class BackgroundQuestionController {
       }) as any).exec();
 
       if (!character) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Personaggio non trovato',
-          code: 'CHARACTER_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Personaggio non trovato',
+          'CHARACTER_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -196,9 +191,8 @@ export class BackgroundQuestionController {
         };
       });
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           characterId,
           characterName: character.name,
           backgroundCompleted: character.backgroundCompleted,
@@ -207,10 +201,9 @@ export class BackgroundQuestionController {
           totalResponses: visibleResponses.length,
           canViewAll: character.userId.toString() === userId
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -220,14 +213,13 @@ export class BackgroundQuestionController {
         name: err.name
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare le risposte di background del personaggio',
-        code: 'GET_CHARACTER_RESPONSES_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare le risposte di background del personaggio',
+        'GET_CHARACTER_RESPONSES_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -242,13 +234,13 @@ export class BackgroundQuestionController {
       const userId = req.user!.userId;
 
       if (!Array.isArray(responses)) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Le risposte devono essere un array',
-          code: 'INVALID_RESPONSES_FORMAT',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Le risposte devono essere un array',
+          'INVALID_RESPONSES_FORMAT',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -259,13 +251,13 @@ export class BackgroundQuestionController {
       }) as any);
 
       if (!character) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Personaggio non trovato o non modificabile',
-          code: 'CHARACTER_NOT_EDITABLE',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Personaggio non trovato o non modificabile',
+          'CHARACTER_NOT_EDITABLE',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -288,26 +280,24 @@ export class BackgroundQuestionController {
 
         // Valida lunghezza risposta
         if (question.minLength && response.trim().length < question.minLength) {
-          const errorResponse: ApiResponse = {
-            success: false,
-            error: `Risposta troppo breve per la domanda ${questionId}`,
-            code: 'RESPONSE_TOO_SHORT',
-            details: { questionId, minLength: question.minLength },
-            timestamp: new Date().toISOString()
-          };
-          res.status(400).json(errorResponse);
+          res.status(400).json(errorResponse(
+            `Risposta troppo breve per la domanda ${questionId}`,
+            'RESPONSE_TOO_SHORT',
+            { questionId, minLength: question.minLength },
+            400,
+            getRequestId(req)
+          ));
           return;
         }
 
         if (response.trim().length > question.maxLength) {
-          const errorResponse: ApiResponse = {
-            success: false,
-            error: `Risposta troppo lunga per la domanda ${questionId}`,
-            code: 'RESPONSE_TOO_LONG',
-            details: { questionId, maxLength: question.maxLength },
-            timestamp: new Date().toISOString()
-          };
-          res.status(400).json(errorResponse);
+          res.status(400).json(errorResponse(
+            `Risposta troppo lunga per la domanda ${questionId}`,
+            'RESPONSE_TOO_LONG',
+            { questionId, maxLength: question.maxLength },
+            400,
+            getRequestId(req)
+          ));
           return;
         }
 
@@ -328,9 +318,8 @@ export class BackgroundQuestionController {
         completed: completionCheck.completed
       });
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
+      res.json(updateResponse(
+        {
           character: {
             id: character.id,
             name: character.name,
@@ -340,10 +329,9 @@ export class BackgroundQuestionController {
           },
           completion: completionCheck
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -353,14 +341,13 @@ export class BackgroundQuestionController {
         name: err.name
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile aggiornare le risposte di background',
-        code: 'UPDATE_RESPONSES_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile aggiornare le risposte di background',
+        'UPDATE_RESPONSES_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 }

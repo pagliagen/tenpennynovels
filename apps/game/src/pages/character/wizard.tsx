@@ -541,23 +541,44 @@ export default function CharacterWizard() {
     if (!dbOccupation) return null;
 
     // Transform requiredSkills with populated skill data
-    const requiredSkills = (dbOccupation.requiredSkills || []).map((req: any) => ({
-      skillId: req.skillId?._id || req.skillId,
-      skillName: req.skillId?.name || 'Unknown Skill',
-      baseValue: req.baseValue || 40,  // Extract baseValue from DB, default to 40
-      isFixed: req.isFixed !== undefined ? req.isFixed : true,
-      alternatives: (req.alternatives || []).map((alt: any) => ({
-        skillId: alt._id || alt,
-        skillName: alt.name || 'Unknown Alternative'
-      }))
-    }));
+    const requiredSkills = (dbOccupation.requiredSkills || []).map((req: any) => {
+      // skillName is stored directly in the schema, skillId is optional String (not ObjectId ref)
+      // Priority: use skillName if available, otherwise try to get from populated skillId
+      const skillId = req.skillId?._id || req.skillId || null;
+      const skillName = req.skillName || req.skillId?.name || (typeof req.skillId === 'string' ? 'Skill non trovata' : 'Unknown Skill');
+      
+      // Handle alternatives - skillName is stored directly, skillId is optional
+      const alternatives = (req.alternatives || []).map((alt: any) => {
+        const altId = alt._id || alt.skillId || null;
+        const altName = alt.skillName || alt.name || (typeof alt === 'string' ? 'Skill alternativa non trovata' : 'Unknown Alternative');
+        return {
+          skillId: altId,
+          skillName: altName
+        };
+      });
+      
+      return {
+        skillId,
+        skillName,
+        baseValue: req.baseValue || 40,  // Extract baseValue from DB, default to 40
+        isFixed: req.isFixed !== undefined ? req.isFixed : true,
+        alternatives
+      };
+    });
 
     // Transform bonusSkills with populated skill data
-    const bonusSkills = (dbOccupation.bonusSkills || []).map((bonus: any) => ({
-      skillId: bonus.skillId?._id || bonus.skillId,
-      skillName: bonus.skillId?.name || 'Unknown Skill',
-      bonusValue: bonus.bonusValue || 0
-    }));
+    const bonusSkills = (dbOccupation.bonusSkills || []).map((bonus: any) => {
+      // skillName is stored directly in the schema, skillId is optional String (not ObjectId ref)
+      // Priority: use skillName if available, otherwise try to get from populated skillId
+      const skillId = bonus.skillId?._id || bonus.skillId || null;
+      const skillName = bonus.skillName || bonus.skillId?.name || (typeof bonus.skillId === 'string' ? 'Skill non trovata' : 'Unknown Skill');
+      
+      return {
+        skillId,
+        skillName,
+        bonusValue: bonus.bonusValue || 0
+      };
+    });
 
     return {
       id: dbOccupation._id,
@@ -687,11 +708,43 @@ export default function CharacterWizard() {
   const validateAllSteps = (data: CharacterWizardData): ValidationResults => {
     const results: ValidationResults = {};
 
-    // Step 1: Basic Info - validation handled by component via onValidationChange callback
-    // Preserve existing validation result from component (lifted state)
-    results[1] = validationResults[1] || {
-      isValid: false,
-      errors: ['Compilare tutti i campi obbligatori'],
+    // Step 1: Basic Info - validate directly here to ensure it works when data is loaded from DB
+    const step1Errors: string[] = [];
+    if (!data.firstName?.trim()) step1Errors.push('Nome richiesto');
+    if (!data.lastName?.trim()) step1Errors.push('Cognome richiesto');
+    if (!data.birthDate?.trim()) step1Errors.push('Data di nascita richiesta');
+    else if (!/^\d{2}\/\d{2}\/\d{4}$/.test(data.birthDate)) step1Errors.push('Formato data invalido (gg/mm/yyyy)');
+    else if (parseInt(data.birthDate.split('/')[2]) >= 1895) step1Errors.push('Anno di nascita deve essere inferiore al 1895');
+    if (data.age === null || data.age === undefined) step1Errors.push('Età richiesta');
+    else if (data.age < 18) step1Errors.push('Età minima: 18 anni');
+    else if (data.age > 80) step1Errors.push('Età massima: 80 anni');
+    if (data.apparentAge === null || data.apparentAge === undefined) step1Errors.push('Età apparente richiesta');
+    else if (data.apparentAge < 18) step1Errors.push('Età apparente minima: 18 anni');
+    else if (data.apparentAge > 80) step1Errors.push('Età apparente massima: 80 anni');
+    if (!data.gender) step1Errors.push('Genere richiesto');
+    if (!data.height?.trim()) step1Errors.push('Altezza richiesta');
+    else {
+      const heightNum = parseInt(data.height);
+      if (isNaN(heightNum) || heightNum < 100 || heightNum > 250) step1Errors.push('Altezza deve essere tra 100 e 250 cm');
+    }
+    if (!data.weight?.trim()) step1Errors.push('Peso richiesto');
+    else {
+      const weightNum = parseInt(data.weight);
+      if (isNaN(weightNum) || weightNum < 30 || weightNum > 200) step1Errors.push('Peso deve essere tra 30 e 200 kg');
+    }
+    if (!data.eyeColor?.trim()) step1Errors.push('Colore occhi richiesto');
+    if (!data.hairColor?.trim()) step1Errors.push('Colore capelli richiesto');
+    if (!data.visibleMarks?.trim()) step1Errors.push('Segni particolari visibili richiesti');
+    if (!data.hiddenMarks?.trim()) step1Errors.push('Segni particolari non visibili richiesti');
+    if (!data.maritalStatus?.trim()) step1Errors.push('Stato civile richiesto');
+    if (!data.illnesses?.trim()) step1Errors.push('Patologie richieste');
+    if (!data.educationTitle?.trim()) step1Errors.push('Titolo di studio richiesto');
+    if (!data.criminalRecord?.trim()) step1Errors.push('Fedina penale richiesta');
+    if (!data.currentOccupation?.trim()) step1Errors.push('Occupazione attuale richiesta');
+
+    results[1] = {
+      isValid: step1Errors.length === 0,
+      errors: step1Errors,
       warnings: []
     };
 
@@ -1354,14 +1407,30 @@ export default function CharacterWizard() {
         const errorData = await submitResponse.json();
         
         // Handle validation errors with details
-        if (errorData.code === 'CHARACTER_VALIDATION_ERROR' && errorData.details) {
-          const validationErrors = Object.entries(errorData.details)
-            .map(([field, message]) => `• ${message}`)
-            .join('\n');
-          throw new Error(`Errori di validazione:\n${validationErrors}`);
+        if (errorData.code === 'CHARACTER_VALIDATION_FAILED' && errorData.details) {
+          const errors = errorData.details.errors || [];
+          const warnings = errorData.details.warnings || [];
+          
+          let errorMessage = '❌ Validazione del personaggio fallita:\n\n';
+          
+          if (errors.length > 0) {
+            errorMessage += 'Errori:\n';
+            errors.forEach((error: string) => {
+              errorMessage += `• ${error}\n`;
+            });
+          }
+          
+          if (warnings.length > 0) {
+            errorMessage += '\nAvvisi:\n';
+            warnings.forEach((warning: string) => {
+              errorMessage += `⚠️ ${warning}\n`;
+            });
+          }
+          
+          throw new Error(errorMessage);
         }
         
-        throw new Error(errorData.error || 'Failed to submit character for approval');
+        throw new Error(errorData.error || 'Errore durante l\'invio del personaggio per approvazione');
       }
 
       // Clear draft from localStorage

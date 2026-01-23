@@ -95,7 +95,7 @@ const SkillsPage: NextPage = () => {
       });
       
       const data = await response.json();
-      if (data.success) {
+      if (data.result) {
         setSkills(data.data.skills);
       }
     } catch (error) {
@@ -117,7 +117,7 @@ const SkillsPage: NextPage = () => {
       });
 
       const data = await response.json();
-      if (data.success) {
+      if (data.result) {
         setSkillCheckResult(data.data.calculation);
       }
     } catch (error) {

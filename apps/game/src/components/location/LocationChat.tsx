@@ -183,8 +183,8 @@ export default function LocationChat({
       
       if (response.ok) {
         const data = await response.json();
-        if (data.success) {
-          setMessages(data.actions || []);
+        if (data.result) {
+          setMessages(data.data?.actions || data.list || []);
         }
       } else {
         console.error('❌ LocationChat: Failed to load chat history:', response.status);
@@ -337,7 +337,7 @@ export default function LocationChat({
       
       if (response.ok) {
         const data = await response.json();
-        if (data.success) {
+        if (data.result) {
           // Clear input and stop typing
           setMessageInput('');
           setIsTyping(false);

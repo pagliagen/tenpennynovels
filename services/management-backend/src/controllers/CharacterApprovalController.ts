@@ -11,6 +11,7 @@ import {
 import { AdminAuthMiddleware } from '../middleware/adminAuth';
 import { logger } from '../utils/logger';
 import { getRedisClient } from '../config/redis';
+import { listResponse, successResponse, errorResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
 
 export class CharacterApprovalController {
   /**
@@ -110,16 +111,12 @@ export class CharacterApprovalController {
         category: 'character_management'
       });
 
-      const response: ApiResponse<{ characters: Character[]; pagination: PaginationInfo }> = {
-        success: true,
-        data: {
-          characters: transformedCharacters as any,
-          pagination: paginationInfo
-        },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+      res.json(listResponse(
+        transformedCharacters as any,
+        paginationInfo,
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error in getAllCharacters method:', { 
         error: error instanceof Error ? error.message : String(error),
@@ -129,14 +126,13 @@ export class CharacterApprovalController {
         params: req.params
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: error instanceof Error ? error.message : 'Impossibile recuperare i personaggi',
-        code: 'FETCH_ALL_CHARACTERS_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        error instanceof Error ? error.message : 'Impossibile recuperare i personaggi',
+        'FETCH_ALL_CHARACTERS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -204,16 +200,12 @@ export class CharacterApprovalController {
         limit
       });
 
-      const response: ApiResponse<{ characters: PendingCharacter[]; pagination: PaginationInfo }> = {
-        success: true,
-        data: {
-          characters: mockCharacters,
-          pagination: mockPagination
-        },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+      res.json(listResponse(
+        mockCharacters,
+        mockPagination,
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error fetching pending characters:', { 
         error: error instanceof Error ? error.message : String(error),
@@ -223,14 +215,13 @@ export class CharacterApprovalController {
         params: req.params
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare i personaggi in attesa',
-        code: 'FETCH_PENDING_CHARACTERS_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare i personaggi in attesa',
+        'FETCH_PENDING_CHARACTERS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -243,10 +234,10 @@ export class CharacterApprovalController {
       const characterId = req.params.characterId;
       
       // Use local and shared models with proper imports
-      const { Character } = await import('../../../../packages/database/models/Character');
-      const { Item } = await import('../../../../packages/database/models/Item');
-      const { Occupation } = await import('../../../../packages/database/models/Occupation');
-      const { User } = await import('../../../../packages/database/models/User');
+      const { Character } = await import('../database/models/Character');
+      const { Item } = await import('../database/models/Item');
+      const { Occupation } = await import('../database/models/Occupation');
+      const { User } = await import('../database/models/User');
       
       // Get character with populated user data
       const character = await Character.findById(characterId)
@@ -259,13 +250,13 @@ export class CharacterApprovalController {
         .exec() as any;
 
       if (!character) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Personaggio non trovato',
-          code: 'CHARACTER_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Personaggio non trovato',
+          'CHARACTER_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -441,15 +432,11 @@ export class CharacterApprovalController {
         category: 'character_management'
       });
 
-      const response: ApiResponse<any> = {
-        success: true,
-        data: {
-          character: transformedCharacter
-        },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+      res.json(successResponse(
+        transformedCharacter,
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error fetching character details:', { 
         error: error instanceof Error ? error.message : String(error), 
@@ -460,14 +447,13 @@ export class CharacterApprovalController {
         params: req.params
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare i dettagli del personaggio',
-        code: 'FETCH_CHARACTER_DETAILS_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare i dettagli del personaggio',
+        'FETCH_CHARACTER_DETAILS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -482,30 +468,30 @@ export class CharacterApprovalController {
 
       // Validate review data
       if (!action || !['approve', 'reject'].includes(action)) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Azione di revisione non valida. Deve essere "approve" o "reject"',
-          code: 'INVALID_REVIEW_ACTION',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Azione di revisione non valida. Deve essere "approve" o "reject"',
+          'INVALID_REVIEW_ACTION',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       if (!note || note.trim().length === 0) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'La nota di revisione è richiesta',
-          code: 'REVIEW_NOTE_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'La nota di revisione è richiesta',
+          'REVIEW_NOTE_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Use local and shared models with proper imports
-      const { Character } = await import('../../../../packages/database/models/Character');
-      const { Occupation } = await import('../../../../packages/database/models/Occupation');
+      const { Character } = await import('../database/models/Character');
+      const { Occupation } = await import('../database/models/Occupation');
       
       // Get character in PENDING_APPROVAL status - force fresh read
       const character = await Character.findOne({
@@ -514,25 +500,25 @@ export class CharacterApprovalController {
       }).lean(false) as any;
 
       if (!character) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Personaggio non trovato o non in attesa di approvazione',
-          code: 'CHARACTER_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Personaggio non trovato o non in attesa di approvazione',
+          'CHARACTER_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       if (!auditInfo) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Autenticazione richiesta',
-          code: 'AUTHENTICATION_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(401).json(response);
+        res.status(401).json(errorResponse(
+          'Autenticazione richiesta',
+          'AUTHENTICATION_REQUIRED',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -549,26 +535,37 @@ export class CharacterApprovalController {
         }
 
         // Create CharacterFinances record based on FINANZA skill
-        const { CharacterFinances, SocialClassConfig } = await import('../../../../packages/database/models');
+        const { CharacterFinances, SocialClassConfig } = await import('../database/models');
         
         // Get character's Finanza skill value from Mongoose Map
-        const finanzaSkill = character.skills?.get('Finanza') || 1;
+        // Handle both Map and object formats, and granular SkillBreakdown objects
+        let finanzaSkill = 1; // Default fallback
         
-        // DEBUG: Log skill reading with Mongoose Map methods
-        const debugData = {
+        if (character.skills instanceof Map) {
+          const finanzaValue = character.skills.get('Finanza') || character.skills.get('FINANZA') || character.skills.get('finanza');
+          if (typeof finanzaValue === 'object' && finanzaValue !== null && 'total' in finanzaValue) {
+            finanzaSkill = (finanzaValue as any).total;
+          } else if (typeof finanzaValue === 'number') {
+            finanzaSkill = finanzaValue;
+          }
+        } else if (character.skills && typeof character.skills === 'object') {
+          const finanzaValue = (character.skills as any)['Finanza'] || (character.skills as any)['FINANZA'] || (character.skills as any)['finanza'];
+          if (typeof finanzaValue === 'object' && finanzaValue !== null && 'total' in finanzaValue) {
+            finanzaSkill = finanzaValue.total;
+          } else if (typeof finanzaValue === 'number') {
+            finanzaSkill = finanzaValue;
+          }
+        }
+        
+        // Ensure finanzaSkill is a valid number
+        finanzaSkill = Math.max(1, Math.min(99, finanzaSkill || 1));
+        
+        logger.info('Character FINANZA skill value for approval', {
           characterId: character._id.toString(),
           characterName: character.name,
-          hasSkills: !!character.skills,
           finanzaSkill,
-          allFinanzaVariants: {
-            'Finanza': character.skills?.get('Finanza'),
-            'FINANZA': character.skills?.get('FINANZA'),
-            'finanza': character.skills?.get('finanza')
-          },
-          skillKeys: character.skills ? Array.from(character.skills.keys()).slice(0, 10) : []
-        };
-        
-        logger.info('DEBUG: Character skills MAP reading - ' + JSON.stringify(debugData, null, 2));
+          skillsType: character.skills instanceof Map ? 'Map' : typeof character.skills
+        });
         
         // Find social class configuration based on FINANZA skill range
         const socialClassConfig = await SocialClassConfig.findOne({
@@ -751,13 +748,11 @@ export class CharacterApprovalController {
         // Continue execution - Redis failure shouldn't break the approval process
       }
 
-      const response: ApiResponse<any> = {
-        success: true,
-        data: result,
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+      res.json(createResponse(
+        result,
+        action === 'approve' ? 'Personaggio approvato con successo' : 'Personaggio respinto',
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error submitting character review:', { 
         error: error instanceof Error ? error.message : String(error),
@@ -768,14 +763,13 @@ export class CharacterApprovalController {
         auditInfo: AdminAuthMiddleware.getAuditInfo(req)
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile inviare la revisione del personaggio',
-        code: 'SUBMIT_CHARACTER_REVIEW_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile inviare la revisione del personaggio',
+        'SUBMIT_CHARACTER_REVIEW_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -826,13 +820,11 @@ export class CharacterApprovalController {
         period
       });
 
-      const response: ApiResponse<ReviewStats> = {
-        success: true,
-        data: mockStats,
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+      res.json(successResponse(
+        mockStats,
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error fetching review stats:', { 
         error: error instanceof Error ? error.message : String(error),
@@ -842,14 +834,13 @@ export class CharacterApprovalController {
         params: req.params
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare le statistiche di revisione',
-        code: 'FETCH_REVIEW_STATS_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare le statistiche di revisione',
+        'FETCH_REVIEW_STATS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -878,13 +869,13 @@ export class CharacterApprovalController {
       const { priority } = req.body;
 
       if (!priority || !['high', 'normal', 'low'].includes(priority)) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Valore di priorità non valido',
-          code: 'INVALID_PRIORITY',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Valore di priorità non valido',
+          'INVALID_PRIORITY',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -898,16 +889,11 @@ export class CharacterApprovalController {
         category: 'character_management'
       });
 
-      const response: ApiResponse<{ characterId: string; priority: string }> = {
-        success: true,
-        data: {
-          characterId,
-          priority
-        },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+      res.json(updateResponse(
+        { characterId, priority },
+        'Priorità di revisione aggiornata con successo',
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error updating review priority:', { 
         error: error instanceof Error ? error.message : String(error),
@@ -918,14 +904,13 @@ export class CharacterApprovalController {
         params: req.params
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile aggiornare la priorità di revisione',
-        code: 'UPDATE_PRIORITY_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile aggiornare la priorità di revisione',
+        'UPDATE_PRIORITY_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -963,35 +948,28 @@ export class CharacterApprovalController {
         daysWaiting: Math.floor((Date.now() - new Date(c.createdAt).getTime()) / (1000 * 60 * 60 * 24))
       }));
 
-      const response: ApiResponse<{
-        characters: any[];
-        count: number;
-        totalPending: number;
-      }> = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           characters: transformedCharacters,
           count: transformedCharacters.length,
           totalPending
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error getting pending characters for review:', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined
       });
 
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare i personaggi in attesa',
-        code: 'GET_PENDING_CHARACTERS_ERROR',
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare i personaggi in attesa',
+        'GET_PENDING_CHARACTERS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 }

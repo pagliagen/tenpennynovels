@@ -81,9 +81,10 @@ export default function AllTicketsPage({ authContext }: AllTicketsProps) {
       }
 
       const data = await response.json();
+      const tickets = data.list || [];
       
       // Map API response to frontend format
-      const mappedTickets = (data.data?.tickets || data.tickets || []).map((ticket: any) => ({
+      const mappedTickets = tickets.map((ticket: any) => ({
         _id: ticket.id,
         ticketId: ticket.id,
         title: ticket.title,

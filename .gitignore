@@ -10,16 +10,11 @@ dist/
 .env.*
 .DS_Store
 *.sh
-dbviewer/
-docs/
 log-monitor/
 process-dashboard/
-sviluppo/
 scripts/
 deploy/
 nginx-api.conf
-CLAUDE.md
-DEPLOY*.md
 
 # Environment files (local development)
 .env.local

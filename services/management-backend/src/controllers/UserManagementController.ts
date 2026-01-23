@@ -11,6 +11,7 @@ import { AdminAuthMiddleware } from '../middleware/adminAuth';
 import { logger } from '../utils/logger';
 import { User } from '../models/User';
 import { Character } from '../models/Character';
+import { listResponse, successResponse, errorResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
 
 export class UserManagementController {
   /**
@@ -190,27 +191,22 @@ export class UserManagementController {
         totalUsers
       });
 
-      const response: ApiResponse<{ users: AdminUserProfile[]; pagination: PaginationInfo }> = {
-        success: true,
-        data: {
-          users: transformedUsers,
-          pagination
-        },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+      res.json(listResponse(
+        transformedUsers,
+        pagination,
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error fetching users:', { error: error instanceof Error ? error.message : String(error) });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Failed to fetch users',
-        code: 'FETCH_USERS_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Failed to fetch users',
+        'FETCH_USERS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -278,27 +274,24 @@ export class UserManagementController {
         targetUsername: mockUser.username
       });
 
-      const response: ApiResponse<AdminUserProfile> = {
-        success: true,
-        data: mockUser,
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+      res.json(successResponse(
+        mockUser,
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error fetching user profile:', { 
         error: error instanceof Error ? error.message : String(error), 
         userId: req.params.userId 
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Failed to fetch user profile',
-        code: 'FETCH_USER_PROFILE_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Failed to fetch user profile',
+        'FETCH_USER_PROFILE_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -313,35 +306,35 @@ export class UserManagementController {
 
       // Validate ban data
       if (!banData.reason || banData.reason.trim().length === 0) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Ban reason is required',
-          code: 'BAN_REASON_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Ban reason is required',
+          'BAN_REASON_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       if (!banData.duration || !['temporary', 'permanent'].includes(banData.duration)) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Invalid ban duration',
-          code: 'INVALID_BAN_DURATION',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Invalid ban duration',
+          'INVALID_BAN_DURATION',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       if (banData.duration === 'temporary' && !banData.bannedUntil) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Ban end date required for temporary bans',
-          code: 'BAN_END_DATE_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Ban end date required for temporary bans',
+          'BAN_END_DATE_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -372,30 +365,24 @@ export class UserManagementController {
       //   timestamp: new Date().toISOString()
       // });
 
-      const response: ApiResponse<{ userId: string; action: string }> = {
-        success: true,
-        data: {
-          userId,
-          action: 'banned'
-        },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+      res.json(createResponse(
+        { userId, action: 'banned' },
+        'User banned successfully',
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error banning user:', { 
         error: error instanceof Error ? error.message : String(error), 
         userId: req.params.userId 
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Failed to ban user',
-        code: 'BAN_USER_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Failed to ban user',
+        'BAN_USER_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -410,103 +397,98 @@ export class UserManagementController {
 
       // Validate userId format
       if (!mongoose.Types.ObjectId.isValid(userId)) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Invalid user ID format. User ID must be a valid MongoDB ObjectId.',
-          code: 'INVALID_USER_ID_FORMAT',
-          details: {
+        res.status(400).json(errorResponse(
+          'Invalid user ID format. User ID must be a valid MongoDB ObjectId.',
+          'INVALID_USER_ID_FORMAT',
+          {
             providedId: userId,
             expectedFormat: 'MongoDB ObjectId (24 hex characters)'
           },
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Validate required fields
       if (!banData.reason || banData.reason.trim().length === 0) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Ban reason is required and cannot be empty.',
-          code: 'BAN_REASON_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Ban reason is required and cannot be empty.',
+          'BAN_REASON_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       if (!banData.duration || !['temporary', 'permanent'].includes(banData.duration)) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Invalid ban duration. Must be "temporary" or "permanent".',
-          code: 'INVALID_BAN_DURATION',
-          details: {
+        res.status(400).json(errorResponse(
+          'Invalid ban duration. Must be "temporary" or "permanent".',
+          'INVALID_BAN_DURATION',
+          {
             providedDuration: banData.duration,
             allowedValues: ['temporary', 'permanent']
           },
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       if (banData.duration === 'temporary' && !banData.bannedUntil) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Ban end date is required for temporary bans.',
-          code: 'BAN_END_DATE_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Ban end date is required for temporary bans.',
+          'BAN_END_DATE_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Validate ban scopes
       if (!banData.banScopes || !Array.isArray(banData.banScopes) || banData.banScopes.length === 0) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'At least one ban scope is required.',
-          code: 'BAN_SCOPES_REQUIRED',
-          details: {
+        res.status(400).json(errorResponse(
+          'At least one ban scope is required.',
+          'BAN_SCOPES_REQUIRED',
+          {
             availableScopes: ['chat_banned', 'game_banned', 'forum_banned', 'documents_banned', 'full_site_banned']
           },
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       const validScopes = ['chat_banned', 'game_banned', 'forum_banned', 'documents_banned', 'full_site_banned'];
       const invalidScopes = banData.banScopes.filter((scope: string) => !validScopes.includes(scope));
       if (invalidScopes.length > 0) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Invalid ban scopes provided.',
-          code: 'INVALID_BAN_SCOPES',
-          details: {
+        res.status(400).json(errorResponse(
+          'Invalid ban scopes provided.',
+          'INVALID_BAN_SCOPES',
+          {
             invalidScopes,
             validScopes
           },
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Find user in database
       const user = await User.findById(userId);
       if (!user) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'User not found with the provided ID.',
-          code: 'USER_NOT_FOUND',
-          details: {
+        res.status(404).json(errorResponse(
+          'User not found with the provided ID.',
+          'USER_NOT_FOUND',
+          {
             searchedUserId: userId
           },
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -562,9 +544,8 @@ export class UserManagementController {
       //   timestamp: new Date().toISOString()
       // });
 
-      const response: ApiResponse<{ userId: string; action: string; banDetails: any }> = {
-        success: true,
-        data: {
+      res.json(updateResponse(
+        {
           userId,
           action: 'ban_updated',
           banDetails: {
@@ -575,10 +556,9 @@ export class UserManagementController {
             bannedAt: updateData['accountStatus.bannedAt']
           }
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        'User ban updated successfully',
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error updating user ban:', { 
         error: error instanceof Error ? error.message : String(error), 
@@ -586,14 +566,13 @@ export class UserManagementController {
         stack: error instanceof Error ? error.stack : undefined
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Failed to update user ban details. Please try again.',
-        code: 'UPDATE_BAN_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Failed to update user ban details. Please try again.',
+        'UPDATE_BAN_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -607,13 +586,13 @@ export class UserManagementController {
       const { reason } = req.body;
 
       if (!reason || reason.trim().length === 0) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Unban reason is required',
-          code: 'UNBAN_REASON_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Unban reason is required',
+          'UNBAN_REASON_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -631,30 +610,24 @@ export class UserManagementController {
         category: 'user_management'
       });
 
-      const response: ApiResponse<{ userId: string; action: string }> = {
-        success: true,
-        data: {
-          userId,
-          action: 'unbanned'
-        },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+      res.json(updateResponse(
+        { userId, action: 'unbanned' },
+        'User unbanned successfully',
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error unbanning user:', { 
         error: error instanceof Error ? error.message : String(error), 
         userId: req.params.userId 
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Failed to unban user',
-        code: 'UNBAN_USER_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Failed to unban user',
+        'UNBAN_USER_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -668,17 +641,16 @@ export class UserManagementController {
       
       // Validate userId format
       if (!mongoose.Types.ObjectId.isValid(userId)) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Invalid user ID format. User ID must be a valid MongoDB ObjectId.',
-          code: 'INVALID_USER_ID_FORMAT',
-          details: {
+        res.status(400).json(errorResponse(
+          'Invalid user ID format. User ID must be a valid MongoDB ObjectId.',
+          'INVALID_USER_ID_FORMAT',
+          {
             providedId: userId,
             expectedFormat: 'MongoDB ObjectId (24 hex characters)'
           },
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -697,17 +669,16 @@ export class UserManagementController {
 
       // Validate payload structure
       if (!updateData || Object.keys(updateData).length === 0) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Request body cannot be empty. At least one field must be provided for update.',
-          code: 'EMPTY_UPDATE_PAYLOAD',
-          details: {
+        res.status(400).json(errorResponse(
+          'Request body cannot be empty. At least one field must be provided for update.',
+          'EMPTY_UPDATE_PAYLOAD',
+          {
             allowedFields: ['username', 'email', 'displayName', 'canAccessAdminPanel', 'userRoles', 'characterRoles', 'characterPermissions', 'isActive', 'multipleCharactersAllowed'],
             receivedFields: Object.keys(updateData)
           },
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -806,17 +777,16 @@ export class UserManagementController {
 
       // Return validation errors if any
       if (validationErrors.length > 0) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Validation failed. Please check the provided data.',
-          code: 'VALIDATION_ERRORS',
-          details: {
+        res.status(400).json(errorResponse(
+          'Validation failed. Please check the provided data.',
+          'VALIDATION_ERRORS',
+          {
             errors: validationErrors,
             providedData: updateData
           },
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -869,18 +839,17 @@ export class UserManagementController {
         const existingUser = await User.findOne(existingUserQuery).lean();
         if (existingUser) {
           const duplicateField = (existingUser as any).username === username?.trim() ? 'username' : 'email';
-          const response: ApiResponse = {
-            success: false,
-            error: `A user with this ${duplicateField} already exists.`,
-            code: 'DUPLICATE_USER_DATA',
-            details: {
+          res.status(409).json(errorResponse(
+            `A user with this ${duplicateField} already exists.`,
+            'DUPLICATE_USER_DATA',
+            {
               duplicateField,
               duplicateValue: duplicateField === 'username' ? username : email,
               existingUserId: (existingUser as any)._id.toString()
             },
-            timestamp: new Date().toISOString()
-          };
-          res.status(409).json(response);
+            409,
+            getRequestId(req)
+          ));
           return;
         }
       }
@@ -897,17 +866,16 @@ export class UserManagementController {
       ).lean();
 
       if (!updatedUser) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'User not found. The specified user ID does not exist in the database.',
-          code: 'USER_NOT_FOUND',
-          details: {
+        res.status(404).json(errorResponse(
+          'User not found. The specified user ID does not exist in the database.',
+          'USER_NOT_FOUND',
+          {
             requestedUserId: userId,
             searchPerformed: true
           },
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -954,13 +922,11 @@ export class UserManagementController {
         category: 'user_management'
       });
 
-      const response: ApiResponse<AdminUserProfile> = {
-        success: true,
-        data: transformedUser,
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+      res.json(updateResponse(
+        transformedUser,
+        'User updated successfully',
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error updating user:', { 
         error: error instanceof Error ? error.message : String(error),
@@ -978,17 +944,16 @@ export class UserManagementController {
           value: err.value
         }));
 
-        const response: ApiResponse = {
-          success: false,
-          error: 'Database validation failed. The provided data does not meet the required constraints.',
-          code: 'DATABASE_VALIDATION_ERROR',
-          details: {
+        res.status(400).json(errorResponse(
+          'Database validation failed. The provided data does not meet the required constraints.',
+          'DATABASE_VALIDATION_ERROR',
+          {
             validationErrors,
             affectedFields: Object.keys(error.errors)
           },
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -997,88 +962,80 @@ export class UserManagementController {
         const duplicateField = error.keyValue ? Object.keys(error.keyValue)[0] : 'unknown';
         const duplicateValue = error.keyValue ? error.keyValue[duplicateField] : 'unknown';
 
-        const response: ApiResponse = {
-          success: false,
-          error: `A user with this ${duplicateField} already exists. Please choose a different value.`,
-          code: 'DUPLICATE_KEY_ERROR',
-          details: {
+        res.status(409).json(errorResponse(
+          `A user with this ${duplicateField} already exists. Please choose a different value.`,
+          'DUPLICATE_KEY_ERROR',
+          {
             duplicateField,
             duplicateValue,
             mongoErrorCode: error.code,
             indexName: error.keyPattern ? Object.keys(error.keyPattern)[0] : 'unknown'
           },
-          timestamp: new Date().toISOString()
-        };
-        res.status(409).json(response);
+          409,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Handle CastError (invalid data types)
       if (error.name === 'CastError') {
-        const response: ApiResponse = {
-          success: false,
-          error: `Invalid data type for field '${error.path}'. Expected ${error.kind} but received ${typeof error.value}.`,
-          code: 'INVALID_DATA_TYPE',
-          details: {
+        res.status(400).json(errorResponse(
+          `Invalid data type for field '${error.path}'. Expected ${error.kind} but received ${typeof error.value}.`,
+          'INVALID_DATA_TYPE',
+          {
             field: error.path,
             expectedType: error.kind,
             receivedValue: error.value,
             receivedType: typeof error.value
           },
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Handle database connection errors
       if (error.name === 'MongoNetworkError' || error.name === 'MongoTimeoutError') {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Database connection error. Please try again later.',
-          code: 'DATABASE_CONNECTION_ERROR',
-          details: {
+        res.status(503).json(errorResponse(
+          'Database connection error. Please try again later.',
+          'DATABASE_CONNECTION_ERROR',
+          {
             errorType: error.name,
             retryable: true
           },
-          timestamp: new Date().toISOString()
-        };
-        res.status(503).json(response);
+          503,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Handle permission errors (if user tries to update their own admin status inappropriately)
       if (error instanceof Error ? error.message : String(error) && error instanceof Error ? error.message : String(error).includes('permission')) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Insufficient permissions to perform this operation.',
-          code: 'INSUFFICIENT_PERMISSIONS',
-          details: {
+        res.status(403).json(errorResponse(
+          'Insufficient permissions to perform this operation.',
+          'INSUFFICIENT_PERMISSIONS',
+          {
             operation: 'update_user',
             userId: req.params.userId
           },
-          timestamp: new Date().toISOString()
-        };
-        res.status(403).json(response);
+          403,
+          getRequestId(req)
+        ));
         return;
       }
       
       // Generic server error
-      const response: ApiResponse = {
-        success: false,
-        error: 'An unexpected error occurred while updating the user. Our team has been notified.',
-        code: 'INTERNAL_SERVER_ERROR',
-        details: {
+      res.status(500).json(errorResponse(
+        'An unexpected error occurred while updating the user. Our team has been notified.',
+        'INTERNAL_SERVER_ERROR',
+        {
           errorType: error.name || 'UnknownError',
           operation: 'update_user',
-          userId: req.params.userId,
-          timestamp: new Date().toISOString(),
-          requestId: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+          userId: req.params.userId
         },
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -1103,24 +1060,21 @@ export class UserManagementController {
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       logger.info('Admin viewed user summary', auditInfo);
 
-      const response: ApiResponse<UserSummary> = {
-        success: true,
-        data: mockSummary,
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+      res.json(successResponse(
+        mockSummary,
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error fetching user summary:', { error: error instanceof Error ? error.message : String(error) });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Failed to fetch user summary',
-        code: 'FETCH_USER_SUMMARY_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Failed to fetch user summary',
+        'FETCH_USER_SUMMARY_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -1134,13 +1088,13 @@ export class UserManagementController {
       const limit = parseInt(req.query.limit as string) || 10;
 
       if (!query || query.trim().length < 2) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Search query must be at least 2 characters',
-          code: 'INVALID_SEARCH_QUERY',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Search query must be at least 2 characters',
+          'INVALID_SEARCH_QUERY',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -1163,24 +1117,21 @@ export class UserManagementController {
         resultsCount: mockResults.length
       });
 
-      const response: ApiResponse<any[]> = {
-        success: true,
-        data: mockResults,
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+      res.json(successResponse(
+        mockResults,
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error searching users:', { error: error instanceof Error ? error.message : String(error) });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Failed to search users',
-        code: 'SEARCH_USERS_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Failed to search users',
+        'SEARCH_USERS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -1205,40 +1156,39 @@ export class UserManagementController {
 
       // Validate input
       if (userRoles && (!Array.isArray(userRoles) || !userRoles.every((role: any) => ['user', 'gestore'].includes(role)))) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Invalid user roles. Must be array containing "user" and/or "gestore"',
-          code: 'INVALID_USER_ROLES',
-          details: {
+        res.status(400).json(errorResponse(
+          'Invalid user roles. Must be array containing "user" and/or "gestore"',
+          'INVALID_USER_ROLES',
+          {
             providedRoles: userRoles,
             allowedRoles: ['user', 'gestore']
           },
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       if (canAccessAdminPanel !== undefined && typeof canAccessAdminPanel !== 'boolean') {
-        const response: ApiResponse = {
-          success: false,
-          error: 'canAccessAdminPanel must be a boolean value',
-          code: 'INVALID_ADMIN_PANEL_ACCESS',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'canAccessAdminPanel must be a boolean value',
+          'INVALID_ADMIN_PANEL_ACCESS',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Check if trying to modify self
       if (userId === adminUserId) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Cannot modify your own permissions',
-          code: 'CANNOT_MODIFY_SELF',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Cannot modify your own permissions',
+          'CANNOT_MODIFY_SELF',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -1258,13 +1208,13 @@ export class UserManagementController {
       );
 
       if (!updatedUser) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'User not found',
-          code: 'USER_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'User not found',
+          'USER_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -1274,33 +1224,33 @@ export class UserManagementController {
         updatedBy: adminUserId
       });
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
-          user: {
-            id: updatedUser._id.toString(),
-            username: updatedUser.username,
-            email: updatedUser.email,
-            displayName: updatedUser.displayName,
-            userRoles: updatedUser.userRoles,
-            canAccessAdminPanel: updatedUser.canAccessAdminPanel,
-            updatedAt: updatedUser.updatedAt.toISOString()
-          },
-          changes: {
-            userRoles: userRoles ? { to: userRoles } : null,
-            canAccessAdminPanel: canAccessAdminPanel !== undefined ? { from: false, to: canAccessAdminPanel } : null
-          }
+      const updateResult = {
+        user: {
+          id: updatedUser._id.toString(),
+          username: updatedUser.username,
+          email: updatedUser.email,
+          displayName: updatedUser.displayName,
+          userRoles: updatedUser.userRoles,
+          canAccessAdminPanel: updatedUser.canAccessAdminPanel,
+          updatedAt: updatedUser.updatedAt.toISOString()
         },
-        timestamp: new Date().toISOString()
+        changes: {
+          userRoles: userRoles ? { to: userRoles } : null,
+          canAccessAdminPanel: canAccessAdminPanel !== undefined ? { from: false, to: canAccessAdminPanel } : null
+        }
       };
 
       logger.info('User permissions updated successfully', {
         userId,
         updatedBy: adminUserId,
-        changes: response.data.changes
+        changes: updateResult.changes
       });
 
-      res.json(response);
+      res.json(updateResponse(
+        updateResult,
+        'User permissions updated successfully',
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error updating user permissions:', {
         error: error instanceof Error ? error.message : String(error),
@@ -1308,14 +1258,13 @@ export class UserManagementController {
         adminUserId: (req as any).adminUserId
       });
 
-      const response: ApiResponse = {
-        success: false,
-        error: 'Failed to update user permissions',
-        code: 'UPDATE_USER_PERMISSIONS_ERROR',
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Failed to update user permissions',
+        'UPDATE_USER_PERMISSIONS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 }

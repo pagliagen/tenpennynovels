@@ -1,4 +1,4 @@
-import { Location, Character } from '../../../../packages/database/models';
+import { Location, Character } from '../../../database/models';
 import { logger } from '../utils/logger';
 
 export interface AccessibleLocation {

@@ -1,6 +1,6 @@
 import nodemailer from 'nodemailer';
 import { logger } from '../utils/logger';
-import { ConfigurationService } from '../../../../packages/shared/src/services/ConfigurationService';
+import { ConfigurationService } from '../../../shared/src/services/ConfigurationService';
 import { Redis } from 'ioredis';
 
 export class EmailService {

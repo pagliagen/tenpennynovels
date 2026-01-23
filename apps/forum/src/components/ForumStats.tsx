@@ -38,7 +38,7 @@ export const ForumStats: React.FC = () => {
 
       const data = await response.json();
       
-      if (data.success && data.data) {
+      if (data.result && data.data) {
         setStats({
           totalDiscussions: data.data.totalDiscussions || 0,
           totalPosts: data.data.totalPosts || 0,

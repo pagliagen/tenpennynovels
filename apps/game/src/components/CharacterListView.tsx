@@ -57,7 +57,7 @@ export const CharacterListView: React.FC<CharacterListViewProps> = () => {
         return;
       }
 
-      if (data.success) {
+      if (data.result) {
         setCharacters(data.data.characters);
       } else {
         setError('Errore nel caricamento dei personaggi');

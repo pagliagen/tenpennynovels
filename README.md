@@ -86,7 +86,7 @@ After starting the services:
 - **Forum**: http://localhost:4003
 - **Management**: http://localhost:4004
 
-For detailed installation instructions, see [docs/TECHNICAL.md](docs/TECHNICAL.md).
+For detailed installation instructions, see [docs/technical.md](docs/technical.md).
 
 ## Development
 
@@ -122,26 +122,30 @@ tenpennynovels/
 │   ├── forum/              # Community forum
 │   ├── management/         # Admin interface
 │   └── tickets/            # Support system
-├── services/               # Backend microservices (4 services)
+├── services/               # Backend Services + Shared Code
 │   ├── api-gateway/        # Central routing
 │   ├── authentication-backend/
 │   ├── game-backend/
-│   └── management-backend/
-├── packages/
-│   ├── shared/            # Common utilities
-│   ├── database/          # Database models
-│   └── shared-ui/         # UI components
-└── docs/                  # Documentation
-    ├── TECHNICAL.md       # Technical documentation
+│   ├── management-backend/
+│   ├── shared/            # Shared utilities, types, models
+│   ├── database/          # MongoDB models (33+ models)
+│   └── config/            # Configuration files (JSON)
+└── docs/                  # Complete documentation
+    ├── technical.md       # Technical documentation
+    ├── api-docs.md        # API documentation
     ├── architecture/      # Architecture guides
     ├── systems/           # System documentation
-    └── gameplay/          # Game mechanics
+    ├── gameplay/          # Game mechanics
+    ├── setup/             # Setup and development guides
+    └── deployment/        # Deployment guides
 ```
 
 ## Documentation
 
-- **[CLAUDE.md](CLAUDE.md)**: Development guidelines and architecture overview
-- **[docs/TECHNICAL.md](docs/TECHNICAL.md)**: Detailed technical documentation
+- **[docs/setup/development-guide.md](docs/setup/development-guide.md)**: Complete development guide and architecture overview
+- **[docs/technical.md](docs/technical.md)**: Detailed technical documentation
+- **[docs/api-docs.md](docs/api-docs.md)**: Complete API documentation with standardized response format
+- **[docs/deployment/](docs/deployment/)**: Production deployment guides
 - **[docs/architecture/](docs/architecture/)**: Architecture documentation
 - **[docs/systems/](docs/systems/)**: System-specific guides
 - **[docs/gameplay/](docs/gameplay/)**: Game mechanics documentation

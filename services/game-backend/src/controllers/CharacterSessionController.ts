@@ -1,8 +1,9 @@
 import { Request, Response } from 'express';
-import { CharacterSession } from '../../../../packages/database/models/CharacterSession';
+import { CharacterSession } from '../../../database/models/CharacterSession';
 import { logger } from '../utils/logger';
 import { AuthUtils } from '../utils/auth';
 import { auditLogger } from '../utils/auditLogger';
+import { successResponse, errorResponse, listResponse, getRequestId } from '../utils/apiResponse';
 
 export class CharacterSessionController {
 
@@ -10,10 +11,13 @@ export class CharacterSessionController {
     try {
       const authResult = AuthUtils.authenticate(req);
       if (!authResult.success) {
-        res.status(401).json({
-          success: false,
-          error: authResult.error
-        });
+        res.status(401).json(errorResponse(
+          authResult.error || 'Authentication failed',
+          'AUTHENTICATION_FAILED',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -54,9 +58,8 @@ export class CharacterSessionController {
         activeSessionCount: formattedSessions.length
       });
 
-      res.json({
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           character: {
             id: character._id,
             name: character.name,
@@ -64,15 +67,20 @@ export class CharacterSessionController {
           },
           sessions: formattedSessions,
           totalActiveSessions: formattedSessions.length
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error retrieving character active sessions:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Internal server error'
-      });
+      res.status(500).json(errorResponse(
+        'Internal server error',
+        'INTERNAL_SERVER_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -80,10 +88,13 @@ export class CharacterSessionController {
     try {
       const authResult = AuthUtils.authenticate(req);
       if (!authResult.success) {
-        res.status(401).json({
-          success: false,
-          error: authResult.error
-        });
+        res.status(401).json(errorResponse(
+          authResult.error || 'Authentication failed',
+          'AUTHENTICATION_FAILED',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -184,9 +195,8 @@ export class CharacterSessionController {
         page: Number(page)
       });
 
-      res.json({
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           character: {
             id: character._id,
             name: character.name,
@@ -200,15 +210,20 @@ export class CharacterSessionController {
             pages: Math.ceil(total / Number(limit))
           },
           statistics: sessionStats
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error retrieving character session history:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Internal server error'
-      });
+      res.status(500).json(errorResponse(
+        'Internal server error',
+        'INTERNAL_SERVER_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -216,10 +231,13 @@ export class CharacterSessionController {
     try {
       const authResult = AuthUtils.authenticate(req);
       if (!authResult.success) {
-        res.status(401).json({
-          success: false,
-          error: authResult.error
-        });
+        res.status(401).json(errorResponse(
+          authResult.error || 'Authentication failed',
+          'AUTHENTICATION_FAILED',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -233,18 +251,24 @@ export class CharacterSessionController {
       });
 
       if (!session) {
-        res.status(404).json({
-          success: false,
-          error: 'Session not found or does not belong to you'
-        });
+        res.status(404).json(errorResponse(
+          'Session not found or does not belong to you',
+          'SESSION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
       if (!session.isActive) {
-        res.status(400).json({
-          success: false,
-          error: 'Session is already inactive'
-        });
+        res.status(400).json(errorResponse(
+          'Session is already inactive',
+          'SESSION_ALREADY_INACTIVE',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -253,10 +277,13 @@ export class CharacterSessionController {
       const currentSession = currentSessionToken ? AuthUtils.decodeCharacterContext(currentSessionToken) : null;
       
       if (currentSession?.sessionId === session.sessionId) {
-        res.status(400).json({
-          success: false,
-          error: 'Cannot invalidate your current session. Please use logout instead.'
-        });
+        res.status(400).json(errorResponse(
+          'Cannot invalidate your current session. Please use logout instead.',
+          'CANNOT_INVALIDATE_CURRENT_SESSION',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -290,24 +317,28 @@ export class CharacterSessionController {
         deviceType: session.deviceInfo.deviceType
       });
 
-      res.json({
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           message: 'Session invalidated successfully',
           invalidatedSession: {
             id: session._id,
             deviceName: session.deviceInfo.deviceName || `${session.deviceInfo.browser} on ${session.deviceInfo.os}`,
             invalidatedAt: session.invalidatedAt
           }
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error invalidating character session:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Internal server error'
-      });
+      res.status(500).json(errorResponse(
+        'Internal server error',
+        'INTERNAL_SERVER_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -315,10 +346,13 @@ export class CharacterSessionController {
     try {
       const authResult = AuthUtils.authenticate(req);
       if (!authResult.success) {
-        res.status(401).json({
-          success: false,
-          error: authResult.error
-        });
+        res.status(401).json(errorResponse(
+          authResult.error || 'Authentication failed',
+          'AUTHENTICATION_FAILED',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -342,13 +376,14 @@ export class CharacterSessionController {
       const otherSessions = await CharacterSession.find(filter);
 
       if (otherSessions.length === 0) {
-        res.status(200).json({
-          success: true,
-          data: {
+        res.json(successResponse(
+          {
             message: 'No other active sessions found',
             invalidatedCount: 0
-          }
-        });
+          },
+          undefined,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -387,20 +422,24 @@ export class CharacterSessionController {
         keptCurrentSession: !!currentSession?.sessionId
       });
 
-      res.json({
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           message: `Successfully signed out from ${updateResult.modifiedCount} other devices`,
           invalidatedCount: updateResult.modifiedCount
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error invalidating all other character sessions:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Internal server error'
-      });
+      res.status(500).json(errorResponse(
+        'Internal server error',
+        'INTERNAL_SERVER_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -408,10 +447,13 @@ export class CharacterSessionController {
     try {
       const authResult = AuthUtils.authenticate(req);
       if (!authResult.success) {
-        res.status(401).json({
-          success: false,
-          error: authResult.error
-        });
+        res.status(401).json(errorResponse(
+          authResult.error || 'Authentication failed',
+          'AUTHENTICATION_FAILED',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -419,19 +461,25 @@ export class CharacterSessionController {
       const currentSessionToken = req.cookies?.character_context;
       
       if (!currentSessionToken) {
-        res.status(400).json({
-          success: false,
-          error: 'No active character session found'
-        });
+        res.status(400).json(errorResponse(
+          'No active character session found',
+          'NO_ACTIVE_SESSION',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       const currentSessionData = AuthUtils.decodeCharacterContext(currentSessionToken);
       if (!currentSessionData) {
-        res.status(400).json({
-          success: false,
-          error: 'Invalid session token'
-        });
+        res.status(400).json(errorResponse(
+          'Invalid session token',
+          'INVALID_SESSION_TOKEN',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -443,10 +491,13 @@ export class CharacterSessionController {
       });
 
       if (!session) {
-        res.status(404).json({
-          success: false,
-          error: 'Session not found in database'
-        });
+        res.status(404).json(errorResponse(
+          'Session not found in database',
+          'SESSION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -479,19 +530,23 @@ export class CharacterSessionController {
         characterId: character._id
       });
 
-      res.json({
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           currentSession
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error retrieving current character session:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Internal server error'
-      });
+      res.status(500).json(errorResponse(
+        'Internal server error',
+        'INTERNAL_SERVER_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 }

@@ -7,6 +7,7 @@ import {
 } from '../types/management';
 import { AdminAuthMiddleware } from '../middleware/adminAuth';
 import { logger } from '../utils/logger';
+import { successResponse, errorResponse, updateResponse, getRequestId } from '../utils/apiResponse';
 
 export class SystemConfigController {
   /**
@@ -56,13 +57,11 @@ export class SystemConfigController {
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       logger.info('Admin viewed system configuration', auditInfo);
 
-      const response: ApiResponse<SystemConfig> = {
-        success: true,
-        data: mockConfig,
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+      res.json(successResponse(
+        mockConfig,
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error fetching system config:', { 
         error: error instanceof Error ? error.message : String(error),
@@ -72,14 +71,13 @@ export class SystemConfigController {
         params: req.params
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare la configurazione di sistema',
-        code: 'FETCH_SYSTEM_CONFIG_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare la configurazione di sistema',
+        'FETCH_SYSTEM_CONFIG_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -93,13 +91,13 @@ export class SystemConfigController {
       const { reason } = req.body;
 
       if (!reason || reason.trim().length === 0) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Il motivo dell\'aggiornamento è richiesto',
-          code: 'UPDATE_REASON_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Il motivo dell\'aggiornamento è richiesto',
+          'UPDATE_REASON_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -132,16 +130,14 @@ export class SystemConfigController {
       //   timestamp: new Date().toISOString()
       // });
 
-      const response: ApiResponse<{ action: string; reason: string }> = {
-        success: true,
-        data: {
+      res.json(updateResponse(
+        {
           action: 'configuration_updated',
           reason
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error updating system config:', { 
         error: error instanceof Error ? error.message : String(error),
@@ -151,14 +147,13 @@ export class SystemConfigController {
         params: req.params
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile aggiornare la configurazione di sistema',
-        code: 'UPDATE_SYSTEM_CONFIG_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile aggiornare la configurazione di sistema',
+        'UPDATE_SYSTEM_CONFIG_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -171,24 +166,24 @@ export class SystemConfigController {
       const { enabled, message, allowedUsers, estimatedCompletion } = req.body;
 
       if (typeof enabled !== 'boolean') {
-        const response: ApiResponse = {
-          success: false,
-          error: 'enabled deve essere un booleano',
-          code: 'INVALID_MAINTENANCE_MODE',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'enabled deve essere un booleano',
+          'INVALID_MAINTENANCE_MODE',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       if (enabled && (!message || message.trim().length === 0)) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Il messaggio di manutenzione è richiesto quando si attiva la modalità manutenzione',
-          code: 'MAINTENANCE_MESSAGE_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Il messaggio di manutenzione è richiesto quando si attiva la modalità manutenzione',
+          'MAINTENANCE_MESSAGE_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -209,27 +204,24 @@ export class SystemConfigController {
         category: 'system_configuration'
       });
 
-      const response: ApiResponse<{ enabled: boolean; message?: string }> = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           enabled,
           message: enabled ? message : undefined
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error setting maintenance mode:', { error: error instanceof Error ? error.message : String(error) });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile impostare la modalità manutenzione',
-        code: 'SET_MAINTENANCE_MODE_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile impostare la modalità manutenzione',
+        'SET_MAINTENANCE_MODE_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -320,27 +312,24 @@ export class SystemConfigController {
         limit
       });
 
-      const response: ApiResponse<{ logs: AuditLog[]; pagination: PaginationInfo }> = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           logs: mockAuditLogs,
           pagination: mockPagination
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error fetching audit logs:', { error: error instanceof Error ? error.message : String(error) });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare i log di audit',
-        code: 'FETCH_AUDIT_LOGS_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare i log di audit',
+        'FETCH_AUDIT_LOGS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -353,13 +342,13 @@ export class SystemConfigController {
       const { logs } = req.body;
 
       if (!logs || !Array.isArray(logs) || logs.length === 0) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Dati log non validi',
-          code: 'INVALID_LOGS_DATA',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Dati log non validi',
+          'INVALID_LOGS_DATA',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -405,26 +394,23 @@ export class SystemConfigController {
       //   timestamp: new Date().toISOString()
       // });
 
-      const response: ApiResponse<{ processed: number }> = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           processed: processedLogs.length
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error processing audit logs:', { error: error instanceof Error ? error.message : String(error) });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile elaborare i log di audit',
-        code: 'PROCESS_AUDIT_LOGS_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile elaborare i log di audit',
+        'PROCESS_AUDIT_LOGS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -464,14 +450,13 @@ audit_2,2024-01-15T13:15:00Z,admin,user_banned,user_management,user,user123,high
     } catch (error: any) {
       logger.error('Error exporting audit logs:', { error: error instanceof Error ? error.message : String(error) });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile esportare i log di audit',
-        code: 'EXPORT_AUDIT_LOGS_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile esportare i log di audit',
+        'EXPORT_AUDIT_LOGS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -485,7 +470,7 @@ audit_2,2024-01-15T13:15:00Z,admin,user_banned,user_management,user,user123,high
       const { User } = await import('../models/User');
       const { Character } = await import('../models/Character');
       const { Location } = await import('../models/Location');
-      const { CharacterWallet, Transaction } = await import('../../../../packages/database/models/Economy');
+      const { CharacterWallet, Transaction } = await import('../database/models/Economy');
 
       // Calculate date ranges
       const now = new Date();
@@ -599,27 +584,24 @@ audit_2,2024-01-15T13:15:00Z,admin,user_banned,user_management,user,user123,high
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       logger.info('Admin viewed system statistics', auditInfo);
 
-      const response: ApiResponse<any> = {
-        success: true,
-        data: stats,
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+      res.json(successResponse(
+        stats,
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error fetching system stats:', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined
       });
 
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare le statistiche di sistema',
-        code: 'FETCH_SYSTEM_STATS_ERROR',
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare le statistiche di sistema',
+        'FETCH_SYSTEM_STATS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -632,29 +614,29 @@ audit_2,2024-01-15T13:15:00Z,admin,user_banned,user_management,user,user123,high
       const { message, type, targetAudience = 'all', targetRoles = [], urgent = false } = req.body;
 
       if (!message || message.trim().length === 0) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Il messaggio broadcast è richiesto',
-          code: 'BROADCAST_MESSAGE_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Il messaggio broadcast è richiesto',
+          'BROADCAST_MESSAGE_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       if (!type || !['info', 'warning', 'emergency'].includes(type)) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Tipo di broadcast non valido',
-          code: 'INVALID_BROADCAST_TYPE',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Tipo di broadcast non valido',
+          'INVALID_BROADCAST_TYPE',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Dynamic imports to avoid circular dependencies
-      const { BroadcastMessage } = await import('../../../../packages/database/models/BroadcastMessage');
+      const { BroadcastMessage } = await import('../database/models/BroadcastMessage');
       const { User } = await import('../models/User');
 
       // Calculate target count based on audience
@@ -716,27 +698,24 @@ audit_2,2024-01-15T13:15:00Z,admin,user_banned,user_management,user,user123,high
         category: 'system_configuration'
       });
 
-      const response: ApiResponse<{ broadcastId: string; targetCount: number }> = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           broadcastId: broadcastDoc._id.toString(),
           targetCount
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error broadcasting message:', { error: error instanceof Error ? error.message : String(error) });
 
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile trasmettere il messaggio',
-        code: 'BROADCAST_MESSAGE_ERROR',
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile trasmettere il messaggio',
+        'BROADCAST_MESSAGE_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -751,7 +730,7 @@ audit_2,2024-01-15T13:15:00Z,admin,user_banned,user_management,user,user123,high
       const type = req.query.type as string; // Optional filter by type
 
       // Dynamic import to avoid circular dependencies
-      const { BroadcastMessage } = await import('../../../../packages/database/models/BroadcastMessage');
+      const { BroadcastMessage } = await import('../database/models/BroadcastMessage');
 
       // Build query
       const query: any = {};
@@ -791,12 +770,8 @@ audit_2,2024-01-15T13:15:00Z,admin,user_banned,user_management,user,user123,high
         category: 'system_configuration'
       });
 
-      const response: ApiResponse<{
-        messages: any[];
-        pagination: { total: number; limit: number; offset: number; hasMore: boolean }
-      }> = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           messages: transformedMessages,
           pagination: {
             total: totalCount,
@@ -805,21 +780,19 @@ audit_2,2024-01-15T13:15:00Z,admin,user_banned,user_management,user,user123,high
             hasMore: offset + messages.length < totalCount
           }
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error retrieving broadcast history:', { error: error instanceof Error ? error.message : String(error) });
 
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare la cronologia dei broadcast',
-        code: 'BROADCAST_HISTORY_ERROR',
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare la cronologia dei broadcast',
+        'BROADCAST_HISTORY_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -835,7 +808,7 @@ audit_2,2024-01-15T13:15:00Z,admin,user_banned,user_management,user,user123,high
   static async getConfigurations(req: Request, res: Response): Promise<void> {
     try {
       const { section } = req.query;
-      const { SystemConfiguration } = await import('../../../../packages/database/models');
+      const { SystemConfiguration } = await import('../../../database/models');
 
       let query: any = {};
       if (section && typeof section === 'string') {
@@ -853,27 +826,24 @@ audit_2,2024-01-15T13:15:00Z,admin,user_banned,user_management,user,user123,high
         count: configs.length
       });
 
-      const response: ApiResponse<any> = {
-        success: true,
-        data: { configs },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+      res.json(successResponse(
+        { configs },
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error fetching system configurations:', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined
       });
 
-      const response: ApiResponse = {
-        success: false,
-        error: 'Errore nel recupero delle configurazioni di sistema',
-        code: 'FETCH_CONFIGURATIONS_ERROR',
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Errore nel recupero delle configurazioni di sistema',
+        'FETCH_CONFIGURATIONS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -884,18 +854,18 @@ audit_2,2024-01-15T13:15:00Z,admin,user_banned,user_management,user,user123,high
   static async getConfigurationByKey(req: Request, res: Response): Promise<void> {
     try {
       const { configKey } = req.params;
-      const { SystemConfiguration } = await import('../../../../packages/database/models');
+      const { SystemConfiguration } = await import('../../../database/models');
 
       const config = await SystemConfiguration.findOne({ configKey }).lean();
 
       if (!config) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Configurazione non trovata',
-          code: 'CONFIGURATION_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Configurazione non trovata',
+          'CONFIGURATION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -905,27 +875,24 @@ audit_2,2024-01-15T13:15:00Z,admin,user_banned,user_management,user,user123,high
         configKey
       });
 
-      const response: ApiResponse<any> = {
-        success: true,
-        data: { config },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+      res.json(successResponse(
+        { config },
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error fetching configuration:', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined
       });
 
-      const response: ApiResponse = {
-        success: false,
-        error: 'Errore nel recupero della configurazione',
-        code: 'FETCH_CONFIGURATION_ERROR',
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Errore nel recupero della configurazione',
+        'FETCH_CONFIGURATION_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -940,18 +907,18 @@ audit_2,2024-01-15T13:15:00Z,admin,user_banned,user_management,user,user123,high
       const { value, updateReason } = req.body;
 
       if (value === undefined) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Il campo value è obbligatorio',
-          code: 'VALUE_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Il campo value è obbligatorio',
+          'VALUE_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Initialize ConfigurationService
-      const { ConfigurationService } = await import('../../../../packages/shared/src/services/ConfigurationService');
+      const { ConfigurationService } = await import('../../../shared/src/services/ConfigurationService');
       const { getRedisClient } = await import('../config/redis');
       const configService = new ConfigurationService(getRedisClient(), logger);
 
@@ -967,13 +934,13 @@ audit_2,2024-01-15T13:15:00Z,admin,user_banned,user_management,user,user123,high
       );
 
       if (!updatedConfig) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Configurazione non trovata',
-          code: 'CONFIGURATION_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Configurazione non trovata',
+          'CONFIGURATION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -986,30 +953,27 @@ audit_2,2024-01-15T13:15:00Z,admin,user_banned,user_management,user,user123,high
         category: 'system_configuration'
       });
 
-      const response: ApiResponse<any> = {
-        success: true,
-        data: {
+      res.json(updateResponse(
+        {
           message: 'Configurazione aggiornata con successo',
           config: updatedConfig
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error updating configuration:', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined
       });
 
-      const response: ApiResponse = {
-        success: false,
-        error: 'Errore nell\'aggiornamento della configurazione',
-        code: 'UPDATE_CONFIGURATION_ERROR',
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Errore nell\'aggiornamento della configurazione',
+        'UPDATE_CONFIGURATION_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -1020,7 +984,7 @@ audit_2,2024-01-15T13:15:00Z,admin,user_banned,user_management,user,user123,high
   static async invalidateConfigCache(req: Request, res: Response): Promise<void> {
     try {
       // Initialize ConfigurationService
-      const { ConfigurationService } = await import('../../../../packages/shared/src/services/ConfigurationService');
+      const { ConfigurationService } = await import('../../../shared/src/services/ConfigurationService');
       const { getRedisClient } = await import('../config/redis');
       const configService = new ConfigurationService(getRedisClient(), logger);
 
@@ -1033,29 +997,26 @@ audit_2,2024-01-15T13:15:00Z,admin,user_banned,user_management,user,user123,high
         category: 'system_configuration'
       });
 
-      const response: ApiResponse<any> = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           message: 'Cache delle configurazioni invalidata con successo'
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error invalidating configuration cache:', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined
       });
 
-      const response: ApiResponse = {
-        success: false,
-        error: 'Errore nell\'invalidazione della cache',
-        code: 'INVALIDATE_CACHE_ERROR',
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Errore nell\'invalidazione della cache',
+        'INVALIDATE_CACHE_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 }

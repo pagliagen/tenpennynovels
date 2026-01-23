@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { redis } from '../config/redis';
-import { ApiResponse } from '../../../../packages/shared/types';
+import { ApiResponse } from '../../../shared/types';
 import { RateLimitConfig } from '../types/auth';
 import { logger, logRate } from '../utils/logger';
 

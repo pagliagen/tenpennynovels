@@ -105,7 +105,7 @@ export default function ConfigurationsPage({ authContext }: PageProps) {
       });
 
       const result = await response.json();
-      if (result.success) {
+      if (result.result) {
         showToast('Configurazione aggiornata con successo', 'success');
         cancelEdit();
         await fetchConfigurations();
@@ -126,7 +126,7 @@ export default function ConfigurationsPage({ authContext }: PageProps) {
       });
 
       const result = await response.json();
-      if (result.success) {
+      if (result.result) {
         showToast('Cache invalidata con successo', 'success');
       }
     } catch (error: any) {

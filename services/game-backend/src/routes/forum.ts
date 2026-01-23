@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { AuthMiddleware } from '../middleware/auth';
-import { banChecks } from '../../../../packages/shared/src/middleware/banCheck';
+import { banChecks } from '../../../shared/src/middleware/banCheck';
 import { ForumController } from '../controllers/ForumController';
 import rateLimit from 'express-rate-limit';
 

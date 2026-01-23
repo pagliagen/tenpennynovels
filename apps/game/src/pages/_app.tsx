@@ -27,7 +27,7 @@ export default function App({ Component, pageProps }: AppProps) {
       try {
         // console.log('🎮 App: Initializing game');
         const result = await GameApiService.initGame();
-        if (result.success) {
+        if (result.result) {
           // console.log('🎮 App: Game initialized successfully');
           setGameData(result);
         } else {
@@ -91,10 +91,10 @@ export default function App({ Component, pageProps }: AppProps) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>TenpennyNovels Londra vittoriana</title>
         {/* Favicon */}
+        <link rel="icon" href="/favicon.ico" />
         <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png" />
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png" />
         <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png" />
-        <link rel="icon" href="/favicon/favicon.ico" />
         <meta name="theme-color" content="#8B4513" />
       </Head>
       

@@ -7,7 +7,7 @@ import type { CharacterCreationConfig } from '../../../../packages/shared/src/se
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'https://api.tenpennynovels.com';
 
 export interface GameInitResponse {
-  success: boolean;
+  result: boolean;
   character?: {
     id: string;
     name: string;
@@ -107,7 +107,7 @@ export interface GameInitResponse {
 }
 
 export interface PingResponse {
-  success: boolean;
+  result: boolean;
   valid: boolean;
   error?: string;
   redirectTo?: string; // If auth is invalid, redirect back to landing
@@ -161,9 +161,9 @@ export class GameApiService {
 
       const data = await response.json();
       
-      if (!response.ok) {
+      if (!response.ok || !data.result) {
         return {
-          success: false,
+          result: false,
           error: data.error || 'Failed to initialize game'
         };
       }
@@ -197,13 +197,13 @@ export class GameApiService {
       }
 
       return {
-        success: true,
+        result: true,
         ...responseData
       };
     } catch (error) {
       console.error('Game initialization failed:', error);
       return {
-        success: false,
+        result: false,
         error: 'Network error during game initialization'
       };
     }
@@ -225,9 +225,9 @@ export class GameApiService {
 
       const data = await response.json();
       
-      if (!response.ok) {
+      if (!response.ok || !data.result) {
         return {
-          success: false,
+          result: false,
           valid: false,
           error: data.error || 'Authentication validation failed',
           redirectTo: process.env.NEXT_PUBLIC_LANDING_URL || 'https://tenpennynovels.com'
@@ -235,13 +235,13 @@ export class GameApiService {
       }
 
       return {
-        success: true,
-        valid: data.valid || true
+        result: true,
+        valid: data.data?.valid || true
       };
     } catch (error) {
       console.error('Ping failed:', error);
       return {
-        success: false,
+        result: false,
         valid: false,
         error: 'Network error during authentication check',
         redirectTo: process.env.LANDING_URL || 'https://game.tenpennynovels.com'
@@ -252,7 +252,7 @@ export class GameApiService {
   /**
    * Set character's current location
    */
-  static async setCharacterLocation(locationId: string): Promise<{ success: boolean; error?: string }> {
+  static async setCharacterLocation(locationId: string): Promise<{ result: boolean; error?: string }> {
     try {
       const response = await fetch(`${API_BASE_URL}/game/characters/set-location`, {
         method: 'POST',
@@ -265,18 +265,18 @@ export class GameApiService {
 
       const data = await response.json();
       
-      if (!response.ok) {
+      if (!response.ok || !data.result) {
         return {
-          success: false,
+          result: false,
           error: data.error || 'Failed to set character location'
         };
       }
 
-      return { success: true };
+      return { result: true };
     } catch (error) {
       console.error('Set character location failed:', error);
       return {
-        success: false,
+        result: false,
         error: 'Network error during location update'
       };
     }
@@ -297,22 +297,22 @@ export class GameApiService {
 
       const data = await response.json();
       
-      if (!response.ok) {
+      if (!response.ok || !data.result) {
         return {
-          success: false,
+          result: false,
           error: data.error || 'Failed to get location'
         };
       }
 
       return {
-        success: true,
+        result: true,
         location: data.data.location,
         chatHistory: data.data.chatHistory || []
       };
     } catch (error) {
       console.error('Get location failed:', error);
       return {
-        success: false,
+        result: false,
         error: 'Network error during location fetch'
       };
     }
@@ -345,7 +345,7 @@ export class GameApiService {
 
 // Additional interfaces for location functionality
 export interface LocationResponse {
-  success: boolean;
+  result: boolean;
   location?: {
     id: string;
     name: string;

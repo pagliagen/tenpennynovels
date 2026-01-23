@@ -3,7 +3,7 @@ import { LoginCredentials } from '@/types/index';
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL;
 
 export interface AuthResponse {
-  success: boolean;
+  result: boolean;
   user?: {
     id: string;
     username: string;
@@ -29,7 +29,7 @@ export interface RegisterData {
 }
 
 export interface RegisterResponse {
-  success: boolean;
+  result: boolean;
   message?: string;
   error?: string;
 }
@@ -51,22 +51,22 @@ export class AuthService {
 
       const data = await response.json();
 
-      if (!response.ok) {
+      if (!response.ok || !data.result) {
         return {
-          success: false,
+          result: false,
           error: data.error || 'Errore durante il login',
           code: data.code
         };
       }
 
       return {
-        success: true,
+        result: true,
         user: data.data.user
       };
     } catch (error) {
       console.error('Errore login:', error);
       return {
-        success: false,
+        result: false,
         error: 'Errore di connessione'
       };
     }
@@ -88,21 +88,21 @@ export class AuthService {
 
       const data = await response.json();
 
-      if (!response.ok) {
+      if (!response.ok || !data.result) {
         return {
-          success: false,
+          result: false,
           error: data.error || 'Errore durante la registrazione'
         };
       }
 
       return {
-        success: true,
+        result: true,
         message: data.message || 'Registrazione completata'
       };
     } catch (error) {
       console.error('Errore registrazione:', error);
       return {
-        success: false,
+        result: false,
         error: 'Errore di connessione'
       };
     }
@@ -145,7 +145,7 @@ export class AuthService {
       const data = await response.json();
       
       // Handle the nested response structure from the API
-      if (data.success && data.data && data.data.availability) {
+      if (data.result && data.data && data.data.availability) {
         return data.data.availability[field]?.available || false;
       }
       
@@ -169,21 +169,21 @@ export class AuthService {
 
       const data = await response.json();
 
-      if (!response.ok) {
+      if (!response.ok || !data.result) {
         return {
-          success: false,
+          result: false,
           error: data.error || 'Errore durante il recupero del profilo'
         };
       }
 
       return {
-        success: true,
+        result: true,
         user: data.data.user
       };
     } catch (error) {
       console.error('Errore profilo:', error);
       return {
-        success: false,
+        result: false,
         error: 'Errore di connessione'
       };
     }
@@ -205,21 +205,21 @@ export class AuthService {
 
       const data = await response.json();
 
-      if (!response.ok) {
+      if (!response.ok || !data.result) {
         return {
-          success: false,
+          result: false,
           error: data.error || 'Errore durante il reinvio della verifica'
         };
       }
 
       return {
-        success: true,
+        result: true,
         message: data.message || 'Email di verifica inviata'
       };
     } catch (error) {
       console.error('Errore resend verification:', error);
       return {
-        success: false,
+        result: false,
         error: 'Errore di connessione'
       };
     }
@@ -240,21 +240,21 @@ export class AuthService {
 
       const data = await response.json();
 
-      if (!response.ok) {
+      if (!response.ok || !data.result) {
         return {
-          success: false,
+          result: false,
           error: data.error || 'Errore durante il reset password'
         };
       }
 
       return {
-        success: true,
+        result: true,
         message: data.message || 'Email di reset inviata'
       };
     } catch (error) {
       console.error('Errore reset password:', error);
       return {
-        success: false,
+        result: false,
         error: 'Errore di connessione'
       };
     }
@@ -275,7 +275,7 @@ export class AuthService {
       }
 
       const data = await response.json();
-      return data.sessions || [];
+      return data.list || [];
     } catch (error) {
       console.error('Errore sessioni:', error);
       return [];
@@ -321,9 +321,9 @@ export class AuthService {
 
       const data = await response.json();
 
-      if (!response.ok) {
+      if (!response.ok || !data.result) {
         return {
-          success: false,
+          result: false,
           error: data.error || 'Errore durante la creazione del personaggio',
           code: data.code,
           details: data.details // ← Passa i dettagli di validazione
@@ -331,13 +331,13 @@ export class AuthService {
       }
 
       return {
-        success: true,
+        result: true,
         user: data.data.character
       };
     } catch (error) {
       console.error('Errore creazione personaggio:', error);
       return {
-        success: false,
+        result: false,
         error: 'Errore di connessione'
       };
     }
@@ -359,21 +359,21 @@ export class AuthService {
 
       const data = await response.json();
 
-      if (!response.ok) {
+      if (!response.ok || !data.result) {
         return {
-          success: false,
+          result: false,
           error: data.error || 'Errore durante la selezione del personaggio'
         };
       }
 
       return {
-        success: true,
-        user: data.user
+        result: true,
+        user: data.data.character
       };
     } catch (error) {
       console.error('Errore selezione personaggio:', error);
       return {
-        success: false,
+        result: false,
         error: 'Errore di connessione'
       };
     }

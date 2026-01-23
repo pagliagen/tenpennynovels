@@ -1,9 +1,10 @@
 import { Request, Response } from 'express';
-import { Ticket, TicketMessage, Character } from '../../../../packages/database/models';
+import { Ticket, TicketMessage, Character } from '../../../database/models';
 import { ApiResponse, TicketCategory, TicketPriority, TicketDepartment, TICKET_CATEGORIES, CATEGORY_DEPARTMENT_MAPPING, CATEGORY_PRIORITY_MAPPING } from '../types/game';
 import { logger } from '../utils/logger';
 import { AuthMiddleware } from '../middleware/auth';
 import { getRedisPublisher } from '../config/redis';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
 
 export class TicketController {
   /**
@@ -85,21 +86,19 @@ export class TicketController {
         escalationLevel: ticket.escalationLevel || 0
       }));
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
-          tickets: formattedTickets,
-          pagination: {
-            currentPage: pageNum,
-            totalPages: Math.ceil(totalCount / limitNum),
-            totalCount,
-            hasMore: skip + tickets.length < totalCount
-          }
+      res.json(listResponse(
+        formattedTickets,
+        {
+          page: pageNum,
+          pageSize: limitNum,
+          total: totalCount,
+          totalPages: Math.ceil(totalCount / limitNum),
+          hasNext: skip + tickets.length < totalCount,
+          hasPrev: pageNum > 1
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -109,14 +108,13 @@ export class TicketController {
         stack: err.stack
       });
 
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare i ticket',
-        code: 'FETCH_TICKETS_ERROR',
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare i ticket',
+        'FETCH_TICKETS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -139,38 +137,38 @@ export class TicketController {
 
       // Validazione input
       if (!title || !category || !content) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Titolo, categoria e contenuto sono obbligatori',
-          code: 'VALIDATION_ERROR',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Titolo, categoria e contenuto sono obbligatori',
+          'VALIDATION_ERROR',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Verifica che la categoria sia valida
       if (!Object.values(TicketCategory).includes(category)) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Categoria ticket non valida',
-          code: 'INVALID_CATEGORY',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Categoria ticket non valida',
+          'INVALID_CATEGORY',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Tutti i personaggi possono creare ticket (anche DRAFT/PENDING per supporto approvazione)
       const character = await Character.findById(characterId);
       if (!character) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Personaggio non trovato',
-          code: 'CHARACTER_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Personaggio non trovato',
+          'CHARACTER_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -234,10 +232,8 @@ export class TicketController {
         source: 'game-backend'
       }));
 
-      // Risposta success
-      const response: ApiResponse = {
-        success: true,
-        data: {
+      res.status(201).json(createResponse(
+        {
           ticket: {
             id: ticket._id.toString(),
             title: ticket.title,
@@ -250,11 +246,9 @@ export class TicketController {
             unreadMessages: 0
           }
         },
-        message: 'Ticket creato con successo',
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(201).json(response);
+        'Ticket creato con successo',
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -265,14 +259,13 @@ export class TicketController {
         stack: err.stack
       });
 
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile creare il ticket',
-        code: 'CREATE_TICKET_ERROR',
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile creare il ticket',
+        'CREATE_TICKET_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -297,13 +290,13 @@ export class TicketController {
       }).lean();
 
       if (!ticket) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Ticket non trovato',
-          code: 'TICKET_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Ticket non trovato',
+          'TICKET_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -331,15 +324,13 @@ export class TicketController {
         escalationLevel: ticket.escalationLevel || 0
       };
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           ticket: ticketDetails
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -350,14 +341,13 @@ export class TicketController {
         stack: err.stack
       });
 
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare i dettagli del ticket',
-        code: 'FETCH_TICKET_ERROR',
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare i dettagli del ticket',
+        'FETCH_TICKET_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -397,13 +387,13 @@ export class TicketController {
       );
 
       if (!ticket) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Ticket non trovato o non può essere riaperto',
-          code: 'TICKET_NOT_REOPENABLE',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Ticket non trovato o non può essere riaperto',
+          'TICKET_NOT_REOPENABLE',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -447,19 +437,16 @@ export class TicketController {
         source: 'game-backend'
       }));
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
+      res.json(updateResponse(
+        {
           ticket: {
             id: ticket._id.toString(),
             status: ticket.status
           }
         },
-        message: 'Ticket riaperto con successo',
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        'Ticket riaperto con successo',
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -470,14 +457,13 @@ export class TicketController {
         stack: err.stack
       });
 
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile riaprire il ticket',
-        code: 'REOPEN_TICKET_ERROR',
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile riaprire il ticket',
+        'REOPEN_TICKET_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -498,13 +484,13 @@ export class TicketController {
       });
 
       if (!content || !content.trim()) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Il contenuto del messaggio è obbligatorio',
-          code: 'VALIDATION_ERROR',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Il contenuto del messaggio è obbligatorio',
+          'VALIDATION_ERROR',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -516,13 +502,13 @@ export class TicketController {
       });
 
       if (!ticket) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Ticket non trovato o chiuso',
-          code: 'TICKET_NOT_FOUND_OR_CLOSED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Ticket non trovato o chiuso',
+          'TICKET_NOT_FOUND_OR_CLOSED',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -570,9 +556,8 @@ export class TicketController {
         source: 'game-backend'
       }));
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
+      res.status(201).json(createResponse(
+        {
           message: {
             id: message._id.toString(),
             content: message.content,
@@ -581,11 +566,9 @@ export class TicketController {
             isFromCurrentUser: true
           }
         },
-        message: 'Messaggio aggiunto con successo',
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(201).json(response);
+        'Messaggio aggiunto con successo',
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -596,14 +579,13 @@ export class TicketController {
         stack: err.stack
       });
 
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile aggiungere il messaggio',
-        code: 'ADD_MESSAGE_ERROR',
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile aggiungere il messaggio',
+        'ADD_MESSAGE_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -628,13 +610,13 @@ export class TicketController {
       });
 
       if (!ticket) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Ticket non trovato',
-          code: 'TICKET_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Ticket non trovato',
+          'TICKET_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -666,15 +648,13 @@ export class TicketController {
         readAt: msg.readAt
       }));
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           messages: formattedMessages
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -685,14 +665,13 @@ export class TicketController {
         stack: err.stack
       });
 
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare i messaggi',
-        code: 'FETCH_MESSAGES_ERROR',
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare i messaggi',
+        'FETCH_MESSAGES_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -725,13 +704,13 @@ export class TicketController {
       );
 
       if (!ticket) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Ticket non trovato',
-          code: 'TICKET_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Ticket non trovato',
+          'TICKET_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -747,13 +726,11 @@ export class TicketController {
         }
       );
 
-      const response: ApiResponse = {
-        success: true,
-        message: 'Ticket segnato come letto',
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+      res.json(successResponse(
+        undefined,
+        'Ticket segnato come letto',
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -764,14 +741,13 @@ export class TicketController {
         stack: err.stack
       });
 
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile segnare il ticket come letto',
-        code: 'MARK_READ_ERROR',
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile segnare il ticket come letto',
+        'MARK_READ_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -790,15 +766,13 @@ export class TicketController {
         priority: CATEGORY_PRIORITY_MAPPING[value as TicketCategory] || TicketPriority.LOW
       }));
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           categories
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -807,14 +781,13 @@ export class TicketController {
         stack: err.stack
       });
 
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare le categorie',
-        code: 'FETCH_CATEGORIES_ERROR',
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare le categorie',
+        'FETCH_CATEGORIES_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -855,15 +828,13 @@ export class TicketController {
 
       const totalUnread = unreadCount.length > 0 ? unreadCount[0].unreadCount : 0;
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           unreadCount: totalUnread
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -873,14 +844,13 @@ export class TicketController {
         stack: err.stack
       });
 
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare il conteggio non letti',
-        code: 'FETCH_UNREAD_COUNT_ERROR',
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare il conteggio non letti',
+        'FETCH_UNREAD_COUNT_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 }

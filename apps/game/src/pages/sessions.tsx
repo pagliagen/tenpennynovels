@@ -79,7 +79,7 @@ const SessionsPage: NextPage = () => {
         credentials: 'include'
       });
       const data = await response.json();
-      if (data.success) {
+      if (data.result) {
         setSessions(data.data.sessions);
       }
     } catch (error) {
@@ -93,7 +93,7 @@ const SessionsPage: NextPage = () => {
         credentials: 'include'
       });
       const data = await response.json();
-      if (data.success) {
+      if (data.result) {
         setMySessions(data.data.sessions);
       }
     } catch (error) {
@@ -111,7 +111,7 @@ const SessionsPage: NextPage = () => {
       });
 
       const data = await response.json();
-      if (data.success) {
+      if (data.result) {
         loadSessions();
         loadMySessions();
         alert('Successfully joined the session!');
@@ -134,7 +134,7 @@ const SessionsPage: NextPage = () => {
       });
 
       const data = await response.json();
-      if (data.success) {
+      if (data.result) {
         loadSessions();
         loadMySessions();
         alert('Successfully left the session');

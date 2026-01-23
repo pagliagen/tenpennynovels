@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { logger } from '../utils/logger';
+import { errorResponse, getRequestId } from '../utils/apiResponse';
 
 export interface AppError extends Error {
   statusCode?: number;
@@ -74,14 +75,13 @@ export function errorHandler(
   }
   
   // Send error response
-  res.status(statusCode).json({
-    success: false,
-    error: message,
+  res.status(statusCode).json(errorResponse(
+    message,
     code,
-    ...(process.env.NODE_ENV === 'development' && {
-      stack: err.stack
-    })
-  });
+    process.env.NODE_ENV === 'development' ? { stack: err.stack } : undefined,
+    statusCode,
+    getRequestId(req)
+  ));
 }
 
 /**

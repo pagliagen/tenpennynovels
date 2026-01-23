@@ -1,7 +1,8 @@
 import { Request, Response } from 'express';
-import { Character, OnGameMessage, OffGameChatMessage, Location, VictorianMessageType, LocationMessageType } from '../../../../packages/database/models';
+import { Character, OnGameMessage, OffGameChatMessage, Location, VictorianMessageType, LocationMessageType } from '../../../database/models';
 import { ApiResponse } from '../types/game';
 import { logger } from '../utils/logger';
+import { successResponse, errorResponse, listResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
 
 export class MessageController {
   /**
@@ -17,27 +18,26 @@ export class MessageController {
       // Get sender character
       const sender = await (Character.findById(characterId) as any);
       if (!sender) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Personaggio mittente non trovato',
-          code: 'SENDER_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Personaggio mittente non trovato',
+          'SENDER_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Validate message type
       const validTypes: MessageType[] = ['letter', 'telegram', 'postcard', 'invitation', 'official_document'];
       if (!validTypes.includes(messageType)) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Tipo di messaggio non valido',
-          code: 'INVALID_MESSAGE_TYPE',
-          details: { validTypes },
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Tipo di messaggio non valido',
+          'INVALID_MESSAGE_TYPE',
+          { validTypes },
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -48,13 +48,13 @@ export class MessageController {
       }) as any);
 
       if (recipientCharacters.length !== recipients.length) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Uno o più destinatari non trovati',
-          code: 'RECIPIENTS_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Uno o più destinatari non trovati',
+          'RECIPIENTS_NOT_FOUND',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -107,9 +107,8 @@ export class MessageController {
         deliveryTime: deliveredAt
       });
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
+      res.status(201).json(createResponse(
+        {
           messages: messages.map((msg: any) => ({
             id: msg.id,
             recipientId: msg.recipientId,
@@ -124,10 +123,9 @@ export class MessageController {
             deliveryMethod: messageType
           }
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(201).json(response);
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -137,14 +135,13 @@ export class MessageController {
         name: err.name
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile inviare il messaggio',
-        code: 'SEND_MESSAGE_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile inviare il messaggio',
+        'SEND_MESSAGE_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -175,32 +172,30 @@ export class MessageController {
         deliveredAt: { $lte: new Date() }
       }) as any);
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
-          messages: messages.map((msg: any) => ({
-            id: msg.id,
-            senderId: msg.senderId,
-            senderName: msg.senderName,
-            messageType: msg.messageType,
-            subject: msg.subject,
-            status: msg.status,
-            sentAt: msg.sentAt,
-            deliveredAt: msg.deliveredAt,
-            readAt: msg.readAt,
-            isPrivate: msg.isPrivate
-          })),
-          pagination: {
-            currentPage: page,
-            totalPages: Math.ceil(totalMessages / limit),
-            totalMessages,
-            hasMore: skip + messages.length < totalMessages
-          }
+      res.json(listResponse(
+        messages.map((msg: any) => ({
+          id: msg.id,
+          senderId: msg.senderId,
+          senderName: msg.senderName,
+          messageType: msg.messageType,
+          subject: msg.subject,
+          status: msg.status,
+          sentAt: msg.sentAt,
+          deliveredAt: msg.deliveredAt,
+          readAt: msg.readAt,
+          isPrivate: msg.isPrivate
+        })),
+        {
+          page,
+          pageSize: limit,
+          total: totalMessages,
+          totalPages: Math.ceil(totalMessages / limit),
+          hasNext: skip + messages.length < totalMessages,
+          hasPrev: page > 1
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -210,14 +205,13 @@ export class MessageController {
         name: err.name
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare la casella di posta',
-        code: 'GET_INBOX_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare la casella di posta',
+        'GET_INBOX_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -243,31 +237,29 @@ export class MessageController {
         senderId: characterId
       }) as any);
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
-          messages: messages.map((msg: any) => ({
-            id: msg.id,
-            recipientId: msg.recipientId,
-            messageType: msg.messageType,
-            subject: msg.subject,
-            status: msg.status,
-            sentAt: msg.sentAt,
-            deliveredAt: msg.deliveredAt,
-            readAt: msg.readAt,
-            isPrivate: msg.isPrivate
-          })),
-          pagination: {
-            currentPage: page,
-            totalPages: Math.ceil(totalMessages / limit),
-            totalMessages,
-            hasMore: skip + messages.length < totalMessages
-          }
+      res.json(listResponse(
+        messages.map((msg: any) => ({
+          id: msg.id,
+          recipientId: msg.recipientId,
+          messageType: msg.messageType,
+          subject: msg.subject,
+          status: msg.status,
+          sentAt: msg.sentAt,
+          deliveredAt: msg.deliveredAt,
+          readAt: msg.readAt,
+          isPrivate: msg.isPrivate
+        })),
+        {
+          page,
+          pageSize: limit,
+          total: totalMessages,
+          totalPages: Math.ceil(totalMessages / limit),
+          hasNext: skip + messages.length < totalMessages,
+          hasPrev: page > 1
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -277,14 +269,13 @@ export class MessageController {
         name: err.name
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare i messaggi inviati',
-        code: 'GET_SENT_MESSAGES_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare i messaggi inviati',
+        'GET_SENT_MESSAGES_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -306,28 +297,27 @@ export class MessageController {
       }) as any);
 
       if (!message) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Messaggio non trovato',
-          code: 'MESSAGE_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Messaggio non trovato',
+          'MESSAGE_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Check if message is delivered (for recipients)
       if (message.recipientId === characterId && message.deliveredAt > new Date()) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Messaggio non ancora consegnato',
-          code: 'MESSAGE_NOT_DELIVERED',
-          details: {
+        res.status(400).json(errorResponse(
+          'Messaggio non ancora consegnato',
+          'MESSAGE_NOT_DELIVERED',
+          {
             estimatedDelivery: message.deliveredAt
           },
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -338,9 +328,8 @@ export class MessageController {
         await message.save();
       }
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           message: {
             id: message.id,
             senderId: message.senderId,
@@ -357,10 +346,9 @@ export class MessageController {
             metadata: message.metadata
           }
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -370,14 +358,13 @@ export class MessageController {
         name: err.name
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile leggere il messaggio',
-        code: 'READ_MESSAGE_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile leggere il messaggio',
+        'READ_MESSAGE_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -406,13 +393,13 @@ export class MessageController {
       const message = inGameMessage || oocMessage;
 
       if (!message) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Messaggio non trovato o non autorizzato',
-          code: 'MESSAGE_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Messaggio non trovato o non autorizzato',
+          'MESSAGE_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -430,13 +417,13 @@ export class MessageController {
       }
 
       if (!canDelete) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Il messaggio non può essere eliminato',
-          code: 'MESSAGE_NOT_DELETABLE',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Il messaggio non può essere eliminato',
+          'MESSAGE_NOT_DELETABLE',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -448,13 +435,10 @@ export class MessageController {
         deletedBy: userId
       });
 
-      const response: ApiResponse = {
-        success: true,
-        message: 'Message deleted successfully',
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+      res.json(deleteResponse(
+        'Message deleted successfully',
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -464,14 +448,13 @@ export class MessageController {
         name: err.name
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile eliminare il messaggio',
-        code: 'DELETE_MESSAGE_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile eliminare il messaggio',
+        'DELETE_MESSAGE_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -499,19 +482,17 @@ export class MessageController {
         })
       ]) as any[];
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           unreadCounts: {
             inGame: inGameUnread,
             ooc: oocUnread,
             total: inGameUnread + oocUnread
           }
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -521,14 +502,13 @@ export class MessageController {
         name: err.name
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare il conteggio dei non letti',
-        code: 'GET_UNREAD_COUNT_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare il conteggio dei non letti',
+        'GET_UNREAD_COUNT_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 }

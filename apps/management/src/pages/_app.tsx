@@ -56,7 +56,7 @@ export default function App({ Component, pageProps }: AppProps) {
         if (response.ok) {
           const data = await response.json();
           // console.log('✅ API success:', data);
-          if (data.success && data.data) {
+          if (data.result && data.data) {
             const newAuthContext = {
               ...data.data,
               isLoading: false

@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { User, Character } from '../../../../packages/database/models';
+import { User, Character } from '../../../database/models';
 import { ApiResponse } from '../types/auth';
 import { logger, logAuth } from '../utils/logger';
 import { redis } from '../config/redis';
@@ -8,6 +8,7 @@ import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 import { AuthMiddleware } from '../middleware/auth';
 import { EmailService } from '../services/EmailService';
+import { successResponse, errorResponse, updateResponse, getRequestId } from '../utils/apiResponse';
 
 export class ProfileController {
   /**
@@ -21,13 +22,13 @@ export class ProfileController {
       const user = await User.findById(userId).select('-passwordHash -emailVerificationToken -passwordResetToken -ipAddress');
       
       if (!user) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Utente non trovato',
-          code: 'USER_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Utente non trovato',
+          'USER_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -37,9 +38,8 @@ export class ProfileController {
         status: { $ne: 'DELETED' }
       }).select('id name status occupation createdAt');
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           user: {
             id: user.id,
             username: user.username,
@@ -74,22 +74,20 @@ export class ProfileController {
             }
           }
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Get profile error:', error);
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare il profilo',
-        code: 'PROFILE_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare il profilo',
+        'PROFILE_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -105,13 +103,13 @@ export class ProfileController {
       const user = await User.findById(userId);
       
       if (!user) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Utente non trovato',
-          code: 'USER_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Utente non trovato',
+          'USER_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -175,10 +173,8 @@ export class ProfileController {
         });
       }
 
-      const response: ApiResponse = {
-        success: true,
-        message: 'Profile updated successfully',
-        data: {
+      res.json(updateResponse(
+        {
           user: {
             id: user.id,
             displayName: user.displayName,
@@ -192,22 +188,20 @@ export class ProfileController {
             updatedAt: user.updatedAt
           }
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+        'Profile updated successfully',
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Update profile error:', error);
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile aggiornare il profilo',
-        code: 'PROFILE_UPDATE_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile aggiornare il profilo',
+        'PROFILE_UPDATE_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -229,13 +223,13 @@ export class ProfileController {
       const characters = charactersResult as any[];
 
       if (!user) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Utente non trovato',
-          code: 'USER_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Utente non trovato',
+          'USER_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -291,14 +285,13 @@ export class ProfileController {
     } catch (error: any) {
       logger.error('Export data error:', error);
 
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile esportare i dati',
-        code: 'EXPORT_ERROR',
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile esportare i dati',
+        'EXPORT_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -312,13 +305,13 @@ export class ProfileController {
 
       const user = await User.findById(userId);
       if (!user) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Utente non trovato',
-          code: 'USER_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Utente non trovato',
+          'USER_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -329,13 +322,13 @@ export class ProfileController {
       });
 
       if (pendingChars.length > 0) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Hai personaggi in attesa di approvazione. Risolvili prima di eliminare l\'account.',
-          code: 'PENDING_CHARACTERS',
-          timestamp: new Date().toISOString()
-        };
-        res.status(409).json(response);
+        res.status(409).json(errorResponse(
+          'Hai personaggi in attesa di approvazione. Risolvili prima di eliminare l\'account.',
+          'PENDING_CHARACTERS',
+          undefined,
+          409,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -358,13 +351,13 @@ export class ProfileController {
         );
       } catch (emailError) {
         logger.error('Failed to send account deletion email:', emailError);
-        const response: ApiResponse = {
-          success: false,
-          error: 'Errore nell\'invio dell\'email di conferma',
-          code: 'EMAIL_ERROR',
-          timestamp: new Date().toISOString()
-        };
-        res.status(500).json(response);
+        res.status(500).json(errorResponse(
+          'Errore nell\'invio dell\'email di conferma',
+          'EMAIL_ERROR',
+          undefined,
+          500,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -381,24 +374,22 @@ export class ProfileController {
         requestedAt: new Date().toISOString()
       }));
 
-      const response: ApiResponse = {
-        success: true,
-        message: 'Email di conferma inviata. Controlla la tua casella di posta.',
-        timestamp: new Date().toISOString()
-      };
-      res.status(200).json(response);
+      res.json(successResponse(
+        undefined,
+        'Email di conferma inviata. Controlla la tua casella di posta.',
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Request account deletion error:', error);
 
-      const response: ApiResponse = {
-        success: false,
-        error: 'Errore durante la richiesta di cancellazione',
-        code: 'REQUEST_DELETION_ERROR',
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Errore durante la richiesta di cancellazione',
+        'REQUEST_DELETION_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -411,13 +402,13 @@ export class ProfileController {
       const { token } = req.params;
 
       if (!token) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Token richiesto',
-          code: 'MISSING_TOKEN',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Token richiesto',
+          'MISSING_TOKEN',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -428,13 +419,13 @@ export class ProfileController {
       });
 
       if (!user) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Token non valido o scaduto',
-          code: 'INVALID_TOKEN',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Token non valido o scaduto',
+          'INVALID_TOKEN',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -494,12 +485,11 @@ export class ProfileController {
           anonymizedAt: user.anonymizedAt!.toISOString()
         }));
 
-        const response: ApiResponse = {
-          success: true,
-          message: 'Account eliminato con successo',
-          timestamp: new Date().toISOString()
-        };
-        res.status(200).json(response);
+        res.json(successResponse(
+          undefined,
+          'Account eliminato con successo',
+          getRequestId(req)
+        ));
 
       } catch (txError) {
         await session.abortTransaction();
@@ -511,14 +501,13 @@ export class ProfileController {
     } catch (error: any) {
       logger.error('Confirm account deletion error:', error);
 
-      const response: ApiResponse = {
-        success: false,
-        error: 'Errore durante l\'eliminazione dell\'account',
-        code: 'DELETE_ERROR',
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Errore durante l\'eliminazione dell\'account',
+        'DELETE_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 }

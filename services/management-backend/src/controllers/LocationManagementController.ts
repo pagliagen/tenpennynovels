@@ -8,7 +8,8 @@ import {
 } from '../types/management';
 import { AdminAuthMiddleware } from '../middleware/adminAuth';
 import { logger } from '../utils/logger';
-import { Location } from '../../../../packages/database/models/Location';
+import { Location } from '../../../database/models/Location';
+import { listResponse, successResponse, errorResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
 
 export class LocationManagementController {
   /**
@@ -109,27 +110,24 @@ export class LocationManagementController {
         totalItems
       });
 
-      const response: ApiResponse<{ locations: LocationManagement[]; pagination: PaginationInfo }> = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           locations: transformedLocations,
           pagination
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error fetching locations:', { error: error instanceof Error ? error.message : String(error) });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare le location',
-        code: 'FETCH_LOCATIONS_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare le location',
+        'FETCH_LOCATIONS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -174,27 +172,24 @@ export class LocationManagementController {
         locationName: mockLocation.name
       });
 
-      const response: ApiResponse<LocationManagement> = {
-        success: true,
-        data: mockLocation,
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+      res.json(successResponse(
+        mockLocation,
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error fetching location details:', { 
         error: error instanceof Error ? error.message : String(error), 
         locationId: req.params.locationId 
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare i dettagli della location',
-        code: 'FETCH_LOCATION_DETAILS_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare i dettagli della location',
+        'FETCH_LOCATION_DETAILS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -209,13 +204,13 @@ export class LocationManagementController {
 
       // Validate required reason
       if (!updates.reason || updates.reason.trim().length === 0) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Il motivo dell\'aggiornamento è richiesto',
-          code: 'UPDATE_REASON_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Il motivo dell\'aggiornamento è richiesto',
+          'UPDATE_REASON_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -248,30 +243,27 @@ export class LocationManagementController {
       //   timestamp: new Date().toISOString()
       // });
 
-      const response: ApiResponse<{ locationId: string; action: string }> = {
-        success: true,
-        data: {
+      res.json(updateResponse(
+        {
           locationId,
           action: 'settings_updated'
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error updating location settings:', { 
         error: error instanceof Error ? error.message : String(error), 
         locationId: req.params.locationId 
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile aggiornare le impostazioni della location',
-        code: 'UPDATE_LOCATION_SETTINGS_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile aggiornare le impostazioni della location',
+        'UPDATE_LOCATION_SETTINGS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -339,27 +331,24 @@ export class LocationManagementController {
         period
       });
 
-      const response: ApiResponse<LocationActivity> = {
-        success: true,
-        data: mockActivity,
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+      res.json(successResponse(
+        mockActivity,
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error fetching location activity:', { 
         error: error instanceof Error ? error.message : String(error), 
         locationId: req.params.locationId 
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare l\'attività della location',
-        code: 'FETCH_LOCATION_ACTIVITY_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare l\'attività della location',
+        'FETCH_LOCATION_ACTIVITY_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -373,24 +362,24 @@ export class LocationManagementController {
 
       // Validate required fields
       if (!name || name.trim().length === 0) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Il nome della location è richiesto',
-          code: 'LOCATION_NAME_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Il nome della location è richiesto',
+          'LOCATION_NAME_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       if (!district || district.trim().length === 0) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Il distretto è richiesto',
-          code: 'DISTRICT_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Il distretto è richiesto',
+          'DISTRICT_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -412,27 +401,24 @@ export class LocationManagementController {
         category: 'location_management'
       });
 
-      const response: ApiResponse<{ locationId: string; action: string }> = {
-        success: true,
-        data: {
+      res.status(201).json(createResponse(
+        {
           locationId: newLocationId,
           action: 'location_created'
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(201).json(response);
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error creating location:', { error: error instanceof Error ? error.message : String(error) });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile creare la location',
-        code: 'CREATE_LOCATION_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile creare la location',
+        'CREATE_LOCATION_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -446,13 +432,13 @@ export class LocationManagementController {
       const { reason, forceDelete } = req.body;
 
       if (!reason || reason.trim().length === 0) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Il motivo dell\'eliminazione è richiesto',
-          code: 'DELETION_REASON_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Il motivo dell\'eliminazione è richiesto',
+          'DELETION_REASON_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -472,30 +458,23 @@ export class LocationManagementController {
         category: 'location_management'
       });
 
-      const response: ApiResponse<{ locationId: string; action: string }> = {
-        success: true,
-        data: {
-          locationId,
-          action: 'location_deleted'
-        },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+      res.json(deleteResponse(
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error deleting location:', { 
         error: error instanceof Error ? error.message : String(error), 
         locationId: req.params.locationId 
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile eliminare la location',
-        code: 'DELETE_LOCATION_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile eliminare la location',
+        'DELETE_LOCATION_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -534,27 +513,24 @@ export class LocationManagementController {
         occupantCount: mockOccupants.length
       });
 
-      const response: ApiResponse<any[]> = {
-        success: true,
-        data: mockOccupants,
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+      res.json(successResponse(
+        mockOccupants,
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error fetching location occupants:', { 
         error: error instanceof Error ? error.message : String(error), 
         locationId: req.params.locationId 
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare gli occupanti della location',
-        code: 'FETCH_LOCATION_OCCUPANTS_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare gli occupanti della location',
+        'FETCH_LOCATION_OCCUPANTS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -595,26 +571,23 @@ export class LocationManagementController {
         ...auditInfo
       });
 
-      const response: ApiResponse<any> = {
-        success: true,
-        data: mockHierarchy,
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+      res.json(successResponse(
+        mockHierarchy,
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error fetching location hierarchy:', { 
         error: error instanceof Error ? error.message : String(error)
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare la gerarchia delle location',
-        code: 'FETCH_LOCATION_HIERARCHY_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare la gerarchia delle location',
+        'FETCH_LOCATION_HIERARCHY_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -654,26 +627,23 @@ export class LocationManagementController {
         ...auditInfo
       });
 
-      const response: ApiResponse<any> = {
-        success: true,
-        data: mockStats,
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+      res.json(successResponse(
+        mockStats,
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error fetching location stats:', { 
         error: error instanceof Error ? error.message : String(error)
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare le statistiche delle location',
-        code: 'FETCH_LOCATION_STATS_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare le statistiche delle location',
+        'FETCH_LOCATION_STATS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -687,13 +657,13 @@ export class LocationManagementController {
       const { name, district, description, settings, reason } = req.body;
 
       if (!reason || reason.trim().length === 0) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Il motivo dell\'aggiornamento è richiesto',
-          code: 'UPDATE_REASON_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Il motivo dell\'aggiornamento è richiesto',
+          'UPDATE_REASON_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -711,30 +681,27 @@ export class LocationManagementController {
         category: 'location_management'
       });
 
-      const response: ApiResponse<{ locationId: string; action: string }> = {
-        success: true,
-        data: {
+      res.json(updateResponse(
+        {
           locationId,
           action: 'location_updated'
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error updating location:', { 
         error: error instanceof Error ? error.message : String(error), 
         locationId: req.params.locationId 
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile aggiornare la location',
-        code: 'UPDATE_LOCATION_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile aggiornare la location',
+        'UPDATE_LOCATION_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -748,13 +715,13 @@ export class LocationManagementController {
       const { characterAccess, corporationAccess, reason } = req.body;
 
       if (!reason || reason.trim().length === 0) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Il motivo della modifica di accesso è richiesto',
-          code: 'ACCESS_REASON_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Il motivo della modifica di accesso è richiesto',
+          'ACCESS_REASON_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -773,30 +740,27 @@ export class LocationManagementController {
         category: 'location_management'
       });
 
-      const response: ApiResponse<{ locationId: string; action: string }> = {
-        success: true,
-        data: {
+      res.json(updateResponse(
+        {
           locationId,
           action: 'access_updated'
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error updating location access:', { 
         error: error instanceof Error ? error.message : String(error), 
         locationId: req.params.locationId 
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile aggiornare l\'accesso alla location',
-        code: 'UPDATE_LOCATION_ACCESS_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile aggiornare l\'accesso alla location',
+        'UPDATE_LOCATION_ACCESS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -809,13 +773,13 @@ export class LocationManagementController {
       const { operation, locationIds, data, reason } = req.body;
 
       if (!reason || reason.trim().length === 0) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Il motivo dell\'operazione bulk è richiesto',
-          code: 'BULK_REASON_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Il motivo dell\'operazione bulk è richiesto',
+          'BULK_REASON_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -833,29 +797,26 @@ export class LocationManagementController {
         category: 'location_management'
       });
 
-      const response: ApiResponse<{ operation: string; processed: number }> = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           operation,
           processed: locationIds?.length || 0
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error in bulk location operation:', { 
         error: error instanceof Error ? error.message : String(error)
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile eseguire l\'operazione bulk',
-        code: 'BULK_LOCATION_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile eseguire l\'operazione bulk',
+        'BULK_LOCATION_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -869,13 +830,13 @@ export class LocationManagementController {
       const { targetLocationId, reason } = req.body;
 
       if (!reason || reason.trim().length === 0) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Il motivo dell\'evacuazione è richiesto',
-          code: 'EVACUATION_REASON_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Il motivo dell\'evacuazione è richiesto',
+          'EVACUATION_REASON_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -895,31 +856,28 @@ export class LocationManagementController {
         category: 'location_management'
       });
 
-      const response: ApiResponse<{ locationId: string; action: string; movedUsers: number }> = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           locationId,
           action: 'location_evacuated',
           movedUsers: 3
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error evacuating location:', { 
         error: error instanceof Error ? error.message : String(error), 
         locationId: req.params.locationId 
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile evacuare la location',
-        code: 'EVACUATE_LOCATION_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile evacuare la location',
+        'EVACUATE_LOCATION_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 }

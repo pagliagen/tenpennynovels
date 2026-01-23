@@ -1,9 +1,10 @@
 import { Request, Response } from 'express';
-import { Occupation } from '../../../../packages/database/models/Occupation';
-import { Character } from '../../../../packages/database/models/Character';
-import { Corporation } from '../../../../packages/database/models/Corporation';
+import { Occupation } from '../../../database/models/Occupation';
+import { Character } from '../../../database/models/Character';
+import { Corporation } from '../../../database/models/Corporation';
 import { logger } from '../utils/logger';
 import { AuthUtils } from '../utils/auth';
+import { successResponse, errorResponse, getRequestId } from '../utils/apiResponse';
 
 export class OccupationController {
 
@@ -11,10 +12,13 @@ export class OccupationController {
     try {
       const authResult = AuthUtils.authenticate(req);
       if (!authResult.success) {
-        res.status(401).json({
-          success: false,
-          error: authResult.error
-        });
+        res.status(401).json(errorResponse(
+          authResult.error || 'Authentication failed',
+          'AUTHENTICATION_FAILED',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -97,21 +101,25 @@ export class OccupationController {
         filters: { category, socialClass }
       });
 
-      res.json({
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           availableOccupations,
           currentOccupation,
           totalAvailable: availableOccupations.length
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error retrieving available occupations:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Errore interno del server'
-      });
+      res.status(500).json(errorResponse(
+        'Errore interno del server',
+        'INTERNAL_SERVER_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -119,10 +127,13 @@ export class OccupationController {
     try {
       const authResult = AuthUtils.authenticate(req);
       if (!authResult.success) {
-        res.status(401).json({
-          success: false,
-          error: authResult.error
-        });
+        res.status(401).json(errorResponse(
+          authResult.error || 'Authentication failed',
+          'AUTHENTICATION_FAILED',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -131,10 +142,13 @@ export class OccupationController {
 
       const occupation = await Occupation.findById(occupationId);
       if (!occupation) {
-        res.status(404).json({
-          success: false,
-          error: 'Occupazione non trovata'
-        });
+        res.status(404).json(errorResponse(
+          'Occupazione non trovata',
+          'OCCUPATION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -205,19 +219,23 @@ export class OccupationController {
         eligible: prerequisiteCheck.eligible
       });
 
-      res.json({
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           occupation: occupationDetails
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error retrieving occupation details:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Errore interno del server'
-      });
+      res.status(500).json(errorResponse(
+        'Errore interno del server',
+        'INTERNAL_SERVER_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -225,10 +243,13 @@ export class OccupationController {
     try {
       const authResult = AuthUtils.authenticate(req);
       if (!authResult.success) {
-        res.status(401).json({
-          success: false,
-          error: authResult.error
-        });
+        res.status(401).json(errorResponse(
+          authResult.error || 'Authentication failed',
+          'AUTHENTICATION_FAILED',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -273,20 +294,24 @@ export class OccupationController {
         description: getCategoryDescription(cat.category)
       }));
 
-      res.json({
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           categories: formattedCategories,
           totalCategories: categories.length
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error retrieving occupation categories:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Errore interno del server'
-      });
+      res.status(500).json(errorResponse(
+        'Errore interno del server',
+        'INTERNAL_SERVER_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -294,10 +319,13 @@ export class OccupationController {
     try {
       const authResult = AuthUtils.authenticate(req);
       if (!authResult.success) {
-        res.status(401).json({
-          success: false,
-          error: authResult.error
-        });
+        res.status(401).json(errorResponse(
+          authResult.error || 'Authentication failed',
+          'AUTHENTICATION_FAILED',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -306,10 +334,13 @@ export class OccupationController {
 
       const occupation = await Occupation.findById(occupationId);
       if (!occupation) {
-        res.status(404).json({
-          success: false,
-          error: 'Occupazione non trovata'
-        });
+        res.status(404).json(errorResponse(
+          'Occupazione non trovata',
+          'OCCUPATION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -321,9 +352,8 @@ export class OccupationController {
         eligible: eligibilityCheck.eligible
       });
 
-      res.json({
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           occupation: {
             id: occupation._id,
             name: occupation.name
@@ -331,15 +361,20 @@ export class OccupationController {
           eligible: eligibilityCheck.eligible,
           reasons: eligibilityCheck.reasons,
           missingRequirements: eligibilityCheck.missingRequirements
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error checking occupation eligibility:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Errore interno del server'
-      });
+      res.status(500).json(errorResponse(
+        'Errore interno del server',
+        'INTERNAL_SERVER_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 }

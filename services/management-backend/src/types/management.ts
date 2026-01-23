@@ -1,15 +1,56 @@
 // Management Backend Type Definitions
 
 // TODO: Import from shared package when workspace configuration is complete
-export interface ApiResponse<T = any> {
-  success: boolean;
-  data?: T;
-  message?: string;
-  error?: string;
-  code?: string;
-  details?: any;
-  timestamp: string;
-  requestId?: string;
+
+/**
+ * Error details type for API responses
+ */
+export interface ErrorDetails {
+  [key: string]: unknown;
+  field?: string;
+  expectedType?: string;
+  receivedValue?: unknown;
+  receivedType?: string;
+  validationErrors?: Array<{ field: string; message: string; value?: unknown }>;
+  affectedFields?: string[];
+  duplicateField?: string;
+  duplicateValue?: unknown;
+  existingUserId?: string;
+  providedId?: string;
+  expectedFormat?: string;
+  allowedFields?: string[];
+  receivedFields?: string[];
+  allowedValues?: string[];
+  providedDuration?: string;
+  invalidScopes?: string[];
+  validScopes?: string[];
+  availableScopes?: string[];
+  searchedUserId?: string;
+  requestedUserId?: string;
+  searchPerformed?: boolean;
+  errorType?: string;
+  retryable?: boolean;
+  operation?: string;
+  userId?: string;
+  mongoErrorCode?: number;
+  indexName?: string;
+}
+
+/**
+ * Standardized API Response interface
+ */
+export interface ApiResponse<T = unknown> {
+  result: boolean;           // Standard: true/false (replaces 'success' for consistency)
+  success?: boolean;         // Deprecated: maintained for backward compatibility
+  data?: T;                  // Single record data or metadata object
+  list?: T[];                // Array for list responses (alternative to data.list)
+  pagination?: PaginationInfo; // Pagination info for list responses
+  message?: string;          // Optional message for POST/PATCH/DELETE
+  error?: string;            // Error message if result = false
+  code?: string;             // Error code (e.g., 'USER_NOT_FOUND')
+  details?: ErrorDetails;    // Additional error details (typed instead of any)
+  timestamp: string;         // Always present
+  requestId?: string;        // Optional for request tracing
 }
 
 // Admin Authentication Types - Updated to use granular permission system

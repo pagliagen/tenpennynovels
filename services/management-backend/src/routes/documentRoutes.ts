@@ -59,9 +59,4 @@ router.get('/css',
   DocumentManagementController.getGlobalCSS
 );
 
-router.get('/css/data', 
-  AdminAuthMiddleware.requireGranularPermission('documents.access'), 
-  DocumentManagementController.getGlobalCSSData
-);
-
 export { router as documentRoutes };

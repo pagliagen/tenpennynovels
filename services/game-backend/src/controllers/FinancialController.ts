@@ -1,9 +1,10 @@
 import { Request, Response } from 'express';
-import { CharacterFinances, FinancialTransaction } from '../../../../packages/database/models';
+import { CharacterFinances, FinancialTransaction } from '../../../database/models';
 import { ApiResponse } from '../types/game';
 import { logger } from '../utils/logger';
 import { FinancialUtils } from '../utils/financialUtils';
 import { CreditLineResetService } from '../services/CreditLineResetService';
+import { successResponse, errorResponse, listResponse, createResponse, getRequestId } from '../utils/apiResponse';
 
 export class FinancialController {
   /**
@@ -16,20 +17,20 @@ export class FinancialController {
       const userId = req.user!.userId;
 
       // Check if user owns the character or is a master
-      const { Character } = require('../../../../packages/database/models');
+      const { Character } = require('../../../database/models');
       const character = await Character.findOne({ 
         _id: characterId, 
         status: { $ne: 'DELETED' } 
       });
 
       if (!character) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Personaggio non trovato',
-          code: 'CHARACTER_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Personaggio non trovato',
+          'CHARACTER_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -38,13 +39,13 @@ export class FinancialController {
                        req.character?.gameplayRoles?.includes('amministratore') || false;
 
       if (!isOwner && !isMaster) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Accesso negato',
-          code: 'ACCESS_DENIED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(403).json(response);
+        res.status(403).json(errorResponse(
+          'Accesso negato',
+          'ACCESS_DENIED',
+          undefined,
+          403,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -52,19 +53,18 @@ export class FinancialController {
       const finances = await CharacterFinances.findOne({ characterId });
 
       if (!finances) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Finanze del personaggio non trovate',
-          code: 'FINANCES_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Finanze del personaggio non trovate',
+          'FINANCES_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           finances: {
             characterId: finances.characterId,
             socialClass: finances.socialClass,
@@ -78,10 +78,9 @@ export class FinancialController {
                         finances.properties.reduce((sum, prop) => sum + (prop.value || 0), 0)
           }
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -91,14 +90,13 @@ export class FinancialController {
         name: err.name
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare le finanze del personaggio',
-        code: 'GET_FINANCES_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare le finanze del personaggio',
+        'GET_FINANCES_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -113,20 +111,20 @@ export class FinancialController {
       const userId = req.user!.userId;
 
       // Check access rights
-      const { Character } = require('../../../../packages/database/models');
+      const { Character } = require('../../../database/models');
       const character = await Character.findOne({ 
         _id: characterId, 
         status: { $ne: 'DELETED' } 
       });
 
       if (!character) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Personaggio non trovato',
-          code: 'CHARACTER_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Personaggio non trovato',
+          'CHARACTER_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -135,13 +133,13 @@ export class FinancialController {
                        req.character?.gameplayRoles?.includes('amministratore') || false;
 
       if (!isOwner && !isMaster) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Accesso negato',
-          code: 'ACCESS_DENIED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(403).json(response);
+        res.status(403).json(errorResponse(
+          'Accesso negato',
+          'ACCESS_DENIED',
+          undefined,
+          403,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -165,21 +163,19 @@ export class FinancialController {
 
       const totalCount = await FinancialTransaction.countDocuments(query);
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
-          transactions,
-          pagination: {
-            page: pageNum,
-            limit: limitNum,
-            totalPages: Math.ceil(totalCount / limitNum),
-            totalCount
-          }
+      res.json(listResponse(
+        transactions,
+        {
+          page: pageNum,
+          pageSize: limitNum,
+          total: totalCount,
+          totalPages: Math.ceil(totalCount / limitNum),
+          hasNext: pageNum < Math.ceil(totalCount / limitNum),
+          hasPrev: pageNum > 1
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -189,14 +185,13 @@ export class FinancialController {
         name: err.name
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare lo storico delle transazioni',
-        code: 'GET_TRANSACTIONS_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare lo storico delle transazioni',
+        'GET_TRANSACTIONS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -211,18 +206,18 @@ export class FinancialController {
 
       // Validate input
       if (!fromCharacterId || !toCharacterId || !amount || amount <= 0) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Parametri di trasferimento non validi',
-          code: 'INVALID_TRANSFER_PARAMS',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Parametri di trasferimento non validi',
+          'INVALID_TRANSFER_PARAMS',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Check if user owns the source character
-      const { Character } = require('../../../../packages/database/models');
+      const { Character } = require('../../../database/models');
       const sourceCharacter = await Character.findOne({ 
         _id: fromCharacterId, 
         userId,
@@ -230,13 +225,13 @@ export class FinancialController {
       });
 
       if (!sourceCharacter) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Personaggio sorgente non trovato o accesso negato',
-          code: 'SOURCE_CHARACTER_ACCESS_DENIED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(403).json(response);
+        res.status(403).json(errorResponse(
+          'Personaggio sorgente non trovato o accesso negato',
+          'SOURCE_CHARACTER_ACCESS_DENIED',
+          undefined,
+          403,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -247,13 +242,13 @@ export class FinancialController {
       });
 
       if (!targetCharacter) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Personaggio destinatario non trovato',
-          code: 'TARGET_CHARACTER_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Personaggio destinatario non trovato',
+          'TARGET_CHARACTER_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -262,25 +257,25 @@ export class FinancialController {
       let targetFinances = await CharacterFinances.findOne({ characterId: toCharacterId });
 
       if (!sourceFinances) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Finanze del personaggio sorgente non trovate',
-          code: 'SOURCE_FINANCES_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Finanze del personaggio sorgente non trovate',
+          'SOURCE_FINANCES_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Check if source has enough money
       if (sourceFinances.cash < amount) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Fondi insufficienti',
-          code: 'INSUFFICIENT_FUNDS',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Fondi insufficienti',
+          'INSUFFICIENT_FUNDS',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -294,13 +289,13 @@ export class FinancialController {
           await FinancialUtils.initializeCharacterFinances(toCharacterId, socialClass);
           targetFinances = await CharacterFinances.findOne({ characterId: toCharacterId });
         } else {
-          const response: ApiResponse = {
-            success: false,
-            error: 'Impossibile inizializzare le finanze del personaggio destinatario',
-            code: 'TARGET_FINANCES_INIT_ERROR',
-            timestamp: new Date().toISOString()
-          };
-          res.status(500).json(response);
+          res.status(500).json(errorResponse(
+            'Impossibile inizializzare le finanze del personaggio destinatario',
+            'TARGET_FINANCES_INIT_ERROR',
+            undefined,
+            500,
+            getRequestId(req)
+          ));
           return;
         }
       }
@@ -334,9 +329,8 @@ export class FinancialController {
         description
       });
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           transfer: {
             fromCharacter: sourceCharacter.name,
             toCharacter: targetCharacter.name,
@@ -346,10 +340,9 @@ export class FinancialController {
             newTargetBalance: targetFinances!.cash
           }
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -359,14 +352,13 @@ export class FinancialController {
         name: err.name
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile trasferire denaro',
-        code: 'TRANSFER_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile trasferire denaro',
+        'TRANSFER_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -383,25 +375,25 @@ export class FinancialController {
                        req.character?.gameplayRoles?.includes('amministratore') || false;
 
       if (!isMaster) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Accesso amministrativo richiesto',
-          code: 'ADMIN_ACCESS_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(403).json(response);
+        res.status(403).json(errorResponse(
+          'Accesso amministrativo richiesto',
+          'ADMIN_ACCESS_REQUIRED',
+          undefined,
+          403,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Validate input
       if (!characterId || !amount || amount === 0) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Parametri di concessione non validi',
-          code: 'INVALID_GRANT_PARAMS',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Parametri di concessione non validi',
+          'INVALID_GRANT_PARAMS',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -410,17 +402,17 @@ export class FinancialController {
 
       if (!finances) {
         // Initialize finances if not exists
-        const { Character } = require('../../../../packages/database/models');
+        const { Character } = require('../../../database/models');
         const character = await Character.findById(characterId);
         
         if (!character) {
-          const response: ApiResponse = {
-            success: false,
-            error: 'Personaggio non trovato',
-            code: 'CHARACTER_NOT_FOUND',
-            timestamp: new Date().toISOString()
-          };
-          res.status(404).json(response);
+          res.status(404).json(errorResponse(
+            'Personaggio non trovato',
+            'CHARACTER_NOT_FOUND',
+            undefined,
+            404,
+            getRequestId(req)
+          ));
           return;
         }
 
@@ -434,13 +426,13 @@ export class FinancialController {
       }
 
       if (!finances) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Impossibile inizializzare le finanze del personaggio',
-          code: 'FINANCES_INIT_ERROR',
-          timestamp: new Date().toISOString()
-        };
-        res.status(500).json(response);
+        res.status(500).json(errorResponse(
+          'Impossibile inizializzare le finanze del personaggio',
+          'FINANCES_INIT_ERROR',
+          undefined,
+          500,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -463,9 +455,8 @@ export class FinancialController {
         grantedBy: req.user!.userId
       });
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           grant: {
             characterId,
             amount,
@@ -474,10 +465,9 @@ export class FinancialController {
             grantedBy: req.user!.userId
           }
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -487,14 +477,13 @@ export class FinancialController {
         name: err.name
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile concedere denaro',
-        code: 'ADMIN_GRANT_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile concedere denaro',
+        'ADMIN_GRANT_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -508,33 +497,35 @@ export class FinancialController {
       const isAdmin = req.character?.gameplayRoles?.includes('amministratore') || false;
 
       if (!isAdmin) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Accesso amministratore richiesto',
-          code: 'ADMIN_ACCESS_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(403).json(response);
+        res.status(403).json(errorResponse(
+          'Accesso amministratore richiesto',
+          'ADMIN_ACCESS_REQUIRED',
+          undefined,
+          403,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Trigger manual reset
       const result = await CreditLineResetService.triggerManualReset();
 
-      const response: ApiResponse = {
-        success: result.success,
-        data: {
-          resetResult: result
-        },
-        timestamp: new Date().toISOString()
-      };
-
       if (result.success) {
-        res.status(200).json(response);
+        res.json(successResponse(
+          {
+            resetResult: result
+          },
+          undefined,
+          getRequestId(req)
+        ));
       } else {
-        response.error = result.message;
-        response.code = 'CREDIT_RESET_ERROR';
-        res.status(500).json(response);
+        res.status(500).json(errorResponse(
+          result.message || 'Credit reset failed',
+          'CREDIT_RESET_ERROR',
+          undefined,
+          500,
+          getRequestId(req)
+        ));
       }
 
     } catch (error: any) {
@@ -545,14 +536,13 @@ export class FinancialController {
         name: err.name
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile azzerare le linee di credito',
-        code: 'ADMIN_CREDIT_RESET_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile azzerare le linee di credito',
+        'ADMIN_CREDIT_RESET_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -567,13 +557,13 @@ export class FinancialController {
                        req.character?.gameplayRoles?.includes('amministratore') || false;
 
       if (!isMaster) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Accesso amministrativo richiesto',
-          code: 'ADMIN_ACCESS_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(403).json(response);
+        res.status(403).json(errorResponse(
+          'Accesso amministrativo richiesto',
+          'ADMIN_ACCESS_REQUIRED',
+          undefined,
+          403,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -609,9 +599,8 @@ export class FinancialController {
 
       const creditResetService = CreditLineResetService.getStatus();
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           systemStatus: {
             totalCharactersWithFinances: totalFinances,
             totalTransactions,
@@ -621,10 +610,9 @@ export class FinancialController {
             lastUpdated: new Date().toISOString()
           }
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -634,14 +622,13 @@ export class FinancialController {
         name: err.name
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare lo stato del sistema',
-        code: 'GET_STATUS_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare lo stato del sistema',
+        'GET_STATUS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 }

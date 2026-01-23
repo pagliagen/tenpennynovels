@@ -6,9 +6,9 @@ import {
   OnGameMessage,
   OffGameChatMessage,
   GamingSession
-} from '../../../../packages/database/models';
+} from '../../../database/models';
 import { logger } from '../utils/logger';
-import { ConfigurationService } from '../../../../packages/shared/src/services/ConfigurationService';
+import { ConfigurationService } from '../../../shared/src/services/ConfigurationService';
 import { getRedisClient } from '../config/redis';
 
 // Initialize cron jobs with dynamic schedules from database
@@ -103,7 +103,7 @@ async function processDailyExperienceGrant(character: any): Promise<any> {
   }
 
   // Fetch configuration values from database
-  const { ConfigurationService } = await import('../../../../packages/shared/src/services/ConfigurationService');
+  const { ConfigurationService } = await import('../../../shared/src/services/ConfigurationService');
   const { getRedisClient } = await import('../config/redis');
   const redis = getRedisClient();
   const configService = new ConfigurationService(redis, logger);

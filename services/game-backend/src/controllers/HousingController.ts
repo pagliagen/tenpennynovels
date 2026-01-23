@@ -1,7 +1,8 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
-import { HousingProperty, EstateTransaction, CharacterFinances, Location } from '../../../../packages/database/models';
+import { HousingProperty, EstateTransaction, CharacterFinances, Location } from '../../../database/models';
 import { logger } from '../utils/logger';
+import { successResponse, errorResponse, createResponse, getRequestId } from '../utils/apiResponse';
 
 export class HousingController {
   
@@ -56,26 +57,27 @@ export class HousingController {
         }
       ];
       
-      res.json({
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           properties,
           characterFinances: {
             availableFunds: 100,
             monthlyCreditLine: 50
           }
         },
-        timestamp: new Date().toISOString()
-      });
+        undefined,
+        getRequestId(req)
+      ));
       
     } catch (error: any) {
       logger.error('Error fetching available properties:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile recuperare le proprietà disponibili',
-        code: 'PROPERTIES_FETCH_FAILED',
-        timestamp: new Date().toISOString()
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare le proprietà disponibili',
+        'PROPERTIES_FETCH_FAILED',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -101,20 +103,21 @@ export class HousingController {
         }
       ];
 
-      res.json({
-        success: true,
-        data: { districts },
-        timestamp: new Date().toISOString()
-      });
+      res.json(successResponse(
+        { districts },
+        undefined,
+        getRequestId(req)
+      ));
       
     } catch (error: any) {
       logger.error('Error fetching districts:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile recuperare i distretti',
-        code: 'DISTRICTS_FETCH_FAILED',
-        timestamp: new Date().toISOString()
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare i distretti',
+        'DISTRICTS_FETCH_FAILED',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -223,11 +226,11 @@ export class HousingController {
         leaseDuration
       });
       
-      res.json({
-        success: true,
-        message: 'Affitto proprietà completato con successo',
-        data: { propertyId, leaseDuration }
-      });
+      res.json(createResponse(
+        { propertyId, leaseDuration },
+        'Affitto proprietà completato con successo',
+        getRequestId(req)
+      ));
       
     } catch (error: any) {
       logger.error('Property rental failed', {
@@ -236,11 +239,13 @@ export class HousingController {
         error: error instanceof Error ? error.message : String(error)
       });
       
-      res.status(400).json({
-        success: false,
-        error: error instanceof Error ? error.message : 'Rental failed',
-        code: 'RENTAL_FAILED'
-      });
+      res.status(400).json(errorResponse(
+        error instanceof Error ? error.message : 'Rental failed',
+        'RENTAL_FAILED',
+        undefined,
+        400,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -318,11 +323,11 @@ export class HousingController {
       
       session.endSession();
       
-      res.json({
-        success: true,
-        message: 'Proprietà acquistata con successo',
-        data: { propertyId }
-      });
+      res.json(createResponse(
+        { propertyId },
+        'Proprietà acquistata con successo',
+        getRequestId(req)
+      ));
       
     } catch (error: any) {
       logger.error('Property purchase failed', {
@@ -331,11 +336,13 @@ export class HousingController {
         error: error instanceof Error ? error.message : String(error)
       });
       
-      res.status(400).json({
-        success: false,
-        error: error instanceof Error ? error.message : 'Purchase failed',
-        code: 'PURCHASE_FAILED'
-      });
+      res.status(400).json(errorResponse(
+        error instanceof Error ? error.message : 'Purchase failed',
+        'PURCHASE_FAILED',
+        undefined,
+        400,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -356,11 +363,13 @@ export class HousingController {
       });
       
       if (!property) {
-        res.status(404).json({
-          success: false,
-          error: 'Proprietà non trovata o non sei l\'inquilino',
-          code: 'PROPERTY_NOT_FOUND'
-        });
+        res.status(404).json(errorResponse(
+          'Proprietà non trovata o non sei l\'inquilino',
+          'PROPERTY_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
       
@@ -370,22 +379,26 @@ export class HousingController {
       // Get character finances and process payment
       const finances = await CharacterFinances.findOne({ characterId });
       if (!finances) {
-        res.status(404).json({
-          success: false,
-          error: 'Finanze del personaggio non trovate',
-          code: 'FINANCES_NOT_FOUND'
-        });
+        res.status(404).json(errorResponse(
+          'Finanze del personaggio non trovate',
+          'FINANCES_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
       
       // Check affordability (cash + credit line)
       const availableFunds = finances.cash + finances.creditLine.currentAvailable;
       if (availableFunds < totalRent) {
-        res.status(400).json({
-          success: false,
-          error: 'Fondi insufficienti per pagare l\'affitto',
-          code: 'INSUFFICIENT_FUNDS'
-        });
+        res.status(400).json(errorResponse(
+          'Fondi insufficienti per pagare l\'affitto',
+          'INSUFFICIENT_FUNDS',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
       
@@ -412,23 +425,25 @@ export class HousingController {
         `Rent payment for ${monthsAdvance} month(s)`
       );
       
-      res.json({
-        success: true,
-        message: 'Pagamento affitto effettuato con successo',
-        data: {
+      res.json(successResponse(
+        {
           amountPaid: totalRent,
           rentPaidUntil: newPaidUntil,
           remainingBalance: finances.cash
-        }
-      });
+        },
+        'Pagamento affitto effettuato con successo',
+        getRequestId(req)
+      ));
       
     } catch (error: any) {
       logger.error('Rent payment failed:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile elaborare il pagamento dell\'affitto',
-        code: 'RENT_PAYMENT_FAILED'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile elaborare il pagamento dell\'affitto',
+        'RENT_PAYMENT_FAILED',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -452,11 +467,13 @@ export class HousingController {
       });
       
       if (!property) {
-        res.status(404).json({
-          success: false,
-          error: 'Proprietà non trovata o permessi insufficienti',
-          code: 'PROPERTY_ACCESS_DENIED'
-        });
+        res.status(404).json(errorResponse(
+          'Proprietà non trovata o permessi insufficienti',
+          'PROPERTY_ACCESS_DENIED',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
       
@@ -501,19 +518,21 @@ export class HousingController {
       
       await property.save();
       
-      res.json({
-        success: true,
-        message: `Accesso ospite ${action === 'grant' ? 'concesso' : 'revocato'} con successo`,
-        data: { guestAccess: property.guestAccess }
-      });
+      res.json(successResponse(
+        { guestAccess: property.guestAccess },
+        `Accesso ospite ${action === 'grant' ? 'concesso' : 'revocato'} con successo`,
+        getRequestId(req)
+      ));
       
     } catch (error: any) {
       logger.error('Guest management failed:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile gestire l\'accesso ospite',
-        code: 'GUEST_MANAGEMENT_FAILED'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile gestire l\'accesso ospite',
+        'GUEST_MANAGEMENT_FAILED',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -554,18 +573,21 @@ export class HousingController {
         };
       });
       
-      res.json({
-        success: true,
-        data: { properties: propertiesWithStatus }
-      });
+      res.json(successResponse(
+        { properties: propertiesWithStatus },
+        undefined,
+        getRequestId(req)
+      ));
       
     } catch (error: any) {
       logger.error('Error fetching character properties:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile recuperare le proprietà',
-        code: 'PROPERTIES_FETCH_FAILED'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare le proprietà',
+        'PROPERTIES_FETCH_FAILED',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -584,11 +606,13 @@ export class HousingController {
         .populate('ownerId', 'name');
       
       if (!property) {
-        res.status(404).json({
-          success: false,
-          error: 'Proprietà non trovata',
-          code: 'PROPERTY_NOT_FOUND'
-        });
+        res.status(404).json(errorResponse(
+          'Proprietà non trovata',
+          'PROPERTY_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
       
@@ -599,11 +623,13 @@ export class HousingController {
                        property.guestAccess.some(g => g.characterId.equals(characterId));
       
       if (!hasAccess) {
-        res.status(403).json({
-          success: false,
-          error: 'Accesso negato a questa proprietà',
-          code: 'PROPERTY_ACCESS_DENIED'
-        });
+        res.status(403).json(errorResponse(
+          'Accesso negato a questa proprietà',
+          'PROPERTY_ACCESS_DENIED',
+          undefined,
+          403,
+          getRequestId(req)
+        ));
         return;
       }
       
@@ -613,9 +639,8 @@ export class HousingController {
         transactions = await EstateTransaction.findByProperty(new mongoose.Types.ObjectId(propertyId), 10);
       }
       
-      res.json({
-        success: true,
-        data: { 
+      res.json(successResponse(
+        { 
           property: property.toJSON(),
           transactions,
           rentStatus: property.ownershipType === 'rental' ? {
@@ -623,16 +648,20 @@ export class HousingController {
             daysOverdue: property.getDaysOverdue(),
             nextPaymentDue: property.rentPaidUntil
           } : null
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
       
     } catch (error: any) {
       logger.error('Error fetching property details:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile recuperare i dettagli della proprietà',
-        code: 'PROPERTY_DETAILS_FETCH_FAILED'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare i dettagli della proprietà',
+        'PROPERTY_DETAILS_FETCH_FAILED',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 

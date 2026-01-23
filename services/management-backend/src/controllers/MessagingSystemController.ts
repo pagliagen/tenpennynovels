@@ -1,10 +1,11 @@
 import { Request, Response } from 'express';
-import { OffGameChat } from '../../../../packages/database/models/OffGameChat';
-import { OffGameChatMessage } from '../../../../packages/database/models/OffGameChatMessage';
-import { OffGameChatParticipant } from '../../../../packages/database/models/OffGameChatParticipant';
-import { Character } from '../../../../packages/database/models/Character';
+import { OffGameChat } from '../../../database/models/OffGameChat';
+import { OffGameChatMessage } from '../../../database/models/OffGameChatMessage';
+import { OffGameChatParticipant } from '../../../database/models/OffGameChatParticipant';
+import { Character } from '../../../database/models/Character';
 import { logger } from '../utils/logger';
 import { auditLogger } from '../utils/auditLogger';
+import { successResponse, errorResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
 
 export class MessagingSystemController {
   
@@ -116,9 +117,8 @@ export class MessagingSystemController {
         })
       );
 
-      res.json({
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           chats: enrichedChats,
           pagination: {
             currentPage: pageNum,
@@ -128,15 +128,20 @@ export class MessagingSystemController {
             hasNext: pageNum < totalPages,
             hasPrev: pageNum > 1
           }
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error fetching chats:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to fetch chats'
-      });
+      res.status(500).json(errorResponse(
+        'Failed to fetch chats',
+        'FETCH_CHATS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -308,17 +313,21 @@ export class MessagingSystemController {
         }))
       };
 
-      res.json({
-        success: true,
-        data: stats
-      });
+      res.json(successResponse(
+        stats,
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error fetching messaging statistics:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to fetch statistics'
-      });
+      res.status(500).json(errorResponse(
+        'Failed to fetch statistics',
+        'FETCH_MESSAGING_STATS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -337,10 +346,13 @@ export class MessagingSystemController {
         .lean();
 
       if (!chat) {
-        res.status(404).json({
-          success: false,
-          error: 'Chat not found'
-        });
+        res.status(404).json(errorResponse(
+          'Chat not found',
+          'CHAT_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -397,9 +409,8 @@ export class MessagingSystemController {
         canModerate: p.role === 'admin' || p.role === 'owner'
       }));
 
-      res.json({
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           chat: enrichedChat,
           messages: {
             data: enrichedMessages,
@@ -416,15 +427,20 @@ export class MessagingSystemController {
             activeParticipants: participants.filter(p => p.isActive).length,
             mutedParticipants: participants.filter(p => p.mutedUntil && p.mutedUntil > new Date()).length
           }
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error fetching chat details:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to fetch chat details'
-      });
+      res.status(500).json(errorResponse(
+        'Failed to fetch chat details',
+        'FETCH_CHAT_DETAILS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -437,18 +453,26 @@ export class MessagingSystemController {
       const { reason } = req.body;
 
       if (!reason) {
-        res.status(400).json({
-          success: false,
-          error: 'Deletion reason is required'
-        });
+        res.status(400).json(errorResponse(
+          'Deletion reason is required',
+          'DELETION_REASON_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
       }
 
       const chat = await OffGameChat.findById(chatId);
       if (!chat) {
-        res.status(404).json({
-          success: false,
-          error: 'Chat not found'
-        });
+        res.status(404).json(errorResponse(
+          'Chat not found',
+          'CHAT_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
+        return;
       }
 
       // Soft delete the chat and all related data
@@ -473,19 +497,20 @@ export class MessagingSystemController {
         },
       });
 
-      res.json({
-        success: true,
-        data: {
-          message: 'Chat deleted successfully'
-        }
-      });
+      res.json(deleteResponse(
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error deleting chat:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to delete chat'
-      });
+      res.status(500).json(errorResponse(
+        'Failed to delete chat',
+        'DELETE_CHAT_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -498,18 +523,26 @@ export class MessagingSystemController {
       const { reason } = req.body;
 
       if (!reason) {
-        res.status(400).json({
-          success: false,
-          error: 'Deletion reason is required'
-        });
+        res.status(400).json(errorResponse(
+          'Deletion reason is required',
+          'DELETION_REASON_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
       }
 
       const message = await OffGameChatMessage.findById(messageId);
       if (!message) {
-        res.status(404).json({
-          success: false,
-          error: 'Message not found'
-        });
+        res.status(404).json(errorResponse(
+          'Message not found',
+          'MESSAGE_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
+        return;
       }
 
       // Soft delete the message
@@ -532,19 +565,20 @@ export class MessagingSystemController {
         },
       });
 
-      res.json({
-        success: true,
-        data: {
-          message: 'Message deleted successfully'
-        }
-      });
+      res.json(deleteResponse(
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error deleting message:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to delete message'
-      });
+      res.status(500).json(errorResponse(
+        'Failed to delete message',
+        'DELETE_MESSAGE_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -557,18 +591,26 @@ export class MessagingSystemController {
       const { action, duration, reason } = req.body;
 
       if (!['mute', 'unmute', 'remove'].includes(action)) {
-        res.status(400).json({
-          success: false,
-          error: 'Invalid action. Must be mute, unmute, or remove'
-        });
+        res.status(400).json(errorResponse(
+          'Invalid action. Must be mute, unmute, or remove',
+          'INVALID_ACTION',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
       }
 
       const participant = await OffGameChatParticipant.findOne({ chatId, characterId });
       if (!participant) {
-        res.status(404).json({
-          success: false,
-          error: 'Participant not found'
-        });
+        res.status(404).json(errorResponse(
+          'Participant not found',
+          'PARTICIPANT_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
+        return;
       }
 
       let updateData: any = {};
@@ -619,19 +661,23 @@ export class MessagingSystemController {
         },
       });
 
-      res.json({
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           message: `Participant ${actionDescription} successfully`
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error moderating participant:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to moderate participant'
-      });
+      res.status(500).json(errorResponse(
+        'Failed to moderate participant',
+        'MODERATE_PARTICIPANT_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -643,17 +689,25 @@ export class MessagingSystemController {
       const { operation, targetType, targetIds, reason, data } = req.body;
 
       if (!operation || !targetType || !targetIds || !Array.isArray(targetIds)) {
-        res.status(400).json({
-          success: false,
-          error: 'Operation, targetType, and targetIds are required'
-        });
+        res.status(400).json(errorResponse(
+          'Operation, targetType, and targetIds are required',
+          'MISSING_BULK_OPERATION_DATA',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
       }
 
       if (!['chat', 'message'].includes(targetType)) {
-        res.status(400).json({
-          success: false,
-          error: 'targetType must be chat or message'
-        });
+        res.status(400).json(errorResponse(
+          'targetType must be chat or message',
+          'INVALID_TARGET_TYPE',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
       }
 
       let result;
@@ -663,10 +717,14 @@ export class MessagingSystemController {
         switch (operation) {
           case 'delete':
             if (!reason) {
-              res.status(400).json({
-                success: false,
-                error: 'Deletion reason is required'
-              });
+              res.status(400).json(errorResponse(
+                'Deletion reason is required',
+                'DELETION_REASON_REQUIRED',
+                undefined,
+                400,
+                getRequestId(req)
+              ));
+              return;
             }
             result = await Promise.all([
               OffGameChat.updateMany({ _id: { $in: targetIds } }, { isActive: false }),
@@ -684,10 +742,14 @@ export class MessagingSystemController {
 
           case 'update_retention':
             if (!data?.messageRetentionDays) {
-              res.status(400).json({
-                success: false,
-                error: 'messageRetentionDays is required for retention update'
-              });
+              res.status(400).json(errorResponse(
+                'messageRetentionDays is required for retention update',
+                'MESSAGE_RETENTION_DAYS_REQUIRED',
+                undefined,
+                400,
+                getRequestId(req)
+              ));
+              return;
             }
             result = await OffGameChat.updateMany(
               { _id: { $in: targetIds } },
@@ -697,19 +759,27 @@ export class MessagingSystemController {
             break;
 
           default:
-            res.status(400).json({
-              success: false,
-              error: 'Invalid operation for chats'
-            });
+            res.status(400).json(errorResponse(
+              'Invalid operation for chats',
+              'INVALID_CHAT_OPERATION',
+              undefined,
+              400,
+              getRequestId(req)
+            ));
+            return;
         }
       } else { // message operations
         switch (operation) {
           case 'delete':
             if (!reason) {
-              res.status(400).json({
-                success: false,
-                error: 'Deletion reason is required'
-              });
+              res.status(400).json(errorResponse(
+                'Deletion reason is required',
+                'DELETION_REASON_REQUIRED',
+                undefined,
+                400,
+                getRequestId(req)
+              ));
+              return;
             }
             result = await OffGameChatMessage.updateMany(
               { _id: { $in: targetIds } },
@@ -727,10 +797,14 @@ export class MessagingSystemController {
             break;
 
           default:
-            res.status(400).json({
-              success: false,
-              error: 'Invalid operation for messages'
-            });
+            res.status(400).json(errorResponse(
+              'Invalid operation for messages',
+              'INVALID_MESSAGE_OPERATION',
+              undefined,
+              400,
+              getRequestId(req)
+            ));
+            return;
         }
       }
 
@@ -751,20 +825,24 @@ export class MessagingSystemController {
         },
       });
 
-      res.json({
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           message: `Bulk ${operation} completed successfully`,
           affected: affectedCount
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error in bulk operations:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to perform bulk operation'
-      });
+      res.status(500).json(errorResponse(
+        'Failed to perform bulk operation',
+        'BULK_OPERATION_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -839,17 +917,21 @@ export class MessagingSystemController {
         }
       };
 
-      res.json({
-        success: true,
-        data: recommendations
-      });
+      res.json(successResponse(
+        recommendations,
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error getting cleanup recommendations:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to get cleanup recommendations'
-      });
+      res.status(500).json(errorResponse(
+        'Failed to get cleanup recommendations',
+        'FETCH_CLEANUP_RECOMMENDATIONS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 }

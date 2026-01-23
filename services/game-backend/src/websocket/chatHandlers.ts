@@ -1,6 +1,6 @@
 import { Socket, Server as SocketIOServer } from 'socket.io';
 import { logger } from '../utils/logger';
-import { LocationAction, Location, OffGameChat, OffGameChatMessage, OffGameChatParticipant } from '../../../../packages/database/models';
+import { LocationAction, Location, OffGameChat, OffGameChatMessage, OffGameChatParticipant } from '../../../database/models';
 
 // Chat action types as defined in CLAUDE.md
 export type ActionType = 

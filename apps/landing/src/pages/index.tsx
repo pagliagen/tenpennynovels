@@ -107,7 +107,7 @@ export default function LoginPage() {
       const formData = getValues();
       const result = await AuthService.resendVerification(formData.username);
 
-      if (result.success) {
+      if (result.result) {
         setResendSuccess(result.message || 'Email di verifica inviata! Controlla la tua casella email.');
       } else {
         setLoginError(result.error || 'Errore durante l\'invio della verifica');
@@ -140,7 +140,7 @@ export default function LoginPage() {
       // Login tramite API Gateway
       const result = await login(credentials);
 
-      if (result.success && result.user) {
+      if (result.result && result.user) {
         // Frontend handles redirect logic based on user configuration
         if (result.user.multipleCharactersAllowed) {
           // Multiple character users stay on landing for character selection

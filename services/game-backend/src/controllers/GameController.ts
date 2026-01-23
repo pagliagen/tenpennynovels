@@ -1,10 +1,11 @@
 import { Request, Response } from 'express';
-import { Character, Location, LocationAction, Skill, Item, Occupation, User, OffGameChat, OffGameChatMessage, OffGameChatParticipant } from '../../../../packages/database/models';
+import { Character, Location, LocationAction, Skill, Item, Occupation, User, OffGameChat, OffGameChatMessage, OffGameChatParticipant } from '../../../database/models';
 import { ApiResponse, DiceResult, LocationActionType } from '../types/game';
 import { logger } from '../utils/logger';
 import { LocationService } from '../services/LocationService';
 import { getRedisPublisher } from '../config/redis';
-import { CharacterCreationConfigService } from '../../../../packages/shared/src/services/CharacterCreationConfigService';
+import { CharacterCreationConfigService } from '../../../shared/src/services/CharacterCreationConfigService';
+import { successResponse, errorResponse, getRequestId } from '../utils/apiResponse';
 
 export class GameController {
   /**
@@ -33,26 +34,26 @@ export class GameController {
 
       // Verify character belongs to user
       if (character.userId.toString() !== userId) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Accesso al personaggio negato',
-          code: 'CHARACTER_ACCESS_DENIED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(403).json(response);
+        res.status(403).json(errorResponse(
+          'Accesso al personaggio negato',
+          'CHARACTER_ACCESS_DENIED',
+          undefined,
+          403,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Get user data for admin permissions
       const user = await (User.findById(userId) as any);
       if (!user) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Utente non trovato',
-          code: 'USER_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Utente non trovato',
+          'USER_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -293,13 +294,11 @@ export class GameController {
         unreadOffGameMessages
       });
 
-      const response: ApiResponse = {
-        success: true,
-        data: responseData,
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+      res.json(successResponse(
+        responseData,
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -309,14 +308,13 @@ export class GameController {
         name: err.name
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile inizializzare il gioco',
-        code: 'GAME_INIT_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile inizializzare il gioco',
+        'GAME_INIT_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -332,24 +330,24 @@ export class GameController {
       // Verify character still exists and belongs to user
       const character = await (Character.findById(characterId) as any);
       if (!character) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Personaggio non trovato',
-          code: 'CHARACTER_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Personaggio non trovato',
+          'CHARACTER_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
       if (character.userId.toString() !== userId) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Character access denied',
-          code: 'CHARACTER_ACCESS_DENIED', 
-          timestamp: new Date().toISOString()
-        };
-        res.status(403).json(response);
+        res.status(403).json(errorResponse(
+          'Character access denied',
+          'CHARACTER_ACCESS_DENIED',
+          undefined,
+          403,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -380,9 +378,8 @@ export class GameController {
         logger.error('❌ Redis: Failed to publish globalPresence_update_single event:', redisError);
       }
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           valid: true,
           character: {
             id: character.id,
@@ -391,10 +388,9 @@ export class GameController {
             currentLocation: character.currentLocation
           }
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -404,14 +400,13 @@ export class GameController {
         name: err.name
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Validazione autenticazione fallita',
-        code: 'PING_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Validazione autenticazione fallita',
+        'PING_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   } 
 
@@ -431,44 +426,43 @@ export class GameController {
       // Get character and validate location
       const character = await (Character.findById(characterId) as any);
       if (!character || !character.currentLocation) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Personaggio non in una location',
-          code: 'CHARACTER_NOT_IN_LOCATION',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Personaggio non in una location',
+          'CHARACTER_NOT_IN_LOCATION',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Validate action type against character roles
       const canPerformAction = GameController.validateActionPermissions(actionType, gameplayRoles);
       if (!canPerformAction) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Permessi insufficienti per questo tipo di azione',
-          code: 'INSUFFICIENT_ACTION_PERMISSIONS',
-          details: {
+        res.status(403).json(errorResponse(
+          'Permessi insufficienti per questo tipo di azione',
+          'INSUFFICIENT_ACTION_PERMISSIONS',
+          {
             actionType,
             requiredRoles: GameController.getRequiredRoles(actionType),
             userRoles: gameplayRoles
           },
-          timestamp: new Date().toISOString()
-        };
-        res.status(403).json(response);
+          403,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Validate location has chat enabled
       const location = await (Location.findById(character.currentLocation) as any);
       if (!location || !location.chat) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Chat non disponibile in questa location',
-          code: 'CHAT_NOT_AVAILABLE',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Chat non disponibile in questa location',
+          'CHAT_NOT_AVAILABLE',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -527,9 +521,8 @@ export class GameController {
         visibility
       });
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
+      res.json(createResponse(
+        {
           action: {
             id: action.id,
             actionType: action.actionType,
@@ -546,10 +539,9 @@ export class GameController {
             broadcastTo
           }
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -559,14 +551,13 @@ export class GameController {
         name: err.name
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile inviare l\'azione location',
-        code: 'LOCATION_ACTION_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile inviare l\'azione location',
+        'LOCATION_ACTION_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -586,26 +577,26 @@ export class GameController {
       const location = await (Location.findById(locationId) as any);
 
       if (!location || !character) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Location non trovata',
-          code: 'LOCATION_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Location non trovata',
+          'LOCATION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Check location access (reuse LocationController logic)
       const hasAccess = await GameController.checkLocationAccess(location, character);
       if (!hasAccess) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Location non trovata',
-          code: 'LOCATION_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Location non trovata',
+          'LOCATION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -625,9 +616,8 @@ export class GameController {
         GameController.canSeeAction(action, character)
       );
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           actions: visibleActions.map((action: any) => ({
             id: action.id,
             actionType: action.actionType,
@@ -645,10 +635,9 @@ export class GameController {
             ? visibleActions[visibleActions.length - 1].timestamp.toISOString()
             : null
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -658,14 +647,13 @@ export class GameController {
         name: err.name
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare lo storico della location',
-        code: 'LOCATION_HISTORY_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare lo storico della location',
+        'LOCATION_HISTORY_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -685,15 +673,13 @@ export class GameController {
         totalActiveCharacters: globalPresence.length
       });
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           globalPresence: globalPresence
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -703,14 +689,13 @@ export class GameController {
         name: err.name
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare la presenza globale',
-        code: 'GLOBAL_PRESENCE_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare la presenza globale',
+        'GLOBAL_PRESENCE_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -835,26 +820,26 @@ export class GameController {
       // locationId is required in the request body (empty string = London)
       if (locationId === undefined || locationId === null) {
         logger.warn('❌ setCharacterLocation: Missing location ID');
-        const response: ApiResponse = {
-          success: false,
-          error: 'ID location obbligatorio (usa stringa vuota per Londra)',
-          code: 'MISSING_LOCATION_ID',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'ID location obbligatorio (usa stringa vuota per Londra)',
+          'MISSING_LOCATION_ID',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Get character
       const character = await (Character.findById(characterId) as any);
       if (!character) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Personaggio non trovato',
-          code: 'CHARACTER_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Personaggio non trovato',
+          'CHARACTER_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -870,13 +855,13 @@ export class GameController {
         // Get location and verify access for specific locations
         location = await (Location.findById(locationId) as any);
         if (!location) {
-          const response: ApiResponse = {
-            success: false,
-            error: 'Location not found',
-            code: 'LOCATION_NOT_FOUND',
-            timestamp: new Date().toISOString()
-          };
-          res.status(404).json(response);
+          res.status(404).json(errorResponse(
+            'Location not found',
+            'LOCATION_NOT_FOUND',
+            undefined,
+            404,
+            getRequestId(req)
+          ));
           return;
         }
 
@@ -885,13 +870,13 @@ export class GameController {
         const hasAccess = accessibleLocations.some(loc => loc.id === locationId);
 
         if (!hasAccess) {
-          const response: ApiResponse = {
-            success: false,
-            error: 'Accesso alla location negato',
-            code: 'LOCATION_ACCESS_DENIED',
-            timestamp: new Date().toISOString()
-          };
-          res.status(403).json(response);
+          res.status(403).json(errorResponse(
+            'Accesso alla location negato',
+            'LOCATION_ACCESS_DENIED',
+            undefined,
+            403,
+            getRequestId(req)
+          ));
           return;
         }
       }
@@ -935,18 +920,15 @@ export class GameController {
         locationName: location.name
       });
 
-      const response: ApiResponse = {
-        success: true,
-        message: `Moved to ${location.name}`,
-        data: {
+      res.json(updateResponse(
+        {
           characterId: character.id,
           newLocationId: locationId,
           locationName: location.name
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+        `Moved to ${location.name}`,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -958,14 +940,13 @@ export class GameController {
         requestBody: req.body
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile aggiornare la location del personaggio',
-        code: 'SET_LOCATION_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile aggiornare la location del personaggio',
+        'SET_LOCATION_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 

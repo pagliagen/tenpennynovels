@@ -1,8 +1,9 @@
 import { Request, Response } from 'express';
-import { LocationAction } from '../../../../packages/database/models';
+import { LocationAction } from '../../../database/models';
 import { logger } from '../utils/logger';
 import { getRedisPublisher } from '../config/redis';
 import { EmbeddingEventPublisher } from '../utils/events/embedding-publisher';
+import { successResponse, errorResponse, createResponse, getRequestId } from '../utils/apiResponse';
 
 export class LocationActionsController {
   
@@ -14,7 +15,13 @@ export class LocationActionsController {
     try {
       const character = req.character;
       if (!character) {
-        res.status(401).json({ success: false, error: 'Character context required' });
+        res.status(401).json(errorResponse(
+          'Character context required',
+          'CHARACTER_CONTEXT_REQUIRED',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -33,10 +40,13 @@ export class LocationActionsController {
 
       // Validate required fields
       if (!actionType || !content || !locationId) {
-        res.status(400).json({ 
-          success: false, 
-          error: 'actionType, content, and locationId are required' 
-        });
+        res.status(400).json(errorResponse(
+          'actionType, content, and locationId are required',
+          'MISSING_REQUIRED_FIELDS',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -47,10 +57,13 @@ export class LocationActionsController {
       );
       
       if (!isValidAction) {
-        res.status(403).json({ 
-          success: false, 
-          error: `You don't have permission to perform ${actionType} actions` 
-        });
+        res.status(403).json(errorResponse(
+          `You don't have permission to perform ${actionType} actions`,
+          'INSUFFICIENT_PERMISSIONS',
+          undefined,
+          403,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -158,19 +171,22 @@ export class LocationActionsController {
 
       logger.info(`Location action created: ${character.characterName} (${actionType}) in ${locationId}`);
 
-      res.json({
-        success: true,
-        action: {
-          id: savedAction._id,
-          actionType: savedAction.actionType,
-          characterName: savedAction.characterName,
-          content: savedAction.content,
-          timestamp: savedAction.timestamp,
-          visibility: savedAction.visibility,
-          diceResult: savedAction.diceResult,
-          itemEffect: savedAction.itemEffect
-        }
-      });
+      res.json(createResponse(
+        {
+          action: {
+            id: savedAction._id,
+            actionType: savedAction.actionType,
+            characterName: savedAction.characterName,
+            content: savedAction.content,
+            timestamp: savedAction.timestamp,
+            visibility: savedAction.visibility,
+            diceResult: savedAction.diceResult,
+            itemEffect: savedAction.itemEffect
+          }
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -179,10 +195,13 @@ export class LocationActionsController {
         stack: err.stack,
         name: err.name
       });
-      res.status(500).json({ 
-        success: false, 
-        error: 'Failed to create location action' 
-      });
+      res.status(500).json(errorResponse(
+        'Failed to create location action',
+        'CREATE_ACTION_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -194,7 +213,13 @@ export class LocationActionsController {
     try {
       const character = req.character;
       if (!character) {
-        res.status(401).json({ success: false, error: 'Character context required' });
+        res.status(401).json(errorResponse(
+          'Character context required',
+          'CHARACTER_CONTEXT_REQUIRED',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -241,16 +266,19 @@ export class LocationActionsController {
 
       logger.info(`Retrieved ${filteredActions.length} location actions for ${character.characterName} in ${locationId}`);
 
-      res.json({
-        success: true,
-        actions: filteredActions,
-        meta: {
-          locationId,
-          hoursBack: hours,
-          totalCount: filteredActions.length,
-          timeThreshold: timeThreshold.toISOString()
-        }
-      });
+      res.json(successResponse(
+        {
+          actions: filteredActions,
+          meta: {
+            locationId,
+            hoursBack: hours,
+            totalCount: filteredActions.length,
+            timeThreshold: timeThreshold.toISOString()
+          }
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -259,10 +287,13 @@ export class LocationActionsController {
         stack: err.stack,
         name: err.name
       });
-      res.status(500).json({ 
-        success: false, 
-        error: 'Failed to retrieve location actions' 
-      });
+      res.status(500).json(errorResponse(
+        'Failed to retrieve location actions',
+        'GET_ACTIONS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 

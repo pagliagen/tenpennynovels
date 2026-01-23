@@ -47,7 +47,7 @@ export default function DeleteAccountPage() {
 
       const data = await response.json();
 
-      if (data.success) {
+      if (data.result) {
         setSuccess(true);
         setError('');
 

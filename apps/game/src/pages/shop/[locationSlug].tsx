@@ -95,7 +95,7 @@ function ShopPageContent() {
         const result = await response.json();
         console.log('🏪 Shop data result:', result);
 
-        if (result.success) {
+        if (result.result) {
           setShopData(result.data);
           setError(null);
         } else {
@@ -130,7 +130,7 @@ function ShopPageContent() {
       });
 
       const result = await response.json();
-      if (result.success) {
+      if (result.result) {
         // Refresh shop data
         window.location.reload();
       } else {

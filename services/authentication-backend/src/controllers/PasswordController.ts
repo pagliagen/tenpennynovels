@@ -1,10 +1,11 @@
 import { Request, Response } from 'express';
-import { User } from '../../../../packages/database/models';
+import { User } from '../../../database/models';
 import { CryptoUtils } from '../utils/crypto';
 import { ApiResponse } from '../types/auth';
 import { logger, logAuth, logSecurity } from '../utils/logger';
 import { redis } from '../config/redis';
 import { EmailService } from '../services/EmailService';
+import { successResponse, errorResponse, updateResponse, getRequestId } from '../utils/apiResponse';
 
 export class PasswordController {
   /**
@@ -25,13 +26,13 @@ export class PasswordController {
 
       if (!user) {
         // Return generic error without revealing if user exists
-        const response: ApiResponse = {
-          success: false,
-          error: 'Utente non trovato',
-          code: 'USER_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Utente non trovato',
+          'USER_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -41,16 +42,11 @@ export class PasswordController {
         ? 'Ti abbiamo inviato una email all\'indirizzo che hai indicato per fare il recupero della password.'
         : 'Abbiamo inviato una mail all\'indirizzo associato all\'utente indicato.';
 
-      const successResponse: ApiResponse = {
-        success: true,
-        message: message,
-        data: {
-          emailSent: true,
-          foundVia: isEmail ? 'email' : 'username',
-          expiresAt: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(), // 2 hours
-          canRequestAgainAt: new Date(Date.now() + 30 * 60 * 1000).toISOString() // 30 minutes cooldown
-        },
-        timestamp: new Date().toISOString()
+      const responseData = {
+        emailSent: true,
+        foundVia: isEmail ? 'email' : 'username',
+        expiresAt: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(), // 2 hours
+        canRequestAgainAt: new Date(Date.now() + 30 * 60 * 1000).toISOString() // 30 minutes cooldown
       };
 
       // Generate password reset token
@@ -86,29 +82,32 @@ export class PasswordController {
       } catch (emailError) {
         logger.error('Failed to send password reset email:', emailError);
         
-        const response: ApiResponse = {
-          success: false,
-          error: 'Impossibile inviare l\'email di reset password',
-          code: 'EMAIL_SEND_ERROR',
-          timestamp: new Date().toISOString()
-        };
-        res.status(500).json(response);
+        res.status(500).json(errorResponse(
+          'Impossibile inviare l\'email di reset password',
+          'EMAIL_SEND_ERROR',
+          undefined,
+          500,
+          getRequestId(req)
+        ));
         return;
       }
 
-      res.status(200).json(successResponse);
+      res.json(successResponse(
+        responseData,
+        message,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Forgot password error:', error);
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Richiesta di reset password fallita',
-        code: 'PASSWORD_RESET_REQUEST_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Richiesta di reset password fallita',
+        'PASSWORD_RESET_REQUEST_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -126,18 +125,17 @@ export class PasswordController {
       });
 
       if (!user) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Token di reset non valido o scaduto',
-          code: 'INVALID_RESET_TOKEN',
-          details: {
+        res.status(400).json(errorResponse(
+          'Token di reset non valido o scaduto',
+          'INVALID_RESET_TOKEN',
+          {
             valid: false,
             canRequestNew: true,
             requestUrl: '/auth/forgot-password'
           },
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -145,9 +143,8 @@ export class PasswordController {
       const hoursRemaining = Math.floor(timeRemaining / (1000 * 60 * 60));
       const minutesRemaining = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           valid: true,
           token: token,
           user: {
@@ -157,22 +154,20 @@ export class PasswordController {
           expiresAt: user.passwordResetExpires!.toISOString(),
           timeRemaining: `${hoursRemaining} hour${hoursRemaining !== 1 ? 's' : ''} ${minutesRemaining} minute${minutesRemaining !== 1 ? 's' : ''}`
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Reset token verification error:', error);
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Verifica token fallita',
-        code: 'TOKEN_VERIFICATION_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Verifica token fallita',
+        'TOKEN_VERIFICATION_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -187,13 +182,13 @@ export class PasswordController {
 
       // Validate that passwords match (should be caught by validation middleware)
       if (newPassword !== confirmPassword) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Le password non corrispondono',
-          code: 'PASSWORDS_MISMATCH',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Le password non corrispondono',
+          'PASSWORDS_MISMATCH',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -203,28 +198,26 @@ export class PasswordController {
       });
 
       if (!user) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Token di reset non valido o scaduto',
-          code: 'INVALID_RESET_TOKEN',
-          details: {
+        res.status(400).json(errorResponse(
+          'Token di reset non valido o scaduto',
+          'INVALID_RESET_TOKEN',
+          {
             canRequestNew: true,
             requestUrl: '/auth/forgot-password'
           },
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Validate password strength
       const passwordValidation = CryptoUtils.validatePasswordStrength(newPassword);
       if (!passwordValidation.isValid) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'La password non soddisfa i requisiti',
-          code: 'INVALID_PASSWORD',
-          details: {
+        res.status(400).json(errorResponse(
+          'La password non soddisfa i requisiti',
+          'INVALID_PASSWORD',
+          {
             requirements: {
               minLength: 8,
               requiresUppercase: true,
@@ -235,9 +228,9 @@ export class PasswordController {
             },
             violations: passwordValidation.violations
           },
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -282,10 +275,8 @@ export class PasswordController {
         logger.error('Failed to send password reset notification:', emailError);
       }
 
-      const response: ApiResponse = {
-        success: true,
-        message: 'Password reset successfully',
-        data: {
+      res.json(updateResponse(
+        {
           user: {
             id: user.id,
             username: user.username,
@@ -296,22 +287,20 @@ export class PasswordController {
             loginRequired: true
           }
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+        'Password reset successfully',
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Password reset error:', error);
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Reset password fallito',
-        code: 'PASSWORD_RESET_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Reset password fallito',
+        'PASSWORD_RESET_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -326,25 +315,25 @@ export class PasswordController {
 
       // Validate that new passwords match
       if (newPassword !== confirmNewPassword) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'La nuova password e la conferma non corrispondono',
-          code: 'PASSWORDS_MISMATCH',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'La nuova password e la conferma non corrispondono',
+          'PASSWORDS_MISMATCH',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       const user = await User.findById(userId);
       if (!user) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Utente non trovato',
-          code: 'USER_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Utente non trovato',
+          'USER_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -358,41 +347,39 @@ export class PasswordController {
           ipAddress: req.ip
         });
 
-        const response: ApiResponse = {
-          success: false,
-          error: 'La password attuale non è corretta',
-          code: 'INVALID_CURRENT_PASSWORD',
-          details: {
+        res.status(400).json(errorResponse(
+          'La password attuale non è corretta',
+          'INVALID_CURRENT_PASSWORD',
+          {
             attemptsRemaining: 3,
             lockoutWarning: 'Account will be temporarily locked after 5 failed attempts'
           },
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Validate that new password is different
       const isSamePassword = await CryptoUtils.comparePassword(newPassword, user.passwordHash);
       if (isSamePassword) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'La nuova password deve essere diversa da quella attuale',
-          code: 'SAME_PASSWORD',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'La nuova password deve essere diversa da quella attuale',
+          'SAME_PASSWORD',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Validate password strength
       const passwordValidation = CryptoUtils.validatePasswordStrength(newPassword);
       if (!passwordValidation.isValid) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'La password non soddisfa i requisiti',
-          code: 'INVALID_PASSWORD',
-          details: {
+        res.status(400).json(errorResponse(
+          'La password non soddisfa i requisiti',
+          'INVALID_PASSWORD',
+          {
             requirements: {
               minLength: 8,
               requiresUppercase: true,
@@ -403,9 +390,9 @@ export class PasswordController {
             },
             violations: passwordValidation.violations
           },
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -448,32 +435,28 @@ export class PasswordController {
         logger.error('Failed to send password change notification:', emailError);
       }
 
-      const response: ApiResponse = {
-        success: true,
-        message: 'Password changed successfully',
-        data: {
+      res.json(updateResponse(
+        {
           passwordChangedAt: user.passwordChangedAt,
           security: {
             otherSessionsTerminated: logoutOtherDevices || false,
             sessionCount: logoutOtherDevices ? 0 : 1 // Placeholder
           }
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+        'Password changed successfully',
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Password change error:', error);
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Cambio password fallito',
-        code: 'PASSWORD_CHANGE_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Cambio password fallito',
+        'PASSWORD_CHANGE_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 }

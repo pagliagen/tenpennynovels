@@ -21,7 +21,8 @@ import documentsRoutes from './routes/documents';
 import ticketRoutes from './routes/tickets';
 import experienceRoutes from './routes/experienceRoutes';
 import { housingRoutes } from './routes/housing-simple';
-import { AnalyticsMiddleware } from '../../../packages/shared/src/middleware/analyticsMiddleware';
+import { AnalyticsMiddleware } from '../../shared/src/middleware/analyticsMiddleware';
+import { successResponse, errorResponse, getRequestId } from './utils/apiResponse';
 
 // Import daily experience cron jobs (runs automatically when imported)
 import './cron/dailyExperience';
@@ -165,23 +166,30 @@ app.use('/documents', documentsRoutes);
 
 // Game health check
 app.get('/game/health', (req, res) => {
-  res.json({
-    status: 'ok',
-    service: 'game-backend',
-    timestamp: new Date().toISOString()
-  });
+  res.json(successResponse(
+    {
+      status: 'ok',
+      service: 'game-backend',
+      uptime: process.uptime(),
+      memory: process.memoryUsage(),
+      environment: process.env.NODE_ENV || 'development'
+    },
+    undefined,
+    getRequestId(req)
+  ));
 });
 
 // 404 handler for unknown routes
 app.use((req, res) => {
   console.warn('404 - Route not found', req.method, req.originalUrl);
 
-  res.status(404).json({
-    success: false,
-    error: 'Route not found',
-    code: 'ROUTE_NOT_FOUND',
-    timestamp: new Date().toISOString()
-  });
+  res.status(404).json(errorResponse(
+    'Route not found',
+    'ROUTE_NOT_FOUND',
+    undefined,
+    404,
+    getRequestId(req)
+  ));
 });
 
 // Global error handler (must be last)
@@ -209,7 +217,7 @@ export const setupDatabaseConnections = async () => {
 // Rate limiter initialization (will be used by index.ts)
 export const initializeRateLimiters = async () => {
   try {
-    const { ConfigurationService } = await import('../../../packages/shared/src/services/ConfigurationService');
+    const { ConfigurationService } = await import('../../shared/src/services/ConfigurationService');
     const { getRedisClient } = await import('./config/redis');
     const { logger } = await import('./utils/logger');
     const redis = getRedisClient();
@@ -229,12 +237,13 @@ export const initializeRateLimiters = async () => {
     const apiLimiter = rateLimit({
       windowMs: apiWindowMs,
       max: apiMax,
-      message: {
-        success: false,
-        error: 'Troppe richieste da questo indirizzo IP, riprova più tardi.',
-        code: 'RATE_LIMIT_EXCEEDED',
-        timestamp: new Date().toISOString()
-      },
+      message: errorResponse(
+        'Troppe richieste da questo indirizzo IP, riprova più tardi.',
+        'RATE_LIMIT_EXCEEDED',
+        undefined,
+        429,
+        undefined
+      ),
       standardHeaders: true,
       legacyHeaders: false,
     });
@@ -243,12 +252,13 @@ export const initializeRateLimiters = async () => {
     const strictLimiter = rateLimit({
       windowMs: strictWindowMs,
       max: strictMax,
-      message: {
-        success: false,
-        error: 'Troppe richieste per questa operazione, riprova più tardi.',
-        code: 'STRICT_RATE_LIMIT_EXCEEDED',
-        timestamp: new Date().toISOString()
-      }
+      message: errorResponse(
+        'Troppe richieste per questa operazione, riprova più tardi.',
+        'STRICT_RATE_LIMIT_EXCEEDED',
+        undefined,
+        429,
+        undefined
+      )
     });
 
     // Apply rate limiting to all routes

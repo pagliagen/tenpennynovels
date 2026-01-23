@@ -63,7 +63,7 @@ export const ComposeMessageForm: React.FC<ComposeMessageFormProps> = ({
       if (response.ok) {
         const data = await response.json();
         // console.log('🔍 Characters API response:', data);
-        if (data.success) {
+        if (data.result) {
           const characters = data.data.characters || [];
           setAvailableCharacters(characters);
           // console.log('🔍 Available characters set:', characters);
@@ -84,7 +84,7 @@ export const ComposeMessageForm: React.FC<ComposeMessageFormProps> = ({
       
       if (response.ok) {
         const data = await response.json();
-        if (data.success) {
+        if (data.result) {
           const wallet = data.data;
           setWalletInfo({
             cash: wallet.cash || 0,
@@ -236,7 +236,7 @@ export const ComposeMessageForm: React.FC<ComposeMessageFormProps> = ({
 
       if (response.ok) {
         const data = await response.json();
-        if (data.success) {
+        if (data.result) {
           // console.log('✅ Message sent successfully');
           
           // Reset form

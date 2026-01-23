@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { ObjectId } from 'mongodb';
 import mongoose from 'mongoose';
 import slugify from 'slugify';
+import { successResponse, errorResponse, createResponse, listResponse, getRequestId } from '../utils/apiResponse';
 
 // Forum Topic Interface
 interface ForumTopic {
@@ -155,20 +156,24 @@ export class ForumController {
         }
       }
       
-      res.json({
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           totalDiscussions,
           totalPosts,
           authContext
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       console.error('Error fetching forum init data:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile recuperare le statistiche del forum'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare le statistiche del forum',
+        'GET_FORUM_INIT_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
   
@@ -197,9 +202,8 @@ export class ForumController {
         .sort({ isPinned: -1, lastPostAt: -1, createdAt: -1 })
         .toArray();
 
-      res.json({
-        success: true,
-        data: topics.map(topic => ({
+      res.json(successResponse(
+        topics.map(topic => ({
           id: topic._id,
           slug: topic.slug,
           title: topic.title,
@@ -216,14 +220,19 @@ export class ForumController {
           createdBy: topic.createdBy,
           color: topic.color,
           icon: topic.icon
-        }))
-      });
+        })),
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       console.error('Error fetching topics:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile recuperare i topic'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare i topic',
+        'GET_TOPICS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -239,25 +248,30 @@ export class ForumController {
       });
 
       if (!topic) {
-        return res.status(404).json({
-          success: false,
-          error: 'Topic non trovato'
-        });
+        return res.status(404).json(errorResponse(
+          'Topic non trovato',
+          'TOPIC_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
       }
 
       // Check access permissions
       if (!topic.isPublic) {
         if (!user || !user.character || user.character.status !== 'APPROVED') {
-          return res.status(403).json({
-            success: false,
-            error: 'Accesso negato: personaggio approvato richiesto'
-          });
+          return res.status(403).json(errorResponse(
+            'Accesso negato: personaggio approvato richiesto',
+            'ACCESS_DENIED',
+            undefined,
+            403,
+            getRequestId(req)
+          ));
         }
       }
 
-      res.json({
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           id: topic._id,
           slug: topic.slug,
           title: topic.title,
@@ -274,14 +288,19 @@ export class ForumController {
           createdBy: topic.createdBy,
           color: topic.color,
           icon: topic.icon
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       console.error('Error fetching topic:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile recuperare il topic'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare il topic',
+        'GET_TOPIC_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -292,17 +311,23 @@ export class ForumController {
       
       // Check permissions
       if (!hasAdminPermission(user, 'canManageForums')) {
-        return res.status(403).json({
-          success: false,
-          error: 'Accesso negato: gestione forum richiesta'
-        });
+        return res.status(403).json(errorResponse(
+          'Accesso negato: gestione forum richiesta',
+          'ACCESS_DENIED',
+          undefined,
+          403,
+          getRequestId(req)
+        ));
       }
 
       if (!title || title.trim().length === 0) {
-        return res.status(400).json({
-          success: false,
-          error: 'Il titolo è obbligatorio'
-        });
+        return res.status(400).json(errorResponse(
+          'Il titolo è obbligatorio',
+          'VALIDATION_ERROR',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
       }
 
       const slug = createSlug(title);
@@ -311,10 +336,13 @@ export class ForumController {
       // Check if slug already exists
       const existingTopic = await db.collection('forum_topics').findOne({ slug });
       if (existingTopic) {
-        return res.status(409).json({
-          success: false,
-          error: 'Esiste già un topic con questo titolo'
-        });
+        return res.status(409).json(errorResponse(
+          'Esiste già un topic con questo titolo',
+          'DUPLICATE_TOPIC',
+          undefined,
+          409,
+          getRequestId(req)
+        ));
       }
 
       const topic: ForumTopic = {
@@ -337,19 +365,23 @@ export class ForumController {
 
       const result = await db.collection('forum_topics').insertOne(topic);
 
-      res.status(201).json({
-        success: true,
-        data: {
+      res.status(201).json(createResponse(
+        {
           id: result.insertedId,
           ...topic
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       console.error('Error creating topic:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile creare il topic'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile creare il topic',
+        'CREATE_TOPIC_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -372,18 +404,24 @@ export class ForumController {
       });
 
       if (!topic) {
-        return res.status(404).json({
-          success: false,
-          error: 'Topic non trovato'
-        });
+        return res.status(404).json(errorResponse(
+          'Topic non trovato',
+          'TOPIC_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
       }
 
       if (!topic.isPublic) {
         if (!user || !user.character || user.character.status !== 'APPROVED') {
-          return res.status(403).json({
-            success: false,
-            error: 'Accesso negato: personaggio approvato richiesto'
-          });
+          return res.status(403).json(errorResponse(
+            'Accesso negato: personaggio approvato richiesto',
+            'ACCESS_DENIED',
+            undefined,
+            403,
+            getRequestId(req)
+          ));
         }
       }
 
@@ -400,9 +438,8 @@ export class ForumController {
 
       const totalPages = Math.ceil(total / limit);
 
-      res.json({
-        success: true,
-        data: discussions.map(d => ({
+      res.json(listResponse(
+        discussions.map(d => ({
           id: d._id,
           slug: d.slug,
           topicSlug: d.topicSlug,
@@ -418,21 +455,26 @@ export class ForumController {
           createdBy: d.createdBy,
           tags: d.tags || []
         })),
-        pagination: {
+        {
           page,
-          limit,
+          pageSize: limit,
           total,
           totalPages,
-          hasNextPage: page < totalPages,
-          hasPrevPage: page > 1
-        }
-      });
+          hasNext: page < totalPages,
+          hasPrev: page > 1
+        },
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       console.error('Error fetching discussions:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile recuperare le discussioni'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare le discussioni',
+        'GET_DISCUSSIONS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -449,18 +491,24 @@ export class ForumController {
       });
 
       if (!topic) {
-        return res.status(404).json({
-          success: false,
-          error: 'Topic non trovato'
-        });
+        return res.status(404).json(errorResponse(
+          'Topic non trovato',
+          'TOPIC_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
       }
 
       if (!topic.isPublic) {
         if (!user || !user.character || user.character.status !== 'APPROVED') {
-          return res.status(403).json({
-            success: false,
-            error: 'Accesso negato: personaggio approvato richiesto'
-          });
+          return res.status(403).json(errorResponse(
+            'Accesso negato: personaggio approvato richiesto',
+            'ACCESS_DENIED',
+            undefined,
+            403,
+            getRequestId(req)
+          ));
         }
       }
 
@@ -472,10 +520,13 @@ export class ForumController {
       });
 
       if (!discussion) {
-        return res.status(404).json({
-          success: false,
-          error: 'Discussione non trovata'
-        });
+        return res.status(404).json(errorResponse(
+          'Discussione non trovata',
+          'DISCUSSION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
       }
 
       // Increment view count
@@ -484,9 +535,8 @@ export class ForumController {
         { $inc: { viewCount: 1 } }
       );
 
-      res.json({
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           id: discussion._id,
           slug: discussion.slug,
           topicSlug: discussion.topicSlug,
@@ -501,14 +551,19 @@ export class ForumController {
           createdAt: discussion.createdAt,
           createdBy: discussion.createdBy,
           tags: discussion.tags || []
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       console.error('Error fetching discussion:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile recuperare la discussione'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare la discussione',
+        'GET_DISCUSSION_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -519,10 +574,13 @@ export class ForumController {
       const user = (req as any).user;
       
       if (!user) {
-        return res.status(401).json({
-          success: false,
-          error: 'Autenticazione richiesta'
-        });
+        return res.status(401).json(errorResponse(
+          'Autenticazione richiesta',
+          'AUTHENTICATION_REQUIRED',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
       }
 
       // Check topic access
@@ -533,31 +591,43 @@ export class ForumController {
       });
 
       if (!topic) {
-        return res.status(404).json({
-          success: false,
-          error: 'Topic non trovato'
-        });
+        return res.status(404).json(errorResponse(
+          'Topic non trovato',
+          'TOPIC_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
       }
 
       if (!topic.isPublic && (!user.character || user.character.status !== 'APPROVED')) {
-        return res.status(403).json({
-          success: false,
-          error: 'Access denied: approved character required'
-        });
+        return res.status(403).json(errorResponse(
+          'Access denied: approved character required',
+          'ACCESS_DENIED',
+          undefined,
+          403,
+          getRequestId(req)
+        ));
       }
 
       if (topic.isLocked && !hasAdminPermission(user, 'canManageForums')) {
-        return res.status(403).json({
-          success: false,
-          error: 'Il topic è bloccato'
-        });
+        return res.status(403).json(errorResponse(
+          'Il topic è bloccato',
+          'TOPIC_LOCKED',
+          undefined,
+          403,
+          getRequestId(req)
+        ));
       }
 
       if (!title || !content || title.trim().length === 0 || content.trim().length === 0) {
-        return res.status(400).json({
-          success: false,
-          error: 'Titolo e contenuto sono obbligatori'
-        });
+        return res.status(400).json(errorResponse(
+          'Titolo e contenuto sono obbligatori',
+          'VALIDATION_ERROR',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
       }
 
       const slug = createSlug(title);
@@ -569,10 +639,13 @@ export class ForumController {
       });
       
       if (existingDiscussion) {
-        return res.status(409).json({
-          success: false,
-          error: 'Esiste già una discussione con questo titolo in questo topic'
-        });
+        return res.status(409).json(errorResponse(
+          'Esiste già una discussione con questo titolo in questo topic',
+          'DUPLICATE_DISCUSSION',
+          undefined,
+          409,
+          getRequestId(req)
+        ));
       }
 
       const now = new Date();
@@ -630,19 +703,23 @@ export class ForumController {
         }
       );
 
-      res.status(201).json({
-        success: true,
-        data: {
+      res.status(201).json(createResponse(
+        {
           id: discussionResult.insertedId,
           ...discussion
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       console.error('Error creating discussion:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile creare la discussione'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile creare la discussione',
+        'CREATE_DISCUSSION_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -665,18 +742,24 @@ export class ForumController {
       });
 
       if (!topic) {
-        return res.status(404).json({
-          success: false,
-          error: 'Topic non trovato'
-        });
+        return res.status(404).json(errorResponse(
+          'Topic non trovato',
+          'TOPIC_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
       }
 
       if (!topic.isPublic) {
         if (!user || !user.character || user.character.status !== 'APPROVED') {
-          return res.status(403).json({
-            success: false,
-            error: 'Accesso negato: personaggio approvato richiesto'
-          });
+          return res.status(403).json(errorResponse(
+            'Accesso negato: personaggio approvato richiesto',
+            'ACCESS_DENIED',
+            undefined,
+            403,
+            getRequestId(req)
+          ));
         }
       }
 
@@ -687,10 +770,13 @@ export class ForumController {
       });
 
       if (!discussion) {
-        return res.status(404).json({
-          success: false,
-          error: 'Discussione non trovata'
-        });
+        return res.status(404).json(errorResponse(
+          'Discussione non trovata',
+          'DISCUSSION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
       }
 
       // Get posts
@@ -714,9 +800,8 @@ export class ForumController {
 
       const totalPages = Math.ceil(total / limit);
 
-      res.json({
-        success: true,
-        data: posts.map(p => ({
+      res.json(listResponse(
+        posts.map(p => ({
           id: p._id,
           topicSlug: p.topicSlug,
           discussionSlug: p.discussionSlug,
@@ -734,21 +819,26 @@ export class ForumController {
           replyToPostId: p.replyToPostId,
           reactionCounts: p.reactionCounts
         })),
-        pagination: {
+        {
           page,
-          limit,
+          pageSize: limit,
           total,
           totalPages,
-          hasNextPage: page < totalPages,
-          hasPrevPage: page > 1
-        }
-      });
+          hasNext: page < totalPages,
+          hasPrev: page > 1
+        },
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       console.error('Error fetching posts:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile recuperare i post'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare i post',
+        'GET_POSTS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -759,17 +849,23 @@ export class ForumController {
       const user = (req as any).user;
       
       if (!user) {
-        return res.status(401).json({
-          success: false,
-          error: 'Autenticazione richiesta'
-        });
+        return res.status(401).json(errorResponse(
+          'Autenticazione richiesta',
+          'AUTHENTICATION_REQUIRED',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
       }
 
       if (!content || content.trim().length === 0) {
-        return res.status(400).json({
-          success: false,
-          error: 'Il contenuto è obbligatorio'
-        });
+        return res.status(400).json(errorResponse(
+          'Il contenuto è obbligatorio',
+          'VALIDATION_ERROR',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
       }
 
       const db = mongoose.connection.db;
@@ -781,17 +877,23 @@ export class ForumController {
       });
 
       if (!topic) {
-        return res.status(404).json({
-          success: false,
-          error: 'Topic non trovato'
-        });
+        return res.status(404).json(errorResponse(
+          'Topic non trovato',
+          'TOPIC_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
       }
 
       if (!topic.isPublic && (!user.character || user.character.status !== 'APPROVED')) {
-        return res.status(403).json({
-          success: false,
-          error: 'Access denied: approved character required'
-        });
+        return res.status(403).json(errorResponse(
+          'Access denied: approved character required',
+          'ACCESS_DENIED',
+          undefined,
+          403,
+          getRequestId(req)
+        ));
       }
 
       const discussion = await db.collection('forum_discussions').findOne({
@@ -801,18 +903,24 @@ export class ForumController {
       });
 
       if (!discussion) {
-        return res.status(404).json({
-          success: false,
-          error: 'Discussione non trovata'
-        });
+        return res.status(404).json(errorResponse(
+          'Discussione non trovata',
+          'DISCUSSION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
       }
 
       if (topic.isLocked || discussion.isLocked) {
         if (!hasAdminPermission(user, 'canManageForums')) {
-          return res.status(403).json({
-            success: false,
-            error: 'La discussione è bloccata'
-          });
+          return res.status(403).json(errorResponse(
+            'La discussione è bloccata',
+            'DISCUSSION_LOCKED',
+            undefined,
+            403,
+            getRequestId(req)
+          ));
         }
       }
 
@@ -865,19 +973,23 @@ export class ForumController {
         }
       );
 
-      res.status(201).json({
-        success: true,
-        data: {
+      res.status(201).json(createResponse(
+        {
           id: result.insertedId,
           ...post
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       console.error('Error creating post:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile creare il post'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile creare il post',
+        'CREATE_POST_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -920,9 +1032,8 @@ export class ForumController {
           isVisible: true
         });
 
-      res.json({
-        success: true,
-        data: discussions.map(d => ({
+      res.json(listResponse(
+        discussions.map(d => ({
           id: d._id,
           slug: d.slug,
           topicSlug: d.topicSlug,
@@ -938,21 +1049,26 @@ export class ForumController {
           createdBy: d.createdBy,
           tags: d.tags || []
         })),
-        pagination: {
+        {
           page: 1,
-          limit,
+          pageSize: limit,
           total: totalCount,
           totalPages: Math.ceil(totalCount / limit),
-          hasNextPage: false,
-          hasPrevPage: false
-        }
-      });
+          hasNext: false,
+          hasPrev: false
+        },
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       console.error('Error fetching recent discussions:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile recuperare le discussioni recenti'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare le discussioni recenti',
+        'GET_RECENT_DISCUSSIONS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -1032,9 +1148,8 @@ export class ForumController {
           createdAt: { $gte: cutoffDate }
         });
 
-      res.json({
-        success: true,
-        data: discussions.map(d => ({
+      res.json(listResponse(
+        discussions.map(d => ({
           id: d._id,
           slug: d.slug,
           topicSlug: d.topicSlug,
@@ -1051,21 +1166,26 @@ export class ForumController {
           tags: d.tags || [],
           popularityScore: d.popularityScore
         })),
-        pagination: {
+        {
           page: 1,
-          limit,
+          pageSize: limit,
           total: totalCount,
           totalPages: Math.ceil(totalCount / limit),
-          hasNextPage: false,
-          hasPrevPage: false
-        }
-      });
+          hasNext: false,
+          hasPrev: false
+        },
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       console.error('Error fetching popular discussions:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile recuperare le discussioni popolari'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare le discussioni popolari',
+        'GET_POPULAR_DISCUSSIONS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -1076,10 +1196,13 @@ export class ForumController {
       const user = (req as any).user;
       
       if (!user) {
-        return res.status(401).json({
-          success: false,
-          error: 'Autenticazione richiesta'
-        });
+        return res.status(401).json(errorResponse(
+          'Autenticazione richiesta',
+          'AUTHENTICATION_REQUIRED',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
       }
 
       const db = mongoose.connection.db;
@@ -1090,10 +1213,11 @@ export class ForumController {
         .toArray();
       
       if (favoriteTopics.length === 0) {
-        return res.json({
-          success: true,
-          data: []
-        });
+        return res.json(successResponse(
+          [],
+          undefined,
+          getRequestId(req)
+        ));
       }
       
       const favoriteTopicSlugs = favoriteTopics.map(f => f.topicSlug);
@@ -1114,9 +1238,8 @@ export class ForumController {
         .sort({ isPinned: -1, lastPostAt: -1, createdAt: -1 })
         .toArray();
 
-      res.json({
-        success: true,
-        data: topics.map(topic => ({
+      res.json(successResponse(
+        topics.map(topic => ({
           id: topic._id,
           slug: topic.slug,
           title: topic.title,
@@ -1134,14 +1257,19 @@ export class ForumController {
           color: topic.color,
           icon: topic.icon,
           isFavorite: true
-        }))
-      });
+        })),
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       console.error('Error fetching user favorite topics:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile recuperare i topic preferiti'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare i topic preferiti',
+        'GET_FAVORITE_TOPICS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -1151,10 +1279,13 @@ export class ForumController {
       const user = (req as any).user;
       
       if (!user) {
-        return res.status(401).json({
-          success: false,
-          error: 'Autenticazione richiesta'
-        });
+        return res.status(401).json(errorResponse(
+          'Autenticazione richiesta',
+          'AUTHENTICATION_REQUIRED',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
       }
 
       const db = mongoose.connection.db;
@@ -1166,19 +1297,25 @@ export class ForumController {
       });
 
       if (!topic) {
-        return res.status(404).json({
-          success: false,
-          error: 'Topic non trovato'
-        });
+        return res.status(404).json(errorResponse(
+          'Topic non trovato',
+          'TOPIC_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
       }
 
       // Check access permissions
       if (!topic.isPublic) {
         if (!user.character || user.character.status !== 'APPROVED') {
-          return res.status(403).json({
-            success: false,
-            error: 'Accesso negato: personaggio approvato richiesto'
-          });
+          return res.status(403).json(errorResponse(
+            'Accesso negato: personaggio approvato richiesto',
+            'ACCESS_DENIED',
+            undefined,
+            403,
+            getRequestId(req)
+          ));
         }
       }
 
@@ -1189,10 +1326,13 @@ export class ForumController {
       });
 
       if (existingFavorite) {
-        return res.status(409).json({
-          success: false,
-          error: 'Topic già nei preferiti'
-        });
+        return res.status(409).json(errorResponse(
+          'Topic già nei preferiti',
+          'ALREADY_FAVORITED',
+          undefined,
+          409,
+          getRequestId(req)
+        ));
       }
 
       // Add to favorites
@@ -1204,20 +1344,24 @@ export class ForumController {
         createdAt: new Date()
       });
 
-      res.status(201).json({
-        success: true,
-        data: {
+      res.status(201).json(createResponse(
+        {
           message: 'Topic aggiunto ai preferiti',
           topicSlug: slug,
           isFavorite: true
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       console.error('Error adding topic to favorites:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile aggiungere il topic ai preferiti'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile aggiungere il topic ai preferiti',
+        'ADD_FAVORITE_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -1227,10 +1371,13 @@ export class ForumController {
       const user = (req as any).user;
       
       if (!user) {
-        return res.status(401).json({
-          success: false,
-          error: 'Autenticazione richiesta'
-        });
+        return res.status(401).json(errorResponse(
+          'Autenticazione richiesta',
+          'AUTHENTICATION_REQUIRED',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
       }
 
       const db = mongoose.connection.db;
@@ -1242,26 +1389,33 @@ export class ForumController {
       });
 
       if (result.deletedCount === 0) {
-        return res.status(404).json({
-          success: false,
-          error: 'Topic non trovato nei preferiti'
-        });
+        return res.status(404).json(errorResponse(
+          'Topic non trovato nei preferiti',
+          'FAVORITE_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
       }
 
-      res.json({
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           message: 'Topic rimosso dai preferiti',
           topicSlug: slug,
           isFavorite: false
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       console.error('Error removing topic from favorites:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile rimuovere il topic dai preferiti'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile rimuovere il topic dai preferiti',
+        'REMOVE_FAVORITE_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -1271,10 +1425,11 @@ export class ForumController {
       const user = (req as any).user;
       
       if (!user) {
-        return res.json({
-          success: true,
-          data: { isFavorite: false }
-        });
+        return res.json(successResponse(
+          { isFavorite: false },
+          undefined,
+          getRequestId(req)
+        ));
       }
 
       const db = mongoose.connection.db;
@@ -1284,16 +1439,20 @@ export class ForumController {
         topicSlug: slug
       });
 
-      res.json({
-        success: true,
-        data: { isFavorite: !!favorite }
-      });
+      res.json(successResponse(
+        { isFavorite: !!favorite },
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       console.error('Error checking topic favorite status:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile verificare lo stato preferito'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile verificare lo stato preferito',
+        'CHECK_FAVORITE_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -1314,10 +1473,13 @@ export class ForumController {
       const user = (req as any).user;
       
       if (!query || typeof query !== 'string' || query.trim().length === 0) {
-        return res.status(400).json({
-          success: false,
-          error: 'La query di ricerca è obbligatoria'
-        });
+        return res.status(400).json(errorResponse(
+          'La query di ricerca è obbligatoria',
+          'MISSING_QUERY',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
       }
 
       const db = mongoose.connection.db;
@@ -1397,9 +1559,8 @@ export class ForumController {
         suggestions = await ForumController.generateSearchSuggestions(db, query, accessFilters);
       }
 
-      res.json({
-        success: true,
-        data: posts.map(p => ({
+      res.json(listResponse(
+        posts.map(p => ({
           id: p._id,
           topicSlug: p.topicSlug,
           discussionSlug: p.discussionSlug,
@@ -1416,28 +1577,26 @@ export class ForumController {
           replyToPostId: p.replyToPostId,
           relevanceScore: p.score || 0
         })),
-        pagination: {
+        {
           page,
-          limit,
+          pageSize: limit,
           total,
           totalPages,
-          hasNextPage: page < totalPages,
-          hasPrevPage: page > 1
+          hasNext: page < totalPages,
+          hasPrev: page > 1
         },
-        meta: {
-          query: query.trim(),
-          processedQuery: processedQuery.originalQuery,
-          sortBy,
-          fuzzyEnabled: fuzzy === 'true',
-          suggestions: suggestions.length > 0 ? suggestions : undefined
-        }
-      });
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       console.error('Error searching forum:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile effettuare la ricerca nel forum'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile effettuare la ricerca nel forum',
+        'SEARCH_FORUM_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -1597,9 +1756,8 @@ export class ForumController {
         { $limit: 10 }
       ]).toArray();
 
-      res.json({
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           popularTerms: commonWords.map(w => ({
             term: w._id,
             frequency: w.count
@@ -1611,15 +1769,20 @@ export class ForumController {
           })),
           totalPosts: await db.collection('forum_posts').countDocuments({ isDeleted: false, ...accessFilters }),
           indexedAt: new Date()
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       console.error('Error getting search stats:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile recuperare le statistiche di ricerca'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare le statistiche di ricerca',
+        'GET_SEARCH_STATS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 }

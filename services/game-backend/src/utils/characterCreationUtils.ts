@@ -1,7 +1,7 @@
-import { Character, Occupation, Skill } from '../../../../packages/database/models';
-import { ICharacter } from '../../../../packages/database/models/Character';
-import { IOccupation } from '../../../../packages/database/models/Occupation';
-import { CharacterCreationConfig, calculateIntelligenceBonus } from '../../../../packages/shared/src/services/CharacterCreationConfigService';
+import { Character, Occupation, Skill } from '../../../database/models';
+import { ICharacter } from '../../../database/models/Character';
+import { IOccupation } from '../../../database/models/Occupation';
+import { CharacterCreationConfig, calculateIntelligenceBonus } from '../../../shared/src/services/CharacterCreationConfigService';
 import { logger } from './logger';
 
 /**
@@ -227,32 +227,32 @@ export async function validateCharacterSubmission(character: ICharacter, config:
 
   // ====== BASIC INFO VALIDATION ======
   if (!character.name || character.name.trim() === '' || character.name === 'New Character') {
-    result.errors.push('Character name is required');
+    result.errors.push('Il nome del personaggio è obbligatorio');
     result.isValid = false;
   }
 
   if (!character.age || character.age < 16 || character.age > 80) {
-    result.errors.push('Character age must be between 16 and 80');
+    result.errors.push(`L'età del personaggio deve essere tra 16 e 80 anni (attuale: ${character.age || 'non impostata'})`);
     result.isValid = false;
   }
 
   if (!character.apparentAge || character.apparentAge < 16 || character.apparentAge > 80) {
-    result.errors.push('Character apparent age must be between 16 and 80');
+    result.errors.push(`L'età apparente del personaggio deve essere tra 16 e 80 anni (attuale: ${character.apparentAge || 'non impostata'})`);
     result.isValid = false;
   }
 
   if (!character.gender) {
-    result.errors.push('Character gender is required');
+    result.errors.push('Il genere del personaggio è obbligatorio');
     result.isValid = false;
   }
 
   if (!character.publicDescription || character.publicDescription.length < 50) {
-    result.errors.push('Public description must be at least 50 characters');
+    result.errors.push(`La descrizione pubblica deve essere di almeno 50 caratteri (attuale: ${character.publicDescription?.length || 0})`);
     result.isValid = false;
   }
 
   if (!character.privateDescription || character.privateDescription.length < 50) {
-    result.errors.push('Private description must be at least 50 characters');
+    result.errors.push(`La descrizione privata deve essere di almeno 50 caratteri (attuale: ${character.privateDescription?.length || 0})`);
     result.isValid = false;
   }
 
@@ -276,12 +276,30 @@ export async function validateCharacterSubmission(character: ICharacter, config:
   const minimumTotal = Object.values(minStats).reduce((sum, val) => sum + val, 0);
 
   // Check each stat against minimum
+  // Map appearance to charm (the actual field name in Character schema)
+  const statMapping: { [key: string]: string } = {
+    appearance: 'charm'
+  };
+  
   let statsAbove80 = 0;
   for (const [statName, minValue] of Object.entries(minStats)) {
-    const currentValue = (character.stats as any)[statName] || 0;
+    const actualStatName = statMapping[statName] || statName;
+    const currentValue = (character.stats as any)[actualStatName] || 0;
 
     if (currentValue < minValue) {
-      result.errors.push(`${statName} cannot be below ${minValue} (current: ${currentValue})`);
+      // Translate stat names to Italian
+      const statNames: { [key: string]: string } = {
+        strength: 'Forza',
+        size: 'Taglia',
+        dexterity: 'Destrezza',
+        constitution: 'Costituzione',
+        intelligence: 'Intelligenza',
+        education: 'Educazione',
+        power: 'Potere',
+        appearance: 'Fascino'
+      };
+      const statNameIt = statNames[statName] || statName;
+      result.errors.push(`${statNameIt} non può essere inferiore a ${minValue} (attuale: ${currentValue})`);
       result.isValid = false;
     }
 
@@ -294,21 +312,21 @@ export async function validateCharacterSubmission(character: ICharacter, config:
   const actualTotal = Object.values(character.stats).reduce((sum, val) => sum + val, 0) - minimumTotal;
 
   if (actualTotal < statTotal) {
-    result.errors.push(`You must spend all ${statTotal} stat points (spent: ${actualTotal})`);
+    result.errors.push(`Devi spendere tutti i ${statTotal} punti caratteristica (spesi: ${actualTotal}, rimanenti: ${statTotal - actualTotal})`);
     result.isValid = false;
   } else if (actualTotal > statTotal) {
-    result.errors.push(`You have exceeded stat point budget (${actualTotal} > ${statTotal})`);
+    result.errors.push(`Hai superato il budget di punti caratteristica (spesi: ${actualTotal}, massimo: ${statTotal})`);
     result.isValid = false;
   }
 
   if (statsAbove80 > maxStatsAbove80) {
-    result.errors.push(`Maximum ${maxStatsAbove80} stats can be above 80 (you have ${statsAbove80})`);
+    result.errors.push(`Massimo ${maxStatsAbove80} caratteristiche possono essere sopra 80 (ne hai ${statsAbove80})`);
     result.isValid = false;
   }
 
   // ====== OCCUPATION VALIDATION ======
   if (!character.occupation) {
-    result.errors.push('Character must select an occupation');
+    result.errors.push('Il personaggio deve selezionare un\'esperienza pregressa');
     result.isValid = false;
     return result; // Can't validate skills without occupation
   }
@@ -317,7 +335,7 @@ export async function validateCharacterSubmission(character: ICharacter, config:
   const occupation = await Occupation.findById(character.occupation).populate('requiredSkills.skillId').populate('requiredSkills.alternatives');
 
   if (!occupation) {
-    result.errors.push('Selected occupation not found in database');
+    result.errors.push('L\'esperienza pregressa selezionata non è stata trovata nel database');
     result.isValid = false;
     return result;
   }
@@ -329,81 +347,149 @@ export async function validateCharacterSubmission(character: ICharacter, config:
 
   // Calculate total points spent on skills
   let skillPointsSpent = 0;
-  const skillEntries = Object.entries(character.skills);
+  
+  // Handle Mongoose Map - convert to object and filter out internal properties
+  let skillsObj: any = {};
+  if (character.skills instanceof Map) {
+    character.skills.forEach((value, key) => {
+      // Filter out Mongoose internal properties
+      if (!key.startsWith('$__')) {
+        skillsObj[key] = value;
+      }
+    });
+  } else {
+    skillsObj = character.skills || {};
+  }
+  
+  const skillEntries = Object.entries(skillsObj);
 
   for (const [skillName, skillValue] of skillEntries) {
+    // Skip Mongoose internal properties
+    if (skillName.startsWith('$__')) {
+      continue;
+    }
+    
     // Fetch skill to get base value
     const skill = await Skill.findOne({ name: skillName });
 
     if (!skill) {
-      result.warnings.push(`Skill "${skillName}" not found in database`);
+      result.warnings.push(`Abilità "${skillName}" non trovata nel database`);
       continue;
     }
 
+    // Handle granular skill breakdown (object) vs simple number
+    let totalValue: number;
+    if (typeof skillValue === 'object' && skillValue !== null && 'total' in skillValue) {
+      totalValue = (skillValue as any).total;
+    } else {
+      totalValue = typeof skillValue === 'number' ? skillValue : 0;
+    }
+
     const baseValue = skill.baseValue || 0;
-    const pointsSpent = Math.max(0, skillValue - baseValue);
+    const pointsSpent = Math.max(0, totalValue - baseValue);
     skillPointsSpent += pointsSpent;
 
     // Check cap (allow final cap if occupation bonuses applied)
     const maxAllowed = character.occupationBonusesApplied ? finalSkillCap : skillCap;
 
-    if (skillValue > maxAllowed) {
-      result.errors.push(`Skill "${skillName}" exceeds cap (${skillValue} > ${maxAllowed})`);
+    if (totalValue > maxAllowed) {
+      result.errors.push(`L'abilità "${skillName}" supera il limite (${totalValue} > ${maxAllowed})`);
       result.isValid = false;
     }
   }
 
   if (skillPointsSpent > skillPoints.totalAvailable) {
-    result.errors.push(`Skill points exceeded (spent: ${skillPointsSpent}, available: ${skillPoints.totalAvailable})`);
+    result.errors.push(`Hai superato i punti abilità disponibili (spesi: ${skillPointsSpent}, disponibili: ${skillPoints.totalAvailable})`);
     result.isValid = false;
   } else if (skillPointsSpent < skillPoints.totalAvailable) {
-    result.errors.push(`You must spend all skill points (spent: ${skillPointsSpent}, available: ${skillPoints.totalAvailable})`);
+    result.errors.push(`Devi spendere tutti i punti abilità (spesi: ${skillPointsSpent}, disponibili: ${skillPoints.totalAvailable}, rimanenti: ${skillPoints.totalAvailable - skillPointsSpent})`);
     result.isValid = false;
   }
 
-  // Check that all 6 required skills have been improved
+  // Check that all required skills have been improved
+  // Use skillName instead of skillId (skillId is optional String, not ObjectId ref)
   let requiredSkillsImproved = 0;
+  const totalRequiredSkills = occupation.requiredSkills?.length || 0;
 
-  for (const requiredSkill of occupation.requiredSkills) {
-    const skill = await Skill.findById(requiredSkill.skillId);
+  for (const requiredSkill of (occupation.requiredSkills || [])) {
+    const skillName = requiredSkill.skillName;
+    if (!skillName) continue;
 
-    if (!skill) continue;
+    const skill = await Skill.findOne({ name: skillName });
+    if (!skill) {
+      result.warnings.push(`Abilità richiesta "${skillName}" non trovata nel database`);
+      continue;
+    }
 
-    const skillValue = character.skills[skill.name] || 0;
+    // Get skill value from character (handle Map and granular breakdown)
+    let skillValue: number = 0;
+    if (character.skills instanceof Map) {
+      const value = character.skills.get(skillName);
+      if (typeof value === 'object' && value !== null && 'total' in value) {
+        skillValue = (value as any).total;
+      } else if (typeof value === 'number') {
+        skillValue = value;
+      }
+    } else {
+      const value = (character.skills as any)[skillName];
+      if (typeof value === 'object' && value !== null && 'total' in value) {
+        skillValue = (value as any).total;
+      } else if (typeof value === 'number') {
+        skillValue = value;
+      }
+    }
+
     const baseValue = skill.baseValue || 0;
+    const requiredMinimum = requiredSkill.baseValue || 40;
 
-    if (skillValue > baseValue) {
+    // Check if skill meets the required minimum
+    if (skillValue >= requiredMinimum) {
       requiredSkillsImproved++;
     }
   }
 
-  if (requiredSkillsImproved < 6) {
-    result.errors.push(`All 6 required occupation skills must be improved (${requiredSkillsImproved}/6 improved)`);
+  if (totalRequiredSkills > 0 && requiredSkillsImproved < totalRequiredSkills) {
+    result.errors.push(`Tutte le ${totalRequiredSkills} abilità richieste dall'esperienza pregressa devono essere migliorate (${requiredSkillsImproved}/${totalRequiredSkills} migliorate)`);
     result.isValid = false;
   }
 
   // ====== BACKGROUND VALIDATION ======
-  if (!character.background || !character.backgroundCompleted) {
-    result.errors.push('Character background must be completed');
-    result.isValid = false;
+  // Check required background fields directly (don't rely on backgroundCompleted flag)
+  const backgroundErrors: string[] = [];
+  
+  // Required: publicDescription and privateDescription (legacy fields)
+  if (!character.publicDescription || character.publicDescription.trim().length < 50) {
+    backgroundErrors.push(`La descrizione pubblica deve essere di almeno 50 caratteri (attuale: ${character.publicDescription?.trim().length || 0})`);
   }
 
-  // Check minimum background fields
+  if (!character.privateDescription || character.privateDescription.trim().length < 50) {
+    backgroundErrors.push(`La descrizione privata deve essere di almeno 50 caratteri (attuale: ${character.privateDescription?.trim().length || 0})`);
+  }
+
+  // Required: structured background fields
   if (character.background) {
-    if (!character.background.briefHistory || character.background.briefHistory.length < 100) {
-      result.errors.push('Brief history must be at least 100 characters');
-      result.isValid = false;
+    if (!character.background.briefHistory || character.background.briefHistory.trim().length < 100) {
+      backgroundErrors.push(`La storia breve deve essere di almeno 100 caratteri (attuale: ${character.background.briefHistory?.trim().length || 0})`);
     }
 
-    if (!character.background.personality || character.background.personality.length < 50) {
-      result.errors.push('Personality description must be at least 50 characters');
-      result.isValid = false;
+    if (!character.background.personality || character.background.personality.trim().length < 50) {
+      backgroundErrors.push(`La descrizione della personalità deve essere di almeno 50 caratteri (attuale: ${character.background.personality?.trim().length || 0})`);
     }
 
-    if (!character.background.goalsAndMotivations || character.background.goalsAndMotivations.length < 50) {
-      result.errors.push('Goals and motivations must be at least 50 characters');
-      result.isValid = false;
+    if (!character.background.goalsAndMotivations || character.background.goalsAndMotivations.trim().length < 50) {
+      backgroundErrors.push(`Obiettivi e motivazioni devono essere di almeno 50 caratteri (attuale: ${character.background.goalsAndMotivations?.trim().length || 0})`);
     }
+  } else {
+    // If background object doesn't exist, check if at least legacy fields are present
+    if (!character.publicDescription || character.publicDescription.trim().length < 50) {
+      backgroundErrors.push('Il background del personaggio deve essere completato');
+    }
+  }
+
+  // Add all background errors
+  if (backgroundErrors.length > 0) {
+    result.errors.push(...backgroundErrors);
+    result.isValid = false;
   }
 
   logger.info('Character validation completed', {

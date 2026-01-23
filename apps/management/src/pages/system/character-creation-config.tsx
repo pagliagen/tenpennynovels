@@ -127,7 +127,7 @@ export default function CharacterCreationConfigPage({ authContext }: PageProps) 
       }
 
       const data = await response.json();
-      if (data.success && data.data?.config) {
+      if (data.result && data.data?.config) {
         setConfig(data.data.config);
         setOriginalConfig(JSON.parse(JSON.stringify(data.data.config)));
         setHasChanges(false);
@@ -202,7 +202,7 @@ export default function CharacterCreationConfigPage({ authContext }: PageProps) 
       });
 
       const data = await response.json();
-      if (data.success) {
+      if (data.result) {
         showToast('Configurazione salvata con successo', 'success');
         await fetchConfig(); // Reload to get updated metadata
       } else {
@@ -224,7 +224,7 @@ export default function CharacterCreationConfigPage({ authContext }: PageProps) 
       });
 
       const data = await response.json();
-      if (data.success) {
+      if (data.result) {
         showToast('Cache invalidata con successo', 'success');
       }
     } catch (error: any) {

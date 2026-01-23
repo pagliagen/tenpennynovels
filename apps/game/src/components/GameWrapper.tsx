@@ -27,7 +27,7 @@ export const GameWrapper: React.FC<GameWrapperProps> = ({ children }) => {
   const initializeGame = async () => {
     try {
       const result = await GameApiService.initGame();
-      if (result.success) {
+      if (result.result) {
         setGameData(result);
         setIsInitialized(true);
       }

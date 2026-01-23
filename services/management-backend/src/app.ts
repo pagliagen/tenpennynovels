@@ -9,6 +9,7 @@ import morgan from 'morgan';
 import { apiRoutes } from './routes';
 import { httpLoggerStream } from './utils/logger';
 import { ApiResponse } from './types/management';
+import { successResponse, errorResponse } from './utils/apiResponse';
 
 console.log('📦 Setting up Management Backend...');
 const app = express();
@@ -145,32 +146,26 @@ app.use('/admin', apiRoutes);
 
 // Health check endpoint
 app.get('/admin/health', (req, res) => {
-  const response: ApiResponse = {
-    success: true,
-    data: {
-      status: 'healthy',
-      service: 'management-backend',
-      version: '1.0.0',
-      uptime: process.uptime(),
-      memory: process.memoryUsage(),
-      environment: process.env.NODE_ENV || 'development'
-    },
-    timestamp: new Date().toISOString()
-  };
-  res.json(response);
+  res.json(successResponse({
+    status: 'healthy',
+    service: 'management-backend',
+    version: '1.0.0',
+    uptime: process.uptime(),
+    memory: process.memoryUsage(),
+    environment: process.env.NODE_ENV || 'development'
+  }));
 });
 
 // Root endpoint removed - not needed
 
 // 404 handler
 app.use((req, res) => {
-  const response: ApiResponse = {
-    success: false,
-    error: 'Endpoint not found',
-    code: 'ENDPOINT_NOT_FOUND',
-    timestamp: new Date().toISOString()
-  };
-  res.status(404).json(response);
+  res.status(404).json(errorResponse(
+    'Endpoint not found',
+    'ENDPOINT_NOT_FOUND',
+    undefined,
+    404
+  ));
 });
 
 // Global error handler
@@ -186,12 +181,12 @@ app.use((error: any, req: express.Request, res: express.Response, next: express.
     userAgent: req.get('User-Agent')
   });
 
-  const response: ApiResponse = {
-    success: false,
-    error: process.env.NODE_ENV === 'production' ? 'Internal server error' : error instanceof Error ? error.message : String(error),
-    code: 'INTERNAL_SERVER_ERROR',
-    timestamp: new Date().toISOString()
-  };
+  const response = errorResponse(
+    process.env.NODE_ENV === 'production' ? 'Internal server error' : error instanceof Error ? error.message : String(error),
+    'INTERNAL_SERVER_ERROR',
+    undefined,
+    500
+  );
 
   res.status(500).json(response);
 });

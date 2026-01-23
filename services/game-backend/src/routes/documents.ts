@@ -3,7 +3,7 @@
 
 import { Router } from 'express';
 import { AuthMiddleware } from '../middleware/auth';
-import { conditionalBanCheck } from '../../../../packages/shared/src/middleware/conditionalBanCheck';
+import { conditionalBanCheck } from '../../../shared/src/middleware/conditionalBanCheck';
 import {
   getDocuments,
   getDocument,

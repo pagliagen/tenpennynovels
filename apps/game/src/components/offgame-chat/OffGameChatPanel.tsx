@@ -70,8 +70,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ chatId, chat }) => {
       
       if (response.ok) {
         const data = await response.json();
-        if (data.success) {
-          const transformedMessages = (data.data.messages || []).map((msg: any) => ({
+        if (data.result) {
+          const messages = data.data?.messages || data.list || [];
+          const transformedMessages = messages.map((msg: any) => ({
             ...msg,
             // Transform populated senderId to string and extract senderName
             senderId: typeof msg.senderId === 'object' ? msg.senderId._id : msg.senderId,
@@ -151,7 +152,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ chatId, chat }) => {
 
       if (response.ok) {
         const data = await response.json();
-        if (data.success) {
+        if (data.result) {
           // console.log('✅ ChatInterface: Message sent successfully');
           setNewMessage('');
           // Reload chat history to show own message
@@ -284,8 +285,8 @@ export const OffGameChatPanel: React.FC<OffGameChatPanelProps> = ({
         
         if (response.ok) {
           const data = await response.json();
-          if (data.success) {
-            setChats(data.data.chats || []);
+          if (data.result) {
+            setChats(data.data?.chats || data.list || []);
           }
         }
       } catch (error) {
@@ -446,7 +447,7 @@ export const OffGameChatPanel: React.FC<OffGameChatPanelProps> = ({
 
       if (response.ok) {
         const result = await response.json();
-        if (result.success) {
+        if (result.result) {
           // Refresh chats list
           const chatsResponse = await fetch(`${API_BASE_URL}/game/offgame-chats`, {
             credentials: 'include'
@@ -454,7 +455,7 @@ export const OffGameChatPanel: React.FC<OffGameChatPanelProps> = ({
           
           if (chatsResponse.ok) {
             const chatsData = await chatsResponse.json();
-            if (chatsData.success) {
+            if (chatsData.result) {
               setChats(chatsData.data.chats || []);
             }
           }

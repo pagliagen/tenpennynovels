@@ -3,7 +3,8 @@ import mongoose from 'mongoose';
 import { ApiResponse } from '../types/management';
 import { AdminAuthMiddleware } from '../middleware/adminAuth';
 import { logger } from '../utils/logger';
-import { Item, ItemCategory, IItem, CharacterInventory, Shop, ShopItem } from '../../../../packages/database/models/Item';
+import { Item, ItemCategory, IItem, CharacterInventory, Shop, ShopItem } from '../../../database/models/Item';
+import { listResponse, successResponse, errorResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
 
 export class ItemManagementController {
   
@@ -46,19 +47,16 @@ export class ItemManagementController {
         .limit(limit)
         .lean();
 
-      const response: ApiResponse<{
-        items: any[];
-        pagination: {
-          currentPage: number;
-          totalPages: number;
-          totalItems: number;
-          limit: number;
-          hasMore: boolean;
-        };
-      }> = {
-        success: true,
-        data: {
-          items: items.map(item => ({
+      const pagination = {
+        currentPage: page,
+        totalPages: Math.ceil(totalItems / limit),
+        totalItems,
+        limit,
+        hasMore: page < Math.ceil(totalItems / limit)
+      };
+
+      res.json(listResponse(
+        items.map(item => ({
             _id: item._id,
             name: item.name,
             description: item.description,
@@ -93,16 +91,10 @@ export class ItemManagementController {
                 item.prerequisites && item.prerequisites[key as keyof typeof item.prerequisites]
               ).length : 0
           })),
-          pagination: {
-            currentPage: page,
-            totalPages: Math.ceil(totalItems / limit),
-            totalItems,
-            limit,
-            hasMore: page < Math.ceil(totalItems / limit)
-          }
-        },
-        timestamp: new Date().toISOString()
-      };
+        pagination,
+        undefined,
+        getRequestId(req)
+      ));
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       logger.info('Admin viewed items list', {
@@ -112,21 +104,18 @@ export class ItemManagementController {
         limit,
         totalResults: totalItems
       });
-
-      res.json(response);
     } catch (error: any) {
       logger.error('Error fetching items:', { 
         error: error instanceof Error ? error.message : String(error) 
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare gli oggetti',
-        code: 'FETCH_ITEMS_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare gli oggetti',
+        'FETCH_ITEMS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -212,26 +201,23 @@ export class ItemManagementController {
         ...auditInfo
       });
 
-      const response: ApiResponse<any> = {
-        success: true,
-        data: stats,
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+      res.json(successResponse(
+        stats,
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error fetching item stats:', { 
         error: error instanceof Error ? error.message : String(error) 
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare le statistiche degli oggetti',
-        code: 'FETCH_ITEM_STATS_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare le statistiche degli oggetti',
+        'FETCH_ITEM_STATS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -249,13 +235,13 @@ export class ItemManagementController {
         .lean();
 
       if (!item) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Oggetto non trovato',
-          code: 'ITEM_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Oggetto non trovato',
+          'ITEM_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -313,27 +299,24 @@ export class ItemManagementController {
         itemName: Array.isArray(item) ? 'Multiple Items' : item.name
       });
 
-      const response: ApiResponse<any> = {
-        success: true,
-        data: itemWithStats,
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+      res.json(successResponse(
+        itemWithStats,
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error fetching item details:', { 
         error: error instanceof Error ? error.message : String(error), 
         itemId: req.params.itemId 
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare i dettagli dell\'oggetto',
-        code: 'FETCH_ITEM_DETAILS_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare i dettagli dell\'oggetto',
+        'FETCH_ITEM_DETAILS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -347,13 +330,13 @@ export class ItemManagementController {
       
       // Validate category
       if (!Object.values(ItemCategory).includes(req.body.category)) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Categoria oggetto non valida',
-          code: 'INVALID_CATEGORY',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Categoria oggetto non valida',
+          'INVALID_CATEGORY',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -371,16 +354,14 @@ export class ItemManagementController {
         category: 'item_management'
       });
 
-      const response: ApiResponse<{ itemId: string; action: string }> = {
-        success: true,
-        data: {
+      res.status(201).json(createResponse(
+        {
           itemId: savedItem._id.toString(),
           action: 'item_created'
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(201).json(response);
+        'Item creato con successo',
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error creating item:', { 
         error: error instanceof Error ? error.message : String(error) 
@@ -388,20 +369,21 @@ export class ItemManagementController {
       
       let errorMessage = 'Failed to create item';
       let errorCode = 'CREATE_ITEM_ERROR';
+      let statusCode = 500;
       
       if (error instanceof Error && error.message.includes('duplicate key')) {
         errorMessage = 'Item name already exists';
         errorCode = 'ITEM_NAME_EXISTS';
+        statusCode = 409;
       }
       
-      const response: ApiResponse = {
-        success: false,
-        error: errorMessage,
-        code: errorCode,
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(error instanceof Error && error.message.includes('duplicate key') ? 409 : 500).json(response);
+      res.status(statusCode).json(errorResponse(
+        errorMessage,
+        errorCode,
+        undefined,
+        statusCode,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -415,25 +397,25 @@ export class ItemManagementController {
       const { reason, ...updateData } = req.body;
 
       if (!reason || reason.trim().length === 0) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Il motivo dell\'aggiornamento è richiesto',
-          code: 'UPDATE_REASON_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Il motivo dell\'aggiornamento è richiesto',
+          'UPDATE_REASON_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Validate category if provided
       if (updateData.category && !Object.values(ItemCategory).includes(updateData.category)) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Categoria oggetto non valida',
-          code: 'INVALID_CATEGORY',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Categoria oggetto non valida',
+          'INVALID_CATEGORY',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -444,13 +426,13 @@ export class ItemManagementController {
       );
 
       if (!item) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Oggetto non trovato',
-          code: 'ITEM_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Oggetto non trovato',
+          'ITEM_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -463,30 +445,27 @@ export class ItemManagementController {
         category: 'item_management'
       });
 
-      const response: ApiResponse<{ itemId: string; action: string }> = {
-        success: true,
-        data: {
+      res.json(updateResponse(
+        {
           itemId,
           action: 'item_updated'
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        'Item aggiornato con successo',
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error updating item:', { 
         error: error instanceof Error ? error.message : String(error), 
         itemId: req.params.itemId 
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile aggiornare l\'oggetto',
-        code: 'UPDATE_ITEM_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile aggiornare l\'oggetto',
+        'UPDATE_ITEM_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -500,25 +479,25 @@ export class ItemManagementController {
       const { reason } = req.body;
 
       if (!reason || reason.trim().length === 0) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Il motivo dell\'eliminazione è richiesto',
-          code: 'DELETION_REASON_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Il motivo dell\'eliminazione è richiesto',
+          'DELETION_REASON_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       const item = await Item.findById(itemId);
       if (!item) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Oggetto non trovato',
-          code: 'ITEM_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Oggetto non trovato',
+          'ITEM_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -546,17 +525,10 @@ export class ItemManagementController {
           category: 'item_management'
         });
 
-        const response: ApiResponse<{ itemId: string; action: string; message: string }> = {
-          success: true,
-          data: {
-            itemId,
-            action: 'item_soft_deleted',
-            message: `Item removed from availability but preserved due to ${inventoryCount} character(s) owning it`
-          },
-          timestamp: new Date().toISOString()
-        };
-
-        res.json(response);
+        res.json(deleteResponse(
+          `Item removed from availability but preserved due to ${inventoryCount} character(s) owning it`,
+          getRequestId(req)
+        ));
       } else {
         // Hard delete: item not in use
         await Item.findByIdAndDelete(itemId);
@@ -570,16 +542,10 @@ export class ItemManagementController {
           category: 'item_management'
         });
 
-        const response: ApiResponse<{ itemId: string; action: string }> = {
-          success: true,
-          data: {
-            itemId,
-            action: 'item_deleted'
-          },
-          timestamp: new Date().toISOString()
-        };
-
-        res.json(response);
+        res.json(deleteResponse(
+          'Item eliminato con successo',
+          getRequestId(req)
+        ));
       }
     } catch (error: any) {
       logger.error('Error deleting item:', { 
@@ -587,14 +553,13 @@ export class ItemManagementController {
         itemId: req.params.itemId 
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile eliminare l\'oggetto',
-        code: 'DELETE_ITEM_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile eliminare l\'oggetto',
+        'DELETE_ITEM_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -607,13 +572,13 @@ export class ItemManagementController {
       const { operation, itemIds, data, reason } = req.body;
 
       if (!reason || reason.trim().length === 0) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Il motivo dell\'operazione bulk è richiesto',
-          code: 'BULK_REASON_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Il motivo dell\'operazione bulk è richiesto',
+          'BULK_REASON_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -633,13 +598,13 @@ export class ItemManagementController {
           break;
         case 'update_category':
           if (!Object.values(ItemCategory).includes(data.category)) {
-            const response: ApiResponse = {
-              success: false,
-              error: 'Categoria non valida',
-              code: 'INVALID_CATEGORY',
-              timestamp: new Date().toISOString()
-            };
-            res.status(400).json(response);
+            res.status(400).json(errorResponse(
+              'Categoria non valida',
+              'INVALID_CATEGORY',
+              undefined,
+              400,
+              getRequestId(req)
+            ));
             return;
           }
           result = await Item.updateMany(
@@ -660,13 +625,13 @@ export class ItemManagementController {
           );
           break;
         default:
-          const response: ApiResponse = {
-            success: false,
-            error: 'Operazione bulk non valida',
-            code: 'INVALID_BULK_OPERATION',
-            timestamp: new Date().toISOString()
-          };
-          res.status(400).json(response);
+          res.status(400).json(errorResponse(
+            'Operazione bulk non valida',
+            'INVALID_BULK_OPERATION',
+            undefined,
+            400,
+            getRequestId(req)
+          ));
           return;
       }
 
@@ -680,30 +645,27 @@ export class ItemManagementController {
         category: 'item_management'
       });
 
-      const response: ApiResponse<{ operation: string; processed: number; modified: number }> = {
-        success: true,
-        data: {
+      res.json(updateResponse(
+        {
           operation,
           processed: itemIds?.length || 0,
           modified: result?.modifiedCount || 0
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        'Operazione bulk completata con successo',
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error in bulk item operation:', { 
         error: error instanceof Error ? error.message : String(error)
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile eseguire l\'operazione bulk',
-        code: 'BULK_ITEM_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile eseguire l\'operazione bulk',
+        'BULK_ITEM_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 }

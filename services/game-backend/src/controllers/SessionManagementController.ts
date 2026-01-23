@@ -1,12 +1,13 @@
 import { Request, Response } from 'express';
-import { GamingSession } from '../../../../packages/database/models/GamingSession';
-import { SessionManagement } from '../../../../packages/database/models/SessionManagement';
-import { SessionTemplate } from '../../../../packages/database/models/SessionTemplate';
-import { Campaign } from '../../../../packages/database/models/Campaign';
-import { ExperienceGrant } from '../../../../packages/database/models/ExperienceGrant';
-import { CharacterProgression } from '../../../../packages/database/models/CharacterProgression';
-import { Character } from '../../../../packages/database/models/Character';
+import { GamingSession } from '../../../database/models/GamingSession';
+import { SessionManagement } from '../../../database/models/SessionManagement';
+import { SessionTemplate } from '../../../database/models/SessionTemplate';
+import { Campaign } from '../../../database/models/Campaign';
+import { ExperienceGrant } from '../../../database/models/ExperienceGrant';
+import { CharacterProgression } from '../../../database/models/CharacterProgression';
+import { Character } from '../../../database/models/Character';
 import { logger } from '../utils/logger';
+import { successResponse, errorResponse, createResponse, listResponse, getRequestId } from '../utils/apiResponse';
 
 export class SessionManagementController {
   
@@ -22,11 +23,13 @@ export class SessionManagementController {
       // Verify master permissions
       const master = await Character.findById(masterId);
       if (!master || !master.gameplayRoles.includes('master')) {
-        res.status(403).json({
-          success: false,
-          error: 'Permessi di Master richiesti',
-          code: 'INSUFFICIENT_PERMISSIONS'
-        });
+        res.status(403).json(errorResponse(
+          'Permessi di Master richiesti',
+          'INSUFFICIENT_PERMISSIONS',
+          undefined,
+          403,
+          getRequestId(req)
+        ));
         return;
       }
       
@@ -49,11 +52,13 @@ export class SessionManagementController {
       if (templateId) {
         const template = await SessionTemplate.findById(templateId);
         if (!template) {
-          res.status(404).json({
-            success: false,
-            error: 'Template sessione non trovato',
-            code: 'TEMPLATE_NOT_FOUND'
-          });
+          res.status(404).json(errorResponse(
+            'Template sessione non trovato',
+            'TEMPLATE_NOT_FOUND',
+            undefined,
+            404,
+            getRequestId(req)
+          ));
           return;
         }
         templateData = template;
@@ -64,21 +69,25 @@ export class SessionManagementController {
       if (campaignId) {
         campaign = await Campaign.findById(campaignId);
         if (!campaign) {
-          res.status(404).json({
-            success: false,
-            error: 'Campagna non trovata',
-            code: 'CAMPAIGN_NOT_FOUND'
-          });
+          res.status(404).json(errorResponse(
+            'Campagna non trovata',
+            'CAMPAIGN_NOT_FOUND',
+            undefined,
+            404,
+            getRequestId(req)
+          ));
           return;
         }
         
         // Check if master is authorized for this campaign
         if (!campaign.masterIds.includes(masterId)) {
-          res.status(403).json({
-            success: false,
-            error: 'Non autorizzato per questa campagna',
-            code: 'CAMPAIGN_ACCESS_DENIED'
-          });
+          res.status(403).json(errorResponse(
+            'Non autorizzato per questa campagna',
+            'CAMPAIGN_ACCESS_DENIED',
+            undefined,
+            403,
+            getRequestId(req)
+          ));
           return;
         }
       }
@@ -177,14 +186,14 @@ export class SessionManagementController {
         campaignId: campaign?._id
       });
       
-      res.json({
-        success: true,
-        message: 'Sessione creata con successo',
-        data: { 
+      res.json(createResponse(
+        { 
           sessionId: session._id,
           sessionMgmtId: sessionMgmt._id
-        }
-      });
+        },
+        'Sessione creata con successo',
+        getRequestId(req)
+      ));
       
     } catch (error: any) {
       logger.error('Session creation failed', {
@@ -192,11 +201,13 @@ export class SessionManagementController {
         error: error instanceof Error ? error.message : String(error)
       });
       
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile creare la sessione',
-        code: 'CREATE_SESSION_ERROR'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile creare la sessione',
+        'CREATE_SESSION_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -242,18 +253,19 @@ export class SessionManagementController {
       
       const totalCount = await GamingSession.countDocuments(filter);
       
-      res.json({
-        success: true,
-        data: {
-          sessions: sessionsWithMgmt,
-          pagination: {
-            total: totalCount,
-            limit: parseInt(limit as string),
-            skip: parseInt(skip as string),
-            hasMore: totalCount > parseInt(skip as string) + parseInt(limit as string)
-          }
-        }
-      });
+      res.json(listResponse(
+        sessionsWithMgmt,
+        {
+          page: Math.floor(parseInt(skip as string) / parseInt(limit as string)) + 1,
+          pageSize: parseInt(limit as string),
+          total: totalCount,
+          totalPages: Math.ceil(totalCount / parseInt(limit as string)),
+          hasNext: totalCount > parseInt(skip as string) + parseInt(limit as string),
+          hasPrev: parseInt(skip as string) > 0
+        },
+        undefined,
+        getRequestId(req)
+      ));
       
     } catch (error: any) {
       logger.error('Failed to get master sessions', {
@@ -261,11 +273,13 @@ export class SessionManagementController {
         error: error instanceof Error ? error.message : String(error)
       });
       
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile recuperare le sessioni',
-        code: 'GET_SESSIONS_ERROR'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare le sessioni',
+        'GET_SESSIONS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -282,42 +296,50 @@ export class SessionManagementController {
     try {
       const session = await GamingSession.findById(sessionId);
       if (!session) {
-        res.status(404).json({
-          success: false,
-          error: 'Sessione non trovata',
-          code: 'SESSION_NOT_FOUND'
-        });
+        res.status(404).json(errorResponse(
+          'Sessione non trovata',
+          'SESSION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
       
       const sessionMgmt = await SessionManagement.findOne({ sessionId });
       if (!sessionMgmt) {
-        res.status(404).json({
-          success: false,
-          error: 'Dati di gestione sessione non trovati',
-          code: 'SESSION_MGMT_NOT_FOUND'
-        });
+        res.status(404).json(errorResponse(
+          'Dati di gestione sessione non trovati',
+          'SESSION_MGMT_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
       
       // Check if session allows registration
       if (!sessionMgmt.planning.isPublic) {
-        res.status(403).json({
-          success: false,
-          error: 'La sessione è privata',
-          code: 'PRIVATE_SESSION'
-        });
+        res.status(403).json(errorResponse(
+          'La sessione è privata',
+          'PRIVATE_SESSION',
+          undefined,
+          403,
+          getRequestId(req)
+        ));
         return;
       }
       
       // Check registration deadline
       if (sessionMgmt.planning.registrationDeadline && 
           new Date() > sessionMgmt.planning.registrationDeadline) {
-        res.status(400).json({
-          success: false,
-          error: 'La scadenza per la registrazione è passata',
-          code: 'REGISTRATION_CLOSED'
-        });
+        res.status(400).json(errorResponse(
+          'La scadenza per la registrazione è passata',
+          'REGISTRATION_CLOSED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
       
@@ -327,11 +349,13 @@ export class SessionManagementController {
       );
       
       if (existingRegistration) {
-        res.status(400).json({
-          success: false,
-          error: 'Sei già registrato per questa sessione',
-          code: 'ALREADY_REGISTERED'
-        });
+        res.status(400).json(errorResponse(
+          'Sei già registrato per questa sessione',
+          'ALREADY_REGISTERED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
       
@@ -351,14 +375,14 @@ export class SessionManagementController {
         
         await sessionMgmt.save();
         
-        res.json({
-          success: true,
-          message: 'Aggiunto alla lista d\'attesa',
-          data: { 
+        res.json(successResponse(
+          { 
             status: 'waitlisted', 
             position: sessionMgmt.participantManagement.waitlist.length 
-          }
-        });
+          },
+          'Aggiunto alla lista d\'attesa',
+          getRequestId(req)
+        ));
         return;
       }
       
@@ -387,11 +411,11 @@ export class SessionManagementController {
         characterName
       });
       
-      res.json({
-        success: true,
-        message: 'Registrato con successo per la sessione',
-        data: { status: 'registered' }
-      });
+      res.json(successResponse(
+        { status: 'registered' },
+        'Registrato con successo per la sessione',
+        getRequestId(req)
+      ));
       
     } catch (error: any) {
       logger.error('Failed to join session', {
@@ -400,11 +424,13 @@ export class SessionManagementController {
         error: error instanceof Error ? error.message : String(error)
       });
       
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile unirsi alla sessione',
-        code: 'JOIN_SESSION_ERROR'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile unirsi alla sessione',
+        'JOIN_SESSION_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -424,21 +450,25 @@ export class SessionManagementController {
       });
       
       if (!session) {
-        res.status(404).json({
-          success: false,
-          error: 'Sessione non trovata o già iniziata',
-          code: 'SESSION_NOT_FOUND'
-        });
+        res.status(404).json(errorResponse(
+          'Sessione non trovata o già iniziata',
+          'SESSION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
       
       const sessionMgmt = await SessionManagement.findOne({ sessionId });
       if (!sessionMgmt) {
-        res.status(404).json({
-          success: false,
-          error: 'Dati di gestione sessione non trovati',
-          code: 'SESSION_MGMT_NOT_FOUND'
-        });
+        res.status(404).json(errorResponse(
+          'Dati di gestione sessione non trovati',
+          'SESSION_MGMT_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
       
@@ -493,15 +523,15 @@ export class SessionManagementController {
         participantCount: confirmedParticipants.length
       });
       
-      res.json({
-        success: true,
-        message: 'Sessione iniziata con successo',
-        data: {
+      res.json(successResponse(
+        {
           sessionId,
           participantCount: confirmedParticipants.length,
           startTime: sessionMgmt.liveSession.actualStartTime
-        }
-      });
+        },
+        'Sessione iniziata con successo',
+        getRequestId(req)
+      ));
       
     } catch (error: any) {
       logger.error('Failed to start session', {
@@ -510,11 +540,13 @@ export class SessionManagementController {
         error: error instanceof Error ? error.message : String(error)
       });
       
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile iniziare la sessione',
-        code: 'START_SESSION_ERROR'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile iniziare la sessione',
+        'START_SESSION_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -540,21 +572,25 @@ export class SessionManagementController {
       });
       
       if (!session) {
-        res.status(404).json({
-          success: false,
-          error: 'Sessione attiva non trovata',
-          code: 'SESSION_NOT_FOUND'
-        });
+        res.status(404).json(errorResponse(
+          'Sessione attiva non trovata',
+          'SESSION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
       
       const sessionMgmt = await SessionManagement.findOne({ sessionId });
       if (!sessionMgmt) {
-        res.status(404).json({
-          success: false,
-          error: 'Dati di gestione sessione non trovati',
-          code: 'SESSION_MGMT_NOT_FOUND'
-        });
+        res.status(404).json(errorResponse(
+          'Dati di gestione sessione non trovati',
+          'SESSION_MGMT_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
       
@@ -665,15 +701,15 @@ export class SessionManagementController {
         experienceGrantsCreated: experienceResults.filter(r => r.success).length
       });
       
-      res.json({
-        success: true,
-        message: 'Sessione terminata ed esperienza assegnata',
-        data: {
+      res.json(successResponse(
+        {
           sessionId,
           duration: sessionDuration,
           experienceResults
-        }
-      });
+        },
+        'Sessione terminata ed esperienza assegnata',
+        getRequestId(req)
+      ));
       
     } catch (error: any) {
       logger.error('Session end failed', {
@@ -682,11 +718,13 @@ export class SessionManagementController {
         error: error instanceof Error ? error.message : String(error)
       });
       
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile terminare la sessione',
-        code: 'END_SESSION_ERROR'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile terminare la sessione',
+        'END_SESSION_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -755,24 +793,27 @@ export class SessionManagementController {
         };
       });
       
-      res.json({
-        success: true,
-        data: { 
+      res.json(successResponse(
+        { 
           sessions: publicSessions,
           count: publicSessions.length
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
       
     } catch (error: any) {
       logger.error('Failed to get public sessions', {
         error: error instanceof Error ? error.message : String(error)
       });
       
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile recuperare le sessioni pubbliche',
-        code: 'GET_PUBLIC_SESSIONS_ERROR'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare le sessioni pubbliche',
+        'GET_PUBLIC_SESSIONS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -815,10 +856,11 @@ export class SessionManagementController {
         .sort({ averageRating: -1, timesUsed: -1 })
         .limit(50);
       
-      res.json({
-        success: true,
-        data: { templates }
-      });
+      res.json(successResponse(
+        { templates },
+        undefined,
+        getRequestId(req)
+      ));
       
     } catch (error: any) {
       logger.error('Failed to get session templates', {
@@ -826,11 +868,13 @@ export class SessionManagementController {
         error: error instanceof Error ? error.message : String(error)
       });
       
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile recuperare i template sessione',
-        code: 'GET_TEMPLATES_ERROR'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare i template sessione',
+        'GET_TEMPLATES_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 

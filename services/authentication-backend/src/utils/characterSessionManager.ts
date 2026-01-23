@@ -1,4 +1,4 @@
-import { CharacterSession } from '../../../../packages/database/models';
+import { CharacterSession } from '../../../database/models';
 import { DeviceInfo } from '../types/auth';
 import { logger } from './logger';
 import crypto from 'crypto';

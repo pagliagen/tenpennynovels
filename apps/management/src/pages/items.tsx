@@ -157,12 +157,13 @@ const ItemsPage: NextPage = () => {
         const itemsData = await itemsResponse.json();
         const statsData = await statsResponse.json();
         
-        if (itemsData.success) {
-          setItems(itemsData.data.items);
-          setTotalPages(itemsData.data.pagination.totalPages);
+        if (itemsData.result) {
+          const items = itemsData.list || [];
+          setItems(items);
+          setTotalPages(itemsData.pagination?.totalPages || 1);
         }
         
-        if (statsData.success) {
+        if (statsData.result) {
           setStats(statsData.data);
         }
       }

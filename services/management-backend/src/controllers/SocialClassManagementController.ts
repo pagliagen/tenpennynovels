@@ -1,9 +1,10 @@
 import { Request, Response } from 'express';
-import { SocialClassConfig, ISocialClassConfig } from '../../../../packages/database/models/SocialClassConfig';
-import { Character } from '../../../../packages/database/models/Character';
+import { SocialClassConfig, ISocialClassConfig } from '../../../database/models/SocialClassConfig';
+import { Character } from '../../../database/models/Character';
 import { logger } from '../utils/logger';
 import { auditLogger } from '../utils/auditLogger';
 import mongoose from 'mongoose';
+import { successResponse, errorResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
 
 export class SocialClassManagementController {
 
@@ -75,9 +76,8 @@ export class SocialClassManagementController {
 
       const totalPages = Math.ceil(total / limitNum);
 
-      res.json({
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           socialClasses: socialClassesWithStats,
           pagination: {
             currentPage: pageNum,
@@ -87,15 +87,20 @@ export class SocialClassManagementController {
             hasPrevPage: pageNum > 1,
             limit: limitNum
           }
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error fetching social classes:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Internal server error while fetching social classes'
-      });
+      res.status(500).json(errorResponse(
+        'Internal server error while fetching social classes',
+        'FETCH_SOCIAL_CLASSES_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -226,9 +231,8 @@ export class SocialClassManagementController {
         .select('name label updatedAt')
         .lean();
 
-      res.json({
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           overview: {
             totalClasses,
             characterDistribution,
@@ -246,15 +250,20 @@ export class SocialClassManagementController {
           },
           housing: housingDistribution,
           recentModifications
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error fetching social class statistics:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Internal server error while fetching social class statistics'
-      });
+      res.status(500).json(errorResponse(
+        'Internal server error while fetching social class statistics',
+        'FETCH_SOCIAL_CLASS_STATS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -266,20 +275,26 @@ export class SocialClassManagementController {
       const { socialClassId } = req.params;
 
       if (!mongoose.Types.ObjectId.isValid(socialClassId)) {
-        res.status(400).json({
-          success: false,
-          error: 'Invalid social class ID'
-        });
+        res.status(400).json(errorResponse(
+          'Invalid social class ID',
+          'INVALID_SOCIAL_CLASS_ID',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       const socialClass = await SocialClassConfig.findById(socialClassId).lean();
 
       if (!socialClass) {
-        res.status(404).json({
-          success: false,
-          error: 'Social class not found'
-        });
+        res.status(404).json(errorResponse(
+          'Social class not found',
+          'SOCIAL_CLASS_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -310,9 +325,8 @@ export class SocialClassManagementController {
         }, {})
       };
 
-      res.json({
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           socialClass,
           characters: characters.map(char => ({
             _id: char._id,
@@ -323,15 +337,20 @@ export class SocialClassManagementController {
             createdAt: char.createdAt
           })),
           statistics: characterStats
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error fetching social class details:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Internal server error while fetching social class details'
-      });
+      res.status(500).json(errorResponse(
+        'Internal server error while fetching social class details',
+        'FETCH_SOCIAL_CLASS_DETAILS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -354,50 +373,68 @@ export class SocialClassManagementController {
 
       // Validation
       if (!name || name.trim().length === 0) {
-        res.status(400).json({
-          success: false,
-          error: 'Social class name is required'
-        });
+        res.status(400).json(errorResponse(
+          'Social class name is required',
+          'SOCIAL_CLASS_NAME_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       if (!label || label.trim().length === 0) {
-        res.status(400).json({
-          success: false,
-          error: 'Social class label is required'
-        });
+        res.status(400).json(errorResponse(
+          'Social class label is required',
+          'SOCIAL_CLASS_LABEL_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       if (!minFinanceSkill || !maxFinanceSkill) {
-        res.status(400).json({
-          success: false,
-          error: 'Finance skill range (min/max) is required'
-        });
+        res.status(400).json(errorResponse(
+          'Finance skill range (min/max) is required',
+          'FINANCE_SKILL_RANGE_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       if (minFinanceSkill > maxFinanceSkill) {
-        res.status(400).json({
-          success: false,
-          error: 'Minimum finance skill cannot be greater than maximum'
-        });
+        res.status(400).json(errorResponse(
+          'Minimum finance skill cannot be greater than maximum',
+          'INVALID_FINANCE_SKILL_RANGE',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       if (!initialWealth || typeof initialWealth.minCash === 'undefined' || typeof initialWealth.maxCash === 'undefined') {
-        res.status(400).json({
-          success: false,
-          error: 'Initial wealth configuration (minCash, maxCash) is required'
-        });
+        res.status(400).json(errorResponse(
+          'Initial wealth configuration (minCash, maxCash) is required',
+          'INITIAL_WEALTH_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       if (initialWealth.minCash > initialWealth.maxCash) {
-        res.status(400).json({
-          success: false,
-          error: 'Minimum starting cash cannot be greater than maximum'
-        });
+        res.status(400).json(errorResponse(
+          'Minimum starting cash cannot be greater than maximum',
+          'INVALID_INITIAL_WEALTH_RANGE',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -407,10 +444,13 @@ export class SocialClassManagementController {
       });
 
       if (existingClass) {
-        res.status(409).json({
-          success: false,
-          error: 'Social class with this name already exists'
-        });
+        res.status(409).json(errorResponse(
+          'Social class with this name already exists',
+          'SOCIAL_CLASS_NAME_EXISTS',
+          undefined,
+          409,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -439,10 +479,13 @@ export class SocialClassManagementController {
       });
 
       if (overlappingClass) {
-        res.status(409).json({
-          success: false,
-          error: `Finance skill range overlaps with existing class "${overlappingClass!.label}" (${overlappingClass!.minFinanceSkill}-${overlappingClass!.maxFinanceSkill})`
-        });
+        res.status(409).json(errorResponse(
+          `Finance skill range overlaps with existing class "${overlappingClass!.label}" (${overlappingClass!.minFinanceSkill}-${overlappingClass!.maxFinanceSkill})`,
+          'FINANCE_SKILL_RANGE_OVERLAP',
+          undefined,
+          409,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -487,17 +530,21 @@ export class SocialClassManagementController {
         adminId: user._id 
       });
 
-      res.status(201).json({
-        success: true,
-        data: { socialClass }
-      });
+      res.status(201).json(createResponse(
+        { socialClass },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error creating social class:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Internal server error while creating social class'
-      });
+      res.status(500).json(errorResponse(
+        'Internal server error while creating social class',
+        'CREATE_SOCIAL_CLASS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -511,27 +558,36 @@ export class SocialClassManagementController {
       const { reason, ...updateData } = req.body;
 
       if (!reason || reason.trim().length === 0) {
-        res.status(400).json({
-          success: false,
-          error: 'Update reason is required'
-        });
+        res.status(400).json(errorResponse(
+          'Update reason is required',
+          'UPDATE_REASON_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       if (!mongoose.Types.ObjectId.isValid(socialClassId)) {
-        res.status(400).json({
-          success: false,
-          error: 'Invalid social class ID'
-        });
+        res.status(400).json(errorResponse(
+          'Invalid social class ID',
+          'INVALID_SOCIAL_CLASS_ID',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       const socialClass = await SocialClassConfig.findById(socialClassId);
       if (!socialClass) {
-        res.status(404).json({
-          success: false,
-          error: 'Social class not found'
-        });
+        res.status(404).json(errorResponse(
+          'Social class not found',
+          'SOCIAL_CLASS_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -541,10 +597,13 @@ export class SocialClassManagementController {
         const newMax = updateData.maxFinanceSkill !== undefined ? updateData.maxFinanceSkill : socialClass.maxFinanceSkill;
 
         if (newMin > newMax) {
-          res.status(400).json({
-            success: false,
-            error: 'Minimum finance skill cannot be greater than maximum'
-          });
+          res.status(400).json(errorResponse(
+            'Minimum finance skill cannot be greater than maximum',
+            'INVALID_FINANCE_SKILL_RANGE',
+            undefined,
+            400,
+            getRequestId(req)
+          ));
           return;
         }
 
@@ -574,10 +633,13 @@ export class SocialClassManagementController {
         });
 
         if (overlappingClass) {
-          res.status(409).json({
-            success: false,
-            error: `Finance skill range would overlap with existing class "${overlappingClass!.label}" (${overlappingClass!.minFinanceSkill}-${overlappingClass!.maxFinanceSkill})`
-          });
+          res.status(409).json(errorResponse(
+            `Finance skill range would overlap with existing class "${overlappingClass!.label}" (${overlappingClass!.minFinanceSkill}-${overlappingClass!.maxFinanceSkill})`,
+            'FINANCE_SKILL_RANGE_OVERLAP',
+            undefined,
+            409,
+            getRequestId(req)
+          ));
           return;
         }
       }
@@ -587,10 +649,13 @@ export class SocialClassManagementController {
           updateData.initialWealth.minCash !== undefined && 
           updateData.initialWealth.maxCash !== undefined) {
         if (updateData.initialWealth.minCash > updateData.initialWealth.maxCash) {
-          res.status(400).json({
-            success: false,
-            error: 'Minimum starting cash cannot be greater than maximum'
-          });
+          res.status(400).json(errorResponse(
+            'Minimum starting cash cannot be greater than maximum',
+            'INVALID_INITIAL_WEALTH_RANGE',
+            undefined,
+            400,
+            getRequestId(req)
+          ));
           return;
         }
       }
@@ -646,17 +711,21 @@ export class SocialClassManagementController {
         reason: reason.trim()
       });
 
-      res.json({
-        success: true,
-        data: { socialClass }
-      });
+      res.json(updateResponse(
+        { socialClass },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error updating social class:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Internal server error while updating social class'
-      });
+      res.status(500).json(errorResponse(
+        'Internal server error while updating social class',
+        'UPDATE_SOCIAL_CLASS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -670,27 +739,36 @@ export class SocialClassManagementController {
       const { reason, forceDelete = false } = req.body;
 
       if (!reason || reason.trim().length === 0) {
-        res.status(400).json({
-          success: false,
-          error: 'Deletion reason is required'
-        });
+        res.status(400).json(errorResponse(
+          'Deletion reason is required',
+          'DELETION_REASON_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       if (!mongoose.Types.ObjectId.isValid(socialClassId)) {
-        res.status(400).json({
-          success: false,
-          error: 'Invalid social class ID'
-        });
+        res.status(400).json(errorResponse(
+          'Invalid social class ID',
+          'INVALID_SOCIAL_CLASS_ID',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       const socialClass = await SocialClassConfig.findById(socialClassId);
       if (!socialClass) {
-        res.status(404).json({
-          success: false,
-          error: 'Social class not found'
-        });
+        res.status(404).json(errorResponse(
+          'Social class not found',
+          'SOCIAL_CLASS_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -704,13 +782,15 @@ export class SocialClassManagementController {
       });
 
       if (affectedCharacters > 0 && !forceDelete) {
-        res.status(409).json({
-          success: false,
-          error: `Cannot delete social class. ${affectedCharacters} characters are currently using this class. Use forceDelete to proceed.`,
-          data: {
+        res.status(409).json(errorResponse(
+          `Cannot delete social class. ${affectedCharacters} characters are currently using this class. Use forceDelete to proceed.`,
+          'SOCIAL_CLASS_IN_USE',
+          {
             affectedCharacters
-          }
-        });
+          },
+          409,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -742,20 +822,20 @@ export class SocialClassManagementController {
         affectedCharacters
       });
 
-      res.json({
-        success: true,
-        data: {
-          deleted: true,
-          affectedCharacters
-        }
-      });
+      res.json(deleteResponse(
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error deleting social class:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Internal server error while deleting social class'
-      });
+      res.status(500).json(errorResponse(
+        'Internal server error while deleting social class',
+        'DELETE_SOCIAL_CLASS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -768,20 +848,26 @@ export class SocialClassManagementController {
       const { classOrders } = req.body;
 
       if (!Array.isArray(classOrders) || classOrders.length === 0) {
-        res.status(400).json({
-          success: false,
-          error: 'Class orders array is required'
-        });
+        res.status(400).json(errorResponse(
+          'Class orders array is required',
+          'CLASS_ORDERS_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Validate the input
       for (const order of classOrders) {
         if (!order.socialClassId || typeof order.displayOrder !== 'number') {
-          res.status(400).json({
-            success: false,
-            error: 'Each class order must have socialClassId and displayOrder'
-          });
+          res.status(400).json(errorResponse(
+            'Each class order must have socialClassId and displayOrder',
+            'INVALID_CLASS_ORDER',
+            undefined,
+            400,
+            getRequestId(req)
+          ));
           return;
         }
       }
@@ -834,20 +920,24 @@ export class SocialClassManagementController {
         adminId: user._id
       });
 
-      res.json({
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           processed,
           errors
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error reordering social classes:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Internal server error while reordering social classes'
-      });
+      res.status(500).json(errorResponse(
+        'Internal server error while reordering social classes',
+        'REORDER_SOCIAL_CLASSES_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -949,9 +1039,8 @@ export class SocialClassManagementController {
 
       const totalPages = Math.ceil(total / limitNum);
 
-      res.json({
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           characters: characters.map(char => ({
             _id: char._id,
             name: char.name,
@@ -970,15 +1059,20 @@ export class SocialClassManagementController {
             hasPrevPage: pageNum > 1,
             limit: limitNum
           }
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error fetching character distribution:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Internal server error while fetching character distribution'
-      });
+      res.status(500).json(errorResponse(
+        'Internal server error while fetching character distribution',
+        'FETCH_CHARACTER_DISTRIBUTION_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 

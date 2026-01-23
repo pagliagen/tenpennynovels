@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { body, validationResult } from 'express-validator';
 import { ApiResponse } from '../types/game';
-import { BackgroundQuestion } from '../../../../packages/database/models/BackgroundQuestion';
+import { BackgroundQuestion } from '../../../database/models/BackgroundQuestion';
 
 export class CharacterValidationMiddleware {
   /**
@@ -352,7 +352,7 @@ export class CharacterValidationMiddleware {
       const userId = req.user!.userId;
 
       // Trova il personaggio
-      const Character = require('../../../../packages/database/models').Character;
+      const Character = require('../../../database/models').Character;
       const character = await Character.findOne({
         _id: characterId,
         userId: userId,

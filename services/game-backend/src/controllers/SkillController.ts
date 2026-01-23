@@ -1,13 +1,14 @@
 import { Request, Response } from 'express';
-import { Skill } from '../../../../packages/database/models/Skill';
-import { Character } from '../../../../packages/database/models/Character';
+import { Skill } from '../../../database/models/Skill';
+import { Character } from '../../../database/models/Character';
 import { logger } from '../utils/logger';
 import { AuthUtils } from '../utils/auth';
 import {
   translateCategory,
   getCategoryDescription,
   getAllCategoriesItalian
-} from '../../../../packages/shared/translations/skillCategories';
+} from '../../../shared/translations/skillCategories';
+import { successResponse, errorResponse, getRequestId } from '../utils/apiResponse';
 
 export class SkillController {
 
@@ -15,10 +16,13 @@ export class SkillController {
     try {
       const authResult = AuthUtils.authenticate(req);
       if (!authResult.success) {
-        res.status(401).json({
-          success: false,
-          error: authResult.error
-        });
+        res.status(401).json(errorResponse(
+          authResult.error || 'Authentication failed',
+          'AUTHENTICATION_FAILED',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -84,24 +88,28 @@ export class SkillController {
         skillPointsAvailable
       });
 
-      res.json({
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           skills: characterSkills,
           skillsByCategory,
           totalPointsUsed,
           skillPointsAvailable,
           skillPointsRemaining: Math.max(0, skillPointsAvailable - totalPointsUsed),
           categories: Object.keys(skillsByCategory)
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error retrieving character skills:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Errore interno del server'
-      });
+      res.status(500).json(errorResponse(
+        'Errore interno del server',
+        'INTERNAL_SERVER_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -109,10 +117,13 @@ export class SkillController {
     try {
       const authResult = AuthUtils.authenticate(req);
       if (!authResult.success) {
-        res.status(401).json({
-          success: false,
-          error: authResult.error
-        });
+        res.status(401).json(errorResponse(
+          authResult.error || 'Authentication failed',
+          'AUTHENTICATION_FAILED',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -121,10 +132,13 @@ export class SkillController {
 
       const skill = await Skill.findById(skillId);
       if (!skill || !skill.visible) {
-        res.status(404).json({
-          success: false,
-          error: 'Abilità non trovata'
-        });
+        res.status(404).json(errorResponse(
+          'Abilità non trovata',
+          'SKILL_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -173,19 +187,23 @@ export class SkillController {
         currentValue
       });
 
-      res.json({
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           skill: skillDetails
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error retrieving skill details:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Errore interno del server'
-      });
+      res.status(500).json(errorResponse(
+        'Errore interno del server',
+        'INTERNAL_SERVER_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -193,10 +211,13 @@ export class SkillController {
     try {
       const authResult = AuthUtils.authenticate(req);
       if (!authResult.success) {
-        res.status(401).json({
-          success: false,
-          error: authResult.error
-        });
+        res.status(401).json(errorResponse(
+          authResult.error || 'Authentication failed',
+          'AUTHENTICATION_FAILED',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -235,20 +256,24 @@ export class SkillController {
         description: getCategoryDescription(cat.category as any)
       }));
 
-      res.json({
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           categories: formattedCategories,
           totalCategories: categories.length
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error retrieving skill categories:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Errore interno del server'
-      });
+      res.status(500).json(errorResponse(
+        'Errore interno del server',
+        'INTERNAL_SERVER_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -256,10 +281,13 @@ export class SkillController {
     try {
       const authResult = AuthUtils.authenticate(req);
       if (!authResult.success) {
-        res.status(401).json({
-          success: false,
-          error: authResult.error
-        });
+        res.status(401).json(errorResponse(
+          authResult.error || 'Authentication failed',
+          'AUTHENTICATION_FAILED',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -299,21 +327,25 @@ export class SkillController {
         return acc;
       }, {} as Record<string, typeof formattedPlaceholders>);
 
-      res.json({
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           placeholders: formattedPlaceholders,
           placeholdersByType,
           availableTypes: Object.keys(placeholdersByType)
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error retrieving placeholder skills:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Errore interno del server'
-      });
+      res.status(500).json(errorResponse(
+        'Errore interno del server',
+        'INTERNAL_SERVER_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -321,10 +353,13 @@ export class SkillController {
     try {
       const authResult = AuthUtils.authenticate(req);
       if (!authResult.success) {
-        res.status(401).json({
-          success: false,
-          error: authResult.error
-        });
+        res.status(401).json(errorResponse(
+          authResult.error || 'Authentication failed',
+          'AUTHENTICATION_FAILED',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -333,10 +368,13 @@ export class SkillController {
 
       const skill = await Skill.findById(skillId);
       if (!skill || !skill.visible) {
-        res.status(404).json({
-          success: false,
-          error: 'Abilità non trovata'
-        });
+        res.status(404).json(errorResponse(
+          'Abilità non trovata',
+          'SKILL_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -396,17 +434,21 @@ export class SkillController {
         }
       };
 
-      res.json({
-        success: true,
-        data: skillProbabilities
-      });
+      res.json(successResponse(
+        skillProbabilities,
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error calculating skill probabilities:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Errore interno del server'
-      });
+      res.status(500).json(errorResponse(
+        'Errore interno del server',
+        'INTERNAL_SERVER_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 }

@@ -126,7 +126,7 @@ export default function BroadcastPage({ authContext }: PageProps) {
       });
 
       const result = await response.json();
-      if (result.success) {
+      if (result.result) {
         showToast(`Messaggio broadcast inviato con successo a ${result.data?.targetCount || 0} utenti`, 'success');
         setMessage('');
         setPriority('info');

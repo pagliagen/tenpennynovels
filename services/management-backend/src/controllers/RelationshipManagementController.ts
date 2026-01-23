@@ -7,11 +7,12 @@ import {
   IRelationshipType,
   ICharacterRelationship,
   IRelationshipProposal 
-} from '../../../../packages/database/models/Relationship';
-import { Character } from '../../../../packages/database/models/Character';
+} from '../../../database/models/Relationship';
+import { Character } from '../../../database/models/Character';
 import { logger } from '../utils/logger';
 import { auditLogger } from '../utils/auditLogger';
 import mongoose from 'mongoose';
+import { successResponse, errorResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
 
 export class RelationshipManagementController {
 
@@ -114,9 +115,8 @@ export class RelationshipManagementController {
 
       const totalPages = Math.ceil(total / limitNum);
 
-      res.json({
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           relationshipTypes: relationshipTypesWithStats,
           pagination: {
             currentPage: pageNum,
@@ -126,15 +126,20 @@ export class RelationshipManagementController {
             hasPrevPage: pageNum > 1,
             limit: limitNum
           }
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error fetching relationship types:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Internal server error while fetching relationship types'
-      });
+      res.status(500).json(errorResponse(
+        'Internal server error while fetching relationship types',
+        'FETCH_RELATIONSHIP_TYPES_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -225,9 +230,8 @@ export class RelationshipManagementController {
         .populate('createdBy', 'username')
         .select('name createdAt createdBy');
 
-      res.json({
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           overview: {
             total: totalTypes,
             active: activeTypes,
@@ -245,15 +249,20 @@ export class RelationshipManagementController {
           },
           respectability: respectabilityStats,
           recentActivity: recentTypes
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error fetching relationship type statistics:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Internal server error while fetching statistics'
-      });
+      res.status(500).json(errorResponse(
+        'Internal server error while fetching statistics',
+        'FETCH_RELATIONSHIP_TYPE_STATS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -344,9 +353,8 @@ export class RelationshipManagementController {
       const total = await CharacterRelationship.countDocuments(filter);
       const totalPages = Math.ceil(total / limitNum);
 
-      res.json({
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           relationships: filteredRelationships,
           pagination: {
             currentPage: pageNum,
@@ -356,15 +364,20 @@ export class RelationshipManagementController {
             hasPrevPage: pageNum > 1,
             limit: limitNum
           }
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error fetching character relationships:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Internal server error while fetching relationships'
-      });
+      res.status(500).json(errorResponse(
+        'Internal server error while fetching relationships',
+        'FETCH_CHARACTER_RELATIONSHIPS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -429,9 +442,8 @@ export class RelationshipManagementController {
 
       const totalPages = Math.ceil(total / limitNum);
 
-      res.json({
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           proposals,
           pagination: {
             currentPage: pageNum,
@@ -441,15 +453,20 @@ export class RelationshipManagementController {
             hasPrevPage: pageNum > 1,
             limit: limitNum
           }
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error fetching relationship proposals:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Internal server error while fetching proposals'
-      });
+      res.status(500).json(errorResponse(
+        'Internal server error while fetching proposals',
+        'FETCH_RELATIONSHIP_PROPOSALS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -562,9 +579,8 @@ export class RelationshipManagementController {
         .limit(10)
         .lean();
 
-      res.json({
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           overview: {
             relationships: statusCounts,
             proposals: proposalStatusCounts
@@ -577,15 +593,20 @@ export class RelationshipManagementController {
           },
           mostConnectedCharacters,
           recentActivity
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error fetching relationship statistics:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Internal server error while fetching relationship statistics'
-      });
+      res.status(500).json(errorResponse(
+        'Internal server error while fetching relationship statistics',
+        'FETCH_RELATIONSHIP_STATS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -613,26 +634,35 @@ export class RelationshipManagementController {
 
       // Validation
       if (!name || name.trim().length === 0) {
-        res.status(400).json({
-          success: false,
-          error: 'Relationship type name is required'
-        });
+        res.status(400).json(errorResponse(
+          'Relationship type name is required',
+          'RELATIONSHIP_TYPE_NAME_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       if (!description || description.trim().length === 0) {
-        res.status(400).json({
-          success: false,
-          error: 'Description is required'
-        });
+        res.status(400).json(errorResponse(
+          'Description is required',
+          'DESCRIPTION_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       if (!socialImplications || socialImplications.trim().length === 0) {
-        res.status(400).json({
-          success: false,
-          error: 'Social implications description is required'
-        });
+        res.status(400).json(errorResponse(
+          'Social implications description is required',
+          'SOCIAL_IMPLICATIONS_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -642,10 +672,13 @@ export class RelationshipManagementController {
       });
 
       if (existingType) {
-        res.status(409).json({
-          success: false,
-          error: 'Relationship type with this name already exists'
-        });
+        res.status(409).json(errorResponse(
+          'Relationship type with this name already exists',
+          'RELATIONSHIP_TYPE_NAME_EXISTS',
+          undefined,
+          409,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -682,17 +715,21 @@ export class RelationshipManagementController {
         adminId: user._id 
       });
 
-      res.status(201).json({
-        success: true,
-        data: { relationshipType }
-      });
+      res.status(201).json(createResponse(
+        { relationshipType },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error creating relationship type:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Internal server error while creating relationship type'
-      });
+      res.status(500).json(errorResponse(
+        'Internal server error while creating relationship type',
+        'CREATE_RELATIONSHIP_TYPE_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -706,19 +743,25 @@ export class RelationshipManagementController {
       const { reason, ...updateData } = req.body;
 
       if (!reason || reason.trim().length === 0) {
-        res.status(400).json({
-          success: false,
-          error: 'Update reason is required'
-        });
+        res.status(400).json(errorResponse(
+          'Update reason is required',
+          'UPDATE_REASON_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       const relationshipType = await RelationshipType.findById(relationshipTypeId);
       if (!relationshipType) {
-        res.status(404).json({
-          success: false,
-          error: 'Relationship type not found'
-        });
+        res.status(404).json(errorResponse(
+          'Relationship type not found',
+          'RELATIONSHIP_TYPE_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -758,17 +801,21 @@ export class RelationshipManagementController {
         reason: reason.trim()
       });
 
-      res.json({
-        success: true,
-        data: { relationshipType }
-      });
+      res.json(updateResponse(
+        { relationshipType },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error updating relationship type:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Internal server error while updating relationship type'
-      });
+      res.status(500).json(errorResponse(
+        'Internal server error while updating relationship type',
+        'UPDATE_RELATIONSHIP_TYPE_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -782,19 +829,25 @@ export class RelationshipManagementController {
       const { reason, forceDelete = false } = req.body;
 
       if (!reason || reason.trim().length === 0) {
-        res.status(400).json({
-          success: false,
-          error: 'Deletion reason is required'
-        });
+        res.status(400).json(errorResponse(
+          'Deletion reason is required',
+          'DELETION_REASON_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       const relationshipType = await RelationshipType.findById(relationshipTypeId);
       if (!relationshipType) {
-        res.status(404).json({
-          success: false,
-          error: 'Relationship type not found'
-        });
+        res.status(404).json(errorResponse(
+          'Relationship type not found',
+          'RELATIONSHIP_TYPE_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -810,14 +863,16 @@ export class RelationshipManagementController {
       });
 
       if ((existingRelationships > 0 || pendingProposals > 0) && !forceDelete) {
-        res.status(409).json({
-          success: false,
-          error: `Cannot delete relationship type. It has ${existingRelationships} active relationships and ${pendingProposals} pending proposals. Use forceDelete to proceed.`,
-          data: {
+        res.status(409).json(errorResponse(
+          `Cannot delete relationship type. It has ${existingRelationships} active relationships and ${pendingProposals} pending proposals. Use forceDelete to proceed.`,
+          'RELATIONSHIP_TYPE_HAS_ACTIVE_RELATIONSHIPS',
+          {
             activeRelationships: existingRelationships,
             pendingProposals: pendingProposals
-          }
-        });
+          },
+          409,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -870,21 +925,20 @@ export class RelationshipManagementController {
         forceDelete
       });
 
-      res.json({
-        success: true,
-        data: {
-          deleted: true,
-          affectedRelationships: existingRelationships,
-          affectedProposals: pendingProposals
-        }
-      });
+      res.json(deleteResponse(
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error deleting relationship type:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Internal server error while deleting relationship type'
-      });
+      res.status(500).json(errorResponse(
+        'Internal server error while deleting relationship type',
+        'DELETE_RELATIONSHIP_TYPE_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -898,10 +952,13 @@ export class RelationshipManagementController {
       const { action, reason } = req.body;
 
       if (!reason || reason.trim().length === 0) {
-        res.status(400).json({
-          success: false,
-          error: 'Moderation reason is required'
-        });
+        res.status(400).json(errorResponse(
+          'Moderation reason is required',
+          'MODERATION_REASON_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -949,10 +1006,13 @@ export class RelationshipManagementController {
           break;
 
         default:
-          res.status(400).json({
-            success: false,
-            error: 'Invalid moderation action. Use: force_approve, reject, end, or dispute'
-          });
+          res.status(400).json(errorResponse(
+            'Invalid moderation action. Use: force_approve, reject, end, or dispute',
+            'INVALID_MODERATION_ACTION',
+            undefined,
+            400,
+            getRequestId(req)
+          ));
           return;
       }
 
@@ -996,20 +1056,24 @@ export class RelationshipManagementController {
         action
       });
 
-      res.json({
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           relationship,
           actionTaken
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error moderating relationship:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Internal server error while moderating relationship'
-      });
+      res.status(500).json(errorResponse(
+        'Internal server error while moderating relationship',
+        'MODERATE_RELATIONSHIP_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -1022,18 +1086,24 @@ export class RelationshipManagementController {
       const { operation, relationshipTypeIds, reason, ...operationData } = req.body;
 
       if (!operation || !Array.isArray(relationshipTypeIds) || relationshipTypeIds.length === 0) {
-        res.status(400).json({
-          success: false,
-          error: 'Operation and relationship type IDs array are required'
-        });
+        res.status(400).json(errorResponse(
+          'Operation and relationship type IDs array are required',
+          'MISSING_BULK_OPERATION_DATA',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       if (!reason || reason.trim().length === 0) {
-        res.status(400).json({
-          success: false,
-          error: 'Reason is required for bulk operations'
-        });
+        res.status(400).json(errorResponse(
+          'Reason is required for bulk operations',
+          'BULK_OPERATION_REASON_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -1125,22 +1195,26 @@ export class RelationshipManagementController {
         reason: reason.trim()
       });
 
-      res.json({
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           processed,
           skipped,
           errors,
           summary
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error in bulk relationship type operations:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Internal server error while performing bulk operations'
-      });
+      res.status(500).json(errorResponse(
+        'Internal server error while performing bulk operations',
+        'BULK_RELATIONSHIP_TYPE_OPERATION_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 

@@ -85,13 +85,69 @@ export interface ValidationError {
   value?: any;
 }
 
+/**
+ * Error details type for API responses
+ */
+export interface ErrorDetails {
+  [key: string]: unknown;
+  field?: string;
+  expectedType?: string;
+  receivedValue?: unknown;
+  receivedType?: string;
+  validationErrors?: Array<{ field: string; message: string; value?: unknown }>;
+  affectedFields?: string[];
+  duplicateField?: string;
+  duplicateValue?: unknown;
+  existingUserId?: string;
+  providedId?: string;
+  expectedFormat?: string;
+  allowedFields?: string[];
+  receivedFields?: string[];
+  allowedValues?: string[];
+  providedDuration?: string;
+  invalidScopes?: string[];
+  validScopes?: string[];
+  availableScopes?: string[];
+  searchedUserId?: string;
+  requestedUserId?: string;
+  searchPerformed?: boolean;
+  errorType?: string;
+  retryable?: boolean;
+  operation?: string;
+  userId?: string;
+  mongoErrorCode?: number;
+  indexName?: string;
+}
+
+/**
+ * Pagination information for list responses
+ */
+export interface PaginationInfo {
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+  // Additional common aliases (backend may use either naming convention)
+  currentPage?: number;
+  limit?: number;
+  totalItems?: number;
+  hasMore?: boolean;
+}
+
+/**
+ * Standardized API Response interface
+ */
 export interface ApiResponse<T = any> {
-  success: boolean;
-  message?: string;
-  data?: T;
-  error?: string;
-  code?: string;
-  details?: any;
-  timestamp: string;  // Required field
-  requestId?: string;
+  result: boolean;           // Standard: true/false (replaces 'success' for consistency)
+  data?: T;                  // Single record data or metadata object
+  list?: T[];                // Array for list responses (alternative to data.list)
+  pagination?: PaginationInfo; // Pagination info for list responses
+  message?: string;          // Optional message for POST/PATCH/DELETE
+  error?: string;            // Error message if result = false
+  code?: string;             // Error code (e.g., 'USER_NOT_FOUND')
+  details?: ErrorDetails;    // Additional error details (typed instead of any)
+  timestamp: string;         // Always present
+  requestId?: string;        // Optional for request tracing
 }

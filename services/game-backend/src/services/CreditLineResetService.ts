@@ -16,7 +16,7 @@ export class CreditLineResetService {
 
     try {
       // Fetch cron schedule from database
-      const { ConfigurationService } = await import('../../../../packages/shared/src/services/ConfigurationService');
+      const { ConfigurationService } = await import('../../../shared/src/services/ConfigurationService');
       const { getRedisClient } = await import('../config/redis');
       const redis = getRedisClient();
       const configService = new ConfigurationService(redis, logger);
@@ -48,7 +48,7 @@ export class CreditLineResetService {
    */
   static async resetWeeklyCreditLines(): Promise<void> {
     try {
-      const { CharacterFinances } = require('../../../../packages/database/models');
+      const { CharacterFinances } = require('../../database/models');
       
       // Get all character finances
       const allFinances = await CharacterFinances.find({});
@@ -111,7 +111,7 @@ export class CreditLineResetService {
       await this.resetWeeklyCreditLines();
       
       // Get count for response
-      const { CharacterFinances } = require('../../../../packages/database/models');
+      const { CharacterFinances } = require('../../database/models');
       const count = await CharacterFinances.countDocuments();
       
       return {

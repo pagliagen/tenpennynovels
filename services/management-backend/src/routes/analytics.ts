@@ -3,7 +3,7 @@
 // =============================================================================
 
 import express from 'express';
-import { AnalyticsService } from '../../../../packages/shared/src/services/AnalyticsService';
+import { AnalyticsService } from '../../../shared/src/services/AnalyticsService';
 
 const router = express.Router();
 

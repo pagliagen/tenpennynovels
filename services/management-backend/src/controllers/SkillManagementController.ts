@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import { Skill, ISkill } from '../../../../packages/database/models/Skill';
-import { Character } from '../../../../packages/database/models/Character';
+import { Skill, ISkill } from '../../../database/models/Skill';
+import { Character } from '../../../database/models/Character';
 import { logger } from '../utils/logger';
 import { auditLogger } from '../utils/auditLogger';
 import mongoose from 'mongoose';
@@ -8,7 +8,8 @@ import {
   translateCategory,
   reverseCategoryTranslation,
   getAllCategoriesItalian
-} from '../../../../packages/shared/translations/skillCategories';
+} from '../../../shared/translations/skillCategories';
+import { successResponse, errorResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
 
 export class SkillManagementController {
 
@@ -95,9 +96,8 @@ export class SkillManagementController {
       const hasNextPage = Number(page) < totalPages;
       const hasPreviousPage = Number(page) > 1;
 
-      res.json({
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           skills: translatedSkills,
           pagination: {
             currentPage: Number(page),
@@ -107,16 +107,20 @@ export class SkillManagementController {
             hasNext: hasNextPage,
             hasPrev: hasPreviousPage
           }
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error fetching skills:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile recuperare le abilità',
-        code: 'SKILLS_FETCH_ERROR'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare le abilità',
+        'SKILLS_FETCH_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -182,9 +186,8 @@ export class SkillManagementController {
         academicSkills: 0
       };
 
-      res.json({
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           total: totalSkills,
           byCategory: skillsByCategory.map(cat => ({
             category: cat._id,
@@ -200,16 +203,20 @@ export class SkillManagementController {
           },
           usage: skillUsageStats,
           recentlyUpdated
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error fetching skill statistics:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile recuperare le statistiche delle abilità',
-        code: 'SKILL_STATS_ERROR'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare le statistiche delle abilità',
+        'SKILL_STATS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -221,22 +228,26 @@ export class SkillManagementController {
       const { skillId } = req.params;
 
       if (!mongoose.Types.ObjectId.isValid(skillId)) {
-        res.status(400).json({
-          success: false,
-          error: 'Formato ID abilità non valido',
-          code: 'INVALID_SKILL_ID'
-        });
+        res.status(400).json(errorResponse(
+          'Formato ID abilità non valido',
+          'INVALID_SKILL_ID',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       const skill = await Skill.findById(skillId).lean();
 
       if (!skill) {
-        res.status(404).json({
-          success: false,
-          error: 'Abilità non trovata',
-          code: 'SKILL_NOT_FOUND'
-        });
+        res.status(404).json(errorResponse(
+          'Abilità non trovata',
+          'SKILL_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -273,9 +284,8 @@ export class SkillManagementController {
         return acc;
       }, {});
 
-      res.json({
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           skill,
           usage: {
             totalCharacters: usage.totalCharacters,
@@ -284,16 +294,20 @@ export class SkillManagementController {
             maxValue: usage.maxValue,
             distribution: valueDistribution
           }
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error fetching skill details:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile recuperare i dettagli dell\'abilità',
-        code: 'SKILL_DETAILS_ERROR'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare i dettagli dell\'abilità',
+        'SKILL_DETAILS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -318,11 +332,13 @@ export class SkillManagementController {
 
       // Validation
       if (!name || !description) {
-        res.status(400).json({
-          success: false,
-          error: 'Nome e descrizione sono obbligatori',
-          code: 'MISSING_REQUIRED_FIELDS'
-        });
+        res.status(400).json(errorResponse(
+          'Nome e descrizione sono obbligatori',
+          'MISSING_REQUIRED_FIELDS',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -342,11 +358,13 @@ export class SkillManagementController {
       // Check if skill with same name already exists
       const existingSkill = await Skill.findOne({ name: name.trim() });
       if (existingSkill) {
-        res.status(409).json({
-          success: false,
-          error: 'Esiste già un\'abilità con questo nome',
-          code: 'DUPLICATE_SKILL_NAME'
-        });
+        res.status(409).json(errorResponse(
+          'Esiste già un\'abilità con questo nome',
+          'DUPLICATE_SKILL_NAME',
+          undefined,
+          409,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -389,21 +407,24 @@ export class SkillManagementController {
         categoryKey: newSkill.category // Keep original English key
       };
 
-      res.status(201).json({
-        success: true,
-        data: {
+      res.status(201).json(createResponse(
+        {
           skill: skillResponse,
           message: 'Abilità creata con successo'
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error creating skill:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile creare l\'abilità',
-        code: 'SKILL_CREATION_ERROR'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile creare l\'abilità',
+        'SKILL_CREATION_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -429,21 +450,25 @@ export class SkillManagementController {
       } = req.body;
 
       if (!mongoose.Types.ObjectId.isValid(skillId)) {
-        res.status(400).json({
-          success: false,
-          error: 'Formato ID abilità non valido',
-          code: 'INVALID_SKILL_ID'
-        });
+        res.status(400).json(errorResponse(
+          'Formato ID abilità non valido',
+          'INVALID_SKILL_ID',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       const skill = await Skill.findById(skillId);
       if (!skill) {
-        res.status(404).json({
-          success: false,
-          error: 'Abilità non trovata',
-          code: 'SKILL_NOT_FOUND'
-        });
+        res.status(404).json(errorResponse(
+          'Abilità non trovata',
+          'SKILL_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -451,11 +476,13 @@ export class SkillManagementController {
       if (name && name.trim() !== skill.name) {
         const existingSkill = await Skill.findOne({ name: name.trim(), _id: { $ne: skillId } });
         if (existingSkill) {
-          res.status(409).json({
-            success: false,
-            error: 'Esiste già un\'abilità con questo nome',
-            code: 'DUPLICATE_SKILL_NAME'
-          });
+          res.status(409).json(errorResponse(
+            'Esiste già un\'abilità con questo nome',
+            'DUPLICATE_SKILL_NAME',
+            undefined,
+            409,
+            getRequestId(req)
+          ));
           return;
         }
       }
@@ -520,21 +547,24 @@ export class SkillManagementController {
         categoryKey: skill.category // Keep original English key
       };
 
-      res.json({
-        success: true,
-        data: {
+      res.json(updateResponse(
+        {
           skill: skillResponse,
           message: 'Abilità aggiornata con successo'
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error updating skill:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile aggiornare l\'abilità',
-        code: 'SKILL_UPDATE_ERROR'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile aggiornare l\'abilità',
+        'SKILL_UPDATE_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -547,21 +577,25 @@ export class SkillManagementController {
       const { reason } = req.body;
 
       if (!mongoose.Types.ObjectId.isValid(skillId)) {
-        res.status(400).json({
-          success: false,
-          error: 'Formato ID abilità non valido',
-          code: 'INVALID_SKILL_ID'
-        });
+        res.status(400).json(errorResponse(
+          'Formato ID abilità non valido',
+          'INVALID_SKILL_ID',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       const skill = await Skill.findById(skillId);
       if (!skill) {
-        res.status(404).json({
-          success: false,
-          error: 'Abilità non trovata',
-          code: 'SKILL_NOT_FOUND'
-        });
+        res.status(404).json(errorResponse(
+          'Abilità non trovata',
+          'SKILL_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -601,25 +635,22 @@ export class SkillManagementController {
         request: req
       });
 
-      res.json({
-        success: true,
-        data: {
-          message: inUse 
-            ? `Skill hidden (soft delete) - ${charactersUsingSkill} characters are using this skill`
-            : 'Skill deleted successfully',
-          deletedAt,
-          inUse,
-          charactersAffected: charactersUsingSkill
-        }
-      });
+      res.json(deleteResponse(
+        inUse 
+          ? `Skill hidden (soft delete) - ${charactersUsingSkill} characters are using this skill`
+          : 'Skill deleted successfully',
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error deleting skill:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile eliminare l\'abilità',
-        code: 'SKILL_DELETE_ERROR'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile eliminare l\'abilità',
+        'SKILL_DELETE_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -631,21 +662,25 @@ export class SkillManagementController {
       const { operation, skillIds, data, reason } = req.body;
 
       if (!operation || !skillIds || !Array.isArray(skillIds)) {
-        res.status(400).json({
-          success: false,
-          error: 'Operation e skillIds sono richiesti',
-          code: 'MISSING_BULK_PARAMS'
-        });
+        res.status(400).json(errorResponse(
+          'Operation e skillIds sono richiesti',
+          'MISSING_BULK_PARAMS',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       const validSkillIds = skillIds.filter(id => mongoose.Types.ObjectId.isValid(id));
       if (validSkillIds.length === 0) {
-        res.status(400).json({
-          success: false,
-          error: 'Nessun ID abilità valido fornito',
-          code: 'INVALID_SKILL_IDS'
-        });
+        res.status(400).json(errorResponse(
+          'Nessun ID abilità valido fornito',
+          'INVALID_SKILL_IDS',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -674,11 +709,13 @@ export class SkillManagementController {
 
           case 'update_category':
             if (!data?.category) {
-              res.status(400).json({
-                success: false,
-                error: 'La categoria è richiesta per l\'operazione update_category',
-                code: 'MISSING_CATEGORY'
-              });
+              res.status(400).json(errorResponse(
+                'La categoria è richiesta per l\'operazione update_category',
+                'MISSING_CATEGORY',
+                undefined,
+                400,
+                getRequestId(req)
+              ));
               return;
             }
             result = await Skill.updateMany(
@@ -718,11 +755,13 @@ export class SkillManagementController {
             break;
 
           default:
-            res.status(400).json({
-              success: false,
-              error: 'Operazione bulk non valida',
-              code: 'INVALID_BULK_OPERATION'
-            });
+            res.status(400).json(errorResponse(
+              'Operazione bulk non valida',
+              'INVALID_BULK_OPERATION',
+              undefined,
+              400,
+              getRequestId(req)
+            ));
             return;
         }
 
@@ -744,33 +783,38 @@ export class SkillManagementController {
           request: req
         });
 
-        res.json({
-          success: true,
-          data: {
+        res.json(successResponse(
+          {
             operation,
             processedCount,
             successCount,
             failedCount: failed.length,
             failed
-          }
-        });
+          },
+          undefined,
+          getRequestId(req)
+        ));
 
       } catch (error: any) {
         logger.error('Bulk operation failed:', error);
-        res.status(500).json({
-          success: false,
-          error: 'Operazione bulk fallita',
-          code: 'BULK_OPERATION_FAILED'
-        });
+        res.status(500).json(errorResponse(
+          'Operazione bulk fallita',
+          'BULK_OPERATION_FAILED',
+          undefined,
+          500,
+          getRequestId(req)
+        ));
       }
 
     } catch (error: any) {
       logger.error('Error in bulk operations:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile eseguire le operazioni bulk',
-        code: 'BULK_OPERATIONS_ERROR'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile eseguire le operazioni bulk',
+        'BULK_OPERATIONS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -782,11 +826,13 @@ export class SkillManagementController {
       const { skillOrders } = req.body; // Array of { skillId, sortOrder }
 
       if (!skillOrders || !Array.isArray(skillOrders)) {
-        res.status(400).json({
-          success: false,
-          error: 'L\'array skillOrders è richiesto',
-          code: 'MISSING_SKILL_ORDERS'
-        });
+        res.status(400).json(errorResponse(
+          'L\'array skillOrders è richiesto',
+          'MISSING_SKILL_ORDERS',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -815,21 +861,24 @@ export class SkillManagementController {
         request: req
       });
 
-      res.json({
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           message: 'Skills reordered successfully',
           reorderedCount: skillOrders.length
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error reordering skills:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile riordinare le abilità',
-        code: 'SKILL_REORDER_ERROR'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile riordinare le abilità',
+        'SKILL_REORDER_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 }

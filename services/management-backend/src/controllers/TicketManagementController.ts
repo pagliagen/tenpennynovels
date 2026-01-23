@@ -16,9 +16,10 @@ import {
 import { AdminAuthMiddleware } from '../middleware/adminAuth';
 import { logger } from '../utils/logger';
 import { redisService } from '../utils/redis';
+import { listResponse, successResponse, errorResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
 
 import { User } from '../models/User';
-import { Ticket, TicketMessage } from '../../../../packages/database/models';
+import { Ticket, TicketMessage } from '../../../database/models';
 import mongoose from 'mongoose';
 
 // Department role mapping for access control
@@ -213,16 +214,12 @@ export class TicketManagementController {
         totalTickets
       });
 
-      const response: ApiResponse<{ tickets: TicketManagement[]; pagination: PaginationInfo }> = {
-        success: true,
-        data: {
-          tickets: transformedTickets,
-          pagination
-        },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+      res.json(listResponse(
+        transformedTickets,
+        pagination,
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error fetching all tickets:', { 
         error: error instanceof Error ? error.message : String(error),
@@ -233,14 +230,13 @@ export class TicketManagementController {
         adminInfo: AdminAuthMiddleware.getAuditInfo(req)
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Failed to fetch tickets',
-        code: 'FETCH_TICKETS_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Failed to fetch tickets',
+        'FETCH_TICKETS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -252,13 +248,13 @@ export class TicketManagementController {
     try {
       const adminUserId = req.user?.userId;
       if (!adminUserId) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'User not authenticated',
-          code: 'USER_NOT_AUTHENTICATED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(401).json(response);
+        res.status(401).json(errorResponse(
+          'User not authenticated',
+          'USER_NOT_AUTHENTICATED',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -346,27 +342,22 @@ export class TicketManagementController {
         totalTickets
       });
 
-      const response: ApiResponse<{ tickets: TicketManagement[]; pagination: PaginationInfo }> = {
-        success: true,
-        data: {
-          tickets: transformedTickets,
-          pagination
-        },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+      res.json(listResponse(
+        transformedTickets,
+        pagination,
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error fetching my tickets:', { error: error instanceof Error ? error.message : String(error) });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Failed to fetch assigned tickets',
-        code: 'FETCH_MY_TICKETS_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Failed to fetch assigned tickets',
+        'FETCH_MY_TICKETS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -377,13 +368,13 @@ export class TicketManagementController {
   static async getDepartmentTickets(req: Request, res: Response): Promise<void> {
     try {
       if (!req.user?.characterRoles) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Character roles required to access department tickets',
-          code: 'CHARACTER_ROLES_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(403).json(response);
+        res.status(403).json(errorResponse(
+          'Character roles required to access department tickets',
+          'CHARACTER_ROLES_REQUIRED',
+          undefined,
+          403,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -398,13 +389,13 @@ export class TicketManagementController {
       });
 
       if (accessibleDepartments.length === 0) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'No department access permissions',
-          code: 'NO_DEPARTMENT_ACCESS',
-          timestamp: new Date().toISOString()
-        };
-        res.status(403).json(response);
+        res.status(403).json(errorResponse(
+          'No department access permissions',
+          'NO_DEPARTMENT_ACCESS',
+          undefined,
+          403,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -492,28 +483,25 @@ export class TicketManagementController {
         totalTickets
       });
 
-      const response: ApiResponse<{ tickets: TicketManagement[]; pagination: PaginationInfo; departments: string[] }> = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           tickets: transformedTickets,
           pagination,
           departments: accessibleDepartments
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error fetching department tickets:', { error: error instanceof Error ? error.message : String(error) });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Failed to fetch department tickets',
-        code: 'FETCH_DEPARTMENT_TICKETS_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Failed to fetch department tickets',
+        'FETCH_DEPARTMENT_TICKETS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -526,38 +514,38 @@ export class TicketManagementController {
       const targetDepartment = req.params.dept;
       
       if (!req.user?.characterRoles) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Character roles required to access department tickets',
-          code: 'CHARACTER_ROLES_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(403).json(response);
+        res.status(403).json(errorResponse(
+          'Character roles required to access department tickets',
+          'CHARACTER_ROLES_REQUIRED',
+          undefined,
+          403,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Check if admin has access to this specific department
       const requiredRoles = DEPARTMENT_ROLES_MAPPING[targetDepartment as keyof typeof DEPARTMENT_ROLES_MAPPING];
       if (!requiredRoles) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Invalid department',
-          code: 'INVALID_DEPARTMENT',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Invalid department',
+          'INVALID_DEPARTMENT',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       const hasAccess = requiredRoles.some(role => req.user?.characterRoles?.includes(role));
       if (!hasAccess) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Insufficient permissions for this department',
-          code: 'INSUFFICIENT_DEPARTMENT_PERMISSIONS',
-          timestamp: new Date().toISOString()
-        };
-        res.status(403).json(response);
+        res.status(403).json(errorResponse(
+          'Insufficient permissions for this department',
+          'INSUFFICIENT_DEPARTMENT_PERMISSIONS',
+          undefined,
+          403,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -643,30 +631,25 @@ export class TicketManagementController {
         totalTickets
       });
 
-      const response: ApiResponse<{ tickets: TicketManagement[]; pagination: PaginationInfo }> = {
-        success: true,
-        data: {
-          tickets: transformedTickets,
-          pagination
-        },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+      res.json(listResponse(
+        transformedTickets,
+        pagination,
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error fetching specific department tickets:', { 
         error: error instanceof Error ? error.message : String(error),
         department: req.params.dept
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Failed to fetch department tickets',
-        code: 'FETCH_SPECIFIC_DEPARTMENT_TICKETS_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Failed to fetch department tickets',
+        'FETCH_SPECIFIC_DEPARTMENT_TICKETS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -678,13 +661,13 @@ export class TicketManagementController {
     try {
       // Check if user has administrative access
       if (!req.user?.characterRoles?.includes('amministratore')) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Administrator role required for statistics',
-          code: 'ADMINISTRATOR_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(403).json(response);
+        res.status(403).json(errorResponse(
+          'Administrator role required for statistics',
+          'ADMINISTRATOR_REQUIRED',
+          undefined,
+          403,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -819,24 +802,21 @@ export class TicketManagementController {
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       logger.info('Admin viewed ticket statistics', auditInfo);
 
-      const response: ApiResponse<TicketStats> = {
-        success: true,
-        data: stats,
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+      res.json(successResponse(
+        stats,
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error fetching ticket statistics:', { error: error instanceof Error ? error.message : String(error) });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Failed to fetch ticket statistics',
-        code: 'FETCH_TICKET_STATS_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Failed to fetch ticket statistics',
+        'FETCH_TICKET_STATS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -849,26 +829,26 @@ export class TicketManagementController {
       const ticketId = req.params.id;
 
       if (!mongoose.Types.ObjectId.isValid(ticketId)) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Invalid ticket ID format',
-          code: 'INVALID_TICKET_ID',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Invalid ticket ID format',
+          'INVALID_TICKET_ID',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       const ticket = await Ticket.findById(ticketId).lean();
 
       if (!ticket) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Ticket not found',
-          code: 'TICKET_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Ticket not found',
+          'TICKET_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -881,13 +861,13 @@ export class TicketManagementController {
         const hasAccess = requiredRoles?.some(role => req.user?.characterRoles?.includes(role));
 
         if (!hasAccess) {
-          const response: ApiResponse = {
-            success: false,
-            error: 'Insufficient permissions to view this ticket',
-            code: 'INSUFFICIENT_PERMISSIONS',
-            timestamp: new Date().toISOString()
-          };
-          res.status(403).json(response);
+          res.status(403).json(errorResponse(
+            'Insufficient permissions to view this ticket',
+            'INSUFFICIENT_PERMISSIONS',
+            undefined,
+            403,
+            getRequestId(req)
+          ));
           return;
         }
       }
@@ -958,30 +938,27 @@ export class TicketManagementController {
         ticketTitle: ticketData.title
       });
 
-      const response: ApiResponse<{ ticket: TicketManagement; messages: TicketMessageResponse[] }> = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           ticket: ticketDetails,
           messages: transformedMessages
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error fetching ticket details:', { 
         error: error instanceof Error ? error.message : String(error),
         ticketId: req.params.id
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Failed to fetch ticket details',
-        code: 'FETCH_TICKET_DETAILS_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Failed to fetch ticket details',
+        'FETCH_TICKET_DETAILS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -995,24 +972,24 @@ export class TicketManagementController {
       const assignmentData: TicketAssignment = req.body;
 
       if (!mongoose.Types.ObjectId.isValid(ticketId)) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Invalid ticket ID format',
-          code: 'INVALID_TICKET_ID',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Invalid ticket ID format',
+          'INVALID_TICKET_ID',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       if (!assignmentData.assignedTo || !assignmentData.assignedToName) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Assignment details required',
-          code: 'ASSIGNMENT_DETAILS_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Assignment details required',
+          'ASSIGNMENT_DETAILS_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -1038,13 +1015,13 @@ export class TicketManagementController {
       );
 
       if (!updatedTicket) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Ticket not found or in invalid status for assignment',
-          code: 'TICKET_ASSIGNMENT_FAILED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Ticket not found or in invalid status for assignment',
+          'TICKET_ASSIGNMENT_FAILED',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -1092,30 +1069,27 @@ export class TicketManagementController {
         });
       }
 
-      const response: ApiResponse<{ ticketId: string; status: string }> = {
-        success: true,
-        data: {
+      res.json(updateResponse(
+        {
           ticketId: updatedTicket!._id.toString(),
           status: 'in_progress'
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        wasAlreadyAssigned ? 'Ticket riassegnato con successo' : 'Ticket assegnato con successo',
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error assigning ticket:', { 
         error: error instanceof Error ? error.message : String(error),
         ticketId: req.params.id
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Failed to assign ticket',
-        code: 'ASSIGN_TICKET_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Failed to assign ticket',
+        'ASSIGN_TICKET_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -1129,48 +1103,48 @@ export class TicketManagementController {
       const reassignmentData: TicketReassignment = req.body;
 
       if (!mongoose.Types.ObjectId.isValid(ticketId)) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Invalid ticket ID format',
-          code: 'INVALID_TICKET_ID',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Invalid ticket ID format',
+          'INVALID_TICKET_ID',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       if (!reassignmentData.toStaff || !reassignmentData.toStaffName) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Reassignment target required',
-          code: 'REASSIGNMENT_TARGET_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Reassignment target required',
+          'REASSIGNMENT_TARGET_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       const ticket = await Ticket.findById(ticketId);
 
       if (!ticket) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Ticket not found',
-          code: 'TICKET_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Ticket not found',
+          'TICKET_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
       if (!ticket!.assignedTo) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Ticket is not assigned to anyone',
-          code: 'TICKET_NOT_ASSIGNED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Ticket is not assigned to anyone',
+          'TICKET_NOT_ASSIGNED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -1228,30 +1202,27 @@ export class TicketManagementController {
         reason: reassignmentData.reason
       });
 
-      const response: ApiResponse<{ ticketId: string; status: string }> = {
-        success: true,
-        data: {
+      res.json(updateResponse(
+        {
           ticketId: ticket!._id.toString(),
           status: 'reassigned'
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        'Ticket riassegnato con successo',
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error reassigning ticket:', { 
         error: error instanceof Error ? error.message : String(error),
         ticketId: req.params.id
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Failed to reassign ticket',
-        code: 'REASSIGN_TICKET_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Failed to reassign ticket',
+        'REASSIGN_TICKET_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -1265,60 +1236,60 @@ export class TicketManagementController {
       const transferData: TicketTransfer = req.body;
 
       if (!mongoose.Types.ObjectId.isValid(ticketId)) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Invalid ticket ID format',
-          code: 'INVALID_TICKET_ID',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Invalid ticket ID format',
+          'INVALID_TICKET_ID',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       if (!transferData.toDepartment || !transferData.reason) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Transfer department and reason required',
-          code: 'TRANSFER_DETAILS_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Transfer department and reason required',
+          'TRANSFER_DETAILS_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       const validDepartments = ['master', 'technical', 'moderation', 'administration', 'general'];
       if (!validDepartments.includes(transferData.toDepartment)) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Invalid target department',
-          code: 'INVALID_DEPARTMENT',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Invalid target department',
+          'INVALID_DEPARTMENT',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       const ticket = await Ticket.findById(ticketId);
 
       if (!ticket) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Ticket not found',
-          code: 'TICKET_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Ticket not found',
+          'TICKET_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
       if (ticket.department === transferData.toDepartment) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Ticket is already in the target department',
-          code: 'SAME_DEPARTMENT_TRANSFER',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Ticket is already in the target department',
+          'SAME_DEPARTMENT_TRANSFER',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -1371,30 +1342,27 @@ export class TicketManagementController {
         reason: transferData.reason
       });
 
-      const response: ApiResponse<{ ticketId: string; newDepartment: string }> = {
-        success: true,
-        data: {
+      res.json(updateResponse(
+        {
           ticketId: ticket!._id.toString(),
           newDepartment: transferData.toDepartment
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        'Ticket trasferito con successo',
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error transferring ticket:', { 
         error: error instanceof Error ? error.message : String(error),
         ticketId: req.params.id
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Failed to transfer ticket',
-        code: 'TRANSFER_TICKET_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Failed to transfer ticket',
+        'TRANSFER_TICKET_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -1408,37 +1376,37 @@ export class TicketManagementController {
       const closureData: TicketClosure = req.body;
 
       if (!mongoose.Types.ObjectId.isValid(ticketId)) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Invalid ticket ID format',
-          code: 'INVALID_TICKET_ID',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Invalid ticket ID format',
+          'INVALID_TICKET_ID',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       const ticket = await Ticket.findById(ticketId);
 
       if (!ticket) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Ticket not found',
-          code: 'TICKET_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Ticket not found',
+          'TICKET_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
       if (ticket!.status === 'closed') {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Ticket is already closed',
-          code: 'TICKET_ALREADY_CLOSED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Ticket is already closed',
+          'TICKET_ALREADY_CLOSED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -1495,30 +1463,27 @@ export class TicketManagementController {
         notifyUser: closureData.notifyUser
       });
 
-      const response: ApiResponse<{ ticketId: string; status: string }> = {
-        success: true,
-        data: {
+      res.json(updateResponse(
+        {
           ticketId: ticket!._id.toString(),
           status: 'closed'
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        'Ticket chiuso con successo',
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error closing ticket:', { 
         error: error instanceof Error ? error.message : String(error),
         ticketId: req.params.id
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Failed to close ticket',
-        code: 'CLOSE_TICKET_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Failed to close ticket',
+        'CLOSE_TICKET_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -1532,59 +1497,59 @@ export class TicketManagementController {
       const { content, isInternal } = req.body;
 
       if (!mongoose.Types.ObjectId.isValid(ticketId)) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Invalid ticket ID format',
-          code: 'INVALID_TICKET_ID',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Invalid ticket ID format',
+          'INVALID_TICKET_ID',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       if (!content || content.trim().length === 0) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Message content is required',
-          code: 'MESSAGE_CONTENT_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Message content is required',
+          'MESSAGE_CONTENT_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       if (content.length > 5000) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Message content too long (max 5000 characters)',
-          code: 'MESSAGE_TOO_LONG',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Message content too long (max 5000 characters)',
+          'MESSAGE_TOO_LONG',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       const ticket = await Ticket.findById(ticketId);
 
       if (!ticket) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Ticket not found',
-          code: 'TICKET_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Ticket not found',
+          'TICKET_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
       if (ticket!.status === 'closed') {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Cannot add messages to closed tickets',
-          code: 'TICKET_CLOSED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Cannot add messages to closed tickets',
+          'TICKET_CLOSED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -1649,30 +1614,27 @@ export class TicketManagementController {
         isInternal: Boolean(isInternal)
       });
 
-      const response: ApiResponse<{ messageId: string; ticketStatus: string }> = {
-        success: true,
-        data: {
+      res.json(createResponse(
+        {
           messageId: message._id.toString(),
           ticketStatus: ticket!.status
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        'Messaggio aggiunto con successo',
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error adding ticket message:', { 
         error: error instanceof Error ? error.message : String(error),
         ticketId: req.params.id
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Failed to add message to ticket',
-        code: 'ADD_TICKET_MESSAGE_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Failed to add message to ticket',
+        'ADD_TICKET_MESSAGE_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -1686,51 +1648,50 @@ export class TicketManagementController {
       const priorityData: TicketPriorityUpdate = req.body;
 
       if (!mongoose.Types.ObjectId.isValid(ticketId)) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Invalid ticket ID format',
-          code: 'INVALID_TICKET_ID',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Invalid ticket ID format',
+          'INVALID_TICKET_ID',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       const validPriorities = ['low', 'medium', 'high', 'critical'];
       if (!priorityData.priority || !validPriorities.includes(priorityData.priority)) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Invalid priority level',
-          code: 'INVALID_PRIORITY',
-          details: { validPriorities },
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Invalid priority level',
+          'INVALID_PRIORITY',
+          { validPriorities },
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Only administrators can set critical priority
       if (priorityData.priority === 'critical' && !req.user?.characterRoles?.includes('amministratore')) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Administrator role required to set critical priority',
-          code: 'CRITICAL_PRIORITY_REQUIRES_ADMIN',
-          timestamp: new Date().toISOString()
-        };
-        res.status(403).json(response);
+        res.status(403).json(errorResponse(
+          'Administrator role required to set critical priority',
+          'CRITICAL_PRIORITY_REQUIRES_ADMIN',
+          undefined,
+          403,
+          getRequestId(req)
+        ));
         return;
       }
 
       const ticket = await Ticket.findById(ticketId);
 
       if (!ticket) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Ticket not found',
-          code: 'TICKET_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Ticket not found',
+          'TICKET_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -1775,30 +1736,27 @@ export class TicketManagementController {
         reason: priorityData.reason
       });
 
-      const response: ApiResponse<{ ticketId: string; priority: string }> = {
-        success: true,
-        data: {
+      res.json(updateResponse(
+        {
           ticketId: ticket!._id.toString(),
           priority: priorityData.priority
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        'Priorità ticket aggiornata con successo',
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error updating ticket priority:', { 
         error: error instanceof Error ? error.message : String(error),
         ticketId: req.params.id
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Failed to update ticket priority',
-        code: 'UPDATE_TICKET_PRIORITY_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Failed to update ticket priority',
+        'UPDATE_TICKET_PRIORITY_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -1856,30 +1814,27 @@ export class TicketManagementController {
         staffCount: transformedStaff.length
       });
 
-      const response: ApiResponse<{ staff: any[]; department?: string }> = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           staff: transformedStaff,
           ...(department && { department })
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error fetching staff list:', { 
         error: error instanceof Error ? error.message : String(error),
         department: req.query.department
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Failed to fetch staff list',
-        code: 'FETCH_STAFF_LIST_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Failed to fetch staff list',
+        'FETCH_STAFF_LIST_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -1893,37 +1848,37 @@ export class TicketManagementController {
       const noteData: TicketInternalNote = req.body;
 
       if (!mongoose.Types.ObjectId.isValid(ticketId)) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Invalid ticket ID format',
-          code: 'INVALID_TICKET_ID',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Invalid ticket ID format',
+          'INVALID_TICKET_ID',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       if (noteData.note && noteData.note.length > 5000) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Internal note too long (max 5000 characters)',
-          code: 'NOTE_TOO_LONG',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Internal note too long (max 5000 characters)',
+          'NOTE_TOO_LONG',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       const ticket = await Ticket.findById(ticketId);
 
       if (!ticket) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Ticket not found',
-          code: 'TICKET_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Ticket not found',
+          'TICKET_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -1939,30 +1894,27 @@ export class TicketManagementController {
         noteLength: noteData.note?.length || 0
       });
 
-      const response: ApiResponse<{ ticketId: string; updated: boolean }> = {
-        success: true,
-        data: {
+      res.json(updateResponse(
+        {
           ticketId: ticket!._id.toString(),
           updated: true
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        'Nota interna aggiornata con successo',
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error updating internal note:', { 
         error: error instanceof Error ? error.message : String(error),
         ticketId: req.params.id
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Failed to update internal note',
-        code: 'UPDATE_INTERNAL_NOTE_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Failed to update internal note',
+        'UPDATE_INTERNAL_NOTE_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 }

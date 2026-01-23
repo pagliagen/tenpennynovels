@@ -112,7 +112,18 @@ export function getRoleColor(role: string): string {
 export async function apiRequest<T = any>(
   endpoint: string, 
   options: RequestInit = {}
-): Promise<{ success: boolean; data?: T; message?: string; error?: string }> {
+): Promise<{ 
+  result: boolean; 
+  data?: T; 
+  list?: T[]; 
+  pagination?: any;
+  message?: string; 
+  error?: string;
+  code?: string;
+  details?: Record<string, any>;
+  timestamp?: string;
+  requestId?: string;
+}> {
   const gatewayUrl = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'https://api.tenpennynovels.com';
   const url = endpoint.startsWith('http') ? endpoint : `${gatewayUrl}${endpoint}`;
   
@@ -130,14 +141,20 @@ export async function apiRequest<T = any>(
     const data = await response.json();
     
     return {
-      success: response.ok,
-      data: response.ok ? data.data : undefined,
+      result: data.result ?? false,
+      data: data.list ? undefined : data.data, // Use data for single records
+      list: data.list, // Use list for array responses
+      pagination: data.pagination,
       message: data.message,
-      error: response.ok ? undefined : data.error || 'Request failed',
+      error: data.error,
+      code: data.code,
+      details: data.details,
+      timestamp: data.timestamp,
+      requestId: data.requestId,
     };
   } catch (error) {
     return {
-      success: false,
+      result: false,
       error: error instanceof Error ? error.message : 'Network error',
     };
   }

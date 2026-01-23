@@ -53,7 +53,7 @@ export default function CharacterCreationPage() {
   const checkAuthentication = async () => {
     try {
       const result = await AuthService.getProfile();
-      if (!result.success || !result.user) {
+      if (!result.result || !result.user) {
         // User not authenticated, redirect to login
         router.push('/');
       }
@@ -79,9 +79,9 @@ export default function CharacterCreationPage() {
 
       if (response.ok) {
         const data = await response.json();
-        if (data.success && data.occupations) {
-          // console.log(`🏢 Loaded ${data.occupations.length} occupations`);
-          setOccupations(data.occupations);
+        if (data.result && data.list) {
+          // console.log(`🏢 Loaded ${data.list.length} occupations`);
+          setOccupations(data.list);
         } else {
           console.error('🏢 Invalid occupations response:', data);
         }
@@ -135,7 +135,7 @@ export default function CharacterCreationPage() {
       
       // console.log('🎭 Character creation result:', result); // Debug logging
       
-      if (result.success) {
+      if (result.result) {
         setSuccess('Personaggio creato con successo! Verrai reindirizzato alla selezione personaggi...');
         
         // Redirect back to character select after success

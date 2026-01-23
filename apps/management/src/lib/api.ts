@@ -8,10 +8,16 @@ import { apiRequest } from './auth';
 export { apiRequest };
 
 export interface ApiResponse<T = any> {
-  success: boolean;
-  data?: T;
-  message?: string;
-  error?: string;
+  result: boolean;           // Standard: true/false
+  data?: T;                  // Single record data or metadata object
+  list?: T[];                // Array for list responses
+  pagination?: PaginationInfo; // Pagination info for list responses
+  message?: string;          // Optional message for POST/PATCH/DELETE
+  error?: string;            // Error message if result = false
+  code?: string;             // Error code (e.g., 'USER_NOT_FOUND')
+  details?: Record<string, any>; // Additional error details
+  timestamp?: string;        // Always present
+  requestId?: string;        // Optional for request tracing
 }
 
 export interface PaginationParams {
@@ -760,6 +766,126 @@ export const locationAPI = {
     return apiRequest('/admin/locations/bulk', {
       method: 'POST',
       body: JSON.stringify({ operation, locationIds, data }),
+    });
+  },
+};
+
+// =============================================================================
+// Housing Property Management API
+// =============================================================================
+
+export interface HousingPropertyData {
+  id?: string;
+  locationId: string;
+  propertyType: 'basic_room' | 'furnished_room' | 'luxury_suite' | 'small_house' | 'large_house' | 'mansion';
+  district: string;
+  address?: string;
+  ownershipType: 'rental' | 'owned' | 'available';
+  currentTenantId?: string;
+  ownerId?: string;
+  monthlyRent?: number;
+  purchasePrice?: number;
+  monthlyMaintenance: number;
+  deposit?: number;
+  isAvailable: boolean;
+  condition: 'poor' | 'fair' | 'good' | 'excellent';
+  features?: {
+    furnished: boolean;
+    hasKitchen: boolean;
+    hasPrivateBathroom: boolean;
+    hasGarden: boolean;
+    hasBalcony: boolean;
+    fireplace: boolean;
+    gaslighting: boolean;
+    waterSupply: 'none' | 'shared' | 'private';
+    roomCount: number;
+  };
+  socialClassRestriction?: ('working' | 'middle' | 'upper')[];
+  minimumIncome?: number;
+}
+
+export const housingPropertyAPI = {
+  // Get all properties with pagination
+  getHousingProperties: (params: PaginationParams & { 
+    district?: string; 
+    propertyType?: string;
+    ownershipType?: string;
+    isAvailable?: boolean;
+  } = {}): Promise<ApiResponse<PaginatedResponse<any>>> => {
+    const queryParams = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        queryParams.append(key, value.toString());
+      }
+    });
+    
+    return apiRequest(`/admin/housing/properties?${queryParams.toString()}`);
+  },
+
+  // Get single property by ID
+  getHousingProperty: (propertyId: string): Promise<ApiResponse<any>> => {
+    return apiRequest(`/admin/housing/properties/${propertyId}`);
+  },
+
+  // Create new property
+  createHousingProperty: (propertyData: Partial<HousingPropertyData>): Promise<ApiResponse<any>> => {
+    return apiRequest('/admin/housing/properties', {
+      method: 'POST',
+      body: JSON.stringify(propertyData),
+    });
+  },
+
+  // Update property
+  updateHousingProperty: (propertyId: string, propertyData: Partial<HousingPropertyData>): Promise<ApiResponse<any>> => {
+    return apiRequest(`/admin/housing/properties/${propertyId}`, {
+      method: 'PUT',
+      body: JSON.stringify(propertyData),
+    });
+  },
+
+  // Delete property
+  deleteHousingProperty: (propertyId: string): Promise<ApiResponse<void>> => {
+    return apiRequest(`/admin/housing/properties/${propertyId}`, {
+      method: 'DELETE',
+    });
+  },
+
+  // Get districts
+  getDistricts: (): Promise<ApiResponse<string[]>> => {
+    return apiRequest('/admin/housing/districts');
+  },
+
+  // Get housing statistics
+  getHousingStats: (): Promise<ApiResponse<any>> => {
+    return apiRequest('/admin/housing/stats');
+  },
+
+  // Get housing reports
+  getHousingReports: (params?: Record<string, any>): Promise<ApiResponse<any>> => {
+    const queryString = buildQueryParams(params || {});
+    return apiRequest(`/admin/housing/reports?${queryString}`);
+  },
+
+  // Trigger rent collection
+  triggerRentCollection: (): Promise<ApiResponse<any>> => {
+    return apiRequest('/admin/housing/rent-collection', {
+      method: 'POST',
+    });
+  },
+
+  // Adjust rents (bulk operation)
+  adjustRents: (adjustments: Array<{ propertyId: string; newRent: number }>): Promise<ApiResponse<any>> => {
+    return apiRequest('/admin/housing/rent-adjustments', {
+      method: 'PUT',
+      body: JSON.stringify({ adjustments }),
+    });
+  },
+
+  // Process evictions
+  processEvictions: (evictionData: any): Promise<ApiResponse<any>> => {
+    return apiRequest('/admin/housing/evictions', {
+      method: 'POST',
+      body: JSON.stringify(evictionData),
     });
   },
 };

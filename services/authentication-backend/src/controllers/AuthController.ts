@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { User, Character, Location } from '../../../../packages/database/models';
+import { User, Character, Location } from '../../../database/models';
 import { CryptoUtils } from '../utils/crypto';
 import { AuthMiddleware } from '../middleware/auth';
 import { RateLimitMiddleware } from '../middleware/rateLimit'; 
@@ -8,8 +8,9 @@ import { CharacterSessionManager } from '../utils/characterSessionManager';
 import { redis } from '../config/redis';
 import { UAParser } from 'ua-parser-js';
 import geoip from 'geoip-lite';
-import { ApiResponse } from '../../../../packages/shared/types';
+import { ApiResponse } from '../types/auth';
 import { DeviceInfo, LocationInfo } from '../types/auth';
+import { successResponse, errorResponse, createResponse, getRequestId } from '../utils/apiResponse';
 
 // Helper function to transform technical validation messages into user-friendly ones
 function transformValidationMessage(field: string, originalMessage: string, validationKind: string): string {
@@ -86,11 +87,10 @@ export class AuthController {
       if (!user) {
         await RateLimitMiddleware.recordFailedLogin(username);
         
-        const response: ApiResponse = {
-          success: false,
-          error: 'Utente non trovato. Se vuoi registrarti clicca qui.',
-          code: 'USER_NOT_FOUND',
-          details: {
+        res.status(401).json(errorResponse(
+          'Utente non trovato. Se vuoi registrarti clicca qui.',
+          'USER_NOT_FOUND',
+          {
             canRegister: true,
             registerUrl: '/register',
             attempts: {
@@ -99,27 +99,26 @@ export class AuthController {
               lockoutDuration: '10 minutes after 5 failed attempts'
             }
           },
-          timestamp: new Date().toISOString()
-        };
-        res.status(401).json(response);
+          401,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Check if account is banned
       if (user.isBanned) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'L\'account è stato sospeso',
-          code: 'ACCOUNT_BANNED',
-          details: {
+        res.status(403).json(errorResponse(
+          'L\'account è stato sospeso',
+          'ACCOUNT_BANNED',
+          {
             bannedUntil: user.bannedUntil?.toISOString() || null,
             reason: user.banReason || 'Community guidelines violation',
             canAppeal: true,
             appealUrl: '/support/appeal'
           },
-          timestamp: new Date().toISOString()
-        };
-        res.status(403).json(response);
+          403,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -138,11 +137,10 @@ export class AuthController {
           userAgent: req.get('User-Agent')
         });
 
-        const response: ApiResponse = {
-          success: false,
-          error: 'Password non corretta. Se l\'hai dimenticata clicca qui.',
-          code: 'INVALID_PASSWORD',
-          details: {
+        res.status(401).json(errorResponse(
+          'Password non corretta. Se l\'hai dimenticata clicca qui.',
+          'INVALID_PASSWORD',
+          {
             canResetPassword: true,
             resetPasswordUrl: '/auth/forgot-password',
             attempts: {
@@ -151,25 +149,24 @@ export class AuthController {
               lockoutDuration: '10 minutes after 5 failed attempts'
             }
           },
-          timestamp: new Date().toISOString()
-        };
-        res.status(401).json(response);
+          401,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Check if email is verified (only after password is correct)
       if (!user.isEmailVerified && process.env.NODE_ENV === 'production') {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Verifica il tuo indirizzo email prima di effettuare il login',
-          code: 'EMAIL_NOT_VERIFIED',
-          details: {
+        res.status(400).json(errorResponse(
+          'Verifica il tuo indirizzo email prima di effettuare il login',
+          'EMAIL_NOT_VERIFIED',
+          {
             canResendVerification: true,
             verificationUrl: '/auth/resend-verification'
           },
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -341,10 +338,8 @@ export class AuthController {
         logger.info(`User ${user.username}: No character context set - either admin or multipleCharactersAllowed=true or no characters`);
       }
 
-      const response: ApiResponse = {
-        success: true,
-        message: 'Login successful',
-        data: {
+      res.json(createResponse(
+        {
           user: {
             id: user.id,
             username: user.username,
@@ -376,10 +371,9 @@ export class AuthController {
             deviceRegistered: true
           }
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+        'Login successful',
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Login error:', {
@@ -391,14 +385,13 @@ export class AuthController {
         userAgent: req.headers?.['user-agent']
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Login fallito',
-        code: 'LOGIN_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Login fallito',
+        'LOGIN_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -418,32 +411,31 @@ export class AuthController {
       });
 
       if (!character) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Personaggio non trovato o non appartiene a questo utente',
-          code: 'CHARACTER_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Personaggio non trovato o non appartiene a questo utente',
+          'CHARACTER_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Check if character can be selected (block only DELETED characters)
       if (character.status === 'DELETED') {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Il personaggio è stato eliminato e non può essere utilizzato',
-          code: 'CHARACTER_DELETED',
-          details: {
+        res.status(404).json(errorResponse(
+          'Il personaggio è stato eliminato e non può essere utilizzato',
+          'CHARACTER_DELETED',
+          {
             character: {
               id: character.id,
               name: character.name,
               status: character.status
             }
           },
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -507,10 +499,8 @@ export class AuthController {
         ipAddress: req.ip
       });
 
-      const response: ApiResponse = {
-        success: true,
-        message: 'Character selected successfully',
-        data: {
+      res.json(createResponse(
+        {
           character: {
             id: character.id,
             name: character.name,
@@ -527,22 +517,20 @@ export class AuthController {
             canUseItems: true
           },
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+        'Character selected successfully',
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Character selection error:', error);
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Selezione personaggio fallita',
-        code: 'CHARACTER_SELECTION_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Selezione personaggio fallita',
+        'CHARACTER_SELECTION_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -557,13 +545,13 @@ export class AuthController {
 
       // Basic validation
       if (!name || typeof name !== 'string' || name.trim().length < 2) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Il nome del personaggio è richiesto e deve essere di almeno 2 caratteri',
-          code: 'VALIDATION_ERROR',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Il nome del personaggio è richiesto e deve essere di almeno 2 caratteri',
+          'VALIDATION_ERROR',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -575,13 +563,13 @@ export class AuthController {
       });
 
       if (existingCharacter) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Esiste già un personaggio con questo nome',
-          code: 'CHARACTER_NAME_EXISTS',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Esiste già un personaggio con questo nome',
+          'CHARACTER_NAME_EXISTS',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -608,10 +596,8 @@ export class AuthController {
         ipAddress: req.ip
       });
 
-      const response: ApiResponse = {
-        success: true,
-        message: 'Character created successfully',
-        data: {
+      res.status(201).json(createResponse(
+        {
           character: {
             id: character.id,
             name: character.name,
@@ -624,10 +610,9 @@ export class AuthController {
             createdAt: character.createdAt
           }
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(201).json(response);
+        'Character created successfully',
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Character creation error:', error);
@@ -645,43 +630,36 @@ export class AuthController {
           details[field] = transformValidationMessage(field, fieldError.message, fieldError.kind);
         }
         
-        const response: ApiResponse = {
-          success: false,
-          error: 'Errori nei dati del personaggio',
-          code: 'CHARACTER_VALIDATION_ERROR',
+        res.status(400).json(errorResponse(
+          'Errori nei dati del personaggio',
+          'CHARACTER_VALIDATION_ERROR',
           details,
-          timestamp: new Date().toISOString()
-        };
-        
-        res.status(400).json(response);
+          400,
+          getRequestId(req)
+        ));
         return;
       }
       
       // Handle duplicate name errors
       if (error instanceof Error && (error as any).code === 11000) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Esiste già un personaggio con questo nome',
-          code: 'CHARACTER_NAME_EXISTS',
-          timestamp: new Date().toISOString()
-        };
-        
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Esiste già un personaggio con questo nome',
+          'CHARACTER_NAME_EXISTS',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
       
       // Generic server error
-      const response: ApiResponse = {
-        success: false,
-        error: 'Creazione personaggio fallita',
-        code: 'CHARACTER_CREATION_ERROR',
-        ...(process.env.NODE_ENV === 'development' && { 
-          details: { message: error instanceof Error ? error.message : 'Unknown error' } 
-        }),
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Creazione personaggio fallita',
+        'CHARACTER_CREATION_ERROR',
+        process.env.NODE_ENV === 'development' ? { message: error instanceof Error ? error.message : 'Unknown error' } : undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -710,31 +688,27 @@ export class AuthController {
       // Set new auth cookie
       AuthMiddleware.setAuthCookie(res, newAuthToken);
 
-      const response: ApiResponse = {
-        success: true,
-        message: 'Session refreshed successfully',
-        data: {
+      res.json(successResponse(
+        {
           session: {
             expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
             refreshedAt: new Date().toISOString()
           }
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+        'Session refreshed successfully',
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Token refresh error:', error);
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Aggiornamento token fallito',
-        code: 'REFRESH_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Aggiornamento token fallito',
+        'REFRESH_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -747,9 +721,8 @@ export class AuthController {
       const user = req.user!;
       const character = req.character;
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           valid: true,
           user: {
             id: user.userId,
@@ -766,22 +739,20 @@ export class AuthController {
             timeRemaining: `${Math.floor((user.exp * 1000 - Date.now()) / (1000 * 60 * 60))} hours ${Math.floor(((user.exp * 1000 - Date.now()) % (1000 * 60 * 60)) / (1000 * 60))} minutes`
           }
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Session check error:', error);
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Controllo sessione fallito',
-        code: 'SESSION_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Controllo sessione fallito',
+        'SESSION_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -824,19 +795,16 @@ export class AuthController {
       // Clear authentication cookies
       AuthMiddleware.clearAuthCookies(res);
 
-      const response: ApiResponse = {
-        success: true,
-        message: 'Logged out successfully',
-        data: {
+      res.json(successResponse(
+        {
           session: {
             loggedOutAt: new Date().toISOString(),
             allDevicesLoggedOut: logoutAllDevices || false
           },
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+        'Logged out successfully',
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Logout error:', error);
@@ -844,14 +812,13 @@ export class AuthController {
       // Clear cookies anyway
       AuthMiddleware.clearAuthCookies(res);
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Logout fallito',
-        code: 'LOGOUT_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Logout fallito',
+        'LOGOUT_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -874,29 +841,25 @@ export class AuthController {
       // Clear authentication cookies
       AuthMiddleware.clearAuthCookies(res);
 
-      const response: ApiResponse = {
-        success: true,
-        message: 'All sessions terminated successfully',
-        data: {
+      res.json(successResponse(
+        {
           sessionsTerminated: 1, // Placeholder
           terminatedAt: new Date().toISOString()
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+        'All sessions terminated successfully',
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Logout all error:', error);
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Logout completo fallito',
-        code: 'LOGOUT_ALL_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Logout completo fallito',
+        'LOGOUT_ALL_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 }

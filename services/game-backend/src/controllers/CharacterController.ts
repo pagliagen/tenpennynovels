@@ -1,20 +1,21 @@
 import { Request, Response } from 'express';
-import { Character, Location, Corporation, Occupation } from '../../../../packages/database/models';
+import { Character, Location, Corporation, Occupation } from '../../../database/models';
 import { ApiResponse } from '../types/game';
 import { logger } from '../utils/logger';
 import { AuthMiddleware } from '../middleware/auth';
 import { CharacterValidationMiddleware } from '../middleware/characterValidation';
-import { CharacterVisibilityFilter } from '../../../../packages/shared/utils/characterVisibility';
+import { CharacterVisibilityFilter } from '../../../shared/utils/characterVisibility';
 import { FinancialUtils } from '../utils/financialUtils';
-import { CharacterCreationConfigService } from '../../../../packages/shared/src/services/CharacterCreationConfigService';
+import { CharacterCreationConfigService } from '../../../shared/src/services/CharacterCreationConfigService';
 import {
   calculateAvailableSkillPoints,
   applyOccupationBonuses,
   validateCharacterSubmission,
   checkOccupationPrerequisites
 } from '../utils/characterCreationUtils';
-import { GET, POST, PUT, DELETE } from '../../../../packages/shared/src/decorators/ApiDoc';
+import { GET, POST, PUT, DELETE } from '../../../shared/src/decorators/ApiDoc';
 import jwt from 'jsonwebtoken';
+import { successResponse, errorResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
 
 // Helper function to get JWT_SECRET with validation
 function getJwtSecret(): string {
@@ -80,9 +81,8 @@ export class CharacterController {
         concept
       });
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
+      res.status(201).json(createResponse(
+        {
           character: {
             id: character.id,
             name: character.name,
@@ -94,10 +94,9 @@ export class CharacterController {
             description: character.description
           }
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(201).json(response);
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -107,14 +106,13 @@ export class CharacterController {
         name: err.name
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile creare il personaggio',
-        code: 'CHARACTER_CREATION_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile creare il personaggio',
+        'CHARACTER_CREATION_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -133,9 +131,8 @@ export class CharacterController {
         .select('id name status occupation isActive currentLocation gameplayRoles submittedAt lastActive')
         .sort({ createdAt: -1 });
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           characters: characters.map((char: any) => ({
             id: char.id,
             name: char.name,
@@ -148,10 +145,9 @@ export class CharacterController {
             lastActive: char.lastActive
           }))
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -161,14 +157,13 @@ export class CharacterController {
         name: err.name
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare i personaggi',
-        code: 'GET_CHARACTERS_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare i personaggi',
+        'GET_CHARACTERS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -197,13 +192,13 @@ export class CharacterController {
       logger.info('Character found', { found: !!character, characterName: character?.name });
 
       if (!character) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Personaggio non trovato',
-          code: 'CHARACTER_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Personaggio non trovato',
+          'CHARACTER_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -214,13 +209,26 @@ export class CharacterController {
 
       // Converti il documento Mongoose in JSON per eliminare i metadati
       const characterJson = character.toJSON();
+      
+      // Converti skills Map in oggetto JavaScript se necessario (Mongoose Map non viene serializzata automaticamente)
+      if (character.skills && character.skills instanceof Map) {
+        const skillsObj: any = {};
+        character.skills.forEach((value, key) => {
+          skillsObj[key] = value;
+        });
+        characterJson.skills = skillsObj;
+      } else if (!characterJson.skills || Object.keys(characterJson.skills).length === 0) {
+        // Se skills è vuoto o non esiste, inizializzalo come oggetto vuoto
+        characterJson.skills = {};
+      }
 
       // Aggiungi il nome dell'occupazione e professional skills se presente
       if (character.occupation) {
-        const { Occupation, Skill } = require('../../../../packages/database/models');
+        const { Occupation, Skill } = require('../../../database/models');
         let occupation = null;
         
         // Verifica se l'occupazione è un ObjectId valido o una stringa
+        // Nota: skillId nello schema è String, non ObjectId ref, quindi non serve populate
         try {
           // Prima prova a cercare per ID
           occupation = await Occupation.findById(character.occupation);
@@ -244,7 +252,7 @@ export class CharacterController {
         
         if (occupation) {
           characterJson.occupationName = occupation.name;
-          characterJson.occupationData = occupation.toJSON(); // Include all occupation data for the wizard
+          characterJson.occupationData = occupation.toJSON(); // Include all occupation data for the wizard (with populated skills)
           
           // Converti professional skills da ID a nomi per evidenziazione frontend
           if (occupation.benefits && occupation.benefits.professionalSkills) {
@@ -259,7 +267,7 @@ export class CharacterController {
 
       // Popula gli oggetti dell'equipaggiamento con i dettagli completi
       if (characterJson.equipment && characterJson.equipment.length > 0) {
-        const { Item } = require('../../../../packages/database/models');
+        const { Item } = require('../../../database/models');
         const equipmentItems = await Item.find({ _id: { $in: characterJson.equipment } });
         
         // Sostituisce gli ID con gli oggetti completi
@@ -309,18 +317,16 @@ export class CharacterController {
         throw filterError;
       }
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           character: {
             ...filteredCharacter,
             isOwnCharacter: isOwner
           }
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -331,14 +337,13 @@ export class CharacterController {
         userId: req.user?.userId
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare il personaggio',
-        code: 'GET_CHARACTER_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare il personaggio',
+        'GET_CHARACTER_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -361,13 +366,13 @@ export class CharacterController {
       }) as any);
 
       if (!character) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Personaggio non trovato',
-          code: 'CHARACTER_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Personaggio non trovato',
+          'CHARACTER_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -391,15 +396,13 @@ export class CharacterController {
         );
       }
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           character: filteredCharacter
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -409,14 +412,13 @@ export class CharacterController {
         name: err.name
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare il personaggio',
-        code: 'GET_PUBLIC_CHARACTER_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare il personaggio',
+        'GET_PUBLIC_CHARACTER_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -437,13 +439,13 @@ export class CharacterController {
       }) as any);
 
       if (!character) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Personaggio non trovato',
-          code: 'CHARACTER_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Personaggio non trovato',
+          'CHARACTER_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -483,10 +485,15 @@ export class CharacterController {
       if (character.status === 'DRAFT') {
         // DRAFT characters can update all fields
         allowedFields = [
-          'name', 'surname', 'age', 'apparentAge', 'gender', 'birthPlace',
+          'name', 'surname', 'age', 'apparentAge', 'gender', 'birthDate', 'birthPlace',
           'physicalDescription', 'publicDescription', 'privateDescription', 'nationality', 
           'description', 'stats', 'skills', 'derived', 'occupation', 'avatar', 'profileImage',
-          'prestavolto', 'guidedBackground', 'motivations', 'fears', 'audioTheme'
+          'prestavolto', 'guidedBackground', 'motivations', 'fears', 'audioTheme',
+          // Anagrafica completa
+          'height', 'weight', 'eyeColor', 'hairColor', 'visibleMarks', 'hiddenMarks',
+          'maritalStatus', 'illnesses', 'educationTitle', 'criminalRecord', 'currentOccupation',
+          // Background strutturato
+          'background'
         ];
       } else {
         // Non-DRAFT characters can only update limited fields
@@ -495,25 +502,69 @@ export class CharacterController {
       
       allowedFields.forEach((field: string) => {
         if (filteredUpdates[field] !== undefined) {
-          character[field] = filteredUpdates[field];
+          // Special handling for skills Map - Mongoose Map requires special handling
+          if (field === 'skills' && filteredUpdates.skills) {
+            // Clear existing skills map
+            character.skills.clear();
+            // Set each skill value (supports both numbers and SkillBreakdown objects)
+            Object.entries(filteredUpdates.skills).forEach(([skillName, skillValue]) => {
+              character.skills.set(skillName, skillValue);
+            });
+            // Mark skills map as modified so Mongoose saves it
+            character.markModified('skills');
+          } else {
+            // Log per currentOccupation per debugging
+            if (field === 'currentOccupation') {
+              logger.info('Setting currentOccupation', {
+                field,
+                value: filteredUpdates[field],
+                valueType: typeof filteredUpdates[field],
+                before: character.currentOccupation
+              });
+            }
+            character[field] = filteredUpdates[field];
+            // Assicurati che Mongoose riconosca il cambiamento per campi opzionali
+            if (field === 'currentOccupation') {
+              character.markModified('currentOccupation');
+              logger.info('currentOccupation set and marked as modified', {
+                after: character.currentOccupation,
+                hasValue: character.currentOccupation !== undefined
+              });
+            }
+          }
         }
       });
 
-      // Handle background JSON parsing - estrai motivations e fears dal JSON (only for DRAFT)
+      // Handle background - support both object and JSON string (only for DRAFT)
       if (character.status === 'DRAFT' && filteredUpdates.background !== undefined) {
         try {
-          // Se background è una stringa JSON, parsala ed estrai motivations e fears
-          if (typeof filteredUpdates.background === 'string') {
-            const parsedBackground = JSON.parse(filteredUpdates.background);
-            if (parsedBackground.motivations) {
-              character.motivations = parsedBackground.motivations;
+          let backgroundData = filteredUpdates.background;
+          
+          // Se background è una stringa JSON, parsala
+          if (typeof backgroundData === 'string') {
+            backgroundData = JSON.parse(backgroundData);
+          }
+          
+          // Se è un oggetto, aggiorna direttamente il campo background
+          if (typeof backgroundData === 'object' && backgroundData !== null) {
+            // Inizializza background se non esiste
+            if (!character.background) {
+              character.background = {};
             }
-            if (parsedBackground.fears) {
-              character.fears = parsedBackground.fears;
+            
+            // Aggiorna tutti i campi del background
+            Object.assign(character.background, backgroundData);
+            
+            // Mantieni compatibilità con campi deprecati motivations e fears
+            if (backgroundData.motivations) {
+              character.motivations = backgroundData.motivations;
+            }
+            if (backgroundData.fears) {
+              character.fears = backgroundData.fears;
             }
           }
         } catch (parseError) {
-          logger.warn('Failed to parse background JSON', { 
+          logger.warn('Failed to parse background', { 
             background: filteredUpdates.background, 
             error: (parseError as Error).message 
           });
@@ -552,6 +603,28 @@ export class CharacterController {
 
       await character.save();
 
+      // Log currentOccupation dopo il salvataggio per verificare se è stato salvato
+      logger.info('Character saved - checking currentOccupation', {
+        characterId: character.id,
+        currentOccupation: character.currentOccupation,
+        currentOccupationType: typeof character.currentOccupation,
+        hasCurrentOccupation: 'currentOccupation' in character,
+        currentOccupationValue: character.get('currentOccupation')
+      });
+
+      // Log skills per debugging
+      if (filteredUpdates.skills) {
+        const skillsObj: any = {};
+        character.skills.forEach((value, key) => {
+          skillsObj[key] = value;
+        });
+        logger.info('Character skills after save', {
+          characterId: character.id,
+          skillsCount: character.skills.size,
+          skills: skillsObj
+        });
+      }
+
       logger.info('Character updated', {
         characterId: character.id,
         userId,
@@ -560,9 +633,8 @@ export class CharacterController {
         appliedFields: Object.keys(filteredUpdates)
       });
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
+      res.json(updateResponse(
+        {
           character: {
             id: character.id,
             name: character.name,
@@ -586,10 +658,9 @@ export class CharacterController {
             prestavolto: character.prestavolto
           }
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -601,14 +672,13 @@ export class CharacterController {
         updates: Object.keys(req.body || {})
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile aggiornare il personaggio',
-        code: 'CHARACTER_UPDATE_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile aggiornare il personaggio',
+        'CHARACTER_UPDATE_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -628,13 +698,13 @@ export class CharacterController {
       }) as any);
 
       if (!character) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Personaggio non trovato o già sottomesso',
-          code: 'CHARACTER_NOT_SUBMITTABLE',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Personaggio non trovato o già sottomesso',
+          'CHARACTER_NOT_SUBMITTABLE',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -653,17 +723,16 @@ export class CharacterController {
           warnings: validationResult.warnings
         });
 
-        const response: ApiResponse = {
-          success: false,
-          error: 'Validazione del personaggio fallita',
-          code: 'CHARACTER_VALIDATION_FAILED',
-          details: {
+        res.status(400).json(errorResponse(
+          'Validazione del personaggio fallita',
+          'CHARACTER_VALIDATION_FAILED',
+          {
             errors: validationResult.errors,
             warnings: validationResult.warnings
           },
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -682,10 +751,8 @@ export class CharacterController {
         warnings: validationResult.warnings
       });
 
-      const response: ApiResponse = {
-        success: true,
-        message: 'Personaggio sottomesso per approvazione',
-        data: {
+      res.json(successResponse(
+        {
           character: {
             id: character.id,
             status: character.status,
@@ -693,10 +760,9 @@ export class CharacterController {
           },
           warnings: validationResult.warnings
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+        'Personaggio sottomesso per approvazione',
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -706,14 +772,13 @@ export class CharacterController {
         name: err.name
       });
 
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile sottomettere il personaggio',
-        code: 'CHARACTER_SUBMIT_ERROR',
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile sottomettere il personaggio',
+        'CHARACTER_SUBMIT_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -733,13 +798,13 @@ export class CharacterController {
       }) as any);
 
       if (!character) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Personaggio non trovato o non approvato',
-          code: 'CHARACTER_NOT_SELECTABLE',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Personaggio non trovato o non approvato',
+          'CHARACTER_NOT_SELECTABLE',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -782,10 +847,8 @@ export class CharacterController {
         name: character.name
       });
 
-      const response: ApiResponse = {
-        success: true,
-        message: 'Personaggio selezionato con successo',
-        data: {
+      res.json(successResponse(
+        {
           character: {
             id: character.id,
             name: character.name,
@@ -800,12 +863,11 @@ export class CharacterController {
             canAccessLocations: true,
             canSendMessages: true,
             canUseItems: true
-          },
+          }
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+        'Personaggio selezionato con successo',
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -815,14 +877,13 @@ export class CharacterController {
         name: err.name
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile selezionare il personaggio',
-        code: 'CHARACTER_SELECT_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile selezionare il personaggio',
+        'CHARACTER_SELECT_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -842,13 +903,13 @@ export class CharacterController {
       }) as any);
 
       if (!character) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Personaggio non trovato o non può essere eliminato',
-          code: 'CHARACTER_NOT_DELETABLE',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Personaggio non trovato o non può essere eliminato',
+          'CHARACTER_NOT_DELETABLE',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -860,13 +921,10 @@ export class CharacterController {
         name: character.name
       });
 
-      const response: ApiResponse = {
-        success: true,
-        message: 'Personaggio eliminato con successo',
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+      res.json(deleteResponse(
+        'Personaggio eliminato con successo',
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -876,14 +934,13 @@ export class CharacterController {
         name: err.name
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile eliminare il personaggio',
-        code: 'CHARACTER_DELETE_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile eliminare il personaggio',
+        'CHARACTER_DELETE_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -927,15 +984,13 @@ export class CharacterController {
         charactersFound: charactersList.length
       });
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           characters: charactersList
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -945,14 +1000,13 @@ export class CharacterController {
         name: err.name
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare la lista dei personaggi',
-        code: 'GET_CHARACTERS_LIST_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare la lista dei personaggi',
+        'GET_CHARACTERS_LIST_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -967,26 +1021,26 @@ export class CharacterController {
       
       // locationId is required in the request body (empty string = London)
       if (locationId === undefined || locationId === null) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'ID location obbligatorio (usa stringa vuota per Londra)',
-          code: 'MISSING_LOCATION_ID',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'ID location obbligatorio (usa stringa vuota per Londra)',
+          'MISSING_LOCATION_ID',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Get character
       const character = await (Character.findById(characterId) as any);
       if (!character) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Personaggio non trovato',
-          code: 'CHARACTER_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Personaggio non trovato',
+          'CHARACTER_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -1000,13 +1054,13 @@ export class CharacterController {
         // Get location and verify access for specific locations
         location = await (Location.findById(locationId) as any);
         if (!location) {
-          const response: ApiResponse = {
-            success: false,
-            error: 'Location non trovata',
-            code: 'LOCATION_NOT_FOUND',
-            timestamp: new Date().toISOString()
-          };
-          res.status(404).json(response);
+          res.status(404).json(errorResponse(
+            'Location non trovata',
+            'LOCATION_NOT_FOUND',
+            undefined,
+            404,
+            getRequestId(req)
+          ));
           return;
         }
       }
@@ -1018,30 +1072,28 @@ export class CharacterController {
       
       await character.save();
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           characterId,
           currentLocation: character.currentLocation,
           locationName: location.name,
           previousLocation: oldLocation,
           timestamp: new Date().toISOString()
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
       console.error('Set character location error:', err);
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile impostare la location del personaggio',
-        code: 'SET_LOCATION_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile impostare la location del personaggio',
+        'SET_LOCATION_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -1074,13 +1126,13 @@ export class CharacterController {
       });
 
       if (!character) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Personaggio non trovato',
-          code: 'CHARACTER_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Personaggio non trovato',
+          'CHARACTER_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -1109,17 +1161,15 @@ export class CharacterController {
         };
       });
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           characterId,
           characterName: `${character.name} ${character.surname}`,
           corporations: characterCorporations
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -1129,13 +1179,13 @@ export class CharacterController {
         characterId: req.params.characterId
       });
 
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare le corporazioni del personaggio',
-        code: 'GET_CHARACTER_CORPORATIONS_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare le corporazioni del personaggio',
+        'GET_CHARACTER_CORPORATIONS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -1166,13 +1216,13 @@ export class CharacterController {
       });
 
       if (!character) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Personaggio non trovato',
-          code: 'CHARACTER_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Personaggio non trovato',
+          'CHARACTER_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -1188,15 +1238,13 @@ export class CharacterController {
         totalAvailable: skillPoints.totalAvailable
       });
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           skillPoints
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -1206,13 +1254,13 @@ export class CharacterController {
         characterId: req.params.characterId
       });
 
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile calcolare i punti abilità',
-        code: 'SKILL_POINTS_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile calcolare i punti abilità',
+        'SKILL_POINTS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -1248,54 +1296,53 @@ export class CharacterController {
       });
 
       if (!character) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Personaggio non trovato o non in stato bozza',
-          code: 'CHARACTER_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Personaggio non trovato o non in stato bozza',
+          'CHARACTER_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Check if bonuses already applied
       if (character.occupationBonusesApplied) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'I bonus occupazione sono già stati applicati',
-          code: 'BONUSES_ALREADY_APPLIED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'I bonus occupazione sono già stati applicati',
+          'BONUSES_ALREADY_APPLIED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       const occupation = await Occupation.findById(occupationId).populate('bonusSkills.skillId');
 
       if (!occupation) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Occupazione non trovata',
-          code: 'OCCUPATION_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Occupazione non trovata',
+          'OCCUPATION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Check prerequisites
       const prereqCheck = await checkOccupationPrerequisites(character, occupation);
       if (!prereqCheck.canAccess) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Il personaggio non soddisfa i prerequisiti dell\'occupazione',
-          code: 'PREREQUISITES_NOT_MET',
-          details: {
+        res.status(400).json(errorResponse(
+          'Il personaggio non soddisfa i prerequisiti dell\'occupazione',
+          'PREREQUISITES_NOT_MET',
+          {
             issues: prereqCheck.issues
           },
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -1319,10 +1366,8 @@ export class CharacterController {
         bonusesApplied: result.bonusesApplied.length
       });
 
-      const response: ApiResponse = {
-        success: true,
-        message: 'Bonus occupazione applicati con successo',
-        data: {
+      res.json(successResponse(
+        {
           result,
           character: {
             id: character.id,
@@ -1331,10 +1376,9 @@ export class CharacterController {
             occupationBonusesApplied: character.occupationBonusesApplied
           }
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+        'Bonus occupazione applicati con successo',
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -1344,13 +1388,13 @@ export class CharacterController {
         characterId: req.params.characterId
       });
 
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile applicare i bonus occupazione',
-        code: 'APPLY_BONUSES_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile applicare i bonus occupazione',
+        'APPLY_BONUSES_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -1383,26 +1427,26 @@ export class CharacterController {
       });
 
       if (!character) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Personaggio non trovato',
-          code: 'CHARACTER_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Personaggio non trovato',
+          'CHARACTER_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
       const occupation = await Occupation.findById(occupationId);
 
       if (!occupation) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Occupazione non trovata',
-          code: 'OCCUPATION_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Occupazione non trovata',
+          'OCCUPATION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -1415,9 +1459,8 @@ export class CharacterController {
         canAccess: prereqCheck.canAccess
       });
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           canAccess: prereqCheck.canAccess,
           issues: prereqCheck.issues,
           occupation: {
@@ -1426,10 +1469,9 @@ export class CharacterController {
             allowedGenders: occupation.allowedGenders
           }
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -1439,13 +1481,13 @@ export class CharacterController {
         occupationId: req.params.occupationId
       });
 
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile verificare i prerequisiti',
-        code: 'CHECK_PREREQUISITES_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile verificare i prerequisiti',
+        'CHECK_PREREQUISITES_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 }

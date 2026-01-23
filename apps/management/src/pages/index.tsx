@@ -186,7 +186,7 @@ export default function Dashboard({ authContext }: DashboardProps) {
 
       const result = await response.json();
 
-      if (!result.success) {
+      if (!result.result) {
         throw new Error(result.error || 'Failed to fetch analytics data');
       }
 

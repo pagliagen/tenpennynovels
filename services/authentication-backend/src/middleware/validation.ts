@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { body, validationResult } from 'express-validator';
-import { ApiResponse, ValidationError } from '../../../../packages/shared/types';
+import { ApiResponse, ValidationError } from '../../../shared/types';
 import { CryptoUtils } from '../utils/crypto';
 import { validationConfig } from '../config/validation';
 

@@ -1,8 +1,9 @@
 import { Request, Response } from 'express';
-import { Character, Location, LocationAction } from '../../../../packages/database/models';
+import { Character, Location, LocationAction } from '../../../database/models';
 import { ApiResponse } from '../types/game';
 import { logger } from '../utils/logger';
 import { LocationService } from '../services/LocationService';
+import { successResponse, errorResponse, getRequestId } from '../utils/apiResponse';
 
 export class LocationController {
   /**
@@ -17,15 +18,13 @@ export class LocationController {
       // Get flat list of accessible locations using centralized service
       const locations = await LocationService.getAccessibleLocations(characterId);
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           locations: locations
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -35,14 +34,13 @@ export class LocationController {
         name: err.name
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare le location accessibili',
-        code: 'GET_LOCATIONS_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare le location accessibili',
+        'GET_LOCATIONS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -58,13 +56,11 @@ export class LocationController {
       // Get hierarchical location tree using centralized service
       const locationTree = await LocationService.getLocationTree(characterId);
 
-      const response: ApiResponse = {
-        success: true,
-        data: { locationTree },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+      res.json(successResponse(
+        { locationTree },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -74,14 +70,13 @@ export class LocationController {
         name: err.name
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare l\'albero delle location',
-        code: 'LOCATION_TREE_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare l\'albero delle location',
+        'LOCATION_TREE_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -100,13 +95,13 @@ export class LocationController {
 
       if (!character) {
         // Return 404 to prevent information disclosure
-        const response: ApiResponse = {
-          success: false,
-          error: 'Location non trovata',
-          code: 'LOCATION_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Location non trovata',
+          'LOCATION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -114,13 +109,13 @@ export class LocationController {
       const location = await (Location.findById(locationId) as any);
 
       if (!location) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Location non trovata',
-          code: 'LOCATION_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Location non trovata',
+          'LOCATION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -129,13 +124,13 @@ export class LocationController {
       
       if (!hasAccess) {
         // Return 404 instead of 403 to prevent information disclosure
-        const response: ApiResponse = {
-          success: false,
-          error: 'Location non trovata',
-          code: 'LOCATION_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Location non trovata',
+          'LOCATION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -146,9 +141,8 @@ export class LocationController {
       // Get chat history for the location
       const chatHistory = await (LocationAction.getLocationHistory(locationId, characterId, 50) as any);
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           location: {
             id: location.id,
             name: location.name,
@@ -183,10 +177,9 @@ export class LocationController {
             targetCharacters: action.targetCharacters
           }))
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -197,14 +190,13 @@ export class LocationController {
       });
       
       // Return 404 for any error to prevent information disclosure
-      const response: ApiResponse = {
-        success: false,
-        error: 'Location non trovata',
-        code: 'LOCATION_NOT_FOUND',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(404).json(response);
+      res.status(404).json(errorResponse(
+        'Location non trovata',
+        'LOCATION_NOT_FOUND',
+        undefined,
+        404,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -225,13 +217,13 @@ export class LocationController {
       ]) as any[];
 
       if (!character || !location) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Location non trovata',
-          code: 'LOCATION_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Location non trovata',
+          'LOCATION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -239,13 +231,13 @@ export class LocationController {
       const hasAccess = await LocationController.checkLocationAccess(location, character);
       
       if (!hasAccess) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Accesso negato',
-          code: 'LOCATION_ACCESS_DENIED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(403).json(response);
+        res.status(403).json(errorResponse(
+          'Accesso negato',
+          'LOCATION_ACCESS_DENIED',
+          undefined,
+          403,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -270,10 +262,8 @@ export class LocationController {
       const updatedLocation = await (Location.findById(location.id) as any);
       const activeOccupants = updatedLocation?.occupants?.filter((o: any) => o.isActive) || [];
 
-      const response: ApiResponse = {
-        success: true,
-        message: `Entered ${location.name}`,
-        data: {
+      res.json(successResponse(
+        {
           location: {
             id: location.id,
             name: location.name,
@@ -289,10 +279,9 @@ export class LocationController {
             private: location.settings?.private || false
           }
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+        `Entered ${location.name}`,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -302,14 +291,13 @@ export class LocationController {
         name: err.name
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile entrare nella location',
-        code: 'ENTER_LOCATION_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile entrare nella location',
+        'ENTER_LOCATION_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -329,36 +317,34 @@ export class LocationController {
       ]) as any[];
 
       if (!character || !location) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Location non trovata',
-          code: 'LOCATION_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Location non trovata',
+          'LOCATION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
       const accessInfo = await LocationController.getAccessInfo(location, character);
       
       if (!accessInfo.hasAccess) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Location non trovata',
-          code: 'LOCATION_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Location non trovata',
+          'LOCATION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
-      const response: ApiResponse = {
-        success: true,
-        data: accessInfo,
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+      res.json(successResponse(
+        accessInfo,
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -368,14 +354,13 @@ export class LocationController {
         name: err.name
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Location non trovata',
-        code: 'LOCATION_NOT_FOUND',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(404).json(response);
+      res.status(404).json(errorResponse(
+        'Location non trovata',
+        'LOCATION_NOT_FOUND',
+        undefined,
+        404,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -397,25 +382,25 @@ export class LocationController {
       ]) as any[];
 
       if (!character || !location || !targetCharacter) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Location non trovata',
-          code: 'LOCATION_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Location non trovata',
+          'LOCATION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Check if character is the owner
       if (location.ownerId?.toString() !== characterId) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Location non trovata',
-          code: 'LOCATION_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Location non trovata',
+          'LOCATION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -456,13 +441,11 @@ export class LocationController {
         permissions
       });
 
-      const response: ApiResponse = {
-        success: true,
-        message: `Access granted to ${targetCharacter.name}`,
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+      res.json(successResponse(
+        undefined,
+        `Access granted to ${targetCharacter.name}`,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -472,14 +455,13 @@ export class LocationController {
         name: err.name
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile concedere l\'accesso',
-        code: 'GRANT_ACCESS_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile concedere l\'accesso',
+        'GRANT_ACCESS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 

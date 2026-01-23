@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import { logger } from '../utils/logger';
+import { listResponse, errorResponse, getRequestId } from '../utils/apiResponse';
 
 /**
  * Controller for occupation-related endpoints
@@ -20,10 +21,13 @@ export class OccupationController {
       const db = mongoose.connection.db;
       if (!db) {
         logger.error('🏢 OccupationController: Database not connected');
-        res.status(500).json({
-          success: false,
-          error: 'Database connection not available'
-        });
+        res.status(500).json(errorResponse(
+          'Database connection not available',
+          'DATABASE_ERROR',
+          undefined,
+          500,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -33,24 +37,35 @@ export class OccupationController {
       logger.info(`🏢 OccupationController: Found ${occupations.length} occupations`);
 
       // Return the occupations array
-      res.json({
-        success: true,
-        occupations: occupations.map(occupation => ({
-          id: occupation._id.toString(),
-          name: occupation.name,
-          description: occupation.description,
-          allowedGenders: occupation.allowedGenders || [],
-          socialClass: occupation.socialClass || [],
-          dailySalary: occupation.dailySalary || 0,
-          socialRespectability: occupation.socialRespectability || 0,
-          category: occupation.category || 'Other',
-          prerequisites: occupation.prerequisites || {},
-          benefits: occupation.benefits || {},
-          workingConditions: occupation.workingConditions || '',
-          rarity: occupation.rarity || 'common',
-          startingItems: occupation.startingItems || []
-        }))
-      });
+      const mappedOccupations = occupations.map(occupation => ({
+        id: occupation._id.toString(),
+        name: occupation.name,
+        description: occupation.description,
+        allowedGenders: occupation.allowedGenders || [],
+        socialClass: occupation.socialClass || [],
+        dailySalary: occupation.dailySalary || 0,
+        socialRespectability: occupation.socialRespectability || 0,
+        category: occupation.category || 'Other',
+        prerequisites: occupation.prerequisites || {},
+        benefits: occupation.benefits || {},
+        workingConditions: occupation.workingConditions || '',
+        rarity: occupation.rarity || 'common',
+        startingItems: occupation.startingItems || []
+      }));
+
+      res.json(listResponse(
+        mappedOccupations,
+        {
+          page: 1,
+          pageSize: mappedOccupations.length,
+          total: mappedOccupations.length,
+          totalPages: 1,
+          hasNext: false,
+          hasPrev: false
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('🏢 OccupationController: Error fetching occupations:', {
@@ -60,13 +75,13 @@ export class OccupationController {
         query: req.query,
         params: req.params
       });
-      res.status(500).json({
-        success: false,
-        error: 'Errore interno del server durante il recupero delle occupazioni',
-        ...(process.env.NODE_ENV === 'development' && { 
-          details: error instanceof Error ? error.message : 'Unknown error' 
-        })
-      });
+      res.status(500).json(errorResponse(
+        'Errore interno del server durante il recupero delle occupazioni',
+        'OCCUPATIONS_ERROR',
+        process.env.NODE_ENV === 'development' ? { message: error instanceof Error ? error.message : 'Unknown error' } : undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -83,10 +98,13 @@ export class OccupationController {
       const db = mongoose.connection.db;
       if (!db) {
         logger.error('🏢 OccupationController: Database not connected');
-        res.status(500).json({
-          success: false,
-          error: 'Database connection not available'
-        });
+        res.status(500).json(errorResponse(
+          'Database connection not available',
+          'DATABASE_ERROR',
+          undefined,
+          500,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -110,25 +128,35 @@ export class OccupationController {
       
       logger.info(`🏢 OccupationController: Found ${occupations.length} filtered occupations`);
 
-      res.json({
-        success: true,
-        filters: { gender, socialClass },
-        occupations: occupations.map(occupation => ({
-          id: occupation._id.toString(),
-          name: occupation.name,
-          description: occupation.description,
-          allowedGenders: occupation.allowedGenders || [],
-          socialClass: occupation.socialClass || [],
-          dailySalary: occupation.dailySalary || 0,
-          socialRespectability: occupation.socialRespectability || 0,
-          category: occupation.category || 'Other',
-          prerequisites: occupation.prerequisites || {},
-          benefits: occupation.benefits || {},
-          workingConditions: occupation.workingConditions || '',
-          rarity: occupation.rarity || 'common',
-          startingItems: occupation.startingItems || []
-        }))
-      });
+      const mappedOccupations = occupations.map(occupation => ({
+        id: occupation._id.toString(),
+        name: occupation.name,
+        description: occupation.description,
+        allowedGenders: occupation.allowedGenders || [],
+        socialClass: occupation.socialClass || [],
+        dailySalary: occupation.dailySalary || 0,
+        socialRespectability: occupation.socialRespectability || 0,
+        category: occupation.category || 'Other',
+        prerequisites: occupation.prerequisites || {},
+        benefits: occupation.benefits || {},
+        workingConditions: occupation.workingConditions || '',
+        rarity: occupation.rarity || 'common',
+        startingItems: occupation.startingItems || []
+      }));
+
+      res.json(listResponse(
+        mappedOccupations,
+        {
+          page: 1,
+          pageSize: mappedOccupations.length,
+          total: mappedOccupations.length,
+          totalPages: 1,
+          hasNext: false,
+          hasPrev: false
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('🏢 OccupationController: Error fetching filtered occupations:', {
@@ -139,13 +167,13 @@ export class OccupationController {
         query: req.query,
         params: req.params
       });
-      res.status(500).json({
-        success: false,
-        error: 'Errore interno del server durante il recupero delle occupazioni filtrate',
-        ...(process.env.NODE_ENV === 'development' && { 
-          details: error instanceof Error ? error.message : 'Unknown error' 
-        })
-      });
+      res.status(500).json(errorResponse(
+        'Errore interno del server durante il recupero delle occupazioni filtrate',
+        'OCCUPATIONS_FILTERED_ERROR',
+        process.env.NODE_ENV === 'development' ? { message: error instanceof Error ? error.message : 'Unknown error' } : undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 }

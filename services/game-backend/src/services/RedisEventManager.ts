@@ -265,8 +265,8 @@ export class RedisEventManager {
     reviewedByUsername: string
   ): Promise<void> {
     try {
-      const { Character } = await import('../../../../packages/database/models/Character');
-      const { User } = await import('../../../../packages/database/models/User');
+      const { Character } = await import('../../database/models/Character');
+      const { User } = await import('../../database/models/User');
 
       // Find the reviewed character
       const targetCharacter = await Character.findById(characterId).populate('userId');
@@ -407,7 +407,7 @@ export class RedisEventManager {
     action: 'approve' | 'reject'
   ): Promise<void> {
     try {
-      const { Character } = await import('../../../../packages/database/models/Character');
+      const { Character } = await import('../../database/models/Character');
       
       // Get updated character to find the user
       const character = await Character.findById(characterId).populate('userId');

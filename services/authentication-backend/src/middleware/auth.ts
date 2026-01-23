@@ -1,9 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import { CryptoUtils } from '../utils/crypto';
-import { AuthTokenPayload, CharacterContextPayload, ApiResponse } from '../../../../packages/shared/types';
+import { AuthTokenPayload, CharacterContextPayload, ApiResponse } from '../../../shared/types';
 import { logger, logAuth, logSecurity } from '../utils/logger';
 import { CharacterSessionManager } from '../utils/characterSessionManager';
-import { User } from '../../../../packages/database/models';
+import { User } from '../../../database/models';
 
 // Extend Express Request interface to include user data
 declare global {

@@ -105,12 +105,13 @@ const ForumPage: NextPage = () => {
         const messagesData = await messagesResponse.json();
         const statsData = await statsResponse.json();
         
-        if (messagesData.success) {
-          setMessages(messagesData.data.messages);
-          setTotalPages(messagesData.data.pagination.totalPages);
+        if (messagesData.result) {
+          const messages = messagesData.list || [];
+          setMessages(messages);
+          setTotalPages(messagesData.pagination?.totalPages || 1);
         }
         
-        if (statsData.success) {
+        if (statsData.result) {
           setStats(statsData.data);
         }
       }
@@ -130,8 +131,8 @@ const ForumPage: NextPage = () => {
       
       if (response.ok) {
         const data = await response.json();
-        if (data.success) {
-          setDeliveryQueue(data.data);
+        if (data.result) {
+          setDeliveryQueue(data.list || []);
         }
       }
     } catch (error) {

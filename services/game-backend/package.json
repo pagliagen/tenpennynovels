@@ -5,13 +5,13 @@
   "main": "dist/index.js",
   "_moduleAliases": {
     "@": "./dist",
-    "@shared": "../../packages/shared",
-    "@database": "../../packages/database"
+    "@shared": "../../../shared",
+    "@database": "../../../database"
   },
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc && npm run copy-assets",
-    "copy-assets": "mkdir -p dist/config && cp -r ../../config/* dist/config/",
+    "copy-assets": "mkdir -p dist/config && cp -r ../config/* dist/config/",
     "start": "node dist/services/game-backend/src/index.js",
     "test": "jest",
     "test:watch": "jest --watch",

@@ -8,6 +8,7 @@ import {
 } from '../types/management';
 import { AdminAuthMiddleware } from '../middleware/adminAuth';
 import { logger } from '../utils/logger';
+import { listResponse, successResponse, errorResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
 
 export class EconomyAdminController {
   /**
@@ -20,57 +21,57 @@ export class EconomyAdminController {
 
       // Validate grant data
       if (!grant.characterId || grant.characterId.trim().length === 0) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'ID personaggio richiesto',
-          code: 'CHARACTER_ID_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'ID personaggio richiesto',
+          'CHARACTER_ID_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       if (!grant.amount || grant.amount <= 0) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'L\'importo deve essere maggiore di 0',
-          code: 'INVALID_AMOUNT',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'L\'importo deve essere maggiore di 0',
+          'INVALID_AMOUNT',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       if (!grant.type || !['cash', 'deposit'].includes(grant.type)) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Il tipo deve essere cash o deposit',
-          code: 'INVALID_GRANT_TYPE',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Il tipo deve essere cash o deposit',
+          'INVALID_GRANT_TYPE',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       if (!grant.category || !['reward', 'compensation', 'correction', 'event_prize'].includes(grant.category)) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Categoria di concessione non valida',
-          code: 'INVALID_GRANT_CATEGORY',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Categoria di concessione non valida',
+          'INVALID_GRANT_CATEGORY',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       if (!grant.reason || grant.reason.trim().length === 0) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Il motivo della concessione è richiesto',
-          code: 'GRANT_REASON_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Il motivo della concessione è richiesto',
+          'GRANT_REASON_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -107,17 +108,15 @@ export class EconomyAdminController {
       //   timestamp: new Date().toISOString()
       // });
 
-      const response: ApiResponse<{ transactionId: string; characterId: string; amount: number }> = {
-        success: true,
-        data: {
+      res.json(createResponse(
+        {
           transactionId,
           characterId: grant.characterId,
           amount: grant.amount
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error granting money:', { 
         error: error instanceof Error ? error.message : String(error),
@@ -128,14 +127,13 @@ export class EconomyAdminController {
         adminInfo: AdminAuthMiddleware.getAuditInfo(req)
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile concedere denaro',
-        code: 'GRANT_MONEY_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile concedere denaro',
+        'GRANT_MONEY_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -205,16 +203,12 @@ export class EconomyAdminController {
         limit
       });
 
-      const response: ApiResponse<{ transactions: EconomicTransaction[]; pagination: PaginationInfo }> = {
-        success: true,
-        data: {
-          transactions: mockTransactions,
-          pagination: mockPagination
-        },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+      res.json(listResponse(
+        mockTransactions,
+        mockPagination,
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error fetching transactions:', { 
         error: error instanceof Error ? error.message : String(error),
@@ -225,14 +219,13 @@ export class EconomyAdminController {
         adminInfo: AdminAuthMiddleware.getAuditInfo(req)
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare le transazioni',
-        code: 'FETCH_TRANSACTIONS_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare le transazioni',
+        'FETCH_TRANSACTIONS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -301,13 +294,11 @@ export class EconomyAdminController {
         period
       });
 
-      const response: ApiResponse<EconomicReports> = {
-        success: true,
-        data: mockReports,
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+      res.json(successResponse(
+        mockReports,
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error fetching economic reports:', { 
         error: error instanceof Error ? error.message : String(error),
@@ -318,14 +309,13 @@ export class EconomyAdminController {
         adminInfo: AdminAuthMiddleware.getAuditInfo(req)
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare i report economici',
-        code: 'FETCH_ECONOMIC_REPORTS_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare i report economici',
+        'FETCH_ECONOMIC_REPORTS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -339,46 +329,46 @@ export class EconomyAdminController {
 
       // Validate adjustment data
       if (!characterId || characterId.trim().length === 0) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'ID personaggio richiesto',
-          code: 'CHARACTER_ID_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'ID personaggio richiesto',
+          'CHARACTER_ID_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       if (amount === 0) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'L\'importo non può essere zero',
-          code: 'INVALID_AMOUNT',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'L\'importo non può essere zero',
+          'INVALID_AMOUNT',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       if (!type || !['cash', 'deposit'].includes(type)) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Il tipo deve essere cash o deposit',
-          code: 'INVALID_ADJUSTMENT_TYPE',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Il tipo deve essere cash o deposit',
+          'INVALID_ADJUSTMENT_TYPE',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       if (!reason || reason.trim().length === 0) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Il motivo dell\'adeguamento è richiesto',
-          code: 'ADJUSTMENT_REASON_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Il motivo dell\'adeguamento è richiesto',
+          'ADJUSTMENT_REASON_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -404,18 +394,16 @@ export class EconomyAdminController {
         category: 'economy_management'
       });
 
-      const response: ApiResponse<{ transactionId: string; characterId: string; amount: number; action: string }> = {
-        success: true,
-        data: {
+      res.json(updateResponse(
+        {
           transactionId,
           characterId,
           amount,
           action
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error adjusting money:', { 
         error: error instanceof Error ? error.message : String(error),
@@ -426,14 +414,13 @@ export class EconomyAdminController {
         adminInfo: AdminAuthMiddleware.getAuditInfo(req)
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile adeguare il denaro',
-        code: 'ADJUST_MONEY_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile adeguare il denaro',
+        'ADJUST_MONEY_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -493,27 +480,24 @@ export class EconomyAdminController {
         characterName: mockFinances.character.name
       });
 
-      const response: ApiResponse<any> = {
-        success: true,
-        data: mockFinances,
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+      res.json(successResponse(
+        mockFinances,
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error fetching character finances:', { 
         error: error instanceof Error ? error.message : String(error), 
         characterId: req.params.characterId 
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare le finanze del personaggio',
-        code: 'FETCH_CHARACTER_FINANCES_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare le finanze del personaggio',
+        'FETCH_CHARACTER_FINANCES_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -527,35 +511,35 @@ export class EconomyAdminController {
 
       // Validate bulk grant data
       if (!Array.isArray(characterIds) || characterIds.length === 0) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Array di ID personaggi richiesto',
-          code: 'CHARACTER_IDS_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Array di ID personaggi richiesto',
+          'CHARACTER_IDS_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       if (!amount || amount <= 0) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'L\'importo deve essere maggiore di 0',
-          code: 'INVALID_AMOUNT',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'L\'importo deve essere maggiore di 0',
+          'INVALID_AMOUNT',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       if (!reason || reason.trim().length === 0) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Il motivo della concessione è richiesto',
-          code: 'GRANT_REASON_REQUIRED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Il motivo della concessione è richiesto',
+          'GRANT_REASON_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -563,7 +547,6 @@ export class EconomyAdminController {
       const results = characterIds.map((id: string) => ({
         characterId: id,
         transactionId: 'tx_bulk_' + Date.now() + '_' + id,
-        success: true,
         amount
       }));
 
@@ -579,17 +562,15 @@ export class EconomyAdminController {
         category: 'economy_management'
       });
 
-      const response: ApiResponse<{ results: any[]; totalAmount: number; characterCount: number }> = {
-        success: true,
-        data: {
+      res.json(createResponse(
+        {
           results,
           totalAmount: amount * characterIds.length,
           characterCount: characterIds.length
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error in bulk money grant:', { 
         error: error instanceof Error ? error.message : String(error),
@@ -600,14 +581,13 @@ export class EconomyAdminController {
         adminInfo: AdminAuthMiddleware.getAuditInfo(req)
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile concedere denaro in blocco',
-        code: 'BULK_GRANT_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile concedere denaro in blocco',
+        'BULK_GRANT_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -645,13 +625,11 @@ export class EconomyAdminController {
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       logger.info('Admin viewed economy configuration', auditInfo);
 
-      const response: ApiResponse<any> = {
-        success: true,
-        data: mockConfig,
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+      res.json(successResponse(
+        mockConfig,
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error fetching economy config:', { 
         error: error instanceof Error ? error.message : String(error),
@@ -662,14 +640,13 @@ export class EconomyAdminController {
         adminInfo: AdminAuthMiddleware.getAuditInfo(req)
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare la configurazione economica',
-        code: 'FETCH_ECONOMY_CONFIG_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare la configurazione economica',
+        'FETCH_ECONOMY_CONFIG_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 }

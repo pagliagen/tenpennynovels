@@ -1,12 +1,13 @@
 import { Request, Response } from 'express';
-import { GamingSession } from '../../../../packages/database/models/GamingSession';
-import { SessionManagement } from '../../../../packages/database/models/SessionManagement';
-import { SessionTemplate } from '../../../../packages/database/models/SessionTemplate';
-import { Campaign } from '../../../../packages/database/models/Campaign';
-import { ExperienceGrant } from '../../../../packages/database/models/ExperienceGrant';
-import { Character } from '../../../../packages/database/models/Character';
-import { Location } from '../../../../packages/database/models/Location';
+import { GamingSession } from '../../../database/models/GamingSession';
+import { SessionManagement } from '../../../database/models/SessionManagement';
+import { SessionTemplate } from '../../../database/models/SessionTemplate';
+import { Campaign } from '../../../database/models/Campaign';
+import { ExperienceGrant } from '../../../database/models/ExperienceGrant';
+import { Character } from '../../../database/models/Character';
+import { Location } from '../../../database/models/Location';
 import { logger } from '../utils/logger';
+import { listResponse, successResponse, errorResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
 
 export class SessionManagementController {
 
@@ -158,21 +159,24 @@ export class SessionManagementController {
         popularTemplates: templateStats
       };
       
-      res.json({
-        success: true,
-        data: { overview }
-      });
+      res.json(successResponse(
+        { overview },
+        undefined,
+        getRequestId(req)
+      ));
       
     } catch (error: any) {
       logger.error('Failed to get session overview', {
         error: error instanceof Error ? error.message : String(error)
       });
       
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile recuperare la panoramica delle sessioni',
-        code: 'GET_SESSION_OVERVIEW_ERROR'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare la panoramica delle sessioni',
+        'GET_SESSION_OVERVIEW_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -250,29 +254,33 @@ export class SessionManagementController {
       
       const totalCount = await GamingSession.countDocuments(filter);
       
-      res.json({
-        success: true,
-        data: {
-          sessions: sessionsWithMgmt,
-          pagination: {
-            total: totalCount,
-            limit: parseInt(limit as string),
-            skip: parseInt(skip as string),
-            hasMore: totalCount > parseInt(skip as string) + parseInt(limit as string)
-          }
-        }
-      });
+      const pagination = {
+        currentPage: Math.floor(parseInt(skip as string) / parseInt(limit as string)) + 1,
+        totalPages: Math.ceil(totalCount / parseInt(limit as string)),
+        totalItems: totalCount,
+        limit: parseInt(limit as string),
+        hasMore: totalCount > parseInt(skip as string) + parseInt(limit as string)
+      };
+
+      res.json(listResponse(
+        sessionsWithMgmt,
+        pagination,
+        undefined,
+        getRequestId(req)
+      ));
       
     } catch (error: any) {
       logger.error('Failed to get sessions', {
         error: error instanceof Error ? error.message : String(error)
       });
       
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile recuperare le sessioni',
-        code: 'GET_SESSIONS_ERROR'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare le sessioni',
+        'GET_SESSIONS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -295,11 +303,13 @@ export class SessionManagementController {
         });
       
       if (!session) {
-        res.status(404).json({
-          success: false,
-          error: 'Sessione non trovata',
-          code: 'SESSION_NOT_FOUND'
-        });
+        res.status(404).json(errorResponse(
+          'Sessione non trovata',
+          'SESSION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
       
@@ -326,10 +336,11 @@ export class SessionManagementController {
         }
       };
       
-      res.json({
-        success: true,
-        data: { session: sessionDetail }
-      });
+      res.json(successResponse(
+        { session: sessionDetail },
+        undefined,
+        getRequestId(req)
+      ));
       
     } catch (error: any) {
       logger.error('Failed to get session detail', {
@@ -337,11 +348,13 @@ export class SessionManagementController {
         error: error instanceof Error ? error.message : String(error)
       });
       
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile recuperare i dettagli della sessione',
-        code: 'GET_SESSION_DETAIL_ERROR'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare i dettagli della sessione',
+        'GET_SESSION_DETAIL_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -405,29 +418,33 @@ export class SessionManagementController {
         })
       );
       
-      res.json({
-        success: true,
-        data: {
-          templates: templatesWithStats,
-          pagination: {
-            total: totalCount,
-            limit: parseInt(limit as string),
-            skip: parseInt(skip as string),
-            hasMore: totalCount > parseInt(skip as string) + parseInt(limit as string)
-          }
-        }
-      });
+      const pagination = {
+        currentPage: Math.floor(parseInt(skip as string) / parseInt(limit as string)) + 1,
+        totalPages: Math.ceil(totalCount / parseInt(limit as string)),
+        totalItems: totalCount,
+        limit: parseInt(limit as string),
+        hasMore: totalCount > parseInt(skip as string) + parseInt(limit as string)
+      };
+
+      res.json(listResponse(
+        templatesWithStats,
+        pagination,
+        undefined,
+        getRequestId(req)
+      ));
       
     } catch (error: any) {
       logger.error('Failed to get session templates', {
         error: error instanceof Error ? error.message : String(error)
       });
       
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile recuperare i template delle sessioni',
-        code: 'GET_TEMPLATES_ERROR'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare i template delle sessioni',
+        'GET_TEMPLATES_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -495,29 +512,33 @@ export class SessionManagementController {
       
       const totalCount = await Campaign.countDocuments(filter);
       
-      res.json({
-        success: true,
-        data: {
-          campaigns: campaignsWithStats,
-          pagination: {
-            total: totalCount,
-            limit: parseInt(limit as string),
-            skip: parseInt(skip as string),
-            hasMore: totalCount > parseInt(skip as string) + parseInt(limit as string)
-          }
-        }
-      });
+      const pagination = {
+        currentPage: Math.floor(parseInt(skip as string) / parseInt(limit as string)) + 1,
+        totalPages: Math.ceil(totalCount / parseInt(limit as string)),
+        totalItems: totalCount,
+        limit: parseInt(limit as string),
+        hasMore: totalCount > parseInt(skip as string) + parseInt(limit as string)
+      };
+
+      res.json(listResponse(
+        campaignsWithStats,
+        pagination,
+        undefined,
+        getRequestId(req)
+      ));
       
     } catch (error: any) {
       logger.error('Failed to get campaigns', {
         error: error instanceof Error ? error.message : String(error)
       });
       
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile recuperare le campagne',
-        code: 'GET_CAMPAIGNS_ERROR'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare le campagne',
+        'GET_CAMPAIGNS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -650,21 +671,24 @@ export class SessionManagementController {
         }
       };
       
-      res.json({
-        success: true,
-        data: { analytics }
-      });
+      res.json(successResponse(
+        { analytics },
+        undefined,
+        getRequestId(req)
+      ));
       
     } catch (error: any) {
       logger.error('Failed to get session analytics', {
         error: error instanceof Error ? error.message : String(error)
       });
       
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile recuperare le analitiche delle sessioni',
-        code: 'GET_SESSION_ANALYTICS_ERROR'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare le analitiche delle sessioni',
+        'GET_SESSION_ANALYTICS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -679,21 +703,25 @@ export class SessionManagementController {
       const adminId = req.user!.userId;
       
       if (!['planned', 'active', 'completed', 'cancelled', 'postponed'].includes(status)) {
-        res.status(400).json({
-          success: false,
-          error: 'Valore di stato non valido',
-          code: 'INVALID_STATUS'
-        });
+        res.status(400).json(errorResponse(
+          'Valore di stato non valido',
+          'INVALID_STATUS',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
       
       const session = await GamingSession.findById(sessionId);
       if (!session) {
-        res.status(404).json({
-          success: false,
-          error: 'Sessione non trovata',
-          code: 'SESSION_NOT_FOUND'
-        });
+        res.status(404).json(errorResponse(
+          'Sessione non trovata',
+          'SESSION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
       
@@ -715,15 +743,15 @@ export class SessionManagementController {
         reason
       });
       
-      res.json({
-        success: true,
-        message: 'Session status updated successfully',
-        data: {
+      res.json(updateResponse(
+        {
           sessionId,
           oldStatus,
           newStatus: status
-        }
-      });
+        },
+        'Session status updated successfully',
+        getRequestId(req)
+      ));
       
     } catch (error: any) {
       logger.error('Failed to update session status', {
@@ -731,11 +759,13 @@ export class SessionManagementController {
         error: error instanceof Error ? error.message : String(error)
       });
       
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile aggiornare lo stato della sessione',
-        code: 'UPDATE_SESSION_STATUS_ERROR'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile aggiornare lo stato della sessione',
+        'UPDATE_SESSION_STATUS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -751,11 +781,14 @@ export class SessionManagementController {
       const masterId = (req as any).user?.characterId || (req as any).character?.id;
 
       if (!masterId) {
-        return res.status(400).json({
-          success: false,
-          error: 'Master ID not found in request',
-          code: 'MASTER_ID_MISSING'
-        });
+        res.status(400).json(errorResponse(
+          'Master ID not found in request',
+          'MASTER_ID_MISSING',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
       }
 
       // Find completed sessions without XP assigned
@@ -781,26 +814,27 @@ export class SessionManagementController {
           : 0
       }));
 
-      res.json({
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           sessions: transformedSessions,
           count: transformedSessions.length
         },
-        timestamp: new Date().toISOString()
-      });
+        undefined,
+        getRequestId(req)
+      ));
     } catch (error: any) {
       logger.error('Error getting pending XP assignment sessions:', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined
       });
 
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile recuperare le sessioni in attesa di assegnazione XP',
-        code: 'GET_PENDING_XP_ERROR',
-        timestamp: new Date().toISOString()
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare le sessioni in attesa di assegnazione XP',
+        'GET_PENDING_XP_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 }

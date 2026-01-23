@@ -34,7 +34,7 @@ const server = app.listen(PORT, async () => {
     await setupDatabaseConnections();
 
     // Ensure models are loaded before accessing configurations
-    await import('../../../packages/database/models');
+    await import('../../database/models');
 
     // Initialize rate limiters with values from database
     await initializeRateLimiters();
@@ -89,7 +89,7 @@ const server = app.listen(PORT, async () => {
     
     // Start analytics system metrics tracking
     console.log('📊 Starting analytics metrics tracking...');
-    const { AnalyticsMiddleware } = await import('../../../packages/shared/src/middleware/analyticsMiddleware');
+    const { AnalyticsMiddleware } = await import('../../shared/src/middleware/analyticsMiddleware');
     AnalyticsMiddleware.trackSystemMetrics('game')();
     
     console.log('🔌 WebSocket server initialized');

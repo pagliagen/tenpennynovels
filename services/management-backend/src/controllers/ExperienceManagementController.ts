@@ -5,8 +5,9 @@ import {
   CharacterProgression, 
   GamingSession, 
   Character 
-} from '../../../../packages/database/models';
+} from '../../../database/models';
 import { logger } from '../utils/logger';
+import { listResponse, successResponse, errorResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
 
 export class ExperienceManagementController {
 
@@ -79,9 +80,8 @@ export class ExperienceManagementController {
         { $limit: 10 }
       ]);
       
-      res.json({
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           overview: {
             grantsInPeriod: grantsCount,
             totalXPGranted: totalXPGranted[0]?.total || 0,
@@ -97,19 +97,23 @@ export class ExperienceManagementController {
             limit: parseInt(limit as string),
             totalGrants: grantsCount
           }
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
       
     } catch (error: any) {
       logger.error('Failed to get experience overview', {
         error: error instanceof Error ? error.message : String(error)
       });
       
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile recuperare la panoramica esperienza',
-        code: 'EXPERIENCE_OVERVIEW_ERROR'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare la panoramica esperienza',
+        'EXPERIENCE_OVERVIEW_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -150,29 +154,36 @@ export class ExperienceManagementController {
         }}
       ]);
       
-      res.json({
-        success: true,
-        data: {
+      const pagination = {
+        currentPage: parseInt(page as string),
+        totalPages: Math.ceil(totalCount / parseInt(limit as string)),
+        totalItems: totalCount,
+        limit: parseInt(limit as string),
+        hasMore: parseInt(page as string) < Math.ceil(totalCount / parseInt(limit as string))
+      };
+
+      res.json(successResponse(
+        {
           sessions,
           statistics: sessionStats,
-          pagination: {
-            page: parseInt(page as string),
-            limit: parseInt(limit as string),
-            total: totalCount
-          }
-        }
-      });
+          pagination
+        },
+        undefined,
+        getRequestId(req)
+      ));
       
     } catch (error: any) {
       logger.error('Failed to get sessions overview', {
         error: error instanceof Error ? error.message : String(error)
       });
       
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile recuperare la panoramica sessioni',
-        code: 'SESSIONS_OVERVIEW_ERROR'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare la panoramica sessioni',
+        'SESSIONS_OVERVIEW_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -200,11 +211,13 @@ export class ExperienceManagementController {
       // Verify master exists and has master role
       const master = await Character.findById(masterId);
       if (!master || !master.gameplayRoles.includes('master')) {
-        res.status(400).json({
-          success: false,
-          error: 'Master specificato non valido',
-          code: 'INVALID_MASTER'
-        });
+        res.status(400).json(errorResponse(
+          'Master specificato non valido',
+          'INVALID_MASTER',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
       
@@ -215,11 +228,13 @@ export class ExperienceManagementController {
       });
       
       if (participants.length !== participantIds.length) {
-        res.status(400).json({
-          success: false,
-          error: 'Alcuni partecipanti non sono validi o non approvati',
-          code: 'INVALID_PARTICIPANTS'
-        });
+        res.status(400).json(errorResponse(
+          'Alcuni partecipanti non sono validi o non approvati',
+          'INVALID_PARTICIPANTS',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
       
@@ -256,22 +271,24 @@ export class ExperienceManagementController {
         participantCount: participants.length
       });
       
-      res.json({
-        success: true,
-        message: 'Gaming session created successfully',
-        data: { sessionId: session._id, session }
-      });
+      res.json(createResponse(
+        { sessionId: session._id, session },
+        'Gaming session created successfully',
+        getRequestId(req)
+      ));
       
     } catch (error: any) {
       logger.error('Failed to create gaming session', {
         error: error instanceof Error ? error.message : String(error)
       });
       
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile creare la sessione di gioco',
-        code: 'CREATE_SESSION_ERROR'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile creare la sessione di gioco',
+        'CREATE_SESSION_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -291,11 +308,13 @@ export class ExperienceManagementController {
       );
       
       if (!session) {
-        res.status(404).json({
-          success: false,
-          error: 'Sessione di gioco non trovata',
-          code: 'SESSION_NOT_FOUND'
-        });
+        res.status(404).json(errorResponse(
+          'Sessione di gioco non trovata',
+          'SESSION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
       
@@ -304,11 +323,11 @@ export class ExperienceManagementController {
         updates: Object.keys(updates)
       });
       
-      res.json({
-        success: true,
-        message: 'Gaming session updated successfully',
-        data: { session }
-      });
+      res.json(updateResponse(
+        { session },
+        'Gaming session updated successfully',
+        getRequestId(req)
+      ));
       
     } catch (error: any) {
       logger.error('Failed to update gaming session', {
@@ -316,11 +335,13 @@ export class ExperienceManagementController {
         error: error instanceof Error ? error.message : String(error)
       });
       
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile aggiornare la sessione di gioco',
-        code: 'UPDATE_SESSION_ERROR'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile aggiornare la sessione di gioco',
+        'UPDATE_SESSION_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -338,29 +359,35 @@ export class ExperienceManagementController {
         .populate('masterId');
         
       if (!session) {
-        res.status(404).json({
-          success: false,
-          error: 'Sessione di gioco non trovata',
-          code: 'SESSION_NOT_FOUND'
-        });
+        res.status(404).json(errorResponse(
+          'Sessione di gioco non trovata',
+          'SESSION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
       
       if (session.experienceAssigned) {
-        res.status(400).json({
-          success: false,
-          error: 'Esperienza già assegnata a questa sessione',
-          code: 'EXPERIENCE_ALREADY_ASSIGNED'
-        });
+        res.status(400).json(errorResponse(
+          'Esperienza già assegnata a questa sessione',
+          'EXPERIENCE_ALREADY_ASSIGNED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
       
       if (session.status !== 'completed') {
-        res.status(400).json({
-          success: false,
-          error: 'La sessione deve essere completata prima di assegnare esperienza',
-          code: 'SESSION_NOT_COMPLETED'
-        });
+        res.status(400).json(errorResponse(
+          'La sessione deve essere completata prima di assegnare esperienza',
+          'SESSION_NOT_COMPLETED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
       
@@ -426,18 +453,18 @@ export class ExperienceManagementController {
         totalSkills: grants.reduce((sum, g) => sum + g.skillPoints, 0)
       });
       
-      res.json({
-        success: true,
-        message: 'Experience assigned successfully',
-        data: {
+      res.json(createResponse(
+        {
           grantsCreated: grants.length,
           grants: grants.map(g => ({
             characterId: g.characterId,
             experiencePoints: g.experiencePoints,
             skillPoints: g.skillPoints
           }))
-        }
-      });
+        },
+        'Experience assigned successfully',
+        getRequestId(req)
+      ));
       
     } catch (error: any) {
       logger.error('Failed to assign session experience', {
@@ -445,11 +472,13 @@ export class ExperienceManagementController {
         error: error instanceof Error ? error.message : String(error)
       });
       
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile assegnare esperienza di sessione',
-        code: 'ASSIGN_EXPERIENCE_ERROR'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile assegnare esperienza di sessione',
+        'ASSIGN_EXPERIENCE_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -475,17 +504,18 @@ export class ExperienceManagementController {
       ]);
       
       if (!character) {
-        res.status(404).json({
-          success: false,
-          error: 'Personaggio non trovato',
-          code: 'CHARACTER_NOT_FOUND'
-        });
+        res.status(404).json(errorResponse(
+          'Personaggio non trovato',
+          'CHARACTER_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
       
-      res.json({
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           character: {
             id: character._id,
             name: character.name,
@@ -497,8 +527,10 @@ export class ExperienceManagementController {
           progression,
           grants,
           sessions
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
       
     } catch (error: any) {
       logger.error('Failed to get character progression details', {
@@ -506,11 +538,13 @@ export class ExperienceManagementController {
         error: error instanceof Error ? error.message : String(error)
       });
       
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile recuperare i dettagli di progressione del personaggio',
-        code: 'PROGRESSION_DETAILS_ERROR'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare i dettagli di progressione del personaggio',
+        'PROGRESSION_DETAILS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -565,22 +599,24 @@ export class ExperienceManagementController {
         reason
       });
       
-      res.json({
-        success: true,
-        message: 'Manual experience grants created',
-        data: { grants: grants.length }
-      });
+      res.json(createResponse(
+        { grants: grants.length },
+        'Manual experience grants created',
+        getRequestId(req)
+      ));
       
     } catch (error: any) {
       logger.error('Failed to create manual experience grant', {
         error: error instanceof Error ? error.message : String(error)
       });
       
-      res.status(500).json({
-        success: false,
-        error: 'Impossibile creare la concessione manuale',
-        code: 'MANUAL_GRANT_ERROR'
-      });
+      res.status(500).json(errorResponse(
+        'Impossibile creare la concessione manuale',
+        'MANUAL_GRANT_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 

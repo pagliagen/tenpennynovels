@@ -70,7 +70,7 @@ const PropertyBrowser: React.FC<PropertyBrowserProps> = ({ onClose, onPropertyRe
 
       if (response.ok) {
         const data = await response.json();
-        if (data.success) {
+        if (data.result) {
           setDistricts(data.data || []);
         } else {
           setError('Impossibile caricare i distretti');
@@ -98,7 +98,7 @@ const PropertyBrowser: React.FC<PropertyBrowserProps> = ({ onClose, onPropertyRe
 
       if (response.ok) {
         const data = await response.json();
-        if (data.success) {
+        if (data.result) {
           setAvailableProperties(data.data?.properties || []);
         } else {
           setError('Impossibile caricare le proprietà');
@@ -130,7 +130,7 @@ const PropertyBrowser: React.FC<PropertyBrowserProps> = ({ onClose, onPropertyRe
 
       const data = await response.json();
       
-      if (response.ok && data.success) {
+      if (response.ok && data.result) {
         alert('Proprietà affittata con successo!');
         setShowRentModal(false);
         setSelectedProperty(null);
@@ -158,7 +158,7 @@ const PropertyBrowser: React.FC<PropertyBrowserProps> = ({ onClose, onPropertyRe
 
       const data = await response.json();
       
-      if (response.ok && data.success) {
+      if (response.ok && data.result) {
         alert('Proprietà acquistata con successo!');
         setShowPurchaseModal(false);
         setSelectedProperty(null);

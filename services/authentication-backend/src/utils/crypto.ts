@@ -1,7 +1,7 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
-import { AuthTokenPayload, CharacterContextPayload } from '../../../../packages/shared/types';
+import { AuthTokenPayload, CharacterContextPayload } from '../../../shared/types';
 import { logger } from '../utils/logger';
 import { validationConfig } from '../config/validation';
 

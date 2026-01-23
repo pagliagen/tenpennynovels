@@ -1,10 +1,11 @@
 import { Request, Response } from 'express';
-import { User } from '../../../../packages/database/models';
-import { ApiResponse } from '../../../../packages/shared/types';
+import { User } from '../../../database/models';
+import { ApiResponse } from '../types/auth';
 import { logger, logSecurity } from '../utils/logger';
 import { redis } from '../config/redis';
 import { CryptoUtils } from '../utils/crypto'; 
 import { SecurityAlert } from '../types/auth';
+import { successResponse, errorResponse, listResponse, getRequestId } from '../utils/apiResponse';
 
 export class SecurityController {
   /**
@@ -37,32 +38,30 @@ export class SecurityController {
         isCurrent: true
       };
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
-          sessions: [currentSession],
-          summary: {
-            totalSessions: 1,
-            activeSessions: 1,
-            suspiciousActivity: false
-          }
+      res.json(listResponse(
+        [currentSession],
+        {
+          page: 1,
+          pageSize: 1,
+          total: 1,
+          totalPages: 1,
+          hasNext: false,
+          hasPrev: false
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Get sessions error:', error);
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare le sessioni',
-        code: 'SESSIONS_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare le sessioni',
+        'SESSIONS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -78,16 +77,15 @@ export class SecurityController {
       // TODO: Implement proper session termination
       // For now, prevent terminating current session
       if (sessionId === 'current') {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Non puoi terminare la sessione corrente',
-          code: 'CANNOT_TERMINATE_CURRENT_SESSION',
-          details: {
+        res.status(400).json(errorResponse(
+          'Non puoi terminare la sessione corrente',
+          'CANNOT_TERMINATE_CURRENT_SESSION',
+          {
             useLogout: true
           },
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -106,29 +104,25 @@ export class SecurityController {
         terminatedAt: new Date().toISOString()
       });
 
-      const response: ApiResponse = {
-        success: true,
-        message: 'Session terminated successfully',
-        data: {
+      res.json(successResponse(
+        {
           sessionId,
           terminatedAt: new Date().toISOString()
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+        'Session terminated successfully',
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Terminate session error:', error);
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile terminare la sessione',
-        code: 'SESSION_TERMINATION_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile terminare la sessione',
+        'SESSION_TERMINATION_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -174,34 +168,30 @@ export class SecurityController {
         }
       ];
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
-          loginHistory,
-          summary: {
-            totalLogins: 45,
-            successfulLogins: 43,
-            failedAttempts: 2,
-            suspiciousAttempts: 0,
-            newLocations: 0
-          }
+      res.json(listResponse(
+        loginHistory,
+        {
+          page: 1,
+          pageSize: limit,
+          total: 45,
+          totalPages: Math.ceil(45 / limit),
+          hasNext: false,
+          hasPrev: false
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Get login history error:', error);
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare lo storico dei login',
-        code: 'LOGIN_HISTORY_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare lo storico dei login',
+        'LOGIN_HISTORY_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -248,25 +238,30 @@ export class SecurityController {
         }
       ];
 
-      const response: ApiResponse = {
-        success: true,
-        data: { alerts },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+      res.json(listResponse(
+        alerts,
+        {
+          page: 1,
+          pageSize: alerts.length,
+          total: alerts.length,
+          totalPages: 1,
+          hasNext: false,
+          hasPrev: false
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Get security alerts error:', error);
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare gli avvisi di sicurezza',
-        code: 'SECURITY_ALERTS_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare gli avvisi di sicurezza',
+        'SECURITY_ALERTS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -281,13 +276,13 @@ export class SecurityController {
 
       const user = await User.findById(userId);
       if (!user) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Utente non trovato',
-          code: 'USER_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Utente non trovato',
+          'USER_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -317,9 +312,8 @@ export class SecurityController {
         timestamp: new Date().toISOString()
       });
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           report: {
             id: reportId,
             type,
@@ -333,22 +327,20 @@ export class SecurityController {
             accountSecured: true
           }
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Report suspicious error:', error);
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile segnalare attività sospetta',
-        code: 'REPORT_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile segnalare attività sospetta',
+        'REPORT_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -369,29 +361,25 @@ export class SecurityController {
         ipAddress: req.ip
       });
 
-      const response: ApiResponse = {
-        success: true,
-        message: 'Alert acknowledged successfully',
-        data: {
+      res.json(successResponse(
+        {
           alertId,
           acknowledgedAt: new Date().toISOString()
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+        'Alert acknowledged successfully',
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Acknowledge alert error:', error);
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile confermare l\'avviso',
-        code: 'ACKNOWLEDGE_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile confermare l\'avviso',
+        'ACKNOWLEDGE_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 }

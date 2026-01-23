@@ -15,7 +15,7 @@ export async function setupMiddleware(app: Express): Promise<void> {
   }
 
   // Fetch rate limit configurations from database
-  const { ConfigurationService } = await import('../../../../packages/shared/src/services/ConfigurationService');
+  const { ConfigurationService } = await import('../../../shared/src/services/ConfigurationService');
   const { getRedisClient } = await import('../config/redis');
   const redis = getRedisClient();
   const configService = new ConfigurationService(redis, logger);

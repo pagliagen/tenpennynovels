@@ -1,10 +1,11 @@
 import { Request, Response } from 'express';
-import { Relationship } from '../../../../packages/database/models/Relationship';
-import { Character } from '../../../../packages/database/models/Character';
+import { Relationship } from '../../../database/models/Relationship';
+import { Character } from '../../../database/models/Character';
 import { logger } from '../utils/logger';
 import { AuthUtils } from '../utils/auth';
 import { auditLogger } from '../utils/auditLogger';
 import { gameEventPublisher } from '../services/GameEventPublisher';
+import { successResponse, errorResponse, createResponse, getRequestId } from '../utils/apiResponse';
 
 export class RelationshipController {
   
@@ -12,10 +13,13 @@ export class RelationshipController {
     try {
       const authResult = AuthUtils.authenticate(req);
       if (!authResult.success) {
-        res.status(401).json({
-          success: false,
-          error: authResult.error
-        });
+        res.status(401).json(errorResponse(
+          authResult.error || 'Authentication failed',
+          'AUTHENTICATION_FAILED',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -66,19 +70,23 @@ export class RelationshipController {
         relationshipsCount: formattedRelationships.length
       });
 
-      res.json({
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           relationships: formattedRelationships
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error retrieving character relationships:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Internal server error'
-      });
+      res.status(500).json(errorResponse(
+        'Internal server error',
+        'INTERNAL_SERVER_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -86,10 +94,13 @@ export class RelationshipController {
     try {
       const authResult = AuthUtils.authenticate(req);
       if (!authResult.success) {
-        res.status(401).json({
-          success: false,
-          error: authResult.error
-        });
+        res.status(401).json(errorResponse(
+          authResult.error || 'Authentication failed',
+          'AUTHENTICATION_FAILED',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -113,19 +124,23 @@ export class RelationshipController {
         requiredSocialClass: type.requiredSocialClass
       }));
 
-      res.json({
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           relationshipTypes: formattedTypes
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error retrieving relationship types:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Internal server error'
-      });
+      res.status(500).json(errorResponse(
+        'Internal server error',
+        'INTERNAL_SERVER_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -133,10 +148,13 @@ export class RelationshipController {
     try {
       const authResult = AuthUtils.authenticate(req);
       if (!authResult.success) {
-        res.status(401).json({
-          success: false,
-          error: authResult.error
-        });
+        res.status(401).json(errorResponse(
+          authResult.error || 'Authentication failed',
+          'AUTHENTICATION_FAILED',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -145,58 +163,76 @@ export class RelationshipController {
 
       // Validate required fields
       if (!targetCharacterId || !relationshipTypeId) {
-        res.status(400).json({
-          success: false,
-          error: 'Personaggio target e tipo di relazione sono obbligatori'
-        });
+        res.status(400).json(errorResponse(
+          'Personaggio target e tipo di relazione sono obbligatori',
+          'VALIDATION_ERROR',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Check if target character exists
       const targetCharacter = await Character.findById(targetCharacterId).select('name surname gender socialClass');
       if (!targetCharacter) {
-        res.status(404).json({
-          success: false,
-          error: 'Personaggio target non trovato'
-        });
+        res.status(404).json(errorResponse(
+          'Personaggio target non trovato',
+          'CHARACTER_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Check if trying to create relationship with self
       if (targetCharacterId === character._id.toString()) {
-        res.status(400).json({
-          success: false,
-          error: 'Non puoi creare una relazione con te stesso'
-        });
+        res.status(400).json(errorResponse(
+          'Non puoi creare una relazione con te stesso',
+          'INVALID_TARGET',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Get relationship type
       const relationshipType = await Relationship.RelationshipType.findById(relationshipTypeId);
       if (!relationshipType || !relationshipType.isActive) {
-        res.status(404).json({
-          success: false,
-          error: 'Tipo di relazione non trovato o inattivo'
-        });
+        res.status(404).json(errorResponse(
+          'Tipo di relazione non trovato o inattivo',
+          'RELATIONSHIP_TYPE_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Check if character can propose this type
       if (!relationshipType.allowsSelfProposal) {
-        res.status(403).json({
-          success: false,
-          error: 'Questo tipo di relazione non può essere auto-proposto'
-        });
+        res.status(403).json(errorResponse(
+          'Questo tipo di relazione non può essere auto-proposto',
+          'SELF_PROPOSAL_NOT_ALLOWED',
+          undefined,
+          403,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Validate gender constraints if any
       if (relationshipType.requiredGender && relationshipType.requiredGender.length > 0) {
         if (!relationshipType.requiredGender.includes(targetCharacter.gender)) {
-          res.status(400).json({
-            success: false,
-            error: `This relationship type requires target character to be ${relationshipType.requiredGender.join(' or ')}`
-          });
+          res.status(400).json(errorResponse(
+            `This relationship type requires target character to be ${relationshipType.requiredGender.join(' or ')}`,
+            'GENDER_REQUIREMENT_NOT_MET',
+            undefined,
+            400,
+            getRequestId(req)
+          ));
           return;
         }
       }
@@ -205,10 +241,13 @@ export class RelationshipController {
       if (relationshipType.requiredSocialClass && relationshipType.requiredSocialClass.length > 0) {
         const targetSocialClass = AuthUtils.determineSocialClass(targetCharacter);
         if (!relationshipType.requiredSocialClass.includes(targetSocialClass)) {
-          res.status(400).json({
-            success: false,
-            error: `This relationship type requires target character to be ${relationshipType.requiredSocialClass.join(' or ')} class`
-          });
+          res.status(400).json(errorResponse(
+            `This relationship type requires target character to be ${relationshipType.requiredSocialClass.join(' or ')} class`,
+            'SOCIAL_CLASS_REQUIREMENT_NOT_MET',
+            undefined,
+            400,
+            getRequestId(req)
+          ));
           return;
         }
       }
@@ -224,10 +263,13 @@ export class RelationshipController {
       });
 
       if (existingRelationship) {
-        res.status(409).json({
-          success: false,
-          error: 'Una relazione di questo tipo esiste già tra questi personaggi'
-        });
+        res.status(409).json(errorResponse(
+          'Una relazione di questo tipo esiste già tra questi personaggi',
+          'RELATIONSHIP_ALREADY_EXISTS',
+          undefined,
+          409,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -243,10 +285,13 @@ export class RelationshipController {
         });
 
         if (existingExclusive) {
-          res.status(409).json({
-            success: false,
-            error: 'Hai già una relazione esclusiva di questo tipo'
-          });
+          res.status(409).json(errorResponse(
+            'Hai già una relazione esclusiva di questo tipo',
+            'EXCLUSIVE_RELATIONSHIP_EXISTS',
+            undefined,
+            409,
+            getRequestId(req)
+          ));
           return;
         }
       }
@@ -263,10 +308,13 @@ export class RelationshipController {
         });
 
         if (currentCount >= relationshipType.maxInstances) {
-          res.status(409).json({
-            success: false,
-            error: `Numero massimo di relazioni ${relationshipType.name} raggiunto`
-          });
+          res.status(409).json(errorResponse(
+            `Numero massimo di relazioni ${relationshipType.name} raggiunto`,
+            'MAX_INSTANCES_REACHED',
+            undefined,
+            409,
+            getRequestId(req)
+          ));
           return;
         }
       }
@@ -349,9 +397,8 @@ export class RelationshipController {
         relationshipType: relationshipType.name
       });
 
-      res.status(201).json({
-        success: true,
-        data: {
+      res.status(201).json(createResponse(
+        {
           relationship: {
             id: newRelationship._id,
             relationshipType: relationshipType.name,
@@ -364,15 +411,20 @@ export class RelationshipController {
             requiresApproval: relationshipType.requiresMutualApproval,
             proposedAt: newRelationship.proposedAt
           }
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error proposing relationship:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Internal server error'
-      });
+      res.status(500).json(errorResponse(
+        'Internal server error',
+        'INTERNAL_SERVER_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -380,10 +432,13 @@ export class RelationshipController {
     try {
       const authResult = AuthUtils.authenticate(req);
       if (!authResult.success) {
-        res.status(401).json({
-          success: false,
-          error: authResult.error
-        });
+        res.status(401).json(errorResponse(
+          authResult.error || 'Authentication failed',
+          'AUTHENTICATION_FAILED',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -392,10 +447,13 @@ export class RelationshipController {
       const { action } = req.body;
 
       if (!action || !['accept', 'reject'].includes(action)) {
-        res.status(400).json({
-          success: false,
-          error: 'L\'azione deve essere "accept" o "reject"'
-        });
+        res.status(400).json(errorResponse(
+          'L\'azione deve essere "accept" o "reject"',
+          'INVALID_ACTION',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -406,28 +464,37 @@ export class RelationshipController {
         .populate('toCharacterId', 'name surname');
 
       if (!relationship) {
-        res.status(404).json({
-          success: false,
-          error: 'Proposta di relazione non trovata'
-        });
+        res.status(404).json(errorResponse(
+          'Proposta di relazione non trovata',
+          'RELATIONSHIP_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Check if character is the target of the proposal
       if (relationship.toCharacterId._id.toString() !== character._id.toString()) {
-        res.status(403).json({
-          success: false,
-          error: 'Puoi rispondere solo alle proposte dirette a te'
-        });
+        res.status(403).json(errorResponse(
+          'Puoi rispondere solo alle proposte dirette a te',
+          'NOT_TARGET_CHARACTER',
+          undefined,
+          403,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Check if proposal is in correct status
       if (!['PROPOSED', 'PENDING_MUTUAL'].includes(relationship.status)) {
-        res.status(400).json({
-          success: false,
-          error: 'Non puoi rispondere a questa proposta'
-        });
+        res.status(400).json(errorResponse(
+          'Non puoi rispondere a questa proposta',
+          'INVALID_STATUS',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -497,24 +564,28 @@ export class RelationshipController {
         proposer: relationship.fromCharacterId._id
       });
 
-      res.json({
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           relationship: {
             id: relationship._id,
             status: updatedStatus,
             relationshipType: relationship.relationshipTypeName,
             establishedAt: establishedAt
           }
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error responding to relationship proposal:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Internal server error'
-      });
+      res.status(500).json(errorResponse(
+        'Internal server error',
+        'INTERNAL_SERVER_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -522,10 +593,13 @@ export class RelationshipController {
     try {
       const authResult = AuthUtils.authenticate(req);
       if (!authResult.success) {
-        res.status(401).json({
-          success: false,
-          error: authResult.error
-        });
+        res.status(401).json(errorResponse(
+          authResult.error || 'Authentication failed',
+          'AUTHENTICATION_FAILED',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -537,10 +611,13 @@ export class RelationshipController {
         .populate('toCharacterId', 'name surname');
 
       if (!relationship) {
-        res.status(404).json({
-          success: false,
-          error: 'Relazione non trovata'
-        });
+        res.status(404).json(errorResponse(
+          'Relazione non trovata',
+          'RELATIONSHIP_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -549,19 +626,25 @@ export class RelationshipController {
       const isToCharacter = relationship.toCharacterId._id.toString() === character._id.toString();
 
       if (!isFromCharacter && !isToCharacter) {
-        res.status(403).json({
-          success: false,
-          error: 'Non fai parte di questa relazione'
-        });
+        res.status(403).json(errorResponse(
+          'Non fai parte di questa relazione',
+          'NOT_PART_OF_RELATIONSHIP',
+          undefined,
+          403,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Check if relationship can be ended
       if (relationship.status !== 'ESTABLISHED') {
-        res.status(400).json({
-          success: false,
-          error: 'Solo le relazioni stabilite possono essere terminate'
-        });
+        res.status(400).json(errorResponse(
+          'Solo le relazioni stabilite possono essere terminate',
+          'INVALID_STATUS',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -614,19 +697,23 @@ export class RelationshipController {
         endedBy: character._id
       });
 
-      res.json({
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           message: 'Relationship ended successfully'
-        }
-      });
+        },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error ending relationship:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Internal server error'
-      });
+      res.status(500).json(errorResponse(
+        'Internal server error',
+        'INTERNAL_SERVER_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 }

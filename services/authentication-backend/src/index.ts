@@ -50,7 +50,7 @@ app.listen(PORT, async () => {
     
     // Start analytics system metrics tracking
     console.log('📊 Starting analytics metrics tracking...');
-    const { AnalyticsMiddleware } = await import('../../../packages/shared/src/middleware/analyticsMiddleware');
+    const { AnalyticsMiddleware } = await import('../../shared/src/middleware/analyticsMiddleware');
     AnalyticsMiddleware.trackSystemMetrics('auth')();
     
     console.log(`🚀 Authentication Backend server fully operational on port ${PORT}`);

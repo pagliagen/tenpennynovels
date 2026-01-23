@@ -51,7 +51,7 @@ function LocationChatContent({ locationId, gameData }: { locationId: string; gam
       try {
         // console.log('📡 LocationPage: Calling set-location API for others...');
         const result = await GameApiService.setCharacterLocation(locationId);
-        if (result.success) {
+        if (result.result) {
           // console.log('✅ LocationPage: Backend location updated, WebSocket will notify others');
         } else {
           console.error('❌ LocationPage: Failed to update backend location:', result.error);

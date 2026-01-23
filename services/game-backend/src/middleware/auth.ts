@@ -156,7 +156,7 @@ export class AuthMiddleware {
         
         try {
           // Import here to avoid circular dependency
-          const { Character } = await import('../../../../packages/database/models');
+          const { Character } = await import('../../../database/models');
           
           // Verify character exists and is not deleted
           const character = await Character.findOne({

@@ -52,7 +52,7 @@ class PostalSystem {
 
   constructor() {
     // Path to config - works with build script that copies assets to dist/config
-    this.configPath = path.join(__dirname, '../../../../config/postal-system.json');
+    this.configPath = path.join(__dirname, '../../../config/postal-system.json');
     this.loadConfig();
   }
 

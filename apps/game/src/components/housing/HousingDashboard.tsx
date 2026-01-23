@@ -64,7 +64,7 @@ const HousingDashboard: React.FC<HousingDashboardProps> = ({ characterId }) => {
 
       if (response.ok) {
         const data = await response.json();
-        if (data.success) {
+        if (data.result) {
           setProperties(data.data?.properties || []);
         } else {
           setError('Impossibile caricare le proprietà');
@@ -97,7 +97,7 @@ const HousingDashboard: React.FC<HousingDashboardProps> = ({ characterId }) => {
 
       const data = await response.json();
       
-      if (response.ok && data.success) {
+      if (response.ok && data.result) {
         // Refresh properties after payment
         await fetchProperties();
         setRentPaymentModal(false);

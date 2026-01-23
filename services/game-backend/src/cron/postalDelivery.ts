@@ -1,5 +1,5 @@
 import cron from 'node-cron';
-import { OnGameMessage, OnGameMessageView, Character } from '../../../../packages/database/models';
+import { OnGameMessage, OnGameMessageView, Character } from '../../../database/models';
 import { logger } from '../utils/logger';
 import { postalSystem } from '../utils/postalSystem';
 import { app } from '../index';

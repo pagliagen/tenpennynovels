@@ -456,11 +456,19 @@ export const WizardStep1_BasicInfo: React.FC<WizardStep1Props> = ({
       {/* Navigation */}
       <div className={styles.stepNavigation}>
         <div className={styles.validationInfo}>
-          {!isStepValid() && (
-            <p className={styles.validationWarning}>
-              ⚠️ Completa tutti i campi obbligatori per procedere
-            </p>
-          )}
+          {!isStepValid() && (() => {
+            const { errors } = getValidationResult();
+            return (
+              <div className={styles.validationWarning}>
+                <p>⚠️ Completa tutti i campi obbligatori per procedere:</p>
+                <ul className={styles.validationErrorsList}>
+                  {errors.map((error, index) => (
+                    <li key={index}>{error}</li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })()}
         </div>
 
         <div className={styles.navigationButtons}>

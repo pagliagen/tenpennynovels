@@ -10,7 +10,7 @@ export const useAuthCheck = () => {
     try {
       const result = await GameApiService.ping();
       
-      if (!result.success || !result.valid) {
+      if (!result.result || !result.valid) {
         console.warn('🔐 Global auth check failed, redirecting to landing');
         if (result.redirectTo) {
           window.location.href = result.redirectTo;
@@ -33,7 +33,7 @@ export const useAuthCheck = () => {
         const result = await GameApiService.ping();
         console.log('🔐 Ping response:', result);
         
-        if (!result.success || !result.valid) {
+        if (!result.result || !result.valid) {
           console.warn('🔐 Global auth check failed, redirecting to landing');
           if (result.redirectTo) {
             window.location.href = result.redirectTo;

@@ -113,13 +113,13 @@ export async function getDocuments(type?: DocumentType): Promise<Document[]> {
   if (type) params.set('type', type);
   
   const endpoint = params.toString() ? `/list?${params}` : '/list';
-  const response = await apiRequest<{ success: boolean; data: Document[] }>(endpoint);
-  return response.data;
+  const response = await apiRequest<{ result: boolean; data?: Document[]; list?: Document[] }>(endpoint);
+  return response.list || response.data || [];
 }
 
 export async function getDocument(type: DocumentType, slug: string): Promise<DocumentContent> {
-  const response = await apiRequest<{ success: boolean; data: DocumentContent }>(`/${type}/${slug}`);
-  return response.data;
+  const response = await apiRequest<{ result: boolean; data: DocumentContent }>(`/${type}/${slug}`);
+  return response.data!;
 }
 
 export async function searchDocuments(
@@ -136,8 +136,8 @@ export async function searchDocuments(
   
   if (type) params.set('type', type);
   
-  const response = await apiRequest<{ success: boolean; data: SearchResult[] }>(`/search?${params}`);
-  return response.data;
+  const response = await apiRequest<{ result: boolean; data?: SearchResult[]; list?: SearchResult[] }>(`/search?${params}`);
+  return response.list || response.data || [];
 }
 
 // ADMIN API - Document management (requires admin permissions)
@@ -164,37 +164,37 @@ export interface UpdateDocumentRequest {
 }
 
 export async function createDocument(data: CreateDocumentRequest): Promise<Document> {
-  const response = await apiRequest<{ success: boolean; data: Document }>('/admin/documents', {
+  const response = await apiRequest<{ result: boolean; data: Document }>('/admin/documents', {
     method: 'POST',
     body: JSON.stringify(data),
   });
-  return response.data;
+  return response.data!;
 }
 
 export async function updateDocument(
   documentId: string, 
   data: UpdateDocumentRequest
 ): Promise<DocumentContent> {
-  const response = await apiRequest<{ success: boolean; data: DocumentContent }>(
+  const response = await apiRequest<{ result: boolean; data: DocumentContent }>(
     `/admin/documents/${documentId}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     }
   );
-  return response.data;
+  return response.data!;
 }
 
 export async function publishDocumentVersion(
   documentId: string, 
   version: number
 ): Promise<void> {
-  await apiRequest<{ success: boolean }>(`/admin/documents/${documentId}/versions/${version}/publish`, {
+  await apiRequest<{ result: boolean }>(`/admin/documents/${documentId}/versions/${version}/publish`, {
     method: 'POST',
   });
 }
 
 export async function deleteDocument(documentId: string): Promise<void> {
-  await apiRequest<{ success: boolean }>(`/admin/documents/${documentId}`, {
+  await apiRequest<{ result: boolean }>(`/admin/documents/${documentId}`, {
     method: 'DELETE',
   });
 }
@@ -203,18 +203,18 @@ export async function deleteDocument(documentId: string): Promise<void> {
 export async function getDocumentVersions(documentId: string): Promise<{
   versions: { version: number; createdAt: Date | string; isActive: boolean; sectionCount: number }[];
 }> {
-  const response = await apiRequest<{ success: boolean; data: any }>(`/admin/documents/${documentId}/versions`);
-  return response.data;
+  const response = await apiRequest<{ result: boolean; data: any }>(`/admin/documents/${documentId}/versions`);
+  return response.data!;
 }
 
 export async function getDocumentVersion(
   documentId: string, 
   version: number
 ): Promise<DocumentContent> {
-  const response = await apiRequest<{ success: boolean; data: DocumentContent }>(
+  const response = await apiRequest<{ result: boolean; data: DocumentContent }>(
     `/admin/documents/${documentId}/versions/${version}`
   );
-  return response.data;
+  return response.data!;
 }
 
 // FAVORITES API - User favorites management (requires authentication)
@@ -230,23 +230,23 @@ export interface FavoriteDocument {
 }
 
 export async function getFavoriteDocuments(): Promise<FavoriteDocument[]> {
-  const response = await apiRequest<{ success: boolean; data: FavoriteDocument[] }>('/favorites');
-  return response.data;
+  const response = await apiRequest<{ result: boolean; data?: FavoriteDocument[]; list?: FavoriteDocument[] }>('/favorites');
+  return response.list || response.data || [];
 }
 
 export async function addDocumentToFavorites(type: DocumentType, slug: string): Promise<void> {
-  await apiRequest<{ success: boolean }>(`/${type}/${slug}/favorite`, {
+  await apiRequest<{ result: boolean }>(`/${type}/${slug}/favorite`, {
     method: 'POST',
   });
 }
 
 export async function removeDocumentFromFavorites(type: DocumentType, slug: string): Promise<void> {
-  await apiRequest<{ success: boolean }>(`/${type}/${slug}/favorite`, {
+  await apiRequest<{ result: boolean }>(`/${type}/${slug}/favorite`, {
     method: 'DELETE',
   });
 }
 
 export async function isDocumentFavorited(type: DocumentType, slug: string): Promise<boolean> {
-  const response = await apiRequest<{ success: boolean; data: { isFavorited: boolean } }>(`/${type}/${slug}/favorite`);
-  return response.data.isFavorited;
+  const response = await apiRequest<{ result: boolean; data: { isFavorited: boolean } }>(`/${type}/${slug}/favorite`);
+  return response.data!.isFavorited;
 }

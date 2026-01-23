@@ -1,7 +1,8 @@
 import { Request, Response } from 'express';
-import { Character, CharacterWallet, Transaction, ShopItem, CharacterInventory, Location, Corporation, CharacterFinances, SocialClassConfig } from '../../../../packages/database/models';
+import { Character, CharacterWallet, Transaction, ShopItem, CharacterInventory, Location, Corporation, CharacterFinances, SocialClassConfig } from '../../../database/models';
 import { ApiResponse } from '../types/game';
 import { logger } from '../utils/logger';
+import { successResponse, errorResponse, createResponse, getRequestId } from '../utils/apiResponse';
 
 export class EconomyController {
   /**
@@ -14,22 +15,21 @@ export class EconomyController {
 
       const character = await (Character.findById(characterId).populate('walletId') as any);
       if (!character || !character.walletId) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Portafoglio non trovato',
-          code: 'WALLET_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Portafoglio non trovato',
+          'WALLET_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
       const wallet = character.walletId;
       const totalPence = wallet.cash + wallet.deposit;
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           wallet: {
             characterId,
             cash: wallet.cash,
@@ -41,10 +41,9 @@ export class EconomyController {
             }
           }
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -57,14 +56,13 @@ export class EconomyController {
         query: req.query
       });
 
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare il portafoglio',
-        code: 'GET_WALLET_ERROR',
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare il portafoglio',
+        'GET_WALLET_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -78,13 +76,13 @@ export class EconomyController {
       const characterId = req.character!.characterId;
 
       if (characterId === targetCharacterId) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Non puoi trasferire denaro a te stesso',
-          code: 'INVALID_TRANSFER_TARGET',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Non puoi trasferire denaro a te stesso',
+          'INVALID_TRANSFER_TARGET',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -94,13 +92,13 @@ export class EconomyController {
       ]) as any[];
 
       if (!fromCharacter || !toCharacter || !fromCharacter.walletId || !toCharacter.walletId) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Personaggio o portafoglio non trovato',
-          code: 'CHARACTER_WALLET_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Personaggio o portafoglio non trovato',
+          'CHARACTER_WALLET_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -109,18 +107,17 @@ export class EconomyController {
       const availableFunds = type === 'cash' ? fromWallet.cash : fromWallet.deposit;
 
       if (availableFunds < amount) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Fondi insufficienti',
-          code: 'INSUFFICIENT_FUNDS',
-          details: {
+        res.status(400).json(errorResponse(
+          'Fondi insufficienti',
+          'INSUFFICIENT_FUNDS',
+          {
             requested: amount,
             available: availableFunds,
             type
           },
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -157,9 +154,8 @@ export class EconomyController {
         type
       });
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           transaction: {
             id: transaction.id,
             from: transaction.from,
@@ -174,10 +170,9 @@ export class EconomyController {
             deposit: fromWallet.deposit
           }
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -190,14 +185,13 @@ export class EconomyController {
         requestBody: req.body
       });
 
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile trasferire denaro',
-        code: 'TRANSFER_ERROR',
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile trasferire denaro',
+        'TRANSFER_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -215,38 +209,38 @@ export class EconomyController {
       // Get character 
       const character = await Character.findById(characterId) as any;
       if (!character) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Personaggio non trovato',
-          code: 'CHARACTER_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Personaggio non trovato',
+          'CHARACTER_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Check if character is approved to access shop
       if (character.status !== 'APPROVED') {
-        const response: ApiResponse = {
-          success: false,
-          error: 'L\'accesso al negozio richiede un personaggio approvato',
-          code: 'CHARACTER_NOT_APPROVED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(403).json(response);
+        res.status(403).json(errorResponse(
+          'L\'accesso al negozio richiede un personaggio approvato',
+          'CHARACTER_NOT_APPROVED',
+          undefined,
+          403,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Try to find location by ID, then by slug
       const location = await Location.findOne({ slug: locationSlug });
       if (!location) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Location non trovata',
-          code: 'LOCATION_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Location non trovata',
+          'LOCATION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -254,25 +248,25 @@ export class EconomyController {
       if (locationSlug !== 'london') {
         const hasAccess = await EconomyController.checkLocationAccess(location, character);
         if (!hasAccess) {
-          const response: ApiResponse = {
-            success: false,
-            error: 'Accesso alla location non valido',
-            code: 'INVALID_LOCATION_ACCESS',
-            timestamp: new Date().toISOString()
-          };
-          res.status(404).json(response);
+          res.status(404).json(errorResponse(
+            'Accesso alla location non valido',
+            'INVALID_LOCATION_ACCESS',
+            undefined,
+            404,
+            getRequestId(req)
+          ));
           return;
         }
 
         // Check if shop is enabled
         if (!location.settings.shop) {
-          const response: ApiResponse = {
-            success: false,
-            error: 'Negozio non trovato',
-            code: 'SHOP_NOT_FOUND',
-            timestamp: new Date().toISOString()
-          };
-          res.status(404).json(response);
+          res.status(404).json(errorResponse(
+            'Negozio non trovato',
+            'SHOP_NOT_FOUND',
+            undefined,
+            404,
+            getRequestId(req)
+          ));
           return;
         }
       }
@@ -340,9 +334,8 @@ export class EconomyController {
         };
       });
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           location: {
             id: location._id,
             name: location.name,
@@ -373,10 +366,9 @@ export class EconomyController {
             available: ['all', 'credit_only']
           }
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -391,14 +383,13 @@ export class EconomyController {
         query: req.query
       });
 
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare gli articoli del negozio',
-        code: 'SHOP_ERROR',
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare gli articoli del negozio',
+        'SHOP_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -462,54 +453,52 @@ export class EconomyController {
       ]) as any[];
 
       if (!character || !item || !inventory) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Articolo o personaggio non trovato',
-          code: 'ITEM_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Articolo o personaggio non trovato',
+          'ITEM_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Verify item is visible and available
       if (!item.visible || !EconomyController.canPurchaseItem(item, character)) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Articolo non disponibile',
-          code: 'ITEM_NOT_AVAILABLE',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Articolo non disponibile',
+          'ITEM_NOT_AVAILABLE',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Check stock
       if (item.currentStock < quantity) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Scorte insufficienti',
-          code: 'INSUFFICIENT_STOCK',
-          details: {
+        res.status(400).json(errorResponse(
+          'Scorte insufficienti',
+          'INSUFFICIENT_STOCK',
+          {
             requested: quantity,
             available: item.currentStock
           },
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Check requirements
       if (!EconomyController.meetsRequirements(item, character)) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Requisiti non soddisfatti',
-          code: 'REQUIREMENTS_NOT_MET',
-          details: item.requirements,
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Requisiti non soddisfatti',
+          'REQUIREMENTS_NOT_MET',
+          item.requirements,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -519,17 +508,16 @@ export class EconomyController {
       const availableFunds = wallet.cash + wallet.deposit;
 
       if (availableFunds < totalCost) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Fondi insufficienti',
-          code: 'INSUFFICIENT_FUNDS',
-          details: {
+        res.status(400).json(errorResponse(
+          'Fondi insufficienti',
+          'INSUFFICIENT_FUNDS',
+          {
             required: totalCost,
             available: availableFunds
           },
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -577,9 +565,8 @@ export class EconomyController {
         remainingStock: item.currentStock
       });
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           purchase: {
             itemId,
             quantity,
@@ -591,10 +578,9 @@ export class EconomyController {
             deposit: wallet.deposit
           }
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -607,14 +593,13 @@ export class EconomyController {
         params: req.params
       });
 
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile acquistare l\'articolo',
-        code: 'PURCHASE_ERROR',
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile acquistare l\'articolo',
+        'PURCHASE_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -631,26 +616,26 @@ export class EconomyController {
       // Get character and verify corporation access
       const character = await (Character.findById(characterId).populate('corporations') as any);
       if (!character) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Personaggio non trovato',
-          code: 'CHARACTER_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Personaggio non trovato',
+          'CHARACTER_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Get shop location and verify corporation ownership
       const location = await (Location.findById(shopId) as any);
       if (!location || !location.corporationId) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Shop not found',
-          code: 'SHOP_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Shop not found',
+          'SHOP_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -660,13 +645,13 @@ export class EconomyController {
       );
 
       if (!isCorporationMember) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Accesso negato',
-          code: 'ACCESS_DENIED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(403).json(response);
+        res.status(403).json(errorResponse(
+          'Accesso negato',
+          'ACCESS_DENIED',
+          undefined,
+          403,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -677,13 +662,13 @@ export class EconomyController {
       ]) as any[];
 
       if (!item || !corporation) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Articolo o corporazione non trovata',
-          code: 'ITEM_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Articolo o corporazione non trovata',
+          'ITEM_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -692,17 +677,16 @@ export class EconomyController {
 
       if (payFromTreasury) {
         if ((corporation.treasury || 0) < restockCost) {
-          const response: ApiResponse = {
-            success: false,
-            error: 'Fondi del tesoro insufficienti',
-            code: 'TREASURY_INSUFFICIENT_FUNDS',
-            details: {
+          res.status(400).json(errorResponse(
+            'Fondi del tesoro insufficienti',
+            'TREASURY_INSUFFICIENT_FUNDS',
+            {
               required: restockCost,
               available: corporation.treasury || 0
             },
-            timestamp: new Date().toISOString()
-          };
-          res.status(400).json(response);
+            400,
+            getRequestId(req)
+          ));
           return;
         }
 
@@ -727,9 +711,8 @@ export class EconomyController {
         restockedBy: characterId
       });
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           restocked: {
             itemId,
             quantityAdded: quantity,
@@ -742,10 +725,9 @@ export class EconomyController {
             newBalance: corporation.treasury || 0
           }
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -759,14 +741,13 @@ export class EconomyController {
         params: req.params
       });
 
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile rifornire il negozio',
-        code: 'RESTOCK_ERROR',
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile rifornire il negozio',
+        'RESTOCK_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 

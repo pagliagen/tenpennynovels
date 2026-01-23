@@ -23,7 +23,7 @@ interface OverdueProperty {
  */
 async function processOverdueRent(property: OverdueProperty): Promise<void> {
   try {
-    const { HousingProperty, EstateTransaction, CharacterFinances } = await import('../../../../packages/database/models');
+    const { HousingProperty, EstateTransaction, CharacterFinances } = await import('../../database/models');
     
     const tenantId = property.currentTenantId;
     const propertyId = property._id;
@@ -132,7 +132,7 @@ async function processOverdueRent(property: OverdueProperty): Promise<void> {
       const daysOverdue = Math.floor((Date.now() - property.rentPaidUntil.getTime()) / (1000 * 60 * 60 * 24));
 
       // Fetch configuration values from database
-      const { ConfigurationService } = await import('../../../../packages/shared/src/services/ConfigurationService');
+      const { ConfigurationService } = await import('../../../shared/src/services/ConfigurationService');
       const { getRedisClient } = await import('../config/redis');
       const redis = getRedisClient();
       const configService = new ConfigurationService(redis, logger);
@@ -174,7 +174,7 @@ async function processRentWithoutTransaction(
   tenantFinances: any, 
   monthlyRent: number
 ): Promise<void> {
-  const { HousingProperty, EstateTransaction, CharacterFinances } = await import('../../../../packages/database/models');
+  const { HousingProperty, EstateTransaction, CharacterFinances } = await import('../database/models');
   
   // Deduct rent from tenant's balance
   await CharacterFinances.updateOne(
@@ -240,10 +240,10 @@ async function processRentWithoutTransaction(
  */
 async function evictTenant(property: OverdueProperty, tenantFinances: any): Promise<void> {
   try {
-    const { HousingProperty, EstateTransaction } = await import('../../../../packages/database/models');
+    const { HousingProperty, EstateTransaction } = await import('../../database/models');
 
     // Fetch eviction fee from configuration
-    const { ConfigurationService } = await import('../../../../packages/shared/src/services/ConfigurationService');
+    const { ConfigurationService } = await import('../../../shared/src/services/ConfigurationService');
     const { getRedisClient } = await import('../config/redis');
     const redis = getRedisClient();
     const configService = new ConfigurationService(redis, logger);
@@ -319,7 +319,7 @@ async function sendRentWarning(property: OverdueProperty, tenantFinances: any, d
  */
 async function startRentCollectionCron(): Promise<void> {
   // Fetch cron schedule from database
-  const { ConfigurationService } = await import('../../../../packages/shared/src/services/ConfigurationService');
+  const { ConfigurationService } = await import('../../../shared/src/services/ConfigurationService');
   const { getRedisClient } = await import('../config/redis');
   const redis = getRedisClient();
   const configService = new ConfigurationService(redis, logger);
@@ -333,7 +333,7 @@ async function startRentCollectionCron(): Promise<void> {
     logger.info('Starting daily rent collection process');
     
     try {
-      const { HousingProperty } = await import('../../../../packages/database/models');
+      const { HousingProperty } = await import('../../database/models');
       
       // Find properties with overdue rent
       const overdueProperties = await HousingProperty.find({
@@ -388,7 +388,7 @@ export async function triggerRentCollection(): Promise<{ processedCount: number;
   logger.info('Manual rent collection triggered');
   
   try {
-    const { HousingProperty } = await import('../../../../packages/database/models');
+    const { HousingProperty } = await import('../database/models');
     
     // Find properties with overdue rent
     const overdueProperties = await HousingProperty.find({

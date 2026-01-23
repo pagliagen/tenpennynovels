@@ -89,7 +89,7 @@ const OccupationsPage: NextPage = () => {
       });
       
       const data = await response.json();
-      if (data.success) {
+      if (data.result) {
         setOccupations(data.data.occupations);
       }
     } catch (error) {

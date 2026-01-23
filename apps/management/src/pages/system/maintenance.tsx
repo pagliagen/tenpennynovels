@@ -92,7 +92,7 @@ export default function MaintenancePage({ authContext }: PageProps) {
       });
 
       const result = await response.json();
-      if (result.success) {
+      if (result.result) {
         showToast(
           enable ? 'Modalità manutenzione attivata' : 'Modalità manutenzione disattivata',
           'success'

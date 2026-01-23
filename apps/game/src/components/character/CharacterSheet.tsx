@@ -74,7 +74,7 @@ const CharacterSheet: React.FC<CharacterSheetProps> = ({ sheet }) => {
           }
 
           const result = await response.json();
-          if (result.success) {
+          if (result.result) {
             setCharacterData(result.data.character);
           } else {
             console.error('Failed to fetch character:', result.error);
@@ -434,7 +434,7 @@ const CharacterSheet: React.FC<CharacterSheetProps> = ({ sheet }) => {
 
       const result = await response.json();
 
-      if (response.ok && result.success) {
+      if (response.ok && result.result) {
         // Refresh character data
         const updatedResponse = await fetch(`${API_BASE_URL}/game/characters/${sheet.characterId}`, {
           credentials: 'include'
@@ -492,7 +492,7 @@ const CharacterSheet: React.FC<CharacterSheetProps> = ({ sheet }) => {
 
       const data = await response.json();
       
-      if (response.ok && data.success) {
+      if (response.ok && data.result) {
         // Navigate to the created chat
         router.push('/');
         // Then trigger opening the chat panel

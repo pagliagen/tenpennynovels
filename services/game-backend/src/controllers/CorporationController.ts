@@ -1,7 +1,8 @@
 import { Request, Response } from 'express';
-import { Character, Corporation, CorporationMembershipRequest, CorporationInvitation } from '../../../../packages/database/models';
+import { Character, Corporation, CorporationMembershipRequest, CorporationInvitation } from '../../../database/models';
 import { ApiResponse, CorporationType, CorporationRole } from '../types/game';
 import { logger } from '../utils/logger';
+import { successResponse, errorResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
 
 export class CorporationController {
   /**
@@ -14,13 +15,13 @@ export class CorporationController {
       const character = await (Character.findById(characterId) as any);
 
       if (!character) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Personaggio non trovato',
-          code: 'CHARACTER_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Personaggio non trovato',
+          'CHARACTER_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -54,15 +55,13 @@ export class CorporationController {
         })
       );
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           corporations: corporationsWithEligibility
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -72,14 +71,13 @@ export class CorporationController {
         name: err.name
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare le corporazioni',
-        code: 'GET_CORPORATIONS_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare le corporazioni',
+        'GET_CORPORATIONS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -96,13 +94,13 @@ export class CorporationController {
         .populate('members') as any);
 
       if (!corporation || !corporation.settings?.publiclyVisible) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Corporazione non trovata',
-          code: 'CORPORATION_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Corporazione non trovata',
+          'CORPORATION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -116,9 +114,8 @@ export class CorporationController {
         ? corporation.members?.find((m: any) => m.characterId.toString() === characterId)?.role
         : null;
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           corporation: {
             id: corporation.id,
             name: corporation.name,
@@ -146,10 +143,9 @@ export class CorporationController {
             } : null
           }
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -159,14 +155,13 @@ export class CorporationController {
         name: err.name
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare la corporazione',
-        code: 'GET_CORPORATION_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare la corporazione',
+        'GET_CORPORATION_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -188,13 +183,13 @@ export class CorporationController {
       ]) as any[];
 
       if (!character || !corporation || !corporation.visible) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Corporazione non trovata',
-          code: 'CORPORATION_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Corporazione non trovata',
+          'CORPORATION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -204,13 +199,13 @@ export class CorporationController {
       );
 
       if (isMember) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Sei già membro di questa corporazione',
-          code: 'ALREADY_MEMBER',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Sei già membro di questa corporazione',
+          'ALREADY_MEMBER',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -222,27 +217,26 @@ export class CorporationController {
       }) as any);
 
       if (existingRequest) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Richiesta già in sospeso',
-          code: 'REQUEST_PENDING',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Richiesta già in sospeso',
+          'REQUEST_PENDING',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Check eligibility
       const eligibility = await CorporationController.checkEligibility(corporation, character);
       if (!eligibility.canJoin) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Non sei idoneo per unirti a questa corporazione',
-          code: 'NOT_ELIGIBLE',
-          details: { reason: eligibility.reason },
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Non sei idoneo per unirti a questa corporazione',
+          'NOT_ELIGIBLE',
+          { reason: eligibility.reason },
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -269,20 +263,17 @@ export class CorporationController {
           requestId: request.id
         });
 
-        const response: ApiResponse = {
-          success: true,
-          message: 'Richiesta di adesione inviata per approvazione',
-          data: {
+        res.status(201).json(createResponse(
+          {
             request: {
               id: request.id,
               status: request.status,
               createdAt: request.createdAt
             }
           },
-          timestamp: new Date().toISOString()
-        };
-
-        res.status(201).json(response);
+          'Richiesta di adesione inviata per approvazione',
+          getRequestId(req)
+        ));
 
       } else {
         // Auto-join for corporations that don't require approval
@@ -294,10 +285,8 @@ export class CorporationController {
           corporationName: corporation.name
         });
 
-        const response: ApiResponse = {
-          success: true,
-          message: `Ti sei unito con successo a ${corporation.name}`,
-          data: {
+        res.json(successResponse(
+          {
             membership: {
               corporationId,
               corporationName: corporation.name,
@@ -305,10 +294,9 @@ export class CorporationController {
               joinedAt: new Date()
             }
           },
-          timestamp: new Date().toISOString()
-        };
-
-        res.status(200).json(response);
+          `Ti sei unito con successo a ${corporation.name}`,
+          getRequestId(req)
+        ));
       }
 
     } catch (error: any) {
@@ -319,14 +307,13 @@ export class CorporationController {
         name: err.name
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile unirsi alla corporazione',
-        code: 'JOIN_CORPORATION_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile unirsi alla corporazione',
+        'JOIN_CORPORATION_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -341,13 +328,13 @@ export class CorporationController {
 
       const corporation = await (Corporation.findById(corporationId) as any);
       if (!corporation) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Corporazione non trovata',
-          code: 'CORPORATION_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Corporazione non trovata',
+          'CORPORATION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -357,13 +344,13 @@ export class CorporationController {
       );
 
       if (memberIndex === -1 || memberIndex === undefined) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Non sei membro di questa corporazione',
-          code: 'NOT_MEMBER',
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+        res.status(400).json(errorResponse(
+          'Non sei membro di questa corporazione',
+          'NOT_MEMBER',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -377,13 +364,13 @@ export class CorporationController {
         ).length || 0;
 
         if (remainingOfficers === 0) {
-          const response: ApiResponse = {
-            success: false,
-            error: 'Non puoi lasciare: non ci sono altri ufficiali',
-            code: 'CANNOT_LEAVE_NO_OFFICERS',
-            timestamp: new Date().toISOString()
-          };
-          res.status(400).json(response);
+          res.status(400).json(errorResponse(
+            'Non puoi lasciare: non ci sono altri ufficiali',
+            'CANNOT_LEAVE_NO_OFFICERS',
+            undefined,
+            400,
+            getRequestId(req)
+          ));
           return;
         }
       }
@@ -410,13 +397,11 @@ export class CorporationController {
         previousRole: member.role
       });
 
-      const response: ApiResponse = {
-        success: true,
-        message: `Hai lasciato ${corporation.name}`,
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+      res.json(successResponse(
+        undefined,
+        `Hai lasciato ${corporation.name}`,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -426,14 +411,13 @@ export class CorporationController {
         name: err.name
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile lasciare la corporazione',
-        code: 'LEAVE_CORPORATION_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile lasciare la corporazione',
+        'LEAVE_CORPORATION_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -449,13 +433,13 @@ export class CorporationController {
       // Check if character is officer/leader
       const corporation = await (Corporation.findById(corporationId) as any);
       if (!corporation) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Corporazione non trovata',
-          code: 'CORPORATION_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Corporazione non trovata',
+          'CORPORATION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -464,13 +448,13 @@ export class CorporationController {
       );
 
       if (!member || (member.role !== 'officer' && member.role !== 'leader')) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Permessi insufficienti',
-          code: 'INSUFFICIENT_PERMISSIONS',
-          timestamp: new Date().toISOString()
-        };
-        res.status(403).json(response);
+        res.status(403).json(errorResponse(
+          'Permessi insufficienti',
+          'INSUFFICIENT_PERMISSIONS',
+          undefined,
+          403,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -480,9 +464,8 @@ export class CorporationController {
         status: 'pending'
       }).sort({ createdAt: -1 }) as any);
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
+      res.json(successResponse(
+        {
           invitations: invitations.map((inv: any) => ({
             id: inv.id,
             characterId: inv.characterId,
@@ -492,10 +475,9 @@ export class CorporationController {
             createdAt: inv.createdAt
           }))
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -505,14 +487,13 @@ export class CorporationController {
         name: err.name
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile recuperare gli inviti',
-        code: 'GET_INVITATIONS_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare gli inviti',
+        'GET_INVITATIONS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -529,13 +510,13 @@ export class CorporationController {
       // Verify corporation and permissions
       const corporation = await (Corporation.findById(corporationId) as any);
       if (!corporation) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Corporazione non trovata',
-          code: 'CORPORATION_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Corporazione non trovata',
+          'CORPORATION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -544,13 +525,13 @@ export class CorporationController {
       );
 
       if (!member || (member.role !== 'officer' && member.role !== 'leader')) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Permessi insufficienti',
-          code: 'INSUFFICIENT_PERMISSIONS',
-          timestamp: new Date().toISOString()
-        };
-        res.status(403).json(response);
+        res.status(403).json(errorResponse(
+          'Permessi insufficienti',
+          'INSUFFICIENT_PERMISSIONS',
+          undefined,
+          403,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -562,13 +543,13 @@ export class CorporationController {
       }) as any);
 
       if (!invitation) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Invito non trovato',
-          code: 'INVITATION_NOT_FOUND',
-          timestamp: new Date().toISOString()
-        };
-        res.status(404).json(response);
+        res.status(404).json(errorResponse(
+          'Invito non trovato',
+          'INVITATION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -576,13 +557,13 @@ export class CorporationController {
         // Add character to corporation
         const character = await (Character.findById(invitation.characterId) as any);
         if (!character) {
-          const response: ApiResponse = {
-            success: false,
-            error: 'Personaggio non trovato',
-            code: 'CHARACTER_NOT_FOUND',
-            timestamp: new Date().toISOString()
-          };
-          res.status(404).json(response);
+          res.status(404).json(errorResponse(
+            'Personaggio non trovato',
+            'CHARACTER_NOT_FOUND',
+            undefined,
+            404,
+            getRequestId(req)
+          ));
           return;
         }
 
@@ -622,13 +603,11 @@ export class CorporationController {
       //   characterId: invitation.characterId 
       // });
 
-      const response: ApiResponse = {
-        success: true,
-        message: `Invito ${action === 'approve' ? 'approvato' : 'respinto'} con successo`,
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+      res.json(updateResponse(
+        undefined,
+        `Invito ${action === 'approve' ? 'approvato' : 'respinto'} con successo`,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       const err = error as Error;
@@ -638,14 +617,13 @@ export class CorporationController {
         name: err.name
       });
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile gestire l\'invito',
-        code: 'HANDLE_INVITATION_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile gestire l\'invito',
+        'HANDLE_INVITATION_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 

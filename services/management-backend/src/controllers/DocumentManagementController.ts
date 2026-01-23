@@ -10,6 +10,7 @@ import { logger } from '../utils/logger';
 import { DocumentGroup, DocumentModel } from '../models/Document';
 import { getRedisPublisher } from '../config/redis';
 import { EmbeddingEventPublisher } from '../utils/events/embedding-publisher';
+import { listResponse, successResponse, errorResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
 
 export class DocumentManagementController {
 
@@ -22,11 +23,13 @@ export class DocumentManagementController {
       const { type } = req.query;
 
       if (!type || !['ambientazione', 'regolamento'].includes(type as string)) {
-        res.status(400).json({
-          success: false,
-          error: 'Tipo documento richiesto (ambientazione o regolamento)',
-          timestamp: new Date().toISOString()
-        } as ApiResponse);
+        res.status(400).json(errorResponse(
+          'Tipo documento richiesto (ambientazione o regolamento)',
+          'DOCUMENT_TYPE_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -135,13 +138,11 @@ export class DocumentManagementController {
 
       logger.info(`Found ${groupsWithDocs.length} groups with ${documents.length} total documents for type: ${type}`);
 
-      const response: ApiResponse = {
-        success: true,
-        data: groupsWithDocs,
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+      res.json(successResponse(
+        groupsWithDocs,
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error fetching document groups:', {
@@ -150,13 +151,13 @@ export class DocumentManagementController {
         type: req.query?.type
       });
 
-      const response: ApiResponse = {
-        success: false,
-        error: 'Errore nel recupero dei gruppi documenti',
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Errore nel recupero dei gruppi documenti',
+        'FETCH_DOCUMENT_GROUPS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -169,20 +170,24 @@ export class DocumentManagementController {
       const { name, description, type, order, isActive } = req.body;
 
       if (!name || !type) {
-        res.status(400).json({
-          success: false,
-          error: 'Nome e tipo gruppo sono richiesti',
-          timestamp: new Date().toISOString()
-        } as ApiResponse);
+        res.status(400).json(errorResponse(
+          'Nome e tipo gruppo sono richiesti',
+          'GROUP_NAME_TYPE_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       if (!['ambientazione', 'regolamento'].includes(type)) {
-        res.status(400).json({
-          success: false,
-          error: 'Tipo non valido (ambientazione o regolamento)',
-          timestamp: new Date().toISOString()
-        } as ApiResponse);
+        res.status(400).json(errorResponse(
+          'Tipo non valido (ambientazione o regolamento)',
+          'INVALID_GROUP_TYPE',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -193,11 +198,13 @@ export class DocumentManagementController {
         .findOne({ name, type });
 
       if (existingGroup) {
-        res.status(400).json({
-          success: false,
-          error: 'Un gruppo con questo nome esiste già',
-          timestamp: new Date().toISOString()
-        } as ApiResponse);
+        res.status(400).json(errorResponse(
+          'Un gruppo con questo nome esiste già',
+          'GROUP_NAME_EXISTS',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -216,14 +223,12 @@ export class DocumentManagementController {
       // Insert the group into database
       await mongoose.connection.db!.collection('document_groups').insertOne(groupData);
 
-      const response: ApiResponse = {
-        success: true,
-        data: groupData,
-        timestamp: new Date().toISOString()
-      };
-
       logger.info(`Document group created successfully: ${name}`);
-      res.status(201).json(response);
+      res.status(201).json(createResponse(
+        groupData,
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error creating document group:', {
@@ -232,13 +237,13 @@ export class DocumentManagementController {
         body: req.body
       });
 
-      const response: ApiResponse = {
-        success: false,
-        error: 'Errore nella creazione del gruppo documenti',
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Errore nella creazione del gruppo documenti',
+        'CREATE_DOCUMENT_GROUP_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -336,14 +341,12 @@ export class DocumentManagementController {
         updatedAt: documentGroup.updatedAt
       };
 
-      const response: ApiResponse = {
-        success: true,
-        data: groupData,
-        timestamp: new Date().toISOString()
-      };
-
       logger.info(`Document group updated successfully: ${documentGroup.name}`);
-      res.json(response);
+      res.json(updateResponse(
+        groupData,
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error updating document group:', {
@@ -353,13 +356,13 @@ export class DocumentManagementController {
         body: req.body
       });
 
-      const response: ApiResponse = {
-        success: false,
-        error: 'Errore nell\'aggiornamento del gruppo documenti',
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Errore nell\'aggiornamento del gruppo documenti',
+        'UPDATE_DOCUMENT_GROUP_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -385,11 +388,13 @@ export class DocumentManagementController {
       logger.info(`Document group found: ${documentGroup}`);
 
       if (!documentGroup) {
-        res.status(404).json({
-          success: false,
-          error: 'Gruppo documenti non trovato',
-          timestamp: new Date().toISOString()
-        } as ApiResponse);
+        res.status(404).json(errorResponse(
+          'Gruppo documenti non trovato',
+          'DOCUMENT_GROUP_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -398,25 +403,24 @@ export class DocumentManagementController {
         .countDocuments({ group: documentGroup.name });
 
       if (documentsCount > 0) {
-        res.status(400).json({
-          success: false,
-          error: `Impossibile eliminare il gruppo: contiene ${documentsCount} documenti`,
-          timestamp: new Date().toISOString()
-        } as ApiResponse);
+        res.status(400).json(errorResponse(
+          `Impossibile eliminare il gruppo: contiene ${documentsCount} documenti`,
+          'GROUP_HAS_DOCUMENTS',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Delete the DocumentGroup entity
       await DocumentGroup.deleteOne({ _id: documentGroup._id });
 
-      const response: ApiResponse = {
-        success: true,
-        data: { message: 'Gruppo eliminato con successo' },
-        timestamp: new Date().toISOString()
-      };
-
       logger.info(`Document group deleted successfully: ${groupName}`);
-      res.json(response);
+      res.json(deleteResponse(
+        'Gruppo eliminato con successo',
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error deleting document group:', {
@@ -425,13 +429,13 @@ export class DocumentManagementController {
         groupId: req.params?.id
       });
 
-      const response: ApiResponse = {
-        success: false,
-        error: 'Errore nell\'eliminazione del gruppo documenti',
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Errore nell\'eliminazione del gruppo documenti',
+        'DELETE_DOCUMENT_GROUP_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -445,11 +449,13 @@ export class DocumentManagementController {
       const { documentIds } = req.body;
 
       if (!documentIds || !Array.isArray(documentIds)) {
-        res.status(400).json({
-          success: false,
-          error: 'Array di ID documenti richiesto',
-          timestamp: new Date().toISOString()
-        } as ApiResponse);
+        res.status(400).json(errorResponse(
+          'Array di ID documenti richiesto',
+          'DOCUMENT_IDS_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -473,16 +479,14 @@ export class DocumentManagementController {
 
       logger.info(`Reordered ${result.modifiedCount} documents in group: ${id}`);
 
-      const response: ApiResponse = {
-        success: true,
-        data: { 
+      res.json(updateResponse(
+        { 
           message: 'Documenti riordinati con successo',
           modifiedCount: result.modifiedCount 
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error reordering documents:', {
@@ -492,13 +496,13 @@ export class DocumentManagementController {
         body: req.body
       });
 
-      const response: ApiResponse = {
-        success: false,
-        error: 'Errore nel riordinamento dei documenti',
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Errore nel riordinamento dei documenti',
+        'REORDER_DOCUMENTS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -511,20 +515,24 @@ export class DocumentManagementController {
       const { title, content, groupId, type, visibility, status, summary, tags, order } = req.body;
 
       if (!title || !content || !groupId || !type) {
-        res.status(400).json({
-          success: false,
-          error: 'Titolo, contenuto, gruppo e tipo sono richiesti',
-          timestamp: new Date().toISOString()
-        } as ApiResponse);
+        res.status(400).json(errorResponse(
+          'Titolo, contenuto, gruppo e tipo sono richiesti',
+          'DOCUMENT_FIELDS_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
       if (!['ambientazione', 'regolamento'].includes(type)) {
-        res.status(400).json({
-          success: false,
-          error: 'Tipo non valido (ambientazione o regolamento)',
-          timestamp: new Date().toISOString()
-        } as ApiResponse);
+        res.status(400).json(errorResponse(
+          'Tipo non valido (ambientazione o regolamento)',
+          'INVALID_DOCUMENT_TYPE',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -539,11 +547,13 @@ export class DocumentManagementController {
         .findOne({ type, slug });
       
       if (existingDoc) {
-        res.status(400).json({
-          success: false,
-          error: 'Un documento con questo titolo esiste gi�',
-          timestamp: new Date().toISOString()
-        } as ApiResponse);
+        res.status(400).json(errorResponse(
+          'Un documento con questo titolo esiste già',
+          'DOCUMENT_TITLE_EXISTS',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -637,14 +647,12 @@ export class DocumentManagementController {
         version: 1
       };
 
-      const response: ApiResponse = {
-        success: true,
-        data: createdDocument,
-        timestamp: new Date().toISOString()
-      };
-
       logger.info(`Document created successfully: ${title}`);
-      res.status(201).json(response);
+      res.status(201).json(createResponse(
+        createdDocument,
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error creating document:', {
@@ -653,18 +661,18 @@ export class DocumentManagementController {
         body: req.body
       });
 
-      const response: ApiResponse = {
-        success: false,
-        error: 'Errore nella creazione del documento',
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Errore nella creazione del documento',
+        'CREATE_DOCUMENT_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
   /**
-   * Update a document
+   * Update an existing document
    * PUT /admin/documents/:id
    */
   static async updateDocument(req: Request, res: Response): Promise<void> {
@@ -681,11 +689,13 @@ export class DocumentManagementController {
         .findOne({ _id: docObjectId });
 
       if (!existingDoc) {
-        res.status(404).json({
-          success: false,
-          error: 'Documento non trovato',
-          timestamp: new Date().toISOString()
-        } as ApiResponse);
+        res.status(404).json(errorResponse(
+          'Documento non trovato',
+          'DOCUMENT_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -833,14 +843,12 @@ export class DocumentManagementController {
         version: updatedDoc!.version
       };
 
-      const response: ApiResponse = {
-        success: true,
-        data: safeDoc,
-        timestamp: new Date().toISOString()
-      };
-
       logger.info(`Document updated successfully: ${updatedDoc!.title}`);
-      res.json(response);
+      res.json(updateResponse(
+        safeDoc,
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error updating document:', {
@@ -850,13 +858,13 @@ export class DocumentManagementController {
         body: req.body
       });
 
-      const response: ApiResponse = {
-        success: false,
-        error: 'Errore nell\'aggiornamento del documento',
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Errore nell\'aggiornamento del documento',
+        'UPDATE_DOCUMENT_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -877,11 +885,13 @@ export class DocumentManagementController {
         .findOne({ _id: docObjectId });
 
       if (!existingDoc) {
-        res.status(404).json({
-          success: false,
-          error: 'Documento non trovato',
-          timestamp: new Date().toISOString()
-        } as ApiResponse);
+        res.status(404).json(errorResponse(
+          'Documento non trovato',
+          'DOCUMENT_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -913,14 +923,11 @@ export class DocumentManagementController {
           .deleteMany({ documentId: docObjectId })
       ]);
 
-      const response: ApiResponse = {
-        success: true,
-        data: { message: 'Documento eliminato con successo' },
-        timestamp: new Date().toISOString()
-      };
-
       logger.info(`Document deleted successfully: ${existingDoc!.title}`);
-      res.json(response);
+      res.json(deleteResponse(
+        'Documento eliminato con successo',
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error deleting document:', {
@@ -929,46 +936,50 @@ export class DocumentManagementController {
         documentId: req.params?.id
       });
 
-      const response: ApiResponse = {
-        success: false,
-        error: 'Errore nell\'eliminazione del documento',
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Errore nell\'eliminazione del documento',
+        'DELETE_DOCUMENT_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
   /**
-   * Update global CSS for all documents
+   * Update global CSS classes for documents
    * PUT /admin/documents/css
    */
   static async updateGlobalCSS(req: Request, res: Response): Promise<void> {
     try {
       const { cssClasses } = req.body;
 
-      logger.info(`Updating global CSS classes`, { cssClasses });
+      if (!Array.isArray(cssClasses)) {
+        res.status(400).json(errorResponse(
+          'cssClasses deve essere un array',
+          'INVALID_CSS_CLASSES',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
 
-      // Get user info from request
-      const username = (req as any).user?.username || 'Admin';
+      // Validate CSS classes structure
+      const validatedClasses = cssClasses.filter((cls: any) => {
+        return cls && typeof cls === 'object' && cls.name && cls.properties;
+      });
 
-      // Validate CSS classes
-      const validatedClasses = Array.isArray(cssClasses) ? cssClasses : [];
-
-      // Generate custom_css.json file
       const cssFilePath = path.join(process.cwd(), 'public', 'assets', 'documents');
-      
-      // Ensure directory exists
       if (!fs.existsSync(cssFilePath)) {
         fs.mkdirSync(cssFilePath, { recursive: true });
       }
 
-      // Write custom_css.json
+      // Generate custom_css.json file
       const jsonFilePath = path.join(cssFilePath, 'custom_css.json');
       fs.writeFileSync(jsonFilePath, JSON.stringify({
         cssClasses: validatedClasses,
         generatedAt: new Date().toISOString(),
-        generatedBy: username,
         version: Date.now()
       }, null, 2));
 
@@ -983,9 +994,8 @@ export class DocumentManagementController {
         classCount: validatedClasses.length
       });
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
+      res.json(updateResponse(
+        {
           cssClasses: validatedClasses,
           filesGenerated: {
             json: jsonFilePath,
@@ -993,21 +1003,20 @@ export class DocumentManagementController {
           },
           version: Date.now()
         },
-        message: 'CSS globale aggiornato con successo',
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+        'CSS globale aggiornato con successo',
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error updating global CSS:', error);
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Errore nell\'aggiornamento del CSS globale',
-        timestamp: new Date().toISOString()
-      };
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Errore nell\'aggiornamento del CSS globale',
+        'UPDATE_GLOBAL_CSS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -1017,79 +1026,41 @@ export class DocumentManagementController {
    */
   static async getGlobalCSS(req: Request, res: Response): Promise<void> {
     try {
-      const cssFilePath = path.join(process.cwd(), 'public', 'assets', 'documents', 'custom.css');
-      
-      if (!fs.existsSync(cssFilePath)) {
-        // Generate empty CSS if file doesn't exist
-        const cssDir = path.dirname(cssFilePath);
-        if (!fs.existsSync(cssDir)) {
-          fs.mkdirSync(cssDir, { recursive: true });
-        }
-        fs.writeFileSync(cssFilePath, '/* No custom CSS classes defined */');
-      }
-
-      const cssContent = fs.readFileSync(cssFilePath, 'utf8');
-      
-      res.set({
-        'Content-Type': 'text/css',
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0'
-      });
-
-      res.send(cssContent);
-
-    } catch (error: any) {
-      logger.error('Error serving custom CSS:', error);
-      res.status(500).send('/* Error loading custom CSS */');
-    }
-  }
-
-  /**
-   * Get global CSS data (JSON format)
-   * GET /admin/documents/css/data
-   */
-  static async getGlobalCSSData(req: Request, res: Response): Promise<void> {
-    try {
       const jsonFilePath = path.join(process.cwd(), 'public', 'assets', 'documents', 'custom_css.json');
       
       if (!fs.existsSync(jsonFilePath)) {
         // Return empty CSS structure if file doesn't exist
-        const response: ApiResponse = {
-          success: true,
-          data: {
+        res.json(successResponse(
+          {
             cssClasses: [],
             generatedAt: new Date().toISOString(),
             version: 0
           },
-          message: 'Nessun CSS globale definito',
-          timestamp: new Date().toISOString()
-        };
-        res.json(response);
+          'Nessun CSS globale definito',
+          getRequestId(req)
+        ));
         return;
       }
 
       const jsonContent = fs.readFileSync(jsonFilePath, 'utf8');
       const cssData = JSON.parse(jsonContent);
       
-      const response: ApiResponse = {
-        success: true,
-        data: cssData,
-        message: 'CSS globale caricato con successo',
-        timestamp: new Date().toISOString()
-      };
-
-      res.json(response);
+      res.json(successResponse(
+        cssData,
+        'CSS globale caricato con successo',
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Error loading global CSS data:', error);
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Errore nel caricamento del CSS globale',
-        timestamp: new Date().toISOString()
-      };
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Errore nel caricamento del CSS globale',
+        'LOAD_GLOBAL_CSS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -1097,24 +1068,17 @@ export class DocumentManagementController {
    * Generate CSS content from CSS classes array
    * @private
    */
-  private static generateCSSFromClasses(cssClasses: Array<{id: string, title: string, css: string, htmlElement?: string}>): string {
-    const CSS_PREFIX = 'tpn_documents';
+  private static generateCSSFromClasses(cssClasses: any[]): string {
+    let css = '/* Auto-generated CSS from document management */\n\n';
     
-    const cssContent = cssClasses
-      .filter(cssClass => cssClass.title && cssClass.title.trim() && cssClass.css && cssClass.css.trim())
-      .map(cssClass => {
-        const className = cssClass.title.trim().toLowerCase().replace(/\s+/g, '-');
-        return `.${CSS_PREFIX}__${className} {
-${cssClass.css.split('\n').map(line => `  ${line}`).join('\n')}
-}`;
-      })
-      .join('\n\n');
-
-    return `/* Generated Custom CSS for TenpennyNovels Documents */
-/* Generated at: ${new Date().toISOString()} */
-/* DO NOT EDIT MANUALLY - This file is auto-generated */
-
-${cssContent || '/* No CSS classes defined */'}
-`;
+    cssClasses.forEach((cls: any) => {
+      css += `.${cls.name} {\n`;
+      Object.entries(cls.properties).forEach(([prop, value]) => {
+        css += `  ${prop}: ${value};\n`;
+      });
+      css += '}\n\n';
+    });
+    
+    return css;
   }
 }

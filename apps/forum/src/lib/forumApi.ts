@@ -159,13 +159,13 @@ async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promi
 // TOPIC MANAGEMENT
 
 export async function getTopics(): Promise<ForumTopic[]> {
-  const response = await apiRequest<{ success: boolean; data: ForumTopic[] }>('/topics');
-  return response.data;
+  const response = await apiRequest<{ result: boolean; data?: ForumTopic[]; list?: ForumTopic[] }>('/topics');
+  return response.list || response.data || [];
 }
 
 export async function getTopic(slug: string): Promise<ForumTopic> {
-  const response = await apiRequest<{ success: boolean; data: ForumTopic }>(`/topics/${slug}`);
-  return response.data;
+  const response = await apiRequest<{ result: boolean; data: ForumTopic }>(`/topics/${slug}`);
+  return response.data!;
 }
 
 export async function createTopic(data: CreateTopicRequest): Promise<ForumTopic> {
@@ -224,16 +224,16 @@ export async function getDiscussions(
     limit: limit.toString(),
   });
   
-  const response = await apiRequest<{ success: boolean; data: Discussion[]; pagination: any }>(`/topics/${topicSlug}/discussions?${params}`);
+  const response = await apiRequest<{ result: boolean; list?: Discussion[]; data?: Discussion[]; pagination: any }>(`/topics/${topicSlug}/discussions?${params}`);
   return {
-    data: response.data,
+    data: response.list || response.data || [],
     pagination: response.pagination
   };
 }
 
 export async function getDiscussion(topicSlug: string, discussionSlug: string): Promise<Discussion> {
-  const response = await apiRequest<{ success: boolean; data: Discussion }>(`/topics/${topicSlug}/discussions/${discussionSlug}`);
-  return response.data;
+  const response = await apiRequest<{ result: boolean; data: Discussion }>(`/topics/${topicSlug}/discussions/${discussionSlug}`);
+  return response.data!;
 }
 
 export async function createDiscussion(
@@ -337,9 +337,9 @@ export async function deletePost(
 export async function getRecentDiscussions(
   limit: number = 20
 ): Promise<PaginatedResponse<Discussion>> {
-  const response = await apiRequest<{ success: boolean; data: Discussion[]; pagination: any }>(`/recent?limit=${limit}`);
+  const response = await apiRequest<{ result: boolean; list?: Discussion[]; data?: Discussion[]; pagination: any }>(`/recent?limit=${limit}`);
   return {
-    data: response.data,
+    data: response.list || response.data || [],
     pagination: response.pagination
   };
 }
@@ -348,9 +348,9 @@ export async function getPopularDiscussions(
   limit: number = 20,
   timeframe: 'week' | 'month' | 'all' = 'week'
 ): Promise<PaginatedResponse<Discussion>> {
-  const response = await apiRequest<{ success: boolean; data: Discussion[]; pagination: any }>(`/popular?limit=${limit}&timeframe=${timeframe}`);
+  const response = await apiRequest<{ result: boolean; list?: Discussion[]; data?: Discussion[]; pagination: any }>(`/popular?limit=${limit}&timeframe=${timeframe}`);
   return {
-    data: response.data,
+    data: response.list || response.data || [],
     pagination: response.pagination
   };
 }
@@ -404,25 +404,25 @@ export async function getReports(): Promise<any[]> {
 // FAVORITES
 
 export async function getUserFavoriteTopics(): Promise<ForumTopic[]> {
-  const response = await apiRequest<{ success: boolean; data: ForumTopic[] }>('/favorites');
-  return response.data;
+  const response = await apiRequest<{ result: boolean; data?: ForumTopic[]; list?: ForumTopic[] }>('/favorites');
+  return response.list || response.data || [];
 }
 
 export async function addTopicToFavorites(slug: string): Promise<{ message: string; topicSlug: string; isFavorite: boolean }> {
-  const response = await apiRequest<{ success: boolean; data: { message: string; topicSlug: string; isFavorite: boolean } }>(`/topics/${slug}/favorite`, {
+  const response = await apiRequest<{ result: boolean; data: { message: string; topicSlug: string; isFavorite: boolean } }>(`/topics/${slug}/favorite`, {
     method: 'POST'
   });
-  return response.data;
+  return response.data!;
 }
 
 export async function removeTopicFromFavorites(slug: string): Promise<{ message: string; topicSlug: string; isFavorite: boolean }> {
-  const response = await apiRequest<{ success: boolean; data: { message: string; topicSlug: string; isFavorite: boolean } }>(`/topics/${slug}/favorite`, {
+  const response = await apiRequest<{ result: boolean; data: { message: string; topicSlug: string; isFavorite: boolean } }>(`/topics/${slug}/favorite`, {
     method: 'DELETE'
   });
-  return response.data;
+  return response.data!;
 }
 
 export async function checkTopicFavorite(slug: string): Promise<{ isFavorite: boolean }> {
-  const response = await apiRequest<{ success: boolean; data: { isFavorite: boolean } }>(`/topics/${slug}/favorite`);
-  return response.data;
+  const response = await apiRequest<{ result: boolean; data: { isFavorite: boolean } }>(`/topics/${slug}/favorite`);
+  return response.data!;
 }

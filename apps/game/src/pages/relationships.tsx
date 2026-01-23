@@ -74,8 +74,8 @@ const RelationshipsPage: NextPage = () => {
         credentials: 'include'
       });
       const data = await response.json();
-      if (data.success) {
-        setRelationships(data.data.relationships);
+      if (data.result) {
+        setRelationships(data.data.relationships || data.list || []);
       }
     } catch (error) {
       console.error('Error loading relationships:', error);
@@ -88,7 +88,7 @@ const RelationshipsPage: NextPage = () => {
         credentials: 'include'
       });
       const data = await response.json();
-      if (data.success) {
+      if (data.result) {
         setRelationshipTypes(data.data.relationshipTypes);
       }
     } catch (error) {
@@ -102,9 +102,10 @@ const RelationshipsPage: NextPage = () => {
         credentials: 'include'
       });
       const data = await response.json();
-      if (data.success) {
+      if (data.result) {
         // Filter out current character
-        const others = data.data.characters.filter(
+        const characters = data.data?.characters || data.list || [];
+        const others = characters.filter(
           (char: Character) => char.id !== character?.id
         );
         setAvailableCharacters(others);
@@ -135,7 +136,7 @@ const RelationshipsPage: NextPage = () => {
       });
 
       const data = await response.json();
-      if (data.success) {
+      if (data.result) {
         setShowProposeModal(false);
         setSelectedType('');
         setSelectedCharacter('');
@@ -163,7 +164,7 @@ const RelationshipsPage: NextPage = () => {
       });
 
       const data = await response.json();
-      if (data.success) {
+      if (data.result) {
         loadRelationships();
         alert(`Relationship proposal ${action}ed successfully!`);
       } else {
@@ -185,7 +186,7 @@ const RelationshipsPage: NextPage = () => {
       });
 
       const data = await response.json();
-      if (data.success) {
+      if (data.result) {
         loadRelationships();
         alert('Relationship ended successfully');
       } else {

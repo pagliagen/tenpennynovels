@@ -23,7 +23,7 @@ export default function App({ Component, pageProps }: AppProps) {
         const response = await fetch(`${API_GATEWAY_URL}/forum/init`, { credentials: 'include' });
         const data = await response.json();
         
-        if (data.success && data.data.authContext) {
+        if (data.result && data.data.authContext) {
           setAuthContext({
             ...data.data.authContext,
             tokens: parseAuthTokens() // Still include tokens for any direct API calls

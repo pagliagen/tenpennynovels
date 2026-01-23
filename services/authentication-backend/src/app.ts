@@ -9,7 +9,8 @@ import morgan from 'morgan';
 import dotenv from 'dotenv';
 import authRoutes from './routes/auth';
 import { httpLoggerStream } from './utils/logger';
-import { AnalyticsMiddleware } from '../../../packages/shared/src/middleware/analyticsMiddleware';
+import { AnalyticsMiddleware } from '../../shared/src/middleware/analyticsMiddleware';
+import { successResponse, errorResponse, getRequestId } from './utils/apiResponse';
 
 console.log('🔧 Loading environment variables...');
 // Load environment variables: first global, then service-specific overrides
@@ -102,12 +103,13 @@ app.use(morgan('combined', {
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 1000, // Limit each IP to 1000 requests per windowMs
-  message: {
-    success: false,
-    error: 'Troppe richieste da questo indirizzo IP, riprova più tardi.',
-    code: 'RATE_LIMITED',
-    timestamp: new Date().toISOString()
-  },
+  message: errorResponse(
+    'Troppe richieste da questo indirizzo IP, riprova più tardi.',
+    'RATE_LIMITED',
+    undefined,
+    429,
+    undefined
+  ),
   standardHeaders: true,
   legacyHeaders: false
 });
@@ -119,30 +121,31 @@ app.use('/auth', authRoutes);
 
 // Health check endpoint
 app.get('/auth/health', (req, res) => {
-  res.status(200).json({
-    success: true,
-    data: {
+  res.json(successResponse(
+    {
       status: 'healthy',
       service: 'authentication-backend',
       version: '1.0.0',
-      timestamp: new Date().toISOString(),
       uptime: process.uptime(),
       memory: process.memoryUsage(),
       environment: process.env.NODE_ENV || 'development'
-    }
-  });
+    },
+    undefined,
+    getRequestId(req)
+  ));
 });
 
 // Root endpoint removed - not needed
 
 // 404 handler
 app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    error: 'Endpoint not found',
-    code: 'ENDPOINT_NOT_FOUND',
-    timestamp: new Date().toISOString()
-  });
+  res.status(404).json(errorResponse(
+    'Endpoint not found',
+    'ENDPOINT_NOT_FOUND',
+    undefined,
+    404,
+    getRequestId(req)
+  ));
 });
 
 // Global error handler
@@ -159,12 +162,13 @@ app.use((error: any, req: express.Request, res: express.Response, next: express.
     userAgent: req.get('User-Agent')
   });
 
-  res.status(500).json({
-    success: false,
-    error: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
-    code: 'INTERNAL_SERVER_ERROR',
-    timestamp: new Date().toISOString()
-  });
+  res.status(500).json(errorResponse(
+    process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    'INTERNAL_SERVER_ERROR',
+    undefined,
+    500,
+    getRequestId(req)
+  ));
 });
 
 // Graceful shutdown

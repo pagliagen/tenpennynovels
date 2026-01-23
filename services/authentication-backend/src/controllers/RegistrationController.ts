@@ -1,10 +1,11 @@
 import { Request, Response } from 'express';
-import { User, Character } from '../../../../packages/database/models';
+import { User, Character } from '../../../database/models';
 import { CryptoUtils } from '../utils/crypto';
-import { ApiResponse } from '../../../../packages/shared/types';
+import { ApiResponse } from '../types/auth';
 import { logger, logAuth } from '../utils/logger';
 import { redis } from '../config/redis';
 import { EmailService } from '../services/EmailService';
+import { createResponse, errorResponse, successResponse, getRequestId } from '../utils/apiResponse';
 
 export class RegistrationController {
   /**
@@ -24,31 +25,29 @@ export class RegistrationController {
           `${username}_player`
         ];
 
-        const response: ApiResponse = {
-          success: false,
-          error: 'Username già esistente',
-          code: 'USERNAME_TAKEN',
-          details: { suggestions },
-          timestamp: new Date().toISOString()
-        };
-        res.status(409).json(response);
+        res.status(409).json(errorResponse(
+          'Username già esistente',
+          'USERNAME_TAKEN',
+          { suggestions },
+          409,
+          getRequestId(req)
+        ));
         return;
       }
 
       // Check if email already exists
       const existingEmail = await User.findOne({ email: email.toLowerCase() });
       if (existingEmail) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Indirizzo email già registrato',
-          code: 'EMAIL_TAKEN',
-          details: {
+        res.status(409).json(errorResponse(
+          'Indirizzo email già registrato',
+          'EMAIL_TAKEN',
+          {
             canRecover: true,
             message: 'If you forgot your password, you can reset it using the password recovery option.'
           },
-          timestamp: new Date().toISOString()
-        };
-        res.status(409).json(response);
+          409,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -128,10 +127,8 @@ export class RegistrationController {
         // Continue with registration even if email fails
       }
 
-      const response: ApiResponse = {
-        success: true,
-        message: 'Registrazione completata con successo. Controlla la tua email per verificare il tuo account.',
-        data: {
+      res.status(201).json(createResponse(
+        {
           user: {
             id: user.id,
             username: user.username,
@@ -146,22 +143,20 @@ export class RegistrationController {
             canResendAt: new Date(Date.now() + 5 * 60 * 1000).toISOString() // 5 minutes cooldown
           }
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(201).json(response);
+        'Registrazione completata con successo. Controlla la tua email per verificare il tuo account.',
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Registration error:', error);
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Registrazione fallita',
-        code: 'REGISTRATION_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Registrazione fallita',
+        'REGISTRATION_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -193,25 +188,22 @@ export class RegistrationController {
         };
       }
 
-      const response: ApiResponse = {
-        success: true,
-        data: { availability },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+      res.json(successResponse(
+        { availability },
+        undefined,
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Availability check error:', error);
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Controllo disponibilità fallito',
-        code: 'AVAILABILITY_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Controllo disponibilità fallito',
+        'AVAILABILITY_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -229,17 +221,16 @@ export class RegistrationController {
       });
 
       if (!user) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Token di verifica non valido o scaduto',
-          code: 'INVALID_VERIFICATION_TOKEN',
-          details: {
+        res.status(400).json(errorResponse(
+          'Token di verifica non valido o scaduto',
+          'INVALID_VERIFICATION_TOKEN',
+          {
             canResend: true,
             resendUrl: '/auth/resend-verification'
           },
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -263,10 +254,8 @@ export class RegistrationController {
         verifiedAt: new Date().toISOString()
       });
 
-      const response: ApiResponse = {
-        success: true,
-        message: 'Email verified successfully. You can now log in.',
-        data: {
+      res.json(successResponse(
+        {
           user: {
             id: user.id,
             username: user.username,
@@ -275,22 +264,20 @@ export class RegistrationController {
             verifiedAt: new Date().toISOString()
           },
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+        'Email verified successfully. You can now log in.',
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Email verification error:', error);
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Verifica email fallita',
-        code: 'VERIFICATION_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Verifica email fallita',
+        'VERIFICATION_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 
@@ -312,31 +299,28 @@ export class RegistrationController {
 
       if (!user) {
         // Don't reveal if email exists or not for security
-        const response: ApiResponse = {
-          success: true,
-          message: 'If the email address exists and is not verified, a verification email has been sent.',
-          data: {
+        res.json(successResponse(
+          {
             emailSent: true,
             canResendAt: new Date(Date.now() + 30 * 60 * 1000).toISOString()
           },
-          timestamp: new Date().toISOString()
-        };
-        res.status(200).json(response);
+          'If the email address exists and is not verified, a verification email has been sent.',
+          getRequestId(req)
+        ));
         return;
       }
 
       if (user.isEmailVerified) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Email già verificata',
-          code: 'EMAIL_ALREADY_VERIFIED',
-          details: {
+        res.status(400).json(errorResponse(
+          'Email già verificata',
+          'EMAIL_ALREADY_VERIFIED',
+          {
             canLogin: true,
             loginUrl: '/login'
           },
-          timestamp: new Date().toISOString()
-        };
-        res.status(400).json(response);
+          400,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -354,13 +338,13 @@ export class RegistrationController {
       } catch (emailError) {
         logger.error('Failed to resend verification email:', emailError);
         
-        const response: ApiResponse = {
-          success: false,
-          error: 'Impossibile inviare l\'email di verifica',
-          code: 'EMAIL_SEND_ERROR',
-          timestamp: new Date().toISOString()
-        };
-        res.status(500).json(response);
+        res.status(500).json(errorResponse(
+          'Impossibile inviare l\'email di verifica',
+          'EMAIL_SEND_ERROR',
+          undefined,
+          500,
+          getRequestId(req)
+        ));
         return;
       }
 
@@ -370,30 +354,26 @@ export class RegistrationController {
         ipAddress: req.ip
       });
 
-      const response: ApiResponse = {
-        success: true,
-        message: 'Verification email sent successfully',
-        data: {
+      res.json(successResponse(
+        {
           emailSent: true,
           canResendAt: new Date(Date.now() + 30 * 60 * 1000).toISOString(), // 30 minutes cooldown
           expiresAt: emailVerificationExpires.toISOString()
         },
-        timestamp: new Date().toISOString()
-      };
-
-      res.status(200).json(response);
+        'Verification email sent successfully',
+        getRequestId(req)
+      ));
 
     } catch (error: any) {
       logger.error('Resend verification error:', error);
       
-      const response: ApiResponse = {
-        success: false,
-        error: 'Impossibile rinviare l\'email di verifica',
-        code: 'RESEND_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      
-      res.status(500).json(response);
+      res.status(500).json(errorResponse(
+        'Impossibile rinviare l\'email di verifica',
+        'RESEND_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
     }
   }
 }

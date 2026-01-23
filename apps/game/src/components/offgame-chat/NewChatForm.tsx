@@ -47,9 +47,10 @@ export const NewChatForm: React.FC<NewChatFormProps> = ({
         
         if (response.ok) {
           const data = await response.json();
-          if (data.success) {
+          if (data.result) {
             // Filter out current user's characters (isOwnCharacter: true)
-            const filteredCharacters = (data.data.characters || []).filter(
+            const characters = data.data?.characters || data.list || [];
+            const filteredCharacters = characters.filter(
               (character: Character) => !character.isOwnCharacter
             );
             setAvailableCharacters(filteredCharacters);
