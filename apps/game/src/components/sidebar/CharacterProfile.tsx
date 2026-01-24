@@ -49,7 +49,7 @@ export const CharacterProfile: React.FC = () => {
     >
       <div className={styles.avatarContainer}>
         <img 
-          src="/images/sidebar/avatar-frame.png" 
+          src="/images/sidebar/miniavatar_cornice.png" 
           alt="Avatar frame" 
           className={styles.avatarFrame}
         />
@@ -58,7 +58,7 @@ export const CharacterProfile: React.FC = () => {
           alt={characterName}
           className={styles.avatarImage}
           onError={(e) => {
-            (e.target as HTMLImageElement).src = '/images/sidebar/avatar-default.png';
+            (e.target as HTMLImageElement).src = '/images/sidebar/miniavatar_default.png';
           }}
         />
       </div>

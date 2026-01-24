@@ -27,78 +27,155 @@
 
 // Sidebar styles - Full Height
 .sidebar {
-  flex: 0 0 300px; // Fixed width sidebar 
+  flex: 0 0 15%; // Fixed width based on clock images (385px)
   overflow-y: auto;
   height: 100vh; // Full viewport height
   background: $bg-sidebar;
   display: flex;
   flex-direction: column;
+  position: relative;
+  min-width: 200px;
+  max-width: 385px;
   
   @media (max-width: $breakpoint-md) {
-    flex: 0 0 250px; // Narrower on mobile
+    flex: 0 0 300px; // Narrower on mobile
   }
   
-  .sidebarContent {
-    padding: $spacing-md;
-    flex: 1;
+  // Clock Upper Section
+  .clockUpper {
+    position: relative;
+    flex: 0 0 auto;
+    width: 100%;
+    background-image: url('/images/sidebar/clock_upper.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: top center;
     display: flex;
     flex-direction: column;
-    gap: $spacing-md;
-    min-height: 0; // Allow shrinking
+    justify-content: space-between;
+    
+    .dateSection,
+    .profileSection,
+    .moonWeatherSection {
+      width: 100%;
+    }
   }
   
   .dateSection {
-    flex: 0 0 auto;
+    position: absolute;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding-top: 5.05%;
+    flex: 0;
   }
 
   .profileSection {
-    flex: 0 0 auto;
+    position: absolute;
+    top: 5%; 
+    display: flex;
+    justify-content: center;
+    flex: 1;
   }
 
   .moonWeatherSection {
-    flex: 0 0 auto;
+    position: absolute;
+    bottom: 0;
     display: flex;
     align-items: center;
-    justify-content: space-around;
-    padding: $spacing-sm 0;
-    gap: $spacing-sm;
+    justify-content: center;
+    gap: $spacing-md;
+    flex: 0;
   }
   
-  .moonImage,
+  .moonImage {
+    width: 25px;
+    height: 31px;
+    object-fit: contain;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+  
+  .weatherGroup {
+    display: flex;
+    align-items: center;
+    gap: $spacing-xs;
+  }
+  
   .weatherIcon {
-    width: 32px;
+    width: 56px;
     height: 32px;
     object-fit: contain;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
   }
   
   .temperature {
-    font-size: $font-size-base;
-    color: $text-primary;
+    font-family: $font-thrifted;
+    font-size: $font-size-lg;
+    color: $text-orange;
     font-weight: 600;
+    text-shadow: 0 0 5px rgba($text-orange, 0.5);
+    line-height: 1;
+    margin-left: 2px;
   }
   
-  .charactersSection {
-    flex: 1; // Takes remaining space
+  // Clock Middle Section
+  .clockMiddle {
+    position: relative;
+    flex: 1;
+    width: 100%;
+    min-height: 0;
     display: flex;
     flex-direction: column;
-    min-height: 0; // Allow shrinking
+    background-image: 
+      url('/images/sidebar/clock_pattern.png'),
+      url('/images/sidebar/clock_middle.png');
+    background-size: 
+      contain,
+      contain;
+    background-repeat: 
+      repeat-y,
+      no-repeat;
+    background-position: 
+      top center,
+      top center;
+    
+    .charactersSection {
+      position: relative;
+      z-index: 1;
+      padding: $spacing-md;
+      overflow-y: auto;
+      flex: 1;
+      min-height: 0;
+    }
   }
 
-  .sidebarFooter {
+  // Clock Base Section
+  .clockBase {
+    position: relative;
     flex: 0 0 auto;
-    padding: $spacing-md;
-    background: $bg-sidebar;
-    border-top: 2px solid $border-green;
-    text-align: center;
+    width: 100%;
+    background-image: url('/images/sidebar/clock_base.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: bottom center;
+    // Padding-bottom percentuale per mantenere proporzioni (316/385 = 82.078%)
+    padding-bottom: 82.078%;
+    
+    .footerText {
+      position: absolute;
+      bottom: $spacing-md;
+      left: 0;
+      right: 0;
+      font-family: $font-mysteres;
+      color: $accent-red;
+      font-size: $font-size-base;
+      text-shadow: 0 0 5px rgba($accent-red, 0.5);
+      text-align: center;
+      z-index: 1;
+    }
   }
-
-  .footerText {
-    font-family: $font-mysteres;
-    color: $accent-red;
-    font-size: $font-size-base;
-    text-shadow: 0 0 5px rgba($accent-red, 0.5);
-  }
-  
 }
 
 // Right container - Header + Body stacked vertically

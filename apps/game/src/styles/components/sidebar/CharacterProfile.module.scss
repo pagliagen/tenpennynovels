@@ -13,6 +13,7 @@
   cursor: pointer;
   transition: all 0.2s ease;
   border-radius: $radius-md;
+  width: 50%;
   
   &:hover {
     background: rgba($text-orange, 0.05);
@@ -26,11 +27,16 @@
 
 .avatarContainer {
   position: relative;
-  width: 80px;
-  height: 80px;
+  width: 100%;
+  padding-bottom: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
+  background-image: url('/images/sidebar/avatar-frame.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
 }
 
 .avatarFrame {
@@ -41,15 +47,19 @@
   height: 100%;
   z-index: 2;
   pointer-events: none;
+  object-fit: contain;
 }
 
 .avatarImage {
-  position: relative;
+  position: absolute;
   width: 70%;
   height: 70%;
   border-radius: 50%;
   object-fit: cover;
   z-index: 1;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 
 .characterName {
