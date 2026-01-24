@@ -2,7 +2,7 @@
 // Handles authentication validation and game initialization
 
 import { CacheManager, CACHE_KEYS, CACHE_TTL } from '@/utils/cache';
-import type { CharacterCreationConfig } from '../../../../packages/shared/src/services/CharacterCreationConfigService';
+import type { CharacterCreationConfig } from '../../../../services/shared/src/services/CharacterCreationConfigService';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'https://api.tenpennynovels.com';
 
@@ -18,6 +18,22 @@ export interface GameInitResponse {
     hitPoints?: number;
     magicPoints?: number;
     sanity?: number;
+    skills?: Record<string, number>;
+    dynamicSkills?: Array<{
+      skillName: string;
+      basedOnTemplate: string;
+      customValue: string;
+      value: number;
+      category: string;
+    }>;
+    stats?: Record<string, number>;
+    equippedItems?: Array<{
+      id: string;
+      itemId: string;
+      name: string;
+      description: string;
+      category: string;
+    }>;
   };
   user?: {
     id: string;
@@ -63,6 +79,19 @@ export interface GameInitResponse {
     prerequisites?: any;
     properties?: any;
     rarity: string;
+  }>;
+  skillTemplates?: Array<{
+    id: string;
+    name: string;
+    baseValue: number;
+    category: string;
+    description: string;
+    defaultSkill: boolean;
+    sortOrder: number;
+    isPlaceholder: boolean;
+    placeholderType?: string;
+    predefinedValues?: string[];
+    canRollWithoutPoints: boolean;
   }>;
   draftConfiguration?: {
     characterStatTotalPoints: number;

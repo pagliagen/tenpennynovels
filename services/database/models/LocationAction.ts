@@ -39,6 +39,37 @@ export interface ILocationAction extends Document {
   targetCharacters?: string[]; // For whispers
   characterRoles: string[]; // Sender's gameplay roles
 
+  // Tags for action categorization
+  tags?: string[];
+  
+  // Edit history for tracking modifications
+  editHistory?: Array<{
+    content: string;
+    editedAt: Date;
+    editedBy: string;
+  }>;
+  
+  // Social conflict data
+  socialConflict?: {
+    type: string;
+    attackerSkill: string;
+    defenderSkill: string;
+    attackerRoll: number;
+    defenderRoll: number;
+    result: string;
+    attackerSuccessDegree?: 'critical' | 'extreme' | 'hard' | 'normal' | 'failure' | 'fumble';
+    defenderSuccessDegree?: 'critical' | 'extreme' | 'hard' | 'normal' | 'failure' | 'fumble';
+    messageForDefender?: string; // Message shown to defender when they detect something
+    visibleToDefenderOnly?: boolean; // If true, only defender can see this conflict result
+  };
+  
+  // Success degree for skill/stat checks
+  successDegree?: 'critical' | 'extreme' | 'hard' | 'normal' | 'failure' | 'fumble';
+  
+  // Action mode fields
+  isHidden?: boolean; // For actions hidden during action mode
+  revealedAt?: Date; // When action is revealed after action mode
+
   // Semantic search fields
   contentEmbedding?: number[]; // 384-dimensional vector for semantic search
   embeddingModel?: string; // Model used for embedding generation
@@ -124,6 +155,65 @@ const LocationActionSchema = new Schema<ILocationAction>({
     enum: ['personaggio', 'master', 'moderatore', 'gestore']
   }],
 
+  // Tags
+  tags: [{
+    type: String,
+    trim: true,
+    lowercase: true
+  }],
+  
+  // Edit history
+  editHistory: [{
+    content: {
+      type: String,
+      required: true
+    },
+    editedAt: {
+      type: Date,
+      required: true,
+      default: Date.now
+    },
+    editedBy: {
+      type: String,
+      required: true
+    }
+  }],
+  
+  // Social conflict
+  socialConflict: {
+    type: {
+      type: String
+    },
+    attackerSkill: String,
+    defenderSkill: String,
+    attackerRoll: Number,
+    defenderRoll: Number,
+    result: String,
+    attackerSuccessDegree: {
+      type: String,
+      enum: ['critical', 'extreme', 'hard', 'normal', 'failure', 'fumble']
+    },
+    defenderSuccessDegree: {
+      type: String,
+      enum: ['critical', 'extreme', 'hard', 'normal', 'failure', 'fumble']
+    },
+    messageForDefender: String,
+    visibleToDefenderOnly: Boolean
+  },
+  
+  // Success degree
+  successDegree: {
+    type: String,
+    enum: ['critical', 'extreme', 'hard', 'normal', 'failure', 'fumble']
+  },
+  
+  // Action mode fields
+  isHidden: {
+    type: Boolean,
+    default: false
+  },
+  revealedAt: Date,
+
   // Semantic search fields
   contentEmbedding: {
     type: [Number],
@@ -179,7 +269,13 @@ LocationActionSchema.statics.getLocationHistory = async function(
   .limit(limit)
   .lean();
 
-  return actions.reverse(); // Return chronological order
+  // Normalize actions: ensure tags field is always present (even if empty array)
+  const normalizedActions = actions.map((action: any) => ({
+    ...action,
+    tags: action.tags || []
+  }));
+
+  return normalizedActions.reverse(); // Return chronological order
 };
 
 LocationActionSchema.statics.createAction = async function(actionData: Partial<ILocationAction>): Promise<ILocationAction> {

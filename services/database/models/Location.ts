@@ -75,6 +75,7 @@ export interface ILocation extends Document {
     enteredAt: Date;
     lastSeen: Date;
     isActive: boolean; // true if character is currently online
+    currentTag?: string; // Current position tag (e.g., "Tavolo", "Bancone del Bar")
   }[];
 
   // NPCs in this location
@@ -94,6 +95,9 @@ export interface ILocation extends Document {
     lastActivityAt?: Date;
     peakHours: string[];
   };
+  
+  // Tags for location categorization
+  tags?: string[];
   
   // Management info
   createdBy: Schema.Types.ObjectId;
@@ -286,6 +290,11 @@ const LocationSchema = new Schema<ILocation>({
     isActive: {
       type: Boolean,
       default: true
+    },
+    currentTag: {
+      type: String,
+      trim: true,
+      maxlength: 50
     }
   }],
 
@@ -323,6 +332,13 @@ const LocationSchema = new Schema<ILocation>({
     lastActivityAt: Date,
     peakHours: [String]
   },
+  
+  // Tags
+  tags: [{
+    type: String,
+    trim: true,
+    lowercase: true
+  }],
   
   // Management
   createdBy: {
@@ -452,9 +468,13 @@ LocationSchema.methods.getActiveNPCs = function() {
 };
 
 // Occupant management methods
-LocationSchema.methods.addOccupant = function(characterId: Schema.Types.ObjectId, characterName: string) {
+LocationSchema.methods.addOccupant = function(characterId: Schema.Types.ObjectId, characterName: string, currentTag?: string) {
   // Remove existing occupant entry
   this.occupants = this.occupants.filter((o: any) => !o.characterId.equals(characterId));
+  
+  // Find existing occupant to preserve tag if not provided
+  const existingOccupant = this.occupants.find((o: any) => o.characterId.equals(characterId));
+  const tagToUse = currentTag !== undefined ? currentTag : existingOccupant?.currentTag;
   
   // Add new occupant entry
   this.occupants.push({
@@ -462,7 +482,8 @@ LocationSchema.methods.addOccupant = function(characterId: Schema.Types.ObjectId
     characterName,
     enteredAt: new Date(),
     lastSeen: new Date(),
-    isActive: true
+    isActive: true,
+    currentTag: tagToUse
   });
   
   return this.save();
@@ -476,6 +497,18 @@ LocationSchema.methods.removeOccupant = function(characterId: Schema.Types.Objec
 LocationSchema.methods.updateOccupantLastSeen = function(characterId: Schema.Types.ObjectId) {
   const occupant = this.occupants.find((o: any) => o.characterId.equals(characterId));
   if (occupant) {
+    occupant.lastSeen = new Date();
+    occupant.isActive = true;
+    // Preserve currentTag when updating last seen
+    return this.save();
+  }
+  return Promise.resolve(this);
+};
+
+LocationSchema.methods.updateOccupantTag = function(characterId: Schema.Types.ObjectId, currentTag?: string) {
+  const occupant = this.occupants.find((o: any) => o.characterId.equals(characterId));
+  if (occupant) {
+    occupant.currentTag = currentTag;
     occupant.lastSeen = new Date();
     occupant.isActive = true;
     return this.save();

@@ -66,6 +66,13 @@ export interface IGamingSession extends Document {
   // Status
   status: 'planned' | 'active' | 'completed' | 'cancelled' | 'postponed';
   
+  // Quest management fields
+  turnOrder?: Schema.Types.ObjectId[]; // Order of turns for quest
+  actionModeActive?: boolean; // Whether action mode is currently active
+  actionModeEndsAt?: Date; // When action mode ends
+  lastMasterScreenAt?: Date; // Last time master sent a screen message
+  currentQuestStatus?: 'planning' | 'active' | 'completed' | 'cancelled'; // Quest-specific status
+  
   // Admin oversight
   requiresReview?: boolean;
   reviewedBy?: Schema.Types.ObjectId;
@@ -225,6 +232,22 @@ const GamingSessionSchema = new Schema<IGamingSession>({
     type: String,
     enum: ['planned', 'active', 'completed', 'cancelled', 'postponed'],
     default: 'planned'
+  },
+  
+  // Quest management fields
+  turnOrder: [{
+    type: Schema.Types.ObjectId,
+    ref: 'Character'
+  }],
+  actionModeActive: {
+    type: Boolean,
+    default: false
+  },
+  actionModeEndsAt: Date,
+  lastMasterScreenAt: Date,
+  currentQuestStatus: {
+    type: String,
+    enum: ['planning', 'active', 'completed', 'cancelled']
   },
   
   requiresReview: {

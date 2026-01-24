@@ -2,6 +2,12 @@
 // TenpennyNovels Design System - Typography Mixins
 // =============================================================================
 
+@use "../variables/colors" as *;
+@use "../variables/typography" as *;
+@use "../variables/spacing" as *;
+@use "../variables/borders" as *;
+@use "../mixins/animations" as *;
+
 // Heading styles
 @mixin heading($level: 1) {
   @if $level == 1 {

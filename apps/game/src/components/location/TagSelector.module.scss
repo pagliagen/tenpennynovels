@@ -1,0 +1,140 @@
+@use "../../../../shared-ui/src/styles/variables/colors" as *;
+@use "../../../../shared-ui/src/styles/variables/spacing" as *;
+@use "../../../../shared-ui/src/styles/variables/borders" as *;
+
+.tagSelector {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+  padding: $spacing-md;
+  background-color: $bg-secondary;
+  border-radius: $radius-md;
+  border: 1px solid $border-secondary;
+}
+
+.selectedTag {
+  margin-bottom: $spacing-sm;
+  
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    background-color: $gold-primary;
+    color: white;
+    border-radius: $radius-sm;
+    font-size: 12px;
+    
+    .removeTag {
+      background: none;
+      border: none;
+      color: white;
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1;
+      padding: 0;
+      width: 16px;
+      height: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      
+      &:hover {
+        opacity: 0.8;
+      }
+    }
+  }
+}
+
+.availableTags {
+  .label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: $spacing-xs;
+    color: $text-secondary;
+  }
+  
+  .tagList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $spacing-xs;
+  }
+  
+  .tagButton {
+    padding: 4px 12px;
+    background-color: $bg-tertiary;
+    border: 1px solid $border-secondary;
+    border-radius: $radius-sm;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s;
+    
+    &:hover {
+      background-color: $bg-primary;
+      border-color: $gold-primary;
+    }
+    
+    &.selected {
+      background-color: $gold-primary;
+      color: white;
+      border-color: $gold-primary;
+    }
+  }
+  
+  .loading {
+    padding: $spacing-sm;
+    text-align: center;
+    color: $text-secondary;
+    font-size: 12px;
+  }
+}
+
+.customTag {
+  .label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: $spacing-xs;
+    color: $text-secondary;
+  }
+  
+  .customTagInput {
+    display: flex;
+    gap: $spacing-xs;
+    
+    .input {
+      flex: 1;
+      padding: 6px 12px;
+      border: 1px solid $border-secondary;
+      border-radius: $radius-sm;
+      font-size: 12px;
+      
+      &:focus {
+        outline: none;
+        border-color: $gold-primary;
+      }
+    }
+    
+    .addButton {
+      padding: 6px 16px;
+      background-color: $gold-primary;
+      color: white;
+      border: none;
+      border-radius: $radius-sm;
+      cursor: pointer;
+      font-size: 12px;
+      transition: background-color 0.2s;
+      
+      &:hover:not(:disabled) {
+        opacity: 0.9;
+      }
+      
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+    }
+  }
+}
+

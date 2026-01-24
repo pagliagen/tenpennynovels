@@ -58,6 +58,7 @@ export interface SkillBreakdown {
   requiredBonus: number;      // Auto-applied: (40 - base) for required skills, 0 otherwise
   manualPoints: number;       // Player-allocated points (ONLY these count toward budget)
   occupationBonus: number;    // From occupation.bonusSkills (+30 for selected bonus skill)
+  category?: string;          // Skill category (general, combat, knowledge, social, artistic, technical, etc.)
 }
 
 // Helper to check if skill uses granular format
@@ -1330,6 +1331,90 @@ export default function CharacterWizard() {
         throw new Error('Character ID not found');
       }
 
+      // Build complete skills object with all skills (not just modified ones)
+      const baseSkills = gameData?.draftConfiguration?.baseSkills || gameData?.skillTemplates || [];
+      const completeSkills: Record<string, number | SkillBreakdown> = {};
+      
+      // Helper to calculate base value from skill template
+      const calculateBaseValue = (skillTemplate: any): number => {
+        if (!skillTemplate) return 0;
+        
+        const baseValStr = String(skillTemplate.baseValue || skillTemplate.base || 0);
+        if (baseValStr.startsWith('FORMULA:')) {
+          const formula = baseValStr.replace('FORMULA:', '');
+          switch (formula) {
+            case 'EDU': return characterData.stats.education || 0;
+            case 'DEX': case 'DES': return characterData.stats.dexterity || 0;
+            case 'INT': return characterData.stats.intelligence || 0;
+            case 'POT': case 'POW': return characterData.stats.power || 0;
+            default: return 0;
+          }
+        } else if (baseValStr.startsWith('VALUE:')) {
+          return parseInt(baseValStr.replace('VALUE:', '')) || 0;
+        } else {
+          return parseInt(baseValStr) || 0;
+        }
+      };
+      
+      // Process all skills from templates
+      baseSkills.forEach((skillTemplate: any) => {
+        const skillName = skillTemplate.name;
+        const category = skillTemplate.category || 'general';
+        
+        // Check if character has modified this skill
+        const characterSkill = characterData.skills[skillName];
+        
+        if (characterSkill !== undefined) {
+          // Character has modified this skill - use it but ensure category is included
+          if (isGranularSkill(characterSkill)) {
+            // Add category if not present
+            completeSkills[skillName] = {
+              ...characterSkill,
+              category: characterSkill.category || category
+            };
+          } else {
+            // Convert to granular format with category
+            const baseValue = calculateBaseValue(skillTemplate);
+            const totalValue = characterSkill;
+            const breakdown = migrateSkillToGranular(
+              skillName,
+              totalValue,
+              baseValue,
+              characterData.occupation || null
+            );
+            completeSkills[skillName] = {
+              ...breakdown,
+              category
+            };
+          }
+        } else {
+          // Character hasn't modified this skill - create SkillBreakdown with base value
+          const baseValue = calculateBaseValue(skillTemplate);
+          completeSkills[skillName] = {
+            total: baseValue,
+            base: baseValue,
+            requiredBonus: 0,
+            manualPoints: 0,
+            occupationBonus: 0,
+            category
+          };
+        }
+      });
+      
+      // Add dynamic skills (they don't have templates)
+      if (characterData.dynamicSkills) {
+        characterData.dynamicSkills.forEach(dynamicSkill => {
+          completeSkills[dynamicSkill.skillName] = {
+            total: dynamicSkill.value,
+            base: 0, // Dynamic skills don't have base value
+            requiredBonus: 0,
+            manualPoints: dynamicSkill.value,
+            occupationBonus: 0,
+            category: dynamicSkill.category || 'general'
+          };
+        });
+      }
+
       // First, save the complete character data (filter empty fields) - NEW SYSTEM
       const baseCharacterUpdateData = {
         name: characterData.firstName,
@@ -1352,7 +1437,7 @@ export default function CharacterWizard() {
         // Stats
         stats: characterData.stats,
         derived: characterData.derived,
-        skills: characterData.skills,
+        skills: completeSkills, // Use complete skills with all skills and categories
         // Occupation
         occupation: characterData.occupation?.id,
         occupationBonusesApplied: characterData.occupationBonusesApplied,

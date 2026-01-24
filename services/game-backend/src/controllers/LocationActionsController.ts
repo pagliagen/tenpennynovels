@@ -1,9 +1,11 @@
 import { Request, Response } from 'express';
-import { LocationAction } from '../../../database/models';
+import { LocationAction, GamingSession, Location, Character } from '../../../database/models';
 import { logger } from '../utils/logger';
 import { getRedisPublisher } from '../config/redis';
 import { EmbeddingEventPublisher } from '../utils/events/embedding-publisher';
 import { successResponse, errorResponse, createResponse, getRequestId } from '../utils/apiResponse';
+import { calculateSuccessDegree, SuccessDegree } from '../utils/successDegrees';
+import { calculateSocialConflict, isValidSocialSkillPair, getDefensiveSkill } from '../utils/socialConflicts';
 
 export class LocationActionsController {
   
@@ -35,7 +37,9 @@ export class LocationActionsController {
         skillName,
         statName,
         targetValue,
-        itemId
+        itemId,
+        tags,
+        isHidden
       } = req.body;
 
       // Validate required fields
@@ -67,6 +71,25 @@ export class LocationActionsController {
         return;
       }
 
+      // Check if action mode is active and if this action should be hidden
+      let shouldHide = false;
+      if (isHidden !== undefined) {
+        shouldHide = isHidden;
+      } else {
+        // Check if location has active action mode
+        const Location = require('../../../database/models').Location;
+        const location = await Location.findById(locationId);
+        if (location?.activeSession?.sessionId) {
+          const session = await GamingSession.findById(location.activeSession.sessionId);
+          if (session?.actionModeActive && session.actionModeEndsAt && new Date() < session.actionModeEndsAt) {
+            shouldHide = true;
+          }
+        }
+      }
+
+      // Extract single tag from tags array (first tag if multiple)
+      const currentTag = Array.isArray(tags) && tags.length > 0 ? tags[0] : null;
+
       // Build the location action
       const actionData: any = {
         actionType,
@@ -77,7 +100,9 @@ export class LocationActionsController {
         locationId,
         timestamp: new Date(),
         visibility: visibility || LocationActionsController.getActionVisibility(actionType),
-        characterRoles: character.gameplayRoles || []
+        characterRoles: character.gameplayRoles || [],
+        tags: currentTag ? [currentTag] : [],
+        isHidden: shouldHide
       };
 
       // Handle special action types
@@ -93,23 +118,27 @@ export class LocationActionsController {
       // Handle skill checks
       if (actionType === 'skill_check' && skillName && targetValue !== undefined) {
         const rollResult = LocationActionsController.rollDice('1d100');
+        const successDegree = calculateSuccessDegree(rollResult.result, targetValue);
         actionData.diceResult = {
           ...rollResult,
           skillName,
           target: targetValue,
           success: rollResult.result <= targetValue
         };
+        actionData.successDegree = successDegree.degree;
       }
 
       // Handle stat checks
       if (actionType === 'stat_check' && statName && targetValue !== undefined) {
         const rollResult = LocationActionsController.rollDice('1d100');
+        const successDegree = calculateSuccessDegree(rollResult.result, targetValue);
         actionData.diceResult = {
           ...rollResult,
           statName,
           target: targetValue,
           success: rollResult.result <= targetValue
         };
+        actionData.successDegree = successDegree.degree;
       }
 
       // Handle item usage
@@ -126,6 +155,20 @@ export class LocationActionsController {
 
       // Save to database
       const savedAction = await (LocationAction.createAction(actionData) as any);
+
+      // Update occupant tag if a tag was provided
+      if (currentTag) {
+        try {
+          const location = await Location.findById(locationId);
+          if (location) {
+            await location.updateOccupantTag(character.characterId, currentTag);
+            logger.info(`Updated occupant tag for ${character.characterName} in ${locationId}: ${currentTag}`);
+          }
+        } catch (error) {
+          // Don't fail the request if tag update fails
+          logger.error('Failed to update occupant tag:', error);
+        }
+      }
 
       // Publish Redis event for async embedding generation
       try {
@@ -171,18 +214,33 @@ export class LocationActionsController {
 
       logger.info(`Location action created: ${character.characterName} (${actionType}) in ${locationId}`);
 
+      // Prepare response action data
+      const responseAction: any = {
+        id: savedAction._id,
+        actionType: savedAction.actionType,
+        characterName: savedAction.characterName,
+        content: savedAction.content,
+        timestamp: savedAction.timestamp,
+        visibility: savedAction.visibility,
+        diceResult: savedAction.diceResult,
+        itemEffect: savedAction.itemEffect
+      };
+      
+      // Filter socialConflict: for Raggirare, attacker should never see it
+      if (savedAction.socialConflict) {
+        const socialConflict = savedAction.socialConflict as any;
+        if (socialConflict.visibleToDefenderOnly) {
+          // Attacker should never see socialConflict for Raggirare
+          // Don't include it in response
+        } else {
+          // For non-hidden social conflicts, include it
+          responseAction.socialConflict = socialConflict;
+        }
+      }
+
       res.json(createResponse(
         {
-          action: {
-            id: savedAction._id,
-            actionType: savedAction.actionType,
-            characterName: savedAction.characterName,
-            content: savedAction.content,
-            timestamp: savedAction.timestamp,
-            visibility: savedAction.visibility,
-            diceResult: savedAction.diceResult,
-            itemEffect: savedAction.itemEffect
-          }
+          action: responseAction
         },
         undefined,
         getRequestId(req)
@@ -254,14 +312,65 @@ export class LocationActionsController {
       .limit(limit)
       .lean() as any[];
 
-      // Filter master_only messages based on character roles
+      // Check action mode status
+      const Location = require('../../../database/models').Location;
+      const location = await Location.findById(locationId);
+      let isActionModeActive = false;
+      if (location?.activeSession?.sessionId) {
+        const session = await GamingSession.findById(location.activeSession.sessionId);
+        isActionModeActive = !!(session?.actionModeActive && session.actionModeEndsAt && new Date() < session.actionModeEndsAt);
+      }
+
+      // Filter master_only messages and hidden actions based on character roles and action mode
       const filteredActions = actions.filter((action: any) => {
+        // Filter master_only messages
         if (action.visibility === 'master_only') {
-          return character.gameplayRoles?.some((role: string) => 
+          const hasMasterRole = character.gameplayRoles?.some((role: string) => 
             ['master', 'moderatore', 'gestore'].includes(role)
           );
+          if (!hasMasterRole) return false;
         }
+        
+        // Filter hidden actions (action mode)
+        if (action.isHidden && !action.revealedAt && isActionModeActive) {
+          // Action mode still active: only show to sender
+          return action.characterId === character.characterId;
+        }
+        
         return true;
+      }).map((action: any) => {
+        // Normalize action: ensure tags field is always present (even if empty array)
+        const normalizedAction: any = {
+          ...action,
+          tags: action.tags || []
+        };
+        
+        // Filter socialConflict data based on visibility rules
+        if (normalizedAction.socialConflict) {
+          const socialConflict = normalizedAction.socialConflict;
+          
+          // If socialConflict is visible only to defender
+          if (socialConflict.visibleToDefenderOnly) {
+            const isAttacker = action.characterId === character.characterId;
+            const isDefender = action.targetCharacters?.includes(character.characterId);
+            
+            // Attacker should NEVER see socialConflict data for Raggirare
+            if (isAttacker) {
+              delete normalizedAction.socialConflict;
+            }
+            // Defender can see it only if they detected something (result !== 'victory')
+            else if (!isDefender || socialConflict.result === 'victory') {
+              delete normalizedAction.socialConflict;
+            }
+            // Other users should never see it
+            else if (!isDefender) {
+              delete normalizedAction.socialConflict;
+            }
+          }
+          // For non-hidden social conflicts, everyone can see them
+        }
+        
+        return normalizedAction;
       });
 
       logger.info(`Retrieved ${filteredActions.length} location actions for ${character.characterName} in ${locationId}`);
@@ -355,9 +464,527 @@ export class LocationActionsController {
     
     const result = total + modifier;
     
-    // For d100 rolls, determine success (lower is better in Call of Cthulhu)
-    const success = diceSize === 100 ? result <= 50 : undefined;
-    
-    return { dice: diceSpec, result, success };
+    // For normal dice rolls, return only the result without success/failure judgment
+    return { dice: diceSpec, result };
+  }
+
+  /**
+   * Update an existing location action (edit)
+   * PATCH /game/locations/actions/:actionId
+   */
+  static async updateAction(req: Request, res: Response): Promise<void> {
+    try {
+      const character = req.character;
+      if (!character) {
+        res.status(401).json(errorResponse(
+          'Character context required',
+          'CHARACTER_CONTEXT_REQUIRED',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      const { actionId } = req.params;
+      const { content } = req.body;
+
+      if (!content) {
+        res.status(400).json(errorResponse(
+          'content is required',
+          'MISSING_REQUIRED_FIELDS',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      // Find the action
+      const action = await LocationAction.findById(actionId);
+      if (!action) {
+        res.status(404).json(errorResponse(
+          'Action not found',
+          'ACTION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      // Check permissions: only the creator can edit, or master
+      const isOwner = action.characterId === character.characterId;
+      const isMaster = character.gameplayRoles?.includes('master') || character.gameplayRoles?.includes('gestore');
+      
+      if (!isOwner && !isMaster) {
+        res.status(403).json(errorResponse(
+          'You can only edit your own actions',
+          'INSUFFICIENT_PERMISSIONS',
+          undefined,
+          403,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      // Check time limit: 5 minutes for non-masters
+      if (!isMaster) {
+        const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+        if (action.timestamp < fiveMinutesAgo) {
+          res.status(403).json(errorResponse(
+            'You can only edit actions within 5 minutes of posting',
+            'EDIT_TIME_EXPIRED',
+            undefined,
+            403,
+            getRequestId(req)
+          ));
+          return;
+        }
+
+        // Check if there's a subsequent action from the same character
+        const subsequentAction = await LocationAction.findOne({
+          locationId: action.locationId,
+          characterId: character.characterId,
+          timestamp: { $gt: action.timestamp }
+        });
+
+        if (subsequentAction) {
+          res.status(403).json(errorResponse(
+            'You cannot edit an action after posting a subsequent one',
+            'SUBSEQUENT_ACTION_EXISTS',
+            undefined,
+            403,
+            getRequestId(req)
+          ));
+          return;
+        }
+      }
+
+      // Add to edit history
+      const editHistory = action.editHistory || [];
+      editHistory.push({
+        content: action.content,
+        editedAt: new Date(),
+        editedBy: character.characterName
+      });
+
+      // Update action
+      action.content = content.trim();
+      action.editHistory = editHistory;
+      await action.save();
+
+      // Emit WebSocket notification
+      const io = req.app.get('io');
+      if (io) {
+        const roomName = `location_${action.locationId}`;
+        io.to(roomName).emit('location_message_notification', {
+          locationId: action.locationId,
+          actionId: action._id,
+          characterName: character.characterName,
+          actionType: action.actionType,
+          timestamp: action.timestamp,
+          edited: true
+        });
+      }
+
+      logger.info(`Location action updated: ${actionId} by ${character.characterName}`);
+
+      res.json(successResponse(
+        {
+          action: {
+            id: action._id,
+            content: action.content,
+            editHistory: action.editHistory
+          }
+        },
+        undefined,
+        getRequestId(req)
+      ));
+
+    } catch (error: any) {
+      const err = error as Error;
+      logger.error('Update location action error:', {
+        message: err.message,
+        stack: err.stack,
+        name: err.name
+      });
+      res.status(500).json(errorResponse(
+        'Failed to update location action',
+        'UPDATE_ACTION_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
+    }
+  }
+
+  /**
+   * Delete a location action
+   * DELETE /game/locations/actions/:actionId
+   */
+  static async deleteAction(req: Request, res: Response): Promise<void> {
+    try {
+      const character = req.character;
+      if (!character) {
+        res.status(401).json(errorResponse(
+          'Character context required',
+          'CHARACTER_CONTEXT_REQUIRED',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      const { actionId } = req.params;
+
+      // Find the action
+      const action = await LocationAction.findById(actionId);
+      if (!action) {
+        res.status(404).json(errorResponse(
+          'Action not found',
+          'ACTION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      // Check permissions: only master can delete
+      const isMaster = character.gameplayRoles?.includes('master') || 
+                       character.gameplayRoles?.includes('moderatore') || 
+                       character.gameplayRoles?.includes('gestore');
+      
+      if (!isMaster) {
+        res.status(403).json(errorResponse(
+          'Only masters can delete actions',
+          'INSUFFICIENT_PERMISSIONS',
+          undefined,
+          403,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      const locationId = action.locationId;
+
+      // Delete the action
+      await LocationAction.findByIdAndDelete(actionId);
+
+      // Emit WebSocket notification
+      const io = req.app.get('io');
+      if (io) {
+        const roomName = `location_${locationId}`;
+        io.to(roomName).emit('location_action_deleted', {
+          locationId,
+          actionId
+        });
+      }
+
+      logger.info(`Location action deleted: ${actionId} by ${character.characterName}`);
+
+      res.json(successResponse(
+        { deleted: true },
+        undefined,
+        getRequestId(req)
+      ));
+
+    } catch (error: any) {
+      const err = error as Error;
+      logger.error('Delete location action error:', {
+        message: err.message,
+        stack: err.stack,
+        name: err.name
+      });
+      res.status(500).json(errorResponse(
+        'Failed to delete location action',
+        'DELETE_ACTION_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
+    }
+  }
+
+  /**
+   * Create a social conflict action
+   * POST /game/locations/actions/social-conflict
+   */
+  static async createSocialConflict(req: Request, res: Response): Promise<void> {
+    try {
+      const character = req.character;
+      if (!character) {
+        res.status(401).json(errorResponse(
+          'Character context required',
+          'CHARACTER_CONTEXT_REQUIRED',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      const {
+        locationId,
+        attackerSkill,
+        attackerValue,
+        defenderCharacterId,
+        content,
+        isHidden,
+        lieText
+      } = req.body;
+
+      // Validate required fields
+      if (!locationId || !attackerSkill || !defenderCharacterId || !content) {
+        res.status(400).json(errorResponse(
+          'locationId, attackerSkill, defenderCharacterId, and content are required',
+          'MISSING_REQUIRED_FIELDS',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      // Determine defender skill automatically from attacker skill
+      const defenderSkill = getDefensiveSkill(attackerSkill);
+      if (!defenderSkill) {
+        res.status(400).json(errorResponse(
+          `Invalid attacker skill: ${attackerSkill} is not a valid social skill`,
+          'INVALID_ATTACKER_SKILL',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      // Retrieve defender character and their skill value
+      const defenderCharacter = await Character.findById(defenderCharacterId);
+      if (!defenderCharacter) {
+        res.status(404).json(errorResponse(
+          'Defender character not found',
+          'DEFENDER_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      // Get defender skill value (handle both number and SkillBreakdown)
+      const defenderSkillData = defenderCharacter.skills?.get(defenderSkill);
+      let defenderValue = 0;
+      
+      if (defenderSkillData !== undefined) {
+        if (typeof defenderSkillData === 'number') {
+          defenderValue = defenderSkillData;
+        } else if (defenderSkillData && typeof defenderSkillData === 'object' && 'total' in defenderSkillData) {
+          defenderValue = defenderSkillData.total;
+        }
+      }
+
+      // If skill doesn't exist or is 0, use default value of 1 (minimum skill level)
+      if (defenderValue === 0) {
+        defenderValue = 1;
+        logger.warn(`Defender skill ${defenderSkill} not found or is 0 for character ${defenderCharacterId}, using default value of 1`);
+      }
+
+      // Roll dice for both characters
+      const attackerRoll = LocationActionsController.rollDice('1d100').result;
+      const defenderRoll = LocationActionsController.rollDice('1d100').result;
+
+      // Calculate conflict result
+      const conflictResult = calculateSocialConflict(
+        attackerSkill,
+        attackerValue,
+        attackerRoll,
+        defenderSkill,
+        defenderValue,
+        defenderRoll,
+        isHidden || attackerSkill === 'Raggirare',
+        lieText,
+        character.characterName
+      );
+
+      // Create action for attacker
+      const isRaggirare = attackerSkill === 'Raggirare';
+      const isHiddenRoll = isHidden || isRaggirare;
+      
+      const actionData: any = {
+        actionType: 'standard',
+        characterId: character.characterId,
+        characterName: character.characterName,
+        characterSurname: character.characterSurname,
+        content: content.trim(),
+        locationId,
+        timestamp: new Date(),
+        visibility: 'public',
+        characterRoles: character.gameplayRoles || [],
+        isHidden: isHiddenRoll
+      };
+
+      // For Raggirare: only include socialConflict if defender detected something
+      // For other social conflicts: always include socialConflict
+      if (isRaggirare) {
+        // Only include socialConflict if defender wins (detected something)
+        if (!conflictResult.attackerWins && conflictResult.messageForDefender) {
+          actionData.socialConflict = {
+            type: attackerSkill,
+            attackerSkill,
+            defenderSkill,
+            attackerRoll,
+            defenderRoll,
+            result: conflictResult.result,
+            attackerSuccessDegree: conflictResult.attackerSuccessDegree,
+            defenderSuccessDegree: conflictResult.defenderSuccessDegree,
+            messageForDefender: conflictResult.messageForDefender,
+            visibleToDefenderOnly: true // Only visible to defender
+          };
+          actionData.targetCharacters = [defenderCharacterId]; // Only defender sees this
+        }
+        // If attacker wins, no socialConflict data is included (attacker sees nothing)
+      } else {
+        // Normal social conflicts: always include socialConflict
+        actionData.socialConflict = {
+          type: attackerSkill,
+          attackerSkill,
+          defenderSkill,
+          attackerRoll,
+          defenderRoll,
+          result: conflictResult.result,
+          attackerSuccessDegree: conflictResult.attackerSuccessDegree,
+          defenderSuccessDegree: conflictResult.defenderSuccessDegree
+        };
+      }
+
+      const savedAction = await LocationAction.createAction(actionData);
+
+      // Emit WebSocket notification
+      const io = req.app.get('io');
+      if (io) {
+        const roomName = `location_${locationId}`;
+        io.to(roomName).emit('location_message_notification', {
+          locationId,
+          actionId: savedAction._id,
+          characterName: character.characterName,
+          actionType: 'standard',
+          timestamp: savedAction.timestamp
+        });
+      }
+
+      logger.info(`Social conflict created: ${attackerSkill} vs ${defenderSkill} by ${character.characterName}`);
+
+      // Prepare response: attacker should never see socialConflict for Raggirare
+      const responseData: any = {
+        action: {
+          id: savedAction._id
+        }
+      };
+      
+      // Only include socialConflict if it's not hidden (not Raggirare)
+      if (!isRaggirare) {
+        responseData.action.socialConflict = conflictResult;
+        responseData.action.messageForAttacker = conflictResult.messageForAttacker;
+      }
+      // For Raggirare, attacker gets no information about the result
+
+      res.json(successResponse(
+        responseData,
+        undefined,
+        getRequestId(req)
+      ));
+
+    } catch (error: any) {
+      const err = error as Error;
+      logger.error('Create social conflict error:', {
+        message: err.message,
+        stack: err.stack,
+        name: err.name
+      });
+      res.status(500).json(errorResponse(
+        'Failed to create social conflict',
+        'CREATE_SOCIAL_CONFLICT_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
+    }
+  }
+
+  /**
+   * Clear all actions from a location (master only)
+   * DELETE /game/locations/:locationId/actions
+   */
+  static async clearChat(req: Request, res: Response): Promise<void> {
+    try {
+      const character = req.character;
+      if (!character) {
+        res.status(401).json(errorResponse(
+          'Character context required',
+          'CHARACTER_CONTEXT_REQUIRED',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      const { locationId } = req.params;
+
+      // Check permissions: only master can clear chat
+      const isMaster = character.gameplayRoles?.includes('master') || 
+                       character.gameplayRoles?.includes('moderatore') || 
+                       character.gameplayRoles?.includes('gestore');
+      
+      if (!isMaster) {
+        res.status(403).json(errorResponse(
+          'Only masters can clear chat',
+          'INSUFFICIENT_PERMISSIONS',
+          undefined,
+          403,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      // Delete all actions for this location
+      const result = await LocationAction.deleteMany({ locationId });
+
+      // Emit WebSocket notification
+      const io = req.app.get('io');
+      if (io) {
+        const roomName = `location_${locationId}`;
+        io.to(roomName).emit('location_chat_cleared', {
+          locationId,
+          clearedBy: character.characterName
+        });
+      }
+
+      logger.info(`Location chat cleared: ${locationId} by ${character.characterName}, deleted ${result.deletedCount} actions`);
+
+      res.json(successResponse(
+        { deletedCount: result.deletedCount },
+        undefined,
+        getRequestId(req)
+      ));
+
+    } catch (error: any) {
+      const err = error as Error;
+      logger.error('Clear chat error:', {
+        message: err.message,
+        stack: err.stack,
+        name: err.name
+      });
+      res.status(500).json(errorResponse(
+        'Failed to clear chat',
+        'CLEAR_CHAT_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
+    }
   }
 }

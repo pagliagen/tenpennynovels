@@ -71,7 +71,7 @@ function LocationChatContent({ locationId, gameData }: { locationId: string; gam
     const loadLocationData = async () => {
       try {
         const locationResult = await GameApiService.getLocation(locationId);
-        if (locationResult.success) {
+        if (locationResult.result) {
           setLocationData(locationResult);
         }
       } catch (error) {
@@ -183,16 +183,17 @@ function LocationChatContent({ locationId, gameData }: { locationId: string; gam
           characterStatus={gameData.character.status || 'UNKNOWN'}
           characterData={{
             ...gameData.character,
-            stats: {},
-            skills: {},
-            equippedItems: []
+            stats: gameData.character.stats || {},
+            skills: gameData.character.skills || {},
+            dynamicSkills: gameData.character.dynamicSkills || [],
+            equippedItems: gameData.character.equippedItems || []
           }}
-          skillTemplates={(gameData.draftConfiguration?.baseSkills || []).map(skill => ({
+          skillTemplates={(gameData.skillTemplates || gameData.draftConfiguration?.baseSkills || []).map(skill => ({
             name: skill.name,
             baseValue: skill.baseValue,
             category: skill.category,
-            canRollWithoutPoints: false,
-            isPlaceholder: false
+            canRollWithoutPoints: 'canRollWithoutPoints' in skill ? skill.canRollWithoutPoints : false,
+            isPlaceholder: 'isPlaceholder' in skill ? skill.isPlaceholder : false
           }))}
         />
       )}

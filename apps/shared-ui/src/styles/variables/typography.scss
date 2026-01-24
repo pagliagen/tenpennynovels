@@ -2,6 +2,8 @@
 // TenpennyNovels Design System - Typography
 // =============================================================================
 
+@use "colors" as *;
+
 // Font Families
 $font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 $font-secondary: 'Cinzel', serif;  // Victorian accent font

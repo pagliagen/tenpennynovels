@@ -96,6 +96,11 @@ export class GameController {
       // For tickets, we need to mock workable count until actual implementation
       const workableTicketsCount = canAccessTickets ? Math.floor(Math.random() * 5) : 0; // Mock data
 
+      // Fetch base skills from database (for all character statuses, not just DRAFT)
+      const baseSkills = await (Skill.find({ visible: true })
+        .sort({ sortOrder: 1, name: 1 })
+        .lean() as any);
+
       // Prepare response data
       const responseData: any = {
         character: {
@@ -134,16 +139,26 @@ export class GameController {
           prerequisites: item.prerequisites,
           properties: item.properties,
           rarity: item.rarity
+        })),
+        // Include skillTemplates for all character statuses (not just DRAFT)
+        skillTemplates: baseSkills.map((skill: any) => ({
+          id: skill._id.toString(),
+          name: skill.name,
+          baseValue: skill.baseValue,
+          category: skill.category,
+          description: skill.description,
+          defaultSkill: skill.defaultSkill,
+          sortOrder: skill.sortOrder,
+          isPlaceholder: skill.isPlaceholder || false,
+          placeholderType: skill.placeholderType || undefined,
+          predefinedValues: skill.predefinedValues || [],
+          canRollWithoutPoints: skill.canRollWithoutPoints !== undefined ? skill.canRollWithoutPoints : true
         }))
       };
 
       // Add DRAFT-specific configuration if character is in DRAFT status
       logger.info('Character status check', { status: character.status, isDraft: character.status === 'DRAFT' });
       if (character.status === 'DRAFT') {
-        // Fetch base skills from database
-        const baseSkills = await (Skill.find({ visible: true })
-          .sort({ sortOrder: 1, name: 1 })
-          .lean() as any);
 
 
         // Fetch base occupations for character creation

@@ -12,6 +12,8 @@ export { Skill, type ISkill } from './Skill';
 // Location System
 export { Location, type ILocation } from './Location';
 export { LocationAction, type ILocationAction } from './LocationAction';
+export { LocationTag, type ILocationTag } from './LocationTag';
+export { BlockNotes, type IBlockNotes } from './BlockNotes';
 
 // Corporation System
 export { 

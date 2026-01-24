@@ -141,6 +141,66 @@ export class LocationController {
       // Get chat history for the location
       const chatHistory = await (LocationAction.getLocationHistory(locationId, characterId, 50) as any);
 
+      // Get occupants from location, or populate from characters with currentLocation if empty
+      let occupants = location.occupants?.map((occupant: any) => ({
+        characterId: occupant.characterId,
+        characterName: occupant.characterName,
+        enteredAt: occupant.enteredAt,
+        lastSeen: occupant.lastSeen,
+        currentTag: occupant.currentTag || null
+      })) || [];
+
+      // If occupants list is empty, populate it from characters with currentLocation matching this location
+      if (occupants.length === 0) {
+        const charactersInLocation = await Character.find({
+          currentLocation: locationId,
+          status: { $ne: 'DELETED' }
+        })
+        .select('_id name currentLocation')
+        .lean() as any[];
+
+        occupants = charactersInLocation.map((char: any) => ({
+          characterId: char._id,
+          characterName: char.name,
+          enteredAt: new Date(), // Approximate, we don't know exact entry time
+          lastSeen: new Date(),
+          currentTag: null // Will be loaded from location.occupants if available
+        }));
+
+        // Try to get currentTag from location.occupants if character exists there
+        if (location.occupants && location.occupants.length > 0) {
+          occupants.forEach((occ: any) => {
+            const locationOccupant = location.occupants.find((lo: any) => 
+              lo.characterId.toString() === occ.characterId.toString()
+            );
+            if (locationOccupant) {
+              occ.currentTag = locationOccupant.currentTag || null;
+              occ.enteredAt = locationOccupant.enteredAt;
+              occ.lastSeen = locationOccupant.lastSeen;
+            }
+          });
+        }
+
+        logger.info(`Populated occupants from currentLocation for ${locationId}: ${occupants.length} characters`);
+      }
+
+      // Ensure current character is in occupants list if they're in this location
+      const currentCharacterInLocation = character.currentLocation?.toString() === locationId;
+      if (currentCharacterInLocation) {
+        const isAlreadyInOccupants = occupants.some((occ: any) => 
+          occ.characterId.toString() === characterId.toString()
+        );
+        if (!isAlreadyInOccupants) {
+          occupants.push({
+            characterId: character._id,
+            characterName: character.name,
+            enteredAt: new Date(),
+            lastSeen: new Date(),
+            currentTag: null
+          });
+        }
+      }
+
       res.json(successResponse(
         {
           location: {
@@ -151,12 +211,7 @@ export class LocationController {
             accessible: true,
             hasShop: location.settings.shop || false,
             private: location.settings.private || false,
-            occupants: location.occupants?.map((occupant: any) => ({
-              characterId: occupant.characterId,
-              characterName: occupant.characterName,
-              enteredAt: occupant.enteredAt,
-              lastSeen: occupant.lastSeen
-            })) || [],
+            occupants: occupants,
             availableItems,
             npcs: location.npcs?.map((npc: any) => ({
               id: npc.id,
@@ -164,18 +219,48 @@ export class LocationController {
               isActive: npc.isActive || false
             })) || []
           },
-          chatHistory: chatHistory.map((action: any) => ({
-            id: action._id,
-            actionType: action.actionType,
-            characterId: action.characterId,
-            characterName: action.characterName,
-            content: action.content,
-            timestamp: action.timestamp.toISOString(),
-            visibility: action.visibility,
-            diceResult: action.diceResult,
-            itemEffect: action.itemEffect,
-            targetCharacters: action.targetCharacters
-          }))
+          chatHistory: chatHistory.map((action: any) => {
+            const mappedAction: any = {
+              id: action._id,
+              actionType: action.actionType,
+              characterId: action.characterId,
+              characterName: action.characterName,
+              content: action.content,
+              timestamp: action.timestamp.toISOString(),
+              visibility: action.visibility,
+              diceResult: action.diceResult,
+              itemEffect: action.itemEffect,
+              targetCharacters: action.targetCharacters,
+              tags: action.tags || []
+            };
+            
+            // Filter socialConflict data based on visibility rules
+            if (action.socialConflict) {
+              const socialConflict = action.socialConflict;
+              
+              // If socialConflict is visible only to defender
+              if (socialConflict.visibleToDefenderOnly) {
+                const isAttacker = action.characterId === characterId;
+                const isDefender = action.targetCharacters?.includes(characterId);
+                
+                // Attacker should NEVER see socialConflict data for Raggirare
+                if (isAttacker) {
+                  // Don't include socialConflict
+                }
+                // Defender can see it only if they detected something (result !== 'victory')
+                else if (isDefender && socialConflict.result !== 'victory') {
+                  mappedAction.socialConflict = socialConflict;
+                }
+                // Other users should never see it
+                // (already handled by not including it)
+              } else {
+                // For non-hidden social conflicts, everyone can see them
+                mappedAction.socialConflict = socialConflict;
+              }
+            }
+            
+            return mappedAction;
+          })
         },
         undefined,
         getRequestId(req)
@@ -208,6 +293,7 @@ export class LocationController {
   static async enterLocation(req: Request, res: Response): Promise<void> {
     try {
       const { locationId } = req.params;
+      const { currentTag } = req.body; // Optional tag from request body
       const characterId = req.character!.characterId;
 
       // Get character and location
@@ -246,7 +332,7 @@ export class LocationController {
       await character.save();
 
       // Add to location occupants
-      await LocationController.addOccupant(location, character);
+      await LocationController.addOccupant(location, character, currentTag);
 
       // TODO: Publish Redis event for WebSocket
       // redis.publish('location:character_entered', { locationId, characterId, characterName });
@@ -503,12 +589,16 @@ export class LocationController {
     });
   }
 
-  private static async addOccupant(location: any, character: any): Promise<void> {
+  private static async addOccupant(location: any, character: any, currentTag?: string): Promise<void> {
     // Remove character from all other locations first
     await (Location.updateMany(
       { 'occupants.characterId': character.id },
       { $pull: { occupants: { characterId: character.id } } }
     ) as any);
+
+    // Check if occupant already exists in this location to preserve tag
+    const existingOccupant = location.occupants?.find((o: any) => o.characterId.equals(character.id));
+    const tagToUse = currentTag !== undefined ? currentTag : existingOccupant?.currentTag;
 
     // Add to current location with new structure
     const occupant = {
@@ -516,13 +606,169 @@ export class LocationController {
       characterName: character.name,
       enteredAt: new Date(),
       lastSeen: new Date(),
-      isActive: true
+      isActive: true,
+      currentTag: tagToUse
     };
 
     await (Location.updateOne(
       { _id: location.id },
       { $addToSet: { occupants: occupant } }
     ) as any);
+  }
+
+  /**
+   * GET /game/locations/:locationId/occupants
+   * Get list of occupants for a location
+   */
+  static async getLocationOccupants(req: Request, res: Response): Promise<void> {
+    try {
+      const { locationId } = req.params;
+      const characterId = req.character!.characterId;
+
+      const location = await Location.findById(locationId);
+      if (!location) {
+        res.status(404).json(errorResponse(
+          'Location non trovata',
+          'LOCATION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      // Get occupants from location, or populate from characters with currentLocation if empty
+      let occupants = location.occupants?.map((occupant: any) => ({
+        characterId: occupant.characterId,
+        characterName: occupant.characterName,
+        enteredAt: occupant.enteredAt,
+        lastSeen: occupant.lastSeen,
+        currentTag: occupant.currentTag || null
+      })) || [];
+
+      // If occupants list is empty, populate it from characters with currentLocation matching this location
+      if (occupants.length === 0) {
+        const charactersInLocation = await Character.find({
+          currentLocation: locationId,
+          status: { $ne: 'DELETED' }
+        })
+        .select('_id name currentLocation')
+        .lean() as any[];
+
+        occupants = charactersInLocation.map((char: any) => ({
+          characterId: char._id,
+          characterName: char.name,
+          enteredAt: new Date(),
+          lastSeen: new Date(),
+          currentTag: null
+        }));
+
+        // Try to get currentTag from location.occupants if character exists there
+        if (location.occupants && location.occupants.length > 0) {
+          occupants.forEach((occ: any) => {
+            const locationOccupant = location.occupants.find((lo: any) => 
+              lo.characterId.toString() === occ.characterId.toString()
+            );
+            if (locationOccupant) {
+              occ.currentTag = locationOccupant.currentTag || null;
+              occ.enteredAt = locationOccupant.enteredAt;
+              occ.lastSeen = locationOccupant.lastSeen;
+            }
+          });
+        }
+      }
+
+      // Ensure current character is in occupants list if they're in this location
+      const character = await Character.findById(characterId);
+      const currentCharacterInLocation = character?.currentLocation?.toString() === locationId;
+      if (currentCharacterInLocation) {
+        const isAlreadyInOccupants = occupants.some((occ: any) => 
+          occ.characterId.toString() === characterId.toString()
+        );
+        if (!isAlreadyInOccupants) {
+          occupants.push({
+            characterId: character._id,
+            characterName: character.name,
+            enteredAt: new Date(),
+            lastSeen: new Date(),
+            currentTag: null
+          });
+        }
+      }
+
+      res.json(successResponse(
+        { occupants },
+        undefined,
+        getRequestId(req)
+      ));
+
+    } catch (error: any) {
+      logger.error('Get location occupants error:', {
+        message: error.message,
+        stack: error.stack
+      });
+      
+      res.status(500).json(errorResponse(
+        'Errore nel recupero degli occupants',
+        'GET_OCCUPANTS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
+    }
+  }
+
+  /**
+   * PATCH /game/locations/:locationId/occupant-tag
+   * Update current tag for occupant in location
+   */
+  static async updateOccupantTag(req: Request, res: Response): Promise<void> {
+    try {
+      const { locationId } = req.params;
+      const { currentTag } = req.body;
+      const characterId = req.character!.characterId;
+
+      const location = await Location.findById(locationId);
+      if (!location) {
+        res.status(404).json(errorResponse(
+          'Location non trovata',
+          'LOCATION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      // Update occupant tag using schema method
+      await location.updateOccupantTag(characterId, currentTag || undefined);
+
+      logger.info('Occupant tag updated', {
+        characterId,
+        locationId,
+        currentTag
+      });
+
+      res.json(successResponse(
+        { currentTag },
+        undefined,
+        getRequestId(req)
+      ));
+
+    } catch (error: any) {
+      logger.error('Update occupant tag error:', {
+        message: error.message,
+        stack: error.stack
+      });
+      
+      res.status(500).json(errorResponse(
+        'Errore nell\'aggiornamento del tag',
+        'UPDATE_TAG_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
+    }
   }
 
   /**

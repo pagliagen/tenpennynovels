@@ -1,9 +1,10 @@
-@import "../../../shared-ui/src/styles/variables/colors";
-@import "../../../shared-ui/src/styles/variables/typography";
-@import "../../../shared-ui/src/styles/variables/spacing";
-@import "../../../shared-ui/src/styles/variables/breakpoints";
-@import "../../../shared-ui/src/styles/variables/shadows";
-@import "../../../shared-ui/src/styles/variables/borders";
+@use "sass:color";
+@use "../../../../shared-ui/src/styles/variables/colors" as *;
+@use "../../../../shared-ui/src/styles/variables/typography" as *;
+@use "../../../../shared-ui/src/styles/variables/spacing" as *;
+@use "../../../../shared-ui/src/styles/variables/breakpoints" as *;
+@use "../../../../shared-ui/src/styles/variables/shadows" as *;
+@use "../../../../shared-ui/src/styles/variables/borders" as *;
 
 .locationChat {
   display: flex;
@@ -51,6 +52,7 @@
   flex-direction: column;
   gap: $spacing-md;
   background-color: $bg-secondary;
+  position: relative; // For tooltip positioning
   
   &::-webkit-scrollbar {
     width: 8px;
@@ -89,6 +91,11 @@
   border: 1px solid transparent;
   background-color: transparent; // Standard messages without background
   color: $text-primary;
+  transition: opacity 0.2s ease;
+  
+  &.messageWithDifferentTag {
+    opacity: 0.5;
+  }
   
   &.masterMessage {
     background-color: rgba($gold-primary, 0.1);
@@ -159,6 +166,12 @@
     flex-shrink: 0;
     text-transform: uppercase;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: transform 0.2s, box-shadow 0.2s;
+    
+    &:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 8px rgba($gold-primary, 0.4);
+    }
   }
   
   .messageInfo {
@@ -177,6 +190,12 @@
       color: $gold-primary;
       font-size: 14px;
       font-family: $font-primary;
+      transition: color 0.2s;
+      
+      &:hover {
+        color: color.adjust($gold-primary, $lightness: 10%);
+        text-decoration: underline;
+      }
     }
     
     .timestamp {
@@ -189,6 +208,40 @@
   // Hide action type from display (user requested)
   .actionType {
     display: none;
+  }
+  
+  .messageTags {
+    display: flex;
+    gap: $spacing-xs;
+    margin-bottom: $spacing-xs;
+    flex-wrap: wrap;
+    
+    .messageTag {
+      display: inline-block;
+      padding: 2px 8px;
+      background-color: rgba($gold-primary, 0.15);
+      border: 1px solid rgba($gold-primary, 0.3);
+      border-radius: $radius-sm;
+      font-size: 11px;
+      color: $gold-primary;
+      font-weight: 500;
+      transition: all 0.2s;
+      
+      &:hover {
+        background-color: rgba($gold-primary, 0.25);
+        border-color: $gold-primary;
+        transform: scale(1.05);
+      }
+    }
+  }
+}
+
+.tooltipContainer {
+  z-index: 1000;
+  pointer-events: none;
+  
+  > * {
+    pointer-events: auto;
   }
 }
 
@@ -205,6 +258,28 @@
   .messageText {
     white-space: pre-wrap;
     word-wrap: break-word;
+    display: flex;
+    align-items: center;
+    gap: $spacing-xs;
+    
+    .detectionIconButton {
+      background: none;
+      border: none;
+      font-size: 18px;
+      cursor: pointer;
+      padding: 4px;
+      border-radius: $radius-sm;
+      transition: background-color 0.2s;
+      flex-shrink: 0;
+      
+      &:hover {
+        background-color: rgba($gold-primary, 0.2);
+      }
+      
+      &:active {
+        transform: scale(0.95);
+      }
+    }
   }
   
   .diceResult {
@@ -276,6 +351,98 @@
       margin-top: $spacing-xs;
     }
   }
+  
+  .socialConflictResult {
+    padding: $spacing-md;
+    background-color: rgba($bg-tertiary, 0.5);
+    border-radius: $radius-md;
+    border-left: 4px solid $gold-primary;
+    margin-top: $spacing-sm;
+    
+    .socialConflictHeader {
+      display: flex;
+      align-items: center;
+      gap: $spacing-sm;
+      margin-bottom: $spacing-sm;
+      font-weight: bold;
+      color: $gold-primary;
+      
+      .conflictIcon {
+        font-size: 18px;
+      }
+    }
+    
+    .socialConflictDetails {
+      display: flex;
+      flex-direction: column;
+      gap: $spacing-xs;
+      font-size: 13px;
+      
+      .conflictRoll {
+        display: flex;
+        align-items: center;
+        gap: $spacing-sm;
+        padding: $spacing-xs 0;
+        
+        .rollValue {
+          font-weight: bold;
+          color: $text-primary;
+          font-size: 14px;
+        }
+        
+        .successDegree {
+          font-size: 11px;
+          color: $text-secondary;
+          font-style: italic;
+        }
+      }
+      
+      .conflictOutcome {
+        display: flex;
+        align-items: center;
+        gap: $spacing-xs;
+        margin-top: $spacing-xs;
+        padding: $spacing-xs $spacing-sm;
+        border-radius: $radius-sm;
+        font-weight: bold;
+        
+        &.victory {
+          background-color: rgba($success-text, 0.15);
+          color: $success-text;
+        }
+        
+        &.defeat {
+          background-color: rgba($error-text, 0.15);
+          color: $error-text;
+        }
+        
+        .victoryIcon {
+          color: $success-text;
+        }
+        
+        .defeatIcon {
+          color: $error-text;
+        }
+        
+        .detectionIcon,
+        .suspicionIcon,
+        .partialIcon {
+          font-size: 14px;
+        }
+      }
+      
+      .detectionMessage {
+        margin-top: $spacing-sm;
+        padding: $spacing-sm $spacing-md;
+        background-color: rgba($gold-primary, 0.15);
+        border-left: 3px solid $gold-primary;
+        border-radius: $radius-sm;
+        font-size: 13px;
+        color: $text-primary;
+        font-style: italic;
+      }
+    }
+  }
 }
 
 .typingIndicator {
@@ -345,19 +512,22 @@
 
 .messageInputContainer {
   display: flex;
-  gap: 12px;
+  flex-direction: column;
+  gap: $spacing-sm;
   
   .messageInput {
-    flex: 1;
-    padding: $spacing-md;
+    width: 100%;
     border: 2px solid $border-secondary;
     border-radius: $radius-lg;
     background-color: $input-bg;
     color: $input-text;
-    resize: vertical;
-    min-height: 44px;
+    resize: none;
+    min-height: 60px;
+    height: 60px;
     font-family: $font-primary;
     font-size: 14px;
+    padding: $spacing-md;
+    box-sizing: border-box;
     
     &:focus {
       outline: none;
@@ -382,6 +552,7 @@
     cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    min-width: 100px;
     
     &:hover:not(:disabled) {
       background: $btn-primary-hover;
@@ -395,6 +566,162 @@
       cursor: not-allowed;
       opacity: $opacity-disabled;
     }
+  }
+}
+
+// Turn order display
+.turnOrderContainer {
+  padding: $spacing-sm $spacing-lg;
+  background-color: $bg-secondary;
+  border-bottom: 1px solid $border-secondary;
+}
+
+// Message input container enhancements
+.inputHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-xs;
+  
+  .characterCounter {
+    font-size: 12px;
+    color: $text-secondary;
+    font-weight: 500;
+  }
+  
+  .expandCollapseButton {
+    background: $bg-tertiary;
+    border: 1px solid $border-secondary;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    color: $text-secondary;
+    padding: 4px 8px;
+    border-radius: $radius-sm;
+    transition: all 0.2s;
+    min-width: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    &:hover {
+      background-color: $bg-secondary;
+      color: $gold-primary;
+      border-color: $gold-primary;
+    }
+    
+    &:active {
+      transform: scale(0.95);
+    }
+  }
+}
+
+.textareaWrapper {
+  position: relative;
+  
+  .messageInput {
+    transition: height 0.3s ease;
+    
+    &.expanded {
+      min-height: 200px;
+      max-height: 200px;
+    }
+  }
+}
+
+.inputActions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: $spacing-md;
+  
+  .leftActions {
+    display: flex;
+    gap: $spacing-sm;
+    align-items: center;
+    flex: 1;
+  }
+  
+  .rightActions {
+    display: flex;
+    gap: $spacing-sm;
+    align-items: center;
+  }
+  
+  .actionButton {
+    padding: 8px 16px;
+    background-color: $bg-tertiary;
+    border: 1px solid $border-secondary;
+    border-radius: $radius-md;
+    color: $text-primary;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    
+    &:hover {
+      background-color: rgba($gold-primary, 0.1);
+      border-color: $gold-primary;
+    }
+    
+    &:active {
+      transform: scale(0.98);
+    }
+    
+    &.active {
+      background-color: rgba($gold-primary, 0.2);
+      border-color: $gold-primary;
+      color: $gold-primary;
+    }
+  }
+  
+  .diceCommandsButton {
+    padding: 8px 16px;
+    background-color: $bg-tertiary;
+    border: 1px solid $border-secondary;
+    border-radius: $radius-md;
+    color: $text-primary;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    
+    &:hover {
+      background-color: rgba($gold-primary, 0.1);
+      border-color: $gold-primary;
+    }
+    
+    &:active {
+      transform: scale(0.98);
+    }
+  }
+  
+  .blockNotesButton {
+    padding: 8px 16px;
+    background-color: $bg-tertiary;
+    border: 1px solid $border-secondary;
+    border-radius: $radius-md;
+    color: $text-primary;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+    
+    &:hover {
+      background-color: $bg-primary;
+      border-color: $gold-primary;
+    }
+  }
+  
+  .characterCounter {
+    font-size: 12px;
+    color: $text-secondary;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  
+  .masterActions {
+    margin-top: $spacing-sm;
   }
 }
 

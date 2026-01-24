@@ -260,7 +260,7 @@ export const WizardStep3_Skills: React.FC<WizardStep3Props> = ({
 
   // Calculate social class from FINANZA skill
   const calculateSocialClass = (finanzaValue: number) => {
-    return socialClassRanges.find(range => finanzaValue >= range.min && finanzaValue <= range.max) || socialClassRanges[0];
+    return socialClassRanges.find((range: { min: number; max: number }) => finanzaValue >= range.min && finanzaValue <= range.max) || socialClassRanges[0];
   };
   // Calculate skill points from config
   const calculateSkillPoints = (intelligence: number) => {

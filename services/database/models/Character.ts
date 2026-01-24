@@ -8,6 +8,7 @@ export interface SkillBreakdown {
   requiredBonus: number;      // Auto-applied: (REQUIRED_SKILL_MINIMUM - base) for required skills
   manualPoints: number;       // Player-allocated points (ONLY these count toward budget)
   occupationBonus: number;    // From occupation.bonusSkills (BONUS_SKILL_POINTS)
+  category?: string;          // Skill category (general, combat, knowledge, social, artistic, technical, etc.)
 }
 
 export interface ICharacter extends Document {
@@ -133,7 +134,7 @@ export interface ICharacter extends Document {
   reviewHistory: {
     reviewedBy: Schema.Types.ObjectId;
     reviewedAt: Date;
-    action: 'approve' | 'reject' | 'request_changes';
+    action: 'approve' | 'reject' | 'request_changes' | 'draft';
     note?: string;
     feedback?: {
       stats?: string;
@@ -532,7 +533,7 @@ const CharacterSchema = new Schema<ICharacter>({
     action: {
       type: String,
       required: true,
-      enum: ['approve', 'reject', 'request_changes']
+      enum: ['approve', 'reject', 'request_changes', 'draft']
     },
     note: String,
     feedback: {

@@ -2,6 +2,9 @@
 // TenpennyNovels Design System - Animation Mixins
 // =============================================================================
 
+@use "../variables/colors" as *;
+@use "../variables/typography" as *;
+
 // Victorian spinner for loading states
 @mixin victorian-spinner($size: 18px) {
   width: $size;
@@ -95,11 +98,11 @@
 
 // Pulse animation
 @mixin pulse($color: $gold-primary, $duration: 2s) {
-  animation: pulse-#{$color} $duration ease-in-out infinite;
+  animation: pulse-gold $duration ease-in-out infinite;
 }
 
-// Generate pulse keyframes for different colors
-@keyframes pulse-#{$gold-primary} {
+// Generate pulse keyframes for gold color
+@keyframes pulse-gold {
   0%, 100% {
     box-shadow: 0 0 5px rgba($gold-primary, 0.5);
   }

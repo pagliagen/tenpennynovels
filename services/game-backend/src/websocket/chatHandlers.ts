@@ -302,8 +302,6 @@ function rollDice(diceSpec: string): { dice: string; result: number; success?: b
   
   const result = total + modifier;
   
-  // For d100 rolls, determine success (lower is better in Call of Cthulhu)
-  const success = diceSize === 100 ? result <= 50 : undefined; // Default success threshold
-  
-  return { dice: diceSpec, result, success };
+  // For normal dice rolls, return only the result without success/failure judgment
+  return { dice: diceSpec, result };
 }

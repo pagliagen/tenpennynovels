@@ -2,6 +2,8 @@
 // TenpennyNovels Design System - Borders & Radius
 // =============================================================================
 
+@use "colors" as *;
+
 // Border Radius
 $radius-none: 0;
 $radius-sm: 0.125rem;     // 2px

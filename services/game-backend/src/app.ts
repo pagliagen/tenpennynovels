@@ -20,6 +20,7 @@ import forumRoutes from './routes/forum';
 import documentsRoutes from './routes/documents';
 import ticketRoutes from './routes/tickets';
 import experienceRoutes from './routes/experienceRoutes';
+import skillRoutes from './routes/skills';
 import { housingRoutes } from './routes/housing-simple';
 import { AnalyticsMiddleware } from '../../shared/src/middleware/analyticsMiddleware';
 import { successResponse, errorResponse, getRequestId } from './utils/apiResponse';
@@ -155,6 +156,7 @@ app.use('/game', chatRoutes);
 app.use('/game', corporationRoutes);
 app.use('/game', ticketRoutes);
 app.use('/game', experienceRoutes);
+app.use('/game', skillRoutes);
 app.use('/game', housingRoutes);
 
 // Forum routes under /forum prefix

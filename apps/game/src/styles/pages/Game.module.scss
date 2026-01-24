@@ -1,9 +1,11 @@
-@import "../../../../shared-ui/src/styles/variables/colors";
-@import "../../../../shared-ui/src/styles/variables/typography";
-@import "../../../../shared-ui/src/styles/variables/spacing";
-@import "../../../../shared-ui/src/styles/variables/breakpoints";
-@import "../../../../shared-ui/src/styles/variables/shadows";
-@import "../../../../shared-ui/src/styles/variables/borders";
+@use "../../../../shared-ui/src/styles/variables/colors" as *;
+@use "../../../../shared-ui/src/styles/variables/typography" as *;
+@use "../../../../shared-ui/src/styles/variables/spacing" as *;
+@use "../../../../shared-ui/src/styles/variables/breakpoints" as *;
+@use "../../../../shared-ui/src/styles/variables/shadows" as *;
+@use "../../../../shared-ui/src/styles/mixins/buttons" as *;
+@use "../../../../shared-ui/src/styles/mixins/typography" as *;
+@use "../../../../shared-ui/src/styles/variables/borders" as *;
 
 // Game Page Styles
 // Victorian London RPG Theme

@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { Character, Location, Corporation, Occupation } from '../../../database/models';
+import { Character, Location, Corporation, Occupation, Skill } from '../../../database/models';
 import { ApiResponse } from '../types/game';
 import { logger } from '../utils/logger';
 import { AuthMiddleware } from '../middleware/auth';
@@ -500,37 +500,204 @@ export class CharacterController {
         allowedFields = limitedEditableFields;
       }
       
-      allowedFields.forEach((field: string) => {
-        if (filteredUpdates[field] !== undefined) {
-          // Special handling for skills Map - Mongoose Map requires special handling
-          if (field === 'skills' && filteredUpdates.skills) {
-            // Clear existing skills map
-            character.skills.clear();
-            // Set each skill value (supports both numbers and SkillBreakdown objects)
-            Object.entries(filteredUpdates.skills).forEach(([skillName, skillValue]) => {
-              character.skills.set(skillName, skillValue);
+      // Handle skills separately (needs async/await for database query)
+      if (filteredUpdates.skills && allowedFields.includes('skills')) {
+        // Solo per personaggi DRAFT: salvare tutte le skills, non solo quelle modificate
+        if (character.status === 'DRAFT') {
+          // Recupera tutte le base skills dal database
+          const baseSkills = await Skill.find({ visible: true })
+            .sort({ sortOrder: 1, name: 1 })
+            .lean();
+          
+          // Helper per calcolare il base value di una skill
+          const calculateSkillBaseValue = (skill: any): number => {
+            if (typeof skill.baseValue === 'number') {
+              return skill.baseValue;
+            }
+            if (typeof skill.baseValue === 'string') {
+              if (skill.baseValue.startsWith('VALUE:')) {
+                return parseInt(skill.baseValue.replace('VALUE:', '')) || 0;
+              }
+              if (skill.baseValue.startsWith('FORMULA:')) {
+                const formula = skill.baseValue.replace('FORMULA:', '');
+                const statValue = character.stats?.[formula.toLowerCase()] || 0;
+                return statValue;
+              }
+            }
+            return 0;
+          };
+          
+          // Converti skills esistenti del character in oggetto
+          const existingSkillsObj: any = {};
+          if (character.skills && character.skills instanceof Map) {
+            character.skills.forEach((value, key) => {
+              existingSkillsObj[key] = value;
             });
-            // Mark skills map as modified so Mongoose saves it
-            character.markModified('skills');
-          } else {
-            // Log per currentOccupation per debugging
-            if (field === 'currentOccupation') {
-              logger.info('Setting currentOccupation', {
-                field,
-                value: filteredUpdates[field],
-                valueType: typeof filteredUpdates[field],
-                before: character.currentOccupation
-              });
+          } else if (character.skills) {
+            Object.assign(existingSkillsObj, character.skills);
+          }
+          
+          // Crea un oggetto completo con tutte le skills
+          const allSkillsToSave: Record<string, any> = {};
+          
+          // Per ogni base skill, crea un SkillBreakdown completo
+          baseSkills.forEach((baseSkill: any) => {
+                const skillName = baseSkill.name;
+                const updatedSkillValue = filteredUpdates.skills[skillName];
+                const existingSkillValue = existingSkillsObj[skillName];
+                const baseValue = calculateSkillBaseValue(baseSkill);
+                
+                let breakdown: any;
+                
+                if (updatedSkillValue !== undefined) {
+                  // Skill modificata nel payload - usa quella
+                  if (updatedSkillValue && typeof updatedSkillValue === 'object' && 'total' in updatedSkillValue) {
+                    // È già un SkillBreakdown - assicurati che abbia la categoria
+                    breakdown = { ...updatedSkillValue, category: baseSkill.category };
+                  } else if (typeof updatedSkillValue === 'number') {
+                    // È un numero semplice - migra a SkillBreakdown
+                    breakdown = {
+                      total: updatedSkillValue,
+                      base: baseValue,
+                      requiredBonus: 0,
+                      manualPoints: updatedSkillValue - baseValue,
+                      occupationBonus: 0,
+                      category: baseSkill.category
+                    };
+                  } else {
+                    breakdown = {
+                      total: baseValue,
+                      base: baseValue,
+                      requiredBonus: 0,
+                      manualPoints: 0,
+                      occupationBonus: 0,
+                      category: baseSkill.category
+                    };
+                  }
+                } else if (existingSkillValue !== undefined) {
+                  // Skill esistente ma non modificata - preserva quella esistente
+                  if (existingSkillValue && typeof existingSkillValue === 'object' && 'total' in existingSkillValue) {
+                    // È già un SkillBreakdown - assicurati che abbia la categoria
+                    breakdown = { ...existingSkillValue, category: baseSkill.category };
+                  } else if (typeof existingSkillValue === 'number') {
+                    // È un numero semplice - migra a SkillBreakdown
+                    breakdown = {
+                      total: existingSkillValue,
+                      base: baseValue,
+                      requiredBonus: 0,
+                      manualPoints: existingSkillValue - baseValue,
+                      occupationBonus: 0,
+                      category: baseSkill.category
+                    };
+                  } else {
+                    breakdown = {
+                      total: baseValue,
+                      base: baseValue,
+                      requiredBonus: 0,
+                      manualPoints: 0,
+                      occupationBonus: 0,
+                      category: baseSkill.category
+                    };
+                  }
+                } else {
+                  // Nuova skill - crea SkillBreakdown di default
+                  breakdown = {
+                    total: baseValue,
+                    base: baseValue,
+                    requiredBonus: 0,
+                    manualPoints: 0,
+                    occupationBonus: 0,
+                    category: baseSkill.category
+                  };
+                }
+                
+            allSkillsToSave[skillName] = breakdown;
+          });
+          
+          // Aggiungi dynamic skills: prima quelle esistenti nel character, poi quelle dal payload (che sovrascrivono)
+          if (character.dynamicSkills && Array.isArray(character.dynamicSkills)) {
+            character.dynamicSkills.forEach((dynamicSkill: any) => {
+              // Aggiungi solo se non è già presente (potrebbe essere sovrascritta dal payload)
+              if (!allSkillsToSave[dynamicSkill.skillName]) {
+                allSkillsToSave[dynamicSkill.skillName] = {
+                  total: dynamicSkill.value || 0,
+                  base: 0,
+                  requiredBonus: 0,
+                  manualPoints: dynamicSkill.value || 0,
+                  occupationBonus: 0,
+                  category: dynamicSkill.category || 'general'
+                };
+              }
+            });
+          }
+          
+          // Aggiungi/aggiorna dynamic skills dal payload (sovrascrivono quelle esistenti)
+          if (filteredUpdates.dynamicSkills && Array.isArray(filteredUpdates.dynamicSkills)) {
+            filteredUpdates.dynamicSkills.forEach((dynamicSkill: any) => {
+              allSkillsToSave[dynamicSkill.skillName] = {
+                total: dynamicSkill.value || 0,
+                base: 0,
+                requiredBonus: 0,
+                manualPoints: dynamicSkill.value || 0,
+                occupationBonus: 0,
+                category: dynamicSkill.category || 'general'
+              };
+            });
+          }
+          
+          // Salva tutte le skills
+          character.skills.clear();
+          Object.entries(allSkillsToSave).forEach(([skillName, skillValue]) => {
+            character.skills.set(skillName, skillValue);
+          });
+          character.markModified('skills');
+          
+          logger.info('All skills saved (DRAFT character)', {
+            characterId: character._id,
+            totalSkillsSaved: Object.keys(allSkillsToSave).length,
+            modifiedSkillsCount: Object.keys(filteredUpdates.skills).length,
+            sampleSkills: Object.keys(allSkillsToSave).slice(0, 5)
+          });
+        } else {
+          // Per personaggi non-DRAFT, comportamento originale (solo skills modificate)
+          character.skills.clear();
+          const skillsToSave = Object.entries(filteredUpdates.skills);
+          skillsToSave.forEach(([skillName, skillValue]) => {
+            if (skillValue && typeof skillValue === 'object' && 'total' in skillValue) {
+              character.skills.set(skillName, skillValue);
+            } else {
+              character.skills.set(skillName, skillValue);
             }
-            character[field] = filteredUpdates[field];
-            // Assicurati che Mongoose riconosca il cambiamento per campi opzionali
-            if (field === 'currentOccupation') {
-              character.markModified('currentOccupation');
-              logger.info('currentOccupation set and marked as modified', {
-                after: character.currentOccupation,
-                hasValue: character.currentOccupation !== undefined
-              });
-            }
+          });
+          character.markModified('skills');
+          
+          logger.info('Skills updated (non-DRAFT character)', {
+            characterId: character._id,
+            totalSkillsToSave: skillsToSave.length
+          });
+        }
+      }
+      
+      // Handle other fields
+      allowedFields.forEach((field: string) => {
+        if (filteredUpdates[field] !== undefined && field !== 'skills') {
+          // Log per currentOccupation per debugging
+          if (field === 'currentOccupation') {
+            logger.info('Setting currentOccupation', {
+              field,
+              value: filteredUpdates[field],
+              valueType: typeof filteredUpdates[field],
+              before: character.currentOccupation
+            });
+          }
+          character[field] = filteredUpdates[field];
+          // Assicurati che Mongoose riconosca il cambiamento per campi opzionali
+          if (field === 'currentOccupation') {
+            character.markModified('currentOccupation');
+            logger.info('currentOccupation set and marked as modified', {
+              after: character.currentOccupation,
+              hasValue: character.currentOccupation !== undefined
+            });
           }
         }
       });
@@ -1071,6 +1238,31 @@ export class CharacterController {
       character.lastActive = new Date();
       
       await character.save();
+
+      // If entering a specific location (not empty), add character to location occupants
+      if (locationId && locationId !== '') {
+        try {
+          const location = await Location.findById(locationId);
+          if (location) {
+            // Check if character is already in occupants
+            const existingOccupant = location.occupants.find((occ: any) => 
+              occ.characterId.toString() === characterId.toString()
+            );
+            
+            if (!existingOccupant) {
+              // Add character to occupants
+              await location.addOccupant(character._id, character.name);
+              logger.info(`Character ${character.name} added to location ${location.name} occupants via setCharacterLocation`);
+            } else {
+              // Update last seen
+              await location.updateOccupantLastSeen(character._id);
+            }
+          }
+        } catch (error) {
+          // Don't fail the request if occupant update fails
+          logger.error('Failed to update location occupants:', error);
+        }
+      }
 
       res.json(successResponse(
         {

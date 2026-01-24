@@ -2,6 +2,12 @@
 // TenpennyNovels Design System - Button Mixins
 // =============================================================================
 
+@use "../variables/colors" as *;
+@use "../variables/typography" as *;
+@use "../variables/spacing" as *;
+@use "../variables/borders" as *;
+@use "../variables/shadows" as *;
+
 // Base button styles
 @mixin btn-base {
   display: inline-flex;

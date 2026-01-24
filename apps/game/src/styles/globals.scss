@@ -1,11 +1,14 @@
 // Game App Global Styles 
 // Note: main.scss contains global selectors incompatible with CSS Modules
 // Individual components import required variables directly
+@use "../../../shared-ui/src/styles/variables/colors" as *;
  
 // Game-specific overflow override (prevent scrolling for game interface)
 // Overrides shared-ui body overflow-x: hidden with complete overflow: hidden
 body {
   overflow: hidden !important; // More restrictive than shared-ui overflow-x: hidden
+  margin: 0 !important; // Remove default browser margin (8px)
+  background: $bg-primary !important; // Ensure black background (or defined color)
 }
 
 // Game interface specific styles
@@ -22,5 +25,3 @@ body {
     display: none !important;
   }
 }
-
-@import "../../../shared-ui/src/styles/index.scss";

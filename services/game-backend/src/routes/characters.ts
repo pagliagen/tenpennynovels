@@ -3,6 +3,7 @@ import { AuthMiddleware } from '../middleware/auth';
 import { CharacterValidationMiddleware } from '../middleware/characterValidation';
 import { CharacterController } from '../controllers/CharacterController';
 import { BackgroundQuestionController } from '../controllers/BackgroundQuestionController';
+import { SkillController } from '../controllers/SkillController';
 
 const router = Router();
 
@@ -28,6 +29,12 @@ router.get('/characters/public-list',
 router.get('/characters/:characterId', 
   AuthMiddleware.requireUserAuth, 
   CharacterController.getCharacter
+);
+
+// Character skills endpoint (for DiceCommandsModal)
+router.get('/characters/:characterId/skills',
+  AuthMiddleware.requireUserAuth,
+  SkillController.getCharacterSkillsForDice
 );
 
 router.get('/characters/public/:characterId', 
