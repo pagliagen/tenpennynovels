@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import styles from '@/styles/components/GameLayout.module.scss';
-import { AnalogClock } from './AnalogClock';
 import { CharactersList } from './CharactersList';
 import { NotificationBar } from './NotificationBar';
 import { DevNotificationTester } from './DevNotificationTester';
@@ -14,6 +13,9 @@ import { useCharacterSheets } from '@/contexts/CharacterSheetsContext';
 import { getLondonLocationId } from '@/utils/cache';
 import { OffGameChatPanel } from './offgame-chat/OffGameChatPanel';
 import { OnGameThreadPanel } from './ongame-mail/OnGameThreadPanel';
+import { TopBar } from './TopBar';
+import { CharacterProfile } from './sidebar/CharacterProfile';
+import { DateDisplay } from './sidebar/DateDisplay';
 
 interface Character {
   characterId: string;
@@ -105,6 +107,45 @@ export const GameLayout: React.FC<GameLayoutProps> = ({
     }
   };
 
+  // Handle location info click (Zona 7)
+  const handleLocationInfoClick = () => {
+    // TODO: Implementare modal/pannello con info location corrente
+    const currentLocationId = character?.currentLocationId;
+    if (currentLocationId) {
+      // Per ora naviga alla location, in futuro aprire modal con info
+      router.push(`/locations/${currentLocationId}`);
+    }
+  };
+
+  // Handle logout (Zona 11)
+  const handleLogoutClick = async () => {
+    try {
+      const API_BASE = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'https://api.tenpennynovels.com';
+      await fetch(`${API_BASE}/auth/logout`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      // Clear local storage and redirect
+      if (typeof window !== 'undefined') {
+        localStorage.clear();
+        sessionStorage.clear();
+        router.push('/');
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Redirect anyway
+      if (typeof window !== 'undefined') {
+        localStorage.clear();
+        sessionStorage.clear();
+        router.push('/');
+      }
+    }
+  };
+
   // Get current location name for display
   const getCurrentLocationName = () => {
     const currentLocationId = character?.currentLocationId;
@@ -189,31 +230,40 @@ export const GameLayout: React.FC<GameLayoutProps> = ({
   }, []);
 
   // Dynamic styles based on notification bar visibility and responsive breakpoints
-  const getRightContainerPadding = () => {
-    if (!showNotificationBar) return '0px';
-    
-    // Match the responsive breakpoints from NotificationBar CSS
-    if (windowWidth <= 550) return '40px';
-    if (windowWidth <= 768) return '45px';
-    if (windowWidth <= 1024) return '48px';
-    return '50px';
-  };
-
-  const rightContainerStyle = {
-    paddingRight: getRightContainerPadding()
-  };
+  // Padding-right rimosso come richiesto
+  const rightContainerStyle = {};
 
   return (
     <div className={styles.gameContainer}>
       {/* Sidebar - Full Height */}
       <aside className={styles.sidebar}>
         <div className={styles.sidebarContent}>
-          {/* Analog Clock at the top */}
-          <div className={styles.clockSection}>
-            <AnalogClock />
+          {/* Date Display */}
+          <div className={styles.dateSection}>
+            <DateDisplay />
           </div>
 
-          {/* Characters List */}
+          {/* Character Profile */}
+          <div className={styles.profileSection}>
+            <CharacterProfile />
+          </div>
+
+          {/* Moon Phase and Weather */}
+          <div className={styles.moonWeatherSection}>
+            <img 
+              src="/images/sidebar/moon-waning.png" 
+              alt="Fase lunare: waning"
+              className={styles.moonImage}
+            />
+            <img 
+              src="/images/sidebar/weather-fog.png" 
+              alt="Condizioni meteo: fog"
+              className={styles.weatherIcon}
+            />
+            <span className={styles.temperature}>5°</span>
+          </div>
+
+          {/* Characters List (Presenze) */}
           <div className={styles.charactersSection}>
             <CharactersList 
               characters={[]} // Non serve più, usa globalPresence dal context
@@ -221,48 +271,33 @@ export const GameLayout: React.FC<GameLayoutProps> = ({
               currentCharacterLocation={character?.currentLocationId || null}
             />
           </div>
+        </div>
 
-          {/* OffGame Chat Section */}
-          <div className={styles.chatSection}>
-            <button 
-              className={styles.offGameChatButton}
-              onClick={handleOffGameChatClick}
-              title="Apri chat off-game (messaggi privati)"
-            >
-              <span className={styles.chatIcon}>💬</span>
-              <span>CHAT OFF-GAME</span>
-              {unreadChatCount > 0 && (
-                <span className={styles.unreadBadge}>
-                  {unreadChatCount > 99 ? '99+' : unreadChatCount}
-                </span>
-              )}
-            </button>
-          </div>
-
-          {/* OnGame Mail Section - Only for APPROVED characters */}
-          {gameData.character?.status === 'APPROVED' && (
-            <div className={styles.mailSection}>
-              <button 
-                className={styles.onGameMailButton}
-                onClick={handleOnGameMailClick}
-                title="Apri portale di posta vittoriano"
-              >
-                <span className={styles.mailIcon}>📮</span>
-                <span>POSTA VITTORIANA</span>
-                {unreadMailCount > 0 && (
-                  <span className={styles.unreadBadge}>
-                    {unreadMailCount > 99 ? '99+' : unreadMailCount}
-                  </span>
-                )}
-              </button>
-            </div>
-          )}
+        {/* Footer */}
+        <div className={styles.sidebarFooter}>
+          <div className={styles.footerText}>THE VOICES OF LONDON</div>
         </div>
       </aside>
 
-      {/* Right side container */}
-      <div className={styles.rightContainer} style={rightContainerStyle}>
-        {/* Header */}
+      {/* Main Content: TopBar + Right Container */}
+      <div className={styles.mainContent}>
+        {/* TopBar */}
+        <TopBar 
+          onQuickMapClick={handleMappeClick}
+          onOnGameMailClick={handleOnGameMailClick}
+          onOffGameChatClick={handleOffGameChatClick}
+          onLocationInfoClick={handleLocationInfoClick}
+          onLogoutClick={handleLogoutClick}
+          onMarketClick={handleMarketClick}
+          unreadOnGameMailCount={unreadMailCount}
+          unreadOffGameChatCount={unreadChatCount}
+          characterStatus={gameData.character?.status}
+        />
+
+        {/* Right side container */}
+        <div className={styles.rightContainer} style={rightContainerStyle}>
+        {/* Header - Non mostrato su /locations o /locations/[locationId] */}
+        {router.pathname !== '/locations' && !isViewingLocationChat() && (
         <header className={styles.header}>
           <div className={styles.headerContent}>
             <div className={styles.headerLeft}>
@@ -271,43 +306,84 @@ export const GameLayout: React.FC<GameLayoutProps> = ({
             </div>
             
             <div className={styles.headerActions}>
+              {/* Bottoni 1, 2, 3 */}
+              <div className={styles.buttonGroup}>
+                {/* Bottone 1 - Placeholder per futuro */}
+                <button 
+                  className={styles.headerButton}
+                  disabled
+                  title="TBD"
+                >
+                  {/* TBD */}
+                </button>
+                
+                {/* Bottone 2 - Placeholder per futuro */}
+                <button 
+                  className={styles.headerButton}
+                  disabled
+                  title="TBD"
+                >
+                  {/* TBD */}
+                </button>
+                
+                {/* Bottone 3 - Placeholder per futuro */}
+                <button 
+                  className={styles.headerButton}
+                  disabled
+                  title="TBD"
+                >
+                  {/* TBD */}
+                </button>
+              </div>
+
+              {/* Bottone MAPPA (centrale) */}
               <button 
-                className={styles.headerButton}
+                className={`${styles.headerButton} ${styles.mapButton}`}
                 onClick={handleMappeClick}
                 title="Visualizza mappe e locations"
               >
                 🗺️ MAPPE
               </button>
-              
-              <button 
-                className={styles.headerButton}
-                onClick={handleCharacterListClick}
-                title="Lista personaggi registrati"
-              >
-                👥 PERSONAGGI
-              </button>
-              
-              {/* Show MERCATO button only for APPROVED characters */}
-              {gameData.character?.status === 'APPROVED' && (
+
+              {/* Bottoni 4, 5, 6 */}
+              <div className={styles.buttonGroup}>
+                {/* Bottone 4: PERSONAGGI */}
                 <button 
                   className={styles.headerButton}
-                  onClick={handleMarketClick}
-                  title="Mercato generale di Londra"
+                  onClick={handleCharacterListClick}
+                  title="Lista personaggi registrati"
                 >
-                  🏪 MERCATO
+                  👥 PERSONAGGI
                 </button>
-              )}
-              
-              {/* Show "Entra in Chat" button if not in London and not already viewing location chat */}
-              {character?.currentLocationId && !isCurrentLocationLondon() && !isViewingLocationChat() && (
+                
+                {/* Bottone 5: TBD (MERCATO spostato in TopBar) */}
                 <button 
                   className={styles.headerButton}
-                  onClick={handleEntraChatClick}
-                  title={`Entra nella chat di ${currentLocationName}`}
+                  disabled
+                  title="TBD"
                 >
-                  💬 ENTRA IN CHAT
+                  {/* TBD */}
                 </button>
-              )}
+                
+                {/* Bottone 6: ENTRA IN CHAT o TBD */}
+                {character?.currentLocationId && !isCurrentLocationLondon() && !isViewingLocationChat() ? (
+                  <button 
+                    className={styles.headerButton}
+                    onClick={handleEntraChatClick}
+                    title={`Entra nella chat di ${currentLocationName}`}
+                  >
+                    💬 ENTRA IN CHAT
+                  </button>
+                ) : (
+                  <button 
+                    className={styles.headerButton}
+                    disabled
+                    title="TBD"
+                  >
+                    {/* TBD */}
+                  </button>
+                )}
+              </div>
             </div>
             
             <div className={styles.headerRight}>
@@ -342,27 +418,35 @@ export const GameLayout: React.FC<GameLayoutProps> = ({
             </div>
           </div>
         </header>
+        )}
 
-        {/* Body Container */}
-        <main className={styles.bodyContainer}>
-          {children || (
-            <div style={{
-              padding: '2rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              height: '100%',
-              color: 'rgba(255, 149, 0, 0.7)',
-              fontWeight: 'bold',
-              border: '1px dashed rgba(255, 149, 0, 0.3)',
-              margin: '1rem',
-              borderRadius: '8px',
-              background: 'rgba(255, 149, 0, 0.05)'
-            }}>
-              BODY CONTAINER
-            </div>
-          )}
-        </main>
+        {/* Body Container - Senza wrapper main su /locations */}
+        {router.pathname === '/locations' || isViewingLocationChat() ? (
+          <div className={styles.bodyContainer}>
+            {children}
+          </div>
+        ) : (
+          <main className={styles.bodyContainer}>
+            {children || (
+              <div style={{
+                padding: '2rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '100%',
+                color: 'rgba(255, 149, 0, 0.7)',
+                fontWeight: 'bold',
+                border: '1px dashed rgba(255, 149, 0, 0.3)',
+                margin: '1rem',
+                borderRadius: '8px',
+                background: 'rgba(255, 149, 0, 0.05)'
+              }}>
+                BODY CONTAINER
+              </div>
+            )}
+          </main>
+        )}
+        </div>
       </div>
 
       {/* Notification Bar - Fixed position */}

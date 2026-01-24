@@ -7,10 +7,32 @@
 
 .wizardContainer {
   margin: 0 auto;
-  padding: 15px;
-  background: linear-gradient(145deg, #1a1a1a 0%, #2d2d2d 100%);
-  min-height: 100vh;
+  padding: 20px;
+  background: linear-gradient(145deg, rgba(26, 26, 26, 0.95) 0%, rgba(45, 45, 45, 0.95) 100%);
+  min-height: calc(100vh - 60px); // Account for topbar
   color: #ffffff;
+  position: relative;
+  
+  // Parchment-like background effect
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+      url('/images/backgrounds/grain-pattern.png') repeat,
+      linear-gradient(145deg, rgba(26, 26, 26, 0.98) 0%, rgba(45, 45, 45, 0.98) 100%);
+    opacity: 0.4;
+    pointer-events: none;
+    z-index: 0;
+  }
+  
+  > * {
+    position: relative;
+    z-index: 1;
+  }
 }
 
 .wizardHeader {
@@ -22,11 +44,11 @@
   border-bottom: 2px solid #ff9500;
   
   .wizardTitle {
-    font-family: 'Times New Roman', serif;
+    font-family: $font-mysteres;
     font-size: 2rem;
-    color: #ff9500;
+    color: $accent-red;
     margin: 0;
-    text-shadow: $text-shadow;
+    text-shadow: 0 0 10px rgba($accent-red, 0.5);
   }
   
   .characterInfo {
@@ -35,10 +57,11 @@
     align-items: flex-end;
     gap: 5px;
     font-size: 14px;
+    font-family: $font-thrifted;
     color: rgba(255, 255, 255, 0.7);
     
     strong {
-      color: #ff9500;
+      color: $text-orange;
     }
   }
 }

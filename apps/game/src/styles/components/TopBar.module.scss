@@ -1,0 +1,148 @@
+@use "../../../../shared-ui/src/styles/variables/colors" as *;
+@use "../../../../shared-ui/src/styles/variables/typography" as *;
+@use "../../../../shared-ui/src/styles/variables/spacing" as *;
+@use "../../../../shared-ui/src/styles/variables/borders" as *;
+
+.topBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 60px;
+  background: $bg-sidebar;
+  border-bottom: 2px solid rgba($text-orange, 0.3);
+  position: relative;
+  z-index: 100;
+}
+
+.topBarLeft,
+.topBarRight {
+  flex: 0 0 auto;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  padding: 0 $spacing-md;
+}
+
+.decorationLeft,
+.decorationRight {
+  height: 100%;
+  object-fit: contain;
+}
+
+.topBarContent {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 $spacing-md;
+  gap: $spacing-md;
+}
+
+.iconsContainerLeft,
+.iconsContainerRight {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  flex: 0 0 auto;
+}
+
+.locationDisplay {
+  flex: 0 0 auto;
+  margin: 0 $spacing-lg; // Spazio tra i due gruppi di icone
+}
+
+.logoutButton {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: $bg-sidebar;
+  border: none;
+  border-top: 2px solid $text-orange;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: all 0.2s ease;
+  flex: 0 0 auto;
+  
+  &:hover {
+    background: rgba($text-orange, 0.1);
+    border-top-color: $text-orange;
+    transform: translateY(-2px);
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+.iconButton {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: $bg-sidebar;
+  border: none;
+  border-top: 2px solid $text-orange;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: all 0.2s ease;
+  position: relative;
+  
+  &:hover:not(:disabled) {
+    background: rgba($text-orange, 0.1);
+    border-top-color: $text-orange;
+    transform: translateY(-2px);
+  }
+  
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.iconImage {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+.notificationBadge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: $error-text;
+  color: $bg-primary;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: bold;
+  border: 2px solid $bg-sidebar;
+  z-index: 10;
+}
+
+.locationDisplay {
+  font-family: $font-mysteres;
+  color: $accent-red;
+  font-size: $font-size-lg;
+  border: 2px solid $accent-red;
+  padding: $spacing-xs $spacing-md;
+  border-radius: $radius-md;
+  background: rgba($accent-red, 0.1);
+  text-shadow: 0 0 5px rgba($accent-red, 0.5);
+  white-space: nowrap;
+}
+

@@ -187,7 +187,7 @@ export default function DiceCommandsModal({
       if (skillsWithCategory[skillName]) {
         category = skillsWithCategory[skillName] || 'general';
       } else {
-        const template = skillTemplates.find(t => t.name === skillName);
+      const template = skillTemplates.find(t => t.name === skillName);
         category = template?.category || inferCategoryFromName(skillName);
       }
 
@@ -392,17 +392,17 @@ export default function DiceCommandsModal({
               </div>
             ) : (
               <>
-                {/* Search bar */}
-                <div className={styles.formGroup}>
-                  <label>Cerca skill:</label>
-                  <input
-                    type="text"
-                    value={skillSearch}
-                    onChange={(e) => setSkillSearch(e.target.value)}
-                    className={styles.searchInput}
-                    placeholder="Cerca per nome..."
-                  />
-                </div>
+            {/* Search bar */}
+            <div className={styles.formGroup}>
+              <label>Cerca skill:</label>
+              <input
+                type="text"
+                value={skillSearch}
+                onChange={(e) => setSkillSearch(e.target.value)}
+                className={styles.searchInput}
+                placeholder="Cerca per nome..."
+              />
+            </div>
 
             {/* Skills grouped by category */}
             <div className={`${styles.skillsContainer} ${isSocialSkill ? styles.withSocialPanel : ''}`}>

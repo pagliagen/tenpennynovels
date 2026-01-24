@@ -211,24 +211,24 @@ export default function LocationChat({
       });
     } else {
       // Fallback: if skillTemplates not available, use only character skills
-      if (characterData?.skills) {
-        Object.entries(characterData.skills).forEach(([skillName, skillValue]) => {
-          let numericValue: number;
+    if (characterData?.skills) {
+      Object.entries(characterData.skills).forEach(([skillName, skillValue]) => {
+        let numericValue: number;
           let category: string | undefined;
           
-          if (typeof skillValue === 'number') {
-            numericValue = skillValue;
-          } else if (skillValue && typeof skillValue === 'object' && 'total' in skillValue) {
-            numericValue = (skillValue as any).total;
+        if (typeof skillValue === 'number') {
+          numericValue = skillValue;
+        } else if (skillValue && typeof skillValue === 'object' && 'total' in skillValue) {
+          numericValue = (skillValue as any).total;
             category = (skillValue as any).category;
-          } else {
-            return; // Skip invalid values
-          }
-          
-          if (canRollSkill(skillName, numericValue)) {
+        } else {
+          return; // Skip invalid values
+        }
+        
+        if (canRollSkill(skillName, numericValue)) {
             skillsMap.set(skillName, { value: numericValue, category });
-          }
-        });
+        }
+      });
       }
     }
     
@@ -1392,18 +1392,18 @@ export default function LocationChat({
             </div>
             
             <div className={styles.rightActions}>
-              <div className={styles.characterCounter}>
-                {messageInput.length}/{MAX_CHARACTERS}
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsTextareaExpanded(!isTextareaExpanded)}
-                className={styles.expandCollapseButton}
-                aria-label={isTextareaExpanded ? 'Riduci textarea' : 'Espandi textarea'}
-                title={isTextareaExpanded ? 'Riduci textarea' : 'Espandi textarea'}
-              >
-                {isTextareaExpanded ? '↑' : '↓'}
-              </button>
+            <div className={styles.characterCounter}>
+              {messageInput.length}/{MAX_CHARACTERS}
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsTextareaExpanded(!isTextareaExpanded)}
+              className={styles.expandCollapseButton}
+              aria-label={isTextareaExpanded ? 'Riduci textarea' : 'Espandi textarea'}
+              title={isTextareaExpanded ? 'Riduci textarea' : 'Espandi textarea'}
+            >
+              {isTextareaExpanded ? '↑' : '↓'}
+            </button>
               <button 
                 onClick={sendMessage} 
                 disabled={!messageInput.trim() || isSending || messageInput.length > MAX_CHARACTERS}
@@ -1411,35 +1411,35 @@ export default function LocationChat({
               >
                 {isSending ? 'Invio...' : 'Invia'}
               </button>
-            </div>
+          </div>
           </div>
           
           {isTagSelectorOpen && (
-            <TagSelector
-              selectedTag={selectedTag}
-              onTagChange={async (tag) => {
-                setSelectedTag(tag);
+          <TagSelector
+            selectedTag={selectedTag}
+            onTagChange={async (tag) => {
+              setSelectedTag(tag);
                 setIsTagSelectorOpen(false); // Close selector after selection
-                // Save tag to occupant immediately when selected
-                if (tag) {
-                  try {
-                    await fetch(`${API_BASE}/game/locations/${locationId}/occupant-tag`, {
-                      method: 'PATCH',
-                      credentials: 'include',
-                      headers: {
-                        'Content-Type': 'application/json'
-                      },
-                      body: JSON.stringify({ currentTag: tag })
-                    });
-                  } catch (error) {
-                    console.error('❌ LocationChat: Failed to update occupant tag:', error);
-                  }
+              // Save tag to occupant immediately when selected
+              if (tag) {
+                try {
+                  await fetch(`${API_BASE}/game/locations/${locationId}/occupant-tag`, {
+                    method: 'PATCH',
+                    credentials: 'include',
+                    headers: {
+                      'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ currentTag: tag })
+                  });
+                } catch (error) {
+                  console.error('❌ LocationChat: Failed to update occupant tag:', error);
                 }
-              }}
-            />
+              }
+            }}
+          />
           )}
           
-          {isMaster && (
+            {isMaster && (
             <div className={styles.masterActions}>
               <MasterPanel
                 locationId={locationId}
@@ -1453,7 +1453,7 @@ export default function LocationChat({
                 onNPC={handleNPC}
                 onMasterOutcome={handleMasterOutcome}
               />
-            </div>
+          </div>
           )}
         </div>
         

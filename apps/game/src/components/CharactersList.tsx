@@ -135,10 +135,7 @@ export const CharactersList: React.FC<CharactersListProps> = ({
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <h3 className={styles.title}>Presenti</h3>
-        <div className={styles.location}>
-          📍 {currentLocationName}
-        </div>
+        <h3 className={styles.title}>PRESENTI</h3>
       </div>
 
       <div className={styles.charactersList}>

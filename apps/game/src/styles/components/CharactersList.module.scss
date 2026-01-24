@@ -19,27 +19,18 @@
 
 .header {
   padding: $spacing-md;
-  border-bottom: 1px solid $border-secondary;
-  background: $bg-tertiary;
+  border-top: 2px solid $border-green;
+  background: $bg-sidebar;
 }
 
 .title {
-  font-family: $font-primary;
-  font-size: 1.1rem;
-  font-weight: bold;
-  color: $gold-primary;
-  margin: 0 0 $spacing-sm 0;
-  text-shadow: $text-shadow;
-}
-
-.location {
-  font-family: $font-primary;
-  font-size: 0.85rem;
-  color: $text-secondary;
-  display: flex;
-  align-items: center;
-  gap: $spacing-xs;
-  text-shadow: $text-shadow;
+  font-family: $font-thrifted;
+  font-size: 1rem;
+  font-weight: normal;
+  color: $text-orange;
+  margin: 0;
+  text-shadow: 0 0 5px rgba($text-orange, 0.5);
+  text-transform: uppercase;
 }
 
 .charactersList {

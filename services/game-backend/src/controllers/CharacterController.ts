@@ -646,11 +646,11 @@ export class CharacterController {
           }
           
           // Salva tutte le skills
-          character.skills.clear();
+            character.skills.clear();
           Object.entries(allSkillsToSave).forEach(([skillName, skillValue]) => {
-            character.skills.set(skillName, skillValue);
-          });
-          character.markModified('skills');
+              character.skills.set(skillName, skillValue);
+            });
+            character.markModified('skills');
           
           logger.info('All skills saved (DRAFT character)', {
             characterId: character._id,
@@ -658,7 +658,7 @@ export class CharacterController {
             modifiedSkillsCount: Object.keys(filteredUpdates.skills).length,
             sampleSkills: Object.keys(allSkillsToSave).slice(0, 5)
           });
-        } else {
+          } else {
           // Per personaggi non-DRAFT, comportamento originale (solo skills modificate)
           character.skills.clear();
           const skillsToSave = Object.entries(filteredUpdates.skills);
@@ -681,23 +681,23 @@ export class CharacterController {
       // Handle other fields
       allowedFields.forEach((field: string) => {
         if (filteredUpdates[field] !== undefined && field !== 'skills') {
-          // Log per currentOccupation per debugging
-          if (field === 'currentOccupation') {
-            logger.info('Setting currentOccupation', {
-              field,
-              value: filteredUpdates[field],
-              valueType: typeof filteredUpdates[field],
-              before: character.currentOccupation
-            });
-          }
-          character[field] = filteredUpdates[field];
-          // Assicurati che Mongoose riconosca il cambiamento per campi opzionali
-          if (field === 'currentOccupation') {
-            character.markModified('currentOccupation');
-            logger.info('currentOccupation set and marked as modified', {
-              after: character.currentOccupation,
-              hasValue: character.currentOccupation !== undefined
-            });
+            // Log per currentOccupation per debugging
+            if (field === 'currentOccupation') {
+              logger.info('Setting currentOccupation', {
+                field,
+                value: filteredUpdates[field],
+                valueType: typeof filteredUpdates[field],
+                before: character.currentOccupation
+              });
+            }
+            character[field] = filteredUpdates[field];
+            // Assicurati che Mongoose riconosca il cambiamento per campi opzionali
+            if (field === 'currentOccupation') {
+              character.markModified('currentOccupation');
+              logger.info('currentOccupation set and marked as modified', {
+                after: character.currentOccupation,
+                hasValue: character.currentOccupation !== undefined
+              });
           }
         }
       });

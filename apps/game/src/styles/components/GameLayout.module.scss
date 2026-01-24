@@ -10,9 +10,18 @@
 .gameContainer {
   min-height: 100vh;
   display: flex;
-  flex-direction: row; // Horizontal layout: sidebar | right container
+  flex-direction: row; // Horizontal layout: sidebar | mainContent
   background: $bg-primary;
   color: $text-primary;
+  overflow: hidden;
+}
+
+// Container for topbar and right container
+.mainContent {
+  display: flex;
+  flex-direction: column; // Vertical layout: topbar | rightContainer
+  flex: 1;
+  min-height: 0;
   overflow: hidden;
 }
 
@@ -21,8 +30,9 @@
   flex: 0 0 300px; // Fixed width sidebar 
   overflow-y: auto;
   height: 100vh; // Full viewport height
-  background: $bg-secondary;
-  border-right: 2px solid $border-secondary;
+  background: $bg-sidebar;
+  display: flex;
+  flex-direction: column;
   
   @media (max-width: $breakpoint-md) {
     flex: 0 0 250px; // Narrower on mobile
@@ -30,14 +40,41 @@
   
   .sidebarContent {
     padding: $spacing-md;
-    height: 100%;
+    flex: 1;
     display: flex;
     flex-direction: column;
     gap: $spacing-md;
+    min-height: 0; // Allow shrinking
   }
   
-  .clockSection {
-    flex: 0 0 auto; // Fixed size for clock
+  .dateSection {
+    flex: 0 0 auto;
+  }
+
+  .profileSection {
+    flex: 0 0 auto;
+  }
+
+  .moonWeatherSection {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: $spacing-sm 0;
+    gap: $spacing-sm;
+  }
+  
+  .moonImage,
+  .weatherIcon {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+  }
+  
+  .temperature {
+    font-size: $font-size-base;
+    color: $text-primary;
+    font-weight: 600;
   }
   
   .charactersSection {
@@ -46,134 +83,22 @@
     flex-direction: column;
     min-height: 0; // Allow shrinking
   }
-  
-  .chatSection, .mailSection {
-    flex: 0 0 auto; // Fixed size for chat/mail buttons
-    padding-top: $spacing-sm;
-    border-top: 1px solid rgba($border-secondary, 0.3);
+
+  .sidebarFooter {
+    flex: 0 0 auto;
+    padding: $spacing-md;
+    background: $bg-sidebar;
+    border-top: 2px solid $border-green;
+    text-align: center;
   }
 
-  .chatSection {
-    margin-top: auto; // Push to bottom
-    padding-top: $spacing-md;
+  .footerText {
+    font-family: $font-mysteres;
+    color: $accent-red;
+    font-size: $font-size-base;
+    text-shadow: 0 0 5px rgba($accent-red, 0.5);
   }
   
-  .offGameChatButton {
-    width: 100%;
-    background: linear-gradient(135deg, rgba($gold-primary, 0.15), rgba($gold-primary, 0.08));
-    border: 1px solid rgba($gold-primary, 0.3);
-    color: $gold-primary;
-    padding: $spacing-md;
-    border-radius: $radius-md;
-    font-family: $font-primary;
-    font-size: 0.9rem;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all all 0.15s ease;
-    text-shadow: $text-shadow;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: $spacing-xs;
-    position: relative;
-    
-    &:hover {
-      background: linear-gradient(135deg, rgba($gold-primary, 0.25), rgba($gold-primary, 0.15));
-      border-color: rgba($gold-primary, 0.5);
-      transform: translateY(-1px);
-      box-shadow: 0 3px 12px rgba($gold-primary, 0.2);
-    }
-    
-    &:active {
-      transform: translateY(0);
-      background: linear-gradient(135deg, rgba($gold-primary, 0.3), rgba($gold-primary, 0.2));
-    }
-    
-    .chatIcon {
-      font-size: 1.1rem;
-    }
-    
-    .unreadBadge {
-      position: absolute;
-      top: -8px;
-      right: -8px;
-      background: $error-text;
-      color: white;
-      border-radius: 50%;
-      font-size: 0.85rem;
-      font-weight: bold;
-      min-width: 24px;
-      height: 24px;
-      z-index: 10;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: 2px solid $bg-secondary;
-      animation: pulse 2s infinite;
-    }
-    
-    @keyframes pulse {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.1); }
-      100% { transform: scale(1); }
-    }
-  }
-
-  // OnGame Mail Button (Victorian Post Office style)
-  .onGameMailButton {
-    width: 100%;
-    background: linear-gradient(135deg, rgba($gold-light, 0.2), rgba($gold-light, 0.1));
-    border: 1px solid rgba($gold-light, 0.4);
-    color: $gold-primary;
-    padding: $spacing-md;
-    border-radius: $radius-md;
-    font-family: $font-primary;
-    font-size: 0.9rem;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all all 0.15s ease;
-    text-shadow: $text-shadow;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: $spacing-xs;
-    position: relative;
-    
-    &:hover {
-      background: linear-gradient(135deg, rgba($gold-light, 0.3), rgba($gold-light, 0.2));
-      border-color: rgba($gold-light, 0.6);
-      transform: translateY(-1px);
-      box-shadow: 0 3px 12px rgba($gold-light, 0.3);
-    }
-    
-    &:active {
-      transform: translateY(0);
-      background: linear-gradient(135deg, rgba($gold-light, 0.4), rgba($gold-light, 0.3));
-    }
-    
-    .mailIcon {
-      font-size: 1.2rem;
-    }
-    
-    .unreadBadge {
-      position: absolute;
-      top: -8px;
-      right: -8px;
-      background: $error-text;
-      color: white;
-      border-radius: 50%;
-      font-size: 0.85rem;
-      font-weight: bold;
-      min-width: 24px;
-      height: 24px;
-      z-index: 10;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: 2px solid $bg-secondary;
-      animation: pulse 2s infinite;
-    }
-  }
 }
 
 // Right container - Header + Body stacked vertically
@@ -181,9 +106,10 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: calc(100vh - 60px); // Full viewport height minus topbar
   min-height: 0; // Allow flex items to shrink
   background: $bg-secondary;
+  overflow-y: auto;
 }
 
 // Header styles - Inside right container
@@ -241,6 +167,17 @@
     gap: $spacing-md;
     flex: 1;
     justify-content: center;
+  }
+
+  .buttonGroup {
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+  }
+
+  .mapButton {
+    margin: 0 $spacing-lg; // Spazio extra attorno al bottone MAPPA centrale
+    font-size: 1rem; // Leggermente più grande per evidenziarlo
   }
   
   .userInfo {
@@ -377,11 +314,7 @@
 }
 
 // Responsive design
-@media (max-width: $breakpoint-lg) {
-  .rightContainer {
-    // Dynamic padding handled in component
-  }
-}
+// Dynamic padding handled in component
 
 @media (max-width: $breakpoint-md) {
   .gameContainer {

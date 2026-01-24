@@ -3,12 +3,17 @@
 // =============================================================================
 
 // Brand Colors - Victorian London Theme
-$gold-primary: #ffa748;       // Primary gold accent
+$gold-primary: #ffa748;       // Primary gold accent (also accent-orange)
+$accent-orange: #ffa748;      // Orange accent (alias for gold-primary)
+$accent-red: #a13925;         // Red for location/titles
+$border-green: #07352e;       // Dark green for borders
+$text-orange: #ffa748;        // Orange text (alias for gold-primary)
 $gold-light: #daddc4;        // Lighter gold
 $gold-dark: #cc7700;          // Darker gold for hover states
 
 // Background Colors
-$bg-primary: #0d0d0d;            // Main dark background
+$bg-primary: #050505;            // Main dark background (updated to match design)
+$bg-sidebar: #0f0f0f;            // Sidebar background
 $bg-secondary: #2a2a2a;          // Secondary background
 $bg-tertiary: #3a3a3a;           // Card/modal backgrounds
 $bg-overlay: rgba(0, 0, 0, 0.8); // Modal overlays 
