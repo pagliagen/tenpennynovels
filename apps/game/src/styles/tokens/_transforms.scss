@@ -1,0 +1,120 @@
+/**
+ * Transform Design Tokens
+ *
+ * Common transform patterns for hover states, animations, and interactions.
+ *
+ * **Transform Categories**:
+ * - Scale: Grow/shrink effects (buttons, cards on hover)
+ * - Translate: Movement effects (lift on hover, slide animations)
+ * - Rotate: Rotation effects (icons, decorative elements)
+ *
+ * **Usage**:
+ * ```scss
+ * .button:hover {
+ *   transform: var(--transform-lift-up);
+ * }
+ *
+ * .icon-chevron {
+ *   transform: var(--transform-rotate-90);
+ * }
+ * ```
+ */
+
+:root {
+  /* ===========================
+     SCALE TRANSFORMS
+     =========================== */
+
+  /**
+   * Scale transforms for grow/shrink effects
+   * Subtle scaling (1.05) for elegant Victorian style
+   */
+
+  /** Grow slightly - Button/card hover */
+  --transform-scale-up: scale(1.05);
+
+  /** Shrink slightly - Button active/pressed */
+  --transform-scale-down: scale(0.95);
+
+  /** Grow more - Emphasized hover (icons, avatars) */
+  --transform-scale-up-lg: scale(1.1);
+
+  /* ===========================
+     TRANSLATE TRANSFORMS
+     =========================== */
+
+  /**
+   * Translate transforms for movement effects
+   * 2px for subtle lift, 4px for pronounced lift
+   */
+
+  /** Lift up - Hover state for cards, buttons */
+  --transform-lift-up: translateY(-2px);
+
+  /** Lift down - Active/pressed state */
+  --transform-lift-down: translateY(2px);
+
+  /** Pronounced lift - Dramatic hover (large cards) */
+  --transform-lift-up-lg: translateY(-4px);
+
+  /** Slide right - Hover indicators, arrows */
+  --transform-slide-right: translateX(4px);
+
+  /** Slide left - Back buttons, reverse motion */
+  --transform-slide-left: translateX(-4px);
+
+  /* ===========================
+     ROTATE TRANSFORMS
+     =========================== */
+
+  /**
+   * Rotate transforms for icons and decorative elements
+   */
+
+  /** Quarter turn - Chevrons, arrows */
+  --transform-rotate-45: rotate(45deg);
+
+  /** Half turn - Expand/collapse icons */
+  --transform-rotate-90: rotate(90deg);
+
+  /** Reverse quarter turn */
+  --transform-rotate-neg-45: rotate(-45deg);
+
+  /** Reverse half turn */
+  --transform-rotate-neg-90: rotate(-90deg);
+
+  /** Full turn - Loading spinners */
+  --transform-rotate-180: rotate(180deg);
+
+  /** Full rotation - 360 spin animations */
+  --transform-rotate-360: rotate(360deg);
+
+  /* ===========================
+     COMBINED TRANSFORMS
+     =========================== */
+
+  /**
+   * Common combinations of transforms for complex effects
+   */
+
+  /** Lift + scale - Premium hover effect */
+  --transform-lift-scale: translateY(-2px) scale(1.05);
+
+  /** Lift + scale large - Dramatic hover */
+  --transform-lift-scale-lg: translateY(-4px) scale(1.1);
+
+  /* ===========================
+     HAMBURGER MENU ANIMATIONS
+     =========================== */
+
+  /**
+   * Specific transforms for hamburger menu icon animation
+   * (3-line menu → X pattern)
+   */
+
+  /** Top bar - moves down and rotates */
+  --transform-hamburger-top: translateY(8px) rotate(45deg);
+
+  /** Bottom bar - moves up and rotates */
+  --transform-hamburger-bottom: translateY(-8px) rotate(-45deg);
+}

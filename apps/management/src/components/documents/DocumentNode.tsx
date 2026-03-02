@@ -23,6 +23,7 @@ interface DocumentNodeProps {
   onToggleDraft: (docId: string) => void;
   // Route actions (NEW)
   onCreateRoute: (docId: string) => void;
+  onCreateChildDocument: (parentDocId: string) => void;
   onEditRoute: (routeId: string) => void;
   onToggleRouteEnabled: (routeId: string) => void;
   onDeleteRoute: (routeId: string) => void;
@@ -40,6 +41,7 @@ export const DocumentNode: React.FC<DocumentNodeProps> = React.memo(({
   onToggleVisibility,
   onToggleDraft,
   onCreateRoute,
+  onCreateChildDocument,
   onEditRoute,
   onToggleRouteEnabled,
   onDeleteRoute
@@ -193,6 +195,18 @@ export const DocumentNode: React.FC<DocumentNodeProps> = React.memo(({
 
               {/* Separator */}
               <hr className={styles.menuDivider} />
+
+              {/* NEW: Create child document */}
+              <button
+                onClick={() => {
+                  onCreateChildDocument(doc._id);
+                  setMenuOpen(false);
+                }}
+                className={styles.menuItem}
+                title="Crea un documento figlio di questo documento"
+              >
+                ➕ Crea Sottodocumento
+              </button>
 
               {/* Document actions (always available) */}
               <button

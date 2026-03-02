@@ -1,0 +1,108 @@
+/**
+ * Shadow Design Tokens
+ *
+ * Box shadows and text shadows for Victorian elevation and depth.
+ *
+ * **Shadow Philosophy**:
+ * - Victorian shadows are warm-toned (brown-based, not pure black)
+ * - Use rgba(40, 30, 20) for warm, historical feel
+ * - Elevations: sm (subtle) → 2xl (dramatic)
+ * - Special: golden glow for ornate elements, inner shadows for depth
+ *
+ * **Shadow Scale**:
+ * - none: No shadow
+ * - sm: 0 1px 2px - Subtle lift (cards, inputs)
+ * - md: 0 4px 6px - Standard elevation (buttons, dropdowns)
+ * - lg: 0 10px 15px - Prominent (modals, popovers)
+ * - xl: 0 20px 25px - High elevation (sheets, drawers)
+ * - 2xl: 0 25px 50px - Maximum drama (full-screen modals)
+ *
+ * **Usage**:
+ * ```scss
+ * .card {
+ *   box-shadow: var(--shadow-md);
+ * }
+ *
+ * .ornate-heading {
+ *   text-shadow: var(--text-shadow-golden);
+ * }
+ * ```
+ */
+
+:root {
+  /* ===========================
+     BOX SHADOWS (Victorian Elevation)
+     =========================== */
+
+  /**
+   * Standard elevation shadows
+   * Uses warm rgba(40, 30, 20) for Victorian historical feel
+   * NOT pure black rgba(0, 0, 0) - too modern
+   */
+
+  /** No shadow - Flat design */
+  --shadow-none: none;
+
+  /** Subtle lift - Cards, input fields */
+  --shadow-sm: 0 1px 2px rgba(40, 30, 20, 0.1);
+
+  /** Standard elevation - Buttons on hover, dropdowns */
+  --shadow-md: 0 4px 6px rgba(40, 30, 20, 0.1);
+
+  /** Prominent elevation - Modals, popovers, sticky headers */
+  --shadow-lg: 0 10px 15px rgba(40, 30, 20, 0.1);
+
+  /** High elevation - Sheets, drawers, large cards */
+  --shadow-xl: 0 20px 25px rgba(40, 30, 20, 0.15);
+
+  /** Maximum drama - Full-screen modals, overlays */
+  --shadow-2xl: 0 25px 50px rgba(40, 30, 20, 0.25);
+
+  /* ===========================
+     VICTORIAN DECORATIVE SHADOWS
+     =========================== */
+
+  /**
+   * Special shadows for Victorian ornamental elements
+   */
+
+  /** Golden glow - For ornate frames, decorative headings */
+  --shadow-golden-glow: 0 0 16px rgba(212, 175, 55, 0.4);
+
+  /** Ornate shadow - Combination of glow + depth for premium elements */
+  --shadow-ornate: 0 0 8px rgba(139, 69, 19, 0.3), 0 4px 8px rgba(0, 0, 0, 0.2);
+
+  /* ===========================
+     INNER SHADOWS
+     =========================== */
+
+  /**
+   * Inner shadows for recessed elements (inputs, wells)
+   */
+
+  /** Subtle inner depth - Input fields, textarea */
+  --shadow-inner: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+
+  /** Pronounced inner depth - Wells, recessed panels */
+  --shadow-inner-lg: inset 0 4px 8px rgba(0, 0, 0, 0.15);
+
+  /* ===========================
+     TEXT SHADOWS
+     =========================== */
+
+  /**
+   * Text shadows for readability and Victorian elegance
+   */
+
+  /** Subtle text depth - Readable on similar backgrounds */
+  --text-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+
+  /** Standard text shadow - Headings, important text */
+  --text-shadow-md: 0 2px 4px rgba(0, 0, 0, 0.4);
+
+  /** Golden text glow - Victorian ornate headings */
+  --text-shadow-golden: 0 0 5px rgba(139, 69, 19, 0.5);
+
+  /** Strong contrast - Light text on dark backgrounds */
+  --text-shadow-contrast: 0 2px 4px rgba(0, 0, 0, 0.8);
+}

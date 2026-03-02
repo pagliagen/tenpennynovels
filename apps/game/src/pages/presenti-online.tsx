@@ -22,7 +22,8 @@ import Head from 'next/head';
 import { GameLayout } from '@/components/layout/GameLayout';
 import { usePresence } from '@/hooks/usePresence';
 import { useAuthStore } from '@/store/authStore';
-import { GlobalPresence } from '@/store/presenceStore';
+// @ts-ignore - Used as type in PresenceGroupProps below
+import { type GlobalPresence } from '@/store/presenceStore';
 import styles from '@/styles/pages/presenti-online.module.scss';
 
 /**
@@ -181,6 +182,7 @@ export default function PresentiOnlinePage(): JSX.Element {
         </div>
       </div>
     </GameLayout>
+    </>
   );
 }
 

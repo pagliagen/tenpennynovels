@@ -33,13 +33,6 @@ router.get('/routes/list', AuthMiddleware.optionalAuth, DocumentController.listR
 router.get('/routes/list-hierarchical', AuthMiddleware.optionalAuth, DocumentController.listRoutesHierarchical);
 
 /**
- * GET /documents/list (DEPRECATED - backwards compatibility)
- * Redirects to /routes/list
- * Query params: type (optional: ambientazione|regolamento)
- */
-router.get('/list', AuthMiddleware.optionalAuth, DocumentController.listRoutes);
-
-/**
  * GET /documents/semantic-search
  * Semantic search using Qdrant vector DB
  * Query params: q (required), type (optional), limit (default: 5), minSimilarity (default: 0.5)

@@ -23,7 +23,7 @@
     font-weight: var(--font-weight-semibold);
     text-transform: uppercase;
     letter-spacing: var(--letter-spacing-wide);
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
 
     &--approved {
       color: var(--color-success);
@@ -64,8 +64,8 @@
    * Avatar
    */
   &__avatar {
-    width: 48px;
-    height: 48px;
+    width: var(--size-avatar);
+    height: var(--size-avatar);
     border-radius: 50%;
     overflow: hidden;
     border: 2px solid var(--color-border-primary);
@@ -139,13 +139,13 @@
     cursor: pointer;
 
     &:hover {
-      transform: translateY(-4px);
+      transform: var(--transform-lift-up-lg);
       border-color: var(--color-primary);
       box-shadow: var(--shadow-golden-glow);
     }
 
     &:active {
-      transform: translateY(-2px);
+      transform: var(--transform-lift-up);
     }
   }
 }

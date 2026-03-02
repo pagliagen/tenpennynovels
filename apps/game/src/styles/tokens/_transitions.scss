@@ -1,0 +1,73 @@
+/**
+ * Transition Design Tokens
+ *
+ * Consistent animation durations and easing functions.
+ * Creates smooth, polished interactions.
+ *
+ * **Durations**:
+ * - fast: 150ms - Micro-interactions (hover, focus)
+ * - base: 300ms - Standard transitions (expand, fade)
+ * - slow: 500ms - Complex animations (modals, drawers)
+ *
+ * **Easing**:
+ * - ease-in: Slow start, fast end
+ * - ease-out: Fast start, slow end (most natural)
+ * - ease-in-out: Smooth both ends
+ *
+ * **Usage**:
+ * ```scss
+ * .button {
+ *   transition: background var(--transition-fast) var(--ease-out);
+ * }
+ * ```
+ */
+
+:root {
+  /* ===========================
+     TRANSITION DURATIONS
+     =========================== */
+
+  /** Fast transition - 150ms - Micro-interactions */
+  --transition-fast: 150ms;
+
+  /** Base transition - 300ms - Standard animations */
+  --transition-base: 300ms;
+
+  /** Slow transition - 500ms - Complex animations */
+  --transition-slow: 500ms;
+
+  /* ===========================
+     EASING FUNCTIONS
+     =========================== */
+
+  /** Ease in - Slow start, fast end */
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+
+  /** Ease out - Fast start, slow end (most natural) */
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+
+  /** Ease in-out - Smooth both ends */
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ===========================
+     COMMON TRANSITIONS
+     =========================== */
+
+  /** Button hover transition */
+  --transition-button: background var(--transition-fast) var(--ease-out),
+                       transform var(--transition-fast) var(--ease-out);
+
+  /** Focus transition */
+  --transition-focus: border-color var(--transition-fast) var(--ease-out),
+                      box-shadow var(--transition-fast) var(--ease-out);
+
+  /** Fade transition */
+  --transition-fade: opacity var(--transition-base) var(--ease-in-out);
+
+  /** Scale transition */
+  --transition-scale: transform var(--transition-base) var(--ease-out);
+
+  /** Slide transition */
+  --transition-slide: transform var(--transition-base) var(--ease-out),
+                      opacity var(--transition-base) var(--ease-out);
+}

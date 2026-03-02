@@ -231,61 +231,6 @@ export class DocumentManagementController {
    * PUT /admin/documents/:id/reorder
    * Body: { order?: number, parentId?: string | null }
    */
-  static async reorderDocument(req: Request, res: Response): Promise<void> {
-    try {
-      const { id, order, parentId } = req.body;
-
-      const document = await Document.findById(id);
-      if (!document) {
-        res.status(404).json(errorResponse(
-          'Documento non trovato',
-          'DOCUMENT_NOT_FOUND',
-          undefined,
-          404,
-          getRequestId(req)
-        ));
-        return;
-      }
-
-      // Update order
-      if (typeof order === 'number') {
-        document.order = order;
-      }
-
-      // Update parentId (move to different parent)
-      if (parentId !== undefined) {
-        document.parentId = parentId ? mongoose.Types.ObjectId.createFromHexString(parentId) : undefined;
-      }
-
-      await document.save();
-
-      logger.info(`Document ${document.slug} reordered: order=${document.order}, parentId=${document.parentId}`);
-
-      res.json({
-        result: true,
-        success: true,
-        data: {
-          _id: document._id.toString(),
-          slug: document.slug,
-          order: document.order,
-          parentId: document.parentId?.toString() || null
-        },
-        message: 'Documento riordinato con successo',
-        timestamp: new Date().toISOString()
-      });
-
-    } catch (error: any) {
-      logger.error('Error reordering document:', error);
-      res.status(500).json(errorResponse(
-        error.message || 'Errore nel riordinamento documento',
-        'REORDER_DOCUMENT_ERROR',
-        undefined,
-        500,
-        getRequestId(req)
-      ));
-    }
-  }
-
   /**
    * Reorder route (update order and/or parentId in route hierarchy)
    * PUT /admin/documents/routes/:id/reorder
@@ -1219,6 +1164,7 @@ export class DocumentManagementController {
       // Create document inline if documentData provided (NEW FEATURE)
       let finalDocumentId = rootDocumentId;
       let routeSlug = slug;  // CHANGED: Use slug directly from body
+      let documentToCheck: any = null;  // FIX: Track created/existing document for parent route detection
 
       if (kind === 'document' && documentData) {
         const { title: docTitle, slug: docSlug, description: docDescription } = documentData;
@@ -1267,6 +1213,7 @@ export class DocumentManagementController {
 
         await newDocument.save();
         finalDocumentId = newDocument._id.toString();
+        documentToCheck = newDocument;  // FIX: Store for parent route detection
 
         logger.info(`Document created inline: ${newDocument._id} (${docSlug})`);
       } else if (rootDocumentId) {
@@ -1282,6 +1229,7 @@ export class DocumentManagementController {
           ));
           return;
         }
+        documentToCheck = docExists;  // FIX: Store for parent route detection
       }
 
       // Determine route parentId

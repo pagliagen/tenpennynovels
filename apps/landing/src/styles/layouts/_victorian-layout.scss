@@ -60,9 +60,9 @@
     position: fixed;
     top: var(--spacing-md);
     left: var(--spacing-md);
-    z-index: 1001;
-    width: 40px;
-    height: 40px;
+    z-index: var(--z-index-max);
+    width: var(--size-hamburger);
+    height: var(--size-hamburger);
     padding: var(--spacing-xs);
     background: var(--color-bg-secondary);
     border: 2px solid var(--color-border-primary);
@@ -78,7 +78,7 @@
     }
 
     &--open &-bar:nth-child(1) {
-      transform: translateY(8px) rotate(45deg);
+      transform: var(--transform-hamburger-top);
     }
 
     &--open &-bar:nth-child(2) {
@@ -86,7 +86,7 @@
     }
 
     &--open &-bar:nth-child(3) {
-      transform: translateY(-8px) rotate(-45deg);
+      transform: var(--transform-hamburger-bottom);
     }
   }
 
@@ -95,7 +95,7 @@
     width: 100%;
     height: 2px;
     background: var(--color-primary);
-    margin: 6px 0;
+    margin: var(--spacing-xs) 0;
     transition: var(--transition-base);
   }
 

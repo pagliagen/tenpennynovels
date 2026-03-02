@@ -33,19 +33,11 @@ router.get('/:id',
   DocumentManagementController.getDocumentById
 );
 
-// Reorder document siblings (batch operation - MAIN METHOD)
+// Reorder document siblings (batch operation)
 // Body: { parentId: string | null, orderedIds: string[] }
 router.put('/reorder',
   AdminAuthMiddleware.requireGranularPermission('documents.update'),
   DocumentManagementController.reorderSiblings
-);
-
-// Reorder single document (change order/parentId) - DEPRECATED
-// Body: { id: string, order: number, parentId: string | null }
-// @deprecated Use /reorder with orderedIds array instead
-router.put('/reorder-single',
-  AdminAuthMiddleware.requireGranularPermission('documents.update'),
-  DocumentManagementController.reorderDocument
 );
 
 // Update document (title, contentDelta, isDraft, visible, order)

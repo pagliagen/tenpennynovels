@@ -49,7 +49,7 @@
   align-items: center;
   justify-content: center;
   font-family: 'Playfair Display', serif;
-  font-size: 14.4px;
+  font-size: 14px;
   font-weight: 600;
   color: #b8860b;
   text-shadow: 0 0 5px rgba(184, 134, 11, 0.3);
@@ -80,7 +80,7 @@
 
 .buttonTitle {
   font-family: 'Playfair Display', serif;
-  font-size: 14.4px;
+  font-size: 14px;
   font-weight: 700;
   color: #b8860b;
   text-shadow: 0 0 5px rgba(184, 134, 11, 0.5);
@@ -99,7 +99,7 @@
   border: 2px solid #654321;
   border-radius: 50%;
   font-family: 'Playfair Display', serif;
-  font-size: 17.6px;
+  font-size: 18px;
   font-weight: 700;
   color: #1a1a1a;
   text-align: center;
@@ -129,7 +129,7 @@
 
 .listHeader {
   font-family: 'Playfair Display', serif;
-  font-size: 13.6px;
+  font-size: 14px;
   font-weight: 600;
   color: #8b4513;
   text-align: center;
@@ -172,14 +172,14 @@
 
 .playerButton {
   width: 100%;
-  padding: 3.2px;
+  padding: 4px;
   background: rgba(139, 69, 19, 0.1);
   border: 1px solid rgba(139, 69, 19, 0.3);
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s ease;
   font-family: 'Thrifted Attire', serif;
-  font-size: 13.6px;
+  font-size: 14px;
   color: #b8860b;
   text-align: left;
   text-shadow: 0 0 3px rgba(184, 134, 11, 0.2);
@@ -209,13 +209,13 @@
   justify-content: center;
   background: rgba(184, 134, 11, 0.2);
   border: 2px solid #8b4513;
-  font-size: 19.2px;
+  font-size: 20px;
 }
 
 .miniName {
   flex: 1;
   font-family: 'Thrifted Attire', serif;
-  font-size: 13.6px;
+  font-size: 14px;
   color: #b8860b;
   text-shadow: 0 0 5px rgba(184, 134, 11, 0.3);
   white-space: nowrap;
@@ -226,7 +226,7 @@
 
 .emptyState {
   font-family: 'Thrifted Attire', serif;
-  font-size: 13.6px;
+  font-size: 14px;
   color: #888;
   font-style: italic;
   text-align: center;

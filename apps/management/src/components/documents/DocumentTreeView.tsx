@@ -37,6 +37,7 @@ interface DocumentTreeViewProps {
   onToggleRouteEnabled: (routeId: string) => void;
   onDeleteRoute: (routeId: string) => void;
   // Document actions (always available)
+  onCreateChildDocument: (parentDocId: string) => void;
   onEditDocument: (docId: string) => void;
   onEditDocumentHierarchical: (docId: string) => void;
   onDeleteDocument: (docId: string) => void;
@@ -49,6 +50,7 @@ interface DocumentTreeViewProps {
 export function DocumentTreeView({
   documents,
   onCreateRoute,
+  onCreateChildDocument,
   onEditRoute,
   onToggleRouteEnabled,
   onDeleteRoute,
@@ -204,6 +206,7 @@ export function DocumentTreeView({
                 onToggleVisibility={onToggleDocumentVisibility}
                 onToggleDraft={onToggleDocumentDraft}
                 onCreateRoute={onCreateRoute}
+                onCreateChildDocument={onCreateChildDocument}
                 onEditRoute={onEditRoute}
                 onToggleRouteEnabled={onToggleRouteEnabled}
                 onDeleteRoute={onDeleteRoute}

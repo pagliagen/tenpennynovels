@@ -1,0 +1,36 @@
+/**
+ * Main SCSS Entry Point - Game App
+ *
+ * Imports all SCSS modules in the correct order:
+ * 1. Tokens (CSS custom properties)
+ * 2. Mixins (reusable patterns)
+ * 3. Base (reset, globals, typography)
+ *
+ * Component styles are imported as CSS Modules in components themselves.
+ *
+ * @module styles/main
+ * @since 2.0.0
+ */
+
+/* ===========================
+   1. TOKENS (CSS Variables)
+   =========================== */
+@use 'tokens/colors' as *;
+@use 'tokens/typography' as *;
+@use 'tokens/spacing' as *;
+@use 'tokens/layout' as *;
+@use 'tokens/borders' as *;
+@use 'tokens/shadows' as *;
+@use 'tokens/transitions' as *;
+@use 'tokens/transforms' as *;
+
+/* ===========================
+   2. MIXINS
+   =========================== */
+@use 'mixins/breakpoints' as *;
+
+/* ===========================
+   3. BASE STYLES
+   =========================== */
+@use 'base/reset' as *;
+@use 'base/globals' as *;

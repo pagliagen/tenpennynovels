@@ -102,7 +102,7 @@
 /* Dimmed message (different tag context) */
 .messageItemDimmed {
   opacity: 0.4;
-  filter: blur(0.5px);
+  filter: blur(1px);
   background: rgba(245, 245, 245, 0.02);
   border-left-color: rgba(184, 134, 11, 0.15);
 
@@ -999,7 +999,7 @@
   }
 
   .locationName {
-    font-size: 1.64px;
+    font-size: 16px;
   }
 
   .messageList {

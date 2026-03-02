@@ -29,7 +29,7 @@ import { queryClient } from '@/lib/api/queryClient';
 import { WebSocketProvider } from '@/contexts/WebSocketContext';
 import { EnvironmentProvider } from '@/contexts/EnvironmentContext';
 import { AuthInitializer } from '@/components/auth/AuthInitializer';
-import '@/styles/globals.css';
+import '@/styles/main.scss';
 
 /**
  * Custom App Component

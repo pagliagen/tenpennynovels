@@ -1,0 +1,79 @@
+/**
+ * Spacing Design Tokens
+ *
+ * Consistent spacing scale for margins, padding, and gaps.
+ * Uses 8px base unit for harmonious spacing.
+ *
+ * **Scale** (8px base):
+ * - xs: 4px
+ * - sm: 8px
+ * - md: 16px
+ * - lg: 24px
+ * - xl: 32px
+ * - 2xl: 48px
+ * - 3xl: 64px
+ * - 4xl: 96px
+ *
+ * **Usage**:
+ * ```scss
+ * .card {
+ *   padding: var(--spacing-md);
+ *   margin-bottom: var(--spacing-lg);
+ * }
+ * ```
+ */
+
+:root {
+  /* ===========================
+     SPACING SCALE
+     =========================== */
+
+  /** Extra small - 4px */
+  --spacing-xs: 4px;
+
+  /** Small - 8px */
+  --spacing-sm: 8px;
+
+  /** Medium - 16px - Base unit */
+  --spacing-md: 16px;
+
+  /** Large - 24px */
+  --spacing-lg: 24px;
+
+  /** Extra large - 32px */
+  --spacing-xl: 32px;
+
+  /** 2x extra large - 48px */
+  --spacing-2xl: 48px;
+
+  /** 3x extra large - 64px */
+  --spacing-3xl: 64px;
+
+  /** 4x extra large - 96px */
+  --spacing-4xl: 96px;
+
+  /* ===========================
+     COMPONENT-SPECIFIC SPACING
+     =========================== */
+
+  /** Form field vertical spacing */
+  --spacing-form-field: var(--spacing-lg);
+
+  /** Button padding horizontal */
+  --spacing-button-x: var(--spacing-lg);
+
+  /** Button padding vertical */
+  --spacing-button-y: var(--spacing-sm);
+
+  /** Card padding */
+  --spacing-card: var(--spacing-xl);
+
+  /** Container padding (mobile) */
+  --spacing-container-mobile: var(--spacing-md);
+
+  /** Container padding (desktop) */
+  --spacing-container-desktop: var(--spacing-2xl);
+
+  /** Section spacing (between major sections) */
+  --spacing-section: var(--spacing-4xl);
+}

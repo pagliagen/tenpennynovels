@@ -1,0 +1,79 @@
+/**
+ * Border Design Tokens
+ *
+ * Border radius, border widths, and common border styles for Victorian theme.
+ *
+ * **Border Radius Scale**:
+ * - none: 0 - Sharp corners
+ * - sm: 4px - Subtle rounding
+ * - md: 6px - Standard rounding
+ * - lg: 8px - Pronounced rounding
+ * - xl: 12px - Large rounding
+ * - 2xl: 16px - Extra large rounding
+ * - full: 9999px - Pills, circular buttons
+ *
+ * **Border Widths**: 1px (thin), 2px (base Victorian), 3px (thick ornate)
+ *
+ * **Usage**:
+ * ```scss
+ * .card {
+ *   border: var(--border-default);
+ *   border-radius: var(--radius-md);
+ * }
+ *
+ * .ornate-frame {
+ *   border: var(--border-ornate);
+ * }
+ * ```
+ */
+
+:root {
+  /* ===========================
+     BORDER RADIUS SCALE
+     =========================== */
+
+  /** Border radius - NO decimal values, whole pixels only */
+  --radius-none: 0;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
+  --radius-full: 9999px; /* Pills, circular buttons */
+
+  /* ===========================
+     BORDER WIDTHS
+     =========================== */
+
+  /** Border widths - Victorian style favors 2px for visibility */
+  --border-width-thin: 1px;
+  --border-width-base: 2px;
+  --border-width-thick: 3px;
+
+  /* ===========================
+     BORDER STYLES (Victorian)
+     =========================== */
+
+  /**
+   * Pre-composed border patterns for common use cases.
+   * Combines width, style, and color for consistency.
+   */
+
+  /** Default border - Thin, subtle */
+  --border-default: var(--border-width-thin) solid var(--color-primary);
+
+  /** Ornate Victorian border - Thick, golden */
+  --border-ornate: var(--border-width-base) solid var(--color-primary);
+
+  /** Subtle border - For backgrounds close to border color */
+  --border-subtle: var(--border-width-thin) solid var(--color-bg-tertiary);
+
+  /** Dashed ornamental border - Victorian decorative pattern */
+  --border-dashed: var(--border-width-base) dashed rgba(212, 175, 55, 0.3);
+
+  /** Input border - Standard form elements */
+  --border-input: var(--border-width-thin) solid var(--color-bg-tertiary);
+
+  /** Focus border - Interactive elements */
+  --border-focus: var(--border-width-base) solid var(--color-primary-hover);
+}

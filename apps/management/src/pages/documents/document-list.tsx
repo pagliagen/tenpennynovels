@@ -14,7 +14,6 @@ import { DocumentTreeView } from '@/components/documents/DocumentTreeView';
 import { EditDocumentModal } from '@/components/documents/EditDocumentModal';
 import { HierarchicalDocumentEditor } from '@/components/documents/HierarchicalDocumentEditor';
 import { CreateDocumentModal } from '@/components/documents/CreateDocumentModal';
-import { CreateRouteModal } from '@/components/documents/CreateRouteModal';
 import { EditRouteModal } from '@/components/documents/EditRouteModal';
 import { useConfirm } from '@/hooks/useConfirm';
 import {
@@ -50,15 +49,9 @@ export default function DocumentList() {
   const [hierarchicalEditorOpen, setHierarchicalEditorOpen] = useState(false);
   const [hierarchicalRootId, setHierarchicalRootId] = useState<string | null>(null);
   const [createDocModalOpen, setCreateDocModalOpen] = useState(false);
-  const [selectedParentRouteId, setSelectedParentRouteId] = useState<string | null>(null);
-  const [createRouteModalOpen, setCreateRouteModalOpen] = useState(false);
+  const [selectedParentDocId, setSelectedParentDocId] = useState<string | null>(null);
   const [editRouteModalOpen, setEditRouteModalOpen] = useState(false);
   const [selectedRouteId, setSelectedRouteId] = useState<string | null>(null);
-  // NEW: State for linking route to existing document
-  const [selectedDocumentForRoute, setSelectedDocumentForRoute] = useState<{
-    id: string;
-    data: { title: string; slug: string; description?: string };
-  } | null>(null);
 
   // Hooks
   const queryClient = useQueryClient();
@@ -149,7 +142,9 @@ export default function DocumentList() {
   };
 
   /**
-   * Create route for existing document (NEW - documents-first)
+   * Create route for existing document without route (orphan documents)
+   * Used by context menu "Crea Rotta" for recovery purposes
+   * NOTE: This is the ONLY manual route creation remaining after "+ Nuova Route" removal
    */
   const handleCreateRoute = async (documentId: string) => {
     // Find the document in the tree
@@ -199,6 +194,15 @@ export default function DocumentList() {
         type: 'error'
       });
     }
+  };
+
+  /**
+   * Create child document (documents-first)
+   * Used by context menu "Crea Sottodocumento"
+   */
+  const handleCreateChildDocument = (parentDocId: string) => {
+    setSelectedParentDocId(parentDocId);
+    setCreateDocModalOpen(true);
   };
 
   /**
@@ -317,11 +321,11 @@ export default function DocumentList() {
             <button
               className={styles.createButton}
               onClick={() => {
-                setSelectedDocumentForRoute(null);
-                setCreateRouteModalOpen(true);
+                setSelectedParentDocId(null);
+                setCreateDocModalOpen(true);
               }}
             >
-              + Nuova Route
+              + Crea Documenti
             </button>
           </div>
         </header>
@@ -355,6 +359,7 @@ export default function DocumentList() {
           <DocumentTreeView
             documents={data?.data ?? []}
             onCreateRoute={handleCreateRoute}
+            onCreateChildDocument={handleCreateChildDocument}
             onEditRoute={handleEditRoute}
             onToggleRouteEnabled={handleToggleEnabled}
             onDeleteRoute={handleDeleteRoute}
@@ -399,87 +404,15 @@ export default function DocumentList() {
             isOpen={createDocModalOpen}
             onClose={() => {
               setCreateDocModalOpen(false);
-              setSelectedParentRouteId(null);
+              setSelectedParentDocId(null);
             }}
             type={typeFilter}
-            availableRoutes={(() => {
-              // Build flat route list from document tree
-              const routes: any[] = [];
-              const extractRoutes = (docs: DocumentWithRoute[]) => {
-                docs.forEach(doc => {
-                  if (doc.route) {
-                    routes.push({
-                      _id: doc.route._id,
-                      path: doc.route.path,
-                      slug: doc.route.slug,
-                      title: doc.route.title,
-                      kind: doc.route.kind,
-                      enabled: doc.route.enabled,
-                      isPublic: doc.route.isPublic,
-                      parentId: null,
-                      children: []
-                    });
-                  }
-                  extractRoutes(doc.children);
-                });
-              };
-              extractRoutes(data?.data ?? []);
-              return routes;
-            })()}
-            preselectedParentId={selectedParentRouteId}
+            preselectedParentDocId={selectedParentDocId}
             onDocumentCreated={(documentId) => {
               setSelectedDocId(documentId);
               setEditModalOpen(true);
               setCreateDocModalOpen(false);
-              setSelectedParentRouteId(null);
-            }}
-          />
-        )}
-
-        {/* Create Route Modal */}
-        {createRouteModalOpen && (
-          <CreateRouteModal
-            isOpen={createRouteModalOpen}
-            onClose={() => {
-              setCreateRouteModalOpen(false);
-              setSelectedDocumentForRoute(null);
-            }}
-            type={typeFilter}
-            existingDocumentId={selectedDocumentForRoute?.id}
-            existingDocumentData={selectedDocumentForRoute?.data}
-            availableRoutes={(() => {
-              // Build flat route list from document tree
-              const routes: any[] = [];
-              const extractRoutes = (docs: DocumentWithRoute[]) => {
-                docs.forEach(doc => {
-                  if (doc.route) {
-                    routes.push({
-                      _id: doc.route._id,
-                      path: doc.route.path,
-                      slug: doc.route.slug,
-                      title: doc.route.title,
-                      kind: doc.route.kind,
-                      enabled: doc.route.enabled,
-                      isPublic: doc.route.isPublic,
-                      parentId: null, // Simplified - no children for now
-                      children: []
-                    });
-                  }
-                  extractRoutes(doc.children);
-                });
-              };
-              extractRoutes(data?.data ?? []);
-              return routes;
-            })()}
-            onRouteCreated={(route) => {
-              addNotification({ type: 'success', message: 'Route creata con successo' });
-              // If route has a document and we didn't link an existing one, open edit modal
-              if (route.rootDocumentId && !selectedDocumentForRoute) {
-                setSelectedDocId(route.rootDocumentId);
-                setEditModalOpen(true);
-              }
-              setCreateRouteModalOpen(false);
-              setSelectedDocumentForRoute(null);
+              setSelectedParentDocId(null);
             }}
           />
         )}

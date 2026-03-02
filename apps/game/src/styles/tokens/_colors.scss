@@ -1,0 +1,151 @@
+/**
+ * Color Design Tokens
+ *
+ * Centralized color palette for Victorian theme.
+ * Uses CSS custom properties for easy theming and consistency.
+ *
+ * **Color System**:
+ * - Primary: Gold (#d4af37) - Victorian luxury
+ * - Background: Dark browns/blacks - Atmospheric
+ * - Text: Beige/cream - Readable on dark
+ * - Semantic: Success (green), Error (red), Warning (amber), Info (blue)
+ *
+ * **Usage**:
+ * ```scss
+ * .button {
+ *   background: var(--color-primary);
+ *   color: var(--color-text-primary);
+ * }
+ * ```
+ */
+
+:root {
+  /* ===========================
+     PRIMARY COLORS
+     =========================== */
+
+  /** Main brand color - Victorian gold */
+  --color-primary: #d4af37;
+
+  /** Primary hover state - Lighter gold */
+  --color-primary-hover: #daa520;
+
+  /** Primary active/pressed state - Darker gold */
+  --color-primary-active: #b8860b;
+
+  /** Primary disabled state - Muted gold */
+  --color-primary-disabled: #9b8348;
+
+  /* ===========================
+     BACKGROUND COLORS
+     =========================== */
+
+  /** Main background - Very dark brown */
+  --color-bg-primary: #1a0f0a;
+
+  /** Secondary background - Slightly lighter brown */
+  --color-bg-secondary: #2a1f1a;
+
+  /** Tertiary background - Card/panel backgrounds */
+  --color-bg-tertiary: #3a2f2a;
+
+  /** Input background - Darker for contrast */
+  --color-bg-input: #0f0a08;
+
+  /** Overlay background - Semi-transparent black */
+  --color-bg-overlay: rgba(0, 0, 0, 0.8);
+
+  /* ===========================
+     TEXT COLORS
+     =========================== */
+
+  /** Primary text - Cream/beige */
+  --color-text-primary: #f5f5dc;
+
+  /** Secondary text - Muted beige */
+  --color-text-secondary: #d4c4b0;
+
+  /** Tertiary text - Dimmed beige */
+  --color-text-tertiary: #a89884;
+
+  /** Disabled text - Very muted */
+  --color-text-disabled: #6b5d51;
+
+  /** Inverse text - Dark text on light backgrounds */
+  --color-text-inverse: #1a0f0a;
+
+  /* ===========================
+     BORDER COLORS
+     =========================== */
+
+  /** Primary border - Gold */
+  --color-border-primary: var(--color-primary);
+
+  /** Secondary border - Muted brown */
+  --color-border-secondary: #4a3f3a;
+
+  /** Input border - Subtle brown */
+  --color-border-input: #3a2f2a;
+
+  /** Focus border - Bright gold */
+  --color-border-focus: var(--color-primary-hover);
+
+  /* ===========================
+     SEMANTIC COLORS
+     =========================== */
+
+  /** Success color - Victorian green */
+  --color-success: #28a745;
+
+  /** Success background - Muted green */
+  --color-success-bg: #1e472e;
+
+  /** Success border - Brighter green */
+  --color-success-border: #34ce57;
+
+  /** Error color - Victorian red */
+  --color-error: #dc3545;
+
+  /** Error background - Muted red */
+  --color-error-bg: #4a1e23;
+
+  /** Error border - Brighter red */
+  --color-error-border: #f56570;
+
+  /** Warning color - Victorian amber */
+  --color-warning: #ffc107;
+
+  /** Warning background - Muted amber */
+  --color-warning-bg: #4a3a1e;
+
+  /** Warning border - Brighter amber */
+  --color-warning-border: #ffce3a;
+
+  /** Info color - Victorian blue */
+  --color-info: #17a2b8;
+
+  /** Info background - Muted blue */
+  --color-info-bg: #1e3a47;
+
+  /** Info border - Brighter blue */
+  --color-info-border: #3abfdb;
+
+  /* ===========================
+     SHADOWS
+     =========================== */
+
+  /** Small shadow - Subtle elevation */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.4);
+
+  /** Medium shadow - Card elevation */
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.5);
+
+  /** Large shadow - Modal elevation */
+  --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.6);
+
+  /** Extra large shadow - Maximum elevation */
+  --shadow-xl: 0 16px 32px rgba(0, 0, 0, 0.7);
+
+  /** Golden glow - Victorian decorative shadow */
+  --shadow-golden-glow: 0 0 16px rgba(212, 175, 55, 0.4);
+}

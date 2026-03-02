@@ -78,6 +78,7 @@ export interface Document {
   _id: string;
   title: string;
   slug: string;
+  description?: string;            // Document description (for search, metadata)
   content: string;
   contentDelta?: any;              // TipTap JSON Delta (WYSIWYG editor format)
   excerpt?: string;
@@ -179,6 +180,7 @@ export interface RouteListResponse {
 export interface CreateDocumentData {
   title: string;
   slug: string;
+  type: 'ambientazione' | 'approfondimenti' | 'regolamento';  // Required for semantic search
   description?: string;
   parentId?: string | null;
   contentDelta?: any;  // TipTap JSON format
@@ -190,6 +192,7 @@ export interface CreateDocumentData {
 
 export interface UpdateDocumentData {
   title?: string;
+  description?: string;           // Document description (for search, metadata)
   content?: string;
   contentDelta?: any;             // TipTap JSON Delta (WYSIWYG editor format)
   excerpt?: string;

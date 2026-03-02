@@ -1,0 +1,170 @@
+/**
+ * Layout Design Tokens
+ *
+ * Breakpoints, container widths, z-index scale, and layout dimensions.
+ * Uses SCSS variables for breakpoints (needed for @media queries) and
+ * CSS custom properties for runtime values.
+ *
+ * **Breakpoint System**:
+ * - xs: 480px  - Extra small devices
+ * - sm: 640px  - Small devices (large phones)
+ * - md: 768px  - Medium devices (tablets)
+ * - lg: 1024px - Large devices (desktops)
+ * - xl: 1280px - Extra large devices
+ * - 2xl: 1536px - Ultra wide devices
+ *
+ * **Z-Index Scale**: 1-100 (NOT 1000+)
+ *
+ * **Usage**:
+ * ```scss
+ * @use 'tokens/layout' as *;
+ *
+ * .container {
+ *   max-width: var(--container-max-width);
+ *   z-index: var(--z-index-modal);
+ * }
+ *
+ * @media (min-width: $breakpoint-md) {
+ *   // Tablet and up
+ * }
+ * ```
+ */
+
+/* ===========================
+   SCSS VARIABLES (for @media)
+   =========================== */
+
+/** Breakpoints - SCSS variables needed for computed values in media queries */
+$breakpoint-xs: 480px;
+$breakpoint-sm: 640px;
+$breakpoint-md: 768px;
+$breakpoint-lg: 1024px;
+$breakpoint-xl: 1280px;
+$breakpoint-2xl: 1536px;
+
+/** Container widths - Aligned with breakpoints */
+$container-sm: 640px;
+$container-md: 768px;
+$container-lg: 1024px;
+$container-xl: 1280px;
+$container-2xl: 1536px;
+$container-full: 100%;
+
+/* ===========================
+   CSS CUSTOM PROPERTIES
+   =========================== */
+
+:root {
+  /* Container Max Widths */
+  --container-max-width: 1400px;
+  --content-max-width: 1200px;
+
+  /* Layout Dimensions */
+  --sidebar-width: 320px;
+  --header-height: 80px;
+  --footer-height: 60px;
+  --mobile-bottom-nav-height: 60px;
+
+  /* Component Sizes */
+  --size-avatar: 48px;
+  --size-hamburger: 40px;
+
+  /* ===========================
+     Z-INDEX SCALE
+     =========================== */
+
+  /**
+   * Z-index scale: 1-100
+   * NEVER use values > 100 (prevents z-index wars)
+   * Clear hierarchy, easy to insert new layers
+   */
+  --z-index-base: 1;
+  --z-index-dropdown: 10;
+  --z-index-sticky: 20;
+  --z-index-fixed: 30;
+  --z-index-sidebar: 40;
+  --z-index-modal-backdrop: 50;
+  --z-index-modal: 60;
+  --z-index-popover: 70;
+  --z-index-tooltip: 80;
+  --z-index-toast: 90;
+  --z-index-max: 100; /* Absolute maximum */
+}
+
+/* ===========================
+   BREAKPOINT MIXINS
+   =========================== */
+
+/**
+ * Mobile-first responsive mixins
+ */
+
+@mixin mobile {
+  @media (max-width: #{$breakpoint-md - 1}) {
+    @content;
+  }
+}
+
+@mixin tablet {
+  @media (min-width: #{$breakpoint-md}) and (max-width: #{$breakpoint-lg - 1}) {
+    @content;
+  }
+}
+
+@mixin desktop {
+  @media (min-width: #{$breakpoint-lg}) {
+    @content;
+  }
+}
+
+@mixin mobile-only {
+  @media (max-width: #{$breakpoint-md - 1}) {
+    @content;
+  }
+}
+
+@mixin desktop-only {
+  @media (min-width: #{$breakpoint-md}) {
+    @content;
+  }
+}
+
+/**
+ * Min-width breakpoint mixins
+ */
+
+@mixin from-xs {
+  @media (min-width: $breakpoint-xs) {
+    @content;
+  }
+}
+
+@mixin from-sm {
+  @media (min-width: $breakpoint-sm) {
+    @content;
+  }
+}
+
+@mixin from-md {
+  @media (min-width: $breakpoint-md) {
+    @content;
+  }
+}
+
+@mixin from-lg {
+  @media (min-width: $breakpoint-lg) {
+    @content;
+  }
+}
+
+@mixin from-xl {
+  @media (min-width: $breakpoint-xl) {
+    @content;
+  }
+}
+
+@mixin from-2xl {
+  @media (min-width: $breakpoint-2xl) {
+    @content;
+  }
+}

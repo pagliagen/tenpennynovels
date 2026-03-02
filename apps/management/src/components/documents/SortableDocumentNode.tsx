@@ -23,6 +23,7 @@ export interface SortableDocumentNodeProps {
   onToggleVisibility: (docId: string) => void;
   onToggleDraft: (docId: string) => void;
   onCreateRoute: (docId: string) => void;
+  onCreateChildDocument: (parentDocId: string) => void;
   onEditRoute: (routeId: string) => void;
   onToggleRouteEnabled: (routeId: string) => void;
   onDeleteRoute: (routeId: string) => void;
@@ -79,6 +80,7 @@ export const SortableDocumentNode: React.FC<SortableDocumentNodeProps> = (props)
                 onToggleVisibility={props.onToggleVisibility}
                 onToggleDraft={props.onToggleDraft}
                 onCreateRoute={props.onCreateRoute}
+                onCreateChildDocument={props.onCreateChildDocument}
                 onEditRoute={props.onEditRoute}
                 onToggleRouteEnabled={props.onToggleRouteEnabled}
                 onDeleteRoute={props.onDeleteRoute}
