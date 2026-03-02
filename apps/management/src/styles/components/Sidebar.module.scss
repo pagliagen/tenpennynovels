@@ -1,357 +1,164 @@
-// Import shared design system variables (CSS Modules compatibility)
-@import 'variables/colors';
-@import 'variables/typography';
-@import 'variables/spacing';
-@import 'variables/breakpoints';
-@import 'variables/shadows';
-@import 'variables/borders';
-// =============================================================================
-// Sidebar Styles  
-// =============================================================================
+@import '../variables.scss';
 
 .sidebar {
-  width: 280px;
-  height: 100vh;
-  background: linear-gradient(180deg, #1a1a1a 0%, #0f0f0f 100%);
-  border-right: 2px solid rgba(212, 175, 55, 0.2);
+  width: 250px;
+  background-color: $color-bg-secondary;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   flex-direction: column;
-  position: fixed;
-  left: 0;
-  top: 0;
-  z-index: 1000;
-  overflow-y: auto;
-  
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
-  
-  &::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.3);
-  }
-  
-  &::-webkit-scrollbar-thumb {
-    background: rgba(212, 175, 55, 0.5);
-    border-radius: 3px;
-  }
-}
-
-// Header Section
-.sidebarHeader {
-  padding: 2rem 1.5rem 1.5rem;
-  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
-}
-
-.logo {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.logoIcon {
-  font-size: 2.5rem;
-  filter: drop-shadow(0 2px 4px rgba(212, 175, 55, 0.3));
-}
-
-.logoText {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.2;
-}
-
-.logoMain {
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: #d4af37;
-  font-family: 'Cinzel', serif;
-}
-
-.logoSub {
-  font-size: 0.85rem;
-  color: #b8b8b8;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-}
-
-// User Info Section
-.userInfo {
-  padding: 1.5rem;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  border-bottom: 1px solid rgba(212, 175, 55, 0.1);
-  background: rgba(212, 175, 55, 0.03);
-}
-
-.userAvatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  border: 2px solid rgba(212, 175, 55, 0.3);
-  overflow: hidden;
-  flex-shrink: 0;
-  
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-}
-
-.userDetails {
-  flex: 1;
-  min-width: 0;
-}
-
-.userName {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #ffffff;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.characterName {
+  transition: width $transition-normal;
   position: relative;
-  font-size: 1rem;
-  font-weight: 600;
-  color: #ffffff;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  padding-right: 30px;
-}
 
-.userRole {
-  font-size: 0.8rem;
-  color: #d4af37;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-// Navigation Section
-.navigation {
-  flex: 1;
-  padding: 1rem 0;
-  overflow-y: auto;
-}
-
-.menuList {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.menuItem {
-  margin-bottom: 0.25rem;
-}
-
-.menuButton {
-  width: 100%;
-  background: none;
-  border: none;
-  color: #e8e8e8;
-  padding: 1rem 1.5rem;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  position: relative;
-  text-align: left;
-  
-  &:hover {
-    background: rgba(212, 175, 55, 0.1);
-    color: #d4af37;
-    
-    &::before {
-      transform: scaleY(1);
-    }
+  &.collapsed {
+    width: 70px;
   }
-  
-  &.active {
-    background: rgba(212, 175, 55, 0.15);
-    color: #d4af37;
-    border-right: 3px solid #d4af37;
-    
-    &::before {
-      transform: scaleY(1);
-    }
-  }
-  
-  &::before {
-    content: '';
-    position: absolute;
+
+  @media (max-width: $breakpoint-mobile) {
+    position: fixed;
     left: 0;
     top: 0;
     bottom: 0;
-    width: 4px;
-    background: linear-gradient(180deg, #d4af37, #f4d03f);
-    transform: scaleY(0);
-    transition: transform 0.2s ease;
-  }
-  
-  &.hasChildren {
-    .expandIcon {
-      margin-left: auto;
-      transition: transform 0.2s ease;
-      
-      &.expanded {
-        transform: rotate(180deg);
-      }
-    }
-  }
-}
-
-.menuIcon {
-  font-size: 1.3rem;
-  flex-shrink: 0;
-}
-
-.menuLabel {
-  font-size: 0.95rem;
-  font-weight: 500;
-  flex: 1;
-}
-
-.expandIcon {
-  font-size: 0.8rem;
-  opacity: 0.7;
-}
-
-// Submenu Styles
-.submenu {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  max-height: 0;
-  overflow: hidden;
-  background: rgba(0, 0, 0, 0.2);
-  transition: max-height 0.3s ease;
-  
-  &.expanded {
-    max-height: 500px;
-  }
-}
-
-.submenuItem {
-  margin: 0;
-}
-
-.submenuButton {
-  width: 100%;
-  background: none;
-  border: none;
-  color: #b8b8b8;
-  padding: 0.75rem 1.5rem 0.75rem 4rem;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-align: left;
-  position: relative;
-  justify-content: left;
-  
-  &:hover {
-    background: rgba(212, 175, 55, 0.08);
-    color: #d4af37;
-  }
-  
-  &.active {
-    background: rgba(212, 175, 55, 0.12);
-    color: #d4af37;
-    
-    &::before {
-      content: '';
-      position: absolute;
-      left: 2.5rem;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 4px;
-      height: 4px;
-      background: #d4af37;
-      border-radius: 50%;
-    }
-  }
-}
-
-.submenuIcon {
-  font-size: 1rem;
-  flex-shrink: 0;
-  opacity: 0.8;
-}
-
-.submenuLabel {
-  font-size: 0.85rem;
-  font-weight: 500;
-}
-
-
-// Responsive Design
-@include large-screen-down {
-  .sidebar {
-    width: 260px;
-  }
-  
-  .logoMain {
-    font-size: 1.2rem;
-  }
-  
-  .logoSub {
-    font-size: 0.75rem;
-  }
-}
-
-@include mobile-only {
-  .sidebar {
-    width: 240px;
+    z-index: $z-dropdown;
     transform: translateX(-100%);
-    transition: transform 0.3s ease;
-    
-    &.open {
+    transition: transform $transition-normal;
+
+    &:not(.collapsed) {
       transform: translateX(0);
     }
   }
 }
 
-@include tablet-down {
-  .sidebar {
-    width: 100vw;
-    
-    .sidebarHeader {
-      padding: 1.5rem 1rem 1rem;
-    }
-    
-    .userInfo {
-      padding: 1rem;
-    }
-    
-    .menuButton {
-      padding: 1rem;
-    }
-    
-    .submenuButton {
-      padding: 0.75rem 1rem 0.75rem 3rem;
-    }
+.toggleButton {
+  position: absolute;
+  top: $spacing-md;
+  right: -15px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: $color-bg-tertiary;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: $color-text-primary;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all $transition-fast;
+  z-index: 1;
+
+  &:hover {
+    background-color: $color-primary;
+    border-color: $color-primary;
+    color: $color-bg-primary;
   }
 }
 
-// Dark theme enhancements
-@media (prefers-color-scheme: dark) {
-  .sidebar {
-    background: linear-gradient(180deg, #0f0f0f 0%, #080808 100%);
-    border-right-color: rgba(212, 175, 55, 0.15);
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+  padding: $spacing-lg $spacing-md;
+  margin-top: 50px; // Space for toggle button
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  padding: $spacing-md;
+  border-radius: $border-radius-md;
+  color: $color-text-secondary;
+  text-decoration: none;
+  transition: all $transition-fast;
+  white-space: nowrap;
+  overflow: hidden;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: $color-text-primary;
   }
-  
-  .userInfo {
-    background: rgba(212, 175, 55, 0.02);
+
+  &.active {
+    background-color: rgba($color-primary, 0.1);
+    color: $color-primary;
+    border-left: 3px solid $color-primary;
   }
-  
-  .submenu {
-    background: rgba(0, 0, 0, 0.4);
+}
+
+.icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.label {
+  font-size: 15px;
+  font-weight: 500;
+}
+
+// Categories (nested menu)
+.category {
+  display: flex;
+  flex-direction: column;
+}
+
+.categoryHeader {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  padding: $spacing-md;
+  border-radius: $border-radius-md;
+  color: $color-text-secondary;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: all $transition-fast;
+  white-space: nowrap;
+  overflow: hidden;
+  font-size: 15px;
+  font-weight: 500;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: $color-text-primary;
+  }
+
+  &.hasActive {
+    color: $color-primary;
+  }
+
+  &.expanded {
+    background-color: rgba(255, 255, 255, 0.03);
+  }
+
+  .icon {
+    font-size: 24px;
+    flex-shrink: 0;
+  }
+
+  .label {
+    flex: 1;
+  }
+
+  .chevron {
+    font-size: 11px;
+    opacity: 0.6;
+    transition: transform $transition-fast;
+  }
+}
+
+.categoryChildren {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+  padding-left: $spacing-md;
+  margin-top: $spacing-xs;
+
+  .navItem {
+    padding: $spacing-sm $spacing-md;
+    font-size: 14px;
+
+    &.child {
+      padding-left: calc($spacing-md + 24px + $spacing-md);
+    }
   }
 }

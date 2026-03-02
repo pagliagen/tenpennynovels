@@ -1,0 +1,64 @@
+/**
+ * Loading Skeleton Component Styles
+ *
+ * Animated placeholder skeletons for loading states.
+ */
+
+.loading-skeleton {
+  display: block;
+  background: linear-gradient(
+    90deg,
+    var(--color-bg-secondary) 0%,
+    var(--color-bg-tertiary) 50%,
+    var(--color-bg-secondary) 100%
+  );
+  background-size: 200% 100%;
+  margin-bottom: var(--spacing-sm);
+
+  /**
+   * Animated pulse effect
+   */
+  &--animated {
+    animation: skeleton-pulse 1.5s ease-in-out infinite;
+  }
+
+  /**
+   * Circle variant (for avatars)
+   */
+  &--circle {
+    border-radius: 50%;
+  }
+
+  /**
+   * Variant-specific defaults
+   */
+  &--avatar {
+    width: 48px;
+    height: 48px;
+  }
+
+  &--card {
+    height: 200px;
+  }
+}
+
+/**
+ * Skeleton group wrapper
+ */
+.loading-skeleton-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+/**
+ * Pulse animation
+ */
+@keyframes skeleton-pulse {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}

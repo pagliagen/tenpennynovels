@@ -1,0 +1,53 @@
+/**
+ * Main SCSS Entry Point
+ *
+ * Imports all SCSS modules in the correct order:
+ * 1. Tokens (CSS variables)
+ * 2. Mixins (reusable patterns)
+ * 3. Base (reset, typography)
+ * 4. Components (button, alert, card, etc.)
+ * 5. Layouts (victorian-layout, form-layout, etc.)
+ */
+
+/* ===========================
+   1. TOKENS (CSS Variables)
+   =========================== */
+@use 'tokens/colors' as *;
+@use 'tokens/spacing' as *;
+@use 'tokens/typography' as *;
+@use 'tokens/transitions' as *;
+
+/* ===========================
+   2. MIXINS
+   =========================== */
+@use 'mixins/forms' as *;
+
+/* ===========================
+   3. BASE STYLES
+   =========================== */
+@use 'base/reset' as *;
+@use 'base/typography' as *;
+
+/* ===========================
+   4. COMPONENTS
+   =========================== */
+@use 'components/alert' as *;
+@use 'components/button' as *;
+@use 'components/card' as *;
+@use 'components/confirm-dialog' as *;
+@use 'components/cookie-banner' as *;
+@use 'components/form-actions' as *;
+@use 'components/form-page' as *;
+@use 'components/loading-skeleton' as *;
+@use 'components/masked-input' as *;
+@use 'components/password-field' as *;
+@use 'components/select-field' as *;
+@use 'components/textarea-field' as *;
+@use 'components/token-page' as *;
+
+/* ===========================
+   5. LAYOUTS
+   =========================== */
+@use 'layouts/form-layout' as *;
+@use 'layouts/page-layout' as *;
+@use 'layouts/victorian-layout' as *;

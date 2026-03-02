@@ -1,0 +1,355 @@
+/**
+ * Locations Map Styles
+ *
+ * Victorian-themed styling for the London map component.
+ * Includes SVG overlays, tooltips, legend, and floating controls.
+ *
+ * @module styles/components/locations/map
+ * @since 2.0.0
+ */
+
+/* ========================================
+   VIEW MODE CONTROLS (Floating Top-Left)
+   ======================================== */
+
+.viewModeControls {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 100;
+  display: flex;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(184, 134, 11, 0.3);
+  backdrop-filter: blur(4px);
+}
+
+.viewButton {
+  background: transparent;
+  border: 2px solid #8b4513;
+  color: #b8860b;
+  font-family: 'Thrifted Attire', serif;
+  padding: 8px 16px;
+  font-size: 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover:not(:disabled) {
+    color: #d4a017;
+    transform: translateY(-2px);
+    border-color: #b8860b;
+    box-shadow: 0 2px 8px rgba(184, 134, 11, 0.3);
+  }
+
+  &.active {
+    background: rgba(184, 134, 11, 0.3);
+    border-color: #b8860b;
+    box-shadow: 0 0 10px rgba(184, 134, 11, 0.5);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  &:focus-visible {
+    outline: 2px solid #b8860b;
+    outline-offset: 2px;
+  }
+}
+
+/* ========================================
+   MAP CONTAINER
+   ======================================== */
+
+.mapContainer {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  padding: 32px;
+  background: linear-gradient(135deg, #1a1410 0%, #2d2416 100%);
+}
+
+.mapWrapper {
+  position: relative;
+  max-width: 1200px;
+  max-height: 800px;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ========================================
+   LONDON LABEL (Clickable)
+   ======================================== */
+
+.londonLabel {
+  position: absolute;
+  top: -20px;
+  left: -20px;
+  z-index: 10;
+  cursor: pointer;
+  transition: transform 0.3s ease, filter 0.3s ease;
+
+  &:hover {
+    transform: scale(1.05);
+    filter: brightness(1.2);
+  }
+}
+
+.labelImage {
+  width: 276px;
+  height: 139px;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5));
+}
+
+/* ========================================
+   MAP IMAGE & SVG OVERLAY
+   ======================================== */
+
+.mapImageWrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mapImage {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  filter: sepia(20%) contrast(1.1) brightness(0.8) saturate(0.9);
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+}
+
+.svgOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* ========================================
+   DISTRICT POLYGONS
+   ======================================== */
+
+.districtPolygon {
+  fill: transparent;
+  stroke: rgba(184, 134, 11, 0.3);
+  stroke-width: 0;
+  pointer-events: all;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    fill: rgba(184, 134, 11, 0.15);
+    stroke: rgba(184, 134, 11, 0.6);
+    stroke-width: 1;
+  }
+}
+
+.glowBorder {
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+
+.rotatingLight {
+  animation: rotateDash 4s linear infinite;
+}
+
+@keyframes pulseGlow {
+  0%,
+  100% {
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@keyframes rotateDash {
+  0% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: 40;
+  }
+}
+
+/* ========================================
+   OCCUPANT INDICATORS (Red Dots)
+   ======================================== */
+
+.occupantsIndicator {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+/* ========================================
+   LEGEND (Bottom-Right)
+   ======================================== */
+
+.legend {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.85);
+  border: 2px solid #8b4513;
+  border-radius: 8px;
+  padding: 24px;
+  min-width: 250px;
+  max-width: 350px;
+  backdrop-filter: blur(8px);
+}
+
+.legendTitle {
+  color: #b8860b;
+  font-family: 'Thrifted Attire', serif;
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  text-align: center;
+  border-bottom: 1px solid rgba(184, 134, 11, 0.3);
+  padding-bottom: 8px;
+}
+
+.legendItems {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(184, 134, 11, 0.15);
+  }
+
+  &.legendHighlighted {
+    background: rgba(184, 134, 11, 0.25);
+    box-shadow: 0 0 8px rgba(184, 134, 11, 0.4);
+  }
+}
+
+.legendDot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #b8860b;
+  border: 2px solid #8b4513;
+  flex-shrink: 0;
+}
+
+.legendLabel {
+  color: #e8d4a0;
+  font-family: 'Playfair Display', serif;
+  font-size: 15px;
+  flex: 1;
+}
+
+.legendOccupants {
+  color: #ff6b35;
+  font-family: 'Playfair Display', serif;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* ========================================
+   RESPONSIVE DESIGN
+   ======================================== */
+
+@media (max-width: 1024px) {
+  .mapContainer {
+    padding: 16px;
+  }
+
+  .legend {
+    bottom: 10px;
+    right: 10px;
+    min-width: 200px;
+    padding: 16px;
+  }
+
+  .londonLabel {
+    top: -10px;
+    left: -10px;
+  }
+
+  .labelImage {
+    width: 200px;
+    height: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .viewModeControls {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .viewButton {
+    width: 100%;
+    font-size: 14px;
+    padding: 0.64px 12px;
+  }
+
+  .legend {
+    display: none; // Hide on mobile, use list view instead
+  }
+}
+
+/* ========================================
+   ACCESSIBILITY
+   ======================================== */
+
+.londonLabel:focus-visible {
+  outline: 2px solid #b8860b;
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+/* Disable animations for users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .glowBorder,
+  .rotatingLight,
+  .occupantsIndicator,
+  .londonLabel,
+  .viewButton,
+  .districtPolygon {
+    animation: none !important;
+    transition: none !important;
+  }
+}

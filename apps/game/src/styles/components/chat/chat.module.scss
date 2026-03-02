@@ -1,0 +1,1025 @@
+/**
+ * Location Chat Styles
+ *
+ * Victorian-themed styling for location chat components.
+ * Gold (#b8860b), brown (#8b4513), beige (#e8d4a0) color palette.
+ *
+ * Components styled:
+ * - ChatContainer (main layout)
+ * - ChatHeader (back button, location name)
+ * - MessageList (scroll container)
+ * - MessageItem (individual messages)
+ * - MessageInput (text input + submit)
+ * - TypingIndicator (real-time typing)
+ *
+ * @module styles/components/chat/chat
+ * @since 2.0.0
+ */
+
+/* ========================================
+   CHAT CONTAINER (Main Layout)
+   ======================================== */
+
+.chatContainer {
+  width: 100%;
+  height: 100%; /* Changed from 100vh - now inside GameLayout */
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(135deg, rgba(139, 69, 19, 0.05) 0%, rgba(184, 134, 11, 0.05) 100%);
+  overflow: hidden;
+}
+
+/* ========================================
+   MESSAGE LIST (Scroll Container)
+   ======================================== */
+
+.messageList {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 24px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  /* Victorian scrollbar */
+  &::-webkit-scrollbar {
+    width: 12px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgba(139, 69, 19, 0.1);
+    border-radius: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(184, 134, 11, 0.5);
+    border-radius: 6px;
+    border: 2px solid rgba(139, 69, 19, 0.1);
+
+    &:hover {
+      background: rgba(184, 134, 11, 0.7);
+    }
+  }
+}
+
+/* Empty state */
+.messageListEmpty {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  color: rgba(232, 212, 160, 0.5);
+  font-family: 'Playfair Display', serif;
+  font-size: 18px;
+  font-style: italic;
+  text-align: center;
+}
+
+/* ========================================
+   MESSAGE ITEM (Individual Message)
+   ======================================== */
+
+.messageItem {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 24px;
+  background: rgba(245, 245, 245, 0.05);
+  border-left: 3px solid rgba(184, 134, 11, 0.3);
+  border-radius: 4px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(245, 245, 245, 0.08);
+    border-left-color: rgba(184, 134, 11, 0.6);
+  }
+}
+
+/* Dimmed message (different tag context) */
+.messageItemDimmed {
+  opacity: 0.4;
+  filter: blur(0.5px);
+  background: rgba(245, 245, 245, 0.02);
+  border-left-color: rgba(184, 134, 11, 0.15);
+
+  &:hover {
+    opacity: 0.7;
+    filter: blur(0);
+    background: rgba(245, 245, 245, 0.05);
+    border-left-color: rgba(184, 134, 11, 0.4);
+  }
+}
+
+/* Message header (character name + timestamp) */
+.messageHeader {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.characterName {
+  color: #b8860b;
+  font-family: 'Thrifted Attire', serif;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.characterTag {
+  color: rgba(232, 212, 160, 0.6);
+  font-family: 'Playfair Display', serif;
+  font-size: 14px;
+  font-style: italic;
+}
+
+.messageTimestamp {
+  color: rgba(232, 212, 160, 0.5);
+  font-family: 'Playfair Display', serif;
+  font-size: 13px;
+  margin-left: auto;
+}
+
+/* Message content */
+.messageContent {
+  color: #e8d4a0;
+  font-family: 'Playfair Display', serif;
+  font-size: 16px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+/* Message type: OOC (Out-of-Character) */
+.messageItemOOC {
+  background: rgba(100, 100, 100, 0.1);
+  border-left-color: rgba(150, 150, 150, 0.5);
+
+  .messageContent {
+    color: rgba(232, 212, 160, 0.7);
+    font-style: italic;
+  }
+}
+
+/* Message type: Whisper */
+.messageItemWhisper {
+  background: rgba(139, 69, 19, 0.15);
+  border-left-color: rgba(139, 69, 19, 0.6);
+
+  .messageContent {
+    color: rgba(232, 212, 160, 0.9);
+    font-style: italic;
+  }
+}
+
+/* Message type: Master */
+.messageItemMaster {
+  background: rgba(184, 134, 11, 0.15);
+  border-left-color: rgba(184, 134, 11, 0.8);
+  border-left-width: 4px;
+
+  .characterName {
+    color: #f0e68c;
+  }
+
+  .messageContent {
+    font-weight: 500;
+  }
+}
+
+/* Edited indicator */
+.messageEdited {
+  color: rgba(232, 212, 160, 0.5);
+  font-family: 'Playfair Display', serif;
+  font-size: 12px;
+  font-style: italic;
+  margin-top: 4px;
+}
+
+/* ========================================
+   MESSAGE TYPE ELEMENTS (Icons, Prefixes)
+   ======================================== */
+
+/* Type-specific prefixes and icons */
+.oocPrefix,
+.masterPrefix,
+.moderationIcon,
+.diceIcon,
+.skillIcon,
+.statIcon,
+.itemIcon {
+  margin-right: 8px;
+  font-size: 14px;
+}
+
+.whisperIndicator {
+  color: rgba(232, 212, 160, 0.6);
+  font-family: 'Playfair Display', serif;
+  font-size: 14px;
+  font-style: italic;
+  margin-left: 8px;
+}
+
+/* Dice roll result display */
+.diceRollResult {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 12px 16px;
+  background: rgba(138, 43, 226, 0.1);
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 15px;
+}
+
+.diceNotation {
+  color: #dda0dd;
+  font-weight: 600;
+}
+
+.diceArrow {
+  color: rgba(232, 212, 160, 0.5);
+}
+
+.diceRolls {
+  color: #ba55d3;
+}
+
+.diceModifier {
+  color: #da70d6;
+}
+
+.diceEquals {
+  color: rgba(232, 212, 160, 0.5);
+  margin-left: 4px;
+}
+
+.diceTotal {
+  color: #ee82ee;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+/* Skill check result display */
+.skillCheckResult {
+  margin-top: 8px;
+  padding: 12px 16px;
+  background: rgba(34, 139, 34, 0.1);
+  border-radius: 4px;
+  color: #90ee90;
+  font-size: 14px;
+}
+
+/* Stat check result display */
+.statCheckResult {
+  margin-top: 8px;
+  padding: 12px 16px;
+  background: rgba(70, 130, 180, 0.1);
+  border-radius: 4px;
+  color: #87ceeb;
+  font-size: 14px;
+}
+
+/* Item use details display */
+.itemUseDetails {
+  margin-top: 8px;
+  padding: 12px 16px;
+  background: rgba(255, 165, 0, 0.1);
+  border-radius: 4px;
+  color: #ffa07a;
+  font-size: 14px;
+
+  strong {
+    color: #ff8c00;
+  }
+
+  p {
+    margin-top: 4px;
+    font-size: 14px;
+    color: rgba(255, 160, 122, 0.8);
+  }
+}
+
+/* ========================================
+   MESSAGE TYPE CLASSES (BEM Pattern)
+   ======================================== */
+
+/* Standard message (default, no special styling) */
+.messageItem--standard {
+  /* Inherits base .messageItem styles */
+}
+
+/* OOC (Out-of-Character) */
+.messageItem--ooc {
+  background: rgba(100, 100, 100, 0.1);
+  border-left-color: rgba(150, 150, 150, 0.5);
+
+  .messageContent {
+    color: rgba(232, 212, 160, 0.7);
+    font-style: italic;
+  }
+}
+
+/* Whisper (Private message) */
+.messageItem--whisper {
+  background: rgba(139, 69, 19, 0.15);
+  border-left-color: rgba(139, 69, 19, 0.6);
+
+  .messageContent {
+    color: rgba(232, 212, 160, 0.9);
+    font-style: italic;
+  }
+}
+
+/* Master announcement */
+.messageItem--master {
+  background: rgba(184, 134, 11, 0.15);
+  border-left-color: rgba(184, 134, 11, 0.8);
+  border-left-width: 4px;
+
+  .characterName {
+    color: #f0e68c;
+  }
+
+  .messageContent {
+    font-weight: 500;
+  }
+}
+
+/* Moderation message */
+.messageItem--moderation {
+  background: rgba(220, 20, 60, 0.1);
+  border-left-color: rgba(220, 20, 60, 0.6);
+  border-left-width: 4px;
+
+  .characterName {
+    color: #ff6b6b;
+  }
+
+  .messageContent {
+    font-weight: 500;
+    color: rgba(255, 107, 107, 0.9);
+  }
+}
+
+/* Dice roll */
+.messageItem--dice_roll {
+  background: rgba(75, 0, 130, 0.1);
+  border-left-color: rgba(138, 43, 226, 0.6);
+
+  .messageContent {
+    font-family: 'Courier New', monospace;
+    color: #dda0dd;
+  }
+}
+
+/* Skill check (social conflicts) */
+.messageItem--skill_check {
+  background: rgba(0, 100, 0, 0.1);
+  border-left-color: rgba(34, 139, 34, 0.6);
+
+  .messageContent {
+    color: #90ee90;
+  }
+}
+
+/* Stat check */
+.messageItem--stat_check {
+  background: rgba(70, 130, 180, 0.1);
+  border-left-color: rgba(70, 130, 180, 0.6);
+
+  .messageContent {
+    color: #87ceeb;
+  }
+}
+
+/* Item use */
+.messageItem--item_use {
+  background: rgba(255, 140, 0, 0.1);
+  border-left-color: rgba(255, 165, 0, 0.6);
+
+  .messageContent {
+    color: #ffa07a;
+  }
+}
+
+/* ========================================
+   MESSAGE INPUT (Text Input + Submit)
+   ======================================== */
+
+.messageInput {
+  flex-shrink: 0;
+  padding: 24px 32px;
+  background: rgba(139, 69, 19, 0.1);
+  border-top: 2px solid rgba(184, 134, 11, 0.3);
+}
+
+.inputForm {
+  display: flex;
+  gap: 16px;
+  align-items: flex-end;
+}
+
+.textarea {
+  flex: 1;
+  min-height: 60px;
+  max-height: 200px;
+  padding: 12px 16px;
+  background: rgba(245, 245, 245, 0.05);
+  border: 1px solid rgba(184, 134, 11, 0.3);
+  border-radius: 6px;
+  color: #e8d4a0;
+  font-family: 'Playfair Display', serif;
+  font-size: 16px;
+  line-height: 1.5;
+  resize: vertical;
+
+  &::placeholder {
+    color: rgba(232, 212, 160, 0.4);
+    font-style: italic;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: rgba(184, 134, 11, 0.6);
+    background: rgba(245, 245, 245, 0.08);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.submitButton {
+  padding: 12px 32px;
+  background: linear-gradient(135deg, rgba(184, 134, 11, 0.7) 0%, rgba(184, 134, 11, 0.5) 100%);
+  border: 1px solid rgba(184, 134, 11, 0.8);
+  border-radius: 6px;
+  color: #fff;
+  font-family: 'Playfair Display', serif;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, rgba(184, 134, 11, 0.9) 0%, rgba(184, 134, 11, 0.7) 100%);
+    border-color: rgba(184, 134, 11, 1);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(184, 134, 11, 0.3);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+/* ========================================
+   TYPING INDICATOR
+   ======================================== */
+
+.typingIndicator {
+  padding: 8px 24px;
+  color: rgba(232, 212, 160, 0.7);
+  font-family: 'Playfair Display', serif;
+  font-size: 14px;
+  font-style: italic;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.typingDots {
+  display: flex;
+  gap: 4px;
+
+  span {
+    width: 6px;
+    height: 6px;
+    background: rgba(184, 134, 11, 0.6);
+    border-radius: 50%;
+    animation: typingBounce 1.4s infinite ease-in-out;
+
+    &:nth-child(1) {
+      animation-delay: 0s;
+    }
+
+    &:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    &:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+  }
+}
+
+@keyframes typingBounce {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.6;
+  }
+  30% {
+    transform: translateY(-6px);
+    opacity: 1;
+  }
+}
+
+/* ========================================
+   PERMISSION BANNER (Replaces MessageInput)
+   ======================================== */
+
+.permissionBanner {
+  flex-shrink: 0;
+  padding: 24px 32px;
+  background: rgba(255, 107, 53, 0.15); 
+  border-top: 2px solid rgba(255, 107, 53, 0.4);
+  color: #ff6b35;
+  font-family: 'Playfair Display', serif;
+  font-size: 16px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.permissionIcon {
+  font-size: 24px;
+}
+
+.permissionText {
+  line-height: 1.5;
+}
+
+/* ========================================
+   LOADING STATE
+   ======================================== */
+
+.loadingState {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  color: rgba(232, 212, 160, 0.7);
+  font-family: 'Playfair Display', serif;
+  font-size: 18px;
+}
+
+.loadingSpinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(184, 134, 11, 0.2);
+  border-top-color: rgba(184, 134, 11, 0.8);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ========================================
+   ACCESSIBILITY
+   ======================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .messageItem,
+  .backButton,
+  .submitButton,
+  .textarea {
+    transition: none;
+  }
+
+  .typingDots span {
+    animation: none;
+  }
+
+  .loadingSpinner {
+    animation: none;
+  }
+}
+
+/* ========================================
+   TAG SELECTOR MODAL
+   ======================================== */
+
+.tagSelectorOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.tagSelectorModal {
+  background: linear-gradient(135deg, rgba(139, 69, 19, 0.95) 0%, rgba(184, 134, 11, 0.95) 100%);
+  border: 2px solid rgba(184, 134, 11, 0.8);
+  border-radius: 8px;
+  padding: 32px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.tagSelectorTitle {
+  color: #f0e68c;
+  font-family: 'Thrifted Attire', serif;
+  font-size: 29px;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.tagSelectorSubtitle {
+  color: rgba(232, 212, 160, 0.8);
+  font-family: 'Playfair Display', serif;
+  font-size: 15px;
+  margin-bottom: 24px;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.tagList {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.tagButton {
+  padding: 12px 16px;
+  background: rgba(245, 245, 245, 0.1);
+  border: 2px solid rgba(184, 134, 11, 0.4);
+  border-radius: 6px;
+  color: #e8d4a0;
+  font-family: 'Playfair Display', serif;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(245, 245, 245, 0.15);
+    border-color: rgba(184, 134, 11, 0.7);
+    transform: translateY(-2px);
+  }
+
+  &.selected {
+    background: linear-gradient(135deg, rgba(184, 134, 11, 0.5) 0%, rgba(184, 134, 11, 0.3) 100%);
+    border-color: rgba(184, 134, 11, 1);
+    color: #f0e68c;
+    font-weight: 600;
+  }
+}
+
+.tagSelectorActions {
+  display: flex;
+  gap: 16px;
+  justify-content: flex-end;
+}
+
+.cancelButton,
+.confirmButton {
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-family: 'Playfair Display', serif;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cancelButton {
+  background: rgba(100, 100, 100, 0.3);
+  border: 1px solid rgba(150, 150, 150, 0.5);
+  color: #e8d4a0;
+
+  &:hover {
+    background: rgba(100, 100, 100, 0.5);
+  }
+}
+
+.confirmButton {
+  background: linear-gradient(135deg, rgba(184, 134, 11, 0.7) 0%, rgba(184, 134, 11, 0.5) 100%);
+  border: 1px solid rgba(184, 134, 11, 0.8);
+  color: #fff;
+
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, rgba(184, 134, 11, 0.9) 0%, rgba(184, 134, 11, 0.7) 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(184, 134, 11, 0.3);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+/* ========================================
+   SOCIAL CONFLICT FIELDS
+   ======================================== */
+
+.socialConflictFields {
+  margin-bottom: 12px;
+}
+
+.fieldRow {
+  display: flex;
+  gap: 12px;
+}
+
+.selectInput {
+  width: 100%;
+}
+
+.lieTextarea {
+  width: 100%;
+  margin-bottom: 8px;
+  margin-top: 8px;
+  min-height: 80px;
+  max-height: 300px;
+  padding: 12px 16px;
+  background: rgba(245, 245, 245, 0.05);
+  border: 1px solid rgba(184, 134, 11, 0.3);
+  border-radius: 6px;
+  color: #e8d4a0;
+  font-family: 'Playfair Display', serif;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.lieWarning {
+  color: rgba(232, 212, 160, 0.5);
+  font-family: 'Playfair Display', serif;
+  font-size: 13px;
+  font-style: italic;
+  margin-top: 8px;
+}
+
+/* ========================================
+   ACTION TYPE SELECTOR
+   ======================================== */
+
+.actionTypeRow {
+  margin-bottom: 12px;
+}
+
+.actionTypeSelect {
+  width: 100%;
+  padding: 12px 16px;
+  background: rgba(245, 245, 245, 0.05);
+  border: 1px solid rgba(184, 134, 11, 0.3);
+  border-radius: 6px;
+  color: #e8d4a0;
+  font-family: 'Playfair Display', serif;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: rgba(184, 134, 11, 0.6);
+    background: rgba(245, 245, 245, 0.08);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: rgba(184, 134, 11, 0.8);
+    background: rgba(245, 245, 245, 0.1);
+  }
+
+  option {
+    background: #2a1810;
+    color: #e8d4a0;
+  }
+}
+
+/* ========================================
+   CONDITIONAL SELECTS
+   ======================================== */
+
+.conditionalSelect {
+  margin-bottom: 12px;
+}
+
+.selectInput {
+  width: 100%;
+  padding: 12px 16px;
+  background: rgba(245, 245, 245, 0.05);
+  border: 1px solid rgba(184, 134, 11, 0.3);
+  border-radius: 6px;
+  color: #e8d4a0;
+  font-family: 'Playfair Display', serif;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: rgba(184, 134, 11, 0.6);
+    background: rgba(245, 245, 245, 0.08);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: rgba(184, 134, 11, 0.8);
+    background: rgba(245, 245, 245, 0.1);
+  }
+
+  option {
+    background: #2a1810;
+    color: #e8d4a0;
+  }
+}
+
+/* ========================================
+   MESSAGE INPUT ACTIONS (Refactored)
+   ======================================== */
+
+.textareaWrapper {
+  margin-bottom: 12px;
+}
+
+.textarea {
+  width: 100%;
+  min-height: 80px;
+  max-height: 300px;
+  padding: 12px 16px;
+  background: rgba(245, 245, 245, 0.05);
+  border: 1px solid rgba(184, 134, 11, 0.3);
+  border-radius: 6px;
+  color: #e8d4a0;
+  font-family: 'Playfair Display', serif;
+  font-size: 16px;
+  line-height: 1.5;
+  resize: vertical;
+  transition: all 0.2s ease;
+
+  &::placeholder {
+    color: rgba(232, 212, 160, 0.4);
+    font-style: italic;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: rgba(184, 134, 11, 0.6);
+    background: rgba(245, 245, 245, 0.08);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &.expanded {
+    min-height: 200px;
+  }
+}
+
+.inputActions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.leftActions,
+.rightActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.actionButton {
+  padding: 8px 16px;
+  background: rgba(245, 245, 245, 0.05);
+  border: 1px solid rgba(184, 134, 11, 0.3);
+  border-radius: 6px;
+  color: #e8d4a0;
+  font-family: 'Playfair Display', serif;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover:not(:disabled) {
+    background: rgba(245, 245, 245, 0.1);
+    border-color: rgba(184, 134, 11, 0.6);
+  }
+
+  &.active {
+    background: linear-gradient(135deg, rgba(184, 134, 11, 0.3) 0%, rgba(184, 134, 11, 0.2) 100%);
+    border-color: rgba(184, 134, 11, 0.8);
+    color: #f0e68c;
+    font-weight: 600;
+  }
+
+  &.mandatory {
+    border-color: rgba(255, 107, 53, 0.6);
+    color: #ff6b35;
+    font-weight: 600;
+  }
+
+  &.flashing {
+    animation: flashButton 0.5s ease-in-out 3;
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+@keyframes flashButton {
+  0%,
+  100% {
+    background: rgba(245, 245, 245, 0.05);
+  }
+  50% {
+    background: rgba(255, 107, 53, 0.3);
+    border-color: rgba(255, 107, 53, 1);
+  }
+}
+
+.characterCounter {
+  color: rgba(232, 212, 160, 0.6);
+  font-family: 'Playfair Display', serif;
+  font-size: 14px;
+}
+
+.expandCollapseButton {
+  padding: 8px 12px;
+  background: rgba(245, 245, 245, 0.05);
+  border: 1px solid rgba(184, 134, 11, 0.3);
+  border-radius: 6px;
+  color: #e8d4a0;
+  font-family: 'Playfair Display', serif;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover:not(:disabled) {
+    background: rgba(245, 245, 245, 0.1);
+    border-color: rgba(184, 134, 11, 0.6);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+/* ========================================
+   RESPONSIVE DESIGN
+   ======================================== */
+
+@media (max-width: 768px) {
+  .chatHeader {
+    padding: 16px 24px;
+  }
+
+  .locationName {
+    font-size: 1.64px;
+  }
+
+  .messageList {
+    padding: 16px 24px;
+  }
+
+  .messageItem {
+    padding: 12px 16px;
+  }
+
+  .messageInput {
+    padding: 16px 24px;
+  }
+
+  .inputForm {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .submitButton {
+    width: 100%;
+  }
+}

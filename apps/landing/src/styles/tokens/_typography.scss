@@ -1,0 +1,121 @@
+/**
+ * Typography Design Tokens
+ *
+ * Font families, sizes, weights, and line heights.
+ * Victorian-inspired typography with IM Fell English as primary font.
+ *
+ * **Font Stack**:
+ * - Primary: 'IM Fell English' (Victorian serif)
+ * - Secondary: 'Georgia' (fallback serif)
+ * - Monospace: 'Courier New' (for code/passwords)
+ *
+ * **Type Scale** (Major Third - 1.250):
+ * - xs: 12px
+ * - sm: 14px
+ * - base: 16px
+ * - lg: 20px
+ * - xl: 24px
+ * - 2xl: 30px
+ * - 3xl: 36px
+ * - 4xl: 48px
+ *
+ * **Usage**:
+ * ```scss
+ * .title {
+ *   font-family: var(--font-primary);
+ *   font-size: var(--font-size-3xl);
+ *   line-height: var(--line-height-tight);
+ * }
+ * ```
+ */
+
+:root {
+  /* ===========================
+     FONT FAMILIES
+     =========================== */
+
+  /** Primary font - Victorian serif */
+  --font-primary: 'IM Fell English', Georgia, serif;
+
+  /** Secondary font - Standard serif */
+  --font-secondary: Georgia, 'Times New Roman', serif;
+
+  /** Monospace font - For code, passwords, etc. */
+  --font-mono: 'Courier New', Courier, monospace;
+
+  /* ===========================
+     FONT SIZES
+     =========================== */
+
+  /** Extra small - 12px */
+  --font-size-xs: 12px;
+
+  /** Small - 14px */
+  --font-size-sm: 14px;
+
+  /** Base - 16px */
+  --font-size-base: 16px;
+
+  /** Large - 20px */
+  --font-size-lg: 20px;
+
+  /** Extra large - 24px */
+  --font-size-xl: 24px;
+
+  /** 2x extra large - 30px */
+  --font-size-2xl: 30px;
+
+  /** 3x extra large - 36px */
+  --font-size-3xl: 36px;
+
+  /** 4x extra large - 48px */
+  --font-size-4xl: 48px;
+
+  /* ===========================
+     FONT WEIGHTS
+     =========================== */
+
+  /** Regular weight */
+  --font-weight-normal: 400;
+
+  /** Medium weight */
+  --font-weight-medium: 500;
+
+  /** Semi-bold weight */
+  --font-weight-semibold: 600;
+
+  /** Bold weight */
+  --font-weight-bold: 700;
+
+  /* ===========================
+     LINE HEIGHTS
+     =========================== */
+
+  /** Tight line height - Headings */
+  --line-height-tight: 1.2;
+
+  /** Normal line height - Body text */
+  --line-height-normal: 1.5;
+
+  /** Relaxed line height - Long-form content */
+  --line-height-relaxed: 1.75;
+
+  /** Loose line height - Maximum readability */
+  --line-height-loose: 2;
+
+  /* ===========================
+     LETTER SPACING
+     =========================== */
+
+  /** Tight letter spacing */
+  --letter-spacing-tight: -0.025em;
+
+  /** Normal letter spacing */
+  --letter-spacing-normal: 0;
+
+  /** Wide letter spacing - For small caps, buttons */
+  --letter-spacing-wide: 0.05em;
+
+  /** Extra wide letter spacing - For headings */
+  --letter-spacing-wider: 0.1em;
+}

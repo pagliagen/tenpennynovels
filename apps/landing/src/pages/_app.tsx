@@ -1,13 +1,44 @@
+/**
+ * Next.js App Component
+ *
+ * Global app wrapper for all pages.
+ *
+ * **Features**:
+ * - Import global SCSS styles
+ * - Add global meta tags (viewport, favicon)
+ * - Add CookieBanner (SSR-disabled)
+ * - Wrap all pages with common layout
+ *
+ * @module pages/_app
+ */
+
 import type { AppProps } from 'next/app';
 import Head from 'next/head';
-import { CookieBanner } from '@/components/CookieBanner';
+import React from 'react';
+import dynamic from 'next/dynamic';
 
 // Import global Victorian theme styles
-import '@/styles/globals.scss';
+import '@/styles/main.scss';
 
+// Import Error Boundary
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+
+// Dynamic import of CookieBanner to avoid SSR issues
+const CookieBanner = dynamic(() => import('@/components/CookieBanner').then(mod => ({ default: mod.CookieBanner })), {
+  ssr: false,
+});
+
+/**
+ * App Component
+ *
+ * Next.js root app component that wraps all pages.
+ *
+ * @param {AppProps} props - Next.js app props
+ * @returns {JSX.Element} App component
+ */
 export default function App({ Component, pageProps }: AppProps) {
   return (
-    <>
+    <ErrorBoundary>
       <Head>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         {/* Favicon */}
@@ -19,6 +50,6 @@ export default function App({ Component, pageProps }: AppProps) {
       </Head>
       <Component {...pageProps} />
       <CookieBanner />
-    </>
+    </ErrorBoundary>
   );
 }

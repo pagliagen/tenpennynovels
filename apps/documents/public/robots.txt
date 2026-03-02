@@ -1,0 +1,16 @@
+# TenpennyNovels Documents - Robots.txt
+
+User-agent: *
+Allow: /
+
+# Sitemaps
+Sitemap: https://docs.tenpennynovels.com/sitemap.xml
+Sitemap: https://docs.tenpennynovels.com/sitemap-documents.xml
+Sitemap: https://docs.tenpennynovels.com/sitemap-landing.xml
+
+# Disallow private content (should return 404 anyway)
+Disallow: /api/
+Disallow: /_next/
+
+# Crawl delay (be nice to our server)
+Crawl-delay: 1

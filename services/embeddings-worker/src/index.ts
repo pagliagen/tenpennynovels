@@ -6,6 +6,9 @@
  * for Documents and LocationActions
  */
 
+// CRITICAL: Load .env BEFORE any imports
+require('dotenv').config();
+
 import { createClient } from 'redis';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';

@@ -1,0 +1,379 @@
+# =============================================================================
+# TenpennyNovels - Docker Compose Configuration
+# =============================================================================
+# Services:
+# - MongoDB: Database principale
+# - Redis: Sessioni, caching, WebSocket adapter
+# - Unified Backend: Tutti i moduli (auth, game, admin, documents, tickets, forum)
+# - API Gateway: Proxy e routing
+# - BotAI Backend: Servizio AI per personaggi bot
+
+services:
+  # ===========================================================================
+  # MongoDB - Database principale
+  # ===========================================================================
+  mongodb:
+    image: mongo:7.0
+    container_name: tenpennynovels-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-admin123}
+      MONGO_INITDB_DATABASE: tenpennynovels
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
+    networks:
+      - tenpennynovels-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+  # ===========================================================================
+  # Redis - Sessioni, caching, WebSocket adapter
+  # ===========================================================================
+  redis:
+    image: redis:7.2-alpine
+    container_name: tenpennynovels-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - tenpennynovels-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # ===========================================================================
+  # Embeddings Service - Flask service per generazione embeddings
+  # ===========================================================================
+  embeddings-service:
+    build:
+      context: ./services/embeddings-service
+      dockerfile: Dockerfile
+    container_name: tenpennynovels-embeddings-service
+    restart: unless-stopped
+    environment:
+      EMBEDDINGS_SERVICE_HOST: 0.0.0.0
+      EMBEDDINGS_SERVICE_PORT: 5001
+      EMBEDDINGS_MODEL: paraphrase-multilingual-MiniLM-L12-v2
+      LOG_LEVEL: INFO
+    ports:
+      - "5001:5001"
+    networks:
+      - tenpennynovels-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # ===========================================================================
+  # Embeddings Worker - Processa eventi Redis per embeddings asincroni
+  # ===========================================================================
+  embeddings-worker:
+    build:
+      context: ./services/embeddings-worker
+      dockerfile: Dockerfile
+    container_name: tenpennynovels-embeddings-worker
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      MONGODB_URI: mongodb://${MONGO_ROOT_USER:-admin}:${MONGO_ROOT_PASSWORD:-admin123}@mongodb:27017/tenpennynovels?authSource=admin
+      REDIS_URL: redis://redis:6379
+      EMBEDDINGS_SERVICE_URL: http://embeddings-service:5001
+      QDRANT_URL: http://qdrant:6333
+    networks:
+      - tenpennynovels-network
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      embeddings-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "sh", "-c", "ps aux | grep -q '[n]ode.*index.js' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  # ===========================================================================
+  # Qdrant - Vector database per semantic search
+  # ===========================================================================
+  qdrant:
+    image: qdrant/qdrant:v1.17.0
+    container_name: tenpennynovels-qdrant
+    restart: unless-stopped
+    environment:
+      - QDRANT__SERVICE__GRPC_PORT=6334
+    ports:
+      - "6333:6333"  # HTTP API
+      - "6334:6334"  # gRPC (optional)
+    volumes:
+      - qdrant_storage:/qdrant/storage
+    networks:
+      - tenpennynovels-network
+    healthcheck:
+      test: ["CMD", "sh", "-c", "nc -z localhost 6333 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # ===========================================================================
+  # Unified Backend - Tutti i moduli (auth, game, admin, documents, tickets, forum)
+  # ===========================================================================
+  unified-backend:
+    build:
+      context: ./services/unified-backend
+      dockerfile: Dockerfile.dev
+    container_name: tenpennynovels-unified-backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: 3001
+
+      # MongoDB
+      MONGODB_URI: mongodb://${MONGO_ROOT_USER:-admin}:${MONGO_ROOT_PASSWORD:-admin123}@mongodb:27017/tenpennynovels?authSource=admin
+
+      # Redis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_URL: redis://redis:6379
+
+      # Qdrant Vector DB
+      QDRANT_URL: http://qdrant:6333
+
+      # Embeddings Service
+      EMBEDDINGS_SERVICE_URL: http://embeddings-service:5001
+
+      # JWT Secrets
+      JWT_SECRET: ${JWT_SECRET:-dev_jwt_secret_change_in_production}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-dev_refresh_secret_change_in_production}
+
+      # Frontend URLs
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:4000}
+      GAME_URL: ${GAME_URL:-http://localhost:4001}
+      LANDING_URL: ${LANDING_URL:-http://localhost:4000}
+      DOCUMENTS_URL: ${DOCUMENTS_URL:-http://localhost:4003}
+      MANAGEMENT_URL: ${MANAGEMENT_URL:-http://localhost:4004}
+
+      # Email (optional for dev)
+      EMAIL_MOCK: ${EMAIL_MOCK:-true}
+      EMAIL_FROM: ${EMAIL_FROM:-noreply@tenpennynovels.test}
+      SMTP_HOST: ${SMTP_HOST:-localhost}
+      SMTP_PORT: ${SMTP_PORT:-1025}
+    ports:
+      - "3001:3001"
+    volumes:
+      # Volume mounting per hot-reload con tsx watch
+      - ./services/unified-backend/src:/app/src:ro
+      - ./services/unified-backend/logs:/app/logs
+      - ./services/unified-backend/node_modules:/app/node_modules:ro
+      # Note: mounting host node_modules for development (includes all deps)
+    networks:
+      - tenpennynovels-network
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      qdrant:
+        condition: service_started
+      embeddings-service:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3001/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # ===========================================================================
+  # API Gateway - Proxy e routing
+  # ===========================================================================
+  api-gateway:
+    build:
+      context: ./services/api-gateway
+      dockerfile: Dockerfile
+    container_name: tenpennynovels-api-gateway
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: 8000
+
+      # Backend URLs
+      UNIFIED_BACKEND_URL: http://unified-backend:3001
+      AUTH_BACKEND_URL: http://unified-backend:3001
+      GAME_BACKEND_URL: http://unified-backend:3001
+      MANAGEMENT_BACKEND_URL: http://unified-backend:3001
+      DOCUMENTS_BACKEND_URL: http://unified-backend:3001
+      TICKETS_BACKEND_URL: http://unified-backend:3001
+      FORUM_BACKEND_URL: http://unified-backend:3001
+      # BOTAI_BACKEND_URL: http://botai-backend:8080  # Disabilitato temporaneamente
+      CDN_SERVICE_URL: http://cdn-service:4002
+
+      # Frontend URLs (CORS)
+      GAME_URL: ${GAME_URL:-http://localhost:4001}
+      LANDING_URL: ${LANDING_URL:-http://localhost:4000}
+      DOCUMENTS_URL: ${DOCUMENTS_URL:-http://localhost:4003}
+      MANAGEMENT_URL: ${MANAGEMENT_URL:-http://localhost:4004}
+
+      TRUST_PROXY: "true"
+    ports:
+      - "8000:8000"
+    volumes:
+      # CDN storage (read-only for serving static files)
+      - cdn_storage:/cdn-storage:ro
+    networks:
+      - tenpennynovels-network
+    depends_on:
+      unified-backend:
+        condition: service_healthy
+      cdn-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:8000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ===========================================================================
+  # CDN Service - Static assets upload and processing
+  # ===========================================================================
+  cdn-service:
+    build:
+      context: ./services/cdn-service
+      dockerfile: Dockerfile.dev
+    container_name: tenpennynovels-cdn-service
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: 4002
+      CDN_SERVICE_HOST: 0.0.0.0
+
+      # Storage
+      CDN_STORAGE_PATH: /cdn-storage
+      CDN_BASE_URL: ${CDN_BASE_URL:-http://localhost:8000/cdn}
+
+      # Upload limits
+      MAX_FILE_SIZE: 10485760  # 10MB
+      ALLOWED_MIME_TYPES: image/jpeg,image/png,image/webp,image/gif
+
+      # Image processing
+      IMAGE_MAX_WIDTH: 1920
+      IMAGE_QUALITY: 85
+      THUMBNAIL_SIZE: 300
+      THUMBNAIL_QUALITY: 80
+
+      # JWT Auth (must match unified-backend)
+      JWT_SECRET: ${JWT_SECRET:-dev_jwt_secret_change_in_production}
+
+      # Cleanup job
+      CLEANUP_INTERVAL_HOURS: 24
+      CLEANUP_RETENTION_DAYS: 7
+
+      # CORS
+      ALLOWED_ORIGINS: http://localhost:4004,http://localhost:4001
+    ports:
+      - "4002:4002"
+    volumes:
+      # Source code (hot-reload)
+      - ./services/cdn-service/src:/app/src:ro
+      # NOTE: node_modules NOT mounted - using container's own (Linux binaries)
+      # Storage volume (shared with api-gateway for serving)
+      - cdn_storage:/cdn-storage
+    networks:
+      - tenpennynovels-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:4002/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  # ===========================================================================
+  # BotAI Backend - Servizio AI per personaggi bot
+  # ===========================================================================
+  # TEMPORANEAMENTE DISABILITATO - necessita migrazione path database models
+  # botai-backend:
+  #   build:
+  #     context: ./services/botai-backend
+  #     dockerfile: Dockerfile
+  #   container_name: tenpennynovels-botai-backend
+  #   restart: unless-stopped
+  #   environment:
+  #     NODE_ENV: ${NODE_ENV:-development}
+  #     PORT: 8080
+
+  #     # MongoDB
+  #     MONGODB_URI: mongodb://${MONGO_ROOT_USER:-admin}:${MONGO_ROOT_PASSWORD:-admin123}@mongodb:27017/tenpennynovels?authSource=admin
+
+  #     # Redis
+  #     REDIS_URL: redis://redis:6379
+
+  #     # Claude API
+  #     ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+
+  #     # Bot AI Configuration
+  #     BOT_AI_MODEL: ${BOT_AI_MODEL:-claude-3-5-sonnet-20241022}
+  #     BOT_AI_MAX_TOKENS: ${BOT_AI_MAX_TOKENS:-2000}
+  #     BOT_AI_TEMPERATURE: ${BOT_AI_TEMPERATURE:-0.9}
+  #   ports:
+  #     - "8080:8080"
+  #   networks:
+  #     - tenpennynovels-network
+  #   depends_on:
+  #     mongodb:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #   healthcheck:
+  #     test: ["CMD", "node", "-e", "require('http').get('http://localhost:8080/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #     start_period: 40s
+
+# =============================================================================
+# Networks
+# =============================================================================
+networks:
+  tenpennynovels-network:
+    driver: bridge
+    name: tenpennynovels-network
+
+# =============================================================================
+# Volumes
+# =============================================================================
+volumes:
+  mongodb_data:
+    driver: local
+    name: tenpennynovels-mongodb-data
+  mongodb_config:
+    driver: local
+    name: tenpennynovels-mongodb-config
+  redis_data:
+    driver: local
+    name: tenpennynovels-redis-data
+  qdrant_storage:
+    driver: local
+    name: tenpennynovels-qdrant-storage
+  cdn_storage:
+    driver: local
+    name: tenpennynovels-cdn-storage

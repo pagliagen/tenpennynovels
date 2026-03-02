@@ -12,14 +12,16 @@ RUN apk add --no-cache \
     && ln -sf python3 /usr/bin/python
 
 # Copy package files and source code
-COPY services/embeddings-worker/package.json services/embeddings-worker/tsconfig.json ./
-COPY services/embeddings-worker/src ./src
+COPY package.json tsconfig.json ./
+COPY src ./src
 
 # Install dependencies
 RUN npm install
 
-# Build TypeScript
+# Build TypeScript with increased heap size
+ENV NODE_OPTIONS="--max-old-space-size=4096"
 RUN npm run build
+ENV NODE_OPTIONS=""
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \

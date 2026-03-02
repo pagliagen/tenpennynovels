@@ -1,0 +1,218 @@
+@use 'sass:color';
+@import '../variables.scss';
+
+.modalBackdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: $z-modal-backdrop;
+  padding: $spacing-lg;
+  overflow-y: auto;
+}
+
+.modal {
+  background-color: $color-bg-secondary;
+  border-radius: $border-radius-lg;
+  box-shadow: $shadow-lg;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  border: 1px solid rgba($color-primary, 0.2);
+
+  &.small {
+    width: 100%;
+    max-width: 400px;
+  }
+
+  &.medium {
+    width: 100%;
+    max-width: 700px;
+  }
+
+  &.large {
+    width: 100%;
+    max-width: 900px;
+  }
+}
+
+.modalHeader {
+  padding: $spacing-lg;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-md;
+}
+
+.modalTitle {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: $color-primary;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  color: $color-text-secondary;
+  font-size: 24px;
+  cursor: pointer;
+  padding: $spacing-sm;
+  line-height: 1;
+  transition: color $transition-fast;
+
+  &:hover {
+    color: $color-text-primary;
+  }
+}
+
+.modalBody {
+  padding: $spacing-lg;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.modalFooter {
+  padding: $spacing-lg;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: $spacing-md;
+}
+
+// Form styles
+.formField {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-lg;
+
+  label {
+    font-size: 15px;
+    font-weight: 500;
+    color: $color-text-primary;
+
+    &:not(:has(input[type="checkbox"])) {
+      display: block;
+      margin-bottom: $spacing-xs;
+    }
+  }
+
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  textarea,
+  select {
+    width: 100%;
+    padding: $spacing-md;
+    background-color: $color-bg-primary;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: $border-radius-sm;
+    color: $color-text-primary;
+    font-size: 15px;
+    font-family: inherit;
+    transition: border-color $transition-fast;
+
+    &:focus {
+      outline: none;
+      border-color: $color-primary;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    &::placeholder {
+      color: $color-text-secondary;
+      opacity: 0.6;
+    }
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 80px;
+  }
+
+  small {
+    font-size: 14px;
+    color: $color-text-secondary;
+    margin-top: $spacing-xs;
+  }
+
+  // Checkbox styling
+  label:has(input[type="checkbox"]) {
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+    cursor: pointer;
+    user-select: none;
+
+    input[type="checkbox"] {
+      width: auto;
+      cursor: pointer;
+    }
+  }
+}
+
+// Buttons
+.cancelButton,
+.submitButton {
+  padding: $spacing-md $spacing-lg;
+  border-radius: $border-radius-sm;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all $transition-fast;
+  border: none;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.cancelButton {
+  background-color: transparent;
+  color: $color-text-secondary;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+
+  &:hover:not(:disabled) {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.3);
+  }
+}
+
+.submitButton {
+  background-color: $color-primary;
+  color: $color-bg-primary;
+
+  &:hover:not(:disabled) {
+    background-color: color.adjust($color-primary, $lightness: 10%);
+    transform: translateY(-1px);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+}
+
+// Info box
+.infoBox {
+  padding: $spacing-md;
+  background-color: rgba($color-primary, 0.1);
+  border: 1px solid rgba($color-primary, 0.3);
+  border-radius: $border-radius-sm;
+  font-size: 14px;
+  color: $color-text-primary;
+  margin-bottom: $spacing-lg;
+}

@@ -1,21 +1,30 @@
+/**
+ * LoadingSpinner - Simple loading spinner component
+ */
+
 import React from 'react';
-import styles from '@/styles/components/shared/LoadingSpinner.module.scss';
+import styles from '@/styles/components/LoadingSpinner.module.scss';
+import classNames from 'classnames';
 
 export interface LoadingSpinnerProps {
   size?: 'small' | 'medium' | 'large';
+  color?: string;
   className?: string;
 }
 
-export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
+export function LoadingSpinner({
   size = 'medium',
+  color,
   className
-}) => {
+}: LoadingSpinnerProps): React.ReactElement {
   return (
-    <div className={`${styles.spinnerContainer} ${styles[size]} ${className || ''}`}>
-      <div className={styles.spinner}>
-        <div className={styles.doubleBounce1}></div>
-        <div className={styles.doubleBounce2}></div>
-      </div>
+    <div
+      className={classNames(styles.spinner, styles[size], className)}
+      style={color ? { borderTopColor: color } : undefined}
+      role="status"
+      aria-label="Caricamento in corso"
+    >
+      <span className={styles.srOnly}>Caricamento...</span>
     </div>
   );
-};
+}

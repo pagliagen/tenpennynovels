@@ -1,0 +1,222 @@
+/**
+ * Locations Error Boundary Styles
+ *
+ * Victorian-themed error fallback UI for locations system.
+ * Provides clear error messaging with retry functionality.
+ *
+ * @module styles/components/locations/error-boundary
+ * @since 2.0.0
+ */
+
+/* ========================================
+   ERROR CONTAINER
+   ======================================== */
+
+.errorContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 60px);
+  width: 100%;
+  padding: 32px;
+  background: linear-gradient(135deg, #1a1410 0%, #2d2416 100%);
+}
+
+.errorContent {
+  max-width: 600px;
+  width: 100%;
+  background: rgba(0, 0, 0, 0.85);
+  border: 2px solid #8b4513;
+  border-radius: 8px;
+  padding: 48px;
+  text-align: center;
+  backdrop-filter: blur(8px);
+}
+
+/* ========================================
+   ERROR ICON & TEXT
+   ======================================== */
+
+.errorIcon {
+  font-size: 64px;
+  margin-bottom: 24px;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+.errorTitle {
+  color: #b8860b;
+  font-family: 'Thrifted Attire', serif;
+  font-size: 29px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.errorMessage {
+  color: #e8d4a0;
+  font-family: 'Playfair Display', serif;
+  font-size: 18px;
+  line-height: 1.6;
+  margin-bottom: 32px;
+}
+
+/* ========================================
+   ERROR DETAILS (Development Only)
+   ======================================== */
+
+.errorDetails {
+  margin-top: 32px;
+  text-align: left;
+  background: rgba(139, 69, 19, 0.1);
+  border: 1px solid rgba(139, 69, 19, 0.3);
+  border-radius: 4px;
+  padding: 16px;
+}
+
+.errorDetailsSummary {
+  color: #b8860b;
+  font-family: 'Playfair Display', serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 8px;
+  user-select: none;
+
+  &:hover {
+    color: #d4a017;
+  }
+}
+
+.errorDetailsContent {
+  color: #d4a017;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  margin-top: 16px;
+
+  strong {
+    display: block;
+    color: #b8860b;
+    margin-top: 16px;
+    margin-bottom: 8px;
+  }
+
+  pre {
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(139, 69, 19, 0.3);
+    border-radius: 4px;
+    padding: 16px;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+}
+
+/* ========================================
+   ACTION BUTTONS
+   ======================================== */
+
+.errorActions {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin-top: 32px;
+}
+
+.retryButton,
+.backButton {
+  background: transparent;
+  border: 2px solid #8b4513;
+  color: #b8860b;
+  font-family: 'Thrifted Attire', serif;
+  padding: 12px 24px;
+  font-size: 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 160px;
+
+  &:hover:not(:disabled) {
+    color: #d4a017;
+    transform: translateY(-2px);
+    border-color: #b8860b;
+    box-shadow: 0 4px 12px rgba(184, 134, 11, 0.3);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+.retryButton {
+  background: rgba(184, 134, 11, 0.2);
+  border-color: #b8860b;
+
+  &:hover:not(:disabled) {
+    background: rgba(184, 134, 11, 0.3);
+  }
+}
+
+/* ========================================
+   RESPONSIVE DESIGN
+   ======================================== */
+
+@media (max-width: 768px) {
+  .errorContainer {
+    padding: 16px;
+  }
+
+  .errorContent {
+    padding: 32px 24px;
+  }
+
+  .errorTitle {
+    font-size: 24px;
+  }
+
+  .errorMessage {
+    font-size: 16px;
+  }
+
+  .errorActions {
+    flex-direction: column;
+
+    button {
+      width: 100%;
+    }
+  }
+}
+
+/* ========================================
+   ACCESSIBILITY
+   ======================================== */
+
+.retryButton:focus-visible,
+.backButton:focus-visible {
+  outline: 2px solid #b8860b;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .errorIcon {
+    animation: none;
+  }
+}

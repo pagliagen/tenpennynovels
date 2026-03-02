@@ -1,0 +1,28 @@
+/**
+ * Weather Display Styles
+ */
+
+.weather {
+  display: flex;
+  align-items: center;
+  gap: 8px; // Space between icon and temperature
+  justify-content: center;
+  flex: 0 0 auto; // Natural size, don't grow
+}
+
+.weatherIcon {
+  width: 32px; // Same size as moon icon for consistency
+  height: auto;
+  object-fit: contain;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+
+.temperature {
+  font-family: 'Thrifted Attire', 'Merriweather', serif;
+  color: #b8860b; // Victorian gold
+  font-size: 16px;
+  font-weight: 600;
+  text-shadow: 0 0 5px rgba(184, 134, 11, 0.5);
+  line-height: 1;
+}

@@ -1,0 +1,7 @@
+# TenpennyNovels Management - Robots.txt
+# Admin panel - block all crawlers
+
+User-agent: *
+Disallow: /
+
+# No sitemap (admin panel, authentication required)

@@ -1,0 +1,245 @@
+/**
+ * Presence Section Styles
+ *
+ * Victorian-themed styles for presence system (button + mini-list).
+ * Designed to fit sidebar 250px width with padding.
+ *
+ * @module styles/components/PresenceSection
+ * @since 2.0.0
+ */
+
+/* ========================================
+   PRESENCE SECTION (Container)
+   ======================================== */
+
+.presenceSection {
+  position: relative;
+  flex: 1; // Fill clockMiddle section
+  display: flex;
+  flex-direction: column;
+  width: 150px; 
+  margin-left: auto;
+  margin-right: auto;
+  height: 100%;
+
+  &::before {
+    content: "";
+    pointer-events: none;
+    background-color: #0e0e0e;
+    border-radius: 150px 150px 0 0;
+    position: absolute;
+    inset: -30px 0 0;
+    z-index: -1;
+  }
+}
+
+/* ========================================
+   PRESENCE BUTTON
+   ======================================== */
+
+.presenceButton {
+  flex: 0 0 auto;
+  width: 100%;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Playfair Display', serif;
+  font-size: 14.4px;
+  font-weight: 600;
+  color: #b8860b;
+  text-shadow: 0 0 5px rgba(184, 134, 11, 0.3);
+  letter-spacing: 0.05em;
+
+  &:hover {
+    color: #d4a017;
+    transform: translateY(-2px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  &:focus {
+    outline: 2px solid #b8860b;
+    outline-offset: 2px;
+  }
+}
+
+.buttonContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.buttonTitle {
+  font-family: 'Playfair Display', serif;
+  font-size: 14.4px;
+  font-weight: 700;
+  color: #b8860b;
+  text-shadow: 0 0 5px rgba(184, 134, 11, 0.5);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.countBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: radial-gradient(circle, #b8860b, #8b6914);
+  border: 2px solid #654321;
+  border-radius: 50%;
+  font-family: 'Playfair Display', serif;
+  font-size: 17.6px;
+  font-weight: 700;
+  color: #1a1a1a;
+  text-align: center;
+  box-shadow: 0 0 10px rgba(184, 134, 11, 0.7), inset 0 2px 5px rgba(255, 255, 255, 0.3);
+}
+
+.locationIndicator {
+  font-family: 'Thrifted Attire', serif;
+  font-size: 12px;
+  color: #8b6914;
+  font-style: italic;
+  text-shadow: 0 0 3px rgba(139, 105, 20, 0.3);
+}
+
+/* ========================================
+   LOCATION PRESENCE LIST (Mini-list)
+   ======================================== */
+
+.locationPresenceList {
+  flex: 1;  
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0 10%;
+  min-height: 0; // CRITICAL for flex child scrolling
+}
+
+.listHeader {
+  font-family: 'Playfair Display', serif;
+  font-size: 13.6px;
+  font-weight: 600;
+  color: #8b4513;
+  text-align: center;
+  padding: 12px 0 8px;
+  border-bottom: 1px solid rgba(139, 69, 19, 0.3);
+  margin-bottom: 8px;
+}
+
+.playerList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  overflow-y: auto; // Scrollable
+  flex: 1;
+  min-height: 0;
+
+  // Custom Victorian scrollbar
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgba(139, 69, 19, 0.2);
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #b8860b;
+    border-radius: 3px;
+
+    &:hover {
+      background: #8b6914;
+    }
+  }
+}
+
+.playerItem {
+  margin-bottom: 8px;
+}
+
+.playerButton {
+  width: 100%;
+  padding: 3.2px;
+  background: rgba(139, 69, 19, 0.1);
+  border: 1px solid rgba(139, 69, 19, 0.3);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: 'Thrifted Attire', serif;
+  font-size: 13.6px;
+  color: #b8860b;
+  text-align: left;
+  text-shadow: 0 0 3px rgba(184, 134, 11, 0.2);
+
+  &:hover {
+    background: rgba(184, 134, 11, 0.2);
+    border-color: #b8860b;
+  } 
+}
+
+.miniAvatar,
+.miniAvatarPlaceholder {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.miniAvatar {
+  border: 2px solid #b8860b;
+  object-fit: cover;
+}
+
+.miniAvatarPlaceholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(184, 134, 11, 0.2);
+  border: 2px solid #8b4513;
+  font-size: 19.2px;
+}
+
+.miniName {
+  flex: 1;
+  font-family: 'Thrifted Attire', serif;
+  font-size: 13.6px;
+  color: #b8860b;
+  text-shadow: 0 0 5px rgba(184, 134, 11, 0.3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left;
+}
+
+.emptyState {
+  font-family: 'Thrifted Attire', serif;
+  font-size: 13.6px;
+  color: #888;
+  font-style: italic;
+  text-align: center;
+  padding: 32px 0;
+}
+
+/* ========================================
+   REDUCED MOTION
+   ======================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .presenceButton,
+  .playerButton {
+    transition-duration: 0.01ms !important;
+  }
+}

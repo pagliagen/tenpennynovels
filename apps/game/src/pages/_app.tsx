@@ -1,120 +1,72 @@
+/**
+ * Custom App Component
+ *
+ * Root component that wraps all pages in the application.
+ * Provides global providers, styles, and layout.
+ *
+ * Provider Tree (MUST RESPECT ORDER):
+ * 1. QueryClientProvider - TanStack Query for API calls
+ * 2. AuthProvider - Authentication state (MUST be above WebSocket)
+ * 3. WebSocketProvider - Real-time events (depends on Auth)
+ * 4. EnvironmentProvider - Weather/moon data (public, auto-refresh every 5 min)
+ * 5. GlobalLayout - UI theme, error boundaries, toasts
+ *
+ * Features:
+ * - React Query integration with devtools (dev mode only)
+ * - WebSocket connection with auto-reconnect
+ * - Authentication state management
+ * - Theme persistence (localStorage)
+ * - Global error boundaries
+ *
+ * @module pages/_app
+ * @since 2.0.0
+ */
+
 import type { AppProps } from 'next/app';
-import Head from 'next/head';
-import React, { useEffect, useState } from 'react';
-// Import game-specific styles (includes shared design system)
-import '@/styles/globals.scss';
-import { GameApiService, GameInitResponse } from '@/lib/gameApi';
-import { GameLayout } from '@/components/GameLayout';
-import { GameProvider } from '@/contexts/GameContext';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import { queryClient } from '@/lib/api/queryClient';
 import { WebSocketProvider } from '@/contexts/WebSocketContext';
-import { NotificationProvider } from '@/contexts/NotificationContext';
-import { NotificationSettingsProvider } from '@/contexts/NotificationSettingsContext';
-import { CharacterSheetsProvider } from '@/contexts/CharacterSheetsContext';
-import { useAuthCheck } from '@/hooks/useAuthCheck';
+import { EnvironmentProvider } from '@/contexts/EnvironmentContext';
+import { AuthInitializer } from '@/components/auth/AuthInitializer';
+import '@/styles/globals.css';
 
-export default function App({ Component, pageProps }: AppProps) {
-  const [gameData, setGameData] = useState<GameInitResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  // Initialize auth check (ping every 5 seconds)
-  useAuthCheck();
-
-  // console.log('🎮 _app.tsx: Component rendering, Component.name:', Component.name || Component.displayName || 'Unknown');
-
-  useEffect(() => {
-    // Initialize game data once when app starts
-    const initGame = async () => {
-      try {
-        // console.log('🎮 App: Initializing game');
-        const result = await GameApiService.initGame();
-        if (result.result) {
-          // console.log('🎮 App: Game initialized successfully');
-          setGameData(result);
-        } else {
-          console.error('🎮 App: Game initialization failed');
-        }
-      } catch (error) {
-        console.error('🎮 App: Game initialization error:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    initGame();
-  }, []);
-
-  if (loading) {
-    return (
-      <>
-        <Head>
-          <title>TenpennyNovels Londra vittoriana</title>
-          <meta name="viewport" content="width=device-width, initial-scale=1" />
-        </Head>
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: '100vh',
-          flexDirection: 'column'
-        }}>
-          <h1>TenpennyNovels</h1>
-          <p>Inizializzazione della Londra vittoriana...</p>
-        </div>
-      </>
-    );
-  }
-
-  if (!gameData?.character) {
-    return (
-      <>
-        <Head>
-          <title>TenpennyNovels Londra vittoriana - Caricamento...</title>
-          <meta name="viewport" content="width=device-width, initial-scale=1" />
-        </Head>
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: '100vh',
-          flexDirection: 'column'
-        }}>
-          <h1>Autenticazione richiesta</h1>
-          <p>Reindirizzamento al login...</p>
-        </div>
-      </>
-    );
-  }
-
+/**
+ * Custom App Component
+ *
+ * Wraps all pages with necessary providers and global configuration.
+ * This component renders on BOTH server and client side.
+ *
+ * @component
+ * @param {AppProps} props - Next.js app props
+ * @param {React.ComponentType} props.Component - Current page component
+ * @param {any} props.pageProps - Props for current page
+ * @returns {JSX.Element} Wrapped application
+ * @since 2.0.0
+ *
+ * @example
+ * // This component is automatically used by Next.js
+ * // No need to import or use directly
+ */
+export default function App({ Component, pageProps }: AppProps): JSX.Element {
   return (
-    <>
-      <Head>
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>TenpennyNovels Londra vittoriana</title>
-        {/* Favicon */}
-        <link rel="icon" href="/favicon.ico" />
-        <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png" />
-        <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png" />
-        <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png" />
-        <meta name="theme-color" content="#8B4513" />
-      </Head>
-      
-      <GameProvider gameData={gameData}>
-        <NotificationSettingsProvider>
-          <NotificationProvider>
-            <CharacterSheetsProvider>
-              <WebSocketProvider
-                characterId={gameData.character?.id || ''}
-                characterName={gameData.character?.name || ''}
-                characterRoles={gameData.character?.gameplayRoles || []}
-              >
-                <GameLayout gameData={gameData}>
-                  <Component {...pageProps} gameData={gameData} />
-                </GameLayout>
-              </WebSocketProvider>
-            </CharacterSheetsProvider>
-          </NotificationProvider>
-        </NotificationSettingsProvider>
-      </GameProvider>
-    </>
+    <QueryClientProvider client={queryClient}>
+      {/* Auth Initializer - Verifies session before rendering */}
+      <AuthInitializer>
+        {/* WebSocket Provider - Handles real-time events */}
+        <WebSocketProvider>
+          {/* Environment Provider - Weather/moon data (public, auto-refresh) */}
+          <EnvironmentProvider>
+            {/* Page Component */}
+            <Component {...pageProps} />
+
+            {/* React Query Devtools (dev mode only) */}
+            {process.env.NODE_ENV === 'development' && (
+              <ReactQueryDevtools initialIsOpen={false} />
+            )}
+          </EnvironmentProvider>
+        </WebSocketProvider>
+      </AuthInitializer>
+    </QueryClientProvider>
   );
 }

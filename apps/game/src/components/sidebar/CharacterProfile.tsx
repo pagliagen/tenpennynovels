@@ -1,72 +1,88 @@
-import React from 'react';
+/**
+ * Character Profile Component
+ *
+ * Displays character avatar and name in the sidebar.
+ * Reads data from auth session (useAuthStore).
+ *
+ * **Clickable**: Opens wizard (DRAFT) or character sheet modal (other statuses).
+ *
+ * @module components/sidebar/CharacterProfile
+ * @since 2.0.0
+ */
+
+'use client';
+
 import { useRouter } from 'next/router';
-import { useGame } from '@/contexts/GameContext';
-import { useCharacterSheets } from '@/contexts/CharacterSheetsContext';
+import { useAuthStore } from '@/store/authStore';
+import { useWindowManagerStore } from '@/store/windowManagerStore';
 import styles from '@/styles/components/sidebar/CharacterProfile.module.scss';
 
-export const CharacterProfile: React.FC = () => {
-  const { character } = useGame();
-  const { openCharacterSheet } = useCharacterSheets();
+/**
+ * Character Profile Component
+ *
+ * Shows character avatar with frame and character name.
+ * Avatar falls back to default image on error.
+ *
+ * **Click Behavior**:
+ * - If status === 'DRAFT' → Navigate to `/character/wizard`
+ * - Else → Open CharacterSheetModal (Phase 4, not implemented yet)
+ *
+ * @component
+ * @returns {JSX.Element | null} Character profile display or null if no character
+ * @since 2.0.0
+ */
+export function CharacterProfile(): JSX.Element | null {
   const router = useRouter();
+  const { selectedCharacter } = useAuthStore();
+  const { openWindow } = useWindowManagerStore();
 
-  if (!character) {
+  if (!selectedCharacter) {
     return null;
   }
 
-  const avatarUrl = character.avatar || '/images/sidebar/avatar-default.png';
-  const characterName = character.name || 'Nome Personaggio';
-  const characterSurname = character.surname || '';
+  const characterName = selectedCharacter.name || 'Unknown Character';
 
-  const handleProfileClick = () => {
-    // If character is DRAFT, navigate to wizard
-    if (character.status === 'DRAFT') {
+  /**
+   * Handle Avatar Click
+   *
+   * Opens wizard (DRAFT) or character sheet window (other statuses).
+   */
+  const handleClick = () => {
+    if (selectedCharacter.status === 'DRAFT') {
+      // DRAFT → Navigate to wizard page (character not completed)
       router.push('/character/wizard');
-      return;
+    } else {
+      // PENDING_APPROVAL, APPROVED, DELETED → Open character sheet window
+      openWindow('characterSheet', {
+        characterId: selectedCharacter._id,
+        characterName: selectedCharacter.name,
+        avatar: selectedCharacter.avatar,
+      });
     }
-
-    // Otherwise open character sheet
-    openCharacterSheet(
-      character.id,
-      characterName,
-      character.avatar || undefined,
-      character.audioTheme,
-      character
-    );
   };
 
   return (
-    <div 
-      className={styles.characterProfile}
-      onClick={handleProfileClick}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          handleProfileClick();
-        }
-      }}
-    >
-      <div className={styles.avatarContainer}>
-        <img 
-          src="/images/sidebar/miniavatar_cornice.png" 
-          alt="Avatar frame" 
-          className={styles.avatarFrame}
-        />
-        <img 
-          src={avatarUrl} 
-          alt={characterName}
-          className={styles.avatarImage}
-          onError={(e) => {
-            (e.target as HTMLImageElement).src = '/images/sidebar/miniavatar_default.png';
-          }}
-        />
+    <>
+      <div className={styles.characterProfile} onClick={handleClick} role="button" tabIndex={0} aria-label={`View ${characterName} character sheet`}>
+        <div className={styles.avatarContainer}>
+          <img
+            src="/images/sidebar/miniavatar_cornice.png"
+            alt="Avatar frame"
+            className={styles.avatarFrame}
+          />
+          <img
+            src={selectedCharacter.avatar || '/images/sidebar/miniavatar_default.png'}
+            alt={characterName}
+            className={styles.avatarImage}
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = '/images/sidebar/miniavatar_default.png';
+            }}
+          />
+        </div>
+        <div className={styles.characterName}>
+          {characterName}
+        </div> 
       </div>
-      <div className={styles.characterName}>
-        {characterName}
-        {characterSurname && ` ${characterSurname}`}
-      </div>
-    </div>
+    </>
   );
-};
-
+}

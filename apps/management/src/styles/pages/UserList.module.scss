@@ -1,0 +1,75 @@
+@use 'sass:color';
+@import '../variables.scss';
+
+.userList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+  height: 100%;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: $spacing-lg;
+  background-color: $color-bg-secondary;
+  border-radius: $border-radius-md;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+
+  h1 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 700;
+    color: $color-primary;
+  }
+
+  p {
+    margin: 0;
+    font-size: 15px;
+    color: $color-text-secondary;
+  }
+}
+
+.errorContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-lg;
+  min-height: 400px;
+  padding: $spacing-xl;
+  background-color: $color-bg-secondary;
+  border-radius: $border-radius-md;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+
+  h2 {
+    margin: 0;
+    font-size: 24px;
+    color: $color-error;
+  }
+
+  p {
+    margin: 0;
+    font-size: 16px;
+    color: $color-text-secondary;
+    text-align: center;
+    max-width: 500px;
+  }
+
+  button {
+    padding: $spacing-md $spacing-lg;
+    background-color: $color-primary;
+    color: $color-bg-primary;
+    border: none;
+    border-radius: $border-radius-sm;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all $transition-fast;
+
+    &:hover {
+      background-color: color.adjust($color-primary, $lightness: 10%);
+    }
+  }
+}

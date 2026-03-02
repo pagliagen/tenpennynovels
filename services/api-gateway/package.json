@@ -1,7 +1,9 @@
 {
   "name": "@tenpennynovels/api-gateway",
   "version": "1.0.0",
-  "description": "API Gateway for TenpennyNovels microservices",
+  "description": "TenpennyNovels - API Gateway",
+  "author": "Gennaro Paglia",
+  "license": "MIT",
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
@@ -11,28 +13,29 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "compression": "^1.7.4",
-    "cookie-parser": "^1.4.6",
-    "cors": "^2.8.5",
-    "dotenv": "^16.3.1",
-    "express": "^4.18.2",
-    "express-rate-limit": "^7.1.5",
-    "helmet": "^7.1.0",
-    "http-proxy-middleware": "^2.0.6",
-    "module-alias": "^2.2.3",
-    "morgan": "^1.10.0",
-    "winston": "^3.11.0"
+    "compression": "^1.8.1",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.2.1",
+    "helmet": "^8.1.0",
+    "http-proxy-middleware": "^3.0.5",
+    "module-alias": "^2.3.4",
+    "morgan": "^1.10.1",
+    "winston": "^3.19.0"
   },
   "devDependencies": {
-    "@types/compression": "^1.7.5",
-    "@types/cookie-parser": "^1.4.6",
-    "@types/cors": "^2.8.17",
-    "@types/express": "^4.17.21",
-    "@types/http-proxy-middleware": "^0.19.3",
-    "@types/morgan": "^1.9.9",
-    "@types/node": "^20.10.4",
-    "tsx": "^4.6.2",
-    "typescript": "^5.3.3"
+    "@types/compression": "^1.8.1",
+    "@types/cookie-parser": "^1.4.10",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/http-proxy-middleware": "^1.0.0",
+    "@types/morgan": "^1.9.10",
+    "@types/node": "^25.2.0",
+    "esbuild": "^0.27.2",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
   },
   "_moduleAliases": {
     "@": "./dist"

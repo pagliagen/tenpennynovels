@@ -1,38 +1,36 @@
-import React from 'react';
-import styles from '@/styles/components/sidebar/DateDisplay.module.scss';
+/**
+ * Date Display Component
+ *
+ * Shows in-game date and time.
+ *
+ * Features (TODO):
+ * - Victorian-era date formatting
+ * - Real-time updates
+ * - Timezone handling
+ *
+ * @module components/sidebar/DateDisplay
+ * @since 2.0.0
+ */
 
-export const DateDisplay: React.FC = () => {
-  const currentDate = new Date();
-  const formattedDate = currentDate.toLocaleDateString('it-IT', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric'
-  });
+'use client';
 
+import styles from '@/styles/components/DateDisplay.module.scss';
+
+/**
+ * Date Display Component
+ *
+ * Renders placeholder date.
+ * Real date will come from TanStack Query in next steps.
+ *
+ * @component
+ * @returns {JSX.Element} Date display
+ * @since 2.0.0
+ */
+export function DateDisplay(): JSX.Element {
   return (
     <div className={styles.dateDisplay}>
-      <svg
-        className={styles.arco}
-        viewBox="0 0 400 200"
-        preserveAspectRatio="xMidYMid meet"
-      >
-        <defs>
-          <path
-            id="arco"
-            d="M 80 160 A 120 120 0 0 1 320 160"
-          />
-        </defs>
-
-        <text className={styles.dateText}>
-          <textPath
-            href="#arco"
-            startOffset="50%"
-            textAnchor="middle"
-          >
-            {formattedDate}
-          </textPath>
-        </text>
-      </svg>
+      <div className={styles.date}>15th November 1889</div>
+      <div className={styles.time}>23:45</div>
     </div>
   );
-};
+}

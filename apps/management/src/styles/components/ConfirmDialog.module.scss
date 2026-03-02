@@ -1,0 +1,87 @@
+@use 'sass:color';
+@import '../variables.scss';
+
+.confirmDialog {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+}
+
+.message {
+  font-size: 16px;
+  line-height: 1.6;
+  color: $color-text-primary;
+
+  &.danger {
+    color: $color-error;
+  }
+
+  &.warning {
+    color: $color-warning;
+  }
+
+  &.info {
+    color: $color-info;
+  }
+}
+
+.actions {
+  display: flex;
+  gap: $spacing-md;
+  justify-content: flex-end;
+}
+
+.cancelButton,
+.confirmButton {
+  padding: $spacing-sm $spacing-lg;
+  border-radius: $border-radius-md;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all $transition-fast;
+  border: none;
+}
+
+.cancelButton {
+  background-color: transparent;
+  color: $color-text-secondary;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: $color-text-primary;
+  }
+}
+
+.confirmButton {
+  background-color: $color-primary;
+  color: $color-bg-primary;
+
+  &:hover {
+    background-color: color.adjust($color-primary, $lightness: 10%);
+  }
+
+  &.danger {
+    background-color: $color-error;
+
+    &:hover {
+      background-color: color.adjust($color-error, $lightness: -10%);
+    }
+  }
+
+  &.warning {
+    background-color: $color-warning;
+
+    &:hover {
+      background-color: color.adjust($color-warning, $lightness: -10%);
+    }
+  }
+
+  &.info {
+    background-color: $color-info;
+
+    &:hover {
+      background-color: color.adjust($color-info, $lightness: -10%);
+    }
+  }
+}

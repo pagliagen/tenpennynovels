@@ -1,0 +1,77 @@
+import { Router, Request, Response } from 'express';
+import { AuthMiddleware } from '../middleware/auth';
+import { banChecks } from '@shared/middleware/banCheck';
+import { OffGameChatController } from '../controllers/OffGameChatController';
+import { OffGameChat, OffGameChatParticipant } from '@database/models';
+import { errorResponse, successResponse } from '../utils/apiResponse';
+
+const router = Router();
+
+// Get user's chats
+router.get('/offgame-chats', AuthMiddleware.requireCharacterAuth, OffGameChatController.getChats);
+
+// Create new chat (direct or group)
+router.post('/offgame-chats', AuthMiddleware.requireCharacterAuth, banChecks.chat(), OffGameChatController.createChat);
+
+// Get chat messages
+router.get('/offgame-chats/:id/messages', AuthMiddleware.requireCharacterAuth, OffGameChatController.getChatMessages);
+
+// Send message to chat
+router.post('/offgame-chats/:id/messages', AuthMiddleware.requireCharacterAuth, banChecks.chat(), OffGameChatController.sendMessage);
+
+// Update chat name (group chats only)
+router.patch('/offgame-chats/:id/name', AuthMiddleware.requireCharacterAuth, OffGameChatController.updateChatName);
+
+// Leave chat
+router.post('/offgame-chats/:id/leave', AuthMiddleware.requireCharacterAuth, OffGameChatController.leaveChat);
+
+// Typing indicator endpoint
+router.post('/offgame-chats/:id/typing',
+  AuthMiddleware.requireCharacterAuth,
+  async (req: Request<{ id: string }>, res: Response) => {
+    try {
+      const chatId = req.params.id;
+      const characterId = req.character!.characterId;
+      const { isTyping } = req.body;
+
+      // Verify chat exists and user is participant
+      const chat = await OffGameChat.findOne({
+        _id: chatId,
+        participants: characterId,
+        isActive: true
+      });
+
+      if (!chat) {
+        res.status(404).json(errorResponse('Chat not found'));
+        return;
+      }
+
+      // Emit WebSocket event to all participants except sender
+      const io = req.app.get('io');
+      if (io) {
+        const participants = await OffGameChatParticipant.find({
+          chatId,
+          isActive: true
+        }).select('characterId');
+
+        for (const participant of participants) {
+          if (participant.characterId.toString() !== characterId) {
+            io.to(`character_${participant.characterId}`).emit('offgame_typing_indicator', {
+              chatId,
+              characterId,
+              characterName: req.character!.characterName,
+              isTyping,
+              timestamp: new Date().toISOString()
+            });
+          }
+        }
+      }
+
+      res.json(successResponse(undefined, 'Typing indicator sent'));
+    } catch (error: any) {
+      res.status(500).json(errorResponse('Failed to send typing indicator'));
+    }
+  }
+);
+
+export default router;

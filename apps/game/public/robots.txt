@@ -1,0 +1,7 @@
+# TenpennyNovels Game - Robots.txt
+# This application requires authentication - block all crawlers
+
+User-agent: *
+Disallow: /
+
+# No sitemap (authentication required for all pages)

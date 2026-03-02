@@ -1,0 +1,102 @@
+@import '../../styles/variables.scss';
+
+.previewContainer {
+  padding: $spacing-lg;
+  background-color: $color-bg-primary;
+  min-height: 100%;
+}
+
+.previewHeader {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  margin-bottom: $spacing-xl;
+  padding-bottom: $spacing-md;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+
+  h1 {
+    font-size: 32px;
+    color: $color-text-primary;
+    margin: 0;
+  }
+
+  .badge {
+    padding: $spacing-xs $spacing-sm;
+    background-color: rgba($color-primary, 0.2);
+    color: $color-primary;
+    border-radius: $border-radius-sm;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+}
+
+.previewContent {
+  // Match public documents Victorian typography
+  font-family: 'Georgia', 'Times New Roman', serif;
+  line-height: 1.8;
+  color: $color-text-secondary;
+
+  h2 {
+    font-size: 28px;
+    margin: $spacing-xl 0 $spacing-md;
+    color: $color-text-primary;
+    font-weight: 600;
+  }
+
+  h3 {
+    font-size: 24px;
+    margin: $spacing-lg 0 $spacing-md;
+    color: $color-text-primary;
+    font-weight: 600;
+  }
+
+  h4 {
+    font-size: 20px;
+    margin: $spacing-md 0 $spacing-sm;
+    color: $color-text-primary;
+  }
+
+  p {
+    margin: $spacing-md 0;
+    text-align: justify;
+  }
+
+  ul, ol {
+    margin: $spacing-md 0;
+    padding-left: $spacing-xl;
+
+    li {
+      margin: $spacing-sm 0;
+    }
+  }
+
+  blockquote {
+    margin: $spacing-lg 0;
+    padding: $spacing-md $spacing-lg;
+    border-left: 4px solid $color-primary;
+    background-color: rgba(255, 255, 255, 0.02);
+    font-style: italic;
+  }
+
+  code {
+    background-color: rgba(255, 255, 255, 0.1);
+    padding: 2px 6px;
+    border-radius: $border-radius-sm;
+    font-family: 'Monaco', 'Courier New', monospace;
+    font-size: 0.9em;
+  }
+
+  pre {
+    background-color: rgba(255, 255, 255, 0.05);
+    padding: $spacing-md;
+    border-radius: $border-radius-md;
+    overflow-x: auto;
+    margin: $spacing-md 0;
+
+    code {
+      background: none;
+      padding: 0;
+    }
+  }
+}

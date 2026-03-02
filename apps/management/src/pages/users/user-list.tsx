@@ -1,334 +1,241 @@
-import React, { useState, useEffect } from 'react';
+/**
+ * User List Page
+ *
+ * Pagina gestione utenti con ConfigurableDataTable, SidePanel, e TanStack Query.
+ * Max 200 linee per mantenibilità.
+ */
+
+import React, { useState, useMemo } from 'react';
 import Head from 'next/head';
-import { useRouter } from 'next/router';
-import { ManagementLayout } from '@/components/ManagementLayout';
+import { ManagementLayout } from '@/components/layout/ManagementLayout';
 import { ConfigurableDataTable } from '@/components/shared/ConfigurableDataTable';
 import { SidePanel } from '@/components/shared/SidePanel';
-import { ColumnVisibilityToggle } from '@/components/shared/ColumnVisibilityToggle';
-import { AuthContext } from '@/lib/auth';
-import { userAPI, UpdateUserData } from '@/lib/api';
-import { logUserAction } from '@/lib/auditLogger';
+import { useConfirm } from '@/hooks/useConfirm';
 import { useTableConfig } from '@/hooks/useTableConfig';
-import styles from '@/styles/pages/UserManagement.module.scss';
+import { useUsers, useUpdateUser, useDeleteUser, useBanUser, useUnbanUser } from '@/hooks/api/useUsers';
+import { useNotificationStore } from '@/store/notificationStore';
+import type { User, UserListParams, BanUserData } from '@/types/api/User';
+import styles from '@/styles/pages/UserList.module.scss';
 
-interface User {
-  id: string;
-  username: string;
-  email: string;
-  displayName: string;
-  canAccessAdminPanel: boolean;
-  userRoles: string[];
-  characterRoles: string[];
-  characterPermissions: string[];
-  accountStatus: {
-    isActive: boolean;
-    isEmailVerified: boolean;
-    isBanned: boolean;
-  };
-  multipleCharactersAllowed: boolean;
-  characters: Array<{
-    id: string;
-    name: string;
-    status: string;
-    occupation: string;
-    socialClass: string;
-    createdAt: string;
-    lastActive: string;
-  }>;
-  activity: {
-    lastLoginAt: string;
-    loginCount: number;
-    messagesSent: number;
-    documentsCreated: number;
-    moderationActions: number;
-  };
-  registrationInfo: {
-    registeredAt: string;
-    registrationSource: string;
-    ipAddress: string;
-    referrer: string;
-  };
-}
-
-interface UserManagementProps {
-  authContext: AuthContext;
-}
-
-export default function UserList({ authContext }: UserManagementProps) {
-  const router = useRouter();
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [activeSidePanel, setActiveSidePanel] = useState<string | null>(null);
-  const [sidePanelLoading, setSidePanelLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // Table configuration with column visibility
-  const { 
-    config: tableConfig, 
-    getNestedValue, 
-    setNestedValue, 
-    columnVisibility,
-    toggleColumnVisibility,
-    resetColumnVisibility,
-    resolveConditionalValue,
-    interpolateTemplate,
-    allColumns
-  } = useTableConfig('user-list');
-
-  // Pagination state
-  const [pagination, setPagination] = useState({
+export default function UserList() {
+  // State
+  const [params, setParams] = useState<UserListParams>({
     page: 1,
-    pageSize: tableConfig?.table.pagination.defaultPageSize || 25,
-    total: 0
+    pageSize: 25,
+    sortBy: 'registrationInfo.registeredAt',
+    sortOrder: 'desc'
   });
+  const [activeSidePanel, setActiveSidePanel] = useState<'edit' | 'view' | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
 
-  const fetchUsers = async (page = 1, pageSize = 25) => {
+  // Hooks
+  const { data, isLoading, error } = useUsers(params);
+  const tableConfig = useTableConfig('user-list');
+  const updateUser = useUpdateUser();
+  const deleteUser = useDeleteUser();
+  const banUser = useBanUser();
+  const unbanUser = useUnbanUser();
+  const { confirm, ConfirmDialogComponent } = useConfirm();
+  const addNotification = useNotificationStore(state => state.addNotification);
+
+  // Prepare visible columns for ConfigurableDataTable
+  const visibleColumns = useMemo(() => {
+    if (!tableConfig.config) return [];
+    return tableConfig.config.columns.filter(
+      col => tableConfig.columnVisibility[col.key] !== false
+    );
+  }, [tableConfig.config, tableConfig.columnVisibility]);
+
+  /**
+   * Handler azioni row
+   */
+  const handleAction = async (action: string, user: User) => {
     try {
-      setLoading(true);
-      setError(null);
-
-      const response = await userAPI.getUsers({ page, pageSize });
-      
-      if (response.success && response.data) {
-        // Mappiamo i dati dall'API alla struttura che ci aspettiamo
-        setUsers(response.data.items);
-        setPagination(prev => ({
-          ...prev,
-          page: response.data!.pagination.currentPage,
-          total: response.data!.pagination.totalItems
-        }));
-      } else {
-        throw new Error(response.error || 'Errore nel caricamento utenti');
-      }
-    } catch (err) {
-      console.error('Errore caricamento utenti:', err);
-      setError(err instanceof Error ? err.message : 'Errore sconosciuto');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchUsers(pagination.page, pagination.pageSize);
-  }, []);
-
-  const handlePageChange = (newPage: number) => {
-    fetchUsers(newPage, pagination.pageSize);
-  };
-
-  const handlePageSizeChange = (newSize: number) => {
-    setPagination(prev => ({ ...prev, pageSize: newSize }));
-    fetchUsers(1, newSize);
-  };
-
-  const openSidePanel = (panelKey: string, user: User) => {
-    setCurrentUser(user);
-    setActiveSidePanel(panelKey);
-  };
-
-
-
-  // Handle table actions from configuration
-  const handleAction = (actionKey: string, user: User) => {
-    switch (actionKey) {
-      case 'edit':
-        openSidePanel('edit', user);
-        break;
-      default:
-        console.warn(`Unknown action: ${actionKey}`);
-    }
-  };
-
-  // Handle bulk actions from configuration
-  const handleBulkAction = (actionKey: string, users: User[]) => {
-    switch (actionKey) {
-      default:
-        console.warn(`Unknown bulk action: ${actionKey}`);
-    }
-  };
-
-  // Handle SidePanel actions
-  const handleSidePanelAction = async (actionKey: string, formData: Record<string, any>) => {
-    if (!currentUser) return;
-
-    setSidePanelLoading(true);
-    
-    try {
-      switch (actionKey) {
-        case 'save':
-          await handleSaveUser(currentUser, formData);
+      switch (action) {
+        case 'edit':
+          setCurrentUser(user);
+          setActiveSidePanel('edit');
           break;
-        default:
-          console.warn(`Unknown SidePanel action: ${actionKey}`);
-          return;
-      }
 
-      // Close panel on success
+        case 'view-characters':
+          setCurrentUser(user);
+          setActiveSidePanel('view');
+          break;
+
+        case 'ban': {
+          const confirmed = await confirm({
+            title: 'Conferma Ban',
+            message: `Sei sicuro di voler bannare ${user.username}?`
+          });
+
+          if (confirmed) {
+            const reason = prompt('Motivo del ban:');
+            if (!reason) {
+              addNotification({ type: 'warning', message: 'Ban annullato: motivo obbligatorio' });
+              return;
+            }
+
+            await banUser.mutateAsync({ id: user._id, banData: { reason } });
+            addNotification({ type: 'success', message: `${user.username} bannato con successo` });
+          }
+          break;
+        }
+
+        case 'unban': {
+          const confirmed = await confirm({
+            title: 'Conferma Unban',
+            message: `Sei sicuro di voler rimuovere il ban a ${user.username}?`
+          });
+
+          if (confirmed) {
+            await unbanUser.mutateAsync(user._id);
+            addNotification({ type: 'success', message: `Ban rimosso per ${user.username}` });
+          }
+          break;
+        }
+
+        case 'delete': {
+          const confirmed = await confirm({
+            title: 'Conferma Eliminazione',
+            message: `Sei sicuro di voler eliminare ${user.username}? Questa azione è irreversibile.`
+          });
+
+          if (confirmed) {
+            await deleteUser.mutateAsync(user._id);
+            addNotification({ type: 'success', message: `${user.username} eliminato` });
+          }
+          break;
+        }
+
+        default:
+          addNotification({ type: 'info', message: `Azione "${action}" non implementata` });
+      }
+    } catch (error) {
+      addNotification({
+        type: 'error',
+        message: error instanceof Error ? error.message : 'Errore nell\'esecuzione azione'
+      });
+    }
+  };
+
+  /**
+   * Handler SidePanel save
+   */
+  const handleSidePanelAction = async (action: string, formData: Record<string, unknown>) => {
+    if (action === 'save' && currentUser) {
+      try {
+        await updateUser.mutateAsync({
+          id: currentUser._id,
+          data: formData
+        });
+
+        addNotification({ type: 'success', message: 'Utente aggiornato con successo' });
+        setActiveSidePanel(null);
+        setCurrentUser(null);
+      } catch (error) {
+        addNotification({
+          type: 'error',
+          message: error instanceof Error ? error.message : 'Errore nell\'aggiornamento'
+        });
+      }
+    } else if (action === 'cancel') {
       setActiveSidePanel(null);
       setCurrentUser(null);
-    } catch (err) {
-      console.error('Error in SidePanel action:', err);
-      setError(err instanceof Error ? err.message : 'Errore sconosciuto');
-    } finally {
-      setSidePanelLoading(false);
     }
   };
 
-  const handleSaveUser = async (user: User, formData: Record<string, any>) => {
-    const updateData: UpdateUserData = {
-      username: formData.username,
-      email: formData.email,
-      displayName: formData.displayName,
-      canAccessAdminPanel: formData.canAccessAdminPanel,
-      userRoles: formData.userRoles || ['user'],
-      isActive: getNestedValue(formData, 'accountStatus.isActive'),
-      multipleCharactersAllowed: formData.multipleCharactersAllowed
-    };
-
-    const response = await userAPI.updateUser(user.id, updateData);
-    
-    if (response.success) {
-      // Update local state
-      setUsers(prev => prev.map(u => 
-        u.id === user.id 
-          ? { 
-              ...u, 
-              username: updateData.username || u.username,
-              email: updateData.email || u.email,
-              displayName: updateData.displayName || u.displayName,
-              canAccessAdminPanel: updateData.canAccessAdminPanel ?? u.canAccessAdminPanel,
-              userRoles: updateData.userRoles || u.userRoles,
-              multipleCharactersAllowed: updateData.multipleCharactersAllowed ?? u.multipleCharactersAllowed,
-              accountStatus: { 
-                ...u.accountStatus, 
-                isActive: updateData.isActive ?? u.accountStatus.isActive 
-              }
-            }
-          : u
-      ));
-
-      // Log audit action
-      logUserAction.update({
-        userId: user.id,
-        username: user.username,
-        changes: updateData
-      });
-    } else {
-      throw new Error(response.error || 'Errore aggiornamento utente');
-    }
+  /**
+   * Handler pagination
+   */
+  const handlePageChange = (page: number) => {
+    setParams(prev => ({ ...prev, page }));
   };
 
-  // Handle cell clicks for specific columns (like banned status)
-  const handleCellClick = (user: User, columnKey: string, value: any) => {
-    if (columnKey === 'accountStatus' && value?.isBanned) {
-      // Redirect to ban-list with user filter
-      router.push(`/users/ban-list?username=${encodeURIComponent(user.username)}`);
-    }
+  const handlePageSizeChange = (pageSize: number) => {
+    setParams(prev => ({ ...prev, pageSize, page: 1 }));
   };
 
-
+  /**
+   * Render error state
+   */
+  if (error) {
+    return (
+      <ManagementLayout>
+        <div className={styles.errorContainer}>
+          <h2>Errore nel caricamento utenti</h2>
+          <p>{error instanceof Error ? error.message : 'Errore sconosciuto'}</p>
+          <button onClick={() => window.location.reload()}>Riprova</button>
+        </div>
+      </ManagementLayout>
+    );
+  }
 
   return (
-    <ManagementLayout authContext={authContext}>
+    <ManagementLayout>
       <Head>
-        <title>TenpennyNovels Management - Gestione Utenti</title>
+        <title>Gestione Utenti - TenpennyNovels Management</title>
       </Head>
 
-      <div className={styles.userManagement}>
-        <div className={styles.pageHeader}>
-          <h1 className={styles.pageTitle}>👥 Gestione Utenti</h1>
-          <div className={styles.pageActions}>
-            {tableConfig && (
-              <ColumnVisibilityToggle
-                allColumns={allColumns}
-                columnVisibility={columnVisibility}
-                onToggleColumn={toggleColumnVisibility}
-                onResetToDefaults={resetColumnVisibility}
-              />
-            )}
-            
-            <button 
-              onClick={() => fetchUsers(pagination.page, pagination.pageSize)}
-              className={styles.refreshButton}
-              disabled={loading}
-            >
-              <span className={styles.refreshIcon}>↻</span>
-              Aggiorna
-            </button>
-          </div>
-        </div>
+      <div className={styles.userList}>
+        <header className={styles.header}>
+          <h1>Gestione Utenti</h1>
+          <p>Totale: {data?.pagination.totalItems ?? 0} utenti</p>
+        </header>
 
-        {error && (
-          <div className={styles.errorBanner}>
-            <span className={styles.errorIcon}>⚠️</span>
-            {error}
-            <button 
-              onClick={() => setError(null)}
-              className={styles.closeError}
-            >
-              ✕
-            </button>
-          </div>
-        )}
-
-        <ConfigurableDataTable
+        <ConfigurableDataTable<User>
           tableName="user-list"
-          data={users}
-          loading={loading}
-          selectedItems={selectedUsers}
-          onSelectionChange={setSelectedUsers}
+          data={data?.items ?? []}
+          loading={isLoading || tableConfig.loading}
           onAction={handleAction}
-          onBulkAction={handleBulkAction}
-          onCellClick={handleCellClick}
           pagination={{
-            page: pagination.page,
-            pageSize: pagination.pageSize,
-            total: pagination.total,
+            page: params.page,
+            pageSize: params.pageSize,
+            total: data?.pagination.totalItems ?? 0,
             onPageChange: handlePageChange,
             onPageSizeChange: handlePageSizeChange
           }}
-          className={styles.usersTable}
-          externalConfig={tableConfig ? {
-            config: tableConfig,
-            loading: false,
-            error: null,
-            visibleColumns: tableConfig.columns.filter(col => {
-              if (col.alwaysVisible) return true;
-              return columnVisibility[col.key] ?? col.defaultVisible;
-            }),
-            getNestedValue,
-            resolveConditionalValue
+          externalConfig={tableConfig.config ? {
+            config: tableConfig.config,
+            visibleColumns: visibleColumns,
+            getNestedValue: tableConfig.getNestedValue,
+            resolveConditionalValue: tableConfig.resolveConditionalValue
           } : undefined}
         />
 
-        {/* SidePanel for Edit */}
-        {tableConfig && tableConfig.sidePanels && activeSidePanel && currentUser && (
+        {activeSidePanel === 'edit' && currentUser && (
           <SidePanel
             isOpen={true}
             config={{
-              title: interpolateTemplate(tableConfig.sidePanels[activeSidePanel].title, currentUser),
-              subtitle: tableConfig.sidePanels[activeSidePanel].subtitle,
-              width: tableConfig.sidePanels[activeSidePanel].width,
-              fields: tableConfig.sidePanels[activeSidePanel].fields,
-              actions: tableConfig.sidePanels[activeSidePanel].actions.map((action: any) => ({
-                ...action,
-                loading: sidePanelLoading && action.key !== 'cancel'
-              }))
+              title: `Modifica ${currentUser.username}`,
+              width: 'medium',
+              fields: [
+                { key: 'displayName', label: 'Nome Visualizzato', type: 'text', required: true, disabled: false },
+                { key: 'email', label: 'Email', type: 'email', required: true, disabled: false },
+                { key: 'canAccessAdminPanel', label: 'Accesso Admin Panel', type: 'checkbox', required: false, disabled: false },
+                { key: 'accountStatus.isActive', label: 'Account Attivo', type: 'checkbox', required: false, disabled: false },
+                { key: 'accountStatus.isEmailVerified', label: 'Email Verificata', type: 'checkbox', required: false, disabled: false }
+              ],
+              actions: [
+                { key: 'save', label: 'Salva', type: 'primary', loading: false },
+                { key: 'cancel', label: 'Annulla', type: 'secondary', loading: false }
+              ]
             }}
-            data={currentUser}
-            loading={sidePanelLoading}
-            columnVisibility={columnVisibility}
-            getNestedValue={getNestedValue}
-            setNestedValue={setNestedValue}
+            data={{
+              displayName: currentUser.displayName,
+              email: currentUser.email,
+              canAccessAdminPanel: currentUser.canAccessAdminPanel,
+              'accountStatus.isActive': currentUser.accountStatus.isActive,
+              'accountStatus.isEmailVerified': currentUser.accountStatus.isEmailVerified
+            }}
+            onAction={handleSidePanelAction}
             onClose={() => {
               setActiveSidePanel(null);
               setCurrentUser(null);
             }}
-            onAction={handleSidePanelAction}
           />
         )}
+
+        {ConfirmDialogComponent}
       </div>
     </ManagementLayout>
   );

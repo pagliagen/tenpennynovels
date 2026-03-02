@@ -1,0 +1,49 @@
+@use '../../variables' as *;
+
+.layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  // background-color: rgba($color-bg-primary, 0.5);
+}
+
+.searchContainer {
+  padding: $spacing-md $spacing-lg;
+  background-color: rgba(212, 175, 55, 0.1);
+  border-bottom: 2px solid $color-gold;
+
+  @include mobile {
+    padding: $spacing-sm $spacing-md;
+  }
+}
+
+.container {
+  display: flex;
+  flex: 1;
+  max-width: 100%;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.main {
+  flex: 1;
+  overflow-x: clip; // Use 'clip' instead of 'hidden' to allow position: sticky to work
+  display: flex;
+  flex-direction: column;
+
+  @include mobile {
+    padding-bottom: $mobile-bottom-nav-height;
+  }
+}
+
+.content {
+  flex: 1;
+  max-width: $content-max-width;
+  width: 100%;
+  margin: 0 auto;
+  padding: $spacing-2xl $spacing-xl;
+
+  @include mobile {
+    padding: $spacing-lg $spacing-md;
+  }
+}

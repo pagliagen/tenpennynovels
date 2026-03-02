@@ -1,432 +1,252 @@
-import React, { useState, useEffect } from 'react';
+/**
+ * Character List Page
+ *
+ * Pagina gestione personaggi con ConfigurableDataTable, SidePanel, e TanStack Query.
+ * Max 200 linee per mantenibilità.
+ */
+
+import React, { useState, useMemo } from 'react';
 import Head from 'next/head';
-import { useRouter } from 'next/router';
-import { ManagementLayout } from '@/components/ManagementLayout';
+import { ManagementLayout } from '@/components/layout/ManagementLayout';
 import { ConfigurableDataTable } from '@/components/shared/ConfigurableDataTable';
-import { CharacterReviewPanel } from '@/components/character/CharacterReviewPanel';
-import { ColumnVisibilityToggle } from '@/components/shared/ColumnVisibilityToggle';
-import { AuthContext } from '@/lib/auth';
-import { useAuditLogger } from '@/hooks/useAuditLogger';
-import { characterAPI } from '@/lib/api';
+import { SidePanel } from '@/components/shared/SidePanel';
+import { useConfirm } from '@/hooks/useConfirm';
 import { useTableConfig } from '@/hooks/useTableConfig';
+import {
+  useCharacters,
+  useUpdateCharacter,
+  useDeleteCharacter,
+  useApproveCharacter,
+  useRejectCharacter
+} from '@/hooks/api/useCharacters';
+import { useNotificationStore } from '@/store/notificationStore';
+import type { Character, CharacterListParams } from '@/types/api/Character';
 import styles from '@/styles/pages/CharacterList.module.scss';
 
-const API_GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'https://api.tenpennynovels.com';
- 
-interface Character {
-  id: string;
-  characterName: string;
-  characterSurname: string;
-  userId: string;
-  username: string;
-  occupation: string;
-  socialClass: string;
-  status: 'DRAFT' | 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED' | 'DELETED';
-  createdAt: Date;
-  submittedAt?: Date;
-  reviewedAt?: Date;
-  reviewedBy?: string;
-  rejectionReason?: string;
-  lastActivity?: Date;
-  stats: {
-    str: number;
-    dex: number;
-    int: number;
-    con: number;
-    app: number;
-    pow: number;
-    siz: number;
-    edu: number;
-  } | null;
-  skills?: Record<string, number>;
-  backstory?: string;
-  notes?: string;
-  characterRoles: string[];
-  corporationMemberships: string[];
-  equipment?: string[];
-}
-
-interface CharacterListProps {
-  authContext: AuthContext;
-}
-
-export default function CharacterList({ authContext }: CharacterListProps) {
-  const router = useRouter();
-  const [currentCharacterId, setCurrentCharacterId] = useState<string | null>(null);
-  const [reviewPanelOpen, setReviewPanelOpen] = useState(false);
-  const [charactersData, setCharactersData] = useState<Character[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedCharacters, setSelectedCharacters] = useState<Character[]>([]);
-  const [error, setError] = useState<string | null>(null);
-
-  // Check if current user can access this page (canAccessAdminPanel + master/moderatore/amministratore/gestore roles)
-  const canAccessAdminPanel = authContext?.user?.canAccessAdminPanel;
-  const userRoles = authContext?.user?.userRoles || [];
-  const characterRoles = authContext?.user?.characterRoles || [];
-  
-  // Can access if: has admin panel access AND (is gestore OR has master/moderatore/amministratore character role)
-  const canAccessPage = canAccessAdminPanel && (
-    userRoles.includes('gestore') ||
-    characterRoles.includes('master') ||
-    characterRoles.includes('moderatore') ||
-    characterRoles.includes('amministratore')
-  );
-
-  // Table configuration with column visibility
-  const {
-    config: tableConfig,
-    getNestedValue,
-    setNestedValue,
-    columnVisibility,
-    toggleColumnVisibility,
-    resetColumnVisibility,
-    resolveConditionalValue,
-    interpolateTemplate,
-    allColumns
-  } = useTableConfig('character-list');
-
-  // Pagination state
-  const [pagination, setPagination] = useState({
+export default function CharacterList() {
+  // State
+  const [params, setParams] = useState<CharacterListParams>({
     page: 1,
-    pageSize: 25, // Fixed value to avoid re-render loop
-    total: 0
+    pageSize: 25,
+    sortBy: 'metadata.createdAt',
+    sortOrder: 'desc'
   });
-  
-  // Audit logging hook
-  const auditLogger = useAuditLogger(authContext);
+  const [activeSidePanel, setActiveSidePanel] = useState<'edit' | 'view' | null>(null);
+  const [currentCharacter, setCurrentCharacter] = useState<Character | null>(null);
 
-  const fetchCharacters = async (page = 1, pageSize = 25) => {
+  // Hooks
+  const { data, isLoading, error } = useCharacters(params);
+  const tableConfig = useTableConfig('character-list');
+  const updateCharacter = useUpdateCharacter();
+  const deleteCharacter = useDeleteCharacter();
+  const approveCharacter = useApproveCharacter();
+  const rejectCharacter = useRejectCharacter();
+  const { confirm, ConfirmDialogComponent } = useConfirm();
+  const addNotification = useNotificationStore(state => state.addNotification);
+
+  // Prepare visible columns for ConfigurableDataTable
+  const visibleColumns = useMemo(() => {
+    if (!tableConfig.config) return [];
+    return tableConfig.config.columns.filter(
+      col => tableConfig.columnVisibility[col.key] !== false
+    );
+  }, [tableConfig.config, tableConfig.columnVisibility]);
+
+  /**
+   * Handler azioni row
+   */
+  const handleAction = async (action: string, character: Character) => {
     try {
-      setLoading(true);
-      setError(null);
+      switch (action) {
+        case 'edit':
+          setCurrentCharacter(character);
+          setActiveSidePanel('edit');
+          break;
 
-      const response = await fetch(`${API_GATEWAY_URL}/admin/characters?page=${page}&pageSize=${pageSize}`, {
-        credentials: 'include'
-      });
+        case 'view-details':
+          setCurrentCharacter(character);
+          setActiveSidePanel('view');
+          break;
 
-      if (response.ok) {
-        const data = await response.json();
-        const characters = data.list || [];
-        setCharactersData(characters);
-        
-        setPagination(prev => ({
-          ...prev,
-          page: data.pagination?.page || page,
-          total: data.pagination?.total || characters.length
-        }));
-        
-        // Log successful data fetch
-        auditLogger.logPageAccess('characters/character-list', {
-          totalCharacters: characters.length,
-          statusCounts: getStatusCounts(characters)
-        });
-      } else {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        case 'approve': {
+          const confirmed = await confirm({
+            title: 'Conferma Approvazione',
+            message: `Sei sicuro di voler approvare ${character.fullName}?`
+          });
+
+          if (confirmed) {
+            await approveCharacter.mutateAsync({ id: character._id });
+            addNotification({ type: 'success', message: `${character.fullName} approvato con successo` });
+          }
+          break;
+        }
+
+        case 'reject': {
+          const confirmed = await confirm({
+            title: 'Conferma Rifiuto',
+            message: `Sei sicuro di voler rifiutare ${character.fullName}?`
+          });
+
+          if (confirmed) {
+            const reason = prompt('Motivo del rifiuto:');
+            if (!reason) {
+              addNotification({ type: 'warning', message: 'Rifiuto annullato: motivo obbligatorio' });
+              return;
+            }
+
+            await rejectCharacter.mutateAsync({ id: character._id, data: { reason } });
+            addNotification({ type: 'success', message: `${character.fullName} rifiutato` });
+          }
+          break;
+        }
+
+        case 'delete': {
+          const confirmed = await confirm({
+            title: 'Conferma Eliminazione',
+            message: `Sei sicuro di voler eliminare ${character.fullName}? Questa azione è irreversibile.`
+          });
+
+          if (confirmed) {
+            await deleteCharacter.mutateAsync(character._id);
+            addNotification({ type: 'success', message: `${character.fullName} eliminato` });
+          }
+          break;
+        }
+
+        default:
+          addNotification({ type: 'info', message: `Azione "${action}" non implementata` });
       }
-    } catch (err) {
-      console.error('Errore caricamento personaggi:', err);
-      setError(err instanceof Error ? err.message : 'Errore sconosciuto');
-      
-      auditLogger.logError(
-        'characters.fetch',
-        'characters',
-        { endpoint: '/admin/characters' },
-        err instanceof Error ? err.message : 'Network error'
-      );
-        
-      // Set empty array on error - no mock data fallback
-      setCharactersData([]);
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      addNotification({
+        type: 'error',
+        message: error instanceof Error ? error.message : 'Errore nell\'esecuzione azione'
+      });
     }
   };
 
-
-  useEffect(() => {
-    // Don't do anything if auth is still loading
-    if (authContext?.isLoading) {
-      return;
-    }
-    
-    if (!canAccessPage) {
-      router.push('/access-denied');
-      return;
-    }
-    
-    fetchCharacters(pagination.page, pagination.pageSize);
-  }, [canAccessPage, authContext?.isLoading]); // Check access before loading
-
-  const handlePageChange = (newPage: number) => {
-    fetchCharacters(newPage, pagination.pageSize);
-  };
-
-  const handlePageSizeChange = (newSize: number) => {
-    setPagination(prev => ({ ...prev, pageSize: newSize }));
-    fetchCharacters(1, newSize);
-  };
-
-  const getStatusCounts = (characters: Character[]) => {
-    if (!Array.isArray(characters)) return {};
-    const counts: Record<string, number> = {};
-    characters.forEach(char => {
-      counts[char.status] = (counts[char.status] || 0) + 1;
-    });
-    return counts;
-  };
-
-  const getStatusBadge = (status: string) => {
-    const statusConfig = {
-      DRAFT: { label: 'Bozza', className: styles.statusDraft },
-      PENDING_APPROVAL: { label: 'In Attesa', className: styles.statusPending },
-      APPROVED: { label: 'Approvato', className: styles.statusApproved },
-      REJECTED: { label: 'Respinto', className: styles.statusRejected },
-      DELETED: { label: 'Eliminato', className: styles.statusDeleted }
-    };
-    
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.DRAFT;
-    
-    return (
-      <span className={`${styles.statusBadge} ${config.className}`}>
-        {config.label}
-      </span>
-    );
-  };
-
-  const getRolesBadges = (roles: string[]) => {
-    if (!roles || roles.length === 0) return null;
-    
-    return (
-      <div className={styles.rolesBadges}>
-        {roles.map(role => (
-          <span key={role} className={`${styles.roleBadge} ${styles[`role${role.charAt(0).toUpperCase()}${role.slice(1)}`]}`}>
-            {role}
-          </span>
-        ))}
-      </div>
-    );
-  };
-
-  const formatDate = (date: Date | string | undefined) => {
-    if (!date) return '-';
-    const dateObj = typeof date === 'string' ? new Date(date) : date;
-    return dateObj.toLocaleDateString('it-IT', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  const calculateTotalStats = (stats: Character['stats']) => {
-    if (!stats) return 0;
-    return Object.values(stats).reduce((sum, stat) => sum + stat, 0);
-  };
-
-  // Handle table actions from configuration
-  const handleAction = (actionKey: string, character: Character) => {
-    switch (actionKey) {
-      case 'view':
-        setCurrentCharacterId(character.id);
-        setReviewPanelOpen(true);
-        
-        // Log character view
-        auditLogger.logSuccess('character.view', 'characters', {
-          characterId: character.id,
-          characterName: `${character.characterName} ${character.characterSurname}`,
-          characterStatus: character.status
+  /**
+   * Handler SidePanel save
+   */
+  const handleSidePanelAction = async (action: string, formData: Record<string, unknown>) => {
+    if (action === 'save' && currentCharacter) {
+      try {
+        await updateCharacter.mutateAsync({
+          id: currentCharacter._id,
+          data: formData
         });
-        break;
-      default:
-        console.warn(`Unknown action: ${actionKey}`);
+
+        addNotification({ type: 'success', message: 'Personaggio aggiornato con successo' });
+        setActiveSidePanel(null);
+        setCurrentCharacter(null);
+      } catch (error) {
+        addNotification({
+          type: 'error',
+          message: error instanceof Error ? error.message : 'Errore nell\'aggiornamento'
+        });
+      }
+    } else if (action === 'cancel') {
+      setActiveSidePanel(null);
+      setCurrentCharacter(null);
     }
   };
 
-  // Handle bulk actions from configuration
-  const handleBulkAction = (actionKey: string, characters: Character[]) => {
-    switch (actionKey) {
-      default:
-        console.warn(`Unknown bulk action: ${actionKey}`);
-    }
+  /**
+   * Handler pagination
+   */
+  const handlePageChange = (page: number) => {
+    setParams(prev => ({ ...prev, page }));
   };
 
-  // Custom renderers for ConfigurableDataTable
-  const customRenderers = {
-    characterInfo: (_: any, character: Character) => (
-      <div className={styles.characterInfo}>
-        <div className={styles.characterName}>
-          {character.characterName} {character.characterSurname}
-        </div>
-        <div className={styles.characterMeta}>
-          {character.occupation} - {character.socialClass}
-        </div>
-        {character.characterRoles && character.characterRoles.length > 0 && (
-          <div className={styles.characterRoles}>
-            {getRolesBadges(character.characterRoles)}
-          </div>
-        )}
-      </div>
-    ),
-    statusBadge: (value: any) => getStatusBadge(value),
-    dateInfo: (value: any) => (
-      <div className={styles.dateInfo}>
-        <div className={styles.dateValue}>{formatDate(value)}</div>
-      </div>
-    ),
-    rolesBadges: (roles: string[]) => getRolesBadges(roles),
-    corporationsList: (corporations: string[]) => (
-      <div className={styles.corporationsDetail}>
-        {corporations && corporations.map(corp => (
-          <span key={corp} className={styles.corporationBadge}>
-            {corp}
-          </span>
-        ))}
-      </div>
-    ),
-    statsPreview: (_: any, character: Character) => (
-      <div className={styles.statsPreview}>
-        {character.stats ? (
-          <>
-            <span className={styles.statTotal}>
-              Tot: {calculateTotalStats(character.stats)}
-            </span>
-            <div className={styles.statBreakdown}>
-              STR:{character.stats.str} DEX:{character.stats.dex} INT:{character.stats.int}
-            </div>
-          </>
-        ) : (
-          <span className={styles.statTotal}>
-            Statistiche non disponibili
-          </span>
-        )}
-      </div>
-    )
+  const handlePageSizeChange = (pageSize: number) => {
+    setParams(prev => ({ ...prev, pageSize, page: 1 }));
   };
 
-
-  const statusCounts = getStatusCounts(charactersData);
-  const totalCharacters = charactersData.length;
-
-  if (!canAccessPage) {
-    return null; // Will redirect in useEffect
+  /**
+   * Render error state
+   */
+  if (error) {
+    return (
+      <ManagementLayout>
+        <div className={styles.errorContainer}>
+          <h2>Errore nel caricamento personaggi</h2>
+          <p>{error instanceof Error ? error.message : 'Errore sconosciuto'}</p>
+          <button onClick={() => window.location.reload()}>Riprova</button>
+        </div>
+      </ManagementLayout>
+    );
   }
 
   return (
-    <ManagementLayout authContext={authContext}>
+    <ManagementLayout>
       <Head>
-        <title>TenpennyNovels Management - Lista Personaggi</title>
+        <title>Gestione Personaggi - TenpennyNovels Management</title>
       </Head>
-      
-      <div className={styles.characterListPage}>
-        <div className={styles.pageHeader}>
-          <div className={styles.headerContent}>
-            <h1 className={styles.pageTitle}>
-              <span className={styles.titleIcon}>📋</span>
-              Lista Personaggi
-            </h1>
-            <p className={styles.pageDescription}>
-              Visualizza tutti i personaggi registrati nella piattaforma
-            </p>
-          </div>
-          
-          <div className={styles.pageActions}>
-            <div className={styles.statsPanel}>
-              <div className={styles.statItem}>
-                <span className={styles.statValue}>{totalCharacters}</span>
-                <span className={styles.statLabel}>Totali</span>
-              </div>
-              <div className={styles.statItem}>
-                <span className={styles.statValue}>{statusCounts.APPROVED || 0}</span>
-                <span className={styles.statLabel}>Approvati</span>
-              </div>
-              <div className={styles.statItem}>
-                <span className={styles.statValue}>{statusCounts.PENDING_APPROVAL || 0}</span>
-                <span className={styles.statLabel}>In Attesa</span>
-              </div>
-            </div>
-            
-            <div className={styles.headerButtons}>
-              {tableConfig && (
-                <ColumnVisibilityToggle
-                  allColumns={allColumns}
-                  columnVisibility={columnVisibility}
-                  onToggleColumn={toggleColumnVisibility}
-                  onResetToDefaults={resetColumnVisibility}
-                />
-              )}
-              
-              <button 
-                onClick={() => fetchCharacters(pagination.page, pagination.pageSize)}
-                className={styles.refreshButton}
-                disabled={loading}
-              >
-                <span className={styles.refreshIcon}>↻</span>
-                Aggiorna
-              </button>
-            </div>
-          </div>
-        </div>
 
-        {error && (
-          <div className={styles.errorBanner}>
-            <span className={styles.errorIcon}>⚠️</span>
-            {error}
-            <button 
-              onClick={() => setError(null)}
-              className={styles.closeError}
-            >
-              ✕
-            </button>
-          </div>
-        )}
+      <div className={styles.characterList}>
+        <header className={styles.header}>
+          <h1>Gestione Personaggi</h1>
+          <p>Totale: {data?.pagination.totalItems ?? 0} personaggi</p>
+        </header>
 
-        <ConfigurableDataTable
+        <ConfigurableDataTable<Character>
           tableName="character-list"
-          data={charactersData}
-          loading={loading}
-          selectedItems={selectedCharacters}
-          onSelectionChange={setSelectedCharacters}
+          data={data?.items ?? []}
+          loading={isLoading || tableConfig.loading}
           onAction={handleAction}
-          onBulkAction={handleBulkAction}
           pagination={{
-            page: pagination.page,
-            pageSize: pagination.pageSize,
-            total: pagination.total,
+            page: params.page,
+            pageSize: params.pageSize,
+            total: data?.pagination.totalItems ?? 0,
             onPageChange: handlePageChange,
             onPageSizeChange: handlePageSizeChange
           }}
-          className={styles.charactersTable}
-          externalConfig={tableConfig ? {
-            config: tableConfig,
-            loading: false,
-            error: null,
-            visibleColumns: tableConfig.columns.filter(col => {
-              if (col.alwaysVisible) return true;
-              return columnVisibility[col.key] ?? col.defaultVisible;
-            }),
-            getNestedValue,
-            resolveConditionalValue,
-            interpolateTemplate,
-            customRenderers
+          externalConfig={tableConfig.config ? {
+            config: tableConfig.config,
+            visibleColumns: visibleColumns,
+            getNestedValue: tableConfig.getNestedValue,
+            resolveConditionalValue: tableConfig.resolveConditionalValue
           } : undefined}
         />
 
-        {/* Character Review Panel */}
-        <CharacterReviewPanel
-          characterId={currentCharacterId || ''}
-          profile="character-list"
-          isOpen={reviewPanelOpen}
-          onClose={() => {
-            setReviewPanelOpen(false);
-            setCurrentCharacterId(null);
-          }}
-          loading={false}
-          error={error}
-        />
+        {activeSidePanel === 'edit' && currentCharacter && (
+          <SidePanel
+            isOpen={true}
+            config={{
+              title: `Modifica ${currentCharacter.fullName}`,
+              width: 'medium',
+              fields: [
+                { key: 'name', label: 'Nome', type: 'text', required: true, disabled: false },
+                { key: 'surname', label: 'Cognome', type: 'text', required: true, disabled: false },
+                { key: 'age', label: 'Età', type: 'number', required: true, disabled: false },
+                { key: 'status', label: 'Stato', type: 'select', required: true, disabled: false, options: [
+                  { value: 'pending', label: 'In Attesa' },
+                  { value: 'approved', label: 'Approvato' },
+                  { value: 'rejected', label: 'Rifiutato' },
+                  { value: 'active', label: 'Attivo' },
+                  { value: 'inactive', label: 'Inattivo' }
+                ]}
+              ],
+              actions: [
+                { key: 'save', label: 'Salva', type: 'primary', loading: false },
+                { key: 'cancel', label: 'Annulla', type: 'secondary', loading: false }
+              ]
+            }}
+            data={{
+              name: currentCharacter.name,
+              surname: currentCharacter.surname,
+              age: currentCharacter.age,
+              status: currentCharacter.status
+            }}
+            onAction={handleSidePanelAction}
+            onClose={() => {
+              setActiveSidePanel(null);
+              setCurrentCharacter(null);
+            }}
+          />
+        )}
+
+        {ConfirmDialogComponent}
       </div>
     </ManagementLayout>
   );
 }
-
-// Note: Authentication is now handled client-side via the ManagementLayout component
-// No server-side props needed since we use API-based auth checking

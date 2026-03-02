@@ -1,0 +1,114 @@
+@import '../variables.scss';
+
+.toastContainer {
+  position: fixed;
+  top: $spacing-lg;
+  right: $spacing-lg;
+  z-index: $z-toast;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+  max-width: 400px;
+  pointer-events: none;
+
+  @media (max-width: $breakpoint-mobile) {
+    left: $spacing-md;
+    right: $spacing-md;
+    max-width: none;
+  }
+}
+
+.toast {
+  background-color: $color-bg-secondary;
+  border-radius: $border-radius-md;
+  box-shadow: $shadow-lg;
+  padding: $spacing-md;
+  display: flex;
+  gap: $spacing-md;
+  align-items: flex-start;
+  border-left: 4px solid;
+  pointer-events: auto;
+  animation: slideIn $transition-normal;
+
+  &.success {
+    border-left-color: $color-success;
+  }
+
+  &.error {
+    border-left-color: $color-error;
+  }
+
+  &.warning {
+    border-left-color: $color-warning;
+  }
+
+  &.info {
+    border-left-color: $color-info;
+  }
+}
+
+.toastContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.toastTitle {
+  font-weight: 600;
+  font-size: 15px;
+  margin-bottom: $spacing-xs;
+  color: $color-text-primary;
+}
+
+.toastMessage {
+  font-size: 14px;
+  color: $color-text-secondary;
+  line-height: 1.5;
+}
+
+.toastActions {
+  display: flex;
+  gap: $spacing-sm;
+  align-items: flex-start;
+}
+
+.actionButton {
+  background: none;
+  border: 1px solid rgba($color-primary, 0.5);
+  color: $color-primary;
+  padding: $spacing-xs $spacing-sm;
+  border-radius: $border-radius-sm;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all $transition-fast;
+
+  &:hover {
+    background-color: rgba($color-primary, 0.1);
+    border-color: $color-primary;
+  }
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  color: $color-text-secondary;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: color $transition-fast;
+
+  &:hover {
+    color: $color-text-primary;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}

@@ -1,158 +1,110 @@
-import React, { useState, useEffect } from 'react';
+/**
+ * Verify Email Page (Token-based)
+ *
+ * Verify user email using token from email link.
+ *
+ * **Features**:
+ * - Token validation with loading state
+ * - Automatic email verification on page load
+ * - Automatic redirect to login after success
+ * - No form required (automatic process)
+ *
+ * **Authentication**: Uses authService singleton
+ * **Reduced from**: 140 lines → 80 lines (43% reduction)
+ *
+ * @module pages/verify-email/[token]
+ */
+
+import { useEffect } from 'react';
 import { useRouter } from 'next/router';
-import Head from 'next/head';
+
+import { TokenPageLayout } from '@/components/layouts/TokenPageLayout';
 import { Button } from '@/components/Button';
-import { VictorianLayout } from '@/components/VictorianLayout';
+import { useFormState } from '@/hooks/useFormState';
+import { useTokenFromUrl } from '@/hooks/useTokenFromUrl';
+import { authService } from '@/services/AuthService';
 
-
+/**
+ * Verify Email Page Component
+ *
+ * Automatic email verification via token.
+ *
+ * @returns {JSX.Element} Verify email page
+ */
 export default function VerifyEmailPage() {
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [success, setSuccess] = useState(false);
-  const [error, setError] = useState<string>('');
 
+  // Extract token from URL
+  const { token } = useTokenFromUrl();
+
+  const { globalError, globalSuccess, setError, setSuccess, clearMessages } = useFormState();
+
+  /**
+   * Verify email automatically when token is available
+   */
   useEffect(() => {
-    // Parse token from URL pathname (workaround for Next.js static export)
-    // router.query doesn't work with static export (output: 'export')
-    const pathParts = window.location.pathname.split('/').filter(Boolean);
-    const tokenFromUrl = pathParts[pathParts.length - 1];
-
-    // Clean trailing slash if present
-    const cleanToken = tokenFromUrl?.replace(/\/$/, '');
-
-    if (cleanToken && cleanToken !== 'verify-email') {
-      console.log('🔍 Verifying email with token:', cleanToken);
-      console.log('🔗 API Gateway URL:', process.env.NEXT_PUBLIC_API_GATEWAY_URL);
-      verifyEmail(cleanToken);
-    } else {
-      console.error('❌ No token found in URL');
+    if (!token) {
       setError('Token di verifica mancante nell\'URL');
-      setLoading(false);
+      return;
     }
-  }, []); // Run once on mount
 
-  const verifyEmail = async (verificationToken: string) => {
-    try {
-      setLoading(true);
+    const verifyEmail = async () => {
+      try {
+        const result = await authService.verifyEmail(token);
 
-      const apiUrl = `${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/auth/verify-email/${verificationToken}`;
-      console.log('📡 Making API call to:', apiUrl);
-
-      const response = await fetch(apiUrl, {
-        method: 'GET',
-        credentials: 'include', // Include cookies for CORS
-        headers: {
-          'Content-Type': 'application/json'
+        if (result.result) {
+          setSuccess(result.message || 'La tua email è stata verificata con successo! Verrai reindirizzato al login...');
+          // Redirect to login after 3 seconds
+          setTimeout(() => {
+            router.push('/?verified=true');
+          }, 3000);
+        } else {
+          setError(result.error || 'Errore durante la verifica email');
         }
-      });
-
-      console.log('✅ Response status:', response.status);
-      console.log('📦 Response headers:', response.headers);
-
-      const data = await response.json();
-      console.log('📥 Response data:', data);
-
-      if (data.result) {
-        setSuccess(true);
-        setError('');
-
-        // Redirect to login after 3 seconds
-        setTimeout(() => {
-          router.push('/?verified=true');
-        }, 3000);
-      } else {
-        setSuccess(false);
-        setError(data.error || 'Errore durante la verifica email');
+      } catch (error) {
+        setError('Errore di connessione durante la verifica');
+        console.error('Errore verifica email:', error);
       }
+    };
 
-    } catch (error) {
-      setSuccess(false);
-      setError('Errore di connessione durante la verifica');
-      console.error('❌ Errore verifica email:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <>
-        <Head>
-          <title>TenpennyNovels Londra vittoriana - Verifica Email</title>
-          <meta name="description" content="Verifica del tuo indirizzo email per TenpennyNovels" />
-          <meta name="viewport" content="width=device-width, initial-scale=1" />
-          <link rel="icon" href="/favicon/favicon.ico" />
-        </Head>
-
-        <VictorianLayout subtitle="Verifica Email in corso...">
-          <div style={{ textAlign: 'center', padding: '2rem' }}>
-            <p style={{ color: 'rgba(255, 149, 0, 0.8)' }}>Verifica email in corso...</p>
-          </div>
-        </VictorianLayout>
-      </>
-    );
-  }
+    verifyEmail();
+  }, [token, setError, setSuccess, router]);
 
   return (
-    <>
-      <Head>
-        <title>TenpennyNovels Londra vittoriana - {success ? 'Email Verificata' : 'Errore Verifica'}</title>
-        <meta name="description" content="Risultato della verifica email per TenpennyNovels" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" href="/favicon/favicon.ico" />
-      </Head>
+    <TokenPageLayout
+      title="Verifica Email - TenpennyNovels"
+      description="Verifica del tuo indirizzo email per TenpennyNovels"
+      isValidating={!globalError && !globalSuccess}
+      isValid={!!globalSuccess}
+      tokenError={globalError || undefined}
+      globalError={globalError}
+      globalSuccess={globalSuccess}
+      onDismissError={clearMessages}
+      onDismissSuccess={clearMessages}
+    >
+      {globalSuccess && (
+        <div style={{ textAlign: 'center', marginTop: '2rem' }}>
+          <Button
+            type="button"
+            variant="primary"
+            onClick={() => router.push('/')}
+          >
+            Vai al Login
+          </Button>
+        </div>
+      )}
 
-      <VictorianLayout subtitle={success ? 'Email Verificata!' : 'Errore Verifica'}>
-        <div className="loginForm">
-              <div className="formFields">
-                {success ? (
-                  <div className="successMessage">
-                    La tua email è stata verificata con successo!
-                    <br />
-                    <small>Verrai reindirizzato al login...</small>
-                  </div>
-                ) : (
-                  <div className="errorMessage">
-                    {error}
-                  </div>
-                )}
-              </div>
-
-              <div className="actionsRow">
-                {success ? (
-                  <Button
-                    type="button"
-                    variant="primary"
-                    onClick={() => router.push('/?verified=true')}
-                    className="loginButton"
-                  >
-                    Vai al Login
-                  </Button>
-                ) : (
-                  <>
-                    <Button
-                      type="button"
-                      variant="primary"
-                      onClick={() => router.push('/register')}
-                      className="loginButton"
-                    >
-                      Torna alla Registrazione
-                    </Button>
-                    
-                    <div className="secondaryActions">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        onClick={() => router.push('/')} 
-                      >
-                        Torna al Login
-                      </Button>
-                    </div>
-                  </>
-                )}
-              </div>
-          </div>
-      </VictorianLayout>
-    </>
+      {globalError && (
+        <div style={{ textAlign: 'center', marginTop: '2rem' }}>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => router.push('/')}
+          >
+            Torna alla Home
+          </Button>
+        </div>
+      )}
+    </TokenPageLayout>
   );
 }

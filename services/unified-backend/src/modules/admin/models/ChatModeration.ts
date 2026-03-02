@@ -1,0 +1,386 @@
+import mongoose, { Schema, Document, Types } from 'mongoose';
+import { db } from '@database/models';
+
+// Chat Moderation Action Interface
+export interface IChatModerationAction extends Document {
+  // Target message identification
+  messageId: Types.ObjectId;
+  messageType: 'location' | 'ongame' | 'offgame';
+  messageCollection: string; // Collection name for reference
+
+  // Action details
+  action: 'hide' | 'delete' | 'warn_sender' | 'ban_sender' | 'edit_content' | 'flag_inappropriate';
+  reason: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+
+  // Moderation context
+  moderatorId: Types.ObjectId; // Admin/Moderator character
+  moderatorUsername: string;
+  actionTakenAt: Date;
+
+  // Target user information
+  targetCharacterId: Types.ObjectId;
+  targetCharacterName: string;
+  targetUserId?: Types.ObjectId;
+
+  // Duration (for temporary actions)
+  duration?: number; // in minutes
+  expiresAt?: Date;
+
+  // Action results
+  isActive: boolean;
+  wasAppealed: boolean;
+  appealedAt?: Date;
+  appealReason?: string;
+  appealResolvedBy?: Types.ObjectId;
+  appealResolution?: 'upheld' | 'overturned' | 'modified';
+
+  // Original message content (for audit trail)
+  originalContent: string;
+  editedContent?: string;
+
+  // Context information
+  locationId?: Types.ObjectId; // For location messages
+  chatId?: Types.ObjectId; // For offgame messages
+
+  // Notes and follow-up
+  moderatorNotes?: string;
+  followUpRequired: boolean;
+  escalated: boolean;
+  escalatedTo?: Types.ObjectId;
+  
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const ChatModerationActionSchema = new Schema<IChatModerationAction>({
+  messageId: {
+    type: Schema.Types.ObjectId,
+    required: true,
+    index: true
+  },
+  messageType: {
+    type: String,
+    enum: ['location', 'ongame', 'offgame'],
+    required: true
+  },
+  messageCollection: {
+    type: String,
+    required: true
+  },
+  
+  action: {
+    type: String,
+    enum: ['hide', 'delete', 'warn_sender', 'ban_sender', 'edit_content', 'flag_inappropriate'],
+    required: true
+  },
+  reason: {
+    type: String,
+    required: true,
+    maxlength: 1000
+  },
+  severity: {
+    type: String,
+    enum: ['low', 'medium', 'high', 'critical'],
+    required: true
+  },
+  
+  moderatorId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Character',
+    required: true
+  },
+  moderatorUsername: {
+    type: String,
+    required: true
+  },
+  actionTakenAt: {
+    type: Date,
+    required: true,
+    default: Date.now
+  },
+  
+  targetCharacterId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Character',
+    required: true,
+    index: true
+  },
+  targetCharacterName: {
+    type: String,
+    required: true
+  },
+  targetUserId: {
+    type: Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  
+  duration: {
+    type: Number,
+    min: 1
+  },
+  expiresAt: {
+    type: Date
+  },
+  
+  isActive: {
+    type: Boolean,
+    default: true
+  },
+  wasAppealed: {
+    type: Boolean,
+    default: false
+  },
+  appealedAt: {
+    type: Date
+  },
+  appealReason: {
+    type: String,
+    maxlength: 1000
+  },
+  appealResolvedBy: {
+    type: Schema.Types.ObjectId,
+    ref: 'Character'
+  },
+  appealResolution: {
+    type: String,
+    enum: ['upheld', 'overturned', 'modified']
+  },
+  
+  originalContent: {
+    type: String,
+    required: true
+  },
+  editedContent: {
+    type: String
+  },
+  
+  locationId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Location'
+  },
+  chatId: {
+    type: Schema.Types.ObjectId
+  },
+  
+  moderatorNotes: {
+    type: String,
+    maxlength: 2000
+  },
+  followUpRequired: {
+    type: Boolean,
+    default: false
+  },
+  escalated: {
+    type: Boolean,
+    default: false
+  },
+  escalatedTo: {
+    type: Schema.Types.ObjectId,
+    ref: 'Character'
+  }
+}, {
+  timestamps: true,
+  collection: 'chat_moderation_actions'
+});
+
+// Indexes for performance
+ChatModerationActionSchema.index({ messageId: 1, messageType: 1 });
+ChatModerationActionSchema.index({ targetCharacterId: 1, actionTakenAt: -1 });
+ChatModerationActionSchema.index({ moderatorId: 1, actionTakenAt: -1 });
+ChatModerationActionSchema.index({ isActive: 1, severity: 1 });
+ChatModerationActionSchema.index({ messageType: 1, createdAt: -1 });
+
+// User Report Interface
+export interface IUserReport extends Document {
+  // Report identification
+  reportId: string; // Unique report ID
+  messageId: Types.ObjectId;
+  messageType: 'location' | 'ongame' | 'offgame';
+  messageCollection: string;
+
+  // Reporter information
+  reporterId: Types.ObjectId; // Character ID
+  reporterName: string;
+  reporterUserId: Types.ObjectId; // User ID
+
+  // Reported user information
+  reportedCharacterId: Types.ObjectId;
+  reportedCharacterName: string;
+  reportedUserId?: Types.ObjectId;
+  
+  // Report details
+  category: 'harassment' | 'spam' | 'inappropriate_content' | 'cheating' | 'other';
+  reason: string; // Detailed explanation
+  severity: 'low' | 'medium' | 'high' | 'urgent';
+  
+  // Message context
+  messageContent: string; // Copy of the reported message
+  messageTimestamp: Date;
+  locationId?: Types.ObjectId; // For location messages
+  chatId?: Types.ObjectId; // For offgame messages
+
+  // Report status
+  status: 'pending' | 'investigating' | 'resolved' | 'dismissed';
+  assignedTo?: Types.ObjectId; // Admin/Moderator ID
+  assignedUsername?: string;
+
+  // Processing information
+  actionTaken?: Types.ObjectId; // Reference to ChatModerationAction
+  
+  // Priority scoring
+  priorityScore: number; // 1-10, calculated based on severity, reporter history, etc.
+  isUrgent: boolean;
+  
+  // Follow-up
+  adminNotes?: string;
+  resolution?: string;
+  resolvedAt?: Date;
+  resolvedBy?: Schema.Types.ObjectId;
+  
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const UserReportSchema = new Schema<IUserReport>({
+  reportId: {
+    type: String,
+    required: true,
+    unique: true,
+    index: true
+  },
+  messageId: {
+    type: Schema.Types.ObjectId,
+    required: true,
+    index: true
+  },
+  messageType: {
+    type: String,
+    enum: ['location', 'ongame', 'offgame'],
+    required: true
+  },
+  messageCollection: {
+    type: String,
+    required: true
+  },
+  
+  reporterId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Character',
+    required: true
+  },
+  reporterName: {
+    type: String,
+    required: true
+  },
+  reporterUserId: {
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  
+  reportedCharacterId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Character',
+    required: true
+  },
+  reportedCharacterName: {
+    type: String,
+    required: true
+  },
+  reportedUserId: {
+    type: Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  
+  category: {
+    type: String,
+    enum: ['harassment', 'spam', 'inappropriate_content', 'cheating', 'other'],
+    required: true
+  },
+  reason: {
+    type: String,
+    required: true,
+    maxlength: 2000
+  },
+  severity: {
+    type: String,
+    enum: ['low', 'medium', 'high', 'urgent'],
+    required: true
+  },
+  
+  messageContent: {
+    type: String,
+    required: true
+  },
+  messageTimestamp: {
+    type: Date,
+    required: true
+  },
+  locationId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Location'
+  },
+  chatId: {
+    type: Schema.Types.ObjectId
+  },
+  
+  status: {
+    type: String,
+    enum: ['pending', 'investigating', 'resolved', 'dismissed'],
+    default: 'pending'
+  },
+  assignedTo: {
+    type: Schema.Types.ObjectId,
+    ref: 'Character'
+  },
+  assignedUsername: {
+    type: String
+  },
+  
+  actionTaken: {
+    type: Schema.Types.ObjectId,
+    ref: 'ChatModerationAction'
+  },
+  
+  priorityScore: {
+    type: Number,
+    min: 1,
+    max: 10,
+    default: 5
+  },
+  isUrgent: {
+    type: Boolean,
+    default: false
+  },
+  
+  adminNotes: {
+    type: String,
+    maxlength: 2000
+  },
+  resolution: {
+    type: String,
+    maxlength: 1000
+  },
+  resolvedAt: {
+    type: Date
+  },
+  resolvedBy: {
+    type: Schema.Types.ObjectId,
+    ref: 'Character'
+  }
+}, {
+  timestamps: true,
+  collection: 'user_reports'
+});
+
+// Indexes for performance
+UserReportSchema.index({ status: 1, priorityScore: -1 });
+UserReportSchema.index({ reportedCharacterId: 1, createdAt: -1 });
+UserReportSchema.index({ reporterId: 1, createdAt: -1 });
+UserReportSchema.index({ assignedTo: 1, status: 1 });
+UserReportSchema.index({ category: 1, severity: 1 });
+
+// Export models (check if already compiled to avoid OverwriteModelError)
+export const ChatModerationAction = mongoose.models.ChatModerationAction || mongoose.model<IChatModerationAction>('ChatModerationAction', ChatModerationActionSchema);
+export const UserReport = mongoose.models.UserReport || mongoose.model<IUserReport>('UserReport', UserReportSchema);

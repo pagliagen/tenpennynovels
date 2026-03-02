@@ -1,7 +1,9 @@
 {
   "name": "@tenpennynovels/embeddings-worker",
   "version": "1.0.0",
-  "description": "Async embedding generation worker for TenpennyNovels",
+  "description": "TenpennyNovels - Embeddings Worker",
+  "author": "Gennaro Paglia",
+  "license": "MIT",
   "private": true,
   "main": "dist/index.js",
   "scripts": {
@@ -11,15 +13,19 @@
     "watch": "tsx watch src/index.ts"
   },
   "dependencies": {
-    "dotenv": "^17.2.1",
-    "mongoose": "^8.0.0",
-    "redis": "^4.6.0",
-    "uuid": "^11.0.4"
+    "@qdrant/js-client-rest": "^1.17.0",
+    "@types/bull": "^4.10.4",
+    "bull": "^4.16.5",
+    "dotenv": "^17.2.3",
+    "mongoose": "^9.1.6",
+    "redis": "^5.10.0",
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
-    "@types/node": "^24.1.0",
-    "@types/uuid": "^10.0.0",
-    "tsx": "^4.0.0",
-    "typescript": "^5.8.3"
+    "@types/node": "^25.2.0",
+    "@types/uuid": "^11.0.0",
+    "esbuild": "^0.27.2",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
   }
 }

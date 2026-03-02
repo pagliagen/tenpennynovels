@@ -1,28 +1,37 @@
-@use "../../../../shared-ui/src/styles/variables/colors" as *;
-@use "../../../../shared-ui/src/styles/variables/typography" as *;
-@use "../../../../shared-ui/src/styles/variables/spacing" as *;
-@use "../../../../shared-ui/src/styles/variables/borders" as *;
+/**
+ * Top Bar Styles
+ *
+ * Victorian-themed navigation bar with circular buttons and location display.
+ * Uses Victorian color palette and decorative images.
+ *
+ * @module styles/components/TopBar
+ * @since 2.0.0
+ */
+
+@use 'sass:color';
 
 .topBar {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   width: 100%;
-  height: 60px;
-  background: $bg-sidebar;
-  border-bottom: 2px solid rgba($text-orange, 0.3);
+  height: 130px;
+  border-bottom: 2px solid #ff6b3566;  // Black border
   position: relative;
   z-index: 100;
 }
 
+/* ========================================
+   LEFT & RIGHT DECORATIONS
+   ======================================== */
+
 .topBarLeft,
 .topBarRight {
   flex: 0 0 auto;
-  height: 100%;
+  height: 60px;
   display: flex;
   align-items: center;
-  gap: $spacing-sm;
-  padding: 0 $spacing-md;
+  gap: var(--spacing-sm);
 }
 
 .decorationLeft,
@@ -31,118 +40,250 @@
   object-fit: contain;
 }
 
+/* ========================================
+   MAIN CONTENT CONTAINER
+   ======================================== */
+
 .topBarContent {
   flex: 1;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  padding: 0 $spacing-md;
-  gap: $spacing-md;
+  position: relative;
+
+  // Black bars on sides
+  &::after,
+  &::before {
+    content: '';
+    position: absolute;
+    width: 10px;
+    height: 128px;
+    top: 0;
+    background: black;
+  }
+
+  &::after {
+    right: 0;
+  }
 }
+
+/* ========================================
+   ICON CONTAINERS (Left & Right)
+   ======================================== */
 
 .iconsContainerLeft,
 .iconsContainerRight {
   display: flex;
-  align-items: center;
-  gap: $spacing-sm;
-  flex: 0 0 auto;
-}
+  justify-content: space-around;
+  gap: var(--spacing-sm);
+  flex: 1 1 auto;
+  padding-left: 10px;
+  padding-right: 10px;
+  height: 60px;
+  background: black;
 
-.locationDisplay {
-  flex: 0 0 auto;
-  margin: 0 $spacing-lg; // Spazio tra i due gruppi di icone
-}
-
-.logoutButton {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: $bg-sidebar;
-  border: none;
-  border-top: 2px solid $text-orange;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  transition: all 0.2s ease;
-  flex: 0 0 auto;
-  
-  &:hover {
-    background: rgba($text-orange, 0.1);
-    border-top-color: $text-orange;
-    transform: translateY(-2px);
+  button, a[href] {
+    margin-top: 20px;
+    background-color: inherit;
+    z-index: 1;
   }
-  
+}
+
+.iconButton {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-primary);
+  border-top: 2px solid var(--color-text-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+
+  &:hover {
+    transform: scale(1.5);
+  }
+
   &:active {
     transform: translateY(0);
   }
 }
 
-.iconButton {
+.iconImage {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.notificationBadge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: var(--color-error);
+  color: white;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  border: 2px solid white;
+  z-index: 10;
+}
+
+/* ========================================
+   LOCATION DISPLAY (Center)
+   ======================================== */
+
+.locationDisplay {
+  width: 300px;
+  height: 150px;
+  overflow: hidden;
+  box-sizing: border-box;
+  position: relative;
+
+  // Black bar on top
+  &::before {
+    position: absolute;
+    top: 0;
+    height: 60px;
+    content: '';
+    width: 100%;
+    background-color: black;
+  }
+}
+
+.semicerchio {
+  width: 300px;
+  height: 300px;
+  box-sizing: border-box;
+  background: black;
+  border-radius: 300px;
+  border: 1px solid var(--color-accent);
+  position: relative;
+  top: -150px;
+  overflow: hidden;
+  transition: border-color 0.2s ease;
+
+  &:hover {
+    border-color: color.adjust(#b8860b, $lightness: 10%);
+  }
+}
+
+.locationImage {
+  position: absolute;
+  bottom: 5px;
+  left: 5px;
+  width: calc(100% - 10px);
+  height: calc(50% - 5px);
+  object-fit: cover;
+  max-height: 145px;
+  z-index: 0;
+  filter: contrast(0.5);
+}
+
+.locationName {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  text-align: center;
+  color: var(--color-text-primary);
+  text-shadow: rgb(255, 255, 255) 0 0 5px;
+  font-size: 24px;
+  font-weight: bold;
+  font-family: 'Playfair Display', serif;
+  padding: 8px 16px;
+  z-index: 1;
+}
+
+.locationActions {
+  position: absolute;
+  top: calc(50% + 35px);
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  z-index: 1;
+}
+
+.locationChatLink,
+.locationLeaveLink {
+  background: none;
+  border: none;
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: 400;
+  cursor: pointer;
+  padding: 0;
+  text-align: center;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+
+  &:hover {
+    color: color.adjust(#8b4513, $lightness: 10%);
+    text-decoration: underline;
+  }
+
+  &:active {
+    color: color.adjust(#8b4513, $lightness: -10%);
+  }
+}
+
+.locationLeaveLink {
+  font-size: 11px;
+  opacity: 0.9;
+}
+
+/* ========================================
+   UTILITY BUTTONS (Admin, Utility, Logout)
+   ======================================== */
+
+.adminButton,
+.utilityButton,
+.logoutButton {
+  position: relative;
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: $bg-sidebar;
+  background: var(--color-bg-secondary);
   border: none;
-  border-top: 2px solid $text-orange;
+  border-top: 2px solid var(--color-accent);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0;
   transition: all 0.2s ease;
-  position: relative;
-  
-  &:hover:not(:disabled) {
-    background: rgba($text-orange, 0.1);
-    border-top-color: $text-orange;
-    transform: translateY(-2px);
+
+  &:hover {
+    border-top-color: color.adjust(#b8860b, $lightness: 10%);
+    transform: scale(1.05);
   }
-  
-  &:active:not(:disabled) {
-    transform: translateY(0);
-  }
-  
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+
+  &:active {
+    transform: scale(0.95);
   }
 }
 
-.iconImage {
-  width: 24px;
-  height: 24px;
-  object-fit: contain;
+.adminButton {
+  border-top-color: var(--color-warning);
+
+  &:hover {
+    border-top-color: color.adjust(#8b6914, $lightness: 10%);
+  }
 }
 
-.notificationBadge {
-  position: absolute;
-  top: -8px;
-  right: -8px;
-  background: $error-text;
-  color: $bg-primary;
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 10px;
-  font-weight: bold;
-  border: 2px solid $bg-sidebar;
-  z-index: 10;
-}
+.logoutButton {
+  border-top-color: var(--color-error);
 
-.locationDisplay {
-  font-family: $font-mysteres;
-  color: $accent-red;
-  font-size: $font-size-lg;
-  border: 2px solid $accent-red;
-  padding: $spacing-xs $spacing-md;
-  border-radius: $radius-md;
-  background: rgba($accent-red, 0.1);
-  text-shadow: 0 0 5px rgba($accent-red, 0.5);
-  white-space: nowrap;
+  &:hover {
+    border-top-color: color.adjust(#8b1a1a, $lightness: 10%);
+  }
 }
-

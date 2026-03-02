@@ -1,0 +1,92 @@
+/**
+ * Typography Base Styles
+ *
+ * Global typography styles for headings, paragraphs, and text elements.
+ * Victorian-inspired typography with IM Fell English font.
+ */
+
+/**
+ * Headings
+ */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-primary);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-md);
+}
+
+h1 {
+  font-size: var(--font-size-4xl);
+  letter-spacing: var(--letter-spacing-tight);
+}
+
+h2 {
+  font-size: var(--font-size-3xl);
+}
+
+h3 {
+  font-size: var(--font-size-2xl);
+}
+
+h4 {
+  font-size: var(--font-size-xl);
+}
+
+h5 {
+  font-size: var(--font-size-lg);
+}
+
+h6 {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+}
+
+/**
+ * Paragraphs
+ */
+p {
+  margin-bottom: var(--spacing-md);
+  line-height: var(--line-height-normal);
+}
+
+/**
+ * Strong/Bold
+ */
+strong,
+b {
+  font-weight: var(--font-weight-bold);
+}
+
+/**
+ * Emphasis/Italic
+ */
+em,
+i {
+  font-style: italic;
+}
+
+/**
+ * Small text
+ */
+small {
+  font-size: var(--font-size-sm);
+}
+
+/**
+ * Code/Monospace
+ */
+code,
+kbd,
+samp {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  padding: 0.2em 0.4em;
+  background: var(--color-bg-secondary);
+  border-radius: 3px;
+}

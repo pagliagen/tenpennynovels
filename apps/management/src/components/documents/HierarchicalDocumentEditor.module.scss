@@ -1,0 +1,265 @@
+@use 'sass:color';
+@import '../../styles/variables.scss';
+
+.hierarchicalEditor {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-2xl;
+  color: $color-text-secondary;
+}
+
+.warning {
+  padding: $spacing-md;
+  background-color: rgba($color-warning, 0.1);
+  border: 1px solid $color-warning;
+  border-radius: $border-radius-md;
+  color: $color-warning;
+  font-size: 14px;
+}
+
+.infoHeader {
+  padding: $spacing-md;
+  background-color: rgba($color-primary, 0.05);
+  border: 1px solid rgba($color-primary, 0.2);
+  border-radius: $border-radius-md;
+  color: $color-text-secondary;
+  font-size: 14px;
+
+  strong {
+    color: $color-primary;
+  }
+
+  .dragHint {
+    margin-top: $spacing-xs;
+    font-size: 14px;
+    opacity: 0.8;
+  }
+}
+
+// Accordion styles
+.accordion {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.accordionItem {
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: $border-radius-md;
+  overflow: visible;
+  transition: all $transition-fast;
+
+  &.modified {
+    border-color: $color-primary;
+    box-shadow: 0 0 0 1px rgba($color-primary, 0.2);
+  }
+
+  &.root {
+    border-color: rgba($color-primary, 0.3);
+    background-color: rgba($color-primary, 0.02);
+  }
+
+  &.dragging {
+    opacity: 0.5;
+    cursor: grabbing;
+  }
+
+  &.dropTarget {
+    border-color: $color-primary;
+    box-shadow: 0 0 8px rgba($color-primary, 0.4);
+    background-color: rgba($color-primary, 0.05);
+  }
+}
+
+.dragOverlay {
+  cursor: grabbing;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+  transform: rotate(2deg);
+  z-index: 9999;
+}
+
+.accordionHeaderWrapper {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.dragHandle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-xs $spacing-sm;
+  color: $color-text-secondary;
+  font-size: 12px;
+  cursor: grab;
+  user-select: none;
+  transition: all $transition-fast;
+
+  &:hover {
+    color: $color-primary;
+  }
+
+  &:active {
+    cursor: grabbing;
+  }
+}
+
+.dropIndicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: $spacing-xs $spacing-md;
+  background-color: rgba($color-primary, 0.15);
+  border-top: 2px dashed $color-primary;
+  color: $color-primary;
+  font-size: 14px;
+  font-weight: 600;
+  z-index: 10;
+  animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.dropZone {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+.accordionHeader {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  padding: $spacing-md;
+  background-color: rgba(255, 255, 255, 0.02);
+  border: none;
+  color: $color-text-primary;
+  cursor: pointer;
+  transition: all $transition-fast;
+  text-align: left;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+
+  .icon {
+    font-size: 13px;
+    color: $color-text-secondary;
+    transition: transform $transition-fast;
+  }
+
+  .title {
+    flex: 1;
+    font-weight: 600;
+    font-size: 16px;
+  }
+
+  .badge {
+    padding: $spacing-xs $spacing-sm;
+    background-color: $color-primary;
+    color: white;
+    border-radius: $border-radius-sm;
+    font-size: 12px;
+    font-weight: 600;
+  }
+}
+
+.accordionContent {
+  padding: $spacing-lg;
+  background-color: $color-bg-primary;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.titleSection {
+  label {
+    display: block;
+    margin-bottom: $spacing-sm;
+    font-weight: 600;
+    color: $color-text-primary;
+    font-size: 14px;
+  }
+
+  .titleInput {
+    width: 100%;
+    padding: $spacing-sm $spacing-md;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: $border-radius-md;
+    background-color: rgba(255, 255, 255, 0.05);
+    color: $color-text-primary;
+    font-size: 16px;
+
+    &:focus {
+      outline: none;
+      border-color: $color-primary;
+    }
+  }
+}
+
+// Footer styles
+.modifiedBadge {
+  margin-right: auto;
+  padding: $spacing-xs $spacing-sm;
+  background-color: rgba($color-primary, 0.1);
+  color: $color-primary;
+  border-radius: $border-radius-sm;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.cancelButton,
+.saveButton {
+  padding: $spacing-sm $spacing-lg;
+  border-radius: $border-radius-md;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all $transition-fast;
+}
+
+.cancelButton {
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: $color-text-secondary;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: $color-text-primary;
+  }
+}
+
+.saveButton {
+  background-color: $color-primary;
+  border: 1px solid $color-primary;
+  color: white;
+
+  &:hover:not(:disabled) {
+    background-color: color.scale($color-primary, $lightness: -10%);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}

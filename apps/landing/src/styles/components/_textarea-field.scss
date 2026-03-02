@@ -1,0 +1,88 @@
+/**
+ * TextArea Field Component Styles
+ *
+ * Multi-line text input with character counter.
+ */
+
+@use '../mixins/forms' as *;
+
+.textarea-field {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: var(--spacing-form-field);
+
+  /**
+   * Label
+   */
+  &__label {
+    @include form-label;
+  }
+
+  /**
+   * Required indicator
+   */
+  &__required {
+    color: var(--color-error);
+    margin-left: var(--spacing-xs);
+  }
+
+  /**
+   * Wrapper
+   */
+  &__wrapper {
+    position: relative;
+
+    &--error &__textarea {
+      @include form-field-error;
+    }
+
+    &--disabled &__textarea {
+      @include form-field-disabled;
+    }
+  }
+
+  /**
+   * Textarea element
+   */
+  &__textarea {
+    @include form-field-base;
+    resize: vertical;
+    min-height: 100px;
+
+    &--error {
+      @include form-field-error;
+    }
+  }
+
+  /**
+   * Footer (counter + error)
+   */
+  &__footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-xs);
+  }
+
+  /**
+   * Character counter
+   */
+  &__counter {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-tertiary);
+
+    &--exceeded {
+      color: var(--color-error);
+      font-weight: var(--font-weight-semibold);
+    }
+  }
+
+  /**
+   * Error message
+   */
+  &__error {
+    font-size: var(--font-size-sm);
+    color: var(--color-error);
+  }
+}

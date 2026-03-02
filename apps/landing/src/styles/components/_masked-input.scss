@@ -1,0 +1,20 @@
+/**
+ * Masked Input Component Styles
+ *
+ * Victorian decorative masked input fields.
+ * Uses @include masked-field mixin from mixins/_forms.scss
+ */
+
+@use '../mixins/forms' as *;
+
+/**
+ * Apply masked field mixin
+ */
+@include masked-field;
+
+/**
+ * Additional masked input wrapper styles
+ */
+.masked-field-wrapper {
+  margin-bottom: unset;
+}

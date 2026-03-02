@@ -1,0 +1,16 @@
+{
+  "name": "@tenpennynovels/database",
+  "version": "1.0.0",
+  "description": "TenpennyNovels - Database Models & Schemas",
+  "author": "Gennaro Paglia",
+  "license": "MIT",
+  "main": "models/index.ts",
+  "dependencies": {
+    "mongoose": "^9.1.6"
+  },
+  "devDependencies": {
+    "@types/node": "^25.2.0",
+    "typescript": "^5.9.3"
+  }
+}
+

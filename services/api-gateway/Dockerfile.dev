@@ -1,0 +1,22 @@
+FROM node:22-alpine
+
+# Install global tools for development
+RUN npm install -g tsx nodemon
+
+# Set working directory
+WORKDIR /app
+
+# Copy package.json for dependency installation
+COPY services/api-gateway/package*.json ./services/api-gateway/
+
+# Install ALL dependencies (including dev dependencies for tsx)
+RUN cd services/api-gateway && npm install
+
+# Set working directory to service
+WORKDIR /app/services/api-gateway
+
+# Expose port
+EXPOSE 8000
+
+# Start with tsx watch for hot-reload
+CMD ["tsx", "watch", "src/index.ts"]

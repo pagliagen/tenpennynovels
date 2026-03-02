@@ -1,0 +1,163 @@
+@use '../variables' as *;
+
+.page {
+  width: 100%;
+}
+
+.pageHeader {
+  margin-bottom: $spacing-3xl;
+  text-align: center;
+  padding-bottom: $spacing-xl;
+  border-bottom: 3px double $color-gold;
+}
+
+.pageTitle {
+  font-family: $font-title;
+  font-size: $font-size-4xl;
+  font-weight: $font-weight-bold;
+  color: $color-ink;
+  margin: 0 0 $spacing-md 0;
+  letter-spacing: $letter-spacing-wide;
+
+  @include mobile {
+    font-size: $font-size-3xl;
+  }
+}
+
+.pageDescription {
+  font-size: $font-size-md;
+  color: $color-text-secondary;
+  line-height: $line-height-relaxed;
+  max-width: 700px;
+  margin: 0 auto;
+
+  @include mobile {
+    font-size: $font-size-base;
+  }
+}
+
+.emptyState {
+  padding: $spacing-4xl;
+  text-align: center;
+  color: $color-text-muted;
+  font-style: italic;
+  background-color: rgba(40, 30, 20, 0.02);
+  border: 2px dashed $color-border-secondary;
+  border-radius: $radius-lg;
+}
+
+.groups {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3xl;
+}
+
+.group {
+  &:not(:last-child) {
+    padding-bottom: $spacing-2xl;
+    border-bottom: 2px solid $color-border-primary;
+  }
+}
+
+.groupTitle {
+  font-family: $font-title;
+  font-size: $font-size-2xl;
+  font-weight: $font-weight-bold;
+  color: $color-ink;
+  margin: 0 0 $spacing-lg 0;
+  letter-spacing: $letter-spacing-wide;
+
+  &::before {
+    content: '❦';
+    color: $color-gold;
+    margin-right: $spacing-sm;
+  }
+
+  @include mobile {
+    font-size: $font-size-xl;
+  }
+}
+
+.documentGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: $spacing-lg;
+
+  @include mobile {
+    grid-template-columns: 1fr;
+  }
+}
+
+.documentCard {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+  padding: $spacing-lg;
+  background-color: rgba(255, 253, 208, 0.3);
+  border: 2px solid $color-border-primary;
+  border-radius: $radius-lg;
+  text-decoration: none;
+  transition: $transition-all;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background-color: $color-gold;
+    transform: scaleY(0);
+    transform-origin: bottom;
+    transition: transform $transition-speed-normal $transition-easing-default;
+  }
+
+  &:hover {
+    border-color: $color-gold;
+    box-shadow: $shadow-lg;
+    transform: translateY(-2px);
+
+    &::before {
+      transform: scaleY(1);
+      transform-origin: top;
+    }
+
+    .documentTitle {
+      color: $color-gold;
+    }
+  }
+}
+
+.documentTitle {
+  font-family: $font-title;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-ink;
+  margin: 0;
+  letter-spacing: $letter-spacing-wide;
+  transition: $transition-colors;
+}
+
+.documentDescription {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  line-height: $line-height-relaxed;
+  margin: 0;
+  flex: 1;
+}
+
+.privateBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-xs;
+  align-self: flex-start;
+  padding: $spacing-xs $spacing-sm;
+  font-size: $font-size-xs;
+  color: $color-text-muted;
+  background-color: rgba(40, 30, 20, 0.05);
+  border: 1px solid $color-border-secondary;
+  border-radius: $radius-sm;
+  margin-top: $spacing-xs;
+}

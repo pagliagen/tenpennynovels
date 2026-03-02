@@ -1,468 +1,246 @@
-@use "../../../../shared-ui/src/styles/variables/colors" as *;
-@use "../../../../shared-ui/src/styles/variables/typography" as *;
-@use "../../../../shared-ui/src/styles/variables/spacing" as *;
-@use "../../../../shared-ui/src/styles/variables/breakpoints" as *;
-@use "../../../../shared-ui/src/styles/variables/shadows" as *;
-@use "../../../../shared-ui/src/styles/variables/borders" as *;
-// Game Layout Component Styles
-// Victorian London RPG Theme - Dark Atmospheric Design
+/**
+ * Game Layout Styles
+ *
+ * Victorian-themed layout with sidebar and main content.
+ * Uses background images for sidebar clock design.
+ *
+ * @module styles/components/GameLayout
+ * @since 2.0.0
+ */
+
+/* ========================================
+   GAME CONTAINER - Root
+   ======================================== */
 
 .gameContainer {
   min-height: 100vh;
   display: flex;
-  flex-direction: row; // Horizontal layout: sidebar | mainContent
-  background: $bg-primary;
-  color: $text-primary;
+  flex-direction: row; // Sidebar | Main Content
+  color: var(--color-text-primary);
   overflow: hidden;
 }
 
-// Container for topbar and right container
+/* ========================================
+   SIDEBAR - Left side with clock design
+   ======================================== */
+
+.sidebar {
+  flex: 0 0 250px; // Fixed width
+  overflow-y: auto;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  width: 250px;
+  margin-right: 5px;
+}
+
+/* Clock Upper Section */
+.clockUpper {
+  position: relative;
+  flex: 0 0 auto;
+  width: 100%;
+  background-image: url('/images/sidebar/clock_upper.png');
+  background-size: 100% auto;
+  background-repeat: no-repeat;
+  background-position: top center;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding-bottom: 95%; // Maintain aspect ratio
+}
+
+.dateSection,
+.profileSection,
+.moonWeatherSection {
+  width: 135px;
+  box-sizing: border-box;
+}
+
+.dateSection {
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 5%;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.profileSection {
+  position: absolute;
+  top: 15%;
+  display: flex;
+  justify-content: center;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.moonWeatherSection {
+  position: absolute;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding-bottom: 2%;
+}
+
+/* Clock Middle Section */
+.clockMiddle {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  background-image: url('/images/sidebar/clock_pattern.png');
+  background-size: 100% auto;
+  background-repeat: repeat-y;
+  background-position: top center;
+  padding-top: 5%;
+}
+
+.headerClockMiddle {
+  position: absolute;
+  width: 100%;
+  top: 0;
+  left: 0;
+  z-index: 0;
+}
+
+.clockPattern {
+  width: 100%;
+  height: auto;
+}
+
+.charactersSection {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  padding-left: 10%;
+  padding-right: 10%;
+  padding-top: 15%;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+/* Clock Base Section */
+.clockBase {
+  position: relative;
+  flex: 0 0 auto;
+  width: 100%;
+  background-image: url('/images/sidebar/clock_base.png');
+  background-size: 100% auto;
+  background-repeat: no-repeat;
+  background-position: bottom center;
+  padding-bottom: 82.078%; // Maintain aspect ratio (316/385)
+}
+
+.footerText {
+  position: absolute;
+  bottom: 30%;
+  left: 0;
+  right: 0;
+  font-family: 'Playfair Display', serif;
+  color: var(--color-error);
+  font-size: 16px;
+  text-shadow: 0 0 5px rgba(139, 26, 26, 0.5);
+  text-align: center;
+  z-index: 1;
+}
+
+.offGameChatButton {
+  position: absolute;
+  top: 12%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #8b1a1a 0%, #5a0f0f 100%);
+  color: #d4af37;
+  border: 1px solid #d4af37;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 14.4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  z-index: 2;
+  white-space: nowrap;
+
+  &:hover {
+    background: linear-gradient(135deg, #a52020 0%, #6f1414 100%);
+    border-color: #e4bf47;
+    transform: translateX(-50%) translateY(-2px);
+    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+  }
+
+  &:active {
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+/* ========================================
+   MAIN CONTENT - Right side
+   ======================================== */
+
 .mainContent {
   display: flex;
-  flex-direction: column; // Vertical layout: topbar | rightContainer
+  flex-direction: column; // TopBar | Body
   flex: 1;
   min-height: 0;
+  height: 100vh;
   overflow: hidden;
 }
 
-// Sidebar styles - Full Height
-.sidebar {
-  flex: 0 0 15%; // Fixed width based on clock images (385px)
-  overflow-y: auto;
-  height: 100vh; // Full viewport height
-  background: $bg-sidebar;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  min-width: 200px;
-  max-width: 385px;
-  
-  @media (max-width: $breakpoint-md) {
-    flex: 0 0 300px; // Narrower on mobile
-  }
-  
-  // Clock Upper Section
-  .clockUpper {
-    position: relative;
-    flex: 0 0 auto;
-    width: 100%;
-    background-image: url('/images/sidebar/clock_upper.png');
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: top center;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    
-    .dateSection,
-    .profileSection,
-    .moonWeatherSection {
-      width: 100%;
-    }
-  }
-  
-  .dateSection {
-    position: absolute;
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    padding-top: 5.05%;
-    flex: 0;
-  }
-
-  .profileSection {
-    position: absolute;
-    top: 5%; 
-    display: flex;
-    justify-content: center;
-    flex: 1;
-  }
-
-  .moonWeatherSection {
-    position: absolute;
-    bottom: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: $spacing-md;
-    flex: 0;
-  }
-  
-  .moonImage {
-    width: 25px;
-    height: 31px;
-    object-fit: contain;
-    image-rendering: -webkit-optimize-contrast;
-    image-rendering: crisp-edges;
-  }
-  
-  .weatherGroup {
-    display: flex;
-    align-items: center;
-    gap: $spacing-xs;
-  }
-  
-  .weatherIcon {
-    width: 56px;
-    height: 32px;
-    object-fit: contain;
-    image-rendering: -webkit-optimize-contrast;
-    image-rendering: crisp-edges;
-  }
-  
-  .temperature {
-    font-family: $font-thrifted;
-    font-size: $font-size-lg;
-    color: $text-orange;
-    font-weight: 600;
-    text-shadow: 0 0 5px rgba($text-orange, 0.5);
-    line-height: 1;
-    margin-left: 2px;
-  }
-  
-  // Clock Middle Section
-  .clockMiddle {
-    position: relative;
-    flex: 1;
-    width: 100%;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    background-image: 
-      url('/images/sidebar/clock_pattern.png'),
-      url('/images/sidebar/clock_middle.png');
-    background-size: 
-      contain,
-      contain;
-    background-repeat: 
-      repeat-y,
-      no-repeat;
-    background-position: 
-      top center,
-      top center;
-    
-    .charactersSection {
-      position: relative;
-      z-index: 1;
-      padding: $spacing-md;
-      overflow-y: auto;
-      flex: 1;
-      min-height: 0;
-    }
-  }
-
-  // Clock Base Section
-  .clockBase {
-    position: relative;
-    flex: 0 0 auto;
-    width: 100%;
-    background-image: url('/images/sidebar/clock_base.png');
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: bottom center;
-    // Padding-bottom percentuale per mantenere proporzioni (316/385 = 82.078%)
-    padding-bottom: 82.078%;
-    
-    .footerText {
-      position: absolute;
-      bottom: $spacing-md;
-      left: 0;
-      right: 0;
-      font-family: $font-mysteres;
-      color: $accent-red;
-      font-size: $font-size-base;
-      text-shadow: 0 0 5px rgba($accent-red, 0.5);
-      text-align: center;
-      z-index: 1;
-    }
-  }
-}
-
-// Right container - Header + Body stacked vertically
-.rightContainer {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  height: calc(100vh - 60px); // Full viewport height minus topbar
-  min-height: 0; // Allow flex items to shrink
-  background: $bg-secondary;
-  overflow-y: auto;
-}
-
-// Header styles - Inside right container
-.header {
-  flex: 0 0 auto;
-  height: 80px; // Fixed header height
-  background: $bg-tertiary;
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid $border-secondary;
-  z-index: 100;
-  
-  .headerContent {
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 $spacing-lg;
-    max-width: 100%;
-    gap: $spacing-lg;
-  }
-  
-  .headerLeft {
-    flex-shrink: 0;
-  }
-  
-  .description {
-    margin: $spacing-xs 0 0 0;
-    color: $text-secondary;
-    font-size: 0.9rem;
-    font-style: italic;
-  }
-  
-  .headerRight {
-    display: flex;
-    align-items: center;
-    gap: $spacing-lg;
-  }
-  
-  .gameTitle {
-    font-family: $font-secondary;
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: $gold-primary;
-    margin: 0;
-    text-shadow: $text-shadow;
-    
-    @media (max-width: $breakpoint-md) {
-      font-size: 1.25rem;
-    }
-  }
-  
-  .headerActions {
-    display: flex;
-    align-items: center;
-    gap: $spacing-md;
-    flex: 1;
-    justify-content: center;
-  }
-
-  .buttonGroup {
-    display: flex;
-    align-items: center;
-    gap: $spacing-sm;
-  }
-
-  .mapButton {
-    margin: 0 $spacing-lg; // Spazio extra attorno al bottone MAPPA centrale
-    font-size: 1rem; // Leggermente più grande per evidenziarlo
-  }
-  
-  .userInfo {
-    flex-shrink: 0;
-  }
-  
-  .userCard {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: $spacing-xs;
-  }
-  
-  .userDetails {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 2px;
-  }
-  
-  .username {
-    color: $gold-primary;
-    font-weight: 600;
-    font-size: 0.95rem;
-  }
-  
-  .characterName {
-    color: $gold-primary;
-    font-size: 0.95rem;
-    font-weight: 600;
-  }
-  
-  .occupation {
-    color: $text-secondary;
-    font-size: 0.85rem;
-    font-style: italic;
-  }
-  
-  .userBadges {
-    display: flex;
-    gap: $spacing-xs;
-  }
-  
-  .adminBadge,
-  .masterBadge,
-  .modBadge {
-    padding: 2px $spacing-xs;
-    border-radius: $radius-sm;
-    font-size: 0.7rem;
-    font-weight: bold;
-    text-transform: uppercase;
-  }
-  
-  .adminBadge {
-    background: linear-gradient(135deg, #e53e3e, #c53030);
-    color: white;
-  }
-  
-  .masterBadge {
-    background: linear-gradient(135deg, $gold-primary, $gold-light);
-    color: $bg-primary;
-  }
-  
-  .modBadge {
-    background: linear-gradient(135deg, #38a169, #2f855a);
-    color: white;
-  }
-  
-  .loginPrompt {
-    color: $text-tertiary;
-    font-size: 0.9rem;
-    font-style: italic;
-  }
-  
-  .headerButton {
-    background: linear-gradient(135deg, rgba($gold-primary, 0.2), rgba($gold-primary, 0.1));
-    border: 1px solid rgba($gold-primary, 0.6);
-    color: $gold-primary;
-    padding: $spacing-sm $spacing-md;
-    border-radius: $radius-md;
-    font-family: $font-primary;
-    font-size: 0.9rem;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all all 0.15s ease;
-    text-shadow: $text-shadow;
-    
-    &:hover {
-      background: linear-gradient(135deg, rgba($gold-primary, 0.3), rgba($gold-primary, 0.2));
-      border-color: rgba($gold-primary, 0.8);
-      transform: translateY(-1px);
-      box-shadow: 0 2px 8px rgba($gold-primary, 0.3);
-    }
-    
-    &:active {
-      transform: translateY(0);
-      background: linear-gradient(135deg, rgba($gold-primary, 0.4), rgba($gold-primary, 0.3));
-    }
-    
-    @media (max-width: $breakpoint-md) {
-      padding: $spacing-xs $spacing-sm;
-      font-size: 0.8rem;
-    }
-  }
-}
-
-// Body container styles - Below header in right container
+/* Body Container - Main content area */
 .bodyContainer {
-  flex: 1; 
-  overflow: hidden;
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
   position: relative;
-  min-height: 0; // Allow flex item to shrink below content size
-  height: 100%; // Force flex to calculate available space
-  background: $bg-primary;
-  
-  // Custom scrollbar styling to match theme
+  min-height: 0;
+  height: 100%;
+  border-left: 2px solid #ff6b3566;
+
+  // Custom scrollbar styling
   &::-webkit-scrollbar {
     width: 8px;
   }
-  
+
   &::-webkit-scrollbar-track {
     background: rgba(255, 255, 255, 0.05);
-    border-radius: $radius-sm;
+    border-radius: var(--radius-sm);
   }
-  
+
   &::-webkit-scrollbar-thumb {
-    background: rgba($gold-primary, 0.3);
-    border-radius: $radius-sm;
-    
+    background: rgba(184, 134, 11, 0.3);
+    border-radius: var(--radius-sm);
+
     &:hover {
-      background: rgba($gold-primary, 0.5);
+      background: rgba(184, 134, 11, 0.5);
     }
   }
 }
 
-// Responsive design
-// Dynamic padding handled in component
+/* ========================================
+   RESPONSIVE
+   ======================================== */
 
-@media (max-width: $breakpoint-md) {
+@media (max-width: 768px) {
   .gameContainer {
-    flex-direction: column; // Stack sidebar above right container on mobile
+    flex-direction: column;
   }
-  
+
   .sidebar {
     flex: 0 0 auto;
-    height: 200px; // Fixed height on mobile
+    height: 200px;
     width: 100%;
-    border-right: none;
-    border-bottom: 2px solid $border-secondary;
   }
-  
-  .rightContainer {
-    flex: 1;
-    min-height: 0;
-  }
-  
-  .bodyContainer {
-    flex: 1;
-    min-height: 0;
-  }
-}
-
-// Custom scrollbar for sidebar
-.sidebar {
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
-  
-  &::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.05);
-  }
-  
-  &::-webkit-scrollbar-thumb {
-    background: rgba($gold-primary, 0.3);
-    border-radius: 9999px;
-    
-    &:hover {
-      background: rgba($gold-primary, 0.5);
-    }
-  }
-}
-
-// Additional atmospheric effects
-.header::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(90deg, 
-    transparent 0%, 
-    rgba($gold-primary, 0.03) 50%, 
-    transparent 100%);
-  pointer-events: none;
-}
-
-.sidebar::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(180deg, 
-    rgba($gold-primary, 0.02) 0%, 
-    transparent 50%, 
-    rgba($gold-primary, 0.02) 100%);
-  pointer-events: none;
-  z-index: -1;
 }

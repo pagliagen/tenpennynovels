@@ -1,0 +1,78 @@
+/**
+ * Select Field Component Styles
+ *
+ * Dropdown select with Victorian styling.
+ */
+
+@use '../mixins/forms' as *;
+
+.select-field {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: var(--spacing-form-field);
+
+  /**
+   * Label
+   */
+  &__label {
+    @include form-label;
+  }
+
+  /**
+   * Required indicator
+   */
+  &__required {
+    color: var(--color-error);
+    margin-left: var(--spacing-xs);
+  }
+
+  /**
+   * Wrapper (for custom arrow)
+   */
+  &__wrapper {
+    position: relative;
+
+    &--error &__select {
+      @include form-field-error;
+    }
+
+    &--disabled &__select {
+      @include form-field-disabled;
+    }
+  }
+
+  /**
+   * Select element
+   */
+  &__select {
+    @include form-field-base;
+    appearance: none; /* Remove default arrow */
+    padding-right: calc(var(--spacing-md) * 2.5); /* Space for custom arrow */
+    cursor: pointer;
+
+    &--error {
+      @include form-field-error;
+    }
+  }
+
+  /**
+   * Custom arrow
+   */
+  &__arrow {
+    position: absolute;
+    top: 50%;
+    right: var(--spacing-md);
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: var(--color-primary);
+  }
+
+  /**
+   * Error message
+   */
+  &__error {
+    margin-top: var(--spacing-xs);
+    font-size: var(--font-size-sm);
+    color: var(--color-error);
+  }
+}

@@ -69,12 +69,13 @@ npm install
 # Configure environment
 cp .env.example .env
 
-# Initialize database
-npm run db:migrate
-npm run db:seed
+# Start services (choose one method)
 
-# Start all services
-npm run dev:all
+# Method 1: Docker (recommended)
+npm run docker:all:start    # Starts MongoDB, Redis, and all backends
+
+# Method 2: Local services
+npm run all                 # Starts all services locally
 ```
 
 ### Access the Platform
@@ -92,13 +93,75 @@ For detailed installation instructions, see [docs/technical.md](docs/technical.m
 
 ### Start Development Environment
 
+#### Option 1: Docker (Recommended for Backend)
+
+Docker provides an isolated development environment with hot-reload support:
+
+```bash
+# Start infrastructure + all backend services
+npm run docker:all:start
+
+# Stop all services
+npm run docker:all:stop
+
+# Infrastructure only (MongoDB, Redis, Embeddings)
+npm run docker:infra:start
+npm run docker:infra:stop
+
+# Backend services only
+# ⚠️ Note: Infrastructure must be running first!
+npm run docker:backends:start
+npm run docker:backends:stop
+
+# Check infrastructure health before starting backends
+npm run docker:check
+
+# View logs - all backends
+npm run docker:logs
+
+# View logs - individual backend
+npm run docker:logs:gateway      # API Gateway
+npm run docker:logs:auth         # Authentication Backend
+npm run docker:logs:game         # Game Backend
+npm run docker:logs:management   # Management Backend
+
+# Check status
+npm run docker:status
+
+# Restart services
+npm run docker:restart
+```
+
+**⚠️ Important: Docker Startup Order**
+
+When starting services manually, always start infrastructure before backends:
+1. ✅ **Correct:** Use `npm run docker:all:start` (handles everything automatically)
+2. ✅ **Correct:** Run `npm run docker:infra:start`, wait 30 seconds, then `npm run docker:backends:start`
+3. ❌ **Incorrect:** Running `npm run docker:backends:start` without infrastructure will fail
+
+Use `npm run docker:check` to verify infrastructure is ready before starting backends.
+
+**Available Services (Docker):**
+- API Gateway: http://localhost:8000
+- Auth Backend: http://localhost:3000
+- Game Backend: http://localhost:3001
+- Management Backend: http://localhost:3002
+- MongoDB Express: http://localhost:8082
+- Redis Commander: http://localhost:8081
+
+**Hot-Reload:** Code changes are automatically detected and services restart in 1-2 seconds.
+
+#### Option 2: Local Services
+
+Run services directly on your machine:
+
 ```bash
 # Start all services and applications
-npm run dev:all
+npm run all
 
 # Or start services individually
-npm run dev:backend      # All backend services
-npm run dev:frontend     # All frontend applications
+npm run backend:all      # All backend services
+npm run frontend:all     # All frontend applications
 ```
 
 ### Build for Production
@@ -138,6 +201,61 @@ tenpennynovels/
     ├── gameplay/          # Game mechanics
     ├── setup/             # Setup and development guides
     └── deployment/        # Deployment guides
+```
+
+## Docker Development Setup
+
+The project includes Docker configuration for streamlined backend development with full hot-reload support.
+
+### Features
+
+- ✅ **Hot-reload**: Code changes trigger automatic restart (1-2 seconds)
+- ✅ **Isolated environment**: Consistent across all developers
+- ✅ **Easy infrastructure**: MongoDB, Redis, and all backends with one command
+- ✅ **Individual logs**: View logs for specific services without grep
+- ✅ **Network isolation**: Services communicate via Docker network
+
+### Docker Files
+
+- `docker-compose.infrastructure.yml` - MongoDB, Redis, Embeddings
+- `docker-compose.backends.yml` - All 4 backend services (Auth, Game, Management, API Gateway)
+- `services/*/Dockerfile.dev` - Development Dockerfiles with tsx watch
+- `docker-backends.sh` - Management script for lifecycle operations
+
+### Advanced Docker Commands
+
+```bash
+# Using the management script directly
+./docker-backends.sh start                          # Start everything
+./docker-backends.sh stop                           # Stop everything
+./docker-backends.sh restart                        # Restart all
+./docker-backends.sh restart tenpennynovels-game-backend  # Restart single service
+./docker-backends.sh logs tenpennynovels-auth-backend     # Logs for specific service
+./docker-backends.sh rebuild                        # Rebuild images from scratch
+
+# Build backends manually
+npm run docker:backends:build
+
+# Hybrid mode (infrastructure in Docker, backends local)
+npm run docker:infra:start && npm run backend:all
+```
+
+### Troubleshooting Docker
+
+```bash
+# Check container status
+docker ps -a
+
+# View detailed logs
+docker logs tenpennynovels-game-backend
+
+# Restart a misbehaving service
+docker restart tenpennynovels-auth-backend
+
+# Clean rebuild if needed
+docker-compose -f docker-compose.backends.yml down
+docker-compose -f docker-compose.backends.yml build --no-cache
+docker-compose -f docker-compose.backends.yml up -d
 ```
 
 ## Documentation

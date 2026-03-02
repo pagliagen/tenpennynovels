@@ -1,0 +1,55 @@
+// Colors - Victorian Theme (aligned with apps/game)
+// Primary palette - Victorian Browns & Golds
+$color-primary: #b8860b; // Dark Goldenrod (Victorian accent)
+$color-secondary: #8b4513; // Saddle Brown (Victorian primary)
+$color-tertiary: #2f4f4f; // Dark Slate Gray
+
+// Status colors - Period-appropriate muted tones
+$color-success: #2d5016; // Victorian dark green
+$color-error: #8b1a1a; // Victorian dark red
+$color-warning: #8b6914; // Victorian brown-gold
+$color-info: #1a5f8b; // Victorian dark blue
+
+// Text colors - Light on dark for admin panel
+$color-text-primary: #e8e8e8;
+$color-text-secondary: #999999;
+$color-text-muted: #666666;
+
+// Background colors - Dark theme for admin panel
+$color-bg-primary: #0f0f0f;
+$color-bg-secondary: #1a1a1a;
+$color-bg-tertiary: #252525;
+
+// Spacing
+$spacing-xs: 4px;
+$spacing-sm: 8px;
+$spacing-md: 16px;
+$spacing-lg: 24px;
+$spacing-xl: 32px;
+$spacing-2xl: 48px;
+
+// Border radius
+$border-radius-sm: 4px;
+$border-radius-md: 6px;
+$border-radius-lg: 8px;
+
+// Shadows
+$shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12);
+$shadow-md: 0 4px 6px rgba(0, 0, 0, 0.16);
+$shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.19);
+
+// Breakpoints
+$breakpoint-mobile: 768px;
+$breakpoint-tablet: 1024px;
+$breakpoint-desktop: 1440px;
+
+// Transitions
+$transition-fast: 150ms ease-in-out;
+$transition-normal: 300ms ease-in-out;
+$transition-slow: 500ms ease-in-out;
+
+// Z-index layers
+$z-dropdown: 1000;
+$z-modal-backdrop: 1040;
+$z-modal: 1050;
+$z-toast: 1060;

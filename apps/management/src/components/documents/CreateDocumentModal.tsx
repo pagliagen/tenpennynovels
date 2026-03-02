@@ -1,309 +1,320 @@
-// =============================================================================
-// Create Document Modal Component  
-// =============================================================================
+/**
+ * CreateDocumentModal Component
+ *
+ * Modal for creating new documents + associated route
+ * ALWAYS creates document + route together (documents cannot exist without routes)
+ */
 
 import React, { useState } from 'react';
-import { Modal } from '@/components/shared/Modal';
-import { CreateDocumentData, DocumentType, DocumentVisibility, DocumentGroupWithDocuments } from '@/types';
-import styles from '@/styles/components/documents/CreateDocumentModal.module.scss';
+import { createRoute } from '@/lib/api/documents';
+import { useNotificationStore } from '@/store/notificationStore';
+import { useQueryClient } from '@tanstack/react-query';
+import styles from '@/styles/components/Modal.module.scss';
+
+interface Route {
+  _id: string;
+  path: string;
+  title: string;
+  kind: 'document' | 'category' | 'redirect';
+}
 
 interface CreateDocumentModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: CreateDocumentData) => Promise<void>;
-  groups: DocumentGroupWithDocuments[];
-  type: DocumentType;
+  type: 'ambientazione' | 'approfondimenti' | 'regolamento';
+  availableRoutes: Route[];
+  preselectedParentId?: string | null;
+  onDocumentCreated: (documentId: string) => void;
 }
 
-export function CreateDocumentModal({ 
-  isOpen, 
-  onClose, 
-  onSubmit, 
-  groups,
-  type 
+export function CreateDocumentModal({
+  isOpen,
+  onClose,
+  type,
+  availableRoutes,
+  preselectedParentId,
+  onDocumentCreated
 }: CreateDocumentModalProps) {
-  const [formData, setFormData] = useState<CreateDocumentData>({
-    title: '',
-    content: '',
-    groupId: '',
-    type,
-    visibility: 'pubblico',
-    status: 'draft',
-    summary: '',
-    tags: []
-  });
-  const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [parentRouteId, setParentRouteId] = useState<string>(preselectedParentId || '');
+  const [title, setTitle] = useState('');
+  const [slug, setSlug] = useState('');
+  const [description, setDescription] = useState('');
+  const [isDraft, setIsDraft] = useState(true);
+  const [visible, setVisible] = useState(true);
+  const [isPublic, setIsPublic] = useState(true);
+  const [enabled, setEnabled] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleInputChange = (field: keyof CreateDocumentData, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }));
+  // Track if user manually edited slug
+  const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
+
+  const addNotification = useNotificationStore(state => state.addNotification);
+  const queryClient = useQueryClient();
+
+  // Update parentRouteId when preselectedParentId changes
+  React.useEffect(() => {
+    if (preselectedParentId) {
+      setParentRouteId(preselectedParentId);
     }
+  }, [preselectedParentId]);
+
+  // Auto-generate slug from title (ALWAYS unless manually edited)
+  const handleTitleChange = (value: string) => {
+    setTitle(value);
+    const autoValue = value
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9\s-]/g, '')
+      .trim()
+      .replace(/\s+/g, '-');
+
+    // Only auto-update if user hasn't manually edited
+    if (!slugManuallyEdited) setSlug(autoValue);
   };
 
-  const validate = (): boolean => {
-    const newErrors: Record<string, string> = {};
-
-    if (!formData.title.trim()) {
-      newErrors.title = 'Il titolo è obbligatorio';
-    } else if (formData.title.length < 3) {
-      newErrors.title = 'Il titolo deve essere di almeno 3 caratteri';
-    } else if (formData.title.length > 200) {
-      newErrors.title = 'Il titolo non può superare i 200 caratteri';
-    }
-
-    if (!formData.groupId) {
-      newErrors.groupId = 'Seleziona un gruppo per il documento';
-    }
-
-    if (formData.summary && formData.summary.length > 500) {
-      newErrors.summary = 'Il riassunto non può superare i 500 caratteri';
-    }
-
-    if (!formData.content.trim()) {
-      newErrors.content = 'Il contenuto è obbligatorio';
-    } else if (formData.content.length < 10) {
-      newErrors.content = 'Il contenuto deve essere di almeno 10 caratteri';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  // Handle manual slug edit
+  const handleSlugChange = (value: string) => {
+    setSlug(value);
+    setSlugManuallyEdited(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!validate()) {
+
+    if (!parentRouteId) {
+      addNotification({
+        type: 'error',
+        message: 'Devi selezionare una rotta parent'
+      });
       return;
     }
 
-    setLoading(true);
+    if (!title.trim() || !slug.trim()) {
+      addNotification({
+        type: 'error',
+        message: 'Titolo e slug sono obbligatori'
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
     try {
-      await onSubmit(formData);
-      handleClose();
+      // Calculate path from parent + slug
+      const parentRoute = availableRoutes.find(r => r._id === parentRouteId);
+      const calculatedPath = parentRoute
+        ? `${parentRoute.path}/${slug.trim()}`
+        : slug.trim();
+
+      // Create route + document together
+      const createdRoute = await createRoute({
+        path: calculatedPath,
+        type,
+        kind: 'document',
+        title: title.trim(),
+        description: description.trim() || undefined,
+        documentData: {
+          title: title.trim(),
+          slug: slug.trim(),
+          description: description.trim() || undefined,
+          isDraft,
+          visible
+        },
+        parentId: parentRouteId,
+        isPublic,
+        enabled,
+        order: 0
+      });
+
+      addNotification({
+        type: 'success',
+        message: 'Documento e route creati con successo'
+      });
+
+      // Refresh documents list (routes + documents tree)
+      queryClient.invalidateQueries({ queryKey: ['admin', 'documents'] });
+
+      // Open edit modal for content
+      if (createdRoute.rootDocumentId) {
+        onDocumentCreated(createdRoute.rootDocumentId);
+      } else {
+        onClose();
+      }
     } catch (error) {
-      console.error('Error creating document:', error);
+      addNotification({
+        type: 'error',
+        message: error instanceof Error ? error.message : 'Errore nella creazione'
+      });
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
-  const handleClose = () => {
-    setFormData({
-      title: '',
-      content: '',
-      groupId: '',
-      type,
-      visibility: 'pubblico',
-      status: 'draft',
-      summary: '',
-      tags: []
-    });
-    setErrors({});
-    setLoading(false);
-    onClose();
-  };
+  if (!isOpen) return null;
 
-  const getVisibilityIcon = (visibility: DocumentVisibility) => {
-    switch (visibility) {
-      case 'pubblico': return '🌍';
-      case 'ristretto': return '🔒';
-      case 'spento': return '🚫';
-      default: return '❓';
-    }
-  };
-
-  const getTypeLabel = (docType: DocumentType) => {
-    return docType === 'ambientazione' ? 'Ambientazione' : 'Regolamento';
-  };
-
-  const activeGroups = groups.filter(g => g.isActive);
+  // Filter routes: only categories or documents (no redirects) for parent selection
+  const selectableRoutes = availableRoutes.filter(r => r.kind !== 'redirect');
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={handleClose}
-      title="Nuovo Documento"
-      size="large"
-    >
-      <form onSubmit={handleSubmit} className={styles.form}>
-        <div className={styles.formSection}>
-          <div className={styles.typeInfo}>
-            <span className={styles.typeIcon}>
-              {type === 'ambientazione' ? '🌍' : '📜'}
-            </span>
-            <span className={styles.typeLabel}>
-              Tipo: {getTypeLabel(type)}
-            </span>
-          </div>
-        </div>
-
-        <div className={styles.row}>
-          <div className={styles.formGroup}>
-            <label className={styles.label} htmlFor="documentTitle">
-              Titolo Documento *
-            </label>
-            <input
-              id="documentTitle"
-              type="text"
-              className={`${styles.input} ${errors.title ? styles.error : ''}`}
-              value={formData.title}
-              onChange={(e) => handleInputChange('title', e.target.value)}
-              placeholder="Inserisci il titolo del documento..."
-              maxLength={200}
-              disabled={loading}
-            />
-            {errors.title && (
-              <span className={styles.errorText}>{errors.title}</span>
-            )}
-            <div className={styles.charCount}>
-              {formData.title.length}/200
-            </div>
-          </div>
-
-          <div className={styles.formGroup}>
-            <label className={styles.label} htmlFor="documentGroup">
-              Gruppo *
-            </label>
-            <select
-              id="documentGroup"
-              className={`${styles.select} ${errors.groupId ? styles.error : ''}`}
-              value={formData.groupId}
-              onChange={(e) => handleInputChange('groupId', e.target.value)}
-              disabled={loading}
-            >
-              <option value="">Seleziona un gruppo...</option>
-              {activeGroups.map(group => (
-                <option key={group.id} value={group.id}>
-                  {group.name} ({group.documents.length} documenti)
-                </option>
-              ))}
-            </select>
-            {errors.groupId && (
-              <span className={styles.errorText}>{errors.groupId}</span>
-            )}
-            {activeGroups.length === 0 && (
-              <span className={styles.warningText}>
-                ⚠️ Nessun gruppo attivo disponibile. Crea prima un gruppo.
-              </span>
-            )}
-          </div>
-        </div>
-
-        <div className={styles.formGroup}>
-          <label className={styles.label} htmlFor="documentSummary">
-            Riassunto
-          </label>
-          <textarea
-            id="documentSummary"
-            className={`${styles.textarea} ${errors.summary ? styles.error : ''}`}
-            value={formData.summary}
-            onChange={(e) => handleInputChange('summary', e.target.value || '')}
-            placeholder="Breve riassunto del contenuto del documento..."
-            rows={2}
-            maxLength={500}
-            disabled={loading}
-          />
-          {errors.summary && (
-            <span className={styles.errorText}>{errors.summary}</span>
-          )}
-          <div className={styles.charCount}>
-            {(formData.summary || '').length}/500
-          </div>
-        </div>
-
-        <div className={styles.row}>
-          <div className={styles.formGroup}>
-            <label className={styles.label} htmlFor="documentVisibility">
-              Visibilità
-            </label>
-            <select
-              id="documentVisibility"
-              className={styles.select}
-              value={formData.visibility}
-              onChange={(e) => handleInputChange('visibility', e.target.value as DocumentVisibility)}
-              disabled={loading}
-            >
-              <option value="pubblico">
-                🌍 Pubblico - Visibile a tutti
-              </option>
-              <option value="ristretto">
-                🔒 Riservato - Solo utenti registrati
-              </option>
-              <option value="spento">
-                🚫 Nascosto - Non visibile
-              </option>
-            </select>
-          </div>
-
-          <div className={styles.formGroup}>
-            <label className={styles.label} htmlFor="documentStatus">
-              Stato
-            </label>
-            <select
-              id="documentStatus"
-              className={styles.select}
-              value={formData.status}
-              onChange={(e) => handleInputChange('status', e.target.value)}
-              disabled={loading}
-            >
-              <option value="draft">📝 Bozza</option>
-              <option value="published">✅ Pubblicato</option>
-            </select>
-          </div>
-        </div>
-
-        <div className={styles.formGroup}>
-          <label className={styles.label} htmlFor="documentContent">
-            Contenuto *
-          </label>
-          <textarea
-            id="documentContent"
-            className={`${styles.textarea} ${styles.contentArea} ${errors.content ? styles.error : ''}`}
-            value={formData.content}
-            onChange={(e) => handleInputChange('content', e.target.value)}
-            placeholder="Inserisci il contenuto del documento in formato Markdown..."
-            rows={10}
-            disabled={loading}
-          />
-          {errors.content && (
-            <span className={styles.errorText}>{errors.content}</span>
-          )}
-          <div className={styles.helpText}>
-            💡 Supporta la sintassi Markdown per formattazione avanzata
-          </div>
-        </div>
-
-        <div className={styles.actions}>
-          <button
-            type="button"
-            className={`${styles.button} ${styles.secondary}`}
-            onClick={handleClose}
-            disabled={loading}
-          >
-            Annulla
+    <div className={styles.modalBackdrop} onClick={onClose}>
+      <div className={`${styles.modal} ${styles.medium}`} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.modalHeader}>
+          <h2 className={styles.modalTitle}>Crea Nuovo Documento</h2>
+          <button className={styles.closeButton} onClick={onClose}>
+            ×
           </button>
-          
-          <button
-            type="submit"
-            className={`${styles.button} ${styles.primary}`}
-            disabled={loading || activeGroups.length === 0}
-          >
-            {loading ? (
-              <>
-                <span className={styles.spinner} />
-                Creando...
-              </>
+        </div>
+
+        <form onSubmit={handleSubmit} className={styles.modalBody}>
+          {/* Route Parent Selection */}
+          <div className={styles.formField}>
+            <label htmlFor="parentRoute">Rotta Parent *</label>
+            {selectableRoutes.length === 0 ? (
+              <div className={styles.infoBox}>
+                ⚠️ Nessuna route disponibile. Crea prima una route di tipo "category" o "document" da usare come parent.
+              </div>
             ) : (
               <>
-                <span>📄</span>
-                Crea Documento
+                <select
+                  id="parentRoute"
+                  value={parentRouteId}
+                  onChange={(e) => setParentRouteId(e.target.value)}
+                  disabled={isSubmitting || !!preselectedParentId}
+                  required
+                >
+                  <option value="">-- Seleziona una route --</option>
+                  {selectableRoutes.map(route => (
+                    <option key={route._id} value={route._id}>
+                      {route.path} - {route.title}
+                    </option>
+                  ))}
+                </select>
+                <small>
+                  {preselectedParentId
+                    ? '✓ Parent preselezionato dalla route'
+                    : 'Seleziona sotto quale route creare questo documento'}
+                </small>
               </>
             )}
-          </button>
-        </div>
-      </form>
-    </Modal>
+          </div>
+
+          {/* Unified Fields */}
+          <div className={styles.formField}>
+            <label htmlFor="title">Titolo *</label>
+            <input
+              id="title"
+              type="text"
+              value={title}
+              onChange={(e) => handleTitleChange(e.target.value)}
+              placeholder="Titolo del documento e della route"
+              required
+              disabled={isSubmitting}
+            />
+            <small>Utilizzato per route e documento</small>
+          </div>
+
+          <div className={styles.formField}>
+            <label htmlFor="slug">Slug *</label>
+            <input
+              id="slug"
+              type="text"
+              value={slug}
+              onChange={(e) => handleSlugChange(e.target.value)}
+              placeholder="slug-documento"
+              required
+              disabled={isSubmitting}
+            />
+            <small>
+              Auto-generato dal titolo {slugManuallyEdited && '(modificato manualmente)'}
+              {parentRouteId && (() => {
+                const parent = availableRoutes.find(r => r._id === parentRouteId);
+                return parent ? ` • URL finale: ${parent.path}/${slug || '...'}` : '';
+              })()}
+            </small>
+          </div>
+
+          <div className={styles.formField}>
+            <label htmlFor="description">Descrizione</label>
+            <textarea
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Breve descrizione"
+              rows={3}
+              disabled={isSubmitting}
+            />
+            <small>Utilizzata per route e documento</small>
+          </div>
+
+          {/* Checkboxes */}
+          <div className={styles.formField}>
+            <label>
+              <input
+                type="checkbox"
+                checked={isDraft}
+                onChange={(e) => setIsDraft(e.target.checked)}
+                disabled={isSubmitting}
+              />
+              {' '}Bozza (non pubblicato)
+            </label>
+          </div>
+
+          <div className={styles.formField}>
+            <label>
+              <input
+                type="checkbox"
+                checked={visible}
+                onChange={(e) => setVisible(e.target.checked)}
+                disabled={isSubmitting}
+              />
+              {' '}Visibile
+            </label>
+          </div>
+
+          <div className={styles.formField}>
+            <label>
+              <input
+                type="checkbox"
+                checked={isPublic}
+                onChange={(e) => setIsPublic(e.target.checked)}
+                disabled={isSubmitting}
+              />
+              {' '}Route pubblica (accessibile senza login)
+            </label>
+          </div>
+
+          <div className={styles.formField}>
+            <label>
+              <input
+                type="checkbox"
+                checked={enabled}
+                onChange={(e) => setEnabled(e.target.checked)}
+                disabled={isSubmitting}
+              />
+              {' '}Route abilitata
+            </label>
+          </div>
+
+          <div className={styles.modalFooter}>
+            <button
+              type="button"
+              onClick={onClose}
+              className={styles.cancelButton}
+              disabled={isSubmitting}
+            >
+              Annulla
+            </button>
+            <button
+              type="submit"
+              className={styles.submitButton}
+              disabled={isSubmitting || selectableRoutes.length === 0}
+            >
+              {isSubmitting ? 'Creazione...' : 'Crea Documento'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 }

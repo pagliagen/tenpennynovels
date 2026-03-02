@@ -1,189 +1,175 @@
-import React from 'react';
-import { Input, Textarea, Select } from './FormComponents';
-import styles from '@/styles/components/shared/FormField.module.scss';
+/**
+ * FormField - Form input component with React Hook Form integration
+ *
+ * Integrates with:
+ * - React Hook Form via forwardRef + register()
+ * - Zod validation via zodResolver
+ * - Error display from formState.errors
+ */
 
-interface Option {
-  value: any;
+import React, { forwardRef } from 'react';
+import classNames from 'classnames';
+import styles from '@/styles/components/FormField.module.scss';
+
+export type FormFieldType =
+  | 'text'
+  | 'email'
+  | 'password'
+  | 'number'
+  | 'textarea'
+  | 'select'
+  | 'checkbox'
+  | 'date'
+  | 'datetime-local';
+
+export interface FormFieldOption {
+  value: string | number | boolean;
   label: string;
 }
 
-interface FormFieldProps {
-  type: 'text' | 'email' | 'checkbox' | 'select' | 'multi_checkbox' | 'textarea' | 'datetime' | 'number';
-  label: string;
-  value: any;
-  onChange: (value: any) => void;
-  required?: boolean;
-  disabled?: boolean;
-  placeholder?: string;
-  options?: Option[];
-  layout?: 'default' | 'grid';
-  columns?: number;
-  rows?: number;
-  validation?: {
-    minLength?: number;
-    maxLength?: number;
-    pattern?: string;
-    email?: boolean;
-    min?: number;
-    max?: number;
-  };
+export interface FormFieldProps extends Omit<React.InputHTMLAttributes<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>, 'type'> {
+  label?: string;
+  type?: FormFieldType;
+  error?: string;
+  helpText?: string;
+  options?: FormFieldOption[];
+  className?: string;
 }
 
-export function FormField({
-  type,
-  label,
-  value,
-  onChange,
-  required = false,
-  disabled = false,
-  placeholder,
-  options = [],
-  layout = 'default',
-  columns = 2,
-  rows = 3,
-  validation
-}: FormFieldProps) {
-  
-  // Handle multi-checkbox change
-  const handleMultiCheckboxChange = (optionValue: any, checked: boolean) => {
-    const currentValues = Array.isArray(value) ? value : [];
-    
-    if (checked) {
-      // Add value if not already present
-      if (!currentValues.includes(optionValue)) {
-        onChange([...currentValues, optionValue]);
-      }
-    } else {
-      // Remove value
-      onChange(currentValues.filter(v => v !== optionValue));
+export const FormField = forwardRef<
+  HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement,
+  FormFieldProps
+>(function FormField(
+  {
+    label,
+    type = 'text',
+    error,
+    helpText,
+    options,
+    className,
+    required,
+    disabled,
+    ...props
+  },
+  ref
+) {
+  const fieldId = props.id || props.name || `field-${Math.random().toString(36).substring(7)}`;
+
+  const renderInput = () => {
+    const baseClassName = classNames(
+      styles.input,
+      error && styles.error,
+      className
+    );
+
+    if (type === 'textarea') {
+      return (
+        <textarea
+          ref={ref as React.Ref<HTMLTextAreaElement>}
+          id={fieldId}
+          className={baseClassName}
+          disabled={disabled}
+          aria-invalid={!!error}
+          aria-describedby={error ? `${fieldId}-error` : helpText ? `${fieldId}-help` : undefined}
+          {...(props as React.TextareaHTMLAttributes<HTMLTextAreaElement>)}
+        />
+      );
     }
+
+    if (type === 'select') {
+      return (
+        <select
+          ref={ref as React.Ref<HTMLSelectElement>}
+          id={fieldId}
+          className={baseClassName}
+          disabled={disabled}
+          aria-invalid={!!error}
+          aria-describedby={error ? `${fieldId}-error` : helpText ? `${fieldId}-help` : undefined}
+          {...(props as React.SelectHTMLAttributes<HTMLSelectElement>)}
+        >
+          {options?.map((option) => (
+            <option key={String(option.value)} value={String(option.value)}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      );
+    }
+
+    if (type === 'checkbox') {
+      return (
+        <div className={styles.checkboxWrapper}>
+          <input
+            ref={ref as React.Ref<HTMLInputElement>}
+            type="checkbox"
+            id={fieldId}
+            className={styles.checkbox}
+            disabled={disabled}
+            aria-invalid={!!error}
+            aria-describedby={error ? `${fieldId}-error` : helpText ? `${fieldId}-help` : undefined}
+            {...(props as React.InputHTMLAttributes<HTMLInputElement>)}
+          />
+          {label && (
+            <label htmlFor={fieldId} className={styles.checkboxLabel}>
+              {label}
+              {required && <span className={styles.required}>*</span>}
+            </label>
+          )}
+        </div>
+      );
+    }
+
+    return (
+      <input
+        ref={ref as React.Ref<HTMLInputElement>}
+        type={type}
+        id={fieldId}
+        className={baseClassName}
+        disabled={disabled}
+        aria-invalid={!!error}
+        aria-describedby={error ? `${fieldId}-error` : helpText ? `${fieldId}-help` : undefined}
+        {...(props as React.InputHTMLAttributes<HTMLInputElement>)}
+      />
+    );
   };
 
-  switch (type) {
-    case 'text':
-    case 'email':
-      return (
-        <Input
-          label={label}
-          type={type}
-          value={value || ''}
-          onChange={(e) => onChange(e.target.value)}
-          required={required}
-          disabled={disabled}
-          placeholder={placeholder}
-          fullWidth={true}
-        />
-      );
-
-    case 'number':
-      return (
-        <Input
-          label={label}
-          type="number"
-          value={value || ''}
-          onChange={(e) => onChange(e.target.value)}
-          required={required}
-          disabled={disabled}
-          placeholder={placeholder}
-          min={validation?.min}
-          max={validation?.max}
-          fullWidth={true}
-        />
-      );
-
-    case 'datetime':
-      return (
-        <Input
-          label={label}
-          type="datetime-local"
-          value={value || ''}
-          onChange={(e) => onChange(e.target.value)}
-          required={required}
-          disabled={disabled}
-          fullWidth={true}
-        />
-      );
-
-    case 'textarea':
-      return (
-        <Textarea
-          label={label}
-          value={value || ''}
-          onChange={(e) => onChange(e.target.value)}
-          required={required}
-          disabled={disabled}
-          placeholder={placeholder}
-          rows={rows}
-          fullWidth={true}
-        />
-      );
-
-    case 'checkbox':
-      return (
-        <div className={styles.checkboxField}>
-          <label className={styles.checkboxLabel}>
-            <input
-              type="checkbox"
-              checked={Boolean(value)}
-              onChange={(e) => onChange(e.target.checked)}
-              required={required}
-              disabled={disabled}
-              className={styles.checkbox}
-            />
-            <span className={styles.checkboxText}>{label}</span>
-            {required && <span className={styles.required}>*</span>}
-          </label>
-        </div>
-      );
-
-    case 'select':
-      return (
-        <Select
-          label={label}
-          value={value || ''}
-          onChange={(e) => onChange(e.target.value)}
-          required={required}
-          disabled={disabled}
-          options={options.map(opt => ({
-            value: opt.value,
-            label: opt.label
-          }))}
-          placeholder={placeholder}
-          fullWidth={true}
-        />
-      );
-
-    case 'multi_checkbox':
-      const currentValues = Array.isArray(value) ? value : [];
-      
-      return (
-        <div className={styles.multiCheckboxField}>
-          <label className={styles.fieldLabel}>
-            {label}
-            {required && <span className={styles.required}>*</span>}
-          </label>
-          <div className={`${styles.checkboxGrid} ${styles[`layout-${layout}`]}`} 
-               style={layout === 'grid' ? { gridTemplateColumns: `repeat(${columns}, 1fr)` } : undefined}>
-            {options.map((option, index) => (
-              <label key={index} className={styles.checkboxOption}>
-                <input
-                  type="checkbox"
-                  checked={currentValues.includes(option.value)}
-                  onChange={(e) => handleMultiCheckboxChange(option.value, e.target.checked)}
-                  className={styles.checkbox}
-                />
-                <span className={styles.checkboxText}>{option.label}</span>
-              </label>
-            ))}
+  if (type === 'checkbox') {
+    return (
+      <div className={styles.formField}>
+        {renderInput()}
+        {error && (
+          <div id={`${fieldId}-error`} className={styles.errorText} role="alert">
+            {error}
           </div>
-        </div>
-      );
-
-    default:
-      return (
-        <div className={styles.unknownField}>
-          <span>Unsupported field type: {type}</span>
-        </div>
-      );
+        )}
+        {helpText && !error && (
+          <div id={`${fieldId}-help`} className={styles.helpText}>
+            {helpText}
+          </div>
+        )}
+      </div>
+    );
   }
-}
+
+  return (
+    <div className={styles.formField}>
+      {label && (
+        <label htmlFor={fieldId} className={styles.label}>
+          {label}
+          {required && <span className={styles.required}>*</span>}
+        </label>
+      )}
+      {renderInput()}
+      {error && (
+        <div id={`${fieldId}-error`} className={styles.errorText} role="alert">
+          {error}
+        </div>
+      )}
+      {helpText && !error && (
+        <div id={`${fieldId}-help`} className={styles.helpText}>
+          {helpText}
+        </div>
+      )}
+    </div>
+  );
+});

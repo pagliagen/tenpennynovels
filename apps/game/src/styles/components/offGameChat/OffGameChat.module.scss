@@ -1,0 +1,460 @@
+/**
+ * OffGame Chat Styles
+ *
+ * WhatsApp-like instant messaging theme.
+ * Dark mode with green accents, message bubbles, typing indicators.
+ *
+ * @module styles/components/offGameChat/OffGameChat
+ * @since 2.0.0
+ */
+
+@use 'sass:color';
+
+// ========================================================================
+// Variables
+// ========================================================================
+
+$bg-primary: #0b141a; // Dark background
+$bg-secondary: #202c33; // Chat item hover
+$bg-message-own: #005c4b; // Own message bubble (green)
+$bg-message-other: #202c33; // Other message bubble (dark)
+$text-primary: #e9edef; // Main text color
+$text-secondary: #8696a0; // Secondary text (timestamps, hints)
+$accent-green: #00a884; // Green accent
+$accent-badge: #25d366; // WhatsApp green for unread badges
+$border-color: #2a3942; // Subtle borders
+
+// ========================================================================
+// Chat Panel (Main Container)
+// ========================================================================
+
+.chatPanel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: $bg-primary;
+  color: $text-primary;
+}
+
+// ========================================================================
+// Header
+// ========================================================================
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: $bg-secondary;
+  border-bottom: 1px solid $border-color;
+
+  .backButton {
+    background: none;
+    border: none;
+    color: $text-primary;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 4px 8px;
+    transition: opacity 0.2s;
+
+    &:hover {
+      opacity: 0.7;
+    }
+  }
+
+  .title {
+    flex: 1;
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0;
+  }
+
+  .actionButton {
+    background: $accent-green;
+    border: none;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.2s;
+
+    &:hover {
+      background: color.adjust($accent-green, $lightness: -10%);
+    }
+  }
+}
+
+// ========================================================================
+// Chat List View
+// ========================================================================
+
+.chatList {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.chatItem {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background 0.2s;
+  border-bottom: 1px solid $border-color;
+
+  &:hover {
+    background: $bg-secondary;
+  }
+
+  &.selected {
+    background: $bg-secondary;
+  }
+
+  .avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: $accent-green;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: 600;
+    color: white;
+    flex-shrink: 0;
+  }
+
+  .chatInfo {
+    flex: 1;
+    min-width: 0;
+
+    .chatName {
+      font-weight: 600;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      .mutedIcon {
+        font-size: 14px;
+        opacity: 0.6;
+      }
+    }
+
+    .lastMessage {
+      font-size: 14px;
+      color: $text-secondary;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+
+  .chatMeta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    flex-shrink: 0;
+
+    .timestamp {
+      font-size: 12px;
+      color: $text-secondary;
+    }
+
+    .unreadBadge {
+      background: $accent-badge;
+      color: white;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 12px;
+      min-width: 20px;
+      text-align: center;
+    }
+  }
+}
+
+// ========================================================================
+// Thread View (Conversation)
+// ========================================================================
+
+.threadView {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.messagesList {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.messageItem {
+  display: flex;
+  flex-direction: column;
+  max-width: 70%;
+  padding: 8px 12px;
+  border-radius: 8px;
+  word-wrap: break-word;
+
+  &.own {
+    align-self: flex-end;
+    background: $bg-message-own;
+    color: white;
+  }
+
+  &.other {
+    align-self: flex-start;
+    background: $bg-message-other;
+  }
+
+  &.system {
+    align-self: center;
+    background: rgba(white, 0.1);
+    color: $text-secondary;
+    font-size: 14px;
+    font-style: italic;
+    max-width: 80%;
+  }
+
+  .senderName {
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 4px;
+    color: $accent-green;
+  }
+
+  .messageContent {
+    margin-bottom: 4px;
+    line-height: 1.4;
+  }
+
+  .messageTime {
+    font-size: 12px;
+    color: rgba(white, 0.6);
+    align-self: flex-end;
+  }
+}
+
+// ========================================================================
+// Typing Indicator
+// ========================================================================
+
+.typingIndicator {
+  padding: 8px 16px;
+  font-size: 14px;
+  color: $text-secondary;
+  font-style: italic;
+
+  .dots {
+    display: inline-block;
+    animation: typingDots 1.5s infinite;
+  }
+}
+
+@keyframes typingDots {
+  0%,
+  20% {
+    content: '.';
+  }
+  40% {
+    content: '..';
+  }
+  60%,
+  100% {
+    content: '...';
+  }
+}
+
+// ========================================================================
+// Message Input
+// ========================================================================
+
+.messageInput {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px;
+  background: $bg-secondary;
+  border-top: 1px solid $border-color;
+
+  .textInput {
+    flex: 1;
+    background: $bg-primary;
+    border: 1px solid $border-color;
+    border-radius: 20px;
+    padding: 12px 16px;
+    color: $text-primary;
+    font-size: 15px;
+    resize: none;
+    max-height: 100px;
+    overflow-y: auto;
+    font-family: inherit;
+
+    &:focus {
+      outline: none;
+      border-color: $accent-green;
+    }
+
+    &::placeholder {
+      color: $text-secondary;
+    }
+  }
+
+  .sendButton {
+    background: $accent-green;
+    border: none;
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    transition: background 0.2s;
+
+    &:disabled {
+      background: $text-secondary;
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+
+    &:not(:disabled):hover {
+      background: color.adjust($accent-green, $lightness: -10%);
+    }
+  }
+}
+
+// ========================================================================
+// New Chat View
+// ========================================================================
+
+.newChatView {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  .formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    label {
+      font-weight: 600;
+      font-size: 14px;
+      color: $text-secondary;
+    }
+
+    input,
+    select {
+      background: $bg-secondary;
+      border: 1px solid $border-color;
+      border-radius: 6px;
+      padding: 12px;
+      color: $text-primary;
+      font-size: 15px;
+
+      &:focus {
+        outline: none;
+        border-color: $accent-green;
+      }
+    }
+  }
+
+  .actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+
+    button {
+      flex: 1;
+      padding: 12px 16px;
+      border: none;
+      border-radius: 6px;
+      font-size: 15px;
+      cursor: pointer;
+      transition: background 0.2s;
+
+      &.cancel {
+        background: $bg-secondary;
+        color: $text-primary;
+
+        &:hover {
+          background: color.adjust($bg-secondary, $lightness: -5%);
+        }
+      }
+
+      &.submit {
+        background: $accent-green;
+        color: white;
+
+        &:disabled {
+          background: $text-secondary;
+          cursor: not-allowed;
+          opacity: 0.5;
+        }
+
+        &:not(:disabled):hover {
+          background: color.adjust($accent-green, $lightness: -10%);
+        }
+      }
+    }
+  }
+}
+
+// ========================================================================
+// Loading & Error States
+// ========================================================================
+
+.loading,
+.error,
+.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  text-align: center;
+  color: $text-secondary;
+}
+
+.error {
+  color: #ef4444;
+}
+
+// ========================================================================
+// Scrollbar Styling
+// ========================================================================
+
+.chatList::-webkit-scrollbar,
+.messagesList::-webkit-scrollbar,
+.textInput::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chatList::-webkit-scrollbar-track,
+.messagesList::-webkit-scrollbar-track,
+.textInput::-webkit-scrollbar-track {
+  background: $bg-primary;
+}
+
+.chatList::-webkit-scrollbar-thumb,
+.messagesList::-webkit-scrollbar-thumb,
+.textInput::-webkit-scrollbar-thumb {
+  background: $border-color;
+  border-radius: 3px;
+
+  &:hover {
+    background: color.adjust($border-color, $lightness: 10%);
+  }
+}

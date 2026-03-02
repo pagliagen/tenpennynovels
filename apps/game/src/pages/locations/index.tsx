@@ -1,36 +1,179 @@
-import React, { useState, useEffect } from 'react';
+/**
+ * Locations Main Page
+ *
+ * Main entry point for the locations/map system.
+ * Provides three view modes:
+ * - Mappa: Interactive London map with clickable districts
+ * - Testuale: Expandable tree list of all locations
+ * - Appartamenti: Private apartments (future feature)
+ *
+ * @module pages/locations
+ * @since 2.0.0
+ */
+
+'use client';
+
+import { useState } from 'react';
 import { useRouter } from 'next/router';
-import { LocationsView } from '@/components/LocationsView';
-import { GameInitResponse } from '@/lib/gameApi';
-import { useWebSocket } from '@/contexts/WebSocketContext';
-import { useLocationsCache } from '@/hooks/useLocationsCache';
-import { useAdminCacheHooks } from '@/hooks/useAdminCacheHooks';
+import Head from 'next/head';
+import { GameLayout } from '@/components/layout/GameLayout';
+import { LocationsMap } from '@/components/locations/LocationsMap';
+import { LocationsList } from '@/components/locations/LocationsList';
+import { LocationsErrorBoundary } from '@/components/locations/LocationsErrorBoundary';
+import { ViewModeSelector, ViewMode } from '@/components/locations/ViewModeSelector';
+import { useLocations } from '@/hooks/useLocations';
+import styles from '@/styles/pages/locations.module.scss';
 
-interface LocationsPageProps {
-  gameData: GameInitResponse;
-}
+/**
+ * Locations Page Component
+ *
+ * Renders the main locations page with view mode selector and content.
+ *
+ * @component
+ * @returns {JSX.Element} Locations page
+ */
+export default function LocationsPage(): JSX.Element {
+  const router = useRouter();
+  const { locations, locationTree, isLoading, error } = useLocations();
 
-export default function LocationsPage({ gameData }: LocationsPageProps) {
-  const { onPresenceUpdate } = useWebSocket();
-  
-  // Use cache-aware locations hook instead of direct state
-  const { locations, updateLocation, cacheInfo } = useLocationsCache(gameData.locations);
-  
-  // Listen for admin cache invalidation events
-  useAdminCacheHooks();
+  // View mode from URL query param, default to 'mappa'
+  const initialViewMode = (router.query.view as ViewMode) || 'mappa';
+  const [viewMode, setViewMode] = useState<ViewMode>(initialViewMode);
 
-  // No longer needed - presence is handled entirely through globalPresence updates
+  /**
+   * Handle view mode change
+   * Updates URL query param for shareable links
+   */
+  const handleViewModeChange = (mode: ViewMode) => {
+    setViewMode(mode);
+    router.push(
+      {
+        pathname: '/locations',
+        query: { view: mode },
+      },
+      undefined,
+      { shallow: true }
+    );
+  };
 
-  // Debug cache info
-  useEffect(() => {
-    // console.log('🗄️ LocationsPage: Cache info:', cacheInfo);
-    // console.log('🗄️ LocationsPage: Loaded locations:', locations.length);
-  }, [cacheInfo, locations]);
+  /**
+   * Handle district click
+   * Navigates to district detail page with split-panel
+   * Uses slug for SEO-friendly URLs
+   */
+  const handleDistrictClick = (slug: string) => {
+    router.push(`/locations/${slug}`);
+  };
+
+  /**
+   * Handle London label click
+   * Returns character to London (leaves current location)
+   */
+  const handleLondonClick = () => {
+    // TODO: Implement leave location API call if character is in a location
+    console.log('Return to London clicked');
+  };
+
+  // Loading state
+  if (isLoading && locations.length === 0) {
+    return (
+      <>
+        <Head>
+          <title>Mappa di Londra - TenpennyNovels</title>
+          <meta name="description" content="Esplora la mappa interattiva della Londra Vittoriana del 1890. Scopri distretti, locations e luoghi nascosti nel gioco di ruolo TenpennyNovels." />
+        </Head>
+        <GameLayout>
+          <div className={styles.loadingContainer}>
+            <div className={styles.spinner}></div>
+            <p className={styles.loadingText}>Caricamento locations...</p>
+          </div>
+        </GameLayout>
+      </>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <>
+        <Head>
+          <title>Mappa di Londra - TenpennyNovels</title>
+          <meta name="description" content="Esplora la mappa interattiva della Londra Vittoriana del 1890. Scopri distretti, locations e luoghi nascosti nel gioco di ruolo TenpennyNovels." />
+        </Head>
+        <GameLayout>
+          <div className={styles.errorContainer}>
+            <h2 className={styles.errorTitle}>Errore</h2>
+            <p className={styles.errorMessage}>{error}</p>
+            <button
+              className={styles.retryButton}
+              onClick={() => window.location.reload()}
+            >
+              Riprova
+            </button>
+          </div>
+        </GameLayout>
+      </>
+    );
+  }
+
+  // Empty state (no locations accessible)
+  if (locations.length === 0) {
+    return (
+      <>
+        <Head>
+          <title>Mappa di Londra - TenpennyNovels</title>
+          <meta name="description" content="Esplora la mappa interattiva della Londra Vittoriana del 1890. Scopri distretti, locations e luoghi nascosti nel gioco di ruolo TenpennyNovels." />
+        </Head>
+        <GameLayout>
+          <div className={styles.emptyContainer}>
+            <h2 className={styles.emptyTitle}>Nessuna Location Disponibile</h2>
+            <p className={styles.emptyMessage}>
+              Non hai accesso a nessuna location al momento.
+            </p>
+          </div>
+        </GameLayout>
+      </>
+    );
+  }
 
   return (
-    <LocationsView
-      locations={locations}
-      onLocationClick={() => {}} // Not needed anymore - WebSocket handles navigation
-    />
+    <>
+      <Head>
+        <title>Mappa di Londra - TenpennyNovels</title>
+        <meta name="description" content="Esplora la mappa interattiva della Londra Vittoriana del 1890. Scopri distretti, locations e luoghi nascosti nel gioco di ruolo TenpennyNovels." />
+      </Head>
+      <GameLayout>
+        <LocationsErrorBoundary>
+          <div className={styles.locationsPage}>
+            {/* View Mode Selector (Floating Top-Left) */}
+            <ViewModeSelector mode={viewMode} onChange={handleViewModeChange} />
+
+            {/* Map View */}
+            {viewMode === 'mappa' && (
+              <LocationsMap
+                locations={locations}
+                onDistrictClick={handleDistrictClick}
+                onLondonClick={handleLondonClick}
+              />
+            )}
+
+            {/* Textual/List View */}
+            {viewMode === 'testuale' && (
+              <LocationsList locationTree={locationTree} />
+            )}
+
+            {/* Apartments View - TODO: Future */}
+            {viewMode === 'appartamenti' && (
+              <div className={styles.placeholderContainer}>
+                <h2 className={styles.placeholderTitle}>Appartamenti</h2>
+                <p className={styles.placeholderMessage}>
+                  Gestione appartamenti privati (coming soon)
+                </p>
+              </div>
+            )}
+          </div>
+        </LocationsErrorBoundary>
+      </GameLayout>
+    </>
   );
-} 
+}

@@ -1,195 +1,204 @@
 {
+  "_meta": {
+    "version": "1.0.0",
+    "description": "Configurazione tabella lista personaggi",
+    "lastUpdated": "2026-02-28"
+  },
   "table": {
     "name": "character-list",
-    "title": "Lista Personaggi",
-    "description": "Gestione completa di tutti i personaggi del gioco",
+    "title": "Gestione Personaggi",
+    "icon": "🎭",
+    "searchable": true,
+    "selectable": true,
     "pagination": {
       "defaultPageSize": 25,
       "pageSizeOptions": [10, 25, 50, 100]
-    },
-    "search": {
-      "enabled": true,
-      "placeholder": "Cerca per nome personaggio, giocatore, occupazione..."
-    },
-    "selectable": true,
-    "sortable": true
+    }
   },
   "columns": [
     {
-      "key": "characterInfo",
-      "label": "Personaggio",
-      "sortable": true,
-      "filterable": true,
-      "searchable": true,
+      "key": "fullName",
+      "label": "Nome Completo",
+      "type": "text",
+      "visible": true,
       "defaultVisible": true,
-      "alwaysVisible": true,
-      "width": "280px",
-      "render": {
-        "type": "custom",
-        "template": "characterInfo"
-      },
-      "tooltip": "Nome, cognome, occupazione e classe sociale del personaggio"
-    },
-    {
-      "key": "username",
-      "label": "Giocatore",
       "sortable": true,
-      "filterable": true,
-      "searchable": true,
-      "defaultVisible": true,
-      "width": "150px",
+      "width": "200px",
       "render": {
         "type": "text",
-        "className": "playerName"
-      },
-      "tooltip": "Username del giocatore proprietario del personaggio"
+        "className": "font-bold text-primary"
+      }
+    },
+    {
+      "key": "user.username",
+      "label": "Utente",
+      "type": "text",
+      "visible": true,
+      "defaultVisible": true,
+      "sortable": true,
+      "width": "150px",
+      "render": {
+        "type": "text"
+      }
+    },
+    {
+      "key": "age",
+      "label": "Età",
+      "type": "number",
+      "visible": true,
+      "defaultVisible": true,
+      "sortable": true,
+      "width": "80px",
+      "render": {
+        "type": "text"
+      }
+    },
+    {
+      "key": "occupation.name",
+      "label": "Occupazione",
+      "type": "text",
+      "visible": true,
+      "defaultVisible": true,
+      "sortable": false,
+      "width": "150px",
+      "render": {
+        "type": "text"
+      }
     },
     {
       "key": "status",
       "label": "Stato",
-      "sortable": true,
-      "filterable": true,
+      "type": "text",
+      "visible": true,
       "defaultVisible": true,
+      "sortable": true,
       "width": "120px",
       "render": {
-        "type": "custom",
-        "template": "statusBadge"
-      },
-      "tooltip": "Stato di approvazione del personaggio"
+        "type": "badge"
+      }
     },
     {
-      "key": "createdAt",
-      "label": "Creato",
+      "key": "socialClass.name",
+      "label": "Classe Sociale",
+      "type": "text",
+      "visible": true,
+      "defaultVisible": false,
+      "sortable": false,
+      "width": "150px",
+      "render": {
+        "type": "text"
+      }
+    },
+    {
+      "key": "metadata.createdAt",
+      "label": "Creato Il",
+      "type": "datetime",
+      "visible": true,
+      "defaultVisible": false,
       "sortable": true,
+      "width": "180px",
+      "render": {
+        "type": "datetime",
+        "format": "date"
+      }
+    },
+    {
+      "key": "metadata.approvedAt",
+      "label": "Approvato Il",
+      "type": "datetime",
+      "visible": true,
       "defaultVisible": true,
-      "width": "140px",
-      "render": {
-        "type": "custom",
-        "template": "dateInfo"
-      },
-      "tooltip": "Data di creazione del personaggio"
-    },
-    {
-      "key": "lastActivity",
-      "label": "Ultima Attività",
       "sortable": true,
-      "defaultVisible": false,
-      "width": "140px",
+      "width": "180px",
       "render": {
-        "type": "custom",
-        "template": "dateInfo"
-      },
-      "tooltip": "Data dell'ultima attività del personaggio"
-    },
-    {
-      "key": "submittedAt",
-      "label": "Inviato",
-      "sortable": true,
-      "defaultVisible": false,
-      "width": "140px",
-      "render": {
-        "type": "custom",
-        "template": "dateInfo"
-      },
-      "tooltip": "Data di invio per approvazione"
-    },
-    {
-      "key": "reviewedAt",
-      "label": "Revisionato",
-      "sortable": true,
-      "defaultVisible": false,
-      "width": "140px",
-      "render": {
-        "type": "custom",
-        "template": "dateInfo"
-      },
-      "tooltip": "Data di revisione da parte dello staff"
-    },
-    {
-      "key": "characterRoles",
-      "label": "Ruoli",
-      "sortable": false,
-      "defaultVisible": false,
-      "width": "200px",
-      "render": {
-        "type": "custom",
-        "template": "rolesBadges"
-      },
-      "tooltip": "Ruoli di gioco assegnati al personaggio"
-    },
-    {
-      "key": "corporationMemberships",
-      "label": "Corporazioni",
-      "sortable": false,
-      "defaultVisible": false,
-      "width": "200px",
-      "render": {
-        "type": "custom",
-        "template": "corporationsList"
-      },
-      "tooltip": "Corporazioni di cui il personaggio è membro"
-    },
-    {
-      "key": "stats",
-      "label": "Statistiche",
-      "sortable": false,
-      "defaultVisible": true,
-      "width": "160px",
-      "render": {
-        "type": "custom",
-        "template": "statsPreview"
-      },
-      "tooltip": "Anteprima delle statistiche del personaggio"
+        "type": "datetime",
+        "format": "relative"
+      }
     }
   ],
   "actions": [
     {
-      "key": "view",
-      "label": "Visualizza",
+      "key": "edit",
+      "label": "Modifica",
+      "icon": "✏️",
+      "type": "primary",
+      "visible": true
+    },
+    {
+      "key": "view-details",
+      "label": "Dettagli",
       "icon": "👁️",
-      "variant": "secondary",
-      "tooltip": "Visualizza dettagli completi del personaggio",
+      "type": "secondary",
+      "visible": true
+    },
+    {
+      "key": "approve",
+      "label": "Approva",
+      "icon": "✅",
+      "type": "success",
       "visible": true,
-      "permissions": ["characters.read"]
+      "confirmMessage": "Sei sicuro di voler approvare questo personaggio?"
+    },
+    {
+      "key": "reject",
+      "label": "Rifiuta",
+      "icon": "❌",
+      "type": "danger",
+      "visible": true,
+      "confirmMessage": "Sei sicuro di voler rifiutare questo personaggio?"
+    },
+    {
+      "key": "delete",
+      "label": "Elimina",
+      "icon": "🗑️",
+      "type": "danger",
+      "visible": true,
+      "confirmMessage": "Sei sicuro di voler eliminare questo personaggio? Questa azione è irreversibile."
     }
   ],
-  "bulkActions": [],
+  "bulkActions": [
+    {
+      "key": "bulk-approve",
+      "label": "Approva Selezionati",
+      "icon": "✅",
+      "type": "success"
+    },
+    {
+      "key": "bulk-reject",
+      "label": "Rifiuta Selezionati",
+      "icon": "❌",
+      "type": "danger"
+    }
+  ],
   "filters": [
     {
       "key": "status",
       "label": "Stato",
       "type": "select",
+      "field": "status",
       "options": [
-        { "value": "ALL", "label": "Tutti gli stati" },
-        { "value": "DRAFT", "label": "Bozza" },
-        { "value": "PENDING_APPROVAL", "label": "In Attesa" },
-        { "value": "APPROVED", "label": "Approvato" },
-        { "value": "REJECTED", "label": "Respinto" },
-        { "value": "DELETED", "label": "Eliminato" }
-      ]
+        { "value": "", "label": "Tutti" },
+        { "value": "pending", "label": "In Attesa" },
+        { "value": "approved", "label": "Approvati" },
+        { "value": "rejected", "label": "Rifiutati" },
+        { "value": "active", "label": "Attivi" },
+        { "value": "inactive", "label": "Inattivi" }
+      ],
+      "placeholder": "Filtra per stato"
     },
     {
-      "key": "roles",
-      "label": "Ruolo",
+      "key": "socialClass",
+      "label": "Classe Sociale",
       "type": "select",
+      "field": "socialClass.name",
       "options": [
-        { "value": "ALL", "label": "Tutti i ruoli" },
-        { "value": "NO_ROLES", "label": "Nessun ruolo" },
-        { "value": "personaggio", "label": "Personaggio" },
-        { "value": "master", "label": "Master" },
-        { "value": "moderatore", "label": "Moderatore" },
-        { "value": "amministratore", "label": "Amministratore" }
-      ]
+        { "value": "", "label": "Tutte" },
+        { "value": "Aristocrazia", "label": "Aristocrazia" },
+        { "value": "Borghesia", "label": "Borghesia" },
+        { "value": "Classe Operaia", "label": "Classe Operaia" },
+        { "value": "Sottoproletariato", "label": "Sottoproletariato" }
+      ],
+      "placeholder": "Filtra per classe"
     }
-  ],
-  "export": {
-    "enabled": true,
-    "formats": ["csv", "json"],
-    "filename": "character-list"
-  },
-  "refresh": {
-    "enabled": true,
-    "autoRefresh": false,
-    "interval": 30000
-  }
+  ]
 }

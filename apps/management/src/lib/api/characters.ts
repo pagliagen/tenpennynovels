@@ -1,0 +1,109 @@
+/**
+ * Character API
+ *
+ * Funzioni per interagire con gli endpoint /admin/characters del backend.
+ * Tutte le chiamate usano il client axios con retry automatico.
+ */
+
+import { apiClient, withRetry } from './client';
+import type {
+  Character,
+  CharacterListParams,
+  CharacterListResponse,
+  UpdateCharacterData,
+  ApproveCharacterData,
+  RejectCharacterData,
+  ApiResponse
+} from '@/types/api/Character';
+
+/**
+ * Recupera lista characters paginata
+ */
+export async function getCharacters(params: CharacterListParams): Promise<CharacterListResponse> {
+  const response = await withRetry(() =>
+    apiClient.get<CharacterListResponse>('/admin/characters', { params })
+  );
+  return response.data;
+}
+
+/**
+ * Recupera singolo character per ID
+ */
+export async function getCharacterById(id: string): Promise<Character> {
+  const response = await withRetry(() =>
+    apiClient.get<ApiResponse<Character>>(`/admin/characters/${id}`)
+  );
+
+  if (!response.data.success || !response.data.data) {
+    throw new Error(response.data.error || 'Errore nel recupero character');
+  }
+
+  return response.data.data;
+}
+
+/**
+ * Aggiorna character
+ */
+export async function updateCharacter(id: string, data: UpdateCharacterData): Promise<Character> {
+  const response = await withRetry(() =>
+    apiClient.patch<ApiResponse<Character>>(`/admin/characters/${id}`, data)
+  );
+
+  if (!response.data.success || !response.data.data) {
+    throw new Error(response.data.error || 'Errore nell\'aggiornamento character');
+  }
+
+  return response.data.data;
+}
+
+/**
+ * Elimina character (soft delete)
+ */
+export async function deleteCharacter(id: string): Promise<void> {
+  const response = await withRetry(() =>
+    apiClient.delete<ApiResponse<void>>(`/admin/characters/${id}`)
+  );
+
+  if (!response.data.success) {
+    throw new Error(response.data.error || 'Errore nell\'eliminazione character');
+  }
+}
+
+/**
+ * Approva character
+ */
+export async function approveCharacter(id: string, data?: ApproveCharacterData): Promise<Character> {
+  const response = await withRetry(() =>
+    apiClient.post<ApiResponse<Character>>(`/admin/characters/${id}/approve`, data || {})
+  );
+
+  if (!response.data.success || !response.data.data) {
+    throw new Error(response.data.error || 'Errore nell\'approvazione character');
+  }
+
+  return response.data.data;
+}
+
+/**
+ * Rifiuta character
+ */
+export async function rejectCharacter(id: string, data: RejectCharacterData): Promise<Character> {
+  const response = await withRetry(() =>
+    apiClient.post<ApiResponse<Character>>(`/admin/characters/${id}/reject`, data)
+  );
+
+  if (!response.data.success || !response.data.data) {
+    throw new Error(response.data.error || 'Errore nel rifiuto character');
+  }
+
+  return response.data.data;
+}
+
+/**
+ * Attiva/disattiva character
+ */
+export async function toggleCharacterStatus(id: string, isActive: boolean): Promise<Character> {
+  return updateCharacter(id, {
+    status: isActive ? 'active' : 'inactive'
+  });
+}

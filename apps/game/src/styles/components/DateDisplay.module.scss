@@ -1,0 +1,26 @@
+/**
+ * Date Display Styles
+ */
+
+.dateDisplay {
+  width: 100%;
+  text-align: center;
+}
+
+.date {
+  font-family: 'Playfair Display', serif;
+  color: var(--color-primary);
+  font-size: $font-size-base * 0.9;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-shadow: 0 0 5px rgba(139, 69, 19, 0.5);
+  margin-bottom: var(--spacing-xs);
+}
+
+.time {
+  font-family: 'Playfair Display', serif;
+  color: var(--color-primary);
+  font-size: 17.6px;  
+  font-weight: $font-weight-bold;
+  text-shadow: 0 0 5px rgba(139, 69, 19, 0.5);
+}

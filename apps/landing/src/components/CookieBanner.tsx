@@ -1,46 +1,174 @@
+/**
+ * Cookie Banner Component
+ *
+ * Displays a cookie consent banner for GDPR/privacy compliance.
+ * Only shows if user hasn't previously accepted. Persists consent in localStorage.
+ *
+ * **Features**:
+ * - SSR safe (only renders client-side)
+ * - localStorage persistence
+ * - Link to Privacy Policy
+ * - Dismissible
+ * - Victorian styling
+ *
+ * **Cookie Usage**:
+ * This application uses only essential cookies for:
+ * - Authentication sessions
+ * - Game state management
+ *
+ * No tracking or advertising cookies are used.
+ *
+ * @module components/CookieBanner
+ */
+
 import React, { useState, useEffect } from 'react';
-import styles from '@/styles/components/CookieBanner.module.scss';
+import { ClientOnly } from './ClientOnly';
 
-const COOKIE_BANNER_KEY = 'tpn_cookie_consent';
+/**
+ * LocalStorage key for cookie consent
+ *
+ * @constant
+ */
+const COOKIE_CONSENT_KEY = 'tpn_cookie_consent';
 
-export const CookieBanner: React.FC = () => {
-  const [visible, setVisible] = useState(false);
+/**
+ * Cookie Banner Content Component
+ *
+ * Internal component that handles the actual banner logic.
+ * Wrapped in ClientOnly to prevent SSR issues with localStorage.
+ *
+ * @returns {JSX.Element | null} Banner or null if consent given
+ */
+const CookieBannerContent: React.FC = () => {
+  const [isVisible, setIsVisible] = useState<boolean>(false);
 
+  /**
+   * Check localStorage for existing consent on mount
+   *
+   * If user has previously accepted, don't show banner.
+   * If localStorage is unavailable, don't show banner (fail gracefully).
+   */
   useEffect(() => {
-    // Check if user has already consented
-    const consent = localStorage.getItem(COOKIE_BANNER_KEY);
-    if (!consent) {
-      setVisible(true);
+    try {
+      const consent = localStorage.getItem(COOKIE_CONSENT_KEY);
+      if (!consent) {
+        setIsVisible(true);
+      }
+    } catch (error) {
+      // localStorage unavailable (private mode, disabled, etc.)
+      // Don't show banner to avoid annoying users
+      console.warn('[CookieBanner] localStorage unavailable:', error);
     }
   }, []);
 
+  /**
+   * Handles user acceptance of cookies
+   *
+   * Saves consent to localStorage and hides banner.
+   * If localStorage save fails, still hide banner (better UX).
+   */
   const handleAccept = () => {
-    localStorage.setItem(COOKIE_BANNER_KEY, 'accepted');
-    setVisible(false);
+    try {
+      localStorage.setItem(COOKIE_CONSENT_KEY, 'accepted');
+    } catch (error) {
+      console.warn('[CookieBanner] Failed to save consent:', error);
+    }
+
+    // Hide banner regardless of save success
+    setIsVisible(false);
   };
 
-  if (!visible) return null;
+  // Don't render if not visible
+  if (!isVisible) {
+    return null;
+  }
 
   return (
-    <div className={styles.cookieBanner}>
-      <div className={styles.bannerContent}>
-        <div className={styles.bannerText}>
-          <h4 className={styles.bannerTitle}>🍪 Cookie & Privacy</h4>
-          <p className={styles.bannerDescription}>
+    <div className="cookie-banner">
+      <div className="cookie-banner__content">
+        {/* Banner text */}
+        <div className="cookie-banner__text">
+          <h4 className="cookie-banner__title">🍪 Cookie & Privacy</h4>
+          <p className="cookie-banner__description">
             Questo sito utilizza <strong>cookie essenziali</strong> per il funzionamento
             dell'autenticazione e della gestione delle sessioni di gioco.
             Non utilizziamo cookie di tracciamento pubblicitario.
           </p>
         </div>
-        <div className={styles.bannerActions}>
-          <button onClick={handleAccept} className={styles.acceptButton}>
+
+        {/* Banner actions */}
+        <div className="cookie-banner__actions">
+          <button
+            type="button"
+            className="cookie-banner__accept"
+            onClick={handleAccept}
+          >
             Accetto
           </button>
-          <a href="/privacy" target="_blank" className={styles.privacyLink}>
+
+          <a
+            href="/privacy"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="cookie-banner__privacy-link"
+          >
             Privacy Policy
           </a>
         </div>
       </div>
     </div>
+  );
+};
+
+/**
+ * Cookie Banner Component
+ *
+ * Renders a GDPR-compliant cookie consent banner.
+ * Only shows if user hasn't previously accepted cookies.
+ *
+ * **Benefits**:
+ * - **SSR Safe**: Uses ClientOnly wrapper
+ * - **Persistent**: Remembers user choice via localStorage
+ * - **Graceful Degradation**: Works even if localStorage unavailable
+ * - **Accessibility**: Semantic HTML, keyboard navigation
+ *
+ * **Implementation Note**:
+ * This component should be placed in the main layout (_app.tsx)
+ * so it appears on all pages.
+ *
+ * @returns {JSX.Element} Cookie banner (wrapped in ClientOnly)
+ *
+ * @example
+ * ```typescript
+ * import { CookieBanner } from '@/components/CookieBanner';
+ *
+ * function MyApp({ Component, pageProps }: AppProps) {
+ *   return (
+ *     <>
+ *       <Component {...pageProps} />
+ *       <CookieBanner />
+ *     </>
+ *   );
+ * }
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // In layout component
+ * function Layout({ children }: { children: React.ReactNode }) {
+ *   return (
+ *     <div>
+ *       {children}
+ *       <CookieBanner />
+ *     </div>
+ *   );
+ * }
+ * ```
+ */
+export const CookieBanner: React.FC = () => {
+  return (
+    <ClientOnly>
+      <CookieBannerContent />
+    </ClientOnly>
   );
 };

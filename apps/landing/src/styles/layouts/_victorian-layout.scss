@@ -1,0 +1,246 @@
+/**
+ * Victorian Layout Styles
+ *
+ * Main layout with Victorian frame, sidebar navigation, and decorative elements.
+ */
+
+.victorian-layout {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  overflow: hidden;
+
+  /**
+   * Background image (desktop)
+   */
+  &__background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('/images/sfondo.png');
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    z-index: -2;
+
+    @media (max-width: 767px) {
+      display: none;
+    }
+  }
+
+  /**
+   * Mobile background
+   */
+  &__mobile-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('/images/sfondo.png');
+    background-size: cover;
+    background-position: center;
+    z-index: -2;
+
+    @media (min-width: 768px) {
+      display: none;
+    }
+  }
+
+  /* ===========================
+     MOBILE MENU
+     =========================== */
+
+  /**
+   * Hamburger menu button
+   */
+  &__hamburger {
+    position: fixed;
+    top: var(--spacing-md);
+    left: var(--spacing-md);
+    z-index: 1001;
+    width: 40px;
+    height: 40px;
+    padding: var(--spacing-xs);
+    background: var(--color-bg-secondary);
+    border: 2px solid var(--color-border-primary);
+    cursor: pointer;
+    transition: var(--transition-button);
+
+    @media (min-width: 768px) {
+      display: none;
+    }
+
+    &:hover {
+      background: var(--color-primary);
+    }
+
+    &--open &-bar:nth-child(1) {
+      transform: translateY(8px) rotate(45deg);
+    }
+
+    &--open &-bar:nth-child(2) {
+      opacity: 0;
+    }
+
+    &--open &-bar:nth-child(3) {
+      transform: translateY(-8px) rotate(-45deg);
+    }
+  }
+
+  &__hamburger-bar {
+    display: block;
+    width: 100%;
+    height: 2px;
+    background: var(--color-primary);
+    margin: 6px 0;
+    transition: var(--transition-base);
+  }
+
+  /**
+   * Mobile navigation overlay
+   */
+  &__mobile-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1000;
+    background: var(--color-bg-primary);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity var(--transition-base) var(--ease-out),
+                visibility var(--transition-base) var(--ease-out);
+
+    @media (min-width: 768px) {
+      display: none;
+    }
+
+    &--open {
+      opacity: 1;
+      visibility: visible;
+    }
+  }
+
+  &__mobile-nav-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-xl);
+    height: 100%;
+    padding: var(--spacing-2xl);
+  }
+
+  /* ===========================
+     DESKTOP SIDEBAR
+     =========================== */
+
+  /**
+   * Left sidebar
+   */
+  &__sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 250px;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: rgba(26, 15, 10, 0.9);
+    border-right: 2px solid var(--color-border-primary);
+    padding: var(--spacing-2xl) var(--spacing-lg);
+    z-index: 10;
+
+    @media (max-width: 767px) {
+      display: none;
+    }
+  }
+
+  /**
+   * Logo section
+   */
+  &__logo {
+    width: 100%;
+    height: 150px;
+    margin-bottom: var(--spacing-3xl);
+    background-image: url('/images/title.png');
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+
+  /**
+   * Navigation
+   */
+  &__nav {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+
+  &__nav-button {
+    width: 100%;
+    justify-content: flex-start;
+    text-align: left;
+    font-size: var(--font-size-lg);
+    padding: var(--spacing-md);
+    transition: var(--transition-button);
+
+    &:hover {
+      transform: translateX(8px);
+      color: var(--color-primary);
+    }
+  }
+
+  /* ===========================
+     MAIN CONTENT AREA
+     =========================== */
+
+  /**
+   * Right content area
+   */
+  &__content {
+    flex: 1;
+    margin-left: 0;
+    position: relative;
+    z-index: 1;
+
+    @media (min-width: 768px) {
+      margin-left: 250px;
+    }
+  } 
+  
+  /**
+   * Window content (raven silhouette background)
+   */
+  &__window-content {
+    width: 100%;
+    height: 100%;
+    background-image: url('/images/sfondo.png');
+    background-size: 40%;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 0.3;
+  }
+
+  /**
+   * Page content (positioned over window)
+   */
+  &__page-content {
+    position: relative;
+    z-index: 2;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-container-mobile);
+
+    @media (min-width: 768px) {
+      padding: var(--spacing-container-desktop);
+    }
+  }
+}

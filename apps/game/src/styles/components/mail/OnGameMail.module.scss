@@ -1,0 +1,686 @@
+/**
+ * OnGame Mail System Styles
+ *
+ * Victorian postal system aesthetic matching Window component theme.
+ * Colors: gold (#ff9500), dark backgrounds, serif fonts.
+ *
+ * @module styles/components/mail/OnGameMail
+ * @since 2.0.0
+ */
+
+/* ==========================================================================
+   MAIL PANEL (Main Container)
+   ========================================================================== */
+
+.mailPanel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  color: #e8e0d5;
+  background: rgba(20, 20, 20, 0.98);
+}
+
+/* ==========================================================================
+   INBOX VIEW (Thread List)
+   ========================================================================== */
+
+.inboxView {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.inboxHeader {
+  padding: 16px;
+  background: linear-gradient(135deg, rgba(139, 69, 19, 0.95), rgba(184, 134, 11, 0.95));
+  border-bottom: 2px solid rgba(255, 149, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.inboxTitle {
+  font-size: 20px;
+  font-weight: 600;
+  color: #ffe4b5;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+.composeButton {
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(255, 149, 0, 0.6);
+  border-radius: 4px;
+  background: rgba(60, 40, 20, 0.8);
+  color: #ffd700;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(80, 50, 30, 0.9);
+    border-color: rgba(255, 149, 0, 0.9);
+    box-shadow: 0 0 8px rgba(255, 149, 0, 0.5);
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+.threadsList {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+
+  /* Victorian scrollbar */
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgba(40, 30, 20, 0.5);
+    border-radius: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(139, 69, 19, 0.8);
+    border-radius: 4px;
+    border: 1px solid rgba(255, 149, 0, 0.4);
+
+    &:hover {
+      background: rgba(184, 134, 11, 0.9);
+    }
+  }
+}
+
+.emptyState {
+  text-align: center;
+  padding: 48px 24px;
+  color: #999;
+  font-style: italic;
+
+  p {
+    margin: 8px 0;
+  }
+
+  .emptyIcon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+  }
+}
+
+/* ==========================================================================
+   THREAD ITEM (Single conversation row)
+   ========================================================================== */
+
+.threadItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  background: rgba(40, 30, 20, 0.6);
+  border: 1px solid rgba(139, 69, 19, 0.5);
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(60, 40, 20, 0.8);
+    border-color: rgba(255, 149, 0, 0.7);
+    box-shadow: 0 2px 8px rgba(255, 149, 0, 0.2);
+  }
+
+  &.unread {
+    border-left: 4px solid #ff9500;
+    background: rgba(60, 40, 20, 0.7);
+
+    .threadContent {
+      .threadTitle {
+        font-weight: 700;
+      }
+    }
+  }
+}
+
+.threadAvatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 149, 0, 0.6);
+  flex-shrink: 0;
+  overflow: hidden;
+  background: rgba(20, 20, 20, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 600;
+  color: #ffd700;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.threadContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.threadHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 4px;
+}
+
+.threadTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: #ffe4b5;
+  margin: 0;
+}
+
+.threadTime {
+  font-size: 13px;
+  color: #999;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
+.threadPreview {
+  font-size: 14px;
+  color: #ccc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0;
+
+  .previewIcon {
+    margin-right: 4px;
+  }
+
+  .sentByMe {
+    color: #ff9500;
+    margin-right: 4px;
+  }
+}
+
+.unreadBadge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #ef4444;
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 12px;
+  min-width: 20px;
+  text-align: center;
+}
+
+/* ==========================================================================
+   THREAD VIEW (Conversation)
+   ========================================================================== */
+
+.threadView {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.threadHeader {
+  padding: 16px;
+  background: linear-gradient(135deg, rgba(139, 69, 19, 0.95), rgba(184, 134, 11, 0.95));
+  border-bottom: 2px solid rgba(255, 149, 0, 0.6);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.backButton {
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(255, 149, 0, 0.6);
+  border-radius: 4px;
+  background: rgba(60, 40, 20, 0.8);
+  color: #ffd700;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+
+  &:hover {
+    background: rgba(80, 50, 30, 0.9);
+    border-color: rgba(255, 149, 0, 0.9);
+    box-shadow: 0 0 8px rgba(255, 149, 0, 0.5);
+  }
+}
+
+.threadHeaderTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: #ffe4b5;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+  flex: 1;
+}
+
+.messagesList {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  /* Victorian scrollbar */
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgba(40, 30, 20, 0.5);
+    border-radius: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(139, 69, 19, 0.8);
+    border-radius: 4px;
+    border: 1px solid rgba(255, 149, 0, 0.4);
+
+    &:hover {
+      background: rgba(184, 134, 11, 0.9);
+    }
+  }
+}
+
+/* ==========================================================================
+   MESSAGE ITEM (Single message bubble)
+   ========================================================================== */
+
+.messageItem {
+  display: flex;
+  flex-direction: column;
+  max-width: 70%;
+  padding: 12px 16px;
+  border-radius: 8px;
+  word-wrap: break-word;
+  position: relative;
+
+  @media (max-width: 768px) {
+    max-width: 85%;
+  }
+
+  &.sent {
+    align-self: flex-end;
+    background: rgba(139, 69, 19, 0.8);
+    border: 1px solid rgba(255, 149, 0, 0.5);
+  }
+
+  &.received {
+    align-self: flex-start;
+    background: rgba(58, 35, 23, 0.9);
+    border: 1px solid rgba(184, 134, 11, 0.6);
+  }
+
+  &.inTransit {
+    opacity: 0.7;
+    border-style: dashed;
+  }
+}
+
+.messageHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: #ccc;
+}
+
+.messageIcon {
+  font-size: 16px;
+}
+
+.messageTime {
+  color: #999;
+}
+
+.messagePostage {
+  color: #ffd700;
+  font-weight: 600;
+}
+
+.messageSubject {
+  font-weight: 700;
+  font-size: 15px;
+  color: #ffe4b5;
+  margin-bottom: 8px;
+}
+
+.messageContent {
+  font-size: 15px;
+  line-height: 1.5;
+  color: #e8e0d5;
+  white-space: pre-wrap;
+}
+
+.inTransitBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #ffd700;
+  background: rgba(139, 69, 19, 0.6);
+  padding: 4px 8px;
+  border-radius: 4px;
+  margin-top: 8px;
+  border: 1px solid rgba(255, 149, 0, 0.4);
+}
+
+/* ==========================================================================
+   REPLY FORM (Quick reply in thread view)
+   ========================================================================== */
+
+.replyForm {
+  padding: 16px;
+  background: rgba(40, 30, 20, 0.9);
+  border-top: 2px solid rgba(255, 149, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.formRow {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.typeSelector {
+  flex: 1;
+  padding: 8px 12px;
+  background: rgba(20, 20, 20, 0.8);
+  border: 1px solid rgba(139, 69, 19, 0.6);
+  border-radius: 4px;
+  color: #e8e0d5;
+  font-family: 'Georgia', serif;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: rgba(255, 149, 0, 0.8);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: rgba(255, 149, 0, 1);
+    box-shadow: 0 0 8px rgba(255, 149, 0, 0.3);
+  }
+}
+
+.textarea {
+  width: 100%;
+  min-height: 80px;
+  max-height: 200px;
+  padding: 12px;
+  background: rgba(20, 20, 20, 0.8);
+  border: 1px solid rgba(139, 69, 19, 0.6);
+  border-radius: 4px;
+  color: #e8e0d5;
+  font-family: 'Georgia', serif;
+  font-size: 15px;
+  line-height: 1.5;
+  resize: vertical;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: rgba(255, 149, 0, 0.8);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: rgba(255, 149, 0, 1);
+    box-shadow: 0 0 8px rgba(255, 149, 0, 0.3);
+  }
+
+  &::placeholder {
+    color: #666;
+    font-style: italic;
+  }
+}
+
+.formFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.charCount {
+  font-size: 13px;
+  color: #999;
+
+  &.warning {
+    color: #fbbf24;
+  }
+
+  &.error {
+    color: #ef4444;
+  }
+}
+
+.postageCost {
+  font-size: 14px;
+  color: #ffd700;
+  font-weight: 600;
+}
+
+.sendButton {
+  padding: 8px 24px;
+  background: linear-gradient(135deg, rgba(139, 69, 19, 0.95), rgba(184, 134, 11, 0.95));
+  border: 1px solid rgba(255, 149, 0, 0.8);
+  border-radius: 4px;
+  color: #ffe4b5;
+  font-family: 'Georgia', serif;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, rgba(184, 134, 11, 0.95), rgba(139, 69, 19, 0.95));
+    box-shadow: 0 0 12px rgba(255, 149, 0, 0.5);
+    transform: translateY(-1px);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+/* ==========================================================================
+   COMPOSE VIEW (Full compose form)
+   ========================================================================== */
+
+.composeView {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 16px;
+  overflow-y: auto;
+
+  /* Victorian scrollbar */
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgba(40, 30, 20, 0.5);
+    border-radius: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(139, 69, 19, 0.8);
+    border-radius: 4px;
+    border: 1px solid rgba(255, 149, 0, 0.4);
+
+    &:hover {
+      background: rgba(184, 134, 11, 0.9);
+    }
+  }
+}
+
+.composeHeader {
+  margin-bottom: 16px;
+
+  h2 {
+    font-size: 22px;
+    font-weight: 600;
+    color: #ffe4b5;
+    margin: 0 0 8px 0;
+  }
+}
+
+.formGroup {
+  margin-bottom: 16px;
+}
+
+.label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffd700;
+  margin-bottom: 8px;
+}
+
+.input {
+  width: 100%;
+  padding: 8px 12px;
+  background: rgba(20, 20, 20, 0.8);
+  border: 1px solid rgba(139, 69, 19, 0.6);
+  border-radius: 4px;
+  color: #e8e0d5;
+  font-family: 'Georgia', serif;
+  font-size: 15px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: rgba(255, 149, 0, 0.8);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: rgba(255, 149, 0, 1);
+    box-shadow: 0 0 8px rgba(255, 149, 0, 0.3);
+  }
+
+  &::placeholder {
+    color: #666;
+    font-style: italic;
+  }
+}
+
+.composeActions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(139, 69, 19, 0.5);
+}
+
+.cancelButton {
+  flex: 1;
+  padding: 12px 24px;
+  background: rgba(60, 40, 20, 0.8);
+  border: 1px solid rgba(139, 69, 19, 0.6);
+  border-radius: 4px;
+  color: #ccc;
+  font-family: 'Georgia', serif;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(80, 50, 30, 0.9);
+    border-color: rgba(255, 149, 0, 0.8);
+    color: #ffe4b5;
+  }
+}
+
+.submitButton {
+  flex: 2;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, rgba(139, 69, 19, 0.95), rgba(184, 134, 11, 0.95));
+  border: 1px solid rgba(255, 149, 0, 0.8);
+  border-radius: 4px;
+  color: #ffe4b5;
+  font-family: 'Georgia', serif;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, rgba(184, 134, 11, 0.95), rgba(139, 69, 19, 0.95));
+    box-shadow: 0 0 12px rgba(255, 149, 0, 0.5);
+    transform: translateY(-1px);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+/* ==========================================================================
+   LOADING/ERROR STATES
+   ========================================================================== */
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  color: #ffd700;
+  font-size: 18px;
+}
+
+.error {
+  padding: 16px;
+  margin: 16px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  border-radius: 6px;
+  color: #fca5a5;
+  font-size: 15px;
+}

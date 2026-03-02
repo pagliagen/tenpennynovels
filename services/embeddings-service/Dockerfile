@@ -21,7 +21,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN python3 -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')"
 
 # Copy application code
-COPY embeddings_generator.py .
 COPY embeddings_service.py .
 
 # Expose port

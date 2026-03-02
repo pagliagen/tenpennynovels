@@ -1,124 +1,99 @@
-import React, { useState, useEffect } from 'react';
-import Head from 'next/head'; 
-import { DocumentsLayout } from '@/components/DocumentsLayout';
-import { getDocuments, Document } from '@/lib/documentApi';
-import { AuthContext } from '@/lib/auth';
-import styles from '@/styles/pages/DocumentView.module.scss';
+/**
+ * Ambientazione Section Index Page
+ *
+ * Lists all ambientazione documents with grouping.
+ * Uses ISR for performance and SEO.
+ *
+ * @module pages/ambientazione/index
+ * @since 1.0.0
+ */
 
-export default function AmbientazioneIndex() {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [documents, setDocuments] = useState<Document[]>([]);
-  const [filteredDocuments, setFilteredDocuments] = useState<Document[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [authContext] = useState<AuthContext>({ isAuthenticated: false, tokens: {} });
+import { GetStaticProps } from 'next';
+import Link from 'next/link';
+import { SEO } from '@/components/SEO';
+import { documentsApi } from '@/lib/api/documents';
+import { useSimpleDocumentGroups } from '@/hooks/useDocumentGroups';
+import type { Document } from '@/types/document';
+import styles from '@/styles/pages/DocumentList.module.scss';
 
-  // Fetch ambientazione documents on mount
-  useEffect(() => {
-    async function fetchDocuments() {
-      try {
-        setLoading(true);
-        const docs = await getDocuments('ambientazione');
-        setDocuments(docs);
-        setError(null);
-      } catch (err) {
-        console.error('Error fetching documents:', err);
-        setError('Errore nel caricamento dei documenti');
-      } finally {
-        setLoading(false);
-      }
-    }
-    
-    fetchDocuments();
-  }, []);
+interface AmbientazioneIndexProps {
+  documents: Document[];
+}
 
-  // Initialize filtered documents only once
-  useEffect(() => {
-    if (filteredDocuments.length === 0 && documents.length > 0) {
-      setFilteredDocuments(documents);
-    }
-  }, [documents, filteredDocuments.length]);
-
-  // Handle search filtering
-  useEffect(() => {
-    if (documents.length === 0) return;
-    
-    if (searchTerm.trim() === '') {
-      setFilteredDocuments(documents);
-    } else {
-      const filtered = documents.filter(doc => 
-        doc.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (doc.description && doc.description.toLowerCase().includes(searchTerm.toLowerCase()))
-      );
-      setFilteredDocuments(filtered);
-    }
-  }, [searchTerm]); // Remove documents dependency to avoid loop
-
-  const formatDate = (date: Date | string | undefined) => {
-    if (!date) return 'Data sconosciuta';
-    const dateObj = typeof date === 'string' ? new Date(date) : date;
-    if (isNaN(dateObj.getTime())) return 'Data non valida';
-    return dateObj.toLocaleDateString('it-IT', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
+export default function AmbientazioneIndex({ documents }: AmbientazioneIndexProps) {
+  const groups = useSimpleDocumentGroups(documents);
 
   return (
-    <DocumentsLayout 
-      authContext={authContext}
-    >
-      <Head>
-        <title>TenpennyNovels Documenti - Ambientazione</title>
-        <meta 
-          name="description" 
-          content="Esplora l'ambientazione della Londra Vittoriana per il nostro gioco di ruolo. Scopri i luoghi, la storia e l'atmosfera del nostro mondo di gioco." 
-        />
-      </Head>
+    <>
+      <SEO
+        title="Ambientazione"
+        description="Documenti di ambientazione per TenpennyNovels - Londra vittoriana, personaggi, luoghi e storie. Esplora il mondo vittoriano del 1890."
+        ogType="website"
+      />
 
-      {/* Contenuto pagina Ambientazione */}
-      <div className={styles.documentContainer}>
-        <header className={styles.documentHeader}>
-          <nav className={styles.breadcrumb}>
-            <a href="/">Documenti</a>
-            <span className={styles.separator}>›</span>
-            <a href="/ambientazione/">Ambientazione</a>
-            <span className={styles.separator}>›</span>
-            <span className={styles.currentPage}>
-              Esplora la Londra Vittoriana del 1885: luoghi, storia, misteri e società
-            </span>
-          </nav>  
+      <div className={styles.page}>
+        <header className={styles.pageHeader}>
+          <h1 className={styles.pageTitle}>🌍 Ambientazione</h1>
+          <p className={styles.pageDescription}>
+            Esplora il mondo di TenpennyNovels: la Londra vittoriana del 1890, i suoi luoghi, personaggi e
+            storie.
+          </p>
         </header>
-        <div className={styles.layout}>
-          <h1>♦ Ambientazione: Londra 1885 ♦</h1>
-          <div className={styles.paper}>
-            <div>
-              <b>Benvenuto nella sezione <span style={{ fontStyle: 'italic' }}>Ambientazione</span>!</b><br /><br />
-              In questa raccolta potrai esplorare i quartieri più iconici della città, scoprire le sue atmosfere nebbiose, i luoghi di potere, le zone malfamate e i segreti che si celano tra le sue strade.<br /><br />
-              Ogni documento è pensato per aiutarti a calarti nei panni dei personaggi e a vivere appieno l’esperienza di gioco.<br /><br />
-              <b>Cosa troverai:</b><br />
-              - Descrizioni dettagliate di luoghi, edifici, taverne, club esclusivi, mercati, vicoli e monumenti<br />
-              - Informazioni su usi, costumi, classi sociali e curiosità storiche<br />
-              - Spunti narrativi, leggende metropolitane, personaggi illustri e misteri irrisolti<br /><br />
-              <b>Come usare questa sezione:</b><br />
-              Utilizza il menu laterale per navigare tra i vari documenti: ogni sezione è dedicata a un aspetto diverso della Londra di fine Ottocento.<br /><br />
-              <div className={styles.highlight} style={{ margin: '1.5rem 0' }}>
-                Questa sezione è in costante aggiornamento: torna spesso per scoprire nuovi dettagli, mappe, spunti narrativi e approfondimenti che renderanno la tua esperienza ancora più coinvolgente!
-              </div>
-              Puoi consultare liberamente tutti i documenti disponibili per arricchire la tua interpretazione e la narrazione.<br />
-              Se hai suggerimenti o vuoi contribuire con materiale originale, contatta i moderatori o utilizza gli strumenti di segnalazione presenti nella piattaforma.
-            </div>
+
+        {groups.length === 0 ? (
+          <div className={styles.emptyState}>
+            <p>Nessun documento di ambientazione disponibile al momento.</p>
           </div>
-        </div>
-        <footer className={styles.documentFooter}> 
-          <div className={styles.lastUpdated}>
-            <p>Ultima modifica: {formatDate(documents[0]?.lastUpdated || new Date())}</p>
-            <p>Creato da: {documents[0]?.createdBy?.username || 'Staff'}</p>
+        ) : (
+          <div className={styles.groups}>
+            {groups.map((group) => (
+              <section key={group.name} className={styles.group}>
+                <h2 className={styles.groupTitle}>{group.name}</h2>
+                <div className={styles.documentGrid}>
+                  {group.documents.map((doc) => (
+                    <Link
+                      key={doc._id}
+                      href={`/ambientazione/${doc.path}`}
+                      className={styles.documentCard}
+                    >
+                      <h3 className={styles.documentTitle}>{doc.title}</h3>
+                      {doc.description && (
+                        <p className={styles.documentDescription}>{doc.description}</p>
+                      )}
+                      {!doc.isPublic && (
+                        <span className={styles.privateBadge}>🔒 Privato</span>
+                      )}
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            ))}
           </div>
-        </footer>
+        )}
       </div>
-    </DocumentsLayout>
+    </>
   );
 }
 
+export const getStaticProps: GetStaticProps = async () => {
+  try {
+    // Fetch documents server-side (no auth, returns only public docs)
+    const documents = await documentsApi.list({ type: 'ambientazione' });
+
+    return {
+      props: {
+        documents,
+      },
+      revalidate: 3600, // Revalidate every hour
+    };
+  } catch (error) {
+    console.error('[Ambientazione Index] Error fetching documents:', error);
+
+    return {
+      props: {
+        documents: [],
+      },
+      revalidate: 60, // Retry after 1 minute on error
+    };
+  }
+};

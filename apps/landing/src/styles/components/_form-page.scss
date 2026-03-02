@@ -1,0 +1,39 @@
+/**
+ * Form Page Component Styles
+ *
+ * Layout wrapper for form pages.
+ */
+
+.form-page {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: var(--spacing-container-mobile);
+
+  @media (min-width: 768px) {
+    padding: var(--spacing-container-desktop);
+  }
+
+  /**
+   * Form layout - Horizontal flex for form fields
+   * Applies to all form field containers with semantic class names
+   */
+  form,
+  form .login-fields,
+  form .register-fields,
+  form .character-creation-fields,
+  form .forgot-password-fields,
+  form .reset-password-fields {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+
+    &.register-form {
+      flex-direction: column;
+    }
+
+    &.register-fields {
+      flex-direction: column;
+    }
+  }
+}

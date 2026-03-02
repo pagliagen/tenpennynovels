@@ -1,0 +1,131 @@
+@use 'sass:color';
+@import '../../styles/variables.scss';
+
+.modalContent {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-2xl;
+  color: $color-text-secondary;
+}
+
+.toolbar {
+  display: flex;
+  justify-content: flex-end;
+  gap: $spacing-sm;
+  margin-bottom: -$spacing-md; // Reduce gap to title section
+}
+
+.previewButton {
+  padding: $spacing-sm $spacing-md;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: $border-radius-md;
+  background-color: rgba(255, 255, 255, 0.05);
+  color: $color-text-primary;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all $transition-fast;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: $color-primary;
+    color: $color-primary;
+  }
+}
+
+.titleSection {
+  label {
+    display: block;
+    margin-bottom: $spacing-sm;
+    font-weight: 600;
+    color: $color-text-primary;
+  }
+
+  .titleInput {
+    width: 100%;
+    padding: $spacing-sm $spacing-md;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: $border-radius-md;
+    background-color: rgba(255, 255, 255, 0.05);
+    color: $color-text-primary;
+    font-size: 18px;
+
+    &:focus {
+      outline: none;
+      border-color: $color-primary;
+    }
+  }
+}
+
+.descriptionSection {
+  label {
+    display: block;
+    margin-bottom: $spacing-sm;
+    font-weight: 600;
+    color: $color-text-primary;
+  }
+
+  .descriptionInput {
+    width: 100%;
+    padding: $spacing-sm $spacing-md;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: $border-radius-md;
+    background-color: rgba(255, 255, 255, 0.05);
+    color: $color-text-primary;
+    font-size: 15px;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 76px;
+
+    &:focus {
+      outline: none;
+      border-color: $color-primary;
+    }
+
+    &::placeholder {
+      color: rgba(255, 255, 255, 0.3);
+    }
+  }
+}
+
+.cancelButton,
+.saveButton {
+  padding: $spacing-sm $spacing-lg;
+  border-radius: $border-radius-md;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all $transition-fast;
+}
+
+.cancelButton {
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: $color-text-secondary;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: $color-text-primary;
+  }
+}
+
+.saveButton {
+  background-color: $color-primary;
+  border: 1px solid $color-primary;
+  color: white;
+
+  &:hover:not(:disabled) {
+    background-color: color.scale($color-primary, $lightness: -10%);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}

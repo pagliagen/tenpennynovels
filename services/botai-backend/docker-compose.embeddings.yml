@@ -1,0 +1,21 @@
+# BotAI Embeddings Service - SHARED
+# Servizio condiviso tra dev e prod (stateless)
+# Porta: 5002
+
+services:
+  # Embeddings Service (shared tra dev e prod)
+  botai-embeddings:
+    build:
+      context: ./embeddings-service
+      dockerfile: Dockerfile
+    image: botai-embeddings:latest
+    container_name: botai-embeddings
+    restart: unless-stopped
+    ports:
+      - "5002:5002"  # Porta condivisa
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:5002/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s

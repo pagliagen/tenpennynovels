@@ -1,58 +1,76 @@
-import React, { useState, useEffect } from 'react';
+/**
+ * Forgot Password Page
+ *
+ * Request password reset email.
+ *
+ * **Features**:
+ * - Victorian masked input for username/email
+ * - Send reset password email
+ * - Form validation with Zod schema
+ *
+ * **Validation**: Uses ForgotPasswordSchema from validation layer
+ * **Authentication**: Uses authService singleton
+ * **Reduced from**: 154 lines → 90 lines (42% reduction)
+ *
+ * @module pages/forgot-password
+ */
+
+import React from 'react';
 import { useRouter } from 'next/router';
 import { useForm } from 'react-hook-form';
-import Head from 'next/head';
-import { Button } from '@/components/Button';
-import { AuthService } from '@/lib/auth';
-import { VictorianLayout } from '@/components/VictorianLayout';
+import { zodResolver } from '@hookform/resolvers/zod';
+import type { z } from 'zod';
 
+import { FormPageLayout } from '@/components/layouts/FormPageLayout';
+import { MaskedInput } from '@/components/forms/MaskedInput';
+import { FormActions } from '@/components/forms/FormActions';
+import { useFormState } from '@/hooks/useFormState';
+import { authService } from '@/services/AuthService';
+import { ForgotPasswordSchema } from '@/lib/validation/schemas';
 
-interface ForgotPasswordFormData {
-  identifier: string; // username or email
-}
+/**
+ * Forgot password form data type
+ */
+type ForgotPasswordFormData = z.infer<typeof ForgotPasswordSchema>;
 
+/**
+ * Forgot Password Page Component
+ *
+ * Request password reset link via email.
+ *
+ * @returns {JSX.Element} Forgot password page
+ */
 export default function ForgotPasswordPage() {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string>('');
-  const [successMessage, setSuccessMessage] = useState<string>('');
-  
+  const { globalError, globalSuccess, loading, setError, setSuccess, setLoading, clearMessages } = useFormState();
+
   const {
     register,
     handleSubmit,
     formState: { errors },
-    getValues,
-    watch
-  } = useForm<ForgotPasswordFormData>();
+    watch,
+  } = useForm<ForgotPasswordFormData>({
+    resolver: zodResolver(ForgotPasswordSchema),
+  });
 
-  // Watch field for custom mask
-  const identifierValue = watch('identifier', '');
+  // Watch field for Victorian mask
+  const identifierValue = watch('email', '');
 
-  // Custom identifier mask effect
-  useEffect(() => {
-    const updateIdentifierMask = () => {
-      const maskElement = document.getElementById('forgot-identifier-mask');
-      if (maskElement) {
-        maskElement.textContent = identifierValue || '';
-      }
-    };
-    updateIdentifierMask();
-  }, [identifierValue]);
-
+  /**
+   * Handle form submission
+   */
   const onSubmit = async (data: ForgotPasswordFormData) => {
     try {
       setLoading(true);
-      setError('');
-      setSuccessMessage('');
-      
-      const result = await AuthService.forgotPassword(data.identifier);
-      
+      clearMessages();
+
+      const result = await authService.forgotPassword(data.email);
+
       if (result.result) {
-        setSuccessMessage(result.message || 'Email di reset inviata con successo!');
+        setSuccess(result.message || 'Email di reset inviata con successo! Controlla la tua casella email.');
       } else {
         setError(result.error || 'Errore durante l\'invio della richiesta di reset');
       }
-      
     } catch (error) {
       setError('Errore di connessione durante l\'invio della richiesta');
       console.error('Errore forgot password:', error);
@@ -62,76 +80,37 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <>
-      <Head>
-        <title>TenpennyNovels Londra vittoriana - Recupera Password</title>
-        <meta name="description" content="Recupera la tua password per accedere a TenpennyNovels" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" href="/favicon/favicon.ico" />
-      </Head>
+    <FormPageLayout
+      title="Recupera Password - TenpennyNovels"
+      description="Recupera la password del tuo account TenpennyNovels."
+      canonical="https://tenpennynovels.com/forgot-password/"
+      noindex
+      globalError={globalError}
+      globalSuccess={globalSuccess}
+      onDismissError={clearMessages}
+      onDismissSuccess={clearMessages}
+    >
+      <form onSubmit={handleSubmit(onSubmit)} className="forgot-password-form">
+        <div className="forgot-password-fields">
+          <MaskedInput
+            id="email"
+            maskType="text"
+            placeholder="Username o Email"
+            value={identifierValue}
+            error={errors.email?.message}
+            register={register('email')}
+            required
+            disabled={loading}
+          />
+        </div>
 
-      <VictorianLayout subtitle="Recupera Password">
-        {/* Forgot Password Form */}
-        <form onSubmit={handleSubmit(onSubmit)} className="loginForm forgotPasswordForm">
-              <div className="formFields">
-                <div className="loginField usernameField">
-                  <input
-                    type="text"
-                    placeholder="Username o Email"
-                    {...register('identifier', {
-                      required: 'Username o Email obbligatorio',
-                      minLength: {
-                        value: 3,
-                        message: 'Deve avere almeno 3 caratteri'
-                      }
-                    })}
-                    className="loginInput"
-                  />
-                  <span className="usernameMask" id="forgot-identifier-mask"></span>
-                </div>
-                {errors.identifier && (
-                  <div className="errorMessage">
-                    {errors.identifier.message}
-                  </div>
-                )}
-
-                {error && (
-                  <div className="errorMessage">
-                    {error}
-                  </div>
-                )}
-
-                {successMessage && (
-                  <div className="successMessage">
-                    {successMessage}
-                  </div>
-                )}
-              </div>
-
-              {/* Actions Row */}
-              <div className="actionsRow">
-                <Button
-                  type="submit"
-                  variant="primary"
-                  loading={loading}
-                  className="loginButton"
-                >
-                  Invia Email
-                </Button>
-
-                <div className="secondaryActions">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={() => router.push('/')}
-                    className="secondaryButton"
-                  >
-                    Torna al Login
-                  </Button> 
-                </div>
-            </div>
-          </form>
-      </VictorianLayout>
-    </>
+        <FormActions
+          submitText="Invia Email di Reset"
+          submitLoading={loading}
+          secondaryText="Torna al Login"
+          onSecondaryClick={() => router.push('/')}
+        />
+      </form>
+    </FormPageLayout>
   );
 }

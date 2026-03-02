@@ -1,0 +1,241 @@
+@use 'sass:color';
+@import '../variables.scss';
+
+.tableContainer {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+  background-color: $color-bg-secondary;
+  border-radius: $border-radius-lg;
+  padding: $spacing-lg;
+}
+
+.loadingContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+}
+
+.error {
+  color: $color-error;
+  padding: $spacing-lg;
+  text-align: center;
+}
+
+.tableHeader {
+  display: flex;
+  gap: $spacing-md;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.searchInput {
+  flex: 1;
+  min-width: 250px;
+  padding: $spacing-sm $spacing-md;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: $border-radius-md;
+  background-color: $color-bg-tertiary;
+  color: $color-text-primary;
+
+  &:focus {
+    outline: none;
+    border-color: $color-primary;
+  }
+}
+
+.bulkActions {
+  display: flex;
+  gap: $spacing-sm;
+  align-items: center;
+}
+
+.selectedCount {
+  font-size: 14px;
+  color: $color-text-secondary;
+}
+
+.bulkActionButton {
+  padding: $spacing-sm $spacing-md;
+  border-radius: $border-radius-sm;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all $transition-fast;
+
+  &.primary {
+    background-color: $color-primary;
+    color: $color-bg-primary;
+  }
+
+  &.danger {
+    background-color: $color-error;
+    color: white;
+  }
+}
+
+.tableWrapper {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+
+  thead {
+    background-color: $color-bg-tertiary;
+  }
+
+  th,
+  td {
+    padding: $spacing-md;
+    text-align: left;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  th {
+    font-weight: 600;
+    color: $color-text-primary;
+    white-space: nowrap;
+
+    &.sortable {
+      cursor: pointer;
+      user-select: none;
+
+      &:hover {
+        background-color: color.adjust($color-bg-tertiary, $lightness: 5%);
+      }
+    }
+
+    &.sorted {
+      color: $color-primary;
+    }
+  }
+
+  td {
+    color: $color-text-secondary;
+
+    &.align-left {
+      text-align: left;
+    }
+
+    &.align-center {
+      text-align: center;
+    }
+
+    &.align-right {
+      text-align: right;
+    }
+  }
+
+  tbody tr {
+    transition: background-color $transition-fast;
+
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.03);
+    }
+
+    &.selected {
+      background-color: rgba($color-primary, 0.1);
+    }
+  }
+}
+
+.sortIcon {
+  margin-left: $spacing-xs;
+}
+
+.checkboxCell {
+  width: 40px;
+  text-align: center;
+}
+
+.actionsCell {
+  width: 150px;
+}
+
+.actions {
+  display: flex;
+  gap: $spacing-xs;
+}
+
+.actionButton {
+  padding: $spacing-xs $spacing-sm;
+  border: none;
+  border-radius: $border-radius-sm;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all $transition-fast;
+  width: 40px;
+  opacity: 0.5;
+
+  &:hover {
+    opacity: 1;
+  }
+
+  &.primary {
+    background-color: $color-primary;
+    color: $color-bg-primary;
+  }
+
+  &.secondary {
+    background-color: transparent;
+    color: $color-text-secondary;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+
+    &:hover {
+      color: $color-text-primary;
+      border-color: $color-primary;
+    }
+  }
+
+  &.danger {
+    background-color: $color-error;
+    color: white;
+  }
+}
+
+.pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: $spacing-md;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.paginationInfo {
+  font-size: 14px;
+  color: $color-text-secondary;
+}
+
+.paginationControls {
+  display: flex;
+  gap: $spacing-md;
+  align-items: center;
+}
+
+.paginationButton {
+  padding: $spacing-sm $spacing-md;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: $border-radius-sm;
+  background-color: transparent;
+  color: $color-text-primary;
+  cursor: pointer;
+  transition: all $transition-fast;
+
+  &:hover:not(:disabled) {
+    border-color: $color-primary;
+    color: $color-primary;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.pageNumber {
+  font-size: 14px;
+  color: $color-text-secondary;
+}

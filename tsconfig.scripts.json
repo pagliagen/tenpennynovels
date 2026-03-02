@@ -8,12 +8,18 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "strict": false
+    "strict": false,
+    "baseUrl": ".",
+    "paths": {
+      "@shared/*": ["./services/unified-backend/src/shared/*"],
+      "@database/*": ["./services/unified-backend/src/database/*"],
+      "@modules/*": ["./services/unified-backend/src/modules/*"],
+      "@config/*": ["./services/unified-backend/src/config/*"]
+    }
   },
   "include": [
     "scripts/**/*.ts",
-    "packages/**/*.ts",
-    "services/game-backend/src/config/database.ts"
+    "services/unified-backend/src/**/*.ts"
   ],
   "exclude": [
     "node_modules",

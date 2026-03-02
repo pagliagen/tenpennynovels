@@ -1,0 +1,18 @@
+/**
+ * Moon Phase Styles
+ */
+
+.moonPhase {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto; // Natural size, don't grow
+}
+
+.moonImage {
+  width: 32px; // Fixed size for consistency with weather icon
+  height: auto;
+  object-fit: contain;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}

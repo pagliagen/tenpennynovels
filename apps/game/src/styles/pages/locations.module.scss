@@ -1,0 +1,265 @@
+/**
+ * Locations Page Styles
+ *
+ * Main page styling for the locations system.
+ * Includes loading states, error states, empty states, and placeholders.
+ *
+ * @module styles/pages/locations
+ * @since 2.0.0
+ */
+
+/* ========================================
+   PAGE CONTAINER
+   ======================================== */
+
+.locationsPage {
+  width: 100%;
+  height: calc(100vh - 120px); // Full viewport minus TopBar + Sidebar
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #1a1410 0%, #2d2416 100%);
+}
+
+/* ========================================
+   LOADING STATE
+   ======================================== */
+
+.loadingContainer {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+}
+
+.spinner {
+  width: 60px;
+  height: 60px;
+  border: 4px solid rgba(184, 134, 11, 0.2);
+  border-top-color: #b8860b;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.loadingText {
+  color: #e8d4a0;
+  font-family: 'Playfair Display', serif;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+}
+
+/* ========================================
+   ERROR STATE
+   ======================================== */
+
+.errorContainer {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 32px;
+  background: rgba(139, 69, 19, 0.05);
+  border: 1px solid rgba(255, 107, 53, 0.3);
+  border-radius: 8px;
+  margin: 32px;
+}
+
+.errorTitle {
+  color: #ff6b35;
+  font-family: 'Thrifted Attire', serif;
+  font-size: 32px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.errorMessage {
+  color: #e8d4a0;
+  font-family: 'Playfair Display', serif;
+  font-size: 18px;
+  text-align: center;
+  max-width: 600px;
+  line-height: 1.6;
+}
+
+.retryButton {
+  background: transparent;
+  border: 2px solid #8b4513;
+  color: #b8860b;
+  font-family: 'Thrifted Attire', serif;
+  padding: 12px 32px;
+  font-size: 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 16px;
+
+  &:hover {
+    color: #d4a017;
+    transform: translateY(-2px);
+    border-color: #b8860b;
+    box-shadow: 0 4px 12px rgba(184, 134, 11, 0.3);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+/* ========================================
+   EMPTY STATE (No Locations)
+   ======================================== */
+
+.emptyContainer {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 32px;
+  background: rgba(139, 69, 19, 0.05);
+  border: 1px solid rgba(139, 69, 19, 0.2);
+  border-radius: 8px;
+  margin: 32px;
+}
+
+.emptyTitle {
+  color: #b8860b;
+  font-family: 'Thrifted Attire', serif;
+  font-size: 32px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.emptyMessage {
+  color: #e8d4a0;
+  font-family: 'Playfair Display', serif;
+  font-size: 18px;
+  text-align: center;
+  max-width: 600px;
+  line-height: 1.6;
+}
+
+/* ========================================
+   PLACEHOLDER (Future Features)
+   ======================================== */
+
+.placeholderContainer {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 32px;
+  background: rgba(139, 69, 19, 0.03);
+  border: 2px dashed rgba(184, 134, 11, 0.3);
+  border-radius: 8px;
+  margin: 32px;
+}
+
+.placeholderTitle {
+  color: #b8860b;
+  font-family: 'Thrifted Attire', serif;
+  font-size: 32px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.placeholderMessage {
+  color: rgba(232, 212, 160, 0.7);
+  font-family: 'Playfair Display', serif;
+  font-size: 18px;
+  text-align: center;
+  max-width: 600px;
+  line-height: 1.6;
+  font-style: italic;
+}
+
+/* ========================================
+   RESPONSIVE DESIGN
+   ======================================== */
+
+@media (max-width: 1024px) {
+  .locationsPage {
+    height: calc(100vh - 100px);
+  }
+
+  .errorContainer,
+  .emptyContainer,
+  .placeholderContainer {
+    margin: 16px;
+    padding: 24px;
+  }
+
+  .errorTitle,
+  .emptyTitle,
+  .placeholderTitle {
+    font-size: 24px;
+  }
+
+  .errorMessage,
+  .emptyMessage,
+  .placeholderMessage {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .locationsPage {
+    height: calc(100vh - 80px);
+  }
+
+  .loadingContainer {
+    padding: 16px;
+  }
+
+  .spinner {
+    width: 50px;
+    height: 50px;
+  }
+
+  .loadingText {
+    font-size: 16px;
+  }
+
+  .errorContainer,
+  .emptyContainer,
+  .placeholderContainer {
+    margin: 8px;
+    padding: 16px;
+  }
+
+  .errorTitle,
+  .emptyTitle,
+  .placeholderTitle {
+    font-size: 20px;
+  }
+
+  .errorMessage,
+  .emptyMessage,
+  .placeholderMessage {
+    font-size: 14px;
+  }
+
+  .retryButton {
+    padding: 0.96px 24px;
+    font-size: 14px;
+  }
+}

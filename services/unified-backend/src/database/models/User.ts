@@ -1,0 +1,293 @@
+import mongoose, { Schema, model, Document } from 'mongoose';
+
+export interface IUser extends Document {
+  // Basic user info
+  username: string;
+  email: string;
+  displayName?: string;
+  avatar?: string;
+  
+  // Password & security
+  passwordHash: string;
+  isEmailVerified: boolean;
+  emailVerificationToken?: string;
+  emailVerificationExpires?: Date;
+  passwordResetToken?: string;
+  passwordResetExpires?: Date;
+  
+  // NUOVO SISTEMA GRANULARE
+  userRoles: ('user' | 'gestore')[]; // Solo override completo (gestore = accesso totale)
+  characterRoles: ('personaggio' | 'master' | 'moderatore' | 'amministratore')[]; // Ruoli gameplay
+  characterPermissions: string[]; // Permessi aggiuntivi puntuali ['users.delete', 'system.maintenance_mode']
+  
+  // Admin panel access (kept for functionality)
+  canAccessAdminPanel: boolean;
+  
+  // Account status
+  isActive: boolean;
+  isBanned: boolean;
+  banReason?: string;
+  bannedUntil?: Date;
+  bannedBy?: Schema.Types.ObjectId;
+  banScope?: 'full' | 'chat_only' | 'game_only';
+  
+  // Character management
+  multipleCharactersAllowed: boolean;
+  
+  // User preferences
+  preferences: {
+    emailNotifications: boolean;
+    marketingEmails: boolean;
+    theme: string;
+    language: string;
+    timezone: string;
+  };
+  
+  // Activity tracking
+  lastLoginAt?: Date;
+  loginCount: number;
+  passwordChangedAt?: Date;
+  
+  // Registration info
+  registrationSource: string;
+  referralCode?: string;
+  ipAddress?: string;
+  
+  // GDPR fields
+  accountStatus: 'active' | 'deleted' | 'anonymized';
+  deletedAt?: Date;
+  anonymizedAt?: Date;
+  anonymizationReason?: string; // 'user_request' | 'admin_action'
+  accountDeletionToken?: string;
+  accountDeletionTokenExpires?: Date;
+  accountDeletionRequestedAt?: Date;
+
+  // Timestamps
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const UserSchema = new Schema<IUser>({
+  // Basic user info
+  username: {
+    type: String,
+    required: true,
+    unique: true,
+    trim: true,
+    minlength: 3,
+    maxlength: 20,
+    match: /^[a-zA-Z0-9_]+$/
+  },
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    lowercase: true,
+    trim: true,
+    match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  },
+  displayName: {
+    type: String,
+    trim: true,
+    maxlength: 50
+  },
+  avatar: {
+    type: String,
+    trim: true
+  },
+  
+  // Password & security
+  passwordHash: {
+    type: String,
+    required: true
+  },
+  isEmailVerified: {
+    type: Boolean,
+    default: false
+  },
+  emailVerificationToken: String,
+  emailVerificationExpires: Date,
+  passwordResetToken: String,
+  passwordResetExpires: Date,
+  
+  // NUOVO SISTEMA GRANULARE
+  userRoles: [{
+    type: String,
+    enum: ['user', 'gestore'],
+    default: 'user'
+  }],
+  characterRoles: [{
+    type: String,
+    enum: ['personaggio', 'master', 'moderatore', 'amministratore']
+  }],
+  characterPermissions: [{
+    type: String,
+    trim: true
+  }],
+  
+  // Admin panel access gate (kept for functionality)
+  canAccessAdminPanel: {
+    type: Boolean,
+    default: false
+  },
+  
+  // Account status
+  isActive: {
+    type: Boolean,
+    default: true
+  },
+  isBanned: {
+    type: Boolean,
+    default: false
+  },
+  banReason: String,
+  bannedUntil: Date,
+  bannedBy: {
+    type: Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  banScope: {
+    type: String,
+    enum: ['full', 'chat_only', 'game_only']
+  },
+  
+  // Character management
+  multipleCharactersAllowed: {
+    type: Boolean,
+    default: false
+  },
+  
+  // User preferences
+  preferences: {
+    emailNotifications: { type: Boolean, default: true },
+    marketingEmails: { type: Boolean, default: false },
+    theme: { type: String, default: 'victorian_dark' },
+    language: { type: String, default: 'en' },
+    timezone: { type: String, default: 'Europe/London' }
+  },
+  
+  // Activity tracking
+  lastLoginAt: Date,
+  loginCount: {
+    type: Number,
+    default: 0
+  },
+  passwordChangedAt: Date,
+  
+  // Registration info
+  registrationSource: {
+    type: String,
+    default: 'web'
+  },
+  referralCode: String,
+  ipAddress: String,
+
+  // GDPR fields
+  accountStatus: {
+    type: String,
+    enum: ['active', 'deleted', 'anonymized'],
+    default: 'active'
+  },
+  deletedAt: Date,
+  anonymizedAt: Date,
+  anonymizationReason: String,
+  accountDeletionToken: String,
+  accountDeletionTokenExpires: Date,
+  accountDeletionRequestedAt: Date
+}, {
+  timestamps: true,
+  collection: 'users'
+});
+
+// Indexes (username and email already have unique indexes)
+UserSchema.index({ isActive: 1, isBanned: 1 });
+UserSchema.index({ canAccessAdminPanel: 1 });
+// New granular permission indexes
+UserSchema.index({ userRoles: 1 });
+UserSchema.index({ characterRoles: 1 });
+UserSchema.index({ characterPermissions: 1 });
+UserSchema.index({ emailVerificationToken: 1 });
+UserSchema.index({ passwordResetToken: 1 });
+// GDPR indexes
+UserSchema.index({ accountStatus: 1, deletedAt: 1 });
+
+// Virtual for character count (populated separately)
+UserSchema.virtual('characterCount', {
+  ref: 'Character',
+  localField: '_id',
+  foreignField: 'userId',
+  count: true
+});
+
+// Methods
+UserSchema.methods.toSafeObject = function() {
+  const user = this.toObject();
+  delete user.passwordHash;
+  delete user.emailVerificationToken;
+  delete user.passwordResetToken;
+  delete user.ipAddress;
+  return user;
+};
+
+// NUOVI METODI GRANULARI
+UserSchema.methods.hasUserRole = function(role: 'user' | 'gestore'): boolean {
+  return this.userRoles.includes(role);
+};
+
+UserSchema.methods.hasCharacterRole = function(role: 'personaggio' | 'master' | 'moderatore' | 'amministratore'): boolean {
+  return this.characterRoles.includes(role);
+};
+
+UserSchema.methods.hasCharacterPermission = function(permission: string): boolean {
+  return this.characterPermissions.includes(permission);
+};
+
+/**
+ * Verifica se l'utente ha accesso a un permesso granulare
+ * Logica: Se userRoles contiene 'gestore' → Accesso completo
+ * Altrimenti: Calcola permessi da characterRoles + characterPermissions
+ */
+UserSchema.methods.hasViewPermission = function(permission: string): boolean {
+  // Override completo per gestore
+  if (this.userRoles.includes('gestore')) {
+    return true;
+  }
+  
+  // Controllo permessi character specifici
+  if (this.characterPermissions.includes(permission)) {
+    return true;
+  }
+  
+  // TODO: Implementare logica ereditarietà ruoli dalla config
+  // Per ora controllo diretto sui ruoli principali
+  const [category, action] = permission.split('.');
+  
+  if (this.characterRoles.includes('amministratore')) {
+    // Amministratore: accesso quasi completo (no maintenance)
+    if (permission === 'system.maintenance_mode' || permission === 'users.delete' || permission === 'users.change_permissions') {
+      return false;
+    }
+    return true;
+  }
+  
+  if (this.characterRoles.includes('master')) {
+    // Master: gestione gameplay completa
+    const masterPermissions = ['dashboard', 'characters', 'economy', 'locations', 'content', 'system.broadcast_messages', 'users.read', 'users.ban'];
+    return masterPermissions.some(p => permission.startsWith(p));
+  }
+  
+  if (this.characterRoles.includes('moderatore')) {
+    // Moderatore: gestione utenti e contenuti
+    const modPermissions = ['dashboard', 'users.read', 'users.ban', 'content', 'system.broadcast_messages'];
+    return modPermissions.some(p => permission.startsWith(p));
+  }
+  
+  if (this.characterRoles.includes('personaggio')) {
+    // Personaggio: solo dashboard base
+    return permission.startsWith('dashboard.access') || permission.startsWith('dashboard.detail.view_basic_stats') || permission.startsWith('dashboard.detail.view_character_stats') || permission.startsWith('dashboard.detail.view_gameplay_stats');
+  }
+  
+  return false;
+};
+
+export const User = mongoose.models.User || model<IUser>('User', UserSchema);

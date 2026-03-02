@@ -1,0 +1,146 @@
+@import '../../styles/variables.scss';
+
+.editorWrapper {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: $border-radius-md;
+  overflow: clip; // Changed from hidden to preserve position: sticky on .toolbar
+}
+
+.toolbar {
+  position: sticky;
+  top: -$spacing-lg;
+  z-index: 10;
+  display: flex;
+  gap: $spacing-xs;
+  padding: $spacing-sm;
+  background-color: rgba(40, 30, 20, 0.98); // More opaque for sticky
+  backdrop-filter: blur(8px); // Blur effect for content underneath
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  flex-wrap: wrap;
+  align-items: center;
+
+  button {
+    padding: $spacing-xs $spacing-sm;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: $border-radius-sm;
+    background-color: rgba(255, 255, 255, 0.05);
+    color: $color-text-secondary;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all $transition-fast;
+    height: 35px;
+
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+      color: $color-text-primary;
+    }
+
+    &.active {
+      background-color: $color-primary;
+      color: white;
+      border-color: $color-primary;
+    }
+  }
+}
+
+.colorPicker {
+  width: 35px;
+  height: 35px;
+  padding: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: $border-radius-sm;
+  background-color: rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  transition: all $transition-fast;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.3);
+  }
+
+  // Hide the default color picker appearance on Webkit browsers
+  &::-webkit-color-swatch-wrapper {
+    padding: 0;
+  }
+
+  &::-webkit-color-swatch {
+    border: none;
+    border-radius: 2px;
+  }
+
+  // Hide the default color picker appearance on Firefox
+  &::-moz-color-swatch {
+    border: none;
+    border-radius: 2px;
+  }
+}
+
+.separator {
+  width: 1px;
+  height: 24px;
+  background-color: rgba(255, 255, 255, 0.1);
+  margin: 0 $spacing-xs;
+}
+
+.editorContent {
+  padding: $spacing-lg;
+  min-height: 400px;
+  max-height: 600px;
+  overflow-y: auto;
+  background-color: $color-bg-primary;
+
+  // TipTap prose styles
+  :global(.ProseMirror) {
+    outline: none;
+
+    h2 {
+      font-size: 24px;
+      margin: $spacing-lg 0 $spacing-md;
+      color: $color-text-primary;
+    }
+
+    h3 {
+      font-size: 20px;
+      margin: $spacing-md 0 $spacing-sm;
+      color: $color-text-primary;
+    }
+
+    p {
+      margin: $spacing-sm 0;
+      line-height: 1.6;
+      color: $color-text-secondary;
+    }
+
+    ul, ol {
+      padding-left: $spacing-xl;
+      margin: $spacing-sm 0;
+    }
+
+    blockquote {
+      border-left: 3px solid $color-primary;
+      padding-left: $spacing-md;
+      margin: $spacing-md 0;
+      font-style: italic;
+      color: $color-text-secondary;
+    }
+
+    code {
+      background-color: rgba(255, 255, 255, 0.1);
+      padding: 2px 6px;
+      border-radius: $border-radius-sm;
+      font-family: 'Monaco', 'Courier New', monospace;
+    }
+
+    pre {
+      background-color: rgba(255, 255, 255, 0.05);
+      padding: $spacing-md;
+      border-radius: $border-radius-md;
+      overflow-x: auto;
+
+      code {
+        background: none;
+        padding: 0;
+      }
+    }
+  }
+}

@@ -1,37 +1,37 @@
 {
   "name": "@tenpennynovels/landing",
-  "version": "1.0.0",
-  "description": "TenpennyNovels Landing & Authentication App",
+  "version": "2.0.0",
+  "description": "TenpennyNovels - Landing & Authentication (Clean Architecture Rewrite)",
+  "author": "Gennaro Paglia",
+  "license": "MIT",
   "private": true,
   "scripts": {
     "dev": "next dev -p 4000 -H 0.0.0.0",
     "build": "next build",
     "start": "next start -p 4000 -H 0.0.0.0",
     "lint": "next lint",
-    "test": "jest",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@tenpennynovels/shared-ui": "file:../shared-ui",
+    "@hookform/resolvers": "^5.2.2",
     "classnames": "^2.5.1",
     "cookie": "^1.1.1",
+    "isomorphic-dompurify": "^3.0.0",
     "js-cookie": "^3.0.5",
-    "next": "^16.1.4",
-    "react": "^19.2.3",
-    "react-dom": "^19.2.3",
-    "react-hook-form": "^7.71.1"
+    "next": "^16.1.6",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "react-hook-form": "^7.71.2",
+    "sass": "^1.97.3",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@types/cookie": "^1.0.0",
     "@types/js-cookie": "^3.0.6",
-    "@types/node": "^25.0.10",
-    "@types/react": "^19.2.9",
+    "@types/node": "^25.3.0",
+    "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
-    "@typescript-eslint/eslint-plugin": "^8.53.1",
-    "@typescript-eslint/parser": "^8.53.1",
-    "eslint": "^9.39.2",
-    "eslint-config-next": "^16.1.4",
-    "sass": "^1.97.3",
+    "eslint": "^10.0.2",
+    "eslint-config-next": "^16.1.6",
     "typescript": "^5.9.3"
   }
 }

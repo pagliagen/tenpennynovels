@@ -1,0 +1,233 @@
+/**
+ * Presenti Online Page Styles
+ *
+ * Victorian-themed styles for full presence list page.
+ *
+ * @module styles/pages/presenti-online
+ * @since 2.0.0
+ */
+
+.presencePage {
+  padding: 32px;
+  max-width: 900px;
+  margin: 0 auto;
+  min-height: 100vh;
+}
+
+/* ========================================
+   HEADER
+   ======================================== */
+
+.pageHeader {
+  text-align: center;
+  margin-bottom: 32px;
+  padding: 24px;
+  background: linear-gradient(135deg, rgba(139, 69, 19, 0.3), rgba(139, 69, 19, 0.1));
+  border: 2px solid #8b4513;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.pageTitle {
+  font-family: 'Playfair Display', serif;
+  font-size: 32px;
+  color: #b8860b;
+  text-shadow: 0 0 10px rgba(184, 134, 11, 0.5);
+  letter-spacing: 0.15em;
+  margin: 0;
+}
+
+/* ========================================
+   FILTERS
+   ======================================== */
+
+.filters {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.searchInput,
+.locationFilter {
+  flex: 1;
+  padding: 12px 16px;
+  background: rgba(245, 245, 245, 0.9);
+  border: 2px solid #8b4513;
+  border-radius: 6px;
+  font-family: 'Thrifted Attire', serif;
+  font-size: 15px;
+  color: #1a1a1a;
+  transition: all 0.3s ease;
+
+  &:focus {
+    outline: none;
+    border-color: #b8860b;
+    box-shadow: 0 0 10px rgba(184, 134, 11, 0.3);
+  }
+
+  &::placeholder {
+    color: #888;
+    font-style: italic;
+  }
+}
+
+/* ========================================
+   GROUPS CONTAINER
+   ======================================== */
+
+.groupsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.presenceGroup {
+  background: rgba(139, 69, 19, 0.05);
+  border: 1px solid rgba(139, 69, 19, 0.2);
+  border-radius: 8px;
+  padding: 24px;
+}
+
+.groupHeader {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.48px;
+  font-weight: 700;
+  color: #8b4513;
+  padding: 12px 16px;
+  background: linear-gradient(90deg, rgba(139, 69, 19, 0.2), transparent);
+  border-left: 4px solid #b8860b;
+  margin: 0 0 16px 0;
+}
+
+.groupList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ========================================
+   PLAYER ITEMS
+   ======================================== */
+
+.playerItem {
+  // Minimal styling, hover handled by playerButton
+}
+
+.playerButton {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #b8860b;
+
+  &:hover {
+    color: #d4a017;
+    transform: translateY(-2px);
+  }
+
+  &:focus {
+    outline: 2px solid #b8860b;
+    outline-offset: 2px;
+  }
+}
+
+.playerAvatar,
+.playerAvatarPlaceholder {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.playerAvatar {
+  border: 3px solid #b8860b;
+  object-fit: cover;
+}
+
+.playerAvatarPlaceholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(184, 134, 11, 0.2);
+  border: 3px solid #8b4513;
+  font-size: 24px;
+}
+
+.playerInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+}
+
+.playerName {
+  font-family: 'Thrifted Attire', serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: #b8860b;
+  text-shadow: 0 0 5px rgba(184, 134, 11, 0.3);
+}
+
+.playerLocation {
+  font-family: 'Merriweather', serif;
+  font-size: 14px;
+  color: #8b6914;
+  font-style: italic;
+
+  &.private {
+    color: #8b1a1a;
+    font-weight: 600;
+  }
+}
+
+/* ========================================
+   LOADING & EMPTY STATES
+   ======================================== */
+
+.loading,
+.emptyState {
+  text-align: center;
+  padding: 48px;
+  font-family: 'Thrifted Attire', serif;
+  font-size: 18px;
+  color: #888;
+  font-style: italic;
+}
+
+/* ========================================
+   REDUCED MOTION
+   ======================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .playerButton,
+  .playerItem {
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+
+@media (max-width: 768px) {
+  .presencePage {
+    padding: 16px;
+  }
+
+  .filters {
+    flex-direction: column;
+  }
+
+  .pageTitle {
+    font-size: 24px;
+  }
+}

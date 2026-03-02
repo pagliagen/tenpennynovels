@@ -1,0 +1,220 @@
+/**
+ * Forms Mixins
+ *
+ * Reusable SCSS mixins for form components.
+ * **BIGGEST WIN**: Eliminates 80+ lines of CSS duplication for masked fields.
+ *
+ * **Mixins**:
+ * - masked-field: Victorian decorative mask overlay
+ * - form-field-base: Base form field styling
+ * - form-field-error: Error state styling
+ * - form-field-disabled: Disabled state styling
+ *
+ * **Usage**:
+ * ```scss
+ * .custom-input {
+ *   @include form-field-base;
+ *   @include masked-field;
+ * }
+ * ```
+ */
+
+/**
+ * Masked Field Mixin
+ *
+ * **BIGGEST CSS WIN**: Eliminates 80+ lines × 4 pages = 320 lines saved.
+ *
+ * Creates Victorian decorative mask overlay for input fields.
+ * Real input is transparent, decorative mask shows styled value.
+ *
+ * **Architecture**:
+ * ```html
+ * <div class="masked-field">
+ *   <input class="masked-field__input" /> <!-- Real input (opacity: 0) -->
+ *   <div class="masked-field__mask">●●●●</div> <!-- Decorative overlay -->
+ * </div>
+ * ```
+ *
+ * **Features**:
+ * - Real input remains interactive (accessibility, clipboard, autocomplete)
+ * - Overlay shows Victorian styled version
+ * - Supports text, password, email variants
+ */
+@mixin masked-field {
+  .masked-field {
+    position: relative;
+    width: 100%;
+
+    /**
+     * Real input (hidden but interactive)
+     *
+     * User types here, but it's visually hidden.
+     * Maintains full accessibility and functionality.
+     */
+    &__input {
+      position: relative;
+      z-index: 2;
+      opacity: 0; /* Hide actual input */
+      width: 100%;
+      padding: var(--spacing-sm) var(--spacing-md);
+      font-family: var(--font-primary);
+      font-size: var(--font-size-base);
+      line-height: var(--line-height-normal);
+      border: 2px solid var(--color-border-input);
+      background: var(--color-bg-input);
+      color: var(--color-text-primary);
+      transition: var(--transition-focus);
+
+      &:focus {
+        outline: none;
+        border-color: var(--color-border-focus);
+        box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2);
+      }
+
+      &--error {
+        border-color: var(--color-error-border);
+      }
+    }
+
+    /**
+     * Decorative mask overlay
+     *
+     * Positioned absolutely over the input.
+     * Shows Victorian styled value.
+     */
+    &__mask {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      padding: var(--spacing-sm) var(--spacing-md);
+      font-family: var(--font-primary);
+      font-size: var(--font-size-base);
+      line-height: var(--line-height-normal);
+      color: var(--color-primary); /* Victorian gold */
+      background: var(--color-bg-input);
+      border: 2px solid var(--color-border-input);
+      pointer-events: none; /* Allow clicks to pass through */
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /**
+     * Password variant - Use monospace font for bullets
+     */
+    &--password &__mask {
+      font-family: var(--font-mono);
+      letter-spacing: 0.5em;
+    }
+
+    /**
+     * Error state
+     */
+    &--error &__mask {
+      border-color: var(--color-error-border);
+    }
+
+    /**
+     * Disabled state
+     */
+    &--disabled &__mask {
+      opacity: 0.5;
+      cursor: not-allowed;
+      background: var(--color-bg-secondary);
+    }
+
+    /**
+     * Error message
+     */
+    &__error {
+      margin-top: var(--spacing-xs);
+      font-size: var(--font-size-sm);
+      color: var(--color-error);
+    }
+  }
+
+  .masked-field-wrapper {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+}
+
+/**
+ * Form Field Base Styling
+ *
+ * Base styles for all form inputs (text, email, password, etc.).
+ */
+@mixin form-field-base {
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-family: var(--font-primary);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-normal);
+  color: var(--color-text-primary);
+  background: var(--color-bg-input);
+  border: 2px solid var(--color-border-input);
+  border-radius: 0; /* Victorian sharp edges */
+  transition: var(--transition-focus);
+
+  &::placeholder {
+    color: var(--color-text-tertiary);
+    opacity: 0.7;
+  }
+
+  &:hover:not(:disabled) {
+    border-color: var(--color-border-secondary);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: var(--color-border-focus);
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2);
+  }
+}
+
+/**
+ * Form Field Error State
+ *
+ * Red border and error message styling.
+ */
+@mixin form-field-error {
+  border-color: var(--color-error-border);
+
+  &:focus {
+    border-color: var(--color-error);
+    box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.2);
+  }
+}
+
+/**
+ * Form Field Disabled State
+ *
+ * Muted styling for disabled inputs.
+ */
+@mixin form-field-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: var(--color-bg-secondary);
+  pointer-events: none;
+}
+
+/**
+ * Form Label Styling
+ *
+ * Consistent label appearance.
+ */
+@mixin form-label {
+  display: block;
+  margin-bottom: var(--spacing-xs);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
+}

@@ -4,7 +4,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
 import cookieParser from 'cookie-parser';
-// import rateLimit from 'express-rate-limit'; // Rate limiting moved to Nginx
+import rateLimit from 'express-rate-limit';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
 import { createProxyMiddleware } from 'http-proxy-middleware';
@@ -46,9 +46,7 @@ app.use(cors({
       process.env.LANDING_URL || 'https://tenpennynovels.com',
       process.env.GAME_URL || 'https://game.tenpennynovels.com',
       process.env.DOCUMENTS_URL || 'https://documenti.tenpennynovels.com',
-      process.env.FORUM_URL || 'https://forum.tenpennynovels.com',
       process.env.MANAGEMENT_URL || 'https://gestione.tenpennynovels.com',
-      process.env.TICKETS_URL || 'https://supporto.tenpennynovels.com',
       // Development localhost URLs (in addition to IP-based URLs from env)
       'http://localhost:4000',
       'http://localhost:4001',
@@ -57,9 +55,6 @@ app.use(cors({
       'http://localhost:4004',
       'http://localhost:4005'
     ];
-    
-    console.log(`🔍 CORS: Allowed origins:`, allowedOrigins);
-    console.log(`🔍 CORS: Checking if "${origin}" is in allowed list...`);
     
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) {
@@ -97,94 +92,317 @@ app.use(morgan('combined', {
   stream: httpLoggerStream
 }));
 
-// Rate limiting handled by Nginx - removed from Express
-console.log('🛡️ Rate limiting handled by Nginx reverse proxy');
+// ========== RATE LIMITING CONFIGURATION ==========
+// Different rate limits for authenticated vs unauthenticated users
+// Applied specifically to /documents/* routes
 
-// Backend service configurations (moved up before body parsing)
+/**
+ * Rate limiter for UNAUTHENTICATED users accessing documents
+ * Limit: 30 requests per minute per IP address
+ */
+const documentsRateLimitUnauth = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 30, // 30 requests per minute
+  message: {
+    success: false,
+    error: 'Too many requests from this IP. Please try again later.',
+    code: 'RATE_LIMIT_EXCEEDED',
+    retryAfter: 60
+  },
+  standardHeaders: true, // Return rate limit info in RateLimit-* headers
+  legacyHeaders: false, // Disable X-RateLimit-* headers
+  skip: (req) => {
+    // Skip rate limiting if user is authenticated (has auth_token cookie)
+    return !!req.cookies?.auth_token;
+  },
+  keyGenerator: (req) => {
+    // Use IP address as key for unauthenticated users
+    return req.ip || req.socket?.remoteAddress || 'unknown';
+  },
+  handler: (req, res) => {
+    logger.warn('[Rate Limit] Unauthenticated user exceeded limit', {
+      ip: req.ip,
+      url: req.originalUrl
+    });
+    res.status(429).json({
+      success: false,
+      error: 'Too many requests. Please try again later.',
+      code: 'RATE_LIMIT_EXCEEDED',
+      retryAfter: 60,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+/**
+ * Rate limiter for AUTHENTICATED users accessing documents
+ * Limit: 120 requests per minute per user
+ */
+const documentsRateLimitAuth = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 120, // 120 requests per minute
+  message: {
+    success: false,
+    error: 'Too many requests. Please try again later.',
+    code: 'RATE_LIMIT_EXCEEDED',
+    retryAfter: 60
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => {
+    // Only apply to authenticated users (has auth_token cookie)
+    return !req.cookies?.auth_token;
+  },
+  keyGenerator: (req) => {
+    // Use auth_token as key for authenticated users
+    return req.cookies?.auth_token || 'unknown';
+  },
+  handler: (req, res) => {
+    logger.warn('[Rate Limit] Authenticated user exceeded limit', {
+      ip: req.ip,
+      url: req.originalUrl
+    });
+    res.status(429).json({
+      success: false,
+      error: 'Too many requests. Please try again later.',
+      code: 'RATE_LIMIT_EXCEEDED',
+      retryAfter: 60,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+console.log('🛡️ Rate limiting configured:');
+console.log('   📄 /documents/* - Unauthenticated: 30 req/min per IP');
+console.log('   📄 /documents/* - Authenticated: 120 req/min per user');
+
+// ✅ SPRINT 4: API Gateway Configuration Cleanup
+// Backend service configurations with validation and clear documentation
+
+/**
+ * Helper: Build proxy target URL with validation
+ *
+ * http-proxy-middleware v3 REQUIRES mount path in target URL:
+ * - Gateway mount: /auth
+ * - Backend expects: /auth prefix (app.use('/auth', routes))
+ * - Target must be: http://backend:3000/auth
+ *
+ * Why this design?
+ * - Backend routers are mounted with prefix (e.g., app.use('/auth', authRoutes))
+ * - Gateway preserves prefix when proxying
+ * - Target URL matches backend's expected routing structure
+ */
+function buildProxyTarget(
+  baseUrl: string | undefined,
+  fallbackUrl: string,
+  mountPath: string
+): string {
+  const base = (baseUrl || fallbackUrl).replace(/\/$/, ''); // Remove trailing slash
+  const path = mountPath.startsWith('/') ? mountPath : `/${mountPath}`;
+  const target = `${base}${path}`;
+
+  console.log(`🔧 Gateway: Configuring proxy for ${mountPath} → ${target}`);
+
+  return target;
+}
+
+/**
+ * Service Configuration Map
+ *
+ * ✅ UNIFIED BACKEND: All services now point to single unified backend
+ * - Authentication, Game, and Management are now modules in unified-backend
+ * - Single deployment, single process, single port (3001)
+ * - API Gateway maintains same path prefixes for zero breaking changes
+ */
+const UNIFIED_BACKEND = process.env.UNIFIED_BACKEND_URL || 'http://localhost:3001';
+
 const services = {
   auth: {
-    target: process.env.AUTH_BACKEND_URL || 'http://localhost:3000'
-    // No pathRewrite needed - forward as-is
+    target: buildProxyTarget(
+      process.env.UNIFIED_BACKEND_URL,
+      UNIFIED_BACKEND,
+      '/auth'
+    ),
+    backend: 'unified-backend',
+    port: 3001
   },
   game: {
-    target: process.env.GAME_BACKEND_URL || 'http://localhost:3001'
-    // No pathRewrite needed - forward as-is
+    target: buildProxyTarget(
+      process.env.UNIFIED_BACKEND_URL,
+      UNIFIED_BACKEND,
+      '/game'
+    ),
+    backend: 'unified-backend',
+    port: 3001
   },
   admin: {
-    target: process.env.MANAGEMENT_BACKEND_URL || 'http://localhost:3002'
-    // No pathRewrite needed - forward as-is
+    target: buildProxyTarget(
+      process.env.UNIFIED_BACKEND_URL,
+      UNIFIED_BACKEND,
+      '/admin'
+    ),
+    backend: 'unified-backend',
+    port: 3001
   },
   documents: {
-    target: process.env.GAME_BACKEND_URL || 'http://localhost:3001'
-    // Documents handled by Game Backend
+    target: buildProxyTarget(
+      process.env.UNIFIED_BACKEND_URL,
+      UNIFIED_BACKEND,
+      '/game/documents'
+    ),
+    backend: 'unified-backend',
+    port: 3001
   },
   forum: {
-    target: process.env.GAME_BACKEND_URL || 'http://localhost:3001'
-    // Forum handled by Game Backend  
+    target: buildProxyTarget(
+      process.env.UNIFIED_BACKEND_URL,
+      UNIFIED_BACKEND,
+      '/forum'
+    ),
+    backend: 'unified-backend',
+    port: 3001
+  },
+  // Socket.IO WebSocket proxy (no path prefix, direct passthrough)
+  socketio: {
+    target: UNIFIED_BACKEND, // Direct target, no path needed
+    backend: 'unified-backend',
+    port: 3001
   }
 };
 
+// Validate configuration at startup
+console.log('\n🔍 Gateway Configuration Validation:');
+Object.entries(services).forEach(([key, config]) => {
+  console.log(`  ✅ /${key} → ${config.target} (${config.backend}:${config.port})`);
+});
+console.log('');
+
 // Create proxy middleware for each service
+// http-proxy-middleware v3 syntax with 'on' event handlers
 const createServiceProxy = (serviceName: string, config: any) => {
   return createProxyMiddleware({
     target: config.target,
     changeOrigin: true,
     timeout: 10000, // 10 second timeout
-    proxyTimeout: 10000, // 10 second proxy timeout
-    headers: {
-      'X-Forwarded-By': 'TenpennyNovels-Gateway',
-      'X-Service-Route': serviceName
-    },
-    onError: (err, req, res) => {
-      const { logger } = require('./utils/logger');
-      console.log(`❌ [PROXY ERROR] Service: ${serviceName}`);
-      console.log(`   🔗 Target: ${config.target}`);
-      console.log(`   📍 URL: ${req.url}`);
-      console.log(`   💥 Error: ${err.message}`);
-      console.log('   ─────────────────────────────────────────────────────────────');
-      
-      logger.error(`Proxy error for ${serviceName}:`, {
-        error: err.message,
-        url: req.url,
-        target: config.target
-      });
-      
-      res.status(502).json({
-        success: false,
-        error: `Service ${serviceName} is temporarily unavailable`,
-        code: 'SERVICE_UNAVAILABLE',
-        timestamp: new Date().toISOString()
-      });
-    },
-    onProxyReq: (proxyReq, req, res) => {
-      console.log(`🔄 [PROXY REQ] Forwarding to ${serviceName}: ${req.method} ${req.url}`);
-      
-      // Forward cookies and auth headers
-      if (req.headers.cookie) {
-        proxyReq.setHeader('Cookie', req.headers.cookie);
-        console.log(`   🍪 Forwarding cookies: ${req.headers.cookie.substring(0, 100)}...`);
-      } else {
-        console.log(`   ❌ No cookies to forward`);
-      }
-      if (req.headers.authorization) {
-        proxyReq.setHeader('Authorization', req.headers.authorization);
-        console.log(`   🔑 Forwarding authorization header`);
-      }
-    },
-    onProxyRes: (proxyRes, req, res) => {
-      console.log(`🔙 [PROXY RES] Response from ${serviceName}: ${proxyRes.statusCode}`);
-      
-      // Forward set-cookie headers back to client
-      if (proxyRes.headers['set-cookie']) {
-        res.setHeader('set-cookie', proxyRes.headers['set-cookie']);
-        console.log(`   🍪 Forwarding set-cookie headers back to client`);
+    on: {
+      proxyReq: (proxyReq: any, req: any, res: any) => {
+        console.log(`🔄 [PROXY REQ] Forwarding to ${serviceName}: ${req.method} ${req.url}`);
+
+        // Add gateway headers
+        proxyReq.setHeader('X-Forwarded-By', 'TenpennyNovels-Gateway');
+        proxyReq.setHeader('X-Service-Route', serviceName);
+
+        // Forward cookies and auth headers
+        if (req.headers.cookie) {
+          proxyReq.setHeader('Cookie', req.headers.cookie);
+          console.log(`   🍪 Forwarding cookies: ${req.headers.cookie.substring(0, 100)}...`);
+        } else {
+          console.log(`   ❌ No cookies to forward`);
+        }
+        if (req.headers.authorization) {
+          proxyReq.setHeader('Authorization', req.headers.authorization);
+          console.log(`   🔑 Forwarding authorization header`);
+        }
+      },
+      proxyRes: (proxyRes: any, req: any, res: any) => {
+        console.log(`🔙 [PROXY RES] Response from ${serviceName}: ${proxyRes.statusCode}`);
+
+        // Forward set-cookie headers back to client
+        if (proxyRes.headers['set-cookie']) {
+          res.setHeader('set-cookie', proxyRes.headers['set-cookie']);
+          console.log(`   🍪 Forwarding set-cookie headers back to client`);
+        }
+      },
+      error: (err: any, req: any, res: any) => {
+        const { logger } = require('./utils/logger');
+        console.log(`❌ [PROXY ERROR] Service: ${serviceName}`);
+        console.log(`   🔗 Target: ${config.target}`);
+        console.log(`   📍 URL: ${req.url}`);
+        console.log(`   💥 Error: ${err.message}`);
+        console.log('   ─────────────────────────────────────────────────────────────');
+
+        logger.error(`Proxy error for ${serviceName}:`, {
+          error: err.message,
+          url: req.url,
+          target: config.target
+        });
+
+        if (!res.headersSent) {
+          res.status(502).json({
+            success: false,
+            error: `Service ${serviceName} is temporarily unavailable`,
+            code: 'SERVICE_UNAVAILABLE',
+            timestamp: new Date().toISOString()
+          });
+        }
       }
     }
   });
 };
 
+// ========== HEALTH CHECK ENDPOINT ==========
+// Must be defined BEFORE proxy routes to avoid routing conflicts
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    service: 'api-gateway',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
+});
+
 // Route to backend services (PRIORITY: these must come before other middleware)
 console.log('🌐 Setting up proxy routes...');
+
+// ========== SOCKET.IO WEBSOCKET PROXY (MUST BE FIRST) ==========
+// Socket.IO requires special handling for WebSocket upgrade and polling
+// CRITICAL: Use middleware without mount path to preserve /socket.io/ prefix
+// http-proxy-middleware v3 syntax with 'on' event handlers
+const socketioProxy = createProxyMiddleware({
+  target: services.socketio.target,
+  changeOrigin: true,
+  ws: true, // Enable WebSocket proxying
+  timeout: 60000, // 60 seconds for long polling
+  // Path filter: only proxy requests starting with /socket.io
+  pathFilter: '/socket.io/**',
+  on: {
+    proxyReq: (proxyReq: any, req: any, res: any) => {
+      console.log(`🔌 [SOCKET.IO] Proxying: ${req.method} ${req.url}`);
+
+      // Forward cookies for authentication
+      if (req.headers.cookie) {
+        proxyReq.setHeader('Cookie', req.headers.cookie);
+      }
+
+      // Add gateway headers
+      proxyReq.setHeader('X-Forwarded-By', 'TenpennyNovels-Gateway');
+      proxyReq.setHeader('X-Service-Route', 'socketio');
+    },
+    proxyRes: (proxyRes: any, req: any, res: any) => {
+      console.log(`🔙 [SOCKET.IO] Response: ${proxyRes.statusCode}`);
+    },
+    error: (err: any, req: any, res: any) => {
+      console.log(`❌ [SOCKET.IO PROXY ERROR]`);
+      console.log(`   🔗 Target: ${services.socketio.target}`);
+      console.log(`   📍 URL: ${req.url}`);
+      console.log(`   💥 Error: ${err.message}`);
+      logger.error(`Socket.IO proxy error:`, { error: err.message, url: req.url });
+
+      // Don't send response for WebSocket errors (connection already upgraded)
+      if (!res.headersSent) {
+        res.status(502).json({
+          success: false,
+          error: 'WebSocket service temporarily unavailable',
+          code: 'WEBSOCKET_UNAVAILABLE'
+        });
+      }
+    }
+  }
+});
+
+// Apply proxy globally (not mounted at /socket.io to preserve path)
+app.use(socketioProxy);
+console.log('✅ Socket.IO WebSocket proxy configured');
 
 // Debug middleware for /auth route
 app.use('/auth', (req, res, next) => {
@@ -219,12 +437,71 @@ app.use('/admin', (req, res, next) => {
   next();
 });
 
+// Apply rate limiting middleware to /documents routes
+app.use('/documents', documentsRateLimitUnauth, documentsRateLimitAuth);
+app.use('/docs', documentsRateLimitUnauth, documentsRateLimitAuth);
+
 app.use('/auth', createServiceProxy('auth', services.auth));
 app.use('/game', createServiceProxy('game', services.game));
 app.use('/forum', createServiceProxy('forum', services.forum));
 app.use('/documents', createServiceProxy('documents', services.documents));
 app.use('/docs', createServiceProxy('documents', services.documents));
 app.use('/admin', createServiceProxy('admin', services.admin));
+
+// ========== CDN SERVICE PROXY ==========
+// CDN upload endpoint: POST /cdn/upload → cdn-service:4002
+const cdnServiceProxy = createProxyMiddleware({
+  target: process.env.CDN_SERVICE_URL || 'http://cdn-service:4002',
+  changeOrigin: true,
+  timeout: 30000, // 30 seconds for image upload/processing
+  pathFilter: '/cdn/upload',
+  on: {
+    proxyReq: (proxyReq: any, req: any, res: any) => {
+      console.log(`📤 [CDN UPLOAD] Proxying: ${req.method} ${req.url}`);
+
+      // Forward auth headers for JWT validation
+      if (req.headers.authorization) {
+        proxyReq.setHeader('Authorization', req.headers.authorization);
+      }
+      if (req.headers.cookie) {
+        proxyReq.setHeader('Cookie', req.headers.cookie);
+      }
+    },
+    proxyRes: (proxyRes: any, req: any, res: any) => {
+      console.log(`✅ [CDN UPLOAD] Response: ${proxyRes.statusCode}`);
+    },
+    error: (err: any, req: any, res: any) => {
+      console.log(`❌ [CDN UPLOAD ERROR] ${err.message}`);
+      logger.error(`CDN upload proxy error:`, { error: err.message });
+
+      if (!res.headersSent) {
+        res.status(502).json({
+          success: false,
+          error: 'CDN service temporarily unavailable'
+        });
+      }
+    }
+  }
+});
+
+app.use(cdnServiceProxy);
+console.log('✅ CDN upload proxy configured (/cdn/upload → cdn-service:4002)');
+
+// ========== CDN STATIC FILE SERVING ==========
+// Serve static files from /cdn-storage volume
+// GET /cdn/* → /cdn-storage/*
+app.use('/cdn', express.static('/cdn-storage', {
+  maxAge: '365d', // 1 year cache (immutable hash-based naming)
+  immutable: true,
+  setHeaders: (res, path) => {
+    // Security headers
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Access-Control-Allow-Origin', '*'); // Public CDN
+    res.setHeader('Cache-Control', 'public, immutable, max-age=31536000');
+  }
+}));
+console.log('✅ CDN static file serving configured (/cdn → /cdn-storage)');
+
 console.log('✅ All proxy routes configured');
 
 // Body parsing middleware (only for non-proxied routes)
@@ -243,7 +520,7 @@ app.use((req, res, next) => {
   const startTime = Date.now();
   const originalUrl = req.originalUrl;
   const method = req.method;
-  const clientIP = req.ip || req.connection.remoteAddress;
+  const clientIP = req.ip || req.socket?.remoteAddress;
   const userAgent = req.get('User-Agent') || 'Unknown';
   
   // Determine target backend based on route
@@ -418,7 +695,7 @@ app.use((req, res) => {
   console.log(`🔗 URL: ${req.originalUrl || req.url}`);
   console.log(`📡 Method: ${req.method}`);
   console.log(`🌐 Origin: ${req.get('Origin') || 'No origin'}`);
-  console.log(`📍 Client IP: ${req.ip || req.connection.remoteAddress || 'Unknown'}`);
+  console.log(`📍 Client IP: ${req.ip || req.socket?.remoteAddress || 'Unknown'}`);
   console.log(`🤖 User-Agent: ${req.get('User-Agent') || 'No user-agent'}`);
   console.log('❌ ===================================\n');
   

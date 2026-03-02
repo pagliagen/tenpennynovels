@@ -1,42 +1,52 @@
-@use "../../../../../shared-ui/src/styles/variables/colors" as *;
-@use "../../../../../shared-ui/src/styles/variables/typography" as *;
-@use "../../../../../shared-ui/src/styles/variables/spacing" as *;
-@use "../../../../../shared-ui/src/styles/variables/borders" as *;
+/**
+ * Character Profile Component Styles
+ *
+ * Styling for character avatar display in sidebar.
+ * Clickable to open wizard (DRAFT) or character sheet (other statuses).
+ *
+ * @module styles/components/sidebar/CharacterProfile
+ * @since 2.0.0
+ */
 
 .characterProfile {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: $spacing-sm;
-  padding: $spacing-md;
-  margin-bottom: $spacing-md;
+  gap: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  width: 100%;
   cursor: pointer;
-  transition: all 0.2s ease;
-  border-radius: $radius-md;
-  width: 50%;
-  
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border-radius: 8px;
+
   &:hover {
-    background: rgba($text-orange, 0.05);
     transform: translateY(-2px);
+    background: rgba(184, 134, 11, 0.05);
   }
-  
+
   &:active {
     transform: translateY(0);
+  }
+
+  &:focus-visible {
+    outline: 2px solid #b8860b;
+    outline-offset: 2px;
   }
 }
 
 .avatarContainer {
   position: relative;
   width: 100%;
-  padding-bottom: 100%;
+  padding-bottom: 100%; /* Maintain 1:1 aspect ratio */
   display: flex;
   align-items: center;
   justify-content: center;
-  background-image: url('/images/sidebar/avatar-frame.png');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  transition: filter 0.2s ease;
 
+  .characterProfile:hover & {
+    filter: brightness(1.1);
+  }
 }
 
 .avatarFrame {
@@ -45,7 +55,6 @@
   left: 0;
   width: 100%;
   height: 100%;
-  z-index: 2;
   pointer-events: none;
   object-fit: contain;
 }
@@ -56,17 +65,17 @@
   height: 70%;
   border-radius: 50%;
   object-fit: cover;
-  z-index: 1;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
 }
 
 .characterName {
-  font-family: $font-thrifted;
-  color: $text-orange;
-  font-size: $font-size-sm;
+  font-family: 'Thrifted Attire', 'Merriweather', serif;
+  color: #b8860b; /* Victorian gold */
+  font-size: 14px;
   text-align: center;
-  text-shadow: 0 0 5px rgba($text-orange, 0.5);
+  text-shadow: 0 0 5px rgba(184, 134, 11, 0.5);
+  font-weight: 600;
 }
-
+ 

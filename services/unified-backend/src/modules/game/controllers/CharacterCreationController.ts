@@ -1,0 +1,203 @@
+/**
+ * Character Creation Controller
+ *
+ * Endpoints for character creation configuration.
+ * Provides occupations, skills, and creation rules with user authentication.
+ *
+ * @module modules/game/controllers/CharacterCreationController
+ * @since 2.0.0
+ */
+
+import { Request, Response } from 'express';
+import { CharacterCreationConfigService } from '@shared/services/CharacterCreationConfigService';
+import { Occupation } from '@database/models/Occupation';
+import { Skill } from '@database/models/Skill';
+import { logger } from '@shared/utils/logger';
+
+export class CharacterCreationController {
+  /**
+   * GET /game/character-creation-config
+   * Get complete character creation configuration (rules + occupations + skills)
+   * Requires user authentication (no character required)
+   */
+  static async getConfig(req: Request, res: Response): Promise<void> {
+    try {
+      // Load configuration rules from JSON file
+      const configService = CharacterCreationConfigService.getInstance();
+      const rulesConfig = await configService.loadConfig();
+
+      // Fetch occupations from database
+      const occupations = await Occupation.find({ isActive: true })
+        .select('name description category socialClass requiredSkills bonusSkills alternativeSkills')
+        .sort({ name: 1 })
+        .lean();
+
+      // Fetch skills from database
+      const skills = await Skill.find({ visible: true, defaultSkill: true })
+        .select('name baseValue category description isPlaceholder placeholderType')
+        .sort({ sortOrder: 1, name: 1 })
+        .lean();
+
+      // Format complete configuration for frontend
+      const completeConfig = {
+        occupations: occupations.map((occ: any) => ({
+          id: occ._id.toString(),
+          name: occ.name,
+          description: occ.description,
+          category: occ.category,
+          socialClass: occ.socialClass || 'middle_class',
+          requiredSkills: (occ.requiredSkills || []).map((skill: any) => ({
+            skillId: skill.skillId || skill.skillName,
+            name: skill.skillName,
+            bonusValue: skill.baseValue,
+          })),
+          bonusSkills: (occ.bonusSkills || []).map((skill: any) => ({
+            skillId: skill.skillId || skill.skillName,
+            name: skill.skillName,
+            bonusValue: skill.bonusValue,
+          })),
+          alternativeSkills: occ.alternativeSkills || {},
+        })),
+        skills: skills.map((skill: any) => ({
+          id: skill._id.toString(),
+          name: skill.name,
+          description: skill.description,
+          category: skill.category,
+          baseValue: typeof skill.baseValue === 'number' ? skill.baseValue : 0,
+          isPlaceholder: skill.isPlaceholder || false,
+          placeholderType: skill.placeholderType,
+        })),
+        limits: rulesConfig.limits,
+        derivedStats: rulesConfig.formulas.derived,
+      };
+
+      logger.info('[CharacterCreationController] Complete character creation config requested', {
+        occupationsCount: occupations.length,
+        skillsCount: skills.length,
+      });
+
+      res.json({
+        success: true,
+        data: { config: completeConfig },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      logger.error('[CharacterCreationController] Error fetching character creation config:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
+
+      res.status(500).json({
+        success: false,
+        error: 'Failed to load character creation configuration',
+        code: 'CONFIG_LOAD_ERROR',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+
+  /**
+   * GET /game/character-creation-config/occupations
+   * Get all available occupations for character creation
+   * Requires user authentication (no character required)
+   */
+  static async getOccupations(req: Request, res: Response): Promise<void> {
+    try {
+      // Fetch all active occupations from database
+      const occupations = await Occupation.find({ isActive: true })
+        .select('name description category socialClass requiredSkills bonusSkills alternativeSkills')
+        .sort({ name: 1 })
+        .lean();
+
+      // Transform to frontend format
+      const formattedOccupations = occupations.map((occ: any) => ({
+        id: occ._id.toString(),
+        name: occ.name,
+        description: occ.description,
+        category: occ.category,
+        socialClass: occ.socialClass || 'middle_class',
+        requiredSkills: (occ.requiredSkills || []).map((skill: any) => ({
+          skillId: skill.skillId || skill.skillName,
+          name: skill.skillName,
+          bonusValue: skill.baseValue,
+        })),
+        bonusSkills: (occ.bonusSkills || []).map((skill: any) => ({
+          skillId: skill.skillId || skill.skillName,
+          name: skill.skillName,
+          bonusValue: skill.bonusValue,
+        })),
+        alternativeSkills: occ.alternativeSkills || {},
+      }));
+
+      logger.info('[CharacterCreationController] Occupations list requested', {
+        count: formattedOccupations.length,
+      });
+
+      res.json({
+        success: true,
+        data: { occupations: formattedOccupations },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      logger.error('[CharacterCreationController] Error fetching occupations:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
+
+      res.status(500).json({
+        success: false,
+        error: 'Failed to load occupations',
+        code: 'OCCUPATIONS_LOAD_ERROR',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+
+  /**
+   * GET /game/character-creation-config/skills
+   * Get all available skills for character creation
+   * Requires user authentication (no character required)
+   */
+  static async getSkills(req: Request, res: Response): Promise<void> {
+    try {
+      // Fetch all visible default skills from database
+      const skills = await Skill.find({ visible: true, defaultSkill: true })
+        .select('name baseValue category description isPlaceholder placeholderType')
+        .sort({ sortOrder: 1, name: 1 })
+        .lean();
+
+      // Transform to frontend format
+      const formattedSkills = skills.map((skill: any) => ({
+        id: skill._id.toString(),
+        name: skill.name,
+        description: skill.description,
+        category: skill.category,
+        baseValue: typeof skill.baseValue === 'number' ? skill.baseValue : 0,
+        isPlaceholder: skill.isPlaceholder || false,
+        placeholderType: skill.placeholderType,
+      }));
+
+      logger.info('[CharacterCreationController] Skills list requested', {
+        count: formattedSkills.length,
+      });
+
+      res.json({
+        success: true,
+        data: { skills: formattedSkills },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      logger.error('[CharacterCreationController] Error fetching skills:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
+
+      res.status(500).json({
+        success: false,
+        error: 'Failed to load skills',
+        code: 'SKILLS_LOAD_ERROR',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+}

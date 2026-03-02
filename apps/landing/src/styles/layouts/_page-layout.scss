@@ -1,0 +1,15 @@
+/**
+ * Page Layout Styles
+ *
+ * General page layout styles.
+ */
+
+.page-layout {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--spacing-container-mobile);
+
+  @media (min-width: 768px) {
+    padding: var(--spacing-container-desktop);
+  }
+}

@@ -1,220 +1,101 @@
-// Import shared design system variables (CSS Modules compatibility)
-@import 'variables/colors';
-@import 'variables/typography';
-@import 'variables/spacing';
-@import 'variables/breakpoints';
-@import 'variables/shadows';
-@import 'variables/borders';
+@import '../variables.scss';
 
-// Loading State
-.loadingContainer {
-  height: 100vh;
+.layout {
   display: flex;
+  min-height: 100vh;
+  background-color: $color-bg-primary;
+  color: $color-text-primary;
+}
+
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: $bg-primary;
-  color: $text-primary;
-}
-
-.loadingSpinner {
-  text-align: center;
-  
-  .spinner {
-    width: 40px;
-    height: 40px;
-    border: 4px solid rgba($gold-primary, 0.3);
-    border-left: 4px solid $gold-primary;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin: 0 auto $spacing-md;
-  }
-  
-  p {
-    color: $text-secondary;
-    font-size: $font-size-sm;
-  }
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-// Main Layout
-.managementContainer {
   min-height: 100vh;
-  display: flex;
-  background: $bg-primary;
-  color: $text-primary;
+  gap: $spacing-lg;
+  background-color: $color-bg-primary;
 }
 
-// Content Area (everything except sidebar)
-.contentArea {
+.loadingText {
+  color: $color-text-secondary;
+  font-size: 16px;
+}
+
+.mainWrapper {
   flex: 1;
   display: flex;
   flex-direction: column;
-  margin-left: 280px; // Space for fixed sidebar
-  min-height: 100vh;
+  min-width: 0; // Allow flex item to shrink
 }
 
-// Header
 .header {
-  height: 70px;
-  background: linear-gradient(135deg, $admin-bg 0%, darken($admin-bg, 5%) 100%);
-  border-bottom: 2px solid $border-secondary;
+  background-color: $color-bg-secondary;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0 $spacing-lg;
+}
+
+.headerContent {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 $spacing-xl;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  z-index: 9999;
+  height: 64px;
 }
 
-.headerLeft {
-  display: flex;
-  align-items: center; 
+.logo {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: $color-primary;
 }
 
-.headerRight {
-  display: flex;
-  align-items: center;
-  gap: $spacing-lg;
-}
-
-.userProfile {
+.headerActions {
   display: flex;
   align-items: center;
   gap: $spacing-md;
-  background: rgba($bg-secondary, 0.6);
-  padding: $spacing-sm $spacing-md;
-  border-radius: $radius-lg;
-  border: 1px solid rgba($border-secondary, 0.3);
 }
 
 .userInfo {
-  text-align: right;
-  
-  .username {
-    color: $gold-primary;
-    font-weight: 600;
-    font-size: $font-size-sm;
-    display: block;
-  }
-  
-  .userRoles {
-    display: flex;
-    gap: $spacing-xs;
-    margin-top: 2px;
-    justify-content: flex-end;
-  }
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
 }
 
-.roleBadge {
-  font-size: 0.65rem;
-  font-weight: bold;
-  padding: 2px $spacing-xs;
-  border-radius: $radius-sm;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  
-  &.role-gestore {
-    background: linear-gradient(135deg, #e53e3e, #c53030);
-    color: white;
-    box-shadow: 0 1px 3px rgba(#e53e3e, 0.4);
-  }
-  
-  &.role-admin {
-    background: linear-gradient(135deg, #ed8936, #dd6b20);
-    color: white;
-    box-shadow: 0 1px 3px rgba(#ed8936, 0.4);
-  }
-  
-  &.role-master {
-    background: linear-gradient(135deg, $gold-primary, $gold-light);
-    color: $bg-primary;
-    box-shadow: 0 1px 3px rgba($gold-primary, 0.4);
-  }
-  
-  &.role-moderatore {
-    background: linear-gradient(135deg, $gold-primary, $gold-light);
-    color: white;
-    box-shadow: 0 1px 3px rgba($gold-primary, 0.4);
-  }
+.userName {
+  font-size: 15px;
+  color: $color-text-secondary;
 }
 
-.backToGameButton {
-  background: linear-gradient(135deg, $gold-primary, darken($gold-primary, 10%));
-  border: none;
-  color: white;
-  font-size: 0.9rem;
+.logoutButton {
   padding: $spacing-sm $spacing-md;
-  border-radius: $radius-sm;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: $border-radius-sm;
+  background-color: transparent;
+  color: $color-text-secondary;
   cursor: pointer;
+  font-size: 14px;
   transition: all $transition-fast;
-  box-shadow: 0 2px 8px rgba($gold-primary, 0.3);
-  font-weight: 500;
-  
+
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba($gold-primary, 0.4);
+    border-color: $color-primary;
+    color: $color-primary;
   }
 }
 
-
-// Main Content
-.mainContent {
+.main {
   flex: 1;
-  padding: $spacing-xl;
+  padding: $spacing-lg;
   overflow-y: auto;
-  background: $bg-primary;
 }
 
+.footer {
+  padding: $spacing-md $spacing-lg;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: center;
 
-// Responsive Design
-@media (max-width: $breakpoint-lg) {
-  // Reduce content area margin for slightly smaller sidebar
-  .contentArea {
-    margin-left: 260px;
-  }
-}
-
-@media (max-width: $breakpoint-md) {
-  // Stack layout for tablets - sidebar becomes full width overlay or hidden
-  .contentArea {
-    margin-left: 0;
-  }
-  
-  .header {
-    padding: 0 $spacing-md;
-  }
-  
-  .mainContent {
-    padding: $spacing-md;
-  }
-  
-  .userProfile {
-    .userInfo .userRoles {
-      display: none; // Hide role badges on mobile
-    }
-  }
-}
-
-@media (max-width: $breakpoint-sm) {
-  .header {
-    padding: 0 $spacing-sm;
-  }
-  
-  .userProfile {
-    padding: $spacing-xs $spacing-sm;
-    gap: $spacing-xs;
-    
-    .userInfo .username {
-      display: none; // Show only back button on very small screens
-    }
-  }
-  
-  .backToGameButton {
-    font-size: 0.8rem;
-    padding: $spacing-xs $spacing-sm;
+  p {
+    margin: 0;
+    font-size: 14px;
+    color: $color-text-muted;
   }
 }

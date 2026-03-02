@@ -8,6 +8,7 @@
     ],
     "allowJs": true,
     "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "noEmit": true,
@@ -24,15 +25,20 @@
       "@tenpennynovels/shared-ui": ["./apps/shared-ui/src"]
     }
   },
-  "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx"
-  ],
+  "include": ["*.ts"],
   "exclude": [
     "node_modules",
+    "**/node_modules",
     "dist",
+    "**/dist",
     "build",
-    ".next"
+    "**/build",
+    ".next",
+    "**/.next",
+    "**/*.tsbuildinfo",
+    "**/out",
+    "services/**/*",
+    "apps/**/*",
+    "scripts/**/*"
   ]
 }

@@ -1,0 +1,177 @@
+/**
+ * usePresence Hook
+ *
+ * Manages global presence state with real-time WebSocket updates.
+ * This hook bridges WebSocketContext and presenceStore.
+ *
+ * Features:
+ * - Fetches initial presence data from API on mount
+ * - Subscribes to WebSocket events (player_entered, player_left, global_presence_update)
+ * - Provides location-filtered presence (characters in same location)
+ * - Automatic cleanup on unmount
+ *
+ * CRITICAL: This hook follows MEMORY.md WebSocket pattern.
+ * - Subscriptions via onLocationEvent / onGlobalEvent callbacks
+ * - NO direct socket.on() calls (violates pattern)
+ * - Automatic unsubscribe on unmount
+ *
+ * @module hooks/usePresence
+ * @since 2.0.0
+ */
+
+import { useEffect } from 'react';
+import { usePresenceStore, GlobalPresence } from '@/store/presenceStore';
+import { useAuthStore } from '@/store/authStore';
+import { useWebSocket } from '@/contexts/WebSocketContext';
+
+/**
+ * usePresence Hook Return Type
+ *
+ * @interface UsePresenceReturn
+ * @since 2.0.0
+ *
+ * @property {GlobalPresence[]} globalPresence - All online characters
+ * @property {GlobalPresence[]} locationPresence - Characters in same location as current character
+ * @property {boolean} isLoading - Whether initial API fetch is in progress
+ * @property {string | null} error - Error message if API fetch failed
+ * @property {() => Promise<void>} refetch - Manually refetch presence data from API
+ */
+interface UsePresenceReturn {
+  globalPresence: GlobalPresence[];
+  locationPresence: GlobalPresence[];
+  isLoading: boolean;
+  error: string | null;
+  refetch: () => Promise<void>;
+}
+
+/**
+ * usePresence Hook
+ *
+ * Manages global presence state with real-time WebSocket updates.
+ *
+ * @returns {UsePresenceReturn} Presence data and actions
+ *
+ * @example
+ * ```typescript
+ * function PresenceList() {
+ *   const { globalPresence, locationPresence, isLoading } = usePresence();
+ *
+ *   if (isLoading) return <Spinner />;
+ *
+ *   return (
+ *     <div>
+ *       <h2>In This Location ({locationPresence.length})</h2>
+ *       {locationPresence.map(p => <PlayerCard key={p.characterId} presence={p} />)}
+ *
+ *       <h2>All Online ({globalPresence.length})</h2>
+ *       {globalPresence.map(p => <PlayerCard key={p.characterId} presence={p} />)}
+ *     </div>
+ *   );
+ * }
+ * ```
+ *
+ * @since 2.0.0
+ */
+export function usePresence(): UsePresenceReturn {
+  const {
+    globalPresence,
+    isLoading,
+    error,
+    initialize,
+    handlePlayerEntered,
+    handlePlayerLeft,
+    handleGlobalPresenceUpdate,
+    getLocationPresence,
+  } = usePresenceStore();
+
+  const { selectedCharacter } = useAuthStore();
+  const { onLocationEvent, onGlobalEvent } = useWebSocket();
+
+  // Initialize presence store on mount (fetch from API)
+  useEffect(() => {
+    if (selectedCharacter) {
+      console.log('🔄 usePresence: Initializing presence store for character:', selectedCharacter._id);
+      initialize(selectedCharacter._id);
+    }
+  }, [selectedCharacter?._id, initialize]);
+
+  // Subscribe to location events (MEMORY.md pattern)
+  useEffect(() => {
+    const unsubscribe = onLocationEvent((event) => {
+      console.log('📥 usePresence: Received location event:', event.type, event.data);
+
+      switch (event.type) {
+        case 'player_entered':
+          // Character entered current location (room-scoped)
+          handlePlayerEntered(event.data);
+          break;
+
+        case 'player_left':
+          // Character left current location (room-scoped)
+          handlePlayerLeft(event.data);
+          break;
+
+        case 'location_joined':
+          // Current character joined new location (confirmation)
+          // Refetch presence to sync with server truth
+          if (selectedCharacter) {
+            console.log('🔄 usePresence: location_joined event - refetching presence');
+            initialize(selectedCharacter._id);
+          }
+          break;
+
+        default:
+          // Other location events (typing, messages) - ignore for presence
+          break;
+      }
+    });
+
+    // Cleanup subscription on unmount
+    return unsubscribe;
+  }, [onLocationEvent, handlePlayerEntered, handlePlayerLeft, initialize, selectedCharacter]);
+
+  // Subscribe to global events (MEMORY.md pattern)
+  useEffect(() => {
+    const unsubscribe = onGlobalEvent((event) => {
+      console.log('📥 usePresence: Received global event:', event.type, event.data);
+
+      switch (event.type) {
+        case 'global_presence_update':
+          // Character moved between locations (broadcast to ALL clients)
+          handleGlobalPresenceUpdate(event.data);
+          break;
+
+        case 'user_status_change':
+          // User went online/offline (not fully implemented in presenceStore)
+          console.log('📥 usePresence: user_status_change event:', event.data);
+          // TODO: Implement when backend includes characterId in event
+          break;
+
+        default:
+          // Other global events - ignore for presence
+          break;
+      }
+    });
+
+    // Cleanup subscription on unmount
+    return unsubscribe;
+  }, [onGlobalEvent, handleGlobalPresenceUpdate]);
+
+  // Compute location-filtered presence (characters in same location as current character)
+  const locationPresence = selectedCharacter
+    ? getLocationPresence(selectedCharacter.currentLocation || null)
+    : [];
+
+  return {
+    globalPresence,
+    locationPresence,
+    isLoading,
+    error,
+    refetch: () => {
+      if (selectedCharacter) {
+        return initialize(selectedCharacter._id);
+      }
+      return Promise.resolve();
+    },
+  };
+}

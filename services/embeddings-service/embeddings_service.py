@@ -9,7 +9,8 @@ import logging
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from typing import List, Dict, Any
-from embeddings_generator import EmbeddingsGenerator
+from sentence_transformers import SentenceTransformer
+import numpy as np
 
 # Setup logging
 logging.basicConfig(
@@ -22,28 +23,61 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
 
-# Global embeddings generator (loaded once at startup)
-generator = None
+# Global model (loaded once at startup)
+model = None
 
-def get_generator() -> EmbeddingsGenerator:
-    """Get or initialize the embeddings generator"""
-    global generator
-    if generator is None:
+def get_model() -> SentenceTransformer:
+    """Get or initialize the sentence transformer model"""
+    global model
+    if model is None:
         model_name = os.getenv('EMBEDDINGS_MODEL', 'paraphrase-multilingual-MiniLM-L12-v2')
-        logger.info(f"🚀 Initializing embeddings generator with model: {model_name}")
-        generator = EmbeddingsGenerator(model_name)
-        generator.load_model()
-        logger.info("✅ Model loaded and ready")
-    return generator
+        logger.info(f"🚀 Loading model: {model_name}")
+        # Use local_files_only=True to avoid HuggingFace API calls after first download
+        # Model will be cached in ~/.cache/huggingface/
+        try:
+            model = SentenceTransformer(model_name, local_files_only=True)
+            logger.info(f"✅ Model loaded from cache (offline mode)")
+        except Exception as e:
+            logger.warning(f"⚠️  Cache miss, downloading from HuggingFace: {e}")
+            model = SentenceTransformer(model_name)
+            logger.info(f"✅ Model downloaded and cached")
+        logger.info(f"   Embedding dimension: {model.get_sentence_embedding_dimension()}")
+    return model
+
+def chunk_text(text: str, max_length: int = 500, overlap: int = 50) -> List[str]:
+    """
+    Smart text chunking with overlap to preserve context
+
+    Args:
+        text: Text to chunk
+        max_length: Maximum chunk length in characters
+        overlap: Overlap between chunks in characters
+
+    Returns:
+        List of text chunks
+    """
+    if len(text) <= max_length:
+        return [text]
+
+    chunks = []
+    start = 0
+    while start < len(text):
+        end = start + max_length
+        chunks.append(text[start:end])
+        start += (max_length - overlap)
+
+    return chunks
 
 
 @app.route('/health', methods=['GET'])
 def health_check():
     """Health check endpoint"""
+    model_name = os.getenv('EMBEDDINGS_MODEL', 'paraphrase-multilingual-MiniLM-L12-v2')
     return jsonify({
         'status': 'healthy',
         'service': 'embeddings-service',
-        'model': generator.model_name if generator else 'not-loaded'
+        'model': model_name,
+        'loaded': model is not None
     })
 
 
@@ -61,7 +95,8 @@ def generate_embedding():
     {
         "success": true,
         "embedding": [0.1, 0.2, ...],
-        "dimensions": 384
+        "dimensions": 384,
+        "chunks": 1
     }
     """
     try:
@@ -80,13 +115,24 @@ def generate_embedding():
                 'error': 'Text must be a non-empty string'
             }), 400
 
-        gen = get_generator()
-        embedding = gen.generate_embedding(text)
+        # Smart text chunking (non hard-coded truncation)
+        chunks = chunk_text(text, max_length=500, overlap=50)
+
+        # Generate embeddings for all chunks
+        model_instance = get_model()
+        embeddings = [model_instance.encode(chunk, convert_to_numpy=True) for chunk in chunks]
+
+        # Average embeddings if multi-chunk
+        if len(embeddings) > 1:
+            final_embedding = np.mean(embeddings, axis=0)
+        else:
+            final_embedding = embeddings[0]
 
         return jsonify({
             'success': True,
-            'embedding': embedding,
-            'dimensions': len(embedding)
+            'embedding': final_embedding.tolist(),
+            'dimensions': len(final_embedding),
+            'chunks': len(chunks)
         })
 
     except Exception as e:
@@ -138,14 +184,27 @@ def generate_embeddings_batch():
                 'error': 'All texts must be non-empty strings'
             }), 400
 
-        gen = get_generator()
-        embeddings = gen.generate_embeddings_batch(texts)
+        # Chunk each text and generate embeddings
+        model_instance = get_model()
+        all_embeddings = []
+
+        for text in texts:
+            chunks = chunk_text(text, max_length=500, overlap=50)
+            chunk_embeddings = [model_instance.encode(chunk, convert_to_numpy=True) for chunk in chunks]
+
+            # Average if multi-chunk
+            if len(chunk_embeddings) > 1:
+                final_embedding = np.mean(chunk_embeddings, axis=0)
+            else:
+                final_embedding = chunk_embeddings[0]
+
+            all_embeddings.append(final_embedding.tolist())
 
         return jsonify({
             'success': True,
-            'embeddings': embeddings,
-            'count': len(embeddings),
-            'dimensions': len(embeddings[0]) if embeddings else 0
+            'embeddings': all_embeddings,
+            'count': len(all_embeddings),
+            'dimensions': len(all_embeddings[0]) if all_embeddings else 0
         })
 
     except Exception as e:
@@ -191,12 +250,22 @@ def compute_similarity():
                 'error': 'Embeddings must be arrays'
             }), 400
 
-        gen = get_generator()
-        similarity = gen.compute_similarity(embedding1, embedding2)
+        # Convert to numpy arrays
+        emb1 = np.array(embedding1)
+        emb2 = np.array(embedding2)
+
+        if emb1.shape != emb2.shape:
+            return jsonify({
+                'success': False,
+                'error': 'Embeddings must have same dimension'
+            }), 400
+
+        # Cosine similarity
+        similarity = np.dot(emb1, emb2) / (np.linalg.norm(emb1) * np.linalg.norm(emb2))
 
         return jsonify({
             'success': True,
-            'similarity': similarity
+            'similarity': float(similarity)
         })
 
     except Exception as e:
@@ -216,7 +285,7 @@ if __name__ == '__main__':
     logger.info(f"   Port: {port}")
 
     # Pre-load the model at startup
-    get_generator()
+    get_model()
 
     logger.info("✅ Service ready to accept requests")
 

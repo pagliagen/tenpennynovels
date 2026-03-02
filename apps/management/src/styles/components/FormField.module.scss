@@ -1,0 +1,92 @@
+@use 'sass:color';
+@import '../variables.scss';
+
+.formField {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 600;
+  color: $color-text-primary;
+  display: flex;
+  gap: $spacing-xs;
+}
+
+.required {
+  color: $color-error;
+}
+
+.input,
+select.input,
+textarea.input {
+  padding: $spacing-sm $spacing-md;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: $border-radius-md;
+  background-color: $color-bg-tertiary;
+  color: $color-text-primary;
+  font-size: 15px;
+  transition: all $transition-fast;
+
+  &:focus {
+    outline: none;
+    border-color: $color-primary;
+    background-color: color.adjust($color-bg-tertiary, $lightness: 5%);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &.error {
+    border-color: $color-error;
+  }
+
+  &::placeholder {
+    color: $color-text-muted;
+  }
+}
+
+textarea.input {
+  min-height: 100px;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.checkboxWrapper {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.checkbox {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: $color-primary;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.checkboxLabel {
+  font-size: 15px;
+  color: $color-text-primary;
+  cursor: pointer;
+  user-select: none;
+}
+
+.errorText {
+  font-size: 14px;
+  color: $color-error;
+}
+
+.helpText {
+  font-size: 14px;
+  color: $color-text-secondary;
+}

@@ -1,149 +1,149 @@
-import React, { useEffect, useRef } from 'react';
+/**
+ * Modal - Custom modal dialog component
+ *
+ * Features:
+ * - Portal rendering
+ * - Backdrop click to close
+ * - Escape key handler
+ * - Focus trap
+ */
+
+import React, { useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import styles from '@/styles/components/shared/Modal.module.scss';
+import classNames from 'classnames';
+import styles from '@/styles/components/Modal.module.scss';
 
 export interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
-  title: string;
+  title?: string;
   children: React.ReactNode;
-  size?: 'small' | 'medium' | 'large' | 'fullscreen';
-  actions?: {
-    label: string;
-    onClick: () => void;
-    variant?: 'primary' | 'secondary' | 'danger';
-    disabled?: boolean;
-    loading?: boolean;
-  }[];
-  closeOnOverlayClick?: boolean;
+  footer?: React.ReactNode;
+  size?: 'small' | 'medium' | 'large';
+  showCloseButton?: boolean;
+  closeOnBackdropClick?: boolean;
   closeOnEscape?: boolean;
   className?: string;
 }
 
-export const Modal: React.FC<ModalProps> = ({
+export function Modal({
   isOpen,
   onClose,
   title,
   children,
+  footer,
   size = 'medium',
-  actions = [],
-  closeOnOverlayClick = true,
+  showCloseButton = true,
+  closeOnBackdropClick = true,
   closeOnEscape = true,
   className
-}) => {
+}: ModalProps): React.ReactElement | null {
   const modalRef = useRef<HTMLDivElement>(null);
-  const previousFocusRef = useRef<HTMLElement | null>(null);
 
-  // Handle ESC key
+  // Handle escape key
   useEffect(() => {
-    if (!closeOnEscape) return;
+    if (!isOpen || !closeOnEscape) return;
 
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
+      if (e.key === 'Escape') {
         onClose();
       }
     };
 
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
-  }, [isOpen, onClose, closeOnEscape]);
+  }, [isOpen, closeOnEscape, onClose]);
 
-  // Focus management
+  // Lock body scroll when modal is open
   useEffect(() => {
-    if (isOpen) {
-      // Store current focus
-      previousFocusRef.current = document.activeElement as HTMLElement;
-      
-      // Focus the modal
-      setTimeout(() => {
-        modalRef.current?.focus();
-      }, 100);
+    if (!isOpen) return;
 
-      // Prevent body scroll
-      document.body.style.overflow = 'hidden';
-    } else {
-      // Restore focus
-      if (previousFocusRef.current) {
-        previousFocusRef.current.focus();
-      }
-      
-      // Restore body scroll
-      document.body.style.overflow = '';
-    }
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
 
     return () => {
-      document.body.style.overflow = '';
+      document.body.style.overflow = originalOverflow;
     };
   }, [isOpen]);
 
-  // Handle overlay click
-  const handleOverlayClick = (e: React.MouseEvent) => {
-    if (closeOnOverlayClick && e.target === e.currentTarget) {
+  // Focus trap
+  useEffect(() => {
+    if (!isOpen || !modalRef.current) return;
+
+    const focusableElements = modalRef.current.querySelectorAll(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+
+    const firstElement = focusableElements[0] as HTMLElement;
+    const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+
+    const handleTab = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return;
+
+      if (e.shiftKey) {
+        if (document.activeElement === firstElement) {
+          e.preventDefault();
+          lastElement?.focus();
+        }
+      } else {
+        if (document.activeElement === lastElement) {
+          e.preventDefault();
+          firstElement?.focus();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleTab);
+    firstElement?.focus();
+
+    return () => document.removeEventListener('keydown', handleTab);
+  }, [isOpen]);
+
+  // Handle backdrop click
+  const handleBackdropClick = useCallback((e: React.MouseEvent) => {
+    if (closeOnBackdropClick && e.target === e.currentTarget) {
       onClose();
     }
-  };
+  }, [closeOnBackdropClick, onClose]);
 
   if (!isOpen) return null;
 
-  const modalContent = (
-    <div 
-      className={styles.modalOverlay}
-      onClick={handleOverlayClick}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="modal-title"
-    >
-      <div 
-        ref={modalRef}
-        className={`${styles.modal} ${styles[`size-${size}`]} ${className || ''}`}
-        tabIndex={-1}
-      >
-        {/* Modal Header */}
-        <div className={styles.modalHeader}>
-          <h2 id="modal-title" className={styles.modalTitle}>
-            {title}
-          </h2>
-          
-          <button
-            onClick={onClose}
-            className={styles.closeButton}
-            aria-label="Chiudi modal"
-          >
-            ✕
-          </button>
-        </div>
+  // Render in portal
+  if (typeof window === 'undefined') return null;
 
-        {/* Modal Content */}
-        <div className={styles.modalContent}>
+  return createPortal(
+    <div className={styles.modalBackdrop} onClick={handleBackdropClick}>
+      <div
+        ref={modalRef}
+        className={classNames(styles.modal, styles[size], className)}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={title ? 'modal-title' : undefined}
+      >
+        {(title || showCloseButton) && (
+          <div className={styles.modalHeader}>
+            {title && <h2 id="modal-title" className={styles.modalTitle}>{title}</h2>}
+            {showCloseButton && (
+              <button
+                onClick={onClose}
+                className={styles.closeButton}
+                aria-label="Chiudi"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+        )}
+        <div className={styles.modalBody}>
           {children}
         </div>
-
-        {/* Modal Actions */}
-        {actions.length > 0 && (
-          <div className={styles.modalActions}>
-            {actions.map((action, index) => (
-              <button
-                key={index}
-                onClick={action.onClick}
-                disabled={action.disabled || action.loading}
-                className={`${styles.actionButton} ${styles[`variant-${action.variant || 'secondary'}`]}`}
-              >
-                {action.loading && (
-                  <span className={styles.loadingSpinner}></span>
-                )}
-                {action.label}
-              </button>
-            ))}
+        {footer && (
+          <div className={styles.modalFooter}>
+            {footer}
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
-
-  // Render in portal
-  if (typeof window !== 'undefined') {
-    return createPortal(modalContent, document.body);
-  }
-
-  return null;
-};
+}

@@ -1,0 +1,101 @@
+/**
+ * Alert Component Styles
+ *
+ * Contextual feedback messages (success, error, warning, info).
+ */
+
+.alert {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+  border: 2px solid;
+  background: var(--color-bg-secondary);
+  border-radius: 0; /* Victorian sharp edges */
+
+  /**
+   * Content wrapper
+   */
+  &__content {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+    flex: 1;
+  }
+
+  /**
+   * Icon
+   */
+  &__icon {
+    flex-shrink: 0;
+    font-size: var(--font-size-lg);
+    line-height: 1;
+  }
+
+  /**
+   * Message text
+   */
+  &__message {
+    flex: 1;
+    font-size: var(--font-size-base);
+    line-height: var(--line-height-normal);
+  }
+
+  /**
+   * Dismiss button
+   */
+  &__dismiss {
+    flex-shrink: 0;
+    padding: 0;
+    margin-left: var(--spacing-md);
+    font-size: var(--font-size-2xl);
+    line-height: 1;
+    color: currentColor;
+    background: none;
+    border: none;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity var(--transition-fast) var(--ease-out);
+
+    &:hover {
+      opacity: 1;
+    }
+  }
+
+  /**
+   * Success variant (green)
+   */
+  &--success {
+    color: var(--color-success);
+    border-color: var(--color-success-border);
+    background: var(--color-success-bg);
+  }
+
+  /**
+   * Error variant (red)
+   */
+  &--error {
+    color: var(--color-error);
+    border-color: var(--color-error-border);
+    background: var(--color-error-bg);
+  }
+
+  /**
+   * Warning variant (amber)
+   */
+  &--warning {
+    color: var(--color-warning);
+    border-color: var(--color-warning-border);
+    background: var(--color-warning-bg);
+  }
+
+  /**
+   * Info variant (blue)
+   */
+  &--info {
+    color: var(--color-info);
+    border-color: var(--color-info-border);
+    background: var(--color-info-bg);
+  }
+}

@@ -1,0 +1,164 @@
+@use 'sass:color';
+@import '../variables.scss';
+
+.backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  z-index: $z-modal-backdrop;
+  opacity: 0;
+  transition: opacity $transition-normal;
+  pointer-events: none;
+
+  &.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+.sidePanel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background-color: $color-bg-secondary;
+  box-shadow: $shadow-lg;
+  z-index: $z-modal;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform $transition-normal;
+
+  &.open {
+    transform: translateX(0);
+  }
+
+  &.small {
+    width: 400px;
+    max-width: 90vw;
+  }
+
+  &.medium {
+    width: 600px;
+    max-width: 90vw;
+  }
+
+  &.large {
+    width: 800px;
+    max-width: 90vw;
+  }
+}
+
+.header {
+  padding: $spacing-lg;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: $spacing-md;
+}
+
+.title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: $color-primary;
+}
+
+.subtitle {
+  margin: $spacing-xs 0 0;
+  font-size: 14px;
+  color: $color-text-secondary;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  color: $color-text-secondary;
+  font-size: 24px;
+  cursor: pointer;
+  padding: $spacing-sm;
+  line-height: 1;
+  transition: color $transition-fast;
+
+  &:hover {
+    color: $color-text-primary;
+  }
+}
+
+.body {
+  flex: 1;
+  overflow-y: auto;
+  padding: $spacing-lg;
+}
+
+.loadingContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+}
+
+.footer {
+  padding: $spacing-lg;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  gap: $spacing-md;
+  justify-content: flex-end;
+}
+
+.actionButton {
+  padding: $spacing-sm $spacing-lg;
+  border-radius: $border-radius-md;
+  border: none;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all $transition-fast;
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &.primary {
+    background-color: $color-primary;
+    color: $color-bg-primary;
+
+    &:hover:not(:disabled) {
+      background-color: color.adjust($color-primary, $lightness: 10%);
+    }
+  }
+
+  &.secondary {
+    background-color: transparent;
+    color: $color-text-secondary;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+
+    &:hover:not(:disabled) {
+      background-color: rgba(255, 255, 255, 0.05);
+      color: $color-text-primary;
+    }
+  }
+
+  &.danger {
+    background-color: $color-error;
+    color: white;
+
+    &:hover:not(:disabled) {
+      background-color: color.adjust($color-error, $lightness: -10%);
+    }
+  }
+}
