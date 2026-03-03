@@ -1014,7 +1014,7 @@ export class TicketManagementController {
           status: 'in_progress',
           'lastReadBy.staff': new Date()
         },
-        { new: true }
+        { returnDocument: 'after' }
       );
 
       if (!updatedTicket) {

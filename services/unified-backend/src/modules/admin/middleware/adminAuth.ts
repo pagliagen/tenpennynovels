@@ -385,12 +385,28 @@ export class AdminAuthMiddleware {
   /**
    * Utility: Extract admin info for audit logging
    */
-  static getAuditInfo(req: Request): { adminId: string; adminUsername: string; userRoles: string[]; characterRoles: string[]; ipAddress: string; userAgent: string } | null {
+  static getAuditInfo(req: Request): { adminId: string; adminUsername: string; adminCharacterName: string; userRoles: string[]; characterRoles: string[]; ipAddress: string; userAgent: string } | null {
     if (!req.user) return null;
-    
+
+    // Extract character name from character_context cookie
+    let adminCharacterName = req.user.username; // Fallback to username
+    const characterContextToken = req.cookies?.character_context;
+    if (characterContextToken) {
+      try {
+        const { AuthUtils } = require('../utils/auth');
+        const characterContext = AuthUtils.decodeCharacterContext(characterContextToken);
+        if (characterContext?.characterName) {
+          adminCharacterName = characterContext.characterName;
+        }
+      } catch (error) {
+        // Ignore error, use fallback
+      }
+    }
+
     return {
       adminId: req.user.userId,
       adminUsername: req.user.username,
+      adminCharacterName: adminCharacterName,
       userRoles: req.user.userRoles || [],
       characterRoles: req.user.characterRoles || [],
       ipAddress: req.ip || 'unknown',

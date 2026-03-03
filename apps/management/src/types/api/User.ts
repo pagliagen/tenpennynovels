@@ -19,7 +19,8 @@ export interface User {
     isBanned: boolean;
     banReason?: string;
     bannedAt?: string;
-    bannedBy?: string;
+    bannedBy?: string; // Admin user ID who performed the ban
+    bannedByName?: string; // Character name of admin who performed the ban
   };
   multipleCharactersAllowed: boolean;
   characters: UserCharacter[];

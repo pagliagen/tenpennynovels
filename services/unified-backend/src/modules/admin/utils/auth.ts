@@ -6,9 +6,6 @@ export interface JWTPayload {
   username: string;
   email: string;
   canAccessAdminPanel: boolean;
-  userRoles: string[];
-  characterRoles?: string[];
-  characterPermissions?: string[];
   characterId?: string;
   iat?: number;
   exp?: number;
@@ -46,11 +43,12 @@ export class AuthUtils {
   /**
    * Extract character context from character_context cookie
    */
-  static decodeCharacterContext(characterContext: string): { characterId: string; characterRoles: string[] } | null {
+  static decodeCharacterContext(characterContext: string): { characterId: string; characterName: string; characterRoles: string[] } | null {
     try {
       const decoded = jwt.verify(characterContext, this.getJwtSecret()) as any;
       return {
         characterId: decoded.characterId,
+        characterName: decoded.characterName, // Include character name from JWT
         characterRoles: decoded.characterRoles || []
       };
     } catch (error: any) {
@@ -72,9 +70,6 @@ export class AuthUtils {
       displayName: user.displayName,
       avatar: user.avatar,
       canAccessAdminPanel: user.canAccessAdminPanel,
-      userRoles: user.userRoles || [],
-      characterRoles: character?.gameplayRoles || user.characterRoles || [],
-      characterPermissions: user.characterPermissions || [],
       multipleCharactersAllowed: user.multipleCharactersAllowed,
       firstName: user.displayName?.split(' ')[0] || user.username,
       lastName: user.displayName?.split(' ')[1] || '',

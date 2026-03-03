@@ -19,6 +19,7 @@ export type FormFieldType =
   | 'textarea'
   | 'select'
   | 'checkbox'
+  | 'checkbox-group'
   | 'date'
   | 'datetime-local';
 
@@ -115,6 +116,43 @@ export const FormField = forwardRef<
               {required && <span className={styles.required}>*</span>}
             </label>
           )}
+        </div>
+      );
+    }
+
+    if (type === 'checkbox-group') {
+      const currentValue = (props.value as string[]) || [];
+      const handleCheckboxChange = (optionValue: string, checked: boolean) => {
+        const newValue = checked
+          ? [...currentValue, optionValue]
+          : currentValue.filter(v => v !== optionValue);
+
+        // Call onChange from register() if provided
+        if (props.onChange) {
+          props.onChange({ target: { value: newValue } } as any);
+        }
+      };
+
+      return (
+        <div className={styles.checkboxGroup}>
+          {options?.map((option) => {
+            const optionId = `${fieldId}-${String(option.value)}`;
+            const optionValue = String(option.value);
+            const isChecked = currentValue.includes(optionValue);
+            return (
+              <label key={optionValue} htmlFor={optionId} className={styles.checkboxGroupItem}>
+                <input
+                  type="checkbox"
+                  id={optionId}
+                  checked={isChecked}
+                  disabled={disabled}
+                  className={styles.checkbox}
+                  onChange={(e) => handleCheckboxChange(optionValue, e.target.checked)}
+                />
+                <span className={styles.checkboxGroupLabel}>{option.label}</span>
+              </label>
+            );
+          })}
         </div>
       );
     }

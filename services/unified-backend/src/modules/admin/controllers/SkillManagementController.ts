@@ -841,7 +841,7 @@ export class SkillManagementController {
         Skill.findByIdAndUpdate(
           item.skillId,
           { sortOrder: item.sortOrder },
-          { new: true }
+          { returnDocument: 'after' }
         )
       );
 

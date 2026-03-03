@@ -97,7 +97,7 @@ export class BlockNotesController {
         },
         {
           upsert: true,
-          new: true
+          returnDocument: 'after'
         }
       );
 

@@ -1164,7 +1164,7 @@ export class SessionManagementController {
         sessionId,
         { $set: updateFields },
         {
-          new: true,
+          returnDocument: 'after',
           runValidators: false // Skip validation for partial updates
         }
       );

@@ -945,7 +945,7 @@ export class LocationController {
       const location = await Location.findByIdAndUpdate(
         locationId,
         { bot_enabled },
-        { new: true }
+        { returnDocument: 'after' }
       );
 
       if (!location) {

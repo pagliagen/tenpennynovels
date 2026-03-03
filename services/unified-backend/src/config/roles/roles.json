@@ -1,0 +1,256 @@
+{
+  "_meta": {
+    "version": "3.1.0",
+    "description": "Roles and permissions aligned with actual management pages",
+    "lastUpdated": "2026-03-03",
+    "notes": "Permissions are split into gamePermissions (in-game actions) and adminPermissions (system management)"
+  },
+  "characterRoles": [
+    {
+      "value": "personaggio",
+      "label": "Personaggio",
+      "description": "Ruolo base personaggio giocante",
+      "category": "game",
+      "permissions": [
+        "chat.send",
+        "documents.read",
+        "locations.view",
+        "market.browse"
+      ]
+    },
+    {
+      "value": "master",
+      "label": "Master",
+      "description": "Narratore/Game Master con poteri di gestione gioco",
+      "category": "game",
+      "permissions": [
+        "chat.send",
+        "chat.moderate",
+        "documents.read",
+        "documents.create",
+        "documents.edit_own",
+        "documents.edit_all",
+        "locations.view",
+        "locations.manage",
+        "market.browse",
+        "market.manage",
+        "quests.create",
+        "quests.edit",
+        "quests.delete",
+        "logs.view",
+        "character.assignPoints",
+        "events.view",
+        "events.create"
+      ]
+    },
+    {
+      "value": "moderatore",
+      "label": "Moderatore",
+      "description": "Moderazione chat e contenuti di gioco",
+      "category": "game",
+      "permissions": [
+        "chat.send",
+        "chat.moderate",
+        "chat.delete_messages",
+        "documents.read",
+        "documents.edit_all",
+        "locations.view",
+        "market.browse"
+      ]
+    }
+  ],
+  "adminRoles": [
+    {
+      "value": "gestore",
+      "label": "Gestore",
+      "description": "Super-Admin con accesso completo al sistema",
+      "category": "admin",
+      "permissions": "all",
+      "note": "isGestore flag grants all game and admin permissions automatically"
+    }
+  ],
+  "gamePermissions": [
+    {
+      "value": "chat.send",
+      "label": "Inviare messaggi chat",
+      "category": "chat",
+      "description": "Permesso base per partecipare alle chat di gioco"
+    },
+    {
+      "value": "chat.moderate",
+      "label": "Moderare chat",
+      "category": "chat",
+      "description": "Moderare discussioni e contenuti in chat"
+    },
+    {
+      "value": "chat.delete_messages",
+      "label": "Eliminare messaggi",
+      "category": "chat",
+      "description": "Rimuovere messaggi inappropriati dalla chat"
+    },
+    {
+      "value": "documents.read",
+      "label": "Leggere documenti",
+      "category": "documents",
+      "description": "Visualizzare documenti di gioco pubblici"
+    },
+    {
+      "value": "documents.create",
+      "label": "Creare documenti",
+      "category": "documents",
+      "description": "Creare nuovi documenti di gioco"
+    },
+    {
+      "value": "documents.edit_own",
+      "label": "Modificare propri documenti",
+      "category": "documents",
+      "description": "Modificare documenti creati da sé"
+    },
+    {
+      "value": "documents.edit_all",
+      "label": "Modificare tutti i documenti",
+      "category": "documents",
+      "description": "Modificare qualsiasi documento di gioco"
+    },
+    {
+      "value": "documents.delete",
+      "label": "Eliminare documenti",
+      "category": "documents",
+      "description": "Rimuovere documenti dal sistema"
+    },
+    {
+      "value": "locations.view",
+      "label": "Visualizzare location",
+      "category": "locations",
+      "description": "Vedere le location disponibili"
+    },
+    {
+      "value": "locations.manage",
+      "label": "Gestire location",
+      "category": "locations",
+      "description": "Creare, modificare location di gioco"
+    },
+    {
+      "value": "locations.delete",
+      "label": "Eliminare location",
+      "category": "locations",
+      "description": "Rimuovere location permanentemente"
+    },
+    {
+      "value": "market.browse",
+      "label": "Navigare mercato",
+      "category": "market",
+      "description": "Vedere articoli in vendita"
+    },
+    {
+      "value": "market.manage",
+      "label": "Gestire mercato",
+      "category": "market",
+      "description": "Creare, modificare articoli nel mercato"
+    },
+    {
+      "value": "quests.create",
+      "label": "Creare quest",
+      "category": "quests",
+      "description": "Creare nuove missioni"
+    },
+    {
+      "value": "quests.edit",
+      "label": "Modificare quest",
+      "category": "quests",
+      "description": "Modificare missioni esistenti"
+    },
+    {
+      "value": "quests.delete",
+      "label": "Eliminare quest",
+      "category": "quests",
+      "description": "Rimuovere missioni"
+    },
+    {
+      "value": "events.view",
+      "label": "Visualizzare eventi",
+      "category": "events",
+      "description": "Vedere calendario eventi di gioco"
+    },
+    {
+      "value": "events.create",
+      "label": "Creare eventi",
+      "category": "events",
+      "description": "Creare nuovi eventi nel calendario"
+    },
+    {
+      "value": "logs.view",
+      "label": "Visualizzare log gioco",
+      "category": "logs",
+      "description": "Vedere log delle giocate"
+    },
+    {
+      "value": "character.assignPoints",
+      "label": "Assegnare punti personaggi",
+      "category": "character",
+      "description": "Modificare punti/stats dei personaggi in gioco"
+    }
+  ],
+  "adminPermissions": [
+    {
+      "value": "users.view",
+      "label": "Visualizzare utenti",
+      "category": "users",
+      "description": "Accedere alla lista utenti (pagina /users/user-list)"
+    },
+    {
+      "value": "users.edit",
+      "label": "Modificare utenti",
+      "category": "users",
+      "description": "Modificare dati account utente"
+    },
+    {
+      "value": "users.delete",
+      "label": "Eliminare utenti",
+      "category": "users",
+      "description": "Eliminare account utente permanentemente"
+    },
+    {
+      "value": "users.warn",
+      "label": "Avvisare utenti",
+      "category": "users",
+      "description": "Inviare warning ufficiali agli utenti"
+    },
+    {
+      "value": "users.mute",
+      "label": "Silenziare utenti",
+      "category": "users",
+      "description": "Mettere utenti in mute temporaneo"
+    },
+    {
+      "value": "users.ban",
+      "label": "Bannare utenti",
+      "category": "users",
+      "description": "Bannare utenti dal sistema (pagina /users/ban-list)"
+    },
+    {
+      "value": "characters.approve",
+      "label": "Approvare personaggi",
+      "category": "characters",
+      "description": "Approvare personaggi in attesa (pagina /characters/character-pending)"
+    },
+    {
+      "value": "characters.reject",
+      "label": "Rifiutare personaggi",
+      "category": "characters",
+      "description": "Rifiutare richieste di creazione personaggi"
+    },
+    {
+      "value": "characters.manage_permissions",
+      "label": "Gestire permessi personaggi",
+      "category": "characters",
+      "description": "Modificare ruoli e permessi dei personaggi (pagina /characters/permissions)"
+    }, 
+    {
+      "value": "logs.view_moderation",
+      "label": "Visualizzare log moderazione",
+      "category": "logs",
+      "description": "Vedere log azioni di moderazione admin"
+    }
+  ]
+}

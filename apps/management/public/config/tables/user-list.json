@@ -55,24 +55,12 @@
     },
     {
       "key": "accountStatus.isActive",
-      "label": "Stato",
+      "label": "Account Attivo",
       "type": "boolean",
       "visible": true,
       "defaultVisible": true,
       "sortable": true,
-      "width": "100px",
-      "render": {
-        "type": "boolean"
-      }
-    },
-    {
-      "key": "accountStatus.isBanned",
-      "label": "Ban",
-      "type": "boolean",
-      "visible": true,
-      "defaultVisible": true,
-      "sortable": true,
-      "width": "80px",
+      "width": "120px",
       "render": {
         "type": "boolean"
       }
@@ -204,8 +192,7 @@
       "options": [
         { "value": "", "label": "Tutti" },
         { "value": "active", "label": "Attivi" },
-        { "value": "inactive", "label": "Inattivi" },
-        { "value": "banned", "label": "Bannati" }
+        { "value": "inactive", "label": "Inattivi" }
       ],
       "placeholder": "Filtra per stato"
     },

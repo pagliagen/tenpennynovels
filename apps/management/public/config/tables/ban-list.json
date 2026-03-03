@@ -1,0 +1,173 @@
+{
+  "_meta": {
+    "version": "1.0.0",
+    "description": "Configurazione tabella gestione ban utenti",
+    "lastUpdated": "2026-03-03"
+  },
+  "table": {
+    "name": "ban-list",
+    "title": "Gestione Ban Utenti",
+    "icon": "🚫",
+    "searchable": true,
+    "selectable": true,
+    "pagination": {
+      "defaultPageSize": 25,
+      "pageSizeOptions": [10, 25, 50, 100]
+    }
+  },
+  "columns": [
+    {
+      "key": "username",
+      "label": "Username",
+      "type": "text",
+      "visible": true,
+      "defaultVisible": true,
+      "sortable": true,
+      "width": "150px",
+      "render": {
+        "type": "text",
+        "className": "font-bold text-primary"
+      }
+    },
+    {
+      "key": "email",
+      "label": "Email",
+      "type": "email",
+      "visible": true,
+      "defaultVisible": true,
+      "sortable": true,
+      "width": "200px",
+      "render": {
+        "type": "text"
+      }
+    },
+    {
+      "key": "accountStatus.isBanned",
+      "label": "Bannato",
+      "type": "boolean",
+      "visible": true,
+      "defaultVisible": true,
+      "sortable": true,
+      "width": "100px",
+      "render": {
+        "type": "boolean"
+      }
+    },
+    {
+      "key": "accountStatus.banReason",
+      "label": "Motivo Ban",
+      "type": "text",
+      "visible": true,
+      "defaultVisible": true,
+      "sortable": false,
+      "width": "250px",
+      "render": {
+        "type": "text"
+      }
+    },
+    {
+      "key": "accountStatus.bannedAt",
+      "label": "Bannato Il",
+      "type": "datetime",
+      "visible": true,
+      "defaultVisible": true,
+      "sortable": true,
+      "width": "180px",
+      "render": {
+        "type": "datetime",
+        "format": "datetime"
+      }
+    },
+    {
+      "key": "accountStatus.bannedByName",
+      "label": "Bannato Da",
+      "type": "text",
+      "visible": true,
+      "defaultVisible": true,
+      "sortable": false,
+      "width": "150px",
+      "render": {
+        "type": "text"
+      }
+    },
+    {
+      "key": "registrationInfo.registeredAt",
+      "label": "Registrato Il",
+      "type": "datetime",
+      "visible": true,
+      "defaultVisible": false,
+      "sortable": true,
+      "width": "180px",
+      "render": {
+        "type": "datetime",
+        "format": "date"
+      }
+    },
+    {
+      "key": "activity.lastLoginAt",
+      "label": "Ultimo Login",
+      "type": "datetime",
+      "visible": true,
+      "defaultVisible": false,
+      "sortable": true,
+      "width": "180px",
+      "render": {
+        "type": "datetime",
+        "format": "relative"
+      }
+    }
+  ],
+  "actions": [
+    {
+      "key": "ban",
+      "label": "Banna Utente",
+      "icon": "🚫",
+      "type": "danger",
+      "visible": true,
+      "confirmMessage": "Sei sicuro di voler bannare questo utente?"
+    },
+    {
+      "key": "unban",
+      "label": "Rimuovi Ban",
+      "icon": "✓",
+      "type": "success",
+      "visible": true,
+      "confirmMessage": "Sei sicuro di voler rimuovere il ban per questo utente?"
+    },
+    {
+      "key": "view-details",
+      "label": "Dettagli",
+      "icon": "👁️",
+      "type": "secondary",
+      "visible": true
+    }
+  ],
+  "bulkActions": [
+    {
+      "key": "bulk-ban",
+      "label": "Banna Selezionati",
+      "icon": "🚫",
+      "type": "danger"
+    },
+    {
+      "key": "bulk-unban",
+      "label": "Rimuovi Ban Selezionati",
+      "icon": "✓",
+      "type": "success"
+    }
+  ],
+  "filters": [
+    {
+      "key": "banStatus",
+      "label": "Status Ban",
+      "type": "select",
+      "field": "status",
+      "options": [
+        { "value": "", "label": "Tutti" },
+        { "value": "banned", "label": "Solo Bannati" },
+        { "value": "active", "label": "Attivi" }
+      ],
+      "placeholder": "Filtra per status ban"
+    }
+  ]
+}

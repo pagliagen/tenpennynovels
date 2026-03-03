@@ -26,6 +26,7 @@ export class UserManagementController {
       const search = req.query.search as string;
       const status = req.query.status as string;
       const role = req.query.role as string;
+      const canAccessAdminPanel = req.query.canAccessAdminPanel as string;
       const sortBy = req.query.sortBy as string || 'createdAt';
       const sortOrder = req.query.sortOrder as string || 'desc';
 
@@ -73,9 +74,26 @@ export class UserManagementController {
         }
       }
 
+      // Admin access filter
+      if (canAccessAdminPanel !== undefined && canAccessAdminPanel !== '') {
+        filters.canAccessAdminPanel = canAccessAdminPanel === 'true' || canAccessAdminPanel === true;
+      }
+
+      // Map nested sort fields to flat database fields
+      const sortFieldMap: Record<string, string> = {
+        'accountStatus.isActive': 'isActive',
+        'accountStatus.isBanned': 'isBanned',
+        'accountStatus.bannedAt': 'bannedAt',
+        'accountStatus.isEmailVerified': 'isEmailVerified',
+        'registrationInfo.registeredAt': 'createdAt',
+        'activity.lastLoginAt': 'lastLoginAt'
+      };
+
+      const mappedSortBy = sortFieldMap[sortBy] || sortBy;
+
       // Build sort object
       const sortObject: any = {};
-      sortObject[sortBy] = sortOrder === 'desc' ? -1 : 1;
+      sortObject[mappedSortBy] = sortOrder === 'desc' ? -1 : 1;
 
       // Count total documents
       const totalUsers = await User.countDocuments(filters);
@@ -90,6 +108,22 @@ export class UserManagementController {
 
       // Get character counts for each user
       const userIds = users.map(user => user._id);
+
+      // Skip character aggregations if no users found (avoid MongoDB limit error)
+      if (userIds.length === 0) {
+        const transformedUsers: AdminUserProfile[] = [];
+        const emptyPagination = {
+          page,
+          totalPages: 0,
+          totalItems: 0,
+          pageSize,
+          hasNextPage: false,
+          hasPrevPage: false
+        };
+        res.json(listResponse(transformedUsers, emptyPagination, undefined, getRequestId(req)));
+        return;
+      }
+
       const characterCounts = await Character.aggregate([
         { $match: { userId: { $in: userIds } } },
         { $group: { _id: '$userId', count: { $sum: 1 } } }
@@ -148,14 +182,15 @@ export class UserManagementController {
         email: user.email,
         displayName: user.displayName || '',
         canAccessAdminPanel: user.canAccessAdminPanel,
-        // Granular permission system
-        userRoles: user.userRoles || [],
-        characterRoles: user.characterRoles || [],
-        characterPermissions: user.characterPermissions || [],
         accountStatus: {
           isActive: user.isActive,
           isEmailVerified: user.isEmailVerified,
-          isBanned: user.isBanned
+          isBanned: user.isBanned,
+          banReason: user.banReason,
+          bannedAt: user.bannedAt?.toISOString(),
+          bannedBy: user.bannedBy?.toString(),
+          bannedUntil: user.bannedUntil?.toISOString(),
+          bannedByName: user.bannedByName?.toString(),
         },
         multipleCharactersAllowed: user.multipleCharactersAllowed,
         characters: charactersMap.get((user._id as any)?.toString()) || [],
@@ -201,6 +236,7 @@ export class UserManagementController {
       ));
     } catch (error: any) {
       logger.error('Error fetching users:', { error: error instanceof Error ? error.message : String(error) });
+      console.error(error);
       
       res.status(500).json(errorResponse(
         'Failed to fetch users',
@@ -340,32 +376,55 @@ export class UserManagementController {
         return;
       }
 
-      // TODO: Implement user ban logic
-      // - Update user status in database
-      // - Send notification to user if required
-      // - Create audit log entry
-      // - Publish Redis event for real-time disconnection
+      // Import User model
+      const { User } = await import('@database/models/User');
 
+      // Get audit info for bannedBy field (includes character name from cookie)
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
+
+      // Prepare update data
+      const updateData: any = {
+        isBanned: true,
+        banReason: banData.reason.trim(),
+        bannedAt: new Date(),
+        bannedBy: auditInfo.adminId,
+        bannedByName: auditInfo.adminCharacterName // Character name from JWT cookie
+      };
+
+      // Add bannedUntil for temporary bans
+      if (banData.duration === 'temporary' && banData.bannedUntil) {
+        updateData.bannedUntil = new Date(banData.bannedUntil);
+      } else {
+        // Permanent ban - no expiration
+        updateData.$unset = { bannedUntil: '' };
+      }
+
+      // Update user in database
+      const user = await User.findByIdAndUpdate(
+        userId,
+        updateData,
+        { returnDocument: 'after' }
+      );
+
+      if (!user) {
+        res.status(404).json(errorResponse(
+          'User not found',
+          'USER_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
+        return;
+      }
+
       logger.warn('User banned by admin', {
         ...auditInfo,
         targetUserId: userId,
         banDuration: banData.duration,
         banReason: banData.reason,
-        banScope: banData.banScope,
         bannedUntil: banData.bannedUntil,
         category: 'user_management'
       });
-
-      // TODO: Send Redis event to force disconnect user
-      // await redisClient.publish('user:banned', {
-      //   userId,
-      //   bannedBy: req.user?.userId,
-      //   reason: banData.reason,
-      //   duration: banData.duration,
-      //   scope: banData.banScope,
-      //   timestamp: new Date().toISOString()
-      // });
 
       res.json(createResponse(
         { userId, action: 'banned' },
@@ -373,11 +432,13 @@ export class UserManagementController {
         getRequestId(req)
       ));
     } catch (error: any) {
-      logger.error('Error banning user:', { 
-        error: error instanceof Error ? error.message : String(error), 
-        userId: req.params.userId 
+      logger.error('Error banning user:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        errorDetails: error,
+        userId: req.params.userId
       });
-      
+
       res.status(500).json(errorResponse(
         'Failed to ban user',
         'BAN_USER_ERROR',
@@ -494,28 +555,28 @@ export class UserManagementController {
         return;
       }
 
-      // Build update object
+      // Build update object (note: fields are flat in schema, not nested under accountStatus)
       const updateData: Record<string, any> = {
-        'accountStatus.isBanned': true,
-        'accountStatus.banReason': banData.reason.trim(),
-        'accountStatus.banScopes': banData.banScopes,
-        'accountStatus.bannedAt': new Date(),
-        'accountStatus.bannedBy': 'Administrator', // TODO: Get actual admin info from token
-        'accountStatus.updatedAt': new Date()
+        isBanned: true,
+        banReason: banData.reason.trim(),
+        banScope: banData.banScopes[0], // Take first scope for now (schema only supports single scope)
+        bannedAt: new Date(),
+        bannedBy: 'Administrator', // TODO: Get actual admin info from token
+        updatedAt: new Date()
       };
 
       // Add bannedUntil only for temporary bans
       if (banData.duration === 'temporary' && banData.bannedUntil) {
-        updateData['accountStatus.bannedUntil'] = new Date(banData.bannedUntil);
+        updateData.bannedUntil = new Date(banData.bannedUntil);
       } else if (banData.duration === 'permanent') {
-        updateData['accountStatus.bannedUntil'] = null;
+        updateData.bannedUntil = null;
       }
 
       // Update user in database
       const updatedUser = await User.findByIdAndUpdate(
         userId,
         { $set: updateData },
-        { new: true, runValidators: true }
+        { returnDocument: 'after', runValidators: true }
       );
 
       if (!updatedUser) {
@@ -546,18 +607,9 @@ export class UserManagementController {
       //   timestamp: new Date().toISOString()
       // });
 
+      // Return the updated user object (frontend expects User, not metadata)
       res.json(updateResponse(
-        {
-          userId,
-          action: 'ban_updated',
-          banDetails: {
-            reason: banData.reason,
-            duration: banData.duration,
-            scopes: banData.banScopes,
-            bannedUntil: banData.bannedUntil,
-            bannedAt: updateData['accountStatus.bannedAt']
-          }
-        },
+        updatedUser.toObject(),
         'User ban updated successfully',
         getRequestId(req)
       ));
@@ -585,24 +637,31 @@ export class UserManagementController {
   static async unbanUser(req: Request<{ userId: string }>, res: Response): Promise<void> {
     try {
       const userId = req.params.userId;
-      const { reason } = req.body;
+      const { reason } = req.body || {};
 
-      if (!reason || reason.trim().length === 0) {
-        res.status(400).json(errorResponse(
-          'Unban reason is required',
-          'UNBAN_REASON_REQUIRED',
+      // Import User model
+      const { User } = await import('@database/models/User');
+
+      // Update user in database - remove ban fields
+      const user = await User.findByIdAndUpdate(
+        userId,
+        {
+          isBanned: false,
+          $unset: { banReason: '', bannedAt: '', bannedUntil: '', bannedBy: '', bannedByName: '' }
+        },
+        { returnDocument: 'after' }
+      );
+
+      if (!user) {
+        res.status(404).json(errorResponse(
+          'User not found',
+          'USER_NOT_FOUND',
           undefined,
-          400,
+          404,
           getRequestId(req)
         ));
         return;
       }
-
-      // TODO: Implement user unban logic
-      // - Update user status in database
-      // - Send notification to user
-      // - Create audit log entry
-      // - Publish Redis event
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       logger.info('User unbanned by admin', {
@@ -618,14 +677,223 @@ export class UserManagementController {
         getRequestId(req)
       ));
     } catch (error: any) {
-      logger.error('Error unbanning user:', { 
-        error: error instanceof Error ? error.message : String(error), 
-        userId: req.params.userId 
+      logger.error('Error unbanning user:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        errorDetails: error,
+        userId: req.params.userId
       });
-      
+
       res.status(500).json(errorResponse(
         'Failed to unban user',
         'UNBAN_USER_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
+    }
+  }
+
+  /**
+   * Bulk ban multiple users
+   * POST /admin/users/bulk-ban
+   */
+  static async bulkBanUsers(req: Request, res: Response): Promise<void> {
+    try {
+      const { userIds, reason, duration, bannedUntil } = req.body;
+
+      if (!Array.isArray(userIds) || userIds.length === 0) {
+        res.status(400).json(errorResponse(
+          'userIds array is required',
+          'INVALID_INPUT',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      // Validate ban data
+      if (!reason || reason.trim().length === 0) {
+        res.status(400).json(errorResponse(
+          'Ban reason is required',
+          'BAN_REASON_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      if (!duration || !['temporary', 'permanent'].includes(duration)) {
+        res.status(400).json(errorResponse(
+          'Invalid ban duration',
+          'INVALID_BAN_DURATION',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      if (duration === 'temporary' && !bannedUntil) {
+        res.status(400).json(errorResponse(
+          'Ban end date required for temporary bans',
+          'BAN_END_DATE_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      const { User } = await import('@database/models/User');
+      const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
+
+      // Ban all users
+      const results = await Promise.allSettled(
+        userIds.map(async (userId: string) => {
+          if (!mongoose.Types.ObjectId.isValid(userId)) {
+            throw new Error(`Invalid userId: ${userId}`);
+          }
+
+          const updateData: any = {
+            isBanned: true,
+            banReason: reason,
+            bannedAt: new Date(),
+            bannedBy: auditInfo.adminId,
+            bannedByName: auditInfo.adminCharacterName,
+            bannedUntil: duration === 'temporary' && bannedUntil ? new Date(bannedUntil) : null
+          };
+
+          if (duration === 'temporary' && bannedUntil) {
+            updateData.bannedUntil = new Date(bannedUntil);
+          }
+
+          const user = await User.findByIdAndUpdate(
+            userId,
+            updateData,
+            { returnDocument: 'after' }
+          );
+
+          if (!user) {
+            throw new Error(`User not found: ${userId}`);
+          }
+
+          return user;
+        })
+      );
+
+      const successCount = results.filter(r => r.status === 'fulfilled').length;
+      const failedCount = results.filter(r => r.status === 'rejected').length;
+
+      logger.info('Bulk ban users completed', {
+        ...auditInfo,
+        totalUsers: userIds.length,
+        successful: successCount,
+        failed: failedCount,
+        reason
+      });
+
+      res.json(successResponse(
+        {
+          success: successCount,
+          failed: failedCount,
+          results: results.map((r, i) => ({
+            userId: userIds[i],
+            success: r.status === 'fulfilled',
+            error: r.status === 'rejected' ? r.reason : undefined
+          }))
+        },
+        'Bulk ban completed',
+        getRequestId(req)
+      ));
+    } catch (error: any) {
+      logger.error('Error in bulk ban users:', { error: error instanceof Error ? error.message : String(error) });
+      res.status(500).json(errorResponse(
+        'Failed to bulk ban users',
+        'BULK_BAN_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
+    }
+  }
+
+  /**
+   * Bulk unban multiple users
+   * POST /admin/users/bulk-unban
+   */
+  static async bulkUnbanUsers(req: Request, res: Response): Promise<void> {
+    try {
+      const { userIds, reason } = req.body;
+
+      if (!Array.isArray(userIds) || userIds.length === 0) {
+        res.status(400).json(errorResponse(
+          'userIds array is required',
+          'INVALID_INPUT',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      const { User } = await import('@database/models/User');
+      const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
+
+      // Unban all users
+      const results = await Promise.allSettled(
+        userIds.map(async (userId: string) => {
+          if (!mongoose.Types.ObjectId.isValid(userId)) {
+            throw new Error(`Invalid userId: ${userId}`);
+          }
+
+          const user = await User.findByIdAndUpdate(
+            userId,
+            {
+              isBanned: false,
+              $unset: { banReason: '', bannedAt: '', bannedBy: '', bannedByName: '', bannedUntil: '' }
+            },
+            { returnDocument: 'after' }
+          );
+
+          if (!user) {
+            throw new Error(`User not found: ${userId}`);
+          }
+
+          return user;
+        })
+      );
+
+      const successCount = results.filter(r => r.status === 'fulfilled').length;
+      const failedCount = results.filter(r => r.status === 'rejected').length;
+
+      logger.info('Bulk unban users completed', {
+        ...auditInfo,
+        totalUsers: userIds.length,
+        successful: successCount,
+        failed: failedCount
+      });
+
+      res.json(successResponse(
+        {
+          success: successCount,
+          failed: failedCount,
+          results: results.map((r, i) => ({
+            userId: userIds[i],
+            success: r.status === 'fulfilled',
+            error: r.status === 'rejected' ? r.reason : undefined
+          }))
+        },
+        'Bulk unban completed',
+        getRequestId(req)
+      ));
+    } catch (error: any) {
+      logger.error('Error in bulk unban users:', { error: error instanceof Error ? error.message : String(error) });
+      res.status(500).json(errorResponse(
+        'Failed to bulk unban users',
+        'BULK_UNBAN_ERROR',
         undefined,
         500,
         getRequestId(req)
@@ -861,7 +1129,7 @@ export class UserManagementController {
         userId,
         { $set: updateFields },
         { 
-          new: true, 
+          returnDocument: 'after', 
           runValidators: true,
           select: '-passwordHash -emailVerificationToken -passwordResetToken'
         }
@@ -889,14 +1157,13 @@ export class UserManagementController {
         email: userData.email,
         displayName: userData.displayName || '',
         canAccessAdminPanel: userData.canAccessAdminPanel,
-        // Granular permission system
-        userRoles: userData.userRoles || [],
-        characterRoles: userData.characterRoles || [],
-        characterPermissions: userData.characterPermissions || [],
         accountStatus: {
           isActive: userData.isActive,
           isEmailVerified: userData.isEmailVerified,
-          isBanned: userData.isBanned
+          isBanned: userData.isBanned,
+          banReason: userData.banReason,
+          bannedAt: userData.bannedAt?.toISOString(),
+          bannedBy: userData.bannedBy?.toString()
         },
         multipleCharactersAllowed: userData.multipleCharactersAllowed,
         characters: [], // Not needed for update response
@@ -1206,7 +1473,7 @@ export class UserManagementController {
       const updatedUser = await User.findByIdAndUpdate(
         userId,
         { $set: updateFields },
-        { new: true, select: '-passwordHash -emailVerificationToken -passwordResetToken' }
+        { returnDocument: 'after', select: '-passwordHash -emailVerificationToken -passwordResetToken' }
       );
 
       if (!updatedUser) {
@@ -1263,6 +1530,172 @@ export class UserManagementController {
       res.status(500).json(errorResponse(
         'Failed to update user permissions',
         'UPDATE_USER_PERMISSIONS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
+    }
+  }
+
+  /**
+   * Bulk activate users
+   * POST /admin/users/bulk-activate
+   */
+  static async bulkActivateUsers(req: Request, res: Response): Promise<void> {
+    try {
+      const { userIds } = req.body;
+
+      if (!Array.isArray(userIds) || userIds.length === 0) {
+        res.status(400).json(errorResponse(
+          'userIds array is required',
+          'INVALID_INPUT',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      const { User } = await import('@database/models/User');
+      const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
+
+      // Activate all users
+      const results = await Promise.allSettled(
+        userIds.map(async (userId: string) => {
+          if (!mongoose.Types.ObjectId.isValid(userId)) {
+            throw new Error(`Invalid userId: ${userId}`);
+          }
+
+          const user = await User.findByIdAndUpdate(
+            userId,
+            { isActive: true },
+            { returnDocument: 'after' }
+          );
+
+          if (!user) {
+            throw new Error(`User not found: ${userId}`);
+          }
+
+          return user;
+        })
+      );
+
+      const successCount = results.filter(r => r.status === 'fulfilled').length;
+      const failedCount = results.filter(r => r.status === 'rejected').length;
+
+      logger.info('Bulk activate users completed', {
+        ...auditInfo,
+        totalUsers: userIds.length,
+        successful: successCount,
+        failed: failedCount
+      });
+
+      res.json(successResponse(
+        {
+          success: successCount,
+          failed: failedCount,
+          results: results.map((result, index) => ({
+            userId: userIds[index],
+            success: result.status === 'fulfilled',
+            error: result.status === 'rejected' ? result.reason?.message || String(result.reason) : undefined
+          }))
+        },
+        `Bulk activate completed: ${successCount} successful, ${failedCount} failed`,
+        getRequestId(req)
+      ));
+    } catch (error: any) {
+      logger.error('Error in bulk activate users:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        errorDetails: error
+      });
+
+      res.status(500).json(errorResponse(
+        'Failed to bulk activate users',
+        'BULK_ACTIVATE_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
+    }
+  }
+
+  /**
+   * Bulk deactivate users
+   * POST /admin/users/bulk-deactivate
+   */
+  static async bulkDeactivateUsers(req: Request, res: Response): Promise<void> {
+    try {
+      const { userIds } = req.body;
+
+      if (!Array.isArray(userIds) || userIds.length === 0) {
+        res.status(400).json(errorResponse(
+          'userIds array is required',
+          'INVALID_INPUT',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      const { User } = await import('@database/models/User');
+      const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
+
+      // Deactivate all users
+      const results = await Promise.allSettled(
+        userIds.map(async (userId: string) => {
+          if (!mongoose.Types.ObjectId.isValid(userId)) {
+            throw new Error(`Invalid userId: ${userId}`);
+          }
+
+          const user = await User.findByIdAndUpdate(
+            userId,
+            { isActive: false },
+            { returnDocument: 'after' }
+          );
+
+          if (!user) {
+            throw new Error(`User not found: ${userId}`);
+          }
+
+          return user;
+        })
+      );
+
+      const successCount = results.filter(r => r.status === 'fulfilled').length;
+      const failedCount = results.filter(r => r.status === 'rejected').length;
+
+      logger.info('Bulk deactivate users completed', {
+        ...auditInfo,
+        totalUsers: userIds.length,
+        successful: successCount,
+        failed: failedCount
+      });
+
+      res.json(successResponse(
+        {
+          success: successCount,
+          failed: failedCount,
+          results: results.map((result, index) => ({
+            userId: userIds[index],
+            success: result.status === 'fulfilled',
+            error: result.status === 'rejected' ? result.reason?.message || String(result.reason) : undefined
+          }))
+        },
+        `Bulk deactivate completed: ${successCount} successful, ${failedCount} failed`,
+        getRequestId(req)
+      ));
+    } catch (error: any) {
+      logger.error('Error in bulk deactivate users:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        errorDetails: error
+      });
+
+      res.status(500).json(errorResponse(
+        'Failed to bulk deactivate users',
+        'BULK_DEACTIVATE_ERROR',
         undefined,
         500,
         getRequestId(req)

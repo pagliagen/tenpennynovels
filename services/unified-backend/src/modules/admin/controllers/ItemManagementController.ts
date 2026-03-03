@@ -423,7 +423,7 @@ export class ItemManagementController {
       const item = await Item.findByIdAndUpdate(
         itemId,
         updateData,
-        { new: true, runValidators: true }
+        { returnDocument: 'after', runValidators: true }
       );
 
       if (!item) {

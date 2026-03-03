@@ -9,36 +9,51 @@ import React, { useState, useMemo } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { ManagementLayout } from '@/components/layout/ManagementLayout';
-import { ConfigurableDataTable } from '@/components/shared/ConfigurableDataTable';
+import { ConfigurableDataTable, FilterState } from '@/components/shared/ConfigurableDataTable';
 import { SidePanel } from '@/components/shared/SidePanel';
 import { ContextMenu, ContextMenuItem } from '@/components/shared/ContextMenu';
 import { useConfirm } from '@/hooks/useConfirm';
 import { useTableConfig } from '@/hooks/useTableConfig';
-import { useUsers, useUpdateUser, useDeleteUser, useBanUser, useUnbanUser } from '@/hooks/api/useUsers';
+import { useTableFilters } from '@/hooks/useTableFilters';
+import { useUsers, useUpdateUser, useDeleteUser, useBanUser, useUnbanUser, useBulkActivateUsers, useBulkDeactivateUsers } from '@/hooks/api/useUsers';
 import { useNotificationStore } from '@/store/notificationStore';
-import { encodeFilter } from '@/lib/utils/urlFilters';
+import { useURLFilter } from '@/hooks/useURLFilter';
+import { encodeFilter, clearFilterHash } from '@/lib/utils/urlFilters';
 import type { User, UserListParams, BanUserData } from '@/types/api/User';
 import styles from '@/styles/pages/UserList.module.scss';
 
 export default function UserList() {
   // State
-  const [params, setParams] = useState<UserListParams>({
+  const { filters, params, setParams, handleFilterChange } = useTableFilters<UserListParams>({
     page: 1,
     pageSize: 25,
     sortBy: 'registrationInfo.registeredAt',
     sortOrder: 'desc'
   });
+  const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
   const [activeSidePanel, setActiveSidePanel] = useState<'edit' | 'view' | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   // Hooks
   const router = useRouter();
-  const { data, isLoading, error } = useUsers(params);
+  const urlFilter = useURLFilter<{ characterId?: string }>();
+
+  // Apply URL filter to params
+  const filteredParams = useMemo(() => {
+    if (urlFilter?.characterId) {
+      return { ...params, characterId: urlFilter.characterId };
+    }
+    return params;
+  }, [params, urlFilter]);
+
+  const { data, isLoading, error } = useUsers(filteredParams);
   const tableConfig = useTableConfig('user-list');
   const updateUser = useUpdateUser();
   const deleteUser = useDeleteUser();
   const banUser = useBanUser();
   const unbanUser = useUnbanUser();
+  const bulkActivate = useBulkActivateUsers();
+  const bulkDeactivate = useBulkDeactivateUsers();
   const { confirm, ConfirmDialogComponent } = useConfirm();
   const addNotification = useNotificationStore(state => state.addNotification);
 
@@ -157,6 +172,91 @@ export default function UserList() {
   };
 
   /**
+   * Handler sorting
+   */
+  const handleSortChange = (sortBy: string, sortOrder: 'asc' | 'desc') => {
+    setParams(prev => ({ ...prev, sortBy, sortOrder, page: 1 }));
+  };
+
+  /**
+   * Handler bulk actions
+   */
+  const handleBulkAction = async (actionKey: string, items: User[], allPagesSelected: boolean = false) => {
+    try {
+      if (allPagesSelected) {
+        addNotification({
+          type: 'warning',
+          message: 'Bulk action per tutte le pagine non ancora implementato'
+        });
+        return;
+      }
+
+      if (actionKey === 'bulk-activate') {
+        const confirmed = await confirm({
+          title: 'Conferma Attivazione Multipla',
+          message: `Vuoi attivare ${items.length} utenti selezionati?`,
+          confirmLabel: 'Attiva',
+          confirmType: 'success'
+        });
+
+        if (!confirmed) return;
+
+        // Execute bulk activate with dedicated endpoint
+        const userIds = items.map(user => user._id);
+        const result = await bulkActivate.mutateAsync(userIds);
+
+        if (result.failed > 0) {
+          addNotification({
+            type: 'warning',
+            message: `${result.success} utenti attivati, ${result.failed} falliti`
+          });
+        } else {
+          addNotification({
+            type: 'success',
+            message: `${result.success} utenti attivati con successo`
+          });
+        }
+
+        // Clear selection
+        setSelectedUsers([]);
+      } else if (actionKey === 'bulk-deactivate') {
+        const confirmed = await confirm({
+          title: 'Conferma Disattivazione Multipla',
+          message: `Vuoi disattivare ${items.length} utenti selezionati? Gli utenti non potranno più accedere al sistema.`,
+          confirmLabel: 'Disattiva',
+          confirmType: 'danger'
+        });
+
+        if (!confirmed) return;
+
+        // Execute bulk deactivate with dedicated endpoint
+        const userIds = items.map(user => user._id);
+        const result = await bulkDeactivate.mutateAsync(userIds);
+
+        if (result.failed > 0) {
+          addNotification({
+            type: 'warning',
+            message: `${result.success} utenti disattivati, ${result.failed} falliti`
+          });
+        } else {
+          addNotification({
+            type: 'success',
+            message: `${result.success} utenti disattivati con successo`
+          });
+        }
+
+        // Clear selection
+        setSelectedUsers([]);
+      }
+    } catch (error) {
+      addNotification({
+        type: 'error',
+        message: error instanceof Error ? error.message : 'Errore nell\'esecuzione bulk action'
+      });
+    }
+  };
+
+  /**
    * Render error state
    */
   if (error) {
@@ -183,6 +283,25 @@ export default function UserList() {
           <p>Totale: {data?.pagination.totalItems ?? 0} utenti</p>
         </header>
 
+        {/* Filter Badge */}
+        {urlFilter?.characterId && (
+          <div className={styles.filterBadge}>
+            <span className={styles.filterLabel}>
+              🔓 Filtrato per personaggio
+            </span>
+            <button
+              className={styles.filterRemove}
+              onClick={() => {
+                clearFilterHash();
+                router.reload();
+              }}
+              title="Rimuovi filtro"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
         <ConfigurableDataTable<User>
           tableName="user-list"
           data={data?.items ?? []}
@@ -202,6 +321,14 @@ export default function UserList() {
             onPageChange: handlePageChange,
             onPageSizeChange: handlePageSizeChange
           }}
+          sortBy={params.sortBy}
+          sortOrder={params.sortOrder}
+          onSortChange={handleSortChange}
+          filters={filters}
+          onFilterChange={handleFilterChange}
+          selectedItems={selectedUsers}
+          onSelectionChange={setSelectedUsers}
+          onBulkAction={handleBulkAction}
           externalConfig={tableConfig.config ? {
             config: tableConfig.config,
             visibleColumns: visibleColumns,

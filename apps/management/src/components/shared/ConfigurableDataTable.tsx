@@ -18,6 +18,8 @@ import { TableConfig, TableColumn } from '@/lib/config/schemas';
 import { getNestedValue } from '@/lib/config/loader';
 import { cellRenderers } from '@/lib/cellRenderers';
 import { LoadingSpinner } from './LoadingSpinner';
+import { TableFilters } from './TableFilters';
+import { ContextMenu, ContextMenuItem } from './ContextMenu';
 import styles from '@/styles/components/ConfigurableDataTable.module.scss';
 
 export interface PaginationState {
@@ -28,6 +30,10 @@ export interface PaginationState {
   onPageSizeChange: (pageSize: number) => void;
 }
 
+export interface FilterState {
+  [filterKey: string]: string | boolean | number | undefined;
+}
+
 export interface ConfigurableDataTableProps<T extends object = Record<string, unknown>> {
   tableName: string;
   data: T[];
@@ -35,11 +41,15 @@ export interface ConfigurableDataTableProps<T extends object = Record<string, un
   selectedItems?: T[];
   onSelectionChange?: (items: T[]) => void;
   onAction?: (actionKey: string, item: T) => void;
-  onBulkAction?: (actionKey: string, items: T[]) => void;
-  onCellClick?: (item: T, columnKey: string, value: unknown) => void;
+  onBulkAction?: (actionKey: string, items: T[], allPagesSelected?: boolean) => void;
   pagination?: PaginationState;
   className?: string;
   renderActions?: (item: T) => React.ReactNode;
+  sortBy?: string | null;
+  sortOrder?: 'asc' | 'desc';
+  onSortChange?: (sortBy: string, sortOrder: 'asc' | 'desc') => void;
+  filters?: FilterState;
+  onFilterChange?: (filters: FilterState) => void;
   externalConfig?: {
     config: TableConfig;
     visibleColumns: TableColumn[];
@@ -64,15 +74,25 @@ export function ConfigurableDataTable<T extends object = Record<string, unknown>
   onSelectionChange,
   onAction,
   onBulkAction,
-  onCellClick,
   pagination,
   className,
   renderActions,
+  sortBy: externalSortBy,
+  sortOrder: externalSortOrder,
+  onSortChange,
+  filters,
+  onFilterChange,
   externalConfig
 }: ConfigurableDataTableProps<T>): React.ReactElement {
   const [search, setSearch] = useState('');
-  const [sortBy, setSortBy] = useState<string | null>(null);
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [internalSortBy, setInternalSortBy] = useState<string | null>(null);
+  const [internalSortOrder, setInternalSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [selectAllPages, setSelectAllPages] = useState(false);
+
+  // Use controlled props if provided, else fallback to internal state
+  const effectiveSortBy = externalSortBy !== undefined ? externalSortBy : internalSortBy;
+  const effectiveSortOrder = externalSortOrder !== undefined ? externalSortOrder : internalSortOrder;
+  const isControlledSorting = onSortChange !== undefined;
 
   const config = externalConfig?.config;
   const visibleColumns = externalConfig?.visibleColumns || [];
@@ -89,32 +109,44 @@ export function ConfigurableDataTable<T extends object = Record<string, unknown>
     );
   }, [data, search, visibleColumns, config]);
 
-  // Sort data
+  // Sort data (only if NOT controlled externally)
   const sortedData = useMemo(() => {
-    if (!sortBy) return filteredData;
+    // If sorting is controlled externally, don't sort - parent handles it
+    if (isControlledSorting) return filteredData;
+
+    if (!effectiveSortBy) return filteredData;
 
     return [...filteredData].sort((a, b) => {
-      const aVal = getNestedValue(a, sortBy);
-      const bVal = getNestedValue(b, sortBy);
+      const aVal = getNestedValue(a, effectiveSortBy);
+      const bVal = getNestedValue(b, effectiveSortBy);
 
       if (aVal === bVal) return 0;
       // Type-safe comparison
       const comparison = String(aVal) > String(bVal) ? 1 : -1;
-      return sortOrder === 'asc' ? comparison : -comparison;
+      return effectiveSortOrder === 'asc' ? comparison : -comparison;
     });
-  }, [filteredData, sortBy, sortOrder]);
+  }, [filteredData, effectiveSortBy, effectiveSortOrder, isControlledSorting]);
 
   // Handle column header click (sort)
   const handleHeaderClick = useCallback((column: TableColumn) => {
     if (!column.sortable) return;
 
-    if (sortBy === column.key) {
-      setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+    if (onSortChange) {
+      // Controlled mode - call callback
+      const newOrder = effectiveSortBy === column.key
+        ? (effectiveSortOrder === 'asc' ? 'desc' : 'asc')
+        : 'asc';
+      onSortChange(column.key, newOrder);
     } else {
-      setSortBy(column.key);
-      setSortOrder('asc');
+      // Uncontrolled mode - update internal state
+      if (internalSortBy === column.key) {
+        setInternalSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+      } else {
+        setInternalSortBy(column.key);
+        setInternalSortOrder('asc');
+      }
     }
-  }, [sortBy]);
+  }, [effectiveSortBy, effectiveSortOrder, internalSortBy, onSortChange]);
 
   // Handle row selection
   const handleRowSelect = useCallback((item: T) => {
@@ -133,16 +165,33 @@ export function ConfigurableDataTable<T extends object = Record<string, unknown>
     }
   }, [selectedItems, onSelectionChange]);
 
-  // Handle select all
+  // Handle select all (current page)
   const handleSelectAll = useCallback(() => {
     if (!onSelectionChange) return;
 
-    if (selectedItems.length === sortedData.length) {
+    if (selectedItems.length === sortedData.length && sortedData.length > 0) {
+      // Deselect all
       onSelectionChange([]);
+      setSelectAllPages(false);
     } else {
+      // Select current page
       onSelectionChange(sortedData);
+      setSelectAllPages(false);
     }
   }, [selectedItems, sortedData, onSelectionChange]);
+
+  // Handle select all pages (all records, not just current page)
+  const handleSelectAllPages = useCallback(() => {
+    setSelectAllPages(true);
+  }, []);
+
+  // Handle cancel select all pages
+  const handleCancelSelectAll = useCallback(() => {
+    setSelectAllPages(false);
+    if (onSelectionChange) {
+      onSelectionChange([]);
+    }
+  }, [onSelectionChange]);
 
   if (loading) {
     return (
@@ -172,11 +221,16 @@ export function ConfigurableDataTable<T extends object = Record<string, unknown>
           )}
           {config.bulkActions && selectedItems.length > 0 && (
             <div className={styles.bulkActions}>
-              <span className={styles.selectedCount}>{selectedItems.length} selezionati</span>
+              <span className={styles.selectedCount}>
+                {selectAllPages && pagination
+                  ? `Tutti i ${pagination.total} record selezionati`
+                  : `${selectedItems.length} ${selectedItems.length === 1 ? 'selezionato' : 'selezionati'}`
+                }
+              </span>
               {config.bulkActions.map(action => (
                 <button
                   key={action.key}
-                  onClick={() => onBulkAction?.(action.key, selectedItems)}
+                  onClick={() => onBulkAction?.(action.key, selectedItems, selectAllPages)}
                   className={classNames(styles.bulkActionButton, styles[action.type])}
                 >
                   {action.label}
@@ -185,6 +239,46 @@ export function ConfigurableDataTable<T extends object = Record<string, unknown>
             </div>
           )}
         </div>
+      )}
+
+      {/* Select All Pages Banner */}
+      {selectedItems.length > 0 && !selectAllPages && pagination && pagination.total > sortedData.length && (
+        <div className={styles.selectAllBanner}>
+          <span>
+            Hai selezionato {selectedItems.length} {selectedItems.length === 1 ? 'elemento' : 'elementi'}.
+          </span>
+          <button
+            onClick={handleSelectAllPages}
+            className={styles.selectAllLink}
+            type="button"
+          >
+            Se vuoi selezionare tutti i {pagination.total} record clicca qui
+          </button>
+        </div>
+      )}
+
+      {selectAllPages && pagination && (
+        <div className={styles.selectAllBanner}>
+          <span>
+            Hai selezionato tutti i {pagination.total} record.
+          </span>
+          <button
+            onClick={handleCancelSelectAll}
+            className={styles.selectAllLink}
+            type="button"
+          >
+            Annulla
+          </button>
+        </div>
+      )}
+
+      {/* Filters */}
+      {config.filters && config.filters.length > 0 && (
+        <TableFilters
+          filters={config.filters}
+          values={filters || {}}
+          onChange={onFilterChange || (() => {})}
+        />
       )}
 
       {/* Table */}
@@ -207,14 +301,14 @@ export function ConfigurableDataTable<T extends object = Record<string, unknown>
                   onClick={() => handleHeaderClick(column)}
                   className={classNames(
                     column.sortable && styles.sortable,
-                    sortBy === column.key && styles.sorted
+                    effectiveSortBy === column.key && styles.sorted
                   )}
                   style={{ width: column.width }}
                 >
                   {column.label}
-                  {sortBy === column.key && (
+                  {effectiveSortBy === column.key && (
                     <span className={styles.sortIcon}>
-                      {sortOrder === 'asc' ? '↑' : '↓'}
+                      {effectiveSortOrder === 'asc' ? '↑' : '↓'}
                     </span>
                   )}
                 </th>
@@ -254,7 +348,6 @@ export function ConfigurableDataTable<T extends object = Record<string, unknown>
                           styles[`align-${column.align}`],
                           `${tableName}__${fieldKey}`
                         )}
-                        onClick={() => onCellClick?.(item, column.key, value)}
                       >
                         {cellRenderers.render(renderType, { value, item, column, tableName })}
                       </td>
@@ -265,18 +358,17 @@ export function ConfigurableDataTable<T extends object = Record<string, unknown>
                       {renderActions ? (
                         renderActions(item)
                       ) : (
-                        <div className={styles.actions}>
-                          {config.actions.map(action => (
-                            <button
-                              key={action.key}
-                              onClick={() => onAction?.(action.key, item)}
-                              className={classNames(styles.actionButton, styles[action.type])}
-                              title={action.label}
-                            >
-                              {action.icon || action.label}
-                            </button>
-                          ))}
-                        </div>
+                        <ContextMenu
+                          items={config.actions.map(action => ({
+                            key: action.key,
+                            label: action.label,
+                            icon: action.icon,
+                            variant: action.type === 'danger' ? 'danger' : action.type === 'success' ? 'success' : 'default',
+                            onClick: () => onAction?.(action.key, item)
+                          } as ContextMenuItem))}
+                          position="left"
+                          ariaLabel={`Azioni per ${getNestedValue<string>(item, 'name') || getNestedValue<string>(item, 'username') || 'elemento'}`}
+                        />
                       )}
                     </td>
                   )}

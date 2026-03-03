@@ -72,6 +72,11 @@ export interface Character {
     isNPC: boolean;
     isPublic: boolean;
   };
+
+  // Granular permission system
+  isGestore: boolean;
+  characterRoles: ('personaggio' | 'master' | 'moderatore')[];
+  characterPermissions: string[];
 }
 
 export interface CharacterSkill {

@@ -1,72 +1,53 @@
 /**
- * Character List Page
+ * Character Pending Page
  *
- * Pagina gestione personaggi con ConfigurableDataTable, SidePanel, e TanStack Query.
- * Max 200 linee per mantenibilità.
+ * Pagina personaggi in attesa di approvazione con ConfigurableDataTable.
+ * Filtro fisso: status=pending
  */
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import Head from 'next/head';
-import { useRouter } from 'next/router';
 import { ManagementLayout } from '@/components/layout/ManagementLayout';
 import { ConfigurableDataTable, FilterState } from '@/components/shared/ConfigurableDataTable';
 import { SidePanel } from '@/components/shared/SidePanel';
 import { useConfirm } from '@/hooks/useConfirm';
 import { useTableConfig } from '@/hooks/useTableConfig';
-import { useTableFilters } from '@/hooks/useTableFilters';
 import {
   useCharacters,
-  useUpdateCharacter,
-  useDeleteCharacter,
   useApproveCharacter,
   useRejectCharacter,
   useBulkApproveCharacters,
-  useBulkRejectCharacters,
-  useBulkDeleteCharacters
+  useBulkRejectCharacters
 } from '@/hooks/api/useCharacters';
 import { useNotificationStore } from '@/store/notificationStore';
-import { useURLFilter } from '@/hooks/useURLFilter';
-import { clearFilterHash } from '@/lib/utils/urlFilters';
 import type { Character, CharacterListParams } from '@/types/api/Character';
 import styles from '@/styles/pages/CharacterList.module.scss';
 
-export default function CharacterList() {
+export default function CharacterPending() {
   // State
-  const { filters, params, setParams, handleFilterChange } = useTableFilters<CharacterListParams>({
+  const [params, setParams] = useState<CharacterListParams>({
     page: 1,
     pageSize: 25,
     sortBy: 'metadata.createdAt',
-    sortOrder: 'desc'
+    sortOrder: 'desc',
+    status: 'pending' // CRITICAL: Fixed filter for pending characters
   });
+  const [filters, setFilters] = useState<FilterState>({});
   const [selectedCharacters, setSelectedCharacters] = useState<Character[]>([]);
-  const [activeSidePanel, setActiveSidePanel] = useState<'edit' | 'view' | null>(null);
+  const [activeSidePanel, setActiveSidePanel] = useState<boolean>(false);
   const [currentCharacter, setCurrentCharacter] = useState<Character | null>(null);
 
   // Hooks
-  const router = useRouter();
-  const urlFilter = useURLFilter<{ userId?: string }>();
-
-  // Apply URL filter to params
-  const filteredParams = useMemo(() => {
-    if (urlFilter?.userId) {
-      return { ...params, userId: urlFilter.userId };
-    }
-    return params;
-  }, [params, urlFilter]);
-
-  const { data, isLoading, error } = useCharacters(filteredParams);
-  const tableConfig = useTableConfig('character-list');
-  const updateCharacter = useUpdateCharacter();
-  const deleteCharacter = useDeleteCharacter();
+  const { data, isLoading, error } = useCharacters(params);
+  const tableConfig = useTableConfig('character-pending');
   const approveCharacter = useApproveCharacter();
   const rejectCharacter = useRejectCharacter();
   const bulkApprove = useBulkApproveCharacters();
   const bulkReject = useBulkRejectCharacters();
-  const bulkDelete = useBulkDeleteCharacters();
   const { confirm, ConfirmDialogComponent } = useConfirm();
   const addNotification = useNotificationStore(state => state.addNotification);
 
-  // Prepare visible columns for ConfigurableDataTable
+  // Prepare visible columns
   const visibleColumns = useMemo(() => {
     if (!tableConfig.config) return [];
     return tableConfig.config.columns.filter(
@@ -80,14 +61,9 @@ export default function CharacterList() {
   const handleAction = async (action: string, character: Character) => {
     try {
       switch (action) {
-        case 'edit':
-          setCurrentCharacter(character);
-          setActiveSidePanel('edit');
-          break;
-
         case 'view-details':
           setCurrentCharacter(character);
-          setActiveSidePanel('view');
+          setActiveSidePanel(true);
           break;
 
         case 'approve': {
@@ -122,19 +98,6 @@ export default function CharacterList() {
           break;
         }
 
-        case 'delete': {
-          const confirmed = await confirm({
-            title: 'Conferma Eliminazione',
-            message: `Sei sicuro di voler eliminare ${character.fullName}? Questa azione è irreversibile.`
-          });
-
-          if (confirmed) {
-            await deleteCharacter.mutateAsync(character._id);
-            addNotification({ type: 'success', message: `${character.fullName} eliminato` });
-          }
-          break;
-        }
-
         default:
           addNotification({ type: 'info', message: `Azione "${action}" non implementata` });
       }
@@ -143,32 +106,6 @@ export default function CharacterList() {
         type: 'error',
         message: error instanceof Error ? error.message : 'Errore nell\'esecuzione azione'
       });
-    }
-  };
-
-  /**
-   * Handler SidePanel save
-   */
-  const handleSidePanelAction = async (action: string, formData: Record<string, unknown>) => {
-    if (action === 'save' && currentCharacter) {
-      try {
-        await updateCharacter.mutateAsync({
-          id: currentCharacter._id,
-          data: formData
-        });
-
-        addNotification({ type: 'success', message: 'Personaggio aggiornato con successo' });
-        setActiveSidePanel(null);
-        setCurrentCharacter(null);
-      } catch (error) {
-        addNotification({
-          type: 'error',
-          message: error instanceof Error ? error.message : 'Errore nell\'aggiornamento'
-        });
-      }
-    } else if (action === 'cancel') {
-      setActiveSidePanel(null);
-      setCurrentCharacter(null);
     }
   };
 
@@ -190,21 +127,28 @@ export default function CharacterList() {
     setParams(prev => ({ ...prev, sortBy, sortOrder, page: 1 }));
   };
 
+  /**
+   * Handler filtering
+   */
+  const handleFilterChange = (newFilters: FilterState) => {
+    setFilters(newFilters);
+    setParams(prev => ({ ...prev, ...newFilters, page: 1, status: 'pending' })); // Keep status=pending
+  };
 
   /**
    * Handler bulk actions
    */
   const handleBulkAction = async (actionKey: string, items: Character[], allPagesSelected: boolean = false) => {
     try {
-      if (allPagesSelected) {
-        addNotification({
-          type: 'warning',
-          message: 'Bulk action per tutte le pagine non ancora implementato'
-        });
-        return;
-      }
-
       if (actionKey === 'bulk-approve') {
+        if (allPagesSelected) {
+          addNotification({
+            type: 'warning',
+            message: 'Approvazione massiva per tutte le pagine non ancora implementata'
+          });
+          return;
+        }
+
         const confirmed = await confirm({
           title: 'Conferma Approvazione Multipla',
           message: `Vuoi approvare ${items.length} personaggi selezionati? Verranno creati finanziamenti e inventari iniziali.`,
@@ -235,7 +179,15 @@ export default function CharacterList() {
         if (!reason || reason.trim().length === 0) {
           addNotification({
             type: 'warning',
-            message: 'Motivo del rifiuto obbligatorio'
+            message: 'Rifiuto annullato: motivo obbligatorio'
+          });
+          return;
+        }
+
+        if (allPagesSelected) {
+          addNotification({
+            type: 'warning',
+            message: 'Rifiuto massivo per tutte le pagine non ancora implementato'
           });
           return;
         }
@@ -261,32 +213,6 @@ export default function CharacterList() {
           addNotification({
             type: 'success',
             message: `${result.success} personaggi rifiutati con successo`
-          });
-        }
-
-        setSelectedCharacters([]);
-      } else if (actionKey === 'bulk-delete') {
-        const confirmed = await confirm({
-          title: 'Conferma Eliminazione Multipla',
-          message: `Vuoi eliminare ${items.length} personaggi selezionati? Questa azione è irreversibile.`,
-          confirmLabel: 'Elimina',
-          confirmType: 'danger'
-        });
-
-        if (!confirmed) return;
-
-        const characterIds = items.map(c => c._id);
-        const result = await bulkDelete.mutateAsync(characterIds);
-
-        if (result.failed > 0) {
-          addNotification({
-            type: 'warning',
-            message: `${result.success} personaggi eliminati, ${result.failed} falliti`
-          });
-        } else {
-          addNotification({
-            type: 'success',
-            message: `${result.success} personaggi eliminati con successo`
           });
         }
 
@@ -318,36 +244,17 @@ export default function CharacterList() {
   return (
     <ManagementLayout>
       <Head>
-        <title>Gestione Personaggi - TenpennyNovels Management</title>
+        <title>Personaggi In Attesa - TenpennyNovels Management</title>
       </Head>
 
       <div className={styles.characterList}>
         <header className={styles.header}>
-          <h1>Gestione Personaggi</h1>
+          <h1>⏳ Personaggi In Attesa di Approvazione</h1>
           <p>Totale: {data?.pagination.totalItems ?? 0} personaggi</p>
         </header>
 
-        {/* Filter Badge */}
-        {urlFilter?.userId && (
-          <div className={styles.filterBadge}>
-            <span className={styles.filterLabel}>
-              🔓 Filtrato per utente
-            </span>
-            <button
-              className={styles.filterRemove}
-              onClick={() => {
-                clearFilterHash();
-                router.reload();
-              }}
-              title="Rimuovi filtro"
-            >
-              ✕
-            </button>
-          </div>
-        )}
-
         <ConfigurableDataTable<Character>
-          tableName="character-list"
+          tableName="character-pending"
           data={data?.items ?? []}
           loading={isLoading || tableConfig.loading}
           onAction={handleAction}
@@ -374,38 +281,41 @@ export default function CharacterList() {
           } : undefined}
         />
 
-        {activeSidePanel === 'edit' && currentCharacter && (
+        {/* Side Panel: View Details */}
+        {activeSidePanel && currentCharacter && (
           <SidePanel
             isOpen={true}
             config={{
-              title: `Modifica ${currentCharacter.fullName}`,
-              width: 'medium',
+              title: `Dettagli: ${currentCharacter.fullName}`,
+              width: 'large',
               fields: [
-                { key: 'name', label: 'Nome', type: 'text', required: true, disabled: false },
-                { key: 'surname', label: 'Cognome', type: 'text', required: true, disabled: false },
-                { key: 'age', label: 'Età', type: 'number', required: true, disabled: false },
-                { key: 'status', label: 'Stato', type: 'select', required: true, disabled: false, options: [
-                  { value: 'pending', label: 'In Attesa' },
-                  { value: 'approved', label: 'Approvato' },
-                  { value: 'rejected', label: 'Rifiutato' },
-                  { value: 'active', label: 'Attivo' },
-                  { value: 'inactive', label: 'Inattivo' }
-                ]}
+                { key: 'fullName', label: 'Nome Completo', type: 'text', required: false, disabled: true },
+                { key: 'age', label: 'Età', type: 'text', required: false, disabled: true },
+                { key: 'occupation', label: 'Occupazione', type: 'text', required: false, disabled: true },
+                { key: 'socialClass', label: 'Classe Sociale', type: 'text', required: false, disabled: true },
+                { key: 'personality', label: 'Personalità', type: 'textarea', required: false, disabled: true },
+                { key: 'backstory', label: 'Background', type: 'textarea', required: false, disabled: true }
               ],
               actions: [
-                { key: 'save', label: 'Salva', type: 'primary', loading: false },
-                { key: 'cancel', label: 'Annulla', type: 'secondary', loading: false }
+                { key: 'close', label: 'Chiudi', type: 'secondary', loading: false }
               ]
             }}
             data={{
-              name: currentCharacter.name,
-              surname: currentCharacter.surname,
-              age: currentCharacter.age,
-              status: currentCharacter.status
+              fullName: currentCharacter.fullName,
+              age: currentCharacter.age?.toString() || 'N/A',
+              occupation: currentCharacter.occupation?.name || 'N/A',
+              socialClass: currentCharacter.socialClass?.name || 'N/A',
+              personality: currentCharacter.personality || 'N/A',
+              backstory: currentCharacter.backstory || 'N/A'
             }}
-            onAction={handleSidePanelAction}
+            onAction={(action) => {
+              if (action === 'close') {
+                setActiveSidePanel(false);
+                setCurrentCharacter(null);
+              }
+            }}
             onClose={() => {
-              setActiveSidePanel(null);
+              setActiveSidePanel(false);
               setCurrentCharacter(null);
             }}
           />

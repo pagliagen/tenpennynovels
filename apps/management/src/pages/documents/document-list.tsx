@@ -28,22 +28,17 @@ import {
 } from '@/hooks/api/useDocuments';
 import { createRoute } from '@/lib/api/documents';
 import { useNotificationStore } from '@/store/notificationStore';
+import { useURLFilter } from '@/hooks/useURLFilter';
+import { setFilterInHash } from '@/lib/utils/urlFilters';
 import type { DocumentWithRoute } from '@/types/api/Document';
 import styles from '@/styles/pages/DocumentList.module.scss';
 
 export default function DocumentList() {
   const router = useRouter();
 
-  // Initialize from URL hash, default to 'ambientazione' if invalid/missing
-  const getTypeFromHash = (): 'ambientazione' | 'approfondimenti' | 'regolamento' => {
-    if (typeof window === 'undefined') return 'ambientazione';
-    const hash = window.location.hash.replace('#', '');
-    if (hash === 'approfondimenti') return 'approfondimenti';
-    if (hash === 'regolamento') return 'regolamento';
-    return 'ambientazione';
-  };
-
-  const [typeFilter, setTypeFilter] = useState<'ambientazione' | 'approfondimenti' | 'regolamento'>(getTypeFromHash());
+  // Read type filter from URL hash
+  const urlFilter = useURLFilter<{ type?: 'ambientazione' | 'approfondimenti' | 'regolamento' }>();
+  const typeFilter = urlFilter?.type || 'ambientazione';
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
   const [hierarchicalEditorOpen, setHierarchicalEditorOpen] = useState(false);
@@ -67,33 +62,19 @@ export default function DocumentList() {
   const addNotification = useNotificationStore(state => state.addNotification);
 
   /**
-   * Sync filter with URL hash on mount and hash changes
+   * Set initial filter on mount if missing
    */
   useEffect(() => {
-    // Set initial hash if missing
-    if (typeof window !== 'undefined') {
-      const hash = window.location.hash.replace('#', '');
-      if (!hash || !['ambientazione', 'approfondimenti', 'regolamento'].includes(hash)) {
-        window.location.hash = 'ambientazione';
-      }
+    if (!urlFilter?.type) {
+      setFilterInHash({ type: 'ambientazione' });
     }
-
-    // Listen to hash changes
-    const handleHashChange = () => {
-      const newType = getTypeFromHash();
-      setTypeFilter(newType);
-    };
-
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
   /**
-   * Update URL hash when filter changes
+   * Update URL filter when type changes
    */
   const handleTypeFilterChange = (type: 'ambientazione' | 'approfondimenti' | 'regolamento') => {
-    window.location.hash = type;
-    setTypeFilter(type);
+    setFilterInHash({ type });
   };
 
   /**

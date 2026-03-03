@@ -184,37 +184,8 @@ export function useBanUser() {
     mutationFn: ({ id, banData }: { id: string; banData: BanUserData }) =>
       userAPI.banUser(id, banData),
 
-    onMutate: async ({ id, banData }) => {
-      await queryClient.cancelQueries({ queryKey: userKeys.lists() });
-      await queryClient.cancelQueries({ queryKey: userKeys.detail(id) });
-
-      const previousLists = queryClient.getQueriesData({ queryKey: userKeys.lists() });
-      const previousDetail = queryClient.getQueryData(userKeys.detail(id));
-
-      // Optimistic update
-      updateUserInCache(queryClient, id, (user) => ({
-        ...user,
-        accountStatus: {
-          ...user.accountStatus,
-          isBanned: true,
-          banReason: banData.reason,
-          bannedAt: new Date().toISOString()
-        }
-      }));
-
-      return { previousLists, previousDetail };
-    },
-
-    onError: (error, variables, context) => {
-      if (context?.previousLists) {
-        context.previousLists.forEach(([queryKey, data]) => {
-          queryClient.setQueryData(queryKey, data);
-        });
-      }
-      if (context?.previousDetail) {
-        queryClient.setQueryData(userKeys.detail(variables.id), context.previousDetail);
-      }
-    },
+    // Nessun optimistic update - lasciamo che onSettled faccia refetch completo
+    // (evita schema mismatch tra backend root fields e frontend nested accountStatus)
 
     onSettled: (data, error, variables) => {
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
@@ -232,25 +203,56 @@ export function useUnbanUser() {
   return useMutation({
     mutationFn: (id: string) => userAPI.unbanUser(id),
 
-    onMutate: async (id) => {
+    // Nessun optimistic update - lasciamo che onSettled faccia refetch completo
+    // (evita schema mismatch tra backend root fields e frontend nested accountStatus)
+
+    onSettled: (data, error, variables) => {
+      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: userKeys.detail(variables) });
+    }
+  });
+}
+
+/**
+ * Hook per bulk ban utenti con optimistic updates
+ */
+export function useBulkBanUsers() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (params: { userIds: string[]; reason?: string; duration?: string; bannedUntil?: string }) =>
+      userAPI.bulkBanUsers(params),
+
+    onMutate: async ({ userIds, reason }) => {
       await queryClient.cancelQueries({ queryKey: userKeys.lists() });
-      await queryClient.cancelQueries({ queryKey: userKeys.detail(id) });
 
       const previousLists = queryClient.getQueriesData({ queryKey: userKeys.lists() });
-      const previousDetail = queryClient.getQueryData(userKeys.detail(id));
 
-      // Optimistic update
-      updateUserInCache(queryClient, id, (user) => ({
-        ...user,
-        accountStatus: {
-          ...user.accountStatus,
-          isBanned: false,
-          banReason: undefined,
-          bannedAt: undefined
+      // Optimistic update for all users
+      queryClient.setQueriesData<{ items: User[] }>(
+        { queryKey: userKeys.lists(), exact: false },
+        (old) => {
+          if (!old?.items) return old;
+          return {
+            ...old,
+            items: old.items.map(user =>
+              userIds.includes(user._id)
+                ? {
+                    ...user,
+                    accountStatus: {
+                      ...user.accountStatus,
+                      isBanned: true,
+                      banReason: reason,
+                      bannedAt: new Date().toISOString()
+                    }
+                  }
+                : user
+            )
+          };
         }
-      }));
+      );
 
-      return { previousLists, previousDetail };
+      return { previousLists };
     },
 
     onError: (error, variables, context) => {
@@ -259,14 +261,170 @@ export function useUnbanUser() {
           queryClient.setQueryData(queryKey, data);
         });
       }
-      if (context?.previousDetail) {
-        queryClient.setQueryData(userKeys.detail(variables), context.previousDetail);
+    },
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+    }
+  });
+}
+
+/**
+ * Hook per bulk unban utenti con optimistic updates
+ */
+export function useBulkUnbanUsers() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (userIds: string[]) => userAPI.bulkUnbanUsers(userIds),
+
+    onMutate: async (userIds) => {
+      await queryClient.cancelQueries({ queryKey: userKeys.lists() });
+
+      const previousLists = queryClient.getQueriesData({ queryKey: userKeys.lists() });
+
+      // Optimistic update for all users
+      queryClient.setQueriesData<{ items: User[] }>(
+        { queryKey: userKeys.lists(), exact: false },
+        (old) => {
+          if (!old?.items) return old;
+          return {
+            ...old,
+            items: old.items.map(user =>
+              userIds.includes(user._id)
+                ? {
+                    ...user,
+                    accountStatus: {
+                      ...user.accountStatus,
+                      isBanned: false,
+                      banReason: undefined,
+                      bannedAt: undefined
+                    }
+                  }
+                : user
+            )
+          };
+        }
+      );
+
+      return { previousLists };
+    },
+
+    onError: (error, variables, context) => {
+      if (context?.previousLists) {
+        context.previousLists.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
       }
     },
 
-    onSettled: (data, error, variables) => {
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: userKeys.detail(variables) });
+    }
+  });
+}
+/**
+ * Hook per bulk activate utenti con optimistic updates
+ */
+export function useBulkActivateUsers() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (userIds: string[]) => userAPI.bulkActivateUsers(userIds),
+
+    onMutate: async (userIds) => {
+      await queryClient.cancelQueries({ queryKey: userKeys.lists() });
+
+      const previousLists = queryClient.getQueriesData({ queryKey: userKeys.lists() });
+
+      // Optimistic update for all users
+      queryClient.setQueriesData<{ items: User[] }>(
+        { queryKey: userKeys.lists(), exact: false },
+        (old) => {
+          if (!old?.items) return old;
+          return {
+            ...old,
+            items: old.items.map(user =>
+              userIds.includes(user._id)
+                ? {
+                    ...user,
+                    accountStatus: {
+                      ...user.accountStatus,
+                      isActive: true
+                    }
+                  }
+                : user
+            )
+          };
+        }
+      );
+
+      return { previousLists };
+    },
+
+    onError: (error, variables, context) => {
+      if (context?.previousLists) {
+        context.previousLists.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
+    },
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+    }
+  });
+}
+
+/**
+ * Hook per bulk deactivate utenti con optimistic updates
+ */
+export function useBulkDeactivateUsers() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (userIds: string[]) => userAPI.bulkDeactivateUsers(userIds),
+
+    onMutate: async (userIds) => {
+      await queryClient.cancelQueries({ queryKey: userKeys.lists() });
+
+      const previousLists = queryClient.getQueriesData({ queryKey: userKeys.lists() });
+
+      // Optimistic update for all users
+      queryClient.setQueriesData<{ items: User[] }>(
+        { queryKey: userKeys.lists(), exact: false },
+        (old) => {
+          if (!old?.items) return old;
+          return {
+            ...old,
+            items: old.items.map(user =>
+              userIds.includes(user._id)
+                ? {
+                    ...user,
+                    accountStatus: {
+                      ...user.accountStatus,
+                      isActive: false
+                    }
+                  }
+                : user
+            )
+          };
+        }
+      );
+
+      return { previousLists };
+    },
+
+    onError: (error, variables, context) => {
+      if (context?.previousLists) {
+        context.previousLists.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
+    },
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
     }
   });
 }

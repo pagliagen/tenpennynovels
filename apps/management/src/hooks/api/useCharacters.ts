@@ -272,3 +272,156 @@ export function useRejectCharacter() {
     }
   });
 }
+
+/**
+ * Hook per bulk approve characters con optimistic updates
+ */
+export function useBulkApproveCharacters() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (characterIds: string[]) => characterAPI.bulkApproveCharacters(characterIds),
+
+    onMutate: async (characterIds) => {
+      await queryClient.cancelQueries({ queryKey: characterKeys.lists() });
+
+      const previousLists = queryClient.getQueriesData({ queryKey: characterKeys.lists() });
+
+      // Optimistic update for all characters
+      queryClient.setQueriesData<{ items: Character[] }>(
+        { queryKey: characterKeys.lists(), exact: false },
+        (old) => {
+          if (!old?.items) return old;
+          return {
+            ...old,
+            items: old.items.map(character =>
+              characterIds.includes(character._id)
+                ? {
+                    ...character,
+                    status: 'APPROVED',
+                    metadata: {
+                      ...character.metadata,
+                      approvalDate: new Date().toISOString()
+                    }
+                  }
+                : character
+            )
+          };
+        }
+      );
+
+      return { previousLists };
+    },
+
+    onError: (error, variables, context) => {
+      if (context?.previousLists) {
+        context.previousLists.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
+    },
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: characterKeys.lists() });
+    }
+  });
+}
+
+/**
+ * Hook per bulk reject characters con optimistic updates
+ */
+export function useBulkRejectCharacters() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (params: { characterIds: string[]; reason: string }) =>
+      characterAPI.bulkRejectCharacters(params),
+
+    onMutate: async ({ characterIds, reason }) => {
+      await queryClient.cancelQueries({ queryKey: characterKeys.lists() });
+
+      const previousLists = queryClient.getQueriesData({ queryKey: characterKeys.lists() });
+
+      // Optimistic update for all characters
+      queryClient.setQueriesData<{ items: Character[] }>(
+        { queryKey: characterKeys.lists(), exact: false },
+        (old) => {
+          if (!old?.items) return old;
+          return {
+            ...old,
+            items: old.items.map(character =>
+              characterIds.includes(character._id)
+                ? {
+                    ...character,
+                    status: 'DRAFT',
+                    metadata: {
+                      ...character.metadata,
+                      rejectionDate: new Date().toISOString(),
+                      rejectionReason: reason
+                    }
+                  }
+                : character
+            )
+          };
+        }
+      );
+
+      return { previousLists };
+    },
+
+    onError: (error, variables, context) => {
+      if (context?.previousLists) {
+        context.previousLists.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
+    },
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: characterKeys.lists() });
+    }
+  });
+}
+
+/**
+ * Hook per bulk delete characters con optimistic updates
+ */
+export function useBulkDeleteCharacters() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (characterIds: string[]) => characterAPI.bulkDeleteCharacters(characterIds),
+
+    onMutate: async (characterIds) => {
+      await queryClient.cancelQueries({ queryKey: characterKeys.lists() });
+
+      const previousLists = queryClient.getQueriesData({ queryKey: characterKeys.lists() });
+
+      // Optimistic removal
+      queryClient.setQueriesData<{ items: Character[] }>(
+        { queryKey: characterKeys.lists(), exact: false },
+        (old) => {
+          if (!old?.items) return old;
+          return {
+            ...old,
+            items: old.items.filter(character => !characterIds.includes(character._id))
+          };
+        }
+      );
+
+      return { previousLists };
+    },
+
+    onError: (error, variables, context) => {
+      if (context?.previousLists) {
+        context.previousLists.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
+    },
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: characterKeys.lists() });
+    }
+  });
+}

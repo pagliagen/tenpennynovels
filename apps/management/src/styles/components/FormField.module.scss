@@ -81,6 +81,36 @@ textarea.input {
   user-select: none;
 }
 
+.checkboxGroup {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+  padding: $spacing-sm;
+  background-color: $color-bg-tertiary;
+  border-radius: $border-radius-sm;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.checkboxGroupItem {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  padding: $spacing-xs;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color $transition-fast;
+  border-radius: $border-radius-sm;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.03);
+  }
+}
+
+.checkboxGroupLabel {
+  font-size: 14px;
+  color: $color-text-primary;
+}
+
 .errorText {
   font-size: 14px;
   color: $color-error;

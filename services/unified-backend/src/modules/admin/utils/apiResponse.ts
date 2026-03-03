@@ -4,19 +4,28 @@
 // Utility functions to generate consistent API responses across all controllers
 
 import { Request } from 'express';
-import { ApiResponse, PaginationInfo, ErrorDetails } from '../types/management';
+import {
+  ApiResponse,
+  ApiListResponse,
+  ApiSingleResponse,
+  ApiErrorResponse,
+  PaginationInfo,
+  ErrorDetails
+} from '../types/management';
 
 /**
  * Generate success response for single record (GET by id, POST, PATCH)
+ *
+ * Returns: { result: true, success: true, data: T, ... }
  */
 export function successResponse<T>(
   data: T,
   message?: string,
   requestId?: string
-): ApiResponse<T> {
+): ApiSingleResponse<T> {
   return {
     result: true,
-    success: true, // Backward compatibility
+    success: true,
     data,
     message,
     timestamp: new Date().toISOString(),
@@ -26,16 +35,21 @@ export function successResponse<T>(
 
 /**
  * Generate success response for list (GET list endpoints)
+ *
+ * CRITICAL: Returns items and pagination at ROOT level (not wrapped in data)
+ * Returns: { result: true, success: true, items: T[], pagination: {...}, ... }
+ *
+ * USE THIS for all /admin/* list endpoints (users, characters, locations, etc.)
  */
 export function listResponse<T>(
   items: T[],
   pagination: PaginationInfo,
   message?: string,
   requestId?: string
-): ApiResponse<T> {
+): ApiListResponse<T> {
   return {
     result: true,
-    success: true, // Backward compatibility
+    success: true,
     items,
     pagination,
     message,
@@ -46,6 +60,8 @@ export function listResponse<T>(
 
 /**
  * Generate error response
+ *
+ * Returns: { result: false, success: false, error: string, code?: string, ... }
  */
 export function errorResponse(
   error: string,
@@ -53,10 +69,10 @@ export function errorResponse(
   details?: ErrorDetails,
   statusCode: number = 500,
   requestId?: string
-): ApiResponse {
+): ApiErrorResponse {
   return {
     result: false,
-    success: false, // Backward compatibility
+    success: false,
     error,
     code,
     details,

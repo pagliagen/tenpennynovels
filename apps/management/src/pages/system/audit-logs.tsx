@@ -10,24 +10,37 @@
 import React, { useState, useMemo } from 'react';
 import Head from 'next/head';
 import { ManagementLayout } from '@/components/layout/ManagementLayout';
-import { ConfigurableDataTable } from '@/components/shared/ConfigurableDataTable';
+import { ConfigurableDataTable, FilterState } from '@/components/shared/ConfigurableDataTable';
 import { useTableConfig } from '@/hooks/useTableConfig';
-import { useQuery } from '@tanstack/react-query';
-import { systemAPI, AuditLog, AuditLogParams } from '@/lib/api/system';
+import { useTableFilters } from '@/hooks/useTableFilters';
+import { useAuditLogs } from '@/hooks/api/useAuditLogs';
+import { AuditLog, AuditLogParams } from '@/lib/api/system';
+import { useURLFilter } from '@/hooks/useURLFilter';
+import { clearFilterHash } from '@/lib/utils/urlFilters';
 import styles from '@/styles/pages/SystemConfig.module.scss';
 
 export default function AuditLogs() {
-  const [params, setParams] = useState<AuditLogParams>({
+  const { filters, params, setParams, handleFilterChange } = useTableFilters<AuditLogParams>({
     page: 1,
-    pageSize: 50
+    pageSize: 25,
+    sortBy: 'timestamp',
+    sortOrder: 'desc'
   });
+  const [selectedLogs, setSelectedLogs] = useState<AuditLog[]>([]);
 
   // Hooks
   const tableConfig = useTableConfig('audit-logs');
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['system', 'audit-logs', params],
-    queryFn: () => systemAPI.getAuditLogs(params)
-  });
+  const urlFilter = useURLFilter<{ userId?: string; characterId?: string }>();
+
+  // Apply URL filter to params
+  const filteredParams = useMemo(() => {
+    if (urlFilter) {
+      return { ...params, ...urlFilter };
+    }
+    return params;
+  }, [params, urlFilter]);
+
+  const { data, isLoading, error } = useAuditLogs(filteredParams);
 
   // Prepare visible columns
   const visibleColumns = useMemo(() => {
@@ -46,37 +59,20 @@ export default function AuditLogs() {
     setParams(prev => ({ ...prev, pageSize, page: 1 }));
   };
 
-  // Filter handlers
-  const handleCategoryChange = (category: string) => {
-    setParams(prev => ({
-      ...prev,
-      category: category || undefined,
-      page: 1
-    }));
+  /**
+   * Handler sorting
+   */
+  const handleSortChange = (sortBy: string, sortOrder: 'asc' | 'desc') => {
+    setParams(prev => ({ ...prev, sortBy, sortOrder, page: 1 }));
   };
 
-  const handleSeverityChange = (severity: string) => {
-    setParams(prev => ({
-      ...prev,
-      severity: (severity as 'info' | 'warning' | 'critical') || undefined,
-      page: 1
-    }));
-  };
 
-  const handleDateFromChange = (dateFrom: string) => {
-    setParams(prev => ({
-      ...prev,
-      dateFrom: dateFrom || undefined,
-      page: 1
-    }));
-  };
-
-  const handleDateToChange = (dateTo: string) => {
-    setParams(prev => ({
-      ...prev,
-      dateTo: dateTo || undefined,
-      page: 1
-    }));
+  /**
+   * Handler bulk actions
+   */
+  const handleBulkAction = async (actionKey: string, items: AuditLog[], allPagesSelected: boolean = false) => {
+    // Audit logs are read-only, no bulk actions needed
+    console.log('Bulk action not applicable for audit logs');
   };
 
   if (error) {
@@ -106,61 +102,24 @@ export default function AuditLogs() {
           </div>
         </header>
 
-        {/* Filters */}
-        <section className={styles.section}>
-          <h2>Filtri</h2>
-          <div className={styles.settingGrid}>
-            <div className={styles.settingItem}>
-              <label htmlFor="category">Categoria</label>
-              <select
-                id="category"
-                value={params.category || ''}
-                onChange={(e) => handleCategoryChange(e.target.value)}
-              >
-                <option value="">Tutte le categorie</option>
-                <option value="character_management">Gestione Personaggi</option>
-                <option value="user_management">Gestione Utenti</option>
-                <option value="economy_management">Economia</option>
-                <option value="system_configuration">Configurazione Sistema</option>
-                <option value="moderation">Moderazione</option>
-              </select>
-            </div>
-
-            <div className={styles.settingItem}>
-              <label htmlFor="severity">Gravità</label>
-              <select
-                id="severity"
-                value={params.severity || ''}
-                onChange={(e) => handleSeverityChange(e.target.value)}
-              >
-                <option value="">Tutte</option>
-                <option value="info">Info</option>
-                <option value="warning">Warning</option>
-                <option value="critical">Critical</option>
-              </select>
-            </div>
-
-            <div className={styles.settingItem}>
-              <label htmlFor="dateFrom">Data Da</label>
-              <input
-                id="dateFrom"
-                type="date"
-                value={params.dateFrom || ''}
-                onChange={(e) => handleDateFromChange(e.target.value)}
-              />
-            </div>
-
-            <div className={styles.settingItem}>
-              <label htmlFor="dateTo">Data A</label>
-              <input
-                id="dateTo"
-                type="date"
-                value={params.dateTo || ''}
-                onChange={(e) => handleDateToChange(e.target.value)}
-              />
-            </div>
+        {/* Filter Badge */}
+        {(urlFilter?.userId || urlFilter?.characterId) && (
+          <div className={styles.filterBadge}>
+            <span className={styles.filterLabel}>
+              🔓 Filtrato per {urlFilter.userId ? 'utente' : 'personaggio'}
+            </span>
+            <button
+              className={styles.filterRemove}
+              onClick={() => {
+                clearFilterHash();
+                window.location.reload();
+              }}
+              title="Rimuovi filtro"
+            >
+              ✕
+            </button>
           </div>
-        </section>
+        )}
 
         {/* Table */}
         <ConfigurableDataTable<AuditLog>
@@ -169,11 +128,19 @@ export default function AuditLogs() {
           loading={isLoading || tableConfig.loading}
           pagination={{
             page: params.page || 1,
-            pageSize: params.pageSize || 50,
+            pageSize: params.pageSize || 25,
             total: data?.pagination?.totalItems ?? 0,
             onPageChange: handlePageChange,
             onPageSizeChange: handlePageSizeChange
           }}
+          sortBy={params.sortBy}
+          sortOrder={params.sortOrder}
+          onSortChange={handleSortChange}
+          filters={filters}
+          onFilterChange={handleFilterChange}
+          selectedItems={selectedLogs}
+          onSelectionChange={setSelectedLogs}
+          onBulkAction={handleBulkAction}
           externalConfig={tableConfig.config ? {
             config: tableConfig.config,
             visibleColumns: visibleColumns,

@@ -473,7 +473,7 @@ export class DocumentManagementController {
       const document = await Document.findByIdAndUpdate(
         id,
         { $set: { ...updates, lastUpdated: new Date() } },
-        { new: true }
+        { returnDocument: 'after' }
       );
 
       if (!document) {
@@ -676,7 +676,7 @@ export class DocumentManagementController {
       const document = await Document.findByIdAndUpdate(
         id,
         { $set: { deleted: true, lastUpdated: new Date() } },
-        { new: true }
+        { returnDocument: 'after' }
       );
 
       if (!document) {

@@ -1,0 +1,71 @@
+/**
+ * TableFilters Styles
+ *
+ * Filter UI component styles for ConfigurableDataTable.
+ * Follows Victorian theme and existing design system.
+ */
+
+@import '../variables.scss';
+
+.filtersContainer {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: $spacing-md;
+  padding: $spacing-lg;
+  background-color: $color-bg-secondary;
+  border-radius: $border-radius-md;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: $spacing-md;
+}
+
+.filterItem {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+
+  label {
+    font-size: 13px;
+    font-weight: 600;
+    color: $color-text-primary;
+  }
+
+  input[type="text"],
+  input[type="date"],
+  select {
+    padding: $spacing-sm $spacing-md;
+    background-color: $color-bg-tertiary;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: $border-radius-sm;
+    color: $color-text-primary;
+    font-size: 14px;
+    transition: all $transition-fast;
+
+    &:focus {
+      outline: none;
+      border-color: $color-primary;
+    }
+
+    &::placeholder {
+      color: $color-text-muted;
+    }
+  }
+
+  select[multiple] {
+    min-height: 100px;
+  }
+}
+
+.dateRange {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+
+  input[type="date"] {
+    flex: 1;
+  }
+
+  .dateRangeSeparator {
+    color: $color-text-secondary;
+    font-size: 14px;
+  }
+}

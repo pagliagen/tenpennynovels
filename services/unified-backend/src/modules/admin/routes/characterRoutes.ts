@@ -48,12 +48,36 @@ router.post(
   CharacterApprovalController.submitCharacterReview
 );
 
-
 router.patch(
   '/:characterId/priority',
   requireViewPermission('characters.detail.edit'),
   AdminAuthMiddleware.logAdminAction('update_review_priority', 'character_management'),
   CharacterApprovalController.updateReviewPriority
+);
+
+// Bulk operations routes
+router.post(
+  '/bulk-approve',
+  requireViewPermission('characters.detail.approve'),
+  AdminAuthMiddleware.logAdminAction('bulk_approve_characters', 'character_management'),
+  AdminAuthMiddleware.sensitiveOperationLimit(),
+  CharacterApprovalController.bulkApproveCharacters
+);
+
+router.post(
+  '/bulk-reject',
+  requireViewPermission('characters.detail.approve'),
+  AdminAuthMiddleware.logAdminAction('bulk_reject_characters', 'character_management'),
+  AdminAuthMiddleware.sensitiveOperationLimit(),
+  CharacterApprovalController.bulkRejectCharacters
+);
+
+router.post(
+  '/bulk-delete',
+  requireViewPermission('characters.detail.delete'),
+  AdminAuthMiddleware.logAdminAction('bulk_delete_characters', 'character_management'),
+  AdminAuthMiddleware.sensitiveOperationLimit(),
+  CharacterApprovalController.bulkDeleteCharacters
 );
 
 // Statistics routes - require characters.read permission

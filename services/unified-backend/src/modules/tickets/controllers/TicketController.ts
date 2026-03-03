@@ -401,7 +401,7 @@ export class TicketController {
           $unset: { closedAt: '', closedBy: '' }
         },
         {
-          new: true
+          returnDocument: 'after'
         }
       );
 
@@ -769,7 +769,7 @@ export class TicketController {
           'lastReadBy.character': new Date()
         },
         {
-          new: true
+          returnDocument: 'after'
         }
       );
 

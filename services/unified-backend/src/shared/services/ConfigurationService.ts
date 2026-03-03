@@ -183,7 +183,7 @@ export class ConfigurationService {
           },
           $inc: { 'metadata.version': 1 },
         },
-        { new: true }
+        { returnDocument: 'after' }
       );
 
       if (config) {

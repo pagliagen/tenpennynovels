@@ -197,10 +197,10 @@ export class AuthController {
       await user.save();
 
       // Get user's characters
-      let characters = await Character.find({ 
+      let characters = await Character.find({
         userId: user.id,
         status: { $in: ['DRAFT', 'PENDING_APPROVAL', 'APPROVED'] }
-      }).select('id name status occupation currentLocation gameplayRoles lastActive submittedAt');
+      }).select('id name surname status occupation currentLocation gameplayRoles lastActive submittedAt');
       
       logger.info(`User ${user.username} login: found ${characters.length} existing characters`);
 
@@ -296,9 +296,14 @@ export class AuthController {
         logger.info(`User ${user.username}: Auto-selecting character ${userCharacter.name} (${userCharacter.id})`);
         
         // Auto-set character context cookie regardless of status
+        // Build full character name (name + surname if present)
+        const fullCharacterName = userCharacter.surname
+          ? `${userCharacter.name} ${userCharacter.surname}`
+          : userCharacter.name;
+
         const characterToken = CryptoUtils.generateCharacterContextToken({
           characterId: userCharacter.id,
-          characterName: userCharacter.name,
+          characterName: fullCharacterName,
           userId: user.id,
           gameplayRoles: userCharacter.gameplayRoles || ['personaggio'],
           isApproved: userCharacter.status === 'approved'
@@ -446,9 +451,14 @@ export class AuthController {
       await character.save();
 
       // Generate character context token
+      // Build full character name (name + surname if present)
+      const fullCharacterName = character.surname
+        ? `${character.name} ${character.surname}`
+        : character.name;
+
       const characterToken = CryptoUtils.generateCharacterContextToken({
         characterId: character.id,
-        characterName: character.name,
+        characterName: fullCharacterName,
         userId: userId,
         gameplayRoles: character.gameplayRoles || ['personaggio'],
         isApproved: character.status === 'approved'

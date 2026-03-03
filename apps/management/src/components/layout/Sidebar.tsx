@@ -31,7 +31,6 @@ const NAV_ITEMS: NavItem[] = [
     icon: '👥',
     children: [
       { key: 'users-list', label: 'Lista Utenti', href: '/users/user-list', permission: 'user.read' },
-      { key: 'users-permissions', label: 'Permessi', href: '/users/permissions', permission: 'user.permissions' },
       { key: 'users-bans', label: 'Ban List', href: '/users/ban-list', permission: 'user.ban' }
     ]
   },
@@ -41,7 +40,8 @@ const NAV_ITEMS: NavItem[] = [
     icon: '🎭',
     children: [
       { key: 'characters-list', label: 'Lista Personaggi', href: '/characters/character-list', permission: 'character.read' },
-      { key: 'characters-pending', label: 'In Attesa Approvazione', href: '/characters/character-pending', permission: 'character.approve' }
+      { key: 'characters-pending', label: 'In Attesa Approvazione', href: '/characters/character-pending', permission: 'character.approve' },
+      { key: 'characters-permissions', label: 'Permessi', href: '/characters/permissions', permission: 'character.permissions' }
     ]
   },
   {

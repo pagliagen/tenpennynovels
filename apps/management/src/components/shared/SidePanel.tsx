@@ -24,6 +24,7 @@ export interface SidePanelProps<T = Record<string, unknown>> {
   config: SidePanelConfig;
   data: T;
   loading?: boolean;
+  customContent?: React.ReactNode; // Custom content instead of fields
   onClose: () => void;
   onAction: (actionKey: string, formData: Record<string, unknown>) => void;
 }
@@ -33,6 +34,7 @@ export function SidePanel<T extends Record<string, unknown>>({
   config,
   data,
   loading = false,
+  customContent,
   onClose,
   onAction
 }: SidePanelProps<T>): React.ReactElement | null {
@@ -110,7 +112,11 @@ export function SidePanel<T extends Record<string, unknown>>({
             <div className={styles.loadingContainer}>
               <LoadingSpinner size="large" />
             </div>
+          ) : customContent ? (
+            // Custom content provided - render directly
+            customContent
           ) : (
+            // Standard form fields
             <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
               {config.fields.filter(isFieldVisible).map(field => (
                 <FormField

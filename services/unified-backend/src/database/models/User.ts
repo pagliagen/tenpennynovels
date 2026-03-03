@@ -27,8 +27,10 @@ export interface IUser extends Document {
   isActive: boolean;
   isBanned: boolean;
   banReason?: string;
-  bannedUntil?: Date;
+  bannedAt?: Date; // When the ban was applied
+  bannedUntil?: Date; // When the ban expires (for temporary bans)
   bannedBy?: Schema.Types.ObjectId;
+  bannedByName?: string; // Character name of admin who performed the ban
   banScope?: 'full' | 'chat_only' | 'game_only';
   
   // Character management
@@ -141,11 +143,13 @@ const UserSchema = new Schema<IUser>({
     default: false
   },
   banReason: String,
-  bannedUntil: Date,
+  bannedAt: Date, // When the ban was applied
+  bannedUntil: Date, // When the ban expires
   bannedBy: {
     type: Schema.Types.ObjectId,
     ref: 'User'
   },
+  bannedByName: String, // Character name of admin who performed the ban
   banScope: {
     type: String,
     enum: ['full', 'chat_only', 'game_only']

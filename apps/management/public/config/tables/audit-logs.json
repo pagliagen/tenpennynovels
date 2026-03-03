@@ -90,5 +90,45 @@
       }
     }
   ],
+  "filters": [
+    {
+      "key": "category",
+      "label": "Categoria",
+      "type": "select",
+      "field": "category",
+      "options": [
+        { "value": "", "label": "Tutte le categorie" },
+        { "value": "character_management", "label": "Gestione Personaggi" },
+        { "value": "user_management", "label": "Gestione Utenti" },
+        { "value": "economy_management", "label": "Economia" },
+        { "value": "system_configuration", "label": "Configurazione Sistema" },
+        { "value": "moderation", "label": "Moderazione" }
+      ]
+    },
+    {
+      "key": "severity",
+      "label": "Gravità",
+      "type": "select",
+      "field": "severity",
+      "options": [
+        { "value": "", "label": "Tutte" },
+        { "value": "info", "label": "Info" },
+        { "value": "warning", "label": "Warning" },
+        { "value": "critical", "label": "Critical" }
+      ]
+    },
+    {
+      "key": "dateFrom",
+      "label": "Data Da",
+      "type": "date",
+      "field": "dateFrom"
+    },
+    {
+      "key": "dateTo",
+      "label": "Data A",
+      "type": "date",
+      "field": "dateTo"
+    }
+  ],
   "actions": []
 }

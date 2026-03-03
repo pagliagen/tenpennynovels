@@ -93,7 +93,7 @@ export class SecurityController {
           invalidatedBy: 'manual',
           invalidatedFromIp: req.ip
         },
-        { new: true }
+        { returnDocument: 'after' }
       );
 
       if (!session) {

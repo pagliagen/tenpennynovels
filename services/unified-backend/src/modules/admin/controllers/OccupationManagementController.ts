@@ -305,7 +305,7 @@ export class OccupationManagementController {
       const occupation = await Occupation.findByIdAndUpdate(
         occupationId,
         updateData,
-        { new: true, runValidators: true }
+        { returnDocument: 'after', runValidators: true }
       );
 
       if (!occupation) {

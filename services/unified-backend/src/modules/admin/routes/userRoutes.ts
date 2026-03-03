@@ -62,6 +62,40 @@ router.delete(
   UserManagementController.unbanUser
 );
 
+// Bulk ban/unban operations
+router.post(
+  '/bulk-ban',
+  requireViewPermission('users.ban'),
+  AdminAuthMiddleware.logAdminAction('bulk_ban_users', 'user_management'),
+  AdminAuthMiddleware.sensitiveOperationLimit(),
+  UserManagementController.bulkBanUsers
+);
+
+router.post(
+  '/bulk-unban',
+  requireViewPermission('users.ban'),
+  AdminAuthMiddleware.logAdminAction('bulk_unban_users', 'user_management'),
+  AdminAuthMiddleware.sensitiveOperationLimit(),
+  UserManagementController.bulkUnbanUsers
+);
+
+// Bulk activate/deactivate operations
+router.post(
+  '/bulk-activate',
+  requireViewPermission('users.update'),
+  AdminAuthMiddleware.logAdminAction('bulk_activate_users', 'user_management'),
+  AdminAuthMiddleware.sensitiveOperationLimit(),
+  UserManagementController.bulkActivateUsers
+);
+
+router.post(
+  '/bulk-deactivate',
+  requireViewPermission('users.update'),
+  AdminAuthMiddleware.logAdminAction('bulk_deactivate_users', 'user_management'),
+  AdminAuthMiddleware.sensitiveOperationLimit(),
+  UserManagementController.bulkDeactivateUsers
+);
+
 router.patch(
   '/:userId',
   requireViewPermission('users.update'),

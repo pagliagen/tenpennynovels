@@ -309,7 +309,7 @@ export class ExperienceManagementController {
       const session = await GamingSession.findByIdAndUpdate(
         sessionId,
         { ...updates, updatedAt: new Date() },
-        { new: true, runValidators: true }
+        { returnDocument: 'after', runValidators: true }
       );
       
       if (!session) {

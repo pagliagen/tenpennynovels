@@ -881,7 +881,7 @@ export class SocialClassManagementController {
           const result = await SocialClassConfig.findByIdAndUpdate(
             order.socialClassId,
             { displayOrder: order.displayOrder },
-            { new: true }
+            { returnDocument: 'after' }
           );
 
           if (result) {

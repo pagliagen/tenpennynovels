@@ -580,7 +580,7 @@ export class AnalyticsService {
           totalSessions: totalViews,
           updatedAt: new Date()
         },
-        { upsert: true, new: true }
+        { upsert: true, returnDocument: 'after' }
       );
 
       console.log(`Daily stats aggregated for ${date}`);

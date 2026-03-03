@@ -138,7 +138,12 @@ export interface ICharacter extends Document {
   isActive: boolean; // Currently selected character
   
   // Character gameplay roles (separate from admin roles)
-  gameplayRoles: ('personaggio' | 'master' | 'moderatore' | 'gestore')[];
+  gameplayRoles: ('personaggio' | 'master' | 'moderatore' | 'gestore')[]; // DEPRECATED - use isGestore + characterRoles
+
+  // Granular permission system for characters
+  isGestore: boolean; // Super-role flag that grants all permissions
+  characterRoles: ('personaggio' | 'master' | 'moderatore')[]; // Character roles (gestore is now a flag)
+  characterPermissions: string[]; // Permission overrides (add/remove specific permissions)
 
   // Bot AI integration
   bot_id?: string; // If present, this Character is a bot (references bot in botai database)
@@ -535,10 +540,24 @@ const CharacterSchema = new Schema<ICharacter>({
     default: false
   },
   
-  // Character gameplay roles
+  // Character gameplay roles (DEPRECATED - use isGestore + characterRoles)
   gameplayRoles: [{
     type: String,
     enum: ['personaggio', 'master', 'moderatore', 'gestore']
+  }],
+
+  // Granular permission system
+  isGestore: {
+    type: Boolean,
+    default: false
+  },
+  characterRoles: [{
+    type: String,
+    enum: ['personaggio', 'master', 'moderatore']
+  }],
+  characterPermissions: [{
+    type: String,
+    trim: true
   }],
 
   // Bot AI integration

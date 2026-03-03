@@ -161,7 +161,7 @@ export class EscalationService {
             }
           }
         },
-        { new: true }
+        { returnDocument: 'after' }
       );
 
       if (updatedTicket) {

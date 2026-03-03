@@ -38,7 +38,7 @@ export interface ErrorDetails {
 }
 
 /**
- * Standardized API Response interface
+ * Standardized API Response interface (BASE)
  */
 export interface ApiResponse<T = unknown> {
   result: boolean;           // Standard: true/false (replaces 'success' for consistency)
@@ -54,7 +54,64 @@ export interface ApiResponse<T = unknown> {
   requestId?: string;        // Optional for request tracing
 }
 
-// Admin Authentication Types - Updated to use granular permission system
+/**
+ * List Response - REQUIRED format for ALL /admin/* list endpoints
+ *
+ * CRITICAL: items and pagination MUST be at root level, NOT wrapped in data object
+ *
+ * Example:
+ * {
+ *   result: true,
+ *   success: true,
+ *   items: [...],
+ *   pagination: {...},
+ *   timestamp: "..."
+ * }
+ */
+export interface ApiListResponse<T> {
+  result: true;
+  success: true;
+  items: T[];
+  pagination: PaginationInfo;
+  message?: string;
+  timestamp: string;
+  requestId?: string;
+}
+
+/**
+ * Single Record Response - format for GET by ID, POST, PATCH
+ *
+ * Example:
+ * {
+ *   result: true,
+ *   success: true,
+ *   data: {...},
+ *   timestamp: "..."
+ * }
+ */
+export interface ApiSingleResponse<T> {
+  result: true;
+  success: true;
+  data: T;
+  message?: string;
+  timestamp: string;
+  requestId?: string;
+}
+
+/**
+ * Error Response
+ */
+export interface ApiErrorResponse {
+  result: false;
+  success: false;
+  error: string;
+  code?: string;
+  details?: ErrorDetails;
+  timestamp: string;
+  requestId?: string;
+}
+
+// Admin Authentication Types
 export interface AdminUser {
   id: string;
   userId: string;
@@ -62,10 +119,6 @@ export interface AdminUser {
   email: string;
   characterId?: string;
   canAccessAdminPanel: boolean;
-  // Granular permission system
-  userRoles: string[];
-  characterRoles: string[];
-  characterPermissions: string[];
 }
 
 
@@ -151,10 +204,6 @@ export interface AdminUserProfile {
   displayName: string;
   avatar?: string;
   canAccessAdminPanel: boolean;
-  // Granular permission system
-  userRoles: string[];
-  characterRoles: string[];
-  characterPermissions: string[];
   accountStatus: AccountStatus;
   multipleCharactersAllowed?: boolean;
   characters: UserCharacter[];

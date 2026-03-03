@@ -57,14 +57,14 @@ export class CharacterApprovalController {
             select: 'username email',
             options: { strictPopulate: false }
           })
-          .select('name surname occupation status createdAt submittedAt approvedAt rejectedAt userId')
+          .select('name surname fullName occupation status createdAt submittedAt approvedAt rejectedAt userId isGestore characterRoles characterPermissions age gender socialClass location')
           .sort({ createdAt: -1 })
           .skip(skip)
           .limit(pageSize)
           .lean()
           .exec();
       } catch (findError) {
-        logger.error('Error fetching characters from database:', { error: findError instanceof Error ? findError.message : String(findError), filter, skip, pageSize }); 
+        logger.error('Error fetching characters from database:', { error: findError instanceof Error ? findError.message : String(findError), filter, skip, pageSize });
         throw new Error('Impossibile recuperare i personaggi dal database');
       }
 
@@ -72,24 +72,41 @@ export class CharacterApprovalController {
       const transformedCharacters = characters.map((char: any) => {
         // Safe access to user data
         const userData = char.userId || {};
-        const userIdString = userData._id ? userData._id.toString() : 
+        const userIdString = userData._id ? userData._id.toString() :
                             (typeof char.userId === 'string' ? char.userId : 'unknown');
         const username = userData.username || 'Unknown User';
         const email = userData.email || 'No Email';
 
         return {
           _id: char._id.toString(),
-          characterName: char.name || 'Unnamed',
-          characterSurname: char.surname || '',
+          name: char.name || 'Unnamed',
+          surname: char.surname || '',
+          fullName: char.fullName || `${char.name || ''} ${char.surname || ''}`.trim(),
           userId: userIdString,
-          username: username,
-          email: email,
-          occupation: char.occupation || 'None',
+          user: {
+            _id: userIdString,
+            username: username,
+            email: email
+          },
+          age: char.age || 0,
+          gender: char.gender || 'other',
+          occupation: char.occupation || null,
+          socialClass: char.socialClass || null,
+          location: char.location || null,
           status: char.status || 'DRAFT',
-          createdAt: char.createdAt ? char.createdAt.toISOString() : new Date().toISOString(),
-          submittedAt: char.submittedAt ? char.submittedAt.toISOString() : null,
-          approvedAt: char.approvedAt ? char.approvedAt.toISOString() : null,
-          rejectedAt: char.rejectedAt ? char.rejectedAt.toISOString() : null
+          isGestore: char.isGestore || false,
+          characterRoles: char.characterRoles || [],
+          characterPermissions: char.characterPermissions || [],
+          metadata: {
+            createdAt: char.createdAt ? char.createdAt.toISOString() : new Date().toISOString(),
+            submittedAt: char.submittedAt ? char.submittedAt.toISOString() : null,
+            approvedAt: char.approvedAt ? char.approvedAt.toISOString() : null,
+            rejectedAt: char.rejectedAt ? char.rejectedAt.toISOString() : null,
+            isNPC: false,
+            isPublic: true,
+            updatedAt: new Date().toISOString(),
+            createdBy: userIdString
+          }
         };
       });
 
@@ -977,4 +994,315 @@ export class CharacterApprovalController {
       ));
     }
   }
+
+  /**
+   * Bulk approve multiple characters
+   * POST /admin/characters/bulk-approve
+   */
+  static async bulkApproveCharacters(req: Request, res: Response): Promise<void> {
+    try {
+      const { characterIds } = req.body;
+
+      if (!Array.isArray(characterIds) || characterIds.length === 0) {
+        res.status(400).json(errorResponse(
+          'characterIds array is required',
+          'INVALID_INPUT',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      const { Character, Occupation, CharacterFinances, SocialClassConfig } = await import('@database/models');
+      const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
+
+      // Process all characters with Promise.allSettled
+      const results = await Promise.allSettled(
+        characterIds.map(async (characterId: string) => {
+          // Find character in PENDING_APPROVAL status
+          const character = await Character.findOne({
+            _id: characterId,
+            status: 'PENDING_APPROVAL'
+          }).lean(false) as any;
+
+          if (!character) {
+            throw new Error(`Character not found or not pending: ${characterId}`);
+          }
+
+          // Get starting items from occupation
+          let startingItems = [];
+          if (character.occupation) {
+            const occupation = await Occupation.findById(character.occupation);
+            if (occupation && occupation.benefits && occupation.benefits.startingItems) {
+              startingItems = occupation.benefits.startingItems.map((item: any) => item.itemId);
+            }
+          }
+
+          // Get Finanza skill for initial finances
+          let finanzaSkill = 1;
+          if (character.skills && character.skills.size > 0) {
+            const finanzaData = character.skills.get('FINANZA');
+            if (finanzaData && typeof finanzaData === 'object' && 'value' in finanzaData) {
+              finanzaSkill = finanzaData.value || 1;
+            }
+          }
+
+          const socialClass = await SocialClassConfig.findOne({ skillValue: finanzaSkill });
+          const initialBalance = socialClass?.initialBalance || 50;
+
+          // Create finances record
+          await CharacterFinances.create({
+            characterId: character._id,
+            currentBalance: initialBalance,
+            initialBalance,
+            totalEarned: initialBalance,
+            totalSpent: 0,
+            lastUpdated: new Date()
+          });
+
+          // Update character status
+          character.status = 'APPROVED';
+          character.metadata = {
+            ...character.metadata,
+            approvalDate: new Date(),
+            reviewedBy: auditInfo.adminId
+          };
+          character.inventory = { items: startingItems };
+
+          await character.save();
+
+          logger.info('Character approved in bulk', {
+            ...auditInfo,
+            characterId: character._id,
+            characterName: `${character.characterName} ${character.characterSurname}`,
+            finanzaSkill,
+            initialBalance
+          });
+
+          return character;
+        })
+      );
+
+      const successCount = results.filter(r => r.status === 'fulfilled').length;
+      const failedCount = results.filter(r => r.status === 'rejected').length;
+
+      logger.info('Bulk approve characters completed', {
+        ...auditInfo,
+        totalCharacters: characterIds.length,
+        successful: successCount,
+        failed: failedCount
+      });
+
+      res.json(successResponse(
+        {
+          success: successCount,
+          failed: failedCount,
+          results: results.map((r, i) => ({
+            characterId: characterIds[i],
+            success: r.status === 'fulfilled',
+            error: r.status === 'rejected' ? r.reason : undefined
+          }))
+        },
+        'Bulk approve completed',
+        getRequestId(req)
+      ));
+    } catch (error: any) {
+      logger.error('Error in bulk approve characters:', { error: error instanceof Error ? error.message : String(error) });
+      res.status(500).json(errorResponse(
+        'Failed to bulk approve characters',
+        'BULK_APPROVE_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
+    }
+  }
+
+  /**
+   * Bulk reject multiple characters
+   * POST /admin/characters/bulk-reject
+   */
+  static async bulkRejectCharacters(req: Request, res: Response): Promise<void> {
+    try {
+      const { characterIds, reason } = req.body;
+
+      if (!Array.isArray(characterIds) || characterIds.length === 0) {
+        res.status(400).json(errorResponse(
+          'characterIds array is required',
+          'INVALID_INPUT',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      if (!reason || reason.trim().length === 0) {
+        res.status(400).json(errorResponse(
+          'Rejection reason is required',
+          'REASON_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      const { Character } = await import('@database/models/Character');
+      const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
+
+      // Process all characters with Promise.allSettled
+      const results = await Promise.allSettled(
+        characterIds.map(async (characterId: string) => {
+          const character = await Character.findOne({
+            _id: characterId,
+            status: 'PENDING_APPROVAL'
+          }).lean(false) as any;
+
+          if (!character) {
+            throw new Error(`Character not found or not pending: ${characterId}`);
+          }
+
+          // Update status to DRAFT with rejection note
+          character.status = 'DRAFT';
+          character.metadata = {
+            ...character.metadata,
+            rejectionDate: new Date(),
+            rejectionReason: reason.trim(),
+            reviewedBy: auditInfo.adminId
+          };
+
+          await character.save();
+
+          logger.info('Character rejected in bulk', {
+            ...auditInfo,
+            characterId: character._id,
+            characterName: `${character.characterName} ${character.characterSurname}`,
+            reason: reason.trim()
+          });
+
+          return character;
+        })
+      );
+
+      const successCount = results.filter(r => r.status === 'fulfilled').length;
+      const failedCount = results.filter(r => r.status === 'rejected').length;
+
+      logger.info('Bulk reject characters completed', {
+        ...auditInfo,
+        totalCharacters: characterIds.length,
+        successful: successCount,
+        failed: failedCount,
+        reason: reason.trim()
+      });
+
+      res.json(successResponse(
+        {
+          success: successCount,
+          failed: failedCount,
+          results: results.map((r, i) => ({
+            characterId: characterIds[i],
+            success: r.status === 'fulfilled',
+            error: r.status === 'rejected' ? r.reason : undefined
+          }))
+        },
+        'Bulk reject completed',
+        getRequestId(req)
+      ));
+    } catch (error: any) {
+      logger.error('Error in bulk reject characters:', { error: error instanceof Error ? error.message : String(error) });
+      res.status(500).json(errorResponse(
+        'Failed to bulk reject characters',
+        'BULK_REJECT_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
+    }
+  }
+
+  /**
+   * Bulk delete multiple characters
+   * POST /admin/characters/bulk-delete
+   */
+  static async bulkDeleteCharacters(req: Request, res: Response): Promise<void> {
+    try {
+      const { characterIds } = req.body;
+
+      if (!Array.isArray(characterIds) || characterIds.length === 0) {
+        res.status(400).json(errorResponse(
+          'characterIds array is required',
+          'INVALID_INPUT',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      const { Character } = await import('@database/models/Character');
+      const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
+
+      // Process all characters with Promise.allSettled
+      const results = await Promise.allSettled(
+        characterIds.map(async (characterId: string) => {
+          const character = await Character.findById(characterId);
+
+          if (!character) {
+            throw new Error(`Character not found: ${characterId}`);
+          }
+
+          // Soft delete by setting status to DELETED
+          await Character.findByIdAndUpdate(characterId, {
+            status: 'DELETED',
+            'metadata.deletedAt': new Date(),
+            'metadata.deletedBy': auditInfo.adminId
+          });
+
+          logger.warn('Character deleted in bulk', {
+            ...auditInfo,
+            characterId,
+            characterName: `${character.characterName} ${character.characterSurname}`
+          });
+
+          return character;
+        })
+      );
+
+      const successCount = results.filter(r => r.status === 'fulfilled').length;
+      const failedCount = results.filter(r => r.status === 'rejected').length;
+
+      logger.info('Bulk delete characters completed', {
+        ...auditInfo,
+        totalCharacters: characterIds.length,
+        successful: successCount,
+        failed: failedCount
+      });
+
+      res.json(successResponse(
+        {
+          success: successCount,
+          failed: failedCount,
+          results: results.map((r, i) => ({
+            characterId: characterIds[i],
+            success: r.status === 'fulfilled',
+            error: r.status === 'rejected' ? r.reason : undefined
+          }))
+        },
+        'Bulk delete completed',
+        getRequestId(req)
+      ));
+    } catch (error: any) {
+      logger.error('Error in bulk delete characters:', { error: error instanceof Error ? error.message : String(error) });
+      res.status(500).json(errorResponse(
+        'Failed to bulk delete characters',
+        'BULK_DELETE_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
+    }
+  }
+
 }

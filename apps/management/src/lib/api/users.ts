@@ -88,11 +88,96 @@ export async function banUser(id: string, banData: BanUserData): Promise<User> {
  */
 export async function unbanUser(id: string): Promise<User> {
   const response = await withRetry(() =>
-    apiClient.post<ApiResponse<User>>(`/admin/users/${id}/unban`)
+    apiClient.delete<ApiResponse<User>>(`/admin/users/${id}/ban`)
   );
 
   if (!response.data.success || !response.data.data) {
     throw new Error(response.data.error || 'Errore nell\'unban utente');
+  }
+
+  return response.data.data;
+}
+
+/**
+ * Bulk ban utenti
+ */
+export async function bulkBanUsers(
+  params: {
+    userIds: string[];
+    reason?: string;
+    duration?: string;
+    bannedUntil?: string;
+  }
+): Promise<{ success: number; failed: number; results: Array<{ userId: string; success: boolean; error?: string }> }> {
+  const response = await withRetry(() =>
+    apiClient.post<ApiResponse<{ success: number; failed: number; results: Array<{ userId: string; success: boolean; error?: string }> }>>(
+      '/admin/users/bulk-ban',
+      params
+    )
+  );
+
+  if (!response.data.success || !response.data.data) {
+    throw new Error(response.data.error || 'Errore nel ban multiplo utenti');
+  }
+
+  return response.data.data;
+}
+
+/**
+ * Bulk unban utenti
+ */
+export async function bulkUnbanUsers(
+  userIds: string[]
+): Promise<{ success: number; failed: number; results: Array<{ userId: string; success: boolean; error?: string }> }> {
+  const response = await withRetry(() =>
+    apiClient.post<ApiResponse<{ success: number; failed: number; results: Array<{ userId: string; success: boolean; error?: string }> }>>(
+      '/admin/users/bulk-unban',
+      { userIds }
+    )
+  );
+
+  if (!response.data.success || !response.data.data) {
+    throw new Error(response.data.error || 'Errore nell\'unban multiplo utenti');
+  }
+
+  return response.data.data;
+}
+
+/**
+ * Bulk activate utenti
+ */
+export async function bulkActivateUsers(
+  userIds: string[]
+): Promise<{ success: number; failed: number; results: Array<{ userId: string; success: boolean; error?: string }> }> {
+  const response = await withRetry(() =>
+    apiClient.post<ApiResponse<{ success: number; failed: number; results: Array<{ userId: string; success: boolean; error?: string }> }>>(
+      '/admin/users/bulk-activate',
+      { userIds }
+    )
+  );
+
+  if (!response.data.success || !response.data.data) {
+    throw new Error(response.data.error || 'Errore nell\'attivazione multipla utenti');
+  }
+
+  return response.data.data;
+}
+
+/**
+ * Bulk deactivate utenti
+ */
+export async function bulkDeactivateUsers(
+  userIds: string[]
+): Promise<{ success: number; failed: number; results: Array<{ userId: string; success: boolean; error?: string }> }> {
+  const response = await withRetry(() =>
+    apiClient.post<ApiResponse<{ success: number; failed: number; results: Array<{ userId: string; success: boolean; error?: string }> }>>(
+      '/admin/users/bulk-deactivate',
+      { userIds }
+    )
+  );
+
+  if (!response.data.success || !response.data.data) {
+    throw new Error(response.data.error || 'Errore nella disattivazione multipla utenti');
   }
 
   return response.data.data;
