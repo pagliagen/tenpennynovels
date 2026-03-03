@@ -3,6 +3,7 @@ import { SystemConfigController } from '../controllers/SystemConfigController';
 import { CharacterCreationConfigController } from '../controllers/CharacterCreationConfigController';
 import { AdminAuthMiddleware } from '../middleware/adminAuth';
 import { requireViewPermission } from '../utils/permissions';
+import { autoLogOutcome } from '../middleware/auditMiddleware';
 
 const router = Router();
 
@@ -20,16 +21,18 @@ router.get(
 router.patch(
   '/config',
   requireViewPermission('system.broadcast_messages'),
-  AdminAuthMiddleware.logAdminAction('update_system_config', 'system_configuration'),
+  AdminAuthMiddleware.logAdminAction('system.config.update', 'system_configuration'),
+  autoLogOutcome,
   AdminAuthMiddleware.sensitiveOperationLimit(),
   SystemConfigController.updateSystemConfig
 );
 
-// Maintenance mode management  
+// Maintenance mode management
 router.post(
   '/maintenance',
   requireViewPermission('system.maintenance_mode'),
-  AdminAuthMiddleware.logAdminAction('set_maintenance_mode', 'system_configuration'),
+  AdminAuthMiddleware.logAdminAction('system.maintenance_mode', 'system_configuration'),
+  autoLogOutcome,
   AdminAuthMiddleware.sensitiveOperationLimit(),
   SystemConfigController.setMaintenanceMode
 );
@@ -68,7 +71,8 @@ router.get(
 router.post(
   '/broadcast',
   requireViewPermission('system.broadcast_messages'),
-  AdminAuthMiddleware.logAdminAction('broadcast_message', 'system_configuration'),
+  AdminAuthMiddleware.logAdminAction('system.broadcast', 'system_configuration'),
+  autoLogOutcome,
   AdminAuthMiddleware.sensitiveOperationLimit(),
   SystemConfigController.broadcastMessage
 );
@@ -104,7 +108,8 @@ router.get(
 router.patch(
   '/configurations/:configKey',
   requireViewPermission('system.broadcast_messages'),
-  AdminAuthMiddleware.logAdminAction('update_configuration', 'system_configuration'),
+  AdminAuthMiddleware.logAdminAction('system.config.update', 'system_configuration'),
+  autoLogOutcome,
   AdminAuthMiddleware.sensitiveOperationLimit(),
   SystemConfigController.updateConfiguration
 );
@@ -113,7 +118,8 @@ router.patch(
 router.post(
   '/configurations/invalidate-cache',
   requireViewPermission('system.broadcast_messages'),
-  AdminAuthMiddleware.logAdminAction('invalidate_config_cache', 'system_configuration'),
+  AdminAuthMiddleware.logAdminAction('system.cache.invalidate', 'system_configuration'),
+  autoLogOutcome,
   AdminAuthMiddleware.sensitiveOperationLimit(),
   SystemConfigController.invalidateConfigCache
 );
@@ -134,7 +140,8 @@ router.get(
 router.put(
   '/character-creation-config',
   requireViewPermission('system.broadcast_messages'),
-  AdminAuthMiddleware.logAdminAction('update_character_creation_config', 'system_configuration'),
+  AdminAuthMiddleware.logAdminAction('system.character_config.update', 'system_configuration'),
+  autoLogOutcome,
   AdminAuthMiddleware.sensitiveOperationLimit(),
   CharacterCreationConfigController.updateConfig
 );
@@ -143,7 +150,8 @@ router.put(
 router.post(
   '/character-creation-config/invalidate-cache',
   requireViewPermission('system.broadcast_messages'),
-  AdminAuthMiddleware.logAdminAction('invalidate_character_creation_cache', 'system_configuration'),
+  AdminAuthMiddleware.logAdminAction('system.cache.invalidate', 'system_configuration'),
+  autoLogOutcome,
   CharacterCreationConfigController.invalidateCache
 );
 

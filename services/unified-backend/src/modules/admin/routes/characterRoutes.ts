@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { CharacterApprovalController } from '../controllers/CharacterApprovalController';
 import { AdminAuthMiddleware } from '../middleware/adminAuth';
 import { requireViewPermission } from '../utils/permissions';
+import { autoLogOutcome } from '../middleware/auditMiddleware';
 
 const router = Router();
 
@@ -32,7 +33,28 @@ router.get(
   CharacterApprovalController.getPendingCharactersForMe
 );
 
-// Get complete character details with populated references
+// IMPORTANT: Specific routes (/:characterId/xxx) must come BEFORE generic route (/:characterId)
+
+// Approve character - specific route
+router.post(
+  '/:characterId/approve',
+  requireViewPermission('characters.detail.approve'),
+  AdminAuthMiddleware.logAdminAction('character.approve', 'character_management'),
+  autoLogOutcome,
+  AdminAuthMiddleware.sensitiveOperationLimit(),
+  CharacterApprovalController.submitCharacterReview
+);
+
+// Update review priority - specific route
+router.patch(
+  '/:characterId/priority',
+  requireViewPermission('characters.detail.edit'),
+  AdminAuthMiddleware.logAdminAction('character.update_priority', 'character_management'),
+  autoLogOutcome,
+  CharacterApprovalController.updateReviewPriority
+);
+
+// Get complete character details - generic route
 router.get(
   '/:characterId',
   requireViewPermission('characters.detail.read'),
@@ -40,26 +62,21 @@ router.get(
   CharacterApprovalController.getCharacterDetails
 );
 
-router.post(
-  '/:characterId/approve',
-  requireViewPermission('characters.detail.approve'),
-  AdminAuthMiddleware.logAdminAction('submit_character_approval', 'character_management'),
-  AdminAuthMiddleware.sensitiveOperationLimit(),
-  CharacterApprovalController.submitCharacterReview
-);
-
+// Update character (including permissions) - generic route
 router.patch(
-  '/:characterId/priority',
+  '/:characterId',
   requireViewPermission('characters.detail.edit'),
-  AdminAuthMiddleware.logAdminAction('update_review_priority', 'character_management'),
-  CharacterApprovalController.updateReviewPriority
+  AdminAuthMiddleware.logAdminAction('character.update', 'character_management'),
+  autoLogOutcome,
+  CharacterApprovalController.updateCharacter
 );
 
 // Bulk operations routes
 router.post(
   '/bulk-approve',
   requireViewPermission('characters.detail.approve'),
-  AdminAuthMiddleware.logAdminAction('bulk_approve_characters', 'character_management'),
+  AdminAuthMiddleware.logAdminAction('character.bulk_approve', 'character_management'),
+  autoLogOutcome,
   AdminAuthMiddleware.sensitiveOperationLimit(),
   CharacterApprovalController.bulkApproveCharacters
 );
@@ -67,7 +84,8 @@ router.post(
 router.post(
   '/bulk-reject',
   requireViewPermission('characters.detail.approve'),
-  AdminAuthMiddleware.logAdminAction('bulk_reject_characters', 'character_management'),
+  AdminAuthMiddleware.logAdminAction('character.bulk_reject', 'character_management'),
+  autoLogOutcome,
   AdminAuthMiddleware.sensitiveOperationLimit(),
   CharacterApprovalController.bulkRejectCharacters
 );
@@ -75,7 +93,8 @@ router.post(
 router.post(
   '/bulk-delete',
   requireViewPermission('characters.detail.delete'),
-  AdminAuthMiddleware.logAdminAction('bulk_delete_characters', 'character_management'),
+  AdminAuthMiddleware.logAdminAction('character.bulk_delete', 'character_management'),
+  autoLogOutcome,
   AdminAuthMiddleware.sensitiveOperationLimit(),
   CharacterApprovalController.bulkDeleteCharacters
 );

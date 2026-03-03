@@ -39,8 +39,12 @@ export default function CharacterList() {
     sortOrder: 'desc'
   });
   const [selectedCharacters, setSelectedCharacters] = useState<Character[]>([]);
-  const [activeSidePanel, setActiveSidePanel] = useState<'edit' | 'view' | null>(null);
+  const [activeSidePanel, setActiveSidePanel] = useState<'edit' | 'view' | 'reject' | 'bulk-reject' | null>(null);
   const [currentCharacter, setCurrentCharacter] = useState<Character | null>(null);
+  const [characterToReject, setCharacterToReject] = useState<Character | null>(null);
+  const [rejectReason, setRejectReason] = useState<string>('');
+  const [bulkRejectCharacters, setBulkRejectCharacters] = useState<Character[]>([]);
+  const [bulkRejectReason, setBulkRejectReason] = useState<string>('');
 
   // Hooks
   const router = useRouter();
@@ -104,21 +108,10 @@ export default function CharacterList() {
         }
 
         case 'reject': {
-          const confirmed = await confirm({
-            title: 'Conferma Rifiuto',
-            message: `Sei sicuro di voler rifiutare ${character.fullName}?`
-          });
-
-          if (confirmed) {
-            const reason = prompt('Motivo del rifiuto:');
-            if (!reason) {
-              addNotification({ type: 'warning', message: 'Rifiuto annullato: motivo obbligatorio' });
-              return;
-            }
-
-            await rejectCharacter.mutateAsync({ id: character._id, data: { reason } });
-            addNotification({ type: 'success', message: `${character.fullName} rifiutato` });
-          }
+          // Open SidePanel to request rejection reason (like ban system)
+          setCharacterToReject(character);
+          setRejectReason('');
+          setActiveSidePanel('reject');
           break;
         }
 
@@ -169,6 +162,69 @@ export default function CharacterList() {
     } else if (action === 'cancel') {
       setActiveSidePanel(null);
       setCurrentCharacter(null);
+    }
+  };
+
+  /**
+   * Handler reject submit
+   */
+  const handleRejectSubmit = async (reason: string) => {
+    if (!characterToReject || !reason?.trim()) {
+      addNotification({ type: 'error', message: 'Motivo del rifiuto obbligatorio' });
+      return;
+    }
+
+    try {
+      await rejectCharacter.mutateAsync({
+        id: characterToReject._id,
+        data: { reason: reason.trim() }
+      });
+      addNotification({ type: 'success', message: `${characterToReject.fullName} rifiutato` });
+      setActiveSidePanel(null);
+      setCharacterToReject(null);
+      setRejectReason('');
+    } catch (error) {
+      addNotification({
+        type: 'error',
+        message: error instanceof Error ? error.message : 'Errore nel rifiuto del personaggio'
+      });
+    }
+  };
+
+  /**
+   * Handler bulk reject submit
+   */
+  const handleBulkRejectSubmit = async (reason: string) => {
+    if (bulkRejectCharacters.length === 0 || !reason?.trim()) {
+      addNotification({ type: 'error', message: 'Motivo del rifiuto obbligatorio' });
+      return;
+    }
+
+    try {
+      const characterIds = bulkRejectCharacters.map(c => c._id);
+      const result = await bulkReject.mutateAsync({ characterIds, reason: reason.trim() });
+
+      if (result.failed > 0) {
+        addNotification({
+          type: 'warning',
+          message: `${result.success} personaggi rifiutati, ${result.failed} falliti`
+        });
+      } else {
+        addNotification({
+          type: 'success',
+          message: `${result.success} personaggi rifiutati con successo`
+        });
+      }
+
+      setActiveSidePanel(null);
+      setBulkRejectCharacters([]);
+      setBulkRejectReason('');
+      setSelectedCharacters([]);
+    } catch (error) {
+      addNotification({
+        type: 'error',
+        message: error instanceof Error ? error.message : 'Errore nel rifiuto multiplo'
+      });
     }
   };
 
@@ -231,40 +287,11 @@ export default function CharacterList() {
 
         setSelectedCharacters([]);
       } else if (actionKey === 'bulk-reject') {
-        const reason = prompt('Motivo del rifiuto (obbligatorio):');
-        if (!reason || reason.trim().length === 0) {
-          addNotification({
-            type: 'warning',
-            message: 'Motivo del rifiuto obbligatorio'
-          });
-          return;
-        }
-
-        const confirmed = await confirm({
-          title: 'Conferma Rifiuto Multiplo',
-          message: `Vuoi rifiutare ${items.length} personaggi selezionati? Torneranno in stato DRAFT.`,
-          confirmLabel: 'Rifiuta',
-          confirmType: 'danger'
-        });
-
-        if (!confirmed) return;
-
-        const characterIds = items.map(c => c._id);
-        const result = await bulkReject.mutateAsync({ characterIds, reason: reason.trim() });
-
-        if (result.failed > 0) {
-          addNotification({
-            type: 'warning',
-            message: `${result.success} personaggi rifiutati, ${result.failed} falliti`
-          });
-        } else {
-          addNotification({
-            type: 'success',
-            message: `${result.success} personaggi rifiutati con successo`
-          });
-        }
-
-        setSelectedCharacters([]);
+        // Open SidePanel to request rejection reason
+        setBulkRejectCharacters(items);
+        setBulkRejectReason('');
+        setActiveSidePanel('bulk-reject');
+        return;
       } else if (actionKey === 'bulk-delete') {
         const confirmed = await confirm({
           title: 'Conferma Eliminazione Multipla',
@@ -407,6 +434,119 @@ export default function CharacterList() {
             onClose={() => {
               setActiveSidePanel(null);
               setCurrentCharacter(null);
+            }}
+          />
+        )}
+
+        {/* Side Panel: Reject Character */}
+        {activeSidePanel === 'reject' && characterToReject && (
+          <SidePanel
+            isOpen={true}
+            config={{
+              title: `Rifiuta ${characterToReject.fullName}`,
+              width: 'medium',
+              fields: [
+                { key: 'characterName', label: 'Personaggio', type: 'text', required: false, disabled: true },
+                { key: 'userName', label: 'Giocatore', type: 'text', required: false, disabled: true },
+                {
+                  key: 'rejectReason',
+                  label: 'Motivo Rifiuto',
+                  type: 'textarea',
+                  required: false,
+                  disabled: false,
+                  placeholder: 'Inserisci il motivo del rifiuto (obbligatorio)...'
+                }
+              ],
+              actions: [
+                { key: 'submit', label: 'Rifiuta Personaggio', type: 'danger', loading: rejectCharacter.isPending },
+                { key: 'cancel', label: 'Annulla', type: 'secondary', loading: false }
+              ]
+            }}
+            data={{
+              characterName: characterToReject.fullName,
+              userName: characterToReject.user?.username || 'Unknown',
+              rejectReason: ''
+            }}
+            onChange={(field, value) => {
+              if (field === 'rejectReason') {
+                setRejectReason(value as string);
+              }
+            }}
+            onAction={(action, formData) => {
+              if (action === 'submit') {
+                const reason = formData.rejectReason as string;
+                handleRejectSubmit(reason);
+              } else if (action === 'cancel') {
+                setActiveSidePanel(null);
+                setCharacterToReject(null);
+                setRejectReason('');
+              }
+            }}
+            onClose={() => {
+              setActiveSidePanel(null);
+              setCharacterToReject(null);
+              setRejectReason('');
+            }}
+          />
+        )}
+
+        {/* Side Panel: Bulk Reject Characters */}
+        {activeSidePanel === 'bulk-reject' && bulkRejectCharacters.length > 0 && (
+          <SidePanel
+            isOpen={true}
+            config={{
+              title: `Rifiuta ${bulkRejectCharacters.length} personaggi`,
+              width: 'medium',
+              fields: [
+                {
+                  key: 'characters',
+                  label: 'Personaggi Selezionati',
+                  type: 'text',
+                  required: false,
+                  disabled: true
+                },
+                {
+                  key: 'bulkRejectReason',
+                  label: 'Motivo Rifiuto (applicato a tutti)',
+                  type: 'textarea',
+                  required: false,
+                  disabled: false,
+                  placeholder: 'Inserisci il motivo del rifiuto che verrà applicato a tutti i personaggi selezionati...'
+                }
+              ],
+              actions: [
+                {
+                  key: 'submit',
+                  label: `Rifiuta ${bulkRejectCharacters.length} Personaggi`,
+                  type: 'danger',
+                  loading: bulkReject.isPending
+                },
+                { key: 'cancel', label: 'Annulla', type: 'secondary', loading: false }
+              ]
+            }}
+            data={{
+              characters: bulkRejectCharacters.map(c => c.fullName).join(', '),
+              bulkRejectReason: ''
+            }}
+            onChange={(field, value) => {
+              if (field === 'bulkRejectReason') {
+                setBulkRejectReason(value as string);
+              }
+            }}
+            onAction={(action, formData) => {
+              if (action === 'submit') {
+                const reason = formData.bulkRejectReason as string;
+                handleBulkRejectSubmit(reason);
+              } else if (action === 'cancel') {
+                setActiveSidePanel(null);
+                setBulkRejectCharacters([]);
+                setBulkRejectReason('');
+              }
+            }}
+            onClose={() => {
+              setActiveSidePanel(null);
+              setBulkRejectCharacters([]);
+              setBulkRejectReason('');
             }}
           />
         )}

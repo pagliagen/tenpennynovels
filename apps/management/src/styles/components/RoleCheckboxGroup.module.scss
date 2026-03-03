@@ -1,0 +1,81 @@
+.roleSection {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+}
+
+.sectionTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: #212529;
+  border-bottom: 2px solid #d97706;
+  padding-bottom: 0.5rem;
+}
+
+.subtitle {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  color: #495057;
+}
+
+.gestoreBlock {
+  margin-bottom: 1.5rem;
+}
+
+.gestoreLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.gestoreText {
+  font-weight: 500;
+  color: #212529;
+}
+
+.gestoreDescription {
+  margin: 0.5rem 0 0 1.75rem;
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+.rolesBlock {
+  margin-top: 1rem;
+}
+
+.roleList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.roleItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  border-radius: 6px;
+
+  &:hover {
+    background: rgba(217, 119, 6, 0.08);
+  }
+}
+
+.roleLabel {
+  font-weight: 500;
+  color: #212529;
+}
+
+.checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  flex-shrink: 0;
+}

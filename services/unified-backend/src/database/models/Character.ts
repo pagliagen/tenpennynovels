@@ -165,8 +165,10 @@ export interface ICharacter extends Document {
   }[];
   
   approvedBy?: Schema.Types.ObjectId;
+  approvedByName?: string;
   approvedAt?: Date;
   rejectedBy?: Schema.Types.ObjectId;
+  rejectedByName?: string;
   rejectedAt?: Date;
   rejectionReason?: string;
   
@@ -601,11 +603,13 @@ const CharacterSchema = new Schema<ICharacter>({
     type: Schema.Types.ObjectId,
     ref: 'User'
   },
+  approvedByName: String,
   approvedAt: Date,
   rejectedBy: {
     type: Schema.Types.ObjectId,
     ref: 'User'
   },
+  rejectedByName: String,
   rejectedAt: Date,
   rejectionReason: String,
   

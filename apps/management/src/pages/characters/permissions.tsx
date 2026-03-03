@@ -11,12 +11,14 @@ import { ManagementLayout } from '@/components/layout/ManagementLayout';
 import { ConfigurableDataTable, FilterState } from '@/components/shared/ConfigurableDataTable';
 import { SidePanel } from '@/components/shared/SidePanel';
 import { PermissionCheckboxGroup, Permission } from '@/components/shared/PermissionCheckboxGroup';
+import { RoleCheckboxGroup } from '@/components/shared/RoleCheckboxGroup';
 import { useTableConfig } from '@/hooks/useTableConfig';
 import { useTableFilters } from '@/hooks/useTableFilters';
 import { useCharacters, useUpdateCharacter } from '@/hooks/api/useCharacters';
 import { useNotificationStore } from '@/store/notificationStore';
 import { useURLFilter } from '@/hooks/useURLFilter';
 import { clearFilterHash } from '@/lib/utils/urlFilters';
+import { useAuthStore, selectUser } from '@/store/authStore';
 import type { Character, CharacterListParams } from '@/types/api/Character';
 import styles from '@/styles/pages/CharacterList.module.scss';
 
@@ -86,6 +88,9 @@ const ADMIN_PERMISSIONS: Permission[] = [
 ];
 
 export default function CharacterPermissions() {
+  // Auth
+  const user = useAuthStore(selectUser);
+
   // State
   const { filters, params, setParams, handleFilterChange } = useTableFilters<CharacterListParams>({
     page: 1,
@@ -315,45 +320,14 @@ export default function CharacterPermissions() {
             data={{}}
             customContent={
               <div style={{ padding: '1rem' }}>
-                {/* Gestore Checkbox */}
-                <div style={{ marginBottom: '2rem', padding: '1rem', background: '#f8f9fa', borderRadius: '8px' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                    <input
-                      type="checkbox"
-                      checked={isGestore}
-                      onChange={(e) => setIsGestore(e.target.checked)}
-                      style={{ width: '20px', height: '20px' }}
-                    />
-                    <strong style={{ fontSize: '1.1rem' }}>Gestore (Super-Admin)</strong>
-                  </label>
-                  <p style={{ margin: '0.5rem 0 0 1.75rem', color: '#6c757d', fontSize: '0.9rem' }}>
-                    Il flag Gestore garantisce tutti i permessi automaticamente
-                  </p>
-                </div>
-
-                {/* Character Roles */}
-                <div style={{ marginBottom: '2rem', padding: '1rem', background: '#f8f9fa', borderRadius: '8px' }}>
-                  <h3 style={{ marginBottom: '1rem' }}>Ruoli Personaggio</h3>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    {CHARACTER_ROLES.map(role => (
-                      <label key={role.value} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                        <input
-                          type="checkbox"
-                          checked={selectedRoles.includes(role.value)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setSelectedRoles([...selectedRoles, role.value]);
-                            } else {
-                              setSelectedRoles(selectedRoles.filter(r => r !== role.value));
-                            }
-                          }}
-                          style={{ width: '18px', height: '18px' }}
-                        />
-                        <span style={{ fontWeight: 500 }}>{role.label}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
+                <RoleCheckboxGroup
+                  title="🧑‍🤝‍🧑 Ruoli"
+                  roles={CHARACTER_ROLES}
+                  selectedRoles={selectedRoles}
+                  isGestore={isGestore}
+                  onRolesChange={setSelectedRoles}
+                  onGestoreChange={setIsGestore}
+                />
 
                 {/* Game Permissions */}
                 <PermissionCheckboxGroup
@@ -366,16 +340,18 @@ export default function CharacterPermissions() {
                   onChange={setSelectedGamePerms}
                 />
 
-                {/* Admin Permissions */}
-                <PermissionCheckboxGroup
-                  title="⚙️ Permessi Admin"
-                  permissions={ADMIN_PERMISSIONS}
-                  selectedPermissions={selectedAdminPerms}
-                  rolePermissions={[]} // Admin permissions are never granted by character roles
-                  roleLabels={{}}
-                  isGestore={isGestore}
-                  onChange={setSelectedAdminPerms}
-                />
+                {/* Admin Permissions - Only visible to users with canAccessAdminPanel */}
+                {user?.canAccessAdminPanel && (
+                  <PermissionCheckboxGroup
+                    title="⚙️ Permessi Admin"
+                    permissions={ADMIN_PERMISSIONS}
+                    selectedPermissions={selectedAdminPerms}
+                    rolePermissions={[]} // Admin permissions are never granted by character roles
+                    roleLabels={{}}
+                    isGestore={isGestore}
+                    onChange={setSelectedAdminPerms}
+                  />
+                )}
               </div>
             }
             onAction={(action) => {

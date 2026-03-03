@@ -146,6 +146,10 @@ export interface UpdateCharacterData {
     level?: number;
     wealth?: number;
   };
+  // Permission fields (used by /characters/permissions page)
+  isGestore?: boolean;
+  characterRoles?: string[];
+  characterPermissions?: string[];
 }
 
 export interface ApproveCharacterData {

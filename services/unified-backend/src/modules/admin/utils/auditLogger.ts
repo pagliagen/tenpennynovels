@@ -214,26 +214,59 @@ class AuditLoggerClass {
 
   /**
    * Calcola la severity di un'azione in base al tipo
+   * FIX: Usa exact match invece di includes per evitare falsi positivi
    */
   private calculateSeverity(action: string): 'low' | 'medium' | 'high' | 'critical' {
+    // CRITICAL: Destructive actions, permanent changes
     const criticalActions = [
-      'user.delete', 'user.change_permissions', 'character.delete',
-      'system.maintenance_mode', 'location.delete'
-    ];
-    
-    const highActions = [
-      'user.ban', 'character.reject', 'economy.adjust_balance',
-      'system.broadcast', 'system.export_data'
-    ];
-    
-    const mediumActions = [
-      'user.update', 'character.approve', 'character.edit',
-      'economy.grant_money', 'location.create', 'location.update'
+      'user.delete',
+      'user.change_permissions',
+      'character.delete',
+      'location.delete',
+      'document.delete',
+      'skill.delete',
+      'item.delete',
+      'system.maintenance_mode',
+      'system.config.update'
     ];
 
-    if (criticalActions.some(a => action.includes(a))) return 'critical';
-    if (highActions.some(a => action.includes(a))) return 'high';
-    if (mediumActions.some(a => action.includes(a))) return 'medium';
+    // HIGH: Security-sensitive, impactful operations
+    const highActions = [
+      'user.ban',
+      'user.role.grant',
+      'user.role.revoke',
+      'character.approve',
+      'character.reject',
+      'character.role.grant',
+      'character.role.revoke',
+      'character.permission.grant',
+      'character.permission.revoke',
+      'economy.adjust_balance',
+      'system.broadcast',
+      'system.export_data'
+    ];
+
+    // MEDIUM: Moderate impact operations
+    const mediumActions = [
+      'user.update',
+      'user.deactivate',
+      'character.update',
+      'character.edit',
+      'location.create',
+      'location.update',
+      'document.create',
+      'document.update',
+      'skill.create',
+      'skill.update',
+      'item.create',
+      'item.update',
+      'economy.grant_money'
+    ];
+
+    // FIX: Use exact match instead of includes to avoid false positives
+    if (criticalActions.includes(action)) return 'critical';
+    if (highActions.includes(action)) return 'high';
+    if (mediumActions.includes(action)) return 'medium';
     return 'low';
   }
 

@@ -54,30 +54,6 @@
       }
     },
     {
-      "key": "occupation.name",
-      "label": "Occupazione",
-      "type": "text",
-      "visible": true,
-      "defaultVisible": true,
-      "sortable": false,
-      "width": "150px",
-      "render": {
-        "type": "text"
-      }
-    },
-    {
-      "key": "socialClass.name",
-      "label": "Classe Sociale",
-      "type": "text",
-      "visible": true,
-      "defaultVisible": true,
-      "sortable": false,
-      "width": "150px",
-      "render": {
-        "type": "text"
-      }
-    },
-    {
       "key": "metadata.createdAt",
       "label": "Richiesto Il",
       "type": "datetime",
@@ -130,20 +106,5 @@
       "type": "danger"
     }
   ],
-  "filters": [
-    {
-      "key": "socialClass",
-      "label": "Classe Sociale",
-      "type": "select",
-      "field": "socialClass.name",
-      "options": [
-        { "value": "", "label": "Tutte" },
-        { "value": "Aristocrazia", "label": "Aristocrazia" },
-        { "value": "Borghesia", "label": "Borghesia" },
-        { "value": "Classe Operaia", "label": "Classe Operaia" },
-        { "value": "Sottoproletariato", "label": "Sottoproletariato" }
-      ],
-      "placeholder": "Filtra per classe"
-    }
-  ]
+  "filters": []
 }

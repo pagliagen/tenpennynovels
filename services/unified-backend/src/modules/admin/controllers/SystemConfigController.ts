@@ -232,99 +232,91 @@ export class SystemConfigController {
    */
   static async getAuditLogs(req: Request, res: Response): Promise<void> {
     try {
+      // Parse query parameters
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 50;
       const category = req.query.category as string;
       const adminUserId = req.query.adminUserId as string;
       const severity = req.query.severity as string;
-      const dateFrom = req.query.dateFrom as string;
-      const dateTo = req.query.dateTo as string;
-      const sortBy = req.query.sortBy as string || 'timestamp';
-      const sortOrder = req.query.sortOrder as string || 'desc';
+      const success = req.query.success !== undefined
+        ? req.query.success === 'true'
+        : undefined;
+      const action = req.query.action as string;
+      const dateFrom = req.query.dateFrom ? new Date(req.query.dateFrom as string) : undefined;
+      const dateTo = req.query.dateTo ? new Date(req.query.dateTo as string) : undefined;
 
-      // TODO: Implement database query for audit logs
-      const mockAuditLogs: AuditLog[] = [
-        {
-          id: 'audit_1',
-          timestamp: '2024-01-15T14:30:00Z',
-          adminUser: {
-            id: 'admin1',
-            username: 'admin',
-            userRoles: ['user'],
-            characterRoles: ['master']
-          },
-          action: 'character_approved',
-          category: 'character_management',
-          target: {
-            type: 'character',
-            id: 'char1',
-            name: 'John Smith'
-          },
-          details: {
-            note: 'Character meets all requirements',
-            previousStatus: 'PENDING_APPROVAL',
-            newStatus: 'APPROVED'
-          },
-          ipAddress: '192.168.1.100',
-          userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-          severity: 'normal'
-        },
-        {
-          id: 'audit_2',
-          timestamp: '2024-01-15T13:15:00Z',
-          adminUser: {
-            id: 'admin1',
-            username: 'admin',
-            userRoles: ['user'],
-            characterRoles: ['master']
-          },
-          action: 'user_banned',
-          category: 'user_management',
-          target: {
-            type: 'user',
-            id: 'user123',
-            name: 'troublemaker'
-          },
-          details: {
-            duration: 'temporary',
-            bannedUntil: '2024-01-22T13:15:00Z',
-            reason: 'Inappropriate behavior in chat',
-            banScope: 'chat_only'
-          },
-          ipAddress: '192.168.1.100',
-          userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-          severity: 'high'
-        }
-      ];
+      // Import AuditLog model
+      const { AuditLog: AuditLogModel } = await import('@database/models/AuditLog');
 
-      const mockPagination: PaginationInfo = {
+      // Query MongoDB with filters
+      const result = await AuditLogModel.queryLogs({
+        category,
+        adminUserId,
+        severity,
+        success,
+        action,
+        dateFrom,
+        dateTo,
         page,
-        totalPages: 1,
-        totalItems: mockAuditLogs.length,
+        limit
+      });
+
+      // Map MongoDB format to frontend format
+      const mappedLogs = result.logs.map((log: any) => ({
+        id: log._id.toString(),
+        timestamp: log.timestamp,
+        actor: {
+          userId: log.actor.userId.toString(),
+          username: log.actor.username,
+          characterName: log.actor.characterName,
+          userRoles: log.actor.userRoles,
+          characterRoles: log.actor.characterRoles
+        },
+        action: log.action,
+        actionDescription: log.actionDescription,
+        category: log.category,
+        target: log.target,
+        success: log.success,
+        errorMessage: log.errorMessage,
+        details: log.details,
+        ipAddress: log.ipAddress,
+        userAgent: log.userAgent,
+        severity: log.severity,
+        duration: log.duration
+      }));
+
+      const pagination: PaginationInfo = {
+        page,
+        totalPages: result.totalPages,
+        totalItems: result.totalCount,
         pageSize: limit,
-        hasNextPage: false,
-        hasPrevPage: false
+        hasNextPage: page < result.totalPages,
+        hasPrevPage: page > 1
       };
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       logger.info('Admin viewed audit logs', {
         ...auditInfo,
-        filters: { category, adminUserId, severity, dateFrom, dateTo },
+        filters: { category, adminUserId, severity, success, action, dateFrom, dateTo },
         page,
-        limit
+        limit,
+        resultsCount: mappedLogs.length
       });
 
-      res.json(successResponse(
-        {
-          logs: mockAuditLogs,
-          pagination: mockPagination
-        },
+      // Use listResponse for consistency with other list endpoints
+      // Returns: { result: true, success: true, items: [...], pagination: {...} }
+      res.json(listResponse(
+        mappedLogs,
+        pagination,
         undefined,
         getRequestId(req)
       ));
     } catch (error: any) {
-      logger.error('Error fetching audit logs:', { error: error instanceof Error ? error.message : String(error) });
-      
+      logger.error('Error fetching audit logs:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
+
       res.status(500).json(errorResponse(
         'Impossibile recuperare i log di audit',
         'FETCH_AUDIT_LOGS_ERROR',

@@ -30,11 +30,23 @@
       }
     },
     {
-      "key": "adminUser.username",
-      "label": "Admin",
+      "key": "actor.characterName",
+      "label": "Admin (Personaggio)",
       "type": "text",
       "visible": true,
       "defaultVisible": true,
+      "sortable": false,
+      "width": "180px",
+      "render": {
+        "type": "text"
+      }
+    },
+    {
+      "key": "actor.username",
+      "label": "Admin (Username)",
+      "type": "text",
+      "visible": true,
+      "defaultVisible": false,
       "sortable": false,
       "width": "150px",
       "render": {
@@ -42,7 +54,7 @@
       }
     },
     {
-      "key": "action",
+      "key": "actionDescription",
       "label": "Azione",
       "type": "text",
       "visible": true,
@@ -54,13 +66,25 @@
       }
     },
     {
+      "key": "action",
+      "label": "Azione (Codice)",
+      "type": "text",
+      "visible": true,
+      "defaultVisible": false,
+      "sortable": true,
+      "width": "180px",
+      "render": {
+        "type": "text"
+      }
+    },
+    {
       "key": "category",
       "label": "Categoria",
       "type": "text",
       "visible": true,
       "defaultVisible": true,
       "sortable": true,
-      "width": "150px",
+      "width": "180px",
       "render": {
         "type": "badge"
       }
@@ -78,6 +102,18 @@
       }
     },
     {
+      "key": "success",
+      "label": "Esito",
+      "type": "boolean",
+      "visible": true,
+      "defaultVisible": true,
+      "sortable": true,
+      "width": "120px",
+      "render": {
+        "type": "badge"
+      }
+    },
+    {
       "key": "severity",
       "label": "Gravità",
       "type": "text",
@@ -87,6 +123,66 @@
       "width": "120px",
       "render": {
         "type": "badge"
+      }
+    },
+    {
+      "key": "errorMessage",
+      "label": "Errore",
+      "type": "text",
+      "visible": true,
+      "defaultVisible": false,
+      "sortable": false,
+      "width": "250px",
+      "render": {
+        "type": "text"
+      }
+    },
+    {
+      "key": "duration",
+      "label": "Durata (ms)",
+      "type": "number",
+      "visible": true,
+      "defaultVisible": false,
+      "sortable": true,
+      "width": "120px",
+      "render": {
+        "type": "text"
+      }
+    },
+    {
+      "key": "ipAddress",
+      "label": "IP Address",
+      "type": "text",
+      "visible": true,
+      "defaultVisible": false,
+      "sortable": false,
+      "width": "150px",
+      "render": {
+        "type": "text"
+      }
+    },
+    {
+      "key": "userAgent",
+      "label": "User Agent",
+      "type": "text",
+      "visible": true,
+      "defaultVisible": false,
+      "sortable": false,
+      "width": "200px",
+      "render": {
+        "type": "text"
+      }
+    },
+    {
+      "key": "details",
+      "label": "Dettagli",
+      "type": "text",
+      "visible": true,
+      "defaultVisible": false,
+      "sortable": false,
+      "width": "250px",
+      "render": {
+        "type": "json"
       }
     }
   ],
@@ -98,10 +194,15 @@
       "field": "category",
       "options": [
         { "value": "", "label": "Tutte le categorie" },
-        { "value": "character_management", "label": "Gestione Personaggi" },
         { "value": "user_management", "label": "Gestione Utenti" },
+        { "value": "character_management", "label": "Gestione Personaggi" },
+        { "value": "document_management", "label": "Gestione Documenti" },
+        { "value": "location_management", "label": "Gestione Location" },
+        { "value": "skill_management", "label": "Gestione Skill" },
+        { "value": "item_management", "label": "Gestione Oggetti" },
         { "value": "economy_management", "label": "Economia" },
         { "value": "system_configuration", "label": "Configurazione Sistema" },
+        { "value": "session_management", "label": "Gestione Sessioni" },
         { "value": "moderation", "label": "Moderazione" }
       ]
     },
@@ -112,10 +213,29 @@
       "field": "severity",
       "options": [
         { "value": "", "label": "Tutte" },
-        { "value": "info", "label": "Info" },
-        { "value": "warning", "label": "Warning" },
-        { "value": "critical", "label": "Critical" }
+        { "value": "low", "label": "Bassa (Low)" },
+        { "value": "medium", "label": "Media (Medium)" },
+        { "value": "high", "label": "Alta (High)" },
+        { "value": "critical", "label": "Critica (Critical)" }
       ]
+    },
+    {
+      "key": "success",
+      "label": "Esito",
+      "type": "select",
+      "field": "success",
+      "options": [
+        { "value": "", "label": "Tutti" },
+        { "value": "true", "label": "Solo Successi" },
+        { "value": "false", "label": "Solo Errori" }
+      ]
+    },
+    {
+      "key": "action",
+      "label": "Azione (ricerca)",
+      "type": "text",
+      "field": "action",
+      "placeholder": "es: user.ban, document.create"
     },
     {
       "key": "dateFrom",

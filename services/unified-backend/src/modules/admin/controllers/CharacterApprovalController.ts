@@ -480,6 +480,89 @@ export class CharacterApprovalController {
   }
 
   /**
+   * Update character fields including permissions
+   * PATCH /admin/characters/:characterId
+   */
+  static async updateCharacter(req: Request<{ characterId: string }>, res: Response): Promise<void> {
+    try {
+      const characterId = req.params.characterId;
+      const updateData = req.body;
+
+      // Use local model with proper imports
+      const { Character } = await import('@database/models/Character');
+
+      // Find character
+      const character = await Character.findById(characterId);
+      if (!character) {
+        res.status(404).json(errorResponse(
+          'Personaggio non trovato',
+          'CHARACTER_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      // Build update object with only allowed fields
+      const allowedFields = [
+        'name', 'surname', 'age', 'gender', 'status',
+        'biography', 'occupation', 'location', 'socialClass',
+        'isGestore', 'characterRoles', 'characterPermissions'
+      ];
+
+      const updates: any = {};
+      for (const field of allowedFields) {
+        if (updateData[field] !== undefined) {
+          updates[field] = updateData[field];
+        }
+      }
+
+      // Apply updates
+      Object.assign(character, updates);
+
+      // Save character
+      await character.save();
+
+      // Populate user data for response
+      await character.populate({
+        path: 'userId',
+        select: 'username email displayName',
+        options: { strictPopulate: false }
+      });
+
+      const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
+      logger.info('Admin updated character', {
+        ...auditInfo,
+        characterId,
+        updatedFields: Object.keys(updates),
+        category: 'character_management'
+      });
+
+      res.json(updateResponse(
+        character.toObject(),
+        undefined,
+        getRequestId(req)
+      ));
+    } catch (error: any) {
+      logger.error('Error updating character:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        characterId: req.params.characterId,
+        body: req.body
+      });
+
+      res.status(500).json(errorResponse(
+        error instanceof Error ? error.message : 'Impossibile aggiornare il personaggio',
+        'UPDATE_CHARACTER_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
+    }
+  }
+
+  /**
    * Submit approval decision for a character
    * POST /admin/characters/:characterId/approve
    */
@@ -641,11 +724,12 @@ export class CharacterApprovalController {
           creditLine: characterFinances.creditLine.maxWeekly
         });
 
-        // Update character: assign equipment and set status to APPROVED  
+        // Update character: assign equipment and set status to APPROVED
         character.equipment = startingItems;
         character.status = 'APPROVED';
         character.approvedAt = new Date();
         character.approvedBy = auditInfo!.adminId; // Set who approved
+        character.approvedByName = auditInfo!.adminUsername; // Set approver username
         character.gameplayRoles = ['personaggio']; // Assign default gameplay role
         character.reviewNote = note; // Store approval note
         
@@ -684,6 +768,7 @@ export class CharacterApprovalController {
         character.status = 'DRAFT';
         character.rejectedAt = new Date();
         character.rejectedBy = auditInfo.adminId; // Set who rejected
+        character.rejectedByName = auditInfo.adminUsername; // Set rejector username
         character.rejectionReason = note; // Store rejection reason
         character.reviewNote = note; // Store rejection reason (legacy field)
         
@@ -1061,14 +1146,24 @@ export class CharacterApprovalController {
             lastUpdated: new Date()
           });
 
-          // Update character status
+          // Update character status - USE TOP-LEVEL FIELDS (not metadata)
           character.status = 'APPROVED';
-          character.metadata = {
-            ...character.metadata,
-            approvalDate: new Date(),
-            reviewedBy: auditInfo.adminId
+          character.approvedAt = new Date();
+          character.approvedBy = auditInfo.adminId;
+          character.approvedByName = auditInfo.adminUsername;
+          character.gameplayRoles = ['personaggio'];
+          character.equipment = startingItems; // Use equipment, not inventory
+
+          // Add to review history (was missing in bulk operations)
+          const reviewEntry = {
+            action: 'approve',
+            reviewedBy: auditInfo.adminId,
+            reviewedByUsername: auditInfo.adminUsername,
+            note: 'Bulk approval',
+            reviewedAt: new Date()
           };
-          character.inventory = { items: startingItems };
+          character.reviewHistory = character.reviewHistory || [];
+          character.reviewHistory.push(reviewEntry);
 
           await character.save();
 
@@ -1087,6 +1182,33 @@ export class CharacterApprovalController {
       const successCount = results.filter(r => r.status === 'fulfilled').length;
       const failedCount = results.filter(r => r.status === 'rejected').length;
 
+      // Extract error details for logging and response
+      const detailedResults = results.map((r, i) => {
+        if (r.status === 'fulfilled') {
+          return {
+            characterId: characterIds[i],
+            success: true
+          };
+        } else {
+          const errorMessage = r.reason instanceof Error
+            ? r.reason.message
+            : (typeof r.reason === 'string' ? r.reason : String(r.reason));
+
+          // Log individual failure for debugging
+          logger.warn('Character approval failed in bulk operation', {
+            characterId: characterIds[i],
+            error: errorMessage,
+            stack: r.reason instanceof Error ? r.reason.stack : undefined
+          });
+
+          return {
+            characterId: characterIds[i],
+            success: false,
+            error: errorMessage
+          };
+        }
+      });
+
       logger.info('Bulk approve characters completed', {
         ...auditInfo,
         totalCharacters: characterIds.length,
@@ -1098,11 +1220,7 @@ export class CharacterApprovalController {
         {
           success: successCount,
           failed: failedCount,
-          results: results.map((r, i) => ({
-            characterId: characterIds[i],
-            success: r.status === 'fulfilled',
-            error: r.status === 'rejected' ? r.reason : undefined
-          }))
+          results: detailedResults
         },
         'Bulk approve completed',
         getRequestId(req)
@@ -1164,14 +1282,23 @@ export class CharacterApprovalController {
             throw new Error(`Character not found or not pending: ${characterId}`);
           }
 
-          // Update status to DRAFT with rejection note
+          // Update status to DRAFT with rejection note - USE TOP-LEVEL FIELDS (not metadata)
           character.status = 'DRAFT';
-          character.metadata = {
-            ...character.metadata,
-            rejectionDate: new Date(),
-            rejectionReason: reason.trim(),
-            reviewedBy: auditInfo.adminId
+          character.rejectedAt = new Date();
+          character.rejectedBy = auditInfo.adminId;
+          character.rejectedByName = auditInfo.adminUsername;
+          character.rejectionReason = reason.trim();
+
+          // Add to review history (was missing in bulk operations)
+          const reviewEntry = {
+            action: 'reject',
+            reviewedBy: auditInfo.adminId,
+            reviewedByUsername: auditInfo.adminUsername,
+            note: reason.trim(),
+            reviewedAt: new Date()
           };
+          character.reviewHistory = character.reviewHistory || [];
+          character.reviewHistory.push(reviewEntry);
 
           await character.save();
 

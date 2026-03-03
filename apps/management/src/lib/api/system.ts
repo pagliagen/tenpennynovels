@@ -28,30 +28,44 @@ export interface SystemConfig {
 }
 
 export interface AuditLog {
-  _id: string;
+  id: string;
   timestamp: string;
-  adminUser: {
-    _id: string;
+  actor: {
+    userId: string;
     username: string;
+    characterName?: string;
+    userRoles: string[];
+    characterRoles: string[];
   };
   action: string;
+  actionDescription: string;
   category: string;
-  target: {
+  target?: {
     type: string;
     id: string;
     name: string;
   };
-  severity: 'info' | 'warning' | 'critical';
+  success: boolean;
+  errorMessage?: string;
   details?: Record<string, unknown>;
+  ipAddress: string;
+  userAgent: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  duration?: number;
 }
 
 export interface AuditLogParams {
   page?: number;
   pageSize?: number;
   category?: string;
+  adminUserId?: string;
+  severity?: 'low' | 'medium' | 'high' | 'critical';
+  success?: boolean;
+  action?: string;
   dateFrom?: string;
   dateTo?: string;
-  severity?: 'info' | 'warning' | 'critical';
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
 }
 
 export interface MaintenanceStatus {

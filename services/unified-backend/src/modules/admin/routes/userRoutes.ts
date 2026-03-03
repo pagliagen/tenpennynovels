@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { UserManagementController } from '../controllers/UserManagementController';
 import { AdminAuthMiddleware } from '../middleware/adminAuth';
 import { requireViewPermission } from '../utils/permissions';
+import { autoLogOutcome } from '../middleware/auditMiddleware';
 
 const router = Router();
 
@@ -41,7 +42,8 @@ router.get(
 router.post(
   '/:userId/ban',
   requireViewPermission('users.ban'),
-  AdminAuthMiddleware.logAdminAction('ban_user', 'user_management'),
+  AdminAuthMiddleware.logAdminAction('user.ban', 'user_management'),
+  autoLogOutcome,
   AdminAuthMiddleware.sensitiveOperationLimit(),
   UserManagementController.banUser
 );
@@ -49,7 +51,8 @@ router.post(
 router.patch(
   '/:userId/ban',
   requireViewPermission('users.ban'),
-  AdminAuthMiddleware.logAdminAction('update_ban', 'user_management'),
+  AdminAuthMiddleware.logAdminAction('user.update_ban', 'user_management'),
+  autoLogOutcome,
   AdminAuthMiddleware.sensitiveOperationLimit(),
   UserManagementController.updateBan
 );
@@ -57,7 +60,8 @@ router.patch(
 router.delete(
   '/:userId/ban',
   requireViewPermission('users.ban'),
-  AdminAuthMiddleware.logAdminAction('unban_user', 'user_management'),
+  AdminAuthMiddleware.logAdminAction('user.unban', 'user_management'),
+  autoLogOutcome,
   AdminAuthMiddleware.sensitiveOperationLimit(),
   UserManagementController.unbanUser
 );
@@ -66,7 +70,8 @@ router.delete(
 router.post(
   '/bulk-ban',
   requireViewPermission('users.ban'),
-  AdminAuthMiddleware.logAdminAction('bulk_ban_users', 'user_management'),
+  AdminAuthMiddleware.logAdminAction('user.bulk_ban', 'user_management'),
+  autoLogOutcome,
   AdminAuthMiddleware.sensitiveOperationLimit(),
   UserManagementController.bulkBanUsers
 );
@@ -74,7 +79,8 @@ router.post(
 router.post(
   '/bulk-unban',
   requireViewPermission('users.ban'),
-  AdminAuthMiddleware.logAdminAction('bulk_unban_users', 'user_management'),
+  AdminAuthMiddleware.logAdminAction('user.bulk_unban', 'user_management'),
+  autoLogOutcome,
   AdminAuthMiddleware.sensitiveOperationLimit(),
   UserManagementController.bulkUnbanUsers
 );
@@ -83,7 +89,8 @@ router.post(
 router.post(
   '/bulk-activate',
   requireViewPermission('users.update'),
-  AdminAuthMiddleware.logAdminAction('bulk_activate_users', 'user_management'),
+  AdminAuthMiddleware.logAdminAction('user.bulk_activate', 'user_management'),
+  autoLogOutcome,
   AdminAuthMiddleware.sensitiveOperationLimit(),
   UserManagementController.bulkActivateUsers
 );
@@ -91,7 +98,8 @@ router.post(
 router.post(
   '/bulk-deactivate',
   requireViewPermission('users.update'),
-  AdminAuthMiddleware.logAdminAction('bulk_deactivate_users', 'user_management'),
+  AdminAuthMiddleware.logAdminAction('user.bulk_deactivate', 'user_management'),
+  autoLogOutcome,
   AdminAuthMiddleware.sensitiveOperationLimit(),
   UserManagementController.bulkDeactivateUsers
 );
@@ -99,15 +107,16 @@ router.post(
 router.patch(
   '/:userId',
   requireViewPermission('users.update'),
-  AdminAuthMiddleware.logAdminAction('update_user', 'user_management'),
+  AdminAuthMiddleware.logAdminAction('user.update', 'user_management'),
+  autoLogOutcome,
   UserManagementController.updateUser
 );
-
 
 router.patch(
   '/:userId/permissions',
   requireViewPermission('manager.manage_user_permissions'),
-  AdminAuthMiddleware.logAdminAction('update_user_permissions', 'user_management'),
+  AdminAuthMiddleware.logAdminAction('user.change_permissions', 'user_management'),
+  autoLogOutcome,
   AdminAuthMiddleware.sensitiveOperationLimit(),
   UserManagementController.updateUserPermissions
 );

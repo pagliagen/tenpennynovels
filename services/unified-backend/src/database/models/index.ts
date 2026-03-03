@@ -179,6 +179,14 @@ export {
   type IWebSocketEvent
 } from './WebSocketEvent';
 
+// Audit Logging System
+export {
+  AuditLog,
+  type IAuditLog,
+  type IAuditLogActor,
+  type IAuditLogTarget
+} from './AuditLog';
+
 // Knowledge Base System (Documents - NEW DUAL-TABLE)
 export {
   default as Route,
