@@ -145,6 +145,7 @@ export const UserSchema = z.object({
   isEmailVerified: z.boolean(),
   role: z.enum(['player', 'moderator', 'admin']),
   status: z.enum(['active', 'suspended', 'banned']),
+  canAccessAdminPanel: z.boolean().optional(),
   lastLoginAt: z.string().datetime().nullable(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
@@ -252,7 +253,6 @@ export const CharacterStatsSchema = z.object({
  * @property {string} background - Character backstory (max 2000 chars)
  * @property {CharacterStats} stats - Character attributes
  * @property {string | null} avatar - Character avatar image URL (optional)
- * @property {string | null} currentLocation - Current location ID (if in a location)
  * @property {'active' | 'inactive' | 'deceased' | 'pending'} status - Character status
  * @property {boolean} isOnline - Whether player is currently online
  * @property {string | null} lastSeenAt - Last activity timestamp
@@ -276,7 +276,6 @@ export const CharacterStatsSchema = z.object({
  *   background: 'Born in 1854, educated at Cambridge...',
  *   stats: { strength: 12, dexterity: 14, ... },
  *   avatar: '/uploads/avatars/sherlock.jpg',
- *   currentLocation: '507f1f77bcf86cd799439014',
  *   status: 'active',
  *   isOnline: true,
  *   lastSeenAt: '2024-01-15T14:30:00.000Z',
@@ -300,13 +299,15 @@ export const CharacterSchema = z.object({
   background: z.string().max(2000),
   stats: CharacterStatsSchema,
   avatar: z.string().max(500).nullable().optional(),
-  currentLocation: MongoIdSchema.nullable(),
   // CRITICAL: Status values MUST match backend Character model
   // Backend enum: ['DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'DELETED']
   // DO NOT use: 'active', 'inactive', 'deceased', 'pending' (not supported by backend)
   status: z.enum(['DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'DELETED']),
   isOnline: z.boolean(),
   lastSeenAt: z.string().datetime().nullable(),
+  isGestore: z.boolean().optional(),
+  characterRoles: z.array(z.string()).optional(),
+  characterPermissions: z.array(z.string()).optional(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });

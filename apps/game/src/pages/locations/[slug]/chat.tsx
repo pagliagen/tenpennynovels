@@ -21,8 +21,7 @@ import { GameLayout } from '@/components/layout/GameLayout';
 import { ChatContainer } from '@/components/chat/ChatContainer';
 import { useAuthStore } from '@/store/authStore';
 import { useLocationStore } from '@/store/locationStore';
-import { useWebSocket } from '@/contexts/WebSocketContext';
-import { locationsApi } from '@/lib/api/locations';
+import { useGameStateStore } from '@/store/gameStateStore';
 import type { AccessibleLocation } from '@/types/location';
 
 /**
@@ -49,9 +48,6 @@ export default function LocationChatPage(): JSX.Element {
   // Location store: Get locations (use separate selectors to avoid infinite loop)
   const locations = useLocationStore((state) => state.locations);
   const isLocationStoreLoading = useLocationStore((state) => state.isLoading);
-
-  // WebSocket context for real-time layer
-  const { socket } = useWebSocket();
 
   // Local state: Current location
   const [location, setLocation] = useState<AccessibleLocation | null>(null);
@@ -113,88 +109,40 @@ export default function LocationChatPage(): JSX.Element {
   }, [slug, locations]);
 
   /**
-   * Effect 1: Sync authStore when location changes
+   * Effect: Enter/leave location (CENTRALIZED via GameStateStore)
    *
-   * Updates selectedCharacter.currentLocation for topbar/sidebar display.
-   * Guard prevents unnecessary updates (avoids triggering parent re-renders).
+   * Single effect that handles:
+   * 1. Enter location → gameStateStore.enterLocation()
+   * 2. Leave location on unmount → gameStateStore.leaveLocation()
+   *
+   * GameStateStore centralizes:
+   * - Local state update (optimistic)
+   * - Backend persistence (HTTP)
+   * - WebSocket room join/leave
    */
   useEffect(() => {
-    if (!location?._id) {
+    if (!location?._id || !location?.name) {
       return;
     }
 
-    const char = useAuthStore.getState().selectedCharacter;
-    if (!char) {
-      return;
-    }
+    console.log('[Chat] 📍 Location detected:', location.name, '- entering via GameStateStore');
 
-    // Guard: Only update if currentLocation actually changed
-    if (char.currentLocation !== location._id) {
-      console.log('[Chat] 🔄 Updating authStore - OLD:', char.currentLocation, '→ NEW:', location._id);
-      useAuthStore.getState().setSelectedCharacter({
-        ...char,
-        currentLocation: location._id
-      });
-      console.log('[Chat] ✅ authStore synced - currentLocation:', location._id);
-    } else {
-      console.log('[Chat] ⏭️ No update needed - currentLocation already:', location._id);
-    }
-  }, [location?._id]);
+    // Enter location (centralized)
+    const { enterLocation, leaveLocation } = useGameStateStore.getState();
 
-  /**
-   * Effect 2: Enter/leave location (HTTP + WebSocket)
-   *
-   * Dual-layer architecture:
-   * - Layer 1 (HTTP): Persistence, updates DB (character.currentLocation, location.occupants)
-   * - Layer 2 (WebSocket): Real-time, joins Socket.IO room for broadcasts
-   *
-   * Cleanup emits leave_location. DB cleanup handled by WebSocket disconnect handler.
-   */
-  useEffect(() => {
-    if (!location?._id || !socket) {
-      return;
-    }
+    enterLocation(location._id, location.name).catch((error) => {
+      console.error('[Chat] ❌ Failed to enter location:', error);
+      // NOTE: User still sees chat even if enter fails (graceful degradation)
+    });
 
-    const currentCharacter = useAuthStore.getState().selectedCharacter;
-    if (!currentCharacter) {
-      return;
-    }
-
-    // AbortController for canceling in-flight HTTP on unmount
-    const controller = new AbortController();
-
-    // Async IIFE for enter flow
-    (async () => {
-      try {
-        // Layer 1: HTTP persistence (DB update)
-        await locationsApi.enter(location._id);
-        console.log('[Chat] ✅ DB updated - entered location:', location._id);
-
-        // Layer 2: WebSocket real-time (Socket.IO room join)
-        socket.emit('join_location', location._id);
-        console.log('[Chat] ✅ WebSocket emitted - join_location:', location._id);
-
-      } catch (error: any) {
-        // Ignore aborted requests (expected on unmount)
-        if (error.name === 'AbortError') {
-          return;
-        }
-
-        console.error('[Chat] ❌ Failed to enter location:', error);
-        // NOTE: User still sees chat even if enter fails (graceful degradation)
-      }
-    })();
-
-    // Cleanup: Cancel in-flight HTTP + emit leave
+    // Cleanup: Leave on unmount
     return () => {
-      controller.abort();
-
-      if (socket) {
-        socket.emit('leave_location', location._id);
-        console.log('[Chat] ✅ WebSocket emitted - leave_location:', location._id);
-      }
+      console.log('[Chat] 🚪 Component unmounting - leaving location');
+      leaveLocation().catch((error) => {
+        console.error('[Chat] ❌ Failed to leave location:', error);
+      });
     };
-  }, [location?._id, socket]);
+  }, [location?._id, location?.name]);
 
   // Loading state (waiting for auth, location store, or specific location data)
   if (!isAuthenticated || !selectedCharacter || isLoadingLocation || isLocationStoreLoading) {

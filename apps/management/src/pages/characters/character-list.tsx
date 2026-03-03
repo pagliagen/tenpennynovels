@@ -265,7 +265,7 @@ export default function CharacterList() {
           title: 'Conferma Approvazione Multipla',
           message: `Vuoi approvare ${items.length} personaggi selezionati? Verranno creati finanziamenti e inventari iniziali.`,
           confirmLabel: 'Approva',
-          confirmType: 'success'
+          type: 'info'
         });
 
         if (!confirmed) return;
@@ -297,7 +297,7 @@ export default function CharacterList() {
           title: 'Conferma Eliminazione Multipla',
           message: `Vuoi eliminare ${items.length} personaggi selezionati? Questa azione è irreversibile.`,
           confirmLabel: 'Elimina',
-          confirmType: 'danger'
+          type: 'danger'
         });
 
         if (!confirmed) return;
@@ -467,11 +467,6 @@ export default function CharacterList() {
               userName: characterToReject.user?.username || 'Unknown',
               rejectReason: ''
             }}
-            onChange={(field, value) => {
-              if (field === 'rejectReason') {
-                setRejectReason(value as string);
-              }
-            }}
             onAction={(action, formData) => {
               if (action === 'submit') {
                 const reason = formData.rejectReason as string;
@@ -527,11 +522,6 @@ export default function CharacterList() {
             data={{
               characters: bulkRejectCharacters.map(c => c.fullName).join(', '),
               bulkRejectReason: ''
-            }}
-            onChange={(field, value) => {
-              if (field === 'bulkRejectReason') {
-                setBulkRejectReason(value as string);
-              }
             }}
             onAction={(action, formData) => {
               if (action === 'submit') {

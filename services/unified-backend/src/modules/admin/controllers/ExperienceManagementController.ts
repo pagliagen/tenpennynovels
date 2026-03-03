@@ -157,14 +157,17 @@ export class ExperienceManagementController {
           averageSkills: { $avg: '$baseSkillPointReward' }
         }}
       ]);
-      
+
+
+      const pageNum = parseInt(page as string);
+      const limitNum = parseInt(limit as string);
       const pagination = {
-        page: parseInt(page as string),
-        totalPages: Math.ceil(totalCount / parseInt(limit as string)),
+        page: pageNum,
+        totalPages: Math.ceil(totalCount / limitNum),
         totalItems: totalCount,
-        pageSize: parseInt(limit as string),
-        hasNextPage: parseInt(page as string) < Math.ceil(totalCount / parseInt(limit as string)),
-        hasPrevPage: page > 1
+        pageSize: limitNum,
+        hasNextPage: pageNum < Math.ceil(totalCount / limitNum),
+        hasPrevPage: pageNum > 1
       };
 
       res.json(successResponse(

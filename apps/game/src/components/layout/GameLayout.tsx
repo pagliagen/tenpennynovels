@@ -34,6 +34,7 @@ import { MinimizedWindowsBar } from '../windows/MinimizedWindowsBar';
 import { ConnectionStatus } from '../connection/ConnectionStatus';
 import { useAuthStore } from '@/store/authStore';
 import { useLocationStore } from '@/store/locationStore';
+import { useGameStateStore } from '@/store/gameStateStore';
 import { useWindowManagerStore } from '@/store/windowManagerStore';
 import { useWebSocket } from '@/contexts/WebSocketContext';
 import { useQueryClient } from '@tanstack/react-query';
@@ -73,18 +74,12 @@ interface GameLayoutProps {
 export function GameLayout({ children }: GameLayoutProps): JSX.Element {
   const router = useRouter();
 
-  // Auth store: Get current character and location
+  // Auth store: Get current character
   const selectedCharacter = useAuthStore((state) => state.selectedCharacter);
   const user = useAuthStore((state) => state.user);
 
-  // DEBUG: Log when selectedCharacter changes
-  useEffect(() => {
-    console.log('[GameLayout] 🔄 selectedCharacter changed:', {
-      id: selectedCharacter?._id,
-      name: selectedCharacter?.name,
-      currentLocation: selectedCharacter?.currentLocation
-    });
-  }, [selectedCharacter]);
+  // Game state: Get current location (SINGLE SOURCE OF TRUTH)
+  const currentLocationId = useGameStateStore((state) => state.currentLocationId);
 
   // Location store: Get all accessible locations
   const locations = useLocationStore((state) => state.locations);
@@ -116,7 +111,9 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
   }, [selectedCharacter?._id, locations.length]);
 
   /**
-   * Calculate TopBar location props from authStore + locationStore
+   * Calculate TopBar location props from GameStateStore + locationStore
+   *
+   * SINGLE SOURCE OF TRUTH: currentLocationId from GameStateStore
    */
   const topBarLocationProps = useMemo(() => {
     // Default: London (when no currentLocation set)
@@ -126,19 +123,17 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
       isInLondon: true,
     };
 
-    // Guard: No character or no currentLocation set
-    if (!selectedCharacter?.currentLocation) {
+    // Guard: No currentLocation set
+    if (!currentLocationId) {
       return defaultProps;
     }
 
-    // Find location by ID
-    const currentLocation = locations.find(
-      (loc) => loc._id === selectedCharacter.currentLocation
-    );
+    // Find location by ID from locationStore
+    const currentLocation = locations.find((loc) => loc._id === currentLocationId);
 
     // If location not found, fallback to default
     if (!currentLocation) {
-      console.warn('[GameLayout] ⚠️ Location not found for ID:', selectedCharacter.currentLocation, '| Available:', locations.length);
+      console.warn('[GameLayout] ⚠️ Location not found for ID:', currentLocationId, '| Available:', locations.length);
       return defaultProps;
     }
 
@@ -150,7 +145,7 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
       locationImageUrl: currentLocation.imageUrl || '/images/topbar/location-image.png',
       isInLondon: currentLocation.slug === 'londra', // TODO: Check if there's a better way to identify London
     };
-  }, [selectedCharacter, locations]);
+  }, [currentLocationId, locations]);
 
   /**
    * Navigate to locations/map page

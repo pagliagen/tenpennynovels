@@ -92,14 +92,16 @@ export class CorporationManagementController {
       });
 
       const totalPages = Math.ceil(totalItems / pageSize);
-      const hasMore = page < totalPages;
+      const hasNextPage = page < totalPages;
+      const hasPrevPage = page > 1;
 
       const paginationInfo: PaginationInfo = {
         page,
         totalPages,
         totalItems,
         pageSize,
-        hasNextPage
+        hasNextPage,
+        hasPrevPage
       };
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
@@ -372,14 +374,16 @@ export class CorporationManagementController {
       });
 
       const totalPages = Math.ceil(totalItems / limit);
-      const hasMore = page < totalPages;
+      const hasNextPage = page < totalPages;
+      const hasPrevPage = page > 1;
 
       const paginationInfo: PaginationInfo = {
         page,
         totalPages,
         totalItems,
         pageSize: limit,
-        hasNextPage
+        hasNextPage,
+        hasPrevPage
       };
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
@@ -1130,14 +1134,16 @@ export class CorporationManagementController {
       });
 
       const totalPages = Math.ceil(totalItems / limit);
-      const hasMore = page < totalPages;
+      const hasNextPage = page < totalPages;
+      const hasPrevPage = page > 1;
 
       const paginationInfo: PaginationInfo = {
         page,
         totalPages,
         totalItems,
         pageSize: limit,
-        hasNextPage
+        hasNextPage,
+        hasPrevPage
       };
 
       res.json(successResponse(

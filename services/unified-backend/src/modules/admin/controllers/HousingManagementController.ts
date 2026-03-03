@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { HousingProperty, EstateTransaction, Location, CharacterFinances, db } from '@database/models';
 import { logger } from '../utils/logger';
 import { listResponse, successResponse, errorResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
+import type { PaginationInfo } from '../types/management';
 
 // Access mongoose from the centralized connection
 const mongoose = db.getMongoose();
@@ -50,15 +51,19 @@ export class HousingManagementController {
       const totalProperties = await HousingProperty.countDocuments(filter);
 
       // Calculate pagination info
-      const totalPages = Math.ceil(totalProperties / Number(pageSize));
-      const hasMore = Number(page) < totalPages;
+      const pageNum = Number(page);
+      const pageSizeNum = Number(pageSize);
+      const totalPages = Math.ceil(totalProperties / pageSizeNum);
+      const hasNextPage = pageNum < totalPages;
+      const hasPrevPage = pageNum > 1;
 
-      const pagination = {
-        page: Number(page),
+      const pagination: PaginationInfo = {
+        page: pageNum,
         totalPages,
         totalItems: totalProperties,
-        limit: Number(pageSize),
-        hasNextPage
+        pageSize: pageSizeNum,
+        hasNextPage,
+        hasPrevPage
       };
 
       res.json(listResponse(

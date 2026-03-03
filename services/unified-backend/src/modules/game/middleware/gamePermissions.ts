@@ -57,7 +57,7 @@ export function requireGamePermission(permission: string) {
         endpoint: req.path
       });
 
-      const response: ApiResponse = {
+      const response: ApiResponse & { requiredPermission?: string } = {
         result: false,
         success: false,
         error: 'Non sei autorizzato ad eseguire questa operazione',
@@ -119,7 +119,7 @@ export function requireAnyGamePermission(permissions: string[]) {
         endpoint: req.path
       });
 
-      const response: ApiResponse = {
+      const response: ApiResponse & { requiredPermissions?: string[] } = {
         result: false,
         success: false,
         error: 'Non sei autorizzato ad eseguire questa operazione',
@@ -181,7 +181,7 @@ export function requireAllGamePermissions(permissions: string[]) {
         endpoint: req.path
       });
 
-      const response: ApiResponse = {
+      const response: ApiResponse & { requiredPermissions?: string[]; missingPermissions?: string[] } = {
         result: false,
         success: false,
         error: 'Non sei autorizzato ad eseguire questa operazione',

@@ -21,7 +21,7 @@ import { useState, useMemo } from 'react';
 import Head from 'next/head';
 import { GameLayout } from '@/components/layout/GameLayout';
 import { usePresence } from '@/hooks/usePresence';
-import { useAuthStore } from '@/store/authStore';
+import { useGameStateStore } from '@/store/gameStateStore';
 // @ts-ignore - Used as type in PresenceGroupProps below
 import { type GlobalPresence } from '@/store/presenceStore';
 import styles from '@/styles/pages/presenti-online.module.scss';
@@ -37,12 +37,11 @@ import styles from '@/styles/pages/presenti-online.module.scss';
  */
 export default function PresentiOnlinePage(): JSX.Element {
   const { globalPresence, isLoading } = usePresence();
-  const { selectedCharacter } = useAuthStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [locationFilter, setLocationFilter] = useState<string | null>(null);
 
-  // Get current character's location
-  const currentLocationId = selectedCharacter?.currentLocation || '';
+  // Get current character's location (SINGLE SOURCE OF TRUTH from GameStateStore)
+  const currentLocationId = useGameStateStore((state) => state.currentLocationId) || '';
 
   // Filter and group presence data
   const groupedPresence = useMemo(() => {
@@ -72,7 +71,7 @@ export default function PresentiOnlinePage(): JSX.Element {
     );
 
     return { sameLocation, london, otherLocations };
-  }, [globalPresence, searchQuery, locationFilter, currentLocationId, selectedCharacter]);
+  }, [globalPresence, searchQuery, locationFilter, currentLocationId]);
 
   // Get unique locations for filter dropdown
   const uniqueLocations = useMemo(() => {

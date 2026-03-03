@@ -19,7 +19,7 @@ export interface RouteWithDocument {
     path: string;
     type: 'ambientazione' | 'approfondimenti' | 'regolamento';
     kind: 'document' | 'category' | 'redirect';
-    title: string;
+    title?: string;
     description?: string;
     isPublic: boolean;
     enabled: boolean;
@@ -28,7 +28,7 @@ export interface RouteWithDocument {
   document?: {
     _id: string;
     slug: string;
-    title: string;
+    title?: string;
     type: 'ambientazione' | 'approfondimenti' | 'regolamento';
     path: string;  // Route path (e.g., "approfondimenti", "approfondimenti/classi-sociali")
     content?: string;  // HTML output (auto-generated with H1 anchor IDs)
@@ -51,7 +51,7 @@ export interface RouteWithDocument {
   }>;
   subRoutes?: Array<{
     path: string;
-    title: string;
+    title?: string;
     description?: string;
     isPublic: boolean;
   }>;

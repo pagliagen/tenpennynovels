@@ -105,7 +105,7 @@ export class ForumManagementController {
         totalItems: total,
         pageSize: limitNum,
         hasNextPage: pageNum < totalPages,
-        hasPrevPage: page > 1
+        hasPrevPage: pageNum > 1
       };
 
       res.json(listResponse(

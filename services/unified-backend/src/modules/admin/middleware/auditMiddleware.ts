@@ -59,7 +59,7 @@ function extractActorFromRequest(req: Request): IAuditLogActor {
   }
 
   return {
-    userId: new Types.ObjectId(req.user?.userId || req.user?.id),
+    userId: new Types.ObjectId(req.user?.userId),
     username: req.user?.username || 'Unknown',
     characterName,
     userRoles: req.user?.userRoles || [],
@@ -112,7 +112,7 @@ export function autoLogOutcome(req: Request, res: Response, next: NextFunction):
     const target = extractTarget(req, body);
 
     // Save audit log to MongoDB (async, don't block response)
-    AuditLog.logAction({
+    AuditLog.create({
       actor: extractActorFromRequest(req),
       action,
       actionDescription,
@@ -123,9 +123,10 @@ export function autoLogOutcome(req: Request, res: Response, next: NextFunction):
       details: extractDetails(req, body, success),
       ipAddress: req.ip || 'unknown',
       userAgent: req.get('User-Agent') || 'Unknown',
-      duration
+      duration,
+      timestamp: new Date()
     })
-      .then((log) => {
+      .then((log: any) => {
         logger.info('Audit log saved', {
           logId: log._id,
           action,
@@ -133,7 +134,7 @@ export function autoLogOutcome(req: Request, res: Response, next: NextFunction):
           duration: `${duration}ms`
         });
       })
-      .catch((error) => {
+      .catch((error: Error) => {
         logger.error('Failed to save audit log', {
           error: error instanceof Error ? error.message : String(error),
           action,
@@ -225,14 +226,17 @@ function generateActionDescription(action: string, req: Request, body: any): str
  * Extract target information from request/response
  */
 function extractTarget(req: Request, body: any): IAuditLogTarget | undefined {
+  // Helper to convert param to string
+  const toStr = (val: any): string | undefined => Array.isArray(val) ? val[0] : val;
+
   // Try to extract target from URL params
-  const userId = req.params.userId || req.params.id;
-  const characterId = req.params.characterId;
-  const locationId = req.params.locationId;
-  const documentId = req.params.documentId;
-  const skillId = req.params.skillId;
-  const itemId = req.params.itemId;
-  const sessionId = req.params.sessionId;
+  const userId = toStr(req.params.userId || req.params.id);
+  const characterId = toStr(req.params.characterId);
+  const locationId = toStr(req.params.locationId);
+  const documentId = toStr(req.params.documentId);
+  const skillId = toStr(req.params.skillId);
+  const itemId = toStr(req.params.itemId);
+  const sessionId = toStr(req.params.sessionId);
 
   // Try to extract target name from response body
   let targetName = 'Unknown';

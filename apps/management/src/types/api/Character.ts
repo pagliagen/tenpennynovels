@@ -75,7 +75,7 @@ export interface Character {
 
   // Granular permission system
   isGestore: boolean;
-  characterRoles: ('personaggio' | 'master' | 'moderatore')[];
+  characterRoles: ('personaggio' | 'master' | 'moderatore' | 'amministratore')[];
   characterPermissions: string[];
 }
 
@@ -148,7 +148,7 @@ export interface UpdateCharacterData {
   };
   // Permission fields (used by /characters/permissions page)
   isGestore?: boolean;
-  characterRoles?: string[];
+  characterRoles?: ('personaggio' | 'master' | 'moderatore' | 'amministratore')[];
   characterPermissions?: string[];
 }
 

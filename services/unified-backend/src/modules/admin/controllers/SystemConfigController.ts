@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import { 
-  ApiResponse, 
+import {
+  ApiResponse,
   SystemConfig,
   AuditLog,
   PaginationInfo
@@ -8,7 +8,7 @@ import {
 import { AdminAuthMiddleware } from '../middleware/adminAuth';
 import { logger } from '../utils/logger';
 import { redis } from '@config/runtime/redis';
-import { successResponse, errorResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+import { listResponse, successResponse, errorResponse, updateResponse, getRequestId } from '../utils/apiResponse';
 
 export class SystemConfigController {
   /**
@@ -248,18 +248,31 @@ export class SystemConfigController {
       // Import AuditLog model
       const { AuditLog: AuditLogModel } = await import('@database/models/AuditLog');
 
-      // Query MongoDB with filters
-      const result = await AuditLogModel.queryLogs({
-        category,
-        adminUserId,
-        severity,
-        success,
-        action,
-        dateFrom,
-        dateTo,
-        page,
-        limit
-      });
+      // Build query filters
+      const query: any = {};
+      if (category) query.category = category;
+      if (adminUserId) query['actor.userId'] = adminUserId;
+      if (severity) query.severity = severity;
+      if (success !== undefined) query.success = success;
+      if (action) query.action = action;
+      if (dateFrom || dateTo) {
+        query.timestamp = {};
+        if (dateFrom) query.timestamp.$gte = dateFrom;
+        if (dateTo) query.timestamp.$lte = dateTo;
+      }
+
+      // Execute query with pagination
+      const skip = (page - 1) * limit;
+      const [logs, totalCount] = await Promise.all([
+        AuditLogModel.find(query).sort({ timestamp: -1 }).skip(skip).limit(limit).lean(),
+        AuditLogModel.countDocuments(query)
+      ]);
+
+      const result = {
+        logs,
+        totalPages: Math.ceil(totalCount / limit),
+        totalCount
+      };
 
       // Map MongoDB format to frontend format
       const mappedLogs = result.logs.map((log: any) => ({

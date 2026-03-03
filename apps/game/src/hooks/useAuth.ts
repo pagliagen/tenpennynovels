@@ -104,7 +104,7 @@ export function useAuth(): UseAuthReturn {
   const [error, setError] = useState<string | null>(null);
   const [errorType, setErrorType] = useState<'network' | 'session' | 'server' | null>(null);
 
-  const { setUser, setSelectedCharacter, setGamePermissions, setInitialized, logout, selectedCharacter: currentSelectedCharacter } = useAuthStore();
+  const { setUser, setSelectedCharacter, setGamePermissions, setInitialized, logout } = useAuthStore();
 
   /**
    * Check session with backend
@@ -146,18 +146,8 @@ export function useAuth(): UseAuthReturn {
         setUser(user as any);
 
         // Set selected character if available
-        // CRITICAL: Preserve local currentLocation if already set (prevents overwrite from backend)
         if (character) {
-          const preservedLocation = currentSelectedCharacter?.currentLocation;
-          setSelectedCharacter({
-            ...character,
-            // Preserve local currentLocation if it exists (chat page may have updated it)
-            currentLocation: preservedLocation || character.currentLocation
-          });
-
-          if (preservedLocation && preservedLocation !== character.currentLocation) {
-            console.log('[useAuth] 🔒 Preserved local currentLocation:', preservedLocation, '(backend had:', character.currentLocation, ')');
-          }
+          setSelectedCharacter(character);
         }
 
         // Set game permissions from backend

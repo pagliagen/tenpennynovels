@@ -298,7 +298,7 @@ export function useBulkApproveCharacters() {
               characterIds.includes(character._id)
                 ? {
                     ...character,
-                    status: 'APPROVED',
+                    status: 'approved' as const,
                     metadata: {
                       ...character.metadata,
                       approvalDate: new Date().toISOString()
@@ -353,7 +353,7 @@ export function useBulkRejectCharacters() {
               characterIds.includes(character._id)
                 ? {
                     ...character,
-                    status: 'DRAFT',
+                    status: 'rejected' as const,
                     metadata: {
                       ...character.metadata,
                       rejectionDate: new Date().toISOString(),

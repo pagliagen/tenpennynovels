@@ -103,7 +103,7 @@ export class LocationActionManagementController {
         totalItems: total,
         pageSize: Number(limit),
         hasNextPage: Number(page) < Math.ceil(total / Number(limit)),
-        hasPrevPage: page > 1
+        hasPrevPage: Number(page) > 1
       };
 
       res.json(listResponse(

@@ -10,7 +10,6 @@
  * @since 3.0.0
  */
 
-import React from 'react';
 import { useUIStore } from '@/store/uiStore';
 import styles from './ToastContainer.module.scss';
 

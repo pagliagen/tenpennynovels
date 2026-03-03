@@ -22,6 +22,7 @@
 import { useEffect } from 'react';
 import { usePresenceStore, GlobalPresence } from '@/store/presenceStore';
 import { useAuthStore } from '@/store/authStore';
+import { useGameStateStore } from '@/store/gameStateStore';
 import { useWebSocket } from '@/contexts/WebSocketContext';
 
 /**
@@ -158,9 +159,9 @@ export function usePresence(): UsePresenceReturn {
   }, [onGlobalEvent, handleGlobalPresenceUpdate]);
 
   // Compute location-filtered presence (characters in same location as current character)
-  const locationPresence = selectedCharacter
-    ? getLocationPresence(selectedCharacter.currentLocation || null)
-    : [];
+  // SINGLE SOURCE OF TRUTH: currentLocationId from GameStateStore
+  const currentLocationId = useGameStateStore((state) => state.currentLocationId);
+  const locationPresence = getLocationPresence(currentLocationId);
 
   return {
     globalPresence,

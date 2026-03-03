@@ -274,6 +274,12 @@ export const useAuthStore = create<AuthStore>()(
           isAuthenticated: false,
           gamePermissions: [],
         });
+
+        // Clear game state (NEW - reset currentLocation)
+        // Dynamic import to avoid circular dependency
+        import('@/store/gameStateStore').then(({ useGameStateStore }) => {
+          useGameStateStore.getState().reset();
+        });
       },
 
       /**

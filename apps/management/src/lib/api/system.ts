@@ -88,7 +88,7 @@ export const systemAPI = {
    */
   getConfig: async (): Promise<SystemConfig> => {
     const response = await api.get('/admin/system/config');
-    return response.data;
+    return response.data as SystemConfig;
   },
 
   /**
@@ -97,7 +97,7 @@ export const systemAPI = {
    */
   updateConfig: async (updates: Partial<SystemConfig>): Promise<SystemConfig> => {
     const response = await api.patch('/admin/system/config', updates);
-    return response.data;
+    return response.data as SystemConfig;
   },
 
   /**
@@ -115,7 +115,7 @@ export const systemAPI = {
    */
   sendBroadcast: async (message: string): Promise<{ sent: number }> => {
     const response = await api.post('/admin/system/broadcast', { message });
-    return response.data;
+    return response.data as { sent: number };
   },
 
   /**
@@ -124,7 +124,7 @@ export const systemAPI = {
    */
   getMaintenanceStatus: async (): Promise<MaintenanceStatus> => {
     const response = await api.get('/admin/system/maintenance');
-    return response.data;
+    return response.data as MaintenanceStatus;
   },
 
   /**
@@ -133,6 +133,6 @@ export const systemAPI = {
    */
   setMaintenanceMode: async (enabled: boolean, message?: string): Promise<MaintenanceStatus> => {
     const response = await api.post('/admin/system/maintenance', { enabled, message });
-    return response.data;
+    return response.data as MaintenanceStatus;
   }
 };

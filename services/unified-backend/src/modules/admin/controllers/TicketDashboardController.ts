@@ -222,7 +222,7 @@ export class TicketDashboardController {
           totalItems: total,
           totalPages: Math.ceil(total / limitNum),
           hasNextPage: skip + tickets.length < total,
-        hasPrevPage: page > 1
+          hasPrevPage: pageNum > 1
         },
         undefined,
         getRequestId(req)

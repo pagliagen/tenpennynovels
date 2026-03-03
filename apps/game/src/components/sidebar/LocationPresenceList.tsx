@@ -19,7 +19,7 @@
 'use client';
 
 import { usePresence } from '@/hooks/usePresence';
-import { useAuthStore } from '@/store/authStore';
+import { useGameStateStore } from '@/store/gameStateStore';
 import styles from '@/styles/components/PresenceSection.module.scss';
 
 /**
@@ -39,10 +39,12 @@ import styles from '@/styles/components/PresenceSection.module.scss';
  */
 export function LocationPresenceList(): JSX.Element {
   const { locationPresence, isLoading } = usePresence();
-  const { selectedCharacter } = useAuthStore();
+
+  // Get current location ID (SINGLE SOURCE OF TRUTH from GameStateStore)
+  const currentLocationId = useGameStateStore((state) => state.currentLocationId);
 
   // Get current location name
-  const locationName = selectedCharacter?.currentLocation
+  const locationName = currentLocationId
     ? 'In questa location' // TODO: Get actual location name from API if needed
     : 'A Londra';
 

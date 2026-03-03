@@ -26,7 +26,7 @@ import type { FilterState } from '@/components/shared/ConfigurableDataTable';
  * });
  * ```
  */
-export function useTableFilters<T extends Record<string, unknown>>(initialParams: T) {
+export function useTableFilters<T extends Record<string, any>>(initialParams: T) {
   const [filters, setFilters] = useState<FilterState>({});
   const [params, setParams] = useState<T>(initialParams);
 

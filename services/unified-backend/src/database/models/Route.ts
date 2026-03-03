@@ -31,7 +31,9 @@ export interface IRoute extends MongooseDocument {
   redirectTo?: string;       // Redirect target (e.g., "/ambientazione/folklore" or "folklore")
 
   // Metadata
-  // ❌ REMOVED: order, title, description, displayCategory (use Document fields via join)
+  // ⚠️ DEPRECATED: title, description should come from Document via join (TODO: refactor consumers)
+  title?: string;             // DEPRECATED - for backwards compatibility only
+  description?: string;       // DEPRECATED - for backwards compatibility only
   isPublic: boolean;
   enabled: boolean;          // If false, route returns 404 (soft delete)
 
@@ -48,7 +50,9 @@ const RouteSchema = new Schema<IRoute>(
     kind: { type: String, enum: ['document', 'category', 'redirect'], required: true },
     rootDocumentId: { type: Schema.Types.ObjectId, ref: 'Document' },
     redirectTo: { type: String },
-    // ❌ REMOVED: order, title, description, displayCategory (use Document fields via join)
+    // ⚠️ DEPRECATED: For backwards compatibility - TODO: refactor consumers to use Document join
+    title: { type: String },
+    description: { type: String },
     isPublic: { type: Boolean, default: false },
     enabled: { type: Boolean, default: true }
   },
