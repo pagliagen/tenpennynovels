@@ -239,3 +239,33 @@
   font-size: 14px;
   color: $color-text-secondary;
 }
+
+// Boolean field rendering
+:global(.tpn-admin-boolean) {
+  display: inline-block;
+  padding: $spacing-xs $spacing-sm;
+  border-radius: $border-radius-sm;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all $transition-fast;
+  margin: auto;
+  display: block;
+  text-align: center;
+  width: 50px;
+
+  &:global(.tpn-admin-boolean--true) {
+    border-color: $color-success;
+    color: lighten($color-success, 40%);
+  }
+
+  &:global(.tpn-admin-boolean--false) {
+    border-color: $color-error;
+    color: lighten($color-error, 40%);
+  }
+}
+
+:global(.tpn-admin-boolean-null) {
+  color: $color-text-muted;
+  font-style: italic;
+}

@@ -7,13 +7,16 @@
 
 import React, { useState, useMemo } from 'react';
 import Head from 'next/head';
+import { useRouter } from 'next/router';
 import { ManagementLayout } from '@/components/layout/ManagementLayout';
 import { ConfigurableDataTable } from '@/components/shared/ConfigurableDataTable';
 import { SidePanel } from '@/components/shared/SidePanel';
+import { ContextMenu, ContextMenuItem } from '@/components/shared/ContextMenu';
 import { useConfirm } from '@/hooks/useConfirm';
 import { useTableConfig } from '@/hooks/useTableConfig';
 import { useUsers, useUpdateUser, useDeleteUser, useBanUser, useUnbanUser } from '@/hooks/api/useUsers';
 import { useNotificationStore } from '@/store/notificationStore';
+import { encodeFilter } from '@/lib/utils/urlFilters';
 import type { User, UserListParams, BanUserData } from '@/types/api/User';
 import styles from '@/styles/pages/UserList.module.scss';
 
@@ -29,6 +32,7 @@ export default function UserList() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   // Hooks
+  const router = useRouter();
   const { data, isLoading, error } = useUsers(params);
   const tableConfig = useTableConfig('user-list');
   const updateUser = useUpdateUser();
@@ -47,6 +51,40 @@ export default function UserList() {
   }, [tableConfig.config, tableConfig.columnVisibility]);
 
   /**
+   * Build context menu items for user row
+   */
+  const getMenuItems = (user: User): ContextMenuItem[] => {
+    const characterCount = user.characters?.length || 0;
+
+    return [
+      {
+        key: 'edit',
+        label: 'Modifica',
+        icon: '✏️',
+        onClick: () => handleAction('edit', user)
+      },
+      {
+        key: 'characters',
+        label: `Personaggi (${characterCount})`,
+        icon: '🔓',
+        onClick: () => {
+          const filter = encodeFilter({ userId: user._id });
+          router.push(`/characters/character-list#filter=${filter}`);
+        },
+        disabled: characterCount === 0,
+        dividerAfter: true
+      },
+      {
+        key: 'delete',
+        label: 'Elimina',
+        icon: '🗑️',
+        variant: 'danger',
+        onClick: () => handleAction('delete', user)
+      }
+    ];
+  };
+
+  /**
    * Handler azioni row
    */
   const handleAction = async (action: string, user: User) => {
@@ -56,43 +94,6 @@ export default function UserList() {
           setCurrentUser(user);
           setActiveSidePanel('edit');
           break;
-
-        case 'view-characters':
-          setCurrentUser(user);
-          setActiveSidePanel('view');
-          break;
-
-        case 'ban': {
-          const confirmed = await confirm({
-            title: 'Conferma Ban',
-            message: `Sei sicuro di voler bannare ${user.username}?`
-          });
-
-          if (confirmed) {
-            const reason = prompt('Motivo del ban:');
-            if (!reason) {
-              addNotification({ type: 'warning', message: 'Ban annullato: motivo obbligatorio' });
-              return;
-            }
-
-            await banUser.mutateAsync({ id: user._id, banData: { reason } });
-            addNotification({ type: 'success', message: `${user.username} bannato con successo` });
-          }
-          break;
-        }
-
-        case 'unban': {
-          const confirmed = await confirm({
-            title: 'Conferma Unban',
-            message: `Sei sicuro di voler rimuovere il ban a ${user.username}?`
-          });
-
-          if (confirmed) {
-            await unbanUser.mutateAsync(user._id);
-            addNotification({ type: 'success', message: `Ban rimosso per ${user.username}` });
-          }
-          break;
-        }
 
         case 'delete': {
           const confirmed = await confirm({
@@ -187,6 +188,13 @@ export default function UserList() {
           data={data?.items ?? []}
           loading={isLoading || tableConfig.loading}
           onAction={handleAction}
+          renderActions={(user) => (
+            <ContextMenu
+              items={getMenuItems(user)}
+              position="left"
+              ariaLabel={`Menu azioni per ${user.username}`}
+            />
+          )}
           pagination={{
             page: params.page,
             pageSize: params.pageSize,

@@ -62,9 +62,7 @@
       "sortable": true,
       "width": "100px",
       "render": {
-        "type": "badge",
-        "trueValue": "Attivo",
-        "falseValue": "Inattivo"
+        "type": "boolean"
       }
     },
     {
@@ -76,9 +74,7 @@
       "sortable": true,
       "width": "80px",
       "render": {
-        "type": "badge",
-        "trueValue": "Bannato",
-        "falseValue": "OK"
+        "type": "boolean"
       }
     },
     {
@@ -90,9 +86,7 @@
       "sortable": true,
       "width": "80px",
       "render": {
-        "type": "badge",
-        "trueValue": "Sì",
-        "falseValue": "No"
+        "type": "boolean"
       }
     },
     {
@@ -176,28 +170,6 @@
       "label": "Modifica",
       "icon": "✏️",
       "type": "primary",
-      "visible": true
-    },
-    {
-      "key": "view-characters",
-      "label": "Personaggi",
-      "icon": "🎭",
-      "type": "secondary",
-      "visible": true
-    },
-    {
-      "key": "ban",
-      "label": "Ban",
-      "icon": "🚫",
-      "type": "danger",
-      "visible": true,
-      "confirmMessage": "Sei sicuro di voler bannare questo utente?"
-    },
-    {
-      "key": "unban",
-      "label": "Unban",
-      "icon": "✓",
-      "type": "success",
       "visible": true
     },
     {

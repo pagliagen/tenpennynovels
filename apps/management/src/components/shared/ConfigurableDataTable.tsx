@@ -39,6 +39,7 @@ export interface ConfigurableDataTableProps<T extends object = Record<string, un
   onCellClick?: (item: T, columnKey: string, value: unknown) => void;
   pagination?: PaginationState;
   className?: string;
+  renderActions?: (item: T) => React.ReactNode;
   externalConfig?: {
     config: TableConfig;
     visibleColumns: TableColumn[];
@@ -56,6 +57,7 @@ export interface ConfigurableDataTableProps<T extends object = Record<string, un
 }
 
 export function ConfigurableDataTable<T extends object = Record<string, unknown>>({
+  tableName,
   data,
   loading = false,
   selectedItems = [],
@@ -65,6 +67,7 @@ export function ConfigurableDataTable<T extends object = Record<string, unknown>
   onCellClick,
   pagination,
   className,
+  renderActions,
   externalConfig
 }: ConfigurableDataTableProps<T>): React.ReactElement {
   const [search, setSearch] = useState('');
@@ -242,31 +245,39 @@ export function ConfigurableDataTable<T extends object = Record<string, unknown>
                   {visibleColumns.map(column => {
                     const value = getNestedValue(item, column.key);
                     const renderType = column.render?.type || 'text';
+                    const fieldKey = column.key.replace(/\./g, '-'); // Replace dots for CSS class safety
 
                     return (
                       <td
                         key={column.key}
-                        className={styles[`align-${column.align}`]}
+                        className={classNames(
+                          styles[`align-${column.align}`],
+                          `${tableName}__${fieldKey}`
+                        )}
                         onClick={() => onCellClick?.(item, column.key, value)}
                       >
-                        {cellRenderers.render(renderType, { value, item, column })}
+                        {cellRenderers.render(renderType, { value, item, column, tableName })}
                       </td>
                     );
                   })}
                   {config.actions && (
                     <td className={styles.actionsCell}>
-                      <div className={styles.actions}>
-                        {config.actions.map(action => (
-                          <button
-                            key={action.key}
-                            onClick={() => onAction?.(action.key, item)}
-                            className={classNames(styles.actionButton, styles[action.type])}
-                            title={action.label}
-                          >
-                            {action.icon || action.label}
-                          </button>
-                        ))}
-                      </div>
+                      {renderActions ? (
+                        renderActions(item)
+                      ) : (
+                        <div className={styles.actions}>
+                          {config.actions.map(action => (
+                            <button
+                              key={action.key}
+                              onClick={() => onAction?.(action.key, item)}
+                              className={classNames(styles.actionButton, styles[action.type])}
+                              title={action.label}
+                            >
+                              {action.icon || action.label}
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </td>
                   )}
                 </tr>

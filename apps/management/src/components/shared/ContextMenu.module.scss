@@ -1,0 +1,131 @@
+/**
+ * ContextMenu Styles
+ *
+ * Dropdown menu component styles.
+ * Adapted from DocumentTreeView.module.scss action menu patterns.
+ */
+
+@import '../../styles/variables';
+
+// Container
+.contextMenu {
+  position: relative;
+  flex-shrink: 0;
+}
+
+// Trigger Button (Three Dots)
+.trigger {
+  padding: $spacing-xs $spacing-sm;
+  border: none;
+  background: none;
+  color: $color-text-secondary;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  transition: all $transition-fast;
+  flex-shrink: 0;
+
+  &:hover {
+    color: $color-text-primary;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: $border-radius-sm;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: 2px;
+  }
+}
+
+// Dropdown Menu
+.menu {
+  position: absolute;
+  top: 100%;
+  margin-top: $spacing-xs;
+  background-color: $color-bg-secondary;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: $border-radius-md;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  min-width: 180px;
+  overflow: hidden;
+
+  // Position variants
+  &.right {
+    right: 0;
+  }
+
+  &.left {
+    left: 0;
+  }
+}
+
+// Menu Item
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  width: 100%;
+  padding: $spacing-sm $spacing-md;
+  border: none;
+  background: none;
+  color: $color-text-primary;
+  cursor: pointer;
+  text-align: left;
+  font-size: 14px;
+  line-height: 1.4;
+  transition: background-color $transition-fast;
+  white-space: nowrap;
+
+  &:hover:not(.disabled) {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+
+  &:focus-visible {
+    background-color: rgba(255, 255, 255, 0.08);
+    outline: none;
+  }
+
+  // Variant: Danger
+  &.danger {
+    color: #f87171;
+
+    &:hover:not(.disabled) {
+      background-color: rgba(239, 68, 68, 0.1);
+    }
+  }
+
+  // Variant: Success
+  &.success {
+    color: #4ade80;
+
+    &:hover:not(.disabled) {
+      background-color: rgba(74, 222, 128, 0.1);
+    }
+  }
+
+  // Disabled State
+  &.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+// Icon
+.icon {
+  font-size: 16px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+// Label
+.label {
+  flex: 1;
+}
+
+// Divider
+.divider {
+  margin: $spacing-xs 0;
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}

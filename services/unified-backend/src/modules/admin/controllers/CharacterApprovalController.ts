@@ -23,13 +23,17 @@ export class CharacterApprovalController {
       const page = parseInt(req.query.page as string) || 1;
       const pageSize = parseInt(req.query.pageSize as string) || 25;
       const status = req.query.status as string;
-      
+      const userId = req.query.userId as string;
+
       const skip = (page - 1) * pageSize;
-      
+
       // Build query filter
       let filter: any = {};
       if (status && ['DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'DELETED'].includes(status)) {
         filter.status = status;
+      }
+      if (userId) {
+        filter.userId = userId;
       }
 
       // Use local model with proper imports

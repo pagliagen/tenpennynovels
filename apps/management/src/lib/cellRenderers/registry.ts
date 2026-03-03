@@ -15,6 +15,7 @@ export interface CellRendererProps<T = Record<string, unknown>> {
   value: unknown;
   item: T;
   column: TableColumn;
+  tableName?: string;
 }
 
 /**

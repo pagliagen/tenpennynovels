@@ -1,0 +1,94 @@
+{
+  "_meta": {
+    "version": "1.0.0",
+    "description": "Configurazione tabella audit logs sistema",
+    "lastUpdated": "2026-03-03"
+  },
+  "table": {
+    "name": "audit-logs",
+    "title": "Log Audit Sistema",
+    "icon": "📋",
+    "searchable": true,
+    "selectable": false,
+    "pagination": {
+      "defaultPageSize": 50,
+      "pageSizeOptions": [25, 50, 100, 200]
+    }
+  },
+  "columns": [
+    {
+      "key": "timestamp",
+      "label": "Data/Ora",
+      "type": "datetime",
+      "visible": true,
+      "defaultVisible": true,
+      "sortable": true,
+      "width": "180px",
+      "render": {
+        "type": "datetime",
+        "format": "datetime"
+      }
+    },
+    {
+      "key": "adminUser.username",
+      "label": "Admin",
+      "type": "text",
+      "visible": true,
+      "defaultVisible": true,
+      "sortable": false,
+      "width": "150px",
+      "render": {
+        "type": "text"
+      }
+    },
+    {
+      "key": "action",
+      "label": "Azione",
+      "type": "text",
+      "visible": true,
+      "defaultVisible": true,
+      "sortable": true,
+      "width": "200px",
+      "render": {
+        "type": "text"
+      }
+    },
+    {
+      "key": "category",
+      "label": "Categoria",
+      "type": "text",
+      "visible": true,
+      "defaultVisible": true,
+      "sortable": true,
+      "width": "150px",
+      "render": {
+        "type": "badge"
+      }
+    },
+    {
+      "key": "target.name",
+      "label": "Target",
+      "type": "text",
+      "visible": true,
+      "defaultVisible": true,
+      "sortable": false,
+      "width": "180px",
+      "render": {
+        "type": "text"
+      }
+    },
+    {
+      "key": "severity",
+      "label": "Gravità",
+      "type": "text",
+      "visible": true,
+      "defaultVisible": true,
+      "sortable": true,
+      "width": "120px",
+      "render": {
+        "type": "badge"
+      }
+    }
+  ],
+  "actions": []
+}

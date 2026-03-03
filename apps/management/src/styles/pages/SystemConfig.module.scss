@@ -1,0 +1,354 @@
+/**
+ * System Configuration Pages Styles
+ *
+ * Shared styles for /system/* pages (configurations, maintenance, broadcast, audit-logs)
+ */
+
+@use 'sass:color';
+@import '../variables.scss';
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: $spacing-lg;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: $spacing-lg;
+  background-color: $color-bg-secondary;
+  border-radius: $border-radius-md;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+
+  h1 {
+    margin: 0 0 $spacing-xs 0;
+    font-size: 28px;
+    font-weight: 700;
+    color: $color-primary;
+  }
+
+  p {
+    margin: 0;
+    font-size: 14px;
+    color: $color-text-secondary;
+  }
+}
+
+.editButton {
+  padding: $spacing-sm $spacing-lg;
+  background-color: $color-primary;
+  color: $color-bg-primary;
+  border: none;
+  border-radius: $border-radius-sm;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all $transition-fast;
+
+  &:hover:not(:disabled) {
+    background-color: color.adjust($color-primary, $lightness: 10%);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.section {
+  padding: $spacing-lg;
+  background-color: $color-bg-secondary;
+  border-radius: $border-radius-md;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+
+  h2 {
+    margin: 0 0 $spacing-lg 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: $color-text-primary;
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+  }
+}
+
+.settingGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: $spacing-lg;
+}
+
+.settingItem {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+
+  label {
+    font-size: 14px;
+    font-weight: 600;
+    color: $color-text-primary;
+  }
+
+  input[type="text"],
+  input[type="number"],
+  input[type="date"],
+  select,
+  textarea {
+    padding: $spacing-sm $spacing-md;
+    background-color: $color-bg-tertiary;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: $border-radius-sm;
+    color: $color-text-primary;
+    font-size: 14px;
+    transition: all $transition-fast;
+
+    &:focus {
+      outline: none;
+      border-color: $color-primary;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  textarea {
+    min-height: 100px;
+    resize: vertical;
+    font-family: inherit;
+  }
+
+  .helpText {
+    font-size: 12px;
+    color: $color-text-secondary;
+    font-style: italic;
+  }
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: $spacing-md;
+  padding: $spacing-lg;
+  background-color: $color-bg-secondary;
+  border-radius: $border-radius-md;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.saveButton {
+  padding: $spacing-md $spacing-xl;
+  background-color: $color-success;
+  color: white;
+  border: none;
+  border-radius: $border-radius-sm;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all $transition-fast;
+
+  &:hover:not(:disabled) {
+    background-color: color.adjust($color-success, $lightness: 10%);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  font-size: 18px;
+  color: $color-text-secondary;
+}
+
+.error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-lg;
+  min-height: 400px;
+  padding: $spacing-xl;
+  background-color: $color-bg-secondary;
+  border-radius: $border-radius-md;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+
+  h2 {
+    margin: 0;
+    font-size: 24px;
+    color: $color-error;
+  }
+
+  p {
+    margin: 0;
+    font-size: 16px;
+    color: $color-text-secondary;
+    text-align: center;
+    max-width: 500px;
+  }
+
+  button {
+    padding: $spacing-md $spacing-lg;
+    background-color: $color-primary;
+    color: $color-bg-primary;
+    border: none;
+    border-radius: $border-radius-sm;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all $transition-fast;
+
+    &:hover {
+      background-color: color.adjust($color-primary, $lightness: 10%);
+    }
+  }
+}
+
+// Maintenance Mode specific styles
+.status {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  padding: $spacing-md;
+  background-color: $color-bg-tertiary;
+  border-radius: $border-radius-sm;
+  margin-bottom: $spacing-lg;
+
+  strong {
+    color: $color-text-primary;
+    font-size: 15px;
+  }
+
+  .active {
+    display: inline-block;
+    padding: $spacing-xs $spacing-md;
+    background-color: rgba($color-error, 0.2);
+    border: 1px solid $color-error;
+    border-radius: $border-radius-sm;
+    color: $color-error;
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  .inactive {
+    display: inline-block;
+    padding: $spacing-xs $spacing-md;
+    background-color: rgba($color-success, 0.2);
+    border: 1px solid $color-success;
+    border-radius: $border-radius-sm;
+    color: $color-success;
+    font-weight: 600;
+    font-size: 14px;
+  }
+}
+
+.message {
+  padding: $spacing-lg;
+  background-color: $color-bg-tertiary;
+  border-radius: $border-radius-sm;
+  border-left: 4px solid $color-warning;
+  margin-bottom: $spacing-lg;
+
+  strong {
+    display: block;
+    margin-bottom: $spacing-sm;
+    color: $color-text-primary;
+    font-size: 14px;
+  }
+
+  p {
+    margin: 0;
+    color: $color-text-secondary;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+}
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+
+  textarea {
+    width: 100%;
+    min-height: 120px;
+  }
+
+  button {
+    align-self: flex-end;
+  }
+}
+
+// Broadcast specific styles
+.broadcastForm {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+
+  textarea {
+    width: 100%;
+    min-height: 200px;
+    padding: $spacing-md;
+    background-color: $color-bg-tertiary;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: $border-radius-sm;
+    color: $color-text-primary;
+    font-size: 15px;
+    font-family: inherit;
+    resize: vertical;
+
+    &:focus {
+      outline: none;
+      border-color: $color-primary;
+    }
+  }
+
+  .charCount {
+    align-self: flex-end;
+    font-size: 13px;
+    color: $color-text-secondary;
+  }
+
+  .sendButton {
+    align-self: flex-end;
+    padding: $spacing-md $spacing-xl;
+    background-color: $color-primary;
+    color: $color-bg-primary;
+    border: none;
+    border-radius: $border-radius-sm;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all $transition-fast;
+
+    &:hover:not(:disabled) {
+      background-color: color.adjust($color-primary, $lightness: 10%);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+}

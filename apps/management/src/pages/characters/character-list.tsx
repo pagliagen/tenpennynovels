@@ -5,8 +5,9 @@
  * Max 200 linee per mantenibilità.
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Head from 'next/head';
+import { useRouter } from 'next/router';
 import { ManagementLayout } from '@/components/layout/ManagementLayout';
 import { ConfigurableDataTable } from '@/components/shared/ConfigurableDataTable';
 import { SidePanel } from '@/components/shared/SidePanel';
@@ -20,6 +21,8 @@ import {
   useRejectCharacter
 } from '@/hooks/api/useCharacters';
 import { useNotificationStore } from '@/store/notificationStore';
+import { useURLFilter } from '@/hooks/useURLFilter';
+import { clearFilterHash } from '@/lib/utils/urlFilters';
 import type { Character, CharacterListParams } from '@/types/api/Character';
 import styles from '@/styles/pages/CharacterList.module.scss';
 
@@ -35,7 +38,18 @@ export default function CharacterList() {
   const [currentCharacter, setCurrentCharacter] = useState<Character | null>(null);
 
   // Hooks
-  const { data, isLoading, error } = useCharacters(params);
+  const router = useRouter();
+  const urlFilter = useURLFilter<{ userId?: string }>();
+
+  // Apply URL filter to params
+  const filteredParams = useMemo(() => {
+    if (urlFilter?.userId) {
+      return { ...params, userId: urlFilter.userId };
+    }
+    return params;
+  }, [params, urlFilter]);
+
+  const { data, isLoading, error } = useCharacters(filteredParams);
   const tableConfig = useTableConfig('character-list');
   const updateCharacter = useUpdateCharacter();
   const deleteCharacter = useDeleteCharacter();
@@ -187,6 +201,25 @@ export default function CharacterList() {
           <h1>Gestione Personaggi</h1>
           <p>Totale: {data?.pagination.totalItems ?? 0} personaggi</p>
         </header>
+
+        {/* Filter Badge */}
+        {urlFilter?.userId && (
+          <div className={styles.filterBadge}>
+            <span className={styles.filterLabel}>
+              🔓 Filtrato per utente
+            </span>
+            <button
+              className={styles.filterRemove}
+              onClick={() => {
+                clearFilterHash();
+                router.reload();
+              }}
+              title="Rimuovi filtro"
+            >
+              ✕
+            </button>
+          </div>
+        )}
 
         <ConfigurableDataTable<Character>
           tableName="character-list"

@@ -31,6 +31,40 @@
   }
 }
 
+.filterBadge {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  padding: $spacing-md $spacing-lg;
+  background-color: rgba($color-primary, 0.1);
+  border: 1px solid rgba($color-primary, 0.3);
+  border-radius: $border-radius-md;
+  margin: 0 $spacing-lg;
+
+  .filterLabel {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 500;
+    color: $color-primary;
+  }
+
+  .filterRemove {
+    padding: $spacing-xs $spacing-sm;
+    background-color: transparent;
+    border: 1px solid rgba($color-primary, 0.4);
+    border-radius: $border-radius-sm;
+    color: $color-primary;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all $transition-fast;
+
+    &:hover {
+      background-color: rgba($color-primary, 0.2);
+      border-color: $color-primary;
+    }
+  }
+}
+
 .errorContainer {
   display: flex;
   flex-direction: column;
