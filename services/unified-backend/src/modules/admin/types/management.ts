@@ -44,7 +44,7 @@ export interface ApiResponse<T = unknown> {
   result: boolean;           // Standard: true/false (replaces 'success' for consistency)
   success?: boolean;         // Deprecated: maintained for backward compatibility
   data?: T;                  // Single record data or metadata object
-  list?: T[];                // Array for list responses (alternative to data.list)
+  items?: T[];               // Array for list responses (changed from 'list')
   pagination?: PaginationInfo; // Pagination info for list responses
   message?: string;          // Optional message for POST/PATCH/DELETE
   error?: string;            // Error message if result = false
@@ -91,7 +91,7 @@ export interface PendingCharacter {
 
 // All Characters List Type (for management table)
 export interface Character {
-  id: string;
+  _id: string;               // Changed from 'id' for consistency
   characterName: string;
   characterSurname?: string;
   userId: string;
@@ -145,7 +145,7 @@ export interface ValidationChecks {
 
 // User Management Types
 export interface AdminUserProfile {
-  id: string;
+  _id: string;               // Changed from 'id' for consistency
   username: string;
   email: string;
   displayName: string;
@@ -563,11 +563,12 @@ export interface AuditTarget {
 
 // Pagination Types
 export interface PaginationInfo {
-  currentPage: number;
+  page: number;              // Renamed from 'currentPage'
   totalPages: number;
   totalItems: number;
-  limit: number;
-  hasMore?: boolean;
+  pageSize: number;          // Renamed from 'limit'
+  hasNextPage: boolean;      // Renamed from 'hasMore'
+  hasPrevPage: boolean;      // Added for prev page check
 }
 
 // Statistics Summary Types

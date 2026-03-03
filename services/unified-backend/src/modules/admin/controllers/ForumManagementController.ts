@@ -100,11 +100,12 @@ export class ForumManagementController {
       const totalPages = Math.ceil(total / limitNum);
 
       const pagination = {
-        currentPage: pageNum,
+        page: pageNum,
         totalPages,
         totalItems: total,
-        limit: limitNum,
-        hasMore: pageNum < totalPages
+        pageSize: limitNum,
+        hasNextPage: pageNum < totalPages,
+        hasPrevPage: page > 1
       };
 
       res.json(listResponse(

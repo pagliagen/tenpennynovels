@@ -75,6 +75,7 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
 
   // Auth store: Get current character and location
   const selectedCharacter = useAuthStore((state) => state.selectedCharacter);
+  const user = useAuthStore((state) => state.user);
 
   // Location store: Get all accessible locations
   const locations = useLocationStore((state) => state.locations);
@@ -259,6 +260,7 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
           unreadOnGameMailCount={unreadMailCount}
           onOffGameChatClick={handleOffGameChatClick}
           unreadOffGameChatCount={unreadOffGameChatCount}
+          canAccessAdmin={user?.canAccessAdminPanel ?? false}
           locationName={topBarLocationProps.locationName}
           locationImageUrl={topBarLocationProps.locationImageUrl}
           isInLondon={topBarLocationProps.isInLondon}

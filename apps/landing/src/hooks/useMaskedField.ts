@@ -7,7 +7,7 @@
  * **What is a Victorian Mask?**
  * A decorative overlay that shows the input value with Victorian-era styling:
  * - For text: Shows actual value with decorative font
- * - For password: Shows bullets (●●●●) instead of actual characters
+ * - For password: Shows bullets (◆◆◆◆) instead of actual characters
  * - For email: Shows email with Victorian styling
  *
  * **Why Client-Side Only?**
@@ -53,7 +53,7 @@ export interface UseMaskedFieldReturn {
  *
  * **Transformation Rules**:
  * - `text`: Shows actual value (Victorian font applied via CSS)
- * - `password`: Shows bullets (● for each character)
+ * - `password`: Shows bullets (◆ for each character)
  * - `email`: Shows actual email (Victorian font applied via CSS)
  *
  * @param {string} value - Actual input value
@@ -66,7 +66,7 @@ export interface UseMaskedFieldReturn {
  * // Returns: 'hello'
  *
  * generateMaskValue('password123', 'password');
- * // Returns: '●●●●●●●●●●●'
+ * // Returns: '◆◆◆◆◆◆◆◆◆◆◆'
  *
  * generateMaskValue('user@example.com', 'email');
  * // Returns: 'user@example.com'
@@ -80,7 +80,7 @@ function generateMaskValue(value: string, type: MaskType): string {
   switch (type) {
     case 'password':
       // Replace each character with bullet
-      return '●'.repeat(value.length);
+      return '◆'.repeat(value.length);
     case 'text':
     case 'email':
     default:
@@ -138,7 +138,7 @@ function generateMaskValue(value: string, type: MaskType): string {
  * ```typescript
  * // Password field
  * const { maskValue } = useMaskedField('myPassword123', 'password');
- * // maskValue: '●●●●●●●●●●●●'
+ * // maskValue: '◆◆◆◆◆◆◆◆◆◆◆◆'
  *
  * // Text field
  * const { maskValue } = useMaskedField('John Doe', 'text');
@@ -153,7 +153,7 @@ function generateMaskValue(value: string, type: MaskType): string {
  *   const { maskValue, isMaskActive } = useMaskedField(password, 'password');
  *
  *   // During SSR: isMaskActive = false, maskValue = ''
- *   // After mount: isMaskActive = true, maskValue = '●●●●●●'
+ *   // After mount: isMaskActive = true, maskValue = '◆◆◆◆◆◆'
  *
  *   return (
  *     <div className="masked-field">

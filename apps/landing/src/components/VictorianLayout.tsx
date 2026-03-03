@@ -96,8 +96,7 @@ const DOCS_URL = 'https://docs.tenpennynovels.com';
  * ```
  */
 export const VictorianLayout: React.FC<VictorianLayoutProps> = ({
-  children,
-  subtitle = 'Chapter One', // Reserved for future use
+  children 
 }) => {
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
@@ -134,12 +133,6 @@ export const VictorianLayout: React.FC<VictorianLayoutProps> = ({
 
   return (
     <div className="victorian-layout">
-      {/* Background imagery */}
-      <div className="victorian-layout__background" />
-
-      {/* Mobile background (different image for small screens) */}
-      <div className="victorian-layout__mobile-background" />
-
       {/* Hamburger Menu (Mobile Only) */}
       <button
         type="button"
@@ -157,6 +150,8 @@ export const VictorianLayout: React.FC<VictorianLayoutProps> = ({
       <div
         className={`victorian-layout__mobile-nav ${isMobileMenuOpen ? 'victorian-layout__mobile-nav--open' : ''}`}
       >
+        <h2 className="victorian-layout__mobile-nav-title">Chapter One</h2>
+
         <nav className="victorian-layout__mobile-nav-content">
           <Button
             variant="ghost"
@@ -191,6 +186,8 @@ export const VictorianLayout: React.FC<VictorianLayoutProps> = ({
 
         {/* Navigation */}
         <nav className="victorian-layout__nav">
+          <h2 className="victorian-layout__nav-title">Chapter One</h2>
+
           <Button
             variant="ghost"
             onClick={() => handleNavigate('/register')}
@@ -218,9 +215,17 @@ export const VictorianLayout: React.FC<VictorianLayoutProps> = ({
       </aside>
 
       {/* Main Content Area (Right Side) */}
-      <main className="victorian-layout__content"> 
+      <main className="victorian-layout__content">
+        {/* Background imagery */}
+        <div className="victorian-layout__background" />
+
+        {/* Mobile background (different image for small screens) */}
+        <div className="victorian-layout__mobile-background" />
+
         {/* Page Content (positioned over window) */}
-        <div className="victorian-layout__page-content">{children}</div>
+        <div className="victorian-layout__page-content"> 
+          {children}
+        </div>
       </main>
     </div>
   );

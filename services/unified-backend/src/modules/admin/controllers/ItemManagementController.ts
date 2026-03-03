@@ -48,11 +48,12 @@ export class ItemManagementController {
         .lean();
 
       const pagination = {
-        currentPage: page,
+        page,
         totalPages: Math.ceil(totalItems / limit),
         totalItems,
-        limit,
-        hasMore: page < Math.ceil(totalItems / limit)
+        pageSize: limit,
+        hasNextPage: page < Math.ceil(totalItems / limit),
+        hasPrevPage: page > 1
       };
 
       res.json(listResponse(
@@ -101,7 +102,7 @@ export class ItemManagementController {
         ...auditInfo,
         filters: { category, rarity, isPublic, isAdminOnly, search },
         page,
-        limit,
+        pageSize: limit,
         totalResults: totalItems
       });
     } catch (error: any) {

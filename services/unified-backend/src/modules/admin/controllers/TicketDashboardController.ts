@@ -217,11 +217,12 @@ export class TicketDashboardController {
           unread: !t.lastReadBy?.staff
         })),
         {
-          currentPage: pageNum,
-          limit: limitNum,
+          page: pageNum,
+          pageSize: limitNum,
           totalItems: total,
           totalPages: Math.ceil(total / limitNum),
-          hasMore: skip + tickets.length < total
+          hasNextPage: skip + tickets.length < total,
+        hasPrevPage: page > 1
         },
         undefined,
         getRequestId(req)

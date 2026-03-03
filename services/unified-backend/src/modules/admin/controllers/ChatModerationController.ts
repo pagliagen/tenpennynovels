@@ -8,6 +8,7 @@ import { User } from '@database/models/User';
 import { logger } from '../utils/logger';
 import { redis } from '@config/runtime/redis';
 import { successResponse, errorResponse, listResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
+import { PaginationInfo } from '../types/management';
 
 export class ChatModerationController {
 
@@ -202,11 +203,18 @@ export class ChatModerationController {
       
       const totalCount = await MessageReport.countDocuments(filter);
       
-      const pagination = {
-        total: totalCount,
-        limit: parseInt(limit as string),
-        skip: parseInt(skip as string),
-        hasMore: totalCount > parseInt(skip as string) + parseInt(limit as string)
+      const skipNum = parseInt(skip as string);
+      const limitNum = parseInt(limit as string);
+      const pageNum = Math.floor(skipNum / limitNum) + 1;
+      const totalPages = Math.ceil(totalCount / limitNum);
+
+      const pagination: PaginationInfo = {
+        page: pageNum,
+        totalPages,
+        totalItems: totalCount,
+        pageSize: limitNum,
+        hasNextPage: pageNum < totalPages,
+        hasPrevPage: pageNum > 1
       };
 
       res.json(successResponse(
@@ -462,11 +470,18 @@ export class ChatModerationController {
       
       const totalCount = await ChatModerationAction.countDocuments(filter);
       
-      const pagination = {
-        total: totalCount,
-        limit: parseInt(limit as string),
-        skip: parseInt(skip as string),
-        hasMore: totalCount > parseInt(skip as string) + parseInt(limit as string)
+      const skipNum = parseInt(skip as string);
+      const limitNum = parseInt(limit as string);
+      const pageNum = Math.floor(skipNum / limitNum) + 1;
+      const totalPages = Math.ceil(totalCount / limitNum);
+
+      const pagination: PaginationInfo = {
+        page: pageNum,
+        totalPages,
+        totalItems: totalCount,
+        pageSize: limitNum,
+        hasNextPage: pageNum < totalPages,
+        hasPrevPage: pageNum > 1
       };
 
       res.json(successResponse(

@@ -121,10 +121,10 @@ export class MessagingSystemController {
         {
           chats: enrichedChats,
           pagination: {
-            currentPage: pageNum,
+            page: pageNum,
             totalPages,
             totalItems: total,
-            limit: limitNum,
+            pageSize: limitNum,
             hasNext: pageNum < totalPages,
             hasPrev: pageNum > 1
           }

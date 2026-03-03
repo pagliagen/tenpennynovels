@@ -18,10 +18,9 @@ interface EditRouteModalProps {
   route: {
     _id: string;
     path: string;
-    title: string;
+    // ❌ REMOVED: title, description - edit Document instead
     type: 'ambientazione' | 'approfondimenti' | 'regolamento';
     kind: 'document' | 'category' | 'redirect';
-    description?: string;
     redirectTo?: string;
     isPublic: boolean;
     enabled: boolean;
@@ -36,9 +35,10 @@ export function EditRouteModal({
   route
 }: EditRouteModalProps) {
   const [path, setPath] = useState(route.path);
-  const [title, setTitle] = useState(route.title);
+  // ❌ REMOVED: title, description state (loaded from Document, not Route)
+  const [docTitle, setDocTitle] = useState('');              // Document title (not route title!)
   const [slug, setSlug] = useState('');
-  const [description, setDescription] = useState(route.description || '');
+  const [docDescription, setDocDescription] = useState('');  // Document description (not route description!)
   const [redirectTo, setRedirectTo] = useState(route.redirectTo || '');
   const [isPublic, setIsPublic] = useState(route.isPublic);
   const [enabled, setEnabled] = useState(route.enabled);
@@ -57,7 +57,9 @@ export function EditRouteModal({
     setIsLoadingDocument(true);
     getDocumentById(route.rootDocumentId)
       .then(doc => {
+        setDocTitle(doc.title);              // ✅ Load from Document
         setSlug(doc.slug);
+        setDocDescription(doc.description || '');  // ✅ Load from Document
         setIsDraft(doc.status === 'draft');
         setVisible(doc.visibility?.isPublic ?? true);
       })
@@ -75,10 +77,19 @@ export function EditRouteModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!path.trim() || !title.trim()) {
+    if (!path.trim()) {
       addNotification({
         type: 'error',
-        message: 'Path e titolo sono obbligatori'
+        message: 'Path è obbligatorio'
+      });
+      return;
+    }
+
+    // Validate document title for non-redirect routes
+    if (route.kind !== 'redirect' && !docTitle.trim()) {
+      addNotification({
+        type: 'error',
+        message: 'Titolo documento è obbligatorio'
       });
       return;
     }
@@ -103,11 +114,10 @@ export function EditRouteModal({
     setIsSubmitting(true);
 
     try {
-      // Build request body
+      // Build request body (Route update - minimal fields)
       const requestBody: any = {
         path: path.trim(),
-        title: title.trim(),
-        description: description.trim() || undefined,
+        // ❌ REMOVED: title, description - edit Document instead!
         isPublic,
         enabled
       };
@@ -115,9 +125,9 @@ export function EditRouteModal({
       // Add document updates for non-redirect routes
       if (route.kind !== 'redirect' && route.rootDocumentId) {
         requestBody.documentData = {
-          title: title.trim(),
+          title: docTitle.trim(),
           slug: slug.trim(),
-          description: description.trim() || undefined,
+          description: docDescription.trim() || undefined,
           isDraft,
           visible
         };
@@ -166,22 +176,53 @@ export function EditRouteModal({
           </div>
         ) : (
           <form onSubmit={handleSubmit} className={styles.modalBody}>
-            <div className={styles.formField}>
-              <label htmlFor="title">Titolo *</label>
-              <input
-                id="title"
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Titolo della route e del documento"
-                required
-                disabled={isSubmitting}
-              />
-              <small>Utilizzato per route e documento</small>
-            </div>
+            {route.kind !== 'redirect' && (
+              <>
+                <div className={styles.formField}>
+                  <label htmlFor="docTitle">Titolo Documento *</label>
+                  <input
+                    id="docTitle"
+                    type="text"
+                    value={docTitle}
+                    onChange={(e) => setDocTitle(e.target.value)}
+                    placeholder="Titolo del documento"
+                    required
+                    disabled={isSubmitting}
+                  />
+                  <small>Titolo del documento (source of truth per navigazione)</small>
+                </div>
+
+                <div className={styles.formField}>
+                  <label htmlFor="slug">Slug Documento *</label>
+                  <input
+                    id="slug"
+                    type="text"
+                    value={slug}
+                    onChange={(e) => setSlug(e.target.value)}
+                    placeholder="slug-url-friendly"
+                    required
+                    disabled={isSubmitting}
+                  />
+                  <small>⚠️ Modificare lo slug può rompere link esistenti</small>
+                </div>
+
+                <div className={styles.formField}>
+                  <label htmlFor="docDescription">Descrizione Documento</label>
+                  <textarea
+                    id="docDescription"
+                    value={docDescription}
+                    onChange={(e) => setDocDescription(e.target.value)}
+                    placeholder="Breve descrizione"
+                    rows={3}
+                    disabled={isSubmitting}
+                  />
+                  <small>Descrizione del documento</small>
+                </div>
+              </>
+            )}
 
             <div className={styles.formField}>
-              <label htmlFor="path">Path *</label>
+              <label htmlFor="path">Path Route *</label>
               <input
                 id="path"
                 type="text"
@@ -193,22 +234,6 @@ export function EditRouteModal({
               />
               <small>⚠️ Modificare il path cambierà l'URL pubblico della route</small>
             </div>
-
-            {route.kind !== 'redirect' && (
-              <div className={styles.formField}>
-                <label htmlFor="slug">Slug Documento *</label>
-                <input
-                  id="slug"
-                  type="text"
-                  value={slug}
-                  onChange={(e) => setSlug(e.target.value)}
-                  placeholder="slug-url-friendly"
-                  required
-                  disabled={isSubmitting}
-                />
-                <small>⚠️ Modificare lo slug può rompere link esistenti</small>
-              </div>
-            )}
 
             {route.kind === 'redirect' && (
               <div className={styles.formField}>
@@ -225,19 +250,6 @@ export function EditRouteModal({
                 <small>Path di destinazione del redirect</small>
               </div>
             )}
-
-            <div className={styles.formField}>
-              <label htmlFor="description">Descrizione</label>
-              <textarea
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Breve descrizione"
-                rows={3}
-                disabled={isSubmitting}
-              />
-              <small>Utilizzata per route e documento</small>
-            </div>
 
             {route.kind !== 'redirect' && (
               <>

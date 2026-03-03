@@ -19,7 +19,6 @@ export interface IRoute extends MongooseDocument {
   // Hierarchy
   parentId?: Types.ObjectId; // Reference to parent route (null = root level)
   slug: string;              // URL segment ("armi", "folklore")
-  order: number;             // Display order within siblings
 
   // Routing
   path: string;              // CALCULATED: parent.path + slug ("folklore", "approfondimenti/armi")
@@ -31,9 +30,7 @@ export interface IRoute extends MongooseDocument {
   redirectTo?: string;       // Redirect target (e.g., "/ambientazione/folklore" or "folklore")
 
   // Metadata
-  title: string;
-  description?: string;
-  displayCategory?: string;  // Frontend display grouping (e.g., "Introduzione", "Londra 1890", "Approfondimenti")
+  // ❌ REMOVED: order, title, description, displayCategory (use Document fields via join)
   isPublic: boolean;
   enabled: boolean;          // If false, route returns 404 (soft delete)
 
@@ -45,15 +42,12 @@ const RouteSchema = new Schema<IRoute>(
   {
     parentId: { type: Schema.Types.ObjectId, ref: 'Route' },
     slug: { type: String, required: true },
-    order: { type: Number, default: 0 },
     path: { type: String, required: false },  // Calculated by pre-save hook
     type: { type: String, enum: ['ambientazione', 'approfondimenti', 'regolamento'], required: true },
     kind: { type: String, enum: ['document', 'category', 'redirect'], required: true },
     rootDocumentId: { type: Schema.Types.ObjectId, ref: 'Document' },
     redirectTo: { type: String },
-    title: { type: String, required: true },
-    description: String,
-    displayCategory: { type: String },
+    // ❌ REMOVED: order, title, description, displayCategory (use Document fields via join)
     isPublic: { type: Boolean, default: false },
     enabled: { type: Boolean, default: true }
   },
@@ -68,8 +62,8 @@ const RouteSchema = new Schema<IRoute>(
 // Fast routing lookup
 RouteSchema.index({ type: 1, path: 1 }, { unique: true });
 
-// Hierarchical queries
-RouteSchema.index({ parentId: 1, order: 1 });
+// Hierarchical queries (order removed - use Document.order via join)
+RouteSchema.index({ parentId: 1 });
 
 // Slug lookups
 RouteSchema.index({ slug: 1 });

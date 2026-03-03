@@ -119,12 +119,12 @@ export class RelationshipManagementController {
         {
           relationshipTypes: relationshipTypesWithStats,
           pagination: {
-            currentPage: pageNum,
+            page: pageNum,
             totalPages,
             totalCount: total,
             hasNextPage: pageNum < totalPages,
             hasPrevPage: pageNum > 1,
-            limit: limitNum
+            pageSize: limitNum
           }
         },
         undefined,
@@ -357,12 +357,12 @@ export class RelationshipManagementController {
         {
           relationships: filteredRelationships,
           pagination: {
-            currentPage: pageNum,
+            page: pageNum,
             totalPages,
             totalCount: total,
             hasNextPage: pageNum < totalPages,
             hasPrevPage: pageNum > 1,
-            limit: limitNum
+            pageSize: limitNum
           }
         },
         undefined,
@@ -446,12 +446,12 @@ export class RelationshipManagementController {
         {
           proposals,
           pagination: {
-            currentPage: pageNum,
+            page: pageNum,
             totalPages,
             totalCount: total,
             hasNextPage: pageNum < totalPages,
             hasPrevPage: pageNum > 1,
-            limit: limitNum
+            pageSize: limitNum
           }
         },
         undefined,

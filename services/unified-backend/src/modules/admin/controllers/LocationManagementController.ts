@@ -95,11 +95,12 @@ export class LocationManagementController {
       });
 
       const pagination: PaginationInfo = {
-        currentPage: page,
+        page,
         totalPages,
         totalItems,
-        limit: pageSize,
-        hasMore: page < totalPages
+        pageSize,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1
       };
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);

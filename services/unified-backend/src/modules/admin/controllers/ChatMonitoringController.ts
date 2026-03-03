@@ -221,11 +221,12 @@ export class ChatMonitoringController {
       });
 
       const pagination = {
-        currentPage: page,
+        page,
         totalPages: Math.ceil(totalCount / limit),
         totalItems: totalCount,
-        limit,
-        hasMore: page < Math.ceil(totalCount / limit)
+        pageSize: limit,
+        hasNextPage: page < Math.ceil(totalCount / limit),
+        hasPrevPage: page > 1
       };
 
       res.json(successResponse(
@@ -396,16 +397,17 @@ export class ChatMonitoringController {
         ...auditInfo,
         filters: { priority, assignedTo, status },
         page,
-        limit,
+        pageSize: limit,
         totalResults: totalItems
       });
 
       const pagination = {
-        currentPage: parseInt(page as string),
+        page: parseInt(page as string),
         totalPages: Math.ceil(totalItems / parseInt(limit as string)),
         totalItems,
-        limit: parseInt(limit as string),
-        hasMore: parseInt(page as string) < Math.ceil(totalItems / parseInt(limit as string))
+        pageSize: parseInt(limit as string),
+        hasNextPage: parseInt(page as string) < Math.ceil(totalItems / parseInt(limit as string)),
+        hasPrevPage: page > 1
       };
 
       res.json(successResponse(
@@ -465,9 +467,10 @@ export class ChatMonitoringController {
           history: moderationHistory,
           pagination: {
             total: totalCount,
-            limit: parseInt(limit as string),
+            pageSize: parseInt(limit as string),
             skip: parseInt(skip as string),
-            hasMore: totalCount > parseInt(skip as string) + parseInt(limit as string)
+            hasNextPage: totalCount > parseInt(skip as string) + parseInt(limit as string),
+        hasPrevPage: page > 1
           }
         },
         undefined,

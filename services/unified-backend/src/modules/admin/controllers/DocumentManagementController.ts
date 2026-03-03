@@ -63,7 +63,7 @@ export class DocumentManagementController {
             _id: route._id.toString(),
             path: route.path,
             slug: route.slug,
-            title: route.title,
+            // ❌ REMOVED: title - use Document.title instead
             type: route.type,
             kind: route.kind,
             enabled: route.enabled,
@@ -934,12 +934,12 @@ export class DocumentManagementController {
    */
   static async createDocument(req: Request, res: Response): Promise<void> {
     try {
-      const { title, slug, description, parentId, contentDelta, isDraft, visible, tags, order } = req.body;
+      const { title, slug, type, description, parentId, contentDelta, isDraft, visible, tags, order } = req.body;
 
       // Validation
-      if (!title || !slug) {
+      if (!title || !slug || !type) {
         res.status(400).json(errorResponse(
-          'Titolo e slug sono obbligatori',
+          'Titolo, slug e type sono obbligatori',
           'VALIDATION_ERROR',
           undefined,
           400,
@@ -980,7 +980,9 @@ export class DocumentManagementController {
       const newDocument = new Document({
         title,
         slug,
+        type,                                            // REQUIRED for semantic search
         description: description || '',
+        content: title,                                  // Set content = title (required field, will be edited later)
         parentId: parentId || null,
         contentDelta: contentDelta || { type: 'doc', content: [] },
         isDraft: isDraft !== undefined ? isDraft : true, // Default to draft
@@ -1265,16 +1267,13 @@ export class DocumentManagementController {
         // path is NOT provided - will be calculated by pre-save hook from parentId + slug
         type,
         kind,
-        title,
-        description: description || '',
+        // ❌ REMOVED: title, description, order - these come from Document!
         rootDocumentId: finalDocumentId || null,
         parentId: routeParentId,
         redirectTo: redirectTo || null,
         isPublic: isPublic !== undefined ? isPublic : true,
-        enabled: enabled !== undefined ? enabled : true,
-        order: order !== undefined ? order : 0,
-        createdAt: new Date(),
-        lastUpdated: new Date()
+        enabled: enabled !== undefined ? enabled : true
+        // ❌ REMOVED: createdAt, lastUpdated - timestamps handled by Mongoose
       });
 
       await newRoute.save();  // Pre-save hook calculates path

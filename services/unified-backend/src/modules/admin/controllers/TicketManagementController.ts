@@ -197,11 +197,12 @@ export class TicketManagementController {
 
       const totalPages = Math.ceil(totalTickets / pageSize);
       const pagination: PaginationInfo = {
-        currentPage: page,
+        page,
         totalPages,
         totalItems: totalTickets,
-        limit: pageSize,
-        hasMore: page < totalPages
+        pageSize,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1
       };
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
@@ -327,11 +328,12 @@ export class TicketManagementController {
 
       const totalPages = Math.ceil(totalTickets / pageSize);
       const pagination: PaginationInfo = {
-        currentPage: page,
+        page,
         totalPages,
         totalItems: totalTickets,
-        limit: pageSize,
-        hasMore: page < totalPages
+        pageSize,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1
       };
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
@@ -467,11 +469,12 @@ export class TicketManagementController {
 
       const totalPages = Math.ceil(totalTickets / pageSize);
       const pagination: PaginationInfo = {
-        currentPage: page,
+        page,
         totalPages,
         totalItems: totalTickets,
-        limit: pageSize,
-        hasMore: page < totalPages
+        pageSize,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1
       };
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
@@ -615,11 +618,12 @@ export class TicketManagementController {
 
       const totalPages = Math.ceil(totalTickets / pageSize);
       const pagination: PaginationInfo = {
-        currentPage: page,
+        page,
         totalPages,
         totalItems: totalTickets,
-        limit: pageSize,
-        hasMore: page < totalPages
+        pageSize,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1
       };
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);

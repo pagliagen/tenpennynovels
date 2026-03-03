@@ -336,7 +336,8 @@
   font-size: 12px;
   font-family: 'Monaco', 'Courier New', monospace;
   transition: all $transition-fast;
-  max-width: 300px;
+  max-width: 30vw;
+  width: 500px;
   flex-shrink: 0;
 
   &:hover {

@@ -93,16 +93,17 @@ export class LocationActionManagementController {
       logger.info('Location actions retrieved', {
         total,
         page: Number(page),
-        limit: Number(limit),
+        pageSize: Number(limit),
         filters: { locationId, actionType, characterId, visibility }
       });
 
       const pagination = {
-        currentPage: Number(page),
+        page: Number(page),
         totalPages: Math.ceil(total / Number(limit)),
         totalItems: total,
-        limit: Number(limit),
-        hasMore: Number(page) < Math.ceil(total / Number(limit))
+        pageSize: Number(limit),
+        hasNextPage: Number(page) < Math.ceil(total / Number(limit)),
+        hasPrevPage: page > 1
       };
 
       res.json(listResponse(

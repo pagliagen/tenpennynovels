@@ -143,7 +143,7 @@ export class UserManagementController {
 
       // Transform to API format
       const transformedUsers: AdminUserProfile[] = users.map(user => ({
-        id: (user._id as any)?.toString(),
+        _id: (user._id as any)?.toString(),
         username: user.username,
         email: user.email,
         displayName: user.displayName || '',
@@ -176,11 +176,12 @@ export class UserManagementController {
 
       const totalPages = Math.ceil(totalUsers / pageSize);
       const pagination: PaginationInfo = {
-        currentPage: page,
+        page,
         totalPages,
         totalItems: totalUsers,
-        limit: pageSize,
-        hasMore: page < totalPages
+        pageSize,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1
       };
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
@@ -222,7 +223,7 @@ export class UserManagementController {
       // TODO: Implement database query
       // Mock data simulating a gestore user with full permissions
       const mockUser: AdminUserProfile = {
-        id: userId,
+        _id: userId,
         username: userId === '68977cc5d4c78ce0d9fd0d49' ? 'admin' : 'gestore_user',
         email: userId === '68977cc5d4c78ce0d9fd0d49' ? 'admin@tenpennynovels.com' : 'gestore@tenpennynovels.com',
         displayName: userId === '68977cc5d4c78ce0d9fd0d49' ? 'System Administrator' : 'Site Manager',
@@ -883,7 +884,7 @@ export class UserManagementController {
       // Transform to API format
       const userData = updatedUser as any;
       const transformedUser: AdminUserProfile = {
-        id: userData._id.toString(),
+        _id: userData._id.toString(),
         username: userData.username,
         email: userData.email,
         displayName: userData.displayName || '',

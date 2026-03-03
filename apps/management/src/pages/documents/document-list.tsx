@@ -170,8 +170,7 @@ export default function DocumentList() {
         slug: doc.slug,
         type: typeFilter,
         kind: 'document' as const,
-        title: doc.title,
-        description: '',
+        // ❌ REMOVED: title, description - these come from Document!
         rootDocumentId: doc._id,
         isPublic: true,
         enabled: true
@@ -409,10 +408,9 @@ export default function DocumentList() {
             type={typeFilter}
             preselectedParentDocId={selectedParentDocId}
             onDocumentCreated={(documentId) => {
-              setSelectedDocId(documentId);
-              setEditModalOpen(true);
               setCreateDocModalOpen(false);
               setSelectedParentDocId(null);
+              handleEditDocument(documentId);  // Simula pressione bottone "✏️ Modifica Documento"
             }}
           />
         )}

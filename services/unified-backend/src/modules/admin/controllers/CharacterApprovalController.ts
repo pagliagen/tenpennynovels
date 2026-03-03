@@ -74,7 +74,7 @@ export class CharacterApprovalController {
         const email = userData.email || 'No Email';
 
         return {
-          id: char._id.toString(),
+          _id: char._id.toString(),
           characterName: char.name || 'Unnamed',
           characterSurname: char.surname || '',
           userId: userIdString,
@@ -90,14 +90,14 @@ export class CharacterApprovalController {
       });
 
       const totalPages = Math.ceil(totalItems / pageSize);
-      const hasMore = page < totalPages;
 
       const paginationInfo: PaginationInfo = {
-        currentPage: page,
+        page,
         totalPages,
         totalItems,
-        limit: pageSize,
-        hasMore
+        pageSize,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1
       };
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
@@ -185,11 +185,12 @@ export class CharacterApprovalController {
       ];
 
       const mockPagination: PaginationInfo = {
-        currentPage: page,
+        page,
         totalPages: 1,
         totalItems: mockCharacters.length,
-        limit,
-        hasMore: false
+        pageSize: limit,
+        hasNextPage: false,
+        hasPrevPage: false
       };
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);

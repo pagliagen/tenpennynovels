@@ -2,8 +2,32 @@
  * Typography Base Styles
  *
  * Global typography styles for headings, paragraphs, and text elements.
- * Victorian-inspired typography with IM Fell English font.
+ * Victorian-inspired typography with Les Mystères de Paris and Thrifted Attire fonts.
  */
+
+@font-face {
+  font-family: 'Les Mystères de Paris';
+  src: url('/fonts/Les Mysteres de Paris.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Thrifted Attire';
+  src: url('/fonts/ThriftedAttire-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Thrifted Attire';
+  src: url('/fonts/ThriftedAttire-Italic.otf') format('opentype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
 
 /**
  * Headings

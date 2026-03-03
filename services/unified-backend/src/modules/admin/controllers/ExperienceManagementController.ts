@@ -98,7 +98,7 @@ export class ExperienceManagementController {
           recentGrants: recentGrants,
           pagination: {
             page: parseInt(page as string),
-            limit: parseInt(limit as string),
+            pageSize: parseInt(limit as string),
             totalGrants: grantsCount
           }
         },
@@ -159,11 +159,12 @@ export class ExperienceManagementController {
       ]);
       
       const pagination = {
-        currentPage: parseInt(page as string),
+        page: parseInt(page as string),
         totalPages: Math.ceil(totalCount / parseInt(limit as string)),
         totalItems: totalCount,
-        limit: parseInt(limit as string),
-        hasMore: parseInt(page as string) < Math.ceil(totalCount / parseInt(limit as string))
+        pageSize: parseInt(limit as string),
+        hasNextPage: parseInt(page as string) < Math.ceil(totalCount / parseInt(limit as string)),
+        hasPrevPage: page > 1
       };
 
       res.json(successResponse(

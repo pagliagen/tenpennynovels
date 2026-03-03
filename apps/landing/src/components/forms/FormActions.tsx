@@ -42,6 +42,8 @@ export interface FormActionsProps {
   className?: string;
   /** Alignment of buttons (default: 'center') */
   align?: 'left' | 'center' | 'right' | 'space-between';
+  /** Additional CSS styles */
+  style?: React.CSSProperties;
 }
 
 /**
@@ -135,6 +137,7 @@ export const FormActions: React.FC<FormActionsProps> = ({
   secondaryType = 'button',
   className = '',
   align = 'center',
+  style = {},
 }) => {
   // Determine if submit button should be disabled
   const isSubmitDisabled = submitLoading || submitDisabled;
@@ -164,6 +167,7 @@ export const FormActions: React.FC<FormActionsProps> = ({
         className={`form-actions__submit ${submitLoading ? 'form-actions__submit--loading' : ''}`}
         disabled={isSubmitDisabled}
         aria-busy={submitLoading}
+        style={style}
       >
         {/* Loading spinner (optional) */}
         {submitLoading && (

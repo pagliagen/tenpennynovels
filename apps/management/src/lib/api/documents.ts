@@ -224,8 +224,7 @@ export async function createRoute(data: {
   slug: string;  // CHANGED: backend now uses slug instead of path (auto-calculated)
   type: 'ambientazione' | 'approfondimenti' | 'regolamento';
   kind: 'document' | 'category' | 'redirect';
-  title: string;
-  description?: string;
+  // ❌ REMOVED: title, description, order - these come from Document!
   rootDocumentId?: string;
   documentData?: {
     title: string;
@@ -238,7 +237,6 @@ export async function createRoute(data: {
   redirectTo?: string;
   isPublic?: boolean;
   enabled?: boolean;
-  order?: number;
 }): Promise<any> {
   const response = await withRetry(() =>
     apiClient.post<ApiResponse<any>>('/admin/routes', data)
@@ -256,8 +254,7 @@ export async function createRoute(data: {
  */
 export async function updateRoute(routeId: string, data: {
   path?: string;
-  title?: string;
-  description?: string;
+  // ❌ REMOVED: title, description - edit Document instead
   redirectTo?: string;
   isPublic?: boolean;
   enabled?: boolean;

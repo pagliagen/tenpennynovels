@@ -188,11 +188,12 @@ export class EconomyAdminController {
       ];
 
       const mockPagination: PaginationInfo = {
-        currentPage: page,
+        page,
         totalPages: 1,
         totalItems: mockTransactions.length,
-        limit,
-        hasMore: false
+        pageSize: limit,
+        hasNextPage: false,
+        hasPrevPage: false
       };
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);

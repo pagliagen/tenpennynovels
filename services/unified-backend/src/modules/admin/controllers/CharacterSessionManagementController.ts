@@ -5,6 +5,7 @@ import { User } from '@database/models/User';
 import { logger } from '../utils/logger';
 import { auditLogger } from '../utils/auditLogger';
 import { listResponse, successResponse, errorResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
+import { PaginationInfo } from '../types/management';
 
 export class CharacterSessionManagementController {
 
@@ -56,16 +57,17 @@ export class CharacterSessionManagementController {
       logger.info('Active character sessions retrieved', {
         total,
         page: Number(page),
-        limit: Number(limit),
+        pageSize: Number(limit),
         filters: { characterId, userId, deviceType }
       });
 
-      const pagination = {
-        currentPage: Number(page),
+      const pagination: PaginationInfo = {
+        page: Number(page),
         totalPages: Math.ceil(total / Number(limit)),
         totalItems: total,
-        limit: Number(limit),
-        hasMore: Number(page) < Math.ceil(total / Number(limit))
+        pageSize: Number(limit),
+        hasNextPage: Number(page) < Math.ceil(total / Number(limit)),
+        hasPrevPage: Number(page) > 1
       };
 
       res.json(listResponse(
@@ -359,7 +361,7 @@ export class CharacterSessionManagementController {
           pagination: {
             total,
             page: Number(page),
-            limit: Number(limit),
+            pageSize: Number(limit),
             pages: Math.ceil(total / Number(limit))
           }
         },

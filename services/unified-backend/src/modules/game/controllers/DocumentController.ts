@@ -126,6 +126,8 @@ export class DocumentController {
    *
    * ⚠️ ONLY returns TOP-LEVEL routes (no "/" in path)
    * Sub-routes are loaded when accessing category detail
+   *
+   * ✅ FIX: Now aggregates Document.title instead of Route.title
    */
   static async listRoutes(req: Request, res: Response): Promise<void> {
     try {
@@ -147,9 +149,51 @@ export class DocumentController {
       // Sub-routes like "approfondimenti/medicina" are hidden from main menu
       filter.path = { $not: { $regex: '/' } };
 
-      const routes = await Route.find(filter)
-        .select('path type kind title description displayCategory isPublic')
-        .sort({ type: 1, path: 1 });
+      // ✅ Join Documents for title
+      const routes = await Route.aggregate([
+        { $match: filter },
+        {
+          $lookup: {
+            from: 'documents',
+            localField: 'rootDocumentId',
+            foreignField: '_id',
+            as: 'document',
+            pipeline: [
+              // ✅ CRITICAL: Filter out soft-deleted documents
+              { $match: { deleted: { $ne: true } } }
+            ]
+          }
+        },
+        {
+          $unwind: {
+            path: '$document',
+            preserveNullAndEmptyArrays: true
+          }
+        },
+        {
+          $project: {
+            path: 1,
+            type: 1,
+            kind: 1,
+            isPublic: 1,
+            rootDocumentId: 1,
+            hasDocument: { $ifNull: ['$document._id', null] },
+            title: { $ifNull: ['$document.title', 'Untitled'] }
+            // description removed - not needed in top-level menu
+            // displayCategory removed - not needed
+          }
+        },
+        {
+          // ✅ Filter out document routes pointing to deleted documents
+          $match: {
+            $or: [
+              { kind: { $ne: 'document' } },  // Keep category/redirect routes
+              { hasDocument: { $ne: null } }   // Keep document routes only if document exists
+            ]
+          }
+        },
+        { $sort: { type: 1, path: 1 } }
+      ]);
 
       res.json({
         success: true,
@@ -173,6 +217,9 @@ export class DocumentController {
    * Returns routes grouped by type with parent/child relationships.
    * Supports unlimited nesting depth for sidebar navigation.
    *
+   * ✅ FIX: Now aggregates Document.order, Document.title, Document.description
+   * instead of Route fields (documents-first architecture)
+   *
    * Response format:
    * {
    *   "success": true,
@@ -192,12 +239,56 @@ export class DocumentController {
         filter.isPublic = true;
       }
 
-      // ✅ Fetch ALL routes (including nested) - NO path filter
-      const routes = await Route.find(filter)
-        .select('_id parentId path slug type kind title description displayCategory isPublic order')
-        .lean();
+      // ✅ Aggregate: Join Documents for order, title, description
+      const routes = await Route.aggregate([
+        { $match: filter },
+        {
+          $lookup: {
+            from: 'documents',
+            localField: 'rootDocumentId',
+            foreignField: '_id',
+            as: 'document',
+            pipeline: [
+              // ✅ CRITICAL: Filter out soft-deleted documents
+              { $match: { deleted: { $ne: true } } }
+            ]
+          }
+        },
+        {
+          $unwind: {
+            path: '$document',
+            preserveNullAndEmptyArrays: true  // Keep category routes without documents
+          }
+        },
+        {
+          $project: {
+            _id: 1,
+            parentId: 1,
+            path: 1,
+            slug: 1,
+            type: 1,
+            kind: 1,
+            isPublic: 1,
+            rootDocumentId: 1,  // Include to check if document exists
+            hasDocument: { $ifNull: ['$document._id', null] },  // Check if document was found
+            // ✅ Use Document fields (not Route fields!)
+            title: { $ifNull: ['$document.title', 'Untitled Category'] },
+            description: '$document.description',
+            order: { $ifNull: ['$document.order', 0] }  // ✅ CRITICAL: Document.order fixes ordering bug!
+          }
+        },
+        {
+          // ✅ Filter out document routes pointing to deleted documents
+          $match: {
+            $or: [
+              { kind: { $ne: 'document' } },  // Keep category/redirect routes
+              { hasDocument: { $ne: null } }   // Keep document routes only if document exists (not deleted)
+            ]
+          }
+        }
+      ]);
 
-      // ✅ Build hierarchical tree
+      // ✅ Build hierarchical tree (existing function - already sorts by order)
       const hierarchicalRoutes = DocumentController.buildHierarchicalRouteTree(routes);
 
       // ✅ Group by type

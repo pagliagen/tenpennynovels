@@ -139,36 +139,6 @@ export default function LoginPage() {
       onDismissError={clearMessages}
       onDismissSuccess={clearMessages}
     >
-      {/* SEO Welcome Section - Important for SEO */}
-      <div style={{
-        maxWidth: '800px',
-        margin: '0 auto 1rem',
-        padding: '2rem',
-        background: 'rgba(139, 69, 19, 0.1)',
-        border: '1px solid rgba(212, 175, 55, 0.3)',
-        borderRadius: '8px',
-        color: '#d4af37',
-        textAlign: 'center'
-      }}>
-        <h1 style={{
-          fontSize: '2.5rem',
-          marginBottom: '1rem',
-          color: '#d4af37',
-          fontFamily: 'IM Fell English, serif'
-        }}>
-          Benvenuto nella Londra Vittoriana
-        </h1>
-        <p style={{ fontSize: '1.1rem', lineHeight: '1.6', marginBottom: '1rem' }}>
-          <strong>TenpennyNovels</strong> è un gioco di ruolo online gratuito ambientato nella suggestiva{' '}
-          <strong>Londra Vittoriana degli anni 1890</strong>. Basato sul celebre sistema{' '}
-          <strong>Call of Cthulhu</strong>, offre un'esperienza GDR investigativa unica via chat, con narrazione in stile Agatha Christie.
-        </p>
-        <p style={{ fontSize: '1rem', lineHeight: '1.6' }}>
-          Crea il tuo personaggio vittoriano, esplora le nebbiose strade di Londra, interagisci con altri giocatori
-          e vivi avventure horror lovecraftiane. <strong>Registrazione gratuita</strong> e immediata!
-        </p>
-      </div>
-
       <form onSubmit={handleSubmit(onSubmit)} className="login-form">
         <div className="login-fields">
           <MaskedInput
@@ -236,6 +206,7 @@ export default function LoginPage() {
         <FormActions
           submitText="Gioca >>"
           submitLoading={loading}
+          align="right"
         />
       </form>
     </FormPageLayout>

@@ -298,11 +298,12 @@ export class SystemConfigController {
       ];
 
       const mockPagination: PaginationInfo = {
-        currentPage: page,
+        page,
         totalPages: 1,
         totalItems: mockAuditLogs.length,
-        limit,
-        hasMore: false
+        pageSize: limit,
+        hasNextPage: false,
+        hasPrevPage: false
       };
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
@@ -764,7 +765,7 @@ audit_2,2024-01-15T13:15:00Z,admin,user_banned,user_management,user,user123,high
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       logger.info('Broadcast history retrieved', {
         ...auditInfo,
-        limit,
+        pageSize: limit,
         offset,
         type,
         resultCount: messages.length,
@@ -776,9 +777,9 @@ audit_2,2024-01-15T13:15:00Z,admin,user_banned,user_management,user,user123,high
           messages: transformedMessages,
           pagination: {
             total: totalCount,
-            limit,
+            pageSize: limit,
             offset,
-            hasMore: offset + messages.length < totalCount
+            hasNextPage: offset + messages.length < totalCount,
           }
         },
         undefined,

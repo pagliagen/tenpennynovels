@@ -95,11 +95,11 @@ export class CorporationManagementController {
       const hasMore = page < totalPages;
 
       const paginationInfo: PaginationInfo = {
-        currentPage: page,
+        page,
         totalPages,
         totalItems,
-        limit: pageSize,
-        hasMore
+        pageSize,
+        hasNextPage
       };
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
@@ -375,18 +375,18 @@ export class CorporationManagementController {
       const hasMore = page < totalPages;
 
       const paginationInfo: PaginationInfo = {
-        currentPage: page,
+        page,
         totalPages,
         totalItems,
-        limit,
-        hasMore
+        pageSize: limit,
+        hasNextPage
       };
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       logger.info('Admin viewed membership requests', {
         ...auditInfo,
         page,
-        limit,
+        pageSize: limit,
         corporationFilter: corporationId || 'all',
         totalResults: transformedRequests.length,
         category: 'corporation_management'
@@ -1133,11 +1133,11 @@ export class CorporationManagementController {
       const hasMore = page < totalPages;
 
       const paginationInfo: PaginationInfo = {
-        currentPage: page,
+        page,
         totalPages,
         totalItems,
-        limit,
-        hasMore
+        pageSize: limit,
+        hasNextPage
       };
 
       res.json(successResponse(
@@ -1651,11 +1651,12 @@ export class CorporationManagementController {
         {
           requests: transformedRequests,
           pagination: {
-            currentPage: page,
+            page,
             totalPages,
             totalItems: totalRequests,
-            limit: pageSize,
-            hasMore: page < totalPages
+            pageSize,
+            hasNextPage: page < totalPages,
+        hasPrevPage: page > 1
           }
         },
         undefined,

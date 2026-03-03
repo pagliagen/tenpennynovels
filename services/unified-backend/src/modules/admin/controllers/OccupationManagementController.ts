@@ -41,11 +41,12 @@ export class OccupationManagementController {
         .lean();
 
       const pagination = {
-        currentPage: page,
+        page,
         totalPages: Math.ceil(totalItems / limit),
         totalItems,
-        limit,
-        hasMore: page < Math.ceil(totalItems / limit)
+        pageSize: limit,
+        hasNextPage: page < Math.ceil(totalItems / limit),
+        hasPrevPage: page > 1
       };
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
@@ -53,7 +54,7 @@ export class OccupationManagementController {
         ...auditInfo,
         filters: { category, socialClass, isActive, search },
         page,
-        limit,
+        pageSize: limit,
         totalResults: totalItems
       });
 

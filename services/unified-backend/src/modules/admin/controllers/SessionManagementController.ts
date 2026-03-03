@@ -255,11 +255,12 @@ export class SessionManagementController {
       const totalCount = await GamingSession.countDocuments(filter);
       
       const pagination = {
-        currentPage: Math.floor(parseInt(skip as string) / parseInt(limit as string)) + 1,
+        page: Math.floor(parseInt(skip as string) / parseInt(limit as string)) + 1,
         totalPages: Math.ceil(totalCount / parseInt(limit as string)),
         totalItems: totalCount,
-        limit: parseInt(limit as string),
-        hasMore: totalCount > parseInt(skip as string) + parseInt(limit as string)
+        pageSize: parseInt(limit as string),
+        hasNextPage: totalCount > parseInt(skip as string) + parseInt(limit as string),
+        hasPrevPage: page > 1
       };
 
       res.json(listResponse(
@@ -419,11 +420,12 @@ export class SessionManagementController {
       );
       
       const pagination = {
-        currentPage: Math.floor(parseInt(skip as string) / parseInt(limit as string)) + 1,
+        page: Math.floor(parseInt(skip as string) / parseInt(limit as string)) + 1,
         totalPages: Math.ceil(totalCount / parseInt(limit as string)),
         totalItems: totalCount,
-        limit: parseInt(limit as string),
-        hasMore: totalCount > parseInt(skip as string) + parseInt(limit as string)
+        pageSize: parseInt(limit as string),
+        hasNextPage: totalCount > parseInt(skip as string) + parseInt(limit as string),
+        hasPrevPage: page > 1
       };
 
       res.json(listResponse(
@@ -513,11 +515,12 @@ export class SessionManagementController {
       const totalCount = await Campaign.countDocuments(filter);
       
       const pagination = {
-        currentPage: Math.floor(parseInt(skip as string) / parseInt(limit as string)) + 1,
+        page: Math.floor(parseInt(skip as string) / parseInt(limit as string)) + 1,
         totalPages: Math.ceil(totalCount / parseInt(limit as string)),
         totalItems: totalCount,
-        limit: parseInt(limit as string),
-        hasMore: totalCount > parseInt(skip as string) + parseInt(limit as string)
+        pageSize: parseInt(limit as string),
+        hasNextPage: totalCount > parseInt(skip as string) + parseInt(limit as string),
+        hasPrevPage: page > 1
       };
 
       res.json(listResponse(

@@ -28,7 +28,7 @@ export function successResponse<T>(
  * Generate success response for list (GET list endpoints)
  */
 export function listResponse<T>(
-  list: T[],
+  items: T[],
   pagination: PaginationInfo,
   message?: string,
   requestId?: string
@@ -36,7 +36,7 @@ export function listResponse<T>(
   return {
     result: true,
     success: true, // Backward compatibility
-    list,
+    items,
     pagination,
     message,
     timestamp: new Date().toISOString(),

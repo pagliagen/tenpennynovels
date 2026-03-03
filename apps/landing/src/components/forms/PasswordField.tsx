@@ -129,7 +129,7 @@ function getStrengthLabel(strength: PasswordStrength): string {
  * Uses MaskedInput when password is hidden for Victorian styling.
  *
  * **Show/Hide Toggle**:
- * - Hidden: Victorian mask with bullets (●●●●●●)
+ * - Hidden: Victorian mask with bullets (◆◆◆◆◆◆)
  * - Visible: Plain text input showing actual password
  *
  * **Strength Meter** (optional):

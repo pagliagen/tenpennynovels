@@ -14,11 +14,9 @@ export interface Route {
   parentId: string | null;          // Parent route ID (null = root level)
   slug: string;                     // URL segment ("armi", "folklore")
   path: string;                     // Full calculated path ("folklore", "approfondimenti/armi")
-  order: number;                    // Display order within siblings
+  // ❌ REMOVED: order, title, description, displayCategory (use Document fields via backend join)
   type: 'ambientazione' | 'approfondimenti' | 'regolamento';
   kind: 'document' | 'category' | 'redirect';
-  title: string;
-  displayCategory?: string;
   enabled: boolean;
   isPublic: boolean;
   rootDocument: DocumentTreeNode | null;  // Root document with nested children

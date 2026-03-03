@@ -100,10 +100,10 @@ export class SkillManagementController {
         {
           skills: translatedSkills,
           pagination: {
-            currentPage: Number(page),
+            page: Number(page),
             totalPages,
             totalSkills,
-            limit: Number(limit),
+            pageSize: Number(limit),
             hasNext: hasNextPage,
             hasPrev: hasPreviousPage
           }

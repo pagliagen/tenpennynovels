@@ -80,12 +80,12 @@ export class SocialClassManagementController {
         {
           socialClasses: socialClassesWithStats,
           pagination: {
-            currentPage: pageNum,
+            page: pageNum,
             totalPages,
             totalCount: total,
             hasNextPage: pageNum < totalPages,
             hasPrevPage: pageNum > 1,
-            limit: limitNum
+            pageSize: limitNum
           }
         },
         undefined,
@@ -1015,7 +1015,7 @@ export class SocialClassManagementController {
       const total = countResult[0]?.total || 0;
 
       // Add pagination
-      pipeline.push({ $skip: skip }, { $limit: limitNum });
+      pipeline.push({ $skip: skip }, { $pageSize: limitNum });
 
       // Add projection for cleaner output
       pipeline.push({
@@ -1052,12 +1052,12 @@ export class SocialClassManagementController {
             createdAt: char.createdAt
           })),
           pagination: {
-            currentPage: pageNum,
+            page: pageNum,
             totalPages,
             totalCount: total,
             hasNextPage: pageNum < totalPages,
             hasPrevPage: pageNum > 1,
-            limit: limitNum
+            pageSize: limitNum
           }
         },
         undefined,

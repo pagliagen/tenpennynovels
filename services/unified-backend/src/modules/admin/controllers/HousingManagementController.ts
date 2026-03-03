@@ -54,11 +54,11 @@ export class HousingManagementController {
       const hasMore = Number(page) < totalPages;
 
       const pagination = {
-        currentPage: Number(page),
+        page: Number(page),
         totalPages,
         totalItems: totalProperties,
         limit: Number(pageSize),
-        hasMore
+        hasNextPage
       };
 
       res.json(listResponse(

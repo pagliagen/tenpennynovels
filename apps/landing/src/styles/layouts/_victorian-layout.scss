@@ -14,14 +14,14 @@
    * Background image (desktop)
    */
   &__background {
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
     width: 100%;
-    height: 100%;
+    height: calc(100% - 180px);
     background-image: url('/images/sfondo.png');
     background-size: contain;
-    background-position: center;
+    background-position: top center;
     background-repeat: no-repeat;
     z-index: -2;
 
@@ -34,7 +34,7 @@
    * Mobile background
    */
   &__mobile-background {
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
     width: 100%;
@@ -65,7 +65,7 @@
     height: var(--size-hamburger);
     padding: var(--spacing-xs);
     background: var(--color-bg-secondary);
-    border: 2px solid var(--color-border-primary);
+    border: 2px solid var(--color-homepage-green);
     cursor: pointer;
     transition: var(--transition-button);
 
@@ -74,7 +74,7 @@
     }
 
     &:hover {
-      background: var(--color-primary);
+      background: var(--color-homepage-green);
     }
 
     &--open &-bar:nth-child(1) {
@@ -94,7 +94,7 @@
     display: block;
     width: 100%;
     height: 2px;
-    background: var(--color-primary);
+    background: var(--color-homepage-green);
     margin: var(--spacing-xs) 0;
     transition: var(--transition-base);
   }
@@ -143,17 +143,13 @@
    * Left sidebar
    */
   &__sidebar {
-    position: fixed;
-    left: 0;
-    top: 0;
-    width: 250px;
+    width: 50%;
     height: 100vh;
     display: flex;
     flex-direction: column;
-    background: rgba(26, 15, 10, 0.9);
-    border-right: 2px solid var(--color-border-primary);
     padding: var(--spacing-2xl) var(--spacing-lg);
     z-index: 10;
+    justify-content: center;
 
     @media (max-width: 767px) {
       display: none;
@@ -165,8 +161,7 @@
    */
   &__logo {
     width: 100%;
-    height: 150px;
-    margin-bottom: var(--spacing-3xl);
+    height: 50%;
     background-image: url('/images/title.png');
     background-size: contain;
     background-position: center;
@@ -176,23 +171,42 @@
   /**
    * Navigation
    */
-  &__nav {
+  &__nav { 
     display: flex;
     flex-direction: column;
     gap: var(--spacing-md);
+    margin-left: auto;
+    margin-right: auto;
+    width: 70%;
+    max-width: 300px;
+    margin-top: -15px;
+  }
+
+  &__nav-title {
+    width: 100%;
+    justify-content: left;
+    text-align: left;
+    font-family: var(--font-primary);
+    font-size: var(--font-size-4xl);
+    transition: var(--transition-button);
+    color: var(--color-homepage-red);
+    text-transform: capitalize;
   }
 
   &__nav-button {
     width: 100%;
-    justify-content: flex-start;
+    padding: unset;
+    justify-content: left;
     text-align: left;
-    font-size: var(--font-size-lg);
-    padding: var(--spacing-md);
+    font-family: var(--font-primary);
+    font-size: var(--font-size-xl);
     transition: var(--transition-button);
+    color: var(--color-homepage-green);
+    text-transform: uppercase;
 
     &:hover {
       transform: translateX(8px);
-      color: var(--color-primary);
+      color: var(--color-homepage-green);
     }
   }
 
@@ -207,11 +221,6 @@
     flex: 1;
     margin-left: 0;
     position: relative;
-    z-index: 1;
-
-    @media (min-width: 768px) {
-      margin-left: 250px;
-    }
   } 
   
   /**
@@ -235,12 +244,13 @@
     z-index: 2;
     min-height: 100vh;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-end;
     padding: var(--spacing-container-mobile);
 
     @media (min-width: 768px) {
       padding: var(--spacing-container-desktop);
     }
-  }
+  } 
 }
