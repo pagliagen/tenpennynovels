@@ -30,7 +30,8 @@ interface CharacterData {
   skills?: Array<{ name: string; value: number; category?: string }>;
   stats?: Record<string, number>;
   equippedItems?: Array<{ id: string; name: string; category?: string }>;
-  roles?: string[];
+  roles?: string[]; // Deprecated - use gamePermissions instead
+  gamePermissions?: string[]; // NEW: Game permissions for checking action availability
 }
 
 /**
@@ -86,10 +87,16 @@ interface MessageInputProps {
 const MAX_CHARACTERS = 2000;
 
 /**
- * Get available action types based on character data
+ * Get available action types based on character data and game permissions
  */
 function getAvailableActions(characterData: CharacterData): ChatMessageType[] {
   const baseActions: ChatMessageType[] = ['standard', 'whisper', 'ooc', 'dice_roll'];
+  const gamePermissions = characterData.gamePermissions || [];
+
+  // Helper: Check if has permission
+  const hasPermission = (permission: string): boolean => {
+    return gamePermissions.includes('game:*') || gamePermissions.includes(permission);
+  };
 
   // Skill check (only if has skills)
   if (characterData.skills && characterData.skills.length > 0) {
@@ -106,13 +113,13 @@ function getAvailableActions(characterData: CharacterData): ChatMessageType[] {
     baseActions.push('item_use');
   }
 
-  // Master actions (only if has master/gestore role)
-  if (characterData.roles?.includes('master') || characterData.roles?.includes('gestore')) {
+  // Master actions (only if has master action permission)
+  if (hasPermission('game:chat:master-action')) {
     baseActions.push('master');
   }
 
-  // Moderation (only if has moderatore/gestore role)
-  if (characterData.roles?.includes('moderatore') || characterData.roles?.includes('gestore')) {
+  // Moderation (only if has moderation action permission)
+  if (hasPermission('game:chat:moderation-action')) {
     baseActions.push('moderation');
   }
 
@@ -180,6 +187,11 @@ export function MessageInput({
 
   // Available actions
   const availableActions = getAvailableActions(characterData);
+
+  // Check social conflict permission
+  const gamePermissions = characterData.gamePermissions || [];
+  const hasSocialConflictPermission = gamePermissions.includes('game:*') ||
+                                       gamePermissions.includes('game:chat:social-clash');
 
   /**
    * Reset action-specific selections when action type changes
@@ -480,7 +492,7 @@ export function MessageInput({
             onClick={toggleSocialConflictMode}
             className={`${styles.actionButton} ${isSocialConflictMode ? styles.active : ''}`}
             title="Scontro Sociale (Raggirare, Persuasione, Intimidazione)"
-            disabled={disabled}
+            disabled={disabled || !hasSocialConflictPermission}
           >
             🎭 Scontro Sociale
           </button>

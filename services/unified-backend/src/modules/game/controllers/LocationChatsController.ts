@@ -76,8 +76,9 @@ export class LocationChatsController {
 
       // Validate action type permissions
       const isValidAction = LocationChatsController.validateActionPermission(
-        actionType, 
-        character.gameplayRoles || []
+        actionType,
+        character.gameplayRoles || [],
+        character.isGestore || false
       );
       
       if (!isValidAction) {
@@ -619,13 +620,19 @@ export class LocationChatsController {
 
   /**
    * Validate if character has permission for action type
+   * Uses NEW gameplayRoles system: player, approved-player, master, moderatore
    */
-  private static validateActionPermission(actionType: string, roles: string[]): boolean {
+  private static validateActionPermission(actionType: string, gameplayRoles: string[], isGestore: boolean = false): boolean {
+    // Gestore bypass (super-admin)
+    if (isGestore) return true;
+
     switch (actionType) {
       case 'master':
-        return roles.includes('master') || roles.includes('gestore');
+        // Only master role can perform master actions
+        return gameplayRoles.includes('master');
       case 'moderation':
-        return roles.includes('moderatore') || roles.includes('gestore');
+        // Only moderatore role can perform moderation actions
+        return gameplayRoles.includes('moderatore');
       case 'standard':
       case 'whisper':
       case 'ooc':
@@ -633,8 +640,10 @@ export class LocationChatsController {
       case 'skill_check':
       case 'stat_check':
       case 'item_use':
-        return roles.includes('personaggio') || roles.includes('master') || 
-               roles.includes('moderatore') || roles.includes('gestore');
+        // All approved players can perform standard actions
+        return gameplayRoles.includes('approved-player') ||
+               gameplayRoles.includes('master') ||
+               gameplayRoles.includes('moderatore');
       default:
         return false;
     }

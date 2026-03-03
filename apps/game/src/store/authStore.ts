@@ -30,12 +30,14 @@ import { clearAuthToken } from '@/lib/api/client';
  * @property {Character | null} selectedCharacter - Currently selected character for gameplay
  * @property {boolean} isAuthenticated - Whether user is authenticated
  * @property {boolean} isInitialized - Whether store has been hydrated from localStorage
+ * @property {string[]} gamePermissions - Game permissions for current character (NOT persisted - fetched fresh from backend)
  */
 interface AuthState {
   user: User | null;
   selectedCharacter: Character | null;
   isAuthenticated: boolean;
   isInitialized: boolean;
+  gamePermissions: string[];
 }
 
 /**
@@ -70,6 +72,28 @@ interface AuthActions {
    * @returns {void}
    */
   clearSelectedCharacter: () => void;
+
+  /**
+   * Set game permissions for current character
+   *
+   * Permissions are fetched from backend on session init.
+   * NOT persisted - always fetch fresh from /auth/session.
+   *
+   * @param {string[]} permissions - Array of permission strings
+   * @returns {void}
+   */
+  setGamePermissions: (permissions: string[]) => void;
+
+  /**
+   * Check if current character has a specific game permission
+   *
+   * Checks against gamePermissions array. Supports wildcard 'game:*'.
+   * Returns true if character is gestore (bypasses all checks).
+   *
+   * @param {string} permission - Permission to check (e.g., 'game:chat:send')
+   * @returns {boolean} Whether character has permission
+   */
+  hasGamePermission: (permission: string) => boolean;
 
   /**
    * Logout user and clear all auth data
@@ -129,12 +153,13 @@ type AuthStore = AuthState & AuthActions;
  */
 export const useAuthStore = create<AuthStore>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       // Initial state
       user: null,
       selectedCharacter: null,
       isAuthenticated: false,
       isInitialized: false,
+      gamePermissions: [],
 
       /**
        * Set authenticated user
@@ -182,13 +207,56 @@ export const useAuthStore = create<AuthStore>()(
        * @since 2.0.0
        */
       clearSelectedCharacter: () => {
-        set({ selectedCharacter: null });
+        set({ selectedCharacter: null, gamePermissions: [] });
+      },
+
+      /**
+       * Set game permissions for current character
+       *
+       * Permissions are fetched from backend on session init.
+       * NOT persisted - always fetch fresh from /auth/session.
+       *
+       * @function setGamePermissions
+       * @param {string[]} permissions - Array of permission strings
+       * @returns {void}
+       * @since 3.0.0
+       */
+      setGamePermissions: (permissions) => {
+        set({ gamePermissions: permissions });
+      },
+
+      /**
+       * Check if current character has a specific game permission
+       *
+       * Checks against gamePermissions array. Supports wildcard 'game:*'.
+       * Returns true if character is gestore (bypasses all checks).
+       *
+       * @function hasGamePermission
+       * @param {string} permission - Permission to check (e.g., 'game:chat:send')
+       * @returns {boolean} Whether character has permission
+       * @since 3.0.0
+       */
+      hasGamePermission: (permission) => {
+        const state = get();
+
+        // Gestore bypasses all permissions
+        if (state.selectedCharacter?.isGestore) {
+          return true;
+        }
+
+        // Check wildcard permission
+        if (state.gamePermissions.includes('game:*')) {
+          return true;
+        }
+
+        // Check exact permission
+        return state.gamePermissions.includes(permission);
       },
 
       /**
        * Logout user and clear all auth data
        *
-       * Clears user, character, and tokens from state and localStorage.
+       * Clears user, character, tokens, and permissions from state and localStorage.
        * Sets isAuthenticated to false.
        *
        * CRITICAL: This does NOT invalidate the token on the server.
@@ -204,6 +272,7 @@ export const useAuthStore = create<AuthStore>()(
           user: null,
           selectedCharacter: null,
           isAuthenticated: false,
+          gamePermissions: [],
         });
       },
 
@@ -224,7 +293,8 @@ export const useAuthStore = create<AuthStore>()(
     {
       name: AUTH_CONFIG.USER_KEY, // localStorage key
       partialize: (state) => ({
-        // Only persist these fields (exclude isInitialized)
+        // Only persist these fields (exclude isInitialized and gamePermissions)
+        // gamePermissions are NOT persisted - always fetch fresh from backend
         user: state.user,
         selectedCharacter: state.selectedCharacter,
         isAuthenticated: state.isAuthenticated,
@@ -285,6 +355,13 @@ export const authSelectors = {
    * @returns {boolean}
    */
   isInitialized: (state: AuthStore) => state.isInitialized,
+
+  /**
+   * Select game permissions
+   *
+   * @returns {string[]}
+   */
+  gamePermissions: (state: AuthStore) => state.gamePermissions,
 
   /**
    * Check if user has selected a character

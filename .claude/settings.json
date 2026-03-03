@@ -1,7 +1,9 @@
 {
   "permissions": {
     "additionalDirectories": [
-      "/Users/gennaropaglia/.claude/skills"
+      "/Users/gennaropaglia/.claude/skills",
+      "/tmp",
+      "/private/tmp"
     ]
   }
 }

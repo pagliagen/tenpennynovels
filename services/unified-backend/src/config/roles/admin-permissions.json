@@ -1,8 +1,16 @@
 {
   "_meta": {
     "version": "2.1.0",
-    "description": "Sistema autorizzazioni granulari TenpennyNovels",
-    "lastUpdated": "2025-08-10"
+    "description": "LEGACY admin panel permissions - DEPRECATED",
+    "lastUpdated": "2026-03-03",
+    "deprecation": {
+      "status": "LEGACY_ACTIVE",
+      "reason": "Old permission system still used by admin middleware",
+      "migration_plan": "Gradually move to database-driven permissions via User.hasViewPermission()",
+      "removal_target": "Q2 2026",
+      "replacement": "Database-driven permissions with AdminAuthMiddleware"
+    },
+    "note": "This file has been renamed from permissions.json to admin-permissions.json and moved to /config/roles/ for better organization. See _README.md for architecture documentation."
   },
   "character_roles": {
     "personaggio": {

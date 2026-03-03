@@ -9,6 +9,7 @@
 import { Router } from 'express';
 import { DocumentController } from '../controllers/DocumentController';
 import { AuthMiddleware } from '../middleware/auth';
+import { requireGamePermission } from '../middleware/gamePermissions';
 
 const router = Router();
 
@@ -68,10 +69,11 @@ router.get('/:type/:path', AuthMiddleware.optionalAuth, DocumentController.getBy
 /**
  * GET /documents/favorites
  * List user favorites
- * Requires: auth_token cookie
+ * Requires: auth_token cookie + character context
  */
 router.get('/favorites',
-  AuthMiddleware.requireUserAuth,
+  AuthMiddleware.requireCharacterAuth,
+  requireGamePermission('game:documents:favorites:read'),
   DocumentController.getFavorites
 );
 
@@ -80,7 +82,8 @@ router.get('/favorites',
  * Toggle favorite (nested path)
  */
 router.post('/:type/:category/:slug/favorite',
-  AuthMiddleware.requireUserAuth,
+  AuthMiddleware.requireCharacterAuth,
+  requireGamePermission('game:documents:favorites:toggle'),
   (req, res) => {
     req.params.path = `${req.params.category}/${req.params.slug}`;
     return DocumentController.toggleFavorite(req as any, res);
@@ -90,11 +93,12 @@ router.post('/:type/:category/:slug/favorite',
 /**
  * POST /documents/:type/:path/favorite
  * Toggle favorite (single-level path)
- * Requires: auth_token cookie
+ * Requires: auth_token cookie + character context
  * Params: type (ambientazione|regolamento), path (e.g., "folklore")
  */
 router.post('/:type/:path/favorite',
-  AuthMiddleware.requireUserAuth,
+  AuthMiddleware.requireCharacterAuth,
+  requireGamePermission('game:documents:favorites:toggle'),
   DocumentController.toggleFavorite
 );
 

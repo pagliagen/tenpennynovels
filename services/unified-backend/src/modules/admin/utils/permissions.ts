@@ -35,7 +35,7 @@ let permissionConfig: PermissionConfig | null = null;
 function loadPermissionConfig(): PermissionConfig {
   // In development, sempre ricarica per vedere i cambiamenti
   if (!permissionConfig || process.env.NODE_ENV === 'development') {
-    const configPath = join(__dirname, '../../../config/static/permissions.json');
+    const configPath = join(__dirname, '../../../config/roles/admin-permissions.json');
     const configData = readFileSync(configPath, 'utf-8');
     permissionConfig = JSON.parse(configData);
   }

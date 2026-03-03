@@ -146,15 +146,16 @@ export class CharacterGameplayController {
       const { characterId } = req.params;
       const userId = req.user!.userId;
 
+      // Allow all statuses except DELETED (DRAFT characters can be selected too)
       const character = await (Character.findOne({
         _id: characterId,
         userId: userId,
-        status: 'APPROVED'
+        status: { $ne: 'DELETED' }
       }) as any);
 
       if (!character) {
         res.status(404).json(errorResponse(
-          'Personaggio non trovato o non approvato',
+          'Personaggio non trovato',
           'CHARACTER_NOT_SELECTABLE',
           undefined,
           404,
@@ -180,7 +181,10 @@ export class CharacterGameplayController {
           characterId: character.id,
           characterName: character.name,
           userId: userId,
-          gameplayRoles: character.gameplayRoles || ['personaggio']
+          gameplayRoles: character.gameplayRoles || [],
+          isGestore: character.isGestore || false,
+          status: character.status || 'DRAFT',
+          characterPermissions: character.characterPermissions || []
         },
         getJwtSecret(),
         { expiresIn: '24h' }

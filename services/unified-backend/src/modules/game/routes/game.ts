@@ -4,21 +4,24 @@ import { GameController } from '../controllers/GameController';
 import { TestController } from '../controllers/TestController';
 import { EnvironmentController } from '../controllers/EnvironmentController';
 import { requireMaster } from '../middleware/requireMaster';
+import { requireGamePermission } from '../middleware/gamePermissions';
 
 const router = Router();
 
 // Game initialization and validation routes (require character auth)
 router.post('/init',
   AuthMiddleware.requireCharacterAuth,
+  requireGamePermission('game:session:init'),
   GameController.initGame
 );
 
 router.get('/presence',
   AuthMiddleware.requireCharacterAuth,
+  requireGamePermission('game:presence:read'),
   GameController.getGlobalPresence
 );
 
-// Environment data (public - no auth required)
+// Environment data (public - no auth required, no permission check)
 router.get('/environment',
   EnvironmentController.getEnvironment
 );
@@ -27,6 +30,7 @@ router.get('/environment',
 router.post('/time/advance',
   AuthMiddleware.requireCharacterAuth,
   requireMaster,
+  requireGamePermission('game:admin:time:advance'),
   GameController.advanceTime
 );
 

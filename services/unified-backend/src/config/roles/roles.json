@@ -1,15 +1,37 @@
 {
   "_meta": {
-    "version": "3.1.0",
-    "description": "Roles and permissions aligned with actual management pages",
+    "version": "3.3.0",
+    "description": "Character roles for admin panel and game runtime bridge",
     "lastUpdated": "2026-03-03",
-    "notes": "Permissions are split into gamePermissions (in-game actions) and adminPermissions (system management)"
+    "architecture": "See _README.md for full permission system architecture",
+    "notes": [
+      "This file bridges admin panel permissions and game runtime permissions",
+      "characterRoles (this file) → used by admin panel for page/operation access",
+      "gameplayRoles (game-permissions.json) → auto-calculated from characterRoles + status",
+      "See admin-permissions.json for LEGACY admin panel system (being deprecated)"
+    ],
+    "related_files": {
+      "admin_legacy": "/config/roles/admin-permissions.json (DEPRECATED)",
+      "game_runtime": "/config/roles/game-permissions.json",
+      "documentation": "/config/roles/_README.md"
+    }
   },
   "characterRoles": [
     {
+      "value": "draft",
+      "label": "Bozza",
+      "description": "Personaggio in fase di creazione o attesa approvazione (solo lettura)",
+      "category": "game",
+      "permissions": [
+        "documents.read",
+        "locations.view"
+      ],
+      "note": "Auto-assigned on character creation, upgraded to 'personaggio' on approval"
+    },
+    {
       "value": "personaggio",
       "label": "Personaggio",
-      "description": "Ruolo base personaggio giocante",
+      "description": "Ruolo base personaggio giocante approvato",
       "category": "game",
       "permissions": [
         "chat.send",
@@ -87,6 +109,42 @@
       "label": "Eliminare messaggi",
       "category": "chat",
       "description": "Rimuovere messaggi inappropriati dalla chat"
+    },
+    {
+      "value": "chat.whisper",
+      "label": "Sussurro (messaggio privato)",
+      "category": "chat",
+      "description": "Inviare messaggi privati ad un altro personaggio in chat"
+    },
+    {
+      "value": "chat.offgame",
+      "label": "Messaggio offgame (OOC)",
+      "category": "chat",
+      "description": "Inviare messaggi out-of-character fuori dal gioco"
+    },
+    {
+      "value": "chat.dice",
+      "label": "Tiro dado",
+      "category": "chat",
+      "description": "Effettuare tiri di dado integrati in chat"
+    },
+    {
+      "value": "chat.social_clash",
+      "label": "Scontro sociale",
+      "category": "chat",
+      "description": "Iniziare uno scontro sociale con un altro personaggio"
+    },
+    {
+      "value": "chat.master_action",
+      "label": "Azione Master",
+      "category": "chat",
+      "description": "Azioni narrative e eventi riservate ai Master"
+    },
+    {
+      "value": "chat.moderation_action",
+      "label": "Azione di Moderazione",
+      "category": "chat",
+      "description": "Azioni di moderazione e avvisi riservate ai Moderatori"
     },
     {
       "value": "documents.read",
@@ -252,5 +310,32 @@
       "category": "logs",
       "description": "Vedere log azioni di moderazione admin"
     }
-  ]
+  ],
+  "_gameplay_roles_mapping": {
+    "description": "Mapping between admin characterRoles (this file) and game gameplayRoles (game-permissions.json)",
+    "note": "characterRoles are assigned in admin panel, gameplayRoles are auto-set based on character.status",
+    "mapping": {
+      "personaggio": {
+        "gameplayRole": "player (DRAFT) or approved-player (APPROVED)",
+        "autoAssignedOn": "Character creation (DRAFT status)",
+        "upgradesTo": "approved-player when status becomes APPROVED"
+      },
+      "master": {
+        "gameplayRole": "master",
+        "autoAssignedOn": "When characterRoles includes 'master'",
+        "inherits": "All permissions from approved-player role"
+      },
+      "moderatore": {
+        "gameplayRole": "moderatore",
+        "autoAssignedOn": "When characterRoles includes 'moderatore'",
+        "inherits": "All permissions from approved-player role",
+        "specialPermissions": "Chat moderation actions and content moderation"
+      },
+      "gestore": {
+        "gameplayRole": "Bypasses all game permissions (isGestore flag)",
+        "autoAssignedOn": "When isGestore=true on Character model",
+        "permissions": "ALL (wildcard game:*)"
+      }
+    }
+  }
 }

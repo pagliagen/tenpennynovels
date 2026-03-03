@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { AuthMiddleware } from '../middleware/auth';
 import { banChecks } from '@shared/middleware/banCheck';
+import { requireGamePermission } from '../middleware/gamePermissions';
 import { OffGameChatController } from '../controllers/OffGameChatController';
 import { OffGameChat, OffGameChatParticipant } from '@database/models';
 import { errorResponse, successResponse } from '../utils/apiResponse';
@@ -8,26 +9,53 @@ import { errorResponse, successResponse } from '../utils/apiResponse';
 const router = Router();
 
 // Get user's chats
-router.get('/offgame-chats', AuthMiddleware.requireCharacterAuth, OffGameChatController.getChats);
+router.get('/offgame-chats',
+  AuthMiddleware.requireCharacterAuth,
+  requireGamePermission('game:offgame-chat:list'),
+  OffGameChatController.getChats
+);
 
 // Create new chat (direct or group)
-router.post('/offgame-chats', AuthMiddleware.requireCharacterAuth, banChecks.chat(), OffGameChatController.createChat);
+router.post('/offgame-chats',
+  AuthMiddleware.requireCharacterAuth,
+  banChecks.chat(),
+  requireGamePermission('game:offgame-chat:create'),
+  OffGameChatController.createChat
+);
 
 // Get chat messages
-router.get('/offgame-chats/:id/messages', AuthMiddleware.requireCharacterAuth, OffGameChatController.getChatMessages);
+router.get('/offgame-chats/:id/messages',
+  AuthMiddleware.requireCharacterAuth,
+  requireGamePermission('game:offgame-chat:read'),
+  OffGameChatController.getChatMessages
+);
 
 // Send message to chat
-router.post('/offgame-chats/:id/messages', AuthMiddleware.requireCharacterAuth, banChecks.chat(), OffGameChatController.sendMessage);
+router.post('/offgame-chats/:id/messages',
+  AuthMiddleware.requireCharacterAuth,
+  banChecks.chat(),
+  requireGamePermission('game:offgame-chat:send'),
+  OffGameChatController.sendMessage
+);
 
 // Update chat name (group chats only)
-router.patch('/offgame-chats/:id/name', AuthMiddleware.requireCharacterAuth, OffGameChatController.updateChatName);
+router.patch('/offgame-chats/:id/name',
+  AuthMiddleware.requireCharacterAuth,
+  requireGamePermission('game:offgame-chat:edit'),
+  OffGameChatController.updateChatName
+);
 
 // Leave chat
-router.post('/offgame-chats/:id/leave', AuthMiddleware.requireCharacterAuth, OffGameChatController.leaveChat);
+router.post('/offgame-chats/:id/leave',
+  AuthMiddleware.requireCharacterAuth,
+  requireGamePermission('game:offgame-chat:leave'),
+  OffGameChatController.leaveChat
+);
 
 // Typing indicator endpoint
 router.post('/offgame-chats/:id/typing',
   AuthMiddleware.requireCharacterAuth,
+  requireGamePermission('game:offgame-chat:typing'),
   async (req: Request<{ id: string }>, res: Response) => {
     try {
       const chatId = req.params.id;

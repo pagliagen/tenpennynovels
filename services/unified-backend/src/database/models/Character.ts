@@ -137,8 +137,8 @@ export interface ICharacter extends Document {
   currentLocation: Schema.Types.ObjectId;
   isActive: boolean; // Currently selected character
   
-  // Character gameplay roles (separate from admin roles)
-  gameplayRoles: ('personaggio' | 'master' | 'moderatore' | 'gestore')[]; // DEPRECATED - use isGestore + characterRoles
+  // Character gameplay roles (game runtime permissions - auto-calculated from status + characterRoles)
+  gameplayRoles: ('player' | 'approved-player' | 'master' | 'moderatore')[];
 
   // Granular permission system for characters
   isGestore: boolean; // Super-role flag that grants all permissions
@@ -542,10 +542,10 @@ const CharacterSchema = new Schema<ICharacter>({
     default: false
   },
   
-  // Character gameplay roles (DEPRECATED - use isGestore + characterRoles)
+  // Character gameplay roles (auto-calculated from status + characterRoles)
   gameplayRoles: [{
     type: String,
-    enum: ['personaggio', 'master', 'moderatore', 'gestore']
+    enum: ['player', 'approved-player', 'master']
   }],
 
   // Granular permission system
@@ -782,9 +782,39 @@ CharacterSchema.pre('save', async function(this: ICharacter) {
     this.submittedAt = new Date();
   }
 
-  // Set default gameplay role when approved
-  if (this.isModified('status') && this.status === 'APPROVED' && this.gameplayRoles.length === 0) {
-    this.gameplayRoles = ['personaggio'];
+  // ============================================================
+  // AUTO-CALCULATE GAME PERMISSIONS (/config/roles/game-permissions.json)
+  // ============================================================
+  // This ensures gameplayRoles is ALWAYS up-to-date based on:
+  // - character.status (APPROVED → approved-player, otherwise → player)
+  // - character.characterRoles (if includes 'master' or 'moderatore', add to gameplayRoles)
+  // - character.characterPermissions (ensure array exists)
+  // - character.isGestore (ensure boolean exists)
+
+  if (this.isModified('status') || this.isModified('characterRoles') || this.isNew) {
+    // Base role based on status
+    const baseRole = this.status === 'APPROVED' ? 'approved-player' : 'player';
+
+    // Check for special roles
+    const hasMasterRole = (this.characterRoles || []).includes('master');
+    const hasModeratorRole = (this.characterRoles || []).includes('moderatore');
+
+    // Build gameplayRoles array (can have multiple special roles)
+    const specialRoles = [];
+    if (hasMasterRole) specialRoles.push('master');
+    if (hasModeratorRole) specialRoles.push('moderatore');
+
+    this.gameplayRoles = [baseRole, ...specialRoles] as any;
+  }
+
+  // Ensure characterPermissions array exists
+  if (!this.characterPermissions) {
+    this.characterPermissions = [];
+  }
+
+  // Ensure isGestore boolean exists
+  if (this.isGestore === undefined || this.isGestore === null) {
+    this.isGestore = false;
   }
 });
 

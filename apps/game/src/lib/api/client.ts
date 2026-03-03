@@ -18,6 +18,7 @@
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { API_CONFIG, AUTH_CONFIG } from '@/constants/config';
 import { parseAxiosError, ApiError } from './errors';
+import { useUIStore } from '@/store/uiStore';
 
 /**
  * Set auth token in localStorage
@@ -150,6 +151,31 @@ const createApiClient = (): AxiosInstance => {
       if (apiError.requiresAuth()) {
         clearAuthToken();
         // Note: Redirect to login handled by useAuth hook
+      }
+
+      // Handle 403 Forbidden - Show permission denied toast
+      if (error.response?.status === 403) {
+        // Extract error message from response
+        const errorData = error.response.data as any;
+        const message = errorData?.error || 'Non sei autorizzato ad eseguire questa operazione';
+
+        // Show toast notification
+        if (typeof window !== 'undefined') {
+          useUIStore.getState().addToast({
+            type: 'error',
+            message: message,
+            duration: 5000,
+          });
+        }
+
+        // Log for debugging in development
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('[Permission Denied]', {
+            url: error.config?.url,
+            requiredPermission: errorData?.requiredPermission,
+            code: errorData?.code,
+          });
+        }
       }
 
       // Log errors in development with full context

@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { CharacterSessionController } from '../controllers/CharacterSessionController';
 import { SessionManagementController } from '../controllers/SessionManagementController';
 import { AuthMiddleware } from '../middleware/auth';
+import { requireGamePermission } from '../middleware/gamePermissions';
 
 const router = Router();
 
@@ -12,6 +13,7 @@ const router = Router();
  */
 router.get('/current',
   AuthMiddleware.requireCharacterAuth,
+  requireGamePermission('game:session:current'),
   CharacterSessionController.getCurrentSession
 );
 
@@ -22,6 +24,7 @@ router.get('/current',
  */
 router.get('/active',
   AuthMiddleware.requireCharacterAuth,
+  requireGamePermission('game:session:active'),
   CharacterSessionController.getMyActiveSessions
 );
 
@@ -35,6 +38,7 @@ router.get('/active',
  */
 router.get('/history',
   AuthMiddleware.requireCharacterAuth,
+  requireGamePermission('game:session:history'),
   CharacterSessionController.getMySessionHistory
 );
 
@@ -45,6 +49,7 @@ router.get('/history',
  */
 router.delete('/:sessionId',
   AuthMiddleware.requireCharacterAuth,
+  requireGamePermission('game:session:invalidate'),
   CharacterSessionController.invalidateSession
 );
 
@@ -55,6 +60,7 @@ router.delete('/:sessionId',
  */
 router.delete('/others/all',
   AuthMiddleware.requireCharacterAuth,
+  requireGamePermission('game:session:invalidate-others'),
   CharacterSessionController.invalidateAllOtherSessions
 );
 

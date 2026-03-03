@@ -29,6 +29,7 @@ import { queryClient } from '@/lib/api/queryClient';
 import { WebSocketProvider } from '@/contexts/WebSocketContext';
 import { EnvironmentProvider } from '@/contexts/EnvironmentContext';
 import { AuthInitializer } from '@/components/auth/AuthInitializer';
+import { ToastContainer } from '@/components/ui/ToastContainer';
 import '@/styles/main.scss';
 
 /**
@@ -59,6 +60,9 @@ export default function App({ Component, pageProps }: AppProps): JSX.Element {
           <EnvironmentProvider>
             {/* Page Component */}
             <Component {...pageProps} />
+
+            {/* Toast Container - Global notifications (403, permission errors, etc.) */}
+            <ToastContainer />
 
             {/* React Query Devtools (dev mode only) */}
             {process.env.NODE_ENV === 'development' && (

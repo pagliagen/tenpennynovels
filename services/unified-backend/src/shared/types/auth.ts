@@ -58,6 +58,10 @@ export interface CharacterContextToken {
   characterName: string;
   isApproved: boolean;
   gameplayRoles?: string[]; // Character gameplay roles (personaggio, master, moderatore, etc.)
+  // Game permissions system
+  isGestore?: boolean; // Super-admin bypass flag
+  status?: string; // DRAFT, PENDING_APPROVAL, APPROVED, DELETED
+  characterPermissions?: string[]; // Granular permission overrides
   iat: number;
   exp: number;
 }

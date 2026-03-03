@@ -57,6 +57,7 @@ interface ChatContainerProps {
 export function ChatContainer({ locationSlug, locationId, locationName }: ChatContainerProps): JSX.Element {
   // Auth store: Character permission check
   const { selectedCharacter } = useAuthStore();
+  const gamePermissions = useAuthStore((state) => state.gamePermissions);
 
   // Location store: Get location positions
   const locations = useLocationStore((state) => state.locations);
@@ -119,12 +120,13 @@ export function ChatContainer({ locationSlug, locationId, locationName }: ChatCo
    */
   const characterData = {
     characterId: selectedCharacter?._id || '',
-    // TODO: skills, equippedItems, roles are not available in base Character type
+    // TODO: skills, equippedItems are not available in base Character type
     // These would need to be fetched separately from /game/characters/:id?view=sheet
     skills: [], // Not available in selectedCharacter
     stats: selectedCharacter?.stats || {},
     equippedItems: [], // Not available in selectedCharacter
-    roles: [], // Not available in selectedCharacter
+    roles: [], // Deprecated - kept for backward compatibility
+    gamePermissions, // NEW: Game permissions from authStore
   };
 
   /**

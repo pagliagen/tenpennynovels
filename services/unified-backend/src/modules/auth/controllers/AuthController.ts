@@ -200,7 +200,7 @@ export class AuthController {
       let characters = await Character.find({
         userId: user.id,
         status: { $in: ['DRAFT', 'PENDING_APPROVAL', 'APPROVED'] }
-      }).select('id name surname status occupation currentLocation gameplayRoles lastActive submittedAt');
+      }).select('id name surname status occupation currentLocation gameplayRoles lastActive submittedAt isGestore characterPermissions');
       
       logger.info(`User ${user.username} login: found ${characters.length} existing characters`);
 
@@ -305,8 +305,11 @@ export class AuthController {
           characterId: userCharacter.id,
           characterName: fullCharacterName,
           userId: user.id,
-          gameplayRoles: userCharacter.gameplayRoles || ['personaggio'],
-          isApproved: userCharacter.status === 'approved'
+          gameplayRoles: userCharacter.gameplayRoles || [],
+          isApproved: userCharacter.status === 'approved',
+          isGestore: userCharacter.isGestore || false,
+          status: userCharacter.status || 'DRAFT',
+          characterPermissions: userCharacter.characterPermissions || []
         });
 
         // Create character session (invalidates any existing sessions for this character)
@@ -460,8 +463,11 @@ export class AuthController {
         characterId: character.id,
         characterName: fullCharacterName,
         userId: userId,
-        gameplayRoles: character.gameplayRoles || ['personaggio'],
-        isApproved: character.status === 'approved'
+        gameplayRoles: character.gameplayRoles || [],
+        isApproved: character.status === 'approved',
+        isGestore: character.isGestore || false,
+        status: character.status || 'DRAFT',
+        characterPermissions: character.characterPermissions || []
       });
 
       // Parse device info for session creation
@@ -694,14 +700,28 @@ export class AuthController {
    */
   static async getSession(req: Request, res: Response): Promise<void> {
     try {
-      const user = req.user!;
+      // If no user token, return not authenticated
+      if (!req.user) {
+        return errorResponse(res,
+          'Non autenticato',
+          'NOT_AUTHENTICATED',
+          undefined,
+          401);
+      }
+
+      const user = req.user;
       const character = req.character;
+
+      // Import game permissions utility
+      const { getCharacterGamePermissions } = await import('../../game/utils/gamePermissions');
 
       // If character exists in JWT token, fetch full character data from database
       let characterData = null;
+      let gamePermissions: string[] = [];
+
       if (character) {
         const fullCharacter = await Character.findById(character.characterId)
-          .select('_id name surname avatar status')
+          .select('_id name surname avatar status isGestore gameplayRoles characterPermissions')
           .lean();
 
         if (fullCharacter) {
@@ -710,8 +730,17 @@ export class AuthController {
             name: fullCharacter.name,
             surname: fullCharacter.surname,
             avatar: fullCharacter.avatar || null,
-            status: fullCharacter.status
+            status: fullCharacter.status,
+            isGestore: fullCharacter.isGestore || false
           };
+
+          // Resolve game permissions for frontend
+          gamePermissions = getCharacterGamePermissions(
+            fullCharacter.status,
+            fullCharacter.isGestore || false,
+            fullCharacter.gameplayRoles || [],
+            fullCharacter.characterPermissions || []
+          );
         }
       }
 
@@ -724,6 +753,7 @@ export class AuthController {
             canAccessAdminPanel: user.canAccessAdminPanel
           },
           character: characterData,
+          gamePermissions: gamePermissions, // NEW: Game permissions for frontend
           session: {
             expiresAt: new Date(user.exp * 1000).toISOString(),
             timeRemaining: `${Math.floor((user.exp * 1000 - Date.now()) / (1000 * 60 * 60))} hours ${Math.floor(((user.exp * 1000 - Date.now()) % (1000 * 60 * 60)) / (1000 * 60))} minutes`

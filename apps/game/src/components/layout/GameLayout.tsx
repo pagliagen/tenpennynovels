@@ -129,8 +129,11 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
 
     // If location not found, fallback to default
     if (!currentLocation) {
+      console.warn('[GameLayout] ⚠️ Location not found for ID:', selectedCharacter.currentLocation, '| Available:', locations.length);
       return defaultProps;
     }
+
+    console.log('[GameLayout] ✅ TopBar updated:', currentLocation.name, '| ID:', currentLocation._id);
 
     // Return actual location props
     return {
@@ -138,7 +141,7 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
       locationImageUrl: currentLocation.imageUrl || '/images/topbar/location-image.png',
       isInLondon: currentLocation.slug === 'londra', // TODO: Check if there's a better way to identify London
     };
-  }, [selectedCharacter?.currentLocation, locations]);
+  }, [selectedCharacter, locations]);
 
   /**
    * Navigate to locations/map page

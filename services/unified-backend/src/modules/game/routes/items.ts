@@ -1,5 +1,7 @@
 import { Router } from 'express';
 import { ItemController } from '../controllers/ItemController';
+import { AuthMiddleware } from '../middleware/auth';
+import { requireGamePermission } from '../middleware/gamePermissions';
 
 const router = Router();
 
@@ -18,14 +20,22 @@ const router = Router();
  * @query page - Page number
  * @query limit - Items per page
  */
-router.get('/', ItemController.getAvailableItems);
+router.get('/',
+  AuthMiddleware.requireCharacterAuth,
+  requireGamePermission('game:items:list'),
+  ItemController.getAvailableItems
+);
 
 /**
  * @route GET /items/categories
  * @desc Get item categories with statistics
  * @access Private (Character required)
  */
-router.get('/categories', ItemController.getItemCategories);
+router.get('/categories',
+  AuthMiddleware.requireCharacterAuth,
+  requireGamePermission('game:items:categories'),
+  ItemController.getItemCategories
+);
 
 /**
  * @route GET /items/search
@@ -36,7 +46,11 @@ router.get('/categories', ItemController.getItemCategories);
  * @query maxPrice - Maximum price filter
  * @query limit - Maximum results (default 10)
  */
-router.get('/search', ItemController.searchItems);
+router.get('/search',
+  AuthMiddleware.requireCharacterAuth,
+  requireGamePermission('game:items:search'),
+  ItemController.searchItems
+);
 
 /**
  * @route GET /items/location/:locationId
@@ -46,13 +60,21 @@ router.get('/search', ItemController.searchItems);
  * @query sortBy - Sort field
  * @query sortOrder - Sort order
  */
-router.get('/location/:locationId', ItemController.getLocationItems);
+router.get('/location/:locationId',
+  AuthMiddleware.requireCharacterAuth,
+  requireGamePermission('game:items:list'),
+  ItemController.getLocationItems
+);
 
 /**
  * @route GET /items/:itemId
  * @desc Get detailed item information
  * @access Private (Character required)
  */
-router.get('/:itemId', ItemController.getItemDetails);
+router.get('/:itemId',
+  AuthMiddleware.requireCharacterAuth,
+  requireGamePermission('game:items:read'),
+  ItemController.getItemDetails
+);
 
 export default router;

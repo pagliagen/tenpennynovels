@@ -44,6 +44,7 @@ interface SessionResponse {
       characters?: Character[];
     };
     character?: Character | null;
+    gamePermissions?: string[]; // NEW: Game permissions from backend
     session?: {
       expiresAt: string;
       timeRemaining?: string;
@@ -103,7 +104,7 @@ export function useAuth(): UseAuthReturn {
   const [error, setError] = useState<string | null>(null);
   const [errorType, setErrorType] = useState<'network' | 'session' | 'server' | null>(null);
 
-  const { setUser, setSelectedCharacter, setInitialized, logout } = useAuthStore();
+  const { setUser, setSelectedCharacter, setGamePermissions, setInitialized, logout } = useAuthStore();
 
   /**
    * Check session with backend
@@ -136,9 +137,9 @@ export function useAuth(): UseAuthReturn {
       });
 
       // Check if session is valid
-      // Backend returns: { result: true, data: { valid: true, user: {...}, character: {...} } }
+      // Backend returns: { result: true, data: { valid: true, user: {...}, character: {...}, gamePermissions: [...] } }
       if (response.result && response.data?.valid && response.data.user) {
-        const { user, character } = response.data;
+        const { user, character, gamePermissions } = response.data;
 
         // Populate auth store with user data
         // TODO: Fix type mismatch between session response and User schema
@@ -149,7 +150,13 @@ export function useAuth(): UseAuthReturn {
           setSelectedCharacter(character);
         }
 
+        // Set game permissions from backend
+        if (gamePermissions) {
+          setGamePermissions(gamePermissions);
+        }
+
         console.log('[useAuth] ✅ Session valid - user authenticated:', user.username);
+        console.log('[useAuth] Game permissions loaded:', gamePermissions?.length || 0, 'permissions');
         setIsInitialized(true);
       } else {
         // No valid session - show error page instead of redirect

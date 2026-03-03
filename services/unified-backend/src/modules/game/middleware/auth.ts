@@ -48,7 +48,7 @@ export class AuthMiddleware {
         email: decoded.email,
         canAccessAdminPanel: decoded.canAccessAdminPanel || false,
         userRoles: decoded.userRoles || ['user'],
-        characterRoles: decoded.characterRoles || ['personaggio'],
+        characterRoles: decoded.characterRoles || [],
         characterPermissions: decoded.characterPermissions || [],
         iat: decoded.iat || Math.floor(Date.now() / 1000),
         exp: decoded.exp || Math.floor(Date.now() / 1000) + 86400
@@ -97,7 +97,7 @@ export class AuthMiddleware {
         canAccessAdminPanel: decoded.canAccessAdminPanel || false,
         // New granular permission system
         userRoles: decoded.userRoles || ['user'],
-        characterRoles: decoded.characterRoles || ['personaggio'],
+        characterRoles: decoded.characterRoles || [],
         characterPermissions: decoded.characterPermissions || [],
         // No more legacy fields
         iat: decoded.iat || Math.floor(Date.now() / 1000),
@@ -162,8 +162,12 @@ export class AuthMiddleware {
         characterId: decoded.characterId,
         characterName: decoded.characterName,
         userId: decoded.userId,
-        gameplayRoles: decoded.gameplayRoles || ['personaggio'],
+        gameplayRoles: decoded.gameplayRoles || [],
         isApproved: decoded.isApproved !== undefined ? decoded.isApproved : true,
+        // Game permissions system
+        isGestore: decoded.isGestore || false,
+        status: decoded.status || 'DRAFT',
+        characterPermissions: decoded.characterPermissions || [],
         iat: decoded.iat || Math.floor(Date.now() / 1000),
         exp: decoded.exp || Math.floor(Date.now() / 1000) + 86400
       };
@@ -201,8 +205,12 @@ export class AuthMiddleware {
         characterId: process.env.TEST_CHARACTER_ID || 'test-character-id',
         characterName: process.env.TEST_CHARACTER_NAME || 'Test Character',
         userId: 'test-user-id',
-        gameplayRoles: ['personaggio'],
+        gameplayRoles: ['approved-player'],
         isApproved: true,
+        // Game permissions system
+        isGestore: false,
+        status: 'APPROVED',
+        characterPermissions: [],
         iat: Math.floor(Date.now() / 1000),
         exp: Math.floor(Date.now() / 1000) + 86400
       };
@@ -212,7 +220,7 @@ export class AuthMiddleware {
         email: 'test@example.com',
         canAccessAdminPanel: false,
         userRoles: ['user'],
-        characterRoles: ['personaggio'],
+        characterRoles: [],
         characterPermissions: [],
         iat: Math.floor(Date.now() / 1000),
         exp: Math.floor(Date.now() / 1000) + 86400
@@ -419,7 +427,7 @@ export class AuthMiddleware {
             canAccessAdminPanel: decoded.canAccessAdminPanel || false,
             // New granular permission system
             userRoles: decoded.userRoles || ['user'],
-            characterRoles: decoded.characterRoles || ['personaggio'],
+            characterRoles: decoded.characterRoles || [],
             characterPermissions: decoded.characterPermissions || [],
             iat: decoded.iat || Math.floor(Date.now() / 1000),
             exp: decoded.exp || Math.floor(Date.now() / 1000) + 86400
@@ -493,7 +501,7 @@ export class AuthMiddleware {
    * Returns decoded payload or null if invalid
    * Used for checking session details in controllers
    */
-  static decodeCharacterContext(token: string): { characterId: string; userId: string; characterName: string; sessionId: string; gameplayRoles: string[] } | null {
+  static decodeCharacterContext(token: string): { characterId: string; userId: string; characterName: string; sessionId: string; gameplayRoles: string[]; isGestore: boolean; status: string; characterPermissions: string[] } | null {
     try {
       const decoded = jwt.verify(token, getJwtSecret()) as any;
       if (!decoded.characterId || !decoded.userId) {
@@ -504,7 +512,10 @@ export class AuthMiddleware {
         userId: decoded.userId,
         characterName: decoded.characterName,
         sessionId: decoded.sessionId,
-        gameplayRoles: decoded.gameplayRoles || []
+        gameplayRoles: decoded.gameplayRoles || [],
+        isGestore: decoded.isGestore || false,
+        status: decoded.status || 'DRAFT',
+        characterPermissions: decoded.characterPermissions || []
       };
     } catch (error) {
       return null;

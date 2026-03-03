@@ -38,11 +38,17 @@ export default function LocationChatPage(): JSX.Element {
   const router = useRouter();
   const { slug } = router.query;
 
+  // Debug: Log URL changes
+  useEffect(() => {
+    console.log('[Chat] 📍 URL changed - slug:', slug, '| pathname:', router.pathname, '| asPath:', router.asPath);
+  }, [slug, router.pathname, router.asPath]);
+
   // Auth store: Check if user logged in
   const { isAuthenticated, selectedCharacter } = useAuthStore();
 
   // Location store: Get locations (use separate selectors to avoid infinite loop)
   const locations = useLocationStore((state) => state.locations);
+  const isLocationStoreLoading = useLocationStore((state) => state.isLoading);
 
   // WebSocket context for real-time layer
   const { socket } = useWebSocket();
@@ -70,12 +76,26 @@ export default function LocationChatPage(): JSX.Element {
   }, [isAuthenticated, selectedCharacter, router]);
 
   /**
+   * Initialize location store if empty
+   * This handles the case where the page loads before GameLayout initializes the store
+   */
+  useEffect(() => {
+    if (selectedCharacter && locations.length === 0 && !isLocationStoreLoading) {
+      console.log('[LocationChat] Initializing locationStore...');
+      useLocationStore.getState().initialize(selectedCharacter._id);
+    }
+  }, [selectedCharacter?._id, locations.length, isLocationStoreLoading]);
+
+  /**
    * Find location by slug
    */
   useEffect(() => {
     if (!slug || typeof slug !== 'string') {
+      console.log('[Chat] ⏭️  Skipping location lookup - no slug yet');
       return;
     }
+
+    console.log('[Chat] 🔍 Looking for location with slug:', slug, '| Available locations:', locations.length);
 
     // Find location in store
     const foundLocation = locations.find((loc) => loc.slug === slug);
@@ -83,12 +103,12 @@ export default function LocationChatPage(): JSX.Element {
     if (foundLocation) {
       setLocation(foundLocation);
       setIsLoadingLocation(false);
-      console.log(`✅ Location found: ${foundLocation.name} (${slug})`);
+      console.log(`[Chat] ✅ Location found: ${foundLocation.name} (${slug}) - ID: ${foundLocation._id}`);
     } else {
       // Location not found → 404
       setLocation(null);
       setIsLoadingLocation(false);
-      console.warn(`⚠️  Location not found: ${slug}`);
+      console.warn(`[Chat] ⚠️  Location NOT found: ${slug} - Available locations:`, locations.map(l => l.slug));
     }
   }, [slug, locations]);
 
@@ -173,8 +193,8 @@ export default function LocationChatPage(): JSX.Element {
     };
   }, [location?._id, socket]);
 
-  // Loading state (waiting for auth or location data)
-  if (!isAuthenticated || !selectedCharacter || isLoadingLocation) {
+  // Loading state (waiting for auth, location store, or specific location data)
+  if (!isAuthenticated || !selectedCharacter || isLoadingLocation || isLocationStoreLoading) {
     return (
       <>
         <Head>
