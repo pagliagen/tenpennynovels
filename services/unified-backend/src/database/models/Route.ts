@@ -11,6 +11,7 @@
  */
 
 import { Schema, model, Document as MongooseDocument, Types } from 'mongoose';
+import type { IDocument } from './Document';
 
 export type RouteType = 'ambientazione' | 'approfondimenti' | 'regolamento';
 export type RouteKind = 'document' | 'category' | 'redirect';
@@ -77,7 +78,7 @@ RouteSchema.index({ type: 1, enabled: 1, kind: 1, isPublic: 1 });
  * Pre-save hook: Calculate path from parent.path + slug
  * Ensures path is always consistent with hierarchy
  */
-RouteSchema.pre('save', async function() {
+RouteSchema.pre('save', async function(this: IRoute) {
   // VALIDATION: kind='document' requires rootDocumentId
   if (this.kind === 'document') {
     if (!this.rootDocumentId) {
@@ -91,11 +92,12 @@ RouteSchema.pre('save', async function() {
       throw new Error(`Document ${this.rootDocumentId} not found`);
     }
 
-    // Validate type matches between Route and Document
-    if (this.type !== doc.type) {
+    // Validate type matches between Route and Document (type assertion for IDocument)
+    const docData = doc as unknown as IDocument;
+    if (this.type !== docData.type) {
       throw new Error(
-        `Route type (${this.type}) must match Document type (${doc.type}). ` +
-        `Document ${this.rootDocumentId} has type="${doc.type}"`
+        `Route type (${this.type}) must match Document type (${docData.type}). ` +
+        `Document ${this.rootDocumentId} has type="${docData.type}"`
       );
     }
   }

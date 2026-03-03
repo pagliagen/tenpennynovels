@@ -1101,6 +1101,16 @@ export class CharacterApprovalController {
 
       const { Character, Occupation, CharacterFinances, SocialClassConfig } = await import('@database/models');
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
+      if (!auditInfo) {
+        res.status(401).json(errorResponse(
+          'Autenticazione richiesta',
+          'UNAUTHORIZED',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
+        return;
+      }
 
       // Process all characters with Promise.allSettled
       const results = await Promise.allSettled(
@@ -1269,6 +1279,16 @@ export class CharacterApprovalController {
 
       const { Character } = await import('@database/models/Character');
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
+      if (!auditInfo) {
+        res.status(401).json(errorResponse(
+          'Autenticazione richiesta',
+          'UNAUTHORIZED',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
+        return;
+      }
 
       // Process all characters with Promise.allSettled
       const results = await Promise.allSettled(
@@ -1370,6 +1390,16 @@ export class CharacterApprovalController {
 
       const { Character } = await import('@database/models/Character');
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
+      if (!auditInfo) {
+        res.status(401).json(errorResponse(
+          'Autenticazione richiesta',
+          'UNAUTHORIZED',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
+        return;
+      }
 
       // Process all characters with Promise.allSettled
       const results = await Promise.allSettled(

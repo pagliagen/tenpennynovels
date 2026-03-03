@@ -204,6 +204,10 @@ export interface AdminUserProfile {
   displayName: string;
   avatar?: string;
   canAccessAdminPanel: boolean;
+  // Granular permission system
+  userRoles?: ('user' | 'gestore')[];
+  characterRoles?: ('personaggio' | 'master' | 'moderatore' | 'amministratore')[];
+  characterPermissions?: string[];
   accountStatus: AccountStatus;
   multipleCharactersAllowed?: boolean;
   characters: UserCharacter[];
@@ -216,8 +220,10 @@ export interface AccountStatus {
   isEmailVerified: boolean;
   isBanned: boolean;
   banReason?: string;
+  bannedAt?: string;
   bannedUntil?: string;
   bannedBy?: string;
+  bannedByName?: string;
 }
 
 export interface UserCharacter {

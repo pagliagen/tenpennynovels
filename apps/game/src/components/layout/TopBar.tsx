@@ -19,6 +19,7 @@
 
 'use client';
 
+import { useEffect } from 'react';
 import styles from '@/styles/components/TopBar.module.scss';
 
 /**
@@ -120,6 +121,14 @@ export function TopBar({
   locationImageUrl = '/images/topbar/location-image.png',
   isInLondon = true,
 }: TopBarProps): JSX.Element {
+  // DEBUG: Log props received
+  useEffect(() => {
+    console.log('[TopBar] 🎨 Rendered with props:', {
+      locationName,
+      isInLondon
+    });
+  }, [locationName, isInLondon]);
+
   return (
     <div className={styles.topBar}>
       {/* ========================================

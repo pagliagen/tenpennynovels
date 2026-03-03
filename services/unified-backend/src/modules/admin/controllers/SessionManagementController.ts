@@ -253,9 +253,10 @@ export class SessionManagementController {
       });
       
       const totalCount = await GamingSession.countDocuments(filter);
-      
+
+      const page = Math.floor(parseInt(skip as string) / parseInt(limit as string)) + 1;
       const pagination = {
-        page: Math.floor(parseInt(skip as string) / parseInt(limit as string)) + 1,
+        page,
         totalPages: Math.ceil(totalCount / parseInt(limit as string)),
         totalItems: totalCount,
         pageSize: parseInt(limit as string),
@@ -418,9 +419,10 @@ export class SessionManagementController {
           };
         })
       );
-      
+
+      const page = Math.floor(parseInt(skip as string) / parseInt(limit as string)) + 1;
       const pagination = {
-        page: Math.floor(parseInt(skip as string) / parseInt(limit as string)) + 1,
+        page,
         totalPages: Math.ceil(totalCount / parseInt(limit as string)),
         totalItems: totalCount,
         pageSize: parseInt(limit as string),
@@ -513,9 +515,10 @@ export class SessionManagementController {
       );
       
       const totalCount = await Campaign.countDocuments(filter);
-      
+
+      const page = Math.floor(parseInt(skip as string) / parseInt(limit as string)) + 1;
       const pagination = {
-        page: Math.floor(parseInt(skip as string) / parseInt(limit as string)) + 1,
+        page,
         totalPages: Math.ceil(totalCount / parseInt(limit as string)),
         totalItems: totalCount,
         pageSize: parseInt(limit as string),

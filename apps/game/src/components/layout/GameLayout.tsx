@@ -77,6 +77,15 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
   const selectedCharacter = useAuthStore((state) => state.selectedCharacter);
   const user = useAuthStore((state) => state.user);
 
+  // DEBUG: Log when selectedCharacter changes
+  useEffect(() => {
+    console.log('[GameLayout] 🔄 selectedCharacter changed:', {
+      id: selectedCharacter?._id,
+      name: selectedCharacter?.name,
+      currentLocation: selectedCharacter?.currentLocation
+    });
+  }, [selectedCharacter]);
+
   // Location store: Get all accessible locations
   const locations = useLocationStore((state) => state.locations);
 

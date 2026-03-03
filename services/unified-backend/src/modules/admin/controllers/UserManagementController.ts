@@ -76,7 +76,7 @@ export class UserManagementController {
 
       // Admin access filter
       if (canAccessAdminPanel !== undefined && canAccessAdminPanel !== '') {
-        filters.canAccessAdminPanel = canAccessAdminPanel === 'true' || canAccessAdminPanel === true;
+        filters.canAccessAdminPanel = canAccessAdminPanel === 'true';
       }
 
       // Map nested sort fields to flat database fields
@@ -381,6 +381,16 @@ export class UserManagementController {
 
       // Get audit info for bannedBy field (includes character name from cookie)
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
+      if (!auditInfo) {
+        res.status(401).json(errorResponse(
+          'Autenticazione richiesta',
+          'UNAUTHORIZED',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
+        return;
+      }
 
       // Prepare update data
       const updateData: any = {
@@ -749,6 +759,16 @@ export class UserManagementController {
 
       const { User } = await import('@database/models/User');
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
+      if (!auditInfo) {
+        res.status(401).json(errorResponse(
+          'Autenticazione richiesta',
+          'UNAUTHORIZED',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
+        return;
+      }
 
       // Ban all users
       const results = await Promise.allSettled(

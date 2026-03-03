@@ -130,11 +130,14 @@ export default function LocationChatPage(): JSX.Element {
 
     // Guard: Only update if currentLocation actually changed
     if (char.currentLocation !== location._id) {
+      console.log('[Chat] 🔄 Updating authStore - OLD:', char.currentLocation, '→ NEW:', location._id);
       useAuthStore.getState().setSelectedCharacter({
         ...char,
         currentLocation: location._id
       });
       console.log('[Chat] ✅ authStore synced - currentLocation:', location._id);
+    } else {
+      console.log('[Chat] ⏭️ No update needed - currentLocation already:', location._id);
     }
   }, [location?._id]);
 

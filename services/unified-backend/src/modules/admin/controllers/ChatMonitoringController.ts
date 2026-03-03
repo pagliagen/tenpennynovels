@@ -401,13 +401,15 @@ export class ChatMonitoringController {
         totalResults: totalItems
       });
 
+      const pageNum = parseInt(page as string);
+      const limitNum = parseInt(limit as string);
       const pagination = {
-        page: parseInt(page as string),
-        totalPages: Math.ceil(totalItems / parseInt(limit as string)),
+        page: pageNum,
+        totalPages: Math.ceil(totalItems / limitNum),
         totalItems,
-        pageSize: parseInt(limit as string),
-        hasNextPage: parseInt(page as string) < Math.ceil(totalItems / parseInt(limit as string)),
-        hasPrevPage: page > 1
+        pageSize: limitNum,
+        hasNextPage: pageNum < Math.ceil(totalItems / limitNum),
+        hasPrevPage: pageNum > 1
       };
 
       res.json(successResponse(
@@ -462,6 +464,7 @@ export class ChatMonitoringController {
         category: 'chat_monitoring'
       });
 
+      const page = Math.floor(parseInt(skip as string) / parseInt(limit as string)) + 1;
       res.json(successResponse(
         {
           history: moderationHistory,
@@ -470,7 +473,7 @@ export class ChatMonitoringController {
             pageSize: parseInt(limit as string),
             skip: parseInt(skip as string),
             hasNextPage: totalCount > parseInt(skip as string) + parseInt(limit as string),
-        hasPrevPage: page > 1
+            hasPrevPage: page > 1
           }
         },
         undefined,
