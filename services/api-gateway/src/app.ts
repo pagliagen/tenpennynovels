@@ -41,7 +41,6 @@ app.use(helmet({
 // CORS configuration for API Gateway - Enhanced with explicit origin handling
 app.use(cors({
   origin: function (origin, callback) {
-    console.log(`🔄 CORS: Received origin: "${origin}" (type: ${typeof origin})`);
     const allowedOrigins = [
       process.env.LANDING_URL || 'https://tenpennynovels.com',
       process.env.GAME_URL || 'https://game.tenpennynovels.com',
@@ -55,22 +54,20 @@ app.use(cors({
       'http://localhost:4004',
       'http://localhost:4005'
     ];
-    
+
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) {
-      console.log(`✅ CORS: No origin header - allowing request`);
+      logger.debug('[CORS] No origin header - allowing request');
       return callback(null, true);
     }
-    
+
     const isAllowed = allowedOrigins.includes(origin);
-    console.log(`🔍 CORS: Origin "${origin}" allowed: ${isAllowed}`);
-    
+
     if (isAllowed) {
-      console.log(`✅ CORS: Allowing origin ${origin}`);
+      logger.debug(`[CORS] Allowing origin: ${origin}`);
       callback(null, true);
     } else {
-      console.log(`❌ CORS: Blocking origin ${origin}`);
-      console.log(`❌ CORS: Available origins:`, allowedOrigins);
+      logger.warn(`[CORS] Blocking origin: ${origin}`);
       callback(new Error(`Origin ${origin} not allowed by CORS`));
     }
   },
@@ -283,10 +280,10 @@ const createServiceProxy = (serviceName: string, config: any) => {
   return createProxyMiddleware({
     target: config.target,
     changeOrigin: true,
-    timeout: 10000, // 10 second timeout
+    timeout: 30000, // 30 second timeout (increased for resilience)
     on: {
-      proxyReq: (proxyReq: any, req: any, res: any) => {
-        console.log(`🔄 [PROXY REQ] Forwarding to ${serviceName}: ${req.method} ${req.url}`);
+      proxyReq: (proxyReq: any, req: any, _res: any) => {
+        logger.debug(`[PROXY REQ] Forwarding to ${serviceName}: ${req.method} ${req.url}`);
 
         // Add gateway headers
         proxyReq.setHeader('X-Forwarded-By', 'TenpennyNovels-Gateway');
@@ -295,32 +292,23 @@ const createServiceProxy = (serviceName: string, config: any) => {
         // Forward cookies and auth headers
         if (req.headers.cookie) {
           proxyReq.setHeader('Cookie', req.headers.cookie);
-          console.log(`   🍪 Forwarding cookies: ${req.headers.cookie.substring(0, 100)}...`);
-        } else {
-          console.log(`   ❌ No cookies to forward`);
+          logger.debug(`[PROXY REQ] Forwarding cookies (${req.headers.cookie.substring(0, 50)}...)`);
         }
         if (req.headers.authorization) {
           proxyReq.setHeader('Authorization', req.headers.authorization);
-          console.log(`   🔑 Forwarding authorization header`);
+          logger.debug(`[PROXY REQ] Forwarding authorization header`);
         }
       },
-      proxyRes: (proxyRes: any, req: any, res: any) => {
-        console.log(`🔙 [PROXY RES] Response from ${serviceName}: ${proxyRes.statusCode}`);
+      proxyRes: (proxyRes: any, _req: any, res: any) => {
+        logger.debug(`[PROXY RES] Response from ${serviceName}: ${proxyRes.statusCode}`);
 
         // Forward set-cookie headers back to client
         if (proxyRes.headers['set-cookie']) {
           res.setHeader('set-cookie', proxyRes.headers['set-cookie']);
-          console.log(`   🍪 Forwarding set-cookie headers back to client`);
+          logger.debug(`[PROXY RES] Forwarding set-cookie headers back to client`);
         }
       },
       error: (err: any, req: any, res: any) => {
-        const { logger } = require('./utils/logger');
-        console.log(`❌ [PROXY ERROR] Service: ${serviceName}`);
-        console.log(`   🔗 Target: ${config.target}`);
-        console.log(`   📍 URL: ${req.url}`);
-        console.log(`   💥 Error: ${err.message}`);
-        console.log('   ─────────────────────────────────────────────────────────────');
-
         logger.error(`Proxy error for ${serviceName}:`, {
           error: err.message,
           url: req.url,
@@ -342,7 +330,7 @@ const createServiceProxy = (serviceName: string, config: any) => {
 
 // ========== HEALTH CHECK ENDPOINT ==========
 // Must be defined BEFORE proxy routes to avoid routing conflicts
-app.get('/health', (req, res) => {
+app.get('/health', (_req, res) => {
   res.status(200).json({
     status: 'ok',
     service: 'api-gateway',
@@ -366,8 +354,8 @@ const socketioProxy = createProxyMiddleware({
   // Path filter: only proxy requests starting with /socket.io
   pathFilter: '/socket.io/**',
   on: {
-    proxyReq: (proxyReq: any, req: any, res: any) => {
-      console.log(`🔌 [SOCKET.IO] Proxying: ${req.method} ${req.url}`);
+    proxyReq: (proxyReq: any, req: any, _res: any) => {
+      logger.debug(`[SOCKET.IO] Proxying: ${req.method} ${req.url}`);
 
       // Forward cookies for authentication
       if (req.headers.cookie) {
@@ -378,15 +366,15 @@ const socketioProxy = createProxyMiddleware({
       proxyReq.setHeader('X-Forwarded-By', 'TenpennyNovels-Gateway');
       proxyReq.setHeader('X-Service-Route', 'socketio');
     },
-    proxyRes: (proxyRes: any, req: any, res: any) => {
-      console.log(`🔙 [SOCKET.IO] Response: ${proxyRes.statusCode}`);
+    proxyRes: (proxyRes: any, _req: any, _res: any) => {
+      logger.debug(`[SOCKET.IO] Response: ${proxyRes.statusCode}`);
     },
     error: (err: any, req: any, res: any) => {
-      console.log(`❌ [SOCKET.IO PROXY ERROR]`);
-      console.log(`   🔗 Target: ${services.socketio.target}`);
-      console.log(`   📍 URL: ${req.url}`);
-      console.log(`   💥 Error: ${err.message}`);
-      logger.error(`Socket.IO proxy error:`, { error: err.message, url: req.url });
+      logger.error(`Socket.IO proxy error:`, {
+        error: err.message,
+        url: req.url,
+        target: services.socketio.target
+      });
 
       // Only send HTTP response if still in HTTP phase (before WebSocket upgrade)
       // After upgrade, res is a socket and doesn't have .status() method
@@ -406,35 +394,35 @@ app.use(socketioProxy);
 console.log('✅ Socket.IO WebSocket proxy configured');
 
 // Debug middleware for /auth route
-app.use('/auth', (req, res, next) => {
-  console.log(`🔥 AUTH ROUTE HIT: ${req.method} ${req.originalUrl}`);
+app.use('/auth', (req, _res, next) => {
+  logger.debug(`[AUTH] ${req.method} ${req.originalUrl}`);
   next();
 });
 
-// Debug middleware for /game route  
-app.use('/game', (req, res, next) => {
-  console.log(`🎮 GAME ROUTE HIT: ${req.method} ${req.originalUrl}`);
+// Debug middleware for /game route
+app.use('/game', (req, _res, next) => {
+  logger.debug(`[GAME] ${req.method} ${req.originalUrl}`);
   next();
 });
 
 // Debug middleware for other routes
-app.use('/forum', (req, res, next) => {
-  console.log(`💬 FORUM ROUTE HIT: ${req.method} ${req.originalUrl}`);
+app.use('/forum', (req, _res, next) => {
+  logger.debug(`[FORUM] ${req.method} ${req.originalUrl}`);
   next();
 });
 
-app.use('/documents', (req, res, next) => {
-  console.log(`📄 DOCUMENTS ROUTE HIT: ${req.method} ${req.originalUrl}`);
+app.use('/documents', (req, _res, next) => {
+  logger.debug(`[DOCUMENTS] ${req.method} ${req.originalUrl}`);
   next();
 });
 
-app.use('/docs', (req, res, next) => {
-  console.log(`📝 DOCS ROUTE HIT: ${req.method} ${req.originalUrl}`);
+app.use('/docs', (req, _res, next) => {
+  logger.debug(`[DOCS] ${req.method} ${req.originalUrl}`);
   next();
 });
 
-app.use('/admin', (req, res, next) => {
-  console.log(`⚙️ ADMIN ROUTE HIT: ${req.method} ${req.originalUrl}`);
+app.use('/admin', (req, _res, next) => {
+  logger.debug(`[ADMIN] ${req.method} ${req.originalUrl}`);
   next();
 });
 
@@ -457,8 +445,8 @@ const cdnServiceProxy = createProxyMiddleware({
   timeout: 30000, // 30 seconds for image upload/processing
   pathFilter: '/cdn/upload',
   on: {
-    proxyReq: (proxyReq: any, req: any, res: any) => {
-      console.log(`📤 [CDN UPLOAD] Proxying: ${req.method} ${req.url}`);
+    proxyReq: (proxyReq: any, req: any, _res: any) => {
+      logger.debug(`[CDN UPLOAD] Proxying: ${req.method} ${req.url}`);
 
       // Forward auth headers for JWT validation
       if (req.headers.authorization) {
@@ -468,11 +456,10 @@ const cdnServiceProxy = createProxyMiddleware({
         proxyReq.setHeader('Cookie', req.headers.cookie);
       }
     },
-    proxyRes: (proxyRes: any, req: any, res: any) => {
-      console.log(`✅ [CDN UPLOAD] Response: ${proxyRes.statusCode}`);
+    proxyRes: (proxyRes: any, _req: any, _res: any) => {
+      logger.debug(`[CDN UPLOAD] Response: ${proxyRes.statusCode}`);
     },
-    error: (err: any, req: any, res: any) => {
-      console.log(`❌ [CDN UPLOAD ERROR] ${err.message}`);
+    error: (err: any, _req: any, res: any) => {
       logger.error(`CDN upload proxy error:`, { error: err.message });
 
       if (!res.headersSent) {
@@ -494,7 +481,7 @@ console.log('✅ CDN upload proxy configured (/cdn/upload → cdn-service:4002)'
 app.use('/cdn', express.static('/cdn-storage', {
   maxAge: '365d', // 1 year cache (immutable hash-based naming)
   immutable: true,
-  setHeaders: (res, path) => {
+  setHeaders: (res, _path) => {
     // Security headers
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Access-Control-Allow-Origin', '*'); // Public CDN
@@ -516,18 +503,15 @@ app.use((req, res, next) => {
     return next();
   }
 
-  console.log(`🔍 [**************] ${req.method} ${req.originalUrl}`);
-  
   const startTime = Date.now();
   const originalUrl = req.originalUrl;
   const method = req.method;
   const clientIP = req.ip || req.socket?.remoteAddress;
-  const userAgent = req.get('User-Agent') || 'Unknown';
-  
+
   // Determine target backend based on route
   let targetService = 'Unknown';
   let targetURL = 'Unknown';
-  
+
   if (originalUrl.startsWith('/auth')) {
     targetService = 'Authentication Backend';
     targetURL = `${process.env.AUTH_BACKEND_URL || 'http://localhost:3000'}${originalUrl}`;
@@ -544,7 +528,7 @@ app.use((req, res, next) => {
     targetService = 'Management Backend';
     targetURL = `${process.env.MANAGEMENT_BACKEND_URL || 'http://localhost:3002'}${originalUrl}`;
   } else {
-    console.log(`🔍 [API Gateway route not found] ${req.method} ${req.originalUrl}`);
+    logger.info(`Route not found: ${method} ${originalUrl}`);
     res.status(404).json({
       success: false,
       error: 'API Gateway route not found',
@@ -554,33 +538,29 @@ app.use((req, res, next) => {
     });
     return;
   }
-  
-  console.log(`🚀 [${new Date().toISOString()}] ${method} ${originalUrl}`);
-  console.log(`   📍 Client: ${clientIP} | User-Agent: ${userAgent.substring(0, 50)}...`);
-  console.log(`   🎯 Target: ${targetService}`);
-  console.log(`   🔗 URL: ${targetURL}`);
-  
+
+  logger.info(`${method} ${originalUrl}`, {
+    clientIP,
+    targetService,
+    targetURL
+  });
+
   // Log response when finished
   const originalSend = res.send;
   res.send = function(data) {
     const duration = Date.now() - startTime;
     const statusCode = res.statusCode;
-    const statusEmoji = statusCode >= 200 && statusCode < 300 ? '✅' : 
-                       statusCode >= 400 && statusCode < 500 ? '⚠️' : '❌';
-    
-    console.log(`   ${statusEmoji} Response: ${statusCode} | Duration: ${duration}ms`);
-    console.log(`   📊 Data size: ${Buffer.byteLength(data, 'utf8')} bytes`);
-    console.log('   ─────────────────────────────────────────────────────────────');
-    
+
+    logger.info(`Response ${statusCode} | ${duration}ms | ${Buffer.byteLength(data, 'utf8')} bytes`);
+
     return originalSend.call(this, data);
   };
-  
+
   next();
 });
 
 // Health check endpoint for the gateway itself with backend services status
-app.get('/health', async (req, res) => {
-  const { logger } = require('./utils/logger');
+app.get('/health', async (_req, res) => {
   
   // Gateway health data
   const gatewayHealth = {
@@ -662,7 +642,7 @@ app.get('/health', async (req, res) => {
 });
 
 // Root endpoint
-app.get('/', (req, res) => {
+app.get('/', (_req, res) => {
   res.json({
     success: true,
     data: {
@@ -692,14 +672,14 @@ app.get('/', (req, res) => {
 
 // 404 handler with detailed logging
 app.use((req, res) => {
-  console.log('\n❌ ===== 404 - ROUTE NOT FOUND =====');
-  console.log(`🔗 URL: ${req.originalUrl || req.url}`);
-  console.log(`📡 Method: ${req.method}`);
-  console.log(`🌐 Origin: ${req.get('Origin') || 'No origin'}`);
-  console.log(`📍 Client IP: ${req.ip || req.socket?.remoteAddress || 'Unknown'}`);
-  console.log(`🤖 User-Agent: ${req.get('User-Agent') || 'No user-agent'}`);
-  console.log('❌ ===================================\n');
-  
+  logger.warn('Route not found', {
+    url: req.originalUrl || req.url,
+    method: req.method,
+    origin: req.get('Origin'),
+    clientIP: req.ip || req.socket?.remoteAddress,
+    userAgent: req.get('User-Agent')
+  });
+
   res.status(404).json({
     success: false,
     error: 'API Gateway route not found',
@@ -712,9 +692,7 @@ app.use((req, res) => {
 });
 
 // Global error handler
-app.use((error: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  const { logger } = require('./utils/logger');
-  
+app.use((error: any, req: express.Request, res: express.Response, _next: express.NextFunction) => {
   logger.error('Unhandled error in API Gateway:', {
     error: error.message,
     stack: error.stack,

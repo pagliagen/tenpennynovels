@@ -16,7 +16,7 @@
   justify-content: space-between;
   width: 100%;
   height: 130px;
-  border-bottom: 2px solid #ff6b3566;  // Black border
+  border-bottom: 2px solid #ff6b3566; // Black border
   position: relative;
   z-index: 100;
 }
@@ -82,7 +82,8 @@
   height: 60px;
   background: black;
 
-  button, a[href] {
+  button,
+  a[href] {
     margin-top: 20px;
     background-color: inherit;
     z-index: 1;
@@ -162,36 +163,35 @@
 
 .semicerchio {
   width: 300px;
-  height: 300px;
+  height: 150px;
   box-sizing: border-box;
-  background: black;
-  border-radius: 300px;
-  border: 1px solid var(--color-accent);
-  position: relative;
-  top: -150px;
+  background: var(--color-accent); 
+  border-radius: 0px 0px 300px 300px;
+  position: relative; 
   overflow: hidden;
-  transition: border-color 0.2s ease;
-
+  transition: box-shadow 0.2s ease;
+  box-shadow: inset 0 0 10px 0 rgba(184, 134, 11, 0.5); // usa rgba per opacity
+  cursor: pointer;
+ 
   &:hover {
-    border-color: color.adjust(#b8860b, $lightness: 10%);
+    box-shadow: inset 0 0 10px 0 rgb(184, 134, 11); 
   }
 }
 
 .locationImage {
   position: absolute;
-  bottom: 5px;
-  left: 5px;
-  width: calc(100% - 10px);
-  height: calc(50% - 5px);
-  object-fit: cover;
-  max-height: 145px;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
   z-index: 0;
   filter: contrast(0.5);
 }
 
 .locationName {
   position: absolute;
-  top: 50%;
+  top: 0;
   left: 0;
   right: 0;
   text-align: center;
