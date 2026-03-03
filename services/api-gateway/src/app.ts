@@ -388,8 +388,9 @@ const socketioProxy = createProxyMiddleware({
       console.log(`   💥 Error: ${err.message}`);
       logger.error(`Socket.IO proxy error:`, { error: err.message, url: req.url });
 
-      // Don't send response for WebSocket errors (connection already upgraded)
-      if (!res.headersSent) {
+      // Only send HTTP response if still in HTTP phase (before WebSocket upgrade)
+      // After upgrade, res is a socket and doesn't have .status() method
+      if (!res.headersSent && typeof res.status === 'function') {
         res.status(502).json({
           success: false,
           error: 'WebSocket service temporarily unavailable',

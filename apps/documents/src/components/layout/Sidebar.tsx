@@ -19,7 +19,7 @@ import styles from '@/styles/components/layout/Sidebar.module.scss';
 
 export function Sidebar(): JSX.Element {
   const router = useRouter();
-  const { data: routesByType, isLoading } = useAllRoutes();
+  const { data: routesByType } = useAllRoutes();
 
   // Track which type sections are collapsed
   const [collapsedTypes, setCollapsedTypes] = useState<Set<string>>(new Set());

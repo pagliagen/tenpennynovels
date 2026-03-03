@@ -433,13 +433,6 @@ export default function BanList() {
               bulkBanDuration: '1d',
               bulkBanReason: ''
             }}
-            onChange={(field, value) => {
-              console.log('BULK BAN onChange:', field, value);
-              if (field === 'bulkBanReason') {
-                setBulkBanReason(value as string);
-                console.log('BULK BAN state updated to:', value);
-              }
-            }}
             onAction={(action, formData) => {
               if (action === 'submit') {
                 console.log('BULK BAN formData:', formData);
@@ -501,13 +494,6 @@ export default function BanList() {
               email: currentUser.email,
               banDuration: '1d',
               banReason: ''
-            }}
-            onChange={(field, value) => {
-              console.log('SINGLE BAN onChange:', field, value);
-              if (field === 'banReason') {
-                setBanReason(value as string);
-                console.log('SINGLE BAN state updated to:', value);
-              }
             }}
             onAction={(action, formData) => {
               if (action === 'submit') {

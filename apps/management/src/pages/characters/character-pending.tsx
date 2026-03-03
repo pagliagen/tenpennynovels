@@ -153,7 +153,7 @@ export default function CharacterPending() {
           title: 'Conferma Approvazione Multipla',
           message: `Vuoi approvare ${items.length} personaggi selezionati? Verranno creati finanziamenti e inventari iniziali.`,
           confirmLabel: 'Approva',
-          confirmType: 'success'
+          type: 'info'
         });
 
         if (!confirmed) return;
@@ -196,7 +196,7 @@ export default function CharacterPending() {
           title: 'Conferma Rifiuto Multiplo',
           message: `Vuoi rifiutare ${items.length} personaggi selezionati? Torneranno in stato DRAFT.`,
           confirmLabel: 'Rifiuta',
-          confirmType: 'danger'
+          type: 'danger'
         });
 
         if (!confirmed) return;
@@ -305,8 +305,8 @@ export default function CharacterPending() {
               age: currentCharacter.age?.toString() || 'N/A',
               occupation: currentCharacter.occupation?.name || 'N/A',
               socialClass: currentCharacter.socialClass?.name || 'N/A',
-              personality: currentCharacter.personality || 'N/A',
-              backstory: currentCharacter.backstory || 'N/A'
+              personality: currentCharacter.biography?.personality || 'N/A',
+              backstory: currentCharacter.biography?.background || 'N/A'
             }}
             onAction={(action) => {
               if (action === 'close') {

@@ -78,6 +78,18 @@ export interface MaintenanceStatus {
   };
 }
 
+export interface AuditLogResponse {
+  items: AuditLog[];
+  pagination: {
+    page: number;
+    pageSize: number;
+    totalItems: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  };
+}
+
 /**
  * System API methods
  */
@@ -104,9 +116,9 @@ export const systemAPI = {
    * Get audit logs with pagination and filtering
    * GET /admin/system/audit-logs
    */
-  getAuditLogs: async (params: AuditLogParams) => {
+  getAuditLogs: async (params: AuditLogParams): Promise<AuditLogResponse> => {
     const response = await api.get('/admin/system/audit-logs', { params });
-    return response.data;
+    return response.data as AuditLogResponse;
   },
 
   /**

@@ -196,7 +196,7 @@ export default function UserList() {
           title: 'Conferma Attivazione Multipla',
           message: `Vuoi attivare ${items.length} utenti selezionati?`,
           confirmLabel: 'Attiva',
-          confirmType: 'success'
+          type: 'info'
         });
 
         if (!confirmed) return;
@@ -224,7 +224,7 @@ export default function UserList() {
           title: 'Conferma Disattivazione Multipla',
           message: `Vuoi disattivare ${items.length} utenti selezionati? Gli utenti non potranno più accedere al sistema.`,
           confirmLabel: 'Disattiva',
-          confirmType: 'danger'
+          type: 'danger'
         });
 
         if (!confirmed) return;

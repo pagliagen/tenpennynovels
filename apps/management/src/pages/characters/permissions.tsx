@@ -197,7 +197,7 @@ export default function CharacterPermissions() {
         id: currentCharacter._id,
         data: {
           isGestore,
-          characterRoles: selectedRoles,
+          characterRoles: selectedRoles as ('personaggio' | 'master' | 'moderatore' | 'amministratore')[],
           characterPermissions: manualPerms
         }
       });
@@ -310,7 +310,7 @@ export default function CharacterPermissions() {
             config={{
               title: `Modifica Permessi - ${currentCharacter.fullName}`,
               subtitle: 'Gestisci ruoli e permessi del personaggio',
-              width: 'xlarge',
+              width: 'large',
               fields: [],
               actions: [
                 { key: 'save', label: 'Salva', type: 'primary', loading: updateCharacter.isPending },
