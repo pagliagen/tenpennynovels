@@ -85,7 +85,8 @@ jobs:
 
             echo "📦 Installing dependencies..."
             # Check if any package-lock.json changed
-            if git diff --name-only HEAD@{1} HEAD 2>/dev/null | grep -q "package-lock.json"; then
+            CHANGED=$(git diff --name-only HEAD@{1} HEAD 2>/dev/null | grep "package-lock.json" || true)
+            if [ -n "$CHANGED" ]; then
               echo "package-lock.json changed, installing all dependencies..."
 
               # Root
