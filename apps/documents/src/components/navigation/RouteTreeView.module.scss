@@ -4,7 +4,7 @@
  * Hierarchical route navigation with nested indentation.
  */
 
-@import '../../styles/variables.scss';
+@use '../../styles/variables' as *;
 
 .routeTree {
   display: flex;
