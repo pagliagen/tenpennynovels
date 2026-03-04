@@ -73,18 +73,24 @@ export class UserSeeder {
         if (existingUsers.length > 0) {
           const userIds = existingUsers.map((u: any) => u._id);
 
-          // STEP 1: Delete Characters FIRST (cascade)
-          const deletedCharacters = await charactersCollection.deleteMany({
+          // STEP 1: Delete Characters FIRST (cascade by userId)
+          const deletedCharactersByUserId = await charactersCollection.deleteMany({
             userId: { $in: userIds }
           });
-          console.log(`   ✓ Deleted ${deletedCharacters.deletedCount} characters\n`);
-
-          // STEP 2: Delete Users
-          const deletedUsers = await usersCollection.deleteMany({
-            username: { $in: adminUsernames }
-          });
-          console.log(`   ✓ Deleted ${deletedUsers.deletedCount} users\n`);
+          console.log(`   ✓ Deleted ${deletedCharactersByUserId.deletedCount} characters by userId\n`);
         }
+
+        // STEP 1b: Delete Characters by name (handle orphaned characters with admin names)
+        const deletedCharactersByName = await charactersCollection.deleteMany({
+          name: { $in: adminUsernames }
+        });
+        console.log(`   ✓ Deleted ${deletedCharactersByName.deletedCount} characters by name\n`);
+
+        // STEP 2: Delete Users
+        const deletedUsers = await usersCollection.deleteMany({
+          username: { $in: adminUsernames }
+        });
+        console.log(`   ✓ Deleted ${deletedUsers.deletedCount} users\n`);
       }
 
       // STEP 3: Create admin users
