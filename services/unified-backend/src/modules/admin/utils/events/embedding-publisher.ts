@@ -56,7 +56,9 @@ export class EmbeddingEventPublisher {
     title: string,
     content: string,
     documentType: 'ambientazione' | 'regolamento',
-    order: number
+    order: number,
+    headingLevel: 2 | 3,
+    parentSlug?: string
   ): Promise<void> {
     const event: DocumentChunkEmbeddingEvent = {
       eventId: uuidv4(),
@@ -67,7 +69,9 @@ export class EmbeddingEventPublisher {
       title,
       content,
       documentType,
-      order
+      order,
+      headingLevel,
+      parentSlug
     };
 
     await this.publisher.publish(

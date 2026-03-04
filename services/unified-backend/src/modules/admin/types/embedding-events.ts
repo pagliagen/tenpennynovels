@@ -47,6 +47,8 @@ export interface DocumentChunkEmbeddingEvent extends BaseEmbeddingEvent {
   content: string;
   documentType: 'ambientazione' | 'regolamento';
   order: number;
+  headingLevel: 2 | 3;      // H2 (main sections) + H3 (sub-sections)
+  parentSlug?: string;       // For H3 chunks, reference to parent H2 slug
 }
 
 /**
