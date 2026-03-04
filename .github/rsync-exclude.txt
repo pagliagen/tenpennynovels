@@ -98,10 +98,7 @@ tsconfig.tsbuildinfo
 
 # Pricing docs (not needed in production)
 pricing/
-
-# Seeder scripts (not needed in production)
-scripts/seeders/
-
+ 
 # Deployment configs (already on server or not needed)
 ecosystem.config.js
 docker-compose.yml
