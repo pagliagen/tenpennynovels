@@ -203,7 +203,7 @@ jobs:
             nvm use
 
             echo "🔄 Restarting PM2 services..."
-            pm2 restart all
+            pm2 startOrRestart ecosystem.config.js --update-env --env production
             echo "✅ PM2 services restarted"
 
       - name: Verify PM2 status
