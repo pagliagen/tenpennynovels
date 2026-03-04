@@ -186,6 +186,38 @@ jobs:
             npm run build:backend:all
             echo "✅ Backend services built successfully"
 
+      - name: Setup Python embeddings service
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          command_timeout: 10m
+          script: |
+            set -e
+            cd ~/tenpennynovels/services/embeddings-service
+
+            echo "🐍 Setting up Python virtual environment..."
+
+            # Create venv if it doesn't exist
+            if [ ! -d "venv" ]; then
+              echo "Creating new virtualenv..."
+              python3 -m venv venv
+            fi
+
+            # Activate venv
+            source venv/bin/activate
+
+            # Upgrade pip
+            pip install --upgrade pip
+
+            # Install/update dependencies
+            echo "Installing Python dependencies..."
+            pip install -r requirements.txt
+
+            echo "✅ Python embeddings service ready"
+
       - name: Restart PM2 services
         uses: appleboy/ssh-action@v1.0.3
         with:

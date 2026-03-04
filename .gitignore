@@ -9,8 +9,8 @@ dist/
 .env
 .env.*
 .DS_Store
-*.sh 
 nginx-api.conf
+__pycache__/
 
 # Environment files (local development)
 .env.local

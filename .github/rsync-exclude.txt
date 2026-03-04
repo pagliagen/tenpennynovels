@@ -5,6 +5,12 @@
 node_modules/
 package-lock.json
 
+# Python virtualenv (regenerated remotely)
+venv/
+__pycache__/
+*.pyc
+*.pyo
+
 # Build outputs (generated remotely)
 .next/
 dist/
