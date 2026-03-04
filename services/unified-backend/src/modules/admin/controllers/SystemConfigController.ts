@@ -506,7 +506,7 @@ audit_2,2024-01-15T13:15:00Z,admin,user_banned,user_management,user,user123,high
         User.countDocuments({}),
         User.countDocuments({ lastActive: { $gte: thirtyDaysAgo } }),
         User.countDocuments({ isOnline: true }),
-        User.countDocuments({ userRoles: { $in: ['gestore', 'master', 'moderatore'] } }),
+        User.countDocuments({ canAccessAdminPanel: true }),
 
         // Characters
         Character.countDocuments({}),

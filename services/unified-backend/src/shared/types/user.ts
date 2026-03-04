@@ -13,7 +13,7 @@ export interface BaseUser {
   email: string;
   canAccessAdminPanel: boolean;
   // Granular permission system
-  userRoles: ('user' | 'gestore')[];
+  userRoles: ('user')[];
   characterRoles: ('personaggio' | 'master' | 'moderatore' | 'amministratore')[];
   characterPermissions: string[];
 }

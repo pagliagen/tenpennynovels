@@ -3,8 +3,8 @@ export interface AuthTokenPayload {
   username: string;
   email: string;
   canAccessAdminPanel: boolean;
-  // New granular permission system
-  userRoles?: ('user' | 'gestore')[];
+  // Granular permission system
+  userRoles?: ('user')[];
   characterRoles?: ('personaggio' | 'master' | 'moderatore' | 'amministratore')[];
   characterPermissions?: string[];
   // No more legacy fields - using only granular system

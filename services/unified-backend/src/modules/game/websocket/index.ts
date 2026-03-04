@@ -116,16 +116,11 @@ export async function setupWebSocket(io: SocketIOServer): Promise<void> {
     // Join user-specific room
     socket.join(`user_${user.userId}`);
 
-    // Join role-specific rooms based on new granular system
-    if (user.userRoles?.includes('gestore')) {
+    // Join role-specific rooms based on characterRoles
+    if (user.characterRoles?.includes('amministratore') || user.characterRoles?.includes('master') || user.characterRoles?.includes('moderatore')) {
       socket.join('admin');
       socket.join('staff');
-      socket.join(`staff_${user.userId}`);  // NEW: Individual staff room for personal notifications
-    }
-
-    if (user.characterRoles?.includes('amministratore') || user.characterRoles?.includes('master') || user.characterRoles?.includes('moderatore')) {
-      socket.join('staff');
-      socket.join(`staff_${user.userId}`);  // NEW: Individual staff room for personal notifications
+      socket.join(`staff_${user.userId}`);  // Individual staff room for personal notifications
     }
     
     // Join character-specific room if character context exists (all statuses except DELETED can access game)

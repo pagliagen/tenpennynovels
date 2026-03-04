@@ -101,7 +101,7 @@ export class UserSeeder {
           isActive: true,
           isBanned: false,
           multipleCharactersAllowed: false,
-          userRoles: ['gestore'],
+          userRoles: ['user'],
           characterRoles: ['amministratore'],
           characterPermissions: [],
           preferences: {
@@ -116,8 +116,30 @@ export class UserSeeder {
           updatedAt: new Date()
         };
 
-        await usersCollection.insertOne(adminData);
+        const userResult = await usersCollection.insertOne(adminData);
         console.log(`   ✓ Created admin: ${adminData.username}/${admin.password}`);
+
+        // Create admin Character with isGestore=true
+        const adminCharacterData = {
+          userId: userResult.insertedId,
+          name: admin.username,
+          status: 'APPROVED',
+          adminRoles: ['amministratore'],
+          gameplayRoles: ['master'],
+          isGestore: true,  // Super-admin flag
+          characterPermissions: [],
+          skills: {},
+          isActive: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          submittedAt: new Date(),
+          approvedAt: new Date(),
+          approvedBy: userResult.insertedId,
+          approvedByName: 'System'
+        };
+
+        await charactersCollection.insertOne(adminCharacterData);
+        console.log(`   ✓ Created admin character: ${admin.username} (isGestore=true)`);
       }
 
       console.log('');

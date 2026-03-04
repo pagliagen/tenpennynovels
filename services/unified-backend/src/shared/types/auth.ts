@@ -11,9 +11,9 @@ export interface User {
   
   // Admin panel access gate
   canAccessAdminPanel: boolean;
-  
-  // New granular permission system
-  userRoles: ('user' | 'gestore')[];
+
+  // Granular permission system
+  userRoles: ('user')[];
   characterRoles: ('personaggio' | 'master' | 'moderatore' | 'amministratore')[];
   characterPermissions: string[];
   
@@ -39,8 +39,8 @@ export interface AuthToken {
   email: string;
   canAccessAdminPanel: boolean;
 
-  // New granular permission system
-  userRoles?: ('user' | 'gestore')[];
+  // Granular permission system
+  userRoles?: ('user')[];
   characterRoles?: ('personaggio' | 'master' | 'moderatore' | 'amministratore')[];
   characterPermissions?: string[];
 

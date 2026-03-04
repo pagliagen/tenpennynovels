@@ -84,7 +84,7 @@ export class LocationTagController {
   static async createTag(req: Request, res: Response): Promise<void> {
     try {
       const user = req.user;
-      if (!user || !user.userRoles?.includes('gestore')) {
+      if (!user || !user.canAccessAdminPanel) {
         res.status(403).json(errorResponse(
           'Only administrators can create tags',
           'INSUFFICIENT_PERMISSIONS',
@@ -155,7 +155,7 @@ export class LocationTagController {
   static async updateTag(req: Request<{ tagId: string }>, res: Response): Promise<void> {
     try {
       const user = req.user;
-      if (!user || !user.userRoles?.includes('gestore')) {
+      if (!user || !user.canAccessAdminPanel) {
         res.status(403).json(errorResponse(
           'Only administrators can update tags',
           'INSUFFICIENT_PERMISSIONS',
@@ -217,7 +217,7 @@ export class LocationTagController {
   static async deleteTag(req: Request<{ tagId: string }>, res: Response): Promise<void> {
     try {
       const user = req.user;
-      if (!user || !user.userRoles?.includes('gestore')) {
+      if (!user || !user.canAccessAdminPanel) {
         res.status(403).json(errorResponse(
           'Only administrators can delete tags',
           'INSUFFICIENT_PERMISSIONS',

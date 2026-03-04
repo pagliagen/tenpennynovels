@@ -333,11 +333,10 @@ export class AuthMiddleware {
       }
 
       const missingPermissions = permissions.filter(perm => {
-        // Check new granular system first
-        if (req.user?.userRoles?.includes('gestore')) return false;
+        // Check granular permission system
         if (req.user?.characterPermissions?.includes(perm)) return false;
-        
-        // No fallback - return true if permission not found in granular system
+
+        // No fallback - return true if permission not found
         return true;
       });
 

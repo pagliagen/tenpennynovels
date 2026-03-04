@@ -266,7 +266,7 @@ export class UserManagementController {
         avatar: '/avatars/admin.jpg',
         canAccessAdminPanel: true,
         // Granular permission system
-        userRoles: ['gestore'],
+        userRoles: ['user'],
         characterRoles: ['amministratore'],
         characterPermissions: [
           'system.maintenance_mode',
@@ -1444,9 +1444,9 @@ export class UserManagementController {
       });
 
       // Validate input
-      if (userRoles && (!Array.isArray(userRoles) || !userRoles.every((role: any) => ['user', 'gestore'].includes(role)))) {
+      if (userRoles && (!Array.isArray(userRoles) || !userRoles.every((role: any) => ['user'].includes(role)))) {
         res.status(400).json(errorResponse(
-          'Invalid user roles. Must be array containing "user" and/or "gestore"',
+          'Invalid user roles. Must be array containing "user"',
           'INVALID_USER_ROLES',
           {
             providedRoles: userRoles,

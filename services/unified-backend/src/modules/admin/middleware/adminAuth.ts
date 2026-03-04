@@ -292,7 +292,6 @@ export class AdminAuthMiddleware {
   static hasRole(req: Request, role: string): boolean {
     if (!req.user) return false;
 
-    if (role === 'gestore' && req.user.userRoles?.includes('gestore')) return true;
     return (req.user.characterRoles as string[])?.includes(role) || false;
   }
 
@@ -301,8 +300,7 @@ export class AdminAuthMiddleware {
    */
   static hasAnyRole(req: Request, roles: string[]): boolean {
     if (!req.user) return false;
-    
-    if (req.user.userRoles?.includes('gestore')) return true;
+
     if (req.user.userRoles?.some(role => roles.includes(role))) return true;
     return req.user.characterRoles?.some(role => roles.includes(role)) || false;
   }

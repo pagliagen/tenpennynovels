@@ -93,10 +93,8 @@ export class GameController {
       }
 
       // Calculate admin permissions
-      const canAccessAdmin = user.canAccessAdminPanel && (
-        user.userRoles.includes('gestore') || 
-        user.characterRoles.some((role: string) => ['master', 'moderatore', 'amministratore'].includes(role))
-      );
+      const canAccessAdmin = user.canAccessAdminPanel &&
+        user.characterRoles.some((role: string) => ['master', 'moderatore', 'amministratore'].includes(role));
       
       const canAccessTickets = canAccessAdmin; // Same permissions for now
       

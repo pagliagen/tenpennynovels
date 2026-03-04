@@ -267,12 +267,10 @@ export class AuthMiddleware {
         // Check specific permissions if provided
         if (permissions.length > 0) {
           let hasPermission = false;
-          
-          // Check new granular system first
-          if (req.user.userRoles?.includes('gestore')) {
-            hasPermission = true;
-          } else if (req.user.characterPermissions) {
-            hasPermission = permissions.some(permission => 
+
+          // Check granular permission system
+          if (req.user.characterPermissions) {
+            hasPermission = permissions.some(permission =>
               req.user!.characterPermissions!.includes(permission)
             );
           }
