@@ -84,7 +84,7 @@ export function useSearch(query: string = '', options: UseSearchOptions = {}) {
       }
 
       const response = await api.get<{ data: SearchResponse }>(
-        `/game/documents/semantic-search?${params.toString()}`
+        `/documents/semantic-search?${params.toString()}`
       );
 
       return response.data;

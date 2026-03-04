@@ -13,6 +13,7 @@
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuthStore } from '@/store/authStore';
+import { usePermissionsStore } from '@/store/permissionsStore';
 import { Sidebar } from './Sidebar';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { ToastContainer } from '@/components/shared/ToastContainer';
@@ -25,6 +26,7 @@ export interface ManagementLayoutProps {
 export function ManagementLayout({ children }: ManagementLayoutProps): React.ReactElement {
   const router = useRouter();
   const { user, isAuthenticated, isLoading } = useAuthStore();
+  const { loadPermissions, clearPermissions } = usePermissionsStore();
 
   // Auth check - redirect to landing if not authenticated
   useEffect(() => {
@@ -42,6 +44,15 @@ export function ManagementLayout({ children }: ManagementLayoutProps): React.Rea
       window.location.href = process.env.NEXT_PUBLIC_LANDING_URL || 'http://localhost:4000';
     }
   }, [isAuthenticated, user]);
+
+  // Load permissions when authenticated
+  useEffect(() => {
+    if (isAuthenticated && user?.canAccessAdminPanel) {
+      loadPermissions();
+    } else {
+      clearPermissions();
+    }
+  }, [isAuthenticated, user?.canAccessAdminPanel, loadPermissions, clearPermissions]);
 
   // Loading state
   if (isLoading) {

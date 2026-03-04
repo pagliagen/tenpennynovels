@@ -4,6 +4,7 @@
 
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import { hasAdminPermission, AdminPermission } from '@config/admin-permissions';
 
 interface PermissionConfig {
   _meta: {
@@ -112,8 +113,19 @@ export function haveAccessTo(section: string, userRoles: string[], characterRole
 /**
  * Funzione per verificare permessi specifici - canView('view_basic_stats')
  */
+/**
+ * @deprecated Use hasAdminPermission() from @config/admin-permissions instead.
+ *
+ * This function used hierarchical 3-part permissions and checked characterRoles
+ * for 'gestore' role (which no longer exists - replaced by Character.isGestore flag).
+ *
+ * Kept temporarily for backward compatibility with legacy code.
+ */
 export function canView(permission: string, userRoles: string[], characterRoles: string[], characterPermissions: string[] = []): boolean {
-  // CHARACTER.GESTORE può sempre vedere tutto senza filtri
+  console.warn('[DEPRECATED] canView() is deprecated. Use hasAdminPermission() instead.');
+
+  // CHARACTER.GESTORE is now Character.isGestore (boolean flag, not a role)
+  // This check no longer works in the new system
   if (characterRoles.includes('gestore')) {
     return true;
   }
@@ -123,7 +135,8 @@ export function canView(permission: string, userRoles: string[], characterRoles:
     return true;
   }
 
-  // Parse permission: section.detail.action
+  // Parse permission: section.detail.action (3-part hierarchical format)
+  // NOTE: New system uses flat 2-part format: section.action
   const parts = permission.split('.');
   if (parts.length !== 3 || parts[1] !== 'detail') {
     console.warn(`Invalid permission format: ${permission}. Expected: section.detail.action`);
@@ -393,7 +406,7 @@ export function requireAccess(section: string) {
  * Middleware per verificare permesso specifico
  * IMPORTANTE: Usa CHARACTER.gameplayRoles dal database (non JWT token)
  */
-export function requireViewPermission(permission: string) {
+export function requireViewPermission(permission: AdminPermission) {
   return async (req: any, res: any, next: any) => {
     const user = req.user;
 
@@ -445,17 +458,24 @@ export function requireViewPermission(permission: string) {
         characterContextData
       );
 
-      // Get CHARACTER roles (from selected character's gameplayRoles)
-      const characterRoles = selectedCharacter?.gameplayRoles || dbUser.characterRoles || [];
-      const userRoles = dbUser.userRoles || [];
-      const characterPermissions = dbUser.characterPermissions || [];
+      // Get admin roles and permissions from selected CHARACTER (not User)
+      const adminRoles = selectedCharacter?.adminRoles || [];
+      const characterPermissions = selectedCharacter?.characterPermissions || [];
+      const isGestore = selectedCharacter?.isGestore || false;
 
-      if (!canView(permission, userRoles, characterRoles, characterPermissions)) {
+      // UNICO bypass: Character.isGestore
+      if (isGestore) {
+        return next();
+      }
+
+      // Check permission using flat system
+      if (!hasAdminPermission(adminRoles, characterPermissions, isGestore, permission)) {
         console.warn(`Permission denied: ${permission}`, {
           userId: user.userId,
-          userRoles,
-          characterRoles,
-          characterPermissions
+          characterId: selectedCharacter?._id,
+          adminRoles,
+          characterPermissions,
+          isGestore
         });
         return res.status(403).json({
           success: false,

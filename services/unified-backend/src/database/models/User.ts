@@ -16,7 +16,7 @@ export interface IUser extends Document {
   passwordResetExpires?: Date;
   
   // NUOVO SISTEMA GRANULARE
-  userRoles: ('user' | 'gestore')[]; // Solo override completo (gestore = accesso totale)
+  userRoles: ('user')[]; // User-level roles (bypass is Character.isGestore, not here)
   characterRoles: ('personaggio' | 'master' | 'moderatore' | 'amministratore')[]; // Ruoli gameplay
   characterPermissions: string[]; // Permessi aggiuntivi puntuali ['users.delete', 'system.maintenance_mode']
   
@@ -115,7 +115,7 @@ const UserSchema = new Schema<IUser>({
   // NUOVO SISTEMA GRANULARE
   userRoles: [{
     type: String,
-    enum: ['user', 'gestore'],
+    enum: ['user'],
     default: 'user'
   }],
   characterRoles: [{
@@ -248,15 +248,10 @@ UserSchema.methods.hasCharacterPermission = function(permission: string): boolea
 
 /**
  * Verifica se l'utente ha accesso a un permesso granulare
- * Logica: Se userRoles contiene 'gestore' → Accesso completo
- * Altrimenti: Calcola permessi da characterRoles + characterPermissions
+ * Logica: Calcola permessi da characterRoles + characterPermissions
+ * NOTE: Bypass totale (gestore) è ora Character.isGestore, non User.userRoles
  */
 UserSchema.methods.hasViewPermission = function(permission: string): boolean {
-  // Override completo per gestore
-  if (this.userRoles.includes('gestore')) {
-    return true;
-  }
-  
   // Controllo permessi character specifici
   if (this.characterPermissions.includes(permission)) {
     return true;

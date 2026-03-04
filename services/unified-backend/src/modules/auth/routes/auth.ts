@@ -63,6 +63,11 @@ router.get('/session',
   AuthController.getSession
 );
 
+router.get('/effective-permissions',
+  AuthMiddleware.authenticateUser(),
+  AuthController.getEffectivePermissions
+);
+
 router.post('/logout',
   AuthMiddleware.authenticateUser(false),
   AuthController.logout

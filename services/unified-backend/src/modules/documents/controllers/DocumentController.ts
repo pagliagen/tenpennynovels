@@ -255,7 +255,7 @@ export class DocumentController {
       ]);
 
       // Build hierarchical tree
-      const hierarchicalRoutes = this.buildHierarchicalRouteTree(routes);
+      const hierarchicalRoutes = DocumentController.buildHierarchicalRouteTree(routes);
 
       // Group by type
       const grouped = {

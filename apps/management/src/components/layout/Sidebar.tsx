@@ -12,6 +12,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import classNames from 'classnames';
 import { useUIStore } from '@/store/uiStore';
+import { usePermissionsStore } from '@/store/permissionsStore';
 import styles from '@/styles/components/Sidebar.module.scss';
 
 interface NavItem {
@@ -30,8 +31,8 @@ const NAV_ITEMS: NavItem[] = [
     label: 'Utenti',
     icon: '👥',
     children: [
-      { key: 'users-list', label: 'Lista Utenti', href: '/users/user-list', permission: 'user.read' },
-      { key: 'users-bans', label: 'Ban List', href: '/users/ban-list', permission: 'user.ban' }
+      { key: 'users-list', label: 'Lista Utenti', href: '/users/user-list', permission: 'users.list' },
+      { key: 'users-bans', label: 'Ban List', href: '/users/ban-list', permission: 'users.ban' }
     ]
   },
   {
@@ -39,9 +40,9 @@ const NAV_ITEMS: NavItem[] = [
     label: 'Personaggi',
     icon: '🎭',
     children: [
-      { key: 'characters-list', label: 'Lista Personaggi', href: '/characters/character-list', permission: 'character.read' },
-      { key: 'characters-pending', label: 'In Attesa Approvazione', href: '/characters/character-pending', permission: 'character.approve' },
-      { key: 'characters-permissions', label: 'Permessi', href: '/characters/permissions', permission: 'character.permissions' }
+      { key: 'characters-list', label: 'Lista Personaggi', href: '/characters/character-list', permission: 'characters.list' },
+      { key: 'characters-pending', label: 'In Attesa Approvazione', href: '/characters/character-pending', permission: 'characters.approve' },
+      { key: 'characters-permissions', label: 'Permessi', href: '/characters/permissions', permission: 'characters.manage_permissions' }
     ]
   },
   {
@@ -49,7 +50,7 @@ const NAV_ITEMS: NavItem[] = [
     label: 'Documenti',
     icon: '📄',
     children: [
-      { key: 'documents-list', label: 'Lista Documenti', href: '/documents/document-list', permission: 'documents.read' }
+      { key: 'documents-list', label: 'Lista Documenti', href: '/documents/document-list', permission: 'documents.list' }
     ]
   },
   {
@@ -58,7 +59,7 @@ const NAV_ITEMS: NavItem[] = [
     icon: '⚙️',
     children: [
       { key: 'system-configs', label: 'Configurazioni', href: '/system/configurations', permission: 'system.config' },
-      { key: 'system-audit', label: 'Audit Logs', href: '/system/audit-logs', permission: 'system.audit' },
+      { key: 'system-audit', label: 'Audit Logs', href: '/system/audit-logs', permission: 'system.logs' },
       { key: 'system-broadcast', label: 'Broadcast', href: '/system/broadcast', permission: 'system.broadcast' }
     ]
   }
@@ -67,6 +68,7 @@ const NAV_ITEMS: NavItem[] = [
 export function Sidebar(): React.ReactElement {
   const router = useRouter();
   const { sidebarCollapsed, toggleSidebar } = useUIStore();
+  const { hasPermission } = usePermissionsStore();
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set(['users', 'characters', 'documents']));
 
   const toggleCategory = (key: string) => {
@@ -84,8 +86,21 @@ export function Sidebar(): React.ReactElement {
   const renderNavItem = (item: NavItem, level: number = 0) => {
     // Category with children
     if (item.children) {
+      // Filter visible children based on permissions
+      const visibleChildren = item.children.filter(child => {
+        // No permission required = always visible
+        if (!child.permission) return true;
+        // Check permission
+        return hasPermission(child.permission);
+      });
+
+      // Hide category if all children are hidden
+      if (visibleChildren.length === 0) {
+        return null;
+      }
+
       const isExpanded = expandedCategories.has(item.key);
-      const hasActiveChild = item.children.some(child => child.href === router.pathname);
+      const hasActiveChild = visibleChildren.some(child => child.href === router.pathname);
 
       return (
         <div key={item.key} className={styles.category}>
@@ -109,7 +124,7 @@ export function Sidebar(): React.ReactElement {
 
           {isExpanded && !sidebarCollapsed && (
             <div className={styles.categoryChildren}>
-              {item.children.map(child => renderNavItem(child, level + 1))}
+              {visibleChildren.map(child => renderNavItem(child, level + 1))}
             </div>
           )}
         </div>
@@ -118,6 +133,11 @@ export function Sidebar(): React.ReactElement {
 
     // Leaf item with href
     if (item.href) {
+      // Hide if no permission
+      if (item.permission && !hasPermission(item.permission)) {
+        return null;
+      }
+
       const isActive = router.pathname === item.href;
 
       return (

@@ -137,12 +137,12 @@ export interface ICharacter extends Document {
   currentLocation: Schema.Types.ObjectId;
   isActive: boolean; // Currently selected character
   
-  // Character gameplay roles (game runtime permissions - auto-calculated from status + characterRoles)
+  // Character gameplay roles (game runtime permissions - auto-calculated from status + adminRoles)
   gameplayRoles: ('player' | 'approved-player' | 'master' | 'moderatore')[];
 
   // Granular permission system for characters
   isGestore: boolean; // Super-role flag that grants all permissions
-  characterRoles: ('personaggio' | 'master' | 'moderatore')[]; // Character roles (gestore is now a flag)
+  adminRoles: ('personaggio' | 'master' | 'moderatore' | 'amministratore')[]; // Admin panel roles
   characterPermissions: string[]; // Permission overrides (add/remove specific permissions)
 
   // Bot AI integration
@@ -542,7 +542,7 @@ const CharacterSchema = new Schema<ICharacter>({
     default: false
   },
   
-  // Character gameplay roles (auto-calculated from status + characterRoles)
+  // Character gameplay roles (auto-calculated from status + adminRoles)
   gameplayRoles: [{
     type: String,
     enum: ['player', 'approved-player', 'master']
@@ -553,9 +553,10 @@ const CharacterSchema = new Schema<ICharacter>({
     type: Boolean,
     default: false
   },
-  characterRoles: [{
+  adminRoles: [{
     type: String,
-    enum: ['personaggio', 'master', 'moderatore']
+    enum: ['personaggio', 'master', 'moderatore', 'amministratore'],
+    default: ['personaggio']
   }],
   characterPermissions: [{
     type: String,
@@ -787,17 +788,17 @@ CharacterSchema.pre('save', async function(this: ICharacter) {
   // ============================================================
   // This ensures gameplayRoles is ALWAYS up-to-date based on:
   // - character.status (APPROVED → approved-player, otherwise → player)
-  // - character.characterRoles (if includes 'master' or 'moderatore', add to gameplayRoles)
+  // - character.adminRoles (if includes 'master' or 'moderatore', add to gameplayRoles)
   // - character.characterPermissions (ensure array exists)
   // - character.isGestore (ensure boolean exists)
 
-  if (this.isModified('status') || this.isModified('characterRoles') || this.isNew) {
+  if (this.isModified('status') || this.isModified('adminRoles') || this.isNew) {
     // Base role based on status
     const baseRole = this.status === 'APPROVED' ? 'approved-player' : 'player';
 
     // Check for special roles
-    const hasMasterRole = (this.characterRoles || []).includes('master');
-    const hasModeratorRole = (this.characterRoles || []).includes('moderatore');
+    const hasMasterRole = (this.adminRoles || []).includes('master');
+    const hasModeratorRole = (this.adminRoles || []).includes('moderatore');
 
     // Build gameplayRoles array (can have multiple special roles)
     const specialRoles = [];

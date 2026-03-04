@@ -11,6 +11,7 @@ import geoip from 'geoip-lite';
 import { ApiResponse } from '../types/auth';
 import { DeviceInfo, LocationInfo } from '../types/auth';
 import { successResponse, errorResponse, createdResponse } from '@shared/utils/apiResponse';
+import { getEffectivePermissions as calculateEffectivePermissions } from '@config/admin-permissions';
 
 // Helper function to transform technical validation messages into user-friendly ones
 function transformValidationMessage(field: string, originalMessage: string, validationKind: string): string {
@@ -222,7 +223,8 @@ export class AuthController {
             userId: user.id,
             name: characterName,
             status: 'DRAFT',
-            gameplayRoles: ['personaggio'],
+            adminRoles: ['personaggio'],      // Admin panel roles
+            gameplayRoles: ['personaggio'],   // Game system roles
             skills: {},
             isActive: false,
             submittedAt: new Date()
@@ -577,7 +579,8 @@ export class AuthController {
         description: description?.trim() || undefined,
         background: background?.trim() || undefined,
         status: 'DRAFT',
-        gameplayRoles: ['personaggio'],
+        adminRoles: ['personaggio'],      // Admin panel roles
+        gameplayRoles: ['personaggio'],   // Game system roles
         isActive: false,
         createdAt: new Date()
       });
@@ -864,11 +867,68 @@ export class AuthController {
     } catch (error: any) {
       logger.error('Logout all error:', error);
       
-      errorResponse(res, 
+      errorResponse(res,
         'Logout completo fallito',
         'LOGOUT_ALL_ERROR',
         undefined,
         500);
+    }
+  }
+
+  /**
+   * Get effective permissions for current character
+   *
+   * Calculates final permission list based on:
+   * - Character.isGestore (bypass flag)
+   * - Character.adminRoles → ROLE_PERMISSIONS mapping
+   * - Character.characterPermissions (custom overrides)
+   *
+   * Used by frontend permissionsStore to filter UI elements.
+   *
+   * @route GET /auth/effective-permissions
+   * @requires authMiddleware
+   * @requires character_context cookie
+   */
+  static async getEffectivePermissions(req: Request, res: Response): Promise<void> {
+    try {
+      // Decode character_context cookie
+      const characterContext = req.cookies?.character_context;
+      if (!characterContext) {
+        return errorResponse(res, 'No character selected', 'NO_CHARACTER_CONTEXT', undefined, 401);
+      }
+
+      // Verify JWT token
+      const decoded = CryptoUtils.verifyCharacterContextToken(characterContext);
+      if (!decoded || !decoded.characterId) {
+        return errorResponse(res, 'Invalid character context', 'INVALID_CHARACTER_CONTEXT', undefined, 401);
+      }
+
+      // Fetch character from database
+      const character = await Character.findById(decoded.characterId);
+      if (!character) {
+        return errorResponse(res, 'Character not found', 'CHARACTER_NOT_FOUND', undefined, 404);
+      }
+
+      // Calculate effective permissions
+      const adminRoles = character.adminRoles || [];
+      const characterPermissions = character.characterPermissions || [];
+      const isGestore = character.isGestore || false;
+
+      const effectivePermissions = calculateEffectivePermissions(
+        adminRoles,
+        characterPermissions,
+        isGestore
+      );
+
+      // Return permissions
+      successResponse(res, {
+        isGestore,
+        permissions: effectivePermissions
+      }, 'Permissions calculated successfully');
+
+    } catch (error: any) {
+      logger.error('Get effective permissions error:', error);
+      errorResponse(res, 'Failed to get permissions', 'GET_PERMISSIONS_ERROR', undefined, 500);
     }
   }
 }
