@@ -3,7 +3,7 @@ import { db } from '@database/models';
 import { ApiResponse } from '../types/management';
 import { AdminAuthMiddleware } from '../middleware/adminAuth';
 import { logger } from '../utils/logger';
-import { ChatModerationAction, UserReport, IChatModerationAction, IUserReport } from '../models/ChatModeration';
+import { ChatModerationAction, UserReport, type IChatModerationAction, type IUserReport } from '@database/models';
 import { listResponse, successResponse, errorResponse, getRequestId } from '../utils/apiResponse';
 
 // Access mongoose from the centralized connection

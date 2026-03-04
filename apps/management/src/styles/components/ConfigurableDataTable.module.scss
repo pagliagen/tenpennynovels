@@ -101,7 +101,7 @@
     transition: color $transition-fast;
 
     &:hover {
-      color: lighten($color-primary, 10%);
+      color: color.adjust($color-primary, $lightness: 10%);
     }
   }
 }
@@ -287,12 +287,12 @@
 
   &:global(.tpn-admin-boolean--true) {
     border-color: $color-success;
-    color: lighten($color-success, 40%);
+    color: color.adjust($color-success, $lightness: 40%);
   }
 
   &:global(.tpn-admin-boolean--false) {
     border-color: $color-error;
-    color: lighten($color-error, 40%);
+    color: color.adjust($color-error, $lightness: 40%);
   }
 }
 

@@ -245,7 +245,7 @@ const services = {
     target: buildProxyTarget(
       process.env.UNIFIED_BACKEND_URL,
       UNIFIED_BACKEND,
-      '/game/documents'
+      '/documents'  // CHANGED: from '/game/documents' to '/documents' (new module mount)
     ),
     backend: 'unified-backend',
     port: 3001
@@ -416,11 +416,6 @@ app.use('/documents', (req, _res, next) => {
   next();
 });
 
-app.use('/docs', (req, _res, next) => {
-  logger.debug(`[DOCS] ${req.method} ${req.originalUrl}`);
-  next();
-});
-
 app.use('/admin', (req, _res, next) => {
   logger.debug(`[ADMIN] ${req.method} ${req.originalUrl}`);
   next();
@@ -428,13 +423,11 @@ app.use('/admin', (req, _res, next) => {
 
 // Apply rate limiting middleware to /documents routes
 app.use('/documents', documentsRateLimitUnauth, documentsRateLimitAuth);
-app.use('/docs', documentsRateLimitUnauth, documentsRateLimitAuth);
 
 app.use('/auth', createServiceProxy('auth', services.auth));
 app.use('/game', createServiceProxy('game', services.game));
 app.use('/forum', createServiceProxy('forum', services.forum));
 app.use('/documents', createServiceProxy('documents', services.documents));
-app.use('/docs', createServiceProxy('documents', services.documents));
 app.use('/admin', createServiceProxy('admin', services.admin));
 
 // ========== CDN SERVICE PROXY ==========
@@ -520,9 +513,6 @@ app.use((req, res, next) => {
     targetURL = `${process.env.GAME_BACKEND_URL || 'http://localhost:3001'}${originalUrl}`;
   } else if (originalUrl.startsWith('/forum')) {
     targetService = 'Game Backend (Forum)';
-    targetURL = `${process.env.GAME_BACKEND_URL || 'http://localhost:3001'}${originalUrl}`;
-  } else if (originalUrl.startsWith('/docs')) {
-    targetService = 'Game Backend (Documents)';
     targetURL = `${process.env.GAME_BACKEND_URL || 'http://localhost:3001'}${originalUrl}`;
   } else if (originalUrl.startsWith('/admin')) {
     targetService = 'Management Backend';
@@ -686,7 +676,7 @@ app.use((req, res) => {
     code: 'ROUTE_NOT_FOUND',
     requested_url: req.originalUrl || req.url,
     method: req.method,
-    available_prefixes: ['/auth', '/game', '/forum', '/admin', '/docs', '/documents'],
+    available_prefixes: ['/auth', '/game', '/forum', '/admin', '/documents'],
     timestamp: new Date().toISOString()
   });
 });

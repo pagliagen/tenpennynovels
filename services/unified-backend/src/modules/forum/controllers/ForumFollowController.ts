@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
-import { ForumCharacterFollow } from '../models/ForumCharacterFollow';
+import { ForumCharacterFollow } from '@database/models';
 import { Character } from '@database/models/Character';
 import { NotificationService } from '../services/NotificationService';
 import { successResponse, errorResponse } from '../utils/apiResponse';

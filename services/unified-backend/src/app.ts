@@ -13,6 +13,7 @@ import { httpLoggerStream, logger } from '@shared/utils/logger';
 import authRoutes from '@modules/auth/routes/auth';
 import gameRoutes from '@modules/game/routes';
 import adminRoutes from '@modules/admin/routes';
+import documentsRoutes from '@modules/documents/routes';
 
 const app: Application = express();
 
@@ -63,6 +64,7 @@ app.get('/health', (req, res) => {
 
 // ===== Module Routes =====
 app.use('/auth', authRoutes);
+app.use('/documents', documentsRoutes);  // Documents module (public)
 app.use('/game', gameRoutes);
 app.use('/admin', adminRoutes);
 

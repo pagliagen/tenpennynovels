@@ -12,17 +12,9 @@
   },
   "scripts": {
     "dev": "NODE_ENV=development tsx watch src/server.ts",
-    "build": "tsc && mkdir -p dist/config/static && cp -r src/config/static/* dist/config/static/",
+    "build": "tsc && mkdir -p dist/config && cp -r src/config/* dist/config/",
     "start": "NODE_ENV=production node -r module-alias/register dist/server.js",
-    "type-check": "tsc --noEmit",
-    "migrate:forum": "tsx scripts/migrate-forum-enhancements.ts",
-    "migrate:chunks": "tsx src/scripts/migrate-documents-to-chunks.ts",
-    "migrate:h1-chunks": "tsx src/scripts/migrate-to-h1-chunks.ts",
-    "migrate:character-approval": "tsx src/scripts/migrate-character-approval-data.ts",
-    "regenerate-html": "tsx src/scripts/regenerate-document-html.ts",
-    "test:h3-chunks": "tsx src/scripts/test-h3-chunks.ts",
-    "seed:character-creation": "tsx scripts/seed-character-creation.ts",
-    "seed:from-csv": "tsx scripts/seed-from-csv.ts"
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@qdrant/js-client-rest": "^1.17.0",

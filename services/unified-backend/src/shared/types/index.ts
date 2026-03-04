@@ -12,6 +12,9 @@ export * from './validation';
 // User Types
 export * from './user';
 
+// Analytics Types
+export * from './analytics';
+
 // Re-export existing types for backward compatibility
 export * from './auth';
 export * from './character';

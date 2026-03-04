@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
-import { ForumNotification } from '../models/ForumNotification';
+import { ForumNotification } from '@database/models';
 import { successResponse, errorResponse } from '../utils/apiResponse';
 
 /**

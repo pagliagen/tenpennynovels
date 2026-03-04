@@ -3,10 +3,7 @@ import mongoose from 'mongoose';
 import { db } from '@database/models';
 import slugify from 'slugify';
 import { successResponse, errorResponse, createResponse, listResponse, getRequestId } from '../utils/apiResponse';
-import { ForumTopic, IForumTopic } from '../models/ForumTopic';
-import { ForumDiscussion, IForumDiscussion } from '../models/ForumDiscussion';
-import { ForumPost, IForumPost } from '../models/ForumPost';
-import { ForumTopicFavorite } from '../models/ForumTopicFavorite';
+import { ForumTopic, IForumTopic, ForumDiscussion, IForumDiscussion, ForumPost, IForumPost, ForumTopicFavorite } from '@database/models';
 import { NotificationService } from '../services/NotificationService';
 
 // Access mongoose from the centralized connection

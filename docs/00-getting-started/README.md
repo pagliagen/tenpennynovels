@@ -189,8 +189,11 @@ Same as Docker method (step 6 above).
 ### Create Admin User
 
 ```bash
-# Use the seed script
+# Use the seed script (from scripts/seeders)
 npm run seed:admin
+
+# Or run directly from seeders folder:
+# cd scripts/seeders && npm run seed:users
 
 # Or manually via MongoDB shell:
 mongosh

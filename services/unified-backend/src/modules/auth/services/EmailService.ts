@@ -344,5 +344,5 @@ export class EmailService {
 //
 // To update templates:
 // 1. Use Management API: PATCH /system/config/:configKey
-// 2. Or update directly in database via seed script: npm run seed:system-config
+// 2. Or update directly in database via MongoDB/Admin Panel
 // ============================================================================

@@ -187,6 +187,11 @@ export {
   type IAuditLogTarget
 } from './AuditLog';
 
+// Chat Moderation System
+export { ChatModerationAction, type IChatModerationAction } from './ChatModerationAction';
+export { MessageReport, type IMessageReport } from './MessageReport';
+export { UserReport, type IUserReport } from './UserReport';
+
 // Knowledge Base System (Documents - NEW DUAL-TABLE)
 export {
   default as Route,
@@ -198,3 +203,14 @@ export {
   default as Document,
   type IDocument
 } from './Document';
+
+// Forum System
+export { ForumTopic, type IForumTopic } from './ForumTopic';
+export { ForumDiscussion, type IForumDiscussion } from './ForumDiscussion';
+export { ForumPost, type IForumPost } from './ForumPost';
+export { ForumTopicFavorite, type IForumTopicFavorite } from './ForumTopicFavorite';
+export { ForumDiscussionSubscription, type IForumDiscussionSubscription } from './ForumDiscussionSubscription';
+export { ForumCharacterFollow, type IForumCharacterFollow } from './ForumCharacterFollow';
+export { ForumBookmark, BookmarkItemType, type IForumBookmark } from './ForumBookmark';
+export { ForumReaction, ReactionType, type IForumReaction } from './ForumReaction';
+export { ForumNotification, ForumNotificationType, type IForumNotification } from './ForumNotification';

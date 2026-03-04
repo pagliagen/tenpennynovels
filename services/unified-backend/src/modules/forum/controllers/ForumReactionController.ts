@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
-import { ForumReaction, ReactionType } from '../models/ForumReaction';
-import { ForumPost } from '../models/ForumPost';
+import { ForumReaction, ReactionType, ForumPost } from '@database/models';
 import { NotificationService } from '../services/NotificationService';
 import { successResponse, errorResponse } from '../utils/apiResponse';
 

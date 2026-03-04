@@ -18,7 +18,7 @@ import {
   DashboardMetrics,
   AnalyticsQuery,
   AnalyticsResponse 
-} from '../models/Analytics';
+} from '../types/analytics';
 
 export class AnalyticsService {
   /**

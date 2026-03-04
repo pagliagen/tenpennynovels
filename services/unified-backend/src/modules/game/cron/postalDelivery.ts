@@ -2,7 +2,7 @@ import cron from 'node-cron';
 import { OnGameMessage, OnGameMessageView, Character } from '@database/models';
 import { logger } from '../utils/logger';
 import { postalSystem } from '../utils/postalSystem';
-import { app } from '../index';
+import app from '@/app';  // Import from main app
 
 class PostalDeliveryService {
   private static instance: PostalDeliveryService;

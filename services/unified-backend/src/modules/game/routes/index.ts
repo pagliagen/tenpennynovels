@@ -8,7 +8,7 @@ import chatRoutes from './chats';
 import offGameChatRoutes from './offGameChats';
 import corporationRoutes from './corporations';
 // import forumRoutes from './forum';
-import documentRoutes from './documents';
+// import documentRoutes from './documents';  // REMOVED: Moved to modules/documents
 // import ticketRoutes from './tickets';
 import experienceRoutes from './experienceRoutes';
 import chatModerationRoutes from './chatModerationRoutes';
@@ -44,7 +44,7 @@ router.use('/chats', chatRoutes); // Location chats (renamed from location actio
 router.use('/', corporationRoutes);
 router.use('/housing', housingRoutes);
 // router.use('/forum', forumRoutes);
-router.use('/documents', documentRoutes);
+// router.use('/documents', documentRoutes);  // REMOVED: Moved to modules/documents (mount: /documents)
 // router.use('/', ticketRoutes);
 router.use('/', experienceRoutes);
 router.use('/', chatModerationRoutes);

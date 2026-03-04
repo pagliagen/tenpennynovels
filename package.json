@@ -49,7 +49,10 @@
     "docker:logs:gateway": "docker-compose -f docker-compose.backends.yml logs -f tenpennynovels-api-gateway",
     "docker:logs:auth": "docker-compose -f docker-compose.backends.yml logs -f tenpennynovels-auth-backend",
     "docker:logs:game": "docker-compose -f docker-compose.backends.yml logs -f tenpennynovels-game-backend",
-    "docker:logs:management": "docker-compose -f docker-compose.backends.yml logs -f tenpennynovels-management-backend"
+    "docker:logs:management": "docker-compose -f docker-compose.backends.yml logs -f tenpennynovels-management-backend",
+    "seed:admin": "cd scripts/seeders && npm run seed:users",
+    "seed:users": "cd scripts/seeders && npm run seed:users",
+    "seed:documents": "cd scripts/seeders && npm run seed:documents"
   },
   "engines": {
     "node": ">=18.0.0"

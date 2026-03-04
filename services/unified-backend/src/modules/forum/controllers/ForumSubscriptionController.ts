@@ -1,8 +1,6 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
-import { ForumDiscussionSubscription } from '../models/ForumDiscussionSubscription';
-import { ForumDiscussion } from '../models/ForumDiscussion';
-import { ForumTopic } from '../models/ForumTopic';
+import { ForumDiscussionSubscription, ForumDiscussion, ForumTopic } from '@database/models';
 import { Character } from '@database/models/Character';
 import { successResponse, errorResponse } from '../utils/apiResponse';
 

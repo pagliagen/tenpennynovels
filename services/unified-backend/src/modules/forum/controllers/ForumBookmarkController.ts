@@ -1,8 +1,6 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
-import { ForumBookmark, BookmarkItemType } from '../models/ForumBookmark';
-import { ForumDiscussion } from '../models/ForumDiscussion';
-import { ForumPost } from '../models/ForumPost';
+import { ForumBookmark, BookmarkItemType, ForumDiscussion, ForumPost } from '@database/models';
 import { successResponse, errorResponse } from '../utils/apiResponse';
 
 /**

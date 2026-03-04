@@ -1,7 +1,5 @@
 import mongoose from 'mongoose';
-import { ForumNotification, ForumNotificationType } from '../models/ForumNotification';
-import { ForumDiscussionSubscription } from '../models/ForumDiscussionSubscription';
-import { ForumPost } from '../models/ForumPost';
+import { ForumNotification, ForumNotificationType, ForumDiscussionSubscription, ForumPost } from '@database/models';
 import { Character } from '@database/models/Character';
 
 /**

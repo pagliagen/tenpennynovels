@@ -317,15 +317,7 @@ API_GATEWAY_URL=http://api-gateway:8000
 
 # Unified Backend
 UNIFIED_BACKEND_URL=http://unified-backend:3001
-
-# Legacy aliases (all point to unified-backend now)
-AUTH_BACKEND_URL=http://unified-backend:3001
-GAME_BACKEND_URL=http://unified-backend:3001
-MANAGEMENT_BACKEND_URL=http://unified-backend:3001
-DOCUMENTS_BACKEND_URL=http://unified-backend:3001
-TICKETS_BACKEND_URL=http://unified-backend:3001
-FORUM_BACKEND_URL=http://unified-backend:3001
-
+ 
 # BotAI Backend (disabled temporarily)
 # BOTAI_BACKEND_URL=http://botai-backend:8080
 ```
