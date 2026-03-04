@@ -1,5 +1,5 @@
 @use 'sass:color';
-@import '../../styles/variables.scss';
+@use '../../styles/variables' as *;
 
 .hierarchicalEditor {
   display: flex;

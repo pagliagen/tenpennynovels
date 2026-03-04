@@ -5,7 +5,7 @@
  */
 
 @use 'sass:color';
-@import '../variables.scss';
+@use '../variables' as *;
 
 .container {
   display: flex;

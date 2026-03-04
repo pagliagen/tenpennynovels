@@ -1,4 +1,4 @@
-@import '../variables.scss';
+@use '../variables' as *;
 
 .sidebar {
   width: 250px;

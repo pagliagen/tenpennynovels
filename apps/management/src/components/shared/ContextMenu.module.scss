@@ -4,8 +4,7 @@
  * Dropdown menu component styles.
  * Adapted from DocumentTreeView.module.scss action menu patterns.
  */
-
-@import '../../styles/variables';
+@use '../../styles/variables' as *;
 
 // Container
 .contextMenu {

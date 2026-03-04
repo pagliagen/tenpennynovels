@@ -1,5 +1,5 @@
 @use 'sass:color';
-@import '../variables.scss';
+@use '../variables' as *;
 
 .tableContainer {
   display: flex;
