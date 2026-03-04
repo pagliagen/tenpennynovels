@@ -1,0 +1,181 @@
+name: Deploy to OVH VPS
+
+on:
+  pull_request:
+    branches: [master]
+  push:
+    branches: [master]
+  workflow_dispatch:
+    inputs:
+      skip_health_check:
+        description: 'Skip health checks after deploy'
+        required: false
+        default: 'false'
+        type: boolean
+
+jobs:
+  build-check:
+    name: Build Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build all frontend apps
+        run: npm run build:frontend:all
+
+      - name: Build all backend services
+        run: npm run build:backend:all
+
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: build-check
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+
+    # Use production environment
+    environment:
+      name: production
+      url: https://tenpennynovels.com
+
+    # Prevent concurrent deployments
+    concurrency:
+      group: production-deploy
+      cancel-in-progress: false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Need full history for git diff
+
+      - name: Deploy files via rsync
+        uses: burnett01/rsync-deployments@7.0.1
+        with:
+          switches: -avzr --delete --exclude-from='.github/rsync-exclude.txt'
+          path: ./
+          remote_path: ~/tenpennynovels/
+          remote_host: ${{ secrets.SSH_HOST }}
+          remote_port: ${{ secrets.SSH_PORT }}
+          remote_user: ${{ secrets.SSH_USERNAME }}
+          remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Build and restart services
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script_stop: true
+          script: |
+            set -e
+            cd ~/tenpennynovels
+
+            echo "📦 Installing dependencies..."
+            # Check if package-lock.json changed, otherwise skip npm install
+            if git diff --name-only HEAD@{1} HEAD 2>/dev/null | grep -q "package-lock.json"; then
+              npm install --production
+            else
+              echo "package-lock.json unchanged, skipping npm install"
+            fi
+
+            echo ""
+            echo "🏗️  Building frontend apps..."
+            npm run build:frontend:all
+
+            echo ""
+            echo "🏗️  Building backend services..."
+            npm run build:backend:all
+
+            echo ""
+            echo "🔄 Restarting PM2 services..."
+            pm2 restart all
+
+            echo ""
+            echo "⏳ Waiting for services to stabilize..."
+            sleep 5
+
+            echo ""
+            echo "✅ PM2 Status:"
+            pm2 status --no-color
+
+      - name: Health checks
+        if: ${{ github.event.inputs.skip_health_check != 'true' }}
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          command_timeout: 30s
+          script: |
+            set -e
+
+            # Health check endpoints
+            ENDPOINTS=(
+              "https://api.tenpennynovels.com/health"
+              "https://ws.tenpennynovels.com/health"
+            )
+
+            echo "🏥 Running health checks..."
+            echo ""
+
+            for url in "${ENDPOINTS[@]}"; do
+              echo "Checking $url..."
+              response=$(curl -s -o /dev/null -w "%{http_code}" "$url" --max-time 10)
+
+              if [ "$response" -eq 200 ]; then
+                echo "✅ $url OK ($response)"
+              else
+                echo "❌ $url FAILED ($response)"
+                exit 1
+              fi
+              echo ""
+            done
+
+            echo "✅ All health checks passed!"
+
+      - name: Deployment summary
+        if: success()
+        run: |
+          echo "## 🚀 Deployment Successful!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Deployed by**: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment**: Production (OVH VPS)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Services Deployed" >> $GITHUB_STEP_SUMMARY
+          echo "- Landing App: https://tenpennynovels.com" >> $GITHUB_STEP_SUMMARY
+          echo "- Game App: https://game.tenpennynovels.com" >> $GITHUB_STEP_SUMMARY
+          echo "- Documents App: https://documenti.tenpennynovels.com" >> $GITHUB_STEP_SUMMARY
+          echo "- Management App: https://gestione.tenpennynovels.com" >> $GITHUB_STEP_SUMMARY
+          echo "- API Gateway: https://api.tenpennynovels.com" >> $GITHUB_STEP_SUMMARY
+          echo "- WebSocket Server: https://ws.tenpennynovels.com" >> $GITHUB_STEP_SUMMARY
+
+      - name: Deployment failure summary
+        if: failure()
+        run: |
+          echo "## ❌ Deployment Failed!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Triggered by**: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "1. Check the logs above for error details" >> $GITHUB_STEP_SUMMARY
+          echo "2. SSH into the server to investigate: \`ssh -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "3. Check PM2 status: \`pm2 status\`" >> $GITHUB_STEP_SUMMARY
+          echo "4. Check PM2 logs: \`pm2 logs --lines 50\`" >> $GITHUB_STEP_SUMMARY
+          echo "5. If needed, revert to previous commit and re-deploy" >> $GITHUB_STEP_SUMMARY

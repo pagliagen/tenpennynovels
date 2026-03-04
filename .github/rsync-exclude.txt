@@ -1,0 +1,107 @@
+# rsync exclude list for TenpennyNovels deployment
+# These files/folders will NOT be transferred to OVH VPS
+
+# Dependencies (reinstalled remotely)
+node_modules/
+package-lock.json
+
+# Build outputs (generated remotely)
+.next/
+dist/
+build/
+out/
+
+# Git and GitHub
+.git/
+.github/
+.gitignore
+.gitattributes
+
+# Environment files (already on server, contain secrets)
+.env
+.env.local
+.env.production
+.env.*.local
+.env.development
+.env.test
+
+# Logs (don't overwrite production logs)
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Testing
+coverage/
+.nyc_output/
+__tests__/
+*.test.js
+*.test.ts
+*.spec.js
+*.spec.ts
+
+# Cache files
+.eslintcache
+.turbo/
+.cache/
+*.cache
+.parcel-cache/
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.settings/
+
+# Temporary files
+*.tmp
+*.temp
+.tmp/
+tmp/
+
+# Documentation (not needed in production)
+README.md
+CHANGELOG.md
+LICENSE
+*.md
+docs/
+
+# Development only
+.prettierrc
+.prettierignore
+.editorconfig
+.nvmrc
+tsconfig.tsbuildinfo
+
+# Claude Code
+.claude/
+
+# Pricing docs (not needed in production)
+pricing/
+
+# Seeder scripts (not needed in production)
+scripts/seeders/
+
+# Deployment configs (already on server or not needed)
+ecosystem.config.js
+docker-compose.yml
+Dockerfile
+.dockerignore
+
+# Materials (static assets not needed in production)
+Materiale Sito/
