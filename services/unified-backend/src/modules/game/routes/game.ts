@@ -33,22 +33,5 @@ router.post('/time/advance',
   requireGamePermission('game:admin:time:advance'),
   GameController.advanceTime
 );
-
-// ========================================
-// TEST ENDPOINTS (Development Only)
-// ========================================
-if (process.env.NODE_ENV !== 'production') {
-  // Custom test event emission
-  router.post('/test/emit-event',
-    AuthMiddleware.optionalAuth,
-    TestController.emitTestEvent
-  );
-
-  // Quick predefined test events
-  router.post('/test/emit-quick/:type',
-    AuthMiddleware.optionalAuth,
-    TestController.emitQuickEvent
-  );
-}
-
+ 
 export default router;

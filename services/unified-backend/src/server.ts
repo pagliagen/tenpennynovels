@@ -25,8 +25,8 @@ const httpServer = http.createServer(app);
 // NOTE: Backend is INTERNAL - WebSocket CORS is permissive since API Gateway validates
 const io = new SocketIOServer(httpServer, {
   cors: {
-    origin: true,  // Accept all origins (validated by API Gateway layer)
-    credentials: true,
+    origin: process.env.NODE_ENV === 'production' ? false : true,
+    credentials: process.env.NODE_ENV === 'production' ? false : true,
     methods: ['GET', 'POST']
   },
   transports: ['websocket', 'polling']
@@ -101,7 +101,8 @@ async function startServer(): Promise<void> {
     // IMPORTANT: Bind to 0.0.0.0 for Docker internal networking
     // Security is handled by api-gateway (only gateway can access backend)
     // External access to backend is blocked by Docker network isolation
-    httpServer.listen(PORT, '0.0.0.0', () => {
+    const BIND_HOST = process.env.NODE_ENV === 'production' ? '127.0.0.1' : '0.0.0.0';
+    httpServer.listen(PORT, BIND_HOST, () => {
       logger.info(`🚀 Unified Backend started on http://0.0.0.0:${PORT}`);
       logger.info(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
       logger.info(`🔗 MongoDB: ${MONGODB_URI}`);

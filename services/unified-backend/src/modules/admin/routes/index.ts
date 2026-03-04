@@ -29,6 +29,7 @@ import { auditLogger } from '../utils/auditLogger';
 import { AuthUtils } from '../utils/auth';
 import { User, Character, Location, db } from '@database/models';
 import { logger } from '../utils/logger';
+import { AdminAuthMiddleware } from '../middleware/adminAuth';
 
 // Access mongoose from the centralized connection
 const mongoose = db.getMongoose();
@@ -36,7 +37,9 @@ const mongoose = db.getMongoose();
 const router = Router();
 
 // Authentication endpoint - Get current admin user info
-router.get('/me', async (req: Request, res: Response): Promise<void> => {
+router.get('/me', 
+  AdminAuthMiddleware.requireAdminAccess,
+  async (req: Request, res: Response): Promise<void> => {
   try {
     logger.info('📍 /admin/me endpoint hit', {
       cookies: Object.keys(req.cookies || {}),

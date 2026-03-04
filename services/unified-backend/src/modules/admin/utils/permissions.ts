@@ -498,7 +498,7 @@ export function requireViewPermission(permission: AdminPermission) {
 /**
  * Legacy middleware per backward compatibility
  */
-export function requirePermission(permission: string) {
+export function requirePermission(permission: AdminPermission) {
   return requireViewPermission(permission);
 }
 

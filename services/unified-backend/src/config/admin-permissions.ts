@@ -21,20 +21,28 @@ export const ADMIN_PERMISSIONS = {
   // Dashboard
   DASHBOARD_VIEW: 'dashboard.view',
 
-  // Users
+  // Users (flat)
   USERS_LIST: 'users.list',
+  USERS_READ: 'users.read',
   USERS_BAN: 'users.ban',
   USERS_UNBAN: 'users.unban',
   USERS_DELETE: 'users.delete',
   USERS_EDIT: 'users.edit',
+  USERS_UPDATE: 'users.update',
 
-  // Characters
+  // Characters (flat)
   CHARACTERS_LIST: 'characters.list',
   CHARACTERS_APPROVE: 'characters.approve',
   CHARACTERS_REJECT: 'characters.reject',
   CHARACTERS_EDIT: 'characters.edit',
   CHARACTERS_DELETE: 'characters.delete',
   CHARACTERS_MANAGE_PERMISSIONS: 'characters.manage_permissions',
+
+  // Characters (granular detail permissions)
+  CHARACTERS_DETAIL_READ: 'characters.detail.read',
+  CHARACTERS_DETAIL_APPROVE: 'characters.detail.approve',
+  CHARACTERS_DETAIL_EDIT: 'characters.detail.edit',
+  CHARACTERS_DETAIL_DELETE: 'characters.detail.delete',
 
   // Documents
   DOCUMENTS_LIST: 'documents.list',
@@ -43,26 +51,92 @@ export const ADMIN_PERMISSIONS = {
   DOCUMENTS_DELETE: 'documents.delete',
   DOCUMENTS_PUBLISH: 'documents.publish',
 
-  // System
+  // System (flat)
   SYSTEM_BROADCAST: 'system.broadcast',
   SYSTEM_CONFIG: 'system.config',
   SYSTEM_LOGS: 'system.logs',
   SYSTEM_MAINTENANCE: 'system.maintenance',
+
+  // System (granular)
+  SYSTEM_BROADCAST_MESSAGES: 'system.broadcast_messages',
+  SYSTEM_MAINTENANCE_MODE: 'system.maintenance_mode',
+  SYSTEM_VIEW_LOGS: 'system.view_logs',
 
   // Tickets
   TICKETS_VIEW: 'tickets.view',
   TICKETS_ASSIGN: 'tickets.assign',
   TICKETS_RESOLVE: 'tickets.resolve',
 
-  // Locations
+  // Locations (flat)
   LOCATIONS_LIST: 'locations.list',
   LOCATIONS_EDIT: 'locations.edit',
   LOCATIONS_CREATE: 'locations.create',
 
-  // Forum/Chat Moderation
+  // Locations (granular)
+  LOCATIONS_READ: 'locations.read',
+  LOCATIONS_UPDATE: 'locations.update',
+  LOCATIONS_DELETE: 'locations.delete',
+  LOCATIONS_MANAGE_ACCESS: 'locations.manage_access',
+
+  // Chat (flat)
   CHAT_MODERATE: 'chat.moderate',
   CHAT_DELETE: 'chat.delete',
+
+  // Chat (granular)
+  CHAT_SEARCH_MESSAGES: 'chat.search_messages',
+  CHAT_VIEW_ACTIVITY: 'chat.view_activity',
+  CHAT_VIEW_REPORTS: 'chat.view_reports',
+  CHAT_VIEW_MODERATION: 'chat.view_moderation',
+
+  // Forum (flat)
   FORUM_MODERATE: 'forum.moderate',
+
+  // Forum (granular)
+  FORUM_ACCESS: 'forum.access',
+  FORUM_DETAIL_VIEW: 'forum.detail.view',
+  FORUM_DETAIL_DELETE: 'forum.detail.delete',
+  FORUM_DETAIL_UPDATE: 'forum.detail.update',
+  FORUM_DELIVERY_VIEW: 'forum.delivery.view',
+  FORUM_DELIVERY_MANAGE: 'forum.delivery.manage',
+
+  // Economy
+  ECONOMY_GRANT_MONEY: 'economy.grant_money',
+  ECONOMY_ADJUST_BALANCES: 'economy.adjust_balances',
+  ECONOMY_VIEW_REPORTS: 'economy.view_reports',
+
+  // Items
+  ITEMS_ACCESS: 'items.access',
+  ITEMS_DETAIL_VIEW: 'items.detail.view',
+  ITEMS_DETAIL_CREATE: 'items.detail.create',
+  ITEMS_DETAIL_UPDATE: 'items.detail.update',
+  ITEMS_DETAIL_DELETE: 'items.detail.delete',
+
+  // Messaging
+  MESSAGING_ACCESS: 'messaging.access',
+  MESSAGING_DETAIL_VIEW: 'messaging.detail.view',
+  MESSAGING_DETAIL_DELETE: 'messaging.detail.delete',
+  MESSAGING_DETAIL_UPDATE: 'messaging.detail.update',
+  MESSAGING_MODERATION_MANAGE: 'messaging.moderation.manage',
+  MESSAGING_MAINTENANCE_VIEW: 'messaging.maintenance.view',
+
+  // Relationships
+  RELATIONSHIPS_ACCESS: 'relationships.access',
+  RELATIONSHIPS_MANAGE: 'relationships.manage',
+  RELATIONSHIPS_MODERATE: 'relationships.moderate',
+
+  // Skills
+  SKILLS_ACCESS: 'skills.access',
+  SKILLS_DETAIL_VIEW: 'skills.detail.view',
+  SKILLS_CREATE: 'skills.create',
+  SKILLS_DETAIL_UPDATE: 'skills.detail.update',
+  SKILLS_DETAIL_DELETE: 'skills.detail.delete',
+
+  // Social Classes
+  SOCIAL_CLASSES_ACCESS: 'social_classes.access',
+  SOCIAL_CLASSES_MANAGE: 'social_classes.manage',
+
+  // Manager (special role)
+  MANAGER_MANAGE_USER_PERMISSIONS: 'manager.manage_user_permissions',
 } as const;
 
 export type AdminPermission = typeof ADMIN_PERMISSIONS[keyof typeof ADMIN_PERMISSIONS];
