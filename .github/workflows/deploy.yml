@@ -79,12 +79,13 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            cd ~/tenpennynovels
+
             # Load nvm and use correct Node version
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
             nvm use
 
-            cd ~/tenpennynovels
             echo "📦 Checking for package-lock.json changes..."
             CHANGED=$(git diff --name-only HEAD@{1} HEAD 2>/dev/null | grep "package-lock.json" || true)
             if [ -n "$CHANGED" ]; then
@@ -104,13 +105,12 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             set -e
+            cd ~/tenpennynovels
 
             # Load nvm and use correct Node version
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
             nvm use
-
-            cd ~/tenpennynovels
 
             if [ -f .deploy-state ]; then
               source .deploy-state
@@ -150,13 +150,13 @@ jobs:
           command_timeout: 10m
           script: |
             set -e
+            cd ~/tenpennynovels
 
             # Load nvm and use correct Node version
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
             nvm use
 
-            cd ~/tenpennynovels
             echo "🏗️  Building frontend apps..."
             echo "Node version: $(node --version)"
             echo "npm version: $(npm --version)"
@@ -173,13 +173,13 @@ jobs:
           command_timeout: 10m
           script: |
             set -e
+            cd ~/tenpennynovels
 
             # Load nvm and use correct Node version
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
             nvm use
 
-            cd ~/tenpennynovels
             echo "🏗️  Building backend services..."
             echo "Node version: $(node --version)"
             echo "npm version: $(npm --version)"
@@ -195,13 +195,13 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             set -e
+            cd ~/tenpennynovels
 
             # Load nvm and use correct Node version
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
             nvm use
 
-            cd ~/tenpennynovels
             echo "🔄 Restarting PM2 services..."
             pm2 restart all
             echo "✅ PM2 services restarted"
@@ -214,6 +214,8 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            cd ~/tenpennynovels
+
             # Load nvm and use correct Node version
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
