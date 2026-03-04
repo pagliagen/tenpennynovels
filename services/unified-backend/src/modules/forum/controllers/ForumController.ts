@@ -25,11 +25,10 @@ const createSlug = (title: string): string => {
 // Check if user has admin permissions
 const hasAdminPermission = (user: any, permission: string): boolean => {
   if (!user?.canAccessAdminPanel) return false;
-  
-  // Check new granular system first
-  if (user.userRoles?.includes('gestore')) return true;
+
+  // Check granular permission system
   if (user.characterPermissions?.includes(permission)) return true;
-  
+
   return false;
 };
 
