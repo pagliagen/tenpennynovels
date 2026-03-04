@@ -85,7 +85,6 @@ docs/
 .prettierrc
 .prettierignore
 .editorconfig
-.nvmrc
 tsconfig.tsbuildinfo
 
 # Claude Code
