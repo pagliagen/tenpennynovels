@@ -71,62 +71,118 @@ jobs:
           remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
           legacy_allow_rsa_hostkeys: true
 
-      - name: Build and restart services
+      - name: Check dependency changes
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
           port: ${{ secrets.SSH_PORT }}
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script_stop: true
+          script: |
+            cd ~/tenpennynovels
+            echo "📦 Checking for package-lock.json changes..."
+            CHANGED=$(git diff --name-only HEAD@{1} HEAD 2>/dev/null | grep "package-lock.json" || true)
+            if [ -n "$CHANGED" ]; then
+              echo "✅ package-lock.json changed - dependencies will be reinstalled"
+              echo "DEPS_CHANGED=true" > ~/tenpennynovels/.deploy-state
+            else
+              echo "ℹ️  No package-lock.json changes detected"
+              echo "DEPS_CHANGED=false" > ~/tenpennynovels/.deploy-state
+            fi
+
+      - name: Install dependencies
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             set -e
             cd ~/tenpennynovels
 
-            echo "📦 Installing dependencies..."
-            # Check if any package-lock.json changed
-            CHANGED=$(git diff --name-only HEAD@{1} HEAD 2>/dev/null | grep "package-lock.json" || true)
-            if [ -n "$CHANGED" ]; then
-              echo "package-lock.json changed, installing all dependencies..."
+            if [ -f .deploy-state ]; then
+              source .deploy-state
+            fi
 
-              # Root
+            if [ "$DEPS_CHANGED" = "true" ]; then
+              echo "📦 Installing root dependencies..."
               npm install --production
 
-              # Frontend apps
+              echo "📦 Installing frontend app dependencies..."
               for app in apps/*/; do
                 if [ -f "${app}package.json" ]; then
-                  echo "Installing ${app}..."
+                  echo "  → ${app}"
                   (cd "$app" && npm install --production)
                 fi
               done
 
-              # Backend services
+              echo "📦 Installing backend service dependencies..."
               for service in services/*/; do
                 if [ -f "${service}package.json" ]; then
-                  echo "Installing ${service}..."
+                  echo "  → ${service}"
                   (cd "$service" && npm install --production)
                 fi
               done
+              echo "✅ Dependencies installed"
             else
-              echo "No package-lock.json changes detected, skipping npm install"
+              echo "⏭️  Skipping dependency installation (no changes)"
             fi
 
-            echo ""
+      - name: Build frontend apps
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          command_timeout: 10m
+          script: |
+            set -e
+            cd ~/tenpennynovels
             echo "🏗️  Building frontend apps..."
             npm run build:frontend:all
+            echo "✅ Frontend apps built successfully"
 
-            echo ""
+      - name: Build backend services
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          command_timeout: 10m
+          script: |
+            set -e
+            cd ~/tenpennynovels
             echo "🏗️  Building backend services..."
             npm run build:backend:all
+            echo "✅ Backend services built successfully"
 
-            echo ""
+      - name: Restart PM2 services
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            cd ~/tenpennynovels
             echo "🔄 Restarting PM2 services..."
             pm2 restart all
+            echo "✅ PM2 services restarted"
 
-            echo ""
+      - name: Verify PM2 status
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
             echo "⏳ Waiting for services to stabilize..."
             sleep 5
-
             echo ""
             echo "✅ PM2 Status:"
             pm2 status --no-color
