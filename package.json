@@ -29,7 +29,7 @@
     "build:backend:botai": "cd services/botai-backend && npm run build",
     "build:backend:embeddings": "cd services/embeddings-worker && npm run build",
     "build:backend:cdn": "cd services/cdn-service && npm run build",
-    "build:backend:all": "npm run build:backend:gateway && npm run build:backend:unified && npm run build:backend:botai && npm run build:backend:embeddings && npm run build:backend:cdn",
+    "build:backend:all": "npm run build:backend:gateway && npm run build:backend:unified && npm run build:backend:embeddings",
     "build:all": "npm run build:backend:all && npm run build:frontend:all",
     "docker:infra:start": "docker-compose -f docker-compose.infrastructure.yml up -d",
     "docker:infra:stop": "docker-compose -f docker-compose.infrastructure.yml down",
