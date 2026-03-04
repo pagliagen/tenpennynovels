@@ -1,0 +1,97 @@
+# ========================================
+# TenpennyNovels - WebSocket Server
+# ws.tenpennynovels.com → localhost:3001
+# ========================================
+
+# HTTP (redirect to HTTPS)
+server {
+    if ($host = ws.tenpennynovels.com) {
+        return 301 https://$host$request_uri;
+    } # managed by Certbot
+
+
+    listen 80;
+    listen [::]:80;
+    server_name ws.tenpennynovels.com;
+
+    # Redirect all HTTP to HTTPS
+    return 301 https://$server_name$request_uri;
+
+
+}
+
+# HTTPS + WebSocket
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name ws.tenpennynovels.com;
+
+    # SSL Configuration
+    ssl_certificate /etc/letsencrypt/live/ws.tenpennynovels.com/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/ws.tenpennynovels.com/privkey.pem; # managed by Certbot
+
+    # SSL Security (Mozilla Intermediate configuration)
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers 'ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384';
+    ssl_prefer_server_ciphers off;
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 10m;
+
+    # Security Headers
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
+    # Logging
+    access_log /var/log/nginx/ws-tenpennynovels-access.log;
+    error_log /var/log/nginx/ws-tenpennynovels-error.log;
+
+    # Proxy to unified-backend WebSocket (PM2 on port 3001)
+    location / {
+        proxy_pass http://127.0.0.1:3001;
+        proxy_http_version 1.1;
+
+        # WebSocket specific headers
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+
+        # Standard proxy headers
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+
+        # WebSocket timeouts (keep connection alive)
+        proxy_connect_timeout 7d;
+        proxy_send_timeout 7d;
+        proxy_read_timeout 7d;
+
+        # Disable buffering for WebSocket
+        proxy_buffering off;
+    }
+
+    # Socket.IO path (if using specific path)
+    location /socket.io/ {
+        proxy_pass http://127.0.0.1:3001/socket.io/;
+        proxy_http_version 1.1;
+
+        # WebSocket specific headers
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+
+        # Standard proxy headers
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # WebSocket timeouts
+        proxy_connect_timeout 7d;
+        proxy_send_timeout 7d;
+        proxy_read_timeout 7d;
+
+        # Disable buffering
+        proxy_buffering off;
+    }
+
+}

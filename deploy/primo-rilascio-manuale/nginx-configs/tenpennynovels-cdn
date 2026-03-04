@@ -1,0 +1,106 @@
+# ========================================
+# TenpennyNovels - CDN (Static Assets)
+# cdn.tenpennynovels.com → /var/www/cdn
+# ========================================
+#
+# Purpose: Serve static assets (images, files) with optimal caching
+# Storage: /var/www/cdn (filesystem)
+# Upload: via unified-backend POST /api/cdn/upload (JWT auth)
+#
+# Features:
+# - Immutable caching (1 year) - hash-based filenames
+# - Compression (gzip for SVG)
+# - CORS enabled (public CDN)
+# - WebP format (modern browsers)
+# - Security headers
+
+# HTTP (redirect to HTTPS)
+server {
+    listen 80;
+    listen [::]:80;
+    server_name cdn.tenpennynovels.com;
+
+    # Redirect all HTTP to HTTPS
+    return 301 https://$server_name$request_uri;
+}
+
+# HTTPS
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name cdn.tenpennynovels.com;
+
+    # SSL Configuration
+    ssl_certificate /etc/letsencrypt/live/cdn.tenpennynovels.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/cdn.tenpennynovels.com/privkey.pem;
+
+    # SSL Security (Mozilla Intermediate configuration)
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers 'ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384';
+    ssl_prefer_server_ciphers off;
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 10m;
+
+    # Security Headers
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header X-Frame-Options "SAMEORIGIN" always;
+
+    # CORS Headers (public CDN - allow all origins)
+    add_header Access-Control-Allow-Origin "*" always;
+    add_header Access-Control-Allow-Methods "GET, OPTIONS" always;
+    add_header Access-Control-Allow-Headers "Origin, Content-Type, Accept" always;
+
+    # Logging
+    access_log /var/log/nginx/cdn-tenpennynovels-access.log;
+    error_log /var/log/nginx/cdn-tenpennynovels-error.log;
+
+    # Compression
+    gzip on;
+    gzip_vary on;
+    gzip_proxied any;
+    gzip_comp_level 6;
+    gzip_types image/svg+xml;
+    gzip_disable "msie6";
+
+    # Root storage directory
+    root /var/www/cdn;
+
+    # Main location - serve static files
+    location / {
+        # Try file, return 404 if not found
+        try_files $uri =404;
+
+        # Immutable cache (1 year) - hash-based naming ensures cache busting
+        expires 1y;
+        add_header Cache-Control "public, immutable, max-age=31536000" always;
+
+        # Security headers (re-add after try_files)
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header Access-Control-Allow-Origin "*" always;
+
+        # Disable access logs for static files (reduce I/O)
+        access_log off;
+    }
+
+    # Health check endpoint
+    location /health {
+        access_log off;
+        return 200 "OK\n";
+        add_header Content-Type text/plain;
+    }
+
+    # Block access to hidden files (.cleanup, .git, etc.)
+    location ~ /\. {
+        deny all;
+        access_log off;
+        log_not_found off;
+    }
+
+    # Block access to cleanup directory
+    location ~ ^/\.cleanup/ {
+        deny all;
+        access_log off;
+        log_not_found off;
+    }
+}

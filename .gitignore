@@ -9,11 +9,7 @@ dist/
 .env
 .env.*
 .DS_Store
-*.sh
-log-monitor/
-process-dashboard/
-scripts/
-deploy/
+*.sh 
 nginx-api.conf
 
 # Environment files (local development)

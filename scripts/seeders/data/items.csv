@@ -1,0 +1,129 @@
+"name";"description";"category";"subcategory";"basePrice";"prerequisites";"isConsumable";"consumptionType";"consumesItems";"providesSkillBonus";"rarity"
+
+# STRUMENTI MEDICI
+"Stetoscopio";"Strumento medico essenziale per esaminare i pazienti";"tools";"medical";"1.50";"requiredOccupations:medico";"false";"";"";"";"common"
+"Borsa Medica";"Borsa in pelle contenente forniture mediche essenziali";"tools";"medical";"3.00";"requiredOccupations:medico";"false";"";"";"";"common"
+"Strumenti Chirurgici";"Set completo di strumenti chirurgici";"tools";"medical";"8.00";"requiredSkills:Medicina:60";"false";"";"";"";"uncommon"
+"Morfina";"Medicinale antidolorifico per procedure mediche";"consumables";"medical";"2.00";"requiredSkills:Medicina:40";"true";"direct";"";"";"";"uncommon"
+"Bende";"Bende sterili per curare ferite e lesioni";"consumables";"medical";"0.50";"";"true";"direct";"";"";"";"common"
+"Laudano";"Tintura di oppio per dolore e insonnia";"consumables";"medical";"1.00";"";"true";"direct";"";"";"";"common"
+"Sali Volatili";"Sali per rianimare persone svenute";"consumables";"medical";"0.30";"";"true";"direct";"";"";"";"common"
+
+# STRUMENTI LEGALI E INVESTIGATIVI
+"Lente d'Ingrandimento";"Strumento per esaminare dettagli minuti";"tools";"investigation";"2.00";"";"false";"";"";"";"common"
+"Codice Penale";"Raccolta delle leggi penali dell'Impero";"books";"legal";"2.00";"requiredSkills:Scienza:30";"false";"";"";"";"";"common"
+"Carta Intestata";"Carta ufficiale per documenti legali";"consumables";"legal";"0.10";"requiredOccupations:avvocato";"true";"direct";"";"";"";"common"
+"Macchina Fotografica";"Apparecchio per catturare immagini su lastre";"tools";"investigation";"25.00";"requiredSkills:Arte:30";"false";"";"";"Arte:5";"uncommon"
+"Lastre Fotografiche";"Lastre in vetro per fotografie";"consumables";"photography";"2.00";"";"true";"direct";"";"";"";"common"
+
+# LIBRI E EDUCAZIONE
+"Bibbia";"Libro sacro della religione cristiana";"books";"religious";"1.00";"";"false";"";"";"";"common"
+"Libri Scolastici";"Collezione di testi educativi";"books";"education";"5.00";"";"false";"";"";"Biblioteca:10";"common"
+"Dizionario Inglese";"Dizionario completo della lingua inglese";"books";"reference";"3.00";"";"false";"";"";"Lingua (Madre):5";"common"
+"Enciclopedia Britannica";"Raccolta completa del sapere umano";"books";"reference";"15.00";"";"false";"";"";"Biblioteca:15";"uncommon"
+"Manuale di Anatomia";"Trattato medico con illustrazioni anatomiche";"books";"medical";"8.00";"requiredSkills:Medicina:30";"false";"";"";"Medicina:10";"uncommon"
+
+# STRUMENTI SCIENTIFICI
+"Set da Chimica";"Kit completo per esperimenti chimici";"tools";"scientific";"15.00";"requiredSkills:Scienza:50";"false";"";"";"Scienza:10";"uncommon"
+"Microscopio";"Strumento per osservare oggetti microscopici";"tools";"scientific";"45.00";"requiredSkills:Scienza:40";"false";"";"";"";"rare"
+"Bilancia di Precisione";"Bilancia per misurazioni accurate";"tools";"scientific";"12.00";"requiredSkills:Scienza:20";"false";"";"";"";"common"
+"Provette";"Tubi di vetro per esperimenti";"consumables";"scientific";"1.00";"";"true";"direct";"";"";"";"common"
+"Sostanze Chimiche";"Reagenti per esperimenti chimici";"consumables";"scientific";"3.00";"requiredSkills:Scienza:30";"true";"direct";"";"";"";"uncommon"
+
+# STRUMENTI PROFESSIONALI
+"Penna Stilografica";"Elegante strumento per la scrittura";"tools";"writing";"3.00";"";"false";"";"";"Scrivere Lingua:5";"common"
+"Inchiostro";"Inchiostro per penne stilografiche";"consumables";"writing";"0.25";"";"true";"direct";"";"";"";"common"
+"Macchina da Scrivere";"Innovativa macchina per scrivere lettere";"tools";"writing";"85.00";"";"false";"";"";"Scrivere Lingua:20";"rare"
+"Registro Contabile";"Libro per tenere la contabilità";"tools";"business";"3.00";"";"false";"";"";"";"common"
+"Calcolatrice Meccanica";"Macchina per calcoli matematici";"tools";"business";"25.00";"requiredSkills:Scienza:25";"false";"";"";"";"uncommon"
+
+# ARMI E MUNIZIONI
+"Fucile";"Arma da fuoco militare a lunga gittata";"weapons";"firearms";"20.00";"requiredSkills:Lanciare:40";"false";"";"";"Lanciare:5";"uncommon"
+"Revolver .32";"Pistola a tamburo calibro .32";"weapons";"firearms";"12.00";"requiredSkills:Lanciare:30";"false";"";"";"Lanciare:3";"uncommon"
+"Derringer .25";"Piccola pistola da difesa personale";"weapons";"firearms";"8.00";"requiredSkills:Lanciare:20";"false";"";"";"Lanciare:2";"uncommon"
+"Spada da Duello";"Elegante spada per duelli d'onore";"weapons";"melee";"15.00";"requiredSkills:Colpire:40";"false";"";"";"";"uncommon"
+"Bastone da Passeggio";"Elegante bastone con pomo d'argento";"weapons";"melee";"5.00";"";"false";"";"";"";"common"
+"Munizioni";"Proiettili generici per armi da fuoco";"consumables";"ammunition";"2.00";"";"true";"indirect";"";"";"";"common"
+"Proiettili .32";"Munizioni specifiche per revolver .32";"consumables";"ammunition";"1.00";"";"true";"indirect";"";"";"";"common"
+"Proiettili .25";"Munizioni per pistola Derringer";"consumables";"ammunition";"0.80";"";"true";"indirect";"";"";"";"common"
+
+# STRUMENTI CRIMINALI
+"Grimaldelli";"Set di attrezzi per forzare serrature";"tools";"criminal";"5.00";"requiredSkills:Artigianato:30";"false";"";"";"";"uncommon"
+"Lima";"Strumento per tagliare metalli";"tools";"criminal";"2.00";"";"false";"";"";"";"common"
+"Corda di Seta";"Corda resistente e silenziosa";"tools";"criminal";"8.00";"";"false";"";"";"";"common"
+"Mantello Nero";"Mantello scuro per nascondersi";"clothing";"criminal";"4.00";"";"false";"";"";"Nascondersi:5";"common"
+
+# ABBIGLIAMENTO VITTORIANO
+"Cappello a Cilindro";"Elegante cappello nero per gentiluomini";"clothing";"headwear";"5.00";"";"false";"";"";"Status:5";"common"
+"Vestito da Sera";"Abito elegante per eventi sociali";"clothing";"formal";"15.00";"";"false";"";"";"Status:10";"common"
+"Guanti da Sera";"Guanti eleganti per occasioni formali";"clothing";"accessories";"2.00";"";"false";"";"";"Status:3";"common"
+"Corsetto";"Indumento intimo femminile strutturato";"clothing";"undergarments";"6.00";"";"false";"";"";"";"common"
+"Redingote";"Elegante cappotto lungo da giorno";"clothing";"outerwear";"12.00";"";"false";"";"";"Status:8";"common"
+"Gonna a Crinolina";"Gonna ampia con struttura metallica";"clothing";"formal";"18.00";"";"false";"";"";"";"common"
+"Stivali di Pelle";"Stivali resistenti in pelle di qualità";"clothing";"footwear";"8.00";"";"false";"";"";"";"common"
+
+# ACCESSORI E OGGETTI PERSONALI
+"Orologio da Tasca";"Orologio di precisione da portare in tasca";"accessories";"timepiece";"8.00";"";"false";"";"";"Status:5";"common"
+"Portasigarette d'Argento";"Elegante porta sigarette in argento";"accessories";"luxury";"12.00";"";"false";"";"";"";"uncommon"
+"Bastoncino da Passeggio";"Elegante accessorio per passeggiate";"accessories";"walking";"6.00";"";"false";"";"";"Status:3";"common"
+"Ventaglio";"Accessorio femminile per rinfrescarsi";"accessories";"feminine";"3.00";"";"false";"";"";"";"common"
+"Ombrello";"Protezione dalla pioggia londinese";"accessories";"weather";"4.00";"";"false";"";"";"";"common"
+"Portamonete";"Piccola borsa per monete";"accessories";"money";"1.50";"";"false";"";"";"";"common"
+
+# CONSUMABILI QUOTIDIANI
+"Candele";"Candele di cera per illuminazione";"consumables";"lighting";"0.50";"";"true";"direct";"";"";"";"common"
+"Olio per Lampade";"Combustibile per lampade a olio";"consumables";"lighting";"0.80";"";"true";"direct";"";"";"";"common"
+"Carbone";"Combustibile per riscaldamento domestico";"consumables";"heating";"1.20";"";"true";"direct";"";"";"";"common"
+"Sapone";"Sapone profumato per l'igiene personale";"consumables";"hygiene";"0.60";"";"true";"direct";"";"";"";"common"
+"Tabacco da Pipa";"Tabacco di qualità per pipe";"consumables";"tobacco";"1.00";"";"true";"direct";"";"";"";"common"
+"Sigarette";"Sigarette confezionate";"consumables";"tobacco";"0.80";"";"true";"direct";"";"";"";"common"
+
+# BEVANDE E CIBO
+"Bottiglia di Vino";"Vino di buona qualità";"consumables";"beverage";"1.50";"";"true";"direct";"";"";"";"common"
+"Whisky Scozzese";"Distillato pregiato delle Highlands";"consumables";"beverage";"3.50";"";"true";"direct";"";"";"";"uncommon"
+"Gin";"Distillato popolare nei bassifondi";"consumables";"beverage";"1.20";"";"true";"direct";"";"";"";"common"
+"Tè Indiano";"Tè pregiato dalle colonie";"consumables";"beverage";"2.00";"";"true";"direct";"";"";"";"common"
+"Caffè";"Bevanda esotica dal Sud America";"consumables";"beverage";"2.50";"";"true";"direct";"";"";"";"uncommon"
+"Pane";"Pane fresco quotidiano";"consumables";"food";"0.20";"";"true";"direct";"";"";"";"common"
+"Carne in Scatola";"Carne conservata per viaggi";"consumables";"food";"1.80";"";"true";"direct";"";"";"";"common"
+
+# OGGETTI SPECIALISTICI AGGIUNTI
+"Cannocchiale";"Strumento ottico per osservare a distanza";"tools";"navigation";"15.00";"requiredOccupations:capitano";"false";"";"";"";"uncommon"
+"Carte Nautiche";"Mappe dettagliate per la navigazione marittima";"consumables";"navigation";"8.00";"requiredOccupations:capitano";"true";"direct";"";"";"";"uncommon"
+"Strumenti di Precisione";"Set di strumenti per lavorazioni di alta precisione";"tools";"crafting";"12.00";"requiredSkills:Manualità:60";"false";"";"";"";"uncommon"
+"Set di Pennelli";"Collezione completa di pennelli per artisti";"tools";"artistic";"6.00";"requiredSkills:Arte - Pittura e Disegno:40";"false";"";"";"";"common"
+"Tele";"Supporti in tessuto per dipingere";"consumables";"artistic";"3.00";"";"true";"direct";"";"";"";"common"
+"Pigmenti";"Colori in polvere per dipingere";"consumables";"artistic";"4.00";"";"true";"direct";"";"";"";"common"
+"Apparecchio Telegrafico";"Dispositivo per trasmissioni telegrafiche";"tools";"communication";"45.00";"requiredSkills:Riparazione elettrica:50";"false";"";"";"";"rare"
+"Strumenti Elettrici";"Kit di strumenti per lavori elettrici";"tools";"electrical";"8.00";"requiredSkills:Riparazione elettrica:40";"false";"";"";"";"uncommon"
+
+# STRUMENTI MUSICALI
+"Violino";"Strumento a corde per musica classica";"tools";"musical";"35.00";"requiredSkills:Arte:40";"false";"";"";"Arte:15";"uncommon"
+"Pianoforte";"Grande strumento a tasti";"tools";"musical";"150.00";"requiredSkills:Arte:50";"false";"";"";"Arte:25";"rare"
+"Flauto";"Strumento a fiato portatile";"tools";"musical";"8.00";"requiredSkills:Arte:20";"false";"";"";"Arte:5";"common"
+
+# OGGETTI DOMESTICI
+"Set da Tè";"Servizio completo per il tè";"accessories";"dining";"15.00";"";"false";"";"";"Status:8";"common"
+"Argenteria";"Posate in argento per occasioni speciali";"accessories";"dining";"45.00";"";"false";"";"";"Status:20";"uncommon"
+"Specchio a Mano";"Specchio portatile con manico";"accessories";"grooming";"3.00";"";"false";"";"";"";"common"
+"Spazzola per Capelli";"Spazzola con setole naturali";"accessories";"grooming";"2.50";"";"false";"";"";"";"common"
+
+# TRASPORTI
+"Biglietto del Treno";"Biglietto per viaggiare in ferrovia";"consumables";"transport";"2.50";"";"true";"direct";"";"";"";"common"
+"Carrozza a Noleggio";"Servizio di trasporto urbano";"consumables";"transport";"5.00";"";"true";"direct";"";"";"";"common"
+
+# STRUMENTI PROFESSIONALI AGGIUNTIVI
+"Taccuino";"Quaderno per appunti e annotazioni investigative";"tools";"writing";"0.30";"";"false";"";"";"";"common"
+"Tesserino";"Documento di identificazione ufficiale";"documents";"identification";"0.50";"requiredOccupations:Ufficiale di Polizia";"false";"";"";"";"common"
+"Manette";"Strumento di immobilizzazione per arrestati";"tools";"law";"1.80";"requiredOccupations:Ufficiale di Polizia";"false";"";"";"";"uncommon"
+"Vetrini";"Sottili lastre di vetro per microscopia";"consumables";"scientific";"0.80";"";"true";"direct";"";"";"common"
+"Microscopio portatile";"Microscopio compatto da campo";"tools";"scientific";"28.00";"requiredSkills:Biologia:30";"false";"";"";"";"uncommon"
+"Set attrezzi";"Collezione completa di attrezzi meccanici";"tools";"mechanical";"12.00";"";"false";"";"";"";"common"
+"Progetti tecnici";"Disegni e schemi di ingegneria";"documents";"technical";"4.00";"requiredSkills:Matematica:30";"false";"";"";"";"common"
+"Guanti di cotone";"Guanti protettivi per maneggiare oggetti delicati";"clothing";"accessories";"0.80";"";"false";"";"";"";"common"
+"Registro Titoli";"Registro per la gestione di titoli e investimenti";"tools";"business";"5.00";"requiredSkills:Finanza:40";"false";"";"";"";"uncommon"
+"Bussola";"Strumento magnetico per l'orientamento";"tools";"navigation";"1.20";"";"false";"";"";"";"common"
+"Mappa";"Carta geografica dell'area locale";"documents";"navigation";"0.80";"";"false";"";"";"";"common"
+"Tenda leggera";"Riparo portatile per esploratori";"tools";"camping";"8.00";"";"false";"";"";"";"uncommon"
+"Croce";"Simbolo religioso cristiano";"accessories";"religious";"1.50";"";"false";"";"";"";"common"
+"Etichetta/Galateo";"Manuale delle buone maniere dell'alta società";"books";"social";"3.50";"";"false";"";"";"";"common"

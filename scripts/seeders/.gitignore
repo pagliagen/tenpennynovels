@@ -1,0 +1,14 @@
+/node_modules
+
+# Environment files (contain sensitive data)
+.env.local
+.env.production
+.env
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db

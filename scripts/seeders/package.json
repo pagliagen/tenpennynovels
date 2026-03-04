@@ -1,0 +1,57 @@
+{
+  "name": "@tenpennynovels/seeders",
+  "version": "1.0.0",
+  "description": "Database seeders for TenpennyNovels",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "export:dev:documents": "dotenv -e .env.local -- tsx utils/export-documents.ts",
+    "export:prod:documents": "dotenv -e .env.production -- tsx utils/export-documents.ts",
+    "seed:dev:permissions": "dotenv -e .env.local -- tsx seeders/PermissionSeeder.ts",
+    "seed:dev:users": "dotenv -e .env.local -- tsx seeders/UserSeeder.ts",
+    "seed:dev:locations": "dotenv -e .env.local -- tsx seeders/LocationSeeder.ts",
+    "seed:dev:items": "dotenv -e .env.local -- tsx seeders/ItemSeeder.ts",
+    "seed:dev:skills": "dotenv -e .env.local -- tsx seeders/SkillSeeder.ts",
+    "seed:dev:occupations": "dotenv -e .env.local -- tsx seeders/OccupationSeeder.ts",
+    "seed:dev:social-classes": "dotenv -e .env.local -- tsx seeders/SocialClassConfigSeeder.ts",
+    "seed:dev:documents": "dotenv -e .env.local -- tsx seeders/DocumentSeeder.ts",
+    "seed:dev:forum": "dotenv -e .env.local -- tsx seeders/ForumSeeder.ts",
+    "seed:dev:market-items": "dotenv -e .env.local -- tsx seeders/MarketItemSeeder.ts",
+    "seed:dev:all": "npm run seed:dev:permissions && npm run seed:dev:users && npm run seed:dev:locations && npm run seed:dev:items && npm run seed:dev:skills && npm run seed:dev:occupations && npm run seed:dev:documents && npm run seed:dev:forum && npm run seed:dev:market-items",
+    "seed:prod:permissions": "dotenv -e .env.production -- tsx seeders/PermissionSeeder.ts",
+    "seed:prod:users": "dotenv -e .env.production -- tsx seeders/UserSeeder.ts",
+    "seed:prod:locations": "dotenv -e .env.production -- tsx seeders/LocationSeeder.ts",
+    "seed:prod:items": "dotenv -e .env.production -- tsx seeders/ItemSeeder.ts",
+    "seed:prod:skills": "dotenv -e .env.production -- tsx seeders/SkillSeeder.ts",
+    "seed:prod:occupations": "dotenv -e .env.production -- tsx seeders/OccupationSeeder.ts",
+    "seed:prod:social-classes": "dotenv -e .env.production -- tsx seeders/SocialClassConfigSeeder.ts",
+    "seed:prod:documents": "dotenv -e .env.production -- tsx seeders/DocumentSeeder.ts",
+    "seed:prod:forum": "dotenv -e .env.production -- tsx seeders/ForumSeeder.ts",
+    "seed:prod:market-items": "dotenv -e .env.production -- tsx seeders/MarketItemSeeder.ts",
+    "seed:prod:all": "npm run seed:prod:permissions && npm run seed:prod:users && npm run seed:prod:locations && npm run seed:prod:items && npm run seed:prod:skills && npm run seed:prod:occupations && npm run seed:prod:documents && npm run seed:prod:forum && npm run seed:prod:market-items",
+    "test:dev": "dotenv -e .env.local -- bash test-all.sh",
+    "test:prod": "dotenv -e .env.production -- bash test-all.sh"
+  },
+  "dependencies": {
+    "@qdrant/js-client-rest": "^1.17.0",
+    "@types/bull": "^4.10.4",
+    "bull": "^4.16.5",
+    "csv-parse": "^6.1.0",
+    "csv-writer": "^1.6.0",
+    "dotenv": "^16.4.7",
+    "glob": "^11.0.0",
+    "gray-matter": "^4.0.3",
+    "ioredis": "^5.10.0",
+    "marked": "^17.0.3",
+    "mongodb": "^7.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.6",
+    "dotenv-cli": "^11.0.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=22.13.1"
+  }
+}
