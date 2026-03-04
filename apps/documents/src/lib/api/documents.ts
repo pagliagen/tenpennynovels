@@ -28,7 +28,7 @@ export const documentsApi = {
    * @returns {Promise<Document[]>} List of documents
    */
   async list(params?: DocumentListFilter): Promise<Document[]> {
-    const response = (await api.get('/documents/list', { params })) as any;
+    const response = (await api.get('/documents/routes/list', { params })) as any;
     return response.data || [];
   },
 
