@@ -4,25 +4,29 @@
 
 /**
  * Standard API response wrapper
+ * Matches backend standard: services/unified-backend/src/shared/utils/apiResponse.ts
  */
 export interface ApiResponse<T = unknown> {
-  result?: boolean;               // Backend compatibility (some endpoints use result)
-  success: boolean;
+  result: boolean;                // ✅ Backend standard
   data?: T;
   error?: string;
+  code?: string;
   message?: string;
+  timestamp?: string;
+  requestId?: string;
 }
 
 /**
  * Paginated API response
  */
 export interface PaginatedResponse<T = unknown> {
-  success: boolean;
+  result: boolean;
   data?: {
     items: T[];
     pagination: PaginationInfo;
   };
   error?: string;
+  code?: string;
   message?: string;
 }
 

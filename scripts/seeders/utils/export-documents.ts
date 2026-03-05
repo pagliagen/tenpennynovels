@@ -4,23 +4,25 @@ import { getConnection } from './connection';
 import { createObjectCsvWriter } from 'csv-writer';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import exportRoutes from './export-routes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 /**
- * Export Documents from Database
+ * Export Documents + Routes from Database
  *
- * Downloads all documents from MongoDB and creates:
+ * Downloads all documents and routes from MongoDB and creates:
  * 1. {slug}.content files (TipTap Delta JSON)
  * 2. {slug}.description files (plain text)
- * 3. documents.csv (remaining fields)
+ * 3. documents.csv (document metadata)
+ * 4. routes.csv (route hierarchy)
  *
  * Usage:
- *   npm run export:documents
- *   MONGO_URI="mongodb+srv://..." npm run export:documents  # Production
+ *   npm run export:dev:documents
+ *   MONGO_URI="mongodb+srv://..." npm run export:dev:documents  # Production
  */
-async function exportDocuments() {
+async function exportDocumentsAndRoutes() {
   const { client, db } = await getConnection();
 
   try {
@@ -137,21 +139,38 @@ async function exportDocuments() {
     console.log(`  Hierarchy: ${stats.roots} roots, ${stats.children} children`);
     console.log(`  Flags: ${stats.drafts} drafts, ${stats.hidden} hidden`);
     console.log(`  Files: ${stats.total} .content, ${stats.hasDescription} .description`);
-    console.log(`\n[Export] ✅ Export complete`);
+    console.log(`\n[Export] ✅ Documents export complete`);
 
   } catch (error) {
-    console.error('[Export] Error:', error);
+    console.error('[Export] ❌ Documents export error:', error);
     throw error;
   } finally {
     await client.close();
   }
+
+  // Phase 2: Export routes
+  console.log('\n');
+  console.log('='.repeat(60));
+  console.log('📍 PHASE 2: Exporting Routes');
+  console.log('='.repeat(60));
+  console.log('');
+
+  try {
+    await exportRoutes();
+  } catch (error) {
+    console.error('[Export] ❌ Routes export error:', error);
+    throw error;
+  }
+
+  console.log('\n');
+  console.log('='.repeat(60));
+  console.log('✅ EXPORT COMPLETE - Documents + Routes');
+  console.log('='.repeat(60));
 }
 
 // CLI execution (ESM compatible)
-import { fileURLToPath } from 'url';
-
 if (import.meta.url === `file://${process.argv[1]}`) {
-  exportDocuments().catch((error) => {
+  exportDocumentsAndRoutes().catch((error) => {
     console.error('Fatal error:', error);
     process.exit(1);
   });

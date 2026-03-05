@@ -869,7 +869,7 @@ export class DocumentManagementController {
   /**
    * Create new route
    * POST /admin/routes
-   * Body: { path, type, kind, title, description?, rootDocumentId?, parentId?, redirectTo?, isPublic?, enabled?, order? }
+   * Body: { slug, type, kind, rootDocumentId?, documentData?, parentId?, redirectTo?, isPublic?, enabled? }
    */
   static async createRoute(req: Request, res: Response): Promise<void> {
     try {
@@ -877,21 +877,18 @@ export class DocumentManagementController {
         slug,  // CHANGED: slug instead of path (path is calculated by pre-save hook)
         type,
         kind,
-        title,
-        description,
         rootDocumentId,
         documentData, // NEW: Create document inline for kind="document"
         parentId,
         redirectTo,
         isPublic,
-        enabled,
-        order
+        enabled
       } = req.body;
 
       // Validation
-      if (!slug || !type || !kind || !title) {
+      if (!slug || !type || !kind) {
         res.status(400).json(errorResponse(
-          'Slug, type, kind e title sono obbligatori',
+          'Slug, type e kind sono obbligatori',
           'VALIDATION_ERROR',
           undefined,
           400,

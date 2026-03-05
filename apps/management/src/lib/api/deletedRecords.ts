@@ -26,7 +26,7 @@ export async function getDeletedRecords(
     { params }
   );
 
-  if (!response.data.success || !response.data.data) {
+  if (!response.data.result || !response.data.data) {
     throw new Error(response.data.error || 'Failed to fetch deleted records');
   }
 
@@ -46,7 +46,7 @@ export async function restoreRecord(
       data
     );
 
-    if (!response.data.success || !response.data.data) {
+    if (!response.data.result || !response.data.data) {
       throw new Error(response.data.error || 'Failed to restore record');
     }
 
@@ -75,7 +75,7 @@ export async function permanentlyDelete(
     { data }
   );
 
-  if (!response.data.success) {
+  if (!response.data.result) {
     throw new Error(response.data.error || 'Failed to permanently delete record');
   }
 }
@@ -91,7 +91,7 @@ export async function bulkPermanentlyDelete(
     data
   );
 
-  if (!response.data.success || !response.data.data) {
+  if (!response.data.result || !response.data.data) {
     throw new Error(response.data.error || 'Failed to bulk permanently delete');
   }
 

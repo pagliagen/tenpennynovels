@@ -297,6 +297,8 @@ export class DocumentController {
         kind: route.kind,
         displayCategory: route.displayCategory,
         isPublic: route.isPublic,
+        title: route.title,           // ✅ FIX: Include document title from JOIN
+        description: route.description, // ✅ FIX: Include document description
         order: route.order,
         children: []
       });

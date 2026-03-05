@@ -4,6 +4,8 @@
  * Definisce interfacce per User entity e relative API responses.
  */
 
+import type { ApiResponse } from './common';
+
 export interface User {
   _id: string;
   username: string;
@@ -89,9 +91,3 @@ export interface BanUserData {
   duration?: number; // Durata in giorni, undefined = permanente
 }
 
-export interface ApiResponse<T> {
-  success: boolean;
-  data?: T;
-  error?: string;
-  message?: string;
-}

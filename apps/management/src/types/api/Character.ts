@@ -4,6 +4,8 @@
  * Definisce interfacce per Character entity e relative API responses.
  */
 
+import type { ApiResponse } from './common';
+
 export interface Character {
   _id: string;
   userId: string;
@@ -158,11 +160,4 @@ export interface ApproveCharacterData {
 
 export interface RejectCharacterData {
   reason: string;
-}
-
-export interface ApiResponse<T> {
-  success: boolean;
-  data?: T;
-  error?: string;
-  message?: string;
 }

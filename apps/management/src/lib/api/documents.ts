@@ -12,9 +12,9 @@ import type {
   DocumentListResponse,
   DocumentTreeResponse,
   CreateDocumentData,
-  UpdateDocumentData,
-  ApiResponse
+  UpdateDocumentData
 } from '@/types/api/Document';
+import type { ApiResponse } from '@/types/api/common';
 
 /**
  * Recupera albero documenti con metadata routes (DOCUMENTS-FIRST)
@@ -36,7 +36,7 @@ export async function getDocumentById(id: string): Promise<Document> {
     apiClient.get<ApiResponse<Document>>(`/admin/documents/${id}`)
   );
 
-  if (!response.data.success || !response.data.data) {
+  if (!response.data.result || !response.data.data) {
     throw new Error(response.data.error || 'Errore nel recupero documento');
   }
 
@@ -56,7 +56,7 @@ export async function getDocumentWithChildren(id: string): Promise<{
     apiClient.get<ApiResponse<any>>(`/admin/documents/${id}/with-children?depth=10`)
   );
 
-  if (!response.data.success || !response.data.data) {
+  if (!response.data.result || !response.data.data) {
     throw new Error(response.data.error || 'Error fetching document hierarchy');
   }
 
@@ -71,7 +71,7 @@ export async function createDocument(data: CreateDocumentData): Promise<Document
     apiClient.post<ApiResponse<Document>>('/admin/documents', data)
   );
 
-  if (!response.data.success || !response.data.data) {
+  if (!response.data.result || !response.data.data) {
     throw new Error(response.data.error || 'Errore nella creazione documento');
   }
 
@@ -86,7 +86,7 @@ export async function updateDocument(id: string, data: UpdateDocumentData): Prom
     apiClient.patch<ApiResponse<Document>>(`/admin/documents/${id}`, data)
   );
 
-  if (!response.data.success || !response.data.data) {
+  if (!response.data.result || !response.data.data) {
     throw new Error(response.data.error || 'Errore nell\'aggiornamento documento');
   }
 
@@ -101,7 +101,7 @@ export async function deleteDocument(id: string): Promise<void> {
     apiClient.delete<ApiResponse<void>>(`/admin/documents/${id}`)
   );
 
-  if (!response.data.success) {
+  if (!response.data.result) {
     throw new Error(response.data.error || 'Errore nell\'eliminazione documento');
   }
 }
@@ -132,7 +132,7 @@ export async function toggleRouteEnabled(routeId: string): Promise<void> {
     apiClient.patch<ApiResponse<void>>(`/admin/routes/${routeId}/toggle-enabled`)
   );
 
-  if (!response.data.success) {
+  if (!response.data.result) {
     throw new Error(response.data.error || 'Errore nel toggle route');
   }
 }
@@ -145,7 +145,7 @@ export async function deleteRoute(routeId: string): Promise<void> {
     apiClient.delete<ApiResponse<void>>(`/admin/routes/${routeId}`)
   );
 
-  if (!response.data.success) {
+  if (!response.data.result) {
     throw new Error(response.data.error || 'Errore nell\'eliminazione route');
   }
 }
@@ -158,7 +158,7 @@ export async function reorderDocument(documentId: string, order: number, parentI
     apiClient.put<ApiResponse<void>>(`/admin/documents/reorder`, { id: documentId, order, parentId })
   );
 
-  if (!response.data.success) {
+  if (!response.data.result) {
     throw new Error(response.data.error || 'Errore nel riordinamento documento');
   }
 }
@@ -172,7 +172,7 @@ export async function reorderSiblings(parentId: string | null, orderedIds: strin
     apiClient.put<ApiResponse<void>>(`/admin/documents/reorder`, { parentId, orderedIds })
   );
 
-  if (!response.data.success) {
+  if (!response.data.result) {
     throw new Error(response.data.error || 'Errore nel riordinamento siblings');
   }
 }
@@ -185,7 +185,7 @@ export async function toggleDocumentVisibility(id: string): Promise<void> {
     apiClient.patch<ApiResponse<void>>(`/admin/documents/${id}/toggle-visibility`)
   );
 
-  if (!response.data.success) {
+  if (!response.data.result) {
     throw new Error(response.data.error || 'Errore nel toggle visibilità documento');
   }
 }
@@ -198,7 +198,7 @@ export async function toggleDocumentDraft(id: string): Promise<void> {
     apiClient.patch<ApiResponse<void>>(`/admin/documents/${id}/toggle-draft`)
   );
 
-  if (!response.data.success) {
+  if (!response.data.result) {
     throw new Error(response.data.error || 'Errore nel toggle draft documento');
   }
 }
@@ -228,7 +228,7 @@ export async function createRoute(data: {
     apiClient.post<ApiResponse<any>>('/admin/routes', data)
   );
 
-  if (!response.data.success || !response.data.data) {
+  if (!response.data.result || !response.data.data) {
     throw new Error(response.data.error || 'Errore nella creazione route');
   }
 
@@ -256,7 +256,7 @@ export async function updateRoute(routeId: string, data: {
     apiClient.patch<ApiResponse<any>>(`/admin/routes/${routeId}`, data)
   );
 
-  if (!response.data.success || !response.data.data) {
+  if (!response.data.result || !response.data.data) {
     throw new Error(response.data.error || 'Errore nell\'aggiornamento route');
   }
 

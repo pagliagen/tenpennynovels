@@ -5,6 +5,8 @@
  * NEW ARCHITECTURE: Route (routing layer) + Document (content layer)
  */
 
+import type { ApiResponse } from './common';
+
 /**
  * Route Interface (NEW ARCHITECTURE - hierarchical)
  * Routes define navigation structure (URL paths) with parent/child relationships
@@ -199,10 +201,3 @@ export interface UpdateDocumentData {
   };
 }
 
-export interface ApiResponse<T> {
-  result?: boolean;               // Backend compatibility (some endpoints use result)
-  success: boolean;
-  data?: T;
-  error?: string;
-  message?: string;
-}
