@@ -2,8 +2,8 @@
  * Character Wizard Page
  *
  * Full-page character creation wizard (6 steps).
- * Only accessible if selectedCharacter.status === 'DRAFT'.
- * Non-DRAFT characters show modal instead (handled in Sidebar/TopBar).
+ * Accessible only with game:character:wizard (draft characters).
+ * Non-draft characters use character sheet (handled in Sidebar).
  *
  * **Flow**:
  * 1. Basic Info (name, age, appearance, etc.)
@@ -31,16 +31,16 @@ import { GameLayout } from '@/components/layout/GameLayout';
  * Character Wizard Page Component
  *
  * Renders the full character creation wizard.
- * Redirects if character is not DRAFT.
+ * Redirects if no game:character:wizard permission (draft only).
  *
  * @returns Character wizard page
  */
 export default function CharacterWizardPage() {
   const router = useRouter();
-  const { selectedCharacter, isAuthenticated } = useAuthStore();
+  const { selectedCharacter, isAuthenticated, hasGamePermission } = useAuthStore();
 
   /**
-   * Guard: Redirect if not authenticated or character not DRAFT
+   * Guard: Redirect if not authenticated, no character, or no wizard permission
    */
   useEffect(() => {
     if (!isAuthenticated) {
@@ -48,24 +48,19 @@ export default function CharacterWizardPage() {
       return;
     }
 
-    // If no selected character, redirect to character selection
     if (!selectedCharacter) {
       router.push('/characters');
       return;
     }
 
-    // If character is not DRAFT, redirect to game
-    if (selectedCharacter.status !== 'DRAFT') {
-      console.warn(
-        `[WizardPage] Character status is ${selectedCharacter.status}, wizard only for DRAFT. Redirecting to game.`
-      );
+    if (!hasGamePermission('game:character:wizard')) {
       router.push('/game');
       return;
     }
-  }, [isAuthenticated, selectedCharacter, router]);
+  }, [isAuthenticated, selectedCharacter, hasGamePermission, router]);
 
-  // Show loading while checking auth/character
-  if (!isAuthenticated || !selectedCharacter || selectedCharacter.status !== 'DRAFT') {
+  // Show loading while checking auth/character/permission
+  if (!isAuthenticated || !selectedCharacter || !hasGamePermission('game:character:wizard')) {
     return (
       <>
         <Head>

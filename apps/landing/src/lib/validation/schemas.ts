@@ -91,17 +91,16 @@ export const EmailSchema = z
  *
  * **Security Requirements**:
  * - Minimum 8 characters
- * - At least one lowercase letter
- * - At least one uppercase letter
- * - At least one number
- * - At least one special character (@$!%*?&#)
+ * - At least one letter (a-z, A-Z)
+ * - At least one number (0-9)
+ * - Special characters are optional but allowed
  *
  * @constant
  * @type {z.ZodString}
  *
  * @example
  * ```typescript
- * const result = PasswordSchema.safeParse('MyP@ssw0rd');
+ * const result = PasswordSchema.safeParse('MyPassword123');
  * if (!result.success) {
  *   console.error('Password errors:', result.error.errors);
  * }
@@ -110,12 +109,8 @@ export const EmailSchema = z
 export const PasswordSchema = z
   .string()
   .min(8, { message: 'Password deve essere di almeno 8 caratteri' })
-  .regex(/[a-z]/, { message: 'Password deve contenere almeno una lettera minuscola' })
-  .regex(/[A-Z]/, { message: 'Password deve contenere almeno una lettera maiuscola' })
-  .regex(/[0-9]/, { message: 'Password deve contenere almeno un numero' })
-  .regex(/[@$!%*?&#]/, {
-    message: 'Password deve contenere almeno un carattere speciale (@$!%*?&#)',
-  });
+  .regex(/[a-zA-Z]/, { message: 'Password deve contenere almeno una lettera' })
+  .regex(/[0-9]/, { message: 'Password deve contenere almeno un numero' });
 
 /**
  * Login form validation schema
@@ -263,7 +258,7 @@ export const CharacterCreationSchema = z
  * Forgot password form validation schema
  *
  * **Fields**:
- * - email: Valid email address
+ * - identifier: Username or email address
  *
  * @constant
  * @type {z.ZodObject}
@@ -276,7 +271,10 @@ export const CharacterCreationSchema = z
  * ```
  */
 export const ForgotPasswordSchema = z.object({
-  email: EmailSchema,
+  identifier: z
+    .string()
+    .min(3, { message: 'Username o email deve essere di almeno 3 caratteri' })
+    .max(50, { message: 'Username o email troppo lungo' }),
 });
 
 /**

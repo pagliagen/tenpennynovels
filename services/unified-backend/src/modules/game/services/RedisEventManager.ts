@@ -298,7 +298,7 @@ export class RedisEventManager {
       const adminCharacter = await Character.findOne({ 
         userId: adminUser._id,
         status: 'APPROVED',
-        gameplayRoles: { $in: ['master', 'amministratore', 'moderatore'] }
+        gameplayRoles: { $in: ['master', 'moderatore'] }
       }).sort({ gameplayRoles: -1 }); // Prioritize by role hierarchy
 
       if (!adminCharacter) {

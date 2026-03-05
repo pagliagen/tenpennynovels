@@ -23,7 +23,7 @@ export class CharacterVisibilityFilter {
       currentLocation: character.currentLocation,
       isActive: character.isActive,
       isBot: character.isBot, // Indica se è un bot (campo pubblico)
-      status: character.status,
+      playerStatus: character.playerStatus,
       createdAt: character.createdAt,
       updatedAt: character.updatedAt
     };

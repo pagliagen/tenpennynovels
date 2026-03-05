@@ -166,7 +166,7 @@ export class AuthService {
    *
    * Sends password reset email to user.
    *
-   * @param {string} email - User email address
+   * @param {string} identifier - Username or email address
    * @returns {Promise<ApiResponse<void>>} Request result
    *
    * @example
@@ -178,9 +178,9 @@ export class AuthService {
    * }
    * ```
    */
-  async forgotPassword(email: string): Promise<ApiResponse<void>> {
+  async forgotPassword(identifier: string): Promise<ApiResponse<void>> {
     const sanitized = {
-      email: sanitizeUserInput(email),
+      identifier: sanitizeUserInput(identifier),
     };
 
     return apiPost<void>('/auth/forgot-password', sanitized);
@@ -193,11 +193,12 @@ export class AuthService {
    *
    * @param {string} token - Reset token from email
    * @param {string} newPassword - New password
+   * @param {string} confirmPassword - Password confirmation
    * @returns {Promise<ApiResponse<void>>} Reset result
    *
    * @example
    * ```typescript
-   * const result = await authService.resetPassword(token, 'NewSecurePass123!');
+   * const result = await authService.resetPassword(token, 'NewSecurePass123!', 'NewSecurePass123!');
    *
    * if (result.result) {
    *   console.log('Password updated successfully!');
@@ -205,10 +206,10 @@ export class AuthService {
    * }
    * ```
    */
-  async resetPassword(token: string, newPassword: string): Promise<ApiResponse<void>> {
-    return apiPost<void>('/auth/reset-password', {
-      token,
-      password: newPassword,
+  async resetPassword(token: string, newPassword: string, confirmPassword: string): Promise<ApiResponse<void>> {
+    return apiPost<void>(`/auth/reset-password/${token}`, {
+      newPassword,
+      confirmPassword,
     });
   }
 
@@ -230,7 +231,34 @@ export class AuthService {
    * ```
    */
   async verifyEmail(token: string): Promise<ApiResponse<void>> {
-    return apiGet<void>(`/auth/verify-email?token=${token}`);
+    return apiGet<void>(`/auth/verify-email/${token}`);
+  }
+
+  /**
+   * Resend email verification
+   *
+   * Sends a new verification email to user.
+   * Used when user tries to login with unverified email.
+   *
+   * @param {string} username - Username or email address
+   * @returns {Promise<ApiResponse<{ emailSent: boolean; canResendAt: string; expiresAt: string }>>} Resend result
+   *
+   * @example
+   * ```typescript
+   * const result = await authService.resendVerification('john');
+   *
+   * if (result.result && result.data) {
+   *   console.log('Verification email sent!');
+   *   console.log('Can resend at:', result.data.canResendAt);
+   * }
+   * ```
+   */
+  async resendVerification(username: string): Promise<ApiResponse<{ emailSent: boolean; canResendAt: string; expiresAt: string }>> {
+    const sanitized = {
+      username: sanitizeUserInput(username),
+    };
+
+    return apiPost<{ emailSent: boolean; canResendAt: string; expiresAt: string }>('/auth/resend-verification', sanitized);
   }
 
   /**

@@ -355,7 +355,7 @@ export class CharacterSessionManagementController {
             id: character._id,
             name: character.name,
             surname: character.surname,
-            status: character.status
+            playerStatus: character.playerStatus
           },
           sessions: formattedSessions,
           pagination: {

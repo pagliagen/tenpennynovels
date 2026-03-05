@@ -90,6 +90,43 @@ export default function App({ Component, pageProps }: AppProps) {
           interagisci con altri giocatori e vivi avventure horror lovecraftiane.{' '}
           <strong>Registrazione gratuita</strong> e immediata!
         </p>
+
+        <div style={{
+          marginTop: '1rem',
+          fontSize: '0.8125rem',
+          display: 'flex',
+          gap: '1rem',
+          justifyContent: 'center',
+          alignItems: 'center'
+        }}>
+          <a
+            href="/about"
+            style={{
+              color: '#8b7355',
+              textDecoration: 'none',
+              borderBottom: '1px solid transparent',
+              transition: 'border-bottom 0.2s'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.borderBottomColor = '#8b7355'}
+            onMouseLeave={(e) => e.currentTarget.style.borderBottomColor = 'transparent'}
+          >
+            Chi Siamo
+          </a>
+          <span style={{ color: '#6b5d4f' }}>•</span>
+          <a
+            href="/terms"
+            style={{
+              color: '#8b7355',
+              textDecoration: 'none',
+              borderBottom: '1px solid transparent',
+              transition: 'border-bottom 0.2s'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.borderBottomColor = '#8b7355'}
+            onMouseLeave={(e) => e.currentTarget.style.borderBottomColor = 'transparent'}
+          >
+            Termini e Condizioni
+          </a>
+        </div>
       </footer>
     </ErrorBoundary>
   );

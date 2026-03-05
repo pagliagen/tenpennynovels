@@ -125,9 +125,10 @@ export interface Character {
   stats: CallOfCthulhuStats;
   skills: VictorianSkills;
   
-  // Character status and approval
-  status: CharacterStatus;
-  statusNote: string; // Staff notes for approval/rejection
+  // Character status and approval (playerStatus: nuovo standard; status: legacy)
+  status?: CharacterStatus;
+  playerStatus?: 'draft' | 'pending' | 'approved';
+  statusNote?: string; // Staff notes for approval/rejection
   
   // Economy and possessions
   walletId: string; // Reference to CharacterWallet

@@ -2,12 +2,7 @@ export interface AuthTokenPayload {
   userId: string;
   username: string;
   email: string;
-  canAccessAdminPanel: boolean;
-  // Granular permission system
   userRoles?: ('user')[];
-  characterRoles?: ('personaggio' | 'master' | 'moderatore' | 'amministratore')[];
-  characterPermissions?: string[];
-  // No more legacy fields - using only granular system
   iat: number;
   exp: number;
 }
@@ -16,7 +11,11 @@ export interface CharacterContextPayload {
   characterId: string;
   characterName: string;
   userId: string;
-  gameplayRoles: ('personaggio' | 'master' | 'moderatore' | 'gestore')[];
+  gameplayRoles: ('player' | 'master' | 'moderatore')[];
+  playerStatus?: string;
+  isApproved?: boolean;
+  isGestore?: boolean;
+  characterPermissions?: string[];
   iat: number;
   exp: number;
 }

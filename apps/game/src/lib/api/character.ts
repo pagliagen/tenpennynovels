@@ -76,6 +76,7 @@ export const characterApi = {
    * Get Character by ID
    *
    * Fetches complete character data including stats, skills, background.
+   * Requires game:character:read (draft characters do not have it; use getForWizard for draft).
    *
    * @param {string} characterId - Character ID
    * @returns {Promise<Character>} Character data
@@ -89,6 +90,20 @@ export const characterApi = {
    */
   async getById(characterId: string): Promise<Character> {
     const response = await api.get<{ data: CharacterResponse }>(`/game/characters/${characterId}`);
+    return response.data.character;
+  },
+
+  /**
+   * Get Character for Wizard (draft editing)
+   *
+   * Fetches character data for the wizard. Requires game:character:wizard (only draft).
+   * Only the current character can be loaded.
+   *
+   * @param {string} characterId - Character ID (must be selected character)
+   * @returns {Promise<Character>} Character data for wizard
+   */
+  async getForWizard(characterId: string): Promise<Character> {
+    const response = await api.get<{ data: CharacterResponse }>(`/game/characters/${characterId}/wizard`);
     return response.data.character;
   },
 

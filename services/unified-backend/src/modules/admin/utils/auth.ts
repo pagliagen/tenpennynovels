@@ -91,7 +91,7 @@ export class AuthUtils {
       id: character._id.toString(),
       name: character.name,
       surname: character.surname,
-      status: character.status,
+      playerStatus: character.playerStatus,
       gameplayRoles: character.gameplayRoles || [],
       userId: character.userId.toString(),
       createdAt: character.createdAt,

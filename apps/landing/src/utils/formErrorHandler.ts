@@ -48,10 +48,15 @@ export function handleApiFormErrors<T extends Record<string, any>>(
         message: typeof message === 'string' ? message : 'Errore di validazione',
       });
     });
+
+    // Also show global error when there are field errors
+    if (result.error && setGlobalError) {
+      setGlobalError(result.error);
+    }
   }
 
-  // Handle general error
-  if (result.error) {
+  // Handle general error (when no field errors)
+  if (result.error && !result.details) {
     if (setGlobalError) {
       setGlobalError(result.error);
     } else {

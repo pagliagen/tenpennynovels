@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { RequestUser } from '@shared/types';
 import { AuthUser, CharacterContext, ApiResponse } from '../types/game';
 import { logger } from '../utils/logger';
 
@@ -12,15 +13,7 @@ function getJwtSecret(): string {
   return secret;
 }
 
-// Extend Express Request interface
-declare global {
-  namespace Express {
-    interface Request {
-      user?: AuthUser;
-      character?: CharacterContext;
-    }
-  }
-}
+// req.user/req.character tipizzati in auth/middleware/auth.ts (RequestUser) e usati qui
 
 export class AuthMiddleware {
   /**
@@ -45,13 +38,10 @@ export class AuthMiddleware {
       const user: AuthUser = {
         userId: decoded.userId,
         username: decoded.username,
-        email: decoded.email,
-        canAccessAdminPanel: decoded.canAccessAdminPanel || false,
+        email: decoded.email ?? '',
         userRoles: decoded.userRoles || ['user'],
-        characterRoles: decoded.characterRoles || [],
-        characterPermissions: decoded.characterPermissions || [],
-        iat: decoded.iat || Math.floor(Date.now() / 1000),
-        exp: decoded.exp || Math.floor(Date.now() / 1000) + 86400
+        iat: decoded.iat ?? Math.floor(Date.now() / 1000),
+        exp: decoded.exp ?? Math.floor(Date.now() / 1000) + 86400
       };
 
       return { result: true,  user };
@@ -88,20 +78,15 @@ export class AuthMiddleware {
         throw new Error('Invalid token payload');
       }
 
-      // Attach user info to request
+      // Attach user info to request (campi admin impostati solo da admin middleware)
       req.user = {
         userId: decoded.userId,
         username: decoded.username,
-        email: decoded.email,
-        canAccessAdminPanel: decoded.canAccessAdminPanel || false,
-        // New granular permission system
+        email: decoded.email ?? '',
         userRoles: decoded.userRoles || ['user'],
-        characterRoles: decoded.characterRoles || [],
-        characterPermissions: decoded.characterPermissions || [],
-        // No more legacy fields
-        iat: decoded.iat || Math.floor(Date.now() / 1000),
-        exp: decoded.exp || Math.floor(Date.now() / 1000) + 86400
-      };
+        iat: decoded.iat ?? Math.floor(Date.now() / 1000),
+        exp: decoded.exp ?? Math.floor(Date.now() / 1000) + 86400
+      } as RequestUser;
 
       next();
 
@@ -163,7 +148,7 @@ export class AuthMiddleware {
         isApproved: decoded.isApproved !== undefined ? decoded.isApproved : true,
         // Game permissions system
         isGestore: decoded.isGestore || false,
-        status: decoded.status || 'DRAFT',
+        playerStatus: decoded.playerStatus || 'draft',
         characterPermissions: decoded.characterPermissions || [],
         iat: decoded.iat || Math.floor(Date.now() / 1000),
         exp: decoded.exp || Math.floor(Date.now() / 1000) + 86400
@@ -201,11 +186,10 @@ export class AuthMiddleware {
         characterId: process.env.TEST_CHARACTER_ID || 'test-character-id',
         characterName: process.env.TEST_CHARACTER_NAME || 'Test Character',
         userId: 'test-user-id',
-        gameplayRoles: ['approved-player'],
+        gameplayRoles: ['player'],
         isApproved: true,
-        // Game permissions system
         isGestore: false,
-        status: 'APPROVED',
+        playerStatus: 'approved',
         characterPermissions: [],
         iat: Math.floor(Date.now() / 1000),
         exp: Math.floor(Date.now() / 1000) + 86400
@@ -214,10 +198,7 @@ export class AuthMiddleware {
         userId: 'test-user-id',
         username: 'testuser',
         email: 'test@example.com',
-        canAccessAdminPanel: false,
         userRoles: ['user'],
-        characterRoles: [],
-        characterPermissions: [],
         iat: Math.floor(Date.now() / 1000),
         exp: Math.floor(Date.now() / 1000) + 86400
       };
@@ -311,7 +292,7 @@ export class AuthMiddleware {
    * Must be called after requireAdminAccess
    */
   static requireAdminPermissions(permissions: string[]) {
-    return (req: Request, res: Response, next: NextFunction): void => {
+    return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
       if (!req.user?.canAccessAdminPanel) {
         const response: ApiResponse = {
           result: false,
@@ -323,42 +304,51 @@ export class AuthMiddleware {
         return;
       }
 
-      const missingPermissions = permissions.filter(perm => {
-        // Check granular permission system
-        if (req.user?.characterPermissions?.includes(perm)) return false;
+      try {
+        const { hasAdminPermission } = await import('@config/admin-permissions');
+        const gameplayRoles = req.user.gameplayRoles ?? [];
+        const adminPermissions = req.user.adminPermissions ?? [];
+        const isGestore = req.user.isGestore ?? false;
+        const missingPermissions = permissions.filter(
+          (perm) => !hasAdminPermission(gameplayRoles, adminPermissions, isGestore, perm as any)
+        );
 
-        // No fallback - return true if permission not found
-        return true;
-      });
-
-      if (missingPermissions.length > 0) {
-        const response: ApiResponse = {
+        if (missingPermissions.length > 0) {
+          const response: ApiResponse = {
+            result: false,
+            error: 'Insufficient permissions',
+            code: 'INSUFFICIENT_PERMISSIONS',
+            details: { missingPermissions },
+            timestamp: new Date().toISOString()
+          };
+          res.status(403).json(response);
+          return;
+        }
+        next();
+      } catch (err: any) {
+        logger.error('requireAdminPermissions error', { error: err?.message, permissions });
+        res.status(500).json({
           result: false,
-          error: 'Insufficient permissions',
-          code: 'INSUFFICIENT_PERMISSIONS',
-          details: { missingPermissions },
+          error: 'Permission check failed',
+          code: 'PERMISSION_CHECK_ERROR',
           timestamp: new Date().toISOString()
-        };
-        res.status(403).json(response);
-        return;
+        });
       }
-
-      next();
     };
   }
 
   /**
    * Utility: Check if character has specific gameplay role
    */
-  static hasGameplayRole(req: Request, role: string): boolean {
-    return req.character?.gameplayRoles?.includes(role) || false;
+  static hasGameplayRole(req: Request, role: 'player' | 'master' | 'moderatore'): boolean {
+    return req.character?.gameplayRoles?.includes(role) ?? false;
   }
 
   /**
    * Middleware factory: Requires specific gameplay roles
    * Must be called after requireCharacterAuth
    */
-  static requireGameplayRoles(roles: string[]) {
+  static requireGameplayRoles(roles: ('player' | 'master' | 'moderatore')[]) {
     return (req: Request, res: Response, next: NextFunction): void => {
       if (!req.character) {
         const response: ApiResponse = {
@@ -372,7 +362,7 @@ export class AuthMiddleware {
       }
 
       const hasRequiredRole = roles.some(role =>
-        req.character?.gameplayRoles?.includes(role) || false
+        req.character?.gameplayRoles?.includes(role) ?? false
       );
 
       if (!hasRequiredRole) {
@@ -410,15 +400,11 @@ export class AuthMiddleware {
           req.user = {
             userId: decoded.userId,
             username: decoded.username,
-            email: decoded.email,
-            canAccessAdminPanel: decoded.canAccessAdminPanel || false,
-            // New granular permission system
+            email: decoded.email ?? '',
             userRoles: decoded.userRoles || ['user'],
-            characterRoles: decoded.characterRoles || [],
-            characterPermissions: decoded.characterPermissions || [],
-            iat: decoded.iat || Math.floor(Date.now() / 1000),
-            exp: decoded.exp || Math.floor(Date.now() / 1000) + 86400
-          };
+            iat: decoded.iat ?? Math.floor(Date.now() / 1000),
+            exp: decoded.exp ?? Math.floor(Date.now() / 1000) + 86400
+          } as RequestUser;
         }
       }
 
@@ -486,7 +472,7 @@ export class AuthMiddleware {
    * Returns decoded payload or null if invalid
    * Used for checking session details in controllers
    */
-  static decodeCharacterContext(token: string): { characterId: string; userId: string; characterName: string; sessionId: string; gameplayRoles: string[]; isGestore: boolean; status: string; characterPermissions: string[] } | null {
+  static decodeCharacterContext(token: string): { characterId: string; userId: string; characterName: string; sessionId: string; gameplayRoles: string[]; isGestore: boolean; playerStatus: string; characterPermissions: string[] } | null {
     try {
       const decoded = jwt.verify(token, getJwtSecret()) as any;
       if (!decoded.characterId || !decoded.userId) {
@@ -499,7 +485,7 @@ export class AuthMiddleware {
         sessionId: decoded.sessionId,
         gameplayRoles: decoded.gameplayRoles || [],
         isGestore: decoded.isGestore || false,
-        status: decoded.status || 'DRAFT',
+        playerStatus: decoded.playerStatus || 'draft',
         characterPermissions: decoded.characterPermissions || []
       };
     } catch (error) {

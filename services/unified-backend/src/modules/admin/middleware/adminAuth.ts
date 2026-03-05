@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { RequestUser } from '@shared/types';
 import { AdminUser, ApiResponse } from '../types/management';
 import { logger } from '../utils/logger';
 import { errorResponse, getRequestId } from '../utils/apiResponse';
@@ -24,13 +25,11 @@ declare global {
 
 export class AdminAuthMiddleware {
   /**
-   * Middleware: Read and validate auth_token cookie for admin panel access
-   * Extracts: userId, username, canAccessAdminPanel, userRoles, characterRoles, characterPermissions
+   * Middleware: Read and validate auth_token cookie; load selected character and set effective admin roles
    */
   static requireAdminAccess(req: Request, res: Response, next: NextFunction): void {
     try {
       const authToken = req.cookies?.auth_token;
-      
       if (!authToken) {
         res.status(401).json(errorResponse(
           'Authentication required',
@@ -42,55 +41,52 @@ export class AdminAuthMiddleware {
         return;
       }
 
-      // Verify JWT token
       const decoded = jwt.verify(authToken, getJwtSecret()) as any;
-      
       if (!decoded.userId || !decoded.username) {
         throw new Error('Invalid token payload');
       }
 
-      // Check if user can access admin panel
-      if (!decoded.canAccessAdminPanel) {
-        logger.warn('Admin access denied', { 
-          userId: decoded.userId, 
-          username: decoded.username,
-          ip: req.ip,
-          userAgent: req.get('User-Agent')
-        });
-
-        res.status(403).json(errorResponse(
-          'Admin access required',
-          'ADMIN_ACCESS_REQUIRED',
-          undefined,
-          403,
-          getRequestId(req)
-        ));
-        return;
-      }
-
-      // Attach admin user info to request
-      (req as any).user = {
-        id: decoded.userId,
+      const requestUser: RequestUser = {
         userId: decoded.userId,
         username: decoded.username,
-        email: decoded.email,
-        canAccessAdminPanel: decoded.canAccessAdminPanel,
-        // Granular permission system
-        userRoles: decoded.userRoles || [],
-        characterRoles: decoded.characterRoles || [],
-        characterPermissions: decoded.characterPermissions || []
+        email: decoded.email ?? '',
+        userRoles: decoded.userRoles ?? [],
+        iat: decoded.iat ?? Math.floor(Date.now() / 1000),
+        exp: decoded.exp ?? Math.floor(Date.now() / 1000) + 86400,
+        characterRoles: [],
+        canAccessAdminPanel: false
       };
+      req.user = requestUser;
 
-      logger.info('Admin access granted', {
-        userId: decoded.userId,
-        username: decoded.username,
-        userRoles: decoded.userRoles,
-        characterRoles: decoded.characterRoles,
-        endpoint: req.originalUrl
-      });
-
+      // Resolve character from cookie and set effective admin roles (async, fire-and-forget for initial attach)
+      const characterContext = req.cookies?.character_context;
+      if (characterContext) {
+        try {
+          const characterDecoded = jwt.verify(characterContext, getJwtSecret()) as any;
+          if (characterDecoded?.characterId) {
+            const { Character } = require('@database/models/Character');
+            const { gameplayRolesToAdminRoles } = require('@config/admin-permissions');
+            Character.findById(characterDecoded.characterId)
+              .select('gameplayRoles adminPermissions isGestore canAccessAdminPanel')
+              .lean()
+              .then((char: any) => {
+                if (char && req.user) {
+                  const adminRoles = gameplayRolesToAdminRoles(char.gameplayRoles || []);
+                  if (char.isGestore) adminRoles.push('amministratore');
+                  req.user.characterRoles = adminRoles;
+                  req.user.gameplayRoles = char.gameplayRoles || [];
+                  req.user.adminPermissions = char.adminPermissions || [];
+                  req.user.isGestore = char.isGestore || false;
+                  req.user.canAccessAdminPanel = char.canAccessAdminPanel || char.isGestore || false;
+                }
+                next();
+              })
+              .catch(() => next());
+            return;
+          }
+        } catch (_) {}
+      }
       next();
-
     } catch (error: any) {
       logger.warn('Admin auth token validation failed:', { 
         error: error instanceof Error ? error.message : String(error), 
@@ -126,23 +122,13 @@ export class AdminAuthMiddleware {
       }
 
       try {
-        // Fetch complete user from database
-        const { User } = await import('@database/models/User');
-        const fullUser = await User.findById(req.user.userId);
-        
-        if (!fullUser) {
-          res.status(404).json(errorResponse(
-            'User not found',
-            'USER_NOT_FOUND',
-            undefined,
-            404,
-            getRequestId(req)
-          ));
-          return;
-        }
+        const { hasAdminPermission } = await import('@config/admin-permissions');
+        const gameplayRoles = req.user.gameplayRoles ?? [];
+        const adminPermissions = req.user.adminPermissions ?? [];
+        const isGestore = req.user.isGestore ?? false;
 
         const missingPermissions = permissions.filter(
-          perm => !fullUser.hasViewPermission(perm)
+          (perm: string) => !hasAdminPermission(gameplayRoles, adminPermissions, isGestore, perm as any)
         );
 
         if (missingPermissions.length > 0) {
@@ -151,26 +137,20 @@ export class AdminAuthMiddleware {
             username: req.user.username,
             requiredPermissions: permissions,
             missingPermissions,
-            userRoles: fullUser.userRoles,
-            characterRoles: fullUser.characterRoles,
+            characterRoles: req.user.characterRoles,
             endpoint: req.originalUrl
           });
 
           res.status(403).json(errorResponse(
             'Insufficient permissions',
             'INSUFFICIENT_PERMISSIONS',
-            { 
-              requiredPermissions: permissions,
-              missingPermissions 
-            },
+            { requiredPermissions: permissions, missingPermissions },
             403,
             getRequestId(req)
           ));
           return;
         }
 
-        // Attach full user to request for downstream use
-        req.fullUser = fullUser;
         next();
 
       } catch (error: any) {
@@ -209,48 +189,30 @@ export class AdminAuthMiddleware {
       }
 
       try {
-        // Fetch complete user from database to use hasViewPermission method
-        const { User } = await import('@database/models/User');
-        const fullUser = await User.findById(req.user.userId);
-        
-        if (!fullUser) {
-          res.status(404).json(errorResponse(
-            'User not found',
-            'USER_NOT_FOUND',
-            undefined,
-            404,
-            getRequestId(req)
-          ));
-          return;
-        }
+        const { hasAdminPermission } = await import('@config/admin-permissions');
+        const gameplayRoles = req.user.gameplayRoles ?? [];
+        const adminPermissions = req.user.adminPermissions ?? [];
+        const isGestore = req.user.isGestore ?? false;
 
-        if (!fullUser.hasViewPermission(permission)) {
+        if (!hasAdminPermission(gameplayRoles, adminPermissions, isGestore, permission as any)) {
           logger.warn('Insufficient granular permissions', {
             userId: req.user.userId,
             username: req.user.username,
             requiredPermission: permission,
-            userRoles: fullUser.userRoles,
-            characterRoles: fullUser.characterRoles,
-            characterPermissions: fullUser.characterPermissions,
+            characterRoles: req.user.characterRoles,
             endpoint: req.originalUrl
           });
 
           res.status(403).json(errorResponse(
             `Insufficient permissions for ${permission}`,
             'INSUFFICIENT_GRANULAR_PERMISSIONS',
-            { 
-              requiredPermission: permission,
-              userRoles: fullUser.userRoles,
-              characterRoles: fullUser.characterRoles
-            },
+            { requiredPermission: permission },
             403,
             getRequestId(req)
           ));
           return;
         }
 
-        // Attach full user to request for downstream use
-        req.fullUser = fullUser;
         next();
 
       } catch (error: any) {
@@ -272,15 +234,16 @@ export class AdminAuthMiddleware {
   }
 
   /**
-   * Utility: Check if admin has specific permission (uses granular system)
+   * Utility: Check if admin has specific permission (effective = gameplayRoles + adminPermissions + isGestore)
    */
   static async hasPermission(req: Request, permission: string): Promise<boolean> {
     if (!req.user) return false;
-    
     try {
-      const { User } = await import('@database/models/User');
-      const fullUser = await User.findById(req.user.userId);
-      return fullUser ? fullUser.hasViewPermission(permission) : false;
+      const { hasAdminPermission } = await import('@config/admin-permissions');
+      const gameplayRoles = req.user.gameplayRoles ?? [];
+      const adminPermissions = req.user.adminPermissions ?? [];
+      const isGestore = req.user.isGestore ?? false;
+      return hasAdminPermission(gameplayRoles, adminPermissions, isGestore, permission as any);
     } catch {
       return false;
     }

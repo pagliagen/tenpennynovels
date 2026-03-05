@@ -151,7 +151,7 @@ export class AuthController {
       }
 
       // Check if email is verified (only after password is correct)
-      if (!user.isEmailVerified && process.env.NODE_ENV === 'production') {
+      if (!user.isEmailVerified) {
         errorResponse(res, 
           'Verifica il tuo indirizzo email prima di effettuare il login',
           'EMAIL_NOT_VERIFIED',
@@ -200,8 +200,8 @@ export class AuthController {
       // Get user's characters
       let characters = await Character.find({
         userId: user.id,
-        status: { $in: ['DRAFT', 'PENDING_APPROVAL', 'APPROVED'] }
-      }).select('id name surname status occupation currentLocation gameplayRoles lastActive submittedAt isGestore characterPermissions');
+        playerStatus: { $in: ['draft', 'pending', 'approved'] }
+      }).select('id name surname playerStatus occupation currentLocation gameplayRoles lastActive submittedAt canAccessAdminPanel isGestore characterPermissions adminPermissions');
       
       logger.info(`User ${user.username} login: found ${characters.length} existing characters`);
 
@@ -222,9 +222,8 @@ export class AuthController {
           const newCharacter = new Character({
             userId: user.id,
             name: characterName,
-            status: 'DRAFT',
-            adminRoles: ['personaggio'],      // Admin panel roles
-            gameplayRoles: ['personaggio'],   // Game system roles
+            playerStatus: 'draft',
+            gameplayRoles: ['player'],
             skills: {},
             isActive: false,
             submittedAt: new Date()
@@ -245,11 +244,7 @@ export class AuthController {
         userId: user.id,
         username: user.username,
         email: user.email,
-        canAccessAdminPanel: user.canAccessAdminPanel,
-        // New granular permission system
-        userRoles: user.userRoles || ['user'],
-        characterRoles: user.characterRoles || ['personaggio'],
-        characterPermissions: user.characterPermissions || []
+        userRoles: user.userRoles || ['user']
       };
 
       const authToken = CryptoUtils.generateAuthToken(tokenPayload, rememberMe ? '7d' : '24h');
@@ -277,19 +272,16 @@ export class AuthController {
       }));
 
       // Publish admin login event if applicable
-      if (user.canAccessAdminPanel) {
-        await redis.publish('auth:admin_login', JSON.stringify({
-          userId: user.id,
-          username: user.username,
-          userRoles: user.userRoles || ['user'],
-          characterRoles: user.characterRoles || [],
-          ipAddress: req.ip || '127.0.0.1',
-          loginAt: new Date().toISOString()
-        }));
-      }
+      await redis.publish('auth:admin_login', JSON.stringify({
+        userId: user.id,
+        username: user.username,
+        userRoles: user.userRoles || ['user'],
+        ipAddress: req.ip || '127.0.0.1',
+        loginAt: new Date().toISOString()
+      }));
 
       // Handle character context based on user settings
-      logger.info(`User ${user.username} character context logic: canAccessAdminPanel=${user.canAccessAdminPanel}, multipleCharactersAllowed=${user.multipleCharactersAllowed}, characters.length=${characters.length}`);
+      logger.info(`User ${user.username} character context logic: multipleCharactersAllowed=${user.multipleCharactersAllowed}, characters.length=${characters.length}`);
       
       // Set character context for all users with exactly one character (including admins)
       if (!user.multipleCharactersAllowed && characters.length > 0) {
@@ -308,9 +300,9 @@ export class AuthController {
           characterName: fullCharacterName,
           userId: user.id,
           gameplayRoles: userCharacter.gameplayRoles || [],
-          isApproved: userCharacter.status === 'approved',
+          isApproved: userCharacter.playerStatus === 'approved',
           isGestore: userCharacter.isGestore || false,
-          status: userCharacter.status || 'DRAFT',
+          playerStatus: userCharacter.playerStatus || 'draft',
           characterPermissions: userCharacter.characterPermissions || []
         });
 
@@ -351,7 +343,6 @@ export class AuthController {
             canAccessAdminPanel: user.canAccessAdminPanel,
             // New granular permission system
             userRoles: user.userRoles || ['user'],
-            characterRoles: user.characterRoles || ['personaggio'],
             characterPermissions: user.characterPermissions || [],
             isEmailVerified: user.isEmailVerified,
             lastLoginAt: user.lastLoginAt,
@@ -360,7 +351,7 @@ export class AuthController {
             characters: characters.map(char => ({
               id: char.id,
               name: char.name,
-              status: char.status,
+              playerStatus: char.playerStatus,
               occupation: char.occupation,
               currentLocation: char.currentLocation,
               gameplayRoles: char.gameplayRoles,
@@ -419,7 +410,7 @@ export class AuthController {
       }
 
       // Check if character can be selected (block only DELETED characters)
-      if (character.status === 'DELETED') {
+      if (character.deletedAt) {
         errorResponse(res, 
           'Il personaggio è stato eliminato e non può essere utilizzato',
           'CHARACTER_DELETED',
@@ -427,7 +418,7 @@ export class AuthController {
             character: {
               id: character.id,
               name: character.name,
-              status: character.status
+              playerStatus: character.playerStatus
             }
           },
           404);
@@ -466,9 +457,9 @@ export class AuthController {
         characterName: fullCharacterName,
         userId: userId,
         gameplayRoles: character.gameplayRoles || [],
-        isApproved: character.status === 'approved',
+        isApproved: character.playerStatus === 'approved',
         isGestore: character.isGestore || false,
-        status: character.status || 'DRAFT',
+        playerStatus: character.playerStatus || 'DRAFT',
         characterPermissions: character.characterPermissions || []
       });
 
@@ -508,7 +499,7 @@ export class AuthController {
           character: {
             id: character.id,
             name: character.name,
-            status: character.status,
+            playerStatus: character.playerStatus,
             occupation: character.occupation,
             currentLocation: character.currentLocation,
             gameplayRoles: character.gameplayRoles,
@@ -557,7 +548,6 @@ export class AuthController {
       const existingCharacter = await Character.findOne({
         userId: userId,
         name: name.trim(),
-        status: { $ne: 'DELETED' }
       });
 
       if (existingCharacter) {
@@ -578,9 +568,8 @@ export class AuthController {
         age: age || undefined,
         description: description?.trim() || undefined,
         background: background?.trim() || undefined,
-        status: 'DRAFT',
-        adminRoles: ['personaggio'],      // Admin panel roles
-        gameplayRoles: ['personaggio'],   // Game system roles
+        playerStatus: 'draft',
+        gameplayRoles: ['player'],
         isActive: false,
         createdAt: new Date()
       });
@@ -598,7 +587,7 @@ export class AuthController {
           character: {
             id: character.id,
             name: character.name,
-            status: character.status,
+            playerStatus: character.playerStatus,
             occupation: character.occupation,
             currentOccupation: character.currentOccupation,
             age: character.age,
@@ -664,11 +653,7 @@ export class AuthController {
         userId: user.userId,
         username: user.username,
         email: user.email,
-        canAccessAdminPanel: user.canAccessAdminPanel,
-        // New granular permission system
-        userRoles: user.userRoles || ['user'],
-        characterRoles: user.characterRoles || ['personaggio'],
-        characterPermissions: user.characterPermissions || []
+        userRoles: user.userRoles || ['user']
       };
 
       const newAuthToken = CryptoUtils.generateAuthToken(tokenPayload, '24h');
@@ -723,7 +708,7 @@ export class AuthController {
 
       if (character) {
         const fullCharacter = await Character.findById(character.characterId)
-          .select('_id name surname avatar status isGestore gameplayRoles characterPermissions')
+          .select('_id name surname avatar playerStatus canAccessAdminPanel isGestore gameplayRoles characterPermissions adminPermissions')
           .lean();
 
         if (fullCharacter) {
@@ -732,13 +717,12 @@ export class AuthController {
             name: fullCharacter.name,
             surname: fullCharacter.surname,
             avatar: fullCharacter.avatar || null,
-            status: fullCharacter.status,
+            playerStatus: fullCharacter.playerStatus,
             isGestore: fullCharacter.isGestore || false
           };
 
-          // Resolve game permissions for frontend
           gamePermissions = getCharacterGamePermissions(
-            fullCharacter.status,
+            fullCharacter.playerStatus,
             fullCharacter.isGestore || false,
             fullCharacter.gameplayRoles || [],
             fullCharacter.characterPermissions || []
@@ -908,14 +892,14 @@ export class AuthController {
         return errorResponse(res, 'Character not found', 'CHARACTER_NOT_FOUND', undefined, 404);
       }
 
-      // Calculate effective permissions
-      const adminRoles = character.adminRoles || [];
-      const characterPermissions = character.characterPermissions || [];
+      // Calculate effective permissions (gameplayRoles → admin mapping + adminPermissions)
+      const gameplayRoles = character.gameplayRoles || [];
+      const adminPermissions = character.adminPermissions || [];
       const isGestore = character.isGestore || false;
 
       const effectivePermissions = calculateEffectivePermissions(
-        adminRoles,
-        characterPermissions,
+        gameplayRoles,
+        adminPermissions,
         isGestore
       );
 

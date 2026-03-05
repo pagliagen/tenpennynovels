@@ -12,7 +12,7 @@ import { ValidationMiddleware } from '../middleware/validation';
 const router = Router();
 
 // Registration routes
-router.post('/register', 
+router.post('/register',
   RateLimitMiddleware.registrationLimit(),
   ValidationMiddleware.validateRegistration,
   RegistrationController.register
@@ -22,6 +22,16 @@ router.post('/register/check-availability',
   RateLimitMiddleware.availabilityCheckLimit(),
   ValidationMiddleware.validateAvailabilityCheck,
   RegistrationController.checkAvailability
+);
+
+router.get('/check-username',
+  RateLimitMiddleware.availabilityCheckLimit(),
+  RegistrationController.checkUsername
+);
+
+router.get('/check-email',
+  RateLimitMiddleware.availabilityCheckLimit(),
+  RegistrationController.checkEmail
 );
 
 router.get('/verify-email/:token',

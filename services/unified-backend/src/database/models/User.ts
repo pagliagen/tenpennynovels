@@ -16,13 +16,7 @@ export interface IUser extends Document, SoftDeleteFields, SoftDeleteMethods {
   passwordResetToken?: string;
   passwordResetExpires?: Date;
 
-  // NUOVO SISTEMA GRANULARE
-  userRoles: ('user')[]; // User-level roles (bypass is Character.isGestore, not here)
-  characterRoles: ('personaggio' | 'master' | 'moderatore' | 'amministratore')[]; // Ruoli gameplay
-  characterPermissions: string[]; // Permessi aggiuntivi puntuali ['users.delete', 'system.maintenance_mode']
-
-  // Admin panel access (kept for functionality)
-  canAccessAdminPanel: boolean;
+  userRoles: ('user')[];
 
   // Account status
   isActive: boolean;
@@ -112,27 +106,12 @@ const UserSchema = new Schema<IUser>({
   passwordResetToken: String,
   passwordResetExpires: Date,
   
-  // NUOVO SISTEMA GRANULARE
   userRoles: [{
     type: String,
     enum: ['user'],
     default: 'user'
   }],
-  characterRoles: [{
-    type: String,
-    enum: ['personaggio', 'master', 'moderatore', 'amministratore']
-  }],
-  characterPermissions: [{
-    type: String,
-    trim: true
-  }],
-  
-  // Admin panel access gate (kept for functionality)
-  canAccessAdminPanel: {
-    type: Boolean,
-    default: false
-  },
-  
+
   // Account status
   isActive: {
     type: Boolean,
@@ -205,11 +184,7 @@ const UserSchema = new Schema<IUser>({
 
 // Indexes (username and email already have unique indexes)
 UserSchema.index({ isActive: 1, isBanned: 1 });
-UserSchema.index({ canAccessAdminPanel: 1 });
-// New granular permission indexes
 UserSchema.index({ userRoles: 1 });
-UserSchema.index({ characterRoles: 1 });
-UserSchema.index({ characterPermissions: 1 });
 UserSchema.index({ emailVerificationToken: 1 });
 UserSchema.index({ passwordResetToken: 1 });
 // GDPR indexes
@@ -233,60 +208,8 @@ UserSchema.methods.toSafeObject = function() {
   return user;
 };
 
-// NUOVI METODI GRANULARI
-UserSchema.methods.hasUserRole = function(role: 'user' | 'gestore'): boolean {
+UserSchema.methods.hasUserRole = function(role: string): boolean {
   return this.userRoles.includes(role);
-};
-
-UserSchema.methods.hasCharacterRole = function(role: 'personaggio' | 'master' | 'moderatore' | 'amministratore'): boolean {
-  return this.characterRoles.includes(role);
-};
-
-UserSchema.methods.hasCharacterPermission = function(permission: string): boolean {
-  return this.characterPermissions.includes(permission);
-};
-
-/**
- * Verifica se l'utente ha accesso a un permesso granulare
- * Logica: Calcola permessi da characterRoles + characterPermissions
- * NOTE: Bypass totale (gestore) è ora Character.isGestore, non User.userRoles
- */
-UserSchema.methods.hasViewPermission = function(permission: string): boolean {
-  // Controllo permessi character specifici
-  if (this.characterPermissions.includes(permission)) {
-    return true;
-  }
-  
-  // TODO: Implementare logica ereditarietà ruoli dalla config
-  // Per ora controllo diretto sui ruoli principali
-  const [category, action] = permission.split('.');
-  
-  if (this.characterRoles.includes('amministratore')) {
-    // Amministratore: accesso quasi completo (no maintenance)
-    if (permission === 'system.maintenance_mode' || permission === 'users.delete' || permission === 'users.change_permissions') {
-      return false;
-    }
-    return true;
-  }
-  
-  if (this.characterRoles.includes('master')) {
-    // Master: gestione gameplay completa
-    const masterPermissions = ['dashboard', 'characters', 'economy', 'locations', 'content', 'system.broadcast_messages', 'users.read', 'users.ban'];
-    return masterPermissions.some(p => permission.startsWith(p));
-  }
-  
-  if (this.characterRoles.includes('moderatore')) {
-    // Moderatore: gestione utenti e contenuti
-    const modPermissions = ['dashboard', 'users.read', 'users.ban', 'content', 'system.broadcast_messages'];
-    return modPermissions.some(p => permission.startsWith(p));
-  }
-  
-  if (this.characterRoles.includes('personaggio')) {
-    // Personaggio: solo dashboard base
-    return permission.startsWith('dashboard.access') || permission.startsWith('dashboard.detail.view_basic_stats') || permission.startsWith('dashboard.detail.view_character_stats') || permission.startsWith('dashboard.detail.view_gameplay_stats');
-  }
-  
-  return false;
 };
 
 // Apply soft delete plugin

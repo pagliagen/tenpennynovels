@@ -79,8 +79,8 @@ export class PasswordController {
 
       } catch (emailError) {
         logger.error('Failed to send password reset email:', emailError);
-        
-        errorResponse(res, 
+
+        errorResponse(res,
           'Impossibile inviare l\'email di reset password',
           'EMAIL_SEND_ERROR',
           undefined,
@@ -88,7 +88,14 @@ export class PasswordController {
         return;
       }
 
-      successResponse(res, 
+      // DEV ONLY: Add reset password URL header for testing
+      if (process.env.NODE_ENV !== 'production') {
+        const resetUrl = `${process.env.BASE_URL || 'http://localhost:4000'}/reset-password/${resetToken}`;
+        res.setHeader('X-Dev-Reset-Password-Url', resetUrl);
+        logger.debug(`[DEV] Reset password URL: ${resetUrl}`);
+      }
+
+      successResponse(res,
         responseData,
         message
       );

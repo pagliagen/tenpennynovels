@@ -68,69 +68,35 @@ function resolveGameplayRolePermissions(roleName: string, config: GamePermission
  * Check if character has specific game permission
  *
  * Resolution order:
- * 1. isGestore = true → GRANT ALL (bypass everything)
- * 2. Status restrictions (DRAFT/PENDING_APPROVAL) → DENY chat/postal
- * 3. characterPermissions → GRANT if includes permission
- * 4. gameplayRoles → GRANT if role has permission
- * 5. Default → DENY
+ * 1. isGestore = true → GRANT ALL
+ * 2. characterPermissions: "-permission" → DENY, "permission" or "game:*" → GRANT
+ * 3. gameplayRoles (player, master, moderatore) → GRANT if role has permission
+ * 4. Default → DENY
  */
 export function hasGamePermission(
   permission: string,
-  characterStatus: string,
+  playerStatus: string,
   isGestore: boolean,
   gameplayRoles: string[],
   characterPermissions: string[]
 ): boolean {
-  // DEBUG: Log all parameters
-  console.log('[hasGamePermission] Checking permission:', {
-    permission,
-    characterStatus,
-    isGestore,
-    gameplayRoles,
-    characterPermissions
-  });
+  if (isGestore) return true;
 
-  // 1. isGestore bypasses everything
-  if (isGestore) {
-    console.log('[hasGamePermission] GRANT - isGestore bypass');
-    return true;
-  }
+  // Deny overrides (prefix -)
+  const denyKey = permission.startsWith('-') ? permission : `-${permission}`;
+  if (characterPermissions.includes(denyKey)) return false;
 
-  // 2. Check status-based restrictions (DRAFT/PENDING_APPROVAL cannot chat/postal)
+  // Grant overrides
+  if (characterPermissions.includes(permission) || characterPermissions.includes('game:*')) return true;
+
   const config = loadGamePermissionConfig();
-  const statusRestrictions = config.status_restrictions[characterStatus];
-  if (statusRestrictions?.blocked_permissions.includes(permission)) {
-    console.log('[hasGamePermission] DENY - status restriction');
-    return false;
-  }
-
-  // 3. Check characterPermissions overrides
-  if (characterPermissions.includes(permission) || characterPermissions.includes('game:*')) {
-    console.log('[hasGamePermission] GRANT - characterPermissions override');
-    return true;
-  }
-
-  // 4. Check gameplayRoles permissions
-  // Fallback to default role if gameplayRoles is empty
-  const roles = gameplayRoles.length > 0
-    ? gameplayRoles
-    : (characterStatus === 'APPROVED' ? ['approved-player'] : ['player']);
-
-  console.log('[hasGamePermission] Checking roles:', roles);
+  const roles = gameplayRoles.length > 0 ? gameplayRoles : ['player'];
 
   for (const roleName of roles) {
     const rolePermissions = resolveGameplayRolePermissions(roleName, config);
-    console.log(`[hasGamePermission] Role '${roleName}' has ${rolePermissions.length} permissions`);
-    console.log(`[hasGamePermission] Looking for '${permission}' in:`, rolePermissions.slice(0, 5), '...');
-
-    if (rolePermissions.includes(permission) || rolePermissions.includes('game:*')) {
-      console.log('[hasGamePermission] GRANT - role permission match');
-      return true;
-    }
+    if (rolePermissions.includes(permission) || rolePermissions.includes('game:*')) return true;
   }
 
-  // 5. Default deny
-  console.log('[hasGamePermission] DENY - no match found');
   return false;
 }
 
@@ -139,38 +105,26 @@ export function hasGamePermission(
  * Used by session endpoint to send full permission list to frontend
  */
 export function getCharacterGamePermissions(
-  characterStatus: string,
+  playerStatus: string,
   isGestore: boolean,
   gameplayRoles: string[],
   characterPermissions: string[]
 ): string[] {
-  // isGestore has ALL permissions
-  if (isGestore) {
-    return ['game:*'];
-  }
+  if (isGestore) return ['game:*'];
 
   const config = loadGamePermissionConfig();
   const allPermissions = new Set<string>();
+  const roles = gameplayRoles.length > 0 ? gameplayRoles : ['player'];
 
-  // Fallback to default role if gameplayRoles is empty
-  const roles = gameplayRoles.length > 0
-    ? gameplayRoles
-    : (characterStatus === 'APPROVED' ? ['approved-player'] : ['player']);
-
-  // Merge all role permissions
   for (const roleName of roles) {
-    const rolePermissions = resolveGameplayRolePermissions(roleName, config);
-    rolePermissions.forEach(p => allPermissions.add(p));
+    resolveGameplayRolePermissions(roleName, config).forEach(p => allPermissions.add(p));
   }
 
-  // Add characterPermissions overrides
-  characterPermissions.forEach(p => allPermissions.add(p));
-
-  // Remove status-based restrictions
-  const statusRestrictions = config.status_restrictions[characterStatus];
-  if (statusRestrictions) {
-    statusRestrictions.blocked_permissions.forEach(p => allPermissions.delete(p));
-  }
+  // Apply overrides: add grants, remove denials
+  characterPermissions.forEach(p => {
+    if (p.startsWith('-')) allPermissions.delete(p.slice(1));
+    else allPermissions.add(p);
+  });
 
   return Array.from(allPermissions).sort();
 }

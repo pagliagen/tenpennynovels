@@ -1,15 +1,15 @@
 import { Request, Response, NextFunction } from 'express';
 import { CryptoUtils } from '../utils/crypto';
-import { AuthTokenPayload, CharacterContextPayload, ApiResponse } from '@shared/types';
+import { RequestUser, CharacterContextPayload, ApiResponse } from '@shared/types';
 import { logger, logAuth, logSecurity } from '../utils/logger';
 import { CharacterSessionManager } from '../utils/characterSessionManager';
 import { User } from '@database/models';
 
-// Extend Express Request interface to include user data
+// Extend Express Request interface to include user data (RequestUser = token + optional character-derived fields from admin)
 declare global {
   namespace Express {
     interface Request {
-      user?: AuthTokenPayload;
+      user?: RequestUser;
       character?: CharacterContextPayload;
       sessionId?: string;
     }
@@ -264,16 +264,15 @@ export class AuthMiddleware {
           return res.status(403).json(response);
         }
 
-        // Check specific permissions if provided
+        // Check specific permissions if provided (effective = gameplayRoles + adminPermissions + isGestore)
         if (permissions.length > 0) {
-          let hasPermission = false;
-
-          // Check granular permission system
-          if (req.user.characterPermissions) {
-            hasPermission = permissions.some(permission =>
-              req.user!.characterPermissions!.includes(permission)
-            );
-          }
+          const { hasAdminPermission } = await import('@config/admin-permissions');
+          const gameplayRoles = req.user.gameplayRoles ?? [];
+          const adminPermissions = req.user.adminPermissions ?? [];
+          const isGestore = req.user.isGestore ?? false;
+          const hasPermission = permissions.every((p) =>
+            hasAdminPermission(gameplayRoles, adminPermissions, isGestore, p as any)
+          );
 
           if (!hasPermission) {
             logSecurity('insufficient_admin_permissions', {
@@ -283,7 +282,8 @@ export class AuthMiddleware {
               requiredPermissions: permissions,
               userRoles: req.user.userRoles,
               characterRoles: req.user.characterRoles,
-              characterPermissions: req.user.characterPermissions
+              gameplayRoles: req.user.gameplayRoles,
+              adminPermissions: req.user.adminPermissions
             });
 
             const response: ApiResponse = {
@@ -311,9 +311,9 @@ export class AuthMiddleware {
   }
 
   /**
-   * Middleware to check character gameplay roles
+   * Middleware to check character gameplay roles (player | master | moderatore). isGestore bypassa il check.
    */
-  static requireGameplayRole(roles: ('personaggio' | 'master' | 'moderatore' | 'gestore')[]) {
+  static requireGameplayRole(roles: ('player' | 'master' | 'moderatore')[]) {
     return async (req: Request, res: Response, next: NextFunction) => {
       try {
         if (!req.character) {
@@ -326,6 +326,10 @@ export class AuthMiddleware {
           return res.status(400).json(response);
         }
 
+        if (req.character.isGestore) {
+          next();
+          return;
+        }
         const hasRole = roles.some(role => req.character!.gameplayRoles?.includes(role));
 
         if (!hasRole) {

@@ -1,15 +1,16 @@
 {
   "_meta": {
     "version": "1.0.0",
-    "description": "Sistema permessi granulari per operazioni game",
-    "lastUpdated": "2026-03-03"
+    "description": "Sistema permessi granulari per operazioni game. Lettura personaggi altrui: read:others:public (dati pubblici, tutti) / read:others:private (dati master-only, solo master).",
+    "lastUpdated": "2026-03-05"
   },
   "gameplay_roles": {
     "player": {
-      "description": "Base player role for DRAFT characters - Can view but not interact",
+      "description": "Player role - full game access; draft/pending restrictions via characterPermissions",
       "permissions": [
         "game:character:read:own",
-        "game:character:read:public",
+        "game:character:read",
+        "game:character:read:others:public",
         "game:character:update",
         "game:character:submit",
         "game:character:background:read",
@@ -31,13 +32,7 @@
         "game:offgame-chat:list",
         "game:postal:read",
         "game:postal:types",
-        "game:postal:threads"
-      ]
-    },
-    "approved-player": {
-      "description": "Approved player with full game access",
-      "inherits": "player",
-      "permissions": [
+        "game:postal:threads",
         "game:character:select",
         "game:character:list:own",
         "game:character:create",
@@ -45,7 +40,6 @@
         "game:character:progression:read",
         "game:character:progression:modify",
         "game:character:corporations:read",
-        "game:locations:list",
         "game:locations:read",
         "game:locations:enter",
         "game:locations:leave",
@@ -68,10 +62,7 @@
         "game:messages:read",
         "game:messages:delete",
         "game:postal:send",
-        "game:postal:read",
         "game:postal:delete",
-        "game:postal:types",
-        "game:postal:threads",
         "game:offgame-chat:list",
         "game:offgame-chat:create",
         "game:offgame-chat:read",
@@ -126,7 +117,6 @@
         "game:session:history",
         "game:session:invalidate",
         "game:session:invalidate-others",
-        "game:presence:read",
         "game:typing:send",
         "game:status:read",
         "game:events:replay",
@@ -140,9 +130,9 @@
     },
     "master": {
       "description": "Game Master with moderation and admin powers",
-      "inherits": "approved-player",
+      "inherits": "player",
       "permissions": [
-        "game:character:read:others",
+        "game:character:read:others:private",
         "game:chat:delete",
         "game:chat:master-action",
         "game:chat:social-conflicts",
@@ -167,7 +157,7 @@
     },
     "moderatore": {
       "description": "Moderatore con poteri di moderazione chat e contenuti",
-      "inherits": "approved-player",
+      "inherits": "player",
       "permissions": [
         "game:chat:delete",
         "game:chat:moderation-action",
@@ -179,17 +169,11 @@
     }
   },
   "status_restrictions": {
-    "DRAFT": {
-      "blocked_permissions": [
-        "game:chat:send",
-        "game:postal:send"
-      ]
+    "draft": {
+      "blocked_permissions": ["game:chat:send", "game:postal:send"]
     },
-    "PENDING_APPROVAL": {
-      "blocked_permissions": [
-        "game:chat:send",
-        "game:postal:send"
-      ]
+    "pending": {
+      "blocked_permissions": ["game:chat:send", "game:postal:send"]
     }
   }
 }

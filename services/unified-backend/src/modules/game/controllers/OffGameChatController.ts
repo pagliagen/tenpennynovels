@@ -102,22 +102,20 @@ export class OffGameChatController {
       }
 
       // CUSTOM LOGIC: DRAFT characters can only chat with APPROVED characters
-      if (initiator.status === 'DRAFT') {
-        // Fetch OTHER participants (excluding initiator)
+      if (initiator.playerStatus === 'draft') {
         const otherParticipants = await Character.find({
           _id: { $in: participantIds }
         });
 
-        // Check if ALL other participants are APPROVED
-        const nonApprovedParticipants = otherParticipants.filter(p => p.status !== 'APPROVED');
+        const nonApprovedParticipants = otherParticipants.filter(p => p.playerStatus !== 'approved');
 
         if (nonApprovedParticipants.length > 0) {
           logger.warn('SECURITY: DRAFT character attempted to chat with non-APPROVED', {
             initiatorId: characterId,
-            initiatorStatus: initiator.status,
+            initiatorPlayerStatus: initiator.playerStatus,
             nonApprovedParticipants: nonApprovedParticipants.map(p => ({
               id: p._id,
-              status: p.status
+              playerStatus: p.playerStatus
             })),
             userId: req.user?.userId
           });
@@ -135,7 +133,7 @@ export class OffGameChatController {
       // Now fetch all participants for final validation
       const characters = await (Character.find({
         _id: { $in: allParticipants },
-        status: { $in: ['DRAFT', 'PENDING_APPROVAL', 'APPROVED'] }
+        status: { $in: ['draft', 'PENDING_APPROVAL', 'APPROVED'] }
       }) as any);
 
       if (characters.length !== allParticipants.length) {
@@ -520,22 +518,21 @@ export class OffGameChatController {
       }
 
       // CUSTOM LOGIC: DRAFT characters can only send messages in chats with APPROVED participants
-      if (senderCharacter.status === 'DRAFT') {
-        // Get all chat participants
+      if (senderCharacter.playerStatus === 'draft') {
         const allParticipants = await Character.find({
           _id: { $in: chat.participants }
         });
 
-        const nonApprovedParticipants = allParticipants.filter(p => p.status !== 'APPROVED');
+        const nonApprovedParticipants = allParticipants.filter(p => p.playerStatus !== 'approved');
 
         if (nonApprovedParticipants.length > 0) {
           logger.warn('SECURITY: DRAFT character attempted to send message to non-APPROVED chat', {
             senderId: characterId,
-            senderStatus: senderCharacter.status,
+            senderPlayerStatus: senderCharacter.playerStatus,
             chatId,
             nonApprovedParticipants: nonApprovedParticipants.map(p => ({
               id: p._id,
-              status: p.status
+              playerStatus: p.playerStatus
             })),
             userId: req.user?.userId
           });

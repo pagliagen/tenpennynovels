@@ -92,7 +92,7 @@ export class CharacterGameplayController {
       }
 
       // Validation passed - submit character
-      character.status = 'PENDING_APPROVAL';
+      character.playerStatus = 'pending';
       character.submittedAt = new Date();
       await character.save();
 
@@ -110,7 +110,7 @@ export class CharacterGameplayController {
         {
           character: {
             id: character.id,
-            status: character.status,
+            playerStatus: character.playerStatus,
             submittedAt: character.submittedAt
           },
           warnings: validationResult.warnings
@@ -183,7 +183,7 @@ export class CharacterGameplayController {
           userId: userId,
           gameplayRoles: character.gameplayRoles || [],
           isGestore: character.isGestore || false,
-          status: character.status || 'DRAFT',
+          playerStatus: character.playerStatus || 'DRAFT',
           characterPermissions: character.characterPermissions || []
         },
         getJwtSecret(),
@@ -211,7 +211,7 @@ export class CharacterGameplayController {
           character: {
             id: character.id,
             name: character.name,
-            status: character.status,
+            playerStatus: character.playerStatus,
             occupation: character.occupation,
             currentLocation: character.currentLocation,
             gameplayRoles: character.gameplayRoles,

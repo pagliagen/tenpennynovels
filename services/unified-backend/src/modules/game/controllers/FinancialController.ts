@@ -36,7 +36,7 @@ export class FinancialController {
 
       const isOwner = character.userId.toString() === userId;
       const isMaster = req.character?.gameplayRoles?.includes('master') || 
-                       req.character?.gameplayRoles?.includes('amministratore') || false;
+                       req.character?.isGestore || false;
 
       if (!isOwner && !isMaster) {
         res.status(403).json(errorResponse(
@@ -130,7 +130,7 @@ export class FinancialController {
 
       const isOwner = character.userId.toString() === userId;
       const isMaster = req.character?.gameplayRoles?.includes('master') || 
-                       req.character?.gameplayRoles?.includes('amministratore') || false;
+                       req.character?.isGestore || false;
 
       if (!isOwner && !isMaster) {
         res.status(403).json(errorResponse(
@@ -372,7 +372,7 @@ export class FinancialController {
       
       // Check if user is a master/admin
       const isMaster = req.character?.gameplayRoles?.includes('master') || 
-                       req.character?.gameplayRoles?.includes('amministratore') || false;
+                       req.character?.isGestore || false;
 
       if (!isMaster) {
         res.status(403).json(errorResponse(
@@ -494,7 +494,7 @@ export class FinancialController {
   static async adminResetCredit(req: Request, res: Response): Promise<void> {
     try {
       // Check if user is an admin
-      const isAdmin = req.character?.gameplayRoles?.includes('amministratore') || false;
+      const isAdmin = req.character?.isGestore || false;
 
       if (!isAdmin) {
         res.status(403).json(errorResponse(
@@ -554,7 +554,7 @@ export class FinancialController {
     try {
       // Check if user is a master/admin
       const isMaster = req.character?.gameplayRoles?.includes('master') || 
-                       req.character?.gameplayRoles?.includes('amministratore') || false;
+                       req.character?.isGestore || false;
 
       if (!isMaster) {
         res.status(403).json(errorResponse(

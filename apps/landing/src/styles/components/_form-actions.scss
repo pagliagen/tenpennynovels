@@ -60,6 +60,16 @@
       color: var(--color-text-inverse);
     }
   }
+
+  &__secondary {
+    color: var(--color-text-primary);
+    text-transform: uppercase;
+
+    &:hover {
+      background: var(--color-text-primary);
+      color: var(--color-text-inverse);
+    }
+  }
 }
 
 /**

@@ -74,7 +74,7 @@ export class ForumController {
             characterName: character.characterName,
             characterSurname: character.characterSurname,
             gameplayRoles: character.gameplayRoles || [],
-            isApproved: character.status === 'APPROVED'
+            isApproved: character.playerStatus === 'approved'
           };
         }
       }
@@ -115,7 +115,7 @@ export class ForumController {
         query.isPublic = true;
       }
       // If user doesn't have an approved character, show only public topics
-      else if (!user.character || user.character.status !== 'APPROVED') {
+      else if (!user.character || user.character.playerStatus !== 'approved') {
         query.isPublic = true;
       }
       // If user has approved character, show both public and private
@@ -181,7 +181,7 @@ export class ForumController {
 
       // Check access permissions
       if (!topic.isPublic) {
-        if (!user || !user.character || user.character.status !== 'APPROVED') {
+        if (!user || !user.character || user.character.playerStatus !== 'approved') {
           return res.status(403).json(errorResponse(
             'Accesso negato: personaggio approvato richiesto',
             'ACCESS_DENIED',
@@ -335,7 +335,7 @@ export class ForumController {
       }
 
       if (!topic.isPublic) {
-        if (!user || !user.character || user.character.status !== 'APPROVED') {
+        if (!user || !user.character || user.character.playerStatus !== 'approved') {
           return res.status(403).json(errorResponse(
             'Accesso negato: personaggio approvato richiesto',
             'ACCESS_DENIED',
@@ -422,7 +422,7 @@ export class ForumController {
       }
 
       if (!topic.isPublic) {
-        if (!user || !user.character || user.character.status !== 'APPROVED') {
+        if (!user || !user.character || user.character.playerStatus !== 'approved') {
           return res.status(403).json(errorResponse(
             'Accesso negato: personaggio approvato richiesto',
             'ACCESS_DENIED',
@@ -521,7 +521,7 @@ export class ForumController {
         ));
       }
 
-      if (!topic.isPublic && (!user.character || user.character.status !== 'APPROVED')) {
+      if (!topic.isPublic && (!user.character || user.character.playerStatus !== 'approved')) {
         return res.status(403).json(errorResponse(
           'Access denied: approved character required',
           'ACCESS_DENIED',
@@ -673,7 +673,7 @@ export class ForumController {
       }
 
       if (!topic.isPublic) {
-        if (!user || !user.character || user.character.status !== 'APPROVED') {
+        if (!user || !user.character || user.character.playerStatus !== 'approved') {
           return res.status(403).json(errorResponse(
             'Accesso negato: personaggio approvato richiesto',
             'ACCESS_DENIED',
@@ -807,7 +807,7 @@ export class ForumController {
         ));
       }
 
-      if (!topic.isPublic && (!user.character || user.character.status !== 'APPROVED')) {
+      if (!topic.isPublic && (!user.character || user.character.playerStatus !== 'approved')) {
         return res.status(403).json(errorResponse(
           'Access denied: approved character required',
           'ACCESS_DENIED',
@@ -926,7 +926,7 @@ export class ForumController {
       let topicFilters: any = { isVisible: true };
       
       // If user doesn't have approved character, show only public topics
-      if (!user || !user.character || user.character.status !== 'APPROVED') {
+      if (!user || !user.character || user.character.playerStatus !== 'approved') {
         topicFilters.isPublic = true;
       }
       
@@ -1021,7 +1021,7 @@ export class ForumController {
       let topicFilters: any = { isVisible: true };
       
       // If user doesn't have approved character, show only public topics
-      if (!user || !user.character || user.character.status !== 'APPROVED') {
+      if (!user || !user.character || user.character.playerStatus !== 'approved') {
         topicFilters.isPublic = true;
       }
       
@@ -1150,7 +1150,7 @@ export class ForumController {
       };
       
       // If user doesn't have approved character, show only public topics
-      if (!user.character || user.character.status !== 'APPROVED') {
+      if (!user.character || user.character.playerStatus !== 'approved') {
         accessFilters.isPublic = true;
       }
       
@@ -1228,7 +1228,7 @@ export class ForumController {
 
       // Check access permissions
       if (!topic.isPublic) {
-        if (!user.character || user.character.status !== 'APPROVED') {
+        if (!user.character || user.character.playerStatus !== 'approved') {
           return res.status(403).json(errorResponse(
             'Accesso negato: personaggio approvato richiesto',
             'ACCESS_DENIED',
@@ -1433,7 +1433,7 @@ export class ForumController {
       let accessFilters: any = {};
       
       // For private topics, require approved character
-      if (!user || !user.character || user.character.status !== 'APPROVED') {
+      if (!user || !user.character || user.character.playerStatus !== 'approved') {
         const publicTopics = await ForumTopic
           .find({ isPublic: true, isVisible: true }, { projection: { slug: 1 } })
           ;
@@ -1610,7 +1610,7 @@ export class ForumController {
       
       // Build access control filters
       let accessFilters: any = {};
-      if (!user || !user.character || user.character.status !== 'APPROVED') {
+      if (!user || !user.character || user.character.playerStatus !== 'approved') {
         const publicTopics = await ForumTopic
           .find({ isPublic: true, isVisible: true }, { projection: { slug: 1 } })
           ;

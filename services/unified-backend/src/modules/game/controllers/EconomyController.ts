@@ -26,10 +26,10 @@ export class EconomyController {
       }
 
       // Defense in depth: Verify character is APPROVED
-      if (character.status !== 'APPROVED') {
+      if (character.playerStatus !== 'approved') {
         logger.warn('SECURITY: DRAFT character attempted to access wallet', {
           characterId,
-          status: character.status,
+          status: character.playerStatus,
           userId: req.user?.userId
         });
         res.status(403).json(errorResponse(
@@ -120,7 +120,7 @@ export class EconomyController {
       }
 
       // Defense in depth: Verify sender is APPROVED
-      if (fromCharacter.status !== 'APPROVED') {
+      if (fromCharacter.status !== 'approved') {
         logger.warn('SECURITY: DRAFT character attempted money transfer', {
           fromCharacterId: characterId,
           toCharacterId: targetCharacterId,
@@ -139,7 +139,7 @@ export class EconomyController {
       }
 
       // Verify recipient is APPROVED
-      if (toCharacter.status !== 'APPROVED') {
+      if (toCharacter.status !== 'approved') {
         res.status(403).json(errorResponse(
           'Il destinatario deve essere un personaggio approvato',
           'RECIPIENT_NOT_APPROVED',
@@ -270,7 +270,7 @@ export class EconomyController {
         }
 
         // Require approved character
-        if (character.status !== 'APPROVED') {
+        if (character.playerStatus !== 'approved') {
           res.status(403).json(errorResponse(
             'L\'accesso al negozio richiede un personaggio approvato',
             'CHARACTER_NOT_APPROVED',
@@ -397,7 +397,7 @@ export class EconomyController {
       }
 
       // Check if character is approved to access shop
-      if (character.status !== 'APPROVED') {
+      if (character.playerStatus !== 'approved') {
         res.status(403).json(errorResponse(
           'L\'accesso al negozio richiede un personaggio approvato',
           'CHARACTER_NOT_APPROVED',
@@ -640,12 +640,12 @@ export class EconomyController {
       }
 
       // Defense in depth: Verify character is APPROVED
-      if (character.status !== 'APPROVED') {
+      if (character.playerStatus !== 'approved') {
         logger.warn('SECURITY: DRAFT character attempted item purchase', {
           characterId,
           itemId,
           quantity,
-          status: character.status,
+          status: character.playerStatus,
           userId: req.user?.userId
         });
         res.status(403).json(errorResponse(
@@ -881,11 +881,11 @@ export class EconomyController {
       }
 
       // Defense in depth: Verify character is APPROVED
-      if (character.status !== 'APPROVED') {
+      if (character.playerStatus !== 'approved') {
         logger.warn('SECURITY: DRAFT character attempted shop restock', {
           characterId,
           shopId,
-          status: character.status,
+          status: character.playerStatus,
           userId: req.user?.userId
         });
         res.status(403).json(errorResponse(

@@ -479,7 +479,7 @@ export class LocationChatsController {
 
       // Check if character has master role (for visibility checks)
       const isMaster = character.gameplayRoles?.some((role: string) =>
-        ['master', 'moderatore', 'gestore'].includes(role)
+        ['master', 'moderatore'].includes(role)
       );
 
       // Filter master_only messages and hidden actions based on character roles and action mode
@@ -641,7 +641,7 @@ export class LocationChatsController {
       case 'stat_check':
       case 'item_use':
         // All approved players can perform standard actions
-        return gameplayRoles.includes('approved-player') ||
+        return gameplayRoles.includes('player') ||
                gameplayRoles.includes('master') ||
                gameplayRoles.includes('moderatore');
       default:
@@ -720,7 +720,7 @@ export class LocationChatsController {
 
       // Check permissions: only the creator can edit, or master
       const isOwner = action.characterId === character.characterId;
-      const isMaster = character.gameplayRoles?.includes('master') || character.gameplayRoles?.includes('gestore');
+      const isMaster = character.gameplayRoles?.includes('master') || character.isGestore;
       
       if (!isOwner && !isMaster) {
         res.status(403).json(errorResponse(
@@ -860,7 +860,7 @@ export class LocationChatsController {
       // Check permissions: only master can delete
       const isMaster = character.gameplayRoles?.includes('master') || 
                        character.gameplayRoles?.includes('moderatore') || 
-                       character.gameplayRoles?.includes('gestore');
+                       character.isGestore;
       
       if (!isMaster) {
         res.status(403).json(errorResponse(
@@ -1179,7 +1179,7 @@ export class LocationChatsController {
       // Check permissions: only master can clear chat
       const isMaster = character.gameplayRoles?.includes('master') || 
                        character.gameplayRoles?.includes('moderatore') || 
-                       character.gameplayRoles?.includes('gestore');
+                       character.isGestore;
       
       if (!isMaster) {
         res.status(403).json(errorResponse(

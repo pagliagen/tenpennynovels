@@ -5,8 +5,7 @@ import { setupChatHandlers } from './chatHandlers';
 import { setupGameHandlers } from './gameHandlers';
 // ✅ SPRINT 4: Refactored event handling system
 import { RedisSubscriber } from '../events/RedisSubscriber';
-// TODO: Import from shared package when workspace configuration is complete  
-import { AuthTokenPayload } from '@shared/types/auth';
+import { RequestUser } from '@shared/types';
 
 interface CharacterContextPayload {
   userId: string;
@@ -59,18 +58,16 @@ export async function setupWebSocket(io: SocketIOServer): Promise<void> {
         return next(new Error('Server configuration error'));
       }
       
-      // Verify auth token
-      const authPayload = jwt.verify(authToken, jwtSecret) as AuthTokenPayload;
-      
+      // Verify auth token (solo campi token; campi admin da character non presenti in WS)
+      const authPayload = jwt.verify(authToken, jwtSecret) as RequestUser;
       socket.data.user = {
         userId: authPayload.userId,
         username: authPayload.username,
-        email: authPayload.email,
-        canAccessAdminPanel: authPayload.canAccessAdminPanel,
-        userRoles: authPayload.userRoles,
-        characterRoles: authPayload.characterRoles,
-        characterPermissions: authPayload.characterPermissions
-      };
+        email: authPayload.email ?? '',
+        userRoles: authPayload.userRoles ?? ['user'],
+        iat: authPayload.iat,
+        exp: authPayload.exp
+      } as RequestUser;
       
       // Verify character context token if provided
       if (characterToken) {
@@ -94,7 +91,7 @@ export async function setupWebSocket(io: SocketIOServer): Promise<void> {
         }
       }
       
-      logger.debug(`WebSocket authenticated: ${authPayload.username} (roles: ${JSON.stringify({userRoles: authPayload.userRoles, characterRoles: authPayload.characterRoles})})`);
+      logger.debug(`WebSocket authenticated: ${authPayload.username} (userRoles: ${JSON.stringify(authPayload.userRoles)})`);
       next();
       
     } catch (error: any) {

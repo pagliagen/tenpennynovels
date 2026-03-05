@@ -31,6 +31,12 @@ router.get('/characters/public-list',
   CharacterController.getPublicCharactersList
 );
 
+router.get('/characters/:characterId/wizard',
+  AuthMiddleware.requireCharacterAuth,
+  requireGamePermission('game:character:wizard'),
+  CharacterController.getCharacterForWizard
+);
+
 router.get('/characters/:characterId',
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:character:read'),
@@ -53,7 +59,7 @@ router.get('/characters/:characterId/skills',
 
 router.get('/characters/public/:characterId',
   AuthMiddleware.requireUserAuth,
-  requireGamePermission('game:character:read:public'),
+  requireGamePermission('game:character:read:others:public'),
   CharacterController.getPublicCharacter
 );
 

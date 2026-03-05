@@ -64,7 +64,7 @@ export class LocationActionManagementController {
             id: character._id,
             name: character.name,
             surname: character.surname,
-            status: character.status,
+            playerStatus: character.playerStatus,
             gameplayRoles: character.gameplayRoles
           } : {
             id: action.characterId,

@@ -233,92 +233,65 @@ export const ROLE_PERMISSIONS: Record<string, AdminPermission[]> = {
 };
 
 /**
+ * Map gameplayRoles to admin role names (player→personaggio, master→master, moderatore→moderatore)
+ */
+export function gameplayRolesToAdminRoles(gameplayRoles: string[]): string[] {
+  const admin: string[] = [];
+  if (gameplayRoles.includes('player')) admin.push('personaggio');
+  if (gameplayRoles.includes('moderatore')) admin.push('moderatore');
+  if (gameplayRoles.includes('master')) admin.push('master');
+  return admin.length > 0 ? admin : ['personaggio'];
+}
+
+/**
  * Check if character has admin permission
  *
  * Permission check order:
  * 1. isGestore bypass (grants all permissions)
- * 2. characterPermissions override (custom grants)
- * 3. adminRoles → ROLE_PERMISSIONS mapping
+ * 2. adminPermissions: "-perm" → DENY, "perm" → GRANT
+ * 3. gameplayRoles → mapped to admin roles (player→personaggio) → ROLE_PERMISSIONS
  *
- * @param adminRoles - Character's admin panel roles
- * @param characterPermissions - Character's custom permission overrides
- * @param isGestore - Gestore bypass flag (grants all permissions)
+ * @param gameplayRoles - Character's gameplay roles (player, master, moderatore)
+ * @param adminPermissions - Admin permission overrides (e.g. "-dashboard.view" to deny)
+ * @param isGestore - Gestore bypass flag
  * @param required - Required permission to check
- * @returns True if character has permission
- *
- * @example
- * ```typescript
- * hasAdminPermission(
- *   ['moderatore'],
- *   ['characters.approve'],
- *   false,
- *   ADMIN_PERMISSIONS.USERS_LIST
- * ) // true (from moderatore role)
- *
- * hasAdminPermission(
- *   ['personaggio'],
- *   [],
- *   true,
- *   ADMIN_PERMISSIONS.SYSTEM_MAINTENANCE
- * ) // true (gestore bypass)
- * ```
  */
 export function hasAdminPermission(
-  adminRoles: string[],
-  characterPermissions: string[],
+  gameplayRoles: string[],
+  adminPermissions: string[],
   isGestore: boolean,
   required: AdminPermission
 ): boolean {
-  // UNICO bypass totale
-  if (isGestore) {
-    return true;
-  }
+  if (isGestore) return true;
 
-  // Check custom permission overrides
-  if (characterPermissions.includes(required)) {
-    return true;
-  }
+  if (adminPermissions.includes(`-${required}`)) return false;
+  if (adminPermissions.includes(required)) return true;
 
-  // Calculate permissions from adminRoles
+  const adminRoles = gameplayRolesToAdminRoles(gameplayRoles);
   const rolePermissions = adminRoles.flatMap(role => ROLE_PERMISSIONS[role] || []);
   return rolePermissions.includes(required);
 }
 
 /**
- * Get all effective permissions for a character
+ * Get all effective admin permissions for a character
  *
- * Calculates final permission list based on adminRoles + characterPermissions.
- * Used by /auth/effective-permissions endpoint.
- *
- * @param adminRoles - Character's admin panel roles
- * @param characterPermissions - Character's custom permission overrides
+ * @param gameplayRoles - Character's gameplay roles (player, master, moderatore)
+ * @param adminPermissions - Admin permission overrides
  * @param isGestore - Gestore bypass flag
- * @returns Array of effective permissions (empty if gestore, as they have all)
- *
- * @example
- * ```typescript
- * getEffectivePermissions(['moderatore'], ['characters.approve'], false)
- * // Returns: ['dashboard.view', 'users.list', 'users.ban', 'characters.approve', ...]
- *
- * getEffectivePermissions([], [], true)
- * // Returns: [] (gestore has implicit all access)
- * ```
  */
 export function getEffectivePermissions(
-  adminRoles: string[],
-  characterPermissions: string[],
+  gameplayRoles: string[],
+  adminPermissions: string[],
   isGestore: boolean
 ): AdminPermission[] {
-  // Gestore bypass: return empty (implies all permissions)
-  if (isGestore) {
-    return [];
-  }
+  if (isGestore) return [];
 
-  // Calculate from roles
+  const adminRoles = gameplayRolesToAdminRoles(gameplayRoles);
   const rolePermissions = adminRoles.flatMap(role => ROLE_PERMISSIONS[role] || []);
-
-  // Merge with custom permissions (deduplicate)
-  const allPermissions = [...new Set([...rolePermissions, ...characterPermissions])];
-
-  return allPermissions as AdminPermission[];
+  const granted = new Set<AdminPermission>([...rolePermissions]);
+  adminPermissions.forEach(p => {
+    if (p.startsWith('-')) granted.delete(p.slice(1) as AdminPermission);
+    else granted.add(p as AdminPermission);
+  });
+  return Array.from(granted);
 }

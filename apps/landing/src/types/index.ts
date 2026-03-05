@@ -51,6 +51,8 @@ export interface ApiResponse<T = any> {
   details?: Record<string, string>;
   /** ISO timestamp of the response */
   timestamp: string;
+  /** @internal - DEV ONLY: Internal dev headers (not part of API contract) */
+  __devHeaders?: Record<string, string>;
 }
 
 /**

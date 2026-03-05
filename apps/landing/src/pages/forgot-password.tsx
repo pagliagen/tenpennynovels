@@ -15,7 +15,7 @@
  * @module pages/forgot-password
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/router';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -43,6 +43,7 @@ type ForgotPasswordFormData = z.infer<typeof ForgotPasswordSchema>;
 export default function ForgotPasswordPage() {
   const router = useRouter();
   const { globalError, globalSuccess, loading, setError, setSuccess, setLoading, clearMessages } = useFormState();
+  const [devResetUrl, setDevResetUrl] = useState<string | null>(null);
 
   const {
     register,
@@ -54,7 +55,7 @@ export default function ForgotPasswordPage() {
   });
 
   // Watch field for Victorian mask
-  const identifierValue = watch('email', '');
+  const identifierValue = watch('identifier', '');
 
   /**
    * Handle form submission
@@ -64,9 +65,14 @@ export default function ForgotPasswordPage() {
       setLoading(true);
       clearMessages();
 
-      const result = await authService.forgotPassword(data.email);
+      const result = await authService.forgotPassword(data.identifier);
 
-      if (result.result) {
+      if (result.result && result.data) {
+        // Extract DEV header
+        if (result.__devHeaders?.['x-dev-reset-password-url']) {
+          setDevResetUrl(result.__devHeaders['x-dev-reset-password-url']);
+        }
+
         setSuccess(result.message || 'Email di reset inviata con successo! Controlla la tua casella email.');
       } else {
         setError(result.error || 'Errore durante l\'invio della richiesta di reset');
@@ -93,12 +99,12 @@ export default function ForgotPasswordPage() {
       <form onSubmit={handleSubmit(onSubmit)} className="forgot-password-form">
         <div className="forgot-password-fields">
           <MaskedInput
-            id="email"
+            id="identifier"
             maskType="text"
             placeholder="Username o Email"
             value={identifierValue}
-            error={errors.email?.message}
-            register={register('email')}
+            error={errors.identifier?.message}
+            register={register('identifier')}
             required
             disabled={loading}
           />
@@ -110,7 +116,7 @@ export default function ForgotPasswordPage() {
           secondaryText="Torna al Login"
           onSecondaryClick={() => router.push('/')}
         />
-      </form>
+      </form> 
     </FormPageLayout>
   );
 }

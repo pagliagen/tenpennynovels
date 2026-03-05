@@ -47,7 +47,6 @@ export interface ICharacter extends Document, SoftDeleteFields, SoftDeleteMethod
 
   // Character creation
   userId: Schema.Types.ObjectId;
-  status: 'DRAFT' | 'PENDING_APPROVAL' | 'APPROVED'; // REMOVED: 'DELETED' (now uses soft delete)
   
   // Call of Cthulhu Stats (d100 system) - Statistiche base
   stats: {
@@ -123,14 +122,14 @@ export interface ICharacter extends Document, SoftDeleteFields, SoftDeleteMethod
   // Game state
   currentLocation: Schema.Types.ObjectId;
   isActive: boolean; // Currently selected character
-  
-  // Character gameplay roles (game runtime permissions - auto-calculated from status + adminRoles)
-  gameplayRoles: ('player' | 'approved-player' | 'master' | 'moderatore')[];
 
-  // Granular permission system for characters
-  isGestore: boolean; // Super-role flag that grants all permissions
-  adminRoles: ('personaggio' | 'master' | 'moderatore' | 'amministratore')[]; // Admin panel roles
-  characterPermissions: string[]; // Permission overrides (add/remove specific permissions)
+  // Permission system: gameplayRoles drives both game and admin (admin = player→personaggio, master→master, mod→moderatore)
+  playerStatus: 'draft' | 'pending' | 'approved';
+  canAccessAdminPanel: boolean; // Gate for admin panel access
+  isGestore: boolean; // Bypass all permissions
+  gameplayRoles: ('player' | 'master' | 'moderatore')[];
+  characterPermissions: string[]; // Game permission overrides (e.g. '-game:chat:send' to deny)
+  adminPermissions: string[]; // Admin permission overrides (same format, see admin-permissions.json)
 
   // Bot AI integration
   bot_id?: string; // If present, this Character is a bot (references bot in botai database)
@@ -318,11 +317,11 @@ const CharacterSchema = new Schema<ICharacter>({
     required: true,
     ref: 'User'
   },
-  status: {
+  playerStatus: {
     type: String,
     required: true,
-    enum: ['DRAFT', 'PENDING_APPROVAL', 'APPROVED'], // REMOVED: 'DELETED' (now uses soft delete)
-    default: 'DRAFT'
+    enum: ['draft', 'pending', 'approved'],
+    default: 'draft'
   },
   
   // Call of Cthulhu Stats - Statistiche base
@@ -485,23 +484,26 @@ const CharacterSchema = new Schema<ICharacter>({
     default: false
   },
   
-  // Character gameplay roles (auto-calculated from status + adminRoles)
+  // Gameplay roles (game + admin: player→personaggio, master→master, moderatore→moderatore)
   gameplayRoles: [{
     type: String,
-    enum: ['player', 'approved-player', 'master']
+    enum: ['player', 'master', 'moderatore'],
+    default: ['player']
   }],
 
-  // Granular permission system
+  canAccessAdminPanel: {
+    type: Boolean,
+    default: false
+  },
   isGestore: {
     type: Boolean,
     default: false
   },
-  adminRoles: [{
-    type: String,
-    enum: ['personaggio', 'master', 'moderatore', 'amministratore'],
-    default: ['personaggio']
-  }],
   characterPermissions: [{
+    type: String,
+    trim: true
+  }],
+  adminPermissions: [{
     type: String,
     trim: true
   }],
@@ -571,14 +573,14 @@ const CharacterSchema = new Schema<ICharacter>({
 // Indexes
 CharacterSchema.index({ userId: 1 });
 CharacterSchema.index({ name: 1 });
-CharacterSchema.index({ status: 1 });
-CharacterSchema.index({ status: 1, submittedAt: 1 });
+CharacterSchema.index({ playerStatus: 1 });
+CharacterSchema.index({ playerStatus: 1, submittedAt: 1 });
 CharacterSchema.index({ occupation: 1 });
 CharacterSchema.index({ currentLocation: 1 });
 
 // Compound indexes for admin queries
-CharacterSchema.index({ status: 1, 'reviewHistory.reviewedAt': -1 });
-CharacterSchema.index({ status: 1, occupation: 1 });
+CharacterSchema.index({ playerStatus: 1, 'reviewHistory.reviewedAt': -1 });
+CharacterSchema.index({ playerStatus: 1, occupation: 1 });
 
 // Ensure only one active character per user
 CharacterSchema.index({ userId: 1, isActive: 1 }, { 
@@ -592,20 +594,19 @@ CharacterSchema.methods.hasGameplayRole = function(role: string): boolean {
 };
 
 CharacterSchema.methods.canPerformAction = function(actionType: string): boolean {
-  const rolePermissions = {
-    'standard': ['personaggio', 'master', 'moderatore', 'gestore'],
-    'master': ['master', 'gestore'],
-    'moderation': ['moderatore', 'gestore'],
-    'whisper': ['personaggio', 'master', 'moderatore', 'gestore'],
-    'ooc': ['personaggio', 'master', 'moderatore', 'gestore'],
-    'dice_roll': ['personaggio', 'master', 'moderatore', 'gestore'],
-    'skill_check': ['personaggio', 'master', 'moderatore', 'gestore'],
-    'stat_check': ['personaggio', 'master', 'moderatore', 'gestore'],
-    'item_use': ['personaggio', 'master', 'moderatore', 'gestore']
+  const rolePermissions: Record<string, string[]> = {
+    'standard': ['player', 'master', 'moderatore'],
+    'master': ['master'],
+    'moderation': ['moderatore'],
+    'whisper': ['player', 'master', 'moderatore'],
+    'ooc': ['player', 'master', 'moderatore'],
+    'dice_roll': ['player', 'master', 'moderatore'],
+    'skill_check': ['player', 'master', 'moderatore'],
+    'stat_check': ['player', 'master', 'moderatore'],
+    'item_use': ['player', 'master', 'moderatore']
   };
-  
-  const requiredRoles = rolePermissions[actionType as keyof typeof rolePermissions] || [];
-  return requiredRoles.some((role: string) => this.gameplayRoles.includes(role as any));
+  const requiredRoles = rolePermissions[actionType] || [];
+  return this.isGestore || requiredRoles.some((role: string) => this.gameplayRoles.includes(role as any));
 };
 
 CharacterSchema.methods.getLatestReview = function() {
@@ -662,45 +663,32 @@ CharacterSchema.pre('save', async function(this: ICharacter) {
     );
   }
 
-  // Set submitted date when status changes to PENDING_APPROVAL
-  if (this.isModified('status') && this.status === 'PENDING_APPROVAL' && !this.submittedAt) {
+  // Set submitted date when playerStatus changes to pending
+  if (this.isModified('playerStatus') && this.playerStatus === 'pending' && !this.submittedAt) {
     this.submittedAt = new Date();
   }
 
-  // ============================================================
-  // AUTO-CALCULATE GAME PERMISSIONS (/config/roles/game-permissions.json)
-  // ============================================================
-  // This ensures gameplayRoles is ALWAYS up-to-date based on:
-  // - character.status (APPROVED → approved-player, otherwise → player)
-  // - character.adminRoles (if includes 'master' or 'moderatore', add to gameplayRoles)
-  // - character.characterPermissions (ensure array exists)
-  // - character.isGestore (ensure boolean exists)
-
-  if (this.isModified('status') || this.isModified('adminRoles') || this.isNew) {
-    // Base role based on status
-    const baseRole = this.status === 'APPROVED' ? 'approved-player' : 'player';
-
-    // Check for special roles
-    const hasMasterRole = (this.adminRoles || []).includes('master');
-    const hasModeratorRole = (this.adminRoles || []).includes('moderatore');
-
-    // Build gameplayRoles array (can have multiple special roles)
-    const specialRoles = [];
-    if (hasMasterRole) specialRoles.push('master');
-    if (hasModeratorRole) specialRoles.push('moderatore');
-
-    this.gameplayRoles = [baseRole, ...specialRoles] as any;
+  // characterPermissions: draft = deny read + wizard only; pending = deny chat/postal; approved = []
+  const DRAFT_PENDING_DENIES = ['-game:chat:send', '-game:postal:send'];
+  const DRAFT_ONLY = ['-game:character:read', 'game:character:wizard'];
+  if (this.isModified('playerStatus') || this.isNew) {
+    if (this.playerStatus === 'draft') {
+      const base = [...DRAFT_PENDING_DENIES, ...DRAFT_ONLY];
+      this.characterPermissions = Array.isArray(this.characterPermissions)
+        ? [...new Set([...this.characterPermissions.filter(p => !base.includes(p)), ...base])]
+        : base.slice();
+    } else if (this.playerStatus === 'pending') {
+      this.characterPermissions = Array.isArray(this.characterPermissions)
+        ? [...new Set([...this.characterPermissions.filter(p => !DRAFT_PENDING_DENIES.includes(p) && !DRAFT_ONLY.includes(p)), ...DRAFT_PENDING_DENIES])]
+        : DRAFT_PENDING_DENIES.slice();
+    } else {
+      this.characterPermissions = [];
+    }
   }
 
-  // Ensure characterPermissions array exists
-  if (!this.characterPermissions) {
-    this.characterPermissions = [];
-  }
-
-  // Ensure isGestore boolean exists
-  if (this.isGestore === undefined || this.isGestore === null) {
-    this.isGestore = false;
-  }
+  if (!this.characterPermissions) this.characterPermissions = [];
+  if (!this.adminPermissions) this.adminPermissions = [];
+  if (this.isGestore === undefined || this.isGestore === null) this.isGestore = false;
 });
 
 // Apply soft delete plugin

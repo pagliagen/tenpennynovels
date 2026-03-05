@@ -3,6 +3,7 @@ import { Character, Occupation, Skill } from '@database/models';
 import { logger } from '../utils/logger';
 import { successResponse, errorResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
 import { CharacterVisibilityFilter } from '@shared/utils/characterVisibility';
+import { hasGamePermission } from '../utils/gamePermissions';
 import { FinancialUtils } from '../utils/financialUtils';
 import { CharacterCreationConfigService } from '@shared/services/CharacterCreationConfigService';
 
@@ -28,7 +29,7 @@ export class CharacterController {
       const character = new Character({
         userId,
         name: 'New Character',
-        status: 'DRAFT',
+        status: 'draft',
         concept,
         preferredOccupation,
         preferredBackground,
@@ -61,7 +62,7 @@ export class CharacterController {
           character: {
             id: character.id,
             name: character.name,
-            status: character.status,
+            status: character.playerStatus,
             stats: character.stats,
             skills: character.skills,
             occupation: character.occupation,
@@ -170,7 +171,7 @@ export class CharacterController {
           name: character.name,
           surname: character.surname,
           avatar: character.avatar,
-          status: character.status,
+          status: character.playerStatus,
           isOwnCharacter: character.userId.toString() === currentUserId,
           isOnline: Boolean(isOnline)
         };
@@ -219,7 +220,7 @@ export class CharacterController {
       const character = await (Character.findOne({
         _id: characterId,
         userId: userId,
-        status: 'DRAFT'
+        status: 'draft'
       }) as any);
 
       if (!character) {
@@ -533,9 +534,15 @@ export class CharacterController {
 
       logger.info('Getting character', { characterId, userId });
 
-      // Determina se l'utente è un master (controlla i ruoli dal token)
-      const isMaster = req.character?.gameplayRoles?.includes('master') || 
-                       req.character?.gameplayRoles?.includes('gestore') || false;
+      // Può vedere dati privati di altri solo con permesso game:character:read:others:private (master)
+      const canReadOthersPrivate = req.character && hasGamePermission(
+        'game:character:read:others:private',
+        req.character.playerStatus || 'draft',
+        req.character.isGestore || false,
+        req.character.gameplayRoles || [],
+        req.character.characterPermissions || []
+      );
+      const isMaster = !!canReadOthersPrivate;
 
       logger.info('User roles check', { isMaster, gameplayRoles: req.character?.gameplayRoles });
 
@@ -712,6 +719,109 @@ export class CharacterController {
   }
 
   /**
+   * GET /characters/:characterId/wizard
+   * Get character data for wizard (draft editing). Requires game:character:wizard; only own character.
+   */
+  static async getCharacterForWizard(req: Request, res: Response): Promise<void> {
+    try {
+      const { characterId } = req.params;
+      const currentCharacterId = req.character?.characterId;
+      if (!currentCharacterId || currentCharacterId !== characterId) {
+        res.status(403).json(errorResponse(
+          'Solo il proprio personaggio può essere caricato nel wizard',
+          'WIZARD_OWNER_REQUIRED',
+          undefined,
+          403,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      const character = await (Character.findOne({
+        _id: characterId,
+        status: { $ne: 'DELETED' }
+      }) as any);
+
+      if (!character) {
+        res.status(404).json(errorResponse(
+          'Personaggio non trovato',
+          'CHARACTER_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      const userId = req.user!.userId;
+      if (character.userId.toString() !== userId) {
+        res.status(403).json(errorResponse(
+          'Solo il proprio personaggio può essere caricato nel wizard',
+          'WIZARD_OWNER_REQUIRED',
+          undefined,
+          403,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      const characterJson = character.toJSON();
+      if (character.skills && character.skills instanceof Map) {
+        const skillsObj: any = {};
+        character.skills.forEach((value: any, key: any) => { skillsObj[key] = value; });
+        characterJson.skills = skillsObj;
+      } else if (!characterJson.skills || Object.keys(characterJson.skills).length === 0) {
+        characterJson.skills = {};
+      }
+
+      if (character.occupation) {
+        const { Occupation, Skill } = require('../../../database/models');
+        let occupation = await Occupation.findById(character.occupation).catch(() => null) as any;
+        if (!occupation && typeof character.occupation === 'string') {
+          occupation = await Occupation.findOne({ name: character.occupation });
+        }
+        if (occupation) {
+          characterJson.occupationName = occupation.name;
+          characterJson.occupationData = occupation.toJSON();
+          if (occupation.benefits?.professionalSkills) {
+            const skills = await Skill.find({ _id: { $in: occupation.benefits.professionalSkills } });
+            characterJson.professionalSkillNames = skills.map((s: any) => s.name);
+          }
+        }
+      }
+
+      if (characterJson.equipment?.length > 0) {
+        const { Item } = require('../../../database/models');
+        const equipmentItems = await Item.find({ _id: { $in: characterJson.equipment } });
+        characterJson.equipment = equipmentItems.map((item: any) => ({
+          id: item._id.toString(),
+          itemId: item._id.toString(),
+          name: item.name,
+          description: item.description,
+          category: item.category,
+          rarity: item.rarity,
+          quantity: 1
+        }));
+      }
+
+      res.json(successResponse(
+        { character: { ...characterJson, isOwnCharacter: true } },
+        undefined,
+        getRequestId(req)
+      ));
+    } catch (error: any) {
+      logger.error('Get character for wizard error', { message: (error as Error).message, characterId: req.params.characterId });
+      res.status(500).json(errorResponse(
+        'Impossibile caricare il personaggio per il wizard',
+        'GET_CHARACTER_WIZARD_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
+    }
+  }
+
+  /**
    * GET /characters/:characterId?view=sheet
    * Get character sheet data with permissions for window display
    *
@@ -744,7 +854,7 @@ export class CharacterController {
       // Determine permissions
       const isOwner = character.userId.toString() === userId;
       const isMaster = req.character?.gameplayRoles?.includes('master') ||
-                       req.character?.gameplayRoles?.includes('gestore') || false;
+                       req.character?.isGestore || false;
 
       const permissions = {
         isOwner,
@@ -752,7 +862,7 @@ export class CharacterController {
         canViewReviewHistory: isOwner || isMaster,
         canViewFullInventory: isOwner,
         canViewSkillBreakdown: isOwner,
-        canEdit: isOwner && character.status === 'DRAFT'
+        canEdit: isOwner && character.playerStatus === 'draft'
       };
 
       // Serialize skills Map to object
@@ -889,9 +999,15 @@ export class CharacterController {
       const { characterId } = req.params;
       const userId = req.user!.userId;
       
-      // Determina se l'utente è un master (controlla i ruoli dal token)
-      const isMaster = req.character?.gameplayRoles?.includes('master') || 
-                       req.character?.gameplayRoles?.includes('gestore') || false;
+      // Può vedere dati privati di altri solo con permesso game:character:read:others:private (master)
+      const canReadOthersPrivate = req.character && hasGamePermission(
+        'game:character:read:others:private',
+        req.character.playerStatus || 'draft',
+        req.character.isGestore || false,
+        req.character.gameplayRoles || [],
+        req.character.characterPermissions || []
+      );
+      const isMaster = !!canReadOthersPrivate;
 
       const character = await (Character.findOne({
         _id: characterId,
@@ -915,13 +1031,13 @@ export class CharacterController {
       // Converti il documento Mongoose in JSON per eliminare i metadati
       const characterJson = character.toJSON();
 
-      // Applica le regole di visibilità
+      // Applica le regole di visibilità (pubblico per tutti, dati master-only solo con permesso)
       let filteredCharacter;
       if (isOwner) {
         // Il proprietario può vedere tutti i dati - restituisci tutto il JSON
         filteredCharacter = characterJson;
       } else {
-        // Altri utenti vedono solo quello che sono autorizzati a vedere
+        // Altri: solo dati pubblici, oppure tutto se ha game:character:read:others:private
         filteredCharacter = CharacterVisibilityFilter.filterCharacter(
           characterJson, 
           userId, 
@@ -981,7 +1097,7 @@ export class CharacterController {
       let filteredUpdates = updates;
       const limitedEditableFields = ['avatar', 'profileImage', 'prestavolto', 'audioTheme'];
       
-      if (character.status !== 'DRAFT') {
+      if (character.playerStatus !== 'draft') {
         // For non-DRAFT characters, only allow limited editable fields
         filteredUpdates = {};
         limitedEditableFields.forEach(field => {
@@ -992,14 +1108,14 @@ export class CharacterController {
         
         logger.info('Filtered updates for non-DRAFT character', {
           characterId,
-          characterStatus: character.status,
+          characterStatus: character.playerStatus,
           originalFields: Object.keys(updates),
           filteredFields: Object.keys(filteredUpdates)
         });
       }
 
       // Handle field name mapping from frontend to backend (only for DRAFT)
-      if (character.status === 'DRAFT') {
+      if (character.playerStatus === 'draft') {
         if (filteredUpdates.firstName !== undefined) {
           character.name = filteredUpdates.firstName;
         }
@@ -1010,7 +1126,7 @@ export class CharacterController {
 
       // Update allowed fields based on character status
       let allowedFields: string[];
-      if (character.status === 'DRAFT') {
+      if (character.playerStatus === 'draft') {
         // DRAFT characters can update all fields
         allowedFields = [
           'name', 'surname', 'age', 'apparentAge', 'gender', 'birthDate', 'birthPlace',
@@ -1032,13 +1148,13 @@ export class CharacterController {
       if (filteredUpdates.skills && allowedFields.includes('skills')) {
         logger.info('[SKILLS UPDATE] Starting skills processing', {
           characterId: character._id,
-          characterStatus: character.status,
+          characterStatus: character.playerStatus,
           payloadSkillsCount: Object.keys(filteredUpdates.skills).length,
           payloadSampleKeys: Object.keys(filteredUpdates.skills).slice(0, 3)
         });
 
         // Solo per personaggi DRAFT: salvare tutte le skills, non solo quelle modificate
-        if (character.status === 'DRAFT') {
+        if (character.playerStatus === 'draft') {
           logger.info('[SKILLS UPDATE] Using DRAFT path (all skills)');
           // Recupera tutte le base skills dal database
           const baseSkills = await Skill.find({ visible: true })
@@ -1301,7 +1417,7 @@ export class CharacterController {
       });
 
       // Handle background - support both object and JSON string (only for DRAFT)
-      if (character.status === 'DRAFT' && filteredUpdates.background !== undefined) {
+      if (character.playerStatus === 'draft' && filteredUpdates.background !== undefined) {
         try {
           let backgroundData = filteredUpdates.background;
           
@@ -1329,7 +1445,7 @@ export class CharacterController {
       }
 
       // AUTO-INITIALIZE CHARACTER FINANCES FROM FINANZA SKILL (only for DRAFT characters)
-      if (character.status === 'DRAFT' && filteredUpdates.skills) {
+      if (character.playerStatus === 'draft' && filteredUpdates.skills) {
         try {
           // Find Finanza skill by name to get its ObjectId
           const finanzaSkill = await Skill.findOne({ name: 'Finanza' }).lean();
@@ -1412,7 +1528,7 @@ export class CharacterController {
       logger.info('Character updated', {
         characterId: character.id,
         userId,
-        characterStatus: character.status,
+        characterStatus: character.playerStatus,
         originalFields: Object.keys(updates),
         appliedFields: Object.keys(filteredUpdates),
         skillKeysInResponse: Object.keys(serializedSkills).slice(0, 3) // Log first 3 keys
@@ -1429,7 +1545,7 @@ export class CharacterController {
             apparentAge: character.apparentAge,
             gender: character.gender,
             birthPlace: character.birthPlace,
-            status: character.status,
+            status: character.playerStatus,
             stats: character.stats,
             derived: character.derived,
             skills: serializedSkills,

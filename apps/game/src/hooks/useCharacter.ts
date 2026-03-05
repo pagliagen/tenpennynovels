@@ -37,6 +37,7 @@ export const characterQueryKeys = {
   list: (filters?: { status?: string }) => [...characterQueryKeys.lists(), filters] as const,
   details: () => [...characterQueryKeys.all, 'detail'] as const,
   detail: (id: string) => [...characterQueryKeys.details(), id] as const,
+  wizard: (id: string) => [...characterQueryKeys.all, 'wizard', id] as const,
   config: () => [...characterQueryKeys.all, 'config'] as const,
   occupations: () => [...characterQueryKeys.all, 'occupations'] as const,
   skills: () => [...characterQueryKeys.all, 'skills'] as const,
@@ -72,6 +73,26 @@ export function useCharacter(
     enabled: options?.enabled !== false && !!characterId,
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes (renamed from cacheTime in v5)
+  });
+}
+
+/**
+ * useCharacterForWizard Hook
+ *
+ * Fetches character data for the wizard (draft editing). Uses GET /characters/:id/wizard
+ * which requires game:character:wizard. Use this instead of useCharacter when loading
+ * an existing draft into the wizard.
+ */
+export function useCharacterForWizard(
+  characterId: string,
+  options?: { enabled?: boolean }
+): UseQueryResult<Character, Error> {
+  return useQuery({
+    queryKey: characterQueryKeys.wizard(characterId),
+    queryFn: () => characterApi.getForWizard(characterId),
+    enabled: options?.enabled !== false && !!characterId,
+    staleTime: 2 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
   });
 }
 

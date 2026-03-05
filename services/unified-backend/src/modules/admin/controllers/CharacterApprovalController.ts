@@ -22,15 +22,15 @@ export class CharacterApprovalController {
     try {
       const page = parseInt(req.query.page as string) || 1;
       const pageSize = parseInt(req.query.pageSize as string) || 25;
-      const status = req.query.status as string;
+      const statusFilter = req.query.status as string;
       const userId = req.query.userId as string;
 
       const skip = (page - 1) * pageSize;
 
       // Build query filter
       let filter: any = {};
-      if (status && ['DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'DELETED'].includes(status)) {
-        filter.status = status;
+      if (statusFilter && ['draft', 'pending', 'approved'].includes(statusFilter)) {
+        filter.playerStatus = statusFilter;
       }
       if (userId) {
         filter.userId = userId;
@@ -57,7 +57,7 @@ export class CharacterApprovalController {
             select: 'username email',
             options: { strictPopulate: false }
           })
-          .select('name surname fullName occupation status createdAt submittedAt approvedAt rejectedAt userId isGestore characterRoles characterPermissions age gender socialClass location')
+          .select('name surname fullName occupation playerStatus createdAt submittedAt approvedAt rejectedAt userId canAccessAdminPanel isGestore gameplayRoles characterPermissions adminPermissions age gender socialClass location')
           .sort({ createdAt: -1 })
           .skip(skip)
           .limit(pageSize)
@@ -93,9 +93,9 @@ export class CharacterApprovalController {
           occupation: char.occupation || null,
           socialClass: char.socialClass || null,
           location: char.location || null,
-          status: char.status || 'DRAFT',
+          playerStatus: char.playerStatus || 'draft',
           isGestore: char.isGestore || false,
-          characterRoles: char.characterRoles || [],
+          gameplayRoles: char.gameplayRoles || [],
           characterPermissions: char.characterPermissions || [],
           metadata: {
             createdAt: char.createdAt ? char.createdAt.toISOString() : new Date().toISOString(),
@@ -126,7 +126,7 @@ export class CharacterApprovalController {
         ...auditInfo,
         page,
         pageSize,
-        statusFilter: status || 'all',
+        statusFilter: statusFilter || 'all',
         totalResults: transformedCharacters.length,
         totalItems,
         category: 'character_management'
@@ -265,7 +265,7 @@ export class CharacterApprovalController {
       const character = await Character.findById(characterId)
         .populate({
           path: 'userId',
-          select: 'username email displayName canAccessAdminPanel userRoles characterRoles',
+          select: 'username email displayName userRoles',
           options: { strictPopulate: false }
         })
         .lean()
@@ -402,7 +402,7 @@ export class CharacterApprovalController {
         occupation: occupationDetails || character.occupation,
         
         // Status and workflow
-        status: character.status || 'DRAFT',
+        playerStatus: character.playerStatus || 'draft',
         createdAt: character.createdAt ? character.createdAt.toISOString() : new Date().toISOString(),
         submittedAt: character.submittedAt ? character.submittedAt.toISOString() : null,
         approvedAt: character.approvedAt ? character.approvedAt.toISOString() : null,
@@ -443,7 +443,7 @@ export class CharacterApprovalController {
         ...auditInfo,
         characterId,
         characterName: transformedCharacter.characterName,
-        characterStatus: transformedCharacter.status,
+        playerStatus: transformedCharacter.playerStatus,
         hasOccupationDetails: !!occupationDetails,
         characterEquipmentCount: equipmentDetails.length,
         occupationStartingItemsCount: occupationStartingItems.length,
@@ -503,9 +503,9 @@ export class CharacterApprovalController {
 
       // Build update object with only allowed fields
       const allowedFields = [
-        'name', 'surname', 'age', 'gender', 'status',
+        'name', 'surname', 'age', 'gender', 'playerStatus',
         'biography', 'occupation', 'location', 'socialClass',
-        'isGestore', 'characterRoles', 'characterPermissions'
+        'canAccessAdminPanel', 'isGestore', 'gameplayRoles', 'characterPermissions', 'adminPermissions'
       ];
 
       const updates: any = {};
@@ -598,7 +598,7 @@ export class CharacterApprovalController {
       // Get character in PENDING_APPROVAL status - force fresh read
       const character = await Character.findOne({
         _id: characterId,
-        status: 'PENDING_APPROVAL'
+        playerStatus: 'pending'
       }).lean(false) as any;
 
       if (!character) {
@@ -723,11 +723,11 @@ export class CharacterApprovalController {
 
         // Update character: assign equipment and set status to APPROVED
         character.equipment = startingItems;
-        character.status = 'APPROVED';
+        character.playerStatus = 'approved';
         character.approvedAt = new Date();
         character.approvedBy = auditInfo!.adminId; // Set who approved
         character.approvedByName = auditInfo!.adminUsername; // Set approver username
-        character.gameplayRoles = ['personaggio']; // Assign default gameplay role
+        character.gameplayRoles = ['player']; // Default gameplay role for approved character
         character.reviewNote = note; // Store approval note
         
         // Add to review history
@@ -762,7 +762,7 @@ export class CharacterApprovalController {
 
       } else if (action === 'reject') {
         // REJECT: Change status back to DRAFT with rejection reason
-        character.status = 'DRAFT';
+        character.playerStatus = 'draft';
         character.rejectedAt = new Date();
         character.rejectedBy = auditInfo.adminId; // Set who rejected
         character.rejectedByName = auditInfo.adminUsername; // Set rejector username
@@ -1115,7 +1115,7 @@ export class CharacterApprovalController {
           // Find character in PENDING_APPROVAL status
           const character = await Character.findOne({
             _id: characterId,
-            status: 'PENDING_APPROVAL'
+            playerStatus: 'pending'
           }).lean(false) as any;
 
           if (!character) {
@@ -1154,11 +1154,11 @@ export class CharacterApprovalController {
           });
 
           // Update character status - USE TOP-LEVEL FIELDS (not metadata)
-          character.status = 'APPROVED';
+          character.playerStatus = 'approved';
           character.approvedAt = new Date();
           character.approvedBy = auditInfo.adminId;
           character.approvedByName = auditInfo.adminUsername;
-          character.gameplayRoles = ['personaggio'];
+          character.gameplayRoles = ['player'];
           character.equipment = startingItems; // Use equipment, not inventory
 
           // Add to review history (was missing in bulk operations)
@@ -1292,7 +1292,7 @@ export class CharacterApprovalController {
         characterIds.map(async (characterId: string) => {
           const character = await Character.findOne({
             _id: characterId,
-            status: 'PENDING_APPROVAL'
+            playerStatus: 'pending'
           }).lean(false) as any;
 
           if (!character) {
@@ -1300,7 +1300,7 @@ export class CharacterApprovalController {
           }
 
           // Update status to DRAFT with rejection note - USE TOP-LEVEL FIELDS (not metadata)
-          character.status = 'DRAFT';
+          character.playerStatus = 'draft';
           character.rejectedAt = new Date();
           character.rejectedBy = auditInfo.adminId;
           character.rejectedByName = auditInfo.adminUsername;

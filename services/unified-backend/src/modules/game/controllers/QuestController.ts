@@ -24,7 +24,7 @@ export class QuestController {
 
       // Check if user is master
       const isMaster = character.gameplayRoles?.includes('master') || 
-                       character.gameplayRoles?.includes('gestore');
+                       character.isGestore;
       if (!isMaster) {
         res.status(403).json(errorResponse(
           'Only masters can create quests',
@@ -178,7 +178,7 @@ export class QuestController {
 
       // Check permissions
       const isMaster = character.gameplayRoles?.includes('master') || 
-                       character.gameplayRoles?.includes('gestore');
+                       character.isGestore;
       const isOwner = session.masterId.toString() === character.characterId;
       
       if (!isMaster && !isOwner) {
@@ -253,7 +253,7 @@ export class QuestController {
 
       // Check permissions
       const isMaster = character.gameplayRoles?.includes('master') || 
-                       character.gameplayRoles?.includes('gestore');
+                       character.isGestore;
       const isOwner = session.masterId.toString() === character.characterId;
       
       if (!isMaster && !isOwner) {
@@ -330,7 +330,7 @@ export class QuestController {
 
       // Check permissions
       const isMaster = character.gameplayRoles?.includes('master') || 
-                       character.gameplayRoles?.includes('gestore');
+                       character.isGestore;
       const isOwner = session.masterId.toString() === character.characterId;
       
       if (!isMaster && !isOwner) {
@@ -424,7 +424,7 @@ export class QuestController {
 
       // Check permissions
       const isMaster = character.gameplayRoles?.includes('master') || 
-                       character.gameplayRoles?.includes('gestore');
+                       character.isGestore;
       const isOwner = session.masterId.toString() === character.characterId;
       
       if (!isMaster && !isOwner) {

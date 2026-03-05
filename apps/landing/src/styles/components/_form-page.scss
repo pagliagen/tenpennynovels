@@ -7,16 +7,27 @@
 .form-page {
   max-width: 600px;
   margin: 0 auto;
-  padding: var(--spacing-container-mobile);
-
-  @media (min-width: 768px) {
-    padding: var(--spacing-container-desktop);
-  }
 
   /**
    * Form layout - Horizontal flex for form fields
    * Applies to all form field containers with semantic class names
    */
+  form {
+    padding: var(--spacing-container-mobile);
+
+    @media (min-width: 768px) {
+      padding: var(--spacing-container-desktop);
+    }
+
+    &:not(.login-form) {
+      border: 2px solid var(--color-border-primary);
+      box-shadow: var(--shadow-lg);
+      background-color: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);  
+    }
+  }
+
   form,
   form .login-fields,
   form .register-fields,

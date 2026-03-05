@@ -8,25 +8,17 @@ export interface User {
   username: string;
   email: string;
   passwordHash: string;
-  
-  // Admin panel access gate
-  canAccessAdminPanel: boolean;
 
-  // Granular permission system
   userRoles: ('user')[];
-  characterRoles: ('personaggio' | 'master' | 'moderatore' | 'amministratore')[];
-  characterPermissions: string[];
-  
-  // No more legacy fields - using only granular system
-  
+
   // Profile
   displayName?: string;
   avatar?: string;
-  
+
   // Account status
   isActive: boolean;
   isEmailVerified: boolean;
-  
+
   // Timestamps
   createdAt: Date;
   updatedAt: Date;
@@ -37,16 +29,21 @@ export interface AuthToken {
   userId: string;
   username: string;
   email: string;
-  canAccessAdminPanel: boolean;
-
-  // Granular permission system
   userRoles?: ('user')[];
-  characterRoles?: ('personaggio' | 'master' | 'moderatore' | 'amministratore')[];
-  characterPermissions?: string[];
+  iat: number;
+  exp: number;
+}
 
-  // No more legacy fields - using only granular system
-  iat: number; // issued at
-  exp: number; // expires at
+/**
+ * Request user: AuthToken plus optional fields set by admin middleware from selected character.
+ * characterRoles = admin role names (personaggio, master, moderatore, amministratore) for permission checks.
+ */
+export interface RequestUser extends AuthToken {
+  characterRoles?: string[];
+  canAccessAdminPanel?: boolean;
+  gameplayRoles?: ('player' | 'master' | 'moderatore')[];
+  adminPermissions?: string[];
+  isGestore?: boolean;
 }
 
 // Alias for backward compatibility
@@ -56,12 +53,11 @@ export interface CharacterContextToken {
   userId: string;
   characterId: string;
   characterName: string;
-  isApproved: boolean;
-  gameplayRoles?: string[]; // Character gameplay roles (personaggio, master, moderatore, etc.)
-  // Game permissions system
-  isGestore?: boolean; // Super-admin bypass flag
-  status?: string; // DRAFT, PENDING_APPROVAL, APPROVED, DELETED
-  characterPermissions?: string[]; // Granular permission overrides
+  isApproved?: boolean;
+  gameplayRoles?: ('player' | 'master' | 'moderatore')[];
+  playerStatus?: string; // draft, pending, approved
+  isGestore?: boolean;
+  characterPermissions?: string[];
   iat: number;
   exp: number;
 }

@@ -78,7 +78,7 @@ export default function ResetPasswordPage() {
       setLoading(true);
       clearMessages();
 
-      const result = await authService.resetPassword(token, data.password);
+      const result = await authService.resetPassword(token, data.password, data.confirmPassword);
 
       if (result.result) {
         setSuccess(result.message || 'Password cambiata con successo! Verrai reindirizzato al login...');
@@ -121,7 +121,6 @@ export default function ResetPasswordPage() {
             required
             autoComplete="new-password"
             disabled={loading}
-            showStrengthMeter
           />
 
           <PasswordField

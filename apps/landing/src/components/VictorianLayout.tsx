@@ -101,6 +101,9 @@ export const VictorianLayout: React.FC<VictorianLayoutProps> = ({
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
 
+  // Check if current page is an info page (credits/privacy/terms)
+  const isInfoPage = ['/credits', '/privacy', '/terms'].includes(router.pathname);
+
   /**
    * Toggles mobile navigation menu
    */
@@ -153,6 +156,16 @@ export const VictorianLayout: React.FC<VictorianLayoutProps> = ({
         <h2 className="victorian-layout__mobile-nav-title">Chapter One</h2>
 
         <nav className="victorian-layout__mobile-nav-content">
+          {isInfoPage && (
+            <Button
+              variant="ghost"
+              onClick={() => handleNavigate('/')}
+              className="victorian-layout__nav-button"
+            >
+              Torna a Login
+            </Button>
+          )}
+
           <Button
             variant="ghost"
             onClick={() => handleNavigate('/register')}
@@ -187,6 +200,16 @@ export const VictorianLayout: React.FC<VictorianLayoutProps> = ({
         {/* Navigation */}
         <nav className="victorian-layout__nav">
           <h2 className="victorian-layout__nav-title">Chapter One</h2>
+
+          {isInfoPage && (
+            <Button
+              variant="ghost"
+              onClick={() => handleNavigate('/')}
+              className="victorian-layout__nav-button"
+            >
+              Torna a Login
+            </Button>
+          )}
 
           <Button
             variant="ghost"

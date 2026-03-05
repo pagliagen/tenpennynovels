@@ -59,7 +59,7 @@ export class SkillController {
       const userId = req.user.userId;
       const isOwner = character.userId.toString() === userId;
       const isMaster = req.character?.gameplayRoles?.includes('master') || 
-                       req.character?.gameplayRoles?.includes('gestore') || false;
+                       req.character?.isGestore || false;
       
       if (!isOwner && !isMaster) {
         res.status(403).json(errorResponse(

@@ -1,0 +1,52 @@
+/**
+ * Credits Page Styles
+ *
+ * Layout and typography for the credits page.
+ */
+
+.creditsPage {
+  position: relative;
+  width: 100%;
+  height: calc(100vh - 100px);
+  overflow-y: auto;
+
+  h2 {
+    color: #d4af37;
+    margin-bottom: 2rem;
+    font-size: 2.5rem;
+  }
+
+  h4 {
+    color: #d4af37;
+    margin-bottom: 1rem;
+  }
+
+  p {
+    margin-bottom: 1.5rem;
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  &__footer {
+    text-align: center;
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 149, 0, 0.3);
+
+    p {
+      margin-bottom: 0.5rem;
+    }
+
+    p:first-child {
+      font-size: 0.9rem;
+      color: rgba(255, 149, 0, 0.8);
+      font-style: italic;
+    }
+
+    p:last-child {
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.6);
+      margin-top: 0.5rem;
+      margin-bottom: 0;
+    }
+  }
+}

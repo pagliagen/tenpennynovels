@@ -38,7 +38,7 @@ export function requireGamePermission(permission: string) {
     // Check permission
     const hasPermission = hasGamePermission(
       permission,
-      character.status || 'DRAFT',
+      character.playerStatus || 'draft',
       character.isGestore || false,
       character.gameplayRoles || [],
       character.characterPermissions || []
@@ -50,7 +50,7 @@ export function requireGamePermission(permission: string) {
         characterId: character.characterId,
         characterName: character.characterName,
         requiredPermission: permission,
-        status: character.status,
+        playerStatus: character.playerStatus,
         isGestore: character.isGestore,
         gameplayRoles: character.gameplayRoles,
         endpoint: req.path
@@ -101,7 +101,7 @@ export function requireAnyGamePermission(permissions: string[]) {
     const hasAnyPermission = permissions.some(permission =>
       hasGamePermission(
         permission,
-        character.status || 'DRAFT',
+        character.playerStatus || 'draft',
         character.isGestore || false,
         character.gameplayRoles || [],
         character.characterPermissions || []
@@ -112,7 +112,7 @@ export function requireAnyGamePermission(permissions: string[]) {
       logger.warn('Permission denied (ANY check)', {
         characterId: character.characterId,
         requiredPermissions: permissions,
-        status: character.status,
+        playerStatus: character.playerStatus,
         endpoint: req.path
       });
 
@@ -160,7 +160,7 @@ export function requireAllGamePermissions(permissions: string[]) {
     const missingPermissions = permissions.filter(permission =>
       !hasGamePermission(
         permission,
-        character.status || 'DRAFT',
+        character.playerStatus || 'draft',
         character.isGestore || false,
         character.gameplayRoles || [],
         character.characterPermissions || []
@@ -172,7 +172,7 @@ export function requireAllGamePermissions(permissions: string[]) {
         characterId: character.characterId,
         requiredPermissions: permissions,
         missingPermissions,
-        status: character.status,
+        playerStatus: character.playerStatus,
         endpoint: req.path
       });
 

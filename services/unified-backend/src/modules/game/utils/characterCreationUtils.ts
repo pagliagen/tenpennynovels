@@ -227,7 +227,7 @@ export async function validateCharacterSubmission(character: ICharacter, config:
   logger.info('Validating character for submission', {
     characterId: character._id.toString(),
     characterName: character.name,
-    status: character.status
+    playerStatus: character.playerStatus
   });
 
   // ====== BASIC INFO VALIDATION ======

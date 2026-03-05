@@ -269,10 +269,15 @@ interceptorManager.useResponseInterceptor(async (response) => {
 
   // Handle 401 - Unauthorized (session expired)
   if (response.status === 401) {
-    // Clear any local state (if needed in the future)
-    // For now, just redirect to login page
     if (typeof window !== 'undefined') {
-      window.location.href = '/';
+      // Don't redirect on login/register pages - let local error handlers work
+      const authPages = ['/', '/register', '/forgot-password', '/reset-password'];
+      const currentPath = window.location.pathname;
+
+      if (!authPages.includes(currentPath)) {
+        // Only redirect on protected pages (expired session)
+        window.location.href = '/';
+      }
     }
   }
 

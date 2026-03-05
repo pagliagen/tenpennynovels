@@ -200,6 +200,11 @@ export function getErrorMessage(code: string): string {
     NOT_FOUND: 'Risorsa non trovata.',
     VALIDATION_ERROR: 'I dati inseriti non sono validi.',
     SERVER_ERROR: 'Errore del server. Riprova più tardi.',
+    INVALID_VERIFICATION_TOKEN: 'Token di verifica non valido o scaduto.',
+    EMAIL_NOT_VERIFIED: 'Email non verificata. Controlla la tua casella di posta.',
+    EMAIL_ALREADY_VERIFIED: 'Email già verificata.',
+    USER_NOT_FOUND: 'Username o email non trovati.',
+    INVALID_PASSWORD: 'Password errata.',
     UNKNOWN_ERROR: 'Errore sconosciuto. Riprova più tardi.',
   };
 

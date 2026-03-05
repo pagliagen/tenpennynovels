@@ -1,0 +1,39 @@
+/**
+ * Terms Page Styles
+ *
+ * Layout and typography for the terms and conditions page.
+ */
+
+.termsPage {
+  position: relative;
+  width: 100%;
+  height: calc(100vh - 100px);
+  overflow-y: auto;
+
+  h2 {
+    color: #d4af37;
+    margin-bottom: 2rem;
+    font-size: 2.5rem;
+
+    &:not(:first-child) {
+      margin-top: 2rem;
+      margin-bottom: 1rem;
+      font-size: 1.25rem;
+    }
+  }
+
+  h3 {
+    margin-bottom: 0.75rem;
+    font-size: 1.1rem;
+  }
+
+  p,
+  ul {
+    margin-bottom: 1rem;
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  ul {
+    padding-left: 1.5rem;
+  }
+}

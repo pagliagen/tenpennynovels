@@ -80,10 +80,7 @@ router.get('/me',
     }
 
     // Fetch user's characters
-    const allCharacters = await Character.find({
-      userId: user._id,
-      status: { $ne: 'DELETED' }
-    }).sort({ createdAt: -1 });
+    const allCharacters = await Character.find({ userId: user._id }).sort({ createdAt: -1 });
 
     // Filter characters based on multipleCharactersAllowed setting
     const availableCharacters = AuthUtils.getAvailableCharacters(
@@ -110,17 +107,14 @@ router.get('/me',
       characterContextData
     );
 
-    // Get character roles for permission calculation
-    const characterRoles = selectedCharacter?.gameplayRoles || user.characterRoles || [];
-
-    // Check management panel access (USER-LEVEL: canAccessAdminPanel flag)
-    const canAccessManagement = user.canAccessAdminPanel === true;
+    const characterRoles = selectedCharacter?.gameplayRoles || [];
+    const characterPermissions = selectedCharacter?.adminPermissions || [];
+    const canAccessManagement = selectedCharacter?.canAccessAdminPanel === true || selectedCharacter?.isGestore === true;
 
     logger.info('🔒 Management panel access check:', {
       userId: user._id,
-      userRoles: user.userRoles,
       characterRoles,
-      canAccessAdminPanel: user.canAccessAdminPanel,
+      canAccessAdminPanel: selectedCharacter?.canAccessAdminPanel,
       canAccessManagement
     });
 
@@ -128,7 +122,7 @@ router.get('/me',
       logger.warn('❌ Access denied to management panel', {
         userId: user._id,
         username: user.username,
-        reason: 'User does not have canAccessAdminPanel flag'
+        reason: 'Character does not have canAccessAdminPanel or isGestore'
       });
       res.status(403).json({
         result: false,
@@ -137,14 +131,12 @@ router.get('/me',
       });
       return;
     }
-    
-    // Calculate effective permissions, badges, and menu structure
-    const effectivePermissions = getUserPermissions(user.userRoles, characterRoles, user.characterPermissions);
-    const visibleBadges = getVisibleDashboardBadges(user.userRoles, characterRoles, user.characterPermissions, selectedCharacter?.isGestore || false);
-    const visibleMenu = getVisibleMenuStructure(user.userRoles, characterRoles, user.characterPermissions, selectedCharacter?.isGestore || false);
 
-    // Debug permissions
-    debugPermissions(user.userRoles, characterRoles, user.characterPermissions);
+    const effectivePermissions = getUserPermissions(user.userRoles, characterRoles, characterPermissions);
+    const visibleBadges = getVisibleDashboardBadges(user.userRoles, characterRoles, characterPermissions, selectedCharacter?.isGestore || false);
+    const visibleMenu = getVisibleMenuStructure(user.userRoles, characterRoles, characterPermissions, selectedCharacter?.isGestore || false);
+
+    debugPermissions(user.userRoles, characterRoles, characterPermissions);
 
     // Create safe user object
     const safeUser = {
@@ -221,10 +213,7 @@ router.get('/my-characters', async (req: Request, res: Response): Promise<void> 
     }
 
     // Fetch user's characters (all non-deleted characters)
-    const allCharacters = await Character.find({
-      userId: user._id,
-      status: { $ne: 'DELETED' }
-    })
+    const allCharacters = await Character.find({ userId: user._id })
     .populate('userId', 'username')
     .populate('approvedBy', 'username')
     .sort({ createdAt: -1 });
@@ -240,7 +229,7 @@ router.get('/my-characters', async (req: Request, res: Response): Promise<void> 
       id: character._id.toString(),
       name: character.name,
       surname: character.surname,
-      status: character.status,
+      playerStatus: character.playerStatus,
       gameplayRoles: character.gameplayRoles || [],
       userId: character.userId._id.toString(),
       createdAt: character.createdAt,

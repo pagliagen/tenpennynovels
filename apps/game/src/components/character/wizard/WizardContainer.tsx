@@ -19,7 +19,7 @@
 import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { useWizardStore } from '@/store/wizardStore';
-import { useCharacter, useCreateCharacter, useUpdateCharacter, useSubmitForApproval } from '@/hooks/useCharacter';
+import { useCharacterForWizard, useCreateCharacter, useUpdateCharacter, useSubmitForApproval } from '@/hooks/useCharacter';
 import { characterApi } from '@/lib/api/character';
 import { WizardHeader } from './WizardHeader';
 import { WizardFooter } from './WizardFooter';
@@ -60,8 +60,8 @@ export function WizardContainer({ characterId }: WizardContainerProps): JSX.Elem
     loadFromDraft,
   } = useWizardStore();
  
-  // Fetch existing character if editing DRAFT
-  const { data: existingCharacter, isLoading: isLoadingCharacter } = useCharacter(
+  // Fetch existing draft via wizard endpoint (requires game:character:wizard; draft has no game:character:read)
+  const { data: existingCharacter, isLoading: isLoadingCharacter } = useCharacterForWizard(
     characterId || '',
     { enabled: !!characterId }
   );

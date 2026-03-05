@@ -87,7 +87,7 @@ export class GameController {
           .lean() as any);
 
         // Load character finances for APPROVED characters (for financial calculations)
-        if (character.status === 'APPROVED') {
+        if (character.playerStatus === 'approved') {
           characterFinances = await (CharacterFinances.findOne({ characterId }) as any);
         }
       }
@@ -114,7 +114,7 @@ export class GameController {
           occupation: character.occupation,
           currentLocation: character.currentLocation,
           gameplayRoles: character.gameplayRoles,
-          status: character.status,
+          status: character.playerStatus,
           hitPoints: character.hit_points,
           magicPoints: character.magic_points,
           sanity: character.sanity,
@@ -123,7 +123,7 @@ export class GameController {
           // NEW: Include dynamic skills for placeholder skill system
           dynamicSkills: character.dynamicSkills || [],
           // Include financial data for APPROVED characters
-          ...(characterFinances && character.status === 'APPROVED' && {
+          ...(characterFinances && character.playerStatus === 'approved' && {
             finances: {
               cash: characterFinances.cash,
               bankDeposit: characterFinances.bankDeposit,
@@ -183,7 +183,7 @@ export class GameController {
           };
 
           // Add financial info if character is APPROVED and has finances
-          if (characterFinances && character.status === 'APPROVED') {
+          if (characterFinances && character.playerStatus === 'approved') {
             const meetsReqs = GameController.meetsRequirements(itemWithRequirements, character);
             const totalWealth = characterFinances.cash + characterFinances.bankDeposit;
             const canAffordCash = totalWealth >= item.basePrice;
@@ -219,8 +219,8 @@ export class GameController {
       };
 
       // Add DRAFT-specific configuration if character is in DRAFT status
-      logger.info('Character status check', { status: character.status, isDraft: character.status === 'DRAFT' });
-      if (character.status === 'DRAFT') {
+      logger.info('Character status check', { status: character.playerStatus, isDraft: character.playerStatus === 'draft' });
+      if (character.playerStatus === 'draft') {
 
 
         // Fetch base occupations for character creation
@@ -445,10 +445,10 @@ export class GameController {
         userId,
         characterId,
         characterName: character.name,
-        characterStatus: character.status,
+        characterStatus: character.playerStatus,
         accessibleLocations: locations.length,
         totalActiveCharacters: globalPresence.length,
-        isDraft: character.status === 'DRAFT',
+        isDraft: character.playerStatus === 'draft',
         canAccessAdmin: canAccessAdmin,
         canAccessTickets: canAccessTickets,
         userRoles: user.userRoles,

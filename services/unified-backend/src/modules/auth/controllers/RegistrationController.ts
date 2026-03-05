@@ -123,6 +123,13 @@ export class RegistrationController {
         // Continue with registration even if email fails
       }
 
+      // DEV ONLY: Add verification URL header for testing
+      if (process.env.NODE_ENV !== 'production') {
+        const verificationUrl = `${process.env.BASE_URL || 'http://localhost:4000'}/verify-email/${emailVerificationToken}`;
+        res.setHeader('X-Dev-Verification-Url', verificationUrl);
+        logger.debug(`[DEV] Verification URL: ${verificationUrl}`);
+      }
+
       createdResponse(res, 
         {
           user: {
@@ -180,16 +187,93 @@ export class RegistrationController {
         };
       }
 
-      successResponse(res, 
+      successResponse(res,
         { availability },
         undefined);
 
     } catch (error: any) {
       logger.error('Availability check error:', error);
-      
-      errorResponse(res, 
+
+      errorResponse(res,
         'Controllo disponibilità fallito',
         'AVAILABILITY_ERROR',
+        undefined,
+        500);
+    }
+  }
+
+  /**
+   * GET /auth/check-username?username=...
+   * Check username availability
+   */
+  static async checkUsername(req: Request, res: Response): Promise<void> {
+    try {
+      const { username } = req.query;
+
+      if (!username || typeof username !== 'string') {
+        errorResponse(res,
+          'Username richiesto',
+          'VALIDATION_ERROR',
+          undefined,
+          400);
+        return;
+      }
+
+      const existingUsername = await User.findOne({ username: username.toLowerCase() });
+
+      successResponse(res,
+        {
+          available: !existingUsername,
+          suggestions: existingUsername ? [
+            `${username}_alt`,
+            `${username}_${new Date().getFullYear()}`,
+            `${username}_player`
+          ] : undefined
+        },
+        undefined);
+
+    } catch (error: any) {
+      logger.error('Username check error:', error);
+
+      errorResponse(res,
+        'Controllo username fallito',
+        'USERNAME_CHECK_ERROR',
+        undefined,
+        500);
+    }
+  }
+
+  /**
+   * GET /auth/check-email?email=...
+   * Check email availability
+   */
+  static async checkEmail(req: Request, res: Response): Promise<void> {
+    try {
+      const { email } = req.query;
+
+      if (!email || typeof email !== 'string') {
+        errorResponse(res,
+          'Email richiesta',
+          'VALIDATION_ERROR',
+          undefined,
+          400);
+        return;
+      }
+
+      const existingEmail = await User.findOne({ email: email.toLowerCase() });
+
+      successResponse(res,
+        {
+          available: !existingEmail
+        },
+        undefined);
+
+    } catch (error: any) {
+      logger.error('Email check error:', error);
+
+      errorResponse(res,
+        'Controllo email fallito',
+        'EMAIL_CHECK_ERROR',
         undefined,
         500);
     }
@@ -315,13 +399,20 @@ export class RegistrationController {
         await EmailService.sendVerificationEmail(user.email, user.displayName || user.username, emailVerificationToken);
       } catch (emailError) {
         logger.error('Failed to resend verification email:', emailError);
-        
-        errorResponse(res, 
+
+        errorResponse(res,
           'Impossibile inviare l\'email di verifica',
           'EMAIL_SEND_ERROR',
           undefined,
           500);
         return;
+      }
+
+      // DEV ONLY: Add verification URL header for testing
+      if (process.env.NODE_ENV !== 'production') {
+        const verificationUrl = `${process.env.BASE_URL || 'http://localhost:4000'}/verify-email/${emailVerificationToken}`;
+        res.setHeader('X-Dev-Verification-Url', verificationUrl);
+        logger.debug(`[DEV] Resend verification URL: ${verificationUrl}`);
       }
 
       logAuth('verification_email_resent', user.id, {

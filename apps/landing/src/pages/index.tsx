@@ -78,18 +78,16 @@ export default function LoginPage() {
       clearMessages();
       setErrorCode('');
 
-      // TODO: Implement resendVerification endpoint in AuthService
-      // const { username } = getValues();
-      // const result = await authService.resendVerification(username);
+      const { username } = getValues();
+      const result = await authService.resendVerification(username);
 
-      setError('Funzionalità non ancora implementata. Contatta l\'amministratore.');
-
-      // if (result.result) {
-      //   setSuccess(result.message || 'Email di verifica inviata! Controlla la tua casella email.');
-      // } else {
-      //   handleApiError(result);
-      //   setErrorCode(result.code || '');
-      // }
+      if (result.result && result.data) {
+        setSuccess(result.message || 'Email di verifica inviata! Controlla la tua casella email.');
+        // Keep errorCode cleared so button disappears
+      } else {
+        handleApiError(result);
+        // Don't restore EMAIL_NOT_VERIFIED code
+      }
     } catch (error) {
       setError('Errore di connessione durante l\'invio della verifica');
       console.error('Errore resend verification:', error);

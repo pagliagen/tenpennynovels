@@ -38,7 +38,7 @@ export interface ILocationAction extends Document {
     }>;
   };
   targetCharacters?: string[]; // For whispers
-  characterRoles: string[]; // Sender's gameplay roles (stores gameplayRoles values: player, approved-player, master, moderatore)
+  characterRoles: string[]; // Sender's gameplay roles (player, master, moderatore)
 
   // Tag for action zone (REQUIRED - indicates where action takes place, must be one of location's tags)
   tags: string;
@@ -158,7 +158,7 @@ const LocationActionSchema = new Schema<ILocationAction>({
   }],
   characterRoles: [{
     type: String,
-    enum: ['player', 'approved-player', 'master', 'moderatore']
+    enum: ['player', 'master', 'moderatore']
   }],
 
   // Tag (REQUIRED - must specify which zone the action takes place in)

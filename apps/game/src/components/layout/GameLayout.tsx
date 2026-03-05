@@ -74,9 +74,10 @@ interface GameLayoutProps {
 export function GameLayout({ children }: GameLayoutProps): JSX.Element {
   const router = useRouter();
 
-  // Auth store: Get current character
+  // Auth store: Get current character and permissions
   const selectedCharacter = useAuthStore((state) => state.selectedCharacter);
   const user = useAuthStore((state) => state.user);
+  const hasGamePermission = useAuthStore((state) => state.hasGamePermission);
 
   // Game state: Get current location (SINGLE SOURCE OF TRUTH)
   const currentLocationId = useGameStateStore((state) => state.currentLocationId);
@@ -96,6 +97,16 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
   // WebSocket + QueryClient: For real-time badge updates
   const { onMessageEvent } = useWebSocket();
   const queryClient = useQueryClient();
+
+  /**
+   * Redirect to wizard when character has game:character:wizard (draft) and we're on game home.
+   */
+  useEffect(() => {
+    if (!selectedCharacter || !hasGamePermission('game:character:wizard')) return;
+    if (router.pathname === '/game') {
+      router.replace('/character/wizard');
+    }
+  }, [selectedCharacter, hasGamePermission, router.pathname, router]);
 
   /**
    * Initialize locationStore on mount

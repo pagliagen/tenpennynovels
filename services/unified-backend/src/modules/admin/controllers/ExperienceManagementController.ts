@@ -527,7 +527,7 @@ export class ExperienceManagementController {
           character: {
             id: character._id,
             name: character.name,
-            status: character.status,
+            playerStatus: character.playerStatus,
             stats: character.stats,
             skills: character.skills,
             gameplayRoles: character.gameplayRoles

@@ -192,3 +192,13 @@ export const creditsBreadcrumb = createBreadcrumbSchema([
   { name: "Home", url: "https://tenpennynovels.com/" },
   { name: "Crediti", url: "https://tenpennynovels.com/credits/" }
 ]);
+
+/**
+ * About Page Breadcrumb
+ *
+ * @constant
+ */
+export const aboutBreadcrumb = createBreadcrumbSchema([
+  { name: "Home", url: "https://tenpennynovels.com/" },
+  { name: "Chi Siamo", url: "https://tenpennynovels.com/about/" }
+]);

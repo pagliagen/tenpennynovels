@@ -184,6 +184,19 @@ async function apiRequestWithRetry<T>(config: RequestConfig): Promise<ApiRespons
       // Parse JSON response
       const data: ApiResponse<T> = await interceptedResponse.json();
 
+      // DEV ONLY: Extract dev headers and attach to response
+      if (process.env.NODE_ENV === 'development') {
+        const devHeaders: Record<string, string> = {};
+        interceptedResponse.headers.forEach((value, key) => {
+          if (key.toLowerCase().startsWith('x-dev-')) {
+            devHeaders[key] = value;
+          }
+        });
+        if (Object.keys(devHeaders).length > 0) {
+          (data as any).__devHeaders = devHeaders;
+        }
+      }
+
       // If response is not OK (4xx, 5xx), throw ApiError
       if (!interceptedResponse.ok) {
         throw new ApiError(
