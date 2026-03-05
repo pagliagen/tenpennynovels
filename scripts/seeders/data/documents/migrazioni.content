@@ -2,15 +2,6 @@
   "type": "doc",
   "content": [
     {
-      "type": "paragraph",
-      "content": [
-        {
-          "type": "text",
-          "text": "Le migrazioni plasmano la Londra vittoriana di fine Ottocento, ridisegnando la mappa sociale della città e il suo tessuto umano. Spostamenti interni, grandi flussi dall'Irlanda e nuove ondate dall'Europa continentale portano prosperità e conflitti, diversità e inquietudine. Analizzare le dinamiche della migrazione significa comprendere le paure, le aspettative e le trasformazioni profonde che attraversano la società urbana di questo periodo."
-        }
-      ]
-    },
-    {
       "type": "heading",
       "attrs": {
         "level": 2

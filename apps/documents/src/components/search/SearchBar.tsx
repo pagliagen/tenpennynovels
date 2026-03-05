@@ -19,15 +19,23 @@ import styles from '@/styles/components/SearchBar.module.scss';
 interface SearchBarProps {
   placeholder?: string;
   className?: string;
+  autoFocus?: boolean;
 }
 
-export function SearchBar({ placeholder = 'Cerca nei documenti...', className }: SearchBarProps) {
+export function SearchBar({ placeholder = 'Cerca nei documenti...', className, autoFocus }: SearchBarProps) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const { query, setQuery, isOpen, setIsOpen, results, totalResults, isLoading, handleClose } =
     useSearchState();
+
+  // Auto-focus on mount if requested
+  useEffect(() => {
+    if (autoFocus && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [autoFocus]);
 
   // Close on outside click
   useEffect(() => {

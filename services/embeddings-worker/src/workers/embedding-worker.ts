@@ -11,20 +11,29 @@ import mongoose from 'mongoose';
 import Bull from 'bull';
 import crypto from 'crypto';
 import { QdrantClient } from '@qdrant/js-client-rest';
+import { Client as ElasticsearchClient } from '@elastic/elasticsearch';
 import {
   REDIS_CHANNELS,
   DocumentEmbeddingEvent,
   DocumentChunkEmbeddingEvent,
+  LocationEmbeddingEvent,
   LocationActionEmbeddingEvent,
+  DeleteEmbeddingEvent,
+  EmbeddingEvent,
   isDocumentEmbeddingEvent,
   isDocumentChunkEmbeddingEvent,
-  isLocationActionEmbeddingEvent
+  isLocationEmbeddingEvent,
+  isLocationActionEmbeddingEvent,
+  isDeleteEmbeddingEvent
 } from '../types/events';
 import { PythonEmbeddingService } from '../services/PythonEmbeddingService';
 import { DLQService } from '../services/DLQService';
+import { parseChunks, ParsedChunk } from '../utils/ChunkParser';
 
 const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
 const QDRANT_URL = process.env.QDRANT_URL || 'http://localhost:6333';
+const ELASTICSEARCH_URL = process.env.ELASTICSEARCH_URL || 'http://localhost:9200';
+const ELASTICSEARCH_INDEX_PREFIX = process.env.ELASTICSEARCH_INDEX_PREFIX || 'tenpennynovels';
 const EMBEDDING_MODEL = 'paraphrase-multilingual-MiniLM-L12-v2';
 const CACHE_TTL = 3600; // 1 hour
 
@@ -32,6 +41,7 @@ export class EmbeddingWorker {
   private subscriber: any; // Redis subscriber
   private redis: any; // Redis client for caching
   private qdrant: QdrantClient; // Qdrant vector DB client
+  private elasticsearch: ElasticsearchClient; // ElasticSearch full-text search client
   private queue: Bull.Queue;
   private pythonService: PythonEmbeddingService; // Python subprocess for embeddings
   private isRunning: boolean = false;
@@ -42,6 +52,9 @@ export class EmbeddingWorker {
 
     // ✅ Initialize Qdrant client
     this.qdrant = new QdrantClient({ url: QDRANT_URL });
+
+    // ✅ Initialize ElasticSearch client (v8 client for ES 8.x)
+    this.elasticsearch = new ElasticsearchClient({ node: ELASTICSEARCH_URL });
 
     // ✅ Bull queue with retry
     this.queue = new Bull('embeddings', {
@@ -111,6 +124,83 @@ export class EmbeddingWorker {
   }
 
   /**
+   * Ensure Qdrant collections and ElasticSearch indices exist
+   */
+  private async ensureCollections(): Promise<void> {
+    try {
+      console.log('🔍 Checking Qdrant collections and ElasticSearch indices...');
+
+      // ✅ Ensure Qdrant document_chunks collection
+      const collections = await this.qdrant.getCollections();
+      const hasDocumentChunks = collections.collections.some(c => c.name === 'document_chunks');
+      const hasDocuments = collections.collections.some(c => c.name === 'documents');
+
+      if (!hasDocumentChunks) {
+        console.log('📦 Creating Qdrant collection: document_chunks');
+        await this.qdrant.createCollection('document_chunks', {
+          vectors: {
+            size: 384, // paraphrase-multilingual-MiniLM-L12-v2
+            distance: 'Cosine'
+          }
+        });
+      }
+
+      if (!hasDocuments) {
+        console.log('📦 Creating Qdrant collection: documents');
+        await this.qdrant.createCollection('documents', {
+          vectors: {
+            size: 384,
+            distance: 'Cosine'
+          }
+        });
+      }
+
+      // ✅ Ensure ElasticSearch document_chunks index
+      const chunkIndexExists = await this.elasticsearch.indices.exists({
+        index: `${ELASTICSEARCH_INDEX_PREFIX}_document_chunks`
+      });
+
+      if (!chunkIndexExists) {
+        console.log(`📦 Creating ElasticSearch index: ${ELASTICSEARCH_INDEX_PREFIX}_document_chunks`);
+        await this.elasticsearch.indices.create({
+          index: `${ELASTICSEARCH_INDEX_PREFIX}_document_chunks`,
+          body: {
+            settings: {
+              analysis: {
+                analyzer: {
+                  italian: {
+                    type: 'standard'
+                  }
+                }
+              }
+            },
+            mappings: {
+              properties: {
+                chunkId: { type: 'keyword' },
+                documentId: { type: 'keyword' },
+                slug: { type: 'keyword' },
+                heading: { type: 'text', analyzer: 'italian' },
+                content: { type: 'text', analyzer: 'italian' },
+                documentType: { type: 'keyword' },
+                headingLevel: { type: 'integer' },
+                parentSlug: { type: 'keyword' },
+                isActive: { type: 'boolean' },
+                createdAt: { type: 'date' }
+              }
+            }
+          }
+        });
+      }
+
+      console.log('✅ Collections and indices ready');
+
+    } catch (error) {
+      console.error('❌ Failed to ensure collections:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Start listening to embedding events
    */
   async start(): Promise<void> {
@@ -120,6 +210,10 @@ export class EmbeddingWorker {
     }
 
     console.log('🚀 Starting Embedding Worker with Bull Queue...');
+
+    // ✅ Ensure collections exist before processing
+    await this.ensureCollections();
+
     this.isRunning = true;
 
     // Subscribe to all embedding channels
@@ -158,13 +252,79 @@ export class EmbeddingWorker {
     );
 
     await this.subscriber.subscribe(
+      REDIS_CHANNELS.EMBEDDING_DOCUMENT_DELETED,
+      (message: string) => {
+        const event = JSON.parse(message);
+        this.queue.add(event, {
+          jobId: `doc-del-${event.entityId}-${Date.now()}`
+        });
+        console.log(`🗑️  Queued document deletion: ${event.entityId}`);
+      }
+    );
+
+    await this.subscriber.subscribe(
+      REDIS_CHANNELS.EMBEDDING_LOCATION_CREATED,
+      (message: string) => {
+        const event = JSON.parse(message);
+        this.queue.add(event, {
+          jobId: `loc-${event.locationId}-${Date.now()}`
+        });
+        console.log(`📍 Queued location: ${event.name}`);
+      }
+    );
+
+    await this.subscriber.subscribe(
+      REDIS_CHANNELS.EMBEDDING_LOCATION_UPDATED,
+      (message: string) => {
+        const event = JSON.parse(message);
+        this.queue.add(event, {
+          jobId: `loc-upd-${event.locationId}-${Date.now()}`
+        });
+        console.log(`📍 Queued location update: ${event.name}`);
+      }
+    );
+
+    await this.subscriber.subscribe(
+      REDIS_CHANNELS.EMBEDDING_LOCATION_DELETED,
+      (message: string) => {
+        const event = JSON.parse(message);
+        this.queue.add(event, {
+          jobId: `loc-del-${event.entityId}-${Date.now()}`
+        });
+        console.log(`🗑️  Queued location deletion: ${event.entityId}`);
+      }
+    );
+
+    await this.subscriber.subscribe(
       REDIS_CHANNELS.EMBEDDING_LOCATION_ACTION_CREATED,
       (message: string) => {
         const event = JSON.parse(message);
         this.queue.add(event, {
-          jobId: `loc-${event.locationActionId}-${Date.now()}`
+          jobId: `action-${event.locationActionId}-${Date.now()}`
         });
         console.log(`🎭 Queued location action: ${event.characterName}`);
+      }
+    );
+
+    await this.subscriber.subscribe(
+      REDIS_CHANNELS.EMBEDDING_LOCATION_ACTION_UPDATED,
+      (message: string) => {
+        const event = JSON.parse(message);
+        this.queue.add(event, {
+          jobId: `action-upd-${event.locationActionId}-${Date.now()}`
+        });
+        console.log(`🎭 Queued location action update: ${event.characterName}`);
+      }
+    );
+
+    await this.subscriber.subscribe(
+      REDIS_CHANNELS.EMBEDDING_LOCATION_ACTION_DELETED,
+      (message: string) => {
+        const event = JSON.parse(message);
+        this.queue.add(event, {
+          jobId: `action-del-${event.entityId}-${Date.now()}`
+        });
+        console.log(`🗑️  Queued location action deletion: ${event.entityId}`);
       }
     );
 
@@ -172,8 +332,14 @@ export class EmbeddingWorker {
     console.log(`   Listening to channels:`);
     console.log(`   - ${REDIS_CHANNELS.EMBEDDING_DOCUMENT_CREATED}`);
     console.log(`   - ${REDIS_CHANNELS.EMBEDDING_DOCUMENT_UPDATED}`);
+    console.log(`   - ${REDIS_CHANNELS.EMBEDDING_DOCUMENT_DELETED}`);
     console.log(`   - ${REDIS_CHANNELS.EMBEDDING_DOCUMENT_CHUNK_CREATED}`);
+    console.log(`   - ${REDIS_CHANNELS.EMBEDDING_LOCATION_CREATED}`);
+    console.log(`   - ${REDIS_CHANNELS.EMBEDDING_LOCATION_UPDATED}`);
+    console.log(`   - ${REDIS_CHANNELS.EMBEDDING_LOCATION_DELETED}`);
     console.log(`   - ${REDIS_CHANNELS.EMBEDDING_LOCATION_ACTION_CREATED}`);
+    console.log(`   - ${REDIS_CHANNELS.EMBEDDING_LOCATION_ACTION_UPDATED}`);
+    console.log(`   - ${REDIS_CHANNELS.EMBEDDING_LOCATION_ACTION_DELETED}`);
   }
 
   /**
@@ -197,11 +363,15 @@ export class EmbeddingWorker {
   /**
    * Process embedding event (called by Bull queue)
    */
-  private async processEmbedding(event: DocumentEmbeddingEvent | DocumentChunkEmbeddingEvent | LocationActionEmbeddingEvent): Promise<void> {
-    if (isDocumentEmbeddingEvent(event)) {
+  private async processEmbedding(event: EmbeddingEvent): Promise<void> {
+    if (isDeleteEmbeddingEvent(event)) {
+      await this.handleDeleteEvent(event);
+    } else if (isDocumentEmbeddingEvent(event)) {
       await this.handleDocumentEvent(event);
     } else if (isDocumentChunkEmbeddingEvent(event)) {
       await this.handleDocumentChunkEvent(event);
+    } else if (isLocationEmbeddingEvent(event)) {
+      await this.handleLocationEvent(event);
     } else if (isLocationActionEmbeddingEvent(event)) {
       await this.handleLocationActionEvent(event);
     }
@@ -230,38 +400,73 @@ export class EmbeddingWorker {
    */
   private async handleDocumentEvent(event: DocumentEmbeddingEvent): Promise<void> {
     try {
-      console.log(`📄 Processing document embedding: ${event.title} (${event.documentId})`);
+      console.log(`📄 Processing document: ${event.title} (${event.documentId})`);
 
-      const text = `${event.title}\n\n${event.content}`;
+      // ✅ Parse contentDelta to extract chunks
+      if (!event.contentDelta) {
+        console.warn(`⚠️  No contentDelta provided for ${event.title}, skipping chunking`);
+        return;
+      }
 
-      // ✅ Check cache first
-      const cacheKey = `embedding:${this.hashContent(text)}`;
-      if (this.redis) {
-        const cached = await this.redis.get(cacheKey);
-        if (cached) {
-          const embedding = JSON.parse(cached);
-          await this.saveDocumentEmbedding(event.documentId, embedding, event.type);
-          console.log(`✅ Document embedding from cache: ${event.title}`);
-          return;
+      const chunks: ParsedChunk[] = parseChunks(event.contentDelta);
+      console.log(`   📑 Extracted ${chunks.length} chunks from document`);
+
+      if (chunks.length === 0) {
+        console.warn(`⚠️  No chunks extracted from ${event.title}`);
+        return;
+      }
+
+      // ✅ Process each chunk: generate embedding + save to DB/Qdrant/ElasticSearch
+      let processedChunks = 0;
+      const errors: Error[] = [];
+
+      for (const chunk of chunks) {
+        try {
+          const chunkText = `${event.title}\n${chunk.heading}\n\n${chunk.content}`;
+
+          // Check cache
+          const cacheKey = `embedding:${this.hashContent(chunkText)}`;
+          let embedding: number[] | null = null;
+
+          if (this.redis) {
+            const cached = await this.redis.get(cacheKey);
+            if (cached) {
+              embedding = JSON.parse(cached);
+            }
+          }
+
+          // Generate embedding if not cached
+          if (!embedding) {
+            embedding = await this.generateEmbedding(chunkText);
+            if (!embedding) {
+              const error = new Error(`Failed to generate embedding for chunk: ${chunk.heading}`);
+              console.error(`   ❌ ${error.message}`);
+              errors.push(error);
+              continue;
+            }
+
+            // Cache for 1 hour
+            if (this.redis) {
+              await this.redis.setEx(cacheKey, CACHE_TTL, JSON.stringify(embedding));
+            }
+          }
+
+          // Save chunk to MongoDB + Qdrant + ElasticSearch
+          await this.saveDocumentChunk(event.documentId, chunk, embedding, event.type);
+          processedChunks++;
+
+        } catch (chunkError) {
+          console.error(`   ❌ Error processing chunk "${chunk.heading}":`, chunkError);
+          errors.push(chunkError as Error);
         }
       }
 
-      // ✅ Generate embedding
-      const embedding = await this.generateEmbedding(text);
-
-      if (!embedding) {
-        throw new Error(`Failed to generate embedding for document ${event.documentId}`);
+      // If ANY chunk failed, throw error to trigger Bull retry
+      if (errors.length > 0) {
+        throw new Error(`Failed to process ${errors.length}/${chunks.length} chunks. First error: ${errors[0].message}`);
       }
 
-      // ✅ Cache for 1 hour
-      if (this.redis) {
-        await this.redis.setEx(cacheKey, CACHE_TTL, JSON.stringify(embedding));
-      }
-
-      // ✅ Save to DB + Qdrant
-      await this.saveDocumentEmbedding(event.documentId, embedding, event.type);
-
-      console.log(`✅ Document embedding saved: ${event.title}`);
+      console.log(`✅ Document chunked and embedded: ${event.title} (${processedChunks}/${chunks.length} chunks)`);
 
     } catch (error) {
       console.error('❌ Error processing document embedding event:', error);
@@ -368,6 +573,79 @@ export class EmbeddingWorker {
   }
 
   /**
+   * Handle location embedding event (created/updated)
+   */
+  private async handleLocationEvent(event: LocationEmbeddingEvent): Promise<void> {
+    try {
+      console.log(`📍 Processing location embedding: ${event.name}`);
+
+      // Generate text from location data
+      const text = `${event.name}\n${event.district}\n\n${event.description}`;
+
+      // ✅ Check cache
+      const cacheKey = `embedding:${this.hashContent(text)}`;
+      if (this.redis) {
+        const cached = await this.redis.get(cacheKey);
+        if (cached) {
+          const embedding = JSON.parse(cached);
+          await this.saveLocationEmbedding(event.locationId, embedding);
+          console.log(`✅ Location embedding from cache: ${event.name}`);
+          return;
+        }
+      }
+
+      // ✅ Generate embedding
+      const embedding = await this.generateEmbedding(text);
+
+      if (!embedding) {
+        throw new Error(`Failed to generate embedding for location ${event.locationId}`);
+      }
+
+      // ✅ Cache
+      if (this.redis) {
+        await this.redis.setEx(cacheKey, CACHE_TTL, JSON.stringify(embedding));
+      }
+
+      // ✅ Save to Qdrant
+      await this.saveLocationEmbedding(event.locationId, embedding);
+
+      console.log(`✅ Location embedding saved: ${event.name}`);
+
+    } catch (error) {
+      console.error('❌ Error processing location embedding event:', error);
+      throw error; // Re-throw to trigger Bull retry
+    }
+  }
+
+  /**
+   * Handle delete event (Document, Location, LocationAction)
+   * Removes embeddings from Qdrant + ElasticSearch
+   */
+  private async handleDeleteEvent(event: DeleteEmbeddingEvent): Promise<void> {
+    try {
+      console.log(`🗑️  Processing deletion: ${event.entityType} ${event.entityId}`);
+
+      switch (event.entityType) {
+        case 'document':
+          await this.deleteDocumentEmbeddings(event.entityId);
+          break;
+        case 'location':
+          await this.deleteLocationEmbedding(event.entityId);
+          break;
+        case 'location_action':
+          await this.deleteLocationActionEmbedding(event.entityId);
+          break;
+      }
+
+      console.log(`✅ Embeddings deleted: ${event.entityType} ${event.entityId}`);
+
+    } catch (error) {
+      console.error(`❌ Error deleting ${event.entityType} embeddings:`, error);
+      throw error; // Re-throw to trigger Bull retry
+    }
+  }
+
+  /**
    * Generate embedding via Python subprocess
    */
   private async generateEmbedding(text: string): Promise<number[] | null> {
@@ -439,8 +717,99 @@ export class EmbeddingWorker {
   }
 
   /**
-   * Save document chunk embedding to Qdrant
+   * Save document chunk embedding to Qdrant + ElasticSearch
    */
+  /**
+   * Save document chunk to MongoDB + Qdrant + ElasticSearch
+   */
+  private async saveDocumentChunk(
+    documentId: string,
+    chunk: ParsedChunk,
+    embedding: number[],
+    documentType: 'ambientazione' | 'approfondimenti' | 'regolamento'
+  ): Promise<void> {
+    const db = mongoose.connection.db;
+    if (!db) {
+      throw new Error('MongoDB connection not available');
+    }
+
+    // Generate IDs
+    const chunkId = crypto.randomUUID();
+    const pointId = crypto.randomUUID();
+
+    // ✅ Save chunk to MongoDB documentchunks collection
+    try {
+      await db.collection('documentchunks').updateOne(
+        {
+          documentId,
+          slug: chunk.slug
+        },
+        {
+          $set: {
+            chunkId,
+            documentId,
+            slug: chunk.slug,
+            heading: chunk.heading,
+            content: chunk.content,
+            headingLevel: chunk.headingLevel,
+            parentSlug: chunk.parentSlug,
+            order: chunk.order,
+            isActive: true,
+            embeddingModel: EMBEDDING_MODEL,
+            lastUpdated: new Date()
+          }
+        },
+        { upsert: true }
+      );
+    } catch (mongoError) {
+      console.error('❌ Failed to save chunk to MongoDB:', mongoError);
+      // Don't throw - continue with Qdrant/ES
+    }
+
+    // ✅ Save to Qdrant (vector search)
+    await this.qdrant.upsert('document_chunks', {
+      wait: true,
+      points: [{
+        id: pointId,
+        vector: embedding,
+        payload: {
+          chunkId,
+          documentId,
+          slug: chunk.slug,
+          heading: chunk.heading,
+          documentType,
+          headingLevel: chunk.headingLevel,
+          parentSlug: chunk.parentSlug,
+          isActive: true,
+          order: chunk.order
+        }
+      }]
+    });
+
+    // ✅ Save to ElasticSearch (keyword search)
+    try {
+      await this.elasticsearch.index({
+        index: `${ELASTICSEARCH_INDEX_PREFIX}_document_chunks`,
+        id: chunkId,
+        document: {
+          chunkId,
+          documentId,
+          slug: chunk.slug,
+          heading: chunk.heading,
+          content: chunk.content,
+          documentType,
+          headingLevel: chunk.headingLevel,
+          parentSlug: chunk.parentSlug,
+          isActive: true,
+          order: chunk.order
+        }
+      });
+    } catch (esError) {
+      console.error('❌ Failed to index to ElasticSearch:', esError);
+      // Don't throw - Qdrant save succeeded
+    }
+  }
+
   private async saveDocumentChunkEmbedding(
     event: DocumentChunkEmbeddingEvent,
     embedding: number[]
@@ -448,6 +817,7 @@ export class EmbeddingWorker {
     // Generate UUID for Qdrant point ID
     const pointId = crypto.randomUUID();
 
+    // ✅ Save to Qdrant (vector search)
     await this.qdrant.upsert('document_chunks', {
       wait: true,
       points: [{
@@ -468,6 +838,30 @@ export class EmbeddingWorker {
     });
 
     console.log(`✅ Chunk embedding saved to Qdrant (type: ${event.documentType}, level: H${event.headingLevel})`);
+
+    // ✅ ALSO save to ElasticSearch (keyword search)
+    try {
+      await this.elasticsearch.index({
+        index: `${ELASTICSEARCH_INDEX_PREFIX}_document_chunks`,
+        id: event.chunkId,
+        document: {
+          chunkId: event.chunkId,
+          documentId: event.documentId,
+          slug: event.slug,
+          heading: event.title,
+          content: event.content,
+          documentType: event.documentType,
+          headingLevel: event.headingLevel,
+          parentSlug: event.parentSlug,
+          isActive: true,
+          order: event.order
+        }
+      });
+      console.log(`✅ Chunk also indexed to ElasticSearch (keyword search)`);
+    } catch (error) {
+      console.error('❌ Failed to index to ElasticSearch (Qdrant saved):', error);
+      // Don't throw - Qdrant save succeeded, ElasticSearch is optional
+    }
   }
 
   /**
@@ -514,6 +908,92 @@ export class EmbeddingWorker {
     } catch (error) {
       console.error('❌ Failed to save to Qdrant (MongoDB saved):', error);
       // Don't throw - MongoDB save succeeded, Qdrant is optional
+    }
+  }
+
+  /**
+   * Save location embedding to Qdrant
+   */
+  private async saveLocationEmbedding(locationId: string, embedding: number[]): Promise<void> {
+    try {
+      await this.qdrant.upsert('location_actions', {
+        wait: true,
+        points: [{
+          id: this.objectIdToUUID(locationId),
+          vector: embedding,
+          payload: {
+            locationId,
+            type: 'location'
+          }
+        }]
+      });
+      console.log(`✅ Location embedding saved to Qdrant`);
+    } catch (error) {
+      console.error('❌ Failed to save location to Qdrant:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Delete all document chunks (Qdrant + ElasticSearch)
+   * Called when a document is deleted
+   */
+  private async deleteDocumentEmbeddings(documentId: string): Promise<void> {
+    try {
+      // Delete from ElasticSearch (all chunks for this document)
+      await this.elasticsearch.deleteByQuery({
+        index: `${ELASTICSEARCH_INDEX_PREFIX}_document_chunks`,
+        body: {
+          query: {
+            term: { documentId }
+          }
+        }
+      });
+
+      // Delete from Qdrant (filter by documentId in payload)
+      await this.qdrant.delete('document_chunks', {
+        wait: true,
+        filter: {
+          must: [{ key: 'documentId', match: { value: documentId } }]
+        }
+      });
+
+      console.log(`✅ Deleted all chunks for document ${documentId}`);
+    } catch (error) {
+      console.error(`❌ Failed to delete document chunks:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Delete location embedding from Qdrant
+   */
+  private async deleteLocationEmbedding(locationId: string): Promise<void> {
+    try {
+      await this.qdrant.delete('location_actions', {
+        wait: true,
+        points: [this.objectIdToUUID(locationId)]
+      });
+      console.log(`✅ Deleted location embedding from Qdrant`);
+    } catch (error) {
+      console.error(`❌ Failed to delete location:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Delete location action embedding from Qdrant
+   */
+  private async deleteLocationActionEmbedding(locationActionId: string): Promise<void> {
+    try {
+      await this.qdrant.delete('location_actions', {
+        wait: true,
+        points: [this.objectIdToUUID(locationActionId)]
+      });
+      console.log(`✅ Deleted location action embedding from Qdrant`);
+    } catch (error) {
+      console.error(`❌ Failed to delete location action:`, error);
+      throw error;
     }
   }
 }

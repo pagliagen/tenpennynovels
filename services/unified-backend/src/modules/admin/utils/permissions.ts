@@ -12,10 +12,10 @@ interface PermissionConfig {
     description: string;
     lastUpdated: string;
   };
-  character_roles: Record<string, {
+  admin_roles: Record<string, {
     description: string;
     inherits?: string;
-    permissions: any;
+    permissions: string[];
   }>;
   user_roles: Record<string, {
     description: string;
@@ -44,65 +44,100 @@ function loadPermissionConfig(): PermissionConfig {
 }
 
 /**
- * Risolve i permessi per un ruolo CHARACTER, includendo l'ereditarietà
+ * Risolve i permessi per un ruolo admin, includendo l'ereditarietà.
+ * Formato flat come game-permissions: array di stringhe "admin:resource:action"
  */
-function resolveCharacterRolePermissions(roleName: string, config: PermissionConfig): any {
-  const role = config.character_roles[roleName];
+function resolveAdminRolePermissions(roleName: string, config: PermissionConfig): string[] {
+  const role = config.admin_roles[roleName];
   if (!role) {
-    console.warn(`Character role ${roleName} not found in permissions config`);
-    return {};
+    console.warn(`Admin role ${roleName} not found in permissions config`);
+    return [];
   }
 
-  let permissions = JSON.parse(JSON.stringify(role.permissions)); // Deep copy
-  
-  // Se il ruolo eredita da un altro ruolo, unisci i permessi
+  let permissions = [...role.permissions];
+
   if (role.inherits) {
-    const inheritedPermissions = resolveCharacterRolePermissions(role.inherits, config);
-    
-    // Unisci i permessi, dando precedenza a quelli del ruolo corrente
-    for (const section in inheritedPermissions) {
-      if (!permissions[section]) {
-        permissions[section] = { access: false, detail: {} };
+    const inheritedPermissions = resolveAdminRolePermissions(role.inherits, config);
+    permissions = [...new Set([...inheritedPermissions, ...permissions])];
+  }
+
+  return permissions;
+}
+
+/**
+ * Ottiene tutti i permessi effettivi per un utente (da ruoli + override)
+ */
+function getResolvedPermissions(characterRoles: string[], characterPermissions: string[], isGestore: boolean, config: PermissionConfig): string[] {
+  if (isGestore) {
+    return []; // Gestore ha tutti i permessi implicitamente
+  }
+
+  let permissions: string[] = [];
+  for (const role of characterRoles) {
+    permissions = [...new Set([...permissions, ...resolveAdminRolePermissions(role, config)])];
+  }
+
+  if (characterPermissions.includes('all')) {
+    return []; // all = tutti i permessi
+  }
+
+  for (const p of characterPermissions) {
+    if (p.startsWith('admin:')) {
+      permissions.push(p);
+    } else if (p.includes('.')) {
+      const parts = p.split('.');
+      if (parts.length === 2 && parts[1] === 'access') {
+        permissions.push(`admin:${parts[0]}:access`);
+      } else if (parts.length === 3 && parts[1] === 'detail') {
+        permissions.push(`admin:${parts[0]}:${parts[2]}`);
       }
-      
-      // Merge access
-      if (inheritedPermissions[section].access && !permissions[section].hasOwnProperty('access')) {
-        permissions[section].access = inheritedPermissions[section].access;
-      }
-      
-      // Merge detail permissions
-      if (!permissions[section].detail) {
-        permissions[section].detail = {};
-      }
-      permissions[section].detail = {
-        ...inheritedPermissions[section].detail,
-        ...permissions[section].detail
-      };
     }
   }
-  
-  return permissions;
+
+  return [...new Set(permissions)];
+}
+
+/**
+ * Verifica se l'utente ha un permesso specifico (da config JSON)
+ */
+function hasPermissionFromConfig(
+  characterRoles: string[],
+  characterPermissions: string[],
+  isGestore: boolean,
+  requiredPermission: string
+): boolean {
+  if (isGestore) return true;
+
+  const config = loadPermissionConfig();
+  const resolved = getResolvedPermissions(characterRoles, characterPermissions, false, config);
+
+  if (characterPermissions.includes('all')) return true;
+  if (resolved.includes(requiredPermission)) return true;
+
+  return false;
 }
 
 /**
  * Funzione principale per verificare accesso - haveAccessTo('dashboard')
  */
 export function haveAccessTo(section: string, userRoles: string[], characterRoles: string[], characterPermissions: string[] = []): boolean {
-  // CHARACTER.GESTORE ha sempre accesso a tutto senza filtri
   if (characterRoles.includes('gestore')) {
     return true;
   }
 
-  // Controlla i permessi specifici del personaggio per override
-  if (characterPermissions.includes('all') || characterPermissions.includes(`${section}.access`)) {
+  if (characterPermissions.includes('all')) {
     return true;
   }
 
-  // Controlla i permessi dei ruoli CHARACTER
+  const accessPermission = `admin:${section}:access`;
+  if (characterPermissions.includes(accessPermission) || characterPermissions.includes(`${section}.access`)) {
+    return true;
+  }
+
   const config = loadPermissionConfig();
   for (const role of characterRoles) {
-    const rolePermissions = resolveCharacterRolePermissions(role, config);
-    if (rolePermissions[section]?.access === true) {
+    const rolePermissions = resolveAdminRolePermissions(role, config);
+    if (rolePermissions.includes(accessPermission)) {
       return true;
     }
   }
@@ -111,80 +146,99 @@ export function haveAccessTo(section: string, userRoles: string[], characterRole
 }
 
 /**
+ * Converte permessi flat in struttura nested (per API backward compatibility)
+ */
+function flatToNestedPermissions(flatPermissions: string[]): Record<string, { access: boolean; detail: Record<string, boolean> }> {
+  const result: Record<string, { access: boolean; detail: Record<string, boolean> }> = {};
+  const allSections = ['dashboard', 'users', 'characters', 'content', 'documents', 'system', 'economy', 'locations', 'gamedata', 'skills', 'occupations', 'tickets'];
+
+  for (const section of allSections) {
+    result[section] = { access: false, detail: {} };
+  }
+
+  for (const p of flatPermissions) {
+    if (!p.startsWith('admin:')) continue;
+    const parts = p.slice(6).split(':');
+    if (parts.length >= 2) {
+      const section = parts[0];
+      const action = parts[1];
+      if (!result[section]) result[section] = { access: false, detail: {} };
+      if (action === 'access') {
+        result[section].access = true;
+      } else {
+        result[section].detail[action] = true;
+      }
+    }
+  }
+
+  return result;
+}
+
+/**
  * Ottieni tutti i permessi per un utente (CHARACTER roles + characterPermissions override)
  */
 export function getUserPermissions(userRoles: string[], characterRoles: string[], characterPermissions: string[] = []): any {
   const config = loadPermissionConfig();
-  let allPermissions: any = {};
 
-  // Se CHARACTER ha ruolo GESTORE, ha tutti i permessi senza filtri
   if (characterRoles.includes('gestore')) {
-    const sections = ['dashboard', 'users', 'characters', 'content', 'documents', 'system', 'economy', 'locations'];
+    const sections = ['dashboard', 'users', 'characters', 'content', 'documents', 'system', 'economy', 'locations', 'gamedata', 'skills', 'occupations', 'tickets'];
+    const allDetail: Record<string, boolean> = {
+      view_basic_stats: true, view_user_count: true, view_character_stats: true,
+      view_system_health: true, view_gameplay_stats: true, view_financial_stats: true,
+      view_activity_logs: true, read: true, create: true, update: true, delete: true,
+      ban: true, change_permissions: true, approve: true, reject: true, edit: true,
+      view_transactions: true, grant_money: true, adjust_balances: true, view_reports: true,
+      manage_access: true, manage_groups: true, publish: true, view_logs: true, maintenance_mode: true,
+      broadcast_messages: true, export_data: true, view: true
+    };
+    const allPermissions: any = {};
     for (const section of sections) {
-      allPermissions[section] = {
-        access: true,
-        detail: {
-          view_basic_stats: true, view_user_count: true, view_character_stats: true,
-          view_system_health: true, view_gameplay_stats: true, view_financial_stats: true,
-          view_activity_logs: true, read: true, create: true, update: true, delete: true,
-          ban: true, change_permissions: true, approve: true, reject: true, edit: true,
-          view_transactions: true, grant_money: true, adjust_balances: true, view_reports: true,
-          manage_access: true, manage_groups: true, publish: true, view_logs: true, maintenance_mode: true,
-          broadcast_messages: true, export_data: true
-        }
-      };
+      allPermissions[section] = { access: true, detail: { ...allDetail } };
     }
     return allPermissions;
   }
 
-  // Accumula permessi da tutti i ruoli CHARACTER
+  let flatPermissions: string[] = [];
   for (const role of characterRoles) {
-    const rolePermissions = resolveCharacterRolePermissions(role, config);
-
-    for (const section in rolePermissions) {
-      if (!allPermissions[section]) {
-        allPermissions[section] = { access: false, detail: {} };
-      }
-
-      // Merge access
-      if (rolePermissions[section].access) {
-        allPermissions[section].access = true;
-      }
-
-      // Merge detail permissions
-      allPermissions[section].detail = {
-        ...allPermissions[section].detail,
-        ...rolePermissions[section].detail
-      };
-    }
+    flatPermissions = [...new Set([...flatPermissions, ...resolveAdminRolePermissions(role, config)])];
   }
 
-  // Applica characterPermissions come override (eccezioni specifiche)
   if (characterPermissions.includes('all')) {
-    for (const section in allPermissions) {
-      allPermissions[section].access = true;
-      for (const action in allPermissions[section].detail) {
-        allPermissions[section].detail[action] = true;
-      }
-    }
+    flatPermissions = ['all'];
   } else {
-    for (const permission of characterPermissions) {
-      const parts = permission.split('.');
-      if (parts.length === 2 && parts[1] === 'access') {
-        if (!allPermissions[parts[0]]) {
-          allPermissions[parts[0]] = { access: false, detail: {} };
+    for (const p of characterPermissions) {
+      if (p.startsWith('admin:')) {
+        flatPermissions.push(p);
+      } else if (p.includes('.')) {
+        const parts = p.split('.');
+        if (parts.length === 2 && parts[1] === 'access') {
+          flatPermissions.push(`admin:${parts[0]}:access`);
+        } else if (parts.length === 3 && parts[1] === 'detail') {
+          flatPermissions.push(`admin:${parts[0]}:${parts[2]}`);
         }
-        allPermissions[parts[0]].access = true;
-      } else if (parts.length === 3 && parts[1] === 'detail') {
-        if (!allPermissions[parts[0]]) {
-          allPermissions[parts[0]] = { access: false, detail: {} };
-        }
-        allPermissions[parts[0]].detail[parts[2]] = true;
       }
     }
   }
 
-  return allPermissions;
+  if (flatPermissions.includes('all')) {
+    const sections = ['dashboard', 'users', 'characters', 'content', 'documents', 'system', 'economy', 'locations', 'gamedata', 'skills', 'occupations', 'tickets'];
+    const allDetail: Record<string, boolean> = {
+      view_basic_stats: true, view_user_count: true, view_character_stats: true,
+      view_system_health: true, view_gameplay_stats: true, view_financial_stats: true,
+      view_activity_logs: true, read: true, create: true, update: true, delete: true,
+      ban: true, approve: true, reject: true, edit: true, view_transactions: true,
+      grant_money: true, adjust_balances: true, view_reports: true, manage_access: true,
+      manage_groups: true, publish: true, view_logs: true, broadcast_messages: true, export_data: true,
+      view: true, assign: true, close: true, manage_all: true, transfer: true, internal_notes: true
+    };
+    const allPermissions: any = {};
+    for (const section of sections) {
+      allPermissions[section] = { access: true, detail: { ...allDetail } };
+    }
+    return allPermissions;
+  }
+
+  return flatToNestedPermissions([...new Set(flatPermissions)]);
 }
 
 /**
@@ -195,9 +249,14 @@ export function getVisibleDashboardBadges(userRoles: string[], characterRoles: s
   const visibleBadges: string[] = [];
 
   for (const [badgeId, badgeConfig] of Object.entries(config.dashboard_badges)) {
-    // Use new permission system
-    if (hasAdminPermission(characterRoles, characterPermissions, isGestore, badgeConfig.permission as AdminPermission)) {
-      visibleBadges.push(badgeId);
+    if (badgeConfig.permission.startsWith('admin:')) {
+      if (hasPermissionFromConfig(characterRoles, characterPermissions, isGestore, badgeConfig.permission)) {
+        visibleBadges.push(badgeId);
+      }
+    } else {
+      if (hasAdminPermission(characterRoles, characterPermissions, isGestore, badgeConfig.permission as AdminPermission)) {
+        visibleBadges.push(badgeId);
+      }
     }
   }
 
@@ -212,7 +271,6 @@ export function getVisibleMenuStructure(userRoles: string[], characterRoles: str
   const visibleMenu: any = {};
 
   for (const [menuId, menuConfig] of Object.entries(config.menu_structure)) {
-    // Controlla se l'utente ha accesso al menu principale
     if (haveAccessTo(menuId, userRoles, characterRoles, characterPermissions)) {
       visibleMenu[menuId] = {
         icon: menuConfig.icon,
@@ -220,10 +278,14 @@ export function getVisibleMenuStructure(userRoles: string[], characterRoles: str
         permission: menuConfig.permission
       };
 
-      // Filtra i sottomenu se esistono
       if (menuConfig.children) {
         const visibleChildren = menuConfig.children.filter((child: any) => {
-          // Use new permission system for all permissions
+          if (child.permission === 'manager.manage_user_permissions') {
+            return userRoles.includes('gestore');
+          }
+          if (child.permission.startsWith('admin:')) {
+            return hasPermissionFromConfig(characterRoles, characterPermissions, isGestore, child.permission);
+          }
           return hasAdminPermission(characterRoles, characterPermissions, isGestore, child.permission as AdminPermission);
         });
         if (visibleChildren.length > 0) {

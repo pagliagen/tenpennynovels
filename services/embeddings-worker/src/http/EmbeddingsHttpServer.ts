@@ -5,6 +5,8 @@
 
 import express, { Request, Response, NextFunction } from 'express';
 import { PythonEmbeddingService } from '../services/PythonEmbeddingService';
+import { QdrantClient } from '@qdrant/js-client-rest';
+import { Client as ElasticsearchClient } from '@elastic/elasticsearch';
 
 const LOG_LEVEL = process.env.LOG_LEVEL || 'info';
 
@@ -28,16 +30,24 @@ const logger = {
   }
 };
 
+const ELASTICSEARCH_URL = process.env.ELASTICSEARCH_URL || 'http://localhost:9200';
+const ELASTICSEARCH_INDEX_PREFIX = process.env.ELASTICSEARCH_INDEX_PREFIX || 'tenpennynovels';
+const QDRANT_URL = process.env.QDRANT_URL || 'http://localhost:6333';
+
 export class EmbeddingsHttpServer {
   private app: express.Application;
   private server: any;
+  private qdrant: QdrantClient;
+  private elasticsearch: ElasticsearchClient;
 
   constructor(
     private pythonService: PythonEmbeddingService,
     private port: number = 5001,
-    private host: string = '127.0.0.1'
+    private host: string = '0.0.0.0'  // Listen on all interfaces for Docker networking
   ) {
     this.app = express();
+    this.qdrant = new QdrantClient({ url: QDRANT_URL });
+    this.elasticsearch = new ElasticsearchClient({ node: ELASTICSEARCH_URL });
     this.setupMiddleware();
     this.setupRoutes();
   }
@@ -90,70 +100,145 @@ export class EmbeddingsHttpServer {
     });
 
     /**
-     * Embed endpoint (compatible with Flask API)
-     * POST /embed
-     * Body: { text: string }
-     * Response: { success: boolean, embedding?: number[], dimensions?: number, error?: string }
+     * Hybrid search endpoint (keyword + semantic)
+     * POST /search
+     * Body: { query: string, type?: string, limit?: number, minScore?: number }
+     * Response: { success: boolean, results: Array<...>, error?: string }
      */
-    this.app.post('/embed', async (req: Request, res: Response) => {
+    this.app.post('/search', async (req: Request, res: Response) => {
       try {
-        const { text } = req.body;
+        const { query, type, limit = 10, minScore = 0.4 } = req.body;
 
-        // Validation
-        if (!text || typeof text !== 'string') {
+        if (!query || typeof query !== 'string') {
           return res.status(400).json({
             success: false,
-            error: 'Missing or invalid text parameter'
+            error: 'Missing or invalid query parameter'
           });
         }
 
-        if (text.length === 0) {
-          return res.status(400).json({
-            success: false,
-            error: 'Text cannot be empty'
-          });
-        }
+        // 1. Generate embedding for semantic search
+        const embedding = await this.pythonService.generateEmbedding(query);
 
-        if (text.length > 10000) {
-          return res.status(400).json({
-            success: false,
-            error: 'Text too long (max 10000 chars)'
-          });
-        }
+        // 2. Keyword search (ElasticSearch)
+        const keywordResults = await this.keywordSearch(query, type, limit * 2);
 
-        // Generate embedding via Python subprocess
-        const embedding = await this.pythonService.generateEmbedding(text);
+        // 3. Semantic search (Qdrant)
+        const semanticResults = await this.vectorSearch(embedding, type, limit * 2, minScore);
+
+        // 4. Merge with RRF
+        const merged = this.mergeWithRRF(keywordResults, semanticResults, limit);
 
         res.json({
           success: true,
-          embedding,
-          dimensions: embedding.length
+          results: merged,
+          totalResults: merged.length
         });
 
       } catch (error: any) {
-        logger.error(`Error in /embed: ${error.message}`);
-
-        // Determine appropriate status code
-        if (error.message.includes('not ready')) {
-          return res.status(503).json({
-            success: false,
-            error: 'Service temporarily unavailable'
-          });
-        }
-
-        if (error.message.includes('timeout')) {
-          return res.status(504).json({
-            success: false,
-            error: 'Request timeout'
-          });
-        }
-
+        logger.error(`Error in /search: ${error.message}`);
         res.status(500).json({
           success: false,
           error: 'Internal server error'
         });
       }
     });
+  }
+
+  private async keywordSearch(query: string, type?: string, limit: number = 20) {
+    try {
+      const mustClauses: any[] = [{
+        bool: {
+          should: [
+            { match: { heading: { query, boost: 2 } } },
+            { match: { content: query } }
+          ]
+        }
+      }];
+
+      if (type) mustClauses.push({ term: { documentType: type } });
+
+      const response = await this.elasticsearch.search({
+        index: `${ELASTICSEARCH_INDEX_PREFIX}_document_chunks`,
+        body: {
+          query: { bool: { must: mustClauses, filter: [{ term: { isActive: true } }] } },
+          size: limit
+        }
+      });
+
+      return response.hits.hits.map((hit: any, i: number) => ({
+        chunkId: hit._source.chunkId,
+        documentId: hit._source.documentId,
+        slug: hit._source.slug,
+        heading: hit._source.heading,
+        type: hit._source.documentType,
+        parentSlug: hit._source.parentSlug,
+        rank: i + 1
+      }));
+    } catch (error: any) {
+      logger.error(`Keyword search error: ${error.message}`);
+      return [];
+    }
+  }
+
+  private async vectorSearch(embedding: number[], type?: string, limit: number = 20, minScore: number = 0.4) {
+    try {
+      if (!embedding) return [];
+
+      const filter: any = { must: [{ key: 'isActive', match: { value: true } }] };
+      if (type) filter.must.push({ key: 'documentType', match: { value: type } });
+
+      const results = await this.qdrant.search('document_chunks', {
+        vector: embedding,
+        limit,
+        score_threshold: minScore,
+        filter
+      });
+
+      return results.map((r, i) => ({
+        chunkId: r.payload?.chunkId as string,
+        documentId: r.payload?.documentId as string,
+        slug: r.payload?.slug as string,
+        heading: r.payload?.heading as string,
+        type: r.payload?.documentType as string,
+        parentSlug: r.payload?.parentSlug as string | undefined,
+        rank: i + 1
+      }));
+    } catch (error: any) {
+      logger.error(`Vector search error: ${error.message}`);
+      return [];
+    }
+  }
+
+  private mergeWithRRF(keywordResults: any[], semanticResults: any[], limit: number) {
+    const k = 60;
+    const scoreMap = new Map<string, { data: any; score: number }>();
+
+    for (const r of keywordResults) {
+      scoreMap.set(r.chunkId, { data: r, score: 1 / (k + r.rank) });
+    }
+
+    for (const r of semanticResults) {
+      const rrfScore = 1 / (k + r.rank);
+      const existing = scoreMap.get(r.chunkId);
+      if (existing) {
+        existing.score += rrfScore;
+      } else {
+        scoreMap.set(r.chunkId, { data: r, score: rrfScore });
+      }
+    }
+
+    return Array.from(scoreMap.values())
+      .sort((a, b) => b.score - a.score)
+      .slice(0, limit)
+      .map(item => ({
+        chunkId: item.data.chunkId,
+        documentId: item.data.documentId,
+        slug: item.data.slug,
+        heading: item.data.heading,
+        score: item.score,
+        type: item.data.type,
+        parentSlug: item.data.parentSlug
+      }));
   }
 
   async start(): Promise<void> {

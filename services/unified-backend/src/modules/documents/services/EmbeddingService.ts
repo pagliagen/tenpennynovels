@@ -10,7 +10,6 @@ import { qdrant } from '../utils/qdrantClient';
 
 const EMBEDDINGS_SERVICE_URL = process.env.EMBEDDINGS_SERVICE_URL || 'http://127.0.0.1:5001';
 const ROUTES_COLLECTION = 'routes_vectors';
-const DOCUMENTS_COLLECTION = 'documents_vectors';
 
 export class EmbeddingService {
   /**
@@ -105,53 +104,54 @@ export class EmbeddingService {
   }
 
   /**
-   * Semantic search for documents
+   * Hybrid search (keyword + semantic) via embeddings-worker
+   *
+   * Delegates search to embeddings-worker /search endpoint which combines
+   * ElasticSearch keyword search with Qdrant semantic search using RRF.
    *
    * @param query - Search query text
    * @param type - Document type filter (optional)
    * @param limit - Max results to return (default 10)
    * @param minScore - Minimum similarity score threshold (default 0.4)
-   * @returns Array of matching documents with scores
+   * @returns Array of matching document chunks with hybrid scores
    */
   static async semanticSearch(
     query: string,
     type?: 'ambientazione' | 'approfondimenti' | 'regolamento',
     limit: number = 10,
     minScore: number = 0.4
-  ): Promise<Array<{ documentId: string; title: string; score: number; type: string; path: string }>> {
+  ): Promise<Array<{ chunkId: string; documentId: string; slug: string; heading: string; score: number; type: string; parentSlug?: string }>> {
     try {
-      // Generate embedding for query
-      const embedding = await this.generateEmbedding(query);
+      logger.info(`[EmbeddingService] Calling embeddings-worker: ${EMBEDDINGS_SERVICE_URL}/search`);
+      logger.info(`[EmbeddingService] Request payload: ${JSON.stringify({ query, type, limit, minScore })}`);
 
-      if (!embedding) {
+      const response = await fetch(`${EMBEDDINGS_SERVICE_URL}/search`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query, type, limit, minScore }),
+        signal: AbortSignal.timeout(10000)
+      });
+
+      logger.info(`[EmbeddingService] Response status: ${response.status}`);
+
+      if (!response.ok) {
+        logger.error(`Search service error: ${response.status}`);
         return [];
       }
 
-      // Build filter
-      const filter: any = {};
-      if (type) {
-        filter.must = [{ key: 'documentType', match: { value: type } }];
+      const data = await response.json() as { success: boolean; results?: any[] };
+      logger.info(`[EmbeddingService] Response data: ${JSON.stringify({ success: data.success, resultsCount: data.results?.length || 0 })}`);
+
+      if (!data.success || !data.results) {
+        logger.warn(`[EmbeddingService] Invalid response: success=${data.success}, results=${!!data.results}`);
+        return [];
       }
 
-      // Vector search in Qdrant
-      const searchResults = await qdrant.search(DOCUMENTS_COLLECTION, {
-        vector: embedding,
-        limit,
-        score_threshold: minScore,
-        filter: Object.keys(filter).length > 0 ? filter : undefined
-      });
-
-      // Map results
-      return searchResults.map(result => ({
-        documentId: result.payload?.documentId as string,
-        title: result.payload?.title as string,
-        score: result.score,
-        type: result.payload?.documentType as string,
-        path: result.payload?.path as string
-      }));
+      return data.results;
 
     } catch (error: any) {
       logger.error(`Error in semanticSearch: ${error.message}`);
+      logger.error(`Error stack: ${error.stack}`);
       return [];
     }
   }

@@ -26,7 +26,7 @@ export class EmbeddingEventPublisher {
     documentId: string,
     title: string,
     content: string,
-    type: 'ambientazione' | 'regolamento' | 'lore',
+    type: 'ambientazione' | 'regolamento' | 'approfondimenti',
     isUpdate: boolean = false
   ): Promise<void> {
     const event: DocumentEmbeddingEvent = {
@@ -81,7 +81,7 @@ export class EmbeddingEventPublisher {
       documentId: string;
       title: string;
       content: string;
-      type: 'ambientazione' | 'regolamento' | 'lore';
+      type: 'ambientazione' | 'regolamento' | 'approfondimenti';
     }>
   ): Promise<void> {
     const pipeline = this.publisher.multi();

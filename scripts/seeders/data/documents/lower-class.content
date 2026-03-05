@@ -2,15 +2,6 @@
   "type": "doc",
   "content": [
     {
-      "type": "paragraph",
-      "content": [
-        {
-          "type": "text",
-          "text": "Nel contesto vittoriano, la lower class comprende l'insieme più vasto e instabile della popolazione urbana. Ne fanno parte operai, manovali, lavoratori a giornata, domestici, mendicanti, disoccupati, indigenti cronici e persone ai margini della legalità. Non è una classe compatta né omogenea: al suo interno convivono lavoro regolare e precarietà assoluta, dignità ostinata e sopravvivenza brutale. A differenza della middle class, la lower class non ha come obiettivo il miglioramento morale o sociale, ma la resistenza quotidiana. Il confine tra lavoro e povertà estrema è sottile e mobile. Una malattia, un licenziamento, una gravidanza o la morte di un familiare possono determinare una caduta improvvisa e irreversibile."
-        }
-      ]
-    },
-    {
       "type": "heading",
       "attrs": {
         "level": 2

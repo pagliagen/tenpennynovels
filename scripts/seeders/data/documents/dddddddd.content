@@ -2,13 +2,26 @@
   "type": "doc",
   "content": [
     {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Test"
+        }
+      ]
+    },
+    {
       "type": "paragraph",
       "content": [
         {
           "type": "text",
-          "text": "dddd"
+          "text": "Questa è una stringa di esempio inserita come richiesto."
         }
       ]
-    }
-  ]
+    },
+    ]
 }
+ 

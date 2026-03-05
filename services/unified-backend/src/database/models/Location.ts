@@ -717,6 +717,58 @@ LocationSchema.statics.findAccessibleByCharacter = function(characterId: Schema.
   });
 };
 
+// ========== HOOKS ==========
+
+/**
+ * Post-save hook: Trigger embedding generation or cleanup
+ * Handles: create, update, soft delete, restore
+ */
+LocationSchema.post('save', async function(doc) {
+  try {
+    const { publishLocationEvent, publishLocationDeletedEvent } = await import('@shared/services/EmbeddingEventPublisher');
+
+    // SOFT DELETE: If deletedAt is set, clean up embeddings
+    if (doc.deletedAt) {
+      await publishLocationDeletedEvent(doc._id.toString());
+      return;
+    }
+
+    // CREATE/UPDATE/RESTORE: Generate embeddings
+    const action = doc.isNew ? 'created' : 'updated';
+    await publishLocationEvent(action, {
+      _id: doc._id.toString(),
+      name: doc.name,
+      description: doc.description,
+      district: doc.district,
+      slug: doc.slug
+    });
+  } catch (error) {
+    console.error('[Location] Failed to publish embedding event:', error);
+  }
+});
+
+/**
+ * Post-delete hooks: Trigger embedding cleanup
+ */
+LocationSchema.post('deleteOne', async function(doc) {
+  try {
+    const { publishLocationDeletedEvent } = await import('@shared/services/EmbeddingEventPublisher');
+    await publishLocationDeletedEvent(doc._id.toString());
+  } catch (error) {
+    console.error('[Location] Failed to publish delete event:', error);
+  }
+});
+
+LocationSchema.post('findOneAndDelete', async function(doc) {
+  if (!doc) return;
+  try {
+    const { publishLocationDeletedEvent } = await import('@shared/services/EmbeddingEventPublisher');
+    await publishLocationDeletedEvent(doc._id.toString());
+  } catch (error) {
+    console.error('[Location] Failed to publish delete event:', error);
+  }
+});
+
 // Apply soft delete plugin
 LocationSchema.plugin(softDeletePlugin, {
   uniqueKeys: ['slug'],

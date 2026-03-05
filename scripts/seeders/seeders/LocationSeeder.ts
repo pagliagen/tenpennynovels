@@ -2,11 +2,30 @@ import * as fs from 'fs';
 import * as path from 'path';
 import csv from 'csv-parser';
 import slugify from 'slugify';
+import Redis from 'ioredis';
+import crypto from 'crypto';
 import { getConnection } from '../utils/connection.js';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 export class LocationSeeder {
   name = 'locations';
   description = 'Seed initial London locations from CSV data';
+  private redis: Redis;
+
+  constructor() {
+    // Initialize Redis for event publishing
+    const redisHost = process.env.REDIS_HOST || 'localhost';
+    const redisPort = parseInt(process.env.REDIS_PORT || '6379', 10);
+    this.redis = new Redis({
+      host: redisHost,
+      port: redisPort,
+      maxRetriesPerRequest: null
+    });
+  }
 
   async seed(force: boolean = false): Promise<void> {
     const { client, db } = await getConnection();
@@ -45,11 +64,17 @@ export class LocationSeeder {
 
       console.log(`   ✅ Successfully created ${createdLocations.size} locations`);
 
+      // Publish embedding events (triggers automatic embedding generation)
+      console.log('   📝 Publishing embedding events...');
+      await this.publishEmbeddingEvents(db);
+      console.log(`   ✅ Embedding events published`);
+
     } catch (error) {
       console.error('   ❌ LocationSeeder error:', error);
       throw error;
     } finally {
       await client.close();
+      await this.redis.quit();
     }
   }
 
@@ -183,7 +208,40 @@ export class LocationSeeder {
       'Guildhall', 'Royal Courts of Justice', 'University College London',
       'Somerset House', 'Scotland Yard'
     ];
-    
+
     return privateLocations.includes(locationName);
+  }
+
+  /**
+   * Publish embedding events for all locations
+   * Triggers automatic embedding generation in embeddings-worker
+   */
+  private async publishEmbeddingEvents(db: any): Promise<void> {
+    const locationsCol = db.collection('locations');
+    const allLocations = await locationsCol.find({}).toArray();
+
+    console.log(`   Publishing events for ${allLocations.length} locations...`);
+
+    let published = 0;
+    for (const location of allLocations) {
+      try {
+        const event = {
+          eventId: crypto.randomUUID(),
+          timestamp: new Date(),
+          locationId: location._id.toString(),
+          name: location.name,
+          description: location.description,
+          district: location.district,
+          slug: location.slug
+        };
+
+        await this.redis.publish('embedding:location:created', JSON.stringify(event));
+        published++;
+      } catch (error) {
+        console.error(`   ⚠️  Failed to publish event for ${location.slug}:`, error);
+      }
+    }
+
+    console.log(`   Published ${published} embedding events successfully`);
   }
 }

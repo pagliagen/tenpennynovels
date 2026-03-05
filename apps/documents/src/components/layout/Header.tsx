@@ -64,7 +64,7 @@ export function Header({ onSearchToggle, showSearch }: HeaderProps): JSX.Element
         {/* Search Bar (inline) or Search Toggle */}
         {showSearch ? (
           <div className={styles.searchBarWrapper}>
-            <SearchBar placeholder="Cerca documenti..." className={styles.inlineSearch} />
+            <SearchBar placeholder="Cerca documenti..." className={styles.inlineSearch} autoFocus />
             <button
               type="button"
               className={styles.closeSearch}

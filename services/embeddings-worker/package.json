@@ -13,12 +13,14 @@
     "watch": "tsx watch src/index.ts"
   },
   "dependencies": {
+    "@elastic/elasticsearch": "^8.15.0",
     "@qdrant/js-client-rest": "^1.17.0",
     "bull": "^4.16.5",
     "dotenv": "^17.2.3",
     "express": "^4.21.2",
     "mongoose": "^9.1.6",
     "redis": "^5.10.0",
+    "slugify": "^1.6.6",
     "uuid": "^13.0.0"
   },
   "devDependencies": {

@@ -59,7 +59,7 @@ const DocumentSchema = new Schema<IDocument>({
   },
   content: {
     type: String,
-    required: true             // Always generated from contentDelta
+    required: false            // Auto-generated from contentDelta in pre-save hook
   },
   description: {
     type: String
@@ -117,7 +117,8 @@ const DocumentSchema = new Schema<IDocument>({
  */
 DocumentSchema.pre('save', async function() {
   // VALIDATION: If document is referenced by a route, validate type matches
-  if (this.isModified('type') || this.isNew) {
+  // Skip validation for new documents (routes may not exist yet, e.g., during seeding)
+  if (this.isModified('type') && !this.isNew) {
     // Dynamic import to avoid circular dependencies
     const Route = (await import('./Route')).default;
     const route = await Route.findOne({ rootDocumentId: this._id });
@@ -140,6 +141,56 @@ DocumentSchema.pre('save', async function() {
       console.error('[Document] Failed to generate HTML from contentDelta:', error);
       // Don't block save - content will be undefined, can be regenerated later
     }
+  }
+});
+
+/**
+ * Post-save hook: Trigger embedding generation or cleanup
+ * Handles: create, update, soft delete, restore
+ */
+DocumentSchema.post('save', async function(doc) {
+  try {
+    const { publishDocumentEvent, publishDocumentDeletedEvent } = await import('@shared/services/EmbeddingEventPublisher');
+
+    // SOFT DELETE: If deletedAt is set, clean up embeddings
+    if (doc.deletedAt) {
+      await publishDocumentDeletedEvent(doc._id.toString());
+      return;
+    }
+
+    // CREATE/UPDATE/RESTORE: Generate embeddings
+    const action = doc.isNew ? 'created' : 'updated';
+    await publishDocumentEvent(action, {
+      _id: doc._id.toString(),
+      title: doc.title,
+      content: doc.content || '',
+      type: doc.type
+    });
+  } catch (error) {
+    console.error('[Document] Failed to publish embedding event:', error);
+    // Don't block save - embeddings can be regenerated later
+  }
+});
+
+/**
+ * Post-delete hooks: Trigger embedding cleanup
+ */
+DocumentSchema.post('deleteOne', async function(doc) {
+  try {
+    const { publishDocumentDeletedEvent } = await import('@shared/services/EmbeddingEventPublisher');
+    await publishDocumentDeletedEvent(doc._id.toString());
+  } catch (error) {
+    console.error('[Document] Failed to publish delete event:', error);
+  }
+});
+
+DocumentSchema.post('findOneAndDelete', async function(doc) {
+  if (!doc) return;
+  try {
+    const { publishDocumentDeletedEvent } = await import('@shared/services/EmbeddingEventPublisher');
+    await publishDocumentDeletedEvent(doc._id.toString());
+  } catch (error) {
+    console.error('[Document] Failed to publish delete event:', error);
   }
 });
 

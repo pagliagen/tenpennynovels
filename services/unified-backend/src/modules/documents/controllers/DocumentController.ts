@@ -13,9 +13,6 @@ import Document from '@database/models/Document';
 import { RouteService } from '../services/RouteService';
 import { EmbeddingService } from '../services/EmbeddingService';
 import { logger } from '@shared/utils/logger';
-import { qdrant } from '../utils/qdrantClient';
-
-const EMBEDDINGS_SERVICE_URL = process.env.EMBEDDINGS_SERVICE_URL || 'http://127.0.0.1:5001';
 
 export class DocumentController {
   // ========== PUBLIC ROUTES ==========
@@ -146,7 +143,13 @@ export class DocumentController {
             foreignField: '_id',
             as: 'document',
             pipeline: [
-              { $match: { deleted: { $ne: true } } }
+              {
+                $match: {
+                  deleted: { $ne: true },
+                  isDraft: { $ne: true },
+                  visible: { $ne: false }
+                }
+              }
             ]
           }
         },
@@ -218,7 +221,13 @@ export class DocumentController {
             foreignField: '_id',
             as: 'document',
             pipeline: [
-              { $match: { deleted: { $ne: true } } }
+              {
+                $match: {
+                  deleted: { $ne: true },
+                  isDraft: { $ne: true },
+                  visible: { $ne: false }
+                }
+              }
             ]
           }
         },
@@ -336,11 +345,11 @@ export class DocumentController {
 
   /**
    * GET /documents/semantic-search
-   * Semantic search using Qdrant vector DB
+   * Hybrid search (keyword + semantic) via embeddings-worker
    */
   static async semanticSearch(req: Request, res: Response): Promise<void> {
     try {
-      const { q: query, type, limit = 5, minSimilarity = 0.5 } = req.query;
+      const { q: query, type, limit = 5, minSimilarity = 0.01 } = req.query;
 
       // Validate query
       if (!query || typeof query !== 'string') {
@@ -352,49 +361,17 @@ export class DocumentController {
         return;
       }
 
-      // Generate query embedding
-      logger.info(`Generating embedding for query: "${query}"`);
-      const embeddingRes = await fetch(`${EMBEDDINGS_SERVICE_URL}/embed`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: query }),
-        signal: AbortSignal.timeout(30000)
-      });
+      logger.info(`Hybrid search for query: "${query}"`);
 
-      if (!embeddingRes.ok) {
-        throw new Error(`Embeddings service error: ${embeddingRes.status}`);
-      }
+      // Call hybrid search service (delegates to embeddings-worker /search)
+      const searchResults = await EmbeddingService.semanticSearch(
+        query,
+        type as any,
+        Number(limit),
+        Number(minSimilarity)
+      );
 
-      const embeddingData = await embeddingRes.json() as { success: boolean; embedding?: number[] };
-
-      if (!embeddingData.success || !embeddingData.embedding) {
-        throw new Error('Failed to generate query embedding');
-      }
-
-      const queryEmbedding = embeddingData.embedding;
-
-      // Qdrant vector search
-      logger.info(`Searching Qdrant with limit=${limit}, minSimilarity=${minSimilarity}`);
-
-      const searchParams: any = {
-        vector: queryEmbedding,
-        limit: Number(limit),
-        score_threshold: Number(minSimilarity)
-      };
-
-      // Optional type filter
-      if (type && ['ambientazione', 'approfondimenti', 'regolamento'].includes(type as string)) {
-        searchParams.filter = {
-          must: [{ key: 'documentType', match: { value: type } }]
-        };
-      }
-
-      const searchResults = await qdrant.search('document_chunks', searchParams);
-
-      // Fetch chunk details from MongoDB
-      const chunkIds = searchResults.map(r => r.payload?.chunkId as string).filter(Boolean);
-
-      if (chunkIds.length === 0) {
+      if (searchResults.length === 0) {
         res.json({
           result: true,
           data: {
@@ -406,27 +383,38 @@ export class DocumentController {
         return;
       }
 
+      // Fetch chunk details from MongoDB
+      const chunkIds = searchResults.map(r => r.chunkId).filter(Boolean);
       const db = mongoose.connection.db;
       if (!db) {
         throw new Error('Database connection not available');
       }
 
       const chunks = await db.collection('documentchunks').find({
-        _id: { $in: chunkIds.map(id => new mongoose.Types.ObjectId(id)) }
+        chunkId: { $in: chunkIds }
       }).toArray();
 
       // Fetch parent documents for each chunk
       const documentIds = chunks.map(c => c.documentId).filter(Boolean);
       const documents = await Document.find({
         _id: { $in: documentIds },
-        deleted: { $ne: true }
+        deleted: { $ne: true },
+        isDraft: { $ne: true },
+        visible: { $ne: false }
       });
 
       // Fetch routes for matched documents
-      const routes = await Route.find({
+      const routeFilter: any = {
         rootDocumentId: { $in: documentIds },
         enabled: true
-      });
+      };
+
+      // Public users see only isPublic=true routes
+      if (!req.user) {
+        routeFilter.isPublic = true;
+      }
+
+      const routes = await Route.find(routeFilter);
 
       // Build maps
       const routeMap = new Map<string, any>();
@@ -443,7 +431,7 @@ export class DocumentController {
 
       // Build results with similarity scores and anchor links
       const results = searchResults.map(result => {
-        const chunk: any = chunks.find((c: any) => c._id.toString() === result.payload?.chunkId);
+        const chunk: any = chunks.find((c: any) => c.chunkId === result.chunkId);
         if (!chunk) return null;
 
         const document = documentMap.get(chunk.documentId.toString());
@@ -457,11 +445,8 @@ export class DocumentController {
           return null;
         }
 
-        // Determine anchor
-        let anchorSlug = chunk.slug;
-        if (chunk.headingLevel === 3 && chunk.parentSlug) {
-          anchorSlug = chunk.parentSlug;
-        }
+        // Determine anchor (use parentSlug for H3, slug for H2)
+        let anchorSlug = result.parentSlug || result.slug;
 
         return {
           document: {
@@ -480,7 +465,7 @@ export class DocumentController {
             fullPath: `/${route.type}/${route.path}#${anchorSlug}`
           },
           matchLevel: chunk.headingLevel,
-          matchHeading: chunk.title,
+          matchHeading: result.heading,
           similarity: result.score,
           matchScore: (result.score * 100).toFixed(1) + '%'
         };

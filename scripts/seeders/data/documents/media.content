@@ -2,15 +2,6 @@
   "type": "doc",
   "content": [
     {
-      "type": "paragraph",
-      "content": [
-        {
-          "type": "text",
-          "text": "Nel cuore pulsante della Londra vittoriana, i media e i mezzi di comunicazione vivevano una stagione di grande trasformazione. Tra innovazioni tecnologiche e tradizioni consolidate, la città si riscopriva sempre più connessa: il telegrafo, il telefono, la posta e la stampa influenzavano profondamente la vita quotidiana, le relazioni sociali e la percezione degli eventi. In questo complesso mosaico, l'accesso all'informazione divenne progressivamente più rapido e capillare, modificando per sempre il modo in cui londinesi e visitatori si muovevano, comunicavano e si formavano un'opinione sul mondo che li circondava."
-        }
-      ]
-    },
-    {
       "type": "heading",
       "attrs": {
         "level": 2

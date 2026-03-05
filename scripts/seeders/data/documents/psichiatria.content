@@ -2,15 +2,6 @@
   "type": "doc",
   "content": [
     {
-      "type": "paragraph",
-      "content": [
-        {
-          "type": "text",
-          "text": "Prima del XIX secolo la cura dei malati di mente non costituiva un ambito medico autonomo. Le persone considerate folli venivano gestite all'interno delle famiglie, delle parrocchie o affidate a figure eterogenee come medici generici, chirurghi, farmacisti ed ecclesiastici. I trattamenti non differivano da quelli applicati alle malattie del corpo e comprendevano purghe, sedativi, salassi e contenimenti fisici. Con l'avvento del capitalismo vittoriano e la crescente urbanizzazione, questo sistema informale entrò in crisi. Le famiglie non erano più in grado di occuparsi dei malati e lo Stato iniziò a intervenire in modo sistematico. La concentrazione dei pazienti in strutture dedicate permise ai medici di osservare, confrontare e classificare i disturbi, trasformando gradualmente la follia da colpa morale o possessione in una condizione patologica. In Gran Bretagna la psichiatria si sviluppò soprattutto come disciplina amministrativa e istituzionale, legata alla gestione dei manicomi. In altri paesi europei rimase più vicina alla neurologia e allo studio del cervello. Questa differenza segnerà a lungo l'approccio britannico alla malattia mentale."
-        }
-      ]
-    },
-    {
       "type": "heading",
       "attrs": {
         "level": 2

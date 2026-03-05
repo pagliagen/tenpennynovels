@@ -177,7 +177,7 @@ export class RouteService {
     }
 
     const rootChunks = await db.collection('documentchunks').find({
-      documentId: rootDoc._id,
+      documentId: rootDoc._id.toString(),
       isActive: true
     }).sort({ order: 1 }).toArray();
 
@@ -186,7 +186,7 @@ export class RouteService {
       response.sections = rootChunks.map((chunk: any) => ({
         _id: chunk._id.toString(),
         documentId: chunk.documentId.toString(),
-        title: chunk.title,
+        title: chunk.heading,
         slug: chunk.slug,
         content: this.convertPlainTextToHTML(chunk.content, chunk.headingLevel),
         order: chunk.order,
@@ -216,7 +216,7 @@ export class RouteService {
       response.sections = rootChunks.map((chunk: any) => ({
         _id: chunk._id.toString(),
         documentId: chunk.documentId.toString(),
-        title: chunk.title,
+        title: chunk.heading,
         slug: chunk.slug,
         content: this.convertPlainTextToHTML(chunk.content, chunk.headingLevel),
         order: chunk.order,
@@ -237,7 +237,7 @@ export class RouteService {
       allSections.push({
         _id: chunk._id.toString(),
         documentId: chunk.documentId.toString(),
-        title: chunk.title,
+        title: chunk.heading,
         slug: chunk.slug,
         content: this.convertPlainTextToHTML(chunk.content, chunk.headingLevel),
         order: chunk.order,
@@ -250,7 +250,7 @@ export class RouteService {
     for (const { document: childDoc, depth, order } of childrenWithDepth) {
       // Fetch child document chunks
       const childChunks = await db.collection('documentchunks').find({
-        documentId: childDoc._id,
+        documentId: childDoc._id.toString(),
         isActive: true
       }).sort({ order: 1 }).toArray();
 
@@ -271,7 +271,7 @@ export class RouteService {
         allSections.push({
           _id: chunk._id.toString(),
           documentId: chunk.documentId.toString(),
-          title: chunk.title,
+          title: chunk.heading,
           slug: chunk.slug,
           content: this.convertPlainTextToHTML(
             chunk.content,

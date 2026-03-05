@@ -1,46 +1,31 @@
 # =============================================================================
-# TenpennyNovels Embeddings Worker (Unified) - Multi-stage Dockerfile
-# Includes: Node.js + Python + sentence-transformers
+# TenpennyNovels Embeddings Worker (Unified) - Single-stage Dockerfile
+# Python base + Node.js (Debian-based for PyTorch compatibility)
 # =============================================================================
 
-# -----------------------------------------------------------------------------
-# Stage 1: Python Base - Install ML dependencies
-# -----------------------------------------------------------------------------
-FROM python:3.11-slim AS python-base
-
-WORKDIR /app/python
-
-# Install Python dependencies
-COPY python/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# HuggingFace token (optional - for rate limits and private models)
-ARG HF_TOKEN
-ENV HF_TOKEN=${HF_TOKEN}
-
-# Pre-download sentence-transformers model to cache
-# This prevents download at runtime and fixes the "20 restarts" issue
-RUN python3 -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')"
-
-# Copy Python scripts
-COPY python/ .
-
-# -----------------------------------------------------------------------------
-# Stage 2: Node.js Final - Application runtime
-# -----------------------------------------------------------------------------
-FROM node:22-alpine
+FROM python:3.12-slim
 
 WORKDIR /app
 
-# Install Python3 runtime in Node image (no build tools needed)
-RUN apk add --no-cache python3 py3-pip
+# Install Node.js 22.x from NodeSource
+RUN apt-get update && \
+    apt-get install -y curl && \
+    curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
+    apt-get install -y nodejs && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
-# Copy Python environment from python-base stage
-COPY --from=python-base /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
-# Alpine uses Python 3.12, so copy packages there too
-COPY --from=python-base /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.12/site-packages
-COPY --from=python-base /root/.cache/huggingface /root/.cache/huggingface
-COPY --from=python-base /app/python /app/python
+# Install Python dependencies
+COPY python/requirements.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt
+
+# Pre-download HuggingFace model to cache
+ARG HF_TOKEN
+ENV HF_TOKEN=${HF_TOKEN}
+RUN python3 -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')"
+
+# Copy Python scripts
+COPY python/ /app/python
 
 # Copy Node.js application files
 COPY package.json package-lock.json tsconfig.json ./

@@ -2,15 +2,6 @@
   "type": "doc",
   "content": [
     {
-      "type": "paragraph",
-      "content": [
-        {
-          "type": "text",
-          "text": "Londra nel 1895 è una città che non conosce riposo. Quattro milioni di persone vivono stipate fra quartieri anneriti dal carbone e boulevard illuminati a gas, sotto il peso di un impero che tocca ogni angolo del mondo. Da quasi sessant'anni regna la regina Vittoria, ormai anziana e ritirata dalle scene: vedova inconsolabile del principe Alberto, porta lutto perenne e ha fatto del rigore morale l'impronta del suo secolo. \nLa sua figura, austera e immobile, è diventata un simbolo di disciplina, famiglia e lavoro; eppure chi abita davvero la città sa che Londra non ha mai smesso di avere due facce. Pubblicamente regna il puritanesimo, privatamente la decadenza: i salotti inneggiano alle buone maniere, ma nei vicoli prosperano i bordelli; le chiese ammoniscono sul peccato, ma i mercati vendono alcol, piacere e ogni vizio possibile."
-        }
-      ]
-    },
-    {
       "type": "heading",
       "attrs": {
         "level": 2

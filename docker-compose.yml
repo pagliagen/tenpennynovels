@@ -77,6 +77,8 @@ services:
       MONGODB_URI: mongodb://${MONGO_ROOT_USER:-admin}:${MONGO_ROOT_PASSWORD:-admin123}@mongodb:27017/tenpennynovels?authSource=admin
       REDIS_URL: redis://redis:6379
       QDRANT_URL: http://qdrant:6333
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      ELASTICSEARCH_INDEX_PREFIX: tenpennynovels
       LOG_LEVEL: info
       HF_TOKEN: ${HF_TOKEN:-}  # HuggingFace token for runtime
     ports:
@@ -90,6 +92,8 @@ services:
         condition: service_healthy
       qdrant:
         condition: service_started
+      elasticsearch:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:5001/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
       interval: 30s
@@ -119,6 +123,30 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
+
+  # ===========================================================================
+  # ElasticSearch - Full-text search for hybrid search (keyword + semantic)
+  # ===========================================================================
+  elasticsearch:
+    image: elasticsearch:8.11.0
+    container_name: tenpennynovels-elasticsearch
+    restart: unless-stopped
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    networks:
+      - tenpennynovels-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
 
   # ===========================================================================
   # Unified Backend - Tutti i moduli (auth, game, admin, documents, tickets, forum)
@@ -360,6 +388,9 @@ volumes:
   qdrant_storage:
     driver: local
     name: tenpennynovels-qdrant-storage
+  elasticsearch_data:
+    driver: local
+    name: tenpennynovels-elasticsearch-data
   cdn_storage:
     driver: local
     name: tenpennynovels-cdn-storage

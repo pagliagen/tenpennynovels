@@ -2,249 +2,98 @@
   "_meta": {
     "version": "2.1.0",
     "description": "LEGACY admin panel permissions - DEPRECATED",
-    "lastUpdated": "2026-03-03",
-    "deprecation": {
-      "status": "LEGACY_ACTIVE",
-      "reason": "Old permission system still used by admin middleware",
-      "migration_plan": "Gradually move to database-driven permissions via User.hasViewPermission()",
-      "removal_target": "Q2 2026",
-      "replacement": "Database-driven permissions with AdminAuthMiddleware"
-    },
-    "note": "This file has been renamed from permissions.json to admin-permissions.json and moved to /config/roles/ for better organization. See _README.md for architecture documentation."
+    "lastUpdated": "2026-03-05"
   },
-  "character_roles": {
+  "admin_roles": {
     "personaggio": {
       "description": "Personaggio base - accesso limitato solo lettura",
-      "permissions": {
-        "dashboard": {
-          "access": true,
-          "detail": {
-            "view_basic_stats": true,
-            "view_user_count": false,
-            "view_character_stats": true,
-            "view_gameplay_stats": true
-          }
-        },
-        "users": {
-          "access": false,
-          "detail": {}
-        },
-        "characters": {
-          "access": false,
-          "detail": {}
-        },
-        "content": {
-          "access": false,
-          "detail": {}
-        },
-        "documents": {
-          "access": false,
-          "detail": {}
-        },
-        "system": {
-          "access": false,
-          "detail": {}
-        },
-        "economy": {
-          "access": false,
-          "detail": {}
-        },
-        "locations": {
-          "access": false,
-          "detail": {}
-        },
-        "tickets": {
-          "access": true,
-          "detail": {
-            "create": true,
-            "read": true
-          }
-        }
-      }
+      "permissions": [
+        "admin:dashboard:access",
+        "admin:dashboard:view_basic_stats",
+        "admin:dashboard:view_character_stats",
+        "admin:dashboard:view_gameplay_stats",
+        "admin:tickets:access",
+        "admin:tickets:create",
+        "admin:tickets:read"
+      ]
     },
     "moderatore": {
       "description": "Moderatore - gestione utenti e contenuti",
       "inherits": "personaggio",
-      "permissions": {
-        "dashboard": {
-          "access": true,
-          "detail": {
-            "view_basic_stats": true,
-            "view_user_count": true,
-            "view_character_stats": true,
-            "view_gameplay_stats": true
-          }
-        },
-        "users": {
-          "access": true,
-          "detail": {
-            "read": true,
-            "ban": true
-          }
-        },
-        "content": {
-          "access": true,
-          "detail": {
-            "read": true,
-            "create": true,
-            "update": true,
-            "delete": true,
-            "publish": true
-          }
-        },
-        "documents": {
-          "access": true,
-          "detail": {
-            "read": true,
-            "create": true,
-            "update": true,
-            "delete": true,
-            "manage_groups": true
-          }
-        },
-        "system": {
-          "access": true,
-          "detail": {
-            "broadcast_messages": true
-          }
-        },
-        "tickets": {
-          "access": true,
-          "detail": {
-            "assign": true,
-            "close": true
-          }
-        }
-      }
+      "permissions": [
+        "admin:dashboard:view_user_count",
+        "admin:users:access",
+        "admin:users:read",
+        "admin:users:ban",
+        "admin:content:access",
+        "admin:content:read",
+        "admin:content:create",
+        "admin:content:update",
+        "admin:content:delete",
+        "admin:content:publish",
+        "admin:documents:access",
+        "admin:documents:read",
+        "admin:documents:create",
+        "admin:documents:update",
+        "admin:documents:delete",
+        "admin:documents:manage_groups",
+        "admin:system:access",
+        "admin:system:broadcast_messages",
+        "admin:tickets:assign",
+        "admin:tickets:close"
+      ]
     },
     "master": {
       "description": "Game Master - gestione gameplay completa",
       "inherits": "moderatore",
-      "permissions": {
-        "dashboard": {
-          "access": true,
-          "detail": {
-            "view_financial_stats": true
-          }
-        },
-        "characters": {
-          "access": true,
-          "detail": {
-            "read": true,
-            "approve": true,
-            "reject": true,
-            "edit": true
-          }
-        },
-        "economy": {
-          "access": true,
-          "detail": {
-            "view_transactions": true,
-            "grant_money": true,
-            "adjust_balances": true,
-            "view_reports": true
-          }
-        },
-        "locations": {
-          "access": true,
-          "detail": {
-            "read": true,
-            "create": true,
-            "update": true,
-            "manage_access": true
-          }
-        },
-        "gamedata": {
-          "access": true,
-          "detail": {
-            "read": true,
-            "create": true,
-            "update": true
-          }
-        },
-        "skills": {
-          "access": true,
-          "detail": {
-            "view": true,
-            "create": true,
-            "update": true
-          }
-        },
-        "occupations": {
-          "access": true,
-          "detail": {
-            "view": true,
-            "create": true,
-            "update": true
-          }
-        },
-        "tickets": {
-          "access": true,
-          "detail": {
-            "manage_all": true
-          }
-        }
-      }
+      "permissions": [
+        "admin:dashboard:view_financial_stats",
+        "admin:characters:access",
+        "admin:characters:read",
+        "admin:characters:approve",
+        "admin:characters:reject",
+        "admin:characters:edit",
+        "admin:economy:access",
+        "admin:economy:view_transactions",
+        "admin:economy:grant_money",
+        "admin:economy:adjust_balances",
+        "admin:economy:view_reports",
+        "admin:locations:access",
+        "admin:locations:read",
+        "admin:locations:create",
+        "admin:locations:update",
+        "admin:locations:manage_access",
+        "admin:gamedata:access",
+        "admin:gamedata:read",
+        "admin:gamedata:create",
+        "admin:gamedata:update",
+        "admin:skills:access",
+        "admin:skills:view",
+        "admin:skills:create",
+        "admin:skills:update",
+        "admin:occupations:access",
+        "admin:occupations:view",
+        "admin:occupations:create",
+        "admin:occupations:update",
+        "admin:tickets:manage_all"
+      ]
     },
     "amministratore": {
       "description": "Amministratore - accesso avanzato senza manutenzione",
       "inherits": "master",
-      "permissions": {
-        "dashboard": {
-          "access": true,
-          "detail": {
-            "view_system_health": true,
-            "view_activity_logs": true
-          }
-        },
-        "users": {
-          "access": true,
-          "detail": {
-            "update": true,
-            "delete": false,
-            "change_permissions": false
-          }
-        },
-        "system": {
-          "access": true,
-          "detail": {
-            "view_logs": true,
-            "export_data": true,
-            "maintenance_mode": false
-          }
-        },
-        "locations": {
-          "access": true,
-          "detail": {
-            "delete": true
-          }
-        },
-        "gamedata": {
-          "access": true,
-          "detail": {
-            "delete": true
-          }
-        },
-        "skills": {
-          "access": true,
-          "detail": {
-            "delete": true
-          }
-        },
-        "occupations": {
-          "access": true,
-          "detail": {
-            "delete": true
-          }
-        },
-        "tickets": {
-          "access": true,
-          "detail": {
-            "transfer": true,
-            "internal_notes": true
-          }
-        }
-      }
+      "permissions": [
+        "admin:dashboard:view_system_health",
+        "admin:dashboard:view_activity_logs",
+        "admin:users:update",
+        "admin:system:view_logs",
+        "admin:system:export_data",
+        "admin:locations:delete",
+        "admin:gamedata:delete",
+        "admin:skills:delete",
+        "admin:occupations:delete",
+        "admin:tickets:transfer",
+        "admin:tickets:internal_notes"
+      ]
     }
   },
   "user_roles": {
@@ -261,27 +110,28 @@
       "roles": ["gestore"]
     }
   },
+  "status_restrictions": {},
   "menu_structure": {
     "dashboard": {
       "icon": "📊",
       "label": "Dashboard",
-      "permission": "dashboard.access"
+      "permission": "admin:dashboard:access"
     },
     "users": {
       "icon": "👥",
       "label": "User Management",
-      "permission": "users.access",
+      "permission": "admin:users:access",
       "children": [
         {
           "icon": "📋",
           "label": "User List",
-          "permission": "users.read",
+          "permission": "admin:users:read",
           "url": "/users/user-list"
         },
         {
           "icon": "🚫",
           "label": "Ban/Unban",
-          "permission": "users.ban",
+          "permission": "admin:users:ban",
           "url": "/users/ban-list"
         },
         {
@@ -295,18 +145,18 @@
     "characters": {
       "icon": "🎭",
       "label": "Personaggi",
-      "permission": "characters.access",
+      "permission": "admin:characters:access",
       "children": [
         {
           "icon": "📋",
           "label": "Lista Completa",
-          "permission": "characters.read",
+          "permission": "admin:characters:read",
           "url": "/characters/character-list"
         },
         {
           "icon": "⏳",
           "label": "In Attesa",
-          "permission": "characters.approve",
+          "permission": "admin:characters:approve",
           "url": "/characters/character-pending"
         }
       ]
@@ -314,24 +164,24 @@
     "economy": {
       "icon": "💰",
       "label": "Economia",
-      "permission": "economy.access",
+      "permission": "admin:economy:access",
       "children": []
     },
     "locations": {
       "icon": "🏛️",
       "label": "Locations",
-      "permission": "locations.access",
+      "permission": "admin:locations:access",
       "children": [
         {
           "icon": "📍",
           "label": "Gestisci",
-          "permission": "locations.update",
+          "permission": "admin:locations:update",
           "url": "/locations/gestisci"
         },
         {
           "icon": "➕",
           "label": "Nuova",
-          "permission": "locations.create",
+          "permission": "admin:locations:create",
           "url": "/locations/gestisci"
         }
       ]
@@ -339,18 +189,18 @@
     "gamedata": {
       "icon": "🎲",
       "label": "Dati di Gioco",
-      "permission": "gamedata.access",
+      "permission": "admin:gamedata:access",
       "children": [
         {
           "icon": "⚔️",
           "label": "Skills",
-          "permission": "skills.access",
+          "permission": "admin:skills:access",
           "url": "/skills"
         },
         {
           "icon": "💼",
           "label": "Occupations",
-          "permission": "occupations.access",
+          "permission": "admin:occupations:access",
           "url": "/occupations"
         }
       ]
@@ -358,24 +208,24 @@
     "content": {
       "icon": "📝",
       "label": "Contenuti",
-      "permission": "content.access",
+      "permission": "admin:content:access",
       "children": []
     },
     "documents": {
       "icon": "📚",
       "label": "Documenti",
-      "permission": "documents.access",
+      "permission": "admin:documents:access",
       "children": [
         {
           "icon": "🌍",
           "label": "Ambientazione",
-          "permission": "documents.read",
+          "permission": "admin:documents:read",
           "url": "/documents/ambientazione"
         },
         {
           "icon": "📜",
           "label": "Regolamento",
-          "permission": "documents.read",
+          "permission": "admin:documents:read",
           "url": "/documents/regolamento"
         }
       ]
@@ -383,36 +233,36 @@
     "system": {
       "icon": "⚙️",
       "label": "Sistema",
-      "permission": "system.access",
+      "permission": "admin:system:access",
       "children": [
         {
           "icon": "📝",
           "label": "Configurazione Sistema",
-          "permission": "system.broadcast_messages",
+          "permission": "admin:system:broadcast_messages",
           "url": "/system/configurations"
         },
         {
           "icon": "🎮",
           "label": "Configurazione Personaggi",
-          "permission": "system.broadcast_messages",
+          "permission": "admin:system:broadcast_messages",
           "url": "/system/character-creation-config"
         },
         {
           "icon": "🔧",
           "label": "Manutenzione",
-          "permission": "system.maintenance_mode",
+          "permission": "admin:system:maintenance_mode",
           "url": "/system/maintenance"
         },
         {
           "icon": "📜",
           "label": "Log di Audit",
-          "permission": "system.view_logs",
+          "permission": "admin:system:view_logs",
           "url": "/system/audit-logs"
         },
         {
           "icon": "📢",
           "label": "Messaggi Broadcast",
-          "permission": "system.broadcast_messages",
+          "permission": "admin:system:broadcast_messages",
           "url": "/system/broadcast"
         }
       ]
@@ -420,30 +270,30 @@
     "tickets": {
       "icon": "🎫",
       "label": "Sistema Ticket",
-      "permission": "tickets.access",
+      "permission": "admin:tickets:access",
       "children": [
         {
           "icon": "📋",
           "label": "Tutti i Ticket",
-          "permission": "tickets.read",
+          "permission": "admin:tickets:read",
           "url": "/tickets/all-tickets"
         },
         {
           "icon": "👤",
           "label": "I Miei Ticket",
-          "permission": "tickets.assign",
+          "permission": "admin:tickets:assign",
           "url": "/tickets/my-tickets"
         },
         {
           "icon": "🏢",
           "label": "Ticket del Reparto",
-          "permission": "tickets.read",
+          "permission": "admin:tickets:read",
           "url": "/tickets/department-tickets"
         },
         {
           "icon": "📊",
           "label": "Statistiche",
-          "permission": "tickets.read",
+          "permission": "admin:tickets:read",
           "url": "/tickets/stats"
         }
       ]
@@ -451,47 +301,47 @@
   },
   "dashboard_badges": {
     "visitatori_unici": {
-      "permission": "dashboard.detail.view_basic_stats",
+      "permission": "admin:dashboard:view_basic_stats",
       "desc": "Visitatori unici"
     },
     "pagine_viste": {
-      "permission": "dashboard.detail.view_basic_stats",
+      "permission": "admin:dashboard:view_basic_stats",
       "desc": "Pagine viste"
     },
     "utenti_iscritti": {
-      "permission": "dashboard.detail.view_user_count",
+      "permission": "admin:dashboard:view_user_count",
       "desc": "Utenti registrati"
     },
     "azioni_inviate": {
-      "permission": "dashboard.detail.view_gameplay_stats",
+      "permission": "admin:dashboard:view_gameplay_stats",
       "desc": "Azioni gameplay"
     },
     "browser_stats": {
-      "permission": "dashboard.detail.view_basic_stats",
+      "permission": "admin:dashboard:view_basic_stats",
       "desc": "Browser"
     },
     "gameplay_activity": {
-      "permission": "dashboard.detail.view_gameplay_stats",
+      "permission": "admin:dashboard:view_gameplay_stats",
       "desc": "Attività gameplay"
     },
     "geographic_distribution": {
-      "permission": "dashboard.detail.view_basic_stats",
+      "permission": "admin:dashboard:view_basic_stats",
       "desc": "Geografia"
     },
     "tickets_open": {
-      "permission": "tickets.read",
+      "permission": "admin:tickets:read",
       "desc": "Ticket Aperti"
     },
     "tickets_assigned": {
-      "permission": "tickets.assign",
+      "permission": "admin:tickets:assign",
       "desc": "Ticket Assegnati"
     },
     "tickets_critical": {
-      "permission": "tickets.read",
+      "permission": "admin:tickets:read",
       "desc": "Ticket Critici"
     },
     "department_workload": {
-      "permission": "tickets.read",
+      "permission": "admin:tickets:read",
       "desc": "Carico Reparto"
     }
   },

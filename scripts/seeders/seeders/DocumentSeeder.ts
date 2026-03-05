@@ -20,11 +20,10 @@ import * as path from 'path';
 import { ObjectId } from 'mongodb';
 import { parse } from 'csv-parse/sync';
 import { getConnection } from '../utils/connection.js';
-import { parseChunks, ParsedChunk } from '../utils/chunk-parser.js';
+import Redis from 'ioredis';
+import crypto from 'crypto';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
-import { redisSeeder } from '../utils/redis-connection.js';
-import { EmbeddingSeederPublisher } from '../utils/embedding-publisher.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -61,23 +60,21 @@ interface RouteCSVRow {
 class DocumentSeeder {
   private dataDir = path.join(__dirname, '../data/documents');
   private csvPath = path.join(__dirname, '../data/documents.csv');
-  private embeddingPublisher?: EmbeddingSeederPublisher;
+  private redis: Redis;
 
-  async seed(options: { forceChunks?: boolean } = {}) {
-    const { forceChunks = true } = options;
+  constructor() {
+    // Initialize Redis for event publishing
+    const redisHost = process.env.REDIS_HOST || 'localhost';
+    const redisPort = parseInt(process.env.REDIS_PORT || '6379', 10);
+    this.redis = new Redis({
+      host: redisHost,
+      port: redisPort,
+      maxRetriesPerRequest: null
+    });
+  }
+
+  async seed() {
     const { client, db } = await getConnection();
-
-    // Connect Redis for embedding events
-    try {
-      await redisSeeder.connect();
-      const publisher = redisSeeder.getPublisher();
-      this.embeddingPublisher = new EmbeddingSeederPublisher(publisher);
-      console.log('✅ Redis connection established for embeddings\n');
-    } catch (error) {
-      console.error('❌ Failed to connect to Redis:', error);
-      console.warn('⚠️  Proceeding without async embeddings\n');
-      this.embeddingPublisher = undefined;
-    }
 
     try {
       const documentsCollection = db.collection('documents');
@@ -109,10 +106,6 @@ class DocumentSeeder {
         const newId = await this.insertDocument(db, row, null, rootIdMap);
         rootIdMap.set(row._id, newId);
         console.log(`   ✓ ${row.slug}`);
-
-        if (forceChunks) {
-          await this.generateChunks(db, newId, row.slug, row.type);
-        }
       }
 
       console.log(`   ✅ Created ${rootDocs.length} root documents\n`);
@@ -131,10 +124,6 @@ class DocumentSeeder {
         const newId = await this.insertDocument(db, row, parentId, rootIdMap);
         rootIdMap.set(row._id, newId);
         console.log(`   ✓ ${row.slug} (child of ${row.parentId})`);
-
-        if (forceChunks) {
-          await this.generateChunks(db, newId, row.slug, row.type);
-        }
       }
 
       console.log(`   ✅ Created ${childDocs.length} child documents\n`);
@@ -143,6 +132,11 @@ class DocumentSeeder {
       console.log(`📝 Phase 3: Inserting routes...`);
       await this.seedRoutes(db, rootIdMap);
       console.log(`   ✅ Routes seeded\n`);
+
+      // PHASE 4: Publish embedding events (triggers automatic chunking + embeddings)
+      console.log(`📝 Phase 4: Publishing embedding events...`);
+      await this.publishEmbeddingEvents(db);
+      console.log(`   ✅ Embedding events published\n`);
 
       // Stats
       const stats = {
@@ -166,12 +160,8 @@ class DocumentSeeder {
       console.error('❌ Seeding failed:', error);
       throw error;
     } finally {
-      try {
-        await redisSeeder.disconnect();
-      } catch (error) {
-        console.error('⚠️  Error disconnecting Redis:', error);
-      }
       await client.close();
+      await this.redis.quit();
       console.log('👋 Done');
     }
   }
@@ -218,210 +208,40 @@ class DocumentSeeder {
       description = '';
     }
 
+    // Generate HTML content from contentDelta using same logic as Document model pre-save hook
+    let content = '';
+    try {
+      const { generateHtml } = await import('../../../services/unified-backend/src/modules/admin/services/HtmlGenerator.js');
+      content = generateHtml(contentDelta, { injectHeadingIds: true });
+    } catch (error) {
+      console.warn(`   ⚠️  Failed to generate HTML for ${row.slug}, using empty string`);
+      content = '';
+    }
+
     const doc = {
-      _id: new ObjectId(),
       slug: row.slug,
       title: row.title,
       description,
       contentDelta,
+      content, // Generated HTML
       type: row.type,
       parentId,
       order: parseInt(row.order.toString(), 10),
       tags: row.tags ? row.tags.split('|').filter(Boolean) : [],
-      isVisible: row.isVisible === 'true',
+      visible: row.isVisible === 'true',
       isDraft: row.isDraft === 'true',
-      version: parseInt(row.version.toString(), 10),
       createdAt: new Date(row.createdAt),
-      updatedAt: new Date(row.updatedAt)
+      lastUpdated: new Date(row.updatedAt)
     };
 
-    await db.collection('documents').insertOne(doc);
-
-    return doc._id;
+    const result = await db.collection('documents').insertOne(doc);
+    return result.insertedId;
   }
 
   /**
    * Publish embedding event to Redis for async processing
    * Falls back to skipping if Redis unavailable
    */
-  private async publishEmbeddingEvent(
-    chunkId: string,
-    documentId: ObjectId,
-    chunk: ParsedChunk,
-    documentType: string
-  ): Promise<void> {
-    try {
-      if (!this.embeddingPublisher) {
-        console.warn('   ⚠️  Redis publisher unavailable, skipping embedding');
-        return;
-      }
-
-      await this.embeddingPublisher.publishDocumentChunkEvent(
-        chunkId,
-        documentId.toString(),
-        chunk.slug,
-        chunk.heading,
-        chunk.content,
-        documentType as 'ambientazione' | 'approfondimenti' | 'regolamento',
-        chunk.order,
-        chunk.headingLevel,
-        chunk.parentSlug
-      );
-    } catch (error: any) {
-      console.error(`   ❌ Failed to publish embedding event: ${error.message}`);
-    }
-  }
-
-  /**
-   * Generate chunks directly using chunk-parser (Option B)
-   *
-   * Flow:
-   * 1. Fetch document from MongoDB to get contentDelta
-   * 2. Parse contentDelta using chunk-parser
-   * 3. Deactivate old chunks (soft delete)
-   * 4. Calculate new version
-   * 5. Insert new chunks (two-phase: H2 → H3)
-   * 6. Generate embeddings by calling embeddings-service directly
-   */
-  private async generateChunks(db: any, documentId: ObjectId, slug: string, documentType: string): Promise<void> {
-    try {
-      const documentsCollection = db.collection('documents');
-      const chunksCollection = db.collection('documentchunks');
-
-      // STEP 1: Fetch document to get contentDelta
-      const document = await documentsCollection.findOne({ _id: documentId });
-      if (!document) {
-        console.warn(`   ⚠️  Document ${slug} not found, skipping chunk generation`);
-        return;
-      }
-
-      const contentDelta = document.contentDelta;
-      if (!contentDelta || Object.keys(contentDelta).length === 0) {
-        console.warn(`   ⚠️  Document ${slug} has empty contentDelta, skipping chunk generation`);
-        return;
-      }
-
-      // STEP 2: Parse contentDelta → chunks
-      let parsedChunks: ParsedChunk[];
-      try {
-        const delta = typeof contentDelta === 'string' ? JSON.parse(contentDelta) : contentDelta;
-        parsedChunks = parseChunks(delta);
-
-        if (parsedChunks.length === 0) {
-          console.warn(`   ⚠️  No chunks parsed from ${slug}`);
-          return;
-        }
-      } catch (parseError: any) {
-        console.error(`   ❌ Failed to parse contentDelta for ${slug}:`, parseError.message);
-        return;
-      }
-
-      // STEP 3: Deactivate old chunks (soft delete)
-      const deactivateResult = await chunksCollection.updateMany(
-        { documentId, isActive: true },
-        { $set: { isActive: false } }
-      );
-      const chunksDeactivated = deactivateResult.modifiedCount;
-
-      // STEP 4: Calculate new version
-      const oldChunks = await chunksCollection
-        .find({ documentId })
-        .sort({ version: -1 })
-        .limit(1)
-        .toArray();
-      const newVersion = (oldChunks[0]?.version || 0) + 1;
-
-      // STEP 5: Create new chunks (TWO-PHASE: H2 first, then H3)
-      let chunksCreated = 0;
-      const now = new Date();
-      const auditInfo = { userId: 'seeder', username: 'seeder' };
-
-      // Split by heading level
-      const h2Chunks = parsedChunks.filter(c => c.headingLevel === 2);
-      const h3Chunks = parsedChunks.filter(c => c.headingLevel === 3);
-
-      // Map to store H2 slug → _id for H3 parent references
-      const h2SlugToId = new Map<string, ObjectId>();
-
-      // PHASE 1: Insert H2 chunks first
-      for (const chunk of h2Chunks) {
-        const chunkData = {
-          documentId,
-          slug: chunk.slug,
-          slugHistory: [chunk.slug],
-          title: chunk.heading,
-          headingLevel: 2,
-          content: chunk.content,
-          order: chunk.order,
-          documentType,
-          version: newVersion,
-          isActive: true,
-          parentChunkId: undefined,
-          parentSlug: undefined,
-          // Audit trail
-          createdAt: now,
-          createdBy: auditInfo,
-          updatedAt: now,
-          updatedBy: auditInfo
-        };
-
-        const result = await chunksCollection.insertOne(chunkData);
-        h2SlugToId.set(chunk.slug, result.insertedId as ObjectId);
-        chunksCreated++;
-
-        // Publish embedding event to Redis for async processing
-        await this.publishEmbeddingEvent(
-          result.insertedId.toString(),
-          documentId,
-          chunk,
-          documentType
-        );
-      }
-
-      // PHASE 2: Insert H3 chunks with parent references
-      for (const chunk of h3Chunks) {
-        const parentChunkId = chunk.parentSlug ? h2SlugToId.get(chunk.parentSlug) : undefined;
-
-        const chunkData = {
-          documentId,
-          slug: chunk.slug,
-          slugHistory: [chunk.slug],
-          title: chunk.heading,
-          headingLevel: 3,
-          content: chunk.content,
-          order: chunk.order,
-          documentType,
-          version: newVersion,
-          isActive: true,
-          parentChunkId,
-          parentSlug: chunk.parentSlug,
-          // Audit trail
-          createdAt: now,
-          createdBy: auditInfo,
-          updatedAt: now,
-          updatedBy: auditInfo
-        };
-
-        const result = await chunksCollection.insertOne(chunkData);
-        chunksCreated++;
-
-        // Publish embedding event to Redis for async processing
-        await this.publishEmbeddingEvent(
-          result.insertedId.toString(),
-          documentId,
-          chunk,
-          documentType
-        );
-      }
-
-      console.log(`   ✓ Generated ${chunksCreated} chunks for ${slug} (v${newVersion}, deactivated ${chunksDeactivated})`);
-
-    } catch (error: any) {
-      console.error(`   ❌ Failed to generate chunks for ${slug}:`, error.message);
-      console.warn(`   ⚠️  Continuing without chunks for ${slug}...`);
-    }
-  }
-
   /**
    * Seed routes from routes.csv (Phase 3)
    * Two-phase insertion: root routes → child routes
@@ -554,15 +374,49 @@ class DocumentSeeder {
     await routesCol.insertOne(routeData);
     return routeData._id;
   }
+
+  /**
+   * Publish embedding events for all documents (Phase 4)
+   * Triggers automatic chunking + embedding generation in embeddings-worker
+   */
+  private async publishEmbeddingEvents(db: any): Promise<void> {
+    const documentsCol = db.collection('documents');
+    const allDocs = await documentsCol.find({}).toArray();
+
+    console.log(`   Publishing events for ${allDocs.length} documents...`);
+
+    let published = 0;
+    for (const doc of allDocs) {
+      try {
+        const event = {
+          eventId: crypto.randomUUID(),
+          timestamp: new Date(),
+          documentId: doc._id.toString(),
+          title: doc.title,
+          content: doc.content || '',
+          contentDelta: doc.contentDelta, // Include for chunking
+          type: doc.type
+        };
+
+        await this.redis.publish('embedding:document:created', JSON.stringify(event));
+        published++;
+
+        if (published % 10 === 0) {
+          console.log(`   Published ${published}/${allDocs.length} events...`);
+        }
+      } catch (error) {
+        console.error(`   ⚠️  Failed to publish event for ${doc.slug}:`, error);
+      }
+    }
+
+    console.log(`   Published ${published} embedding events successfully`);
+  }
 }
 
 // CLI execution
 if (import.meta.url === `file://${process.argv[1]}`) {
   const seeder = new DocumentSeeder();
-  const options = {
-    forceChunks: !process.argv.includes('--no-chunks')
-  };
-  seeder.seed(options).catch((error) => {
+  seeder.seed().catch((error) => {
     console.error('Fatal error:', error);
     process.exit(1);
   });

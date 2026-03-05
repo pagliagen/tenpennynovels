@@ -301,8 +301,53 @@ LocationActionSchema.statics.createAction = async function(actionData: Partial<I
   return action;
 };
 
+// ========== HOOKS ==========
+
+/**
+ * Post-save hook: Trigger embedding generation
+ */
+LocationActionSchema.post('save', async function(doc) {
+  try {
+    const { publishLocationActionEvent } = await import('@shared/services/EmbeddingEventPublisher');
+    const action = doc.isNew ? 'created' : 'updated';
+
+    await publishLocationActionEvent(action, {
+      _id: doc._id.toString(),
+      characterId: doc.characterId,
+      characterName: doc.characterName,
+      locationId: doc.locationId,
+      content: doc.content,
+      actionType: doc.actionType
+    });
+  } catch (error) {
+    console.error('[LocationAction] Failed to publish embedding event:', error);
+  }
+});
+
+/**
+ * Post-delete hooks: Trigger embedding cleanup
+ */
+LocationActionSchema.post('deleteOne', async function(doc) {
+  try {
+    const { publishLocationActionDeletedEvent } = await import('@shared/services/EmbeddingEventPublisher');
+    await publishLocationActionDeletedEvent(doc._id.toString());
+  } catch (error) {
+    console.error('[LocationAction] Failed to publish delete event:', error);
+  }
+});
+
+LocationActionSchema.post('findOneAndDelete', async function(doc) {
+  if (!doc) return;
+  try {
+    const { publishLocationActionDeletedEvent } = await import('@shared/services/EmbeddingEventPublisher');
+    await publishLocationActionDeletedEvent(doc._id.toString());
+  } catch (error) {
+    console.error('[LocationAction] Failed to publish delete event:', error);
+  }
+});
+
 // Model
-export const LocationAction: Model<ILocationAction> = mongoose.models.LocationAction || 
+export const LocationAction: Model<ILocationAction> = mongoose.models.LocationAction ||
   mongoose.model<ILocationAction>('LocationAction', LocationActionSchema);
 
 export default LocationAction;
