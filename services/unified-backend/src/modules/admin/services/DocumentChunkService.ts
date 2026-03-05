@@ -126,10 +126,6 @@ export class DocumentChunkService {
           isActive: true,
           parentChunkId: undefined,  // H2 has no parent
           parentSlug: undefined,
-          // Embeddings (populated by worker)
-          contentEmbedding: undefined,
-          embeddingModel: undefined,
-          embeddingGeneratedAt: undefined,
           // Audit trail
           createdAt: now,
           createdBy: auditInfo,
@@ -178,10 +174,6 @@ export class DocumentChunkService {
           isActive: true,
           parentChunkId,              // Reference to parent H2
           parentSlug: chunk.parentSlug,
-          // Embeddings (populated by worker)
-          contentEmbedding: undefined,
-          embeddingModel: undefined,
-          embeddingGeneratedAt: undefined,
           // Audit trail
           createdAt: now,
           createdBy: auditInfo,

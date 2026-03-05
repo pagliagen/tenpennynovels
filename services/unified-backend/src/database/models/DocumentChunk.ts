@@ -37,11 +37,6 @@ export interface IDocumentChunk extends MongooseDocument {
   version: number;                 // 1, 2, 3... (incremented on edit)
   isActive: boolean;               // Only latest version = true
 
-  // EMBEDDINGS
-  contentEmbedding?: number[];     // 384D vector (paraphrase-multilingual-MiniLM-L12-v2)
-  embeddingModel?: string;         // "paraphrase-multilingual-MiniLM-L12-v2"
-  embeddingGeneratedAt?: Date;
-
   // AUDIT
   createdAt: Date;
   createdBy: {
@@ -128,17 +123,6 @@ const DocumentChunkSchema = new Schema<IDocumentChunk>({
     required: true,
     default: true,
     index: true
-  },
-
-  // EMBEDDINGS
-  contentEmbedding: {
-    type: [Number]
-  },
-  embeddingModel: {
-    type: String
-  },
-  embeddingGeneratedAt: {
-    type: Date
   },
 
   // AUDIT

@@ -6,13 +6,12 @@
  * 2. Reads remaining fields from documents.csv
  * 3. Inserts documents to MongoDB (two-phase: root → children)
  * 4. Generates chunks DIRECTLY using chunk-parser (no backend API dependency)
- * 5. Optionally waits for embeddings to complete
+ * 5. Publishes Redis events for async embeddings (processed by embeddings-worker)
  * 6. Supports both local (Docker) and production (direct MongoDB) environments
  *
  * Usage:
  *   npm run seed:documents              # Normal mode
  *   npm run seed:documents -- --force   # Clear + reseed + force chunks
- *   npm run seed:documents -- --no-wait # Skip waiting for embeddings
  *   npm run seed:documents -- --no-chunks # Skip chunk generation entirely
  */
 
@@ -21,7 +20,6 @@ import * as path from 'path';
 import { ObjectId } from 'mongodb';
 import { parse } from 'csv-parse/sync';
 import { getConnection } from '../utils/connection.js';
-import { waitForChunkEmbeddings } from '../utils/wait-for-embeddings.js';
 import { parseChunks, ParsedChunk } from '../utils/chunk-parser.js';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
@@ -65,8 +63,8 @@ class DocumentSeeder {
   private csvPath = path.join(__dirname, '../data/documents.csv');
   private embeddingPublisher?: EmbeddingSeederPublisher;
 
-  async seed(options: { forceChunks?: boolean; waitForEmbeddings?: boolean } = {}) {
-    const { forceChunks = true, waitForEmbeddings = true } = options;
+  async seed(options: { forceChunks?: boolean } = {}) {
+    const { forceChunks = true } = options;
     const { client, db } = await getConnection();
 
     // Connect Redis for embedding events
@@ -114,9 +112,6 @@ class DocumentSeeder {
 
         if (forceChunks) {
           await this.generateChunks(db, newId, row.slug, row.type);
-          if (waitForEmbeddings) {
-            await waitForChunkEmbeddings(db, newId, 30000);
-          }
         }
       }
 
@@ -139,9 +134,6 @@ class DocumentSeeder {
 
         if (forceChunks) {
           await this.generateChunks(db, newId, row.slug, row.type);
-          if (waitForEmbeddings) {
-            await waitForChunkEmbeddings(db, newId, 30000);
-          }
         }
       }
 
@@ -366,10 +358,6 @@ class DocumentSeeder {
           isActive: true,
           parentChunkId: undefined,
           parentSlug: undefined,
-          // Embeddings (will be populated by embeddings-worker)
-          contentEmbedding: undefined,
-          embeddingModel: undefined,
-          embeddingGeneratedAt: undefined,
           // Audit trail
           createdAt: now,
           createdBy: auditInfo,
@@ -407,10 +395,6 @@ class DocumentSeeder {
           isActive: true,
           parentChunkId,
           parentSlug: chunk.parentSlug,
-          // Embeddings (will be populated by embeddings-worker)
-          contentEmbedding: undefined,
-          embeddingModel: undefined,
-          embeddingGeneratedAt: undefined,
           // Audit trail
           createdAt: now,
           createdBy: auditInfo,
@@ -576,8 +560,7 @@ class DocumentSeeder {
 if (import.meta.url === `file://${process.argv[1]}`) {
   const seeder = new DocumentSeeder();
   const options = {
-    forceChunks: !process.argv.includes('--no-chunks'),
-    waitForEmbeddings: !process.argv.includes('--no-wait')
+    forceChunks: !process.argv.includes('--no-chunks')
   };
   seeder.seed(options).catch((error) => {
     console.error('Fatal error:', error);

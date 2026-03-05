@@ -439,61 +439,35 @@ export class EmbeddingWorker {
   }
 
   /**
-   * Save document chunk embedding to MongoDB + Qdrant
+   * Save document chunk embedding to Qdrant
    */
   private async saveDocumentChunkEmbedding(
     event: DocumentChunkEmbeddingEvent,
     embedding: number[]
   ): Promise<void> {
-    // ✅ Save to MongoDB
-    const db = mongoose.connection.db;
-    if (!db) {
-      throw new Error('Database connection not available');
-    }
+    // Generate UUID for Qdrant point ID
+    const pointId = crypto.randomUUID();
 
-    const result = await db.collection('documentchunks').updateOne(
-      { _id: new mongoose.Types.ObjectId(event.chunkId) },
-      {
-        $set: {
-          contentEmbedding: embedding,
-          embeddingModel: EMBEDDING_MODEL,
-          embeddingGeneratedAt: new Date()
+    await this.qdrant.upsert('document_chunks', {
+      wait: true,
+      points: [{
+        id: pointId,
+        vector: embedding,
+        payload: {
+          chunkId: event.chunkId,
+          documentId: event.documentId,
+          slug: event.slug,
+          heading: event.title,
+          documentType: event.documentType,
+          headingLevel: event.headingLevel,
+          parentSlug: event.parentSlug,
+          isActive: true,
+          order: event.order
         }
-      }
-    );
+      }]
+    });
 
-    if (result.matchedCount === 0) {
-      throw new Error(`DocumentChunk not found: ${event.chunkId}`);
-    }
-
-    // ✅ ALSO save to Qdrant (for fast vector search)
-    try {
-      // Generate UUID for Qdrant point ID
-      const pointId = crypto.randomUUID();
-
-      await this.qdrant.upsert('document_chunks', {
-        wait: true,
-        points: [{
-          id: pointId,
-          vector: embedding,
-          payload: {
-            chunkId: event.chunkId,
-            documentId: event.documentId,
-            slug: event.slug,
-            heading: event.title,
-            documentType: event.documentType,
-            headingLevel: event.headingLevel,      // NEW: H2 vs H3
-            parentSlug: event.parentSlug,          // NEW: parent H2 slug for H3 chunks
-            isActive: true,
-            order: event.order
-          }
-        }]
-      });
-      console.log(`✅ Chunk embedding saved to MongoDB + Qdrant (type: ${event.documentType}, level: H${event.headingLevel})`);
-    } catch (error) {
-      console.error('❌ Failed to save to Qdrant (MongoDB saved):', error);
-      // Don't throw - MongoDB save succeeded, Qdrant is optional
-    }
+    console.log(`✅ Chunk embedding saved to Qdrant (type: ${event.documentType}, level: H${event.headingLevel})`);
   }
 
   /**

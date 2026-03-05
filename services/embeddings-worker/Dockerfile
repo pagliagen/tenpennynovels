@@ -37,9 +37,10 @@ RUN apk add --no-cache python3 py3-pip
 
 # Copy Python environment from python-base stage
 COPY --from=python-base /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+# Alpine uses Python 3.12, so copy packages there too
+COPY --from=python-base /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.12/site-packages
 COPY --from=python-base /root/.cache/huggingface /root/.cache/huggingface
 COPY --from=python-base /app/python /app/python
-RUN ln -s /usr/local/lib/python3.11 /usr/local/lib/python3.12
 
 # Copy Node.js application files
 COPY package.json package-lock.json tsconfig.json ./
