@@ -45,7 +45,7 @@ export interface DocumentChunkEmbeddingEvent extends BaseEmbeddingEvent {
   slug: string;
   title: string;
   content: string;
-  documentType: 'ambientazione' | 'regolamento';
+  documentType: 'ambientazione' | 'approfondimenti' | 'regolamento';  // FIX: Added approfondimenti (seeder uses 3 types)
   order: number;
   headingLevel: 2 | 3;      // H2 (main sections) + H3 (sub-sections)
   parentSlug?: string;       // For H3 chunks, reference to parent H2 slug

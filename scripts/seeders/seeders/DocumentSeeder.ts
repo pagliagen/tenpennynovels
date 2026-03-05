@@ -25,12 +25,11 @@ import { waitForChunkEmbeddings } from '../utils/wait-for-embeddings.js';
 import { parseChunks, ParsedChunk } from '../utils/chunk-parser.js';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import { redisSeeder } from '../utils/redis-connection.js';
+import { EmbeddingSeederPublisher } from '../utils/embedding-publisher.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-
-// Embeddings Service URL (from env or default)
-const EMBEDDINGS_SERVICE_URL = process.env.EMBEDDINGS_SERVICE_URL || 'http://127.0.0.1:5001';
 
 interface DocumentCSVRow {
   _id: string;
@@ -47,13 +46,40 @@ interface DocumentCSVRow {
   updatedAt: string;
 }
 
+interface RouteCSVRow {
+  slug: string;
+  parentPath?: string;
+  type: 'ambientazione' | 'approfondimenti' | 'regolamento';
+  kind: 'document' | 'category' | 'redirect';
+  rootDocumentSlug?: string;
+  redirectTo?: string;
+  title?: string;
+  description?: string;
+  isPublic: string;
+  enabled: string;
+  displayCategory?: string;
+}
+
 class DocumentSeeder {
   private dataDir = path.join(__dirname, '../data/documents');
   private csvPath = path.join(__dirname, '../data/documents.csv');
+  private embeddingPublisher?: EmbeddingSeederPublisher;
 
   async seed(options: { forceChunks?: boolean; waitForEmbeddings?: boolean } = {}) {
     const { forceChunks = true, waitForEmbeddings = true } = options;
     const { client, db } = await getConnection();
+
+    // Connect Redis for embedding events
+    try {
+      await redisSeeder.connect();
+      const publisher = redisSeeder.getPublisher();
+      this.embeddingPublisher = new EmbeddingSeederPublisher(publisher);
+      console.log('✅ Redis connection established for embeddings\n');
+    } catch (error) {
+      console.error('❌ Failed to connect to Redis:', error);
+      console.warn('⚠️  Proceeding without async embeddings\n');
+      this.embeddingPublisher = undefined;
+    }
 
     try {
       const documentsCollection = db.collection('documents');
@@ -121,6 +147,11 @@ class DocumentSeeder {
 
       console.log(`   ✅ Created ${childDocs.length} child documents\n`);
 
+      // PHASE 3: Insert routes (after all documents exist)
+      console.log(`📝 Phase 3: Inserting routes...`);
+      await this.seedRoutes(db, rootIdMap);
+      console.log(`   ✅ Routes seeded\n`);
+
       // Stats
       const stats = {
         total: await documentsCollection.countDocuments({}),
@@ -143,6 +174,11 @@ class DocumentSeeder {
       console.error('❌ Seeding failed:', error);
       throw error;
     } finally {
+      try {
+        await redisSeeder.disconnect();
+      } catch (error) {
+        console.error('⚠️  Error disconnecting Redis:', error);
+      }
       await client.close();
       console.log('👋 Done');
     }
@@ -213,29 +249,34 @@ class DocumentSeeder {
   }
 
   /**
-   * Generate embedding for a text using embeddings-service
+   * Publish embedding event to Redis for async processing
+   * Falls back to skipping if Redis unavailable
    */
-  private async generateEmbedding(text: string): Promise<number[] | null> {
+  private async publishEmbeddingEvent(
+    chunkId: string,
+    documentId: ObjectId,
+    chunk: ParsedChunk,
+    documentType: string
+  ): Promise<void> {
     try {
-      console.log(`   [Embedding] Calling ${EMBEDDINGS_SERVICE_URL}/embed...`);
-      const response = await fetch(`${EMBEDDINGS_SERVICE_URL}/embed`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text })
-      });
-
-      if (!response.ok) {
-        console.warn(`   ⚠️  Embeddings service returned ${response.status}`);
-        return null;
+      if (!this.embeddingPublisher) {
+        console.warn('   ⚠️  Redis publisher unavailable, skipping embedding');
+        return;
       }
 
-      const data = await response.json();
-      console.log(`   [Embedding] ✓ Generated (${data.embedding?.length || 0} dims)`);
-      return data.embedding || null;
+      await this.embeddingPublisher.publishDocumentChunkEvent(
+        chunkId,
+        documentId.toString(),
+        chunk.slug,
+        chunk.heading,
+        chunk.content,
+        documentType as 'ambientazione' | 'approfondimenti' | 'regolamento',
+        chunk.order,
+        chunk.headingLevel,
+        chunk.parentSlug
+      );
     } catch (error: any) {
-      console.error(`   ❌ Failed to generate embedding: ${error.message}`);
-      console.error(`   Service URL: ${EMBEDDINGS_SERVICE_URL}`);
-      return null;
+      console.error(`   ❌ Failed to publish embedding event: ${error.message}`);
     }
   }
 
@@ -340,20 +381,13 @@ class DocumentSeeder {
         h2SlugToId.set(chunk.slug, result.insertedId as ObjectId);
         chunksCreated++;
 
-        // Generate embedding for this chunk
-        const embedding = await this.generateEmbedding(chunk.content);
-        if (embedding) {
-          await chunksCollection.updateOne(
-            { _id: result.insertedId },
-            {
-              $set: {
-                contentEmbedding: embedding,
-                embeddingModel: 'paraphrase-multilingual-MiniLM-L12-v2',
-                embeddingGeneratedAt: new Date()
-              }
-            }
-          );
-        }
+        // Publish embedding event to Redis for async processing
+        await this.publishEmbeddingEvent(
+          result.insertedId.toString(),
+          documentId,
+          chunk,
+          documentType
+        );
       }
 
       // PHASE 2: Insert H3 chunks with parent references
@@ -387,20 +421,13 @@ class DocumentSeeder {
         const result = await chunksCollection.insertOne(chunkData);
         chunksCreated++;
 
-        // Generate embedding for this chunk
-        const embedding = await this.generateEmbedding(chunk.content);
-        if (embedding) {
-          await chunksCollection.updateOne(
-            { _id: result.insertedId },
-            {
-              $set: {
-                contentEmbedding: embedding,
-                embeddingModel: 'paraphrase-multilingual-MiniLM-L12-v2',
-                embeddingGeneratedAt: new Date()
-              }
-            }
-          );
-        }
+        // Publish embedding event to Redis for async processing
+        await this.publishEmbeddingEvent(
+          result.insertedId.toString(),
+          documentId,
+          chunk,
+          documentType
+        );
       }
 
       console.log(`   ✓ Generated ${chunksCreated} chunks for ${slug} (v${newVersion}, deactivated ${chunksDeactivated})`);
@@ -409,6 +436,139 @@ class DocumentSeeder {
       console.error(`   ❌ Failed to generate chunks for ${slug}:`, error.message);
       console.warn(`   ⚠️  Continuing without chunks for ${slug}...`);
     }
+  }
+
+  /**
+   * Seed routes from routes.csv (Phase 3)
+   * Two-phase insertion: root routes → child routes
+   */
+  private async seedRoutes(db: any, documentSlugMap: Map<string, ObjectId>): Promise<void> {
+    const routesCol = db.collection('routes');
+    const csvPath = path.join(__dirname, '../data/routes.csv');
+
+    // Read routes CSV
+    let routeRows: RouteCSVRow[];
+    try {
+      const fileContent = await fs.readFile(csvPath, 'utf8');
+      routeRows = parse(fileContent, {
+        columns: true,
+        skip_empty_lines: true,
+        trim: true
+      });
+    } catch (error) {
+      console.warn(`   ⚠️  routes.csv not found, skipping route seeding`);
+      return;
+    }
+
+    console.log(`   Read ${routeRows.length} routes from CSV`);
+
+    // Build document slug → _id map
+    const documentsCol = db.collection('documents');
+    const allDocs = await documentsCol.find({}).toArray();
+    const docSlugToId = new Map<string, ObjectId>();
+    for (const doc of allDocs) {
+      docSlugToId.set(doc.slug, doc._id);
+    }
+    console.log(`   Mapped ${docSlugToId.size} document slugs`);
+
+    // TWO-PHASE INSERTION: root routes → child routes
+    const rootRoutes = routeRows.filter(row => !row.parentPath || row.parentPath === '');
+    const routePathToId = new Map<string, ObjectId>(); // Track inserted route path → _id
+
+    // Phase 3a: Root routes
+    console.log(`   Phase 3a: Inserting ${rootRoutes.length} root routes...`);
+    for (const row of rootRoutes) {
+      const routeId = await this.insertRoute(db, row, null, docSlugToId);
+      const fullPath = row.slug; // Root route path = slug
+      routePathToId.set(fullPath, routeId);
+      console.log(`   ✓ ${fullPath} (${row.kind})`);
+    }
+
+    // Phase 3b: Child routes
+    const childRoutes = routeRows.filter(row => row.parentPath && row.parentPath !== '');
+    console.log(`   Phase 3b: Inserting ${childRoutes.length} child routes...`);
+    for (const row of childRoutes) {
+      const parentId = routePathToId.get(row.parentPath!);
+      if (!parentId) {
+        console.warn(`   ⚠️  Parent route "${row.parentPath}" not found for ${row.slug}, skipping`);
+        continue;
+      }
+
+      const routeId = await this.insertRoute(db, row, parentId, docSlugToId);
+      const fullPath = `${row.parentPath}/${row.slug}`; // Calculate full path
+      routePathToId.set(fullPath, routeId);
+      console.log(`   ✓ ${fullPath} (${row.kind})`);
+    }
+
+    // Stats
+    const routeStats = {
+      total: await routesCol.countDocuments({}),
+      document: await routesCol.countDocuments({ kind: 'document' }),
+      category: await routesCol.countDocuments({ kind: 'category' }),
+      redirect: await routesCol.countDocuments({ kind: 'redirect' })
+    };
+
+    console.log(`   Routes: ${routeStats.total} total (${routeStats.document} document, ${routeStats.category} category, ${routeStats.redirect} redirect)`);
+  }
+
+  /**
+   * Insert single route with validation
+   */
+  private async insertRoute(
+    db: any,
+    row: RouteCSVRow,
+    parentId: ObjectId | null,
+    docSlugToId: Map<string, ObjectId>
+  ): Promise<ObjectId> {
+    const routesCol = db.collection('routes');
+
+    // Resolve rootDocumentSlug → ObjectId
+    let rootDocumentId: ObjectId | undefined;
+    if (row.rootDocumentSlug && row.rootDocumentSlug !== '') {
+      rootDocumentId = docSlugToId.get(row.rootDocumentSlug);
+      if (!rootDocumentId) {
+        throw new Error(`Document "${row.rootDocumentSlug}" not found for route "${row.slug}"`);
+      }
+    }
+
+    // Validation: kind=document requires rootDocumentId
+    if (row.kind === 'document' && !rootDocumentId) {
+      throw new Error(`Route kind=document requires rootDocumentSlug (route: ${row.slug})`);
+    }
+
+    // Calculate full path
+    let fullPath: string;
+    if (parentId) {
+      // Lookup parent to get its path
+      const parent = await routesCol.findOne({ _id: parentId });
+      if (!parent) {
+        throw new Error(`Parent route not found for ${row.slug}`);
+      }
+      fullPath = `${parent.path}/${row.slug}`;
+    } else {
+      fullPath = row.slug;
+    }
+
+    const routeData = {
+      _id: new ObjectId(),
+      parentId,
+      slug: row.slug,
+      path: fullPath,
+      type: row.type,
+      kind: row.kind,
+      rootDocumentId,
+      redirectTo: row.redirectTo || undefined,
+      title: row.title || undefined,
+      description: row.description || undefined,
+      displayCategory: row.displayCategory || undefined,
+      isPublic: row.isPublic === 'true',
+      enabled: row.enabled !== 'false', // Default true
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    await routesCol.insertOne(routeData);
+    return routeData._id;
   }
 }
 

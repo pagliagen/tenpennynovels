@@ -17,7 +17,7 @@ export async function waitForChunkEmbeddings(
   maxWaitMs: number = 30000
 ): Promise<boolean> {
   const startTime = Date.now();
-  const chunksCollection = db.collection('document_chunks');
+  const chunksCollection = db.collection('documentchunks');  // FIX: Match DocumentSeeder collection name (no underscore)
 
   while (Date.now() - startTime < maxWaitMs) {
     const chunks = await chunksCollection.find({

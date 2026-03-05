@@ -1,5 +1,8 @@
 /**
- * Redis Event Types for Async Embedding Generation
+ * Redis Event Types for Async Embedding Generation (Seeder Version)
+ *
+ * Copied from embeddings-worker/src/types/events.ts with critical fix:
+ * - DocumentChunkEmbeddingEvent.documentType now includes 'approfondimenti'
  *
  * This file defines the event types published to Redis when new content
  * needs embedding generation. Workers subscribe to these events and process
@@ -38,6 +41,8 @@ export interface DocumentEmbeddingEvent extends BaseEmbeddingEvent {
 /**
  * DocumentChunk embedding event
  * Published when a document chunk is created (H2/H3 section)
+ *
+ * FIX: Added 'approfondimenti' to documentType (seeder uses 3 types)
  */
 export interface DocumentChunkEmbeddingEvent extends BaseEmbeddingEvent {
   chunkId: string;
@@ -45,7 +50,7 @@ export interface DocumentChunkEmbeddingEvent extends BaseEmbeddingEvent {
   slug: string;
   title: string;
   content: string;
-  documentType: 'ambientazione' | 'approfondimenti' | 'regolamento';  // FIX: Added approfondimenti (seeder uses 3 types)
+  documentType: 'ambientazione' | 'approfondimenti' | 'regolamento'; // FIX: Added approfondimenti
   order: number;
   headingLevel: 2 | 3;      // H2 (main sections) + H3 (sub-sections)
   parentSlug?: string;       // For H3 chunks, reference to parent H2 slug

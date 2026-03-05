@@ -7,6 +7,10 @@
   "scripts": {
     "export:dev:documents": "dotenv -e .env.local -- tsx utils/export-documents.ts",
     "export:prod:documents": "dotenv -e .env.production -- tsx utils/export-documents.ts",
+    "export:dev:routes": "dotenv -e .env.local -- tsx utils/export-routes.ts",
+    "export:prod:routes": "dotenv -e .env.production -- tsx utils/export-routes.ts",
+    "export:dev:all": "npm run export:dev:documents && npm run export:dev:routes",
+    "export:prod:all": "npm run export:prod:documents && npm run export:prod:routes",
     "seed:dev:permissions": "dotenv -e .env.local -- tsx seeders/PermissionSeeder.ts",
     "seed:dev:users": "dotenv -e .env.local -- tsx seeders/UserSeeder.ts",
     "seed:dev:locations": "dotenv -e .env.local -- tsx seeders/LocationSeeder.ts",
@@ -43,10 +47,13 @@
     "gray-matter": "^4.0.3",
     "ioredis": "^5.10.0",
     "marked": "^17.0.3",
-    "mongodb": "^7.0.0"
+    "mongodb": "^7.0.0",
+    "redis": "^5.11.0",
+    "uuid": "^11.0.5"
   },
   "devDependencies": {
     "@types/node": "^22.13.6",
+    "@types/uuid": "^10.0.0",
     "dotenv-cli": "^11.0.0",
     "tsx": "^4.19.2",
     "typescript": "^5.9.3"
