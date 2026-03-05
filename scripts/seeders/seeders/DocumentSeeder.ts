@@ -217,6 +217,7 @@ class DocumentSeeder {
    */
   private async generateEmbedding(text: string): Promise<number[] | null> {
     try {
+      console.log(`   [Embedding] Calling ${EMBEDDINGS_SERVICE_URL}/embed...`);
       const response = await fetch(`${EMBEDDINGS_SERVICE_URL}/embed`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -229,9 +230,11 @@ class DocumentSeeder {
       }
 
       const data = await response.json();
+      console.log(`   [Embedding] ✓ Generated (${data.embedding?.length || 0} dims)`);
       return data.embedding || null;
     } catch (error: any) {
-      console.warn(`   ⚠️  Failed to generate embedding: ${error.message}`);
+      console.error(`   ❌ Failed to generate embedding: ${error.message}`);
+      console.error(`   Service URL: ${EMBEDDINGS_SERVICE_URL}`);
       return null;
     }
   }
