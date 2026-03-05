@@ -1,0 +1,341 @@
+{
+  "type": "doc",
+  "content": [
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Introduzione"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Ten Penny Novels utilizza un adattamento del Basic Role Playing (BRP), ottimizzato per il gioco by chat. È un sistema percentuale: tutte le caratteristiche e abilità sono espresse con valori da 01 a 99, che rappresentano la probabilità di riuscita in una determinata azione."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Ogni personaggio è definito da un insieme di caratteristiche (Forza, Educazione, Potere, ecc.) che rappresentano le doti innate, e da un gruppo di abilità che descrivono le competenze apprese nel corso della vita."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Al momento della creazione, ogni giocatore sceglie un'esperienza pregressa (mestiere o background). Questa scelta determina i requisiti minimi di alcune abilità, eventuali abilità bonus e la rete iniziale di contatti a disposizione del personaggio. In questo modo il passato influenza direttamente le competenze di partenza e le opportunità narrative durante il gioco."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Le abilità non partono tutte allo stesso livello:"
+        }
+      ]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Alcune hanno un valore base più alto, perché rappresentano capacità comuni che chiunque possiede almeno in forma rudimentale. Anche senza addestramento, una persona può cavarsela in parte..\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Alcune abilità derivano direttamente da una caratteristica: il loro valore iniziale corrisponde a una frazione della caratteristica collegata (es. Lingua madre = EDU ÷ 2, inserire almeno un altro esempio).\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Tutte le altre abilità iniziano da 01%, a indicare che solo attraverso studio, pratica o esperienze dirette possono svilupparsi."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Quando un'azione ha un esito incerto, il Master può richiedere una prova di abilità.\nSe il risultato del dado da 100 è pari o inferiore al punteggio dell'Abilità o della Caratteristica utilizzata, il personaggio ottiene un successo. Se il risultato è superiore al punteggio, l'azione termina con un fallimento."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Gradi di successo"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Ogni tiro percentuale può generare quattro possibili esiti."
+        }
+      ]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Successo normale: il risultato è pari o inferiore al valore dell'abilità. L'azione riesce normalmente."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Successo arduo: il risultato al dado è pari o inferiore al 50% dell'abilità."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Successo estremo: il risultato al dado è pari o inferiore al 25% dell'abilità."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Successo critico (facendo 01% al dado): indipendentemente dal valore dell'abilità, il risultato 01% rappresenta un evento speciale. L'azione riesce e produce anche un vantaggio imprevisto che può essere un indizio extra, un effetto collaterale positivo, un imprevisto che gioca a favore del personaggio."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Fallimento: il risultato è superiore al valore dell'abilità. L'azione non riesce, con conseguenze proporzionate."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Fallimento critico: il risultato è 100 e l'azione fallisce in modo disastroso, con conseguenze peggiori del normale."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Il master richiede un successo Estremo per azioni che rasentano l'impossibile. Ad esempio, per scalare una parete il giocatore deve superare un tiro di Atletica: con un successo Normale se la parete offre delle sporgenze oppure non è particolarmente scivolosa, con un successo Arduo se non ci sono appigli e la superficie è bagnata dall'acqua di una cascata vicina."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Un successo Arduo o Estremo in una prova con difficoltà Normale indica, invece, che il personaggio è riuscito nell'impresa in modo eccezionale: potrebbe aver scalato la parete in meno tempo del previsto, aver notato un indizio extra in una prova di indagine."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "In caso di abilità contrapposte il grado di successo indica chi tra i due giocatori vince, indifferentemente dal livello di abilità, secondo questo schema:"
+        }
+      ]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Un successo Critico batte un successo Estremo."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Estremo batte Arduo."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Arduo batte Normale."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "A parità di successo vince chi ha ottenuto un risultato inferiore."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Forzare il tiro"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Quando un personaggio fallisce una prova (ma non in modo critico), il giocatore solo in quest può chiedere di forzare il tiro. Forzare significa ritentare la prova, ma con la consapevolezza che un secondo fallimento avrà conseguenze peggiori."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Il contesto deve giustificare la possibilità del nuovo tentativo: forzare una porta, insistere con un testimone, cercare ancora un indizio. Se anche il secondo tiro fallisce, il Master introduce un effetto negativo proporzionale all'azione: la porta può cedere ma ferire il personaggio, il testimone può offendersi e chiamare la polizia, l'indizio può andare perduto per sempre."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Tiro libero Il tiro libero viene utilizzato quando l'esito di una situazione non dipende da capacità, caratteristiche o scelte del personaggio, ma da un fattore esterno, casuale o imponderabile. La decisione di ricorrere a un tiro libero spetta sempre al Master."
+        }
+      ]
+    }
+  ]
+}

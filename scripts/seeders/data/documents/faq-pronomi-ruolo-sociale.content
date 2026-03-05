@@ -1,0 +1,1231 @@
+{
+  "type": "doc",
+  "content": [
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Sintesi rapida sull'uso dei pronomi:"
+        }
+      ]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "\"Tu\"  \nSi usa tra familiari stretti, amici intimi, innamorati. Può risultare offensivo se usato con estranei o superiori.\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "\"Lei\"  \nÈ la forma comune tra pari o sconosciuti, e in situazioni formali. Il più usato in città.\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "\"Voi\"  \nTipico di classi popolari verso persone di rango superiore o autorità."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Classe sociale e comportamento"
+        }
+      ]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Le classi sociali sono rigide?  \nSì, ufficialmente. Nei fatti ci sono scambi tra classi, ma spesso hanno conseguenze (chiacchiere, scandali o isolamento).\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Come rivolgersi a uno sconosciuto?  \nSolo in occasioni pubbliche o legittime (lavoro, chiesa, conferenze, parchi affollati).\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Quanto pesa la reputazione?  \nMoltissimo. Un pettegolezzo non smentito diventa facilmente \"verità\".\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Esistono relazioni tra classi diverse?  \nSì, ma spesso sono nascoste o creano problemi.\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Uomini e donne possono parlarsi da soli?  \nDipende dal ceto:  \n- Aristocrazia: solo tra parenti/promessi o in presenza d’altri.  \n- Borghesia: possibili se in luoghi pubblici.  \n- Ceti popolari: normale.\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Lettere private?  \nSì tra tutti, con modalità diverse:  \n- Ceti alti: formali, \"mostrabili\" anche a terzi.  \n- Borghesia: più libertà.  \n- Popolari: informali o tramite intermediari.\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Visite senza preavviso?  \n- Ceti alti: quasi insulto (tranne grandi confidenze).  \n- Borghesia: possibile in qualche caso.  \n- Popolari: normale.\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Sono romantici i fidanzamenti?  \n- Aristocrazia: accordo sociale.  \n- Borghesia: possibile anche l’affetto.  \n- Popolari: più praticità.\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Contatto fisico in pubblico?  \n- Alti: mai.  \n- Borghesia: malvisto.  \n- Popolari: più tollerato.\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Si esce insieme da “non sposati”?  \n- Alti: solo motivi formali.  \n- Borghesia: possibile ma osservato.  \n- Popolari: normale.\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Corteggiamento formale?  \nSolo nei ceti alti, poco tra borghesi, assente tra i popolari.\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Rapporti sociali diretti o allusivi?  \n- Alti: allusivi  \n- Borghesi: intermedi  \n- Popolari: diretti"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Donne: ruoli e autonomia"
+        }
+      ]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Le donne sono giocabili quanto gli uomini?  \nSì. Nessuna azione è loro vietata per principio.\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Le donne lavorano?  \nSì in ogni ceto, ma cambiano mansioni e status sociale.\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Ci sono donne medico o in altre posizioni importanti?  \nPossibile, raro ma storicamente corretto.\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Le donne possono girare sole?  \nSì, ma in città attireranno attenzione e giudizi, specialmente tra i ricchi.\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Il corpo femminile è tabu?  \nSì a livello sociale, meno nella pratica quotidiana.\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Donne più autonome nei ceti bassi?  \nSì, ma significa meno protezione e più rischi."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Etnie e percezione sociale"
+        }
+      ]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Ci sono persone non bianche a Londra nel 1895?  \nSì: città imperiale e portuale.\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Tutte le etnie sono giocabili?  \nSì, senza limiti sui ruoli.\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Il razzismo esiste?  \nSì, ma in forme non uniformi. Molto conta il pregiudizio.\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Conta più il ceto o l’etnia?  \nIl ceto viene prima. L’abbigliamento e il ruolo sociale sono decisivi.\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Persone non bianche possono essere ricche?  \nSì, anche se meno frequente.\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "I pronomi cambiano in base all’etnia?  \nNo, solo rispetto a ceto e contesto.\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Origine delle persone non bianche?  \nDa ogni parte dell’Impero Britannico e altrove: Caraibi, India, Africa, Medioriente, Cina, Americhe."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Lavoro e sussistenza"
+        }
+      ]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Orari di lavoro regolari?  \nNo, giornate lunghe, specie tra popolari e servitù.\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "È facile cambiare lavoro?  \nNo: rischioso per poveri, delicato per borghesi, strategico per ricchi.\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Ruoli intellettuali per donne?  \nSì, soprattutto come insegnanti, infermiere, scrittrici, ricercatrici o benefattrici."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Cure, medicina e igiene"
+        }
+      ]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Quando si chiama il medico?  \nSolo se necessario e se ci si può permettere. Molte cure sono domestiche.\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Donne e conoscenze mediche?  \nSì, attraverso rimedi “di casa” e quotidiani.\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Igiene moderna?  \nNo: lavaggi frequenti ma solo parziali, pochi bagni completi.\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Acqua corrente ovunque?  \nNo. Nei quartieri poveri si usano pozzi e lavatoi.\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Medicina affidabile?  \nVariegata: medicina scientifica in crescita e rimedi empirici convivono.\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Medicine comuni?  \nOppiacei (laudano, morfina), alcol, erbe, sali, tonici - spesso senza ricetta.\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Farmaci regolamentati?  \nSolo in parte. Molti venduti senza controlli.\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Ci si fida sempre del medico?  \nNo, molti preferiscono fare da sé o affidarsi a parenti/conoscenti.\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Esistono “rimedi da banco”?  \nSì, in farmacia o drogheria, anche senza prescrizione.\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Cure diverse tra ricchi e poveri?  \nSì. I ricchi hanno accesso a medici, i poveri a rimedi rapidi o alla carità."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Trasporti e spostamenti"
+        }
+      ]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Come si viaggia a Londra?  \nA piedi, carrozze, omnibus, cab, ferrovia urbana.\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Mezzi puntuali?  \nNo, il traffico crea molti ritardi.\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Uomini e donne insieme sui mezzi?  \nSì, spesso il contatto fisico è inevitabile."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Comunicazione e informazione"
+        }
+      ]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Comunicazioni rapide?  \nLettere (anche in giornata) e telegrammi (rapidi, ma costosi o stringati).\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Telefono diffuso?  \nRarissimo, solo tra ricchi e in ufficio.\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "I giornali sono letti da tutti?  \nSì, spesso in gruppo anche tra popolari."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Denaro, acquisti e consumi"
+        }
+      ]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Si usa il contante?  \nSì, credito informale e personale.\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "I prezzi sono fissi?  \nNon sempre, spesso si contratta.\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Ci sono negozi specializzati?  \nSì, specialmente tra borghesi (librerie, farmacie, sartorie)."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Religione e funzione sociale"
+        }
+      ]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Andare in chiesa è obbligatorio?  \nNo, ma socialmente raccomandato in borghesia/aristocrazia.\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Essere non credenti è malvisto?  \nPuò creare sospetto ma non è vietato."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Legge e criminalità"
+        }
+      ]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "La legge è applicata sempre?  \nNo, le applicazioni variano a seconda del contesto e dei rapporti.\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "La legge è uguale per tutti?  \nNo, ceto, reputazione, relazioni contano.\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "La violenza è scandalo per forza?  \nNon sempre, spesso tollerata (specie nei quartieri più poveri).\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Chi “può” infrangere la legge?  \nChi ha potere, connessioni o è invisibile agli occhi della società.\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Essere colti in flagrante è sempre decisivo?  \nNo, spesso conta chi/dove/come e chi testimonia.\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "La polizia è ovunque?  \nNo, presenza irregolare e più reattiva che preventiva.\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Ci sono zone in cui il crimine è tollerato?  \nSì, le aree più degradate di Londra ospitano attività illegali note ma ignorate.\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "La criminalità è organizzata?  \nIn parte: reti e personaggi chiave esistono, ma non sempre vere \"mafie\" come oggi.\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Denunciare conviene sempre?  \nNo, spesso porta problemi a chi denuncia."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Sessualità, gravidanze e prevenzione"
+        }
+      ]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Il sesso fuori dal matrimonio esiste?  \nSì, in tutte le classi.\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Stesse conseguenze per tutti?  \nNo: le donne e i più vulnerabili rischiano di più.\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Esistono relazioni tra persone dello stesso sesso?  \nSì, ma di solito sono segrete o rischiose.\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Le relazioni sentimentali portano sempre al matrimonio?  \nNo, alcune restano informali o “irregolari”.\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Il desiderio femminile è riconosciuto?  \nPoco in pubblico, ma è una realtà privata diffusa.\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Esistono metodi contraccettivi?  \nSì, non sempre affidabili, ma conosciuti.\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Quali contraccettivi si usano?  \nPreservativi in gomma, diaframmi rudimentali, spugne, lavande, astinenza periodica.\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "I preservativi esistono nel 1895?  \nSì, come “dispositivi igienici”.\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Si parla apertamente di contraccezione?  \nNo, le informazioni girano di nascosto, spesso tra donne.\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Come si prevengono le malattie veneree?  \nPreservativi, lavaggi, medici (ma efficacia limitata).\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Le malattie veneree sono diffuse?  \nSì, soprattutto sifilide e gonorrea.\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Le cure funzionano?  \nA volte, ma spesso sono lunghe e pesanti."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

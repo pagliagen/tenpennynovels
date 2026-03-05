@@ -1,0 +1,110 @@
+{
+  "type": "doc",
+  "content": [
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Regina Vittoria"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "La regina Vittoria, salita al trono nel 1837, ha incarnato per oltre sessant’anni l’autorità morale e politica di un’intera epoca. Sotto il suo regno il Regno Unito ha conosciuto una straordinaria espansione economica, territoriale e industriale. Il lutto perenne per la morte del consorte Alberto ha contribuito a trasformare Vittoria nel simbolo di un’etica austera, centrata su valori rigidi come la famiglia, la disciplina e la rispettabilità pubblica. Nonostante la sua figura apparentemente distante dagli affari politici quotidiani, la sua influenza si è fatta sentire sulla corte, sul governo e sulla società: la sua presenza aleggia in ogni aspetto della vita pubblica, e perfino le mode e i costumi delle classi alte sono modellati su di lei. La sua longevità regale ha generato una percezione di continuità e stabilità, anche nei momenti di profondo cambiamento e tensione."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Religione"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "La religione occupava un ruolo di primo piano nella vita quotidiana della Londra vittoriana: la Chiesa Anglicana era la confessione ufficiale e la sua influenza si estendeva sia sulle élite che sulle classi popolari. Tuttavia, il periodo fu anche segnato da una certa crisi religiosa: la diffusione delle idee scientifiche e il confronto con altre fedi (cattolici, ebrei, metodisti, immigrati irlandesi e comunità indiane) resero il panorama spirituale molto più variegato e meno uniforme. L’assiduità alla messa domenicale rappresentava un dovere sociale più che reale convinzione, e molti vivevano una fede privata, talvolta intrisa di superstizioni e pratiche popolari. Accanto alla religione ufficiale sopravvivevano culti minoritari, movimenti spiritualisti e pratiche occulte che testimoniavano il bisogno di certezze e di conforto di fronte ai rapidi cambiamenti dell’epoca."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Scienza"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "La scienza vittoriana fu caratterizzata da incredibile fermento e ottimismo: telescopi, microscopi, teorie evoluzionistiche e nuove tecniche mediche rivoluzionarono la percezione dell’essere umano e della natura. Le esposizioni universali, come quella di Londra del 1851 nel Crystal Palace, celebravano il progresso industriale e tecnologico. Tuttavia, alla fiducia nella scienza si accompagnavano paure e retaggi magici: l’elettricità sembrava una forza occulta, la psicologia e l’ipnosi erano al confine fra medicina e stregoneria, lo spiritismo divenne di moda nei salotti borghesi. Gli scienziati godevano di grande rispetto, ma erano anche percepiti con sospetto dai più tradizionalisti; la tensione tra razionalità e mistero resta una delle cifre dell’epoca."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Politica"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Politicamente la Londra vittoriana era il cuore pulsante di un impero globale, ma anche teatro di profondi conflitti interni. Il sistema monarchico-costituzionale garantiva stabilità, ma non assenza di tensioni: i partiti Whig e Tory (poi liberali e conservatori) si alternavano con programmi opposti, e il dibattito pubblico era acceso e vivace. L’epoca vide l’allargamento graduale del diritto di voto maschile e le prime richieste delle donne di essere riconosciute come cittadine a pieno titolo. Le lotte operaie per migliori condizioni di lavoro animavano le strade, mentre sulle colonne dei giornali si discuteva di colonialismo, guerre lontane e scandali finanziari. La politica estera era dominata dalla volontà di mantenere il primato imperiale, a qualsiasi costo."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Strati sociali"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "La società londinese era rigidamente stratificata, una vera giungla di classi e sottoclassi la cui appartenenza determinava quasi ogni aspetto dell’esistenza quotidiana. Al vertice, l’aristocrazia e l’alta borghesia godevano di enormi privilegi, vissuti tra dimore sontuose, ricevimenti e relazioni di potere. Al di sotto, la middle class prosperava grazie alle professioni emergenti nella nuova economia industriale, ma era ossessionata dal desiderio di rispettabilità e dall’ansia di non scivolare “in basso”. Gli operai, le lavandaie, i servitori e gli abitanti dei quartieri dell’East End vivevano in condizioni precarie, spesso costretti a espedienti o a lavori massacranti per sopravvivere. Ogni segno esteriore – abito, linguaggio, istruzione – serviva a marcare i confini invisibili fra le classi; anche l’accesso alla giustizia e alla salute era fortemente condizionato dal ceto di appartenenza. In questo scenario, la mobilità sociale era rara, e una caduta era quasi sempre definitiva e pubblicamente stigmatizzata."
+        }
+      ]
+    }
+  ]
+}

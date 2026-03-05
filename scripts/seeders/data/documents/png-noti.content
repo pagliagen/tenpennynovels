@@ -1,0 +1,182 @@
+{
+  "type": "doc",
+  "content": [
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Di seguito sono presentati alcuni dei personaggi non giocanti (PNG) più noti nell’ambientazione di Ten Penny Novels. Ciascuno ricopre un ruolo sociale e narrativo ben preciso, con retroscena e carattere che possono arricchire la partita e offrire agganci investigativi, alleanze, ostacoli o semplici voci sullo sfondo della Londra vittoriana."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Thomas Reed - Il sindacalista"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Thomas Reed è una figura centrale nei movimenti operai dell’East End. Uomo di statura imponente e temperamento risoluto, è cresciuto fra i moli del Tamigi e le fabbriche annerite dai fumi industriali. Ha conosciuto la povertà e sa parlare la lingua della gente comune, guadagnandosi la fiducia degli operai e il timore dei padroni. Reed organizza scioperi, cortei e incontri clandestini, spesso sorvegliato dalla polizia ma mai colto in flagranza. Le sue idee progressiste lo mettono in contrasto con autorità e industriali, ma neppure i più conservatori possono ignorare la sua influenza nei quartieri popolari. Alcuni lo accusano di essere troppo radicale, mentre altri lo considerano la sola speranza contro sfruttamento e abusi. Dietro la fermezza, si nasconde però un’anima ferita dalle perdite personali e dalla consapevolezza che la lotta ha un prezzo. Reed non si lascia mai corrompere e fa leva sui valori di solidarietà, spesso proteggendo chi rischia rappresaglie. Non si tira indietro davanti al pericolo: è disposto a rischiare tutto pur di conquistare condizioni migliori per i suoi compagni."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Mrs. Hale - Proprietaria del bordello"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Mrs. Hale è la nota proprietaria di uno degli stabilimenti più chiacchierati di Soho, la \"Pink Rose\". Elegante e sempre impeccabile, con un portamento di regale sicurezza, gestisce il suo bordello con disciplina e discrezione. Nonostante il suo lavoro sia oggetto di pettegolezzi e moralismi, ha costruito una rete di contatti che va ben oltre i suoi clienti: poliziotti corrotti, medici misericordiosi, giornalisti e uomini politici trovano spesso il modo di rivolgersi a lei per risolvere questioni delicate. Appare fredda, ma chi la conosce sa che protegge fieramente le donne che lavorano nel suo locale, offrendo rifugio e sostegno in una società che non perdona i passi falsi. È abile nel gestire informazioni, talvolta ricattando chi minaccia i suoi interessi o il benessere delle sue ragazze. Tra le sue stanze passano segreti e voci — chi ottiene la sua fiducia può accedere a un patrimonio di confidenze preziose… a caro prezzo."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Mrs. Grant - Fondatrice e proprietaria del rifugio per indigenti"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Mrs. Philomena Grant ha fondato e dirige il più grande rifugio per indigenti del distretto di Whitechapel. Donna di mezza età dal sorriso paziente e lo spirito indomito, si è fatta strada tra mille difficoltà personali, scegliendo di dedicare la sua vita ai più bisognosi. Il \"Grant’s Shelter\" offre pasti caldi, un letto pulito e talvolta un lavoro temporaneo a donne sole, vedovi, orfani e invalidi. Mrs. Grant conosce le storie di chiunque varchi la soglia del suo rifugio: offre aiuto materiale, ma anche ascolto e conforto, conquistando il rispetto di preti, filantropi, ma anche gente disperata. È energica, diretta e raramente indulgente verso chi approfitta della sua bontà. Sa essere autorevole e meticolosa nella gestione degli aiuti, collaborando spesso con le parrocchie e i medici volenterosi, ma senza sottomettersi mai a regole imposte “dall’alto”. C’è chi sostiene abbia un passato misterioso – forse una grande perdita o un amore mai dimenticato – che la spinge ad essere così devota alla sua missione."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Clara & Edith - Le signore della Casa delle Donne"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Clara & Edith rappresentano due volti della solidarietà femminile nell’East End vittoriano. Unite dalla gestione della Casa delle Donne, incarnano reti di protezione, emancipazione e lotta sociale per le lavoratrici e le ragazze in difficoltà. Clara, nata nei bassifondi, porta la voce della strada e della resistenza quotidiana; Edith, colta e benestante, offre risorse, diplomazia e apertura verso le istituzioni. Le loro differenze creano tensioni ma anche una sinergia indispensabile, rendendole punto di riferimento e speranza per molte donne escluse o minacciate dalla società. "
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 3
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Clara"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Clara è nata e cresciuta nell’East End: conosce le strade, le difficoltà e le risorse delle donne della zona. Pratica, coraggiosa e senza peli sulla lingua, si batte per fornire rifugio, formazione e solidarietà alle ragazze che fuggono da padri violenti o lavori degradanti. La Casa delle Donne, da lei co-gestita, accoglie lavoratrici, madri sole, apprendiste e chiunque abbia bisogno di un luogo sicuro. Clara ha uno spirito di lotta radicato, non si lascia intimidire dalle minacce dei magnaccia o dal disprezzo dell’alta società. Si trova spesso in conflitto con le istituzioni e con i benpensanti, ma gode di grande rispetto tra chi ha visto da vicino la durezza della vita nei bassifondi."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 3
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Edith"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Edith Harrison, la co-fondatrice, proviene invece dall’alta borghesia. Vedova di un industriale, ha scelto di impiegare la sua fortuna e la sua posizione per cause filantropiche. Colta, elegante, diplomatica, predilige una linea fatta di trattative con le autorità, raccolte fondi e appelli sui giornali. È convinta che educazione e formazione siano le chiavi per il progresso delle donne e dedica energia alla promozione di corsi e lavori “rispettabili”. I rapporti fra lei e Clara sono a volte tesi: Edith appare ingenua ai problemi delle strade, Clara troppo impulsiva. Eppure, insieme rappresentano una forza complementare e instancabile, capace di smuovere coscienze e leggi."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Li Wen - Gestore della fumeria"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Li Wen è il discreto, enigmatico proprietario di una delle più conosciute fumerie d’oppio della Limehouse. Arrivato a Londra dalla Cina quasi vent’anni fa, ha visto e subito discriminazioni, ma è riuscito con spirito di sacrificio e astuzia a ritagliarsi un ruolo di rispetto, sia nella comunità cinese che tra i frequentatori occidentali del suo locale. Riservato, di poche parole, si muove tra i tavoli in un silenzio quasi solenne, facendo rispettare con fermezza le regole imposte agli avventori. Per molti, il suo locale è un luogo proibito e pericoloso, ma chi lo conosce sa che Wen difende i suoi clienti dagli eccessi delle bande criminali e spesso offre riparo e cure a chi cerca solo una tregua temporanea dalle miserie della città. Si dice conosca segreti e traffici che avvengono sotto la superficie – e che la sua saggezza sia ricercata perfino da investigatori in cerca di informazioni che la polizia non riesce ad ottenere."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Elias Ward - L’attore del music hall"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Elias Ward è una vera leggenda vivente del “Grand Albion Music Hall”. Di origini modeste, ha conquistato il cuore del pubblico grazie a una voce vibrante, una presenza scenica magnetica e un talento istrionico che gli consente di passare senza sforzo dal comico al drammatico. Fuori dal palco, Ward è noto per il suo spirito arguto e il gusto per la compagnia, ma anche per le sue idee progressiste e il sostegno alle cause popolari: partecipa a raccolte fondi, protegge giovani artisti e non si tira indietro quando si tratta di aiutare colleghi in difficoltà. La sua fama lo ha reso oggetto di invidie — e qualche minaccia – ma egli affronta la maldicenza con elegante distacco. Voci di corridoio raccontano di una vita privata movimentata e di amicizie influenti tra politici e nobili, ma Ward resta gelosamente riservato sui dettagli più intimi. Sul palco incanta con le sue storie di vita londinese, pungendo vizi e debolezze dei potenti sotto forma di satira raffinata. Il “suo” music hall, si dice, è anche rifugio per chi cerca una seconda occasione."
+        }
+      ]
+    }
+  ]
+}

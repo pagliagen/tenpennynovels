@@ -1,0 +1,170 @@
+{
+  "type": "doc",
+  "content": [
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "La distanza fra chi vive nei piani alti e chi affolla i bassifondi della Londra del 1895 è economica, morale, culturale, talvolta perfino linguistica. La classe sociale rappresenta una mappa di possibilità e limiti che influenza la vita quotidiana e le opportunità, oltre che in determinati contesti la credibilità di una persona. Classe, denaro, istruzione e nascita rappresentano etichette invisibili per tutti, e spaccano una città già pesantemente divisa.  \nQueste barriere sono parte di Londra tanto quanto i ponti sul Tamigi.  \nOgni rapporto è condizionato da una gerarchia che nessuno mette in discussione ma che tutti conoscono. Nelle indagini, queste distanze pesano a volte più delle prove: certe persone non vengono credute, altre non vengono mai toccate.  \nUn personaggio dell'alta società può ottenere informazioni nei club privati, convincere un funzionario o corrompere un poliziotto ma difficilmente metterà piede in una taverna dell'East-End senza essere notato. Un operaio o una prostituta, invece, possono muoversi tra vicoli e mercati, ascoltare voci, passare inosservati ma la sua parola vale poco davanti a un magistrato o a una persona di classe superiore.  \nI poveri hanno accesso a reti informali di aiuto o di corruzione che restano invisibili ai più. Gli aristocratici, al contrario, vivono di reputazione e un pettegolezzo potrebbe distruggerli quanto un'accusa formale; il loro potere deriva dall'accesso a contatti più altolocati e dal denaro, che li protegge.  "
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Le differenze di classe attraversano quindi ogni aspetto del gioco. Un delitto cambia forma a seconda di chi lo racconta e del quartiere in cui avviene. Ciò che per un giornale è scandalo, per chi vive in strada è abitudine, rassegnazione; ciò che per la polizia è caso chiuso, per qualcuno resta una ferita aperta. Ogni verità dipende da chi ha il diritto di parlarne."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Classi Sociali della Londra Vittoriana"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Nella Londra del 1895, la società è profondamente stratificata: ogni classe sociale determina non solo status e possibilità, ma anche percezione pubblica, limiti di movimento e di parola. Poteri e debolezze di ogni personaggio sono filtrati dal ceto di appartenenza e le regole non scritte della città plasmano le loro quotidianità, ambizioni e paure. Di seguito, una panoramica delle principali classi sociali che si incontrano nelle strade nebbiose, nei club eleganti e nei vicoli popolosi della capitale."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 3
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Lower Class"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Operai, manovali, lavandaie, servitori, cocchieri, scaricatori, cuoche.  \nVivono nei quartieri popolari dell'East-End, in alloggi sovraffollati e malsani. La polizia li controlla più di quanto li protegga, ma generalmente conoscono la città meglio di chiunque altro."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 3
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Lower-middle Class"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Impiegati, piccoli artigiani, sarti, insegnanti, tipografi, negozianti, agenti, poliziotti.  \nVivono del proprio lavoro e difendono con ostinazione la rispettabilità conquistata."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 3
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Pauper Class"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Disoccupati, senzatetto, mendicanti, bambini di strada, prostitute, lavoratori a giornata privi di sicurezza o fissa dimora.  \nSopravvivono ai margini estremi della città, invisibili o temuti, spesso costretti a espedienti e lavori umilianti pur di sopravvivere. La loro esistenza è segnata dalla precarietà, dalla fame, dalle malattie e dalla costante minaccia di abusi o repressione. La società li ignora, ma le loro storie si intrecciano con le ombre e i segreti della metropoli."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 3
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Middle Class"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Professionisti, medici, avvocati, insegnanti, giornalisti, contabili, piccoli imprenditori.  \nVivono di reputazione e lavoro, credono nel progresso e nell'educazione. Sono il motore morale della città e la sua maschera più rigida."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 3
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Wealthy Class"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Grandi industriali, banchieri, investitori, imprenditori coloniali, editori.  \nRappresentano la ricchezza moderna, costruita sull'espansione economica più che sul lignaggio. Possono muovere interessi attraverso la stampa e le fondazioni di beneficenza."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 3
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Upper Class"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "La nobiltà di sangue, i grandi funzionari di Stato, gli accademici, i politici.  \nVivono tra Mayfair e Westminster, circondati da servitù e agi. Possiedono titoli, ma anche vincoli di apparenza. Rappresentano spesso la facciata immobile di una società in trasformazione."
+        }
+      ]
+    }
+  ]
+}

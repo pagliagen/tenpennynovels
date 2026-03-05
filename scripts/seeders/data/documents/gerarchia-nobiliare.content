@@ -1,0 +1,557 @@
+{
+  "type": "doc",
+  "content": [
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "La nobiltà inglese si basa sul principio della primogenitura maschile: il primo figlio maschio eredita titolo nobiliare e beni familiari. In mancanza di eredi maschi diretti, il titolo passa al parente maschio più prossimo nella linea di sangue (spesso un fratello, nipote o cugino). Rarissimi titoli si trasmettono in linea femminile e, se ciò accade, il titolo viene comunque ereditato dal primo figlio maschio della titolare quando possibile. Le donne possono detenere un titolo solo in circostanze eccezionali e difficilmente possono trasmetterlo."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "L’erede diretto si definisce heir apparent (erede evidente), mentre in assenza di figli maschi si parla di heir presumptive (erede presunto): quest’ultimo può essere scavalcato se nasce un figlio maschio legittimo dopo la morte del titolare. Per questo motivo, dopo la morte di un nobile senza figli maschi, si aspetta un periodo di tempo per escludere una possibile gravidanza della vedova prima di investire l’erede presunto."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "L’eredità dei titoli richiede la legittimità di nascita: nessun figlio illegittimo può ereditare, anche se riconosciuto o seguito da matrimonio dei genitori. I detentori di titoli effettivi sono i Peers of the Realm, che hanno diritto a un seggio alla Camera dei Lords (House of Lords), mentre chi ha solo titolo di cortesia (come gli eredi) non possiede questo privilegio."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Nota sui titoli: i titoli spesso non coincidono con il cognome: ad esempio, Arthur Bingham, conte di Middleborough, viene chiamato Lord Middleborough, non Lord Bingham né Lord Arthur."
+        }
+      ]
+    },
+    {
+      "type": "horizontalRule"
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Ordine e struttura dei titoli nobiliari"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Di seguito i titoli in ordine decrescente di importanza e le rispettive convenzioni familiari:"
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 3
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "1. Duca (Duke)"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Descrizione: Massimo rango nobiliare fuori dalla famiglia reale. Grande influenza politica e sociale, ampi possedimenti e clientele."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Forma: Duke and Duchess of Frullilandia  \nAppellativo: Your Grace"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Famiglia:  "
+        }
+      ]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Il figlio maggiore è erede e assume il secondo titolo più elevato del padre (di solito \"marchese\") come titolo di cortesia."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Le figlie sono chiamate Lady + nome proprio e mantengono il titolo anche da sposate, salvo nozze con un pari di rango superiore o uguale."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "horizontalRule"
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 3
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "2. Marchese (Marquess o Marquis)"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Descrizione: Titolo legato storicamente al controllo di territori di confine, nel periodo vittoriano con valore ormai simbolico."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Forma: Marquess and Marchioness of Frullilandia"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Famiglia:  "
+        }
+      ]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "L’erede usa come titolo di cortesia quello di \"conte\"."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Figlie sono Lady + nome proprio."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Figli maschi non eredi sono Lord + nome proprio."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "horizontalRule"
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 3
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "3. Conte (Earl)"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Descrizione: Titolo ampiamente diffuso, centrale nella vita politica locale e nazionale."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Forma: Earl and Countess of Frullilandia"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Famiglia:  "
+        }
+      ]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "L’erede usa un titolo di cortesia inferiore."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Altri figli maschi: The Honorable."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Figlie: Lady + nome proprio."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "horizontalRule"
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 3
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "4. Visconte (Viscount)"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Descrizione: Titolo di medio rango tra i pari."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Forma: Viscount and Viscountess Smith  \n(Il titolo non usa la preposizione \"of\".)"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Famiglia:  "
+        }
+      ]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Moglie e figlie sono Lady."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Tutti i figli (incluso l’erede): The Honorable."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "horizontalRule"
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 3
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "5. Barone (Baron)"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Descrizione: Rango più basso della peerage, ma comunque titolo nobiliare pieno. Spesso nobiltà recente acquisita per meriti."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Forma: Baron and Baroness  \n(Nella vita quotidiana: Lord e Lady.)"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Famiglia:  "
+        }
+      ]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Regole uguali ai visconti."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "horizontalRule"
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Titoli fuori dalla peerage"
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 3
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "6. Baronetto (Baronet)"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Descrizione: Titolo ereditario, ma fuori dalla nobiltà pari; conferisce prestigio e status, non diritto alla Camera dei Lords."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Forma: Sir Smith  \n(Moglie: Lady Smith)"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Famiglia:  "
+        }
+      ]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "I figli non hanno titoli."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "horizontalRule"
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 3
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "7. Cavaliere (Knight)"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Descrizione: Titolo onorifico non ereditario conferito per meriti (servizio alla Corona, arti, scienza, militari). Si estingue alla morte del titolare."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Forma: Sir Smith  \n(Moglie: Lady Smith)"
+        }
+      ]
+    }
+  ]
+}
