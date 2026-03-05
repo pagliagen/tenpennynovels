@@ -14,6 +14,10 @@ WORKDIR /app/python
 COPY python/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# HuggingFace token (optional - for rate limits and private models)
+ARG HF_TOKEN
+ENV HF_TOKEN=${HF_TOKEN}
+
 # Pre-download sentence-transformers model to cache
 # This prevents download at runtime and fixes the "20 restarts" issue
 RUN python3 -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')"
@@ -35,9 +39,10 @@ RUN apk add --no-cache python3 py3-pip
 COPY --from=python-base /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 COPY --from=python-base /root/.cache/huggingface /root/.cache/huggingface
 COPY --from=python-base /app/python /app/python
+RUN ln -s /usr/local/lib/python3.11 /usr/local/lib/python3.12
 
 # Copy Node.js application files
-COPY package.json tsconfig.json ./
+COPY package.json package-lock.json tsconfig.json ./
 COPY src ./src
 
 # Install ALL dependencies (including devDependencies for build)
@@ -64,6 +69,7 @@ ENV MONGODB_URI=mongodb://mongodb:27017/tenpennynovels
 ENV REDIS_URL=redis://redis:6379
 ENV QDRANT_URL=http://qdrant:6333
 ENV LOG_LEVEL=info
+ENV HF_TOKEN=${HF_TOKEN}
 
 # Start unified embeddings service
 CMD ["node", "dist/index.js"]

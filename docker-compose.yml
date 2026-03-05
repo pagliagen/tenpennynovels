@@ -66,6 +66,8 @@ services:
     build:
       context: ./services/embeddings-worker
       dockerfile: Dockerfile
+      args:
+        HF_TOKEN: ${HF_TOKEN:-}  # HuggingFace token (optional)
     container_name: tenpennynovels-embeddings-worker
     restart: unless-stopped
     environment:
@@ -76,6 +78,7 @@ services:
       REDIS_URL: redis://redis:6379
       QDRANT_URL: http://qdrant:6333
       LOG_LEVEL: info
+      HF_TOKEN: ${HF_TOKEN:-}  # HuggingFace token for runtime
     ports:
       - "5001:5001"  # HTTP API for embeddings
     networks:
