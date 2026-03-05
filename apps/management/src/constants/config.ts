@@ -4,8 +4,8 @@
 
 // API Configuration
 export const API_CONFIG = {
-  BASE_URL: process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:8000',
-  WEBSOCKET_URL: process.env.NEXT_PUBLIC_WEBSOCKET_URL || 'http://localhost:3001',
+  BASE_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
+  WEBSOCKET_URL: process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:3001',
   LANDING_URL: process.env.NEXT_PUBLIC_LANDING_URL || 'http://localhost:4000',
   TIMEOUT: 30000, // 30 seconds
   RETRY_COUNT: 3,
