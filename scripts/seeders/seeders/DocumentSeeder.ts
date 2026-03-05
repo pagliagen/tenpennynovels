@@ -57,7 +57,7 @@ class DocumentSeeder {
 
     try {
       const documentsCollection = db.collection('documents');
-      const chunksCollection = db.collection('document_chunks');
+      const chunksCollection = db.collection('documentchunks');  // FIX: Match backend collection name (no underscore)
       const routesCollection = db.collection('routes');
 
       console.log('🌱 Document Seeder (New Approach)\n');
