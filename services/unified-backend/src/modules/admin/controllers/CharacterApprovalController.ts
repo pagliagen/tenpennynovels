@@ -1373,6 +1373,70 @@ export class CharacterApprovalController {
    * Bulk delete multiple characters
    * POST /admin/characters/bulk-delete
    */
+  /**
+   * Delete a single character (soft delete)
+   */
+  static async deleteCharacter(req: Request, res: Response): Promise<void> {
+    try {
+      const { characterId } = req.params;
+
+      const { Character } = await import('@database/models/Character');
+      const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
+      if (!auditInfo) {
+        res.status(401).json(errorResponse(
+          'Autenticazione richiesta',
+          'UNAUTHORIZED',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      // Find character
+      const character = await Character.findById(characterId);
+
+      if (!character) {
+        res.status(404).json(errorResponse(
+          `Character not found: ${characterId}`,
+          'CHARACTER_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      // Soft delete by setting status to DELETED
+      await Character.findByIdAndUpdate(characterId, {
+        status: 'DELETED',
+        'metadata.deletedAt': new Date(),
+        'metadata.deletedBy': auditInfo.adminId
+      });
+
+      logger.warn('Character deleted', {
+        ...auditInfo,
+        characterId,
+        characterName: `${character.characterName} ${character.characterSurname}`
+      });
+
+      res.json(successResponse(
+        { characterId, deleted: true },
+        'Character deleted successfully',
+        getRequestId(req)
+      ));
+    } catch (error: any) {
+      logger.error('Error deleting character:', { error: error instanceof Error ? error.message : String(error) });
+      res.status(500).json(errorResponse(
+        'Failed to delete character',
+        'DELETE_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
+    }
+  }
+
   static async bulkDeleteCharacters(req: Request, res: Response): Promise<void> {
     try {
       const { characterIds } = req.body;

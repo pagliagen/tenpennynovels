@@ -71,6 +71,16 @@ router.patch(
   CharacterApprovalController.updateCharacter
 );
 
+// Delete character - generic route
+router.delete(
+  '/:characterId',
+  requireViewPermission('characters.detail.delete'),
+  AdminAuthMiddleware.logAdminAction('character.delete', 'character_management'),
+  autoLogOutcome,
+  AdminAuthMiddleware.sensitiveOperationLimit(),
+  CharacterApprovalController.deleteCharacter
+);
+
 // Bulk operations routes
 router.post(
   '/bulk-approve',

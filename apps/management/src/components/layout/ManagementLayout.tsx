@@ -88,12 +88,6 @@ export function ManagementLayout({ children }: ManagementLayoutProps): React.Rea
             <div className={styles.headerActions}>
               <div className={styles.userInfo}>
                 <span className={styles.userName}>{user?.displayName || user?.username}</span>
-                <button
-                  onClick={() => useAuthStore.getState().logout()}
-                  className={styles.logoutButton}
-                >
-                  Logout
-                </button>
               </div>
             </div>
           </div>
