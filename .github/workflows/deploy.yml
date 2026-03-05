@@ -202,6 +202,9 @@ jobs:
             echo "🐍 Installing Python dependencies for embeddings worker..."
 
             # Install/update dependencies globally (no venv needed for PM2)
+            rm -rf .venv
+            python3 -m venv venv
+            source venv/bin/activate
             pip3 install --upgrade pip
             pip3 install -r requirements.txt
 
