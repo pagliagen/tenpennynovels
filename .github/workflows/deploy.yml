@@ -132,7 +132,8 @@ jobs:
               for service in services/*/; do
                 if [ -f "${service}package.json" ]; then
                   echo "  → ${service}"
-                  (cd "$service" && npm install --production)
+                  # Install ALL deps (including devDependencies for build)
+                  (cd "$service" && npm install)
                 fi
               done
               echo "✅ Dependencies installed"
