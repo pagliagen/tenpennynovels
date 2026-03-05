@@ -68,17 +68,12 @@ npm install
 npm run build
 print_status $? "embeddings-worker built successfully"
 
-# Embeddings Service (Python)
-echo "Setting up embeddings-service (Python)..."
-cd "$PROJECT_ROOT/services/embeddings-service"
-if [ ! -d "venv" ]; then
-    echo "Creating Python virtual environment..."
-    python3 -m venv venv
-fi
-source venv/bin/activate
-pip install -r requirements.txt
-deactivate
-print_status $? "embeddings-service setup successfully"
+# Embeddings Worker - Python dependencies
+echo "Setting up Python for embeddings-worker..."
+cd "$PROJECT_ROOT/services/embeddings-worker/python"
+pip3 install -r requirements.txt
+python3 -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')"
+print_status $? "embeddings-worker Python setup successfully"
 
 # ========================================
 # 2. COPY ENVIRONMENT FILES

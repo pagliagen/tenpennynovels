@@ -20,9 +20,10 @@ import {
   isDocumentChunkEmbeddingEvent,
   isLocationActionEmbeddingEvent
 } from '../types/events';
+import { PythonEmbeddingService } from '../services/PythonEmbeddingService';
+import { DLQService } from '../services/DLQService';
 
 const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
-const EMBEDDINGS_SERVICE_URL = process.env.EMBEDDINGS_SERVICE_URL || 'http://127.0.0.1:5001';
 const QDRANT_URL = process.env.QDRANT_URL || 'http://localhost:6333';
 const EMBEDDING_MODEL = 'paraphrase-multilingual-MiniLM-L12-v2';
 const CACHE_TTL = 3600; // 1 hour
@@ -32,10 +33,12 @@ export class EmbeddingWorker {
   private redis: any; // Redis client for caching
   private qdrant: QdrantClient; // Qdrant vector DB client
   private queue: Bull.Queue;
+  private pythonService: PythonEmbeddingService; // Python subprocess for embeddings
   private isRunning: boolean = false;
 
-  constructor(redisSubscriber: any) {
+  constructor(redisSubscriber: any, pythonService: PythonEmbeddingService) {
     this.subscriber = redisSubscriber;
+    this.pythonService = pythonService;
 
     // ✅ Initialize Qdrant client
     this.qdrant = new QdrantClient({ url: QDRANT_URL });
@@ -50,7 +53,7 @@ export class EmbeddingWorker {
           delay: 2000
         },
         removeOnComplete: 100, // Keep last 100 completed jobs
-        removeOnFail: 500      // Keep last 500 failed jobs
+        removeOnFail: false    // DON'T auto-remove failed jobs - use DLQ
       }
     });
 
@@ -64,8 +67,27 @@ export class EmbeddingWorker {
       console.log(`✅ Job ${job.id} completed`);
     });
 
-    this.queue.on('failed', (job, err) => {
+    // Failed job handler → DLQ
+    this.queue.on('failed', async (job, err) => {
       console.error(`❌ Job ${job.id} failed after ${job.attemptsMade} attempts:`, err.message);
+
+      // After max attempts, move to DLQ
+      if (job.attemptsMade >= 3) {
+        const eventType = this.detectEventType(job.data);
+        const retryable = !this.isPermanentError(err);
+
+        await DLQService.addFailedJob(
+          job.id as string,
+          eventType,
+          job.data,
+          err.message,
+          job.attemptsMade,
+          retryable
+        );
+
+        // Now safe to remove from Bull queue
+        await job.remove();
+      }
     });
 
     // Initialize Redis client for caching
@@ -346,30 +368,38 @@ export class EmbeddingWorker {
   }
 
   /**
-   * Generate embedding via HTTP service
+   * Generate embedding via Python subprocess
    */
   private async generateEmbedding(text: string): Promise<number[] | null> {
     try {
-      const response = await fetch(`${EMBEDDINGS_SERVICE_URL}/embed`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ text }),
-        signal: AbortSignal.timeout(30000) // 30 second timeout
-      });
-
-      if (!response.ok) {
-        throw new Error(`Embeddings service error: ${response.status}`);
-      }
-
-      const result = await response.json() as { success: boolean; embedding?: number[] };
-      return result.success && result.embedding ? result.embedding : null;
-
-    } catch (error) {
-      console.error('Error calling embeddings service:', error);
-      throw error; // Re-throw to trigger retry
+      return await this.pythonService.generateEmbedding(text);
+    } catch (error: any) {
+      console.error('Error generating embedding:', error.message);
+      throw error; // Re-throw to trigger Bull retry
     }
+  }
+
+  /**
+   * Detect event type from job data
+   */
+  private detectEventType(data: any): 'document' | 'document_chunk' | 'location_action' {
+    if (data.chunkId) return 'document_chunk';
+    if (data.locationActionId) return 'location_action';
+    return 'document';
+  }
+
+  /**
+   * Check if error is permanent (validation, missing data)
+   */
+  private isPermanentError(error: Error): boolean {
+    const permanentErrors = [
+      'Invalid text',
+      'Missing',
+      'not found',
+      'Too long',
+      'Text cannot be empty'
+    ];
+    return permanentErrors.some(msg => error.message.includes(msg));
   }
 
   /**

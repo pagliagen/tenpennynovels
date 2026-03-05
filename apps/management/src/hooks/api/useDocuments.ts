@@ -407,27 +407,6 @@ export function useReorderDocument() {
 }
 
 /**
- * Hook per riordinare route (change order/parentId in route hierarchy) - DEPRECATED
- * @deprecated Use useReorderSiblings instead
- */
-export function useReorderRoute() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ routeId, order, parentId }: { routeId: string; order: number; parentId: string | null }) =>
-      documentAPI.reorderRoute(routeId, order, parentId),
-
-    onSuccess: () => {
-      // Force refetch of active queries (bypass staleTime)
-      queryClient.invalidateQueries({
-        queryKey: documentKeys.lists(),
-        refetchType: 'active'
-      });
-    }
-  });
-}
-
-/**
  * Hook per riordinare siblings (NEW SIMPLE APPROACH)
  * Pass full ordered array of sibling IDs
  */

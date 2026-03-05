@@ -1,5 +1,6 @@
 import mongoose, { Schema, model, Document } from 'mongoose';
 import { VictorianCurrency } from '../../shared/types/economy';
+import { softDeletePlugin, SoftDeleteFields, SoftDeleteMethods } from '../plugins/softDeletePlugin';
 
 export enum ItemCategory {
   CLOTHING = 'clothing',
@@ -20,7 +21,7 @@ export enum ItemCategory {
   SERVICES = 'services'
 }
 
-export interface IItem extends Document {
+export interface IItem extends Document, SoftDeleteFields, SoftDeleteMethods {
   // Basic info
   name: string;
   description: string;
@@ -673,10 +674,16 @@ ShopItemSchema.methods.updateStock = function(quantityChange: number) {
 };
 
 ShopItemSchema.methods.needsRestock = function() {
-  return this.autoRestock && 
-         this.restockThreshold !== undefined && 
+  return this.autoRestock &&
+         this.restockThreshold !== undefined &&
          this.currentStock <= this.restockThreshold;
 };
+
+// Apply soft delete plugin to Item
+ItemSchema.plugin(softDeletePlugin, {
+  uniqueKeys: ['name'],
+  deletedByField: 'Character'
+});
 
 export const Item = mongoose.models.Item || model<IItem>('Item', ItemSchema);
 export const CharacterInventory = mongoose.models.CharacterInventory || model<ICharacterInventory>('CharacterInventory', CharacterInventorySchema);

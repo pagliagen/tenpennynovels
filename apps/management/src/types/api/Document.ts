@@ -163,18 +163,6 @@ export interface DocumentTreeResponse {
   timestamp: string;
 }
 
-/**
- * Route List Response (DEPRECATED - kept for backward compatibility)
- * @deprecated Use DocumentTreeResponse instead
- */
-export interface RouteListResponse {
-  result: boolean;
-  success: boolean;
-  list: Route[];
-  totalItems: number;
-  timestamp: string;
-}
-
 export interface CreateDocumentData {
   title: string;
   slug: string;

@@ -28,7 +28,7 @@ export class AuthMiddleware {
         if (!authToken) {
           if (required) {
             const response: ApiResponse = {
-              success: false,
+              result: false,
               error: 'Authentication required',
               code: 'AUTH_REQUIRED',
               timestamp: new Date().toISOString()
@@ -55,7 +55,7 @@ export class AuthMiddleware {
             });
 
             const response: ApiResponse = {
-              success: false,
+              result: false,
               error: 'Account non più attivo',
               code: 'ACCOUNT_DELETED',
               timestamp: new Date().toISOString()
@@ -87,7 +87,7 @@ export class AuthMiddleware {
             });
 
             const response: ApiResponse = {
-              success: false,
+              result: false,
               error: 'Invalid or expired session',
               code: 'INVALID_SESSION',
               timestamp: new Date().toISOString()
@@ -100,7 +100,7 @@ export class AuthMiddleware {
       } catch (error: any) {
         logger.error('Auth middleware error:', error);
         const response: ApiResponse = {
-          success: false,
+          result: false,
           error: 'Authentication error',
           code: 'AUTH_ERROR',
           timestamp: new Date().toISOString()
@@ -121,7 +121,7 @@ export class AuthMiddleware {
         if (!characterToken) {
           if (required) {
             const response: ApiResponse = {
-              success: false,
+              result: false,
               error: 'Character selection required',
               code: 'CHARACTER_REQUIRED',
               timestamp: new Date().toISOString()
@@ -151,7 +151,7 @@ export class AuthMiddleware {
             });
 
             const response: ApiResponse = {
-              success: false,
+              result: false,
               error: 'Character token mismatch',
               code: 'CHARACTER_TOKEN_MISMATCH',
               timestamp: new Date().toISOString()
@@ -183,7 +183,7 @@ export class AuthMiddleware {
 
             if (required) {
               const response: ApiResponse = {
-                success: false,
+                result: false,
                 error: 'Character session is no longer valid. Another device may have logged in with this character.',
                 code: 'CHARACTER_SESSION_INVALID',
                 timestamp: new Date().toISOString()
@@ -208,7 +208,7 @@ export class AuthMiddleware {
 
           if (required) {
             const response: ApiResponse = {
-              success: false,
+              result: false,
               error: 'Invalid or expired character session',
               code: 'INVALID_CHARACTER_SESSION',
               timestamp: new Date().toISOString()
@@ -221,7 +221,7 @@ export class AuthMiddleware {
       } catch (error: any) {
         logger.error('Character auth middleware error:', error);
         const response: ApiResponse = {
-          success: false,
+          result: false,
           error: 'Character authentication error',
           code: 'CHARACTER_AUTH_ERROR',
           timestamp: new Date().toISOString()
@@ -239,7 +239,7 @@ export class AuthMiddleware {
       try {
         if (!req.user) {
           const response: ApiResponse = {
-            success: false,
+            result: false,
             error: 'Authentication required',
             code: 'AUTH_REQUIRED',
             timestamp: new Date().toISOString()
@@ -256,7 +256,7 @@ export class AuthMiddleware {
           });
 
           const response: ApiResponse = {
-            success: false,
+            result: false,
             error: 'Admin privileges required',
             code: 'ADMIN_REQUIRED',
             timestamp: new Date().toISOString()
@@ -287,7 +287,7 @@ export class AuthMiddleware {
             });
 
             const response: ApiResponse = {
-              success: false,
+              result: false,
               error: 'Insufficient admin permissions',
               code: 'INSUFFICIENT_PERMISSIONS',
               timestamp: new Date().toISOString()
@@ -300,7 +300,7 @@ export class AuthMiddleware {
       } catch (error: any) {
         logger.error('Admin auth middleware error:', error);
         const response: ApiResponse = {
-          success: false,
+          result: false,
           error: 'Admin authentication error',
           code: 'ADMIN_AUTH_ERROR',
           timestamp: new Date().toISOString()
@@ -318,7 +318,7 @@ export class AuthMiddleware {
       try {
         if (!req.character) {
           const response: ApiResponse = {
-            success: false,
+            result: false,
             error: 'Character selection required',
             code: 'CHARACTER_REQUIRED',
             timestamp: new Date().toISOString()
@@ -338,7 +338,7 @@ export class AuthMiddleware {
           });
 
           const response: ApiResponse = {
-            success: false,
+            result: false,
             error: 'Insufficient gameplay permissions',
             code: 'INSUFFICIENT_GAMEPLAY_ROLE',
             timestamp: new Date().toISOString()
@@ -350,7 +350,7 @@ export class AuthMiddleware {
       } catch (error: any) {
         logger.error('Gameplay role middleware error:', error);
         const response: ApiResponse = {
-          success: false,
+          result: false,
           error: 'Gameplay authentication error',
           code: 'GAMEPLAY_AUTH_ERROR',
           timestamp: new Date().toISOString()

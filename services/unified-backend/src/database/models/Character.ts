@@ -1,6 +1,7 @@
 import mongoose, { Schema, model, Document } from 'mongoose';
 // Use relative import instead of alias to fix seed script compatibility
 import { calculateAllDerivedStats, getCharacterCreationConfig, type CharacterStats, type DerivedStats } from '../../shared/services/CharacterCreationConfigService';
+import { softDeletePlugin, SoftDeleteFields, SoftDeleteMethods } from '../plugins/softDeletePlugin';
 
 // Granular skill tracking interface for occupation bonuses
 export interface SkillBreakdown {
@@ -12,9 +13,9 @@ export interface SkillBreakdown {
   category?: string;          // Skill category (general, combat, knowledge, social, artistic, technical, etc.)
 }
 
-export interface ICharacter extends Document {
+export interface ICharacter extends Document, SoftDeleteFields, SoftDeleteMethods {
   // Character basic info
-  name: string; // visibile a tutti
+  name: string; // visibile a tutti (NOW UNIQUE)
   surname?: string; // cognome - opzionale, visibile a tutti
   age: number; // età reale - visibile solo ai master
   apparentAge: number; // età apparente - visibile a tutti
@@ -46,7 +47,7 @@ export interface ICharacter extends Document {
 
   // Character creation
   userId: Schema.Types.ObjectId;
-  status: 'DRAFT' | 'PENDING_APPROVAL' | 'APPROVED' | 'DELETED';
+  status: 'DRAFT' | 'PENDING_APPROVAL' | 'APPROVED'; // REMOVED: 'DELETED' (now uses soft delete)
   
   // Call of Cthulhu Stats (d100 system) - Statistiche base
   stats: {
@@ -85,13 +86,7 @@ export interface ICharacter extends Document {
     category: string;           // Skill category
   }>;
 
-  // Character description (deprecated fields)
-  motivations?: string; // DEPRECATED - use background.goalsAndMotivations
-  fears?: string; // DEPRECATED - use background.fearsAndPhobias
-  description?: string; // DEPRECATED - use publicDescription
-  personalityTraits?: string[]; // DEPRECATED - use background.personality
-
-  // NEW SYSTEM: Background guidato strutturato (da background_guidato.txt)
+  // Background guidato strutturato
   background?: {
     briefHistory?: string; // Storia in breve (max 4000 caratteri)
     significantEvents?: string; // Fatti salienti
@@ -115,14 +110,6 @@ export interface ICharacter extends Document {
     postCount: number; // Total number of forum posts
     lastForumActivityAt?: Date; // Last time character interacted with forum
   };
-
-  // DEPRECATED: Background guidato - ora gestito tramite questionario (kept for migration)
-  backgroundResponses?: {
-    questionId: string;
-    response: string;
-    answeredAt: Date;
-    questionVersion: number;
-  }[];
 
   // Character appearance
   avatar?: string; // URL or path to character avatar image (for chat/location lists)
@@ -187,6 +174,7 @@ const CharacterSchema = new Schema<ICharacter>({
   name: {
     type: String,
     required: true,
+    unique: true, // NEW: Character names must be unique
     trim: true,
     minlength: 2,
     maxlength: 50
@@ -333,7 +321,7 @@ const CharacterSchema = new Schema<ICharacter>({
   status: {
     type: String,
     required: true,
-    enum: ['DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'DELETED'],
+    enum: ['DRAFT', 'PENDING_APPROVAL', 'APPROVED'], // REMOVED: 'DELETED' (now uses soft delete)
     default: 'DRAFT'
   },
   
@@ -381,27 +369,7 @@ const CharacterSchema = new Schema<ICharacter>({
     default: []
   },
 
-  // Character description (DEPRECATED fields)
-  motivations: {
-    type: String,
-    trim: true,
-    minlength: 10,
-    maxlength: 500
-  },
-  fears: {
-    type: String,
-    trim: true,
-    minlength: 10,
-    maxlength: 500
-  },
-  description: {
-    type: String,
-    minlength: 50,
-    maxlength: 1000
-  },
-  personalityTraits: [String],
-
-  // NEW SYSTEM: Background guidato strutturato
+  // Background guidato strutturato
   background: {
     briefHistory: {
       type: String,
@@ -478,31 +446,6 @@ const CharacterSchema = new Schema<ICharacter>({
     },
     lastForumActivityAt: Date
   },
-
-  // DEPRECATED: Background responses - questionario (kept for migration)
-  backgroundResponses: [{
-    questionId: {
-      type: String,
-      required: true,
-      trim: true
-    },
-    response: {
-      type: String,
-      required: true,
-      trim: true,
-      maxlength: 2000
-    },
-    answeredAt: {
-      type: Date,
-      required: true,
-      default: Date.now
-    },
-    questionVersion: {
-      type: Number,
-      required: true,
-      default: 1
-    }
-  }],
 
   // Character appearance
   avatar: {
@@ -677,65 +620,6 @@ CharacterSchema.methods.addReview = function(reviewData: any) {
   });
 };
 
-// Metodi per gestire il questionario background
-CharacterSchema.methods.setBackgroundResponse = function(questionId: string, response: string, questionVersion: number = 1) {
-  // Trova se esiste già una risposta per questa domanda
-  const existingResponseIndex = this.backgroundResponses.findIndex(
-    (r: any) => r.questionId === questionId
-  );
-  
-  const responseData = {
-    questionId,
-    response: response.trim(),
-    answeredAt: new Date(),
-    questionVersion
-  };
-  
-  if (existingResponseIndex >= 0) {
-    // Aggiorna risposta esistente
-    this.backgroundResponses[existingResponseIndex] = responseData;
-  } else {
-    // Aggiungi nuova risposta
-    this.backgroundResponses.push(responseData);
-  }
-};
-
-CharacterSchema.methods.getBackgroundResponse = function(questionId: string) {
-  return this.backgroundResponses.find((r: any) => r.questionId === questionId);
-};
-
-CharacterSchema.methods.checkBackgroundCompletion = async function(requiredQuestions: string[]) {
-  const answeredQuestions = this.backgroundResponses.map((r: any) => r.questionId);
-  const missingQuestions = requiredQuestions.filter(q => !answeredQuestions.includes(q));
-  
-  if (missingQuestions.length === 0) {
-    this.backgroundCompleted = true;
-    this.backgroundCompletedAt = new Date();
-    return { completed: true, missing: [] };
-  }
-  
-  return { completed: false, missing: missingQuestions };
-};
-
-CharacterSchema.methods.getBackgroundResponsesByVisibility = function(visibility: 'public' | 'master_only' | 'owner_only', questions: any[]) {
-  const visibleQuestions = questions.filter(q => q.responseVisibility === visibility);
-  const responses = [];
-  
-  for (const question of visibleQuestions) {
-    const response = this.getBackgroundResponse(question.questionId);
-    if (response) {
-      responses.push({
-        question: question.questionText,
-        response: response.response,
-        category: question.category,
-        answeredAt: response.answeredAt
-      });
-    }
-  }
-  
-  return responses;
-};
-
 // Pre-save middleware
 CharacterSchema.pre('save', async function(this: ICharacter) {
   // Calculate derived statistics when base stats change
@@ -817,6 +701,12 @@ CharacterSchema.pre('save', async function(this: ICharacter) {
   if (this.isGestore === undefined || this.isGestore === null) {
     this.isGestore = false;
   }
+});
+
+// Apply soft delete plugin
+CharacterSchema.plugin(softDeletePlugin, {
+  uniqueKeys: ['name'],
+  deletedByField: 'Character'
 });
 
 export const Character = mongoose.models.Character || model<ICharacter>('Character', CharacterSchema);

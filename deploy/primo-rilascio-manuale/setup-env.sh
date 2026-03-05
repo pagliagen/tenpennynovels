@@ -57,7 +57,6 @@ echo ""
 echo -e "${YELLOW}Backend Services:${NC}"
 copy_env "api-gateway.env" "$PROJECT_ROOT/services/api-gateway/.env.production"
 copy_env "unified-backend.env" "$PROJECT_ROOT/services/unified-backend/.env.production"
-copy_env "embeddings-service.env" "$PROJECT_ROOT/services/embeddings-service/.env"
 copy_env "embeddings-worker.env" "$PROJECT_ROOT/services/embeddings-worker/.env.production"
 echo ""
 

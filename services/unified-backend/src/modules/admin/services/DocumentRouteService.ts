@@ -91,8 +91,7 @@ export class DocumentRouteService {
       tags: input.document.tags ?? [],
       isDraft: input.document.isDraft ?? false,
       draftNotes: input.document.draftNotes,
-      visible: true,
-      deleted: false
+      visible: true
     });
 
     try {
@@ -102,11 +101,9 @@ export class DocumentRouteService {
           ? new Types.ObjectId(input.route.parentId)
           : undefined,
         slug: input.route.slug,
-        title: input.route.title,
         type: input.route.type,
         kind: input.route.kind,
         rootDocumentId: input.route.kind === 'document' ? doc._id : undefined,
-        description: input.route.description,
         isPublic: input.route.isPublic ?? false,
         enabled: input.route.enabled ?? true,
         redirectTo: input.route.redirectTo,
@@ -137,12 +134,7 @@ export class DocumentRouteService {
     doc.title = newTitle;
     await doc.save();
 
-    // Update route if exists
-    const route = await Route.findOne({ rootDocumentId: doc._id });
-    if (route) {
-      route.title = newTitle;
-      await route.save();
-    }
+    // Route doesn't store title anymore - title comes from Document
   }
 
   /**
@@ -169,54 +161,6 @@ export class DocumentRouteService {
     if (route) {
       route.type = newType;
       await route.save();  // Will trigger validation
-    }
-  }
-
-  /**
-   * Delete document + route atomically
-   *
-   * Soft-deletes document (sets deleted=true).
-   * Disables route (sets enabled=false) to return 404.
-   */
-  async deleteDocumentAndRoute(documentId: string): Promise<void> {
-    // Soft-delete document
-    const doc = await Document.findById(documentId);
-    if (!doc) {
-      throw new Error(`Document ${documentId} not found`);
-    }
-
-    doc.deleted = true;
-    await doc.save();
-
-    // Disable route if exists
-    const route = await Route.findOne({ rootDocumentId: doc._id });
-    if (route) {
-      route.enabled = false;
-      await route.save();
-    }
-  }
-
-  /**
-   * Restore document + route atomically
-   *
-   * Undeletes document (sets deleted=false).
-   * Enables route (sets enabled=true).
-   */
-  async restoreDocumentAndRoute(documentId: string): Promise<void> {
-    // Restore document
-    const doc = await Document.findById(documentId);
-    if (!doc) {
-      throw new Error(`Document ${documentId} not found`);
-    }
-
-    doc.deleted = false;
-    await doc.save();
-
-    // Enable route if exists
-    const route = await Route.findOne({ rootDocumentId: doc._id });
-    if (route) {
-      route.enabled = true;
-      await route.save();
     }
   }
 

@@ -20,7 +20,6 @@ const __dirname = dirname(__filename);
  * - kind: "document" | "category" | "redirect"
  * - rootDocumentSlug: Document slug reference (for kind=document)
  * - redirectTo: Redirect target (for kind=redirect)
- * - title, description: DEPRECATED (kept for backward compat)
  * - isPublic, enabled: Boolean flags (string "true"/"false")
  *
  * Usage:
@@ -102,8 +101,6 @@ async function exportRoutes() {
           kind: route.kind,
           rootDocumentSlug,
           redirectTo: route.redirectTo || '',
-          title: route.title || '',
-          description: route.description || '',
           isPublic: String(route.isPublic !== false),  // Default true
           enabled: String(route.enabled !== false),    // Default true
           displayCategory: route.displayCategory || ''

@@ -34,7 +34,7 @@ export async function setupMiddleware(app: Express): Promise<void> {
     windowMs: authWindowMs,
     max: authMax,
     message: {
-      success: false,
+      result: false,
       error: 'Troppe richieste da questo indirizzo IP, riprova più tardi.',
       code: 'RATE_LIMIT_EXCEEDED'
     },
@@ -51,7 +51,7 @@ export async function setupMiddleware(app: Express): Promise<void> {
     windowMs: loginWindowMs,
     max: loginMax,
     message: {
-      success: false,
+      result: false,
       error: 'Too many authentication attempts, please try again later.',
       code: 'AUTH_RATE_LIMIT_EXCEEDED'
     },

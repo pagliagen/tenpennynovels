@@ -16,7 +16,7 @@ import {
 /**
  * Generate success response for single record (GET by id, POST, PATCH)
  *
- * Returns: { result: true, success: true, data: T, ... }
+ * Returns: { result: true, result: true, data: T, ... }
  */
 export function successResponse<T>(
   data: T,
@@ -25,7 +25,6 @@ export function successResponse<T>(
 ): ApiSingleResponse<T> {
   return {
     result: true,
-    success: true,
     data,
     message,
     timestamp: new Date().toISOString(),
@@ -37,7 +36,7 @@ export function successResponse<T>(
  * Generate success response for list (GET list endpoints)
  *
  * CRITICAL: Returns items and pagination at ROOT level (not wrapped in data)
- * Returns: { result: true, success: true, items: T[], pagination: {...}, ... }
+ * Returns: { result: true, result: true, items: T[], pagination: {...}, ... }
  *
  * USE THIS for all /admin/* list endpoints (users, characters, locations, etc.)
  */
@@ -49,7 +48,6 @@ export function listResponse<T>(
 ): ApiListResponse<T> {
   return {
     result: true,
-    success: true,
     items,
     pagination,
     message,
@@ -61,7 +59,7 @@ export function listResponse<T>(
 /**
  * Generate error response
  *
- * Returns: { result: false, success: false, error: string, code?: string, ... }
+ * Returns: { result: false, result: false, error: string, code?: string, ... }
  */
 export function errorResponse(
   error: string,
@@ -72,7 +70,6 @@ export function errorResponse(
 ): ApiErrorResponse {
   return {
     result: false,
-    success: false,
     error,
     code,
     details,
@@ -90,7 +87,6 @@ export function deleteResponse(
 ): ApiResponse {
   return {
     result: true,
-    success: true, // Backward compatibility
     message: message || 'Record eliminato con successo',
     timestamp: new Date().toISOString(),
     requestId
@@ -107,7 +103,6 @@ export function createResponse<T>(
 ): ApiResponse<T> {
   return {
     result: true,
-    success: true, // Backward compatibility
     data,
     message: message || 'Record creato con successo',
     timestamp: new Date().toISOString(),
@@ -125,7 +120,6 @@ export function updateResponse<T>(
 ): ApiResponse<T> {
   return {
     result: true,
-    success: true, // Backward compatibility
     data,
     message: message || 'Record aggiornato con successo',
     timestamp: new Date().toISOString(),

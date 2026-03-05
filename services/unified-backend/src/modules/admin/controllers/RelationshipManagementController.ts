@@ -969,7 +969,7 @@ export class RelationshipManagementController {
 
       if (!relationship) {
         res.status(404).json({
-          success: false,
+          result: false,
           error: 'Relationship not found'
         });
         return;

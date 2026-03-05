@@ -111,76 +111,6 @@ export function haveAccessTo(section: string, userRoles: string[], characterRole
 }
 
 /**
- * Funzione per verificare permessi specifici - canView('view_basic_stats')
- */
-/**
- * @deprecated Use hasAdminPermission() from @config/admin-permissions instead.
- *
- * This function used hierarchical 3-part permissions and checked characterRoles
- * for 'gestore' role (which no longer exists - replaced by Character.isGestore flag).
- *
- * Kept temporarily for backward compatibility with legacy code.
- */
-export function canView(permission: string, userRoles: string[], characterRoles: string[], characterPermissions: string[] = []): boolean {
-  console.warn('[DEPRECATED] canView() is deprecated. Use hasAdminPermission() instead.');
-
-  // CHARACTER.GESTORE is now Character.isGestore (boolean flag, not a role)
-  // This check no longer works in the new system
-  if (characterRoles.includes('gestore')) {
-    return true;
-  }
-
-  // Prima controlla i permessi specifici del personaggio per override
-  if (characterPermissions.includes('all') || characterPermissions.includes(permission)) {
-    return true;
-  }
-
-  // Parse permission: section.detail.action (3-part hierarchical format)
-  // NOTE: New system uses flat 2-part format: section.action
-  const parts = permission.split('.');
-  if (parts.length !== 3 || parts[1] !== 'detail') {
-    console.warn(`Invalid permission format: ${permission}. Expected: section.detail.action`);
-    return false;
-  }
-
-  const [section, , action] = parts;
-
-  // Controlla i permessi dei ruoli CHARACTER
-  const config = loadPermissionConfig();
-  for (const role of characterRoles) {
-    const rolePermissions = resolveCharacterRolePermissions(role, config);
-    // Richiede sia access che detail permission
-    if (rolePermissions[section]?.access === true &&
-        rolePermissions[section]?.detail?.[action] === true) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-/**
- * Check if user has a specific permission
- */
-export function hasPermission(
-  userRoles: string[], 
-  characterPermissions: string[], 
-  requiredPermission: string,
-  characterRoles: string[] = []
-): boolean {
-  const parts = requiredPermission.split('.');
-  
-  if (parts.length === 2 && parts[1] === 'access') {
-    return haveAccessTo(parts[0], userRoles, characterRoles, characterPermissions);
-  } else if (parts.length === 3 && parts[1] === 'detail') {
-    return canView(requiredPermission, userRoles, characterRoles, characterPermissions);
-  }
-  
-  // Fallback per altri formati
-  return characterPermissions.includes('all') || characterPermissions.includes(requiredPermission);
-}
-
-/**
  * Ottieni tutti i permessi per un utente (CHARACTER roles + characterPermissions override)
  */
 export function getUserPermissions(userRoles: string[], characterRoles: string[], characterPermissions: string[] = []): any {
@@ -260,26 +190,27 @@ export function getUserPermissions(userRoles: string[], characterRoles: string[]
 /**
  * Filtra i badge della dashboard in base ai permessi dell'utente
  */
-export function getVisibleDashboardBadges(userRoles: string[], characterRoles: string[], characterPermissions: string[] = []): string[] {
+export function getVisibleDashboardBadges(userRoles: string[], characterRoles: string[], characterPermissions: string[] = [], isGestore: boolean = false): string[] {
   const config = loadPermissionConfig();
   const visibleBadges: string[] = [];
-  
+
   for (const [badgeId, badgeConfig] of Object.entries(config.dashboard_badges)) {
-    if (canView(badgeConfig.permission, userRoles, characterRoles, characterPermissions)) {
+    // Use new permission system
+    if (hasAdminPermission(characterRoles, characterPermissions, isGestore, badgeConfig.permission as AdminPermission)) {
       visibleBadges.push(badgeId);
     }
   }
-  
+
   return visibleBadges;
 }
 
 /**
  * Ottieni la struttura menu visibile per l'utente
  */
-export function getVisibleMenuStructure(userRoles: string[], characterRoles: string[], characterPermissions: string[] = []): any {
+export function getVisibleMenuStructure(userRoles: string[], characterRoles: string[], characterPermissions: string[] = [], isGestore: boolean = false): any {
   const config = loadPermissionConfig();
   const visibleMenu: any = {};
-  
+
   for (const [menuId, menuConfig] of Object.entries(config.menu_structure)) {
     // Controlla se l'utente ha accesso al menu principale
     if (haveAccessTo(menuId, userRoles, characterRoles, characterPermissions)) {
@@ -288,15 +219,12 @@ export function getVisibleMenuStructure(userRoles: string[], characterRoles: str
         label: menuConfig.label,
         permission: menuConfig.permission
       };
-      
+
       // Filtra i sottomenu se esistono
       if (menuConfig.children) {
         const visibleChildren = menuConfig.children.filter((child: any) => {
-          const parts = child.permission.split('.');
-          if (parts.length === 3 && parts[1] === 'detail') {
-            return canView(child.permission, userRoles, characterRoles, characterPermissions);
-          }
-          return haveAccessTo(parts[0], userRoles, characterRoles, characterPermissions);
+          // Use new permission system for all permissions
+          return hasAdminPermission(characterRoles, characterPermissions, isGestore, child.permission as AdminPermission);
         });
         if (visibleChildren.length > 0) {
           visibleMenu[menuId].children = visibleChildren;
@@ -304,7 +232,7 @@ export function getVisibleMenuStructure(userRoles: string[], characterRoles: str
       }
     }
   }
-  
+
   return visibleMenu;
 }
 
@@ -326,7 +254,7 @@ export function requireAccess(section: string) {
 
     if (!user) {
       return res.status(401).json({
-        success: false,
+        result: false,
         error: 'Authentication required'
       });
     }
@@ -340,7 +268,7 @@ export function requireAccess(section: string) {
       const dbUser = await User.findById(user.userId);
       if (!dbUser) {
         return res.status(404).json({
-          success: false,
+          result: false,
           error: 'User not found'
         });
       }
@@ -385,7 +313,7 @@ export function requireAccess(section: string) {
           characterPermissions
         });
         return res.status(403).json({
-          success: false,
+          result: false,
           error: `Access denied to ${section}`,
           action: 'ACCESS_DENIED'
         });
@@ -395,7 +323,7 @@ export function requireAccess(section: string) {
     } catch (error: any) {
       console.error('Error checking access:', error);
       return res.status(500).json({
-        success: false,
+        result: false,
         error: 'Access check failed'
       });
     }
@@ -412,7 +340,7 @@ export function requireViewPermission(permission: AdminPermission) {
 
     if (!user) {
       return res.status(401).json({
-        success: false,
+        result: false,
         error: 'Authentication required'
       });
     }
@@ -426,7 +354,7 @@ export function requireViewPermission(permission: AdminPermission) {
       const dbUser = await User.findById(user.userId);
       if (!dbUser) {
         return res.status(404).json({
-          success: false,
+          result: false,
           error: 'User not found'
         });
       }
@@ -478,7 +406,7 @@ export function requireViewPermission(permission: AdminPermission) {
           isGestore
         });
         return res.status(403).json({
-          success: false,
+          result: false,
           error: `Permission denied: ${permission}`,
           action: 'PERMISSION_DENIED'
         });
@@ -488,7 +416,7 @@ export function requireViewPermission(permission: AdminPermission) {
     } catch (error: any) {
       console.error('Error checking permissions:', error);
       return res.status(500).json({
-        success: false,
+        result: false,
         error: 'Permission check failed'
       });
     }

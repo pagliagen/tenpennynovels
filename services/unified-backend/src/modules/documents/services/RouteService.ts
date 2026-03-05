@@ -97,8 +97,6 @@ export class RouteService {
           path: route.path,
           type: route.type,
           kind: route.kind,
-          title: route.title,
-          description: route.description,
           isPublic: route.isPublic,
           enabled: route.enabled,
           redirectTo: route.redirectTo
@@ -319,10 +317,8 @@ export class RouteService {
     response.document = {
       _id: route._id.toString(),
       slug: urlPath.split('/').pop() || urlPath,
-      title: route.title,
       type: route.type,
       path: route.path,
-      description: route.description,
       tags: [],
       isDraft: false,
       draftNotes: undefined
@@ -340,8 +336,6 @@ export class RouteService {
 
     response.subRoutes = subRoutes.map(subRoute => ({
       path: subRoute.path,
-      title: subRoute.title,
-      description: subRoute.description,
       isPublic: subRoute.isPublic
     }));
 

@@ -41,8 +41,8 @@ export interface ErrorDetails {
  * Standardized API Response interface (BASE)
  */
 export interface ApiResponse<T = unknown> {
-  result: boolean;           // Standard: true/false (replaces 'success' for consistency)
-  success?: boolean;         // Deprecated: maintained for backward compatibility
+  result: boolean;           // Standard: true/false
+  success?: boolean;         // Optional: backward compat (mirrors result)
   data?: T;                  // Single record data or metadata object
   items?: T[];               // Array for list responses (changed from 'list')
   pagination?: PaginationInfo; // Pagination info for list responses
@@ -62,7 +62,7 @@ export interface ApiResponse<T = unknown> {
  * Example:
  * {
  *   result: true,
- *   success: true,
+ *   result: true,
  *   items: [...],
  *   pagination: {...},
  *   timestamp: "..."
@@ -70,7 +70,6 @@ export interface ApiResponse<T = unknown> {
  */
 export interface ApiListResponse<T> {
   result: true;
-  success: true;
   items: T[];
   pagination: PaginationInfo;
   message?: string;
@@ -84,14 +83,13 @@ export interface ApiListResponse<T> {
  * Example:
  * {
  *   result: true,
- *   success: true,
+ *   result: true,
  *   data: {...},
  *   timestamp: "..."
  * }
  */
 export interface ApiSingleResponse<T> {
   result: true;
-  success: true;
   data: T;
   message?: string;
   timestamp: string;
@@ -103,7 +101,6 @@ export interface ApiSingleResponse<T> {
  */
 export interface ApiErrorResponse {
   result: false;
-  success: false;
   error: string;
   code?: string;
   details?: ErrorDetails;

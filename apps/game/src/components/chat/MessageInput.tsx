@@ -30,8 +30,7 @@ interface CharacterData {
   skills?: Array<{ name: string; value: number; category?: string }>;
   stats?: Record<string, number>;
   equippedItems?: Array<{ id: string; name: string; category?: string }>;
-  roles?: string[]; // Deprecated - use gamePermissions instead
-  gamePermissions?: string[]; // NEW: Game permissions for checking action availability
+  gamePermissions?: string[]; // Game permissions for checking action availability
 }
 
 /**

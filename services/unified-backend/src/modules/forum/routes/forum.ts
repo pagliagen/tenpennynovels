@@ -16,7 +16,7 @@ const forumCreationLimiter = rateLimit({
   windowMs: 5 * 60 * 1000, // 5 minutes
   max: 10, // limit each IP to 10 creations per windowMs
   message: {
-    success: false,
+    result: false,
     error: 'Too many forum posts created, please try again later.',
     code: 'FORUM_RATE_LIMIT_EXCEEDED',
     timestamp: new Date().toISOString()

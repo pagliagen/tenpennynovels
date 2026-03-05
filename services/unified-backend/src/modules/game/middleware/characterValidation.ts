@@ -18,7 +18,6 @@ export class CharacterValidationMiddleware {
 
       const response: ApiResponse = {
         result: false,
-        success: false,
         error: 'Validation failed',
         code: 'CHARACTER_VALIDATION_ERROR',
         details: validationErrors.reduce((acc, err) => {
@@ -390,7 +389,6 @@ export class CharacterValidationMiddleware {
       if (!character) {
         const response: ApiResponse = {
           result: false,
-          success: false,
           error: 'Character not found',
           code: 'CHARACTER_NOT_FOUND',
           timestamp: new Date().toISOString()
@@ -430,7 +428,6 @@ export class CharacterValidationMiddleware {
       if (errors.length > 0) {
         const response: ApiResponse = {
           result: false,
-          success: false,
           error: 'Background incomplete',
           code: 'BACKGROUND_INCOMPLETE',
           details: {
@@ -450,7 +447,6 @@ export class CharacterValidationMiddleware {
 
       const response: ApiResponse = {
         result: false,
-        success: false,
         error: 'Failed to validate background completion',
         code: 'BACKGROUND_VALIDATION_ERROR',
         timestamp: new Date().toISOString()

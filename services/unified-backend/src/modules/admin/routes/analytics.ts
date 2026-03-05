@@ -25,7 +25,7 @@ router.get('/dashboard', async (req, res): Promise<void> => {
 
     if (!result.success) {
       res.status(500).json({
-        success: false,
+        result: false,
         error: result.error || 'Failed to retrieve dashboard metrics',
         code: 'ANALYTICS_ERROR',
         timestamp: new Date().toISOString()
@@ -34,7 +34,7 @@ router.get('/dashboard', async (req, res): Promise<void> => {
     }
 
     res.json({
-      success: true,
+      result: true,
       data: result.data,
       timestamp: new Date().toISOString()
     });
@@ -42,7 +42,7 @@ router.get('/dashboard', async (req, res): Promise<void> => {
   } catch (error: any) {
     console.error('Analytics dashboard error:', error);
     res.status(500).json({
-      success: false,
+      result: false,
       error: process.env.NODE_ENV === 'production' ? 'Internal server error' : error instanceof Error ? error instanceof Error ? error.message : String(error) : 'Unknown error',
       code: 'ANALYTICS_ERROR',
       timestamp: new Date().toISOString()
@@ -62,7 +62,7 @@ router.post('/aggregate/:date', async (req, res): Promise<void> => {
     // Validate date format (YYYY-MM-DD)
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
       res.status(400).json({
-        success: false,
+        result: false,
         error: 'Invalid date format. Use YYYY-MM-DD',
         code: 'INVALID_DATE_FORMAT',
         timestamp: new Date().toISOString()
@@ -73,7 +73,7 @@ router.post('/aggregate/:date', async (req, res): Promise<void> => {
     await AnalyticsService.aggregateDailyStats(date);
 
     res.json({
-      success: true,
+      result: true,
       message: `Daily analytics aggregation completed for ${date}`,
       timestamp: new Date().toISOString()
     });
@@ -81,7 +81,7 @@ router.post('/aggregate/:date', async (req, res): Promise<void> => {
   } catch (error: any) {
     console.error('Analytics aggregation error:', error);
     res.status(500).json({
-      success: false,
+      result: false,
       error: process.env.NODE_ENV === 'production' ? 'Internal server error' : error instanceof Error ? error instanceof Error ? error.message : String(error) : 'Unknown error',
       code: 'AGGREGATION_ERROR',
       timestamp: new Date().toISOString()
@@ -99,7 +99,7 @@ router.post('/cleanup', async (req, res) => {
     await AnalyticsService.cleanupOldData();
 
     res.json({
-      success: true,
+      result: true,
       message: 'Old analytics data cleanup completed',
       timestamp: new Date().toISOString()
     });
@@ -107,7 +107,7 @@ router.post('/cleanup', async (req, res) => {
   } catch (error: any) {
     console.error('Analytics cleanup error:', error);
     res.status(500).json({
-      success: false,
+      result: false,
       error: process.env.NODE_ENV === 'production' ? 'Internal server error' : error instanceof Error ? error instanceof Error ? error.message : String(error) : 'Unknown error',
       code: 'CLEANUP_ERROR',
       timestamp: new Date().toISOString()
@@ -140,7 +140,7 @@ router.get('/health', async (req, res) => {
   } catch (error: any) {
     console.error('Analytics health check error:', error);
     res.status(503).json({
-      success: false,
+      result: false,
       data: {
         status: 'critical',
         database: false,

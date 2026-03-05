@@ -125,7 +125,6 @@ export function ChatContainer({ locationSlug, locationId, locationName }: ChatCo
     skills: [], // Not available in selectedCharacter
     stats: selectedCharacter?.stats || {},
     equippedItems: [], // Not available in selectedCharacter
-    roles: [], // Deprecated - kept for backward compatibility
     gamePermissions, // NEW: Game permissions from authStore
   };
 

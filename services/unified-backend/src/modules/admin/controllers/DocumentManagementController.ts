@@ -118,7 +118,6 @@ export class DocumentManagementController {
 
       res.json({
         result: true,
-        success: true,
         data,
         totalItems: data.length,
         timestamp: new Date().toISOString()
@@ -163,7 +162,6 @@ export class DocumentManagementController {
 
       res.json({
         result: true,
-        success: true,
         data: {
           _id: route._id.toString(),
           path: route.path,
@@ -209,7 +207,6 @@ export class DocumentManagementController {
 
       res.json({
         result: true,
-        success: true,
         message: 'Route eliminata con successo',
         timestamp: new Date().toISOString()
       });
@@ -231,145 +228,6 @@ export class DocumentManagementController {
    * PUT /admin/documents/:id/reorder
    * Body: { order?: number, parentId?: string | null }
    */
-  /**
-   * Reorder route (update order and/or parentId in route hierarchy)
-   * PUT /admin/documents/routes/:id/reorder
-   * Body: { order: number, parentId: string | null }
-   *
-   * CRITICAL: Reorders ALL siblings to maintain sequential order (0, 1, 2, 3...)
-   */
-  static async reorderRoute(req: Request, res: Response): Promise<void> {
-    try {
-      const { id } = req.params;
-      const { order: newOrder, parentId: newParentId } = req.body;
-
-      const route = await Route.findById(id);
-      if (!route) {
-        res.status(404).json(errorResponse(
-          'Route non trovata',
-          'ROUTE_NOT_FOUND',
-          undefined,
-          404,
-          getRequestId(req)
-        ));
-        return;
-      }
-
-      // Validate parent if specified
-      if (newParentId) {
-        const parent = await Route.findById(newParentId);
-        if (!parent) {
-          res.status(404).json(errorResponse(
-            'Parent document non trovato',
-            'PARENT_DOCUMENT_NOT_FOUND',
-            undefined,
-            404,
-            getRequestId(req)
-          ));
-          return;
-        }
-
-        // Prevent circular reference
-        if (newParentId === id) {
-          res.status(400).json(errorResponse(
-            'Una route non può essere parent di se stessa',
-            'CIRCULAR_REFERENCE',
-            undefined,
-            400,
-            getRequestId(req)
-          ));
-          return;
-        }
-      }
-
-      const oldParentId = route.parentId?.toString() || null;
-      const targetParentId = newParentId || null;
-
-      // Validate newOrder bounds
-      if (typeof newOrder !== 'number' || newOrder < 0) {
-        res.status(400).json(errorResponse(
-          'Order deve essere un numero >= 0',
-          'INVALID_ORDER',
-          undefined,
-          400,
-          getRequestId(req)
-        ));
-        return;
-      }
-
-      // CRITICAL: Fetch ALL siblings (same parentId as target)
-      // Mongoose query: use $exists:false for null/undefined parentId
-      const siblings = await Route.find({
-        $and: [
-          targetParentId
-            ? { parentId: mongoose.Types.ObjectId.createFromHexString(targetParentId) }
-            : { $or: [{ parentId: null }, { parentId: { $exists: false } }] },
-          { _id: { $ne: route._id } } // Exclude the route being moved
-        ]
-      }).sort({ order: 1 });
-
-      // Build new siblings array with route inserted at newOrder position
-      // CRITICAL: Order starts from 1 (not 0), clamp to valid range [1, siblings.length+1]
-      const clampedOrder = Math.max(1, Math.min(newOrder, siblings.length + 1));
-      const reorderedSiblings = [...siblings];
-      reorderedSiblings.splice(clampedOrder - 1, 0, route as any); // -1 because array is 0-indexed
-
-      // Bulk update: assign sequential order to ALL siblings (starting from 1, not 0)
-      const bulkOps = reorderedSiblings.map((sibling, index) => ({
-        updateOne: {
-          filter: { _id: sibling._id },
-          update: {
-            $set: {
-              order: index + 1, // Start from 1, not 0
-              ...(sibling._id.toString() === id && targetParentId !== oldParentId
-                ? { parentId: targetParentId ? mongoose.Types.ObjectId.createFromHexString(targetParentId) : undefined }
-                : {})
-            }
-          }
-        }
-      }));
-
-      await Document.bulkWrite(bulkOps);
-
-      // Reload route to get updated path (pre-save hooks won't trigger with bulkWrite)
-      // Manually trigger path recalculation if parent changed
-      if (targetParentId !== oldParentId) {
-        const updatedRoute = await Route.findById(id);
-        if (updatedRoute) {
-          await updatedRoute.save(); // Triggers pre-save hook for path calculation
-        }
-      }
-
-      const updatedRoute = await Route.findById(id);
-
-      logger.info(`Route ${updatedRoute?.path} reordered: order=${clampedOrder}, parentId=${targetParentId}, siblings_updated=${bulkOps.length}`);
-
-      res.json({
-        result: true,
-        success: true,
-        data: {
-          _id: updatedRoute!._id.toString(),
-          path: updatedRoute!.path,
-          slug: updatedRoute!.slug,
-          order: clampedOrder,
-          parentId: updatedRoute!.parentId?.toString() || null,
-          siblings_updated: bulkOps.length
-        },
-        message: 'Route riordinata con successo',
-        timestamp: new Date().toISOString()
-      });
-
-    } catch (error: any) {
-      logger.error('Error reordering route:', error);
-      res.status(500).json(errorResponse(
-        error.message || 'Errore nel riordinamento route',
-        'REORDER_ROUTE_ERROR',
-        undefined,
-        500,
-        getRequestId(req)
-      ));
-    }
-  }
 
   /**
    * Reorder siblings (NEW SIMPLE APPROACH)
@@ -439,7 +297,6 @@ export class DocumentManagementController {
 
       res.json({
         result: true,
-        success: true,
         data: {
           parentId: parentId || null,
           updated_count: orderedIds.length,
@@ -533,7 +390,6 @@ export class DocumentManagementController {
 
       res.json({
         result: true,
-        success: true,
         data: document,
         message: 'Documento aggiornato con successo',
         timestamp: new Date().toISOString()
@@ -616,7 +472,6 @@ export class DocumentManagementController {
 
         res.json({
           result: true,
-          success: true,
           data: {
             chunksCreated: result.chunksCreated,
             chunksDeactivated: result.chunksDeactivated,
@@ -694,7 +549,6 @@ export class DocumentManagementController {
 
       res.json({
         result: true,
-        success: true,
         message: 'Documento eliminato con successo',
         timestamp: new Date().toISOString()
       });
@@ -740,7 +594,6 @@ export class DocumentManagementController {
 
       res.json({
         result: true,
-        success: true,
         data: { visible: document.visible },
         message: `Documento ${document.visible ? 'reso visibile' : 'nascosto'} con successo`,
         timestamp: new Date().toISOString()
@@ -787,7 +640,6 @@ export class DocumentManagementController {
 
       res.json({
         result: true,
-        success: true,
         data: { isDraft: document.isDraft },
         message: `Documento ${document.isDraft ? 'segnato come bozza' : 'pubblicato'} con successo`,
         timestamp: new Date().toISOString()
@@ -828,7 +680,6 @@ export class DocumentManagementController {
       // Include metadata for optimistic locking
       res.json({
         result: true,
-        success: true,
         data: {
           ...document,
           _id: document._id.toString(),
@@ -901,7 +752,6 @@ export class DocumentManagementController {
 
       res.json({
         result: true,
-        success: true,
         data: {
           document: {
             ...rootDoc,
@@ -999,7 +849,6 @@ export class DocumentManagementController {
 
       res.status(201).json({
         result: true,
-        success: true,
         data: newDocument,
         message: 'Documento creato con successo',
         timestamp: new Date().toISOString()
@@ -1282,7 +1131,6 @@ export class DocumentManagementController {
 
       res.status(201).json({
         result: true,
-        success: true,
         data: newRoute,
         message: 'Route creata con successo',
         timestamp: new Date().toISOString()

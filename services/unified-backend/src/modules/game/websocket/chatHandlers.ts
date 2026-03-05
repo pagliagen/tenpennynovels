@@ -52,12 +52,7 @@ export function setupChatHandlers(socket: Socket, io: SocketIOServer): void {
   /**
    * Handle location chat actions
    */
-  socket.on('location_action', async (data: ChatActionRequest) => {
-    console.warn('🔌 WebSocket: location_action is deprecated. Use HTTP endpoints instead.');
-    socket.emit('error', { 
-      message: 'location_action is deprecated. Use HTTP endpoints for sending messages.' 
-    });
-  });
+  // location_action listener removed - use HTTP endpoints instead
   
   /**
    * Join a location room

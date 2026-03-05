@@ -94,12 +94,8 @@ async function vectorizeRoutes() {
     const points: any[] = [];
 
     for (const route of routes) {
-      // Create searchable text: path + title + description
-      const searchText = [
-        route.path.replace(/\//g, ' '),  // "approfondimenti/medicina" → "approfondimenti medicina"
-        route.title,
-        route.description || ''
-      ].filter(Boolean).join(' ');
+      // Create searchable text: path only (title/description removed from Route)
+      const searchText = route.path.replace(/\//g, ' ');  // "approfondimenti/medicina" → "approfondimenti medicina"
 
       console.log(`   [${processed + 1}/${routes.length}] ${route.type}/${route.path}`);
 
@@ -115,8 +111,6 @@ async function vectorizeRoutes() {
           type: route.type,
           path: route.path,
           kind: route.kind,
-          title: route.title,
-          description: route.description || '',
           searchText  // Store for debugging
         }
       });

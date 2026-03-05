@@ -65,8 +65,7 @@ export class CharacterController {
             stats: character.stats,
             skills: character.skills,
             occupation: character.occupation,
-            background: character.background,
-            description: character.description
+            background: character.background
           }
         },
         undefined,
@@ -809,7 +808,6 @@ export class CharacterController {
       // Map background fields to frontend-expected structure
       const publicBackground = character.background?.briefHistory ||
                                character.publicDescription ||
-                               character.description ||
                                undefined;
 
       const privateBackground = character.background?.significantEvents ||
@@ -817,11 +815,9 @@ export class CharacterController {
                                 undefined;
 
       const motivations = character.background?.goalsAndMotivations ||
-                          character.motivations ||
                           undefined;
 
       const fears = character.background?.fearsAndPhobias ||
-                    character.fears ||
                     undefined;
 
       const traumas = undefined; // Not in current schema
@@ -1323,14 +1319,6 @@ export class CharacterController {
             
             // Aggiorna tutti i campi del background
             Object.assign(character.background, backgroundData);
-            
-            // Mantieni compatibilità con campi deprecati motivations e fears
-            if (backgroundData.motivations) {
-              character.motivations = backgroundData.motivations;
-            }
-            if (backgroundData.fears) {
-              character.fears = backgroundData.fears;
-            }
           }
         } catch (parseError) {
           logger.warn('Failed to parse background', { 
@@ -1449,9 +1437,6 @@ export class CharacterController {
             physicalDescription: character.physicalDescription,
             publicDescription: character.publicDescription,
             privateDescription: character.privateDescription,
-            motivations: character.motivations,
-            fears: character.fears,
-            description: character.description,
             avatar: character.avatar,
             prestavolto: character.prestavolto
           }

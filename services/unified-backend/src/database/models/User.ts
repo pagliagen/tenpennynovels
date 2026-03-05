@@ -1,12 +1,13 @@
 import mongoose, { Schema, model, Document } from 'mongoose';
+import { softDeletePlugin, SoftDeleteFields, SoftDeleteMethods } from '../plugins/softDeletePlugin';
 
-export interface IUser extends Document {
+export interface IUser extends Document, SoftDeleteFields, SoftDeleteMethods {
   // Basic user info
   username: string;
   email: string;
   displayName?: string;
   avatar?: string;
-  
+
   // Password & security
   passwordHash: string;
   isEmailVerified: boolean;
@@ -14,15 +15,15 @@ export interface IUser extends Document {
   emailVerificationExpires?: Date;
   passwordResetToken?: string;
   passwordResetExpires?: Date;
-  
+
   // NUOVO SISTEMA GRANULARE
   userRoles: ('user')[]; // User-level roles (bypass is Character.isGestore, not here)
   characterRoles: ('personaggio' | 'master' | 'moderatore' | 'amministratore')[]; // Ruoli gameplay
   characterPermissions: string[]; // Permessi aggiuntivi puntuali ['users.delete', 'system.maintenance_mode']
-  
+
   // Admin panel access (kept for functionality)
   canAccessAdminPanel: boolean;
-  
+
   // Account status
   isActive: boolean;
   isBanned: boolean;
@@ -32,10 +33,10 @@ export interface IUser extends Document {
   bannedBy?: Schema.Types.ObjectId;
   bannedByName?: string; // Character name of admin who performed the ban
   banScope?: 'full' | 'chat_only' | 'game_only';
-  
+
   // Character management
   multipleCharactersAllowed: boolean;
-  
+
   // User preferences
   preferences: {
     emailNotifications: boolean;
@@ -44,20 +45,19 @@ export interface IUser extends Document {
     language: string;
     timezone: string;
   };
-  
+
   // Activity tracking
   lastLoginAt?: Date;
   loginCount: number;
   passwordChangedAt?: Date;
-  
+
   // Registration info
   registrationSource: string;
   referralCode?: string;
   ipAddress?: string;
-  
-  // GDPR fields
+
+  // GDPR fields (NOTE: GDPR deletedAt is different from soft delete deletedAt)
   accountStatus: 'active' | 'deleted' | 'anonymized';
-  deletedAt?: Date;
   anonymizedAt?: Date;
   anonymizationReason?: string; // 'user_request' | 'admin_action'
   accountDeletionToken?: string;
@@ -288,5 +288,11 @@ UserSchema.methods.hasViewPermission = function(permission: string): boolean {
   
   return false;
 };
+
+// Apply soft delete plugin
+UserSchema.plugin(softDeletePlugin, {
+  uniqueKeys: ['username', 'email'],
+  deletedByField: 'User'
+});
 
 export const User = mongoose.models.User || model<IUser>('User', UserSchema);

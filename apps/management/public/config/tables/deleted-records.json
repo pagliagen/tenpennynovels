@@ -1,0 +1,81 @@
+{
+  "table": {
+    "name": "deleted-records",
+    "searchable": true,
+    "searchPlaceholder": "Cerca per nome..."
+  },
+  "columns": [
+    {
+      "key": "type",
+      "label": "Tipo",
+      "sortable": true,
+      "width": "120px",
+      "render": {
+        "type": "badge",
+        "colorMap": {
+          "user": "#2196f3",
+          "character": "#9c27b0",
+          "document": "#ff9800",
+          "location": "#4caf50",
+          "item": "#f44336"
+        },
+        "labelMap": {
+          "user": "User",
+          "character": "Character",
+          "document": "Document",
+          "location": "Location",
+          "item": "Item"
+        }
+      }
+    },
+    {
+      "key": "displayName",
+      "label": "Nome",
+      "sortable": true,
+      "width": "250px"
+    },
+    {
+      "key": "originalKeys",
+      "label": "Chiavi Originali",
+      "sortable": false,
+      "width": "200px",
+      "render": {
+        "type": "json",
+        "compact": true
+      }
+    },
+    {
+      "key": "keyConflicts",
+      "label": "Stato Chiavi",
+      "sortable": false,
+      "width": "150px",
+      "render": {
+        "type": "conflict-badge"
+      }
+    },
+    {
+      "key": "deletedAt",
+      "label": "Cancellato Il",
+      "sortable": true,
+      "width": "180px",
+      "render": {
+        "type": "datetime",
+        "format": "DD/MM/YYYY HH:mm"
+      }
+    },
+    {
+      "key": "deletedBy.username",
+      "label": "Cancellato Da",
+      "sortable": true,
+      "width": "150px"
+    }
+  ],
+  "defaultSort": {
+    "sortBy": "deletedAt",
+    "sortOrder": "desc"
+  },
+  "pagination": {
+    "defaultPageSize": 25,
+    "pageSizeOptions": [10, 25, 50, 100]
+  }
+}

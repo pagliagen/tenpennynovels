@@ -140,7 +140,8 @@ export interface PaginationInfo {
  * Standardized API Response interface
  */
 export interface ApiResponse<T = any> {
-  result: boolean;           // Standard: true/false (replaces 'success' for consistency)
+  result: boolean;           // Standard: true/false
+  success?: boolean;         // Optional: backward compat (mirrors result)
   data?: T;                  // Single record data or metadata object
   list?: T[];                // Array for list responses (alternative to data.list)
   pagination?: PaginationInfo; // Pagination info for list responses

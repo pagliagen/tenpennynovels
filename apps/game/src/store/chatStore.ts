@@ -242,10 +242,6 @@ export const useChatStore = create<ChatStore>()(
             // Legacy: API returns { data: { messages: [...] } }
             messages = anyResponse.data.messages;
             console.log(`📊 Loaded ${anyResponse.data.totalCount} messages (hasMore: ${anyResponse.data.hasMore})`);
-          } else if (anyResponse.data && Array.isArray(anyResponse.data.actions)) {
-            // DEPRECATED: API returns { data: { actions: [...] } }
-            messages = anyResponse.data.actions;
-            console.log(`📊 Meta info:`, anyResponse.data.meta);
           } else if (response.messages && Array.isArray(response.messages)) {
             // ✅ CURRENT: API returns { messages: [...], totalCount, hasMore } (MessageHistoryResponse)
             messages = response.messages;

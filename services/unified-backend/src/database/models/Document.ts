@@ -6,8 +6,9 @@
  */
 
 import mongoose, { Schema, Document as MongooseDocument, Types } from 'mongoose';
+import { softDeletePlugin, SoftDeleteFields, SoftDeleteMethods } from '../plugins/softDeletePlugin';
 
-export interface IDocument extends MongooseDocument {
+export interface IDocument extends MongooseDocument, SoftDeleteFields, SoftDeleteMethods {
   // Identity
   slug: string;              // Unique identifier (e.g., "folklore", "upper-class")
   title: string;
@@ -27,7 +28,6 @@ export interface IDocument extends MongooseDocument {
   isDraft: boolean;          // If true, content is incomplete/work-in-progress
   draftNotes?: string;       // Notes/instructions for drafts
   visible: boolean;          // If false, document is hidden (admin can still see it)
-  deleted: boolean;          // Soft delete flag (if true, document is deleted)
 
   lastUpdated: Date;
   createdAt: Date;
@@ -38,6 +38,7 @@ const DocumentSchema = new Schema<IDocument>({
   slug: {
     type: String,
     required: true,
+    unique: true, // Ensure slug uniqueness
     index: true
   },
   title: {
@@ -94,11 +95,7 @@ const DocumentSchema = new Schema<IDocument>({
     default: true,
     index: true
   },
-  deleted: {
-    type: Boolean,
-    default: false,
-    index: true  // Index for efficient filtering in queries
-  },
+  // REMOVED: deleted field (now using soft delete plugin)
 
   lastUpdated: {
     type: Date,
@@ -156,5 +153,11 @@ DocumentSchema.index({ slug: 1 });
 
 // Index for tag-based search
 DocumentSchema.index({ tags: 1 });
+
+// Apply soft delete plugin
+DocumentSchema.plugin(softDeletePlugin, {
+  uniqueKeys: ['slug'],
+  deletedByField: 'Character'
+});
 
 export default mongoose.model<IDocument>('Document', DocumentSchema);

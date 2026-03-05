@@ -24,7 +24,8 @@ import sessionManagementRoutes from './sessionManagementRoutes';
 import chatModerationRoutes from './chatModerationRoutes';
 import characterSessionRoutes from './characterSessionRoutes';
 import locationActionRoutes from './locationActionRoutes';
-import { hasPermission, getVisibleDashboardBadges, getUserPermissions, getVisibleMenuStructure, haveAccessTo, canView, debugPermissions } from '../utils/permissions';
+import deletedRecordsRoutes from './deletedRecordsRoutes';
+import { getVisibleDashboardBadges, getUserPermissions, getVisibleMenuStructure, haveAccessTo, debugPermissions } from '../utils/permissions';
 import { auditLogger } from '../utils/auditLogger';
 import { AuthUtils } from '../utils/auth';
 import { User, Character, Location, db } from '@database/models';
@@ -53,7 +54,7 @@ router.get('/me',
     
     if (!authToken) {
       res.status(401).json({
-        success: false,
+        result: false,
         error: 'No authentication token provided'
       });
       return;
@@ -72,7 +73,7 @@ router.get('/me',
     const user = await User.findById(decodedToken.userId).select('-passwordHash -emailVerificationToken -passwordResetToken');
     if (!user) {
       res.status(404).json({
-        success: false,
+        result: false,
         error: 'User not found'
       });
       return;
@@ -130,7 +131,7 @@ router.get('/me',
         reason: 'User does not have canAccessAdminPanel flag'
       });
       res.status(403).json({
-        success: false,
+        result: false,
         error: 'Access denied to management panel',
         action: 'ACCESS_DENIED'
       });
@@ -139,8 +140,8 @@ router.get('/me',
     
     // Calculate effective permissions, badges, and menu structure
     const effectivePermissions = getUserPermissions(user.userRoles, characterRoles, user.characterPermissions);
-    const visibleBadges = getVisibleDashboardBadges(user.userRoles, characterRoles, user.characterPermissions);
-    const visibleMenu = getVisibleMenuStructure(user.userRoles, characterRoles, user.characterPermissions);
+    const visibleBadges = getVisibleDashboardBadges(user.userRoles, characterRoles, user.characterPermissions, selectedCharacter?.isGestore || false);
+    const visibleMenu = getVisibleMenuStructure(user.userRoles, characterRoles, user.characterPermissions, selectedCharacter?.isGestore || false);
 
     // Debug permissions
     debugPermissions(user.userRoles, characterRoles, user.characterPermissions);
@@ -176,7 +177,7 @@ router.get('/me',
     });
 
     res.json({
-      success: true,
+      result: true,
       data: authContext
     });
     
@@ -186,7 +187,7 @@ router.get('/me',
       stack: error instanceof Error ? error.stack : undefined
     });
     res.status(500).json({
-      success: false,
+      result: false,
       error: 'Internal server error'
     });
   }
@@ -200,7 +201,7 @@ router.get('/my-characters', async (req: Request, res: Response): Promise<void> 
     const authToken = req.cookies?.auth_token;
     if (!authToken) {
       res.status(401).json({
-        success: false,
+        result: false,
         error: 'No authentication token provided'
       });
       return;
@@ -213,7 +214,7 @@ router.get('/my-characters', async (req: Request, res: Response): Promise<void> 
     const user = await User.findById(decodedToken.userId).select('multipleCharactersAllowed');
     if (!user) {
       res.status(404).json({
-        success: false,
+        result: false,
         error: 'User not found'
       });
       return;
@@ -256,7 +257,7 @@ router.get('/my-characters', async (req: Request, res: Response): Promise<void> 
     });
 
     res.json({
-      success: true,
+      result: true,
       data: {
         characters: safeCharacters
       }
@@ -268,7 +269,7 @@ router.get('/my-characters', async (req: Request, res: Response): Promise<void> 
       stack: error instanceof Error ? error.stack : undefined
     });
     res.status(500).json({
-      success: false,
+      result: false,
       error: 'Internal server error'
     });
   }
@@ -301,6 +302,7 @@ router.use('/', sessionManagementRoutes);
 router.use('/', chatModerationRoutes);
 router.use('/character-sessions', characterSessionRoutes);
 router.use('/location-actions', locationActionRoutes);
+router.use('/deleted-records', deletedRecordsRoutes);
 
 export { router as apiRoutes };
 export default router;

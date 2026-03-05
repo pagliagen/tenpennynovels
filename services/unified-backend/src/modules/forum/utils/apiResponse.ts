@@ -21,7 +21,7 @@ export function successResponse<T>(
   requestId?: string
 ): ForumApiResponse<T> {
   const response: any = {
-    success: true,
+    result: true,
     data,
     timestamp: new Date().toISOString()
   };
@@ -48,7 +48,7 @@ export function errorResponse(
   requestId?: string
 ): ForumApiResponse {
   const response: any = {
-    success: false,
+    result: false,
     error,
     timestamp: new Date().toISOString()
   };
@@ -100,7 +100,7 @@ export function listResponse<T>(
   requestId?: string
 ): ForumApiResponse {
   const response: any = {
-    success: true,
+    result: true,
     data: {
       items
     },

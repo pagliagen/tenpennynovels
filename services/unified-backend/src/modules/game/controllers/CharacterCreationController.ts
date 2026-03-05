@@ -77,7 +77,7 @@ export class CharacterCreationController {
       });
 
       res.json({
-        success: true,
+        result: true,
         data: { config: completeConfig },
         timestamp: new Date().toISOString(),
       });
@@ -88,7 +88,7 @@ export class CharacterCreationController {
       });
 
       res.status(500).json({
-        success: false,
+        result: false,
         error: 'Failed to load character creation configuration',
         code: 'CONFIG_LOAD_ERROR',
         timestamp: new Date().toISOString(),
@@ -134,7 +134,7 @@ export class CharacterCreationController {
       });
 
       res.json({
-        success: true,
+        result: true,
         data: { occupations: formattedOccupations },
         timestamp: new Date().toISOString(),
       });
@@ -145,7 +145,7 @@ export class CharacterCreationController {
       });
 
       res.status(500).json({
-        success: false,
+        result: false,
         error: 'Failed to load occupations',
         code: 'OCCUPATIONS_LOAD_ERROR',
         timestamp: new Date().toISOString(),
@@ -182,7 +182,7 @@ export class CharacterCreationController {
       });
 
       res.json({
-        success: true,
+        result: true,
         data: { skills: formattedSkills },
         timestamp: new Date().toISOString(),
       });
@@ -193,7 +193,7 @@ export class CharacterCreationController {
       });
 
       res.status(500).json({
-        success: false,
+        result: false,
         error: 'Failed to load skills',
         code: 'SKILLS_LOAD_ERROR',
         timestamp: new Date().toISOString(),

@@ -61,6 +61,7 @@ export const ADMIN_PERMISSIONS = {
   SYSTEM_BROADCAST_MESSAGES: 'system.broadcast_messages',
   SYSTEM_MAINTENANCE_MODE: 'system.maintenance_mode',
   SYSTEM_VIEW_LOGS: 'system.view_logs',
+  SYSTEM_DELETED_RECORDS: 'system.deleted_records', // Gestore-only: manage soft deleted records
 
   // Tickets
   TICKETS_VIEW: 'tickets.view',

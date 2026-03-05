@@ -1,6 +1,7 @@
 import mongoose, { Schema, model, Document } from 'mongoose';
+import { softDeletePlugin, SoftDeleteFields, SoftDeleteMethods } from '../plugins/softDeletePlugin';
 
-export interface ILocation extends Document {
+export interface ILocation extends Document, SoftDeleteFields, SoftDeleteMethods {
   // Basic info
   name: string;
   slug: string;
@@ -715,5 +716,11 @@ LocationSchema.statics.findAccessibleByCharacter = function(characterId: Schema.
     ]
   });
 };
+
+// Apply soft delete plugin
+LocationSchema.plugin(softDeletePlugin, {
+  uniqueKeys: ['slug'],
+  deletedByField: 'Character'
+});
 
 export const Location = mongoose.models.Location || model<ILocation>('Location', LocationSchema);

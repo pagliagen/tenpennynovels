@@ -670,14 +670,14 @@ export class SessionManagementController {
               characterName: participant.characterName,
               experiencePoints,
               skillPoints,
-              success: true
+              result: true
             });
             
           } catch (error: any) {
             experienceResults.push({
               characterId: participant.characterId,
               characterName: participant.characterName,
-              success: false,
+              result: false,
               error: error instanceof Error ? error.message : 'Grant failed'
             });
           }
@@ -698,7 +698,7 @@ export class SessionManagementController {
         sessionId,
         masterId,
         duration: sessionDuration,
-        experienceGrantsCreated: experienceResults.filter(r => r.success).length
+        experienceGrantsCreated: experienceResults.filter(r => r.result).length
       });
       
       res.json(successResponse(

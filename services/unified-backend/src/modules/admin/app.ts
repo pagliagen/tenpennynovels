@@ -120,7 +120,7 @@ const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: process.env.NODE_ENV === 'development' ? 10000 : 1000, // Higher limit for development
   message: {
-    success: false,
+    result: false,
     error: 'Troppe richieste da questo indirizzo IP, riprova più tardi.',
     code: 'RATE_LIMITED',
     timestamp: new Date().toISOString()

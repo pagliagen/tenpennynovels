@@ -156,7 +156,7 @@ export class SecurityController {
         ipAddress: entry.deviceInfo.ipAddress,
         location: 'Sconosciuto', // TODO: GeoIP lookup
         deviceInfo: `${entry.deviceInfo.browser || 'Sconosciuto'} su ${entry.deviceInfo.os || 'Sconosciuto'}`,
-        success: true, // Se è nel database, login è riuscito
+        result: true, // Se è nel database, login è riuscito
         sessionDuration: entry.invalidatedAt
           ? Math.floor((entry.invalidatedAt.getTime() - entry.createdAt.getTime()) / 1000)
           : undefined,

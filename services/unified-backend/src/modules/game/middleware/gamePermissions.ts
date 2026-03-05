@@ -27,7 +27,6 @@ export function requireGamePermission(permission: string) {
     if (!character) {
       const response: ApiResponse = {
         result: false,
-        success: false,
         error: 'Character context required',
         code: 'NO_CHARACTER_CONTEXT',
         timestamp: new Date().toISOString()
@@ -59,7 +58,6 @@ export function requireGamePermission(permission: string) {
 
       const response: ApiResponse & { requiredPermission?: string } = {
         result: false,
-        success: false,
         error: 'Non sei autorizzato ad eseguire questa operazione',
         code: 'PERMISSION_DENIED',
         requiredPermission: permission,
@@ -91,7 +89,6 @@ export function requireAnyGamePermission(permissions: string[]) {
     if (!character) {
       const response: ApiResponse = {
         result: false,
-        success: false,
         error: 'Character context required',
         code: 'NO_CHARACTER_CONTEXT',
         timestamp: new Date().toISOString()
@@ -121,7 +118,6 @@ export function requireAnyGamePermission(permissions: string[]) {
 
       const response: ApiResponse & { requiredPermissions?: string[] } = {
         result: false,
-        success: false,
         error: 'Non sei autorizzato ad eseguire questa operazione',
         code: 'PERMISSION_DENIED',
         requiredPermissions: permissions,
@@ -152,7 +148,6 @@ export function requireAllGamePermissions(permissions: string[]) {
     if (!character) {
       const response: ApiResponse = {
         result: false,
-        success: false,
         error: 'Character context required',
         code: 'NO_CHARACTER_CONTEXT',
         timestamp: new Date().toISOString()
@@ -183,7 +178,6 @@ export function requireAllGamePermissions(permissions: string[]) {
 
       const response: ApiResponse & { requiredPermissions?: string[]; missingPermissions?: string[] } = {
         result: false,
-        success: false,
         error: 'Non sei autorizzato ad eseguire questa operazione',
         code: 'PERMISSION_DENIED',
         requiredPermissions: permissions,

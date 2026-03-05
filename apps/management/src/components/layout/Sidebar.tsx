@@ -60,7 +60,8 @@ const NAV_ITEMS: NavItem[] = [
     children: [
       { key: 'system-configs', label: 'Configurazioni', href: '/system/configurations', permission: 'system.config' },
       { key: 'system-audit', label: 'Audit Logs', href: '/system/audit-logs', permission: 'system.logs' },
-      { key: 'system-broadcast', label: 'Broadcast', href: '/system/broadcast', permission: 'system.broadcast' }
+      { key: 'system-broadcast', label: 'Broadcast', href: '/system/broadcast', permission: 'system.broadcast' },
+      { key: 'system-deleted', label: 'Record Cancellati', href: '/system/deleted-records', icon: '🗑️', permission: 'system.deleted_records' }
     ]
   }
 ];

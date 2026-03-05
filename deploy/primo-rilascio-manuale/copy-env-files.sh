@@ -99,8 +99,7 @@ copy_env "management.env" "apps/management" ".env.production" "Management App"
 # ========================================
 copy_env "api-gateway.env" "services/api-gateway" ".env.production" "API Gateway Service"
 copy_env "unified-backend.env" "services/unified-backend" ".env.production" "Unified Backend Service"
-copy_env "embeddings-worker.env" "services/embeddings-worker" ".env.production" "Embeddings Worker Service"
-copy_env "embeddings-service.env" "services/embeddings-service" ".env" "Embeddings Service (Python)"
+copy_env "embeddings-worker.env" "services/embeddings-worker" ".env.production" "Embeddings Worker Service (Unified)"
 
 # ========================================
 # SUMMARY

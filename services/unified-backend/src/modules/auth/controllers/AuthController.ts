@@ -602,7 +602,6 @@ export class AuthController {
             occupation: character.occupation,
             currentOccupation: character.currentOccupation,
             age: character.age,
-            description: character.description,
             background: character.background,
             createdAt: character.createdAt
           }

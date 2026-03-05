@@ -34,7 +34,7 @@ export class RateLimitMiddleware {
           });
 
           const response: ApiResponse = {
-            success: false,
+            result: false,
             error: 'Troppe richieste',
             code: 'RATE_LIMITED',
             details: {
@@ -117,7 +117,7 @@ export class RateLimitMiddleware {
           });
 
           const response: ApiResponse = {
-            success: false,
+            result: false,
             error: 'Account temporarily locked due to too many failed login attempts',
             code: 'ACCOUNT_LOCKED',
             details: {

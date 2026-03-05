@@ -164,20 +164,6 @@ export async function reorderDocument(documentId: string, order: number, parentI
 }
 
 /**
- * Reorder route (change order/parentId in route hierarchy) - DEPRECATED
- * @deprecated Use reorderSiblings instead
- */
-export async function reorderRoute(routeId: string, order: number, parentId: string | null): Promise<void> {
-  const response = await withRetry(() =>
-    apiClient.put<ApiResponse<void>>(`/admin/routes/${routeId}/reorder`, { order, parentId })
-  );
-
-  if (!response.data.success) {
-    throw new Error(response.data.error || 'Errore nel riordinamento route');
-  }
-}
-
-/**
  * Reorder siblings (SIMPLE APPROACH)
  * Pass full ordered array of sibling IDs, backend assigns sequential order (1, 2, 3...)
  */

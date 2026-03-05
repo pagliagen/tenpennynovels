@@ -28,18 +28,18 @@ export class AuthMiddleware {
    * Returns result object instead of calling res/next
    * Use this for inline auth checks in controllers
    */
-  static authenticate(req: Request): { result: boolean; success: boolean; user?: AuthUser; error?: string } {
+  static authenticate(req: Request): { result: boolean; user?: AuthUser; error?: string } {
     try {
       const authToken = req.cookies?.auth_token;
       if (!authToken) {
-        return { result: false, success: false, error: 'No auth token' };
+        return { result: false,  error: 'No auth token' };
       }
 
       const jwtSecret = getJwtSecret();
       const decoded = jwt.verify(authToken, jwtSecret) as any;
 
       if (!decoded.userId || !decoded.username) {
-        return { result: false, success: false, error: 'Invalid token payload' };
+        return { result: false,  error: 'Invalid token payload' };
       }
 
       const user: AuthUser = {
@@ -54,10 +54,10 @@ export class AuthMiddleware {
         exp: decoded.exp || Math.floor(Date.now() / 1000) + 86400
       };
 
-      return { result: true, success: true, user };
+      return { result: true,  user };
     } catch (error: any) {
       logger.warn('Auth token validation failed:', { error: error.message, ip: req.ip });
-      return { result: false, success: false, error: error.message };
+      return { result: false,  error: error.message };
     }
   }
 
@@ -72,7 +72,6 @@ export class AuthMiddleware {
       if (!authToken) {
         const response: ApiResponse = {
           result: false,
-          success: false,
           error: 'Authentication required',
           code: 'NO_AUTH_TOKEN',
           timestamp: new Date().toISOString()
@@ -111,7 +110,6 @@ export class AuthMiddleware {
       
       const response: ApiResponse = {
         result: false,
-        success: false,
         error: 'Invalid authentication token',
         code: 'INVALID_AUTH_TOKEN',
         timestamp: new Date().toISOString()
@@ -136,7 +134,6 @@ export class AuthMiddleware {
       if (!characterToken) {
         const response: ApiResponse = {
           result: false,
-          success: false,
           error: 'Character selection required',
           code: 'NO_CHARACTER_CONTEXT',
           timestamp: new Date().toISOString()
@@ -183,7 +180,6 @@ export class AuthMiddleware {
       
       const response: ApiResponse = {
         result: false,
-        success: false,
         error: 'Invalid character context',
         code: 'INVALID_CHARACTER_CONTEXT',
         timestamp: new Date().toISOString()
@@ -254,7 +250,6 @@ export class AuthMiddleware {
           if (!character) {
             const response: ApiResponse = {
               result: false,
-              success: false,
               error: 'Personaggio non trovato o non accessibile',
               code: 'CHARACTER_NOT_FOUND',
               timestamp: new Date().toISOString()
@@ -270,7 +265,6 @@ export class AuthMiddleware {
 
           const response: ApiResponse = {
             result: false,
-            success: false,
             error: 'Character verification failed',
             code: 'CHARACTER_VERIFICATION_ERROR',
             timestamp: new Date().toISOString()
@@ -290,7 +284,6 @@ export class AuthMiddleware {
     if (!req.user) {
       const response: ApiResponse = {
         result: false,
-        success: false,
         error: 'Authentication required',
         code: 'NO_AUTH_TOKEN',
         timestamp: new Date().toISOString()
@@ -302,7 +295,6 @@ export class AuthMiddleware {
     if (!req.user.canAccessAdminPanel) {
       const response: ApiResponse = {
         result: false,
-        success: false,
         error: 'Admin access required',
         code: 'ADMIN_ACCESS_REQUIRED',
         timestamp: new Date().toISOString()
@@ -323,7 +315,6 @@ export class AuthMiddleware {
       if (!req.user?.canAccessAdminPanel) {
         const response: ApiResponse = {
           result: false,
-          success: false,
           error: 'Admin access required',
           code: 'ADMIN_ACCESS_REQUIRED',
           timestamp: new Date().toISOString()
@@ -343,7 +334,6 @@ export class AuthMiddleware {
       if (missingPermissions.length > 0) {
         const response: ApiResponse = {
           result: false,
-          success: false,
           error: 'Insufficient permissions',
           code: 'INSUFFICIENT_PERMISSIONS',
           details: { missingPermissions },
@@ -373,7 +363,6 @@ export class AuthMiddleware {
       if (!req.character) {
         const response: ApiResponse = {
           result: false,
-          success: false,
           error: 'Character context required',
           code: 'NO_CHARACTER_CONTEXT',
           timestamp: new Date().toISOString()
@@ -389,7 +378,6 @@ export class AuthMiddleware {
       if (!hasRequiredRole) {
         const response: ApiResponse = {
           result: false,
-          success: false,
           error: 'Insufficient gameplay permissions',
           code: 'INSUFFICIENT_GAMEPLAY_PERMISSIONS',
           details: { 
@@ -458,7 +446,6 @@ export class AuthMiddleware {
       if (!apiKey || apiKey !== expectedKey) {
         const response: ApiResponse = {
           result: false,
-          success: false,
           error: 'Invalid API key',
           code: 'INVALID_API_KEY',
           timestamp: new Date().toISOString()
@@ -473,7 +460,6 @@ export class AuthMiddleware {
       logger.error('Bot API key validation failed:', error);
       const response: ApiResponse = {
         result: false,
-        success: false,
         error: 'Authentication failed',
         code: 'AUTH_ERROR',
         timestamp: new Date().toISOString()

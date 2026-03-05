@@ -317,7 +317,7 @@ export class SystemConfigController {
       });
 
       // Use listResponse for consistency with other list endpoints
-      // Returns: { result: true, success: true, items: [...], pagination: {...} }
+      // Returns: { result: true, result: true, items: [...], pagination: {...} }
       res.json(listResponse(
         mappedLogs,
         pagination,

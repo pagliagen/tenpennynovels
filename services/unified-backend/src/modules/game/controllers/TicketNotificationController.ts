@@ -25,7 +25,7 @@ export class TicketNotificationController {
 
       if (!characterId) {
         res.status(401).json({
-          success: false,
+          result: false,
           error: 'Character not found',
           code: 'CHARACTER_NOT_FOUND'
         });
@@ -52,7 +52,7 @@ export class TicketNotificationController {
       });
 
       res.status(200).json({
-        success: true,
+        result: true,
         data: {
           notifications,
           unreadCount,
@@ -65,7 +65,7 @@ export class TicketNotificationController {
     } catch (error: any) {
       console.error('[TicketNotificationController] List error:', error);
       res.status(500).json({
-        success: false,
+        result: false,
         error: 'Failed to fetch notifications',
         code: 'LIST_NOTIFICATIONS_ERROR'
       });
@@ -83,7 +83,7 @@ export class TicketNotificationController {
 
       if (!characterId) {
         res.status(401).json({
-          success: false,
+          result: false,
           error: 'Character not found',
           code: 'CHARACTER_NOT_FOUND'
         });
@@ -92,7 +92,7 @@ export class TicketNotificationController {
 
       if (!mongoose.Types.ObjectId.isValid(id)) {
         res.status(400).json({
-          success: false,
+          result: false,
           error: 'Invalid notification ID',
           code: 'INVALID_NOTIFICATION_ID'
         });
@@ -110,7 +110,7 @@ export class TicketNotificationController {
 
       if (!notification) {
         res.status(404).json({
-          success: false,
+          result: false,
           error: 'Notification not found',
           code: 'NOTIFICATION_NOT_FOUND'
         });
@@ -121,7 +121,7 @@ export class TicketNotificationController {
       await (notification as any).markAsRead();
 
       res.status(200).json({
-        success: true,
+        result: true,
         data: {
           isRead: true,
           readAt: notification.readAt
@@ -131,7 +131,7 @@ export class TicketNotificationController {
     } catch (error: any) {
       console.error('[TicketNotificationController] Mark read error:', error);
       res.status(500).json({
-        success: false,
+        result: false,
         error: 'Failed to mark notification as read',
         code: 'MARK_READ_ERROR'
       });
@@ -148,7 +148,7 @@ export class TicketNotificationController {
 
       if (!characterId) {
         res.status(401).json({
-          success: false,
+          result: false,
           error: 'Character not found',
           code: 'CHARACTER_NOT_FOUND'
         });
@@ -159,7 +159,7 @@ export class TicketNotificationController {
       const markedCount = await (TicketNotification as any).markAllAsRead('character', characterId);
 
       res.status(200).json({
-        success: true,
+        result: true,
         data: {
           markedCount
         },
@@ -168,7 +168,7 @@ export class TicketNotificationController {
     } catch (error: any) {
       console.error('[TicketNotificationController] Mark all read error:', error);
       res.status(500).json({
-        success: false,
+        result: false,
         error: 'Failed to mark all notifications as read',
         code: 'MARK_ALL_READ_ERROR'
       });
@@ -185,7 +185,7 @@ export class TicketNotificationController {
 
       if (!characterId) {
         res.status(401).json({
-          success: false,
+          result: false,
           error: 'Character not found',
           code: 'CHARACTER_NOT_FOUND'
         });
@@ -195,7 +195,7 @@ export class TicketNotificationController {
       const unreadCount = await (TicketNotification as any).getUnreadCount('character', characterId);
 
       res.status(200).json({
-        success: true,
+        result: true,
         data: {
           unreadCount
         }
@@ -203,7 +203,7 @@ export class TicketNotificationController {
     } catch (error: any) {
       console.error('[TicketNotificationController] Get unread count error:', error);
       res.status(500).json({
-        success: false,
+        result: false,
         error: 'Failed to get unread count',
         code: 'GET_UNREAD_COUNT_ERROR'
       });
@@ -221,7 +221,7 @@ export class TicketNotificationController {
 
       if (!characterId) {
         res.status(401).json({
-          success: false,
+          result: false,
           error: 'Character not found',
           code: 'CHARACTER_NOT_FOUND'
         });
@@ -230,7 +230,7 @@ export class TicketNotificationController {
 
       if (!mongoose.Types.ObjectId.isValid(id)) {
         res.status(400).json({
-          success: false,
+          result: false,
           error: 'Invalid notification ID',
           code: 'INVALID_NOTIFICATION_ID'
         });
@@ -248,7 +248,7 @@ export class TicketNotificationController {
 
       if (result.deletedCount === 0) {
         res.status(404).json({
-          success: false,
+          result: false,
           error: 'Notification not found',
           code: 'NOTIFICATION_NOT_FOUND'
         });
@@ -256,7 +256,7 @@ export class TicketNotificationController {
       }
 
       res.status(200).json({
-        success: true,
+        result: true,
         data: {
           deleted: true
         },
@@ -265,7 +265,7 @@ export class TicketNotificationController {
     } catch (error: any) {
       console.error('[TicketNotificationController] Delete error:', error);
       res.status(500).json({
-        success: false,
+        result: false,
         error: 'Failed to delete notification',
         code: 'DELETE_NOTIFICATION_ERROR'
       });

@@ -418,13 +418,10 @@ export class CharacterApprovalController {
         stats: character.stats || null,
         derived: character.derived || null,
         skills: character.skills || {},
-        
+
         // Character description and background
-        motivations: character.motivations || '',
-        fears: character.fears || '',
-        backgroundResponses: character.backgroundResponses || [],
         backgroundCompleted: character.backgroundCompleted || false,
-        
+
         // Equipment (populated with full item details + occupation starting items)
         equipment: allEquipment,
         
@@ -1197,7 +1194,7 @@ export class CharacterApprovalController {
         if (r.status === 'fulfilled') {
           return {
             characterId: characterIds[i],
-            success: true
+            result: true
           };
         } else {
           const errorMessage = r.reason instanceof Error
@@ -1213,7 +1210,7 @@ export class CharacterApprovalController {
 
           return {
             characterId: characterIds[i],
-            success: false,
+            result: false,
             error: errorMessage
           };
         }
@@ -1407,17 +1404,16 @@ export class CharacterApprovalController {
         return;
       }
 
-      // Soft delete by setting status to DELETED
-      await Character.findByIdAndUpdate(characterId, {
-        status: 'DELETED',
-        'metadata.deletedAt': new Date(),
-        'metadata.deletedBy': auditInfo.adminId
-      });
+      // Soft delete using plugin method
+      await character.softDelete(
+        auditInfo.adminId,
+        auditInfo.adminCharacterName || 'Unknown Admin'
+      );
 
-      logger.warn('Character deleted', {
+      logger.warn('Character soft deleted', {
         ...auditInfo,
         characterId,
-        characterName: `${character.characterName} ${character.characterSurname}`
+        characterName: character.name
       });
 
       res.json(successResponse(
@@ -1474,17 +1470,16 @@ export class CharacterApprovalController {
             throw new Error(`Character not found: ${characterId}`);
           }
 
-          // Soft delete by setting status to DELETED
-          await Character.findByIdAndUpdate(characterId, {
-            status: 'DELETED',
-            'metadata.deletedAt': new Date(),
-            'metadata.deletedBy': auditInfo.adminId
-          });
+          // Soft delete using plugin method
+          await character.softDelete(
+            auditInfo.adminId,
+            auditInfo.adminCharacterName || 'Unknown Admin'
+          );
 
-          logger.warn('Character deleted in bulk', {
+          logger.warn('Character soft deleted in bulk', {
             ...auditInfo,
             characterId,
-            characterName: `${character.characterName} ${character.characterSurname}`
+            characterName: character.name
           });
 
           return character;

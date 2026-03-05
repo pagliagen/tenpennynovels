@@ -295,13 +295,13 @@ export class ExperienceController {
           results.push({
             characterId: targetCharacterId,
             grantId: grant._id,
-            success: true
+            result: true
           });
           
         } catch (error: any) {
           results.push({
             characterId: targetCharacterId,
-            success: false,
+            result: false,
             error: error instanceof Error ? error.message : 'Grant failed'
           });
         }

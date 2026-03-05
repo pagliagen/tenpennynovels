@@ -35,7 +35,7 @@ export class DocumentController {
       // Validate type
       if (!['ambientazione', 'approfondimenti', 'regolamento'].includes(type)) {
         res.status(400).json({
-          success: false,
+          result: false,
           error: 'Tipo non valido',
           code: 'INVALID_TYPE'
         });
@@ -53,7 +53,7 @@ export class DocumentController {
         // Check permissions for redirects too
         if (!result.route.isPublic && !req.user) {
           res.status(404).json({
-            success: false,
+            result: false,
             error: 'Risorsa non trovata',
             code: 'NOT_FOUND'
           });
@@ -67,7 +67,7 @@ export class DocumentController {
       // Check permissions (unauthenticated users can only see public routes)
       if (!result.route.isPublic && !req.user) {
         res.status(404).json({
-          success: false,
+          result: false,
           error: 'Risorsa non trovata',
           code: 'NOT_FOUND'
         });
@@ -75,7 +75,7 @@ export class DocumentController {
       }
 
       res.json({
-        success: true,
+        result: true,
         data: result
       });
 
@@ -95,7 +95,7 @@ export class DocumentController {
         }
 
         res.status(404).json({
-          success: false,
+          result: false,
           error: 'Risorsa non trovata',
           code: 'NOT_FOUND'
         });
@@ -104,7 +104,7 @@ export class DocumentController {
 
       logger.error('Error in getByPath:', error);
       res.status(500).json({
-        success: false,
+        result: false,
         error: 'Errore recupero documento',
         code: 'GET_DOCUMENT_ERROR'
       });
@@ -179,14 +179,14 @@ export class DocumentController {
       ]);
 
       res.json({
-        success: true,
+        result: true,
         data: routes
       });
 
     } catch (error: any) {
       logger.error('Error in listRoutes:', error);
       res.status(500).json({
-        success: false,
+        result: false,
         error: 'Errore recupero routes',
         code: 'LIST_ROUTES_ERROR'
       });
@@ -265,14 +265,14 @@ export class DocumentController {
       };
 
       res.json({
-        success: true,
+        result: true,
         routes: grouped
       });
 
     } catch (error: any) {
       logger.error('Error in listRoutesHierarchical:', error);
       res.status(500).json({
-        success: false,
+        result: false,
         error: 'Errore recupero routes gerarchiche',
         code: 'LIST_HIERARCHICAL_ROUTES_ERROR'
       });
@@ -295,8 +295,6 @@ export class DocumentController {
         slug: route.slug,
         type: route.type,
         kind: route.kind,
-        title: route.title,
-        description: route.description,
         displayCategory: route.displayCategory,
         isPublic: route.isPublic,
         order: route.order,
@@ -345,7 +343,7 @@ export class DocumentController {
       // Validate query
       if (!query || typeof query !== 'string') {
         res.status(400).json({
-          success: false,
+          result: false,
           error: 'Query richiesta',
           code: 'MISSING_QUERY'
         });
@@ -396,7 +394,7 @@ export class DocumentController {
 
       if (chunkIds.length === 0) {
         res.json({
-          success: true,
+          result: true,
           data: {
             results: [],
             totalResults: 0,
@@ -476,7 +474,6 @@ export class DocumentController {
           route: {
             path: route.path,
             type: route.type,
-            title: route.title,
             anchor: `#${anchorSlug}`,
             fullPath: `/${route.type}/${route.path}#${anchorSlug}`
           },
@@ -488,7 +485,7 @@ export class DocumentController {
       }).filter(Boolean);
 
       res.json({
-        success: true,
+        result: true,
         data: {
           results,
           totalResults: results.length,
@@ -499,7 +496,7 @@ export class DocumentController {
     } catch (error: any) {
       logger.error('Error in semanticSearch:', error);
       res.status(500).json({
-        success: false,
+        result: false,
         error: 'Errore semantic search',
         code: 'SEARCH_ERROR'
       });
@@ -514,7 +511,7 @@ export class DocumentController {
     try {
       if (!req.user) {
         res.status(401).json({
-          success: false,
+          result: false,
           error: 'Autenticazione richiesta',
           code: 'UNAUTHORIZED'
         });
@@ -560,8 +557,7 @@ export class DocumentController {
             },
             route: {
               path: '$route.path',
-              type: '$route.type',
-              title: '$route.title'
+              type: '$route.type'
             },
             addedAt: '$createdAt'
           }
@@ -570,14 +566,14 @@ export class DocumentController {
       ]).toArray();
 
       res.json({
-        success: true,
+        result: true,
         data: favorites
       });
 
     } catch (error: any) {
       logger.error('Error in getFavorites:', error);
       res.status(500).json({
-        success: false,
+        result: false,
         error: 'Errore recupero preferiti',
         code: 'GET_FAVORITES_ERROR'
       });
@@ -592,7 +588,7 @@ export class DocumentController {
     try {
       if (!req.user) {
         res.status(401).json({
-          success: false,
+          result: false,
           error: 'Autenticazione richiesta',
           code: 'UNAUTHORIZED'
         });
@@ -611,7 +607,7 @@ export class DocumentController {
 
       if (!route || !route.rootDocumentId) {
         res.status(404).json({
-          success: false,
+          result: false,
           error: 'Documento non trovato',
           code: 'NOT_FOUND'
         });
@@ -621,7 +617,7 @@ export class DocumentController {
       const document = await Document.findById(route.rootDocumentId);
       if (!document) {
         res.status(404).json({
-          success: false,
+          result: false,
           error: 'Documento non trovato',
           code: 'NOT_FOUND'
         });
@@ -644,7 +640,7 @@ export class DocumentController {
         await db.collection('document_favorites').deleteOne({ _id: existing._id });
 
         res.json({
-          success: true,
+          result: true,
           data: { favorited: false },
           message: 'Rimosso dai preferiti'
         });
@@ -657,7 +653,7 @@ export class DocumentController {
         });
 
         res.json({
-          success: true,
+          result: true,
           data: { favorited: true },
           message: 'Aggiunto ai preferiti'
         });
@@ -666,7 +662,7 @@ export class DocumentController {
     } catch (error: any) {
       logger.error('Error in toggleFavorite:', error);
       res.status(500).json({
-        success: false,
+        result: false,
         error: 'Errore toggle favorite',
         code: 'FAVORITE_ERROR'
       });

@@ -1,37 +1,66 @@
-# TenpennyNovels Embeddings Worker Dockerfile
+# =============================================================================
+# TenpennyNovels Embeddings Worker (Unified) - Multi-stage Dockerfile
+# Includes: Node.js + Python + sentence-transformers
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Stage 1: Python Base - Install ML dependencies
+# -----------------------------------------------------------------------------
+FROM python:3.11-slim AS python-base
+
+WORKDIR /app/python
+
+# Install Python dependencies
+COPY python/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Pre-download sentence-transformers model to cache
+# This prevents download at runtime and fixes the "20 restarts" issue
+RUN python3 -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')"
+
+# Copy Python scripts
+COPY python/ .
+
+# -----------------------------------------------------------------------------
+# Stage 2: Node.js Final - Application runtime
+# -----------------------------------------------------------------------------
 FROM node:22-alpine
 
-# Set working directory
 WORKDIR /app
 
-# Install system dependencies
-RUN apk add --no-cache \
-    python3 \
-    py3-pip \
-    build-base \
-    && ln -sf python3 /usr/bin/python
+# Install Python3 runtime in Node image (no build tools needed)
+RUN apk add --no-cache python3 py3-pip
 
-# Copy package files and source code
+# Copy Python environment from python-base stage
+COPY --from=python-base /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=python-base /root/.cache/huggingface /root/.cache/huggingface
+COPY --from=python-base /app/python /app/python
+
+# Copy Node.js application files
 COPY package.json tsconfig.json ./
 COPY src ./src
 
-# Install dependencies
-RUN npm install
+# Install Node dependencies
+RUN npm ci --only=production
 
-# Build TypeScript with increased heap size
-ENV NODE_OPTIONS="--max-old-space-size=4096"
+# Build TypeScript
 RUN npm run build
-ENV NODE_OPTIONS=""
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-  CMD ps aux | grep -q "[n]ode.*embeddings-worker" || exit 1
+# Expose HTTP port
+EXPOSE 5001
 
-# Set environment variables
+# Health check - verify HTTP endpoint responds
+HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:5001/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
+
+# Environment variables (can be overridden in docker-compose.yml)
 ENV NODE_ENV=production
-ENV MONGODB_URI=mongodb://tenpennynovels-mongodb:27017/tenpennynovels
-ENV REDIS_URL=redis://tenpennynovels-redis:6379
-ENV EMBEDDINGS_SERVICE_URL=http://tenpennynovels-embeddings:5001
+ENV HTTP_PORT=5001
+ENV PYTHON_PATH=python3
+ENV MONGODB_URI=mongodb://mongodb:27017/tenpennynovels
+ENV REDIS_URL=redis://redis:6379
+ENV QDRANT_URL=http://qdrant:6333
+ENV LOG_LEVEL=info
 
-# Run the worker
+# Start unified embeddings service
 CMD ["node", "dist/index.js"]

@@ -19,7 +19,7 @@ export class ValidationMiddleware {
       }));
 
       const response: ApiResponse = {
-        success: false,
+        result: false,
         error: 'Validation failed',
         code: 'VALIDATION_ERROR',
         details: validationErrors.reduce((acc, err) => {

@@ -5,7 +5,6 @@ import { requireGamePermission } from '../middleware/gamePermissions';
 import { CharacterController } from '../controllers/CharacterController';
 import { CharacterGameplayController } from '../controllers/CharacterGameplayController';
 import { CharacterSocialController } from '../controllers/CharacterSocialController';
-import { BackgroundQuestionController } from '../controllers/BackgroundQuestionController';
 import { SkillController } from '../controllers/SkillController';
 
 const router = Router();
@@ -85,32 +84,6 @@ router.delete('/characters/:characterId',
   AuthMiddleware.requireUserAuth,
   requireGamePermission('game:character:delete'),
   CharacterController.deleteCharacter
-);
-
-// Background questionnaire routes
-router.get('/background-questions',
-  AuthMiddleware.requireUserAuth,
-  requireGamePermission('game:character:background:read'),
-  BackgroundQuestionController.getBackgroundQuestions
-);
-
-router.get('/background-questions/category/:category',
-  AuthMiddleware.requireUserAuth,
-  requireGamePermission('game:character:background:read'),
-  BackgroundQuestionController.getQuestionsByCategory
-);
-
-router.get('/characters/:characterId/background-responses',
-  AuthMiddleware.requireUserAuth,
-  requireGamePermission('game:character:background:read'),
-  BackgroundQuestionController.getCharacterBackgroundResponses
-);
-
-router.put('/characters/:characterId/background-responses',
-  AuthMiddleware.requireUserAuth,
-  requireGamePermission('game:character:background:write'),
-  CharacterValidationMiddleware.validateBackgroundResponses,
-  BackgroundQuestionController.updateBackgroundResponses
 );
 
 // Character location management

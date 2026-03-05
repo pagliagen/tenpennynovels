@@ -39,11 +39,11 @@ export async function initializeDailyExperienceCrons(): Promise<void> {
     for (const character of activeCharacters) {
       try {
         const dailyGrant = await processDailyExperienceGrant(character);
-        results.push({ characterId: character._id, success: true, grant: dailyGrant });
+        results.push({ characterId: character._id, result: true, grant: dailyGrant });
       } catch (error: any) {
         results.push({ 
           characterId: character._id, 
-          success: false, 
+          result: false, 
           error: error instanceof Error ? error.message : String(error)
         });
       }
