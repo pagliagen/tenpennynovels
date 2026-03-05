@@ -40,11 +40,14 @@ COPY --from=python-base /app/python /app/python
 COPY package.json tsconfig.json ./
 COPY src ./src
 
-# Install Node dependencies
-RUN npm ci --only=production
+# Install ALL dependencies (including devDependencies for build)
+RUN npm ci
 
 # Build TypeScript
 RUN npm run build
+
+# Prune devDependencies after build (keep only production deps)
+RUN npm prune --production
 
 # Expose HTTP port
 EXPOSE 5001
