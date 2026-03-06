@@ -94,12 +94,10 @@
 
     &:hover:not(:disabled) {
       background: var(--color-primary-hover);
-      border-color: var(--color-primary-hover);
     }
 
     &:active:not(:disabled) {
       background: var(--color-primary-active);
-      border-color: var(--color-primary-active);
     }
   }
 
@@ -112,8 +110,7 @@
     border-color: var(--color-primary);
 
     &:hover:not(:disabled) {
-      color: var(--color-text-inverse);
-      background: var(--color-primary);
+      color: var(--color-text-inverse); 
     }
   }
 

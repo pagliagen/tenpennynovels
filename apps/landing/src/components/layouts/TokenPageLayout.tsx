@@ -1,7 +1,7 @@
 /**
  * Token Page Layout Component
  *
- * Layout wrapper for pages that require token validation (verify-email, reset-password, delete-account).
+ * Layout wrapper for pages that require token validation (reset-password, delete-account).
  * Handles loading state, token validation, and error display automatically.
  *
  * **Benefits**:
@@ -115,7 +115,7 @@ export interface TokenPageLayoutProps extends Omit<PageLayoutProps, 'children'> 
  *
  *   useEffect(() => {
  *     if (isReady && token) {
- *       apiGet(`/auth/verify-email?token=${token}`)
+ *       apiGet(`/auth/validate-reset-token/${token}`)
  *         .then(res => setIsValid(res.result))
  *         .finally(() => setIsValidating(false));
  *     } else if (isReady && !token) {
@@ -125,15 +125,15 @@ export interface TokenPageLayoutProps extends Omit<PageLayoutProps, 'children'> 
  *
  *   return (
  *     <TokenPageLayout
- *       title="Verifica Email"
- *       description="Verifica il tuo indirizzo email"
+ *       title="Reset Password"
+ *       description="Reimposta la tua password"
  *       isReady={isReady}
  *       token={token}
  *       isValidating={isValidating}
  *       isValid={isValid}
- *       errorMessage="Link di verifica non valido o scaduto"
+ *       errorMessage="Link non valido o scaduto"
  *     >
- *       <VerifiedMessage />
+ *       <ResetPasswordForm />
  *     </TokenPageLayout>
  *   );
  * }

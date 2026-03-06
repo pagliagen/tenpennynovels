@@ -125,7 +125,7 @@ export class RegistrationController {
 
       // DEV ONLY: Add verification URL header for testing
       if (process.env.NODE_ENV !== 'production') {
-        const verificationUrl = `${process.env.BASE_URL || 'http://localhost:4000'}/verify-email/${emailVerificationToken}`;
+        const verificationUrl = `${process.env.BASE_URL || 'http://localhost:4000'}/?token=${emailVerificationToken}`;
         res.setHeader('X-Dev-Verification-Url', verificationUrl);
         logger.debug(`[DEV] Verification URL: ${verificationUrl}`);
       }
@@ -334,7 +334,7 @@ export class RegistrationController {
             verifiedAt: new Date().toISOString()
           },
         },
-        'Email verified successfully. You can now log in.');
+        'Email verificata con successo. Ora puoi effettuare il login.');
 
     } catch (error: any) {
       logger.error('Email verification error:', error);
@@ -370,7 +370,7 @@ export class RegistrationController {
             emailSent: true,
             canResendAt: new Date(Date.now() + 30 * 60 * 1000).toISOString()
           },
-          'If the email address exists and is not verified, a verification email has been sent.');
+          'Se l\'indirizzo email esiste e non è verificato, un\'email di verifica è stata inviata.');
         return;
       }
 
@@ -410,7 +410,7 @@ export class RegistrationController {
 
       // DEV ONLY: Add verification URL header for testing
       if (process.env.NODE_ENV !== 'production') {
-        const verificationUrl = `${process.env.BASE_URL || 'http://localhost:4000'}/verify-email/${emailVerificationToken}`;
+        const verificationUrl = `${process.env.BASE_URL || 'http://localhost:4000'}/?token=${emailVerificationToken}`;
         res.setHeader('X-Dev-Verification-Url', verificationUrl);
         logger.debug(`[DEV] Resend verification URL: ${verificationUrl}`);
       }
@@ -427,7 +427,7 @@ export class RegistrationController {
           canResendAt: new Date(Date.now() + 30 * 60 * 1000).toISOString(), // 30 minutes cooldown
           expiresAt: emailVerificationExpires.toISOString()
         },
-        'Verification email sent successfully');
+        'Email di verifica inviata con successo');
 
     } catch (error: any) {
       logger.error('Resend verification error:', error);

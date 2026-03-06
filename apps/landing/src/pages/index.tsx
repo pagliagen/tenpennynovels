@@ -17,7 +17,7 @@
  * @module pages/index
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -32,6 +32,7 @@ import { authService } from '@/services/AuthService';
 import { LoginSchema } from '@/lib/validation/schemas';
 import { handleApiFormErrors } from '@/utils/formErrorHandler';
 import { homeSchema } from '@/utils/schemas';
+import { ApiError } from '@/lib/api/errors';
 
 /**
  * Login form data type (inferred from Zod schema)
@@ -50,6 +51,7 @@ export default function LoginPage() {
   const { globalError, globalSuccess, loading, setError, setSuccess, setLoading, clearMessages, handleApiError } = useFormState();
   const [errorCode, setErrorCode] = useState<string>('');
   const [isResendingVerification, setIsResendingVerification] = useState<boolean>(false);
+  const hasHandledVerificationRef = useRef(false);
 
   const {
     register,
@@ -68,6 +70,51 @@ export default function LoginPage() {
   // Watch fields for Victorian masks
   const usernameValue = watch('username', '');
   const passwordValue = watch('password', '');
+
+  /**
+   * Email verification from link: ?token=xxx → read token, clean URL, call API.
+   */
+  useEffect(() => {
+    const token = router.query.token;
+    if (!token || typeof token !== 'string' || hasHandledVerificationRef.current) {
+      return;
+    }
+    hasHandledVerificationRef.current = true;
+    router.replace('/', undefined, { shallow: true });
+    setLoading(true);
+    clearMessages();
+    setErrorCode('');
+
+    authService
+      .verifyEmail(token)
+      .then((result) => {
+        if (result.result) {
+          setSuccess(
+            result.message ||
+              'Email verificata con successo! Benvenuto su TenpennyNovels. Puoi accedere con le tue credenziali.'
+          );
+        } else {
+          setError(result.error || 'Verifica email fallita. Il link potrebbe essere scaduto o non valido.');
+          if ((result.details as { canResend?: boolean })?.canResend) {
+            setErrorCode('EMAIL_NOT_VERIFIED');
+          }
+        }
+      })
+      .catch((err) => {
+        console.error('Email verification error:', err);
+        if (err instanceof ApiError) {
+          setError(err.message);
+          if ((err.details as { canResend?: boolean })?.canResend) {
+            setErrorCode('EMAIL_NOT_VERIFIED');
+          }
+        } else {
+          setError('Si è verificato un errore durante la verifica. Riprova più tardi.');
+        }
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [router, router.query.token, setLoading, clearMessages, setSuccess, setError, setErrorCode]);
 
   /**
    * Handle resend verification email
@@ -162,17 +209,18 @@ export default function LoginPage() {
             autoComplete="current-password"
             disabled={loading}
           />
+        </div>
 
+        <div className={`login-actions ${errorCode ? 'login-actions--with-errors' : ''}`}>
           {/* Recoverable Error Actions */}
           {errorCode && (
-            <div style={{ marginTop: '1rem' }}>
+            <div className="login-actions__error-actions">
               {errorCode === 'EMAIL_NOT_VERIFIED' && (
                 <Button
                   type="button"
                   variant="ghost"
                   onClick={handleResendVerification}
                   loading={isResendingVerification}
-                  style={{ fontSize: '0.9rem', padding: '0.5rem 1rem' }}
                 >
                   Reinvia Email di Verifica
                 </Button>
@@ -182,7 +230,6 @@ export default function LoginPage() {
                   type="button"
                   variant="ghost"
                   onClick={() => router.push('/forgot-password')}
-                  style={{ fontSize: '0.9rem', padding: '0.5rem 1rem' }}
                 >
                   Password dimenticata? Clicca qui per resettarla
                 </Button>
@@ -192,20 +239,19 @@ export default function LoginPage() {
                   type="button"
                   variant="ghost"
                   onClick={() => router.push('/register')}
-                  style={{ fontSize: '0.9rem', padding: '0.5rem 1rem' }}
                 >
                   Non hai un account? Registrati qui
                 </Button>
               )}
             </div>
           )}
-        </div>
 
-        <FormActions
-          submitText="Gioca >>"
-          submitLoading={loading}
-          align="right"
-        />
+          <FormActions
+            submitText="Gioca >>"
+            submitLoading={loading}
+            align="right"
+          />
+        </div>
       </form>
     </FormPageLayout>
   );

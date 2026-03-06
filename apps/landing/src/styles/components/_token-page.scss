@@ -5,13 +5,8 @@
  */
 
 .token-page {
-  max-width: 600px;
+  width: 100%;
   margin: 0 auto;
-  padding: var(--spacing-container-mobile);
-
-  @media (min-width: 768px) {
-    padding: var(--spacing-container-desktop);
-  }
 
   /**
    * Loading state

@@ -260,7 +260,7 @@ export interface FormErrors {
 /**
  * Token validation result
  *
- * Used by token-based pages (verify-email, reset-password, delete-account).
+ * Used by token-based pages (reset-password, delete-account). Email verification uses ?token= on index.
  *
  * @interface TokenValidation
  */

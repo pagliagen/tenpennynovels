@@ -12,12 +12,15 @@ import { Button } from './Button';
 
 /** Path for the Victorian background image (used as <img> for semantics and flexibility). */
 const BACKGROUND_IMAGE_SRC = '/images/sfondo.png';
+const LOGO_IMAGE_SRC = '/images/title.png';
 
 export interface VictorianLayoutMobileProps {
   /** Page content rendered inside the main area. */
   children: React.ReactNode;
-  /** When true, shows "Torna a Login" in the nav. */
+  /** When true, shows only "Chiudi" in the nav (info pages: credits, privacy, terms). */
   isInfoPage: boolean;
+  /** Page identifier for main content (e.g. "login-page", "register-page"). */
+  pageClass: string;
   /** Called for internal navigation (e.g. /register, /credits). */
   onNavigate: (path: string) => void;
   /** Called when "Documenti" is clicked (external link). */
@@ -31,6 +34,7 @@ export interface VictorianLayoutMobileProps {
 export const VictorianLayoutMobile: React.FC<VictorianLayoutMobileProps> = ({
   children,
   isInfoPage,
+  pageClass,
   onNavigate,
   onDocsClick,
   isMobileMenuOpen,
@@ -59,49 +63,63 @@ export const VictorianLayoutMobile: React.FC<VictorianLayoutMobileProps> = ({
         aria-label="Menu di navigazione"
         aria-hidden={!isMobileMenuOpen}
       >
+        <button
+          type="button"
+          className="victorian-layout-mobile__nav-close"
+          onClick={onToggleMobileMenu}
+          aria-label="Chiudi menu"
+        >
+          ✕
+        </button>
         <h2 className="victorian-layout-mobile__nav-title">Chapter One</h2>
         <nav className="victorian-layout-mobile__nav-content">
-          {isInfoPage && (
+          {isInfoPage ? (
             <Button
               variant="ghost"
-              onClick={() => onNavigate('/')}
+              onClick={() => window.close()}
               className="victorian-layout-mobile__nav-button"
             >
-              Torna a Login
+              Chiudi
             </Button>
+          ) : (
+            <>
+              <Button
+                variant="ghost"
+                onClick={() => onNavigate('/register')}
+                className="victorian-layout-mobile__nav-button"
+              >
+                Registrati
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={onDocsClick}
+                className="victorian-layout-mobile__nav-button"
+              >
+                Documenti
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => onNavigate('/credits')}
+                className="victorian-layout-mobile__nav-button"
+              >
+                Crediti
+              </Button>
+            </>
           )}
-
-          <Button
-            variant="ghost"
-            onClick={() => onNavigate('/register')}
-            className="victorian-layout-mobile__nav-button"
-          >
-            Registrati
-          </Button>
-
-          <Button
-            variant="ghost"
-            onClick={onDocsClick}
-            className="victorian-layout-mobile__nav-button"
-          >
-            Documenti
-          </Button>
-
-          <Button
-            variant="ghost"
-            onClick={() => onNavigate('/credits')}
-            className="victorian-layout-mobile__nav-button"
-          >
-            Crediti
-          </Button>
         </nav>
       </div>
 
-      <main className="victorian-layout-mobile__content">
+      <main className={`victorian-layout-mobile__content victorian-layout-mobile__content--${pageClass}`}>
         <img
           src={BACKGROUND_IMAGE_SRC}
           alt=""
           className="victorian-layout-mobile__background-image"
+          fetchPriority="high"
+        />
+        <img
+          src={LOGO_IMAGE_SRC}
+          alt=""
+          className="victorian-layout-mobile__logo"
           fetchPriority="high"
         />
         <div className="victorian-layout-mobile__page-content">{children}</div>

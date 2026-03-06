@@ -19,11 +19,12 @@ TenpennyNovels usa un sistema di autenticazione a due livelli:
 3. Risposta: User creato, email verifica inviata
 
 ### Verifica Email
-1. User clicca link verifica → `POST /auth/verify-email?token=...`
-2. Authentication Backend:
+1. User clicca link verifica (email contiene `/?token=xxx`) → atterra su index
+2. Index legge `?token=`, rimuove da URL, chiama `GET /auth/verify-email/:token`
+3. Authentication Backend:
    - Valida token
-   - Aggiorna User.emailVerified = true
-3. Risposta: Email verificata
+   - Aggiorna User.isEmailVerified = true
+4. Risposta: Email verificata; index mostra success/error (e pulsante Reinvia se canResend)
 
 ### Login
 1. User inserisce credenziali → `POST /auth/login`

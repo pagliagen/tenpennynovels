@@ -6,6 +6,9 @@
  */
 
 .victorian-layout-desktop {
+  /* Fluid nav typography: 1024px → 1200px (range 176px) */
+  --nav-fluid-range: 176;
+
   position: relative;
   min-height: 100vh;
   display: flex;
@@ -26,7 +29,6 @@
     display: flex;
     flex-direction: column;
     padding: var(--spacing-2xl) var(--spacing-lg);
-    z-index: 10;
     justify-content: center;
   }
 
@@ -44,8 +46,7 @@
     margin-left: auto;
     margin-right: auto;
     width: 70%;
-    max-width: 300px;
-    margin-top: -15px;
+    max-width: 300px; 
   }
 
   &__nav-title {
@@ -53,7 +54,7 @@
     justify-content: left;
     text-align: left;
     font-family: var(--font-primary);
-    font-size: var(--font-size-4xl);
+    font-size: clamp(24px, calc(24px + (100vw - 1024px) * 24 / var(--nav-fluid-range)), 48px);
     transition: var(--transition-button);
     color: var(--color-homepage-red);
     text-transform: capitalize;
@@ -65,7 +66,7 @@
     justify-content: left;
     text-align: left;
     font-family: var(--font-primary);
-    font-size: var(--font-size-xl);
+    font-size: clamp(20px, calc(20px + (100vw - 1024px) * 20 / var(--nav-fluid-range)), 24px);
     transition: var(--transition-button);
     color: var(--color-homepage-green);
     text-transform: uppercase;
@@ -86,6 +87,30 @@
     position: relative;
     width: 100%;
     min-width: 768px;
+    height: 100vh;
+
+    &--register-page .victorian-layout-desktop__page-content {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      padding: 20px 17%; 
+    }
+
+    &--privacy-page .victorian-layout-desktop__page-content,
+    &--terms-page .victorian-layout-desktop__page-content {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 100%;
+      padding: unset; 
+    }
+
+    &--reset-password-token-page .victorian-layout-desktop__page-content {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      padding: 20px 17%; 
+    }
   }
 
   /**
@@ -93,16 +118,19 @@
    * Positioned behind page content; same visual as previous background-image.
    */
   &__background-image {
+    position: relative;
     width: 100%;
-    object-fit: contain;
-    object-position: top center;
-    z-index: -2;
+
+    img {
+      height: 100%;
+      object-fit: contain;
+      object-position: top center;
+    }
   }
 
   &__page-content {
     position: relative;
-    z-index: 2;
     display: flex;
-    padding: 20px 17%;
+    padding: 20px 17%; 
   }
 }

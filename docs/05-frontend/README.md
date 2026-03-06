@@ -41,7 +41,7 @@ TenpennyNovels utilizza 4 applicazioni frontend separate costruite con Next.js 1
 - `/forgot-password` - Password reset request
 - `/reset-password/:token` - Password reset
 - `/character-select` - Character selection
-- `/verify-email/:token` - Email verification
+- Email verification: link in email points to `/?token=xxx` (handled on index)
 - `/delete-account/:token` - Account deletion
 - `/privacy` - Privacy policy
 - `/terms` - Terms of service

@@ -2,12 +2,12 @@
  * Token Extraction Hook
  *
  * Extracts authentication token from URL parameters (query string or route params).
- * Used for token-based pages: verify-email, reset-password, delete-account.
+ * Used for token-based pages: reset-password, delete-account.
+ * (Email verification uses ?token= on the index page and is handled there.)
  *
- * **Eliminates**: 15-20 lines of router/query parsing per token page × 3 pages = 45-60 lines saved.
+ * **Eliminates**: 15-20 lines of router/query parsing per token page.
  *
  * **Use Cases**:
- * - Email verification: `/verify-email?token=abc123`
  * - Password reset: `/reset-password/[token]`
  * - Account deletion: `/delete-account/[token]`
  *
@@ -41,7 +41,7 @@ export interface UseTokenFromUrlReturn {
  * Handles both query string and route params automatically.
  *
  * **Supported URL Formats**:
- * - Query string: `/verify-email?token=abc123`
+ * - Query string: `/?token=abc123` (email verification is handled on index)
  * - Route param: `/reset-password/abc123` (with `[token]` dynamic route)
  * - Combined: `/reset-password/[token]?redirect=/dashboard`
  *
@@ -56,19 +56,19 @@ export interface UseTokenFromUrlReturn {
  * ```typescript
  * import { useTokenFromUrl } from '@/hooks/useTokenFromUrl';
  *
- * function VerifyEmailPage() {
+ * function ResetPasswordPage() {
  *   const { token, isReady } = useTokenFromUrl();
  *
  *   useEffect(() => {
  *     if (isReady && token) {
- *       verifyEmail(token);
+ *       validateToken(token);
  *     }
  *   }, [isReady, token]);
  *
  *   if (!isReady) return <div>Loading...</div>;
  *   if (!token) return <div>Token mancante</div>;
  *
- *   return <div>Verifying token...</div>;
+ *   return <div>Validating token...</div>;
  * }
  * ```
  *

@@ -149,7 +149,7 @@ POST   /auth/logout             - User logout
 POST   /auth/refresh-token      - Refresh JWT
 POST   /auth/forgot-password    - Request password reset
 POST   /auth/reset-password/:token - Reset password
-GET    /auth/verify-email/:token - Verify email
+GET    /auth/verify-email/:token - Verify email (landing link: /?token=xxx)
 DELETE /auth/delete-account/:token - Delete account
 POST   /auth/character-select   - Character context token
 ```

@@ -2,6 +2,7 @@
  * Page Layout Styles
  *
  * General page layout styles.
+ * Breakpoint 1024px aligned with Victorian layout desktop/mobile switch.
  */
 
 .page-layout {
@@ -9,7 +10,8 @@
   margin: 0 auto;
   padding: var(--spacing-container-mobile);
 
-  @media (min-width: 768px) {
+  @media (min-width: 1024px) {
     padding: var(--spacing-container-desktop);
   }
 }
+  

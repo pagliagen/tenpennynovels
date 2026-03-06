@@ -99,29 +99,7 @@ export default function TermsPage() {
         </p>
 
         <p><small>Ultimo aggiornamento: Marzo 2026</small></p>
-      </div>
-
-      <div className="actionsRow">
-        <Button
-          type="button"
-          variant="primary"
-          onClick={() => window.close()}
-          className="loginButton"
-        >
-          Chiudi
-        </Button>
-
-        <div className="secondaryActions">
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => router.push('/privacy')}
-            className="secondaryButton"
-          >
-            Privacy Policy
-          </Button>
-        </div>
-      </div>
+      </div> 
     </PageLayout>
   );
 }

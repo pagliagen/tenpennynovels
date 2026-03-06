@@ -2,14 +2,17 @@
  * Terms Page Styles
  *
  * Layout and typography for the terms and conditions page.
+ * Responsive for desktop (≥1024px) and mobile (<1024px) Victorian layout.
  */
 
 .termsPage {
-  position: relative;
   width: 100%;
-  height: calc(100vh - 100px);
+  min-height: 0;
+  position: relative;
   overflow-y: auto;
-
+  padding: 50px;
+  height: 100vh;
+ 
   h2 {
     color: #d4af37;
     margin-bottom: 2rem;

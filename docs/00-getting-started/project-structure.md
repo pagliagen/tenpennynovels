@@ -64,7 +64,7 @@ tenpennynovels/
 /register            - User registration
 /forgot-password     - Password reset request
 /reset-password/[token] - Password reset form
-/verify-email/[token] - Email verification
+/ (with ?token= in query) - Email verification handled on index
 /character-select    - Character selection screen
 /character-creation  - Character creation wizard
 /credits             - Credits page

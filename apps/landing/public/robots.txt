@@ -4,6 +4,5 @@ Disallow: /character-select/
 Disallow: /character-creation/
 Disallow: /delete-account/
 Disallow: /reset-password/
-Disallow: /verify-email/
 
 Sitemap: https://tenpennynovels.com/sitemap.xml

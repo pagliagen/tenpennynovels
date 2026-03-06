@@ -165,29 +165,7 @@ export default function PrivacyPage() {
         </p>
 
         <p><small>Ultimo aggiornamento: Dicembre 2025</small></p>
-      </div>
-
-      <div className="actionsRow">
-        <Button
-          type="button"
-          variant="primary"
-          onClick={() => window.close()}
-          className="loginButton"
-        >
-          Chiudi
-        </Button>
-
-        <div className="secondaryActions">
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => router.push('/terms')}
-            className="secondaryButton"
-          >
-            Termini e Condizioni
-          </Button>
-        </div>
-      </div>
+      </div> 
     </PageLayout >
   );
 }

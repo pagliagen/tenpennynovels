@@ -57,7 +57,7 @@ export class EmailService {
    */
   static async sendVerificationEmail(email: string, displayName: string, token: string): Promise<void> {
     try {
-      const verificationUrl = `${process.env.BASE_URL || 'http://localhost:4000'}/verify-email/${token}`;
+      const verificationUrl = `${process.env.BASE_URL || 'http://localhost:4000'}/?token=${token}`;
 
       let subject: string;
       let html: string;

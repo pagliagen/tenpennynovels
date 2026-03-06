@@ -29,6 +29,16 @@ export interface VictorianLayoutProps {
 /** Breakpoint in px: viewport >= this is desktop. */
 const LAYOUT_BREAKPOINT_PX = 1024;
 
+/** Derives a page class from pathname (e.g. "/" → "login-page", "/register" → "register-page"). */
+function getPageClass(pathname: string): string {
+  if (!pathname || pathname === '/') return 'login-page';
+  const segment = pathname
+    .slice(1)
+    .replace(/\//g, '-')    // replace all / with -
+    .replace(/\[|\]/g, ''); // remove all [ and ]
+  return segment ? `${segment}-page` : 'login-page';
+}
+
 /**
  * Documentation URL (external link).
  */
@@ -66,10 +76,13 @@ export const VictorianLayout: React.FC<VictorianLayoutProps> = ({ children, subt
     setIsMobileMenuOpen((prev) => !prev);
   }, []);
 
+  const pageClass = getPageClass(router.pathname);
+
   if (isDesktop) {
     return (
       <VictorianLayoutDesktop
         isInfoPage={isInfoPage}
+        pageClass={pageClass}
         onNavigate={handleNavigate}
         onDocsClick={handleDocsClick}
       >
@@ -81,6 +94,7 @@ export const VictorianLayout: React.FC<VictorianLayoutProps> = ({ children, subt
   return (
     <VictorianLayoutMobile
       isInfoPage={isInfoPage}
+      pageClass={pageClass}
       onNavigate={handleNavigate}
       onDocsClick={handleDocsClick}
       isMobileMenuOpen={isMobileMenuOpen}

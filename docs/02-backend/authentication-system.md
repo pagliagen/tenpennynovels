@@ -293,7 +293,7 @@ POST   /auth/refresh               // JWT token refresh
 POST   /auth/forgot-password       // Password reset request
 POST   /auth/reset-password        // Password reset with token
 POST   /auth/resend-verification   // Resend verification email
-GET    /auth/verify-email/:token   // Email verification
+GET    /auth/verify-email/:token   // Email verification (link in email: /?token=xxx)
 GET    /auth/profile               // User profile retrieval
 PUT    /auth/profile               // User profile update
 DELETE /auth/account               // Account deletion
