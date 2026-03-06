@@ -56,8 +56,7 @@
     text-transform: uppercase;
 
     &:hover {
-      background: var(--color-homepage-yellow);
-      color: var(--color-text-inverse);
+      color: var(--color-homepage-red);
     }
   }
 
@@ -78,39 +77,5 @@
 @keyframes spinner-spin {
   to {
     transform: rotate(360deg);
-  }
-}
-
-.login-form {
-  display: block !important;
-
-  input {
-    text-align: center;
-    text-transform: capitalize
-  }
-
-  .masked-field__mask {
-    justify-content: center;
-  }
-
-  .login-fields {
-    margin-bottom: var(--spacing-lg);
-
-    .masked-field-wrapper {
-      position: relative;
-
-      &:before {
-        background-image: url('/images/masked-field-bg.png');
-        background-size: contain;
-        background-position: bottom right;
-        background-repeat: no-repeat;
-        content: '';
-        position: absolute; 
-        top: 5px;
-        left: 5px;
-        width: 100%;
-        height: 100%;
-      }
-    } 
   }
 }

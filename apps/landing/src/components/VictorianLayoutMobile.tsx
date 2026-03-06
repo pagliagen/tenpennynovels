@@ -1,0 +1,111 @@
+/**
+ * Victorian Layout — Mobile
+ *
+ * Mobile-only layout: hamburger, overlay nav, and main area with background image and content.
+ * Rendered when viewport width < 768px.
+ *
+ * @module components/VictorianLayoutMobile
+ */
+
+import React from 'react';
+import { Button } from './Button';
+
+/** Path for the Victorian background image (used as <img> for semantics and flexibility). */
+const BACKGROUND_IMAGE_SRC = '/images/sfondo.png';
+
+export interface VictorianLayoutMobileProps {
+  /** Page content rendered inside the main area. */
+  children: React.ReactNode;
+  /** When true, shows "Torna a Login" in the nav. */
+  isInfoPage: boolean;
+  /** Called for internal navigation (e.g. /register, /credits). */
+  onNavigate: (path: string) => void;
+  /** Called when "Documenti" is clicked (external link). */
+  onDocsClick: () => void;
+  /** Whether the mobile nav overlay is open. */
+  isMobileMenuOpen: boolean;
+  /** Toggles the mobile nav overlay. */
+  onToggleMobileMenu: () => void;
+}
+
+export const VictorianLayoutMobile: React.FC<VictorianLayoutMobileProps> = ({
+  children,
+  isInfoPage,
+  onNavigate,
+  onDocsClick,
+  isMobileMenuOpen,
+  onToggleMobileMenu,
+}) => {
+  return (
+    <div className="victorian-layout-mobile">
+      <button
+        type="button"
+        className={`victorian-layout-mobile__hamburger ${isMobileMenuOpen ? 'victorian-layout-mobile__hamburger--open' : ''}`}
+        onClick={onToggleMobileMenu}
+        aria-label="Menu di navigazione"
+        aria-expanded={isMobileMenuOpen}
+        aria-controls="victorian-mobile-nav"
+      >
+        <span className="victorian-layout-mobile__hamburger-bar" aria-hidden />
+        <span className="victorian-layout-mobile__hamburger-bar" aria-hidden />
+        <span className="victorian-layout-mobile__hamburger-bar" aria-hidden />
+      </button>
+
+      <div
+        id="victorian-mobile-nav"
+        className={`victorian-layout-mobile__nav ${isMobileMenuOpen ? 'victorian-layout-mobile__nav--open' : ''}`}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Menu di navigazione"
+        aria-hidden={!isMobileMenuOpen}
+      >
+        <h2 className="victorian-layout-mobile__nav-title">Chapter One</h2>
+        <nav className="victorian-layout-mobile__nav-content">
+          {isInfoPage && (
+            <Button
+              variant="ghost"
+              onClick={() => onNavigate('/')}
+              className="victorian-layout-mobile__nav-button"
+            >
+              Torna a Login
+            </Button>
+          )}
+
+          <Button
+            variant="ghost"
+            onClick={() => onNavigate('/register')}
+            className="victorian-layout-mobile__nav-button"
+          >
+            Registrati
+          </Button>
+
+          <Button
+            variant="ghost"
+            onClick={onDocsClick}
+            className="victorian-layout-mobile__nav-button"
+          >
+            Documenti
+          </Button>
+
+          <Button
+            variant="ghost"
+            onClick={() => onNavigate('/credits')}
+            className="victorian-layout-mobile__nav-button"
+          >
+            Crediti
+          </Button>
+        </nav>
+      </div>
+
+      <main className="victorian-layout-mobile__content">
+        <img
+          src={BACKGROUND_IMAGE_SRC}
+          alt=""
+          className="victorian-layout-mobile__background-image"
+          fetchPriority="high"
+        />
+        <div className="victorian-layout-mobile__page-content">{children}</div>
+      </main>
+    </div>
+  );
+};

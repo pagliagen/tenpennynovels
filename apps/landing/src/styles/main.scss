@@ -58,4 +58,5 @@
    =========================== */
 @use 'layouts/form-layout' as *;
 @use 'layouts/page-layout' as *;
-@use 'layouts/victorian-layout' as *;
+@use 'layouts/victorian-layout-desktop' as *;
+@use 'layouts/victorian-layout-mobile' as *;

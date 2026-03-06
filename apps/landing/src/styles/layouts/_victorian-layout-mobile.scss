@@ -1,0 +1,147 @@
+/**
+ * Victorian Layout — Mobile
+ *
+ * Styles for mobile layout (viewport < 768px).
+ * Hamburger, overlay nav, main content; background via <img>.
+ */
+
+.victorian-layout-mobile {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+
+  /* ===========================
+     HAMBURGER
+     =========================== */
+
+  &__hamburger {
+    position: fixed;
+    top: var(--spacing-md);
+    left: var(--spacing-md);
+    z-index: var(--z-index-max);
+    width: var(--size-hamburger);
+    height: var(--size-hamburger);
+    padding: var(--spacing-xs);
+    background: var(--color-bg-secondary);
+    border: 2px solid var(--color-homepage-green);
+    cursor: pointer;
+    transition: var(--transition-button);
+
+    &:hover {
+      background: var(--color-homepage-green);
+    }
+
+    &--open &-bar:nth-child(1) {
+      transform: var(--transform-hamburger-top);
+    }
+
+    &--open &-bar:nth-child(2) {
+      opacity: 0;
+    }
+
+    &--open &-bar:nth-child(3) {
+      transform: var(--transform-hamburger-bottom);
+    }
+  }
+
+  &__hamburger-bar {
+    display: block;
+    width: 100%;
+    height: 2px;
+    background: var(--color-homepage-green);
+    margin: var(--spacing-xs) 0;
+    transition: var(--transition-base);
+  }
+
+  /* ===========================
+     OVERLAY NAV
+     =========================== */
+
+  &__nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1000;
+    background: var(--color-bg-primary);
+    opacity: 0;
+    visibility: hidden;
+    transition:
+      opacity var(--transition-base) var(--ease-out),
+      visibility var(--transition-base) var(--ease-out);
+
+    &--open {
+      opacity: 1;
+      visibility: visible;
+    }
+  }
+
+  &__nav-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-xl);
+    height: 100%;
+    padding: var(--spacing-2xl);
+  }
+
+  &__nav-title {
+    font-family: var(--font-primary);
+    font-size: var(--font-size-4xl);
+    color: var(--color-homepage-red);
+    text-transform: capitalize;
+  }
+
+  &__nav-button {
+    width: 100%;
+    padding: unset;
+    justify-content: left;
+    text-align: left;
+    font-family: var(--font-primary);
+    font-size: var(--font-size-xl);
+    transition: var(--transition-button);
+    color: var(--color-homepage-green);
+    text-transform: uppercase;
+
+    &:hover {
+      color: var(--color-homepage-green);
+    }
+  }
+
+  /* ===========================
+     MAIN CONTENT
+     =========================== */
+
+  &__content {
+    position: relative;
+    min-height: 100vh;
+  }
+
+  /**
+   * Background image (<img>): decorative Victorian scene.
+   * Full area, cover; same visual as previous mobile background-image.
+   */
+  &__background-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    z-index: -2;
+  }
+
+  &__page-content {
+    position: relative;
+    z-index: 2;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    padding: var(--spacing-container-mobile);
+  }
+}

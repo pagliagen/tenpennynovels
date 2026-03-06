@@ -142,7 +142,7 @@ export default function LoginPage() {
           <MaskedInput
             id="username"
             maskType="text"
-            placeholder="Username"
+            placeholder="Nickname"
             value={usernameValue}
             error={errors.username?.message}
             register={register('username')}

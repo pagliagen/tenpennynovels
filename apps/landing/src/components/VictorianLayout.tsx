@@ -2,254 +2,91 @@
  * Victorian Layout Component
  *
  * Main layout wrapper for the landing application.
- * Provides Victorian-era aesthetic with decorative elements and navigation.
+ * Renders either VictorianLayoutDesktop (≥768px) or VictorianLayoutMobile (<768px).
  *
  * **Layout Structure**:
- * - Left side: Logo + vertical navigation
- * - Right side: Victorian window frame + content
- * - Mobile: Hamburger menu + overlay navigation
+ * - Desktop: Left sidebar (logo + nav) + right content (background image + page content).
+ * - Mobile: Hamburger, overlay nav, and content with background image.
  *
- * **Visual Elements**:
- * - Background imagery (Victorian era)
- * - Decorative window frame with raven silhouette
- * - Golden ornamental accents
- * - Parchment textures
+ * **Breakpoint**: 768px (aligned with design token $breakpoint-md).
  *
  * @module components/VictorianLayout
  */
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useRouter } from 'next/router';
-import { Button } from './Button';
+import { useIsDesktop } from '@/hooks/useIsDesktop';
+import { VictorianLayoutDesktop } from './VictorianLayoutDesktop';
+import { VictorianLayoutMobile } from './VictorianLayoutMobile';
 
-/**
- * Victorian layout props
- *
- * @interface VictorianLayoutProps
- */
 export interface VictorianLayoutProps {
-  /** Page content to render inside the window frame */
+  /** Page content to render inside the layout. */
   children: React.ReactNode;
-  /** Optional subtitle (currently unused, reserved for future) */
+  /** Optional subtitle (reserved for future use). */
   subtitle?: string;
 }
 
-/**
- * Documentation URL
- *
- * External link to game documentation.
- */
-const DOCS_URL = 'https://docs.tenpennynovels.com';
+/** Breakpoint in px: viewport >= this is desktop. Must match SCSS/media (768). */
+const LAYOUT_BREAKPOINT_PX = 768;
 
 /**
- * Victorian Layout Component
- *
- * Renders the main Victorian-era themed layout with navigation.
- * Provides responsive design with mobile hamburger menu.
- *
- * **Desktop Layout**:
- * - Left sidebar: Logo + navigation buttons
- * - Right content: Victorian window frame + page content
- *
- * **Mobile Layout**:
- * - Hamburger menu (top-left)
- * - Overlay navigation (full-screen)
- * - Content below fold
- *
- * **Navigation**:
- * - Registrati: Go to registration page
- * - Documenti: External link to game docs
- * - Crediti: Go to credits page
- *
- * @param {VictorianLayoutProps} props - Component props
- * @returns {JSX.Element} Rendered Victorian layout
- *
- * @example
- * ```typescript
- * import { VictorianLayout } from '@/components/VictorianLayout';
- *
- * function LoginPage() {
- *   return (
- *     <VictorianLayout>
- *       <LoginForm />
- *     </VictorianLayout>
- *   );
- * }
- * ```
- *
- * @example
- * ```typescript
- * // With SEO
- * function RegisterPage() {
- *   return (
- *     <>
- *       <SEO
- *         title="Registrati"
- *         description="Crea un account per giocare a TenpennyNovels"
- *       />
- *       <VictorianLayout>
- *         <RegisterForm />
- *       </VictorianLayout>
- *     </>
- *   );
- * }
- * ```
+ * Documentation URL (external link).
  */
-export const VictorianLayout: React.FC<VictorianLayoutProps> = ({
-  children 
-}) => {
+const DOCS_URL = process.env.NEXT_PUBLIC_DOCUMENTS_URL || 'http://localhost:4002';
+
+/**
+ * Victorian Layout
+ *
+ * Chooses Desktop or Mobile layout based on viewport width.
+ * Keeps navigation state and handlers in one place; passes them to the active layout.
+ */
+export const VictorianLayout: React.FC<VictorianLayoutProps> = ({ children, subtitle }) => {
   const router = useRouter();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
+  const isDesktop = useIsDesktop(LAYOUT_BREAKPOINT_PX);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Check if current page is an info page (credits/privacy/terms)
   const isInfoPage = ['/credits', '/privacy', '/terms'].includes(router.pathname);
 
-  /**
-   * Toggles mobile navigation menu
-   */
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(prev => !prev);
-  };
+  const handleNavigate = useCallback(
+    (path: string) => {
+      router.push(path);
+      setIsMobileMenuOpen(false);
+    },
+    [router]
+  );
 
-  /**
-   * Handles navigation to Documenti (external link)
-   *
-   * Opens documentation in current window (not new tab).
-   * Closes mobile menu after navigation.
-   */
-  const handleDocsClick = () => {
+  const handleDocsClick = useCallback(() => {
     if (typeof window !== 'undefined') {
       window.location.href = DOCS_URL;
     }
     setIsMobileMenuOpen(false);
-  };
+  }, []);
 
-  /**
-   * Handles navigation to internal page
-   *
-   * @param {string} path - Route path to navigate to
-   */
-  const handleNavigate = (path: string) => {
-    router.push(path);
-    setIsMobileMenuOpen(false);
-  };
+  const toggleMobileMenu = useCallback(() => {
+    setIsMobileMenuOpen((prev) => !prev);
+  }, []);
+
+  if (isDesktop) {
+    return (
+      <VictorianLayoutDesktop
+        isInfoPage={isInfoPage}
+        onNavigate={handleNavigate}
+        onDocsClick={handleDocsClick}
+      >
+        {children}
+      </VictorianLayoutDesktop>
+    );
+  }
 
   return (
-    <div className="victorian-layout">
-      {/* Hamburger Menu (Mobile Only) */}
-      <button
-        type="button"
-        className={`victorian-layout__hamburger ${isMobileMenuOpen ? 'victorian-layout__hamburger--open' : ''}`}
-        onClick={toggleMobileMenu}
-        aria-label="Menu di navigazione"
-        aria-expanded={isMobileMenuOpen}
-      >
-        <span className="victorian-layout__hamburger-bar" />
-        <span className="victorian-layout__hamburger-bar" />
-        <span className="victorian-layout__hamburger-bar" />
-      </button>
-
-      {/* Mobile Navigation Overlay */}
-      <div
-        className={`victorian-layout__mobile-nav ${isMobileMenuOpen ? 'victorian-layout__mobile-nav--open' : ''}`}
-      >
-        <h2 className="victorian-layout__mobile-nav-title">Chapter One</h2>
-
-        <nav className="victorian-layout__mobile-nav-content">
-          {isInfoPage && (
-            <Button
-              variant="ghost"
-              onClick={() => handleNavigate('/')}
-              className="victorian-layout__nav-button"
-            >
-              Torna a Login
-            </Button>
-          )}
-
-          <Button
-            variant="ghost"
-            onClick={() => handleNavigate('/register')}
-            className="victorian-layout__nav-button"
-          >
-            Registrati
-          </Button>
-
-          <Button
-            variant="ghost"
-            onClick={handleDocsClick}
-            className="victorian-layout__nav-button"
-          >
-            Documenti
-          </Button>
-
-          <Button
-            variant="ghost"
-            onClick={() => handleNavigate('/credits')}
-            className="victorian-layout__nav-button"
-          >
-            Crediti
-          </Button>
-        </nav>
-      </div>
-
-      {/* Left Sidebar (Desktop Only) */}
-      <aside className="victorian-layout__sidebar">
-        {/* Logo Section */}
-        <div className="victorian-layout__logo" aria-label="TenpennyNovels" />
-
-        {/* Navigation */}
-        <nav className="victorian-layout__nav">
-          <h2 className="victorian-layout__nav-title">Chapter One</h2>
-
-          {isInfoPage && (
-            <Button
-              variant="ghost"
-              onClick={() => handleNavigate('/')}
-              className="victorian-layout__nav-button"
-            >
-              Torna a Login
-            </Button>
-          )}
-
-          <Button
-            variant="ghost"
-            onClick={() => handleNavigate('/register')}
-            className="victorian-layout__nav-button"
-          >
-            Registrati
-          </Button>
-
-          <Button
-            variant="ghost"
-            onClick={handleDocsClick}
-            className="victorian-layout__nav-button"
-          >
-            Documenti
-          </Button>
-
-          <Button
-            variant="ghost"
-            onClick={() => handleNavigate('/credits')}
-            className="victorian-layout__nav-button"
-          >
-            Crediti
-          </Button>
-        </nav>
-      </aside>
-
-      {/* Main Content Area (Right Side) */}
-      <main className="victorian-layout__content">
-        {/* Background imagery */}
-        <div className="victorian-layout__background" />
-
-        {/* Mobile background (different image for small screens) */}
-        <div className="victorian-layout__mobile-background" />
-
-        {/* Page Content (positioned over window) */}
-        <div className="victorian-layout__page-content"> 
-          {children}
-        </div>
-      </main>
-    </div>
+    <VictorianLayoutMobile
+      isInfoPage={isInfoPage}
+      onNavigate={handleNavigate}
+      onDocsClick={handleDocsClick}
+      isMobileMenuOpen={isMobileMenuOpen}
+      onToggleMobileMenu={toggleMobileMenu}
+    >
+      {children}
+    </VictorianLayoutMobile>
   );
 };
