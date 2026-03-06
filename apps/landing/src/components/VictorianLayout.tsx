@@ -2,7 +2,7 @@
  * Victorian Layout Component
  *
  * Main layout wrapper for the landing application.
- * Renders either VictorianLayoutDesktop (≥768px) or VictorianLayoutMobile (<768px).
+ * Renders either VictorianLayoutDesktop (≥1024px) or VictorianLayoutMobile (<1024px).
  *
  * **Layout Structure**:
  * - Desktop: Left sidebar (logo + nav) + right content (background image + page content).
@@ -26,8 +26,8 @@ export interface VictorianLayoutProps {
   subtitle?: string;
 }
 
-/** Breakpoint in px: viewport >= this is desktop. Must match SCSS/media (768). */
-const LAYOUT_BREAKPOINT_PX = 768;
+/** Breakpoint in px: viewport >= this is desktop. */
+const LAYOUT_BREAKPOINT_PX = 1024;
 
 /**
  * Documentation URL (external link).

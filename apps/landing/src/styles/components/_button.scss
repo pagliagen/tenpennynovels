@@ -126,8 +126,7 @@
     border-color: transparent;
 
     &:hover:not(:disabled) {
-      color: var(--color-primary);
-      background: rgba(6, 115, 104, 0.1);
+      color: var(--color-homepage-yellow);
     }
   }
 

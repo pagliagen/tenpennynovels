@@ -2,7 +2,7 @@
  * Victorian Layout — Mobile
  *
  * Mobile-only layout: hamburger, overlay nav, and main area with background image and content.
- * Rendered when viewport width < 768px.
+ * Rendered when viewport width < 1024px.
  *
  * @module components/VictorianLayoutMobile
  */

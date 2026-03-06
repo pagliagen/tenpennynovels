@@ -63,7 +63,11 @@
   }
 
   &__accept {
-    /* Uses Button component styles */
+    color: var(--color-homepage-yellow);
+
+    &:hover:not(:disabled) {
+      color: var(--color-homepage-red);
+    }
   }
 
   &__privacy-link {

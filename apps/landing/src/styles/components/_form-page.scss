@@ -2,19 +2,26 @@
  * Form Page Component Styles
  *
  * Layout wrapper for form pages.
+ * Login form: Nickname/Password fields with jagged stripe below (HOMEPAGE reference).
  */
 
 .form-page {
   width: 100%;
   margin: 0 auto;
 }
- 
-.login-form { 
+
+.login-form {
   width: 100%;
+
+  /* Login field styling (reference: jagged stripe, rounded top, border) */
+  --login-stripe-url: url('/images/stripe.png');
+  --login-stripe-h: 25px;
+  --login-stripe-off: -10px;
+  --login-field-br: #925951;
 
   input {
     text-align: center;
-    text-transform: capitalize
+    text-transform: capitalize;
   }
 
   .masked-field__mask {
@@ -29,18 +36,25 @@
     .masked-field-wrapper {
       position: relative;
 
-      &:before {
-        background-image: url('/images/masked-field-bg.png');
-        background-size: cover;
-        background-position: bottom right;
-        background-repeat: no-repeat;
+      /* Jagged stripe below the input (reference design) */
+      &::after {
         content: '';
-        position: absolute; 
-        top: 5px;
-        left: 5px;
-        width: 100%;
-        height: 100%;
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: var(--login-stripe-off);
+        height: var(--login-stripe-h);
+        background: var(--login-stripe-url) repeat-x center / auto 100%;
+        z-index: 1;
       }
-    } 
+    }
+
+    /* Input + mask: rounded top only, thicker top border, border color */
+    .masked-field__input,
+    .masked-field__mask {
+      border-radius: 5px 5px 0 0;
+      border: 2px solid var(--login-field-br);
+      border-top-width: 3px;
+    }
   }
 }

@@ -1,7 +1,7 @@
 /**
  * Victorian Layout — Desktop
  *
- * Styles for desktop layout (viewport ≥ 768px).
+ * Styles for desktop layout (viewport ≥ 1024px).
  * Sidebar + main content; background via <img>.
  */
 
@@ -21,6 +21,7 @@
   &__sidebar {
     width: 100%;
     height: 100vh;
+    max-width: 768px;
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -31,7 +32,7 @@
 
   &__logo {
     width: 100%;
-    height: 50%;
+    max-height: 300px;
     object-fit: contain;
     object-position: center;
   }

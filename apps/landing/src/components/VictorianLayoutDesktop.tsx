@@ -2,7 +2,7 @@
  * Victorian Layout — Desktop
  *
  * Desktop-only layout: sidebar (logo + nav) + main area with background image and content.
- * Rendered when viewport width >= 768px.
+ * Rendered when viewport width >= 1024px.
  *
  * @module components/VictorianLayoutDesktop
  */
