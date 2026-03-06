@@ -1,7 +1,7 @@
 {
   "name": "@tenpennynovels/api-gateway",
   "version": "1.0.0",
-  "description": "TenpennyNovels - API Gateway",
+  "description": "TenPennyNovels - API Gateway",
   "author": "Gennaro Paglia",
   "license": "MIT",
   "main": "dist/index.js",

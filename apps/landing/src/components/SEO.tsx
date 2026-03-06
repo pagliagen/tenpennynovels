@@ -32,7 +32,7 @@ import { useRouter } from 'next/router';
  * @interface SEOProps
  */
 export interface SEOProps {
-  /** Page title (will be appended with "| TenpennyNovels" if not included) */
+  /** Page title (will be appended with "| TenPennyNovels" if not included) */
   title: string;
   /** Meta description (150-160 chars recommended) */
   description: string;
@@ -83,7 +83,7 @@ export interface SEOProps {
  *     <>
  *       <SEO
  *         title="Login"
- *         description="Accedi a TenpennyNovels per giocare alle tue avventure vittoriane."
+ *         description="Accedi a TenPennyNovels per giocare alle tue avventure vittoriane."
  *       />
  *       <LoginForm />
  *     </>
@@ -96,7 +96,7 @@ export interface SEOProps {
  * // Article page with custom OG image
  * <SEO
  *   title="Guida: Come Creare un Personaggio"
- *   description="Impara a creare un personaggio indimenticabile per TenpennyNovels."
+ *   description="Impara a creare un personaggio indimenticabile per TenPennyNovels."
  *   ogType="article"
  *   ogImage="https://tenpennynovels.com/images/guide-character.jpg"
  * />
@@ -119,14 +119,14 @@ export interface SEOProps {
  * const schema = {
  *   "@context": "https://schema.org",
  *   "@type": "WebSite",
- *   "name": "TenpennyNovels",
+ *   "name": "TenPennyNovels",
  *   "url": "https://tenpennynovels.com",
  *   "description": "Victorian role-playing game"
  * };
  *
  * <SEO
  *   title="Home"
- *   description="Welcome to TenpennyNovels"
+ *   description="Welcome to TenPennyNovels"
  *   schema={schema}
  * />
  * ```
@@ -144,7 +144,7 @@ export const SEO: React.FC<SEOProps> = ({
   const router = useRouter();
 
   // Site configuration
-  const siteName = 'TenpennyNovels';
+  const siteName = 'TenPennyNovels';
   const baseUrl = 'https://tenpennynovels.com';
 
   // Generate full URL (canonical or current path)

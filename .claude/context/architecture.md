@@ -1,8 +1,8 @@
-# Architettura TenpennyNovels
+# Architettura TenPennyNovels
 
 ## Panoramica
 
-TenpennyNovels è una piattaforma RPG basata su chat per ambientazione Victorian London con regole Call of Cthulhu. L'architettura è un monorepo con microservizi backend e multiple applicazioni frontend.
+TenPennyNovels è una piattaforma RPG basata su chat per ambientazione Victorian London con regole Call of Cthulhu. L'architettura è un monorepo con microservizi backend e multiple applicazioni frontend.
 
 ## Architettura Generale
 

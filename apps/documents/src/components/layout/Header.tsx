@@ -40,7 +40,7 @@ export function Header({ onSearchToggle, showSearch }: HeaderProps): JSX.Element
         <Link href="/" className={styles.logo}>
           <span className={styles.logoIcon}>📚</span>
           <span className={styles.logoText}>
-            <span className={styles.logoMain}>TenpennyNovels</span>
+            <span className={styles.logoMain}>TenPennyNovels</span>
             <span className={styles.logoSub}>Archivi</span>
           </span>
         </Link>

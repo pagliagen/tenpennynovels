@@ -1,7 +1,7 @@
 /**
  * Shared Services Index
  *
- * Exports all shared services used across the TenpennyNovels platform.
+ * Exports all shared services used across the TenPennyNovels platform.
  */
 
 export { AnalyticsService } from './AnalyticsService';

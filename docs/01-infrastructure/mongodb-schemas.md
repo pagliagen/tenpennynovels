@@ -4,13 +4,13 @@
 
 **Status**: ✅ Production Ready | **Last Updated**: 2026-03-01
 
-Complete reference per tutti gli schema MongoDB di TenpennyNovels (42 collections).
+Complete reference per tutti gli schema MongoDB di TenPennyNovels (42 collections).
 
 ---
 
 ## Overview
 
-TenpennyNovels utilizza MongoDB 7.0 come database principale con **42 collections** organizzate per categoria funzionale. Tutti gli schema sono definiti con Mongoose 9.2.1 e includono indexes ottimizzati per performance.
+TenPennyNovels utilizza MongoDB 7.0 come database principale con **42 collections** organizzate per categoria funzionale. Tutti gli schema sono definiti con Mongoose 9.2.1 e includono indexes ottimizzati per performance.
 
 **Database**: `tenpennynovels`
 **ORM**: Mongoose 9.2.1

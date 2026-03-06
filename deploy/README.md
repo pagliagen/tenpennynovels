@@ -1,6 +1,6 @@
-# TenpennyNovels - Production Deployment Guide
+# TenPennyNovels - Production Deployment Guide
 
-Complete guide for deploying TenpennyNovels on Ubuntu VPS with GitHub Actions automation.
+Complete guide for deploying TenPennyNovels on Ubuntu VPS with GitHub Actions automation.
 
 ## 📁 Directory Structure
 

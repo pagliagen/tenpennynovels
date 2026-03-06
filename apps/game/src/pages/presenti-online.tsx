@@ -90,8 +90,8 @@ export default function PresentiOnlinePage(): JSX.Element {
     return (
       <>
         <Head>
-          <title>Presenti Online - TenpennyNovels</title>
-          <meta name="description" content="Vedi chi è online ora su TenpennyNovels. Trova altri giocatori nella Londra Vittoriana e unisciti alle loro avventure." />
+          <title>Presenti Online - TenPennyNovels</title>
+          <meta name="description" content="Vedi chi è online ora su TenPennyNovels. Trova altri giocatori nella Londra Vittoriana e unisciti alle loro avventure." />
         </Head>
         <GameLayout>
           <div className={styles.presencePage}>
@@ -105,8 +105,8 @@ export default function PresentiOnlinePage(): JSX.Element {
   return (
     <>
       <Head>
-        <title>Presenti Online - TenpennyNovels</title>
-        <meta name="description" content="Vedi chi è online ora su TenpennyNovels. Trova altri giocatori nella Londra Vittoriana e unisciti alle loro avventure." />
+        <title>Presenti Online - TenPennyNovels</title>
+        <meta name="description" content="Vedi chi è online ora su TenPennyNovels. Trova altri giocatori nella Londra Vittoriana e unisciti alle loro avventure." />
       </Head>
       <GameLayout>
         <div className={styles.presencePage}>

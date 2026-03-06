@@ -4,13 +4,13 @@
 
 **Status**: ✅ Production Ready | **Last Updated**: 2026-03-01
 
-Guida rapida per configurare l'ambiente di sviluppo TenpennyNovels e iniziare a contribuire al progetto.
+Guida rapida per configurare l'ambiente di sviluppo TenPennyNovels e iniziare a contribuire al progetto.
 
 ---
 
 ## Overview
 
-TenpennyNovels è un gioco di ruolo Victorian ambientato nella Londra del 1880 basato sul sistema Call of Cthulhu d100. L'applicazione utilizza un'architettura microservizi moderna con Next.js per il frontend e Node.js/Express per il backend.
+TenPennyNovels è un gioco di ruolo Victorian ambientato nella Londra del 1880 basato sul sistema Call of Cthulhu d100. L'applicazione utilizza un'architettura microservizi moderna con Next.js per il frontend e Node.js/Express per il backend.
 
 ---
 

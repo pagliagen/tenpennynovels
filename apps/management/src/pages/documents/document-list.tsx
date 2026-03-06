@@ -288,7 +288,7 @@ export default function DocumentList() {
   return (
     <ManagementLayout>
       <Head>
-        <title>Gestione Documenti - TenpennyNovels Management</title>
+        <title>Gestione Documenti - TenPennyNovels Management</title>
       </Head>
 
       <div className={styles.documentList}>

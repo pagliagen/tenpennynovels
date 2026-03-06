@@ -1,7 +1,7 @@
 /**
  * Credits Page
  *
- * Credits and acknowledgments for TenpennyNovels.
+ * Credits and acknowledgments for TenPennyNovels.
  *
  * **Content**: Development team, technologies, resources, acknowledgments
  * **Reduced from**: 101 lines → 95 lines (6% reduction)
@@ -24,8 +24,8 @@ import { creditsBreadcrumb } from '@/utils/schemas';
 export default function CreditsPage() {
   return (
     <PageLayout
-      title="Crediti e Ringraziamenti - TenpennyNovels"
-      description="Crediti e ringraziamenti di TenpennyNovels. Scopri il team di sviluppo e le fonti di ispirazione per il nostro gioco di ruolo vittoriano."
+      title="Crediti e Ringraziamenti - TenPennyNovels"
+      description="Crediti e ringraziamenti di TenPennyNovels. Scopri il team di sviluppo e le fonti di ispirazione per il nostro gioco di ruolo vittoriano."
       canonical="https://tenpennynovels.com/credits/"
       schema={creditsBreadcrumb}
     >
@@ -33,7 +33,7 @@ export default function CreditsPage() {
         <h2>Crediti</h2>
         <h4>Sviluppo</h4>
         <p>
-          <strong>Game Design & Development:</strong> TenpennyNovels Team
+          <strong>Game Design & Development:</strong> TenPennyNovels Team
         </p>
         <p>
           <strong>Engine:</strong> Next.js, Node.js, MongoDB, Redis
@@ -85,7 +85,7 @@ export default function CreditsPage() {
             "In his house at R'lyeh, dead Cthulhu waits dreaming..."
           </p>
           <p>
-            © 2024 TenpennyNovels - Piattaforma GDR Londra Vittoriana
+            © 2024 TenPennyNovels - Piattaforma GDR Londra Vittoriana
           </p>
         </div>
       </div>

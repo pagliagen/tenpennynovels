@@ -345,7 +345,7 @@ export default function CharacterList() {
   return (
     <ManagementLayout>
       <Head>
-        <title>Gestione Personaggi - TenpennyNovels Management</title>
+        <title>Gestione Personaggi - TenPennyNovels Management</title>
       </Head>
 
       <div className={styles.characterList}>

@@ -6,7 +6,7 @@
 
 # Victorian Occupations Reference
 
-TenpennyNovels offre **57 occupazioni storiche** dell'epoca vittoriana (Londra, 1895), organizzate in **18 categorie tematiche**. Ogni occupazione fornisce **6 required skills** (alcune con alternative) + **1-2 bonus skills** con valori predeterminati.
+TenPennyNovels offre **57 occupazioni storiche** dell'epoca vittoriana (Londra, 1895), organizzate in **18 categorie tematiche**. Ogni occupazione fornisce **6 required skills** (alcune con alternative) + **1-2 bonus skills** con valori predeterminati.
 
 ## Occupation System (NEW v2.0)
 
@@ -637,7 +637,7 @@ Alcune occupazioni storicamente riservate agli uomini:
 - **Solo Uomini**: Soldato, Sacerdote, Avvocato (fino 1919)
 - **Prevalentemente Uomini**: Medico, Ingegnere, Politico
 
-**Nota di Gioco**: TenpennyNovels permette flessibilità narrativa per storie inclusive, ma può applicare modificatori sociali (reazioni NPC, scandal risk) per fedeltà storica.
+**Nota di Gioco**: TenPennyNovels permette flessibilità narrativa per storie inclusive, ma può applicare modificatori sociali (reazioni NPC, scandal risk) per fedeltà storica.
 
 ---
 

@@ -1,6 +1,6 @@
-# TenpennyNovels Management Panel
+# TenPennyNovels Management Panel
 
-Management panel moderno per TenpennyNovels, costruito con Next.js 16, TypeScript, TanStack Query e Zustand.
+Management panel moderno per TenPennyNovels, costruito con Next.js 16, TypeScript, TanStack Query e Zustand.
 
 ## Stack Tecnologico
 
@@ -194,4 +194,4 @@ npm test -- -u
 
 ## License
 
-Private - TenpennyNovels © 2026
+Private - TenPennyNovels © 2026

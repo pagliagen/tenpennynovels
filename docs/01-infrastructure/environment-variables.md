@@ -4,13 +4,13 @@
 
 **Status**: ✅ Production Ready | **Last Updated**: 2026-03-01
 
-Complete reference per tutte le environment variables di TenpennyNovels.
+Complete reference per tutte le environment variables di TenPennyNovels.
 
 ---
 
 ## Overview
 
-TenpennyNovels utilizza un sistema di environment variables centralizzato per configurazione cross-service. Tutte le variabili sono definite in `.env` alla root del progetto e condivise tra frontend e backend services.
+TenPennyNovels utilizza un sistema di environment variables centralizzato per configurazione cross-service. Tutte le variabili sono definite in `.env` alla root del progetto e condivise tra frontend e backend services.
 
 **File Structure**:
 ```
@@ -373,7 +373,7 @@ EMAIL_FROM=noreply@tenpennynovels.test
 
 ```bash
 EMAIL_MOCK=false
-EMAIL_FROM=TenpennyNovels <noreply@tenpennynovels.com>
+EMAIL_FROM=TenPennyNovels <noreply@tenpennynovels.com>
 
 # SMTP Configuration
 SMTP_HOST=smtp.gmail.com

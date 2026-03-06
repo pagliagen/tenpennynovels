@@ -92,7 +92,7 @@ export default function SystemConfigurations() {
   return (
     <ManagementLayout>
       <Head>
-        <title>Configurazioni Sistema - TenpennyNovels Management</title>
+        <title>Configurazioni Sistema - TenPennyNovels Management</title>
       </Head>
 
       <div className={styles.container}>

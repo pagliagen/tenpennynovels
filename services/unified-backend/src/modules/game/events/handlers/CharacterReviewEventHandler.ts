@@ -98,7 +98,7 @@ export class CharacterReviewEventHandler extends BaseEventHandler {
       // Create the message content
       let messageContent: string;
       if (action === 'approve') {
-        messageContent = `🎉 Abbiamo verificato il tuo personaggio "${characterName}" ed è stato APPROVATO!\n\nOra puoi iniziare a giocare e divertirti nella Londra vittoriana. Benvenuto/a nel mondo di TenpennyNovels!`;
+        messageContent = `🎉 Abbiamo verificato il tuo personaggio "${characterName}" ed è stato APPROVATO!\n\nOra puoi iniziare a giocare e divertirti nella Londra vittoriana. Benvenuto/a nel mondo di TenPennyNovels!`;
         if (note && note.trim()) {
           messageContent += `\n\nNota: ${note}`;
         }

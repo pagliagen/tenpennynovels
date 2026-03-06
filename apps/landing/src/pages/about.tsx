@@ -1,7 +1,7 @@
 /**
  * About Page
  *
- * Information page about TenpennyNovels platform.
+ * Information page about TenPennyNovels platform.
  *
  * **Content**: Platform description, game mechanics, setting, community
  * **SEO-optimized**: Rich keywords for Victorian RPG, Call of Cthulhu, online gaming
@@ -17,24 +17,24 @@ import { aboutBreadcrumb } from '@/utils/schemas';
 /**
  * About Page Component
  *
- * Displays information about TenpennyNovels platform.
+ * Displays information about TenPennyNovels platform.
  *
  * @returns {JSX.Element} About page
  */
 export default function AboutPage() {
   return (
     <PageLayout
-      title="Chi Siamo - TenpennyNovels | Gioco di Ruolo Londra Vittoriana"
-      description="TenpennyNovels è un gioco di ruolo online gratuito ambientato nella Londra Vittoriana del 1890. Sistema Call of Cthulhu via chat con narrazione investigativa horror lovecraftiana. Scopri come funziona il nostro GDR collaborativo!"
+      title="Chi Siamo - TenPennyNovels | Gioco di Ruolo Londra Vittoriana"
+      description="TenPennyNovels è un gioco di ruolo online gratuito ambientato nella Londra Vittoriana del 1890. Sistema Call of Cthulhu via chat con narrazione investigativa horror lovecraftiana. Scopri come funziona il nostro GDR collaborativo!"
       canonical="https://tenpennynovels.com/about/"
       schema={aboutBreadcrumb}
     >
       <div className="creditsPage">
         <h2>Chi Siamo</h2>
 
-        <h3>Cos'è TenpennyNovels?</h3>
+        <h3>Cos'è TenPennyNovels?</h3>
         <p>
-          <strong>TenpennyNovels</strong> è una piattaforma di <strong>gioco di ruolo online gratuito</strong> ambientata nella
+          <strong>TenPennyNovels</strong> è una piattaforma di <strong>gioco di ruolo online gratuito</strong> ambientata nella
           suggestiva <strong>Londra Vittoriana degli anni 1890</strong>. Basato sul celebre sistema{' '}
           <strong>Call of Cthulhu</strong>, offre un'esperienza GDR investigativa unica interamente via chat.
         </p>
@@ -57,7 +57,7 @@ export default function AboutPage() {
 
         <h3>Sistema di Gioco: Call of Cthulhu</h3>
         <p>
-          TenpennyNovels utilizza il sistema di regole <strong>Call of Cthulhu</strong>, uno dei più celebri
+          TenPennyNovels utilizza il sistema di regole <strong>Call of Cthulhu</strong>, uno dei più celebri
           GDR investigativi al mondo. Il sistema enfatizza:
         </p>
         <ul>
@@ -91,7 +91,7 @@ export default function AboutPage() {
 
         <h4>Gioco Collaborativo</h4>
         <p>
-          TenpennyNovels è un'esperienza <strong>multiplayer collaborativa</strong>. Interagisci con decine di
+          TenPennyNovels è un'esperienza <strong>multiplayer collaborativa</strong>. Interagisci con decine di
           altri giocatori, forma alleanze, condividi informazioni, e affronta insieme minacce soprannaturali.
         </p>
         <p>
@@ -113,7 +113,7 @@ export default function AboutPage() {
 
         <h3>Tecnologia</h3>
         <p>
-          TenpennyNovels è costruito con tecnologie web moderne per garantire velocità, affidabilità e scalabilità:
+          TenPennyNovels è costruito con tecnologie web moderne per garantire velocità, affidabilità e scalabilità:
         </p>
         <ul>
           <li><strong>Frontend</strong>: React, Next.js, TypeScript</li>
@@ -135,7 +135,7 @@ export default function AboutPage() {
 
         <h3>Chi Può Giocare</h3>
         <p>
-          TenpennyNovels è rivolto a <strong>giocatori maggiorenni</strong> (18+) per via dei temi horror,
+          TenPennyNovels è rivolto a <strong>giocatori maggiorenni</strong> (18+) per via dei temi horror,
           violenza fittizia ed elementi soprannaturali tipici dell'universo Call of Cthulhu.
         </p>
         <p>
@@ -163,7 +163,7 @@ export default function AboutPage() {
             — H.P. Lovecraft
           </p>
           <p style={{ marginTop: '1rem' }}>
-            © 2024 TenpennyNovels - Piattaforma GDR Londra Vittoriana
+            © 2024 TenPennyNovels - Piattaforma GDR Londra Vittoriana
           </p>
         </div>
       </div>

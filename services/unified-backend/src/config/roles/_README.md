@@ -1,4 +1,4 @@
-# TenpennyNovels Permission System Architecture
+# TenPennyNovels Permission System Architecture
 
 This directory contains ALL permission and role configuration files for the entire system.
 

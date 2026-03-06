@@ -4,13 +4,13 @@
 
 **Status**: ✅ Production Ready | **Last Updated**: 2026-03-01
 
-Documentazione completa dell'API Gateway di TenpennyNovels - single entry point per tutti i backend services.
+Documentazione completa dell'API Gateway di TenPennyNovels - single entry point per tutti i backend services.
 
 ---
 
 ## Overview
 
-L'API Gateway è il **punto di ingresso unico** per tutte le richieste HTTP/WebSocket al backend di TenpennyNovels. Implementa proxy routing, CORS handling, rate limiting e WebSocket upgrade.
+L'API Gateway è il **punto di ingresso unico** per tutte le richieste HTTP/WebSocket al backend di TenPennyNovels. Implementa proxy routing, CORS handling, rate limiting e WebSocket upgrade.
 
 **Key Features**:
 - ✅ **Single Entry Point**: Un solo endpoint pubblico (port 8000)
@@ -507,7 +507,7 @@ GET /health
   "success": true,
   "data": {
     "gateway": {
-      "service": "TenpennyNovels API Gateway",
+      "service": "TenPennyNovels API Gateway",
       "version": "1.0.0",
       "status": "healthy",
       "timestamp": "2026-03-01T10:00:00.000Z",
@@ -654,7 +654,7 @@ on: {
     }
 
     // Add gateway headers
-    proxyReq.setHeader('X-Forwarded-By', 'TenpennyNovels-Gateway');
+    proxyReq.setHeader('X-Forwarded-By', 'TenPennyNovels-Gateway');
     proxyReq.setHeader('X-Service-Route', serviceName);
   }
 }

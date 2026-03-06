@@ -1,5 +1,5 @@
 # =============================================================================
-# TenpennyNovels Embeddings Worker (Unified) - Single-stage Dockerfile
+# TenPennyNovels Embeddings Worker (Unified) - Single-stage Dockerfile
 # Python base + Node.js (Debian-based for PyTorch compatibility)
 # =============================================================================
 

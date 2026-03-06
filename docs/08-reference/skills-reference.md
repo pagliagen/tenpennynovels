@@ -6,7 +6,7 @@
 
 # Skills Reference
 
-Complete reference per tutte le skill disponibili in TenpennyNovels, adattate da Call of Cthulhu 7th Edition per l'ambientazione vittoriana (Londra, 1895).
+Complete reference per tutte le skill disponibili in TenPennyNovels, adattate da Call of Cthulhu 7th Edition per l'ambientazione vittoriana (Londra, 1895).
 
 ## Skill System Overview
 

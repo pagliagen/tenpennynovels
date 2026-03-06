@@ -4,13 +4,13 @@
 
 **Status**: ✅ Production Ready | **Last Updated**: 2026-03-01
 
-Complete overview della struttura del repository TenpennyNovels monorepo.
+Complete overview della struttura del repository TenPennyNovels monorepo.
 
 ---
 
 ## Overview
 
-TenpennyNovels è organizzato come **monorepo** con npm workspaces. Tutti i frontend apps e backend services condividono dependencies e tooling centralizzato.
+TenPennyNovels è organizzato come **monorepo** con npm workspaces. Tutti i frontend apps e backend services condividono dependencies e tooling centralizzato.
 
 **Repository Type**: Monorepo
 **Package Manager**: npm workspaces

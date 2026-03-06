@@ -4,13 +4,13 @@
 
 **Status**: ✅ Production Ready | **Last Updated**: 2026-03-01
 
-Documentazione completa dell'architettura Unified Backend di TenpennyNovels - modular structure con tutti i servizi consolidati.
+Documentazione completa dell'architettura Unified Backend di TenPennyNovels - modular structure con tutti i servizi consolidati.
 
 ---
 
 ## Overview
 
-TenpennyNovels utilizza un **Unified Backend** che consolida tutti i moduli backend (authentication, game, admin, forum, documents, tickets) in un singolo servizio Express.
+TenPennyNovels utilizza un **Unified Backend** che consolida tutti i moduli backend (authentication, game, admin, forum, documents, tickets) in un singolo servizio Express.
 
 **Key Benefits**:
 - ✅ **Single Deployment**: Un solo processo, un solo port (3001)

@@ -10,7 +10,7 @@ Documentazione dei sistemi di gioco: personaggi, locations, housing, experience,
 
 ## Overview
 
-TenpennyNovels implementa un sistema di gioco completo basato su Call of Cthulhu 7th Edition adattato per ambientazione Victorian (Londra 1880s). I sistemi core includono creazione personaggi, esplorazione locations, gestione housing, advancement via XP, e gameplay turn-based.
+TenPennyNovels implementa un sistema di gioco completo basato su Call of Cthulhu 7th Edition adattato per ambientazione Victorian (Londra 1880s). I sistemi core includono creazione personaggi, esplorazione locations, gestione housing, advancement via XP, e gameplay turn-based.
 
 ---
 

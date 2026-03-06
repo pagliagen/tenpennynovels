@@ -4,13 +4,13 @@
 
 **Status**: ✅ Production Ready | **Last Updated**: 2026-03-01
 
-Overview dell'infrastruttura TenpennyNovels: Docker, database, caching, vector search, event systems.
+Overview dell'infrastruttura TenPennyNovels: Docker, database, caching, vector search, event systems.
 
 ---
 
 ## Overview
 
-L'infrastruttura di TenpennyNovels è completamente dockerizzata per consistenza tra development e production. Utilizza 7 servizi containerizzati orchestrati via Docker Compose.
+L'infrastruttura di TenPennyNovels è completamente dockerizzata per consistenza tra development e production. Utilizza 7 servizi containerizzati orchestrati via Docker Compose.
 
 ---
 

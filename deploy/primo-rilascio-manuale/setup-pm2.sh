@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ========================================
-# TenpennyNovels - Setup PM2
+# TenPennyNovels - Setup PM2
 # ========================================
 # This script starts all services with PM2 and configures auto-restart on boot
 
@@ -18,7 +18,7 @@ NC='\033[0m' # No Color
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 echo -e "${BLUE}========================================${NC}"
-echo -e "${BLUE}TenpennyNovels - PM2 Setup${NC}"
+echo -e "${BLUE}TenPennyNovels - PM2 Setup${NC}"
 echo -e "${BLUE}========================================${NC}"
 echo ""
 

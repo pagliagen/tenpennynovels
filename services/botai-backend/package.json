@@ -1,7 +1,7 @@
 {
   "name": "botai-backend",
   "version": "1.0.0",
-  "description": "TenpennyNovels - Bot AI Backend",
+  "description": "TenPennyNovels - Bot AI Backend",
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",

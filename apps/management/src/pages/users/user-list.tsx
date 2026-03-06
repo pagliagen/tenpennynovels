@@ -274,7 +274,7 @@ export default function UserList() {
   return (
     <ManagementLayout>
       <Head>
-        <title>Gestione Utenti - TenpennyNovels Management</title>
+        <title>Gestione Utenti - TenPennyNovels Management</title>
       </Head>
 
       <div className={styles.userList}>

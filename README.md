@@ -1,9 +1,9 @@
-# TenpennyNovels
+# TenPennyNovels
 
 **Victorian London RPG by Chat Platform**
 *Experience immersive roleplay in Victorian London using Call of Cthulhu Rules*
 
-TenpennyNovels is a comprehensive web-based RPG platform that brings Victorian London to life through real-time chat gameplay, character management, and collaborative storytelling.
+TenPennyNovels is a comprehensive web-based RPG platform that brings Victorian London to life through real-time chat gameplay, character management, and collaborative storytelling.
 
 ## Features
 

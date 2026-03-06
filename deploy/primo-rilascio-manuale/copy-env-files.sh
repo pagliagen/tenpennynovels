@@ -1,6 +1,6 @@
 #!/bin/bash
 # ========================================
-# TenpennyNovels - Copy Production ENV Files
+# TenPennyNovels - Copy Production ENV Files
 # ========================================
 # Copies env templates from deploy/primo-rilascio-manuale/env-templates/
 # to the correct app/service directories as .env.production files
@@ -19,7 +19,7 @@ PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 TEMPLATE_DIR="$PROJECT_ROOT/deploy/primo-rilascio-manuale/env-templates"
 
 echo -e "${BLUE}========================================${NC}"
-echo -e "${BLUE}TenpennyNovels - Copy ENV Files${NC}"
+echo -e "${BLUE}TenPennyNovels - Copy ENV Files${NC}"
 echo -e "${BLUE}========================================${NC}"
 echo ""
 echo "Project root: $PROJECT_ROOT"

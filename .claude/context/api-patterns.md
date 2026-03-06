@@ -2,7 +2,7 @@
 
 ## Formato Risposta API
 
-Tutte le API di TenpennyNovels usano un formato di risposta standardizzato per consistenza e facilità di utilizzo.
+Tutte le API di TenPennyNovels usano un formato di risposta standardizzato per consistenza e facilità di utilizzo.
 
 ### Struttura Standard
 

@@ -1,4 +1,4 @@
-# TenpennyNovels Management - Robots.txt
+# TenPennyNovels Management - Robots.txt
 # Admin panel - block all crawlers
 
 User-agent: *

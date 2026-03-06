@@ -2,7 +2,7 @@
 
 ## Panoramica
 
-TenpennyNovels usa un sistema di autenticazione a due livelli:
+TenPennyNovels usa un sistema di autenticazione a due livelli:
 1. **User Authentication**: Autenticazione utente con JWT
 2. **Character Session**: Sessione character separata per gameplay
 

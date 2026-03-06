@@ -1,6 +1,6 @@
 {
-  "name": "TenpennyNovels - Victorian RPG",
-  "short_name": "TenpennyNovels",
+  "name": "TenPennyNovels - Victorian RPG",
+  "short_name": "TenPennyNovels",
   "description": "Victorian-era multiplayer RPG game set in 1895 London",
   "start_url": "/",
   "display": "standalone",

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ========================================
-# TenpennyNovels - Link .env files
+# TenPennyNovels - Link .env files
 # ========================================
 # Creates symlinks .env → .env.production for all services
 # This allows dotenv to load production config automatically

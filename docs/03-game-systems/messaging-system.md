@@ -2,7 +2,7 @@
 
 ## Overview
 
-TenpennyNovels implementa un sistema di comunicazione completo con tre modalità distinte e integrate:
+TenPennyNovels implementa un sistema di comunicazione completo con tre modalità distinte e integrate:
 
 1. **Location Chat**: Comunicazione in tempo reale basata su posizione con azioni di ruolo e meccaniche di gioco
 2. **OnGame Messages**: Sistema postale vittoriano autentico con delivery schedulato e meccaniche storiche
@@ -1413,7 +1413,7 @@ class MessagingEventHandler {
     
     // Show desktop notification if enabled
     if (Notification.permission === 'granted') {
-      new Notification(`📬 TenpennyNovels`, {
+      new Notification(`📬 TenPennyNovels`, {
         body: `New ${event.messageType} from ${event.from}: ${event.subject}`,
         icon: '/favicon.ico'
       });
@@ -1736,4 +1736,4 @@ INBOX_COUNT_CACHE_TTL=300
 LOCATION_MESSAGE_CACHE_SIZE=100
 ```
 
-Il sistema di messaggistica di TenpennyNovels fornisce un'esperienza di comunicazione completa e immersiva che supporta sia il gameplay in-character attraverso meccaniche postali vittoriane autentiche, sia la comunicazione fuori personaggio per coordinamento e socializzazione, il tutto integrato in un'architettura WebSocket robusta e performante.
+Il sistema di messaggistica di TenPennyNovels fornisce un'esperienza di comunicazione completa e immersiva che supporta sia il gameplay in-character attraverso meccaniche postali vittoriane autentiche, sia la comunicazione fuori personaggio per coordinamento e socializzazione, il tutto integrato in un'architettura WebSocket robusta e performante.

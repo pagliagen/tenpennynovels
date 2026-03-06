@@ -2,7 +2,7 @@
 
 ## Overview
 
-Il CDN Service gestisce upload, processing e serving di asset statici (immagini) per il progetto TenpennyNovels.
+Il CDN Service gestisce upload, processing e serving di asset statici (immagini) per il progetto TenPennyNovels.
 
 **Architettura**:
 - **Locale**: cdn-service (Node/Express) + api-gateway (static serving)

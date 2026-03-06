@@ -1,5 +1,5 @@
 # =============================================================================
-# TenpennyNovels - API Gateway Dockerfile
+# TenPennyNovels - API Gateway Dockerfile
 # =============================================================================
 
 FROM node:22-alpine

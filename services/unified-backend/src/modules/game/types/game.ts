@@ -582,7 +582,7 @@ export enum TicketPriority {
   CRITICAL = 'critical'  // 6h escalation (solo admin)
 }
 
-// Mapping Categoria → Label Italiana (basate sui sistemi TenpennyNovels)
+// Mapping Categoria → Label Italiana (basate sui sistemi TenPennyNovels)
 export const TICKET_CATEGORIES = {
   // Gestione Personaggi
   [TicketCategory.CHARACTER_SHEET_REVIEW]: 'Revisione Scheda Personaggio',

@@ -4,7 +4,7 @@
 
 **Status**: ✅ Reference | **Last Updated**: 2026-03-01
 
-Terminologia Victorian e tecnica usata nel progetto TenpennyNovels.
+Terminologia Victorian e tecnica usata nel progetto TenPennyNovels.
 
 ---
 

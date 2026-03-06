@@ -85,6 +85,7 @@ const CookieBannerContent: React.FC = () => {
 
   return (
     <div className="cookie-banner">
+      <div className="cookie-banner__background"></div>
       <div className="cookie-banner__content">
         {/* Banner text */}
         <div className="cookie-banner__text">

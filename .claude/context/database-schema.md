@@ -2,7 +2,7 @@
 
 ## Panoramica
 
-TenpennyNovels usa MongoDB con Mongoose ODM. Tutti i modelli sono definiti in `services/database/models/` e esportati tramite barrel export in `index.ts`.
+TenPennyNovels usa MongoDB con Mongoose ODM. Tutti i modelli sono definiti in `services/database/models/` e esportati tramite barrel export in `index.ts`.
 
 ## Modelli Principali
 

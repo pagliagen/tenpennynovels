@@ -1,5 +1,5 @@
 # =============================================================================
-# TenpennyNovels - Docker Compose Configuration
+# TenPennyNovels - Docker Compose Configuration
 # =============================================================================
 # Services:
 # - MongoDB: Database principale

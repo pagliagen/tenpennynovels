@@ -2,7 +2,7 @@
 
 ## Panoramica
 
-TenpennyNovels usa Socket.io per gestire connessioni WebSocket real-time per chat location, notifiche e aggiornamenti gameplay.
+TenPennyNovels usa Socket.io per gestire connessioni WebSocket real-time per chat location, notifiche e aggiornamenti gameplay.
 
 ## Architettura
 

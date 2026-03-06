@@ -2,7 +2,7 @@
 
 ## Overview
 
-Il sistema Experience Points di TenpennyNovels implementa le regole Call of Cthulhu per la progressione dei personaggi, con automation avanzata per daily grants, session-based XP assignment e character advancement tracking.
+Il sistema Experience Points di TenPennyNovels implementa le regole Call of Cthulhu per la progressione dei personaggi, con automation avanzata per daily grants, session-based XP assignment e character advancement tracking.
 
 ## 🎯 Implementation Status: ✅ COMPLETE
 

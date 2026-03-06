@@ -68,7 +68,7 @@ export interface PageLayoutProps extends Omit<SEOProps, 'title' | 'description'>
  *   return (
  *     <PageLayout
  *       title="Crediti"
- *       description="Crediti e ringraziamenti per TenpennyNovels"
+ *       description="Crediti e ringraziamenti per TenPennyNovels"
  *     >
  *       <div className="credits">
  *         <h1>Crediti</h1>
@@ -84,7 +84,7 @@ export interface PageLayoutProps extends Omit<SEOProps, 'title' | 'description'>
  * // With custom OG image
  * <PageLayout
  *   title="Privacy Policy"
- *   description="Informativa sulla privacy di TenpennyNovels"
+ *   description="Informativa sulla privacy di TenPennyNovels"
  *   ogImage="https://tenpennynovels.com/images/privacy-og.jpg"
  * >
  *   <PrivacyContent />

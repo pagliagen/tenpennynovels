@@ -1,5 +1,5 @@
 // =============================================================================
-// Analytics Types - Sistema Statistiche TenpennyNovels
+// Analytics Types - Sistema Statistiche TenPennyNovels
 // =============================================================================
 
 export interface UserSession {

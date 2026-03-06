@@ -1,4 +1,4 @@
-# ElasticSearch Setup Guide - TenpennyNovels
+# ElasticSearch Setup Guide - TenPennyNovels
 
 Guida completa per setup ElasticSearch (hybrid search: keyword + semantic) sia locale (Docker) che produzione (VPS OVH).
 

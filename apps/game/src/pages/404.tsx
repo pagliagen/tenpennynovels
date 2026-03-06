@@ -32,8 +32,8 @@ export default function Custom404(): JSX.Element {
   return (
     <>
       <Head>
-        <title>Pagina Non Trovata - TenpennyNovels</title>
-        <meta name="description" content="La pagina che cerchi è svanita nella nebbia londinese. Torna alla tua avventura su TenpennyNovels." />
+        <title>Pagina Non Trovata - TenPennyNovels</title>
+        <meta name="description" content="La pagina che cerchi è svanita nella nebbia londinese. Torna alla tua avventura su TenPennyNovels." />
       </Head>
       <div
       style={{
@@ -105,7 +105,7 @@ export default function Custom404(): JSX.Element {
           color: '#999',
         }}
       >
-        TenpennyNovels - Victorian Gothic Interactive Fiction
+        TenPennyNovels - Victorian Gothic Interactive Fiction
       </p>
     </div>
     </>

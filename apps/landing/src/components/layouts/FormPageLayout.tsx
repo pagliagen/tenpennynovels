@@ -99,8 +99,8 @@ export interface FormPageLayoutProps extends Omit<PageLayoutProps, 'children'> {
  *
  *   return (
  *     <FormPageLayout
- *       title="Login | TenpennyNovels"
- *       description="Accedi a TenpennyNovels"
+ *       title="Login | TenPennyNovels"
+ *       description="Accedi a TenPennyNovels"
  *       globalError={globalError}
  *       globalSuccess={globalSuccess}
  *     >

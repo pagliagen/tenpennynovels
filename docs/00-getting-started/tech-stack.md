@@ -4,13 +4,13 @@
 
 **Status**: ✅ Production Ready | **Last Updated**: 2026-03-01
 
-Complete technology stack di TenpennyNovels - frontend, backend, infrastructure, AI/ML.
+Complete technology stack di TenPennyNovels - frontend, backend, infrastructure, AI/ML.
 
 ---
 
 ## Overview
 
-TenpennyNovels è costruito su uno stack moderno full-stack JavaScript/TypeScript con focus su performance, scalability e developer experience.
+TenPennyNovels è costruito su uno stack moderno full-stack JavaScript/TypeScript con focus su performance, scalability e developer experience.
 
 **Philosophy**:
 - **TypeScript First**: Type safety in tutto il codebase

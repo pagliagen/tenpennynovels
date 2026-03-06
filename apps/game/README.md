@@ -1,4 +1,4 @@
-# TenpennyNovels - Game Frontend (V2)
+# TenPennyNovels - Game Frontend (V2)
 
 **Production-ready architecture** con TypeScript strict, TanStack Query, Zustand, e testing completo.
 

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ========================================
-# TenpennyNovels - Setup Environment Files
+# TenPennyNovels - Setup Environment Files
 # ========================================
 # This script copies all .env templates to their correct destinations
 
@@ -19,7 +19,7 @@ PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TEMPLATES_DIR="$PROJECT_ROOT/deploy/env-templates"
 
 echo -e "${BLUE}========================================${NC}"
-echo -e "${BLUE}TenpennyNovels - Setup Environment${NC}"
+echo -e "${BLUE}TenPennyNovels - Setup Environment${NC}"
 echo -e "${BLUE}========================================${NC}"
 echo ""
 

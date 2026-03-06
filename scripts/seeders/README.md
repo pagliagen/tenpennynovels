@@ -1,4 +1,4 @@
-# TenpennyNovels Seeders System
+# TenPennyNovels Seeders System
 
 Complete overhaul of the seeders system with support for both local (Docker) and production (direct MongoDB) environments.
 
@@ -533,4 +533,4 @@ None! All seeders maintain backward compatibility while adding new features.
 
 ## License
 
-Proprietary - TenpennyNovels
+Proprietary - TenPennyNovels

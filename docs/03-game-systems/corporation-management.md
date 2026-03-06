@@ -4,7 +4,7 @@
 
 ## Overview
 
-Il Corporation Management System implementa un sistema completo per gestire corporazioni, compagnie e organizzazioni nell'ambientazione vittoriana di TenpennyNovels, includendo treasury management, membership workflow e integration con l'economia di gioco.
+Il Corporation Management System implementa un sistema completo per gestire corporazioni, compagnie e organizzazioni nell'ambientazione vittoriana di TenPennyNovels, includendo treasury management, membership workflow e integration con l'economia di gioco.
 
 ## 🎯 Implementation Status: ✅ BACKEND COMPLETE
 

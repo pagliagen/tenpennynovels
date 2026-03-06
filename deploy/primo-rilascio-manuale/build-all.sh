@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ========================================
-# TenpennyNovels - Build All Services
+# TenPennyNovels - Build All Services
 # ========================================
 # This script builds all backend services and frontend apps
 
@@ -18,7 +18,7 @@ NC='\033[0m' # No Color
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 echo -e "${BLUE}========================================${NC}"
-echo -e "${BLUE}TenpennyNovels - Build All Services${NC}"
+echo -e "${BLUE}TenPennyNovels - Build All Services${NC}"
 echo -e "${BLUE}========================================${NC}"
 echo ""
 

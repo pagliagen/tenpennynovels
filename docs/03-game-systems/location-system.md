@@ -10,7 +10,7 @@ Sistema gerarchico di locations con real-time occupants tracking e access contro
 
 ## Overview
 
-Il Location System di TenpennyNovels gestisce ambientazioni di gioco in cui i personaggi si muovono, esplorano e interagiscono. Implementa una struttura gerarchica a 3 livelli con controllo accessi e tracking real-time degli occupanti.
+Il Location System di TenPennyNovels gestisce ambientazioni di gioco in cui i personaggi si muovono, esplorano e interagiscono. Implementa una struttura gerarchica a 3 livelli con controllo accessi e tracking real-time degli occupanti.
 
 ---
 

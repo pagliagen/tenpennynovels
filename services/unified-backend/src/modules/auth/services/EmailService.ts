@@ -77,9 +77,17 @@ export class EmailService {
         text = this.replacePlaceholders(template.text, { displayName, verificationUrl });
       } else {
         // Fallback template when ConfigurationService is not available
-        subject = 'Verifica il tuo account - TenpennyNovels';
-        text = `Caro ${displayName},\n\nBenvenuto su TenpennyNovels!\n\nPer favore verifica il tuo account cliccando sul seguente link:\n${verificationUrl}\n\nSe non hai richiesto questa registrazione, ignora questa email.\n\nCordiali saluti,\nIl Team di TenpennyNovels`;
-        html = `<h2>Benvenuto su TenpennyNovels!</h2><p>Caro ${displayName},</p><p>Per favore verifica il tuo account cliccando sul pulsante qui sotto:</p><p><a href="${verificationUrl}" style="background-color: #8B4513; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Verifica Account</a></p><p>Oppure copia e incolla questo link nel tuo browser:</p><p>${verificationUrl}</p><p>Se non hai richiesto questa registrazione, ignora questa email.</p><p>Cordiali saluti,<br>Il Team di TenpennyNovels</p>`;
+        subject = 'Verifica il tuo account - TenPennyNovels';
+        text = `Caro ${displayName},\n\nBenvenuto su TenPennyNovels!\n\nPer favore verifica il tuo account cliccando sul seguente link:\n${verificationUrl}\n\nSe non hai richiesto questa registrazione, ignora questa email.\n\nCordiali saluti,\nIl Team di TenPennyNovels`;
+        html = this.buildEmailHtml({
+          title: 'Benvenuto su TenPennyNovels!',
+          bodyHtml: `
+                <p style="margin: 0 0 16px; color: #d4c4b0;">Caro <strong style="color: #f5f5dc;">${displayName}</strong>,</p>
+                <p style="margin: 0 0 8px;">Per favore verifica il tuo account cliccando sul pulsante qui sotto:</p>`,
+          cta: { text: 'Verifica Account', url: verificationUrl },
+          alternativeUrl: verificationUrl,
+          footerExtra: 'Se non hai richiesto questa registrazione, ignora questa email.',
+        });
       }
 
       if (this.isMockMode) {
@@ -97,7 +105,7 @@ export class EmailService {
 
       const mailOptions = {
         from: {
-          name: 'TenpennyNovels',
+          name: 'TenPennyNovels',
           address: process.env.EMAIL_FROM || 'info@tenpennynovels.com'
         },
         to: email,
@@ -146,9 +154,18 @@ export class EmailService {
         text = this.replacePlaceholders(template.text, { displayName, resetUrl });
       } else {
         // Fallback template when ConfigurationService is not available
-        subject = 'Reset Password - TenpennyNovels';
-        text = `Caro ${displayName},\n\nHai richiesto il reset della tua password.\n\nClicca sul seguente link per reimpostare la password:\n${resetUrl}\n\nQuesto link scadrà tra 1 ora.\n\nSe non hai richiesto questo reset, ignora questa email.\n\nCordiali saluti,\nIl Team di TenpennyNovels`;
-        html = `<h2>Reset Password</h2><p>Caro ${displayName},</p><p>Hai richiesto il reset della tua password.</p><p><a href="${resetUrl}" style="background-color: #8B4513; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Reset Password</a></p><p>Oppure copia e incolla questo link:</p><p>${resetUrl}</p><p><strong>Questo link scadrà tra 1 ora.</strong></p><p>Se non hai richiesto questo reset, ignora questa email.</p><p>Cordiali saluti,<br>Il Team di TenpennyNovels</p>`;
+        subject = 'Reset Password - TenPennyNovels';
+        text = `Caro ${displayName},\n\nHai richiesto il reset della tua password.\n\nClicca sul seguente link per reimpostare la password:\n${resetUrl}\n\nQuesto link scadrà tra 1 ora.\n\nSe non hai richiesto questo reset, ignora questa email.\n\nCordiali saluti,\nIl Team di TenPennyNovels`;
+        html = this.buildEmailHtml({
+          title: 'Reset Password',
+          bodyHtml: `
+                <p style="margin: 0 0 16px; color: #d4c4b0;">Caro <strong style="color: #f5f5dc;">${displayName}</strong>,</p>
+                <p style="margin: 0 0 8px;">Hai richiesto il reset della tua password. Clicca sul pulsante qui sotto per reimpostarla:</p>
+                <p style="margin: 16px 0 0; font-size: 13px; color: #FFA748;"><strong>Questo link scadr&agrave; tra 1 ora.</strong></p>`,
+          cta: { text: 'Reimposta Password', url: resetUrl },
+          alternativeUrl: resetUrl,
+          footerExtra: 'Se non hai richiesto questo reset, ignora questa email.',
+        });
       }
 
       if (this.isMockMode) {
@@ -166,7 +183,7 @@ export class EmailService {
 
       const mailOptions = {
         from: {
-          name: 'TenpennyNovels',
+          name: 'TenPennyNovels',
           address: process.env.EMAIL_FROM || 'info@tenpennynovels.com'
         },
         to: email,
@@ -210,9 +227,25 @@ export class EmailService {
         text = this.replacePlaceholders(template.text, { displayName, alertType, details: detailsString });
       } else {
         // Fallback template when ConfigurationService is not available
-        subject = 'Avviso di Sicurezza - TenpennyNovels';
-        text = `Caro ${displayName},\n\nAbbiamo rilevato un'attività sospetta sul tuo account.\n\nTipo di allerta: ${alertType}\n\nDettagli:\n${detailsString}\n\nSe riconosci questa attività, puoi ignorare questa email. Altrimenti, ti consigliamo di cambiare la tua password immediatamente.\n\nCordiali saluti,\nIl Team di TenpennyNovels`;
-        html = `<h2>Avviso di Sicurezza</h2><p>Caro ${displayName},</p><p>Abbiamo rilevato un'attività sospetta sul tuo account.</p><p><strong>Tipo di allerta:</strong> ${alertType}</p><p><strong>Dettagli:</strong></p><pre>${detailsString}</pre><p>Se riconosci questa attività, puoi ignorare questa email. Altrimenti, ti consigliamo di <strong>cambiare la tua password immediatamente</strong>.</p><p>Cordiali saluti,<br>Il Team di TenpennyNovels</p>`;
+        subject = 'Avviso di Sicurezza - TenPennyNovels';
+        text = `Caro ${displayName},\n\nAbbiamo rilevato un'attività sospetta sul tuo account.\n\nTipo di allerta: ${alertType}\n\nDettagli:\n${detailsString}\n\nSe riconosci questa attività, puoi ignorare questa email. Altrimenti, ti consigliamo di cambiare la tua password immediatamente.\n\nCordiali saluti,\nIl Team di TenPennyNovels`;
+        html = this.buildEmailHtml({
+          title: 'Avviso di Sicurezza',
+          bodyHtml: `
+                <p style="margin: 0 0 16px; color: #d4c4b0;">Caro <strong style="color: #f5f5dc;">${displayName}</strong>,</p>
+                <p style="margin: 0 0 16px;">Abbiamo rilevato un'attivit&agrave; sospetta sul tuo account.</p>
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 16px 0; background-color: #151515; border: 1px solid #1a1a1a; border-radius: 6px;">
+                  <tr>
+                    <td style="padding: 16px 20px;">
+                      <p style="margin: 0 0 8px; font-size: 13px; color: #a89884; text-transform: uppercase; letter-spacing: 1px;">Tipo di allerta</p>
+                      <p style="margin: 0 0 16px; font-size: 15px; color: #c1272d; font-weight: bold;">${alertType}</p>
+                      <p style="margin: 0 0 8px; font-size: 13px; color: #a89884; text-transform: uppercase; letter-spacing: 1px;">Dettagli</p>
+                      <pre style="margin: 0; font-size: 13px; color: #d4c4b0; white-space: pre-wrap; word-break: break-all; font-family: 'Courier New', Courier, monospace;">${detailsString}</pre>
+                    </td>
+                  </tr>
+                </table>
+                <p style="margin: 0;">Se riconosci questa attivit&agrave;, puoi ignorare questa email. Altrimenti, ti consigliamo di <strong style="color: #c1272d;">cambiare la tua password immediatamente</strong>.</p>`,
+        });
       }
 
       if (this.isMockMode) {
@@ -230,7 +263,7 @@ export class EmailService {
 
       const mailOptions = {
         from: {
-          name: 'TenpennyNovels Security',
+          name: 'TenPennyNovels Security',
           address: process.env.EMAIL_FROM || 'info@tenpennynovels.com'
         },
         to: email,
@@ -273,9 +306,24 @@ export class EmailService {
         text = this.replacePlaceholders(template.text, { displayName, deletionUrl });
       } else {
         // Fallback template when ConfigurationService is not available
-        subject = 'Conferma Cancellazione Account - TenpennyNovels';
-        text = `Caro ${displayName},\n\nHai richiesto la cancellazione del tuo account TenpennyNovels.\n\nPer confermare questa operazione, clicca sul seguente link:\n${deletionUrl}\n\nQuesta azione è irreversibile e tutti i tuoi dati verranno eliminati permanentemente.\n\nSe non hai richiesto questa cancellazione, ignora questa email.\n\nCordiali saluti,\nIl Team di TenpennyNovels`;
-        html = `<h2>Conferma Cancellazione Account</h2><p>Caro ${displayName},</p><p>Hai richiesto la cancellazione del tuo account TenpennyNovels.</p><p><a href="${deletionUrl}" style="background-color: #8B4513; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Conferma Cancellazione</a></p><p>Oppure copia e incolla questo link:</p><p>${deletionUrl}</p><p><strong>⚠️ Questa azione è irreversibile e tutti i tuoi dati verranno eliminati permanentemente.</strong></p><p>Se non hai richiesto questa cancellazione, ignora questa email.</p><p>Cordiali saluti,<br>Il Team di TenpennyNovels</p>`;
+        subject = 'Conferma Cancellazione Account - TenPennyNovels';
+        text = `Caro ${displayName},\n\nHai richiesto la cancellazione del tuo account TenPennyNovels.\n\nPer confermare questa operazione, clicca sul seguente link:\n${deletionUrl}\n\nQuesta azione è irreversibile e tutti i tuoi dati verranno eliminati permanentemente.\n\nSe non hai richiesto questa cancellazione, ignora questa email.\n\nCordiali saluti,\nIl Team di TenPennyNovels`;
+        html = this.buildEmailHtml({
+          title: 'Conferma Cancellazione Account',
+          bodyHtml: `
+                <p style="margin: 0 0 16px; color: #d4c4b0;">Caro <strong style="color: #f5f5dc;">${displayName}</strong>,</p>
+                <p style="margin: 0 0 8px;">Hai richiesto la cancellazione del tuo account TenPennyNovels.</p>
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 16px 0; background-color: #1a0a0a; border: 1px solid #c1272d; border-radius: 6px;">
+                  <tr>
+                    <td style="padding: 14px 20px; text-align: center;">
+                      <p style="margin: 0; font-size: 14px; color: #c1272d; font-weight: bold;">Questa azione &egrave; irreversibile e tutti i tuoi dati verranno eliminati permanentemente.</p>
+                    </td>
+                  </tr>
+                </table>`,
+          cta: { text: 'Conferma Cancellazione', url: deletionUrl, color: '#c1272d' },
+          alternativeUrl: deletionUrl,
+          footerExtra: 'Se non hai richiesto questa cancellazione, ignora questa email.',
+        });
       }
 
       if (this.isMockMode) {
@@ -293,7 +341,7 @@ export class EmailService {
 
       const mailOptions = {
         from: {
-          name: 'TenpennyNovels',
+          name: 'TenPennyNovels',
           address: process.env.EMAIL_FROM || 'info@tenpennynovels.com'
         },
         to: email,
@@ -309,6 +357,107 @@ export class EmailService {
       logger.error(`Failed to send account deletion email to ${email}:`, error);
       throw error;
     }
+  }
+
+  private static readonly LOGO_URL = 'https://tenpennynovels.com/images/title.png';
+
+  private static buildEmailHtml(options: {
+    title: string;
+    bodyHtml: string;
+    cta?: { text: string; url: string; color?: string };
+    alternativeUrl?: string;
+    footerExtra?: string;
+  }): string {
+    const { title, bodyHtml, cta, alternativeUrl, footerExtra } = options;
+    const btnColor = cta?.color || '#067368';
+    const btnHoverColor = cta?.color === '#c1272d' ? '#a01f25' : '#08857a';
+
+    const ctaHtml = cta ? `
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 32px auto 0;">
+                <tr>
+                  <td style="border-radius: 6px; background-color: ${btnColor};">
+                    <a href="${cta.url}" target="_blank" style="display: inline-block; padding: 14px 36px; font-family: Georgia, 'Times New Roman', serif; font-size: 16px; font-weight: bold; color: #f5f5dc; text-decoration: none; border-radius: 6px; border: 1px solid ${btnHoverColor};">${cta.text}</a>
+                  </td>
+                </tr>
+              </table>` : '';
+
+    const altUrlHtml = alternativeUrl ? `
+              <p style="margin: 24px 0 0; font-size: 13px; color: #a89884; line-height: 1.5;">
+                Oppure copia e incolla questo link nel tuo browser:<br>
+                <a href="${alternativeUrl}" style="color: #FFA748; word-break: break-all; text-decoration: underline;">${alternativeUrl}</a>
+              </p>` : '';
+
+    const footerExtraHtml = footerExtra
+      ? `<p style="margin: 12px 0 0; font-size: 13px; color: #a89884; line-height: 1.5;">${footerExtra}</p>`
+      : '';
+
+    return `<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="dark">
+  <meta name="supported-color-schemes" content="dark">
+  <title>${title}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #050505; font-family: Georgia, 'Times New Roman', serif;">
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #050505;">
+    <tr>
+      <td style="padding: 40px 16px;">
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="max-width: 600px; margin: 0 auto; background-color: #0d0d0d; border: 1px solid #1a1a1a; border-radius: 8px; overflow: hidden;">
+          <!-- Header: logo + title side by side -->
+          <tr>
+            <td style="padding: 24px 32px; background-color: #0a0a0a;">
+              <table role="presentation" cellspTenPennyNovelspadding="0" border="0" width="100%">
+                <tr>
+                  <td style="width: 140px; vertical-align: middle;">
+                    <img src="${this.LOGO_URL}" alt="TenpennyNovels" width="130" style="max-width: 130px; height: auto; display: block;">
+                  </td>
+                  <td style="vertical-align: middle; padding-left: 20px;">
+                    <h2 style="margin: 0; font-size: 21px; font-weight: bold; color: #d4af37; font-family: Georgia, 'Times New Roman', serif; line-height: 1.3;">${title}</h2>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <!-- Gold separator -->
+          <tr>
+            <td style="padding: 0 32px;">
+              <div style="height: 1px; background: linear-gradient(to right, transparent, #d4af37, transparent);"></div>
+            </td>
+          </tr>
+          <!-- Body -->
+          <tr>
+            <td style="padding: 28px 32px 32px;">
+              <div style="font-size: 15px; line-height: 1.6; color: #f5f5dc; font-family: Georgia, 'Times New Roman', serif;">
+                ${bodyHtml}
+              </div>
+              ${ctaHtml}
+              ${altUrlHtml}
+            </td>
+          </tr>
+          <!-- Footer separator -->
+          <tr>
+            <td style="padding: 0 32px;">
+              <div style="height: 1px; background-color: #1a1a1a;"></div>
+            </td>TenPennyNovels
+          </tr>
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 20px 32px 24px; text-align: center;">
+              ${footerExtraHtml}
+              <p style="margin: 0; font-size: 12px; color: #6b5d50; line-height: 1.5; font-family: Georgia, 'Times New Roman', serif;">
+                Cordiali saluti,<br>
+                <span style="color: #a89884;">Il Team di TenpennyNovels</span>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
   }
 
   /**

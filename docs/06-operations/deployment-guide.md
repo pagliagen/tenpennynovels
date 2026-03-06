@@ -4,13 +4,13 @@
 
 **Status**: ✅ Production Ready | **Last Updated**: 2026-03-01
 
-Guida completa al deployment di TenpennyNovels in production con Docker.
+Guida completa al deployment di TenPennyNovels in production con Docker.
 
 ---
 
 ## Overview
 
-TenpennyNovels utilizza **Docker Compose** per orchestrare 7 servizi containerizzati in production. Questa guida copre setup, deployment, monitoring e troubleshooting.
+TenPennyNovels utilizza **Docker Compose** per orchestrare 7 servizi containerizzati in production. Questa guida copre setup, deployment, monitoring e troubleshooting.
 
 ---
 
@@ -140,7 +140,7 @@ SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=noreply@tenpennynovels.com
 SMTP_PASSWORD=<app-password>
-EMAIL_FROM=TenpennyNovels <noreply@tenpennynovels.com>
+EMAIL_FROM=TenPennyNovels <noreply@tenpennynovels.com>
 
 # API Keys
 BOT_API_KEY=<generate-secure-key>

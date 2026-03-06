@@ -1,7 +1,7 @@
 {
   "name": "@tenpennynovels/seeders",
   "version": "1.0.0",
-  "description": "Database seeders for TenpennyNovels",
+  "description": "Database seeders for TenPennyNovels",
   "private": true,
   "type": "module",
   "scripts": {

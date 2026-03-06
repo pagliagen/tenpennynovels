@@ -27,7 +27,7 @@ export default function RegolamentoIndex({ documents }: RegolamentoIndexProps) {
     <>
       <SEO
         title="Regolamento"
-        description="Regolamento di gioco per TenpennyNovels - Regole Call of Cthulhu, meccaniche e linee guida per il roleplay vittoriano."
+        description="Regolamento di gioco per TenPennyNovels - Regole Call of Cthulhu, meccaniche e linee guida per il roleplay vittoriano."
         ogType="website"
       />
 
@@ -35,7 +35,7 @@ export default function RegolamentoIndex({ documents }: RegolamentoIndexProps) {
         <header className={styles.pageHeader}>
           <h1 className={styles.pageTitle}>📜 Regolamento</h1>
           <p className={styles.pageDescription}>
-            Consulta il regolamento di TenpennyNovels: regole di gioco, meccaniche e linee guida per una
+            Consulta il regolamento di TenPennyNovels: regole di gioco, meccaniche e linee guida per una
             corretta esperienza di roleplay.
           </p>
         </header>

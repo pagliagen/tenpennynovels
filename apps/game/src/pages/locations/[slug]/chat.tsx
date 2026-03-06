@@ -149,7 +149,7 @@ export default function LocationChatPage(): JSX.Element {
     return (
       <>
         <Head>
-          <title>Chat Location - TenpennyNovels</title>
+          <title>Chat Location - TenPennyNovels</title>
           <meta name="description" content="Chatta in tempo reale nella Londra Vittoriana. Gioco di ruolo online con narrazione investigativa." />
         </Head>
         <GameLayout>
@@ -177,7 +177,7 @@ export default function LocationChatPage(): JSX.Element {
     return (
       <>
         <Head>
-          <title>Location Non Trovata - TenpennyNovels</title>
+          <title>Location Non Trovata - TenPennyNovels</title>
           <meta name="description" content="La location che cerchi non esiste o non è accessibile." />
         </Head>
         <GameLayout>
@@ -221,7 +221,7 @@ export default function LocationChatPage(): JSX.Element {
   return (
     <>
       <Head>
-        <title>{location.name} - Chat - TenpennyNovels</title>
+        <title>{location.name} - Chat - TenPennyNovels</title>
         <meta name="description" content={`Chatta in tempo reale a ${location.name} nella Londra Vittoriana del 1890. Gioco di ruolo investigativo con sistema Call of Cthulhu.`} />
       </Head>
       <GameLayout>

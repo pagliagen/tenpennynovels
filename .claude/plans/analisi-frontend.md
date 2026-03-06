@@ -1,4 +1,4 @@
-# DEPLOYMENT SSR + ANALISI CRITICA FRONTEND - TenpennyNovels
+# DEPLOYMENT SSR + ANALISI CRITICA FRONTEND - TenPennyNovels
 
 ## Context
 
@@ -41,7 +41,7 @@ Sistema di deployment automatizzato che:
 ```bash
 #!/bin/bash
 # ========================================
-# TenpennyNovels SSR Deployment Script
+# TenPennyNovels SSR Deployment Script
 # Deploy to OVH VPS with rsync + PM2
 # ========================================
 
@@ -64,7 +64,7 @@ fi
 source .env.deploy
 
 echo -e "${BLUE}========================================${NC}"
-echo -e "${BLUE}🚀 TenpennyNovels SSR Deployment${NC}"
+echo -e "${BLUE}🚀 TenPennyNovels SSR Deployment${NC}"
 echo -e "${BLUE}========================================${NC}"
 echo ""
 echo -e "Target: ${YELLOW}${OVH_SSH_USER}@${OVH_SSH_HOST}:${OVH_DEPLOY_PATH}${NC}"
@@ -244,7 +244,7 @@ chmod +x scripts/deploy-ssr.sh
 #### 2. **PM2 Ecosystem Config**: `ecosystem.config.js`
 
 ```javascript
-// PM2 Ecosystem Configuration for TenpennyNovels SSR Deployment
+// PM2 Ecosystem Configuration for TenPennyNovels SSR Deployment
 module.exports = {
   apps: [
     // ========================================
@@ -565,7 +565,7 @@ module.exports = nextConfig;
 
 ```nginx
 # ========================================
-# TenpennyNovels Nginx Configuration
+# TenPennyNovels Nginx Configuration
 # Reverse proxy per frontend SSR + backend API
 # ========================================
 
@@ -763,7 +763,7 @@ Rimuovere sezioni FTP, aggiornare per SSR:
 
 ```bash
 # ========================================
-# TenpennyNovels SSR Deployment Configuration
+# TenPennyNovels SSR Deployment Configuration
 # ========================================
 
 # OVH VPS Connection

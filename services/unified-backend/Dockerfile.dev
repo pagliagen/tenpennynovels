@@ -1,5 +1,5 @@
 # =============================================================================
-# TenpennyNovels - Unified Backend Dockerfile (Development)
+# TenPennyNovels - Unified Backend Dockerfile (Development)
 # =============================================================================
 # Development mode con tsx watch (no build, hot reload)
 

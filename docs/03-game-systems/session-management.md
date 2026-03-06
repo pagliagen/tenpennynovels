@@ -2,7 +2,7 @@
 
 ## Overview
 
-Il Session Management System di TenpennyNovels fornisce ai Master strumenti completi per creare, gestire e tracciare sessioni di gioco, con integrazione automatica dell'Experience Points System e tracking avanzato delle attività.
+Il Session Management System di TenPennyNovels fornisce ai Master strumenti completi per creare, gestire e tracciare sessioni di gioco, con integrazione automatica dell'Experience Points System e tracking avanzato delle attività.
 
 ## 🎯 Implementation Status: ✅ COMPLETE (Backend)
 

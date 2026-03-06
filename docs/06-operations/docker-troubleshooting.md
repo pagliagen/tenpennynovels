@@ -1,6 +1,6 @@
 # Docker Troubleshooting Guide
 
-This guide covers common Docker-related issues and their solutions for TenpennyNovels development.
+This guide covers common Docker-related issues and their solutions for TenPennyNovels development.
 
 ## Common Issues and Solutions
 

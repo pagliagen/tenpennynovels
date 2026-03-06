@@ -11,7 +11,7 @@ export default function Dashboard() {
   return (
     <ManagementLayout>
       <Head>
-        <title>Dashboard - TenpennyNovels Management</title>
+        <title>Dashboard - TenPennyNovels Management</title>
       </Head>
 
       <div className={styles.dashboard}>
@@ -48,7 +48,7 @@ export default function Dashboard() {
 
         <div className={styles.welcome}>
           <h2>Benvenuto nel Management Panel</h2>
-          <p>Sistema di gestione TenpennyNovels - PHASE 1-4 completate ✓</p>
+          <p>Sistema di gestione TenPennyNovels - PHASE 1-4 completate ✓</p>
         </div>
       </div>
     </ManagementLayout>

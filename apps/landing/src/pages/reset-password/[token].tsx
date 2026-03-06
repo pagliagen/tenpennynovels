@@ -99,8 +99,8 @@ export default function ResetPasswordPage() {
 
   return (
     <TokenPageLayout
-      title="Reset Password - TenpennyNovels"
-      description="Reset della password per TenpennyNovels"
+      title="Reset Password - TenPennyNovels"
+      description="Reset della password per TenPennyNovels"
       isReady={isReady}
       token={token}
       isValidating={false}

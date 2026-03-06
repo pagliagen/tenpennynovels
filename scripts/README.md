@@ -1,6 +1,6 @@
-# TenpennyNovels Scripts
+# TenPennyNovels Scripts
 
-Raccolta organizzata di script per gestione database, seeding, utilities e monitoring del progetto TenpennyNovels.
+Raccolta organizzata di script per gestione database, seeding, utilities e monitoring del progetto TenPennyNovels.
 
 ---
 
@@ -363,4 +363,4 @@ npm start
 
 ---
 
-**Made for TenpennyNovels** 🎩🔮
+**Made for TenPennyNovels** 🎩🔮

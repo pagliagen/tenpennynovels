@@ -4,13 +4,13 @@
 
 **Status**: ✅ Production Ready | **Last Updated**: 2026-03-01
 
-Overview dei servizi backend di TenpennyNovels: unified-backend, API gateway, BotAI.
+Overview dei servizi backend di TenPennyNovels: unified-backend, API gateway, BotAI.
 
 ---
 
 ## Overview
 
-Il backend di TenpennyNovels utilizza un'architettura modulare consolidata in un unico servizio (unified-backend) con un API Gateway come single entry point. Questa architettura è il risultato del consolidamento di auth-backend, game-backend e management-backend in un'unica applicazione modulare.
+Il backend di TenPennyNovels utilizza un'architettura modulare consolidata in un unico servizio (unified-backend) con un API Gateway come single entry point. Questa architettura è il risultato del consolidamento di auth-backend, game-backend e management-backend in un'unica applicazione modulare.
 
 ---
 

@@ -1,7 +1,7 @@
 {
   "name": "tenpennynovels-monorepo",
   "version": "1.0.0",
-  "description": "TenpennyNovels Monorepo - GDR Call of Cthulhu via Chat",
+  "description": "TenPennyNovels Monorepo - GDR Call of Cthulhu via Chat",
   "author": "Gennaro Paglia",
   "license": "MIT",
   "private": true,

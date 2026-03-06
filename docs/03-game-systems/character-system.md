@@ -6,7 +6,7 @@
 
 ## Overview
 
-Il sistema personaggi di TenpennyNovels implementa le regole Call of Cthulhu complete con modifiche per l'ambientazione vittoriana. Questa versione 2.0 introduce il **NEW SYSTEM** con occupazioni basate su **6 required skills** + **1-2 bonus skills** automatici, background strutturato guidato, e anagrafica dettagliata opzionale.
+Il sistema personaggi di TenPennyNovels implementa le regole Call of Cthulhu complete con modifiche per l'ambientazione vittoriana. Questa versione 2.0 introduce il **NEW SYSTEM** con occupazioni basate su **6 required skills** + **1-2 bonus skills** automatici, background strutturato guidato, e anagrafica dettagliata opzionale.
 
 ## Key Changes in Version 2.0
 

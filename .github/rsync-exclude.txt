@@ -1,4 +1,4 @@
-# rsync exclude list for TenpennyNovels deployment
+# rsync exclude list for TenPennyNovels deployment
 # These files/folders will NOT be transferred to OVH VPS
 
 # Dependencies (reinstalled remotely)

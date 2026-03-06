@@ -1,5 +1,5 @@
 # =============================================================================
-# TenpennyNovels - Unified Backend Dockerfile
+# TenPennyNovels - Unified Backend Dockerfile
 # =============================================================================
 # Multi-stage build for production-ready Node.js 22 backend
 

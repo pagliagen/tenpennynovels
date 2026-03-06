@@ -191,7 +191,7 @@ export async function setupWebSocket(io: SocketIOServer): Promise<void> {
     
     // Send welcome message
     socket.emit('connected', {
-      message: 'Connected to TenpennyNovels Game Backend',
+      message: 'Connected to TenPennyNovels Game Backend',
       user: {
         userId: user.userId,
         username: user.username,

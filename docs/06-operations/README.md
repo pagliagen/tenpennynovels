@@ -10,7 +10,7 @@ Deployment, monitoring, troubleshooting, backup strategies.
 
 ## Overview
 
-Documentazione operativa per deploy, monitoring e maintenance di TenpennyNovels in production.
+Documentazione operativa per deploy, monitoring e maintenance di TenPennyNovels in production.
 
 ---
 

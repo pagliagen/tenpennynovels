@@ -1,4 +1,4 @@
-# TenpennyNovels Documents - Robots.txt
+# TenPennyNovels Documents - Robots.txt
 
 User-agent: *
 Allow: /

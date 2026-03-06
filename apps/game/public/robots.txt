@@ -1,4 +1,4 @@
-# TenpennyNovels Game - Robots.txt
+# TenPennyNovels Game - Robots.txt
 # This application requires authentication - block all crawlers
 
 User-agent: *

@@ -442,13 +442,13 @@ npm run document:chat
 
 1. 🌍 Guida Rapida per Nuovi Giocatori
    Match: 95.2% | Tipo: regolamento | Gruppo: Sistema di Gioco
-   Come iniziare a giocare su TenpennyNovels.
-   "Benvenuto su TenpennyNovels! Questa guida ti aiuterà..."
+   Come iniziare a giocare su TenPennyNovels.
+   "Benvenuto su TenPennyNovels! Questa guida ti aiuterà..."
 
 2. 📜 Creazione Personaggio
    Match: 87.4% | Tipo: regolamento | Gruppo: Sistema di Gioco
-   Guida completa alla creazione di personaggi per TenpennyNovels.
-   "La creazione di un personaggio per TenpennyNovels segue..."
+   Guida completa alla creazione di personaggi per TenPennyNovels.
+   "La creazione di un personaggio per TenPennyNovels segue..."
 ```
 
 #### Via CLI (Single Query)

@@ -2,7 +2,7 @@
 
 ## Overview
 
-Il Chat Monitoring System fornisce agli amministratori di TenpennyNovels la capacità completa di monitorare, ricercare e moderare tutti i tipi di messaggi nel sistema. Il sistema integra monitoring in tempo reale, ricerca avanzata, gestione report utenti e azioni di moderazione attraverso un'interfaccia amministrativa centralizzata.
+Il Chat Monitoring System fornisce agli amministratori di TenPennyNovels la capacità completa di monitorare, ricercare e moderare tutti i tipi di messaggi nel sistema. Il sistema integra monitoring in tempo reale, ricerca avanzata, gestione report utenti e azioni di moderazione attraverso un'interfaccia amministrativa centralizzata.
 
 ## System Architecture
 
@@ -1686,4 +1686,4 @@ export class ChatMonitoringAuthMiddleware {
 }
 ```
 
-Il sistema di Chat Monitoring di TenpennyNovels fornisce un controllo completo e in tempo reale di tutte le comunicazioni della piattaforma, garantendo un ambiente sicuro e rispettoso per la community mentre mantenendo la trasparenza e l'accountability delle azioni di moderazione attraverso un sistema di audit completo.
+Il sistema di Chat Monitoring di TenPennyNovels fornisce un controllo completo e in tempo reale di tutte le comunicazioni della piattaforma, garantendo un ambiente sicuro e rispettoso per la community mentre mantenendo la trasparenza e l'accountability delle azioni di moderazione attraverso un sistema di audit completo.

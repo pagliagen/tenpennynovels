@@ -6,7 +6,7 @@
 
 # Call of Cthulhu Rules Reference
 
-TenpennyNovels utilizza il sistema di gioco **Call of Cthulhu 7th Edition** adattato per l'ambientazione vittoriana (Londra, 1895). Questo documento fornisce le regole base del sistema d100 e le modifiche specifiche per l'ambientazione.
+TenPennyNovels utilizza il sistema di gioco **Call of Cthulhu 7th Edition** adattato per l'ambientazione vittoriana (Londra, 1895). Questo documento fornisce le regole base del sistema d100 e le modifiche specifiche per l'ambientazione.
 
 ## Core Mechanic: d100 System
 

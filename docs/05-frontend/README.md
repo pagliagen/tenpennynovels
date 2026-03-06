@@ -4,13 +4,13 @@
 
 **Status**: ✅ Production Ready | **Last Updated**: 2026-03-01
 
-Documentazione delle 4 applicazioni frontend Next.js di TenpennyNovels.
+Documentazione delle 4 applicazioni frontend Next.js di TenPennyNovels.
 
 ---
 
 ## Overview
 
-TenpennyNovels utilizza 4 applicazioni frontend separate costruite con Next.js 16, ciascuna con uno scope specifico e ottimizzata per il proprio use case.
+TenPennyNovels utilizza 4 applicazioni frontend separate costruite con Next.js 16, ciascuna con uno scope specifico e ottimizzata per il proprio use case.
 
 ---
 

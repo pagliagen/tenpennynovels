@@ -1,7 +1,7 @@
 /**
  * Document Types
  *
- * Type definitions for TenpennyNovels Documents (Ambientazione & Regolamento)
+ * Type definitions for TenPennyNovels Documents (Ambientazione & Regolamento)
  *
  * @module types/document
  * @since 1.0.0

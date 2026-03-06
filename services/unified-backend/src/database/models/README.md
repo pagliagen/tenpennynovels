@@ -1,6 +1,6 @@
 # Database Models
 
-Questa directory contiene tutti i modelli MongoDB Mongoose per TenpennyNovels.
+Questa directory contiene tutti i modelli MongoDB Mongoose per TenPennyNovels.
 
 ## Struttura
 

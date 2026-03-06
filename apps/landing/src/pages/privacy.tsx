@@ -1,7 +1,7 @@
 /**
  * Privacy Policy Page
  *
- * GDPR-compliant privacy policy for TenpennyNovels.
+ * GDPR-compliant privacy policy for TenPennyNovels.
  *
  * **Content**: Data collection, usage, GDPR rights, contact information
  * **Reduced from**: 189 lines → 180 lines (5% reduction)
@@ -28,8 +28,8 @@ export default function PrivacyPage() {
 
   return (
     <PageLayout
-      title="Privacy Policy - TenpennyNovels | Protezione Dati GDPR"
-      description="Informativa sulla privacy di TenpennyNovels. Come trattiamo i tuoi dati personali in conformità al GDPR. Leggi la nostra politica sulla protezione dei dati."
+      title="Privacy Policy - TenPennyNovels | Protezione Dati GDPR"
+      description="Informativa sulla privacy di TenPennyNovels. Come trattiamo i tuoi dati personali in conformità al GDPR. Leggi la nostra politica sulla protezione dei dati."
       canonical="https://tenpennynovels.com/privacy/"
       schema={privacyBreadcrumb}
     >
@@ -72,7 +72,7 @@ export default function PrivacyPage() {
         <ul>
           <li>Con il tuo consenso esplicito</li>
           <li>Per rispettare obblighi legali</li>
-          <li>Per proteggere i diritti e la sicurezza di TenpennyNovels e degli utenti</li>
+          <li>Per proteggere i diritti e la sicurezza di TenPennyNovels e degli utenti</li>
           <li>Con fornitori di servizi tecnici che operano per nostro conto (server, sicurezza)</li>
         </ul>
 
@@ -142,7 +142,7 @@ export default function PrivacyPage() {
 
         <h3>8. Minori</h3>
         <p>
-          TenpennyNovels non è destinato a minori di 18 anni. Non raccogliamo
+          TenPennyNovels non è destinato a minori di 18 anni. Non raccogliamo
           consapevolmente informazioni personali da minori.
         </p>
 

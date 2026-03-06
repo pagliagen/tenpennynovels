@@ -1,4 +1,4 @@
-# TenpennyNovels Documentation
+# TenPennyNovels Documentation
 
 > Victorian Role-Playing Game via chat — London 1880s — Call of Cthulhu d100 System
 
@@ -8,7 +8,7 @@
 
 ## 🚀 Quick Start
 
-### New to TenpennyNovels?
+### New to TenPennyNovels?
 - **First Time Setup** → [Getting Started Guide](./00-getting-started/README.md)
 - **Docker Environment** → [Docker Compose Setup](./01-infrastructure/docker-compose.md)
 - **Understanding the Stack** → [Tech Stack Overview](./00-getting-started/tech-stack.md)

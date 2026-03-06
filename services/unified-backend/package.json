@@ -1,7 +1,7 @@
 {
   "name": "@tenpennynovels/unified-backend",
   "version": "1.0.0",
-  "description": "TenpennyNovels - Unified Backend (All Modules)",
+  "description": "TenPennyNovels - Unified Backend (All Modules)",
   "main": "dist/server.js",
   "_moduleAliases": {
     "@": "./dist",

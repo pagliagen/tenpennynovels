@@ -1,7 +1,7 @@
 /**
  * Social Class Type System
  *
- * TenpennyNovels uses a granular 8-level social class system based on the
+ * TenPennyNovels uses a granular 8-level social class system based on the
  * Call of Cthulhu Credit Rating skill (FINANZA, 1-99).
  *
  * This provides precise economic modeling while maintaining role-playing authenticity

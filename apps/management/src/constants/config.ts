@@ -14,7 +14,7 @@ export const API_CONFIG = {
 
 // App Configuration
 export const APP_CONFIG = {
-  NAME: process.env.NEXT_PUBLIC_APP_NAME || 'TenpennyNovels Management',
+  NAME: process.env.NEXT_PUBLIC_APP_NAME || 'TenPennyNovels Management',
   VERSION: process.env.NEXT_PUBLIC_APP_VERSION || '1.0.0'
 } as const;
 

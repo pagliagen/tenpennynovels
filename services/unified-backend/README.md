@@ -1,4 +1,4 @@
-# TenpennyNovels Unified Backend
+# TenPennyNovels Unified Backend
 
 Backend unificato con architettura modulare che gestisce tutte le app frontend.
 

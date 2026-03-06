@@ -68,7 +68,7 @@ export class GeoLocationService {
       const response = await fetch(`https://ipapi.co/${ipAddress}/json/`, {
         signal: controller.signal,
         headers: {
-          'User-Agent': 'TenpennyNovels-Analytics/1.0'
+          'User-Agent': 'TenPennyNovels-Analytics/1.0'
         }
       });
       
@@ -106,7 +106,7 @@ export class GeoLocationService {
       const response = await fetch(`https://api.ipbase.com/v1/json/${ipAddress}`, {
         signal: controller.signal,
         headers: {
-          'User-Agent': 'TenpennyNovels-Analytics/1.0'
+          'User-Agent': 'TenPennyNovels-Analytics/1.0'
         }
       });
       
@@ -144,7 +144,7 @@ export class GeoLocationService {
       const response = await fetch(`https://ipinfo.io/${ipAddress}/json`, {
         signal: controller.signal,
         headers: {
-          'User-Agent': 'TenpennyNovels-Analytics/1.0'
+          'User-Agent': 'TenPennyNovels-Analytics/1.0'
         }
       });
       

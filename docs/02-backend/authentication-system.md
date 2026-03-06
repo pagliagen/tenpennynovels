@@ -1,8 +1,8 @@
-# Authentication System - TenpennyNovels
+# Authentication System - TenPennyNovels
 
 ## Overview
 
-TenpennyNovels implementa un sistema di autenticazione dual-token avanzato con separazione tra ruoli USER (amministrativi) e CHARACTER (gameplay), utilizzando JWT e cookie cross-domain per accesso seamless tra le 6 applicazioni frontend.
+TenPennyNovels implementa un sistema di autenticazione dual-token avanzato con separazione tra ruoli USER (amministrativi) e CHARACTER (gameplay), utilizzando JWT e cookie cross-domain per accesso seamless tra le 6 applicazioni frontend.
 
 ## 🏗️ Dual-Token Architecture
 
@@ -845,4 +845,4 @@ MAX_LOGIN_ATTEMPTS=5
 LOCKOUT_DURATION=15m
 ```
 
-This authentication system provides comprehensive security, seamless cross-application access, and proper separation between user administration and character gameplay contexts for the TenpennyNovels Victorian RPG platform.
+This authentication system provides comprehensive security, seamless cross-application access, and proper separation between user administration and character gameplay contexts for the TenPennyNovels Victorian RPG platform.

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ========================================
-# TenpennyNovels - Setup Nginx Configurations
+# TenPennyNovels - Setup Nginx Configurations
 # ========================================
 # This script generates and installs HTTP-only Nginx configs for all frontend subdomains.
 # After running this script, use certbot to add SSL/HTTPS.
@@ -20,7 +20,7 @@ PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 NGINX_CONFIGS_DIR="$PROJECT_ROOT/deploy/nginx-configs"
 
 echo -e "${BLUE}========================================${NC}"
-echo -e "${BLUE}TenpennyNovels - Nginx Setup${NC}"
+echo -e "${BLUE}TenPennyNovels - Nginx Setup${NC}"
 echo -e "${BLUE}========================================${NC}"
 echo ""
 
@@ -58,7 +58,7 @@ generate_nginx_config() {
     local file="$NGINX_CONFIGS_DIR/tenpennynovels-$name"
 
     cat > "$file" << EOF
-# TenpennyNovels - $name Frontend
+# TenPennyNovels - $name Frontend
 # Domain: $domain
 # Proxy to: localhost:$port
 #

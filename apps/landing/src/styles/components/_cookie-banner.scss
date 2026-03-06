@@ -6,25 +6,38 @@
 
 .cookie-banner {
   position: fixed;
+  top: 0;
   bottom: 0;
   left: 0;
   right: 0;
   z-index: 999;
-  padding: var(--spacing-lg) var(--spacing-container-mobile);
-  background: var(--color-bg-secondary);
-  border-top: 2px solid var(--color-border-primary);
-  box-shadow: var(--shadow-lg);
-  animation: slide-up 0.3s ease-out;
+  animation: slide-up 0.3s ease-out; 
 
-  /**
-   * Content wrapper
-   */
+  &__background {
+    content: '';
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(3px); 
+    pointer-events: auto;
+  }
+ 
   &__content {
-    max-width: 1200px;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    border-top: 2px solid var(--color-border-primary);
+    padding: var(--spacing-lg) var(--spacing-container-mobile);
     margin: 0 auto;
     display: flex;
     flex-direction: column;
     gap: var(--spacing-md);
+    background: var(--color-bg-secondary);
+    box-shadow: var(--shadow-lg);
 
     @media (min-width: 768px) {
       flex-direction: row;
@@ -87,6 +100,7 @@
   from {
     transform: translateY(100%);
   }
+
   to {
     transform: translateY(0);
   }

@@ -28,7 +28,7 @@ const HTTP_PORT = parseInt(process.env.HTTP_PORT || '5001', 10);
 const PYTHON_PATH = process.env.PYTHON_PATH || 'python3';
 
 async function main() {
-  console.log('🌱 TenpennyNovels Embeddings Worker (Unified)');
+  console.log('🌱 TenPennyNovels Embeddings Worker (Unified)');
   console.log('============================================\n');
 
   try {

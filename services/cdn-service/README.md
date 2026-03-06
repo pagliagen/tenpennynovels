@@ -1,6 +1,6 @@
 # CDN Service
 
-**Purpose**: Upload, processing e storage di asset statici (immagini) per TenpennyNovels.
+**Purpose**: Upload, processing e storage di asset statici (immagini) per TenPennyNovels.
 
 ## Features
 

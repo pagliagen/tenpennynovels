@@ -1,7 +1,7 @@
 {
   "name": "@tenpennynovels/game",
   "version": "2.0.0",
-  "description": "TenpennyNovels - Game Frontend (Architecture V2)",
+  "description": "TenPennyNovels - Game Frontend (Architecture V2)",
   "author": "Gennaro Paglia",
   "license": "MIT",
   "private": true,

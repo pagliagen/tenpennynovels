@@ -5,7 +5,7 @@
  * Improves search engine visibility and rich snippets.
  *
  * **Schemas**:
- * - Organization: Defines TenpennyNovels organization
+ * - Organization: Defines TenPennyNovels organization
  * - WebSite: Defines website metadata
  * - WebApplication: Defines app as a game application
  * - VideoGame: Defines app as a video game
@@ -17,14 +17,14 @@
 /**
  * Organization Schema
  *
- * Identifies TenpennyNovels organization for search engines.
+ * Identifies TenPennyNovels organization for search engines.
  *
  * @constant
  */
 export const organizationSchema = {
   "@context": "https://schema.org",
   "@type": "Organization",
-  "name": "TenpennyNovels",
+  "name": "TenPennyNovels",
   "url": "https://tenpennynovels.com",
   "logo": "https://tenpennynovels.com/images/title.png",
   "description": "Gioco di ruolo online ambientato nella Londra Vittoriana. Esperienza GDR Call of Cthulhu via chat con narrazione stile Agatha Christie.",
@@ -45,7 +45,7 @@ export const organizationSchema = {
 export const websiteSchema = {
   "@context": "https://schema.org",
   "@type": "WebSite",
-  "name": "TenpennyNovels",
+  "name": "TenPennyNovels",
   "url": "https://tenpennynovels.com",
   "inLanguage": "it",
   "potentialAction": {
@@ -61,14 +61,14 @@ export const websiteSchema = {
 /**
  * WebApplication Schema
  *
- * Defines TenpennyNovels as a web application game.
+ * Defines TenPennyNovels as a web application game.
  *
  * @constant
  */
 export const webApplicationSchema = {
   "@context": "https://schema.org",
   "@type": "WebApplication",
-  "name": "TenpennyNovels - Londra Vittoriana",
+  "name": "TenPennyNovels - Londra Vittoriana",
   "url": "https://tenpennynovels.com",
   "applicationCategory": "Game",
   "applicationSubCategory": "Role-Playing Game",
@@ -92,14 +92,14 @@ export const webApplicationSchema = {
 /**
  * VideoGame Schema
  *
- * Alternative schema defining TenpennyNovels as a video game.
+ * Alternative schema defining TenPennyNovels as a video game.
  *
  * @constant
  */
 export const videoGameSchema = {
   "@context": "https://schema.org",
   "@type": "VideoGame",
-  "name": "TenpennyNovels - Londra Vittoriana",
+  "name": "TenPennyNovels - Londra Vittoriana",
   "description": "Gioco di ruolo online gratuito basato su Call of Cthulhu. Ambientazione Londra Vittoriana 1890. Narrazione investigativa via chat.",
   "url": "https://tenpennynovels.com",
   "genre": ["Horror", "Mystery", "Role-Playing"],
@@ -110,7 +110,7 @@ export const videoGameSchema = {
   "playMode": "MultiPlayer",
   "author": {
     "@type": "Organization",
-    "name": "TenpennyNovels"
+    "name": "TenPennyNovels"
   },
   "offers": {
     "@type": "Offer",

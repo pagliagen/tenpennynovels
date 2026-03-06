@@ -286,7 +286,7 @@ const createServiceProxy = (serviceName: string, config: any) => {
         logger.debug(`[PROXY REQ] Forwarding to ${serviceName}: ${req.method} ${req.url}`);
 
         // Add gateway headers
-        proxyReq.setHeader('X-Forwarded-By', 'TenpennyNovels-Gateway');
+        proxyReq.setHeader('X-Forwarded-By', 'TenPennyNovels-Gateway');
         proxyReq.setHeader('X-Service-Route', serviceName);
 
         // Forward cookies and auth headers
@@ -363,7 +363,7 @@ const socketioProxy = createProxyMiddleware({
       }
 
       // Add gateway headers
-      proxyReq.setHeader('X-Forwarded-By', 'TenpennyNovels-Gateway');
+      proxyReq.setHeader('X-Forwarded-By', 'TenPennyNovels-Gateway');
       proxyReq.setHeader('X-Service-Route', 'socketio');
     },
     proxyRes: (proxyRes: any, _req: any, _res: any) => {
@@ -554,7 +554,7 @@ app.get('/health', async (_req, res) => {
   
   // Gateway health data
   const gatewayHealth = {
-    service: 'TenpennyNovels API Gateway',
+    service: 'TenPennyNovels API Gateway',
     version: '1.0.0',
     description: 'API Gateway routing requests to backend microservices',
     timestamp: new Date().toISOString(),
@@ -580,7 +580,7 @@ app.get('/health', async (_req, res) => {
       
       const response = await fetch(healthUrl, { 
         signal: controller.signal,
-        headers: { 'User-Agent': 'TenpennyNovels-Gateway-Health-Check' }
+        headers: { 'User-Agent': 'TenPennyNovels-Gateway-Health-Check' }
       });
       clearTimeout(timeoutId);
       
@@ -636,9 +636,9 @@ app.get('/', (_req, res) => {
   res.json({
     success: true,
     data: {
-      service: 'TenpennyNovels API Gateway',
+      service: 'TenPennyNovels API Gateway',
       version: '1.0.0',
-      description: 'Central API Gateway for TenpennyNovels microservices architecture',
+      description: 'Central API Gateway for TenPennyNovels microservices architecture',
       routes: {
         authentication: '/auth/*',
         game_backend: '/game/*',

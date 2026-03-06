@@ -38,7 +38,7 @@ export const VictorianLayoutDesktop: React.FC<VictorianLayoutDesktopProps> = ({
       <aside className="victorian-layout-desktop__sidebar">
         <img
           src={LOGO_IMAGE_SRC}
-          alt="TenpennyNovels"
+          alt="TenPennyNovels"
           className="victorian-layout-desktop__logo"
         />
         <nav className="victorian-layout-desktop__nav" aria-label="Navigazione principale">

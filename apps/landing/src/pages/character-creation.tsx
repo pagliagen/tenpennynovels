@@ -132,8 +132,8 @@ export default function CharacterCreationPage() {
 
   return (
     <FormPageLayout
-      title="Creazione Personaggio - TenpennyNovels"
-      description="Crea il tuo personaggio per TenpennyNovels"
+      title="Creazione Personaggio - TenPennyNovels"
+      description="Crea il tuo personaggio per TenPennyNovels"
       noindex
       globalError={globalError}
       globalSuccess={globalSuccess}

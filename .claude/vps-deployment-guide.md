@@ -1,4 +1,4 @@
-# TenpennyNovels - VPS Deployment Troubleshooting Guide
+# TenPennyNovels - VPS Deployment Troubleshooting Guide
 
 **Data creazione**: 2026-02-28
 **Sessione di debug**: Deployment produzione su VPS Ubuntu (51.83.47.109)

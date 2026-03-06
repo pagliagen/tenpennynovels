@@ -4,13 +4,13 @@
 
 **Status**: ✅ Production Ready | **Last Updated**: 2026-03-01
 
-Documentazione completa dell'infrastruttura Docker Compose di TenpennyNovels con 7 servizi containerizzati.
+Documentazione completa dell'infrastruttura Docker Compose di TenPennyNovels con 7 servizi containerizzati.
 
 ---
 
 ## Overview
 
-TenpennyNovels utilizza **Docker Compose** per orchestrare tutti i servizi in un'unica rete containerizzata. Questo approccio garantisce:
+TenPennyNovels utilizza **Docker Compose** per orchestrare tutti i servizi in un'unica rete containerizzata. Questo approccio garantisce:
 
 - **Isolamento completo**: Ogni servizio in container dedicato
 - **Networking semplificato**: Comunicazione via hostname Docker
@@ -505,7 +505,7 @@ npm run docker:all:stop    # Stop all services
 #!/bin/bash
 # Check all services health
 
-echo "🔍 Checking TenpennyNovels services health..."
+echo "🔍 Checking TenPennyNovels services health..."
 
 # API Gateway
 curl -s http://localhost:8000/health | jq '.'

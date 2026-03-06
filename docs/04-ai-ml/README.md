@@ -10,7 +10,7 @@ Sistemi AI e ML: embeddings, semantic search, bot psychology.
 
 ## Overview
 
-TenpennyNovels integra machine learning per semantic search e AI (Claude) per NPC bot intelligenti con psychology system avanzata.
+TenPennyNovels integra machine learning per semantic search e AI (Claude) per NPC bot intelligenti con psychology system avanzata.
 
 ---
 

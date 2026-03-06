@@ -10,7 +10,7 @@ Sistema di embeddings event-driven per ricerca semantica su documenti e location
 
 ## Overview
 
-TenpennyNovels utilizza embeddings vettoriali (vector representations) di testo per permettere ricerche semantiche intelligenti oltre la semplice keyword search.
+TenPennyNovels utilizza embeddings vettoriali (vector representations) di testo per permettere ricerche semantiche intelligenti oltre la semplice keyword search.
 
 **Use Cases**:
 - **Documents**: "Come creare un personaggio?" → trova documenti su creazione personaggi
