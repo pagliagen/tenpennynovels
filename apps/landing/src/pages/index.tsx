@@ -179,6 +179,7 @@ export default function LoginPage() {
       description="Ten Penny Novels: gioco di ruolo online gratuito ambientato nella Londra Vittoriana del 1890. Sistema Call of Cthulhu via chat con narrazione investigativa stile Agatha Christie. Crea il tuo personaggio vittoriano ed esplora i misteri della capitale inglese. Registrazione gratuita!"
       canonical="https://tenpennynovels.com/"
       schema={homeSchema}
+      noindex={false}
       globalError={globalError}
       globalSuccess={globalSuccess}
       onDismissError={clearMessages}
