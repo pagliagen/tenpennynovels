@@ -29,17 +29,22 @@ interface TableOfContentsProps {
   childDocuments?: HierarchicalChild[];  // For 'hierarchical' mode
   currentPath?: string;  // Current document path
   baseUrl?: string;  // For constructing route URLs
+  scrollContainerRef?: React.RefObject<HTMLElement | null>;
 }
 
-export function TableOfContents({ mode, items, sections, childDocuments, currentPath, baseUrl }: TableOfContentsProps): JSX.Element {
+const SCROLL_OFFSET = 30;
+
+export function TableOfContents({ mode, items, sections, childDocuments, currentPath, baseUrl, scrollContainerRef }: TableOfContentsProps): JSX.Element {
   const [activeSection, setActiveSection] = useState<string | null>(null);
 
-  // Scroll tracking (only for anchors mode)
   useEffect(() => {
     if (mode !== 'anchors' || !sections) return;
 
+    const container = scrollContainerRef?.current;
+    if (!container) return;
+
     const handleScroll = () => {
-      const scrollPosition = window.scrollY + 100;
+      const scrollTop = container.scrollTop + SCROLL_OFFSET;
 
       for (let i = sections.length - 1; i >= 0; i--) {
         const section = sections[i];
@@ -47,24 +52,24 @@ export function TableOfContents({ mode, items, sections, childDocuments, current
 
         const element = document.getElementById(section.slug);
 
-        if (element && element.offsetTop <= scrollPosition) {
+        if (element && element.offsetTop <= scrollTop) {
           setActiveSection(section.slug);
           break;
         }
       }
     };
 
-    window.addEventListener('scroll', handleScroll);
-    handleScroll(); // Initial check
+    container.addEventListener('scroll', handleScroll);
+    handleScroll();
 
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [mode, sections]);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [mode, sections, scrollContainerRef]);
 
   const scrollToSection = (slug: string) => {
     const element = document.getElementById(slug);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      // Update URL with hash (without triggering page reload)
+    const container = scrollContainerRef?.current;
+    if (element && container) {
+      container.scrollTo({ top: element.offsetTop - SCROLL_OFFSET, behavior: 'smooth' });
       window.history.pushState(null, '', `#${slug}`);
     }
   };

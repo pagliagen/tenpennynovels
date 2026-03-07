@@ -62,7 +62,7 @@ export function DocumentDetail({ data }: DocumentDetailProps): JSX.Element {
 
           {showTOC && (
             <aside className={styles.tocAside}>
-              <TableOfContents mode="anchors" sections={sections} />
+              <TableOfContents mode="anchors" sections={sections} scrollContainerRef={articleRef} />
             </aside>
           )}
         </div>

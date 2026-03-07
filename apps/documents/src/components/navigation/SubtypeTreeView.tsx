@@ -24,7 +24,9 @@ interface SubtypeTreeViewProps {
 
 export function SubtypeTreeView({ subtypes, type, currentPath }: SubtypeTreeViewProps) {
   const [expandedDocs, setExpandedDocs] = useState<Set<string>>(new Set());
-  const [expandedSubtypes, setExpandedSubtypes] = useState<Set<string>>(new Set());
+  const [expandedSubtypes, setExpandedSubtypes] = useState<Set<string>>(
+    () => new Set(subtypes.map(s => s._id))
+  );
 
   const docContainsActivePath = useCallback((doc: SubtypeDocument): boolean => {
     const docPath = `/${type}/${doc.path}`;
@@ -37,27 +39,31 @@ export function SubtypeTreeView({ subtypes, type, currentPath }: SubtypeTreeView
   }, [docContainsActivePath]);
 
   useEffect(() => {
-    const docsToExpand = new Set<string>();
-    const subtypesToExpand = new Set<string>();
-
-    subtypes.forEach(s => {
-      if (subtypeContainsActivePath(s)) {
-        subtypesToExpand.add(s._id);
-      }
-
-      const walk = (docs: SubtypeDocument[]) => {
-        docs.forEach(doc => {
-          if (doc.children && doc.children.length > 0 && docContainsActivePath(doc)) {
-            docsToExpand.add(doc._id);
-            walk(doc.children);
-          }
-        });
-      };
-      walk(s.documents || []);
+    setExpandedDocs(prev => {
+      const next = new Set(prev);
+      subtypes.forEach(s => {
+        const walk = (docs: SubtypeDocument[]) => {
+          docs.forEach(doc => {
+            if (doc.children && doc.children.length > 0 && docContainsActivePath(doc)) {
+              next.add(doc._id);
+              walk(doc.children);
+            }
+          });
+        };
+        walk(s.documents || []);
+      });
+      return next;
     });
 
-    setExpandedDocs(docsToExpand);
-    setExpandedSubtypes(subtypesToExpand);
+    setExpandedSubtypes(prev => {
+      const next = new Set(prev);
+      subtypes.forEach(s => {
+        if (subtypeContainsActivePath(s)) {
+          next.add(s._id);
+        }
+      });
+      return next;
+    });
   }, [currentPath, subtypes, docContainsActivePath, subtypeContainsActivePath]);
 
   const toggle = (id: string, setter: React.Dispatch<React.SetStateAction<Set<string>>>) => {
