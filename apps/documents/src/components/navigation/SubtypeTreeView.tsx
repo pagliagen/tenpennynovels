@@ -11,10 +11,27 @@
  * @since 2.0.0
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import type { DocumentSubtype, SubtypeDocument } from '@/types/document';
 import styles from './RouteTreeView.module.scss';
+
+const STORAGE_KEY_PREFIX = 'sidebar-expanded';
+
+function loadFromStorage(type: string, key: string): string[] | null {
+  try {
+    const raw = localStorage.getItem(`${STORAGE_KEY_PREFIX}:${type}:${key}`);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveToStorage(type: string, key: string, ids: Set<string>) {
+  try {
+    localStorage.setItem(`${STORAGE_KEY_PREFIX}:${type}:${key}`, JSON.stringify([...ids]));
+  } catch { /* quota exceeded, ignore */ }
+}
 
 interface SubtypeTreeViewProps {
   subtypes: DocumentSubtype[];
@@ -23,10 +40,15 @@ interface SubtypeTreeViewProps {
 }
 
 export function SubtypeTreeView({ subtypes, type, currentPath }: SubtypeTreeViewProps) {
-  const [expandedDocs, setExpandedDocs] = useState<Set<string>>(new Set());
-  const [expandedSubtypes, setExpandedSubtypes] = useState<Set<string>>(
-    () => new Set(subtypes.map(s => s._id))
-  );
+  const [expandedDocs, setExpandedDocs] = useState<Set<string>>(() => {
+    const saved = loadFromStorage(type, 'docs');
+    return saved ? new Set(saved) : new Set();
+  });
+  const [expandedSubtypes, setExpandedSubtypes] = useState<Set<string>>(() => {
+    const saved = loadFromStorage(type, 'subtypes');
+    return saved ? new Set(saved) : new Set(subtypes.map(s => s._id));
+  });
+  const isInitialMount = useRef(true);
 
   const docContainsActivePath = useCallback((doc: SubtypeDocument): boolean => {
     const docPath = `/${type}/${doc.path}`;
@@ -39,6 +61,10 @@ export function SubtypeTreeView({ subtypes, type, currentPath }: SubtypeTreeView
   }, [docContainsActivePath]);
 
   useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+    }
+
     setExpandedDocs(prev => {
       const next = new Set(prev);
       subtypes.forEach(s => {
@@ -65,6 +91,16 @@ export function SubtypeTreeView({ subtypes, type, currentPath }: SubtypeTreeView
       return next;
     });
   }, [currentPath, subtypes, docContainsActivePath, subtypeContainsActivePath]);
+
+  useEffect(() => {
+    if (isInitialMount.current) return;
+    saveToStorage(type, 'docs', expandedDocs);
+  }, [expandedDocs, type]);
+
+  useEffect(() => {
+    if (isInitialMount.current) return;
+    saveToStorage(type, 'subtypes', expandedSubtypes);
+  }, [expandedSubtypes, type]);
 
   const toggle = (id: string, setter: React.Dispatch<React.SetStateAction<Set<string>>>) => {
     setter(prev => {

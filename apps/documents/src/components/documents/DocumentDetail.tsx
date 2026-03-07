@@ -21,8 +21,8 @@ export function DocumentDetail({ data }: DocumentDetailProps): JSX.Element {
     if (hash) {
       const timeoutId = setTimeout(() => {
         const element = window.document.getElementById(hash.substring(1));
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (element && articleRef.current) {
+          articleRef.current.scrollTo({ top: element.offsetTop - 10, behavior: 'smooth' });
         }
       }, 100);
       return () => clearTimeout(timeoutId);
