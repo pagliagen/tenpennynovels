@@ -75,7 +75,7 @@ export const VictorianLayoutMobile: React.FC<VictorianLayoutMobileProps> = ({
           ✕
         </button>
         <nav className="victorian-layout-mobile__nav-content">
-          {isInfoPage ?? (
+          {isInfoPage && (
             <Button
               variant="ghost"
               onClick={() => onNavigate('/')}
