@@ -1,16 +1,6 @@
-/**
- * DocumentsLayout Component
- *
- * Master layout wrapper for all documents pages.
- * Includes Header, Sidebar (desktop), MobileBottomNav (mobile), and main content area.
- *
- * @module components/layout/DocumentsLayout
- * @since 1.0.0
- */
-
 'use client';
 
-import { useState, ReactNode } from 'react';
+import { ReactNode } from 'react';
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
 import { MobileBottomNav } from './MobileBottomNav';
@@ -21,14 +11,12 @@ interface DocumentsLayoutProps {
 }
 
 export function DocumentsLayout({ children }: DocumentsLayoutProps): JSX.Element {
-  const [searchVisible, setSearchVisible] = useState(false);
-
   return (
     <div className={styles.layout}>
-      <Header onSearchToggle={() => setSearchVisible(!searchVisible)} showSearch={searchVisible} />
+      <Sidebar />
 
       <div className={styles.container}>
-        <Sidebar />
+        <Header />
 
         <main className={styles.main}>
           <div className={styles.content}>{children}</div>

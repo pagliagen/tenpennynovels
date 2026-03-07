@@ -1,100 +1,156 @@
-/**
- * Header Component
- *
- * Victorian-themed header with logo, section tabs, and search toggle.
- * Desktop: Full navigation. Mobile: Simplified with hamburger menu.
- *
- * @module components/layout/Header
- * @since 1.0.0
- */
-
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { SearchBar } from '../search/SearchBar';
+import { useAuthStore } from '@/store/authStore';
+import { useSearchState } from '@/hooks/useSearch';
+import { SearchResults } from '../search/SearchResults';
 import styles from '@/styles/components/layout/Header.module.scss';
 
-interface HeaderProps {
-  onSearchToggle?: () => void;
-  showSearch?: boolean;
-}
-
-export function Header({ onSearchToggle, showSearch }: HeaderProps): JSX.Element {
+export function Header(): JSX.Element {
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
-  const isActiveSection = (path: string) => {
-    return router.pathname.startsWith(path);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+
+  const { query, setQuery, isOpen: resultsOpen, setIsOpen: setResultsOpen, results, totalResults, isLoading, handleClose: handleSearchClose } =
+    useSearchState();
+
+  const isActiveSection = (path: string) => router.pathname.startsWith(path);
+
+  const openSearch = () => {
+    setSearchOpen(true);
+    setTimeout(() => inputRef.current?.focus(), 50);
+  };
+
+  const closeSearch = useCallback(() => {
+    setSearchOpen(false);
+    handleSearchClose();
+  }, [handleSearchClose]);
+
+  useEffect(() => {
+    if (!searchOpen) return;
+
+    function handleClickOutside(event: MouseEvent) {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+        closeSearch();
+      }
+    }
+
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === 'Escape') closeSearch();
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [searchOpen, closeSearch]);
+
+  useEffect(() => {
+    closeSearch();
+  }, [router.asPath, closeSearch]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setQuery(e.target.value);
+  };
+
+  const handleInputFocus = () => {
+    if (query.length >= 2) {
+      setResultsOpen(true);
+    }
   };
 
   return (
     <header className={styles.header}>
       <div className={styles.container}>
-        {/* Logo */}
-        <Link href="/" className={styles.logo}>
-          <span className={styles.logoIcon}>📚</span>
-          <span className={styles.logoText}>
-            <span className={styles.logoMain}>Ten Penny Novels</span>
-            <span className={styles.logoSub}>Archivi</span>
-          </span>
-        </Link>
-
-        {/* Desktop Navigation */}
         <nav className={styles.nav}>
           <Link
             href="/ambientazione"
-            className={`${styles.navLink} ${isActiveSection('/ambientazione') ? styles.active : ''}`}
+            className={`${styles.navTab} ${isActiveSection('/ambientazione') ? styles.active : ''}`}
           >
             Ambientazione
           </Link>
           <Link
             href="/regolamento"
-            className={`${styles.navLink} ${isActiveSection('/regolamento') ? styles.active : ''}`}
+            className={`${styles.navTab} ${isActiveSection('/regolamento') ? styles.active : ''}`}
           >
             Regolamento
           </Link>
+          {isAuthenticated && (
+            <Link
+              href="/preferiti"
+              className={`${styles.navTab} ${isActiveSection('/preferiti') ? styles.active : ''}`}
+            >
+              Preferiti
+            </Link>
+          )}
         </nav>
 
-        {/* Search Bar (inline) or Search Toggle */}
-        {showSearch ? (
-          <div className={styles.searchBarWrapper}>
-            <SearchBar placeholder="Cerca documenti..." className={styles.inlineSearch} autoFocus />
-            <button
-              type="button"
-              className={styles.closeSearch}
-              onClick={onSearchToggle}
-              aria-label="Close search"
-            >
-              ✕
-            </button>
-          </div>
-        ) : (
-          onSearchToggle && (
+        <div className={styles.searchArea} ref={searchContainerRef}>
+          {searchOpen ? (
+            <div className={styles.searchInputWrapper}>
+              <input
+                ref={inputRef}
+                type="text"
+                className={styles.searchInput}
+                placeholder="ricerca per parola o frase"
+                value={query}
+                onChange={handleInputChange}
+                onFocus={handleInputFocus}
+                autoComplete="off"
+                spellCheck={false}
+              />
+              <button
+                type="button"
+                className={styles.searchClose}
+                onClick={closeSearch}
+                aria-label="Chiudi ricerca"
+              >
+                ✕
+              </button>
+
+              {resultsOpen && query.length >= 2 && (
+                <div className={styles.searchDropdown}>
+                  <SearchResults
+                    results={results}
+                    totalResults={totalResults}
+                    query={query}
+                    isLoading={isLoading}
+                    onClose={closeSearch}
+                  />
+                </div>
+              )}
+            </div>
+          ) : (
             <button
               type="button"
               className={styles.searchToggle}
-              onClick={onSearchToggle}
-              aria-label="Toggle search"
+              onClick={openSearch}
+              aria-label="Apri ricerca"
             >
-              🔍
+              ricerca per parola o frase
             </button>
-          )
-        )}
+          )}
+        </div>
 
-        {/* Mobile Menu Toggle */}
         <button
           type="button"
           className={styles.mobileMenuToggle}
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          aria-label="Toggle menu"
+          aria-label="Menu"
+          aria-expanded={mobileMenuOpen}
         >
           {mobileMenuOpen ? '✕' : '☰'}
         </button>
       </div>
 
-      {/* Mobile Menu */}
       {mobileMenuOpen && (
         <div className={styles.mobileMenu}>
           <Link
@@ -111,6 +167,15 @@ export function Header({ onSearchToggle, showSearch }: HeaderProps): JSX.Element
           >
             Regolamento
           </Link>
+          {isAuthenticated && (
+            <Link
+              href="/preferiti"
+              className={`${styles.mobileLink} ${isActiveSection('/preferiti') ? styles.active : ''}`}
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Preferiti
+            </Link>
+          )}
         </div>
       )}
     </header>

@@ -11,7 +11,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import type { DocumentSection, HierarchicalChild } from '@/types/document';
 import styles from '@/styles/components/documents/TableOfContents.module.scss';
@@ -81,7 +81,7 @@ export function TableOfContents({ mode, items, sections, childDocuments, current
             <li
               key={item._id}
               className={styles.tocItem}
-              style={{ marginLeft: `${(item.depth - 1) * 20}px` }}
+              style={{ '--depth': item.depth - 1 } as React.CSSProperties}
             >
               <Link href={`${baseUrl}/${item.slug}`} className={styles.tocLink}>
                 {item.title}
@@ -108,7 +108,7 @@ export function TableOfContents({ mode, items, sections, childDocuments, current
             <li
               key={section._id}
               className={`${styles.tocItem} ${activeSection === section.slug ? styles.active : ''}`}
-              style={{ marginLeft: `${(section.depth || 0) * 20}px` }}
+              style={{ '--depth': section.depth || 0 } as React.CSSProperties}
             >
               <a
                 href={`#${section.slug}`}
@@ -134,13 +134,10 @@ export function TableOfContents({ mode, items, sections, childDocuments, current
     // Recursive function to render hierarchical structure
     const renderHierarchical = (docs: HierarchicalChild[], parentPath?: string): JSX.Element[] => {
       return docs.map(doc => {
-        const indent = (doc.depth - 1) * 20;
-
         return (
-          <li key={doc._id} className={styles.tocItem} style={{ marginLeft: `${indent}px` }}>
-            {doc.hasRoute ? (
-              // External link to route
-              <Link href={doc.routePath!} className={styles.tocLink}>
+          <li key={doc._id} className={styles.tocItem} style={{ '--depth': doc.depth - 1 } as React.CSSProperties}>
+            {doc.hasOwnPage ? (
+              <Link href={doc.path!} className={styles.tocLink}>
                 {doc.title}
               </Link>
             ) : (
@@ -165,7 +162,7 @@ export function TableOfContents({ mode, items, sections, childDocuments, current
             {/* Recursively render children */}
             {doc.children && doc.children.length > 0 && (
               <ul className={styles.tocList}>
-                {renderHierarchical(doc.children, doc.hasRoute ? doc.routePath : parentPath)}
+                {renderHierarchical(doc.children, doc.hasOwnPage ? doc.path : parentPath)}
               </ul>
             )}
           </li>

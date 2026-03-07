@@ -16,7 +16,7 @@ const LOGO_IMAGE_SRC = '/images/title.png';
 export interface VictorianLayoutDesktopProps {
   /** Page content rendered inside the main area. */
   children: React.ReactNode;
-  /** When true, shows only "Chiudi" in the nav (info pages: credits, privacy, terms). */
+  /** When true, shows only "Chiudi" in the nav (info pages: credits). */
   isInfoPage: boolean;
   /** Page identifier for main content (e.g. "login-page", "register-page"). */
   pageClass: string;
@@ -24,6 +24,8 @@ export interface VictorianLayoutDesktopProps {
   onNavigate: (path: string) => void;
   /** Called when "Documenti" is clicked (external link). */
   onDocsClick: () => void;
+  /** Optional info panel rendered above page content */
+  pageInfo?: React.ReactNode;
 }
 
 export const VictorianLayoutDesktop: React.FC<VictorianLayoutDesktopProps> = ({
@@ -32,6 +34,7 @@ export const VictorianLayoutDesktop: React.FC<VictorianLayoutDesktopProps> = ({
   pageClass,
   onNavigate,
   onDocsClick,
+  pageInfo,
 }) => {
   return (
     <div className="victorian-layout-desktop">
@@ -44,39 +47,37 @@ export const VictorianLayoutDesktop: React.FC<VictorianLayoutDesktopProps> = ({
         <nav className="victorian-layout-desktop__nav" aria-label="Navigazione principale">
           <h2 className="victorian-layout-desktop__nav-title">Chapter One</h2>
 
-          {isInfoPage ? (
+          {isInfoPage && (
             <Button
               variant="ghost"
-              onClick={() => window.close()}
+              onClick={() => onNavigate('/')}
               className="victorian-layout-desktop__nav-button"
             >
-              Chiudi
+              Torna al Login
             </Button>
-          ) : (
-            <>
-              <Button
-                variant="ghost"
-                onClick={() => onNavigate('/register')}
-                className="victorian-layout-desktop__nav-button"
-              >
-                Registrati
-              </Button>
-              <Button
-                variant="ghost"
-                onClick={onDocsClick}
-                className="victorian-layout-desktop__nav-button"
-              >
-                Documenti
-              </Button>
-              <Button
-                variant="ghost"
-                onClick={() => onNavigate('/credits')}
-                className="victorian-layout-desktop__nav-button"
-              >
-                Crediti
-              </Button>
-            </>
           )}
+
+          <Button
+            variant="ghost"
+            onClick={() => onNavigate('/register')}
+            className="victorian-layout-desktop__nav-button"
+          >
+            Registrati
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={onDocsClick}
+            className="victorian-layout-desktop__nav-button"
+          >
+            Documenti
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={() => onNavigate('/credits')}
+            className="victorian-layout-desktop__nav-button"
+          >
+            Crediti
+          </Button>   
         </nav>
       </aside>
 
@@ -89,6 +90,9 @@ export const VictorianLayoutDesktop: React.FC<VictorianLayoutDesktopProps> = ({
             fetchPriority="high"
           />
         </div>
+        {pageInfo && (
+          <div className="victorian-layout-desktop__page-info">{pageInfo}</div>
+        )}
         <div className="victorian-layout-desktop__page-content">{children}</div>
       </main>
     </div>

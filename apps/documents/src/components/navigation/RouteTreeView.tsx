@@ -77,7 +77,7 @@ export function RouteTreeView({ routes, type, currentPath, depth }: RouteTreeVie
       <div
         key={route._id}
         className={styles.routeItem}
-        style={{ paddingLeft: `${currentDepth * 16}px` }}
+        style={{ '--depth': currentDepth } as React.CSSProperties}
       >
         <div className={styles.routeRow}>
           {/* Expand button (if has children) */}

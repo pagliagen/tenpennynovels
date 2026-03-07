@@ -1,0 +1,28 @@
+/**
+ * Page Info Panel — wrapper with close button for inline info panels
+ * (terms, privacy, etc.)
+ */
+
+.page-info-panel {
+  position: relative;
+  width: 100%;
+
+  &__close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: none;
+    border: 1px solid var(--color-homepage-yellow);
+    cursor: pointer;
+    color: var(--color-homepage-yellow);
+    font-size: 18px;
+    line-height: 1;
+    padding: 4px 8px;
+    z-index: 2;
+    transition: opacity 0.2s;
+
+    &:hover {
+      opacity: 0.7;
+    }
+  }
+}

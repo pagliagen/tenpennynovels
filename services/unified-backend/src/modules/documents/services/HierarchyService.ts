@@ -84,8 +84,8 @@ export class HierarchyService {
         _id: child._id.toString(),
         slug: child.slug,
         title: child.title,
-        hasRoute: hasOwnPage,
-        routePath: hasOwnPage ? `/${type}/${child.path}` : undefined,
+        hasOwnPage,
+        path: hasOwnPage ? child.path : undefined,
         depth: currentDepth + 1,
         order: child.order,
         children: grandchildren

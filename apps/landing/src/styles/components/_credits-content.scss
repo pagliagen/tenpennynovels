@@ -1,29 +1,24 @@
 /**
- * Credits Page Styles (crediti-page)
+ * Credits Content Styles (inline within page-info)
  */
 
-.crediti-page {
+.credits-content {
   width: 100%;
-  padding: 20px;
-  position: relative;
-  background-color: rgba(0, 0, 0, 0.5);
-  border: 1px solid var(--color-homepage-yellow);
-  max-height: 400px; 
-  overflow-y: auto;
- 
+
   h2 {
     color: #d4af37;
     margin-bottom: 2rem;
     font-size: 2.5rem;
   }
 
-  h4 {
+  h3 {
     color: #d4af37;
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
+    font-size: 1.1rem;
   }
 
   p {
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
     color: rgba(255, 255, 255, 0.9);
   }
 

@@ -44,7 +44,7 @@
   --login-stripe-url: url('/images/stripe.png');
   --login-stripe-h: 25px;
   --login-stripe-off: -10px;
-  --login-field-br: #925951;
+  --login-field-br: #025951;
 
   input {
     text-align: center;
@@ -76,7 +76,7 @@
         bottom: var(--login-stripe-off);
         height: var(--login-stripe-h);
         background: var(--login-stripe-url) repeat-x center / auto 100%;
-        z-index: 1;
+        z-index: 0;
       }
     }
 

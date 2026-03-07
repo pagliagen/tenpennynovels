@@ -17,7 +17,7 @@ const LOGO_IMAGE_SRC = '/images/title.png';
 export interface VictorianLayoutMobileProps {
   /** Page content rendered inside the main area. */
   children: React.ReactNode;
-  /** When true, shows only "Chiudi" in the nav (info pages: credits, privacy, terms). */
+  /** When true, shows only "Chiudi" in the nav (info pages: credits). */
   isInfoPage: boolean;
   /** Page identifier for main content (e.g. "login-page", "register-page"). */
   pageClass: string;
@@ -29,6 +29,8 @@ export interface VictorianLayoutMobileProps {
   isMobileMenuOpen: boolean;
   /** Toggles the mobile nav overlay. */
   onToggleMobileMenu: () => void;
+  /** Optional info panel rendered above page content */
+  pageInfo?: React.ReactNode;
 }
 
 export const VictorianLayoutMobile: React.FC<VictorianLayoutMobileProps> = ({
@@ -39,6 +41,7 @@ export const VictorianLayoutMobile: React.FC<VictorianLayoutMobileProps> = ({
   onDocsClick,
   isMobileMenuOpen,
   onToggleMobileMenu,
+  pageInfo,
 }) => {
   return (
     <div className="victorian-layout-mobile">
@@ -72,39 +75,37 @@ export const VictorianLayoutMobile: React.FC<VictorianLayoutMobileProps> = ({
           ✕
         </button>
         <nav className="victorian-layout-mobile__nav-content">
-          {isInfoPage ? (
+          {isInfoPage ?? (
             <Button
               variant="ghost"
               onClick={() => onNavigate('/')}
               className="victorian-layout-mobile__nav-button"
             >
-              Chiudi
+              Torna al Login
             </Button>
-          ) : (
-            <>
-              <Button
-                variant="ghost"
-                onClick={() => onNavigate('/register')}
-                className="victorian-layout-mobile__nav-button"
-              >
-                Registrati
-              </Button>
-              <Button
-                variant="ghost"
-                onClick={onDocsClick}
-                className="victorian-layout-mobile__nav-button"
-              >
-                Documenti
-              </Button>
-              <Button
-                variant="ghost"
-                onClick={() => onNavigate('/credits')}
-                className="victorian-layout-mobile__nav-button"
-              >
-                Crediti
-              </Button>
-            </>
           )}
+
+          <Button
+            variant="ghost"
+            onClick={() => onNavigate('/register')}
+            className="victorian-layout-mobile__nav-button"
+          >
+            Registrati
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={onDocsClick}
+            className="victorian-layout-mobile__nav-button"
+          >
+            Documenti
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={() => onNavigate('/credits')}
+            className="victorian-layout-mobile__nav-button"
+          >
+            Crediti
+          </Button>
         </nav>
       </div>
 
@@ -126,6 +127,9 @@ export const VictorianLayoutMobile: React.FC<VictorianLayoutMobileProps> = ({
             <h2 className="victorian-layout-mobile__title">Chapter One</h2>
           </div>
         </div>
+        {pageInfo && (
+          <div className="victorian-layout-mobile__page-info">{pageInfo}</div>
+        )}
         <div className="victorian-layout-mobile__page-content">{children}</div>
       </main>
     </div>

@@ -43,13 +43,10 @@
   }
 
   &__nav {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-md);
     margin-left: auto;
     margin-right: auto;
     width: 70%;
-    max-width: 300px; 
+    max-width: 300px;
   }
 
   &__nav-title {
@@ -64,7 +61,7 @@
   }
 
   &__nav-button {
-    width: 100%;
+    display: block;
     padding: unset;
     justify-content: left;
     text-align: left;
@@ -73,6 +70,7 @@
     transition: var(--transition-button);
     color: var(--color-homepage-green);
     text-transform: uppercase;
+    margin-bottom: var(--spacing-md);
 
     &:hover {
       color: var(--color-homepage-green);
@@ -94,27 +92,32 @@
     flex-direction: column;
     align-items: center;
 
+    &--credits-page .victorian-layout-desktop__page-content {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      padding: 20px 17%;
+      max-height: 450px;
+    }
+
     &--register-page .victorian-layout-desktop__page-content {
       position: absolute;
       bottom: 0;
       width: 100%;
-      padding: 20px 17%; 
-    }
-
-    &--privacy-page .victorian-layout-desktop__page-content,
-    &--terms-page .victorian-layout-desktop__page-content {
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      width: 100%;
-      padding: unset; 
+      padding: 20px 17%;
+      max-height: 450px;
     }
 
     &--reset-password-token-page .victorian-layout-desktop__page-content {
       position: absolute;
       bottom: 0;
       width: 100%;
-      padding: 20px 17%; 
+      padding: 20px 17%;
+      max-height: 450px;
+    }
+
+    &--login-page .victorian-layout-desktop__background-image {
+      position: relative;
     }
   }
 
@@ -123,8 +126,8 @@
    * Positioned behind page content; same visual as previous background-image.
    */
   &__background-image {
-    position: relative; 
-    flex: 0; 
+    position: absolute;
+    flex: 0;
     width: 100%;
     max-height: calc(100% - 135px);
 
@@ -136,10 +139,27 @@
     }
   }
 
+  &__page-info {
+    position: relative;
+    display: flex;
+    padding: 20px 17%;
+    flex: 1;
+    max-height: calc(100% - 427px);
+
+    .page-info-panel {
+      overflow-y: auto;
+      background-color: #00000080;
+      border: 1px solid var(--color-homepage-yellow);
+      padding: 10px;
+      width: 100%;
+      height: 100%;
+    }
+  }
+
   &__page-content {
     position: relative;
     display: flex;
-    padding: 20px 17%; 
+    padding: 20px 17%;
     flex: 1;
   }
 }

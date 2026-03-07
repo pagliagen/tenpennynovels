@@ -8,14 +8,14 @@
   margin-bottom: $spacing-3xl;
   text-align: center;
   padding-bottom: $spacing-xl;
-  border-bottom: 3px double $color-gold;
+  border-bottom: 2px solid $color-border;
 }
 
 .pageTitle {
-  font-family: $font-title;
+  font-family: $font-secondary;
   font-size: $font-size-4xl;
   font-weight: $font-weight-bold;
-  color: $color-ink;
+  color: $color-heading;
   margin: 0 0 $spacing-md 0;
   letter-spacing: $letter-spacing-wide;
 
@@ -41,8 +41,8 @@
   text-align: center;
   color: $color-text-muted;
   font-style: italic;
-  background-color: rgba(40, 30, 20, 0.02);
-  border: 2px dashed $color-border-secondary;
+  background-color: rgba(0, 0, 0, 0.02);
+  border: 2px dashed $color-border;
   border-radius: $radius-lg;
 }
 
@@ -55,23 +55,17 @@
 .group {
   &:not(:last-child) {
     padding-bottom: $spacing-2xl;
-    border-bottom: 2px solid $color-border-primary;
+    border-bottom: 1px solid $color-border;
   }
 }
 
 .groupTitle {
-  font-family: $font-title;
+  font-family: $font-secondary;
   font-size: $font-size-2xl;
   font-weight: $font-weight-bold;
-  color: $color-ink;
+  color: $color-heading;
   margin: 0 0 $spacing-lg 0;
   letter-spacing: $letter-spacing-wide;
-
-  &::before {
-    content: '❦';
-    color: $color-gold;
-    margin-right: $spacing-sm;
-  }
 
   @include mobile {
     font-size: $font-size-xl;
@@ -93,8 +87,8 @@
   flex-direction: column;
   gap: $spacing-sm;
   padding: $spacing-lg;
-  background-color: rgba(255, 253, 208, 0.3);
-  border: 2px solid $color-border-primary;
+  background-color: rgba(255, 255, 255, 0.5);
+  border: 1px solid $color-border;
   border-radius: $radius-lg;
   text-decoration: none;
   transition: $transition-all;
@@ -108,15 +102,15 @@
     left: 0;
     width: 4px;
     height: 100%;
-    background-color: $color-gold;
+    background-color: $color-primary;
     transform: scaleY(0);
     transform-origin: bottom;
-    transition: transform $transition-speed-normal $transition-easing-default;
+    transition: transform $transition-speed-normal $transition-easing;
   }
 
   &:hover {
-    border-color: $color-gold;
-    box-shadow: $shadow-lg;
+    border-color: $color-primary;
+    box-shadow: $shadow-md;
     transform: translateY(-2px);
 
     &::before {
@@ -125,16 +119,16 @@
     }
 
     .documentTitle {
-      color: $color-gold;
+      color: $color-primary;
     }
   }
 }
 
 .documentTitle {
-  font-family: $font-title;
+  font-family: $font-secondary;
   font-size: $font-size-lg;
   font-weight: $font-weight-semibold;
-  color: $color-ink;
+  color: $color-text-primary;
   margin: 0;
   letter-spacing: $letter-spacing-wide;
   transition: $transition-colors;
@@ -156,8 +150,8 @@
   padding: $spacing-xs $spacing-sm;
   font-size: $font-size-xs;
   color: $color-text-muted;
-  background-color: rgba(40, 30, 20, 0.05);
-  border: 1px solid $color-border-secondary;
+  background-color: rgba(0, 0, 0, 0.03);
+  border: 1px solid $color-border;
   border-radius: $radius-sm;
   margin-top: $spacing-xs;
 }

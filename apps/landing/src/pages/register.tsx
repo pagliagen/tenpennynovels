@@ -25,7 +25,9 @@ import type { z } from 'zod';
 import { FormPageLayout } from '@/components/layouts/FormPageLayout';
 import { MaskedInput } from '@/components/forms/MaskedInput';
 import { FormActions } from '@/components/forms/FormActions';
-import { Button } from '@/components/Button';
+import { TermsContent } from '@/components/content/TermsContent';
+import { PrivacyContent } from '@/components/content/PrivacyContent';
+import { CreditsContent } from '@/components/content/CreditsContent';
 import { useFormState } from '@/hooks/useFormState';
 import { useDebounce } from '@/hooks/useDebounce';
 import { authService } from '@/services/AuthService';
@@ -47,7 +49,27 @@ type RegisterFormData = z.infer<typeof RegisterSchema>;
 export default function RegisterPage() {
   const router = useRouter();
   const { globalError, globalSuccess, loading, setError, setSuccess, setLoading, clearMessages, handleApiError } = useFormState();
-  const [devVerificationUrl, setDevVerificationUrl] = useState<string | null>(null);
+  const [activeInfo, setActiveInfo] = useState<'terms' | 'privacy' | 'credits' | null>(null);
+
+  const infoComponents = {
+    terms: <TermsContent />,
+    privacy: <PrivacyContent />,
+    credits: <CreditsContent />,
+  } as const;
+
+  const pageInfoContent = activeInfo ? (
+    <div className="page-info-panel">
+      <button
+        type="button"
+        className="page-info-panel__close"
+        onClick={() => setActiveInfo(null)}
+        aria-label="Chiudi"
+      >
+        ✕
+      </button>
+      {infoComponents[activeInfo]}
+    </div>
+  ) : undefined;
 
   const {
     register,
@@ -119,17 +141,11 @@ export default function RegisterPage() {
   const onSubmit = async (data: RegisterFormData) => {
     try {
       setLoading(true);
-      clearMessages();
-      setDevVerificationUrl(null); // Clear previous URL
+      clearMessages(); 
 
       const result = await authService.register(data);
 
-      if (result.result) {
-        // Extract dev verification URL if present
-        if (result.__devHeaders?.['X-Dev-Verification-Url']) {
-          setDevVerificationUrl(result.__devHeaders['X-Dev-Verification-Url']);
-        }
-
+      if (result.result) { 
         setSuccess(result.message || 'Registrazione completata con successo! Verrai reindirizzato al login...');
         // Redirect to login after 5 seconds (increased from 3s to allow viewing dev URL)
         setTimeout(() => {
@@ -155,82 +171,9 @@ export default function RegisterPage() {
       globalSuccess={globalSuccess}
       onDismissError={clearMessages}
       onDismissSuccess={clearMessages}
+      pageInfo={pageInfoContent}
     >
-      <form onSubmit={handleSubmit(onSubmit)} className="register-form">
-        {/* DEV ONLY: Display verification URL */}
-        {devVerificationUrl && (
-          <div style={{
-            marginBottom: '1.5rem',
-            padding: '1rem',
-            backgroundColor: '#fff3cd',
-            border: '2px solid #ffc107',
-            borderRadius: '6px',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-          }}>
-            <div style={{ fontWeight: 'bold', marginBottom: '0.75rem', color: '#856404', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span style={{ fontSize: '1.2rem' }}>🔧</span>
-              DEV MODE: Email Verification Link
-            </div>
-
-            <div style={{ fontSize: '0.9rem', marginBottom: '0.75rem', color: '#333', lineHeight: '1.5' }}>
-              Per velocizzare il testing, puoi verificare l'email direttamente cliccando qui sotto:
-            </div>
-
-            <a
-              href={devVerificationUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: 'block',
-                padding: '0.75rem 1rem',
-                backgroundColor: '#28a745',
-                color: 'white',
-                textAlign: 'center',
-                textDecoration: 'none',
-                borderRadius: '4px',
-                fontWeight: 'bold',
-                marginBottom: '0.75rem',
-                cursor: 'pointer'
-              }}
-            >
-              ✓ Verifica Email Ora
-            </a>
-
-            <div style={{ fontSize: '0.85rem', color: '#666', marginBottom: '0.5rem', fontWeight: '500' }}>
-              Oppure copia il link:
-            </div>
-
-            <input
-              type="text"
-              readOnly
-              value={devVerificationUrl}
-              onClick={(e) => {
-                e.currentTarget.select();
-                navigator.clipboard.writeText(devVerificationUrl).then(() => {
-                  e.currentTarget.style.backgroundColor = '#d4edda';
-                  setTimeout(() => e.currentTarget.style.backgroundColor = '#f8f9fa', 500);
-                });
-              }}
-              style={{
-                width: '100%',
-                padding: '0.5rem',
-                fontFamily: 'Monaco, Consolas, monospace',
-                fontSize: '0.75rem',
-                backgroundColor: '#f8f9fa',
-                border: '1px solid #ced4da',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                wordBreak: 'break-all'
-              }}
-              title="Click per selezionare e copiare"
-            />
-
-            <div style={{ fontSize: '0.75rem', color: '#6c757d', marginTop: '0.5rem', fontStyle: 'italic' }}>
-              💡 Questo box appare SOLO in ambiente di sviluppo
-            </div>
-          </div>
-        )}
-
+      <form onSubmit={handleSubmit(onSubmit)} className="register-form"> 
         <div className="register-fields">
           <MaskedInput
             id="username"
@@ -292,13 +235,29 @@ export default function RegisterPage() {
               />
               <label htmlFor="agreeToTerms" style={{ fontSize: '0.9rem', color: 'var(--color-text-primary)', cursor: 'pointer' }}>
                 Accetto i{' '}
-                <a href="/terms" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-primary)', textDecoration: 'underline' }}>
+                <button
+                  type="button"
+                  onClick={() => setActiveInfo(activeInfo === 'terms' ? null : 'terms')}
+                  style={{ color: 'var(--color-primary)', textDecoration: 'underline', background: 'none', border: 'none', padding: 0, cursor: 'pointer', font: 'inherit' }}
+                >
                   termini e condizioni
-                </a>{' '}
+                </button>{' '}
                 e la{' '}
-                <a href="/privacy" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-primary)', textDecoration: 'underline' }}>
+                <button
+                  type="button"
+                  onClick={() => setActiveInfo(activeInfo === 'privacy' ? null : 'privacy')}
+                  style={{ color: 'var(--color-primary)', textDecoration: 'underline', background: 'none', border: 'none', padding: 0, cursor: 'pointer', font: 'inherit' }}
+                >
                   privacy policy
-                </a>
+                </button>
+                {' | '}
+                <button
+                  type="button"
+                  onClick={() => setActiveInfo(activeInfo === 'credits' ? null : 'credits')}
+                  style={{ color: 'var(--color-primary)', textDecoration: 'underline', background: 'none', border: 'none', padding: 0, cursor: 'pointer', font: 'inherit' }}
+                >
+                  crediti
+                </button>
               </label>
             </div>
             {errors.agreeToTerms && (

@@ -24,6 +24,8 @@ export interface VictorianLayoutProps {
   children: React.ReactNode;
   /** Optional subtitle (reserved for future use). */
   subtitle?: string;
+  /** Optional info panel rendered above page content */
+  pageInfo?: React.ReactNode;
 }
 
 /** Breakpoint in px: viewport >= this is desktop. */
@@ -50,12 +52,12 @@ const DOCS_URL = process.env.NEXT_PUBLIC_DOCUMENTS_URL || 'http://localhost:4002
  * Chooses Desktop or Mobile layout based on viewport width.
  * Keeps navigation state and handlers in one place; passes them to the active layout.
  */
-export const VictorianLayout: React.FC<VictorianLayoutProps> = ({ children, subtitle }) => {
+export const VictorianLayout: React.FC<VictorianLayoutProps> = ({ children, subtitle, pageInfo }) => {
   const router = useRouter();
   const isDesktop = useIsDesktop(LAYOUT_BREAKPOINT_PX);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const isInfoPage = ['/credits', '/privacy', '/terms'].includes(router.pathname);
+  const isInfoPage = router.pathname === '/credits';
 
   const handleNavigate = useCallback(
     (path: string) => {
@@ -67,7 +69,7 @@ export const VictorianLayout: React.FC<VictorianLayoutProps> = ({ children, subt
 
   const handleDocsClick = useCallback(() => {
     if (typeof window !== 'undefined') {
-      window.location.href = DOCS_URL;
+      window.open(DOCS_URL, 'tpn-docs', 'noopener,noreferrer');
     }
     setIsMobileMenuOpen(false);
   }, []);
@@ -85,6 +87,7 @@ export const VictorianLayout: React.FC<VictorianLayoutProps> = ({ children, subt
         pageClass={pageClass}
         onNavigate={handleNavigate}
         onDocsClick={handleDocsClick}
+        pageInfo={pageInfo}
       >
         {children}
       </VictorianLayoutDesktop>
@@ -99,6 +102,7 @@ export const VictorianLayout: React.FC<VictorianLayoutProps> = ({ children, subt
       onDocsClick={handleDocsClick}
       isMobileMenuOpen={isMobileMenuOpen}
       onToggleMobileMenu={toggleMobileMenu}
+      pageInfo={pageInfo}
     >
       {children}
     </VictorianLayoutMobile>

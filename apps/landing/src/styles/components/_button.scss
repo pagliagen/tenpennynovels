@@ -47,14 +47,7 @@
     &--right {
       margin-left: calc(var(--spacing-sm) * -0.5);
     }
-  }
-
-  /**
-   * Hover state
-   */
-  &:hover:not(:disabled) {
-    box-shadow: var(--shadow-md);
-  }
+  } 
 
   /**
    * Active/pressed state

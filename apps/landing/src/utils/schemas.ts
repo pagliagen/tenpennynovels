@@ -164,26 +164,6 @@ export const createBreadcrumbSchema = (items: Array<{ name: string; url: string 
 });
 
 /**
- * Privacy Page Breadcrumb
- *
- * @constant
- */
-export const privacyBreadcrumb = createBreadcrumbSchema([
-  { name: "Home", url: "https://tenpennynovels.com/" },
-  { name: "Privacy Policy", url: "https://tenpennynovels.com/privacy/" }
-]);
-
-/**
- * Terms Page Breadcrumb
- *
- * @constant
- */
-export const termsBreadcrumb = createBreadcrumbSchema([
-  { name: "Home", url: "https://tenpennynovels.com/" },
-  { name: "Termini e Condizioni", url: "https://tenpennynovels.com/terms/" }
-]);
-
-/**
  * Credits Page Breadcrumb
  *
  * @constant

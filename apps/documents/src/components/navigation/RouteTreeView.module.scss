@@ -1,31 +1,24 @@
-/**
- * RouteTreeView Component Styles
- *
- * Hierarchical route navigation with nested indentation.
- */
-
 @use '../../styles/variables' as *;
 
 .routeTree {
   display: flex;
   flex-direction: column;
+  padding: $spacing-md;
 }
 
 .routeItem {
   display: flex;
   flex-direction: column;
+  padding-left: calc(var(--depth, 0) * #{$spacing-md});
+  margin-bottom: 10px;
 }
 
 .routeRow {
   display: flex;
   align-items: center;
-  gap: 1.6px;  
-  padding: 1.6px 0;  
-  transition: background-color $transition-speed-fast;
-
-  &:hover {
-    background-color: rgba(212, 175, 55, 0.05);
-  }
+  gap: 2px;
+  padding: 2px 0;
+  transition: background-color $transition-speed-fast; 
 }
 
 .expandButton {
@@ -34,18 +27,18 @@
   padding: 0;
   border: none;
   background: none;
-  color: $color-text-secondary;
+  color: $color-text-light-muted;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;  
+  font-size: 12px;
   transition: all $transition-speed-fast;
   flex-shrink: 0;
 
   &:hover {
-    color: $color-text-primary;
-    background-color: rgba(255, 255, 255, 0.05);
+    color: $color-text-light;
+    background-color: rgba(255, 255, 255, 0.08);
     border-radius: $radius-sm;
   }
 }
@@ -60,25 +53,22 @@
   flex: 1;
   display: flex;
   align-items: center;
-  gap: 8px;  
-  padding: 5px 10px;  
-  border-radius: $radius-md;
+  gap: 8px;
+  padding: 0 5px;
+  border-radius: $radius-sm;
   text-decoration: none;
-  color: $color-text-primary;
-  font-size: 15px;  
+  color: $color-text-light-muted;
+  font-size: $font-size-sm;
   transition: all $transition-speed-fast;
   border: 1px solid transparent;
 
   &:hover {
-    background-color: rgba(212, 175, 55, 0.1);
-    border-color: rgba(212, 175, 55, 0.3);
+    color: $color-text-light;
   }
 
   &.active {
-    background-color: rgba(212, 175, 55, 0.2);
-    border-color: $color-primary;
-    font-weight: 600;
-    color: $color-primary;
+    color: $color-text-light;
+    font-weight: $font-weight-semibold;
   }
 }
 
@@ -88,8 +78,26 @@
 }
 
 .privateBadge {
-  font-size: 13.6px; 
+  font-size: 13px;
   opacity: 0.7;
+}
+
+.subtypeLabel {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  padding: 0 5px;
+  color: $color-text-light;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  text-transform: uppercase;
+  letter-spacing: $letter-spacing-wider;
+  cursor: default;
+  user-select: none;
+}
+
+.childItem {
+  padding-left: 0;
 }
 
 .routeChildren {

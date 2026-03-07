@@ -35,6 +35,8 @@ export interface PageLayoutProps extends Omit<SEOProps, 'title' | 'description'>
   children: React.ReactNode;
   /** Optional Victorian layout subtitle */
   subtitle?: string;
+  /** Optional info panel rendered above page content */
+  pageInfo?: React.ReactNode;
 }
 
 /**
@@ -113,6 +115,7 @@ export const PageLayout: React.FC<PageLayoutProps> = ({
   nofollow,
   schema,
   subtitle,
+  pageInfo,
   children,
 }) => {
   return (
@@ -128,7 +131,7 @@ export const PageLayout: React.FC<PageLayoutProps> = ({
         schema={schema}
       />
 
-      <VictorianLayout subtitle={subtitle}>{children}</VictorianLayout>
+      <VictorianLayout subtitle={subtitle} pageInfo={pageInfo}>{children}</VictorianLayout>
     </>
   );
 };

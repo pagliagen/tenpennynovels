@@ -1,0 +1,12 @@
+@use '../../variables' as *;
+
+.loadingScreen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  font-family: $font-primary;
+  font-size: $font-size-lg;
+  color: $color-primary;
+  background-color: $color-content-bg;
+}

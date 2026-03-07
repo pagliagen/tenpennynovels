@@ -187,6 +187,18 @@
     margin-top: var(--spacing-2xl);
 }
 
+  &__page-info {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 50%;
+    overflow-y: auto;
+    padding: var(--spacing-container-mobile);
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 1;
+  }
+
   &__page-content {
     position: absolute;
     left: 0;

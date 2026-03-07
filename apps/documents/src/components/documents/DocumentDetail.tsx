@@ -1,16 +1,3 @@
-/**
- * DocumentDetail Component
- *
- * Complete document view with header, TOC, and sections.
- * Victorian-styled article layout with ornate decorations.
- *
- * For categories: displays list of sub-routes as navigation links.
- * For documents: displays sections with TOC.
- *
- * @module components/documents/DocumentDetail
- * @since 1.0.0
- */
-
 'use client';
 
 import { useEffect } from 'react';
@@ -27,37 +14,33 @@ interface DocumentDetailProps {
 
 export function DocumentDetail({ data }: DocumentDetailProps): JSX.Element {
   const { document, sections, childDocuments } = data;
-
-  // Show TOC only if there are 2+ sections
   const showTOC = sections && sections.length >= 2;
 
-  // ✅ FIX: Scroll to anchor on page load (e.g., direct navigation to #scienza)
   useEffect(() => {
     const hash = window.location.hash;
     if (!hash) return;
 
-    // Wait for DOM to be fully rendered (dangerouslySetInnerHTML needs time)
     const timeoutId = setTimeout(() => {
-      const elementId = hash.substring(1); // Remove '#' prefix
-      const element = window.document.getElementById(elementId); // Use window.document to avoid conflict with destructured 'document' variable
-
+      const elementId = hash.substring(1);
+      const element = window.document.getElementById(elementId);
       if (element) {
-        // Scroll with smooth behavior
         element.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
-    }, 100); // Small delay to ensure HTML is injected
+    }, 100);
 
     return () => clearTimeout(timeoutId);
-  }, [document.content]); // Re-run if content changes
+  }, [document.content]);
 
   return (
     <article className={styles.article}>
       <DocumentHeader document={document} />
 
+      {document.description && (
+        <p className={styles.description}>{document.description}</p>
+      )}
+
       <div className={showTOC ? styles.bodyLayout : styles.bodyLayoutFullWidth}>
-        {/* Main Content */}
         <div className={styles.body}>
-          {/* Render HTML content with H2 anchors */}
           <div
             className={styles.documentContent}
             dangerouslySetInnerHTML={{
@@ -72,15 +55,14 @@ export function DocumentDetail({ data }: DocumentDetailProps): JSX.Element {
             }}
           />
 
-          {/* Child documents listing (if any) - shown AFTER main content */}
           {childDocuments && childDocuments.length > 0 && (
             <div className={styles.categoryContent}>
               <h2>Documenti correlati:</h2>
               <ul className={styles.subRoutesList}>
                 {childDocuments.map((child) => (
                   <li key={child._id}>
-                    {child.hasRoute && child.routePath ? (
-                      <Link href={`/${document.type}/${child.routePath}`}>
+                    {child.hasOwnPage && child.path ? (
+                      <Link href={`/${document.type}/${child.path}`}>
                         <div className={styles.subRouteItem}>
                           <h3>{child.title}</h3>
                         </div>
@@ -96,7 +78,6 @@ export function DocumentDetail({ data }: DocumentDetailProps): JSX.Element {
             </div>
           )}
 
-          {/* Empty State - only if NO content AND NO child documents */}
           {!document.content && (!childDocuments || childDocuments.length === 0) && (
             <div className={styles.emptyState}>
               <p>Questo documento non contiene ancora contenuto.</p>
@@ -104,13 +85,9 @@ export function DocumentDetail({ data }: DocumentDetailProps): JSX.Element {
           )}
         </div>
 
-        {/* Table of Contents - ONLY for sections (anchors mode) */}
         {showTOC && (
           <aside className={styles.tocAside}>
-            <TableOfContents
-              mode="anchors"
-              sections={sections}
-            />
+            <TableOfContents mode="anchors" sections={sections} />
           </aside>
         )}
       </div>

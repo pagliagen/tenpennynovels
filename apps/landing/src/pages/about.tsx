@@ -29,7 +29,7 @@ export default function AboutPage() {
       canonical="https://tenpennynovels.com/about/"
       schema={aboutBreadcrumb}
     >
-      <div className="creditsPage">
+      <div className="crediti-page">
         <h2>Chi Siamo</h2>
 
         <h3>Cos'è Ten Penny Novels?</h3>
@@ -155,7 +155,7 @@ export default function AboutPage() {
           </a>.
         </p>
 
-        <div className="creditsPage__footer">
+        <div className="crediti-page__footer">
           <p>
             "The oldest and strongest emotion of mankind is fear, and the oldest and strongest kind of fear is fear of the unknown."
           </p>
@@ -163,7 +163,7 @@ export default function AboutPage() {
             — H.P. Lovecraft
           </p>
           <p style={{ marginTop: '1rem' }}>
-            © 2024 Ten Penny Novels - Piattaforma GDR Londra Vittoriana
+            © 2025 Ten Penny Novels - Piattaforma GDR Londra Vittoriana
           </p>
         </div>
       </div>

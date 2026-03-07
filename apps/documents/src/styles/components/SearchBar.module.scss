@@ -1,125 +1,73 @@
-/**
- * SearchBar Styles
- */
+@use '../variables' as *;
 
 .searchContainer {
   position: relative;
   width: 100%;
-  max-width: 600px;
 }
 
 .searchInputWrapper {
   position: relative;
   display: flex;
   align-items: center;
-  background: var(--color-background-secondary, #f5f5f5);
-  border: 2px solid var(--color-border, #e0e0e0);
-  border-radius: 8px;
-  transition: all 0.2s ease;
-
-  &:focus-within {
-    background: var(--color-background, #ffffff);
-    border-color: var(--color-primary, #8b4513);
-    box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.1);
-  }
 }
 
 .searchIcon {
   position: absolute;
-  left: 12px;
-  color: var(--color-text-muted, #666);
+  left: $spacing-sm;
+  color: $color-text-muted;
   pointer-events: none;
+  z-index: 1;
 }
 
 .searchInput {
-  flex: 1;
-  padding: 12px 16px 12px 44px;
-  font-size: 16px;
-  line-height: 1.5;
-  color: var(--color-text, #333);
-  background: transparent;
-  border: none;
-  outline: none;
+  width: 100%;
+  padding: $spacing-sm $spacing-md;
+  padding-left: $spacing-2xl;
+  padding-right: $spacing-2xl;
+  font-family: $font-primary;
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  background-color: #1c1c1c;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  transition: $transition-all;
 
   &::placeholder {
-    color: var(--color-text-muted, #999);
+    color: $color-text-muted;
+    font-style: italic;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: $color-primary;
+    box-shadow: 0 0 0 3px rgba($color-primary, 0.15);
   }
 }
 
 .clearButton {
+  position: absolute;
+  right: $spacing-2xl;
+  padding: $spacing-xs;
+  color: $color-text-muted;
+  cursor: pointer;
+  transition: $transition-colors;
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  margin-right: 4px;
-  color: var(--color-text-muted, #666);
-  background: transparent;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.2s ease;
 
   &:hover {
-    color: var(--color-text, #333);
-    background: var(--color-background-secondary, #f0f0f0);
-  }
-
-  svg {
-    width: 16px;
-    height: 16px;
+    color: $color-text-primary;
   }
 }
 
 .shortcut {
-  display: none;
-  padding: 4px 8px;
-  margin-right: 8px;
-  font-size: 12px;
-  font-family: var(--font-mono, monospace);
-  color: var(--color-text-muted, #666);
-  background: var(--color-background, #fff);
-  border: 1px solid var(--color-border, #e0e0e0);
-  border-radius: 4px;
-
-  @media (min-width: 768px) {
-    display: block;
-  }
-}
-
-// Dark mode support
-@media (prefers-color-scheme: dark) {
-  .searchInputWrapper {
-    background: var(--color-background-secondary, #2a2a2a);
-    border-color: var(--color-border, #444);
-
-    &:focus-within {
-      background: var(--color-background, #1a1a1a);
-      border-color: var(--color-primary, #d4a574);
-      box-shadow: 0 0 0 3px rgba(212, 165, 116, 0.1);
-    }
-  }
-
-  .searchInput {
-    color: var(--color-text, #e0e0e0);
-
-    &::placeholder {
-      color: var(--color-text-muted, #888);
-    }
-  }
-
-  .clearButton {
-    color: var(--color-text-muted, #888);
-
-    &:hover {
-      color: var(--color-text, #e0e0e0);
-      background: var(--color-background-secondary, #333);
-    }
-  }
-
-  .shortcut {
-    color: var(--color-text-muted, #888);
-    background: var(--color-background-secondary, #2a2a2a);
-    border-color: var(--color-border, #444);
-  }
+  position: absolute;
+  right: $spacing-sm;
+  font-family: $font-mono;
+  font-size: $font-size-xs;
+  color: $color-text-muted;
+  background-color: rgba(0, 0, 0, 0.05);
+  padding: 2px 6px;
+  border-radius: $radius-sm;
+  border: 1px solid $color-border;
+  pointer-events: none;
 }

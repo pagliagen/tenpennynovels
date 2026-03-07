@@ -1,27 +1,13 @@
-/**
- * Credits Page
- *
- * Credits and acknowledgments for TenPennyNovels.
- *
- * **Content**: Development team, technologies, resources, acknowledgments
- * **Reduced from**: 101 lines → 95 lines (6% reduction)
- *
- * @module pages/credits
- */
-
 import React from 'react';
+import { useRouter } from 'next/router';
 
 import { PageLayout } from '@/components/layouts/PageLayout';
+import { Button } from '@/components/Button';
 import { creditsBreadcrumb } from '@/utils/schemas';
 
-/**
- * Credits Page Component
- *
- * Displays development credits and acknowledgments.
- *
- * @returns {JSX.Element} Credits page
- */
 export default function CreditsPage() {
+  const router = useRouter();
+
   return (
     <PageLayout
       title="Crediti e Ringraziamenti - Ten Penny Novels"
@@ -29,7 +15,7 @@ export default function CreditsPage() {
       canonical="https://tenpennynovels.com/credits/"
       schema={creditsBreadcrumb}
     >
-      <div className="creditsPage">
+      <div className="crediti-page">
         <h2>Crediti</h2>
         <h4>Sviluppo</h4>
         <p>
@@ -80,14 +66,14 @@ export default function CreditsPage() {
           La comunità di sviluppatori open source
         </p>
 
-        <div className="creditsPage__footer">
+        <div className="crediti-page__footer">
           <p>
             "In his house at R'lyeh, dead Cthulhu waits dreaming..."
           </p>
           <p>
-            © 2024 Ten Penny Novels - Piattaforma GDR Londra Vittoriana
+            © 2025 Ten Penny Novels - Piattaforma GDR Londra Vittoriana
           </p>
-        </div>
+        </div> 
       </div>
     </PageLayout>
   );

@@ -29,6 +29,8 @@ import { Alert } from '../Alert';
 export interface FormPageLayoutProps extends Omit<PageLayoutProps, 'children'> {
   /** Page content (typically a form) */
   children: React.ReactNode;
+  /** Optional info panel rendered above page content (e.g. terms, privacy inline) */
+  pageInfo?: React.ReactNode;
   /** Global error message (null if no error) */
   globalError?: string | null;
   /** Global success message (null if no success) */
@@ -147,6 +149,7 @@ export const FormPageLayout: React.FC<FormPageLayoutProps> = ({
   nofollow,
   schema,
   subtitle,
+  pageInfo,
   globalError,
   globalSuccess,
   successAutoHide = 0,
@@ -163,6 +166,7 @@ export const FormPageLayout: React.FC<FormPageLayoutProps> = ({
       nofollow={nofollow}
       schema={schema}
       subtitle={subtitle}
+      pageInfo={pageInfo}
     >
       <div className="form-page">
         {/* Global error alert */}

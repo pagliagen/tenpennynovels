@@ -1,138 +1,141 @@
 @use '../../variables' as *;
 
 .article {
+  position: relative;
   width: 100%;
-}
+  background-image: $paper-texture-url;
+  background-attachment: fixed;
+  padding: $spacing-md;
 
-.header {
-  margin-bottom: $spacing-2xl;
-  padding-bottom: $spacing-xl;
-  border-bottom: 3px double $color-gold;
-}
-
-.metadata {
-  display: flex;
-  align-items: center;
-  gap: $spacing-sm;
-  margin-bottom: $spacing-md;
-  flex-wrap: wrap;
-}
-
-.typeBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: $spacing-xs;
-  padding: $spacing-xs $spacing-md;
-  font-size: $font-size-sm;
-  font-weight: $font-weight-semibold;
-  color: white;
-  border-radius: $radius-md;
-  text-transform: uppercase;
-  letter-spacing: $letter-spacing-wide;
-  box-shadow: $shadow-sm;
-}
-
-.privateBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: $spacing-xs;
-  padding: $spacing-xs $spacing-md;
-  font-size: $font-size-sm;
-  color: $color-text-muted;
-  background-color: rgba(40, 30, 20, 0.05);
-  border: 1px solid $color-border-secondary;
-  border-radius: $radius-md;
-}
-
-.title {
-  font-family: $font-title;
-  font-size: $font-size-3xl;
-  font-weight: $font-weight-bold;
-  color: $color-ink;
-  margin: 0 0 $spacing-md 0;
-  line-height: $line-height-tight;
-  letter-spacing: $letter-spacing-wide;
-
-  @include mobile {
-    font-size: $font-size-2xl;
+  ::after {
+    position: absolute;
+    top: calc($spacing-md / 2);
+    left: calc($spacing-md / 2);
+    right: calc($spacing-md / 2);
+    bottom: calc($spacing-md / 2);
+    border: 2px solid #67675e;
   }
 }
+
+// ========== STICKY HEADER (title + favorites) ==========
+
+.stickyHeader {
+  position: sticky;
+  top: $header-height;
+  z-index: $z-index-sticky - 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-md;
+  padding: $spacing-md 0;
+  border-bottom: 2px solid $color-border;
+  background-image: $paper-texture-url;
+  background-attachment: fixed;
+
+  @include mobile {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: $spacing-sm;
+  }
+}
+
+.stickyTitle {
+  font-family: $font-secondary;
+  font-size: $font-size-2xl;
+  font-weight: $font-weight-bold;
+  color: $color-heading;
+  margin: 0;
+  line-height: $line-height-tight;
+  letter-spacing: $letter-spacing-wide;
+  text-align: center;
+  flex: 1;
+
+  @include mobile {
+    font-size: $font-size-xl;
+    text-align: left;
+  }
+}
+
+.titleDiamond {
+  color: $color-heading;
+  font-size: 0.6em;
+  margin: 0 $spacing-sm;
+  vertical-align: middle;
+}
+
+.favoriteButton {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-xs;
+  padding: $spacing-xs $spacing-md;
+  font-family: $font-primary;
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: $transition-all;
+  white-space: nowrap;
+  flex-shrink: 0;
+
+  &:hover {
+    font-weight: $font-weight-bold;
+  }
+
+  &.favorited {
+    color: $color-heading;
+
+    .favoriteIcon {
+      color: $color-accent;
+    }
+  }
+}
+
+.favoriteIcon {
+  font-size: $font-size-lg;
+}
+
+.favoriteLabel {
+  text-transform: uppercase;
+  font-size: $font-size-xs;
+  letter-spacing: $letter-spacing-wide;
+}
+
+// ========== DESCRIPTION ==========
 
 .description {
   font-size: $font-size-md;
   color: $color-text-secondary;
   line-height: $line-height-relaxed;
-  margin: 0 0 $spacing-lg 0;
+  margin: $spacing-md 0 $spacing-lg 0;
   font-style: italic;
 }
 
-.info {
-  display: flex;
-  align-items: center;
-  gap: $spacing-lg;
-  flex-wrap: wrap;
-  margin-bottom: $spacing-md;
-}
-
-.infoItem {
-  font-size: $font-size-sm;
-  color: $color-text-muted;
-
-  &::before {
-    content: '•';
-    margin-right: $spacing-sm;
-    color: $color-gold;
-  }
-
-  &:first-child::before {
-    content: '';
-    margin: 0;
-  }
-}
-
-.actions {
-  margin-top: $spacing-md;
-}
-
-.favoriteButton {
-  padding: $spacing-sm $spacing-lg;
-  font-size: $font-size-sm;
-  font-weight: $font-weight-semibold;
-  color: $color-ink;
-  background-color: transparent;
-  border: 2px solid $color-border-primary;
-  border-radius: $radius-md;
-  cursor: pointer;
-  transition: $transition-all;
-
-  &:hover {
-    background-color: rgba(212, 175, 55, 0.1);
-    border-color: $color-gold;
-    color: $color-gold;
-  }
-}
+// ========== BODY LAYOUT ==========
 
 .bodyLayout {
   display: grid;
   grid-template-columns: 1fr;
   gap: $spacing-xl;
+  margin-top: $spacing-lg;
 
   @include desktop {
-    grid-template-columns: 1fr 280px;
+    grid-template-columns: 1fr 220px;
   }
 }
 
 .bodyLayoutFullWidth {
   display: grid;
-  grid-template-columns: 1fr; // Always full width (no TOC column)
+  grid-template-columns: 1fr;
   gap: $spacing-xl;
+  margin-top: $spacing-lg;
 }
 
 .tocAside {
   order: 2;
-  align-self: start; // Required for position: sticky to work in grid
+  align-self: start;
   position: sticky;
-  top: calc($header-height + $spacing-lg);
+  top: calc(#{$header-height} + #{$sticky-bar-height} + #{$spacing-lg});
 }
 
 .body {
@@ -146,122 +149,106 @@
   line-height: $line-height-relaxed;
   color: $color-text-primary;
 
-  // ✅ FIX: Prevent fixed header from covering anchored headings
-  // Add scroll margin to all headings to account for sticky header (80px) + padding (20px)
   h1, h2, h3, h4, h5, h6 {
-    scroll-margin-top: calc($header-height + $spacing-lg);
+    scroll-margin-top: calc(#{$header-height} + #{$sticky-bar-height} + #{$spacing-lg});
   }
 
-  // Victorian-styled content
   p {
     margin-bottom: $spacing-lg;
-
-    &:last-child {
-      margin-bottom: 0;
-    }
+    &:last-child { margin-bottom: 0; }
   }
 
   h1 {
-    font-family: $font-title;
+    font-family: $font-secondary;
     font-size: $font-size-3xl;
     font-weight: $font-weight-bold;
-    color: $color-ink;
+    color: $color-heading;
     margin: $spacing-2xl 0 $spacing-lg 0;
     padding-bottom: $spacing-md;
-    border-bottom: 3px double $color-gold;
-    letter-spacing: $letter-spacing-wide;
+    border-bottom: 2px solid $color-border;
 
-    &:first-child {
-      margin-top: 0;
-    }
+    &:first-child { margin-top: 0; }
 
-    @include mobile {
-      font-size: $font-size-2xl;
-    }
-  }
-
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    font-family: $font-title;
-    color: $color-ink;
-    margin-top: $spacing-2xl;
-    margin-bottom: $spacing-md;
-    letter-spacing: $letter-spacing-wide;
+    @include mobile { font-size: $font-size-2xl; }
   }
 
   h2 {
+    font-family: $font-secondary;
     font-size: $font-size-2xl;
     font-weight: $font-weight-bold;
-    padding-bottom: $spacing-sm;
-    border-bottom: 2px solid rgba(212, 175, 55, 0.3);
+    color: $color-heading;
+    margin-top: $spacing-2xl;
+    margin-bottom: $spacing-md;
+    padding-left: $spacing-md;
+    border-left: 4px solid $color-heading;
 
-    @include mobile {
-      font-size: $font-size-xl;
-    }
+    @include mobile { font-size: $font-size-xl; }
   }
 
   h3 {
+    font-family: $font-secondary;
     font-size: $font-size-xl;
     font-weight: $font-weight-semibold;
+    color: $color-heading;
+    margin-top: $spacing-2xl;
+    margin-bottom: $spacing-md;
   }
 
-  h4 {
-    font-size: $font-size-lg;
-    font-weight: $font-weight-semibold;
+  h4, h5, h6 {
+    font-family: $font-secondary;
+    color: $color-heading;
+    margin-top: $spacing-xl;
+    margin-bottom: $spacing-md;
   }
 
-  h5, h6 {
-    font-size: $font-size-base;
-    font-weight: $font-weight-semibold;
-  }
+  h4 { font-size: $font-size-lg; }
+  h5, h6 { font-size: $font-size-base; }
 
   a {
-    color: $color-burgundy;
+    color: $color-link;
     text-decoration: underline;
-    text-decoration-color: rgba(128, 0, 32, 0.3);
+    text-decoration-color: rgba($color-link, 0.3);
     transition: $transition-colors;
 
     &:hover {
-      color: $color-gold;
-      text-decoration-color: $color-gold;
+      color: $color-link-hover;
+      text-decoration-color: $color-link-hover;
     }
   }
 
-  ul,
-  ol {
+  strong, b {
+    font-weight: $font-weight-bold;
+    color: $color-text-primary;
+  }
+
+  ul, ol {
     margin-bottom: $spacing-lg;
     padding-left: $spacing-2xl;
   }
 
-  li {
-    margin-bottom: $spacing-sm;
-  }
+  li { margin-bottom: $spacing-sm; }
 
   blockquote {
-    border-left: 4px solid $color-gold;
-    padding-left: $spacing-lg;
+    border-left: 4px solid $color-primary;
+    padding: $spacing-md $spacing-lg;
     margin: $spacing-lg 0;
     font-style: italic;
-    color: $color-ink-light;
-    background-color: rgba(212, 175, 55, 0.05);
-    padding: $spacing-md $spacing-lg;
-    border-radius: $radius-md;
+    color: $color-text-secondary;
+    background-color: rgba($color-primary, 0.05);
+    border-radius: 0 $radius-md $radius-md 0;
   }
 
   code {
-    font-family: 'Courier New', monospace;
-    background-color: rgba(40, 30, 20, 0.05);
+    font-family: $font-mono;
+    background-color: rgba(0, 0, 0, 0.05);
     padding: 2px 6px;
     border-radius: $radius-sm;
     font-size: 0.9em;
   }
 
   pre {
-    background-color: rgba(40, 30, 20, 0.05);
-    border: 1px solid $color-border-secondary;
+    background-color: rgba(0, 0, 0, 0.05);
+    border: 1px solid $color-border;
     border-radius: $radius-md;
     padding: $spacing-md;
     overflow-x: auto;
@@ -285,166 +272,54 @@
     width: 100%;
     border-collapse: collapse;
     margin: $spacing-lg 0;
-    border: 2px solid $color-border-primary;
+    border: 1px solid $color-border;
 
-    th,
-    td {
+    th, td {
       padding: $spacing-sm $spacing-md;
-      border: 1px solid $color-border-secondary;
+      border: 1px solid $color-border;
       text-align: left;
     }
 
     th {
-      background-color: rgba(212, 175, 55, 0.1);
+      background-color: rgba($color-primary, 0.08);
       font-weight: $font-weight-bold;
-      color: $color-ink;
+      color: $color-text-primary;
     }
   }
 
   hr {
     border: none;
-    border-top: 2px solid rgba(212, 175, 55, 0.3);
+    border-top: 2px solid $color-border;
     margin: $spacing-2xl 0;
   }
 }
 
-.section {
-  margin-bottom: $spacing-3xl;
-
-  &:last-child {
-    margin-bottom: 0;
-  }
-}
-
-.sectionTitle {
-  font-family: $font-title;
-  font-size: $font-size-2xl;
-  font-weight: $font-weight-bold;
-  color: $color-ink;
-  margin: 0 0 $spacing-lg 0;
-  padding-bottom: $spacing-md;
-  border-bottom: 2px solid $color-gold;
-  letter-spacing: $letter-spacing-wide;
-
-  @include mobile {
-    font-size: $font-size-xl;
-  }
-}
-
-.sectionContent {
-  font-size: $font-size-base;
-  line-height: $line-height-relaxed;
-  color: $color-text-primary;
-
-  // Victorian-styled content
-  p {
-    margin-bottom: $spacing-lg;
-
-    &:last-child {
-      margin-bottom: 0;
-    }
-  }
-
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    font-family: $font-title;
-    color: $color-ink;
-    margin-top: $spacing-2xl;
-    margin-bottom: $spacing-md;
-    letter-spacing: $letter-spacing-wide;
-  }
-
-  a {
-    color: $color-burgundy;
-    text-decoration: underline;
-    text-decoration-color: rgba(128, 0, 32, 0.3);
-    transition: $transition-colors;
-
-    &:hover {
-      color: $color-gold;
-      text-decoration-color: $color-gold;
-    }
-  }
-
-  ul,
-  ol {
-    margin-bottom: $spacing-lg;
-    padding-left: $spacing-2xl;
-  }
-
-  li {
-    margin-bottom: $spacing-sm;
-  }
-
-  blockquote {
-    border-left: 4px solid $color-gold;
-    padding-left: $spacing-lg;
-    margin: $spacing-lg 0;
-    font-style: italic;
-    color: $color-ink-light;
-    background-color: rgba(212, 175, 55, 0.05);
-    padding: $spacing-md $spacing-lg;
-    border-radius: $radius-md;
-  }
-
-  img {
-    max-width: 100%;
-    height: auto;
-    border-radius: $radius-md;
-    box-shadow: $shadow-md;
-    margin: $spacing-lg 0;
-  }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: $spacing-lg 0;
-    border: 2px solid $color-border-primary;
-
-    th,
-    td {
-      padding: $spacing-sm $spacing-md;
-      border: 1px solid $color-border-secondary;
-      text-align: left;
-    }
-
-    th {
-      background-color: rgba(212, 175, 55, 0.1);
-      font-weight: $font-weight-bold;
-      color: $color-ink;
-    }
-  }
-}
+// ========== EMPTY STATE ==========
 
 .emptyState {
   padding: $spacing-3xl;
   text-align: center;
   color: $color-text-muted;
   font-style: italic;
-  background-color: rgba(40, 30, 20, 0.02);
-  border: 2px dashed $color-border-secondary;
+  background-color: rgba(0, 0, 0, 0.02);
+  border: 2px dashed $color-border;
   border-radius: $radius-lg;
 }
 
-// ========== CATEGORY VIEW STYLES ==========
+// ========== CATEGORY / CHILD DOCUMENTS ==========
 
 .categoryContent {
+  margin-top: $spacing-2xl;
+
   h2 {
-    font-family: $font-title;
+    font-family: $font-secondary;
     font-size: $font-size-2xl;
-    font-weight: $font-weight-bold;
-    color: $color-ink;
+    color: $color-heading;
     margin: 0 0 $spacing-xl 0;
     padding-bottom: $spacing-md;
-    border-bottom: 2px solid $color-gold;
-    letter-spacing: $letter-spacing-wide;
+    border-bottom: 2px solid $color-border;
 
-    @include mobile {
-      font-size: $font-size-xl;
-    }
+    @include mobile { font-size: $font-size-xl; }
   }
 }
 
@@ -462,38 +337,27 @@
 
 .subRouteItem {
   padding: $spacing-lg;
-  background-color: rgba(40, 30, 20, 0.02);
-  border: 2px solid $color-border-secondary;
+  background-color: rgba(0, 0, 0, 0.02);
+  border: 1px solid $color-border;
   border-radius: $radius-lg;
   transition: $transition-all;
   cursor: pointer;
 
   &:hover {
-    background-color: rgba(212, 175, 55, 0.05);
-    border-color: $color-gold;
+    border-color: $color-primary;
     box-shadow: $shadow-md;
     transform: translateY(-2px);
   }
 
   h3 {
-    font-family: $font-title;
+    font-family: $font-secondary;
     font-size: $font-size-lg;
-    font-weight: $font-weight-bold;
-    color: $color-ink;
-    margin: 0 0 $spacing-sm 0;
-    letter-spacing: $letter-spacing-wide;
+    color: $color-text-primary;
+    margin: 0;
     transition: $transition-colors;
 
     .subRouteItem:hover & {
-      color: $color-gold;
+      color: $color-primary;
     }
   }
-}
-
-.subRouteDescription {
-  font-size: $font-size-sm;
-  line-height: $line-height-relaxed;
-  color: $color-text-secondary;
-  margin: 0;
-  font-style: italic;
 }

@@ -1,17 +1,8 @@
-/**
- * DocumentHeader Component
- *
- * Document title, metadata, and favorite button (only for authenticated users).
- *
- * @module components/documents/DocumentHeader
- * @since 1.0.0
- */
-
 'use client';
 
 import type { Document } from '@/types/document';
-import { DOCUMENT_TYPE_CONFIGS } from '@/types/document';
 import { useAuthStore } from '@/store/authStore';
+import { useToggleFavorite, useIsFavorited } from '@/hooks/useFavorites';
 import styles from '@/styles/components/documents/DocumentDetail.module.scss';
 
 interface DocumentHeaderProps {
@@ -19,34 +10,41 @@ interface DocumentHeaderProps {
 }
 
 export function DocumentHeader({ document }: DocumentHeaderProps): JSX.Element {
-  const typeConfig = DOCUMENT_TYPE_CONFIGS[document.type];
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const { data: isFavorited } = useIsFavorited(document._id, isAuthenticated);
+  const toggleFavorite = useToggleFavorite();
+
+  const handleToggleFavorite = () => {
+    toggleFavorite.mutate({
+      type: document.type,
+      path: document.path,
+      documentId: document._id,
+      isFavorited: !!isFavorited,
+    });
+  };
 
   return (
-    <header className={styles.header}>
-      <div className={styles.metadata}>
-        <span className={styles.typeBadge} style={{ backgroundColor: typeConfig.color }}>
-          {typeConfig.icon} {typeConfig.label}
-        </span>
-        {!document.isPublic && (
-          <span className={styles.privateBadge} title="Documento privato">
-            🔒 Privato
-          </span>
-        )}
-      </div>
-
-      <h1 className={styles.title}>{document.title}</h1>
-
-      {document.description && <p className={styles.description}>{document.description}</p>}
+    <div className={styles.stickyHeader}>
+      <h1 className={styles.stickyTitle}>
+        <span className={styles.titleDiamond}>&#9670;</span>
+        {document.title}
+        <span className={styles.titleDiamond}>&#9670;</span>
+      </h1>
 
       {isAuthenticated && (
-        <div className={styles.actions}>
-          {/* TODO: collegare FavoriteButton al backend */}
-          <button type="button" className={styles.favoriteButton}>
-            ☆ Aggiungi ai preferiti
-          </button>
-        </div>
+        <button
+          type="button"
+          className={`${styles.favoriteButton} ${isFavorited ? styles.favorited : ''}`}
+          onClick={handleToggleFavorite}
+          disabled={toggleFavorite.isPending}
+          aria-label={isFavorited ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti'}
+        >
+          <span className={styles.favoriteIcon}>{isFavorited ? '★' : '☆'}</span>
+          <span className={styles.favoriteLabel}>
+            {isFavorited ? 'Preferito' : 'Aggiungi ai preferiti'}
+          </span>
+        </button>
       )}
-    </header>
+    </div>
   );
 }

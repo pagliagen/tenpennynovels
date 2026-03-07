@@ -1,70 +1,53 @@
 /**
- * Victorian Theme Variables
+ * Design System Variables
  *
- * Design system for TenPennyNovels Documents app.
- * Inspired by Victorian-era aesthetics with parchment, ink, and ornate details.
- *
- * @module styles/variables
- * @since 1.0.0
+ * TenPennyNovels Documents app.
+ * Color palette aligned with landing app.
  */
 
 // ========================================
-// VICTORIAN COLOR PALETTE (Aligned with Game App)
+// COLOR PALETTE
 // ========================================
 
-// Primary Colors (Victorian Brown & Slate)
-$color-primary: #8b4513; // Saddle Brown (from game)
-$color-secondary: #2f4f4f; // Dark Slate Gray (from game)
-$color-accent: #b8860b; // Dark Goldenrod (from game)
+$color-primary: #091918;
+$color-primary-hover: #08857a;
+$color-primary-active: #055a52;
 
-// Legacy Parchment Colors (kept for backward compatibility)
-$color-parchment: #f4f1e8; // Aged paper background
-$color-parchment-light: #faf8f3; // Lighter parchment variant
-$color-parchment-dark: #e8e4d8; // Darker parchment for borders
-$color-ink: #2c1810; // Victorian ink black
-$color-ink-light: #5a4a3e; // Lighter ink for secondary text
-$color-sepia: #8b7355; // Sepia tone for muted elements
+$color-heading: #c1272d;
+$color-heading-dark: #9e1f24;
 
-// Accent Colors (Victorian Elegance) - Updated to match game
-$color-gold: #b8860b; // Aligned with game accent (was #d4af37)
-$color-gold-dark: #8b6914; // Darker gold for hover states
-$color-burgundy: #800020; // Victorian burgundy for important elements
-$color-burgundy-dark: #66001a; // Darker burgundy for hover
-$color-cream: #fffdd0; // Cream for highlights
+$color-accent: #FFA748;
+$color-accent-dark: #e08f30;
 
-// UI State Colors (Aligned with Game App)
-$color-error: #8b1a1a; // Dark red for errors (from game)
-$color-success: #2d5016; // Dark green for success (same)
-$color-warning: #8b6914; // Gold-brown for warnings (same)
-$color-info: #1a5f8b; // Info blue (from game)
+$color-text-light: #f5f5dc;
+$color-text-light-muted: rgba(#f5f5dc, 0.75);
 
-// Background & Surface Colors (Aligned with Game App)
-$color-bg-primary: #ffffff; // White background (from game)
-$color-bg-secondary: #f5f5f5; // Light gray (from game)
-$color-bg-tertiary: #e8e8e8; // Medium gray (from game)
-$color-surface: rgba(255, 253, 208, 0.3); // Cream overlay for cards
+$color-content-bg: #f4f1e8;
+$color-content-bg-dark: #e8e4d8;
 
-// Text Colors (Aligned with Game App)
-$color-text-primary: #1a1a1a; // Almost black (from game)
-$color-text-secondary: #4a4a4a; // Medium gray (from game)
-$color-text-muted: #8a8a8a; // Light gray (from game)
-$color-text-inverse: $color-parchment;
+$color-text-primary: #2c1810;
+$color-text-secondary: #5a4a3e;
+$color-text-muted: #8a7a6e;
 
-// Border Colors (Aligned with Game App)
-$color-border-primary: #d0d0d0; // Light gray border (from game)
-$color-border-secondary: rgba(208, 208, 208, 0.5); // Lighter border
-$color-border-accent: $color-gold;
+$color-border: rgba(#2c1810, 0.15);
+$color-border-light: rgba(#f5f5dc, 0.5);
+$color-border-light-muted: rgba(#f5f5dc, 0.3);
+
+$color-link: #091918;
+$color-link-hover: #08857a;
+
+$color-error: #c1272d;
+$color-success: #091918;
+$color-warning: #FFA748;
 
 // ========================================
-// TYPOGRAPHY (Victorian Fonts)
+// TYPOGRAPHY
 // ========================================
 
-// Font Families
-$font-title: 'Barrio', serif; // Ornate Victorian titles
-$font-body: 'IMFeENsc28P', 'Georgia', serif; // Readable Victorian body
-$font-mono: 'Courier New', monospace; // For code/technical content
+$font-primary: 'Thrifted Attire', Georgia, 'Times New Roman', serif;
+$font-secondary: 'Les Mysteres de Paris', 'Thrifted Attire', Georgia, serif;
+$font-mono: 'Courier New', Courier, monospace;
 
-// Font Sizes
 $font-size-xs: 12px;
 $font-size-sm: 14px;
 $font-size-base: 16px;
@@ -75,37 +58,32 @@ $font-size-2xl: 30px;
 $font-size-3xl: 36px;
 $font-size-4xl: 48px;
 
-// Font Weights
-$font-weight-light: 300;
 $font-weight-regular: 400;
 $font-weight-medium: 500;
 $font-weight-semibold: 600;
 $font-weight-bold: 700;
 
-// Line Heights
 $line-height-tight: 1.25;
 $line-height-normal: 1.5;
 $line-height-relaxed: 1.75;
 $line-height-loose: 2;
 
-// Letter Spacing (Victorian elegance)
-$letter-spacing-tight: -0.4px;
+$letter-spacing-tight: -0.025em;
 $letter-spacing-normal: 0;
-$letter-spacing-wide: 0.4px;
-$letter-spacing-wider: 0.8px;
+$letter-spacing-wide: 0.05em;
+$letter-spacing-wider: 0.1em;
 
 // ========================================
 // LAYOUT & SPACING
 // ========================================
 
-// Container Widths
 $container-max-width: 1400px;
 $content-max-width: 1200px;
-$sidebar-width: 320px;
-$header-height: 80px;
+$sidebar-width: 350px;
+$header-height: 125px;
+$sticky-bar-height: 48px;
 $mobile-bottom-nav-height: 60px;
 
-// Spacing Scale (8px base)
 $spacing-xs: 4px;
 $spacing-sm: 8px;
 $spacing-md: 16px;
@@ -115,18 +93,19 @@ $spacing-2xl: 48px;
 $spacing-3xl: 64px;
 $spacing-4xl: 96px;
 
-// Border Radius
+// ========================================
+// BORDERS & RADIUS
+// ========================================
+
 $radius-sm: 4px;
 $radius-md: 6px;
 $radius-lg: 8px;
 $radius-xl: 12px;
 $radius-full: 9999px;
 
-// Shadows (Victorian subtle depth)
-$shadow-sm: 0 1px 2px rgba(40, 30, 20, 0.1);
-$shadow-md: 0 4px 6px rgba(40, 30, 20, 0.1);
-$shadow-lg: 0 10px 15px rgba(40, 30, 20, 0.1);
-$shadow-xl: 0 20px 25px rgba(40, 30, 20, 0.15);
+$shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2);
+$shadow-md: 0 4px 8px rgba(0, 0, 0, 0.15);
+$shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.2);
 
 // ========================================
 // BREAKPOINTS
@@ -139,7 +118,6 @@ $breakpoint-lg: 1024px;
 $breakpoint-xl: 1280px;
 $breakpoint-2xl: 1536px;
 
-// Breakpoint Mixins
 @mixin mobile {
   @media (max-width: #{$breakpoint-md - 1}) {
     @content;
@@ -192,34 +170,27 @@ $transition-speed-fast: 150ms;
 $transition-speed-normal: 250ms;
 $transition-speed-slow: 350ms;
 
-$transition-easing-default: cubic-bezier(0.4, 0, 0.2, 1);
-$transition-easing-in: cubic-bezier(0.4, 0, 1, 1);
-$transition-easing-out: cubic-bezier(0, 0, 0.2, 1);
-$transition-easing-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+$transition-easing: cubic-bezier(0.4, 0, 0.2, 1);
 
-// Common Transitions
-$transition-all: all $transition-speed-normal $transition-easing-default;
-$transition-colors: color $transition-speed-normal $transition-easing-default,
-  background-color $transition-speed-normal $transition-easing-default,
-  border-color $transition-speed-normal $transition-easing-default;
-$transition-transform: transform $transition-speed-normal $transition-easing-default;
-$transition-opacity: opacity $transition-speed-normal $transition-easing-default;
+$transition-all: all $transition-speed-normal $transition-easing;
+$transition-colors: color $transition-speed-normal $transition-easing,
+  background-color $transition-speed-normal $transition-easing,
+  border-color $transition-speed-normal $transition-easing;
+$transition-transform: transform $transition-speed-normal $transition-easing;
+$transition-opacity: opacity $transition-speed-normal $transition-easing;
 
 // ========================================
-// VICTORIAN ORNAMENTS & DECORATIONS
+// PAPER TEXTURE
 // ========================================
 
-// Paper Texture Overlay
 $paper-texture-opacity: 0.3;
 $paper-texture-url: url('/images/paper-texture.png');
 
-// Ornamental Borders
-$border-ornate: 2px solid $color-gold;
-$border-subtle: 1px solid $color-border-primary;
-$border-dashed-ornate: 2px dashed rgba(212, 175, 55, 0.3);
+// ========================================
+// SCROLLBAR
+// ========================================
 
-// Victorian Scrollbar
-$scrollbar-width: 12px;
-$scrollbar-track-color: $color-parchment-dark;
-$scrollbar-thumb-color: $color-sepia;
-$scrollbar-thumb-hover-color: $color-gold;
+$scrollbar-width: 10px;
+$scrollbar-track-color: $color-primary-active;
+$scrollbar-thumb-color: rgba(#f5f5dc, 0.3);
+$scrollbar-thumb-hover-color: rgba(#f5f5dc, 0.5);

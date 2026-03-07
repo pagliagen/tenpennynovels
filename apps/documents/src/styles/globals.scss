@@ -1,17 +1,39 @@
 /**
- * Global Styles
- *
- * Victorian-themed global styles for TenPennyNovels Documents app.
- * Includes resets, typography, paper texture, and ornate Victorian details.
- *
- * @module styles/globals
- * @since 1.0.0
+ * Global Styles - TenPennyNovels Documents
  */
 
 @use './variables' as *;
 
 // ========================================
-// MODERN CSS RESET
+// FONT FACES
+// ========================================
+
+@font-face {
+  font-family: 'Thrifted Attire';
+  src: url('/fonts/thrifted-attire-regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Thrifted Attire';
+  src: url('/fonts/thrifted-attire-italic.otf') format('opentype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Les Mysteres de Paris';
+  src: url('/fonts/les-mysteres-de-paris.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+// ========================================
+// CSS RESET
 // ========================================
 
 *,
@@ -33,119 +55,74 @@ html {
 body {
   margin: 0;
   padding: 0;
-  font-family: $font-body;
+  font-family: $font-primary;
   font-size: $font-size-base;
   font-weight: $font-weight-regular;
   line-height: $line-height-normal;
-  color: $color-text-primary;
-  background-color: $color-bg-primary;
+  color: $color-text-primary; 
   min-height: 100vh;
   overflow-x: hidden;
-
-  // Victorian paper texture overlay
   position: relative;
-  &::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-image: $paper-texture-url;
-    background-repeat: repeat;
-    background-size: cover;
-    opacity: $paper-texture-opacity;
-    pointer-events: none;
-    z-index: 0;
-  }
+  background-color: #091918;
 }
 
 // ========================================
 // TYPOGRAPHY
 // ========================================
 
-// Headings (Victorian Ornate Style)
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  font-family: $font-title;
+h1, h2, h3, h4, h5, h6 {
+  font-family: $font-secondary;
   font-weight: $font-weight-bold;
   line-height: $line-height-tight;
-  color: $color-ink;
+  color: $color-heading;
   margin-bottom: $spacing-md;
   letter-spacing: $letter-spacing-wide;
 }
 
 h1 {
   font-size: $font-size-4xl;
-  @include mobile {
-    font-size: $font-size-3xl;
-  }
+  @include mobile { font-size: $font-size-3xl; }
 }
 
 h2 {
   font-size: $font-size-3xl;
-  @include mobile {
-    font-size: $font-size-2xl;
-  }
+  @include mobile { font-size: $font-size-2xl; }
 }
 
 h3 {
   font-size: $font-size-2xl;
-  @include mobile {
-    font-size: $font-size-xl;
-  }
+  @include mobile { font-size: $font-size-xl; }
 }
 
 h4 {
   font-size: $font-size-xl;
-  @include mobile {
-    font-size: $font-size-lg;
-  }
+  @include mobile { font-size: $font-size-lg; }
 }
 
-h5 {
-  font-size: $font-size-lg;
-}
+h5 { font-size: $font-size-lg; }
+h6 { font-size: $font-size-md; }
 
-h6 {
-  font-size: $font-size-md;
-}
-
-// Body Text
 p {
   margin-bottom: $spacing-md;
   line-height: $line-height-relaxed;
-
-  &:last-child {
-    margin-bottom: 0;
-  }
+  &:last-child { margin-bottom: 0; }
 }
 
-// Links (Victorian Gold Accents)
 a {
-  color: $color-burgundy;
+  color: $color-link;
   text-decoration: none;
   transition: $transition-colors;
-  position: relative;
 
-  &:hover {
-    color: $color-gold;
-  }
+  &:hover { color: $color-link-hover; }
 
   &:focus-visible {
-    outline: 2px solid $color-gold;
+    outline: 2px solid $color-primary;
     outline-offset: 2px;
     border-radius: $radius-sm;
   }
 }
 
-// Lists
-ul,
-ol {
+ul, ol {
   margin-bottom: $spacing-md;
   padding-left: $spacing-xl;
 }
@@ -155,32 +132,27 @@ li {
   line-height: $line-height-relaxed;
 }
 
-// Emphasis
-strong,
-b {
+strong, b {
   font-weight: $font-weight-bold;
-  color: $color-ink;
+  color: $color-text-primary;
 }
 
-em,
-i {
+em, i {
   font-style: italic;
-  color: $color-ink-light;
 }
 
-// Code (Victorian Monospace)
 code {
   font-family: $font-mono;
   font-size: 0.9em;
-  background-color: rgba(40, 30, 20, 0.05);
+  background-color: rgba(0, 0, 0, 0.05);
   padding: 2px 6px;
   border-radius: $radius-sm;
-  border: 1px solid $color-border-secondary;
+  border: 1px solid $color-border;
 }
 
 pre {
-  background-color: rgba(40, 30, 20, 0.05);
-  border: 1px solid $color-border-primary;
+  background-color: rgba(0, 0, 0, 0.05);
+  border: 1px solid $color-border;
   border-radius: $radius-md;
   padding: $spacing-lg;
   overflow-x: auto;
@@ -193,43 +165,27 @@ pre {
   }
 }
 
-// Blockquotes (Victorian Ornate)
 blockquote {
-  border-left: 4px solid $color-gold;
-  padding-left: $spacing-lg;
+  border-left: 4px solid $color-primary;
+  padding: $spacing-md $spacing-lg;
   margin: $spacing-lg 0;
   font-style: italic;
-  color: $color-ink-light;
-  background-color: rgba(212, 175, 55, 0.05);
-  padding: $spacing-md $spacing-lg;
-  border-radius: $radius-md;
+  color: $color-text-secondary;
+  background-color: rgba($color-primary, 0.05);
+  border-radius: 0 $radius-md $radius-md 0;
 }
 
-// Horizontal Rules (Victorian Dividers)
 hr {
   border: none;
   height: 2px;
   background: linear-gradient(
     to right,
     transparent,
-    $color-gold 20%,
-    $color-gold 80%,
+    $color-primary 20%,
+    $color-primary 80%,
     transparent
   );
   margin: $spacing-2xl 0;
-  position: relative;
-
-  &::after {
-    content: '❦'; // Victorian flourish
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: $color-parchment;
-    padding: 0 $spacing-md;
-    color: $color-gold;
-    font-size: $font-size-lg;
-  }
 }
 
 // ========================================
@@ -243,13 +199,10 @@ img {
 }
 
 // ========================================
-// FORMS (Victorian Style)
+// FORMS
 // ========================================
 
-input,
-textarea,
-select,
-button {
+input, textarea, select, button {
   font-family: inherit;
   font-size: inherit;
   line-height: inherit;
@@ -269,20 +222,18 @@ button {
   }
 }
 
-input,
-textarea,
-select {
-  border: 1px solid $color-border-primary;
+input, textarea, select {
+  border: 1px solid $color-border;
   border-radius: $radius-md;
   padding: $spacing-sm $spacing-md;
-  background-color: rgba(255, 253, 208, 0.2);
-  color: $color-ink;
+  background-color: rgba(255, 255, 255, 0.5);
+  color: $color-text-primary;
   transition: $transition-all;
 
   &:focus {
     outline: none;
-    border-color: $color-gold;
-    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+    border-color: $color-primary;
+    box-shadow: 0 0 0 3px rgba($color-primary, 0.15);
   }
 
   &::placeholder {
@@ -291,7 +242,7 @@ select {
 }
 
 // ========================================
-// SCROLLBAR (Victorian Style)
+// SCROLLBAR
 // ========================================
 
 ::-webkit-scrollbar {
@@ -301,44 +252,35 @@ select {
 
 ::-webkit-scrollbar-track {
   background-color: $scrollbar-track-color;
-  border-radius: $radius-sm;
 }
 
 ::-webkit-scrollbar-thumb {
   background-color: $scrollbar-thumb-color;
   border-radius: $radius-sm;
-  border: 2px solid $scrollbar-track-color;
 
   &:hover {
     background-color: $scrollbar-thumb-hover-color;
   }
 }
 
-// Firefox scrollbar
 * {
   scrollbar-width: thin;
   scrollbar-color: $scrollbar-thumb-color $scrollbar-track-color;
 }
 
 // ========================================
-// SELECTION (Victorian Gold)
+// SELECTION
 // ========================================
 
 ::selection {
-  background-color: rgba(212, 175, 55, 0.3);
-  color: $color-ink;
-}
-
-::-moz-selection {
-  background-color: rgba(212, 175, 55, 0.3);
-  color: $color-ink;
+  background-color: rgba($color-primary, 0.3);
+  color: $color-text-primary;
 }
 
 // ========================================
 // UTILITY CLASSES
 // ========================================
 
-// Container
 .container {
   max-width: $container-max-width;
   margin: 0 auto;
@@ -348,121 +290,6 @@ select {
     padding: 0 $spacing-md;
   }
 }
-
-// Text Utilities
-.text-center {
-  text-align: center;
-}
-
-.text-left {
-  text-align: left;
-}
-
-.text-right {
-  text-align: right;
-}
-
-.text-muted {
-  color: $color-text-muted;
-}
-
-.text-small {
-  font-size: $font-size-sm;
-}
-
-// Display Utilities
-.hidden {
-  display: none !important;
-}
-
-.mobile-only {
-  @include desktop-only {
-    display: none !important;
-  }
-}
-
-.desktop-only {
-  @include mobile-only {
-    display: none !important;
-  }
-}
-
-// Loading Spinner (Victorian)
-.loading-spinner {
-  border: 3px solid $color-parchment-dark;
-  border-top-color: $color-gold;
-  border-radius: $radius-full;
-  width: 40px;
-  height: 40px;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-// Victorian Card
-.card {
-  background-color: rgba(255, 253, 208, 0.3);
-  border: 1px solid $color-border-primary;
-  border-radius: $radius-lg;
-  padding: $spacing-lg;
-  box-shadow: $shadow-md;
-  transition: $transition-all;
-
-  &:hover {
-    box-shadow: $shadow-lg;
-    border-color: $color-gold;
-  }
-}
-
-// Victorian Button
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: $spacing-sm $spacing-lg;
-  border-radius: $radius-md;
-  font-weight: $font-weight-semibold;
-  transition: $transition-all;
-  cursor: pointer;
-  text-decoration: none;
-
-  &-primary {
-    background-color: $color-gold;
-    color: $color-ink;
-    border: 2px solid $color-gold-dark;
-
-    &:hover {
-      background-color: $color-gold-dark;
-      transform: translateY(-1px);
-      box-shadow: $shadow-md;
-    }
-  }
-
-  &-secondary {
-    background-color: transparent;
-    color: $color-ink;
-    border: 2px solid $color-border-primary;
-
-    &:hover {
-      border-color: $color-gold;
-      color: $color-gold;
-    }
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    transform: none !important;
-  }
-}
-
-// ========================================
-// ACCESSIBILITY
-// ========================================
 
 .sr-only {
   position: absolute;
@@ -476,44 +303,28 @@ select {
   border-width: 0;
 }
 
-// Focus Visible (Victorian Gold)
+.mobile-only {
+  @include desktop-only { display: none !important; }
+}
+
+.desktop-only {
+  @include mobile-only { display: none !important; }
+}
+
+// ========================================
+// ACCESSIBILITY
+// ========================================
+
 *:focus-visible {
-  outline: 2px solid $color-gold;
+  outline: 2px solid $color-primary;
   outline-offset: 2px;
 }
 
-// Skip to content link
-.skip-to-content {
-  position: absolute;
-  top: -100px;
-  left: 0;
-  background-color: $color-gold;
-  color: $color-ink;
-  padding: $spacing-sm $spacing-md;
-  text-decoration: none;
-  font-weight: $font-weight-bold;
-  z-index: 9999;
-
-  &:focus {
-    top: 0;
-  }
-}
-
 // ========================================
-// PRINT STYLES
+// PRINT
 // ========================================
 
 @media print {
-  body {
-    background: white;
-    color: black;
-  }
-
-  .no-print {
-    display: none !important;
-  }
-
-  a[href]::after {
-    content: ' (' attr(href) ')';
-  }
+  body { background: white; color: black; }
+  .no-print { display: none !important; }
 }

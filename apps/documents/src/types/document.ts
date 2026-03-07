@@ -84,8 +84,8 @@ export interface HierarchicalChild {
   _id: string;
   slug: string;
   title: string;
-  hasRoute: boolean;
-  routePath?: string;
+  hasOwnPage: boolean;
+  path?: string;
   depth: number;
   order: number;
   children: HierarchicalChild[];
@@ -140,14 +140,15 @@ export interface SearchResponse {
 }
 
 /**
- * Favorite Document
+ * Favorite Document (from backend aggregation)
  */
 export interface FavoriteDocument {
-  id: string;
+  _id: string;
+  documentId: string;
   title: string;
   type: DocumentType;
-  slug: string;
-  addedAt: Date;
+  path: string;
+  addedAt: string;
 }
 
 /**
@@ -176,15 +177,15 @@ export const DOCUMENT_TYPE_CONFIGS: Record<DocumentType, DocumentTypeConfig> = {
   ambientazione: {
     key: 'ambientazione',
     label: 'Ambientazione',
-    icon: '🌍',
-    color: '#d4af37',
+    icon: '',
+    color: '#091918',
     priority: 0.7,
   },
   regolamento: {
     key: 'regolamento',
     label: 'Regolamento',
-    icon: '📜',
-    color: '#800020',
+    icon: '',
+    color: '#c1272d',
     priority: 0.6,
   },
 };

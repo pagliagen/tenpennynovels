@@ -4,15 +4,12 @@
   position: sticky;
   top: 0;
   z-index: $z-index-sticky;
-  background-color: rgba(244, 241, 232, 0.95);
-  backdrop-filter: blur(8px);
-  border-bottom: 2px solid $color-gold;
+  background-color: $color-primary;
   box-shadow: $shadow-md;
+  flex-shrink: 0;
 }
 
 .container {
-  max-width: $container-max-width;
-  margin: 0 auto;
   padding: 0 $spacing-lg;
   height: $header-height;
   display: flex;
@@ -25,133 +22,149 @@
   }
 }
 
-.logo {
-  display: flex;
-  align-items: center;
-  gap: $spacing-sm;
-  text-decoration: none;
-  flex-shrink: 0;
-
-  &:hover {
-    .logoText {
-      color: $color-gold;
-    }
-  }
-}
-
-.logoIcon {
-  font-size: 32px;
-
-  @include mobile {
-    font-size: 24px;
-  }
-}
-
-.logoText {
-  display: flex;
-  flex-direction: column;
-  transition: $transition-colors;
-
-  @include mobile {
-    display: none;
-  }
-}
-
-.logoMain {
-  font-family: $font-title;
-  font-size: $font-size-lg;
-  font-weight: $font-weight-bold;
-  color: $color-ink;
-  line-height: 1;
-  letter-spacing: $letter-spacing-wide;
-}
-
-.logoSub {
-  font-size: $font-size-xs;
-  color: $color-text-muted;
-  text-transform: uppercase;
-  letter-spacing: $letter-spacing-wider;
-}
+// ========== NAV TABS ==========
 
 .nav {
   display: flex;
   align-items: center;
   gap: $spacing-md;
-  margin-left: auto;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 100%; 
+    border-bottom: 2px solid #003032;
+    z-index: -1;
+  }
 
   @include mobile {
     display: none;
   }
 }
 
-.navLink {
+.navTab {
   padding: $spacing-sm $spacing-lg;
-  font-family: $font-title;
+  font-family: $font-secondary;
   font-size: $font-size-base;
-  font-weight: $font-weight-semibold;
-  color: $color-text-primary;
+  font-weight: $font-weight-regular;
+  color: $color-text-light-muted;
   text-decoration: none;
-  border-radius: $radius-md;
+  text-transform: uppercase;
+  letter-spacing: $letter-spacing-wide;
+  border: 2px solid $color-border-light-muted;
   transition: $transition-all;
-  position: relative;
+  white-space: nowrap;
+  background-color: #1c1c1c;
 
   &:hover {
-    background-color: rgba(212, 175, 55, 0.1);
-    color: $color-gold;
+    color: $color-text-light;
+    border-color: $color-border-light;
+    background-color: #025951;
   }
 
   &.active {
-    background-color: rgba(212, 175, 55, 0.2);
-    color: $color-burgundy;
+    color: $color-text-light;
+    border-color: $color-border-light;
+    background-color: #025951;
+  }
+}
 
-    &::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 60%;
-      height: 3px;
-      background-color: $color-gold;
-      border-radius: $radius-full;
-    }
+// ========== SEARCH ==========
+
+.searchArea {
+  margin-left: auto;
+  flex-shrink: 0;
+  position: relative;
+
+  @include mobile {
+    display: none;
   }
 }
 
 .searchToggle {
-  padding: $spacing-sm $spacing-md;
-  font-size: $font-size-xl;
-  background-color: transparent;
-  border: 2px solid $color-border-primary;
-  border-radius: $radius-md;
+  padding: $spacing-sm $spacing-lg;
+  font-family: $font-primary;
+  font-size: $font-size-sm;
+  font-style: italic;
+  color: $color-text-light-muted;
+  border: 2px solid $color-border-light-muted;
+  background: #1c1c1c;
   cursor: pointer;
   transition: $transition-all;
+  white-space: nowrap;
 
   &:hover {
-    background-color: rgba(212, 175, 55, 0.1);
-    border-color: $color-gold;
-  }
-
-  &.active {
-    background-color: $color-gold;
-    border-color: $color-gold-dark;
-  }
-
-  @include mobile {
-    padding: $spacing-xs $spacing-sm;
-    font-size: $font-size-lg;
+    border-color: $color-border-light;
+    color: $color-text-light;
   }
 }
+
+.searchInputWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.searchInput {
+  width: 280px;
+  padding: $spacing-sm $spacing-lg;
+  font-family: $font-primary;
+  font-size: $font-size-sm;
+  font-style: italic;
+  color: $color-text-light;
+  background-color: #1c1c1c;
+  border: 2px solid $color-border-light;
+  outline: none;
+  transition: $transition-all;
+
+  &::placeholder {
+    color: $color-text-light-muted;
+  }
+
+  &:focus {
+    border-color: $color-text-light;
+  }
+}
+
+.searchClose {
+  padding: $spacing-xs $spacing-sm;
+  font-size: $font-size-lg;
+  color: $color-text-light-muted;
+  cursor: pointer;
+  transition: $transition-colors;
+  flex-shrink: 0;
+
+  &:hover {
+    color: $color-text-light;
+  }
+}
+
+.searchDropdown {
+  position: absolute;
+  top: calc(100% + #{$spacing-sm});
+  right: 0;
+  width: 480px;
+  max-height: 70vh;
+  overflow-y: auto;
+  background-color: $color-content-bg;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  box-shadow: $shadow-lg;
+  z-index: $z-index-dropdown;
+}
+
+// ========== MOBILE ==========
 
 .mobileMenuToggle {
   display: none;
   margin-left: auto;
   padding: $spacing-sm;
   font-size: $font-size-2xl;
-  background-color: transparent;
-  border: none;
+  color: $color-text-light;
   cursor: pointer;
-  color: $color-text-primary;
 
   @include mobile {
     display: block;
@@ -163,8 +176,8 @@
   flex-direction: column;
   gap: $spacing-xs;
   padding: $spacing-md;
-  background-color: rgba(244, 241, 232, 0.98);
-  border-top: 1px solid $color-border-primary;
+  background-color: $color-primary-active;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 
   @include mobile {
     display: flex;
@@ -173,66 +186,22 @@
 
 .mobileLink {
   padding: $spacing-md;
-  font-family: $font-title;
+  font-family: $font-secondary;
   font-size: $font-size-base;
-  font-weight: $font-weight-semibold;
-  color: $color-text-primary;
+  color: $color-text-light-muted;
   text-decoration: none;
-  border-radius: $radius-md;
+  text-transform: uppercase;
+  letter-spacing: $letter-spacing-wide;
   transition: $transition-all;
 
   &:hover {
-    background-color: rgba(212, 175, 55, 0.1);
+    color: $color-text-light;
+    background-color: rgba(255, 255, 255, 0.06);
   }
 
   &.active {
-    background-color: rgba(212, 175, 55, 0.2);
-    color: $color-burgundy;
-    border-left: 4px solid $color-gold;
-  }
-}
-
-// Inline Search Bar
-.searchBarWrapper {
-  display: flex;
-  align-items: center;
-  gap: $spacing-sm;
-  margin-left: auto;
-
-  @include mobile {
-    flex: 1;
-    margin-left: $spacing-md;
-  }
-}
-
-.inlineSearch {
-  min-width: 400px;
-  max-width: 600px;
-
-  @include mobile {
-    min-width: auto;
-    flex: 1;
-  }
-}
-
-.closeSearch {
-  padding: $spacing-sm $spacing-md;
-  font-size: $font-size-xl;
-  background-color: transparent;
-  border: 2px solid $color-border-primary;
-  border-radius: $radius-md;
-  cursor: pointer;
-  transition: $transition-all;
-  color: $color-text-primary;
-
-  &:hover {
-    background-color: rgba(212, 175, 55, 0.1);
-    border-color: $color-gold;
-    color: $color-gold;
-  }
-
-  @include mobile {
-    padding: $spacing-xs $spacing-sm;
-    font-size: $font-size-lg;
+    color: $color-text-light;
+    border-left: 3px solid $color-text-light;
+    padding-left: calc(#{$spacing-md} - 3px);
   }
 }

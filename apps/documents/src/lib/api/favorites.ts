@@ -1,68 +1,59 @@
-/**
- * Favorites API Service
- *
- * API client for user favorites operations.
- * All endpoints require authentication.
- *
- * @module lib/api/favorites
- * @since 1.0.0
- */
-
 import { api } from './client';
-import type { FavoriteDocument } from '@/types/document';
+
+const FAVORITES_CACHE_KEY = 'tpn_doc_favorites';
+
+function getCachedFavoriteIds(): string[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const cached = localStorage.getItem(FAVORITES_CACHE_KEY);
+    return cached ? JSON.parse(cached) : [];
+  } catch {
+    return [];
+  }
+}
+
+function setCachedFavoriteIds(ids: string[]): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(FAVORITES_CACHE_KEY, JSON.stringify(ids));
+  } catch {
+    // localStorage full or unavailable
+  }
+}
+
+export function isDocumentCachedAsFavorite(documentId: string): boolean {
+  return getCachedFavoriteIds().includes(documentId);
+}
+
+export interface FavoriteEntry {
+  _id: string;
+  document: {
+    _id: string;
+    slug: string;
+    title: string;
+    description?: string;
+    tags: string[];
+    isDraft: boolean;
+    path: string;
+    type: string;
+  };
+  route: { path: string; type: string };
+  addedAt: string;
+}
 
 export const favoritesApi = {
-  /**
-   * Get user's favorite documents
-   *
-   * Requires authentication. Returns 401 if not authenticated.
-   *
-   * @returns {Promise<FavoriteDocument[]>} List of favorited documents
-   */
-  async list(): Promise<FavoriteDocument[]> {
+  async list(): Promise<FavoriteEntry[]> {
     const response = (await api.get('/documents/favorites')) as any;
-    return response.data.favorites || response.data || [];
+    const favorites: FavoriteEntry[] = response.data || [];
+
+    const ids = favorites.map((f) => f.document._id);
+    setCachedFavoriteIds(ids);
+
+    return favorites;
   },
 
-  /**
-   * Add document to favorites
-   *
-   * Requires authentication. Idempotent (no error if already favorited).
-   *
-   * @param {string} documentId - Document ID to favorite
-   * @returns {Promise<void>}
-   */
-  async add(documentId: string): Promise<void> {
-    await api.post('/documents/favorites', { documentId });
-  },
-
-  /**
-   * Remove document from favorites
-   *
-   * Requires authentication. Idempotent (no error if not favorited).
-   *
-   * @param {string} documentId - Document ID to unfavorite
-   * @returns {Promise<void>}
-   */
-  async remove(documentId: string): Promise<void> {
-    await api.delete(`/documents/favorites/${documentId}`);
-  },
-
-  /**
-   * Check if document is favorited
-   *
-   * Requires authentication. Returns false if not authenticated.
-   *
-   * @param {string} documentId - Document ID to check
-   * @returns {Promise<boolean>} True if favorited
-   */
-  async isFavorited(documentId: string): Promise<boolean> {
-    try {
-      const response = (await api.get(`/documents/favorites/${documentId}/status`)) as any;
-      return response.data?.isFavorited || false;
-    } catch (error) {
-      // If endpoint doesn't exist or auth fails, return false
-      return false;
-    }
+  async toggle(type: string, path: string): Promise<{ favorited: boolean }> {
+    const response = (await api.post(`/documents/${type}/${path}/favorite`)) as any;
+    return response.data || { favorited: false };
   },
 };

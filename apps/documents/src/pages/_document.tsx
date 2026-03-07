@@ -13,20 +13,12 @@ export default function Document() {
   return (
     <Html lang="it">
       <Head>
-        {/* Victorian Fonts */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Barrio&display=swap"
-          rel="stylesheet"
-        />
-
         {/* Favicon */}
         <link rel="icon" href="/favicon/favicon.ico" />
         <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png" />
 
         {/* Meta Tags */}
-        <meta name="theme-color" content="#f4f1e8" />
+        <meta name="theme-color" content="#091918" />
         <meta name="description" content="Ten Penny Novels - Archivi di Ambientazione e Regolamento" />
       </Head>
       <body>

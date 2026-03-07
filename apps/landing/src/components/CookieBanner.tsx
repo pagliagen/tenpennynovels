@@ -107,14 +107,9 @@ const CookieBannerContent: React.FC = () => {
             Accetto
           </button>
 
-          <a
-            href="/privacy"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="cookie-banner__privacy-link"
-          >
-            Privacy Policy
-          </a>
+          <span className="cookie-banner__privacy-link">
+            Consulta la Privacy Policy nella pagina di registrazione
+          </span>
         </div>
       </div>
     </div>

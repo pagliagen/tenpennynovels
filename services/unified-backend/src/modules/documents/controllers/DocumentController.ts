@@ -106,7 +106,7 @@ export class DocumentController {
       );
 
       const hasAnyChildWithSeparatePage = (children: any[]): boolean =>
-        children.some(child => child.hasRoute || hasAnyChildWithSeparatePage(child.children || []));
+        children.some(child => child.hasOwnPage || hasAnyChildWithSeparatePage(child.children || []));
 
       if (hasAnyChildWithSeparatePage(hierarchicalChildren)) {
         res.json({
@@ -164,7 +164,7 @@ export class DocumentController {
             _id: childDoc._id.toString(),
             slug: childDoc.slug,
             title: childDoc.title,
-            hasRoute: false,
+            hasOwnPage: false,
             depth,
             order: childDoc.order,
             children: []
