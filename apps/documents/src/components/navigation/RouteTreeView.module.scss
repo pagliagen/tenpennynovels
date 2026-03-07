@@ -4,6 +4,7 @@
   display: flex;
   flex-direction: column;
   padding: $spacing-md;
+  overflow-x: hidden;
 }
 
 // ========== SUBTYPE HEADER ==========
@@ -45,6 +46,7 @@
   gap: $spacing-xs;
   padding: $spacing-xs $spacing-sm;
   width: fit-content;
+  max-width: 100%;
 }
 
 .expandButton {
@@ -175,5 +177,7 @@
 // ========== SUBTYPE GROUP ==========
 
 .subtypeGroup {
+  position: relative;
   margin-bottom: $spacing-lg;
+  overflow-x: hidden;
 }
