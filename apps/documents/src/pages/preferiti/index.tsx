@@ -15,8 +15,8 @@ export default function PreferitiIndex() {
   useEffect(() => {
     if (isLoading || !favorites) return;
 
-    if (favorites.length > 0) {
-      const first = favorites[0];
+    const first = favorites[0];
+    if (first) {
       router.replace(`/preferiti/${first.document.type}/${first.document.path}`);
     }
   }, [favorites, isLoading, router]);
