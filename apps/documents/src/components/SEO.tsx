@@ -32,7 +32,7 @@ import { useRouter } from 'next/router';
  * @interface SEOProps
  */
 export interface SEOProps {
-  /** Page title (will be appended with "| TenPennyNovels" if not included) */
+  /** Page title (will be appended with "| Ten Penny Novels" if not included) */
   title: string;
   /** Meta description (150-160 chars recommended) */
   description: string;
@@ -83,7 +83,7 @@ export interface SEOProps {
  *     <>
  *       <SEO
  *         title="Londra Vittoriana - Ambientazione"
- *         description="Guida completa alla Londra Vittoriana del 1890 per TenPennyNovels."
+ *         description="Guida completa alla Londra Vittoriana del 1890 per Ten Penny Novels."
  *       />
  *       <DocumentContent />
  *     </>
@@ -104,7 +104,7 @@ export const SEO: React.FC<SEOProps> = ({
   const router = useRouter();
 
   // Site configuration
-  const siteName = 'TenPennyNovels';
+  const siteName = 'Ten Penny Novels';
   const baseUrl = 'https://docs.tenpennynovels.com';
 
   // Generate full URL (canonical or current path)

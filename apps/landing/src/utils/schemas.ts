@@ -24,7 +24,7 @@
 export const organizationSchema = {
   "@context": "https://schema.org",
   "@type": "Organization",
-  "name": "TenPennyNovels",
+  "name": "Ten Penny Novels",
   "url": "https://tenpennynovels.com",
   "logo": "https://tenpennynovels.com/images/title.png",
   "description": "Gioco di ruolo online ambientato nella Londra Vittoriana. Esperienza GDR Call of Cthulhu via chat con narrazione stile Agatha Christie.",
@@ -45,7 +45,7 @@ export const organizationSchema = {
 export const websiteSchema = {
   "@context": "https://schema.org",
   "@type": "WebSite",
-  "name": "TenPennyNovels",
+  "name": "Ten Penny Novels",
   "url": "https://tenpennynovels.com",
   "inLanguage": "it",
   "potentialAction": {
@@ -68,7 +68,7 @@ export const websiteSchema = {
 export const webApplicationSchema = {
   "@context": "https://schema.org",
   "@type": "WebApplication",
-  "name": "TenPennyNovels - Londra Vittoriana",
+  "name": "Ten Penny Novels - Londra Vittoriana",
   "url": "https://tenpennynovels.com",
   "applicationCategory": "Game",
   "applicationSubCategory": "Role-Playing Game",
@@ -99,7 +99,7 @@ export const webApplicationSchema = {
 export const videoGameSchema = {
   "@context": "https://schema.org",
   "@type": "VideoGame",
-  "name": "TenPennyNovels - Londra Vittoriana",
+  "name": "Ten Penny Novels - Londra Vittoriana",
   "description": "Gioco di ruolo online gratuito basato su Call of Cthulhu. Ambientazione Londra Vittoriana 1890. Narrazione investigativa via chat.",
   "url": "https://tenpennynovels.com",
   "genre": ["Horror", "Mystery", "Role-Playing"],
@@ -110,7 +110,7 @@ export const videoGameSchema = {
   "playMode": "MultiPlayer",
   "author": {
     "@type": "Organization",
-    "name": "TenPennyNovels"
+    "name": "Ten Penny Novels"
   },
   "offers": {
     "@type": "Offer",

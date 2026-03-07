@@ -27,7 +27,7 @@ export default function ApprofondimentiIndex({ documents }: ApprofondimentiIndex
     <>
       <SEO
         title="Approfondimenti"
-        description="Guide dettagliate e approfondimenti su specifici argomenti del mondo di TenPennyNovels - medicina vittoriana, armi, criminalità e società."
+        description="Guide dettagliate e approfondimenti su specifici argomenti del mondo di Ten Penny Novels - medicina vittoriana, armi, criminalità e società."
         ogType="website"
       />
 

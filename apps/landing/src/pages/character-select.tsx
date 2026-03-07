@@ -147,7 +147,7 @@ export default function CharacterSelectPage() {
   // Show loading skeleton while loading
   if (profileLoading) {
     return (
-      <PageLayout title="Selezione Personaggio - TenPennyNovels" description="Seleziona il personaggio con cui giocare" noindex>
+      <PageLayout title="Selezione Personaggio - Ten Penny Novels" description="Seleziona il personaggio con cui giocare" noindex>
         <div style={{ textAlign: 'center', padding: '2rem' }}>
           <LoadingSkeleton height="100px" count={3} />
         </div>

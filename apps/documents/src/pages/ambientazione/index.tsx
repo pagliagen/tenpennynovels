@@ -27,7 +27,7 @@ export default function AmbientazioneIndex({ documents }: AmbientazioneIndexProp
     <>
       <SEO
         title="Ambientazione"
-        description="Documenti di ambientazione per TenPennyNovels - Londra vittoriana, personaggi, luoghi e storie. Esplora il mondo vittoriano del 1890."
+        description="Documenti di ambientazione per Ten Penny Novels - Londra vittoriana, personaggi, luoghi e storie. Esplora il mondo vittoriano del 1890."
         ogType="website"
       />
 
@@ -35,7 +35,7 @@ export default function AmbientazioneIndex({ documents }: AmbientazioneIndexProp
         <header className={styles.pageHeader}>
           <h1 className={styles.pageTitle}>🌍 Ambientazione</h1>
           <p className={styles.pageDescription}>
-            Esplora il mondo di TenPennyNovels: la Londra vittoriana del 1890, i suoi luoghi, personaggi e
+            Esplora il mondo di Ten Penny Novels: la Londra vittoriana del 1890, i suoi luoghi, personaggi e
             storie.
           </p>
         </header>

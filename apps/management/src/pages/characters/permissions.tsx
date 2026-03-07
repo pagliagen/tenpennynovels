@@ -250,7 +250,7 @@ export default function CharacterPermissions() {
   return (
     <ManagementLayout>
       <Head>
-        <title>Gestione Permessi Personaggi - TenPennyNovels Management</title>
+        <title>Gestione Permessi Personaggi - Ten Penny Novels Management</title>
       </Head>
 
       <div className={styles.characterList}>

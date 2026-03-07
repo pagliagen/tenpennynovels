@@ -77,10 +77,10 @@ export class EmailService {
         text = this.replacePlaceholders(template.text, { displayName, verificationUrl });
       } else {
         // Fallback template when ConfigurationService is not available
-        subject = 'Verifica il tuo account - TenPennyNovels';
-        text = `Caro ${displayName},\n\nBenvenuto su TenPennyNovels!\n\nPer favore verifica il tuo account cliccando sul seguente link:\n${verificationUrl}\n\nSe non hai richiesto questa registrazione, ignora questa email.\n\nCordiali saluti,\nIl Team di TenPennyNovels`;
+        subject = 'Verifica il tuo account - Ten Penny Novels';
+        text = `Caro ${displayName},\n\nBenvenuto su Ten Penny Novels!\n\nPer favore verifica il tuo account cliccando sul seguente link:\n${verificationUrl}\n\nSe non hai richiesto questa registrazione, ignora questa email.\n\nCordiali saluti,\nIl Team di Ten Penny Novels`;
         html = this.buildEmailHtml({
-          title: 'Benvenuto su TenPennyNovels!',
+          title: 'Benvenuto su Ten Penny Novels!',
           bodyHtml: `
                 <p style="margin: 0 0 16px; color: #d4c4b0;">Caro <strong style="color: #f5f5dc;">${displayName}</strong>,</p>
                 <p style="margin: 0 0 8px;">Per favore verifica il tuo account cliccando sul pulsante qui sotto:</p>`,
@@ -105,7 +105,7 @@ export class EmailService {
 
       const mailOptions = {
         from: {
-          name: 'TenPennyNovels',
+          name: 'Ten Penny Novels',
           address: process.env.EMAIL_FROM || 'info@tenpennynovels.com'
         },
         to: email,
@@ -154,8 +154,8 @@ export class EmailService {
         text = this.replacePlaceholders(template.text, { displayName, resetUrl });
       } else {
         // Fallback template when ConfigurationService is not available
-        subject = 'Reset Password - TenPennyNovels';
-        text = `Caro ${displayName},\n\nHai richiesto il reset della tua password.\n\nClicca sul seguente link per reimpostare la password:\n${resetUrl}\n\nQuesto link scadrà tra 1 ora.\n\nSe non hai richiesto questo reset, ignora questa email.\n\nCordiali saluti,\nIl Team di TenPennyNovels`;
+        subject = 'Reset Password - Ten Penny Novels';
+        text = `Caro ${displayName},\n\nHai richiesto il reset della tua password.\n\nClicca sul seguente link per reimpostare la password:\n${resetUrl}\n\nQuesto link scadrà tra 1 ora.\n\nSe non hai richiesto questo reset, ignora questa email.\n\nCordiali saluti,\nIl Team di Ten Penny Novels`;
         html = this.buildEmailHtml({
           title: 'Reset Password',
           bodyHtml: `
@@ -183,7 +183,7 @@ export class EmailService {
 
       const mailOptions = {
         from: {
-          name: 'TenPennyNovels',
+          name: 'Ten Penny Novels',
           address: process.env.EMAIL_FROM || 'info@tenpennynovels.com'
         },
         to: email,
@@ -227,8 +227,8 @@ export class EmailService {
         text = this.replacePlaceholders(template.text, { displayName, alertType, details: detailsString });
       } else {
         // Fallback template when ConfigurationService is not available
-        subject = 'Avviso di Sicurezza - TenPennyNovels';
-        text = `Caro ${displayName},\n\nAbbiamo rilevato un'attività sospetta sul tuo account.\n\nTipo di allerta: ${alertType}\n\nDettagli:\n${detailsString}\n\nSe riconosci questa attività, puoi ignorare questa email. Altrimenti, ti consigliamo di cambiare la tua password immediatamente.\n\nCordiali saluti,\nIl Team di TenPennyNovels`;
+        subject = 'Avviso di Sicurezza - Ten Penny Novels';
+        text = `Caro ${displayName},\n\nAbbiamo rilevato un'attività sospetta sul tuo account.\n\nTipo di allerta: ${alertType}\n\nDettagli:\n${detailsString}\n\nSe riconosci questa attività, puoi ignorare questa email. Altrimenti, ti consigliamo di cambiare la tua password immediatamente.\n\nCordiali saluti,\nIl Team di Ten Penny Novels`;
         html = this.buildEmailHtml({
           title: 'Avviso di Sicurezza',
           bodyHtml: `
@@ -263,7 +263,7 @@ export class EmailService {
 
       const mailOptions = {
         from: {
-          name: 'TenPennyNovels Security',
+          name: 'Ten Penny Novels Security',
           address: process.env.EMAIL_FROM || 'info@tenpennynovels.com'
         },
         to: email,
@@ -306,13 +306,13 @@ export class EmailService {
         text = this.replacePlaceholders(template.text, { displayName, deletionUrl });
       } else {
         // Fallback template when ConfigurationService is not available
-        subject = 'Conferma Cancellazione Account - TenPennyNovels';
-        text = `Caro ${displayName},\n\nHai richiesto la cancellazione del tuo account TenPennyNovels.\n\nPer confermare questa operazione, clicca sul seguente link:\n${deletionUrl}\n\nQuesta azione è irreversibile e tutti i tuoi dati verranno eliminati permanentemente.\n\nSe non hai richiesto questa cancellazione, ignora questa email.\n\nCordiali saluti,\nIl Team di TenPennyNovels`;
+        subject = 'Conferma Cancellazione Account - Ten Penny Novels';
+        text = `Caro ${displayName},\n\nHai richiesto la cancellazione del tuo account Ten Penny Novels.\n\nPer confermare questa operazione, clicca sul seguente link:\n${deletionUrl}\n\nQuesta azione è irreversibile e tutti i tuoi dati verranno eliminati permanentemente.\n\nSe non hai richiesto questa cancellazione, ignora questa email.\n\nCordiali saluti,\nIl Team di Ten Penny Novels`;
         html = this.buildEmailHtml({
           title: 'Conferma Cancellazione Account',
           bodyHtml: `
                 <p style="margin: 0 0 16px; color: #d4c4b0;">Caro <strong style="color: #f5f5dc;">${displayName}</strong>,</p>
-                <p style="margin: 0 0 8px;">Hai richiesto la cancellazione del tuo account TenPennyNovels.</p>
+                <p style="margin: 0 0 8px;">Hai richiesto la cancellazione del tuo account Ten Penny Novels.</p>
                 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 16px 0; background-color: #1a0a0a; border: 1px solid #c1272d; border-radius: 6px;">
                   <tr>
                     <td style="padding: 14px 20px; text-align: center;">
@@ -341,7 +341,7 @@ export class EmailService {
 
       const mailOptions = {
         from: {
-          name: 'TenPennyNovels',
+          name: 'Ten Penny Novels',
           address: process.env.EMAIL_FROM || 'info@tenpennynovels.com'
         },
         to: email,
@@ -408,10 +408,10 @@ export class EmailService {
           <!-- Header: logo + title side by side -->
           <tr>
             <td style="padding: 24px 32px; background-color: #0a0a0a;">
-              <table role="presentation" cellspTenPennyNovelspadding="0" border="0" width="100%">
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                 <tr>
                   <td style="width: 140px; vertical-align: middle;">
-                    <img src="${this.LOGO_URL}" alt="TenpennyNovels" width="130" style="max-width: 130px; height: auto; display: block;">
+                    <img src="${this.LOGO_URL}" alt="Ten Penny Novels" width="130" style="max-width: 130px; height: auto; display: block;">
                   </td>
                   <td style="vertical-align: middle; padding-left: 20px;">
                     <h2 style="margin: 0; font-size: 21px; font-weight: bold; color: #d4af37; font-family: Georgia, 'Times New Roman', serif; line-height: 1.3;">${title}</h2>
@@ -440,7 +440,7 @@ export class EmailService {
           <tr>
             <td style="padding: 0 32px;">
               <div style="height: 1px; background-color: #1a1a1a;"></div>
-            </td>TenPennyNovels
+            </td>
           </tr>
           <!-- Footer -->
           <tr>
@@ -448,7 +448,7 @@ export class EmailService {
               ${footerExtraHtml}
               <p style="margin: 0; font-size: 12px; color: #6b5d50; line-height: 1.5; font-family: Georgia, 'Times New Roman', serif;">
                 Cordiali saluti,<br>
-                <span style="color: #a89884;">Il Team di TenpennyNovels</span>
+                <span style="color: #a89884;">Il Team di Ten Penny Novels</span>
               </p>
             </td>
           </tr>

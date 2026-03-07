@@ -11,12 +11,14 @@
 
   position: relative;
   height: 100vh;
-  max-height: 1000px;
+  min-height: 600px;
+  max-height: 824px;
   display: flex;
   overflow: hidden;
   max-width: 1600px;
   margin-left: auto;
   margin-right: auto;
+  justify-content: center;
 
   /* ===========================
      SIDEBAR
@@ -25,7 +27,7 @@
   &__sidebar {
     width: 100%;
     height: 100%;
-    max-width: 768px;
+    max-width: 500px;
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -73,7 +75,6 @@
     text-transform: uppercase;
 
     &:hover {
-      transform: translateX(8px);
       color: var(--color-homepage-green);
     }
   }
@@ -88,7 +89,10 @@
     position: relative;
     width: 100%;
     min-width: 768px;
-    height: 100vh;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 
     &--register-page .victorian-layout-desktop__page-content {
       position: absolute;
@@ -119,13 +123,16 @@
    * Positioned behind page content; same visual as previous background-image.
    */
   &__background-image {
-    position: relative;
+    position: relative; 
+    flex: 0; 
     width: 100%;
+    max-height: calc(100% - 135px);
 
     img {
       height: 100%;
       object-fit: contain;
       object-position: top center;
+      margin: 0 auto;
     }
   }
 
@@ -133,5 +140,6 @@
     position: relative;
     display: flex;
     padding: 20px 17%; 
+    flex: 1;
   }
 }

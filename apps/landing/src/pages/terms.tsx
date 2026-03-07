@@ -28,8 +28,8 @@ export default function TermsPage() {
 
   return (
     <PageLayout
-      title="Termini e Condizioni - TenPennyNovels | Regolamento Servizio"
-      description="Termini e condizioni d'uso di TenPennyNovels. Leggi le regole del gioco di ruolo e i diritti degli utenti. Accettazione necessaria per la registrazione."
+      title="Termini e Condizioni - Ten Penny Novels | Regolamento Servizio"
+      description="Termini e condizioni d'uso di Ten Penny Novels. Leggi le regole del gioco di ruolo e i diritti degli utenti. Accettazione necessaria per la registrazione."
       canonical="https://tenpennynovels.com/terms/"
       schema={termsBreadcrumb}
     >
@@ -37,12 +37,12 @@ export default function TermsPage() {
         <h2>Termini e Condizioni</h2>
         <h3>1. Accettazione dei Termini</h3>
         <p>
-          Accedendo e utilizzando TenPennyNovels, accetti di essere vincolato da questi termini e condizioni d'uso.
+          Accedendo e utilizzando Ten Penny Novels, accetti di essere vincolato da questi termini e condizioni d'uso.
         </p>
 
         <h3>2. Descrizione del Servizio</h3>
         <p>
-          TenPennyNovels è una piattaforma di gioco di ruolo online ambientata nella Londra vittoriana,
+          Ten Penny Novels è una piattaforma di gioco di ruolo online ambientata nella Londra vittoriana,
           basata sul sistema di regole Call of Cthulhu. Il servizio include chat in tempo reale,
           gestione dei personaggi e contenuti narrativi collaborativi.
         </p>
@@ -66,12 +66,12 @@ export default function TermsPage() {
         <h3>5. Contenuti Generati dagli Utenti</h3>
         <p>
           I contenuti che crei (personaggi, storie, messaggi) rimangono di tua proprietà,
-          ma concedi a TenPennyNovels il diritto di utilizzarli per il funzionamento del servizio.
+          ma concedi a Ten Penny Novels il diritto di utilizzarli per il funzionamento del servizio.
         </p>
 
         <h3>6. Contenuti del Gioco</h3>
         <p>
-          TenPennyNovels può contenere temi horror, violenza fittizia e elementi soprannaturali
+          Ten Penny Novels può contenere temi horror, violenza fittizia e elementi soprannaturali
           appropriati per l'ambientazione Call of Cthulhu. Il servizio è rivolto a utenti maggiorenni.
         </p>
 
@@ -83,7 +83,7 @@ export default function TermsPage() {
 
         <h3>8. Limitazioni di Responsabilità</h3>
         <p>
-          TenPennyNovels è fornito "così com'è". Non garantiamo la disponibilità continua
+          Ten Penny Novels è fornito "così com'è". Non garantiamo la disponibilità continua
           del servizio e non siamo responsabili per perdite di dati o interruzioni.
         </p>
 

@@ -144,7 +144,7 @@ export const SEO: React.FC<SEOProps> = ({
   const router = useRouter();
 
   // Site configuration
-  const siteName = 'TenPennyNovels';
+  const siteName = 'Ten Penny Novels';
   const baseUrl = 'https://tenpennynovels.com';
 
   // Generate full URL (canonical or current path)
@@ -181,6 +181,9 @@ export const SEO: React.FC<SEOProps> = ({
       <meta property="og:title" content={fullTitle} />
       <meta property="og:description" content={description} />
       <meta property="og:image" content={ogImage} />
+      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:height" content="630" />
+      <meta property="og:image:type" content="image/jpeg" />
       <meta property="og:site_name" content={siteName} />
       <meta property="og:locale" content="it_IT" />
 

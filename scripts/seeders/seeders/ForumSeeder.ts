@@ -8,7 +8,7 @@ const forumSeedData = {
   topics: [
     {
       slug: 'benvenuti-a-tenpennynovels',
-      title: 'Benvenuti a TenPennyNovels',
+      title: 'Benvenuti a Ten Penny Novels',
       description: 'Discussioni generali sulla London Vittoriana e il nostro GDR',
       category: 'Generale',
       isPublic: true,
@@ -487,7 +487,7 @@ const forumSeedData = {
     {
       topicSlug: 'benvenuti-a-tenpennynovels',
       discussionSlug: 'benvenuti-nuovi-giocatori',
-      content: 'Benvenuti a TenPennyNovels, la nostra comunità dedicata al GDR Call of Cthulhu ambientato nella Londra Vittoriana! Questo è un luogo dove potete immergervi nelle strade nebbiose della London del 1890, creare personaggi avvincenti e partecipare ad avventure misteriose.\n\nChe siate investigatori esperti o nuovi al mondo di Cthulhu, tutti sono benvenuti qui. Per favore, prendetevi del tempo per leggere le nostre regole e presentarvi alla comunità.',
+      content: 'Benvenuti a Ten Penny Novels, la nostra comunità dedicata al GDR Call of Cthulhu ambientato nella Londra Vittoriana! Questo è un luogo dove potete immergervi nelle strade nebbiose della London del 1890, creare personaggi avvincenti e partecipare ad avventure misteriose.\n\nChe siate investigatori esperti o nuovi al mondo di Cthulhu, tutti sono benvenuti qui. Per favore, prendetevi del tempo per leggere le nostre regole e presentarvi alla comunità.',
       authorUserId: 'system',
       authorUsername: 'MaestroDelGioco',
       authorCharacterName: 'Il Narratore',

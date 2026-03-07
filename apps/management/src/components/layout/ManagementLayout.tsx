@@ -84,7 +84,7 @@ export function ManagementLayout({ children }: ManagementLayoutProps): React.Rea
         {/* Header */}
         <header className={styles.header}>
           <div className={styles.headerContent}>
-            <h1 className={styles.logo}>TenPennyNovels</h1>
+            <h1 className={styles.logo}>Ten Penny Novels</h1>
             <div className={styles.headerActions}>
               <div className={styles.userInfo}>
                 <span className={styles.userName}>{user?.displayName || user?.username}</span>
@@ -100,7 +100,7 @@ export function ManagementLayout({ children }: ManagementLayoutProps): React.Rea
 
         {/* Footer */}
         <footer className={styles.footer}>
-          <p>© 2026 TenPennyNovels - Management Panel v1.0.0</p>
+          <p>© 2026 Ten Penny Novels - Management Panel v1.0.0</p>
         </footer>
       </div>
 

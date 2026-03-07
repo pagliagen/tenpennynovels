@@ -49,19 +49,19 @@
    */
 
   /** Lift up - Hover state for cards, buttons */
-  --transform-lift-up: translateY(-2px);
+  --transform-lift-up: translateY(-0);
 
   /** Lift down - Active/pressed state */
-  --transform-lift-down: translateY(2px);
+  --transform-lift-down: translateY(0);
 
   /** Pronounced lift - Dramatic hover (large cards) */
-  --transform-lift-up-lg: translateY(-4px);
+  --transform-lift-up-lg: translateY(0);
 
   /** Slide right - Hover indicators, arrows */
-  --transform-slide-right: translateX(4px);
+  --transform-slide-right: translateX(0);
 
   /** Slide left - Back buttons, reverse motion */
-  --transform-slide-left: translateX(-4px);
+  --transform-slide-left: translateX(0);
 
   /* ===========================
      ROTATE TRANSFORMS

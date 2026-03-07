@@ -64,8 +64,8 @@ export default function CharacterWizardPage() {
     return (
       <>
         <Head>
-          <title>Creazione Personaggio - TenPennyNovels</title>
-          <meta name="description" content="Crea il tuo personaggio vittoriano per TenPennyNovels. Sistema Call of Cthulhu con background dettagliato e skills personalizzabili." />
+          <title>Creazione Personaggio - Ten Penny Novels</title>
+          <meta name="description" content="Crea il tuo personaggio vittoriano per Ten Penny Novels. Sistema Call of Cthulhu con background dettagliato e skills personalizzabili." />
         </Head>
         <GameLayout>
           <div
@@ -91,8 +91,8 @@ export default function CharacterWizardPage() {
   return (
     <>
       <Head>
-        <title>Creazione Personaggio - TenPennyNovels</title>
-        <meta name="description" content="Crea il tuo personaggio vittoriano per TenPennyNovels. Sistema Call of Cthulhu con background dettagliato e skills personalizzabili." />
+        <title>Creazione Personaggio - Ten Penny Novels</title>
+        <meta name="description" content="Crea il tuo personaggio vittoriano per Ten Penny Novels. Sistema Call of Cthulhu con background dettagliato e skills personalizzabili." />
       </Head>
       <GameLayout>
         <WizardContainer characterId={selectedCharacter._id} />

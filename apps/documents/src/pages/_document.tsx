@@ -27,7 +27,7 @@ export default function Document() {
 
         {/* Meta Tags */}
         <meta name="theme-color" content="#f4f1e8" />
-        <meta name="description" content="TenPennyNovels - Archivi di Ambientazione e Regolamento" />
+        <meta name="description" content="Ten Penny Novels - Archivi di Ambientazione e Regolamento" />
       </Head>
       <body>
         <Main />

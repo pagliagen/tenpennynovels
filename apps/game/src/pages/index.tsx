@@ -65,8 +65,8 @@ export default function HomePage(): JSX.Element {
   return (
     <>
       <Head>
-        <title>TenPennyNovels - Gioco di Ruolo Vittoriano Online</title>
-        <meta name="description" content="Gioca a TenPennyNovels, GDR online ambientato nella Londra Vittoriana del 1890. Sistema Call of Cthulhu con narrazione investigativa in tempo reale." />
+        <title>Ten Penny Novels - Gioco di Ruolo Vittoriano Online</title>
+        <meta name="description" content="Gioca a Ten Penny Novels, GDR online ambientato nella Londra Vittoriana del 1890. Sistema Call of Cthulhu con narrazione investigativa in tempo reale." />
       </Head>
       <style jsx>{`
         @keyframes pulse {
@@ -95,7 +95,7 @@ export default function HomePage(): JSX.Element {
             color: '#8B4513',
           }}
         >
-          Welcome to TenPennyNovels
+          Welcome to Ten Penny Novels
         </h1>
 
         <p style={{ fontSize: '1.1rem', marginBottom: '2rem', color: '#333' }}>

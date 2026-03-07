@@ -51,7 +51,7 @@ export default function Broadcast() {
   return (
     <ManagementLayout>
       <Head>
-        <title>Broadcast - TenPennyNovels Management</title>
+        <title>Broadcast - Ten Penny Novels Management</title>
       </Head>
 
       <div className={styles.container}>

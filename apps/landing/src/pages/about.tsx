@@ -24,17 +24,17 @@ import { aboutBreadcrumb } from '@/utils/schemas';
 export default function AboutPage() {
   return (
     <PageLayout
-      title="Chi Siamo - TenPennyNovels | Gioco di Ruolo Londra Vittoriana"
-      description="TenPennyNovels è un gioco di ruolo online gratuito ambientato nella Londra Vittoriana del 1890. Sistema Call of Cthulhu via chat con narrazione investigativa horror lovecraftiana. Scopri come funziona il nostro GDR collaborativo!"
+      title="Chi Siamo - Ten Penny Novels | Gioco di Ruolo Londra Vittoriana"
+      description="Ten Penny Novels è un gioco di ruolo online gratuito ambientato nella Londra Vittoriana del 1890. Sistema Call of Cthulhu via chat con narrazione investigativa horror lovecraftiana. Scopri come funziona il nostro GDR collaborativo!"
       canonical="https://tenpennynovels.com/about/"
       schema={aboutBreadcrumb}
     >
       <div className="creditsPage">
         <h2>Chi Siamo</h2>
 
-        <h3>Cos'è TenPennyNovels?</h3>
+        <h3>Cos'è Ten Penny Novels?</h3>
         <p>
-          <strong>TenPennyNovels</strong> è una piattaforma di <strong>gioco di ruolo online gratuito</strong> ambientata nella
+          <strong>Ten Penny Novels</strong> è una piattaforma di <strong>gioco di ruolo online gratuito</strong> ambientata nella
           suggestiva <strong>Londra Vittoriana degli anni 1890</strong>. Basato sul celebre sistema{' '}
           <strong>Call of Cthulhu</strong>, offre un'esperienza GDR investigativa unica interamente via chat.
         </p>
@@ -57,7 +57,7 @@ export default function AboutPage() {
 
         <h3>Sistema di Gioco: Call of Cthulhu</h3>
         <p>
-          TenPennyNovels utilizza il sistema di regole <strong>Call of Cthulhu</strong>, uno dei più celebri
+          Ten Penny Novels utilizza il sistema di regole <strong>Call of Cthulhu</strong>, uno dei più celebri
           GDR investigativi al mondo. Il sistema enfatizza:
         </p>
         <ul>
@@ -91,7 +91,7 @@ export default function AboutPage() {
 
         <h4>Gioco Collaborativo</h4>
         <p>
-          TenPennyNovels è un'esperienza <strong>multiplayer collaborativa</strong>. Interagisci con decine di
+          Ten Penny Novels è un'esperienza <strong>multiplayer collaborativa</strong>. Interagisci con decine di
           altri giocatori, forma alleanze, condividi informazioni, e affronta insieme minacce soprannaturali.
         </p>
         <p>
@@ -113,7 +113,7 @@ export default function AboutPage() {
 
         <h3>Tecnologia</h3>
         <p>
-          TenPennyNovels è costruito con tecnologie web moderne per garantire velocità, affidabilità e scalabilità:
+          Ten Penny Novels è costruito con tecnologie web moderne per garantire velocità, affidabilità e scalabilità:
         </p>
         <ul>
           <li><strong>Frontend</strong>: React, Next.js, TypeScript</li>
@@ -135,7 +135,7 @@ export default function AboutPage() {
 
         <h3>Chi Può Giocare</h3>
         <p>
-          TenPennyNovels è rivolto a <strong>giocatori maggiorenni</strong> (18+) per via dei temi horror,
+          Ten Penny Novels è rivolto a <strong>giocatori maggiorenni</strong> (18+) per via dei temi horror,
           violenza fittizia ed elementi soprannaturali tipici dell'universo Call of Cthulhu.
         </p>
         <p>
@@ -163,7 +163,7 @@ export default function AboutPage() {
             — H.P. Lovecraft
           </p>
           <p style={{ marginTop: '1rem' }}>
-            © 2024 TenPennyNovels - Piattaforma GDR Londra Vittoriana
+            © 2024 Ten Penny Novels - Piattaforma GDR Londra Vittoriana
           </p>
         </div>
       </div>

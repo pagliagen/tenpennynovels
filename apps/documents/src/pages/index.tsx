@@ -23,7 +23,7 @@ export default function HomePage() {
     <>
       <SEO
         title="Archivi"
-        description="Archivi di ambientazione e regolamento di TenPennyNovels. Esplora la Londra Vittoriana del 1890 e le regole del gioco."
+        description="Archivi di ambientazione e regolamento di Ten Penny Novels. Esplora la Londra Vittoriana del 1890 e le regole del gioco."
         ogType="website"
       />
       <LoadingSpinner fullPage message="Reindirizzamento..." />

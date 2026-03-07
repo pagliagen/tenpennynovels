@@ -82,8 +82,8 @@ export default function DeleteAccountPage() {
 
   return (
     <TokenPageLayout
-      title="Elimina Account - TenPennyNovels"
-      description="Eliminazione account TenPennyNovels"
+      title="Elimina Account - Ten Penny Novels"
+      description="Eliminazione account Ten Penny Novels"
       isValidating={false}
       isValid={!!token}
       tokenError={!token ? 'Token mancante nell\'URL' : undefined}
