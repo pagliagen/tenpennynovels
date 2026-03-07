@@ -71,12 +71,11 @@ export const VictorianLayoutMobile: React.FC<VictorianLayoutMobileProps> = ({
         >
           ✕
         </button>
-        <h2 className="victorian-layout-mobile__nav-title">Chapter One</h2>
         <nav className="victorian-layout-mobile__nav-content">
           {isInfoPage ? (
             <Button
               variant="ghost"
-              onClick={() => window.close()}
+              onClick={() => onNavigate('/')}
               className="victorian-layout-mobile__nav-button"
             >
               Chiudi
@@ -110,18 +109,23 @@ export const VictorianLayoutMobile: React.FC<VictorianLayoutMobileProps> = ({
       </div>
 
       <main className={`victorian-layout-mobile__content victorian-layout-mobile__content--${pageClass}`}>
-        <img
-          src={BACKGROUND_IMAGE_SRC}
-          alt=""
-          className="victorian-layout-mobile__background-image"
-          fetchPriority="high"
-        />
-        <img
-          src={LOGO_IMAGE_SRC}
-          alt=""
-          className="victorian-layout-mobile__logo"
-          fetchPriority="high"
-        />
+        <div className="victorian-layout-mobile__background-image-container">
+          <img
+            src={BACKGROUND_IMAGE_SRC}
+            alt=""
+            className="victorian-layout-mobile__background-image"
+            fetchPriority="high"
+          />
+          <div className="victorian-layout-mobile__title-container">
+            <img
+              src={LOGO_IMAGE_SRC}
+              alt=""
+              className="victorian-layout-mobile__logo"
+              fetchPriority="high"
+            />
+            <h2 className="victorian-layout-mobile__title">Chapter One</h2>
+          </div>
+        </div>
         <div className="victorian-layout-mobile__page-content">{children}</div>
       </main>
     </div>
