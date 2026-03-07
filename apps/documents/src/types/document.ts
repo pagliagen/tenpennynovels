@@ -58,6 +58,7 @@ export interface Document {
   tags?: string[];
   isDraft?: boolean;
   draftNotes?: string;
+  displayCategory?: string;
 }
 
 /**
@@ -88,6 +89,15 @@ export interface HierarchicalChild {
   depth: number;
   order: number;
   children: HierarchicalChild[];
+}
+
+/**
+ * Document Group (for tree navigation grouping)
+ */
+export interface DocumentGroup {
+  name: string;
+  documents: Document[];
+  isCollapsed: boolean;
 }
 
 /**

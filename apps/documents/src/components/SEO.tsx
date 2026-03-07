@@ -96,7 +96,7 @@ export const SEO: React.FC<SEOProps> = ({
   description,
   canonical,
   ogType = 'article',
-  ogImage = 'https://docs.tenpennynovels.com/images/og-image.jpg',
+  ogImage = 'https://documenti.tenpennynovels.com/images/og-image.jpg',
   noindex = false,
   nofollow = false,
   schema,
@@ -105,7 +105,7 @@ export const SEO: React.FC<SEOProps> = ({
 
   // Site configuration
   const siteName = 'Ten Penny Novels';
-  const baseUrl = 'https://docs.tenpennynovels.com';
+  const baseUrl = 'https://documenti.tenpennynovels.com';
 
   // Generate full URL (canonical or current path)
   const fullUrl = canonical || `${baseUrl}${router.asPath}`;

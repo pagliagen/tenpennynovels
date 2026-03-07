@@ -1,8 +1,13 @@
 /**
  * SitemapService
  *
- * Generates sitemap.xml with static pages + public documents
- * Triggered by admin panel when documents are published/unpublished/deleted
+ * Generates sitemap index + sub-sitemaps for tenpennynovels.com
+ * All files are written to apps/landing/public/ (single source of truth).
+ *
+ * Output:
+ *   sitemap.xml            - Sitemap Index pointing to sub-sitemaps
+ *   sitemap-landing.xml    - Static pages (tenpennynovels.com)
+ *   sitemap-documents.xml  - Public documents (documenti.tenpennynovels.com)
  */
 
 import fs from 'fs/promises';
@@ -10,91 +15,107 @@ import path from 'path';
 import Document from '@database/models/Document';
 import { logger } from '@shared/utils/logger';
 
+const LANDING_DOMAIN = 'https://tenpennynovels.com';
+const DOCUMENTS_DOMAIN = 'https://documenti.tenpennynovels.com';
+const OUTPUT_DIR = path.join(__dirname, '../../../../../apps/landing/public');
+
 interface SitemapUrl {
   loc: string;
-  lastmod?: string;
-  changefreq?: 'always' | 'hourly' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'never';
-  priority?: number;
+  lastmod: string;
+  changefreq: 'always' | 'hourly' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'never';
+  priority: number;
 }
 
 export class SitemapService {
-  /**
-   * Generate complete sitemap with static pages + public documents
-   */
-  async generateSitemap(): Promise<void> {
+  static async generate(): Promise<void> {
     try {
-      logger.info('[SitemapService] Generating sitemap...');
+      logger.info('[SitemapService] Generating sitemaps...');
 
-      // Fetch all PUBLIC documents (only those visible without auth)
-      const documents = await Document.find({ isPublic: true })
-        .select('type slug lastUpdated')
-        .lean();
+      const today = new Date().toISOString().split('T')[0];
 
-      logger.info(`[SitemapService] Found ${documents.length} public documents`);
+      const landingXml = this.buildUrlsetXml(this.getStaticPages());
+      const { xml: documentsXml, count: docCount } = await this.buildDocumentsSitemap();
+      const indexXml = this.buildSitemapIndex(today);
 
-      // Static pages from landing app
-      const staticPages: SitemapUrl[] = [
-        { loc: 'https://tenpennynovels.com/', lastmod: '2026-02-27', changefreq: 'monthly', priority: 1.0 },
-        { loc: 'https://tenpennynovels.com/register/', lastmod: '2026-02-27', changefreq: 'monthly', priority: 0.8 },
-        { loc: 'https://tenpennynovels.com/forgot-password/', lastmod: '2026-02-27', changefreq: 'monthly', priority: 0.4 },
-        { loc: 'https://tenpennynovels.com/privacy/', lastmod: '2025-12-01', changefreq: 'yearly', priority: 0.3 },
-        { loc: 'https://tenpennynovels.com/terms/', lastmod: '2025-12-01', changefreq: 'yearly', priority: 0.3 },
-        { loc: 'https://tenpennynovels.com/credits/', lastmod: '2025-12-01', changefreq: 'yearly', priority: 0.2 },
-      ];
+      await Promise.all([
+        fs.writeFile(path.join(OUTPUT_DIR, 'sitemap.xml'), indexXml, 'utf-8'),
+        fs.writeFile(path.join(OUTPUT_DIR, 'sitemap-landing.xml'), landingXml, 'utf-8'),
+        fs.writeFile(path.join(OUTPUT_DIR, 'sitemap-documents.xml'), documentsXml, 'utf-8'),
+      ]);
 
-      // Dynamic document URLs (SEO-friendly slugs)
-      const documentUrls: SitemapUrl[] = documents.map((doc: any) => ({
-        loc: `https://documents.tenpennynovels.com/${doc.type}/${doc.slug}/`,
-        lastmod: doc.lastUpdated ? new Date(doc.lastUpdated).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-        changefreq: 'monthly' as const,
-        priority: doc.type === 'ambientazione' ? 0.7 : 0.6,
-      }));
-
-      // Combine all URLs
-      const allUrls = [...staticPages, ...documentUrls];
-
-      // Build sitemap XML
-      const xml = this.buildSitemapXML(allUrls);
-
-      // Write to apps/landing/public/sitemap.xml
-      const sitemapPath = path.join(__dirname, '../../../../../apps/landing/public/sitemap.xml');
-      await fs.writeFile(sitemapPath, xml, 'utf-8');
-
-      logger.info(`[SitemapService] Sitemap generated successfully at ${sitemapPath}`);
-      logger.info(`[SitemapService] Total URLs: ${allUrls.length} (${staticPages.length} static + ${documentUrls.length} documents)`);
-
+      logger.info(`[SitemapService] Done. Landing: ${this.getStaticPages().length} URLs, Documents: ${docCount} URLs`);
     } catch (error) {
-      logger.error('[SitemapService] Error generating sitemap:', error);
-      throw error;
+      logger.error('[SitemapService] Generation failed:', error);
     }
   }
 
-  /**
-   * Build sitemap XML from URL list
-   */
-  private buildSitemapXML(urls: SitemapUrl[]): string {
-    const urlTags = urls
+  private static getStaticPages(): SitemapUrl[] {
+    return [
+      { loc: `${LANDING_DOMAIN}/`, lastmod: '2026-02-27', changefreq: 'weekly', priority: 1.0 },
+      { loc: `${LANDING_DOMAIN}/about`, lastmod: '2026-03-06', changefreq: 'monthly', priority: 0.8 },
+      { loc: `${LANDING_DOMAIN}/credits`, lastmod: '2026-02-27', changefreq: 'monthly', priority: 0.5 },
+      { loc: `${LANDING_DOMAIN}/terms`, lastmod: '2026-02-27', changefreq: 'monthly', priority: 0.5 },
+      { loc: `${LANDING_DOMAIN}/privacy`, lastmod: '2026-02-27', changefreq: 'monthly', priority: 0.5 },
+    ];
+  }
+
+  private static async buildDocumentsSitemap(): Promise<{ xml: string; count: number }> {
+    const documents = await Document.find({
+      isPublic: true,
+      isDraft: false,
+      visible: true,
+      deletedAt: { $exists: false },
+    })
+      .select('type path lastUpdated')
+      .lean();
+
+    const urls: SitemapUrl[] = documents.map((doc: any) => ({
+      loc: `${DOCUMENTS_DOMAIN}/${doc.type}/${doc.path}`,
+      lastmod: doc.lastUpdated
+        ? new Date(doc.lastUpdated).toISOString().split('T')[0]
+        : new Date().toISOString().split('T')[0],
+      changefreq: 'monthly' as const,
+      priority: 0.7,
+    }));
+
+    return { xml: this.buildUrlsetXml(urls), count: urls.length };
+  }
+
+  private static buildSitemapIndex(lastmod: string): string {
+    return `<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <sitemap>
+    <loc>${LANDING_DOMAIN}/sitemap-landing.xml</loc>
+    <lastmod>${lastmod}</lastmod>
+  </sitemap>
+  <sitemap>
+    <loc>${LANDING_DOMAIN}/sitemap-documents.xml</loc>
+    <lastmod>${lastmod}</lastmod>
+  </sitemap>
+</sitemapindex>
+`;
+  }
+
+  private static buildUrlsetXml(urls: SitemapUrl[]): string {
+    const entries = urls
       .map(
-        (url) => `
-  <url>
-    <loc>${this.escapeXml(url.loc)}</loc>
-    <lastmod>${url.lastmod || new Date().toISOString().split('T')[0]}</lastmod>
-    <changefreq>${url.changefreq || 'monthly'}</changefreq>
-    <priority>${url.priority !== undefined ? url.priority.toFixed(1) : '0.5'}</priority>
+        (u) => `  <url>
+    <loc>${this.escapeXml(u.loc)}</loc>
+    <lastmod>${u.lastmod}</lastmod>
+    <changefreq>${u.changefreq}</changefreq>
+    <priority>${u.priority.toFixed(1)}</priority>
   </url>`
       )
-      .join('');
+      .join('\n');
 
     return `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urlTags}
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${entries}
 </urlset>
 `;
   }
 
-  /**
-   * Escape XML special characters
-   */
-  private escapeXml(text: string): string {
+  private static escapeXml(text: string): string {
     return text
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')

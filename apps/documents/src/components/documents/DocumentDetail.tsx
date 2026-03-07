@@ -26,7 +26,7 @@ interface DocumentDetailProps {
 }
 
 export function DocumentDetail({ data }: DocumentDetailProps): JSX.Element {
-  const { document, sections, subRoutes } = data;
+  const { document, sections, childDocuments } = data;
 
   // Show TOC only if there are 2+ sections
   const showTOC = sections && sections.length >= 2;
@@ -72,29 +72,32 @@ export function DocumentDetail({ data }: DocumentDetailProps): JSX.Element {
             }}
           />
 
-          {/* Sub-routes listing (if any) - shown AFTER main content */}
-          {subRoutes && subRoutes.length > 0 && (
+          {/* Child documents listing (if any) - shown AFTER main content */}
+          {childDocuments && childDocuments.length > 0 && (
             <div className={styles.categoryContent}>
               <h2>Documenti correlati:</h2>
               <ul className={styles.subRoutesList}>
-                {subRoutes.map((subRoute) => (
-                  <li key={subRoute.path}>
-                    <Link href={`/${document.type}/${subRoute.path}`}>
+                {childDocuments.map((child) => (
+                  <li key={child._id}>
+                    {child.hasRoute && child.routePath ? (
+                      <Link href={`/${document.type}/${child.routePath}`}>
+                        <div className={styles.subRouteItem}>
+                          <h3>{child.title}</h3>
+                        </div>
+                      </Link>
+                    ) : (
                       <div className={styles.subRouteItem}>
-                        <h3>{subRoute.title}</h3>
-                        {subRoute.description && (
-                          <p className={styles.subRouteDescription}>{subRoute.description}</p>
-                        )}
+                        <h3>{child.title}</h3>
                       </div>
-                    </Link>
+                    )}
                   </li>
                 ))}
               </ul>
             </div>
           )}
 
-          {/* Empty State - only if NO content AND NO subRoutes */}
-          {!document.content && (!subRoutes || subRoutes.length === 0) && (
+          {/* Empty State - only if NO content AND NO child documents */}
+          {!document.content && (!childDocuments || childDocuments.length === 0) && (
             <div className={styles.emptyState}>
               <p>Questo documento non contiene ancora contenuto.</p>
             </div>

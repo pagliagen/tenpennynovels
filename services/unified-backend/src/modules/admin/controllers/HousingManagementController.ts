@@ -778,43 +778,6 @@ export class HousingManagementController {
   }
 
   /**
-   * Trigger manual rent collection (for testing and admin use)
-   * POST /admin/housing/rent-collection
-   */
-  static async triggerRentCollection(req: Request, res: Response): Promise<void> {
-    try {
-      logger.info('Manual rent collection triggered by admin', {
-        adminId: req.user!.userId,
-        adminUsername: req.user!.username
-      });
-
-      // Import and call the rent collection function
-      const { triggerRentCollection } = await import('@modules/game/cron/rentCollection');
-      const result = await triggerRentCollection();
-
-      res.json(updateResponse(
-        {
-          processedCount: result.processedCount,
-          errorCount: result.errorCount,
-          timestamp: new Date().toISOString()
-        },
-        'Rent collection completed successfully',
-        getRequestId(req)
-      ));
-
-    } catch (error: any) {
-      logger.error('Manual rent collection failed:', error);
-      res.status(500).json(errorResponse(
-        error instanceof Error ? error.message : 'Riscossione affitto fallita',
-        'RENT_COLLECTION_FAILED',
-        undefined,
-        500,
-        getRequestId(req)
-      ));
-    }
-  }
-
-  /**
    * Get district information
    * GET /admin/housing/districts
    */

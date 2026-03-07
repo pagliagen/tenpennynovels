@@ -93,9 +93,9 @@ async function startServer(): Promise<void> {
     NotificationService.initialize(io);
     logger.info('✅ Notification service initialized');
 
-    // Start Ticket Escalation CRON Job
-    await import('@modules/tickets/cron/escalation');
-    logger.info('✅ Ticket escalation CRON job started');
+    // Start Sitemap CRON Job (daily at 03:00 + immediate on boot)
+    await import('./cron/sitemapGeneration');
+    logger.info('✅ Sitemap CRON job started');
 
     // Start HTTP server
     // IMPORTANT: Bind to 0.0.0.0 for Docker internal networking

@@ -150,7 +150,7 @@ export default function AboutPage() {
         </p>
         <p>
           Per maggiori informazioni consulta la nostra{' '}
-          <a href="https://docs.tenpennynovels.com" target="_blank" rel="noopener noreferrer">
+          <a href="https://documenti.tenpennynovels.com" target="_blank" rel="noopener noreferrer">
             documentazione ufficiale
           </a>.
         </p>

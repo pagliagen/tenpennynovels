@@ -21,10 +21,6 @@ router.post('/evictions', HousingManagementController.processEvictions);
 router.get('/reports', HousingManagementController.getHousingReports);
 router.get('/stats', HousingManagementController.getHousingStats);
 
-// Rent collection (manual trigger)
-router.post('/rent-collection', HousingManagementController.triggerRentCollection);
-router.post('/rent-collection/trigger', HousingManagementController.triggerRentCollection);
-
 // District information
 router.get('/districts', HousingManagementController.getDistricts);
 
