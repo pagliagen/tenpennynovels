@@ -23,7 +23,7 @@
   gap: $spacing-md;
   padding: $spacing-md 0;
   border-bottom: 2px solid $color-border;
-  background-color: yellow;
+  background-color: #d5d9c2;
 
   @include mobile {
     flex-direction: column;

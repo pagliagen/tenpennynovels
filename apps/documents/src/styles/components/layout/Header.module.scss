@@ -45,6 +45,7 @@
 }
 
 .navTab {
+  position: relative;
   padding: $spacing-sm $spacing-lg;
   font-family: $font-secondary;
   font-size: $font-size-base;
@@ -53,19 +54,32 @@
   text-decoration: none;
   text-transform: uppercase;
   letter-spacing: $letter-spacing-wide;
-  border: 2px solid $color-border-light-muted;
   transition: $transition-all;
   white-space: nowrap;
-  background-color: #1c1c1c;
+  background-color: #050505;
+  border: 2px solid #025951;
+  border-top-width: 3px;
+  border-radius: 5px 5px 0 0;
+
+  &::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -10px;
+    height: 25px;
+    background: url('/images/stripe.png') repeat-x center / auto 100%;
+    z-index: 0;
+  }
 
   &:hover {
-    color: $color-text-light;
-    border-color: $color-border-light;
+    color: $color-heading;
+    border-color: $color-heading;
   }
 
   &.active {
     color: $color-text-light;
-    border-color: $color-border-light;
+    border-color: #025951;
     background-color: #025951;
   }
 }
@@ -87,6 +101,17 @@
   display: flex;
   align-items: center;
   gap: $spacing-sm;
+
+  &::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -10px;
+    height: 25px;
+    background: url('/images/stripe.png') repeat-x center / auto 100%;
+    z-index: 0;
+  }
 }
 
 .searchInput {
@@ -96,10 +121,12 @@
   font-size: $font-size-sm;
   font-style: italic;
   color: $color-text-light;
-  background-color: #1c1c1c;
-  border: 2px solid $color-border-light-muted;
   outline: none;
   transition: $transition-all;
+  background-color: #050505;
+  border: 2px solid #025951;
+  border-top-width: 3px;
+  border-radius: 5px 5px 0 0;
 
   &::placeholder {
     color: $color-text-light-muted;

@@ -46,6 +46,7 @@
 }
 
 .sectionLabel {
+  position: relative;
   padding: $spacing-sm $spacing-md;
   font-family: $font-secondary;
   font-size: $font-size-sm;
@@ -53,8 +54,23 @@
   color: $color-text-light;
   text-transform: uppercase;
   letter-spacing: $letter-spacing-wider;
-  background-color: rgba(0, 0, 0, 0.15);
   flex-shrink: 0;
+  background-color: #025951;
+  border: 2px solid #025951;
+  border-top-width: 3px;
+  border-radius: 5px 5px 0 0;
+  text-align: center;
+
+  &::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -10px;
+    height: 25px;
+    background: url('/images/stripe.png') repeat-x center / auto 100%;
+    z-index: 0;
+  }
 }
 
 .treeContainer {

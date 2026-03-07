@@ -138,7 +138,7 @@ export function SubtypeTreeView({ subtypes, type, currentPath }: SubtypeTreeView
                 href={docPath}
                 className={`${styles.docLink} ${isActive ? styles.active : ''}`}
               >
-                <span className={styles.docTitle}>{doc.title}</span>
+                <span className={styles.docTitle} title={doc.title}>{doc.title}</span>
                 {!doc.isPublic && <span className={styles.privateBadge}>🔒</span>}
               </Link>
             )}
