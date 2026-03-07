@@ -11,10 +11,8 @@ import styles from '@/styles/components/layout/Header.module.scss';
 export function Header(): JSX.Element {
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
-  const inputRef = useRef<HTMLInputElement>(null);
   const searchContainerRef = useRef<HTMLDivElement>(null);
 
   const { query, setQuery, isOpen: resultsOpen, setIsOpen: setResultsOpen, results, totalResults, isLoading, handleClose: handleSearchClose } =
@@ -22,27 +20,21 @@ export function Header(): JSX.Element {
 
   const isActiveSection = (path: string) => router.pathname.startsWith(path);
 
-  const openSearch = () => {
-    setSearchOpen(true);
-    setTimeout(() => inputRef.current?.focus(), 50);
-  };
-
-  const closeSearch = useCallback(() => {
-    setSearchOpen(false);
+  const closeResults = useCallback(() => {
     handleSearchClose();
   }, [handleSearchClose]);
 
   useEffect(() => {
-    if (!searchOpen) return;
+    if (!resultsOpen) return;
 
     function handleClickOutside(event: MouseEvent) {
       if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
-        closeSearch();
+        closeResults();
       }
     }
 
     function handleEscape(event: KeyboardEvent) {
-      if (event.key === 'Escape') closeSearch();
+      if (event.key === 'Escape') closeResults();
     }
 
     document.addEventListener('mousedown', handleClickOutside);
@@ -51,11 +43,11 @@ export function Header(): JSX.Element {
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('keydown', handleEscape);
     };
-  }, [searchOpen, closeSearch]);
+  }, [resultsOpen, closeResults]);
 
   useEffect(() => {
-    closeSearch();
-  }, [router.asPath, closeSearch]);
+    closeResults();
+  }, [router.asPath, closeResults]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setQuery(e.target.value);
@@ -94,50 +86,30 @@ export function Header(): JSX.Element {
         </nav>
 
         <div className={styles.searchArea} ref={searchContainerRef}>
-          {searchOpen ? (
-            <div className={styles.searchInputWrapper}>
-              <input
-                ref={inputRef}
-                type="text"
-                className={styles.searchInput}
-                placeholder="ricerca per parola o frase"
-                value={query}
-                onChange={handleInputChange}
-                onFocus={handleInputFocus}
-                autoComplete="off"
-                spellCheck={false}
-              />
-              <button
-                type="button"
-                className={styles.searchClose}
-                onClick={closeSearch}
-                aria-label="Chiudi ricerca"
-              >
-                ✕
-              </button>
+          <div className={styles.searchInputWrapper}>
+            <input
+              type="text"
+              className={styles.searchInput}
+              placeholder="ricerca per parola o frase"
+              value={query}
+              onChange={handleInputChange}
+              onFocus={handleInputFocus}
+              autoComplete="off"
+              spellCheck={false}
+            />
 
-              {resultsOpen && query.length >= 2 && (
-                <div className={styles.searchDropdown}>
-                  <SearchResults
-                    results={results}
-                    totalResults={totalResults}
-                    query={query}
-                    isLoading={isLoading}
-                    onClose={closeSearch}
-                  />
-                </div>
-              )}
-            </div>
-          ) : (
-            <button
-              type="button"
-              className={styles.searchToggle}
-              onClick={openSearch}
-              aria-label="Apri ricerca"
-            >
-              ricerca per parola o frase
-            </button>
-          )}
+            {resultsOpen && query.length >= 2 && (
+              <div className={styles.searchDropdown}>
+                <SearchResults
+                  results={results}
+                  totalResults={totalResults}
+                  query={query}
+                  isLoading={isLoading}
+                  onClose={closeResults}
+                />
+              </div>
+            )}
+          </div>
         </div>
 
         <button

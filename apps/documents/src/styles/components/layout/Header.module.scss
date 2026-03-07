@@ -82,24 +82,6 @@
   }
 }
 
-.searchToggle {
-  padding: $spacing-sm $spacing-lg;
-  font-family: $font-primary;
-  font-size: $font-size-sm;
-  font-style: italic;
-  color: $color-text-light-muted;
-  border: 2px solid $color-border-light-muted;
-  background: #1c1c1c;
-  cursor: pointer;
-  transition: $transition-all;
-  white-space: nowrap;
-
-  &:hover {
-    border-color: $color-border-light;
-    color: $color-text-light;
-  }
-}
-
 .searchInputWrapper {
   position: relative;
   display: flex;
@@ -115,7 +97,7 @@
   font-style: italic;
   color: $color-text-light;
   background-color: #1c1c1c;
-  border: 2px solid $color-border-light;
+  border: 2px solid $color-border-light-muted;
   outline: none;
   transition: $transition-all;
 
@@ -125,19 +107,6 @@
 
   &:focus {
     border-color: $color-text-light;
-  }
-}
-
-.searchClose {
-  padding: $spacing-xs $spacing-sm;
-  font-size: $font-size-lg;
-  color: $color-text-light-muted;
-  cursor: pointer;
-  transition: $transition-colors;
-  flex-shrink: 0;
-
-  &:hover {
-    color: $color-text-light;
   }
 }
 

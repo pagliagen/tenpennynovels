@@ -7,7 +7,7 @@
  * @since 2.0.0
  */
 
-import { GetStaticProps } from 'next';
+import { GetServerSideProps } from 'next';
 import { SEO } from '@/components/SEO';
 import { documentsApi } from '@/lib/api/documents';
 import { findFirstLeafPath } from '@/lib/findFirstLeafPath';
@@ -26,7 +26,7 @@ export default function AmbientazioneIndex() {
   );
 }
 
-export const getStaticProps: GetStaticProps = async () => {
+export const getServerSideProps: GetServerSideProps = async () => {
   try {
     const hierarchical = await documentsApi.listHierarchical();
     const subtypes = hierarchical.ambientazione || [];
@@ -35,13 +35,12 @@ export const getStaticProps: GetStaticProps = async () => {
     if (firstPath) {
       return {
         redirect: { destination: firstPath, permanent: false },
-        revalidate: 3600,
       };
     }
 
-    return { props: {}, revalidate: 3600 };
+    return { props: {} };
   } catch (error) {
     console.error('[Ambientazione Index] Error:', error);
-    return { props: {}, revalidate: 60 };
+    return { props: {} };
   }
 };

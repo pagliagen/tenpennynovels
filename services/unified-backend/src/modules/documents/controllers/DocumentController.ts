@@ -277,7 +277,7 @@ export class DocumentController {
       // Group root documents by subtypeId
       const docsBySubtype = new Map<string, any[]>();
       rootDocs.forEach(doc => {
-        const key = doc.subtypeId.toString();
+        const key = doc.subtypeId?.toString() || 'default';
         if (!docsBySubtype.has(key)) {
           docsBySubtype.set(key, []);
         }
