@@ -26,10 +26,6 @@ export function Header({ onSearchToggle, showSearch }: HeaderProps): JSX.Element
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const isActiveSection = (path: string) => {
-    // Approfondimenti is part of Ambientazione section
-    if (path === '/ambientazione' && router.pathname.startsWith('/approfondimenti')) {
-      return true;
-    }
     return router.pathname.startsWith(path);
   };
 

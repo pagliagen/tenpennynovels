@@ -18,10 +18,6 @@ export function MobileBottomNav(): JSX.Element {
   const router = useRouter();
 
   const isActiveSection = (path: string) => {
-    // Approfondimenti is part of Ambientazione section
-    if (path === '/ambientazione' && router.pathname.startsWith('/approfondimenti')) {
-      return true;
-    }
     return router.pathname.startsWith(path);
   };
 

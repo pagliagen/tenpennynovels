@@ -1,43 +1,32 @@
 /**
- * Document List Page (DOCUMENTS-FIRST Architecture)
+ * Document List Page
  *
- * Shows documents as primary tree with route metadata
- * Actions: create/edit/toggle/delete routes, edit/delete documents
+ * Shows documents as primary tree structure
+ * Actions: create/edit/toggle/delete documents
  */
 
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
-import { useRouter } from 'next/router';
-import { useQueryClient } from '@tanstack/react-query';
 import { ManagementLayout } from '@/components/layout/ManagementLayout';
 import { DocumentTreeView } from '@/components/documents/DocumentTreeView';
 import { EditDocumentModal } from '@/components/documents/EditDocumentModal';
 import { HierarchicalDocumentEditor } from '@/components/documents/HierarchicalDocumentEditor';
 import { CreateDocumentModal } from '@/components/documents/CreateDocumentModal';
-import { EditRouteModal } from '@/components/documents/EditRouteModal';
 import { useConfirm } from '@/hooks/useConfirm';
 import {
   useDocuments,
-  useToggleRouteEnabled,
-  useDeleteRoute,
-  useUpdateRoute,
   useReorderSiblings,
   useDeleteDocument,
   useToggleDocumentVisibility,
   useToggleDocumentDraft
 } from '@/hooks/api/useDocuments';
-import { createRoute } from '@/lib/api/documents';
 import { useNotificationStore } from '@/store/notificationStore';
 import { useURLFilter } from '@/hooks/useURLFilter';
 import { setFilterInHash } from '@/lib/utils/urlFilters';
-import type { DocumentWithRoute } from '@/types/api/Document';
 import styles from '@/styles/pages/DocumentList.module.scss';
 
 export default function DocumentList() {
-  const router = useRouter();
-
-  // Read type filter from URL hash
-  const urlFilter = useURLFilter<{ type?: 'ambientazione' | 'approfondimenti' | 'regolamento' }>();
+  const urlFilter = useURLFilter<{ type?: 'ambientazione' | 'regolamento' }>();
   const typeFilter = urlFilter?.type || 'ambientazione';
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
@@ -45,15 +34,8 @@ export default function DocumentList() {
   const [hierarchicalRootId, setHierarchicalRootId] = useState<string | null>(null);
   const [createDocModalOpen, setCreateDocModalOpen] = useState(false);
   const [selectedParentDocId, setSelectedParentDocId] = useState<string | null>(null);
-  const [editRouteModalOpen, setEditRouteModalOpen] = useState(false);
-  const [selectedRouteId, setSelectedRouteId] = useState<string | null>(null);
 
-  // Hooks
-  const queryClient = useQueryClient();
   const { data, isLoading, error } = useDocuments({ type: typeFilter });
-  const toggleEnabled = useToggleRouteEnabled();
-  const deleteRoute = useDeleteRoute();
-  const updateRoute = useUpdateRoute();
   const reorderSiblings = useReorderSiblings();
   const deleteDocument = useDeleteDocument();
   const toggleDocumentVisibility = useToggleDocumentVisibility();
@@ -61,138 +43,25 @@ export default function DocumentList() {
   const { confirm, ConfirmDialogComponent } = useConfirm();
   const addNotification = useNotificationStore(state => state.addNotification);
 
-  /**
-   * Set initial filter on mount if missing
-   */
   useEffect(() => {
     if (!urlFilter?.type) {
       setFilterInHash({ type: 'ambientazione' });
     }
   }, []);
 
-  /**
-   * Update URL filter when type changes
-   */
-  const handleTypeFilterChange = (type: 'ambientazione' | 'approfondimenti' | 'regolamento') => {
+  const handleTypeFilterChange = (type: 'ambientazione' | 'regolamento') => {
     setFilterInHash({ type });
   };
 
-  /**
-   * Toggle route enabled (hide/show)
-   */
-  const handleToggleEnabled = async (routeId: string) => {
-    try {
-      await toggleEnabled.mutateAsync(routeId);
-      addNotification({ type: 'success', message: 'Stato route aggiornato' });
-    } catch (error) {
-      addNotification({
-        type: 'error',
-        message: error instanceof Error ? error.message : 'Errore nell\'aggiornamento'
-      });
-    }
-  };
-
-  /**
-   * Delete route
-   */
-  const handleDeleteRoute = async (routeId: string) => {
-    const confirmed = await confirm({
-      title: 'Conferma Eliminazione',
-      message: 'Sei sicuro di voler eliminare questa route? Questa azione è irreversibile.'
-    });
-
-    if (!confirmed) return;
-
-    try {
-      await deleteRoute.mutateAsync(routeId);
-      addNotification({ type: 'success', message: 'Route eliminata con successo' });
-    } catch (error) {
-      addNotification({
-        type: 'error',
-        message: error instanceof Error ? error.message : 'Errore nell\'eliminazione'
-      });
-    }
-  };
-
-  /**
-   * Edit route - opens EditRouteModal
-   */
-  const handleEditRoute = (routeId: string) => {
-    setSelectedRouteId(routeId);
-    setEditRouteModalOpen(true);
-  };
-
-  /**
-   * Create route for existing document without route (orphan documents)
-   * Used by context menu "Crea Rotta" for recovery purposes
-   * NOTE: This is the ONLY manual route creation remaining after "+ Nuova Route" removal
-   */
-  const handleCreateRoute = async (documentId: string) => {
-    // Find the document in the tree
-    const findDoc = (docs: DocumentWithRoute[], target: string): DocumentWithRoute | null => {
-      for (const doc of docs) {
-        if (doc._id === target) return doc;
-        const found = findDoc(doc.children, target);
-        if (found) return found;
-      }
-      return null;
-    };
-
-    const doc = findDoc(data?.data ?? [], documentId);
-    if (!doc) return;
-
-    // Check if parent has a route
-    const parent = doc.parentId ? findDoc(data?.data ?? [], doc.parentId) : null;
-
-    // Create route automatically (with or without parent)
-    try {
-      const routeData = {
-        parentId: parent?.route?._id || null,  // Auto-detect parent route or create top-level
-        slug: doc.slug,
-        type: typeFilter,
-        kind: 'document' as const,
-        // ❌ REMOVED: title, description - these come from Document!
-        rootDocumentId: doc._id,
-        isPublic: true,
-        enabled: true
-      };
-
-      await createRoute(routeData);
-
-      // Invalidate documents query to refresh the tree with new route
-      await queryClient.invalidateQueries({ queryKey: ['admin', 'documents'] });
-
-      addNotification({
-        title: 'Route creata',
-        message: `Route "${doc.title}" creata con successo`,
-        type: 'success'
-      });
-    } catch (error: any) {
-      addNotification({
-        title: 'Errore',
-        message: error.message || 'Errore nella creazione route',
-        type: 'error'
-      });
-    }
-  };
-
-  /**
-   * Create child document (documents-first)
-   * Used by context menu "Crea Sottodocumento"
-   */
   const handleCreateChildDocument = (parentDocId: string) => {
     setSelectedParentDocId(parentDocId);
     setCreateDocModalOpen(true);
   };
 
-  /**
-   * Reorder siblings (drag & drop)
-   * Receives full ordered array of sibling IDs
-   */
   const handleReorderSiblings = async (parentId: string | null, orderedIds: string[]) => {
     try {
       await reorderSiblings.mutateAsync({ parentId, orderedIds });
-      addNotification({ type: 'success', message: `${orderedIds.length} routes riordinate` });
+      addNotification({ type: 'success', message: `${orderedIds.length} documenti riordinati` });
     } catch (error) {
       addNotification({
         type: 'error',
@@ -201,25 +70,16 @@ export default function DocumentList() {
     }
   };
 
-  /**
-   * Edit document - opens TipTap editor modal
-   */
   const handleEditDocument = (documentId: string) => {
     setSelectedDocId(documentId);
     setEditModalOpen(true);
   };
 
-  /**
-   * Edit document hierarchically (parent + children in accordion)
-   */
   const handleEditDocumentHierarchical = (documentId: string) => {
     setHierarchicalRootId(documentId);
     setHierarchicalEditorOpen(true);
   };
 
-  /**
-   * Delete document (soft delete)
-   */
   const handleDeleteDocument = async (documentId: string) => {
     const confirmed = await confirm({
       title: 'Conferma Eliminazione',
@@ -239,9 +99,6 @@ export default function DocumentList() {
     }
   };
 
-  /**
-   * Toggle document visibility (hide/show)
-   */
   const handleToggleDocumentVisibility = async (documentId: string) => {
     try {
       await toggleDocumentVisibility.mutateAsync(documentId);
@@ -254,9 +111,6 @@ export default function DocumentList() {
     }
   };
 
-  /**
-   * Toggle document draft status
-   */
   const handleToggleDocumentDraft = async (documentId: string) => {
     try {
       await toggleDocumentDraft.mutateAsync(documentId);
@@ -269,9 +123,6 @@ export default function DocumentList() {
     }
   };
 
-  /**
-   * Render error state
-   */
   if (error) {
     return (
       <ManagementLayout>
@@ -283,7 +134,6 @@ export default function DocumentList() {
       </ManagementLayout>
     );
   }
-
 
   return (
     <ManagementLayout>
@@ -305,7 +155,7 @@ export default function DocumentList() {
                 setCreateDocModalOpen(true);
               }}
             >
-              + Crea Documenti
+              + Crea Documento
             </button>
           </div>
         </header>
@@ -317,12 +167,6 @@ export default function DocumentList() {
             onClick={() => handleTypeFilterChange('ambientazione')}
           >
             🌍 Ambientazione
-          </button>
-          <button
-            className={`${styles.filterButton} ${typeFilter === 'approfondimenti' ? styles.active : ''}`}
-            onClick={() => handleTypeFilterChange('approfondimenti')}
-          >
-            📚 Approfondimenti
           </button>
           <button
             className={`${styles.filterButton} ${typeFilter === 'regolamento' ? styles.active : ''}`}
@@ -338,11 +182,7 @@ export default function DocumentList() {
         ) : (
           <DocumentTreeView
             documents={data?.data ?? []}
-            onCreateRoute={handleCreateRoute}
             onCreateChildDocument={handleCreateChildDocument}
-            onEditRoute={handleEditRoute}
-            onToggleRouteEnabled={handleToggleEnabled}
-            onDeleteRoute={handleDeleteRoute}
             onEditDocument={handleEditDocument}
             onEditDocumentHierarchical={handleEditDocumentHierarchical}
             onDeleteDocument={handleDeleteDocument}
@@ -354,7 +194,6 @@ export default function DocumentList() {
 
         {ConfirmDialogComponent}
 
-        {/* Edit Document Modal */}
         {editModalOpen && selectedDocId && (
           <EditDocumentModal
             documentId={selectedDocId}
@@ -366,7 +205,6 @@ export default function DocumentList() {
           />
         )}
 
-        {/* Hierarchical Document Editor Modal */}
         {hierarchicalEditorOpen && hierarchicalRootId && (
           <HierarchicalDocumentEditor
             rootDocumentId={hierarchicalRootId}
@@ -378,7 +216,6 @@ export default function DocumentList() {
           />
         )}
 
-        {/* Create Document Modal */}
         {createDocModalOpen && (
           <CreateDocumentModal
             isOpen={createDocModalOpen}
@@ -391,46 +228,10 @@ export default function DocumentList() {
             onDocumentCreated={(documentId) => {
               setCreateDocModalOpen(false);
               setSelectedParentDocId(null);
-              handleEditDocument(documentId);  // Simula pressione bottone "✏️ Modifica Documento"
+              handleEditDocument(documentId);
             }}
           />
         )}
-
-        {/* Edit Route Modal */}
-        {editRouteModalOpen && selectedRouteId && (() => {
-          // Find route in document tree
-          const findRoute = (docs: DocumentWithRoute[], id: string): any => {
-            for (const doc of docs) {
-              if (doc.route && doc.route._id === id) {
-                return {
-                  _id: doc.route._id,
-                  path: doc.route.path,
-                  slug: doc.route.slug,
-                  title: doc.route.title,
-                  kind: doc.route.kind,
-                  enabled: doc.route.enabled,
-                  isPublic: doc.route.isPublic,
-                  rootDocumentId: doc._id
-                };
-              }
-              const found = findRoute(doc.children, id);
-              if (found) return found;
-            }
-            return null;
-          };
-          const route = findRoute(data?.data ?? [], selectedRouteId);
-          return route ? (
-            <EditRouteModal
-              isOpen={editRouteModalOpen}
-              onClose={() => {
-                setEditRouteModalOpen(false);
-                setSelectedRouteId(null);
-              }}
-              routeId={selectedRouteId}
-              route={route}
-            />
-          ) : null;
-        })()}
       </div>
     </ManagementLayout>
   );

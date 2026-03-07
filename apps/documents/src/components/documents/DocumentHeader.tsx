@@ -1,8 +1,7 @@
 /**
  * DocumentHeader Component
  *
- * Document title, metadata, and favorite button.
- * Shows document type and public/private status.
+ * Document title, metadata, and favorite button (only for authenticated users).
  *
  * @module components/documents/DocumentHeader
  * @since 1.0.0
@@ -12,15 +11,16 @@
 
 import type { Document } from '@/types/document';
 import { DOCUMENT_TYPE_CONFIGS } from '@/types/document';
+import { useAuthStore } from '@/store/authStore';
 import styles from '@/styles/components/documents/DocumentDetail.module.scss';
 
 interface DocumentHeaderProps {
   document: Document;
-  showFavoriteButton?: boolean;
 }
 
-export function DocumentHeader({ document, showFavoriteButton = true }: DocumentHeaderProps): JSX.Element {
+export function DocumentHeader({ document }: DocumentHeaderProps): JSX.Element {
   const typeConfig = DOCUMENT_TYPE_CONFIGS[document.type];
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   return (
     <header className={styles.header}>
@@ -39,9 +39,9 @@ export function DocumentHeader({ document, showFavoriteButton = true }: Document
 
       {document.description && <p className={styles.description}>{document.description}</p>}
 
-      {showFavoriteButton && (
+      {isAuthenticated && (
         <div className={styles.actions}>
-          {/* TODO: Add FavoriteButton component */}
+          {/* TODO: collegare FavoriteButton al backend */}
           <button type="button" className={styles.favoriteButton}>
             ☆ Aggiungi ai preferiti
           </button>

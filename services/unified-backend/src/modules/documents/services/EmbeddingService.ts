@@ -60,7 +60,7 @@ export class EmbeddingService {
    * @returns Similar route info or null if no good match
    */
   static async findSimilarRoute(
-    type: 'ambientazione' | 'approfondimenti' | 'regolamento',
+    type: 'ambientazione' | 'regolamento',
     searchPath: string,
     minSimilarity: number = 0.55
   ): Promise<{ type: string; path: string; similarity: number } | null> {
@@ -117,7 +117,7 @@ export class EmbeddingService {
    */
   static async semanticSearch(
     query: string,
-    type?: 'ambientazione' | 'approfondimenti' | 'regolamento',
+    type?: 'ambientazione' | 'regolamento',
     limit: number = 10,
     minScore: number = 0.4
   ): Promise<Array<{ chunkId: string; documentId: string; slug: string; heading: string; score: number; type: string; parentSlug?: string }>> {

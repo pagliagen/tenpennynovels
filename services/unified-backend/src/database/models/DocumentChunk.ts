@@ -11,7 +11,7 @@
 
 import mongoose, { Schema, Document as MongooseDocument } from 'mongoose';
 
-export type DocumentType = 'ambientazione' | 'approfondimenti' | 'regolamento';
+export type DocumentType = 'ambientazione' | 'regolamento';
 
 export interface IDocumentChunk extends MongooseDocument {
   documentId: mongoose.Types.ObjectId;
@@ -107,7 +107,7 @@ const DocumentChunkSchema = new Schema<IDocumentChunk>({
   // DOCUMENT TYPE
   documentType: {
     type: String,
-    enum: ['ambientazione', 'approfondimenti', 'regolamento'],
+    enum: ['ambientazione', 'regolamento'],
     required: true,
     index: true
   },

@@ -5,15 +5,18 @@ import { autoLogOutcome } from '../middleware/auditMiddleware';
 
 const router = Router();
 
-// Apply admin authentication middleware to all routes
 router.use(AdminAuthMiddleware.requireAdminAccess);
 
 /**
- * Document Management Routes (NEW ARCHITECTURE - SPLIT SEMANTICO)
- *
- * Gestisce Documents (content layer) separatamente da Routes (navigation layer)
+ * Document Management Routes
  * Mounted on: /admin/documents
  */
+
+// List documents tree (grouped by subtype)
+router.get('/',
+  AdminAuthMiddleware.requireGranularPermission('documents.read'),
+  DocumentManagementController.getDocuments
+);
 
 // Create new document
 router.post('/',
@@ -24,7 +27,6 @@ router.post('/',
 );
 
 // Get document with all children recursively (for hierarchical editing)
-// IMPORTANT: Must be BEFORE /:id (more specific route first!)
 router.get('/:id/with-children',
   AdminAuthMiddleware.requireGranularPermission('documents.read'),
   DocumentManagementController.getDocumentWithChildren
@@ -36,14 +38,13 @@ router.get('/:id',
   DocumentManagementController.getDocumentById
 );
 
-// Reorder document siblings (batch operation)
-// Body: { parentId: string | null, orderedIds: string[] }
+// Reorder document siblings
 router.put('/reorder',
   AdminAuthMiddleware.requireGranularPermission('documents.update'),
   DocumentManagementController.reorderSiblings
 );
 
-// Update document (title, contentDelta, isDraft, visible, order)
+// Update document
 router.patch('/:id',
   AdminAuthMiddleware.requireGranularPermission('documents.update'),
   AdminAuthMiddleware.logAdminAction('document.update', 'document_management'),
@@ -51,7 +52,7 @@ router.patch('/:id',
   DocumentManagementController.updateDocument
 );
 
-// Soft delete document (set deleted: true)
+// Soft delete document
 router.delete('/:id',
   AdminAuthMiddleware.requireGranularPermission('documents.delete'),
   AdminAuthMiddleware.logAdminAction('document.delete', 'document_management'),
@@ -75,7 +76,7 @@ router.patch('/:id/toggle-draft',
   DocumentManagementController.toggleDocumentDraft
 );
 
-// Manually regenerate chunks for a document (for recovery/debugging)
+// Manually regenerate chunks
 router.post('/:id/regenerate-chunks',
   AdminAuthMiddleware.requireGranularPermission('documents.update'),
   AdminAuthMiddleware.logAdminAction('document.regenerate_chunks', 'document_management'),

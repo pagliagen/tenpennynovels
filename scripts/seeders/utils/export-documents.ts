@@ -4,28 +4,62 @@ import { getConnection } from './connection';
 import { createObjectCsvWriter } from 'csv-writer';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
-import exportRoutes from './export-routes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 /**
- * Export Documents + Routes from Database
+ * Export Documents + Subtypes from Database
  *
- * Downloads all documents and routes from MongoDB and creates:
+ * Downloads all documents and subtypes from MongoDB and creates:
  * 1. {slug}.content files (TipTap Delta JSON)
  * 2. {slug}.description files (plain text)
- * 3. documents.csv (document metadata)
- * 4. routes.csv (route hierarchy)
+ * 3. documents.csv (document metadata with subtypeSlug and isPublic)
+ * 4. subtypes.csv (subtype metadata)
  *
  * Usage:
  *   npm run export:dev:documents
- *   MONGO_URI="mongodb+srv://..." npm run export:dev:documents  # Production
  */
-async function exportDocumentsAndRoutes() {
+async function exportDocumentsAndSubtypes() {
   const { client, db } = await getConnection();
 
   try {
+    // Phase 1: Export subtypes
+    console.log('📍 PHASE 1: Exporting Subtypes');
+    const subtypesCollection = db.collection('documentsubtypes');
+    const subtypes = await subtypesCollection.find({}).sort({ type: 1, order: 1 }).toArray();
+
+    console.log(`[Export] Found ${subtypes.length} subtypes`);
+
+    const subtypeIdToSlug = new Map<string, string>();
+    const subtypeCsvData = [];
+
+    for (const st of subtypes) {
+      subtypeIdToSlug.set(st._id.toString(), st.slug);
+      subtypeCsvData.push({
+        slug: st.slug,
+        title: st.title,
+        type: st.type,
+        order: st.order
+      });
+      console.log(`[Export] ✓ ${st.type}/${st.slug}`);
+    }
+
+    const subtypeCsvWriter = createObjectCsvWriter({
+      path: path.join(__dirname, '../data/subtypes.csv'),
+      header: [
+        { id: 'slug', title: 'slug' },
+        { id: 'title', title: 'title' },
+        { id: 'type', title: 'type' },
+        { id: 'order', title: 'order' }
+      ]
+    });
+
+    await subtypeCsvWriter.writeRecords(subtypeCsvData);
+    console.log(`[Export] ✓ subtypes.csv written: ${subtypeCsvData.length} rows\n`);
+
+    // Phase 2: Export documents
+    console.log('📄 PHASE 2: Exporting Documents');
     const documentsCollection = db.collection('documents');
     const documents = await documentsCollection
       .find({ deleted: { $ne: true } })
@@ -33,23 +67,6 @@ async function exportDocumentsAndRoutes() {
       .toArray();
 
     console.log(`[Export] Found ${documents.length} documents`);
-
-    // Validation warnings
-    const issues: string[] = [];
-    for (const doc of documents) {
-      if (!doc.slug) issues.push(`Document ${doc._id} missing slug`);
-      if (!doc.title) issues.push(`Document ${doc._id} missing title`);
-      if (!doc.type) issues.push(`Document ${doc._id} missing type`);
-      if (!doc.contentDelta || Object.keys(doc.contentDelta).length === 0) {
-        issues.push(`Document ${doc.slug} has empty contentDelta`);
-      }
-    }
-
-    if (issues.length > 0) {
-      console.warn('[Export] ⚠️  Validation warnings:');
-      issues.forEach(i => console.warn(`  - ${i}`));
-      console.log('');
-    }
 
     const dataDir = path.join(__dirname, '../data/documents');
     await fs.mkdir(dataDir, { recursive: true });
@@ -60,44 +77,43 @@ async function exportDocumentsAndRoutes() {
       try {
         const slug = doc.slug;
 
-        // Write content file (TipTap Delta JSON)
         await fs.writeFile(
           path.join(dataDir, `${slug}.content`),
           JSON.stringify(doc.contentDelta || {}, null, 2),
           'utf8'
         );
 
-        // Write description file (plain text)
         await fs.writeFile(
           path.join(dataDir, `${slug}.description`),
           doc.description || '',
           'utf8'
         );
 
-        // CSV row (remaining fields)
+        const subtypeSlug = doc.subtypeId ? subtypeIdToSlug.get(doc.subtypeId.toString()) || '' : '';
+
         csvData.push({
           _id: doc._id.toString(),
           slug: doc.slug,
           title: doc.title,
           type: doc.type,
+          subtypeSlug,
           parentId: doc.parentId?.toString() || '',
           order: doc.order || 0,
           tags: (doc.tags || []).join('|'),
-          isVisible: String(doc.visible !== false),  // Transform: visible → isVisible
-          isDraft: String(doc.isDraft === true),     // Explicit string: "true" or "false"
+          isVisible: String(doc.visible !== false),
+          isDraft: String(doc.isDraft === true),
+          isPublic: String(doc.isPublic === true),
           version: doc.version || 1,
           createdAt: doc.createdAt?.toISOString() || '',
           updatedAt: doc.updatedAt?.toISOString() || ''
         });
 
-        console.log(`[Export] ✓ ${slug} (${doc.type}${doc.parentId ? ', child' : ''}${doc.isDraft ? ', draft' : ''})`);
+        console.log(`[Export] ✓ ${slug} (${doc.type}/${subtypeSlug}${doc.parentId ? ', child' : ''})`);
       } catch (error: any) {
         console.error(`[Export] ❌ Failed to export ${doc.slug || doc._id}:`, error.message);
-        // Continue with next document instead of crashing
       }
     }
 
-    // Write CSV
     const csvWriter = createObjectCsvWriter({
       path: path.join(__dirname, '../data/documents.csv'),
       header: [
@@ -105,11 +121,13 @@ async function exportDocumentsAndRoutes() {
         { id: 'slug', title: 'slug' },
         { id: 'title', title: 'title' },
         { id: 'type', title: 'type' },
+        { id: 'subtypeSlug', title: 'subtypeSlug' },
         { id: 'parentId', title: 'parentId' },
         { id: 'order', title: 'order' },
         { id: 'tags', title: 'tags' },
         { id: 'isVisible', title: 'isVisible' },
         { id: 'isDraft', title: 'isDraft' },
+        { id: 'isPublic', title: 'isPublic' },
         { id: 'version', title: 'version' },
         { id: 'createdAt', title: 'createdAt' },
         { id: 'updatedAt', title: 'updatedAt' }
@@ -118,59 +136,19 @@ async function exportDocumentsAndRoutes() {
 
     await csvWriter.writeRecords(csvData);
 
-    const stats = {
-      total: documents.length,
-      byType: {
-        ambientazione: documents.filter(d => d.type === 'ambientazione').length,
-        approfondimenti: documents.filter(d => d.type === 'approfondimenti').length,
-        regolamento: documents.filter(d => d.type === 'regolamento').length
-      },
-      roots: documents.filter(d => !d.parentId).length,
-      children: documents.filter(d => d.parentId).length,
-      drafts: documents.filter(d => d.isDraft).length,
-      hidden: documents.filter(d => !d.visible).length,
-      hasDescription: documents.filter(d => d.description).length
-    };
-
-    console.log(`[Export] ✓ CSV written: ${csvData.length} rows\n`);
-    console.log(`[Export] 📊 Statistics:`);
-    console.log(`  Total: ${stats.total} documents`);
-    console.log(`  By Type: ambientazione=${stats.byType.ambientazione}, approfondimenti=${stats.byType.approfondimenti}, regolamento=${stats.byType.regolamento}`);
-    console.log(`  Hierarchy: ${stats.roots} roots, ${stats.children} children`);
-    console.log(`  Flags: ${stats.drafts} drafts, ${stats.hidden} hidden`);
-    console.log(`  Files: ${stats.total} .content, ${stats.hasDescription} .description`);
-    console.log(`\n[Export] ✅ Documents export complete`);
+    console.log(`[Export] ✓ documents.csv written: ${csvData.length} rows\n`);
+    console.log('✅ EXPORT COMPLETE - Subtypes + Documents');
 
   } catch (error) {
-    console.error('[Export] ❌ Documents export error:', error);
+    console.error('[Export] ❌ Export error:', error);
     throw error;
   } finally {
     await client.close();
   }
-
-  // Phase 2: Export routes
-  console.log('\n');
-  console.log('='.repeat(60));
-  console.log('📍 PHASE 2: Exporting Routes');
-  console.log('='.repeat(60));
-  console.log('');
-
-  try {
-    await exportRoutes();
-  } catch (error) {
-    console.error('[Export] ❌ Routes export error:', error);
-    throw error;
-  }
-
-  console.log('\n');
-  console.log('='.repeat(60));
-  console.log('✅ EXPORT COMPLETE - Documents + Routes');
-  console.log('='.repeat(60));
 }
 
-// CLI execution (ESM compatible)
 if (import.meta.url === `file://${process.argv[1]}`) {
-  exportDocumentsAndRoutes().catch((error) => {
+  exportDocumentsAndSubtypes().catch((error) => {
     console.error('Fatal error:', error);
     process.exit(1);
   });

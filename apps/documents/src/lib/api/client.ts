@@ -16,55 +16,8 @@
  */
 
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
-import { API_CONFIG, AUTH_CONFIG } from '@/constants/config';
+import { API_CONFIG } from '@/constants/config';
 import { parseAxiosError, ApiError } from './errors';
-
-/**
- * Set auth token in localStorage
- *
- * Stores JWT token for subsequent authenticated requests.
- * No-op during server-side rendering.
- *
- * @param {string} token - JWT access token to store
- * @returns {void}
- * @public
- * @since 2.0.0
- *
- * @example
- * ```typescript
- * // After successful login
- * setAuthToken(response.token);
- * ```
- */
-export function setAuthToken(token: string): void {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem(AUTH_CONFIG.TOKEN_KEY, token);
-}
-
-/**
- * Remove auth token from localStorage
- *
- * Clears all authentication-related data from localStorage.
- * Called on logout or when receiving 401 responses.
- * No-op during server-side rendering.
- *
- * @returns {void}
- * @public
- * @since 2.0.0
- *
- * @example
- * ```typescript
- * // On logout
- * clearAuthToken();
- * router.push(ROUTES.LOGIN);
- * ```
- */
-export function clearAuthToken(): void {
-  if (typeof window === 'undefined') return;
-  localStorage.removeItem(AUTH_CONFIG.TOKEN_KEY);
-  localStorage.removeItem(AUTH_CONFIG.REFRESH_TOKEN_KEY);
-  localStorage.removeItem(AUTH_CONFIG.USER_KEY);
-}
 
 /**
  * Create Axios instance with base configuration
@@ -146,12 +99,6 @@ const createApiClient = (): AxiosInstance => {
     },
     async (error: AxiosError) => {
       const apiError = parseAxiosError(error);
-
-      // Handle 401 Unauthorized - Clear auth tokens
-      if (apiError.requiresAuth()) {
-        clearAuthToken();
-        // Note: Redirect to login handled by useAuth hook
-      }
 
       // Log errors in development with full context
       if (process.env.NODE_ENV === 'development') {

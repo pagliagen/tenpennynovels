@@ -8,11 +8,11 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { DocumentNode } from './DocumentNode';
-import type { DocumentWithRoute } from '@/types/api/Document';
+import type { DocumentTreeNode } from '@/types/api/Document';
 import styles from './DocumentTreeView.module.scss';
 
 export interface SortableDocumentNodeProps {
-  doc: DocumentWithRoute;
+  doc: DocumentTreeNode;
   depth: number;
   isExpanded: boolean;
   expandedDocs: Set<string>;
@@ -22,17 +22,9 @@ export interface SortableDocumentNodeProps {
   onDelete: (docId: string) => void;
   onToggleVisibility: (docId: string) => void;
   onToggleDraft: (docId: string) => void;
-  onCreateRoute: (docId: string) => void;
   onCreateChildDocument: (parentDocId: string) => void;
-  onEditRoute: (routeId: string) => void;
-  onToggleRouteEnabled: (routeId: string) => void;
-  onDeleteRoute: (routeId: string) => void;
 }
 
-/**
- * Sortable wrapper for DocumentNode - makes it draggable
- * Also wraps children in SortableContext for nested drag & drop
- */
 export const SortableDocumentNode: React.FC<SortableDocumentNodeProps> = (props) => {
   const {
     attributes,
@@ -54,12 +46,10 @@ export const SortableDocumentNode: React.FC<SortableDocumentNodeProps> = (props)
 
   return (
     <>
-      {/* Sortable wrapper - ONLY for the document itself, NOT children */}
       <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
         <DocumentNode {...props} />
       </div>
 
-      {/* Render children OUTSIDE sortable wrapper - prevents event bubbling */}
       {hasChildren && props.isExpanded && (
         <div className={styles.children}>
           <SortableContext
@@ -79,11 +69,7 @@ export const SortableDocumentNode: React.FC<SortableDocumentNodeProps> = (props)
                 onDelete={props.onDelete}
                 onToggleVisibility={props.onToggleVisibility}
                 onToggleDraft={props.onToggleDraft}
-                onCreateRoute={props.onCreateRoute}
                 onCreateChildDocument={props.onCreateChildDocument}
-                onEditRoute={props.onEditRoute}
-                onToggleRouteEnabled={props.onToggleRouteEnabled}
-                onDeleteRoute={props.onDeleteRoute}
               />
             ))}
           </SortableContext>

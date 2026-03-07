@@ -261,8 +261,7 @@ export class ApiError extends Error {
    * @example
    * ```typescript
    * if (error.requiresAuth()) {
-   *   clearAuthToken();
-   *   router.push(ROUTES.LOGIN);
+   *   // handle unauthenticated state
    * }
    * ```
    */

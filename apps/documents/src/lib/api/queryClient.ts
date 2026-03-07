@@ -150,169 +150,31 @@ export const queryClient = new QueryClient({
  * Query Key Factory
  *
  * Type-safe query key builders for consistent cache management.
- * Use these instead of hardcoding query keys.
  *
  * @namespace queryKeys
  * @since 2.0.0
- *
- * @example
- * ```typescript
- * import { queryKeys } from '@/lib/api/queryClient';
- *
- * // User queries
- * useQuery({
- *   queryKey: queryKeys.users.detail(userId),
- *   queryFn: () => api.get(`/users/${userId}`)
- * });
- *
- * // Character queries
- * useQuery({
- *   queryKey: queryKeys.characters.list(campaignId),
- *   queryFn: () => api.get(`/characters?campaign=${campaignId}`)
- * });
- * ```
  */
 export const queryKeys = {
-  /**
-   * Auth-related query keys
-   */
   auth: {
-    /** Current user query key */
-    me: ['auth', 'me'] as const,
-
-    /** Session validation query key */
     session: ['auth', 'session'] as const,
   },
 
-  /**
-   * User-related query keys
-   */
-  users: {
-    /** All users list query key */
-    all: ['users'] as const,
-
-    /** User list with filters query key builder */
-    list: (filters?: Record<string, unknown>) => ['users', 'list', filters] as const,
-
-    /** Single user detail query key builder */
-    detail: (id: string) => ['users', 'detail', id] as const,
+  documents: {
+    all: ['documents'] as const,
+    list: (filters?: Record<string, unknown>) => ['documents', 'list', filters] as const,
+    detail: (type: string, path: string) => ['documents', 'detail', type, path] as const,
+    routes: (type?: string) => ['documents', 'routes', type] as const,
   },
 
-  /**
-   * Character-related query keys
-   */
-  characters: {
-    /** All characters list query key */
-    all: ['characters'] as const,
-
-    /** Character list with filters query key builder */
-    list: (filters?: Record<string, unknown>) => ['characters', 'list', filters] as const,
-
-    /** Single character detail query key builder */
-    detail: (id: string) => ['characters', 'detail', id] as const,
-
-    /** Characters by campaign query key builder */
-    byCampaign: (campaignId: string) => ['characters', 'campaign', campaignId] as const,
-
-    /** Public characters list (for recipient selector) */
-    publicList: ['characters', 'publicList'] as const,
+  search: {
+    all: ['search'] as const,
+    results: (query: string, type?: string) => ['search', 'results', query, type] as const,
+    suggestions: (query: string) => ['search', 'suggestions', query] as const,
   },
 
-  /**
-   * Location-related query keys
-   */
-  locations: {
-    /** All locations list query key */
-    all: ['locations'] as const,
-
-    /** Location list with filters query key builder */
-    list: (filters?: Record<string, unknown>) => ['locations', 'list', filters] as const,
-
-    /** Single location detail query key builder */
-    detail: (id: string) => ['locations', 'detail', id] as const,
-
-    /** Location occupants query key builder */
-    occupants: (id: string) => ['locations', id, 'occupants'] as const,
-  },
-
-  /**
-   * Message-related query keys
-   */
-  messages: {
-    /** Location messages query key builder */
-    location: (locationId: string, page?: number) =>
-      ['messages', 'location', locationId, page] as const,
-
-    /** Private messages query key builder */
-    private: (characterId: string, page?: number) =>
-      ['messages', 'private', characterId, page] as const,
-
-    /** Postal messages query key builder */
-    postal: (characterId: string, page?: number) =>
-      ['messages', 'postal', characterId, page] as const,
-  },
-
-  /**
-   * Presence-related query keys
-   */
-  presence: {
-    /** All online characters query key */
-    all: ['presence'] as const,
-
-    /** Single character presence query key builder */
-    detail: (characterId: string) => ['presence', characterId] as const,
-  },
-
-  /**
-   * Market-related query keys
-   */
-  market: {
-    /** All market items query key */
-    all: ['market'] as const,
-
-    /** Market items with filters query key builder */
-    list: (filters?: Record<string, unknown>) => ['market', 'list', filters] as const,
-
-    /** Single market item detail query key builder */
-    detail: (id: string) => ['market', 'detail', id] as const,
-  },
-
-  /**
-   * OnGame Mail-related query keys
-   */
-  onGameMail: {
-    /** Thread list (conversation list) query key */
-    threads: ['onGameMail', 'threads'] as const,
-
-    /** Single thread (conversation) query key builder */
-    thread: (partnerId: string) => ['onGameMail', 'thread', partnerId] as const,
-
-    /** Message types config query key */
-    messageTypes: ['onGameMail', 'messageTypes'] as const,
-
-    /** Unread count query key */
-    unreadCount: ['onGameMail', 'unreadCount'] as const,
-  },
-
-  /**
-   * OffGame Chat-related query keys
-   */
-  offGameChat: {
-    /** Chat list (all chats) query key */
-    chats: ['offGameChat', 'chats'] as const,
-
-    /** Single chat with messages query key builder */
-    chat: (chatId: string) => ['offGameChat', 'chat', chatId] as const,
-
-    /** Total unread count query key */
-    unreadCount: ['offGameChat', 'unreadCount'] as const,
-  },
-
-  /**
-   * Economy-related query keys
-   */
-  economy: {
-    /** Wallet balance query key */
-    wallet: ['economy', 'wallet'] as const,
+  favorites: {
+    all: ['favorites'] as const,
+    list: () => ['favorites', 'list'] as const,
+    status: (documentId: string) => ['favorites', 'status', documentId] as const,
   },
 } as const;

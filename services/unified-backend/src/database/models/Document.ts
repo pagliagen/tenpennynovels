@@ -1,8 +1,11 @@
 /**
- * Document Model (Content Layer)
+ * Document Model (Content + Routing Layer)
  *
- * Represents the content of a document. Routing is managed by Route model.
+ * Single source of truth for document content and URL resolution.
  * Supports hierarchy (parent/child relationships) for granular embedding/search.
+ * Grouped by DocumentSubtype for sidebar navigation.
+ *
+ * URL resolution: Document.findOne({ type, path }) where path = "{subtype.slug}/{doc.slug}"
  */
 
 import mongoose, { Schema, Document as MongooseDocument, Types } from 'mongoose';
@@ -10,24 +13,29 @@ import { softDeletePlugin, SoftDeleteFields, SoftDeleteMethods } from '../plugin
 
 export interface IDocument extends MongooseDocument, SoftDeleteFields, SoftDeleteMethods {
   // Identity
-  slug: string;              // Unique identifier (e.g., "folklore", "upper-class")
+  slug: string;
   title: string;
-  type: 'ambientazione' | 'approfondimenti' | 'regolamento';  // Document type (determines which section it belongs to)
+  type: 'ambientazione' | 'regolamento';
+
+  // Subtype & Routing
+  subtypeId: Types.ObjectId;
+  path: string;              // Calculated: "{subtype.slug}/{doc.slug}" (unique per type)
+  isPublic: boolean;
 
   // Content (TipTap Delta JSON - ONLY format)
-  contentDelta: any;         // TipTap JSON Delta (WYSIWYG gestionale format)
+  contentDelta: any;
   content?: string;          // HTML output (auto-generated from contentDelta with H1 IDs)
   description?: string;
 
   // Hierarchy (for parent/child relationships)
-  parentId?: Types.ObjectId; // Reference to parent document (null if root)
-  order: number;             // Order for assembly in parent (1, 2, 3...)
+  parentId?: Types.ObjectId;
+  order: number;
 
   // Metadata
-  tags: string[];            // Tags for semantic search
-  isDraft: boolean;          // If true, content is incomplete/work-in-progress
-  draftNotes?: string;       // Notes/instructions for drafts
-  visible: boolean;          // If false, document is hidden (admin can still see it)
+  tags: string[];
+  isDraft: boolean;
+  draftNotes?: string;
+  visible: boolean;
 
   lastUpdated: Date;
   createdAt: Date;
@@ -38,7 +46,7 @@ const DocumentSchema = new Schema<IDocument>({
   slug: {
     type: String,
     required: true,
-    unique: true, // Ensure slug uniqueness
+    unique: true,
     index: true
   },
   title: {
@@ -47,9 +55,25 @@ const DocumentSchema = new Schema<IDocument>({
   },
   type: {
     type: String,
-    enum: ['ambientazione', 'approfondimenti', 'regolamento'],
+    enum: ['ambientazione', 'regolamento'],
     required: true,
     index: true
+  },
+
+  // Subtype & Routing
+  subtypeId: {
+    type: Schema.Types.ObjectId,
+    ref: 'DocumentSubtype',
+    required: true,
+    index: true
+  },
+  path: {
+    type: String,
+    required: false  // Calculated by pre-save hook
+  },
+  isPublic: {
+    type: Boolean,
+    default: true
   },
 
   // Content (TipTap Delta JSON)
@@ -59,7 +83,7 @@ const DocumentSchema = new Schema<IDocument>({
   },
   content: {
     type: String,
-    required: false            // Auto-generated from contentDelta in pre-save hook
+    required: false
   },
   description: {
     type: String
@@ -95,7 +119,6 @@ const DocumentSchema = new Schema<IDocument>({
     default: true,
     index: true
   },
-  // REMOVED: deleted field (now using soft delete plugin)
 
   lastUpdated: {
     type: Date,
@@ -107,26 +130,41 @@ const DocumentSchema = new Schema<IDocument>({
   }
 }, {
   collection: 'documents',
-  timestamps: false // We manage timestamps manually
+  timestamps: false
 });
 
 // ========== HOOKS ==========
 
 /**
- * Pre-save hook: Validations + HTML generation
+ * Pre-save hook: Path calculation, type validation, HTML generation
  */
 DocumentSchema.pre('save', async function() {
-  // VALIDATION: If document is referenced by a route, validate type matches
-  // Skip validation for new documents (routes may not exist yet, e.g., during seeding)
-  if (this.isModified('type') && !this.isNew) {
-    // Dynamic import to avoid circular dependencies
-    const Route = (await import('./Route')).default;
-    const route = await Route.findOne({ rootDocumentId: this._id });
+  // PATH CALCULATION: Calculate path from subtype.slug + doc.slug
+  if (this.isNew || this.isModified('subtypeId') || this.isModified('slug')) {
+    const DocumentSubtype = (await import('./DocumentSubtype')).default;
+    const subtype = await DocumentSubtype.findById(this.subtypeId);
 
-    if (route && route.type !== this.type) {
+    if (!subtype) {
+      throw new Error(`DocumentSubtype ${this.subtypeId} not found`);
+    }
+
+    if (subtype.type !== this.type) {
       throw new Error(
-        `Document type (${this.type}) must match Route type (${route.type}). ` +
-        `Route ${route._id} has type="${route.type}"`
+        `Document type (${this.type}) must match DocumentSubtype type (${subtype.type})`
+      );
+    }
+
+    this.path = `${subtype.slug}/${this.slug}`;
+  }
+
+  // TYPE VALIDATION: If type changed, validate it still matches subtype
+  if (this.isModified('type') && !this.isNew && !this.isModified('subtypeId')) {
+    const DocumentSubtype = (await import('./DocumentSubtype')).default;
+    const subtype = await DocumentSubtype.findById(this.subtypeId);
+
+    if (subtype && subtype.type !== this.type) {
+      throw new Error(
+        `Document type (${this.type}) must match DocumentSubtype type (${subtype.type})`
       );
     }
   }
@@ -134,31 +172,26 @@ DocumentSchema.pre('save', async function() {
   // HTML GENERATION: Generate HTML content from contentDelta
   if (this.isModified('contentDelta')) {
     try {
-      // Dynamic import to avoid circular dependencies
       const { generateHtml } = await import('../../modules/admin/services/HtmlGenerator');
       this.content = generateHtml(this.contentDelta, { injectHeadingIds: true });
     } catch (error) {
       console.error('[Document] Failed to generate HTML from contentDelta:', error);
-      // Don't block save - content will be undefined, can be regenerated later
     }
   }
 });
 
 /**
  * Post-save hook: Trigger embedding generation or cleanup
- * Handles: create, update, soft delete, restore
  */
 DocumentSchema.post('save', async function(doc) {
   try {
     const { publishDocumentEvent, publishDocumentDeletedEvent } = await import('@shared/services/EmbeddingEventPublisher');
 
-    // SOFT DELETE: If deletedAt is set, clean up embeddings
     if (doc.deletedAt) {
       await publishDocumentDeletedEvent(doc._id.toString());
       return;
     }
 
-    // CREATE/UPDATE/RESTORE: Generate embeddings
     const action = doc.isNew ? 'created' : 'updated';
     await publishDocumentEvent(action, {
       _id: doc._id.toString(),
@@ -168,7 +201,6 @@ DocumentSchema.post('save', async function(doc) {
     });
   } catch (error) {
     console.error('[Document] Failed to publish embedding event:', error);
-    // Don't block save - embeddings can be regenerated later
   }
 });
 
@@ -196,13 +228,16 @@ DocumentSchema.post('findOneAndDelete', async function(doc) {
 
 // ========== INDEXES ==========
 
-// Index for hierarchy queries (fast children fetch)
+// URL resolution: find document by type + calculated path
+DocumentSchema.index({ type: 1, path: 1 }, { unique: true });
+
+// Hierarchy queries (fast children fetch)
 DocumentSchema.index({ parentId: 1, order: 1 });
 
-// Index for slug lookup (admin/search)
-DocumentSchema.index({ slug: 1 });
+// Subtype grouping (list documents by subtype, ordered)
+DocumentSchema.index({ subtypeId: 1, order: 1 });
 
-// Index for tag-based search
+// Tag-based search
 DocumentSchema.index({ tags: 1 });
 
 // Apply soft delete plugin

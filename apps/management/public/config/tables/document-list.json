@@ -1,9 +1,9 @@
 {
   "_meta": {
-    "version": "2.0.0",
-    "description": "Configurazione tabella lista route/documenti (NEW ARCHITECTURE)",
-    "lastUpdated": "2026-02-28",
-    "architecture": "Document model (content)"
+    "version": "3.0.0",
+    "description": "Configurazione tabella documenti (SubType architecture)",
+    "lastUpdated": "2026-03-07",
+    "architecture": "Document + DocumentSubtype"
   },
   "table": {
     "name": "document-list",
@@ -55,44 +55,6 @@
       }
     },
     {
-      "key": "kind",
-      "label": "Kind",
-      "type": "text",
-      "visible": true,
-      "defaultVisible": true,
-      "sortable": true,
-      "width": "100px",
-      "render": {
-        "type": "badge"
-      }
-    },
-    {
-      "key": "displayCategory",
-      "label": "Categoria",
-      "type": "text",
-      "visible": true,
-      "defaultVisible": true,
-      "sortable": false,
-      "width": "150px",
-      "render": {
-        "type": "text"
-      }
-    },
-    {
-      "key": "enabled",
-      "label": "Abilitato",
-      "type": "boolean",
-      "visible": true,
-      "defaultVisible": true,
-      "sortable": true,
-      "width": "90px",
-      "render": {
-        "type": "badge",
-        "trueValue": "Sì",
-        "falseValue": "No"
-      }
-    },
-    {
       "key": "isPublic",
       "label": "Pubblico",
       "type": "boolean",
@@ -111,7 +73,7 @@
       "label": "Bozza",
       "type": "boolean",
       "visible": true,
-      "defaultVisible": false,
+      "defaultVisible": true,
       "sortable": false,
       "width": "80px",
       "render": {
@@ -121,29 +83,17 @@
       }
     },
     {
-      "key": "metadata.createdAt",
-      "label": "Creato Il",
-      "type": "datetime",
-      "visible": true,
-      "defaultVisible": false,
-      "sortable": true,
-      "width": "180px",
-      "render": {
-        "type": "datetime",
-        "format": "date"
-      }
-    },
-    {
-      "key": "metadata.updatedAt",
-      "label": "Aggiornato Il",
-      "type": "datetime",
+      "key": "visible",
+      "label": "Visibile",
+      "type": "boolean",
       "visible": true,
       "defaultVisible": true,
-      "sortable": true,
-      "width": "180px",
+      "sortable": false,
+      "width": "80px",
       "render": {
-        "type": "datetime",
-        "format": "relative"
+        "type": "badge",
+        "trueValue": "Sì",
+        "falseValue": "No"
       }
     }
   ],
@@ -168,21 +118,7 @@
       "icon": "🗑️",
       "type": "danger",
       "visible": true,
-      "confirmMessage": "Sei sicuro di voler eliminare questa route? Questa azione è irreversibile."
-    }
-  ],
-  "bulkActions": [
-    {
-      "key": "bulk-enable",
-      "label": "Abilita Selezionati",
-      "icon": "✅",
-      "type": "success"
-    },
-    {
-      "key": "bulk-disable",
-      "label": "Disabilita Selezionati",
-      "icon": "❌",
-      "type": "danger"
+      "confirmMessage": "Sei sicuro di voler eliminare questo documento? Questa azione è irreversibile."
     }
   ],
   "filters": [
@@ -197,31 +133,6 @@
         { "value": "regolamento", "label": "Regolamento" }
       ],
       "placeholder": "Filtra per tipo"
-    },
-    {
-      "key": "kind",
-      "label": "Kind",
-      "type": "select",
-      "field": "kind",
-      "options": [
-        { "value": "", "label": "Tutti" },
-        { "value": "document", "label": "Document" },
-        { "value": "category", "label": "Category" },
-        { "value": "redirect", "label": "Redirect" }
-      ],
-      "placeholder": "Filtra per kind"
-    },
-    {
-      "key": "enabled",
-      "label": "Stato",
-      "type": "select",
-      "field": "enabled",
-      "options": [
-        { "value": "", "label": "Tutti" },
-        { "value": true, "label": "Abilitato" },
-        { "value": false, "label": "Disabilitato" }
-      ],
-      "placeholder": "Filtra per stato"
     }
   ]
 }

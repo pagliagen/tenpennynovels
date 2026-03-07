@@ -192,13 +192,12 @@ export { ChatModerationAction, type IChatModerationAction } from './ChatModerati
 export { MessageReport, type IMessageReport } from './MessageReport';
 export { UserReport, type IUserReport } from './UserReport';
 
-// Knowledge Base System (Documents - NEW DUAL-TABLE)
+// Knowledge Base System (Documents + SubTypes)
 export {
-  default as Route,
-  type IRoute,
-  type RouteType,
-  type RouteKind
-} from './Route';
+  default as DocumentSubtype,
+  type IDocumentSubtype,
+  type DocumentType
+} from './DocumentSubtype';
 export {
   default as Document,
   type IDocument

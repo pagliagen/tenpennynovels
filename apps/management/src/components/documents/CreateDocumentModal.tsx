@@ -1,21 +1,20 @@
 /**
  * CreateDocumentModal Component
  *
- * Modal for creating new documents WITHOUT routes (documents-first approach)
- * Routes can be created later via context menu "Crea Rotta"
+ * Modal for creating new documents with subtype selection.
  */
 
 import React, { useState } from 'react';
-import { createDocument } from '@/lib/api/documents';
+import { createDocument, getSubtypes } from '@/lib/api/documents';
 import { useNotificationStore } from '@/store/notificationStore';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
 import styles from '@/styles/components/Modal.module.scss';
 
 interface CreateDocumentModalProps {
   isOpen: boolean;
   onClose: () => void;
-  type: 'ambientazione' | 'approfondimenti' | 'regolamento';  // Category context
-  preselectedParentDocId?: string | null;                     // For child document creation
+  type: 'ambientazione' | 'regolamento';
+  preselectedParentDocId?: string | null;
   onDocumentCreated: (documentId: string) => void;
 }
 
@@ -29,17 +28,24 @@ export function CreateDocumentModal({
   const [title, setTitle] = useState('');
   const [slug, setSlug] = useState('');
   const [description, setDescription] = useState('');
+  const [subtypeId, setSubtypeId] = useState('');
   const [isDraft, setIsDraft] = useState(true);
   const [visible, setVisible] = useState(true);
+  const [isPublic, setIsPublic] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Track if user manually edited slug
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
 
   const addNotification = useNotificationStore(state => state.addNotification);
   const queryClient = useQueryClient();
 
-  // Auto-generate slug from title (ALWAYS unless manually edited)
+  // Fetch subtypes for the current type
+  const { data: subtypes = [] } = useQuery({
+    queryKey: ['admin', 'subtypes', type],
+    queryFn: () => getSubtypes(type),
+    enabled: isOpen,
+    staleTime: 5 * 60 * 1000,
+  });
+
   const handleTitleChange = (value: string) => {
     setTitle(value);
     const autoValue = value
@@ -50,11 +56,9 @@ export function CreateDocumentModal({
       .trim()
       .replace(/\s+/g, '-');
 
-    // Only auto-update if user hasn't manually edited
     if (!slugManuallyEdited) setSlug(autoValue);
   };
 
-  // Handle manual slug edit
   const handleSlugChange = (value: string) => {
     setSlug(value);
     setSlugManuallyEdited(true);
@@ -63,10 +67,10 @@ export function CreateDocumentModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!title.trim() || !slug.trim()) {
+    if (!title.trim() || !slug.trim() || !subtypeId) {
       addNotification({
         type: 'error',
-        message: 'Titolo e slug sono obbligatori'
+        message: 'Titolo, slug e sottotipo sono obbligatori'
       });
       return;
     }
@@ -74,16 +78,17 @@ export function CreateDocumentModal({
     setIsSubmitting(true);
 
     try {
-      // Create document WITHOUT route
       const createdDocument = await createDocument({
         title: title.trim(),
         slug: slug.trim(),
-        type,                              // From prop (category context)
+        type,
+        subtypeId,
         description: description.trim() || undefined,
-        parentId: preselectedParentDocId || null,  // From prop (for child docs) or null
-        contentDelta: { type: 'doc', content: [] },  // Empty content initially
+        parentId: preselectedParentDocId || null,
+        contentDelta: { type: 'doc', content: [] },
         isDraft,
-        visible
+        visible,
+        isPublic
       });
 
       addNotification({
@@ -93,10 +98,7 @@ export function CreateDocumentModal({
           : 'Documento creato con successo'
       });
 
-      // Refresh documents list
       queryClient.invalidateQueries({ queryKey: ['admin', 'documents'] });
-
-      // Open edit modal for content
       onDocumentCreated(createdDocument._id);
     } catch (error) {
       addNotification({
@@ -118,17 +120,11 @@ export function CreateDocumentModal({
             {preselectedParentDocId ? 'Crea Sottodocumento' : 'Crea Nuovo Documento'}
           </h2>
           <button className={styles.closeButton} onClick={onClose}>
-            ×
+            &times;
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className={styles.modalBody}>
-          {preselectedParentDocId && (
-            <div className={styles.infoBox}>
-              ℹ️ Verrà creato un documento figlio. Potrai creare la route in seguito dal menu contestuale.
-            </div>
-          )}
-
           {/* Title Field */}
           <div className={styles.formField}>
             <label htmlFor="title">Titolo *</label>
@@ -142,7 +138,6 @@ export function CreateDocumentModal({
               disabled={isSubmitting}
               autoFocus
             />
-            <small>Titolo principale del documento</small>
           </div>
 
           {/* Slug Field */}
@@ -162,6 +157,26 @@ export function CreateDocumentModal({
             </small>
           </div>
 
+          {/* Subtype Selector */}
+          <div className={styles.formField}>
+            <label htmlFor="subtypeId">Sottotipo *</label>
+            <select
+              id="subtypeId"
+              value={subtypeId}
+              onChange={(e) => setSubtypeId(e.target.value)}
+              required
+              disabled={isSubmitting}
+            >
+              <option value="">Seleziona sottotipo...</option>
+              {subtypes.map((st) => (
+                <option key={st._id} value={st._id}>
+                  {st.title} ({st.slug})
+                </option>
+              ))}
+            </select>
+            <small>Raggruppa il documento sotto questo sottotipo nella sidebar</small>
+          </div>
+
           {/* Description Field */}
           <div className={styles.formField}>
             <label htmlFor="description">Descrizione</label>
@@ -173,10 +188,9 @@ export function CreateDocumentModal({
               rows={3}
               disabled={isSubmitting}
             />
-            <small>Descrizione opzionale (utile per ricerca)</small>
           </div>
 
-          {/* Document Checkboxes */}
+          {/* Checkboxes */}
           <div className={styles.formField}>
             <label>
               <input
@@ -198,6 +212,18 @@ export function CreateDocumentModal({
                 disabled={isSubmitting}
               />
               {' '}Visibile
+            </label>
+          </div>
+
+          <div className={styles.formField}>
+            <label>
+              <input
+                type="checkbox"
+                checked={isPublic}
+                onChange={(e) => setIsPublic(e.target.checked)}
+                disabled={isSubmitting}
+              />
+              {' '}Pubblico (accessibile senza login)
             </label>
           </div>
 

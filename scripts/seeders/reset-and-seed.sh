@@ -27,7 +27,7 @@ echo -e "${YELLOW}📦 Step 1: Dropping MongoDB collections...${NC}"
 docker exec tenpennynovels-mongodb mongosh "${MONGO_URI}" --quiet --eval "
   db.documents.drop();
   db.documentchunks.drop();
-  db.routes.drop();
+  db.documentsubtypes.drop();
   db.locations.drop();
   print('✅ MongoDB collections dropped');
 " || echo -e "${RED}⚠️  MongoDB cleanup failed (collections may not exist)${NC}"

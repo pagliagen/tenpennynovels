@@ -1,468 +1,362 @@
 /**
  * DocumentController
  *
- * Handles document retrieval via Route→Document resolution.
+ * Handles document retrieval via direct Document lookup (no Route model).
  * Public API for documents visualization (frontend apps/documents).
  * Supports semantic search and favorites management.
  */
 
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
-import Route from '@database/models/Route';
 import Document from '@database/models/Document';
-import { RouteService } from '../services/RouteService';
+import DocumentSubtype from '@database/models/DocumentSubtype';
 import { EmbeddingService } from '../services/EmbeddingService';
+import { HierarchyService } from '../services/HierarchyService';
 import { logger } from '@shared/utils/logger';
 
 export class DocumentController {
   // ========== PUBLIC ROUTES ==========
 
   /**
-   * GET /documents/:type/:path
-   * Get document or category by route path
-   *
-   * Examples:
-   *   /documents/ambientazione/folklore → document with children
-   *   /documents/ambientazione/approfondimenti → category with sub-routes
+   * GET /documents/:type/:path(*)
+   * Get document by type + path (e.g., ambientazione/introduzione/presentazione)
    */
   static async getByPath(req: Request<{ type: string; path: string }>, res: Response): Promise<void> {
     const { type, path } = req.params;
 
     try {
-      // Validate type
-      if (!['ambientazione', 'approfondimenti', 'regolamento'].includes(type)) {
-        res.status(400).json({
-          result: false,
-          error: 'Tipo non valido',
-          code: 'INVALID_TYPE'
-        });
+      if (!['ambientazione', 'regolamento'].includes(type)) {
+        res.status(400).json({ result: false, error: 'Tipo non valido', code: 'INVALID_TYPE' });
         return;
       }
 
-      // Use RouteService for routing
-      const result = await RouteService.getByPath(
-        type as 'ambientazione' | 'approfondimenti' | 'regolamento',
-        path
-      );
-
-      // Handle redirects (302 Found)
-      if (result.route.kind === 'redirect' && result.route.redirectTo) {
-        // Check permissions for redirects too
-        if (!result.route.isPublic && !req.user) {
-          res.status(404).json({
-            result: false,
-            error: 'Risorsa non trovata',
-            code: 'NOT_FOUND'
-          });
-          return;
-        }
-
-        res.redirect(302, result.route.redirectTo);
-        return;
-      }
-
-      // Check permissions (unauthenticated users can only see public routes)
-      if (!result.route.isPublic && !req.user) {
-        res.status(404).json({
-          result: false,
-          error: 'Risorsa non trovata',
-          code: 'NOT_FOUND'
-        });
-        return;
-      }
-
-      res.json({
-        result: true,
-        data: result
-      });
-
-    } catch (error: any) {
-      // Route not found or disabled → Try vector search fallback
-      if (error.message.includes('not found') || error.message.includes('disabled')) {
-        try {
-          const similarRoute = await RouteService.findSimilarRoute(type as any, path);
-
-          if (similarRoute) {
-            const redirectUrl = `/${similarRoute.type}/${similarRoute.path}`;
-            res.redirect(302, redirectUrl);
-            return;
-          }
-        } catch (fallbackError: any) {
-          logger.error('Vector fallback failed:', fallbackError);
-        }
-
-        res.status(404).json({
-          result: false,
-          error: 'Risorsa non trovata',
-          code: 'NOT_FOUND'
-        });
-        return;
-      }
-
-      logger.error('Error in getByPath:', error);
-      res.status(500).json({
-        result: false,
-        error: 'Errore recupero documento',
-        code: 'GET_DOCUMENT_ERROR'
-      });
-    }
-  }
-
-  /**
-   * GET /documents/routes/list
-   * List all enabled routes (for navigation/menu)
-   *
-   * Only returns TOP-LEVEL routes (no "/" in path)
-   */
-  static async listRoutes(req: Request, res: Response): Promise<void> {
-    try {
-      const { type } = req.query;
-
-      const filter: any = { enabled: true };
-
-      // Filter by type if provided
-      if (type && ['ambientazione', 'approfondimenti', 'regolamento'].includes(type as string)) {
-        filter.type = type;
-      }
-
-      // Public users see only isPublic=true routes
-      if (!req.user) {
-        filter.isPublic = true;
-      }
-
-      // Only return top-level routes (no "/" in path)
-      filter.path = { $not: { $regex: '/' } };
-
-      // Join Documents for title
-      const routes = await Route.aggregate([
-        { $match: filter },
-        {
-          $lookup: {
-            from: 'documents',
-            localField: 'rootDocumentId',
-            foreignField: '_id',
-            as: 'document',
-            pipeline: [
-              {
-                $match: {
-                  deleted: { $ne: true },
-                  isDraft: { $ne: true },
-                  visible: { $ne: false }
-                }
-              }
-            ]
-          }
-        },
-        {
-          $unwind: {
-            path: '$document',
-            preserveNullAndEmptyArrays: true
-          }
-        },
-        {
-          $project: {
-            path: 1,
-            type: 1,
-            kind: 1,
-            isPublic: 1,
-            rootDocumentId: 1,
-            hasDocument: { $ifNull: ['$document._id', null] },
-            title: { $ifNull: ['$document.title', 'Untitled'] }
-          }
-        },
-        {
-          $match: {
-            $or: [
-              { kind: { $ne: 'document' } },
-              { hasDocument: { $ne: null } }
-            ]
-          }
-        },
-        { $sort: { type: 1, path: 1 } }
-      ]);
-
-      res.json({
-        result: true,
-        data: routes
-      });
-
-    } catch (error: any) {
-      logger.error('Error in listRoutes:', error);
-      res.status(500).json({
-        result: false,
-        error: 'Errore recupero routes',
-        code: 'LIST_ROUTES_ERROR'
-      });
-    }
-  }
-
-  /**
-   * GET /documents/routes/list-hierarchical
-   * List ALL routes with full hierarchical structure
-   *
-   * Returns routes grouped by type with parent/child relationships.
-   */
-  static async listRoutesHierarchical(req: Request, res: Response): Promise<void> {
-    try {
-      const filter: any = { enabled: true };
-
-      // Public users see only isPublic=true routes
-      if (!req.user) {
-        filter.isPublic = true;
-      }
-
-      // Aggregate: Join Documents for order, title, description
-      const routes = await Route.aggregate([
-        { $match: filter },
-        {
-          $lookup: {
-            from: 'documents',
-            localField: 'rootDocumentId',
-            foreignField: '_id',
-            as: 'document',
-            pipeline: [
-              {
-                $match: {
-                  deleted: { $ne: true },
-                  isDraft: { $ne: true },
-                  visible: { $ne: false }
-                }
-              }
-            ]
-          }
-        },
-        {
-          $unwind: {
-            path: '$document',
-            preserveNullAndEmptyArrays: true
-          }
-        },
-        {
-          $project: {
-            _id: 1,
-            parentId: 1,
-            path: 1,
-            slug: 1,
-            type: 1,
-            kind: 1,
-            isPublic: 1,
-            rootDocumentId: 1,
-            hasDocument: { $ifNull: ['$document._id', null] },
-            title: { $ifNull: ['$document.title', 'Untitled Category'] },
-            description: '$document.description',
-            order: { $ifNull: ['$document.order', 0] }
-          }
-        },
-        {
-          $match: {
-            $or: [
-              { kind: { $ne: 'document' } },
-              { hasDocument: { $ne: null } }
-            ]
-          }
-        }
-      ]);
-
-      // Build hierarchical tree
-      const hierarchicalRoutes = DocumentController.buildHierarchicalRouteTree(routes);
-
-      // Group by type
-      const grouped = {
-        ambientazione: hierarchicalRoutes.filter(r => r.type === 'ambientazione'),
-        approfondimenti: hierarchicalRoutes.filter(r => r.type === 'approfondimenti'),
-        regolamento: hierarchicalRoutes.filter(r => r.type === 'regolamento')
+      const filter: any = {
+        type,
+        path,
+        deletedAt: null,
+        isDraft: false,
+        visible: true
       };
 
-      res.json({
-        result: true,
-        routes: grouped
-      });
-
-    } catch (error: any) {
-      logger.error('Error in listRoutesHierarchical:', error);
-      res.status(500).json({
-        result: false,
-        error: 'Errore recupero routes gerarchiche',
-        code: 'LIST_HIERARCHICAL_ROUTES_ERROR'
-      });
-    }
-  }
-
-  /**
-   * Build hierarchical route tree from flat list
-   * Recursively sorts children at each level
-   */
-  private static buildHierarchicalRouteTree(routes: any[]): any[] {
-    const routeMap = new Map<string, any>();
-
-    // Build lookup map with children array
-    routes.forEach(route => {
-      routeMap.set(route._id.toString(), {
-        _id: route._id,
-        parentId: route.parentId,
-        path: route.path,
-        slug: route.slug,
-        type: route.type,
-        kind: route.kind,
-        displayCategory: route.displayCategory,
-        isPublic: route.isPublic,
-        title: route.title,           // ✅ FIX: Include document title from JOIN
-        description: route.description, // ✅ FIX: Include document description
-        order: route.order,
-        children: []
-      });
-    });
-
-    // Build parent-child relationships
-    const rootRoutes: any[] = [];
-    routes.forEach(route => {
-      const routeWithChildren = routeMap.get(route._id.toString())!;
-
-      if (route.parentId) {
-        const parent = routeMap.get(route.parentId.toString());
-        if (parent) {
-          parent.children.push(routeWithChildren);
-        } else {
-          rootRoutes.push(routeWithChildren);
-        }
-      } else {
-        rootRoutes.push(routeWithChildren);
+      if (!req.user) {
+        filter.isPublic = true;
       }
-    });
 
-    // Recursive sort by order at each level
-    const sortChildren = (routes: any[]): any[] => {
-      return routes
-        .sort((a, b) => (a.order || 0) - (b.order || 0))
-        .map(route => ({
-          ...route,
-          children: sortChildren(route.children)
-        }));
-    };
+      const doc = await Document.findOne(filter);
 
-    return sortChildren(rootRoutes);
-  }
-
-  /**
-   * GET /documents/semantic-search
-   * Hybrid search (keyword + semantic) via embeddings-worker
-   */
-  static async semanticSearch(req: Request, res: Response): Promise<void> {
-    try {
-      const { q: query, type, limit = 5, minSimilarity = 0.01 } = req.query;
-
-      // Validate query
-      if (!query || typeof query !== 'string') {
-        res.status(400).json({
-          result: false,
-          error: 'Query richiesta',
-          code: 'MISSING_QUERY'
-        });
+      if (!doc) {
+        res.status(404).json({ result: false, error: 'Risorsa non trovata', code: 'NOT_FOUND' });
         return;
       }
 
-      logger.info(`Hybrid search for query: "${query}"`);
+      // Build response with sections from child documents + chunks
+      const childrenWithDepth = await HierarchyService.fetchChildDocuments(doc._id);
+      const hasChildren = childrenWithDepth.length > 0;
 
-      // Call hybrid search service (delegates to embeddings-worker /search)
-      const searchResults = await EmbeddingService.semanticSearch(
-        query,
-        type as any,
-        Number(limit),
-        Number(minSimilarity)
-      );
-
-      if (searchResults.length === 0) {
-        res.json({
-          result: true,
-          data: {
-            results: [],
-            totalResults: 0,
-            query
-          }
-        });
-        return;
-      }
-
-      // Fetch chunk details from MongoDB
-      const chunkIds = searchResults.map(r => r.chunkId).filter(Boolean);
       const db = mongoose.connection.db;
       if (!db) {
         throw new Error('Database connection not available');
       }
 
-      const chunks = await db.collection('documentchunks').find({
-        chunkId: { $in: chunkIds }
-      }).toArray();
+      const rootChunks = await db.collection('documentchunks').find({
+        documentId: doc._id.toString(),
+        isActive: true
+      }).sort({ order: 1 }).toArray();
 
-      // Fetch parent documents for each chunk
-      const documentIds = chunks.map(c => c.documentId).filter(Boolean);
-      const documents = await Document.find({
-        _id: { $in: documentIds },
-        deleted: { $ne: true },
-        isDraft: { $ne: true },
-        visible: { $ne: false }
-      });
-
-      // Fetch routes for matched documents
-      const routeFilter: any = {
-        rootDocumentId: { $in: documentIds },
-        enabled: true
+      const document = {
+        _id: doc._id.toString(),
+        slug: doc.slug,
+        title: doc.title,
+        type: doc.type,
+        path: doc.path,
+        content: doc.content,
+        description: doc.description,
+        tags: doc.tags || [],
+        isDraft: doc.isDraft || false,
+        draftNotes: doc.draftNotes,
+        isPublic: doc.isPublic
       };
 
-      // Public users see only isPublic=true routes
-      if (!req.user) {
-        routeFilter.isPublic = true;
+      const convertChunk = (chunk: any, depth: number = 0) => ({
+        _id: chunk._id.toString(),
+        documentId: chunk.documentId.toString(),
+        title: chunk.heading,
+        slug: chunk.slug,
+        content: DocumentController.convertPlainTextToHTML(chunk.content, chunk.headingLevel),
+        order: chunk.order,
+        depth
+      });
+
+      if (!hasChildren) {
+        res.json({
+          result: true,
+          data: {
+            route: { path: doc.path, type: doc.type, kind: 'document', isPublic: doc.isPublic, enabled: true },
+            document,
+            sections: rootChunks.map(c => convertChunk(c)),
+            hasChildren: false
+          }
+        });
+        return;
       }
 
-      const routes = await Route.find(routeFilter);
+      // Build hierarchical children
+      const hierarchicalChildren = await HierarchyService.buildHierarchicalChildren(
+        doc._id, doc.path, doc.type as any, 0, 5
+      );
 
-      // Build maps
-      const routeMap = new Map<string, any>();
-      routes.forEach(route => {
-        if (route.rootDocumentId) {
-          routeMap.set(route.rootDocumentId.toString(), route);
+      const hasAnyChildWithSeparatePage = (children: any[]): boolean =>
+        children.some(child => child.hasRoute || hasAnyChildWithSeparatePage(child.children || []));
+
+      if (hasAnyChildWithSeparatePage(hierarchicalChildren)) {
+        res.json({
+          result: true,
+          data: {
+            route: { path: doc.path, type: doc.type, kind: 'document', isPublic: doc.isPublic, enabled: true },
+            document,
+            sections: rootChunks.map(c => convertChunk(c)),
+            hasChildren: false,
+            childDocuments: hierarchicalChildren
+          }
+        });
+        return;
+      }
+
+      // Assemble full hierarchy
+      const allSections: any[] = rootChunks.map(c => ({ ...convertChunk(c), isRootChunk: true }));
+
+      for (const { document: childDoc, depth, order } of childrenWithDepth) {
+        const childChunks = await db.collection('documentchunks').find({
+          documentId: childDoc._id.toString(),
+          isActive: true
+        }).sort({ order: 1 }).toArray();
+
+        allSections.push({
+          _id: childDoc._id.toString(),
+          documentId: childDoc._id.toString(),
+          title: childDoc.title,
+          slug: childDoc.slug,
+          content: `<h${depth + 1}>${childDoc.title}</h${depth + 1}>`,
+          order,
+          depth,
+          isDocumentTitle: true
+        });
+
+        childChunks.forEach((chunk: any, chunkIndex: number) => {
+          allSections.push({
+            ...convertChunk(chunk, depth),
+            order: order + (chunkIndex * 0.01),
+            parentDocumentId: childDoc._id.toString()
+          });
+        });
+      }
+
+      allSections.sort((a, b) => a.order - b.order);
+
+      res.json({
+        result: true,
+        data: {
+          route: { path: doc.path, type: doc.type, kind: 'document', isPublic: doc.isPublic, enabled: true },
+          document,
+          sections: allSections,
+          hasChildren: true,
+          childDocuments: childrenWithDepth.map(({ document: childDoc, depth }) => ({
+            _id: childDoc._id.toString(),
+            slug: childDoc.slug,
+            title: childDoc.title,
+            hasRoute: false,
+            depth,
+            order: childDoc.order,
+            children: []
+          }))
         }
       });
 
-      const documentMap = new Map<string, any>();
+    } catch (error: any) {
+      logger.error('Error in getByPath:', error);
+      res.status(500).json({ result: false, error: 'Errore recupero documento', code: 'GET_DOCUMENT_ERROR' });
+    }
+  }
+
+  /**
+   * GET /documents/routes/list
+   * List top-level documents (for navigation/menu)
+   */
+  static async listRoutes(req: Request, res: Response): Promise<void> {
+    try {
+      const { type } = req.query;
+
+      const filter: any = {
+        deletedAt: null,
+        isDraft: { $ne: true },
+        visible: { $ne: false },
+        parentId: null
+      };
+
+      if (type && ['ambientazione', 'regolamento'].includes(type as string)) {
+        filter.type = type;
+      }
+
+      if (!req.user) {
+        filter.isPublic = true;
+      }
+
+      const docs = await Document.find(filter)
+        .select('path type title description isPublic slug order')
+        .sort({ type: 1, order: 1 })
+        .lean();
+
+      const data = docs.map(doc => ({
+        ...doc,
+        _id: doc._id.toString(),
+        kind: 'document',
+        hasDocument: doc._id
+      }));
+
+      res.json({ result: true, data });
+    } catch (error: any) {
+      logger.error('Error in listRoutes:', error);
+      res.status(500).json({ result: false, error: 'Errore recupero documenti', code: 'LIST_DOCUMENTS_ERROR' });
+    }
+  }
+
+  /**
+   * GET /documents/routes/list-hierarchical
+   * List documents grouped by subtype within each type
+   */
+  static async listRoutesHierarchical(req: Request, res: Response): Promise<void> {
+    try {
+      const subtypes = await DocumentSubtype.find().sort({ type: 1, order: 1 }).lean();
+
+      const docFilter: any = {
+        deletedAt: null,
+        isDraft: { $ne: true },
+        visible: { $ne: false },
+        parentId: null
+      };
+
+      if (!req.user) {
+        docFilter.isPublic = true;
+      }
+
+      const documents = await Document.find(docFilter)
+        .select('slug title path type subtypeId order isPublic')
+        .sort({ order: 1 })
+        .lean();
+
+      // Group documents by subtypeId
+      const docsBySubtype = new Map<string, any[]>();
       documents.forEach(doc => {
-        documentMap.set(doc._id.toString(), doc);
+        const key = doc.subtypeId.toString();
+        if (!docsBySubtype.has(key)) {
+          docsBySubtype.set(key, []);
+        }
+        docsBySubtype.get(key)!.push({
+          _id: doc._id.toString(),
+          slug: doc.slug,
+          title: doc.title,
+          path: doc.path,
+          isPublic: doc.isPublic,
+          order: doc.order
+        });
       });
 
-      // Build results with similarity scores and anchor links
+      // Build grouped response
+      const grouped: Record<string, any[]> = {
+        ambientazione: [],
+        regolamento: []
+      };
+
+      subtypes.forEach(subtype => {
+        const subtypeId = subtype._id.toString();
+        const subtypeDocs = docsBySubtype.get(subtypeId) || [];
+
+        // Only include subtypes that have at least one visible document
+        // (or all subtypes if user is authenticated)
+        if (subtypeDocs.length > 0 || req.user) {
+          grouped[subtype.type]?.push({
+            _id: subtypeId,
+            slug: subtype.slug,
+            title: subtype.title,
+            order: subtype.order,
+            documents: subtypeDocs
+          });
+        }
+      });
+
+      res.json({ result: true, routes: grouped });
+    } catch (error: any) {
+      logger.error('Error in listRoutesHierarchical:', error);
+      res.status(500).json({ result: false, error: 'Errore recupero documenti gerarchici', code: 'LIST_HIERARCHICAL_ERROR' });
+    }
+  }
+
+  /**
+   * GET /documents/semantic-search
+   */
+  static async semanticSearch(req: Request, res: Response): Promise<void> {
+    try {
+      const { q: query, type, limit = 5, minSimilarity = 0.01 } = req.query;
+
+      if (!query || typeof query !== 'string') {
+        res.status(400).json({ result: false, error: 'Query richiesta', code: 'MISSING_QUERY' });
+        return;
+      }
+
+      const searchResults = await EmbeddingService.semanticSearch(
+        query, type as any, Number(limit), Number(minSimilarity)
+      );
+
+      if (searchResults.length === 0) {
+        res.json({ result: true, data: { results: [], totalResults: 0, query } });
+        return;
+      }
+
+      const chunkIds = searchResults.map(r => r.chunkId).filter(Boolean);
+      const db = mongoose.connection.db;
+      if (!db) throw new Error('Database connection not available');
+
+      const chunks = await db.collection('documentchunks').find({ chunkId: { $in: chunkIds } }).toArray();
+
+      const documentIds = chunks.map(c => c.documentId).filter(Boolean);
+      const docFilter: any = {
+        _id: { $in: documentIds.map(id => new mongoose.Types.ObjectId(id)) },
+        deletedAt: null,
+        isDraft: { $ne: true },
+        visible: { $ne: false }
+      };
+
+      if (!req.user) {
+        docFilter.isPublic = true;
+      }
+
+      const docs = await Document.find(docFilter).lean();
+      const docMap = new Map(docs.map(d => [d._id.toString(), d]));
+
       const results = searchResults.map(result => {
         const chunk: any = chunks.find((c: any) => c.chunkId === result.chunkId);
         if (!chunk) return null;
 
-        const document = documentMap.get(chunk.documentId.toString());
-        if (!document) return null;
+        const doc = docMap.get(chunk.documentId.toString());
+        if (!doc) return null;
 
-        const route = routeMap.get(chunk.documentId.toString());
-        if (!route) return null;
-
-        // Check permissions
-        if (!route.isPublic && !req.user) {
-          return null;
-        }
-
-        // Determine anchor (use parentSlug for H3, slug for H2)
-        let anchorSlug = result.parentSlug || result.slug;
+        const anchorSlug = result.parentSlug || result.slug;
 
         return {
           document: {
-            _id: document._id,
-            slug: document.slug,
-            title: document.title,
+            _id: doc._id,
+            slug: doc.slug,
+            title: doc.title,
             content: chunk.content.substring(0, 300) + (chunk.content.length > 300 ? '...' : ''),
-            description: document.description,
-            tags: document.tags || [],
-            isDraft: document.isDraft || false
+            description: doc.description,
+            tags: doc.tags || [],
+            isDraft: doc.isDraft || false
           },
           route: {
-            path: route.path,
-            type: route.type,
+            path: doc.path,
+            type: doc.type,
             anchor: `#${anchorSlug}`,
-            fullPath: `/${route.type}/${route.path}#${anchorSlug}`
+            fullPath: `/${doc.type}/${doc.path}#${anchorSlug}`
           },
           matchLevel: chunk.headingLevel,
           matchHeading: result.heading,
@@ -471,46 +365,26 @@ export class DocumentController {
         };
       }).filter(Boolean);
 
-      res.json({
-        result: true,
-        data: {
-          results,
-          totalResults: results.length,
-          query
-        }
-      });
-
+      res.json({ result: true, data: { results, totalResults: results.length, query } });
     } catch (error: any) {
       logger.error('Error in semanticSearch:', error);
-      res.status(500).json({
-        result: false,
-        error: 'Errore semantic search',
-        code: 'SEARCH_ERROR'
-      });
+      res.status(500).json({ result: false, error: 'Errore semantic search', code: 'SEARCH_ERROR' });
     }
   }
 
   /**
    * GET /documents/favorites
-   * List user favorites (authenticated)
    */
   static async getFavorites(req: Request, res: Response): Promise<void> {
     try {
       if (!req.user) {
-        res.status(401).json({
-          result: false,
-          error: 'Autenticazione richiesta',
-          code: 'UNAUTHORIZED'
-        });
+        res.status(401).json({ result: false, error: 'Autenticazione richiesta', code: 'UNAUTHORIZED' });
         return;
       }
 
       const db = mongoose.connection.db;
-      if (!db) {
-        throw new Error('Database connection not available');
-      }
+      if (!db) throw new Error('Database connection not available');
 
-      // Fetch favorites with route info
       const favorites = await db.collection('document_favorites').aggregate([
         { $match: { userId: req.user.userId } },
         {
@@ -523,15 +397,6 @@ export class DocumentController {
         },
         { $unwind: '$document' },
         {
-          $lookup: {
-            from: 'routes',
-            localField: 'document._id',
-            foreignField: 'rootDocumentId',
-            as: 'route'
-          }
-        },
-        { $unwind: { path: '$route', preserveNullAndEmptyArrays: true } },
-        {
           $project: {
             id: '$_id',
             document: {
@@ -540,11 +405,13 @@ export class DocumentController {
               title: '$document.title',
               description: '$document.description',
               tags: '$document.tags',
-              isDraft: '$document.isDraft'
+              isDraft: '$document.isDraft',
+              path: '$document.path',
+              type: '$document.type'
             },
             route: {
-              path: '$route.path',
-              type: '$route.type'
+              path: '$document.path',
+              type: '$document.type'
             },
             addedAt: '$createdAt'
           }
@@ -552,107 +419,97 @@ export class DocumentController {
         { $sort: { addedAt: -1 } }
       ]).toArray();
 
-      res.json({
-        result: true,
-        data: favorites
-      });
-
+      res.json({ result: true, data: favorites });
     } catch (error: any) {
       logger.error('Error in getFavorites:', error);
-      res.status(500).json({
-        result: false,
-        error: 'Errore recupero preferiti',
-        code: 'GET_FAVORITES_ERROR'
-      });
+      res.status(500).json({ result: false, error: 'Errore recupero preferiti', code: 'GET_FAVORITES_ERROR' });
     }
   }
 
   /**
    * POST /documents/:type/:path/favorite
-   * Toggle favorite (add/remove) (authenticated)
    */
   static async toggleFavorite(req: Request<{ type: string; path: string }>, res: Response): Promise<void> {
     try {
       if (!req.user) {
-        res.status(401).json({
-          result: false,
-          error: 'Autenticazione richiesta',
-          code: 'UNAUTHORIZED'
-        });
+        res.status(401).json({ result: false, error: 'Autenticazione richiesta', code: 'UNAUTHORIZED' });
         return;
       }
 
       const { type, path } = req.params;
 
-      // Find route and document
-      const route = await Route.findOne({
+      const document = await Document.findOne({
         type,
         path,
-        enabled: true,
-        kind: 'document'
+        deletedAt: null,
+        isDraft: false,
+        visible: true
       });
 
-      if (!route || !route.rootDocumentId) {
-        res.status(404).json({
-          result: false,
-          error: 'Documento non trovato',
-          code: 'NOT_FOUND'
-        });
-        return;
-      }
-
-      const document = await Document.findById(route.rootDocumentId);
       if (!document) {
-        res.status(404).json({
-          result: false,
-          error: 'Documento non trovato',
-          code: 'NOT_FOUND'
-        });
+        res.status(404).json({ result: false, error: 'Documento non trovato', code: 'NOT_FOUND' });
         return;
       }
 
       const db = mongoose.connection.db;
-      if (!db) {
-        throw new Error('Database connection not available');
-      }
+      if (!db) throw new Error('Database connection not available');
 
-      // Check if already favorited
       const existing = await db.collection('document_favorites').findOne({
         userId: req.user.userId,
         documentId: document._id
       });
 
       if (existing) {
-        // Remove favorite
         await db.collection('document_favorites').deleteOne({ _id: existing._id });
-
-        res.json({
-          result: true,
-          data: { favorited: false },
-          message: 'Rimosso dai preferiti'
-        });
+        res.json({ result: true, data: { favorited: false }, message: 'Rimosso dai preferiti' });
       } else {
-        // Add favorite
         await db.collection('document_favorites').insertOne({
           userId: req.user.userId,
           documentId: document._id,
           createdAt: new Date()
         });
-
-        res.json({
-          result: true,
-          data: { favorited: true },
-          message: 'Aggiunto ai preferiti'
-        });
+        res.json({ result: true, data: { favorited: true }, message: 'Aggiunto ai preferiti' });
       }
-
     } catch (error: any) {
       logger.error('Error in toggleFavorite:', error);
-      res.status(500).json({
-        result: false,
-        error: 'Errore toggle favorite',
-        code: 'FAVORITE_ERROR'
-      });
+      res.status(500).json({ result: false, error: 'Errore toggle favorite', code: 'FAVORITE_ERROR' });
     }
+  }
+
+  // ========== PRIVATE HELPERS ==========
+
+  private static convertPlainTextToHTML(content: string, headingLevel: number): string {
+    if (!content || !content.trim()) return '<p>Contenuto non disponibile.</p>';
+
+    const lines = content.trim().split('\n');
+    const htmlParts: string[] = [];
+    let i = 0;
+
+    while (i < lines.length) {
+      const line = lines[i];
+
+      if (line.trim().match(/^[•\-\*]\s+/) || line.trim().match(/^\d+[\.\)]\s+/)) {
+        const listItems: string[] = [];
+        const isBullet = line.trim().match(/^[•\-\*]\s+/);
+
+        while (i < lines.length && (lines[i].trim().match(/^[•\-\*]\s+/) || lines[i].trim().match(/^\d+[\.\)]\s+/))) {
+          const itemText = lines[i].trim().replace(/^[•\-\*]\s+/, '').replace(/^\d+[\.\)]\s+/, '');
+          const escaped = itemText.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          listItems.push(`<li>${escaped}</li>`);
+          i++;
+        }
+
+        const listTag = isBullet ? 'ul' : 'ol';
+        htmlParts.push(`<${listTag}>\n${listItems.join('\n')}\n</${listTag}>`);
+      } else if (line.trim()) {
+        const escaped = line.trim().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        htmlParts.push(`<p>${escaped}</p>`);
+        i++;
+      } else {
+        i++;
+      }
+    }
+
+    return htmlParts.join('\n');
   }
 }

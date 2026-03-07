@@ -1,0 +1,333 @@
+@use 'sass:color';
+@use '../variables' as *;
+
+.subtypesPage {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+  height: 100%;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: $spacing-lg;
+  background-color: $color-bg-secondary;
+  border-radius: $border-radius-md;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+
+  h1 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 700;
+    color: $color-primary;
+  }
+
+  p {
+    margin: 0;
+    font-size: 15px;
+    color: $color-text-secondary;
+  }
+}
+
+.headerActions {
+  display: flex;
+  gap: $spacing-md;
+}
+
+.createButton {
+  padding: $spacing-md $spacing-lg;
+  background-color: $color-primary;
+  color: $color-bg-primary;
+  border: none;
+  border-radius: $border-radius-sm;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all $transition-fast;
+  white-space: nowrap;
+
+  &:hover {
+    background-color: color.adjust($color-primary, $lightness: 10%);
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+.filters {
+  display: flex;
+  gap: $spacing-md;
+  padding: $spacing-md;
+  background-color: $color-bg-secondary;
+  border-radius: $border-radius-md;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.filterButton {
+  padding: $spacing-sm $spacing-lg;
+  background-color: transparent;
+  color: $color-text-secondary;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: $border-radius-sm;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all $transition-fast;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.3);
+  }
+
+  &.active {
+    background-color: $color-primary;
+    color: $color-bg-primary;
+    border-color: $color-primary;
+    font-weight: 600;
+  }
+}
+
+.subtypeForm {
+  padding: $spacing-lg;
+  background-color: $color-bg-secondary;
+  border-radius: $border-radius-md;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+
+  h3 {
+    margin: 0 0 $spacing-md;
+    font-size: 18px;
+    font-weight: 600;
+    color: $color-text-primary;
+  }
+}
+
+.formFields {
+  display: flex;
+  gap: $spacing-lg;
+  margin-bottom: $spacing-md;
+}
+
+.formField {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+
+  label {
+    font-size: 13px;
+    font-weight: 600;
+    color: $color-text-secondary;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  input {
+    padding: $spacing-sm $spacing-md;
+    background-color: $color-bg-tertiary;
+    color: $color-text-primary;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: $border-radius-sm;
+    font-size: 15px;
+    transition: border-color $transition-fast;
+
+    &:focus {
+      outline: none;
+      border-color: $color-primary;
+    }
+
+    &::placeholder {
+      color: $color-text-muted;
+    }
+  }
+}
+
+.formActions {
+  display: flex;
+  gap: $spacing-md;
+  justify-content: flex-end;
+}
+
+.cancelBtn {
+  padding: $spacing-sm $spacing-lg;
+  background-color: transparent;
+  color: $color-text-secondary;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: $border-radius-sm;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all $transition-fast;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+}
+
+.submitBtn {
+  padding: $spacing-sm $spacing-lg;
+  background-color: $color-primary;
+  color: $color-bg-primary;
+  border: none;
+  border-radius: $border-radius-sm;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all $transition-fast;
+
+  &:hover {
+    background-color: color.adjust($color-primary, $lightness: 10%);
+  }
+}
+
+.subtypesList {
+  background-color: $color-bg-secondary;
+  border-radius: $border-radius-md;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+.listHeader {
+  display: flex;
+  align-items: center;
+  padding: $spacing-sm $spacing-md;
+  background-color: $color-bg-tertiary;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 12px;
+  font-weight: 600;
+  color: $color-text-muted;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.colDrag {
+  width: 32px;
+  flex-shrink: 0;
+}
+
+.colOrder {
+  width: 48px;
+  flex-shrink: 0;
+}
+
+.colTitle {
+  flex: 1;
+}
+
+.colSlug {
+  width: 200px;
+  flex-shrink: 0;
+}
+
+.colActions {
+  width: 80px;
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.subtypeRow {
+  display: flex;
+  align-items: center;
+  padding: $spacing-sm $spacing-md;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  transition: background-color $transition-fast;
+  background-color: $color-bg-secondary;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.03);
+  }
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.dragHandle {
+  width: 32px;
+  flex-shrink: 0;
+  font-size: 18px;
+  color: $color-text-muted;
+  cursor: grab;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+
+  &:active {
+    cursor: grabbing;
+  }
+}
+
+.subtypeOrder {
+  width: 48px;
+  flex-shrink: 0;
+  font-size: 13px;
+  color: $color-text-muted;
+  font-family: monospace;
+}
+
+.subtypeTitle {
+  flex: 1;
+  font-size: 15px;
+  font-weight: 500;
+  color: $color-text-primary;
+}
+
+.subtypeSlug {
+  width: 200px;
+  flex-shrink: 0;
+  font-size: 13px;
+  color: $color-text-secondary;
+  font-family: monospace;
+}
+
+.subtypeActions {
+  width: 80px;
+  flex-shrink: 0;
+  display: flex;
+  gap: $spacing-xs;
+  justify-content: flex-end;
+}
+
+.editBtn,
+.deleteBtn {
+  padding: $spacing-xs $spacing-sm;
+  background-color: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: $border-radius-sm;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all $transition-fast;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+}
+
+.deleteBtn:hover {
+  background-color: rgba($color-error, 0.2);
+  border-color: $color-error;
+}
+
+.emptyState {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-2xl;
+  background-color: $color-bg-secondary;
+  border-radius: $border-radius-md;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: $color-text-muted;
+  font-size: 15px;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-2xl;
+  color: $color-text-secondary;
+  font-size: 15px;
+}

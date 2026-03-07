@@ -1,27 +1,26 @@
 /**
- * Sidebar Component (NEW MULTI-TYPE HIERARCHICAL)
+ * Sidebar Component (Subtype-based Navigation)
  *
- * Desktop sidebar showing ALL document types with full hierarchical navigation.
- * Each type is collapsible with nested route trees.
+ * Desktop sidebar showing documents grouped by subtype.
+ * Each subtype is a collapsible section with its document links.
  *
  * @module components/layout/Sidebar
- * @since 1.0.0
+ * @since 2.0.0
  */
 
 'use client';
 
 import { useState } from 'react';
 import { useRouter } from 'next/router';
-import { useAllRoutes } from '@/hooks/useAllRoutes';
-import { RouteTreeView } from '../navigation/RouteTreeView';
+import { useDocumentTree } from '@/hooks/useDocumentTree';
+import { SubtypeTreeView } from '../navigation/SubtypeTreeView';
 import { DOCUMENT_TYPE_CONFIGS, DOCUMENT_TYPE_ORDER } from '@/types/document';
 import styles from '@/styles/components/layout/Sidebar.module.scss';
 
 export function Sidebar(): JSX.Element {
   const router = useRouter();
-  const { data: routesByType } = useAllRoutes();
+  const { data: documentsByType } = useDocumentTree();
 
-  // Track which type sections are collapsed
   const [collapsedTypes, setCollapsedTypes] = useState<Set<string>>(new Set());
 
   const toggleType = (type: string) => {
@@ -36,30 +35,25 @@ export function Sidebar(): JSX.Element {
     });
   };
 
-  // Determine current path for active state highlighting
   const currentPath = router.asPath;
 
-  // Determine which types to show based on current section
-  // Regolamento section: show only Regolamento
-  // Ambientazione/Approfondimenti section: show both Ambientazione and Approfondimenti
   const isOnRegolamento = currentPath.startsWith('/regolamento');
-  const typesToShow = isOnRegolamento
-    ? ['regolamento']
-    : ['ambientazione', 'approfondimenti'];
+  const typesToShow = isOnRegolamento ? ['regolamento'] : ['ambientazione'];
 
   return (
     <aside className={styles.sidebar}>
-      <div className={styles.sidebarContent}>  
+      <div className={styles.sidebarContent}>
         <div className={styles.treeContainer}>
           {DOCUMENT_TYPE_ORDER.filter(type => typesToShow.includes(type)).map((type) => {
             const config = DOCUMENT_TYPE_CONFIGS[type];
-            const routes = routesByType?.[type] || [];
+            const subtypes = documentsByType?.[type] || [];
             const isCollapsed = collapsedTypes.has(type);
             const isCurrentType = currentPath.startsWith(`/${type}`);
 
+            const totalDocs = subtypes.reduce((sum, st) => sum + (st.documents?.length || 0), 0);
+
             return (
               <div key={type} className={styles.typeSection}>
-                {/* Type Header (collapsible) */}
                 <button
                   className={`${styles.typeHeader} ${isCurrentType ? styles.active : ''}`}
                   onClick={() => toggleType(type)}
@@ -67,20 +61,18 @@ export function Sidebar(): JSX.Element {
                   <span className={styles.typeIcon}>{isCollapsed ? '▶' : '▼'}</span>
                   <span className={styles.typeEmoji}>{config.icon}</span>
                   <span className={styles.typeLabel}>{config.label}</span>
-                  <span className={styles.typeCount}>({routes.length})</span>
+                  <span className={styles.typeCount}>({totalDocs})</span>
                 </button>
 
-                {/* Hierarchical Route Tree */}
                 {!isCollapsed && (
                   <div className={styles.typeContent}>
-                    {routes.length === 0 ? (
+                    {subtypes.length === 0 ? (
                       <p className={styles.emptyMessage}>Nessun documento disponibile</p>
                     ) : (
-                      <RouteTreeView
-                        routes={routes}
+                      <SubtypeTreeView
+                        subtypes={subtypes}
                         type={type}
                         currentPath={currentPath}
-                        depth={0}
                       />
                     )}
                   </div>

@@ -1,51 +1,26 @@
 /**
  * Auth Initializer Component
  *
- * Wraps the application and handles session verification on mount.
- * Shows loading state while checking session.
- * Shows error page if session check fails.
+ * Non-blocking session check wrapper. Always renders children.
+ * Shows a brief loading indicator while the session is being verified.
  *
  * @module components/auth/AuthInitializer
- * @since 1.0.0
+ * @since 2.0.0
  */
 
 'use client';
 
 import { ReactNode } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { AuthError } from './AuthError';
 
-/**
- * Auth Initializer Props
- *
- * @interface AuthInitializerProps
- * @since 1.0.0
- */
 interface AuthInitializerProps {
   children: ReactNode;
 }
 
-/**
- * Auth Initializer Component
- *
- * Verifies session on mount before rendering children.
- * Handles loading state and error display.
- *
- * @component
- * @param {AuthInitializerProps} props - Component props
- * @returns {JSX.Element}
- * @since 1.0.0
- */
 export function AuthInitializer({ children }: AuthInitializerProps): JSX.Element {
-  const { isLoading, isInitialized, error, errorType } = useAuth();
+  const { isInitialized } = useAuth();
 
-  // Show error page if session check failed
-  if (error && errorType) {
-    return <AuthError type={errorType} message={error} />;
-  }
-
-  // Show loading state while checking session
-  if (isLoading || !isInitialized) {
+  if (!isInitialized) {
     return (
       <div
         style={{
@@ -58,7 +33,7 @@ export function AuthInitializer({ children }: AuthInitializerProps): JSX.Element
           color: '#8B4513',
         }}
       >
-        Verifying session...
+        Caricamento...
       </div>
     );
   }

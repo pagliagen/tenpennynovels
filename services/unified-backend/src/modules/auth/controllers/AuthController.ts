@@ -705,9 +705,10 @@ export class AuthController {
       // If character exists in JWT token, fetch full character data from database
       let characterData = null;
       let gamePermissions: string[] = [];
+      let fullCharacter: any = null;
 
       if (character) {
-        const fullCharacter = await Character.findById(character.characterId)
+        fullCharacter = await Character.findById(character.characterId)
           .select('_id name surname avatar playerStatus canAccessAdminPanel isGestore gameplayRoles characterPermissions adminPermissions')
           .lean();
 
@@ -736,7 +737,9 @@ export class AuthController {
           user: {
             id: user.userId,
             username: user.username,
-            canAccessAdminPanel: user.canAccessAdminPanel
+            canAccessAdminPanel: fullCharacter
+              ? (fullCharacter.canAccessAdminPanel || fullCharacter.isGestore || false)
+              : false
           },
           character: characterData,
           gamePermissions: gamePermissions, // NEW: Game permissions for frontend

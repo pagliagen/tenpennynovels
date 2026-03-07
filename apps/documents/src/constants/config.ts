@@ -18,20 +18,6 @@ export const API_CONFIG = {
 } as const;
 
 /**
- * Authentication Configuration
- */
-export const AUTH_CONFIG = {
-  TOKEN_KEY: 'auth_token',
-  TOKEN_EXPIRY_KEY: 'auth_token_expiry',
-  REFRESH_TOKEN_KEY: 'refresh_token',
-  USER_KEY: 'user',
-  COOKIE_NAME: 'auth_token',
-  COOKIE_DOMAIN: '.tenpennynovels.com',
-  COOKIE_PATH: '/',
-  COOKIE_MAX_AGE: 7 * 24 * 60 * 60, // 7 days in seconds
-} as const;
-
-/**
  * App URLs
  */
 export const APP_URLS = {

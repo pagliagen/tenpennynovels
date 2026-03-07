@@ -1,74 +1,47 @@
 /**
  * Document API Types
  *
- * Definisce interfacce per Document entity, Route entity e relative API responses.
- * NEW ARCHITECTURE: Route (routing layer) + Document (content layer)
+ * Definisce interfacce per Document entity, DocumentSubtype entity e relative API responses.
+ * Document e' unica fonte di verita' per contenuto e routing.
  */
 
 import type { ApiResponse } from './common';
 
 /**
- * Route Interface (NEW ARCHITECTURE - hierarchical)
- * Routes define navigation structure (URL paths) with parent/child relationships
+ * DocumentSubtype Interface
+ * Raggruppamento ordinabile di documenti per tipo
  */
-export interface Route {
+export interface DocumentSubtype {
   _id: string;
-  parentId: string | null;          // Parent route ID (null = root level)
-  slug: string;                     // URL segment ("armi", "folklore")
-  path: string;                     // Full calculated path ("folklore", "approfondimenti/armi")
-  // ❌ REMOVED: order, title, description, displayCategory (use Document fields via backend join)
-  type: 'ambientazione' | 'approfondimenti' | 'regolamento';
-  kind: 'document' | 'category' | 'redirect';
-  enabled: boolean;
-  isPublic: boolean;
-  rootDocument: DocumentTreeNode | null;  // Root document with nested children
-  children?: Route[];               // Nested child routes (navigation hierarchy)
-  metadata?: {
-    createdAt: string;
-    updatedAt: string;
-  };
+  slug: string;
+  title: string;
+  type: 'ambientazione' | 'regolamento';
+  order: number;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 /**
- * Document Tree Node (content hierarchy within a route)
- * Documents nest within each other (parent/child) independently from routes
+ * Document Tree Node (content hierarchy)
+ * Documents nest within each other (parent/child)
  */
 export interface DocumentTreeNode {
   _id: string;
   slug: string;
   title: string;
   isDraft: boolean;
-  visible: boolean;                 // If false, document is hidden
+  visible: boolean;
+  isPublic: boolean;
   tags?: string[];
   order: number;
   parentId: string | null;
-  children: DocumentTreeNode[];     // Nested child documents
-}
-
-/**
- * Document With Route (DOCUMENTS-FIRST ARCHITECTURE)
- * Document hierarchy with route metadata attached
- */
-export interface DocumentWithRoute {
-  _id: string;
-  slug: string;
-  title: string;
-  isDraft: boolean;
-  visible: boolean;
-  tags: string[];
-  order: number;
-  parentId: string | null;
-  route: {                          // ← Route metadata (null if no route linked)
+  path?: string;
+  subtype: {
     _id: string;
-    path: string;
     slug: string;
     title: string;
-    type: 'ambientazione' | 'approfondimenti' | 'regolamento';
-    kind: 'document' | 'category' | 'redirect';
-    enabled: boolean;
-    isPublic: boolean;
   } | null;
-  children: DocumentWithRoute[];    // Recursive children
+  children: DocumentTreeNode[];
 }
 
 /**
@@ -78,45 +51,20 @@ export interface Document {
   _id: string;
   title: string;
   slug: string;
-  description?: string;            // Document description (for search, metadata)
+  description?: string;
   content: string;
-  contentDelta?: any;              // TipTap JSON Delta (WYSIWYG editor format)
-  excerpt?: string;
-  type: 'ambientazione' | 'approfondimenti' | 'regolamento' | 'guida' | 'news' | 'announcement';
-  category?: string;
+  contentDelta?: any;
+  type: 'ambientazione' | 'regolamento';
+  subtypeId?: string | DocumentSubtype;
+  path?: string;
+  isPublic?: boolean;
   tags: string[];
-  order: number;                   // Order for sorting siblings
-  parentId?: string | null;        // Parent document ID (null if root)
-  status: 'draft' | 'published' | 'archived';
-  visibility: {
-    isPublic: boolean;
-    restrictedTo: string[];
-    requiredRole?: string;
-  };
-  author: {
-    _id: string;
-    username: string;
-    displayName: string;
-  };
-  metadata: {
-    createdAt: string;
-    updatedAt: string;
-    publishedAt?: string;
-    lastEditedBy?: string;
-    version: number;
-  };
-  stats: {
-    views: number;
-    likes: number;
-    comments: number;
-  };
-  seo: {
-    metaTitle?: string;
-    metaDescription?: string;
-    keywords: string[];
-  };
-  attachments: DocumentAttachment[];
-  relatedDocuments: string[];
+  order: number;
+  parentId?: string | null;
+  isDraft?: boolean;
+  visible?: boolean;
+  lastUpdated?: string;
+  createdAt?: string;
 }
 
 export interface DocumentAttachment {
@@ -130,37 +78,21 @@ export interface DocumentAttachment {
 }
 
 export interface DocumentListParams {
-  page: number;
-  pageSize: number;
+  page?: number;
+  pageSize?: number;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
   search?: string;
-  type?: 'ambientazione' | 'approfondimenti' | 'regolamento' | 'guida' | 'news' | 'announcement';
-  status?: 'draft' | 'published' | 'archived';
-  authorId?: string;
-  category?: string;
-}
-
-export interface DocumentListResponse {
-  items: Document[];
-  pagination: {
-    page: number;
-    pageSize: number;
-    totalItems: number;
-    totalPages: number;
-    hasNextPage: boolean;
-    hasPrevPage: boolean;
-  };
+  type?: 'ambientazione' | 'regolamento';
 }
 
 /**
- * Document Tree Response (DOCUMENTS-FIRST - NEW)
- * Backend returns documents with route metadata
+ * Document Tree Response
+ * Backend returns documents grouped by subtype
  */
 export interface DocumentTreeResponse {
   result: boolean;
-  success: boolean;
-  data: DocumentWithRoute[];        // ← Changed from 'list: Route[]' to 'data: DocumentWithRoute[]'
+  data: DocumentTreeNode[];
   totalItems: number;
   timestamp: string;
 }
@@ -168,36 +100,28 @@ export interface DocumentTreeResponse {
 export interface CreateDocumentData {
   title: string;
   slug: string;
-  type: 'ambientazione' | 'approfondimenti' | 'regolamento';  // Required for semantic search
+  type: 'ambientazione' | 'regolamento';
+  subtypeId: string;
   description?: string;
   parentId?: string | null;
-  contentDelta?: any;  // TipTap JSON format
+  contentDelta?: any;
   isDraft?: boolean;
   visible?: boolean;
+  isPublic?: boolean;
   tags?: string[];
   order?: number;
 }
 
 export interface UpdateDocumentData {
   title?: string;
-  description?: string;           // Document description (for search, metadata)
+  description?: string;
   content?: string;
-  contentDelta?: any;             // TipTap JSON Delta (WYSIWYG editor format)
-  excerpt?: string;
-  lastUpdated?: string;           // For optimistic locking
-  type?: 'ambientazione' | 'approfondimenti' | 'regolamento' | 'guida' | 'news' | 'announcement';
-  category?: string;
+  contentDelta?: any;
+  lastUpdated?: string;
+  type?: 'ambientazione' | 'regolamento';
+  subtypeId?: string;
+  isPublic?: boolean;
   tags?: string[];
-  status?: 'draft' | 'published' | 'archived';
-  visibility?: {
-    isPublic?: boolean;
-    restrictedTo?: string[];
-    requiredRole?: string;
-  };
-  seo?: {
-    metaTitle?: string;
-    metaDescription?: string;
-    keywords?: string[];
-  };
+  isDraft?: boolean;
+  visible?: boolean;
 }
-

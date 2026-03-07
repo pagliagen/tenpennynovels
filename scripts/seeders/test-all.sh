@@ -42,13 +42,4 @@ npm run seed:documents -- --force --no-chunks
 echo "    Note: Skipping chunk generation for test speed"
 echo ""
 
-echo "[9/9] Testing RouteSeeder (if data exists)..."
-if [ -f "data/routes-config.json" ]; then
-  echo "    routes-config.json found, running seeder..."
-  npm run seed:routes || echo "    Warning: RouteSeeder failed (may need DocumentSeeder first)"
-else
-  echo "    Skipping (data/routes-config.json not found)"
-fi
-echo ""
-
 echo "✅ All seeders tested successfully"

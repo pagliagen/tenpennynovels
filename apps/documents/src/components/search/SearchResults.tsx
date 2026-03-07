@@ -25,7 +25,7 @@ interface SearchResult {
   };
   route: {
     path: string;
-    type: 'ambientazione' | 'approfondimenti' | 'regolamento';
+    type: 'ambientazione' | 'regolamento';
     title: string;
     anchor: string;  // e.g., "#regina-vittoria"
     fullPath: string;  // e.g., "/ambientazione/epoca-vittoriana#regina-vittoria"
@@ -115,7 +115,6 @@ export function SearchResults({
               <p className={styles.resultBreadcrumb}>
                 <span className={styles.breadcrumbType}>
                   {result.route.type === 'ambientazione' && '🌍 Ambientazione'}
-                  {result.route.type === 'approfondimenti' && '📚 Approfondimenti'}
                   {result.route.type === 'regolamento' && '📜 Regolamento'}
                 </span>
                 <span className={styles.breadcrumbSeparator}>›</span>

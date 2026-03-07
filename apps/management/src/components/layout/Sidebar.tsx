@@ -50,7 +50,8 @@ const NAV_ITEMS: NavItem[] = [
     label: 'Documenti',
     icon: '📄',
     children: [
-      { key: 'documents-list', label: 'Lista Documenti', href: '/documents/document-list', permission: 'documents.list' }
+      { key: 'documents-list', label: 'Lista Documenti', href: '/documents/document-list', permission: 'documents.list' },
+      { key: 'documents-subtypes', label: 'Sottotipi', href: '/documents/subtypes', permission: 'documents.list' }
     ]
   },
   {
