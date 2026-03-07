@@ -90,7 +90,6 @@ export function RouteTreeView({ routes, type, currentPath, depth }: RouteTreeVie
               {isExpanded ? '▼' : '▶'}
             </button>
           )}
-          {!hasChildren && <span className={styles.expandPlaceholder}></span>}
 
           {/* Route link */}
           <Link

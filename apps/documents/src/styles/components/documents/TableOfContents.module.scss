@@ -70,7 +70,6 @@ $toc-indent: 20px;
 
   &:hover {
     color: $color-heading;
-    background-color: rgba($color-heading, 0.05);
     padding-left: calc(#{$spacing-sm} + 4px);
   }
 }

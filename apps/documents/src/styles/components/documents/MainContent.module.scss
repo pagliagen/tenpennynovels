@@ -1,0 +1,24 @@
+@use '../../variables' as *;
+ 
+.mainContainer {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  overflow-y: auto;
+  background-color: yellow;
+  padding: $spacing-md;  
+
+  &::after {
+    position: absolute;
+    top: calc($spacing-md / 2);
+    left: calc($spacing-md / 2);
+    right: calc($spacing-md / 2);
+    bottom: calc($spacing-md / 2);
+    border: 2px solid #67675e;
+    content: '';
+    pointer-events: none;
+  }
+
+}

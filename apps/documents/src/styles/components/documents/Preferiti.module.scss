@@ -70,7 +70,6 @@
 
   &:hover {
     border-color: $color-primary;
-    box-shadow: $shadow-sm;
   }
 }
 
@@ -121,6 +120,5 @@
   &:hover {
     color: $color-error;
     border-color: $color-error;
-    background-color: rgba($color-error, 0.05);
   }
 }

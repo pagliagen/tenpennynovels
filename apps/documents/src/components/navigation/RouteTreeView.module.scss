@@ -6,19 +6,30 @@
   padding: $spacing-md;
 }
 
-.routeItem {
-  display: flex;
-  flex-direction: column;
-  padding-left: calc(var(--depth, 0) * #{$spacing-md});
-  margin-bottom: 10px;
-}
+// ========== SUBTYPE HEADER ==========
 
-.routeRow {
+.subtypeLabel {
   display: flex;
   align-items: center;
-  gap: 2px;
-  padding: 2px 0;
-  transition: background-color $transition-speed-fast; 
+  padding: 0 5px;
+  color: $color-text-light;
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  text-transform: uppercase;
+  letter-spacing: $letter-spacing-wider;
+  cursor: default;
+  user-select: none;
+  margin-bottom: $spacing-sm;
+}
+
+// ========== DOCUMENT NODE ==========
+ 
+.documentRow {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+  padding: $spacing-xs $spacing-sm;
+  width: fit-content;
 }
 
 .expandButton {
@@ -38,29 +49,27 @@
 
   &:hover {
     color: $color-text-light;
-    background-color: rgba(255, 255, 255, 0.08);
-    border-radius: $radius-sm;
   }
 }
-
-.expandPlaceholder {
-  width: 20px;
-  height: 20px;
+ 
+.docIcon {
+  font-size: 12px;
   flex-shrink: 0;
 }
 
-.routeLink {
+// ========== DOCUMENT TITLE (link vs toggle) ==========
+
+.docLink {
   flex: 1;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 0 5px;
-  border-radius: $radius-sm;
+  gap: $spacing-xs;
   text-decoration: none;
   color: $color-text-light-muted;
   font-size: $font-size-sm;
-  transition: all $transition-speed-fast;
-  border: 1px solid transparent;
+  transition: color $transition-speed-fast;
+  line-height: 20px;
+  min-width: 0;
 
   &:hover {
     color: $color-text-light;
@@ -69,38 +78,85 @@
   &.active {
     color: $color-text-light;
     font-weight: $font-weight-semibold;
+
+    &::after {
+      content: url('/images/doc_active.png');
+      height: 20px;
+    }
   }
 }
 
-.routeTitle {
+.docToggle {
   flex: 1;
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: $color-text-light;
+  font-family: inherit;
+  font-size: $font-size-sm;
+  text-align: left;
   line-height: 1.4;
+  min-width: 0;
+  transition: opacity $transition-speed-fast;
+
+  &::before {
+    content: '▶';
+    line-height: 20px;
+    font-size: 12px;
+    width: 20px;
+    text-align: center;
+    color: $color-text-light-muted;
+    transition: transform $transition-speed-fast;
+  }
+
+  &.expanded::before {
+    content: '▼'; 
+  } 
+
+  &:hover {
+    color: $color-text-light-muted;
+  }
 }
+
+.docTitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// ========== BADGES ==========
 
 .privateBadge {
   font-size: 13px;
   opacity: 0.7;
+  flex-shrink: 0;
 }
 
-.subtypeLabel {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  padding: 0 5px;
-  color: $color-text-light;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
+.draftBadge {
+  margin-left: $spacing-xs;
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: $radius-sm;
+  background-color: rgba(251, 191, 36, 0.2);
+  color: #fbbf24;
   text-transform: uppercase;
-  letter-spacing: $letter-spacing-wider;
-  cursor: default;
-  user-select: none;
+  font-weight: $font-weight-semibold;
+  flex-shrink: 0;
 }
 
-.childItem {
-  padding-left: 0;
-}
+// ========== CHILDREN CONTAINER ==========
 
-.routeChildren {
+.children {
   display: flex;
   flex-direction: column;
+}
+
+// ========== SUBTYPE GROUP ==========
+
+.subtypeGroup {
+  margin-bottom: $spacing-lg;
 }

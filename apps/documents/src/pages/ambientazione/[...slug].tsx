@@ -15,6 +15,8 @@ import { documentsApi } from '@/lib/api/documents';
 import { DocumentDetail } from '@/components/documents/DocumentDetail';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
 import type { DocumentDetail as DocumentDetailType } from '@/types/document';
+import { DocumentHeader } from '@/components/documents/DocumentHeader';
+import styles from '@/styles/components/documents/MainContent.module.scss';
 
 interface AmbientazioneDetailProps {
   data: DocumentDetailType | null;
@@ -45,7 +47,10 @@ export default function AmbientazioneDetail({ data, error }: AmbientazioneDetail
         ogType="article"
       />
 
-      <DocumentDetail data={data} />
+      <div className={styles.mainContainer}>
+        <DocumentHeader document={data.document} />
+        <DocumentDetail data={data} />
+      </div>
     </>
   );
 }

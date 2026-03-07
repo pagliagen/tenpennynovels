@@ -39,6 +39,7 @@ export interface SubtypeDocument {
   path: string;
   isPublic: boolean;
   order: number;
+  children?: SubtypeDocument[];
 }
 
 /**

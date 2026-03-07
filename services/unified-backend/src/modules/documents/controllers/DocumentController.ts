@@ -232,33 +232,56 @@ export class DocumentController {
         deletedAt: null,
         isDraft: { $ne: true },
         visible: { $ne: false },
-        parentId: null
       };
 
       if (!req.user) {
         docFilter.isPublic = true;
       }
 
-      const documents = await Document.find(docFilter)
-        .select('slug title path type subtypeId order isPublic')
+      const allDocuments = await Document.find(docFilter)
+        .select('slug title path type subtypeId order isPublic parentId')
         .sort({ order: 1 })
         .lean();
 
-      // Group documents by subtypeId
-      const docsBySubtype = new Map<string, any[]>();
-      documents.forEach(doc => {
-        const key = doc.subtypeId.toString();
-        if (!docsBySubtype.has(key)) {
-          docsBySubtype.set(key, []);
+      // Index docs by parentId for fast tree building
+      const childrenByParent = new Map<string, any[]>();
+      const rootDocs: any[] = [];
+
+      allDocuments.forEach(doc => {
+        if (!doc.parentId) {
+          rootDocs.push(doc);
+        } else {
+          const parentKey = doc.parentId.toString();
+          if (!childrenByParent.has(parentKey)) {
+            childrenByParent.set(parentKey, []);
+          }
+          childrenByParent.get(parentKey)!.push(doc);
         }
-        docsBySubtype.get(key)!.push({
-          _id: doc._id.toString(),
+      });
+
+      // Recursively build tree node
+      const buildTreeNode = (doc: any): any => {
+        const docId = doc._id.toString();
+        const kids = childrenByParent.get(docId) || [];
+        return {
+          _id: docId,
           slug: doc.slug,
           title: doc.title,
           path: doc.path,
           isPublic: doc.isPublic,
-          order: doc.order
-        });
+          order: doc.order,
+          children: kids.map(buildTreeNode),
+        };
+      };
+
+      // Group root documents by subtypeId
+      const docsBySubtype = new Map<string, any[]>();
+      rootDocs.forEach(doc => {
+        const key = doc.subtypeId.toString();
+        if (!docsBySubtype.has(key)) {
+          docsBySubtype.set(key, []);
+        }
+        docsBySubtype.get(key)!.push(buildTreeNode(doc));
       });
 
       // Build grouped response
@@ -271,8 +294,6 @@ export class DocumentController {
         const subtypeId = subtype._id.toString();
         const subtypeDocs = docsBySubtype.get(subtypeId) || [];
 
-        // Only include subtypes that have at least one visible document
-        // (or all subtypes if user is authenticated)
         if (subtypeDocs.length > 0 || req.user) {
           grouped[subtype.type]?.push({
             _id: subtypeId,

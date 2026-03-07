@@ -92,9 +92,6 @@
   color: $color-text-primary;
   transition: $transition-all;
 
-  &:hover {
-    background-color: rgba($color-primary, 0.05);
-  }
 }
 
 .resultHeader {

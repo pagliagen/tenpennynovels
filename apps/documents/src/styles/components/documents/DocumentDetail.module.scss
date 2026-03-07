@@ -1,27 +1,21 @@
 @use '../../variables' as *;
 
 .article {
-  position: relative;
   width: 100%;
-  background-image: $paper-texture-url;
-  background-attachment: fixed;
+  position: absolute;
+  overflow-y: auto;
+  top: 80px;
+  bottom: 0;
+  left: 0;
+  right: 0;
   padding: $spacing-md;
-
-  ::after {
-    position: absolute;
-    top: calc($spacing-md / 2);
-    left: calc($spacing-md / 2);
-    right: calc($spacing-md / 2);
-    bottom: calc($spacing-md / 2);
-    border: 2px solid #67675e;
-  }
 }
 
 // ========== STICKY HEADER (title + favorites) ==========
 
 .stickyHeader {
   position: sticky;
-  top: $header-height;
+  top: 0;
   z-index: $z-index-sticky - 1;
   display: flex;
   align-items: center;
@@ -29,8 +23,7 @@
   gap: $spacing-md;
   padding: $spacing-md 0;
   border-bottom: 2px solid $color-border;
-  background-image: $paper-texture-url;
-  background-attachment: fixed;
+  background-color: yellow;
 
   @include mobile {
     flex-direction: column;
@@ -77,6 +70,7 @@
   transition: $transition-all;
   white-space: nowrap;
   flex-shrink: 0;
+  width: 220px;
 
   &:hover {
     font-weight: $font-weight-bold;
@@ -116,8 +110,7 @@
 .bodyLayout {
   display: grid;
   grid-template-columns: 1fr;
-  gap: $spacing-xl;
-  margin-top: $spacing-lg;
+  gap: $spacing-xl; 
 
   @include desktop {
     grid-template-columns: 1fr 220px;
@@ -135,7 +128,7 @@
   order: 2;
   align-self: start;
   position: sticky;
-  top: calc(#{$header-height} + #{$sticky-bar-height} + #{$spacing-lg});
+  top: 0;
 }
 
 .body {
@@ -345,7 +338,6 @@
 
   &:hover {
     border-color: $color-primary;
-    box-shadow: $shadow-md;
     transform: translateY(-2px);
   }
 

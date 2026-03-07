@@ -178,14 +178,7 @@ $transition-colors: color $transition-speed-normal $transition-easing,
   border-color $transition-speed-normal $transition-easing;
 $transition-transform: transform $transition-speed-normal $transition-easing;
 $transition-opacity: opacity $transition-speed-normal $transition-easing;
-
-// ========================================
-// PAPER TEXTURE
-// ========================================
-
-$paper-texture-opacity: 0.3;
-$paper-texture-url: url('/images/paper-texture.png');
-
+ 
 // ========================================
 // SCROLLBAR
 // ========================================
