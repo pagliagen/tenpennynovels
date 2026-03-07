@@ -11,15 +11,30 @@
 .subtypeLabel {
   display: flex;
   align-items: center;
+  gap: 6px;
+  width: 100%;
   padding: 0 5px;
+  background: none;
+  border: none;
   color: $color-text-light;
   font-size: $font-size-md;
   font-weight: $font-weight-semibold;
   text-transform: uppercase;
   letter-spacing: $letter-spacing-wider;
-  cursor: default;
+  cursor: pointer;
   user-select: none;
   margin-bottom: $spacing-sm;
+
+  &::before {
+    content: '▶';
+    font-size: 10px;
+    color: $color-text-light-muted;
+    transition: transform $transition-speed-fast;
+  }
+
+  &.expanded::before {
+    content: '▼';
+  }
 }
 
 // ========== DOCUMENT NODE ==========

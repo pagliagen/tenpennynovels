@@ -24,6 +24,7 @@ interface SubtypeTreeViewProps {
 
 export function SubtypeTreeView({ subtypes, type, currentPath }: SubtypeTreeViewProps) {
   const [expandedDocs, setExpandedDocs] = useState<Set<string>>(new Set());
+  const [expandedSubtypes, setExpandedSubtypes] = useState<Set<string>>(new Set());
 
   const docContainsActivePath = useCallback((doc: SubtypeDocument): boolean => {
     const docPath = `/${type}/${doc.path}`;
@@ -31,27 +32,39 @@ export function SubtypeTreeView({ subtypes, type, currentPath }: SubtypeTreeView
     return doc.children?.some(child => docContainsActivePath(child)) ?? false;
   }, [type, currentPath]);
 
+  const subtypeContainsActivePath = useCallback((subtype: DocumentSubtype): boolean => {
+    return (subtype.documents || []).some(doc => docContainsActivePath(doc));
+  }, [docContainsActivePath]);
+
   useEffect(() => {
-    const toExpand = new Set<string>();
+    const docsToExpand = new Set<string>();
+    const subtypesToExpand = new Set<string>();
 
-    const walk = (docs: SubtypeDocument[]) => {
-      docs.forEach(doc => {
-        if (doc.children && doc.children.length > 0 && docContainsActivePath(doc)) {
-          toExpand.add(doc._id);
-          walk(doc.children);
-        }
-      });
-    };
+    subtypes.forEach(s => {
+      if (subtypeContainsActivePath(s)) {
+        subtypesToExpand.add(s._id);
+      }
 
-    subtypes.forEach(s => walk(s.documents || []));
-    setExpandedDocs(toExpand);
-  }, [currentPath, subtypes, docContainsActivePath]);
+      const walk = (docs: SubtypeDocument[]) => {
+        docs.forEach(doc => {
+          if (doc.children && doc.children.length > 0 && docContainsActivePath(doc)) {
+            docsToExpand.add(doc._id);
+            walk(doc.children);
+          }
+        });
+      };
+      walk(s.documents || []);
+    });
 
-  const toggleDoc = (docId: string) => {
-    setExpandedDocs(prev => {
+    setExpandedDocs(docsToExpand);
+    setExpandedSubtypes(subtypesToExpand);
+  }, [currentPath, subtypes, docContainsActivePath, subtypeContainsActivePath]);
+
+  const toggle = (id: string, setter: React.Dispatch<React.SetStateAction<Set<string>>>) => {
+    setter(prev => {
       const next = new Set(prev);
-      if (next.has(docId)) next.delete(docId);
-      else next.add(docId);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   };
@@ -73,7 +86,7 @@ export function SubtypeTreeView({ subtypes, type, currentPath }: SubtypeTreeView
               <button
                 type="button"
                 className={`${styles.docToggle} ${isExpanded ? styles.expanded : ''}`}
-                onClick={() => toggleDoc(doc._id)}
+                onClick={() => toggle(doc._id, setExpandedDocs)}
               >
                 <span className={styles.docTitle}>{doc.title}</span>
                 {!doc.isPublic && <span className={styles.privateBadge}>🔒</span>}
@@ -104,11 +117,19 @@ export function SubtypeTreeView({ subtypes, type, currentPath }: SubtypeTreeView
       {subtypes.map((subtype) => {
         const docs = subtype.documents || [];
 
+        const isSubtypeExpanded = expandedSubtypes.has(subtype._id);
+
         return (
           <div key={subtype._id} className={styles.subtypeGroup}>
-            <div className={styles.subtypeLabel}>{subtype.title}</div>
+            <button
+              type="button"
+              className={`${styles.subtypeLabel} ${isSubtypeExpanded ? styles.expanded : ''}`}
+              onClick={() => toggle(subtype._id, setExpandedSubtypes)}
+            >
+              {subtype.title}
+            </button>
 
-            {docs.map(doc => renderDocNode(doc, 0))}
+            {isSubtypeExpanded && docs.map(doc => renderDocNode(doc, 0))}
           </div>
         );
       })}
