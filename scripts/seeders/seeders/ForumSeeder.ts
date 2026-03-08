@@ -814,8 +814,6 @@ async function seedForum() {
   }
 }
 
-if (require.main === module) {
-  seedForum();
-}
+seedForum();
 
 export { seedForum };

@@ -1,0 +1,212 @@
+@use 'sass:color';
+@use '../variables' as *;
+
+.treeContainer {
+  display: flex;
+  flex-direction: column;
+  background-color: $color-bg-secondary;
+  border-radius: $border-radius-md;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+.treeNode {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.nodeRow {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  padding: $spacing-sm $spacing-md;
+  transition: background-color $transition-fast;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.03);
+  }
+
+  &.hidden {
+    opacity: 0.5;
+  }
+
+  &.private {
+    border-left: 3px solid $color-warning;
+  }
+}
+
+.expandToggle {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: $color-text-secondary;
+  font-size: 10px;
+  cursor: pointer;
+  flex-shrink: 0;
+  border-radius: $border-radius-sm;
+  transition: all $transition-fast;
+
+  &:hover:not(:disabled) {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: $color-text-primary;
+  }
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.3;
+  }
+}
+
+.nodeInfo {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+
+  &:hover .nodeName {
+    color: $color-primary;
+  }
+}
+
+.nodeThumb {
+  width: 28px;
+  height: 28px;
+  border-radius: $border-radius-sm;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.nodeName {
+  font-size: 14px;
+  font-weight: 500;
+  color: $color-text-primary;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color $transition-fast;
+}
+
+.badge {
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+.badgeRoot {
+  background-color: rgba($color-info, 0.2);
+  color: color.scale($color-info, $lightness: 30%);
+}
+
+.badgeDistrict {
+  background-color: rgba($color-primary, 0.2);
+  color: $color-primary;
+}
+
+.badgeLocation {
+  background-color: rgba($color-success, 0.2);
+  color: color.scale($color-success, $lightness: 30%);
+}
+
+.tagHidden,
+.tagPrivate {
+  padding: 2px 6px;
+  border-radius: $border-radius-sm;
+  font-size: 10px;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.tagHidden {
+  background-color: rgba($color-text-muted, 0.2);
+  color: $color-text-muted;
+}
+
+.tagPrivate {
+  background-color: rgba($color-warning, 0.2);
+  color: $color-warning;
+}
+
+.occupants {
+  padding: 2px 6px;
+  border-radius: $border-radius-sm;
+  font-size: 11px;
+  font-weight: 500;
+  background-color: rgba($color-success, 0.15);
+  color: color.scale($color-success, $lightness: 25%);
+  flex-shrink: 0;
+}
+
+.nodeActions {
+  display: flex;
+  gap: $spacing-xs;
+  opacity: 0;
+  transition: opacity $transition-fast;
+  flex-shrink: 0;
+
+  .nodeRow:hover & {
+    opacity: 1;
+  }
+}
+
+.actionBtn {
+  padding: 4px 10px;
+  background-color: rgba(255, 255, 255, 0.08);
+  color: $color-text-secondary;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: $border-radius-sm;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all $transition-fast;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.12);
+    color: $color-text-primary;
+    border-color: rgba(255, 255, 255, 0.25);
+  }
+
+  &.deleteBtn {
+    color: color.scale($color-error, $lightness: 20%);
+    border-color: rgba($color-error, 0.3);
+
+    &:hover {
+      background-color: rgba($color-error, 0.15);
+      border-color: rgba($color-error, 0.5);
+    }
+  }
+}
+
+.nodeChildren {
+  // Children are indented via paddingLeft on nodeRow
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-2xl;
+  background-color: $color-bg-secondary;
+  border-radius: $border-radius-md;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: center;
+
+  p {
+    margin: $spacing-xs 0;
+    color: $color-text-secondary;
+    font-size: 15px;
+  }
+}

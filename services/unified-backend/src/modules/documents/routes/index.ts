@@ -23,6 +23,9 @@ router.get('/routes/list-hierarchical', AuthMiddleware.optionalAuth, DocumentCon
 // Semantic search
 router.get('/semantic-search', AuthMiddleware.optionalAuth, DocumentController.semanticSearch);
 
+// AI-powered Q&A (graceful degradation if AI unavailable)
+router.get('/ask', AuthMiddleware.optionalAuth, DocumentController.ask);
+
 // Get document by type + nested path (e.g., /documents/ambientazione/introduzione/presentazione)
 router.get('/:type/:category/:slug', AuthMiddleware.optionalAuth, (req, res) => {
   req.params.path = `${req.params.category}/${req.params.slug}`;

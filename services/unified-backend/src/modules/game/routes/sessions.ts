@@ -70,31 +70,31 @@ router.delete('/others/all',
 
 /**
  * @route GET /sessions/:sessionId
- * @desc Get session details for bot
- * @access BOT_API_KEY required
+ * @desc Get session details for AI gateway
+ * @access AI_GATEWAY_WEBHOOK_SECRET required
  */
 router.get('/:sessionId',
-  AuthMiddleware.requireBotApiKey,
+  AuthMiddleware.requireAIGatewayAuth,
   SessionManagementController.getSession
 );
 
 /**
  * @route POST /sessions/:sessionId/complete-bot-turn
  * @desc Complete bot turn in session
- * @access BOT_API_KEY required
+ * @access AI_GATEWAY_WEBHOOK_SECRET required
  */
 router.post('/:sessionId/complete-bot-turn',
-  AuthMiddleware.requireBotApiKey,
+  AuthMiddleware.requireAIGatewayAuth,
   SessionManagementController.completeBotTurn
 );
 
 /**
  * @route PATCH /sessions/:sessionId
- * @desc Update session (bot)
- * @access BOT_API_KEY required
+ * @desc Update session (AI gateway callback)
+ * @access AI_GATEWAY_WEBHOOK_SECRET required
  */
 router.patch('/:sessionId',
-  AuthMiddleware.requireBotApiKey,
+  AuthMiddleware.requireAIGatewayAuth,
   SessionManagementController.updateSession
 );
 

@@ -1,443 +1,267 @@
-# CDN Service - Deployment Guide
+# CDN Service - Setup & Deployment
 
-## Overview
+## Architettura
 
-Il CDN Service gestisce upload, processing e serving di asset statici (immagini) per il progetto TenPennyNovels.
+L'upload delle immagini e gestito dall'**unified-backend** tramite il modulo CDN integrato (`CDNService`, `FTPSyncService`, `CDNController`).
 
-**Architettura**:
-- **Locale**: cdn-service (Node/Express) + api-gateway (static serving)
-- **Production**: Nginx standalone su `cdn.tenpennynovels.com` + upload via unified-backend
+Le immagini vengono salvate nel formato originale (JPEG, PNG, WebP, GIF) senza alcun processing server-side.
+Il naming usa un hash SHA256 del contenuto (12 caratteri) per content-addressable storage.
 
----
-
-## 🏗️ Architettura
-
-### Locale (Docker Compose)
+### Sviluppo locale (Docker Compose)
 
 ```
-┌─────────────────────┐
-│   Management UI     │
-│  (localhost:4004)   │
-└──────────┬──────────┘
-           │ POST /cdn/upload (multipart + JWT)
-           ▼
-┌─────────────────────┐
-│   API Gateway       │
-│  (localhost:8000)   │──────► Proxy → cdn-service:4002
-└──────────┬──────────┘
-           │ Processing (Sharp)
-           ▼
-┌─────────────────────┐
-│   CDN Service       │
-│   (port 4002)       │
-└──────────┬──────────┘
-           │
-           ▼
-    /cdn-storage/ (Docker volume)
-           │
-           │ Static serving
-           ▼
-┌─────────────────────┐
-│   API Gateway       │
-│  GET /cdn/*         │──────► Express static middleware
-└─────────────────────┘
+Management UI (:4004)
+    |
+    | POST /admin/cdn/upload (multipart)
+    v
+API Gateway (:8000)
+    |
+    | proxy -> unified-backend:3001
+    v
+unified-backend (:3001)
+    |
+    | Salvataggio file originale
+    v
+/cdn-storage/ (Docker volume condiviso)
+    |
+    | express.static (api-gateway)
+    v
+GET http://localhost:8000/cdn/locations/{id}/{hash}.png
 ```
 
-### Production (OVH/Ubuntu)
+- Volume `cdn_storage` montato su unified-backend (RW) e api-gateway (RO)
+- `CDN_FTP_ENABLED=false` - nessun FTP in locale
+- Le immagini sono servite da api-gateway su `/cdn/*`
+
+### Produzione (OVH VPS + Serverplan)
 
 ```
-┌─────────────────────┐
-│   Management UI     │
-│ gestione.tpn.com    │
-└──────────┬──────────┘
-           │ POST /api/cdn/upload
-           ▼
-┌─────────────────────┐
-│  Unified Backend    │
-│   (port 3001)       │
-└──────────┬──────────┘
-           │ Processing (Sharp)
-           ▼
-      /var/www/cdn/
-           │
-           │ Static serving
-           ▼
-┌─────────────────────┐
-│   Nginx             │
-│ cdn.tpn.com         │──────► Serve da /var/www/cdn
-└─────────────────────┘
+Management UI (gestione.tenpennynovels.com)
+    |
+    | POST /admin/cdn/upload
+    v
+unified-backend (OVH VPS :3001)
+    |
+    | Salvataggio locale + FTP sync
+    v
+/var/www/cdn-cache/ (cache locale OVH)
+    |
+    | FTP sync (basic-ftp con retry)
+    v
+Serverplan (hosting condiviso)
+    |
+    | Apache serve i file
+    v
+https://cdn.tenpennynovels.com/locations/{id}/{hash}.png
 ```
 
----
+- OVH salva i file localmente come cache e li sincronizza via FTP su Serverplan
+- `cdn.tenpennynovels.com` e servito da Serverplan (Apache)
 
-## 📦 Local Setup (Docker)
+## Struttura cartelle
 
-### 1. Build e Start
+```
+/cdn-storage/ (locale) o /var/www/cdn-cache/ (OVH)
+  locations/{locationId}/
+    {hash}.png
+    {hash}.jpg
+    {hash}.webp
+  items/{itemId}/
+    {hash}.png
+  characters/{characterId}/
+    {hash}.jpg
+```
+
+Hash generato da SHA256 del contenuto file (12 char). Estensione originale preservata.
+
+## Endpoint API
+
+| Metodo | URL | Descrizione | Permesso |
+|--------|-----|-------------|----------|
+| POST | `/admin/cdn/upload` | Upload immagine (multipart: file + type + entityId) | `locations.update` |
+| DELETE | `/admin/cdn/:type/:entityId/:filename` | Cancella immagine | `locations.update` |
+| GET | `/admin/cdn/:type/:entityId` | Lista immagini per entita | `locations.read` |
+
+### Upload - Request
 
 ```bash
-# Build cdn-service
-cd services/cdn-service
-npm install
-
-# Start docker compose
-cd ../..
-docker compose up -d cdn-service api-gateway
-```
-
-### 2. Verifica Servizi
-
-```bash
-# Health check cdn-service
-curl http://localhost:4002/health
-
-# Health check api-gateway CDN proxy
-curl http://localhost:8000/cdn/health
-```
-
-### 3. Test Upload
-
-```bash
-# Upload test image (richiede JWT admin token)
-curl -X POST http://localhost:8000/cdn/upload \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-  -F "file=@/path/to/image.jpg" \
-  -F "type=location" \
+curl -X POST https://api.tenpennynovels.com/admin/cdn/upload \
+  -H "Cookie: auth_token=YOUR_TOKEN" \
+  -F "file=@image.png" \
+  -F "type=locations" \
   -F "entityId=507f1f77bcf86cd799439011"
 ```
 
-**Response attesa**:
+### Upload - Response
+
 ```json
 {
-  "success": true,
-  "urls": {
-    "main": "http://localhost:8000/cdn/locations/507f1f77bcf86cd799439011/location-a1b2c3d4e5f6.webp",
-    "thumbnail": "http://localhost:8000/cdn/locations/507f1f77bcf86cd799439011/thumb-a1b2c3d4e5f6.webp"
-  },
-  "metadata": {
+  "result": true,
+  "data": {
+    "url": "https://cdn.tenpennynovels.com/locations/507f.../a1b2c3d4e5f6.png",
     "hash": "a1b2c3d4e5f6",
-    "originalSize": 1234567,
-    "processedSize": 345678,
-    "thumbnailSize": 12345
-  }
+    "size": 933666
+  },
+  "message": "Immagine caricata con successo"
 }
 ```
 
-### 4. Test Static Serving
+## Setup locale
 
-```bash
-# Serve immagine appena caricata
-curl http://localhost:8000/cdn/locations/507f1f77bcf86cd799439011/location-a1b2c3d4e5f6.webp -I
+Il setup locale funziona automaticamente con `docker compose up`. Il `docker-compose.yml` configura:
 
-# Dovrebbe ritornare:
-# HTTP/1.1 200 OK
-# Content-Type: image/webp
-# Cache-Control: public, immutable, max-age=31536000
+- Volume `cdn_storage` condiviso
+- Variabili `CDN_STORAGE_PATH=/cdn-storage`, `CDN_BASE_URL=http://localhost:8000/cdn`, `CDN_FTP_ENABLED=false`
+- api-gateway serve `/cdn/*` tramite `express.static`
+- CORS CDN limitato a `GAME_URL` e `MANAGEMENT_URL`
+
+## Setup produzione
+
+### 1. Configurazione Serverplan
+
+1. **Crea sottodominio `cdn.tenpennynovels.com`**:
+   - Pannello Serverplan -> Domini -> Sottodomini
+   - Punta a una directory dedicata (es. `/httpdocs/cdn/` o `/subdomains/cdn/`)
+   - Annota il path root (serve per `CDN_FTP_BASE_PATH`)
+
+2. **Abilita SSL**:
+   - Pannello Serverplan -> SSL -> Let's Encrypt
+   - Attiva per `cdn.tenpennynovels.com`
+
+3. **Configura `.htaccess`** nella root del sottodominio:
+
+```apache
+<IfModule mod_headers.c>
+    # CORS: solo game e gestionale possono caricare le immagini
+    SetEnvIf Origin "https://game\.tenpennynovels\.com$" CORS_ORIGIN=$0
+    SetEnvIf Origin "https://gestione\.tenpennynovels\.com$" CORS_ORIGIN=$0
+
+    Header set Access-Control-Allow-Origin "%{CORS_ORIGIN}e" env=CORS_ORIGIN
+    Header set Access-Control-Allow-Methods "GET, HEAD, OPTIONS" env=CORS_ORIGIN
+    Header set Vary "Origin"
+
+    Header set X-Content-Type-Options "nosniff"
+
+    <FilesMatch "\.(webp|jpg|jpeg|png|gif)$">
+        Header set Cache-Control "public, immutable, max-age=31536000"
+    </FilesMatch>
+</IfModule>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule /\. - [F,L]
+</IfModule>
+
+Options -Indexes
+AddType image/webp .webp
 ```
 
----
+4. **Crea credenziali FTP dedicate**:
+   - Pannello Serverplan -> FTP -> Crea utente FTP
+   - Utente: `cdn_upload`, path root: directory del sottodominio cdn
+   - Password sicura (minimo 24 caratteri)
 
-## 🚀 Production Deployment (OVH/Ubuntu)
+5. **Crea struttura cartelle iniziale** (via FTP o pannello):
 
-### 1. Setup Nginx per CDN
-
-```bash
-# Copia configurazione Nginx
-sudo cp deploy/nginx-configs/tenpennynovels-cdn /etc/nginx/sites-available/
-sudo ln -s /etc/nginx/sites-available/tenpennynovels-cdn /etc/nginx/sites-enabled/
-
-# Crea directory storage
-sudo mkdir -p /var/www/cdn
-sudo chown -R www-data:www-data /var/www/cdn
-sudo chmod -R 755 /var/www/cdn
-
-# Test configurazione
-sudo nginx -t
-
-# Reload Nginx
-sudo systemctl reload nginx
+```
+mkdir locations
+mkdir items
+mkdir characters
 ```
 
-### 2. Setup SSL con Let's Encrypt
+### 2. Configurazione OVH VPS
+
+1. **Variabili d'ambiente** (file `.env` unified-backend):
 
 ```bash
-# Genera certificato SSL
-sudo certbot --nginx -d cdn.tenpennynovels.com
-
-# Verifica auto-renewal
-sudo certbot renew --dry-run
+CDN_STORAGE_PATH=/var/www/cdn-cache
+CDN_BASE_URL=https://cdn.tenpennynovels.com
+CDN_FTP_ENABLED=true
+CDN_FTP_HOST=ftp.tenpennynovels.com
+CDN_FTP_PORT=21
+CDN_FTP_USER=cdn_upload
+CDN_FTP_PASSWORD=xxx
+CDN_FTP_BASE_PATH=/
+CDN_FTP_SECURE=true
 ```
 
-### 3. Test Nginx CDN
+2. **Crea directory cache locale**:
 
 ```bash
-# Health check
-curl https://cdn.tenpennynovels.com/health
-
-# Test 404 (nessun file ancora)
-curl https://cdn.tenpennynovels.com/locations/test/test.webp -I
-# HTTP/1.1 404 Not Found
+sudo mkdir -p /var/www/cdn-cache
+sudo chown -R ubuntu:ubuntu /var/www/cdn-cache
 ```
 
-### 4. Upload Endpoint via Unified Backend
-
-**IMPORTANTE**: In production, l'upload NON usa cdn-service dedicato, ma passa da unified-backend.
-
-Aggiungi endpoint in `services/unified-backend/src/modules/admin/routes/cdnRoutes.ts`:
-
-```typescript
-import { Router } from 'express';
-import multer from 'multer';
-import { authMiddleware } from '../middleware/auth';
-import { uploadHandler } from '../controllers/CDNController';
-
-const router = Router();
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10485760 } });
-
-// POST /admin/cdn/upload
-router.post('/upload', authMiddleware, upload.single('file'), uploadHandler);
-
-export default router;
-```
-
-Implementa `CDNController.ts` (copia logica da cdn-service/src/routes/upload.ts).
-
-### 5. Test Upload Production
+3. **Variabili api-gateway** (file `.env` api-gateway):
 
 ```bash
-# Upload via unified-backend
+# Percorso locale per servire file CDN come fallback
+CDN_STORAGE_PATH=/var/www/cdn-cache
+```
+
+4. **Script di re-sync** (cron su OVH, ogni ora):
+
+```bash
+# /opt/scripts/cdn-resync.sh
+lftp -u cdn_upload,PASSWORD ftp://ftp.tenpennynovels.com -e "
+  mirror --reverse --only-newer /var/www/cdn-cache /
+  exit
+"
+```
+
+```bash
+# Crontab
+0 * * * * /opt/scripts/cdn-resync.sh >> /var/log/cdn-resync.log 2>&1
+```
+
+### 3. Test end-to-end
+
+```bash
+# Upload
 curl -X POST https://api.tenpennynovels.com/admin/cdn/upload \
-  -H "Authorization: Bearer YOUR_PROD_JWT_TOKEN" \
-  -F "file=@image.jpg" \
-  -F "type=location" \
+  -H "Cookie: auth_token=YOUR_TOKEN" \
+  -F "file=@test.jpg" \
+  -F "type=locations" \
   -F "entityId=507f1f77bcf86cd799439011"
+
+# Verifica su Serverplan
+curl -I https://cdn.tenpennynovels.com/locations/507f.../HASH.jpg
+
+# Verifica cache locale OVH
+ls -la /var/www/cdn-cache/locations/507f.../
 ```
 
-File salvato in: `/var/www/cdn/locations/507f1f77bcf86cd799439011/location-{hash}.webp`
-
-### 6. Test Serving Production
-
-```bash
-# Serve immagine
-curl https://cdn.tenpennynovels.com/locations/507f1f77bcf86cd799439011/location-{hash}.webp -I
-
-# Verifica headers
-# Cache-Control: public, immutable, max-age=31536000
-# Access-Control-Allow-Origin: *
-# X-Content-Type-Options: nosniff
-```
-
----
-
-## 🗑️ Cleanup Job (Soft-Deleted Files)
-
-### Locale (Docker)
-
-Il cleanup job gira automaticamente ogni 24h dentro cdn-service container.
-
-**Manual run**:
-```bash
-docker compose exec cdn-service npm run cleanup
-```
-
-### Production
-
-Aggiungi cron job:
-
-```bash
-# Apri crontab
-sudo crontab -e
-
-# Aggiungi (esegui ogni giorno alle 3am)
-0 3 * * * /usr/bin/node /var/www/tenpennynovels/services/unified-backend/dist/scripts/cdnCleanup.js >> /var/log/cdn-cleanup.log 2>&1
-```
-
-Script `services/unified-backend/src/scripts/cdnCleanup.ts`:
-```typescript
-import fs from 'fs/promises';
-import path from 'path';
-
-const CLEANUP_PATH = '/var/www/cdn/.cleanup';
-const RETENTION_DAYS = 7;
-
-// Copia logica da cdn-service/src/services/cleanup.ts
-async function runCleanup() {
-  // ... (stessa implementazione)
-}
-
-runCleanup().then(() => process.exit(0)).catch(() => process.exit(1));
-```
-
----
-
-## 📊 Monitoring
-
-### Locale
-
-```bash
-# Logs cdn-service
-docker compose logs -f cdn-service
-
-# Verifica volume storage
-docker volume inspect tenpennynovels-cdn-storage
-
-# Size disco
-docker exec tenpennynovels-cdn-service du -sh /cdn-storage
-```
-
-### Production
-
-```bash
-# Nginx logs
-tail -f /var/log/nginx/cdn-tenpennynovels-access.log
-tail -f /var/log/nginx/cdn-tenpennynovels-error.log
-
-# Storage size
-du -sh /var/www/cdn
-
-# Files count
-find /var/www/cdn -type f | wc -l
-```
-
----
-
-## 🔧 Configurazione Avanzata
-
-### Aumentare Max Upload Size
-
-**Locale** (`services/cdn-service/.env`):
-```env
-MAX_FILE_SIZE=20971520  # 20MB
-```
-
-**Production** (Nginx):
-```nginx
-# In /etc/nginx/sites-available/tenpennynovels-cdn
-client_max_body_size 20M;
-```
-
-**Production** (Unified Backend):
-```typescript
-// services/unified-backend/src/modules/admin/routes/cdnRoutes.ts
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 20971520 }  // 20MB
-});
-```
-
-### Cambiare Qualità Immagini
-
-**Locale** (`services/cdn-service/.env`):
-```env
-IMAGE_MAX_WIDTH=2560      # Default: 1920
-IMAGE_QUALITY=90          # Default: 85
-THUMBNAIL_SIZE=500        # Default: 300
-THUMBNAIL_QUALITY=85      # Default: 80
-```
-
-### Cambiare Retention Cleanup
-
-```env
-CLEANUP_RETENTION_DAYS=14  # Default: 7
-```
-
----
-
-## ⚠️ Troubleshooting
-
-### Upload fallisce con "File too large"
-
-**Problema**: File supera 10MB
-
-**Soluzione**:
-1. Aumenta `MAX_FILE_SIZE` in `.env`
-2. Aumenta `client_max_body_size` in Nginx (production)
-3. Restart services
-
-### Immagine non appare dopo upload
-
-**Problema**: URL errato o file non salvato
-
-**Check**:
-```bash
-# Locale
-docker exec tenpennynovels-cdn-service ls -la /cdn-storage/locations/{entityId}/
-
-# Production
-ls -la /var/www/cdn/locations/{entityId}/
-```
-
-**Soluzione**: Verifica response upload contenga URL corretto.
-
-### Sharp processing error
-
-**Problema**: Immagine corrotta o formato non supportato
-
-**Soluzione**:
-- Verifica file sia immagine valida (JPEG, PNG, WebP, GIF)
-- Check logs: `docker compose logs cdn-service`
-- Test con immagine diversa
-
-### Permission denied su /var/www/cdn
-
-**Problema**: User wrong permissions
-
-**Soluzione**:
-```bash
-sudo chown -R www-data:www-data /var/www/cdn
-sudo chmod -R 755 /var/www/cdn
-```
-
----
-
-## 🔐 Security Checklist
-
-- ✅ JWT auth su upload endpoint (solo admin)
-- ✅ File type validation (MIME + extension)
-- ✅ Size limit (10MB default)
-- ✅ Path traversal prevention (hash-based naming)
-- ✅ Image validation (Sharp metadata check)
-- ✅ CORS enabled per GET (public CDN)
-- ✅ CORS disabled per POST (auth required)
-- ✅ Security headers (X-Content-Type-Options, etc.)
-- ✅ Rate limiting (via api-gateway se necessario)
-
----
-
-## 📈 Performance
-
-### Benchmark Attesi
-
-| Metric | Target | Actual |
-|--------|--------|--------|
-| Upload time (5MB JPEG) | < 10s | ~6-8s |
-| Processing time (resize + webp) | < 5s | ~2-4s |
-| Static serving latency (cold) | < 20ms | ~10-15ms |
-| Static serving latency (cached) | < 5ms | ~2-3ms |
-| Throughput (Nginx static) | > 1000 req/s | ~2000 req/s |
-| Storage efficiency (WebP vs JPEG) | -30% | ~-35% |
-
-### Ottimizzazioni
-
-1. **Cache Browser**: Headers immutable 1 year
-2. **Nginx compression**: Gzip per SVG
-3. **WebP format**: -30% size vs JPEG
-4. **Lazy thumbnails**: Pre-generati durante upload
-5. **Hash-based naming**: Content-addressable (deduplication)
-
----
-
-## 🎯 Next Steps (Future)
-
-1. **S3 Migration**: MinIO locale → AWS S3/Cloudflare R2
-2. **CDN Layer**: Cloudflare davanti a Nginx (global edge)
-3. **Image transforms**: On-the-fly resize (`?w=500&q=80`)
-4. **Video support**: MP4 encoding + HLS streaming
-5. **Backup automation**: S3 sync cronjob
-
----
-
-## 📞 Support
-
-**Issues**: https://github.com/tenpennynovels/issues
-**Docs**: `/docs/cdn-service.md`
-**Logs**: `docker compose logs cdn-service`
+## File del progetto
+
+| File | Descrizione |
+|------|-------------|
+| `services/unified-backend/src/modules/admin/services/CDNService.ts` | Storage locale, hash naming, validazione MIME |
+| `services/unified-backend/src/modules/admin/services/FTPSyncService.ts` | Sync FTP condizionale verso Serverplan |
+| `services/unified-backend/src/modules/admin/controllers/CDNController.ts` | Endpoint REST upload/delete/list |
+| `services/unified-backend/src/modules/admin/routes/cdnRoutes.ts` | Route con permessi admin |
+| `apps/management/src/components/shared/ImageUploader.tsx` | Componente drag-and-drop upload |
+| `apps/management/src/lib/api/cdn.ts` | Client API per upload/delete/list |
+
+## Variabili d'ambiente
+
+| Variabile | Dove | Dev | Prod |
+|-----------|------|-----|------|
+| `CDN_STORAGE_PATH` | unified-backend, api-gateway | `/cdn-storage` | `/var/www/cdn-cache` |
+| `CDN_BASE_URL` | unified-backend | `http://localhost:8000/cdn` | `https://cdn.tenpennynovels.com` |
+| `CDN_FTP_ENABLED` | unified-backend | `false` | `true` |
+| `CDN_FTP_HOST` | unified-backend | - | `ftp.tenpennynovels.com` |
+| `CDN_FTP_PORT` | unified-backend | - | `21` |
+| `CDN_FTP_USER` | unified-backend | - | `cdn_upload` |
+| `CDN_FTP_PASSWORD` | unified-backend | - | `xxx` |
+| `CDN_FTP_BASE_PATH` | unified-backend | - | `/` |
+| `CDN_FTP_SECURE` | unified-backend | - | `true` |
+
+## Troubleshooting
+
+**Upload fallisce con "File too large"**: aumentare `MAX_FILE_SIZE` in `CDNController.ts` e `client_max_body_size` in Nginx (prod).
+
+**FTP fallisce**: i file restano nella cache locale OVH. Lo script di re-sync (cron) ritenta automaticamente. Controllare i log: `tail -f /var/log/cdn-resync.log`.
+
+**Immagine non visibile**: verificare che il volume `cdn_storage` sia montato correttamente su api-gateway (locale) o che l'FTP abbia caricato il file su Serverplan (prod).
+
+**CORS errore in dev**: verificare che `GAME_URL` e `MANAGEMENT_URL` siano configurati correttamente in `docker-compose.yml` per l'api-gateway. Le origin CDN sono prese da queste variabili.

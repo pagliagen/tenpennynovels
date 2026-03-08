@@ -318,8 +318,11 @@ API_GATEWAY_URL=http://api-gateway:8000
 # Unified Backend
 UNIFIED_BACKEND_URL=http://unified-backend:3001
  
-# BotAI Backend (disabled temporarily)
-# BOTAI_BACKEND_URL=http://botai-backend:8080
+# AI Gateway (local-ai via ngrok)
+AI_GATEWAY_URL=https://your-ngrok-url.ngrok-free.dev
+AI_GATEWAY_HMAC_SECRET=<generate-with-openssl-rand-hex-32>
+AI_GATEWAY_API_KEY=<generate-with-openssl-rand-hex-32>
+AI_GATEWAY_WEBHOOK_SECRET=<generate-with-openssl-rand-hex-32>
 ```
 
 ---
@@ -394,11 +397,11 @@ SMTP_SECURE=false                      # true for port 465, false for 587
 ## BotAI Configuration (Disabled)
 
 ```bash
-# BotAI Backend (temporarily disabled)
-# BOT_API_KEY=<generate-secure-key>
-# ANTHROPIC_API_KEY=sk-ant-...
-# BOT_AI_MODEL=claude-3-5-sonnet-20241022
-# BOT_AI_MAX_TOKENS=2000
+# AI Gateway (local-ai platform via ngrok)
+AI_GATEWAY_URL=https://your-ngrok-url.ngrok-free.dev
+AI_GATEWAY_HMAC_SECRET=<shared-secret-for-hmac-signing>
+AI_GATEWAY_API_KEY=<api-key-for-authentication>
+AI_GATEWAY_WEBHOOK_SECRET=<secret-for-callback-auth>
 # BOT_AI_TEMPERATURE=0.9
 
 # System Bot User

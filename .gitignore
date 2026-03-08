@@ -18,6 +18,9 @@ __pycache__/
 .env.test.local
 .env.production.local
 
+# Local AI client secrets (NEVER commit)
+local-ai/clients.json
+
 # Deployment credentials (NEVER commit)
 .env.deploy
 .deploy-backup/

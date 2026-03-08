@@ -537,7 +537,7 @@ docker network ls | grep tenpennynovels
 
 Current system only **retrieves** documents. To **generate answers**, integrate LLM:
 
-**Option 1**: Cloud LLM (OpenAI, Anthropic)
+**Option 1**: Local LLM (Ollama via local-ai Q&A service)
 ```typescript
 // 1. Semantic search
 const docs = await semanticSearch(query);

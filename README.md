@@ -3,7 +3,7 @@
 **Victorian London RPG by Chat Platform**
 *Experience immersive roleplay in Victorian London using Call of Cthulhu Rules*
 
-TenPennyNovels is a comprehensive web-based RPG platform that brings Victorian London to life through real-time chat gameplay, character management, and collaborative storytelling.
+TenPennyNovels is a web-based RPG platform that brings Victorian London to life through real-time chat gameplay, character management, and collaborative storytelling.
 
 ## Features
 
@@ -14,47 +14,112 @@ TenPennyNovels is a comprehensive web-based RPG platform that brings Victorian L
   - Location-based in-character chat
   - Victorian postal system for messages
   - Out-of-character chat for players
-- **Rich Document System**: Access setting guides, rules, and historical information
+- **AI-powered NPC Bots**: Intelligent NPCs driven by local Ollama models (zero API costs)
+- **Rich Document System**: Setting guides, rules, and historical information with semantic search and AI-powered Q&A
 - **Community Forum**: Discuss storylines and coordinate with other players
 - **Character Management**: Create, develop, and track your Victorian character
 - **Admin Tools**: Comprehensive management interface for game masters
 
 ## Technology Stack
 
-- **Frontend**: Next.js, React, TypeScript
-- **Backend**: Node.js, Express, TypeScript
-- **Real-time**: Socket.io for WebSocket connections
-- **Database**: MongoDB with Redis caching
-- **Authentication**: NextAuth.js with JWT tokens
+- **Frontend**: Next.js 15, React, TypeScript, SCSS Modules
+- **Backend**: Node.js 22, Express, TypeScript (unified backend)
+- **Real-time**: Socket.IO for WebSocket connections
+- **Database**: MongoDB 7 with Mongoose ODM
+- **Cache/Pub-Sub**: Redis 7 for sessions, caching, and real-time events
+- **Search**: Qdrant (vector DB) + ElasticSearch (full-text) for hybrid semantic search
+- **ML**: Python sentence-transformers for document embeddings
+- **AI**: Ollama (local LLM inference) via piattaforma Local AI indipendente
+- **Authentication**: Custom JWT with HttpOnly cookies
 
 ## Architecture
 
-### Multi-Application Design
-The platform consists of 6 frontend applications and 4 backend microservices:
+### Overview
+
+The platform consists of 4 frontend applications, 3 backend services, and an independent local AI platform.
+
+```mermaid
+flowchart TD
+    subgraph frontend ["Frontend (Next.js SSR)"]
+        Landing["Landing\n:4000"]
+        Game["Game\n:4001"]
+        Documents["Documents\n:4003"]
+        Management["Management\n:4004"]
+    end
+
+    subgraph backend ["Backend (VPS)"]
+        Gateway["API Gateway\n:8000"]
+        Unified["Unified Backend\n:3001"]
+        Embeddings["Embeddings Worker\n:5001"]
+    end
+
+    subgraph localai ["Local AI (standalone, via ngrok)"]
+        AIGateway["AI Gateway\n:9000"]
+        BotAI["BotAI\n:8080"]
+        QA["Q&A\n:8090"]
+        Ollama["Ollama\n:11434"]
+    end
+
+    subgraph infra ["Infrastructure"]
+        MongoDB[(MongoDB)]
+        Redis[(Redis)]
+        Qdrant[(Qdrant)]
+        ES[(ElasticSearch)]
+    end
+
+    frontend --> Gateway
+    Gateway --> Unified
+    Unified --> MongoDB
+    Unified --> Redis
+    Unified --> Qdrant
+    Unified --> Embeddings
+    Unified -->|"contesto + callback\n(via ngrok)"| AIGateway
+    AIGateway --> BotAI
+    AIGateway --> QA
+    BotAI --> Ollama
+    QA --> Ollama
+    BotAI -->|"callback"| Unified
+    Embeddings --> Qdrant
+    Embeddings --> ES
+    Embeddings --> MongoDB
+```
 
 **Frontend Applications:**
-- **Landing**: Authentication and character selection
-- **Game**: Main gameplay interface with real-time chat
-- **Documents**: Setting guides and rules reference
-- **Forum**: Community discussions
-- **Management**: Game master tools
-- **Tickets**: Player support system
 
-**Backend Services:**
-- **API Gateway**: Centralized routing (Port 8000)
-- **Authentication**: User management and security (Port 3000)
-- **Game Backend**: Gameplay logic and WebSocket (Port 3001)
-- **Management Backend**: Administrative functions (Port 3002)
+| App | Port | Domain (prod) | Description |
+|-----|------|---------------|-------------|
+| Landing | 4000 | tenpennynovels.com | Authentication and character selection |
+| Game | 4001 | game.tenpennynovels.com | Main gameplay interface with real-time chat, forum |
+| Documents | 4003 | documenti.tenpennynovels.com | Setting guides and rules reference |
+| Management | 4004 | gestione.tenpennynovels.com | Game master and admin tools |
 
-### Event-Driven Architecture
-Services communicate via Redis pub/sub for real-time features and loosely coupled microservices.
+**Backend Services (VPS):**
+
+| Service | Port | Description |
+|---------|------|-------------|
+| API Gateway | 8000 | Centralized routing and proxy to unified-backend |
+| Unified Backend | 3001 | All modules: auth, game, admin, documents, tickets, forum, WebSocket |
+| Embeddings Worker | 5001 | HTTP API + Python subprocess + Bull queue for semantic embeddings |
+
+**Local AI Platform (macchina locale, esposta via ngrok):**
+
+| Service | Port | Description |
+|---------|------|-------------|
+| AI Gateway | 9000 | Autenticazione multi-client, routing, rate limiting, validazione |
+| BotAI | 8080 | NPC bot responses via Ollama |
+| Q&A | 8090 | RAG-based Q&A su documenti di gioco |
+| Ollama | 11434 | LLM inference locale (mistral:7b-instruct) |
+
+> La piattaforma Local AI è **completamente indipendente**: non accede al database del gioco, non importa codice dal backend, funziona standalone. Vedi [local-ai/docs/](local-ai/docs/) per la documentazione completa.
 
 ## Quick Start
 
 ### Prerequisites
-- Node.js v22.13.1
-- MongoDB v6.x or higher
-- Redis v7.x or higher
+
+- Node.js v22.x (see `.nvmrc`)
+- MongoDB 7.x
+- Redis 7.x
+- Docker (per Local AI e infrastruttura)
 
 ### Installation
 
@@ -68,246 +133,199 @@ npm install
 
 # Configure environment
 cp .env.example .env
+# Edit .env with your configuration
+```
 
-# Start services (choose one method)
+### Start with Docker (recommended)
 
-# Method 1: Docker (recommended)
-npm run docker:all:start    # Starts MongoDB, Redis, and all backends
+```bash
+# Start all infrastructure + backend services
+docker compose up -d
 
-# Method 2: Local services
-npm run all                 # Starts all services locally
+# Verify services are healthy
+docker compose ps
+```
+
+### Start Local AI (opzionale)
+
+```bash
+# Setup e avvio della piattaforma AI locale
+cd local-ai
+cp .env.example .env
+cp clients.json.example clients.json
+# Editare clients.json con le API key (vedi local-ai/docs/setup.md)
+
+docker compose up -d
+docker compose exec ollama ollama pull mistral:7b-instruct
+
+# Verifica
+curl http://localhost:9000/health
+```
+
+Per esporre il servizio via ngrok (necessario per l'integrazione con il VPS):
+
+```bash
+ngrok start --config ngrok.yml ai-gateway
+```
+
+### Start locally (without Docker)
+
+```bash
+# Start all backend services
+npm run backend:all
+
+# Start all frontend applications (separate terminal)
+npm run frontend:all
+
+# Or start everything together
+npm run all
 ```
 
 ### Access the Platform
 
-After starting the services:
-- **Landing/Login**: http://localhost:4000
-- **Game Interface**: http://localhost:4001
-- **Documents**: http://localhost:4002
-- **Forum**: http://localhost:4003
-- **Management**: http://localhost:4004
-
-For detailed installation instructions, see [docs/technical.md](docs/technical.md).
-
-## Development
-
-### Start Development Environment
-
-#### Option 1: Docker (Recommended for Backend)
-
-Docker provides an isolated development environment with hot-reload support:
-
-```bash
-# Start infrastructure + all backend services
-npm run docker:all:start
-
-# Stop all services
-npm run docker:all:stop
-
-# Infrastructure only (MongoDB, Redis, Embeddings)
-npm run docker:infra:start
-npm run docker:infra:stop
-
-# Backend services only
-# ⚠️ Note: Infrastructure must be running first!
-npm run docker:backends:start
-npm run docker:backends:stop
-
-# Check infrastructure health before starting backends
-npm run docker:check
-
-# View logs - all backends
-npm run docker:logs
-
-# View logs - individual backend
-npm run docker:logs:gateway      # API Gateway
-npm run docker:logs:auth         # Authentication Backend
-npm run docker:logs:game         # Game Backend
-npm run docker:logs:management   # Management Backend
-
-# Check status
-npm run docker:status
-
-# Restart services
-npm run docker:restart
-```
-
-**⚠️ Important: Docker Startup Order**
-
-When starting services manually, always start infrastructure before backends:
-1. ✅ **Correct:** Use `npm run docker:all:start` (handles everything automatically)
-2. ✅ **Correct:** Run `npm run docker:infra:start`, wait 30 seconds, then `npm run docker:backends:start`
-3. ❌ **Incorrect:** Running `npm run docker:backends:start` without infrastructure will fail
-
-Use `npm run docker:check` to verify infrastructure is ready before starting backends.
-
-**Available Services (Docker):**
-- API Gateway: http://localhost:8000
-- Auth Backend: http://localhost:3000
-- Game Backend: http://localhost:3001
-- Management Backend: http://localhost:3002
-- MongoDB Express: http://localhost:8082
-- Redis Commander: http://localhost:8081
-
-**Hot-Reload:** Code changes are automatically detected and services restart in 1-2 seconds.
-
-#### Option 2: Local Services
-
-Run services directly on your machine:
-
-```bash
-# Start all services and applications
-npm run all
-
-# Or start services individually
-npm run backend:all      # All backend services
-npm run frontend:all     # All frontend applications
-```
-
-### Build for Production
-
-```bash
-# Build all applications
-npm run build
-
-# Run tests
-npm run test
-```
+| Service | URL |
+|---------|-----|
+| Landing/Login | http://localhost:4000 |
+| Game Interface | http://localhost:4001 |
+| Documents | http://localhost:4003 |
+| Management | http://localhost:4004 |
+| API Gateway | http://localhost:8000 |
+| AI Gateway Health | http://localhost:9000/health |
 
 ## Project Structure
 
 ```
 tenpennynovels/
-├── apps/                    # Frontend applications (6 sites)
-│   ├── landing/            # Login and character selection
-│   ├── game/               # Main game interface
-│   ├── documents/          # Document management
-│   ├── forum/              # Community forum
-│   ├── management/         # Admin interface
-│   └── tickets/            # Support system
-├── services/               # Backend Services + Shared Code
-│   ├── api-gateway/        # Central routing
-│   ├── authentication-backend/
-│   ├── game-backend/
-│   ├── management-backend/
-│   ├── shared/            # Shared utilities, types, models
-│   ├── database/          # MongoDB models (33+ models)
-│   └── config/            # Configuration files (JSON)
-└── docs/                  # Complete documentation
-    ├── technical.md       # Technical documentation
-    ├── api-docs.md        # API documentation
-    ├── architecture/      # Architecture guides
-    ├── systems/           # System documentation
-    ├── gameplay/          # Game mechanics
-    ├── setup/             # Setup and development guides
-    └── deployment/        # Deployment guides
+├── apps/                        # Frontend applications (Next.js)
+│   ├── landing/                 # Login and character selection
+│   ├── game/                    # Main game interface + forum
+│   ├── documents/               # Setting guides and rules
+│   └── management/              # Admin/game master interface
+│
+├── services/                    # Backend services (VPS)
+│   ├── api-gateway/             # Centralized routing and proxy
+│   ├── unified-backend/         # Main backend (all modules)
+│   │   └── src/modules/
+│   │       ├── auth/            # Authentication
+│   │       ├── game/            # Gameplay logic + WebSocket
+│   │       ├── admin/           # Admin panel
+│   │       ├── documents/       # Document system
+│   │       ├── tickets/         # Support tickets
+│   │       └── forum/           # Community forum
+│   └── embeddings-worker/       # ML embeddings service
+│
+├── local-ai/                    # Local AI platform (indipendente)
+│   ├── gateway/                 # Multi-client gateway + security
+│   ├── services/
+│   │   ├── botai/               # NPC bot AI (Ollama)
+│   │   ├── qa/                  # RAG Q&A
+│   │   ├── item-image-gen/      # Image gen (stub)
+│   │   ├── location-image-gen/  # Image gen (stub)
+│   │   └── avatar-gen/          # Image gen (stub)
+│   ├── shared/                  # Codice condiviso local-ai
+│   ├── docs/                    # Documentazione local-ai
+│   └── docker-compose.yml       # Stack standalone
+│
+├── scripts/                     # Seeders and utility scripts
+├── deploy/                      # Deployment configs
+├── docs/                        # Project documentation
+├── _archive/                    # Archived code (reference only)
+├── docker-compose.yml           # Docker Compose for local dev
+└── ecosystem.config.js          # PM2 config for production
 ```
 
-## Docker Development Setup
+## Development
 
-The project includes Docker configuration for streamlined backend development with full hot-reload support.
-
-### Features
-
-- ✅ **Hot-reload**: Code changes trigger automatic restart (1-2 seconds)
-- ✅ **Isolated environment**: Consistent across all developers
-- ✅ **Easy infrastructure**: MongoDB, Redis, and all backends with one command
-- ✅ **Individual logs**: View logs for specific services without grep
-- ✅ **Network isolation**: Services communicate via Docker network
-
-### Docker Files
-
-- `docker-compose.infrastructure.yml` - MongoDB, Redis, Embeddings
-- `docker-compose.backends.yml` - All 4 backend services (Auth, Game, Management, API Gateway)
-- `services/*/Dockerfile.dev` - Development Dockerfiles with tsx watch
-- `docker-backends.sh` - Management script for lifecycle operations
-
-### Advanced Docker Commands
+### Available Scripts
 
 ```bash
-# Using the management script directly
-./docker-backends.sh start                          # Start everything
-./docker-backends.sh stop                           # Stop everything
-./docker-backends.sh restart                        # Restart all
-./docker-backends.sh restart tenpennynovels-game-backend  # Restart single service
-./docker-backends.sh logs tenpennynovels-auth-backend     # Logs for specific service
-./docker-backends.sh rebuild                        # Rebuild images from scratch
+# Individual services
+npm run backend:gateway          # API Gateway
+npm run backend:unified          # Unified Backend
+npm run backend:embeddings       # Embeddings Worker
 
-# Build backends manually
-npm run docker:backends:build
+# Groups
+npm run backend:all              # All backends
+npm run frontend:all             # All frontends
+npm run all                      # Everything
 
-# Hybrid mode (infrastructure in Docker, backends local)
-npm run docker:infra:start && npm run backend:all
+# Local AI
+npm run local-ai:start           # Start local AI (Docker)
+npm run local-ai:stop            # Stop local AI
+npm run local-ai:dev             # Dev mode (Ollama + MongoDB + servizi)
+npm run local-ai:logs            # View local AI logs
+
+# Build
+npm run build:all                # Build everything for production
+npm run build:backend:all        # Build all backends
+npm run build:frontend:all       # Build all frontends
+
+# Seeders
+npm run seed:users               # Seed default users
+npm run seed:documents           # Seed documents
 ```
 
-### Troubleshooting Docker
+### Docker Commands
 
 ```bash
-# Check container status
-docker ps -a
+# Game stack (VPS)
+docker compose up -d             # Start all services
+docker compose down              # Stop all services
+docker compose ps                # Check status
 
-# View detailed logs
-docker logs tenpennynovels-game-backend
-
-# Restart a misbehaving service
-docker restart tenpennynovels-auth-backend
-
-# Clean rebuild if needed
-docker-compose -f docker-compose.backends.yml down
-docker-compose -f docker-compose.backends.yml build --no-cache
-docker-compose -f docker-compose.backends.yml up -d
+# Local AI stack (standalone)
+cd local-ai
+docker compose up -d             # Start AI services
+docker compose down              # Stop AI services
+docker compose logs -f           # View logs
 ```
+
+## Production Deployment
+
+**Game Platform** — runs on an OVH VPS with PM2 and Nginx:
+
+| Domain | Service |
+|--------|---------|
+| tenpennynovels.com | Landing |
+| game.tenpennynovels.com | Game |
+| documenti.tenpennynovels.com | Documents |
+| gestione.tenpennynovels.com | Management |
+| api.tenpennynovels.com | API Gateway |
+| ws.tenpennynovels.com | WebSocket |
+
+**Local AI** — runs sulla macchina locale, esposto al VPS via ngrok:
+
+| URL | Service |
+|-----|---------|
+| https://\*.ngrok-free.dev | AI Gateway (porta 9000) |
+
+See [deploy/](deploy/) and [docs/06-operations/deployment-guide.md](docs/06-operations/deployment-guide.md) for game deployment.
+See [local-ai/docs/](local-ai/docs/) for Local AI setup and deployment.
 
 ## Documentation
 
-- **[docs/setup/development-guide.md](docs/setup/development-guide.md)**: Complete development guide and architecture overview
-- **[docs/technical.md](docs/technical.md)**: Detailed technical documentation
-- **[docs/api-docs.md](docs/api-docs.md)**: Complete API documentation with standardized response format
-- **[docs/deployment/](docs/deployment/)**: Production deployment guides
-- **[docs/architecture/](docs/architecture/)**: Architecture documentation
-- **[docs/systems/](docs/systems/)**: System-specific guides
-- **[docs/gameplay/](docs/gameplay/)**: Game mechanics documentation
+- [docs/INDEX.md](docs/INDEX.md) — Complete documentation index
+- [docs/00-getting-started/](docs/00-getting-started/) — Tech stack and project structure
+- [docs/01-infrastructure/](docs/01-infrastructure/) — Docker, environment variables, MongoDB schemas
+- [docs/02-backend/](docs/02-backend/) — Backend architecture and API documentation
+- [docs/03-game-systems/](docs/03-game-systems/) — Game mechanics and systems
+- [docs/04-ai-ml/](docs/04-ai-ml/) — AI/ML integrations (embeddings, bots, Q&A)
+- [docs/06-operations/](docs/06-operations/) — Deployment and operations
+- [local-ai/docs/](local-ai/docs/) — Local AI: architettura, sicurezza, API, deployment
 
 ## Security
 
 - JWT-based authentication with secure HttpOnly cookies
-- Two-tier authorization system (user and character roles)
-- Server-side validation and authorization checks
+- Two-tier authorization system (user roles + character gameplay roles)
+- Granular admin permissions with per-character overrides
 - Rate limiting and input sanitization
 - HTTPS enforcement in production
-
-## Contributing
-
-We welcome contributions! Please follow these steps:
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Commit your changes: `git commit -m 'Add amazing feature'`
-4. Push to the branch: `git push origin feature/amazing-feature`
-5. Open a Pull Request
-
-## Testing
-
-```bash
-# Run all tests
-npm run test
-
-# Run specific test suites
-npm run test:backend      # Backend services
-npm run test:frontend     # Frontend applications
-npm run test:integration  # Integration tests
-```
+- **AI Gateway**: multi-client API key authentication, optional HMAC signing per-client, per-client rate limiting, Zod payload validation
 
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Support
-
-- **Issues**: [GitHub Issues](https://github.com/pagliagen/tenpennynovels/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/pagliagen/tenpennynovels/discussions)
-- **Documentation**: See [docs/](docs/) directory
-
 ---
 
-Made with ❤️ for Victorian London RPG enthusiasts
+Made with care for Victorian London RPG enthusiasts

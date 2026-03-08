@@ -13,6 +13,8 @@ import DocumentSubtype from '@database/models/DocumentSubtype';
 import { EmbeddingService } from '../services/EmbeddingService';
 import { HierarchyService } from '../services/HierarchyService';
 import { logger } from '@shared/utils/logger';
+import { isQuestion } from '../utils/questionDetector';
+import { aiGatewayClient } from '../../game/services/AIGatewayClient';
 
 export class DocumentController {
   // ========== PUBLIC ROUTES ==========
@@ -317,7 +319,7 @@ export class DocumentController {
    */
   static async semanticSearch(req: Request, res: Response): Promise<void> {
     try {
-      const { q: query, type, limit = 5, minSimilarity = 0.01 } = req.query;
+      const { q: query, type, limit = 10, minSimilarity = 0.01 } = req.query;
 
       if (!query || typeof query !== 'string') {
         res.status(400).json({ result: false, error: 'Query richiesta', code: 'MISSING_QUERY' });
@@ -380,7 +382,6 @@ export class DocumentController {
             slug: doc.slug,
             title: doc.title,
             content: chunk.content.substring(0, 300) + (chunk.content.length > 300 ? '...' : ''),
-            description: doc.description,
             tags: doc.tags || [],
             isDraft: doc.isDraft || false
           },
@@ -398,7 +399,55 @@ export class DocumentController {
         };
       }).filter(Boolean);
 
-      res.json({ result: true, data: { results, totalResults: results.length, query } });
+      // --- AI integration: answer questions using local-ai QA ---
+      let aiAnswer: Record<string, any> | undefined;
+
+      const MIN_AI_SCORE = 35;
+      const relevantResults = (results as any[]).filter((r: any) => parseInt(r.matchScore) >= MIN_AI_SCORE);
+
+      if (isQuestion(query) && relevantResults.length > 0) {
+        try {
+          const healthy = await aiGatewayClient.isHealthy();
+          if (healthy) {
+            const contextChunks = relevantResults.map((r: any) => {
+              const chunkId = searchResults.find(sr => sr.heading === r.matchHeading && sr.slug === r.route?.anchor?.replace('#', ''))?.chunkId;
+              const chunk: any = chunkId ? chunks.find((c: any) => c.chunkId === chunkId) : null;
+              return {
+                heading: r.matchHeading,
+                content: (chunk?.content || '').substring(0, 800),
+                source: {
+                  documentId: r.document?._id?.toString(),
+                  slug: r.document?.slug,
+                  fullPath: r.route?.fullPath,
+                  title: r.document?.title,
+                  subtypeTitle: r.route?.subtypeTitle || '',
+                },
+              };
+            });
+
+            const qaResponse = await aiGatewayClient.askQuestion({
+              question: query,
+              context: contextChunks,
+              options: { maxTokens: 800, locale: 'it' },
+            });
+
+            if (qaResponse?.success && qaResponse.answer) {
+              aiAnswer = {
+                answer: qaResponse.answer,
+                sources: qaResponse.sources || [],
+                model: qaResponse.metadata?.model,
+              };
+            }
+          }
+        } catch (aiError: any) {
+          logger.warn('AI answer failed (non-blocking):', aiError.message);
+        }
+      }
+
+      res.json({
+        result: true,
+        data: { results, totalResults: results.length, query, aiAnswer },
+      });
     } catch (error: any) {
       logger.error('Error in semanticSearch:', error);
       res.status(500).json({ result: false, error: 'Errore semantic search', code: 'SEARCH_ERROR' });
@@ -506,6 +555,94 @@ export class DocumentController {
     } catch (error: any) {
       logger.error('Error in toggleFavorite:', error);
       res.status(500).json({ result: false, error: 'Errore toggle favorite', code: 'FAVORITE_ERROR' });
+    }
+  }
+
+  /**
+   * GET /documents/ask?q=...
+   * AI-powered Q&A: semantic search → top chunks → local-ai Q&A → answer
+   * Graceful degradation: if AI unavailable, returns search results only
+   */
+  static async ask(req: Request, res: Response): Promise<void> {
+    try {
+      const { q: question, type, locale = 'it' } = req.query;
+
+      if (!question || typeof question !== 'string' || question.length < 3) {
+        res.status(400).json({ result: false, error: 'Domanda richiesta (minimo 3 caratteri)', code: 'MISSING_QUESTION' });
+        return;
+      }
+
+      const searchResults = await EmbeddingService.semanticSearch(
+        question, type as any, 5, 0.01
+      );
+
+      if (searchResults.length === 0) {
+        res.json({
+          result: true,
+          data: { answer: null, aiAvailable: false, results: [], message: 'Nessun risultato trovato' },
+        });
+        return;
+      }
+
+      const chunkIds = searchResults.map(r => r.chunkId).filter(Boolean);
+      const db = mongoose.connection.db;
+      if (!db) throw new Error('Database connection not available');
+
+      const chunks = await db.collection('documentchunks').find({ chunkId: { $in: chunkIds } }).toArray();
+
+      const contextChunks = searchResults.map(result => {
+        const chunk = chunks.find((c: any) => c.chunkId === result.chunkId);
+        if (!chunk) return null;
+        return {
+          heading: result.heading || chunk.heading || '',
+          content: chunk.content || '',
+          source: { documentId: result.documentId, slug: result.slug },
+        };
+      }).filter(Boolean);
+
+      // Try AI-powered answer via local-ai
+      try {
+        const { aiGatewayClient } = await import('@modules/game/services/AIGatewayClient');
+
+        const healthy = await aiGatewayClient.isHealthy();
+        if (healthy && contextChunks.length > 0) {
+          const qaResponse = await aiGatewayClient.askQuestion({
+            question,
+            context: contextChunks as any,
+            options: { maxTokens: 800, locale: locale as string },
+          });
+
+          if (qaResponse?.success && qaResponse.answer) {
+            res.json({
+              result: true,
+              data: {
+                answer: qaResponse.answer,
+                aiAvailable: true,
+                sources: qaResponse.sources,
+                metadata: qaResponse.metadata,
+                results: searchResults.slice(0, 3),
+              },
+            });
+            return;
+          }
+        }
+      } catch (aiError: any) {
+        logger.warn(`[DocumentController] AI Q&A unavailable: ${aiError.message}`);
+      }
+
+      // Graceful degradation: return search results without AI answer
+      res.json({
+        result: true,
+        data: {
+          answer: null,
+          aiAvailable: false,
+          results: searchResults,
+          message: 'AI non disponibile, ecco i risultati della ricerca',
+        },
+      });
+    } catch (error: any) {
+      logger.error('Error in ask:', error);
+      res.status(500).json({ result: false, error: 'Errore Q&A', code: 'ASK_ERROR' });
     }
   }
 

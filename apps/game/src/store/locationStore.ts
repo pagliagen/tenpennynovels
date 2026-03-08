@@ -20,7 +20,7 @@ import type { AccessibleLocation, LocationsResponse } from '@/types/location';
 /**
  * Cache Configuration
  */
-const CACHE_VERSION = '1.2.0'; // Bump when ILocation schema changes (v1.2.0: All 49 locations have positions)
+const CACHE_VERSION = '1.3.0'; // Bump when ILocation schema changes (v1.3.0: imageUrl from CDN)
 const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 /**

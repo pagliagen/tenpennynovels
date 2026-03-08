@@ -1,204 +1,135 @@
-import * as fs from 'fs';
-import * as path from 'path';
-import csv from 'csv-parser';
+/**
+ * Occupation Seeder - Standalone Script
+ *
+ * Reads occupations from CSV, seeds MongoDB.
+ */
+
+import { readFileSync } from 'fs';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
+import { parse } from 'csv-parse/sync';
 import { getConnection } from '../utils/connection.js';
 
-export class OccupationSeeder {
-  name = 'occupations';
-  description = 'Seed Victorian London occupations from CSV';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
-  async seed(force: boolean = false): Promise<void> {
-    const { client, db } = await getConnection();
+const CSV_PATH = join(__dirname, '../data/occupations.csv');
 
-    try {
-      const occupationsCollection = db.collection('occupations');
+interface OccupationRow {
+  name: string;
+  description: string;
+  category: string;
+  contacts: string;
+  earnings: string;
+  requiredSkills: string;
+  bonusSkills: string;
+}
 
-      // Check if occupations already exist
-      const existingCount = await occupationsCollection.countDocuments();
+const DAILY_SALARIES: Record<string, number> = {
+  medical: 180, legal: 200, clergy: 60, military: 30, education: 90,
+  domestic_service: 20, trades: 50, commerce: 80, entertainment: 40,
+  criminal: 15, nobility: 500, professional: 150, industrial: 35,
+  transportation: 40, agricultural: 25
+};
 
-      if (existingCount > 0 && !force) {
-        console.log(`   💼 ${existingCount} occupations already exist, skipping seeding`);
-        console.log('   💡 Use --force to re-seed');
-        return;
-      }
+const SOCIAL_RESPECTABILITY: Record<string, number> = {
+  medical: 9, legal: 9, clergy: 8, military: 7, education: 7,
+  domestic_service: 4, trades: 5, commerce: 6, entertainment: 5,
+  criminal: 1, nobility: 10, professional: 8, industrial: 4,
+  transportation: 5, agricultural: 4
+};
 
-      if (force && existingCount > 0) {
-        console.log(`   🗑️  Truncating ${existingCount} existing occupations...`);
+async function seedOccupations() {
+  console.log('💼 Occupation Seeder\n');
+  const { client, db } = await getConnection();
 
-        // Drop indexes before seeding
-        try {
-          await occupationsCollection.dropIndexes();
-          console.log('   📋 Dropped existing indexes');
-        } catch (indexError) {
-          console.log('   ⚠️  No indexes to drop or drop failed (this is usually fine)');
-        }
+  try {
+    const occupationsCol = db.collection('occupations');
+    const force = process.argv.includes('--force');
 
-        await occupationsCollection.deleteMany({});
-        console.log('   ✅ Occupations truncated');
-      }
-
-      // Read CSV data
-      const csvPath = path.join(__dirname, '../data/occupations.csv');
-
-      if (!fs.existsSync(csvPath)) {
-        throw new Error(`CSV file not found at: ${csvPath}`);
-      }
-
-      console.log('   📄 Reading occupations from CSV...');
-      const occupationsData = await this.readCsvData(csvPath);
-      console.log(`   📊 Parsed ${occupationsData.length} occupations from CSV`);
-
-      console.log(`   🏗️  Creating occupations...`);
-
-      const createdOccupations = [];
-
-      for (const csvOccupation of occupationsData) {
-        try {
-          // Process CSV data with validation
-          const occupationData = this.processOccupationData(csvOccupation);
-
-          const result = await occupationsCollection.insertOne(occupationData);
-          const savedOccupation = { ...occupationData, _id: result.insertedId };
-          createdOccupations.push(savedOccupation);
-
-          console.log(`   💼 Created: ${savedOccupation.name} (${savedOccupation.category})`);
-
-        } catch (error: any) {
-          console.error(`   ❌ Error creating occupation ${csvOccupation.name}:`, error.message);
-          throw error; // Fail the entire seeding process on any error
-        }
-      }
-
-      console.log(`   ✅ Successfully created ${createdOccupations.length} occupations`);
-
-    } catch (error) {
-      console.error('   ❌ OccupationSeeder error:', error);
-      throw error;
-    } finally {
-      await client.close();
+    const existingCount = await occupationsCol.countDocuments();
+    if (existingCount > 0 && !force) {
+      console.log(`   ℹ️  ${existingCount} occupations already exist, skipping`);
+      console.log('   💡 Use --force to re-seed\n');
+      return;
     }
-  }
 
-  private async readCsvData(csvPath: string): Promise<any[]> {
-    return new Promise((resolve, reject) => {
-      const occupations: any[] = [];
+    if (existingCount > 0) {
+      console.log(`   🗑️  Clearing ${existingCount} existing occupations...`);
+      try { await occupationsCol.dropIndexes(); } catch { /* ok */ }
+      await occupationsCol.deleteMany({});
+    }
 
-      fs.createReadStream(csvPath)
-        .pipe(csv({ separator: ';' }))
-        .on('data', (row) => {
-          if (row.name && row.description) {
-            occupations.push(row);
-          }
-        })
-        .on('end', () => resolve(occupations))
-        .on('error', reject);
-    });
-  }
+    console.log('   📄 Reading occupations from CSV...');
+    const fileContent = readFileSync(CSV_PATH, 'utf-8');
+    const records = parse(fileContent, {
+      columns: true,
+      skip_empty_lines: true,
+      delimiter: ';',
+      trim: true,
+      relax_quotes: true,
+    }) as OccupationRow[];
 
-  private processOccupationData(csvOccupation: any): any {
-    console.log(`\n🏢 Processing occupation: ${csvOccupation.name}`);
+    console.log(`   📊 Parsed ${records.length} occupations from CSV\n`);
 
-    const systemUserId = '000000000000000000000000'; // System user ID
+    const systemUserId = '000000000000000000000000';
+    let created = 0;
+    const categories: Record<string, number> = {};
 
-    // Parse required skills (format: "Skill1|Skill2|Skill3")
-    const requiredSkills = csvOccupation.requiredSkills
-      ? csvOccupation.requiredSkills.split('|').map((skillName: string) => ({
-          skillName: skillName.trim(),
-          isFixed: false,
-          alternatives: []
-        }))
-      : [];
+    for (const row of records) {
+      if (!row.name || !row.description) continue;
 
-    // Parse bonus skills (format: "SkillName:Value|SkillName:Value")
-    const bonusSkills = csvOccupation.bonusSkills
-      ? csvOccupation.bonusSkills.split('|').map((bonusStr: string) => {
-          const [skillName, valueStr] = bonusStr.split(':');
-          return {
-            skillName: skillName.trim(),
-            bonusValue: parseInt(valueStr) || 10
-          };
-        })
-      : [];
+      const requiredSkills = row.requiredSkills
+        ? row.requiredSkills.split('|').map(s => ({
+            skillName: s.trim(),
+            isFixed: false,
+            alternatives: []
+          }))
+        : [];
 
-    return {
-      name: csvOccupation.name,
-      description: csvOccupation.description,
-      category: csvOccupation.category,
+      const bonusSkills = row.bonusSkills
+        ? row.bonusSkills.split('|').map(b => {
+            const [skillName, valueStr] = b.split(':');
+            return { skillName: skillName.trim(), bonusValue: parseInt(valueStr) || 10 };
+          })
+        : [];
 
-      // Display information
-      contacts: csvOccupation.contacts || 'Nessuno',
-      earnings: csvOccupation.earnings || 'Variabile',
+      await occupationsCol.insertOne({
+        name: row.name,
+        description: row.description,
+        category: row.category,
+        contacts: row.contacts || 'Nessuno',
+        earnings: row.earnings || 'Variabile',
+        requiredSkills,
+        bonusSkills,
+        allowedGenders: ['male', 'female'],
+        socialClass: ['working', 'middle', 'upper'],
+        dailySalary: DAILY_SALARIES[row.category] || 50,
+        socialRespectability: SOCIAL_RESPECTABILITY[row.category] || 5,
+        typicalEmployers: [],
+        isActive: true,
+        createdBy: systemUserId,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
 
-      // Skills system
-      requiredSkills,
-      bonusSkills,
+      created++;
+      categories[row.category] = (categories[row.category] || 0) + 1;
+    }
 
-      // Occupation settings
-      allowedGenders: this.getAllowedGenders(),
-      socialClass: this.getAllowedSocialClasses(),
-      dailySalary: this.getDailySalary(csvOccupation.category),
-      socialRespectability: this.getSocialRespectability(csvOccupation.category),
-      typicalEmployers: [],
-      isActive: true,
-      createdBy: systemUserId,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-  }
+    console.log(`   ✅ Created ${created} occupations\n`);
 
-  private getAllowedGenders(): ('male' | 'female')[] {
-    // Most Victorian occupations allow both genders (historical accuracy varies)
-    return ['male', 'female'];
-  }
+    console.log('📊 Stats by category:');
+    Object.entries(categories).forEach(([cat, count]) => console.log(`   ${cat}: ${count}`));
+    console.log('');
 
-  private getAllowedSocialClasses(): ('working' | 'middle' | 'upper')[] {
-    // Most occupations are accessible across classes
-    return ['working', 'middle', 'upper'];
-  }
-
-  private getDailySalary(category: string): number {
-    // Victorian daily wages in pence (1 shilling = 12 pence, 1 pound = 240 pence)
-    const salaries: { [key: string]: number } = {
-      'medical': 180,        // £0.75/day (high professional)
-      'legal': 200,          // £0.83/day (high professional)
-      'clergy': 60,          // £0.25/day (modest living)
-      'military': 30,        // £0.125/day (soldier's pay)
-      'education': 90,       // £0.375/day (teacher)
-      'domestic_service': 20, // £0.08/day (low)
-      'trades': 50,          // £0.21/day (skilled worker)
-      'commerce': 80,        // £0.33/day (clerk/shopkeeper)
-      'entertainment': 40,   // £0.17/day (variable)
-      'criminal': 15,        // £0.06/day (unstable)
-      'nobility': 500,       // £2.08/day (wealthy)
-      'professional': 150,   // £0.625/day (middle professional)
-      'industrial': 35,      // £0.15/day (factory worker)
-      'transportation': 40,  // £0.17/day (driver/sailor)
-      'agricultural': 25     // £0.10/day (farm worker)
-    };
-
-    return salaries[category] || 50;
-  }
-
-  private getSocialRespectability(category: string): number {
-    // Social respectability on a 1-10 scale
-    const respectability: { [key: string]: number } = {
-      'medical': 9,
-      'legal': 9,
-      'clergy': 8,
-      'military': 7,
-      'education': 7,
-      'domestic_service': 4,
-      'trades': 5,
-      'commerce': 6,
-      'entertainment': 5,
-      'criminal': 1,
-      'nobility': 10,
-      'professional': 8,
-      'industrial': 4,
-      'transportation': 5,
-      'agricultural': 4
-    };
-
-    return respectability[category] || 5;
+  } catch (error) {
+    console.error('❌ Failed:', error);
+    process.exit(1);
+  } finally {
+    await client.close();
+    console.log('👋 Done');
   }
 }
+
+seedOccupations();

@@ -1,0 +1,103 @@
+services:
+  # Ollama containerizzato (fallback se non hai Ollama nativo)
+  # Per usarlo: docker compose --profile ollama-docker up -d
+  ollama:
+    image: ollama/ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_models:/root/.ollama
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    profiles:
+      - ollama-docker
+
+  mongodb:
+    image: mongo:7
+    ports:
+      - "27030:27017"
+    volumes:
+      - mongo_data:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: local-ai
+
+  gateway:
+    build:
+      context: .
+      dockerfile: gateway/Dockerfile
+    ports:
+      - "8080:9000"
+      - "9000:9000"
+    env_file: .env
+    volumes:
+      - ./clients.json:/app/clients.json:ro
+    depends_on:
+      botai:
+        condition: service_started
+      qa:
+        condition: service_started
+
+  botai:
+    build:
+      context: .
+      dockerfile: services/botai/Dockerfile
+    expose:
+      - "8080"
+    env_file: .env
+    depends_on:
+      - mongodb
+
+  qa:
+    build:
+      context: .
+      dockerfile: services/qa/Dockerfile
+    expose:
+      - "8090"
+    env_file: .env
+
+  item-image-gen:
+    build:
+      context: .
+      dockerfile: services/item-image-gen/Dockerfile
+    expose:
+      - "8100"
+    env_file: .env
+
+  location-image-gen:
+    build:
+      context: .
+      dockerfile: services/location-image-gen/Dockerfile
+    expose:
+      - "8110"
+    env_file: .env
+
+  avatar-gen:
+    build:
+      context: .
+      dockerfile: services/avatar-gen/Dockerfile
+    expose:
+      - "8120"
+    env_file: .env
+
+  test-ui:
+    build:
+      context: .
+      dockerfile: tools/test-ui/Dockerfile
+    ports:
+      - "3100:3100"
+    environment:
+      - GATEWAY_URL=http://gateway:9000
+      - CALLBACK_URL=http://test-ui:3100
+    volumes:
+      - ./clients.json:/app/clients.json:ro
+    depends_on:
+      - gateway
+    profiles:
+      - test
+
+volumes:
+  ollama_models:
+  mongo_data:

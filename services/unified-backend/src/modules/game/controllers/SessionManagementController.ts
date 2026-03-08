@@ -989,9 +989,9 @@ export class SessionManagementController {
   }
 
   /**
-   * Complete bot turn (called by botai-backend)
+   * Complete bot turn (called by local-ai via AI gateway)
    * POST /game/sessions/:sessionId/complete-bot-turn
-   * Requires BOT_API_KEY authentication
+   * Requires AI_GATEWAY_WEBHOOK_SECRET authentication
    */
   static async completeBotTurn(req: Request<{ sessionId: string }>, res: Response): Promise<void> {
     try {

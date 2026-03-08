@@ -11,6 +11,37 @@ import { logger } from '../utils/logger';
 import { Location } from '@database/models/Location';
 import { listResponse, successResponse, errorResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
 
+function generateSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/[àáâãäå]/g, 'a')
+    .replace(/[èéêë]/g, 'e')
+    .replace(/[ìíîï]/g, 'i')
+    .replace(/[òóôõö]/g, 'o')
+    .replace(/[ùúûü]/g, 'u')
+    .replace(/[ñ]/g, 'n')
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+async function generateUniqueSlug(name: string, excludeId?: string): Promise<string> {
+  const baseSlug = generateSlug(name);
+  let slug = baseSlug;
+  let counter = 1;
+  const query: any = { slug };
+  if (excludeId) query._id = { $ne: excludeId };
+
+  while (await Location.findOne(query)) {
+    slug = `${baseSlug}-${counter}`;
+    query.slug = slug;
+    counter++;
+  }
+  return slug;
+}
+
 export class LocationManagementController {
   /**
    * Get list of all locations with management info
@@ -25,38 +56,45 @@ export class LocationManagementController {
       const showHidden = req.query.showHidden === 'true';
       const sortBy = req.query.sortBy as string || 'name';
       const sortOrder = req.query.sortOrder as string || 'asc';
+      const search = req.query.search as string;
+      const locationLevel = req.query.locationLevel as string;
 
-      // Build query filters
       const query: any = {};
 
-      // District filter
       if (district) {
         query.district = district;
       }
 
-      // Visibility filter
+      if (locationLevel) {
+        query.locationLevel = locationLevel;
+      }
+
       if (!showHidden) {
         query['settings.visible'] = true;
       }
 
-      // Count total items for pagination
+      if (search) {
+        query.$or = [
+          { name: { $regex: search, $options: 'i' } },
+          { description: { $regex: search, $options: 'i' } },
+          { district: { $regex: search, $options: 'i' } }
+        ];
+      }
+
       const totalItems = await Location.countDocuments(query);
       const totalPages = Math.ceil(totalItems / pageSize);
 
-      // Build sort object - simple sort by name for hierarchical display
-      const sort: any = { name: sortOrder === 'asc' ? 1 : -1 };
+      const sort: any = {};
+      sort[sortBy] = sortOrder === 'asc' ? 1 : -1;
 
-      // Execute query WITHOUT pagination (needed for hierarchical tree building in frontend)
       const locations = await Location.find(query)
         .sort(sort)
         .populate('createdBy', 'username')
         .populate('lastModifiedBy', 'username')
-        .populate('parentLocation', 'name')
+        .populate('parentLocation', 'name slug')
         .lean();
 
-      // Transform to LocationManagement format
       const transformedLocations: LocationManagement[] = locations.map((loc: any) => {
-        // Calculate average stay time
         const avgStayMinutes = loc.statistics?.averageStayTime || 0;
         const avgStayTime = avgStayMinutes >= 60
           ? `${Math.floor(avgStayMinutes / 60)}h ${avgStayMinutes % 60}m`
@@ -69,9 +107,13 @@ export class LocationManagementController {
           district: loc.district,
           description: loc.description,
           locationLevel: loc.locationLevel,
-          parentLocation: loc.parentLocation?._id?.toString() || loc.parentLocation?.toString(),
+          parentLocation: loc.parentLocation?._id?.toString() || loc.parentLocation?.toString() || null,
           parentLocationName: loc.parentLocation?.name || null,
-          sortOrder: loc.sortOrder,
+          sortOrder: loc.sortOrder || 0,
+          imageUrl: loc.imageUrl || null,
+          tags: loc.tags || [],
+          positions: loc.positions || [],
+          maxOccupants: loc.maxOccupants || null,
           settings: {
             visible: loc.settings?.visible ?? true,
             chat: loc.settings?.chat ?? true,
@@ -82,7 +124,7 @@ export class LocationManagementController {
           statistics: {
             totalVisits: loc.statistics?.totalVisits || 0,
             uniqueVisitors: loc.statistics?.uniqueVisitors || 0,
-            currentOccupants: loc.occupants?.length || 0,
+            currentOccupants: loc.occupants?.filter((o: any) => o.isActive)?.length || 0,
             averageStayTime: avgStayTime,
             messagesExchanged: loc.statistics?.messagesExchanged || 0
           },
@@ -106,7 +148,7 @@ export class LocationManagementController {
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       logger.info('Admin viewed locations list', {
         ...auditInfo,
-        filters: { district, showHidden, sortBy, sortOrder },
+        filters: { district, showHidden, sortBy, sortOrder, search, locationLevel },
         page,
         pageSize,
         totalItems
@@ -122,7 +164,7 @@ export class LocationManagementController {
       ));
     } catch (error: any) {
       logger.error('Error fetching locations:', { error: error instanceof Error ? error.message : String(error) });
-      
+
       res.status(500).json(errorResponse(
         'Impossibile recuperare le location',
         'FETCH_LOCATIONS_ERROR',
@@ -141,29 +183,63 @@ export class LocationManagementController {
     try {
       const locationId = req.params.locationId;
 
-      // TODO: Implement database query
-      const mockLocation: LocationManagement = {
-        id: locationId,
-        name: 'Whitechapel Hospital',
-        district: 'Whitechapel',
-        description: 'A Victorian-era hospital serving the poor of East London',
+      const location = await Location.findById(locationId)
+        .populate('createdBy', 'username')
+        .populate('lastModifiedBy', 'username')
+        .populate('parentLocation', 'name slug locationLevel')
+        .lean() as any;
+
+      if (!location) {
+        res.status(404).json(errorResponse(
+          'Location non trovata',
+          'LOCATION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      const childCount = await Location.countDocuments({ parentLocation: locationId });
+
+      const avgStayMinutes = location.statistics?.averageStayTime || 0;
+      const avgStayTime = avgStayMinutes >= 60
+        ? `${Math.floor(avgStayMinutes / 60)}h ${avgStayMinutes % 60}m`
+        : `${avgStayMinutes}m`;
+
+      const locationDetail = {
+        id: location._id.toString(),
+        name: location.name,
+        slug: location.slug,
+        district: location.district,
+        description: location.description,
+        locationLevel: location.locationLevel,
+        parentLocation: location.parentLocation?._id?.toString() || null,
+        parentLocationName: location.parentLocation?.name || null,
+        sortOrder: location.sortOrder || 0,
+        imageUrl: location.imageUrl || null,
+        tags: location.tags || [],
+        positions: location.positions || [],
+        maxOccupants: location.maxOccupants || null,
+        childCount,
         settings: {
-          visible: true,
-          chat: true,
-          shop: false,
-          private: false
+          visible: location.settings?.visible ?? true,
+          chat: location.settings?.chat ?? true,
+          shop: location.settings?.shop ?? false,
+          private: location.settings?.private ?? false,
+          bot_enabled: location.bot_enabled ?? false
         },
         statistics: {
-          totalVisits: 450,
-          uniqueVisitors: 89,
-          currentOccupants: 3,
-          averageStayTime: '45m',
-          messagesExchanged: 1250
+          totalVisits: location.statistics?.totalVisits || 0,
+          uniqueVisitors: location.statistics?.uniqueVisitors || 0,
+          currentOccupants: location.occupants?.filter((o: any) => o.isActive)?.length || 0,
+          averageStayTime: avgStayTime,
+          messagesExchanged: location.statistics?.messagesExchanged || 0
         },
         management: {
-          createdBy: 'system',
-          lastModified: '2024-01-15T10:00:00Z',
-          modifiedBy: 'admin1'
+          createdBy: location.createdBy?.username || 'system',
+          lastModified: location.updatedAt?.toISOString() || location.createdAt?.toISOString(),
+          modifiedBy: location.lastModifiedBy?.username || location.createdBy?.username || 'system'
         }
       };
 
@@ -171,20 +247,20 @@ export class LocationManagementController {
       logger.info('Admin viewed location details', {
         ...auditInfo,
         locationId,
-        locationName: mockLocation.name
+        locationName: location.name
       });
 
       res.json(successResponse(
-        mockLocation,
+        locationDetail,
         undefined,
         getRequestId(req)
       ));
     } catch (error: any) {
-      logger.error('Error fetching location details:', { 
-        error: error instanceof Error ? error.message : String(error), 
-        locationId: req.params.locationId 
+      logger.error('Error fetching location details:', {
+        error: error instanceof Error ? error.message : String(error),
+        locationId: req.params.locationId
       });
-      
+
       res.status(500).json(errorResponse(
         'Impossibile recuperare i dettagli della location',
         'FETCH_LOCATION_DETAILS_ERROR',
@@ -204,7 +280,6 @@ export class LocationManagementController {
       const locationId = req.params.locationId;
       const updates: LocationSettingsUpdate = req.body;
 
-      // Validate required reason
       if (!updates.reason || updates.reason.trim().length === 0) {
         res.status(400).json(errorResponse(
           'Il motivo dell\'aggiornamento è richiesto',
@@ -216,7 +291,6 @@ export class LocationManagementController {
         return;
       }
 
-      // Find location
       const location = await Location.findById(locationId);
       if (!location) {
         res.status(404).json(errorResponse(
@@ -229,7 +303,6 @@ export class LocationManagementController {
         return;
       }
 
-      // Build update object (only fields that are provided)
       const updateData: any = {};
       if (updates.visible !== undefined) updateData['settings.visible'] = updates.visible;
       if (updates.chat !== undefined) updateData['settings.chat'] = updates.chat;
@@ -239,10 +312,13 @@ export class LocationManagementController {
       if (updates.description !== undefined) updateData.description = updates.description;
       if (updates.maxOccupants !== undefined) updateData.maxOccupants = updates.maxOccupants;
 
-      // Update location in database
+      const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
+      if (auditInfo?.adminId) {
+        updateData.lastModifiedBy = auditInfo.adminId;
+      }
+
       await Location.findByIdAndUpdate(locationId, { $set: updateData });
 
-      const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       logger.info('Location settings updated by admin', {
         ...auditInfo,
         locationId,
@@ -258,14 +334,6 @@ export class LocationManagementController {
         category: 'location_management'
       });
 
-      // TODO: Send Redis event for real-time updates
-      // await redisClient.publish('location:settings_updated', {
-      //   locationId,
-      //   updates,
-      //   updatedBy: req.user?.userId,
-      //   timestamp: new Date().toISOString()
-      // });
-
       res.json(updateResponse(
         {
           locationId,
@@ -276,99 +344,14 @@ export class LocationManagementController {
         getRequestId(req)
       ));
     } catch (error: any) {
-      logger.error('Error updating location settings:', { 
-        error: error instanceof Error ? error.message : String(error), 
-        locationId: req.params.locationId 
+      logger.error('Error updating location settings:', {
+        error: error instanceof Error ? error.message : String(error),
+        locationId: req.params.locationId
       });
-      
+
       res.status(500).json(errorResponse(
         'Impossibile aggiornare le impostazioni della location',
         'UPDATE_LOCATION_SETTINGS_ERROR',
-        undefined,
-        500,
-        getRequestId(req)
-      ));
-    }
-  }
-
-  /**
-   * Get location activity and visitor analytics
-   * GET /admin/locations/:locationId/activity
-   */
-  static async getLocationActivity(req: Request<{ locationId: string }>, res: Response): Promise<void> {
-    try {
-      const locationId = req.params.locationId;
-      const period = req.query.period as string || '7d';
-
-      // TODO: Implement database query for location activity
-      const mockActivity: LocationActivity = {
-        visits: {
-          totalVisits: 450,
-          uniqueVisitors: 89,
-          averageStayTime: '45m',
-          peakHours: ['14:00', '15:00', '20:00', '21:00']
-        },
-        communication: {
-          messagesExchanged: 1250,
-          averageMessagesPerVisit: 2.8,
-          activeConversations: 12,
-          npcsActivated: 5
-        },
-        visitors: [
-          {
-            characterId: 'char1',
-            characterName: 'John Smith',
-            visitCount: 15,
-            totalTimeSpent: '8h 45m',
-            messagesPosted: 89,
-            lastVisit: '2024-01-15T14:30:00Z'
-          },
-          {
-            characterId: 'char2',
-            characterName: 'Mary Watson',
-            visitCount: 8,
-            totalTimeSpent: '3h 20m',
-            messagesPosted: 45,
-            lastVisit: '2024-01-14T18:15:00Z'
-          }
-        ],
-        timeline: [
-          {
-            date: '2024-01-15',
-            visits: 25,
-            messages: 78,
-            uniqueVisitors: 12
-          },
-          {
-            date: '2024-01-14',
-            visits: 18,
-            messages: 45,
-            uniqueVisitors: 9
-          }
-        ]
-      };
-
-      const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
-      logger.info('Admin viewed location activity', {
-        ...auditInfo,
-        locationId,
-        period
-      });
-
-      res.json(successResponse(
-        mockActivity,
-        undefined,
-        getRequestId(req)
-      ));
-    } catch (error: any) {
-      logger.error('Error fetching location activity:', { 
-        error: error instanceof Error ? error.message : String(error), 
-        locationId: req.params.locationId 
-      });
-      
-      res.status(500).json(errorResponse(
-        'Impossibile recuperare l\'attività della location',
-        'FETCH_LOCATION_ACTIVITY_ERROR',
         undefined,
         500,
         getRequestId(req)
@@ -382,9 +365,11 @@ export class LocationManagementController {
    */
   static async createLocation(req: Request, res: Response): Promise<void> {
     try {
-      const { name, district, description, settings } = req.body;
+      const {
+        name, district, description, settings, locationLevel,
+        parentLocation, imageUrl, tags, positions, maxOccupants
+      } = req.body;
 
-      // Validate required fields
       if (!name || name.trim().length === 0) {
         res.status(400).json(errorResponse(
           'Il nome della location è richiesto',
@@ -396,10 +381,10 @@ export class LocationManagementController {
         return;
       }
 
-      if (!district || district.trim().length === 0) {
+      if (!description || description.trim().length === 0) {
         res.status(400).json(errorResponse(
-          'Il distretto è richiesto',
-          'DISTRICT_REQUIRED',
+          'La descrizione è richiesta',
+          'DESCRIPTION_REQUIRED',
           undefined,
           400,
           getRequestId(req)
@@ -407,27 +392,82 @@ export class LocationManagementController {
         return;
       }
 
-      // TODO: Implement location creation
-      // - Create location in database
-      // - Set default settings
-      // - Create audit log entry
-      // - Publish Redis event
+      if (!locationLevel || !['root', 'district', 'location'].includes(locationLevel)) {
+        res.status(400).json(errorResponse(
+          'Il livello della location è richiesto (root, district, location)',
+          'LOCATION_LEVEL_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
 
-      const newLocationId = 'loc_' + Date.now();
+      if (parentLocation) {
+        const parent = await Location.findById(parentLocation);
+        if (!parent) {
+          res.status(400).json(errorResponse(
+            'La location padre non esiste',
+            'PARENT_LOCATION_NOT_FOUND',
+            undefined,
+            400,
+            getRequestId(req)
+          ));
+          return;
+        }
+      }
+
+      const slug = await generateUniqueSlug(name);
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
+
+      const siblingCount = await Location.countDocuments({
+        parentLocation: parentLocation || { $exists: false }
+      });
+
+      const newLocation = await Location.create({
+        name: name.trim(),
+        slug,
+        description: description.trim(),
+        district: district?.trim() || (locationLevel === 'root' ? name.trim() : ''),
+        locationLevel,
+        parentLocation: parentLocation || undefined,
+        imageUrl: imageUrl || undefined,
+        tags: tags || [],
+        positions: positions || [],
+        maxOccupants: maxOccupants || undefined,
+        sortOrder: siblingCount,
+        settings: {
+          visible: settings?.visible ?? true,
+          chat: settings?.chat ?? true,
+          shop: settings?.shop ?? false,
+          private: settings?.private ?? false
+        },
+        bot_enabled: settings?.bot_enabled ?? false,
+        statistics: {
+          totalVisits: 0,
+          uniqueVisitors: 0,
+          averageStayTime: 0,
+          messagesExchanged: 0,
+          peakHours: []
+        },
+        createdBy: auditInfo?.adminId || (req as any).user?.userId
+      });
+
       logger.info('New location created by admin', {
         ...auditInfo,
-        locationId: newLocationId,
+        locationId: newLocation._id.toString(),
         locationName: name,
+        locationLevel,
         district,
-        settings,
+        parentLocation,
         category: 'location_management'
       });
 
       res.status(201).json(createResponse(
         {
-          locationId: newLocationId,
+          locationId: newLocation._id.toString(),
+          slug: newLocation.slug,
           action: 'location_created'
         },
         undefined,
@@ -435,7 +475,7 @@ export class LocationManagementController {
       ));
     } catch (error: any) {
       logger.error('Error creating location:', { error: error instanceof Error ? error.message : String(error) });
-      
+
       res.status(500).json(errorResponse(
         'Impossibile creare la location',
         'CREATE_LOCATION_ERROR',
@@ -447,7 +487,110 @@ export class LocationManagementController {
   }
 
   /**
-   * Delete a location
+   * Update location
+   * PUT /admin/locations/:locationId
+   */
+  static async updateLocation(req: Request<{ locationId: string }>, res: Response): Promise<void> {
+    try {
+      const locationId = req.params.locationId;
+      const {
+        name, district, description, settings, locationLevel,
+        parentLocation, imageUrl, tags, positions, maxOccupants, sortOrder
+      } = req.body;
+
+      const location = await Location.findById(locationId);
+      if (!location) {
+        res.status(404).json(errorResponse(
+          'Location non trovata',
+          'LOCATION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      if (parentLocation === locationId) {
+        res.status(400).json(errorResponse(
+          'Una location non può essere padre di se stessa',
+          'SELF_PARENT_ERROR',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      const updateData: any = {};
+
+      if (name !== undefined) {
+        updateData.name = name.trim();
+        if (name.trim() !== location.name) {
+          updateData.slug = await generateUniqueSlug(name.trim(), locationId);
+        }
+      }
+      if (district !== undefined) updateData.district = district.trim();
+      if (description !== undefined) updateData.description = description.trim();
+      if (locationLevel !== undefined) updateData.locationLevel = locationLevel;
+      if (imageUrl !== undefined) updateData.imageUrl = imageUrl || null;
+      if (tags !== undefined) updateData.tags = tags;
+      if (positions !== undefined) updateData.positions = positions;
+      if (maxOccupants !== undefined) updateData.maxOccupants = maxOccupants;
+      if (sortOrder !== undefined) updateData.sortOrder = sortOrder;
+
+      if (parentLocation !== undefined) {
+        updateData.parentLocation = parentLocation || null;
+      }
+
+      if (settings) {
+        if (settings.visible !== undefined) updateData['settings.visible'] = settings.visible;
+        if (settings.chat !== undefined) updateData['settings.chat'] = settings.chat;
+        if (settings.shop !== undefined) updateData['settings.shop'] = settings.shop;
+        if (settings.private !== undefined) updateData['settings.private'] = settings.private;
+        if (settings.bot_enabled !== undefined) updateData.bot_enabled = settings.bot_enabled;
+      }
+
+      const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
+      if (auditInfo?.adminId) {
+        updateData.lastModifiedBy = auditInfo.adminId;
+      }
+
+      await Location.findByIdAndUpdate(locationId, { $set: updateData });
+
+      logger.info('Location updated by admin', {
+        ...auditInfo,
+        locationId,
+        updates: Object.keys(updateData),
+        category: 'location_management'
+      });
+
+      res.json(updateResponse(
+        {
+          locationId,
+          action: 'location_updated',
+          updatedFields: Object.keys(updateData)
+        },
+        undefined,
+        getRequestId(req)
+      ));
+    } catch (error: any) {
+      logger.error('Error updating location:', {
+        error: error instanceof Error ? error.message : String(error),
+        locationId: req.params.locationId
+      });
+
+      res.status(500).json(errorResponse(
+        'Impossibile aggiornare la location',
+        'UPDATE_LOCATION_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
+    }
+  }
+
+  /**
+   * Delete a location (soft delete)
    * DELETE /admin/locations/:locationId
    */
   static async deleteLocation(req: Request<{ locationId: string }>, res: Response): Promise<void> {
@@ -466,19 +609,64 @@ export class LocationManagementController {
         return;
       }
 
-      // TODO: Implement location deletion
-      // - Check if location has active users (unless forceDelete)
-      // - Move users to safe location if forced
-      // - Delete location from database
-      // - Create audit log entry
-      // - Publish Redis event
+      const location = await Location.findById(locationId);
+      if (!location) {
+        res.status(404).json(errorResponse(
+          'Location non trovata',
+          'LOCATION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      const activeOccupants = location.occupants?.filter((o: any) => o.isActive) || [];
+      if (activeOccupants.length > 0 && !forceDelete) {
+        res.status(409).json(errorResponse(
+          `La location ha ${activeOccupants.length} occupanti attivi. Usa forceDelete per forzare l'eliminazione.`,
+          'LOCATION_HAS_OCCUPANTS',
+          { occupantCount: activeOccupants.length },
+          409,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      const childCount = await Location.countDocuments({ parentLocation: locationId });
+      if (childCount > 0 && !forceDelete) {
+        res.status(409).json(errorResponse(
+          `La location ha ${childCount} sotto-location. Usa forceDelete per forzare l'eliminazione.`,
+          'LOCATION_HAS_CHILDREN',
+          { childCount },
+          409,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      if (childCount > 0 && forceDelete) {
+        await Location.updateMany(
+          { parentLocation: locationId },
+          { $set: { parentLocation: location.parentLocation || null } }
+        );
+      }
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
+
+      if (typeof (location as any).softDelete === 'function') {
+        await (location as any).softDelete(auditInfo?.adminId || (req as any).user?.userId);
+      } else {
+        await Location.findByIdAndDelete(locationId);
+      }
+
       logger.warn('Location deleted by admin', {
         ...auditInfo,
         locationId,
+        locationName: location.name,
         reason,
         forceDelete: !!forceDelete,
+        childrenMoved: childCount > 0 && forceDelete,
         category: 'location_management'
       });
 
@@ -487,11 +675,11 @@ export class LocationManagementController {
         getRequestId(req)
       ));
     } catch (error: any) {
-      logger.error('Error deleting location:', { 
-        error: error instanceof Error ? error.message : String(error), 
-        locationId: req.params.locationId 
+      logger.error('Error deleting location:', {
+        error: error instanceof Error ? error.message : String(error),
+        locationId: req.params.locationId
       });
-      
+
       res.status(500).json(errorResponse(
         'Impossibile eliminare la location',
         'DELETE_LOCATION_ERROR',
@@ -503,108 +691,84 @@ export class LocationManagementController {
   }
 
   /**
-   * Get current occupants of a location
-   * GET /admin/locations/:locationId/occupants
-   */
-  static async getLocationOccupants(req: Request<{ locationId: string }>, res: Response): Promise<void> {
-    try {
-      const locationId = req.params.locationId;
-
-      // TODO: Implement real-time occupants query
-      const mockOccupants = [
-        {
-          characterId: 'char1',
-          characterName: 'John Smith',
-          playerUsername: 'player1',
-          joinedAt: '2024-01-15T14:30:00Z',
-          isActive: true,
-          lastActivity: '2024-01-15T15:45:00Z'
-        },
-        {
-          characterId: 'char2',
-          characterName: 'Mary Watson',
-          playerUsername: 'player2',
-          joinedAt: '2024-01-15T15:00:00Z',
-          isActive: false,
-          lastActivity: '2024-01-15T15:30:00Z'
-        }
-      ];
-
-      const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
-      logger.info('Admin viewed location occupants', {
-        ...auditInfo,
-        locationId,
-        occupantCount: mockOccupants.length
-      });
-
-      res.json(successResponse(
-        mockOccupants,
-        undefined,
-        getRequestId(req)
-      ));
-    } catch (error: any) {
-      logger.error('Error fetching location occupants:', { 
-        error: error instanceof Error ? error.message : String(error), 
-        locationId: req.params.locationId 
-      });
-      
-      res.status(500).json(errorResponse(
-        'Impossibile recuperare gli occupanti della location',
-        'FETCH_LOCATION_OCCUPANTS_ERROR',
-        undefined,
-        500,
-        getRequestId(req)
-      ));
-    }
-  }
-
-  /**
-   * Get location hierarchy
+   * Get location hierarchy tree
    * GET /admin/locations/hierarchy
    */
   static async getLocationHierarchy(req: Request, res: Response): Promise<void> {
     try {
-      // TODO: Implement location hierarchy query
-      const mockHierarchy = {
-        districts: [
-          {
-            name: 'Whitechapel',
-            locationCount: 15,
-            locations: [
-              { id: '1', name: 'Whitechapel Hospital', private: false },
-              { id: '2', name: 'The Ten Bells', private: false },
-              { id: '3', name: 'Mary Kelly\'s Room', private: true }
-            ]
-          },
-          {
-            name: 'Marylebone',
-            locationCount: 8,
-            locations: [
-              { id: '4', name: 'Baker Street 221B', private: true },
-              { id: '5', name: 'Regent\'s Park', private: false }
-            ]
-          }
-        ],
-        totalLocations: 23,
-        publicLocations: 17,
-        privateLocations: 6
-      };
+      const locations = await Location.find({})
+        .sort({ locationLevel: 1, sortOrder: 1, name: 1 })
+        .select('name slug district locationLevel parentLocation sortOrder settings.visible settings.private imageUrl occupants')
+        .lean() as any[];
+
+      interface TreeNode {
+        id: string;
+        name: string;
+        slug: string;
+        district: string;
+        locationLevel: string;
+        sortOrder: number;
+        visible: boolean;
+        private: boolean;
+        imageUrl: string | null;
+        currentOccupants: number;
+        children: TreeNode[];
+      }
+
+      const nodeMap = new Map<string, TreeNode>();
+      const rootNodes: TreeNode[] = [];
+
+      for (const loc of locations) {
+        const node: TreeNode = {
+          id: loc._id.toString(),
+          name: loc.name,
+          slug: loc.slug,
+          district: loc.district,
+          locationLevel: loc.locationLevel,
+          sortOrder: loc.sortOrder || 0,
+          visible: loc.settings?.visible ?? true,
+          private: loc.settings?.private ?? false,
+          imageUrl: loc.imageUrl || null,
+          currentOccupants: loc.occupants?.filter((o: any) => o.isActive)?.length || 0,
+          children: []
+        };
+        nodeMap.set(node.id, node);
+      }
+
+      for (const loc of locations) {
+        const id = loc._id.toString();
+        const parentId = loc.parentLocation?.toString();
+        const node = nodeMap.get(id)!;
+
+        if (parentId && nodeMap.has(parentId)) {
+          nodeMap.get(parentId)!.children.push(node);
+        } else {
+          rootNodes.push(node);
+        }
+      }
+
+      const totalLocations = locations.length;
+      const publicLocations = locations.filter(l => !l.settings?.private).length;
+      const privateLocations = totalLocations - publicLocations;
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
-      logger.info('Admin viewed location hierarchy', {
-        ...auditInfo
-      });
+      logger.info('Admin viewed location hierarchy', { ...auditInfo });
 
       res.json(successResponse(
-        mockHierarchy,
+        {
+          tree: rootNodes,
+          totalLocations,
+          publicLocations,
+          privateLocations
+        },
         undefined,
         getRequestId(req)
       ));
     } catch (error: any) {
-      logger.error('Error fetching location hierarchy:', { 
+      logger.error('Error fetching location hierarchy:', {
         error: error instanceof Error ? error.message : String(error)
       });
-      
+
       res.status(500).json(errorResponse(
         'Impossibile recuperare la gerarchia delle location',
         'FETCH_LOCATION_HIERARCHY_ERROR',
@@ -621,46 +785,66 @@ export class LocationManagementController {
    */
   static async getLocationStats(req: Request, res: Response): Promise<void> {
     try {
-      // TODO: Implement location stats query
-      const mockStats = {
-        total: 23,
-        visible: 20,
-        private: 6,
-        withChat: 18,
-        withShop: 5,
-        activeOccupants: 45,
-        totalVisitsToday: 127,
-        messagesExchangedToday: 892,
-        topDistricts: [
-          { name: 'Whitechapel', count: 15 },
-          { name: 'Marylebone', count: 8 }
-        ],
-        recentActivity: [
-          {
-            locationId: '1',
-            locationName: 'Whitechapel Hospital',
-            action: 'settings_updated',
-            timestamp: '2024-01-15T15:30:00Z',
-            adminUser: 'admin1'
-          }
-        ]
+      const [
+        total,
+        hiddenCount,
+        privateCount,
+        chatEnabledCount,
+        shopEnabledCount,
+        allLocations
+      ] = await Promise.all([
+        Location.countDocuments({}),
+        Location.countDocuments({ 'settings.visible': false }),
+        Location.countDocuments({ 'settings.private': true }),
+        Location.countDocuments({ 'settings.chat': true }),
+        Location.countDocuments({ 'settings.shop': true }),
+        Location.find({}).select('district occupants statistics').lean() as any
+      ]);
+
+      const districtCounts = new Map<string, number>();
+      let activeOccupants = 0;
+      let totalVisitsToday = 0;
+      let messagesExchangedTotal = 0;
+
+      for (const loc of allLocations) {
+        const d = loc.district || 'Sconosciuto';
+        districtCounts.set(d, (districtCounts.get(d) || 0) + 1);
+        activeOccupants += loc.occupants?.filter((o: any) => o.isActive)?.length || 0;
+        totalVisitsToday += loc.statistics?.totalVisits || 0;
+        messagesExchangedTotal += loc.statistics?.messagesExchanged || 0;
+      }
+
+      const topDistricts = Array.from(districtCounts.entries())
+        .map(([name, count]) => ({ name, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 10);
+
+      const stats = {
+        total,
+        visible: total - hiddenCount,
+        hidden: hiddenCount,
+        private: privateCount,
+        withChat: chatEnabledCount,
+        withShop: shopEnabledCount,
+        activeOccupants,
+        totalVisits: totalVisitsToday,
+        messagesExchanged: messagesExchangedTotal,
+        topDistricts
       };
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
-      logger.info('Admin viewed location stats', {
-        ...auditInfo
-      });
+      logger.info('Admin viewed location stats', { ...auditInfo });
 
       res.json(successResponse(
-        mockStats,
+        stats,
         undefined,
         getRequestId(req)
       ));
     } catch (error: any) {
-      logger.error('Error fetching location stats:', { 
+      logger.error('Error fetching location stats:', {
         error: error instanceof Error ? error.message : String(error)
       });
-      
+
       res.status(500).json(errorResponse(
         'Impossibile recuperare le statistiche delle location',
         'FETCH_LOCATION_STATS_ERROR',
@@ -672,27 +856,17 @@ export class LocationManagementController {
   }
 
   /**
-   * Update location
-   * PUT /admin/locations/:locationId
+   * Get location activity and visitor analytics
+   * GET /admin/locations/:locationId/activity
    */
-  static async updateLocation(req: Request<{ locationId: string }>, res: Response): Promise<void> {
+  static async getLocationActivity(req: Request<{ locationId: string }>, res: Response): Promise<void> {
     try {
       const locationId = req.params.locationId;
-      const { name, district, description, settings, reason } = req.body;
 
-      if (!reason || reason.trim().length === 0) {
-        res.status(400).json(errorResponse(
-          'Il motivo dell\'aggiornamento è richiesto',
-          'UPDATE_REASON_REQUIRED',
-          undefined,
-          400,
-          getRequestId(req)
-        ));
-        return;
-      }
+      const location = await Location.findById(locationId)
+        .select('statistics occupants name')
+        .lean() as any;
 
-      // Find location
-      const location = await Location.findById(locationId);
       if (!location) {
         res.status(404).json(errorResponse(
           'Location non trovata',
@@ -704,53 +878,111 @@ export class LocationManagementController {
         return;
       }
 
-      // Build update object
-      const updateData: any = {};
-      if (name !== undefined) updateData.name = name;
-      if (district !== undefined) updateData.district = district;
-      if (description !== undefined) updateData.description = description;
-
-      // Handle settings object
-      if (settings) {
-        if (settings.visible !== undefined) updateData['settings.visible'] = settings.visible;
-        if (settings.chat !== undefined) updateData['settings.chat'] = settings.chat;
-        if (settings.shop !== undefined) updateData['settings.shop'] = settings.shop;
-        if (settings.private !== undefined) updateData['settings.private'] = settings.private;
-        if (settings.bot_enabled !== undefined) updateData.bot_enabled = settings.bot_enabled;
-      }
-
-      // Update location in database
-      await Location.findByIdAndUpdate(locationId, { $set: updateData });
+      const activity = {
+        visits: {
+          totalVisits: location.statistics?.totalVisits || 0,
+          uniqueVisitors: location.statistics?.uniqueVisitors || 0,
+          averageStayTime: `${location.statistics?.averageStayTime || 0}m`,
+          peakHours: location.statistics?.peakHours || []
+        },
+        communication: {
+          messagesExchanged: location.statistics?.messagesExchanged || 0,
+          averageMessagesPerVisit: location.statistics?.totalVisits
+            ? Math.round((location.statistics.messagesExchanged / location.statistics.totalVisits) * 10) / 10
+            : 0,
+          activeConversations: 0,
+          npcsActivated: 0
+        },
+        currentOccupants: (location.occupants || []).map((o: any) => ({
+          characterId: o.characterId?.toString(),
+          characterName: o.characterName,
+          enteredAt: o.enteredAt?.toISOString(),
+          isActive: o.isActive,
+          lastSeen: o.lastSeen?.toISOString(),
+          currentTag: o.currentTag
+        }))
+      };
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
-      logger.info('Location updated by admin', {
+      logger.info('Admin viewed location activity', {
         ...auditInfo,
-        locationId,
-        updates: { name, district, description, settings },
-        reason,
-        category: 'location_management'
+        locationId
       });
 
-      // TODO: Send Redis event for real-time updates
-
-      res.json(updateResponse(
-        {
-          locationId,
-          action: 'location_updated',
-          updatedFields: Object.keys(updateData)
-        },
+      res.json(successResponse(
+        activity,
         undefined,
         getRequestId(req)
       ));
     } catch (error: any) {
-      logger.error('Error updating location:', { 
-        error: error instanceof Error ? error.message : String(error), 
-        locationId: req.params.locationId 
+      logger.error('Error fetching location activity:', {
+        error: error instanceof Error ? error.message : String(error),
+        locationId: req.params.locationId
       });
-      
+
       res.status(500).json(errorResponse(
-        'Impossibile aggiornare la location',
-        'UPDATE_LOCATION_ERROR',
+        'Impossibile recuperare l\'attività della location',
+        'FETCH_LOCATION_ACTIVITY_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
+    }
+  }
+
+  /**
+   * Get current occupants of a location
+   * GET /admin/locations/:locationId/occupants
+   */
+  static async getLocationOccupants(req: Request<{ locationId: string }>, res: Response): Promise<void> {
+    try {
+      const locationId = req.params.locationId;
+
+      const location = await Location.findById(locationId)
+        .select('occupants')
+        .lean() as any;
+
+      if (!location) {
+        res.status(404).json(errorResponse(
+          'Location non trovata',
+          'LOCATION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      const occupants = (location.occupants || []).map((o: any) => ({
+        characterId: o.characterId?.toString(),
+        characterName: o.characterName,
+        enteredAt: o.enteredAt?.toISOString(),
+        isActive: o.isActive,
+        lastSeen: o.lastSeen?.toISOString(),
+        currentTag: o.currentTag
+      }));
+
+      const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
+      logger.info('Admin viewed location occupants', {
+        ...auditInfo,
+        locationId,
+        occupantCount: occupants.length
+      });
+
+      res.json(successResponse(
+        occupants,
+        undefined,
+        getRequestId(req)
+      ));
+    } catch (error: any) {
+      logger.error('Error fetching location occupants:', {
+        error: error instanceof Error ? error.message : String(error),
+        locationId: req.params.locationId
+      });
+
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare gli occupanti della location',
+        'FETCH_LOCATION_OCCUPANTS_ERROR',
         undefined,
         500,
         getRequestId(req)
@@ -778,10 +1010,17 @@ export class LocationManagementController {
         return;
       }
 
-      // TODO: Implement access control update
-      // - Update location access rules
-      // - Create audit log entry
-      // - Notify affected users
+      const location = await Location.findById(locationId);
+      if (!location) {
+        res.status(404).json(errorResponse(
+          'Location non trovata',
+          'LOCATION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
+        return;
+      }
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       logger.info('Location access updated by admin', {
@@ -802,11 +1041,11 @@ export class LocationManagementController {
         getRequestId(req)
       ));
     } catch (error: any) {
-      logger.error('Error updating location access:', { 
-        error: error instanceof Error ? error.message : String(error), 
-        locationId: req.params.locationId 
+      logger.error('Error updating location access:', {
+        error: error instanceof Error ? error.message : String(error),
+        locationId: req.params.locationId
       });
-      
+
       res.status(500).json(errorResponse(
         'Impossibile aggiornare l\'accesso alla location',
         'UPDATE_LOCATION_ACCESS_ERROR',
@@ -818,17 +1057,17 @@ export class LocationManagementController {
   }
 
   /**
-   * Bulk location operations
-   * POST /admin/locations/bulk
+   * Reorder sibling locations
+   * PUT /admin/locations/reorder
    */
-  static async bulkLocationOperations(req: Request, res: Response): Promise<void> {
+  static async reorderLocations(req: Request, res: Response): Promise<void> {
     try {
-      const { operation, locationIds, data, reason } = req.body;
+      const { parentId, orderedIds } = req.body;
 
-      if (!reason || reason.trim().length === 0) {
+      if (!Array.isArray(orderedIds) || orderedIds.length === 0) {
         res.status(400).json(errorResponse(
-          'Il motivo dell\'operazione bulk è richiesto',
-          'BULK_REASON_REQUIRED',
+          'Lista orderedIds richiesta',
+          'ORDERED_IDS_REQUIRED',
           undefined,
           400,
           getRequestId(req)
@@ -836,36 +1075,39 @@ export class LocationManagementController {
         return;
       }
 
-      // TODO: Implement bulk operations
-      // - Process bulk update/delete/settings change
-      // - Create audit log entries
-      // - Publish Redis events
+      const bulkOps = orderedIds.map((id: string, index: number) => ({
+        updateOne: {
+          filter: { _id: id },
+          update: { $set: { sortOrder: index } }
+        }
+      }));
+
+      await Location.bulkWrite(bulkOps);
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
-      logger.info('Bulk location operation by admin', {
+      logger.info('Locations reordered by admin', {
         ...auditInfo,
-        operation,
-        locationCount: locationIds?.length || 0,
-        reason,
+        parentId,
+        reorderedCount: orderedIds.length,
         category: 'location_management'
       });
 
-      res.json(successResponse(
+      res.json(updateResponse(
         {
-          operation,
-          processed: locationIds?.length || 0
+          action: 'locations_reordered',
+          count: orderedIds.length
         },
         undefined,
         getRequestId(req)
       ));
     } catch (error: any) {
-      logger.error('Error in bulk location operation:', { 
+      logger.error('Error reordering locations:', {
         error: error instanceof Error ? error.message : String(error)
       });
-      
+
       res.status(500).json(errorResponse(
-        'Impossibile eseguire l\'operazione bulk',
-        'BULK_LOCATION_ERROR',
+        'Impossibile riordinare le location',
+        'REORDER_LOCATIONS_ERROR',
         undefined,
         500,
         getRequestId(req)
@@ -893,12 +1135,26 @@ export class LocationManagementController {
         return;
       }
 
-      // TODO: Implement location evacuation
-      // - Get all current occupants
-      // - Move them to target location or default safe location
-      // - Send notifications to affected users
-      // - Create audit log entry
-      // - Publish Redis events
+      const location = await Location.findById(locationId);
+      if (!location) {
+        res.status(404).json(errorResponse(
+          'Location non trovata',
+          'LOCATION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      const activeOccupants = location.occupants?.filter((o: any) => o.isActive) || [];
+      const movedCount = activeOccupants.length;
+
+      await Location.findByIdAndUpdate(locationId, {
+        $set: { 'occupants.$[elem].isActive': false }
+      }, {
+        arrayFilters: [{ 'elem.isActive': true }]
+      });
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       logger.warn('Location evacuated by admin', {
@@ -906,6 +1162,7 @@ export class LocationManagementController {
         locationId,
         targetLocationId,
         reason,
+        movedUsers: movedCount,
         category: 'location_management'
       });
 
@@ -913,17 +1170,17 @@ export class LocationManagementController {
         {
           locationId,
           action: 'location_evacuated',
-          movedUsers: 3
+          movedUsers: movedCount
         },
         undefined,
         getRequestId(req)
       ));
     } catch (error: any) {
-      logger.error('Error evacuating location:', { 
-        error: error instanceof Error ? error.message : String(error), 
-        locationId: req.params.locationId 
+      logger.error('Error evacuating location:', {
+        error: error instanceof Error ? error.message : String(error),
+        locationId: req.params.locationId
       });
-      
+
       res.status(500).json(errorResponse(
         'Impossibile evacuare la location',
         'EVACUATE_LOCATION_ERROR',

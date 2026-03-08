@@ -6,7 +6,7 @@
  *
  * Supported filter types:
  * - select: Dropdown with options
- * - text: Text input
+ * - text: Text input (debounced 300ms)
  * - date: Single date picker
  * - daterange: From/To date pickers
  * - multiselect: Multiple selection dropdown
@@ -14,10 +14,51 @@
  * @module components/shared/TableFilters
  */
 
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { TableFilter } from '@/lib/config/schemas';
 import { FilterState } from './ConfigurableDataTable';
 import styles from '@/styles/components/TableFilters.module.scss';
+
+const TEXT_DEBOUNCE_MS = 300;
+
+function DebouncedTextInput({
+  id,
+  value,
+  onChange,
+  placeholder,
+}: {
+  id: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+}) {
+  const [localValue, setLocalValue] = useState(value);
+  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+
+  useEffect(() => {
+    setLocalValue(value);
+  }, [value]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const next = e.target.value;
+    setLocalValue(next);
+
+    clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => onChange(next), TEXT_DEBOUNCE_MS);
+  };
+
+  useEffect(() => () => clearTimeout(timerRef.current), []);
+
+  return (
+    <input
+      id={id}
+      type="text"
+      value={localValue}
+      onChange={handleChange}
+      placeholder={placeholder}
+    />
+  );
+}
 
 export interface TableFiltersProps {
   filters: TableFilter[];
@@ -61,13 +102,12 @@ export function TableFilters({ filters, values, onChange }: TableFiltersProps): 
             </select>
           )}
 
-          {/* Text Filter */}
+          {/* Text Filter — debounced to avoid API spam on every keystroke */}
           {filter.type === 'text' && (
-            <input
+            <DebouncedTextInput
               id={`filter-${filter.key}`}
-              type="text"
               value={String(values[filter.field || filter.key] ?? '')}
-              onChange={(e) => handleFilterChange(filter, e.target.value)}
+              onChange={(val) => handleFilterChange(filter, val)}
               placeholder={filter.placeholder || `Filtra per ${filter.label.toLowerCase()}...`}
             />
           )}

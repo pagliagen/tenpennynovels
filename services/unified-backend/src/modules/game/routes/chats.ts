@@ -44,7 +44,7 @@ router.delete('/:locationId/clear',
   LocationChatsController.clearChat
 );
 
-// Bot integration (requires BOT_API_KEY)
+// Bot integration (requires AI_GATEWAY_WEBHOOK_SECRET)
 router.post('/bot', LocationChatsController.createBotMessage);
 
 export default router;

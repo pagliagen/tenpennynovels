@@ -1,0 +1,117 @@
+@use 'sass:color';
+@use '../variables' as *;
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $spacing-md;
+
+  @media (max-width: $breakpoint-mobile) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.section {
+  margin-top: $spacing-sm;
+  padding-top: $spacing-md;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+
+  h3 {
+    margin: 0 0 $spacing-md;
+    font-size: 16px;
+    font-weight: 600;
+    color: $color-primary;
+  }
+}
+
+.settingsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $spacing-sm $spacing-lg;
+
+  @media (max-width: $breakpoint-mobile) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: $spacing-md;
+}
+
+.cancelBtn {
+  padding: $spacing-sm $spacing-lg;
+  background-color: transparent;
+  color: $color-text-secondary;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: $border-radius-sm;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all $transition-fast;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.3);
+  }
+}
+
+.submitBtn {
+  padding: $spacing-sm $spacing-lg;
+  background-color: $color-primary;
+  color: $color-bg-primary;
+  border: none;
+  border-radius: $border-radius-sm;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all $transition-fast;
+
+  &:hover:not(:disabled) {
+    background-color: color.adjust($color-primary, $lightness: 10%);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.loadingContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+}
+
+.errorContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+  color: $color-error;
+}
+
+.meta {
+  margin-top: $spacing-sm;
+  padding: $spacing-md;
+  background-color: rgba(255, 255, 255, 0.03);
+  border-radius: $border-radius-sm;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+
+  p {
+    margin: $spacing-xs 0;
+    font-size: 13px;
+    color: $color-text-secondary;
+
+    strong {
+      color: $color-text-primary;
+    }
+  }
+}

@@ -15,7 +15,7 @@ export function Header(): JSX.Element {
 
   const searchContainerRef = useRef<HTMLDivElement>(null);
 
-  const { query, setQuery, isOpen: resultsOpen, setIsOpen: setResultsOpen, results, totalResults, isLoading, handleClose: handleSearchClose } =
+  const { query, setQuery, isOpen: resultsOpen, setIsOpen: setResultsOpen, results, totalResults, isLoading, aiAnswer, handleClose: handleSearchClose } =
     useSearchState();
 
   const isActiveSection = (path: string) => router.pathname.startsWith(path);
@@ -105,6 +105,7 @@ export function Header(): JSX.Element {
                   totalResults={totalResults}
                   query={query}
                   isLoading={isLoading}
+                  aiAnswer={aiAnswer}
                   onClose={closeResults}
                 />
               </div>

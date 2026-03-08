@@ -159,12 +159,12 @@ router.post('/quests/:questId/reveal-actions',
 // Bot action endpoint REMOVED - moved to /chats/bot (see routes/chats.ts)
 
 router.get('/locations/:locationId/bot-details',
-  AuthMiddleware.requireBotApiKey,
+  AuthMiddleware.requireAIGatewayAuth,
   LocationController.getBotLocationDetails
 );
 
 router.patch('/locations/:locationId/bot-enabled',
-  AuthMiddleware.requireBotApiKey,
+  AuthMiddleware.requireAIGatewayAuth,
   LocationController.updateBotEnabled
 );
 

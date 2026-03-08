@@ -141,9 +141,9 @@ Il backend di TenPennyNovels utilizza un'architettura modulare consolidata in un
 **Technology Stack**:
 - Node.js 22.13.1
 - Express 5.2.1
-- Anthropic SDK 0.72.1 (Claude Sonnet 4.5)
+- Ollama (modelli locali, gratuito)
 
-**Status**: Temporarily disabled, requires model path migration
+**Status**: Sostituito da Local AI Platform (`local-ai/`)
 
 **Key Features**:
 - **Psychology System**: 6 axes, central wound, duality

@@ -1,141 +1,124 @@
-import * as fs from 'fs';
-import * as path from 'path';
-import csv from 'csv-parser';
+/**
+ * Skill Seeder - Standalone Script
+ *
+ * Reads skills from CSV, seeds MongoDB.
+ */
+
+import { readFileSync } from 'fs';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
+import { parse } from 'csv-parse/sync';
 import { getConnection } from '../utils/connection.js';
 
-export class SkillSeeder {
-  name = 'skills';
-  description = 'Populates database with Call of Cthulhu base skills from CSV';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
-  async seed(force: boolean = false): Promise<void> {
-    const { client, db } = await getConnection();
+const CSV_PATH = join(__dirname, '../data/skills.csv');
 
-    try {
-      const skillsCollection = db.collection('skills');
+interface SkillRow {
+  name: string;
+  baseValue: string;
+  category: string;
+  description: string;
+  isPlaceholder: string;
+  placeholderType: string;
+  canRollWithoutPoints: string;
+}
 
-      // Check if skills already exist
-      const existingCount = await skillsCollection.countDocuments();
+function parseBaseValue(baseValueStr: string): string | number {
+  if (!baseValueStr || baseValueStr.trim() === '') return 15;
 
-      if (existingCount > 0 && !force) {
-        console.log(`   🎯 ${existingCount} skills already exist, skipping seeding`);
-        console.log('   💡 Use --force to re-seed');
-        return;
-      }
+  const val = baseValueStr.trim();
 
-      if (force && existingCount > 0) {
-        console.log(`   🗑️  Truncating ${existingCount} existing skills...`);
-        await skillsCollection.deleteMany({});
-        console.log('   ✅ Skills truncated');
-      }
+  if (val.startsWith('VALUE:')) {
+    const num = parseInt(val.replace('VALUE:', ''));
+    if (isNaN(num)) throw new Error(`Invalid VALUE format: "${val}"`);
+    return num;
+  }
 
-      // Read CSV data - using new format with placeholder and academic skill support
-      const csvPath = path.join(__dirname, '../data/skills.csv');
+  if (val.startsWith('FORMULA:')) {
+    const characteristic = val.replace('FORMULA:', '');
+    const valid = ['STR', 'DEX', 'INT', 'CON', 'APP', 'POW', 'SIZ', 'EDU'];
+    if (!valid.includes(characteristic)) {
+      throw new Error(`Invalid FORMULA characteristic: "${characteristic}"`);
+    }
+    return val;
+  }
 
-      if (!fs.existsSync(csvPath)) {
-        throw new Error(`CSV file not found at: ${csvPath}`);
-      }
+  const parsed = parseInt(val);
+  if (isNaN(parsed)) throw new Error(`Invalid baseValue: "${val}"`);
+  return parsed;
+}
 
-      console.log('   📄 Reading skills from CSV...');
-      const skillsData = await this.readCsvData(csvPath);
-      console.log(`   📊 Parsed ${skillsData.length} skills from CSV`);
+async function seedSkills() {
+  console.log('🎯 Skill Seeder\n');
+  const { client, db } = await getConnection();
 
-      // Process and create skills with flexible baseValue system
-      const skills = skillsData.map((csvSkill) => ({
-        name: csvSkill.name,
-        baseValue: this.parseBaseValue(csvSkill.baseValue), // New flexible parsing
-        category: csvSkill.category,
-        description: csvSkill.description,
-        visible: true, // Code-based visibility
-        defaultSkill: true, // All skills are default skills
-        sortOrder: 0, // Will be assigned after sorting
-        // NEW: Placeholder support (for "Lingua" skill)
-        isPlaceholder: csvSkill.isPlaceholder === 'true',
-        placeholderType: csvSkill.placeholderType || undefined,
-        predefinedValues: [], // Empty array - to be configured manually later
-        // NEW: Academic skills restriction (skills with 00 base value)
-        canRollWithoutPoints: csvSkill.canRollWithoutPoints === 'true',
+  try {
+    const skillsCol = db.collection('skills');
+    const force = process.argv.includes('--force');
+
+    const existingCount = await skillsCol.countDocuments();
+    if (existingCount > 0 && !force) {
+      console.log(`   ℹ️  ${existingCount} skills already exist, skipping`);
+      console.log('   💡 Use --force to re-seed\n');
+      return;
+    }
+
+    if (existingCount > 0) {
+      console.log(`   🗑️  Clearing ${existingCount} existing skills...`);
+      await skillsCol.deleteMany({});
+    }
+
+    console.log('   📄 Reading skills from CSV...');
+    const fileContent = readFileSync(CSV_PATH, 'utf-8');
+    const records = parse(fileContent, {
+      columns: true,
+      skip_empty_lines: true,
+      delimiter: ';',
+      trim: true,
+      relax_quotes: true,
+    }) as SkillRow[];
+
+    console.log(`   📊 Parsed ${records.length} skills from CSV\n`);
+
+    const skills = records
+      .filter(r => r.name && r.description)
+      .map(r => ({
+        name: r.name,
+        baseValue: parseBaseValue(r.baseValue),
+        category: r.category,
+        description: r.description,
+        visible: true,
+        defaultSkill: true,
+        sortOrder: 0,
+        isPlaceholder: r.isPlaceholder === 'true',
+        placeholderType: r.placeholderType || undefined,
+        predefinedValues: [],
+        canRollWithoutPoints: r.canRollWithoutPoints === 'true',
         createdAt: new Date(),
         updatedAt: new Date()
       }));
 
-      // Sort skills alphabetically by name
-      skills.sort((a, b) => a.name.localeCompare(b.name, 'it'));
+    skills.sort((a, b) => a.name.localeCompare(b.name, 'it'));
+    skills.forEach((skill, index) => { skill.sortOrder = index + 1; });
 
-      // Assign sortOrder based on alphabetical position
-      skills.forEach((skill, index) => {
-        skill.sortOrder = index + 1;
-      });
+    await skillsCol.insertMany(skills);
+    console.log(`   ✅ Created ${skills.length} skills\n`);
 
-      console.log('   📝 Skills sorted alphabetically');
+    const categories: Record<string, number> = {};
+    skills.forEach(s => { categories[s.category] = (categories[s.category] || 0) + 1; });
+    console.log('📊 Stats by category:');
+    Object.entries(categories).forEach(([cat, count]) => console.log(`   ${cat}: ${count}`));
+    console.log('');
 
-      // Insert skills
-      await skillsCollection.insertMany(skills);
-      console.log(`   ✓ Inserted ${skills.length} skills`);
-
-      console.log('   🔧 Skills seeding completed successfully!');
-
-    } catch (error) {
-      console.error('   ❌ SkillSeeder error:', error);
-      throw error;
-    } finally {
-      await client.close();
-    }
+  } catch (error) {
+    console.error('❌ Failed:', error);
+    process.exit(1);
+  } finally {
+    await client.close();
+    console.log('👋 Done');
   }
-
-  private parseBaseValue(baseValueStr: string): string {
-    if (!baseValueStr || baseValueStr.trim() === '') {
-      return '15'; // Default value
-    }
-
-    const baseValue = baseValueStr.trim();
-    console.log(`   🧮 Parsing baseValue: "${baseValue}"`);
-
-    // Check for new flexible format
-    if (baseValue.startsWith('VALUE:')) {
-      const numericValue = baseValue.replace('VALUE:', '');
-      const parsed = parseInt(numericValue);
-      if (isNaN(parsed)) {
-        throw new Error(`Invalid VALUE format: "${baseValue}". Expected "VALUE:XX" where XX is a number.`);
-      }
-      console.log(`   ✅ Fixed value: ${parsed}`);
-      return parsed; // Return as number
-    }
-    
-    if (baseValue.startsWith('FORMULA:')) {
-      const characteristic = baseValue.replace('FORMULA:', '');
-      const validCharacteristics = ['STR', 'DEX', 'INT', 'CON', 'APP', 'POW', 'SIZ', 'EDU'];
-      
-      if (!validCharacteristics.includes(characteristic)) {
-        throw new Error(`Invalid FORMULA characteristic: "${characteristic}". Valid: ${validCharacteristics.join(', ')}`);
-      }
-      
-      console.log(`   ✅ Formula value: ${characteristic}`);
-      return baseValue; // Store the full formula string
-    }
-    
-    // Backward compatibility: numeric values
-    const parsed = parseInt(baseValue);
-    if (isNaN(parsed)) {
-      throw new Error(`Invalid baseValue format: "${baseValue}". Expected number, "VALUE:XX", or "FORMULA:CHAR"`);
-    }
-    
-    console.log(`   ✅ Numeric value: ${parsed}`);
-    return parsed; // Return as number for backward compatibility
-  }
-
-  private async readCsvData(csvPath: string): Promise<any[]> {
-    return new Promise((resolve, reject) => {
-      const skills: any[] = [];
-      
-      fs.createReadStream(csvPath)
-        .pipe(csv({ separator: ';' }))
-        .on('data', (row) => {
-          if (row.name && row.description) {
-            skills.push(row);
-          }
-        })
-        .on('end', () => resolve(skills))
-        .on('error', reject);
-    });
-  } 
 }
+
+seedSkills();

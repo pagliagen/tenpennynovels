@@ -38,6 +38,32 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 
+// ========== CDN STATIC FILE SERVING ==========
+// Defined BEFORE global CORS to avoid credentials conflict
+const CDN_ALLOWED_ORIGINS = [
+  process.env.GAME_URL || 'https://game.tenpennynovels.com',
+  process.env.MANAGEMENT_URL || 'https://gestione.tenpennynovels.com',
+];
+
+const isDev = process.env.NODE_ENV !== 'production';
+const cdnStoragePath = process.env.CDN_STORAGE_PATH || '/cdn-storage';
+
+app.use('/cdn', cors({
+  origin: CDN_ALLOWED_ORIGINS,
+  credentials: false,
+  methods: ['GET', 'HEAD'],
+}), express.static(cdnStoragePath, {
+  maxAge: isDev ? '0' : '365d',
+  immutable: !isDev,
+  setHeaders: (res) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    if (isDev) {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    }
+  }
+}));
+console.log(`✅ CDN static file serving configured (/cdn → ${cdnStoragePath})`);
+
 // CORS configuration for API Gateway - Enhanced with explicit origin handling
 app.use(cors({
   origin: function (origin, callback) {
@@ -430,58 +456,6 @@ app.use('/forum', createServiceProxy('forum', services.forum));
 app.use('/documents', createServiceProxy('documents', services.documents));
 app.use('/admin', createServiceProxy('admin', services.admin));
 
-// ========== CDN SERVICE PROXY ==========
-// CDN upload endpoint: POST /cdn/upload → cdn-service:4002
-const cdnServiceProxy = createProxyMiddleware({
-  target: process.env.CDN_SERVICE_URL || 'http://cdn-service:4002',
-  changeOrigin: true,
-  timeout: 30000, // 30 seconds for image upload/processing
-  pathFilter: '/cdn/upload',
-  on: {
-    proxyReq: (proxyReq: any, req: any, _res: any) => {
-      logger.debug(`[CDN UPLOAD] Proxying: ${req.method} ${req.url}`);
-
-      // Forward auth headers for JWT validation
-      if (req.headers.authorization) {
-        proxyReq.setHeader('Authorization', req.headers.authorization);
-      }
-      if (req.headers.cookie) {
-        proxyReq.setHeader('Cookie', req.headers.cookie);
-      }
-    },
-    proxyRes: (proxyRes: any, _req: any, _res: any) => {
-      logger.debug(`[CDN UPLOAD] Response: ${proxyRes.statusCode}`);
-    },
-    error: (err: any, _req: any, res: any) => {
-      logger.error(`CDN upload proxy error:`, { error: err.message });
-
-      if (!res.headersSent) {
-        res.status(502).json({
-          success: false,
-          error: 'CDN service temporarily unavailable'
-        });
-      }
-    }
-  }
-});
-
-app.use(cdnServiceProxy);
-console.log('✅ CDN upload proxy configured (/cdn/upload → cdn-service:4002)');
-
-// ========== CDN STATIC FILE SERVING ==========
-// Serve static files from /cdn-storage volume
-// GET /cdn/* → /cdn-storage/*
-app.use('/cdn', express.static('/cdn-storage', {
-  maxAge: '365d', // 1 year cache (immutable hash-based naming)
-  immutable: true,
-  setHeaders: (res, _path) => {
-    // Security headers
-    res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader('Access-Control-Allow-Origin', '*'); // Public CDN
-    res.setHeader('Cache-Control', 'public, immutable, max-age=31536000');
-  }
-}));
-console.log('✅ CDN static file serving configured (/cdn → /cdn-storage)');
 
 console.log('✅ All proxy routes configured');
 

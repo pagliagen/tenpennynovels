@@ -5,95 +5,98 @@ user-invocable: true
 ---
 
 ## Overview
-Generate AI-powered NPC bots for a specific location with contextual personalities based on location tags. The command activates `bot_enabled` on the location and creates bots via the BotAI API.
+Generate AI-powered NPC bots for a specific location. Creates bots via the Local AI gateway's BotAI service (Ollama-powered, zero API costs).
 
 ## Usage Pattern
-/generate-bot [environment] [location_name] [num_bots]
+/generate-bot [location_name] [num_bots]
 
 Parameters:
-- **environment**: 'dev' (port 8082) or 'prod' (port 8080) - MANDATORY
 - **location_name**: Exact name of the location (e.g., "Borough Market", "The Blind Beggar")
 - **num_bots**: Number of bots to generate (positive integer)
 
 Examples:
-- /generate-bot dev "Borough Market" 3
-- /generate-bot prod "The Blind Beggar" 5
-- /generate-bot dev "Whitechapel High Street" 1
+- /generate-bot "Borough Market" 3
+- /generate-bot "The Blind Beggar" 5
 
-## Implementation Details
+## Architecture
 
-### Command Execution
-The skill executes the TypeScript script `scripts/utilities/bots/generate-bot.ts` with proper environment variables:
+The bot generation now uses the **Local AI platform** (`local-ai/`):
 
-**DEV Environment:**
-- BOTAI_WEBHOOK_URL: http://localhost:8082
-- ADMIN_BACKEND_BOT_API_KEY: x3vC8bN5mK2pW7jL4gT9sR6hQ1aF8dY3zM7nV2uE5cX9bK4wP6jT8rL3qH5nM2
+```
+unified-backend (or CLI script)
+  → AI Gateway (:9001 dev / :9000 prod via ngrok)
+    → BotAI service (:8080)
+      → Ollama (mistral:7b-instruct)
+```
 
-**PROD Environment:**
-- BOTAI_WEBHOOK_URL: http://localhost:8080
-- ADMIN_BACKEND_BOT_API_KEY: x3vC8bN5mK2pW7jL4gT9sR6hQ1aF8dY3zM7nV2uE5cX9bK4wP6jT8rL3qH5nM2
+### API Endpoints
 
-### What the Script Does
+- **Gateway Health**: `GET http://localhost:9001/health`
+- **Generate Bot**: `POST http://localhost:9001/botai/bots/generate`
+- **Create Bot**: `POST http://localhost:9001/botai/bots`
+- **List Bots**: `GET http://localhost:9001/botai/bots`
 
-1. **Connect to MongoDB** (tenpennynovels database)
-2. **Find location** by exact name
-3. **Activate bot_enabled** flag on location if not already active
-4. **Generate N bots** with:
-   - Contextual personalities based on location tags
-   - Italian names and surnames
-   - Gender alternation (even=male, odd=female)
-   - Activation rules with location-specific keywords
-   - Appropriate traits and speech patterns
-5. **Create bots** via BotAI API (POST /bots)
-6. **Return summary** with bot IDs and details
+### Authentication
 
-### Bot Personality Mapping
+All requests require `X-API-Key` header with the value from `local-ai/.env` → `API_KEY`.
 
-Based on location tags:
+### Generate Bot API
 
-| Tag | Possible Roles | Traits |
-|-----|----------------|--------|
-| commercio | Commerciante di spezie, Venditore ambulante | affabile, commerciante, intraprendente |
-| cibo | Venditore di cibo, Fornaio | cordiale, generoso, culinario |
-| mercato | Bancarellista, Venditrice di fiori | vivace, socievole, contrattatore |
-| taverna | Locandiere, Barista | gioviale, discreto, narratore |
-| strada | Passante, Guardiano notturno | cauto, osservatore, diffidente |
+```bash
+curl -X POST http://localhost:9001/botai/bots/generate \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: your-api-key" \
+  -d '{
+    "description": "Un barista irlandese, veterano di guerra, con un segreto oscuro",
+    "style": "vittoriano",
+    "locale": "it"
+  }'
+```
 
-**Default** (no tags): Residente locale, traits: curioso, disponibile, locale
+### Create Bot Manually
 
-## MongoDB Credentials
-- URI: `mongodb://admin:password123@localhost:27017/tenpennynovels?authSource=admin`
-- Database: `tenpennynovels`
+```bash
+curl -X POST http://localhost:9001/botai/bots \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: your-api-key" \
+  -d '{
+    "name": "Detective Morrison",
+    "personality": {
+      "traits": ["cinico", "osservatore", "solitario"],
+      "speech_style": "frasi brevi, tono asciutto",
+      "background": "Ex poliziotto, investigatore privato"
+    },
+    "systemPrompt": "Sei Detective Morrison, un investigatore privato..."
+  }'
+```
 
-## BotAI API
-- DEV URL: `http://localhost:8082`
-- PROD URL: `http://localhost:8080`
-- Endpoint: `POST /bots`
-- Auth Header: `x-admin-api-key: admin-secret-key`
+## Prerequisites
 
-## Key Considerations
-- **Environment selection**: Always specify 'dev' or 'prod' explicitly
-- **Location name**: Must match exactly (case-sensitive)
-- **BotAI must be running**: Verify with `curl http://localhost:8080/health`
-- **MongoDB must be accessible**: Check with `docker ps | grep mongodb`
-- **Script path**: Executed from project root as `npx tsx scripts/generate-bot.ts`
+1. **Local AI stack running**: `cd local-ai && docker compose up -d`
+2. **Ollama model pulled**: `docker compose exec ollama ollama pull mistral:7b-instruct`
+3. **Verify health**: `curl http://localhost:9001/health`
 
-## Error Handling
-- **Location not found**: Verify exact name with database query
-- **BotAI unreachable**: Check if BotAI service is running
-- **MongoDB connection refused**: Verify Docker containers are up
-- **Invalid API key**: Check .env.botai configuration
+## After Creating Bots
 
-## Verification Checklist
-- [ ] Location exists in database with correct name
-- [ ] BotAI service is running (dev or prod)
-- [ ] MongoDB container is accessible
-- [ ] bot_enabled flag is set to true on location
-- [ ] N bots were created successfully
-- [ ] Bots have correct assignedLocations array
-- [ ] Bots are marked as isActive: true
+1. Set `bot_enabled: true` on the location in the game database
+2. Associate bot character IDs with the location
+3. The bot will respond automatically when players interact in the location
+
+## MongoDB
+
+Bot data is stored in the **local-ai MongoDB** (port 27030), NOT the game database:
+- Database: `local-ai`
+- Collections: `bots`, `memories`, `relationships`
+
+## Environment Variables
+
+Located in `local-ai/.env`:
+- `API_KEY`: API key for gateway authentication
+- `OLLAMA_MODEL`: LLM model (default: `mistral:7b-instruct`)
+- `MONGODB_URI`: Internal MongoDB connection
 
 ## Related Files
-- Script: `scripts/utilities/bots/generate-bot.ts`
-- Location Model: `services/unified-backend/src/database/models/Location.ts`
-- BotAI Docs: `services/botai-backend/README.md`
+- Local AI platform: `local-ai/`
+- BotAI service: `local-ai/services/botai/`
+- Gateway: `local-ai/gateway/`
+- Old archived code: `_archive/botai-backend/`

@@ -2,7 +2,7 @@
  * SearchResults Component
  *
  * Displays semantic search results with match scores.
- * Results are ranked by similarity to query.
+ * When AI provides an answer, renders it above the document list.
  *
  * @module components/search/SearchResults
  * @since 1.0.0
@@ -11,6 +11,7 @@
 'use client';
 
 import Link from 'next/link';
+import type { AIAnswer } from '@/hooks/useSearch';
 import styles from '@/styles/components/SearchResults.module.scss';
 
 interface SearchResult {
@@ -41,7 +42,50 @@ interface SearchResultsProps {
   totalResults: number;
   query: string;
   isLoading: boolean;
+  aiAnswer?: AIAnswer;
   onClose: () => void;
+}
+
+function AIAnswerCard({ aiAnswer, onClose }: { aiAnswer: AIAnswer; onClose: () => void }) {
+  const usedSources = aiAnswer.sources.filter(s => s.used);
+
+  return (
+    <div className={styles.aiAnswerCard}>
+      <div className={styles.aiAnswerHeader}>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7Z" />
+          <path d="M10 21h4" />
+        </svg>
+        <span>Risposta AI</span>
+      </div>
+
+      <div className={styles.aiAnswerText}>
+        {aiAnswer.answer}
+      </div>
+
+      {usedSources.length > 0 && (
+        <div className={styles.aiSources}>
+          <span className={styles.aiSourcesLabel}>Riferimenti:</span>
+          {usedSources.map((source, i) => (
+            source.fullPath ? (
+              <Link
+                key={i}
+                href={source.fullPath}
+                className={styles.aiSourceLink}
+                onClick={onClose}
+              >
+                {source.title || source.heading}
+              </Link>
+            ) : (
+              <span key={i} className={styles.aiSourceLink}>
+                {source.title || source.heading}
+              </span>
+            )
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function SearchResults({
@@ -49,6 +93,7 @@ export function SearchResults({
   totalResults,
   query,
   isLoading,
+  aiAnswer,
   onClose,
 }: SearchResultsProps) {
   if (isLoading) {
@@ -62,7 +107,7 @@ export function SearchResults({
     );
   }
 
-  if (results.length === 0) {
+  if (results.length === 0 && !aiAnswer) {
     return (
       <div className={styles.resultsDropdown}>
         <div className={styles.noResults}>
@@ -95,6 +140,8 @@ export function SearchResults({
         </span>
         <span className={styles.resultsQuery}>per "{query}"</span>
       </div>
+
+      {aiAnswer && <AIAnswerCard aiAnswer={aiAnswer} onClose={onClose} />}
 
       <ul className={styles.resultsList}>
         {results.map((result) => (
@@ -135,11 +182,7 @@ export function SearchResults({
                   {result.matchHeading}
                 </p>
               )}
-
-              {result.document.description && (
-                <p className={styles.resultDescription}>{result.document.description}</p>
-              )}
-
+ 
               {result.document.content && (
                 <p className={styles.resultContent}>
                   {result.document.content.replace(/<[^>]*>/g, '')}

@@ -1,105 +1,110 @@
-import * as fs from 'fs';
-import * as path from 'path';
-import csv from 'csv-parser';
+/**
+ * Social Class Config Seeder - Standalone Script
+ *
+ * Reads social class configurations from CSV, seeds MongoDB.
+ */
+
+import { readFileSync } from 'fs';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
+import { parse } from 'csv-parse/sync';
 import { getConnection } from '../utils/connection.js';
 
-export class SocialClassConfigSeeder {
-  name = 'social-class-configs';
-  description = 'Populates database with social class configurations for FINANZA skill system';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
-  async seed(force: boolean = false): Promise<void> {
-    const { client, db } = await getConnection();
+const CSV_PATH = join(__dirname, '../data/social-class-configs.csv');
 
-    try {
-      const socialClassConfigsCollection = db.collection('socialclassconfigs');
+interface SocialClassRow {
+  name: string;
+  label: string;
+  minFinanceSkill: string;
+  maxFinanceSkill: string;
+  weeklyCredit: string;
+  minCash: string;
+  maxCash: string;
+  hasPrivateApartment: string;
+  apartmentType: string;
+  bonusItems: string;
+  displayOrder: string;
+  description: string;
+}
 
-      // Check if configs already exist
-      const existingCount = await socialClassConfigsCollection.countDocuments();
+function parseBonusItems(str: string): string[] {
+  if (!str || str === '[]') return [];
+  try {
+    return JSON.parse(str);
+  } catch {
+    return str.split(',').map(s => s.trim()).filter(Boolean);
+  }
+}
 
-      if (existingCount > 0 && !force) {
-        console.log(`   🏛️  ${existingCount} social class configs already exist, skipping seeding`);
-        console.log('   💡 Use --force to re-seed');
-        return;
-      }
+async function seedSocialClassConfigs() {
+  console.log('🏛️  Social Class Config Seeder\n');
+  const { client, db } = await getConnection();
 
-      if (force && existingCount > 0) {
-        console.log(`   🗑️  Truncating ${existingCount} existing social class configs...`);
-        await socialClassConfigsCollection.deleteMany({});
-        console.log('   ✅ Social class configs truncated');
-      }
+  try {
+    const configsCol = db.collection('socialclassconfigs');
+    const force = process.argv.includes('--force');
 
-      // Read CSV data
-      const csvPath = path.join(__dirname, '../data/social-class-configs.csv');
+    const existingCount = await configsCol.countDocuments();
+    if (existingCount > 0 && !force) {
+      console.log(`   ℹ️  ${existingCount} social class configs already exist, skipping`);
+      console.log('   💡 Use --force to re-seed\n');
+      return;
+    }
 
-      if (!fs.existsSync(csvPath)) {
-        throw new Error(`CSV file not found at: ${csvPath}`);
-      }
+    if (existingCount > 0) {
+      console.log(`   🗑️  Clearing ${existingCount} existing configs...`);
+      await configsCol.deleteMany({});
+    }
 
-      console.log('   📄 Reading social class configs from CSV...');
-      const configsData = await this.readCsvData(csvPath);
-      console.log(`   📊 Parsed ${configsData.length} social class configs from CSV`);
+    console.log('   📄 Reading social class configs from CSV...');
+    const fileContent = readFileSync(CSV_PATH, 'utf-8');
+    const records = parse(fileContent, {
+      columns: true,
+      skip_empty_lines: true,
+      delimiter: ';',
+      trim: true,
+      relax_quotes: true,
+    }) as SocialClassRow[];
 
-      // Process and create configs
-      const configs = configsData.map((csvConfig) => ({
-        name: csvConfig.name, // English name for internal logic
-        label: csvConfig.label, // Italian label for UI display
-        minFinanceSkill: parseInt(csvConfig.minFinanceSkill),
-        maxFinanceSkill: parseInt(csvConfig.maxFinanceSkill),
-        weeklyCredit: parseFloat(csvConfig.weeklyCredit),
+    console.log(`   📊 Parsed ${records.length} configs from CSV\n`);
+
+    const configs = records
+      .filter(r => r.name && r.label && r.minFinanceSkill)
+      .map(r => ({
+        name: r.name,
+        label: r.label,
+        minFinanceSkill: parseInt(r.minFinanceSkill),
+        maxFinanceSkill: parseInt(r.maxFinanceSkill),
+        weeklyCredit: parseFloat(r.weeklyCredit),
         initialWealth: {
-          minCash: parseFloat(csvConfig.minCash),
-          maxCash: parseFloat(csvConfig.maxCash),
-          hasPrivateApartment: csvConfig.hasPrivateApartment === 'true',
-          apartmentType: csvConfig.apartmentType || undefined,
-          bonusItems: this.parseBonusItems(csvConfig.bonusItems)
+          minCash: parseFloat(r.minCash),
+          maxCash: parseFloat(r.maxCash),
+          hasPrivateApartment: r.hasPrivateApartment === 'true',
+          apartmentType: r.apartmentType || undefined,
+          bonusItems: parseBonusItems(r.bonusItems)
         },
-        displayOrder: parseInt(csvConfig.displayOrder),
-        description: csvConfig.description,
+        displayOrder: parseInt(r.displayOrder),
+        description: r.description,
         createdAt: new Date(),
         updatedAt: new Date()
       }));
 
-      // Insert configs
-      await socialClassConfigsCollection.insertMany(configs);
-      console.log(`   ✓ Inserted ${configs.length} social class configs`);
+    await configsCol.insertMany(configs);
+    console.log(`   ✅ Created ${configs.length} social class configs\n`);
 
-      console.log('   🏛️  Social class configs seeding completed successfully!');
+    configs.forEach(c => console.log(`   ${c.name} (${c.label}): ${c.minFinanceSkill}-${c.maxFinanceSkill}`));
+    console.log('');
 
-    } catch (error) {
-      console.error('   ❌ SocialClassConfigSeeder error:', error);
-      throw error;
-    } finally {
-      await client.close();
-    }
-  }
-
-  private async readCsvData(csvPath: string): Promise<any[]> {
-    return new Promise((resolve, reject) => {
-      const configs: any[] = [];
-      
-      fs.createReadStream(csvPath)
-        .pipe(csv({ separator: ';' }))
-        .on('data', (row) => {
-          if (row.name && row.label && row.minFinanceSkill) {
-            configs.push(row);
-          }
-        })
-        .on('end', () => resolve(configs))
-        .on('error', reject);
-    });
-  }
-
-  private parseBonusItems(bonusItemsStr: string): string[] {
-    if (!bonusItemsStr || bonusItemsStr === '[]') {
-      return [];
-    }
-    
-    try {
-      // Parse JSON-like array from CSV
-      return JSON.parse(bonusItemsStr);
-    } catch {
-      // If JSON parsing fails, assume comma-separated values
-      return bonusItemsStr.split(',').map(item => item.trim()).filter(item => item.length > 0);
-    }
+  } catch (error) {
+    console.error('❌ Failed:', error);
+    process.exit(1);
+  } finally {
+    await client.close();
+    console.log('👋 Done');
   }
 }
+
+seedSocialClassConfigs();

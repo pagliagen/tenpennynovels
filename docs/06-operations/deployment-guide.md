@@ -142,9 +142,11 @@ SMTP_USER=noreply@tenpennynovels.com
 SMTP_PASSWORD=<app-password>
 EMAIL_FROM=TenPennyNovels <noreply@tenpennynovels.com>
 
-# API Keys
-BOT_API_KEY=<generate-secure-key>
-ANTHROPIC_API_KEY=sk-ant-...  # If using BotAI
+# AI Gateway (local-ai via ngrok)
+AI_GATEWAY_URL=https://your-ngrok-url.ngrok-free.dev
+AI_GATEWAY_HMAC_SECRET=<generate-with-openssl-rand-hex-32>
+AI_GATEWAY_API_KEY=<generate-with-openssl-rand-hex-32>
+AI_GATEWAY_WEBHOOK_SECRET=<generate-with-openssl-rand-hex-32>
 
 # Monitoring (optional)
 SENTRY_DSN=https://...@sentry.io/...

@@ -1,0 +1,13 @@
+node_modules
+**/node_modules
+**/dist
+**/.env
+.env
+clients.json
+*.log
+.git
+.gitignore
+docs
+*.md
+!package.json
+!tsconfig*.json

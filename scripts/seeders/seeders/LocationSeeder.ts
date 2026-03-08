@@ -1,230 +1,219 @@
-import * as fs from 'fs';
-import * as path from 'path';
-import csv from 'csv-parser';
-import slugify from 'slugify';
+/**
+ * Location Seeder - Standalone Script
+ *
+ * Reads locations from CSV, builds hierarchy (root → district → location),
+ * seeds MongoDB, and publishes embedding events.
+ */
+
+import { readFileSync } from 'fs';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
+import { parse } from 'csv-parse/sync';
 import Redis from 'ioredis';
 import crypto from 'crypto';
 import { getConnection } from '../utils/connection.js';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-export class LocationSeeder {
-  name = 'locations';
-  description = 'Seed initial London locations from CSV data';
-  private redis: Redis;
+const CSV_PATH = join(__dirname, '../data/locations.csv');
 
-  constructor() {
-    // Initialize Redis for event publishing
-    const redisHost = process.env.REDIS_HOST || 'localhost';
-    const redisPort = parseInt(process.env.REDIS_PORT || '6379', 10);
-    this.redis = new Redis({
-      host: redisHost,
-      port: redisPort,
-      maxRetriesPerRequest: null
-    });
-  }
+interface LocationRow {
+  name: string;
+  description: string;
+  parentLocationName: string;
+  tags: string;
+}
 
-  async seed(force: boolean = false): Promise<void> {
-    const { client, db } = await getConnection();
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[àáâãäå]/g, 'a')
+    .replace(/[èéêë]/g, 'e')
+    .replace(/[ìíîï]/g, 'i')
+    .replace(/[òóôõö]/g, 'o')
+    .replace(/[ùúûü]/g, 'u')
+    .replace(/[ñ]/g, 'n')
+    .replace(/[']/g, '')
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+}
 
-    try {
-      const locationsCollection = db.collection('locations');
+function shouldHaveShop(name: string): boolean {
+  return ['London', 'Commercial Street', 'Borough Market', 'Bond Street', 'Covent Garden'].includes(name);
+}
 
-      // Check if locations already exist
-      const existingCount = await locationsCollection.countDocuments();
+function isPrivateLocation(name: string): boolean {
+  return [
+    "Gentleman's Club", 'Kensington Palace', 'Bank of England',
+    'Guildhall', 'Royal Courts of Justice', 'Scotland Yard',
+    'Scotland Yard Archives', 'Parliament Square Courtyard'
+  ].includes(name);
+}
 
-      if (existingCount > 0 && !force) {
-        console.log(`   📍 ${existingCount} locations already exist, skipping seeding`);
-        console.log('   💡 Use --force to re-seed');
-        return;
-      }
+async function seedLocations() {
+  console.log('📍 Location Seeder\n');
+  const { client, db } = await getConnection();
 
-      if (force && existingCount > 0) {
-        console.log(`   🗑️  Truncating ${existingCount} existing locations...`);
-        await locationsCollection.deleteMany({});
-        console.log('   ✅ Locations truncated');
-      }
+  let redis: Redis | null = null;
 
-      // Read CSV data
-      const csvPath = path.join(__dirname, '../data/locations.csv');
-
-      if (!fs.existsSync(csvPath)) {
-        throw new Error(`CSV file not found at: ${csvPath}`);
-      }
-
-      console.log('   📄 Reading locations from CSV...');
-      const locations = await this.readCsvData(csvPath);
-      console.log(`   📊 Parsed ${locations.length} locations from CSV`);
-
-      // Create locations in hierarchical order
-      const createdLocations = await this.createLocationsHierarchically(locations, locationsCollection);
-
-      console.log(`   ✅ Successfully created ${createdLocations.size} locations`);
-
-      // Publish embedding events (triggers automatic embedding generation)
-      console.log('   📝 Publishing embedding events...');
-      await this.publishEmbeddingEvents(db);
-      console.log(`   ✅ Embedding events published`);
-
-    } catch (error) {
-      console.error('   ❌ LocationSeeder error:', error);
-      throw error;
-    } finally {
-      await client.close();
-      await this.redis.quit();
-    }
-  }
-
-  private async readCsvData(csvPath: string): Promise<any[]> {
-    return new Promise((resolve, reject) => {
-      const locations: any[] = [];
-      
-      fs.createReadStream(csvPath)
-        .pipe(csv({ separator: ';' }))
-        .on('data', (row) => {
-          if (row.name && row.description) {
-            locations.push(row);
-          }
-        })
-        .on('end', () => resolve(locations))
-        .on('error', reject);
-    });
-  }
-
-  private async createLocationsHierarchically(locations: any[], collection: any): Promise<Map<string, any>> {
-    const createdLocations = new Map<string, any>();
-    const systemUserId = '000000000000000000000000'; // System user ID
-
-    // Sort locations by hierarchy level
-    const rootLocations = locations.filter(loc => !loc.parentLocationName);
-    const districtLocations = locations.filter(loc =>
-      loc.parentLocationName && rootLocations.some(root => root.name === loc.parentLocationName)
-    );
-    const subLocations = locations.filter(loc =>
-      loc.parentLocationName && !rootLocations.some(root => root.name === loc.parentLocationName)
-    );
-
-    console.log(`   🏗️  Creating ${rootLocations.length} root locations...`);
-    // Create root locations first
-    for (const csvLocation of rootLocations) {
-      const locationDoc = await this.createLocation(csvLocation, null, 'root', systemUserId, collection);
-      createdLocations.set(csvLocation.name, locationDoc);
-    }
-
-    console.log(`   🏙️  Creating ${districtLocations.length} district locations...`);
-    // Create district locations
-    for (const csvLocation of districtLocations) {
-      const parentLocation = createdLocations.get(csvLocation.parentLocationName);
-      if (!parentLocation) {
-        console.warn(`   ⚠️  Parent location not found for district: ${csvLocation.name}`);
-        continue;
-      }
-
-      const locationDoc = await this.createLocation(csvLocation, parentLocation, 'district', systemUserId, collection);
-      createdLocations.set(csvLocation.name, locationDoc);
-    }
-
-    console.log(`   🏢 Creating ${subLocations.length} sub-locations...`);
-    // Create sub-locations
-    for (const csvLocation of subLocations) {
-      const parentLocation = createdLocations.get(csvLocation.parentLocationName);
-      if (!parentLocation) {
-        console.warn(`   ⚠️  Parent location not found for location: ${csvLocation.name}`);
-        continue;
-      }
-
-      const locationDoc = await this.createLocation(csvLocation, parentLocation, 'location', systemUserId, collection);
-      createdLocations.set(csvLocation.name, locationDoc);
-    }
-
-    return createdLocations;
-  }
-
-  private async createLocation(
-    csvData: any,
-    parentLocation: any | null,
-    level: 'root' | 'district' | 'location',
-    createdBy: string,
-    collection: any
-  ): Promise<any> {
-    // Parse tags from CSV (comma-separated string to array)
-    const tags = csvData.tags
-      ? csvData.tags.split(',').map((tag: string) => tag.trim().toLowerCase()).filter((tag: string) => tag.length > 0)
-      : [];
-
-    const locationDoc = {
-      name: csvData.name,
-      description: csvData.description,
-      district: level === 'root' ? csvData.name : (parentLocation?.district || parentLocation?.name),
-      parentLocation: parentLocation?._id,
-      locationLevel: level,
-      slug: slugify(csvData.name, { lower: true, strict: true }), // Generate slug for location
-      tags, // Add tags from CSV
-      settings: {
-        visible: true, // All locations are visible by default
-        chat: true,    // All locations have chat enabled by default
-        shop: this.shouldHaveShop(csvData.name), // Determine shop based on location name
-        private: this.isPrivateLocation(csvData.name) // Determine privacy based on location name
-      },
-      access: this.isPrivateLocation(csvData.name) ? {
-        characterAccess: [],
-        corporationAccess: []
-      } : undefined,
-      occupants: [],
-      npcs: [],
-      statistics: {
-        totalVisits: 0,
-        uniqueVisitors: 0,
-        averageStayTime: 0,
-        messagesExchanged: 0,
-        peakHours: []
-      },
-      createdBy,
-      sortOrder: 0,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-
-    const result = await collection.insertOne(locationDoc);
-    return { ...locationDoc, _id: result.insertedId };
-  } 
-
-  private shouldHaveShop(locationName: string): boolean {
-    // Locations that should have shops
-    const shopLocations = [
-      'London', 'Commercial Street'
-    ];
-    
-    return shopLocations.includes(locationName);
-  }
-
-  private isPrivateLocation(locationName: string): boolean {
-    // Locations that should be private
-    const privateLocations = [
-      'Gentleman\'s Club', 'Kensington Palace', 'Bank of England',
-      'Guildhall', 'Royal Courts of Justice', 'University College London',
-      'Somerset House', 'Scotland Yard'
-    ];
-
-    return privateLocations.includes(locationName);
-  }
-
-  /**
-   * Publish embedding events for all locations
-   * Triggers automatic embedding generation in embeddings-worker
-   */
-  private async publishEmbeddingEvents(db: any): Promise<void> {
+  try {
     const locationsCol = db.collection('locations');
-    const allLocations = await locationsCol.find({}).toArray();
+    const force = process.argv.includes('--force');
 
-    console.log(`   Publishing events for ${allLocations.length} locations...`);
+    const existingCount = await locationsCol.countDocuments();
+    if (existingCount > 0 && !force) {
+      console.log(`   ℹ️  ${existingCount} locations already exist, skipping`);
+      console.log('   💡 Use --force to re-seed\n');
+      return;
+    }
 
-    let published = 0;
-    for (const location of allLocations) {
-      try {
+    if (existingCount > 0) {
+      console.log(`   🗑️  Clearing ${existingCount} existing locations...`);
+      await locationsCol.deleteMany({});
+    }
+
+    console.log('   📄 Reading locations from CSV...');
+    const fileContent = readFileSync(CSV_PATH, 'utf-8');
+    const records = parse(fileContent, {
+      columns: true,
+      skip_empty_lines: true,
+      delimiter: ';',
+      trim: true,
+      relax_quotes: true,
+    }) as LocationRow[];
+
+    console.log(`   📊 Parsed ${records.length} locations from CSV\n`);
+
+    const systemUserId = '000000000000000000000000';
+    const createdLocations = new Map<string, any>();
+
+    const rootLocations = records.filter(r => !r.parentLocationName);
+    const districtLocations = records.filter(r =>
+      r.parentLocationName && rootLocations.some(root => root.name === r.parentLocationName)
+    );
+    const subLocations = records.filter(r =>
+      r.parentLocationName &&
+      !rootLocations.some(root => root.name === r.parentLocationName) &&
+      !districtLocations.some(d => d.name === r.parentLocationName)
+    );
+    const deepLocations = records.filter(r =>
+      r.parentLocationName &&
+      !rootLocations.some(root => root.name === r.parentLocationName) &&
+      !districtLocations.some(d => d.name === r.parentLocationName) &&
+      subLocations.some(s => s.name === r.parentLocationName)
+    );
+
+    const subLocationsFiltered = records.filter(r =>
+      r.parentLocationName &&
+      !rootLocations.some(root => root.name === r.parentLocationName) &&
+      districtLocations.some(d => d.name === r.parentLocationName)
+    );
+
+    const deeperLocations = records.filter(r =>
+      r.parentLocationName &&
+      !rootLocations.some(root => root.name === r.parentLocationName) &&
+      !districtLocations.some(d => d.name === r.parentLocationName) &&
+      !subLocationsFiltered.some(s => s.name === r.parentLocationName) &&
+      subLocationsFiltered.some(s => s.name !== r.name)
+    );
+
+    async function createBatch(batch: LocationRow[], level: 'root' | 'district' | 'location', label: string) {
+      console.log(`   🏗️  Creating ${batch.length} ${label}...`);
+      let sortOrder = 0;
+
+      for (const row of batch) {
+        const parentDoc = row.parentLocationName ? createdLocations.get(row.parentLocationName) : null;
+
+        if (row.parentLocationName && !parentDoc) {
+          console.warn(`   ⚠️  Parent "${row.parentLocationName}" not found for "${row.name}", skipping`);
+          continue;
+        }
+
+        const tags = row.tags
+          ? row.tags.split(',').map(t => t.trim().toLowerCase()).filter(Boolean)
+          : [];
+
+        const doc = {
+          name: row.name,
+          slug: slugify(row.name),
+          description: row.description,
+          district: level === 'root' ? row.name : (parentDoc?.district || parentDoc?.name || ''),
+          parentLocation: parentDoc?._id || undefined,
+          locationLevel: level,
+          tags,
+          sortOrder: sortOrder++,
+          settings: {
+            visible: true,
+            chat: true,
+            shop: shouldHaveShop(row.name),
+            private: isPrivateLocation(row.name)
+          },
+          access: isPrivateLocation(row.name) ? { characterAccess: [], corporationAccess: [] } : undefined,
+          bot_enabled: false,
+          occupants: [],
+          npcs: [],
+          statistics: {
+            totalVisits: 0,
+            uniqueVisitors: 0,
+            averageStayTime: 0,
+            messagesExchanged: 0,
+            peakHours: []
+          },
+          createdBy: systemUserId,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+
+        const result = await locationsCol.insertOne(doc);
+        createdLocations.set(row.name, { ...doc, _id: result.insertedId });
+      }
+    }
+
+    await createBatch(rootLocations, 'root', 'root locations');
+    await createBatch(districtLocations, 'district', 'districts');
+
+    const allSubLocations = records.filter(r =>
+      r.parentLocationName &&
+      !rootLocations.some(root => root.name === r.parentLocationName) &&
+      !createdLocations.has(r.name)
+    );
+
+    let remaining = allSubLocations;
+    let pass = 0;
+    while (remaining.length > 0 && pass < 5) {
+      pass++;
+      const canCreate = remaining.filter(r => createdLocations.has(r.parentLocationName));
+      const cannotCreate = remaining.filter(r => !createdLocations.has(r.parentLocationName));
+
+      if (canCreate.length === 0) {
+        console.warn(`   ⚠️  ${cannotCreate.length} locations have missing parents, skipping`);
+        for (const r of cannotCreate) {
+          console.warn(`      - "${r.name}" → parent "${r.parentLocationName}" not found`);
+        }
+        break;
+      }
+
+      await createBatch(canCreate, 'location', `locations (pass ${pass})`);
+      remaining = cannotCreate;
+    }
+
+    console.log(`\n   ✅ Created ${createdLocations.size} locations total\n`);
+
+    // Publish embedding events
+    try {
+      const redisHost = process.env.REDIS_HOST || 'localhost';
+      const redisPort = parseInt(process.env.REDIS_PORT || '6379', 10);
+      redis = new Redis({ host: redisHost, port: redisPort, maxRetriesPerRequest: null });
+
+      console.log('   📝 Publishing embedding events...');
+      const allLocations = await locationsCol.find({}).toArray();
+      let published = 0;
+
+      for (const location of allLocations) {
         const event = {
           eventId: crypto.randomUUID(),
           timestamp: new Date(),
@@ -234,14 +223,32 @@ export class LocationSeeder {
           district: location.district,
           slug: location.slug
         };
-
-        await this.redis.publish('embedding:location:created', JSON.stringify(event));
+        await redis.publish('embedding:location:created', JSON.stringify(event));
         published++;
-      } catch (error) {
-        console.error(`   ⚠️  Failed to publish event for ${location.slug}:`, error);
       }
+      console.log(`   ✅ Published ${published} embedding events\n`);
+    } catch (redisError) {
+      console.warn('   ⚠️  Redis not available, skipping embedding events\n');
     }
 
-    console.log(`   Published ${published} embedding events successfully`);
+    // Stats
+    const stats = await locationsCol.aggregate([
+      { $group: { _id: '$locationLevel', count: { $sum: 1 } } },
+      { $sort: { _id: 1 } }
+    ]).toArray();
+
+    console.log('📊 Stats by level:');
+    stats.forEach(s => console.log(`   ${s._id}: ${s.count}`));
+    console.log('');
+
+  } catch (error) {
+    console.error('❌ Failed:', error);
+    process.exit(1);
+  } finally {
+    if (redis) await redis.quit();
+    await client.close();
+    console.log('👋 Done');
   }
 }
+
+seedLocations();

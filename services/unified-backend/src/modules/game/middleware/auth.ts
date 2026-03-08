@@ -417,23 +417,25 @@ export class AuthMiddleware {
   }
 
   /**
-   * Middleware: Validates shared API key for bot service
-   * Used for bot-to-backend communication
+   * Middleware: Validates webhook secret for AI Gateway callbacks (local-ai → unified-backend).
+   * Replaces the old requireBotApiKey.
    */
-  static requireBotApiKey(req: Request, res: Response, next: NextFunction): void {
+  static requireAIGatewayAuth(req: Request, res: Response, next: NextFunction): void {
     try {
-      const apiKey = req.headers['x-bot-api-key'];
-      const expectedKey = process.env.BOT_API_KEY;
+      const authHeader = req.headers['authorization'] as string;
+      const expectedSecret = process.env.AI_GATEWAY_WEBHOOK_SECRET;
 
-      if (!expectedKey) {
-        throw new Error('BOT_API_KEY not configured');
+      if (!expectedSecret) {
+        throw new Error('AI_GATEWAY_WEBHOOK_SECRET not configured');
       }
 
-      if (!apiKey || apiKey !== expectedKey) {
+      const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+
+      if (!token || token !== expectedSecret) {
         const response: ApiResponse = {
           result: false,
-          error: 'Invalid API key',
-          code: 'INVALID_API_KEY',
+          error: 'Invalid webhook authorization',
+          code: 'INVALID_WEBHOOK_AUTH',
           timestamp: new Date().toISOString()
         };
         res.status(401).json(response);
@@ -443,7 +445,7 @@ export class AuthMiddleware {
       next();
 
     } catch (error: any) {
-      logger.error('Bot API key validation failed:', error);
+      logger.error('AI Gateway auth validation failed:', error);
       const response: ApiResponse = {
         result: false,
         error: 'Authentication failed',
@@ -452,6 +454,13 @@ export class AuthMiddleware {
       };
       res.status(500).json(response);
     }
+  }
+
+  /**
+   * @deprecated Use requireAIGatewayAuth instead
+   */
+  static requireBotApiKey(req: Request, res: Response, next: NextFunction): void {
+    return AuthMiddleware.requireAIGatewayAuth(req, res, next);
   }
 
   /**

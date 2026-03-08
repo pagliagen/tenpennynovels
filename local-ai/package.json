@@ -1,0 +1,22 @@
+{
+  "name": "@tenpennynovels/local-ai",
+  "version": "1.0.0",
+  "description": "TenPennyNovels Local AI Platform - Independent AI services",
+  "private": true,
+  "workspaces": [
+    "gateway",
+    "services/*"
+  ],
+  "scripts": {
+    "postinstall": "patch-package",
+    "dev": "docker compose up -d ollama mongodb && concurrently -n \"gw,botai,qa\" -c \"blue,green,yellow\" \"npm run dev -w gateway\" \"npm run dev -w services/botai\" \"npm run dev -w services/qa\"",
+    "start": "docker compose up -d",
+    "stop": "docker compose down",
+    "logs": "docker compose logs -f",
+    "pull-models": "docker compose exec ollama ollama pull mistral:7b-instruct",
+    "health": "curl -s http://localhost:9000/health | jq"
+  },
+  "devDependencies": {
+    "patch-package": "^8.0.0"
+  }
+}

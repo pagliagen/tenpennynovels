@@ -107,3 +107,6 @@ Dockerfile
 
 # Materials (static assets not needed in production)
 Materiale Sito/
+
+# Local AI Folder
+local-ai/

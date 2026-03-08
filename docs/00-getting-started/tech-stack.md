@@ -547,11 +547,11 @@ embeddingQueue.process(5, async (job) => {
 
 ---
 
-### BotAI - Claude Sonnet 4.5 (Disabled)
+### BotAI - Ollama (Local AI)
 
-**Model**: Claude 3.5 Sonnet (Anthropic)
-**Integration**: Webhook-based
-**Status**: Temporarily disabled (migrating to unified-backend)
+**Model**: Mistral 7B Instruct (via Ollama, locale e gratuito)
+**Integration**: Gateway con HMAC + callback
+**Status**: Attivo tramite Local AI Platform (`local-ai/`)
 
 **Features**:
 - Psychology system (6 axes, central wound)

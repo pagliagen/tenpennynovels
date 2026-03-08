@@ -19,7 +19,6 @@
 'use client';
 
 import { useRouter } from 'next/router';
-import Image from 'next/image';
 import styles from '@/styles/components/locations/detail.module.scss';
 import type { AccessibleLocation } from '@/types/location';
 
@@ -100,11 +99,9 @@ export function LocationDetail({
       {/* Location Image */}
       {location.imageUrl && (
         <div className={styles.imageWrapper}>
-          <Image
+          <img
             src={location.imageUrl}
             alt={location.name}
-            width={600}
-            height={400}
             className={styles.locationImage}
           />
         </div>

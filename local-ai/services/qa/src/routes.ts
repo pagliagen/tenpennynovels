@@ -1,0 +1,26 @@
+import { Router, Request, Response } from 'express';
+import { askWithContext } from './services/RAGPipeline';
+import { createLogger } from '../../../shared/logger';
+
+const logger = createLogger('QA');
+const router = Router();
+
+router.post('/ask', async (req: Request, res: Response) => {
+  try {
+    const { question, context, options } = req.body;
+
+    const result = await askWithContext(
+      question,
+      context,
+      options?.locale || 'it',
+      options?.maxTokens || 800
+    );
+
+    res.json({ success: true, ...result });
+  } catch (error: any) {
+    logger.error(`Error in /ask: ${error.message}`);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+export default router;

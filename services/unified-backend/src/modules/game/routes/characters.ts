@@ -125,15 +125,14 @@ router.get('/occupations/:occupationId/check-prerequisites',
   CharacterGameplayController.checkOccupationPrerequisitesEndpoint
 );
 
-// Bot-only endpoint (API key auth, no JWT)
+// AI gateway callback endpoints
 router.post('/characters/bot',
-  AuthMiddleware.requireBotApiKey,
+  AuthMiddleware.requireAIGatewayAuth,
   CharacterController.createBotCharacter
 );
 
-// Complete bot character creation endpoint (API key auth, no JWT)
 router.post('/characters/bot/complete',
-  AuthMiddleware.requireBotApiKey,
+  AuthMiddleware.requireAIGatewayAuth,
   CharacterController.createCompleteBotCharacter
 );
 

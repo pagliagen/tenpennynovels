@@ -168,8 +168,7 @@ This script automatically copies all `.env` templates to their correct destinati
 
 **⚠️ IMPORTANT:** Before pushing to Git, make sure you've configured all secrets in the template files (`deploy/env-templates/*.env`):
 - JWT secrets (generate with `openssl rand -hex 64`)
-- Anthropic API key
-- Bot API key (generate with `openssl rand -hex 32`)
+- AI Gateway secrets (generate with `openssl rand -hex 32`)
 - SMTP credentials
 - MongoDB URI (if authentication is enabled)
 
@@ -326,8 +325,10 @@ https://gestione.tenpennynovels.com
 - `NODE_ENV`: production
 - `PORT`: 8080
 - `MONGODB_URI`: MongoDB connection string
-- `ANTHROPIC_API_KEY`: ⚠️ **MUST CHANGE**
-- `GAME_BACKEND_BOT_API_KEY`: ⚠️ **MUST CHANGE**
+- `AI_GATEWAY_URL`: URL ngrok del gateway AI locale
+- `AI_GATEWAY_HMAC_SECRET`: ⚠️ **MUST CHANGE** (generate with `openssl rand -hex 32`)
+- `AI_GATEWAY_API_KEY`: ⚠️ **MUST CHANGE**
+- `AI_GATEWAY_WEBHOOK_SECRET`: ⚠️ **MUST CHANGE**
 
 #### embeddings-service
 - `EMBEDDINGS_SERVICE_HOST`: 127.0.0.1

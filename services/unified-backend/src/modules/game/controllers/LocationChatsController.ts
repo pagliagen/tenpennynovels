@@ -305,7 +305,7 @@ export class LocationChatsController {
               // If next turn is bot, we'll set flag for notification
               if (nextTurn?.isBot) {
                 isBotTurnNext = true;
-                logger.info(`[TurnManager] Next turn is BOT, will notify botai-backend with isBotTurn flag`);
+                logger.info(`[TurnManager] Next turn is BOT, will notify local-ai with isBotTurn flag`);
               }
 
               // Emit WebSocket event for turn advancement
@@ -330,44 +330,81 @@ export class LocationChatsController {
       }
       // ========== END TURN MANAGEMENT ==========
 
-      // Check if location has bot configured and notify botai-backend
+      // Check if location has bot configured and notify AI gateway
       try {
-        const { botaiWebhookClient } = await import('../services/BotAIWebhookClient');
+        const { aiGatewayClient } = await import('../services/AIGatewayClient');
 
         if (location?.bot_enabled) {
-          // Bot enabled - botai-backend will decide which bot responds
-          // Check if bot is disabled for current session
-          if (sessionId) {
-            const session = await GamingSession.findById(sessionId);
+          const shouldNotify = !sessionId || !(await GamingSession.findById(sessionId))?.botDisabledForSession;
 
-            if (!session?.botDisabledForSession) {
-              // Try to notify botai-backend with sessionId and isBotTurn flag
-              const success = await botaiWebhookClient.notifyLocationAction(
-                savedAction,
-                sessionId, // Use sessionId from session management above
-                isBotTurnNext // Pass flag indicating if next turn is bot
-              );
+          if (shouldNotify) {
+            const healthy = await aiGatewayClient.isHealthy();
+            if (healthy) {
+              const recentActions = await LocationAction.find({ locationId })
+                .sort({ timestamp: -1 }).limit(10).lean();
 
-              // If notification fails, disable bot for this session
-              if (!success && session) {
-                session.botDisabledForSession = true;
-                await session.save();
-                logger.info(`[BotAI] Bot disabled for session ${session._id} due to connection failure`);
+              const presentChars = await LocationAction.distinct('characterId', {
+                locationId,
+                timestamp: { $gte: new Date(Date.now() - 60 * 60 * 1000) },
+              });
+              const presentCharacters = await Character.find({ _id: { $in: presentChars } })
+                .select('_id name').lean();
+
+              const botId = location.bot_id || '';
+              const botCharacter = location.botCharacterId
+                ? await Character.findById(location.botCharacterId).lean()
+                : null;
+
+              const callbackSecret = process.env.AI_GATEWAY_WEBHOOK_SECRET;
+              const backendUrl = process.env.BACKEND_URL || 'https://api.tenpennynovels.it';
+
+              const success = await aiGatewayClient.notifyBotAction({
+                requestId: savedAction._id.toString(),
+                bot: { id: botId.toString(), name: botCharacter?.name || 'Bot' },
+                context: {
+                  location: {
+                    id: locationId,
+                    name: location.name,
+                    description: location.description,
+                  },
+                  triggeringAction: {
+                    id: savedAction._id.toString(),
+                    characterId: character.characterId,
+                    characterName: character.characterName,
+                    content: content.trim(),
+                    type: actionType,
+                  },
+                  recentActions: recentActions.reverse().map((a: any) => ({
+                    characterId: a.characterId?.toString(),
+                    characterName: a.characterName,
+                    content: a.content,
+                    timestamp: a.timestamp?.toISOString(),
+                  })),
+                  presentCharacters: presentCharacters.map((c: any) => ({
+                    id: c._id.toString(),
+                    name: c.name,
+                  })),
+                },
+                callback: callbackSecret ? {
+                  url: `${backendUrl}/game/webhooks/bot-response`,
+                  method: 'POST',
+                  headers: { Authorization: `Bearer ${callbackSecret}` },
+                } : undefined,
+              });
+
+              if (!success && sessionId) {
+                const session = await GamingSession.findById(sessionId);
+                if (session) {
+                  session.botDisabledForSession = true;
+                  await session.save();
+                  logger.info(`[AIGateway] Bot disabled for session ${session._id} due to connection failure`);
+                }
               }
             }
-          } else {
-            // No active session - notify anyway for bot testing/free-form mode
-            logger.info(`[BotAI] No active session, notifying botai-backend anyway (free-form mode)`);
-            await botaiWebhookClient.notifyLocationAction(
-              savedAction,
-              undefined, // No sessionId
-              false // Not a bot turn (free-form)
-            );
           }
         }
       } catch (botError) {
-        // Don't fail the request if bot notification fails
-        logger.error('Failed to notify bot service:', botError);
+        logger.error('Failed to notify AI gateway:', botError);
       }
 
       // Prepare response action data
@@ -1231,9 +1268,9 @@ export class LocationChatsController {
   }
 
   /**
-   * Create bot action (called by botai-backend)
+   * Create bot action (called by local-ai via AI gateway)
    * POST /game/locations/actions/bot
-   * Requires BOT_API_KEY authentication
+   * Requires AI_GATEWAY_WEBHOOK_SECRET authentication
    */
   static async createBotMessage(req: Request, res: Response): Promise<void> {
     try {

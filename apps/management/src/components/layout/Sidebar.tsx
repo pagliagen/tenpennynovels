@@ -46,6 +46,14 @@ const NAV_ITEMS: NavItem[] = [
     ]
   },
   {
+    key: 'locations',
+    label: 'Location',
+    icon: '🗺️',
+    children: [
+      { key: 'locations-list', label: 'Gestione Location', href: '/locations/location-list', permission: 'locations.list' }
+    ]
+  },
+  {
     key: 'documents',
     label: 'Documenti',
     icon: '📄',
@@ -71,7 +79,7 @@ export function Sidebar(): React.ReactElement {
   const router = useRouter();
   const { sidebarCollapsed, toggleSidebar } = useUIStore();
   const { hasPermission } = usePermissionsStore();
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set(['users', 'characters', 'documents']));
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set(['users', 'characters', 'locations', 'documents']));
 
   const toggleCategory = (key: string) => {
     setExpandedCategories(prev => {

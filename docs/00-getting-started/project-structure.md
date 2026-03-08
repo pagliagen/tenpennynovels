@@ -313,9 +313,9 @@ app.use('/socket.io', createProxyMiddleware({
 **Purpose**: AI-powered bot characters (temporarily disabled)
 
 **Port**: 8080
-**Tech**: Express, Anthropic SDK, Claude Sonnet 4.5
+**Tech**: Express, Ollama (modelli locali)
 
-**Status**: Disabled - migrating to unified-backend
+**Status**: Sostituito da Local AI Platform (`local-ai/`)
 
 **Details**: [BotAI Backend](../02-backend/botai-backend.md)
 

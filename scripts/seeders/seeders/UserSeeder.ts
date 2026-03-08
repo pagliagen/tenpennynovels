@@ -2,158 +2,123 @@
  * User Seeder - Standalone Script
  *
  * Creates initial admin users and test accounts.
- * IMPORTANT: When using --force, deletes Characters FIRST to avoid orphaned records.
- *
- * NO dependencies on unified-backend mongoose models.
+ * When using --force, deletes Characters FIRST to avoid orphaned records.
  */
 
 import { getConnection } from '../utils/connection.js';
 import * as bcrypt from 'bcryptjs';
 
-export class UserSeeder {
-  name = 'users';
-  description = 'Seed initial users (admin accounts, test users)';
+const ADMIN_ACCOUNTS = [
+  { username: 'admin', email: 'gennaro.paglia@gmail.com', password: 'admin123', displayName: 'System Administrator' },
+  { username: 'tibbi', email: 'gdrplayer89@gmail.com', password: 'tibbi', displayName: 'Tibbi' },
+  { username: 'susi', email: 'tenpennynovels@gmail.com', password: 'susi', displayName: 'Susanna' },
+  { username: 'linda', email: 'sonolindanegrini@gmail.com', password: 'linda', displayName: 'Linda' }
+];
 
-  async seed(force: boolean = false): Promise<void> {
-    const { client, db } = await getConnection();
+async function seedUsers() {
+  console.log('👤 User Seeder\n');
+  const { client, db } = await getConnection();
+  const force = process.argv.includes('--force');
 
-    try {
-      const usersCollection = db.collection('users');
-      const charactersCollection = db.collection('characters');
+  try {
+    const usersCol = db.collection('users');
+    const charsCol = db.collection('characters');
 
-      console.log('👤 User Seeder\n');
+    const adminUsernames = ADMIN_ACCOUNTS.map(u => u.username);
+    const existingAdmins = await usersCol.countDocuments({ username: { $in: adminUsernames } });
 
-      // Check if admin users already exist
-      const adminCount = await usersCollection.countDocuments({ canAccessAdminPanel: true });
+    if (existingAdmins > 0 && !force) {
+      console.log(`   ℹ️  ${existingAdmins} admin users already exist, skipping`);
+      console.log('   💡 Use --force to re-seed\n');
+      return;
+    }
 
-      if (adminCount > 0 && !force) {
-        console.log(`   ℹ️  ${adminCount} admin users already exist, skipping seeding`);
-        console.log('   💡 Use --force to re-seed\n');
-        return;
+    if (force && existingAdmins > 0) {
+      console.log('   🗑️  --force: cascade deleting existing admin data...');
+
+      const existingUsers = await usersCol.find({ username: { $in: adminUsernames } }).toArray();
+      const userIds = existingUsers.map((u: any) => u._id);
+
+      if (userIds.length > 0) {
+        const delChars = await charsCol.deleteMany({ $or: [
+          { userId: { $in: userIds } },
+          { name: { $in: adminUsernames } }
+        ]});
+        console.log(`   ✓ Deleted ${delChars.deletedCount} characters`);
       }
 
-      // Admin accounts to seed
-      const adminAccounts = [
-        {
-          username: 'admin',
-          email: 'gennaro.paglia@gmail.com',
-          password: 'admin123',
-          displayName: 'System Administrator'
-        },
-        {
-          username: 'tibbi',
-          email: 'gdrplayer89@gmail.com',
-          password: 'tibbi',
-          displayName: 'Tibbi'
-        },
-        {
-          username: 'susi',
-          email: 'tenpennynovels@gmail.com',
-          password: 'susi',
-          displayName: 'Susanna'
-        },
-        {
-          username: 'linda',
-          email: 'sonolindanegrini@gmail.com',
-          password: 'linda',
-          displayName: 'Linda'
-        }
-      ];
+      const delUsers = await usersCol.deleteMany({ username: { $in: adminUsernames } });
+      console.log(`   ✓ Deleted ${delUsers.deletedCount} users\n`);
+    }
 
-      // CRITICAL: Delete Characters FIRST if --force flag is used
-      if (force && adminCount > 0) {
-        console.log('🗑️  --force flag detected, performing cascade deletion...\n');
+    console.log('   👤 Creating admin users...\n');
 
-        // Get userIds for admin users
-        const adminUsernames = adminAccounts.map(u => u.username);
-        const existingUsers = await usersCollection.find({
-          username: { $in: adminUsernames }
-        }).toArray();
-
-        if (existingUsers.length > 0) {
-          const userIds = existingUsers.map((u: any) => u._id);
-
-          // STEP 1: Delete Characters FIRST (cascade by userId)
-          const deletedCharactersByUserId = await charactersCollection.deleteMany({
-            userId: { $in: userIds }
-          });
-          console.log(`   ✓ Deleted ${deletedCharactersByUserId.deletedCount} characters by userId\n`);
-        }
-
-        // STEP 1b: Delete Characters by name (handle orphaned characters with admin names)
-        const deletedCharactersByName = await charactersCollection.deleteMany({
-          name: { $in: adminUsernames }
-        });
-        console.log(`   ✓ Deleted ${deletedCharactersByName.deletedCount} characters by name\n`);
-
-        // STEP 2: Delete Users
-        const deletedUsers = await usersCollection.deleteMany({
-          username: { $in: adminUsernames }
-        });
-        console.log(`   ✓ Deleted ${deletedUsers.deletedCount} users\n`);
+    for (const admin of ADMIN_ACCOUNTS) {
+      const existing = await usersCol.findOne({ username: admin.username });
+      if (existing) {
+        console.log(`   ⏭️  ${admin.username} already exists, skipping`);
+        continue;
       }
 
-      // STEP 3: Create admin users
-      console.log('👤 Creating admin users...\n');
+      const adminData = {
+        username: admin.username,
+        email: admin.email,
+        passwordHash: await bcrypt.hash(admin.password, 12),
+        displayName: admin.displayName,
+        isEmailVerified: true,
+        canAccessAdminPanel: true,
+        isActive: true,
+        isBanned: false,
+        multipleCharactersAllowed: false,
+        userRoles: ['user'],
+        characterRoles: ['amministratore'],
+        characterPermissions: [],
+        preferences: {
+          emailNotifications: true,
+          marketingEmails: false,
+          theme: 'victorian_dark',
+          language: 'it',
+          timezone: 'Europe/Rome'
+        },
+        loginCount: 0,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
 
-      for (const admin of adminAccounts) {
-        const adminData = {
-          username: admin.username,
-          email: admin.email,
-          passwordHash: await bcrypt.hash(admin.password, 12),
-          displayName: admin.displayName,
-          isEmailVerified: true,
-          canAccessAdminPanel: true,
-          isActive: true,
-          isBanned: false,
-          multipleCharactersAllowed: false,
-          userRoles: ['user'],
-          characterRoles: ['amministratore'],
-          characterPermissions: [],
-          preferences: {
-            emailNotifications: true,
-            marketingEmails: false,
-            theme: 'victorian_dark',
-            language: 'it',
-            timezone: 'Europe/Rome'
-          },
-          loginCount: 0,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        };
+      const userResult = await usersCol.insertOne(adminData);
+      console.log(`   ✓ Created admin: ${admin.username}/${admin.password}`);
 
-        const userResult = await usersCollection.insertOne(adminData);
-        console.log(`   ✓ Created admin: ${adminData.username}/${admin.password}`);
+      await charsCol.insertOne({
+        userId: userResult.insertedId,
+        name: admin.username,
+        status: 'APPROVED',
+        adminRoles: ['amministratore'],
+        gameplayRoles: ['master'],
+        isGestore: true,
+        characterPermissions: [],
+        skills: {},
+        isActive: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        submittedAt: new Date(),
+        approvedAt: new Date(),
+        approvedBy: userResult.insertedId,
+        approvedByName: 'System'
+      });
+      console.log(`   ✓ Created admin character: ${admin.username} (isGestore=true)`);
+    }
 
-        // Create admin Character with isGestore=true
-        const adminCharacterData = {
-          userId: userResult.insertedId,
-          name: admin.username,
-          status: 'APPROVED',
-          adminRoles: ['amministratore'],
-          gameplayRoles: ['master'],
-          isGestore: true,  // Super-admin flag
-          characterPermissions: [],
-          skills: {},
-          isActive: false,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          submittedAt: new Date(),
-          approvedAt: new Date(),
-          approvedBy: userResult.insertedId,
-          approvedByName: 'System'
-        };
+    // Test user
+    console.log('\n   👤 Creating test user...');
+    const existingTest = await usersCol.findOne({ username: 'testuser' });
 
-        await charactersCollection.insertOne(adminCharacterData);
-        console.log(`   ✓ Created admin character: ${admin.username} (isGestore=true)`);
-      }
+    if (existingTest && force) {
+      await charsCol.deleteMany({ userId: existingTest._id });
+      await usersCol.deleteOne({ username: 'testuser' });
+    }
 
-      console.log('');
-
-      // Create test user
-      console.log('👤 Creating test user...\n');
-
-      const testUserData = {
+    if (!existingTest || force) {
+      await usersCol.insertOne({
         username: 'testuser',
         email: 'test@tenpennynovels.com',
         passwordHash: await bcrypt.hash('test123', 12),
@@ -176,51 +141,24 @@ export class UserSeeder {
         loginCount: 0,
         createdAt: new Date(),
         updatedAt: new Date()
-      };
-
-      const existingTestUser = await usersCollection.findOne({ username: testUserData.username });
-      if (!existingTestUser || force) {
-        if (force && existingTestUser) {
-          // Delete test user's characters first
-          await charactersCollection.deleteMany({ userId: existingTestUser._id });
-          await usersCollection.deleteOne({ username: testUserData.username });
-        }
-
-        await usersCollection.insertOne(testUserData);
-        console.log('   ✓ Created test user: testuser/test123\n');
-      }
-
-      // Stats
-      const totalUsers = await usersCollection.countDocuments({});
-      const totalAdmins = await usersCollection.countDocuments({ canAccessAdminPanel: true });
-
-      console.log('📊 Stats:');
-      console.log(`   Total users: ${totalUsers}`);
-      console.log(`   Admin users: ${totalAdmins}\n`);
-
-      console.log('✅ User seeding completed');
-
-    } catch (error) {
-      console.error('❌ UserSeeder error:', error);
-      throw error;
-    } finally {
-      await client.close();
+      });
+      console.log('   ✓ Created test user: testuser/test123');
+    } else {
+      console.log('   ⏭️  testuser already exists, skipping');
     }
+
+    // Stats
+    const totalUsers = await usersCol.countDocuments({});
+    const totalAdmins = await usersCol.countDocuments({ canAccessAdminPanel: true });
+    console.log(`\n📊 Stats: ${totalUsers} users total, ${totalAdmins} admins\n`);
+
+  } catch (error) {
+    console.error('❌ Failed:', error);
+    process.exit(1);
+  } finally {
+    await client.close();
+    console.log('👋 Done');
   }
 }
 
-// Run seeder if called directly
-if (import.meta.url === `file://${process.argv[1]}`) {
-  const seeder = new UserSeeder();
-  const force = process.argv.includes('--force');
-
-  seeder.seed(force)
-    .then(() => {
-      console.log('👋 Done');
-      process.exit(0);
-    })
-    .catch((error) => {
-      console.error('❌ Seeding failed:', error);
-      process.exit(1);
-    });
-}
+seedUsers();
