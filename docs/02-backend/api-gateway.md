@@ -26,39 +26,21 @@ L'API Gateway è il **punto di ingresso unico** per tutte le richieste HTTP/WebS
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                      Internet (HTTPS)                       │
-│                           ↓                                 │
-│              Nginx Reverse Proxy (SSL/TLS)                  │
-└─────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────┐
-│                   API Gateway (Port 8000)                   │
-│  ┌───────────────────────────────────────────────────────┐  │
-│  │ CORS Middleware - Validate origin                     │  │
-│  │ Rate Limiting - 30/120 req/min                        │  │
-│  │ Request Logging - Morgan + Winston                    │  │
-│  │ Body Parsing - JSON/URL-encoded (non-proxied only)    │  │
-│  └───────────────────────────────────────────────────────┘  │
-│                           ↓                                 │
-│  ┌───────────────────────────────────────────────────────┐  │
-│  │          Proxy Routes (http-proxy-middleware)         │  │
-│  │  /socket.io/** → ws: true (WebSocket upgrade)         │  │
-│  │  /auth/*      → http://unified-backend:3001/auth/*    │  │
-│  │  /game/*      → http://unified-backend:3001/game/*    │  │
-│  │  /admin/*     → http://unified-backend:3001/admin/*   │  │
-│  │  /forum/*     → http://unified-backend:3001/forum/*   │  │
-│  │  /documents/* → http://unified-backend:3001/game/...  │  │
-│  └───────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────┐
-│             Unified Backend (Port 3001)                     │
-│  ┌──────────┬──────────┬──────────┬──────────┬──────────┐  │
-│  │   auth   │   game   │  admin   │  forum   │documents │  │
-│  └──────────┴──────────┴──────────┴──────────┴──────────┘  │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    Internet["Internet (HTTPS)"]
+    Nginx["Nginx Reverse Proxy (SSL/TLS)"]
+    subgraph Gateway["API Gateway (Port 8000)"]
+        Middleware["CORS Middleware - Validate origin\nRate Limiting - 30/120 req/min\nRequest Logging - Morgan + Winston\nBody Parsing - JSON/URL-encoded"]
+        Proxy["Proxy Routes (http-proxy-middleware)\n/socket.io/** → ws: true\n/auth/*, /game/*, /admin/*, /forum/*, /documents/*"]
+    end
+    subgraph Backend["Unified Backend (Port 3001)"]
+        Modules["auth | game | admin | forum | documents"]
+    end
+    Internet --> Nginx
+    Nginx --> Middleware
+    Middleware --> Proxy
+    Proxy --> Backend
 ```
 
 ---

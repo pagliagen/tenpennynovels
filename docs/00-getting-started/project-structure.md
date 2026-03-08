@@ -21,7 +21,7 @@ TenPennyNovels è organizzato come **monorepo** con npm workspaces. Tutti i fron
 
 ## Root Directory
 
-```
+```text
 tenpennynovels/
 ├── .claude/                # Claude AI project config
 ├── .git/                   # Git repository
@@ -202,7 +202,7 @@ tenpennynovels/
 **Tech**: Express 5.2.1, Mongoose 9.2.1, Socket.IO 4.8.3
 
 **Structure**:
-```
+```text
 services/unified-backend/
 ├── src/
 │   ├── modules/
@@ -272,7 +272,7 @@ app.listen(3001);
 **Tech**: Express 5.2.1, http-proxy-middleware 3.x
 
 **Structure**:
-```
+```text
 services/api-gateway/
 ├── src/
 │   ├── app.ts                # Main application
@@ -329,7 +329,7 @@ app.use('/socket.io', createProxyMiddleware({
 **Tech**: Flask 3.1.0, sentence-transformers
 
 **Structure**:
-```
+```text
 services/embeddings-service/
 ├── embeddings_service.py     # Flask app
 ├── requirements.txt          # Python dependencies
@@ -359,7 +359,7 @@ def generate_embedding():
 **Tech**: Node.js 22, Bull 4.x, TypeScript
 
 **Structure**:
-```
+```text
 services/embeddings-worker/
 ├── src/
 │   ├── workers/
@@ -394,7 +394,7 @@ embeddingQueue.process(5, async (job) => {
 
 ### Testing Scripts
 
-```
+```text
 scripts/
 ├── test-auth-endpoints.sh        # Test authentication API
 ├── test-game-endpoints.sh        # Test game logic API
@@ -419,7 +419,7 @@ scripts/
 
 ### Deployment Scripts
 
-```
+```text
 scripts/
 ├── docker-backends.sh            # Start backend services only
 ├── start-dev.sh                  # Start development environment
@@ -432,7 +432,7 @@ scripts/
 
 **New Structure** (as of 2026-03-01):
 
-```
+```text
 docs/
 ├── INDEX.md                      # Master entry point
 ├── GLOSSARY.md                   # Victorian + tech terminology
@@ -515,7 +515,7 @@ docs/
 
 ## Deployment Configs (`/deploy`)
 
-```
+```text
 deploy/
 ├── docker/
 │   └── docker-compose.prod.yml   # Production overrides
@@ -638,7 +638,7 @@ Thumbs.db
 
 ### Frontend Apps
 
-```
+```text
 apps/landing/               - Landing app root
 apps/landing/src/           - Source code
 apps/landing/public/        - Static assets
@@ -656,7 +656,7 @@ apps/game/public/           - Static assets
 
 ### Backend Services
 
-```
+```text
 services/unified-backend/src/                    - Source code
 services/unified-backend/src/modules/            - Feature modules
 services/unified-backend/src/database/models/    - 42 Mongoose schemas
@@ -672,7 +672,7 @@ services/embeddings-worker/src/                  - Worker code
 
 ### Testing
 
-```
+```text
 scripts/test-*.sh           - API testing scripts
 apps/*/src/               - Frontend tests (future)
 ```
@@ -681,7 +681,7 @@ apps/*/src/               - Frontend tests (future)
 
 ### Documentation
 
-```
+```text
 docs/INDEX.md               - Documentation entry point
 docs/00-getting-started/    - Onboarding guides
 docs/01-infrastructure/     - Docker, DB, Redis

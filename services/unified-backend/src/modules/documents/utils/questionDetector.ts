@@ -6,8 +6,10 @@ const QUESTION_PREFIXES = [
 
 const REQUEST_PREFIXES = [
   'mi trovi', 'mi dici', 'mi spieghi', 'mi puoi', 'mi potresti',
+  'mi dai', 'mi daresti', 'mi fai', 'mi faresti',
   'dimmi', 'spiegami', 'elencami', 'parlami', 'descrivi', 'raccontami',
-  'puoi dirmi', 'puoi spiegarmi', 'puoi trovarmi',
+  'trovami', 'dammi', 'fammi',
+  'puoi dirmi', 'puoi spiegarmi', 'puoi trovarmi', 'puoi darmi',
   'vorrei sapere', 'voglio sapere',
 ];
 

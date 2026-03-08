@@ -2,15 +2,34 @@
 
 **Navigation**: [Home](../INDEX.md) > Frontend
 
-**Status**: ✅ Production Ready | **Last Updated**: 2026-03-01
+**Status**: ✅ Production Ready | **Last Updated**: 2026-03-08
 
-Documentazione delle 4 applicazioni frontend Next.js di TenPennyNovels.
+Documentation for the 4 frontend Next.js applications of TenPennyNovels.
 
 ---
 
 ## Overview
 
-TenPennyNovels utilizza 4 applicazioni frontend separate costruite con Next.js 16, ciascuna con uno scope specifico e ottimizzata per il proprio use case.
+TenPennyNovels uses 4 separate frontend applications built with Next.js 16, each with a specific scope and optimized for its use case.
+
+```mermaid
+flowchart TB
+    subgraph Frontend["Frontend Apps"]
+        L[Landing<br/>Port 4000]
+        G[Game<br/>Port 4001]
+        D[Documents<br/>Port 4003]
+        M[Management<br/>Port 4004]
+    end
+    
+    subgraph Backend["Backend"]
+        API[Unified Backend<br/>API + WebSocket]
+    end
+    
+    L --> API
+    G --> API
+    D --> API
+    M --> API
+```
 
 ---
 
@@ -21,30 +40,28 @@ TenPennyNovels utilizza 4 applicazioni frontend separate costruite con Next.js 1
 **Purpose**: Login, registration, character selection, onboarding.
 
 **Technology**:
-- Next.js 18.3.1
-- React 19.2.4
-- React Hook Form 7.54.2
+- Next.js 16.1.6
+- React 19.2
+- React Hook Form 7.71.2
+- Zod 4.3.6
 - SCSS Modules
 
 **Key Features**:
-- User registration con email verification
+- User registration with email verification
 - Login (remember-me optional)
 - Forgot password / reset password flow
-- Character selection (liste characters dell'utente)
-- Character wizard redirect (per creazione)
+- Character selection (user's character list)
+- Character wizard redirect (for creation)
 - Victorian-themed landing page
 
 **Routes**:
-- `/` - Landing page
+- `/` - Landing page (login)
 - `/register` - User registration
-- `/login` - Login form (future: removed, directly on `/`)
 - `/forgot-password` - Password reset request
-- `/reset-password/:token` - Password reset
+- `/reset-password/[token]` - Password reset
+- `/delete-account/[token]` - Account deletion
 - `/character-select` - Character selection
-- Email verification: link in email points to `/?token=xxx` (handled on index)
-- `/delete-account/:token` - Account deletion
-- `/privacy` - Privacy policy
-- `/terms` - Terms of service
+- `/character-creation` - Character creation wizard
 - `/credits` - Credits page
 
 **State Management**: Local component state + React Hook Form
@@ -55,11 +72,11 @@ TenPennyNovels utilizza 4 applicazioni frontend separate costruite con Next.js 1
 
 ### 2. Game App (Port 4001)
 
-**Purpose**: Main gameplay interface - locations, chat, sessions.
+**Purpose**: Main gameplay interface - locations, chat, sessions, character sheets.
 
 **Technology**:
 - Next.js 16.1.6
-- React 18.3.1
+- React 18.3
 - Socket.IO Client 4.8.3
 - Zustand 5.0.3
 - TanStack Query 5.62.11
@@ -67,7 +84,7 @@ TenPennyNovels utilizza 4 applicazioni frontend separate costruite con Next.js 1
 
 **Key Features**:
 - **Location Exploration**: Join/leave locations, view occupants
-- **Location Chat**: Real-time chat con turn-based system
+- **Location Chat**: Real-time chat with turn-based system
 - **Character Sheets**: View/edit character details
 - **Sessions**: Participate in gaming sessions
 - **OffGame Chat**: Private messages with other players
@@ -75,7 +92,7 @@ TenPennyNovels utilizza 4 applicazioni frontend separate costruite con Next.js 1
 - **Admin Panel Access**: Link to management app (if admin)
 
 **State Management**:
-- Zustand store (game state, locations, characters)
+- Zustand stores (auth, chat, locations, windows, presence, game state, wizard, UI)
 - WebSocketContext (real-time events)
 - TanStack Query (server state caching)
 
@@ -83,13 +100,11 @@ TenPennyNovels utilizza 4 applicazioni frontend separate costruite con Next.js 1
 
 **Routes**:
 - `/` - Game home (location list)
-- `/locations/:slug` - Location detail with chat
-- `/characters` - Character list
-- `/characters/:id` - Character sheet
-- `/sessions` - Gaming sessions list
-- `/messages` - OnGame postal inbox
-- `/offgame` - OffGame chat
-- `/shop/:locationSlug` - Shop interface (if location hasShop)
+- `/locations` - Locations map
+- `/locations/[slug]` - Location detail
+- `/locations/[slug]/chat` - Location chat
+- `/character/wizard` - Character creation wizard
+- `/presenti-online` - Online presence list
 
 **File**: [Game App](./game-app.md)
 
@@ -97,32 +112,31 @@ TenPennyNovels utilizza 4 applicazioni frontend separate costruite con Next.js 1
 
 ### 3. Documents App (Port 4003)
 
-**Purpose**: Knowledge base, regolamento, ambientazione.
+**Purpose**: Knowledge base (ambientazione e regolamento) with semantic search.
 
 **Technology**:
 - Next.js 16.1.6
-- React 18.3.1
+- React 18.3
 - Zustand 5.0.3
 - TanStack Query 5.62.11
-- Marked 16.0.0 (Markdown rendering)
-- DOMPurify 3.2.6 (XSS protection)
+- Marked 17.0.3 (Markdown rendering)
+- DOMPurify 3.0.6 (XSS protection)
 - SCSS Modules
 
 **Key Features**:
 - **Document Browsing**: Hierarchical navigation (categories, documents)
 - **Semantic Search**: Vector-based + full-text search
 - **Favorites**: Save documents for quick access
-- **Dark Mode**: Toggle dark/light theme
 - **Responsive**: Mobile-optimized
 
 **Routes**:
-- `/` - Document home
-- `/ambientazione` - Setting documents
-- `/ambientazione/:slug` - Setting document detail
-- `/regolamento` - Rules documents
-- `/regolamento/:slug` - Rule document detail
-- `/search` - Search results
-- `/favoriti` - Saved favorites
+- `/` - Redirects to /ambientazione
+- `/ambientazione` - Setting documents index
+- `/ambientazione/[...slug]` - Setting document detail
+- `/regolamento` - Rules documents index
+- `/regolamento/[...slug]` - Rule document detail
+- `/preferiti` - Saved favorites
+- `/preferiti/[...slug]` - Favorite document detail
 
 **State Management**:
 - Zustand store (favorites, theme)
@@ -134,38 +148,43 @@ TenPennyNovels utilizza 4 applicazioni frontend separate costruite con Next.js 1
 
 ### 4. Management App (Port 4004)
 
-**Purpose**: Admin panel per gestione gioco.
+**Purpose**: Admin panel for game management.
 
 **Technology**:
 - Next.js 16.1.6
-- React 18.3.1
+- React 18.3
 - Zustand 5.0.3
 - TanStack Query 5.62.11
+- React Hook Form 7.71.2
+- Zod 3.25.1
+- TipTap editor (rich text)
+- dnd-kit (drag and drop)
 - SCSS Modules
 
 **Key Features**:
 - **Character Approval**: Review pending characters
 - **User Management**: Ban/unban, permissions
-- **Corporation Management**: Oversee organizations
-- **Housing Analytics**: Property management, revenue
+- **Location Management**: Location CRUD
 - **Document Management**: CRUD documents
 - **System Configuration**: Game settings
 - **Audit Logs**: Track admin actions
 - **Broadcast Messages**: System announcements
 
-**Routes**:
+**Routes** (basePath: `/gestione`):
 - `/` - Admin dashboard
-- `/characters/approval` - Pending approvals
-- `/characters/character-list` - All characters
 - `/users/user-list` - User management
-- `/users/permissions` - User permissions
-- `/corporations` - Corporation list
-- `/corporations/:id` - Corporation detail
-- `/housing` - Housing management
-- `/documents` - Document CRUD
+- `/users/ban-list` - Ban list
+- `/characters/character-list` - All characters
+- `/characters/character-pending` - Pending approvals
+- `/characters/permissions` - Character permissions
+- `/locations/location-list` - Location management
+- `/documents/document-list` - Document CRUD
+- `/documents/subtypes` - Document subtypes
 - `/system/configurations` - System config
 - `/system/audit-logs` - Audit trail
-- `/tickets/my-tickets` - Support tickets
+- `/system/broadcast` - Broadcast messages
+- `/system/maintenance` - Maintenance mode
+- `/system/deleted-records` - Deleted records
 
 **State Management**:
 - Zustand store (auth, UI state)
@@ -181,35 +200,13 @@ TenPennyNovels utilizza 4 applicazioni frontend separate costruite con Next.js 1
 
 ### Shared UI Library
 
-**Path**: `apps/shared-ui/`
+**Path**: `apps/shared-ui/` (or `packages/shared-ui`)
 
-**Purpose**: Centralized Victorian-themed design system condiviso tra tutte le app.
+**Package**: `@tenpennynovels/shared-ui`
 
-**Components**:
-- Typography: Victorian fonts (Barrio, IMFeENsc28P, Thrifted Attire)
-- Colors: Victorian palette (sepia, dark brown, gold accents)
-- Buttons: Styled buttons with Victorian aesthetic
-- Forms: Input fields, selects, checkboxes
-- Modals: Modal dialogs
-- Cards: Content containers
+**Purpose**: Centralized Victorian-themed design system shared between game and management apps.
 
-**SCSS Modules**:
-- `_variables.scss` - Color palette, fonts, spacing
-- `_mixins.scss` - Reusable style mixins
-- `_layout.scss` - Layout utilities
-- `components/` - Component styles
-
-**Usage**:
-```scss
-// In any app
-@import 'shared-ui/styles/variables';
-@import 'shared-ui/styles/mixins';
-
-.myComponent {
-  @include victorian-button;
-  color: $primary-color;
-}
-```
+**Used by**: Game App, Management App (Landing and Documents have their own styles)
 
 **File**: [Shared UI System](./shared-ui-system.md)
 
@@ -264,18 +261,36 @@ function MyComponent() {
 
 ## State Management Strategies
 
+```mermaid
+flowchart LR
+    subgraph Game["Game App"]
+        GZ[Zustand<br/>auth, chat, locations,<br/>windows, presence,<br/>gameState, wizard, UI]
+        GW[WebSocketContext<br/>Real-time events]
+        GQ[TanStack Query<br/>Server state]
+    end
+    
+    subgraph Management["Management App"]
+        MZ[Zustand<br/>auth, UI]
+        MQ[TanStack Query<br/>Admin data]
+    end
+    
+    subgraph Documents["Documents App"]
+        DZ[Zustand<br/>favorites, theme]
+        DQ[TanStack Query<br/>Documents]
+    end
+```
+
 ### Game App
 
-**Zustand Store** (game state):
-```typescript
-interface GameState {
-  currentLocation: Location | null;
-  characters: Character[];
-  sessions: Session[];
-  setLocation: (location: Location) => void;
-  // ...
-}
-```
+**Zustand Stores** (game state):
+- `authStore` - User, character, permissions
+- `chatStore` - Chat messages, typing state
+- `locationStore` - Current location, favorites
+- `windowManagerStore` - Open windows (character sheets, chat panels)
+- `presenceStore` - Online players
+- `gameStateStore` - Game session state
+- `wizardStore` - Character creation wizard
+- `uiStore` - Theme, sidebar state
 
 **WebSocketContext** (real-time):
 - Connection management
@@ -290,13 +305,8 @@ interface GameState {
 ### Management App
 
 **Zustand Store** (auth + UI):
-```typescript
-interface ManagementState {
-  user: User | null;
-  sidebarOpen: boolean;
-  // ...
-}
-```
+- `authStore` - User, permissions
+- `uiStore` - Sidebar, column visibility
 
 **TanStack Query** (admin data):
 - Character approvals
@@ -306,14 +316,8 @@ interface ManagementState {
 ### Documents App
 
 **Zustand Store** (favorites + theme):
-```typescript
-interface DocumentsState {
-  favorites: string[]; // document IDs
-  theme: 'light' | 'dark';
-  toggleFavorite: (docId: string) => void;
-  // ...
-}
-```
+- Favorites list
+- Theme preference
 
 **TanStack Query** (document data):
 - Document content
@@ -328,13 +332,18 @@ interface DocumentsState {
 
 All apps use Next.js file-based routing:
 
-```
-pages/
-├── index.tsx           → /
-├── login.tsx           → /login
-├── locations/
-│   └── [slug].tsx      → /locations/:slug
-└── api/                → API routes (rare, most API in backend)
+```mermaid
+flowchart TD
+    subgraph Pages["pages/"]
+        I[index.tsx]
+        L[locations/]
+        C[character/]
+    end
+    
+    I --> R1["/"]
+    L --> R2["/locations"]
+    L --> R3["/locations/[slug]"]
+    C --> R4["/character/wizard"]
 ```
 
 ### Cross-App Navigation
@@ -349,7 +358,7 @@ window.location.href = process.env.NEXT_PUBLIC_GAME_URL;
 window.location.href = process.env.NEXT_PUBLIC_MANAGEMENT_URL;
 ```
 
-**Note**: Full page reload necessario per cross-app navigation (different Next.js instances).
+**Note**: Full page reload required for cross-app navigation (different Next.js instances).
 
 ---
 
@@ -361,8 +370,8 @@ window.location.href = process.env.NEXT_PUBLIC_MANAGEMENT_URL;
 # Backend API
 NEXT_PUBLIC_API_URL=http://localhost:8000
 
-# WebSocket (Game App only)
-NEXT_PUBLIC_WEBSOCKET_URL=ws://localhost:8000
+# WebSocket (Game App and Management App)
+NEXT_PUBLIC_WS_URL=ws://localhost:8000
 
 # Cross-app URLs
 NEXT_PUBLIC_LANDING_URL=http://localhost:4000
@@ -390,32 +399,29 @@ npm run frontend:all
 
 ### Production Build
 
+Production deployment uses **PM2 + Next.js SSR** (standalone output), not Docker.
+
 ```bash
 # Build app
 cd apps/game
 npm run build
 
-# Start production server
+# Start production server (PM2 manages this)
 npm run start
 ```
 
-### Docker (Production)
+### Deployment Process
 
-```dockerfile
-# Multi-stage build
-FROM node:22-alpine AS builder
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci
-COPY . .
-RUN npm run build
+1. **Build**: `./deploy/primo-rilascio-manuale/build-all.sh` builds all services and apps
+2. **PM2**: Apps run via PM2 (`next start -p 400X`)
+3. **Nginx**: Reverse proxy routes traffic to each app port
 
-FROM node:22-alpine
-WORKDIR /app
-COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/node_modules ./node_modules
-CMD ["npm", "start"]
+```mermaid
+flowchart LR
+    Nginx --> L[Landing :4000]
+    Nginx --> G[Game :4001]
+    Nginx --> D[Documents :4003]
+    Nginx --> M[Management :4004]
 ```
 
 ---

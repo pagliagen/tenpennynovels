@@ -2,67 +2,73 @@
 
 **Navigation**: [Home](../INDEX.md) > [Infrastructure](./README.md) > Docker Compose
 
-**Status**: ✅ Production Ready | **Last Updated**: 2026-03-01
+**Status**: ✅ Production Ready | **Last Updated**: 2026-03-08
 
-Documentazione completa dell'infrastruttura Docker Compose di TenPennyNovels con 7 servizi containerizzati.
+Complete documentation of TenPennyNovels Docker Compose infrastructure with 7 containerized services.
 
 ---
 
 ## Overview
 
-TenPennyNovels utilizza **Docker Compose** per orchestrare tutti i servizi in un'unica rete containerizzata. Questo approccio garantisce:
+TenPennyNovels uses **Docker Compose** to orchestrate all services in a single containerized network. This approach provides:
 
-- **Isolamento completo**: Ogni servizio in container dedicato
-- **Networking semplificato**: Comunicazione via hostname Docker
-- **Deployment consistente**: Identico in dev/staging/production
-- **Hot-reload in development**: Volumi montati per tsx watch
-- **Health checks integrati**: Monitoraggio automatico stato servizi
+- **Complete isolation**: Each service in dedicated container
+- **Simplified networking**: Communication via Docker hostnames
+- **Consistent deployment**: Identical in dev/staging/production
+- **Hot-reload in development**: Volume mounts for tsx watch
+- **Integrated health checks**: Automatic service state monitoring
 
 ---
 
 ## Architecture Diagram
 
+```mermaid
+flowchart TB
+    subgraph Internet["Internet"]
+        HTTPS["HTTPS via Nginx"]
+    end
+
+    subgraph Network["tenpennynovels-network (Docker Bridge)"]
+        subgraph DataLayer["Data Layer"]
+            MongoDB["MongoDB (27017)"]
+            Redis["Redis (6379)"]
+            Qdrant["Qdrant (6333/6334)"]
+            Elasticsearch["ElasticSearch (9200)"]
+        end
+
+        subgraph EmbeddingsLayer["Embeddings Layer"]
+            EW["embeddings-worker (5001)"]
+        end
+
+        subgraph AppLayer["Application Layer"]
+            UB["Unified Backend (3001)"]
+            AG["API Gateway (8000)"]
+        end
+
+        MongoDB --> EW
+        Redis --> EW
+        Qdrant --> EW
+        Elasticsearch --> EW
+        MongoDB --> UB
+        Redis --> UB
+        Qdrant --> UB
+        EW --> UB
+        UB --> AG
+        AG --> HTTPS
+    end
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                    tenpennynovels-network                       │
-│                     (Docker Bridge Network)                     │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  ┌──────────────┐   ┌──────────────┐   ┌──────────────┐       │
-│  │   MongoDB    │   │    Redis     │   │   Qdrant     │       │
-│  │   (27017)    │   │   (6379)     │   │   (6333)     │       │
-│  │  Persistence │   │   Cache +    │   │   Vector     │       │
-│  │   Database   │   │   PubSub     │   │   Search     │       │
-│  └──────┬───────┘   └──────┬───────┘   └──────┬───────┘       │
-│         │                  │                   │                │
-│  ┌──────┴───────────────────┴───────────────────┴───────┐      │
-│  │                                                       │      │
-│  │            Embeddings Service (Flask 5001)           │      │
-│  │      paraphrase-multilingual-MiniLM-L12-v2           │      │
-│  │                                                       │      │
-│  └──────┬────────────────────────────────────────────────┘      │
-│         │                                                       │
-│  ┌──────┴────────────┐   ┌─────────────────────────────┐      │
-│  │ Embeddings Worker │   │    Unified Backend (3001)   │      │
-│  │  (Bull Queue)     │   │  ┌──────────────────────┐   │      │
-│  │                   │   │  │ auth   │ game        │   │      │
-│  └───────────────────┘   │  │ admin  │ documents   │   │      │
-│                          │  │ forum  │ tickets     │   │      │
-│                          │  └──────────────────────┘   │      │
-│                          └──────────┬──────────────────┘      │
-│                                     │                          │
-│                          ┌──────────┴──────────────────┐      │
-│                          │   API Gateway (8000)        │      │
-│                          │   - Proxy routing           │      │
-│                          │   - CORS handling           │      │
-│                          │   - Rate limiting           │      │
-│                          │   - WebSocket upgrade       │      │
-│                          └─────────────────────────────┘      │
-│                                     │                          │
-└─────────────────────────────────────┼──────────────────────────┘
-                                      │
-                                 Internet
-                             (HTTPS via Nginx)
+
+```mermaid
+flowchart LR
+    subgraph Services["7 Services"]
+        M["mongodb"]
+        R["redis"]
+        EW["embeddings-worker"]
+        Q["qdrant"]
+        ES["elasticsearch"]
+        UB["unified-backend"]
+        AG["api-gateway"]
+    end
 ```
 
 ---
@@ -73,7 +79,7 @@ TenPennyNovels utilizza **Docker Compose** per orchestrare tutti i servizi in un
 
 **Image**: `mongo:7.0`
 **Container**: `tenpennynovels-mongodb`
-**Purpose**: Database principale per tutti i dati persistenti
+**Purpose**: Primary database for all persistent data
 
 **Configuration**:
 ```yaml
@@ -93,8 +99,8 @@ healthcheck:
 ```
 
 **Collections**: 44+ schemas (users, characters, locations, documents, messages, etc.)
-**Indexes**: Ottimizzati per query frequenti (slug, characterId, userId)
-**Auth**: Sempre abilitato in production (`--auth`)
+**Indexes**: Optimized for frequent queries (slug, characterId, userId)
+**Auth**: Always enabled in production (`--auth`)
 
 **Details**: [MongoDB Schemas](./mongodb-schemas.md)
 
@@ -104,7 +110,7 @@ healthcheck:
 
 **Image**: `redis:7.2-alpine`
 **Container**: `tenpennynovels-redis`
-**Purpose**: Sessioni utenti, WebSocket adapter, event pub/sub, cache
+**Purpose**: User sessions, WebSocket adapter, event pub/sub, cache
 
 **Configuration**:
 ```yaml
@@ -121,12 +127,11 @@ healthcheck:
 - **Socket.IO Adapter**: Multi-instance WebSocket sync
 - **Bull Queue**: Job queue per embeddings worker
 - **Pub/Sub Channels**:
-  - `character:updated`
-  - `location:action`
-  - `document:created`
-  - `embedding:requested`
+  - `embedding:document:created`, `embedding:document:updated`, `embedding:document:deleted`
+  - `embedding:location:created`, `embedding:location:updated`, `embedding:location:deleted`
+  - `embedding:location_action:created`, `embedding:location_action:updated`, `embedding:location_action:deleted`
 
-**Persistence**: AOF (Append-Only File) abilitato
+**Persistence**: AOF (Append-Only File) enabled
 
 **Details**: [Redis Pub/Sub](./redis-pubsub.md)
 
@@ -136,7 +141,7 @@ healthcheck:
 
 **Image**: `qdrant/qdrant:v1.17.0`
 **Container**: `tenpennynovels-qdrant`
-**Purpose**: Vector database per semantic search
+**Purpose**: Vector database for semantic search
 
 **Configuration**:
 ```yaml
@@ -150,72 +155,102 @@ healthcheck:
 ```
 
 **Collections**:
-- `documents` - 384D vectors per semantic search documenti
-- Future: `characters`, `locations`
+- `document_chunks` - 384D vectors for document semantic search
+- `locations` - Location embeddings
+- `location_actions` - Location action embeddings
 
-**Performance**: ANN search < 100ms con 1000+ documenti
+**Performance**: ANN search < 100ms with 1000+ documents
 
 **Details**: [Qdrant Vector DB](./qdrant-vector-db.md)
 
 ---
 
-### 4. Embeddings Service (Port 5001)
+### 4. ElasticSearch (Port 9200)
 
-**Build**: `./services/embeddings-service/Dockerfile`
-**Container**: `tenpennynovels-embeddings-service`
-**Purpose**: Flask service per generazione embeddings
+**Image**: `elasticsearch:8.11.0`
+**Container**: `tenpennynovels-elasticsearch`
+**Purpose**: Full-text search for hybrid search (keyword + semantic)
 
 **Configuration**:
 ```yaml
 environment:
-  EMBEDDINGS_SERVICE_HOST: 0.0.0.0
-  EMBEDDINGS_SERVICE_PORT: 5001
-  EMBEDDINGS_MODEL: paraphrase-multilingual-MiniLM-L12-v2
-  LOG_LEVEL: INFO
+  - discovery.type=single-node
+  - xpack.security.enabled=false
+  - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+ports:
+  - "9200:9200"
+volumes:
+  - elasticsearch_data:/usr/share/elasticsearch/data
+healthcheck:
+  test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+  interval: 10s
+  timeout: 5s
+  retries: 5
+  start_period: 60s
 ```
 
-**Model**: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
-**Dimension**: 384D
-**Languages**: Multilingual (EN, IT, FR, DE, ES, etc.)
-**Performance**: ~50ms per embedding (cached), ~1.5s (first time)
+**Indices** (prefix: `tenpennynovels_`):
+- `tenpennynovels_document_chunks` - Document chunk full-text index
+- `tenpennynovels_locations` - Location full-text index
+- `tenpennynovels_location_actions` - Location action full-text index
 
-**API Endpoints**:
-- `POST /embed` - Generate embedding da testo
-- `GET /health` - Health check
+**Usage**: Keyword search combined with Qdrant semantic search via RRF (Reciprocal Rank Fusion)
 
-**Details**: [Embeddings Architecture](../04-ai-ml/embeddings-architecture.md)
+**Details**: [Qdrant Vector DB](./qdrant-vector-db.md) (hybrid search section)
 
 ---
 
-### 5. Embeddings Worker (No exposed port)
+### 5. Embeddings Worker (Port 5001)
 
 **Build**: `./services/embeddings-worker/Dockerfile`
 **Container**: `tenpennynovels-embeddings-worker`
-**Purpose**: Async worker per processing embeddings via Bull queue
+**Purpose**: Unified embedding service (replaces legacy Flask embeddings-service). Combines HTTP server, Python subprocess for sentence-transformers, and Bull queue for async processing.
+
+**Architecture**:
+- **HTTP Server** (port 5001): Sync embedding and hybrid search API for unified-backend
+- **Python Subprocess**: sentence-transformers (paraphrase-multilingual-MiniLM-L12-v2)
+- **Bull Queue**: Async embedding jobs with Dead Letter Queue for failed jobs
 
 **Configuration**:
 ```yaml
 environment:
+  NODE_ENV: production
+  HTTP_PORT: 5001
   MONGODB_URI: mongodb://admin:password@mongodb:27017/tenpennynovels?authSource=admin
   REDIS_URL: redis://redis:6379
-  EMBEDDINGS_SERVICE_URL: http://embeddings-service:5001
   QDRANT_URL: http://qdrant:6333
+  ELASTICSEARCH_URL: http://elasticsearch:9200
+  ELASTICSEARCH_INDEX_PREFIX: tenpennynovels
 depends_on:
   - mongodb (condition: service_healthy)
   - redis (condition: service_healthy)
-  - embeddings-service (condition: service_healthy)
+  - qdrant (condition: service_started)
+  - elasticsearch (condition: service_healthy)
+ports:
+  - "5001:5001"  # HTTP API for embeddings
 ```
 
-**Job Processing**:
-- **Queue**: Bull (Redis-backed)
-- **Concurrency**: 5 jobs paralleli
-- **Retry**: 3 tentativi con exponential backoff
-- **Cache**: Redis 1h per risultati
+**Model**: paraphrase-multilingual-MiniLM-L12-v2 (384 dimensions)
+**Performance**: ~50ms per embedding (cached), ~1.5s (first load)
 
-**Event Subscriptions**:
-- `document:created` → genera embedding + store in Qdrant
-- `document:updated` → rigenera embedding
-- `character:updated` → aggiorna vector (future)
+**API Endpoints**:
+- `POST /embed` - Generate embedding from text
+- `POST /search` - Hybrid search (keyword + semantic via RRF)
+- `GET /health` - Health check (returns 503 if Python not ready)
+
+**Job Processing**:
+- **Queue**: Bull (Redis-backed) - queue name: `embeddings`
+- **Concurrency**: 5 parallel jobs
+- **Retry**: 3 attempts with exponential backoff
+- **Dead Letter Queue**: Failed jobs after max retries
+- **Cache**: Redis 1h TTL for embedding results
+
+**Event Subscriptions** (Redis Pub/Sub):
+- `embedding:document:created`, `embedding:document:updated`, `embedding:document:deleted`
+- `embedding:location:created`, `embedding:location:updated`, `embedding:location:deleted`
+- `embedding:location_action:created`, `embedding:location_action:updated`, `embedding:location_action:deleted`
+
+**Details**: [Embeddings Architecture](../04-ai-ml/embeddings-architecture.md)
 
 ---
 
@@ -223,7 +258,7 @@ depends_on:
 
 **Build**: `./services/unified-backend/Dockerfile.dev`
 **Container**: `tenpennynovels-unified-backend`
-**Purpose**: Backend principale con tutti i moduli
+**Purpose**: Main backend with all modules
 
 **Modules**:
 ```
@@ -242,9 +277,11 @@ environment:
   NODE_ENV: development
   PORT: 3001
   MONGODB_URI: mongodb://admin:password@mongodb:27017/tenpennynovels?authSource=admin
+  REDIS_HOST: redis
+  REDIS_PORT: 6379
   REDIS_URL: redis://redis:6379
   QDRANT_URL: http://qdrant:6333
-  EMBEDDINGS_SERVICE_URL: http://embeddings-service:5001
+  EMBEDDINGS_SERVICE_URL: http://embeddings-worker:5001
   JWT_SECRET: <secure-secret>
   JWT_REFRESH_SECRET: <secure-secret>
 volumes:
@@ -320,12 +357,13 @@ depends_on:
 
 **Internal DNS**:
 ```
-mongodb:27017          → tenpennynovels-mongodb
-redis:6379             → tenpennynovels-redis
-qdrant:6333            → tenpennynovels-qdrant
-embeddings-service:5001 → tenpennynovels-embeddings-service
-unified-backend:3001   → tenpennynovels-unified-backend
-api-gateway:8000       → tenpennynovels-api-gateway
+mongodb:27017           → tenpennynovels-mongodb
+redis:6379              → tenpennynovels-redis
+qdrant:6333             → tenpennynovels-qdrant
+elasticsearch:9200      → tenpennynovels-elasticsearch
+embeddings-worker:5001  → tenpennynovels-embeddings-worker
+unified-backend:3001    → tenpennynovels-unified-backend
+api-gateway:8000        → tenpennynovels-api-gateway
 ```
 
 **Host Access** (via port mapping):
@@ -333,7 +371,8 @@ api-gateway:8000       → tenpennynovels-api-gateway
 localhost:27017 → MongoDB
 localhost:6379  → Redis
 localhost:6333  → Qdrant
-localhost:5001  → Embeddings Service
+localhost:9200  → ElasticSearch
+localhost:5001  → Embeddings Worker (HTTP API)
 localhost:3001  → Unified Backend
 localhost:8000  → API Gateway (PUBLIC ENTRY POINT)
 ```
@@ -362,6 +401,14 @@ volumes:
   qdrant_storage:
     driver: local
     name: tenpennynovels-qdrant-storage
+
+  elasticsearch_data:
+    driver: local
+    name: tenpennynovels-elasticsearch-data
+
+  cdn_storage:
+    driver: local
+    name: tenpennynovels-cdn-storage
 ```
 
 **Development Hot-Reload Volumes** (unified-backend):
@@ -513,8 +560,11 @@ curl -s http://localhost:8000/health | jq '.'
 # Unified Backend
 curl -s http://localhost:3001/health | jq '.'
 
-# Embeddings Service
+# Embeddings Worker
 curl -s http://localhost:5001/health | jq '.'
+
+# ElasticSearch
+curl -s http://localhost:9200/_cluster/health | jq '.'
 
 # Qdrant
 curl -s http://localhost:6333/healthz | jq '.'
@@ -695,9 +745,11 @@ services:
 
 - [Environment Variables](./environment-variables.md) - Complete env vars reference
 - [MongoDB Schemas](./mongodb-schemas.md) - Database models
-- [Redis Pub/Sub](./redis-pubsub.md) - Event channels
+- [Redis Pub/Sub](./redis-pubsub.md) - Event channels and Bull queues
+- [Qdrant Vector DB](./qdrant-vector-db.md) - Vector search and hybrid search
 - [Unified Backend](../02-backend/unified-backend-architecture.md) - Backend modules
 - [API Gateway](../02-backend/api-gateway.md) - Proxy configuration
+- [Embeddings Architecture](../04-ai-ml/embeddings-architecture.md) - ML pipeline
 - [Deployment Guide](../06-operations/deployment-guide.md) - Production deployment
 - [Docker Troubleshooting](../06-operations/docker-troubleshooting.md) - Common issues
 
@@ -713,4 +765,4 @@ services:
 
 **Public Entry Point**: `http://localhost:8000` (API Gateway)
 **Network**: `tenpennynovels-network` (bridge)
-**Volumes**: 4 persistent (mongodb_data, mongodb_config, redis_data, qdrant_storage)
+**Volumes**: 6 persistent (mongodb_data, mongodb_config, redis_data, qdrant_storage, elasticsearch_data, cdn_storage)

@@ -16,32 +16,27 @@ Il backend di TenPennyNovels utilizza un'architettura modulare consolidata in un
 
 ## Architecture
 
-```
-┌───────────────────────────┐
-│    Frontend Apps          │
-│  (Next.js 16, React 18)   │
-└────────────┬──────────────┘
-             │ HTTP/WebSocket
-     ┌───────▼───────┐
-     │  API Gateway  │ ← Port 8000
-     │  (Proxy)      │   Single Entry Point
-     └───────┬───────┘
-             │
-     ┌───────▼─────────────┐
-     │  Unified Backend    │ ← Port 3001
-     │                     │   Modular Monolith
-     ├─────────────────────┤
-     │  Module: auth       │ → /auth/*
-     │  Module: game       │ → /game/*
-     │  Module: admin      │ → /admin/*
-     │  Module: forum      │ → /forum/*
-     │  Module: documents  │ → /documents/*
-     └──────┬──────────────┘
-            │
-     ┌──────▼──────────────────────┐
-     │  Infrastructure             │
-     │  MongoDB, Redis, Qdrant     │
-     └─────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph Frontend["Frontend Apps"]
+        FA["Next.js 16, React 18"]
+    end
+    subgraph Gateway["API Gateway"]
+        AG["Proxy - Port 8000 - Single Entry Point"]
+    end
+    subgraph Backend["Unified Backend - Port 3001 - Modular Monolith"]
+        M1["Module: auth → /auth/*"]
+        M2["Module: game → /game/*"]
+        M3["Module: admin → /admin/*"]
+        M4["Module: forum → /forum/*"]
+        M5["Module: documents → /documents/*"]
+    end
+    subgraph Infra["Infrastructure"]
+        I["MongoDB, Redis, Qdrant"]
+    end
+    Frontend -->|HTTP/WebSocket| Gateway
+    Gateway --> Backend
+    Backend --> Infra
 ```
 
 ---
@@ -173,8 +168,9 @@ Il backend di TenPennyNovels utilizza un'architettura modulare consolidata in un
 
 ### Middleware Chain
 
-```
-Request → authenticateUser → authenticateCharacter → requireAdmin/requireGameplayRole → Controller
+```mermaid
+flowchart LR
+    A[Request] --> B[authenticateUser] --> C[authenticateCharacter] --> D[requireAdmin/requireGameplayRole] --> E[Controller]
 ```
 
 **Details**: [Authentication System](./authentication-system.md)

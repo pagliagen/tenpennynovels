@@ -23,23 +23,32 @@ TenPennyNovels utilizza embeddings vettoriali (vector representations) di testo 
 
 ### Event-Driven Zero-Latency Design
 
-```
-┌─────────────────┐      ┌──────────────┐      ┌──────────────────┐
-│  API Backends   │─────▶│ Redis Pub/Sub │─────▶│ Embeddings Worker│
-│ (Game/Mgmt)     │      │  (3 channels) │      │   (Node.js)      │
-└─────────────────┘      └──────────────┘      └──────────────────┘
-        │ 150ms                                         │ 100ms
-        ▼                                               ▼
-┌─────────────────┐                            ┌──────────────────┐
-│    MongoDB      │◀───────────────────────────│ Embeddings       │
-│   (Documents)   │      Update embeddings     │ Service (Flask)  │
-└─────────────────┘                            └──────────────────┘
-                                                         │
-                                                         ▼
-                                                ┌──────────────────┐
-                                                │ Qdrant Vector DB │
-                                                │ (future dual)    │
-                                                └──────────────────┘
+```mermaid
+flowchart TB
+    subgraph API["API Backends (Game/Mgmt)"]
+        A["Game/Mgmt"]
+    end
+    subgraph Redis["Redis Pub/Sub (3 channels)"]
+        R["Redis"]
+    end
+    subgraph Worker["Embeddings Worker (Node.js)"]
+        W["Worker"]
+    end
+    subgraph ES["Embeddings Service (Flask)"]
+        E["Flask"]
+    end
+    subgraph Mongo["MongoDB (Documents)"]
+        M["Documents"]
+    end
+    subgraph Qdrant["Qdrant Vector DB (future dual)"]
+        Q["Qdrant"]
+    end
+    A -->|150ms| R
+    A -->|150ms| Mongo
+    R -->|100ms| Worker
+    Worker --> ES
+    ES -->|Update embeddings| Mongo
+    ES --> Qdrant
 ```
 
 **Flow**:

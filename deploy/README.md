@@ -12,11 +12,8 @@ Complete guide for deploying TenPennyNovels on Ubuntu VPS with GitHub Actions au
 
 - **[scripts/](./scripts/)** - Script di deploy automatico (usati da GitHub Actions)
   - install-all.sh - Installa tutte le dipendenze
-  - build-all.sh - Build completo
-  - rebuild-frontend.sh - Rebuild solo frontend
 
 - **[utility/](./utility/)** - Script manuali occasionali (fix speciali)
-  - fix-websocket-env.sh - Fix WebSocket URLs
   - link-env.sh - Symlink env files (dev only)
 
 - **CDN_SETUP.md** - Guida setup CDN service
@@ -143,22 +140,18 @@ chmod +x deploy/*.sh
 ```
 
 This script automatically copies all `.env` templates to their correct destinations:
-- `deploy/env-templates/api-gateway.env` → `services/api-gateway/.env.production`
-- `deploy/env-templates/unified-backend.env` → `services/unified-backend/.env.production`
-- `deploy/env-templates/botai-backend.env` → `services/botai-backend/.env.production`
-- `deploy/env-templates/embeddings-service.env` → `services/embeddings-service/.env`
-- `deploy/env-templates/embeddings-worker.env` → `services/embeddings-worker/.env.production`
-- `deploy/env-templates/landing.env` → `apps/landing/.env.production`
-- `deploy/env-templates/game.env` → `apps/game/.env.production`
-- `deploy/env-templates/documents.env` → `apps/documents/.env.production`
-- `deploy/env-templates/management.env` → `apps/management/.env.production`
+- `deploy/primo-rilascio-manuale/env-templates/api-gateway.env` → `services/api-gateway/.env.production`
+- `deploy/primo-rilascio-manuale/env-templates/unified-backend.env` → `services/unified-backend/.env.production`
+- `deploy/primo-rilascio-manuale/env-templates/embeddings-worker.env` → `services/embeddings-worker/.env.production`
+- `deploy/primo-rilascio-manuale/env-templates/landing.env` → `apps/landing/.env.production`
+- `deploy/primo-rilascio-manuale/env-templates/game.env` → `apps/game/.env.production`
+- `deploy/primo-rilascio-manuale/env-templates/documents.env` → `apps/documents/.env.production`
+- `deploy/primo-rilascio-manuale/env-templates/management.env` → `apps/management/.env.production`
 
 **Expected output:**
 ```
 ✅ Copied api-gateway.env → services/api-gateway/.env.production
 ✅ Copied unified-backend.env → services/unified-backend/.env.production
-✅ Copied botai-backend.env → services/botai-backend/.env.production
-✅ Copied embeddings-service.env → services/embeddings-service/.env
 ✅ Copied embeddings-worker.env → services/embeddings-worker/.env.production
 ✅ Copied landing.env → apps/landing/.env.production
 ✅ Copied game.env → apps/game/.env.production
@@ -276,13 +269,12 @@ pm2 status
 ├─────┼────────────────────────────────┼─────────┼──────┼─────┼──────────┤
 │ 0   │ tenpennynovels-api-gateway     │ online  │ 0%   │ 45M │ 10s      │
 │ 1   │ tenpennynovels-unified-backend │ online  │ 0%   │ 98M │ 10s      │
-│ 2   │ tenpennynovels-botai-backend   │ online  │ 0%   │ 78M │ 10s      │
-│ 3   │ tenpennynovels-embeddings-...  │ online  │ 0%   │ 1.2G│ 10s      │
-│ 4   │ tenpennynovels-embeddings-...  │ online  │ 0%   │ 45M │ 10s      │
-│ 5   │ tenpennynovels-landing         │ online  │ 0%   │ 120M│ 10s      │
-│ 6   │ tenpennynovels-game            │ online  │ 0%   │ 130M│ 10s      │
-│ 7   │ tenpennynovels-documents       │ online  │ 0%   │ 110M│ 10s      │
-│ 8   │ tenpennynovels-management      │ online  │ 0%   │ 115M│ 10s      │
+│ 2   │ tenpennynovels-embeddings-svc  │ online  │ 0%   │ 1.2G│ 10s      │
+│ 3   │ tenpennynovels-embeddings-wkr  │ online  │ 0%   │ 45M │ 10s      │
+│ 4   │ tenpennynovels-landing         │ online  │ 0%   │ 120M│ 10s      │
+│ 5   │ tenpennynovels-game            │ online  │ 0%   │ 130M│ 10s      │
+│ 6   │ tenpennynovels-documenti       │ online  │ 0%   │ 110M│ 10s      │
+│ 7   │ tenpennynovels-gestione        │ online  │ 0%   │ 115M│ 10s      │
 └─────┴────────────────────────────────┴─────────┴──────┴─────┴──────────┘
 ```
 
@@ -320,20 +312,6 @@ https://gestione.tenpennynovels.com
 - `JWT_REFRESH_SECRET`: ⚠️ **MUST CHANGE**
 - `EMBEDDINGS_SERVICE_URL`: http://127.0.0.1:5001
 - `SMTP_*`: Email configuration
-
-#### botai-backend
-- `NODE_ENV`: production
-- `PORT`: 8080
-- `MONGODB_URI`: MongoDB connection string
-- `AI_GATEWAY_URL`: URL ngrok del gateway AI locale
-- `AI_GATEWAY_HMAC_SECRET`: ⚠️ **MUST CHANGE** (generate with `openssl rand -hex 32`)
-- `AI_GATEWAY_API_KEY`: ⚠️ **MUST CHANGE**
-- `AI_GATEWAY_WEBHOOK_SECRET`: ⚠️ **MUST CHANGE**
-
-#### embeddings-service
-- `EMBEDDINGS_SERVICE_HOST`: 127.0.0.1
-- `EMBEDDINGS_SERVICE_PORT`: 5001
-- `EMBEDDINGS_MODEL`: paraphrase-multilingual-MiniLM-L12-v2
 
 #### embeddings-worker
 - `NODE_ENV`: production
@@ -665,7 +643,7 @@ pm2 describe tenpennynovels-unified-backend
 
 ```bash
 # Backup MongoDB
-mongodump --db tenpennynovels-prod --out ~/backups/mongodb-$(date +%Y%m%d)
+mongodump --db tenpennynovels --out ~/backups/mongodb-$(date +%Y%m%d)
 
 # Backup Redis (if persistence is enabled)
 redis-cli SAVE

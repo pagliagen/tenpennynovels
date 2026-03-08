@@ -15,14 +15,14 @@ I client sono definiti nel file `clients.json` (array JSON, montato nel gateway 
     "name": "TenPennyNovels VPS",
     "apiKey": "a1b2c3d4...",
     "hmacSecret": "e5f6g7h8...",
-    "permissions": ["botai", "qa"],
+    "permissions": ["botai", "qa", "item-image-gen", "location-image-gen", "avatar-gen"],
     "rateLimit": { "maxPerMinute": 30 }
   },
   {
     "id": "tpn-dev",
     "name": "Local Development",
     "apiKey": "x9y8z7w6...",
-    "permissions": ["botai", "qa"],
+    "permissions": ["botai", "qa", "item-image-gen", "location-image-gen", "avatar-gen"],
     "rateLimit": { "maxPerMinute": 120 }
   }
 ]

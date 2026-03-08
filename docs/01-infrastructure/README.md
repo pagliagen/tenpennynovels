@@ -2,48 +2,53 @@
 
 **Navigation**: [Home](../INDEX.md) > Infrastructure
 
-**Status**: ✅ Production Ready | **Last Updated**: 2026-03-01
+**Status**: ✅ Production Ready | **Last Updated**: 2026-03-08
 
-Overview dell'infrastruttura TenPennyNovels: Docker, database, caching, vector search, event systems.
+Overview of TenPennyNovels infrastructure: Docker, database, caching, vector search, event systems.
 
 ---
 
 ## Overview
 
-L'infrastruttura di TenPennyNovels è completamente dockerizzata per consistenza tra development e production. Utilizza 7 servizi containerizzati orchestrati via Docker Compose.
+TenPennyNovels infrastructure is fully dockerized for consistency between development and production. It uses 7 containerized services orchestrated via Docker Compose.
 
 ---
 
 ## Architecture Diagram
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                    Frontend Apps                         │
-│  Landing:4000  Game:4001  Docs:4003  Mgmt:4004          │
-└────────────────────┬────────────────────────────────────┘
-                     │ HTTP/WebSocket
-         ┌───────────▼───────────┐
-         │   API Gateway :8000   │ ← Single Entry Point
-         │  (Proxy + WebSocket)  │
-         └───────────┬───────────┘
-                     │
-         ┌───────────▼────────────┐
-         │ Unified Backend :3001  │ ← Main Application
-         │   (5 modules)          │
-         └───┬────────────────┬───┘
-             │                │
-    ┌────────▼─────┐   ┌─────▼──────┐   ┌───────────────┐
-    │ MongoDB:27017│   │ Redis:6379 │   │ Qdrant:6333   │
-    │ (Persistence)│   │ (Pub/Sub)  │   │ (Vector DB)   │
-    └──────────────┘   └────────────┘   └───────────────┘
-                              │
-            ┌─────────────────┴─────────────────┐
-            │                                   │
-    ┌───────▼────────┐              ┌──────────▼──────────┐
-    │ Embeddings     │              │ Embeddings Worker   │
-    │ Service :5001  │              │ (Bull Queue)        │
-    │ (Flask ML)     │              │                     │
-    └────────────────┘              └─────────────────────┘
+```mermaid
+flowchart TB
+    subgraph Frontend["Frontend Apps"]
+        F["Landing:4000  Game:4001  Docs:4003  Mgmt:4004"]
+    end
+
+    subgraph Gateway["API Gateway :8000"]
+        AG["Single Entry Point (Proxy + WebSocket)"]
+    end
+
+    subgraph Backend["Unified Backend :3001"]
+        UB["Main Application (5 modules)"]
+    end
+
+    subgraph Data["Data Layer"]
+        M["MongoDB:27017"]
+        R["Redis:6379"]
+        Q["Qdrant:6333"]
+        ES["ElasticSearch:9200"]
+    end
+
+    subgraph Embeddings["embeddings-worker :5001"]
+        EW["HTTP + Python + Bull Queue"]
+    end
+
+    Frontend --> Gateway
+    Gateway --> Backend
+    Backend --> M
+    Backend --> R
+    Backend --> Q
+    Backend --> Embeddings
+    Embeddings --> Q
+    Embeddings --> ES
 ```
 
 ---
@@ -104,7 +109,7 @@ L'infrastruttura di TenPennyNovels è completamente dockerizzata per consistenza
 
 **Key Features**:
 - Approximate Nearest Neighbor (ANN) search <100ms
-- Collections: `documents`, `document_chunks`
+- Collections: `document_chunks`, `locations`, `location_actions`
 - 384-dimensional vectors (paraphrase-multilingual-MiniLM-L12-v2)
 - Point payloads with metadata filtering
 
@@ -117,44 +122,37 @@ L'infrastruttura di TenPennyNovels è completamente dockerizzata per consistenza
 
 ---
 
-### 4. Embeddings Service (Port 5001)
+### 4. ElasticSearch (Port 9200)
 
-**Purpose**: ML service for generating text embeddings.
+**Purpose**: Full-text search for hybrid search (keyword + semantic).
 
-**Technology**: Flask (Python 3.11), Sentence Transformers
+**Technology**: ElasticSearch 8.11.0
 
 **Key Features**:
-- Model: paraphrase-multilingual-MiniLM-L12-v2
-- 384-dimensional vectors
-- Endpoints: `/embed`, `/embed/batch`, `/health`
-- ~100ms per embedding, ~50ms cached
-- Multilingual support (IT, EN, +50 languages)
+- Indices: `tenpennynovels_document_chunks`, `tenpennynovels_locations`, `tenpennynovels_location_actions`
+- Combined with Qdrant via RRF (Reciprocal Rank Fusion)
+- Single-node mode (development)
 
-**Resource Usage**: ~500MB RAM (model loaded)
-
-**Health Check**: `curl /health`
-
-**Details**: [Embeddings Architecture](../04-ai-ml/embeddings-architecture.md)
+**Details**: [Qdrant Vector DB](./qdrant-vector-db.md) (hybrid search)
 
 ---
 
-### 5. Embeddings Worker
+### 5. Embeddings Worker (Port 5001)
 
-**Purpose**: Async processing of embedding generation jobs.
+**Purpose**: Unified embedding service (HTTP + Python subprocess + Bull queue). Replaces legacy Flask embeddings-service.
 
-**Technology**: Node.js, Bull Queue, Qdrant client
+**Technology**: Node.js, Python (sentence-transformers), Bull Queue
 
 **Key Features**:
-- Event-driven via Redis pub/sub
-- Concurrency: 5 jobs parallel
-- Retry strategy: 3 attempts, exponential backoff
-- Dual storage: MongoDB + Qdrant
+- HTTP server on port 5001 for sync embedding and hybrid search
+- Python subprocess for paraphrase-multilingual-MiniLM-L12-v2
+- Bull queue for async processing (concurrency: 5)
+- Dead Letter Queue for failed jobs
 - Redis cache (1h TTL)
+- Endpoints: `/embed`, `/search` (hybrid), `/health`
 
 **Events Subscribed**:
-- `EMBEDDING_DOCUMENT_CREATED`
-- `EMBEDDING_DOCUMENT_UPDATED`
-- `EMBEDDING_LOCATION_ACTION_CREATED`
+- `embedding:document:*`, `embedding:location:*`, `embedding:location_action:*`
 
 **Details**: [Embeddings Architecture](../04-ai-ml/embeddings-architecture.md)
 
@@ -231,6 +229,8 @@ Persistent volumes per data preservation:
 | `mongodb_config` | MongoDB | Configuration |
 | `redis_data` | Redis | AOF persistence |
 | `qdrant_storage` | Qdrant | Vector database |
+| `elasticsearch_data` | ElasticSearch | Full-text indices |
+| `cdn_storage` | unified-backend, api-gateway | CDN assets |
 
 **Backup Strategy**: [Backup & Restore](../06-operations/backup-restore.md)
 
@@ -244,9 +244,10 @@ Tutte le environment variables sono documentate in dettaglio:
 
 **Key Variables**:
 - `MONGODB_URI` - MongoDB connection string
-- `REDIS_URL` - Redis connection URL
+- `REDIS_HOST`, `REDIS_PORT`, `REDIS_URL` - Redis connection
 - `QDRANT_URL` - Qdrant API URL
-- `EMBEDDINGS_SERVICE_URL` - Embeddings service endpoint
+- `ELASTICSEARCH_URL` - ElasticSearch endpoint (embeddings-worker)
+- `EMBEDDINGS_SERVICE_URL` - Embeddings worker HTTP endpoint (http://embeddings-worker:5001)
 - `JWT_SECRET` - JWT signing secret
 - `NODE_ENV` - Environment (development/production)
 

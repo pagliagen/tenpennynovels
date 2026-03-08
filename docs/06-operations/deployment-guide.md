@@ -2,693 +2,500 @@
 
 **Navigation**: [Home](../INDEX.md) > [Operations](./README.md) > Deployment Guide
 
-**Status**: ✅ Production Ready | **Last Updated**: 2026-03-01
+**Status**: ✅ Production Ready | **Last Updated**: 2026-03-08
 
-Guida completa al deployment di TenPennyNovels in production con Docker.
-
----
-
-## Overview
-
-TenPennyNovels utilizza **Docker Compose** per orchestrare 7 servizi containerizzati in production. Questa guida copre setup, deployment, monitoring e troubleshooting.
+Guida completa al deployment di TenPennyNovels su VPS Ubuntu con PM2 e GitHub Actions.
 
 ---
 
-## Architecture
+## Architettura Produzione
 
-### Services
+```mermaid
+flowchart TD
+    subgraph internet ["Internet"]
+        Users["Browser Utenti"]
+    end
 
-```
-Production Stack (Docker Compose):
-├── MongoDB (7.0) - Port 27017
-├── Redis (7.2-alpine) - Port 6379
-├── Qdrant (1.17.0) - Port 6333
-├── Embeddings Service (Flask) - Port 5001
-├── Embeddings Worker (Node.js) - No exposed port
-├── Unified Backend (Node.js 22) - Port 3001
-└── API Gateway (Node.js 22) - Port 8000 (public entry)
+    subgraph nginx ["Nginx Reverse Proxy + SSL/TLS"]
+        N1["tenpennynovels.com :443"]
+        N2["game.tenpennynovels.com :443"]
+        N3["documenti.tenpennynovels.com :443"]
+        N4["gestione.tenpennynovels.com :443"]
+        N5["api.tenpennynovels.com :443"]
+        N6["ws.tenpennynovels.com :443"]
+        N7["cdn.tenpennynovels.com :443"]
+    end
+
+    subgraph pm2 ["PM2 Processi Node.js"]
+        L["Landing :4000"]
+        G["Game :4001"]
+        D["Documents :4003"]
+        M["Management :4004"]
+        GW["API Gateway :8000"]
+        UB["Unified Backend :3001"]
+        EW["Embeddings Worker :5001"]
+    end
+
+    subgraph infra ["Infrastructure (localhost)"]
+        DB["MongoDB :27017"]
+        RD["Redis :6379"]
+        QD["Qdrant :6333"]
+        ES["ElasticSearch :9200"]
+    end
+
+    Users --> nginx
+    N1 --> L
+    N2 --> G
+    N3 --> D
+    N4 --> M
+    N5 --> GW
+    N6 --> UB
+    N7 --> GW
+    GW --> UB
+    UB --> DB
+    UB --> RD
+    UB --> QD
+    UB --> EW
+    EW --> ES
+    EW --> QD
+    EW --> DB
 ```
 
-### Network
+### Subdomini e Porte
 
-```
-Internet (HTTPS)
-    ↓
-Nginx Reverse Proxy (SSL/TLS termination)
-    ↓
-API Gateway (Port 8000) - Docker internal network
-    ↓
-Unified Backend (Port 3001) - Docker internal network
-    ↓
-MongoDB, Redis, Qdrant - Docker internal network
-```
+| Subdomain | Servizio | Porta | PM2 Process | Mode |
+|-----------|----------|-------|-------------|------|
+| `tenpennynovels.com` | Landing App | 4000 | `tenpennynovels-landing` | fork |
+| `game.tenpennynovels.com` | Game App | 4001 | `tenpennynovels-game` | fork |
+| `documenti.tenpennynovels.com` | Documents App | 4003 | `tenpennynovels-documenti` | fork |
+| `gestione.tenpennynovels.com` | Management App | 4004 | `tenpennynovels-gestione` | fork |
+| `api.tenpennynovels.com` | API Gateway | 8000 | `tenpennynovels-api-gateway` | cluster x2 |
+| `ws.tenpennynovels.com` | Unified Backend (WebSocket) | 3001 | `tenpennynovels-unified-backend` | fork |
+| `cdn.tenpennynovels.com` | Static CDN | - | Nginx direct | - |
+
+**Nota**: unified-backend DEVE usare fork mode (NON cluster) -- cluster mode causa crash con il Redis adapter di Socket.IO.
 
 ---
 
-## Prerequisites
+## Prerequisiti Server
 
-### Server Requirements
+### Requisiti Minimi
 
-**Minimum (Development)**:
-- 2 vCPU
-- 4GB RAM
-- 40GB SSD
-- Ubuntu 20.04+ / Debian 11+
+- **OS**: Ubuntu 22.04 LTS
+- **CPU**: 4 vCPU
+- **RAM**: 8 GB
+- **SSD**: 100 GB
+- **Node.js**: v22.13.1 (via nvm)
+- **Python**: 3.8+
 
-**Recommended (Production)**:
-- 4 vCPU
-- 8GB RAM
-- 100GB SSD
-- Ubuntu 22.04 LTS
-
-### Software Requirements
+### Software Necessario
 
 ```bash
-# Docker
-docker --version  # 24.0.0+
+# Node.js via nvm
+nvm install 22.13.1 && nvm alias default 22.13.1
 
-# Docker Compose
-docker compose version  # 2.20.0+
+# PM2
+npm install -g pm2
 
-# Node.js (for local builds)
-node --version  # 22.13.1
+# Nginx + Certbot
+sudo apt install -y nginx certbot python3-certbot-nginx
 
-# Git
-git --version  # 2.30.0+
+# MongoDB, Redis installati come servizi systemd
+# Qdrant, ElasticSearch installati separatamente
 ```
 
 ---
 
-## Environment Setup
+## CI/CD Pipeline
 
-### 1. Clone Repository
+Il deploy avviene automaticamente tramite GitHub Actions su push al branch `master`.
 
-```bash
-# SSH (recommended for production)
-git clone git@github.com:your-org/tenpennynovels.git
-cd tenpennynovels
-
-# HTTPS
-git clone https://github.com/your-org/tenpennynovels.git
-cd tenpennynovels
+```mermaid
+flowchart LR
+    Push["Push to master"] --> BuildCheck["Build Check (CI)"]
+    BuildCheck --> Rsync["rsync to VPS"]
+    Rsync --> InstallDeps["Install Dependencies"]
+    InstallDeps --> BuildFE["Build Frontend"]
+    BuildFE --> BuildBE["Build Backend"]
+    BuildBE --> SetupPy["Setup Python venv"]
+    SetupPy --> PM2Restart["PM2 Restart"]
+    PM2Restart --> HealthCheck["Health Checks"]
 ```
+
+**File**: [`.github/workflows/deploy.yml`](../../.github/workflows/deploy.yml)
+
+**Nota importante**: Il workflow usa `pm2 startOrRestart ecosystem.config.js` -- il file [`ecosystem.config.js`](../../ecosystem.config.js) DEVE essere presente nella root del progetto.
+
+### GitHub Secrets Necessari
+
+| Secret | Descrizione |
+|--------|-------------|
+| `SSH_HOST` | IP o hostname del VPS |
+| `SSH_PORT` | Porta SSH |
+| `SSH_USERNAME` | Utente SSH |
+| `SSH_PRIVATE_KEY` | Chiave privata SSH |
+| `HF_TOKEN` | HuggingFace token (opzionale) |
 
 ---
 
-### 2. Configure Environment Variables
+## Variabili d'Ambiente
 
-```bash
-# Copy example
-cp .env.example .env
+### Come Funzionano
 
-# Edit production values
-nano .env
+I template sono in `deploy/primo-rilascio-manuale/env-templates/`. Lo script `copy-env-files.sh` li copia come `.env.production` in ogni servizio/app.
+
+```mermaid
+flowchart TD
+    subgraph templates ["deploy/primo-rilascio-manuale/env-templates/"]
+        T1["landing.env"]
+        T2["game.env"]
+        T3["documents.env"]
+        T4["management.env"]
+        T5["api-gateway.env"]
+        T6["unified-backend.env"]
+        T7["embeddings-worker.env"]
+    end
+
+    subgraph targets ["Destinazione sul server"]
+        D1["apps/landing/.env.production"]
+        D2["apps/game/.env.production"]
+        D3["apps/documents/.env.production"]
+        D4["apps/management/.env.production"]
+        D5["services/api-gateway/.env.production"]
+        D6["services/unified-backend/.env.production"]
+        D7["services/embeddings-worker/.env.production"]
+    end
+
+    T1 --> D1
+    T2 --> D2
+    T3 --> D3
+    T4 --> D4
+    T5 --> D5
+    T6 --> D6
+    T7 --> D7
 ```
 
-**Critical Variables**:
+**CRITICO**: I file `.env.production` NON vengono trasferiti via rsync (esclusi in `.github/rsync-exclude.txt`). Devono essere gia presenti sul server o copiati manualmente.
+
+**CRITICO per Next.js**: Le variabili `NEXT_PUBLIC_*` sono compilate durante il build. Modificare `.env.production` richiede un rebuild (`npm run build`), non basta riavviare PM2.
+
+### Variabili per Servizio
+
+#### Frontend Apps (tutte)
+
 ```bash
-# Environment
 NODE_ENV=production
+NEXT_PUBLIC_API_URL=https://api.tenpennynovels.com
+NEXT_PUBLIC_LANDING_URL=https://tenpennynovels.com
+NEXT_PUBLIC_GAME_URL=https://game.tenpennynovels.com
+NEXT_PUBLIC_DOCUMENTS_URL=https://documenti.tenpennynovels.com
+NEXT_PUBLIC_MANAGEMENT_URL=https://gestione.tenpennynovels.com
+```
 
-# Database
-MONGODB_URI=mongodb://username:password@mongodb:27017/tenpennynovels?authSource=admin
-MONGO_ROOT_USER=admin
-MONGO_ROOT_PASSWORD=<secure-password>
+Solo game e management aggiungono:
+```bash
+# Socket.IO usa https:// (NON wss://), auto-upgrade a WSS
+NEXT_PUBLIC_WS_URL=https://ws.tenpennynovels.com
+```
 
-# Redis
-REDIS_URL=redis://redis:6379
+#### Unified Backend (servizio principale)
 
-# JWT Secrets
-JWT_SECRET=<generate-secure-secret>
-JWT_REFRESH_SECRET=<generate-secure-secret>
-CHARACTER_SESSION_MANAGER_SECRET=<generate-secure-secret>
+```bash
+NODE_ENV=production
+PORT=3001
+MONGODB_URI=mongodb://127.0.0.1:27017/tenpennynovels
+REDIS_HOST=127.0.0.1
+REDIS_PORT=6379
+REDIS_URL=redis://127.0.0.1:6379
+QDRANT_URL=http://127.0.0.1:6333
+EMBEDDINGS_SERVICE_URL=http://127.0.0.1:5001
 
-# Qdrant
-QDRANT_URL=http://qdrant:6333
-
-# Embeddings
-EMBEDDINGS_SERVICE_URL=http://embeddings-service:5001
-
-# Frontend URLs (production domains)
+# CORS - tutti i frontend
+FRONTEND_URL=https://game.tenpennynovels.com
 LANDING_URL=https://tenpennynovels.com
 GAME_URL=https://game.tenpennynovels.com
 DOCUMENTS_URL=https://documenti.tenpennynovels.com
 MANAGEMENT_URL=https://gestione.tenpennynovels.com
+ALLOWED_ORIGINS=https://tenpennynovels.com,https://game.tenpennynovels.com,https://documenti.tenpennynovels.com,https://gestione.tenpennynovels.com
 
-# Email (for production notifications)
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=noreply@tenpennynovels.com
-SMTP_PASSWORD=<app-password>
-EMAIL_FROM=TenPennyNovels <noreply@tenpennynovels.com>
+# Segreti (generare con openssl rand -hex 64)
+JWT_SECRET=<generare>
+JWT_REFRESH_SECRET=<generare>
 
 # AI Gateway (local-ai via ngrok)
-AI_GATEWAY_URL=https://your-ngrok-url.ngrok-free.dev
-AI_GATEWAY_HMAC_SECRET=<generate-with-openssl-rand-hex-32>
-AI_GATEWAY_API_KEY=<generate-with-openssl-rand-hex-32>
-AI_GATEWAY_WEBHOOK_SECRET=<generate-with-openssl-rand-hex-32>
+AI_GATEWAY_URL=<url-ngrok>
+AI_GATEWAY_CLIENT_ID=tpn-prod
+AI_GATEWAY_API_KEY=<generare con openssl rand -hex 32>
+AI_GATEWAY_HMAC_SECRET=<generare con openssl rand -hex 32>
 
-# Monitoring (optional)
-SENTRY_DSN=https://...@sentry.io/...
+# Email SMTP
+SMTP_HOST=mail.tenpennynovels.com
+SMTP_PORT=465
+SMTP_SECURE=true
+SMTP_USER=info@tenpennynovels.com
+SMTP_PASS=<password>
+
+# CDN
+CDN_STORAGE_PATH=/var/www/cdn-cache
+CDN_BASE_URL=https://cdn.tenpennynovels.com
 ```
 
-**Generate Secrets**:
-```bash
-# Generate random secrets
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-```
-
-**Complete Reference**: [Environment Variables](../01-infrastructure/environment-variables.md)
-
----
-
-## Deployment Steps
-
-### Step 1: Build Docker Images
+#### API Gateway
 
 ```bash
-# Build all images
-docker compose build
-
-# Or build specific services
-docker compose build unified-backend
-docker compose build api-gateway
-docker compose build embeddings-service
-docker compose build embeddings-worker
+NODE_ENV=production
+PORT=8000
+UNIFIED_BACKEND_URL=http://127.0.0.1:3001
+TRUST_PROXY=true
+CDN_STORAGE_PATH=/var/www/cdn-cache
+# Frontend URLs per CORS
+LANDING_URL=https://tenpennynovels.com
+GAME_URL=https://game.tenpennynovels.com
+DOCUMENTS_URL=https://documenti.tenpennynovels.com
+MANAGEMENT_URL=https://gestione.tenpennynovels.com
 ```
 
-**Production Optimization**:
-```dockerfile
-# Multi-stage build already configured
-FROM node:22-alpine AS builder
-# ... build steps ...
-
-FROM node:22-alpine
-# ... runtime only
-```
-
----
-
-### Step 2: Start Services
+#### Embeddings Worker
 
 ```bash
-# Start all services (detached)
-docker compose up -d
-
-# View logs
-docker compose logs -f
-
-# Check status
-docker compose ps
-```
-
-**Expected Output**:
-```
-NAME                              STATUS    PORTS
-tenpennynovels-mongodb            Up        0.0.0.0:27017->27017/tcp
-tenpennynovels-redis              Up        0.0.0.0:6379->6379/tcp
-tenpennynovels-qdrant             Up        0.0.0.0:6333->6333/tcp
-tenpennynovels-embeddings-service Up        0.0.0.0:5001->5001/tcp
-tenpennynovels-embeddings-worker  Up
-tenpennynovels-unified-backend    Up        0.0.0.0:3001->3001/tcp
-tenpennynovels-api-gateway        Up        0.0.0.0:8000->8000/tcp
+NODE_ENV=production
+HTTP_PORT=5001
+PYTHON_PATH=python3
+MONGODB_URI=mongodb://127.0.0.1:27017/tenpennynovels
+REDIS_URL=redis://127.0.0.1:6379
+QDRANT_URL=http://127.0.0.1:6333
+ELASTICSEARCH_URL=http://127.0.0.1:9200
+ELASTICSEARCH_INDEX_PREFIX=tenpennynovels
 ```
 
 ---
 
-### Step 3: Verify Health
+## Setup Nuovo Server (Checklist)
 
-```bash
-# API Gateway
-curl http://localhost:8000/health
-# Expected: {"status":"ok"}
-
-# Unified Backend
-curl http://localhost:3001/health
-# Expected: {"status":"ok","mongodb":"connected","redis":"connected"}
-
-# Embeddings Service
-curl http://localhost:5001/health
-# Expected: {"status":"healthy","model":"...","dimension":384}
-
-# Qdrant
-curl http://localhost:6333/healthz
-# Expected: {"status":"ok"}
+```mermaid
+flowchart TD
+    A["1. Provisioning VPS Ubuntu 22.04+"] --> B["2. Install Node 22, PM2, Nginx, Certbot"]
+    B --> C["3. Install MongoDB, Redis, Qdrant, ElasticSearch"]
+    C --> D["4. Clone repo + install dependencies"]
+    D --> E["5. Configurare env-templates con segreti"]
+    E --> F["6. Eseguire copy-env-files.sh"]
+    F --> G["7. Build frontend + backend"]
+    G --> H["8. Setup Nginx (7 subdomini)"]
+    H --> I["9. Certbot SSL per tutti i domini"]
+    I --> J["10. PM2 start + save + startup"]
+    J --> K["11. DNS: puntare tutti i subdomini al nuovo IP"]
+    K --> L["12. Health checks + verifica"]
 ```
 
-**Automated Health Check**:
-```bash
-# Use provided script
-./scripts/health-check.sh
+### Step 1: Software di Base
 
-# Or via npm
-npm run docker:check
+```bash
+# Node.js via nvm
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+source ~/.bashrc
+nvm install 22.13.1
+nvm alias default 22.13.1
+
+# PM2
+npm install -g pm2
+
+# Nginx + Certbot
+sudo apt install -y nginx certbot python3-certbot-nginx
+```
+
+### Step 2: Database e Servizi
+
+```bash
+# MongoDB
+sudo systemctl enable mongod && sudo systemctl start mongod
+
+# Redis
+sudo systemctl enable redis && sudo systemctl start redis
+
+# Qdrant (porta 6333) - installare secondo documentazione ufficiale
+# ElasticSearch (porta 9200) - installare secondo documentazione ufficiale
+```
+
+### Step 3: Deploy Applicazione
+
+```bash
+cd ~ && git clone <repo-url> tenpennynovels && cd tenpennynovels
+
+# Installare dipendenze
+./deploy/scripts/install-all.sh
+
+# Configurare variabili d'ambiente
+# 1. Editare i template in deploy/primo-rilascio-manuale/env-templates/
+# 2. Generare segreti: openssl rand -hex 64 (per JWT), openssl rand -hex 32 (per AI)
+# 3. Copiare i template
+./deploy/primo-rilascio-manuale/copy-env-files.sh
+
+# Build
+npm run build:frontend:all
+npm run build:backend:all
+
+# Setup Python per embeddings
+cd services/embeddings-worker/python
+python3 -m venv venv && source venv/bin/activate
+pip install -r requirements.txt
+deactivate && cd ../../..
+```
+
+### Step 4: Nginx + SSL
+
+```bash
+# Copiare le config Nginx
+sudo cp deploy/primo-rilascio-manuale/nginx-configs/* /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl reload nginx
+
+# SSL per tutti i domini
+sudo certbot --nginx \
+  -d tenpennynovels.com -d game.tenpennynovels.com \
+  -d documenti.tenpennynovels.com -d gestione.tenpennynovels.com \
+  -d api.tenpennynovels.com -d ws.tenpennynovels.com \
+  -d cdn.tenpennynovels.com
+```
+
+### Step 5: Avvio PM2
+
+```bash
+pm2 startOrRestart ecosystem.config.js --env production
+pm2 save
+pm2 startup  # seguire le istruzioni per auto-avvio al boot
+```
+
+### Step 6: Verifica
+
+```bash
+pm2 status
+curl https://api.tenpennynovels.com/health
+curl https://ws.tenpennynovels.com/health
 ```
 
 ---
 
-## Frontend Deployment
-
-### Build Static Exports
+## Generazione Segreti
 
 ```bash
-# Build all frontend apps
-npm run frontend:build
+# JWT secrets (128 char hex)
+openssl rand -hex 64
 
-# Or individually
-cd apps/landing && npm run build && npm run export
-cd apps/game && npm run build && npm run export
-cd apps/documents && npm run build && npm run export
-cd apps/management && npm run build && npm run export
-```
+# AI Gateway secrets (64 char hex)
+openssl rand -hex 32
 
-**Output**: Static HTML/CSS/JS in each app's `out/` directory.
-
----
-
-### Deploy to Static Hosting
-
-**Options**:
-1. **Nginx** (self-hosted)
-2. **Vercel** (recommended for Next.js)
-3. **Netlify**
-4. **Cloudflare Pages**
-5. **AWS S3 + CloudFront**
-
-**Nginx Example**:
-```nginx
-# /etc/nginx/sites-available/tenpennynovels
-
-# Landing
-server {
-    listen 80;
-    server_name tenpennynovels.com;
-    root /var/www/tenpennynovels/landing/out;
-    index index.html;
-
-    location / {
-        try_files $uri $uri/ /index.html;
-    }
-}
-
-# Game
-server {
-    listen 80;
-    server_name game.tenpennynovels.com;
-    root /var/www/tenpennynovels/game/out;
-    index index.html;
-
-    location / {
-        try_files $uri $uri/ /index.html;
-    }
-}
-
-# ... repeat for other apps
-```
-
-**Upload Static Files**:
-```bash
-# Rsync to server
-rsync -avz --delete apps/landing/out/ user@server:/var/www/tenpennynovels/landing/out/
-rsync -avz --delete apps/game/out/ user@server:/var/www/tenpennynovels/game/out/
-# ... repeat for other apps
-
-# Reload Nginx
-ssh user@server "sudo nginx -t && sudo systemctl reload nginx"
+# I segreti AI devono matchare tra:
+# - services/unified-backend/.env.production (AI_GATEWAY_*)
+# - local-ai/.env (client config)
 ```
 
 ---
 
-## SSL/TLS Setup
-
-### Let's Encrypt (Free)
+## Comandi Utili
 
 ```bash
-# Install Certbot
-sudo apt install certbot python3-certbot-nginx
+# PM2
+pm2 status                              # Stato processi
+pm2 logs [nome]                         # Visualizza log
+pm2 restart [nome]                      # Riavvia servizio
+pm2 restart all                         # Riavvia tutto
+pm2 monit                               # Monitoraggio real-time
 
-# Obtain certificates
-sudo certbot --nginx -d tenpennynovels.com -d www.tenpennynovels.com
-sudo certbot --nginx -d game.tenpennynovels.com
-sudo certbot --nginx -d documenti.tenpennynovels.com
-sudo certbot --nginx -d gestione.tenpennynovels.com
+# Nginx
+sudo nginx -t                           # Test configurazione
+sudo systemctl reload nginx             # Applica modifiche
+sudo tail -f /var/log/nginx/error.log   # Log errori
 
-# Auto-renewal (already configured)
-sudo certbot renew --dry-run
+# Database
+mongosh mongodb://127.0.0.1:27017/tenpennynovels  # Shell MongoDB
+redis-cli PING                                      # Test Redis
+curl http://127.0.0.1:6333/healthz                  # Test Qdrant
+curl http://127.0.0.1:9200/_cluster/health           # Test ElasticSearch
+
+# SSL
+sudo certbot certificates               # Stato certificati
+sudo certbot renew --dry-run             # Test rinnovo
 ```
 
 ---
 
-## Production Optimizations
-
-### Docker Compose Production Override
-
-**Create**: `docker-compose.prod.yml`
-
-```yaml
-version: '3.8'
-
-services:
-  unified-backend:
-    restart: always
-    environment:
-      NODE_ENV: production
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-
-  api-gateway:
-    restart: always
-    environment:
-      NODE_ENV: production
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-
-  mongodb:
-    restart: always
-    command: mongod --auth --bind_ip_all
-    volumes:
-      - mongodb_data:/data/db
-      - mongodb_config:/data/configdb
-      - ./backups:/backups  # Backup mount
-
-  redis:
-    restart: always
-    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
-```
-
-**Deploy**:
-```bash
-docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-```
-
----
-
-### Resource Limits
-
-**Add to `docker-compose.prod.yml`**:
-
-```yaml
-services:
-  unified-backend:
-    deploy:
-      resources:
-        limits:
-          cpus: '2.0'
-          memory: 2G
-        reservations:
-          cpus: '1.0'
-          memory: 1G
-
-  mongodb:
-    deploy:
-      resources:
-        limits:
-          cpus: '2.0'
-          memory: 2G
-```
-
----
-
-## Monitoring
-
-### Health Checks
-
-**Docker Compose Built-in**:
-```yaml
-services:
-  unified-backend:
-    healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3001/health', ...)"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
-```
-
----
-
-### Logging
-
-**View Logs**:
-```bash
-# All services
-docker compose logs -f
-
-# Specific service
-docker compose logs -f unified-backend
-
-# Last 100 lines
-docker compose logs --tail=100 unified-backend
-
-# Since timestamp
-docker compose logs --since 2026-03-01T10:00:00 unified-backend
-```
-
-**Log Rotation** (already configured in production override):
-- Max size: 10MB per file
-- Max files: 3 (30MB total per service)
-
----
-
-### Metrics (Optional)
-
-**Prometheus + Grafana Stack**:
-
-```yaml
-# Add to docker-compose.monitoring.yml
-services:
-  prometheus:
-    image: prom/prometheus:latest
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
-
-  grafana:
-    image: grafana/grafana:latest
-    ports:
-      - "3000:3000"
-    environment:
-      GF_SECURITY_ADMIN_PASSWORD: <secure-password>
-```
-
----
-
-## Backup Strategy
-
-### MongoDB Backup
-
-**Automated Daily Backup**:
+## Rollback
 
 ```bash
-#!/bin/bash
-# scripts/backup-mongodb.sh
-
-BACKUP_DIR="/backups/mongodb/$(date +%Y%m%d)"
-mkdir -p $BACKUP_DIR
-
-docker exec tenpennynovels-mongodb mongodump \
-  --username=admin \
-  --password=$MONGO_ROOT_PASSWORD \
-  --authenticationDatabase=admin \
-  --db=tenpennynovels \
-  --out=$BACKUP_DIR
-
-# Compress
-tar -czf "${BACKUP_DIR}.tar.gz" -C /backups/mongodb $(basename $BACKUP_DIR)
-rm -rf $BACKUP_DIR
-
-# Keep last 7 days
-find /backups/mongodb -name "*.tar.gz" -mtime +7 -delete
-```
-
-**Cron** (daily at 2am):
-```bash
-0 2 * * * /path/to/scripts/backup-mongodb.sh >> /var/log/mongodb-backup.log 2>&1
-```
-
-**Details**: [Backup & Restore](./backup-restore.md)
-
----
-
-### Restore
-
-```bash
-# Extract backup
-tar -xzf /backups/mongodb/20260301.tar.gz -C /tmp
-
-# Restore to MongoDB
-docker exec -i tenpennynovels-mongodb mongorestore \
-  --username=admin \
-  --password=$MONGO_ROOT_PASSWORD \
-  --authenticationDatabase=admin \
-  --db=tenpennynovels \
-  --drop \
-  /tmp/20260301/tenpennynovels
-```
-
----
-
-## Update & Maintenance
-
-### Update Application Code
-
-```bash
-# Pull latest code
-git pull origin main
-
-# Rebuild images
-docker compose build
-
-# Recreate containers
-docker compose up -d --force-recreate
-
-# Verify health
-./scripts/health-check.sh
-```
-
----
-
-### Update Docker Images
-
-```bash
-# Pull latest base images
-docker compose pull
-
-# Rebuild
-docker compose build --no-cache
-
-# Restart
-docker compose up -d
-```
-
----
-
-### Database Migrations
-
-**Run Migrations**:
-```bash
-# If using migration framework
-docker exec tenpennynovels-unified-backend npm run migrate:up
-
-# Or manual scripts
-docker exec -i tenpennynovels-mongodb mongosh \
-  --username admin --password $MONGO_ROOT_PASSWORD \
-  --authenticationDatabase admin \
-  tenpennynovels < migrations/001_add_bot_id_field.js
+# Git rollback (sul server)
+cd ~/tenpennynovels
+git log --oneline -5                    # Trova commit precedente
+git checkout <commit-hash>
+npm run build:frontend:all && npm run build:backend:all
+pm2 restart all
 ```
 
 ---
 
 ## Troubleshooting
 
-### Service Won't Start
+### PM2 mostra servizio "errored"
 
 ```bash
-# Check logs
-docker compose logs unified-backend
-
-# Check dependencies
-docker compose ps
-
-# Restart service
-docker compose restart unified-backend
+pm2 logs <nome-servizio> --lines 50    # Controlla i log
+# Cause comuni: .env.production mancante, porta occupata, dipendenza mancante
 ```
 
-**Common Issues**: [Docker Troubleshooting](./docker-troubleshooting.md)
-
----
-
-### Database Connection Issues
+### Nginx 502 Bad Gateway
 
 ```bash
-# Test MongoDB connection
-docker exec tenpennynovels-mongodb mongosh \
-  --username admin --password $MONGO_ROOT_PASSWORD \
-  --authenticationDatabase admin \
-  --eval "db.adminCommand('ping')"
-
-# Test from backend
-docker exec tenpennynovels-unified-backend node -e "
-  const mongoose = require('mongoose');
-  mongoose.connect(process.env.MONGODB_URI).then(() => {
-    console.log('Connected');
-    process.exit(0);
-  }).catch(err => {
-    console.error(err);
-    process.exit(1);
-  });
-"
+pm2 status                              # Verifica che il servizio sia online
+sudo netstat -tulpn | grep :<porta>     # Verifica che la porta sia in ascolto
+sudo tail -f /var/log/nginx/error.log   # Log Nginx
 ```
 
----
+### WebSocket non si connette
 
-### High Memory Usage
+1. Verificare CSP in `apps/game/next.config.js` includa `https://ws.tenpennynovels.com`
+2. Verificare Nginx config per ws.tenpennynovels.com abbia `proxy_read_timeout 7200s`
+3. Socket.IO usa `https://` (NON `wss://`)
+4. Rebuild necessario dopo modifica: `cd apps/game && npm run build && pm2 restart tenpennynovels-game`
 
+### NEXT_PUBLIC_* non aggiornata
+
+Le variabili `NEXT_PUBLIC_*` sono compilate nel build. Dopo modifica di `.env.production`:
 ```bash
-# Check resource usage
-docker stats
-
-# Restart specific service
-docker compose restart unified-backend
-```
-
----
-
-## Rollback Strategy
-
-### Quick Rollback
-
-```bash
-# Tag current version before update
-docker tag tenpennynovels/unified-backend:latest tenpennynovels/unified-backend:backup-$(date +%Y%m%d)
-
-# If update fails, rollback
-docker tag tenpennynovels/unified-backend:backup-20260301 tenpennynovels/unified-backend:latest
-docker compose up -d --force-recreate
-```
-
----
-
-### Git Rollback
-
-```bash
-# Revert to previous commit
-git reset --hard HEAD~1
-
-# Rebuild and deploy
-docker compose build
-docker compose up -d --force-recreate
+cd apps/<app-name>
+npm run build
+pm2 restart tenpennynovels-<nome>
 ```
 
 ---
 
 ## Security Checklist
 
-- [ ] All secrets in `.env` (not committed to Git)
-- [ ] MongoDB authentication enabled (`--auth`)
-- [ ] Redis password set (`requirepass`)
-- [ ] JWT secrets rotated regularly
-- [ ] SSL/TLS certificates valid and auto-renewing
-- [ ] Firewall configured (only 80, 443, 22 open)
-- [ ] Docker socket not exposed
-- [ ] Logs rotated and monitored
-- [ ] Backups tested monthly
-- [ ] Dependency updates scheduled
-- [ ] Security headers enabled (Helmet.js in API Gateway)
+- [ ] JWT secrets generati con `openssl rand -hex 64` (non valori di default)
+- [ ] SMTP password reale (non placeholder)
+- [ ] unified-backend bind su 127.0.0.1 (non esposto su internet)
+- [ ] Firewall: solo porte 80, 443, 22 aperte
+- [ ] MongoDB senza auth pubblica (solo localhost)
+- [ ] SSL certificati validi e auto-rinnovo configurato
+- [ ] CORS `ALLOWED_ORIGINS` contiene solo i domini reali
+- [ ] File `.env.production` con permessi `chmod 600`
+
+---
+
+## Database Produzione
+
+**Nome DB**: `tenpennynovels` (NON `tenpennynovels-prod`)
+
+Quando si eseguono i seeder in produzione, specificare sempre:
+```bash
+MONGODB_URI=mongodb://127.0.0.1:27017/tenpennynovels \
+DB_NAME=tenpennynovels \
+npm run seed:users -- --force
+```
 
 ---
 
 ## Related Documentation
 
-- [Infrastructure](../01-infrastructure/README.md) - Service architecture
-- [Docker Compose](../01-infrastructure/docker-compose.md) - Service configuration
-- [Docker Troubleshooting](./docker-troubleshooting.md) - Common issues
-- [Monitoring](./monitoring.md) - Logs and metrics
-- [Backup & Restore](./backup-restore.md) - Database backup
+- [Docker Compose (Dev)](../01-infrastructure/docker-compose.md) - Ambiente locale di sviluppo
+- [Docker Troubleshooting](./docker-troubleshooting.md) - Problemi Docker in dev
+- [Monitoring](./monitoring.md) - Monitoraggio produzione
+- [Backup & Restore](./backup-restore.md) - Backup database
+- [VPS Troubleshooting](../../.claude/vps-deployment-guide.md) - Fix specifici produzione

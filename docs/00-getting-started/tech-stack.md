@@ -102,7 +102,7 @@ node --version
 - Image optimization con `next/image`
 
 **Apps**:
-```
+```text
 apps/
 ├── landing/      - Landing page (login, registration, character select)
 ├── game/         - Main gameplay interface
@@ -193,14 +193,11 @@ const { data: characters, isLoading } = useQuery({
 - ✅ **Binary Support**: Efficient data transfer
 
 **Architecture**:
-```
-Client (Socket.IO Client)
-    ↓
-API Gateway (Proxy with ws: true)
-    ↓
-Unified Backend (Socket.IO Server)
-    ↓
-Redis Adapter (Multi-instance sync)
+```mermaid
+flowchart TD
+    A[Client - Socket.IO Client] --> B[API Gateway - Proxy with ws: true]
+    B --> C[Unified Backend - Socket.IO Server]
+    C --> D[Redis Adapter - Multi-instance sync]
 ```
 
 **Details**: [WebSocket Patterns](../05-frontend/websocket-patterns.md)
@@ -730,12 +727,10 @@ chore: Update dependencies
 - **OS**: Ubuntu 22.04 LTS
 
 **Stack**:
-```
-Nginx (SSL/TLS, reverse proxy)
-    ↓
-Docker Compose (7 services)
-    ↓
-MongoDB, Redis, Qdrant, Embeddings, Backends
+```mermaid
+flowchart TD
+    A[Nginx - SSL/TLS, reverse proxy] --> B[Docker Compose - 7 services]
+    B --> C[MongoDB, Redis, Qdrant, Embeddings, Backends]
 ```
 
 **Details**: [Deployment Guide](../06-operations/deployment-guide.md)

@@ -29,7 +29,6 @@ services:
       context: .
       dockerfile: gateway/Dockerfile
     ports:
-      - "8080:9000"
       - "9000:9000"
     env_file: .env
     volumes:
@@ -65,6 +64,8 @@ services:
     expose:
       - "8100"
     env_file: .env
+    profiles:
+      - image-gen
 
   location-image-gen:
     build:
@@ -73,6 +74,8 @@ services:
     expose:
       - "8110"
     env_file: .env
+    profiles:
+      - image-gen
 
   avatar-gen:
     build:
@@ -81,6 +84,8 @@ services:
     expose:
       - "8120"
     env_file: .env
+    profiles:
+      - image-gen
 
   test-ui:
     build:

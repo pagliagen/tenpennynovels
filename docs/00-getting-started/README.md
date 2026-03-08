@@ -226,7 +226,7 @@ Vedi [API Testing Scripts](../07-testing/api-testing-scripts.md) per dettagli.
 
 ## Project Structure Overview
 
-```
+```text
 tenpennynovels/
 ├── apps/                      # Frontend Next.js apps
 │   ├── landing/              # Login, registration (port 4000)

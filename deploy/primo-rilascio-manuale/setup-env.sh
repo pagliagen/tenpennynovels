@@ -15,8 +15,8 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Project root directory
-PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-TEMPLATES_DIR="$PROJECT_ROOT/deploy/env-templates"
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+TEMPLATES_DIR="$PROJECT_ROOT/deploy/primo-rilascio-manuale/env-templates"
 
 echo -e "${BLUE}========================================${NC}"
 echo -e "${BLUE}TenPennyNovels - Setup Environment${NC}"

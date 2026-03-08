@@ -44,7 +44,7 @@ Endpoint pubblico (no autenticazione). Controlla lo stato di tutti i servizi.
 }
 ```
 
-Lo `status` globale e `"healthy"` se tutti i servizi sono `up` o `stub`. Se uno o piu servizi sono `down` (es. gli stub image-gen non avviati — sono nel profilo Docker `image-gen`), lo status diventa `"degraded"`. I servizi image-gen si avviano solo con `docker compose --profile image-gen up -d`.
+Lo `status` globale e `"healthy"` se tutti i servizi sono `up` o `stub`. Se uno o piu servizi sono `down` (es. gli stub image-gen non avviati), lo status diventa `"degraded"`. I servizi image-gen sono nel profilo Docker `image-gen` e si avviano con `docker compose --profile image-gen up -d`.
 
 ---
 
@@ -279,10 +279,10 @@ Il caller fornisce la domanda e il contesto (chunk di testo). Il servizio Q&A no
 ```json
 {
   "success": true,
-  "answer": "Le armi da fuoco richiedono un tiro su Firearms [1]...",
+  "answer": "Le armi da fuoco richiedono un tiro su Firearms...",
   "sources": [
-    { "heading": "Armi da Fuoco", "slug": "armi-da-fuoco", "used": true },
-    { "heading": "Combattimento", "slug": "combattimento", "used": false }
+    { "heading": "Armi da Fuoco", "slug": "armi-da-fuoco", "fullPath": "/rules/armi", "title": "Armi da Fuoco", "used": true },
+    { "heading": "Combattimento", "slug": "combattimento", "fullPath": "/rules/combattimento", "title": "Combattimento", "used": false }
   ],
   "metadata": {
     "model": "mistral:7b-instruct",

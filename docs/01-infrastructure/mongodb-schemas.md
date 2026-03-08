@@ -22,102 +22,144 @@ TenPennyNovels utilizza MongoDB 7.0 come database principale con **42 collection
 ## Schema Categories
 
 ### Core User & Authentication (3)
-```
-└── User                    - Utenti del sistema
-└── CharacterSession        - Sessioni attive per character selection
-└── SystemConfiguration     - Configurazioni di sistema
+```mermaid
+flowchart LR
+    subgraph Core["Core User & Authentication"]
+        User[User - Utenti del sistema]
+        CharacterSession[CharacterSession - Sessioni attive]
+        SystemConfiguration[SystemConfiguration - Configurazioni]
+    end
 ```
 
 ### Characters (4)
-```
-└── Character               - Dati base personaggi
-└── CharacterProgression    - Stats, skills, experience
-└── CharacterFinances       - Credits, transactions
-└── BackgroundQuestion      - Domande background per creazione character
+```mermaid
+flowchart LR
+    subgraph Characters["Characters"]
+        Character[Character - Dati base personaggi]
+        CharacterProgression[CharacterProgression - Stats, skills, experience]
+        CharacterFinances[CharacterFinances - Credits, transactions]
+        BackgroundQuestion[BackgroundQuestion - Domande background]
+    end
 ```
 
 ### Locations & Gameplay (5)
-```
-└── Location                - Hierarchical locations (root → district → location)
-└── LocationAction          - Azioni disponibili in location
-└── LocationTag             - Tags per categorizzare location
-└── Route                   - Collegamenti tra locations
-└── BlockNotes              - Note private Master per location
+```mermaid
+flowchart LR
+    subgraph Locations["Locations & Gameplay"]
+        Location[Location - Hierarchical locations]
+        LocationAction[LocationAction - Azioni disponibili]
+        LocationTag[LocationTag - Tags location]
+        Route[Route - Collegamenti tra locations]
+        BlockNotes[BlockNotes - Note Master]
+    end
 ```
 
 ### Housing & Economy (4)
-```
-└── HousingProperty         - Proprietà immobiliari (rent/purchase)
-└── EstateTransaction       - Transazioni immobiliari
-└── Economy                 - Configurazioni economiche
-└── FinancialTransaction    - Transazioni finanziarie generiche
+```mermaid
+flowchart LR
+    subgraph Housing["Housing & Economy"]
+        HousingProperty[HousingProperty - Proprietà immobiliari]
+        EstateTransaction[EstateTransaction - Transazioni immobiliari]
+        Economy[Economy - Configurazioni economiche]
+        FinancialTransaction[FinancialTransaction - Transazioni finanziarie]
+    end
 ```
 
 ### Messaging & Communication (7)
-```
-└── OnGameMessage           - Messaggi on-game (postal system)
-└── OnGameMessageView       - Tracking lettura messaggi
-└── OffGameChat             - Chat off-game (gruppi)
-└── OffGameChatMessage      - Messaggi chat off-game
-└── OffGameChatParticipant  - Partecipanti chat
-└── Messaging               - Sistema messaggistica (legacy)
-└── MessageReport           - Segnalazioni messaggi
+```mermaid
+flowchart LR
+    subgraph MsgComm["Messaging & Communication"]
+        OnGameMessage[OnGameMessage - Postal system]
+        OnGameMessageView[OnGameMessageView - Tracking lettura]
+        OffGameChat[OffGameChat - Chat off-game]
+        OffGameChatMessage[OffGameChatMessage - Messaggi chat]
+        OffGameChatParticipant[OffGameChatParticipant - Partecipanti]
+        MessagingLegacy[Messaging - Sistema legacy]
+        MessageReport[MessageReport - Segnalazioni]
+    end
 ```
 
 ### Documents & Content (3)
-```
-└── Document                - Documenti (ambientazione/regolamento)
-└── DocumentSection         - Sezioni gerarchiche documenti
-└── DocumentChunk           - Chunks per semantic search (embeddings)
+```mermaid
+flowchart LR
+    subgraph Documents["Documents & Content"]
+        Document[Document - Ambientazione/regolamento]
+        DocumentSection[DocumentSection - Sezioni gerarchiche]
+        DocumentChunk[DocumentChunk - Chunks semantic search]
+    end
 ```
 
 ### Gaming Sessions (4)
-```
-└── GamingSession           - Sessioni di gioco gestite dal Master
-└── SessionManagement       - Gestione sessioni
-└── SessionTemplate         - Template sessioni
-└── Campaign                - Campagne di gioco
+```mermaid
+flowchart LR
+    subgraph Gaming["Gaming Sessions"]
+        GamingSession[GamingSession - Sessioni di gioco]
+        SessionManagement[SessionManagement - Gestione sessioni]
+        SessionTemplate[SessionTemplate - Template sessioni]
+        Campaign[Campaign - Campagne di gioco]
+    end
 ```
 
 ### Tickets & Support (3)
-```
-└── Ticket                  - Ticket supporto utenti
-└── TicketMessage           - Messaggi thread ticket
-└── TicketNotification      - Notifiche ticket
+```mermaid
+flowchart LR
+    subgraph Tickets["Tickets & Support"]
+        Ticket[Ticket - Ticket supporto]
+        TicketMessage[TicketMessage - Messaggi thread]
+        TicketNotification[TicketNotification - Notifiche]
+    end
 ```
 
 ### Corporations & Relationships (2)
-```
-└── Corporation             - Corporations (clubs/aziende/gang)
-└── Relationship            - Relazioni tra character
+```mermaid
+flowchart LR
+    subgraph Corp["Corporations & Relationships"]
+        Corporation[Corporation - Clubs/aziende/gang]
+        Relationship[Relationship - Relazioni tra character]
+    end
 ```
 
 ### Game Rules (3)
-```
-└── Occupation              - 55 occupazioni Call of Cthulhu Victorian
-└── Skill                   - Skill system con predefined values
-└── SocialClassConfig       - Configurazioni classi sociali
+```mermaid
+flowchart LR
+    subgraph Rules["Game Rules"]
+        Occupation[Occupation - 55 occupazioni CoC Victorian]
+        Skill[Skill - Skill system]
+        SocialClassConfig[SocialClassConfig - Classi sociali]
+    end
 ```
 
 ### Items & Inventory (1)
-```
-└── Item                    - Items (equipaggiamento, oggetti)
+```mermaid
+flowchart LR
+    subgraph Items["Items & Inventory"]
+        Item[Item - Equipaggiamento, oggetti]
+    end
 ```
 
 ### Experience & Progression (1)
-```
-└── ExperienceGrant         - Grant XP giornalieri
+```mermaid
+flowchart LR
+    subgraph XP["Experience & Progression"]
+        ExperienceGrant[ExperienceGrant - Grant XP giornalieri]
+    end
 ```
 
 ### Moderation & Admin (2)
-```
-└── ChatModerationAction    - Azioni moderazione chat
-└── BroadcastMessage        - Messaggi broadcast sistema
+```mermaid
+flowchart LR
+    subgraph Mod["Moderation & Admin"]
+        ChatModerationAction[ChatModerationAction - Moderazione chat]
+        BroadcastMessage[BroadcastMessage - Messaggi broadcast]
+    end
 ```
 
 ### System Events (1)
-```
-└── WebSocketEvent          - Eventi WebSocket per real-time updates
+```mermaid
+flowchart LR
+    subgraph Events["System Events"]
+        WebSocketEvent[WebSocketEvent - Eventi real-time]
+    end
 ```
 
 ---
@@ -362,7 +404,7 @@ interface ILocation {
 - `occupants`
 
 **Example Hierarchy**:
-```
+```text
 London (root)
 ├── Westminster (district)
 │   ├── Westminster Abbey (location)

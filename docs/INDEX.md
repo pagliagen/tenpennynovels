@@ -2,7 +2,7 @@
 
 > Victorian Role-Playing Game via chat — London 1880s — Call of Cthulhu d100 System
 
-**Status**: ✅ Production | **Last Updated**: 2026-03-01 | **Version**: 2.0
+**Status**: ✅ Production | **Last Updated**: 2026-03-08 | **Version**: 2.0
 
 ---
 
@@ -17,7 +17,7 @@
 
 **For Developers:**
 - [Project Structure](./00-getting-started/project-structure.md) - Repository organization
-- [Infrastructure Overview](./01-infrastructure/README.md) - Docker, MongoDB, Redis, Qdrant
+- [Infrastructure Overview](./01-infrastructure/README.md) - Docker, MongoDB, Redis, Qdrant, ElasticSearch
 - [Backend Architecture](./02-backend/unified-backend-architecture.md) - Modules and routing
 - [Frontend Apps](./05-frontend/README.md) - Next.js applications
 - [WebSocket Patterns](./05-frontend/websocket-patterns.md) - Real-time communication
@@ -181,30 +181,50 @@ Game rules, occupations, skills, items reference material.
 ### Technology Stack
 - **Backend**: Node.js 22, Express 5.2.1, TypeScript 5.9.3
 - **Frontend**: Next.js 16, React 18/19, TypeScript 5.9.3
-- **Database**: MongoDB 7.0 (Mongoose 9.2.1), Redis 7.2, Qdrant 1.17
+- **Database**: MongoDB 7.0 (Mongoose 9.2.1), Redis 7.2, Qdrant 1.17, ElasticSearch 8.11
 - **Real-time**: Socket.IO 4.8.3
-- **AI/ML**: Claude Sonnet 4.5, Sentence Transformers (paraphrase-multilingual-MiniLM-L12-v2)
+- **AI/ML**: Ollama (local), Sentence Transformers (paraphrase-multilingual-MiniLM-L12-v2)
 
 ### Services Architecture
+
+```mermaid
+flowchart TB
+    subgraph Frontend["Frontend Apps (Next.js)"]
+        L["Landing (4000)"]
+        G["Game (4001)"]
+        D["Documents (4003)"]
+        M["Management (4004)"]
+    end
+
+    subgraph Gateway["API Gateway (8000)"]
+        AG["WebSocket Upgrade"]
+    end
+
+    subgraph Backend["Unified Backend (3001)"]
+        AUTH["auth module"]
+        GAME["game module"]
+        ADMIN["admin module"]
+        DOCS["documents module"]
+        FORUM["forum module (not mounted)"]
+    end
+
+    subgraph Infra["Infrastructure"]
+        MONGO["MongoDB (27017)"]
+        REDIS["Redis (6379)"]
+        QDRANT["Qdrant (6333)"]
+        ES["ElasticSearch (9200)"]
+        EW["embeddings-worker (5001)"]
+    end
+
+    Frontend --> Gateway
+    Gateway --> Backend
+    Backend --> Infra
+    EW --> QDRANT
+    EW --> ES
+    EW --> MONGO
 ```
-Frontend Apps (Next.js)
-  ↓
-API Gateway (Port 8000) ← WebSocket Upgrade
-  ↓
-Unified Backend (Port 3001)
-  ├── auth module
-  ├── game module
-  ├── admin module
-  ├── forum module
-  └── documents module
-  ↓
-Infrastructure
-  ├── MongoDB (Port 27017) - 44+ schemas
-  ├── Redis (Port 6379) - Pub/Sub + Caching
-  ├── Qdrant (Port 6333) - Vector search
-  ├── Embeddings Service (Port 5001) - Flask ML service
-  └── Embeddings Worker - Bull queue processor
-```
+
+**Note**: Forum module exists in code but is not mounted (404). Embeddings-worker exposes HTTP on port 5001 and handles both embedding generation and hybrid search (ElasticSearch + Qdrant).
 
 ### Frontend Applications
 - **Landing** (Port 4000) - Login, registration, character selection

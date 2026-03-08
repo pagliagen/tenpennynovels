@@ -15,7 +15,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Project root directory
-PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 echo -e "${BLUE}========================================${NC}"
 echo -e "${BLUE}TenPennyNovels - Build All Services${NC}"
@@ -83,16 +83,16 @@ print_header "Copying .env.production files"
 
 # Copy .env templates for all services and apps
 echo "Copying backend .env templates..."
-cp "$PROJECT_ROOT/deploy/env-templates/unified-backend.env" "$PROJECT_ROOT/services/unified-backend/.env.production"
-cp "$PROJECT_ROOT/deploy/env-templates/embeddings-worker.env" "$PROJECT_ROOT/services/embeddings-worker/.env.production"
-cp "$PROJECT_ROOT/deploy/env-templates/api-gateway.env" "$PROJECT_ROOT/services/api-gateway/.env.production"
+cp "$PROJECT_ROOT/deploy/primo-rilascio-manuale/env-templates/unified-backend.env" "$PROJECT_ROOT/services/unified-backend/.env.production"
+cp "$PROJECT_ROOT/deploy/primo-rilascio-manuale/env-templates/embeddings-worker.env" "$PROJECT_ROOT/services/embeddings-worker/.env.production"
+cp "$PROJECT_ROOT/deploy/primo-rilascio-manuale/env-templates/api-gateway.env" "$PROJECT_ROOT/services/api-gateway/.env.production"
 print_status $? "Backend .env files copied"
 
 echo "Copying frontend .env templates..."
-cp "$PROJECT_ROOT/deploy/env-templates/landing.env" "$PROJECT_ROOT/apps/landing/.env.production"
-cp "$PROJECT_ROOT/deploy/env-templates/game.env" "$PROJECT_ROOT/apps/game/.env.production"
-cp "$PROJECT_ROOT/deploy/env-templates/documents.env" "$PROJECT_ROOT/apps/documents/.env.production"
-cp "$PROJECT_ROOT/deploy/env-templates/management.env" "$PROJECT_ROOT/apps/management/.env.production"
+cp "$PROJECT_ROOT/deploy/primo-rilascio-manuale/env-templates/landing.env" "$PROJECT_ROOT/apps/landing/.env.production"
+cp "$PROJECT_ROOT/deploy/primo-rilascio-manuale/env-templates/game.env" "$PROJECT_ROOT/apps/game/.env.production"
+cp "$PROJECT_ROOT/deploy/primo-rilascio-manuale/env-templates/documents.env" "$PROJECT_ROOT/apps/documents/.env.production"
+cp "$PROJECT_ROOT/deploy/primo-rilascio-manuale/env-templates/management.env" "$PROJECT_ROOT/apps/management/.env.production"
 print_status $? "Frontend .env files copied"
 
 echo -e "${YELLOW}⚠️  IMPORTANT: Edit .env.production files and update secrets before starting PM2!${NC}"
@@ -139,7 +139,7 @@ print_header "Linking .env files"
 
 # Run link-env.sh to create symlinks
 cd "$PROJECT_ROOT"
-./deploy/link-env.sh
+./deploy/utility/link-env.sh
 print_status $? "Environment files linked"
 
 # ========================================

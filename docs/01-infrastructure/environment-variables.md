@@ -13,7 +13,7 @@ Complete reference per tutte le environment variables di TenPennyNovels.
 TenPennyNovels utilizza un sistema di environment variables centralizzato per configurazione cross-service. Tutte le variabili sono definite in `.env` alla root del progetto e condivise tra frontend e backend services.
 
 **File Structure**:
-```
+```text
 tenpennynovels/
 ├── .env                    # Main environment file (NEVER commit!)
 ├── .env.example            # Template con valori di default

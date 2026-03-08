@@ -27,79 +27,43 @@ Il sistema permette agli utenti di fare domande in linguaggio naturale e trovare
 
 ### High-Level Flow
 
-```
-User Query
-    ↓
-Unified Backend (/game/documents/semantic-search)
-    ↓
-┌─────────────────────────────────────────────┐
-│ L1 Search (MongoDB Text)                    │
-│ - Full-text search on title/content         │
-│ - Fast (~50ms)                               │
-│ - Good for exact keyword matches            │
-└─────────────────────────────────────────────┘
-    ↓ (if L1 insufficient)
-┌─────────────────────────────────────────────┐
-│ L2 Search (Qdrant Vector)                   │
-│ 1. Generate query embedding (Flask service) │
-│ 2. ANN search in Qdrant (384D vectors)      │
-│ 3. Cosine similarity ranking                │
-│ 4. ~500ms total                              │
-└─────────────────────────────────────────────┘
-    ↓
-Merged & Ranked Results
-    ↓
-Client (Next.js documents app)
+```mermaid
+flowchart TB
+    A[User Query] --> B[Unified Backend /game/documents/semantic-search]
+    B --> L1["L1 Search (MongoDB Text)\n- Full-text search on title/content\n- Fast (~50ms)\n- Good for exact keyword matches"]
+    L1 -->|if L1 insufficient| L2["L2 Search (Qdrant Vector)\n1. Generate query embedding (Flask service)\n2. ANN search in Qdrant (384D vectors)\n3. Cosine similarity ranking\n4. ~500ms total"]
+    L2 --> C[Merged & Ranked Results]
+    C --> D[Client - Next.js documents app]
 ```
 
 ### Component Architecture
 
-```
-┌────────────────────────────────────────────────────────────────┐
-│ Frontend (Next.js Documents App)                               │
-│ - Search UI with query input                                   │
-│ - Real-time results display                                    │
-│ - Type filtering (ambientazione/regolamento)                   │
-└────────────────────────────────────────────────────────────────┘
-                          ↓ HTTP
-┌────────────────────────────────────────────────────────────────┐
-│ API Gateway (port 8000)                                        │
-│ - Proxies /game/* to unified-backend                           │
-└────────────────────────────────────────────────────────────────┘
-                          ↓
-┌────────────────────────────────────────────────────────────────┐
-│ Unified Backend (port 3001)                                    │
-│ - GET /game/documents/semantic-search                          │
-│ - DocumentController.semanticSearchDocuments()                 │
-│ - Dual L1/L2 strategy execution                                │
-│ - Result merging and ranking                                   │
-└────────────────────────────────────────────────────────────────┘
-         ↓ L1                               ↓ L2
-┌───────────────────┐           ┌──────────────────────────────┐
-│ MongoDB (port     │           │ Embeddings Service (Flask    │
-│ 27017)            │           │ port 5001)                   │
-│ - Text index on   │           │ - POST /embed                │
-│   title + content │           │ - sentence-transformers      │
-│ - $text query     │           │ - 384D vectors               │
-│ - Fast retrieval  │           │ - ~50ms per embedding        │
-└───────────────────┘           └──────────────────────────────┘
-                                           ↓
-                                ┌──────────────────────────────┐
-                                │ Qdrant (port 6333)           │
-                                │ - Vector DB (ANN search)     │
-                                │ - Collection: "documents"    │
-                                │ - 384 dimensions             │
-                                │ - Cosine similarity          │
-                                │ - ~100ms search              │
-                                └──────────────────────────────┘
-
-┌────────────────────────────────────────────────────────────────┐
-│ Background: Embeddings Worker (Bull Queue)                     │
-│ - Async embedding generation for new documents                 │
-│ - Redis queue coordination                                     │
-│ - Dual storage: MongoDB + Qdrant                               │
-│ - Retry 3x on failure                                          │
-└────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph Frontend["Frontend (Next.js Documents App)"]
+        FE["Search UI with query input\nReal-time results display\nType filtering (ambientazione/regolamento)"]
+    end
+    subgraph Gateway["API Gateway (port 8000)"]
+        AG["Proxies /game/* to unified-backend"]
+    end
+    subgraph Backend["Unified Backend (port 3001)"]
+        UB["GET /game/documents/semantic-search\nDocumentController.semanticSearchDocuments()\nDual L1/L2 strategy execution\nResult merging and ranking"]
+    end
+    subgraph L1["L1 - MongoDB (port 27017)"]
+        Mongo["Text index on title + content\n$text query\nFast retrieval"]
+    end
+    subgraph L2["L2 - Embeddings + Qdrant"]
+        ES["Embeddings Service (Flask port 5001)\nPOST /embed\nsentence-transformers\n384D vectors\n~50ms per embedding"]
+        Qdrant["Qdrant (port 6333)\nVector DB (ANN search)\nCollection: documents\n384 dimensions\nCosine similarity\n~100ms search"]
+    end
+    subgraph Worker["Background: Embeddings Worker (Bull Queue)"]
+        EW["Async embedding generation for new documents\nRedis queue coordination\nDual storage: MongoDB + Qdrant\nRetry 3x on failure"]
+    end
+    Frontend -->|HTTP| Gateway
+    Gateway --> Backend
+    Backend -->|L1| Mongo
+    Backend -->|L2| ES
+    ES --> Qdrant
 ```
 
 ## Components
