@@ -26,10 +26,12 @@ interface SearchResult {
   route: {
     path: string;
     type: 'ambientazione' | 'regolamento';
-    title: string;
-    anchor: string;  // e.g., "#regina-vittoria"
-    fullPath: string;  // e.g., "/ambientazione/epoca-vittoriana#regina-vittoria"
+    subtypeTitle: string;
+    anchor: string;
+    fullPath: string;
   };
+  matchLevel: number;
+  matchHeading: string;
   similarity: number;
   matchScore: string;
 }
@@ -117,9 +119,22 @@ export function SearchResults({
                   {result.route.type === 'ambientazione' && '🌍 Ambientazione'}
                   {result.route.type === 'regolamento' && '📜 Regolamento'}
                 </span>
+                {result.route.subtypeTitle && (
+                  <>
+                    <span className={styles.breadcrumbSeparator}>›</span>
+                    <span className={styles.breadcrumbPath}>{result.route.subtypeTitle}</span>
+                  </>
+                )}
                 <span className={styles.breadcrumbSeparator}>›</span>
-                <span className={styles.breadcrumbPath}>{result.route.title}</span>
+                <span className={styles.breadcrumbPath}>{result.document.title}</span>
               </p>
+
+              {result.matchHeading && (
+                <p className={styles.matchSection}>
+                  <span className={styles.matchSectionIcon}>§</span>
+                  {result.matchHeading}
+                </p>
+              )}
 
               {result.document.description && (
                 <p className={styles.resultDescription}>{result.document.description}</p>

@@ -354,6 +354,15 @@ export class DocumentController {
       const docs = await Document.find(docFilter).lean();
       const docMap = new Map(docs.map(d => [d._id.toString(), d]));
 
+      const subtypeIds = [...new Set(docs.map(d => d.subtypeId.toString()))];
+      const subtypes = await db.collection('documentsubtypes').find({
+        _id: { $in: subtypeIds.map(id => new mongoose.Types.ObjectId(id)) }
+      }).toArray();
+      const subtypeMap = new Map(subtypes.map(s => [s._id.toString(), s]));
+
+      const RRF_K = 60;
+      const maxRrfScore = 2 / (RRF_K + 1);
+
       const results = searchResults.map(result => {
         const chunk: any = chunks.find((c: any) => c.chunkId === result.chunkId);
         if (!chunk) return null;
@@ -361,7 +370,9 @@ export class DocumentController {
         const doc = docMap.get(chunk.documentId.toString());
         if (!doc) return null;
 
-        const anchorSlug = result.parentSlug || result.slug;
+        const anchorSlug = result.slug;
+        const subtype = subtypeMap.get(doc.subtypeId.toString());
+        const normalizedScore = Math.min((result.score / maxRrfScore) * 100, 100);
 
         return {
           document: {
@@ -376,13 +387,14 @@ export class DocumentController {
           route: {
             path: doc.path,
             type: doc.type,
+            subtypeTitle: subtype?.title || '',
             anchor: `#${anchorSlug}`,
             fullPath: `/${doc.type}/${doc.path}#${anchorSlug}`
           },
           matchLevel: chunk.headingLevel,
           matchHeading: result.heading,
           similarity: result.score,
-          matchScore: (result.score * 100).toFixed(1) + '%'
+          matchScore: normalizedScore.toFixed(0) + '%'
         };
       }).filter(Boolean);
 

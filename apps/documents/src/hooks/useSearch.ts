@@ -18,7 +18,7 @@ interface SearchResult {
     _id: string;
     slug: string;
     title: string;
-    content: string; // Preview (300 chars)
+    content: string;
     description?: string;
     tags: string[];
     isDraft: boolean;
@@ -26,12 +26,14 @@ interface SearchResult {
   route: {
     path: string;
     type: DocumentType;
-    title: string;
-    anchor: string;  // e.g., "#regina-vittoria"
-    fullPath: string;  // e.g., "/ambientazione/epoca-vittoriana#regina-vittoria"
+    subtypeTitle: string;
+    anchor: string;
+    fullPath: string;
   };
+  matchLevel: number;
+  matchHeading: string;
   similarity: number;
-  matchScore: string; // e.g., "85.3%"
+  matchScore: string;
 }
 
 interface SearchResponse {

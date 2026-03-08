@@ -139,6 +139,22 @@
   text-overflow: ellipsis;
 }
 
+.matchSection {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+  font-size: $font-size-xs;
+  color: $color-primary;
+  margin: 0 0 $spacing-xs;
+  font-style: italic;
+}
+
+.matchSectionIcon {
+  font-style: normal;
+  font-weight: $font-weight-semibold;
+  opacity: 0.7;
+}
+
 .resultDescription {
   font-size: $font-size-sm;
   color: $color-text-secondary;

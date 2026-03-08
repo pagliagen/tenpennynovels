@@ -12,7 +12,7 @@
 import slugify from 'slugify';
 
 export interface HtmlGeneratorOptions {
-  injectHeadingIds?: boolean;  // Default: true - inject id="slug" into H1 tags
+  injectHeadingIds?: boolean;  // Default: true - inject id="slug" into all heading tags
 }
 
 interface TipTapNode {
@@ -67,18 +67,17 @@ function nodeToHtml(node: TipTapNode, injectHeadingIds: boolean): string {
       const tag = `h${level}`;
       const text = extractTextContent(node);
 
-      // Inject ID for H1 if enabled and no existing ID
-      if (level === 1 && injectHeadingIds && !node.attrs?.id) {
-        const slug = generateSlug(text);
-        return `<${tag} id="${slug}">${text}</${tag}>`;
-      }
-
       // Use existing ID if present
       if (node.attrs?.id) {
         return `<${tag} id="${node.attrs.id}">${text}</${tag}>`;
       }
 
-      // No ID for other headings (H2-H6)
+      // Inject slug-based ID on all heading levels for anchor navigation
+      if (injectHeadingIds) {
+        const slug = generateSlug(text);
+        return `<${tag} id="${slug}">${text}</${tag}>`;
+      }
+
       return `<${tag}>${text}</${tag}>`;
     }
 
