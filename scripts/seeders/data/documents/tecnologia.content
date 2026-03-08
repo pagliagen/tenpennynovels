@@ -18,7 +18,43 @@
       "content": [
         {
           "type": "text",
-          "text": "Nel corso del XIX secolo l'accesso all'acqua potabile divenne una delle principali questioni urbane di Londra. Fino alla metà del secolo l'approvvigionamento era affidato a pozzi privati, cisterne e alla raccolta dell'acqua piovana, con risultati spesso disastrosi dal punto di vista igienico. Le epidemie di colera e tifo resero evidente il legame diretto tra acqua contaminata e mortalità urbana. A partire dagli anni Cinquanta dell'Ottocento iniziarono importanti lavori di modernizzazione delle reti idriche, soprattutto grazie alle riforme sanitarie e alla costruzione di nuovi acquedotti che attingevano l'acqua a monte del Tamigi. Tuttavia, la presenza dell'acqua corrente nelle abitazioni non era affatto uniforme. Le case dell'aristocrazia e dell'alta borghesia, in particolare nel West End, a Mayfair, Kensington, Belgravia e Marylebone, disponevano quasi sempre di acqua corrente, almeno ai piani inferiori. In queste abitazioni erano presenti rubinetti in cucina e talvolta anche nei bagni, con acqua fredda costante e, più raramente, sistemi per il riscaldamento dell'acqua. Nelle abitazioni della classe media l'acqua corrente era meno garantita. Spesso era presente un'unica presa d'acqua per piano o per edificio, condivisa tra più famiglie. Nei quartieri popolari e nell'East End, l'acqua veniva invece prelevata da pompe pubbliche, cortili comuni o fontane di quartiere. Le famiglie si organizzavano con secchi, brocche e grandi recipienti di terracotta o metallo, e la gestione dell'acqua era una delle occupazioni quotidiane più gravose, soprattutto per donne e bambini."
+          "text": "Nel corso del XIX secolo l'accesso all'acqua potabile divenne una delle principali questioni urbane di Londra, una città che nel 1895 conta oltre quattro milioni di abitanti e continua a crescere a ritmi vertiginosi. Fino alla metà del secolo l'approvvigionamento era affidato a pozzi privati, cisterne e alla raccolta dell'acqua piovana, con risultati spesso disastrosi dal punto di vista igienico. Il Tamigi stesso, arteria vitale della città, era diventato una fogna a cielo aperto: nel 1858 la cosiddetta \"Great Stink\" rese il Parlamento quasi inabitabile a causa del fetore che saliva dal fiume durante un'estate particolarmente calda, costringendo i deputati a imbevere le tende di calce nel tentativo di filtrare l'aria irrespirabile. Le epidemie di colera — quella del 1854 fu particolarmente devastante, con migliaia di morti nel quartiere di Soho — e di tifo resero evidente il legame diretto tra acqua contaminata e mortalità urbana, grazie anche al lavoro pionieristico del dottor John Snow, che dimostrò la trasmissione idrica del colera mappando i casi attorno alla pompa di Broad Street."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "A partire dagli anni Cinquanta dell'Ottocento iniziarono importanti lavori di modernizzazione delle reti idriche, soprattutto grazie alle riforme sanitarie promosse da Edwin Chadwick e alla costruzione di nuovi acquedotti che attingevano l'acqua a monte del Tamigi, lontano dagli scarichi fognari della città. Il grande ingegnere Joseph Bazalgette progettò e realizzò un sistema fognario monumentale, con oltre 1.300 miglia di canali sotterranei che deviavano i liquami lontano dal centro urbano, opera completata nel 1875 e ancora funzionante nel 1895. Le compagnie idriche private — tra cui la New River Company, la East London Waterworks Company e la Southwark and Vauxhall Water Company — si contendevano il mercato della distribuzione, ma la qualità del servizio variava enormemente da zona a zona e da compagnia a compagnia. Non tutte filtravano l'acqua adeguatamente, e le ispezioni governative rivelavano regolarmente la presenza di materia organica, batteri e sedimenti nelle forniture idriche di alcuni quartieri."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Tuttavia, la presenza dell'acqua corrente nelle abitazioni non era affatto uniforme e costituiva uno dei marcatori più evidenti della divisione di classe. Le case dell'aristocrazia e dell'alta borghesia, in particolare nel West End, a Mayfair, Kensington, Belgravia e Marylebone, disponevano quasi sempre di acqua corrente, almeno ai piani inferiori. In queste abitazioni erano presenti rubinetti in ottone lucidato nella cucina del seminterrato — dominio della cuoca e delle sguattere — e talvolta anche nei bagni padronali, con acqua fredda costante proveniente dalle tubature di piombo che correvano nelle pareti. I sistemi per il riscaldamento dell'acqua, alimentati dal focolare della cucina o da caldaie a carbone dedicate, permettevano il lusso di un bagno caldo senza dover scaldare pentole sul fuoco, un privilegio che la servitù preparava con cura meticolosa, riempiendo le vasche di rame o ghisa smaltata nelle stanze da bagno al piano superiore."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Nelle abitazioni della classe media l'acqua corrente era meno garantita e la sua disponibilità dipendeva dall'anno di costruzione dell'edificio, dalla zona e dalla compagnia idrica di riferimento. Spesso era presente un'unica presa d'acqua per piano o per edificio, un rubinetto condiviso nel cortile interno o nel corridoio, attorno al quale si formavano code mattutine e si accendevano dispute tra vicini. L'acqua non arrivava in modo continuo: molte compagnie idriche fornivano il servizio solo per alcune ore al giorno — tipicamente due o tre ore al mattino — costringendo le famiglie a riempire secchi, tinozze e recipienti di riserva per il resto della giornata. Nelle abitazioni più recenti della classe media, costruite negli anni '80 e '90, i costruttori iniziavano a includere un piccolo bagno con acqua corrente fredda, ma il bagno caldo restava un evento settimanale che richiedeva preparazione e fatica."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Nei quartieri popolari e nell'East End, l'acqua veniva invece prelevata da pompe pubbliche, cortili comuni o fontane di quartiere, spesso a centinaia di metri dall'abitazione. Le famiglie si organizzavano con secchi, brocche e grandi recipienti di terracotta o metallo, e la gestione dell'acqua era una delle occupazioni quotidiane più gravose, soprattutto per donne e bambini che compivano più volte al giorno il tragitto tra la pompa e la casa, portando carichi pesanti su per le scale di edifici fatiscenti. L'acqua delle pompe pubbliche non era sempre potabile: nonostante i miglioramenti delle infrastrutture, la contaminazione incrociata tra tubature idriche e canali fognari restava un problema concreto, soprattutto dopo forti piogge che allagavano le fognature. In alcune zone particolarmente degradate come i rookeries di St Giles o i vicoli ciechi di Bermondsey, l'acqua della pompa aveva un colore giallastro e un odore sgradevole che nemmeno la bollitura riusciva a eliminare del tutto. I bagni pubblici e i lavatoi municipali, istituiti dal Public Baths and Washhouses Act del 1846, offrivano un'alternativa per l'igiene personale al costo di pochi penny, ma non tutti potevano permettersi di frequentarli regolarmente."
         }
       ]
     },
@@ -39,7 +75,25 @@
       "content": [
         {
           "type": "text",
-          "text": "L'introduzione dell'acqua corrente non implicava automaticamente la presenza di servizi igienici moderni. I water closet con scarico ad acqua erano un lusso riservato alle abitazioni più ricche. Anche dove presenti, spesso convivevano con sistemi più tradizionali. Nella maggior parte delle case popolari e medio-basse, i servizi consistevano in latrine esterne, spesso condivise da più famiglie. Queste strutture erano collegate a fosse settiche o a semplici pozzi neri, che venivano svuotati periodicamente da squadre specializzate. Gli odori, la promiscuità e la scarsa manutenzione rendevano questi luoghi insalubri e pericolosi. Chi non disponeva di latrine utilizzava vasi da notte, svuotati al mattino in appositi contenitori o direttamente nelle fogne, quando presenti. In alcune zone meno controllate, soprattutto nelle ore notturne, lo smaltimento avveniva ancora in strada o nei corsi d'acqua minori."
+          "text": "L'introduzione dell'acqua corrente non implicava automaticamente la presenza di servizi igienici moderni, e la questione sanitaria restava uno dei problemi più urgenti e meno risolti della Londra di fine secolo. I water closet con scarico ad acqua, perfezionati da Thomas Crapper e da altri inventori a partire dagli anni '60, erano un lusso riservato alle abitazioni più ricche. Anche dove presenti, spesso convivevano con sistemi più tradizionali, e il passaggio dalla latrina al water closet avveniva con lentezza, ostacolato dai costi di installazione, dalla necessità di collegamento alla rete fognaria e dalla resistenza culturale di molti proprietari che consideravano l'investimento superfluo per gli inquilini dei ceti inferiori. Le abitazioni più lussuose del West End potevano vantare water closet decorati con ceramiche dipinte a mano, catene di ottone e serbatoi in mogano, talvolta collocati in stanze dedicate con ventilazione meccanica e piastrelle lavabili — veri e propri templi dell'igiene che i proprietari mostravano con orgoglio ai visitatori."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Nella maggior parte delle case popolari e medio-basse, i servizi consistevano in latrine esterne, spesso condivise da più famiglie — in alcuni edifici dell'East End, una singola latrina serviva venti o trenta persone. Queste strutture erano collegate a fosse settiche o a semplici pozzi neri, che venivano svuotati periodicamente da squadre specializzate di night soil men, lavoratori notturni che svolgevano uno dei mestieri più ripugnanti e peggio pagati della città, trasportando il contenuto dei pozzi in carri coperti verso i depositi fuori città. Gli odori, la promiscuità e la scarsa manutenzione rendevano questi luoghi insalubri e pericolosi: le latrine condivise erano focolai di infezioni intestinali, tifo e dissenteria, e la loro vicinanza alle cucine e ai pozzi d'acqua aggravava il rischio di contaminazione. D'inverno il freddo rendeva l'uso delle latrine esterne particolarmente penoso, e molti preferivano evitarle durante la notte."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Chi non disponeva di latrine utilizzava vasi da notte — chamber pots in inglese — di ceramica, terracotta o metallo smaltato, svuotati al mattino in appositi contenitori o direttamente nelle fogne, quando presenti. Lo svuotamento dei vasi da notte era compito della servitù nelle case benestanti, dove venivano discretamente portati via prima del risveglio dei padroni e lavati in appositi locali nel seminterrato. Nelle case popolari, il contenuto veniva gettato dalla finestra con un grido di avvertimento — \"gardyloo!\", deformazione del francese \"gardez l'eau\" — una pratica che, benché formalmente vietata dalle ordinanze municipali, persisteva nei vicoli più degradati. In alcune zone meno controllate, soprattutto nelle ore notturne, lo smaltimento avveniva ancora in strada o nei corsi d'acqua minori, contribuendo a quell'odore pervasivo e nauseante che caratterizzava intere zone della città e che i visitatori stranieri annotavano regolarmente nei loro diari di viaggio. Lo smaltimento dei rifiuti solidi non era meno problematico: la spazzatura domestica veniva accumulata in cortili comuni, raccolta irregolarmente da dustmen con carri trainati da cavalli, e trasportata verso discariche e cumuli di immondizia nei sobborghi orientali, dove i toshers — raccoglitori di rifiuti — setacciavano i rifiuti alla ricerca di oggetti rivendibili."
         }
       ]
     },
@@ -60,7 +114,25 @@
       "content": [
         {
           "type": "text",
-          "text": "L'illuminazione a gas fu una delle innovazioni tecnologiche più visibili della Londra vittoriana. Già dagli anni Trenta dell'Ottocento il gas era ampiamente utilizzato per l'illuminazione stradale, ma la sua diffusione negli interni avvenne in modo graduale e selettivo. Le abitazioni aristocratiche e borghesi disponevano di lampade a gas nelle stanze principali: salotti, sale da pranzo, corridoi. Il gas era fornito da compagnie private e il suo utilizzo comportava costi non trascurabili, oltre a rischi concreti come fughe, incendi o intossicazioni. Per questo motivo molte famiglie limitavano l'uso del gas alle ore serali e solo in alcune stanze. Nelle case più modeste il gas era spesso assente. L'illuminazione continuava a basarsi su candele, lampade a olio o a petrolio. Questi sistemi richiedevano manutenzione quotidiana, pulizia degli stoppini e una costante attenzione per evitare incendi. Anche nelle case dove il gas era presente, candele e lampade tradizionali continuavano a essere usate come integrazione o riserva."
+          "text": "L'illuminazione a gas fu una delle innovazioni tecnologiche più visibili della Londra vittoriana, una rivoluzione che trasformò radicalmente il paesaggio urbano e i ritmi della vita quotidiana. Già dagli anni Trenta dell'Ottocento il gas era ampiamente utilizzato per l'illuminazione stradale — nel 1895 Londra conta circa 60.000 lampioni a gas che vengono accesi ogni sera al tramonto dai lamplighters, figure caratteristiche del paesaggio urbano che percorrono le strade con le loro lunghe pertiche, accendendo uno a uno i fanali in una routine silenziosa e ipnotica. La luce giallastra e tremolante dei lampioni a gas definisce l'atmosfera stessa della Londra notturna: crea zone di luce e ombra, angoli bui dove tutto può accadere, e una visibilità limitata che favorisce tanto il crimine quanto il romanticismo."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "La diffusione del gas negli interni domestici avvenne in modo graduale e selettivo, seguendo la geografia della ricchezza. Le abitazioni aristocratiche e borghesi disponevano di lampade a gas nelle stanze principali: salotti illuminati da elaborate plafoniere in ottone e vetro soffiato, sale da pranzo dove il gas rendeva possibili le lunghe cene serali, corridoi dove appliques a muro guidavano gli ospiti attraverso gli spazi della casa. Il gas era fornito da compagnie private — la Gas Light and Coke Company era la più importante, fondata nel 1812 — e il suo utilizzo comportava costi non trascurabili: una famiglia borghese poteva spendere dai 10 ai 30 scellini al trimestre per il gas, a seconda del consumo e della dimensione dell'abitazione. I rischi erano concreti e ben noti: fughe di gas provocavano regolarmente incendi e, nei casi peggiori, esplosioni che potevano distruggere interi edifici. L'intossicazione da monossido di carbonio era un pericolo silenzioso, e i giornali riportavano con preoccupante regolarità casi di morte accidentale — o suicidio — per inalazione di gas. Il caratteristico odore dolciastro del gas di città, derivato dalla distillazione del carbone, permeava le stanze e i corridoi, mescolandosi agli altri odori della casa vittoriana."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Nelle case più modeste il gas era spesso assente. L'illuminazione continuava a basarsi su candele di sego — economiche ma fumose e maleodoranti —, candele di cera d'api — più pulite ma costose —, lampade a olio di colza o di balena, e le sempre più diffuse lampade a petrolio (kerosene), che offrivano una luce più stabile e brillante rispetto ai sistemi precedenti ma richiedevano una ventilazione attenta per evitare l'accumulo di fumi. Questi sistemi richiedevano manutenzione quotidiana: pulizia degli stoppini anneriti, rabbocco dei serbatoi d'olio, sostituzione delle candele consumate, e una costante attenzione per evitare incendi in abitazioni costruite prevalentemente in legno e con tende, tappeti e mobili altamente infiammabili. Anche nelle case dove il gas era presente, candele e lampade tradizionali continuavano a essere usate come integrazione o riserva: nelle camere da letto, dove il gas era ritenuto pericoloso per la notte, nelle stanze della servitù al piano superiore o nel seminterrato dove le tubature del gas non arrivavano, e come illuminazione portatile per muoversi da una stanza all'altra. Il contrasto tra una casa illuminata a gas e una illuminata a candele era immediatamente percepibile e socialmente significativo: il gas rappresentava il progresso e la rispettabilità, la candela l'arretratezza e la povertà."
         }
       ]
     },
@@ -81,7 +153,25 @@
       "content": [
         {
           "type": "text",
-          "text": "Alla fine del XIX secolo l'elettricità era ancora una rarità nel contesto domestico londinese. I primi impianti elettrici erano sperimentali e concentrati in edifici pubblici, teatri, grandi magazzini, stazioni e alcune residenze eccezionalmente moderne. Solo alcune dimore aristocratiche o case di ricchi industriali, soprattutto nelle zone più nuove e prestigiose, potevano vantare l'illuminazione elettrica. Anche in questi casi l'elettricità era spesso limitata a poche stanze di rappresentanza e conviveva con il gas. Per la stragrande maggioranza della popolazione londinese, l'elettricità restava un'idea futuristica, associata al progresso, alla scienza e talvolta a un certo timore. Non faceva parte della vita quotidiana."
+          "text": "Alla fine del XIX secolo l'elettricità era ancora una rarità nel contesto domestico londinese, una meraviglia tecnologica che suscitava stupore, ammirazione e una buona dose di diffidenza. I primi impianti elettrici erano sperimentali e concentrati in edifici pubblici di prestigio, grandi teatri come il Savoy Theatre — il primo teatro al mondo interamente illuminato a elettricità dal 1881, grazie all'intuizione di Richard D'Oyly Carte —, grandi magazzini come Selfridges e Harrods che utilizzavano la luce elettrica come attrazione commerciale, stazioni ferroviarie dove la sicurezza richiedeva un'illuminazione più affidabile, e alcune residenze eccezionalmente moderne. L'Electric Lighting Act del 1882 aveva tentato di regolamentare la distribuzione elettrica, ma le sue clausole restrittive — in particolare la norma che permetteva alle autorità locali di acquistare gli impianti dopo soli 21 anni — scoraggiarono gli investimenti privati e rallentarono enormemente la diffusione dell'elettricità domestica rispetto ad altre capitali europee e americane."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Solo alcune dimore aristocratiche o case di ricchi industriali e inventori, soprattutto nelle zone più nuove e prestigiose come South Kensington e Knightsbridge, potevano vantare l'illuminazione elettrica. Hatfield House, residenza del Marchese di Salisbury — Primo Ministro nel 1895 — fu una delle prime case private in Inghilterra a essere elettrificata, con risultati inizialmente disastrosi: cortocircuiti, fili scoperti che provocavano scintille, e una luce che tremolava in modo inquietante. Anche in questi casi l'elettricità era spesso limitata a poche stanze di rappresentanza — il salone, la sala da ballo, la sala da pranzo — e conviveva con il gas, che restava il sistema di illuminazione principale e più affidabile. L'installazione di un impianto elettrico richiedeva lavori invasivi, era costosa e necessitava di un generatore privato, poiché la rete elettrica pubblica era ancora frammentaria e inaffidabile. I generatori a vapore, rumorosi e ingombranti, venivano installati nelle cantine o in edifici separati nel giardino, e il loro funzionamento richiedeva personale tecnico specializzato."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Per la stragrande maggioranza della popolazione londinese, l'elettricità restava un'idea futuristica, associata al progresso, alla scienza e talvolta a un certo timore reverenziale misto a superstizione. Non faceva parte della vita quotidiana, e chi la incontrava per la prima volta — in un grande magazzino, a teatro, in una stazione — ne restava profondamente impressionato. La luce elettrica era più bianca, più stabile e più intensa di qualsiasi fiamma, e la sua natura invisibile — non c'era combustione visibile, né odore, né calore diretto — la rendeva quasi magica agli occhi di chi era cresciuto con candele e lampade a gas. I giornali dedicavano articoli entusiasti alle nuove installazioni elettriche, descrivendole come segni del futuro che avanza, mentre nelle riviste satiriche e nei music hall i comici scherzavano sui rischi di folgorazione e sulle paure dei più anziani. Per i personaggi del gioco, incontrare la luce elettrica è un'esperienza che segna un confine netto tra il vecchio mondo e il nuovo, tra la tradizione e un futuro che si annuncia meraviglioso e inquietante al tempo stesso."
         }
       ]
     },
@@ -102,7 +192,25 @@
       "content": [
         {
           "type": "text",
-          "text": "Chi non aveva accesso a queste tecnologie sviluppava una quotidianità fatta di adattamento e fatica. L'acqua veniva razionata, scaldata sul fuoco, conservata con attenzione. L'igiene personale era meno frequente e spesso stagionale. L'illuminazione limitava le attività serali e scandiva i ritmi della giornata. Questa distanza tecnologica non era solo una questione di comodità, ma di status sociale visibile. Avere acqua corrente, gas o elettricità significava appartenere a un mondo diverso, più sicuro, più sano, più rispettabile. La tecnologia domestica diventava così un segno concreto della divisione di classe, percepibile nella vita di ogni giorno, dentro le case prima ancora che nelle strade."
+          "text": "Chi non aveva accesso a queste tecnologie sviluppava una quotidianità fatta di adattamento, ingegno e fatica costante, una lotta silenziosa contro le privazioni materiali che definiva ogni aspetto della giornata. L'acqua veniva razionata con estrema attenzione: si riempivano secchi e tinozze durante le poche ore di erogazione dalla pompa, si riciclava l'acqua del bucato per lavare i pavimenti, si usava l'acqua di cottura delle verdure per le zuppe del giorno dopo. Scaldare l'acqua richiedeva carbone o legna, risorse costose che venivano anch'esse centellinare: un bagno completo in una tinozza di latta era un evento settimanale nella migliore delle ipotesi, e l'acqua veniva usata da tutti i membri della famiglia in successione, dal capofamiglia ai bambini più piccoli, senza cambiarla. L'igiene personale quotidiana si limitava a un rapido lavaggio di viso e mani con un panno umido, e in inverno anche questo gesto diventava una prova di resistenza al freddo."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "L'illuminazione limitava drasticamente le attività serali e scandiva i ritmi della giornata secondo le ore di luce naturale. Con il calare del buio, nelle case senza gas né elettricità, la famiglia si riuniva attorno all'unica fonte di luce disponibile — una candela di sego che gocciolava e fumava, una lampada a olio dal debole bagliore — per le ultime attività della sera: rammendare, preparare il cibo per l'indomani, raccontare storie ai bambini. Leggere era difficile e affaticante per gli occhi, cucire richiedeva una buona luce che raramente era disponibile, e il buio significava spesso ritirarsi a letto presto per risparmiare sul combustibile. Le lunghe sere invernali, quando il sole tramontava alle quattro del pomeriggio, erano particolarmente opprimenti, e la mancanza di luce contribuiva a quel senso di isolamento e di oppressione che caratterizzava la vita nei quartieri popolari."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Questa distanza tecnologica non era solo una questione di comodità, ma di status sociale visibile e tangibile, un marchio che si portava addosso e che gli altri sapevano leggere immediatamente. Avere acqua corrente, gas o elettricità significava appartenere a un mondo diverso, più sicuro, più sano, più rispettabile. Le mani screpolate di chi lava i panni nell'acqua fredda, l'odore di fumo che impregna i vestiti di chi si scalda con un focolare aperto, la vista debole di chi cuce alla luce di una candela: sono tutti segni che il corpo porta con sé e che rivelano la condizione sociale più eloquentemente di qualsiasi parola. La tecnologia domestica diventava così un segno concreto della divisione di classe, percepibile nella vita di ogni giorno, dentro le case prima ancora che nelle strade. Per un personaggio del gioco, entrare in una casa con acqua corrente calda, illuminazione a gas in ogni stanza e magari una lampadina elettrica nel salotto significa varcare una soglia non solo fisica ma sociale, un passaggio da un mondo a un altro che nessuna eleganza nell'abbigliamento o nei modi può replicare del tutto."
         }
       ]
     }

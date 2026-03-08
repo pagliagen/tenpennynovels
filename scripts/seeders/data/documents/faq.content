@@ -30,7 +30,7 @@
       "content": [
         {
           "type": "text",
-          "text": "Il gioco è ambientato a Londra, Inghilterra, nel periodo 1885-1895 durante il Late Victorian Period. Questo decennio è caratterizzato da tensioni sociali, progresso tecnologico e contraddizioni tra moralismo pubblico e realtà underground."
+          "text": "Il gioco è ambientato a Londra, Inghilterra, nel periodo 1885-1895, durante il cosiddetto Late Victorian Period — l'ultima fase dell'età vittoriana, quando il regno della regina Vittoria si avvia verso il suo settimo decennio e l'Impero Britannico raggiunge la sua massima estensione territoriale. Questo decennio è caratterizzato da tensioni sociali profonde e irrisolte, da un progresso tecnologico che sta trasformando radicalmente la vita quotidiana, e da contraddizioni laceranti tra il moralismo pubblico e la realtà underground di una metropoli di oltre cinque milioni di abitanti. Londra nel 1895 è la città più grande del mondo, il centro finanziario e politico del pianeta, un crogiolo di culture, lingue e classi sociali dove il lusso più sfrenato convive con la povertà più abietta a poche centinaia di metri di distanza. È anche una città in trasformazione: il vapore cede il passo all'elettricità, i cavalli alle prime automobili sperimentali, il telegrafo al telefono, e le certezze religiose alle inquietudini della scienza moderna. È in questo momento di passaggio — sospeso tra il vecchio mondo e il nuovo, tra la luce del progresso e l'ombra del mistero — che si svolgono le storie di Ten Penny Novels."
         }
       ]
     },
@@ -51,7 +51,7 @@
       "content": [
         {
           "type": "text",
-          "text": "Gli anni 1885-1895 offrono un contesto ricco e drammatico:"
+          "text": "Gli anni 1885-1895 offrono un contesto ricco e drammatico, un decennio in cui la storia sembra concentrare un numero straordinario di eventi, tensioni e trasformazioni che forniscono materia prima inesauribile per la narrazione di gioco. È un'epoca in cui il crimine organizzato si intreccia con la politica, la scienza sfida la religione, le classi sociali si scontrano con violenza crescente e le certezze del mondo vittoriano cominciano a sgretolarsi sotto la pressione di forze inarrestabili:"
         }
       ]
     },
@@ -66,7 +66,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Jack the Ripper (1888) - icona del crimine vittoriano"
+                  "text": "Jack the Ripper (1888) — L'autunno del terrore: tra agosto e novembre del 1888, una serie di omicidi brutali nel quartiere di Whitechapel terrorizza Londra e mette in ginocchio Scotland Yard. Le vittime sono prostitute delle classi più povere, e l'assassino — mai identificato — diventa l'icona del crimine vittoriano, il simbolo terrificante di una violenza che la società non riesce né a spiegare né a fermare. I delitti scatenano un'ondata di panico mediatico, indignazione sociale e teorie cospirative che non si esauriranno mai."
                 }
               ]
             }
@@ -80,7 +80,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Movimento operaio - scioperi e proteste sociali"
+                  "text": "Movimento operaio — Il Grande Sciopero dei Portuali del 1889 segna una svolta nella storia del sindacalismo britannico: per la prima volta, lavoratori non qualificati si organizzano con successo per ottenere condizioni migliori, dimostrando che la classe operaia può sfidare il potere economico e vincere. Scioperi, proteste sociali e manifestazioni di piazza sono una presenza costante nella Londra del decennio, alimentati dalla povertà crescente, dallo sfruttamento nelle fabbriche e dalla consapevolezza che la ricchezza dell'impero non viene distribuita equamente."
                 }
               ]
             }
@@ -94,7 +94,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Suffragette - nascita del movimento per il voto femminile"
+                  "text": "Suffragette — Nel 1889, le donne contribuenti ottengono il diritto di voto nelle elezioni locali dei County Councils, un passo timido ma significativo che alimenta le speranze del movimento suffragista. Millicent Fawcett guida la National Union of Women's Suffrage Societies con una strategia di pressione pacifica e costituzionale, mentre cresce il malcontento tra chi ritiene che servano metodi più radicali — un fermento che porterà alla nascita delle suffragette militanti di Emmeline Pankhurst nel decennio successivo."
                 }
               ]
             }
@@ -108,7 +108,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Scotland Yard - polizia investigativa moderna"
+                  "text": "Scotland Yard — La Metropolitan Police, fondata da Sir Robert Peel nel 1829 e riorganizzata negli anni Ottanta dopo una serie di scandali, sta lentamente evolvendo verso una polizia investigativa moderna. Il Criminal Investigation Department (CID) impiega detective in borghese, sviluppa tecniche di indagine basate sull'osservazione e sulla raccolta di prove, e comincia a sperimentare con le impronte digitali e la fotografia giudiziaria. Tuttavia, la corruzione, l'incompetenza e la mancanza di risorse restano problemi endemici."
                 }
               ]
             }
@@ -122,7 +122,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Tecnologia - transizione verso modernità (elettricità, telefono)"
+                  "text": "Tecnologia — Il decennio segna la transizione dalla prima alla seconda rivoluzione industriale: l'elettricità comincia a sostituire il gas per l'illuminazione, il telefono appare nei primi uffici e nelle residenze più ricche, il cinematografo viene inventato nel 1895, i raggi X vengono scoperti nello stesso anno, e le prime automobili a benzina fanno la loro comparsa sulle strade. È un'epoca di meraviglie tecnologiche che affascinano e spaventano in egual misura, sfumando il confine tra scienza e magia."
                 }
               ]
             }
@@ -136,7 +136,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Impero britannico - apice e primi segni di crisi"
+                  "text": "Impero britannico — L'impero è al suo apice territoriale, con possedimenti in ogni continente e il controllo delle rotte commerciali marittime mondiali. La corsa alla spartizione dell'Africa, le rivalità con Francia e Germania, le guerre coloniali in Sudan, in Sudafrica e nelle regioni di frontiera dell'India mantengono una tensione costante. Ma sotto la superficie della potenza imperiale si avvertono i primi segni di crisi: il costo crescente delle guerre coloniali, il nazionalismo emergente nelle colonie, e la crescente competizione industriale della Germania e degli Stati Uniti minacciano il primato britannico."
                 }
               ]
             }
@@ -161,7 +161,7 @@
       "content": [
         {
           "type": "text",
-          "text": "L'ambientazione si basa su ricerca storica accurata, ma con licenze narrative per il gioco:"
+          "text": "L'ambientazione si basa su una ricerca storica accurata e approfondita, condotta consultando fonti primarie e secondarie sull'epoca vittoriana, ma con licenze narrative deliberate che servono a rendere il gioco più coinvolgente e accessibile. L'obiettivo non è riprodurre un manuale di storia, ma creare un mondo verosimile e atmosferico in cui i giocatori possano immergersi senza dover possedere una laurea in storia britannica. Ecco come funziona il bilanciamento tra accuratezza storica e libertà creativa:"
         }
       ]
     },
@@ -176,7 +176,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Eventi storici reali forniscono il backdrop"
+                  "text": "Eventi storici reali forniscono il backdrop: i grandi avvenimenti dell'epoca — dalla crisi irlandese agli omicidi di Whitechapel, dal processo Wilde alle esposizioni universali — fanno parte del tessuto narrativo del gioco e possono influenzare le trame. I personaggi dei giocatori vivono in un mondo dove questi eventi sono accaduti o stanno accadendo, e possono interagire con le loro conseguenze."
                 }
               ]
             }
@@ -190,7 +190,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Personaggi storici possono apparire (Conan Doyle, Oscar Wilde, ecc.)"
+                  "text": "Personaggi storici possono apparire come figure di sfondo o interagire marginalmente con i personaggi dei giocatori: è possibile incrociare Arthur Conan Doyle a una conferenza della Society for Psychical Research, vedere Oscar Wilde al Café Royal, assistere a un comizio di Annie Besant o incontrare un detective di Scotland Yard ispirato a Frederick Abberline. Tuttavia, i personaggi storici non sono mai al centro della narrazione: il palcoscenico appartiene ai personaggi dei giocatori."
                 }
               ]
             }
@@ -204,7 +204,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Alcune libertà creative per gameplay e narrativa"
+                  "text": "Alcune libertà creative sono introdotte per migliorare il gameplay e la narrativa: dettagli cronologici possono essere leggermente aggiustati, tecnologie rese disponibili qualche anno prima o dopo rispetto alla datazione storica precisa, e alcune dinamiche sociali semplificate per rendere l'esperienza di gioco più fluida. Queste licenze sono sempre al servizio della storia, mai gratuite."
                 }
               ]
             }
@@ -218,7 +218,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Bilanciamento tra realismo e divertimento"
+                  "text": "Il bilanciamento tra realismo e divertimento è il principio guida di ogni decisione di design: quando l'accuratezza storica e il divertimento entrano in conflitto, il gioco sceglie sempre l'opzione che produce la migliore esperienza narrativa. Un gioco di ruolo non è un'enciclopedia: è uno strumento per raccontare storie emozionanti, e ogni elemento — storico o inventato — deve servire questo scopo."
                 }
               ]
             }
@@ -243,7 +243,7 @@
       "content": [
         {
           "type": "text",
-          "text": "Sì! La Londra vittoriana era multietnica:"
+          "text": "Sì! La Londra vittoriana era una delle città più cosmopolite e multetniche del mondo, un vero crogiolo di popoli, lingue e culture attirati dalla capitale dell'impero più vasto della storia. Il porto di Londra — il più trafficato del pianeta — accoglieva ogni giorno navi da ogni angolo del globo, e migliaia di marinai, commercianti, rifugiati e avventurieri si stabilivano nella metropoli, formando comunità vivaci e ben radicate che contribuivano alla ricchezza culturale della città. Ecco le principali comunità di immigrati presenti nella Londra del 1895:"
         }
       ]
     },
@@ -258,7 +258,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Irlandesi: Maggioranza immigrante"
+                  "text": "Irlandesi — La comunità più numerosa tra gli immigrati, con centinaia di migliaia di persone concentrate principalmente nei quartieri di Camden Town, Kilburn e nell'East End. Molti sono discendenti dei profughi della Grande Carestia degli anni Quaranta, e occupano prevalentemente lavori manuali, edili e di servizio. La comunità irlandese è guardata con sospetto e diffidenza da molti britannici a causa delle tensioni politiche sull'Home Rule e delle attività dei Feniani, che hanno compiuto attentati dinamitardi a Londra."
                 }
               ]
             }
@@ -272,7 +272,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Ebrei dell'Est Europa: Comunità a Whitechapel"
+                  "text": "Ebrei dell'Est Europa — Una delle comunità in più rapida crescita negli anni Novanta dell'Ottocento, alimentata dalle ondate migratorie in fuga dai pogrom dell'Impero Russo e dalla miseria delle regioni orientali del continente. Concentrati a Whitechapel e Spitalfields, gli ebrei ashkenaziti hanno creato un quartiere vivace e autonomo con sinagoghe, scuole, giornali in yiddish, botteghe artigianali e un tessuto sociale coeso. La loro presenza alimenta tensioni antisemite e proteste nativiste che porteranno all'Aliens Act del 1905."
                 }
               ]
             }
@@ -286,7 +286,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Italiani: Little Italy a Clerkenwell"
+                  "text": "Italiani — La \"Little Italy\" di Clerkenwell è il cuore della comunità italiana a Londra, con le sue chiese cattoliche, i caffè, i negozi di generi alimentari e le botteghe artigianali. Gli italiani lavorano come gelatai, musicisti ambulanti, mosaicisti, figurinai (venditori di statuette in gesso) e in varie attività legate alla ristorazione e all'artigianato. La comunità è coesa e ben organizzata, con proprie istituzioni di mutuo soccorso e una vita sociale intensa centrata sulla parrocchia di St Peter's in Clerkenwell Road."
                 }
               ]
             }
@@ -300,7 +300,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Cinesi: Chinatown a Limehouse"
+                  "text": "Cinesi — La piccola ma visibile comunità cinese di Limehouse, lungo le rive del Tamigi nei docks orientali, è composta principalmente da marinai e piccoli imprenditori provenienti dalle province costiere della Cina. Limehouse è l'origine del mito letterario di Chinatown londinese, amplificato dai romanzi sensazionalistici e dai resoconti giornalistici che descrivono le fumerie d'oppio come antri di perdizione — una rappresentazione largamente esagerata e razzista che contribuisce a stigmatizzare una comunità laboriosa e per lo più rispettabile."
                 }
               ]
             }
@@ -314,7 +314,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Indiani: Marinai lascar, commercianti"
+                  "text": "Indiani — I marinai lascar provenienti dall'India, dal Bangladesh e dalla regione del Golfo Persico sono una presenza costante nei quartieri portuali, dove alcuni si stabiliscono permanentemente aprendo pensioni, ristoranti e piccole attività commerciali. Accanto a loro, studenti indiani frequentano le università e gli Inns of Court per studiare legge, e commercianti e imprenditori gestiscono attività legate al commercio imperiale. Alcuni personaggi indiani raggiungono posizioni di rilievo nella società britannica, come Dadabhai Naoroji, eletto al Parlamento nel 1892."
                 }
               ]
             }
@@ -328,7 +328,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Americani: Visitatori, espatriati"
+                  "text": "Americani — Visitatori, espatriati, artisti, scrittori e imprenditori americani formano una comunità cosmopolita e influente nella Londra vittoriana. L'attrazione tra le due culture anglofone è reciproca: ricche ereditiere americane sposano aristocratici britannici in cerca di capitali freschi (le cosiddette \"Dollar Princesses\"), scrittori come Henry James e Mark Twain soggiornano a lungo a Londra, e uomini d'affari americani cercano opportunità nel mercato più grande del mondo. Gli americani sono generalmente ben visti, anche se il loro accento e le loro maniere \"informali\" suscitano divertimento e talvolta disapprovazione."
                 }
               ]
             }
@@ -365,7 +365,7 @@
       "content": [
         {
           "type": "text",
-          "text": "Il sistema distingue tra:"
+          "text": "Il sistema di documentazione di Ten Penny Novels è organizzato in modo da rendere le informazioni facilmente accessibili e navigabili, con una struttura gerarchica intuitiva che riflette la suddivisione logica dei contenuti. Il sistema distingue tra due macro-categorie principali, ciascuna con le proprie sottosezioni:"
         }
       ]
     },
@@ -380,7 +380,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Ambientazione: Informazioni sul mondo di gioco, storia, società"
+                  "text": "Ambientazione — Questa sezione raccoglie tutte le informazioni sul mondo di gioco: la storia dell'epoca vittoriana, la struttura della società londinese, le classi sociali, la religione, la scienza, la politica, la cultura, la vita quotidiana, la criminalità, la tecnologia e ogni altro aspetto della Londra del 1895 che possa essere utile ai giocatori per costruire i propri personaggi e interpretarli in modo credibile. I documenti di ambientazione sono concepiti come risorse di consultazione, non come letture obbligatorie: il giocatore può approfondire gli argomenti che più lo interessano o che sono rilevanti per il proprio personaggio."
                 }
               ]
             }
@@ -394,7 +394,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Regolamento: Meccaniche, regole, guide di gioco"
+                  "text": "Regolamento — Questa sezione contiene le meccaniche di gioco, le regole per la creazione dei personaggi, il sistema di risoluzione delle azioni, le guide per il combattimento, la progressione e ogni altro aspetto tecnico necessario per partecipare al gioco. Il regolamento è progettato per essere chiaro, accessibile e non eccessivamente complesso, in modo da non ostacolare la fluidità della narrazione."
                 }
               ]
             }
@@ -407,7 +407,7 @@
       "content": [
         {
           "type": "text",
-          "text": "I documenti sono organizzati gerarchicamente con max 2 livelli di profondità nelle URL."
+          "text": "I documenti sono organizzati gerarchicamente con un massimo di due livelli di profondità nelle URL, il che significa che ogni documento è raggiungibile con al massimo due clic dalla pagina principale. Questa struttura piatta e leggibile facilita la navigazione e permette ai giocatori di trovare rapidamente le informazioni di cui hanno bisogno, senza perdersi in labirinti di sottopagine. La barra laterale di navigazione mostra l'intero albero dei contenuti, e ogni sezione è espandibile per rivelare i documenti sottostanti."
         }
       ]
     },
@@ -428,7 +428,7 @@
       "content": [
         {
           "type": "text",
-          "text": "Dipende:"
+          "text": "L'accesso ai documenti dipende dal loro livello di visibilità e dal tuo stato di autenticazione. Il sistema è progettato per bilanciare la necessità di rendere le informazioni di base accessibili a tutti con l'esigenza di proteggere contenuti riservati o avanzati che richiedono un account registrato:"
         }
       ]
     },
@@ -443,7 +443,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Documenti pubblici: Accessibili senza autenticazione (introduzione, ambientazione generale)"
+                  "text": "Documenti pubblici — Accessibili senza autenticazione, includono le pagine introduttive, la presentazione del gioco, l'ambientazione generale e le informazioni di base necessarie per capire di cosa si tratta Ten Penny Novels e decidere se parteciparvi. Chiunque visiti il sito può leggere questi contenuti senza dover creare un account, il che facilita la scoperta del gioco e l'onboarding di nuovi giocatori."
                 }
               ]
             }
@@ -457,7 +457,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Documenti privati: Richiedono account e login (regole avanzate, contenuti riservati)"
+                  "text": "Documenti privati — Richiedono un account e l'autenticazione per essere visualizzati. Includono le regole avanzate, i contenuti riservati relativi alle trame in corso, le informazioni sensibili che potrebbero compromettere l'esperienza di gioco se lette da chi non partecipa, e i materiali di approfondimento destinati ai giocatori attivi. Per accedere a questi contenuti è necessario registrarsi e fare login."
                 }
               ]
             }
@@ -482,7 +482,7 @@
       "content": [
         {
           "type": "text",
-          "text": "La ricerca utilizza embeddings multilingue per trovare documenti rilevanti anche se non contengono esattamente le parole cercate. Ad esempio, cercando \"polizia\" troverai documenti su Scotland Yard, forze dell'ordine, criminalità."
+          "text": "La ricerca utilizza embeddings multilingue per trovare documenti rilevanti anche se non contengono esattamente le parole cercate, superando i limiti della ricerca testuale tradizionale basata sulla corrispondenza esatta delle keyword. Questo significa che il sistema comprende il significato della tua ricerca, non solo le parole che usi: cercando \"polizia\" troverai documenti su Scotland Yard, forze dell'ordine, criminalità, detective e investigazioni, anche se nessuno di questi documenti contiene la parola \"polizia\" nel testo. Allo stesso modo, cercando \"come vivevano i poveri\" otterrai risultati sulla vita quotidiana delle classi lavoratrici, sulle condizioni abitative dell'East End, sulla workhouse e sulla beneficenza — tutti argomenti semanticamente correlati alla tua domanda. La ricerca funziona sia in italiano che in inglese, e il sistema è in grado di collegare concetti espressi in lingue diverse. Questa funzionalità è particolarmente utile quando non sai esattamente quale documento contiene l'informazione che cerchi, o quando vuoi esplorare un argomento trasversalmente, attraverso documenti diversi che lo trattano da angolazioni complementari."
         }
       ]
     },
@@ -515,7 +515,7 @@
       "content": [
         {
           "type": "text",
-          "text": "Sì, ma ogni classe offre opportunità e limitazioni diverse:"
+          "text": "Sì, il gioco permette di interpretare personaggi appartenenti a qualsiasi strato della società londinese del 1895, dall'aristocrazia più esclusiva ai bassifondi più degradati. Ogni classe sociale offre opportunità narrative uniche e limitazioni specifiche che modellano profondamente l'esperienza di gioco, rendendo la scelta della classe una delle decisioni più importanti nella creazione del personaggio:"
         }
       ]
     },
@@ -530,7 +530,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Upper Class: Ricchezza, connessioni, influenza politica, ma aspettative sociali rigide"
+                  "text": "Upper Class — Ricchezza, connessioni influenti, accesso ai circoli del potere politico e sociale, e la possibilità di muoversi liberamente negli ambienti più esclusivi di Londra. Un personaggio dell'alta società può frequentare i club di Pall Mall, partecipare ai ricevimenti a corte, viaggiare in prima classe e disporre di una servitù numerosa. Ma questa posizione privilegiata comporta aspettative sociali rigidissime: ogni comportamento è osservato, giudicato e potenzialmente trasformato in scandalo. La libertà d'azione è paradossalmente limitata dalle convenzioni: un aristocratico non può frequentare certi luoghi, parlare con certe persone o svolgere certe attività senza mettere a rischio la propria reputazione e quella della famiglia."
                 }
               ]
             }
@@ -544,7 +544,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Middle Class: Professioni qualificate, rispettabilità, equilibrio tra risorse e libertà"
+                  "text": "Middle Class — Le professioni qualificate della borghesia vittoriana — medici, avvocati, ingegneri, insegnanti, impiegati, commercianti — offrono un equilibrio interessante tra risorse economiche e libertà di movimento. Il personaggio borghese ha un'istruzione, un reddito dignitoso e una rispettabilità che gli apre molte porte, senza le costrizioni soffocanti dell'aristocrazia. Può accedere sia ai quartieri eleganti del West End che — con la dovuta cautela — ai bassifondi dell'East End, fungendo da ponte narrativo tra mondi sociali altrimenti separati. La borghesia è anche la classe dell'ambizione e dell'ansia: il terrore di perdere lo status conquistato con fatica è una motivazione narrativa potentissima."
                 }
               ]
             }
@@ -558,7 +558,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Lower Class: Libertà dalle convenzioni, accesso all'underworld, ma povertà e discriminazione"
+                  "text": "Lower Class — Libertà dalle convenzioni sociali che imprigionano le classi superiori, accesso diretto all'underworld criminale, conoscenza intima delle strade, dei vicoli e dei segreti della Londra popolare. Un personaggio delle classi lavoratrici conosce la città dal basso, sa dove trovare informazioni che nessun gentleman potrebbe ottenere, e può muoversi in ambienti dove un borghese attirerebbe immediatamente sospetti. Ma questa libertà ha un prezzo brutale: la povertà è una condizione quotidiana, la discriminazione è costante, l'accesso alla giustizia e alla sanità è limitato, e una singola disgrazia — una malattia, un licenziamento, un arresto — può precipitare il personaggio nella miseria più nera della workhouse o delle strade."
                 }
               ]
             }
@@ -583,7 +583,7 @@
       "content": [
         {
           "type": "text",
-          "text": "La mobilità sociale è possibile ma difficile (come storicamente):"
+          "text": "La mobilità sociale è possibile ma difficile, esattamente come lo era nella Londra storica del 1895. La società vittoriana è strutturata in modo da rendere ogni passaggio tra una classe e l'altra un'impresa titanica che richiede tempo, risorse, alleanze strategiche e una buona dose di fortuna — o sfortuna, nel caso di una discesa sociale. Ecco i principali meccanismi di mobilità sociale nel gioco, ciascuno con le proprie implicazioni narrative:"
         }
       ]
     },
@@ -598,7 +598,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Matrimonio: Soprattutto per donne"
+                  "text": "Matrimonio — Soprattutto per le donne, il matrimonio è il veicolo più efficace di ascesa sociale. Una donna di classe media che sposa un aristocratico acquisisce il suo status, il suo titolo e il suo patrimonio — ma deve anche adattarsi a un mondo di regole non scritte che non conosce, e rischia di essere guardata con condiscendenza dalle famiglie aristocratiche che considerano il suo sangue \"inferiore\". Le cosiddette \"Dollar Princesses\" americane che sposano nobili britannici dimostrano che il denaro può comprare un titolo, ma non necessariamente il rispetto. Al contrario, una donna aristocratica che sposa \"al di sotto del proprio rango\" affronta la disapprovazione della famiglia e della società."
                 }
               ]
             }
@@ -612,7 +612,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Successo economico: Imprenditoria, commercio"
+                  "text": "Successo economico — L'imprenditoria e il commercio possono portare ricchezza sufficiente a comprare una casa in un quartiere rispettabile, mandare i figli nelle scuole giuste e cominciare a frequentare i circoli della buona società. Ma il denaro da solo non basta: i nouveaux riches sono guardati con sospetto e condiscendenza dall'aristocrazia e dalla vecchia borghesia, che distinguono nettamente tra ricchezza ereditata (rispettabile) e ricchezza guadagnata (volgare). L'ascesa sociale attraverso il successo economico richiede generalmente più di una generazione."
                 }
               ]
             }
@@ -626,7 +626,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Carriere professionali: Medicina, legge (richiede istruzione)"
+                  "text": "Carriere professionali — La medicina, la legge, l'ingegneria e il servizio civile offrono percorsi di ascesa per chi ha accesso all'istruzione superiore — un privilegio che nel 1895 è ancora largamente riservato ai maschi della classe media e alta. Le università di Oxford e Cambridge sono il passaporto per le professioni più prestigiose, ma richiedono tasse elevate e anni di studio che le famiglie operaie non possono permettersi. Le borse di studio esistono ma sono rare, e un operaio che riesce a studiare medicina deve comunque superare le barriere invisibili del pregiudizio di classe."
                 }
               ]
             }
@@ -640,7 +640,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Scandali: Perdita di status per comportamenti \"inappropriati\""
+                  "text": "Scandali — La discesa sociale è molto più rapida e brutale dell'ascesa. Un singolo scandalo — un'accusa di frode, una relazione extraconiugale resa pubblica, un arresto per un comportamento \"inappropriato\", la scoperta di un segreto compromettente — può distruggere in pochi giorni una reputazione costruita in decenni. La caduta è spesso irreversibile: chi perde il proprio status raramente riesce a recuperarlo, e la memoria dello scandalo perseguita la famiglia per generazioni. Per il gioco, lo scandalo è un elemento narrativo potentissimo che può ribaltare le sorti di un personaggio in un istante."
                 }
               ]
             }
@@ -665,7 +665,7 @@
       "content": [
         {
           "type": "text",
-          "text": "Assolutamente sì! Sebbene la società vittoriana fosse patriarcale, le donne potevano:"
+          "text": "Assolutamente sì! Sebbene la società vittoriana fosse profondamente patriarcale e imponesse alle donne ruoli rigidamente definiti, la storia è piena di donne straordinarie che hanno sfidato le convenzioni, infranto le barriere e lasciato un segno indelebile nel loro tempo. Ten Penny Novels incoraggia attivamente i giocatori a creare personaggi femminili forti, complessi e protagonisti della narrazione, offrendo numerose possibilità storicamente fondate:"
         }
       ]
     },
@@ -680,7 +680,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Essere investigatrici private (ispirazione: detectives vittoriane reali)"
+                  "text": "Investigatrici private — La figura della detective donna è storicamente attestata nell'epoca vittoriana: agenzie come la British Ladies' Detective Agency impiegavano donne per condurre indagini in contesti dove un investigatore maschio sarebbe risultato sospetto o inappropriato. Le donne investigatrici avevano il vantaggio di poter accedere a spazi domestici, conversazioni femminili e ambienti sociali preclusi ai colleghi maschi, rendendole investigatrici insostituibili per certi tipi di casi — sorveglianza di mogli sospette, indagini su governanti disoneste, infiltrazioni nei circoli mondani."
                 }
               ]
             }
@@ -694,7 +694,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Lavorare come governanti, infermiere, insegnanti"
+                  "text": "Governanti, infermiere, insegnanti — Queste professioni rispettabili offrono alle donne un'indipendenza economica e una libertà di movimento significative per l'epoca. Una governante vive nella casa del padrone e ha accesso ai segreti della famiglia; un'infermiera conosce i reparti degli ospedali, i pazienti e le loro storie; un'insegnante ha il rispetto della comunità e la libertà intellettuale di una donna istruita. Ciascuna di queste posizioni offre un punto di osservazione privilegiato sulla società e una copertura perfetta per un'investigatrice."
                 }
               ]
             }
@@ -708,7 +708,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Appartenere a movimenti suffragette"
+                  "text": "Attiviste suffragette — Il movimento per il suffragio femminile è una delle forze sociali più dinamiche dell'epoca, e offre ai personaggi femminili un contesto narrativo ricco di tensione, coraggio e conflitto. Le suffragiste organizzano petizioni, conferenze, marce e campagne di pressione politica; alcune rischiano l'arresto, la violenza della polizia e l'ostracismo sociale per difendere i propri ideali. Un personaggio coinvolto nel movimento suffragista ha accesso a reti di solidarietà femminile, contatti con giornalisti e politici, e una motivazione profonda che può intrecciarsi con la trama principale."
                 }
               ]
             }
@@ -722,7 +722,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Vivere vite non convenzionali nell'underworld"
+                  "text": "Donne dell'underworld — Nei quartieri più poveri e ai margini della legge, le donne vivono vite non convenzionali che sfidano radicalmente l'ideale vittoriano della femminilità domestica. Proprietarie di pub e lodging houses, ricettatrici, informatrici, ladre, truffatrici e — sì — anche leader di piccole organizzazioni criminali: il mondo sotterraneo di Londra offre alle donne opportunità che la società rispettabile nega, a un prezzo altissimo in termini di rischio e stigma sociale."
                 }
               ]
             }
@@ -736,7 +736,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Sfidare le convenzioni sociali (con conseguenze narrative)"
+                  "text": "Sfidare le convenzioni sociali — Qualsiasi donna che scelga di vivere al di fuori dei confini imposti dalla società vittoriana — che sia una scienziata, un'artista, una viaggiatrice, una donna d'affari o semplicemente una persona che rifiuta di conformarsi — affronta conseguenze narrative reali e significative. Ma queste conseguenze non sono solo punitive: includono anche l'ammirazione segreta di altre donne, l'interesse della stampa, il supporto di movimenti riformisti e la possibilità di diventare un simbolo di cambiamento. Le convenzioni sfidano chi le sfida, ma possono anche piegarsi."
                 }
               ]
             }
@@ -773,7 +773,7 @@
       "content": [
         {
           "type": "text",
-          "text": "Sì, l'underworld londinese offre numerose possibilità:"
+          "text": "Sì, l'underworld londinese offre numerose possibilità per personaggi che operano ai margini o al di fuori della legge. La criminalità vittoriana è un mondo complesso e stratificato, con le proprie gerarchie, i propri codici d'onore e le proprie regole non scritte, che offre spunti narrativi ricchissimi per il gioco di ruolo. Ecco alcune delle tipologie di criminali più diffuse nella Londra del 1895:"
         }
       ]
     },
@@ -788,7 +788,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Borseggiatori, ladri, truffatori"
+                  "text": "Borseggiatori, ladri e truffatori — La manovalanza del crimine londinese, presente in ogni angolo della città dalle strade affollate di Oxford Street ai mercati dell'East End. I borseggiatori — i \"dippers\" nel gergo della malavita — operano nei luoghi affollati: stazioni ferroviarie, mercati, teatri, chiese. I ladri spaziano dal semplice scassinatore al \"cracksman\" professionista specializzato in casseforti. I truffatori — i \"confidence men\" — ingannano le loro vittime con schemi elaborati che sfruttano l'avidità, la vanità o la buona fede. Molti di questi criminali sono organizzati in reti informali con ruoli specifici e codici di comportamento."
                 }
               ]
             }
@@ -802,7 +802,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Gang organizzate"
+                  "text": "Gang organizzate — Bande come i Forty Elephants (una gang interamente femminile specializzata in furti nei grandi magazzini), gli Hooligans dell'East End e varie organizzazioni criminali territoriali controllano quartieri specifici di Londra, imponendo il pizzo ai commercianti, gestendo attività illegali e combattendo violentemente per il controllo del territorio. Ogni gang ha il proprio leader, le proprie regole e i propri territori, e i confini tra le zone di influenza sono fonte di conflitti costanti e spesso sanguinosi."
                 }
               ]
             }
@@ -816,7 +816,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Contrabbandieri"
+                  "text": "Contrabbandieri — Il Tamigi e i docks di Londra sono il teatro di un commercio illegale fiorente: merci rubate dalle navi durante le operazioni di carico e scarico, prodotti di contrabbando introdotti senza pagare le tasse doganali, e beni proibiti — come l'oppio non tassato, le armi e i documenti falsi — che transitano attraverso una rete capillare di intermediari, magazzini clandestini e battelli notturni. I contrabbandieri operano con la complicità di funzionari doganali corrotti e di poliziotti che chiudono un occhio in cambio di una percentuale."
                 }
               ]
             }
@@ -830,7 +830,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Ricettatori"
+                  "text": "Ricettatori — I \"fences\" sono il perno dell'economia criminale, gli intermediari essenziali senza i quali il furto non avrebbe senso economico. Acquistano merce rubata a una frazione del suo valore e la rivendono attraverso canali legali o semi-legali: negozi compiacenti, mercati dell'usato, aste fittizie. I ricettatori più importanti sono figure potenti e rispettate nell'underworld, con reti di contatti che si estendono dalla strada ai salotti, e la loro protezione è essenziale per qualsiasi ladro che voglia operare in sicurezza."
                 }
               ]
             }
@@ -844,7 +844,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Criminali \"gentiluomini\" (Raffles-style)"
+                  "text": "Criminali \"gentiluomini\" — Ispirati al personaggio letterario di A.J. Raffles (creato da E.W. Hornung nel 1898 ma il cui archetipo è già presente nella cultura vittoriana), i gentlemen-thieves sono criminali che appartengono — o fingono di appartenere — alle classi superiori. Frequentano i club, partecipano alle feste dell'alta società, vestono con eleganza e parlano con accento impeccabile, mentre di notte si dedicano a furti audaci nelle dimore dei ricchi. Questa doppia vita offre possibilità narrative irresistibili, con il costante rischio di essere smascherati e il brivido di muoversi tra due mondi inconciliabili."
                 }
               ]
             }
@@ -869,7 +869,7 @@
       "content": [
         {
           "type": "text",
-          "text": "Scotland Yard può essere:"
+          "text": "Scotland Yard — la sede della Metropolitan Police situata in Great Scotland Yard, vicino a Trafalgar Square (e trasferita nel 1890 nella nuova sede sul Victoria Embankment, ribattezzata New Scotland Yard) — è un elemento centrale dell'ambientazione di Ten Penny Novels. Nel gioco, il rapporto tra i personaggi e la polizia può assumere diverse forme, a seconda della natura del personaggio e delle circostanze della trama:"
         }
       ]
     },
@@ -884,7 +884,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Alleato: Collaborazione con detective (se personaggio rispettabile)"
+                  "text": "Alleato — Per i personaggi rispettabili, Scotland Yard può essere un alleato prezioso nelle indagini. Un detective del CID può condividere informazioni, facilitare l'accesso a scene del crimine, fornire protezione e offrire il supporto delle risorse investigative della polizia. Tuttavia, la collaborazione con la polizia richiede rispettabilità, referenze e — spesso — connessioni personali: un aristocratico o un professionista borghese avrà un accesso molto più facile alla cooperazione della polizia rispetto a un immigrato o un operaio."
                 }
               ]
             }
@@ -898,7 +898,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Antagonista: Investigazioni contro il personaggio criminale"
+                  "text": "Antagonista — Per i personaggi coinvolti in attività criminali o ai margini della legge, Scotland Yard rappresenta una minaccia costante. I detective del CID conducono indagini, raccolgono informazioni attraverso reti di informatori, organizzano retate e arresti, e la loro attenzione può trasformare la vita di un criminale in un incubo di paranoia e fuga. Essere nel mirino di un detective determinato è uno degli elementi di tensione più efficaci nel gioco."
                 }
               ]
             }
@@ -912,7 +912,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Ostacolo burocratico: Inefficienza, corruzione, incompetenza"
+                  "text": "Ostacolo burocratico — Scotland Yard può anche essere semplicemente un ostacolo frustrante: l'inefficienza burocratica, la corruzione di singoli agenti, l'incompetenza investigativa, i pregiudizi sociali e razziali, e le rivalità interne tra dipartimenti possono rallentare o deviare le indagini, proteggere i colpevoli per errore o per interesse, e rendere la vita impossibile agli investigatori privati che cercano di fare il lavoro che la polizia non fa. La polizia vittoriana non è l'FBI: è un'organizzazione con risorse limitate, personale insufficiente e una cultura istituzionale che privilegia il mantenimento dell'ordine pubblico rispetto alla risoluzione dei crimini."
                 }
               ]
             }
@@ -937,7 +937,7 @@
       "content": [
         {
           "type": "text",
-          "text": "Gli omicidi di Whitechapel (1888) sono parte del background storico. Il gioco può:"
+          "text": "Gli omicidi di Whitechapel del 1888 — l'\"Autunno del Terrore\" — sono parte integrante del background storico del gioco. Nel 1895, l'identità del Ripper è ancora un mistero irrisolto che ossessiona l'opinione pubblica, alimenta teorie cospirative e getta un'ombra lunga sui vicoli dell'East End. Il gioco può interagire con questo pezzo di storia in diversi modi, ciascuno dei quali offre possibilità narrative uniche:"
         }
       ]
     },
@@ -952,7 +952,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Usare gli eventi come ambientazione"
+                  "text": "Ambientazione — Gli omicidi hanno lasciato cicatrici profonde nel tessuto sociale di Whitechapel e dell'East End. Le strade dove sono stati trovati i corpi — Buck's Row, Hanbury Street, Mitre Square, Dorset Street — sono diventate luoghi carichi di memoria e terrore. I personaggi che si muovono in questi quartieri nel 1895 vivono in un mondo dove il fantasma del Ripper aleggia ancora, dove le donne hanno paura di uscire sole di notte, e dove il semplice passaggio di uno sconosciuto può scatenare il panico."
                 }
               ]
             }
@@ -966,7 +966,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Permettere investigazioni alternative"
+                  "text": "Investigazioni alternative — Il gioco può permettere ai personaggi di condurre le proprie indagini sugli omicidi irrisolti, seguendo piste che la polizia ha trascurato o abbandonato, interrogando testimoni che non sono mai stati ascoltati, e scoprendo connessioni che nessuno ha notato. Questa possibilità offre trame appassionanti che si intrecciano con la storia reale senza pretendere di riscriverla."
                 }
               ]
             }
@@ -980,7 +980,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Esplorare il panico mediatico e sociale"
+                  "text": "Panico mediatico e sociale — I delitti del Ripper hanno scatenato un'isteria collettiva che è stata amplificata e alimentata dalla stampa sensazionalistica. I giornali hanno pubblicato lettere attribuite all'assassino (molte delle quali probabilmente false), illustrazioni macabre e resoconti dettagliati che hanno trasformato il terrore in spettacolo. Questo fenomeno mediatico può essere esplorato nel gioco come sfondo narrativo, mostrando come la paura può essere manipolata, commercializzata e utilizzata per fini politici."
                 }
               ]
             }
@@ -994,7 +994,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Non rivelare l'identità (mistero irrisolto)"
+                  "text": "Mistero irrisolto — Il gioco non rivelerà mai l'identità del Ripper. Questo è un mistero che appartiene alla storia, e la sua forza risiede proprio nel fatto che non è mai stato risolto. L'identità dell'assassino resta sconosciuta, e qualsiasi tentativo di attribuire i delitti a una persona specifica sarebbe una speculazione che il gioco non intende avallare. Il mistero irrisolto è più potente di qualsiasi rivelazione."
                 }
               ]
             }
@@ -1027,6 +1027,15 @@
       ]
     },
     {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "La tecnologia del tardo periodo vittoriano si trova in un momento di transizione affascinante, a cavallo tra la prima rivoluzione industriale (basata sul vapore e sul carbone) e la seconda (basata sull'elettricità e sul petrolio). Ecco una panoramica di ciò che esiste, ciò che non esiste e ciò che sta emergendo nella Londra del 1895:"
+        }
+      ]
+    },
+    {
       "type": "bulletList",
       "content": [
         {
@@ -1037,7 +1046,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Sì: Telegrafo, telefono (raro), ferrovia, gas lighting, fotografia, battelli a vapore"
+                  "text": "Tecnologie consolidate: Il telegrafo è il sistema nervoso dell'impero, con cavi sottomarini che collegano Londra a ogni angolo del globo; il telefono esiste ma è rarissimo, un lusso delle grandi aziende e delle residenze più ricche; la ferrovia è il mezzo di trasporto rivoluzionario che ha trasformato il paese, con la metropolitana di Londra già in funzione dal 1863; l'illuminazione a gas è lo standard nelle strade e nelle case; la fotografia è una tecnologia matura ma ancora costosa e ingombrante; i battelli a vapore dominano i mari e collegano Londra al resto del mondo."
                 }
               ]
             }
@@ -1051,7 +1060,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "No: Auto (rarissime fino al 1895), aeroplani, radio, computer, antibiotici"
+                  "text": "Tecnologie inesistenti: Le automobili sono rarissime fino al 1895 — il Red Flag Act, che obbliga ogni veicolo a motore a essere preceduto da un uomo con bandiera rossa, sarà abolito solo nel 1896; gli aeroplani non voleranno prima del 1903; la radio è ancora in fase sperimentale; i computer ovviamente non esistono; gli antibiotici non saranno scoperti prima del 1928; il cinema non esiste fino alla fine del 1895 quando i fratelli Lumière presenteranno il loro cinematografo. Queste assenze tecnologiche sono fondamentali per l'ambientazione: senza telefoni cellulari un personaggio non può chiedere aiuto istantaneamente; senza antibiotici una ferita infetta può essere fatale; senza DNA le indagini si basano su testimonianze, indizi fisici e intuizione."
                 }
               ]
             }
@@ -1065,7 +1074,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Emergente: Elettricità (lusso estremo), cinema (1895), raggi X (1895)"
+                  "text": "Tecnologie emergenti: L'elettricità è un lusso estremo che sta trasformando le strade più eleganti di Londra — le prime centrali elettriche sono operative, e i teatri del West End, i grandi magazzini e alcune residenze aristocratiche sono illuminati dalla luce elettrica, che suscita meraviglia e timore. Il cinema nasce nel 1895 con le proiezioni dei fratelli Lumière. I raggi X vengono scoperti da Röntgen nel novembre 1895, aprendo scenari medici e investigativi impensabili. La bicicletta moderna con pneumatici ad aria compressa sta diventando popolare, soprattutto tra le donne che la usano come strumento di emancipazione. Le macchine da scrivere si diffondono negli uffici, creando nuove opportunità di impiego per le donne."
                 }
               ]
             }
@@ -1086,6 +1095,15 @@
       ]
     },
     {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Muoversi nella Londra del 1895 è un'esperienza radicalmente diversa da qualsiasi cosa si possa immaginare nella nostra epoca di metropolitane efficienti e ride-sharing. Le strade sono un caos perenne di veicoli a trazione animale, e il rumore degli zoccoli sul selciato, il puzzo del letame e il fischio dei treni sono la colonna sonora costante della città:"
+        }
+      ]
+    },
+    {
       "type": "bulletList",
       "content": [
         {
@@ -1096,7 +1114,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "A piedi: Metodo principale per le classi povere"
+                  "text": "A piedi — Il metodo principale di spostamento per le classi povere, che percorrono quotidianamente distanze considerevoli per raggiungere il posto di lavoro, fare la spesa, portare i panni alla lavanderia e sbrigare ogni commissione. Un operaio dell'East End che lavora in una fabbrica a Southwark può camminare un'ora all'andata e un'ora al ritorno, sei giorni alla settimana, in qualsiasi condizione atmosferica. Le strade non sono illuminate uniformemente, e dopo il tramonto — che in inverno arriva presto — camminare nei quartieri meno frequentati diventa un'esperienza rischiosa."
                 }
               ]
             }
@@ -1110,7 +1128,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Omnibus: Trasporto pubblico a cavalli"
+                  "text": "Omnibus — Il trasporto pubblico più democratico di Londra: grandi carrozze a cavalli che percorrono rotte fisse attraverso la città, con fermate prestabilite e tariffe accessibili alla classe media e ai lavoratori meglio pagati. Gli omnibus a due piani (i \"knifeboard\" e poi i \"garden seat\") sono una presenza iconica delle strade londinesi, con i passeggeri del piano superiore esposti alle intemperie e quelli del piano inferiore stipati in uno spazio angusto. Le tariffe variano da un penny per le tratte brevi a sei pence per quelle più lunghe."
                 }
               ]
             }
@@ -1124,7 +1142,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Cab/Hansom: Taxi a cavalli (costoso)"
+                  "text": "Cab/Hansom — Il celebre Hansom cab, progettato da Joseph Hansom nel 1834, è il taxi della Londra vittoriana: un elegante veicolo a due ruote trainato da un singolo cavallo, con il cocchiere seduto in alto dietro la cabina. Veloce, maneggevole e relativamente confortevole, il Hansom è il mezzo di trasporto preferito dalla borghesia e dai professionisti che devono spostarsi rapidamente in città. Le tariffe sono regolamentate ma costose: uno scellino per la prima migliaia di iarde e sei pence per ogni migliaia successiva, più mance al cocchiere. I cabman — i cocchieri — sono figure iconiche della Londra vittoriana, con la loro conoscenza enciclopedica delle strade e il loro linguaggio colorito."
                 }
               ]
             }
@@ -1138,7 +1156,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Ferrovia: Metropolitan Railway (metropolitana), treni per fuori città"
+                  "text": "Ferrovia — La Metropolitan Railway, inaugurata nel 1863, è la prima metropolitana del mondo e un orgoglio della tecnologia britannica. I treni a vapore percorrono tunnel sotterranei collegando le principali stazioni della città, avvolti in una nube di fumo e fuliggine che rende l'esperienza di viaggio soffocante ma efficiente. I vagoni sono divisi in tre classi — prima, seconda e terza — e la differenza di comfort è abissale. I treni a lunga percorrenza partono dalle grandi stazioni terminali — Paddington, King's Cross, Victoria, Waterloo, Liverpool Street — collegando Londra al resto dell'Inghilterra e, attraverso Dover e il servizio di traghetti, al continente europeo."
                 }
               ]
             }
@@ -1152,7 +1170,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Battelli: Sul Tamigi"
+                  "text": "Battelli sul Tamigi — I battelli a vapore che percorrono il Tamigi offrono un mezzo di trasporto alternativo per collegare i quartieri rivieraschi, da Westminster a Greenwich, e sono particolarmente utilizzati nei mesi estivi quando il viaggio fluviale è piacevole e panoramico. Il loro uso è in declino rispetto ai decenni precedenti, soppiantato dalla comodità dei treni e degli omnibus, ma restano un'opzione affascinante e atmosferica per chi non ha fretta."
                 }
               ]
             }
@@ -1173,6 +1191,15 @@
       ]
     },
     {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "La comunicazione nella Londra vittoriana avviene attraverso una combinazione di mezzi che, per quanto primitivi rispetto ai nostri standard, sono sorprendentemente efficaci nel contesto dell'epoca:"
+        }
+      ]
+    },
+    {
       "type": "bulletList",
       "content": [
         {
@@ -1183,7 +1210,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Posta: 2-3 consegne al giorno a Londra (velocissimo!)"
+                  "text": "Posta — Il servizio postale londinese è straordinariamente efficiente: con fino a sei consegne al giorno nei quartieri centrali (e almeno due-tre nelle aree residenziali), una lettera impostata al mattino può ricevere risposta nel pomeriggio dello stesso giorno. Il costo di un penny per lettera — la rivoluzionaria Penny Post introdotta nel 1840 — ha democratizzato la corrispondenza, rendendola accessibile a tutte le classi sociali. Le cassette postali rosse, disegnate da Anthony Trollope, sono una presenza familiare in ogni angolo della città, e gli uffici postali offrono anche servizi di risparmio, telegrafo e money order."
                 }
               ]
             }
@@ -1197,7 +1224,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Telegrafo: Messaggi urgenti (uffici pubblici)"
+                  "text": "Telegrafo — Per i messaggi urgenti, gli uffici telegrafici pubblici offrono un servizio quasi istantaneo: un messaggio può attraversare l'intera città in pochi minuti, o raggiungere l'altra parte del mondo in poche ore attraverso la rete di cavi sottomarini dell'impero. Il costo è calcolato a parola, il che impone una concisione estrema che ha generato uno stile comunicativo unico — il cosiddetto \"telegraphese\". Inviare un telegramma ha anche un valore simbolico: riceverne uno è spesso associato a notizie urgenti, emergenze o comunicazioni ufficiali, e il suono del fattorino del telegrafo che bussa alla porta provoca invariabilmente un brivido di apprensione."
                 }
               ]
             }
@@ -1211,7 +1238,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Telefono: Rarissimo, solo ricchi e uffici"
+                  "text": "Telefono — Rarissimo nel 1895, il telefono è un lusso riservato alle grandi aziende, agli uffici governativi e alle residenze più ricche. La National Telephone Company gestisce il servizio con poche migliaia di abbonati in tutta Londra. Le conversazioni richiedono la mediazione di centraliniste che connettono manualmente le chiamate, e la privacy è un miraggio. La qualità audio è scarsa, con interferenze, rumori di fondo e frequenti interruzioni della linea. Per la maggior parte dei londinesi, il telefono è una curiosità tecnologica di cui si legge sui giornali."
                 }
               ]
             }
@@ -1225,7 +1252,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Messaggeri: Fattorini per consegne immediate"
+                  "text": "Messaggeri e fattorini — Per le consegne immediate che non possono aspettare la posta e non giustificano il costo di un telegramma, i fattorini (\"messenger boys\") offrono un servizio rapido ed economico. Ragazzini tra i dodici e i sedici anni percorrono la città a piedi o in bicicletta, consegnando lettere, pacchi, biglietti da visita e messaggi verbali per pochi pence. Le grandi aziende mantengono i propri fattorini, e nelle strade centrali di Londra è possibile trovare fattorini a nolo stazionati agli angoli, pronti a partire al primo cenno. Questo servizio umano di messaggistica è l'equivalente vittoriano del nostro SMS."
                 }
               ]
             }
@@ -1262,7 +1289,7 @@
       "content": [
         {
           "type": "text",
-          "text": "Le regole sono nella sezione Regolamento del sito:"
+          "text": "Tutte le regole del gioco sono consultabili nella sezione Regolamento del sito, organizzata in documenti chiari e accessibili che coprono ogni aspetto meccanico dell'esperienza di gioco. Non è necessario memorizzare ogni dettaglio prima di iniziare: le regole sono progettate per essere consultate al bisogno, come un manuale di riferimento piuttosto che un testo da studiare. Ecco le principali aree coperte dalla documentazione regolamentare:"
         }
       ]
     },
@@ -1277,7 +1304,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Creazione personaggio"
+                  "text": "Creazione personaggio — Guide dettagliate per costruire il proprio alter ego vittoriano: dalla scelta della classe sociale alla definizione delle abilità, dalla biografia alla personalità, dall'aspetto fisico all'equipaggiamento iniziale. Il processo di creazione è guidato e strutturato per aiutare anche i giocatori meno esperti a creare personaggi credibili e interessanti."
                 }
               ]
             }
@@ -1291,7 +1318,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Meccaniche di gioco"
+                  "text": "Meccaniche di gioco — Il sistema di regole che governa le azioni dei personaggi, basato sul Basic Role-Playing (BRP). Include le regole per i tiri di dado, i test di abilità, le prove contrappposte e tutti gli elementi meccanici che trasformano le intenzioni narrative dei giocatori in risultati concreti nella fiction del gioco."
                 }
               ]
             }
@@ -1305,7 +1332,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Combattimento e skill"
+                  "text": "Combattimento e skill — Le regole specifiche per le situazioni di conflitto fisico, dalla rissa da pub alla sparatoria nei docks, inclusi i sistemi per le ferite, la guarigione e le conseguenze a lungo termine della violenza. Il sistema di skill copre tutte le competenze che un personaggio può possedere, dalla medicina all'investigazione, dalla persuasione alla sopravvivenza urbana."
                 }
               ]
             }
@@ -1319,7 +1346,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Sistema di progressione"
+                  "text": "Sistema di progressione — Come i personaggi crescono e si sviluppano nel corso della campagna: miglioramento delle abilità attraverso l'esperienza, acquisizione di nuove competenze, evoluzione delle relazioni sociali e cambiamento dello status all'interno del mondo di gioco. La progressione riflette le possibilità realistiche dell'epoca vittoriana."
                 }
               ]
             }
@@ -1344,7 +1371,7 @@
       "content": [
         {
           "type": "text",
-          "text": "No! I documenti sono risorse di consultazione:"
+          "text": "Assolutamente no! I documenti sono risorse di consultazione, non compiti da svolgere. La documentazione di Ten Penny Novels è vasta e approfondita di proposito: vuole essere una biblioteca a disposizione dei giocatori, non un esame da superare. Ecco come usarla al meglio in base al tuo livello di esperienza e alle tue esigenze:"
         }
       ]
     },
@@ -1359,7 +1386,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Leggi introduzione e panoramica per iniziare"
+                  "text": "Per iniziare, leggi la presentazione del gioco e la panoramica sull'ambientazione: questi documenti forniscono il contesto essenziale — il tono, l'atmosfera, le coordinate storiche e le premesse narrative — che è tutto ciò di cui hai bisogno per cominciare a immaginare il tuo personaggio e a muovere i primi passi nel mondo di Ten Penny Novels."
                 }
               ]
             }
@@ -1373,7 +1400,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Consulta approfondimenti quando necessario per il tuo personaggio"
+                  "text": "Consulta gli approfondimenti quando ne hai bisogno per il tuo personaggio: se stai giocando un medico, leggi il documento sulla medicina vittoriana; se il tuo personaggio è un detective, approfondisci Scotland Yard e il sistema giudiziario; se interpreti una donna della classe media, consulta i documenti sulla condizione femminile e sulle classi sociali. La documentazione è lì per aiutarti quando ne hai bisogno, non per sommergerti di informazioni prima che tu ne abbia uso."
                 }
               ]
             }
@@ -1387,7 +1414,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Usa ricerca semantica per trovare info specifiche"
+                  "text": "Usa la ricerca semantica per trovare informazioni specifiche senza dover navigare l'intero archivio: digita una domanda o un argomento e il sistema ti presenterà i documenti più rilevanti, anche se non conosci il titolo esatto o la sezione in cui sono collocati. Questo strumento è particolarmente utile durante il gioco, quando hai bisogno di una risposta rapida su un aspetto dell'ambientazione."
                 }
               ]
             }
@@ -1412,7 +1439,7 @@
       "content": [
         {
           "type": "text",
-          "text": "Dipende dalla politica del progetto (vedi sezione Contributi o contatta gli amministratori)."
+          "text": "La possibilità di contribuire con contenuti dipende dalla politica del progetto e dal tipo di contributo che desideri offrire. Ten Penny Novels è un progetto curato con attenzione alla coerenza narrativa e all'accuratezza storica, il che significa che i nuovi contenuti devono essere valutati e approvati dallo staff prima di essere pubblicati. Se hai idee, suggerimenti, correzioni storiche o proposte per nuovi documenti di ambientazione, il modo migliore per procedere è contattare gli amministratori attraverso i canali ufficiali del progetto — il forum della community o il server Discord — dove potrai discutere la tua proposta, ricevere feedback e, se approvata, collaborare con lo staff per integrare il tuo contributo nella documentazione. Ogni apporto che arricchisca l'esperienza di gioco mantenendo la coerenza dell'ambientazione è benvenuto e apprezzato."
         }
       ]
     },
@@ -1441,6 +1468,15 @@
       ]
     },
     {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Se trovi errori, imprecisioni storiche, problemi tecnici o hai suggerimenti per migliorare il gioco, hai diverse opzioni per comunicarli allo staff:"
+        }
+      ]
+    },
+    {
       "type": "bulletList",
       "content": [
         {
@@ -1451,7 +1487,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Sistema di feedback integrato (se disponibile)"
+                  "text": "Sistema di feedback integrato — Se disponibile sul sito, puoi utilizzare il sistema di feedback per inviare segnalazioni direttamente dalla pagina in cui hai notato il problema. Questo è il metodo più efficace per errori specifici come refusi, imprecisioni storiche, link non funzionanti o problemi di formattazione, perché permette allo staff di identificare immediatamente la posizione del problema e intervenire rapidamente."
                 }
               ]
             }
@@ -1465,7 +1501,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Contatto diretto con amministratori"
+                  "text": "Contatto diretto con amministratori — Per questioni più complesse, suggerimenti strutturali o proposte che richiedono una discussione approfondita, puoi contattare direttamente gli amministratori del progetto. Lo staff è composto da appassionati di storia vittoriana e di gioco di ruolo che sono sempre disponibili ad ascoltare feedback costruttivi e a valutare proposte di miglioramento."
                 }
               ]
             }
@@ -1479,7 +1515,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Forum/Discord della community"
+                  "text": "Forum e Discord della community — La community di Ten Penny Novels dispone di canali dedicati al feedback, alle discussioni sull'ambientazione e ai suggerimenti per il miglioramento del gioco. Questi spazi sono il luogo ideale per discutere le proprie idee con altri giocatori e con lo staff in un contesto informale e collaborativo, dove le proposte possono essere valutate, affinate e sviluppate collettivamente prima di essere implementate."
                 }
               ]
             }
@@ -1500,6 +1536,15 @@
       ]
     },
     {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Ten Penny Novels è un gioco di ruolo by chat che vive della partecipazione attiva della sua community. Ecco i principali canali dove puoi trovare altri giocatori e integrarti nel mondo del gioco:"
+        }
+      ]
+    },
+    {
       "type": "bulletList",
       "content": [
         {
@@ -1510,7 +1555,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Community Discord/forum"
+                  "text": "Community Discord e forum — Il server Discord e il forum ufficiale sono i luoghi di ritrovo principali della community, dove i giocatori si conoscono, discutono di ambientazione e regolamento, pianificano sessioni e condividono le proprie esperienze di gioco. Sono anche il punto d'ingresso ideale per i nuovi giocatori, che possono presentarsi, fare domande e ricevere supporto da veterani e staff."
                 }
               ]
             }
@@ -1524,7 +1569,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Eventi organizzati"
+                  "text": "Eventi organizzati — Lo staff organizza periodicamente eventi speciali, sessioni a tema, avventure one-shot e occasioni di incontro che permettono ai giocatori di conoscersi, di sperimentare il sistema di gioco e di partecipare a esperienze narrative condivise. Questi eventi sono un'ottima occasione per i nuovi giocatori di fare i primi passi in un contesto guidato e supportato."
                 }
               ]
             }
@@ -1538,7 +1583,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Sessioni online o in-person"
+                  "text": "Sessioni online — Il gioco si svolge principalmente online attraverso la piattaforma di chat dedicata, il che significa che puoi partecipare da qualsiasi luogo e in qualsiasi fuso orario. Le sessioni possono essere sincrone (tutti i giocatori online contemporaneamente per scene ad alta intensità) o asincrone (i giocatori rispondono quando possono, permettendo una narrazione più riflessiva e dettagliata). Questa flessibilità rende Ten Penny Novels accessibile a giocatori con orari e impegni diversi."
                 }
               ]
             }
@@ -1554,7 +1599,7 @@
       "content": [
         {
           "type": "text",
-          "text": "Non hai trovato la risposta? Usa la ricerca semantica o contatta il supporto!"
+          "text": "Non hai trovato la risposta alla tua domanda? Non preoccuparti: usa la ricerca semantica per esplorare la documentazione del gioco — il sistema è in grado di trovare informazioni rilevanti anche a partire da domande formulate in modo generico o con parole diverse da quelle usate nei documenti. Se la risposta non è nella documentazione, contatta direttamente lo staff attraverso il Discord della community o i canali di supporto: siamo sempre disponibili ad aiutare i giocatori, vecchi e nuovi, a orientarsi nel mondo di Ten Penny Novels."
         }
       ]
     }

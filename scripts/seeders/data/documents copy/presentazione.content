@@ -1,0 +1,89 @@
+{
+  "type": "doc",
+  "content": [
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "L'ambientazione e le ispirazioni"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Non serve reinventare Londra: è proprio la sua forza simbolica a renderla il terreno ideale per un gioco d'indagine e mistero. Frankenstein, Holmes, Hyde sono figure che hanno già plasmato l'immaginario collettivo, capaci di evocare con immediatezza la tensione che vogliamo trasmettere. Nel 1895, mentre l'elettricità sostituisce il vapore e i motori a benzina iniziano a circolare, la società resta ancora legata a credenze e tabù. La città si muove fra scienza e occulto, e il confine fra i due mondi è fragile."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 3
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Le atmosfere gotiche"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Ten Penny Novels si ispira al romanzo gotico e ai penny dreadful. Le paure che lo animano non sono solo mostri o profezie, ma l'angoscia della morte, la follia, la corruzione, la scoperta che l'uomo comune non è affatto al sicuro. Gli investigatori che muovono i primi passi non hanno nulla di eroico: possono essere studiosi, ladri, infermiere, investigatori o ballerine. Tutti sono chiamati a confrontarsi con ciò che non trova risposta nei manuali di scienza né nelle prediche di un parroco."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Struttura della campagna"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Il gioco non è pensato come una land senza fine. Ha l'impianto di una campagna: inizio, sviluppo e conclusione. Ogni storia si costruisce come un'indagine collettiva, dove la verità non emerge mai da un singolo punto di vista ma dal confronto, dalla collaborazione e dal rischio condiviso. La durata limitata della campagna serve a dare ritmo e spessore, a trasformare l'esperienza in un romanzo giocato insieme, che abbia il suo epilogo naturale."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Verosimiglianza e personaggi"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Ten Penny Novels si fonda su un'ambientazione storica, ma non pretende rigore accademico. L'obiettivo è la verosimiglianza, non la ricostruzione pedissequa. Non si chiede ai giocatori di immedesimarsi in un cittadino medio dell'età vittoriana, né di ridurre le donne al ruolo domestico lasciando agli uomini l'azione. Personaggi eccezionali sono previsti e benvenuti, ma la loro eccezionalità avrà un peso nel gioco. L'obiettivo non è cancellare le contraddizioni dell'epoca ma esaltarle per trasformarle in spunti di narrazione."
+        }
+      ]
+    }
+  ]
+}

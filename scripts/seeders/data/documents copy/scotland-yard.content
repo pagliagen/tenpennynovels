@@ -1,0 +1,367 @@
+{
+  "type": "doc",
+  "content": [
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Struttura interna"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "All'interno di Scotland Yard operano diversi uffici:"
+        }
+      ]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "il Criminal Investigation Department (CID)"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "la Special Branch"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "il Public Carriage Office, incaricato di rilasciare le licenze ai cocchieri"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "il casellario giudiziale"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "i laboratori"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "gli uffici amministrativi"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "È presente anche lo Scotland Yard Museum of Criminal Relics, noto come Black Museum, dove vengono conservati reperti e prove dei casi più celebri. Non è un museo pubblico nel senso moderno, ma un archivio didattico e simbolico."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 3
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Criminal Investigation Department (CID)"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Il CID nasce nel 1842 come Detective Department e viene riorganizzato nel 1878. Si occupa dei crimini più complessi e delle indagini di rilievo: omicidi, tradimento, crimini violenti di grande risonanza, casi politicamente sensibili. Gli ispettori del CID godono di maggiore autonomia rispetto ai poliziotti di pattuglia. Sono autorizzati a portare armi da fuoco durante il servizio, poiché affrontano situazioni più pericolose. Un aspetto peculiare è la possibilità, per gli ispettori, di lavorare come investigatori privati nel tempo libero, purché ciò non interferisca con i doveri ufficiali. Questo rende spesso impossibile stabilire se un'indagine sia condotta in modo formale o ufficioso, a meno che non vi sia una comunicazione esplicita. Gli ispettori del CID vengono talvolta richiesti come consulenti anche all'estero, soprattutto in casi ritenuti insoliti o difficili."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 3
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Special Branch"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "La Special Branch viene istituita nel 1886. Il suo scopo principale è il contrasto ai nazionalisti irlandesi e alle attività terroristiche. Negli anni Ottanta e Novanta del secolo Londra è colpita da una serie di attentati dinamitardi. Nel 1884 un'esplosione colpisce direttamente Scotland Yard, distruggendo quasi interamente gli uffici del CID. Da quel momento la sorveglianza politica e il controllo dei movimenti sovversivi diventano una priorità costante."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Organizzazione territoriale"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Il territorio è suddiviso in ventidue divisioni amministrative, ciascuna con una propria stazione di polizia. Ogni divisione copre un'area specifica della città e risponde alla catena di comando centrale. Ogni stazione dispone in genere di un Ispettore responsabile, un Sergente e circa venti Agenti di Polizia. Le stazioni sono distribuite nei principali quartieri e nodi urbani, spesso in prossimità delle grandi vie di comunicazione."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Catena di comando"
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 3
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Commissario"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Il vertice assoluto della Polizia Metropolitana è il Commissario di Polizia della Metropoli. Ricopre attualmente la carica Sir Edward Bradford, subentrato al discusso James Munro nei primi anni Novanta. Il Commissario dirige l'intera forza, mantiene i rapporti con il Governo e il Ministero degli Interni, stabilisce linee operative e disciplinari, approva decisioni strategiche e casi sensibili."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 3
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Sovrintendenti"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Subito sotto il Commissario operano i Sovrintendenti. Sono responsabili di coordinare gli Ispettori Capo, supervisionare procedimenti disciplinari di alto livello e fungere da collegamento diretto con il Commissario. Solo i Sovrintendenti hanno accesso diretto e regolare al Commissario."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 3
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Ispettori Capo"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Gli Ispettori Capo dirigono reparti specifici o divisioni complesse. Il più noto è il capo del CID. Coordinano gli Ispettori, garantiscono la disciplina interna, decidono priorità operative all'interno del loro reparto."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 3
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Ispettori"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Gli Ispettori sono il vero fulcro operativo del Met. Possono dirigere una stazione di polizia locale, guidare squadre investigative, operare all'interno del CID, dare ordini a detective, sergenti, agenti e agenti speciali subordinati. Hanno autorità disciplinare limitata. Possono sanzionare infrazioni minori, sospendere agenti e segnalare casi più gravi ai livelli superiori."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 3
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Investigatori (Detective)"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Gli Investigatori, spesso chiamati detective, sono assegnati al CID. Si occupano di interrogatori, raccolta e analisi delle prove, individuazione di testimoni, costruzione dei casi giudiziari. Hanno autorità funzionale sugli Agenti e sui Sergenti per quanto riguarda le indagini, ma non hanno potere disciplinare. Sono spesso figure esperte, tenaci, poco visibili al pubblico, ma centrali per il successo di un'indagine."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 3
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Sergente"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Il Sergente è il primo livello di comando sul campo. Può coordinare gli Agenti, far rispettare la disciplina sugli Agenti, intervenire in caso di negligenza o insubordinazione. Un Sergente può disciplinare un Agente anche se non appartiene allo stesso reparto. Per sanzioni più gravi deve coinvolgere un Ispettore."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 3
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Agente di Polizia"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "L'Agente è il grado base della Polizia Metropolitana. Svolge pattugliamenti, controllo del territorio, interventi di routine, primi contatti con criminali e vittime. Ha pochissima autorità decisionale ed è spesso il bersaglio diretto della criminalità. È la figura più visibile e anche la più esposta."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 3
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Agente Speciale"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Gli Agenti Speciali sono cittadini nominati temporaneamente in caso di emergenze o disordini. Possono assistere interrogatori, aiutare nella raccolta delle prove, partecipare ad arresti, proteggere persone e proprietà. Non possono richiedere mandati, ottenere perquisizioni o trattenere sospetti in custodia. Il loro ruolo è di supporto e viene spesso guardato con sospetto dai professionisti del Met."
+        }
+      ]
+    }
+  ]
+}

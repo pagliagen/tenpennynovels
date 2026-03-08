@@ -18,7 +18,34 @@
       "content": [
         {
           "type": "text",
-          "text": "La giornata inizia prima dell'alba. Il personale viene radunato al suono di una campana o di una tromba. I compiti vengono assegnati subito. La colazione è abbondante. Zuppa d'avena, uova, lardo, prosciutto affumicato, fagioli, patate, formaggio, pudding, grandi quantità di burro. Latte e birra provengono dalla fattoria stessa. Dopo il pasto la donna si occupa della casa, della latteria, del pollaio, del frutteto. Rammenda la biancheria, talvolta fila. L'uomo percorre i campi, controlla siepi e canaletti, sorveglia i braccianti. Se necessario lavora in prima persona, guidando animali da tiro. Nelle tenute più estese si sposta a cavallo. A metà giornata si consuma il pranzo, simile alla colazione ma con l'aggiunta di carne, spesso pollo o montone. Le porzioni sono molto abbondanti. L'espressione \"mangiare come un affittuario\" diventa proverbiale. Dopo il pranzo il lavoro riprende fino allo spuntino serale. Seguono le preghiere. La domenica è giorno di riposo obbligatorio. Le uniche attività ammesse sono la funzione religiosa, i cori mattutini e, la sera, qualche bevuta in più. Birra o grog al rum. Il whisky, comune in Scozia, non è considerato rispettabile in Inghilterra."
+          "text": "La giornata dell'affittuario — il tenant farmer, colonna portante dell'economia agricola inglese — inizia prima dell'alba, quando il cielo è ancora una striscia grigia all'orizzonte e il freddo dell'Inghilterra rurale penetra fino alle ossa. Il personale viene radunato al suono di una campana di bronzo fissata al muro della fattoria o di una tromba che il capomastro suona nel cortile principale. Non c'è tempo per indugi: i compiti della giornata vengono assegnati immediatamente dal padrone o dal suo caposquadra, distribuendo gli uomini tra i campi, le stalle, i fienili e i laboratori della fattoria con un'efficienza militare che non ammette discussioni. La colazione è abbondante, concepita per sostenere corpi destinati a ore di lavoro fisico pesante all'aperto in ogni condizione climatica: zuppa d'avena densa e fumante (porridge), uova fresche raccolte dal pollaio quella mattina stessa, lardo tagliato a fette spesse e fritto nel suo grasso, prosciutto affumicato stagionato nei locali della fattoria, fagioli bianchi lessati e conditi con burro, patate bollite o arrostite nella cenere, formaggio locale dal sapore forte e deciso, pudding di sego cotto al vapore nel panno di lino, e grandi quantità di burro fresco lavorato nella latteria dalla moglie dell'affittuario. Il latte viene bevuto appena munto, ancora tiepido, e la birra — una birra leggera prodotta in casa, la small beer — accompagna il pasto come bevanda quotidiana, considerata più sicura dell'acqua di pozzo che poteva essere contaminata."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Dopo il pasto la giornata si divide secondo le linee di genere che governano ogni aspetto della vita rurale. La donna dell'affittuario — la farmer's wife — è una figura di autorità indiscussa nel dominio domestico e nella gestione della produzione alimentare della fattoria. Si occupa della casa, mantenendo l'ordine e la pulizia in ambienti dove polvere, fango e fuliggine sono nemici costanti. Gestisce la latteria, dove il latte viene trasformato in burro e formaggio attraverso un processo laborioso che richiede ore di lavorazione manuale: scrematura, zangolatura, salatura, pressatura. Supervisiona il pollaio, raccogliendo le uova e decidendo quali galline mantenere e quali macellare quando la loro produttività cala. Cura il frutteto e l'orto, dove crescono mele, pere, prugne, verdure di stagione e erbe aromatiche che insaporiscono i piatti della cucina contadina. Nei momenti liberi — che sono pochi — rammenda la biancheria della casa e del personale con aghi e filo in una stanza illuminata dalla luce della finestra, e talvolta fila la lana delle pecore della fattoria per farne calze, maglie e coperte. L'uomo, intanto, percorre i campi a piedi o a cavallo, controllando lo stato delle siepi che delimitano le proprietà e i pascoli — la manutenzione delle siepi è un obbligo contrattuale dell'affittuario nei confronti del proprietario terriero —, ispezionando i canaletti di irrigazione e drenaggio che impediscono ai campi di allagarsi, e sorvegliando il lavoro dei braccianti con un occhio esperto che valuta la qualità dell'aratura, della semina o della mietitura. Se necessario lavora in prima persona accanto ai suoi uomini, guidando gli animali da tiro — i pesanti cavalli shire che tirano l'aratro attraverso il terreno argilloso —, riparando attrezzi rotti nella fucina della fattoria, o caricando i carri di fieno e grano nei mesi del raccolto."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Nelle tenute più estese, che possono comprendere centinaia di acri di terreno coltivabile, pascoli e boschi, l'affittuario si sposta a cavallo da un campo all'altro, accompagnato spesso dal suo cane da lavoro — un collie o un pastore inglese — che lo aiuta a radunare il bestiame. A metà giornata, verso l'una, si consuma il pranzo, simile alla colazione nella sua abbondanza ma con l'aggiunta di carne fresca: pollo arrosto allo spiedo nel grande camino della cucina, montone bollito con salsa di menta, manzo stufato con cipolle e carote nelle stagioni più fredde, o maiale arrosto con mele nelle festività. Le porzioni sono molto generose, quasi eccessive per gli standard urbani: la vita rurale richiede un apporto calorico notevole, e la tavola dell'affittuario è un simbolo di prosperità e di abbondanza che contrasta vivamente con la miseria alimentare dei braccianti e dei contadini più poveri. L'espressione \"mangiare come un affittuario\" (to eat like a farmer) diventa proverbiale nella cultura inglese dell'epoca, indicando un appetito robusto e un pasto copioso. Dopo il pranzo il lavoro riprende nei campi fino al tramonto, interrotto solo dal breve spuntino serale — il supper — che consiste in pane, formaggio, avanzi del pranzo e una pinta di birra. Seguono le preghiere della sera, recitate dal capofamiglia con tutta la servitù radunata nella grande cucina, e poi il riposo."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "La domenica è giorno di riposo obbligatorio, rispettato con una serietà quasi sacrale che affonda le radici nella tradizione puritana dell'Inghilterra protestante. Le uniche attività ammesse sono la partecipazione alla funzione religiosa nella chiesa parrocchiale — un obbligo sociale oltre che spirituale, dove la posizione nel banco rivela la posizione nella gerarchia locale —, i cori mattutini in cui le voci dei contadini si mescolano a quelle delle famiglie del maniero, e, nel pomeriggio, una passeggiata riposante lungo i sentieri della campagna o una visita ai vicini. La sera della domenica si concede qualche piacere in più rispetto al resto della settimana: una bevuta più abbondante al pub del villaggio o nella cucina della fattoria, dove gli uomini si riuniscono attorno al camino con boccali di birra scura o grog al rum — una miscela di rum, acqua calda, zucchero e limone che scalda le sere invernali. Il whisky, bevanda comune e rispettata in Scozia, non gode della stessa considerazione in Inghilterra, dove è visto come una bevanda esotica o addirittura sospetta, associata alla classe operaia urbana e ai bassifondi londinesi piuttosto che alla rispettabilità rurale."
         }
       ]
     },
@@ -39,7 +66,16 @@
       "content": [
         {
           "type": "text",
-          "text": "I giorni di mercato interrompono la routine. Le cittadine si animano. I carri affluiscono dalle campagne. Le piazze si riempiono. Gli affittuari vendono i prodotti e acquistano oggetti fabbricati. Seduti a tavola con una birra discutono del raccolto, del bestiame, delle notizie politiche. Non mancano scommesse sui combattimenti tra galli, spettacoli di circhi ambulanti, esposizioni di stalloni e capi di bestiame. Il mercato è un luogo di scambio, ma anche di socialità."
+          "text": "I giorni di mercato interrompono la routine monotona della vita agricola e trasformano le sonnolente cittadine di campagna in luoghi brulicanti di vita, colore e rumore. Le date dei mercati sono fissate per tradizione — ogni martedì a Guildford, ogni giovedì a Reading, ogni sabato a Aylesbury — e rappresentano appuntamenti imperdibili nel calendario rurale, attesi con impazienza da tutta la comunità. Le cittadine si animano fin dalle prime ore del mattino quando i carri affluiscono dalle campagne circostanti, carichi di prodotti: sacchi di grano e avena, cesti di mele e pere, forme di formaggio avvolte in tela cerata, burro fresco modellato in panetti decorati con lo stampo della fattoria, polli vivi con le zampe legate, maiali che grugniscono nelle gabbie, agnelli che belano spaventati dalla confusione. Le piazze del mercato si riempiono di bancarelle improvvisate su cavalletti di legno, coperte da tele cerate nei giorni di pioggia, dove i prodotti vengono esposti con cura e offerti a voce alta ai compratori che si aggirano tra le file, toccando, annusando, confrontando e contrattando con la tenacia e l'esperienza di chi conosce il valore di ogni penny."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Gli affittuari vendono i prodotti della fattoria — grano, bestiame, latticini, pollame, lana, pelli — e acquistano in cambio oggetti fabbricati che la campagna non può produrre: chiodi, attrezzi di ferro, coltelli, pentole, tessuti, candele, sale, zucchero, tè, spezie importate dai porti coloniali. Seduti a tavola nell'unico pub della piazza principale con un boccale di birra scura davanti, gli affittuari discutono del raccolto — le piogge di settembre hanno rovinato il grano? il prezzo del luppolo è salito o sceso? —, del bestiame — i vitelli di quest'anno sono più magri del solito, sarà colpa dell'erba —, delle notizie politiche che arrivano da Londra attraverso i giornali portati dal carrettiere postale — le riforme agrarie, le leggi sulle decime, le tariffe doganali che proteggono o penalizzano i prodotti inglesi rispetto alle importazioni americane e coloniali. Non mancano divertimenti meno edificanti: le scommesse sui combattimenti tra galli — una pratica ufficialmente illegale dal 1835 ma ancora praticata con entusiasmo nelle campagne, lontano dagli occhi della polizia —, gli spettacoli di circhi ambulanti con acrobati, giocolieri e animali esotici che attraversano la campagna inglese da una fiera all'altra, e le esposizioni di stalloni e capi di bestiame da riproduzione, dove i proprietari più orgogliosi presentano i loro animali migliori nella speranza di vendere servizi di monta o di vincere premi che conferiscono prestigio alla fattoria. Il mercato è un luogo di scambio economico, ma anche e soprattutto di socialità: è qui che si stringono accordi, si combinano matrimoni, si risolvono dispute, si diffondono notizie e pettegolezzi, e si mantengono i legami che tengono insieme la comunità rurale."
         }
       ]
     },
@@ -60,7 +96,43 @@
       "content": [
         {
           "type": "text",
-          "text": "Il padrone delle terre organizza periodicamente incontri con gli affittuari. Le famiglie vengono invitate a trascorrere una giornata nella tenuta o nel parco. Gli ospiti arrivano dal mattino, vestiti con gli abiti migliori. L'accoglienza è calorosa e inizia con una colazione abbondante. Segue un giro della proprietà per verificare lo stato dei campi e del bestiame. Le conversazioni di cortesia si intrecciano con questioni amministrative. Tra gli affittuari emerge una competizione silenziosa per ottenere il favore del padrone. Il pranzo è lungo. Si svolge in casa, nei granai o all'aperto durante la bella stagione. La padrona di casa resta sempre in movimento. Si assicura che donne e ragazzi abbiano caffè e succhi di frutta. Agli uomini viene servita birra in quantità. Le figlie e le serve aiutano a portare piatti di carne e pesce. Il tè finale è accompagnato da grandi quantità di pasticceria. Partecipano spesso anche il pastore, amici del proprietario, figure influenti della vita rurale. Nel pomeriggio ci si dedica ai giochi. Cricket, pugilato, attività che mettono sullo stesso piano proprietari e affittuari. Con il calare della sera iniziano le partite a carte. Le donne conversano, i giovani danzano sull'aia. Polke e quadriglie si mescolano alle danze tradizionali. Dopo uno spuntino serale caldo e del vino, gli ospiti si congedano con grandi dichiarazioni di amicizia. L'immagine è quella di una Inghilterra rurale idealizzata, cordiale, pronta però a trasformare l'allegria in rissa se necessario."
+          "text": "Il padrone delle terre — il landlord, spesso un membro della piccola nobiltà rurale o gentry, uno squire che risiede nella manor house del villaggio, o un aristocratico la cui tenuta si estende per migliaia di acri — organizza periodicamente incontri con gli affittuari che coltivano le sue terre. Questi eventi, che si svolgono due o tre volte all'anno — a Natale, a Pasqua e dopo il raccolto estivo —, sono occasioni di grande importanza sociale che mescolano la sorveglianza economica al rituale di comunità. Le famiglie degli affittuari vengono invitate a trascorrere un'intera giornata nella tenuta padronale o nel parco che la circonda, un privilegio che viene atteso e preparato con settimane di anticipo. Gli ospiti arrivano dal mattino presto, vestiti con gli abiti migliori — quelli conservati nell'armadio per le grandi occasioni, profumati di lavanda e naftalina —, i carri lucidati e i cavalli strigliati con cura. L'accoglienza è calorosa e studiata per dare l'impressione di un rapporto paritario tra padrone e affittuario, un'illusione che entrambe le parti mantengono con consumata abilità. La giornata inizia con una colazione abbondante servita nella grande sala della manor house o, nella bella stagione, sotto un tendone eretto nel prato davanti alla residenza."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Dopo la colazione segue un giro della proprietà per verificare lo stato dei campi, dei recinti, dei fabbricati agricoli e del bestiame, un'ispezione che ha tanto di rituale quanto di sostanza: il proprietario osserva con attenzione le condizioni della terra, nota i miglioramenti apportati e le manutenzioni trascurate, valuta la qualità del bestiame e la resa dei campi. Le conversazioni di cortesia — il tempo, la salute della famiglia, le condizioni generali dell'agricoltura — si intrecciano con questioni amministrative più delicate: il rinnovo dei contratti d'affitto, le richieste di riduzione del canone in caso di cattivi raccolti, i progetti di miglioramento fondiario che richiedono investimenti condivisi tra padrone e affittuario. Tra gli affittuari emerge una competizione silenziosa ma intensa per ottenere il favore del proprietario: essere considerati affidabili, industriosi e rispettosi significa sicurezza del contratto, condizioni migliori e, in caso di difficoltà, la possibilità di contare sulla benevolenza del padrone. Al contrario, cadere in disgrazia può significare la perdita della fattoria e la rovina della famiglia."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Il pranzo è lungo, elaborato e generoso, un momento centrale della giornata che celebra l'abbondanza della terra e il legame tra chi la possiede e chi la lavora. Si svolge nella grande sala della manor house, nei granai ripuliti e addobbati per l'occasione, o all'aperto durante la bella stagione su tavole di legno disposte sotto gli alberi del parco. La padrona di casa — la lady del maniero — resta sempre in movimento, supervisiona il servizio con l'aiuto della governante, si assicura che donne e ragazzi abbiano caffè caldo e succhi di frutta preparati con le mele e le pere del frutteto, distribuisce sorrisi e parole gentili che mantengono l'atmosfera cordiale e festosa. Agli uomini viene servita birra in quantità generose — la birra forte della fattoria, la harvest ale o la stout scura — e talvolta anche sidro prodotto nel torchio della tenuta. Le figlie del proprietario e le domestiche aiutano a portare in tavola piatti abbondanti di carne arrosto — manzo, montone, maiale —, pesce affumicato delle contee costiere, torte salate con la selvaggina del bosco padronale, verdure dell'orto e insalate fresche. Il tè finale è accompagnato da grandi quantità di pasticceria fatta in casa: crostate di frutta, pudding al burro, biscotti di pasta frolla, e l'immancabile fruitcake — il dolce pesante e ricco di frutta secca che è il simbolo stesso dell'ospitalità inglese."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Partecipano spesso anche il pastore anglicano della parrocchia — figura di autorità morale e di mediazione sociale il cui parere è ascoltato con rispetto da tutti —, amici e conoscenti del proprietario venuti dalla città per l'occasione, il medico del distretto, il notaio, e altre figure influenti della vita rurale il cui giudizio può determinare il destino di un affittuario quanto quello del padrone stesso. Nel pomeriggio ci si dedica ai giochi e alle competizioni sportive che rappresentano uno dei pochi momenti in cui le barriere di classe si attenuano — almeno in apparenza. Il cricket, giocato su un campo allestito nel prato della tenuta con wicket di legno e mazze lucide d'olio di lino, è lo sport per eccellenza dell'Inghilterra rurale e mette sullo stesso campo — letteralmente — proprietari, affittuari e braccianti. Le partite di pugilato a mani nude, disputate in un cerchio tracciato sulla terra, sono seguite con entusiasmo e accompagnate da scommesse rumorose. I bambini partecipano a giochi di corsa, tiro alla fune e gare di agilità che premiano i vincitori con nastri colorati e dolciumi. Con il calare della sera l'atmosfera si scalda e le attività diventano più intime: iniziano le partite a carte — whist e cribbage sono i giochi preferiti — attorno a tavoli illuminati da lanterne. Le donne conversano tra loro scambiandosi ricette, consigli domestici e pettegolezzi sulla vita del villaggio. I giovani, liberati dalla sorveglianza degli adulti che si sono rilassati con la birra, danzano sull'aia al suono di un violino suonato da un bracciante: polke vivaci, quadriglie elaborate e danze tradizionali inglesi come la morris dance si mescolano in una serata che cresce di allegria e di volume."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Dopo uno spuntino serale caldo — zuppa di coda di bue, pane tostato con formaggio fuso, torta di carne calda — e qualche bicchiere di vino servito dal proprietario in persona come segno di particolare generosità, gli ospiti si congedano con grandi dichiarazioni di amicizia, strette di mano vigorose e promesse di reciproca lealtà che vengono rinnovate ad ogni incontro con la stessa solenne ritualità. I carri si allontanano nella notte lungo i sentieri di campagna illuminati dalla luna, con le famiglie intere caricate sul retro tra coperte e avanzi di cibo avvolti in tovaglioli di lino. L'immagine è quella di una Inghilterra rurale idealizzata, cordiale e paternalistica, un mondo dove padrone e contadino bevono dalla stessa botte e giocano sulla stessa aia — un'immagine che ha una sua verità ma che nasconde le tensioni profonde del rapporto tra proprietà e lavoro, pronta a trasformare l'allegria in rissa e la cordialità in rancore se il padrone alza l'affitto, se il raccolto fallisce, o se il contratto non viene rinnovato."
         }
       ]
     },
@@ -81,7 +153,34 @@
       "content": [
         {
           "type": "text",
-          "text": "I braccianti sono la maggioranza della popolazione rurale. Le loro condizioni sono quasi sempre misere. I più fortunati fanno parte del personale stabile: garzoni di stalla, giardinieri, lattaie, serve. Godono di una relativa sicurezza. Sono pochi. La maggioranza lavora a chiamata, assunta per periodi limitati durante le fasi cruciali dell'anno agricolo. Vive con l'angoscia della disoccupazione. Le assunzioni avvengono due volte l'anno, durante grandi fiere. I candidati si presentano con un oggetto che indica la specializzazione. Forca, vincastro, griglia. I contratti sono verbali. Chi viene scelto segue il nuovo padrone con i pochi beni posseduti. Chi resta escluso spesso finisce nelle workhouse, strutture assistenziali simili a prigioni, oppure viene arruolato nell'esercito. Altri trovano impiego nei cantieri ferroviari, emigrano in città o oltreoceano. Le macchine agricole sono viste con ostilità. Provocano rivolte spontanee, represse con durezza. Le impiccagioni non sono rare. Per evitare tensioni molti affittuari preferiscono metodi tradizionali."
+          "text": "I braccianti — i labourers — sono la maggioranza silenziosa e invisibile della popolazione rurale inglese, la base della piramide sociale su cui poggia l'intera economia agricola del paese. Le loro condizioni sono quasi sempre misere, segnate dalla fatica fisica, dalla precarietà economica e da un'assenza quasi totale di diritti e di protezioni. I più fortunati fanno parte del personale stabile della fattoria — gli indoor servants dell'agricoltura —: garzoni di stalla che accudiscono i cavalli da lavoro, li nutrono, li strigliamo e li bardano prima dell'alba; giardinieri che mantengono l'orto, il frutteto e i giardini della manor house; lattaie (dairymaids) che lavorano nella latteria trasformando il latte in burro e formaggio dall'alba al tramonto; serve di casa (household servants) che puliscono, cucinano e mantengono l'ordine nella residenza del padrone e nella fattoria. Questi lavoratori godono di una relativa sicurezza: hanno un tetto, pasti regolari, un salario modesto ma prevedibile, e la protezione paternalistica del padrone che si sente responsabile del loro benessere in cambio della loro lealtà e del loro lavoro. Sono pochi, però: una fattoria di medie dimensioni impiega stabilmente non più di cinque o sei persone."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "La grande maggioranza dei braccianti lavora invece a chiamata, assunta per periodi limitati durante le fasi cruciali dell'anno agricolo: l'aratura primaverile, la semina, la fienagione estiva, la mietitura del grano in agosto e settembre, la raccolta delle patate e delle radici in autunno, e la macellazione del bestiame in inverno. Tra una stagione e l'altra, questi lavoratori vivono con l'angoscia quotidiana della disoccupazione, un'incertezza che corrode l'animo e distrugge le famiglie più fragili. Le assunzioni avvengono due volte l'anno, durante grandi fiere del lavoro — le hiring fairs o mop fairs — che si tengono nelle piazze delle cittadine rurali in date tradizionali, spesso in coincidenza con le feste di San Michele (29 settembre) e di Lady Day (25 marzo). I candidati si presentano nelle piazze del mercato, schierati lungo i muri o sotto le arcate, con un oggetto simbolico che indica la loro specializzazione professionale: una forca per il contadino generico, un vincastro per il mandriano, una frusta per il carrettiere, un ciuffo di lana per il pastore, una griglia per la cuoca, un secchio per la lattaia. I potenziali datori di lavoro camminano lungo la fila, esaminando i candidati come si esaminano capi di bestiame: guardano le mani, le braccia, i denti, valutano la corporatura e l'aspetto generale di salute, fanno domande sulle esperienze precedenti e sulle referenze."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "I contratti sono verbali, sigillati da una stretta di mano e dalla consegna di uno scellino come caparra — il cosiddetto fastening penny — che vincola il lavoratore al padrone per la durata concordata, di solito sei mesi o un anno. Chi viene scelto segue il nuovo padrone con i pochi beni posseduti — un fagotto di vestiti, qualche utensile, forse una Bibbia e un rasoio — caricati su un carro o portati a spalla lungo le strade di campagna. Chi resta escluso dalla fiera — chi è troppo vecchio, troppo debole, troppo malato, o semplicemente sfortunato — si trova di fronte a un futuro desolante. Alcuni finiscono nelle workhouse, le case di lavoro istituite dalla Poor Law del 1834, strutture assistenziali che hanno più l'aspetto e il funzionamento di prigioni che di rifugi: famiglie separate per sesso, disciplina ferrea, lavoro obbligatorio — spaccare pietre, cardare la lana, raccogliere stoppa —, cibo appena sufficiente a sopravvivere, e uno stigma sociale che marchia chi vi entra come fallito e indegno. Il terrore della workhouse è così profondo nella cultura rurale inglese che molti preferiscono la fame, il vagabondaggio o persino il crimine piuttosto che varcare quella soglia. Altri trovano impiego nei cantieri ferroviari che attraversano la campagna inglese — i navvies, lavoratori delle ferrovie, sono una forza lavoro dura e temuta, famosa per la violenza, l'alcolismo e una solidarietà feroce tra compagni. Altri ancora emigrano nelle città industriali del Nord — Manchester, Birmingham, Leeds — dove le fabbriche e le miniere hanno un bisogno insaziabile di braccia, oppure prendono la decisione drammatica di emigrare oltreoceano, verso l'America, il Canada, l'Australia o la Nuova Zelanda, con la speranza di una vita migliore e la consapevolezza di non tornare mai più."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Le macchine agricole — la trebbiatrice a vapore, la seminatrice meccanica, la mietitrice — sono viste con ostilità profonda e comprensibile dai braccianti, che riconoscono in esse la causa diretta della loro crescente superfluità. Ogni macchina che entra in una fattoria significa decine di braccia in meno necessarie per il raccolto, decine di famiglie senza lavoro e senza pane. Le rivolte contro le macchine non sono un ricordo lontano: gli Swing Riots del 1830, quando bande di braccianti percorsero la campagna inglese distruggendo trebbiatrici e incendiando fienili sotto la guida del misterioso \"Captain Swing\", sono ancora vivi nella memoria collettiva. Le repressioni furono brutali: centinaia di arrestati, decine di condannati a morte — molte sentenze commutate in deportazione nelle colonie penali australiane — e un messaggio inequivocabile che il progresso tecnologico non si ferma davanti alla disperazione umana. Nel 1895 le tensioni sono meno esplosive ma non meno profonde: per evitare conflitti aperti e il rischio di sabotaggi notturni, molti affittuari preferiscono ancora i metodi tradizionali di raccolta, impiegando squadre di braccianti armati di falce e rastrello piuttosto che investire in macchinari costosi che, oltre a provocare il risentimento dei lavoratori, richiedono manutenzione specializzata e combustibile che non sempre è disponibile."
         }
       ]
     },
@@ -102,7 +201,34 @@
       "content": [
         {
           "type": "text",
-          "text": "I salari sono bassissimi. Mantenere una famiglia in modo dignitoso è impossibile. Le donne lavorano come lavandaie o rammendatrici. Talvolta fanno le levatrici. I bambini vengono mandati nei campi appena camminano. Scacciano uccelli per pochi penny. Più avanti vengono avviati a miniere o filature. I pasti sono poverissimi. Pane inzuppato nell'acqua o strofinato con poco lardo. Patate, cipolle, pudding di farina. Acqua come bevanda. Latte solo per i più fortunati. Il tè e il caffè sono irraggiungibili. La domenica si mangia meglio. Pudding, un piede di maiale. Il manzo compare solo nelle grandi festività, soprattutto a Natale. I garzoni e le serve mangiano leggermente meglio. Minestre di cereali, formaggio, qualche verdura. Il bracconaggio è diffuso. Lepri e pernici finiscono sulle tavole quando possibile. Il rischio è alto. La punizione può arrivare fino alla deportazione."
+          "text": "I salari dei braccianti agricoli sono bassissimi e variano considerevolmente da regione a regione: nelle contee meridionali come il Dorset, il Wiltshire e il Devon, un bracciante guadagna tra i 7 e i 10 scellini alla settimana, una somma appena sufficiente a sfamare un uomo solo, del tutto inadeguata a mantenere una famiglia in modo dignitoso. Nelle contee settentrionali, dove la concorrenza delle fabbriche costringe i proprietari terrieri a offrire salari più competitivi, le paghe arrivano a 12 o 14 scellini, ma il costo della vita è anch'esso più elevato. Mantenere una famiglia — moglie e quattro o cinque figli, che è la media — con queste somme è un'impresa impossibile senza il contributo di tutti i membri del nucleo familiare. Le donne lavorano come lavandaie per le famiglie benestanti del vicinato, guadagnando pochi penny per giornata di lavoro che inizia all'alba e finisce al tramonto, con le mani immerse nell'acqua gelida o bollente e la schiena curva sopra il mastello. Altre lavorano come rammendatrici a domicilio, ricevendo biancheria da riparare dal sarto del villaggio e guadagnando cifre irrisorie per ore di lavoro minuzioso alla luce della candela. Talvolta le donne più esperte servono come levatrici, assistendo le partorienti della comunità con un sapere tramandato di madre in figlia, senza formazione medica, compensate con qualche scellino, un pollo o un pezzo di formaggio."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "I bambini vengono mandati nei campi appena sono in grado di camminare e di eseguire ordini semplici, a partire dai cinque o sei anni. I più piccoli hanno il compito di scacciare gli uccelli dai campi seminati, armati di sonagli, coperchi di pentole o rudimentali fionde, per tutta la durata della giornata lavorativa, in cambio di pochi penny settimanali. È un lavoro solitario e monotono che espone i bambini al freddo, alla pioggia e al vento per ore interminatevoli. Quando crescono vengono avviati a compiti più impegnativi e pericolosi: raccolta delle pietre dai campi, pulizia delle stalle, conduzione degli animali al pascolo. I ragazzi più grandi possono essere mandati nelle miniere di carbone o di stagno, dove lavorano sottoterra in condizioni terrificanti, o nelle filature e nelle fabbriche tessili del Nord, dove le macchine amputano dita e mani con una regolarità agghiacciante."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "I pasti dei braccianti sono poverissimi, una dieta da fame che contribuisce alla debolezza fisica, alle malattie e alla mortalità precoce che caratterizzano la classe lavoratrice rurale. La colazione è pane secco inzuppato nell'acqua calda — un piatto chiamato con amara ironia kettle broth, brodo di bollitore — o strofinato con un po' di lardo per dargli sapore e calorie. Le patate sono la base dell'alimentazione, bollite o arrostite nella cenere del focolare, accompagnate da cipolle crude che danno sapore e forniscono qualche vitamina. Il pudding di farina — un impasto di farina, acqua e un po' di sugna, bollito nel panno — è il piatto più comune e meno nutriente, un riempitivo che inganna lo stomaco senza alimentare il corpo. L'acqua è l'unica bevanda per la maggior parte delle famiglie: il latte, quando disponibile, viene dato ai bambini più piccoli, ma spesso viene venduto alla latteria della fattoria piuttosto che consumato in casa, perché il denaro ricavato è più necessario delle calorie. Il tè e il caffè sono lussi irraggiungibili per la maggior parte dell'anno, e quando vengono consumati sono talmente allungati da essere poco più che acqua colorata."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "La domenica si mangia leggermente meglio, perché il giorno di riposo permette alla donna di dedicare più tempo alla cucina e perché la tradizione impone un pasto festivo anche nelle famiglie più povere. Un pudding più ricco, con qualche pezzo di frutta secca o un cucchiaio di marmellata, un piede di maiale bollito per ore fino a renderne tenera la cartilagine, o una fetta di pancetta arrosto: questi sono i lussi della domenica contadina. Il manzo compare sulla tavola solo nelle grandi festività, soprattutto a Natale, quando anche la famiglia più povera cerca di procurarsi un pezzo di carne — spesso gli avanzi meno pregiati del macellaio, comprati a prezzo ridotto alla vigilia — per onorare la tradizione. I garzoni di stalla e le serve della fattoria mangiano leggermente meglio dei braccianti a giornata, perché il vitto è incluso nel loro contratto: minestre di cereali — orzo, avena, segale — bollite a lungo con ossa di manzo e ritagli di verdura, formaggio locale dal sapore forte e dalla consistenza dura, qualche verdura dell'orto nelle stagioni giuste. Il bracconaggio è praticato con discrezione ma con ampia diffusione: lepri catturate con lacci di filo di ferro, pernici e fagiani intrappolati con reti nei boschi del padrone, conigli snidati dalle tane con i furetti nelle notti senza luna. Queste prede finiscono sulle tavole dei braccianti quando è possibile, cucinate di nascosto nel camino per evitare che l'odore della carne arrosto attiri l'attenzione dei vicini o del guardacaccia. Il rischio è alto e ben noto a tutti: il bracconaggio è un reato severamente punito dalla legge inglese, e le Game Laws prevedono pene che possono arrivare fino alla deportazione nelle colonie per i recidivi, una punizione che equivale a un esilio permanente dall'Inghilterra e dalla propria famiglia."
         }
       ]
     },
@@ -123,7 +249,25 @@
       "content": [
         {
           "type": "text",
-          "text": "L'alloggio è fornito dal proprietario. Dormitori per i celibi. Cottage di due stanze per famiglie. Tutti dormono nella stessa stanza. I letti sono sovrapposti. Famiglie numerose condividono pochi giacigli. La seconda stanza, quando esiste, serve a tutto. Cucina, deposito, lavanderia, talvolta ricovero per animali. Il combustibile è usato con parsimonia. Non esistono servizi igienici. L'acqua va presa lontano. Le fenditure nei muri vengono tappate con paglia. In alcune regioni la mortalità infantile sotto i cinque anni raggiunge il 48 per cento."
+          "text": "L'alloggio dei braccianti è fornito dal proprietario terriero come parte del contratto di lavoro, il che significa che perdere il lavoro equivale automaticamente a perdere anche la casa — una dipendenza totale che tiene i lavoratori in una condizione di sottomissione permanente. I celibi e le nubili dormono in dormitori collettivi, spesso ricavati nei fienili o nei granai adiacenti alla fattoria: file di pagliericci o giacigli di paglia stesi sul pavimento, coperti da coperte logore e ruvide, senza alcuna privacy né separazione tra i sessi se non una tenda di tela o un tramezzo di legno. I rumori, i movimenti, i russamenti e gli odori degli altri occupanti rendono il sonno un lusso quasi quanto un pasto decente. Le famiglie dei braccianti sposati vivono in cottage di due stanze — quando va bene — forniti anch'essi dal proprietario e la cui qualità varia enormemente: alcuni sono costruzioni in pietra o mattoni con tetto di ardesia che offrono un minimo di protezione dagli elementi, altri sono capanne di fango e paglia con pavimenti di terra battuta e tetti che gocciolano a ogni pioggia."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Tutti i membri della famiglia dormono nella stessa stanza, l'unica che funge da camera da letto, in letti sovrapposti a castello costruiti con assi di legno e imbottiti di paglia che viene cambiata solo poche volte all'anno. Famiglie numerose — e le famiglie dei braccianti sono quasi sempre numerose, con sei, otto, talvolta dieci figli — condividono pochi giacigli, con i più piccoli che dormono in ceste o cassetti accanto al letto dei genitori e i più grandi ammassati due o tre nello stesso letto. La seconda stanza, quando esiste, serve a tutto il resto: è cucina dove si preparano i pasti nel camino che è anche l'unica fonte di calore, è deposito dove si conservano i pochi attrezzi e le provviste, è lavanderia dove la biancheria viene lavata nel mastello di legno, e talvolta è ricovero per gli animali domestici — una capra, qualche gallina, un maiale — che vengono portati all'interno durante le notti più fredde dell'inverno per proteggerli dal gelo e, non secondariamente, per beneficiare del loro calore corporeo."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Il combustibile — carbone, legna, torba a seconda della regione — è usato con estrema parsimonia, perché il suo costo rappresenta una voce significativa nel bilancio familiare e la raccolta di legna nei boschi del padrone è soggetta a restrizioni e sanzioni. Non esistono servizi igienici: le necessità naturali vengono espletate all'aperto, dietro la siepe o nel campo più vicino, in ogni stagione e in ogni condizione meteorologica. L'acqua va presa al pozzo o alla sorgente più vicina, spesso a centinaia di metri dal cottage, e trasportata in secchi di legno o di ferro sulle spalle delle donne e dei bambini. Le fenditure nei muri di pietra o di fango vengono tappate con paglia, muschio o stracci per tentare di arginare gli spifferi che in inverno rendono l'interno del cottage poco più caldo dell'esterno. L'umidità è una compagna costante: i muri trasudano acqua, i vestiti non si asciugano mai completamente, la paglia dei letti si inzuppa e ammuffisce. In queste condizioni le malattie respiratorie, la tubercolosi, il reumatismo e le infezioni intestinali sono endemiche. In alcune regioni particolarmente depresse dell'Inghilterra meridionale e occidentale — il Dorset descritto da Thomas Hardy, il Somerset, le zone paludose dell'East Anglia — la mortalità infantile sotto i cinque anni raggiunge il quarantotto per cento, una cifra che significa che quasi un bambino su due nato in queste comunità non sopravvive ai primi anni di vita."
         }
       ]
     },
@@ -144,7 +288,25 @@
       "content": [
         {
           "type": "text",
-          "text": "La religione è centrale. Tutti partecipano alle funzioni domenicali. Uomini e donne siedono separati. Le famiglie degli affittuari occupano i primi banchi. I braccianti escono per ultimi. Gli svaghi sono pochi. Boxe, cori, feste di maggio, danze. Le veglie serali sono dedicate ai racconti. Streghe, diavoli, fantasmi. La tradizione orale è forte. Le ragazze madri sono stigmatizzate. Le unioni irregolari sono rare. Le famiglie ritenute rispettabili ricevono aiuti caritatevoli. Abiti usati, maglie fatte a mano. Chi mostra ambizioni eccessive resta escluso."
+          "text": "La religione è centrale nella vita della comunità rurale inglese, un pilastro che sorregge l'ordine sociale tanto quanto la proprietà terriera e la gerarchia di classe. La chiesa parrocchiale anglicana — un edificio di pietra grigia con il campanile visibile da miglia di distanza, spesso l'unica costruzione monumentale del villaggio — è il cuore della vita comunitaria, il luogo dove tutti si ritrovano ogni domenica e dove le differenze sociali sono al tempo stesso confermate e momentaneamente sospese sotto lo sguardo di Dio. Tutti partecipano alle funzioni domenicali, la presenza è un obbligo sociale il cui mancato rispetto attira sospetti, pettegolezzi e la disapprovazione del pastore — il vicar o il rector — che è una delle figure più influenti della comunità. Uomini e donne siedono separati nella navata, le famiglie degli affittuari più importanti occupano i primi banchi — talvolta banchi riservati con il nome della fattoria inciso sul legno —, mentre i braccianti e i poveri si accomodano in fondo alla chiesa, sui banchi più duri e più lontani dall'altare. L'ordine di uscita alla fine della funzione rispecchia la gerarchia sociale: prima il proprietario terriero e la sua famiglia, poi gli affittuari in ordine di importanza, infine i braccianti che escono per ultimi, dopo aver atteso pazientemente nel freddo della navata."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Gli svaghi dei contadini sono pochi, semplici e legati ai ritmi delle stagioni e delle tradizioni locali. Il pugilato a mani nude — il bare-knuckle boxing — è lo sport popolare per eccellenza: gli incontri si disputano nei cortili delle fattorie, nei prati dietro il pub o nelle radure dei boschi, e attirano spettatori da tutto il circondario che scommettono sulla vittoria del loro campione con le poche monete che hanno in tasca. I cori — la tradizione corale inglese, sia sacra che profana, è fortissima nelle campagne — riuniscono uomini e donne delle diverse fattorie per le prove settimanali nel retrobottega del pub o nella sagrestia della chiesa, creando legami sociali che attraversano i confini delle proprietà. Le feste di maggio — il May Day — con il tradizionale albero della cuccagna (maypole) decorato di nastri colorati attorno al quale danzano le ragazze del villaggio, le danze tradizionali e l'elezione della Queen of May, sono il momento più gioioso del calendario rurale, un'esplosione di colore e allegria che celebra la primavera e la fertilità della terra. Le veglie serali — le winter evenings — sono dedicate ai racconti orali attorno al fuoco del camino: storie di streghe che cavalcano manici di scopa nella notte, di diavoli che appaiono ai crocevia per tentare i viaggiatori, di fantasmi che infestano le rovine dei castelli e le chiese abbandonate, di fate e folletti che abitano i tumuli e i cerchi di funghi nei prati. La tradizione orale è ancora fortissima nelle campagne inglesi degli anni '90, nonostante l'avanzata dell'alfabetizzazione e dei giornali a buon mercato."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "La morale sessuale nelle campagne è rigida e spietata, soprattutto con le donne. Le ragazze madri — le fallen women — sono stigmatizzate dalla comunità, escluse dalla vita sociale, rifiutate dalla propria famiglia e spesso costrette ad abbandonare il villaggio per cercare un'anonima sopravvivenza nelle città, dove molte finiscono nella prostituzione o nella workhouse. Le unioni irregolari — convivenze senza matrimonio — sono rare e fortemente disapprovate: il matrimonio è un sacramento religioso e un contratto sociale il cui rispetto è considerato essenziale per il mantenimento dell'ordine comunitario. Le famiglie ritenute rispettabili — quelle che vanno in chiesa ogni domenica, che mantengono la casa pulita, che non bevono in eccesso e che non generano scandali — ricevono aiuti caritatevoli dalla parrocchia e dalle signore della manor house: abiti usati ma ancora presentabili, maglie fatte a mano con la lana della tenuta, coperte per l'inverno, cesti di cibo durante le festività. Chi mostra ambizioni eccessive — chi cerca di elevare la propria condizione oltre il posto assegnato dalla nascita e dalla tradizione, chi manda i figli a scuola in città, chi legge giornali radicali o parla di diritti dei lavoratori — viene guardato con sospetto, considerato un ribelle o un sovversivo, e resta escluso dalla rete di protezione informale che la comunità offre ai suoi membri più conformisti."
         }
       ]
     },
@@ -165,7 +327,25 @@
       "content": [
         {
           "type": "text",
-          "text": "Accanto a proprietari e contadini vivono artigiani e piccoli commercianti. Le comunicazioni sono difficili. Ogni distretto deve essere autosufficiente. In ogni villaggio si trovano fabbri, carpentieri, carradori, tessitori, conciatori. Mulini ad acqua o a vento sono comuni. Il mugnaio ha un ruolo centrale. Commercia cereali, presta denaro. È rispettato quasi quanto il pastore o il medico. Le botteghe vendono stoffe, utensili, merceria. Spesso i commercianti si spostano di fattoria in fattoria per mostrare le merci. Donne e ragazzi si radunano attorno a loro."
+          "text": "Accanto a proprietari terrieri, affittuari e contadini vive un terzo gruppo sociale che svolge un ruolo essenziale nell'economia rurale: gli artigiani e i piccoli commercianti che forniscono i beni e i servizi che la terra da sola non può produrre. Le comunicazioni tra i villaggi e le città sono difficili e lente — le strade di campagna sono spesso poco più che sentieri fangosi, impraticabili nei mesi invernali, e il servizio postale raggiunge le zone più remote con giorni di ritardo — il che impone a ogni distretto di essere il più possibile autosufficiente. In ogni villaggio, anche il più piccolo, si trovano i mestieri fondamentali della vita rurale: il fabbro (blacksmith), con la sua fucina fumante e il rumore ritmico del martello sull'incudine, che ferra i cavalli, ripara gli attrezzi agricoli, produce chiodi, cardini e ferramenta; il carpentiere (carpenter) che costruisce e ripara i carri, le porte, i mobili, le bare e tutto ciò che è di legno; il carradore (wheelwright) specializzato nella costruzione e riparazione delle ruote — un lavoro che richiede grande abilità nel curvare il legno e montare il cerchione di ferro; il tessitore (weaver) che lavora al telaio producendo tessuti di lana e di lino per l'uso domestico; il conciatore (tanner) che trasforma le pelli grezze del bestiame macellato in cuoio per scarpe, cinghie, finimenti e selle, con un processo che richiede settimane di trattamento in vasche maleodoranti di tannino e urina."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "I mulini ad acqua, costruiti lungo i corsi d'acqua che attraversano la campagna inglese, o i mulini a vento che punteggiano le colline delle contee orientali come il Suffolk e il Norfolk, sono strutture fondamentali dell'economia locale. Il mugnaio (miller) ha un ruolo centrale nella comunità che va ben oltre la semplice macinazione del grano: è spesso anche commerciante di cereali, acquistando il grano dagli affittuari e rivendendolo ai fornai e ai mercanti della città con un margine che lo rende uno degli uomini più prosperi del villaggio. In molti casi il mugnaio funge anche da prestatore di denaro informale, anticipando somme ai contadini in difficoltà contro la promessa del raccolto futuro — un ruolo che gli conferisce potere e lo rende al tempo stesso rispettato e temuto. Il suo status sociale è elevato per gli standard rurali, quasi paragonabile a quello del pastore anglicano o del medico condotto, e la sua opinione pesa nelle decisioni della comunità."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Le botteghe del villaggio vendono stoffe importate dalla città, utensili domestici, merceria — aghi, filo, bottoni, nastri, pizzi —, candele, sapone, sale, zucchero, tè e altri generi che la campagna non produce. Il commerciante del villaggio — il shopkeeper — è una figura chiave della vita sociale: il suo negozio è un luogo di incontro dove si scambiano notizie, si discutono i fatti del giorno e si alimentano i pettegolezzi che sono il tessuto connettivo della comunità rurale. Spesso i commercianti ambulanti — i pedlars o chapmen — integrano l'offerta delle botteghe fisse, spostandosi di fattoria in fattoria con carretti carichi di mercanzia varia: nastri, specchietti, pettini, coltellini, almanacchi, libri di preghiere, medicinali di dubbia efficacia, e piccoli lussi — un fazzoletto colorato, una spilla di latta, un dolciume — che le donne e i ragazzi delle fattorie attendono con impazienza, radunadosi attorno al carro del mercante come attorno a una finestra aperta sul mondo esterno. Questi venditori ambulanti portano con sé anche le notizie: raccontano cosa succede nei villaggi vicini, nelle città, nel mondo, e sono spesso le uniche fonti di informazione per chi vive nelle zone più isolate della campagna inglese."
         }
       ]
     },
@@ -186,7 +366,25 @@
       "content": [
         {
           "type": "text",
-          "text": "Non esistono municipi rurali. L'amministrazione è affidata al giudice di pace, spesso il principale proprietario o un grande affittuario. Il consiglio parrocchiale gestisce chiesa e assistenza. La polizia non è presente. In caso di disordini intervengono esercito o yeomanry, una guardia civica locale. Esiste anche lo scaccino, guardia campestre riconoscibile dalla palandrana e dal bicorno, incaricato di vigilare sui campi."
+          "text": "Non esistono municipi rurali nel senso moderno del termine: l'amministrazione della campagna inglese alla fine del XIX secolo è ancora largamente affidata a strutture informali e tradizionali che affondano le radici nel Medioevo. Il Local Government Act del 1894 ha introdotto i consigli di distretto e parrocchiali eletti, ma nella pratica il potere reale resta saldamente nelle mani dei proprietari terrieri e dei loro alleati. Il giudice di pace — il Justice of the Peace o magistrate — è la figura centrale dell'ordine locale: spesso è il principale proprietario terriero del distretto o un grande affittuario, un uomo la cui autorità deriva non da un'elezione democratica ma dalla sua posizione sociale, dalla sua ricchezza e dalla nomina della Corona. Il giudice di pace presiede il tribunale locale — le petty sessions — dove vengono giudicati i reati minori: furti di pollame, risse al pub, bracconaggio, vagabondaggio, ubriachezza molesta, violazioni delle Game Laws. Le pene vanno dalla multa alla detenzione nella prigione della contea, dalla frustata pubblica — ancora praticata per i giovani delinquenti — alla deportazione per i casi più gravi."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Il consiglio parrocchiale — la vestry — gestisce la chiesa, il cimitero, le strade locali e l'assistenza ai poveri della parrocchia attraverso le Poor Rates, una tassa locale che finanzia il mantenimento della workhouse e i sussidi ai più bisognosi. Il pastore anglicano — il vicar o il rector — è membro di diritto del consiglio e spesso ne è la voce più influente: conosce ogni famiglia della parrocchia, visita i malati, celebra battesimi, matrimoni e funerali, media le dispute e distribuisce la carità con una mano che premia i docili e ignora i ribelli. La polizia organizzata — la County Constabulary, istituita con i County Police Acts del 1839 e 1856 — è presente nelle cittadine e nelle città, ma nelle campagne più remote la sua presenza è sporadica e inaffidabile: un singolo constable può essere responsabile di un'area che comprende diversi villaggi distanti miglia l'uno dall'altro, il che rende il suo intervento in caso di emergenza lento e spesso tardivo. In caso di disordini gravi — rivolte contro le macchine, proteste per l'aumento degli affitti, tumulti durante le fiere — intervengono l'esercito regolare o la yeomanry, una guardia civica locale composta da proprietari terrieri e affittuari a cavallo, armati e autorizzati a reprimere i disordini con la forza."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Esiste anche lo scaccino — il parish constable o beadle —, una figura di tradizione medievale ancora presente in molte comunità rurali, riconoscibile dalla palandrana nera o blu scuro e dal bicorno d'ordinanza che lo distingue dalla gente comune. Lo scaccino è incaricato di vigilare sui campi, di sorvegliare il bestiame al pascolo, di mantenere l'ordine durante le funzioni religiose e le assemblee parrocchiali, e di eseguire i mandati del giudice di pace — consegnare citazioni, riscuotere multe, accompagnare i vagabondi fuori dal territorio della parrocchia. Il suo potere reale è limitato — non ha l'autorità di un poliziotto professionista e spesso è un contadino anziano a cui la comunità ha assegnato il ruolo più per rispetto che per competenza — ma la sua presenza rappresenta il minimo livello di ordine formale in una campagna dove la legge è spesso poco più che la volontà del proprietario terriero più potente, applicata con la discrezione e l'arbitrarietà che caratterizzano un sistema fondato non sui diritti ma sulla deferenza e sulla tradizione."
         }
       ]
     }

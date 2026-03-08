@@ -18,7 +18,7 @@
       "content": [
         {
           "type": "text",
-          "text": "All'interno di Scotland Yard operano diversi uffici:"
+          "text": "All'interno di Scotland Yard operano diversi uffici, ciascuno con competenze specifiche e una propria catena di comando. La nuova sede di New Scotland Yard, inaugurata nel 1890 lungo il Victoria Embankment, è un imponente edificio in mattoni rossi e granito progettato dall'architetto Richard Norman Shaw. L'edificio sorge su un terreno originariamente destinato a un teatro dell'opera mai completato, e la sua costruzione è divenuta celebre anche per il macabro ritrovamento di resti umani nelle fondamenta durante i lavori — un caso mai risolto, noto come il \"Whitehall Mystery\". All'interno, corridoi lunghi e austeri collegano gli uffici dei vari dipartimenti, ognuno con la propria burocrazia, i propri archivi e le proprie rivalità interne. L'atmosfera è quella di un formicaio operoso dove funzionari in abiti civili si mescolano a poliziotti in uniforme, e dove il fruscio continuo di carte e telegrammi accompagna il ticchettio delle macchine da scrivere, appena introdotte negli uffici amministrativi. La struttura riflette la complessità crescente del crimine urbano nella Londra di fine secolo: non basta più pattugliare le strade, occorre coordinare informazioni, catalogare precedenti penali, gestire relazioni diplomatiche con le forze di polizia straniere e rispondere alle pressioni politiche di Whitehall."
         }
       ]
     },
@@ -33,7 +33,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "il Criminal Investigation Department (CID)"
+                  "text": "il Criminal Investigation Department (CID), il cuore investigativo di Scotland Yard, responsabile delle indagini sui crimini più gravi e complessi che affliggono la metropoli, dagli omicidi ai grandi furti organizzati, dalle frodi finanziarie ai casi di cospirazione politica"
                 }
               ]
             }
@@ -47,7 +47,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "la Special Branch"
+                  "text": "la Special Branch, incaricata della sorveglianza politica e del contrasto alle attività sovversive, con particolare attenzione ai movimenti feniani irlandesi, agli anarchici continentali e a qualsiasi minaccia alla sicurezza dello Stato e della Corona"
                 }
               ]
             }
@@ -61,7 +61,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "il Public Carriage Office, incaricato di rilasciare le licenze ai cocchieri"
+                  "text": "il Public Carriage Office, incaricato di rilasciare le licenze ai cocchieri di hansom cab e di carrozze a quattro ruote, verificare la conformità dei veicoli alle norme di sicurezza, controllare le tariffe applicate e ricevere i reclami dei passeggeri — un ufficio che gestisce migliaia di licenze attive e che rappresenta uno dei pochi punti di contatto burocratico tra Scotland Yard e la vita quotidiana dei londinesi"
                 }
               ]
             }
@@ -75,7 +75,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "il casellario giudiziale"
+                  "text": "il casellario giudiziale, un archivio in costante espansione che raccoglie i precedenti penali di migliaia di individui, organizzato con un sistema di schedatura ancora prevalentemente manuale e basato su descrizioni fisiche, alias conosciuti e fotografie segnaletiche introdotte negli ultimi decenni — uno strumento indispensabile ma lento e soggetto a errori"
                 }
               ]
             }
@@ -89,7 +89,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "i laboratori"
+                  "text": "i laboratori, dove si conducono analisi rudimentali su sostanze sospette, veleni, documenti falsificati e reperti raccolti sulle scene del crimine — la scienza forense muove i primi passi, e i laboratori di Scotland Yard, pur modesti, rappresentano un tentativo pionieristico di applicare il metodo scientifico alle indagini criminali"
                 }
               ]
             }
@@ -103,7 +103,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "gli uffici amministrativi"
+                  "text": "gli uffici amministrativi, che gestiscono il personale, le paghe, le comunicazioni interne, la corrispondenza con il Ministero degli Interni e le relazioni con le altre forze di polizia del Regno Unito e dell'Impero — un apparato burocratico massiccio che impiega decine di impiegati civili e che rappresenta il sistema nervoso logistico dell'intera Metropolitan Police"
                 }
               ]
             }
@@ -116,7 +116,7 @@
       "content": [
         {
           "type": "text",
-          "text": "È presente anche lo Scotland Yard Museum of Criminal Relics, noto come Black Museum, dove vengono conservati reperti e prove dei casi più celebri. Non è un museo pubblico nel senso moderno, ma un archivio didattico e simbolico."
+          "text": "È presente anche lo Scotland Yard Museum of Criminal Relics, noto come Black Museum, dove vengono conservati reperti e prove dei casi più celebri. Non è un museo pubblico nel senso moderno, ma un archivio didattico e simbolico. Fondato nel 1874 dall'ispettore Neame, il Black Museum occupa una stanza al piano superiore dell'edificio, accessibile solo al personale di polizia e a visitatori selezionati con permesso speciale del Commissario. Le sue vetrine custodiscono una collezione macabra e affascinante: armi utilizzate in omicidi celebri, maschere mortuarie di condannati a morte, lettere minatorie, strumenti di scasso, campioni di veleni, corde da impiccagione, e persino il berretto insanguinato di una delle vittime di Jack lo Squartatore. Ogni oggetto è accompagnato da una scheda che ne descrive la provenienza e il caso giudiziario collegato. Il museo serve come strumento di formazione per i nuovi detective, che vi vengono condotti per studiare i metodi criminali e comprendere la psicologia dei delinquenti. La sua esistenza è nota al pubblico grazie ad articoli comparsi sui giornali, ma l'accesso resta rigorosamente limitato, alimentando un alone di mistero e curiosità morbosa che lo rende uno degli ambienti più leggendari di tutta Scotland Yard."
         }
       ]
     },
@@ -137,7 +137,25 @@
       "content": [
         {
           "type": "text",
-          "text": "Il CID nasce nel 1842 come Detective Department e viene riorganizzato nel 1878. Si occupa dei crimini più complessi e delle indagini di rilievo: omicidi, tradimento, crimini violenti di grande risonanza, casi politicamente sensibili. Gli ispettori del CID godono di maggiore autonomia rispetto ai poliziotti di pattuglia. Sono autorizzati a portare armi da fuoco durante il servizio, poiché affrontano situazioni più pericolose. Un aspetto peculiare è la possibilità, per gli ispettori, di lavorare come investigatori privati nel tempo libero, purché ciò non interferisca con i doveri ufficiali. Questo rende spesso impossibile stabilire se un'indagine sia condotta in modo formale o ufficioso, a meno che non vi sia una comunicazione esplicita. Gli ispettori del CID vengono talvolta richiesti come consulenti anche all'estero, soprattutto in casi ritenuti insoliti o difficili."
+          "text": "Il CID nasce nel 1842 come Detective Department, una piccola unità composta da appena otto uomini scelti per le loro capacità investigative, e viene profondamente riorganizzato nel 1878 in seguito allo scandalo della \"Trial of the Detectives\", che portò alla condanna di tre ispettori per corruzione e complicità con truffatori. La riforma, voluta dal Commissario Edmund Henderson e poi perfezionata dal suo successore Sir Charles Warren, trasforma il dipartimento in una struttura più ampia e professionale, con gerarchie definite e procedure codificate. Il CID si occupa dei crimini più complessi e delle indagini di rilievo: omicidi, tradimento, crimini violenti di grande risonanza, casi politicamente sensibili, truffe elaborate, ricatti e reati che coinvolgono membri dell'aristocrazia o del mondo politico. Nel 1895, il dipartimento conta circa duecento detective distribuiti tra la sede centrale di New Scotland Yard e le varie divisioni territoriali."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Gli ispettori del CID godono di maggiore autonomia rispetto ai poliziotti di pattuglia. Vestono in abiti civili anziché in uniforme, il che permette loro di muoversi con discrezione nei quartieri più pericolosi e di infiltrarsi negli ambienti criminali senza essere riconosciuti. Sono autorizzati a portare armi da fuoco durante il servizio, generalmente revolver a cinque colpi, poiché affrontano situazioni più pericolose rispetto ai comuni constable. La loro formazione è prevalentemente pratica: imparano il mestiere affiancando detective più esperti, frequentando i tribunali, studiando i fascicoli dei casi risolti e irrisolti conservati negli archivi. Non esiste una vera e propria accademia investigativa, e le competenze si acquisiscono sul campo, tra le strade fangose di Whitechapel e i salotti insospettabili di Mayfair."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Un aspetto peculiare è la possibilità, per gli ispettori, di lavorare come investigatori privati nel tempo libero, purché ciò non interferisca con i doveri ufficiali. Questa pratica, tollerata ma mai del tutto regolamentata, crea una zona grigia che alimenta sospetti di conflitto di interessi e favoritismi. Capita spesso che un ispettore segua privatamente un caso che poi si rivela connesso a un'indagine ufficiale, oppure che utilizzi informazioni ottenute in servizio per avvantaggiare un cliente privato. Questo rende talvolta impossibile stabilire se un'indagine sia condotta in modo formale o ufficioso, a meno che non vi sia una comunicazione esplicita da parte dell'ispettore stesso o del suo superiore. La stampa non manca di denunciare queste ambiguità, soprattutto quando un caso fallisce o quando emergono legami imbarazzanti tra detective e individui sospetti. Gli ispettori del CID vengono talvolta richiesti come consulenti anche all'estero, soprattutto in casi ritenuti insoliti o difficili da risolvere per le forze di polizia locali. Hanno prestato servizio in Francia, in Germania, nelle colonie dell'Impero e persino in Turchia, portando con sé i metodi investigativi londinesi e riportando a casa tecniche e informazioni sui movimenti criminali internazionali."
         }
       ]
     },
@@ -158,7 +176,16 @@
       "content": [
         {
           "type": "text",
-          "text": "La Special Branch viene istituita nel 1886. Il suo scopo principale è il contrasto ai nazionalisti irlandesi e alle attività terroristiche. Negli anni Ottanta e Novanta del secolo Londra è colpita da una serie di attentati dinamitardi. Nel 1884 un'esplosione colpisce direttamente Scotland Yard, distruggendo quasi interamente gli uffici del CID. Da quel momento la sorveglianza politica e il controllo dei movimenti sovversivi diventano una priorità costante."
+          "text": "La Special Branch viene istituita nel 1883 — inizialmente con il nome di Special Irish Branch — come risposta diretta alla campagna dinamitarda condotta dai Feniani, i nazionalisti irlandesi che mirano a ottenere l'indipendenza dell'Irlanda dal dominio britannico attraverso atti di terrorismo e sabotaggio. Il suo scopo principale è il contrasto ai nazionalisti irlandesi e alle attività terroristiche, ma nel corso degli anni il suo mandato si estende fino a comprendere la sorveglianza di anarchici, socialisti rivoluzionari, agenti stranieri e qualsiasi gruppo considerato una minaccia per la sicurezza interna del Regno. Gli agenti della Special Branch operano quasi esclusivamente in borghese, utilizzano pseudonimi, coltivano reti di informatori nei porti, nelle comunità di immigrati e negli ambienti politici radicali, e mantengono stretti contatti con i servizi di intelligence militare e con le polizie politiche di Francia, Germania e Russia."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Negli anni Ottanta e Novanta del secolo Londra è colpita da una serie di attentati dinamitardi che seminano il panico tra la popolazione e mettono in grave imbarazzo le autorità. Nel 1884 un'esplosione colpisce direttamente Scotland Yard, distruggendo quasi interamente gli uffici del CID e ferendo diversi agenti — un attacco che viene percepito come un affronto personale alla Metropolitan Police e che galvanizza la determinazione del governo a potenziare le capacità di sorveglianza. Nello stesso anno vengono colpiti anche la stazione della metropolitana di Praed Street e la sede del governo a Whitehall. Nel 1885 una bomba esplode nella Camera dei Comuni e un'altra alla Torre di Londra. Da quel momento la sorveglianza politica e il controllo dei movimenti sovversivi diventano una priorità costante. La Special Branch infiltra agenti nelle organizzazioni feniane sia a Londra che in Irlanda e America, intercetta corrispondenza sospetta, sorveglia i porti dove sbarcano emigrati e sospetti agitatori, e tiene sotto controllo le tipografie clandestine che stampano materiale propagandistico. Il confine tra sicurezza nazionale e libertà civili è sottilissimo, e la Special Branch opera spesso ai margini della legalità, giustificando i propri metodi con l'urgenza della minaccia. Nel 1895, con la questione irlandese ancora irrisolta e il crescere dei movimenti anarchici in tutta Europa, la Branch resta uno dei dipartimenti più temuti e meno trasparenti dell'intera struttura di Scotland Yard."
         }
       ]
     },
@@ -179,7 +206,16 @@
       "content": [
         {
           "type": "text",
-          "text": "Il territorio è suddiviso in ventidue divisioni amministrative, ciascuna con una propria stazione di polizia. Ogni divisione copre un'area specifica della città e risponde alla catena di comando centrale. Ogni stazione dispone in genere di un Ispettore responsabile, un Sergente e circa venti Agenti di Polizia. Le stazioni sono distribuite nei principali quartieri e nodi urbani, spesso in prossimità delle grandi vie di comunicazione."
+          "text": "Il territorio è suddiviso in ventidue divisioni amministrative, ciascuna identificata da una lettera dell'alfabeto e dotata di una propria stazione di polizia centrale, oltre a diverse sottostazioni distribuite nel territorio di competenza. Ogni divisione copre un'area specifica della città e risponde alla catena di comando centrale di Scotland Yard, ma gode di una certa autonomia operativa nella gestione quotidiana dell'ordine pubblico. La Divisione A, ad esempio, copre Westminster e le aree circostanti il Parlamento, Buckingham Palace e i principali edifici governativi — un incarico prestigioso che richiede discrezione e capacità diplomatiche. La Divisione H copre Whitechapel e Stepney, quartieri tra i più malfamati e densamente popolati della città, dove il crimine è endemico e le condizioni di lavoro per i poliziotti sono tra le più dure."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Ogni stazione dispone in genere di un Ispettore responsabile, un Sergente e circa venti Agenti di Polizia, anche se il numero effettivo varia enormemente a seconda della divisione: le aree più pericolose e densamente abitate ricevono rinforzi supplementari, mentre le divisioni periferiche operano con organici ridotti. Le stazioni sono distribuite nei principali quartieri e nodi urbani, spesso in prossimità delle grandi vie di comunicazione, dei mercati, delle stazioni ferroviarie e dei punti di aggregazione dove il rischio di disordini è più elevato. La vita all'interno di una stazione di polizia segue ritmi rigidi: i turni si alternano ogni otto ore, le ronde vengono assegnate con precisione, e ogni agente deve firmare un registro all'inizio e alla fine del servizio. Le celle di detenzione, generalmente al piano inferiore, ospitano gli arrestati in attesa di comparizione davanti al magistrato. L'odore di umidità, carbone e sudore è una costante in queste stanze sotterranee, illuminate da lampade a gas che proiettano ombre inquietanti sui muri scrostati. Nelle stazioni più grandi è presente anche un ufficio per il detective di divisione, che coordina le indagini locali e mantiene i contatti con il CID centrale."
         }
       ]
     },
@@ -212,7 +248,7 @@
       "content": [
         {
           "type": "text",
-          "text": "Il vertice assoluto della Polizia Metropolitana è il Commissario di Polizia della Metropoli. Ricopre attualmente la carica Sir Edward Bradford, subentrato al discusso James Munro nei primi anni Novanta. Il Commissario dirige l'intera forza, mantiene i rapporti con il Governo e il Ministero degli Interni, stabilisce linee operative e disciplinari, approva decisioni strategiche e casi sensibili."
+          "text": "Il vertice assoluto della Polizia Metropolitana è il Commissario di Polizia della Metropoli, una figura di enorme potere e responsabilità che risponde direttamente al Segretario di Stato per gli Affari Interni. Ricopre attualmente la carica Sir Edward Bradford, un veterano dell'esercito coloniale che ha perso il braccio sinistro durante una caccia alla tigre in India — un dettaglio che contribuisce alla sua reputazione di uomo duro e imperturbabile. Bradford è subentrato al discusso James Monro nei primi anni Novanta, dopo un periodo turbolento segnato dalla crisi di Whitechapel e dagli scontri con il precedente Commissario Sir Charles Warren, la cui gestione autoritaria aveva alienato sia il pubblico che i ranghi inferiori della polizia. Il Commissario dirige l'intera forza, che nel 1895 conta circa sedici mila uomini, mantiene i rapporti con il Governo e il Ministero degli Interni, stabilisce linee operative e disciplinari, approva decisioni strategiche e casi sensibili, e rappresenta la Metropolitan Police di fronte al Parlamento e all'opinione pubblica. È una posizione che richiede tanto acume politico quanto competenza operativa, poiché ogni scandalo, ogni crimine irrisolto e ogni errore di un singolo agente può riflettersi direttamente sulla sua persona e sulla sua carriera."
         }
       ]
     },
@@ -233,7 +269,7 @@
       "content": [
         {
           "type": "text",
-          "text": "Subito sotto il Commissario operano i Sovrintendenti. Sono responsabili di coordinare gli Ispettori Capo, supervisionare procedimenti disciplinari di alto livello e fungere da collegamento diretto con il Commissario. Solo i Sovrintendenti hanno accesso diretto e regolare al Commissario."
+          "text": "Subito sotto il Commissario operano i Sovrintendenti, ufficiali di alto rango che fungono da intermediari tra la direzione strategica e l'operatività sul campo. Sono responsabili di coordinare gli Ispettori Capo, supervisionare procedimenti disciplinari di alto livello e fungere da collegamento diretto con il Commissario per tutte le questioni che richiedono decisioni al vertice. Solo i Sovrintendenti hanno accesso diretto e regolare al Commissario, e questa prossimità al potere conferisce loro un'autorità informale che va ben oltre le competenze formali del grado. Un Sovrintendente può ispezionare qualsiasi stazione della sua area senza preavviso, richiedere rapporti dettagliati su qualsiasi indagine in corso, e intervenire personalmente nei casi che ritiene mal gestiti. Sono figure temute e rispettate a tutti i livelli della gerarchia, e la loro approvazione o disapprovazione può determinare l'avanzamento o la fine della carriera di un ispettore. Nella pratica quotidiana, i Sovrintendenti trascorrono gran parte del tempo nei propri uffici a Scotland Yard, esaminando rapporti, rispondendo a comunicazioni del Ministero degli Interni e partecipando a riunioni con i vertici politici, ma non è raro vederli comparire improvvisamente in una stazione divisionale per verificare di persona l'efficienza del servizio e la disciplina degli uomini."
         }
       ]
     },
@@ -254,7 +290,7 @@
       "content": [
         {
           "type": "text",
-          "text": "Gli Ispettori Capo dirigono reparti specifici o divisioni complesse. Il più noto è il capo del CID. Coordinano gli Ispettori, garantiscono la disciplina interna, decidono priorità operative all'interno del loro reparto."
+          "text": "Gli Ispettori Capo dirigono reparti specifici o divisioni complesse, occupando una posizione cruciale nell'architettura operativa della Metropolitan Police. Il più noto è il capo del CID, una figura che riveste un ruolo quasi leggendario nell'immaginario pubblico grazie alla copertura stampa dei grandi casi criminali. Coordinano gli Ispettori, garantiscono la disciplina interna, decidono priorità operative all'interno del loro reparto, e sono responsabili della distribuzione delle risorse tra le diverse indagini in corso. Un Ispettore Capo del CID può avere contemporaneamente sotto la propria supervisione casi di omicidio, indagini su reti di ricettatori, sorveglianza di sospetti sovversivi e delicate operazioni sotto copertura. Devono bilanciare le pressioni che arrivano dall'alto — il Commissario che esige risultati rapidi, il Ministero degli Interni che teme scandali — con le limitazioni pratiche del campo: detective insufficienti, fondi scarsi, informatori inaffidabili e un sistema giudiziario che non sempre collabora. Gli Ispettori Capo sono generalmente uomini di lunga esperienza, saliti attraverso i ranghi della polizia ordinaria prima di essere promossi al ruolo investigativo, e la loro conoscenza della città e dei suoi bassifondi è spesso enciclopedica."
         }
       ]
     },
@@ -275,7 +311,7 @@
       "content": [
         {
           "type": "text",
-          "text": "Gli Ispettori sono il vero fulcro operativo del Met. Possono dirigere una stazione di polizia locale, guidare squadre investigative, operare all'interno del CID, dare ordini a detective, sergenti, agenti e agenti speciali subordinati. Hanno autorità disciplinare limitata. Possono sanzionare infrazioni minori, sospendere agenti e segnalare casi più gravi ai livelli superiori."
+          "text": "Gli Ispettori sono il vero fulcro operativo del Met, il punto di snodo tra la strategia decisa ai piani alti di Scotland Yard e l'azione concreta nelle strade della capitale. Possono dirigere una stazione di polizia locale, guidare squadre investigative, operare all'interno del CID, dare ordini a detective, sergenti, agenti e agenti speciali subordinati. Il loro ruolo è estremamente versatile: un ispettore può trovarsi a coordinare le ronde notturne in un quartiere turbolento al mattino, e nel pomeriggio interrogare un sospettato in una stanza senza finestre della stazione di polizia. Hanno autorità disciplinare limitata: possono sanzionare infrazioni minori come ritardi, uniforme non conforme o comportamento inappropriato, sospendere agenti in attesa di procedimento e segnalare casi più gravi ai livelli superiori per provvedimenti formali. La paga di un ispettore si aggira intorno alle duecento sterline annue, una cifra che colloca questi uomini nella fascia bassa della middle class — abbastanza per mantenere un alloggio dignitoso e una famiglia, ma non sufficiente per i lussi e le comodità che i cittadini facoltosi danno per scontati. Molti ispettori integrano il reddito con le già menzionate attività private di investigazione, creando un intreccio tra dovere pubblico e interesse personale che caratterizza profondamente la cultura del Met in quest'epoca."
         }
       ]
     },
@@ -296,7 +332,7 @@
       "content": [
         {
           "type": "text",
-          "text": "Gli Investigatori, spesso chiamati detective, sono assegnati al CID. Si occupano di interrogatori, raccolta e analisi delle prove, individuazione di testimoni, costruzione dei casi giudiziari. Hanno autorità funzionale sugli Agenti e sui Sergenti per quanto riguarda le indagini, ma non hanno potere disciplinare. Sono spesso figure esperte, tenaci, poco visibili al pubblico, ma centrali per il successo di un'indagine."
+          "text": "Gli Investigatori, spesso chiamati detective, sono assegnati al CID e rappresentano l'élite operativa della Metropolitan Police nel campo delle indagini criminali. Si occupano di interrogatori, raccolta e analisi delle prove, individuazione di testimoni, costruzione dei casi giudiziari che verranno poi presentati ai magistrati e alle giurie dell'Old Bailey. A differenza dei poliziotti in uniforme, i detective vestono in borghese — abiti scuri, cappello a cilindro o bombetta, soprabito lungo — per mimetizzarsi tra la folla e muoversi senza attirare attenzione nei quartieri dove conducono le loro indagini. Hanno autorità funzionale sugli Agenti e sui Sergenti per quanto riguarda le indagini, potendo richiedere la loro assistenza per sorveglianze, arresti e perquisizioni, ma non hanno potere disciplinare su di essi. Sono spesso figure esperte, tenaci, poco visibili al pubblico, ma centrali per il successo di un'indagine. Trascorrono ore nei pub e nelle bettole raccogliendo informazioni, camminano per miglia attraverso i vicoli di Southwark e Bermondsey seguendo piste che spesso si rivelano false, e sviluppano nel tempo una conoscenza intima del mondo criminale londinese — i suoi codici, i suoi rifugi, le sue gerarchie. Un buon detective conosce per nome e soprannome decine di ricettatori, falsari, borseggiatori e scassinatori, e sa esattamente in quale pub di quale vicolo trovarli. La relazione con gli informatori è al centro del mestiere: sono le soffiate, le confidenze a mezza bocca, i messaggi lasciati in luoghi prestabiliti a guidare la maggior parte delle indagini, molto più di qualsiasi evidenza materiale."
         }
       ]
     },
@@ -317,7 +353,7 @@
       "content": [
         {
           "type": "text",
-          "text": "Il Sergente è il primo livello di comando sul campo. Può coordinare gli Agenti, far rispettare la disciplina sugli Agenti, intervenire in caso di negligenza o insubordinazione. Un Sergente può disciplinare un Agente anche se non appartiene allo stesso reparto. Per sanzioni più gravi deve coinvolgere un Ispettore."
+          "text": "Il Sergente è il primo livello di comando sul campo, la cerniera essenziale tra gli ufficiali superiori e gli agenti di pattuglia che percorrono le strade notte e giorno. Può coordinare gli Agenti, assegnare le ronde, verificare che ogni constable copra la propria area nei tempi stabiliti, e far rispettare la disciplina sugli Agenti con fermezza ma anche con quella familiarità che nasce dal condividere le stesse condizioni di lavoro. Un Sergente può intervenire in caso di negligenza o insubordinazione, comminando sanzioni immediate come richiami ufficiali o riduzioni di paga, e può disciplinare un Agente anche se non appartiene allo stesso reparto, poiché la sua autorità si estende a tutti i constable del Met. Per sanzioni più gravi, come la sospensione o l'espulsione dal corpo, deve coinvolgere un Ispettore e avviare una procedura formale. Nella pratica quotidiana, il Sergente è spesso la figura più rispettata — e temuta — dagli agenti semplici: è lui che controlla i registri, verifica gli orari, ispeziona le uniformi, e soprattutto è lui che percorre le strade durante le ore notturne per assicurarsi che nessun constable si sia addormentato in un portone o si sia rifugiato in una taverna per sfuggire al freddo e alla pioggia. Un Sergente veterano conosce ogni angolo del suo beat, ogni volto sospetto, ogni porta che non dovrebbe essere aperta a quell'ora, e questa esperienza lo rende una risorsa insostituibile per qualsiasi indagine che si svolga nel suo territorio."
         }
       ]
     },
@@ -338,7 +374,16 @@
       "content": [
         {
           "type": "text",
-          "text": "L'Agente è il grado base della Polizia Metropolitana. Svolge pattugliamenti, controllo del territorio, interventi di routine, primi contatti con criminali e vittime. Ha pochissima autorità decisionale ed è spesso il bersaglio diretto della criminalità. È la figura più visibile e anche la più esposta."
+          "text": "L'Agente è il grado base della Polizia Metropolitana, la spina dorsale dell'intero sistema di ordine pubblico londinese. Svolge pattugliamenti lungo percorsi prestabiliti chiamati beats, ciascuno della durata di circa sette miglia, da percorrere a piedi a passo regolare indipendentemente dalle condizioni meteorologiche — pioggia battente, nebbia fitta, gelo invernale. Il controllo del territorio, gli interventi di routine, i primi contatti con criminali e vittime sono il suo pane quotidiano. Ha pochissima autorità decisionale: deve seguire le istruzioni ricevute dal Sergente, redigere rapporti su qualsiasi incidente, e riferire ogni situazione anomala ai superiori prima di agire autonomamente. È spesso il bersaglio diretto della criminalità — aggressioni, insulti, tentativi di corruzione sono all'ordine del giorno — ed è la figura più visibile e anche la più esposta dell'intero corpo di polizia."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "La paga di un constable si aggira intorno a una sterlina e cinque scellini a settimana, appena sufficiente per un alloggio modesto e il sostentamento di una famiglia piccola. I requisiti per l'arruolamento sono rigidi: età compresa tra ventuno e ventisette anni, altezza minima di cinque piedi e nove pollici, buona salute, assenza di precedenti penali, capacità di leggere e scrivere. La formazione iniziale è breve — poche settimane di addestramento presso il deposito di Wellington Barracks — prima di essere assegnati a una divisione. I turni di servizio durano otto ore, ma le ore di straordinario non retribuite sono la norma piuttosto che l'eccezione. La vita sociale di un constable è limitata: le regole del Met vietano di frequentare pub durante il servizio, impongono restrizioni sulle attività nel tempo libero, e la divisa stessa — il pesante cappotto blu scuro, il casco rigido, gli stivali lucidati — diventa una seconda pelle che isola il bobby dal resto della comunità, creando una distanza che molti cittadini percepiscono come arroganza e che molti poliziotti vivono come solitudine."
         }
       ]
     },
@@ -359,7 +404,16 @@
       "content": [
         {
           "type": "text",
-          "text": "Gli Agenti Speciali sono cittadini nominati temporaneamente in caso di emergenze o disordini. Possono assistere interrogatori, aiutare nella raccolta delle prove, partecipare ad arresti, proteggere persone e proprietà. Non possono richiedere mandati, ottenere perquisizioni o trattenere sospetti in custodia. Il loro ruolo è di supporto e viene spesso guardato con sospetto dai professionisti del Met."
+          "text": "Gli Agenti Speciali sono cittadini nominati temporaneamente in caso di emergenze o disordini, una sorta di riserva civile a cui la Metropolitan Police ricorre quando le risorse ordinarie si rivelano insufficienti. Vengono convocati durante scioperi, sommosse, grandi eventi pubblici come il Giubileo della Regina, oppure in situazioni di crisi come epidemie o attentati. La loro nomina avviene per decreto del magistrato su richiesta del Commissario, e può essere revocata in qualsiasi momento. Possono assistere interrogatori, aiutare nella raccolta delle prove, partecipare ad arresti sotto la supervisione di un agente regolare, proteggere persone e proprietà, e pattugliare aree designate in supporto ai constable in servizio. Non possono richiedere mandati, ottenere perquisizioni o trattenere sospetti in custodia senza la supervisione di un agente regolare — le loro prerogative sono strettamente limitate e subordinate all'autorità dei professionisti."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Il loro ruolo è di supporto e viene spesso guardato con sospetto dai professionisti del Met, che li considerano dilettanti impreparati, potenzialmente pericolosi e inclini a complicare situazioni già difficili. Gli Agenti Speciali non ricevono una formazione strutturata, non sono dotati di uniforme regolamentare — indossano solitamente un bracciale distintivo e portano un manganello — e la loro motivazione varia enormemente: alcuni sono cittadini mossi da genuino senso civico, altri cercano un'occasione per esercitare autorità, altri ancora sperano di ottenere favori o protezione dalla polizia. La loro presenza è particolarmente controversa durante gli scioperi operai, dove vengono percepiti dalle classi lavoratrici come strumenti di repressione al servizio dei datori di lavoro e dell'establishment. Nonostante queste criticità, gli Agenti Speciali rappresentano una risorsa che il Met non può permettersi di ignorare, specialmente in una città di quasi cinque milioni di abitanti dove la polizia regolare è cronicamente sottodimensionata rispetto alle esigenze di sicurezza."
         }
       ]
     }

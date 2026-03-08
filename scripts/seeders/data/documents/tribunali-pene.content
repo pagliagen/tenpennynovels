@@ -18,7 +18,25 @@
       "content": [
         {
           "type": "text",
-          "text": "Gli agenti di polizia hanno il potere di arresto in caso di reato. Possono trattenere un sospetto fino a ventiquattro ore per fini investigativi. Per una detenzione più lunga è necessaria l'autorizzazione di un giudice. Gli arresti possono avvenire senza mandato se un sospetto viene colto sul fatto; altrimenti serve un ordine scritto del magistrato. Per perquisizioni e mandati formali occorre il coinvolgimento dell'autorità giudiziaria. Dopo l'arresto, il prigioniero viene condotto alla stazione di polizia, schedato e trattenuto in cella fino al giorno successivo. Non esiste ancora il diritto al silenzio o alla presenza di un avvocato durante l'interrogatorio."
+          "text": "Gli agenti di polizia hanno il potere di arresto in caso di reato flagrante o di fondato sospetto che un individuo abbia commesso, stia commettendo o sia in procinto di commettere un crimine. Il Metropolitan Police Act e il common law conferiscono ai constable un'autorità considerevole nella gestione dell'ordine pubblico, anche se i confini di tale autorità sono spesso sfumati e soggetti all'interpretazione del singolo agente. Possono trattenere un sospetto fino a ventiquattro ore per fini investigativi presso la stazione di polizia divisionale, durante le quali il prigioniero viene interrogato, schedato nei registri della stazione e, se necessario, sottoposto a una perquisizione personale. Per una detenzione più lunga è necessaria l'autorizzazione formale di un magistrato, che deve essere ottenuta presentando le ragioni del trattenimento davanti alla corte del magistrato più vicina."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Gli arresti possono avvenire senza mandato se un sospetto viene colto sul fatto — in flagranza di reato, come si dice nel linguaggio giuridico — oppure se l'agente ha ragionevole motivo di credere che il soggetto rappresenti una minaccia immediata per l'ordine pubblico. Altrimenti, per procedere all'arresto, serve un ordine scritto del magistrato, il cosiddetto warrant, che specifica il nome dell'accusato, la natura del reato contestato e l'autorizzazione a procedere alla cattura. Per perquisizioni domiciliari e sequestri di beni occorre un mandato specifico (search warrant) rilasciato dall'autorità giudiziaria, anche se nella pratica i confini tra una perquisizione autorizzata e un'ispezione informale sono spesso labili, specialmente nei quartieri poveri dove gli abitanti conoscono poco i propri diritti legali e dove la resistenza a un agente in servizio può trasformarsi rapidamente in un'accusa di oltraggio a pubblico ufficiale."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Dopo l'arresto, il prigioniero viene condotto alla stazione di polizia più vicina — spesso trascinato per le strade se oppone resistenza, uno spettacolo che attira inevitabilmente curiosi, ragazzini che insultano e lanciano oggetti, e talvolta complici che tentano di liberare l'arrestato con la forza. Una volta alla stazione, viene schedato nel registro degli arresti: nome, alias conosciuti, età dichiarata, descrizione fisica, occupazione, indirizzo, motivo dell'arresto. Se si rifiuta di fornire le proprie generalità, il sergente di turno annota una descrizione dettagliata e gli assegna un numero provvisorio. Il prigioniero viene quindi perquisito — oggetti personali, denaro e armi vengono confiscati e registrati — e condotto in una delle celle di detenzione al piano inferiore della stazione. Queste celle sono ambienti angusti, freddi, con un tavolaccio di legno come giaciglio, un secchio per le necessità fisiologiche e una finestrella con le sbarre che lascia entrare più correnti d'aria che luce. Il prigioniero vi resta fino al giorno successivo, quando viene portato davanti al magistrato per la prima udienza. Non esiste ancora il diritto al silenzio codificato o il diritto alla presenza di un avvocato durante l'interrogatorio: il sospettato può essere sottoposto a domande per ore, senza pausa e senza assistenza legale, e qualsiasi dichiarazione rilasciata — volontariamente o sotto pressione — può essere utilizzata contro di lui in tribunale."
         }
       ]
     },
@@ -39,7 +57,34 @@
       "content": [
         {
           "type": "text",
-          "text": "Ogni morte improvvisa o sospetta è seguita da un'inchiesta del coroner, una figura a metà tra medico e giudice. Durante il coroner's inquest vengono ascoltati testimoni, familiari e medici, per stabilire se si tratti di incidente, suicidio o omicidio. I verdetti (accidental death, misadventure, suicide, murder o open verdict) possono riaprire indagini o chiudere un caso per sempre. Le autopsie vengono eseguite solo su ordine del coroner o del magistrato, spesso in condizioni precarie, nei retrobottega degli obitori o nelle aule universitarie di medicina legale."
+          "text": "Ogni morte improvvisa, violenta o sospetta è seguita da un'inchiesta del coroner, una figura istituzionale antichissima — l'ufficio risale al XII secolo — che occupa una posizione unica nel sistema giuridico inglese, a metà tra il medico e il giudice, tra l'investigatore e l'arbitro. Il coroner non è necessariamente un medico: può essere un avvocato o un funzionario pubblico con competenze giuridiche, e nelle aree rurali il ruolo è talvolta ricoperto da figure senza alcuna formazione specifica. A Londra, tuttavia, i coroner sono generalmente professionisti preparati, che gestiscono carichi di lavoro enormi — centinaia di inchieste all'anno — in una città dove la morte violenta, accidentale o sospetta è un evento quotidiano: annegamenti nel Tamigi, incidenti industriali, risse mortali nei pub, avvelenamenti accidentali o dolosi, suicidi, infanticidi, e i corpi non identificati che emergono dal fiume o vengono trovati nei vicoli con una regolarità inquietante."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Durante il coroner's inquest — l'inchiesta formale — vengono ascoltati testimoni, familiari, vicini di casa, colleghi di lavoro e medici che hanno esaminato il corpo, per stabilire le circostanze della morte e determinare se si tratti di incidente (accidental death), disavventura (misadventure), suicidio (suicide), omicidio (murder o manslaughter) o se le circostanze restino indeterminate (open verdict). L'inchiesta si svolge spesso in una stanza attigua a un pub o in una sala pubblica del quartiere dove è avvenuto il decesso, davanti a una giuria composta da uomini del luogo — dodici cittadini comuni che ascoltano le deposizioni, esaminano le prove presentate e votano il verdetto. L'atmosfera è spesso tesa e drammatica: i familiari della vittima piangono e protestano, i testimoni contraddittori vengono incalzati, e il coroner deve mantenere l'ordine e guidare la giuria verso un verdetto fondato sulle evidenze."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "I verdetti del coroner hanno conseguenze legali immediate e profonde. Un verdetto di murder obbliga la polizia ad aprire un'indagine formale per omicidio e può portare all'incriminazione di un sospettato direttamente dall'inchiesta stessa, senza necessità di un'azione separata da parte del pubblico ministero. Un verdetto di suicide comporta implicazioni sociali devastanti per la famiglia del defunto: il suicidio è considerato un peccato mortale dalla Chiesa e un reato dalla legge, e la famiglia può subire l'esclusione sociale, la perdita di polizze assicurative e persino difficoltà nella sepoltura del corpo in terra consacrata. Un open verdict — un verdetto aperto che non determina la causa della morte — può riaprire indagini o chiudere un caso per sempre in un limbo di incertezza, lasciando le famiglie senza risposte e i sospettati in una condizione di perpetuo sospetto."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Le autopsie vengono eseguite solo su ordine del coroner o del magistrato, e spesso in condizioni che oggi sarebbero considerate inaccettabili: nei retrobottega degli obitori pubblici — lugubri stanze sotterranee illuminate da lampade a gas, con tavoli di pietra coperti di macchie e un odore di decomposizione che nessun disinfettante riesce a mascherare — nelle aule universitarie di medicina legale dove gli studenti assistono alle dissezioni come parte della loro formazione, o talvolta nello stesso pub dove si tiene l'inchiesta, con il corpo steso su un tavolo nella stanza sul retro. I chirurghi che eseguono le autopsie non sono sempre specialisti di medicina legale: possono essere medici generici del quartiere, chirurghi ospedalieri chiamati in fretta, o studenti di medicina ancora in formazione. La qualità delle autopsie varia enormemente, e non è raro che cause di morte vengano errate, che segni di violenza vengano trascurati, o che veleni passino inosservati per mancanza di analisi tossicologiche adeguate. Questa fragilità del sistema apre la porta a errori giudiziari, omicidi mascherati da morti naturali, e un'incertezza sistemica che permea l'intero apparato della giustizia vittoriana."
         }
       ]
     },
@@ -60,7 +105,7 @@
       "content": [
         {
           "type": "text",
-          "text": "Per i reati minori — ubriachezza, prostituzione, vagabondaggio — il processo si svolge nei Magistrates' Courts, la corte più bassa del sistema giudiziario. I giudici locali, spesso non giuristi di professione, emettono sentenze rapide, talvolta in giornata, in uno dei tribunali di polizia distribuiti nei vari distretti cittadini. Le udienze sono rapide. Le pene immediate."
+          "text": "Per i reati minori — ubriachezza molesta, prostituzione, vagabondaggio, accattonaggio aggressivo, piccoli furti, rissa, oltraggio a pubblico ufficiale, violazione delle ordinanze sanitarie — il processo si svolge nei Magistrates' Courts, la corte più bassa del sistema giudiziario inglese. I giudici locali, chiamati magistrates o justices of the peace, sono spesso non giuristi di professione: gentiluomini di campagna, commercianti rispettabili, ecclesiastici, uomini d'affari — figure della comunità nominati per il loro status sociale più che per la loro competenza giuridica. Nelle aree urbane operano anche stipendiary magistrates, giudici stipendiati con formazione legale, che gestiscono i carichi di lavoro più pesanti con maggiore efficienza e competenza. Le sentenze vengono emesse rapidamente, talvolta in pochi minuti, in uno dei numerosi tribunali di polizia (police courts) distribuiti nei vari distretti cittadini: Bow Street, Marlborough Street, Thames Police Court, Worship Street, e molti altri. Le udienze sono rapide, sbrigative, talvolta sommarie. Le pene immediate: una multa di pochi scellini, qualche giorno di detenzione, oppure il rilascio con un ammonimento che il magistrato pronuncia con un tono che va dalla paterna benevolenza al disprezzo manifesto, a seconda del suo umore e della classe sociale dell'imputato."
         }
       ]
     },
@@ -69,7 +114,7 @@
       "content": [
         {
           "type": "text",
-          "text": "Per i reati più gravi il caso passa alla Corte d'Assise, presente in ogni contea di Inghilterra e Galles. I giudici tengono sessioni periodiche. Il verdetto spetta a una giuria popolare di dodici membri. I crimini più seri — omicidio, alto tradimento, truffa — vengono giudicati presso il Central Criminal Court dell'Old Bailey, a nord della Cattedrale di St. Paul. Qui si celebrano i processi che fanno epoca."
+          "text": "Per i reati più gravi — furti con scasso, rapina, aggressione con lesioni gravi, ricettazione organizzata, truffa — il caso passa alle Quarter Sessions o alla Corte d'Assise (Assizes), presente in ogni contea di Inghilterra e Galles. Le Quarter Sessions si tengono quattro volte l'anno e sono presiedute da un panel di magistrati; le Assizes sono tenute da giudici dell'Alta Corte che viaggiano in circuito attraverso le contee, portando con sé l'autorità della Corona e la solennità della giustizia reale. I giudici tengono sessioni periodiche in edifici imponenti che incarnano la maestà della legge: aule rivestite di legno scuro, con il seggio del giudice sopraelevato, la gabbia dell'imputato, il banco della giuria e le gallerie per il pubblico sempre gremite di curiosi. Il verdetto spetta a una giuria popolare di dodici membri, tutti uomini — le donne sono escluse dal servizio di giuria — selezionati tra i contribuenti del distretto con un patrimonio minimo che esclude di fatto le classi più basse."
         }
       ]
     },
@@ -78,7 +123,16 @@
       "content": [
         {
           "type": "text",
-          "text": "Gli avvocati difensori (barristers) sono accessibili solo a chi può permetterseli. I poveri devono contare su volontari o associazioni caritatevoli. Molti accusati si presentano da soli davanti al giudice, impreparati e intimoriti. Spesso il loro destino dipende dall'aspetto, dalla reputazione o dal tono con cui si rivolgono alla corte. Le udienze sono pubbliche e gremite di curiosi."
+          "text": "I crimini più seri — omicidio, alto tradimento, pirateria, truffa di vaste proporzioni, incendio doloso — vengono giudicati presso il Central Criminal Court dell'Old Bailey, situato in un edificio gotico a nord della Cattedrale di St. Paul, nel cuore della City. L'Old Bailey è il tribunale penale più famoso del mondo, e qui si celebrano i processi che fanno epoca: i casi che riempiono le prime pagine dei giornali, che dividono l'opinione pubblica, che generano dibattiti parlamentari e riforme legislative. L'edificio stesso emana un'aura di solennità e terrore: le sue mura hanno udito le sentenze di morte di migliaia di condannati, e il passaggio coperto che lo collega alla prigione di Newgate — il cosiddetto \"Dead Man's Walk\" — è percorso dai condannati nei loro ultimi passi verso il patibolo. Le sessioni dell'Old Bailey si tengono circa dieci volte l'anno, ciascuna della durata di diversi giorni, e sono presiedute dal Recorder of London o da un giudice dell'Alta Corte. Il pubblico accorre in massa, e i giornalisti stenografano febbrilmente ogni parola per i resoconti che appariranno sulle edizioni serali."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Gli avvocati difensori (barristers) sono accessibili solo a chi può permetterseli, e i loro onorari — che variano da poche ghinee per un caso semplice a centinaia di sterline per una difesa complessa — rendono la rappresentanza legale un privilegio delle classi medie e alte. I poveri devono contare su volontari, associazioni caritatevoli come la Poor Prisoners' Defence Act Association, o sulla benevolenza occasionale di un barrister disposto a difendere pro bono un caso che attira l'attenzione pubblica. Molti accusati si presentano da soli davanti al giudice, impreparati e intimoriti, incapaci di comprendere il linguaggio giuridico, di contestare le prove dell'accusa o di interrogare efficacemente i testimoni. Spesso il loro destino dipende dall'aspetto — un volto pulito e un abito decoroso possono fare la differenza tra la clemenza e il rigore — dalla reputazione nel quartiere, che i magistrati spesso conoscono o si fanno riferire, o dal tono con cui si rivolgono alla corte: troppo umile e vengono considerati colpevoli e meschini; troppo sicuro di sé e vengono giudicati arroganti e impenitenti. Le udienze sono pubbliche e gremite di curiosi: mogli e parenti degli imputati, giornalisti, studenti di legge, sfaccendati in cerca di intrattenimento, e i cosiddetti \"Old Bailey regulars\" — anziani che trascorrono le giornate seguendo i processi come altri seguono le corse dei cavalli, commentando a mezza voce le prestazioni degli avvocati e scommettendo sui verdetti."
         }
       ]
     },
@@ -99,7 +153,7 @@
       "content": [
         {
           "type": "text",
-          "text": "Le pene spaziano da piccole ammende o pochi giorni di detenzione, fino alla pena di morte per impiccagione, eseguita all'interno delle prigioni dal 1868 in poi. I reati capitali sono pochi — omicidio, alto tradimento, incendio doloso e stupro violento — ma la loro esecuzione mantiene un valore deterrente e intrattenitivo insieme."
+          "text": "Le pene previste dal sistema giudiziario vittoriano spaziano da piccole ammende di pochi scellini per infrazioni minori o pochi giorni di detenzione nella casa di correzione locale, fino alla pena capitale per impiccagione, che viene eseguita all'interno delle mura delle prigioni dal 1868 in poi, quando il Capital Punishment Amendment Act pone fine alle esecuzioni pubbliche che per secoli avevano attirato folle immense davanti alle porte di Newgate. L'ultima esecuzione pubblica a Londra — quella di Michael Barrett, un feniano condannato per l'attentato dinamitardo di Clerkenwell — si è svolta il 26 maggio 1868 davanti a una folla di duemila persone. Da allora, le impiccagioni avvengono nel cortile interno della prigione, alla presenza del direttore, del cappellano, del medico, di alcuni testimoni ufficiali e del boia — nel 1895 il titolare è James Billington, che ha ereditato il mestiere dal leggendario William Marwood, inventore del metodo del \"long drop\" progettato per causare la rottura istantanea del collo e una morte più rapida rispetto alla lenta asfissia delle impiccagioni precedenti."
         }
       ]
     },
@@ -108,7 +162,25 @@
       "content": [
         {
           "type": "text",
-          "text": "La maggior parte dei detenuti sconta condanne di hard labour (lavori forzati) oppure penal servitude, la reclusione con disciplina militare. Le prigioni più note sono Newgate, Pentonville, Wandsworth e Holloway (quest'ultima riservata alle donne). Celle singole, silenzio obbligato, preghiera, lavori meccanici. La recidiva ha un livello di frequenza altissimo: quasi sempre chi esce dal sistema penitenziario londinese fa poi ritorno."
+          "text": "I reati capitali sono ormai ridotti a pochi — omicidio premeditato (murder), alto tradimento, incendio doloso agli arsenali e ai cantieri navali della Corona, e pirateria con violenza — ma la loro esecuzione mantiene un valore deterrente e un fascino morboso nell'immaginario collettivo. I giornali riportano con dovizia di dettagli le ultime ore dei condannati: l'ultimo pasto, le ultime parole, il comportamento sulla forca — se ha affrontato la morte con coraggio o se è crollato in ginocchio piangendo. Le petizioni di grazia, indirizzate al Segretario di Stato per gli Affari Interni, sono frequenti e talvolta riescono a commutare la sentenza di morte in penal servitude a vita, specialmente quando emergono circostanze attenuanti o quando l'opinione pubblica si mobilita in favore del condannato. Le donne condannate a morte vengono impiccate nella prigione di Newgate, ma le esecuzioni femminili sono rare e generano sempre un dibattito acceso sulla moralità di giustiziare una donna."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "La maggior parte dei detenuti, tuttavia, non affronta la forca ma sconta condanne di hard labour (lavori forzati) oppure penal servitude, la reclusione con disciplina quasi militare che ha sostituito la deportazione nelle colonie penali — cessata definitivamente nel 1868, quando l'Australia ha rifiutato di accettare ulteriori trasporti di condannati. Le prigioni più note di Londra sono Newgate, la prigione più antica e sinistra, situata accanto all'Old Bailey e destinata alla demolizione entro pochi anni; Pentonville, costruita nel 1842 come modello del sistema penitenziario progressivo, con le sue celle individuali disposte a raggiera attorno a un punto centrale di osservazione; Wandsworth, uno dei carceri più grandi d'Inghilterra con una capacità di oltre mille detenuti; e Holloway, riservata alle donne e ai giovani detenuti, dove le condizioni sono leggermente meno brutali ma non per questo meno oppressive."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "La vita carceraria è scandita da una routine spietata: celle singole di circa sette piedi per tredici, con un letto pieghevole fissato al muro, un secchio per i bisogni, una Bibbia e nient'altro. Il silenzio è obbligato — i detenuti non possono parlare tra loro, e le comunicazioni avvengono attraverso gesti o bisbigli furtivi — e le punizioni per chi infrange la regola del silenzio includono la riduzione del vitto, l'isolamento in celle buie e la privazione delle coperte. La preghiera quotidiana nella cappella della prigione è obbligatoria, e il cappellano rappresenta spesso l'unica figura umana con cui il detenuto può interagire. I lavori meccanici imposti comprendono il treadmill — una ruota che il detenuto deve far girare con i piedi per ore, senza alcuno scopo produttivo — il crank — una manovella che deve essere girata migliaia di volte al giorno, spesso con una resistenza regolabile che i guardiani aumentano come forma di punizione — e lo spezzare pietre, il cucire sacchi e il fare stoppa con vecchie corde di canapa. La dieta è monotona e insufficiente: pane, gruel (una pappa d'avena acquosa), patate, e occasionalmente carne bollita di qualità infima. La recidiva ha un livello di frequenza altissimo: quasi il settanta per cento dei detenuti rilasciati fa ritorno in prigione entro pochi anni, un dato che alimenta un dibattito feroce tra i sostenitori della punizione esemplare e i riformatori che chiedono un sistema penitenziario orientato alla riabilitazione. Le workhouses — le case di lavoro per i poveri — e le prigioni condividono spesso lo stesso tipo di popolazione, e per molti abitanti dei bassifondi londinesi il confine tra povertà e criminalità, tra la workhouse e la prigione, è sottile come un filo di seta."
         }
       ]
     }

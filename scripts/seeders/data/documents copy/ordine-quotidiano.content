@@ -1,0 +1,89 @@
+{
+  "type": "doc",
+  "content": [
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "I poliziotti di pattuglia"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Il volto più visibile della legge è quello del bobby, o police constable. Pattuglia aree prestabilite, sempre le stesse. È riconoscibile dall'uniforme blu scuro, dal casco rigido (custodian helmet), dalla cintura con il manganello. L'equipaggiamento comprende una lanterna cieca, dotata di schermo mobile per occultare il fascio di luce, e un fischietto o un sonaglio per richiamare rinforzi. I poliziotti di ronda non portano armi da fuoco. La scelta è deliberata e simbolica: serve a distinguere la polizia dall'esercito, ma espone i bobbies a rischi continui. La paga è bassa. I turni sono lunghi. Il lavoro è ingrato. Le aggressioni sono frequenti. I piccoli favoritismi e le bustarelle esistono, ma non sono la norma. La maggior parte dei constables è composta da uomini onesti, più temuti dai criminali che rispettati dalla popolazione."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Armi e repressione"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Il possesso illegale di armi da fuoco è considerato un reato grave. Usarle durante un crimine equivale a rinunciare a ogni speranza di clemenza. Questo non impedisce ai criminali più determinati di armarsi. Coltelli, manganelli e sfollagente restano comunque le armi più comuni negli scontri con la polizia. Gli ispettori del CID, a differenza dei bobbies, sono autorizzati a portare pistole, proprio perché chiamati a fronteggiare situazioni più estreme."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Procedure investigative"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "La criminologia è ancora rudimentale. Le tecniche moderne non esistono o sono agli albori. Le impronte digitali sono conosciute, ma considerate una curiosità scientifica più che uno strumento affidabile. Non esistono archivi centralizzati né confronti rapidi. Le indagini si basano su interrogatori estenuanti, osservazione, informatori, pedinamenti. Gli investigatori percorrono la città a piedi per chilometri, parlano con chiunque, tornano più volte sugli stessi luoghi. Sono le confessioni e i testimoni a costituire le prove più determinanti nei processi."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Legge e disuguaglianza"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "La legge non colpisce tutti allo stesso modo. I quartieri poveri sono sorvegliati con durezza. Le classi basse subiscono arresti frequenti e pene severe. Le classi alte affrontano la legge attraverso avvocati, conoscenze, silenzi. Il carcere è per molti. Lo scandalo per pochi."
+        }
+      ]
+    }
+  ]
+}

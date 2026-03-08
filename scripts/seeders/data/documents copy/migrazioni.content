@@ -1,0 +1,308 @@
+{
+  "type": "doc",
+  "content": [
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Migrazione interna"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Nel corso del XIX secolo la Gran Bretagna è attraversata da un intenso movimento di migrazione interna. La maggior parte degli spostamenti avviene su distanze brevi. Famiglie e individui tendono a restare all'interno di aree già conosciute, spesso legate alla stessa regione da generazioni. Accanto a questa mobilità limitata, si sviluppa però un fenomeno più ampio e strutturale: il trasferimento dalle campagne alle città. Si stima che circa il 40 per cento della crescita demografica urbana derivi da questo processo. Tra il 1841 e il 1911 le aree rurali britanniche perdono oltre quattro milioni di abitanti. Chi lascia la campagna sceglie spesso la città più vicina. Altri puntano direttamente verso grandi centri industriali e portuali, attratti dalla promessa di lavoro. Londra rappresenta il polo principale. Tra il 1841 e il 1911 registra un incremento netto di circa 1,25 milioni di migranti interni, diventando l'unica città con un ruolo realmente nazionale nel sistema migratorio britannico. Alla fine del secolo questo flusso rallenta. Compaiono fenomeni di suburbanizzazione e contro-urbanizzazione, con spostamenti verso le periferie o verso aree meno congestionate. La migrazione non è legata solo al lavoro. Le donne si spostano spesso in seguito al matrimonio. È diffusa anche una forte transitorietà urbana, con alti tassi di ricambio della popolazione nei quartieri popolari."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Immigrazione dall'estero"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Nel XIX secolo la Gran Bretagna mantiene una politica di immigrazione molto permissiva. Fino al 1905 non esistono veri controlli all'ingresso. Questo non significa però accoglienza incondizionata. Le relazioni tra popolazione locale e immigrati sono complesse e spesso conflittuali, modellate da pregiudizi, tensioni economiche e differenze religiose."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Immigrazione irlandese"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Il gruppo più numeroso di immigrati è quello irlandese. Il flusso cresce dopo il 1815 e diventa massiccio negli anni Quaranta e Cinquanta dell'Ottocento, in seguito alla carestia delle patate. Molti irlandesi si stabiliscono nelle grandi città, dove la richiesta di manodopera non qualificata è elevata. Gli irlandesi occupano spesso i livelli più bassi del mercato del lavoro. Vivono in aree a basso costo, con condizioni abitative difficili e sovraffollamento. In alcune zone si formano comunità compatte, ma non ovunque esistono veri ghetti. Molti irlandesi sono dispersi nel tessuto urbano. L'arrivo di una popolazione povera e in gran parte cattolica genera forti reazioni ostili. Vengono accusati di abbassare i salari, aumentare il sovraffollamento e favorire criminalità e ubriachezza. Queste accuse si fondano su stereotipi già esistenti, che dipingono gli irlandesi come incivili, violenti o moralmente inferiori. Le tensioni sfociano periodicamente in scontri tra lavoratori britannici e irlandesi. L'ostilità persiste anche dopo la fine della carestia, attenuandosi solo verso la fine del secolo."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Immigrazione dall'Europa continentale"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Dopo gli irlandesi, per gran parte del secolo i tedeschi costituiscono il gruppo immigrato più numeroso. A partire dagli anni Ottanta dell'Ottocento, però, il quadro cambia. Un grande afflusso di ebrei dell'Europa orientale arriva in Gran Bretagna in fuga da persecuzioni, repressioni politiche e difficoltà economiche. Negli anni Novanta dell'Ottocento questa comunità supera numericamente quella tedesca. La reazione è spesso ostile. Politici, giornalisti e riformatori sociali descrivono gli ebrei come fisicamente e moralmente degenerati. Vengono accusati di introdurre lavoro sottopagato nell'industria dell'abbigliamento e dell'ebanisteria, soprattutto nell'East End londinese, e di competere aggressivamente sul mercato immobiliare. Queste tensioni contribuiscono all'approvazione dell'Atto sugli Stranieri del 1905, che introduce per la prima volta restrizioni formali all'immigrazione. La legge richiede agli immigrati di dimostrare di poter mantenere se stessi e la propria famiglia e concede alle autorità il potere di espellere individui considerati criminali o mentalmente instabili."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Altri gruppi immigrati"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Accanto ai grandi flussi principali, sono presenti gruppi più piccoli ma visibili:"
+        }
+      ]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "italiani e lituani, soprattutto a fine secolo\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "americani\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "cittadini delle colonie britanniche\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "piccoli gruppi di cinesi\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "persone provenienti dall'Africa e dalle Indie Orientali e Occidentali"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Queste comunità sono spesso numericamente ridotte, ma contribuiscono alla natura multietnica di alcune aree urbane, in particolare nei quartieri portuali e commerciali."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Impatto sociale"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "La migrazione, interna ed esterna, trasforma profondamente le città vittoriane. Produce:"
+        }
+      ]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "crescita rapida e disordinata\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "sovraffollamento\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "tensioni etniche e religiose\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "nuove reti di solidarietà\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "nuove paure sociali"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "L'immigrato è spesso visto come capro espiatorio di problemi strutturali. Al tempo stesso è una risorsa indispensabile per l'economia urbana e industriale."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "**Razze e minoranze etniche\\\nCronologia**"
+        }
+      ]
+    }
+  ]
+}

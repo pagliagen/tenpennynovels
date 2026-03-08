@@ -18,7 +18,34 @@
       "content": [
         {
           "type": "text",
-          "text": "L'immagine del manicomio ottocentesco come luogo esclusivamente brutale è parziale. Accanto a strutture private degradate, soprattutto per i poveri, esistevano anche istituti di piccole dimensioni ospitati in abitazioni private o edifici adattati, spesso decorosi e dotati di spazi verdi. Il contenimento fisico era diffuso, ma considerato una misura di sicurezza più che una punizione. Una svolta importante fu attribuita a Philippe Pinel, che promosse l'idea di una \"cura morale\". Secondo questa impostazione, il malato mentale doveva essere trattato con fermezza ma senza violenza, facendo leva sulle capacità razionali residue. La follia veniva intesa come disturbo del cervello, spesso scatenato da eventi emotivi o traumatici. In Inghilterra queste idee furono riprese da William Tuke, che fondò lo York Retreat. La struttura era gestita come una comunità familiare, priva di catene e punizioni, basata su disciplina, calma e routine. L'esperienza attirò l'attenzione del Parlamento e nel 1816 un'inchiesta mise a confronto il Retreat con il Bethlem Hospital di Londra, dove segregazione e coercizione erano ancora pratiche comuni. Da questo momento lo Stato iniziò a intervenire in modo diretto. Le contee furono autorizzate a costruire manicomi pubblici e a finanziare le strutture con tasse locali. Nel 1828 vennero istituiti i Metropolitan Commissioners in Lunacy, incaricati di vigilare sulle condizioni degli istituti e concedere licenze. La psichiatria entrava così definitivamente nell'apparato statale."
+          "text": "L'immagine del manicomio ottocentesco come luogo esclusivamente brutale è parziale e non rende giustizia alla complessità di un sistema in rapida evoluzione. All'inizio del XIX secolo la situazione dell'assistenza ai malati di mente in Inghilterra è frammentaria e largamente disumana. I pazzi furiosi vengono rinchiusi nelle carceri, incatenati nelle cantine delle case familiari o esibiti come curiosità nelle madhouses private, gestite da proprietari il cui interesse primario è il profitto più che la cura. Il Bethlem Hospital di Londra — il cui nome corrotto, \"Bedlam\", è divenuto sinonimo universale di caos e follia — accoglie i malati più gravi in condizioni che, quando vengono rese pubbliche dalle inchieste parlamentari, scandalizzano l'opinione pubblica: pazienti nudi incatenati ai muri, nutriti a malapena, lasciati nelle proprie deiezioni, sottoposti a punizioni corporali e privati di qualsiasi contatto umano significativo."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Accanto a queste realtà estreme esistono tuttavia anche strutture private più piccole e decorose, ospitate in abitazioni private o edifici adattati, soprattutto per i pazienti delle classi agiate le cui famiglie possono permettersi di pagare rette significative. Alcune di queste case private offrono giardini, passeggiate, attività manuali e un trattamento relativamente umano, sebbene il controllo medico sia spesso superficiale e la permanenza potenzialmente indefinita. Il contenimento fisico — attraverso camicie di forza, cinghie di cuoio, sedie di contenzione e stanze imbottite — è diffuso e considerato una misura di sicurezza necessaria più che una punizione deliberata, anche se nella pratica la distinzione tra le due cose è spesso inesistente. Una svolta concettuale fondamentale fu attribuita al medico francese Philippe Pinel, il quale, nei turbolenti anni della Rivoluzione Francese, promosse l'idea rivoluzionaria di una \"cura morale\" della follia. Secondo questa impostazione, il malato mentale non era un animale da domare o un peccatore da punire, ma un essere umano il cui intelletto aveva temporaneamente ceduto sotto la pressione di emozioni violente, traumi o circostanze avverse, e che poteva essere recuperato attraverso un trattamento fermo ma rispettoso, facendo leva sulle capacità razionali residue del paziente. La follia veniva intesa come un disturbo del cervello — non dell'anima — spesso scatenato da eventi emotivi traumatici come lutti, rovesci finanziari, delusioni amorose, eccessi sessuali o abuso di sostanze."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "In Inghilterra queste idee trovarono un'applicazione pratica pionieristica nell'opera di William Tuke, un mercante quacchero di York, che nel 1796 fondò lo York Retreat dopo aver appreso delle condizioni disumane in cui una donna quacchera era morta al York Asylum. Il Retreat era strutturato e gestito come una comunità familiare allargata, priva di catene, punizioni corporali e contenimenti meccanici, basata su principi di disciplina gentile, calma, routine quotidiana, lavoro manuale, esercizio fisico all'aria aperta e interazione umana rispettosa. I pazienti venivano trattati come ospiti infermi piuttosto che come prigionieri, e si cercava di mantenere un ambiente domestico con pasti in comune, conversazioni e attività ricreative. L'esperienza del Retreat attirò l'attenzione del Parlamento britannico e nel 1815-1816 una Select Committee della Camera dei Comuni condusse un'inchiesta approfondita sulle condizioni dei manicomi inglesi, mettendo drammaticamente a confronto l'umanità del Retreat con gli orrori del Bethlem Hospital e di altre istituzioni dove segregazione, coercizione e abbandono erano ancora pratiche quotidiane."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Da questo momento lo Stato iniziò ad assumere un ruolo diretto nella gestione della malattia mentale. Il County Asylums Act del 1808 autorizzò le contee a costruire manicomi pubblici finanziati con le tasse locali, sebbene la sua applicazione restasse volontaria per molti anni. Il Lunatics Act del 1845 rese finalmente obbligatoria la costruzione di un manicomio pubblico in ogni contea e istituì i Commissioners in Lunacy, un organismo nazionale con il potere di ispezionare tutti gli istituti — pubblici e privati — concedere e revocare licenze, e riferire al Parlamento sulle condizioni dei pazienti. I Metropolitan Commissioners in Lunacy, già istituiti nel 1828 con competenza limitata alla capitale, furono assorbiti in questo nuovo organismo nazionale. La psichiatria entrava così definitivamente nell'apparato statale britannico, acquisendo al contempo legittimità scientifica e responsabilità istituzionale, ma anche il peso di dover gestire un numero di pazienti in costante e inarrestabile crescita."
         }
       ]
     },
@@ -39,7 +66,25 @@
       "content": [
         {
           "type": "text",
-          "text": "I trattamenti utilizzati nei manicomi erano eterogenei e spesso contraddittori. Le terapie farmacologiche comprendevano oppiacei, sedativi, purganti, canfora e cannabis, somministrati senza dosaggi standardizzati. In alcuni casi si continuava a ricorrere a salassi e sanguisughe. Accanto ai farmaci si diffusero pratiche fisiche come bagni caldi o freddi, docce improvvise e dispositivi meccanici, presto abbandonati per la loro inefficacia. Alcuni alienisti iniziarono però a dubitare dell'utilità di qualunque intervento farmacologico nei disturbi mentali gravi. I sostenitori della cura morale, influenzati da Jean-Etienne-Dominique Esquirol, insistevano sull'importanza del silenzio, dell'ordine e della disciplina. Si credeva che un ambiente controllato potesse \"ripulire\" la mente e renderla ricettiva all'intervento del medico. In pratica, però, la carenza di fondi e l'aumento dei ricoveri trasformarono molti manicomi in luoghi di custodia più che di cura."
+          "text": "I trattamenti utilizzati nei manicomi erano eterogenei, spesso contraddittori e riflettevano la profonda incertezza che circondava la comprensione della malattia mentale. Non esisteva un corpus terapeutico coerente: ciascun alienista — il termine \"psichiatra\" si affermerà solo più tardi — seguiva le proprie convinzioni, la propria esperienza e le risorse disponibili nella struttura in cui operava, producendo un panorama di pratiche che variava enormemente da istituto a istituto. Le terapie farmacologiche comprendevano oppiacei come il laudano e la morfina, utilizzati per sedare l'agitazione e indurre il sonno; bromuri di potassio, che divennero il sedativo d'elezione nella seconda metà del secolo; cloralio idrato, un ipnotico sintetico introdotto negli anni Sessanta; purganti drastici come il calomelano, somministrati nella convinzione che la pulizia intestinale potesse giovare anche alla mente; canfora, usata come stimolante nei casi di stupore catatonico; e cannabis indica, prescritta per calmare l'ansia, ridurre le convulsioni e favorire l'appetito. Queste sostanze venivano somministrate senza dosaggi standardizzati, spesso in combinazioni empiriche e per periodi prolungati, con effetti collaterali che potevano aggravare significativamente le condizioni del paziente. In alcuni istituti si continuava a ricorrere a salassi e sanguisughe, soprattutto per i pazienti in stato di agitazione acuta, nella convinzione che la sottrazione di sangue potesse ridurre la \"congestione cerebrale\" ritenuta responsabile dei sintomi."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Accanto ai farmaci si diffusero pratiche fisiche di varia natura. I bagni caldi prolungati venivano impiegati per calmare i pazienti agitati, talvolta per ore o addirittura per giorni, con il paziente immerso in una vasca e trattenuto da una copertura di tela cerata che lasciava emergere solo la testa. I bagni freddi e le docce improvvise a getto erano utilizzati come \"terapia d'urto\" per scuotere i pazienti dallo stupore o per punire comportamenti ritenuti inaccettabili, sebbene la distinzione tra terapia e punizione venisse formalmente negata. Dispositivi meccanici come sedie rotanti, altalene coercitive e letti oscillanti, progettati per indurre vertigine, nausea e disorientamento nel tentativo di \"resettare\" la mente del paziente, furono utilizzati nella prima metà del secolo ma vennero progressivamente abbandonati per la loro manifesta inefficacia e per le lesioni che causavano."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Alcuni alienisti più riflessivi iniziarono però a dubitare dell'utilità di qualunque intervento farmacologico o fisico nei disturbi mentali gravi, osservando che molti pazienti sembravano migliorare spontaneamente nel tempo, indipendentemente dalle terapie ricevute. I sostenitori della cura morale, profondamente influenzati dal lavoro di Jean-Étienne-Dominique Esquirol — allievo di Pinel e primo a tenere un corso universitario di psichiatria — insistevano sull'importanza terapeutica dell'ambiente: silenzio, ordine, disciplina, lavoro manuale regolare, passeggiate all'aria aperta, dieta controllata e un rapporto di fiducia tra medico e paziente erano considerati gli strumenti più efficaci per favorire la guarigione. Si credeva che un ambiente controllato, ordinato e privo di stimoli perturbanti potesse \"ripulire\" la mente dai suoi disordini e renderla ricettiva all'intervento terapeutico del medico. In pratica, però, la carenza cronica di fondi, la penuria di personale qualificato e l'aumento inarrestabile dei ricoveri trasformarono molti manicomi pubblici in luoghi di mera custodia più che di cura effettiva, dove l'obiettivo reale era contenere, classificare e rendere invisibili i malati piuttosto che guarirli."
         }
       ]
     },
@@ -60,7 +105,25 @@
       "content": [
         {
           "type": "text",
-          "text": "Nella seconda metà del secolo si diffuse un crescente pessimismo terapeutico. Molti psichiatri abbracciarono la teoria della degenerazione, secondo cui la malattia mentale era il risultato di un decadimento fisico e morale trasmesso per via ereditaria. Si riteneva che alcolismo, tossicodipendenza, promiscuità sessuale e vita urbana contribuissero a una progressiva corruzione della stirpe. Le donne erano considerate particolarmente vulnerabili, soprattutto se istruite o sessualmente autonome. Alla fine del secolo, follia e immoralità venivano spesso sovrapposte. Queste idee alimentarono politiche di segregazione e controllo. Il manicomio divenne uno strumento per isolare non solo i malati, ma anche poveri, devianti, donne scomode e individui incapaci di conformarsi alle norme sociali. La psichiatria, in questo contesto, serviva più a mantenere l'ordine che a guarire."
+          "text": "Nella seconda metà del secolo si diffuse un crescente e pervasivo pessimismo terapeutico che investì la psichiatria come un'ondata gelida, erodendo le speranze di guarigione che avevano animato i pionieri della cura morale. Le statistiche dei manicomi pubblici mostravano un quadro sconfortante: il numero dei ricoverati cresceva di anno in anno — in Inghilterra e Galles si passò da circa 7.000 internati nel 1850 a oltre 86.000 nel 1890 — le dimissioni per guarigione diventavano sempre più rare, e la popolazione manicomiale tendeva a stabilizzarsi in una massa crescente di malati cronici che invecchiavano e morivano all'interno delle mura dell'istituto. Di fronte a questa realtà scoraggiante, molti psichiatri abbandonarono la fiducia nella possibilità di una cura e abbracciarono la teoria della degenerazione, formulata dal medico franco-austriaco Bénédict Augustin Morel nel 1857 e successivamente elaborata da Valentin Magnan, Henry Maudsley e Cesare Lombroso."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Secondo questa teoria, la malattia mentale non era un disturbo accidentale o reattivo, ma il risultato di un decadimento biologico e morale radicato nella costituzione fisica dell'individuo e trasmesso per via ereditaria attraverso le generazioni. Si riteneva che ogni generazione successiva manifestasse forme di degenerazione più gravi: un nonno eccentrico poteva generare un figlio alcolista, che a sua volta avrebbe prodotto un nipote epilettico e un pronipote idiota, in una progressione inesorabile verso l'estinzione della linea familiare. L'alcolismo, la tossicodipendenza, la promiscuità sessuale, la masturbazione, la vita urbana con i suoi eccessi e le sue tentazioni, e persino l'istruzione eccessiva — soprattutto nelle donne — venivano indicati come fattori che acceleravano questo processo di corruzione della stirpe. Le donne erano considerate particolarmente vulnerabili alla degenerazione: la biologia femminile, con i suoi cicli, le gravidanze e la menopausa, era vista come intrinsecamente instabile e predisposta al cedimento nervoso. Una donna istruita, sessualmente autonoma, che rifiutava il matrimonio o esprimeva opinioni politiche era facilmente classificata come \"degenerata\" e candidata al ricovero."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Alla fine del secolo, follia e immoralità venivano sistematicamente sovrapposte e confuse. L'omosessualità era classificata come una forma di degenerazione mentale. La povertà cronica era interpretata come segno di inferiorità biologica. La criminalità abituale veniva ricondotta a difetti congeniti del sistema nervoso. Queste idee, che trovavano una veste scientifica nella frenologia, nella craniometria e nelle prime teorie eugeniche, alimentarono politiche di segregazione, controllo e isolamento che andavano ben oltre il trattamento dei malati mentali in senso stretto. Il manicomio divenne uno strumento sociale per isolare non solo chi era genuinamente afflitto da disturbi psichici, ma anche poveri, vagabondi, donne ribelli, alcolisti cronici, anziani non autosufficienti, disabili e chiunque fosse incapace o non volesse conformarsi alle norme sociali della rispettabilità vittoriana. La psichiatria, in questo contesto, serviva più a mantenere l'ordine sociale e a proteggere la società dai suoi elementi scomodi che a guarire i malati, e il confine tra diagnosi medica e giudizio morale era diventato quasi indistinguibile."
         }
       ]
     },
@@ -81,7 +144,25 @@
       "content": [
         {
           "type": "text",
-          "text": "Con l'istituzionalizzazione della disciplina si rese necessaria una classificazione dei disturbi mentali. Termini come monomania vennero usati per descrivere forme parziali di follia, comprese manie, melanconia, fissazioni religiose e convinzioni deliranti. La paranoia, ad esempio, non indicava solo il delirio persecutorio, ma qualunque convinzione ritenuta infondata. Nella seconda metà del secolo comparve il termine \"depressione\", anche se in Gran Bretagna si continuò a usare una terminologia meno uniforme. Nel 1879 Krafft-Ebing propose una classificazione basata su criteri come la presenza di ritardo mentale, patologie cerebrali e ereditarietà. Molte di queste distinzioni, pur imprecise, gettarono le basi della nosologia moderna."
+          "text": "Con l'istituzionalizzazione della disciplina psichiatrica e la crescita esponenziale della popolazione manicomiale, si rese necessaria una classificazione sistematica dei disturbi mentali che permettesse di distinguere, catalogare e registrare le diverse forme di follia ai fini amministrativi, statistici e — almeno in teoria — terapeutici. La sfida era enorme: la mente non offriva lesioni visibili come un osso fratturato o un organo infiammato, e i confini tra un disturbo e l'altro apparivano sfumati, instabili e soggetti a interpretazioni divergenti. Il termine \"monomania\", introdotto da Esquirol negli anni Venti del secolo, venne largamente utilizzato per descrivere forme parziali di follia in cui il paziente appariva razionale e lucido nella maggior parte degli ambiti della vita, ma manifestava un delirio circoscritto a un singolo argomento o una singola ossessione. Si parlava di monomania omicida per spiegare omicidi apparentemente immotivati commessi da individui altrimenti sani di mente, di monomania religiosa per le fissazioni mistiche, di monomania erotica per le ossessioni amorose, e di monomania orgogliosa per i deliri di grandezza."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "La categoria della mania copriva le forme di agitazione acuta con eccitazione motoria, loquacità incontenibile, idee grandiose e comportamento violento o disinibito. La melanconia — antenata della moderna depressione — descriveva uno stato di prostrazione, tristezza profonda, rallentamento psicomotorio, idee di rovina e talvolta impulsi suicidi. La paranoia non indicava solo il delirio persecutorio nel senso moderno, ma qualunque sistema di convinzioni ritenute infondate, elaborate e tenacemente sostenute dal paziente nonostante le evidenze contrarie. Nella seconda metà del secolo comparve gradualmente il termine \"depressione\" come categoria diagnostica autonoma, sebbene in Gran Bretagna si continuasse a preferire una terminologia meno uniforme, parlando di \"melanconia agitata\", \"esaurimento nervoso\", \"prostrazione mentale\" o semplicemente di \"pazzia parziale\". L'\"idiozia\" e l'\"imbecillità\" venivano distinte dalla follia propriamente detta, in quanto considerate condizioni congenite e immutabili del ritardo mentale, prive di prospettive di guarigione. L'\"epilessia\" era classificata tra i disturbi mentali e costituiva una causa frequente di ricovero manicomiale, poiché le convulsioni venivano associate a deterioramento cognitivo progressivo e a comportamenti violenti."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Nel 1879 Richard von Krafft-Ebing, psichiatra tedesco il cui lavoro ebbe grande influenza anche in Inghilterra, propose una classificazione organica dei disturbi mentali basata su criteri come la presenza di ritardo mentale congenito, di patologie cerebrali acquisite, di ereditarietà degenerativa e di fattori scatenanti emotivi o ambientali. La sua opera \"Psychopathia Sexualis\", pubblicata nel 1886, catalogò e descrisse per la prima volta in modo sistematico le \"perversioni sessuali\" — omosessualità, sadismo, masochismo, feticismo — inquadrandole come manifestazioni di degenerazione nervosa, con un impatto enorme sulla percezione medica e sociale della sessualità. Molte di queste distinzioni diagnostiche, pur imprecise, arbitrarie e pesantemente influenzate dai pregiudizi morali dell'epoca, gettarono nondimeno le basi della nosologia psichiatrica moderna e stabilirono un vocabolario che, in forme modificate, sopravvive ancora oggi."
         }
       ]
     },
@@ -102,7 +183,25 @@
       "content": [
         {
           "type": "text",
-          "text": "Dopo il fallimento dei metodi coercitivi e farmacologici, alcuni medici iniziarono a esplorare strade alternative. L'ipnosi fu sperimentata come strumento diagnostico e terapeutico, ma rimase limitata a pochi specialisti. Questi studi aprirono lentamente la strada a una nuova attenzione per i processi mentali interni. Sul finire del secolo, in Europa continentale, iniziarono a emergere teorie che attribuivano importanza ai traumi, ai conflitti interiori e all'inconscio, come quelle sviluppate da Sigmund Freud. In Gran Bretagna, tuttavia, tali idee rimasero marginali fino al Novecento. Nel XIX secolo, dunque, la psichiatria fu soprattutto una disciplina di osservazione, classificazione e contenimento. I manicomi crebbero in numero e dimensioni, mentre la possibilità di una vera guarigione rimase limitata. La mente veniva studiata, ma raramente compresa."
+          "text": "Dopo il fallimento evidente dei metodi coercitivi, l'esaurimento delle speranze riposte nella cura morale e i limiti sempre più evidenti della farmacologia empirica, alcuni medici più audaci e intellettualmente curiosi iniziarono a esplorare strade alternative per la comprensione e il trattamento della malattia mentale, aprendo crepe nel muro di pessimismo terapeutico che dominava la psichiatria di fine secolo. L'ipnosi, riscoperta e sistematizzata dalla scuola medica di Nancy in Francia sotto la guida di Hippolyte Bernheim e Ambroise-Auguste Liébeault, fu sperimentata come strumento sia diagnostico sia terapeutico per i disturbi nervosi e isterici. In Inghilterra l'interesse per l'ipnosi fu alimentato dalla visita di Jean-Martin Charcot — il celebre neurologo della Salpêtrière di Parigi, che utilizzava l'ipnosi per indurre e studiare i sintomi dell'isteria — e dalla fondazione della Society for Psychical Research nel 1882, che indagava fenomeni come la telepatia, il sonnambulismo e gli stati alterati di coscienza con un approccio che mescolava curiosità scientifica e fascinazione per l'occulto."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "L'ipnosi rimase tuttavia un metodo controverso e limitato a pochi specialisti: molti medici la consideravano una forma di ciarlataneria o un pericolo per la volontà del paziente, e la sua efficacia terapeutica era difficile da dimostrare in modo riproducibile. Ciononostante, gli studi sull'ipnosi contribuirono in modo significativo a spostare l'attenzione dalla lesione cerebrale visibile ai processi mentali invisibili: l'idea che un sintomo fisico — una paralisi, una cecità, un dolore cronico — potesse avere un'origine puramente psicologica, senza alcuna base anatomica, rappresentava una sfida radicale alle teorie materialistiche dominanti e apriva lentamente la strada a una nuova comprensione della mente umana. Sul finire del secolo, in Europa continentale, queste intuizioni cominciarono a coagularsi in sistemi teorici più articolati. Pierre Janet, allievo di Charcot, sviluppò una teoria della dissociazione psicologica che spiegava l'isteria come il risultato di idee e ricordi traumatici scissi dalla coscienza. A Vienna, Sigmund Freud, inizialmente seguace di Charcot, stava elaborando un metodo di esplorazione dell'inconscio — la psicoanalisi — basato sull'ascolto prolungato del paziente, sull'interpretazione dei sogni e sull'analisi delle resistenze e dei transfert emotivi."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "I suoi \"Studi sull'isteria\", pubblicati nel 1895 insieme a Josef Breuer, proponevano che i sintomi isterici fossero l'espressione simbolica di traumi emotivi rimossi dalla coscienza, e che la loro cura consistesse nel riportare questi ricordi alla consapevolezza attraverso il dialogo terapeutico. In Gran Bretagna, tuttavia, tali idee rimasero largamente sconosciute o accolte con scetticismo fino ai primi anni del Novecento. La psichiatria britannica restava saldamente ancorata a una visione organicista e istituzionale della malattia mentale, diffidente verso le speculazioni continentali e concentrata sulla gestione amministrativa dei manicomi più che sulla ricerca di nuovi approcci terapeutici. Nel XIX secolo, dunque, la psichiatria fu soprattutto una disciplina di osservazione, classificazione e contenimento sociale. I manicomi crebbero in numero e dimensioni fino a diventare città dentro le città — strutture colossali con centinaia o migliaia di internati, dotate di fattorie, lavanderie, laboratori, cappelle e cimiteri propri — mentre la possibilità di una vera guarigione rimase limitata a una piccola percentuale di pazienti, spesso quelli le cui condizioni erano state meno gravi fin dall'inizio. La mente umana veniva studiata, catalogata, misurata e pesata — letteralmente, nel caso dei cervelli rimossi durante le autopsie — ma raramente compresa nella sua complessità, e quasi mai ascoltata nella sua sofferenza."
         }
       ]
     }

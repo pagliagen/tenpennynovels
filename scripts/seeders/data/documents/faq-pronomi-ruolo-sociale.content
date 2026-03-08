@@ -14,6 +14,15 @@
       ]
     },
     {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "In inglese esiste un unico pronome di seconda persona, \"you\", che non distingue tra registro formale e informale. In italiano, invece, disponiamo di tre forme — tu, Lei, Voi — che veicolano informazioni fondamentali sulla relazione sociale tra chi parla e chi ascolta. Nel gioco, questa distinzione diventa uno strumento narrativo potente: il pronome scelto racconta immediatamente il tipo di rapporto tra due personaggi, la loro posizione sociale relativa e il grado di intimità o distanza che li separa. Usare il pronome sbagliato in una conversazione può essere un affronto grave, un segnale di sfida sociale, o al contrario un gesto di apertura e fiducia inaspettata. I giocatori sono incoraggiati a prestare attenzione a queste sfumature, perché nella Londra vittoriana il modo in cui ci si rivolge a qualcuno dice molto più delle parole stesse."
+        }
+      ]
+    },
+    {
       "type": "bulletList",
       "content": [
         {
@@ -24,7 +33,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "\"Tu\"  \nSi usa tra familiari stretti, amici intimi, innamorati. Può risultare offensivo se usato con estranei o superiori.\n"
+                  "text": "\"Tu\"\nSi usa tra familiari stretti, amici intimi, innamorati e talvolta tra bambini. È la forma della confidenza e dell'affetto, riservata a chi si conosce profondamente e con cui si è stabilito un legame personale che trascende le formalità sociali. Dare del tu a uno sconosciuto o a un superiore sociale è considerato un affronto, un segno di maleducazione o di sfida deliberata. Nelle famiglie aristocratiche, persino tra genitori e figli il passaggio dal \"Lei\" al \"tu\" può avvenire solo in momenti di grande intimità o in circostanze eccezionali. Tra coniugi, il \"tu\" è la norma nella sfera privata, ma in presenza di estranei o in contesti formali alcuni preferiscono mantenere il \"Lei\" per decoro.\n"
                 }
               ]
             }
@@ -38,7 +47,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "\"Lei\"  \nÈ la forma comune tra pari o sconosciuti, e in situazioni formali. Il più usato in città.\n"
+                  "text": "\"Lei\"\nÈ la forma comune tra pari o sconosciuti, e in situazioni formali. Il più usato in città, rappresenta la scelta neutra e rispettosa che non presuppone né intimità né sottomissione. Si impiega nei rapporti professionali, tra conoscenti, nei negozi, negli uffici e in qualsiasi contesto in cui le persone interagiscono senza un legame personale consolidato. Tra borghesi è la forma predefinita: darsi del Lei è segno di educazione e buone maniere, e il passaggio al \"tu\" — se mai avviene — richiede un invito esplicito da parte della persona di rango più elevato o più anziana. Nei club, nei salotti e nelle occasioni mondane, il Lei è la regola inderogabile anche tra persone che si conoscono da anni.\n"
                 }
               ]
             }
@@ -52,7 +61,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "\"Voi\"  \nTipico di classi popolari verso persone di rango superiore o autorità."
+                  "text": "\"Voi\"\nTipico di classi popolari verso persone di rango superiore o autorità. Esprime deferenza e riconoscimento della distanza sociale: un operaio si rivolgerà al padrone con il \"Voi\", un domestico alla padrona di casa, un contadino al proprietario terriero. È una forma che segnala consapevolezza del proprio posto nella gerarchia sociale senza la formalità piena del \"Lei\", che nelle classi più basse può suonare artificioso o eccessivamente borghese. In alcune comunità di immigrati — irlandesi, italiani — il \"Voi\" è anche la forma rispettosa verso gli anziani e i capifamiglia, indipendentemente dal contesto sociale più ampio."
                 }
               ]
             }
@@ -73,6 +82,15 @@
       ]
     },
     {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "La classe sociale nella Londra vittoriana non è semplicemente una questione di reddito: è un sistema complesso di codici comportamentali, aspettative reciproche e regole non scritte che governano ogni interazione umana. Dall'aristocratico che non tocca mai denaro in pubblico all'operaio che si toglie il berretto al passaggio del padrone, ogni gesto, ogni parola, ogni silenziosa omissione comunica la posizione di ciascuno nella gerarchia. Per i giocatori di Ten Penny Novels, comprendere queste dinamiche è essenziale: non si tratta di regole rigide da memorizzare, ma di un tessuto sociale che dà profondità e autenticità a ogni scena."
+        }
+      ]
+    },
+    {
       "type": "bulletList",
       "content": [
         {
@@ -83,7 +101,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Le classi sociali sono rigide?  \nSì, ufficialmente. Nei fatti ci sono scambi tra classi, ma spesso hanno conseguenze (chiacchiere, scandali o isolamento).\n"
+                  "text": "Le classi sociali sono rigide?\nSì, ufficialmente la struttura di classe è considerata parte dell'ordine naturale delle cose, quasi una legge divina. Nei fatti, però, ci sono scambi e interazioni tra classi che avvengono quotidianamente — nei mercati, nelle strade, nei luoghi di lavoro, nelle chiese. Tuttavia, quando questi scambi superano i confini del funzionale e diventano relazioni personali, le conseguenze possono essere severe: chiacchiere di quartiere, scandali sui giornali, isolamento sociale e persino la perdita del proprio status. Un gentleman che frequenta abitualmente un pub dell'East End verrà guardato con sospetto dai suoi pari; una domestica che si concede troppe confidenze con il figlio del padrone rischia il licenziamento immediato e una reputazione rovinata.\n"
                 }
               ]
             }
@@ -97,7 +115,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Come rivolgersi a uno sconosciuto?  \nSolo in occasioni pubbliche o legittime (lavoro, chiesa, conferenze, parchi affollati).\n"
+                  "text": "Come rivolgersi a uno sconosciuto?\nSolo in occasioni pubbliche o legittime: il lavoro, la chiesa, conferenze, parchi affollati, eventi mondani. Rivolgersi a uno sconosciuto per strada, senza un motivo valido, è considerato sconveniente in quasi tutti i contesti sociali — per una donna, può addirittura essere interpretato come un invito sessuale. Le presentazioni formali sono il mezzo privilegiato per conoscere nuove persone: un conoscente comune deve fare le presentazioni, menzionando nome, titolo e, implicitamente, lo status sociale di ciascuno. Senza una presentazione adeguata, avviare una conversazione con uno sconosciuto di rango superiore è un'imperdonabile gaffe; con uno di rango inferiore, è un gesto di condiscendenza che dev'essere giustificato dal contesto.\n"
                 }
               ]
             }
@@ -111,7 +129,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Quanto pesa la reputazione?  \nMoltissimo. Un pettegolezzo non smentito diventa facilmente \"verità\".\n"
+                  "text": "Quanto pesa la reputazione?\nMoltissimo: la reputazione è il capitale più prezioso che un individuo possieda nella società vittoriana, più del denaro stesso per certi aspetti. Un pettegolezzo non smentito diventa facilmente \"verità\" accettata, e una volta che la reputazione è macchiata, ripulirla è quasi impossibile. I giornali scandalistici dell'epoca — come la Pall Mall Gazette — potevano distruggere carriere, matrimoni e vite intere con un singolo articolo. Per le donne, la reputazione era particolarmente fragile: bastava essere vista in compagnia di un uomo non imparentato, in un orario o in un luogo inappropriato, per scatenare sospetti che nessuna smentita avrebbe mai dissipato completamente. Per i personaggi del gioco, la gestione della reputazione è un elemento strategico fondamentale.\n"
                 }
               ]
             }
@@ -125,7 +143,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Esistono relazioni tra classi diverse?  \nSì, ma spesso sono nascoste o creano problemi.\n"
+                  "text": "Esistono relazioni tra classi diverse?\nSì, ma spesso sono nascoste, negate o gestite con estrema cautela. Un aristocratico può avere un'amante di classe inferiore, ma non porterà mai quella relazione alla luce del sole; un medico borghese può stringere amicizia con un poliziotto di umili origini durante un'indagine, ma difficilmente lo inviterà a cena con la famiglia. Le relazioni inter-classe più comuni e accettate sono quelle di servizio — padrone e domestico, datore di lavoro e operaio — che comportano un'intimità quotidiana paradossalmente profonda ma rigidamente asimmetrica. Le storie d'amore tra classi diverse, pur essendo un topos letterario amato dal pubblico vittoriano, nella realtà portavano quasi sempre a rotture familiari, diseredazioni e ostracismo sociale.\n"
                 }
               ]
             }
@@ -139,7 +157,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Uomini e donne possono parlarsi da soli?  \nDipende dal ceto:  \n- Aristocrazia: solo tra parenti/promessi o in presenza d’altri.  \n- Borghesia: possibili se in luoghi pubblici.  \n- Ceti popolari: normale.\n"
+                  "text": "Uomini e donne possono parlarsi da soli?\nDipende dal ceto e il contesto è tutto:\n- Aristocrazia: solo tra parenti stretti, promessi sposi o in presenza di un chaperone. Una donna non sposata trovata da sola con un uomo rischia uno scandalo che potrebbe comprometterla per sempre. Le visite in salotto avvengono sempre in presenza di altri familiari o della servitù, e persino la corrispondenza tra un uomo e una donna non imparentati deve passare attraverso la madre o il tutore della donna.\n- Borghesia: possibile se in luoghi pubblici come parchi, chiese, mostre, biblioteche. La discrezione resta fondamentale, ma le regole sono meno soffocanti che nell'aristocrazia. Una donna sposata gode di maggiore libertà rispetto a una nubile.\n- Ceti popolari: normale e quotidiano. Uomini e donne lavorano fianco a fianco nelle fabbriche, nei mercati, nei lavatoi. La separazione rigida dei sessi è un lusso che le classi lavoratrici non possono permettersi.\n"
                 }
               ]
             }
@@ -153,7 +171,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Lettere private?  \nSì tra tutti, con modalità diverse:  \n- Ceti alti: formali, \"mostrabili\" anche a terzi.  \n- Borghesia: più libertà.  \n- Popolari: informali o tramite intermediari.\n"
+                  "text": "Lettere private?\nSì, la corrispondenza epistolare è uno dei mezzi di comunicazione più importanti dell'epoca e attraversa tutte le classi sociali, ma con modalità radicalmente diverse:\n- Ceti alti: le lettere sono formali, scritte su carta pregiata con inchiostro di qualità, e devono essere \"mostrabili\" anche a terzi — il che significa che raramente contengono sentimenti espliciti o informazioni compromettenti. Le lettere d'amore esistono, ma sono cifrate, allusive, scritte in un codice che solo i destinatari possono comprendere pienamente.\n- Borghesia: più libertà espressiva, soprattutto nella corrispondenza privata tra coniugi o tra amici intimi. Le lettere commerciali seguono formulari rigidi, ma quelle personali possono essere sorprendentemente intime.\n- Popolari: informali, spesso brevi per necessità, talvolta dettate a un intermediario alfabetizzato per chi non sa scrivere. La posta del penny (penny post) ha reso la corrispondenza accessibile anche ai più poveri.\n"
                 }
               ]
             }
@@ -167,7 +185,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Visite senza preavviso?  \n- Ceti alti: quasi insulto (tranne grandi confidenze).  \n- Borghesia: possibile in qualche caso.  \n- Popolari: normale.\n"
+                  "text": "Visite senza preavviso?\n- Ceti alti: presentarsi senza preavviso è quasi un insulto, una violazione grave dell'etichetta che può compromettere una relazione. L'unica eccezione è tra amici molto intimi o parenti stretti, e anche in quel caso ci si aspetta che il visitatore lasci prima il proprio biglietto da visita con il maggiordomo. Le visite formali seguono un protocollo preciso: si lasciano i biglietti, si aspetta un invito, si presentano in orari stabiliti (tipicamente tra le tre e le cinque del pomeriggio) e si resta per un tempo appropriato — mai più di quindici o venti minuti.\n- Borghesia: possibile in circostanze informali, specialmente tra vicini o colleghi, ma comunque preferibile dare avviso. La borghesia imita spesso le regole dell'aristocrazia, ma con meno rigore e più pragmatismo.\n- Popolari: del tutto normale. Nelle case operaie le porte sono spesso aperte, i vicini entrano ed escono liberamente, e la privacy nel senso borghese del termine è un concetto quasi sconosciuto.\n"
                 }
               ]
             }
@@ -181,7 +199,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Sono romantici i fidanzamenti?  \n- Aristocrazia: accordo sociale.  \n- Borghesia: possibile anche l’affetto.  \n- Popolari: più praticità.\n"
+                  "text": "Sono romantici i fidanzamenti?\n- Aristocrazia: il fidanzamento è prima di tutto un accordo sociale, politico e patrimoniale tra famiglie. L'affetto reciproco è auspicabile ma non essenziale: ciò che conta è l'adeguatezza del match in termini di rango, patrimonio e reputazione. I termini dell'accordo vengono negoziati dagli avvocati delle rispettive famiglie, e rompere un fidanzamento è uno scandalo gravissimo che può comportare cause legali per \"breach of promise\".\n- Borghesia: il sentimento ha più spazio, e molti fidanzamenti borghesi nascono da un'attrazione genuina coltivata durante la Season o in occasioni sociali. Tuttavia, anche nella borghesia il calcolo economico resta importante, e un matrimonio \"svantaggioso\" incontra la resistenza della famiglia.\n- Popolari: più praticità e meno formalismo. I fidanzamenti sono spesso brevi e informali, dettati più dalla necessità economica o da una gravidanza inaspettata che da elaborate strategie sociali.\n"
                 }
               ]
             }
@@ -195,7 +213,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Contatto fisico in pubblico?  \n- Alti: mai.  \n- Borghesia: malvisto.  \n- Popolari: più tollerato.\n"
+                  "text": "Contatto fisico in pubblico?\n- Alti: assolutamente proibito tra persone di sesso opposto non imparentate. Persino stringere la mano è un gesto carico di significato, e un uomo deve aspettare che sia la donna a offrire la mano per prima. Un braccio offerto per accompagnare una signora è il massimo contatto fisico ammesso in pubblico, e deve essere offerto con discrezione. Tra uomini, una stretta di mano è accettabile; tra donne, un bacio sulla guancia tra intime amiche è tollerato.\n- Borghesia: malvisto e fonte di chiacchiere, ma meno catastrofico che nell'aristocrazia. Il contatto accidentale è scusato, quello deliberato è giudicato.\n- Popolari: più tollerato per necessità e abitudine. Nelle strade affollate, nei mercati, sui mezzi pubblici il contatto fisico è inevitabile. Le coppie popolari mostrano più liberamente l'affetto in pubblico, anche se la rispettabilità resta un valore trasversale.\n"
                 }
               ]
             }
@@ -209,7 +227,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Si esce insieme da “non sposati”?  \n- Alti: solo motivi formali.  \n- Borghesia: possibile ma osservato.  \n- Popolari: normale.\n"
+                  "text": "Si esce insieme da \"non sposati\"?\n- Alti: solo per motivi formali e strettamente codificati — una passeggiata a Hyde Park in compagnia di un chaperone, un palco a teatro con altri membri della famiglia, un ballo dove ogni danza deve essere prenotata sul carnet. Ogni uscita tra un uomo e una donna non sposati è interpretata come un segnale di corteggiamento, e viene osservata attentamente dalla società. Uscire ripetutamente con la stessa persona senza che segua una proposta di matrimonio è considerato compromettente per la donna.\n- Borghesia: possibile ma osservato. Le convenzioni sono più rilassate, soprattutto se l'uscita avviene in un contesto semi-pubblico come un concerto, una conferenza o una passeggiata in un parco affollato. La presenza di un'amica o di un familiare è comunque preferibile.\n- Popolari: normale e privo di stigma particolare. Le coppie non sposate passeggiano insieme, frequentano i music hall, vanno alle fiere, si incontrano nei pub senza che la cosa susciti particolari commenti.\n"
                 }
               ]
             }
@@ -223,7 +241,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Corteggiamento formale?  \nSolo nei ceti alti, poco tra borghesi, assente tra i popolari.\n"
+                  "text": "Corteggiamento formale?\nSolo nei ceti alti, dove il corteggiamento segue un rituale elaborato e codificato: il gentleman esprime il proprio interesse attraverso visite regolari alla famiglia della donna, invii di fiori (ogni tipo di fiore ha un significato preciso nel linguaggio floreale vittoriano), lettere poetiche e partecipazione assidua agli stessi eventi sociali. Il corteggiamento deve essere pubblico e visibile, in modo che la società possa attestare le intenzioni onorevoli del pretendente. Tra borghesi il corteggiamento è meno ritualizzato ma comunque presente, spesso mediato dalla famiglia o da amici comuni. Tra i popolari, il corteggiamento formale è praticamente assente: le relazioni nascono in modo più spontaneo, nei luoghi di lavoro, nei mercati, nei pub, e la comunità locale svolge la funzione di garante informale della serietà delle intenzioni.\n"
                 }
               ]
             }
@@ -237,7 +255,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Rapporti sociali diretti o allusivi?  \n- Alti: allusivi  \n- Borghesi: intermedi  \n- Popolari: diretti"
+                  "text": "Rapporti sociali diretti o allusivi?\n- Alti: prevalentemente allusivi. L'arte della conversazione nell'alta società vittoriana è un esercizio di sottigliezza e indirezione: ciò che non si dice è spesso più importante di ciò che si esprime. Gli insulti sono velati da complimenti ambigui, le proposte commerciali nascoste dietro inviti a pranzo, le minacce formulate come consigli amichevoli. Padroneggiare questo linguaggio è essenziale per sopravvivere nei salotti.\n- Borghesi: intermedi, con una tendenza alla franchezza professionale temperata dalla cortesia sociale. Un medico o un avvocato può essere diretto con i clienti, ma nei contesti sociali adotta il registro più formale.\n- Popolari: diretti, spesso brutalmente. Il linguaggio della strada è colorito, espressivo e privo di quelle sfumature retoriche che caratterizzano le classi superiori. La franchezza è considerata una virtù, non un difetto."
                 }
               ]
             }
@@ -258,6 +276,15 @@
       ]
     },
     {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "La condizione femminile nella Londra del 1895 è un terreno complesso e contraddittorio, dove la retorica ufficiale sulla \"naturale domesticità\" della donna si scontra quotidianamente con una realtà fatta di donne lavoratrici, attiviste, intellettuali e ribelli. Il gioco incoraggia i personaggi femminili a esplorare queste contraddizioni, trasformandole in fonte di tensione narrativa e di spunti per l'interpretazione."
+        }
+      ]
+    },
+    {
       "type": "bulletList",
       "content": [
         {
@@ -268,7 +295,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Le donne sono giocabili quanto gli uomini?  \nSì. Nessuna azione è loro vietata per principio.\n"
+                  "text": "Le donne sono giocabili quanto gli uomini?\nSì, senza riserve. Nessuna azione è loro vietata per principio nel gioco. Ten Penny Novels rifiuta deliberatamente l'idea che i personaggi femminili debbano essere relegati a ruoli passivi o decorativi. Le donne nell'epoca vittoriana vivevano vite complesse, ricche e spesso straordinarie: dalla regina Vittoria stessa a Florence Nightingale, da Ada Lovelace alle suffragette che sfidavano l'arresto e la violenza per i propri diritti. Il gioco offre ai personaggi femminili le stesse opportunità narrative degli uomini, pur riconoscendo che nella Londra del 1895 le donne affrontano ostacoli sociali specifici — ostacoli che possono diventare elementi narrativi potenti e coinvolgenti.\n"
                 }
               ]
             }
@@ -282,7 +309,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Le donne lavorano?  \nSì in ogni ceto, ma cambiano mansioni e status sociale.\n"
+                  "text": "Le donne lavorano?\nSì, in ogni ceto, ma le mansioni e lo status sociale associato variano enormemente. Nell'aristocrazia, il \"lavoro\" di una donna è gestire la casa, organizzare eventi sociali, supervisionare la servitù e rappresentare la famiglia in società — un impegno tutt'altro che banale che richiede competenze diplomatiche, organizzative e sociali considerevoli. Nella borghesia, le donne possono essere insegnanti, governanti, infermiere, scrittrici, o gestire piccole attività commerciali. Nei ceti popolari, le donne lavorano nelle fabbriche tessili, nelle lavanderie, come domestiche, sarte, venditrici ambulanti, nei pub e — nella fascia più disperata — nella prostituzione. Il Married Women's Property Act del 1882 ha finalmente concesso alle donne sposate il diritto di possedere beni propri, un passo rivoluzionario che sta lentamente cambiando gli equilibri economici all'interno delle famiglie.\n"
                 }
               ]
             }
@@ -296,7 +323,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Ci sono donne medico o in altre posizioni importanti?  \nPossibile, raro ma storicamente corretto.\n"
+                  "text": "Ci sono donne medico o in altre posizioni importanti?\nPossibile, raro ma storicamente corretto. Elizabeth Garrett Anderson è diventata la prima donna medico in Inghilterra nel 1865, e nel 1874 ha fondato la London School of Medicine for Women. Nel 1895, alcune donne esercitano la professione medica, anche se affrontano pregiudizi e ostacoli continui da parte dei colleghi maschi e delle istituzioni. Sophia Jex-Blake ha combattuto battaglie legali epiche per il diritto delle donne a studiare medicina. Al di là della medicina, le donne possono essere scienziate, scrittrici, giornaliste, fotografe, artiste, insegnanti universitarie e attiviste politiche — ma ciascuna di queste posizioni è conquistata contro la resistenza di una società che considera l'ambizione femminile una deviazione dalla norma naturale.\n"
                 }
               ]
             }
@@ -310,7 +337,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Le donne possono girare sole?  \nSì, ma in città attireranno attenzione e giudizi, specialmente tra i ricchi.\n"
+                  "text": "Le donne possono girare sole?\nSì, ma le conseguenze sociali dipendono dal contesto, dall'ora e dal quartiere. Una donna rispettabile che cammina da sola per le strade del West End durante il giorno non attirerà particolare attenzione, ma la stessa donna che si aggira sola di notte nei pressi di Haymarket — zona notoriamente frequentata da prostitute — rischia di essere scambiata per una di loro dalla polizia e dai passanti. Nelle classi alte, una donna non accompagnata è un'anomalia sociale che suscita curiosità e potenziale disapprovazione: ci si aspetta che sia accompagnata da un familiare, un domestico o almeno un'amica. Nei ceti popolari, le donne si muovono liberamente per necessità lavorativa e pratica, ma questo non le protegge dai rischi reali della violenza urbana, soprattutto nei quartieri più degradati dell'East End.\n"
                 }
               ]
             }
@@ -324,7 +351,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Il corpo femminile è tabu?  \nSì a livello sociale, meno nella pratica quotidiana.\n"
+                  "text": "Il corpo femminile è tabù?\nSì a livello di discorso pubblico: la morale vittoriana proibisce qualsiasi riferimento esplicito al corpo femminile, alla sessualità e alle funzioni fisiologiche. I medici visitano le pazienti attraverso la mediazione di un paravento, le gambe dei pianoforti vengono coperte con drappi per non evocare le gambe umane (una pratica caricaturale ma attestata), e il vocabolario quotidiano è pieno di eufemismi per evitare qualsiasi accenno diretto al fisico. Nella pratica quotidiana, tuttavia, la realtà è molto diversa: le donne dei ceti popolari allattano in pubblico, si lavano nei lavatoi comuni, condividono stanze da letto con fratelli e parenti, e hanno una conoscenza del corpo — proprio e altrui — assai più concreta e pragmatica di quanto la morale ufficiale vorrebbe ammettere.\n"
                 }
               ]
             }
@@ -338,7 +365,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Donne più autonome nei ceti bassi?  \nSì, ma significa meno protezione e più rischi."
+                  "text": "Donne più autonome nei ceti bassi?\nSì, paradossalmente le donne delle classi lavoratrici godono di una libertà di movimento e di azione impensabile per le loro controparti aristocratiche o borghesi, vincolate da regole sociali asfissianti e dalla costante sorveglianza della comunità. Una lavandaia dell'East End può camminare da sola a qualsiasi ora, entrare in un pub, parlare liberamente con uomini, guadagnare il proprio denaro e spenderlo come meglio crede. Ma questa libertà ha un prezzo alto: significa meno protezione legale, meno risorse in caso di malattia o disgrazia, maggiore esposizione alla violenza domestica e di strada, e la consapevolezza che nessuno — né la famiglia, né la legge, né la società — interverrà in suo soccorso se le cose andranno male. L'autonomia femminile nei ceti bassi è la libertà della sopravvivenza, non quella della scelta."
                 }
               ]
             }
@@ -359,6 +386,15 @@
       ]
     },
     {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "La Londra del 1895 è la capitale di un impero che si estende su un quarto delle terre emerse del pianeta, e la sua popolazione riflette questa dimensione globale. Marinai, commercianti, studenti, diplomatici, rifugiati e lavoratori da ogni angolo del mondo transitano per il porto più trafficato della Terra, e molti di loro restano. La diversità etnica di Londra è un dato storico incontestabile, e il gioco la riflette offrendo ai giocatori la possibilità di interpretare personaggi di qualsiasi origine."
+        }
+      ]
+    },
+    {
       "type": "bulletList",
       "content": [
         {
@@ -369,7 +405,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Ci sono persone non bianche a Londra nel 1895?  \nSì: città imperiale e portuale.\n"
+                  "text": "Ci sono persone non bianche a Londra nel 1895?\nSì, Londra è una città imperiale e portuale con una presenza multietnica documentata da secoli. I marinai lascar — provenienti dall'India, dalla Malesia e dal Medio Oriente — sono una presenza costante nei quartieri portuali di Limehouse e Shadwell fin dal Settecento. Comunità di origine africana e caraibica esistono a Londra almeno dal periodo elisabettiano, e nel tardo Ottocento includono musicisti, boxeur, domestici, marinai e piccoli imprenditori. Studenti e intellettuali provenienti dalle colonie frequentano le università e gli Inns of Court, e alcuni raggiungono posizioni di rilievo nella società britannica. La loro presenza è documentata nei registri parrocchiali, nei censimenti, nelle cronache giudiziarie e nelle fotografie d'epoca.\n"
                 }
               ]
             }
@@ -383,7 +419,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Tutte le etnie sono giocabili?  \nSì, senza limiti sui ruoli.\n"
+                  "text": "Tutte le etnie sono giocabili?\nSì, senza limiti sui ruoli che il personaggio può ricoprire nella narrazione. Il gioco non impone restrizioni basate sull'etnia del personaggio, ma incoraggia i giocatori a considerare come la società vittoriana percepirebbe e tratterebbe una persona di colore, un immigrato o un appartenente a una minoranza etnica in diversi contesti sociali. Questo non significa subire passivamente il razzismo dell'epoca, ma usarlo come elemento narrativo che arricchisce la storia del personaggio, crea conflitti interessanti e offre opportunità per scene memorabili di sfida, resilienza e dignità.\n"
                 }
               ]
             }
@@ -397,7 +433,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Il razzismo esiste?  \nSì, ma in forme non uniformi. Molto conta il pregiudizio.\n"
+                  "text": "Il razzismo esiste?\nSì, ma in forme non uniformi e spesso contraddittorie. Il razzismo vittoriano non è il segregazionismo americano: non esistono leggi Jim Crow in Inghilterra, e una persona di colore non è legalmente esclusa da nessun luogo pubblico. Il pregiudizio, tuttavia, è pervasivo e assume forme diverse: dalla curiosità condiscendente all'ostilità aperta, dall'esotismo romanticizzante alla discriminazione lavorativa. Le teorie pseudoscientifiche sulla gerarchia razziale sono diffuse negli ambienti accademici e politici, ma coesistono con voci critiche e con una tradizione abolizionista di cui molti britannici vanno orgogliosi. Il razzismo vittoriano è, in sintesi, più una questione di atteggiamenti sociali che di barriere legali formali.\n"
                 }
               ]
             }
@@ -411,7 +447,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Conta più il ceto o l’etnia?  \nIl ceto viene prima. L’abbigliamento e il ruolo sociale sono decisivi.\n"
+                  "text": "Conta più il ceto o l'etnia?\nIl ceto viene prima nella maggior parte delle interazioni sociali quotidiane. L'abbigliamento, il linguaggio, il portamento e il ruolo sociale sono più decisivi del colore della pelle nel determinare come una persona viene trattata. Un gentleman indiano ben vestito, istruito a Oxford e accompagnato da una lettera di presentazione, sarà ricevuto con rispetto nella maggior parte dei salotti londinesi — anche se dietro le quinte si mormoreranno commenti sulla sua origine. Al contrario, un bianco irlandese dei bassifondi sarà trattato con disprezzo da chiunque si consideri superiore. La classe sociale funziona come un filtro che può attenuare o amplificare il pregiudizio razziale, senza mai eliminarlo completamente.\n"
                 }
               ]
             }
@@ -425,7 +461,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Persone non bianche possono essere ricche?  \nSì, anche se meno frequente.\n"
+                  "text": "Persone non bianche possono essere ricche?\nSì, anche se il fenomeno è meno frequente che tra i bianchi e quasi sempre legato a circostanze specifiche. Mercanti indiani e maharaja in visita a Londra ostentano ricchezze che farebbero impallidire molti aristocratici britannici. Commercianti africani dell'Africa occidentale hanno accumulato fortune nel commercio con l'impero. Imprenditori cinesi gestiscono attività floride a Limehouse e nei quartieri portuali. La ricchezza offre una protezione parziale ma significativa contro il pregiudizio: il denaro apre porte che l'etnia da sola non aprirebbe, anche se non garantisce mai una piena accettazione sociale.\n"
                 }
               ]
             }
@@ -439,7 +475,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "I pronomi cambiano in base all’etnia?  \nNo, solo rispetto a ceto e contesto.\n"
+                  "text": "I pronomi cambiano in base all'etnia?\nNo, l'uso dei pronomi nel gioco è determinato esclusivamente dal ceto sociale e dal contesto relazionale, non dall'etnia. Un gentleman indiano riceverà il \"Lei\" come qualsiasi altro gentleman; un operaio nero dell'East End si sentirà dare del \"Voi\" o del \"tu\" esattamente come i suoi colleghi bianchi. Il sistema pronominale riflette la gerarchia sociale, non quella razziale — anche se nella pratica le due gerarchie spesso si sovrappongono, con le minoranze etniche concentrate in modo sproporzionato nelle classi più basse.\n"
                 }
               ]
             }
@@ -453,7 +489,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Origine delle persone non bianche?  \nDa ogni parte dell’Impero Britannico e altrove: Caraibi, India, Africa, Medioriente, Cina, Americhe."
+                  "text": "Origine delle persone non bianche?\nDa ogni parte dell'Impero Britannico e ben oltre i suoi confini: dai Caraibi, dove le comunità di discendenti degli schiavi liberati mantengono forti legami con la madrepatria; dall'India e dal subcontinente, che forniscono marinai lascar, studenti di legge, medici e funzionari coloniali; dall'Africa occidentale e orientale, con commercianti, missionari e personalità politiche; dal Medio Oriente, con mercanti e diplomatici ottomani e persiani; dalla Cina, con marinai e piccoli imprenditori concentrati a Limehouse; dalle Americhe, con artisti, scrittori e attivisti afroamericani che trovano a Londra un ambiente meno segregato rispetto agli Stati Uniti. Ogni comunità ha la propria storia, le proprie reti di supporto e il proprio rapporto — spesso ambivalente — con la società britannica che la ospita."
                 }
               ]
             }
@@ -474,6 +510,15 @@
       ]
     },
     {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Il lavoro nella Londra vittoriana è molto diverso da come lo concepiamo oggi: non esistono contratti standardizzati, ferie pagate, orari regolamentati né protezioni sindacali efficaci per la maggior parte dei lavoratori. La giornata lavorativa è scandita dalla luce del sole e dalle esigenze del padrone più che dall'orologio, e la distinzione tra vita privata e vita professionale è spesso inesistente, soprattutto per la servitù domestica."
+        }
+      ]
+    },
+    {
       "type": "bulletList",
       "content": [
         {
@@ -484,7 +529,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Orari di lavoro regolari?  \nNo, giornate lunghe, specie tra popolari e servitù.\n"
+                  "text": "Orari di lavoro regolari?\nNo, le giornate lavorative sono lunghe e irregolari, specialmente tra le classi popolari e la servitù domestica. Un domestico può lavorare dalle sei del mattino alle dieci di sera con poche pause, sette giorni su sette, con al massimo una mezza giornata libera a settimana — e anche quella è concessa per grazia del padrone, non per diritto. Gli operai delle fabbriche lavorano turni di dieci-quattordici ore, sei giorni su sette, in condizioni spesso pericolose e malsane. I Factory Acts hanno introdotto alcune limitazioni — per esempio sull'orario di lavoro di donne e bambini — ma l'applicazione è sporadica e i datori di lavoro trovano facilmente modi per aggirare le regole. I professionisti borghesi godono di maggiore autonomia nella gestione del tempo, ma le aspettative sociali impongono una disponibilità quasi costante: un medico può essere chiamato a qualsiasi ora, un avvocato deve essere presente in studio ogni giorno.\n"
                 }
               ]
             }
@@ -498,7 +543,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "È facile cambiare lavoro?  \nNo: rischioso per poveri, delicato per borghesi, strategico per ricchi.\n"
+                  "text": "È facile cambiare lavoro?\nNo, e le conseguenze variano drammaticamente in base alla classe sociale. Per i poveri, perdere un impiego può significare la fame, la workhouse o la strada: senza risparmi né rete di sicurezza sociale, ogni giorno senza salario è una crisi immediata. Le referenze del precedente datore di lavoro sono essenziali, e un domestico licenziato senza referenze può trovarsi nell'impossibilità di trovare un nuovo impiego rispettabile. Per i borghesi, cambiare lavoro è un'operazione delicata che richiede diplomazia e tempismo: lasciare un impiego senza un altro già assicurato è rischioso, e le reti professionali — i club, le associazioni, le logge massoniche — sono fondamentali per trovare nuove opportunità. Per i ricchi, il \"lavoro\" in senso stretto è spesso irrilevante: la gestione delle proprietà, gli investimenti e le rendite fondiarie garantiscono il reddito, e le scelte professionali sono questioni di prestigio e ambizione personale piuttosto che di sopravvivenza.\n"
                 }
               ]
             }
@@ -512,7 +557,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Ruoli intellettuali per donne?  \nSì, soprattutto come insegnanti, infermiere, scrittrici, ricercatrici o benefattrici."
+                  "text": "Ruoli intellettuali per donne?\nSì, soprattutto come insegnanti, infermiere, scrittrici, ricercatrici, giornaliste o benefattrici. L'insegnamento è la professione intellettuale più accessibile alle donne: le governanti private e le insegnanti nelle scuole femminili sono una presenza consolidata e rispettata. L'infermieristica, grazie alla rivoluzione di Florence Nightingale, è diventata una professione dignitosa e persino prestigiosa. La scrittura offre uno dei pochi spazi di espressione pubblica in cui le donne competono alla pari con gli uomini: autrici come George Eliot (Mary Ann Evans), le sorelle Brontë, Elizabeth Gaskell e — nel 1895 — la giornalista investigativa Annie Besant hanno dimostrato che la penna femminile può essere tanto affilata quanto quella maschile. La beneficenza organizzata è un ambito in cui le donne dell'alta borghesia e dell'aristocrazia esercitano un potere considerevole, gestendo fondi, istituzioni e reti di assistenza con competenza manageriale."
                 }
               ]
             }
@@ -533,6 +578,15 @@
       ]
     },
     {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "La medicina vittoriana è un campo in rapida evoluzione dove scoperte rivoluzionarie coesistono con pratiche antiquate, superstizioni e ciarlataneria. Nel 1895, la teoria dei germi di Pasteur e Koch sta lentamente trasformando la comprensione delle malattie, ma la maggior parte della popolazione continua ad affidarsi a rimedi tradizionali, medici empirici e la propria esperienza domestica per curare i mali quotidiani."
+        }
+      ]
+    },
+    {
       "type": "bulletList",
       "content": [
         {
@@ -543,7 +597,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Quando si chiama il medico?  \nSolo se necessario e se ci si può permettere. Molte cure sono domestiche.\n"
+                  "text": "Quando si chiama il medico?\nSolo se strettamente necessario e, soprattutto, se ci si può permettere il costo della visita. Per le classi popolari, chiamare un medico è un evento raro e riservato ai casi più gravi — una frattura esposta, un parto complicato, una febbre che dura da giorni — e spesso arriva troppo tardi. Molte cure sono domestiche: le donne della famiglia conoscono rimedi trasmessi da generazioni per tosse, febbri, dolori e piccoli traumi. I dispensari caritatevoli e gli ospedali per i poveri — come il London Hospital di Whitechapel — offrono cure gratuite ma sovraffollate e con risorse limitate. I borghesi e i ricchi hanno il proprio medico di famiglia, che fa visite a domicilio e conosce la storia clinica dell'intera famiglia.\n"
                 }
               ]
             }
@@ -557,7 +611,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Donne e conoscenze mediche?  \nSì, attraverso rimedi “di casa” e quotidiani.\n"
+                  "text": "Donne e conoscenze mediche?\nSì, le donne sono le principali custodi della conoscenza medica domestica, attraverso rimedi \"di casa\" tramandati di madre in figlia per generazioni. Ogni donna di buona famiglia è addestrata a gestire le malattie leggere, a fasciare ferite, a preparare infusi ed empiastri, e a riconoscere i sintomi che richiedono l'intervento del medico. Nei ceti popolari, questa conoscenza è ancora più vasta e pratica: le ostetriche di quartiere — le handywomen — assistono i parti, le \"wise women\" prescrivono erbe e cataplasmi, e le anziane del vicinato sono consultate come vere e proprie autorità mediche informali. Questa tradizione di sapere femminile è guardata con sospetto dalla professione medica maschile, che la considera concorrenza sgradita e potenziale fonte di pericolo.\n"
                 }
               ]
             }
@@ -571,7 +625,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Igiene moderna?  \nNo: lavaggi frequenti ma solo parziali, pochi bagni completi.\n"
+                  "text": "Igiene moderna?\nNo, gli standard igienici del 1895 sono profondamente diversi dai nostri. I lavaggi frequenti del corpo sono la norma, ma si tratta per lo più di lavaggi parziali — mani, viso, ascelle — eseguiti con brocca e catino nella camera da letto. I bagni completi, con immersione in vasca, sono rari: una volta alla settimana per i borghesi benestanti, molto meno frequentemente per i poveri che devono recarsi ai bagni pubblici o scaldarsi l'acqua sul fuoco. Il sapone è un articolo comune ma la sua qualità varia enormemente, dal sapone profumato di Pears usato dall'alta società al sapone da bucato grossolano dei ceti popolari. Il concetto moderno di igiene quotidiana — doccia giornaliera, cambio frequente della biancheria, disinfezione — è ancora lontano dall'essere universale.\n"
                 }
               ]
             }
@@ -585,7 +639,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Acqua corrente ovunque?  \nNo. Nei quartieri poveri si usano pozzi e lavatoi.\n"
+                  "text": "Acqua corrente ovunque?\nNo, la distribuzione dell'acqua corrente è disuguale e riflette le profonde divisioni sociali di Londra. Le case borghesi e aristocratiche dei quartieri occidentali dispongono di acqua corrente nelle cucine e spesso nei bagni, fornita dalle compagnie idriche private che servono le aree più redditizie della città. Nei quartieri poveri dell'East End, la situazione è drasticamente diversa: molte famiglie dipendono da pozzi comuni spesso contaminati, lavatoi condivisi e fontane pubbliche dove l'acqua viene erogata solo in determinati orari della giornata. Le grandi epidemie di colera che hanno devastato Londra nella prima metà del secolo hanno portato alla costruzione del sistema fognario progettato da Joseph Bazalgette, ma nel 1895 molte aree periferiche restano scarsamente servite.\n"
                 }
               ]
             }
@@ -599,7 +653,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Medicina affidabile?  \nVariegata: medicina scientifica in crescita e rimedi empirici convivono.\n"
+                  "text": "Medicina affidabile?\nVariegata e in rapida evoluzione: la medicina scientifica moderna sta crescendo rapidamente grazie alle scoperte sulla batteriologia, sull'antisepsi e sull'anestesia, ma convive ancora con pratiche empiriche, teorie obsolete e vere e proprie truffe mediche. Un medico qualificato del 1895 conosce la teoria dei germi, pratica l'antisepsi chirurgica secondo i principi di Lister, e ha accesso a strumenti diagnostici come lo stetoscopio e il termometro clinico. Tuttavia, molte malattie restano incurabili o incomprese: la tubercolosi uccide migliaia di persone ogni anno, le febbri puerperali decimano le partorienti, e le malattie mentali sono trattate con metodi che vanno dall'idroterapia alla contenzione forzata. Accanto ai medici qualificati prosperano ciarlatani, venditori di elisir miracolosi e praticanti di medicine alternative di dubbia efficacia.\n"
                 }
               ]
             }
@@ -613,7 +667,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Medicine comuni?  \nOppiacei (laudano, morfina), alcol, erbe, sali, tonici - spesso senza ricetta.\n"
+                  "text": "Medicine comuni?\nOppiacei come laudano e morfina sono i farmaci più diffusi e vengono utilizzati per ogni tipo di dolore, dall'emicrania al mal di denti, dalla tosse infantile ai dolori mestruali. Il laudano — una tintura di oppio in alcol — è venduto liberamente in farmacia e persino nei negozi di alimentari, ed è somministrato regolarmente ai neonati sotto forma di sciroppi calmanti come il Godfrey's Cordial o il Mrs Winslow's Soothing Syrup. L'alcol è considerato un tonico e un ricostituente, prescritto dai medici come cura per la debolezza e la malinconia. Le erbe medicinali, i sali da bagno, i tonici a base di ferro e chinino, i cataplasmi e le lavande sono parte della farmacopea quotidiana. La cocaina, isolata nel 1860, è utilizzata come anestetico locale e ingrediente di vari preparati medicinali. Molti di questi rimedi sono venduti senza prescrizione medica e senza alcun controllo sulla loro composizione o dosaggio.\n"
                 }
               ]
             }
@@ -627,7 +681,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Farmaci regolamentati?  \nSolo in parte. Molti venduti senza controlli.\n"
+                  "text": "Farmaci regolamentati?\nSolo in parte. La Pharmacy Act del 1868 ha introdotto alcune limitazioni sulla vendita di veleni e sostanze tossiche, richiedendo che i farmacisti siano registrati e che i veleni siano venduti solo da professionisti qualificati. Tuttavia, l'applicazione della legge è lacunosa e incoerente: oppiacei e altre sostanze potenzialmente letali continuano a essere venduti liberamente sotto forma di preparati brevettati — i cosiddetti \"patent medicines\" — le cui etichette non rivelano la composizione reale. I giornali sono pieni di pubblicità di cure miracolose per ogni malattia, dalla calvizie al cancro, e il confine tra farmacia legittima e ciarlataneria è sottilissimo.\n"
                 }
               ]
             }
@@ -641,7 +695,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Ci si fida sempre del medico?  \nNo, molti preferiscono fare da sé o affidarsi a parenti/conoscenti.\n"
+                  "text": "Ci si fida sempre del medico?\nNo, la fiducia nel medico varia enormemente in base alla classe sociale e all'esperienza personale. Tra i ceti popolari, molti preferiscono fare da sé o affidarsi a parenti e conoscenti piuttosto che rivolgersi a un dottore — per ragioni economiche ma anche per una diffidenza radicata verso una professione percepita come elitaria, costosa e talvolta pericolosa. Le esperienze negative — interventi chirurgici senza anestesia, cure peggiori della malattia, medici che parlano in un gergo incomprensibile — alimentano questa sfiducia. I medici dei ceti alti, al contrario, sono figure di fiducia e autorità, ma anche loro vengono talvolta messi in discussione quando le cure non funzionano o quando la famiglia ha le proprie idee sulla malattia.\n"
                 }
               ]
             }
@@ -655,7 +709,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Esistono “rimedi da banco”?  \nSì, in farmacia o drogheria, anche senza prescrizione.\n"
+                  "text": "Esistono \"rimedi da banco\"?\nSì, in abbondanza. Le farmacie e le drogherie vittoriane sono piene di preparati venduti senza prescrizione per ogni disturbo immaginabile: pillole per la digestione, sciroppi per la tosse, unguenti per i dolori articolari, polveri per il mal di testa, tonici per il sangue e \"ricostituenti\" per la debolezza nervosa. I patent medicines — preparati brevettati la cui formula segreta è gelosamente custodita dal produttore — costituiscono un'industria multimilionaria che si regge sulla pubblicità aggressiva e sulle testimonianze di clienti soddisfatti. Molti di questi prodotti contengono quantità significative di alcol, oppio, cocaina o mercurio, ma le etichette raramente lo dichiarano. I manifesti pubblicitari di questi rimedi tappezzano i muri di Londra e riempiono le pagine dei giornali.\n"
                 }
               ]
             }
@@ -669,7 +723,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Cure diverse tra ricchi e poveri?  \nSì. I ricchi hanno accesso a medici, i poveri a rimedi rapidi o alla carità."
+                  "text": "Cure diverse tra ricchi e poveri?\nSì, la qualità delle cure mediche è drammaticamente legata al ceto sociale. I ricchi hanno accesso ai migliori medici del paese — molti dei quali sono anche professori nelle facoltà di medicina — a cliniche private confortevoli, a farmaci costosi e a lunghi periodi di convalescenza in località termali o al mare. I poveri devono accontentarsi dei dispensari caritatevoli dove i medici — spesso giovani e inesperti — visitano decine di pazienti al giorno in condizioni di sovraffollamento, degli ospedali per indigenti dove le corsie sono piene e l'igiene precaria, o dei rimedi fai-da-te tramandati dalla tradizione familiare. La differenza di aspettativa di vita tra i quartieri ricchi e quelli poveri di Londra è abissale: un bambino nato a Mayfair ha probabilità di vivere il doppio rispetto a un coetaneo nato a Bethnal Green."
                 }
               ]
             }
@@ -690,6 +744,15 @@
       ]
     },
     {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Muoversi nella Londra del 1895 è un'esperienza sensoriale intensa e caotica. Le strade sono un intasamento perpetuo di carrozze, omnibus, carri, cavalli, biciclette e pedoni, il tutto avvolto in un misto di odori che vanno dal letame equino alla fuliggine dei camini, dal pesce di Billingsgate al profumo dei fiori di Covent Garden."
+        }
+      ]
+    },
+    {
       "type": "bulletList",
       "content": [
         {
@@ -700,7 +763,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Come si viaggia a Londra?  \nA piedi, carrozze, omnibus, cab, ferrovia urbana.\n"
+                  "text": "Come si viaggia a Londra?\nA piedi per le classi più povere, che percorrono quotidianamente miglia e miglia per raggiungere il posto di lavoro. Le carrozze private sono il privilegio dell'aristocrazia e dell'alta borghesia: un brougham con cocchiere in livrea è il simbolo visibile della ricchezza. L'omnibus — un veicolo a cavalli che percorre rotte fisse — è il mezzo più democratico, utilizzato dalla classe media e dai lavoratori meglio pagati. L'Hansom cab, il celebre taxi a due ruote trainato da un singolo cavallo, è più rapido e maneggevole ma considerevolmente più costoso: uno scellino per una corsa breve, una cifra che un operaio guadagna in mezza giornata. La ferrovia urbana — la Metropolitan Railway, inaugurata nel 1863, prima metropolitana del mondo — offre un trasporto veloce ma fumoso e soffocante, con carrozze divise per classe. I battelli sul Tamigi completano la rete di trasporti, anche se il loro uso è in declino rispetto ai decenni precedenti.\n"
                 }
               ]
             }
@@ -714,7 +777,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Mezzi puntuali?  \nNo, il traffico crea molti ritardi.\n"
+                  "text": "Mezzi puntuali?\nNo, il traffico londinese è proverbialmente caotico e imprevedibile. Le strade principali — lo Strand, Oxford Street, Cheapside, London Bridge — sono regolarmente congestionate da un ingorgo impenetrabile di veicoli che si blocca per ore, soprattutto nelle ore di punta e nei giorni di mercato. Gli incidenti sono frequenti: carrozze che si scontrano, cavalli che scivolano sul selciato bagnato, pedoni travolti nell'attraversare le strade. La pioggia e la nebbia peggiorano ulteriormente la situazione, riducendo la visibilità e trasformando il selciato in una pista di pattinaggio per gli zoccoli dei cavalli. Gli orari dei treni e degli omnibus sono teoricamente fissi ma raramente rispettati, e arrivare in ritardo a un appuntamento è una scusa socialmente accettata purché si menzioni il traffico con adeguata indignazione.\n"
                 }
               ]
             }
@@ -728,7 +791,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Uomini e donne insieme sui mezzi?  \nSì, spesso il contatto fisico è inevitabile."
+                  "text": "Uomini e donne insieme sui mezzi?\nSì, e spesso il contatto fisico è inevitabile, soprattutto sugli omnibus affollati e nei vagoni di terza classe della metropolitana. Questa promiscuità forzata è una delle poche situazioni in cui le rigide regole di separazione tra i sessi vengono temporaneamente sospese dalla necessità pratica. Un gentleman può trovarsi schiacciato accanto a una operaia, un parroco accanto a una prostituta, un uomo d'affari accanto a una lavandaia — e nessuno può farci nulla. Per le donne rispettabili, viaggiare senza accompagnatore sui mezzi pubblici è considerato sconveniente ma sempre più comune, soprattutto nella borghesia; alcune linee di omnibus offrono posti riservati alle signore. Sui treni, esistono compartimenti separati per le donne sole, introdotti dopo episodi di molestie che avevano suscitato sdegno pubblico."
                 }
               ]
             }
@@ -749,6 +812,15 @@
       ]
     },
     {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "In un mondo senza telefoni cellulari, email o messaggi istantanei, comunicare nella Londra vittoriana richiede pazienza, pianificazione e, spesso, una buona dose di creatività. Il sistema postale britannico è il più efficiente del mondo, ma anche le sue alternative — dal telegrafo al fattorino — offrono possibilità narrative ricche per il gioco."
+        }
+      ]
+    },
+    {
       "type": "bulletList",
       "content": [
         {
@@ -759,7 +831,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Comunicazioni rapide?  \nLettere (anche in giornata) e telegrammi (rapidi, ma costosi o stringati).\n"
+                  "text": "Comunicazioni rapide?\nLettere e telegrammi sono i due pilastri della comunicazione. La posta londinese è straordinariamente efficiente: con sei o più consegne al giorno nei quartieri centrali, una lettera impostata al mattino può ricevere risposta nel pomeriggio dello stesso giorno. Il costo di un penny per lettera — grazie alla riforma postale di Rowland Hill del 1840 — rende la corrispondenza accessibile a tutte le classi. Il telegrafo offre comunicazioni quasi istantanee ma più costose e limitate: i messaggi devono essere brevi (si paga a parola), e devono essere inviati e ricevuti presso un ufficio telegrafico. La concisione imposta dal costo ha generato uno stile comunicativo telegrafico unico, fatto di abbreviazioni e formule standardizzate, che un giocatore attento può sfruttare come elemento di colore.\n"
                 }
               ]
             }
@@ -773,7 +845,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Telefono diffuso?  \nRarissimo, solo tra ricchi e in ufficio.\n"
+                  "text": "Telefono diffuso?\nRarissimo nel 1895, il telefono è un lusso estremo riservato ai più ricchi, agli uffici delle grandi aziende e ad alcune istituzioni pubbliche. La National Telephone Company gestisce il servizio, ma il numero di abbonati è ancora esiguo — poche migliaia in tutta Londra — e la qualità delle chiamate è spesso pessima: interferenze, interruzioni, voci distorte e connessioni che cadono sono la norma. L'apparecchio è grande, ingombrante e fissato al muro; le conversazioni non sono private perché le centraliniste — invariabilmente donne — devono connettere manualmente ogni chiamata e possono ascoltare l'intera conversazione. Per la maggior parte dei londinesi nel 1895, il telefono è una curiosità tecnologica di cui si è sentito parlare ma che non si è mai avuto occasione di usare.\n"
                 }
               ]
             }
@@ -787,7 +859,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "I giornali sono letti da tutti?  \nSì, spesso in gruppo anche tra popolari."
+                  "text": "I giornali sono letti da tutti?\nSì, la stampa è il grande medium di massa dell'epoca vittoriana e raggiunge tutte le classi sociali, sia pure in forme diverse. L'aristocrazia e la borghesia leggono il Times, il Daily Telegraph, il Morning Post e la Pall Mall Gazette, giornali d'opinione e cronaca che offrono analisi approfondite della politica, dell'economia e della società. Le classi popolari divorano i tabloid a basso prezzo come il Daily Mail (fondato nel 1896, ma con precursori già attivi), i giornali illustrati come l'Illustrated London News, e i penny dreadful che mescolano cronaca nera, scandali e narrativa sensazionalistica. I giornali vengono spesso letti in gruppo — nel pub, nella sala comune della workhouse, nella bottega del barbiere — e chi non sa leggere si fa raccontare le notizie dai compagni alfabetizzati. La stampa modella l'opinione pubblica con un potere che nessun altro mezzo di comunicazione può eguagliare."
                 }
               ]
             }
@@ -808,6 +880,15 @@
       ]
     },
     {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Il sistema monetario vittoriano è basato sulla sterlina d'oro (sovereign), suddivisa in venti scellini, ciascuno dei quali vale dodici pence. Comprendere il valore del denaro è essenziale per giocare in modo credibile: un operaio guadagna circa una sterlina a settimana, un impiegato due o tre, un medico di successo può guadagnarne cinquanta al mese, e un aristocratico vive di rendite che possono raggiungere migliaia di sterline all'anno."
+        }
+      ]
+    },
+    {
       "type": "bulletList",
       "content": [
         {
@@ -818,7 +899,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Si usa il contante?  \nSì, credito informale e personale.\n"
+                  "text": "Si usa il contante?\nSì, il contante — monete d'oro, d'argento e di rame — è il mezzo di pagamento universale per le transazioni quotidiane. Tuttavia, il sistema di credito informale è diffusissimo a tutti i livelli della società: i negozianti tengono conti aperti per i clienti abituali, i pub segnano le consumazioni su una lavagna, i padroni di casa accettano l'affitto con qualche giorno di ritardo se il locatario è conosciuto e affidabile. Le banche — la Bank of England, le joint stock banks come la Barclays e la Lloyds — servono la borghesia e l'aristocrazia con conti correnti, assegni e lettere di credito, ma per la classe operaia il risparmio avviene attraverso le penny banks, le friendly societies e il materasso.\n"
                 }
               ]
             }
@@ -832,7 +913,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "I prezzi sono fissi?  \nNon sempre, spesso si contratta.\n"
+                  "text": "I prezzi sono fissi?\nNon sempre, e la pratica della contrattazione varia in base al tipo di negozio e alla classe sociale del cliente. I grandi magazzini — come Harrods, Selfridges e Liberty — hanno introdotto il concetto di prezzo fisso esposto, una rivoluzione commerciale che sta lentamente trasformando le abitudini di acquisto della borghesia. Nei mercati rionali, nelle botteghe artigianali e nei negozi dei quartieri popolari, la contrattazione resta la norma: il prezzo iniziale è solo un punto di partenza per una negoziazione che coinvolge abilità retorica, conoscenza del prodotto e capacità di valutare il cliente. Nei pub, i prezzi della birra sono generalmente fissi ma le porzioni possono variare, e il padrone può offrire un giro ai clienti abituali.\n"
                 }
               ]
             }
@@ -846,7 +927,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Ci sono negozi specializzati?  \nSì, specialmente tra borghesi (librerie, farmacie, sartorie)."
+                  "text": "Ci sono negozi specializzati?\nSì, la Londra del 1895 offre una varietà commerciale impressionante, specialmente nei quartieri borghesi e nel West End. Le librerie di Charing Cross Road e Paternoster Row sono un paradiso per i lettori; le farmacie dispensano rimedi e cosmetici; le sartorie di Savile Row vestono i gentlemen più esigenti; i negozi di strumenti scientifici vendono microscopi, telescopi e apparecchi fotografici; i rigattieri dell'East End offrono ogni genere di merce usata a prezzi accessibili. I grandi magazzini come Harrods, Whiteley's e Selfridges stanno rivoluzionando il commercio al dettaglio offrendo sotto un unico tetto una gamma vastissima di prodotti, dall'abbigliamento ai generi alimentari, con vetrine illuminate e commessi in livrea. Accanto ai negozi fissi, i mercati all'aperto — Covent Garden per frutta e fiori, Smithfield per la carne, Billingsgate per il pesce, Petticoat Lane per l'abbigliamento usato — restano il cuore pulsante del commercio popolare."
                 }
               ]
             }
@@ -867,6 +948,15 @@
       ]
     },
     {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "La religione nella Londra vittoriana non è semplicemente una questione di fede personale: è un indicatore sociale, un obbligo comunitario e uno strumento di controllo che permea ogni aspetto della vita quotidiana, dalla nascita alla morte, dal matrimonio all'istruzione."
+        }
+      ]
+    },
+    {
       "type": "bulletList",
       "content": [
         {
@@ -877,7 +967,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Andare in chiesa è obbligatorio?  \nNo, ma socialmente raccomandato in borghesia/aristocrazia.\n"
+                  "text": "Andare in chiesa è obbligatorio?\nNo dal punto di vista legale, ma socialmente è fortemente raccomandato e quasi imprescindibile per chiunque aspiri alla rispettabilità, specialmente nella borghesia e nell'aristocrazia. La messa domenicale è un rituale sociale tanto quanto religioso: è l'occasione per vedere e farsi vedere, per scambiare notizie e pettegolezzi, per consolidare relazioni e dimostrare la propria adesione ai valori della comunità. L'assenza prolungata dalla chiesa suscita sospetti e mormorazioni: si dice che chi non va in chiesa abbia qualcosa da nascondere. Nei ceti popolari, la frequenza religiosa è meno regolare — la stanchezza dopo una settimana di lavoro massacrante, la mancanza di abiti presentabili, la distanza dalla chiesa — ma le grandi occasioni religiose come Natale e Pasqua vedono anche le famiglie più povere affollare le navate.\n"
                 }
               ]
             }
@@ -891,7 +981,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Essere non credenti è malvisto?  \nPuò creare sospetto ma non è vietato."
+                  "text": "Essere non credenti è malvisto?\nPuò creare sospetto e diffidenza, ma non è formalmente vietato né legalmente sanzionato. L'ateismo esplicito è raro e socialmente rischioso: Charles Bradlaugh, il primo parlamentare ateo dichiarato, ha dovuto combattere una battaglia legale di sei anni prima di poter prendere il proprio seggio alla Camera dei Comuni senza prestare giuramento religioso. Tuttavia, il dubbio religioso privato è molto più diffuso di quanto le apparenze suggeriscano: le scoperte scientifiche, la critica biblica, il contatto con culture non cristiane e la semplice osservazione delle contraddizioni tra la predicazione morale e la realtà sociale hanno eroso la fede di molti vittoriani colti. L'agnosticismo — termine coniato da Thomas Huxley nel 1869 — offre una posizione intellettualmente rispettabile per chi non riesce più a credere ma non vuole dichiarare apertamente il proprio ateismo."
                 }
               ]
             }
@@ -912,6 +1002,15 @@
       ]
     },
     {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Il sistema giudiziario della Londra vittoriana è un labirinto di tribunali, giurisdizioni e procedure la cui complessità riflette secoli di stratificazione legale. La giustizia non è cieca: il denaro, le connessioni e lo status sociale influenzano profondamente ogni fase del processo, dall'arresto alla sentenza, e la legge scritta è solo una delle variabili in gioco."
+        }
+      ]
+    },
+    {
       "type": "bulletList",
       "content": [
         {
@@ -922,7 +1021,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "La legge è applicata sempre?  \nNo, le applicazioni variano a seconda del contesto e dei rapporti.\n"
+                  "text": "La legge è applicata sempre?\nNo, le applicazioni variano enormemente a seconda del contesto, dei rapporti personali, della classe sociale degli interessati e della convenienza politica del momento. Un reato commesso nell'East End può essere ignorato dalla polizia per settimane; lo stesso reato nel West End scatena un'indagine immediata. I magistrati dei tribunali sommari — le Petty Sessions — hanno un potere discrezionale enorme nel decidere la severità delle pene, e la loro decisione è spesso influenzata dall'aspetto, dall'accento e dall'abbigliamento dell'imputato tanto quanto dalle prove del reato. La legge esiste sulla carta, ma la sua applicazione è un negoziato continuo tra potere, opportunità e circostanze.\n"
                 }
               ]
             }
@@ -936,7 +1035,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "La legge è uguale per tutti?  \nNo, ceto, reputazione, relazioni contano.\n"
+                  "text": "La legge è uguale per tutti?\nNo, e questa è una delle verità più brutali della società vittoriana. Il ceto sociale, la reputazione, le relazioni personali e la capacità di permettersi un buon avvocato influenzano pesantemente l'esito di qualsiasi procedimento giudiziario. Un aristocratico accusato di un reato minore può aspettarsi un trattamento discreto, un processo rapido e una pena lieve; un povero arrestato per lo stesso reato può finire in prigione per mesi in attesa del processo, essere giudicato sommariamente e condannato a pene durissime. I ricchi possono permettersi i migliori barrister del paese, che padroneggiano le sottigliezze procedurali e conoscono personalmente i giudici; i poveri si affidano ai solicitor d'ufficio, spesso sopraffatti dal carico di lavoro e poco motivati.\n"
                 }
               ]
             }
@@ -950,7 +1049,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "La violenza è scandalo per forza?  \nNon sempre, spesso tollerata (specie nei quartieri più poveri).\n"
+                  "text": "La violenza è scandalo per forza?\nNon sempre, e la soglia di tolleranza varia enormemente in base al quartiere e alla classe sociale. Nelle zone più povere di Londra — i docks, l'East End, i quartieri lungo il fiume — la violenza quotidiana è un fatto di vita accettato con fatalismo: risse nei pub, violenze domestiche, aggressioni per strada sono eventi comuni che raramente suscitano l'intervento della polizia o l'indignazione della comunità. Nei quartieri borghesi e aristocratici, invece, qualsiasi forma di violenza è uno scandalo pubblico che può distruggere carriere e reputazioni. La violenza domestica, tuttavia, è tollerata quasi ovunque purché non sia eccessiva: la legge consente implicitamente al marito di \"correggere\" la moglie, e la polizia è riluttante a intervenire in questioni considerate private.\n"
                 }
               ]
             }
@@ -964,7 +1063,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Chi “può” infrangere la legge?  \nChi ha potere, connessioni o è invisibile agli occhi della società.\n"
+                  "text": "Chi \"può\" infrangere la legge?\nChi ha potere, connessioni, denaro o è invisibile agli occhi della società. I ricchi e i potenti possono commettere reati — frodi finanziarie, violenze contro i subordinati, corruzione — con una ragionevole aspettativa di impunità, perché le loro vittime non hanno i mezzi per perseguirli e la polizia è riluttante a disturbare chi potrebbe ritorsioni. All'estremo opposto, i più poveri e i più emarginati — gli homeless, le prostitute, gli immigrati senza documenti — possono infrangere certe leggi perché nessuno si accorge della loro esistenza e nessuno ha interesse a perseguirli, purché i loro reati restino confinati nei quartieri degradati. Il ceto medio è paradossalmente il più vulnerabile: troppo visibile per sfuggire alla legge, troppo poco potente per manipolarla.\n"
                 }
               ]
             }
@@ -978,7 +1077,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Essere colti in flagrante è sempre decisivo?  \nNo, spesso conta chi/dove/come e chi testimonia.\n"
+                  "text": "Essere colti in flagrante è sempre decisivo?\nNo, e spesso conta più chi sei, dove sei e chi testimonia del fatto in sé. Un gentleman colto a rubare in un negozio può cavarsela con una parola discreta del direttore del negozio al suo club; un ragazzo di strada colto a fare la stessa cosa viene arrestato e processato. La testimonianza di un poliziotto è considerata più attendibile di quella di un operaio, quella di un pastore protestante più di quella di un cattolico irlandese, quella di un uomo più di quella di una donna. Le prove forensiche nel senso moderno del termine sono quasi inesistenti: le impronte digitali sono usate sperimentalmente ma non ancora accettate come prova legale, e la scena del crimine viene spesso contaminata prima che qualcuno pensi a esaminarla.\n"
                 }
               ]
             }
@@ -992,7 +1091,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "La polizia è ovunque?  \nNo, presenza irregolare e più reattiva che preventiva.\n"
+                  "text": "La polizia è ovunque?\nNo, la presenza della Metropolitan Police è irregolare e concentrata nei quartieri commerciali e residenziali più importanti, dove la protezione della proprietà privata è la priorità assoluta. I bobby — gli agenti di polizia in divisa — pattugliando le strade a piedi seguono percorsi prestabiliti chiamati \"beats\", e un criminale attento può calcolare con precisione quando un agente passerà per un determinato punto. La polizia è più reattiva che preventiva: interviene dopo che un crimine è stato commesso piuttosto che prevenirlo, e la sua efficacia dipende enormemente dalla collaborazione dei cittadini, che non è sempre garantita. Nei quartieri più degradati, la polizia è vista con ostilità e diffidenza, e gli agenti raramente si avventurano nelle zone più pericolose se non in forze.\n"
                 }
               ]
             }
@@ -1006,7 +1105,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Ci sono zone in cui il crimine è tollerato?  \nSì, le aree più degradate di Londra ospitano attività illegali note ma ignorate.\n"
+                  "text": "Ci sono zone in cui il crimine è tollerato?\nSì, le aree più degradate di Londra ospitano attività illegali note a tutti ma sistematicamente ignorate dalle autorità. I rookeries — i quartieri-ghetto più fatiscenti e sovraffollati — sono veri e propri territori fuorilegge dove la polizia entra solo in occasione di retate organizzate e dove vigono leggi non scritte dettate dai criminali locali. Le fumerie d'oppio di Limehouse, i bordelli di Haymarket, le bische clandestine di Soho, i ricettatori di Petticoat Lane operano alla luce del sole, protetti dalla corruzione di singoli agenti, dalla complicità tacita delle autorità locali e dalla semplice impossibilità pratica di controllare ogni angolo di una metropoli di cinque milioni di abitanti.\n"
                 }
               ]
             }
@@ -1020,7 +1119,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "La criminalità è organizzata?  \nIn parte: reti e personaggi chiave esistono, ma non sempre vere \"mafie\" come oggi.\n"
+                  "text": "La criminalità è organizzata?\nIn parte, anche se non nelle forme strutturate che il termine evoca nell'immaginario moderno. Non esistono \"mafie\" nel senso contemporaneo, ma reti criminali complesse e gerarchiche controllano settori specifici dell'economia illegale: ricettatori che gestiscono catene di distribuzione per merce rubata, protettori che impongono il pizzo ai commercianti, gang giovanili che controllano il borseggio e le rapine in quartieri specifici, organizzazioni di contrabbandieri che operano lungo il Tamigi e nei docks. Figure come il \"fence\" — il ricettatore professionista che funge da intermediario tra ladri e compratori — sono personaggi reali e ben documentati dalla cronaca dell'epoca. La collaborazione tra criminali e polizia corrotta è un segreto di Pulcinella che periodicamente esplode in scandali pubblici.\n"
                 }
               ]
             }
@@ -1034,7 +1133,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Denunciare conviene sempre?  \nNo, spesso porta problemi a chi denuncia."
+                  "text": "Denunciare conviene sempre?\nNo, e questa è una lezione che i giocatori di Ten Penny Novels impareranno rapidamente. Denunciare un crimine può portare problemi seri a chi denuncia: ritorsioni da parte dei criminali, ostilità del vicinato che segue il codice del silenzio, sospetti della polizia stessa che può trattare il denunciante come sospetto o complice. Per le classi popolari, collaborare con la polizia è considerato un tradimento della comunità, e gli informatori — i \"grasses\" — sono disprezzati e puniti con la violenza. Per le classi alte, denunciare significa rendere pubblico uno scandalo che potrebbe danneggiare la reputazione familiare più del crimine stesso. Spesso, i problemi vengono risolti privatamente: intimidazione, accordi economici, intervento di intermediari rispettati o, nei casi estremi, giustizia sommaria."
                 }
               ]
             }
@@ -1055,6 +1154,15 @@
       ]
     },
     {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "La sessualità nell'epoca vittoriana è avvolta in un paradosso colossale: la morale pubblica predica la castità, la purezza e la riservatezza assoluta, mentre la realtà quotidiana rivela una società dove la prostituzione è un'industria fiorente, le relazioni extraconiugali sono diffusissime, e la pornografia circola liberamente — sia pure sotto il bancone. Per il gioco, questo contrasto tra facciata e realtà è una miniera di spunti narrativi."
+        }
+      ]
+    },
+    {
       "type": "bulletList",
       "content": [
         {
@@ -1065,7 +1173,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Il sesso fuori dal matrimonio esiste?  \nSì, in tutte le classi.\n"
+                  "text": "Il sesso fuori dal matrimonio esiste?\nSì, in tutte le classi sociali e con una frequenza che smentisce clamorosamente la retorica ufficiale sulla purezza vittoriana. Nell'aristocrazia, le relazioni extraconiugali sono tollerate purché condotte con la massima discrezione: la regola non scritta è che una donna debba prima fornire un erede al marito prima di prendere un amante, e che lo scandalo vada evitato a ogni costo. Nella borghesia, l'ideale della fedeltà coniugale è più rigidamente imposto, ma le trasgressioni sono comunque frequenti — semplicemente, le conseguenze sociali di una scoperta sono più devastanti. Nei ceti popolari, le unioni non formalizzate dal matrimonio sono comuni, e la coabitazione senza cerimonia religiosa è una realtà diffusa, soprattutto dove il costo del matrimonio rappresenta un ostacolo economico.\n"
                 }
               ]
             }
@@ -1079,7 +1187,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Stesse conseguenze per tutti?  \nNo: le donne e i più vulnerabili rischiano di più.\n"
+                  "text": "Stesse conseguenze per tutti?\nAssolutamente no: le donne e i più vulnerabili rischiano enormemente di più degli uomini in caso di trasgressione sessuale. Una donna scoperta in una relazione extraconiugale rischia la rovina sociale completa — il divorzio, la perdita della custodia dei figli, l'esclusione dalla buona società — mentre un uomo nella stessa situazione se la cava generalmente con qualche pettegolezzo. Per le donne non sposate, una gravidanza fuori dal matrimonio è una catastrofe: significa la perdita dell'impiego, il rifiuto della famiglia, la discesa nella povertà e spesso nella prostituzione. I figli illegittimi portano lo stigma della nascita per tutta la vita e non hanno gli stessi diritti dei figli legittimi. Questa doppia morale è uno degli aspetti più ipocritici della società vittoriana.\n"
                 }
               ]
             }
@@ -1093,7 +1201,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Esistono relazioni tra persone dello stesso sesso?  \nSì, ma di solito sono segrete o rischiose.\n"
+                  "text": "Esistono relazioni tra persone dello stesso sesso?\nSì, ma sono segrete, rischiose e legalmente perseguite — almeno per gli uomini. Il Criminal Law Amendment Act del 1885 ha criminalizzato tutti gli atti di \"gross indecency\" tra uomini, e nel 1895 il processo e la condanna di Oscar Wilde per sodomia rappresentano il caso più celebre e traumatico dell'applicazione di questa legge. Le relazioni tra donne, paradossalmente, non sono mai state esplicitamente criminalizzate dalla legge britannica — secondo una leggenda, perché la regina Vittoria rifiutò di credere che potessero esistere — ma sono comunque stigmatizzate e negate dalla società. Nonostante i rischi, comunità sotterranee di uomini e donne omosessuali esistono a Londra, con i propri luoghi di incontro, codici e reti di protezione reciproca.\n"
                 }
               ]
             }
@@ -1107,7 +1215,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Le relazioni sentimentali portano sempre al matrimonio?  \nNo, alcune restano informali o “irregolari”.\n"
+                  "text": "Le relazioni sentimentali portano sempre al matrimonio?\nNo, molte relazioni restano informali, irregolari o segrete per tutta la loro durata. Le unioni di fatto — il cosiddetto \"common-law marriage\" — sono diffuse nei ceti popolari, dove le coppie vivono insieme senza formalizzare il legame per ragioni economiche, pratiche o semplicemente perché il matrimonio religioso non è percepito come necessario. Nelle classi superiori, relazioni clandestine tra amanti possono durare anni o decenni senza mai sfociare nel matrimonio, sia perché uno o entrambi i partner sono già sposati, sia perché la differenza di classe rende il matrimonio socialmente impossibile. Le \"amicizie particolari\" — termine usato per indicare relazioni intime che non vengono mai definite esplicitamente — sono una realtà trasversale a tutti i ceti.\n"
                 }
               ]
             }
@@ -1121,7 +1229,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Il desiderio femminile è riconosciuto?  \nPoco in pubblico, ma è una realtà privata diffusa.\n"
+                  "text": "Il desiderio femminile è riconosciuto?\nPoco nel discorso pubblico, dove la donna ideale vittoriana è descritta come naturalmente passiva, casta e priva di impulsi sessuali — un \"angelo del focolare\" la cui funzione è procreare e accudire. La scienza medica dell'epoca dibatte seriamente se le donne provino piacere sessuale, e molti medici considerano il desiderio femminile un sintomo di isteria o di devianza morale. Nella pratica quotidiana, tuttavia, la realtà è radicalmente diversa: le lettere private, i diari e le testimonianze giudiziarie rivelano una sessualità femminile attiva, consapevole e talvolta assertiva, che la morale ufficiale si sforza di negare ma non riesce a sopprimere. Per le giocatrici, questa tensione tra aspettativa sociale e realtà intima è un elemento narrativo ricchissimo.\n"
                 }
               ]
             }
@@ -1135,7 +1243,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Esistono metodi contraccettivi?  \nSì, non sempre affidabili, ma conosciuti.\n"
+                  "text": "Esistono metodi contraccettivi?\nSì, anche se non sempre affidabili e spesso circondati da segretezza e disapprovazione sociale. La contraccezione è un argomento tabù nel discorso pubblico vittoriano: nel 1877, Charles Bradlaugh e Annie Besant furono processati per aver pubblicato un opuscolo informativo sul controllo delle nascite, anche se alla fine vennero assolti. Nonostante lo stigma, la conoscenza dei metodi contraccettivi è diffusa, soprattutto tra le donne, che si scambiano informazioni in modo informale — dal passaparola tra amiche e vicine ai consigli delle ostetriche e delle levatrici. Il tasso di natalità è in calo costante dalla metà del secolo, a dimostrazione che la contraccezione viene praticata in modo sempre più efficace.\n"
                 }
               ]
             }
@@ -1149,7 +1257,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Quali contraccettivi si usano?  \nPreservativi in gomma, diaframmi rudimentali, spugne, lavande, astinenza periodica.\n"
+                  "text": "Quali contraccettivi si usano?\nI metodi disponibili sono vari ma nessuno garantisce una protezione completa. I preservativi in gomma vulcanizzata sono disponibili dalla metà del secolo e vengono venduti nelle farmacie e dai venditori ambulanti sotto l'eufemismo di \"dispositivi igienici\" o \"articoli da toilette\". Sono relativamente costosi e spesso riutilizzati dopo il lavaggio. I diaframmi rudimentali — spugne imbevute di aceto, limone o altri spermicidi artigianali — sono utilizzati dalle donne. Le lavande vaginali post-coitali con soluzioni di chinino o lisolo sono raccomandate da alcuni manuali clandestini. L'astinenza periodica, il coito interrotto e l'allattamento prolungato sono i metodi più diffusi tra le classi popolari perché non richiedono alcun costo o acquisto.\n"
                 }
               ]
             }
@@ -1163,7 +1271,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "I preservativi esistono nel 1895?  \nSì, come “dispositivi igienici”.\n"
+                  "text": "I preservativi esistono nel 1895?\nSì, i preservativi in gomma vulcanizzata sono un prodotto commerciale disponibile e relativamente diffuso, venduto sotto l'etichetta di \"dispositivi igienici\" per evitare le restrizioni legali sulla pubblicità di prodotti contraccettivi. Costano circa due scellini la dozzina — una cifra significativa per un operaio, ma accessibile per la borghesia. Sono più spessi e meno confortevoli dei loro equivalenti moderni, e vengono spesso lavati e riutilizzati per ragioni economiche. La loro vendita avviene nelle farmacie, nei negozi di articoli igienici e per corrispondenza attraverso annunci discreti nei giornali. Prima della vulcanizzazione della gomma (procedimento perfezionato da Charles Goodyear nel 1839), si usavano preservativi in budello animale, più costosi e meno affidabili.\n"
                 }
               ]
             }
@@ -1177,7 +1285,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Si parla apertamente di contraccezione?  \nNo, le informazioni girano di nascosto, spesso tra donne.\n"
+                  "text": "Si parla apertamente di contraccezione?\nNo, la contraccezione è un argomento tabù che non si discute in pubblico, nelle famiglie rispettabili né tantomeno in società. Le informazioni circolano di nascosto, spesso tra donne: le madri trasmettono consigli alle figlie prima del matrimonio, le amiche si scambiano indicazioni basate sull'esperienza personale, le ostetriche e le levatrici sono fonti preziose di informazioni pratiche. Alcuni opuscoli clandestini — come The Fruits of Philosophy e altri testi neo-malthusiani — circolano sottobanco e vengono periodicamente sequestrati dalla polizia. I medici sono generalmente reticenti sull'argomento, sia per convinzione morale sia per timore di scandalo professionale, ma alcuni prescrittono privatamente metodi contraccettivi alle loro pazienti più insistenti.\n"
                 }
               ]
             }
@@ -1191,7 +1299,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Come si prevengono le malattie veneree?  \nPreservativi, lavaggi, medici (ma efficacia limitata).\n"
+                  "text": "Come si prevengono le malattie veneree?\nI metodi di prevenzione sono limitati e spesso inefficaci. I preservativi offrono una protezione parziale ma non sono usati universalmente, sia per ragioni di costo sia per ignoranza o disinteresse. I lavaggi con soluzioni antisettiche prima e dopo il rapporto sono raccomandati da alcuni medici. La Contagious Diseases Acts — leggi che permettevano l'arresto e la visita forzata delle presunte prostitute nelle città di guarnigione — sono state abrogate nel 1886 dopo una campagna guidata da Josephine Butler, ma il problema delle malattie veneree resta immenso e non risolto. La prevenzione più efficace, secondo la morale ufficiale, è l'astinenza fuori dal matrimonio — un consiglio che la società sistematicamente ignora.\n"
                 }
               ]
             }
@@ -1205,7 +1313,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Le malattie veneree sono diffuse?  \nSì, soprattutto sifilide e gonorrea.\n"
+                  "text": "Le malattie veneree sono diffuse?\nSì, enormemente, e costituiscono una delle emergenze sanitarie più gravi dell'epoca vittoriana. La sifilide e la gonorrea sono le più comuni, ma esistono anche altre infezioni sessualmente trasmissibili meno documentate. Si stima che almeno il dieci per cento della popolazione londinese sia affetta da sifilide in qualche stadio della malattia. La sifilide è particolarmente temuta perché nei suoi stadi avanzati provoca demenza, cecità, paralisi e morte, e può essere trasmessa ai figli — la cosiddetta sifilide congenita che colpisce i neonati. Lo stigma associato alle malattie veneree è enorme: ammettere di essere malato equivale ad ammettere un comportamento sessuale immorale, e molti pazienti si curano in segreto o non si curano affatto.\n"
                 }
               ]
             }
@@ -1219,7 +1327,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Le cure funzionano?  \nA volte, ma spesso sono lunghe e pesanti."
+                  "text": "Le cure funzionano?\nA volte, ma spesso sono lunghe, dolorose e con effetti collaterali gravi. La sifilide viene trattata con preparati a base di mercurio — pillole, unguenti, iniezioni e fumigazioni — che provocano effetti collaterali devastanti: perdita dei denti, salivazione eccessiva, danni renali e avvelenamento cronico. Il detto popolare recita che \"una notte con Venere costa una vita con Mercurio\". La gonorrea viene trattata con lavaggi uretrali a base di nitrato d'argento, una procedura estremamente dolorosa e non sempre efficace. Nell'ultimo decennio del secolo, nuovi approcci terapeutici basati sulla batteriologia stanno emergendo, ma una cura definitiva per la sifilide — il Salvarsan di Paul Ehrlich — non arriverà prima del 1910. Per i giocatori, le malattie veneree e il loro trattamento possono essere elementi narrativi potenti che aggiungono realismo e tensione alle storie."
                 }
               ]
             }

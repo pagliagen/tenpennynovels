@@ -18,7 +18,16 @@
       "content": [
         {
           "type": "text",
-          "text": "Le cucine vittoriane non assomigliano più a quelle dell'epoca Regency. Il cambiamento principale riguarda il passaggio dal focolare aperto a sistemi di cottura più controllabili. Nel corso dell'Ottocento si affermano forni e fornelli, inizialmente a legna e carbone, poi progressivamente a gas. Nel 1834 compare il primo progetto efficace di stufa in ghisa, noto come stufa Oberlin. È compatta, adatta agli ambienti domestici e molto più efficiente del camino. Il metallo trattiene e diffonde il calore meglio della muratura, riducendo i tempi di cottura e il consumo di combustibile. Questo modello diventa la base per molte soluzioni successive. A metà secolo la stufa in ghisa è ormai presente nella maggior parte delle cucine. Dal 1850 in poi cucinare significa quasi sempre disporre di un piano riscaldato su cui appoggiare pentole e casseruole. Il gas inizia a diffondersi dopo il 1880, soprattutto nelle abitazioni urbane. Nel 1895 l'elettricità è presente in alcune case, ma resta un lusso e viene usata per l'illuminazione. Cucinare con l'elettricità è costoso e poco pratico, per cui legna, carbone e gas restano dominanti."
+          "text": "Le cucine vittoriane non assomigliano più a quelle dell'epoca Regency, e il cambiamento che si è compiuto nel corso dell'Ottocento è radicale sia nella tecnologia che nell'organizzazione dello spazio domestico. Il passaggio principale riguarda l'abbandono del focolare aperto — il camino medievale davanti al quale si cucinava per irradiazione, con spiedi, griglie e pentoloni appesi a catene — in favore di sistemi di cottura più controllabili, efficienti e sicuri. Nel corso del secolo si affermano forni e fornelli chiusi, inizialmente alimentati a legna e carbone, poi progressivamente a gas. Nel 1834 compare il primo progetto efficace di stufa in ghisa per uso domestico, noto come stufa Oberlin. È una struttura compatta, relativamente leggera rispetto alle precedenti costruzioni in muratura, adatta agli ambienti domestici anche di dimensioni modeste e molto più efficiente del camino aperto. Il metallo trattiene e diffonde il calore meglio della muratura, riducendo significativamente i tempi di cottura e il consumo di combustibile, e permettendo una regolazione più precisa della temperatura attraverso sportelli e prese d'aria regolabili. Questo modello diventa la base per molte soluzioni successive e viene rapidamente copiato, modificato e migliorato da fonderie in tutta la Gran Bretagna."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "A metà secolo la stufa in ghisa — il range, come viene chiamata — è ormai presente nella maggior parte delle cucine britanniche, dalle grandi residenze di campagna con i loro enormi range a sei fuochi alimentati da una squadra di domestici ai monolocali operai con stufe minuscole che servono sia per cucinare che per riscaldare l'ambiente. Dal 1850 in poi cucinare significa quasi sempre disporre di un piano riscaldato su cui appoggiare pentole e casseruole, di un forno chiuso per arrostire e infornare, e di una griglia per tostare il pane e grigliare la carne. La pulizia e la manutenzione del range sono compiti quotidiani gravosi: la ghisa deve essere annerita con una miscela di grafite e olio (black lead) per prevenire la ruggine, le ceneri vanno rimosse, il focolare alimentato e la canna fumaria pulita regolarmente per evitare incendi. Nelle case borghesi questo lavoro spetta alla sguattera (scullery maid), la domestica di grado più basso, che si alza prima dell'alba per accendere il fuoco e preparare la cucina. Il gas inizia a diffondersi come combustibile per la cottura dopo il 1880, soprattutto nelle abitazioni urbane collegate alla rete di distribuzione del gas di carbone. I fornelli a gas sono più puliti, più rapidi da accendere e offrono un controllo della fiamma superiore a qualsiasi sistema a combustibile solido, ma molti cuochi e cuoche restano diffidenti — il gas è invisibile, ha un odore sgradevole e può esplodere. Nel 1895 l'elettricità è presente in alcune case di Londra, ma resta un lusso riservato ai più facoltosi e viene usata quasi esclusivamente per l'illuminazione. Cucinare con l'elettricità è tecnicamente possibile ma costoso e poco pratico, per cui legna, carbone e gas restano i combustibili dominanti nelle cucine londinesi."
         }
       ]
     },
@@ -39,7 +48,16 @@
       "content": [
         {
           "type": "text",
-          "text": "L'alimentazione riflette in modo diretto il ceto sociale. I ricchi hanno accesso a libri di cucina, ingredienti vari, utensili specializzati. I poveri mangiano ciò che riescono a procurarsi, spesso in condizioni precarie. La dieta delle classi elevate è abbondante e ricca di grassi, zuccheri e alcol. Sulle loro tavole non mancano uova, carni, pane, cereali, pesce, dolci. Le classi povere vivono di alimenti poco vari, talvolta avariati, acquistati a basso costo o recuperati come scarti di mercato. La birra svolge un ruolo importante. Nei pub è facilmente reperibile e fornisce calorie supplementari. Il gin è diffuso, soprattutto nei contesti più degradati. L'alcol entra a far parte dell'alimentazione quotidiana, più per necessità che per piacere."
+          "text": "L'alimentazione nella Londra del 1895 riflette in modo diretto e impietoso il ceto sociale. Il cibo non è soltanto nutrimento: è marcatore di classe, strumento di distinzione sociale e, nei casi più estremi, questione di sopravvivenza. I ricchi hanno accesso a libri di cucina — Mrs Beeton's Book of Household Management, pubblicato nel 1861, è la bibbia della cucina borghese vittoriana e viene consultato in ogni casa rispettabile —, ingredienti vari provenienti da tutto l'Impero, utensili specializzati, cucine attrezzate e personale di servizio che include un cuoco o una cuoca (spesso francese nelle case più ricche, perché la cucina francese è considerata l'apice della raffinatezza), una o più sguattere, un maggiordomo che supervisiona il servizio in tavola e camerieri in livrea. La dieta delle classi elevate è abbondante, ricca di grassi animali, zuccheri raffinati, proteine e alcol in quantità che oggi consideremmo eccessive e pericolose per la salute. Sulle loro tavole non mancano mai uova fresche consegnate ogni mattina, carni di ogni tipo — manzo, agnello, vitello, maiale, selvaggina, pollame —, pane bianco di frumento, cereali, pesce fresco dal mercato di Billingsgate, crostacei e ostriche (queste ultime un alimento sorprendentemente economico e popolare anche tra i poveri), dolci elaborati, frutta importata, formaggi stagionati e conserve pregiate."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Le classi povere vivono una realtà alimentare radicalmente diversa. La loro dieta è composta da alimenti poco vari, talvolta avariati, acquistati a basso costo nei mercati all'aperto, nelle botteghe dei vicoli o recuperati come scarti dai banchi dei venditori ambulanti. Il pane, le patate, la birra leggera e il tè — tre volte al giorno se possibile, dolcificato con zucchero scuro — costituiscono la base dell'alimentazione popolare. La carne è un lusso raro: quando disponibile, si tratta di tagli scadenti, frattaglie, ossa per il brodo, pezzi di maiale salato o salsicce di composizione dubbia. Nelle settimane peggiori, una famiglia operaia può sopravvivere con pane secco inzuppato nel tè e qualche patata bollita. I bambini dei quartieri più poveri mostrano i segni della malnutrizione cronica: rachitismo, denti cariati, ossa fragili, crescita ritardata. La birra svolge un ruolo importante nell'alimentazione popolare, paradossalmente più come alimento che come bevanda voluttuaria. Nei pub è facilmente reperibile, relativamente economica e fornisce calorie supplementari sotto forma di carboidrati e alcol. Una pinta di porter o di mild ale è spesso il complemento calorico necessario a un pasto altrimenti insufficiente. Il gin è diffuso soprattutto nei contesti più degradati, negli slums dell'East End e nei quartieri intorno ai docks, dove è venduto a pochi pence il bicchiere nei gin palaces — locali sfarzosamente illuminati a gas con specchi, ottoni lucidi e banconi di mogano che offrono un'illusione di lusso agli avventori più disperati. L'alcol entra a far parte dell'alimentazione quotidiana delle classi più basse, più per necessità di sfuggire al freddo, alla fame e alla miseria che per piacere, e il problema dell'alcolismo — o temperance question come viene chiamato — è uno dei temi sociali più dibattuti dell'epoca."
         }
       ]
     },
@@ -60,7 +78,16 @@
       "content": [
         {
           "type": "text",
-          "text": "Non esiste una conoscenza scientifica dei principi nutritivi. Le regole alimentari sono empiriche e spesso legate alla tradizione. Ai malati e alle puerpere vengono riservate diete liquide, considerate leggere e nutrienti, a base di brodo e vino. Nei mercati cittadini il cibo arriva spesso già deteriorato, soprattutto nei mesi caldi. Le parti migliori finiscono nelle cucine dei ricchi. Ai poveri restano gli scarti, pagati poco o regalati. L'alta mortalità infantile urbana è legata anche alla qualità del cibo disponibile."
+          "text": "Non esiste ancora, nel 1895, una conoscenza scientifica adeguata dei principi nutritivi come li intendiamo oggi. Le vitamine non sono state ancora scoperte, il concetto di caloria è noto solo in ambito accademico, e la distinzione tra proteine, carboidrati e grassi è oggetto di studi pionieristici ma non è ancora entrata nella pratica medica corrente. Le regole alimentari sono empiriche, tramandate dalla tradizione familiare e dal buon senso popolare, spesso mescolate a superstizioni e credenze prive di fondamento scientifico. Ai malati vengono riservate diete liquide — brodi di manzo, consommé di pollo, vino riscaldato con spezie, latte caldo con un goccio di brandy —, considerate leggere e nutrienti ma in realtà spesso inadeguate a sostenere un organismo debilitato dalla malattia. Le puerpere ricevono un trattamento simile: brodo di carne, stout (una birra scura e densa ritenuta ricca di ferro), uova sbattute nel vino e porridge liquido, il tutto accompagnato dal riposo assoluto a letto per almeno due settimane."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Nei mercati cittadini il cibo arriva spesso già deteriorato, soprattutto nei mesi caldi quando la mancanza di refrigerazione rende la conservazione degli alimenti deperibili un problema quotidiano e talvolta mortale. La carne esposta all'aria nelle macellerie all'aperto attira mosche e insetti, il pesce puzza dopo poche ore, la frutta e la verdura arrivano ammaccate e parzialmente marce dai lunghi trasporti in carro. Le parti migliori — i tagli più freschi, la frutta più bella, il pesce più sodo — finiscono nelle cucine dei ricchi, servite dalla rete di fornitori di fiducia che consegnano direttamente alle residenze del West End. Ai poveri restano gli scarti, i ritagli, le parti meno nobili, pagati poco o regalati alla fine della giornata quando i venditori preferiscono disfarsi della merce piuttosto che portarsela a casa. L'adulterazione alimentare è una piaga diffusa e ben documentata: latte annacquato e addizionato con gesso o amido per mascherare la diluizione, tè rinforzato con foglie di altri alberi o addirittura con terra colorata, caffè allungato con cicoria o farina di ghiande, burro mescolato con grasso di sego, dolci colorati con pigmenti tossici a base di piombo, rame o arsenico. L'alta mortalità infantile urbana — che a Londra raggiunge il centocinquanta per mille tra le classi più povere, un bambino su sei o sette — è legata anche alla qualità spaventosa del cibo disponibile, all'acqua contaminata utilizzata per cucinare e alle condizioni igieniche deplorevoli in cui gli alimenti vengono preparati e conservati."
         }
       ]
     },
@@ -81,7 +108,16 @@
       "content": [
         {
           "type": "text",
-          "text": "La cucina vittoriana resta elaborata, ma perde il gusto per le presentazioni spettacolari. Le porzioni diventano più sobrie, almeno in apparenza. Circola sul mercato la cosiddetta carne broxy, proveniente da animali malati. Costa meno, ma comporta rischi evidenti. Si ritiene che lavaggi con acqua, vino o aceto, insieme alla cottura, siano sufficienti a renderla sicura. Nelle cucine dei poveri gli utensili sono pochi. Spesso si dispone di un solo pentolone in cui tutto viene cotto insieme. Alla fine ogni alimento assume la forma di una zuppa, indipendentemente dall'ingrediente di partenza."
+          "text": "La cucina vittoriana resta elaborata nelle sue ricette e nei suoi metodi di preparazione, ma ha progressivamente abbandonato il gusto per le presentazioni spettacolari che caratterizzavano la tavola georgiana e Regency, con i suoi enormi pezzi di cacciagione arrosti interi e portati in tavola con penne e code come trofei. Le porzioni diventano più sobrie, almeno in apparenza, servite nei piatti individuali secondo il service à la russe introdotto a metà secolo, in cui le portate vengono servite in sequenza anziché disposte tutte insieme sulla tavola alla francese. Il roast beef resta il piatto nazionale per eccellenza, servito ogni domenica nelle case di ogni classe sociale che possa permetterselo, accompagnato da Yorkshire pudding, patate arrosto, verdure bollite e gravy denso. L'arrosto della domenica è un rituale quasi sacro, che unisce la famiglia intorno alla tavola e afferma l'identità britannica con la stessa forza di una bandiera."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Circola tuttavia sul mercato la cosiddetta carne broxy, proveniente da animali malati, morti per cause naturali o troppo vecchi per il macello regolare. Costa significativamente meno della carne sana — talvolta la metà o un terzo del prezzo normale — ma comporta rischi evidenti per la salute dei consumatori, dai disturbi gastrointestinali alle infezioni parassitarie. Si ritiene comunemente che lavaggi accurati con acqua, vino o aceto, insieme a una cottura prolungata ad alta temperatura, siano sufficienti a renderla sicura per il consumo — una convinzione che i progressi della batteriologia stanno iniziando a mettere in discussione. La carne broxy viene venduta soprattutto nei quartieri poveri, nelle macellerie di seconda categoria e dai venditori ambulanti che percorrono le strade con i loro carretti, urlando i loro richiami per attirare le massaie più bisognose. I macellai più onesti la distinguono dalla carne sana con prezzi differenziati, ma non mancano quelli che la mescolano con tagli migliori per trarne profitto. Nelle cucine dei poveri gli utensili sono pochi e rudimentali: spesso si dispone di un solo pentolone di ferro o di rame in cui tutto viene cotto insieme — carne, verdure, ossa, avanzi del giorno prima —, e alla fine ogni alimento assume inevitabilmente la forma e il sapore di una zuppa densa e indistinta, indipendentemente dall'ingrediente di partenza. Questa zuppa, riscaldata ogni giorno e arricchita con qualsiasi cosa sia disponibile, può durare un'intera settimana, diventando sempre più densa e sempre meno identificabile nel suo contenuto."
         }
       ]
     },
@@ -102,7 +138,16 @@
       "content": [
         {
           "type": "text",
-          "text": "Il pane è l'alimento base, ma anche uno dei più problematici. Intorno al 1850 Londra è teatro di una vasta adulterazione del prodotto. Per aumentare peso e resa vengono aggiunti allume, farine di legumi, talvolta persino polveri da intonaco. Il pane risulta più economico e apparentemente abbondante. Gli effetti sulla salute sono gravi. Le regolamentazioni arrivano solo verso la fine del secolo. Le condizioni di lavoro dei fornai sono dure. La produzione avviene spesso di notte. Gli impasti vengono preparati in grandi vasche, talvolta lavorati con i piedi. I forni devono restare a temperature elevate e richiedono sorveglianza continua."
+          "text": "Il pane è l'alimento base dell'alimentazione britannica, consumato a ogni pasto da ogni classe sociale, ma è anche uno dei prodotti più problematici e frequentemente adulterati del mercato alimentare vittoriano. Intorno al 1850 Londra è teatro di una vasta e sistematica adulterazione del pane che tocca proporzioni scandalose. Per aumentare il peso e la resa della farina, e dunque il profitto del fornaio, vengono aggiunti all'impasto allume di potassio (che rende il pane più bianco e voluminoso ma è un irritante intestinale), farine di legumi o di patate più economiche, gesso macinato, talvolta persino polveri ricavate dall'intonaco dei muri o dalla polvere d'ossa. Il pane risulta più economico per il consumatore e apparentemente più abbondante e più bianco — il colore bianco è considerato segno di qualità superiore —, ma gli effetti sulla salute sono gravi e cumulativi: disturbi digestivi cronici, carenze nutrizionali, avvelenamenti lenti che indeboliscono l'organismo senza che la vittima ne comprenda la causa. Le indagini del chimico Frederick Accum e poi di Arthur Hill Hassall, pubblicate nei decenni centrali del secolo, rivelano l'ampiezza spaventosa della frode alimentare e contribuiscono a un crescente allarme pubblico. Le regolamentazioni legislative — il Sale of Food and Drugs Act del 1875 e le successive modifiche — arrivano solo verso la fine del secolo e la loro applicazione resta disomogenea e dipendente dalla diligenza degli ispettori locali."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Le condizioni di lavoro dei fornai sono tra le più dure dell'epoca vittoriana, equiparabili a quelle dei minatori e dei lavoratori delle fonderie. La produzione del pane avviene quasi interamente di notte, perché le pagnotte devono essere pronte per la vendita all'alba. I fornai lavorano in sotterranei bui, caldi e mal ventilati, immersi nella polvere di farina che causa malattie respiratorie croniche — la cosiddetta baker's asthma. Gli impasti vengono preparati in grandi vasche di legno, spesso lavorati con le mani nude e talvolta, nelle panetterie più primitive, con i piedi, in condizioni igieniche che farebbero inorridire un ispettore sanitario moderno. Il sudore dei fornai, i loro capelli, le particelle della loro pelle si mescolano inevitabilmente all'impasto. I forni devono restare a temperature elevatissime e richiedono sorveglianza continua e una grande esperienza per evitare che il pane bruci o resti crudo all'interno. Un fornaio esperto conosce il suo forno come un musicista il suo strumento, e sa giudicare la temperatura toccando le pareti e osservando il colore della fiamma. Le giornate lavorative durano sedici o diciotto ore, i salari sono bassi, e molti fornai muoiono giovani, consumati dalla fatica, dalla polvere e dal calore. Per le classi popolari il pane è spesso l'unico alimento solido della giornata: pane e tè a colazione, pane e formaggio a mezzogiorno, pane con un po' di dripping (grasso di arrosto) o di margarina alla sera."
         }
       ]
     },
@@ -123,7 +168,16 @@
       "content": [
         {
           "type": "text",
-          "text": "Il latte è altamente deperibile. Per renderlo nuovamente commerciabile vengono aggiunte sostanze come acido borico o formalina, ritenute sanificanti. I casi di intossicazione sono numerosi. La pastorizzazione viene sperimentata a partire dal 1863, ma l'applicazione industriale richiede tempo. Per lungo periodo il metodo più sicuro resta la trasformazione del latte in formaggio."
+          "text": "Il latte è uno degli alimenti più problematici della Londra vittoriana, altamente deperibile in un'epoca che non dispone di refrigerazione domestica e in cui la catena di distribuzione dal produttore al consumatore può richiedere ore o addirittura giorni. Il latte venduto nella capitale proviene in parte da latterie urbane — vacche tenute in stalle anguste e maleodoranti nel cuore della città, nutrite con scarti e prive di pascolo — e in parte dalle fattorie del Kent, del Surrey e dell'Essex, trasportato in bidoni di latta su carretti trainati da cavalli o per ferrovia. Durante il trasporto, soprattutto nei mesi estivi, il latte si deteriora rapidamente, inacidisce e diventa un terreno di coltura ideale per batteri pericolosi. Per renderlo nuovamente commerciabile e mascherare i segni del deterioramento, vengono aggiunte sostanze chimiche come acido borico — utilizzato come conservante —, formalina — un disinfettante potente ma tossico —, salicilato di sodio e persino borace, ritenuti sanificanti dai venditori ma in realtà nocivi per la salute dei consumatori, soprattutto dei bambini piccoli che dipendono dal latte come alimento principale."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "I casi di intossicazione da latte adulterato o contaminato sono numerosi e ben documentati, e contribuiscono significativamente all'alta mortalità infantile nelle zone urbane. Il latte è anche un veicolo di trasmissione per malattie gravi come la tubercolosi bovina, la febbre tifoide, la scarlattina e la difterite, che passano dalla vacca infetta al consumatore senza che nessun trattamento intermedio le elimini. La pastorizzazione — il processo di riscaldamento del latte a una temperatura sufficiente a uccidere i patogeni, sviluppato da Louis Pasteur negli anni Sessanta per il vino — viene sperimentata sul latte a partire dal 1863, ma l'applicazione industriale e commerciale su larga scala richiede tempo, investimenti e un cambiamento culturale che nel 1895 è ancora in corso. Molti consumatori diffidano del latte pastorizzato, ritenendolo 'cotto' e quindi meno nutriente del latte crudo. Per lungo periodo il metodo più sicuro per conservare il latte e renderlo meno pericoloso resta la sua trasformazione in formaggio — un processo che elimina gran parte dei batteri attraverso la fermentazione e la stagionatura — o in latte condensato, disponibile in scatola dal 1856 e sempre più popolare come alternativa al latte fresco soprattutto per l'alimentazione infantile. Il latte condensato zuccherato della marca Nestlé è uno dei prodotti più venduti, anche se la sua ricchezza di zucchero e la sua povertà di nutrienti lo rendono un sostituto inadeguato del latte materno."
         }
       ]
     },
@@ -144,7 +198,16 @@
       "content": [
         {
           "type": "text",
-          "text": "Il porridge è uno degli alimenti più diffusi. È semplice, saziante, adattabile. Può essere dolce o salato, preparato con acqua, latte o brodo. Nelle case dei poveri spesso costituisce l'unico pasto. Nei refettori viene deliberatamente allungato con acqua. La ciotola appare piena, lo stomaco meno."
+          "text": "Il porridge è uno degli alimenti più diffusi e democratici della dieta britannica, consumato a colazione da tutte le classi sociali — anche se in forme e qualità molto diverse. È semplice da preparare, saziante, economico e infinitamente adattabile alle risorse disponibili. Può essere dolce — con zucchero di canna, miele, melassa o frutta secca — o salato — con sale, burro, un pezzo di formaggio o un cucchiaio di dripping —, preparato con acqua, latte o brodo a seconda di ciò che la famiglia può permettersi. L'avena, l'ingrediente base, è il cereale più economico e resistente, coltivato soprattutto in Scozia e nell'Irlanda del Nord, e il porridge è tradizionalmente considerato un piatto scozzese — il che non impedisce agli inglesi di ogni regione e classe di consumarlo quotidianamente. In Scozia il porridge è una questione di identità nazionale e orgoglio culinario: viene preparato con acqua e sale, cotto lentamente mescolando sempre nella stessa direzione con un cucchiaio di legno (spurtle), e servito in ciotole di legno, talvolta accompagnato da una tazza di latte freddo in cui si intinge ogni cucchiaiata."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Nelle case dei poveri il porridge spesso costituisce l'unico pasto della giornata, soprattutto per i bambini e per gli anziani che non possono lavorare. Una pentola di porridge cotto all'alba può sfamare un'intera famiglia con pochi pence di avena, e gli avanzi si solidificano raffreddandosi, formando una sorta di torta che può essere tagliata a fette e consumata fredda durante il giorno o riscaldata la sera. Nei refettori delle workhouse — gli ospizi per i poveri resi famosi dalla denuncia feroce di Dickens in Oliver Twist — il porridge viene deliberatamente allungato con acqua per ridurre i costi e mantenere i ricoverati in uno stato di fame perpetua che serve come deterrente: le condizioni nelle workhouse devono essere peggiori della più misera esistenza fuori, per scoraggiare chi potrebbe essere tentato di chiedere assistenza pubblica. La ciotola appare piena, lo stomaco molto meno. Il gruel — una versione ancora più liquida del porridge, quasi una bevanda calda di farina d'avena — è il pasto standard delle workhouse, delle prigioni e degli ospedali per i poveri, un alimento che fornisce il minimo indispensabile di calorie senza alcuna soddisfazione gustativa."
         }
       ]
     },
@@ -165,7 +228,16 @@
       "content": [
         {
           "type": "text",
-          "text": "Per gran parte del secolo la conservazione domestica si affida a contenitori in vetro, ceramica e pietra. Si usano tecniche tradizionali come salatura, salamoia, sott'olio, sotto grasso, essiccazione. Zucchero, aceto e alcol vengono impiegati per prolungare la commestibilità. Sono comuni conserve di frutta, composte, pesce e carne in salamoia. Le cozze, economiche e facili da reperire, vengono conservate per mesi. Le uova non sono disponibili tutto l'anno. Si conservano in salamoia, sott'olio, al buio, sotto segatura o crusca."
+          "text": "Per gran parte del secolo la conservazione domestica degli alimenti si affida a metodi antichissimi, tramandati di generazione in generazione e basati sull'uso di contenitori in vetro, ceramica, pietra e terracotta. Si usano tecniche tradizionali che hanno radici nell'antichità: la salatura per carni e pesci, la salamoia per verdure e ortaggi, la conservazione sott'olio con olio di oliva o di semi, sotto grasso di maiale o di bue che crea una barriera protettiva contro l'aria e i batteri, e l'essiccazione al sole, al vento o vicino al fuoco per frutta, erbe aromatiche, legumi e carne (il biltong sudafricano e il pemmican canadese sono varianti coloniali di questa tecnica millenaria). Zucchero, aceto e alcol vengono ampiamente impiegati per prolungare la commestibilità degli alimenti deperibili. Lo zucchero, sempre più economico grazie alle importazioni dalle colonie caraibiche, è la base delle marmellate, delle confetture, delle gelatine di frutta e dei canditi che riempiono le dispense delle famiglie borghesi. L'aceto — di malto, di sidro o di vino — è utilizzato per conservare sottaceti (pickles), cipolline, cetrioli, capperi e una vasta gamma di condimenti che accompagnano la carne fredda e il formaggio."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Sono comuni conserve di frutta di ogni tipo — fragole, lamponi, ribes, prugne, mele cotogne —, composte dense destinate a durare tutto l'inverno, pesce sotto sale e in salamoia, e carne conservata in grandi vasi di terracotta sotto uno strato di grasso solidificato. Le cozze, economiche e facili da reperire lungo le coste britanniche e vendute per pochi pence dai venditori ambulanti di Londra, vengono conservate in salamoia per mesi e rappresentano una fonte di proteine accessibile anche ai più poveri. Le ostriche, prima della metà del secolo un alimento popolare e abbondante, sono diventate progressivamente più rare e costose a causa della pesca eccessiva, ma restano un elemento importante della cucina londinese. Le uova non sono disponibili in quantità costante durante tutto l'anno — le galline depongono meno in inverno, quando le giornate sono corte e fredde — e devono essere conservate con metodi ingegnosi: in salamoia forte che ne sigilla il guscio, sott'olio d'oliva in vasi di terracotta, al buio in cantine fresche, immerse in calce viva (waterglass), o sepolte sotto strati di segatura, crusca o cenere che le isolano dall'aria e rallentano il deterioramento. Una massaia previdente dell'epoca vittoriana sa che la dispensa (pantry o larder) è il cuore della casa quanto la cucina, e dedica ore alla preparazione delle conserve stagionali che garantiranno alla famiglia alimenti commestibili durante i mesi più freddi e più difficili."
         }
       ]
     },
@@ -186,7 +258,16 @@
       "content": [
         {
           "type": "text",
-          "text": "All'inizio dell'Ottocento si sviluppano i primi sistemi di conservazione sottovuoto. La tecnica consiste nel bollire gli alimenti in contenitori sigillati, creando un ambiente sterile che si mantiene grazie al raffreddamento. I primi recipienti sono in vetro, poi in stagno e infine in latta. La produzione inizialmente è manuale. La vera spinta arriva con le esigenze militari. La conservazione in scatola apre la strada alla produzione industriale."
+          "text": "All'inizio dell'Ottocento si sviluppano i primi sistemi di conservazione sottovuoto degli alimenti, un'innovazione che rivoluzionerà l'industria alimentare e cambierà per sempre il modo in cui il cibo viene prodotto, distribuito e consumato. La tecnica fondamentale, sviluppata dal pasticciere francese Nicolas Appert alla fine del Settecento e perfezionata nei primi decenni dell'Ottocento, consiste nel bollire gli alimenti — carne, verdure, frutta, zuppe — in contenitori sigillati ermeticamente, creando un ambiente sterile in cui i microrganismi responsabili del deterioramento non possono sopravvivere. Il raffreddamento successivo consolida il sigillo e garantisce una conservazione che può durare mesi o addirittura anni. I primi recipienti utilizzati per questo processo sono in vetro, fragili e pesanti ma trasparenti, che permettono di ispezionare il contenuto. Successivamente si passa a contenitori in stagno saldato — la tinned food, il cibo in scatola che diventerà uno dei simboli dell'era industriale — e infine a lattine di latta più sottili, leggere e resistenti. La produzione inizialmente è interamente manuale: ogni scatola viene tagliata, piegata, saldata a mano da operai specializzati, e la capacità produttiva è limitata a poche centinaia di pezzi al giorno."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "La vera spinta all'industrializzazione della conservazione in scatola arriva con le esigenze militari. L'Ammiragliato britannico e l'esercito hanno bisogno di alimenti che possano essere trasportati su lunghe distanze, conservati per settimane o mesi in condizioni difficili — sulle navi, nelle trincee, nei climi tropicali — e consumati senza necessità di cottura o refrigerazione. Il cibo in scatola diventa rapidamente un elemento essenziale del vettovagliamento militare e coloniale, e la domanda delle forze armate stimola lo sviluppo di tecniche di produzione industriale su larga scala. Tuttavia, i primi decenni della conservazione in scatola sono segnati anche da tragedie e scandali: la spedizione di Sir John Franklin nell'Artico nel 1845, il cui equipaggio morì anche a causa di intossicazione da piombo proveniente dalla saldatura delle scatolette, e i numerosi casi di botulismo causati da conserve mal sterilizzate hanno contribuito a una diffidenza pubblica verso il cibo in scatola che persiste per decenni. Entro la fine del secolo, tuttavia, la tecnologia è migliorata enormemente e le conserve in scatola — corned beef, sardine, salmone, latte condensato, pesche sciroppate, zuppe — sono diventate un elemento comune della dieta britannica, soprattutto per le classi medie e per i viaggiatori. La conservazione in scatola ha aperto la strada alla produzione alimentare industriale, separando per la prima volta nella storia il luogo e il momento della produzione del cibo da quello del suo consumo."
         }
       ]
     },
@@ -207,7 +288,16 @@
       "content": [
         {
           "type": "text",
-          "text": "Gli studi sulla putrefazione mettono in crisi l'idea della generazione spontanea. Si comprende che i microrganismi sono la causa del deterioramento. La pastorizzazione consiste in un riscaldamento breve ad alta temperatura. Elimina i patogeni, ma non garantisce una lunga conservazione. La sterilizzazione richiede temperature più alte e tempi più lunghi, con effetti maggiori sul prodotto. Le prime applicazioni riguardano il vino, poi altri alimenti liquidi."
+          "text": "Gli studi sulla putrefazione condotti da Louis Pasteur e dai suoi successori nella seconda metà dell'Ottocento hanno messo definitivamente in crisi l'antica teoria della generazione spontanea — l'idea che gli organismi viventi potessero nascere spontaneamente dalla materia inerte, che i vermi nascessero dalla carne in decomposizione e i topi dalla paglia umida. Si comprende finalmente che sono i microrganismi — batteri, muffe, lieviti — la causa del deterioramento degli alimenti e delle malattie infettive, e che questi organismi invisibili a occhio nudo possono essere uccisi dal calore. La pastorizzazione, il processo inventato da Pasteur e che porta il suo nome, consiste in un riscaldamento breve del prodotto a una temperatura relativamente alta — generalmente tra i sessanta e i settanta gradi centigradi per il latte — sufficiente a eliminare la maggior parte dei patogeni senza alterare significativamente il sapore e le proprietà nutritive dell'alimento. Il processo elimina i batteri responsabili della tubercolosi, del tifo e della brucellosi, ma non garantisce una conservazione a lungo termine: il latte pastorizzato deve comunque essere consumato entro pochi giorni."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "La sterilizzazione, un processo più radicale, richiede temperature più alte — oltre i cento gradi centigradi, spesso ottenuti in autoclavi a pressione — e tempi più lunghi, con effetti più marcati sul prodotto: il sapore si altera, alcune vitamine si degradano, la consistenza cambia. Tuttavia, la sterilizzazione garantisce una conservazione molto più lunga ed è il processo fondamentale per la sicurezza del cibo in scatola. Le prime applicazioni della pastorizzazione riguardano il vino — Pasteur sviluppa il processo proprio per risolvere il problema dell'inacidimento del vino francese —, poi la birra e successivamente altri alimenti liquidi come il latte, i succhi di frutta e i brodi. Nel 1895 la pastorizzazione del latte è già praticata in alcune latterie progressive di Londra e di altre grandi città, ma l'obbligo legale di pastorizzare il latte destinato al consumo pubblico non arriverà fino al Novecento. La resistenza dei produttori tradizionali, la diffidenza dei consumatori verso il latte 'trattato', e i costi delle attrezzature necessarie rallentano l'adozione di una tecnologia che avrebbe potuto salvare migliaia di vite ogni anno."
         }
       ]
     },
@@ -228,7 +318,16 @@
       "content": [
         {
           "type": "text",
-          "text": "Il freddo è usato da secoli per conservare. Le ghiacciaie sono ambienti sotterranei riempiti di neve pressata durante l'inverno. Mantengono temperature prossime allo zero. Nelle città esistono ghiacciaie pubbliche o legate a grandi residenze. Il ghiaccio viene anche venduto per strada. Nelle case comuni si usano madie isolate, in cui il ghiaccio va sostituito frequentemente. La presenza di sorbetti e gelati nelle ricette ottocentesche testimonia una buona diffusione del ghiaccio, almeno nelle cucine attrezzate."
+          "text": "Il freddo è usato da secoli per conservare gli alimenti, e la Londra vittoriana non fa eccezione. Le ghiacciaie (ice houses) sono costruzioni sotterranee o semi-sotterranee, con pareti spesse e isolate, riempite di neve e ghiaccio pressato durante l'inverno. Il ghiaccio viene raccolto dai laghi e dai fiumi ghiacciati dell'Inghilterra, della Scozia e della Norvegia — l'importazione di ghiaccio norvegese è un commercio fiorente — e trasportato in blocchi enormi, avvolti in paglia e segatura per rallentare lo scioglimento. Una ghiacciaia ben costruita e ben rifornita può mantenere il ghiaccio per mesi, mantenendo temperature prossime allo zero anche nei mesi più caldi dell'estate. Nelle grandi residenze di campagna dell'aristocrazia le ghiacciaie sono strutture imponenti, spesso costruite nel parco con un accesso discreto dalla cucina, che permettono di conservare carne, pesce, burro, latte e altri alimenti deperibili per settimane e di preparare gelati, sorbetti e bevande ghiacciate per le cene e i ricevimenti estivi."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Nelle città esistono ghiacciaie pubbliche o commerciali legate a grandi residenze, hotel, ospedali e mercati, dove il ghiaccio viene venduto al dettaglio a chi ne ha bisogno. I venditori di ghiaccio (icemen) percorrono le strade di Londra con i loro carretti, vendendo blocchi e pezzi di ghiaccio a peso, un servizio utilizzato soprattutto da ristoranti, hotel, pescivendoli e famiglie benestanti. Nelle case comuni della classe media si usano madie refrigeranti (ice boxes o ice chests), armadi isolati con un compartimento superiore destinato al ghiaccio e uno inferiore dove vengono riposti gli alimenti. Il ghiaccio va sostituito frequentemente — ogni giorno o due nei mesi caldi — e l'acqua di scioglimento deve essere drenata per evitare che si accumuli e rovini gli alimenti. La gestione dell'ice box è uno dei compiti quotidiani della domestica o della padrona di casa, che deve bilanciare il costo del ghiaccio con la necessità di conservare gli alimenti freschi. La presenza di sorbetti, gelati, granite e dessert ghiacciati nelle ricette e nei menu ottocenteschi testimonia una buona diffusione del ghiaccio, almeno nelle cucine attrezzate delle classi medie e superiori. Il gelato, venduto anche per strada dai venditori ambulanti italiani che percorrono i quartieri con i loro carrettini colorati — i famosi Hokey-Pokey men —, è uno dei piaceri estivi più apprezzati da tutte le classi sociali, anche se la qualità igienica del prodotto venduto per strada è spesso dubbia."
         }
       ]
     },
@@ -249,7 +348,16 @@
       "content": [
         {
           "type": "text",
-          "text": "I primi sistemi di refrigerazione basati sui gas vengono brevettati nella prima metà dell'Ottocento. L'uso domestico resta però impraticabile fino alla diffusione dell'elettricità. I primi frigoriferi sono pericolosi. Le fughe di gas causano intossicazioni. Fino al Novecento la refrigerazione resta confinata alla produzione e al trasporto alimentare. Il freddo rivoluziona soprattutto il commercio del pesce, rendendo possibili trasporti su lunghe distanze."
+          "text": "I primi sistemi di refrigerazione meccanica basati sulla compressione e l'espansione di gas come l'ammoniaca, l'etere e il biossido di zolfo vengono brevettati e sperimentati nella prima metà dell'Ottocento, ma l'uso domestico resta impraticabile per decenni a causa delle dimensioni enormi dei macchinari, del costo proibitivo, della complessità della manutenzione e, soprattutto, della pericolosità dei gas refrigeranti utilizzati. I primi frigoriferi industriali sono macchine grandi come stanze, con compressori rumorosi e tubature complesse, utilizzati in birrerie, mattatoi, magazzini portuali e impianti di produzione del ghiaccio artificiale. L'uso domestico resta confinato a prototipi costosi e inaffidabili. I primi frigoriferi sperimentali per uso domestico sono pericolosi: le fughe di gas ammoniaca e di biossido di zolfo causano intossicazioni acute con sintomi che vanno dalla nausea e il vomito alla perdita di coscienza e, nei casi più gravi, alla morte. L'odore pungente e sgradevole dei refrigeranti contribuisce a rendere questi apparecchi impopolari tra le famiglie."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Fino all'inizio del Novecento e alla diffusione dell'elettricità nelle abitazioni, la refrigerazione meccanica domestica resta un sogno tecnologico irrealizzato. Il frigorifero elettrico per uso domestico non diventerà un prodotto commerciale diffuso fino agli anni Venti e Trenta del Novecento, quando l'introduzione di refrigeranti meno pericolosi come il Freon e la riduzione dei costi di produzione lo renderanno accessibile alla classe media. Nel frattempo, la refrigerazione industriale sta già trasformando radicalmente il commercio alimentare su scala globale. Il freddo meccanico rivoluziona soprattutto il commercio del pesce e della carne, rendendo possibili trasporti su distanze che prima erano impensabili. Nel 1880 le prime navi frigorifero (refrigerated ships) trasportano con successo carne congelata dall'Australia e dalla Nuova Zelanda all'Inghilterra, un viaggio di oltre diecimila miglia nautiche che richiede settimane. L'importazione di carne congelata dall'emisfero australe e dall'Argentina abbassa i prezzi della carne in Gran Bretagna e modifica profondamente il mercato alimentare, suscitando l'ostilità degli allevatori britannici ma la gratitudine dei consumatori urbani che possono finalmente permettersi tagli di carne a prezzi accessibili."
         }
       ]
     },
@@ -270,7 +378,25 @@
       "content": [
         {
           "type": "text",
-          "text": "La colazione è il pasto più importante per tutte le classi. Serve a fornire energia per il lavoro e lo studio. Può includere uova, pesce, carne, formaggi, dolci, pane, focacce. Pancetta, salsicce, fagioli e funghi sono comuni. Il porridge è onnipresente. Per i poveri la colazione è essenziale ma scarsa. Pane e birra possono bastare per iniziare la giornata. Il pasto di mezzogiorno è leggero o assente. Le donne delle classi elevate preferiscono arrivare al low tea del primo pomeriggio, consumato in salotto o in giardino, accompagnato da tramezzini, scones, dolci e tè. Dopo le cinque si diffonde l'afternoon tea. Per molti lavoratori è il pasto principale. Si beve tè, si mangia ciò che c'è. La birra è presente, servita a temperatura ambiente. Il dinner è un pasto formale serale, riservato ai ricchi. Le portate arrivano in successione. La zuppa apre il pasto. Seguono carni, arrosti, verdure, patate, pesce, crostacei. Sono apprezzati budini dolci e salati, torte di carne, piatti in gelatina. Dopo teatro o ballo può esserci una cena tardiva, simile al pranzo formale ma meno impegnativa."
+          "text": "La colazione (breakfast) è il pasto più importante della giornata per tutte le classi sociali, il momento in cui il corpo viene rifornito dell'energia necessaria per il lavoro, lo studio e le attività quotidiane. Nelle case della borghesia e dell'aristocrazia, la colazione è un pasto abbondante e sostanzioso, servito tra le otto e le dieci del mattino su una tavola apparecchiata con cura, con tovaglia bianca, stoviglie di porcellana e posate d'argento. Può includere uova — sode, strapazzate, in camicia, alla coque —, pesce affumicato — aringhe kippers, haddock, salmone —, carne fredda avanzata dalla cena della sera precedente, formaggi stagionati, dolci come muffins, crumpets e toast imburrati, pane fresco, focacce (scones), marmellata, miele. Pancetta (bacon) fritta o grigliata, salsicce di maiale, fagioli bianchi in salsa di pomodoro, funghi trifolati, pomodori grigliati e il rognone (kidneys) sono elementi comuni del full English breakfast che nel 1895 sta assumendo la forma che conserverà per tutto il Novecento. Il porridge è onnipresente, servito in ciotole con latte caldo e zucchero nelle case inglesi, con acqua e sale in quelle scozzesi. Il tè è la bevanda dominante, servito forte e caldo con latte e zucchero, in tazze di porcellana che possono essere opere d'arte in miniatura. Il caffè è meno comune ma presente soprattutto nelle case degli uomini d'affari che lo hanno assaggiato durante i viaggi sul continente."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Per i poveri la colazione è essenziale ma dolorosamente scarsa. Pane con un po' di burro o margarina, una tazza di tè forte e dolcissimo — lo zucchero fornisce calorie a basso costo — e, nei giorni migliori, un po' di porridge o un uovo possono bastare per iniziare una giornata di lavoro fisico estenuante. Molti bambini dei quartieri operai vanno a scuola senza aver mangiato nulla, e le maestre più compassionevoli tengono in classe qualche pezzo di pane per i più visibilmente affamati. Il pasto di mezzogiorno (luncheon) è relativamente leggero nella tradizione britannica o addirittura assente per chi lavora lontano da casa. I lavoratori manuali portano con sé il lunch in un fagotto — pane, formaggio, un pezzo di torta salata, una mela — o mangiano nei chop houses e nelle pie shops della City, dove per pochi pence si possono avere un piatto di carne con verdure o una meat pie fumante. Le donne delle classi elevate preferiscono arrivare al low tea del primo pomeriggio — tra le tre e le quattro —, consumato in salotto o in giardino quando il tempo lo permette, accompagnato da tramezzini sottili senza crosta (finger sandwiches) con cetriolo, prosciutto, uova o crescione, scones caldi con panna rappresa (clotted cream) e marmellata di fragole, dolci elaborati — Victoria sponge, petit fours, biscotti al burro — e tè versato da una teiera d'argento con un rituale preciso che la padrona di casa esegue con grazia studiata."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Dopo le cinque si diffonde l'afternoon tea o high tea, un pasto che nelle classi medio-basse ha assunto il carattere di un vero e proprio pasto serale. Per molti lavoratori è il pasto principale della giornata, consumato al rientro dal lavoro: si beve tè forte in abbondanza, si mangia ciò che c'è — pane tostato, uova sode, un po' di formaggio, fette di carne fredda, torte salate, pickles —, e la birra è talvolta presente, servita a temperatura ambiente in brocche di terracotta. Il dinner (cena formale) è un pasto serale riservato ai ricchi e alle classi medio-alte, un rituale sociale elaborato che può durare diverse ore e coinvolgere una dozzina o più di ospiti seduti intorno a una tavola fastosamente apparecchiata, illuminata da candelabri d'argento e decorata con fiori freschi e centrotavola ornamentali. Le portate arrivano in successione secondo un ordine prestabilito e rigoroso. La zuppa apre sempre il pasto — consommé chiaro, cream of asparagus, turtle soup per le occasioni più sontuose. Segue il pesce — sogliola, turbante, salmone — con una salsa leggera. Poi gli entrées — vol-au-vent, croquettes, rognone — seguiti dal piatto principale: arrosti di manzo, vitello, agnello o selvaggina accompagnati da verdure di stagione, patate in varie preparazioni, salse e condimenti. Sono molto apprezzati i budini dolci e salati, le torte di carne (meat pies e game pies), i piatti in gelatina (aspics) — elaboratissime costruzioni traslucide in cui pezzi di carne, pesce o uova sono sospesi in una gelatina brillante come insetti nell'ambra. Il dessert chiude il pasto con frutta fresca, formaggi, noci, port wine e dolci. Dopo teatro, opera o ballo, può esserci una cena tardiva (supper), simile al dinner formale ma meno impegnativa, servita dopo le undici con piatti freddi, insalate, frutti di mare e champagne."
         }
       ]
     },
@@ -291,7 +417,16 @@
       "content": [
         {
           "type": "text",
-          "text": "I pasti formali seguono un cerimoniale preciso. Posti a sedere, ordine delle portate, tempi di uscita dalla sala sono regolati. Al termine del pasto ufficiale le donne si ritirano, mentre gli uomini restano per bere porto. La serata si chiude con tè o cioccolata."
+          "text": "I pasti formali nella Londra vittoriana seguono un cerimoniale preciso e rigoroso che è codificato in decine di manuali di etichetta e che ogni persona di buona educazione è tenuta a conoscere nei minimi dettagli, perché una violazione delle regole della tavola è considerata una prova inequivocabile di origine sociale inferiore o di educazione carente. I posti a sedere sono assegnati dalla padrona di casa secondo un ordine di precedenza basato sul rango sociale, il titolo nobiliare, l'età e lo stato civile degli ospiti, un compito che richiede una conoscenza enciclopedica della gerarchia sociale e una diplomazia degna di un ambasciatore. L'ospite d'onore siede alla destra del padrone di casa, l'ospite d'onore femminile alla destra della padrona. Marito e moglie non siedono mai vicini. L'ordine delle portate è immutabile, i tempi di servizio sono calcolati al minuto, e il ritmo del pasto è dettato dalla padrona di casa. Ogni posata ha il suo uso specifico e la sua posizione precisa — la forchetta da pesce, il coltello da burro, il cucchiaio da consommé, la forchetta da ostriche — e usare la posata sbagliata è un faux pas che può rovinare una reputazione sociale."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Al termine del pasto ufficiale, la padrona di casa si alza — un segnale che tutti i commensali riconoscono immediatamente — e le donne si ritirano nel salotto (drawing room) per conversare, bere tè o caffè e suonare il pianoforte, mentre gli uomini restano nella sala da pranzo per bere porto, fumare sigari e discutere di politica, affari e argomenti considerati inappropriati per le orecchie femminili. Questa separazione dei sessi dopo il pranzo è una delle tradizioni più radicate della socialità vittoriana e dura solitamente tra i venti minuti e un'ora, dopo di che gli uomini raggiungono le donne nel salotto. La serata si chiude con tè caldo, cioccolata in tazza, biscotti leggeri e conversazione più rilassata. In molte case l'ultimo gesto della serata è una breve preghiera familiare guidata dal capofamiglia, a cui tutti i presenti — ospiti e domestici compresi — sono tenuti a partecipare. Le regole della tavola si applicano con severità proporzionale al rango sociale: ciò che è perdonabile in una famiglia della piccola borghesia è imperdonabile in un salotto aristocratico, e un invitato che commette errori grossolani di etichetta rischia di non essere mai più invitato."
         }
       ]
     },
@@ -312,7 +447,16 @@
       "content": [
         {
           "type": "text",
-          "text": "A corte il ritmo del pasto è dettato dalla sovrana. Quando lei termina una portata, il piatto viene ritirato anche agli ospiti. Il problema è che mangia rapidamente. Chi pranza con lei deve adeguarsi. Ama il midollo, ottenuto bollendo grandi ossa e spalmato sul pane. È presente a colazione e a cena. Fra i piatti più apprezzati c'è la Brown Windsor Soup, una zuppa scura a base di sugo di manzo, aceto di malto, pepe, frutta secca e talvolta vino di Madeira. Il suo successo la rende un piatto simbolo dell'epoca."
+          "text": "A corte il ritmo del pasto è dettato dalla sovrana, la regina Vittoria, secondo un'etichetta rigidissima che trasforma ogni pranzo ufficiale in una prova di resistenza per gli ospiti. La regola fondamentale è semplice e spietata: quando la regina termina una portata — posando le posate e facendo un cenno impercettibile al maggiordomo —, il piatto viene ritirato immediatamente anche a tutti gli altri commensali, indipendentemente dal fatto che abbiano finito di mangiare o meno. Il problema è che Vittoria mangia con una velocità sorprendente per una donna della sua età e della sua stazza — negli ultimi decenni del regno la sovrana è diventata notevolmente corpulenta —, divorando le portate con un'efficienza che lascia poco tempo ai commensali meno rapidi. Chi pranza o cena con la regina deve adeguarsi al suo ritmo o rassegnarsi a tornare a casa affamato. I diplomatici stranieri, i dignitari coloniali e gli ospiti non avvezzi all'etichetta di corte vengono spesso colti di sorpresa e raccontano con sgomento di cene ufficiali durante le quali hanno appena assaggiato il piatto principale prima di vederselo portare via da un cameriere in livrea con guanti bianchi."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Fra le passioni culinarie della regina, il midollo osseo occupa un posto d'onore. Vittoria ama il midollo, ottenuto bollendo per ore grandi ossa di manzo o vitello fino a quando il grasso morbido e gelatinoso all'interno non può essere estratto con un cucchiaio lungo e stretto appositamente progettato (marrow scoop), e poi spalmato generosamente sul pane tostato con un pizzico di sale e pepe. Questo piatto rustico e sostanzioso è presente sia a colazione che a cena nel menu reale, e la sua presenza alla tavola della sovrana contribuisce a mantenere il midollo osseo come un piatto rispettabile nella cucina britannica. Vittoria è anche una grande amante dei dolci, delle torte elaborate, dei gelati e dei piatti ricchi di burro e panna, un'inclinazione che contribuisce alla sua corpulenza negli ultimi anni. Fra i piatti più apprezzati dalla corte e più rappresentativi dell'epoca c'è la Brown Windsor Soup, una zuppa densa e scura che prende il nome dal castello di Windsor. È preparata a base di sugo di manzo concentrato, con l'aggiunta di cipolla rosolata, farina per addensare, aceto di malto che le conferisce una nota agrodolce caratteristica, pepe nero abbondante, frutta secca — uvetta e albicocche — che aggiunge dolcezza e corpo, e talvolta un generoso bicchiere di vino di Madeira che la rende ancora più ricca e profumata. La zuppa viene cotta a fuoco lento per ore, fino a raggiungere una consistenza vellutata e un colore bruno intenso quasi nero. Il suo successo la rende un piatto simbolo dell'epoca vittoriana, presente nei menu dei ristoranti, dei club e delle case borghesi di tutta la nazione, e diventa così emblematica dell'era che la sua fama sopravviverà alla stessa regina."
         }
       ]
     }

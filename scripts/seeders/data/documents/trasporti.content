@@ -18,7 +18,25 @@
       "content": [
         {
           "type": "text",
-          "text": "Alla fine del XIX secolo il viaggio per mare rappresenta ancora il principale collegamento tra i continenti. Le navi passeggeri attraversano regolarmente l'Atlantico: un viaggio dall'America all'Inghilterra dura dai sei ai dieci giorni e costa dalle 12 alle 25 sterline, mentre un biglietto di andata e ritorno può arrivare a 65 sterline, a seconda del livello di comfort richiesto. Le traversate partono in genere da New York e terminano a Liverpool; da lì è possibile raggiungere Londra in treno in un tempo variabile tra le quattro e le otto ore, con una spesa compresa tra i 16 e i 29 scellini. L'attraversamento della Manica, da Dover a Calais, richiede circa tre ore e costa tra i 10 e i 19 scellini. È una rotta molto frequentata da uomini d'affari, diplomatici, artisti e membri dell'aristocrazia continentale. Il Tamigi costituisce una vera e propria arteria vitale per Londra. Le navi di grandi dimensioni sono confinate nella zona orientale del fiume e non risalgono oltre il Pool of London, l'area compresa tra London Bridge e Limehouse. Qui si concentrano file interminabili di magazzini e depositi per le merci destinate al resto del Regno. Lungo le rive operano numerose imbarcazioni di piccola e media grandezza. Battelli a vapore trasportano passeggeri tra le diverse zone della città con tariffe variabili in base alla distanza percorsa. Per l'Upper Class è inoltre possibile affittare un piroscafo per l'intera giornata, con costi che vanno dalle 6 alle 35 sterline, per eventi mondani, ricevimenti o semplici gite di piacere."
+          "text": "Alla fine del XIX secolo il viaggio per mare rappresenta ancora il principale e unico collegamento tra i continenti, un'esperienza che combina avventura, pericolo, noia estenuante e un rigido sistema di classi che replica in miniatura la società vittoriana stessa. Le grandi compagnie di navigazione — la Cunard Line, la White Star Line, la P&O (Peninsular and Oriental Steam Navigation Company) — competono ferocemente per accaparrarsi i passeggeri più facoltosi, offrendo cabine sempre più lussuose con saloni rivestiti di mogano, sale da pranzo con servizio in porcellana e argenteria, e ponti passeggiata dove l'aristocrazia transatlantica prende il tè ammirando l'oceano. Le navi passeggeri attraversano regolarmente l'Atlantico: un viaggio dall'America all'Inghilterra dura dai sei ai dieci giorni a seconda delle condizioni meteorologiche e della rotta seguita, e costa dalle 12 alle 25 sterline per un passaggio di prima o seconda classe, mentre un biglietto di andata e ritorno può arrivare a 65 sterline. I passeggeri di terza classe — emigranti, lavoratori stagionali, famiglie in cerca di fortuna — viaggiano in condizioni ben diverse: dormitori comuni sotto il ponte, cibo monotono e scarso, promiscuità forzata con estranei che parlano lingue diverse. Il mal di mare è una costante per tutti, e i naufragi, benché meno frequenti che in passato grazie al vapore, restano un rischio concreto che assicuratori e passeggeri non dimenticano mai."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Le traversate partono in genere da New York — dal molo della Cunard a Jersey City o dal Pier 54 di Manhattan — e terminano a Liverpool, il grande porto atlantico dell'Inghilterra settentrionale. Da lì è possibile raggiungere Londra in treno attraverso la London and North Western Railway, in un tempo variabile tra le quattro e le otto ore a seconda del tipo di servizio, con una spesa compresa tra i 16 e i 29 scellini. La stazione di arrivo a Londra è Euston, con la sua imponente facciata neoclassica e la Great Hall che accoglie i viaggiatori stanchi ma sollevati. L'attraversamento della Manica, da Dover a Calais, richiede circa tre ore su battelli a vapore che oscillano paurosamente nelle acque spesso agitate dello Stretto, e costa tra i 10 e i 19 scellini. È una rotta molto frequentata da uomini d'affari che trattano con le case commerciali parigine, diplomatici in viaggio tra le cancellerie europee, artisti che cercano ispirazione nel continente, e membri dell'aristocrazia continentale che visitano Londra per la Season sociale o per affari di stato. I passeggeri più sofferenti trovano conforto nel sapere che esistono già progetti per un tunnel sotto la Manica, anche se le preoccupazioni militari — l'incubo di un'invasione francese attraverso il tunnel — ne bloccano regolarmente la realizzazione."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Il Tamigi costituisce una vera e propria arteria vitale per Londra, la ragione stessa dell'esistenza della città, il suo confine naturale e la sua principale via commerciale da quasi duemila anni. Le navi di grandi dimensioni — velieri mercantili, piroscafi a vapore, carboniere che alimentano le fornaci della città — sono confinate nella zona orientale del fiume e non risalgono oltre il Pool of London, l'area compresa tra London Bridge e Limehouse. Qui il fiume è un paesaggio industriale straordinario: file interminabili di magazzini e depositi in mattoni rossi si affacciano sull'acqua, gru meccaniche e argani sollevano balle, casse e barili dalle stive delle navi, e migliaia di scaricatori di porto — i dockers — lavorano in condizioni brutali per pochi scellini al giorno, ingaggiati ogni mattina attraverso il sistema del casual labour che li costringe a presentarsi alle porte dei moli all'alba sperando di essere scelti. I grandi dock — St Katharine's, London Dock, West India Dock, Millwall Dock, Royal Victoria Dock — sono mondi a sé stanti, con le proprie regole, i propri pericoli e i propri odori: catrame, spezie, legname, pesce, tabacco, zucchero grezzo. Lungo le rive operano numerose imbarcazioni di piccola e media grandezza. Battelli a vapore della London Steamboat Company trasportano passeggeri tra le diverse zone della città — da Westminster a Greenwich, da Chelsea a Woolwich — con tariffe variabili in base alla distanza percorsa, generalmente da un penny a sei penny per tratta. Per l'Upper Class è inoltre possibile affittare un piroscafo privato per l'intera giornata, con costi che vanno dalle 6 alle 35 sterline a seconda delle dimensioni dell'imbarcazione e del livello di servizio offerto, per eventi mondani, ricevimenti galleggianti, feste estive o semplici gite di piacere lungo il fiume fino a Hampton Court o Richmond."
         }
       ]
     },
@@ -39,7 +57,25 @@
       "content": [
         {
           "type": "text",
-          "text": "La ferrovia è il vero collante della Gran Bretagna vittoriana. Entro il 1895 Londra è collegata in modo rapido e regolare con tutte le principali città del Regno: Birmingham, Manchester, Leeds, Bristol, Liverpool e Glasgow. I tempi di percorrenza sono relativamente brevi per l'epoca e permettono spostamenti che fino a pochi decenni prima avrebbero richiesto giorni. I treni sono suddivisi in classi. La prima classe offre carrozze imbottite, maggiore spazio e un pubblico selezionato. La seconda classe è il compromesso tipico della borghesia. La terza classe, affollata e spartana, è l'unica accessibile alle classi lavoratrici e ai migranti. Viaggiare in una classe piuttosto che in un'altra è immediatamente visibile e socialmente significativo. Le grandi stazioni ferroviarie londinesi sono luoghi di transito, ma anche di osservazione e controllo: ferrovieri, facchini e agenti di polizia vedono, ricordano e talvolta riferiscono."
+          "text": "La ferrovia è il vero collante della Gran Bretagna vittoriana, l'innovazione che più di ogni altra ha trasformato la società, l'economia e la percezione stessa del tempo e dello spazio nel corso del XIX secolo. Entro il 1895, dopo oltre sessant'anni di costruzione frenetica, la rete ferroviaria britannica si estende per oltre 20.000 miglia di binari e Londra è collegata in modo rapido e regolare con tutte le principali città del Regno: Birmingham in due ore e mezza, Manchester in quattro ore, Leeds in circa cinque ore, Bristol in due ore, Liverpool in quattro ore e Glasgow in otto ore e mezza. I tempi di percorrenza sono relativamente brevi per l'epoca e permettono spostamenti che fino a pochi decenni prima avrebbero richiesto giorni di viaggio in diligenza su strade fangose e pericolose, con soste frequenti per il cambio dei cavalli. La ferrovia ha creato i pendolari: migliaia di impiegati della classe media vivono ormai nei sobborghi — Surbiton, Croydon, Bromley, Wimbledon — e raggiungono ogni mattina i loro uffici nella City attraverso i treni suburbani, in un rituale quotidiano che scandisce la vita della capitale."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "I treni sono suddivisi in classi che replicano fedelmente la struttura sociale britannica. La prima classe offre carrozze imbottite con sedili in velluto o pelle, lampade a gas individuali, poggiapiedi, riscaldamento a scaldapiedi metallici riempiti di acqua calda, e un pubblico selezionato che include gentiluomini in cilindro, signore accompagnate dalla cameriera personale, e ufficiali dell'esercito in uniforme. I compartimenti di prima classe sono separati e chiusi, con portiere in legno lucidato e tendine alle finestre, e il bigliettaio verifica con discrezione che nessun passeggero di classe inferiore si sia introdotto per errore o per frode. La seconda classe è il compromesso tipico della borghesia professionale: meno lusso ma ancora decorosa, con sedili imbottiti ma più stretti, illuminazione condivisa e una promiscuità controllata. La terza classe, affollata e spartana, con panchine di legno senza imbottitura, finestre senza tendine e spesso senza riscaldamento, è l'unica accessibile alle classi lavoratrici, ai venditori ambulanti, ai migranti irlandesi, ai soldati in licenza e ai viaggiatori con animali al seguito. Viaggiare in una classe piuttosto che in un'altra è immediatamente visibile e socialmente significativo: salire in un vagone di prima classe con abiti inadeguati attira sguardi di disapprovazione e può provocare l'intervento del controllore."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Le grandi stazioni ferroviarie londinesi sono luoghi monumentali che incarnano l'orgoglio e l'ambizione dell'epoca vittoriana. Paddington, progettata da Isambard Kingdom Brunel con la sua spettacolare copertura in ferro e vetro, serve il West Country e il Galles. King's Cross e St Pancras, affiancate come due sorelle rivali sulla Euston Road, servono rispettivamente le Midlands e il Nord. Victoria è la porta verso il continente attraverso il servizio di traghetti dalla costa meridionale. Waterloo collega Londra al sud dell'Inghilterra. Ogni stazione è un mondo in sé: sale d'attesa divise per classe, buffet dove si servono pasti frettolosi e tè bollente, edicole che vendono giornali e i celebri yellowback novels per il viaggio, uffici postali e telegrafici, depositi bagagli, e una folla costante di passeggeri, ferrovieri in uniforme, facchini con i loro carrelli, venditori ambulanti, mendicanti e borseggiatori. Le stazioni sono anche luoghi di sorveglianza e controllo: la Railway Police pattuglia le banchine, e gli agenti di Scotland Yard utilizzano la rete ferroviaria per inseguire i criminali in fuga, telegrafare identikit ai colleghi nelle città di provincia, e intercettare sospetti in arrivo o in partenza."
         }
       ]
     },
@@ -60,7 +96,25 @@
       "content": [
         {
           "type": "text",
-          "text": "Il cavallo resta il mezzo di trasporto dominante nelle strade di Londra. Viene cavalcato, impiegato per trainare carri merci o utilizzato per le carrozze pubbliche e private. Le cab dominano il traffico cittadino. La più diffusa è la Hansom cab, una carrozza leggera a due ruote che può trasportare due passeggeri, tre se stretti. È dotata di vetri anteriori e di un posto sopraelevato per il cocchiere, che può ricevere istruzioni tramite una piccola finestra sul tetto. Le carrozze a quattro ruote possono trasportare quattro o cinque persone, offrendo maggiore stabilità e privacy. Sono completamente chiuse, spesso con tendine abbassate, e dispongono di uno spazio per i bagagli sul tetto. Sono preferite dalla borghesia e dall'aristocrazia, specialmente per spostamenti discreti. La tariffa standard è di circa uno scellino a persona ogni due miglia, con un supplemento di twopence per ogni bagaglio voluminoso. I cocchieri sono disposti ad attendere i clienti dopo averli condotti a destinazione per un sixpence ogni quarto d'ora. Tra le carrozze private spicca la \"Victoria\", veicolo aperto con cappotta pieghevole, molto diffuso tra le famiglie benestanti."
+          "text": "Il cavallo resta il mezzo di trasporto dominante nelle strade di Londra, una presenza così pervasiva da definire il paesaggio sonoro, olfattivo e visivo della città. Nel 1895 si stima che circa 300.000 cavalli lavorino quotidianamente nelle strade londinesi, producendo tonnellate di sterco che vengono raccolte — non sempre tempestivamente — dai crossing sweepers, ragazzini che spazzano gli incroci in cambio di qualche penny dai passanti che vogliono attraversare senza sporcarsi le scarpe. L'odore di cavallo, sudore equino, cuoio e letame è il profumo stesso di Londra, mescolato a quello del carbone, del gas e della birra che esce dai pub. I cavalli vengono cavalcati da gentiluomini nei parchi — Rotten Row a Hyde Park è la passeggiata equestre più elegante della capitale —, impiegati per trainare carri merci carichi di birra, carbone, mattoni e merci di ogni genere, o utilizzati per le carrozze pubbliche e private che costituiscono il principale sistema di trasporto individuale della città."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Le cab dominano il traffico cittadino e sono il mezzo di trasporto più comodo e flessibile per chi può permetterselo. La più diffusa è la Hansom cab, inventata nel 1834 da Joseph Hansom e perfezionata nel corso dei decenni successivi fino a diventare l'icona stessa della Londra vittoriana. È una carrozza leggera a due ruote che può trasportare due passeggeri, tre se stretti, seduti in un abitacolo coperto nella parte anteriore del veicolo. È dotata di vetri anteriori pieghevoli che proteggono dalla pioggia ma possono essere aperti nelle giornate più miti, e di un posto sopraelevato per il cocchiere nella parte posteriore, dietro e sopra l'abitacolo, da dove il cabman guida il cavallo e può ricevere istruzioni dai passeggeri tramite una piccola finestra sul tetto. Questa configurazione offre ai passeggeri una certa privacy — il cocchiere non può vedere cosa accade nell'abitacolo, il che rende la Hansom cab la scelta preferita per incontri clandestini e conversazioni riservate. Le carrozze a quattro ruote, chiamate growlers per il rumore sordo che producono sul selciato, possono trasportare quattro o cinque persone offrendo maggiore stabilità e privacy. Sono completamente chiuse, spesso con tendine di velluto scuro abbassate, e dispongono di uno spazio per i bagagli sul tetto accessibile tramite una scaletta posteriore. Sono preferite dalla borghesia e dall'aristocrazia, specialmente per spostamenti discreti, per il trasporto di dame in abito da sera, o quando il numero di passeggeri supera le due persone."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "La tariffa standard è fissata per legge e controllata dalla polizia: circa uno scellino a persona ogni due miglia, con un supplemento di twopence per ogni bagaglio voluminoso caricato sul tetto. Le tariffe notturne, dopo le otto di sera, sono maggiorate di circa il cinquanta per cento. I cocchieri sono disposti ad attendere i clienti dopo averli condotti a destinazione per un sixpence ogni quarto d'ora di attesa. Le dispute sulle tariffe sono frequentissime: i cabmen sono noti per arrotondare al rialzo, chiedere supplementi inventati e protestare vivacemente contro le mance giudicate insufficienti. Il Metropolitan Police Act regolamenta il settore, e i passeggeri insoddisfatti possono denunciare il cocchiere al commissariato più vicino — un diritto esercitato più spesso nelle zone benestanti che nell'East End, dove le regole sono più flessibili. Tra le carrozze private, disponibili solo per le famiglie più facoltose, spicca la \"Victoria\", veicolo aperto con cappotta pieghevole, molto diffuso per le passeggiate nel parco e gli spostamenti diurni nelle zone eleganti. Il brougham, chiuso e discreto, è il veicolo preferito per le visite formali e gli spostamenti invernali. Il landau, con la sua doppia cappotta che può essere completamente abbattuta, è la carrozza delle grandi occasioni estive. Mantenere una carrozza privata con cavalli, cocchiere, stalliere e rimessa costa almeno 300 sterline all'anno, una somma che pone questa forma di trasporto decisamente al di fuori della portata di chiunque non appartenga almeno all'alta borghesia."
         }
       ]
     },
@@ -81,7 +135,16 @@
       "content": [
         {
           "type": "text",
-          "text": "L'omnibus è un mezzo collettivo trainato da cavalli che segue percorsi prestabiliti. È spesso affollato, meno costoso di una cab e relativamente stabile. Le corse iniziano alle otto del mattino e terminano a mezzanotte, con un'attesa variabile tra i quattro e i quindici minuti. Il costo massimo di una corsa è un sixpence. Il tram funziona in modo simile, ma procede su rotaie e garantisce una maggiore regolarità del tragitto. È utilizzato soprattutto dalle classi popolari e dai lavoratori pendolari."
+          "text": "L'omnibus è un mezzo collettivo trainato da cavalli che segue percorsi prestabiliti attraverso le strade principali di Londra, il trasporto pubblico per eccellenza della classe media e medio-bassa. Si tratta di un grande veicolo a due piani: il piano inferiore è chiuso e offre riparo dalla pioggia e dal freddo con sedili imbottiti disposti su due file che si fronteggiano, mentre il piano superiore — il cosiddetto \"knife-board\" o, nei modelli più recenti, il \"garden seat\" — è aperto all'aria e accessibile tramite una ripida scala a chiocciola sul retro. Il piano superiore è più economico e preferito dai fumatori, che non possono fumare al piano inferiore per rispetto delle signore. Le donne in gonna lunga raramente salgono al piano superiore, sia per la difficoltà di salire la scala in modo decoroso, sia per convenzione sociale. L'omnibus è spesso affollato, specialmente nelle ore di punta del mattino e della sera quando gli impiegati si spostano tra i sobborghi e la City, meno costoso di una cab — il costo massimo di una corsa è un sixpence, ma le tratte brevi costano un penny o due — e relativamente prevedibile nei suoi orari. Le corse iniziano alle otto del mattino e terminano a mezzanotte, con un'attesa variabile tra i quattro e i quindici minuti a seconda della linea e dell'ora del giorno. Il conducente, seduto a cassetta davanti, guida il tiro di due cavalli attraverso il traffico congestionato, mentre il conduttore sulla piattaforma posteriore raccoglie i biglietti, annuncia le fermate e decide quando il veicolo è pieno — una decisione spesso contestata dai passeggeri che restano a terra sotto la pioggia."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Il tram funziona in modo simile all'omnibus, ma procede su rotaie metalliche incassate nel selciato stradale, il che garantisce una maggiore regolarità del tragitto, meno scossoni e una velocità leggermente superiore. I tram sono trainati anch'essi da cavalli — i tram elettrici arriveranno a Londra solo nel 1901 — e sono utilizzati soprattutto dalle classi popolari e dai lavoratori pendolari che vivono nei quartieri periferici meridionali e orientali della città. Il Tramways Act del 1870 ne regolamentava l'installazione, ma una clausola impediva ai tram di attraversare il centro di Londra, proteggendo gli interessi dei cabmen e degli omnibus operators nelle zone più redditizie. Il risultato è che nel 1895 i tram servono prevalentemente i sobborghi e le periferie, collegando quartieri operai come Brixton, Camberwell, Lewisham e Stratford alle zone commerciali e industriali. Il costo di una corsa in tram è inferiore a quello dell'omnibus — spesso un penny per le tratte più lunghe — rendendolo il mezzo di trasporto più economico dopo la camminata a piedi. I tram sono anche un luogo di socializzazione involontaria: operai, commesse, sarte, venditori ambulanti e piccoli impiegati condividono lo stesso spazio ristretto ogni giorno, creando una comunità di pendolari che si riconosce e si saluta senza mai incontrarsi al di fuori di quel contesto."
         }
       ]
     },
@@ -102,7 +165,16 @@
       "content": [
         {
           "type": "text",
-          "text": "Per una larga parte della popolazione londinese, spostarsi a piedi è la norma. I lavoratori percorrono ogni giorno lunghe distanze tra casa e luogo di impiego, attraversando quartieri molto diversi tra loro. Camminare non è soltanto una necessità economica, ma anche un indicatore sociale. Un gentiluomo che cammina a lungo in certe zone può apparire fuori posto o destare sospetti, mentre per i poveri il cammino è inevitabile. Le distanze fisiche diventano così distanze sociali, e attraversare un confine urbano significa spesso esporsi a sguardi, giudizi o pericoli."
+          "text": "Per una larga parte della popolazione londinese, spostarsi a piedi è la norma quotidiana e inevitabile, la forma di trasporto più antica e democratica in una città che si estende ormai per miglia in ogni direzione. I lavoratori percorrono ogni giorno lunghe distanze tra casa e luogo di impiego — distanze che possono superare le cinque o sei miglia per tratta — attraversando quartieri molto diversi tra loro, passando in pochi isolati dai vicoli maleodoranti dell'East End ai boulevard alberati del West End, dai mercati caotici di Cheapside ai giardini silenziosi di Bloomsbury. Il marciapiede londinese è un mondo in sé: venditori di giornali che gridano le ultime notizie, lustrascarpe che offrono i loro servizi per un halfpenny, mendicanti che tendono la mano, bottegai che espongono le merci fin sulla strada, bambini che giocano tra le gambe dei passanti, cani randagi che rovistano nella spazzatura. Camminare a Londra richiede attenzione costante: il selciato è spesso scivoloso per la pioggia, il fango e lo sterco di cavallo, le carrozze sfiorano i pedoni a velocità pericolose, e nei giorni di nebbia — il celebre fog londinese, reso giallastro e acre dalla combustione del carbone — la visibilità può ridursi a pochi metri, rendendo ogni attraversamento stradale un azzardo."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Camminare non è soltanto una necessità economica, ma anche un indicatore sociale che comunica immediatamente chi si è e dove si appartiene. Un gentiluomo che cammina a lungo in certe zone — a Whitechapel, a Bermondsey, nei vicoli attorno ai docks — può apparire fuori posto o destare sospetti: cosa ci fa un uomo in abiti eleganti in un quartiere simile? È un filantropo? Un pervertito? Un poliziotto in borghese? Al contrario, un operaio in abiti logori che si aggira per Mayfair o Belgravia sarà immediatamente notato, fermato da un poliziotto o allontanato da un domestico che sorveglia l'ingresso. Per i poveri il cammino è inevitabile e spesso estenuante: le donne che lavorano come lavandaie percorrono miglia con pesanti cesti di biancheria, i venditori ambulanti trascinano i loro carri a mano per le strade in pendenza, i bambini dei quartieri popolari camminano scalzi anche d'inverno perché le scarpe sono un lusso che la famiglia non può permettersi. Le distanze fisiche diventano così distanze sociali, e attraversare un confine urbano — il ponte che separa il Nord dal Sud del Tamigi, la strada che divide Mayfair da Soho, il vicolo che segna il confine tra rispettabilità e degrado — significa spesso esporsi a sguardi, giudizi o pericoli concreti. Un personaggio che cammina per Londra non si limita a spostarsi: racconta una storia con i suoi passi, i suoi abiti, la sua andatura, la direzione che prende."
         }
       ]
     },
@@ -123,7 +195,16 @@
       "content": [
         {
           "type": "text",
-          "text": "A partire dal 1890 iniziano a comparire le prime biciclette moderne. Sono prodotte in larga scala dal 1893 e vengono considerate, sulle brevi distanze, una valida alternativa al cavallo. La loro diffusione è maggiore nelle campagne e nelle periferie rispetto al centro di Londra, dove il traffico e le strade congestionate ne limitano l'uso. La bicicletta è associata a individui dinamici, progressisti e a una certa indipendenza personale."
+          "text": "A partire dal 1890 iniziano a comparire le prime biciclette moderne con il design \"safety bicycle\" — due ruote di uguale dimensione, catena e pedali, pneumatici gonfiabili introdotti da John Boyd Dunlop nel 1888 — che sostituiscono progressivamente il pericoloso e instabile penny-farthing con la sua enorme ruota anteriore. Sono prodotte in larga scala dal 1893 da manifatture come la Rover, la Humber e la Raleigh, e vengono considerate, sulle brevi e medie distanze, una valida alternativa al cavallo. Il prezzo di una bicicletta nuova varia dalle 10 alle 25 sterline, una somma considerevole che la rende accessibile alla classe media ma non ai lavoratori manuali, anche se il mercato dell'usato inizia a rendere possibile l'acquisto di modelli di seconda mano a prezzi più abbordabili. La loro diffusione è maggiore nelle campagne e nelle periferie rispetto al centro di Londra, dove il traffico caotico, i binari del tram, lo sterco di cavallo e le strade congestionate ne limitano l'uso pratico e lo rendono potenzialmente pericoloso."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "La bicicletta è associata a individui dinamici, progressisti e a una certa indipendenza personale che la rende oggetto di fascino e di controversia al tempo stesso. Per le donne, in particolare, la bicicletta rappresenta una piccola rivoluzione: la necessità di pedalare con libertà di movimento spinge molte cicliste ad adottare il rational dress — gonne più corte, pantaloni alla turca o bloomers — sfidando le convenzioni dell'abbigliamento femminile e attirando scandalo e ammirazione in egual misura. La scrittrice americana Susan B. Anthony dichiarerà che la bicicletta \"ha fatto più per l'emancipazione femminile di qualsiasi altra cosa al mondo\". I club ciclistici fioriscono in tutta l'Inghilterra, organizzando escursioni domenicali nella campagna circostante, gare amatoriali e raduni sociali che attraggono giovani di entrambi i sessi con la promessa di un'attività sana, moderna e socialmente accettabile. Per un personaggio del gioco, possedere una bicicletta è un segno di modernità e di spirito avventuroso, ma anche un potenziale strumento di fuga, di esplorazione e di indipendenza dai costosi servizi di trasporto pubblico e privato."
         }
       ]
     },
@@ -144,7 +225,16 @@
       "content": [
         {
           "type": "text",
-          "text": "L'automobile fa il suo debutto ufficiale in Inghilterra nel 1896. Fino a quel momento è considerata poco più di un giocattolo costoso per ricchi eccentrici, rumoroso e poco affidabile. Nel 1895 la sua presenza è ancora marginale e non influisce in modo significativo sulla vita quotidiana della città."
+          "text": "L'automobile fa il suo debutto ufficiale in Inghilterra nel 1896, quando il Locomotives on Highways Act abolirà finalmente il famigerato Red Flag Act del 1865, una legge che richiedeva che ogni veicolo a motore fosse preceduto da un uomo a piedi con una bandiera rossa per avvertire i pedoni e i cavalieri del pericolo imminente — una norma che aveva di fatto reso impossibile l'uso pratico dell'automobile sulle strade britanniche. Fino a quel momento, nel 1895, l'automobile è considerata poco più di un giocattolo costoso e rumoroso per ricchi eccentrici, ingegneri visionari e aristocratici in cerca di emozioni forti. I pochi veicoli a motore presenti in Inghilterra sono importati dalla Francia e dalla Germania — i modelli Benz e Peugeot sono i più noti — e suscitano curiosità, ilarità e irritazione in egual misura quando attraversano le strade facendo spaventare i cavalli, sollevando nuvole di polvere e lasciandosi dietro una scia di fumo e di olio bruciato."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Nel 1895 la presenza dell'automobile è ancora del tutto marginale e non influisce in modo significativo sulla vita quotidiana della città. I giornali ne parlano con un misto di entusiasmo e scetticismo, e la maggior parte dei londinesi non ha mai visto un'automobile dal vivo. Tuttavia, chi segue le notizie dalla Francia — dove le prime gare automobilistiche attirano folle di spettatori — intuisce che questo strano congegno potrebbe avere un futuro. Per il momento, però, il cavallo regna incontrastato, e l'idea che un giorno le strade di Londra possano essere percorse da veicoli senza cavalli sembra ai più una fantasia degna di un romanzo di H.G. Wells — il cui \"The Time Machine\" viene pubblicato proprio nel 1895, alimentando l'immaginazione di un'epoca che inizia a sognare il futuro con un misto di speranza e di inquietudine."
         }
       ]
     },
@@ -165,7 +255,25 @@
       "content": [
         {
           "type": "text",
-          "text": "Londra possiede una rete sotterranea già estesa. La metropolitana collega rapidamente diverse zone della città con treni ogni dieci minuti e una tariffa di circa un twopence per tratta. I primi convogli sono a vapore e rendono l'ambiente sotterraneo soffocante, pieno di fumo e fuliggine. Solo verso la fine del secolo i motori a vapore vengono progressivamente sostituiti da quelli elettrici, migliorando notevolmente le condizioni di viaggio. Le stazioni della metropolitana sono punti di snodo fondamentali, frequentati da ogni classe sociale, ma anche luoghi in cui il movimento delle persone è osservato e, talvolta, controllato."
+          "text": "Londra possiede una rete sotterranea già estesa e sorprendentemente efficiente, la prima al mondo, inaugurata nel 1863 con la Metropolitan Railway che collegava Paddington a Farringdon Street. Nel 1895 la rete si è espansa fino a comprendere diverse linee che attraversano la città da est a ovest e da nord a sud, gestite da compagnie rivali — la Metropolitan Railway, la District Railway, la City and South London Railway — che competono per i passeggeri con tariffe e servizi diversi. La metropolitana collega rapidamente zone della città che per via di superficie richiederebbero ore di carrozza nel traffico congestionato, con treni ogni dieci minuti nelle ore di punta e una tariffa di circa un twopence per tratta nelle classi inferiori, fino a sei pence per la prima classe."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "I primi convogli sono a vapore e rendono l'ambiente sotterraneo un'esperienza sensoriale intensa e spesso sgradevole: i tunnel si riempiono di fumo denso, fuliggine nera e vapore surriscaldato che rendono l'aria quasi irrespirabile, soprattutto nelle stazioni più profonde dove la ventilazione è inadeguata. I passeggeri emergono dalle stazioni con i volti anneriti, gli abiti impregnati di fumo e gli occhi irritati, un inconveniente che molti accettano come prezzo necessario per la rapidità del viaggio. La Metropolitan Railway aveva tentato di risolvere il problema utilizzando locomotive \"condensing\" progettate per trattenere il vapore, ma il sistema funzionava solo parzialmente e i macchinisti, costretti a lavorare in condizioni quasi insostenibili, si ammalavano frequentemente di malattie respiratorie. Solo verso la fine del secolo i motori a vapore vengono progressivamente sostituiti da quelli elettrici — la City and South London Railway, aperta nel 1890, è la prima ferrovia elettrica sotterranea al mondo — migliorando notevolmente le condizioni di viaggio e aprendo la strada alla moderna Underground che diventerà il simbolo stesso di Londra nel XX secolo."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Le stazioni della metropolitana sono punti di snodo fondamentali nel tessuto urbano londinese, frequentati ogni giorno da decine di migliaia di persone di ogni classe sociale, dall'impiegato della City in bombetta che consulta il suo orologio da taschino all'operaia con il grembiule ancora sporco di farina che corre a prendere l'ultimo treno della sera. Le stazioni più grandi — Baker Street, King's Cross, Liverpool Street — sono dotate di biglietterie, sale d'attesa, edicole e bancarelle che vendono bevande calde e spuntini. Ma sono anche luoghi in cui il movimento delle persone è osservato e, talvolta, controllato: la polizia metropolitana mantiene una presenza costante nelle stazioni principali, osservando i flussi di passeggeri, identificando i borseggiatori professionisti che operano nella calca, e tenendo d'occhio i sospetti segnalati dalle stazioni di polizia di superficie. Per un personaggio del gioco, la metropolitana è il modo più rapido e anonimo di attraversare Londra, ma anche un luogo dove è possibile essere visti, seguiti o intrappolati."
         }
       ]
     }

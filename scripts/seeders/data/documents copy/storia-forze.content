@@ -1,0 +1,131 @@
+{
+  "type": "doc",
+  "content": [
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Prime forme organizzate"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Prima della Metropolitan Police esistono nuclei più piccoli, legati ai magistrati e a zone specifiche. A Londra si affermano i Bow Street Runners, legati a Bow Street e coordinati da magistrati. La loro funzione è investigativa e operativa, con metodi ancora lontani dalla polizia moderna, ma più strutturati rispetto alle vecchie guardie notturne. Nel 1798 viene istituita la Polizia Marina, per contrastare i furti lungo la riva nord del Tamigi, tra London Bridge e la Torre. È una risposta diretta ai furti nei magazzini e negli scali."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Metropolitan Police e City of London Police"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "La Metropolitan Police nasce nel 1829 su iniziativa di Sir Robert Peel. La Metropolitan Police Act del 1829 definisce un primo distretto operativo. Nel giro di poco tempo vengono create divisioni territoriali, legate a quartieri e aree chiave della città. L'idea è semplice: pattuglie stabili, presenza costante, riconoscibilità. È il modello del \"New Police\". L'avvio è difficile. La nuova polizia incontra ostilità non solo dalla criminalità, ma anche da magistrati e cittadini diffidenti verso un corpo organizzato che sembra un controllo governativo sulla vita urbana. L'opposizione si attenua quando i risultati diventano evidenti. Nel 1836 viene incorporato il Bow Street Horse Patrol, usato soprattutto nelle aree periferiche. Nel 1839 un nuovo atto consolida e amplia il distretto e formalizza la Thames Division come struttura stabile legata al fiume. Nel 1844 viene avviato un reparto investigativo che diventa il Criminal Investigation Department (CID). Verso la fine del secolo il Metropolitan Police Force raggiunge quasi 20.000 uomini, con una struttura gerarchica ormai matura. Dipende direttamente da Whitehall, sotto la supervisione del Ministero degli Interni. Il comando è affidato a un Commissario nominato dal Ministero. Il Metropolitan Police District copre oltre settecento miglia quadrate, comprendendo tutta Londra esclusa la City, la contea del Middlesex e ampie porzioni di Essex, Hertfordshire, Kent e Sussex."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "La City di Londra mantiene una posizione particolare. Cerca di preservare la propria autonomia e continua a disporre di una forza indipendente, la City of London Police, fondata nel 1839. Controlla solo la \"Square Mile\", il nucleo storico e finanziario della città, ma è nota per maggiore efficienza e corruzione più contenuta. Resta molto più piccola, circa 200 uomini, ma presidia una zona economicamente cruciale. Le due istituzioni cooperano quando necessario, pur mantenendo competenze distinte."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Altre forze operative"
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 3
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Thames Division (River Police)"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "La Thames Division pattuglia il Tamigi con imbarcazioni a vapore. È una presenza costante lungo il fiume, fondamentale per il controllo dei traffici e dei furti nei magazzini e negli scali."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 3
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Railway Police Force"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Con la crescita delle ferrovie nasce l'esigenza di una sicurezza dedicata. Una legge del 1838 è uno dei primi riferimenti alla creazione di agenti legati alle ferrovie. Con l'espansione della rete ferroviaria, la polizia ferroviaria cresce fino a diventare una delle forze più numerose del paese, con organizzazione e poteri comparabili a quelli delle altre forze, entro i propri ambiti di competenza. L'uniforme è simile, con distinzioni nei distintivi."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 3
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Port of London Police Force"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Il porto si espande enormemente nell'Ottocento, con nuovi bacini e docks. Il volume di merci e la posta economica rendono necessario un controllo dedicato. La funzione non è soltanto repressiva: serve a proteggere infrastrutture e commerci, limitare furti, violenza, ricatti, sabotaggi. Con il crescere della complessità del porto, diventa evidente la necessità di un'autorità più centrale e pubblica."
+        }
+      ]
+    }
+  ]
+}

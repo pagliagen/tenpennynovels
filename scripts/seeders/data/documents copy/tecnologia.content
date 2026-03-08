@@ -1,0 +1,110 @@
+{
+  "type": "doc",
+  "content": [
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Acqua corrente e approvvigionamento idrico"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Nel corso del XIX secolo l'accesso all'acqua potabile divenne una delle principali questioni urbane di Londra. Fino alla metà del secolo l'approvvigionamento era affidato a pozzi privati, cisterne e alla raccolta dell'acqua piovana, con risultati spesso disastrosi dal punto di vista igienico. Le epidemie di colera e tifo resero evidente il legame diretto tra acqua contaminata e mortalità urbana. A partire dagli anni Cinquanta dell'Ottocento iniziarono importanti lavori di modernizzazione delle reti idriche, soprattutto grazie alle riforme sanitarie e alla costruzione di nuovi acquedotti che attingevano l'acqua a monte del Tamigi. Tuttavia, la presenza dell'acqua corrente nelle abitazioni non era affatto uniforme. Le case dell'aristocrazia e dell'alta borghesia, in particolare nel West End, a Mayfair, Kensington, Belgravia e Marylebone, disponevano quasi sempre di acqua corrente, almeno ai piani inferiori. In queste abitazioni erano presenti rubinetti in cucina e talvolta anche nei bagni, con acqua fredda costante e, più raramente, sistemi per il riscaldamento dell'acqua. Nelle abitazioni della classe media l'acqua corrente era meno garantita. Spesso era presente un'unica presa d'acqua per piano o per edificio, condivisa tra più famiglie. Nei quartieri popolari e nell'East End, l'acqua veniva invece prelevata da pompe pubbliche, cortili comuni o fontane di quartiere. Le famiglie si organizzavano con secchi, brocche e grandi recipienti di terracotta o metallo, e la gestione dell'acqua era una delle occupazioni quotidiane più gravose, soprattutto per donne e bambini."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Servizi igienici e smaltimento dei rifiuti"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "L'introduzione dell'acqua corrente non implicava automaticamente la presenza di servizi igienici moderni. I water closet con scarico ad acqua erano un lusso riservato alle abitazioni più ricche. Anche dove presenti, spesso convivevano con sistemi più tradizionali. Nella maggior parte delle case popolari e medio-basse, i servizi consistevano in latrine esterne, spesso condivise da più famiglie. Queste strutture erano collegate a fosse settiche o a semplici pozzi neri, che venivano svuotati periodicamente da squadre specializzate. Gli odori, la promiscuità e la scarsa manutenzione rendevano questi luoghi insalubri e pericolosi. Chi non disponeva di latrine utilizzava vasi da notte, svuotati al mattino in appositi contenitori o direttamente nelle fogne, quando presenti. In alcune zone meno controllate, soprattutto nelle ore notturne, lo smaltimento avveniva ancora in strada o nei corsi d'acqua minori."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Gas e illuminazione domestica"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "L'illuminazione a gas fu una delle innovazioni tecnologiche più visibili della Londra vittoriana. Già dagli anni Trenta dell'Ottocento il gas era ampiamente utilizzato per l'illuminazione stradale, ma la sua diffusione negli interni avvenne in modo graduale e selettivo. Le abitazioni aristocratiche e borghesi disponevano di lampade a gas nelle stanze principali: salotti, sale da pranzo, corridoi. Il gas era fornito da compagnie private e il suo utilizzo comportava costi non trascurabili, oltre a rischi concreti come fughe, incendi o intossicazioni. Per questo motivo molte famiglie limitavano l'uso del gas alle ore serali e solo in alcune stanze. Nelle case più modeste il gas era spesso assente. L'illuminazione continuava a basarsi su candele, lampade a olio o a petrolio. Questi sistemi richiedevano manutenzione quotidiana, pulizia degli stoppini e una costante attenzione per evitare incendi. Anche nelle case dove il gas era presente, candele e lampade tradizionali continuavano a essere usate come integrazione o riserva."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Elettricità: un'eccezione, non la norma"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Alla fine del XIX secolo l'elettricità era ancora una rarità nel contesto domestico londinese. I primi impianti elettrici erano sperimentali e concentrati in edifici pubblici, teatri, grandi magazzini, stazioni e alcune residenze eccezionalmente moderne. Solo alcune dimore aristocratiche o case di ricchi industriali, soprattutto nelle zone più nuove e prestigiose, potevano vantare l'illuminazione elettrica. Anche in questi casi l'elettricità era spesso limitata a poche stanze di rappresentanza e conviveva con il gas. Per la stragrande maggioranza della popolazione londinese, l'elettricità restava un'idea futuristica, associata al progresso, alla scienza e talvolta a un certo timore. Non faceva parte della vita quotidiana."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Come si arrangiavano i ceti popolari"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Chi non aveva accesso a queste tecnologie sviluppava una quotidianità fatta di adattamento e fatica. L'acqua veniva razionata, scaldata sul fuoco, conservata con attenzione. L'igiene personale era meno frequente e spesso stagionale. L'illuminazione limitava le attività serali e scandiva i ritmi della giornata. Questa distanza tecnologica non era solo una questione di comodità, ma di status sociale visibile. Avere acqua corrente, gas o elettricità significava appartenere a un mondo diverso, più sicuro, più sano, più rispettabile. La tecnologia domestica diventava così un segno concreto della divisione di classe, percepibile nella vita di ogni giorno, dentro le case prima ancora che nelle strade."
+        }
+      ]
+    }
+  ]
+}

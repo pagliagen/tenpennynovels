@@ -1,0 +1,543 @@
+{
+  "type": "doc",
+  "content": [
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Il Folklore nella Londra del 1895"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Il folklore nella Londra del 1895 non è una disciplina strutturata: le credenze popolari circolano per tradizione orale, articoli sensazionalistici e conferenze pubbliche. La città vive una fase in cui la scienza sta ancora definendo i criteri di prova e affidabilità, come mostrano gli esperimenti e i dibattiti condotti attorno alle sedute spiritiche, osservate e testate da scienziati attraverso misurazioni e strumenti che rivelano quanto fossero sottili i confini tra curiosità scientifica e cautela metodologica."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Allo stesso tempo, la stampa popolare pubblica resoconti sensazionalistici di apparizioni, fenomeni insoliti e testimonianze anonime, contribuendo a un clima dove ciò che accade nei vicoli o nelle case vecchie non viene liquidato come fantasia, ma trattato come un fatto da interpretare."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Nei quartieri poveri la popolazione usa racconti, presagi e segni come parte del proprio modo di comprendere malattie improvvise, incidenti sul lavoro o il comportamento imprevedibile della città; credere per loro non è indice di ingenuità, ma un adattamento funzionale alla precarietà quotidiana."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Nella borghesia, invece, la posizione è più ambigua: ci si dichiara razionali e diffidenti, ma si continua a usare un linguaggio modellato da simboli e narrazioni ereditate, e l'interesse verso sedute, cronache insolite o fenomeni mal documentati non contraddice affatto l'identità moderna, purché resti confinato al discorso colto dei salotti. L'interesse dei colti, quindi, non appare incompatibile con un'identità \"razionale\": ciò che cambia è il modo in cui se ne parla, non l'interesse di fondo. Nei circoli intellettuali, la questione si sposta dalla credenza alla classificazione: la possibilità che certi fenomeni possano essere studiati, misurati o esclusi con metodo diventa più rilevante della loro presunta natura, e il dibattito ruota attorno ai limiti stessi dell'osservazione."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Il lavoro della Society for Psychical Research, nata negli anni precedenti e ancora attiva nel '95, testimonia come il confine fra indagine, curiosità e scetticismo fosse fluido: la questione non è più stabilire se un fenomeno sia vero o falso, ma se possa essere compreso e classificato."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Immaginario letterario nella Londra del 1895"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "In questo clima, anche la letteratura rielabora nei romanzi, nei feuilleton e nei racconti d'indagine gli stessi dubbi e ambiguità che circolano nelle strade. Accanto a queste fonti informali, la narrativa dell'epoca ha già introdotto alcune figure sovrannaturali che hanno influenzato in parte l'immaginazione collettiva. Le figure più radicate non sono necessariamente mostri definiti, ma presenze ibride nate da paure collettive e dicerie."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 3
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Il Vampiro"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "La figura del vampiro esiste nell'Ottocento, ma non ha ancora assunto la forma che diventerà canonica. I londinesi del 1895 potrebbero aver sentito parlare del tema grazie a:"
+        }
+      ]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Leggende provenienti dall'Europa orientale o dalle colonie."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Racconti popolari diffusi nei quartieri immigrati."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Varney the Vampire (1845), romanzo a puntate molto lungo e di bassa qualità, conosciuto soprattutto da chi frequentava la narrativa popolare."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Carmilla di Sheridan Le Fanu (1872), più elegante e inquietante, ma noto soprattutto agli appassionati di letteratura gotica."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Il vampiro non è ancora una creatura iconica. Esiste, ma senza tratti fissi. Non c'è un'immagine universale: alcuni lo pensano come un revenant, altri come un nobile pallido, altri ancora come un mostro notturno. Il nome stesso non richiama necessariamente un'immagine precisa."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 3
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Frankenstein"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Il romanzo di Mary Shelley, pubblicato nel 1818, è noto da decenni. La creatura non è considerata parte del folklore, ma un simbolo letterario. Fra chi legge romanzi o segue gli adattamenti teatrali, l'idea di un corpo rianimato tramite esperimenti scientifici è presente e riconoscibile. La maggior parte delle persone però ne conosce una versione distorta e spettacolarizzata."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 3
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Il dottor Jekyll"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Strange Case of Dr Jekyll and Mr Hyde (1886) ha avuto un impatto più immediato del romanzo di Shelley. È entrato nei giornali, nelle conversazioni e perfino nel linguaggio comune. Nonostante ciò, la storia è percepita come una parabola morale, non come un fatto reale. La figura del doppio, dell'uomo perbene che nasconde una natura violenta, si è radicata in modo forte, soprattutto dopo gli omicidi di Jack lo Squartatore."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 3
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "I fantasmi vittoriani"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Le storie di fantasmi sono molto più diffuse di qualunque creatura mostruosa. Riviste, giornali e conferenze le trattano con frequenza. Sono figure che variano: apparizioni domestiche, presenze in case abbandonate, ombre lungo le rive del Tamigi. Non esiste un modello unico, ma la paura dei morti che tornano è familiare in tutta la società londinese."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Superstizioni e leggende popolari"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Le superstizioni e le leggende popolari permeano la vita quotidiana dei londinesi di fine Ottocento, intrecciandosi con le paure, i rituali e la spiegazione degli eventi inspiegabili. Ogni quartiere, ogni comunità porta con sé storie, segnali e credenze che offrono interpretazioni alternative ai drammi della città moderna, fungendo da bussola nelle incertezze della metropoli vittoriana."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 3
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Presagi, maledizioni e segni funesti"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "I londinesi danno grande importanza ai segnali interpretati come portatori di sventura. Questi elementi non derivano da testi accademici, ma da tradizioni popolari radicate nei quartieri operai. I più diffusi sono:"
+        }
+      ]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "animali considerati emissari della morte, come il corvo o il cane nero;"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "orologi fermi senza motivo;"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "specchi rotti o coperti durante un lutto;"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "suoni improvvisi nelle case, attribuiti a \"presenze\"."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 3
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Le fetch e le apparizioni familiari"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Diffusa soprattutto nelle comunità irlandesi: la figura di una sorta di doppio che appare prima della morte di una persona. Non è considerato un fantasma, ma un segno infausto collegato alla vita della vittima. Londra, con la forte immigrazione irlandese post carestia, ne conserva molte varianti."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 3
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "La Banshee e gli spiriti lamentosi"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Sempre provenienti dall'Irlanda e dalla Scozia. Le storie parlano di presenze che annunciano un lutto o un disastro attraverso pianti, urla o canti al confine tra umano e animale. Nelle zone più povere, soprattutto i vicinati con forte componente celtica, la leggenda è accettata come parte della vita quotidiana."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 3
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Il Black Dog dell'East End"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Molto più urbano rispetto a Banshee e fetch, il cane nero è una delle figure più comuni nella superstizione londinese. È una presenza tanto popolare quanto indefinita. Le caratteristiche cambiano a seconda del quartiere: è enorme e silenzioso nelle zone portuali; veloce come un'ombra nei vicoli dell'East End; associato ai suicidi sul ponte di Blackfriars."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 3
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Le creature dell’acqua"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Il Tamigi è al centro di molti racconti che mescolano superstizione, condizioni del fiume e suggestioni generate dalla nebbia. Le paure nascono da suggestioni come forme scure che emergono durante la nebbia; figure che trascinano giù chi si avvicina al fiume; voci che imitano persone familiari, udite da marinai o scaricatori di porto."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 3
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Le fair folk delle comunità scozzesi e delle Highlands"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Non fate benevole, ma entità inclini a inganni e rapimenti. Non sono considerate reali, ma la storia del changeling è nota quasi ovunque e nella Londra vittoriana sopravvive una versione urbanizzata del mito. Alcune versioni parlano di bambini \"cambiati\"; incontri notturni nel verde dei nuovi parchi cittadini; rumori dentro case dove non ci sono segni di effrazione."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "L'impero porta in città racconti da India, Africa occidentale e Caraibi. Queste leggende restano spesso circoscritte alle comunità d'origine, ma possono filtrare nei porti e nei mercati. Gli esempi più diffusi, pur distorti, includono: spiriti ancestrali connessi agli oggetti portati in patria dagli ufficiali; figure notturne che proteggono o vendicano comunità oppresse; storie su creature del bush africano, dell'India rurale o dei Caraibi, riportate e reinterpretate dai soldati."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 3
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "La figura dell’uomo-bestia"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Non è un mostro codificato, ma un'idea ricorrente. Alcuni di questi racconti circolano già prima di Jekyll & Hyde, altri ne sono stati rafforzati. In una città che vive ancora l'impatto degli omicidi di Whitechapel, qualunque rumore nei vicoli può essere associato a: assassini animaleschi; uomini deformi o figure vestite di stracci che non sembrano davvero umane."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 3
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Il sonnambulismo e le \"malattie della mente\""
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "La scienza psichiatrica non è ancora un punto fermo, e questo alimenta superstizioni. Molti comportamenti inspiegabili sono attribuiti a stati alterati:"
+        }
+      ]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "sonnambuli che camminano in strada e vengono scambiati per spiriti;"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "persone che parlano da sole nei cortili e vengono credute possedute;"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "crisi nervose che generano racconti di possessione."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

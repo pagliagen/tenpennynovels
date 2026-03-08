@@ -18,7 +18,7 @@
       "content": [
         {
           "type": "text",
-          "text": "Ten Penny Novels utilizza un adattamento del Basic Role Playing (BRP), ottimizzato per il gioco by chat. È un sistema percentuale: tutte le caratteristiche e abilità sono espresse con valori da 01 a 99, che rappresentano la probabilità di riuscita in una determinata azione."
+          "text": "Ten Penny Novels utilizza un adattamento del Basic Role Playing (BRP), il celebre sistema di gioco di ruolo creato da Chaosium negli anni Ottanta e reso celebre da titoli come Call of Cthulhu e RuneQuest. Il BRP è stato scelto per la sua eleganza e immediatezza: è un sistema percentuale, il che significa che tutte le caratteristiche e le abilità sono espresse con valori compresi tra 01 e 99, che rappresentano direttamente la probabilità percentuale di riuscita in una determinata azione. Se un personaggio possiede un'abilità al 45%, significa che ha il 45% di possibilità di riuscire in quell'azione quando il dado viene lanciato. Questa trasparenza rende il sistema intuitivo sia per i giocatori esperti sia per i neofiti: non servono tabelle complesse o calcoli elaborati, basta confrontare il risultato del dado con il punteggio dell'abilità. L'adattamento per il gioco by chat è stato curato nei minimi dettagli per garantire fluidità narrativa anche in un formato testuale asincrono, dove i giocatori potrebbero non essere tutti collegati contemporaneamente. Le meccaniche sono state semplificate dove necessario per evitare rallentamenti, mantenendo però la profondità strategica che rende il BRP uno dei sistemi più apprezzati nella storia del gioco di ruolo."
         }
       ]
     },
@@ -27,7 +27,7 @@
       "content": [
         {
           "type": "text",
-          "text": "Ogni personaggio è definito da un insieme di caratteristiche (Forza, Educazione, Potere, ecc.) che rappresentano le doti innate, e da un gruppo di abilità che descrivono le competenze apprese nel corso della vita."
+          "text": "Ogni personaggio è definito da un insieme di caratteristiche fondamentali — Forza (FOR), Costituzione (COS), Taglia (TAG), Destrezza (DES), Aspetto (ASP), Educazione (EDU), Intelligenza (INT) e Potere (POT) — che rappresentano le doti innate e le qualità intrinseche dell'individuo. Queste caratteristiche sono determinate al momento della creazione del personaggio e riflettono il patrimonio genetico, l'ambiente in cui è cresciuto e le esperienze formative della sua giovinezza. A fianco delle caratteristiche si trovano le abilità, che descrivono le competenze specifiche apprese nel corso della vita attraverso studio, addestramento, pratica sul campo o semplice esperienza quotidiana. Mentre le caratteristiche cambiano raramente nel corso del gioco — a meno di eventi traumatici, malattie o interventi soprannaturali — le abilità possono crescere e svilupparsi man mano che il personaggio accumula esperienza. Nella Londra vittoriana del 1895, le abilità riflettono il ventaglio di competenze tipiche dell'epoca: dalla conoscenza della legge alla capacità di cavalcare, dall'arte della persuasione alla padronanza delle armi da fuoco, dalla medicina rudimentale alla navigazione delle complesse convenzioni sociali dell'era. Ogni abilità racconta una parte della storia del personaggio e del mondo in cui vive."
         }
       ]
     },
@@ -36,7 +36,7 @@
       "content": [
         {
           "type": "text",
-          "text": "Al momento della creazione, ogni giocatore sceglie un'esperienza pregressa (mestiere o background). Questa scelta determina i requisiti minimi di alcune abilità, eventuali abilità bonus e la rete iniziale di contatti a disposizione del personaggio. In questo modo il passato influenza direttamente le competenze di partenza e le opportunità narrative durante il gioco."
+          "text": "Al momento della creazione, ogni giocatore sceglie un'esperienza pregressa, ovvero un mestiere o un background che definisce il passato del personaggio prima dell'inizio delle avventure in gioco. Questa scelta è fondamentale perché determina i requisiti minimi di alcune abilità — garantendo che il personaggio possieda le competenze coerenti con la propria storia — eventuali abilità bonus che riflettono specializzazioni particolari, e la rete iniziale di contatti a disposizione del personaggio nel tessuto sociale della Londra vittoriana. Un ex soldato dell'Impero, ad esempio, avrà competenze nelle armi da fuoco e nel combattimento corpo a corpo, ma anche una rete di vecchi commilitoni e ufficiali che potrebbe rivelarsi preziosa durante le indagini. Un medico avrà accesso alle strutture ospedaliere e alla comunità scientifica, mentre un giornalista conoscerà informatori, tipografi e figure chiave della Fleet Street. In questo modo il passato influenza direttamente le competenze di partenza e le opportunità narrative durante il gioco, creando personaggi già radicati nel mondo di gioco fin dal primo momento. La scelta dell'esperienza pregressa non è solo meccanica ma anche narrativa: definisce chi era il personaggio prima che la storia iniziasse, quali cicatrici porta con sé, quali relazioni ha costruito e quali porte gli si possono aprire — o chiudere — nella caotica e affascinante metropoli di fine Ottocento."
         }
       ]
     },
@@ -45,7 +45,7 @@
       "content": [
         {
           "type": "text",
-          "text": "Le abilità non partono tutte allo stesso livello:"
+          "text": "Le abilità non partono tutte allo stesso livello, e questa differenziazione riflette il realismo del sistema: nella vita reale, alcune capacità sono più naturali e comuni di altre, mentre certe competenze richiedono anni di studio e pratica dedicata per essere anche solo sfiorate. Il sistema BRP cattura questa sfumatura attraverso tre categorie di valori iniziali:"
         }
       ]
     },
@@ -60,7 +60,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Alcune hanno un valore base più alto, perché rappresentano capacità comuni che chiunque possiede almeno in forma rudimentale. Anche senza addestramento, una persona può cavarsela in parte..\n"
+                  "text": "Alcune abilità hanno un valore base più alto, perché rappresentano capacità comuni che chiunque possiede almeno in forma rudimentale, indipendentemente dalla formazione ricevuta. Anche senza addestramento specifico, una persona può cavarsela in parte: sa nuotare almeno quel tanto da non affogare in acque tranquille, è in grado di nascondersi dietro un muro, può tentare di convincere qualcuno con un argomento ragionevole, oppure sa orientarsi per le strade della propria città. Queste abilità riflettono le competenze di sopravvivenza quotidiana che ogni essere umano sviluppa naturalmente crescendo nella società vittoriana, dove la vita stessa è una scuola costante. Il valore base più alto indica che, anche con un minimo di fortuna, il personaggio ha una possibilità concreta di riuscita."
                 }
               ]
             }
@@ -74,7 +74,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Alcune abilità derivano direttamente da una caratteristica: il loro valore iniziale corrisponde a una frazione della caratteristica collegata (es. Lingua madre = EDU ÷ 2, inserire almeno un altro esempio).\n"
+                  "text": "Alcune abilità derivano direttamente da una caratteristica: il loro valore iniziale corrisponde a una frazione della caratteristica collegata, creando un legame organico tra le doti naturali del personaggio e le sue competenze pratiche. Ad esempio, Lingua Madre parte da un valore pari a EDU ÷ 2, riflettendo il fatto che la padronanza della propria lingua dipende in gran parte dal livello di istruzione ricevuta. Allo stesso modo, Schivare parte da DES ÷ 2, poiché la capacità di evitare un colpo o un pericolo è legata alla prontezza fisica e ai riflessi del personaggio. Questo meccanismo garantisce che i personaggi con caratteristiche elevate in un determinato ambito abbiano un vantaggio naturale nelle abilità correlate, senza però rendere inutile l'investimento in addestramento e pratica."
                 }
               ]
             }
@@ -88,7 +88,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Tutte le altre abilità iniziano da 01%, a indicare che solo attraverso studio, pratica o esperienze dirette possono svilupparsi."
+                  "text": "Tutte le altre abilità iniziano da 01%, a indicare che solo attraverso studio, pratica o esperienze dirette possono svilupparsi in modo significativo. Queste sono le competenze specialistiche — la chirurgia, la conoscenza delle lingue straniere, la capacità di pilotare un'imbarcazione, l'arte della contraffazione, la perizia legale — che richiedono un impegno consapevole e prolungato per essere acquisite. Un personaggio che non ha mai studiato medicina non può improvvisarsi chirurgo, così come un uomo che non ha mai impugnato un fioretto non può pretendere di duellare con un maestro d'armi. Il valore iniziale di 01% rappresenta la pura fortuna: una possibilità remota, quasi miracolosa, che le cose vadano per il verso giusto anche senza alcuna competenza reale."
                 }
               ]
             }
@@ -101,7 +101,16 @@
       "content": [
         {
           "type": "text",
-          "text": "Quando un'azione ha un esito incerto, il Master può richiedere una prova di abilità.\nSe il risultato del dado da 100 è pari o inferiore al punteggio dell'Abilità o della Caratteristica utilizzata, il personaggio ottiene un successo. Se il risultato è superiore al punteggio, l'azione termina con un fallimento."
+          "text": "Quando un'azione ha un esito incerto e le sue conseguenze sono narrativamente rilevanti, il Master può richiedere una prova di abilità. Questa è la meccanica fondamentale del gioco: il giocatore lancia un dado percentuale (d100, ottenuto combinando due dadi a dieci facce, uno per le decine e uno per le unità) e confronta il risultato con il punteggio dell'abilità o della caratteristica utilizzata. Se il risultato del dado è pari o inferiore al punteggio, il personaggio ottiene un successo: l'azione riesce come desiderato, e il giocatore ha la libertà di descriverne l'esecuzione nei dettagli. Se il risultato è superiore al punteggio, l'azione termina con un fallimento, e il Master descrive le conseguenze — che possono variare da un semplice inconveniente a una complicazione seria, a seconda del contesto e della gravità della situazione. È importante ricordare che il Master non è obbligato a richiedere un tiro per ogni azione: le azioni ordinarie e prive di rischio rilevante si risolvono automaticamente con la narrazione. I tiri sono riservati ai momenti di tensione, incertezza e pericolo, quando il destino del personaggio è davvero in bilico."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Nel contesto del gioco by chat, le prove di abilità vengono gestite attraverso il sistema di dadi integrato nella piattaforma. Il giocatore descrive l'azione che intende compiere, il Master valuta quale abilità sia pertinente e la difficoltà della prova, e il sistema genera automaticamente il risultato del dado percentuale. Questo processo, pur essendo mediato dalla tecnologia, mantiene intatta l'emozione del tiro: quel momento di suspense in cui il destino del personaggio pende da un filo, sospeso tra il trionfo e il disastro. I giocatori sono incoraggiati a descrivere le proprie azioni prima di conoscere l'esito del dado, per mantenere la narrazione fluida e coinvolgente."
         }
       ]
     },
@@ -122,7 +131,7 @@
       "content": [
         {
           "type": "text",
-          "text": "Ogni tiro percentuale può generare quattro possibili esiti."
+          "text": "Ogni tiro percentuale può generare diversi possibili esiti, ciascuno con implicazioni narrative differenti. Il sistema dei gradi di successo è una delle caratteristiche più eleganti del BRP: non esiste solo il bianco e il nero, il riuscito e il fallito, ma un'intera scala di sfumature che permette al Master e ai giocatori di costruire narrazioni più ricche, dettagliate e imprevedibili. Un ladro che cerca di scassinare una serratura può riuscirci a malapena, con grande sforzo e rumore, oppure può aprirla con la grazia silenziosa di un artista — e la differenza tra questi due esiti è determinata proprio dal grado di successo ottenuto."
         }
       ]
     },
@@ -137,7 +146,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Successo normale: il risultato è pari o inferiore al valore dell'abilità. L'azione riesce normalmente."
+                  "text": "Successo normale: il risultato del dado è pari o inferiore al valore dell'abilità. L'azione riesce normalmente, senza complicazioni particolari ma anche senza risultati eccezionali. Il personaggio porta a termine ciò che si era prefisso con competenza ordinaria. Ad esempio, un investigatore con Indagare al 55% che ottiene un 42 trova gli indizi che cercava nella scena del crimine, ma nulla di più di quanto ci si aspetterebbe da un esame accurato. È l'esito più comune e rappresenta il funzionamento standard delle competenze del personaggio."
                 }
               ]
             }
@@ -151,7 +160,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Successo arduo: il risultato al dado è pari o inferiore al 50% dell'abilità."
+                  "text": "Successo arduo: il risultato al dado è pari o inferiore al 50% del valore dell'abilità (arrotondato per difetto). Questo grado indica che il personaggio ha eseguito l'azione con notevole maestria, superando le aspettative. In termini pratici, il successo arduo viene richiesto dal Master quando le circostanze rendono l'azione significativamente più difficile del normale: tentare di decifrare un documento scritto in un codice complesso, convincere un testimone ostile a collaborare, o mantenere l'equilibrio su una superficie ghiacciata durante un inseguimento notturno per le strade di Whitechapel. Ad esempio, se un personaggio ha Furtività al 60%, il successo arduo si ottiene con un risultato pari o inferiore a 30."
                 }
               ]
             }
@@ -165,7 +174,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Successo estremo: il risultato al dado è pari o inferiore al 25% dell'abilità."
+                  "text": "Successo estremo: il risultato al dado è pari o inferiore al 25% del valore dell'abilità (arrotondato per difetto). Il successo estremo rappresenta un'impresa ai limiti delle capacità umane, un momento in cui il personaggio supera ogni aspettativa e compie qualcosa di straordinario. Il Master richiede questo grado di successo solo per azioni che rasentano l'impossibile o che richiedono una perfezione assoluta. Ad esempio, con Medicina al 60%, il successo estremo si ottiene con un risultato di 15 o inferiore. Un chirurgo che ottiene un successo estremo potrebbe salvare un paziente che tutti davano per spacciato, eseguendo un'operazione impeccabile nella luce tremolante di una lampada a gas."
                 }
               ]
             }
@@ -179,7 +188,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Successo critico (facendo 01% al dado): indipendentemente dal valore dell'abilità, il risultato 01% rappresenta un evento speciale. L'azione riesce e produce anche un vantaggio imprevisto che può essere un indizio extra, un effetto collaterale positivo, un imprevisto che gioca a favore del personaggio."
+                  "text": "Successo critico (ottenendo 01 al dado): indipendentemente dal valore dell'abilità, il risultato 01 rappresenta un evento speciale, un allineamento perfetto di fortuna, talento e circostanze favorevoli. L'azione non solo riesce in modo impeccabile, ma produce anche un vantaggio imprevisto che arricchisce la narrazione: potrebbe trattarsi di un indizio extra che apre una pista completamente nuova, un effetto collaterale positivo come l'ammirazione di un testimone che diventa un alleato, o un imprevisto fortunato che gioca a favore del personaggio — come trovare una lettera compromettente nascosta nel fodero di un libro mentre si cercava tutt'altro. Il successo critico è il momento di gloria del personaggio, l'istante in cui il destino sembra sorridergli, e il Master è incoraggiato a renderlo memorabile con descrizioni vivide e conseguenze narrative significative."
                 }
               ]
             }
@@ -193,7 +202,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Fallimento: il risultato è superiore al valore dell'abilità. L'azione non riesce, con conseguenze proporzionate."
+                  "text": "Fallimento: il risultato del dado è superiore al valore dell'abilità. L'azione non riesce, e le conseguenze sono proporzionate alla gravità della situazione e al contesto narrativo. Un fallimento nel tentativo di scassinare una serratura potrebbe significare semplicemente che il grimaldello non fa presa, mentre un fallimento nel tentativo di attraversare un tetto durante un inseguimento potrebbe comportare una caduta dolorosa. Il Master ha la discrezionalità di calibrare le conseguenze del fallimento in base alla situazione: non ogni insuccesso deve essere catastrofico, ma ogni insuccesso deve avere un peso narrativo. Il fallimento è parte integrante della storia e spesso genera le svolte più interessanti e memorabili."
                 }
               ]
             }
@@ -207,7 +216,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Fallimento critico: il risultato è 100 e l'azione fallisce in modo disastroso, con conseguenze peggiori del normale."
+                  "text": "Fallimento critico (ottenendo 100 al dado): l'azione fallisce in modo disastroso, con conseguenze peggiori del normale che possono mettere in pericolo il personaggio stesso o i suoi alleati. Un fallimento critico nel tentativo di sparare a un avversario potrebbe significare che l'arma si inceppa o che il proiettile colpisce un innocente; un fallimento critico in una prova di Persuasione potrebbe trasformare un potenziale alleato in un nemico giurato. Il fallimento critico rappresenta il momento in cui tutto va storto nel modo peggiore possibile, ed è speculare al successo critico: se il 01 è il tocco del destino benevolo, il 100 è lo scherzo crudele della sorte. Narrativamente, i fallimenti critici sono spesso i momenti più memorabili di una partita, quelli che i giocatori ricorderanno e racconteranno per anni."
                 }
               ]
             }
@@ -220,7 +229,7 @@
       "content": [
         {
           "type": "text",
-          "text": "Il master richiede un successo Estremo per azioni che rasentano l'impossibile. Ad esempio, per scalare una parete il giocatore deve superare un tiro di Atletica: con un successo Normale se la parete offre delle sporgenze oppure non è particolarmente scivolosa, con un successo Arduo se non ci sono appigli e la superficie è bagnata dall'acqua di una cascata vicina."
+          "text": "Il Master calibra la difficoltà di ogni prova scegliendo il grado di successo richiesto in base alle circostanze narrative e ambientali. Un successo Normale è sufficiente per azioni che presentano un rischio ma restano nell'ambito delle capacità ordinarie: scalare una parete che offre sporgenze naturali, convincere un negoziante a fare un piccolo sconto, o decifrare una calligrafia disordinata ma in lingua nota. Un successo Arduo viene richiesto quando le condizioni rendono l'azione significativamente più complessa: scalare quella stessa parete sotto la pioggia battente, senza appigli evidenti, con il fragore di una cascata che disorienta e le dita intorpidite dal freddo; oppure convincere un funzionario corrotto a tradire il suo protettore, o decifrare un documento parzialmente bruciato scritto in un dialetto arcaico. Il successo Estremo è riservato alle imprese che rasentano l'impossibile, i momenti in cui solo un talento eccezionale combinato con una dose straordinaria di fortuna può fare la differenza."
         }
       ]
     },
@@ -229,7 +238,7 @@
       "content": [
         {
           "type": "text",
-          "text": "Un successo Arduo o Estremo in una prova con difficoltà Normale indica, invece, che il personaggio è riuscito nell'impresa in modo eccezionale: potrebbe aver scalato la parete in meno tempo del previsto, aver notato un indizio extra in una prova di indagine."
+          "text": "Un successo Arduo o Estremo ottenuto in una prova con difficoltà Normale non viene sprecato: indica, invece, che il personaggio è riuscito nell'impresa in modo eccezionale, ben oltre quanto era strettamente necessario. Il Master è incoraggiato a premiare questi risultati superiori con benefici narrativi aggiuntivi: il personaggio potrebbe aver scalato la parete in metà del tempo previsto, senza fare il minimo rumore, arrivando in cima fresco e riposato; un'indagine sulla scena del crimine potrebbe rivelare non solo l'indizio cercato ma anche un dettaglio cruciale che nessun altro avrebbe notato — un'impronta parziale su un davanzale, una fibra di tessuto incastrata in una crepa del muro, il leggero odore di un profumo costoso in una stanza che non dovrebbe contenerne traccia. Questi successi superiori sono lo strumento del Master per premiare i personaggi competenti e per introdurre nella narrazione elementi imprevisti che arricchiscono la trama e mantengono alta l'attenzione dei giocatori."
         }
       ]
     },
@@ -238,7 +247,7 @@
       "content": [
         {
           "type": "text",
-          "text": "In caso di abilità contrapposte il grado di successo indica chi tra i due giocatori vince, indifferentemente dal livello di abilità, secondo questo schema:"
+          "text": "In caso di abilità contrapposte — quando due personaggi si sfidano direttamente, che sia un braccio di ferro, un duello di arguzie in un salotto dell'alta società, un inseguimento per i vicoli di Southwark, o un confronto di volontà durante un interrogatorio — il grado di successo indica chi tra i due contendenti prevale, indipendentemente dal livello assoluto delle rispettive abilità. Questo significa che un ladro con Furtività al 40% può sfuggire a un poliziotto con Percezione al 70%, se il ladro ottiene un grado di successo superiore. La gerarchia dei gradi segue questo schema preciso:"
         }
       ]
     },
@@ -253,7 +262,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Un successo Critico batte un successo Estremo."
+                  "text": "Un successo Critico batte qualsiasi altro grado di successo, incluso un successo Estremo. Il 01 al dado è il risultato supremo, e chi lo ottiene prevale sempre, a meno che anche l'avversario non ottenga un Critico — nel qual caso si confrontano i valori numerici."
                 }
               ]
             }
@@ -267,7 +276,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Estremo batte Arduo."
+                  "text": "Un successo Estremo batte un successo Arduo. Chi ha ottenuto un risultato pari o inferiore al 25% della propria abilità prevale su chi ha ottenuto un risultato compreso tra il 25% e il 50%, dimostrando una padronanza superiore della propria competenza in quel frangente."
                 }
               ]
             }
@@ -281,7 +290,7 @@
               "content": [
                 {
                   "type": "text",
-                  "text": "Arduo batte Normale."
+                  "text": "Un successo Arduo batte un successo Normale. Chi ha eseguito l'azione con maestria superiore prevale su chi l'ha eseguita in modo ordinario, anche se quest'ultimo possiede un valore di abilità più alto sulla carta. In questo modo il sistema premia la performance nel momento decisivo, non solo la competenza teorica."
                 }
               ]
             }
@@ -294,7 +303,7 @@
       "content": [
         {
           "type": "text",
-          "text": "A parità di successo vince chi ha ottenuto un risultato inferiore."
+          "text": "A parità di grado di successo — ad esempio, quando entrambi i contendenti ottengono un successo Normale — vince chi ha ottenuto un risultato numerico inferiore al dado, poiché un risultato più basso indica una riuscita più netta e convincente. Se anche i risultati numerici fossero identici, il Master dichiara una situazione di stallo: nessuno dei due prevale, e la scena si risolve con un pareggio narrativo che può portare a nuovi sviluppi — un inseguimento che continua, una trattativa che si arena, un duello che si prolunga. In questi casi, il Master può decidere di richiedere un nuovo tiro o di risolvere la situazione narrativamente, a seconda di ciò che meglio serve la storia."
         }
       ]
     },
@@ -315,7 +324,7 @@
       "content": [
         {
           "type": "text",
-          "text": "Quando un personaggio fallisce una prova (ma non in modo critico), il giocatore solo in quest può chiedere di forzare il tiro. Forzare significa ritentare la prova, ma con la consapevolezza che un secondo fallimento avrà conseguenze peggiori."
+          "text": "Quando un personaggio fallisce una prova di abilità — ma non in modo critico, poiché un fallimento critico preclude ogni possibilità di riprovare — il giocatore, esclusivamente durante le sessioni di quest guidate dal Master, può chiedere di forzare il tiro. Forzare significa ritentare la prova con rinnovata determinazione, impiegando più tempo, più sforzo o un approccio differente, ma con la piena consapevolezza che un secondo fallimento avrà conseguenze significativamente peggiori rispetto al primo. La decisione di forzare il tiro deve essere ponderata con attenzione: non è un semplice \"riprovare\", ma un'escalation deliberata in cui il personaggio mette in gioco qualcosa di più — la propria sicurezza, la propria reputazione, le proprie risorse — nel tentativo disperato di riuscire. Il Master deve sempre approvare la richiesta di forzatura, e può rifiutarla se le circostanze narrative non la giustificano: non si può forzare un tiro per ricordare un'informazione (o la si sa o non la si sa), né per percepire qualcosa che è già sfuggito completamente all'attenzione del personaggio."
         }
       ]
     },
@@ -324,7 +333,7 @@
       "content": [
         {
           "type": "text",
-          "text": "Il contesto deve giustificare la possibilità del nuovo tentativo: forzare una porta, insistere con un testimone, cercare ancora un indizio. Se anche il secondo tiro fallisce, il Master introduce un effetto negativo proporzionale all'azione: la porta può cedere ma ferire il personaggio, il testimone può offendersi e chiamare la polizia, l'indizio può andare perduto per sempre."
+          "text": "Il contesto narrativo deve giustificare in modo credibile la possibilità di un nuovo tentativo: forzare una porta significa prendere la rincorsa e scagliarsi contro di essa con tutta la forza disponibile, rischiando di ferirsi una spalla o di attirare l'attenzione di chiunque si trovi nelle vicinanze; insistere con un testimone reticente significa alzare la voce, fare pressione, magari lasciarsi sfuggire una minaccia velata che potrebbe ritorcersi contro; cercare ancora un indizio in una stanza già perquisita significa rovistare con frenesia, spostare mobili, strappare tappezzerie, con il rischio di distruggere prove delicate o di farsi scoprire. Se anche il secondo tiro fallisce, il Master introduce un effetto negativo concreto e proporzionale all'azione tentata: la porta può cedere ma una scheggia di legno ferisce il braccio del personaggio, causando una penalità temporanea; il testimone può offendersi mortalmente e chiamare la polizia, trasformando il personaggio da investigatore a sospettato; l'indizio può andare perduto per sempre, calpestato o contaminato dalla ricerca troppo aggressiva. Questi effetti negativi non sono punizioni gratuite, ma conseguenze narrative logiche che rendono il mondo di gioco più vivo e le decisioni dei giocatori più significative."
         }
       ]
     },
@@ -333,7 +342,16 @@
       "content": [
         {
           "type": "text",
-          "text": "Tiro libero Il tiro libero viene utilizzato quando l'esito di una situazione non dipende da capacità, caratteristiche o scelte del personaggio, ma da un fattore esterno, casuale o imponderabile. La decisione di ricorrere a un tiro libero spetta sempre al Master."
+          "text": "La forzatura è uno strumento potente nelle mani del giocatore, ma deve essere usata con giudizio. I giocatori esperti imparano rapidamente a valutare quando il rischio vale la posta in gioco e quando è più saggio accettare il fallimento e cercare una via alternativa. A volte, la scelta più intelligente è riconoscere i propri limiti e trovare un altro modo per raggiungere l'obiettivo — chiedere aiuto a un alleato con competenze diverse, cercare un percorso alternativo, o semplicemente aspettare un momento più propizio."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Il tiro libero è una meccanica distinta che viene utilizzata quando l'esito di una situazione non dipende dalle capacità, dalle caratteristiche o dalle scelte consapevoli del personaggio, ma da un fattore esterno, casuale o completamente imponderabile. La decisione di ricorrere a un tiro libero spetta sempre ed esclusivamente al Master, e non può essere richiesta dal giocatore. Esempi tipici includono: determinare se un personaggio si trova nel posto giusto al momento giusto per assistere a un evento casuale; stabilire se la pioggia smette di cadere prima che il personaggio raggiunga la sua destinazione; verificare se una lettera spedita tre giorni fa è già arrivata a destinazione attraverso il Royal Mail; o decidere se un passante casuale ha notato il personaggio mentre usciva furtivamente da una finestra. Il tiro libero usa sempre un dado percentuale, ma il valore di riferimento è stabilito dal Master in base alla probabilità logica dell'evento: un 50% per eventi equiprobabili, un 20% per eventi improbabili, un 80% per eventi quasi certi. In questo modo, anche il caso e la fortuna trovano il loro spazio nel sistema, aggiungendo un elemento di imprevedibilità che rende ogni sessione unica e irripetibile."
         }
       ]
     }

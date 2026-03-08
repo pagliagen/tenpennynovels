@@ -1,0 +1,110 @@
+{
+  "type": "doc",
+  "content": [
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Armi bianche"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Il lifepreserver è molto diffuso negli ambienti criminali urbani. È una corta mazza a una mano, progettata per colpire alla testa e stordire. La polizia lo utilizza in una versione simile, chiamata billy. Non è pensato per il combattimento prolungato né per la difesa personale. Serve a mettere fuori gioco una vittima in pochi secondi. La garrota è uno strumento semplice e brutale. Una corda o un filo robusto viene passato attorno al collo della vittima e tirato da dietro. È silenziosa, efficace, richiede vicinanza fisica e una certa determinazione. Molto diffuso è anche il bastone animato. All'esterno appare come un normale bastone da passeggio. All'interno nasconde una lama sottile. Alcuni modelli hanno lame corte, simili a pugnali. Altri sfruttano tutta la lunghezza del bastone. È un'arma elegante, facile da portare in pubblico, associata tanto a gentiluomini quanto a individui poco raccomandabili. La lancia da cavalleria resta in uso militare fino ai primi del Novecento. In ambiente urbano è rara, ma è possibile incontrarla negli arsenali o tra i reparti dell'esercito impiegati nelle colonie, in particolare in Africa. Accanto a queste armi più caratteristiche esiste una grande varietà di strumenti tradizionali. Archi di foggia antica, ingombranti e difficili da nascondere. Balestre ormai fuori uso, reperibili come curiosità o su commissione. Coltelli di ogni tipo, a serramanico, da caccia, Bowie. Spade di varia foggia, dal fioretto al machete. La Londra multietnica introduce anche armi inconsuete, importate da altre culture e talvolta modificate per l'uso urbano."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Pistole"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "L'arma da fuoco più comune è la rivoltella. I revolver sono diffusi in numerosi modelli e calibri. I più comuni vanno dal .38 al .45. Le versioni di dimensioni ridotte sono considerate adatte alle donne e possono essere occultate in borse o indumenti ampi. In Inghilterra sono apprezzate le pistole Adams e Webley. Quest'ultima è utilizzata anche dall'esercito. In America domina la Colt .45, che viene adottata anche dalla Marina britannica. Una pistola standard del periodo è difficile da nascondere sotto gli abiti. Per questo motivo le Derringer sono molto popolari come armi a scomparsa. Piccole, spesso a uno o due colpi, possono essere nascoste nelle maniche, negli stivali, nei cappelli o nelle cinture. Alcuni modelli arrivano a cinque colpi, ma restano armi di emergenza."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Fucili"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "I fucili a leva diventano popolari soprattutto negli Stati Uniti. Il Winchester è l'esempio più noto. Il sistema lever-action è più leggero dei modelli precedenti e consente una cadenza di fuoco più rapida. L'esercito britannico utilizza il Lee-Metford fino al 1895, sostituendolo poi con il Lee-Enfield. I calibri più comuni vanno dal .22 al .30, ma esistono armi di calibro maggiore, destinate alla caccia grossa e allo sport. Sono in grado di abbattere animali di grandi dimensioni. Esistono anche fucili ad aria compressa. Utilizzano una riserva d'aria per sparare dardi o proiettili. Sono silenziosi e sorprendentemente efficaci. La riserva consente in genere una ventina di colpi. È contenuta in una sfera posta sotto la canna. Alcuni modelli speciali sono progettati per un solo colpo e possono essere nascosti all'interno di bastoni da passeggio. Tra i criminali circola il nome di Von Herder come fabbricante rinomato, ma armi simili sono reperibili in diversi paesi europei. Gli shotgun esistono già, ma sono costosi e difficili da reperire. Restano armi rare, più comuni in ambito venatorio che urbano."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Mitragliatrici"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Le mitragliatrici più diffuse sono la Gatling, la Gardner e la Nordenfelt. Sono armi pesanti, azionate a manovella, con sistemi di alimentazione separati. La prima mitragliatrice completamente automatica viene progettata da Hiram Maxim nel 1884. L'esercito britannico la adotta nel 1891. L'impatto sul campo di battaglia è enorme. Per la popolazione civile l'accesso a queste armi è estremamente limitato. Possono essere ottenute solo tramite furti militari o contrabbando internazionale."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Esplosivi"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Un cittadino comune può teoricamente avere accesso a dinamite, nitroglicerina e ordigni rudimentali. In pratica ogni tentativo di acquisto attira attenzioni indesiderate. Negli ultimi decenni del secolo Londra è scossa da numerosi attentati dinamitardi. Scotland Yard sorveglia con attenzione il commercio di esplosivi e indaga rapidamente su qualsiasi richiesta sospetta. Procurarsi questi materiali senza una copertura credibile è estremamente rischioso."
+        }
+      ]
+    }
+  ]
+}
