@@ -221,6 +221,12 @@
   flex-shrink: 0;
 }
 
+.colExpand {
+  width: 64px;
+  flex-shrink: 0;
+  text-align: center;
+}
+
 .colActions {
   width: 80px;
   flex-shrink: 0;
@@ -281,6 +287,31 @@
   font-size: 13px;
   color: $color-text-secondary;
   font-family: monospace;
+}
+
+.expandToggle {
+  width: 64px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-xs;
+  background-color: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: $border-radius-sm;
+  font-size: 12px;
+  color: $color-text-muted;
+  cursor: pointer;
+  transition: all $transition-fast;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  &.expanded {
+    color: $color-primary;
+    border-color: rgba($color-primary, 0.4);
+  }
 }
 
 .subtypeActions {

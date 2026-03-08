@@ -69,7 +69,11 @@ done
 echo ""
 echo -e "${YELLOW}🌱 Step 6: Seeding documents...${NC}"
 npm run seed:dev:documents
-  
+
+echo ""
+echo -e "${YELLOW}🌱 Step 6: Seeding locations...${NC}"
+npm run seed:dev:locations  
+
 echo ""
 echo -e "${GREEN}✅ Reset and seed complete!${NC}"
 echo ""

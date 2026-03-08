@@ -46,6 +46,7 @@ $color-warning: #FFA748;
 
 $font-primary: 'Thrifted Attire', Georgia, 'Times New Roman', serif;
 $font-secondary: 'Les Mysteres de Paris', 'Thrifted Attire', Georgia, serif;
+$font-body: 'Bahnschrift', 'Segoe UI', Arial, sans-serif;
 $font-mono: 'Courier New', Courier, monospace;
 
 $font-size-xs: 12px;
@@ -185,5 +186,5 @@ $transition-opacity: opacity $transition-speed-normal $transition-easing;
 
 $scrollbar-width: 10px;
 $scrollbar-track-color: $color-primary-active;
-$scrollbar-thumb-color: rgba(#f5f5dc, 0.3);
-$scrollbar-thumb-hover-color: rgba(#f5f5dc, 0.5);
+$scrollbar-thumb-color: rgba(#f5f5dc, 0.45);
+$scrollbar-thumb-hover-color: rgba(#f5f5dc, 0.65);

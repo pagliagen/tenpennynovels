@@ -192,7 +192,7 @@ export async function createSubtype(data: { slug: string; title: string; type: s
 /**
  * Update subtype
  */
-export async function updateSubtype(id: string, data: { slug?: string; title?: string }): Promise<DocumentSubtype> {
+export async function updateSubtype(id: string, data: { slug?: string; title?: string; expandedByDefault?: boolean }): Promise<DocumentSubtype> {
   const response = await withRetry(() =>
     apiClient.patch<ApiResponse<DocumentSubtype>>(`/admin/subtypes/${id}`, data)
   );

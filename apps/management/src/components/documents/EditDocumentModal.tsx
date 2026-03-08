@@ -123,16 +123,13 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({
           />
         </div>
 
-        {/* Description Input */}
+        {/* Description Editor */}
         <div className={styles.descriptionSection}>
-          <label htmlFor="doc-description">Descrizione</label>
-          <textarea
-            id="doc-description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className={styles.descriptionInput}
-            placeholder="Inserisci descrizione (opzionale)..."
-            rows={3}
+          <label>Descrizione</label>
+          <DocumentContentEditor
+            contentDelta={description}
+            onChange={(html) => setDescription(html)}
+            htmlMode
           />
         </div>
 

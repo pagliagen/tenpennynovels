@@ -302,6 +302,7 @@ export class DocumentController {
             slug: subtype.slug,
             title: subtype.title,
             order: subtype.order,
+            expandedByDefault: subtype.expandedByDefault,
             documents: subtypeDocs
           });
         }

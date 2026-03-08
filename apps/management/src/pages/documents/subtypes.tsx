@@ -42,11 +42,13 @@ type DocumentType = 'ambientazione' | 'regolamento';
 function SortableSubtypeRow({
   subtype,
   onEdit,
-  onDelete
+  onDelete,
+  onToggleExpanded
 }: {
   subtype: DocumentSubtype;
   onEdit: (s: DocumentSubtype) => void;
   onDelete: (id: string) => void;
+  onToggleExpanded: (id: string, value: boolean) => void;
 }) {
   const {
     attributes,
@@ -71,6 +73,13 @@ function SortableSubtypeRow({
       <span className={styles.subtypeOrder}>#{subtype.order}</span>
       <span className={styles.subtypeTitle}>{subtype.title}</span>
       <span className={styles.subtypeSlug}>{subtype.slug}</span>
+      <button
+        className={`${styles.expandToggle} ${subtype.expandedByDefault ? styles.expanded : ''}`}
+        onClick={() => onToggleExpanded(subtype._id, !subtype.expandedByDefault)}
+        title={subtype.expandedByDefault ? 'Espanso in sidebar' : 'Chiuso in sidebar'}
+      >
+        {subtype.expandedByDefault ? '▼' : '▶'}
+      </button>
       <div className={styles.subtypeActions}>
         <button onClick={() => onEdit(subtype)} className={styles.editBtn} title="Modifica">
           ✏️
@@ -186,6 +195,19 @@ export default function SubtypesPage() {
       addNotification({
         type: 'error',
         message: error instanceof Error ? error.message : 'Errore nell\'eliminazione'
+      });
+    }
+  };
+
+  const handleToggleExpanded = async (id: string, value: boolean) => {
+    setLocalSubtypes(prev => prev.map(s => s._id === id ? { ...s, expandedByDefault: value } : s));
+    try {
+      await updateSubtype.mutateAsync({ id, data: { expandedByDefault: value } });
+    } catch (error) {
+      setLocalSubtypes(subtypes || []);
+      addNotification({
+        type: 'error',
+        message: error instanceof Error ? error.message : 'Errore nell\'aggiornamento'
       });
     }
   };
@@ -312,6 +334,7 @@ export default function SubtypesPage() {
                 <span className={styles.colOrder}>#</span>
                 <span className={styles.colTitle}>Titolo</span>
                 <span className={styles.colSlug}>Slug</span>
+                <span className={styles.colExpand}>Sidebar</span>
                 <span className={styles.colActions}>Azioni</span>
               </div>
               <SortableContext
@@ -324,6 +347,7 @@ export default function SubtypesPage() {
                     subtype={subtype}
                     onEdit={handleEdit}
                     onDelete={handleDelete}
+                    onToggleExpanded={handleToggleExpanded}
                   />
                 ))}
               </SortableContext>

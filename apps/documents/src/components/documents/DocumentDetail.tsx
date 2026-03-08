@@ -37,7 +37,12 @@ export function DocumentDetail({ data }: DocumentDetailProps): JSX.Element {
         <div className={showTOC ? styles.bodyLayout : styles.bodyLayoutFullWidth}>
           <div className={styles.body}>
             {document.description && (
-              <p className={styles.description}>{document.description}</p>
+              <div
+                className={styles.description}
+                dangerouslySetInnerHTML={{
+                  __html: DOMPurify.sanitize(document.description)
+                }}
+              />
             )}
             <div
               className={styles.documentContent}

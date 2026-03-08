@@ -8,6 +8,7 @@ import React, { useState } from 'react';
 import { createDocument, getSubtypes } from '@/lib/api/documents';
 import { useNotificationStore } from '@/store/notificationStore';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
+import { DocumentContentEditor } from './DocumentContentEditor';
 import styles from '@/styles/components/Modal.module.scss';
 
 interface CreateDocumentModalProps {
@@ -177,16 +178,14 @@ export function CreateDocumentModal({
             <small>Raggruppa il documento sotto questo sottotipo nella sidebar</small>
           </div>
 
-          {/* Description Field */}
+          {/* Description Editor */}
           <div className={styles.formField}>
-            <label htmlFor="description">Descrizione</label>
-            <textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Breve descrizione del documento"
-              rows={3}
-              disabled={isSubmitting}
+            <label>Descrizione</label>
+            <DocumentContentEditor
+              contentDelta={description}
+              onChange={(html) => setDescription(html)}
+              htmlMode
+              readOnly={isSubmitting}
             />
           </div>
 

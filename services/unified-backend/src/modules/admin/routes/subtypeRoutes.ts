@@ -113,7 +113,7 @@ router.patch('/:id',
   async (req: Request, res: Response): Promise<void> => {
     try {
       const { id } = req.params;
-      const { slug, title } = req.body;
+      const { slug, title, expandedByDefault } = req.body;
 
       const subtype = await DocumentSubtype.findById(id);
       if (!subtype) {
@@ -139,6 +139,7 @@ router.patch('/:id',
       }
 
       if (title) subtype.title = title;
+      if (typeof expandedByDefault === 'boolean') subtype.expandedByDefault = expandedByDefault;
       await subtype.save();
 
       // If slug changed, recalculate paths for all documents in this subtype

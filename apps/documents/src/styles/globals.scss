@@ -32,6 +32,14 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: 'Bahnschrift SemiLight';
+  src: url('/fonts/bahnschrift.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;  
+}
+
 // ========================================
 // CSS RESET
 // ========================================
@@ -63,7 +71,11 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
   position: relative;
-  background-color: #091918;
+  background-image: url('/images/documenti_background.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
 }
 
 // ========================================

@@ -1,7 +1,7 @@
 /**
  * TipTap WYSIWYG editor for document content
  */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
@@ -10,27 +10,32 @@ import Image from '@tiptap/extension-image';
 import TextStyle from '@tiptap/extension-text-style';
 import Color from '@tiptap/extension-color';
 import Highlight from '@tiptap/extension-highlight';
+import Table from '@tiptap/extension-table';
+import TableRow from '@tiptap/extension-table-row';
+import TableCell from '@tiptap/extension-table-cell';
+import TableHeader from '@tiptap/extension-table-header';
 import styles from './DocumentContentEditor.module.scss';
 
 interface DocumentContentEditorProps {
-  contentDelta: any;                    // TipTap JSON Delta
-  onChange: (delta: any) => void;       // Emit changes
+  contentDelta: any;
+  onChange: (delta: any) => void;
   readOnly?: boolean;
+  /** When true, contentDelta is treated as an HTML string and onChange emits HTML */
+  htmlMode?: boolean;
 }
 
 export const DocumentContentEditor: React.FC<DocumentContentEditorProps> = ({
   contentDelta,
   onChange,
-  readOnly = false
+  readOnly = false,
+  htmlMode = false
 }) => {
-  const [colorPickerOpen, setColorPickerOpen] = useState(false);
-
   const editor = useEditor({
-    immediatelyRender: false, // Fix SSR hydration mismatch
+    immediatelyRender: false,
     extensions: [
       StarterKit.configure({
         heading: {
-          levels: [2, 3]  // H2-H6 (H1 reserved for document title)
+          levels: [2, 3]
         }
       }),
       Link.configure({
@@ -49,24 +54,34 @@ export const DocumentContentEditor: React.FC<DocumentContentEditorProps> = ({
       Color,
       Highlight.configure({
         multicolor: true
-      })
+      }),
+      Table.configure({ resizable: true }),
+      TableRow,
+      TableCell,
+      TableHeader
     ],
     content: contentDelta,
     editable: !readOnly,
     onUpdate: ({ editor }) => {
-      onChange(editor.getJSON());
+      onChange(htmlMode ? editor.getHTML() : editor.getJSON());
     }
   });
 
-  // Update content when prop changes (for hierarchical editing)
   useEffect(() => {
-    if (editor && contentDelta) {
+    if (!editor || !contentDelta) return;
+
+    if (htmlMode) {
+      const currentHtml = editor.getHTML();
+      if (currentHtml !== contentDelta) {
+        editor.commands.setContent(contentDelta);
+      }
+    } else {
       const currentContent = editor.getJSON();
       if (JSON.stringify(currentContent) !== JSON.stringify(contentDelta)) {
         editor.commands.setContent(contentDelta);
       }
     }
-  }, [contentDelta, editor]);
+  }, [contentDelta, editor, htmlMode]);
 
   if (!editor) {
     return <div>Loading editor...</div>;
@@ -181,6 +196,16 @@ export const DocumentContentEditor: React.FC<DocumentContentEditorProps> = ({
             type="button"
           >
             {'<>'} Code
+          </button>
+
+          <div className={styles.separator} />
+
+          {/* Table */}
+          <button
+            onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
+            type="button"
+          >
+            ⊞ Table
           </button>
 
           <div className={styles.separator} />

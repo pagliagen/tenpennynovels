@@ -17,6 +17,7 @@ export interface DocumentSubtype {
   title: string;
   type: 'ambientazione' | 'regolamento';
   order: number;
+  expandedByDefault: boolean;
   createdAt?: string;
   updatedAt?: string;
 }

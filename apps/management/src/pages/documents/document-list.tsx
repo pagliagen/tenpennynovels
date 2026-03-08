@@ -5,7 +5,7 @@
  * Actions: create/edit/toggle/delete documents
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Head from 'next/head';
 import { ManagementLayout } from '@/components/layout/ManagementLayout';
 import { DocumentTreeView } from '@/components/documents/DocumentTreeView';
@@ -15,6 +15,7 @@ import { CreateDocumentModal } from '@/components/documents/CreateDocumentModal'
 import { useConfirm } from '@/hooks/useConfirm';
 import {
   useDocuments,
+  useSubtypes,
   useReorderSiblings,
   useDeleteDocument,
   useToggleDocumentVisibility,
@@ -23,6 +24,7 @@ import {
 import { useNotificationStore } from '@/store/notificationStore';
 import { useURLFilter } from '@/hooks/useURLFilter';
 import { setFilterInHash } from '@/lib/utils/urlFilters';
+import type { DocumentTreeNode } from '@/types/api/Document';
 import styles from '@/styles/pages/DocumentList.module.scss';
 
 export default function DocumentList() {
@@ -35,7 +37,10 @@ export default function DocumentList() {
   const [createDocModalOpen, setCreateDocModalOpen] = useState(false);
   const [selectedParentDocId, setSelectedParentDocId] = useState<string | null>(null);
 
+  const [activeSubtypeIds, setActiveSubtypeIds] = useState<Set<string> | null>(null);
+
   const { data, isLoading, error } = useDocuments({ type: typeFilter });
+  const { data: subtypes = [] } = useSubtypes(typeFilter);
   const reorderSiblings = useReorderSiblings();
   const deleteDocument = useDeleteDocument();
   const toggleDocumentVisibility = useToggleDocumentVisibility();
@@ -48,6 +53,39 @@ export default function DocumentList() {
       setFilterInHash({ type: 'ambientazione' });
     }
   }, []);
+
+  useEffect(() => {
+    setActiveSubtypeIds(null);
+  }, [typeFilter]);
+
+  const toggleSubtype = (subtypeId: string) => {
+    setActiveSubtypeIds(prev => {
+      const current = prev ?? new Set(subtypes.map(s => s._id));
+      const next = new Set(current);
+      if (next.has(subtypeId)) {
+        next.delete(subtypeId);
+      } else {
+        next.add(subtypeId);
+      }
+      return next;
+    });
+  };
+
+  const filteredDocuments = useMemo(() => {
+    const docs = data?.data ?? [];
+    const active = activeSubtypeIds ?? new Set(subtypes.map(s => s._id));
+    if (active.size === subtypes.length) return docs;
+
+    const filterTree = (nodes: DocumentTreeNode[]): DocumentTreeNode[] =>
+      nodes
+        .filter(node => node.subtype && active.has(node.subtype._id))
+        .map(node => ({
+          ...node,
+          children: filterTree(node.children)
+        }));
+
+    return filterTree(docs);
+  }, [data?.data, activeSubtypeIds, subtypes]);
 
   const handleTypeFilterChange = (type: 'ambientazione' | 'regolamento') => {
     setFilterInHash({ type });
@@ -160,7 +198,7 @@ export default function DocumentList() {
           </div>
         </header>
 
-        {/* Filters */}
+        {/* Type Filters */}
         <div className={styles.filters}>
           <button
             className={`${styles.filterButton} ${typeFilter === 'ambientazione' ? styles.active : ''}`}
@@ -176,12 +214,31 @@ export default function DocumentList() {
           </button>
         </div>
 
+        {/* Subtype Filters */}
+        {subtypes.length > 0 && (
+          <div className={styles.subtypeFilters}>
+            {subtypes.map(st => {
+              const active = activeSubtypeIds ?? new Set(subtypes.map(s => s._id));
+              const isActive = active.has(st._id);
+              return (
+                <button
+                  key={st._id}
+                  className={`${styles.subtypeButton} ${isActive ? styles.active : ''}`}
+                  onClick={() => toggleSubtype(st._id)}
+                >
+                  {st.title}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         {/* Tree View */}
         {isLoading ? (
           <div className={styles.loading}>Caricamento...</div>
         ) : (
           <DocumentTreeView
-            documents={data?.data ?? []}
+            documents={filteredDocuments}
             onCreateChildDocument={handleCreateChildDocument}
             onEditDocument={handleEditDocument}
             onEditDocumentHierarchical={handleEditDocumentHierarchical}

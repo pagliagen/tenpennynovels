@@ -19,6 +19,7 @@ export interface IDocumentSubtype extends MongooseDocument {
   title: string;
   type: DocumentType;
   order: number;
+  expandedByDefault: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -41,6 +42,10 @@ const DocumentSubtypeSchema = new Schema<IDocumentSubtype>(
     order: {
       type: Number,
       default: 0
+    },
+    expandedByDefault: {
+      type: Boolean,
+      default: true
     }
   },
   {

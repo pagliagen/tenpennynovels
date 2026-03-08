@@ -47,8 +47,7 @@ export function SubtypeTreeView({ subtypes, type, currentPath }: SubtypeTreeView
   const [expandedSubtypes, setExpandedSubtypes] = useState<Set<string>>(() => {
     const saved = loadFromStorage(type, 'subtypes');
     if (saved) return new Set(saved);
-    const COLLAPSED_BY_DEFAULT = ['approfondimenti'];
-    return new Set(subtypes.filter(s => !COLLAPSED_BY_DEFAULT.includes(s.slug)).map(s => s._id));
+    return new Set(subtypes.filter(s => s.expandedByDefault).map(s => s._id));
   });
   const isInitialMount = useRef(true);
 

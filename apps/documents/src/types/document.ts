@@ -26,6 +26,7 @@ export interface DocumentSubtype {
   title: string;
   type: DocumentType;
   order: number;
+  expandedByDefault: boolean;
   documents: SubtypeDocument[];
 }
 

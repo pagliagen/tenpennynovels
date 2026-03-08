@@ -302,7 +302,7 @@ export function useUpdateSubtype() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: { slug?: string; title?: string } }) =>
+    mutationFn: ({ id, data }: { id: string; data: { slug?: string; title?: string; expandedByDefault?: boolean } }) =>
       documentAPI.updateSubtype(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: documentKeys.subtypes });

@@ -7,7 +7,7 @@
  * **What is a Victorian Mask?**
  * A decorative overlay that shows the input value with Victorian-era styling:
  * - For text: Actual value with decorative font (via CSS)
- * - For password: Bullets (◆◆◆◆◆◆) instead of characters
+ * - For password: Bullets (✦✦✦✦✦✦) instead of characters
  * - For email: Email address with Victorian styling
  *
  * **Architecture**:

@@ -31,15 +31,16 @@
 }
 
 .stickyTitle {
-  font-family: $font-secondary;
+  font-family: $font-primary;
   font-size: $font-size-2xl;
   font-weight: $font-weight-bold;
-  color: $color-heading;
+  color: #025951;
   margin: 0;
   line-height: $line-height-tight;
   letter-spacing: $letter-spacing-wide;
   text-align: center;
   flex: 1;
+  text-transform: uppercase;
 
   @include mobile {
     font-size: $font-size-xl;
@@ -48,7 +49,7 @@
 }
 
 .titleDiamond {
-  color: $color-heading;
+  color: #025951;
   font-size: 0.6em;
   margin: 0 $spacing-sm;
   vertical-align: middle;
@@ -98,9 +99,52 @@
 .description {
   font-size: $font-size-md;
   color: $color-text-secondary;
-  line-height: $line-height-relaxed;
+  line-height: $line-height-normal;
   margin: $spacing-md 0 $spacing-lg 0;
   font-style: italic;
+
+  blockquote {
+    font-size: inherit;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: $font-weight-bold;
+    color: #c1272d;
+    background-color: unset;
+    border: none;
+    padding: unset;
+    position: relative;
+    padding-bottom: 20px;
+
+    &::before {
+      content: '';
+      display: inline-block;
+      width: 60px;
+      height: 60px; 
+      min-width: 60px;
+      min-height: 60px;
+      background-image: url('/images/nb_icon.png');
+      background-size: contain;
+      background-repeat: no-repeat;
+      margin-right: 10px;
+    }
+
+    &::after {
+      content: '';
+      background-image: url('/images/nb_border.png');
+      background-repeat: no-repeat;
+      background-size: contain;
+      height: 20px;
+      min-height: 20px;
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 50%;
+      background-position: bottom center;
+    }
+
+  }
 }
 
 // ========== BODY LAYOUT ==========
@@ -108,7 +152,7 @@
 .bodyLayout {
   display: grid;
   grid-template-columns: 1fr;
-  gap: $spacing-xl; 
+  gap: $spacing-xl;
 
   @include desktop {
     grid-template-columns: 1fr 220px;
@@ -136,65 +180,88 @@
 // ========== DOCUMENT CONTENT (dangerouslySetInnerHTML) ==========
 
 .documentContent {
+  font-family: $font-body;
   font-size: $font-size-base;
-  line-height: $line-height-relaxed;
-  color: $color-text-primary;
+  line-height: $line-height-normal;
+  color: #0d0d0d;
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     scroll-margin-top: calc(#{$header-height} + #{$sticky-bar-height} + #{$spacing-lg});
   }
 
   p {
     margin-bottom: $spacing-lg;
-    &:last-child { margin-bottom: 0; }
+
+    &:last-child {
+      margin-bottom: 0;
+    }
   }
 
   h1 {
-    font-family: $font-secondary;
+    font-family: $font-primary;
     font-size: $font-size-3xl;
     font-weight: $font-weight-bold;
-    color: $color-heading;
+    color: #025951;
     margin: $spacing-2xl 0 $spacing-lg 0;
     padding-bottom: $spacing-md;
     border-bottom: 2px solid $color-border;
 
-    &:first-child { margin-top: 0; }
+    &:first-child {
+      margin-top: 0;
+    }
 
-    @include mobile { font-size: $font-size-2xl; }
+    @include mobile {
+      font-size: $font-size-2xl;
+    }
   }
 
   h2 {
-    font-family: $font-secondary;
+    font-family: $font-primary;
     font-size: $font-size-2xl;
     font-weight: $font-weight-bold;
-    color: $color-heading;
+    color: #025951;
     margin-top: $spacing-2xl;
     margin-bottom: $spacing-md;
     padding-left: $spacing-md;
-    border-left: 4px solid $color-heading;
+    border-left: 4px solid #025951;
     line-height: $line-height-normal;
 
-    @include mobile { font-size: $font-size-xl; }
+    @include mobile {
+      font-size: $font-size-xl;
+    }
   }
 
   h3 {
-    font-family: $font-secondary;
+    font-family: $font-primary;
     font-size: $font-size-xl;
     font-weight: $font-weight-semibold;
-    color: $color-heading;
+    color: #025951;
     margin-top: $spacing-2xl;
     margin-bottom: $spacing-md;
   }
 
-  h4, h5, h6 {
-    font-family: $font-secondary;
-    color: $color-heading;
+  h4,
+  h5,
+  h6 {
+    font-family: $font-primary;
+    color: #025951;
     margin-top: $spacing-xl;
     margin-bottom: $spacing-md;
   }
 
-  h4 { font-size: $font-size-lg; }
-  h5, h6 { font-size: $font-size-base; }
+  h4 {
+    font-size: $font-size-lg;
+  }
+
+  h5,
+  h6 {
+    font-size: $font-size-base;
+  }
 
   a {
     color: $color-link;
@@ -208,17 +275,21 @@
     }
   }
 
-  strong, b {
+  strong,
+  b {
     font-weight: $font-weight-bold;
     color: $color-text-primary;
   }
 
-  ul, ol {
+  ul,
+  ol {
     margin-bottom: $spacing-lg;
     padding-left: $spacing-2xl;
   }
 
-  li { margin-bottom: $spacing-sm; }
+  li {
+    margin-bottom: $spacing-sm;
+  }
 
   blockquote {
     border-left: 4px solid $color-primary;
@@ -266,7 +337,8 @@
     margin: $spacing-lg 0;
     border: 1px solid $color-border;
 
-    th, td {
+    th,
+    td {
       padding: $spacing-sm $spacing-md;
       border: 1px solid $color-border;
       text-align: left;
@@ -304,14 +376,16 @@
   margin-top: $spacing-2xl;
 
   h2 {
-    font-family: $font-secondary;
+    font-family: $font-primary;
     font-size: $font-size-2xl;
-    color: $color-heading;
+    color: #025951;
     margin: 0 0 $spacing-xl 0;
     padding-bottom: $spacing-md;
     border-bottom: 2px solid $color-border;
 
-    @include mobile { font-size: $font-size-xl; }
+    @include mobile {
+      font-size: $font-size-xl;
+    }
   }
 }
 
