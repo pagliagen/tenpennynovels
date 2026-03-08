@@ -71,31 +71,6 @@ jobs:
           remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
           legacy_allow_rsa_hostkeys: true
 
-      - name: Check dependency changes
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          port: ${{ secrets.SSH_PORT }}
-          username: ${{ secrets.SSH_USERNAME }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            cd ~/tenpennynovels
-
-            # Load nvm and use correct Node version
-            export NVM_DIR="$HOME/.nvm"
-            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-            nvm use
-
-            echo "📦 Checking for package-lock.json changes..."
-            CHANGED=$(git diff --name-only HEAD@{1} HEAD 2>/dev/null | grep "package-lock.json" || true)
-            if [ -n "$CHANGED" ]; then
-              echo "✅ package-lock.json changed - dependencies will be reinstalled"
-              echo "DEPS_CHANGED=true" > ~/tenpennynovels/.deploy-state
-            else
-              echo "ℹ️  No package-lock.json changes detected"
-              echo "DEPS_CHANGED=false" > ~/tenpennynovels/.deploy-state
-            fi
-
       - name: Install dependencies
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -112,11 +87,16 @@ jobs:
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
             nvm use
 
-            if [ -f .deploy-state ]; then
-              source .deploy-state
+            # Detect changes by checksumming all package.json and package-lock.json files
+            NEW_HASH=$(find . -maxdepth 3 -name 'package.json' -o -name 'package-lock.json' | sort | xargs cat | sha256sum | cut -d' ' -f1)
+            OLD_HASH=""
+            if [ -f .deps-hash ]; then
+              OLD_HASH=$(cat .deps-hash)
             fi
 
-            if [ "$DEPS_CHANGED" = "true" ]; then
+            if [ "$NEW_HASH" != "$OLD_HASH" ]; then
+              echo "📦 Dependency files changed — installing..."
+
               echo "📦 Installing root dependencies..."
               npm install --production
 
@@ -132,10 +112,11 @@ jobs:
               for service in services/*/; do
                 if [ -f "${service}package.json" ]; then
                   echo "  → ${service}"
-                  # Install ALL deps (including devDependencies for build)
                   (cd "$service" && npm install)
                 fi
               done
+
+              echo "$NEW_HASH" > .deps-hash
               echo "✅ Dependencies installed"
             else
               echo "⏭️  Skipping dependency installation (no changes)"

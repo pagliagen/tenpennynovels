@@ -25,5 +25,7 @@ local-ai/clients.json
 .env.deploy
 .deploy-backup/
 .deploy-staging/
+.deps-hash
+.deploy-state
 
 out/
