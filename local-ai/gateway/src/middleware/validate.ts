@@ -52,6 +52,18 @@ export const qaAskSchema = z.object({
   }).optional(),
 });
 
+export const qaExtractKeywordsSchema = z.object({
+  question: z.string().min(1).max(2000),
+  answer: z.string().min(1).max(5000),
+});
+
+export const qaExtractInsightSchema = z.object({
+  question: z.string().min(1).max(2000),
+  existingAnswer: z.string().min(1).max(5000),
+  documentContent: z.string().min(1).max(5000),
+  documentTitle: z.string().min(1).max(500),
+});
+
 export const botCreateSchema = z.object({
   name: z.string().min(1).max(200),
   gender: z.enum(['male', 'female']).optional(),

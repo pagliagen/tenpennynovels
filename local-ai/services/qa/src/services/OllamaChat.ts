@@ -30,4 +30,25 @@ export class OllamaChat {
       tokensUsed: (response.eval_count || 0) + (response.prompt_eval_count || 0),
     };
   }
+
+  async chatJSON(systemPrompt: string, userMessage: string, maxTokens: number = 256): Promise<{ text: string; tokensUsed: number }> {
+    const response = await this.client.chat({
+      model: this.model,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userMessage },
+      ],
+      options: {
+        temperature: 0.3,
+        num_predict: maxTokens,
+      },
+      format: 'json',
+      keep_alive: -1,
+    });
+
+    return {
+      text: response.message.content.trim(),
+      tokensUsed: (response.eval_count || 0) + (response.prompt_eval_count || 0),
+    };
+  }
 }

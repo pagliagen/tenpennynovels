@@ -27,7 +27,7 @@ export function SearchBar({ placeholder = 'Cerca nei documenti...', className, a
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const { query, setQuery, isOpen, setIsOpen, results, totalResults, isLoading, aiAnswer, handleClose } =
+  const { query, setQuery, isOpen, setIsOpen, results, totalResults, isLoading, aiAnswer, aiEnrichments, aiLoading, aiComplete, handleClose } =
     useSearchState();
 
   // Auto-focus on mount if requested
@@ -149,6 +149,9 @@ export function SearchBar({ placeholder = 'Cerca nei documenti...', className, a
           query={query}
           isLoading={isLoading}
           aiAnswer={aiAnswer}
+          aiEnrichments={aiEnrichments}
+          aiLoading={aiLoading}
+          aiComplete={aiComplete}
           onClose={handleClose}
         />
       )}

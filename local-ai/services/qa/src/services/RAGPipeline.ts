@@ -21,24 +21,23 @@ export async function askWithContext(
   question: string,
   contextChunks: ContextChunk[],
   locale: string = 'it',
-  maxTokens: number = 500
+  maxTokens: number = 400
 ): Promise<RAGResult> {
   const contextText = contextChunks
-    .map((c, i) => `[${i + 1}] ${c.heading}\n${c.content}`)
+    .map(c => `${c.heading}\n${c.content}`)
     .join('\n\n---\n\n');
 
   const lang = locale === 'it' ? 'italiano' : 'English';
 
-  const systemPrompt = `Sei un assistente che risponde a domande basandosi ESCLUSIVAMENTE sul contesto fornito.
+  const systemPrompt = `Sei il Bibliotecario, l'assistente esperto di un gioco di ruolo play-by-chat ambientato nell'epoca vittoriana (Londra, 1885-1895).
 
-Regole:
-- Rispondi SOLO in ${lang}
-- Usa SOLO le informazioni presenti nel contesto
-- Se il contesto non contiene la risposta, dillo chiaramente
-- NON citare numeri di fonti nel testo (niente [1], [2], ecc.)
-- Sii conciso e preciso`;
+Rispondi alla domanda del giocatore usando SOLO le informazioni nel contesto.
+Scrivi una risposta fluida e naturale come se fosse conoscenza tua: MAI dire "il documento", "nel contesto", "secondo le fonti" o simili.
+Motiva sempre brevemente la risposta.
+Se il contesto non contiene abbastanza informazioni, dillo.
+Rispondi in ${lang}, in 2-4 frasi sintetiche ma complete.`;
 
-  const userMessage = `Contesto:\n${contextText}\n\nDomanda: ${question}`;
+  const userMessage = `Documenti di contesto:\n${contextText}\n\nDomanda del giocatore: ${question}`;
 
   const startMs = Date.now();
   const { text, tokensUsed } = await ollamaChat.chat(systemPrompt, userMessage, maxTokens);

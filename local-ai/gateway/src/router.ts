@@ -5,7 +5,7 @@ import { services, ServiceConfig } from './services';
 import { authenticateClient, requirePermission } from './middleware/apiKey';
 import { verifyHMAC } from './middleware/hmac';
 import { clientRateLimit } from './middleware/rateLimit';
-import { validateBody, botRespondSchema, qaAskSchema, botCreateSchema, botGenerateSchema, imageGenSchema } from './middleware/validate';
+import { validateBody, botRespondSchema, qaAskSchema, qaExtractKeywordsSchema, qaExtractInsightSchema, botCreateSchema, botGenerateSchema, imageGenSchema } from './middleware/validate';
 
 interface RouteValidation {
   method: string;
@@ -21,6 +21,8 @@ const routeValidations: Record<string, RouteValidation[]> = {
   ],
   '/qa': [
     { method: 'POST', path: '/ask', schema: validateBody(qaAskSchema) },
+    { method: 'POST', path: '/extract-keywords', schema: validateBody(qaExtractKeywordsSchema) },
+    { method: 'POST', path: '/extract-insight', schema: validateBody(qaExtractInsightSchema) },
   ],
   '/item-image-gen': [
     { method: 'POST', path: '/generate', schema: validateBody(imageGenSchema) },

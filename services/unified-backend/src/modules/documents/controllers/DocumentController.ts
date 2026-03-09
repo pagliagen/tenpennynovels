@@ -12,9 +12,9 @@ import Document from '@database/models/Document';
 import DocumentSubtype from '@database/models/DocumentSubtype';
 import { EmbeddingService } from '../services/EmbeddingService';
 import { HierarchyService } from '../services/HierarchyService';
+import { DocumentSearchAgent } from '../services/DocumentSearchAgent';
 import { logger } from '@shared/utils/logger';
 import { isQuestion } from '../utils/questionDetector';
-import { aiGatewayClient } from '../../game/services/AIGatewayClient';
 
 export class DocumentController {
   // ========== PUBLIC ROUTES ==========
@@ -320,15 +320,19 @@ export class DocumentController {
    */
   static async semanticSearch(req: Request, res: Response): Promise<void> {
     try {
-      const { q: query, type, limit = 10, minSimilarity = 0.01 } = req.query;
+      const { q: query, type, limit = 5, minSimilarity = 0.01 } = req.query;
 
       if (!query || typeof query !== 'string') {
         res.status(400).json({ result: false, error: 'Query richiesta', code: 'MISSING_QUERY' });
         return;
       }
 
+      const displayLimit = Math.min(Number(limit) || 5, 10);
+      const aiLimit = 10;
+      const fetchLimit = Math.max(displayLimit, aiLimit);
+
       const searchResults = await EmbeddingService.semanticSearch(
-        query, type as any, Number(limit), Number(minSimilarity)
+        query, type as any, fetchLimit, Number(minSimilarity)
       );
 
       if (searchResults.length === 0) {
@@ -400,58 +404,73 @@ export class DocumentController {
         };
       }).filter(Boolean);
 
-      // --- AI integration: answer questions using local-ai QA ---
-      let aiAnswer: Record<string, any> | undefined;
+      const displayResults = (results as any[]).slice(0, displayLimit);
 
       const MIN_AI_SCORE = 35;
-      const relevantResults = (results as any[]).filter((r: any) => parseInt(r.matchScore) >= MIN_AI_SCORE);
+      const relevantResults = (results as any[]).filter((r: any) => parseInt(r.matchScore) >= MIN_AI_SCORE).slice(0, aiLimit);
+      const shouldUseAI = isQuestion(query) && relevantResults.length > 0;
 
-      if (isQuestion(query) && relevantResults.length > 0) {
-        try {
-          const healthy = await aiGatewayClient.isHealthy();
-          if (healthy) {
-            const contextChunks = relevantResults.map((r: any) => {
-              const chunkId = searchResults.find(sr => sr.heading === r.matchHeading && sr.slug === r.route?.anchor?.replace('#', ''))?.chunkId;
-              const chunk: any = chunkId ? chunks.find((c: any) => c.chunkId === chunkId) : null;
-              return {
-                heading: r.matchHeading,
-                content: (chunk?.content || '').substring(0, 800),
-                source: {
-                  documentId: r.document?._id?.toString(),
-                  slug: r.document?.slug,
-                  fullPath: r.route?.fullPath,
-                  title: r.document?.title,
-                  subtypeTitle: r.route?.subtypeTitle || '',
-                },
-              };
-            });
-
-            const qaResponse = await aiGatewayClient.askQuestion({
-              question: query,
-              context: contextChunks,
-              options: { maxTokens: 800, locale: 'it' },
-            });
-
-            if (qaResponse?.success && qaResponse.answer) {
-              aiAnswer = {
-                answer: qaResponse.answer,
-                sources: qaResponse.sources || [],
-                model: qaResponse.metadata?.model,
-              };
-            }
-          }
-        } catch (aiError: any) {
-          logger.warn('AI answer failed (non-blocking):', aiError.message);
-        }
+      if (!shouldUseAI) {
+        res.json({
+          result: true,
+          data: { results: displayResults, totalResults: displayResults.length, query },
+        });
+        return;
       }
 
-      res.json({
-        result: true,
-        data: { results, totalResults: results.length, query, aiAnswer },
+      // --- SSE mode: stream results + AI answer + enrichments ---
+      res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+        'X-Accel-Buffering': 'no',
       });
+
+      const sendSSE = (event: string, data: any) => {
+        res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+      };
+
+      sendSSE('results', {
+        result: true,
+        data: { results: displayResults, totalResults: displayResults.length, query },
+      });
+
+      const keepAlive = setInterval(() => {
+        res.write(': keepalive\n\n');
+      }, 15000);
+
+      const abortController = new AbortController();
+
+      req.on('close', () => {
+        abortController.abort();
+        clearInterval(keepAlive);
+      });
+
+      const contextChunks = relevantResults.map((r: any) => {
+        const chunkId = searchResults.find(sr => sr.heading === r.matchHeading && sr.slug === r.route?.anchor?.replace('#', ''))?.chunkId;
+        const chunk: any = chunkId ? chunks.find((c: any) => c.chunkId === chunkId) : null;
+        return {
+          heading: r.matchHeading,
+          content: (chunk?.content || '').substring(0, 1500),
+          source: {
+            documentId: r.document?._id?.toString(),
+            slug: r.document?.slug,
+            fullPath: r.route?.fullPath,
+            title: r.document?.title,
+            subtypeTitle: r.route?.subtypeTitle || '',
+          },
+        };
+      });
+
+      await DocumentSearchAgent.run(query, contextChunks, res, abortController.signal);
+      clearInterval(keepAlive);
     } catch (error: any) {
       logger.error('Error in semanticSearch:', error);
-      res.status(500).json({ result: false, error: 'Errore semantic search', code: 'SEARCH_ERROR' });
+      if (!res.headersSent) {
+        res.status(500).json({ result: false, error: 'Errore semantic search', code: 'SEARCH_ERROR' });
+      } else {
+        try { res.end(); } catch { /* connection already closed */ }
+      }
     }
   }
 
@@ -610,7 +629,7 @@ export class DocumentController {
           const qaResponse = await aiGatewayClient.askQuestion({
             question,
             context: contextChunks as any,
-            options: { maxTokens: 800, locale: locale as string },
+            options: { maxTokens: 1000, locale: locale as string },
           });
 
           if (qaResponse?.success && qaResponse.answer) {

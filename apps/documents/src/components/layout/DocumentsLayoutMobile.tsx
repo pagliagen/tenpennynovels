@@ -24,6 +24,7 @@ export function DocumentsLayoutMobile({ children }: DocumentsLayoutMobileProps):
     query, setQuery,
     isOpen: resultsOpen, setIsOpen: setResultsOpen,
     results, totalResults, isLoading, aiAnswer,
+    aiEnrichments, aiReading, aiLoading, aiComplete,
     handleClose: handleSearchClose,
   } = useSearchState();
 
@@ -129,6 +130,10 @@ export function DocumentsLayoutMobile({ children }: DocumentsLayoutMobileProps):
                     query={query}
                     isLoading={isLoading}
                     aiAnswer={aiAnswer}
+                    aiEnrichments={aiEnrichments}
+                    aiReading={aiReading}
+                    aiLoading={aiLoading}
+                    aiComplete={aiComplete}
                     onClose={closeResults}
                   />
                 </div>

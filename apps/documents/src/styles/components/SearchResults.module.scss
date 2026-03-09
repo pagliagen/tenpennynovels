@@ -173,21 +173,6 @@
   overflow: hidden;
 }
 
-.resultTags {
-  display: flex;
-  gap: $spacing-xs;
-  margin-top: $spacing-sm;
-  flex-wrap: wrap;
-}
-
-.tag {
-  font-size: $font-size-xs;
-  color: $color-text-muted;
-  padding: 2px $spacing-sm;
-  border: 1px solid $color-border;
-  border-radius: $radius-sm;
-}
-
 .draftBadge {
   display: inline-block;
   font-size: $font-size-xs;
@@ -205,6 +190,10 @@
   background-color: rgba($color-primary, 0.03);
 }
 
+.aiAnswerRevealed {
+  animation: fadeIn 0.5s ease-out;
+}
+
 .aiAnswerHeader {
   display: flex;
   align-items: center;
@@ -218,6 +207,16 @@
   svg {
     opacity: 0.7;
   }
+}
+
+.aiAnswerBlurred {
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  line-height: $line-height-relaxed;
+  filter: blur(8px);
+  user-select: none;
+  pointer-events: none;
+  animation: blurPulse 2s ease-in-out infinite;
 }
 
 .aiAnswerText {
@@ -254,6 +253,169 @@
     color: $color-link-hover;
     border-color: $color-link-hover;
   }
+}
+
+// ========================================
+// AI ENRICHMENTS
+// ========================================
+
+.aiEnrichments {
+  border-bottom: 2px solid $color-border;
+}
+
+.aiEnrichmentBlock {
+  padding: $spacing-sm $spacing-md;
+  background-color: rgba($color-primary, 0.02);
+  border-top: 1px solid $color-border;
+  animation: slideDown 0.4s ease-out;
+}
+
+.aiEnrichmentHeader {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+  font-size: $font-size-xs;
+  color: $color-text-muted;
+  font-style: italic;
+  margin-bottom: $spacing-sm;
+
+  svg {
+    opacity: 0.6;
+    flex-shrink: 0;
+  }
+}
+
+.aiEnrichmentText {
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  line-height: $line-height-relaxed;
+  white-space: pre-line;
+}
+
+// ========================================
+// AI READING INDICATOR
+// ========================================
+
+.aiReadingIndicator {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+  padding: $spacing-sm $spacing-md;
+  font-size: $font-size-xs;
+  color: $color-text-muted;
+  font-style: italic;
+  border-top: 1px solid $color-border;
+  background-color: rgba($color-primary, 0.02);
+  animation: fadeIn 0.3s ease-out;
+}
+
+.aiReadingDots {
+  display: flex;
+  gap: 3px;
+
+  span {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background-color: $color-primary;
+    opacity: 0.4;
+    animation: dotPulse 1.4s ease-in-out infinite;
+
+    &:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    &:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+  }
+}
+
+// ========================================
+// ANIMATIONS
+// ========================================
+
+@keyframes blurPulse {
+  0%, 100% {
+    filter: blur(6px);
+    opacity: 0.7;
+  }
+  50% {
+    filter: blur(10px);
+    opacity: 0.5;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 500px;
+  }
+}
+
+@keyframes dotPulse {
+  0%, 80%, 100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+// ========================================
+// COLLAPSIBLE RESULTS
+// ========================================
+
+.collapsibleResults {
+  border-top: 1px solid $color-border;
+}
+
+.collapsibleToggle {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  width: 100%;
+  padding: $spacing-sm $spacing-md;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: $font-secondary;
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+  transition: $transition-colors;
+
+  &:hover {
+    color: $color-text-primary;
+    background-color: rgba($color-primary, 0.03);
+  }
+}
+
+.collapsibleChevron {
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.collapsibleChevronOpen {
+  transform: rotate(90deg);
 }
 
 .resultsFooter {

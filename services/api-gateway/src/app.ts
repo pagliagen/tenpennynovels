@@ -103,8 +103,16 @@ app.use(cors({
   optionsSuccessStatus: 200 // For legacy browser support
 }));
  
-// General middleware
-app.use(compression() as any);
+// General middleware — skip compression for SSE streams to allow progressive delivery
+app.use(compression({
+  filter: (req, res) => {
+    const contentType = res.getHeader('content-type');
+    if (contentType && String(contentType).includes('text/event-stream')) {
+      return false;
+    }
+    return compression.filter(req, res);
+  }
+}) as any);
 app.use(cookieParser() as any);
 
 // Note: express.json() and urlencoded() are moved after proxy setup
@@ -302,11 +310,11 @@ console.log('');
 
 // Create proxy middleware for each service
 // http-proxy-middleware v3 syntax with 'on' event handlers
-const createServiceProxy = (serviceName: string, config: any) => {
+const createServiceProxy = (serviceName: string, config: any, timeout: number = 30000) => {
   return createProxyMiddleware({
     target: config.target,
     changeOrigin: true,
-    timeout: 30000, // 30 second timeout (increased for resilience)
+    timeout,
     on: {
       proxyReq: (proxyReq: any, req: any, _res: any) => {
         logger.debug(`[PROXY REQ] Forwarding to ${serviceName}: ${req.method} ${req.url}`);
@@ -439,6 +447,9 @@ app.use('/forum', (req, _res, next) => {
 
 app.use('/documents', (req, _res, next) => {
   logger.debug(`[DOCUMENTS] ${req.method} ${req.originalUrl}`);
+  if (req.url.includes('semantic-search')) {
+    delete req.headers['accept-encoding'];
+  }
   next();
 });
 
@@ -453,7 +464,7 @@ app.use('/documents', documentsRateLimitUnauth, documentsRateLimitAuth);
 app.use('/auth', createServiceProxy('auth', services.auth));
 app.use('/game', createServiceProxy('game', services.game));
 app.use('/forum', createServiceProxy('forum', services.forum));
-app.use('/documents', createServiceProxy('documents', services.documents));
+app.use('/documents', createServiceProxy('documents', services.documents, 120000));
 app.use('/admin', createServiceProxy('admin', services.admin));
 
 
