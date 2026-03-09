@@ -1,29 +1,20 @@
 'use client';
 
 import { ReactNode } from 'react';
-import { Header } from './Header';
-import { Sidebar } from './Sidebar';
-import { MobileBottomNav } from './MobileBottomNav';
-import styles from '@/styles/components/layout/DocumentsLayout.module.scss';
+import { useIsDesktop } from '@/hooks/useIsDesktop';
+import { DocumentsLayoutDesktop } from './DocumentsLayoutDesktop';
+import { DocumentsLayoutMobile } from './DocumentsLayoutMobile';
 
 interface DocumentsLayoutProps {
   children: ReactNode;
 }
 
 export function DocumentsLayout({ children }: DocumentsLayoutProps): JSX.Element {
-  return (
-    <div className={styles.layout}>
-      <Sidebar />
+  const isDesktop = useIsDesktop(1024);
 
-      <div className={styles.container}>
-        <Header />
+  if (isDesktop) {
+    return <DocumentsLayoutDesktop>{children}</DocumentsLayoutDesktop>;
+  }
 
-        <main className={styles.main}>
-          <div className={styles.content}>{children}</div>
-        </main>
-      </div>
-
-      <MobileBottomNav />
-    </div>
-  );
+  return <DocumentsLayoutMobile>{children}</DocumentsLayoutMobile>;
 }

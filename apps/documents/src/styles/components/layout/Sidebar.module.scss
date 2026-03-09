@@ -11,10 +11,6 @@
   flex-direction: column;
   padding-left: 20px;
   padding-right: 20px;
-
-  @include mobile {
-    display: none;
-  }
 }
 
 // ========== LOGO ==========

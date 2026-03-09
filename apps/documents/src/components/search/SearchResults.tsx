@@ -56,11 +56,11 @@ function AIAnswerCard({ aiAnswer, onClose }: { aiAnswer: AIAnswer; onClose: () =
           <path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7Z" />
           <path d="M10 21h4" />
         </svg>
-        <span>Risposta AI</span>
+        <span>Il Bibliotecario risponde...</span>
       </div>
 
       <div className={styles.aiAnswerText}>
-        {aiAnswer.answer}
+        <div>{aiAnswer.answer}</div>
       </div>
 
       {usedSources.length > 0 && (

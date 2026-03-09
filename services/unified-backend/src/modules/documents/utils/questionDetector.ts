@@ -11,6 +11,8 @@ const REQUEST_PREFIXES = [
   'trovami', 'dammi', 'fammi',
   'puoi dirmi', 'puoi spiegarmi', 'puoi trovarmi', 'puoi darmi',
   'vorrei sapere', 'voglio sapere',
+  'mi aiuti', 'mi puoi aiutare', 'mi potresti aiutare', 'puoi aiutarmi',
+  'puoi darmi una mano', 'mi daresti una mano', 'puoi aiutare', 'aiutami'
 ];
 
 const ALL_PREFIXES = [...QUESTION_PREFIXES, ...REQUEST_PREFIXES];

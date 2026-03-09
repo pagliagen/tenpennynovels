@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import DOMPurify from 'isomorphic-dompurify';
 import type { DocumentDetail as DocumentDetailType } from '@/types/document'; 
+import { useIsDesktop } from '@/hooks/useIsDesktop';
 import { TableOfContents } from './TableOfContents';
 import styles from '@/styles/components/documents/DocumentDetail.module.scss';
 
@@ -12,7 +13,8 @@ interface DocumentDetailProps {
 
 export function DocumentDetail({ data }: DocumentDetailProps): JSX.Element {
   const { document, sections, childDocuments } = data;
-  const showTOC = sections && sections.length >= 2;
+  const isDesktop = useIsDesktop(1024);
+  const showTOC = isDesktop && sections && sections.length >= 2;
   const articleRef = useRef<HTMLElement>(null);
 
   useEffect(() => {

@@ -11,12 +11,6 @@ $toc-indent: 20px;
   border: 1px solid $color-border;
   border-radius: $radius-md;
   background-color: rgba(255, 255, 255, 0.5);
-
-  @include mobile {
-    position: static;
-    max-height: none;
-    margin-bottom: $spacing-lg;
-  }
 }
 
 .tocTitle {
