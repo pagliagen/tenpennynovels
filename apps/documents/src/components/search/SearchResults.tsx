@@ -65,7 +65,13 @@ function AIAnswerSkeleton() {
 }
 
 function AIAnswerCard({ aiAnswer, onClose }: { aiAnswer: AIAnswer; onClose: () => void }) {
-  const usedSources = aiAnswer.sources.filter(s => s.used);
+  const seen = new Set<string>();
+  const uniqueSources = aiAnswer.sources.filter(s => {
+    const key = s.fullPath || s.title || s.heading;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 
   return (
     <div className={`${styles.aiAnswerCard} ${styles.aiAnswerRevealed}`}>
@@ -81,10 +87,10 @@ function AIAnswerCard({ aiAnswer, onClose }: { aiAnswer: AIAnswer; onClose: () =
         <div>{aiAnswer.answer}</div>
       </div>
 
-      {usedSources.length > 0 && (
+      {uniqueSources.length > 0 && (
         <div className={styles.aiSources}>
           <span className={styles.aiSourcesLabel}>Riferimenti:</span>
-          {usedSources.map((source, i) => (
+          {uniqueSources.map((source, i) => (
             source.fullPath ? (
               <Link
                 key={i}
