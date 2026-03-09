@@ -10,15 +10,15 @@
   flex-direction: column;
   overflow-y: auto;
   background-color: #d5d9c2;
-  padding: $spacing-md;  
+  padding: $spacing-lg;  
 
   &::after {
     position: absolute;
-    top: calc($spacing-md / 2);
-    left: calc($spacing-md / 2);
-    right: calc($spacing-md / 2);
-    bottom: calc($spacing-md / 2);
-    border: 1px solid #025951;
+    top: $spacing-md;
+    left: $spacing-md;
+    right: $spacing-md;
+    bottom: $spacing-md;
+    border: 1px solid #b5b7a5;
     content: '';
     pointer-events: none;
   }

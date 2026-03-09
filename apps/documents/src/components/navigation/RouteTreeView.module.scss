@@ -27,6 +27,10 @@
   user-select: none;
   margin-bottom: $spacing-sm;
 
+  &:hover {
+    color: #c1272d;
+  }
+
   &::before {
     content: '▶';
     font-size: 8px;
@@ -91,14 +95,15 @@
   min-width: 0;
 
   &:hover {
-    color: $color-text-light;
+    color: #025951;
   }
 
   &.active {
-    color: #c1272d;
+    color: #025951;
     font-weight: $font-weight-semibold;
 
     &::after {
+      border-left: 1px solid #b5b7a5;
       content: url('/images/doc_active.png');
       height: 20px;
     }
