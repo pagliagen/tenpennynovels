@@ -5,7 +5,6 @@ import { API_CONFIG } from '@/constants/config';
 import type { DocumentType } from '@/types/document';
 
 const SEARCH_DEBOUNCE_MS = 400;
-const AI_TIMEOUT_MS = 20000;
 
 // --- Question detection (mirrors backend questionDetector.ts) ---
 
