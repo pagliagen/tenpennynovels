@@ -22,6 +22,9 @@ export interface Occupation {
   description: string;
   category: string;
   socialClass: string;
+  contacts: string;
+  earnings: string;
+  image: string | null;
   requiredSkills: Array<{
     skillId: string;
     name: string;

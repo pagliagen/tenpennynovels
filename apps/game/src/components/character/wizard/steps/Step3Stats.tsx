@@ -11,21 +11,23 @@
 'use client';
 
 import { useWizardStore } from '@/store/wizardStore';
-import { BudgetIndicator } from '../shared/BudgetIndicator';
-import styles from '@/styles/components/character/wizard.module.scss';
+import { useOccupations } from '@/hooks/useCharacterCreation';
+import { useWizardToolbar } from '../WizardSlotsContext';
+import { StatControl } from '../shared/StatControl';
+import { DerivedStatCard } from '../shared/DerivedStatCard';
+import Image from 'next/image';
+import { getOccupationImage } from '../shared/OccupationIconMap';
+import styles from '@/styles/components/character/wizard/Step3Stats.module.scss';
 
-/**
- * Stat definitions with labels
- */
 const STATS = [
-  { key: 'strength' as const, label: 'Forza (STR)', description: 'Potenza fisica, capacità di sollevare pesi' },
-  { key: 'dexterity' as const, label: 'Destrezza (DEX)', description: 'Agilità, coordinazione, riflessi' },
-  { key: 'intelligence' as const, label: 'Intelligenza (INT)', description: 'Capacità di ragionamento, memoria, apprendimento' },
-  { key: 'constitution' as const, label: 'Costituzione (CON)', description: 'Salute, resistenza fisica, vigore' },
-  { key: 'appearance' as const, label: 'Aspetto (APP)', description: 'Bellezza, carisma fisico, presenza' },
-  { key: 'power' as const, label: 'Potere (POW)', description: 'Forza di volontà, resistenza mentale, magia' },
-  { key: 'size' as const, label: 'Taglia (SIZ)', description: 'Massa corporea, altezza e peso' },
-  { key: 'education' as const, label: 'Educazione (EDU)', description: 'Conoscenza acquisita, istruzione formale' },
+  { key: 'strength' as const, label: 'Forza (FOR)', abbreviation: 'FOR', description: 'Potenza fisica, capacità di sollevare pesi' },
+  { key: 'dexterity' as const, label: 'Destrezza (DES)', abbreviation: 'DES', description: 'Agilità, coordinazione, riflessi' },
+  { key: 'intelligence' as const, label: 'Intelligenza (INT)', abbreviation: 'INT', description: 'Capacità di ragionamento, memoria' },
+  { key: 'constitution' as const, label: 'Costituzione (COS)', abbreviation: 'COS', description: 'Salute, resistenza fisica' },
+  { key: 'appearance' as const, label: 'Carisma (CHA)', abbreviation: 'CHA', description: 'Fascino, presenza, carisma personale' },
+  { key: 'power' as const, label: 'Potere (POT)', abbreviation: 'POT', description: 'Forza di volontà, resistenza mentale' },
+  { key: 'size' as const, label: 'Taglia (TAG)', abbreviation: 'TAG', description: 'Massa corporea, altezza, corporatura' },
+  { key: 'education' as const, label: 'Educazione (EDU)', abbreviation: 'EDU', description: 'Istruzione formale, conoscenza acquisita' },
 ];
 
 /**
@@ -34,128 +36,84 @@ const STATS = [
  * @returns {JSX.Element} Step 3 form
  */
 export function Step3Stats(): JSX.Element {
-  const { stats, derivedStats, updateStat, stepErrors } = useWizardStore();
+  const { stats, derivedStats, updateStat, stepErrors, occupation } = useWizardStore();
+  const { data: occupations } = useOccupations();
   const errors = stepErrors[3] || {};
-
-  // Calculate total points (all stats count toward 400 budget)
   const total = Object.values(stats).reduce((sum, val) => sum + val, 0);
-  const statsAbove80 = Object.values(stats).filter((val) => val > 80).length;
+  const remaining = 400 - total;
+  const statsAbove80 = Object.values(stats).filter((v) => v > 80).length;
+
+  const selectedOcc = occupations?.find((o) => o.id === occupation.occupationId);
+  const occImage = selectedOcc ? getOccupationImage(selectedOcc.image) : null;
+
+  useWizardToolbar(() => (
+    <>
+      <div className={styles.toolbarLeft}>
+        {occImage && (
+          <Image
+            src={occImage}
+            alt={selectedOcc?.name || 'Occupazione'}
+            width={28}
+            height={28}
+            className={styles.occIcon}
+          />
+        )}
+      </div>
+      <div className={styles.pointsSummary}>
+        <span className={styles.pointsLabel}>RIEPILOGO PUNTI:</span>
+        <span
+          className={`${styles.pointsValue} ${total === 400 ? styles.pointsValid : total > 400 ? styles.pointsExceeded : ''}`}
+        >
+          utilizzati {total}/400 | rimanenti {remaining}
+        </span>
+      </div>
+    </>
+  ), [occImage, selectedOcc?.name, total, remaining]);
 
   return (
     <div className={styles.stepContent} data-step="stats">
-      <h2 className={styles.stepTitle}>Statistiche</h2>
-      <p className={styles.stepDescription}>
-        Distribuisci <strong>400 punti</strong> tra le 8 statistiche base. Massimo 2 statistiche possono superare 80, e nessuna può superare 85.
-      </p>
 
-      {/* Budget Indicator */}
-      <BudgetIndicator spent={total} total={400} label="Punti Statistiche" />
-
-      {/* Warnings */}
       {statsAbove80 > 2 && (
         <div className={styles.warningBox}>
           ⚠️ Hai {statsAbove80} statistiche sopra 80. Massimo consentito: 2
         </div>
       )}
 
-      {/* Stats Allocator */}
-      <div className={styles.section}>
-        <h3 className={styles.sectionTitle}>Statistiche Base</h3>
-
-        <div className={styles.statsGrid}>
-          {STATS.map((stat) => (
-            <div key={stat.key} className={styles.statItem}>
-              <div className={styles.statHeader}>
-                <label htmlFor={stat.key} className={styles.statLabel}>
-                  {stat.label}
-                </label>
-                <span className={styles.statValue}>{stats[stat.key]}</span>
-              </div>
-              <input
-                type="range"
-                id={stat.key}
-                min={1}
-                max={85}
+      <div className={styles.panels}>
+        <div className={styles.panelLeft}>
+          <h3 className={styles.panelTitle}>CARATTERISTICHE PRINCIPALI</h3>
+          <p className={styles.panelDescription}>
+            Distribuisci 400 punti tra le 8 statistiche. Massimo 2 statistiche possono superare 80, nessuna può superare 85.
+          </p>
+          <div className={styles.statsGrid}>
+            {STATS.map((stat) => (
+              <StatControl
+                key={stat.key}
+                label={stat.label}
+                abbreviation={stat.abbreviation}
+                description={stat.description}
                 value={stats[stat.key]}
-                onChange={(e) => updateStat(stat.key, parseInt(e.target.value))}
-                className={`${styles.statSlider} ${stats[stat.key] > 80 ? styles.statSliderHigh : ''}`}
+                onChange={(v) => updateStat(stat.key, v)}
+                isHigh={stats[stat.key] > 80}
               />
-              <div className={styles.statControls}>
-                <button
-                  type="button"
-                  onClick={() => updateStat(stat.key, Math.max(1, stats[stat.key] - 5))}
-                  className={styles.statButton}
-                >
-                  -5
-                </button>
-                <button
-                  type="button"
-                  onClick={() => updateStat(stat.key, Math.max(1, stats[stat.key] - 1))}
-                  className={styles.statButton}
-                >
-                  -1
-                </button>
-                <input
-                  type="number"
-                  value={stats[stat.key]}
-                  onChange={(e) => updateStat(stat.key, parseInt(e.target.value) || 0)}
-                  min={1}
-                  max={85}
-                  className={styles.statInput}
-                />
-                <button
-                  type="button"
-                  onClick={() => updateStat(stat.key, Math.min(85, stats[stat.key] + 1))}
-                  className={styles.statButton}
-                >
-                  +1
-                </button>
-                <button
-                  type="button"
-                  onClick={() => updateStat(stat.key, Math.min(85, stats[stat.key] + 5))}
-                  className={styles.statButton}
-                >
-                  +5
-                </button>
-              </div>
-              <small className={styles.statDescription}>{stat.description}</small>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
 
-      {/* Derived Stats Display */}
-      <div className={styles.section}>
-        <h3 className={styles.sectionTitle}>Statistiche Derivate</h3>
-        <p className={styles.helpText}>
-          Queste statistiche vengono calcolate automaticamente in base alle tue statistiche base.
-        </p>
-
-        <div className={styles.derivedStatsGrid}>
-          <div className={styles.derivedStat}>
-            <span className={styles.derivedStatLabel}>Punti Ferita (HP)</span>
-            <span className={styles.derivedStatValue}>{derivedStats.hitPoints}</span>
-            <small className={styles.derivedStatFormula}>= (CON + SIZ) / 10</small>
-          </div>
-          <div className={styles.derivedStat}>
-            <span className={styles.derivedStatLabel}>Sanità Mentale</span>
-            <span className={styles.derivedStatValue}>{derivedStats.sanity}</span>
-            <small className={styles.derivedStatFormula}>= POW</small>
-          </div>
-          <div className={styles.derivedStat}>
-            <span className={styles.derivedStatLabel}>Punti Magia (MP)</span>
-            <span className={styles.derivedStatValue}>{derivedStats.magicPoints}</span>
-            <small className={styles.derivedStatFormula}>= POW / 5</small>
-          </div>
-          <div className={styles.derivedStat}>
-            <span className={styles.derivedStatLabel}>Fortuna</span>
-            <span className={styles.derivedStatValue}>{derivedStats.luck}</span>
-            <small className={styles.derivedStatFormula}>= POW</small>
+        <div className={styles.panelRight}>
+          <h3 className={styles.panelTitle}>CARATTERISTICHE DERIVATE</h3>
+          <p className={styles.panelDescription}>
+            Calcolate automaticamente dalle statistiche principali.
+          </p>
+          <div className={styles.derivedGrid}>
+            <DerivedStatCard label="Punti Vita" value={derivedStats.hitPoints} formula="= (COS + TAG) / 10" />
+            <DerivedStatCard label="Sanità Mentale" value={derivedStats.sanity} formula="= POT" />
+            <DerivedStatCard label="Punti Magia" value={derivedStats.magicPoints} formula="= POT / 5" />
+            <DerivedStatCard label="Fortuna" value={derivedStats.luck} formula="= POT" />
           </div>
         </div>
       </div>
 
-      {/* Validation Errors */}
       {Object.keys(errors).length > 0 && (
         <div className={styles.errorSummary}>
           <h4>Errori di Validazione:</h4>

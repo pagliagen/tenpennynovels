@@ -31,7 +31,6 @@ export interface FavoriteEntry {
     _id: string;
     slug: string;
     title: string;
-    description?: string;
     tags: string[];
     isDraft: boolean;
     path: string;

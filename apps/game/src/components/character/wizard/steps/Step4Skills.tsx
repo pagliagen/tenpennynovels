@@ -13,9 +13,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useWizardStore } from '@/store/wizardStore';
 import { useSkills, useOccupations } from '@/hooks/useCharacterCreation';
+import { useWizardToolbar } from '../WizardSlotsContext';
 import { BudgetIndicator } from '../shared/BudgetIndicator';
 import { PlaceholderSkillManager } from '../shared/PlaceholderSkillManager';
-import styles from '@/styles/components/character/wizard.module.scss';
+import styles from '@/styles/components/character/wizard/Step4Skills.module.scss';
 
 /**
  * Step 4: Skills Component
@@ -75,6 +76,24 @@ export function Step4Skills(): JSX.Element {
     (sum, skill) => sum + skill.manualPoints + skill.requiredBonus,
     0
   );
+
+  useWizardToolbar(() => (
+    <>
+      <div className={styles.categoryTabs}>
+        {categories.map((cat) => (
+          <button
+            key={cat.id}
+            type="button"
+            onClick={() => setActiveCategory(cat.id)}
+            className={`${styles.categoryTab} ${activeCategory === cat.id ? styles.categoryTabActive : ''}`}
+          >
+            {cat.label}
+          </button>
+        ))}
+      </div>
+      <BudgetIndicator spent={spentPoints} total={totalBudget} label="Punti Abilità" />
+    </>
+  ), [categories, activeCategory, spentPoints, totalBudget]);
 
   // Initialize skills with base values from API if not already present
   useEffect(() => {
@@ -214,15 +233,6 @@ export function Step4Skills(): JSX.Element {
 
   return (
     <div className={styles.stepContent} data-step="skills">
-      <h2 className={styles.stepTitle}>Abilità</h2>
-      <p className={styles.stepDescription}>
-        Distribuisci <strong>{totalBudget} punti</strong> ({baseBudget} base + {intelligenceBonus} da INT) tra le
-        abilità. Massimo 75 punti per abilità, o 80 con bonus occupazione.
-      </p>
-
-      {/* Budget Indicator */}
-      <BudgetIndicator spent={spentPoints} total={totalBudget} label="Punti Abilità" />
-
       {/* Required Skills Section */}
       {occupation.occupationId && occupations && (
         <div className={styles.section}>
@@ -372,20 +382,6 @@ export function Step4Skills(): JSX.Element {
           </div>
         </div>
       )}
-
-      {/* Category Tabs */}
-      <div className={styles.categoryTabs}>
-        {categories.map((cat) => (
-          <button
-            key={cat.id}
-            type="button"
-            onClick={() => setActiveCategory(cat.id)}
-            className={`${styles.categoryTab} ${activeCategory === cat.id ? styles.categoryTabActive : ''}`}
-          >
-            {cat.label}
-          </button>
-        ))}
-      </div>
 
       {/* Skills Table */}
       <div className={styles.section}>

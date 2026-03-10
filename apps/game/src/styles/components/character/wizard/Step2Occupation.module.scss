@@ -1,0 +1,62 @@
+/**
+ * Step2Occupation - Occupation selection step styles
+ * Uses design tokens only. No local SCSS variables.
+ */
+
+@use './wizard-forms' as forms;
+
+.stepContent {
+  @include forms.stepContent;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 60px;
+  padding: var(--spacing-md);
+}
+
+.errorSummary {
+  @include forms.errorSummary;
+}
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-xl);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-base);
+
+  p {
+    margin: 0;
+  }
+}
+
+.loadingIcon {
+  font-size: var(--font-size-2xl);
+  line-height: 1;
+}
+
+.errorState {
+  background: var(--color-error-bg);
+  border: var(--border-width-base) solid var(--color-error);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
+  margin-top: var(--spacing-md);
+
+  h4 {
+    color: var(--color-error);
+    margin: 0 0 var(--spacing-sm);
+    font-size: var(--font-size-base);
+  }
+
+  p {
+    margin: 0;
+    color: var(--color-error-border);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-normal);
+  }
+}

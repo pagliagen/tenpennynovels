@@ -14,11 +14,11 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  width: 100%;
+  width: 1000px;
   height: 130px;
-  border-bottom: 2px solid #ff6b3566; // Black border
   position: relative;
   z-index: 100;
+  margin: 0 auto;
 }
 
 /* ========================================
@@ -57,7 +57,7 @@
     content: '';
     position: absolute;
     width: 10px;
-    height: 128px;
+    height: 130px;
     top: 0;
     background: black;
   }
@@ -143,11 +143,11 @@
    ======================================== */
 
 .locationDisplay {
-  width: 300px;
-  height: 150px;
   overflow: hidden;
   box-sizing: border-box;
   position: relative;
+  display: flex; 
+  justify-content: center;
 
   // Black bar on top
   &::before {
@@ -161,8 +161,8 @@
 }
 
 .semicerchio {
-  width: 300px;
-  height: 150px;
+  width: 240px;
+  height: 120px;
   box-sizing: border-box;
   background: var(--color-accent); 
   border-radius: 0px 0px 300px 300px;

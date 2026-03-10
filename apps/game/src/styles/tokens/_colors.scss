@@ -7,7 +7,7 @@
  * **Color System**:
  * - Primary: Gold (#d4af37) - Victorian luxury
  * - Background: Dark browns/blacks - Atmospheric
- * - Text: Beige/cream - Readable on dark
+ * - Text: #c9c6ad/cream - Readable on dark
  * - Semantic: Success (green), Error (red), Warning (amber), Info (blue)
  *
  * **Usage**:
@@ -59,13 +59,13 @@
      TEXT COLORS
      =========================== */
 
-  /** Primary text - Cream/beige */
+  /** Primary text - Cream/#c9c6ad */
   --color-text-primary: #f5f5dc;
 
-  /** Secondary text - Muted beige */
+  /** Secondary text - Muted #c9c6ad */
   --color-text-secondary: #d4c4b0;
 
-  /** Tertiary text - Dimmed beige */
+  /** Tertiary text - Dimmed #c9c6ad */
   --color-text-tertiary: #a89884;
 
   /** Disabled text - Very muted */

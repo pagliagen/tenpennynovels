@@ -10,7 +10,7 @@
 
 'use client';
 
-import styles from '@/styles/components/character/wizard.module.scss';
+import styles from '@/styles/components/character/wizard/BudgetIndicator.module.scss';
 
 /**
  * Budget Indicator Props

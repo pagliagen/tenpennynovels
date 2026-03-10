@@ -8,7 +8,6 @@ import React, { useState } from 'react';
 import { createDocument, getSubtypes } from '@/lib/api/documents';
 import { useNotificationStore } from '@/store/notificationStore';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
-import { DocumentContentEditor } from './DocumentContentEditor';
 import styles from '@/styles/components/Modal.module.scss';
 
 interface CreateDocumentModalProps {
@@ -28,7 +27,6 @@ export function CreateDocumentModal({
 }: CreateDocumentModalProps) {
   const [title, setTitle] = useState('');
   const [slug, setSlug] = useState('');
-  const [description, setDescription] = useState('');
   const [subtypeId, setSubtypeId] = useState('');
   const [isDraft, setIsDraft] = useState(true);
   const [visible, setVisible] = useState(true);
@@ -84,7 +82,6 @@ export function CreateDocumentModal({
         slug: slug.trim(),
         type,
         subtypeId,
-        description: description.trim() || undefined,
         parentId: preselectedParentDocId || null,
         contentDelta: { type: 'doc', content: [] },
         isDraft,
@@ -176,17 +173,6 @@ export function CreateDocumentModal({
               ))}
             </select>
             <small>Raggruppa il documento sotto questo sottotipo nella sidebar</small>
-          </div>
-
-          {/* Description Editor */}
-          <div className={styles.formField}>
-            <label>Descrizione</label>
-            <DocumentContentEditor
-              contentDelta={description}
-              onChange={(html) => setDescription(html)}
-              htmlMode
-              readOnly={isSubmitting}
-            />
           </div>
 
           {/* Checkboxes */}

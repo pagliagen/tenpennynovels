@@ -89,14 +89,7 @@
   border-radius: 5px 5px 0 0;
 
   &::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: -10px;
-    height: 25px;
-    background: url('/images/stripe.png') repeat-x center / auto 100%;
-    z-index: 0;
+    @include stripe-border($bottom: -12px, $z: -1);
   }
 
   &:hover {
@@ -126,14 +119,7 @@
   gap: $spacing-sm;
 
   &::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: -10px;
-    height: 25px;
-    background: url('/images/stripe.png') repeat-x center / auto 100%;
-    z-index: 0;
+    @include stripe-border;
   }
 }
 

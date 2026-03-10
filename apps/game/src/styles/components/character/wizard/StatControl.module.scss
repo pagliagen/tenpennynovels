@@ -1,0 +1,130 @@
+/**
+ * StatControl - Stat allocator card styles
+ * Uses design tokens only (no local SCSS variables).
+ */
+
+.root {
+  background: var(--color-bg-tertiary);
+  border: var(--border-subtle);
+  padding: var(--spacing-md);
+  border-radius: 4px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-sm);
+}
+
+.label {
+  font-size: var(--font-size-base);
+  color: var(--color-text-primary);
+}
+
+.value {
+  font-size: var(--font-size-xl);
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.valueHigh {
+  font-size: var(--font-size-xl);
+  color: var(--color-warning);
+  font-weight: 600;
+}
+
+.slider,
+.sliderHigh {
+  width: 100%;
+  margin-bottom: var(--spacing-sm);
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  background: var(--color-bg-tertiary);
+  border-radius: 3px;
+  outline: none;
+
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--color-primary);
+    cursor: pointer;
+    border: var(--border-subtle);
+  }
+
+  &::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--color-primary);
+    cursor: pointer;
+    border: var(--border-subtle);
+  }
+}
+
+.sliderHigh {
+  &::-webkit-slider-thumb {
+    background: var(--color-warning);
+  }
+
+  &::-moz-range-thumb {
+    background: var(--color-warning);
+  }
+}
+
+.buttons {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  margin-bottom: var(--spacing-sm);
+}
+
+.btn {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: var(--font-size-sm);
+  background: var(--color-bg-tertiary);
+  border: var(--border-subtle);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  border-radius: 4px;
+  min-width: 36px;
+
+  &:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+  }
+}
+
+.input {
+  width: 56px;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: var(--font-size-base);
+  text-align: center;
+  background: var(--color-bg-input);
+  border: var(--border-input);
+  color: var(--color-text-primary);
+  border-radius: 4px;
+
+  &:focus {
+    outline: none;
+    border-color: var(--color-primary);
+  }
+
+  &::-webkit-inner-spin-button,
+  &::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  -moz-appearance: textfield;
+}
+
+.description {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  margin: 0;
+}

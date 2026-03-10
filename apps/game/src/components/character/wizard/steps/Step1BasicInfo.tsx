@@ -14,7 +14,7 @@
 'use client';
 
 import { useWizardStore } from '@/store/wizardStore';
-import styles from '@/styles/components/character/wizard.module.scss';
+import styles from '@/styles/components/character/wizard/Step1BasicInfo.module.scss';
 
 /**
  * Calculate age from birthdate (relative to 1895 Victorian setting)
@@ -76,11 +76,6 @@ export function Step1BasicInfo(): JSX.Element {
 
   return (
     <div className={styles.stepContent} data-step="basic-info">
-      <h2 className={styles.stepTitle}>Informazioni Base</h2>
-      <p className={styles.stepDescription}>
-        Inserisci le informazioni base del tuo personaggio. Tutti i campi sono obbligatori.
-      </p>
-
       {/* Section: Personal Info */}
       <div className={styles.section}>
         <h3 className={styles.sectionTitle}>Informazioni Personali</h3>
@@ -200,8 +195,7 @@ export function Step1BasicInfo(): JSX.Element {
               id="age"
               value={basicInfo.age || ''}
               readOnly
-              className={`${styles.input} ${errors.age ? styles.inputError : ''}`}
-              style={{ background: '#f5f5f5', cursor: 'not-allowed' }}
+              className={`${styles.input} ${styles.inputReadonly} ${errors.age ? styles.inputError : ''}`}
             />
             <small className={styles.helpText}>Calcolata automaticamente dalla data di nascita (18-80 anni)</small>
             {errors.age && <span className={styles.error}>{errors.age}</span>}

@@ -1,0 +1,62 @@
+.footer {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--color-bg-primary);
+  gap: var(--spacing-md);
+}
+
+.helpText {
+  flex: 1;
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-sm);
+  font-style: italic;
+  font-family: var(--font-primary);
+}
+
+.actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+}
+
+.buttonPrimary {
+  padding: var(--spacing-button-y) var(--spacing-button-x);
+  font-size: 10px;
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  font-family: var(--font-primary);
+  color: yellow;
+  transition: all .2s;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &.submitButton {
+    animation: submitPulse 2s infinite;
+  }
+}
+
+@keyframes submitPulse {
+
+  0%,
+  100% {
+    box-shadow: var(--shadow-sm);
+  }
+
+  50% {
+    box-shadow: var(--shadow-golden-glow);
+  }
+}

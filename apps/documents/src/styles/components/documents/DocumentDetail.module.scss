@@ -19,7 +19,6 @@
   justify-content: space-between;
   gap: $spacing-md;
   padding: $spacing-md 0;
-  border-bottom: 2px solid $color-border;
   background-color: #d5d9c2;
 
   @include mobile {
@@ -31,7 +30,7 @@
 
 .stickyTitle {
   font-family: $font-primary;
-  font-size: $font-size-2xl;
+  font-size: 40px;
   font-weight: $font-weight-bold;
   color: #025951;
   margin: 0;
@@ -91,59 +90,6 @@
   text-transform: uppercase;
   font-size: $font-size-xs;
   letter-spacing: $letter-spacing-wide;
-}
-
-// ========== DESCRIPTION ==========
-
-.description {
-  font-size: $font-size-md;
-  color: $color-text-secondary;
-  line-height: $line-height-normal;
-  margin: $spacing-md 0 $spacing-lg 0;
-  font-style: italic;
-
-  blockquote {
-    font-size: inherit;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-weight: $font-weight-bold;
-    color: #c1272d;
-    background-color: unset;
-    border: none;
-    padding: unset;
-    position: relative;
-    padding-bottom: 20px;
-
-    &::before {
-      content: '';
-      display: inline-block;
-      width: 60px;
-      height: 60px; 
-      min-width: 60px;
-      min-height: 60px;
-      background-image: url('/images/nb_icon.png');
-      background-size: contain;
-      background-repeat: no-repeat;
-      margin-right: 10px;
-    }
-
-    &::after {
-      content: '';
-      background-image: url('/images/nb_border.png');
-      background-repeat: no-repeat;
-      background-size: contain;
-      height: 20px;
-      min-height: 20px;
-      position: absolute;
-      bottom: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 50%;
-      background-position: bottom center;
-    }
-
-  }
 }
 
 // ========== BODY LAYOUT ==========
@@ -291,13 +237,46 @@
   }
 
   blockquote {
-    border-left: 4px solid $color-primary;
-    padding: $spacing-md $spacing-lg;
-    margin: $spacing-lg 0;
-    font-style: italic;
-    color: $color-text-secondary;
-    background-color: rgba($color-primary, 0.05);
-    border-radius: 0 $radius-md $radius-md 0;
+    font-size: inherit;
+    color: #c1272d;
+    background-color: unset;
+    padding: unset;
+    border: none;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 20px;
+    font-weight: 700;
+    display: flex;
+    position: relative;
+    margin: 0 0 30px 0;
+
+    &::before {
+      content: '';
+      background-image: url('/images/nb_icon.png');
+      background-repeat: no-repeat;
+      background-size: contain;
+      width: 60px;
+      min-width: 60px;
+      height: 60px;
+      min-height: 60px;
+      margin-right: 10px;
+      display: inline-block;
+    }
+
+    &::after {
+      content: "";
+      background-image: url('/images/nb_border.png');
+      background-position: bottom;
+      background-repeat: no-repeat;
+      background-size: contain;
+      width: 50%;
+      height: 20px;
+      min-height: 20px;
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translate(-50%);
+    }
   }
 
   code {

@@ -184,6 +184,21 @@ $transition-opacity: opacity $transition-speed-normal $transition-easing;
 // SCROLLBAR
 // ========================================
 
+// ========================================
+// MIXINS
+// ========================================
+
+@mixin stripe-border($bottom: -10px, $z: 0) {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: $bottom;
+  height: 25px;
+  background: url('/images/stripe.png') repeat-x center / auto 100%;
+  z-index: $z;
+}
+
 $scrollbar-width: 10px;
 $scrollbar-track-color: $color-primary-active;
 $scrollbar-thumb-color: rgba(#f5f5dc, 0.45);

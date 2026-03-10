@@ -20,12 +20,12 @@ router.get('/routes/list', AuthMiddleware.optionalAuth, DocumentController.listR
 // List documents grouped by subtype (hierarchical sidebar)
 router.get('/routes/list-hierarchical', AuthMiddleware.optionalAuth, DocumentController.listRoutesHierarchical);
 
+// AI availability status
+router.get('/ai-status', DocumentController.aiStatus);
+
 // Semantic search
 router.get('/semantic-search', AuthMiddleware.optionalAuth, DocumentController.semanticSearch);
-
-// AI-powered Q&A (graceful degradation if AI unavailable)
-router.get('/ask', AuthMiddleware.optionalAuth, DocumentController.ask);
-
+ 
 // Get document by type + nested path (e.g., /documents/ambientazione/introduzione/presentazione)
 router.get('/:type/:category/:slug', AuthMiddleware.optionalAuth, (req, res) => {
   req.params.path = `${req.params.category}/${req.params.slug}`;

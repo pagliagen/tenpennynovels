@@ -52,7 +52,6 @@ export interface Document {
   _id: string;
   title: string;
   slug: string;
-  description?: string;
   content: string;
   contentDelta?: any;
   type: 'ambientazione' | 'regolamento';
@@ -103,7 +102,6 @@ export interface CreateDocumentData {
   slug: string;
   type: 'ambientazione' | 'regolamento';
   subtypeId: string;
-  description?: string;
   parentId?: string | null;
   contentDelta?: any;
   isDraft?: boolean;
@@ -115,7 +113,6 @@ export interface CreateDocumentData {
 
 export interface UpdateDocumentData {
   title?: string;
-  description?: string;
   content?: string;
   contentDelta?: any;
   lastUpdated?: string;

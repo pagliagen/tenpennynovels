@@ -11,7 +11,6 @@ interface SearchResult {
     slug: string;
     title: string;
     content: string;
-    description?: string;
     tags: string[];
     isDraft: boolean;
   };

@@ -1,0 +1,41 @@
+/**
+ * DerivedStatCard - Compact derived stat card styles
+ * Uses design tokens only (no local SCSS variables).
+ */
+
+.root {
+  background: var(--color-bg-tertiary);
+  border: var(--border-default);
+  padding: var(--spacing-md);
+  border-radius: 4px;
+  text-align: center;
+}
+
+.label {
+  display: block;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.value {
+  display: block;
+  font-size: var(--font-size-2xl);
+  color: var(--color-primary);
+  font-weight: bold;
+  margin-bottom: var(--spacing-xs);
+}
+
+.formula {
+  display: block;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  font-style: italic;
+  margin-bottom: var(--spacing-xs);
+}
+
+.description {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  margin: var(--spacing-xs) 0 0;
+}

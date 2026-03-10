@@ -25,7 +25,6 @@ export interface IDocument extends MongooseDocument, SoftDeleteFields, SoftDelet
   // Content (TipTap Delta JSON - ONLY format)
   contentDelta: any;
   content?: string;          // HTML output (auto-generated from contentDelta with H1 IDs)
-  description?: string;
 
   // Hierarchy (for parent/child relationships)
   parentId?: Types.ObjectId;
@@ -84,9 +83,6 @@ const DocumentSchema = new Schema<IDocument>({
   content: {
     type: String,
     required: false
-  },
-  description: {
-    type: String
   },
 
   // Hierarchy

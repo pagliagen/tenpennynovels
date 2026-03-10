@@ -1,0 +1,81 @@
+/**
+ * CategoryFilter - Victorian dark-themed category dropdown
+ * Uses design tokens only. No local SCSS variables.
+ */
+
+.container {
+  position: relative;
+  display: flex;
+  justify-content: end;
+  width: 100%;
+}
+
+.trigger {
+  display: flex;
+  align-items: center;
+  background: black;
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  display: flex;
+  gap: 12px;
+  padding: 0 12px 0 12px;
+
+  &:hover {
+    color: red;
+  }
+}
+
+.triggerIcon {
+  display: flex;
+  align-items: center;
+  line-height: 0;
+}
+
+.filterIcon {
+  display: block;
+  opacity: 0.8;
+
+  .trigger:hover & {
+    opacity: 1;
+  }
+}
+
+.dropdown {
+  top: 25px;
+  width: 147px;
+  padding: var(--spacing-xs);
+  background: black;
+  z-index: 100;
+  margin: 0;
+  list-style: none;
+  position: absolute;
+  right: 0;
+}
+
+.dropdownItem {
+  align-items: center;
+  color: var(--color-text-primary);
+  font-family: var(--font-primary);
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+  background: none;
+  border: none;
+  transition: background-color .2s;
+  display: flex;
+
+  &:hover {
+    color: red;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: -2px;
+  }
+}
+
+.itemIcon {
+  font-size: var(--font-size-base);
+  line-height: 1;
+}

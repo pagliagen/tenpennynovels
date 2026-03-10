@@ -1,0 +1,91 @@
+/**
+ * WizardTabBar - Tab bar for character creation wizard
+ * Dark Victorian theme. Uses design tokens only.
+ */
+
+.tabBar {
+  display: flex;
+  flex-direction: row;
+  font-family: var(--font-primary);
+  padding: 0 var(--spacing-md);
+  gap: 5px;
+}
+
+.tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: rgba(#c9c6ad, 0.8);
+  border: none;
+  border-bottom: var(--border-width-base) solid transparent;
+  color: black;
+  font-family: var(--font-primary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+  border-radius: 5px 5px 0 0 ;
+
+  &:hover {
+    color: red;
+  }
+
+  &.tabActive { 
+    outline: 2px solid #c9c6ad;
+    transform: translateY(-2px);
+    background-color: #c9c6ad;
+  }
+
+  &:focus-visible { 
+    outline-offset: unset;
+  }
+}
+
+.tabIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25em;
+  height: 1.25em;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+}
+
+/* Valid step: green checkmark */
+.tabValid .tabIcon {
+  color: var(--color-success);
+}
+
+/* Invalid step: red/orange X */
+.tabInvalid .tabIcon {
+  color: var(--color-warning);
+}
+
+.tabLabel {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 768px) {
+  .tabBar {
+    flex-wrap: wrap;
+  }
+
+  .tab {
+    flex: 1 1 calc(50% - var(--spacing-xs));
+    font-size: var(--font-size-xs);
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+
+  .tabLabel {
+    display: none;
+  }
+
+  .tab .tabIcon {
+    margin: 0 auto;
+  }
+}

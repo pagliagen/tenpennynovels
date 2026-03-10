@@ -43,7 +43,7 @@ export default function AmbientazioneDetail({ data, error }: AmbientazioneDetail
     <>
       <SEO
         title={`${document.title} - Ambientazione`}
-        description={document.description || document.title}
+        description={document.title}
         ogType="article"
       />
 

@@ -1,0 +1,30 @@
+.header {
+  flex-shrink: 0;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-md);
+  position: relative;
+}
+
+.characterName {
+  position: absolute;
+  left: var(--spacing-md);
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+  font-family: var(--font-primary);
+  font-weight: var(--font-weight-medium);
+}
+
+.wizardTitle {
+  font-size: var(--font-size-2xl);
+  color: var(--color-primary);
+  font-family: var(--font-primary);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wider);
+  text-align: center;
+}

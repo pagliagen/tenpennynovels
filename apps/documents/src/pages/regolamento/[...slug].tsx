@@ -43,7 +43,7 @@ export default function RegolamentoDetail({ data, error }: RegolamentoDetailProp
     <>
       <SEO
         title={`${document.title} - Regolamento`}
-        description={document.description || document.title}
+        description={document.title}
         ogType="article"
       />
 

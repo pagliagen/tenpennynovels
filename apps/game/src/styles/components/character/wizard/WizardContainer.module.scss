@@ -1,0 +1,70 @@
+.wizardContainer {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background-color: black;
+  border-radius: 10px;
+}
+
+.wizardBody {
+  position: relative;
+  flex: 1;
+  overflow-y: hidden;
+  margin-right: 10px;
+  border: 20px solid #c9c6ad;
+  padding: 10px 10px 0 10px;
+  background-color: black;
+  border-bottom: unset;
+}
+
+.wizardBodyBackground {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  background-image: linear-gradient(to right,
+      #c9c6ad 0%,
+      #c9c6ad 48%,
+      #a9a690 50%,
+      #c9c6ad 52%,
+      #c9c6ad 100%);
+}
+
+.wizardContent {
+  position: relative;
+  overflow-y: overlay;
+  height: 100%;
+  min-height: 0;
+  width: 100%;
+  padding-left: 10px;
+
+  &::-webkit-scrollbar {
+    width: 10px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(184, 134, 11, 0.5);
+    border-radius: 5px;
+
+    &:hover {
+      background: rgba(184, 134, 11, 0.7);
+    }
+  }
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--color-text-secondary);
+  font-family: var(--font-primary);
+  font-size: var(--font-size-lg);
+}

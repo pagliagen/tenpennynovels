@@ -1,0 +1,240 @@
+/**
+ * Wizard Forms Mixin
+ *
+ * Shared form styles used across multiple wizard step components.
+ * Imported via @use by individual step SCSS modules.
+ * Uses global design tokens exclusively.
+ */
+
+@mixin section {
+  background: var(--color-bg-secondary);
+  border: var(--border-ornate);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
+  margin: 0 var(--spacing-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+@mixin sectionTitle {
+  font-size: var(--font-size-lg);
+  color: var(--color-primary);
+  margin-bottom: var(--spacing-md);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: var(--border-default);
+  font-family: var(--font-primary);
+  font-weight: var(--font-weight-bold);
+}
+
+@mixin formRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+@mixin formGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+@mixin label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--spacing-xs);
+}
+
+@mixin required {
+  color: var(--color-error);
+  margin-left: 2px;
+}
+
+@mixin inputBase {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: var(--border-input);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-base);
+  font-family: var(--font-primary);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  background: var(--color-bg-input);
+  color: var(--color-text-primary);
+
+  &:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
+  }
+
+  &::placeholder {
+    color: var(--color-text-tertiary);
+    font-style: italic;
+  }
+}
+
+@mixin inputError {
+  border-color: var(--color-error) !important;
+
+  &:focus {
+    box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.15) !important;
+  }
+}
+
+@mixin textarea {
+  @include inputBase;
+  resize: vertical;
+  min-height: 80px;
+}
+
+@mixin helpText {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  margin-top: var(--spacing-xs);
+  font-style: italic;
+}
+
+@mixin error {
+  color: var(--color-error);
+  font-size: var(--font-size-sm);
+  margin-top: var(--spacing-xs);
+  font-weight: var(--font-weight-medium);
+}
+
+@mixin errorSummary {
+  background: var(--color-error-bg);
+  border: var(--border-width-base) solid var(--color-error);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  margin-top: var(--spacing-lg);
+
+  h4 {
+    color: var(--color-error);
+    margin-bottom: var(--spacing-sm);
+    font-size: var(--font-size-base);
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+
+    li {
+      color: var(--color-error-border);
+      font-size: var(--font-size-sm);
+      padding: var(--spacing-xs) 0;
+      border-bottom: 1px solid rgba(220, 53, 69, 0.2);
+
+      &:last-child {
+        border-bottom: none;
+      }
+    }
+  }
+}
+
+@mixin infoBox {
+  background: var(--color-info-bg);
+  border: var(--border-width-base) solid var(--color-info);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  margin: var(--spacing-md) 0;
+  color: var(--color-info-border);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-normal);
+}
+
+@mixin warningBox {
+  background: var(--color-warning-bg);
+  border: var(--border-width-base) solid var(--color-warning);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  margin: var(--spacing-md) 0;
+  color: var(--color-warning-border);
+  font-weight: var(--font-weight-semibold);
+}
+
+@mixin successBox {
+  background: var(--color-success-bg);
+  border: var(--border-width-base) solid var(--color-success);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  margin: var(--spacing-md) 0;
+  color: var(--color-success-border);
+  font-weight: var(--font-weight-semibold);
+  text-align: center;
+}
+
+@mixin stepContent {
+  animation: wizardFadeIn 0.3s ease;
+  position: relative;
+  overflow-y: auto;
+}
+
+@keyframes wizardFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@mixin stepTitle {
+  font-size: var(--font-size-2xl);
+  color: var(--color-primary);
+  margin-bottom: var(--spacing-sm);
+  font-family: var(--font-primary);
+  font-weight: var(--font-weight-bold);
+}
+
+@mixin stepDescription {
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-lg);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-relaxed);
+}
+
+@mixin button {
+  padding: var(--spacing-button-y) var(--spacing-button-x);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: var(--font-primary);
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+@mixin buttonPrimary {
+  @include button;
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-active) 100%);
+  color: var(--color-text-inverse);
+  box-shadow: var(--shadow-sm);
+
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, var(--color-primary-hover) 0%, var(--color-primary) 100%);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+}
+
+@mixin buttonSecondary {
+  @include button;
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-primary);
+  border: var(--border-ornate);
+
+  &:hover:not(:disabled) {
+    background: var(--color-bg-secondary);
+    border-color: var(--color-primary-hover);
+  }
+}

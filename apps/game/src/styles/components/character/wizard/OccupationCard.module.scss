@@ -1,0 +1,92 @@
+/**
+ * OccupationCard - Victorian dark-themed occupation card
+ * Uses design tokens only. No local SCSS variables.
+ */
+
+.card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  text-align: left;
+  background: var(--color-bg-tertiary);
+  border: var(--border-ornate);
+  border-radius: var(--radius-md);
+  padding: 0;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+}
+
+.cardSelected {
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-golden-glow);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  border-bottom: var(--border-default);
+  color: var(--color-primary);
+}
+
+.icon {
+  font-size: var(--font-size-xl);
+  line-height: 1;
+  object-fit: contain;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-primary);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.body {
+  flex: 1;
+  padding: var(--spacing-md);
+}
+
+.description {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+.footer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-md);
+  border-top: var(--border-default);
+}
+
+.infoSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.infoLabel {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary);
+}
+
+.infoValue {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+}

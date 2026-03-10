@@ -24,7 +24,6 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({
   const { data: document, isLoading } = useDocument(documentId);
   const [contentDelta, setContentDelta] = useState<any>(null);
   const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
   const [previewOpen, setPreviewOpen] = useState(false);
   const updateDocument = useUpdateDocument();
   const addNotification = useNotificationStore(state => state.addNotification);
@@ -34,7 +33,6 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({
     if (document) {
       setContentDelta(document.contentDelta || { type: 'doc', content: [] });
       setTitle(document.title || '');
-      setDescription(document.description || '');
     }
   }, [document]);
 
@@ -45,7 +43,6 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({
         data: {
           contentDelta,
           title,
-          description,
           lastUpdated: new Date().toISOString()
         }
       });
@@ -120,16 +117,6 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({
             onChange={(e) => setTitle(e.target.value)}
             className={styles.titleInput}
             placeholder="Inserisci titolo..."
-          />
-        </div>
-
-        {/* Description Editor */}
-        <div className={styles.descriptionSection}>
-          <label>Descrizione</label>
-          <DocumentContentEditor
-            contentDelta={description}
-            onChange={(html) => setDescription(html)}
-            htmlMode
           />
         </div>
 

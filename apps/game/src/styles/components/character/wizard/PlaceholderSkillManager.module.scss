@@ -1,0 +1,190 @@
+/**
+ * PlaceholderSkillManager - Placeholder skill specialization manager styles
+ * Uses CSS custom properties only. No local SCSS variables.
+ */
+
+@use 'wizard-forms' as forms;
+
+.placeholderSkillManager {
+  background: var(--color-bg-secondary);
+  border: var(--border-ornate);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  margin-top: var(--spacing-md);
+}
+
+.placeholderHeader {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  margin-bottom: var(--spacing-md);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: var(--border-default);
+
+  strong {
+    font-size: var(--font-size-base);
+    color: var(--color-text-primary);
+    font-family: var(--font-primary);
+  }
+}
+
+.placeholderNote {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  font-style: italic;
+}
+
+.derivedSkillsList {
+  margin-bottom: var(--spacing-md);
+}
+
+.derivedSkillsTable {
+  width: 100%;
+  background: var(--color-bg-secondary);
+  border: var(--border-default);
+  border-radius: var(--radius-md);
+  border-collapse: collapse;
+  overflow: hidden;
+
+  thead {
+    background: var(--color-bg-tertiary);
+    border-bottom: var(--border-default);
+
+    th {
+      padding: var(--spacing-sm) var(--spacing-md);
+      text-align: left;
+      font-size: var(--font-size-sm);
+      font-weight: var(--font-weight-bold);
+      color: var(--color-primary);
+      border-right: 1px solid var(--border-default);
+      font-family: var(--font-primary);
+
+      &:last-child {
+        border-right: none;
+      }
+
+      &:first-child {
+        text-align: center;
+      }
+    }
+  }
+
+  tbody {
+    tr {
+      border-bottom: 1px solid var(--border-default);
+      transition: background-color 0.2s ease;
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      &:hover {
+        background: var(--color-bg-tertiary);
+      }
+
+      &.primaryRow {
+        background: rgba(212, 175, 55, 0.1);
+        font-weight: var(--font-weight-semibold);
+
+        &:hover {
+          background: rgba(212, 175, 55, 0.15);
+        }
+      }
+    }
+
+    td {
+      padding: var(--spacing-sm) var(--spacing-md);
+      font-size: var(--font-size-sm);
+      color: var(--color-text-primary);
+      border-right: 1px solid var(--border-default);
+
+      &:last-child {
+        border-right: none;
+      }
+
+      &:first-child {
+        text-align: center;
+      }
+
+      input[type='radio'] {
+        cursor: pointer;
+        width: 18px;
+        height: 18px;
+        accent-color: var(--color-primary);
+      }
+    }
+  }
+}
+
+.primaryBadge {
+  display: inline-block;
+  margin-left: var(--spacing-xs);
+  color: var(--color-primary);
+  font-size: var(--font-size-base);
+}
+
+.validTotal {
+  color: var(--color-success);
+}
+
+.warningMessage {
+  background: var(--color-warning-bg);
+  border: var(--border-width-base) solid var(--color-warning);
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  margin-top: var(--spacing-sm);
+  color: var(--color-warning);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  text-align: center;
+}
+
+.addButton {
+  @include forms.buttonSecondary;
+  width: 100%;
+}
+
+.addForm {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+  padding: var(--spacing-sm);
+  background: var(--color-bg-tertiary);
+  border: var(--border-default);
+  border-radius: var(--radius-sm);
+  margin-top: var(--spacing-sm);
+}
+
+.inputText {
+  @include forms.inputBase;
+  flex: 1;
+}
+
+.confirmButton {
+  @include forms.buttonPrimary;
+  white-space: nowrap;
+}
+
+.cancelButton {
+  @include forms.buttonSecondary;
+  white-space: nowrap;
+}
+
+.deleteButton {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: var(--color-bg-secondary);
+  border: var(--border-width-base) solid var(--color-error);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-base);
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: var(--color-error-bg);
+    transform: scale(1.05);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+}

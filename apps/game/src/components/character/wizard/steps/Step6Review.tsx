@@ -13,7 +13,8 @@
 import { useWizardStore } from '@/store/wizardStore';
 import { useSkills } from '@/hooks/useCharacterCreation';
 import { DataSummaryCard } from '../shared/DataSummaryCard';
-import styles from '@/styles/components/character/wizard.module.scss';
+import { useWizardToolbar } from '../WizardSlotsContext';
+import styles from '@/styles/components/character/wizard/Step6Review.module.scss';
 
 /**
  * Step 6: Review Component
@@ -55,14 +56,19 @@ export function Step6Review(): JSX.Element {
     return skillId;
   };
  
+  const errorCount = Object.values(validation.errors).length;
+
+  useWizardToolbar(() => (
+    <>
+      <span className={styles.toolbarTitle}>RIEPILOGO FINALE</span>
+      <span className={validation.valid ? styles.toolbarValid : styles.toolbarErrors}>
+        {validation.valid ? '✓ Pronto per l\'invio' : `✗ ${errorCount} errori da correggere`}
+      </span>
+    </>
+  ), [validation.valid, errorCount]);
+
   return (
     <div className={styles.stepContent} data-step="riepilogo">
-      <h2 className={styles.stepTitle}>Riepilogo</h2>
-      <p className={styles.stepDescription}>
-        Verifica che tutti i dati siano corretti prima di inviare il personaggio per l&apos;approvazione. Una volta
-        inviato, il personaggio sarà revisionato dallo staff.
-      </p>
-
       {/* Validation Status */}
       {!validation.valid && (
         <div className={styles.errorSummary}>

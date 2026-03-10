@@ -53,7 +53,6 @@ export interface Document {
   path: string;
   title: string;
   content?: string;
-  description?: string;
   type: DocumentType;
   kind: 'document';
   isPublic: boolean;

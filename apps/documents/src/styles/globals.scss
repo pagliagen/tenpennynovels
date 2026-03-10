@@ -116,7 +116,7 @@ h6 { font-size: $font-size-md; }
 
 p {
   margin-bottom: $spacing-md;
-  line-height: $line-height-relaxed;
+  line-height: 1.5;
   &:last-child { margin-bottom: 0; }
 }
 
@@ -175,17 +175,7 @@ pre {
     border: none;
     padding: 0;
   }
-}
-
-blockquote {
-  border-left: 4px solid $color-primary;
-  padding: $spacing-md $spacing-lg;
-  margin: $spacing-lg 0;
-  font-style: italic;
-  color: $color-text-secondary;
-  background-color: rgba($color-primary, 0.05);
-  border-radius: 0 $radius-md $radius-md 0;
-}
+} 
 
 hr {
   border: none;

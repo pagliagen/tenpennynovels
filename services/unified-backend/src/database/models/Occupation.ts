@@ -47,6 +47,9 @@ export interface IOccupation extends Document {
     maximumAge?: number;
   };
 
+  // Display image
+  image?: string; // Path to occupation image (e.g., /images/occupations/medico.png)
+
   // Availability
   isActive: boolean; // Can be selected by players
 
@@ -188,6 +191,14 @@ const OccupationSchema = new Schema<IOccupation>({
   }],
   careerProgression: [String],
   
+  // Display image
+  image: {
+    type: String,
+    trim: true,
+    maxlength: 500,
+    default: null
+  },
+
   // Availability
   isActive: {
     type: Boolean,

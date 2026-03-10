@@ -27,7 +27,7 @@ export function DocumentLink({ document }: DocumentLinkProps): JSX.Element {
     <Link
       href={`/${document.type}/${document.path}`}
       className={`${styles.documentLink} ${isActive ? styles.active : ''}`}
-      title={document.description || document.title}
+      title={document.title}
     >
       <span className={styles.documentTitle}>{document.title}</span>
       {!document.isPublic && (

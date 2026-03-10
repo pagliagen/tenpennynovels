@@ -72,7 +72,6 @@ export class DocumentController {
         type: doc.type,
         path: doc.path,
         content: doc.content,
-        description: doc.description,
         tags: doc.tags || [],
         isDraft: doc.isDraft || false,
         draftNotes: doc.draftNotes,
@@ -204,7 +203,7 @@ export class DocumentController {
       }
 
       const docs = await Document.find(filter)
-        .select('path type title description isPublic slug order')
+        .select('path type title isPublic slug order')
         .sort({ type: 1, order: 1 })
         .lean();
 
@@ -505,7 +504,6 @@ export class DocumentController {
               _id: '$document._id',
               slug: '$document.slug',
               title: '$document.title',
-              description: '$document.description',
               tags: '$document.tags',
               isDraft: '$document.isDraft',
               path: '$document.path',
@@ -575,6 +573,20 @@ export class DocumentController {
     } catch (error: any) {
       logger.error('Error in toggleFavorite:', error);
       res.status(500).json({ result: false, error: 'Errore toggle favorite', code: 'FAVORITE_ERROR' });
+    }
+  }
+
+  /**
+   * GET /documents/ai-status
+   * Returns whether the AI gateway is healthy and available for Q&A.
+   */
+  static async aiStatus(_req: Request, res: Response): Promise<void> {
+    try {
+      const { aiGatewayClient } = await import('@modules/game/services/AIGatewayClient');
+      const aiAvailable = await aiGatewayClient.isHealthy();
+      res.json({ result: true, data: { aiAvailable } });
+    } catch {
+      res.json({ result: true, data: { aiAvailable: false } });
     }
   }
 

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useAuthStore } from '@/store/authStore';
 import { useSearchState } from '@/hooks/useSearch';
+import { useAiStatus } from '@/hooks/useAiStatus';
 import { Sidebar } from './Sidebar';
 import { SearchResults } from '../search/SearchResults';
 import styles from '@/styles/components/layout/DocumentsLayoutDesktop.module.scss';
@@ -17,6 +18,7 @@ export function DocumentsLayoutDesktop({ children }: DocumentsLayoutDesktopProps
   const router = useRouter();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const searchContainerRef = useRef<HTMLDivElement>(null);
+  const { aiAvailable } = useAiStatus();
 
   const {
     query, setQuery,
@@ -102,7 +104,7 @@ export function DocumentsLayoutDesktop({ children }: DocumentsLayoutDesktopProps
                 <input
                   type="text"
                   className={styles.searchInput}
-                  placeholder="Cerca per parola chiave oppure fai una domanda"
+                  placeholder={aiAvailable ? 'Cerca per parola chiave oppure fai una domanda...' : 'Cerca per parola chiave'}
                   value={query}
                   onChange={handleInputChange}
                   onFocus={handleInputFocus}

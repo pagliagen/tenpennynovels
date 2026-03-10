@@ -12,7 +12,7 @@
 
 import { useState } from 'react';
 import { useWizardStore } from '@/store/wizardStore';
-import styles from '@/styles/components/character/wizard.module.scss';
+import styles from '@/styles/components/character/wizard/PlaceholderSkillManager.module.scss';
 
 interface PlaceholderSkillManagerProps {
   /** Placeholder skill definition from API */

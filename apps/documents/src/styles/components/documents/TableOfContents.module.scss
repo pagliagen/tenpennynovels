@@ -14,10 +14,10 @@ $toc-indent: 20px;
 }
 
 .tocTitle {
-  font-family: $font-secondary;
+  font-family: $font-primary;
   font-size: $font-size-sm;
   font-weight: $font-weight-bold;
-  color: $color-heading;
+  color: #c1272d;
   text-transform: uppercase;
   letter-spacing: $letter-spacing-wider;
   margin: 0 0 $spacing-sm 0;
@@ -26,24 +26,31 @@ $toc-indent: 20px;
 }
 
 .tocList {
+  font-family: $font-body;
+  font-size: $font-size-sm;
+  color: #daddc4;
   list-style: none;
   padding: 0;
   margin: 0;
   display: flex;
   flex-direction: column;
   gap: 2px;
+
 }
 
 .tocItem {
   margin: 0;
   margin-left: calc(var(--depth, 0) * #{$toc-indent});
 
+  &:hover {
+    color: #025951;
+  } 
+
   &.active {
     .tocLink {
-      color: $color-heading;
-      font-weight: $font-weight-semibold;
-      background-color: rgba($color-heading, 0.08);
-      border-left-color: $color-heading;
+      font-weight: $font-weight-bold;
+      color: #025951;
+      border-left: 1px solid #b5b7a5;
     }
   }
 }

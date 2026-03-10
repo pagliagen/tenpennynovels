@@ -10,7 +10,8 @@
 'use client';
 
 import { useWizardStore } from '@/store/wizardStore';
-import styles from '@/styles/components/character/wizard.module.scss';
+import { useWizardToolbar } from '../WizardSlotsContext';
+import styles from '@/styles/components/character/wizard/Step5Background.module.scss';
 
 /**
  * Step 5: Background Component
@@ -37,14 +38,26 @@ export function Step5Background(): JSX.Element {
     });
   };
 
+  const requiredFields = [
+    { label: 'Desc. pubblica', done: ((basicInfo as any).publicDescription || '').trim().length >= 50 },
+    { label: 'Desc. privata', done: ((basicInfo as any).privateDescription || '').trim().length >= 50 },
+    { label: 'Storia', done: (background.briefHistory || '').trim().length >= 100 },
+    { label: 'Personalità', done: (background.personality || '').trim().length >= 50 },
+    { label: 'Obiettivi', done: (background.goalsAndMotivations || '').trim().length >= 50 },
+  ];
+  const completedCount = requiredFields.filter((f) => f.done).length;
+
+  useWizardToolbar(() => (
+    <>
+      <span className={styles.toolbarTitle}>BACKGROUND</span>
+      <span className={styles.toolbarProgress}>
+        Campi obbligatori: {completedCount}/{requiredFields.length}
+      </span>
+    </>
+  ), [completedCount, requiredFields.length]);
+
   return (
     <div className={styles.stepContent} data-step="background">
-      <h2 className={styles.stepTitle}>Background e Storia del Personaggio</h2>
-      <p className={styles.stepDescription}>
-        Sviluppa la storia e la personalità del tuo personaggio attraverso domande guidate.
-        I campi contrassegnati con * sono obbligatori.
-      </p>
-
       {/* SECTION 1: Descrizioni Base (Required) */}
       <div className={styles.section}>
         <h3 className={styles.sectionTitle}>Descrizioni Base</h3>

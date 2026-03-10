@@ -28,7 +28,7 @@ export class CharacterCreationController {
 
       // Fetch occupations from database
       const occupations = await Occupation.find({ isActive: true })
-        .select('name description category socialClass requiredSkills bonusSkills alternativeSkills')
+        .select('name description category socialClass contacts earnings image requiredSkills bonusSkills alternativeSkills')
         .sort({ name: 1 })
         .lean();
 
@@ -46,6 +46,9 @@ export class CharacterCreationController {
           description: occ.description,
           category: occ.category,
           socialClass: occ.socialClass || 'middle_class',
+          contacts: occ.contacts || '',
+          earnings: occ.earnings || '',
+          image: occ.image || null,
           requiredSkills: (occ.requiredSkills || []).map((skill: any) => ({
             skillId: skill.skillId || skill.skillName,
             name: skill.skillName,
@@ -105,7 +108,7 @@ export class CharacterCreationController {
     try {
       // Fetch all active occupations from database
       const occupations = await Occupation.find({ isActive: true })
-        .select('name description category socialClass requiredSkills bonusSkills alternativeSkills')
+        .select('name description category socialClass contacts earnings image requiredSkills bonusSkills alternativeSkills')
         .sort({ name: 1 })
         .lean();
 
@@ -116,6 +119,9 @@ export class CharacterCreationController {
         description: occ.description,
         category: occ.category,
         socialClass: occ.socialClass || 'middle_class',
+        contacts: occ.contacts || '',
+        earnings: occ.earnings || '',
+        image: occ.image || null,
         requiredSkills: (occ.requiredSkills || []).map((skill: any) => ({
           skillId: skill.skillId || skill.skillName,
           name: skill.skillName,

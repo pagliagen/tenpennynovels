@@ -771,212 +771,33 @@ export const useWizardStore = create<WizardStore>()(
         });
       },
 
-      /**
-       * Validate Step
-       *
-       * Validates all fields in a specific step.
-       * Returns validation result with errors.
-       *
-       * @param step - Step number (1-6)
-       * @returns Validation result
-       */
       validateStep: (step) => {
-        const errors: Record<string, string> = {};
-
-        // Step 1: Basic Info
-        if (step === 1) {
-          const { basicInfo } = get();
-
-          if (!basicInfo.firstName || basicInfo.firstName.length < 2) {
-            errors.firstName = 'Nome deve essere almeno 2 caratteri';
-          }
-          if (!basicInfo.lastName || basicInfo.lastName.length < 2) {
-            errors.lastName = 'Cognome deve essere almeno 2 caratteri';
-          }
-          if (basicInfo.age < 16 || basicInfo.age > 80) {
-            errors.age = 'Età deve essere tra 16 e 80';
-          }
-          if (basicInfo.apparentAge < 16 || basicInfo.apparentAge > 80) {
-            errors.apparentAge = 'Età apparente deve essere tra 16 e 80';
-          }
-          if (!basicInfo.gender) {
-            errors.gender = 'Seleziona un genere';
-          }
-          if (!basicInfo.birthplace) {
-            errors.birthplace = 'Inserisci luogo di nascita';
-          }
-          if (!basicInfo.height || basicInfo.height.trim() === '') {
-            errors.height = 'Altezza è obbligatoria';
-          } else {
-            const heightNum = parseFloat(basicInfo.height);
-            if (isNaN(heightNum) || heightNum < 100 || heightNum > 250) {
-              errors.height = 'Altezza deve essere tra 100 e 250 cm';
-            }
-          }
-          if (!basicInfo.weight || basicInfo.weight.trim() === '') {
-            errors.weight = 'Peso è obbligatorio';
-          } else {
-            const weightNum = parseFloat(basicInfo.weight);
-            if (isNaN(weightNum) || weightNum < 30 || weightNum > 200) {
-              errors.weight = 'Peso deve essere tra 30 e 200 kg';
-            }
-          }
-        }
-
-        // Step 2: Occupation
-        if (step === 2) {
-          const { occupation } = get();
-
-          if (!occupation.occupationId) {
-            errors.occupationId = 'Seleziona un\'occupazione';
-          }
-          if (!occupation.currentOccupation) {
-            errors.currentOccupation = 'Inserisci titolo occupazione';
-          }
-        }
-
-        // Step 3: Stats
-        if (step === 3) {
-          const { stats } = get();
-          const total = Object.values(stats).reduce((sum, val) => sum + val, 0);
-          const above80 = Object.values(stats).filter((val) => val > 80).length;
-
-          if (total !== 400) {
-            errors.statsBudget = `Budget stats: ${total}/400 (deve essere esattamente 400)`;
-          }
-          if (above80 > 2) {
-            errors.statsAbove80 = `Massimo 2 stats sopra 80 (attualmente: ${above80})`;
-          }
-          if (Object.values(stats).some((val) => val > 85)) {
-            errors.statsCap = 'Nessun stat può superare 85 in creazione';
-          }
-          // Check minimum values (backend requires >= 20)
-          const belowMin = Object.entries(stats)
-            .filter(([_, val]) => val < 20)
-            .map(([key, val]) => `${key}: ${val}`);
-          if (belowMin.length > 0) {
-            errors.statsMinimum = `Tutte le statistiche devono essere almeno 20 (sotto minimo: ${belowMin.join(', ')})`;
-          }
-        }
-
-        // Step 4: Skills
-        if (step === 4) {
-          const { skills, stats, occupation, dynamicSkills } = get();
-          // Budget calculation: manualPoints + requiredBonus count, occupationBonus does NOT
-          const totalSpent = Object.values(skills).reduce(
-            (sum, skill) => sum + skill.manualPoints + skill.requiredBonus,
-            0
-          );
-          const budget = 200 + Math.floor(stats.intelligence / 2);
-
-          if (totalSpent !== budget) {
-            const diff = totalSpent - budget;
-            if (diff > 0) {
-              errors.skillsBudget = `Punti abilità: ${totalSpent}/${budget} (superato di ${diff})`;
-            } else {
-              errors.skillsBudget = `Punti abilità: ${totalSpent}/${budget} (mancano ${Math.abs(diff)} punti)`;
-            }
-          }
-
-          // Check caps (75 normally, 80 with occupation)
-          for (const [skillName, skill] of Object.entries(skills)) {
-            const cap = skill.occupationBonus > 0 ? 80 : 75;
-            if (skill.total > cap) {
-              errors[`skill_${skillName}`] = `${skillName}: ${skill.total}/${cap} (cap superato)`;
-            }
-          }
-
-          // Validate required placeholder skills have primary selection
-          if (occupation.requiredPlaceholderSkills?.length > 0) {
-            occupation.requiredPlaceholderSkills.forEach((placeholderName) => {
-              // Find all dynamic skills derived from this placeholder
-              const derivedSkills = dynamicSkills.filter((ds) => ds.name === placeholderName);
-
-              if (derivedSkills.length === 0) {
-                errors[`placeholder_${placeholderName}`] = `"${placeholderName}": aggiungi almeno una specializzazione`;
-                return;
-              }
-
-              // Check if at least one has requiredBonus > 0 (is primary)
-              const hasPrimary = derivedSkills.some((ds) => {
-                const skill = skills[ds.skillId];
-                return skill && skill.requiredBonus > 0;
-              });
-
-              if (!hasPrimary) {
-                errors[`placeholder_${placeholderName}`] = `"${placeholderName}": seleziona una specializzazione come principale`;
-              }
-            });
-          }
-        }
-
-        // Step 5: Background
-        if (step === 5) {
-          const { basicInfo, background } = get();
-
-          // Required: publicDescription (min 50)
-          if (!(basicInfo as any).publicDescription || (basicInfo as any).publicDescription.trim().length < 50) {
-            errors.publicDescription = 'Descrizione pubblica deve essere almeno 50 caratteri';
-          }
-
-          // Required: privateDescription (min 50)
-          if (!(basicInfo as any).privateDescription || (basicInfo as any).privateDescription.trim().length < 50) {
-            errors.privateDescription = 'Descrizione privata deve essere almeno 50 caratteri';
-          }
-
-          // Required: briefHistory (min 100)
-          if (!background.briefHistory || background.briefHistory.trim().length < 100) {
-            errors.briefHistory = 'Storia in breve deve essere almeno 100 caratteri';
-          }
-
-          // Required: personality (min 50)
-          if (!background.personality || background.personality.trim().length < 50) {
-            errors.personality = 'Personalità deve essere almeno 50 caratteri';
-          }
-
-          // Required: goalsAndMotivations (min 50)
-          if (!background.goalsAndMotivations || background.goalsAndMotivations.trim().length < 50) {
-            errors.goalsAndMotivations = 'Obiettivi e motivazioni deve essere almeno 50 caratteri';
-          }
-        }
-
-        // Step 6: Review (no validation - all checked in previous steps)
-
-        return {
-          valid: Object.keys(errors).length === 0,
-          errors,
+        const state = get();
+        const validators: Record<number, () => import('@/types/wizard').ValidationResult> = {
+          1: () => require('@/components/character/wizard/validation/wizardValidation').validateStep1(state.basicInfo),
+          2: () => require('@/components/character/wizard/validation/wizardValidation').validateStep2(state.occupation),
+          3: () => require('@/components/character/wizard/validation/wizardValidation').validateStep3(state.stats),
+          4: () => require('@/components/character/wizard/validation/wizardValidation').validateStep4(state.skills, state.stats, state.occupation, state.dynamicSkills),
+          5: () => require('@/components/character/wizard/validation/wizardValidation').validateStep5(state.basicInfo, state.background),
+          6: () => ({ valid: true, errors: {} }),
         };
+        const validator = validators[step];
+        return validator ? validator() : { valid: true, errors: {} };
       },
 
-      /**
-       * Validate All Steps
-       *
-       * Cross-step validation before submission.
-       * Checks relationships between steps.
-       *
-       * @returns Validation result
-       */
       validateAll: () => {
         const errors: Record<string, string> = {};
-
-        // Validate each step
         for (let step = 1; step <= 5; step++) {
           const stepResult = get().validateStep(step);
           if (!stepResult.valid) {
             errors[`step${step}`] = `Step ${step} ha errori`;
           }
         }
-
-        // Cross-step validation
         const { occupation } = get();
         if (occupation.occupationBonusesApplied === false) {
-          errors.occupationBonuses = 'Devi applicare i bonus dell\'occupazione (Step 4)';
+          errors.occupationBonuses = "Devi applicare i bonus dell'occupazione (Step 4)";
         }
-
-        return {
-          valid: Object.keys(errors).length === 0,
-          errors,
-        };
+        return { valid: Object.keys(errors).length === 0, errors };
       },
 
       /**

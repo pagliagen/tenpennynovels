@@ -10,7 +10,7 @@
 'use client';
 
 import { ReactNode } from 'react';
-import styles from '@/styles/components/character/wizard.module.scss';
+import styles from '@/styles/components/character/wizard/DataSummaryCard.module.scss';
 
 /**
  * Props for DataSummaryCard

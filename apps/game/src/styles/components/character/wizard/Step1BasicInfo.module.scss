@@ -1,0 +1,82 @@
+/**
+ * Step1BasicInfo - Basic info form step styles
+ * Uses CSS custom properties only. No local SCSS variables.
+ */
+
+@use 'wizard-forms' as forms;
+
+.stepContent {
+  @include forms.stepContent;
+}
+
+.toolbarTitle {
+  font-size: var(--font-size-sm);
+  color: var(--color-primary);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
+  font-family: var(--font-primary);
+}
+
+.toolbarHint {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  font-style: italic;
+}
+
+.section {
+  @include forms.section;
+}
+
+.sectionTitle {
+  @include forms.sectionTitle;
+}
+
+.formRow {
+  @include forms.formRow;
+}
+
+.formGroup {
+  @include forms.formGroup;
+}
+
+.label {
+  @include forms.label;
+}
+
+.required {
+  @include forms.required;
+}
+
+.input {
+  @include forms.inputBase;
+}
+
+.inputReadonly {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.inputError {
+  @include forms.inputError;
+}
+
+.select {
+  @include forms.inputBase;
+}
+
+.textarea {
+  @include forms.textarea;
+}
+
+.helpText {
+  @include forms.helpText;
+}
+
+.error {
+  @include forms.error;
+}
+
+.errorSummary {
+  @include forms.errorSummary;
+}

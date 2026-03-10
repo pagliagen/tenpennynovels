@@ -39,20 +39,13 @@ export const documentsApi = {
       type: response.data.route.type,
       kind: 'document',
       isPublic: response.data.route.isPublic,
-      ...(response.data.document.description && { description: response.data.document.description }),
+      content: response.data.document.content || '',
     };
 
     const sections: DocumentSection[] = response.data.sections || [];
 
-    const content = sections
-      .map(section => `<h2 id="${section.slug}">${section.title}</h2>\n${section.content}`)
-      .join('\n\n');
-
     return {
-      document: {
-        ...document,
-        content,
-      },
+      document,
       sections,
       hasChildren: response.data.hasChildren ?? false,
       childDocuments: response.data.childDocuments ?? null,

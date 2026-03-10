@@ -172,11 +172,7 @@ export class DocumentManagementController {
       const id = req.params.id as string;
       const updates = req.body;
 
-      const document = await Document.findByIdAndUpdate(
-        id,
-        { $set: { ...updates, lastUpdated: new Date() } },
-        { returnDocument: 'after' }
-      );
+      const document = await Document.findById(id);
 
       if (!document) {
         res.status(404).json(errorResponse(
@@ -184,6 +180,19 @@ export class DocumentManagementController {
         ));
         return;
       }
+
+      const allowedFields = [
+        'title', 'slug', 'type', 'subtypeId', 'contentDelta',
+        'parentId', 'isDraft', 'visible', 'isPublic', 'tags', 'order', 'draftNotes'
+      ];
+      for (const key of allowedFields) {
+        if (updates[key] !== undefined) {
+          (document as any)[key] = updates[key];
+        }
+      }
+      document.lastUpdated = new Date();
+
+      await document.save();
 
       logger.info(`Document ${id} updated`, { updates });
 
@@ -480,11 +489,11 @@ export class DocumentManagementController {
   /**
    * Create new document
    * POST /admin/documents
-   * Body: { title, slug, type, subtypeId, description?, parentId?, contentDelta?, isDraft, visible, isPublic?, tags?, order? }
+   * Body: { title, slug, type, subtypeId, parentId?, contentDelta?, isDraft, visible, isPublic?, tags?, order? }
    */
   static async createDocument(req: Request, res: Response): Promise<void> {
     try {
-      const { title, slug, type, subtypeId, description, parentId, contentDelta, isDraft, visible, isPublic, tags, order } = req.body;
+      const { title, slug, type, subtypeId, parentId, contentDelta, isDraft, visible, isPublic, tags, order } = req.body;
 
       if (!title || !slug || !type || !subtypeId) {
         res.status(400).json(errorResponse(
@@ -544,7 +553,6 @@ export class DocumentManagementController {
         slug,
         type,
         subtypeId,
-        description: description || '',
         parentId: parentId || null,
         contentDelta: contentDelta || { type: 'doc', content: [] },
         isDraft: isDraft !== undefined ? isDraft : true,

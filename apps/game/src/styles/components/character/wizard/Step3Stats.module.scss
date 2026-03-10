@@ -1,0 +1,112 @@
+/**
+ * Step3Stats - Stats allocation step styles
+ * Uses design tokens only. No local SCSS variables.
+ */
+
+@use './wizard-forms' as forms;
+
+.stepContent {
+  @include forms.stepContent;
+}
+
+.toolbarLeft {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.occIcon {
+  font-size: var(--font-size-xl);
+}
+
+.pointsSummary {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.pointsLabel {
+  font-size: var(--font-size-sm);
+  color: var(--color-primary);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
+}
+
+.pointsValue {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.pointsValid {
+  color: var(--color-success);
+}
+
+.pointsExceeded {
+  color: var(--color-error);
+}
+
+.warningBox {
+  @include forms.warningBox;
+}
+
+.panels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-lg);
+  margin-top: var(--spacing-lg);
+  padding: 0 var(--spacing-lg);
+}
+
+.panelLeft,
+.panelRight {
+  background: var(--color-bg-secondary);
+  border: var(--border-ornate);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
+}
+
+.panelTitle {
+  font-size: var(--font-size-lg);
+  color: var(--color-primary);
+  font-family: var(--font-primary);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
+  margin-bottom: var(--spacing-sm);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: var(--border-default);
+}
+
+.panelDescription {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-sm);
+}
+
+.derivedGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-md);
+}
+
+.errorSummary {
+  @include forms.errorSummary;
+}
+
+@media (max-width: 768px) {
+  .panels {
+    grid-template-columns: 1fr;
+  }
+
+  .statsGrid {
+    grid-template-columns: 1fr;
+  }
+}
