@@ -57,6 +57,10 @@
 .body {
   flex: 1;
   padding: var(--spacing-md);
+  max-height: 120px;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  padding-right: 10px; 
 }
 
 .description {

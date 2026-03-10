@@ -11,8 +11,8 @@
   border: var(--border-ornate);
   border-radius: var(--radius-md);
   padding: var(--spacing-lg);
-  margin: 0 var(--spacing-lg);
-  box-shadow: var(--shadow-sm);
+  margin: 3px var(--spacing-lg) 10px;
+  box-shadow: 0 0 0px 3px var(--color-bg-secondary);
 }
 
 @mixin sectionTitle {

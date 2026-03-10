@@ -91,6 +91,7 @@
   max-width: 400px;
   max-height: 60vh;
   overflow-y: auto;
+  scrollbar-gutter: auto;
   background-color: $color-content-bg;
   border: 1px solid $color-border;
   border-radius: $radius-md;
