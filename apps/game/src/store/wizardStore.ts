@@ -37,6 +37,21 @@ import type {
 } from '@/types/wizard';
 
 /**
+ * Bonus Danno lookup table (FOR + TAG)
+ */
+function getBonusDamage(forPlusTag: number): string {
+  if (forPlusTag <= 64) return '-2';
+  if (forPlusTag <= 84) return '-1';
+  if (forPlusTag <= 124) return '0';
+  if (forPlusTag <= 164) return '+1d4';
+  if (forPlusTag <= 204) return '+1d6';
+  if (forPlusTag <= 284) return '+2d6';
+  if (forPlusTag <= 364) return '+3d6';
+  if (forPlusTag <= 444) return '+4d6';
+  return '+5d6';
+}
+
+/**
  * Wizard Store State Interface
  */
 interface WizardStore extends WizardData {
@@ -168,11 +183,11 @@ const initialState = (): Omit<
 
   // Step 3: Derived Stats
   derivedStats: {
-    hitPoints: 4, // FLOOR((CON + SIZ) / 10) = FLOOR((20 + 20) / 10) = 4
-    sanity: 20, // POW
-    maxSanity: 99, // 99 - Cthulhu Mythos (0 initially)
-    magicPoints: 4, // FLOOR(POW / 5) = FLOOR(20 / 5) = 4
-    luck: 20, // POW
+    hitPoints: 4,       // PV = FLOOR((COS + TAG) / 10) = FLOOR((20 + 20) / 10) = 4
+    sanity: 20,         // SAN = POT
+    maxSanity: 99,      // 99 - Cthulhu Mythos (0 initially)
+    bonusDamage: '-2',  // BD = lookup(FOR + TAG) = lookup(40) = -2
+    ideaRoll: 20,       // Tiro Idea = INT
   },
 
   // Step 4: Skills
@@ -386,15 +401,15 @@ export const useWizardStore = create<WizardStore>()(
       /**
        * Recalculate Derived Stats
        *
-       * Calculates HP, Sanity, Magic Points, Luck from base stats.
+       * Calculates PV, SAN, BD, Idea from base stats.
        * Called automatically after stat updates.
        *
-       * **Formulas** (from character-creation.json):
-       * - HP = FLOOR((CON + SIZ) / 10)
-       * - Sanity = POW
+       * **Formulas**:
+       * - PV (Punti Vita) = FLOOR((COS + TAG) / 10)
+       * - SAN (Sanita Mentale) = POT
        * - Max Sanity = 99 (minus Cthulhu Mythos skill)
-       * - Magic Points = FLOOR(POW / 5)
-       * - Luck = POW
+       * - BD (Bonus Danno) = lookup(FOR + TAG)
+       * - Tiro Idea = INT
        */
       recalculateDerivedStats: () => {
         const { stats } = get();
@@ -402,9 +417,9 @@ export const useWizardStore = create<WizardStore>()(
         const derivedStats: DerivedStats = {
           hitPoints: Math.floor((stats.constitution + stats.size) / 10),
           sanity: stats.power,
-          maxSanity: 99, // Minus Cthulhu Mythos (0 initially)
-          magicPoints: Math.floor(stats.power / 5),
-          luck: stats.power,
+          maxSanity: 99,
+          bonusDamage: getBonusDamage(stats.strength + stats.size),
+          ideaRoll: stats.intelligence,
         };
 
         set({ derivedStats });
@@ -898,8 +913,8 @@ export const useWizardStore = create<WizardStore>()(
             sanity: derivedStats.sanity,
             maxSanity: derivedStats.maxSanity,
             hitPoints: derivedStats.hitPoints,
-            magicPoints: derivedStats.magicPoints,
-            luck: derivedStats.luck,
+            bonusDamage: derivedStats.bonusDamage,
+            ideaRoll: derivedStats.ideaRoll,
           },
 
           // Skills (transformed)
@@ -1023,8 +1038,8 @@ export const useWizardStore = create<WizardStore>()(
               hitPoints: character.stats.hitPoints || 4,
               sanity: character.stats.sanity || 20,
               maxSanity: character.stats.maxSanity || 99,
-              magicPoints: character.stats.magicPoints || 4,
-              luck: character.stats.luck || 20,
+              bonusDamage: character.stats.bonusDamage || '-2',
+              ideaRoll: character.stats.ideaRoll || 20,
             },
           });
         }

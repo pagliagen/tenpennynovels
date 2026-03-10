@@ -102,11 +102,11 @@ export interface WizardStats {
  * Derived Stats - Calculated from base stats
  */
 export interface DerivedStats {
-  hitPoints: number; // FLOOR((CON + SIZ) / 10)
-  sanity: number; // POW
-  maxSanity: number; // 99 - Cthulhu Mythos skill
-  magicPoints: number; // FLOOR(POW / 5)
-  luck: number; // POW (rolled separately in some systems)
+  hitPoints: number;    // PV = FLOOR((COS + TAG) / 10)
+  sanity: number;       // SAN = POT
+  maxSanity: number;    // 99 - Cthulhu Mythos skill
+  bonusDamage: string;  // BD = lookup(FOR + TAG) -> es. "-2", "0", "+1d4"
+  ideaRoll: number;     // Tiro Idea = INT
 }
 
 /**
@@ -281,8 +281,8 @@ export interface CharacterCreatePayload {
     sanity: number;
     maxSanity: number;
     hitPoints: number;
-    magicPoints: number;
-    luck: number;
+    bonusDamage: string;
+    ideaRoll: number;
   };
 
   // Skills (transformed to VictorianSkills - 83 static fields)

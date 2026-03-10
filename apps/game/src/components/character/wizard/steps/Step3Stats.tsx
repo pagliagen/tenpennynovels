@@ -20,14 +20,14 @@ import { getOccupationImage } from '../shared/OccupationIconMap';
 import styles from '@/styles/components/character/wizard/Step3Stats.module.scss';
 
 const STATS = [
-  { key: 'strength' as const, label: 'Forza (FOR)', abbreviation: 'FOR', description: 'Potenza fisica, capacità di sollevare pesi' },
-  { key: 'dexterity' as const, label: 'Destrezza (DES)', abbreviation: 'DES', description: 'Agilità, coordinazione, riflessi' },
-  { key: 'intelligence' as const, label: 'Intelligenza (INT)', abbreviation: 'INT', description: 'Capacità di ragionamento, memoria' },
-  { key: 'constitution' as const, label: 'Costituzione (COS)', abbreviation: 'COS', description: 'Salute, resistenza fisica' },
-  { key: 'appearance' as const, label: 'Carisma (CHA)', abbreviation: 'CHA', description: 'Fascino, presenza, carisma personale' },
-  { key: 'power' as const, label: 'Potere (POT)', abbreviation: 'POT', description: 'Forza di volontà, resistenza mentale' },
-  { key: 'size' as const, label: 'Taglia (TAG)', abbreviation: 'TAG', description: 'Massa corporea, altezza, corporatura' },
-  { key: 'education' as const, label: 'Educazione (EDU)', abbreviation: 'EDU', description: 'Istruzione formale, conoscenza acquisita' },
+  { key: 'strength' as const, label: 'Forza (FOR)', abbreviation: 'FOR', description: 'Potenza fisica, capacità di sollevare, spingere.' },
+  { key: 'dexterity' as const, label: 'Destrezza (DES)', abbreviation: 'DES', description: 'Agilità, coordinazione, velocità di reazione.' },
+  { key: 'intelligence' as const, label: 'Intelligenza (INT)', abbreviation: 'INT', description: 'Capacità di ragionamento, memoria e apprendimento.' },
+  { key: 'constitution' as const, label: 'Costituzione (COS)', abbreviation: 'COS', description: 'Salute, resistenza, sopportazione fatica.' },
+  { key: 'appearance' as const, label: 'Carisma (CAR)', abbreviation: 'CAR', description: 'Fascino, presenza, carisma personale.' },
+  { key: 'size' as const, label: 'Taglia (TAG)', abbreviation: 'TAG', description: 'Massa corporea, altezza, corporatura.' },
+  { key: 'power' as const, label: 'Potere (POT)', abbreviation: 'POT', description: 'Forza di volontà, resistenza mentale, intuito.' },
+  { key: 'education' as const, label: 'Educazione (EDU)', abbreviation: 'EDU', description: 'Istruzione formale, conoscenze acquisite.' },
 ];
 
 /**
@@ -82,9 +82,6 @@ export function Step3Stats(): JSX.Element {
       <div className={styles.panels}>
         <div className={styles.panelLeft}>
           <h3 className={styles.panelTitle}>CARATTERISTICHE PRINCIPALI</h3>
-          <p className={styles.panelDescription}>
-            Distribuisci 400 punti tra le 8 statistiche. Massimo 2 statistiche possono superare 80, nessuna può superare 85.
-          </p>
           <div className={styles.statsGrid}>
             {STATS.map((stat) => (
               <StatControl
@@ -103,13 +100,33 @@ export function Step3Stats(): JSX.Element {
         <div className={styles.panelRight}>
           <h3 className={styles.panelTitle}>CARATTERISTICHE DERIVATE</h3>
           <p className={styles.panelDescription}>
-            Calcolate automaticamente dalle statistiche principali.
+            Le caratteristiche derivate si calcolano automaticamente sulla base dei punteggi delle caratteristiche principali.
           </p>
           <div className={styles.derivedGrid}>
-            <DerivedStatCard label="Punti Vita" value={derivedStats.hitPoints} formula="= (COS + TAG) / 10" />
-            <DerivedStatCard label="Sanità Mentale" value={derivedStats.sanity} formula="= POT" />
-            <DerivedStatCard label="Punti Magia" value={derivedStats.magicPoints} formula="= POT / 5" />
-            <DerivedStatCard label="Fortuna" value={derivedStats.luck} formula="= POT" />
+            <DerivedStatCard
+              label="Punti Vita"
+              value={derivedStats.hitPoints}
+              formula="COS + TAG : 10"
+              description="Resistenza fisica prima di perdere conoscenza o morire. A 0 PV incosciente, a -2 morto."
+            />
+            <DerivedStatCard
+              label="Sanità Mentale"
+              value={derivedStats.sanity}
+              formula="= POT"
+              description="Resistenza alla follia. Diminuisce affrontando orrori soprannaturali. Max 99%."
+            />
+            <DerivedStatCard
+              label="Tiro Idea"
+              value={derivedStats.ideaRoll}
+              formula="= INT"
+              description="Lampo di intuizione per collegare indizi o ricordare informazioni cruciali."
+            />
+            <DerivedStatCard
+              label="Bonus Danno"
+              value={derivedStats.bonusDamage}
+              formula="FOR + TAG"
+              description="Danni extra in combattimento corpo a corpo, calcolati dalla tabella BD."
+            />
           </div>
         </div>
       </div>

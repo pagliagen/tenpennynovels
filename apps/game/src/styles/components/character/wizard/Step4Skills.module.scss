@@ -7,6 +7,7 @@
 
 .stepContent {
   @include forms.stepContent;
+  display: flex;  
 }
 
 .stepTitle {
@@ -35,39 +36,40 @@
 
 .errorSummary {
   @include forms.errorSummary;
-}
+} 
 
 .categoryTabs {
+  position: relative;
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-md);
+  flex-direction: column;
+  flex-grow: 0;
+  flex-shrink: 0;
+  width: 120px;
+}
+
+.skillsContent {
+  position: relative;
+  flex-grow: 1;
+  flex-shrink: 1;
 }
 
 .categoryTab {
-  padding: var(--spacing-sm) var(--spacing-md);
-  background: var(--color-bg-tertiary);
-  border: var(--border-default);
-  border-radius: var(--radius-sm);
-  color: var(--color-text-secondary);
+  color: black;
   font-family: var(--font-primary);
   font-size: var(--font-size-sm);
   cursor: pointer;
   transition: all 0.2s ease;
+  border-left: 2px solid transparent;
 
-  &:hover {
-    background: var(--color-bg-secondary);
-    border-color: var(--color-primary);
-    color: var(--color-text-primary);
+  &:hover { 
+    font-weight: bold;
+  }
+
+  &.categoryTabActive {
+  border-left: 2px solid black;
   }
 }
-
-.categoryTabActive {
-  background: var(--color-primary);
-  border-color: var(--color-primary);
-  color: var(--color-text-inverse);
-}
-
+ 
 .skillsTable {
   width: 100%;
   background: var(--color-bg-secondary);

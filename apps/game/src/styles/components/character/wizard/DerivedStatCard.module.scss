@@ -3,27 +3,47 @@
  * Uses design tokens only (no local SCSS variables).
  */
 
-.root {
-  background: var(--color-bg-tertiary);
-  border: var(--border-default);
-  padding: var(--spacing-md);
-  border-radius: 4px;
+.root { 
+  position: relative;
+  font-family: var(--font-primary);
+
+  + .root:after {
+      content: '';
+      position: absolute;
+      top: 110px;
+      bottom: 8px;
+      left: -10px;
+      border-right: 1px solid #c8c6ad;
+  }
+}
+
+.valueWrapper {
+  background: #c9c6ad;
+  padding: 10px;
+  border-radius: 10px;
   text-align: center;
+  color: black;
+  height: 80px;
+  display: flex;
+  flex-direction: column;
 }
 
 .label {
+  flex-grow: 0;
+  flex-shrink: 0;
   display: block;
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
-  margin-bottom: var(--spacing-xs);
+  font-size: 10px; 
 }
 
 .value {
-  display: block;
-  font-size: var(--font-size-2xl);
-  color: var(--color-primary);
-  font-weight: bold;
-  margin-bottom: var(--spacing-xs);
+  font-size: 12px; 
+  flex-grow: 1;
+  flex-shrink: 1;
+  display: block; 
+  font-weight: var(--font-weight-bold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .formula {
@@ -32,10 +52,12 @@
   color: var(--color-text-tertiary);
   font-style: italic;
   margin-bottom: var(--spacing-xs);
+  text-align: center;
 }
 
 .description {
   font-size: var(--font-size-xs);
   color: var(--color-text-tertiary);
   margin: var(--spacing-xs) 0 0;
+  text-align: center;
 }

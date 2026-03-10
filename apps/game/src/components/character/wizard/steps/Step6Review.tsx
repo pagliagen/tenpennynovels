@@ -226,12 +226,12 @@ export function Step6Review(): JSX.Element {
           <span className={styles.summaryValue}>{derivedStats.sanity}</span>
         </div>
         <div className={styles.summaryRow}>
-          <span className={styles.summaryLabel}>Punti Magia:</span>
-          <span className={styles.summaryValue}>{derivedStats.magicPoints}</span>
+          <span className={styles.summaryLabel}>Tiro Idea:</span>
+          <span className={styles.summaryValue}>{derivedStats.ideaRoll}</span>
         </div>
         <div className={styles.summaryRow}>
-          <span className={styles.summaryLabel}>Fortuna:</span>
-          <span className={styles.summaryValue}>{derivedStats.luck}</span>
+          <span className={styles.summaryLabel}>Bonus Danno:</span>
+          <span className={styles.summaryValue}>{derivedStats.bonusDamage}</span>
         </div>
       </DataSummaryCard>
 

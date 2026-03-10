@@ -80,17 +80,18 @@
 .panelTitle {
   font-size: var(--font-size-lg);
   color: var(--color-primary);
-  font-family: var(--font-primary);
+  font-family: var(--font-heading-secondary);
   font-weight: var(--font-weight-bold);
   text-transform: uppercase;
   letter-spacing: var(--letter-spacing-wide);
   margin-bottom: var(--spacing-sm);
   padding-bottom: var(--spacing-sm);
-  border-bottom: var(--border-default);
+  text-align: center;
 }
 
 .panelDescription {
   color: var(--color-text-tertiary);
+  font-family: var(--font-secondary);
   font-size: var(--font-size-sm);
   margin-bottom: var(--spacing-md);
 }
@@ -103,7 +104,7 @@
 
 .derivedGrid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: var(--spacing-md);
 }
 
@@ -118,5 +119,9 @@
 
   .statsGrid {
     grid-template-columns: 1fr;
+  }
+
+  .derivedGrid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }

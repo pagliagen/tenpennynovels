@@ -1,8 +1,10 @@
 /**
- * StatControl - Single stat allocator with slider and increment/decrement buttons
+ * StatControl - Single stat allocator with numeric input
  *
  * @module components/character/wizard/shared/StatControl
  */
+
+'use client';
 
 import React, { useCallback } from 'react';
 import styles from '@/styles/components/character/wizard/StatControl.module.scss';
@@ -32,17 +34,7 @@ export function StatControl({
   max = 85,
   isHigh = false,
 }: StatControlProps) {
-  const handleSliderChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const next = parseInt(e.target.value, 10);
-      if (!Number.isNaN(next)) {
-        onChange(clamp(next, min, max));
-      }
-    },
-    [onChange, min, max]
-  );
-
-  const handleInputChange = useCallback(
+  const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const raw = e.target.value;
       if (raw === '') return;
@@ -54,75 +46,24 @@ export function StatControl({
     [onChange, min, max]
   );
 
-  const adjust = useCallback(
-    (delta: number) => {
-      onChange(clamp(value + delta, min, max));
-    },
-    [value, onChange, min, max]
-  );
-
   return (
     <div className={styles.root}>
-      <div className={styles.header}>
-        <span className={styles.label}>{label}</span>
-        <span className={isHigh ? styles.valueHigh : styles.value}>{value}</span>
-      </div>
-
-      <input
-        type="range"
-        className={isHigh ? styles.sliderHigh : styles.slider}
-        min={min}
-        max={max}
-        value={value}
-        onChange={handleSliderChange}
-        aria-label={`${label} (${abbreviation})`}
-      />
-
-      <div className={styles.buttons}>
-        <button
-          type="button"
-          className={styles.btn}
-          onClick={() => adjust(-5)}
-          aria-label={`${abbreviation} -5`}
-        >
-          -5
-        </button>
-        <button
-          type="button"
-          className={styles.btn}
-          onClick={() => adjust(-1)}
-          aria-label={`${abbreviation} -1`}
-        >
-          -1
-        </button>
+      <div className={styles.inputWrapper}>
         <input
           type="number"
-          className={styles.input}
+          className={`${styles.input} ${isHigh ? styles.inputHigh : ''}`}
           min={min}
           max={max}
           value={value}
-          onChange={handleInputChange}
-          aria-label={abbreviation}
+          onChange={handleChange}
+          aria-label={`${label} (${abbreviation})`}
         />
-        <button
-          type="button"
-          className={styles.btn}
-          onClick={() => adjust(1)}
-          aria-label={`${abbreviation} +1`}
-        >
-          +1
-        </button>
-        <button
-          type="button"
-          className={styles.btn}
-          onClick={() => adjust(5)}
-          aria-label={`${abbreviation} +5`}
-        >
-          +5
-        </button>
+        <span className={styles.percent}>%</span>
       </div>
-
-      <p className={styles.description}>{description}</p>
+      <div className={styles.textGroup}>
+        <span className={styles.label}>{label}</span>
+        <span className={styles.description}>{description}</span>
+      </div>
     </div>
   );
 }

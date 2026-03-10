@@ -21,8 +21,10 @@ export function DerivedStatCard({
 }: DerivedStatCardProps) {
   return (
     <div className={styles.root}>
-      <span className={styles.label}>{label}</span>
-      <span className={styles.value}>{value}</span>
+      <div className={styles.valueWrapper}>
+        <span className={styles.label}>{label}</span>
+        <span className={styles.value}>{value}</span>
+      </div>
       {formula && <span className={styles.formula}>{formula}</span>}
       {description && <p className={styles.description}>{description}</p>}
     </div>

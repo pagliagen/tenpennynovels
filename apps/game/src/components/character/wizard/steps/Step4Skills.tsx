@@ -78,21 +78,7 @@ export function Step4Skills(): JSX.Element {
   );
 
   useWizardToolbar(() => (
-    <>
-      <div className={styles.categoryTabs}>
-        {categories.map((cat) => (
-          <button
-            key={cat.id}
-            type="button"
-            onClick={() => setActiveCategory(cat.id)}
-            className={`${styles.categoryTab} ${activeCategory === cat.id ? styles.categoryTabActive : ''}`}
-          >
-            {cat.label}
-          </button>
-        ))}
-      </div>
-      <BudgetIndicator spent={spentPoints} total={totalBudget} label="Punti Abilità" />
-    </>
+    <BudgetIndicator spent={spentPoints} total={totalBudget} label="Punti Abilità" />
   ), [categories, activeCategory, spentPoints, totalBudget]);
 
   // Initialize skills with base values from API if not already present
@@ -234,235 +220,249 @@ export function Step4Skills(): JSX.Element {
   return (
     <div className={styles.stepContent} data-step="skills">
       {/* Required Skills Section */}
-      {occupation.occupationId && occupations && (
-        <div className={styles.section}>
-          <h3 className={styles.sectionTitle}>Skill Obbligatorie per {occupation.currentOccupation}</h3>
-          <p className={styles.helpText}>
-            Queste skill sono richieste dalla tua occupazione e vengono automaticamente portate a <strong>40 punti</strong>.
-          </p>
+      <div className={styles.categoryTabs}>
+        {categories.map((cat) => (
+          <button
+            key={cat.id}
+            type="button"
+            onClick={() => setActiveCategory(cat.id)}
+            className={`${styles.categoryTab} ${activeCategory === cat.id ? styles.categoryTabActive : ''}`}
+          >
+            {cat.label}
+          </button>
+        ))}
+      </div>
+      <div className={styles.skillsContent}>
+        {occupation.occupationId && occupations && (
+          <div className={styles.section}>
+            <h3 className={styles.sectionTitle}>Skill Obbligatorie per {occupation.currentOccupation}</h3>
+            <p className={styles.helpText}>
+              Queste skill sono richieste dalla tua occupazione e vengono automaticamente portate a <strong>40 punti</strong>.
+            </p>
 
-          {(() => {
-            const selectedOccupation = occupations.find((occ) => occ.id === occupation.occupationId);
-            if (!selectedOccupation) return null;
+            {(() => {
+              const selectedOccupation = occupations.find((occ) => occ.id === occupation.occupationId);
+              if (!selectedOccupation) return null;
 
-            // Separate placeholder skills from normal skills
-            // Note: alternativeSkills is a Record<skillId, alternatives[]> at occupation level, not on individual requirements
-            const requiredSkillsData = selectedOccupation.requiredSkills
-              .filter((req) => {
-                // Filter out skills that have alternatives (those are handled by PlaceholderSkillManager)
-                const hasAlternatives = selectedOccupation.alternativeSkills?.[req.skillId];
-                return !hasAlternatives || hasAlternatives.length === 0;
-              })
-              .map((requirement) => {
-                // Case-insensitive match for skill names
-                const skillDef = apiSkills?.find(
-                  (s) =>
-                    s.id === requirement.skillId ||
-                    s.name.toLowerCase() === requirement.name.toLowerCase()
-                );
-                return { requirement, skillDef };
-              })
-              .filter(({ skillDef }) => skillDef !== undefined);
+              // Separate placeholder skills from normal skills
+              // Note: alternativeSkills is a Record<skillId, alternatives[]> at occupation level, not on individual requirements
+              const requiredSkillsData = selectedOccupation.requiredSkills
+                .filter((req) => {
+                  // Filter out skills that have alternatives (those are handled by PlaceholderSkillManager)
+                  const hasAlternatives = selectedOccupation.alternativeSkills?.[req.skillId];
+                  return !hasAlternatives || hasAlternatives.length === 0;
+                })
+                .map((requirement) => {
+                  // Case-insensitive match for skill names
+                  const skillDef = apiSkills?.find(
+                    (s) =>
+                      s.id === requirement.skillId ||
+                      s.name.toLowerCase() === requirement.name.toLowerCase()
+                  );
+                  return { requirement, skillDef };
+                })
+                .filter(({ skillDef }) => skillDef !== undefined);
 
-            // Safe to use non-null assertion after filter
-            const placeholderSkills = requiredSkillsData.filter(({ skillDef }) => skillDef!.isPlaceholder);
-            const normalSkills = requiredSkillsData.filter(({ skillDef }) => !skillDef!.isPlaceholder);
+              // Safe to use non-null assertion after filter
+              const placeholderSkills = requiredSkillsData.filter(({ skillDef }) => skillDef!.isPlaceholder);
+              const normalSkills = requiredSkillsData.filter(({ skillDef }) => !skillDef!.isPlaceholder);
 
-            return (
-              <>
-                {/* Normal Skills Table */}
-                {normalSkills.length > 0 && (
-                  <div className={styles.skillsTable}>
-                    <div className={styles.skillsTableHeader}>
-                      <div className={styles.skillsTableCell}>Abilità</div>
-                      <div className={styles.skillsTableCell}>Base</div>
-                      <div className={styles.skillsTableCell}>Req.</div>
-                      <div className={styles.skillsTableCell}>Manuali</div>
-                      <div className={styles.skillsTableCell}>Totale</div>
+              return (
+                <>
+                  {/* Normal Skills Table */}
+                  {normalSkills.length > 0 && (
+                    <div className={styles.skillsTable}>
+                      <div className={styles.skillsTableHeader}>
+                        <div className={styles.skillsTableCell}>Abilità</div>
+                        <div className={styles.skillsTableCell}>Base</div>
+                        <div className={styles.skillsTableCell}>Req.</div>
+                        <div className={styles.skillsTableCell}>Manuali</div>
+                        <div className={styles.skillsTableCell}>Totale</div>
+                      </div>
+                      {normalSkills.map(({ skillDef }) => {
+                        const skill = skills[skillDef!.id] || {
+                          base: skillDef!.baseValue,
+                          requiredBonus: 0,
+                          manualPoints: 0,
+                          occupationBonus: 0,
+                          total: skillDef!.baseValue,
+                        };
+
+                        return (
+                          <div key={skillDef!.id} className={styles.skillsTableRow}>
+                            <div className={styles.skillsTableCell}>
+                              <strong>{skillDef!.name}</strong>
+                            </div>
+                            <div className={styles.skillsTableCell}>{skill.base}</div>
+                            <div className={styles.skillsTableCell}>
+                              {skill.requiredBonus > 0 ? `+${skill.requiredBonus}` : '-'}
+                            </div>
+                            <div className={styles.skillsTableCell}>{skill.manualPoints}</div>
+                            <div className={styles.skillsTableCell}>
+                              <strong className={skill.total >= 40 ? styles.skillHighValue : ''}>
+                                {skill.total}
+                              </strong>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-                    {normalSkills.map(({ skillDef }) => {
-                      const skill = skills[skillDef!.id] || {
-                        base: skillDef!.baseValue,
-                        requiredBonus: 0,
-                        manualPoints: 0,
-                        occupationBonus: 0,
-                        total: skillDef!.baseValue,
-                      };
+                  )}
 
-                      return (
-                        <div key={skillDef!.id} className={styles.skillsTableRow}>
-                          <div className={styles.skillsTableCell}>
-                            <strong>{skillDef!.name}</strong>
-                          </div>
-                          <div className={styles.skillsTableCell}>{skill.base}</div>
-                          <div className={styles.skillsTableCell}>
-                            {skill.requiredBonus > 0 ? `+${skill.requiredBonus}` : '-'}
-                          </div>
-                          <div className={styles.skillsTableCell}>{skill.manualPoints}</div>
-                          <div className={styles.skillsTableCell}>
-                            <strong className={skill.total >= 40 ? styles.skillHighValue : ''}>
-                              {skill.total}
-                            </strong>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
+                  {/* Placeholder Skills */}
+                  {placeholderSkills.map(({ skillDef, requirement }) => (
+                    <PlaceholderSkillManager
+                      key={skillDef!.id}
+                      placeholderSkill={skillDef!}
+                      requiredMinimum={requirement!.bonusValue || 40}
+                    />
+                  ))}
+                </>
+              );
+            })()}
+          </div>
+        )}
 
-                {/* Placeholder Skills */}
-                {placeholderSkills.map(({ skillDef, requirement }) => (
-                  <PlaceholderSkillManager
-                    key={skillDef!.id}
-                    placeholderSkill={skillDef!}
-                    requiredMinimum={requirement!.bonusValue || 40}
-                  />
-                ))}
-              </>
-            );
-          })()}
-        </div>
-      )}
+        {/* Bonus Skills Section */}
+        {occupation.occupationId && occupations && (
+          <div className={styles.section}>
+            <h3 className={styles.sectionTitle}>Skill Bonus per {occupation.currentOccupation}</h3>
+            <p className={styles.helpText}>
+              Queste skill ricevono un <strong>bonus extra</strong> dalla tua occupazione (non conta verso il budget).
+            </p>
+            <div className={styles.skillsTable}>
+              <div className={styles.skillsTableHeader}>
+                <div className={styles.skillsTableCell}>Abilità</div>
+                <div className={styles.skillsTableCell}>Base</div>
+                <div className={styles.skillsTableCell}>Bonus</div>
+                <div className={styles.skillsTableCell}>Manuali</div>
+                <div className={styles.skillsTableCell}>Totale</div>
+              </div>
+              {(() => {
+                const selectedOccupation = occupations.find((occ) => occ.id === occupation.occupationId);
+                if (!selectedOccupation || !selectedOccupation.bonusSkills?.length) return null;
 
-      {/* Bonus Skills Section */}
-      {occupation.occupationId && occupations && (
+                return selectedOccupation.bonusSkills.map((bonusSkill) => {
+                  // Case-insensitive match for skill names
+                  const skillDef = apiSkills?.find(
+                    (s) =>
+                      s.id === bonusSkill.skillId ||
+                      s.name.toLowerCase() === bonusSkill.name.toLowerCase()
+                  );
+                  if (!skillDef) return null;
+
+                  const skill = skills[skillDef.id] || {
+                    base: skillDef.baseValue,
+                    requiredBonus: 0,
+                    manualPoints: 0,
+                    occupationBonus: 0,
+                    total: skillDef.baseValue,
+                  };
+
+                  return (
+                    <div key={skillDef.id} className={styles.skillsTableRow}>
+                      <div className={styles.skillsTableCell}>
+                        <strong>{skillDef.name}</strong>
+                      </div>
+                      <div className={styles.skillsTableCell}>{skill.base}</div>
+                      <div className={styles.skillsTableCell}>
+                        {skill.occupationBonus > 0 ? `+${skill.occupationBonus}` : '-'}
+                      </div>
+                      <div className={styles.skillsTableCell}>{skill.manualPoints}</div>
+                      <div className={styles.skillsTableCell}>
+                        <strong className={skill.total > 75 ? styles.skillHighValue : ''}>
+                          {skill.total}
+                        </strong>
+                      </div>
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+          </div>
+        )}
+
+        {/* Skills Table */}
         <div className={styles.section}>
-          <h3 className={styles.sectionTitle}>Skill Bonus per {occupation.currentOccupation}</h3>
-          <p className={styles.helpText}>
-            Queste skill ricevono un <strong>bonus extra</strong> dalla tua occupazione (non conta verso il budget).
-          </p>
           <div className={styles.skillsTable}>
             <div className={styles.skillsTableHeader}>
               <div className={styles.skillsTableCell}>Abilità</div>
               <div className={styles.skillsTableCell}>Base</div>
+              <div className={styles.skillsTableCell}>Req.</div>
               <div className={styles.skillsTableCell}>Bonus</div>
               <div className={styles.skillsTableCell}>Manuali</div>
               <div className={styles.skillsTableCell}>Totale</div>
+              <div className={styles.skillsTableCell}>Controlli</div>
             </div>
-            {(() => {
-              const selectedOccupation = occupations.find((occ) => occ.id === occupation.occupationId);
-              if (!selectedOccupation || !selectedOccupation.bonusSkills?.length) return null;
 
-              return selectedOccupation.bonusSkills.map((bonusSkill) => {
-                // Case-insensitive match for skill names
-                const skillDef = apiSkills?.find(
-                  (s) =>
-                    s.id === bonusSkill.skillId ||
-                    s.name.toLowerCase() === bonusSkill.name.toLowerCase()
-                );
-                if (!skillDef) return null;
+            {filteredSkills.map((skillDef) => {
+              const skill = skills[skillDef.id] || {
+                base: skillDef.baseValue,
+                requiredBonus: 0,
+                manualPoints: 0,
+                occupationBonus: 0,
+                total: skillDef.baseValue,
+              };
 
-                const skill = skills[skillDef.id] || {
-                  base: skillDef.baseValue,
-                  requiredBonus: 0,
-                  manualPoints: 0,
-                  occupationBonus: 0,
-                  total: skillDef.baseValue,
-                };
-
-                return (
-                  <div key={skillDef.id} className={styles.skillsTableRow}>
-                    <div className={styles.skillsTableCell}>
-                      <strong>{skillDef.name}</strong>
-                    </div>
-                    <div className={styles.skillsTableCell}>{skill.base}</div>
-                    <div className={styles.skillsTableCell}>
-                      {skill.occupationBonus > 0 ? `+${skill.occupationBonus}` : '-'}
-                    </div>
-                    <div className={styles.skillsTableCell}>{skill.manualPoints}</div>
-                    <div className={styles.skillsTableCell}>
-                      <strong className={skill.total > 75 ? styles.skillHighValue : ''}>
-                        {skill.total}
-                      </strong>
-                    </div>
+              return (
+                <div key={skillDef.id} className={styles.skillsTableRow}>
+                  <div className={styles.skillsTableCell}>
+                    <strong>{skillDef.name}</strong>
                   </div>
-                );
-              });
-            })()}
+                  <div className={styles.skillsTableCell}>{skill.base}</div>
+                  <div className={styles.skillsTableCell}>
+                    {skill.requiredBonus > 0 ? `+${skill.requiredBonus}` : '-'}
+                  </div>
+                  <div className={styles.skillsTableCell}>
+                    {skill.occupationBonus > 0 ? `+${skill.occupationBonus}` : '-'}
+                  </div>
+                  <div className={styles.skillsTableCell}>
+                    <input
+                      type="number"
+                      value={skill.manualPoints}
+                      onChange={(e) => handlePointChange(skillDef.id, parseInt(e.target.value) || 0)}
+                      min={0}
+                      max={totalBudget}
+                      className={styles.skillInput}
+                    />
+                  </div>
+                  <div className={styles.skillsTableCell}>
+                    <strong className={skill.total > 75 ? styles.skillHighValue : ''}>{skill.total}</strong>
+                  </div>
+                  <div className={styles.skillsTableCell}>
+                    <button
+                      type="button"
+                      onClick={() => handlePointChange(skillDef.id, skill.manualPoints - 5)}
+                      className={styles.skillButton}
+                    >
+                      -5
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handlePointChange(skillDef.id, skill.manualPoints + 5)}
+                      className={styles.skillButton}
+                    >
+                      +5
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
-      )}
 
-      {/* Skills Table */}
-      <div className={styles.section}>
-        <div className={styles.skillsTable}>
-          <div className={styles.skillsTableHeader}>
-            <div className={styles.skillsTableCell}>Abilità</div>
-            <div className={styles.skillsTableCell}>Base</div>
-            <div className={styles.skillsTableCell}>Req.</div>
-            <div className={styles.skillsTableCell}>Bonus</div>
-            <div className={styles.skillsTableCell}>Manuali</div>
-            <div className={styles.skillsTableCell}>Totale</div>
-            <div className={styles.skillsTableCell}>Controlli</div>
+        {/* Validation Errors */}
+        {Object.keys(errors).length > 0 && (
+          <div className={styles.errorSummary}>
+            <h4>Errori di Validazione:</h4>
+            <ul>
+              {Object.entries(errors).map(([field, error]) => (
+                <li key={field}>{error}</li>
+              ))}
+            </ul>
           </div>
-
-          {filteredSkills.map((skillDef) => {
-            const skill = skills[skillDef.id] || {
-              base: skillDef.baseValue,
-              requiredBonus: 0,
-              manualPoints: 0,
-              occupationBonus: 0,
-              total: skillDef.baseValue,
-            };
-
-            return (
-              <div key={skillDef.id} className={styles.skillsTableRow}>
-                <div className={styles.skillsTableCell}>
-                  <strong>{skillDef.name}</strong>
-                </div>
-                <div className={styles.skillsTableCell}>{skill.base}</div>
-                <div className={styles.skillsTableCell}>
-                  {skill.requiredBonus > 0 ? `+${skill.requiredBonus}` : '-'}
-                </div>
-                <div className={styles.skillsTableCell}>
-                  {skill.occupationBonus > 0 ? `+${skill.occupationBonus}` : '-'}
-                </div>
-                <div className={styles.skillsTableCell}>
-                  <input
-                    type="number"
-                    value={skill.manualPoints}
-                    onChange={(e) => handlePointChange(skillDef.id, parseInt(e.target.value) || 0)}
-                    min={0}
-                    max={totalBudget}
-                    className={styles.skillInput}
-                  />
-                </div>
-                <div className={styles.skillsTableCell}>
-                  <strong className={skill.total > 75 ? styles.skillHighValue : ''}>{skill.total}</strong>
-                </div>
-                <div className={styles.skillsTableCell}>
-                  <button
-                    type="button"
-                    onClick={() => handlePointChange(skillDef.id, skill.manualPoints - 5)}
-                    className={styles.skillButton}
-                  >
-                    -5
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handlePointChange(skillDef.id, skill.manualPoints + 5)}
-                    className={styles.skillButton}
-                  >
-                    +5
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        )}
       </div>
-
-      {/* Validation Errors */}
-      {Object.keys(errors).length > 0 && (
-        <div className={styles.errorSummary}>
-          <h4>Errori di Validazione:</h4>
-          <ul>
-            {Object.entries(errors).map(([field, error]) => (
-              <li key={field}>{error}</li>
-            ))}
-          </ul>
-        </div>
-      )}
     </div>
   );
 }

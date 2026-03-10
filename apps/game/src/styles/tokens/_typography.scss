@@ -43,6 +43,26 @@
   /** Monospace font - For code, passwords, etc. */
   --font-mono: 'Courier New', Courier, monospace;
 
+  /** Font - For headings */
+  @font-face {
+    font-family: 'Les Mystères de Paris';
+    src: url('/fonts/les-mysteres-de-paris.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+  }
+  
+  @font-face {
+    font-family: 'Thrifted Attire';
+    src: url('/fonts/thrifted-attire-regular.otf') format('opentype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+  }
+  
+  --font-heading-primary: 'Les Mystères de Paris', 'IM Fell English', Georgia, serif;
+  --font-heading-secondary: 'Thrifted Attire', 'IM Fell English', Georgia, serif;
+
   /* ===========================
      FONT SIZES
      =========================== */
