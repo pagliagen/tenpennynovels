@@ -13,10 +13,14 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
+  padding-left: 30px;
+  padding-top: 8px;
 }
 
 .occIcon {
   font-size: var(--font-size-xl);
+  object-fit: contain;
+  object-position: top center;
 }
 
 .pointsSummary {

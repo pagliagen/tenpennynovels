@@ -25,6 +25,7 @@
   left: 10px;
   right: 10px;
   bottom: 10px;
+  margin-top: 20px;
   background-image: linear-gradient(to right,
       #c9c6ad 0%,
       #c9c6ad 48%,
@@ -40,6 +41,7 @@
   min-height: 0;
   width: 100%;
   padding-left: 10px;
+  padding-top: 20px;
 
   &::-webkit-scrollbar {
     width: 10px;

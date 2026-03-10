@@ -30,7 +30,7 @@ export function Step2Occupation(): JSX.Element {
 
   const categories = useMemo(() => {
     if (!occupations) return [];
-    return [...new Set(occupations.map((o) => o.category))];
+    return [...new Set(occupations.map((o) => o.category))].sort((a, b) => a.localeCompare(b, 'it'));
   }, [occupations]);
 
   useWizardToolbar(() => (
