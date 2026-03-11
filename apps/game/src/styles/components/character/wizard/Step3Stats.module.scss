@@ -69,12 +69,8 @@
 }
 
 .panelLeft,
-.panelRight {
-  background: var(--color-bg-secondary);
-  border: var(--border-ornate);
-  border-radius: var(--radius-md);
-  padding: var(--spacing-lg);
-  box-shadow: 0 0 0px 3px var(--color-bg-secondary);
+.panelRight { 
+  @include forms.boxConteiner;
 }
 
 .panelTitle {

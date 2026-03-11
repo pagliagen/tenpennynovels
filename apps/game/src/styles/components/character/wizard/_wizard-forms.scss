@@ -6,13 +6,18 @@
  * Uses global design tokens exclusively.
  */
 
-@mixin section {
+@mixin boxConteiner {
   background: var(--color-bg-secondary);
   border: var(--border-ornate);
   border-radius: var(--radius-md);
   padding: var(--spacing-lg);
   margin: 3px var(--spacing-lg) 10px;
   box-shadow: 0 0 0px 3px var(--color-bg-secondary);
+
+}
+
+@mixin section {
+  @include boxConteiner;
 }
 
 @mixin sectionTitle {
@@ -100,11 +105,8 @@
 }
 
 @mixin errorSummary {
-  background: var(--color-error-bg);
-  border: var(--border-width-base) solid var(--color-error);
-  border-radius: var(--radius-md);
-  padding: var(--spacing-md);
-  margin-top: var(--spacing-lg);
+  @include boxConteiner;
+  color: red;
 
   h4 {
     color: var(--color-error);

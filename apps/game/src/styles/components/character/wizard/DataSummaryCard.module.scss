@@ -2,14 +2,10 @@
  * DataSummaryCard - Summary card component styles
  * Uses CSS custom properties only. No local SCSS variables.
  */
+@use 'wizard-forms' as forms;
 
-.summaryCard {
-  background: var(--color-bg-secondary);
-  border: var(--border-ornate);
-  border-radius: var(--radius-md);
-  padding: var(--spacing-lg);
-  margin-bottom: var(--spacing-md);
-  box-shadow: var(--shadow-sm);
+.summaryCard { 
+  @include forms.boxConteiner;
 }
 
 .summaryCardHeader {

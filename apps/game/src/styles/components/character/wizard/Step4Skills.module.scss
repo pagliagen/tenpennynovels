@@ -20,6 +20,7 @@
 
 .section {
   @include forms.section;
+  padding: unset;
 }
 
 .sectionTitle {
@@ -71,10 +72,7 @@
 }
  
 .skillsTable {
-  width: 100%;
-  background: var(--color-bg-secondary);
-  border: var(--border-ornate);
-  border-radius: var(--radius-md);
+  width: 100%; 
   overflow: hidden;
 }
 
