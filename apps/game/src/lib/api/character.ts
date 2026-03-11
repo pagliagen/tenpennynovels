@@ -265,7 +265,7 @@ export const characterApi = {
    * ```typescript
    * const occupations = await characterApi.getOccupations();
    * const detective = occupations.find(o => o.name === 'Detective');
-   * console.log(detective.requiredSkills); // ['Psychology', 'Spot Hidden', ...]
+   * console.log(detective.requiredSkillSlots); // [{options: [{skillId, name}, ...]}, ...]
    * ```
    */
   async getOccupations(): Promise<any[]> {

@@ -24,13 +24,7 @@ const routeValidations: Record<string, RouteValidation[]> = {
     { method: 'POST', path: '/extract-keywords', schema: validateBody(qaExtractKeywordsSchema) },
     { method: 'POST', path: '/extract-insight', schema: validateBody(qaExtractInsightSchema) },
   ],
-  '/item-image-gen': [
-    { method: 'POST', path: '/generate', schema: validateBody(imageGenSchema) },
-  ],
-  '/location-image-gen': [
-    { method: 'POST', path: '/generate', schema: validateBody(imageGenSchema) },
-  ],
-  '/avatar-gen': [
+  '/image-gen': [
     { method: 'POST', path: '/generate', schema: validateBody(imageGenSchema) },
   ],
 };

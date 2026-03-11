@@ -244,33 +244,36 @@ export function Step4Skills(): JSX.Element {
               const selectedOccupation = occupations.find((occ) => occ.id === occupation.occupationId);
               if (!selectedOccupation) return null;
 
-              // Separate placeholder skills from normal skills
-              // Note: alternativeSkills is a Record<skillId, alternatives[]> at occupation level, not on individual requirements
-              const requiredSkillsData = selectedOccupation.requiredSkills
-                .filter((req) => {
-                  // Filter out skills that have alternatives (those are handled by PlaceholderSkillManager)
-                  const hasAlternatives = selectedOccupation.alternativeSkills?.[req.skillId];
-                  return !hasAlternatives || hasAlternatives.length === 0;
-                })
-                .map((requirement) => {
-                  // Case-insensitive match for skill names
-                  const skillDef = apiSkills?.find(
-                    (s) =>
-                      s.id === requirement.skillId ||
-                      s.name.toLowerCase() === requirement.name.toLowerCase()
-                  );
-                  return { requirement, skillDef };
-                })
-                .filter(({ skillDef }) => skillDef !== undefined);
+              // Process slot-based required skills
+              const fixedSlots: { skillDef: any; slotIdx: number }[] = [];
+              const choiceSlots: { options: any[]; slotIdx: number }[] = [];
+              const placeholderSlots: { skillDef: any; slotIdx: number }[] = [];
 
-              // Safe to use non-null assertion after filter
-              const placeholderSkills = requiredSkillsData.filter(({ skillDef }) => skillDef!.isPlaceholder);
-              const normalSkills = requiredSkillsData.filter(({ skillDef }) => !skillDef!.isPlaceholder);
+              (selectedOccupation.requiredSkillSlots || []).forEach((slot: any, slotIdx: number) => {
+                const options = slot.options || [];
+                if (options.length === 0) return;
+
+                if (options.length > 1) {
+                  choiceSlots.push({ options, slotIdx });
+                  return;
+                }
+
+                const opt = options[0];
+                const skillDef = apiSkills?.find(
+                  (s) => s.id === opt.skillId || s.name === opt.name
+                );
+                if (!skillDef) return;
+
+                if (skillDef.isPlaceholder) {
+                  placeholderSlots.push({ skillDef, slotIdx });
+                } else {
+                  fixedSlots.push({ skillDef, slotIdx });
+                }
+              });
 
               return (
                 <>
-                  {/* Normal Skills Table */}
-                  {normalSkills.length > 0 && (
+                  {fixedSlots.length > 0 && (
                     <div className={styles.skillsTable}>
                       <div className={styles.skillsTableHeader}>
                         <div className={styles.skillsTableCell}>Abilità</div>
@@ -279,29 +282,24 @@ export function Step4Skills(): JSX.Element {
                         <div className={styles.skillsTableCell}>Manuali</div>
                         <div className={styles.skillsTableCell}>Totale</div>
                       </div>
-                      {normalSkills.map(({ skillDef }) => {
-                        const skill = skills[skillDef!.id] || {
-                          base: skillDef!.baseValue,
+                      {fixedSlots.map(({ skillDef }) => {
+                        const skill = skills[skillDef.id] || {
+                          base: skillDef.baseValue,
                           requiredBonus: 0,
                           manualPoints: 0,
                           occupationBonus: 0,
-                          total: skillDef!.baseValue,
+                          total: skillDef.baseValue,
                         };
-
                         return (
-                          <div key={skillDef!.id} className={styles.skillsTableRow}>
-                            <div className={styles.skillsTableCell}>
-                              <strong>{skillDef!.name}</strong>
-                            </div>
+                          <div key={skillDef.id} className={styles.skillsTableRow}>
+                            <div className={styles.skillsTableCell}><strong>{skillDef.name}</strong></div>
                             <div className={styles.skillsTableCell}>{skill.base}</div>
                             <div className={styles.skillsTableCell}>
                               {skill.requiredBonus > 0 ? `+${skill.requiredBonus}` : '-'}
                             </div>
                             <div className={styles.skillsTableCell}>{skill.manualPoints}</div>
                             <div className={styles.skillsTableCell}>
-                              <strong className={skill.total >= 40 ? styles.skillHighValue : ''}>
-                                {skill.total}
-                              </strong>
+                              <strong className={skill.total >= 40 ? styles.skillHighValue : ''}>{skill.total}</strong>
                             </div>
                           </div>
                         );
@@ -309,12 +307,33 @@ export function Step4Skills(): JSX.Element {
                     </div>
                   )}
 
-                  {/* Placeholder Skills */}
-                  {placeholderSkills.map(({ skillDef, requirement }) => (
+                  {/* Choice slots: player picks one skill from N options */}
+                  {choiceSlots.length > 0 && (
+                    <div className={styles.skillsTable}>
+                      <div className={styles.skillsTableHeader}>
+                        <div className={styles.skillsTableCell}>Slot a scelta</div>
+                        <div className={styles.skillsTableCell}>Opzioni</div>
+                      </div>
+                      {choiceSlots.map(({ options, slotIdx }) => {
+                        const optionNames = options.map((o: any) => o.name).join(' / ');
+                        return (
+                          <div key={slotIdx} className={styles.skillsTableRow}>
+                            <div className={styles.skillsTableCell}><strong>Slot {slotIdx + 1}</strong></div>
+                            <div className={styles.skillsTableCell}>{optionNames}</div>
+                          </div>
+                        );
+                      })}
+                      <div className={styles.helpText} style={{padding: '8px'}}>
+                        Migliora almeno una delle opzioni per ogni slot a scelta.
+                      </div>
+                    </div>
+                  )}
+
+                  {placeholderSlots.map(({ skillDef }) => (
                     <PlaceholderSkillManager
-                      key={skillDef!.id}
-                      placeholderSkill={skillDef!}
-                      requiredMinimum={requirement!.bonusValue || 40}
+                      key={skillDef.id}
+                      placeholderSkill={skillDef}
+                      requiredMinimum={40}
                     />
                   ))}
                 </>

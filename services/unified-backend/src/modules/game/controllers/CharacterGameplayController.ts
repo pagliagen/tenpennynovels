@@ -509,7 +509,9 @@ export class CharacterGameplayController {
         return;
       }
 
-      const occupation = await Occupation.findById(occupationId).populate('bonusSkills.skillId');
+      const occupation = await Occupation.findById(occupationId)
+        .populate('requiredSkillSlots.options', 'name category isPlaceholder placeholderType')
+        .populate('bonusSkills.skillId', 'name category');
 
       if (!occupation) {
         res.status(404).json(errorResponse(
@@ -643,8 +645,7 @@ export class CharacterGameplayController {
           issues: prereqCheck.issues,
           occupation: {
             id: occupation.id,
-            name: occupation.name,
-            allowedGenders: occupation.allowedGenders
+            name: occupation.name
           }
         },
         undefined,

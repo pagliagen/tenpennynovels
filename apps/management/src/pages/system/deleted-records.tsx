@@ -187,28 +187,31 @@ export default function DeletedRecordsPage() {
    * Get badge color by type
    */
   const getTypeBadgeColor = (type: RecordType): string => {
-    const colors: Record<RecordType, string> = {
-      user: '#2196f3',
-      character: '#9c27b0',
-      document: '#ff9800',
-      location: '#4caf50',
-      item: '#f44336'
+    const colors: Record<string, string> = {
+      users: '#2196f3',
+      characters: '#9c27b0',
+      documents: '#ff9800',
+      locations: '#4caf50',
+      items: '#f44336',
+      skills: '#00bcd4',
+      occupations: '#795548',
+      socialclassconfigs: '#607d8b'
     };
-    return colors[type];
+    return colors[type] || '#9e9e9e';
   };
 
-  /**
-   * Get type label
-   */
   const getTypeLabel = (type: RecordType): string => {
-    const labels: Record<RecordType, string> = {
-      user: 'User',
-      character: 'Character',
-      document: 'Document',
-      location: 'Location',
-      item: 'Item'
+    const labels: Record<string, string> = {
+      users: 'User',
+      characters: 'Character',
+      documents: 'Document',
+      locations: 'Location',
+      items: 'Item',
+      skills: 'Skill',
+      occupations: 'Occupazione',
+      socialclassconfigs: 'Classe Sociale'
     };
-    return labels[type];
+    return labels[type] || type;
   };
 
   return (
@@ -238,34 +241,52 @@ export default function DeletedRecordsPage() {
             Tutti ({data?.counts.total || 0})
           </button>
           <button
-            className={activeTab === 'user' ? styles.active : ''}
-            onClick={() => handleTabChange('user')}
+            className={activeTab === 'users' ? styles.active : ''}
+            onClick={() => handleTabChange('users')}
           >
-            👥 Users ({data?.counts.user || 0})
+            👥 Users ({data?.counts.users || 0})
           </button>
           <button
-            className={activeTab === 'character' ? styles.active : ''}
-            onClick={() => handleTabChange('character')}
+            className={activeTab === 'characters' ? styles.active : ''}
+            onClick={() => handleTabChange('characters')}
           >
-            🎭 Characters ({data?.counts.character || 0})
+            🎭 Characters ({data?.counts.characters || 0})
           </button>
           <button
-            className={activeTab === 'document' ? styles.active : ''}
-            onClick={() => handleTabChange('document')}
+            className={activeTab === 'documents' ? styles.active : ''}
+            onClick={() => handleTabChange('documents')}
           >
-            📄 Documents ({data?.counts.document || 0})
+            📄 Documents ({data?.counts.documents || 0})
           </button>
           <button
-            className={activeTab === 'location' ? styles.active : ''}
-            onClick={() => handleTabChange('location')}
+            className={activeTab === 'locations' ? styles.active : ''}
+            onClick={() => handleTabChange('locations')}
           >
-            📍 Locations ({data?.counts.location || 0})
+            📍 Locations ({data?.counts.locations || 0})
           </button>
           <button
-            className={activeTab === 'item' ? styles.active : ''}
-            onClick={() => handleTabChange('item')}
+            className={activeTab === 'items' ? styles.active : ''}
+            onClick={() => handleTabChange('items')}
           >
-            🎒 Items ({data?.counts.item || 0})
+            🎒 Items ({data?.counts.items || 0})
+          </button>
+          <button
+            className={activeTab === 'skills' ? styles.active : ''}
+            onClick={() => handleTabChange('skills')}
+          >
+            🎯 Skills ({data?.counts.skills || 0})
+          </button>
+          <button
+            className={activeTab === 'occupations' ? styles.active : ''}
+            onClick={() => handleTabChange('occupations')}
+          >
+            💼 Occupazioni ({data?.counts.occupations || 0})
+          </button>
+          <button
+            className={activeTab === 'socialclassconfigs' ? styles.active : ''}
+            onClick={() => handleTabChange('socialclassconfigs')}
+          >
+            🏛️ Classi Sociali ({data?.counts.socialclassconfigs || 0})
           </button>
         </div>
 

@@ -39,7 +39,6 @@ export class OccupationController {
         id: occupation._id.toString(),
         name: occupation.name,
         description: occupation.description,
-        allowedGenders: occupation.allowedGenders || [],
         socialClass: occupation.socialClass || [],
         dailySalary: occupation.dailySalary || 0,
         socialRespectability: occupation.socialRespectability || 0,
@@ -80,14 +79,14 @@ export class OccupationController {
   }
 
   /**
-   * Get occupations filtered by gender and social class
+   * Get occupations filtered by social class
    * This is useful for the character wizard to show only relevant occupations
    */
   static async getFilteredOccupations(req: Request, res: Response): Promise<void> {
     try {
-      const { gender, socialClass } = req.query;
+      const { socialClass } = req.query;
       
-      logger.info(`🏢 OccupationController: Fetching occupations filtered by gender: ${gender}, socialClass: ${socialClass}`);
+      logger.info(`🏢 OccupationController: Fetching occupations filtered by socialClass: ${socialClass}`);
 
       const database = db.getConnection().db;
       if (!database) {
@@ -103,14 +102,6 @@ export class OccupationController {
       // Build filter query
       const filter: any = {};
 
-      if (gender) {
-        filter.$or = [
-          { allowedGenders: { $in: [gender] } },
-          { allowedGenders: { $exists: false } },
-          { allowedGenders: { $size: 0 } }
-        ];
-      }
-
       if (socialClass) {
         filter.socialClass = { $in: [socialClass] };
       }
@@ -124,7 +115,6 @@ export class OccupationController {
         id: occupation._id.toString(),
         name: occupation.name,
         description: occupation.description,
-        allowedGenders: occupation.allowedGenders || [],
         socialClass: occupation.socialClass || [],
         dailySalary: occupation.dailySalary || 0,
         socialRespectability: occupation.socialRespectability || 0,

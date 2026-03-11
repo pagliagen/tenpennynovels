@@ -99,8 +99,6 @@ export class ItemController {
             name: loc.name,
             type: loc.type
           })),
-          rarity: item.rarity || 'common',
-          weight: item.weight,
           isStackable: item.isStackable || false,
           maxStack: item.maxStack || 1,
           
@@ -213,8 +211,6 @@ export class ItemController {
         })),
         
         // Item properties
-        rarity: item.rarity || 'common',
-        weight: item.weight || 0,
         isStackable: item.isStackable || false,
         maxStack: item.maxStack || 1,
         
@@ -407,7 +403,6 @@ export class ItemController {
           subcategory: item.subcategory,
           basePrice: item.basePrice,
           priceFormatted: formatPrice(item.basePrice),
-          rarity: item.rarity || 'common',
           canPurchase: eligibility.canPurchase,
           eligibilityReasons: eligibility.reasons
         };
@@ -483,7 +478,6 @@ export class ItemController {
         subcategory: item.subcategory,
         basePrice: item.basePrice,
         priceFormatted: formatPrice(item.basePrice),
-        rarity: item.rarity || 'common'
       }));
 
       logger.info('Item search performed', {

@@ -20,8 +20,8 @@ COPY python/requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
 # Pre-download HuggingFace model to cache
-ARG HF_TOKEN
-ENV HF_TOKEN=${HF_TOKEN}
+ARG HUGGINGFACE_TOKEN
+ENV HUGGINGFACE_TOKEN=${HUGGINGFACE_TOKEN}
 RUN python3 -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')"
 
 # Copy Python scripts
@@ -55,7 +55,7 @@ ENV MONGODB_URI=mongodb://mongodb:27017/tenpennynovels
 ENV REDIS_URL=redis://redis:6379
 ENV QDRANT_URL=http://qdrant:6333
 ENV LOG_LEVEL=info
-ENV HF_TOKEN=${HF_TOKEN}
+ENV HUGGINGFACE_TOKEN=${HUGGINGFACE_TOKEN}
 
 # Start unified embeddings service
 CMD ["node", "dist/index.js"]

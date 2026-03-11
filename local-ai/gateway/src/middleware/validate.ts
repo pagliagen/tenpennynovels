@@ -90,8 +90,8 @@ export const botGenerateSchema = z.object({
 });
 
 export const imageGenSchema = z.object({
-  name: z.string().min(1),
-  description: z.string().min(1),
+  entityType: z.enum(['character', 'item', 'location']),
+  record: z.record(z.any()),
   style: z.string().optional(),
   options: z.object({
     width: z.number().int().min(64).max(2048).optional(),

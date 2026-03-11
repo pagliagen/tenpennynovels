@@ -10,7 +10,7 @@ export { CharacterSession, type ICharacterSession } from './CharacterSession';
 // Character System
 export { Character, type ICharacter } from './Character';
 export { BackgroundQuestion, type IBackgroundQuestion } from './BackgroundQuestion';
-export { Skill, type ISkill } from './Skill';
+export { Skill, SKILL_CATEGORY_LABELS, type ISkill } from './Skill';
 
 // Location System
 export { Location, type ILocation } from './Location';
@@ -38,7 +38,8 @@ export {
   type ICharacterInventory,
   type IShop,
   type IShopItem,
-  ItemCategory
+  ItemCategory,
+  ITEM_CATEGORY_LABELS
 } from './Item';
 
 // Economy System
@@ -110,6 +111,7 @@ export {
 export {
   Occupation,
   CharacterOccupationHistory,
+  OccupationCategory,
   type IOccupation,
   type ICharacterOccupationHistory
 } from './Occupation';
@@ -213,3 +215,17 @@ export { ForumCharacterFollow, type IForumCharacterFollow } from './ForumCharact
 export { ForumBookmark, BookmarkItemType, type IForumBookmark } from './ForumBookmark';
 export { ForumReaction, ReactionType, type IForumReaction } from './ForumReaction';
 export { ForumNotification, ForumNotificationType, type IForumNotification } from './ForumNotification';
+
+// Deleted Records Archive
+export { DeletedRecord, type IDeletedRecord } from './DeletedRecord';
+
+// Soft Delete Registry - register all soft-deletable models
+import { registerSoftDeleteModel } from '../plugins/softDeleteRegistry';
+registerSoftDeleteModel('characters', () => require('./Character').Character, 'name');
+registerSoftDeleteModel('locations', () => require('./Location').Location, 'name');
+registerSoftDeleteModel('items', () => require('./Item').Item, 'name');
+registerSoftDeleteModel('documents', () => require('./Document').default, 'title');
+registerSoftDeleteModel('users', () => require('./User').User, 'username');
+registerSoftDeleteModel('occupations', () => require('./Occupation').Occupation, 'name');
+registerSoftDeleteModel('skills', () => require('./Skill').Skill, 'name');
+registerSoftDeleteModel('socialclassconfigs', () => require('./SocialClassConfig').SocialClassConfig, 'label');

@@ -1,8 +1,10 @@
 import { Request, Response } from 'express';
+import mongoose from 'mongoose';
 import { ApiResponse } from '../types/management';
 import { AdminAuthMiddleware } from '../middleware/adminAuth';
 import { logger } from '../utils/logger';
 import { Occupation } from '@database/models/Occupation';
+import { Character } from '@database/models/Character';
 import { listResponse, successResponse, errorResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
 
 export class OccupationManagementController {
@@ -15,14 +17,12 @@ export class OccupationManagementController {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 25;
       const category = req.query.category as string;
-      const socialClass = req.query.socialClass as string;
       const isActive = req.query.isActive as string;
       const search = req.query.search as string;
 
       // Build query
       const query: any = {};
       if (category && category !== 'all') query.category = category;
-      if (socialClass && socialClass !== 'all') query.socialClass = socialClass;
       if (isActive !== undefined) query.isActive = isActive === 'true';
       if (search) {
         query.$or = [
@@ -35,6 +35,8 @@ export class OccupationManagementController {
       const totalItems = await Occupation.countDocuments(query);
       const occupations = await Occupation.find(query)
         .populate('createdBy', 'username')
+        .populate('requiredSkillSlots.options', 'name category isPlaceholder placeholderType')
+        .populate('bonusSkills.skillId', 'name category')
         .sort({ name: 1 })
         .skip((page - 1) * limit)
         .limit(limit)
@@ -52,7 +54,7 @@ export class OccupationManagementController {
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       logger.info('Admin viewed occupations list', {
         ...auditInfo,
-        filters: { category, socialClass, isActive, search },
+        filters: { category, isActive, search },
         page,
         pageSize: limit,
         totalResults: totalItems
@@ -64,21 +66,15 @@ export class OccupationManagementController {
           name: occ.name,
           description: occ.description,
           category: occ.category,
-          socialClass: occ.socialClass,
           contacts: occ.contacts,
           earnings: occ.earnings,
+          image: occ.image || null,
           isActive: occ.isActive,
-          // Skills system
-          requiredSkills: occ.requiredSkills || [],
+          requiredSkillSlots: occ.requiredSkillSlots || [],
           bonusSkills: occ.bonusSkills || [],
-          typicalEmployers: occ.typicalEmployers || [],
-          careerProgression: occ.careerProgression || [],
           createdBy: occ.createdBy,
           createdAt: occ.createdAt,
           updatedAt: occ.updatedAt,
-          // Skills count
-          requiredSkillsCount: (occ.requiredSkills || []).length,
-          bonusSkillsCount: (occ.bonusSkills || []).length
         })),
         pagination,
         undefined,
@@ -109,19 +105,13 @@ export class OccupationManagementController {
         total,
         active,
         inactive,
-        byCategory,
-        bySocialClass
+        byCategory
       ] = await Promise.all([
         Occupation.countDocuments(),
         Occupation.countDocuments({ isActive: true }),
         Occupation.countDocuments({ isActive: false }),
         Occupation.aggregate([
           { $group: { _id: '$category', count: { $sum: 1 } } },
-          { $sort: { count: -1 } }
-        ]),
-        Occupation.aggregate([
-          { $unwind: '$socialClass' },
-          { $group: { _id: '$socialClass', count: { $sum: 1 } } },
           { $sort: { count: -1 } }
         ])
       ]);
@@ -130,8 +120,7 @@ export class OccupationManagementController {
         total,
         active,
         inactive,
-        byCategory: byCategory.map(cat => ({ name: cat._id, count: cat.count })),
-        bySocialClass: bySocialClass.map(sc => ({ name: sc._id, count: sc.count }))
+        byCategory: byCategory.map(cat => ({ name: cat._id, count: cat.count }))
       };
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
@@ -169,6 +158,8 @@ export class OccupationManagementController {
 
       const occupation = await Occupation.findById(occupationId)
         .populate('createdBy', 'username')
+        .populate('requiredSkillSlots.options', 'name category isPlaceholder placeholderType')
+        .populate('bonusSkills.skillId', 'name category')
         .lean();
 
       if (!occupation) {
@@ -384,22 +375,45 @@ export class OccupationManagementController {
         return;
       }
 
-      // Soft delete: set isActive to false instead of actual deletion
-      await Occupation.findByIdAndUpdate(occupationId, { isActive: false });
-
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
-      logger.warn('Occupation deactivated by admin', {
-        ...auditInfo,
-        occupationId,
-        occupationName: occupation.name,
-        reason,
-        category: 'occupation_management'
+
+      const charactersUsingOccupation = await Character.countDocuments({
+        status: { $ne: 'DELETED' },
+        'occupation.occupationId': new mongoose.Types.ObjectId(occupationId)
       });
 
-      res.json(deleteResponse(
-        undefined,
-        getRequestId(req)
-      ));
+      if (charactersUsingOccupation > 0) {
+        await Occupation.findByIdAndUpdate(occupationId, { isActive: false });
+        logger.warn('Occupation deactivated by admin (in use)', {
+          ...auditInfo,
+          occupationId,
+          occupationName: occupation.name,
+          reason,
+          charactersUsingOccupation,
+          category: 'occupation_management'
+        });
+        res.json(deleteResponse(
+          `Occupazione disattivata. ${charactersUsingOccupation} personaggio/i la stanno utilizzando.`,
+          getRequestId(req)
+        ));
+      } else {
+        await occupation.softDelete(
+          auditInfo?.adminId || (req as any).user?.userId,
+          auditInfo?.adminCharacterName || 'Unknown Admin',
+          reason
+        );
+        logger.warn('Occupation soft-deleted by admin', {
+          ...auditInfo,
+          occupationId,
+          occupationName: occupation.name,
+          reason,
+          category: 'occupation_management'
+        });
+        res.json(deleteResponse(
+          'Occupazione eliminata con successo',
+          getRequestId(req)
+        ));
+      }
     } catch (error: any) {
       logger.error('Error deactivating occupation:', { 
         error: error instanceof Error ? error.message : String(error), 
@@ -501,28 +515,17 @@ export class OccupationManagementController {
   }
 
   /**
-   * Bulk update skill values for all occupations
+   * Bulk update bonus skill values for all occupations
    * POST /admin/occupations/bulk-update-skills
    */
   static async bulkUpdateSkillValues(req: Request, res: Response): Promise<void> {
     try {
-      const { skillType, fieldToUpdate, newValue, reason } = req.body;
+      const { newValue, reason } = req.body;
 
       if (!reason || reason.trim().length === 0) {
         res.status(400).json(errorResponse(
           'Il motivo dell\'aggiornamento bulk è richiesto',
           'BULK_UPDATE_REASON_REQUIRED',
-          undefined,
-          400,
-          getRequestId(req)
-        ));
-        return;
-      }
-
-      if (!skillType || !fieldToUpdate || newValue === undefined) {
-        res.status(400).json(errorResponse(
-          'skillType, fieldToUpdate e newValue sono richiesti',
-          'MISSING_PARAMETERS',
           undefined,
           400,
           getRequestId(req)
@@ -541,35 +544,14 @@ export class OccupationManagementController {
         return;
       }
 
-      let result;
-      if (skillType === 'required' && fieldToUpdate === 'baseValue') {
-        // Update baseValue for all requiredSkills in all occupations
-        result = await Occupation.updateMany(
-          { 'requiredSkills.0': { $exists: true } },
-          { $set: { 'requiredSkills.$[].baseValue': newValue } }
-        );
-      } else if (skillType === 'bonus' && fieldToUpdate === 'bonusValue') {
-        // Update bonusValue for all bonusSkills in all occupations
-        result = await Occupation.updateMany(
-          { 'bonusSkills.0': { $exists: true } },
-          { $set: { 'bonusSkills.$[].bonusValue': newValue } }
-        );
-      } else {
-        res.status(400).json(errorResponse(
-          'Combinazione skillType o fieldToUpdate non valida',
-          'INVALID_SKILL_TYPE',
-          undefined,
-          400,
-          getRequestId(req)
-        ));
-        return;
-      }
+      const result = await Occupation.updateMany(
+        { 'bonusSkills.0': { $exists: true } },
+        { $set: { 'bonusSkills.$[].bonusValue': newValue } }
+      );
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
-      logger.info('Bulk skill values updated by admin', {
+      logger.info('Bulk bonus skill values updated by admin', {
         ...auditInfo,
-        skillType,
-        fieldToUpdate,
         newValue,
         updatedCount: result?.modifiedCount || 0,
         reason,

@@ -23,6 +23,8 @@ services:
       - mongo_data:/data/db
     environment:
       MONGO_INITDB_DATABASE: local-ai
+    profiles:
+      - botai
 
   gateway:
     build:
@@ -31,13 +33,10 @@ services:
     ports:
       - "9000:9000"
     env_file: .env
+    environment:
+      - IMAGE_GEN_TARGET=http://host.docker.internal:8100
     volumes:
       - ./clients.json:/app/clients.json:ro
-    depends_on:
-      botai:
-        condition: service_started
-      qa:
-        condition: service_started
 
   botai:
     build:
@@ -48,6 +47,8 @@ services:
     env_file: .env
     depends_on:
       - mongodb
+    profiles:
+      - botai
 
   qa:
     build:
@@ -56,34 +57,20 @@ services:
     expose:
       - "8090"
     env_file: .env
+    profiles:
+      - qa
 
-  item-image-gen:
+  image-gen:
     build:
       context: .
-      dockerfile: services/item-image-gen/Dockerfile
+      dockerfile: services/image-gen/Dockerfile
     expose:
       - "8100"
     env_file: .env
-    profiles:
-      - image-gen
-
-  location-image-gen:
-    build:
-      context: .
-      dockerfile: services/location-image-gen/Dockerfile
-    expose:
-      - "8110"
-    env_file: .env
-    profiles:
-      - image-gen
-
-  avatar-gen:
-    build:
-      context: .
-      dockerfile: services/avatar-gen/Dockerfile
-    expose:
-      - "8120"
-    env_file: .env
+    environment:
+      - HUGGINGFACE_TOKEN=${HUGGINGFACE_TOKEN:-}
+      - FLUX_MODEL_ID=${FLUX_MODEL_ID:-black-forest-labs/FLUX.1-dev}
+      - FLUX_STEPS=${FLUX_STEPS:-30}
     profiles:
       - image-gen
 

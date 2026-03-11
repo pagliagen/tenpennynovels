@@ -1,6 +1,6 @@
 import mongoose, { Schema, model, Document } from 'mongoose';
 import { VictorianCurrency } from '../../shared/types/economy';
-import { softDeletePlugin, SoftDeleteFields, SoftDeleteMethods } from '../plugins/softDeletePlugin';
+import { softDeletePlugin, SoftDeleteMethods } from '../plugins/softDeletePlugin';
 
 export enum ItemCategory {
   CLOTHING = 'clothing',
@@ -21,7 +21,26 @@ export enum ItemCategory {
   SERVICES = 'services'
 }
 
-export interface IItem extends Document, SoftDeleteFields, SoftDeleteMethods {
+export const ITEM_CATEGORY_LABELS: Record<ItemCategory, string> = {
+  [ItemCategory.CLOTHING]: 'Abbigliamento',
+  [ItemCategory.ACCESSORIES]: 'Accessori',
+  [ItemCategory.TOOLS]: 'Strumenti',
+  [ItemCategory.WEAPONS]: 'Armi',
+  [ItemCategory.BOOKS]: 'Libri',
+  [ItemCategory.DOCUMENTS]: 'Documenti',
+  [ItemCategory.MEDICAL]: 'Medico',
+  [ItemCategory.FOOD_DRINK]: 'Cibo e Bevande',
+  [ItemCategory.HOUSEHOLD]: 'Casalinghi',
+  [ItemCategory.LUXURY]: 'Lusso',
+  [ItemCategory.PROFESSIONAL]: 'Professionale',
+  [ItemCategory.TRANSPORT]: 'Trasporti',
+  [ItemCategory.CURIOSITIES]: 'Curiosità',
+  [ItemCategory.OCCULT]: 'Occulto',
+  [ItemCategory.CONSUMABLES]: 'Consumabili',
+  [ItemCategory.SERVICES]: 'Servizi'
+};
+
+export interface IItem extends Document, SoftDeleteMethods {
   // Basic info
   name: string;
   description: string;
@@ -66,7 +85,6 @@ export interface IItem extends Document, SoftDeleteFields, SoftDeleteMethods {
   properties: {
     isStackable: boolean;               // Can own multiple copies
     maxQuantity?: number;               // Maximum quantity per character
-    weight?: number;                    // For carrying capacity (future feature)
     durability?: number;                // Item condition (1-100)
     isConsumable: boolean;              // Item is consumed on use
     consumptionType?: 'direct' | 'indirect';  // How the item is consumed
@@ -75,15 +93,6 @@ export interface IItem extends Document, SoftDeleteFields, SoftDeleteMethods {
       quantityConsumed: number;        // How many are consumed per use
       required: boolean;               // Must have this item to use
     }[];
-    
-    // Special properties
-    providesSkillBonus?: { [skillName: string]: number };
-    providesStatBonus?: { [statName: string]: number };
-    grantsSpecialAbilities?: string[];  // Special abilities this item provides
-    
-    // Social effects
-    socialStatusModifier?: number;      // Effect on social interactions
-    respectabilityModifier?: number;    // Effect on character respectability
   };
   
   // Financial system integration
@@ -104,16 +113,6 @@ export interface IItem extends Document, SoftDeleteFields, SoftDeleteMethods {
     defaultStock?: number;             // Default stock for new shops
     restockInterval?: string;          // How often stock replenishes
     restockQuantity?: number;          // How much stock is added
-  };
-  
-  // Rarity and availability
-  rarity: 'common' | 'uncommon' | 'rare' | 'very_rare' | 'legendary' | 'unique';
-  
-  // Time and seasonal availability
-  availabilitySchedule?: {
-    timeOfDay?: ('day' | 'night' | 'both');
-    seasonalAvailability?: string[];   // Months when available
-    specialEvents?: string[];          // Only available during certain events
   };
   
   // Metadata
@@ -318,7 +317,6 @@ const ItemSchema = new Schema<IItem>({
   properties: {
     isStackable: { type: Boolean, default: false },
     maxQuantity: { type: Number, min: 1 },
-    weight: { type: Number, min: 0 },
     durability: { type: Number, min: 1, max: 100 },
     isConsumable: { type: Boolean, default: false },
     consumptionType: { type: String, enum: ['direct', 'indirect'] },
@@ -331,11 +329,6 @@ const ItemSchema = new Schema<IItem>({
       quantityConsumed: { type: Number, required: true, min: 1 },
       required: { type: Boolean, default: true }
     }],
-    providesSkillBonus: { type: Map, of: Number },
-    providesStatBonus: { type: Map, of: Number },
-    grantsSpecialAbilities: [String],
-    socialStatusModifier: Number,
-    respectabilityModifier: Number
   },
   
   // Financial system integration
@@ -354,20 +347,6 @@ const ItemSchema = new Schema<IItem>({
     defaultStock: { type: Number, min: 0 },
     restockInterval: String,
     restockQuantity: { type: Number, min: 0 }
-  },
-  
-  // Rarity
-  rarity: {
-    type: String,
-    enum: ['common', 'uncommon', 'rare', 'very_rare', 'legendary', 'unique'],
-    default: 'common'
-  },
-  
-  // Availability schedule
-  availabilitySchedule: {
-    timeOfDay: { type: String, enum: ['day', 'night', 'both'] },
-    seasonalAvailability: [String],
-    specialEvents: [String]
   },
   
   // Management
@@ -531,7 +510,7 @@ const ShopItemSchema = new Schema<IShopItem>({
 
 // Indexes
 // name already has unique constraint
-ItemSchema.index({ category: 1, rarity: 1 });
+ItemSchema.index({ category: 1 });
 ItemSchema.index({ isPublic: 1 });
 ItemSchema.index({ availableLocations: 1 });
 ItemSchema.index({ 'properties.isConsumable': 1 });
@@ -547,82 +526,11 @@ ShopItemSchema.index({ shopId: 1, itemId: 1 }, { unique: true });
 ShopItemSchema.index({ itemId: 1 });
 ShopItemSchema.index({ isInStock: 1, currentStock: 1 });
 
-// Methods
-ItemSchema.methods.checkPrerequisites = function(character: any, characterInventory: any[] = [], corporationMemberships: any[] = []) {
-  const issues: string[] = [];
-  
-  if (!this.prerequisites) {
-    return { canAccess: true, issues: [] };
-  }
-  
-  const req = this.prerequisites;
-  
-  // Check stats
-  if (req.minimumStats) {
-    for (const [stat, minValue] of req.minimumStats) {
-      if (character.stats[stat] < minValue) {
-        issues.push(`${stat} too low (has ${character.stats[stat]}, requires ${minValue})`);
-      }
-    }
-  }
-  
-  // Check skills
-  if (req.minimumSkills) {
-    for (const [skill, minValue] of req.minimumSkills) {
-      const characterSkill = character.skills.get(skill) || 0;
-      if (characterSkill < minValue) {
-        issues.push(`${skill} skill too low (has ${characterSkill}, requires ${minValue})`);
-      }
-    }
-  }
-  
-  // Check social class
-  if (req.requiredSocialClass && !req.requiredSocialClass.includes(character.socialClass)) {
-    issues.push(`Social class requirement not met (requires ${req.requiredSocialClass.join(' or ')})`);
-  }
-  
-  // Check gender
-  if (req.requiredGender && character.gender !== req.requiredGender) {
-    issues.push(`Gender requirement not met (requires ${req.requiredGender})`);
-  }
-  
-  // Check age
-  if (req.minimumAge && character.age < req.minimumAge) {
-    issues.push(`Age too low (requires minimum ${req.minimumAge})`);
-  }
-  
-  if (req.maximumAge && character.age > req.maximumAge) {
-    issues.push(`Age too high (maximum ${req.maximumAge})`);
-  }
-  
-  // Check occupation
-  if (req.requiredOccupations && !req.requiredOccupations.includes(character.occupation)) {
-    issues.push(`Occupation requirement not met (requires ${req.requiredOccupations.join(' or ')})`);
-  }
-  
-  // Check required items
-  if (req.requiredItems && req.requiredItems.length > 0) {
-    const ownedItemIds = characterInventory.map(inv => inv.itemId.toString());
-    const missingItems = req.requiredItems.filter((itemId: any) => !ownedItemIds.includes(itemId.toString()));
-    if (missingItems.length > 0) {
-      issues.push(`Missing required items: ${missingItems.length} items`);
-    }
-  }
-  
-  // Check excluded items
-  if (req.excludeIfHasItems && req.excludeIfHasItems.length > 0) {
-    const ownedItemIds = characterInventory.map(inv => inv.itemId.toString());
-    const conflictingItems = req.excludeIfHasItems.filter((itemId: any) => ownedItemIds.includes(itemId.toString()));
-    if (conflictingItems.length > 0) {
-      issues.push(`Cannot own conflicting items: ${conflictingItems.length} items`);
-    }
-  }
-  
-  return {
-    canAccess: issues.length === 0,
-    issues
-  };
-};
+ItemSchema.virtual('categoryLabel').get(function() {
+  return ITEM_CATEGORY_LABELS[this.category as ItemCategory] || this.category;
+});
+
+ItemSchema.set('toJSON', { virtuals: true });
 
 CharacterInventorySchema.methods.addItem = function(itemId: Schema.Types.ObjectId, quantity: number, acquiredThrough: string, additionalData = {}) {
   // Check if item already exists and is stackable

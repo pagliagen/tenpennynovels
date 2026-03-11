@@ -654,11 +654,11 @@ export class LocationManagementController {
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
 
-      if (typeof (location as any).softDelete === 'function') {
-        await (location as any).softDelete(auditInfo?.adminId || (req as any).user?.userId);
-      } else {
-        await Location.findByIdAndDelete(locationId);
-      }
+      await (location as any).softDelete(
+        auditInfo?.adminId || (req as any).user?.userId,
+        auditInfo?.adminCharacterName || 'Unknown Admin',
+        reason
+      );
 
       logger.warn('Location deleted by admin', {
         ...auditInfo,

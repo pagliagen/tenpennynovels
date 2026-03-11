@@ -1,0 +1,76 @@
+@use 'sass:color';
+@use '../variables' as *;
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+}
+
+.generateBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-xs;
+  padding: $spacing-xs $spacing-md;
+  background: linear-gradient(135deg, rgba($color-primary, 0.15), rgba(#9b59b6, 0.15));
+  border: 1px solid rgba($color-primary, 0.4);
+  border-radius: $border-radius-sm;
+  color: $color-primary;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all $transition-fast;
+  white-space: nowrap;
+
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, rgba($color-primary, 0.25), rgba(#9b59b6, 0.25));
+    border-color: $color-primary;
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  &.generating {
+    background: rgba($color-warning, 0.1);
+    border-color: rgba($color-warning, 0.4);
+    color: $color-warning;
+
+    &:hover {
+      background: rgba($color-warning, 0.2);
+    }
+  }
+
+  &.completed {
+    background: rgba($color-success, 0.1);
+    border-color: rgba($color-success, 0.4);
+    color: $color-success;
+  }
+
+  &.hasError {
+    background: rgba($color-error, 0.1);
+    border-color: rgba($color-error, 0.4);
+    color: $color-error;
+  }
+}
+
+.spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid transparent;
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.errorMessage {
+  margin: 0;
+  font-size: 12px;
+  color: color.adjust($color-error, $lightness: 20%);
+}

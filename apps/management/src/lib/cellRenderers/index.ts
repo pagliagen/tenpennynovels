@@ -11,6 +11,7 @@ import { BadgeListRenderer } from './renderers/BadgeListRenderer';
 import { DateTimeRenderer } from './renderers/DateTimeRenderer';
 import { BooleanRenderer } from './renderers/BooleanRenderer';
 import { ConflictBadgeRenderer } from './renderers/ConflictBadgeRenderer';
+import { ImageRenderer } from './renderers/ImageRenderer';
 
 /**
  * Bootstrap default renderers
@@ -24,6 +25,7 @@ export function bootstrapRenderers(): void {
   cellRenderers.register('date', DateTimeRenderer); // Alias
   cellRenderers.register('boolean', BooleanRenderer);
   cellRenderers.register('conflict-badge', ConflictBadgeRenderer); // For deleted records
+  cellRenderers.register('image', ImageRenderer);
 
   if (process.env.NODE_ENV === 'development') {
     console.log('[CellRenderers] Registered types:', cellRenderers.getRegisteredTypes());
@@ -40,5 +42,6 @@ export { BadgeListRenderer } from './renderers/BadgeListRenderer';
 export { DateTimeRenderer } from './renderers/DateTimeRenderer';
 export { BooleanRenderer } from './renderers/BooleanRenderer';
 export { ConflictBadgeRenderer } from './renderers/ConflictBadgeRenderer';
+export { ImageRenderer } from './renderers/ImageRenderer';
 
 export type { CellRendererProps, CellRendererFn } from './registry';

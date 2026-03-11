@@ -1,51 +1,47 @@
 import mongoose, { Schema, model, Document } from 'mongoose';
-import { SocialClass } from '../../shared/types/socialClass';
+import { softDeletePlugin, SoftDeleteMethods } from '../plugins/softDeletePlugin';
 
-export interface IOccupation extends Document {
+export enum OccupationCategory {
+  AVVENTURIERI = 'avventurieri',
+  ARTI_CREATIVE = 'arti_creative',
+  ARTISTI_SPETTACOLO = 'artisti_spettacolo',
+  SPORT = 'sport',
+  AFFARI = 'affari',
+  RELIGIOSI = 'religiosi',
+  CRIMINALI = 'criminali',
+  GIORNALISMO = 'giornalismo',
+  LAVORO_RURALE = 'lavoro_rurale',
+  LAVORO_URBANO = 'lavoro_urbano',
+  TUTORI_ORDINE = 'tutori_ordine',
+  PROFESSIONE_LEGALE = 'professione_legale',
+  OPERATORI_SANITARI = 'operatori_sanitari',
+  SALUTE_MENTALE = 'salute_mentale',
+  FORZE_ARMATE = 'forze_armate',
+  POLITICA = 'politica',
+  STUDIOSI = 'studiosi',
+  PROFESSIONI_VARIE = 'professioni_varie'
+}
+
+export interface IOccupation extends Document, SoftDeleteMethods {
   // Basic info
   name: string;
   description: string;
 
-  // Social and economic context
-  socialClass: SocialClass[];
-
   // Category for organization (from esperienze_pregresse.txt - 18 categories)
-  category: 'avventurieri' | 'arti_creative' | 'artisti_spettacolo' | 'sport' | 'affari' |
-           'religiosi' | 'criminali' | 'giornalismo' | 'lavoro_rurale' | 'lavoro_urbano' |
-           'tutori_ordine' | 'professione_legale' | 'operatori_sanitari' | 'salute_mentale' |
-           'forze_armate' | 'politica' | 'studiosi' | 'professioni_varie';
+  category: OccupationCategory;
 
   // Display information
   contacts: string; // e.g., "altri medici, alta società, polizia locale"
   earnings: string; // e.g., "Lower Middle Class - Alta Borghesia"
 
-  // Skills system
-  requiredSkills?: Array<{
-    skillId?: string;
-    skillName: string;
-    baseValue: number; // Base skill value when acquired (default 40)
-    isFixed?: boolean;
-    alternatives?: Array<{
-      skillId?: string;
-      skillName: string;
-    }>;
+  // Skills system - slot-based: each slot has 1+ options (1 = fixed, N = player picks one)
+  requiredSkillSlots?: Array<{
+    options: Schema.Types.ObjectId[];
   }>;
   bonusSkills?: Array<{
-    skillId?: string;
-    skillName: string;
+    skillId: Schema.Types.ObjectId;
     bonusValue: number;
   }>;
-
-  // Victorian context
-  typicalEmployers: string[]; // Who typically employs this occupation
-  careerProgression?: string[]; // Possible advancement paths (occupation IDs)
-
-  // Prerequisites and restrictions
-  allowedGenders?: string[]; // Allowed genders for this occupation
-  prerequisites?: {
-    minimumAge?: number;
-    maximumAge?: number;
-  };
 
   // Display image
   image?: string; // Path to occupation image (e.g., /images/occupations/medico.png)
@@ -113,23 +109,11 @@ const OccupationSchema = new Schema<IOccupation>({
     maxlength: 2000
   },
 
-  // Social context
-  socialClass: [{
-    type: String,
-    enum: ['destitute', 'poor', 'modest', 'lower_middle', 'middle_class', 'wealthy', 'affluent', 'elite'],
-    required: true
-  }],
-
   // Category (from esperienze_pregresse.txt - 18 categories)
   category: {
     type: String,
     required: true,
-    enum: [
-      'avventurieri', 'arti_creative', 'artisti_spettacolo', 'sport', 'affari',
-      'religiosi', 'criminali', 'giornalismo', 'lavoro_rurale', 'lavoro_urbano',
-      'tutori_ordine', 'professione_legale', 'operatori_sanitari', 'salute_mentale',
-      'forze_armate', 'politica', 'studiosi', 'professioni_varie'
-    ]
+    enum: Object.values(OccupationCategory)
   },
 
   // Display information
@@ -146,51 +130,15 @@ const OccupationSchema = new Schema<IOccupation>({
     maxlength: 200
   },
 
-  // Skills system
-  requiredSkills: [{
-    skillId: String,
-    skillName: {
-      type: String,
-      required: true
-    },
-    baseValue: {
-      type: Number,
-      required: true,
-      default: 40,
-      min: 0
-    },
-    isFixed: {
-      type: Boolean,
-      default: false
-    },
-    alternatives: [{
-      skillId: String,
-      skillName: {
-        type: String,
-        required: true
-      }
-    }]
+  // Skills system - slot-based with ObjectId refs
+  requiredSkillSlots: [{
+    options: [{ type: Schema.Types.ObjectId, ref: 'Skill' }]
   }],
   bonusSkills: [{
-    skillId: String,
-    skillName: {
-      type: String,
-      required: true
-    },
-    bonusValue: {
-      type: Number,
-      required: true,
-      min: 0
-    }
+    skillId: { type: Schema.Types.ObjectId, ref: 'Skill', required: true },
+    bonusValue: { type: Number, required: true, min: 0 }
   }],
 
-  // Victorian context
-  typicalEmployers: [{
-    type: String,
-    trim: true
-  }],
-  careerProgression: [String],
-  
   // Display image
   image: {
     type: String,
@@ -302,7 +250,6 @@ const CharacterOccupationHistorySchema = new Schema<ICharacterOccupationHistory>
 // Indexes
 // name already has unique constraint
 OccupationSchema.index({ category: 1, isActive: 1 });
-OccupationSchema.index({ socialClass: 1 });
 
 CharacterOccupationHistorySchema.index({ characterId: 1, startedAt: -1 });
 CharacterOccupationHistorySchema.index({ occupationId: 1 });
@@ -333,6 +280,8 @@ CharacterOccupationHistorySchema.pre('save', async function() {
     );
   }
 });
+
+OccupationSchema.plugin(softDeletePlugin, { uniqueKeys: ['name'], deletedByField: 'Character' });
 
 export const Occupation = mongoose.models.Occupation || model<IOccupation>('Occupation', OccupationSchema);
 export const CharacterOccupationHistory = mongoose.models.CharacterOccupationHistory || model<ICharacterOccupationHistory>('CharacterOccupationHistory', CharacterOccupationHistorySchema);

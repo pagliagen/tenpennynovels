@@ -37,6 +37,29 @@ interface BotRespondPayload {
   };
 }
 
+interface ImageGenPayload {
+  entityType: 'character' | 'item' | 'location';
+  record: Record<string, any>;
+  style?: string;
+  options?: {
+    width?: number;
+    height?: number;
+    format?: 'png' | 'jpeg' | 'webp';
+  };
+  callback: {
+    url: string;
+    method: 'POST' | 'PUT' | 'PATCH';
+    headers: Record<string, string>;
+  };
+}
+
+interface ImageGenResponse {
+  success: boolean;
+  jobId: string;
+  status: string;
+  queuePosition?: number;
+}
+
 interface QAPayload {
   question: string;
   context: Array<{
@@ -153,8 +176,16 @@ export class AIGatewayClient {
     }
 
     try {
-      const response = await axios.get(`${this.config.url}/health`, { timeout: 3000 });
-      this.healthy = response.data?.status === 'healthy';
+      const response = await axios.get(`${this.config.url}/health`, {
+        timeout: 3000,
+        headers: {
+          'X-API-Key': this.config.apiKey,
+          'X-Client-Id': this.config.clientId,
+          'ngrok-skip-browser-warning': 'true',
+        },
+      });
+      const status = response.data?.status;
+      this.healthy = status === 'healthy';
     } catch {
       this.healthy = false;
     }
@@ -178,6 +209,10 @@ export class AIGatewayClient {
 
   async extractInsight(payload: QAExtractInsightPayload): Promise<QAExtractInsightResponse | null> {
     return this.request<QAExtractInsightResponse>('POST', '/qa/extract-insight', payload);
+  }
+
+  async generateImage(payload: ImageGenPayload): Promise<ImageGenResponse | null> {
+    return this.request<ImageGenResponse>('POST', '/image-gen/generate', payload);
   }
 
   async createBot(data: any) { return this.request('POST', '/botai/bots', data); }

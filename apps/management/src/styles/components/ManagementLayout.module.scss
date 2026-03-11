@@ -5,6 +5,7 @@
   min-height: 100vh;
   background-color: $color-bg-primary;
   color: $color-text-primary;
+  min-width: 1500px;
 }
 
 .loadingContainer {
@@ -33,6 +34,8 @@
   background-color: $color-bg-secondary;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   padding: 0 $spacing-lg;
+  position: sticky;
+  top: 0; 
 }
 
 .headerContent {

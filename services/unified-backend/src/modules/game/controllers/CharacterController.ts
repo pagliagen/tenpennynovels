@@ -234,14 +234,15 @@ export class CharacterController {
         return;
       }
 
-      // Soft delete (marks as deleted, keeps data for audit trail)
-      await character.softDelete(userId);
+      await character.softDelete(
+        character._id,
+        character.name
+      );
 
       logger.info('Character soft deleted', {
         characterId,
         userId,
-        name: character.name,
-        deletedAt: character.deletedAt
+        name: character.name
       });
 
       res.json(deleteResponse(
@@ -640,7 +641,6 @@ export class CharacterController {
           name: item.name,
           description: item.description,
           category: item.category,
-          rarity: item.rarity,
           quantity: 1 // Default quantity
         }));
 
@@ -799,7 +799,6 @@ export class CharacterController {
           name: item.name,
           description: item.description,
           category: item.category,
-          rarity: item.rarity,
           quantity: 1
         }));
       }

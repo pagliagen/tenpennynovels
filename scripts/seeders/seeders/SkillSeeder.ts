@@ -91,7 +91,6 @@ async function seedSkills() {
         description: r.description,
         visible: true,
         defaultSkill: true,
-        sortOrder: 0,
         isPlaceholder: r.isPlaceholder === 'true',
         placeholderType: r.placeholderType || undefined,
         predefinedValues: [],
@@ -101,7 +100,6 @@ async function seedSkills() {
       }));
 
     skills.sort((a, b) => a.name.localeCompare(b.name, 'it'));
-    skills.forEach((skill, index) => { skill.sortOrder = index + 1; });
 
     await skillsCol.insertMany(skills);
     console.log(`   ✅ Created ${skills.length} skills\n`);

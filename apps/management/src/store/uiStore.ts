@@ -15,6 +15,7 @@ export type ColumnVisibilityMap = Record<string, boolean>;
  */
 interface UIState {
   sidebarCollapsed: boolean;
+  expandedCategories: string[];
   columnVisibility: Record<string, ColumnVisibilityMap>; // { tableName: { columnKey: boolean } }
 }
 
@@ -24,6 +25,7 @@ interface UIState {
 interface UIActions {
   toggleSidebar: () => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
+  toggleCategory: (key: string) => void;
   setColumnVisibility: (tableName: string, columnKey: string, visible: boolean) => void;
   toggleColumnVisibility: (tableName: string, columnKey: string) => void;
   resetColumnVisibility: (tableName: string) => void;
@@ -40,6 +42,7 @@ type UIStore = UIState & UIActions;
  */
 const initialState: UIState = {
   sidebarCollapsed: false,
+  expandedCategories: ['users', 'characters', 'locations', 'documents', 'game-data', 'system'],
   columnVisibility: {}
 };
 
@@ -64,6 +67,17 @@ export const useUIStore = create<UIStore>()(
        */
       setSidebarCollapsed: (collapsed) =>
         set({ sidebarCollapsed: collapsed }),
+
+      toggleCategory: (key) =>
+        set(state => {
+          const cats = state.expandedCategories;
+          const expanded = cats.includes(key);
+          return {
+            expandedCategories: expanded
+              ? cats.filter(k => k !== key)
+              : [...cats, key]
+          };
+        }),
 
       /**
        * Set column visibility for a specific table and column

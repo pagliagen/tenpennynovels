@@ -84,7 +84,8 @@ export async function setupWebSocket(io: SocketIOServer): Promise<void> {
             characterName: characterPayload.characterName,
             userId: characterPayload.userId,
             isApproved: characterPayload.isApproved,
-            gameplayRoles: characterPayload.gameplayRoles || []
+            gameplayRoles: characterPayload.gameplayRoles || [],
+            isGestore: characterPayload.isGestore || false,
           };
         } catch (error: any) {
           logger.warn('Invalid character context token provided');
@@ -113,11 +114,13 @@ export async function setupWebSocket(io: SocketIOServer): Promise<void> {
     // Join user-specific room
     socket.join(`user_${user.userId}`);
 
-    // Join role-specific rooms based on characterRoles
-    if (user.characterRoles?.includes('amministratore') || user.characterRoles?.includes('master') || user.characterRoles?.includes('moderatore')) {
+    // Join role-specific rooms based on character gameplayRoles or isGestore flag
+    const roles = character?.gameplayRoles || [];
+    const isStaff = character?.isGestore || roles.includes('amministratore') || roles.includes('master') || roles.includes('moderatore');
+    if (isStaff) {
       socket.join('admin');
       socket.join('staff');
-      socket.join(`staff_${user.userId}`);  // Individual staff room for personal notifications
+      socket.join(`staff_${user.userId}`);
     }
     
     // Join character-specific room if character context exists (all statuses except DELETED can access game)

@@ -26,16 +26,18 @@ export class CharacterCreationController {
       const configService = CharacterCreationConfigService.getInstance();
       const rulesConfig = await configService.loadConfig();
 
-      // Fetch occupations from database
+      // Fetch occupations from database with populated skill refs
       const occupations = await Occupation.find({ isActive: true })
-        .select('name description category socialClass contacts earnings image requiredSkills bonusSkills alternativeSkills')
+        .select('name description category contacts earnings image requiredSkillSlots bonusSkills')
+        .populate('requiredSkillSlots.options', 'name category isPlaceholder placeholderType baseValue')
+        .populate('bonusSkills.skillId', 'name category')
         .sort({ name: 1 })
         .lean();
 
       // Fetch skills from database
       const skills = await Skill.find({ visible: true, defaultSkill: true })
         .select('name baseValue category description isPlaceholder placeholderType')
-        .sort({ sortOrder: 1, name: 1 })
+        .sort({ name: 1 })
         .lean();
 
       // Format complete configuration for frontend
@@ -45,21 +47,23 @@ export class CharacterCreationController {
           name: occ.name,
           description: occ.description,
           category: occ.category,
-          socialClass: occ.socialClass || 'middle_class',
           contacts: occ.contacts || '',
           earnings: occ.earnings || '',
           image: occ.image || null,
-          requiredSkills: (occ.requiredSkills || []).map((skill: any) => ({
-            skillId: skill.skillId || skill.skillName,
-            name: skill.skillName,
-            bonusValue: skill.baseValue,
+          requiredSkillSlots: (occ.requiredSkillSlots || []).map((slot: any) => ({
+            options: (slot.options || []).map((skill: any) => ({
+              skillId: skill._id.toString(),
+              name: skill.name,
+              category: skill.category,
+              isPlaceholder: skill.isPlaceholder || false,
+              placeholderType: skill.placeholderType,
+            })),
           })),
-          bonusSkills: (occ.bonusSkills || []).map((skill: any) => ({
-            skillId: skill.skillId || skill.skillName,
-            name: skill.skillName,
-            bonusValue: skill.bonusValue,
+          bonusSkills: (occ.bonusSkills || []).map((bs: any) => ({
+            skillId: bs.skillId?._id?.toString() || bs.skillId?.toString() || '',
+            name: bs.skillId?.name || '',
+            bonusValue: bs.bonusValue,
           })),
-          alternativeSkills: occ.alternativeSkills || {},
         })),
         skills: skills.map((skill: any) => ({
           id: skill._id.toString(),
@@ -106,9 +110,11 @@ export class CharacterCreationController {
    */
   static async getOccupations(req: Request, res: Response): Promise<void> {
     try {
-      // Fetch all active occupations from database
+      // Fetch all active occupations from database with populated skill refs
       const occupations = await Occupation.find({ isActive: true })
-        .select('name description category socialClass contacts earnings image requiredSkills bonusSkills alternativeSkills')
+        .select('name description category contacts earnings image requiredSkillSlots bonusSkills')
+        .populate('requiredSkillSlots.options', 'name category isPlaceholder placeholderType baseValue')
+        .populate('bonusSkills.skillId', 'name category')
         .sort({ name: 1 })
         .lean();
 
@@ -118,21 +124,23 @@ export class CharacterCreationController {
         name: occ.name,
         description: occ.description,
         category: occ.category,
-        socialClass: occ.socialClass || 'middle_class',
         contacts: occ.contacts || '',
         earnings: occ.earnings || '',
         image: occ.image || null,
-        requiredSkills: (occ.requiredSkills || []).map((skill: any) => ({
-          skillId: skill.skillId || skill.skillName,
-          name: skill.skillName,
-          bonusValue: skill.baseValue,
+        requiredSkillSlots: (occ.requiredSkillSlots || []).map((slot: any) => ({
+          options: (slot.options || []).map((skill: any) => ({
+            skillId: skill._id.toString(),
+            name: skill.name,
+            category: skill.category,
+            isPlaceholder: skill.isPlaceholder || false,
+            placeholderType: skill.placeholderType,
+          })),
         })),
-        bonusSkills: (occ.bonusSkills || []).map((skill: any) => ({
-          skillId: skill.skillId || skill.skillName,
-          name: skill.skillName,
-          bonusValue: skill.bonusValue,
+        bonusSkills: (occ.bonusSkills || []).map((bs: any) => ({
+          skillId: bs.skillId?._id?.toString() || bs.skillId?.toString() || '',
+          name: bs.skillId?.name || '',
+          bonusValue: bs.bonusValue,
         })),
-        alternativeSkills: occ.alternativeSkills || {},
       }));
 
       logger.info('[CharacterCreationController] Occupations list requested', {

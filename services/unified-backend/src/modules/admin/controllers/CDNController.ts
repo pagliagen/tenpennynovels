@@ -4,7 +4,7 @@ import { CDNService, CDNEntityType } from '../services/CDNService';
 import { logger } from '../utils/logger';
 import { successResponse, errorResponse, createResponse, getRequestId } from '../utils/apiResponse';
 
-const VALID_TYPES: CDNEntityType[] = ['locations', 'items', 'characters'];
+const VALID_TYPES: CDNEntityType[] = ['locations', 'items', 'characters', 'occupations'];
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 export const upload = multer({

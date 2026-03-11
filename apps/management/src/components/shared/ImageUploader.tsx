@@ -3,7 +3,7 @@ import classNames from 'classnames';
 import { uploadImage, deleteImage } from '@/lib/api/cdn';
 import styles from '@/styles/components/ImageUploader.module.scss';
 
-export type CDNEntityType = 'locations' | 'items' | 'characters';
+export type CDNEntityType = 'locations' | 'items' | 'characters' | 'occupations';
 
 interface ImageUploaderProps {
   value: string;

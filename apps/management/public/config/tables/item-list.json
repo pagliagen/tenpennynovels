@@ -1,0 +1,164 @@
+{
+  "_meta": {
+    "version": "1.0.0",
+    "description": "Configurazione tabella lista items",
+    "lastUpdated": "2026-03-11"
+  },
+  "table": {
+    "name": "item-list",
+    "title": "Gestione Items",
+    "icon": "📦",
+    "searchable": true,
+    "selectable": false,
+    "pagination": {
+      "defaultPageSize": 25,
+      "pageSizeOptions": [10, 25, 50, 100]
+    }
+  },
+  "columns": [
+    {
+      "key": "imageUrl",
+      "label": "Immagine",
+      "type": "text",
+      "visible": true,
+      "defaultVisible": true,
+      "sortable": false,
+      "width": "70px",
+      "render": {
+        "type": "image",
+        "fallback": "📦"
+      }
+    },
+    {
+      "key": "name",
+      "label": "Nome",
+      "type": "text",
+      "visible": true,
+      "defaultVisible": true,
+      "sortable": true,
+      "width": "200px",
+      "render": {
+        "type": "text",
+        "className": "font-bold text-primary"
+      }
+    },
+    {
+      "key": "categoryLabel",
+      "label": "Categoria",
+      "type": "text",
+      "visible": true,
+      "defaultVisible": true,
+      "sortable": true,
+      "width": "150px",
+      "render": {
+        "type": "text"
+      }
+    },
+    {
+      "key": "basePrice",
+      "label": "Prezzo (pence)",
+      "type": "number",
+      "visible": true,
+      "defaultVisible": true,
+      "sortable": true,
+      "width": "120px",
+      "render": {
+        "type": "text"
+      }
+    },
+    {
+      "key": "isPublic",
+      "label": "Vendita Libera",
+      "type": "boolean",
+      "visible": true,
+      "defaultVisible": true,
+      "sortable": false,
+      "width": "110px",
+      "render": {
+        "type": "boolean"
+      }
+    },
+    {
+      "key": "isAdminOnly",
+      "label": "Solo Gestionale",
+      "type": "boolean",
+      "visible": true,
+      "defaultVisible": true,
+      "sortable": false,
+      "width": "120px",
+      "render": {
+        "type": "boolean"
+      }
+    }
+  ],
+  "actions": [
+    {
+      "key": "edit",
+      "label": "Modifica",
+      "icon": "✏️",
+      "type": "primary",
+      "visible": true
+    },
+    {
+      "key": "delete",
+      "label": "Elimina",
+      "icon": "🗑️",
+      "type": "danger",
+      "visible": true,
+      "confirmMessage": "Sei sicuro di voler eliminare questo item? Questa azione è irreversibile."
+    }
+  ],
+  "bulkActions": [],
+  "filters": [
+    {
+      "key": "category",
+      "label": "Categoria",
+      "type": "select",
+      "field": "category",
+      "options": [
+        { "value": "", "label": "Tutte" },
+        { "value": "clothing", "label": "Abbigliamento" },
+        { "value": "accessories", "label": "Accessori" },
+        { "value": "tools", "label": "Strumenti" },
+        { "value": "weapons", "label": "Armi" },
+        { "value": "books", "label": "Libri" },
+        { "value": "documents", "label": "Documenti" },
+        { "value": "medical", "label": "Medico" },
+        { "value": "food_drink", "label": "Cibo e Bevande" },
+        { "value": "household", "label": "Casalinghi" },
+        { "value": "luxury", "label": "Lusso" },
+        { "value": "professional", "label": "Professionale" },
+        { "value": "transport", "label": "Trasporti" },
+        { "value": "curiosities", "label": "Curiosità" },
+        { "value": "occult", "label": "Occulto" },
+        { "value": "consumables", "label": "Consumabili" },
+        { "value": "services", "label": "Servizi" }
+      ],
+      "placeholder": "Filtra per categoria"
+    },
+    {
+      "key": "isPublic",
+      "label": "Vendita Libera",
+      "type": "select",
+      "field": "isPublic",
+      "options": [
+        { "value": "", "label": "Tutti" },
+        { "value": "true", "label": "In vendita libera" },
+        { "value": "false", "label": "Non in vendita libera" }
+      ],
+      "placeholder": "Filtra per vendita"
+    },
+    {
+      "key": "isAdminOnly",
+      "label": "Solo Gestionale",
+      "type": "select",
+      "field": "isAdminOnly",
+      "options": [
+        { "value": "", "label": "Tutti" },
+        { "value": "true", "label": "Solo gestionale" },
+        { "value": "false", "label": "Disponibili in gioco" }
+      ],
+      "placeholder": "Filtra per disponibilità"
+    }
+  ]
+}

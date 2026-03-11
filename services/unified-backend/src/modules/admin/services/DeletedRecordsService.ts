@@ -1,42 +1,31 @@
 /**
  * DeletedRecordsService
  *
- * Centralized service for managing soft deleted records across all models.
- *
- * Features:
- * - Aggregate deleted records from User, Character, Document, Location, Item
- * - Check key conflicts before restore
- * - Transactional restore with validation
- * - Permanent delete with 30-day retention policy
+ * Manages soft-deleted records stored in the `deleted_records` collection.
+ * All deleted records live in a single collection, queryable by originalCollection.
  */
 
-import mongoose, { Model } from 'mongoose';
-import { User } from '@database/models/User';
-import { Character } from '@database/models/Character';
-import Document from '@database/models/Document';
-import { Location } from '@database/models/Location';
-import { Item } from '@database/models/Item';
+import mongoose from 'mongoose';
+import { DeletedRecord, IDeletedRecord } from '@database/models/DeletedRecord';
+import { getModelForCollection, getRegisteredCollections } from '@database/plugins/softDeleteRegistry';
 
-export type RecordType = 'user' | 'character' | 'document' | 'location' | 'item';
+export type RecordType = string;
 
-export interface DeletedRecord {
+export interface DeletedRecordDTO {
   _id: string;
-  type: RecordType;
+  type: string;
   displayName: string;
   originalKeys: Record<string, any>;
-  keyConflicts?: Record<string, boolean>;
   deletedAt: Date;
   deletedBy: {
     _id?: string;
     username: string;
   };
-  metadata?: {
-    relatedRecords?: Array<{ type: string; id: string; name: string }>;
-  };
+  deletionReason?: string;
 }
 
 export interface DeletedRecordsParams {
-  type?: RecordType;
+  type?: string;
   page?: number;
   pageSize?: number;
   sortBy?: string;
@@ -44,7 +33,7 @@ export interface DeletedRecordsParams {
 }
 
 export interface DeletedRecordsResponse {
-  items: DeletedRecord[];
+  items: DeletedRecordDTO[];
   pagination: {
     page: number;
     pageSize: number;
@@ -53,20 +42,10 @@ export interface DeletedRecordsResponse {
     hasNextPage: boolean;
     hasPrevPage: boolean;
   };
-  counts: {
-    user: number;
-    character: number;
-    document: number;
-    location: number;
-    item: number;
-    total: number;
-  };
+  counts: Record<string, number> & { total: number };
 }
 
 export class DeletedRecordsService {
-  /**
-   * Get deleted records from all models or specific type
-   */
   async getDeletedRecords(params: DeletedRecordsParams = {}): Promise<DeletedRecordsResponse> {
     const {
       type,
@@ -76,46 +55,35 @@ export class DeletedRecordsService {
       sortOrder = 'desc'
     } = params;
 
-    const skip = (page - 1) * pageSize;
-    const sort: any = { [sortBy]: sortOrder === 'asc' ? 1 : -1 };
-
-    let items: DeletedRecord[] = [];
-
-    // If specific type requested, query only that model
+    const filter: any = {};
     if (type) {
-      items = await this.queryModelDeleted(type, skip, pageSize, sort);
-    } else {
-      // Query all models and merge results
-      const [users, characters, documents, locations, itemRecords] = await Promise.all([
-        this.queryModelDeleted('user', 0, pageSize * 5, sort),
-        this.queryModelDeleted('character', 0, pageSize * 5, sort),
-        this.queryModelDeleted('document', 0, pageSize * 5, sort),
-        this.queryModelDeleted('location', 0, pageSize * 5, sort),
-        this.queryModelDeleted('item', 0, pageSize * 5, sort)
-      ]);
-
-      // Merge and sort all results
-      items = [...users, ...characters, ...documents, ...locations, ...itemRecords]
-        .sort((a, b) => {
-          const aVal = a[sortBy as keyof DeletedRecord];
-          const bVal = b[sortBy as keyof DeletedRecord];
-          if (aVal === undefined || bVal === undefined) return 0;
-          if (aVal < bVal) return sortOrder === 'asc' ? -1 : 1;
-          if (aVal > bVal) return sortOrder === 'asc' ? 1 : -1;
-          return 0;
-        })
-        .slice(skip, skip + pageSize);
+      filter.originalCollection = type;
     }
 
-    // Get counts
-    const counts = await this.getCounts();
+    const sort: any = { [sortBy]: sortOrder === 'asc' ? 1 : -1 };
+    const skip = (page - 1) * pageSize;
 
-    // Calculate pagination
-    const totalItems = type ? counts[type] : counts.total;
+    const [items, totalItems] = await Promise.all([
+      DeletedRecord.find(filter).sort(sort).skip(skip).limit(pageSize).lean(),
+      DeletedRecord.countDocuments(filter)
+    ]);
+
+    const counts = await this.getCounts();
     const totalPages = Math.ceil(totalItems / pageSize);
 
     return {
-      items,
+      items: items.map((doc: any) => ({
+        _id: doc._id.toString(),
+        type: doc.originalCollection,
+        displayName: doc.displayName,
+        originalKeys: doc.originalKeys || {},
+        deletedAt: doc.deletedAt,
+        deletedBy: {
+          _id: doc.deletedBy?.toString(),
+          username: doc.deletedByName || 'Unknown'
+        },
+        deletionReason: doc.deletionReason
+      })),
       pagination: {
         page,
         pageSize,
@@ -128,216 +96,96 @@ export class DeletedRecordsService {
     };
   }
 
-  /**
-   * Query deleted records from specific model
-   */
-  private async queryModelDeleted(
-    type: RecordType,
-    skip: number,
-    limit: number,
-    sort: any
-  ): Promise<DeletedRecord[]> {
-    const Model = this.getModelByType(type);
-
-    const docs = await Model.find({ deletedAt: { $exists: true } })
-      .sort(sort)
-      .skip(skip)
-      .limit(limit)
-      .lean();
-
-    return docs.map((doc: any) => ({
-      _id: doc._id.toString(),
-      type,
-      displayName: this.getDisplayName(type, doc),
-      originalKeys: doc.originalKeys || {},
-      deletedAt: doc.deletedAt,
-      deletedBy: {
-        _id: doc.deletedBy?.toString(),
-        username: doc.deletedByName || 'Unknown'
-      }
-    }));
-  }
-
-  /**
-   * Get display name for deleted record based on type
-   */
-  private getDisplayName(type: RecordType, doc: any): string {
-    switch (type) {
-      case 'user':
-        return doc.originalKeys?.username || doc.username || 'Unknown User';
-      case 'character':
-        return doc.originalKeys?.name || doc.name || 'Unknown Character';
-      case 'document':
-        return doc.title || doc.originalKeys?.slug || doc.slug || 'Unknown Document';
-      case 'location':
-        return doc.name || doc.originalKeys?.slug || doc.slug || 'Unknown Location';
-      case 'item':
-        return doc.originalKeys?.name || doc.name || 'Unknown Item';
-      default:
-        return 'Unknown';
-    }
-  }
-
-  /**
-   * Get counts of deleted records by type
-   */
-  async getCounts(): Promise<DeletedRecordsResponse['counts']> {
-    const [userCount, charCount, docCount, locCount, itemCount] = await Promise.all([
-      User.countDocuments({ deletedAt: { $exists: true } }),
-      Character.countDocuments({ deletedAt: { $exists: true } }),
-      Document.countDocuments({ deletedAt: { $exists: true } }),
-      Location.countDocuments({ deletedAt: { $exists: true } }),
-      Item.countDocuments({ deletedAt: { $exists: true } })
+  async getCounts(): Promise<Record<string, number> & { total: number }> {
+    const pipeline = await DeletedRecord.aggregate([
+      { $group: { _id: '$originalCollection', count: { $sum: 1 } } }
     ]);
 
-    return {
-      user: userCount,
-      character: charCount,
-      document: docCount,
-      location: locCount,
-      item: itemCount,
-      total: userCount + charCount + docCount + locCount + itemCount
-    };
+    const counts: any = { total: 0 };
+    for (const entry of pipeline) {
+      counts[entry._id] = entry.count;
+      counts.total += entry.count;
+    }
+
+    return counts;
   }
 
-  /**
-   * Check if originalKeys are still available (not taken by another record)
-   */
   async checkKeyConflicts(
-    recordId: string,
-    type: RecordType
+    recordId: string
   ): Promise<Record<string, boolean>> {
-    const Model = this.getModelByType(type);
+    const record = await DeletedRecord.findById(recordId).lean() as any;
+    if (!record) {
+      throw new Error('Deleted record not found');
+    }
 
-    // Find the deleted record
-    const record = await Model.findById(recordId)
-      .setOptions({ _includeDeleted: true });
-
-    if (!record || !record.deletedAt) {
-      throw new Error('Record not found or not soft deleted');
+    const Model = getModelForCollection(record.originalCollection);
+    if (!Model) {
+      throw new Error(`No model registered for collection: ${record.originalCollection}`);
     }
 
     const conflicts: Record<string, boolean> = {};
-
-    // Check each original key
     for (const [key, value] of Object.entries(record.originalKeys || {})) {
-      // Check if another non-deleted record has this key
-      const existing = await Model.findOne({
-        [key]: value,
-        deletedAt: { $exists: false },
-        _id: { $ne: recordId }
-      });
-
+      const existing = await Model.findOne({ [key]: value });
       conflicts[key] = !!existing;
     }
 
     return conflicts;
   }
 
-  /**
-   * Restore deleted record (transactional)
-   *
-   * @param recordId - ID of record to restore
-   * @param type - Type of record
-   * @param newKeys - Optional new keys if originals are taken (e.g., { username: 'newusername' })
-   */
   async restoreRecord(
     recordId: string,
-    type: RecordType,
     newKeys?: Record<string, string>
   ): Promise<{ success: boolean; conflicts?: Record<string, boolean> }> {
+    const record = await DeletedRecord.findById(recordId) as IDeletedRecord | null;
+    if (!record) {
+      throw new Error('Deleted record not found');
+    }
+
+    const Model = getModelForCollection(record.originalCollection);
+    if (!Model) {
+      throw new Error(`No model registered for collection: ${record.originalCollection}`);
+    }
+
+    const docData = { ...record.data } as any;
+
+    if (newKeys) {
+      for (const [key, value] of Object.entries(newKeys)) {
+        const existing = await Model.findOne({ [key]: value, _id: { $ne: record.originalId } });
+        if (existing) {
+          return { success: false, conflicts: { [key]: true } };
+        }
+        docData[key] = value;
+      }
+    } else {
+      for (const [key, value] of Object.entries(record.originalKeys || {})) {
+        const existing = await Model.findOne({ [key]: value, _id: { $ne: record.originalId } });
+        if (existing) {
+          return { success: false, conflicts: { [key]: true } };
+        }
+        docData[key] = value;
+      }
+    }
+
     const session = await mongoose.startSession();
-    session.startTransaction();
-
     try {
-      const Model = this.getModelByType(type);
+      await session.withTransaction(async () => {
+        await Model.collection.insertOne(docData, { session });
+        await DeletedRecord.findByIdAndDelete(recordId).session(session);
+      });
 
-      // Find record with session
-      const record = await Model.findById(recordId)
-        .session(session)
-        .setOptions({ _includeDeleted: true });
-
-      if (!record) {
-        throw new Error('Record not found');
-      }
-
-      if (!record.deletedAt) {
-        throw new Error('Record is not soft deleted');
-      }
-
-      // If newKeys provided, use them instead of originalKeys
-      if (newKeys) {
-        // Validate newKeys are available
-        for (const [key, value] of Object.entries(newKeys)) {
-          const existing = await Model.findOne({
-            [key]: value,
-            deletedAt: { $exists: false },
-            _id: { $ne: recordId }
-          }).session(session);
-
-          if (existing) {
-            await session.abortTransaction();
-            return {
-              success: false,
-              conflicts: { [key]: true }
-            };
-          }
-
-          // Set new key value
-          record[key] = value;
-        }
-
-        // Clear originalKeys since we're using new values
-        record.originalKeys = undefined;
-        record.deletedAt = undefined;
-        record.deletedBy = undefined;
-        record.deletedByName = undefined;
-        record.deletedByType = undefined;
-
-        await record.save({ session });
-      } else {
-        // Use built-in restore method from plugin
-        const result = await record.restore();
-
-        if (!result.success) {
-          await session.abortTransaction();
-          return result;
-        }
-      }
-
-      await session.commitTransaction();
       return { success: true };
-    } catch (error) {
-      await session.abortTransaction();
-      throw error;
     } finally {
-      session.endSession();
+      await session.endSession();
     }
   }
 
-  /**
-   * Permanently delete record (hard delete)
-   *
-   * RETENTION POLICY: Only allowed if deletedAt > 30 days ago
-   */
-  async permanentDelete(recordId: string, type: RecordType): Promise<void> {
-    const Model = this.getModelByType(type);
-
-    // Find record
-    const record = await Model.findById(recordId)
-      .setOptions({ _includeDeleted: true });
-
+  async permanentDelete(recordId: string): Promise<void> {
+    const record = await DeletedRecord.findById(recordId);
     if (!record) {
-      throw new Error('Record not found');
+      throw new Error('Deleted record not found');
     }
 
-    if (!record.deletedAt) {
-      throw new Error('Record is not soft deleted');
-    }
-
-    // RETENTION POLICY: 30 days
     const daysSinceDeleted = (Date.now() - record.deletedAt.getTime()) / (1000 * 60 * 60 * 24);
-
     if (daysSinceDeleted < 30) {
       throw new Error(
         `Cannot permanently delete: retention policy requires 30 days. ` +
@@ -345,56 +193,24 @@ export class DeletedRecordsService {
       );
     }
 
-    // Hard delete
-    await Model.findByIdAndDelete(recordId);
+    await DeletedRecord.findByIdAndDelete(recordId);
   }
 
-  /**
-   * Bulk permanent delete (with retention check)
-   */
   async bulkPermanentDelete(
-    recordIds: string[],
-    type: RecordType
+    recordIds: string[]
   ): Promise<{ success: number; failed: number; errors: Array<{ id: string; error: string }> }> {
-    const results = {
-      success: 0,
-      failed: 0,
-      errors: [] as Array<{ id: string; error: string }>
-    };
+    const results = { success: 0, failed: 0, errors: [] as Array<{ id: string; error: string }> };
 
     for (const id of recordIds) {
       try {
-        await this.permanentDelete(id, type);
+        await this.permanentDelete(id);
         results.success++;
       } catch (error: any) {
         results.failed++;
-        results.errors.push({
-          id,
-          error: error.message || 'Unknown error'
-        });
+        results.errors.push({ id, error: error.message || 'Unknown error' });
       }
     }
 
     return results;
-  }
-
-  /**
-   * Get model class by type
-   */
-  private getModelByType(type: RecordType): Model<any> {
-    const models: Record<RecordType, Model<any>> = {
-      user: User as any,
-      character: Character as any,
-      document: Document as any,
-      location: Location as any,
-      item: Item as any
-    };
-
-    const model = models[type];
-    if (!model) {
-      throw new Error(`Invalid record type: ${type}`);
-    }
-
-    return model;
   }
 }

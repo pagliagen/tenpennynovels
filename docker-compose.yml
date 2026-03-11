@@ -69,7 +69,7 @@ services:
       context: ./services/embeddings-worker
       dockerfile: Dockerfile
       args:
-        HF_TOKEN: ${HF_TOKEN:-}  # HuggingFace token (optional)
+        HUGGINGFACE_TOKEN: ${HUGGINGFACE_TOKEN:-}  # HuggingFace token (optional)
     container_name: tenpennynovels-embeddings-worker
     restart: unless-stopped
     environment:
@@ -82,7 +82,7 @@ services:
       ELASTICSEARCH_URL: http://elasticsearch:9200
       ELASTICSEARCH_INDEX_PREFIX: tenpennynovels
       LOG_LEVEL: info
-      HF_TOKEN: ${HF_TOKEN:-}  # HuggingFace token for runtime
+      HUGGINGFACE_TOKEN: ${HUGGINGFACE_TOKEN:-}  # HuggingFace token for runtime
     ports:
       - "5001:5001"  # HTTP API for embeddings
     networks:

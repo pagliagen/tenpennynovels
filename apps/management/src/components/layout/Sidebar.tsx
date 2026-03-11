@@ -7,7 +7,7 @@
  * - Active route highlight
  */
 
-import React, { useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import classNames from 'classnames';
@@ -63,6 +63,17 @@ const NAV_ITEMS: NavItem[] = [
     ]
   },
   {
+    key: 'game-data',
+    label: 'Dati di Gioco',
+    icon: '🎲',
+    children: [
+      { key: 'game-skills', label: 'Skills', href: '/game-data/skill-list', permission: 'skills.access' },
+      { key: 'game-social-classes', label: 'Classi Sociali', href: '/game-data/social-class-list', permission: 'social_classes.access' },
+      { key: 'game-occupations', label: 'Occupazioni', href: '/game-data/occupation-list', permission: 'skills.access' },
+      { key: 'game-items', label: 'Mercato', href: '/game-data/item-list', permission: 'items.access' }
+    ]
+  },
+  {
     key: 'system',
     label: 'Sistema',
     icon: '⚙️',
@@ -77,21 +88,8 @@ const NAV_ITEMS: NavItem[] = [
 
 export function Sidebar(): React.ReactElement {
   const router = useRouter();
-  const { sidebarCollapsed, toggleSidebar } = useUIStore();
+  const { sidebarCollapsed, toggleSidebar, expandedCategories, toggleCategory } = useUIStore();
   const { hasPermission } = usePermissionsStore();
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set(['users', 'characters', 'locations', 'documents']));
-
-  const toggleCategory = (key: string) => {
-    setExpandedCategories(prev => {
-      const next = new Set(prev);
-      if (next.has(key)) {
-        next.delete(key);
-      } else {
-        next.add(key);
-      }
-      return next;
-    });
-  };
 
   const renderNavItem = (item: NavItem, level: number = 0) => {
     // Category with children
@@ -109,7 +107,7 @@ export function Sidebar(): React.ReactElement {
         return null;
       }
 
-      const isExpanded = expandedCategories.has(item.key);
+      const isExpanded = expandedCategories.includes(item.key);
       const hasActiveChild = visibleChildren.some(child => child.href === router.pathname);
 
       return (

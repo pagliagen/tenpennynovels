@@ -2,7 +2,7 @@
  * Types for Deleted Records API
  */
 
-export type RecordType = 'user' | 'character' | 'document' | 'location' | 'item';
+export type RecordType = 'users' | 'characters' | 'documents' | 'locations' | 'items' | 'skills' | 'occupations' | 'socialclassconfigs';
 
 export interface DeletedRecord {
   _id: string;
@@ -42,14 +42,7 @@ export interface DeletedRecordsResponse {
     hasNextPage: boolean;
     hasPrevPage: boolean;
   };
-  counts: {
-    user: number;
-    character: number;
-    document: number;
-    location: number;
-    item: number;
-    total: number;
-  };
+  counts: Record<string, number> & { total: number };
 }
 
 export interface RestoreRecordData {

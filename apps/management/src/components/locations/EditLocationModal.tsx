@@ -8,6 +8,7 @@ import React, { useState, useEffect } from 'react';
 import { Modal } from '@/components/shared/Modal';
 import { FormField } from '@/components/shared/FormField';
 import { ImageUploader } from '@/components/shared/ImageUploader';
+import { GenerateImageButton } from '@/components/shared/GenerateImageButton';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useLocation, useUpdateLocation, useLocations } from '@/hooks/api/useLocations';
 import { useNotificationStore } from '@/store/notificationStore';
@@ -185,6 +186,12 @@ export function EditLocationModal({
               onChange={(url) => handleChange('imageUrl', url)}
               entityType="locations"
               entityId={locationId}
+            />
+            <GenerateImageButton
+              entityType="location"
+              entityId={locationId}
+              entityName={formData.name}
+              onSuccess={(url) => handleChange('imageUrl', url)}
             />
           </div>
 

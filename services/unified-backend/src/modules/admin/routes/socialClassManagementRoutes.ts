@@ -8,7 +8,7 @@ const router = Router();
 // All social class management routes require admin access
 router.use(AdminAuthMiddleware.requireAdminAccess);
 
-// Social Class Configuration routes
+// Static routes MUST come before parameterized routes
 router.get(
   '/',
   requireViewPermission('social_classes.access'),
@@ -24,10 +24,10 @@ router.get(
 );
 
 router.get(
-  '/:socialClassId',
+  '/characters/distribution',
   requireViewPermission('social_classes.access'),
-  AdminAuthMiddleware.logAdminAction('view_social_class_details', 'social_class_management'),
-  SocialClassManagementController.getSocialClassDetails
+  AdminAuthMiddleware.logAdminAction('view_character_distribution', 'social_class_management'),
+  SocialClassManagementController.getCharacterDistribution
 );
 
 router.post(
@@ -35,6 +35,21 @@ router.post(
   requireViewPermission('social_classes.manage'),
   AdminAuthMiddleware.logAdminAction('create_social_class', 'social_class_management'),
   SocialClassManagementController.createSocialClass
+);
+
+router.post(
+  '/reorder',
+  requireViewPermission('social_classes.manage'),
+  AdminAuthMiddleware.logAdminAction('reorder_social_classes', 'social_class_management'),
+  SocialClassManagementController.reorderSocialClasses
+);
+
+// Parameterized routes AFTER all static ones
+router.get(
+  '/:socialClassId',
+  requireViewPermission('social_classes.access'),
+  AdminAuthMiddleware.logAdminAction('view_social_class_details', 'social_class_management'),
+  SocialClassManagementController.getSocialClassDetails
 );
 
 router.put(
@@ -49,22 +64,6 @@ router.delete(
   requireViewPermission('social_classes.manage'),
   AdminAuthMiddleware.logAdminAction('delete_social_class', 'social_class_management'),
   SocialClassManagementController.deleteSocialClass
-);
-
-// Reordering routes
-router.post(
-  '/reorder',
-  requireViewPermission('social_classes.manage'),
-  AdminAuthMiddleware.logAdminAction('reorder_social_classes', 'social_class_management'),
-  SocialClassManagementController.reorderSocialClasses
-);
-
-// Character Distribution routes
-router.get(
-  '/characters/distribution',
-  requireViewPermission('social_classes.access'),
-  AdminAuthMiddleware.logAdminAction('view_character_distribution', 'social_class_management'),
-  SocialClassManagementController.getCharacterDistribution
 );
 
 export default router;

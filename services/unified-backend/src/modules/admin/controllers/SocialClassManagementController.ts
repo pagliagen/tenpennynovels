@@ -794,10 +794,12 @@ export class SocialClassManagementController {
         return;
       }
 
-      // Delete the social class
-      await SocialClassConfig.findByIdAndDelete(socialClassId);
+      await socialClass.softDelete(
+        user?.activeCharacterId || user?._id,
+        user?.activeCharacterName || user?.username || 'Unknown Admin',
+        reason.trim()
+      );
 
-      // Audit log
       auditLogger.logSuccess({
         action: 'DELETE_SOCIAL_CLASS',
         resource: 'SOCIAL_CLASS',
@@ -1015,7 +1017,7 @@ export class SocialClassManagementController {
       const total = countResult[0]?.total || 0;
 
       // Add pagination
-      pipeline.push({ $skip: skip }, { $pageSize: limitNum });
+      pipeline.push({ $skip: skip }, { $limit: limitNum });
 
       // Add projection for cleaner output
       pipeline.push({

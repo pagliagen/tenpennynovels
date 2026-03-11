@@ -1,7 +1,7 @@
 import mongoose, { Schema, model, Document } from 'mongoose';
-import { softDeletePlugin, SoftDeleteFields, SoftDeleteMethods } from '../plugins/softDeletePlugin';
+import { softDeletePlugin, SoftDeleteMethods } from '../plugins/softDeletePlugin';
 
-export interface IUser extends Document, SoftDeleteFields, SoftDeleteMethods {
+export interface IUser extends Document, SoftDeleteMethods {
   // Basic user info
   username: string;
   email: string;
@@ -50,7 +50,8 @@ export interface IUser extends Document, SoftDeleteFields, SoftDeleteMethods {
   referralCode?: string;
   ipAddress?: string;
 
-  // GDPR fields (NOTE: GDPR deletedAt is different from soft delete deletedAt)
+  // GDPR fields
+  deletedAt?: Date;
   accountStatus: 'active' | 'deleted' | 'anonymized';
   anonymizedAt?: Date;
   anonymizationReason?: string; // 'user_request' | 'admin_action'

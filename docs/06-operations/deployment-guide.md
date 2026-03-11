@@ -134,7 +134,7 @@ flowchart LR
 | `SSH_PORT` | Porta SSH |
 | `SSH_USERNAME` | Utente SSH |
 | `SSH_PRIVATE_KEY` | Chiave privata SSH |
-| `HF_TOKEN` | HuggingFace token (opzionale) |
+| `HUGGINGFACE_TOKEN` | HuggingFace token (opzionale) |
 
 ---
 

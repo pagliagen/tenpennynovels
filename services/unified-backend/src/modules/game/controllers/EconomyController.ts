@@ -286,7 +286,7 @@ export class EconomyController {
 
       // Get all public items
       const items = await Item.find({ isPublic: true })
-        .select('name description category subcategory basePrice rarity properties prerequisites financialSettings imageUrl')
+        .select('name description category subcategory basePrice properties prerequisites financialSettings imageUrl')
         .lean();
 
       // Format with financial info if authenticated
@@ -312,7 +312,6 @@ export class EconomyController {
           subcategory: item.subcategory,
           price: item.basePrice,
           priceFormatted: EconomyController.formatCurrency(item.basePrice),
-          rarity: item.rarity,
           properties: item.properties,
           requirements: item.prerequisites,
           imageUrl: item.imageUrl,

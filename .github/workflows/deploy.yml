@@ -183,7 +183,7 @@ jobs:
             echo "🐍 Installing Python dependencies for embeddings worker..."
 
             # Set HuggingFace token (avoids rate limits)
-            export HF_TOKEN="${{ secrets.HF_TOKEN }}"
+            export HUGGINGFACE_TOKEN="${{ secrets.HUGGINGFACE_TOKEN }}"
 
             # Install/update dependencies globally (no venv needed for PM2)
             rm -rf .venv

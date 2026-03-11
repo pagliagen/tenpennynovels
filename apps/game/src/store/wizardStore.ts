@@ -79,7 +79,7 @@ interface WizardStore extends WizardData {
   // Actions - Skills (Step 4)
   updateSkill: (skillName: string, breakdown: Partial<SkillBreakdown>) => void;
   setSkillManualPoints: (skillName: string, points: number) => void;
-  applyOccupationBonuses: (requiredSkills: string[], bonusSkill: string) => void;
+  applyOccupationBonuses: (requiredSkillIds: string[], bonusSkillId: string) => void;
   autoAssignRequiredSkills: (occupationData: any, skillDefinitions: any) => void;
   addDynamicSkill: (skill: DynamicSkill) => void;
   removeDynamicSkill: (skillId: string) => void;
@@ -484,8 +484,8 @@ export const useWizardStore = create<WizardStore>()(
        * - Required skills: If current total < 40, apply requiredBonus = (40 - base)
        * - Bonus skill: Apply +30 occupationBonus (can exceed 75, up to 80)
        *
-       * @param requiredSkills - Array of 6 required skill names
-       * @param bonusSkill - Single bonus skill name (user-selected)
+       * @param requiredSkillIds - Array of required skill IDs
+       * @param bonusSkillId - Single bonus skill ID
        */
       applyOccupationBonuses: (requiredSkills, bonusSkill) => {
         const { skills } = get();
@@ -543,7 +543,7 @@ export const useWizardStore = create<WizardStore>()(
        * @param skillDefinitions - All skills from API (to get base values)
        */
       autoAssignRequiredSkills: (occupationData, skillDefinitions) => {
-        if (!occupationData?.requiredSkills || !skillDefinitions?.length) {
+        if (!occupationData?.requiredSkillSlots || !skillDefinitions?.length) {
           console.warn('[wizardStore] Cannot auto-assign: missing occupation or skill data');
           return;
         }
@@ -552,7 +552,6 @@ export const useWizardStore = create<WizardStore>()(
         const updatedSkills = { ...skills };
         let changesMade = false;
 
-        // Track placeholder skills for validation
         const requiredPlaceholderSkills: string[] = [];
 
         // FIRST: Clear old requiredBonus when occupation changes
@@ -565,34 +564,40 @@ export const useWizardStore = create<WizardStore>()(
           }
         });
 
-        // SECOND: Process each required skill
-        occupationData.requiredSkills.forEach((requirement: any) => {
-          // Skip skills with alternatives (user must choose)
-          if (requirement.alternatives && requirement.alternatives.length > 0) {
+        // SECOND: Process each required skill slot
+        occupationData.requiredSkillSlots.forEach((slot: any) => {
+          const options = slot.options || [];
+          if (options.length === 0) return;
+
+          // Multi-option slot: player must choose, skip auto-assign
+          if (options.length > 1) {
+            // Track any placeholder skills in multi-option slots
+            options.forEach((opt: any) => {
+              if (opt.isPlaceholder) {
+                requiredPlaceholderSkills.push(opt.name);
+              }
+            });
             return;
           }
 
-          // Find skill definition to get base value (case-insensitive match)
+          // Single option: auto-assign
+          const skillOption = options[0];
+
+          // Find skill definition by ID
           const skillDef = skillDefinitions.find(
-            (s: any) =>
-              s.id === requirement.skillId ||
-              s.name.toLowerCase() === requirement.name.toLowerCase()
+            (s: any) => s.id === skillOption.skillId || s.name === skillOption.name
           );
 
           if (!skillDef) {
-            console.warn(`[wizardStore] Skill not found: ${requirement.name}`);
+            console.warn(`[wizardStore] Skill not found: ${skillOption.name}`);
             return;
           }
 
-          // If placeholder, track it for validation and skip auto-assignment
-          // User must add specializations via PlaceholderSkillManager and select primary
           if (skillDef.isPlaceholder) {
             requiredPlaceholderSkills.push(skillDef.name);
-            console.log(`[wizardStore] Tracked required placeholder: ${skillDef.name}`);
             return;
           }
 
-          // Get or initialize skill breakdown
           const currentSkill = updatedSkills[skillDef.id] || {
             base: skillDef.baseValue,
             requiredBonus: 0,
@@ -602,31 +607,22 @@ export const useWizardStore = create<WizardStore>()(
             category: skillDef.category,
           };
 
-          // Calculate required bonus (default minimum is 40)
-          const requiredMinimum = requirement.bonusValue || 40;
+          const requiredMinimum = 40;
           const newRequiredBonus = Math.max(0, requiredMinimum - currentSkill.base);
 
-          // Only update if changed
           if (currentSkill.requiredBonus !== newRequiredBonus) {
             currentSkill.requiredBonus = newRequiredBonus;
-
-            // Recalculate total
             currentSkill.total =
               currentSkill.base +
               currentSkill.requiredBonus +
               currentSkill.manualPoints +
               currentSkill.occupationBonus;
 
-            // Enforce cap (75 normally, 80 with occupation bonus)
             const cap = currentSkill.occupationBonus > 0 ? 80 : 75;
             if (currentSkill.total > cap) {
-              // Reduce manualPoints to fit cap (preserve requiredBonus)
               const excess = currentSkill.total - cap;
               currentSkill.manualPoints = Math.max(0, currentSkill.manualPoints - excess);
               currentSkill.total = cap;
-              console.warn(
-                `[wizardStore] Skill ${skillDef.name} exceeded cap, reduced manualPoints`
-              );
             }
 
             updatedSkills[skillDef.id] = currentSkill;

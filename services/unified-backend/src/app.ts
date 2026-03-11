@@ -14,6 +14,7 @@ import authRoutes from '@modules/auth/routes/auth';
 import gameRoutes from '@modules/game/routes';
 import adminRoutes from '@modules/admin/routes';
 import documentsRoutes from '@modules/documents/routes';
+import { webhookRoutes } from '@modules/admin/routes/webhookRoutes';
 
 const app: Application = express();
 
@@ -61,6 +62,9 @@ app.get('/health', (req, res) => {
     requestId: res.locals.requestId
   });
 });
+
+// ===== Webhook Routes (before admin auth middleware) =====
+app.use('/webhooks', webhookRoutes);
 
 // ===== Module Routes =====
 app.use('/auth', authRoutes);

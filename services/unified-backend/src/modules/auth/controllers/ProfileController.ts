@@ -459,10 +459,9 @@ export class ProfileController {
 
         await user.save({ session });
 
-        // Soft delete all characters
         await Character.updateMany(
           { userId: user._id, status: { $ne: 'DELETED' } },
-          { $set: { status: 'DELETED', deletedAt: new Date() } },
+          { $set: { status: 'DELETED' } },
           { session }
         );
 

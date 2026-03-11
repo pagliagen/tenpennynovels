@@ -13,7 +13,13 @@ interface OccupationCardProps {
 
 export function OccupationCard({ occupation, isSelected, onSelect }: OccupationCardProps): JSX.Element {
   const imageSrc = getOccupationImage(occupation.image);
-  const requiredSkillNames = occupation.requiredSkills.map((s) => s.name).join(', ');
+  const requiredSkillNames = (occupation.requiredSkillSlots || [])
+    .map((slot) => {
+      const names = slot.options.map((o) => o.name);
+      return names.length > 1 ? names.join(' / ') : names[0] || '';
+    })
+    .filter(Boolean)
+    .join(', ');
   const bonusSkillInfo = occupation.bonusSkills
     .map((s) => `${s.name} (+${s.bonusValue})`)
     .join(', ');

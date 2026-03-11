@@ -74,7 +74,7 @@ export interface WizardOccupation {
   /** Current occupation title (user-editable string) */
   currentOccupation: string;
 
-  /** For occupations with alternative skill choices (e.g., Artist: Painting/Sculpture) */
+  /** Slot index -> chosen skill ID (for multi-option slots where the player picks one) */
   selectedAlternativeSkills: Record<string, string>;
 
   /** Flag: occupation bonuses have been applied to skills */
@@ -330,18 +330,25 @@ export interface CharacterCreatePayload {
 export interface Occupation {
   _id: string;
   name: string;
-  category: string; // Professional, Military, Academic, etc.
+  category: string;
   description: string;
-  creditRatingRange: { min: number; max: number };
 
-  /** 6 required skills (auto-boost to 40) */
-  requiredSkills: Array<{
-    name: string;
-    alternatives?: string[]; // For choice-based skills
+  /** Slot-based required skills: 1 option = fixed, N options = player picks one */
+  requiredSkillSlots: Array<{
+    options: Array<{
+      skillId: string;
+      name: string;
+      isPlaceholder?: boolean;
+      placeholderType?: string;
+    }>;
   }>;
 
-  /** 1 bonus skill (user chooses, +30 points) */
-  bonusSkills: string[];
+  /** Bonus skills with automatic bonuses */
+  bonusSkills: Array<{
+    skillId: string;
+    name: string;
+    bonusValue: number;
+  }>;
 }
 
 /**

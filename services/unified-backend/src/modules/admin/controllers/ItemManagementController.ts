@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 import { ApiResponse } from '../types/management';
 import { AdminAuthMiddleware } from '../middleware/adminAuth';
 import { logger } from '../utils/logger';
-import { Item, ItemCategory, IItem, CharacterInventory, Shop, ShopItem } from '@database/models/Item';
+import { Item, ItemCategory, ITEM_CATEGORY_LABELS, IItem, CharacterInventory, Shop, ShopItem } from '@database/models/Item';
 import { listResponse, successResponse, errorResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
 
 export class ItemManagementController {
@@ -17,7 +17,6 @@ export class ItemManagementController {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 25;
       const category = req.query.category as string;
-      const rarity = req.query.rarity as string;
       const isPublic = req.query.isPublic as string;
       const isAdminOnly = req.query.isAdminOnly as string;
       const search = req.query.search as string;
@@ -25,7 +24,6 @@ export class ItemManagementController {
       // Build query
       const query: any = {};
       if (category && category !== 'all') query.category = category;
-      if (rarity && rarity !== 'all') query.rarity = rarity;
       if (isPublic !== undefined) query.isPublic = isPublic === 'true';
       if (isAdminOnly !== undefined) query.isAdminOnly = isAdminOnly === 'true';
       
@@ -62,9 +60,10 @@ export class ItemManagementController {
             name: item.name,
             description: item.description,
             category: item.category,
+            categoryLabel: ITEM_CATEGORY_LABELS[item.category as ItemCategory] || item.category,
             subcategory: item.subcategory,
+            imageUrl: item.imageUrl || null,
             basePrice: item.basePrice,
-            rarity: item.rarity,
             isPublic: item.isPublic,
             isAdminOnly: item.isAdminOnly,
             availableLocations: item.availableLocations || [],
@@ -72,7 +71,6 @@ export class ItemManagementController {
               isStackable: item.properties?.isStackable || false,
               isConsumable: item.properties?.isConsumable || false,
               maxQuantity: item.properties?.maxQuantity,
-              weight: item.properties?.weight,
               durability: item.properties?.durability
             },
             shopSettings: {
@@ -100,7 +98,7 @@ export class ItemManagementController {
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       logger.info('Admin viewed items list', {
         ...auditInfo,
-        filters: { category, rarity, isPublic, isAdminOnly, search },
+        filters: { category, isPublic, isAdminOnly, search },
         page,
         pageSize: limit,
         totalResults: totalItems
@@ -131,7 +129,6 @@ export class ItemManagementController {
         publicItems,
         adminOnlyItems,
         byCategory,
-        byRarity,
         consumableItems,
         stackableItems,
         withPrerequisites
@@ -141,10 +138,6 @@ export class ItemManagementController {
         Item.countDocuments({ isAdminOnly: true }),
         Item.aggregate([
           { $group: { _id: '$category', count: { $sum: 1 } } },
-          { $sort: { count: -1 } }
-        ]),
-        Item.aggregate([
-          { $group: { _id: '$rarity', count: { $sum: 1 } } },
           { $sort: { count: -1 } }
         ]),
         Item.countDocuments({ 'properties.isConsumable': true }),
@@ -184,7 +177,6 @@ export class ItemManagementController {
         stackableItems,
         withPrerequisites,
         byCategory: byCategory.map(cat => ({ name: cat._id, count: cat.count })),
-        byRarity: byRarity.map(r => ({ name: r._id, count: r.count })),
         priceStats: priceStats.length > 0 ? {
           average: Math.round(priceStats[0].avgPrice || 0),
           minimum: priceStats[0].minPrice || 0,
@@ -531,11 +523,14 @@ export class ItemManagementController {
           getRequestId(req)
         ));
       } else {
-        // Hard delete: item not in use
-        await Item.findByIdAndDelete(itemId);
-
         const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
-        logger.warn('Item deleted by admin', {
+        await item.softDelete(
+          auditInfo?.adminId || (req as any).user?.userId,
+          auditInfo?.adminCharacterName || 'Unknown Admin',
+          reason
+        );
+
+        logger.warn('Item soft-deleted by admin', {
           ...auditInfo,
           itemId,
           itemName: item.name,
@@ -611,12 +606,6 @@ export class ItemManagementController {
           result = await Item.updateMany(
             { _id: { $in: itemIds } },
             { category: data.category }
-          );
-          break;
-        case 'update_rarity':
-          result = await Item.updateMany(
-            { _id: { $in: itemIds } },
-            { rarity: data.rarity }
           );
           break;
         case 'update_price':

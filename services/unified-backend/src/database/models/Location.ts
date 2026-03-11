@@ -1,7 +1,7 @@
 import mongoose, { Schema, model, Document } from 'mongoose';
-import { softDeletePlugin, SoftDeleteFields, SoftDeleteMethods } from '../plugins/softDeletePlugin';
+import { softDeletePlugin, SoftDeleteMethods } from '../plugins/softDeletePlugin';
 
-export interface ILocation extends Document, SoftDeleteFields, SoftDeleteMethods {
+export interface ILocation extends Document, SoftDeleteMethods {
   // Basic info
   name: string;
   slug: string;
@@ -727,13 +727,7 @@ LocationSchema.post('save', async function(doc) {
   try {
     const { publishLocationEvent, publishLocationDeletedEvent } = await import('@shared/services/EmbeddingEventPublisher');
 
-    // SOFT DELETE: If deletedAt is set, clean up embeddings
-    if (doc.deletedAt) {
-      await publishLocationDeletedEvent(doc._id.toString());
-      return;
-    }
-
-    // CREATE/UPDATE/RESTORE: Generate embeddings
+    // CREATE/UPDATE: Generate embeddings
     const action = doc.isNew ? 'created' : 'updated';
     await publishLocationEvent(action, {
       _id: doc._id.toString(),

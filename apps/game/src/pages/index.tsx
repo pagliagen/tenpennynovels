@@ -85,6 +85,8 @@ export default function HomePage(): JSX.Element {
         style={{
           padding: '2rem',
           fontFamily: 'Merriweather, serif',
+          background: '#000000',
+          height: '100%',
         }}
       >
         <h1
@@ -108,7 +110,7 @@ export default function HomePage(): JSX.Element {
             flexDirection: 'column',
             gap: '1rem',
             padding: '1.5rem',
-            backgroundColor: '#f5f5f5',
+            backgroundColor: '#8B4513',
             borderRadius: '8px',
           }}
         >
@@ -165,17 +167,17 @@ export default function HomePage(): JSX.Element {
             style={{
               marginTop: '2rem',
               padding: '1.5rem',
-              backgroundColor: '#f9f9f9',
+              backgroundColor: '#8B4513',
               borderRadius: '8px',
               border: '1px solid #ddd',
             }}
           >
-            <h3 style={{ fontSize: '1.2rem', marginBottom: '1rem', color: '#8B4513' }}>
+            <h3 style={{ fontSize: '1.2rem', marginBottom: '1rem', color: '#fff' }}>
               📡 WebSocket Events (Live Feed)
             </h3>
 
             {events.length === 0 ? (
-              <p style={{ color: '#666', fontStyle: 'italic' }}>
+              <p style={{ color: '#fff', fontStyle: 'italic' }}>
                 No events received yet. Waiting for WebSocket events...
               </p>
             ) : (

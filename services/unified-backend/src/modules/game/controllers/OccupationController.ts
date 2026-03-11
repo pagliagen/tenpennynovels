@@ -10,7 +10,7 @@ export class OccupationController {
   static async getAvailableOccupations(req: Request, res: Response): Promise<void> {
     try {
       const characterId = req.character!.characterId;
-      const { category, socialClass } = req.query;
+      const { category } = req.query;
 
       // Get character for eligibility checks
       const character = await Character.findById(characterId);
@@ -32,18 +32,11 @@ export class OccupationController {
         occupationFilter.category = category;
       }
       
-      if (socialClass) {
-        occupationFilter.socialClass = { $in: [socialClass] };
-      }
-
-      // Get all potentially available occupations
-      let occupations = await Occupation.find(occupationFilter).sort({ name: 1 });
-
-      // Filter based on character's gender
-      occupations = occupations.filter(occ => 
-        occ.allowedGenders.length === 0 || 
-        occ.allowedGenders.includes(character.gender)
-      );
+      // Get all potentially available occupations with populated skill refs
+      let occupations = await Occupation.find(occupationFilter)
+        .populate('requiredSkillSlots.options', 'name category isPlaceholder placeholderType')
+        .populate('bonusSkills.skillId', 'name category')
+        .sort({ name: 1 });
 
       // Filter based on character's prerequisites
       const availableOccupations = [];
@@ -57,23 +50,10 @@ export class OccupationController {
             name: occupation.name,
             description: occupation.description,
             category: occupation.category,
-            socialClass: occupation.socialClass,
-            dailySalary: occupation.dailySalary,
-            socialRespectability: occupation.socialRespectability,
-            allowedGenders: occupation.allowedGenders,
             contacts: occupation.contacts,
             earnings: occupation.earnings,
-            // NEW: Skills system
-            requiredSkills: occupation.requiredSkills || [],
+            requiredSkillSlots: occupation.requiredSkillSlots || [],
             bonusSkills: occupation.bonusSkills || [],
-            // Legacy field for backward compatibility
-            skillBonuses: occupation.occupationalSkillPoints,
-            prerequisites: occupation.prerequisites ? {
-              minimumStats: occupation.prerequisites.minimumStats,
-              minimumSkills: occupation.prerequisites.minimumSkills,
-              minimumAge: occupation.prerequisites.minimumAge,
-              maximumAge: occupation.prerequisites.maximumAge
-            } : null
           });
         }
       }
@@ -98,7 +78,7 @@ export class OccupationController {
         characterId: character._id,
         availableCount: availableOccupations.length,
         totalCount: occupations.length,
-        filters: { category, socialClass }
+        filters: { category }
       });
 
       res.json(successResponse(
@@ -141,7 +121,9 @@ export class OccupationController {
         return;
       }
 
-      const occupation = await Occupation.findById(occupationId);
+      const occupation = await Occupation.findById(occupationId)
+        .populate('requiredSkillSlots.options', 'name category isPlaceholder placeholderType')
+        .populate('bonusSkills.skillId', 'name category');
       if (!occupation) {
         res.status(404).json(errorResponse(
           'Occupazione non trovata',
@@ -156,62 +138,18 @@ export class OccupationController {
       // Check if character meets prerequisites
       const prerequisiteCheck = await checkOccupationPrerequisites(character, occupation);
 
-      // Get any corporations mentioned in prerequisites
-      let requiredCorporations = [];
-      if (occupation.prerequisites?.requiredCorporations) {
-        requiredCorporations = await Corporation.find({
-          _id: { $in: occupation.prerequisites.requiredCorporations.map((rc: any) => rc.corporationId) }
-        }).select('name description type');
-      }
-
       const occupationDetails = {
         id: occupation._id,
         name: occupation.name,
         description: occupation.description,
         category: occupation.category,
-        socialClass: occupation.socialClass,
-        allowedGenders: occupation.allowedGenders,
-        dailySalary: occupation.dailySalary,
-        socialRespectability: occupation.socialRespectability,
         contacts: occupation.contacts,
         earnings: occupation.earnings,
-
-        // NEW: Skills system
-        requiredSkills: occupation.requiredSkills || [],
+        requiredSkillSlots: occupation.requiredSkillSlots || [],
         bonusSkills: occupation.bonusSkills || [],
-
-        // Legacy: Skill benefits (for backward compatibility)
-        occupationalSkillPoints: occupation.occupationalSkillPoints,
-        professionalSkillsFormula: occupation.professionalSkillsFormula,
-        
-        // Prerequisites
-        prerequisites: occupation.prerequisites ? {
-          minimumStats: occupation.prerequisites.minimumStats,
-          minimumSkills: occupation.prerequisites.minimumSkills,
-          requiredItems: occupation.prerequisites.requiredItems,
-          requiredCorporations: requiredCorporations.map(corp => ({
-            id: corp._id,
-            name: corp.name,
-            type: corp.type
-          })),
-          minimumAge: occupation.prerequisites.minimumAge,
-          maximumAge: occupation.prerequisites.maximumAge,
-          prerequisiteOccupations: occupation.prerequisites.prerequisiteOccupations,
-          excludeIfHasItems: occupation.prerequisites.excludeIfHasItems,
-          excludeIfInCorporations: occupation.prerequisites.excludeIfInCorporations
-        } : null,
-
-        // Character-specific information
         characterEligible: prerequisiteCheck.eligible,
         eligibilityReasons: prerequisiteCheck.reasons,
         isCurrentOccupation: character.occupation?.toString() === occupationId,
-        
-        // Income information
-        economicBenefits: {
-          dailySalary: occupation.dailySalary,
-          monthlySalary: occupation.dailySalary * 30,
-          yearlyEstimate: occupation.dailySalary * 365
-        }
       };
 
       logger.info('Occupation details retrieved', {
@@ -252,8 +190,7 @@ export class OccupationController {
             _id: '$category',
             count: { $sum: 1 },
             avgSalary: { $avg: '$dailySalary' },
-            avgRespectability: { $avg: '$socialRespectability' },
-            socialClasses: { $addToSet: '$socialClass' }
+            avgRespectability: { $avg: '$socialRespectability' }
           }
         },
         {
@@ -261,12 +198,7 @@ export class OccupationController {
             category: '$_id',
             count: 1,
             avgDailySalary: { $round: ['$avgSalary', 0] },
-            avgSocialRespectability: { $round: ['$avgRespectability', 1] },
-            socialClasses: { $reduce: {
-              input: '$socialClasses',
-              initialValue: [],
-              in: { $setUnion: ['$$value', '$$this'] }
-            }}
+            avgSocialRespectability: { $round: ['$avgRespectability', 1] }
           }
         },
         {
@@ -279,7 +211,6 @@ export class OccupationController {
         count: cat.count,
         avgDailySalary: cat.avgDailySalary,
         avgSocialRespectability: cat.avgSocialRespectability,
-        socialClasses: cat.socialClasses,
         description: getCategoryDescription(cat.category)
       }));
 
@@ -378,12 +309,6 @@ async function checkOccupationPrerequisites(character: any, occupation: any): Pr
   const reasons: string[] = [];
   const missingRequirements: any[] = [];
 
-  // Check gender restrictions
-  if (occupation.allowedGenders.length > 0 && !occupation.allowedGenders.includes(character.gender)) {
-    reasons.push(`Questa occupazione è disponibile solo per personaggi ${occupation.allowedGenders.join(' o ')}`);
-    return { eligible: false, reasons, missingRequirements };
-  }
-
   // If no prerequisites, character is eligible
   if (!occupation.prerequisites) {
     return { eligible: true, reasons: ['Nessun prerequisito specifico richiesto'] };
@@ -421,26 +346,6 @@ async function checkOccupationPrerequisites(character: any, occupation: any): Pr
         });
       }
     }
-  }
-
-  // Check age requirements
-  const characterAge = character.age || 0;
-  if (prereqs.minimumAge && characterAge < prereqs.minimumAge) {
-    reasons.push(`Richiede età minima di ${prereqs.minimumAge} (hai ${characterAge})`);
-    missingRequirements.push({
-      type: 'age',
-      required: prereqs.minimumAge,
-      current: characterAge
-    });
-  }
-
-  if (prereqs.maximumAge && characterAge > prereqs.maximumAge) {
-    reasons.push(`Richiede età massima di ${prereqs.maximumAge} (hai ${characterAge})`);
-    missingRequirements.push({
-      type: 'age',
-      required: prereqs.maximumAge,
-      current: characterAge
-    });
   }
 
   // Check required items (would need to implement character inventory system)

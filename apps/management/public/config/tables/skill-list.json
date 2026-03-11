@@ -1,0 +1,158 @@
+{
+  "_meta": {
+    "version": "1.0.0",
+    "description": "Configurazione tabella lista skills",
+    "lastUpdated": "2026-03-11"
+  },
+  "table": {
+    "name": "skill-list",
+    "title": "Gestione Skills",
+    "icon": "🎯",
+    "searchable": true,
+    "selectable": false,
+    "pagination": {
+      "defaultPageSize": 25,
+      "pageSizeOptions": [10, 25, 50, 100]
+    }
+  },
+  "columns": [
+    {
+      "key": "name",
+      "label": "Nome",
+      "type": "text",
+      "visible": true,
+      "defaultVisible": true,
+      "sortable": true,
+      "width": "200px",
+      "render": {
+        "type": "text",
+        "className": "font-bold text-primary"
+      }
+    },
+    {
+      "key": "category",
+      "label": "Categoria",
+      "type": "text",
+      "visible": true,
+      "defaultVisible": true,
+      "sortable": true,
+      "width": "150px",
+      "render": {
+        "type": "text"
+      }
+    },
+    {
+      "key": "baseValue",
+      "label": "Valore Base",
+      "type": "text",
+      "visible": true,
+      "defaultVisible": true,
+      "sortable": true,
+      "width": "100px",
+      "render": {
+        "type": "text"
+      }
+    },
+    {
+      "key": "visible",
+      "label": "Visibile",
+      "type": "boolean",
+      "visible": true,
+      "defaultVisible": true,
+      "sortable": false,
+      "width": "80px",
+      "render": {
+        "type": "boolean"
+      }
+    },
+    {
+      "key": "defaultSkill",
+      "label": "Default",
+      "type": "boolean",
+      "visible": true,
+      "defaultVisible": true,
+      "sortable": false,
+      "width": "100px",
+      "render": {
+        "type": "boolean"
+      }
+    },
+    {
+      "key": "isPlaceholder",
+      "label": "Placeholder",
+      "type": "boolean",
+      "visible": true,
+      "defaultVisible": true,
+      "sortable": false,
+      "width": "100px",
+      "render": {
+        "type": "boolean"
+      }
+    }
+  ],
+  "actions": [
+    {
+      "key": "edit",
+      "label": "Modifica",
+      "icon": "✏️",
+      "type": "primary",
+      "visible": true
+    },
+    {
+      "key": "delete",
+      "label": "Elimina",
+      "icon": "🗑️",
+      "type": "danger",
+      "visible": true,
+      "confirmMessage": "Sei sicuro di voler eliminare questa skill? Questa azione è irreversibile."
+    }
+  ],
+  "bulkActions": [],
+  "filters": [
+    {
+      "key": "category",
+      "label": "Categoria",
+      "type": "select",
+      "field": "category",
+      "options": [
+        { "value": "", "label": "Tutte" },
+        { "value": "general", "label": "Generale" },
+        { "value": "combat", "label": "Combattimento" },
+        { "value": "knowledge", "label": "Conoscenza" },
+        { "value": "social", "label": "Sociale" },
+        { "value": "technical", "label": "Tecnico" },
+        { "value": "special", "label": "Speciale" },
+        { "value": "criminal", "label": "Criminale" },
+        { "value": "physical", "label": "Fisico" },
+        { "value": "artistic", "label": "Artistico" },
+        { "value": "financial", "label": "Finanziario" },
+        { "value": "occult", "label": "Occulto" }
+      ],
+      "placeholder": "Filtra per categoria"
+    },
+    {
+      "key": "visible",
+      "label": "Visibile",
+      "type": "select",
+      "field": "visible",
+      "options": [
+        { "value": "", "label": "Tutti" },
+        { "value": "true", "label": "Visibili" },
+        { "value": "false", "label": "Nascosti" }
+      ],
+      "placeholder": "Filtra per visibilità"
+    },
+    {
+      "key": "defaultSkill",
+      "label": "Default",
+      "type": "select",
+      "field": "defaultSkill",
+      "options": [
+        { "value": "", "label": "Tutti" },
+        { "value": "true", "label": "Default" },
+        { "value": "false", "label": "Non Default" }
+      ],
+      "placeholder": "Filtra per default"
+    }
+  ]
+}

@@ -87,11 +87,23 @@ async function seedItems() {
         subcategory: row.subcategory || null,
         basePrice: parseFloat(row.basePrice),
         prerequisites: Object.keys(prerequisites).length > 0 ? prerequisites : undefined,
-        isConsumable,
-        consumptionType: row.consumptionType || null,
-        consumesItems: consumesItems.length > 0 ? consumesItems : undefined,
-        providesSkillBonus: providesSkillBonus.length > 0 ? providesSkillBonus : undefined,
-        rarity: row.rarity || 'common',
+        isPublic: true,
+        isAdminOnly: false,
+        availableLocations: [],
+        properties: {
+          isStackable: false,
+          isConsumable,
+          consumptionType: row.consumptionType || undefined,
+        },
+        shopSettings: {
+          canBePurchased: true,
+          canBeSold: true,
+          canBeTradedBetweenPlayers: true,
+          hasLimitedStock: false,
+        },
+        financialSettings: {
+          eligibleForCredit: true,
+        },
         createdAt: new Date(),
         updatedAt: new Date(),
       });
@@ -114,17 +126,7 @@ async function seedItems() {
     });
     console.log('');
 
-    // Rarity distribution
-    const rarities = await itemsCol.aggregate([
-      { $group: { _id: '$rarity', count: { $sum: 1 } } },
-      { $sort: { count: -1 } }
-    ]).toArray();
-
-    console.log('📊 Stats by rarity:');
-    rarities.forEach(r => {
-      console.log(`   ${r._id}: ${r.count}`);
-    });
-    console.log('');
+    console.log(`   isPublic: true (tutti), isAdminOnly: false (tutti)`);
 
   } catch (error) {
     console.error('❌ Failed:', error);

@@ -136,6 +136,9 @@ export const ADMIN_PERMISSIONS = {
   SOCIAL_CLASSES_ACCESS: 'social_classes.access',
   SOCIAL_CLASSES_MANAGE: 'social_classes.manage',
 
+  // Image Generation (AI)
+  IMAGE_GENERATION_ACCESS: 'image_generation.access',
+
   // Manager (special role)
   MANAGER_MANAGE_USER_PERMISSIONS: 'manager.manage_user_permissions',
 } as const;
@@ -195,6 +198,7 @@ export const ROLE_PERMISSIONS: Record<string, AdminPermission[]> = {
     ADMIN_PERMISSIONS.TICKETS_VIEW,
     ADMIN_PERMISSIONS.TICKETS_ASSIGN,
     ADMIN_PERMISSIONS.TICKETS_RESOLVE,
+    ADMIN_PERMISSIONS.IMAGE_GENERATION_ACCESS,
   ],
 
   /**
@@ -233,6 +237,7 @@ export const ROLE_PERMISSIONS: Record<string, AdminPermission[]> = {
     ADMIN_PERMISSIONS.TICKETS_VIEW,
     ADMIN_PERMISSIONS.TICKETS_ASSIGN,
     ADMIN_PERMISSIONS.TICKETS_RESOLVE,
+    ADMIN_PERMISSIONS.IMAGE_GENERATION_ACCESS,
   ],
 };
 

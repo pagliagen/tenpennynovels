@@ -296,7 +296,7 @@ export class CharacterApprovalController {
             const itemIds = occupationDetails.benefits.startingItems.map((item: any) => item.itemId);
             const startingItemsData = await Item.find({ 
               _id: { $in: itemIds } 
-            }).select('name description category basePrice rarity properties').lean() as any;
+            }).select('name description category basePrice properties').lean() as any;
             
             occupationStartingItems = occupationDetails.benefits.startingItems.map((startingItem: any) => {
               const itemData = startingItemsData.find((item: any) => item._id.toString() === startingItem.itemId.toString());
@@ -307,7 +307,6 @@ export class CharacterApprovalController {
                   description: itemData.description,
                   category: itemData.category,
                   basePrice: itemData.basePrice,
-                  rarity: itemData.rarity,
                   quantity: startingItem.quantity || 1,
                   properties: itemData.properties,
                   source: 'occupation'
@@ -338,7 +337,7 @@ export class CharacterApprovalController {
         try {
           const equipmentItems = await Item.find({ 
             _id: { $in: character.equipment } 
-          }).select('name description category basePrice rarity properties').lean() as any;
+          }).select('name description category basePrice properties').lean() as any;
           
           // Create detailed equipment array with quantity info
           equipmentDetails = character.equipment.map((itemId: string) => {
@@ -350,7 +349,6 @@ export class CharacterApprovalController {
                 description: itemData.description,
                 category: itemData.category,
                 basePrice: itemData.basePrice,
-                rarity: itemData.rarity,
                 quantity: 1, // Default quantity for character equipment
                 properties: itemData.properties,
                 source: 'character'

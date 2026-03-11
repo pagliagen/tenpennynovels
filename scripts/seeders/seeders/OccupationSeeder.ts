@@ -2,12 +2,14 @@
  * Occupation Seeder - Standalone Script
  *
  * Reads occupations from CSV, seeds MongoDB.
+ * Looks up skill ObjectIds from the skills collection for requiredSkillSlots/bonusSkills.
  */
 
 import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { parse } from 'csv-parse/sync';
+import { ObjectId } from 'mongodb';
 import { getConnection } from '../utils/connection.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -25,26 +27,13 @@ interface OccupationRow {
   bonusSkills: string;
 }
 
-const DAILY_SALARIES: Record<string, number> = {
-  medical: 180, legal: 200, clergy: 60, military: 30, education: 90,
-  domestic_service: 20, trades: 50, commerce: 80, entertainment: 40,
-  criminal: 15, nobility: 500, professional: 150, industrial: 35,
-  transportation: 40, agricultural: 25
-};
-
-const SOCIAL_RESPECTABILITY: Record<string, number> = {
-  medical: 9, legal: 9, clergy: 8, military: 7, education: 7,
-  domestic_service: 4, trades: 5, commerce: 6, entertainment: 5,
-  criminal: 1, nobility: 10, professional: 8, industrial: 4,
-  transportation: 5, agricultural: 4
-};
-
 async function seedOccupations() {
   console.log('💼 Occupation Seeder\n');
   const { client, db } = await getConnection();
 
   try {
     const occupationsCol = db.collection('occupations');
+    const skillsCol = db.collection('skills');
     const force = process.argv.includes('--force');
 
     const existingCount = await occupationsCol.countDocuments();
@@ -60,6 +49,15 @@ async function seedOccupations() {
       await occupationsCol.deleteMany({});
     }
 
+    // Build skill name -> ObjectId map (case-insensitive keys)
+    console.log('   🔗 Loading skill IDs from database...');
+    const allSkills = await skillsCol.find({}, { projection: { name: 1 } }).toArray();
+    const skillMap = new Map<string, ObjectId>();
+    for (const s of allSkills) {
+      skillMap.set(s.name.toLowerCase(), s._id);
+    }
+    console.log(`   📎 Found ${skillMap.size} skills for reference\n`);
+
     console.log('   📄 Reading occupations from CSV...');
     const fileContent = readFileSync(CSV_PATH, 'utf-8');
     const records = parse(fileContent, {
@@ -74,25 +72,38 @@ async function seedOccupations() {
 
     const systemUserId = '000000000000000000000000';
     let created = 0;
+    let missingSkills: string[] = [];
     const categories: Record<string, number> = {};
 
     for (const row of records) {
       if (!row.name || !row.description) continue;
 
-      const requiredSkills = row.requiredSkills
-        ? row.requiredSkills.split('|').map(s => ({
-            skillName: s.trim(),
-            isFixed: false,
-            alternatives: []
-          }))
-        : [];
+      // Build requiredSkillSlots: each CSV skill name becomes a slot with one option (ObjectId)
+      const requiredSkillSlots: Array<{ options: ObjectId[] }> = [];
+      if (row.requiredSkills) {
+        for (const skillName of row.requiredSkills.split('|').map(s => s.trim())) {
+          const skillId = skillMap.get(skillName.toLowerCase());
+          if (skillId) {
+            requiredSkillSlots.push({ options: [skillId] });
+          } else {
+            missingSkills.push(`${row.name} -> ${skillName}`);
+          }
+        }
+      }
 
-      const bonusSkills = row.bonusSkills
-        ? row.bonusSkills.split('|').map(b => {
-            const [skillName, valueStr] = b.split(':');
-            return { skillName: skillName.trim(), bonusValue: parseInt(valueStr) || 10 };
-          })
-        : [];
+      // Build bonusSkills: each CSV entry "skillName:value" becomes { skillId: ObjectId, bonusValue }
+      const bonusSkills: Array<{ skillId: ObjectId; bonusValue: number }> = [];
+      if (row.bonusSkills) {
+        for (const entry of row.bonusSkills.split('|').map(s => s.trim())) {
+          const [skillName, valueStr] = entry.split(':');
+          const skillId = skillMap.get(skillName.trim().toLowerCase());
+          if (skillId) {
+            bonusSkills.push({ skillId, bonusValue: parseInt(valueStr) || 10 });
+          } else {
+            missingSkills.push(`${row.name} -> ${skillName.trim()} (bonus)`);
+          }
+        }
+      }
 
       await occupationsCol.insertOne({
         name: row.name,
@@ -100,15 +111,11 @@ async function seedOccupations() {
         category: row.category,
         contacts: row.contacts || 'Nessuno',
         earnings: row.earnings || 'Variabile',
-        requiredSkills,
+        requiredSkillSlots,
         bonusSkills,
-        allowedGenders: ['male', 'female'],
-        socialClass: ['working', 'middle', 'upper'],
-        dailySalary: DAILY_SALARIES[row.category] || 50,
-        socialRespectability: SOCIAL_RESPECTABILITY[row.category] || 5,
-        typicalEmployers: [],
+        image: null,
         isActive: true,
-        createdBy: systemUserId,
+        createdBy: new ObjectId(systemUserId),
         createdAt: new Date(),
         updatedAt: new Date()
       });
@@ -118,6 +125,12 @@ async function seedOccupations() {
     }
 
     console.log(`   ✅ Created ${created} occupations\n`);
+
+    if (missingSkills.length > 0) {
+      console.log(`   ⚠️  ${missingSkills.length} skill references not found in DB:`);
+      missingSkills.forEach(m => console.log(`      - ${m}`));
+      console.log('');
+    }
 
     console.log('📊 Stats by category:');
     Object.entries(categories).forEach(([cat, count]) => console.log(`   ${cat}: ${count}`));

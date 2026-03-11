@@ -9,9 +9,9 @@
  */
 
 import mongoose, { Schema, Document as MongooseDocument, Types } from 'mongoose';
-import { softDeletePlugin, SoftDeleteFields, SoftDeleteMethods } from '../plugins/softDeletePlugin';
+import { softDeletePlugin, SoftDeleteMethods } from '../plugins/softDeletePlugin';
 
-export interface IDocument extends MongooseDocument, SoftDeleteFields, SoftDeleteMethods {
+export interface IDocument extends MongooseDocument, SoftDeleteMethods {
   // Identity
   slug: string;
   title: string;
@@ -181,12 +181,7 @@ DocumentSchema.pre('save', async function() {
  */
 DocumentSchema.post('save', async function(doc) {
   try {
-    const { publishDocumentEvent, publishDocumentDeletedEvent } = await import('@shared/services/EmbeddingEventPublisher');
-
-    if (doc.deletedAt) {
-      await publishDocumentDeletedEvent(doc._id.toString());
-      return;
-    }
+    const { publishDocumentEvent } = await import('@shared/services/EmbeddingEventPublisher');
 
     const action = doc.isNew ? 'created' : 'updated';
     await publishDocumentEvent(action, {

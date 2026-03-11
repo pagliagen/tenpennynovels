@@ -80,8 +80,7 @@ export class GameController {
             { isPublic: true },
             { 'shopSettings.canBePurchased': true }
           ],
-          isAdminOnly: false,
-          'rarity': { $in: ['common', 'uncommon'] }
+          isAdminOnly: false
         })
           .sort({ category: 1, name: 1 })
           .lean() as any);
@@ -159,7 +158,6 @@ export class GameController {
             price: item.basePrice,
             basePrice: item.basePrice,
             priceFormatted: GameController.formatCurrency(item.basePrice),
-            rarity: item.rarity,
             properties: item.properties,
             imageUrl: item.imageUrl,
 
@@ -225,6 +223,8 @@ export class GameController {
 
         // Fetch base occupations for character creation
         const baseOccupations = await (Occupation.find({ isActive: true })
+          .populate('requiredSkillSlots.options', 'name category isPlaceholder placeholderType')
+          .populate('bonusSkills.skillId', 'name category')
           .sort({ category: 1, name: 1 })
           .lean() as any);
 
@@ -287,32 +287,23 @@ export class GameController {
             id: occupation._id.toString(),
             name: occupation.name,
             description: occupation.description,
-            allowedGenders: occupation.allowedGenders,
-            socialClass: occupation.socialClass,
-            dailySalary: occupation.dailySalary,
-            socialRespectability: occupation.socialRespectability,
             category: occupation.category,
             contacts: occupation.contacts,
             earnings: occupation.earnings,
-            workingConditions: occupation.workingConditions,
-            rarity: occupation.rarity,
-            // Skills system
-            requiredSkills: (occupation.requiredSkills || []).map((req: any) => ({
-              skillId: req.skillId?.toString(),
-              skillName: req.skillName,
-              baseValue: req.baseValue,
-              isFixed: req.isFixed,
-              alternatives: (req.alternatives || []).map((alt: any) => ({
-                skillId: alt.skillId?.toString(),
-                skillName: alt.skillName,
-                baseValue: alt.baseValue
-              }))
+            requiredSkillSlots: (occupation.requiredSkillSlots || []).map((slot: any) => ({
+              options: (slot.options || []).map((opt: any) => ({
+                skillId: opt._id?.toString() || opt.toString(),
+                name: opt.name || '',
+                category: opt.category || '',
+                isPlaceholder: opt.isPlaceholder || false,
+                placeholderType: opt.placeholderType,
+              })),
             })),
-            bonusSkills: (occupation.bonusSkills || []).map((bonus: any) => ({
-              skillId: bonus.skillId?.toString(),
-              skillName: bonus.skillName,
-              bonusValue: bonus.bonusValue
-            }))
+            bonusSkills: (occupation.bonusSkills || []).map((bs: any) => ({
+              skillId: bs.skillId?._id?.toString() || bs.skillId?.toString() || '',
+              name: bs.skillId?.name || '',
+              bonusValue: bs.bonusValue,
+            })),
           })),
           characterCreationConfig: characterConfig
         };

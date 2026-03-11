@@ -43,7 +43,6 @@ export interface Item {
   properties: {
     isStackable: boolean;               // Can own multiple copies
     maxQuantity?: number;               // Maximum quantity per character
-    weight?: number;                    // For carrying capacity (future feature)
     durability?: number;                // Item condition (1-100)
     isConsumable: boolean;             // Item is consumed on use
     consumptionType?: 'direct' | 'indirect';  // How the item is consumed
@@ -53,14 +52,6 @@ export interface Item {
       required: boolean;               // Must have this item to use
     }[];
     
-    // Special properties
-    providesSkillBonus?: { [skillName: string]: number };
-    providesStatBonus?: { [statName: string]: number };
-    grantsSpecialAbilities?: string[];  // Special abilities this item provides
-    
-    // Social effects
-    socialStatusModifier?: number;      // Effect on social interactions
-    respectabilityModifier?: number;    // Effect on character respectability
   };
   
   // Shop and trading
@@ -75,16 +66,6 @@ export interface Item {
     currentStock?: number;             // Current available quantity
     restockInterval?: string;          // How often stock replenishes
     restockQuantity?: number;          // How much stock is added
-  };
-  
-  // Rarity and availability
-  rarity: 'common' | 'uncommon' | 'rare' | 'very_rare' | 'legendary' | 'unique';
-  
-  // Time and seasonal availability
-  availabilitySchedule?: {
-    timeOfDay?: ('day' | 'night' | 'both');
-    seasonalAvailability?: string[];   // Months when available
-    specialEvents?: string[];          // Only available during certain events
   };
   
   // Metadata

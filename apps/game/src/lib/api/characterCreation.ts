@@ -14,28 +14,35 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 const GAME_API_URL = `${API_BASE_URL}/game`;
 
 /**
- * Occupation Definition
+ * Populated skill reference from backend
+ */
+export interface SkillOption {
+  skillId: string;
+  name: string;
+  category?: string;
+  isPlaceholder?: boolean;
+  placeholderType?: string;
+}
+
+/**
+ * Occupation Definition - slot-based skill system
  */
 export interface Occupation {
   id: string;
   name: string;
   description: string;
   category: string;
-  socialClass: string;
   contacts: string;
   earnings: string;
   image: string | null;
-  requiredSkills: Array<{
-    skillId: string;
-    name: string;
-    bonusValue: number;
+  requiredSkillSlots: Array<{
+    options: SkillOption[];
   }>;
   bonusSkills: Array<{
     skillId: string;
     name: string;
     bonusValue: number;
   }>;
-  alternativeSkills?: Record<string, string[]>;
 }
 
 /**

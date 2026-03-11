@@ -1,7 +1,8 @@
 import mongoose, { Document, Schema } from 'mongoose';
+import { softDeletePlugin, SoftDeleteMethods } from '../plugins/softDeletePlugin';
 
 // Social Class Configuration Interface
-export interface ISocialClassConfig extends Document {
+export interface ISocialClassConfig extends Document, SoftDeleteMethods {
   name: string; // English name for internal logic: "destitute", "poor", etc.
   label: string; // Italian label for UI display: "Indigente", "Povero", etc.
   minFinanceSkill: number; // Minimum FINANZA skill value
@@ -16,8 +17,6 @@ export interface ISocialClassConfig extends Document {
   };
   displayOrder: number; // For UI ordering
   description?: string; // Optional description for UI
-  createdAt: Date;
-  updatedAt: Date;
 }
 
 // Social Class Configuration Schema
@@ -83,14 +82,6 @@ const SocialClassConfigSchema = new Schema<ISocialClassConfig>({
   description: {
     type: String,
     trim: true
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now
   }
 }, {
   timestamps: true
@@ -100,5 +91,9 @@ const SocialClassConfigSchema = new Schema<ISocialClassConfig>({
 SocialClassConfigSchema.index({ minFinanceSkill: 1, maxFinanceSkill: 1 });
 SocialClassConfigSchema.index({ displayOrder: 1 });
 
-// Model
+SocialClassConfigSchema.plugin(softDeletePlugin, {
+  uniqueKeys: ['name'],
+  deletedByField: 'Character'
+});
+
 export const SocialClassConfig = mongoose.models.SocialClassConfig || mongoose.model<ISocialClassConfig>('SocialClassConfig', SocialClassConfigSchema);

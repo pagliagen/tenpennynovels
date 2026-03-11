@@ -1,13 +1,13 @@
 import { Schema, model, models, Document } from 'mongoose';
+import { softDeletePlugin, SoftDeleteMethods } from '../plugins/softDeletePlugin';
 
-export interface ISkill extends Document {
+export interface ISkill extends Document, SoftDeleteMethods {
   name: string;
   baseValue: string | number; // Flexible: number, "VALUE:XX", or "FORMULA:CHAR"
   category: 'general' | 'combat' | 'knowledge' | 'social' | 'technical' | 'special' | 'criminal' | 'physical' | 'artistic' | 'financial' | 'occult';
   description: string;
   visible: boolean;
   defaultSkill: boolean;  // True se è una skill base per tutti i personaggi
-  sortOrder: number;
   // NEW: Support for placeholder skills (e.g., "Lingua")
   isPlaceholder: boolean; // True for skills like "Lingua" that become dynamic skills
   placeholderType?: string; // Type of placeholder: "lingua", "arte", etc.
@@ -17,6 +17,20 @@ export interface ISkill extends Document {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export const SKILL_CATEGORY_LABELS: Record<string, string> = {
+  general: 'Generale',
+  combat: 'Combattimento',
+  knowledge: 'Conoscenza',
+  social: 'Sociale',
+  technical: 'Tecnico',
+  special: 'Speciale',
+  criminal: 'Criminale',
+  physical: 'Fisico',
+  artistic: 'Artistico',
+  financial: 'Finanziario',
+  occult: 'Occulto'
+};
 
 const skillSchema = new Schema<ISkill>({
   name: {
@@ -69,10 +83,6 @@ const skillSchema = new Schema<ISkill>({
     type: Boolean,
     default: true  // Default: tutte le skills sono di base
   },
-  sortOrder: {
-    type: Number,
-    default: 0
-  },
   // NEW: Placeholder skill support
   isPlaceholder: {
     type: Boolean,
@@ -113,12 +123,16 @@ const skillSchema = new Schema<ISkill>({
 });
 
 // Indexes per performance
-skillSchema.index({ visible: 1, sortOrder: 1 });
-skillSchema.index({ category: 1, sortOrder: 1 });
+skillSchema.index({ visible: 1, name: 1 });
+skillSchema.index({ category: 1, name: 1 });
 
 // Virtual per l'ID come stringa
 skillSchema.virtual('id').get(function(this: ISkill) {
   return this._id.toString();
+});
+
+skillSchema.virtual('categoryLabel').get(function(this: ISkill) {
+  return SKILL_CATEGORY_LABELS[this.category] || this.category;
 });
 
 // Assicurati che i virtual siano inclusi nel JSON
@@ -129,6 +143,11 @@ skillSchema.set('toJSON', {
     delete (ret as any).__v;
     return ret;
   }
+});
+
+skillSchema.plugin(softDeletePlugin, {
+  uniqueKeys: ['name'],
+  deletedByField: 'Character'
 });
 
 export const Skill = models.Skill || model<ISkill>('Skill', skillSchema);

@@ -1,25 +1,16 @@
 /**
  * DeletedRecordsController
  *
- * Handles HTTP requests for deleted records management (gestore-only)
+ * Handles HTTP requests for deleted records management (gestore-only).
+ * All deleted records live in a single `deleted_records` collection.
  */
 
 import { Request, Response } from 'express';
-import { DeletedRecordsService, RecordType } from '../services/DeletedRecordsService';
+import { DeletedRecordsService } from '../services/DeletedRecordsService';
 import { successResponse, errorResponse, getRequestId } from '../utils/apiResponse';
 import { logger } from '../utils/logger';
 
 export class DeletedRecordsController {
-  /**
-   * GET /admin/deleted-records
-   *
-   * Query params:
-   * - type?: 'user' | 'character' | 'document' | 'location' | 'item'
-   * - page?: number (default: 1)
-   * - pageSize?: number (default: 25)
-   * - sortBy?: string (default: 'deletedAt')
-   * - sortOrder?: 'asc' | 'desc' (default: 'desc')
-   */
   static async getDeletedRecords(req: Request, res: Response): Promise<void> {
     try {
       const { type, page, pageSize, sortBy, sortOrder } = req.query;
@@ -27,18 +18,14 @@ export class DeletedRecordsController {
       const service = new DeletedRecordsService();
 
       const result = await service.getDeletedRecords({
-        type: type as RecordType | undefined,
+        type: type as string | undefined,
         page: page ? Number(page) : undefined,
         pageSize: pageSize ? Number(pageSize) : undefined,
         sortBy: sortBy as string | undefined,
         sortOrder: sortOrder as 'asc' | 'desc' | undefined
       });
 
-      res.json(successResponse(
-        result,
-        undefined,
-        getRequestId(req)
-      ));
+      res.json(successResponse(result, undefined, getRequestId(req)));
     } catch (error: any) {
       logger.error('Error fetching deleted records:', {
         error: error.message,
@@ -55,21 +42,14 @@ export class DeletedRecordsController {
     }
   }
 
-  /**
-   * POST /admin/deleted-records/:id/restore
-   *
-   * Body:
-   * - type: 'user' | 'character' | 'document' | 'location' | 'item'
-   * - newKeys?: { username?: string, email?: string, name?: string, slug?: string }
-   */
   static async restoreRecord(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const { type, newKeys } = req.body;
+      const { newKeys } = req.body;
 
-      if (!id || typeof id !== 'string' || !type || typeof type !== 'string') {
+      if (!id || typeof id !== 'string') {
         res.status(400).json(errorResponse(
-          'Missing required fields',
+          'Missing record ID',
           'INVALID_INPUT',
           undefined,
           400,
@@ -78,14 +58,10 @@ export class DeletedRecordsController {
         return;
       }
 
-      const recordId = id;
-      const recordType = type as RecordType;
       const service = new DeletedRecordsService();
 
-      // Pre-check conflicts if no newKeys provided
       if (!newKeys) {
-        const conflicts = await service.checkKeyConflicts(recordId, recordType);
-
+        const conflicts = await service.checkKeyConflicts(id);
         if (Object.values(conflicts).some(hasConflict => hasConflict)) {
           res.status(409).json(errorResponse(
             'Key conflicts detected. Original keys are no longer available.',
@@ -98,8 +74,7 @@ export class DeletedRecordsController {
         }
       }
 
-      // Attempt restore
-      const result = await service.restoreRecord(recordId, recordType, newKeys);
+      const result = await service.restoreRecord(id, newKeys);
 
       if (!result.success) {
         res.status(409).json(errorResponse(
@@ -113,14 +88,13 @@ export class DeletedRecordsController {
       }
 
       logger.info('Record restored', {
-        id: recordId,
-        type: recordType,
+        id,
         restoredBy: req.user?.username || 'Unknown',
         usedNewKeys: !!newKeys
       });
 
       res.json(successResponse(
-        { restored: true, recordId, type: recordType },
+        { restored: true, recordId: id },
         'Record restored successfully',
         getRequestId(req)
       ));
@@ -128,8 +102,7 @@ export class DeletedRecordsController {
       logger.error('Error restoring record:', {
         error: error.message,
         stack: error.stack,
-        recordId: req.params.id,
-        type: req.body.type
+        recordId: req.params.id
       });
 
       res.status(500).json(errorResponse(
@@ -142,23 +115,13 @@ export class DeletedRecordsController {
     }
   }
 
-  /**
-   * DELETE /admin/deleted-records/:id
-   *
-   * Permanently delete (hard delete) a soft deleted record.
-   * Enforces 30-day retention policy.
-   *
-   * Body:
-   * - type: 'user' | 'character' | 'document' | 'location' | 'item'
-   */
   static async permanentDelete(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const { type } = req.body;
 
-      if (!id || typeof id !== 'string' || !type || typeof type !== 'string') {
+      if (!id || typeof id !== 'string') {
         res.status(400).json(errorResponse(
-          'Missing required fields',
+          'Missing record ID',
           'INVALID_INPUT',
           undefined,
           400,
@@ -167,21 +130,17 @@ export class DeletedRecordsController {
         return;
       }
 
-      const recordId = id;
-      const recordType = type as RecordType;
       const service = new DeletedRecordsService();
-
-      await service.permanentDelete(recordId, recordType);
+      await service.permanentDelete(id);
 
       logger.warn('Permanent delete executed', {
-        id: recordId,
-        type: recordType,
+        id,
         deletedBy: req.user?.username || 'Unknown',
         requestId: getRequestId(req)
       });
 
       res.json(successResponse(
-        { permanentlyDeleted: true, recordId, type: recordType },
+        { permanentlyDeleted: true, recordId: id },
         'Record permanently deleted',
         getRequestId(req)
       ));
@@ -189,11 +148,9 @@ export class DeletedRecordsController {
       logger.error('Error permanently deleting record:', {
         error: error.message,
         stack: error.stack,
-        recordId: req.params.id,
-        type: req.body.type
+        recordId: req.params.id
       });
 
-      // If retention policy error, return 400
       if (error.message.includes('retention policy')) {
         res.status(400).json(errorResponse(
           error.message,
@@ -215,22 +172,13 @@ export class DeletedRecordsController {
     }
   }
 
-  /**
-   * POST /admin/deleted-records/bulk-permanent-delete
-   *
-   * Bulk permanent delete with retention checks
-   *
-   * Body:
-   * - type: 'user' | 'character' | 'document' | 'location' | 'item'
-   * - ids: string[]
-   */
   static async bulkPermanentDelete(req: Request, res: Response): Promise<void> {
     try {
-      const { type, ids } = req.body;
+      const { ids } = req.body;
 
-      if (!type || !Array.isArray(ids) || ids.length === 0) {
+      if (!Array.isArray(ids) || ids.length === 0) {
         res.status(400).json(errorResponse(
-          'Missing required fields: type, ids (array)',
+          'Missing required field: ids (array)',
           'INVALID_INPUT',
           undefined,
           400,
@@ -240,11 +188,9 @@ export class DeletedRecordsController {
       }
 
       const service = new DeletedRecordsService();
-
-      const result = await service.bulkPermanentDelete(ids, type);
+      const result = await service.bulkPermanentDelete(ids);
 
       logger.warn('Bulk permanent delete executed', {
-        type,
         idsCount: ids.length,
         success: result.success,
         failed: result.failed,

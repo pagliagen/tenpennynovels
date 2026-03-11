@@ -4,7 +4,7 @@ import path from 'path';
 import { logger } from '../utils/logger';
 import { FTPSyncService } from './FTPSyncService';
 
-export type CDNEntityType = 'locations' | 'items' | 'characters';
+export type CDNEntityType = 'locations' | 'items' | 'characters' | 'occupations';
 
 export interface CDNUploadResult {
   url: string;

@@ -1,7 +1,7 @@
 import mongoose, { Schema, model, Document } from 'mongoose';
 // Use relative import instead of alias to fix seed script compatibility
 import { calculateAllDerivedStats, getCharacterCreationConfig, type CharacterStats, type DerivedStats } from '../../shared/services/CharacterCreationConfigService';
-import { softDeletePlugin, SoftDeleteFields, SoftDeleteMethods } from '../plugins/softDeletePlugin';
+import { softDeletePlugin, SoftDeleteMethods } from '../plugins/softDeletePlugin';
 
 // Granular skill tracking interface for occupation bonuses
 export interface SkillBreakdown {
@@ -13,7 +13,7 @@ export interface SkillBreakdown {
   category?: string;          // Skill category (general, combat, knowledge, social, artistic, technical, etc.)
 }
 
-export interface ICharacter extends Document, SoftDeleteFields, SoftDeleteMethods {
+export interface ICharacter extends Document, SoftDeleteMethods {
   // Character basic info
   name: string; // visibile a tutti (NOW UNIQUE)
   surname?: string; // cognome - opzionale, visibile a tutti

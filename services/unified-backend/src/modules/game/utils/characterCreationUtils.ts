@@ -85,21 +85,17 @@ export function calculateAvailableSkillPoints(character: ICharacter, config: Cha
 /**
  * Apply occupation bonuses to character skills
  *
- * The new system grants 1-2 automatic bonus skills that don't count against
+ * Grants automatic bonus skills that don't count against
  * the character's skill point budget. These bonuses can push skills above
  * the normal cap (creationCap) up to the final cap (creationCapWithOccupation).
  *
- * @param character - The character to apply bonuses to
- * @param occupation - The occupation with bonus skills
- * @param config - Character creation configuration
- * @param selectedAlternatives - Map of requirement ID to selected alternative skill ID (for choice skills)
- * @returns Result of bonus application with details
+ * bonusSkills are expected to have populated skillId (via .populate('bonusSkills.skillId')).
  */
 export async function applyOccupationBonuses(
   character: ICharacter,
   occupation: IOccupation,
   config: CharacterCreationConfig,
-  selectedAlternatives?: { [requirementId: string]: string }
+  selectedAlternatives?: { [slotIndex: string]: string }
 ): Promise<OccupationBonusResult> {
   const result: OccupationBonusResult = {
     bonusesApplied: [],
@@ -109,7 +105,6 @@ export async function applyOccupationBonuses(
 
   const finalSkillCap = config.skills.creationCapWithOccupation || 80;
 
-  // Validate occupation has bonusSkills
   if (!occupation.bonusSkills || occupation.bonusSkills.length === 0) {
     result.warnings.push('Occupation has no bonus skills defined');
     return result;
@@ -122,71 +117,63 @@ export async function applyOccupationBonuses(
     bonusSkillCount: occupation.bonusSkills.length
   });
 
-  // Initialize skills map if it doesn't exist
   if (!character.skills) {
     character.skills = {};
   }
 
-  // Apply each bonus skill
   for (const bonusSkill of occupation.bonusSkills) {
     try {
-      // Fetch skill details
-      const skill = await Skill.findById(bonusSkill.skillId);
+      // skillId may be populated (object with _id/name) or a raw ObjectId
+      const populatedSkill = typeof bonusSkill.skillId === 'object' && bonusSkill.skillId !== null
+        ? bonusSkill.skillId as any
+        : null;
 
+      const skill = populatedSkill || await Skill.findById(bonusSkill.skillId);
       if (!skill) {
         result.warnings.push(`Bonus skill with ID ${bonusSkill.skillId} not found`);
         continue;
       }
 
+      const skillId = (skill._id || skill.id).toString();
       const skillName = skill.name;
-      const currentValue = character.skills[skillName] || skill.baseValue || 0;
+      const currentValue = character.skills[skillId] || skill.baseValue || 0;
       const bonusValue = bonusSkill.bonusValue;
-      const newValue = currentValue + bonusValue;
+      const newValue = (typeof currentValue === 'number' ? currentValue : 0) + bonusValue;
 
-      // Check if bonus would exceed final cap
       if (newValue > finalSkillCap) {
         result.exceededCap = true;
         result.warnings.push(
           `Bonus for ${skillName} would exceed cap (${newValue} > ${finalSkillCap}). Capping at ${finalSkillCap}.`
         );
-        character.skills[skillName] = finalSkillCap;
+        character.skills[skillId] = finalSkillCap;
       } else {
-        character.skills[skillName] = newValue;
+        character.skills[skillId] = newValue;
       }
 
       result.bonusesApplied.push({
-        skillId: skill.id,
+        skillId,
         skillName,
         bonusValue,
-        finalValue: character.skills[skillName] as number
-      });
-
-      logger.debug('Applied bonus skill', {
-        characterId: character._id.toString(),
-        skillName,
-        currentValue,
-        bonusValue,
-        newValue: character.skills[skillName]
+        finalValue: character.skills[skillId] as number
       });
 
     } catch (error: any) {
       logger.error('Error applying bonus skill', {
         error: error.message,
-        bonusSkillId: bonusSkill.skillId
+        bonusSkillId: String(bonusSkill.skillId)
       });
       result.warnings.push(`Failed to apply bonus for skill ${bonusSkill.skillId}: ${error.message}`);
     }
   }
 
-  // Mark that bonuses have been applied
   character.occupationBonusesApplied = true;
 
-  // Store selected alternative skills if provided (convert string IDs to ObjectIds)
+  // Store selected slot choices (slot index -> chosen skill ObjectId)
   if (selectedAlternatives) {
     const mongoose = await import('mongoose');
     const alternativesAsObjectIds: any = {};
-    for (const [requirementId, skillId] of Object.entries(selectedAlternatives)) {
-      alternativesAsObjectIds[requirementId] = new mongoose.Types.ObjectId(skillId);
+    for (const [slotIndex, skillId] of Object.entries(selectedAlternatives)) {
+      alternativesAsObjectIds[slotIndex] = new mongoose.Types.ObjectId(skillId);
     }
     character.selectedAlternativeSkills = alternativesAsObjectIds;
   }
@@ -336,8 +323,10 @@ export async function validateCharacterSubmission(character: ICharacter, config:
     return result; // Can't validate skills without occupation
   }
 
-  // Fetch occupation details
-  const occupation = await Occupation.findById(character.occupation).populate('requiredSkills.skillId').populate('requiredSkills.alternatives');
+  // Fetch occupation details with populated skill refs
+  const occupation = await Occupation.findById(character.occupation)
+    .populate('requiredSkillSlots.options')
+    .populate('bonusSkills.skillId');
 
   if (!occupation) {
     result.errors.push('L\'esperienza pregressa selezionata non è stata trovata nel database');
@@ -429,101 +418,90 @@ export async function validateCharacterSubmission(character: ICharacter, config:
     result.isValid = false;
   }
 
-  // Check that all required skills have been improved
-  // Use skillName instead of skillId (skillId is optional String, not ObjectId ref)
-  let requiredSkillsImproved = 0;
-  const totalRequiredSkills = occupation.requiredSkills?.length || 0;
+  // Check that all required skill slots have been satisfied.
+  // Each slot contains 1+ skill options (populated ObjectIds).
+  // 1 option = mandatory skill; N options = player picks one.
+  let slotsValidated = 0;
+  const totalSlots = occupation.requiredSkillSlots?.length || 0;
 
-  for (const requiredSkill of (occupation.requiredSkills || [])) {
-    const skillName = requiredSkill.skillName;
-    if (!skillName) continue;
+  for (let slotIdx = 0; slotIdx < totalSlots; slotIdx++) {
+    const slot = (occupation.requiredSkillSlots || [])[slotIdx];
+    const options = (slot?.options || []) as any[];
+    if (options.length === 0) continue;
 
-    const skill = await Skill.findOne({ name: skillName });
-    if (!skill) {
-      result.warnings.push(`Abilità richiesta "${skillName}" non trovata nel database`);
-      continue;
-    }
+    let slotSatisfied = false;
 
-    // Handle PLACEHOLDER SKILLS (e.g., "Lingua straniera")
-    // Placeholder skills don't exist directly in character.skills
-    // Instead, derived specializations like "Lingua straniera (Francese)" exist
-    if (skill.isPlaceholder) {
-      logger.info(`Validating placeholder skill: ${skillName}`);
+    for (const skillRef of options) {
+      const skill = typeof skillRef === 'object' && skillRef._id
+        ? skillRef
+        : await Skill.findById(skillRef);
+      if (!skill) continue;
 
-      // Find all skills that match the pattern: "SkillName (Specialization)"
-      const derivedSkills: { name: string; value: number }[] = [];
+      const skillName = skill.name;
 
-      // Search for derived skills in character.skills
-      for (const [charSkillName, charSkillValue] of skillEntries) {
-        // Match pattern: "Lingua straniera (Francese)"
-        if (charSkillName.startsWith(`${skillName} (`)) {
-          let totalValue: number = 0;
-          if (typeof charSkillValue === 'object' && charSkillValue !== null && 'total' in charSkillValue) {
-            totalValue = (charSkillValue as any).total;
-          } else if (typeof charSkillValue === 'number') {
-            totalValue = charSkillValue;
+      // Handle PLACEHOLDER SKILLS (e.g., "Lingua straniera")
+      if (skill.isPlaceholder) {
+        const derivedSkills: { name: string; value: number }[] = [];
+        for (const [charSkillName, charSkillValue] of skillEntries) {
+          if (charSkillName.startsWith(`${skillName} (`)) {
+            let totalValue = 0;
+            if (typeof charSkillValue === 'object' && charSkillValue !== null && 'total' in charSkillValue) {
+              totalValue = (charSkillValue as any).total;
+            } else if (typeof charSkillValue === 'number') {
+              totalValue = charSkillValue;
+            }
+            derivedSkills.push({ name: charSkillName, value: totalValue });
           }
+        }
 
-          derivedSkills.push({ name: charSkillName, value: totalValue });
+        if (derivedSkills.length > 0 && derivedSkills.some(ds => ds.value > (skill.baseValue || 0))) {
+          slotSatisfied = true;
+          break;
+        }
+        continue;
+      }
+
+      // NORMAL SKILL: check by ObjectId
+      const skillId = (skill._id || skill.id).toString();
+      let skillValue = 0;
+      if (character.skills instanceof Map) {
+        const value = character.skills.get(skillId);
+        if (typeof value === 'object' && value !== null && 'total' in value) {
+          skillValue = (value as any).total;
+        } else if (typeof value === 'number') {
+          skillValue = value;
+        }
+      } else {
+        const value = (character.skills as any)?.[skillId];
+        if (typeof value === 'object' && value !== null && 'total' in value) {
+          skillValue = (value as any).total;
+        } else if (typeof value === 'number') {
+          skillValue = value;
         }
       }
 
-      // Validate: at least one specialization must exist
-      if (derivedSkills.length === 0) {
-        result.errors.push(`"${skillName}": devi aggiungere almeno una specializzazione`);
-        result.isValid = false;
-        continue; // Don't count as improved
+      const baseValue = skill.baseValue || 0;
+      if (skillValue > baseValue) {
+        slotSatisfied = true;
+        break;
       }
-
-      // Validate: at least one specialization must meet the required minimum
-      const requiredMinimum = requiredSkill.baseValue || 40;
-      const hasValidSpecialization = derivedSkills.some(ds => ds.value >= requiredMinimum);
-
-      if (!hasValidSpecialization) {
-        result.errors.push(
-          `"${skillName}": almeno una specializzazione deve raggiungere ${requiredMinimum} punti (trovate: ${derivedSkills.map(ds => `${ds.name}: ${ds.value}`).join(', ')})`
-        );
-        result.isValid = false;
-        continue; // Don't count as improved
-      }
-
-      // Placeholder skill validated successfully
-      requiredSkillsImproved++;
-      logger.info(`Placeholder skill validated: ${skillName} (${derivedSkills.length} specializations, min ${requiredMinimum})`);
-      continue;
     }
 
-    // NORMAL SKILL VALIDATION (non-placeholder)
-    // Get skill value from character using ObjectId key (not name)
-    const skillId = skill._id.toString();
-    let skillValue: number = 0;
-    if (character.skills instanceof Map) {
-      const value = character.skills.get(skillId);
-      if (typeof value === 'object' && value !== null && 'total' in value) {
-        skillValue = (value as any).total;
-      } else if (typeof value === 'number') {
-        skillValue = value;
-      }
+    if (slotSatisfied) {
+      slotsValidated++;
     } else {
-      const value = (character.skills as any)[skillId];
-      if (typeof value === 'object' && value !== null && 'total' in value) {
-        skillValue = (value as any).total;
-      } else if (typeof value === 'number') {
-        skillValue = value;
+      const optionNames = options.map((o: any) => o.name || 'Sconosciuta').join(' o ');
+      if (options.length === 1) {
+        result.errors.push(`Abilità richiesta "${optionNames}" non è stata migliorata`);
+      } else {
+        result.errors.push(`Slot ${slotIdx + 1}: devi migliorare almeno una tra ${optionNames}`);
       }
-    }
-
-    const baseValue = skill.baseValue || 0;
-    const requiredMinimum = requiredSkill.baseValue || 40;
-
-    // Check if skill meets the required minimum
-    if (skillValue >= requiredMinimum) {
-      requiredSkillsImproved++;
+      result.isValid = false;
     }
   }
 
-  if (totalRequiredSkills > 0 && requiredSkillsImproved < totalRequiredSkills) {
-    result.errors.push(`Tutte le ${totalRequiredSkills} abilità richieste dall'esperienza pregressa devono essere migliorate (${requiredSkillsImproved}/${totalRequiredSkills} migliorate)`);
+  if (totalSlots > 0 && slotsValidated < totalSlots) {
+    result.errors.push(`${slotsValidated}/${totalSlots} slot abilità richieste soddisfatti`);
     result.isValid = false;
   }
 
@@ -592,21 +570,6 @@ export async function checkOccupationPrerequisites(
   // Use the method from Occupation model if available
   if (typeof (occupation as any).checkPrerequisites === 'function') {
     return (occupation as any).checkPrerequisites(character, [], []);
-  }
-
-  // Fallback: basic checks
-  if (occupation.allowedGenders && !occupation.allowedGenders.includes(character.gender)) {
-    issues.push(`Gender requirement not met (requires ${occupation.allowedGenders.join(' or ')})`);
-  }
-
-  // Check minimum age if specified
-  if (occupation.prerequisites?.minimumAge && character.age < occupation.prerequisites.minimumAge) {
-    issues.push(`Minimum age requirement not met (requires ${occupation.prerequisites.minimumAge})`);
-  }
-
-  // Check maximum age if specified
-  if (occupation.prerequisites?.maximumAge && character.age > occupation.prerequisites.maximumAge) {
-    issues.push(`Maximum age requirement not met (maximum ${occupation.prerequisites.maximumAge})`);
   }
 
   return {

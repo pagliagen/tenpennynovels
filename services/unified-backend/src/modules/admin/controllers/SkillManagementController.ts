@@ -10,6 +10,7 @@ import {
   getAllCategoriesItalian
 } from '@shared/translations/skillCategories';
 import { successResponse, errorResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
+import { AdminAuthMiddleware } from '../middleware/adminAuth';
 
 export class SkillManagementController {
 
@@ -26,7 +27,7 @@ export class SkillManagementController {
         visible = '',
         defaultSkill = '',
         isPlaceholder = '',
-        sortBy = 'sortOrder',
+        sortBy = 'name',
         sortOrder = 'asc'
       } = req.query;
 
@@ -323,7 +324,6 @@ export class SkillManagementController {
         description,
         visible = true,
         defaultSkill = true,
-        sortOrder = 0,
         isPlaceholder = false,
         placeholderType,
         predefinedValues,
@@ -376,7 +376,6 @@ export class SkillManagementController {
         description: description.trim(),
         visible,
         defaultSkill,
-        sortOrder: Number(sortOrder),
         isPlaceholder,
         placeholderType: placeholderType?.trim(),
         predefinedValues: predefinedValues || [],
@@ -441,7 +440,6 @@ export class SkillManagementController {
         description,
         visible,
         defaultSkill,
-        sortOrder,
         isPlaceholder,
         placeholderType,
         predefinedValues,
@@ -511,7 +509,6 @@ export class SkillManagementController {
       if (description !== undefined) skill.description = description.trim();
       if (visible !== undefined) skill.visible = visible;
       if (defaultSkill !== undefined) skill.defaultSkill = defaultSkill;
-      if (sortOrder !== undefined) skill.sortOrder = Number(sortOrder);
       if (isPlaceholder !== undefined) skill.isPlaceholder = isPlaceholder;
       if (placeholderType !== undefined) skill.placeholderType = placeholderType?.trim();
       if (predefinedValues !== undefined) skill.predefinedValues = predefinedValues;
@@ -605,18 +602,19 @@ export class SkillManagementController {
         'skills.name': skill.name
       });
 
-      let deletedAt: Date | undefined;
       let inUse = false;
 
       if (charactersUsingSkill > 0) {
-        // Soft delete - hide skill but keep data
         skill.visible = false;
-        deletedAt = new Date();
         await skill.save();
         inUse = true;
       } else {
-        // Hard delete - no characters are using it
-        await Skill.findByIdAndDelete(skillId);
+        const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
+        await skill.softDelete(
+          auditInfo?.adminId || (req as any).user?.userId,
+          auditInfo?.adminCharacterName || 'Unknown Admin',
+          reason
+        );
       }
 
       // Audit log

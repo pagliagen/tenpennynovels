@@ -409,8 +409,7 @@ export class AuthController {
         return;
       }
 
-      // Check if character can be selected (block only DELETED characters)
-      if (character.deletedAt) {
+      if (character.status === 'DELETED') {
         errorResponse(res, 
           'Il personaggio è stato eliminato e non può essere utilizzato',
           'CHARACTER_DELETED',

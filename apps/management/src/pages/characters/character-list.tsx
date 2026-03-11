@@ -5,12 +5,13 @@
  * Max 200 linee per mantenibilità.
  */
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { ManagementLayout } from '@/components/layout/ManagementLayout';
 import { ConfigurableDataTable, FilterState } from '@/components/shared/ConfigurableDataTable';
 import { SidePanel } from '@/components/shared/SidePanel';
+import { GenerateImageButton } from '@/components/shared/GenerateImageButton';
 import { useConfirm } from '@/hooks/useConfirm';
 import { useTableConfig } from '@/hooks/useTableConfig';
 import { useTableFilters } from '@/hooks/useTableFilters';
@@ -27,8 +28,30 @@ import {
 import { useNotificationStore } from '@/store/notificationStore';
 import { useURLFilter } from '@/hooks/useURLFilter';
 import { clearFilterHash } from '@/lib/utils/urlFilters';
+import { FormField } from '@/components/shared/FormField';
 import type { Character, CharacterListParams } from '@/types/api/Character';
 import styles from '@/styles/pages/CharacterList.module.scss';
+
+function CharacterEditContent({ character, onAvatarGenerated }: { character: Character; onAvatarGenerated: () => void }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <FormField label="Nome" name="name" value={character.name} disabled type="text" />
+      <FormField label="Cognome" name="surname" value={character.surname || ''} disabled type="text" />
+      <FormField label="Età" name="age" value={character.age} disabled type="number" />
+      <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '16px' }}>
+        <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 500, color: 'rgba(255,255,255,0.7)' }}>
+          Avatar AI
+        </label>
+        <GenerateImageButton
+          entityType="character"
+          entityId={character._id}
+          entityName={`${character.name} ${character.surname || ''}`.trim()}
+          onSuccess={onAvatarGenerated}
+        />
+      </div>
+    </div>
+  );
+}
 
 export default function CharacterList() {
   // State
@@ -407,18 +430,7 @@ export default function CharacterList() {
             config={{
               title: `Modifica ${currentCharacter.fullName}`,
               width: 'medium',
-              fields: [
-                { key: 'name', label: 'Nome', type: 'text', required: true, disabled: false },
-                { key: 'surname', label: 'Cognome', type: 'text', required: true, disabled: false },
-                { key: 'age', label: 'Età', type: 'number', required: true, disabled: false },
-                { key: 'status', label: 'Stato', type: 'select', required: true, disabled: false, options: [
-                  { value: 'pending', label: 'In Attesa' },
-                  { value: 'approved', label: 'Approvato' },
-                  { value: 'rejected', label: 'Rifiutato' },
-                  { value: 'active', label: 'Attivo' },
-                  { value: 'inactive', label: 'Inattivo' }
-                ]}
-              ],
+              fields: [],
               actions: [
                 { key: 'save', label: 'Salva', type: 'primary', loading: false },
                 { key: 'cancel', label: 'Annulla', type: 'secondary', loading: false }
@@ -430,6 +442,12 @@ export default function CharacterList() {
               age: currentCharacter.age,
               status: currentCharacter.status
             }}
+            customContent={
+              <CharacterEditContent
+                character={currentCharacter}
+                onAvatarGenerated={() => addNotification({ type: 'success', message: 'Avatar generato con successo!' })}
+              />
+            }
             onAction={handleSidePanelAction}
             onClose={() => {
               setActiveSidePanel(null);

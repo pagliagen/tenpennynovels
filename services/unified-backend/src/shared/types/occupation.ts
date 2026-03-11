@@ -1,47 +1,13 @@
 import { VictorianCurrency } from './economy';
-import { SocialClass } from './socialClass';
 
 export interface Occupation {
   id: string;
   name: string;
   description: string;
   
-  // Gender restrictions
-  allowedGenders: ('male' | 'female')[];
-  
   // Social and economic context
-  socialClass: SocialClass[]; // Array - occupations can span multiple classes
   dailySalary: VictorianCurrency; // Daily income paid by "the state"
   socialRespectability: number; // 1-10 scale
-  
-  // Prerequisites (ALL must be met to see/select this occupation)
-  prerequisites?: {
-    // Minimum stats required
-    minimumStats?: { [statName: string]: number }; // e.g., { strength: 60, intelligence: 70 }
-    
-    // Minimum skills required
-    minimumSkills?: { [skillName: string]: number }; // e.g., { medicine: 80, education: 70 }
-    
-    // Required items/qualifications
-    requiredItems?: string[]; // e.g., ["University Degree", "Medical License"]
-    
-    // Corporation membership requirements
-    requiredCorporations?: {
-      corporationId: string;
-      minimumRole?: string; // Optional minimum role level
-    }[];
-    
-    // Age restrictions
-    minimumAge?: number;
-    maximumAge?: number;
-    
-    // Other occupation prerequisites (must have had this occupation first)
-    prerequisiteOccupations?: string[]; // Occupation IDs
-    
-    // Exclusions (cannot have these)
-    excludeIfHasItems?: string[]; // e.g., ["Criminal Record"]
-    excludeIfInCorporations?: string[]; // Corporation IDs that disqualify
-  };
   
   // Occupation benefits and bonuses
   benefits?: {
@@ -66,12 +32,9 @@ export interface Occupation {
   
   // Victorian context
   workingConditions: string; // Description of typical working conditions
-  typicalEmployers: string[]; // Who typically employs this occupation
-  careerProgression?: string[]; // Possible advancement paths (occupation IDs)
   
   // Availability
   isActive: boolean; // Can be selected by players
-  rarity: 'common' | 'uncommon' | 'rare' | 'very_rare'; // How common this occupation is
   
   // Metadata
   createdAt: Date;
@@ -134,7 +97,6 @@ export interface OccupationWithCategory extends Occupation {
 // For filtering and searching occupations
 export interface OccupationFilter {
   gender?: 'male' | 'female';
-  socialClass?: SocialClass[];
   category?: OccupationCategory[];
   minimumIncome?: number;
   maximumIncome?: number;

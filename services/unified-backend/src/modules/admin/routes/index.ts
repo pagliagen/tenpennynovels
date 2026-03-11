@@ -24,6 +24,7 @@ import chatModerationRoutes from './chatModerationRoutes';
 import characterSessionRoutes from './characterSessionRoutes';
 import locationActionRoutes from './locationActionRoutes';
 import deletedRecordsRoutes from './deletedRecordsRoutes';
+import imageGenerationRoutes from './imageGenerationRoutes';
 import { cdnRoutes } from './cdnRoutes';
 import { getVisibleDashboardBadges, getUserPermissions, getVisibleMenuStructure, haveAccessTo, debugPermissions } from '../utils/permissions';
 import { auditLogger } from '../utils/auditLogger';
@@ -291,6 +292,7 @@ router.use('/', chatModerationRoutes);
 router.use('/character-sessions', characterSessionRoutes);
 router.use('/location-actions', locationActionRoutes);
 router.use('/deleted-records', deletedRecordsRoutes);
+router.use('/image-gen', imageGenerationRoutes);
 router.use('/cdn', cdnRoutes);
 
 export { router as apiRoutes };
