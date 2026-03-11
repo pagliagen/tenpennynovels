@@ -211,7 +211,7 @@ services:
       - ./services/unified-backend/src:/app/src:ro
       - ./services/unified-backend/logs:/app/logs
       - ./services/unified-backend/node_modules:/app/node_modules:ro
-      - cdn_storage:/cdn-storage
+      - ./cdn-storage:/cdn-storage
     networks:
       - tenpennynovels-network
     depends_on:
@@ -264,7 +264,7 @@ services:
     volumes:
       - ./services/api-gateway/src:/app/src:ro
       - ./services/api-gateway/node_modules:/app/node_modules:ro
-      - cdn_storage:/cdn-storage:ro
+      - ./cdn-storage:/cdn-storage:ro
     networks:
       - tenpennynovels-network
     depends_on:
@@ -304,6 +304,3 @@ volumes:
   elasticsearch_data:
     driver: local
     name: tenpennynovels-elasticsearch-data
-  cdn_storage:
-    driver: local
-    name: tenpennynovels-cdn-storage

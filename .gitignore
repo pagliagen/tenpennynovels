@@ -29,3 +29,7 @@ local-ai/clients.json
 .deploy-state
 
 out/
+
+# CDN local storage (images)
+cdn-storage/*
+!cdn-storage/.gitkeep
