@@ -51,7 +51,7 @@ export interface IItem extends Document, SoftDeleteFields, SoftDeleteMethods {
     requiredGender?: 'male' | 'female';
     minimumAge?: number;
     maximumAge?: number;
-    requiredSocialClass?: ('working' | 'middle' | 'upper')[];    // Legacy support
+    requiredSocialClass?: string[];    // Legacy support
     requiredFinancialClasses?: string[];     // New system: ["Indigente", "Povero", "Modesto", etc.]
     
     // Item prerequisites
@@ -68,7 +68,7 @@ export interface IItem extends Document, SoftDeleteFields, SoftDeleteMethods {
     maxQuantity?: number;               // Maximum quantity per character
     weight?: number;                    // For carrying capacity (future feature)
     durability?: number;                // Item condition (1-100)
-    isConsumable: boolean;             // Item is consumed on use
+    isConsumable: boolean;              // Item is consumed on use
     consumptionType?: 'direct' | 'indirect';  // How the item is consumed
     consumesItems?: {                  // For indirect consumption (e.g., gun consumes ammo)
       itemId: Schema.Types.ObjectId;                  // What item is consumed
