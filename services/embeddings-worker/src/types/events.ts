@@ -20,55 +20,40 @@ export const REDIS_CHANNELS = {
   EMBEDDING_LOCATION_UPDATED: 'embedding:location:updated',
   EMBEDDING_LOCATION_DELETED: 'embedding:location:deleted',
 
-  // Location action events (no chunking)
-  EMBEDDING_LOCATION_ACTION_CREATED: 'embedding:location_action:created',
-  EMBEDDING_LOCATION_ACTION_UPDATED: 'embedding:location_action:updated',
-  EMBEDDING_LOCATION_ACTION_DELETED: 'embedding:location_action:deleted',
+  // Chat events (no chunking)
+  EMBEDDING_CHAT_CREATED: 'embedding:chat:created',
+  EMBEDDING_CHAT_UPDATED: 'embedding:chat:updated',
+  EMBEDDING_CHAT_DELETED: 'embedding:chat:deleted',
 } as const;
 
 export type RedisChannel = typeof REDIS_CHANNELS[keyof typeof REDIS_CHANNELS];
 
-/**
- * Base event interface
- */
 export interface BaseEmbeddingEvent {
-  eventId: string; // Unique event ID for tracking/deduplication
+  eventId: string;
   timestamp: Date;
-  retryCount?: number; // For retry logic
+  retryCount?: number;
 }
 
-/**
- * Document embedding event
- * Published when a document is created or updated
- */
 export interface DocumentEmbeddingEvent extends BaseEmbeddingEvent {
   documentId: string;
   title: string;
   content: string;
-  contentDelta?: any; // TipTap Delta JSON for chunking
+  contentDelta?: any;
   type: 'ambientazione' | 'approfondimenti' | 'regolamento';
 }
 
-/**
- * DocumentChunk embedding event
- * Published when a document chunk is created (H2/H3 section)
- */
 export interface DocumentChunkEmbeddingEvent extends BaseEmbeddingEvent {
   chunkId: string;
   documentId: string;
   slug: string;
   title: string;
   content: string;
-  documentType: 'ambientazione' | 'approfondimenti' | 'regolamento';  // FIX: Added approfondimenti (seeder uses 3 types)
+  documentType: 'ambientazione' | 'approfondimenti' | 'regolamento';
   order: number;
-  headingLevel: 2 | 3;      // H2 (main sections) + H3 (sub-sections)
-  parentSlug?: string;       // For H3 chunks, reference to parent H2 slug
+  headingLevel: 2 | 3;
+  parentSlug?: string;
 }
 
-/**
- * Location embedding event
- * Published when a location is created/updated/deleted
- */
 export interface LocationEmbeddingEvent extends BaseEmbeddingEvent {
   locationId: string;
   name: string;
@@ -77,12 +62,8 @@ export interface LocationEmbeddingEvent extends BaseEmbeddingEvent {
   slug: string;
 }
 
-/**
- * LocationAction embedding event
- * Published when a location action is created/updated/deleted
- */
-export interface LocationActionEmbeddingEvent extends BaseEmbeddingEvent {
-  locationActionId: string;
+export interface ChatEmbeddingEvent extends BaseEmbeddingEvent {
+  chatId: string;
   characterId: string;
   characterName: string;
   locationId: string;
@@ -90,28 +71,18 @@ export interface LocationActionEmbeddingEvent extends BaseEmbeddingEvent {
   actionType: string;
 }
 
-/**
- * Delete event (for Document, Location, LocationAction)
- * Published when content is deleted - removes from Qdrant + ElasticSearch
- */
 export interface DeleteEmbeddingEvent extends BaseEmbeddingEvent {
-  entityType: 'document' | 'location' | 'location_action';
-  entityId: string; // documentId, locationId, or locationActionId
+  entityType: 'document' | 'location' | 'chat';
+  entityId: string;
 }
 
-/**
- * Union type for all embedding events
- */
 export type EmbeddingEvent =
   | DocumentEmbeddingEvent
   | DocumentChunkEmbeddingEvent
   | LocationEmbeddingEvent
-  | LocationActionEmbeddingEvent
+  | ChatEmbeddingEvent
   | DeleteEmbeddingEvent;
 
-/**
- * Helper to check event type
- */
 export function isDocumentEmbeddingEvent(event: EmbeddingEvent): event is DocumentEmbeddingEvent {
   return 'documentId' in event && !('chunkId' in event) && !('entityType' in event);
 }
@@ -121,11 +92,11 @@ export function isDocumentChunkEmbeddingEvent(event: EmbeddingEvent): event is D
 }
 
 export function isLocationEmbeddingEvent(event: EmbeddingEvent): event is LocationEmbeddingEvent {
-  return 'locationId' in event && !('locationActionId' in event) && !('entityType' in event);
+  return 'locationId' in event && !('chatId' in event) && !('entityType' in event);
 }
 
-export function isLocationActionEmbeddingEvent(event: EmbeddingEvent): event is LocationActionEmbeddingEvent {
-  return 'locationActionId' in event;
+export function isChatEmbeddingEvent(event: EmbeddingEvent): event is ChatEmbeddingEvent {
+  return 'chatId' in event;
 }
 
 export function isDeleteEmbeddingEvent(event: EmbeddingEvent): event is DeleteEmbeddingEvent {

@@ -24,7 +24,7 @@ export * from './item';
 export * from './location';
 export * from './messaging';
 export * from './occupation';
-export * from './relationships';
+export * from './characterRelation';
 export * from './security';
 export * from './websocket';
 // export * from './ai'; // TODO: Create AI types when needed

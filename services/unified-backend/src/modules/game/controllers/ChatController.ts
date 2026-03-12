@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { LocationAction, GamingSession, Location, Character } from '@database/models';
+import { Chat, GamingSession, Location, Character } from '@database/models';
 import { logger } from '../utils/logger';
 import { redis } from '@config/runtime/redis';
 import { EmbeddingEventPublisher } from '../utils/events/embedding-publisher';
@@ -8,7 +8,7 @@ import { calculateSuccessDegree, SuccessDegree } from '../utils/successDegrees';
 import { calculateSocialConflict, isValidSocialSkillPair, getDefensiveSkill } from '../utils/socialConflicts';
 import { getSocketIO } from '../websocket/socketInstance';
 
-export class LocationChatsController {
+export class ChatController {
   
   /**
    * Create a new location action (message)
@@ -75,7 +75,7 @@ export class LocationChatsController {
       }
 
       // Validate action type permissions
-      const isValidAction = LocationChatsController.validateActionPermission(
+      const isValidAction = ChatController.validateActionPermission(
         actionType,
         character.gameplayRoles || [],
         character.isGestore || false
@@ -145,7 +145,7 @@ export class LocationChatsController {
         locationId,
         sessionId, // Copy sessionId from location to action
         timestamp: new Date(),
-        visibility: visibility || LocationChatsController.getActionVisibility(actionType),
+        visibility: visibility || ChatController.getActionVisibility(actionType),
         characterRoles: character.gameplayRoles || [],
         tags: tag || '', // Single tag string (required field, empty string if not provided)
         isHidden: shouldHide
@@ -158,12 +158,12 @@ export class LocationChatsController {
 
       // Handle dice rolling actions (sempre 1d100)
       if (actionType === 'dice_roll') {
-        actionData.diceResult = LocationChatsController.rollDice();
+        actionData.diceResult = ChatController.rollDice();
       }
 
       // Handle skill checks
       if (actionType === 'skill_check' && skillName && targetValue !== undefined) {
-        const rollResult = LocationChatsController.rollDice('1d100');
+        const rollResult = ChatController.rollDice('1d100');
         const successDegree = calculateSuccessDegree(rollResult.result, targetValue);
         actionData.diceResult = {
           ...rollResult,
@@ -176,7 +176,7 @@ export class LocationChatsController {
 
       // Handle stat checks
       if (actionType === 'stat_check' && statName && targetValue !== undefined) {
-        const rollResult = LocationChatsController.rollDice('1d100');
+        const rollResult = ChatController.rollDice('1d100');
         const successDegree = calculateSuccessDegree(rollResult.result, targetValue);
         actionData.diceResult = {
           ...rollResult,
@@ -200,7 +200,7 @@ export class LocationChatsController {
 
 
       // Save to database
-      const savedAction = await ((LocationAction as any).createAction(actionData));
+      const savedAction = await ((Chat as any).createAction(actionData));
 
       // Update occupant tag if a tag was provided
       if (tag) {
@@ -220,7 +220,7 @@ export class LocationChatsController {
       try {
         const redisPublisher = redis.getPublisher();
         const embeddingPublisher = new EmbeddingEventPublisher(redisPublisher);
-        await embeddingPublisher.publishLocationActionEvent(
+        await embeddingPublisher.publishChatEvent(
           savedAction._id.toString(),
           character.characterId,
           character.characterName,
@@ -236,12 +236,12 @@ export class LocationChatsController {
 
       // Emit WebSocket notification with full message (frontend expects complete ChatMessage)
       const io = getSocketIO();
-      console.log('🔌 LocationActionsController: io instance:', io ? 'FOUND' : 'NOT FOUND');
+      console.log('🔌 ChatsController: io instance:', io ? 'FOUND' : 'NOT FOUND');
 
       if (io) {
         const roomName = `location_${locationId}`;
 
-        // Map LocationAction (DB) to ChatMessage (frontend format)
+        // Map Chat (DB) to ChatMessage (frontend format)
         const chatMessage = {
           _id: savedAction._id.toString(),
           messageType: savedAction.actionType,
@@ -269,14 +269,14 @@ export class LocationChatsController {
           locationId
         };
 
-        console.log('🔔 LocationActionsController: Emitting notification to room:', roomName, 'with message:', chatMessage._id);
+        console.log('🔔 ChatsController: Emitting notification to room:', roomName, 'with message:', chatMessage._id);
         io.to(roomName).emit('location_message_notification', notification);
 
         // Debug: Check how many clients are in the room
         const room = io.sockets.adapter.rooms.get(roomName);
-        console.log('👥 LocationActionsController: Clients in room', roomName, ':', room ? room.size : 0);
+        console.log('👥 ChatsController: Clients in room', roomName, ':', room ? room.size : 0);
       } else {
-        console.error('❌ LocationActionsController: Socket.io instance not found in req.app');
+        console.error('❌ ChatsController: Socket.io instance not found in req.app');
       }
 
       logger.info(`Location action created: ${character.characterName} (${actionType}) in ${locationId}`);
@@ -340,10 +340,10 @@ export class LocationChatsController {
           if (shouldNotify) {
             const healthy = await aiGatewayClient.isHealthy();
             if (healthy) {
-              const recentActions = await LocationAction.find({ locationId })
+              const recentActions = await Chat.find({ locationId })
                 .sort({ timestamp: -1 }).limit(10).lean();
 
-              const presentChars = await LocationAction.distinct('characterId', {
+              const presentChars = await Chat.distinct('characterId', {
                 locationId,
                 timestamp: { $gte: new Date(Date.now() - 60 * 60 * 1000) },
               });
@@ -483,7 +483,7 @@ export class LocationChatsController {
       timeThreshold.setHours(timeThreshold.getHours() - hours);
 
       // Get actions from the last X hours, visible to this character
-      const actions = await LocationAction.find({
+      const actions = await Chat.find({
         locationId,
         timestamp: { $gte: timeThreshold },
         $or: [
@@ -558,7 +558,7 @@ export class LocationChatsController {
 
         return true;
       }).map((action: any) => {
-        // Map LocationAction (DB) → ChatMessage (frontend format)
+        // Map Chat (DB) → ChatMessage (frontend format)
         const chatMessage: any = {
           _id: action._id.toString(),
           messageType: action.actionType,  // ✅ Frontend expects messageType
@@ -743,7 +743,7 @@ export class LocationChatsController {
       }
 
       // Find the action
-      const action = await LocationAction.findById(actionId);
+      const action = await Chat.findById(actionId);
       if (!action) {
         res.status(404).json(errorResponse(
           'Action not found',
@@ -785,7 +785,7 @@ export class LocationChatsController {
         }
 
         // Check if there's a subsequent action from the same character
-        const subsequentAction = await LocationAction.findOne({
+        const subsequentAction = await Chat.findOne({
           locationId: action.locationId,
           characterId: character.characterId,
           timestamp: { $gt: action.timestamp }
@@ -882,7 +882,7 @@ export class LocationChatsController {
       const { actionId } = req.params;
 
       // Find the action
-      const action = await LocationAction.findById(actionId);
+      const action = await Chat.findById(actionId);
       if (!action) {
         res.status(404).json(errorResponse(
           'Action not found',
@@ -913,7 +913,7 @@ export class LocationChatsController {
       const locationId = action.locationId;
 
       // Delete the action
-      await LocationAction.findByIdAndDelete(actionId);
+      await Chat.findByIdAndDelete(actionId);
 
       // Emit WebSocket notification
       const io = req.app.get('io');
@@ -1073,8 +1073,8 @@ export class LocationChatsController {
       }
 
       // Roll dice for both characters
-      const attackerRoll = LocationChatsController.rollDice('1d100').result;
-      const defenderRoll = LocationChatsController.rollDice('1d100').result;
+      const attackerRoll = ChatController.rollDice('1d100').result;
+      const defenderRoll = ChatController.rollDice('1d100').result;
 
       // Calculate conflict result
       const conflictResult = calculateSocialConflict(
@@ -1139,7 +1139,7 @@ export class LocationChatsController {
         };
       }
 
-      const savedAction = await (LocationAction as any).createAction(actionData);
+      const savedAction = await (Chat as any).createAction(actionData);
 
       // Emit WebSocket notification
       const io = req.app.get('io');
@@ -1230,7 +1230,7 @@ export class LocationChatsController {
       }
 
       // Delete all actions for this location
-      const result = await LocationAction.deleteMany({ locationId });
+      const result = await Chat.deleteMany({ locationId });
 
       // Emit WebSocket notification
       const io = req.app.get('io');
@@ -1335,13 +1335,13 @@ export class LocationChatsController {
         isBot: true // Flag to identify bot actions
       };
 
-      const action = await LocationAction.create(actionData);
+      const action = await Chat.create(actionData);
 
       // Publish embedding event for bot actions
       try {
         const redisPublisher = redis.getPublisher();
         const embeddingPublisher = new EmbeddingEventPublisher(redisPublisher);
-        await embeddingPublisher.publishLocationActionEvent(
+        await embeddingPublisher.publishChatEvent(
           action._id.toString(),
           actionData.characterId,
           actionData.characterName,

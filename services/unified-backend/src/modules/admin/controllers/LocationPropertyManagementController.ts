@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { HousingProperty, EstateTransaction, Location, CharacterFinances, db } from '@database/models';
+import { LocationProperty, Location, CharacterFinances, db } from '@database/models';
 import { logger } from '../utils/logger';
 import { listResponse, successResponse, errorResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
 import type { PaginationInfo } from '../types/management';
@@ -7,7 +7,7 @@ import type { PaginationInfo } from '../types/management';
 // Access mongoose from the centralized connection
 const mongoose = db.getMongoose();
 
-export class HousingManagementController {
+export class LocationPropertyManagementController {
   
   /**
    * Get all properties with admin overview
@@ -39,7 +39,7 @@ export class HousingManagementController {
       sort[sortBy as string] = sortOrder === 'desc' ? -1 : 1;
 
       // Get properties with population
-      const properties = await HousingProperty.find(filter)
+      const properties = await LocationProperty.find(filter)
         .populate('locationId', 'name description')
         .populate('currentTenantId', 'name')
         .populate('ownerId', 'name')
@@ -48,7 +48,7 @@ export class HousingManagementController {
         .limit(Number(pageSize));
 
       // Get total count for pagination
-      const totalProperties = await HousingProperty.countDocuments(filter);
+      const totalProperties = await LocationProperty.countDocuments(filter);
 
       // Calculate pagination info
       const pageNum = Number(page);
@@ -154,8 +154,8 @@ export class HousingManagementController {
 
         await location.save(session ? { session } : {});
 
-        // Then create the HousingProperty
-        const property = new HousingProperty({
+        // Then create the LocationProperty
+        const property = new LocationProperty({
           locationId: location._id,
           propertyType,
           district,
@@ -226,7 +226,7 @@ export class HousingManagementController {
       const { propertyId } = req.params;
       const updates = req.body;
 
-      const property = await HousingProperty.findById(propertyId);
+      const property = await LocationProperty.findById(propertyId);
       if (!property) {
         res.status(404).json(errorResponse(
           'Proprietà non trovata',
@@ -286,7 +286,7 @@ export class HousingManagementController {
     try {
       const { propertyId } = req.params;
 
-      const property = await HousingProperty.findById(propertyId);
+      const property = await LocationProperty.findById(propertyId);
       if (!property) {
         res.status(404).json(errorResponse(
           'Proprietà non trovata',
@@ -375,7 +375,7 @@ export class HousingManagementController {
       if (filters.propertyType) filter.propertyType = filters.propertyType;
       if (filters.ownershipType) filter.ownershipType = filters.ownershipType;
 
-      const properties = await HousingProperty.find(filter);
+      const properties = await LocationProperty.find(filter);
       
       if (properties.length === 0) {
         res.status(404).json(errorResponse(
@@ -459,7 +459,7 @@ export class HousingManagementController {
       // Find properties with overdue rent
       const cutoffDate = new Date(Date.now() - gracePeriodDays * 24 * 60 * 60 * 1000);
       
-      const overdueProperties = await HousingProperty.find({
+      const overdueProperties = await LocationProperty.find({
         ownershipType: 'rental',
         currentTenantId: { $exists: true },
         rentPaidUntil: { $lt: cutoffDate }
@@ -481,17 +481,6 @@ export class HousingManagementController {
         for (const property of overdueProperties) {
           try {
             const tenantId = property.currentTenantId;
-            
-            // Record eviction transaction
-            const evictionTransaction = new EstateTransaction({
-              transactionType: 'eviction_fee',
-              propertyId: property._id,
-              characterId: tenantId,
-              amount: property.monthlyRent || 0,
-              description: `Eviction from ${property.district} property for non-payment`,
-              status: 'completed'
-            });
-            await evictionTransaction.save();
 
             // Add to rental history
             property.addToRentalHistory(
@@ -593,7 +582,7 @@ export class HousingManagementController {
 
       if (reportType === 'overview' || reportType === 'all') {
         // Occupancy rates by district
-        const occupancyReport = await HousingProperty.aggregate([
+        const occupancyReport = await LocationProperty.aggregate([
           {
             $group: {
               _id: '$district',
@@ -620,44 +609,9 @@ export class HousingManagementController {
         reports.occupancyByDistrict = occupancyReport;
       }
 
-      if (reportType === 'financial' || reportType === 'all') {
-        // Revenue analytics
-        const startDate = new Date();
-        if (period === 'month') {
-          startDate.setMonth(startDate.getMonth() - 1);
-        } else if (period === 'quarter') {
-          startDate.setMonth(startDate.getMonth() - 3);
-        } else if (period === 'year') {
-          startDate.setFullYear(startDate.getFullYear() - 1);
-        }
-
-        const revenueReport = await EstateTransaction.aggregate([
-          {
-            $match: {
-              transactionDate: { $gte: startDate },
-              status: 'completed',
-              transactionType: { $in: ['rental_payment', 'rent_deposit', 'purchase'] }
-            }
-          },
-          {
-            $group: {
-              _id: '$transactionType',
-              totalRevenue: { $sum: '$amount' },
-              transactionCount: { $sum: 1 }
-            }
-          }
-        ]);
-
-        reports.revenue = {
-          period,
-          startDate,
-          transactions: revenueReport
-        };
-      }
-
       if (reportType === 'market' || reportType === 'all') {
         // Market statistics
-        const marketStats = await HousingProperty.aggregate([
+        const marketStats = await LocationProperty.aggregate([
           {
             $group: {
               _id: '$propertyType',
@@ -704,19 +658,19 @@ export class HousingManagementController {
   static async getHousingStats(req: Request, res: Response): Promise<void> {
     try {
       // Overall statistics
-      const totalProperties = await HousingProperty.countDocuments();
-      const occupiedProperties = await HousingProperty.countDocuments({ 
+      const totalProperties = await LocationProperty.countDocuments();
+      const occupiedProperties = await LocationProperty.countDocuments({ 
         currentTenantId: { $exists: true } 
       });
-      const ownedProperties = await HousingProperty.countDocuments({ 
+      const ownedProperties = await LocationProperty.countDocuments({ 
         ownershipType: 'owned' 
       });
-      const availableProperties = await HousingProperty.countDocuments({ 
+      const availableProperties = await LocationProperty.countDocuments({ 
         isAvailable: true 
       });
 
       // Rent statistics
-      const rentStats = await HousingProperty.aggregate([
+      const rentStats = await LocationProperty.aggregate([
         { $match: { monthlyRent: { $exists: true, $gt: 0 } } },
         {
           $group: {
@@ -730,18 +684,11 @@ export class HousingManagementController {
       ]);
 
       // Overdue rent count
-      const overdueCount = await HousingProperty.countDocuments({
+      const overdueCount = await LocationProperty.countDocuments({
         ownershipType: 'rental',
         currentTenantId: { $exists: true },
         rentPaidUntil: { $lt: new Date() }
       });
-
-      // Recent transactions
-      const recentTransactions = await EstateTransaction.find()
-        .sort({ transactionDate: -1 })
-        .limit(10)
-        .populate('characterId', 'name')
-        .populate('propertyId', 'district propertyType');
 
       res.json(successResponse(
         {
@@ -758,8 +705,7 @@ export class HousingManagementController {
             minRent: 0,
             maxRent: 0,
             totalRentableValue: 0
-          },
-          recentTransactions
+          }
         },
         undefined,
         getRequestId(req)
@@ -786,7 +732,7 @@ export class HousingManagementController {
       logger.info('Fetching district information for management');
 
       // Get district statistics
-      const districtStats = await HousingProperty.aggregate([
+      const districtStats = await LocationProperty.aggregate([
         {
           $group: {
             _id: '$district',

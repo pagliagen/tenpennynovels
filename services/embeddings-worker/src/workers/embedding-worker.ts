@@ -17,13 +17,13 @@ import {
   DocumentEmbeddingEvent,
   DocumentChunkEmbeddingEvent,
   LocationEmbeddingEvent,
-  LocationActionEmbeddingEvent,
+  ChatEmbeddingEvent,
   DeleteEmbeddingEvent,
   EmbeddingEvent,
   isDocumentEmbeddingEvent,
   isDocumentChunkEmbeddingEvent,
   isLocationEmbeddingEvent,
-  isLocationActionEmbeddingEvent,
+  isChatEmbeddingEvent,
   isDeleteEmbeddingEvent
 } from '../types/events';
 import { PythonEmbeddingService } from '../services/PythonEmbeddingService';
@@ -296,35 +296,35 @@ export class EmbeddingWorker {
     );
 
     await this.subscriber.subscribe(
-      REDIS_CHANNELS.EMBEDDING_LOCATION_ACTION_CREATED,
+      REDIS_CHANNELS.EMBEDDING_CHAT_CREATED,
       (message: string) => {
         const event = JSON.parse(message);
         this.queue.add(event, {
-          jobId: `action-${event.locationActionId}-${Date.now()}`
+          jobId: `action-${event.chatId}-${Date.now()}`
         });
-        console.log(`🎭 Queued location action: ${event.characterName}`);
+        console.log(`🎭 Queued chat: ${event.characterName}`);
       }
     );
 
     await this.subscriber.subscribe(
-      REDIS_CHANNELS.EMBEDDING_LOCATION_ACTION_UPDATED,
+      REDIS_CHANNELS.EMBEDDING_CHAT_UPDATED,
       (message: string) => {
         const event = JSON.parse(message);
         this.queue.add(event, {
-          jobId: `action-upd-${event.locationActionId}-${Date.now()}`
+          jobId: `action-upd-${event.chatId}-${Date.now()}`
         });
-        console.log(`🎭 Queued location action update: ${event.characterName}`);
+        console.log(`🎭 Queued chat update: ${event.characterName}`);
       }
     );
 
     await this.subscriber.subscribe(
-      REDIS_CHANNELS.EMBEDDING_LOCATION_ACTION_DELETED,
+      REDIS_CHANNELS.EMBEDDING_CHAT_DELETED,
       (message: string) => {
         const event = JSON.parse(message);
         this.queue.add(event, {
           jobId: `action-del-${event.entityId}-${Date.now()}`
         });
-        console.log(`🗑️  Queued location action deletion: ${event.entityId}`);
+        console.log(`🗑️  Queued chat deletion: ${event.entityId}`);
       }
     );
 
@@ -337,9 +337,9 @@ export class EmbeddingWorker {
     console.log(`   - ${REDIS_CHANNELS.EMBEDDING_LOCATION_CREATED}`);
     console.log(`   - ${REDIS_CHANNELS.EMBEDDING_LOCATION_UPDATED}`);
     console.log(`   - ${REDIS_CHANNELS.EMBEDDING_LOCATION_DELETED}`);
-    console.log(`   - ${REDIS_CHANNELS.EMBEDDING_LOCATION_ACTION_CREATED}`);
-    console.log(`   - ${REDIS_CHANNELS.EMBEDDING_LOCATION_ACTION_UPDATED}`);
-    console.log(`   - ${REDIS_CHANNELS.EMBEDDING_LOCATION_ACTION_DELETED}`);
+    console.log(`   - ${REDIS_CHANNELS.EMBEDDING_CHAT_CREATED}`);
+    console.log(`   - ${REDIS_CHANNELS.EMBEDDING_CHAT_UPDATED}`);
+    console.log(`   - ${REDIS_CHANNELS.EMBEDDING_CHAT_DELETED}`);
   }
 
   /**
@@ -372,8 +372,8 @@ export class EmbeddingWorker {
       await this.handleDocumentChunkEvent(event);
     } else if (isLocationEmbeddingEvent(event)) {
       await this.handleLocationEvent(event);
-    } else if (isLocationActionEmbeddingEvent(event)) {
-      await this.handleLocationActionEvent(event);
+    } else if (isChatEmbeddingEvent(event)) {
+      await this.handleChatEvent(event);
     }
   }
 
@@ -519,11 +519,11 @@ export class EmbeddingWorker {
   }
 
   /**
-   * Handle location action embedding event
+   * Handle chat embedding event
    */
-  private async handleLocationActionEvent(event: LocationActionEmbeddingEvent): Promise<void> {
+  private async handleChatEvent(event: ChatEmbeddingEvent): Promise<void> {
     try {
-      console.log(`🎭 Processing location action embedding: ${event.locationActionId}`);
+      console.log(`🎭 Processing chat embedding: ${event.chatId}`);
 
       // Get location name
       const Location = mongoose.model('Location');
@@ -543,7 +543,7 @@ export class EmbeddingWorker {
         const cached = await this.redis.get(cacheKey);
         if (cached) {
           const embedding = JSON.parse(cached);
-          await this.saveLocationActionEmbedding(event.locationActionId, locationName, embedding);
+          await this.saveChatEmbedding(event.chatId, locationName, embedding);
           console.log(`✅ Location action embedding from cache: ${event.characterName}`);
           return;
         }
@@ -553,7 +553,7 @@ export class EmbeddingWorker {
       const embedding = await this.generateEmbedding(text);
 
       if (!embedding) {
-        throw new Error(`Failed to generate embedding for location action ${event.locationActionId}`);
+        throw new Error(`Failed to generate embedding for chat ${event.chatId}`);
       }
 
       // ✅ Cache
@@ -562,12 +562,12 @@ export class EmbeddingWorker {
       }
 
       // ✅ Save to DB
-      await this.saveLocationActionEmbedding(event.locationActionId, locationName, embedding);
+      await this.saveChatEmbedding(event.chatId, locationName, embedding);
 
       console.log(`✅ Location action embedding saved: ${event.characterName} @ ${locationName}`);
 
     } catch (error) {
-      console.error('❌ Error processing location action embedding event:', error);
+      console.error('❌ Error processing chat embedding event:', error);
       throw error; // Re-throw to trigger Bull retry
     }
   }
@@ -618,7 +618,7 @@ export class EmbeddingWorker {
   }
 
   /**
-   * Handle delete event (Document, Location, LocationAction)
+   * Handle delete event (Document, Location, Chat)
    * Removes embeddings from Qdrant + ElasticSearch
    */
   private async handleDeleteEvent(event: DeleteEmbeddingEvent): Promise<void> {
@@ -632,8 +632,8 @@ export class EmbeddingWorker {
         case 'location':
           await this.deleteLocationEmbedding(event.entityId);
           break;
-        case 'location_action':
-          await this.deleteLocationActionEmbedding(event.entityId);
+        case 'chat':
+          await this.deleteChatEmbedding(event.entityId);
           break;
       }
 
@@ -660,9 +660,9 @@ export class EmbeddingWorker {
   /**
    * Detect event type from job data
    */
-  private detectEventType(data: any): 'document' | 'document_chunk' | 'location_action' {
+  private detectEventType(data: any): 'document' | 'document_chunk' | 'chat' {
     if (data.chunkId) return 'document_chunk';
-    if (data.locationActionId) return 'location_action';
+    if (data.chatId) return 'chat';
     return 'document';
   }
 
@@ -865,17 +865,17 @@ export class EmbeddingWorker {
   }
 
   /**
-   * Save location action embedding to MongoDB + Qdrant
+   * Save chat embedding to MongoDB + Qdrant
    */
-  private async saveLocationActionEmbedding(locationActionId: string, locationName: string, embedding: number[]): Promise<void> {
+  private async saveChatEmbedding(chatId: string, locationName: string, embedding: number[]): Promise<void> {
     const db = mongoose.connection.db;
     if (!db) {
       throw new Error('Database connection not available');
     }
 
     // ✅ Save to MongoDB
-    const result = await db.collection('locationactions').updateOne(
-      { _id: new mongoose.Types.ObjectId(locationActionId) },
+    const result = await db.collection('chats').updateOne(
+      { _id: new mongoose.Types.ObjectId(chatId) },
       {
         $set: {
           locationName: locationName,
@@ -887,20 +887,20 @@ export class EmbeddingWorker {
     );
 
     if (result.matchedCount === 0) {
-      throw new Error(`LocationAction not found: ${locationActionId}`);
+      throw new Error(`Chat not found: ${chatId}`);
     }
 
     // ✅ ALSO save to Qdrant (for fast vector search)
     try {
-      await this.qdrant.upsert('location_actions', {
+      await this.qdrant.upsert('chats', {
         wait: true,
         points: [{
-          id: this.objectIdToUUID(locationActionId),
+          id: this.objectIdToUUID(chatId),
           vector: embedding,
           payload: {
-            locationActionId,
+            chatId,
             locationName,
-            type: 'location_action'
+            type: 'chat'
           }
         }]
       });
@@ -916,7 +916,7 @@ export class EmbeddingWorker {
    */
   private async saveLocationEmbedding(locationId: string, embedding: number[]): Promise<void> {
     try {
-      await this.qdrant.upsert('location_actions', {
+      await this.qdrant.upsert('chats', {
         wait: true,
         points: [{
           id: this.objectIdToUUID(locationId),
@@ -970,7 +970,7 @@ export class EmbeddingWorker {
    */
   private async deleteLocationEmbedding(locationId: string): Promise<void> {
     try {
-      await this.qdrant.delete('location_actions', {
+      await this.qdrant.delete('chats', {
         wait: true,
         points: [this.objectIdToUUID(locationId)]
       });
@@ -982,17 +982,17 @@ export class EmbeddingWorker {
   }
 
   /**
-   * Delete location action embedding from Qdrant
+   * Delete chat embedding from Qdrant
    */
-  private async deleteLocationActionEmbedding(locationActionId: string): Promise<void> {
+  private async deleteChatEmbedding(chatId: string): Promise<void> {
     try {
-      await this.qdrant.delete('location_actions', {
+      await this.qdrant.delete('chats', {
         wait: true,
-        points: [this.objectIdToUUID(locationActionId)]
+        points: [this.objectIdToUUID(chatId)]
       });
-      console.log(`✅ Deleted location action embedding from Qdrant`);
+      console.log(`✅ Deleted chat embedding from Qdrant`);
     } catch (error) {
-      console.error(`❌ Failed to delete location action:`, error);
+      console.error(`❌ Failed to delete chat:`, error);
       throw error;
     }
   }

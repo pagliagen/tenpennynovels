@@ -20,10 +20,10 @@ export const REDIS_CHANNELS = {
   EMBEDDING_LOCATION_UPDATED: 'embedding:location:updated',
   EMBEDDING_LOCATION_DELETED: 'embedding:location:deleted',
 
-  // Location action events (no chunking)
-  EMBEDDING_LOCATION_ACTION_CREATED: 'embedding:location_action:created',
-  EMBEDDING_LOCATION_ACTION_UPDATED: 'embedding:location_action:updated',
-  EMBEDDING_LOCATION_ACTION_DELETED: 'embedding:location_action:deleted',
+  // Chat events (no chunking)
+  EMBEDDING_CHAT_CREATED: 'embedding:chat:created',
+  EMBEDDING_CHAT_UPDATED: 'embedding:chat:updated',
+  EMBEDDING_CHAT_DELETED: 'embedding:chat:deleted',
 } as const;
 
 /**
@@ -135,11 +135,11 @@ export async function publishLocationDeletedEvent(locationId: string): Promise<v
 }
 
 /**
- * Publish location action created/updated event
+ * Publish chat created/updated event
  */
-export async function publishLocationActionEvent(
+export async function publishChatEvent(
   action: 'created' | 'updated',
-  locationAction: {
+  chat: {
     _id: string;
     characterId: string;
     characterName: string;
@@ -150,42 +150,42 @@ export async function publishLocationActionEvent(
 ): Promise<void> {
   try {
     const channel = action === 'created'
-      ? REDIS_CHANNELS.EMBEDDING_LOCATION_ACTION_CREATED
-      : REDIS_CHANNELS.EMBEDDING_LOCATION_ACTION_UPDATED;
+      ? REDIS_CHANNELS.EMBEDDING_CHAT_CREATED
+      : REDIS_CHANNELS.EMBEDDING_CHAT_UPDATED;
 
     const event = {
       eventId: crypto.randomUUID(),
       timestamp: new Date(),
-      locationActionId: locationAction._id.toString(),
-      characterId: locationAction.characterId,
-      characterName: locationAction.characterName,
-      locationId: locationAction.locationId,
-      content: locationAction.content,
-      actionType: locationAction.actionType
+      chatId: chat._id.toString(),
+      characterId: chat.characterId,
+      characterName: chat.characterName,
+      locationId: chat.locationId,
+      content: chat.content,
+      actionType: chat.actionType
     };
 
     await redis.publish(channel, JSON.stringify(event));
-    logger.debug(`[EmbeddingEvent] LocationAction ${action}: ${locationAction._id}`);
+    logger.debug(`[EmbeddingEvent] Chat ${action}: ${chat._id}`);
   } catch (error: any) {
-    logger.error(`[EmbeddingEvent] Failed to publish location action ${action}:`, error);
+    logger.error(`[EmbeddingEvent] Failed to publish chat ${action}:`, error);
   }
 }
 
 /**
- * Publish location action deleted event
+ * Publish chat deleted event
  */
-export async function publishLocationActionDeletedEvent(locationActionId: string): Promise<void> {
+export async function publishChatDeletedEvent(chatId: string): Promise<void> {
   try {
     const event = {
       eventId: crypto.randomUUID(),
       timestamp: new Date(),
-      entityType: 'location_action' as const,
-      entityId: locationActionId
+      entityType: 'chat' as const,
+      entityId: chatId
     };
 
-    await redis.publish(REDIS_CHANNELS.EMBEDDING_LOCATION_ACTION_DELETED, JSON.stringify(event));
-    logger.debug(`[EmbeddingEvent] LocationAction deleted: ${locationActionId}`);
+    await redis.publish(REDIS_CHANNELS.EMBEDDING_CHAT_DELETED, JSON.stringify(event));
+    logger.debug(`[EmbeddingEvent] Chat deleted: ${chatId}`);
   } catch (error: any) {
-    logger.error('[EmbeddingEvent] Failed to publish location action deleted:', error);
+    logger.error('[EmbeddingEvent] Failed to publish chat deleted:', error);
   }
 }

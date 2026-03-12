@@ -20,7 +20,7 @@ import { EmbeddingWorker } from './workers/embedding-worker';
 // Import models to register them with Mongoose
 import './models/Document';
 import './models/Location';
-import './models/LocationAction';
+import './models/Chat';
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/tenpennynovels';
 const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';

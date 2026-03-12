@@ -477,7 +477,6 @@ audit_2,2024-01-15T13:15:00Z,admin,user_banned,user_management,user,user123,high
       const { User } = await import('@database/models/User');
       const { Character } = await import('@database/models/Character');
       const { Location } = await import('@database/models/Location');
-      const { CharacterWallet, Transaction } = await import('@database/models/Economy');
 
       // Calculate date ranges
       const now = new Date();
@@ -497,8 +496,6 @@ audit_2,2024-01-15T13:15:00Z,admin,user_banned,user_management,user,user123,high
         totalLocations,
         visibleLocations,
         privateLocations,
-        wallets,
-        transactionsToday,
         charactersApprovedToday,
         usersRegisteredToday
       ] = await Promise.all([
@@ -519,10 +516,6 @@ audit_2,2024-01-15T13:15:00Z,admin,user_banned,user_management,user,user123,high
         Location.countDocuments({ isVisible: true }),
         Location.countDocuments({ isPrivate: true }),
 
-        // Economy
-        CharacterWallet.find({}).select('balance').lean(),
-        Transaction.countDocuments({ createdAt: { $gte: startOfToday } }),
-
         // Events today
         Character.countDocuments({
           state: 'APPROVED',
@@ -530,10 +523,6 @@ audit_2,2024-01-15T13:15:00Z,admin,user_banned,user_management,user,user123,high
         }),
         User.countDocuments({ createdAt: { $gte: startOfToday } })
       ]);
-
-      // Calculate economy stats
-      const totalSupply = wallets.reduce((sum: number, wallet: any) => sum + (wallet.balance || 0), 0);
-      const avgBalance = wallets.length > 0 ? Math.round(totalSupply / wallets.length) : 0;
 
       // Calculate uptime (from process start)
       const uptimeSeconds = Math.floor(process.uptime());
@@ -569,11 +558,6 @@ audit_2,2024-01-15T13:15:00Z,admin,user_banned,user_management,user,user123,high
           private: privateLocations,
           active: visibleLocations // Active = visible locations
         },
-        economy: {
-          totalSupply: totalSupply,
-          avgBalance: avgBalance,
-          transactionsToday: transactionsToday
-        },
         performance: {
           avgResponseTime: 'N/A', // Would require APM integration
           errorRate: 'N/A', // Would require error tracking
@@ -581,10 +565,9 @@ audit_2,2024-01-15T13:15:00Z,admin,user_banned,user_management,user,user123,high
           cpuUsage: 'N/A' // Would require OS-level monitoring
         },
         events: {
-          todayTotal: charactersApprovedToday + usersRegisteredToday + transactionsToday,
+          todayTotal: charactersApprovedToday + usersRegisteredToday,
           charactersApproved: charactersApprovedToday,
-          usersRegistered: usersRegisteredToday,
-          transactionsProcessed: transactionsToday
+          usersRegistered: usersRegisteredToday
         }
       };
 

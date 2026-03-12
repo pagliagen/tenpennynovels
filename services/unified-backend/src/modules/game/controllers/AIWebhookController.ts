@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { LocationAction, Location, Character } from '@database/models';
+import { Chat, Location, Character } from '@database/models';
 import { logger } from '../utils/logger';
 import { getSocketIO } from '../websocket/socketInstance';
 
@@ -53,7 +53,7 @@ export class AIWebhookController {
 
       const defaultTag = (location.tags && location.tags.length > 0) ? location.tags[0] : 'general';
 
-      const action = await LocationAction.create({
+      const action = await Chat.create({
         locationId,
         characterId: botCharacterId || '',
         characterName: character?.name || botName || 'Bot',

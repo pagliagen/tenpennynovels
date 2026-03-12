@@ -2,9 +2,6 @@ import { Request, Response } from 'express';
 import { GamingSession } from '@database/models/GamingSession';
 import { SessionManagement } from '@database/models/SessionManagement';
 import { SessionTemplate } from '@database/models/SessionTemplate';
-import { Campaign } from '@database/models/Campaign';
-import { ExperienceGrant } from '@database/models/ExperienceGrant';
-import { CharacterProgression } from '@database/models/CharacterProgression';
 import { Character } from '@database/models/Character';
 import { logger } from '../utils/logger';
 import { successResponse, errorResponse, createResponse, listResponse, getRequestId } from '../utils/apiResponse';
@@ -43,8 +40,7 @@ export class SessionManagementController {
         difficultyLevel,
         maxParticipants,
         isPublic,
-        templateId,
-        campaignId
+        templateId
       } = req.body;
       
       // Load template if provided
@@ -64,34 +60,6 @@ export class SessionManagementController {
         templateData = template;
       }
       
-      // Validate campaign if provided
-      let campaign = null;
-      if (campaignId) {
-        campaign = await Campaign.findById(campaignId);
-        if (!campaign) {
-          res.status(404).json(errorResponse(
-            'Campagna non trovata',
-            'CAMPAIGN_NOT_FOUND',
-            undefined,
-            404,
-            getRequestId(req)
-          ));
-          return;
-        }
-        
-        // Check if master is authorized for this campaign
-        if (!campaign.masterIds.includes(masterId)) {
-          res.status(403).json(errorResponse(
-            'Non autorizzato per questa campagna',
-            'CAMPAIGN_ACCESS_DENIED',
-            undefined,
-            403,
-            getRequestId(req)
-          ));
-          return;
-        }
-      }
-      
       // Create session
       const session = new GamingSession({
         title,
@@ -104,7 +72,6 @@ export class SessionManagementController {
         primaryLocation,
         sessionType: sessionType || templateData?.category || 'investigation',
         difficultyLevel: difficultyLevel || templateData?.difficulty || 'medium',
-        campaignId: campaign?._id,
         
         // Set experience rewards from template or defaults
         baseExperienceReward: templateData?.experienceGuidance?.baseExperienceReward || 5,
@@ -166,11 +133,6 @@ export class SessionManagementController {
       
       await sessionMgmt.save();
       
-      // Add session to campaign if specified
-      if (campaign) {
-        await campaign.addSession(session._id.toString());
-      }
-      
       // If template was used, increment usage counter
       if (templateData) {
         templateData.timesUsed++;
@@ -182,8 +144,7 @@ export class SessionManagementController {
         masterId,
         title,
         sessionDate,
-        templateUsed: !!templateId,
-        campaignId: campaign?._id
+        templateUsed: !!templateId
       });
       
       res.json(createResponse(
@@ -232,7 +193,6 @@ export class SessionManagementController {
       
       const sessions = await GamingSession.find(filter)
         .populate('primaryLocation', 'name description')
-        .populate('campaignId', 'title currentChapter')
         .sort({ sessionDate: -1 })
         .limit(parseInt(limit as string))
         .skip(parseInt(skip as string));
@@ -551,184 +511,6 @@ export class SessionManagementController {
   }
 
   /**
-   * End session and assign experience
-   * POST /game/sessions/:sessionId/end
-   */
-  static async endSession(req: Request<{ sessionId: string }>, res: Response): Promise<void> {
-    const { sessionId } = req.params;
-    const masterId = req.character!.characterId;
-    const { 
-      sessionSummary, 
-      significantEvents, 
-      customExperienceGrants,
-      masterNotes 
-    } = req.body;
-    
-    try {
-      const session = await GamingSession.findOne({ 
-        _id: sessionId, 
-        masterId,
-        status: 'active' 
-      });
-      
-      if (!session) {
-        res.status(404).json(errorResponse(
-          'Sessione attiva non trovata',
-          'SESSION_NOT_FOUND',
-          undefined,
-          404,
-          getRequestId(req)
-        ));
-        return;
-      }
-      
-      const sessionMgmt = await SessionManagement.findOne({ sessionId });
-      if (!sessionMgmt) {
-        res.status(404).json(errorResponse(
-          'Dati di gestione sessione non trovati',
-          'SESSION_MGMT_NOT_FOUND',
-          undefined,
-          404,
-          getRequestId(req)
-        ));
-        return;
-      }
-      
-      // Calculate session metrics
-      const endTime = new Date();
-      const sessionDuration = sessionMgmt.liveSession.actualStartTime 
-        ? Math.floor((endTime.getTime() - sessionMgmt.liveSession.actualStartTime.getTime()) / (1000 * 60))
-        : 0;
-      
-      // Update session
-      session.status = 'completed';
-      session.endTime = endTime;
-      session.summary = sessionSummary;
-      session.significantEvents = significantEvents || [];
-      session.masterNotes = masterNotes;
-      session.totalActiveTime = sessionDuration;
-      
-      await session.save();
-      
-      // Update session management
-      sessionMgmt.liveSession.isActive = false;
-      sessionMgmt.analytics.totalActiveTime = sessionDuration;
-      await sessionMgmt.save();
-      
-      // Assign experience points
-      const experienceResults = [];
-      
-      for (const participant of session.participants) {
-        if (participant.wasActive) {
-          try {
-            // Check for custom experience grant for this participant
-            const customGrant = customExperienceGrants?.find(
-              (grant: any) => grant.characterId === participant.characterId.toString()
-            );
-            
-            const experiencePoints = customGrant?.experiencePoints || 
-              Math.round(session.baseExperienceReward * session.experienceMultiplier);
-            const skillPoints = customGrant?.skillPoints || 
-              Math.round(session.baseSkillPointReward * session.experienceMultiplier);
-            
-            // Create experience grant
-            const grant = new ExperienceGrant({
-              characterId: participant.characterId,
-              grantedBy: masterId,
-              grantedByType: 'master',
-              grantedByName: req.character!.characterName,
-              grantType: 'session_participation',
-              category: session.sessionType,
-              experiencePoints,
-              skillPoints,
-              reason: `Session participation: ${session.title}`,
-              masterComment: customGrant?.comment || '',
-              sessionId: session._id,
-              sessionDetails: {
-                sessionDate: session.sessionDate,
-                sessionTitle: session.title,
-                primaryLocation: session.primaryLocation,
-                sessionType: session.sessionType,
-                participants: session.participants.map((p: any) => p.characterId),
-                difficultyRating: session.difficultyLevel,
-                masterNotes: session.masterNotes
-              }
-            });
-            
-            await grant.save();
-            
-            // Update character progression
-            await this.updateCharacterProgression(
-              participant.characterId.toString(),
-              experiencePoints,
-              skillPoints
-            );
-            
-            session.experienceGrants.push(grant._id);
-            experienceResults.push({
-              characterId: participant.characterId,
-              characterName: participant.characterName,
-              experiencePoints,
-              skillPoints,
-              result: true
-            });
-            
-          } catch (error: any) {
-            experienceResults.push({
-              characterId: participant.characterId,
-              characterName: participant.characterName,
-              result: false,
-              error: error instanceof Error ? error.message : 'Grant failed'
-            });
-          }
-        }
-      }
-      
-      session.experienceAssigned = true;
-      await session.save();
-      
-      // Notify participants about session end and experience
-      await this.notifySessionParticipants(sessionId, {
-        type: 'session_ended',
-        message: 'La sessione di gioco è conclusa. I punti esperienza sono stati assegnati!',
-        experienceResults
-      });
-      
-      logger.info('Gaming session ended with experience assignment', {
-        sessionId,
-        masterId,
-        duration: sessionDuration,
-        experienceGrantsCreated: experienceResults.filter(r => r.result).length
-      });
-      
-      res.json(successResponse(
-        {
-          sessionId,
-          duration: sessionDuration,
-          experienceResults
-        },
-        'Sessione terminata ed esperienza assegnata',
-        getRequestId(req)
-      ));
-      
-    } catch (error: any) {
-      logger.error('Session end failed', {
-        sessionId,
-        masterId,
-        error: error instanceof Error ? error.message : String(error)
-      });
-      
-      res.status(500).json(errorResponse(
-        'Impossibile terminare la sessione',
-        'END_SESSION_ERROR',
-        undefined,
-        500,
-        getRequestId(req)
-      ));
-    }
-  }
-
-  /**
    * Get public sessions (for player browsing)
    * GET /game/sessions/public
    */
@@ -755,10 +537,10 @@ export class SessionManagementController {
       const sessions = await GamingSession.find(filter)
         .populate('primaryLocation', 'name description')
         .populate('masterId', 'name')
-        .populate('campaignId', 'title')
         .select(`
           title description sessionDate estimatedDuration sessionType difficultyLevel
-          primaryLocation masterId campaignId
+          title description sessionDate estimatedDuration sessionType difficultyLevel
+          primaryLocation masterId
         `)
         .sort({ sessionDate: 1 })
         .limit(parseInt(limit as string));
@@ -898,7 +680,6 @@ export class SessionManagementController {
   private static async notifySessionParticipants(sessionId: string, notification: any): Promise<void> {
     try {
       const { redis } = await import('@config/runtime');
-      const redisClient = redis.getClient();
       
       await redis.publish('session:notification', JSON.stringify({
         sessionId,
@@ -907,34 +688,6 @@ export class SessionManagementController {
       }));
     } catch (error: any) {
       logger.warn('Failed to notify session participants', { sessionId, error });
-    }
-  }
-
-  private static async updateCharacterProgression(
-    characterId: string,
-    experiencePoints: number,
-    skillPoints: number
-  ): Promise<void> {
-    try {
-      const progression = await CharacterProgression.findOne({ characterId });
-      
-      if (progression) {
-        progression.availableExperiencePoints += experiencePoints;
-        progression.availableSkillPoints += skillPoints;
-        progression.totalExperienceEarned += experiencePoints;
-        progression.totalSkillPointsEarned += skillPoints;
-        progression.activityMetrics.sessionsParticipated++;
-        progression.lastUpdated = new Date();
-        
-        await progression.save();
-      }
-    } catch (error: any) {
-      logger.error('Failed to update character progression', {
-        characterId,
-        experiencePoints,
-        skillPoints,
-        error: error instanceof Error ? error.message : String(error)
-      });
     }
   }
 

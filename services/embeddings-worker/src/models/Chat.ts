@@ -1,10 +1,10 @@
 /**
- * LocationAction Model (Simplified for Embeddings Worker)
+ * Chat Model (Simplified for Embeddings Worker)
  * Only includes fields needed for embedding updates
  */
 import mongoose, { Schema } from 'mongoose';
 
-const LocationActionSchema = new Schema(
+const ChatSchema = new Schema(
   {
     characterId: { type: String, required: true },
     locationId: { type: String, required: true },
@@ -35,9 +35,9 @@ const LocationActionSchema = new Schema(
   },
   {
     timestamps: true,
-    collection: 'locationactions',
-    strict: false // Allow fields not defined in schema
+    collection: 'chats',
+    strict: false
   }
 );
 
-export default mongoose.model('LocationAction', LocationActionSchema);
+export default mongoose.model('Chat', ChatSchema);

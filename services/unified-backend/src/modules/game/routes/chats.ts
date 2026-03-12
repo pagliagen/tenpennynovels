@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { LocationChatsController } from '../controllers/LocationChatsController';
+import { ChatController } from '../controllers/ChatController';
 import { AuthMiddleware } from '../middleware/auth';
 import { requireGamePermission } from '../middleware/gamePermissions';
 
@@ -9,42 +9,42 @@ const router = Router();
 router.post('/',
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:chat:send'), // BLOCKED for DRAFT
-  LocationChatsController.createMessage
+  ChatController.createMessage
 );
 
 router.get('/:locationId',
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:chat:read'),
-  LocationChatsController.getMessages
+  ChatController.getMessages
 );
 
 router.patch('/:messageId',
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:chat:edit'),
-  LocationChatsController.updateMessage
+  ChatController.updateMessage
 );
 
 router.delete('/:messageId',
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:chat:delete'),
-  LocationChatsController.deleteMessage
+  ChatController.deleteMessage
 );
 
 // Social conflicts (skill-based interactions)
 router.post('/social-conflict',
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:chat:social-conflicts'),
-  LocationChatsController.createSocialConflict
+  ChatController.createSocialConflict
 );
 
 // Admin operations
 router.delete('/:locationId/clear',
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:moderation:chat:clear'),
-  LocationChatsController.clearChat
+  ChatController.clearChat
 );
 
 // Bot integration (requires AI_GATEWAY_WEBHOOK_SECRET)
-router.post('/bot', LocationChatsController.createBotMessage);
+router.post('/bot', ChatController.createBotMessage);
 
 export default router;

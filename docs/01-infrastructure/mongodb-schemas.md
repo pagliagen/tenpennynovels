@@ -4,17 +4,17 @@
 
 **Status**: ✅ Production Ready | **Last Updated**: 2026-03-01
 
-Complete reference per tutti gli schema MongoDB di TenPennyNovels (42 collections).
+Complete reference per tutti gli schema MongoDB di TenPennyNovels (36 collections).
 
 ---
 
 ## Overview
 
-TenPennyNovels utilizza MongoDB 7.0 come database principale con **42 collections** organizzate per categoria funzionale. Tutti gli schema sono definiti con Mongoose 9.2.1 e includono indexes ottimizzati per performance.
+TenPennyNovels utilizza MongoDB 7.0 come database principale con **36 collections** organizzate per categoria funzionale. Tutti gli schema sono definiti con Mongoose 9.2.1 e includono indexes ottimizzati per performance.
 
 **Database**: `tenpennynovels`
 **ORM**: Mongoose 9.2.1
-**Total Collections**: 42
+**Total Collections**: 36
 **Auth Mode**: Enabled (`--auth`)
 
 ---
@@ -38,7 +38,6 @@ flowchart LR
         Character[Character - Dati base personaggi]
         CharacterProgression[CharacterProgression - Stats, skills, experience]
         CharacterFinances[CharacterFinances - Credits, transactions]
-        BackgroundQuestion[BackgroundQuestion - Domande background]
     end
 ```
 
@@ -47,25 +46,22 @@ flowchart LR
 flowchart LR
     subgraph Locations["Locations & Gameplay"]
         Location[Location - Hierarchical locations]
-        LocationAction[LocationAction - Azioni disponibili]
-        LocationTag[LocationTag - Tags location]
+        Chat[Chat - Messaggi chat location]
         Route[Route - Collegamenti tra locations]
-        BlockNotes[BlockNotes - Note Master]
+        CharacterNotes[CharacterNotes - Note Master]
     end
 ```
 
-### Housing & Economy (4)
+### Housing & Economy (1)
 ```mermaid
 flowchart LR
     subgraph Housing["Housing & Economy"]
-        HousingProperty[HousingProperty - Proprietà immobiliari]
-        EstateTransaction[EstateTransaction - Transazioni immobiliari]
-        Economy[Economy - Configurazioni economiche]
-        FinancialTransaction[FinancialTransaction - Transazioni finanziarie]
+        LocationProperty[LocationProperty - Proprietà immobiliari]
     end
 ```
+*Removed: EstateTransaction, Economy, FinancialTransaction*
 
-### Messaging & Communication (7)
+### Messaging & Communication (6)
 ```mermaid
 flowchart LR
     subgraph MsgComm["Messaging & Communication"]
@@ -74,10 +70,10 @@ flowchart LR
         OffGameChat[OffGameChat - Chat off-game]
         OffGameChatMessage[OffGameChatMessage - Messaggi chat]
         OffGameChatParticipant[OffGameChatParticipant - Partecipanti]
-        MessagingLegacy[Messaging - Sistema legacy]
         MessageReport[MessageReport - Segnalazioni]
     end
 ```
+*Removed: Messaging (legacy)*
 
 ### Documents & Content (3)
 ```mermaid
@@ -89,16 +85,16 @@ flowchart LR
     end
 ```
 
-### Gaming Sessions (4)
+### Gaming Sessions (3)
 ```mermaid
 flowchart LR
     subgraph Gaming["Gaming Sessions"]
         GamingSession[GamingSession - Sessioni di gioco]
         SessionManagement[SessionManagement - Gestione sessioni]
         SessionTemplate[SessionTemplate - Template sessioni]
-        Campaign[Campaign - Campagne di gioco]
     end
 ```
+*Removed: Campaign*
 
 ### Tickets & Support (3)
 ```mermaid
@@ -115,7 +111,7 @@ flowchart LR
 flowchart LR
     subgraph Corp["Corporations & Relationships"]
         Corporation[Corporation - Clubs/aziende/gang]
-        Relationship[Relationship - Relazioni tra character]
+        CharacterRelation[CharacterRelation - Relazioni tra character]
     end
 ```
 
@@ -137,13 +133,8 @@ flowchart LR
     end
 ```
 
-### Experience & Progression (1)
-```mermaid
-flowchart LR
-    subgraph XP["Experience & Progression"]
-        ExperienceGrant[ExperienceGrant - Grant XP giornalieri]
-    end
-```
+### Experience & Progression (0)
+*Removed: ExperienceGrant*
 
 ### Moderation & Admin (2)
 ```mermaid
@@ -418,12 +409,12 @@ London (root)
 
 ---
 
-### HousingProperty
+### LocationProperty
 
 **Purpose**: Proprietà immobiliari (rental/purchase)
 
 ```typescript
-interface IHousingProperty {
+interface ILocationProperty {
   _id: ObjectId;
   locationId: ObjectId;       // ref: Location
   name: string;
@@ -700,7 +691,7 @@ interface ICorporation {
   }>;
 
   // Housing Integration
-  properties: ObjectId[];     // ref: HousingProperty (owned by corporation)
+  properties: ObjectId[];     // ref: LocationProperty (owned by corporation)
 
   // Finances
   treasury: number;           // Corporation funds (£)
@@ -1021,7 +1012,7 @@ docker exec -i tenpennynovels-mongodb mongorestore \
 
 ## Quick Reference
 
-**Total Collections**: 42
+**Total Collections**: 36
 **Database**: `tenpennynovels`
 **MongoDB Version**: 7.0
 **ORM**: Mongoose 9.2.1

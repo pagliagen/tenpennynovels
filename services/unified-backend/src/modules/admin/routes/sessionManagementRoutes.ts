@@ -41,9 +41,4 @@ router.get('/session-templates',
   SessionManagementController.getSessionTemplates
 );
 
-// Campaign management
-router.get('/campaigns',
-  SessionManagementController.getCampaigns
-);
-
 export default router;

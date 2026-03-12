@@ -208,12 +208,12 @@ src/modules/game/
 │   ├── CharacterSkillsController.ts    # Skill management
 │   ├── CharacterCorporationsController.ts # Corporation membership
 │   ├── LocationController.ts           # Location operations
-│   ├── HousingController.ts           # Housing system
+│   ├── LocationPropertyController.ts           # Housing system
 │   ├── SessionController.ts            # Gaming sessions
 │   ├── CorporationController.ts        # Corporations
 │   ├── SkillController.ts              # Skills
 │   ├── OccupationController.ts         # Occupations
-│   ├── RelationshipController.ts       # Relationships
+│   ├── CharacterRelationController.ts  # Character Relations
 │   └── ... (20+ controllers)
 ├── routes/
 │   └── index.ts                        # Game router (mounted at /game)
@@ -416,17 +416,17 @@ export async function connectDatabase() {
 
 **Categories**:
 1. **Core** (3): User, CharacterSession, SystemConfiguration
-2. **Characters** (4): Character, CharacterProgression, CharacterFinances, BackgroundQuestion
-3. **Locations & Gameplay** (5): Location, LocationAction, LocationTag, Route, BlockNotes
-4. **Housing & Economy** (4): HousingProperty, EstateTransaction, Economy, FinancialTransaction
+2. **Characters** (3): Character, CharacterProgression, CharacterFinances
+3. **Locations & Gameplay** (4): Location, Chat, Route, CharacterNotes
+4. **Housing & Economy** (1): LocationProperty *(removed: EstateTransaction, Economy, FinancialTransaction)*
 5. **Messaging** (7): OnGameMessage, OnGameMessageView, OffGameChat, OffGameChatMessage, etc.
 6. **Documents** (3): Document, DocumentSection, DocumentChunk
-7. **Gaming Sessions** (4): GamingSession, SessionManagement, SessionTemplate, Campaign
+7. **Gaming Sessions** (3): GamingSession, SessionManagement, SessionTemplate *(removed: Campaign)*
 8. **Tickets** (3): Ticket, TicketMessage, TicketNotification
-9. **Corporations** (2): Corporation, Relationship
+9. **Corporations** (2): Corporation, CharacterRelation
 10. **Game Rules** (3): Occupation, Skill, SocialClassConfig
 11. **Items** (1): Item
-12. **Experience** (1): ExperienceGrant
+12. **Experience** (0): *(removed: ExperienceGrant)*
 13. **Moderation** (2): ChatModerationAction, BroadcastMessage
 14. **System** (1): WebSocketEvent
 

@@ -82,7 +82,7 @@ export interface AuthenticatedRequest extends Request {
 }
 
 // Game Action Types
-export type LocationActionType = 
+export type ChatActionType = 
   | 'standard' 
   | 'master' 
   | 'moderation' 
@@ -94,9 +94,9 @@ export type LocationActionType =
 
 export type MessageVisibility = 'public' | 'whisper' | 'master_only';
 
-export interface LocationAction {
+export interface ChatMessage {
   id: string;
-  actionType: LocationActionType;
+  actionType: ChatActionType;
   characterId: string;
   characterName: string;
   content: string;
@@ -500,7 +500,7 @@ export interface Inventory {
 }
 
 // WebSocket Event Types
-export interface SocketLocationAction extends LocationAction {
+export interface SocketChatMessage extends ChatMessage {
   broadcastTo: string[];
 }
 

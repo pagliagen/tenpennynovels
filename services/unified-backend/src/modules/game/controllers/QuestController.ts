@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { GamingSession, Location, LocationAction } from '@database/models';
+import { GamingSession, Location, Chat } from '@database/models';
 import { logger } from '../utils/logger';
 import { successResponse, errorResponse, getRequestId } from '../utils/apiResponse';
 
@@ -440,7 +440,7 @@ export class QuestController {
 
       // Reveal all hidden actions for this location
       const now = new Date();
-      await LocationAction.updateMany(
+      await Chat.updateMany(
         {
           locationId: session.primaryLocation.toString(),
           isHidden: true,

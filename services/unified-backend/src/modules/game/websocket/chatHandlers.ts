@@ -1,6 +1,6 @@
 import { Socket, Server as SocketIOServer } from 'socket.io';
 import { logger } from '../utils/logger';
-import { LocationAction, Location, OffGameChat, OffGameChatMessage, OffGameChatParticipant } from '@database/models';
+import { Chat, Location, OffGameChat, OffGameChatMessage, OffGameChatParticipant } from '@database/models';
 
 // Chat action types as defined in CLAUDE.md
 export type ActionType = 
@@ -13,7 +13,7 @@ export type ActionType =
   | 'dice_action'
   | 'item_usage';
 
-export interface LocationAction {
+export interface Chat {
   actionType: ActionType;
   characterId: string;
   characterName: string;
@@ -278,7 +278,7 @@ function getActionVisibility(actionType: ActionType): 'public' | 'whisper' | 'ma
 /**
  * Emit location action to appropriate recipients
  */
-async function emitLocationAction(io: SocketIOServer, action: LocationAction): Promise<void> {
+async function emitChat(io: SocketIOServer, action: Chat): Promise<void> {
   const locationRoom = `location_${action.locationId}`;
   
   switch (action.visibility) {

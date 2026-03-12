@@ -4,7 +4,7 @@
 
 **Status**: ✅ Production Ready | **Last Updated**: 2026-03-01
 
-Sistema di embeddings event-driven per ricerca semantica su documenti e location actions.
+Sistema di embeddings event-driven per ricerca semantica su documenti e chat.
 
 ---
 
@@ -14,7 +14,7 @@ TenPennyNovels utilizza embeddings vettoriali (vector representations) di testo 
 
 **Use Cases**:
 - **Documents**: "Come creare un personaggio?" → trova documenti su creazione personaggi
-- **Location Actions**: "Azioni di Lord Blackwood al pub" → trova tutte le azioni del personaggio in quella location
+- **Chat**: "Azioni di Lord Blackwood al pub" → trova tutte le azioni del personaggio in quella location
 - **Bot Memories** (BotAI): Retrieval semantico dei ricordi bot basato su similarity
 
 ---
@@ -134,7 +134,7 @@ curl -X POST http://localhost:5001/embed/batch \
 const REDIS_CHANNELS = {
   EMBEDDING_DOCUMENT_CREATED: 'embedding:document:created',
   EMBEDDING_DOCUMENT_UPDATED: 'embedding:document:updated',
-  EMBEDDING_LOCATION_ACTION_CREATED: 'embedding:location_action:created',
+  EMBEDDING_CHAT_CREATED: 'embedding:chat:created',
 } as const;
 ```
 
@@ -237,13 +237,13 @@ interface DocumentEmbeddingEvent {
 }
 ```
 
-### Location Action Embedding Event
+### Chat Embedding Event
 
 ```typescript
-interface LocationActionEmbeddingEvent {
+interface ChatEmbeddingEvent {
   eventId: string;
   timestamp: Date;
-  locationActionId: string;  // MongoDB ObjectId
+  chatId: string;  // MongoDB ObjectId
   characterId: string;
   characterName: string;
   locationId: string;
@@ -613,7 +613,7 @@ Support different models for different use cases:
 const MODEL_CONFIG = {
   documents: 'paraphrase-multilingual-MiniLM-L12-v2',
   botMemories: 'paraphrase-multilingual-MiniLM-L12-v2',
-  locationActions: 'all-MiniLM-L6-v2'  // Faster for high-volume
+  chats: 'all-MiniLM-L6-v2'  // Faster for high-volume
 };
 ```
 

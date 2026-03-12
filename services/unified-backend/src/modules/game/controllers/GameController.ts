@@ -1,12 +1,12 @@
 import { Request, Response } from 'express';
-import { Character, Location, LocationAction, Skill, Item, Occupation, User, OffGameChat, OffGameChatMessage, OffGameChatParticipant, CharacterFinances, Campaign } from '@database/models';
-import { ApiResponse, DiceResult, LocationActionType } from '../types/game';
+import { Character, Location, Chat, Skill, Item, Occupation, User, OffGameChat, OffGameChatMessage, OffGameChatParticipant, CharacterFinances } from '@database/models';
+import { ApiResponse, DiceResult, ChatActionType } from '../types/game';
 import { logger } from '../utils/logger';
 import { LocationService } from '../services/LocationService';
 import { redis } from '@config/runtime/redis';
 import { CharacterCreationConfigService } from '@shared/services/CharacterCreationConfigService';
 import { successResponse, errorResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
-import { getWeather, clearWeatherCache, WeatherService } from '../services/WeatherService';
+import { getWeather } from '../services/WeatherService';
 
 export class GameController {
   /**
@@ -347,90 +347,7 @@ export class GameController {
         unreadOffGameMessages
       };
 
-      // Get weather data from campaign
-      let weatherData = null;
-      try {
-        const campaign = await (Campaign.findOne({
-          $or: [
-            { 'players.characterId': characterId },
-            { isDefault: true }
-          ]
-        }).lean() as any);
-
-        if (campaign && campaign.weather && campaign.gameTime) {
-          // Check for manual override first
-          if (
-            campaign.weather.manualOverride?.active &&
-            campaign.weather.manualOverride.expiresAt &&
-            new Date(campaign.weather.manualOverride.expiresAt) > new Date()
-          ) {
-            // Use manual override
-            weatherData = {
-              condition: campaign.weather.manualOverride.condition || campaign.weather.currentCondition,
-              temperature: campaign.weather.manualOverride.temperature ?? campaign.weather.temperature,
-              moonPhase: WeatherService.calculateMoonPhase(
-                new Date(campaign.gameTime.currentDate)
-              ),
-              gameDate: campaign.gameTime.currentDate
-            };
-          } else {
-            // Calculate weather from current game date
-            const gameDate = new Date(campaign.gameTime.currentDate);
-            const startDate = new Date(campaign.gameTime.startDate);
-            const moonPhase = WeatherService.calculateMoonPhase(gameDate);
-
-            const hoursSinceUpdate =
-              (Date.now() - new Date(campaign.weather.lastUpdated).getTime()) / (1000 * 60 * 60);
-
-            const { condition, temperature } = WeatherService.calculateWeather(
-              gameDate,
-              campaign.weather.currentCondition,
-              hoursSinceUpdate
-            );
-
-            // Update campaign if weather changed
-            if (condition !== campaign.weather.currentCondition) {
-              await Campaign.updateOne(
-                { _id: campaign._id },
-                {
-                  $set: {
-                    'weather.currentCondition': condition,
-                    'weather.temperature': temperature,
-                    'weather.lastUpdated': new Date()
-                  }
-                }
-              );
-            }
-
-            weatherData = {
-              condition,
-              temperature,
-              moonPhase,
-              gameDate: gameDate.toISOString()
-            };
-          }
-        } else {
-          // Fallback if campaign not found or missing weather data
-          weatherData = {
-            condition: 'fog',
-            temperature: 5,
-            moonPhase: 'waning',
-            gameDate: new Date('1888-01-15T12:00:00Z').toISOString()
-          };
-        }
-      } catch (error) {
-        logger.error('Failed to get weather data:', error);
-        // Fallback weather data
-        weatherData = {
-          condition: 'fog',
-          temperature: 5,
-          moonPhase: 'waning',
-          gameDate: new Date('1888-01-15T12:00:00Z').toISOString()
-        };
-      }
-
-      // Add weather to response
-      responseData.weather = weatherData;
+      responseData.weather = await getWeather();
 
       logger.info('Game initialized', {
         userId,
@@ -522,7 +439,7 @@ export class GameController {
       }
 
       // Get actions that character can see
-      const actions = await (LocationAction.find(query)
+      const actions = await (Chat.find(query)
         .sort({ timestamp: -1 })
         .limit(limit) as any);
 
@@ -655,12 +572,12 @@ export class GameController {
     };
   }
 
-  private static validateActionPermissions(actionType: LocationActionType, roles: string[]): boolean {
+  private static validateActionPermissions(actionType: ChatActionType, roles: string[]): boolean {
     const requiredRoles = GameController.getRequiredRoles(actionType);
     return requiredRoles.some(role => roles.includes(role));
   }
 
-  private static getRequiredRoles(actionType: LocationActionType): string[] {
+  private static getRequiredRoles(actionType: ChatActionType): string[] {
     const roleMap = {
       standard: ['personaggio'],
       master: ['master', 'gestore'],
@@ -675,7 +592,7 @@ export class GameController {
     return roleMap[actionType] || ['personaggio'];
   }
 
-  private static getActionVisibility(actionType: LocationActionType, targetCharacters?: string[]): 'public' | 'whisper' | 'master_only' {
+  private static getActionVisibility(actionType: ChatActionType, targetCharacters?: string[]): 'public' | 'whisper' | 'master_only' {
     if (actionType === 'whisper' && targetCharacters && targetCharacters.length > 0) {
       return 'whisper';
     }
@@ -685,7 +602,7 @@ export class GameController {
     return 'public';
   }
 
-  private static async getBroadcastTargets(location: any, actionType: LocationActionType, targetCharacters?: string[]): Promise<string[]> {
+  private static async getBroadcastTargets(location: any, actionType: ChatActionType, targetCharacters?: string[]): Promise<string[]> {
     if (actionType === 'whisper' && targetCharacters) {
       // Include sender + targets for whispers
       return targetCharacters;
@@ -979,126 +896,6 @@ export class GameController {
 
     // Check if mapped social class is in allowed list
     return item.financialSettings.socialClassesEligible.includes(mappedClass);
-  }
-
-  /**
-   * POST /game/time/advance
-   * Advance game time (Master only)
-   * Body: { hours?: number, days?: number }
-   */
-  static async advanceTime(req: Request, res: Response): Promise<void> {
-    try {
-      const { hours, days } = req.body;
-      const characterId = req.character!.characterId;
-
-      // Validate input
-      if (!hours && !days) {
-        res.status(400).json(errorResponse(
-          'Fornire "hours" o "days" da avanzare',
-          'MISSING_TIME_PARAMETERS',
-          undefined,
-          400,
-          getRequestId(req)
-        ));
-        return;
-      }
-
-      // Find campaign for this character
-      const campaign = await Campaign.findOne({
-        'players.characterId': characterId
-      });
-
-      if (!campaign) {
-        res.status(404).json(errorResponse(
-          'Campaign non trovato per questo personaggio',
-          'CAMPAIGN_NOT_FOUND',
-          undefined,
-          404,
-          getRequestId(req)
-        ));
-        return;
-      }
-
-      // Verify character is a master
-      const isMaster = campaign.masterIds.some(
-        (id: any) => id.toString() === characterId
-      );
-
-      if (!isMaster) {
-        res.status(403).json(errorResponse(
-          'Solo i master possono avanzare il tempo',
-          'MASTER_REQUIRED',
-          undefined,
-          403,
-          getRequestId(req)
-        ));
-        return;
-      }
-
-      // Calculate total hours to advance
-      const hoursToAdvance = (days || 0) * 24 + (hours || 0);
-
-      if (hoursToAdvance <= 0) {
-        res.status(400).json(errorResponse(
-          'Il tempo da avanzare deve essere positivo',
-          'INVALID_TIME_VALUE',
-          undefined,
-          400,
-          getRequestId(req)
-        ));
-        return;
-      }
-
-      // Advance time using Campaign method
-      await (campaign as any).advanceTime(hoursToAdvance);
-
-      // Broadcast weather change via WebSocket
-      try {
-        const redisPublisher = redis.getPublisher();
-        await redisPublisher.publish('game:weather_changed', JSON.stringify({
-          campaignId: campaign._id.toString(),
-          weather: campaign.weather,
-          gameDate: campaign.gameTime.currentDate
-        }));
-      } catch (redisError) {
-        logger.error('Failed to publish weather change to Redis:', redisError);
-        // Continue even if Redis publish fails
-      }
-
-      logger.info('Time advanced successfully', {
-        campaignId: campaign._id,
-        masterId: characterId,
-        hoursAdvanced: hoursToAdvance,
-        newGameDate: campaign.gameTime.currentDate,
-        newWeather: campaign.weather.currentCondition,
-        newTemperature: campaign.weather.temperature,
-        newMoonPhase: campaign.weather.moonPhase
-      });
-
-      res.json(successResponse(
-        {
-          newGameDate: campaign.gameTime.currentDate,
-          weather: {
-            condition: campaign.weather.currentCondition,
-            temperature: campaign.weather.temperature,
-            moonPhase: campaign.weather.moonPhase,
-            gameDate: campaign.gameTime.currentDate
-          }
-        },
-        undefined,
-        getRequestId(req)
-      ));
-
-    } catch (error) {
-      logger.error('Advance time error:', error);
-      res.status(500).json(errorResponse(
-        'Errore durante l\'avanzamento del tempo',
-        'ADVANCE_TIME_ERROR',
-        undefined,
-        500,
-        getRequestId(req)
-      ));
-    }
   }
 
 }

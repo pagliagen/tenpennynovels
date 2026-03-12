@@ -9,14 +9,12 @@ export { CharacterSession, type ICharacterSession } from './CharacterSession';
 
 // Character System
 export { Character, type ICharacter } from './Character';
-export { BackgroundQuestion, type IBackgroundQuestion } from './BackgroundQuestion';
 export { Skill, SKILL_CATEGORY_LABELS, type ISkill } from './Skill';
 
 // Location System
 export { Location, type ILocation } from './Location';
-export { LocationAction, type ILocationAction } from './LocationAction';
-export { LocationTag, type ILocationTag } from './LocationTag';
-export { BlockNotes, type IBlockNotes } from './BlockNotes';
+export { Chat, type IChat } from './Chat';
+export { CharacterNotes, type ICharacterNotes } from './CharacterNotes';
 
 // Corporation System
 export { 
@@ -41,35 +39,6 @@ export {
   ItemCategory,
   ITEM_CATEGORY_LABELS
 } from './Item';
-
-// Economy System
-export { 
-  CharacterWallet,
-  Transaction,
-  EconomicReport,
-  type ICharacterWallet,
-  type ITransaction,
-  type IEconomicReport
-} from './Economy';
-
-// Messaging System (OnGame messages)
-export {
-  InGameMessage,
-  MessageInboxEntry,
-  MessageOutboxEntry,
-  MessageFolder,
-  MessageLabel,
-  LocationChatMessage,
-  type IInGameMessage,
-  type IMessageInboxEntry,
-  type IMessageOutboxEntry,
-  type IMessageFolder,
-  type IMessageLabel,
-  type ILocationChatMessage,
-  VictorianMessageType,
-  VictorianDeliveryMethod,
-  LocationMessageType
-} from './Messaging';
 
 // OffGame Chat System (character-to-character OOC)
 export {
@@ -97,15 +66,15 @@ export {
 
 // Relationship System
 export {
-  RelationshipType,
-  CharacterRelationship,
-  RelationshipProposal,
-  RelationshipAction,
-  type IRelationshipType,
-  type ICharacterRelationship,
-  type IRelationshipProposal,
-  type IRelationshipAction
-} from './Relationship';
+  CharacterRelation,
+  CharacterRelationType,
+  CharacterRelationProposal,
+  CharacterRelationAction,
+  type ICharacterRelationType,
+  type ICharacterRelation,
+  type ICharacterRelationProposal,
+  type ICharacterRelationAction
+} from './CharacterRelation';
 
 // Occupation System
 export {
@@ -125,6 +94,11 @@ export {
   TicketMessage,
   type ITicketMessage
 } from './TicketMessage';
+export {
+  TicketNotification,
+  type TicketNotificationType,
+  type ITicketNotification
+} from './TicketNotification';
 
 // Financial System
 export {
@@ -135,27 +109,14 @@ export {
   CharacterFinances,
   type ICharacterFinances
 } from './CharacterFinances';
-export {
-  FinancialTransaction,
-  type IFinancialTransaction,
-  type TransactionType
-} from './FinancialTransaction';
 
-// Housing System
+// Location Property System
 export {
-  HousingProperty,
-  type IHousingProperty
-} from './HousingProperty';
-export {
-  EstateTransaction,
-  type IEstateTransaction
-} from './EstateTransaction';
+  LocationProperty,
+  type ILocationProperty
+} from './LocationProperty';
 
-// Experience Points System
-export {
-  ExperienceGrant,
-  type IExperienceGrant
-} from './ExperienceGrant';
+// Session & Gaming System
 export {
   CharacterProgression,
   type ICharacterProgression
@@ -165,9 +126,13 @@ export {
   type IGamingSession
 } from './GamingSession';
 export {
-  Campaign,
-  type ICampaign
-} from './Campaign';
+  SessionManagement,
+  type ISessionManagement
+} from './SessionManagement';
+export {
+  SessionTemplate,
+  type ISessionTemplate
+} from './SessionTemplate';
 
 // System Configuration
 export {
@@ -175,7 +140,13 @@ export {
   type ISystemConfiguration
 } from './SystemConfiguration';
 
-// WebSocket Event Replay (SPRINT 4)
+// Broadcast Messages
+export {
+  BroadcastMessage,
+  type IBroadcastMessage
+} from './BroadcastMessage';
+
+// WebSocket Event Replay
 export {
   WebSocketEvent,
   type IWebSocketEvent
@@ -204,6 +175,10 @@ export {
   default as Document,
   type IDocument
 } from './Document';
+export {
+  default as DocumentChunk,
+  type IDocumentChunk
+} from './DocumentChunk';
 
 // Forum System
 export { ForumTopic, type IForumTopic } from './ForumTopic';

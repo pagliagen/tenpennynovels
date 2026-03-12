@@ -131,7 +131,6 @@ export interface Character {
   statusNote?: string; // Staff notes for approval/rejection
   
   // Economy and possessions
-  walletId: string; // Reference to CharacterWallet
   inventoryId: string; // Reference to CharacterInventory
   
   // Current game state
@@ -183,39 +182,4 @@ export const CHARACTER_VISIBILITY: CharacterVisibilityRules = {
 // Interfaccia per il personaggio filtrato in base ai permessi dell'utente
 export interface FilteredCharacter extends Partial<Character> {
   // I campi saranno presenti o meno in base ai permessi dell'utente che richiede i dati
-}
-
-// Tipi per il sistema di domande background
-export interface BackgroundQuestion {
-  questionId: string;
-  questionText: string;
-  placeholder: string;
-  helpText?: string;
-  category: 'phobias' | 'traumas' | 'beliefs' | 'bonds' | 'secrets' | 'personality' | 'history';
-  order: number;
-  isRequired: boolean;
-  responseVisibility: 'public' | 'master_only' | 'owner_only';
-  minLength?: number;
-  maxLength: number;
-  version: number;
-}
-
-export interface BackgroundResponse {
-  questionId: string;
-  response: string;
-  answeredAt: Date;
-  questionVersion: number;
-}
-
-export interface BackgroundQuestionnaire {
-  questions: BackgroundQuestion[];
-  totalQuestions: number;
-  requiredQuestions: number;
-}
-
-export interface BackgroundCompletionStatus {
-  completed: boolean;
-  missing: string[];
-  requiredAnswered: number;
-  totalRequired: number;
 }

@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { OnGameMessage, OnGameMessageView, Character, CharacterWallet, db } from '@database/models';
+import { OnGameMessage, OnGameMessageView, Character, CharacterFinances, db } from '@database/models';
 import { ApiResponse } from '../types/game';
 import { logger } from '../utils/logger';
 import { postalSystem } from '../utils/postalSystem';
@@ -107,11 +107,11 @@ export class OnGameMessageController {
       const postageRequired = postalSystem.calculatePostage(messageType, isExpress || false);
       const deliveryTime = postalSystem.calculateDeliveryTime(messageType, isExpress || false);
 
-      // Check sender's wallet for postage
+      // Check sender's finances for postage
       if (postageRequired > 0) {
-        const wallet = await CharacterWallet.findOne({ characterId });
-        if (!wallet || (wallet.cash + wallet.deposit) < postageRequired) {
-          const available = wallet ? (wallet.cash + wallet.deposit) : 0;
+        const finances = await CharacterFinances.findOne({ characterId });
+        if (!finances || (finances.cash + finances.bankDeposit) < postageRequired) {
+          const available = finances ? (finances.cash + finances.bankDeposit) : 0;
           res.status(400).json(errorResponse(
             'Validation failed',
             'VALIDATION_ERROR',
@@ -124,16 +124,16 @@ export class OnGameMessageController {
           return;
         }
 
-        // Deduct postage from cash first, then deposit
+        // Deduct postage from cash first, then bank deposit
         let remaining = postageRequired;
-        if (wallet.cash >= remaining) {
-          wallet.cash -= remaining;
+        if (finances.cash >= remaining) {
+          finances.cash -= remaining;
         } else {
-          remaining -= wallet.cash;
-          wallet.cash = 0;
-          wallet.deposit -= remaining;
+          remaining -= finances.cash;
+          finances.cash = 0;
+          finances.bankDeposit -= remaining;
         }
-        await wallet.save();
+        await finances.save();
       }
 
       // Verify recipients exist and are APPROVED

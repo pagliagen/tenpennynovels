@@ -11,7 +11,7 @@ const FailedJobSchema = new mongoose.Schema<FailedJob>({
   eventType: {
     type: String,
     required: true,
-    enum: ['document', 'document_chunk', 'location_action']
+    enum: ['document', 'document_chunk', 'chat']
   },
   eventData: { type: mongoose.Schema.Types.Mixed, required: true },
   error: { type: String, required: true },
@@ -33,7 +33,7 @@ export class DLQService {
    */
   static async addFailedJob(
     jobId: string,
-    eventType: 'document' | 'document_chunk' | 'location_action',
+    eventType: 'document' | 'document_chunk' | 'chat',
     eventData: any,
     error: string,
     attempts: number,

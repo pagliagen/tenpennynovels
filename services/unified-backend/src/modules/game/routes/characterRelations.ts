@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { RelationshipController } from '../controllers/RelationshipController';
+import { CharacterRelationController } from '../controllers/CharacterRelationController';
 import { AuthMiddleware } from '../middleware/auth';
 import { requireGamePermission } from '../middleware/gamePermissions';
 
@@ -13,7 +13,7 @@ const router = Router();
 router.get('/',
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:relationships:list'),
-  RelationshipController.getMyRelationships
+  CharacterRelationController.getMyRelationships
 );
 
 /**
@@ -24,7 +24,7 @@ router.get('/',
 router.get('/types',
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:relationships:types'),
-  RelationshipController.getRelationshipTypes
+  CharacterRelationController.getRelationshipTypes
 );
 
 /**
@@ -35,7 +35,7 @@ router.get('/types',
 router.post('/',
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:relationships:propose'),
-  RelationshipController.proposeRelationship
+  CharacterRelationController.proposeRelationship
 );
 
 /**
@@ -46,7 +46,7 @@ router.post('/',
 router.put('/:relationshipId/respond',
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:relationships:respond'),
-  RelationshipController.respondToProposal
+  CharacterRelationController.respondToProposal
 );
 
 /**
@@ -57,7 +57,7 @@ router.put('/:relationshipId/respond',
 router.delete('/:relationshipId',
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:relationships:end'),
-  RelationshipController.endRelationship
+  CharacterRelationController.endRelationship
 );
 
 export default router;

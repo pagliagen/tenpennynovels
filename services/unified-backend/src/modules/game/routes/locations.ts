@@ -3,9 +3,8 @@ import { AuthMiddleware } from '../middleware/auth';
 import { banChecks } from '@shared/middleware/banCheck';
 import { requireGamePermission } from '../middleware/gamePermissions';
 import { LocationController } from '../controllers/LocationController';
-// LocationActionsController removed - moved to LocationChatsController in chats.ts
-import { LocationTagController } from '../controllers/LocationTagController';
-import { BlockNotesController } from '../controllers/BlockNotesController';
+// ChatsController - location actions moved to chats (see chats.ts)
+import { CharacterNotesController } from '../controllers/CharacterNotesController';
 import { QuestController } from '../controllers/QuestController';
 
 const router = Router();
@@ -61,61 +60,33 @@ router.patch('/locations/:locationId/occupant-tag',
   LocationController.updateOccupantTag
 );
 
-// Location actions routes REMOVED - moved to /chats route (see chats.ts)
+// Chat routes REMOVED - moved to /chats route (see chats.ts)
 // Old routes:
-//   POST   /locations/actions
-//   GET    /locations/actions/:locationId
-//   PATCH  /locations/actions/:actionId
-//   DELETE /locations/actions/:actionId
-//   DELETE /locations/:locationId/actions
-//   POST   /locations/actions/social-conflict
+//   POST   /locations/chats
+//   GET    /locations/chats/:locationId
+//   PATCH  /locations/chats/:chatId
+//   DELETE /locations/chats/:chatId
+//   DELETE /locations/:locationId/chats
+//   POST   /locations/chats/social-conflict
 // New routes: /chats/* (see routes/chats.ts)
-
-// Location tags routes (Admin only)
-router.get('/location-tags',
-  AuthMiddleware.requireCharacterAuth,
-  requireGamePermission('game:admin:location-tags:read'),
-  LocationTagController.getTags
-);
-
-router.post('/location-tags',
-  AuthMiddleware.requireUserAuth,
-  AuthMiddleware.requireAdminAccess, // Admin only
-  requireGamePermission('game:admin:location-tags:create'),
-  LocationTagController.createTag
-);
-
-router.patch('/location-tags/:tagId',
-  AuthMiddleware.requireUserAuth,
-  AuthMiddleware.requireAdminAccess, // Admin only
-  requireGamePermission('game:admin:location-tags:update'),
-  LocationTagController.updateTag
-);
-
-router.delete('/location-tags/:tagId',
-  AuthMiddleware.requireUserAuth,
-  AuthMiddleware.requireAdminAccess, // Admin only
-  requireGamePermission('game:admin:location-tags:delete'),
-  LocationTagController.deleteTag
-);
 
 // Block notes routes (Personal location notes)
 router.get('/block-notes',
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:block-notes:read'),
-  BlockNotesController.getNotes
+  CharacterNotesController.getNotes
 );
 
 router.post('/block-notes',
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:block-notes:write'),
-  BlockNotesController.saveNotes
+  CharacterNotesController.saveNotes
 );
 
 router.delete('/block-notes/:notesId',
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:block-notes:delete'),
-  BlockNotesController.deleteNotes
+  CharacterNotesController.deleteNotes
 );
 
 // Quest routes (using GamingSession)

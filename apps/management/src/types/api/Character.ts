@@ -48,7 +48,7 @@ export interface Character {
     wealth: number;
   };
   skills: CharacterSkill[];
-  relationships: CharacterRelationship[];
+  relationships: CharacterRelation[];
   inventory: {
     items: InventoryItem[];
     money: number;
@@ -90,7 +90,7 @@ export interface CharacterSkill {
   category: string;
 }
 
-export interface CharacterRelationship {
+export interface CharacterRelation {
   _id: string;
   targetCharacterId: string;
   targetCharacterName: string;

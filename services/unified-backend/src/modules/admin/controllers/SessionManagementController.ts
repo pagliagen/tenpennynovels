@@ -2,8 +2,6 @@ import { Request, Response } from 'express';
 import { GamingSession } from '@database/models/GamingSession';
 import { SessionManagement } from '@database/models/SessionManagement';
 import { SessionTemplate } from '@database/models/SessionTemplate';
-import { Campaign } from '@database/models/Campaign';
-import { ExperienceGrant } from '@database/models/ExperienceGrant';
 import { Character } from '@database/models/Character';
 import { Location } from '@database/models/Location';
 import { logger } from '../utils/logger';
@@ -100,26 +98,6 @@ export class SessionManagementController {
         }
       ]);
       
-      // Get experience distribution stats
-      const experienceStats = await ExperienceGrant.aggregate([
-        { 
-          $match: { 
-            grantType: 'session_participation',
-            grantDate: { $gte: startDate }
-          } 
-        },
-        {
-          $group: {
-            _id: null,
-            totalExperienceGranted: { $sum: '$experiencePoints' },
-            totalSkillPointsGranted: { $sum: '$skillPoints' },
-            totalGrants: { $sum: 1 },
-            averageExperience: { $avg: '$experiencePoints' },
-            averageSkillPoints: { $avg: '$skillPoints' }
-          }
-        }
-      ]);
-      
       // Get session templates usage
       const templateStats = await SessionTemplate.aggregate([
         { $sort: { timesUsed: -1 } },
@@ -149,7 +127,7 @@ export class SessionManagementController {
             : 0
         })),
         popularLocations: locationStats,
-        experienceStats: experienceStats[0] || {
+        experienceStats: {
           totalExperienceGranted: 0,
           totalSkillPointsGranted: 0,
           totalGrants: 0,
@@ -229,8 +207,6 @@ export class SessionManagementController {
       const sessions = await GamingSession.find(filter)
         .populate('masterId', 'name')
         .populate('primaryLocation', 'name description')
-        .populate('campaignId', 'title status')
-        .populate('experienceGrants')
         .sort(sortOption)
         .limit(parseInt(limit as string))
         .skip(parseInt(skip as string));
@@ -297,8 +273,6 @@ export class SessionManagementController {
       const session = await GamingSession.findById(sessionId)
         .populate('masterId', 'name email gameplayRoles')
         .populate('primaryLocation', 'name description parentLocation')
-        .populate('campaignId', 'title status currentChapter')
-        .populate('experienceGrants')
         .populate({
           path: 'participants.characterId',
           select: 'name occupation gameplayRoles'
@@ -321,20 +295,15 @@ export class SessionManagementController {
         .populate('participantManagement.waitlist.characterId', 'name')
         .populate('liveSession.participantStatus.characterId', 'name');
       
-      // Get experience grants details
-      const experienceDetails = await ExperienceGrant.find({
-        sessionId: sessionId
-      }).populate('characterId', 'name');
-      
       const sessionDetail = {
         ...session!.toJSON(),
         management: sessionMgmt,
-        experienceDetails,
+        experienceDetails: [],
         analytics: {
           participantCount: session!.participants?.length || 0,
           completionRate: session!.status === 'completed' ? 100 : 0,
-          experienceGranted: experienceDetails.reduce((sum, grant) => sum + grant.experiencePoints, 0),
-          skillPointsGranted: experienceDetails.reduce((sum, grant) => sum + grant.skillPoints, 0)
+          experienceGranted: 0,
+          skillPointsGranted: 0
         }
       };
       
@@ -445,102 +414,6 @@ export class SessionManagementController {
       res.status(500).json(errorResponse(
         'Impossibile recuperare i template delle sessioni',
         'GET_TEMPLATES_ERROR',
-        undefined,
-        500,
-        getRequestId(req)
-      ));
-    }
-  }
-
-  /**
-   * Get campaign management overview
-   * GET /admin/campaigns
-   */
-  static async getCampaigns(req: Request, res: Response): Promise<void> {
-    try {
-      const { 
-        status, 
-        isRecruiting, 
-        masterId,
-        limit = 20,
-        skip = 0 
-      } = req.query;
-      
-      let filter: any = {};
-      
-      if (status) {
-        filter.status = status;
-      }
-      
-      if (isRecruiting !== undefined) {
-        filter.isRecruiting = isRecruiting === 'true';
-      }
-      
-      if (masterId) {
-        filter.masterIds = masterId;
-      }
-      
-      const campaigns = await Campaign.find(filter)
-        .populate('masterIds', 'name gameplayRoles')
-        .populate('players.characterId', 'name occupation')
-        .populate('setting.majorLocations', 'name description')
-        .sort({ createdAt: -1 })
-        .limit(parseInt(limit as string))
-        .skip(parseInt(skip as string));
-      
-      // Enhance campaigns with session statistics
-      const campaignsWithStats = await Promise.all(
-        campaigns.map(async (campaign) => {
-          const sessionCount = campaign.sessions.length;
-          const completedSessions = await GamingSession.countDocuments({
-            _id: { $in: campaign.sessions },
-            status: 'completed'
-          });
-          
-          const activePlayers = campaign.players.filter((p: any) => p.status === 'active').length;
-
-          return {
-            ...campaign.toJSON(),
-            stats: {
-              sessionCount,
-              completedSessions,
-              activePlayers,
-              activePlotThreads: campaign.plotThreads.filter((pt: any) => pt.status === 'active').length,
-              campaignDuration: Math.ceil(
-                (Date.now() - campaign.createdAt.getTime()) / (1000 * 60 * 60 * 24)
-              )
-            }
-          };
-        })
-      );
-      
-      const totalCount = await Campaign.countDocuments(filter);
-
-      const page = Math.floor(parseInt(skip as string) / parseInt(limit as string)) + 1;
-      const pagination = {
-        page,
-        totalPages: Math.ceil(totalCount / parseInt(limit as string)),
-        totalItems: totalCount,
-        pageSize: parseInt(limit as string),
-        hasNextPage: totalCount > parseInt(skip as string) + parseInt(limit as string),
-        hasPrevPage: page > 1
-      };
-
-      res.json(listResponse(
-        campaignsWithStats,
-        pagination,
-        undefined,
-        getRequestId(req)
-      ));
-      
-    } catch (error: any) {
-      logger.error('Failed to get campaigns', {
-        error: error instanceof Error ? error.message : String(error)
-      });
-      
-      res.status(500).json(errorResponse(
-        'Impossibile recuperare le campagne',
-        'GET_CAMPAIGNS_ERROR',
         undefined,
         500,
         getRequestId(req)

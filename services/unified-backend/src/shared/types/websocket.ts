@@ -10,7 +10,7 @@ export type {
   LocationMessageType,
   DiceRollResult,
   SkillCheckResult,
-  LocationActionItemUsage,
+  ChatItemUsage,
   InGameMessage,
   OffGameMessage
 } from './messaging';

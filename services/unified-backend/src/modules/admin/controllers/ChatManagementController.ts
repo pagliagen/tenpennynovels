@@ -1,14 +1,14 @@
 import { Request, Response } from 'express';
-import { LocationAction } from '@database/models/LocationAction';
+import { Chat } from '@database/models/Chat';
 import { Location } from '@database/models/Location';
 import { Character } from '@database/models/Character';
 import { logger } from '../utils/logger';
 import { auditLogger } from '../utils/auditLogger';
 import { listResponse, successResponse, errorResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
 
-export class LocationActionManagementController {
+export class ChatManagementController {
 
-  static async getLocationActions(req: Request, res: Response): Promise<void> {
+  static async getChats(req: Request, res: Response): Promise<void> {
     try {
       const { 
         locationId, 
@@ -41,12 +41,12 @@ export class LocationActionManagementController {
       const sort: any = {};
       sort[sortBy as string] = sortOrder === 'desc' ? -1 : 1;
 
-      const actions = await LocationAction.find(filter)
+      const actions = await Chat.find(filter)
         .sort(sort)
         .limit(Number(limit))
         .skip((Number(page) - 1) * Number(limit));
 
-      const total = await LocationAction.countDocuments(filter);
+      const total = await Chat.countDocuments(filter);
 
       // Get location and character info for actions
       const actionsWithDetails = await Promise.all(actions.map(async (action) => {
@@ -125,7 +125,7 @@ export class LocationActionManagementController {
     }
   }
 
-  static async getLocationActionStatistics(req: Request, res: Response): Promise<void> {
+  static async getChatStatistics(req: Request, res: Response): Promise<void> {
     try {
       const { timeRange = '7d', locationId } = req.query;
       
@@ -157,7 +157,7 @@ export class LocationActionManagementController {
       if (locationId) matchFilter.locationId = locationId;
 
       // Action type breakdown
-      const actionTypeStats = await LocationAction.aggregate([
+      const actionTypeStats = await Chat.aggregate([
         { $match: matchFilter },
         {
           $group: {
@@ -169,7 +169,7 @@ export class LocationActionManagementController {
       ]);
 
       // Visibility breakdown
-      const visibilityStats = await LocationAction.aggregate([
+      const visibilityStats = await Chat.aggregate([
         { $match: matchFilter },
         {
           $group: {
@@ -180,7 +180,7 @@ export class LocationActionManagementController {
       ]);
 
       // Most active locations
-      const locationStats = await LocationAction.aggregate([
+      const locationStats = await Chat.aggregate([
         { $match: matchFilter },
         {
           $group: {
@@ -210,7 +210,7 @@ export class LocationActionManagementController {
       ]);
 
       // Most active characters
-      const characterStats = await LocationAction.aggregate([
+      const characterStats = await Chat.aggregate([
         { $match: matchFilter },
         {
           $group: {
@@ -232,7 +232,7 @@ export class LocationActionManagementController {
       ]);
 
       // Hourly activity pattern
-      const hourlyActivity = await LocationAction.aggregate([
+      const hourlyActivity = await Chat.aggregate([
         { $match: matchFilter },
         {
           $project: {
@@ -250,7 +250,7 @@ export class LocationActionManagementController {
 
       const statistics = {
         timeRange,
-        totalActions: await LocationAction.countDocuments(matchFilter),
+        totalActions: await Chat.countDocuments(matchFilter),
         actionTypeBreakdown: actionTypeStats.reduce((acc, stat) => {
           acc[stat._id] = stat.count;
           return acc;
@@ -267,7 +267,7 @@ export class LocationActionManagementController {
         })),
         insights: {
           averageActionsPerDay: Math.ceil(
-            await LocationAction.countDocuments(matchFilter) / 
+            await Chat.countDocuments(matchFilter) / 
             Math.max(1, Math.ceil((now.getTime() - startTime.getTime()) / (1000 * 60 * 60 * 24)))
           ),
           peakHour: hourlyActivity.length > 0 ? 
@@ -300,12 +300,12 @@ export class LocationActionManagementController {
     }
   }
 
-  static async deleteLocationAction(req: Request<{ actionId: string }>, res: Response): Promise<void> {
+  static async deleteChat(req: Request<{ actionId: string }>, res: Response): Promise<void> {
     try {
       const { actionId } = req.params;
       const { reason } = req.body;
 
-      const action = await LocationAction.findById(actionId);
+      const action = await Chat.findById(actionId);
       if (!action) {
         res.status(404).json(errorResponse(
           'Location action not found',
@@ -321,7 +321,7 @@ export class LocationActionManagementController {
       const location = await Location.findById(action.locationId).select('name');
       const character = await Character.findById(action.characterId).select('name surname');
 
-      await LocationAction.findByIdAndDelete(actionId);
+      await Chat.findByIdAndDelete(actionId);
 
       // Audit log
       auditLogger.logSuccess({
@@ -368,7 +368,7 @@ export class LocationActionManagementController {
     }
   }
 
-  static async bulkDeleteLocationActions(req: Request, res: Response): Promise<void> {
+  static async bulkDeleteChats(req: Request, res: Response): Promise<void> {
     try {
       const { 
         locationId, 
@@ -403,7 +403,7 @@ export class LocationActionManagementController {
       }
 
       // Count actions to be deleted
-      const actionCount = await LocationAction.countDocuments(filter);
+      const actionCount = await Chat.countDocuments(filter);
       
       if (actionCount === 0) {
         res.json(successResponse(
@@ -418,7 +418,7 @@ export class LocationActionManagementController {
       }
 
       // Perform bulk delete
-      const deleteResult = await LocationAction.deleteMany(filter);
+      const deleteResult = await Chat.deleteMany(filter);
 
       // Audit log
       auditLogger.logSuccess({
@@ -458,10 +458,10 @@ export class LocationActionManagementController {
     }
   }
 
-  static async getLocationActionTypes(req: Request, res: Response): Promise<void> {
+  static async getChatTypes(req: Request, res: Response): Promise<void> {
     try {
       // Get all action types with counts and descriptions
-      const actionTypes = await LocationAction.aggregate([
+      const actionTypes = await Chat.aggregate([
         {
           $group: {
             _id: '$actionType',
@@ -512,7 +512,7 @@ export class LocationActionManagementController {
     }
   }
 
-  static async exportLocationActions(req: Request, res: Response): Promise<void> {
+  static async exportChats(req: Request, res: Response): Promise<void> {
     try {
       const { 
         locationId, 
@@ -533,7 +533,7 @@ export class LocationActionManagementController {
         if (endDate) filter.timestamp.$lte = new Date(endDate as string);
       }
 
-      const actions = await LocationAction.find(filter)
+      const actions = await Chat.find(filter)
         .sort({ timestamp: 1 })
         .limit(10000); // Limit for performance
 

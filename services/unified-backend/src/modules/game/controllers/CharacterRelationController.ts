@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { Relationship } from '@database/models/Relationship';
+import { CharacterRelation, CharacterRelationType } from '@database/models/CharacterRelation';
 import { Character } from '@database/models/Character';
 import { logger } from '../utils/logger';
 import { AuthUtils } from '../middleware/auth';
@@ -7,14 +7,13 @@ import { auditLogger } from '@modules/admin/utils/auditLogger';
 import { gameEventPublisher } from '../services/GameEventPublisher';
 import { successResponse, errorResponse, createResponse, getRequestId } from '../utils/apiResponse';
 
-export class RelationshipController {
+export class CharacterRelationController {
   
   static async getMyRelationships(req: Request, res: Response): Promise<void> {
     try {
       const characterId = req.character!.characterId;
 
-      // Get all relationships where this character is involved
-      const relationships = await Relationship.CharacterRelationship.find({
+      const relationships = await CharacterRelation.find({
         $or: [
           { fromCharacterId: characterId },
           { toCharacterId: characterId }
@@ -25,7 +24,6 @@ export class RelationshipController {
       .populate('relationshipTypeId', 'name description isPublicRelationship respectabilityModifier')
       .sort({ establishedAt: -1 });
 
-      // Format relationships for response
       const formattedRelationships = relationships.map(rel => ({
         id: rel._id,
         relationshipType: {
@@ -80,8 +78,7 @@ export class RelationshipController {
 
   static async getRelationshipTypes(req: Request, res: Response): Promise<void> {
     try {
-      // Get all active relationship types
-      const relationshipTypes = await Relationship.RelationshipType.find({
+      const relationshipTypes = await CharacterRelationType.find({
         isActive: true
       }).sort({ name: 1 });
 
@@ -126,7 +123,6 @@ export class RelationshipController {
       const characterName = req.character!.characterName;
       const { targetCharacterId, relationshipTypeId, description, isPublic } = req.body;
 
-      // Validate required fields
       if (!targetCharacterId || !relationshipTypeId) {
         res.status(400).json(errorResponse(
           'Personaggio target e tipo di relazione sono obbligatori',
@@ -138,7 +134,6 @@ export class RelationshipController {
         return;
       }
 
-      // Check if target character exists
       const targetCharacter = await Character.findById(targetCharacterId).select('name surname gender socialClass');
       if (!targetCharacter) {
         res.status(404).json(errorResponse(
@@ -151,7 +146,6 @@ export class RelationshipController {
         return;
       }
 
-      // Check if trying to create relationship with self
       if (targetCharacterId === characterId.toString()) {
         res.status(400).json(errorResponse(
           'Non puoi creare una relazione con te stesso',
@@ -163,8 +157,7 @@ export class RelationshipController {
         return;
       }
 
-      // Get relationship type
-      const relationshipType = await Relationship.RelationshipType.findById(relationshipTypeId);
+      const relationshipType = await CharacterRelationType.findById(relationshipTypeId);
       if (!relationshipType || !relationshipType.isActive) {
         res.status(404).json(errorResponse(
           'Tipo di relazione non trovato o inattivo',
@@ -176,7 +169,6 @@ export class RelationshipController {
         return;
       }
 
-      // Check if character can propose this type
       if (!relationshipType.allowsSelfProposal) {
         res.status(403).json(errorResponse(
           'Questo tipo di relazione non può essere auto-proposto',
@@ -188,7 +180,6 @@ export class RelationshipController {
         return;
       }
 
-      // Validate gender constraints if any
       if (relationshipType.requiredGender && relationshipType.requiredGender.length > 0) {
         if (!relationshipType.requiredGender.includes(targetCharacter.gender)) {
           res.status(400).json(errorResponse(
@@ -202,7 +193,6 @@ export class RelationshipController {
         }
       }
 
-      // Validate social class constraints if any
       if (relationshipType.requiredSocialClass && relationshipType.requiredSocialClass.length > 0) {
         if (!relationshipType.requiredSocialClass.includes(targetCharacter.socialClass)) {
           res.status(400).json(errorResponse(
@@ -216,8 +206,7 @@ export class RelationshipController {
         }
       }
 
-      // Check for existing relationship between these characters
-      const existingRelationship = await Relationship.CharacterRelationship.findOne({
+      const existingRelationship = await CharacterRelation.findOne({
         $or: [
           { fromCharacterId: characterId, toCharacterId: targetCharacterId },
           { fromCharacterId: targetCharacterId, toCharacterId: characterId }
@@ -237,9 +226,8 @@ export class RelationshipController {
         return;
       }
 
-      // Check exclusive relationship constraints
       if (relationshipType.isExclusive) {
-        const existingExclusive = await Relationship.CharacterRelationship.findOne({
+        const existingExclusive = await CharacterRelation.findOne({
           $or: [
             { fromCharacterId: characterId },
             { toCharacterId: characterId }
@@ -260,9 +248,8 @@ export class RelationshipController {
         }
       }
 
-      // Check max instances constraint
       if (relationshipType.maxInstances) {
-        const currentCount = await Relationship.CharacterRelationship.countDocuments({
+        const currentCount = await CharacterRelation.countDocuments({
           $or: [
             { fromCharacterId: characterId },
             { toCharacterId: characterId }
@@ -283,15 +270,14 @@ export class RelationshipController {
         }
       }
 
-      // Create relationship proposal
-      const newRelationship = new Relationship.CharacterRelationship({
+      const newRelationship = new CharacterRelation({
         fromCharacterId: characterId,
         toCharacterId: targetCharacterId,
         relationshipTypeId: relationshipTypeId,
         relationshipTypeName: relationshipType.name,
         status: relationshipType.requiresMutualApproval ? 'PENDING_MUTUAL' : 'ESTABLISHED',
-        fromCharacterApproved: true, // Proposer automatically approves
-        toCharacterApproved: !relationshipType.requiresMutualApproval, // Auto-approve if no mutual approval needed
+        fromCharacterApproved: true,
+        toCharacterApproved: !relationshipType.requiresMutualApproval,
         description: description || '',
         isPublic: isPublic !== undefined ? isPublic : relationshipType.isPublicRelationship,
         proposedAt: new Date(),
@@ -300,12 +286,11 @@ export class RelationshipController {
 
       await newRelationship.save();
 
-      // Create reciprocal relationship if needed
       let reciprocalRelationship = null;
       if (relationshipType.hasReciprocalType && relationshipType.reciprocalTypeId) {
-        const reciprocalType = await Relationship.RelationshipType.findById(relationshipType.reciprocalTypeId);
+        const reciprocalType = await CharacterRelationType.findById(relationshipType.reciprocalTypeId);
         if (reciprocalType) {
-          reciprocalRelationship = new Relationship.CharacterRelationship({
+          reciprocalRelationship = new CharacterRelation({
             fromCharacterId: targetCharacterId,
             toCharacterId: characterId,
             relationshipTypeId: relationshipType.reciprocalTypeId,
@@ -321,13 +306,11 @@ export class RelationshipController {
           });
           await reciprocalRelationship.save();
           
-          // Link back to reciprocal
           newRelationship.linkedRelationshipId = reciprocalRelationship._id;
           await newRelationship.save();
         }
       }
 
-      // Audit log
       await auditLogger.log({
         action: 'RELATIONSHIP_PROPOSED',
         actorType: 'CHARACTER',
@@ -344,7 +327,6 @@ export class RelationshipController {
         userAgent: req.get('User-Agent')
       });
 
-      // Publish game event for real-time notifications
       await gameEventPublisher.publishRelationshipEvent({
         type: 'RELATIONSHIP_PROPOSED',
         characterId: characterId.toString(),
@@ -412,8 +394,7 @@ export class RelationshipController {
         return;
       }
 
-      // Find the relationship proposal
-      const relationship = await Relationship.CharacterRelationship.findById(relationshipId)
+      const relationship = await CharacterRelation.findById(relationshipId)
         .populate('relationshipTypeId', 'name requiresMutualApproval hasReciprocalType')
         .populate('fromCharacterId', 'name surname')
         .populate('toCharacterId', 'name surname');
@@ -429,7 +410,6 @@ export class RelationshipController {
         return;
       }
 
-      // Check if character is the target of the proposal
       if (relationship.toCharacterId._id.toString() !== characterId.toString()) {
         res.status(403).json(errorResponse(
           'Puoi rispondere solo alle proposte dirette a te',
@@ -441,7 +421,6 @@ export class RelationshipController {
         return;
       }
 
-      // Check if proposal is in correct status
       if (!['PROPOSED', 'PENDING_MUTUAL'].includes(relationship.status)) {
         res.status(400).json(errorResponse(
           'Non puoi rispondere a questa proposta',
@@ -461,9 +440,8 @@ export class RelationshipController {
         updatedStatus = 'ESTABLISHED';
         establishedAt = new Date();
         
-        // Update linked reciprocal relationship if exists
         if (relationship.linkedRelationshipId) {
-          await Relationship.CharacterRelationship.findByIdAndUpdate(
+          await CharacterRelation.findByIdAndUpdate(
             relationship.linkedRelationshipId,
             {
               fromCharacterApproved: true,
@@ -475,9 +453,8 @@ export class RelationshipController {
       } else {
         updatedStatus = 'REJECTED';
         
-        // Reject linked reciprocal relationship if exists
         if (relationship.linkedRelationshipId) {
-          await Relationship.CharacterRelationship.findByIdAndUpdate(
+          await CharacterRelation.findByIdAndUpdate(
             relationship.linkedRelationshipId,
             { status: 'REJECTED' }
           );
@@ -488,7 +465,6 @@ export class RelationshipController {
       if (establishedAt) relationship.establishedAt = establishedAt;
       await relationship.save();
 
-      // Audit log
       await auditLogger.log({
         action: `RELATIONSHIP_${action.toUpperCase()}ED`,
         actorType: 'CHARACTER',
@@ -504,7 +480,6 @@ export class RelationshipController {
         userAgent: req.get('User-Agent')
       });
 
-      // Publish game event
       await gameEventPublisher.publishRelationshipEvent({
         type: `RELATIONSHIP_${action.toUpperCase()}ED`,
         characterId: relationship.fromCharacterId._id.toString(),
@@ -552,7 +527,7 @@ export class RelationshipController {
       const characterName = req.character!.characterName;
       const { relationshipId } = req.params;
 
-      const relationship = await Relationship.CharacterRelationship.findById(relationshipId)
+      const relationship = await CharacterRelation.findById(relationshipId)
         .populate('fromCharacterId', 'name surname')
         .populate('toCharacterId', 'name surname');
 
@@ -567,7 +542,6 @@ export class RelationshipController {
         return;
       }
 
-      // Check if character is part of this relationship
       const isFromCharacter = relationship.fromCharacterId._id.toString() === characterId.toString();
       const isToCharacter = relationship.toCharacterId._id.toString() === characterId.toString();
 
@@ -582,7 +556,6 @@ export class RelationshipController {
         return;
       }
 
-      // Check if relationship can be ended
       if (relationship.status !== 'ESTABLISHED') {
         res.status(400).json(errorResponse(
           'Solo le relazioni stabilite possono essere terminate',
@@ -594,15 +567,13 @@ export class RelationshipController {
         return;
       }
 
-      // End the relationship
       relationship.status = 'ENDED';
       relationship.endedAt = new Date();
       relationship.endedBy = characterId;
       await relationship.save();
 
-      // End linked reciprocal relationship if exists
       if (relationship.linkedRelationshipId) {
-        await Relationship.CharacterRelationship.findByIdAndUpdate(
+        await CharacterRelation.findByIdAndUpdate(
           relationship.linkedRelationshipId,
           {
             status: 'ENDED',
@@ -612,7 +583,6 @@ export class RelationshipController {
         );
       }
 
-      // Audit log
       await auditLogger.log({
         action: 'RELATIONSHIP_ENDED',
         actorType: 'CHARACTER',
@@ -628,7 +598,6 @@ export class RelationshipController {
         userAgent: req.get('User-Agent')
       });
 
-      // Publish game event
       await gameEventPublisher.publishRelationshipEvent({
         type: 'RELATIONSHIP_ENDED',
         characterId: relationship.fromCharacterId._id.toString(),

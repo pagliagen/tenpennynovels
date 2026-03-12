@@ -782,7 +782,7 @@ export class AnalyticsService {
       
       // Check if models are already registered, if not, create them with flexible schemas
       const Character = mongoose.models.Character || mongoose.model('Character', new mongoose.Schema({}, { collection: 'characters', strict: false }));
-      const LocationAction = mongoose.models.LocationAction || mongoose.model('LocationAction', new mongoose.Schema({}, { collection: 'locationactions', strict: false }));
+      const Chat = mongoose.models.Chat || mongoose.model('Chat', new mongoose.Schema({}, { collection: 'chats', strict: false }));
       const OnGameMessage = mongoose.models.OnGameMessage || mongoose.model('OnGameMessage', new mongoose.Schema({}, { collection: 'ongamemessages', strict: false }));
       const Corporation = mongoose.models.Corporation || mongoose.model('Corporation', new mongoose.Schema({}, { collection: 'corporations', strict: false }));
       const Location = mongoose.models.Location || mongoose.model('Location', new mongoose.Schema({}, { collection: 'locations', strict: false }));
@@ -790,18 +790,18 @@ export class AnalyticsService {
       const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
       
       // Characters online (approved characters with recent activity)
-      const charactersOnline = await LocationAction.distinct('characterId', {
+      const charactersOnline = await Chat.distinct('characterId', {
         timestamp: { $gte: yesterday }
       }).then((ids: any[]) => ids.length);
 
       // Active locations (locations with recent activity)
-      const activeLocations = await LocationAction.distinct('locationId', {
+      const activeLocations = await Chat.distinct('locationId', {
         timestamp: { $gte: yesterday }
       }).then((ids: any[]) => ids.length);
 
       // Messages last 24h (both location actions and on-game messages)
       const [locationMessages, onGameMessages] = await Promise.all([
-        LocationAction.countDocuments({
+        Chat.countDocuments({
           timestamp: { $gte: yesterday },
           actionType: { $in: ['standard', 'master', 'whisper', 'ooc'] }
         }),
@@ -813,7 +813,7 @@ export class AnalyticsService {
       const messagesLast24h = locationMessages + onGameMessages;
 
       // Dice rolls last 24h
-      const diceRollsLast24h = await LocationAction.countDocuments({
+      const diceRollsLast24h = await Chat.countDocuments({
         timestamp: { $gte: yesterday },
         actionType: { $in: ['dice_roll', 'skill_check', 'stat_check'] }
       });
@@ -824,7 +824,7 @@ export class AnalyticsService {
       });
 
       // Active corporations (corporations with recent member activity)
-      const corporationsWithActivity = await LocationAction.aggregate([
+      const corporationsWithActivity = await Chat.aggregate([
         { $match: { timestamp: { $gte: yesterday } } },
         { $lookup: { from: 'characters', localField: 'characterId', foreignField: '_id', as: 'character' } },
         { $unwind: '$character' },

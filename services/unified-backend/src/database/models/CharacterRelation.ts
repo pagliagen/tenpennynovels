@@ -1,6 +1,6 @@
 import mongoose, { Schema, model, Document } from 'mongoose';
 
-export interface IRelationshipType extends Document {
+export interface ICharacterRelationType extends Document {
   // Basic info
   name: string;
   description: string;
@@ -33,7 +33,7 @@ export interface IRelationshipType extends Document {
   updatedAt: Date;
 }
 
-export interface ICharacterRelationship extends Document {
+export interface ICharacterRelation extends Document {
   // Relationship parties
   fromCharacterId: Schema.Types.ObjectId; // Who initiated or holds this relationship
   toCharacterId: Schema.Types.ObjectId; // Target of the relationship
@@ -73,7 +73,7 @@ export interface ICharacterRelationship extends Document {
   updatedAt: Date;
 }
 
-export interface IRelationshipProposal extends Document {
+export interface ICharacterRelationProposal extends Document {
   // Proposal details
   fromCharacterId: Schema.Types.ObjectId;
   toCharacterId: Schema.Types.ObjectId;
@@ -106,7 +106,7 @@ export interface IRelationshipProposal extends Document {
   updatedAt: Date;
 }
 
-export interface IRelationshipAction extends Document {
+export interface ICharacterRelationAction extends Document {
   // Action details
   actionType: 'propose' | 'accept' | 'reject' | 'modify' | 'end' | 'dispute';
   relationshipId?: Schema.Types.ObjectId; // For actions on existing relationships
@@ -134,7 +134,7 @@ export interface IRelationshipAction extends Document {
   updatedAt: Date;
 }
 
-const RelationshipTypeSchema = new Schema<IRelationshipType>({
+const CharacterRelationTypeSchema = new Schema<ICharacterRelationType>({
   // Basic info
   name: {
     type: String,
@@ -219,10 +219,10 @@ const RelationshipTypeSchema = new Schema<IRelationshipType>({
   }
 }, {
   timestamps: true,
-  collection: 'relationship_types'
+  collection: 'character_relation_types'
 });
 
-const CharacterRelationshipSchema = new Schema<ICharacterRelationship>({
+const CharacterRelationSchema = new Schema<ICharacterRelation>({
   // Parties
   fromCharacterId: {
     type: Schema.Types.ObjectId,
@@ -238,7 +238,7 @@ const CharacterRelationshipSchema = new Schema<ICharacterRelationship>({
   // Relationship details
   relationshipTypeId: {
     type: Schema.Types.ObjectId,
-    ref: 'RelationshipType',
+    ref: 'CharacterRelationType',
     required: true
   },
   relationshipTypeName: {
@@ -316,10 +316,10 @@ const CharacterRelationshipSchema = new Schema<ICharacterRelationship>({
   }
 }, {
   timestamps: true,
-  collection: 'character_relationships'
+  collection: 'character_relations'
 });
 
-const RelationshipProposalSchema = new Schema<IRelationshipProposal>({
+const CharacterRelationProposalSchema = new Schema<ICharacterRelationProposal>({
   // Proposal details
   fromCharacterId: {
     type: Schema.Types.ObjectId,
@@ -333,7 +333,7 @@ const RelationshipProposalSchema = new Schema<IRelationshipProposal>({
   },
   relationshipTypeId: {
     type: Schema.Types.ObjectId,
-    ref: 'RelationshipType',
+    ref: 'CharacterRelationType',
     required: true
   },
   
@@ -391,10 +391,10 @@ const RelationshipProposalSchema = new Schema<IRelationshipProposal>({
   }
 }, {
   timestamps: true,
-  collection: 'relationship_proposals'
+  collection: 'character_relation_proposals'
 });
 
-const RelationshipActionSchema = new Schema<IRelationshipAction>({
+const CharacterRelationActionSchema = new Schema<ICharacterRelationAction>({
   // Action details
   actionType: {
     type: String,
@@ -403,11 +403,11 @@ const RelationshipActionSchema = new Schema<IRelationshipAction>({
   },
   relationshipId: {
     type: Schema.Types.ObjectId,
-    ref: 'CharacterRelationship'
+    ref: 'CharacterRelation'
   },
   proposalId: {
     type: Schema.Types.ObjectId,
-    ref: 'RelationshipProposal'
+    ref: 'CharacterRelationProposal'
   },
   
   // Context
@@ -426,7 +426,7 @@ const RelationshipActionSchema = new Schema<IRelationshipAction>({
   actionData: {
     newRelationshipType: {
       type: Schema.Types.ObjectId,
-      ref: 'RelationshipType'
+      ref: 'CharacterRelationType'
     },
     reason: {
       type: String,
@@ -460,50 +460,46 @@ const RelationshipActionSchema = new Schema<IRelationshipAction>({
   }
 }, {
   timestamps: true,
-  collection: 'relationship_actions'
+  collection: 'character_relation_actions'
 });
 
 // Indexes
-// name already has unique constraint
-RelationshipTypeSchema.index({ isActive: 1 });
+CharacterRelationTypeSchema.index({ isActive: 1 });
 
-CharacterRelationshipSchema.index({ fromCharacterId: 1, toCharacterId: 1 });
-CharacterRelationshipSchema.index({ fromCharacterId: 1, status: 1 });
-CharacterRelationshipSchema.index({ toCharacterId: 1, status: 1 });
-CharacterRelationshipSchema.index({ relationshipTypeId: 1 });
-CharacterRelationshipSchema.index({ status: 1, isActive: 1 });
+CharacterRelationSchema.index({ fromCharacterId: 1, toCharacterId: 1 });
+CharacterRelationSchema.index({ fromCharacterId: 1, status: 1 });
+CharacterRelationSchema.index({ toCharacterId: 1, status: 1 });
+CharacterRelationSchema.index({ relationshipTypeId: 1 });
+CharacterRelationSchema.index({ status: 1, isActive: 1 });
 
-RelationshipProposalSchema.index({ fromCharacterId: 1, status: 1 });
-RelationshipProposalSchema.index({ toCharacterId: 1, status: 1 });
-RelationshipProposalSchema.index({ status: 1, expiresAt: 1 });
+CharacterRelationProposalSchema.index({ fromCharacterId: 1, status: 1 });
+CharacterRelationProposalSchema.index({ toCharacterId: 1, status: 1 });
+CharacterRelationProposalSchema.index({ status: 1, expiresAt: 1 });
 
-RelationshipActionSchema.index({ performedBy: 1, performedAt: -1 });
-RelationshipActionSchema.index({ affectedCharacter: 1, performedAt: -1 });
-RelationshipActionSchema.index({ status: 1 });
+CharacterRelationActionSchema.index({ performedBy: 1, performedAt: -1 });
+CharacterRelationActionSchema.index({ affectedCharacter: 1, performedAt: -1 });
+CharacterRelationActionSchema.index({ status: 1 });
 
 // Compound indexes for queries
-CharacterRelationshipSchema.index({ fromCharacterId: 1, relationshipTypeId: 1, isActive: 1 });
-CharacterRelationshipSchema.index({ toCharacterId: 1, relationshipTypeId: 1, isActive: 1 });
+CharacterRelationSchema.index({ fromCharacterId: 1, relationshipTypeId: 1, isActive: 1 });
+CharacterRelationSchema.index({ toCharacterId: 1, relationshipTypeId: 1, isActive: 1 });
 
 // Methods
-RelationshipTypeSchema.methods.checkConstraints = function(character: any, targetCharacter: any, existingRelationships: any[] = []) {
+CharacterRelationTypeSchema.methods.checkConstraints = function(character: any, targetCharacter: any, existingRelationships: any[] = []) {
   const issues: string[] = [];
   
-  // Check gender restrictions
   if (this.requiredGender && this.requiredGender.length > 0) {
     if (!this.requiredGender.includes(targetCharacter.gender)) {
       issues.push(`Gender requirement not met (requires ${this.requiredGender.join(' or ')}))`);
     }
   }
   
-  // Check social class restrictions  
   if (this.requiredSocialClass && this.requiredSocialClass.length > 0) {
     if (!this.requiredSocialClass.includes(targetCharacter.socialClass)) {
       issues.push(`Social class requirement not met (requires ${this.requiredSocialClass.join(' or ')}))`);
     }
   }
   
-  // Check max instances
   if (this.maxInstances) {
     const currentCount = existingRelationships.filter((r: any) => 
       r.relationshipTypeId.equals(this._id) && r.isActive
@@ -514,7 +510,6 @@ RelationshipTypeSchema.methods.checkConstraints = function(character: any, targe
     }
   }
   
-  // Check exclusivity conflicts
   if (this.isExclusive) {
     const conflictingRelationships = existingRelationships.filter((r: any) => 
       r.relationshipTypeId.equals(this._id) && r.isActive
@@ -531,8 +526,7 @@ RelationshipTypeSchema.methods.checkConstraints = function(character: any, targe
   };
 };
 
-CharacterRelationshipSchema.methods.updateApprovalStatus = function() {
-  // If both parties have approved and relationship requires mutual approval
+CharacterRelationSchema.methods.updateApprovalStatus = function() {
   if (this.fromCharacterApproved && this.toCharacterApproved) {
     this.status = 'ESTABLISHED';
     this.establishedDate = new Date();
@@ -541,19 +535,18 @@ CharacterRelationshipSchema.methods.updateApprovalStatus = function() {
   }
 };
 
-CharacterRelationshipSchema.methods.endRelationship = function(reason: string, endedBy?: Schema.Types.ObjectId) {
+CharacterRelationSchema.methods.endRelationship = function(reason: string, endedBy?: Schema.Types.ObjectId) {
   this.status = 'ENDED';
   this.isActive = false;
   this.endedAt = new Date();
   this.endReason = reason;
   
-  // Record who ended the relationship if provided
   if (endedBy) {
     this.endReason = `${reason} (ended by ${endedBy})`;
   }
 };
 
-RelationshipProposalSchema.methods.accept = function(respondingCharacterId: Schema.Types.ObjectId, responseMessage?: string) {
+CharacterRelationProposalSchema.methods.accept = function(respondingCharacterId: Schema.Types.ObjectId, responseMessage?: string) {
   this.status = 'accepted';
   this.response = {
     accept: true,
@@ -565,7 +558,7 @@ RelationshipProposalSchema.methods.accept = function(respondingCharacterId: Sche
   this.isActive = false;
 };
 
-RelationshipProposalSchema.methods.reject = function(respondingCharacterId: Schema.Types.ObjectId, responseMessage?: string) {
+CharacterRelationProposalSchema.methods.reject = function(respondingCharacterId: Schema.Types.ObjectId, responseMessage?: string) {
   this.status = 'rejected';
   this.response = {
     accept: false,
@@ -578,28 +571,18 @@ RelationshipProposalSchema.methods.reject = function(respondingCharacterId: Sche
 };
 
 // Pre-save middleware to handle expiration
-RelationshipProposalSchema.pre('save', async function() {
-  // Set default expiration (7 days from proposal)
+CharacterRelationProposalSchema.pre('save', async function() {
   if (!this.expiresAt && this.isNew) {
     this.expiresAt = new Date(this.proposedAt.getTime() + 7 * 24 * 60 * 60 * 1000);
   }
 
-  // Check if proposal has expired
   if (this.expiresAt && new Date() > this.expiresAt && this.status === 'pending') {
     this.status = 'expired';
     this.isActive = false;
   }
 });
 
-export const RelationshipType = mongoose.models.RelationshipType || model<IRelationshipType>('RelationshipType', RelationshipTypeSchema);
-export const CharacterRelationship = mongoose.models.CharacterRelationship || model<ICharacterRelationship>('CharacterRelationship', CharacterRelationshipSchema);
-export const RelationshipProposal = mongoose.models.RelationshipProposal || model<IRelationshipProposal>('RelationshipProposal', RelationshipProposalSchema);
-export const RelationshipAction = mongoose.models.RelationshipAction || model<IRelationshipAction>('RelationshipAction', RelationshipActionSchema);
-
-// Aggregated export for backward compatibility
-export const Relationship = {
-  RelationshipType,
-  CharacterRelationship,
-  RelationshipProposal,
-  RelationshipAction
-};
+export const CharacterRelationType = mongoose.models.CharacterRelationType || model<ICharacterRelationType>('CharacterRelationType', CharacterRelationTypeSchema);
+export const CharacterRelation = mongoose.models.CharacterRelation || model<ICharacterRelation>('CharacterRelation', CharacterRelationSchema);
+export const CharacterRelationProposal = mongoose.models.CharacterRelationProposal || model<ICharacterRelationProposal>('CharacterRelationProposal', CharacterRelationProposalSchema);
+export const CharacterRelationAction = mongoose.models.CharacterRelationAction || model<ICharacterRelationAction>('CharacterRelationAction', CharacterRelationActionSchema);

@@ -463,7 +463,7 @@ export interface LocationChatMessage {
   // Special message data
   diceRoll?: DiceRollResult;
   skillCheck?: SkillCheckResult;
-  itemUsage?: LocationActionItemUsage;
+  itemUsage?: ChatItemUsage;
   
   // Target (for whispers, directed actions)
   targetId?: string;                    // Character ID
@@ -528,7 +528,7 @@ export interface StatCheckResult extends DiceRollResult {
   checkReason: string;                  // What triggered the stat check
 }
 
-export interface LocationActionItemUsage {
+export interface ChatItemUsage {
   itemId: string;
   itemName: string;
   usageType: 'activate' | 'consume' | 'equip' | 'unequip' | 'examine' | 'show';
@@ -616,5 +616,5 @@ export interface MessagingEvents {
   // Special events
   'dice_rolled': (result: DiceRollResult, characterId: string, locationId: string) => void;
   'skill_checked': (result: SkillCheckResult, characterId: string, locationId: string) => void;
-  'item_used': (result: LocationActionItemUsage, characterId: string, locationId: string) => void;
+  'item_used': (result: ChatItemUsage, characterId: string, locationId: string) => void;
 }

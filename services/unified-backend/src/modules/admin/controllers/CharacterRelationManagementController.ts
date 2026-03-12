@@ -1,25 +1,25 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import {
-  RelationshipType,
-  CharacterRelationship,
-  RelationshipProposal,
-  RelationshipAction,
-  IRelationshipType,
-  ICharacterRelationship,
-  IRelationshipProposal
-} from '@database/models/Relationship';
+  CharacterRelationType,
+  CharacterRelation,
+  CharacterRelationProposal,
+  CharacterRelationAction,
+  ICharacterRelationType,
+  ICharacterRelation,
+  ICharacterRelationProposal
+} from '@database/models/CharacterRelation';
 import { Character } from '@database/models/Character';
 import { logger } from '../utils/logger';
 import { auditLogger } from '../utils/auditLogger';
 import { successResponse, errorResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
 
-export class RelationshipManagementController {
+export class CharacterRelationManagementController {
 
   /**
    * Get relationship types with filtering, searching and pagination
    */
-  static async getRelationshipTypes(req: Request, res: Response): Promise<void> {
+  static async getCharacterRelationTypes(req: Request, res: Response): Promise<void> {
     try {
       const {
         page = 1,
@@ -81,24 +81,24 @@ export class RelationshipManagementController {
 
       // Execute query with population
       const [relationshipTypes, total] = await Promise.all([
-        RelationshipType.find(filter)
+        CharacterRelationType.find(filter)
           .populate('createdBy', 'username')
           .sort(sort)
           .skip(skip)
           .limit(limitNum)
           .lean(),
-        RelationshipType.countDocuments(filter)
+        CharacterRelationType.countDocuments(filter)
       ]);
 
       // Add usage statistics for each relationship type
       const relationshipTypesWithStats = await Promise.all(
         relationshipTypes.map(async (relType) => {
-          const usage = await CharacterRelationship.countDocuments({
+          const usage = await CharacterRelation.countDocuments({
             relationshipTypeId: relType._id,
             isActive: true
           });
 
-          const activeProposals = await RelationshipProposal.countDocuments({
+          const activeProposals = await CharacterRelationProposal.countDocuments({
             relationshipTypeId: relType._id,
             status: 'pending'
           });
@@ -146,7 +146,7 @@ export class RelationshipManagementController {
   /**
    * Get relationship types statistics and analytics
    */
-  static async getRelationshipTypeStats(req: Request, res: Response): Promise<void> {
+  static async getCharacterRelationTypeStats(req: Request, res: Response): Promise<void> {
     try {
       // Basic counts
       const [
@@ -156,31 +156,31 @@ export class RelationshipManagementController {
         exclusiveTypes,
         selfProposalTypes
       ] = await Promise.all([
-        RelationshipType.countDocuments({}),
-        RelationshipType.countDocuments({ isActive: true }),
-        RelationshipType.countDocuments({ requiresMutualApproval: true }),
-        RelationshipType.countDocuments({ isExclusive: true }),
-        RelationshipType.countDocuments({ allowsSelfProposal: true })
+        CharacterRelationType.countDocuments({}),
+        CharacterRelationType.countDocuments({ isActive: true }),
+        CharacterRelationType.countDocuments({ requiresMutualApproval: true }),
+        CharacterRelationType.countDocuments({ isExclusive: true }),
+        CharacterRelationType.countDocuments({ allowsSelfProposal: true })
       ]);
 
       // Gender and social class restrictions
-      const genderRestrictions = await RelationshipType.aggregate([
+      const genderRestrictions = await CharacterRelationType.aggregate([
         { $unwind: '$requiredGender' },
         { $group: { _id: '$requiredGender', count: { $sum: 1 } } },
         { $sort: { count: -1 } }
       ]);
 
-      const socialClassRestrictions = await RelationshipType.aggregate([
+      const socialClassRestrictions = await CharacterRelationType.aggregate([
         { $unwind: '$requiredSocialClass' },
         { $group: { _id: '$requiredSocialClass', count: { $sum: 1 } } },
         { $sort: { count: -1 } }
       ]);
 
       // Usage statistics
-      const usageStats = await RelationshipType.aggregate([
+      const usageStats = await CharacterRelationType.aggregate([
         {
           $lookup: {
-            from: 'character_relationships',
+            from: 'character_relations',
             localField: '_id',
             foreignField: 'relationshipTypeId',
             as: 'relationships'
@@ -213,7 +213,7 @@ export class RelationshipManagementController {
       ]);
 
       // Respectability impact
-      const respectabilityStats = await RelationshipType.aggregate([
+      const respectabilityStats = await CharacterRelationType.aggregate([
         {
           $group: {
             _id: '$respectabilityModifier',
@@ -224,7 +224,7 @@ export class RelationshipManagementController {
       ]);
 
       // Recent activity
-      const recentTypes = await RelationshipType.find({})
+      const recentTypes = await CharacterRelationType.find({})
         .sort({ createdAt: -1 })
         .limit(5)
         .populate('createdBy', 'username')
@@ -269,7 +269,7 @@ export class RelationshipManagementController {
   /**
    * Get active character relationships with filtering and pagination
    */
-  static async getCharacterRelationships(req: Request, res: Response): Promise<void> {
+  static async getCharacterRelations(req: Request, res: Response): Promise<void> {
     try {
       const {
         page = 1,
@@ -314,7 +314,7 @@ export class RelationshipManagementController {
       const sort: any = { [sortField]: sortDirection };
 
       // Execute query with full population
-      let query = CharacterRelationship.find(filter)
+      let query = CharacterRelation.find(filter)
         .populate('fromCharacterId', 'name basicInfo.fullName')
         .populate('toCharacterId', 'name basicInfo.fullName')
         .populate('relationshipTypeId', 'name description respectabilityModifier')
@@ -350,7 +350,7 @@ export class RelationshipManagementController {
         }).slice(0, limitNum);
       }
 
-      const total = await CharacterRelationship.countDocuments(filter);
+      const total = await CharacterRelation.countDocuments(filter);
       const totalPages = Math.ceil(total / limitNum);
 
       res.json(successResponse(
@@ -384,7 +384,7 @@ export class RelationshipManagementController {
   /**
    * Get relationship proposals with filtering and pagination
    */
-  static async getRelationshipProposals(req: Request, res: Response): Promise<void> {
+  static async getCharacterRelationProposals(req: Request, res: Response): Promise<void> {
     try {
       const {
         page = 1,
@@ -428,7 +428,7 @@ export class RelationshipManagementController {
       const sort: any = { [sortField]: sortDirection };
 
       const [proposals, total] = await Promise.all([
-        RelationshipProposal.find(filter)
+        CharacterRelationProposal.find(filter)
           .populate('fromCharacterId', 'name basicInfo.fullName')
           .populate('toCharacterId', 'name basicInfo.fullName')
           .populate('relationshipTypeId', 'name description')
@@ -437,7 +437,7 @@ export class RelationshipManagementController {
           .skip(skip)
           .limit(limitNum)
           .lean(),
-        RelationshipProposal.countDocuments(filter)
+        CharacterRelationProposal.countDocuments(filter)
       ]);
 
       const totalPages = Math.ceil(total / limitNum);
@@ -476,7 +476,7 @@ export class RelationshipManagementController {
   static async getRelationshipStats(req: Request, res: Response): Promise<void> {
     try {
       // Relationship status counts
-      const statusCounts = await CharacterRelationship.aggregate([
+      const statusCounts = await CharacterRelation.aggregate([
         {
           $group: {
             _id: '$status',
@@ -487,7 +487,7 @@ export class RelationshipManagementController {
       ]);
 
       // Proposal status counts
-      const proposalStatusCounts = await RelationshipProposal.aggregate([
+      const proposalStatusCounts = await CharacterRelationProposal.aggregate([
         {
           $group: {
             _id: '$status',
@@ -498,10 +498,10 @@ export class RelationshipManagementController {
       ]);
 
       // Most popular relationship types
-      const popularTypes = await CharacterRelationship.aggregate([
+      const popularTypes = await CharacterRelation.aggregate([
         {
           $lookup: {
-            from: 'relationship_types',
+            from: 'character_relation_types',
             localField: 'relationshipTypeId',
             foreignField: '_id',
             as: 'relationshipType'
@@ -525,7 +525,7 @@ export class RelationshipManagementController {
       ]);
 
       // Relationship strength and trust averages
-      const strengthTrustStats = await CharacterRelationship.aggregate([
+      const strengthTrustStats = await CharacterRelation.aggregate([
         {
           $match: { status: 'ESTABLISHED', isActive: true }
         },
@@ -544,7 +544,7 @@ export class RelationshipManagementController {
       ]);
 
       // Character activity (most connected characters)
-      const mostConnectedCharacters = await CharacterRelationship.aggregate([
+      const mostConnectedCharacters = await CharacterRelation.aggregate([
         { $match: { isActive: true } },
         {
           $group: {
@@ -572,7 +572,7 @@ export class RelationshipManagementController {
       ]);
 
       // Recent activity
-      const recentActivity = await RelationshipAction.find({})
+      const recentActivity = await CharacterRelationAction.find({})
         .populate('performedBy', 'name basicInfo.fullName')
         .populate('affectedCharacter', 'name basicInfo.fullName')
         .sort({ performedAt: -1 })
@@ -613,7 +613,7 @@ export class RelationshipManagementController {
   /**
    * Create a new relationship type
    */
-  static async createRelationshipType(req: Request, res: Response): Promise<void> {
+  static async createCharacterRelationType(req: Request, res: Response): Promise<void> {
     try {
       const { user } = req as any;
       const {
@@ -667,7 +667,7 @@ export class RelationshipManagementController {
       }
 
       // Check if name already exists
-      const existingType = await RelationshipType.findOne({ 
+      const existingType = await CharacterRelationType.findOne({ 
         name: new RegExp(`^${name.trim()}$`, 'i') 
       });
 
@@ -683,7 +683,7 @@ export class RelationshipManagementController {
       }
 
       // Create new relationship type
-      const relationshipType = new RelationshipType({
+      const relationshipType = new CharacterRelationType({
         name: name.trim(),
         description: description.trim(),
         requiresMutualApproval,
@@ -736,7 +736,7 @@ export class RelationshipManagementController {
   /**
    * Update a relationship type
    */
-  static async updateRelationshipType(req: Request<{ relationshipTypeId: string }>, res: Response): Promise<void> {
+  static async updateCharacterRelationType(req: Request<{ relationshipTypeId: string }>, res: Response): Promise<void> {
     try {
       const { relationshipTypeId } = req.params;
       const { user } = req as any;
@@ -753,7 +753,7 @@ export class RelationshipManagementController {
         return;
       }
 
-      const relationshipType = await RelationshipType.findById(relationshipTypeId);
+      const relationshipType = await CharacterRelationType.findById(relationshipTypeId);
       if (!relationshipType) {
         res.status(404).json(errorResponse(
           'Relationship type not found',
@@ -822,7 +822,7 @@ export class RelationshipManagementController {
   /**
    * Delete a relationship type (soft delete)
    */
-  static async deleteRelationshipType(req: Request<{ relationshipTypeId: string }>, res: Response): Promise<void> {
+  static async deleteCharacterRelationType(req: Request<{ relationshipTypeId: string }>, res: Response): Promise<void> {
     try {
       const { relationshipTypeId } = req.params;
       const { user } = req as any;
@@ -839,7 +839,7 @@ export class RelationshipManagementController {
         return;
       }
 
-      const relationshipType = await RelationshipType.findById(relationshipTypeId);
+      const relationshipType = await CharacterRelationType.findById(relationshipTypeId);
       if (!relationshipType) {
         res.status(404).json(errorResponse(
           'Relationship type not found',
@@ -852,12 +852,12 @@ export class RelationshipManagementController {
       }
 
       // Check for existing relationships
-      const existingRelationships = await CharacterRelationship.countDocuments({
+      const existingRelationships = await CharacterRelation.countDocuments({
         relationshipTypeId: relationshipType._id,
         isActive: true
       });
 
-      const pendingProposals = await RelationshipProposal.countDocuments({
+      const pendingProposals = await CharacterRelationProposal.countDocuments({
         relationshipTypeId: relationshipType._id,
         status: 'pending'
       });
@@ -883,7 +883,7 @@ export class RelationshipManagementController {
       // If force delete, handle existing relationships
       if (forceDelete && (existingRelationships > 0 || pendingProposals > 0)) {
         // End all active relationships
-        await CharacterRelationship.updateMany(
+        await CharacterRelation.updateMany(
           { relationshipTypeId: relationshipType._id, isActive: true },
           {
             status: 'ENDED',
@@ -894,7 +894,7 @@ export class RelationshipManagementController {
         );
 
         // Expire all pending proposals
-        await RelationshipProposal.updateMany(
+        await CharacterRelationProposal.updateMany(
           { relationshipTypeId: relationshipType._id, status: 'pending' },
           {
             status: 'expired',
@@ -962,7 +962,7 @@ export class RelationshipManagementController {
         return;
       }
 
-      const relationship = await CharacterRelationship.findById(relationshipId)
+      const relationship = await CharacterRelation.findById(relationshipId)
         .populate('fromCharacterId', 'name basicInfo.fullName')
         .populate('toCharacterId', 'name basicInfo.fullName')
         .populate('relationshipTypeId', 'name');
@@ -1019,7 +1019,7 @@ export class RelationshipManagementController {
       await relationship.save();
 
       // Create relationship action record
-      const relationshipAction = new RelationshipAction({
+      const relationshipAction = new CharacterRelationAction({
         actionType: 'dispute', // Admin actions are logged as disputes
         relationshipId: relationship._id,
         performedBy: user._id,
@@ -1114,7 +1114,7 @@ export class RelationshipManagementController {
 
       for (const relationshipTypeId of relationshipTypeIds) {
         try {
-          const relationshipType = await RelationshipType.findById(relationshipTypeId);
+          const relationshipType = await CharacterRelationType.findById(relationshipTypeId);
           if (!relationshipType) {
             errors.push({
               relationshipTypeId,

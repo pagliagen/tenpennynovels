@@ -1,12 +1,12 @@
 import { Request, Response } from 'express';
-import { HousingProperty, EstateTransaction, CharacterFinances, Location, db } from '@database/models';
+import { LocationProperty, CharacterFinances, Location, db } from '@database/models';
 import { logger } from '../utils/logger';
 import { successResponse, errorResponse, createResponse, getRequestId } from '../utils/apiResponse';
 
 // Access mongoose from the centralized connection
 const mongoose = db.getMongoose();
 
-export class HousingController {
+export class LocationPropertyController {
   
   /**
    * Get available properties in district
@@ -137,7 +137,7 @@ export class HousingController {
       
       await session.withTransaction(async () => {
         // Get property and validate availability
-        const property = await HousingProperty.findById(propertyId).session(session);
+        const property = await LocationProperty.findById(propertyId).session(session);
         if (!property || !property.isAvailable) {
           throw new Error('Property not available');
         }
@@ -160,7 +160,7 @@ export class HousingController {
         }
         
         // Process payment
-        await HousingController.processRentalPayment(finances, totalUpfront, 'rental_start', session);
+        await LocationPropertyController.processRentalPayment(finances, totalUpfront, 'rental_start', session);
         
         // Update property
         const leaseStart = new Date();
@@ -190,26 +190,6 @@ export class HousingController {
           
           await location.save({ session });
         }
-        
-        // Record transaction
-        const transaction = new EstateTransaction({
-          transactionType: 'rent_deposit',
-          propertyId,
-          characterId,
-          amount: totalUpfront,
-          currency: 'pence',
-          paymentMethod: 'bank_transfer',
-          paymentSource: 'character_deposit',
-          transactionDate: new Date(),
-          description: `Rental deposit and first month for ${property.district} property`,
-          status: 'completed',
-          rentalPeriod: {
-            startDate: leaseStart,
-            endDate: leaseEnd
-          }
-        });
-        
-        await transaction.save({ session });
         
         // Add to rental history
         property.rentalHistory.push({
@@ -264,7 +244,7 @@ export class HousingController {
       
       await session.withTransaction(async () => {
         // Get property and validate availability
-        const property = await HousingProperty.findById(propertyId).session(session);
+        const property = await LocationProperty.findById(propertyId).session(session);
         if (!property || !property.isAvailable || !property.purchasePrice) {
           throw new Error('Property not available for purchase');
         }
@@ -283,7 +263,7 @@ export class HousingController {
         }
         
         // Process payment
-        await HousingController.processRentalPayment(finances, purchasePrice, 'purchase', session);
+        await LocationPropertyController.processRentalPayment(finances, purchasePrice, 'purchase', session);
         
         // Update property
         property.ownerId = new mongoose.Types.ObjectId(characterId);
@@ -305,14 +285,6 @@ export class HousingController {
           
           await location.save({ session });
         }
-        
-        // Record transaction
-        await (EstateTransaction as any).createPurchase(
-          propertyId,
-          new mongoose.Types.ObjectId(characterId),
-          purchasePrice,
-          `Purchase of ${property.district} property`
-        );
         
         // Add to ownership history
         property.addToOwnershipHistory(
@@ -359,7 +331,7 @@ export class HousingController {
     
     try {
       // Get property and validate tenancy
-      const property = await HousingProperty.findOne({
+      const property = await LocationProperty.findOne({
         _id: propertyId,
         currentTenantId: characterId
       });
@@ -405,7 +377,7 @@ export class HousingController {
       }
       
       // Process payment
-      await HousingController.processRentalPayment(finances, totalRent, 'rent_payment');
+      await LocationPropertyController.processRentalPayment(finances, totalRent, 'rent_payment');
       
       // Update rent paid until date
       const currentPaidUntil = property.rentPaidUntil || new Date();
@@ -414,18 +386,6 @@ export class HousingController {
       property.rentPaidUntil = newPaidUntil;
       property.lastRentPayment = new Date();
       await property.save();
-      
-      // Record transaction
-      await (EstateTransaction as any).createRentPayment(
-        new mongoose.Types.ObjectId(propertyId),
-        new mongoose.Types.ObjectId(characterId),
-        totalRent,
-        {
-          startDate: currentPaidUntil,
-          endDate: newPaidUntil
-        },
-        `Rent payment for ${monthsAdvance} month(s)`
-      );
       
       res.json(successResponse(
         {
@@ -460,7 +420,7 @@ export class HousingController {
     
     try {
       // Validate property ownership/tenancy
-      const property = await HousingProperty.findOne({
+      const property = await LocationProperty.findOne({
         _id: propertyId,
         $or: [
           { currentTenantId: characterId },
@@ -546,7 +506,7 @@ export class HousingController {
     const characterId = req.character!.characterId;
     
     try {
-      const properties = await HousingProperty.find({
+      const properties = await LocationProperty.find({
         $or: [
           { currentTenantId: characterId },
           { ownerId: characterId }
@@ -602,7 +562,7 @@ export class HousingController {
     const characterId = req.character!.characterId;
     
     try {
-      const property = await HousingProperty.findById(propertyId)
+      const property = await LocationProperty.findById(propertyId)
         .populate('locationId', 'name description')
         .populate('currentTenantId', 'name')
         .populate('ownerId', 'name');
@@ -635,16 +595,9 @@ export class HousingController {
         return;
       }
       
-      // Get recent transactions if user is tenant/owner
-      let transactions = [];
-      if (property.currentTenantId?.equals(characterId) || property.ownerId?.equals(characterId)) {
-        transactions = await (EstateTransaction as any).findByProperty(new mongoose.Types.ObjectId(propertyId), 10);
-      }
-      
       res.json(successResponse(
         { 
           property: property.toJSON(),
-          transactions,
           rentStatus: property.ownershipType === 'rental' ? {
             isOverdue: property.isRentOverdue(),
             daysOverdue: property.getDaysOverdue(),

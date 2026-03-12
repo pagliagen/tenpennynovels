@@ -1,7 +1,7 @@
 import mongoose, { Schema, model, Document } from 'mongoose';
 import { SocialClass } from '../../shared/types/socialClass';
 
-export interface IHousingProperty extends Document {
+export interface ILocationProperty extends Document {
   // Basic property info
   locationId: Schema.Types.ObjectId; // Reference to Location
   propertyType: 'basic_room' | 'furnished_room' | 'luxury_suite' | 'small_house' | 'large_house' | 'mansion';
@@ -81,7 +81,7 @@ export interface IHousingProperty extends Document {
   updatedAt: Date;
 }
 
-const HousingPropertySchema = new Schema<IHousingProperty>({
+const LocationPropertySchema = new Schema<ILocationProperty>({
   locationId: {
     type: Schema.Types.ObjectId,
     ref: 'Location',
@@ -227,37 +227,37 @@ const HousingPropertySchema = new Schema<IHousingProperty>({
   }
 }, {
   timestamps: true,
-  collection: 'housing_properties'
+  collection: 'location_properties'
 });
 
 // Indexes
-HousingPropertySchema.index({ district: 1, isAvailable: 1 });
-HousingPropertySchema.index({ propertyType: 1, ownershipType: 1 });
-HousingPropertySchema.index({ currentTenantId: 1 });
-HousingPropertySchema.index({ ownerId: 1 });
-HousingPropertySchema.index({ rentPaidUntil: 1 }); // For automated rent collection
-HousingPropertySchema.index({ monthlyRent: 1, district: 1 });
+LocationPropertySchema.index({ district: 1, isAvailable: 1 });
+LocationPropertySchema.index({ propertyType: 1, ownershipType: 1 });
+LocationPropertySchema.index({ currentTenantId: 1 });
+LocationPropertySchema.index({ ownerId: 1 });
+LocationPropertySchema.index({ rentPaidUntil: 1 }); // For automated rent collection
+LocationPropertySchema.index({ monthlyRent: 1, district: 1 });
 
 // Methods
-HousingPropertySchema.methods.isRentOverdue = function() {
+LocationPropertySchema.methods.isRentOverdue = function() {
   return this.ownershipType === 'rental' && 
          this.rentPaidUntil && 
          new Date() > this.rentPaidUntil;
 };
 
-HousingPropertySchema.methods.getDaysOverdue = function() {
+LocationPropertySchema.methods.getDaysOverdue = function() {
   if (!this.isRentOverdue()) return 0;
   return Math.floor((Date.now() - this.rentPaidUntil.getTime()) / (1000 * 60 * 60 * 24));
 };
 
-HousingPropertySchema.methods.canAfford = function(characterFinances: any) {
+LocationPropertySchema.methods.canAfford = function(characterFinances: any) {
   if (!this.monthlyRent) return false;
   const totalUpfront = this.monthlyRent + (this.deposit || this.monthlyRent);
   const availableFunds = characterFinances.cash + characterFinances.bankDeposit;
   return availableFunds >= totalUpfront;
 };
 
-HousingPropertySchema.methods.grantGuestAccess = function(
+LocationPropertySchema.methods.grantGuestAccess = function(
   characterId: Schema.Types.ObjectId, 
   permissions: string[], 
   duration: 'temporary' | 'permanent' = 'temporary'
@@ -279,11 +279,11 @@ HousingPropertySchema.methods.grantGuestAccess = function(
   });
 };
 
-HousingPropertySchema.methods.revokeGuestAccess = function(characterId: Schema.Types.ObjectId) {
+LocationPropertySchema.methods.revokeGuestAccess = function(characterId: Schema.Types.ObjectId) {
   this.guestAccess = this.guestAccess.filter((g: any) => !g.characterId.equals(characterId));
 };
 
-HousingPropertySchema.methods.addToRentalHistory = function(
+LocationPropertySchema.methods.addToRentalHistory = function(
   tenantId: Schema.Types.ObjectId,
   startDate: Date,
   finalRent: number,
@@ -301,7 +301,7 @@ HousingPropertySchema.methods.addToRentalHistory = function(
   });
 };
 
-HousingPropertySchema.methods.addToOwnershipHistory = function(
+LocationPropertySchema.methods.addToOwnershipHistory = function(
   ownerId: Schema.Types.ObjectId,
   acquiredDate: Date,
   purchasePrice: number,
@@ -316,7 +316,7 @@ HousingPropertySchema.methods.addToOwnershipHistory = function(
 };
 
 // Static methods
-HousingPropertySchema.statics.findAvailableInDistrict = function(
+LocationPropertySchema.statics.findAvailableInDistrict = function(
   district: string, 
   filters: any = {}
 ) {
@@ -332,17 +332,17 @@ HousingPropertySchema.statics.findAvailableInDistrict = function(
     .sort({ monthlyRent: 1 });
 };
 
-HousingPropertySchema.statics.findByTenant = function(characterId: Schema.Types.ObjectId) {
+LocationPropertySchema.statics.findByTenant = function(characterId: Schema.Types.ObjectId) {
   return this.find({ currentTenantId: characterId })
     .populate('locationId', 'name description');
 };
 
-HousingPropertySchema.statics.findByOwner = function(characterId: Schema.Types.ObjectId) {
+LocationPropertySchema.statics.findByOwner = function(characterId: Schema.Types.ObjectId) {
   return this.find({ ownerId: characterId })
     .populate('locationId', 'name description');
 };
 
-HousingPropertySchema.statics.findOverdueRent = function() {
+LocationPropertySchema.statics.findOverdueRent = function() {
   return this.find({
     ownershipType: 'rental',
     currentTenantId: { $exists: true },
@@ -350,4 +350,4 @@ HousingPropertySchema.statics.findOverdueRent = function() {
   }).populate('currentTenantId', 'name');
 };
 
-export const HousingProperty = mongoose.models.HousingProperty || model<IHousingProperty>('HousingProperty', HousingPropertySchema);
+export const LocationProperty = mongoose.models.LocationProperty || model<ILocationProperty>('LocationProperty', LocationPropertySchema);

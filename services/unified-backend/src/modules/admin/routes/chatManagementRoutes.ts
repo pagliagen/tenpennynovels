@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { LocationActionManagementController } from '../controllers/LocationActionManagementController';
+import { ChatManagementController } from '../controllers/ChatManagementController';
 import { AdminAuthMiddleware } from '../middleware/adminAuth';
 
 const router = Router();
@@ -8,8 +8,8 @@ const router = Router();
 router.use(AdminAuthMiddleware.requireAdminAccess);
 
 /**
- * @route GET /location-actions
- * @desc Get location actions with filtering
+ * @route GET /chats
+ * @desc Get chats with filtering
  * @access Admin
  * @query locationId - Filter by location ID
  * @query actionType - Filter by action type
@@ -22,27 +22,27 @@ router.use(AdminAuthMiddleware.requireAdminAccess);
  * @query sortBy - Sort field (timestamp, actionType, etc.)
  * @query sortOrder - Sort order (asc, desc)
  */
-router.get('/', LocationActionManagementController.getLocationActions);
+router.get('/', ChatManagementController.getChats);
 
 /**
- * @route GET /location-actions/statistics
- * @desc Get location action statistics
+ * @route GET /chats/statistics
+ * @desc Get chat statistics
  * @access Admin
  * @query timeRange - Time range (1h, 24h, 7d, 30d)
  * @query locationId - Filter by location ID
  */
-router.get('/statistics', LocationActionManagementController.getLocationActionStatistics);
+router.get('/statistics', ChatManagementController.getChatStatistics);
 
 /**
- * @route GET /location-actions/action-types
- * @desc Get available action types with counts
+ * @route GET /chats/action-types
+ * @desc Get available chat types with counts
  * @access Admin
  */
-router.get('/action-types', LocationActionManagementController.getLocationActionTypes);
+router.get('/action-types', ChatManagementController.getChatTypes);
 
 /**
- * @route GET /location-actions/export
- * @desc Export location actions
+ * @route GET /chats/export
+ * @desc Export chats
  * @access Admin
  * @query locationId - Filter by location ID
  * @query startDate - Start date for export
@@ -50,20 +50,20 @@ router.get('/action-types', LocationActionManagementController.getLocationAction
  * @query actionType - Filter by action type
  * @query format - Export format (json, csv)
  */
-router.get('/export', LocationActionManagementController.exportLocationActions);
+router.get('/export', ChatManagementController.exportChats);
 
 /**
- * @route DELETE /location-actions/:actionId
- * @desc Delete specific location action
+ * @route DELETE /chats/:chatId
+ * @desc Delete specific chat
  * @access Admin
  */
-router.delete('/:actionId', LocationActionManagementController.deleteLocationAction);
+router.delete('/:actionId', ChatManagementController.deleteChat);
 
 /**
- * @route POST /location-actions/bulk-delete
- * @desc Bulk delete location actions
+ * @route POST /chats/bulk-delete
+ * @desc Bulk delete chats
  * @access Admin
  */
-router.post('/bulk-delete', LocationActionManagementController.bulkDeleteLocationActions);
+router.post('/bulk-delete', ChatManagementController.bulkDeleteChats);
 
 export default router;

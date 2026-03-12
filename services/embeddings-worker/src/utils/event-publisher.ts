@@ -9,7 +9,7 @@ import { v4 as uuidv4 } from 'uuid';
 import {
   REDIS_CHANNELS,
   DocumentEmbeddingEvent,
-  LocationActionEmbeddingEvent
+  ChatEmbeddingEvent
 } from '../types/events';
 
 export class EmbeddingEventPublisher {
@@ -45,21 +45,18 @@ export class EmbeddingEventPublisher {
     await this.publisher.publish(channel, JSON.stringify(event));
   }
 
-  /**
-   * Publish location action created event
-   */
-  async publishLocationActionEvent(
-    locationActionId: string,
+  async publishChatEvent(
+    chatId: string,
     characterId: string,
     characterName: string,
     locationId: string,
     content: string,
     actionType: string
   ): Promise<void> {
-    const event: LocationActionEmbeddingEvent = {
+    const event: ChatEmbeddingEvent = {
       eventId: uuidv4(),
       timestamp: new Date(),
-      locationActionId,
+      chatId,
       characterId,
       characterName,
       locationId,
@@ -68,7 +65,7 @@ export class EmbeddingEventPublisher {
     };
 
     await this.publisher.publish(
-      REDIS_CHANNELS.EMBEDDING_LOCATION_ACTION_CREATED,
+      REDIS_CHANNELS.EMBEDDING_CHAT_CREATED,
       JSON.stringify(event)
     );
   }

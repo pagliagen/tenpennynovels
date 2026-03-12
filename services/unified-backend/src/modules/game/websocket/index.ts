@@ -13,6 +13,7 @@ interface CharacterContextPayload {
   characterName: string;
   isApproved: boolean;
   gameplayRoles?: string[];
+  isGestore?: boolean;
 }
 
 /**

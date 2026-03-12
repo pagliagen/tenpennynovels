@@ -1,9 +1,9 @@
 import { Request, Response } from 'express';
-import { BlockNotes } from '@database/models';
+import { CharacterNotes } from '@database/models';
 import { logger } from '../utils/logger';
 import { successResponse, errorResponse, getRequestId } from '../utils/apiResponse';
 
-export class BlockNotesController {
+export class CharacterNotesController {
   /**
    * Get block notes for current character
    * GET /game/block-notes
@@ -29,7 +29,7 @@ export class BlockNotesController {
         query.locationId = locationId;
       }
 
-      const notes = await BlockNotes.findOne(query).lean();
+      const notes = await CharacterNotes.findOne(query).lean();
 
       res.json(successResponse(
         { notes: notes || null },
@@ -88,7 +88,7 @@ export class BlockNotesController {
         query.locationId = locationId;
       }
 
-      const notes = await BlockNotes.findOneAndUpdate(
+      const notes = await CharacterNotes.findOneAndUpdate(
         query,
         {
           characterId: character.characterId,
@@ -144,7 +144,7 @@ export class BlockNotesController {
 
       const { notesId } = req.params;
 
-      const notes = await BlockNotes.findById(notesId);
+      const notes = await CharacterNotes.findById(notesId);
       if (!notes) {
         res.status(404).json(errorResponse(
           'Notes not found',
@@ -168,7 +168,7 @@ export class BlockNotesController {
         return;
       }
 
-      await BlockNotes.findByIdAndDelete(notesId);
+      await CharacterNotes.findByIdAndDelete(notesId);
 
       logger.info(`Block notes deleted: ${notesId} by ${character.characterId}`);
 

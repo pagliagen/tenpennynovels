@@ -141,32 +141,4 @@ export class FinancialUtils {
     nextSunday.setHours(0, 0, 0, 0); // Midnight
     return nextSunday;
   }
-  
-  /**
-   * Log financial transaction
-   */
-  static async logTransaction(
-    characterId: string,
-    type: 'credit_purchase' | 'cash_purchase' | 'credit_reset' | 'salary' | 'transfer_in' | 'transfer_out' | 'admin_grant',
-    amount: number,
-    description: string,
-    itemId?: string
-  ): Promise<void> {
-    try {
-      const { FinancialTransaction } = require('../../../database/models');
-      
-      const transaction = new FinancialTransaction({
-        characterId,
-        type,
-        amount,
-        description,
-        itemId,
-        timestamp: new Date()
-      });
-      
-      await transaction.save();
-    } catch (error: any) {
-      console.error('Error logging financial transaction:', error);
-    }
-  }
 }

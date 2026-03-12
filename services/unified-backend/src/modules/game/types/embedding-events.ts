@@ -10,7 +10,7 @@ export const REDIS_CHANNELS = {
   EMBEDDING_DOCUMENT_CREATED: 'embedding:document:created',
   EMBEDDING_DOCUMENT_UPDATED: 'embedding:document:updated',
   EMBEDDING_DOCUMENT_CHUNK_CREATED: 'embedding:document_chunk:created',
-  EMBEDDING_LOCATION_ACTION_CREATED: 'embedding:location_action:created',
+  EMBEDDING_CHAT_CREATED: 'embedding:chat:created',
   EMBEDDING_BOT_MEMORY_CREATED: 'embedding:bot_memory:created',
 } as const;
 
@@ -53,11 +53,11 @@ export interface DocumentChunkEmbeddingEvent extends BaseEmbeddingEvent {
 }
 
 /**
- * LocationAction embedding event
- * Published when a location action is created
+ * Chat embedding event
+ * Published when a chat is created
  */
-export interface LocationActionEmbeddingEvent extends BaseEmbeddingEvent {
-  locationActionId: string;
+export interface ChatEmbeddingEvent extends BaseEmbeddingEvent {
+  chatId: string;
   characterId: string;
   characterName: string;
   locationId: string;
@@ -81,7 +81,7 @@ export interface BotMemoryEmbeddingEvent extends BaseEmbeddingEvent {
 /**
  * Union type for all embedding events
  */
-export type EmbeddingEvent = DocumentEmbeddingEvent | DocumentChunkEmbeddingEvent | LocationActionEmbeddingEvent | BotMemoryEmbeddingEvent;
+export type EmbeddingEvent = DocumentEmbeddingEvent | DocumentChunkEmbeddingEvent | ChatEmbeddingEvent | BotMemoryEmbeddingEvent;
 
 /**
  * Helper to check event type
@@ -94,8 +94,8 @@ export function isDocumentChunkEmbeddingEvent(event: EmbeddingEvent): event is D
   return 'chunkId' in event;
 }
 
-export function isLocationActionEmbeddingEvent(event: EmbeddingEvent): event is LocationActionEmbeddingEvent {
-  return 'locationActionId' in event;
+export function isChatEmbeddingEvent(event: EmbeddingEvent): event is ChatEmbeddingEvent {
+  return 'chatId' in event;
 }
 
 export function isBotMemoryEmbeddingEvent(event: EmbeddingEvent): event is BotMemoryEmbeddingEvent {

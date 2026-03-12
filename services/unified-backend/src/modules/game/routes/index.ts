@@ -10,14 +10,13 @@ import corporationRoutes from './corporations';
 // import forumRoutes from './forum';
 // import documentRoutes from './documents';  // REMOVED: Moved to modules/documents
 // import ticketRoutes from './tickets';
-import experienceRoutes from './experienceRoutes';
 import chatModerationRoutes from './chatModerationRoutes';
-import relationshipRoutes from './relationships';
+import characterRelationRoutes from './characterRelations';
 import occupationRoutes from './occupations';
 import skillRoutes from './skills';
 import itemRoutes from './items';
 import sessionRoutes from './sessions';
-import { housingRoutes } from './housing';
+import { locationPropertyRoutes } from './locationPropertyRoutes';
 import websocketEventRoutes from './websocketEvents';
 import characterCreationRoutes from './characterCreation';
 import webhookRoutes from './webhooks';
@@ -43,13 +42,12 @@ router.use('/', messageRoutes);
 router.use('/', offGameChatRoutes); // OffGame chat system
 router.use('/chats', chatRoutes); // Location chats (renamed from location actions)
 router.use('/', corporationRoutes);
-router.use('/housing', housingRoutes);
+router.use('/housing', locationPropertyRoutes);
 // router.use('/forum', forumRoutes);
 // router.use('/documents', documentRoutes);  // REMOVED: Moved to modules/documents (mount: /documents)
 // router.use('/', ticketRoutes);
-router.use('/', experienceRoutes);
 router.use('/', chatModerationRoutes);
-router.use('/relationships', relationshipRoutes);
+router.use('/relationships', characterRelationRoutes);
 router.use('/occupations', occupationRoutes);
 router.use('/skills', skillRoutes);
 router.use('/items', itemRoutes);

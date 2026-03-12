@@ -23,8 +23,6 @@ export interface IGamingSession extends Document {
   // Session type and difficulty
   sessionType?: 'investigation' | 'social' | 'combat' | 'exploration' | 'event' | 'one_shot' | 'campaign_episode';
   difficultyLevel?: 'easy' | 'medium' | 'hard' | 'extreme';
-  campaignId?: Schema.Types.ObjectId; // If part of ongoing campaign
-  
   // Participants
   participants: {
     characterId: Schema.Types.ObjectId;
@@ -46,8 +44,6 @@ export interface IGamingSession extends Document {
   baseExperienceReward?: number;
   baseSkillPointReward?: number;
   experienceMultiplier?: number; // Based on difficulty and quality
-  
-  experienceGrants: Schema.Types.ObjectId[]; // References to ExperienceGrant documents
   
   // Master notes (private)
   masterNotes?: string;
@@ -152,11 +148,7 @@ const GamingSessionSchema = new Schema<IGamingSession>({
     enum: ['easy', 'medium', 'hard', 'extreme'],
     required: true
   },
-  campaignId: {
-    type: Schema.Types.ObjectId,
-    ref: 'Campaign'
-  },
-  
+
   participants: [{
     characterId: {
       type: Schema.Types.ObjectId,
@@ -211,11 +203,6 @@ const GamingSessionSchema = new Schema<IGamingSession>({
     min: 0.5,
     max: 3.0
   },
-  
-  experienceGrants: [{
-    type: Schema.Types.ObjectId,
-    ref: 'ExperienceGrant'
-  }],
   
   masterNotes: String,
   playerFeedback: [{

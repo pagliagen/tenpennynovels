@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { Character, Location, LocationAction } from '@database/models';
+import { Character, Location, Chat } from '@database/models';
 import { ApiResponse } from '../types/game';
 import { logger } from '../utils/logger';
 import { LocationService } from '../services/LocationService';
@@ -141,7 +141,7 @@ export class LocationController {
 
       // Get chat history for the location, filtered by current session
       const sessionId = location.activeSession?.sessionId?.toString();
-      const chatHistory = await ((LocationAction as any).getLocationHistory(locationId, characterId, 50, sessionId));
+      const chatHistory = await ((Chat as any).getLocationHistory(locationId, characterId, 50, sessionId));
 
       // Get occupants from location, or populate from characters with currentLocation if empty
       let occupants = location.occupants?.map((occupant: any) => ({

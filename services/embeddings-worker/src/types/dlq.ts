@@ -6,7 +6,7 @@
 export interface FailedJob {
   _id?: string;
   jobId: string;
-  eventType: 'document' | 'document_chunk' | 'location_action';
+  eventType: 'document' | 'document_chunk' | 'chat';
   eventData: any;
   error: string;
   attempts: number;

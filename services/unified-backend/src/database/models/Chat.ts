@@ -1,26 +1,25 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
-// Interface for LocationAction document
-export interface ILocationAction extends Document {
+export interface IChat extends Document {
   actionType: 'standard' | 'master' | 'moderation' | 'whisper' | 'ooc' |
              'dice_roll' | 'skill_check' | 'stat_check' | 'item_use';
   characterId: string;
   characterName: string;
   characterSurname?: string;
-  isBot: boolean; // indica se l'azione è stata eseguita da un bot
+  isBot: boolean;
   content: string;
   locationId: string;
-  locationName?: string; // Populated for embedding context
-  sessionId?: string; // Reference to GamingSession (auto-created, groups messages, TTL 3 hours)
+  locationName?: string;
+  sessionId?: string;
   timestamp: Date;
   visibility: 'public' | 'whisper' | 'master_only';
   diceResult?: {
     dice: string;
     result: number;
     success?: boolean;
-    target?: number;      // Target number for skill/stat checks
-    skillName?: string;   // For skill checks
-    statName?: string;    // For stat checks
+    target?: number;
+    skillName?: string;
+    statName?: string;
   };
   itemEffect?: {
     itemId: string;
@@ -37,20 +36,17 @@ export interface ILocationAction extends Document {
       duration?: string;
     }>;
   };
-  targetCharacters?: string[]; // For whispers
-  characterRoles: string[]; // Sender's gameplay roles (player, master, moderatore)
+  targetCharacters?: string[];
+  characterRoles: string[];
 
-  // Tag for action zone (REQUIRED - indicates where action takes place, must be one of location's tags)
   tags: string;
   
-  // Edit history for tracking modifications
   editHistory?: Array<{
     content: string;
     editedAt: Date;
     editedBy: string;
   }>;
   
-  // Social conflict data
   socialConflict?: {
     type: string;
     attackerSkill: string;
@@ -60,25 +56,21 @@ export interface ILocationAction extends Document {
     result: string;
     attackerSuccessDegree?: 'critical' | 'extreme' | 'hard' | 'normal' | 'failure' | 'fumble';
     defenderSuccessDegree?: 'critical' | 'extreme' | 'hard' | 'normal' | 'failure' | 'fumble';
-    messageForDefender?: string; // Message shown to defender when they detect something
-    visibleToDefenderOnly?: boolean; // If true, only defender can see this conflict result
+    messageForDefender?: string;
+    visibleToDefenderOnly?: boolean;
   };
   
-  // Success degree for skill/stat checks
   successDegree?: 'critical' | 'extreme' | 'hard' | 'normal' | 'failure' | 'fumble';
   
-  // Action mode fields
-  isHidden?: boolean; // For actions hidden during action mode
-  revealedAt?: Date; // When action is revealed after action mode
+  isHidden?: boolean;
+  revealedAt?: Date;
 
-  // Semantic search fields
-  contentEmbedding?: number[]; // 384-dimensional vector for semantic search
-  embeddingModel?: string; // Model used for embedding generation
-  embeddingGeneratedAt?: Date; // When embedding was generated
+  contentEmbedding?: number[];
+  embeddingModel?: string;
+  embeddingGeneratedAt?: Date;
 }
 
-// LocationAction Schema
-const LocationActionSchema = new Schema<ILocationAction>({
+const ChatSchema = new Schema<IChat>({
   actionType: {
     type: String,
     required: true,
@@ -118,7 +110,7 @@ const LocationActionSchema = new Schema<ILocationAction>({
   sessionId: {
     type: String,
     required: false,
-    index: true // Index for efficient session-based queries
+    index: true
   },
   timestamp: {
     type: Date,
@@ -134,9 +126,9 @@ const LocationActionSchema = new Schema<ILocationAction>({
     dice: { type: String },
     result: { type: Number },
     success: { type: Boolean },
-    target: { type: Number },      // Target number for skill/stat checks
-    skillName: { type: String },   // For skill checks
-    statName: { type: String }     // For stat checks
+    target: { type: Number },
+    skillName: { type: String },
+    statName: { type: String }
   },
   itemEffect: {
     itemId: { type: String },
@@ -161,7 +153,6 @@ const LocationActionSchema = new Schema<ILocationAction>({
     enum: ['player', 'master', 'moderatore']
   }],
 
-  // Tag (REQUIRED - must specify which zone the action takes place in)
   tags: {
     type: String,
     required: true,
@@ -170,7 +161,6 @@ const LocationActionSchema = new Schema<ILocationAction>({
     maxlength: 50
   },
   
-  // Edit history
   editHistory: [{
     content: {
       type: String,
@@ -187,7 +177,6 @@ const LocationActionSchema = new Schema<ILocationAction>({
     }
   }],
   
-  // Social conflict
   socialConflict: {
     type: {
       type: String
@@ -209,20 +198,17 @@ const LocationActionSchema = new Schema<ILocationAction>({
     visibleToDefenderOnly: Boolean
   },
   
-  // Success degree
   successDegree: {
     type: String,
     enum: ['critical', 'extreme', 'hard', 'normal', 'failure', 'fumble']
   },
   
-  // Action mode fields
   isHidden: {
     type: Boolean,
     default: false
   },
   revealedAt: Date,
 
-  // Semantic search fields
   contentEmbedding: {
     type: [Number],
     required: false,
@@ -243,26 +229,23 @@ const LocationActionSchema = new Schema<ILocationAction>({
   }
 }, {
   timestamps: true,
-  collection: 'locationactions'
+  collection: 'chats'
 });
 
-// Compound indexes for efficient queries
-LocationActionSchema.index({ locationId: 1, timestamp: -1 });
-LocationActionSchema.index({ characterId: 1, timestamp: -1 });
-LocationActionSchema.index({ locationId: 1, visibility: 1, timestamp: -1 });
-LocationActionSchema.index({ sessionId: 1, timestamp: -1 }); // Session-based conversation retrieval
+ChatSchema.index({ locationId: 1, timestamp: -1 });
+ChatSchema.index({ characterId: 1, timestamp: -1 });
+ChatSchema.index({ locationId: 1, visibility: 1, timestamp: -1 });
+ChatSchema.index({ sessionId: 1, timestamp: -1 });
 
-// TTL index to auto-delete old actions after 30 days
-LocationActionSchema.index({ timestamp: 1 }, { expireAfterSeconds: 30 * 24 * 60 * 60 });
+// TTL index to auto-delete old messages after 30 days
+ChatSchema.index({ timestamp: 1 }, { expireAfterSeconds: 30 * 24 * 60 * 60 });
 
-// Static methods
-LocationActionSchema.statics.getLocationHistory = async function(
+ChatSchema.statics.getLocationHistory = async function(
   locationId: string,
   characterId: string,
   limit: number = 50,
   sessionId?: string
-): Promise<ILocationAction[]> {
-  // Build query filter
+): Promise<IChat[]> {
   const filter: any = {
     locationId,
     $or: [
@@ -271,47 +254,39 @@ LocationActionSchema.statics.getLocationHistory = async function(
         { characterId },
         { targetCharacters: characterId }
       ]},
-      { visibility: 'master_only' } // Client will filter based on roles
+      { visibility: 'master_only' }
     ]
   };
 
-  // Filter by sessionId if provided (only show actions from current session)
   if (sessionId) {
     filter.sessionId = sessionId;
   }
 
-  // Get actions visible to the character
   const actions = await this.find(filter)
   .sort({ timestamp: -1 })
   .limit(limit)
   .lean();
 
-  // Normalize actions: ensure tags field is always present (as string)
   const normalizedActions = actions.map((action: any) => ({
     ...action,
     tags: action.tags || ''
   }));
 
-  return normalizedActions.reverse(); // Return chronological order
+  return normalizedActions.reverse();
 };
 
-LocationActionSchema.statics.createAction = async function(actionData: Partial<ILocationAction>): Promise<ILocationAction> {
+ChatSchema.statics.createAction = async function(actionData: Partial<IChat>): Promise<IChat> {
   const action = new this(actionData);
   await action.save();
   return action;
 };
 
-// ========== HOOKS ==========
-
-/**
- * Post-save hook: Trigger embedding generation
- */
-LocationActionSchema.post('save', async function(doc) {
+ChatSchema.post('save', async function(doc) {
   try {
-    const { publishLocationActionEvent } = await import('@shared/services/EmbeddingEventPublisher');
+    const { publishChatEvent } = await import('@shared/services/EmbeddingEventPublisher');
     const action = doc.isNew ? 'created' : 'updated';
 
-    await publishLocationActionEvent(action, {
+    await publishChatEvent(action, {
       _id: doc._id.toString(),
       characterId: doc.characterId,
       characterName: doc.characterName,
@@ -320,34 +295,30 @@ LocationActionSchema.post('save', async function(doc) {
       actionType: doc.actionType
     });
   } catch (error) {
-    console.error('[LocationAction] Failed to publish embedding event:', error);
+    console.error('[Chat] Failed to publish embedding event:', error);
   }
 });
 
-/**
- * Post-delete hooks: Trigger embedding cleanup
- */
-LocationActionSchema.post('deleteOne', async function(doc) {
+ChatSchema.post('deleteOne', async function(doc) {
   try {
-    const { publishLocationActionDeletedEvent } = await import('@shared/services/EmbeddingEventPublisher');
-    await publishLocationActionDeletedEvent(doc._id.toString());
+    const { publishChatDeletedEvent } = await import('@shared/services/EmbeddingEventPublisher');
+    await publishChatDeletedEvent(doc._id.toString());
   } catch (error) {
-    console.error('[LocationAction] Failed to publish delete event:', error);
+    console.error('[Chat] Failed to publish delete event:', error);
   }
 });
 
-LocationActionSchema.post('findOneAndDelete', async function(doc) {
+ChatSchema.post('findOneAndDelete', async function(doc) {
   if (!doc) return;
   try {
-    const { publishLocationActionDeletedEvent } = await import('@shared/services/EmbeddingEventPublisher');
-    await publishLocationActionDeletedEvent(doc._id.toString());
+    const { publishChatDeletedEvent } = await import('@shared/services/EmbeddingEventPublisher');
+    await publishChatDeletedEvent(doc._id.toString());
   } catch (error) {
-    console.error('[LocationAction] Failed to publish delete event:', error);
+    console.error('[Chat] Failed to publish delete event:', error);
   }
 });
 
-// Model
-export const LocationAction: Model<ILocationAction> = mongoose.models.LocationAction ||
-  mongoose.model<ILocationAction>('LocationAction', LocationActionSchema);
+export const Chat: Model<IChat> = mongoose.models.Chat ||
+  mongoose.model<IChat>('Chat', ChatSchema);
 
-export default LocationAction;
+export default Chat;

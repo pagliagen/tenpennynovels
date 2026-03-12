@@ -7,18 +7,6 @@ import { FinancialController } from '../controllers/FinancialController';
 const router = Router();
 
 // Economy routes (require character auth)
-router.get('/economy/wallet',
-  AuthMiddleware.requireCharacterAuth,
-  requireGamePermission('game:economy:wallet:read'),
-  EconomyController.getWallet
-);
-
-router.post('/economy/transfer',
-  AuthMiddleware.requireCharacterAuth,
-  requireGamePermission('game:economy:transfer'),
-  EconomyController.transferMoney
-);
-
 router.get('/economy/general-store',
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:shops:list'),
@@ -31,12 +19,6 @@ router.get('/economy/shops/:locationSlug',
   EconomyController.getShopItems
 );
 
-router.post('/economy/purchase',
-  AuthMiddleware.requireCharacterAuth,
-  requireGamePermission('game:shops:purchase'),
-  EconomyController.purchaseItem
-);
-
 router.post('/economy/shops/:shopId/restock',
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:admin:shops:restock'),
@@ -47,20 +29,7 @@ router.post('/economy/shops/:shopId/restock',
 // FINANCIAL OPERATIONS (merged from finances.ts)
 // ========================================================================
 
-// Transaction history
-router.get('/economy/transactions',
-  AuthMiddleware.requireCharacterAuth,
-  requireGamePermission('game:economy:transactions:read'),
-  FinancialController.getTransactionHistory
-);
-
 // Administrative endpoints (require admin permissions)
-router.post('/economy/admin/grant',
-  AuthMiddleware.requireCharacterAuth,
-  requireGamePermission('game:admin:economy:grant'),
-  FinancialController.adminMoneyGrant
-);
-
 router.post('/economy/admin/reset-credit',
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:admin:economy:reset-credit'),

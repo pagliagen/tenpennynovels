@@ -64,13 +64,11 @@ export class CreditLineResetService {
           
           await finance.save();
           
-          // Log the transaction
-          await FinancialUtils.logTransaction(
-            finance.characterId.toString(),
-            'credit_reset',
-            finance.maxCreditLine,
-            `Weekly credit line reset from £${oldCreditLine} to £${finance.maxCreditLine}`
-          );
+          logger.info('Credit line reset', {
+            characterId: finance.characterId.toString(),
+            oldCreditLine,
+            newCreditLine: finance.maxCreditLine
+          });
           
           resetResults.push({
             characterId: finance.characterId.toString(),

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { HousingController } from '../controllers/HousingController';
+import { LocationPropertyController } from '../controllers/LocationPropertyController';
 import { AuthMiddleware } from '../middleware/auth';
 import { requireGamePermission } from '../middleware/gamePermissions';
 
@@ -7,50 +7,50 @@ const router = Router();
 
 // Housing routes (public - no auth, no permission check)
 router.get('/districts',
-  HousingController.getDistricts
+  LocationPropertyController.getDistricts
 );
 
 router.get('/available/:district',
-  HousingController.getAvailableProperties
+  LocationPropertyController.getAvailableProperties
 );
 
 // Character-specific routes (require character auth)
 router.get('/my-properties',
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:housing:my-properties'),
-  HousingController.getMyProperties
+  LocationPropertyController.getMyProperties
 );
 
 router.get('/:propertyId',
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:housing:read'),
-  HousingController.getPropertyDetails
+  LocationPropertyController.getPropertyDetails
 );
 
 // Property transactions (require auth)
 router.post('/rent',
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:housing:rent'),
-  HousingController.rentProperty
+  LocationPropertyController.rentProperty
 );
 
 router.post('/purchase',
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:housing:purchase'),
-  HousingController.purchaseProperty
+  LocationPropertyController.purchaseProperty
 );
 
 router.post('/:propertyId/pay-rent',
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:housing:pay-rent'),
-  HousingController.payRent
+  LocationPropertyController.payRent
 );
 
 // Property management (require auth)
 router.put('/:propertyId/guests',
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:housing:manage-guests'),
-  HousingController.manageGuests
+  LocationPropertyController.manageGuests
 );
 
-export { router as housingRoutes };
+export { router as locationPropertyRoutes };

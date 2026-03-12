@@ -248,15 +248,3 @@ export function clearWeatherCache(): void {
   logger.info('[WeatherService] Cache cleared');
 }
 
-/**
- * WeatherService namespace export for backwards compatibility
- */
-export const WeatherService = {
-  getWeather,
-  clearWeatherCache,
-  calculateMoonPhase,
-  calculateWeather: (date: Date, currentCondition: WeatherCondition, hoursSinceUpdate: number) => {
-    // Stub function - implement if needed
-    return { condition: currentCondition, temperature: 15 };
-  }
-};
