@@ -378,7 +378,6 @@ export class OccupationManagementController {
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
 
       const charactersUsingOccupation = await Character.countDocuments({
-        status: { $ne: 'DELETED' },
         'occupation.occupationId': new mongoose.Types.ObjectId(occupationId)
       });
 

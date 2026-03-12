@@ -254,32 +254,7 @@ export function Step6Review(): JSX.Element {
             ))}
         </div>
       </DataSummaryCard>
-
-      {/* Background Summary */}
-      <DataSummaryCard title="Background">
-        {background.guidedBackground &&
-          Object.entries(background.guidedBackground).map(([key, value]) => {
-            if (!value) return null;
-            const labels: Record<string, string> = {
-              childhood: 'Infanzia',
-              family: 'Famiglia',
-              mentors: 'Mentori',
-              fears: 'Paure',
-              secrets: 'Segreti',
-              motivations: 'Motivazioni',
-              relationships: 'Relazioni',
-              goals: 'Obiettivi',
-              flaws: 'Difetti',
-            };
-            return (
-              <div key={key} className={styles.summaryRow}>
-                <span className={styles.summaryLabel}>{labels[key]}:</span>
-                <span className={styles.summaryValue}>{value.substring(0, 100)}...</span>
-              </div>
-            );
-          })}
-      </DataSummaryCard>
-
+ 
       {/* Final Instructions */}
       <div className={styles.section}>
         <div className={styles.infoBox}>

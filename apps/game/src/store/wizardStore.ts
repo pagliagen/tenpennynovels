@@ -36,6 +36,32 @@ import type {
   CharacterCreatePayload,
 } from '@/types/wizard';
 
+const FORMULA_STAT_MAP: Record<string, string> = {
+  str: 'strength', dex: 'dexterity', int: 'intelligence',
+  con: 'constitution', app: 'appearance', pow: 'power',
+  siz: 'size', edu: 'education',
+};
+
+/**
+ * Resolve a skill's baseValue from a formula string or number.
+ * Skills with "FORMULA:DEX" need the character's stats to compute their base.
+ */
+export function resolveSkillBaseValue(
+  baseFormula: string | null | undefined,
+  baseValue: number,
+  stats: Record<string, number>,
+): number {
+  if (!baseFormula) return baseValue;
+
+  if (baseFormula.startsWith('FORMULA:')) {
+    const raw = baseFormula.replace('FORMULA:', '').toLowerCase();
+    const fullStat = FORMULA_STAT_MAP[raw] || raw;
+    return stats[fullStat] ?? stats[raw] ?? baseValue;
+  }
+
+  return baseValue;
+}
+
 /**
  * Bonus Danno lookup table (FOR + TAG)
  */
@@ -55,6 +81,11 @@ function getBonusDamage(forPlusTag: number): string {
  * Wizard Store State Interface
  */
 interface WizardStore extends WizardData {
+  // Hydration & draft tracking (NOT persisted: _hasHydrated; persisted: _draftCharacterId, _serverUpdatedAt)
+  _hasHydrated: boolean;
+  _draftCharacterId: string | null;
+  _serverUpdatedAt: string | null;
+
   // Validation state
   stepErrors: Record<number, Record<string, string>>; // Step → Field → Error
   isValidating: boolean;
@@ -132,6 +163,11 @@ const initialState = (): Omit<
   | 'reset'
   | 'loadFromDraft'
 > => ({
+  // Hydration & draft tracking
+  _hasHydrated: false,
+  _draftCharacterId: null,
+  _serverUpdatedAt: null as string | null,
+
   // Navigation
   currentStep: 1,
 
@@ -237,8 +273,8 @@ const initialState = (): Omit<
  * ```
  */
 export const useWizardStore = create<WizardStore>()(
-  persist(
-    devtools(
+  devtools(
+    persist(
       (set, get) => ({
         ...initialState(),
 
@@ -548,16 +584,20 @@ export const useWizardStore = create<WizardStore>()(
           return;
         }
 
-        const { skills } = get();
+        const { skills, stats } = get();
         const updatedSkills = { ...skills };
         let changesMade = false;
 
         const requiredPlaceholderSkills: string[] = [];
 
-        // FIRST: Clear old requiredBonus when occupation changes
+        // Collect dynamic skill IDs to preserve their requiredBonus (set by user via PlaceholderSkillManager)
+        const { dynamicSkills: currentDynamicSkills } = get();
+        const dynamicSkillIds = new Set(currentDynamicSkills.map((ds) => ds.skillId));
+
+        // FIRST: Clear old requiredBonus when occupation changes (skip dynamic/placeholder skills)
         Object.keys(updatedSkills).forEach((skillId) => {
           const skill = updatedSkills[skillId];
-          if (skill && skill.requiredBonus > 0) {
+          if (skill && skill.requiredBonus > 0 && !dynamicSkillIds.has(skillId)) {
             skill.requiredBonus = 0;
             skill.total = skill.base + skill.manualPoints + skill.occupationBonus;
             changesMade = true;
@@ -598,14 +638,20 @@ export const useWizardStore = create<WizardStore>()(
             return;
           }
 
+          const resolvedBase = resolveSkillBaseValue(skillDef.baseFormula, skillDef.baseValue, stats);
           const currentSkill = updatedSkills[skillDef.id] || {
-            base: skillDef.baseValue,
+            base: resolvedBase,
             requiredBonus: 0,
             manualPoints: 0,
             occupationBonus: 0,
-            total: skillDef.baseValue,
+            total: resolvedBase,
             category: skillDef.category,
           };
+
+          if (currentSkill.base !== resolvedBase) {
+            currentSkill.base = resolvedBase;
+            currentSkill.total = resolvedBase + currentSkill.requiredBonus + currentSkill.manualPoints + currentSkill.occupationBonus;
+          }
 
           const requiredMinimum = 40;
           const newRequiredBonus = Math.max(0, requiredMinimum - currentSkill.base);
@@ -655,17 +701,20 @@ export const useWizardStore = create<WizardStore>()(
               return;
             }
 
-            // Get or initialize skill breakdown
+            const resolvedBonusBase = resolveSkillBaseValue(skillDef.baseFormula, skillDef.baseValue, stats);
             const currentSkill = updatedSkills[skillDef.id] || {
-              base: skillDef.baseValue,
+              base: resolvedBonusBase,
               requiredBonus: 0,
               manualPoints: 0,
               occupationBonus: 0,
-              total: skillDef.baseValue,
+              total: resolvedBonusBase,
               category: skillDef.category,
             };
 
-            // Apply occupation bonus (from CSV, e.g., +30 or +10)
+            if (currentSkill.base !== resolvedBonusBase) {
+              currentSkill.base = resolvedBonusBase;
+            }
+
             const bonusValue = bonusSkill.bonusValue || 30;
             currentSkill.occupationBonus = bonusValue;
 
@@ -874,9 +923,28 @@ export const useWizardStore = create<WizardStore>()(
           }
         }
 
+        // Transform dynamicSkills for backend (Character.dynamicSkills schema)
+        const { dynamicSkills } = get();
+        const transformedDynamicSkills = dynamicSkills.map((ds) => {
+          const breakdown = skills[ds.skillId];
+          return {
+            skillName: `${ds.name} (${ds.specialization || ''})`,
+            basedOnTemplate: ds.name,
+            customValue: ds.specialization || '',
+            value: breakdown?.total || 0,
+            base: breakdown?.base || 0,
+            requiredBonus: breakdown?.requiredBonus || 0,
+            manualPoints: breakdown?.manualPoints || 0,
+            occupationBonus: breakdown?.occupationBonus || 0,
+            category: breakdown?.category || 'general',
+          };
+        });
+
         const payload: CharacterCreatePayload = {
           // Basic info (field name reconciliation as per CharacterCreatePayload type)
-          name: basicInfo.firstName + ' ' + basicInfo.lastName,
+          name: [basicInfo.firstName, basicInfo.lastName].filter(Boolean).join(' '),
+          surname: basicInfo.lastName || '',
+          birthDate: basicInfo.birthDate || undefined,
           birthplace: basicInfo.birthplace, // lowercase!
           age: basicInfo.age,
           apparentAge: basicInfo.apparentAge,
@@ -933,6 +1001,9 @@ export const useWizardStore = create<WizardStore>()(
             goalsAndMotivations: background.goalsAndMotivations,
           },
 
+          // Dynamic skills (placeholder specializations)
+          dynamicSkills: transformedDynamicSkills,
+
           // Metadata
           status: 'DRAFT',
         };
@@ -958,27 +1029,55 @@ export const useWizardStore = create<WizardStore>()(
        * @param character - Existing character data
        */
       loadFromDraft: (character) => {
-        console.log('[WizardStore] Loading DRAFT character into wizard:', character._id);
-
-        // CLEANUP: Remove any legacy skills (name-based) from store before loading
-        const currentSkills = get().skills;
-        const cleanedSkills: Record<string, any> = {};
-        Object.entries(currentSkills).forEach(([key, value]) => {
-          // Keep only skills with valid ObjectId keys
-          if (key.match(/^[0-9a-f]{24}$/i)) {
-            cleanedSkills[key] = value;
-          }
+        console.log('[WizardStore] loadFromDraft called', {
+          id: character._id,
+          name: character.name,
+          surname: character.surname,
+          hasStats: !!character.stats,
+          hasDerived: !!character.derived,
+          hasSkills: !!character.skills,
+          hasBackground: !!character.background,
+          updatedAt: character.updatedAt,
         });
-        if (Object.keys(cleanedSkills).length !== Object.keys(currentSkills).length) {
-          console.log('[WizardStore] Cleaned up legacy skills from localStorage');
-          set({ skills: cleanedSkills });
+
+        // Reconstruct firstName: if surname exists, strip it from the full name
+        const fullName = character.name || '';
+        const surname = character.surname || '';
+        const firstName = surname && fullName.endsWith(surname)
+          ? fullName.slice(0, -surname.length).trim()
+          : fullName;
+
+        // Process skills (handle both Map and plain object)
+        const skillsObj: Record<string, any> = {};
+        if (character.skills) {
+          const rawEntries: Array<[string, any]> = character.skills instanceof Map
+            ? Array.from(character.skills.entries() as IterableIterator<[string, any]>)
+            : Object.entries(character.skills);
+
+          rawEntries.forEach(([key, value]) => {
+            if (!key.match(/^[0-9a-f]{24}$/i)) return;
+            if (typeof value === 'number') {
+              skillsObj[key] = {
+                total: value, base: 0, requiredBonus: 0,
+                manualPoints: value, occupationBonus: 0, category: 'general',
+              };
+            } else if (value && typeof value === 'object') {
+              skillsObj[key] = value;
+            }
+          });
         }
 
-        // Basic Info
+        // Derived stats from character.derived (calculated by backend pre-save hook)
+        const derived = character.derived || {};
+        const charStats = character.stats || {};
+
+        // SINGLE ATOMIC set() — avoids intermediate renders and persist middleware race conditions
         set({
+          _draftCharacterId: character._id,
+          _serverUpdatedAt: character.updatedAt || null,
           basicInfo: {
-            firstName: character.name || '',
-            lastName: character.surname || '',
+            firstName,
+            lastName: surname,
             birthDate: character.birthDate || '',
             birthplace: character.birthPlace || '',
             age: character.age || 25,
@@ -998,133 +1097,76 @@ export const useWizardStore = create<WizardStore>()(
             privateDescription: character.privateDescription || '',
             physicalDescription: character.physicalDescription || '',
           },
-        });
-
-        // Occupation
-        set({
           occupation: {
             occupationId: character.occupation || '',
             currentOccupation: character.currentOccupation || '',
             selectedAlternativeSkills: {},
-            occupationBonusesApplied: false,
+            occupationBonusesApplied: true,
             requiredPlaceholderSkills: [],
           },
+          stats: {
+            strength: charStats.strength || 20,
+            dexterity: charStats.dexterity || 20,
+            intelligence: charStats.intelligence || 20,
+            constitution: charStats.constitution || 20,
+            appearance: charStats.charm || 20,
+            power: charStats.power || 20,
+            size: charStats.size || 20,
+            education: charStats.education || 20,
+          },
+          derivedStats: {
+            hitPoints: derived.hitPoints || charStats.hitPoints || 4,
+            sanity: derived.sanityPoints ?? derived.sanity ?? charStats.sanity ?? 20,
+            maxSanity: derived.maxSanity ?? charStats.maxSanity ?? 99,
+            bonusDamage: derived.damageBonus ?? derived.bonusDamage ?? charStats.bonusDamage ?? '-2',
+            ideaRoll: derived.ideaRoll ?? charStats.ideaRoll ?? 20,
+          },
+          skills: skillsObj,
+          background: character.background ? {
+            briefHistory: character.background.briefHistory || '',
+            significantEvents: character.background.significantEvents || '',
+            importantRelationships: character.background.importantRelationships || '',
+            personality: character.background.personality || '',
+            ideology: character.background.ideology || '',
+            significantPlaces: character.background.significantPlaces || '',
+            fearsAndPhobias: character.background.fearsAndPhobias || '',
+            secrets: character.background.secrets || '',
+            goalsAndMotivations: character.background.goalsAndMotivations || '',
+          } : get().background,
         });
 
-        // Stats (map charm → appearance from backend)
-        if (character.stats) {
-          set({
-            stats: {
-              strength: character.stats.strength || 20,
-              dexterity: character.stats.dexterity || 20,
-              intelligence: character.stats.intelligence || 20,
-              constitution: character.stats.constitution || 20,
-              appearance: character.stats.charm || 20, // Backend has "charm" not "appearance"
-              power: character.stats.power || 20,
-              size: character.stats.size || 20,
-              education: character.stats.education || 20,
-            },
-          });
-        }
-
-        // Derived Stats
-        if (character.stats) {
-          set({
-            derivedStats: {
-              hitPoints: character.stats.hitPoints || 4,
-              sanity: character.stats.sanity || 20,
-              maxSanity: character.stats.maxSanity || 99,
-              bonusDamage: character.stats.bonusDamage || '-2',
-              ideaRoll: character.stats.ideaRoll || 20,
-            },
-          });
-        }
-
-        // Skills - Preserve SkillBreakdown format from backend
-        if (character.skills) {
-          const skillsObj: Record<string, any> = {};
-
-          // Handle both Map and object formats
-          if (character.skills instanceof Map) {
-            character.skills.forEach((value: any, key: string) => {
-              // Only add skills with valid IDs (ObjectId format), skip legacy name-based skills
-              if (key.match(/^[0-9a-f]{24}$/i)) {
-                if (typeof value === 'number') {
-                  // Legacy number format - convert to SkillBreakdown
-                  skillsObj[key] = {
-                    total: value,
-                    base: 0,
-                    requiredBonus: 0,
-                    manualPoints: value,
-                    occupationBonus: 0,
-                    category: 'general',
-                  };
-                } else if (value && typeof value === 'object') {
-                  // Already SkillBreakdown - preserve it completely
-                  skillsObj[key] = value;
-                }
-              }
-            });
-          } else if (typeof character.skills === 'object') {
-            Object.entries(character.skills).forEach(([key, value]: [string, any]) => {
-              // Only add skills with valid IDs (ObjectId format), skip legacy name-based skills
-              if (key.match(/^[0-9a-f]{24}$/i)) {
-                if (typeof value === 'number') {
-                  // Legacy number format - convert to SkillBreakdown
-                  skillsObj[key] = {
-                    total: value,
-                    base: 0,
-                    requiredBonus: 0,
-                    manualPoints: value,
-                    occupationBonus: 0,
-                    category: 'general',
-                  };
-                } else if (value && typeof value === 'object') {
-                  // Already SkillBreakdown - preserve it completely
-                  skillsObj[key] = value;
-                }
-              }
-            });
-          }
-
-          set({ skills: skillsObj });
-        }
-
-        // Background
-        if (character.background) {
-          set({
-            background: {
-              briefHistory: character.background.briefHistory || '',
-              significantEvents: character.background.significantEvents || '',
-              importantRelationships: character.background.importantRelationships || '',
-              personality: character.background.personality || '',
-              ideology: character.background.ideology || '',
-              significantPlaces: character.background.significantPlaces || '',
-              fearsAndPhobias: character.background.fearsAndPhobias || '',
-              secrets: character.background.secrets || '',
-              goalsAndMotivations: character.background.goalsAndMotivations || '',
-            },
-          });
-        }
-
-        console.log('[WizardStore] Character data loaded successfully');
+        console.log('[WizardStore] loadFromDraft completed', {
+          firstName: get().basicInfo.firstName,
+          occupationId: get().occupation.occupationId,
+          skillCount: Object.keys(get().skills).length,
+          stats: get().stats,
+          derivedStats: get().derivedStats,
+        });
       },
     }),
-      { name: 'WizardStore' }
+      {
+        name: 'wizard-draft',
+        partialize: (state) => ({
+          _draftCharacterId: state._draftCharacterId,
+          _serverUpdatedAt: state._serverUpdatedAt,
+          currentStep: state.currentStep,
+          basicInfo: state.basicInfo,
+          occupation: state.occupation,
+          stats: state.stats,
+          derivedStats: state.derivedStats,
+          skills: state.skills,
+          dynamicSkills: state.dynamicSkills,
+          background: state.background,
+        }),
+        onRehydrateStorage: () => {
+          return (_state, error) => {
+            if (!error) {
+              useWizardStore.setState({ _hasHydrated: true });
+            }
+          };
+        },
+      }
     ),
-    {
-      name: 'wizard-draft', // LocalStorage key
-      partialize: (state) => ({
-        currentStep: state.currentStep,
-        basicInfo: state.basicInfo,
-        occupation: state.occupation,
-        stats: state.stats,
-        derivedStats: state.derivedStats,
-        skills: state.skills,
-        dynamicSkills: state.dynamicSkills,
-        background: state.background,
-        // Don't persist errors/validation state
-      }),
-    }
+    { name: 'WizardStore' }
   )
 );

@@ -44,7 +44,7 @@ export class CharacterReviewEventHandler extends BaseEventHandler {
       await this.sendCharacterReviewMessage(characterId, characterName, action, note, reviewedByUsername);
 
       // Send WebSocket event to notify character data refresh
-      await this.notifyCharacterStatusChange(characterId, characterName, action);
+      await this.notifyCharacterStatusChange(characterId, characterName, action, note);
 
     } catch (error: any) {
       logger.error('[CharacterReviewEventHandler] Error handling character review event:', {
@@ -86,7 +86,7 @@ export class CharacterReviewEventHandler extends BaseEventHandler {
       // Find admin's character (prefer master/amministratore roles)
       const adminCharacter = await Character.findOne({
         userId: adminUser._id,
-        status: 'APPROVED',
+        playerStatus: 'approved',
         gameplayRoles: { $in: ['master', 'moderatore'] }
       }).sort({ gameplayRoles: -1 }); // Prioritize by role hierarchy
 
@@ -110,7 +110,8 @@ export class CharacterReviewEventHandler extends BaseEventHandler {
       await this.sendOffGameMessage(
         adminCharacter._id.toString(),
         targetCharacter._id.toString(),
-        messageContent
+        messageContent,
+        adminCharacter.name || reviewedByUsername
       );
 
       logger.info(`[CharacterReviewEventHandler] Character review message sent via direct service call`, {
@@ -132,7 +133,8 @@ export class CharacterReviewEventHandler extends BaseEventHandler {
   private async sendOffGameMessage(
     fromCharacterId: string,
     toCharacterId: string,
-    messageContent: string
+    messageContent: string,
+    senderName?: string
   ): Promise<void> {
     try {
       // ✅ Import service directly (same backend, no HTTP needed)
@@ -171,6 +173,7 @@ export class CharacterReviewEventHandler extends BaseEventHandler {
         chatId: chat._id.toString(),
         messageId: message?._id.toString(),
         senderId: fromCharacterId,
+        senderName: senderName || fromCharacterId,
         content: messageContent,
         messageType: 'system' as const,
         timestamp: message?.sentAt,
@@ -209,7 +212,8 @@ export class CharacterReviewEventHandler extends BaseEventHandler {
   private async notifyCharacterStatusChange(
     characterId: string,
     characterName: string,
-    action: 'approve' | 'reject'
+    action: 'approve' | 'reject',
+    note?: string
   ): Promise<void> {
     try {
       const { Character } = await import('@database/models/Character');
@@ -223,6 +227,10 @@ export class CharacterReviewEventHandler extends BaseEventHandler {
 
       const userId = character.userId._id ? character.userId._id.toString() : character.userId.toString();
 
+      const rejectMessage = note?.trim()
+        ? `Il tuo personaggio è stato respinto. Motivo: ${note.trim()}`
+        : 'Il tuo personaggio è stato respinto. Puoi modificarlo e risubmettere.';
+
       // Send WebSocket event to the specific character/user to refresh data
       this.io.to(`user_${userId}`).emit('character_status_changed', {
         type: 'character_status_changed',
@@ -230,10 +238,11 @@ export class CharacterReviewEventHandler extends BaseEventHandler {
         characterName: characterName,
         action: action,
         newStatus: action === 'approve' ? 'APPROVED' : 'DRAFT',
+        note: note || '',
         timestamp: new Date().toISOString(),
         message: action === 'approve'
           ? 'Il tuo personaggio è stato approvato! I dati sono stati aggiornati.'
-          : 'Il tuo personaggio è stato respinto. Puoi modificarlo e risubmettere.'
+          : rejectMessage
       });
 
       logger.info('[CharacterReviewEventHandler] Character status change notification sent', {

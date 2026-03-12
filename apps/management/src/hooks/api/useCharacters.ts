@@ -247,7 +247,7 @@ export function useRejectCharacter() {
         approvalStatus: {
           ...char.approvalStatus,
           status: 'rejected',
-          rejectionReason: data.reason,
+          rejectionReason: data.note,
           reviewedAt: new Date().toISOString()
         }
       }));

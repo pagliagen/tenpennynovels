@@ -227,9 +227,7 @@ export class LocationService {
       const cutoffTime = new Date(Date.now() - activityTimeout);
 
       // Get ALL characters that are not deleted
-      const allCharacters = await Character.find({ 
-        status: { $ne: 'DELETED' }
-      }).select('id name surname currentLocation lastActive avatar');
+      const allCharacters = await Character.find({}).select('id name surname currentLocation lastActive avatar');
 
       // Check each character for recent activity and location
       for (const character of allCharacters) {

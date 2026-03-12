@@ -64,7 +64,7 @@ router.get('/characters/public/:characterId',
 );
 
 router.put('/characters/:characterId',
-  AuthMiddleware.requireUserAuth,
+  AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:character:update'),
   CharacterValidationMiddleware.validateCharacterUpdate,
   CharacterValidationMiddleware.validateVictorianContent,
@@ -73,7 +73,7 @@ router.put('/characters/:characterId',
 );
 
 router.post('/characters/:characterId/submit',
-  AuthMiddleware.requireUserAuth,
+  AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:character:submit'),
   CharacterValidationMiddleware.validateBackgroundCompletion,
   CharacterGameplayController.submitCharacter

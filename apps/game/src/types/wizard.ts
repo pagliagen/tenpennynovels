@@ -248,7 +248,9 @@ export interface CharacterCreationConfig {
  */
 export interface CharacterCreatePayload {
   // Basic info (field name reconciliation)
-  name: string; // firstName + ' ' + lastName
+  name: string; // firstName + ' ' + lastName (full name for backward compat)
+  surname?: string; // lastName stored separately for wizard round-trip
+  birthDate?: string; // gg/mm/yyyy format
   birthplace: string; // lowercase!
   age: number;
   apparentAge: number;
@@ -317,6 +319,19 @@ export interface CharacterCreatePayload {
     secrets?: string; // Segreti (private)
     goalsAndMotivations?: string; // Obiettivi e motivazioni
   };
+
+  // Dynamic skills (placeholder specializations like "Lingua straniera (Francese)")
+  dynamicSkills?: Array<{
+    skillName: string;
+    basedOnTemplate: string;
+    customValue: string;
+    value: number;
+    base: number;
+    requiredBonus: number;
+    manualPoints: number;
+    occupationBonus: number;
+    category: string;
+  }>;
 
   // Metadata
   status: CharacterStatus; // Always 'DRAFT' initially

@@ -159,5 +159,5 @@ export interface ApproveCharacterData {
 }
 
 export interface RejectCharacterData {
-  reason: string;
+  note: string;
 }

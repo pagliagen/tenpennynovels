@@ -17,8 +17,7 @@ export class FinancialController {
       // Check if user owns the character or is a master
       const { Character } = require('../../../database/models');
       const character = await Character.findOne({ 
-        _id: characterId, 
-        status: { $ne: 'DELETED' } 
+        _id: characterId
       });
 
       if (!character) {

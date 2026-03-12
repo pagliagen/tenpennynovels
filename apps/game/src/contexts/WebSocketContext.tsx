@@ -25,6 +25,7 @@ import { createContext, useContext, useEffect, useRef, useState, useCallback, Re
 import { io, Socket } from 'socket.io-client';
 import { WS_CONFIG } from '@/constants/config';
 import { useAuthStore } from '@/store/authStore';
+import { useUIStore } from '@/store/uiStore';
 
 /**
  * WebSocket Connection Status
@@ -331,6 +332,14 @@ export function WebSocketProvider({ children }: WebSocketProviderProps): JSX.Ele
       messageCallbacksRef.current.forEach((callback) =>
         callback({ type: 'offgame_message_received', data })
       );
+
+      if (data?.senderName) {
+        useUIStore.getState().addToast({
+          type: 'info',
+          message: `Nuovo messaggio da ${data.senderName}`,
+          duration: 4000,
+        });
+      }
     });
 
     socket.on('offgame_typing_indicator', (data) => {
@@ -355,6 +364,14 @@ export function WebSocketProvider({ children }: WebSocketProviderProps): JSX.Ele
       messageCallbacksRef.current.forEach((callback) =>
         callback({ type: 'ongame:message_delivered', data })
       );
+
+      if (data?.fromCharacterName) {
+        useUIStore.getState().addToast({
+          type: 'info',
+          message: `Nuova posta da ${data.fromCharacterName}${data.subject ? `: ${data.subject}` : ''}`,
+          duration: 4000,
+        });
+      }
     });
 
     socket.on('ongame:message_sent', (data) => {
@@ -373,6 +390,46 @@ export function WebSocketProvider({ children }: WebSocketProviderProps): JSX.Ele
       messageCallbacksRef.current.forEach((callback) =>
         callback({ type: 'character_status_changed', data })
       );
+
+      if (data?.message) {
+        const toastType = data.action === 'approve' ? 'success' : 'warning';
+        useUIStore.getState().addToast({
+          type: toastType,
+          message: data.message,
+          duration: 6000,
+        });
+      }
+    });
+
+    /**
+     * Notification Events
+     *
+     * Direct toast triggers - these events are NOT dispatched to component callbacks,
+     * they only produce user-visible toast notifications.
+     */
+
+    socket.on('notification:ticket', (data) => {
+      useUIStore.getState().addToast({
+        type: 'info',
+        message: data?.title || data?.message || 'Nuova notifica ticket',
+        duration: 5000,
+      });
+    });
+
+    socket.on('system_notification', (message) => {
+      useUIStore.getState().addToast({
+        type: 'info',
+        message: typeof message === 'string' ? message : 'Notifica di sistema',
+        duration: 5000,
+      });
+    });
+
+    socket.on('error', (errorMsg) => {
+      useUIStore.getState().addToast({
+        type: 'error',
+        message: typeof errorMsg === 'string' ? errorMsg : 'Si è verificato un errore',
+        duration: 5000,
+      });
     });
 
     /**

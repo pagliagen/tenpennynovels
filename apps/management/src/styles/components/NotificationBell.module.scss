@@ -1,0 +1,247 @@
+@import '../variables';
+
+// Bell container
+.bellContainer {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.bellButton {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: $border-radius-md;
+  color: $color-text-secondary;
+  cursor: pointer;
+  transition: color $transition-fast, background $transition-fast, border-color $transition-fast;
+
+  &:hover {
+    color: $color-primary;
+    background: rgba($color-primary, 0.08);
+    border-color: rgba($color-primary, 0.2);
+  }
+}
+
+.bellIcon {
+  width: 20px;
+  height: 20px;
+}
+
+// Shake animation
+.shaking {
+  animation: shake 0.6s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: rotate(0deg); }
+  15% { transform: rotate(12deg); }
+  30% { transform: rotate(-10deg); }
+  45% { transform: rotate(8deg); }
+  60% { transform: rotate(-6deg); }
+  75% { transform: rotate(3deg); }
+}
+
+// Badge
+.badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  background: $color-error;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+  border-radius: 8px;
+  pointer-events: none;
+}
+
+// Dropdown
+.dropdown {
+  position: absolute;
+  top: calc(100% + #{$spacing-sm});
+  right: 0;
+  width: 360px;
+  max-height: 480px;
+  background: $color-bg-secondary;
+  border: 1px solid rgba($color-primary, 0.15);
+  border-radius: $border-radius-lg;
+  box-shadow: $shadow-lg;
+  z-index: $z-dropdown;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.dropdownHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-sm $spacing-md;
+  border-bottom: 1px solid rgba(#fff, 0.06);
+}
+
+.dropdownTitle {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: $color-text-primary;
+}
+
+.dropdownActions {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.markAllRead,
+.clearAllBtn {
+  background: none;
+  border: none;
+  color: $color-primary;
+  font-size: 11px;
+  cursor: pointer;
+  padding: 2px $spacing-xs;
+  border-radius: $border-radius-sm;
+  transition: background $transition-fast;
+  white-space: nowrap;
+
+  &:hover {
+    background: rgba($color-primary, 0.1);
+  }
+}
+
+// Tabs
+.tabs {
+  display: flex;
+  border-bottom: 1px solid rgba(#fff, 0.06);
+}
+
+.tab {
+  flex: 1;
+  padding: $spacing-sm;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: $color-text-muted;
+  font-size: 12px;
+  cursor: pointer;
+  transition: color $transition-fast, border-color $transition-fast;
+
+  &:hover {
+    color: $color-text-secondary;
+  }
+}
+
+.tabActive {
+  color: $color-primary;
+  border-bottom-color: $color-primary;
+}
+
+// Notification list
+.notificationList {
+  overflow-y: auto;
+  flex: 1;
+  max-height: 360px;
+}
+
+.emptyState {
+  padding: $spacing-xl $spacing-md;
+  text-align: center;
+  color: $color-text-muted;
+  font-size: 13px;
+}
+
+// Notification item
+.notificationItem {
+  display: flex;
+  align-items: flex-start;
+  padding: $spacing-sm $spacing-md;
+  cursor: pointer;
+  transition: background $transition-fast;
+  border-left: 3px solid transparent;
+
+  &:hover {
+    background: rgba(#fff, 0.03);
+  }
+
+  &:not(:last-child) {
+    border-bottom: 1px solid rgba(#fff, 0.04);
+  }
+}
+
+.unread {
+  border-left-color: $color-primary;
+  background: rgba($color-primary, 0.04);
+
+  .notificationTitle {
+    font-weight: 600;
+  }
+}
+
+.notificationContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.notificationTitle {
+  font-size: 12px;
+  font-weight: 500;
+  color: $color-text-primary;
+}
+
+.notificationMessage {
+  font-size: 11px;
+  color: $color-text-secondary;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.notificationTime {
+  font-size: 10px;
+  color: $color-text-muted;
+  margin-top: 2px;
+}
+
+.removeBtn {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: $color-text-muted;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: $border-radius-sm;
+  opacity: 0;
+  transition: opacity $transition-fast, color $transition-fast, background $transition-fast;
+  margin-left: $spacing-xs;
+
+  .notificationItem:hover & {
+    opacity: 1;
+  }
+
+  &:hover {
+    color: $color-error;
+    background: rgba($color-error, 0.1);
+  }
+}

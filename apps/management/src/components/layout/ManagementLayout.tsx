@@ -15,8 +15,10 @@ import { useRouter } from 'next/router';
 import { useAuthStore } from '@/store/authStore';
 import { usePermissionsStore } from '@/store/permissionsStore';
 import { Sidebar } from './Sidebar';
+import { NotificationBell } from '@/components/shared/NotificationBell';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { ToastContainer } from '@/components/shared/ToastContainer';
+import { useAdminNotifications } from '@/hooks/useAdminNotifications';
 import styles from '@/styles/components/ManagementLayout.module.scss';
 
 export interface ManagementLayoutProps {
@@ -27,6 +29,8 @@ export function ManagementLayout({ children }: ManagementLayoutProps): React.Rea
   const router = useRouter();
   const { user, isAuthenticated, isLoading } = useAuthStore();
   const { loadPermissions, clearPermissions } = usePermissionsStore();
+
+  useAdminNotifications();
 
   // Auth check - redirect to landing if not authenticated
   useEffect(() => {
@@ -86,6 +90,7 @@ export function ManagementLayout({ children }: ManagementLayoutProps): React.Rea
           <div className={styles.headerContent}>
             <h1 className={styles.logo}>Ten Penny Novels</h1>
             <div className={styles.headerActions}>
+              <NotificationBell />
               <div className={styles.userInfo}>
                 <span className={styles.userName}>{user?.displayName || user?.username}</span>
               </div>

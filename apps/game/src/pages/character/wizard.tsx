@@ -13,14 +13,15 @@
  * 5. Background (9 structured questions)
  * 6. Review (summary + submit for approval)
  *
- * **No Persistence**: Wizard state is session-only (lost on refresh).
+ * **Persistence**: Wizard state is persisted in localStorage via Zustand `persist` middleware.
+ * Draft survives page refresh and is tied to the character ID.
  * Expected completion time: 15-30 minutes.
  *
  * @module pages/character/wizard
  * @since 2.0.0
  */
 
-import { useEffect } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import { useAuthStore } from '@/store/authStore';
@@ -38,11 +39,20 @@ import { GameLayout } from '@/components/layout/GameLayout';
 export default function CharacterWizardPage() {
   const router = useRouter();
   const { selectedCharacter, isAuthenticated, hasGamePermission } = useAuthStore();
+  const isSubmittingRef = useRef(false);
+
+  const setSubmitting = useCallback((value: boolean) => {
+    isSubmittingRef.current = value;
+  }, []);
 
   /**
-   * Guard: Redirect if not authenticated, no character, or no wizard permission
+   * Guard: Redirect if not authenticated, no character, or no wizard permission.
+   * Skipped during submit to avoid premature redirect while the mutation
+   * updates selectedCharacter (which temporarily changes its shape).
    */
   useEffect(() => {
+    if (isSubmittingRef.current) return;
+
     if (!isAuthenticated) {
       router.push('/auth/login');
       return;
@@ -53,14 +63,14 @@ export default function CharacterWizardPage() {
       return;
     }
 
-    if (!hasGamePermission('game:character:wizard')) {
-      router.push('/game');
+    if (!hasGamePermission('game:character:wizard') || selectedCharacter?.playerStatus !== 'draft') {
+      router.push('/');
       return;
     }
   }, [isAuthenticated, selectedCharacter, hasGamePermission, router]);
 
   // Show loading while checking auth/character/permission
-  if (!isAuthenticated || !selectedCharacter || !hasGamePermission('game:character:wizard')) {
+  if (!isAuthenticated || !selectedCharacter || !hasGamePermission('game:character:wizard') || selectedCharacter.playerStatus !== 'draft') {
     return (
       <>
         <Head>
@@ -95,7 +105,7 @@ export default function CharacterWizardPage() {
         <meta name="description" content="Crea il tuo personaggio vittoriano per Ten Penny Novels. Sistema Call of Cthulhu con background dettagliato e skills personalizzabili." />
       </Head>
       <GameLayout>
-        <WizardContainer characterId={selectedCharacter._id} />
+        <WizardContainer characterId={selectedCharacter._id} onSubmittingChange={setSubmitting} />
       </GameLayout>
     </>
   );

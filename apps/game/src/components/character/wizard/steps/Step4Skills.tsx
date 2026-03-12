@@ -11,7 +11,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { useWizardStore } from '@/store/wizardStore';
+import { useWizardStore, resolveSkillBaseValue } from '@/store/wizardStore';
 import { useSkills, useOccupations } from '@/hooks/useCharacterCreation';
 import { useWizardToolbar } from '../WizardSlotsContext';
 import { BudgetIndicator } from '../shared/BudgetIndicator';
@@ -81,23 +81,32 @@ export function Step4Skills(): JSX.Element {
     <BudgetIndicator spent={spentPoints} total={totalBudget} label="Punti Abilità" />
   ), [categories, activeCategory, spentPoints, totalBudget]);
 
-  // Initialize skills with base values from API if not already present
+  // Initialize skills with base values from API (resolve formulas with current stats)
   useEffect(() => {
     if (!apiSkills) return;
 
     apiSkills.forEach((skillDef) => {
+      const resolvedBase = resolveSkillBaseValue(skillDef.baseFormula, skillDef.baseValue, stats);
+
       if (!skills[skillDef.id]) {
         updateSkill(skillDef.id, {
-          base: skillDef.baseValue,
+          base: resolvedBase,
           requiredBonus: 0,
           manualPoints: 0,
           occupationBonus: 0,
-          total: skillDef.baseValue,
+          total: resolvedBase,
           category: skillDef.category,
+        });
+      } else if (skills[skillDef.id].base !== resolvedBase) {
+        const s = skills[skillDef.id];
+        updateSkill(skillDef.id, {
+          ...s,
+          base: resolvedBase,
+          total: resolvedBase + s.requiredBonus + s.manualPoints + s.occupationBonus,
         });
       }
     });
-  }, [apiSkills, skills, updateSkill]);
+  }, [apiSkills, skills, updateSkill, stats]);
 
   /**
    * Auto-Assign Required Skills
@@ -128,10 +137,11 @@ export function Step4Skills(): JSX.Element {
     // Auto-assign required skills
     autoAssignRequiredSkills(selectedOccupation, apiSkills);
   }, [
-    occupation.occupationId, // Trigger when occupation changes
-    apiSkills, // Trigger when skills load
-    occupations, // Trigger when occupations load
-    autoAssignRequiredSkills, // Include action in dependencies
+    occupation.occupationId,
+    apiSkills,
+    occupations,
+    autoAssignRequiredSkills,
+    stats,
   ]);
 
   // Filter skills by active category (including dynamic skills)
@@ -151,11 +161,11 @@ export function Step4Skills(): JSX.Element {
         const placeholder = apiSkills.find((s) => s.name === ds.name);
         if (!placeholder || placeholder.category.toLowerCase() !== activeCategory) return null;
 
-        // Create skill definition for derived skill
         return {
           id: ds.skillId,
           name: `${ds.name} (${ds.specialization})`,
-          baseValue: placeholder.baseValue,
+          baseValue: resolveSkillBaseValue(placeholder.baseFormula, placeholder.baseValue, stats),
+          baseFormula: placeholder.baseFormula,
           category: placeholder.category,
           description: `${placeholder.description} - ${ds.specialization}`,
           isPlaceholder: false,
@@ -283,12 +293,13 @@ export function Step4Skills(): JSX.Element {
                         <div className={styles.skillsTableCell}>Totale</div>
                       </div>
                       {fixedSlots.map(({ skillDef }) => {
+                        const rb = resolveSkillBaseValue(skillDef.baseFormula, skillDef.baseValue, stats);
                         const skill = skills[skillDef.id] || {
-                          base: skillDef.baseValue,
+                          base: rb,
                           requiredBonus: 0,
                           manualPoints: 0,
                           occupationBonus: 0,
-                          total: skillDef.baseValue,
+                          total: rb,
                         };
                         return (
                           <div key={skillDef.id} className={styles.skillsTableRow}>
@@ -370,12 +381,13 @@ export function Step4Skills(): JSX.Element {
                   );
                   if (!skillDef) return null;
 
+                  const rbBonus = resolveSkillBaseValue(skillDef.baseFormula, skillDef.baseValue, stats);
                   const skill = skills[skillDef.id] || {
-                    base: skillDef.baseValue,
+                    base: rbBonus,
                     requiredBonus: 0,
                     manualPoints: 0,
                     occupationBonus: 0,
-                    total: skillDef.baseValue,
+                    total: rbBonus,
                   };
 
                   return (
@@ -415,12 +427,13 @@ export function Step4Skills(): JSX.Element {
             </div>
 
             {filteredSkills.map((skillDef) => {
+              const rbFiltered = resolveSkillBaseValue(skillDef.baseFormula, skillDef.baseValue, stats);
               const skill = skills[skillDef.id] || {
-                base: skillDef.baseValue,
+                base: rbFiltered,
                 requiredBonus: 0,
                 manualPoints: 0,
                 occupationBonus: 0,
-                total: skillDef.baseValue,
+                total: rbFiltered,
               };
 
               return (

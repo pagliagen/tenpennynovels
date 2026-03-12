@@ -23,6 +23,7 @@ import { useChatStore } from '@/store/chatStore';
 import { useAuthStore } from '@/store/authStore';
 import { locationChatsApi } from '@/lib/api/locationChats';
 import { useWebSocket } from '@/contexts/WebSocketContext';
+import { useUIStore } from '@/store/uiStore';
 import type {
   ChatMessage,
   SendMessageRequest,
@@ -302,8 +303,13 @@ export function useLocationChat(
       } catch (error) {
         console.error('❌ Failed to send message:', error);
 
-        // TODO: Show toast notification to user
-        chatStore.error = error instanceof Error ? error.message : 'Failed to send message';
+        const errorMessage = error instanceof Error ? error.message : 'Invio messaggio fallito';
+        chatStore.error = errorMessage;
+        useUIStore.getState().addToast({
+          type: 'error',
+          message: errorMessage,
+          duration: 4000,
+        });
 
         return null;
       }

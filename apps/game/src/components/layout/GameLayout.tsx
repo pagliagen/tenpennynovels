@@ -20,7 +20,7 @@
 
 'use client';
 
-import { ReactNode, useMemo, useEffect } from 'react';
+import { ReactNode, useMemo, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import styles from '@/styles/components/GameLayout.module.scss';
 import { TopBar } from './TopBar';
@@ -33,6 +33,7 @@ import { WindowRenderer } from '../windows/WindowRenderer';
 import { MinimizedWindowsBar } from '../windows/MinimizedWindowsBar';
 import { ConnectionStatus } from '../connection/ConnectionStatus';
 import { useAuthStore } from '@/store/authStore';
+import { api } from '@/lib/api/client';
 import { useLocationStore } from '@/store/locationStore';
 import { useGameStateStore } from '@/store/gameStateStore';
 import { useWindowManagerStore } from '@/store/windowManagerStore';
@@ -78,6 +79,8 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
   const selectedCharacter = useAuthStore((state) => state.selectedCharacter);
   const user = useAuthStore((state) => state.user);
   const hasGamePermission = useAuthStore((state) => state.hasGamePermission);
+  const setSelectedCharacter = useAuthStore((state) => state.setSelectedCharacter);
+  const setGamePermissions = useAuthStore((state) => state.setGamePermissions);
 
   // Game state: Get current location (SINGLE SOURCE OF TRUTH)
   const currentLocationId = useGameStateStore((state) => state.currentLocationId);
@@ -99,10 +102,29 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
   const queryClient = useQueryClient();
 
   /**
+   * Refresh auth session to pick up character status changes (e.g. approved/rejected via WebSocket)
+   */
+  const refreshSession = useCallback(async () => {
+    try {
+      const session = await api.get<any>('/auth/session');
+      if (session.result && session.data?.valid) {
+        if (session.data.character) {
+          setSelectedCharacter(session.data.character);
+        }
+        if (session.data.gamePermissions) {
+          setGamePermissions(session.data.gamePermissions);
+        }
+      }
+    } catch {
+      // Non-critical: session will refresh on next page load
+    }
+  }, [setSelectedCharacter, setGamePermissions]);
+
+  /**
    * Redirect to wizard when character has game:character:wizard (draft) and we're on game home.
    */
   useEffect(() => {
-    if (!selectedCharacter || !hasGamePermission('game:character:wizard')) return;
+    if (!selectedCharacter || !hasGamePermission('game:character:wizard') || selectedCharacter.playerStatus !== 'draft') return;
     if (router.pathname === '/game') {
       router.replace('/character/wizard');
     }
@@ -203,9 +225,13 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
           queryKey: queryKeys.offGameChat.unreadCount,
         });
       }
+
+      if (event.type === 'character_status_changed') {
+        refreshSession();
+      }
     });
     return unsubscribe;
-  }, [onMessageEvent, queryClient]);
+  }, [onMessageEvent, queryClient, refreshSession]);
 
   return (
     <div className={styles.gameContainer}>

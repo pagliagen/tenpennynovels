@@ -38,6 +38,34 @@ interface CharacterValidationResult {
 }
 
 /**
+ * Resolve a Skill's baseValue to a numeric value.
+ * Handles: number, "VALUE:XX", "FORMULA:STAT" (resolves against character stats).
+ */
+function resolveBaseValue(baseValue: string | number, characterStats?: Record<string, number>): number {
+  if (typeof baseValue === 'number') return baseValue;
+  if (typeof baseValue !== 'string') return 0;
+
+  if (baseValue.startsWith('VALUE:')) {
+    return parseInt(baseValue.replace('VALUE:', '')) || 0;
+  }
+
+  if (baseValue.startsWith('FORMULA:')) {
+    const stat = baseValue.replace('FORMULA:', '').toLowerCase();
+    if (!characterStats) return 0;
+    const statMapping: Record<string, string> = {
+      str: 'strength', dex: 'dexterity', int: 'intelligence',
+      con: 'constitution', app: 'charm', pow: 'power',
+      siz: 'size', edu: 'education',
+    };
+    const fullStat = statMapping[stat] || stat;
+    return characterStats[fullStat] || characterStats[stat] || 0;
+  }
+
+  const parsed = parseInt(baseValue);
+  return isNaN(parsed) ? 0 : parsed;
+}
+
+/**
  * Calculate available skill points for a character
  *
  * Formula: base points (from config) + INT/intelligenceBonusDivisor bonus
@@ -373,28 +401,49 @@ export async function validateCharacterSubmission(character: ICharacter, config:
       skill = await Skill.findOne({ name: skillKey });
     }
 
-    if (!skill) {
-      result.warnings.push(`Abilità "${skillKey}" non trovata nel database`);
-      continue;
-    }
-
     // Handle granular skill breakdown (object) vs simple number
     let totalValue: number;
     let manualPoints: number = 0;
     let requiredBonus: number = 0;
     let occupationBonus: number = 0;
+    let skillDisplayName: string;
 
-    if (typeof skillValue === 'object' && skillValue !== null && 'total' in skillValue) {
-      // Granular breakdown available
-      totalValue = (skillValue as any).total;
-      manualPoints = (skillValue as any).manualPoints || 0;
-      requiredBonus = (skillValue as any).requiredBonus || 0;
-      occupationBonus = (skillValue as any).occupationBonus || 0;
+    if (!skill) {
+      // Check if this is a dynamic/placeholder skill (e.g., "Lingua straniera (Latino)")
+      const dynamicEntry = (character.dynamicSkills || []).find(
+        (ds: any) => ds.skillName === skillKey
+      );
+
+      if (!dynamicEntry) {
+        result.warnings.push(`Abilità "${skillKey}" non trovata nel database`);
+        continue;
+      }
+
+      // Dynamic skill found — use its breakdown directly and count the points
+      skillDisplayName = dynamicEntry.skillName;
+
+      if (typeof skillValue === 'object' && skillValue !== null && 'total' in skillValue) {
+        totalValue = (skillValue as any).total;
+        manualPoints = (skillValue as any).manualPoints || 0;
+        requiredBonus = (skillValue as any).requiredBonus || 0;
+        occupationBonus = (skillValue as any).occupationBonus || 0;
+      } else {
+        totalValue = typeof skillValue === 'number' ? skillValue : 0;
+        manualPoints = totalValue;
+      }
     } else {
-      // Legacy: simple number (calculate as if all manual)
-      totalValue = typeof skillValue === 'number' ? skillValue : 0;
-      const baseValue = skill.baseValue || 0;
-      manualPoints = Math.max(0, totalValue - baseValue);
+      skillDisplayName = skill.name;
+
+      if (typeof skillValue === 'object' && skillValue !== null && 'total' in skillValue) {
+        totalValue = (skillValue as any).total;
+        manualPoints = (skillValue as any).manualPoints || 0;
+        requiredBonus = (skillValue as any).requiredBonus || 0;
+        occupationBonus = (skillValue as any).occupationBonus || 0;
+      } else {
+        totalValue = typeof skillValue === 'number' ? skillValue : 0;
+        const baseValue = skill.baseValue || 0;
+        manualPoints = Math.max(0, totalValue - baseValue);
+      }
     }
 
     // Budget calculation: manualPoints + requiredBonus count, occupationBonus does NOT
@@ -405,7 +454,7 @@ export async function validateCharacterSubmission(character: ICharacter, config:
     const maxAllowed = character.occupationBonusesApplied ? finalSkillCap : skillCap;
 
     if (totalValue > maxAllowed) {
-      result.errors.push(`L'abilità "${skill.name}" supera il limite (${totalValue} > ${maxAllowed})`);
+      result.errors.push(`L'abilità "${skillDisplayName}" supera il limite (${totalValue} > ${maxAllowed})`);
       result.isValid = false;
     }
   }
@@ -441,23 +490,48 @@ export async function validateCharacterSubmission(character: ICharacter, config:
 
       // Handle PLACEHOLDER SKILLS (e.g., "Lingua straniera")
       if (skill.isPlaceholder) {
-        const derivedSkills: { name: string; value: number }[] = [];
-        for (const [charSkillName, charSkillValue] of skillEntries) {
-          if (charSkillName.startsWith(`${skillName} (`)) {
+        // Check character.dynamicSkills for specializations of this placeholder
+        const dynamicEntries = (character.dynamicSkills || []).filter(
+          (ds: any) => ds.basedOnTemplate === skillName
+        );
+
+        if (dynamicEntries.length > 0) {
+          const resolvedBase = resolveBaseValue(skill.baseValue, character.stats as any);
+          const hasImproved = dynamicEntries.some((ds: any) => {
+            if (ds.value > resolvedBase) return true;
+            const skillId = ds.skillId?.toString();
+            if (skillId) {
+              const skillData = skillsObj[skillId];
+              if (skillData && typeof skillData === 'object' && 'total' in skillData) {
+                return (skillData as any).total > resolvedBase;
+              }
+              if (typeof skillData === 'number') return skillData > resolvedBase;
+            }
+            return false;
+          });
+
+          if (hasImproved) {
+            slotSatisfied = true;
+            break;
+          }
+        }
+
+        // Fallback: check skills map for name-based keys (legacy support)
+        for (const [charSkillKey, charSkillValue] of skillEntries) {
+          if (charSkillKey.startsWith(`${skillName} (`)) {
             let totalValue = 0;
             if (typeof charSkillValue === 'object' && charSkillValue !== null && 'total' in charSkillValue) {
               totalValue = (charSkillValue as any).total;
             } else if (typeof charSkillValue === 'number') {
               totalValue = charSkillValue;
             }
-            derivedSkills.push({ name: charSkillName, value: totalValue });
+            if (totalValue > resolveBaseValue(skill.baseValue, character.stats as any)) {
+              slotSatisfied = true;
+              break;
+            }
           }
         }
-
-        if (derivedSkills.length > 0 && derivedSkills.some(ds => ds.value > (skill.baseValue || 0))) {
-          slotSatisfied = true;
-          break;
-        }
+        if (slotSatisfied) break;
         continue;
       }
 
@@ -480,8 +554,8 @@ export async function validateCharacterSubmission(character: ICharacter, config:
         }
       }
 
-      const baseValue = skill.baseValue || 0;
-      if (skillValue > baseValue) {
+      const resolvedBase = resolveBaseValue(skill.baseValue, character.stats as any);
+      if (skillValue > resolvedBase) {
         slotSatisfied = true;
         break;
       }

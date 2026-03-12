@@ -305,6 +305,7 @@ export const CharacterSchema = z.object({
   status: z.enum(['DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'DELETED']),
   isOnline: z.boolean(),
   lastSeenAt: z.string().datetime().nullable(),
+  playerStatus: z.enum(['draft', 'pending', 'approved']).optional(),
   isGestore: z.boolean().optional(),
   characterRoles: z.array(z.string()).optional(),
   characterPermissions: z.array(z.string()).optional(),

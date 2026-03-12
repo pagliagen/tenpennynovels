@@ -1,10 +1,12 @@
 'use client';
 
-import { useEffect, useRef, useMemo } from 'react';
+import { useEffect, useRef, useMemo, useState, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import { useWizardStore } from '@/store/wizardStore';
 import { useCharacterForWizard, useCreateCharacter, useUpdateCharacter } from '@/hooks/useCharacter';
 import { characterApi } from '@/lib/api/character';
+import { api } from '@/lib/api/client';
+import { useAuthStore } from '@/store/authStore';
 import { validateAllSteps } from './validation/wizardValidation';
 import { WizardHeader } from './WizardHeader';
 import { WizardFooter } from './WizardFooter';
@@ -18,8 +20,16 @@ import { Step5Background } from './steps/Step5Background';
 import { Step6Review } from './steps/Step6Review';
 import styles from '@/styles/components/character/wizard/WizardContainer.module.scss';
 
+type SubmitFeedback = {
+  type: 'success' | 'error' | 'validation';
+  message: string;
+  details?: string[];
+  warnings?: string[];
+} | null;
+
 interface WizardContainerProps {
   characterId?: string;
+  onSubmittingChange?: (isSubmitting: boolean) => void;
 }
 
 const STEP_HELP_TEXTS: Record<number, string> = {
@@ -31,17 +41,31 @@ const STEP_HELP_TEXTS: Record<number, string> = {
   6: 'Controlla tutti i dati e invia per approvazione.',
 };
 
-export function WizardContainer({ characterId }: WizardContainerProps): JSX.Element {
+export function WizardContainer({ characterId, onSubmittingChange }: WizardContainerProps): JSX.Element {
   return (
     <WizardSlotsProvider>
-      <WizardContainerInner characterId={characterId} />
+      <WizardContainerInner characterId={characterId} onSubmittingChange={onSubmittingChange} />
     </WizardSlotsProvider>
   );
 }
 
-function WizardContainerInner({ characterId }: WizardContainerProps): JSX.Element {
+function useStoreHydrated(): boolean {
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => {
+    if (useWizardStore.persist.hasHydrated()) {
+      setHydrated(true);
+      return;
+    }
+    const unsub = useWizardStore.persist.onFinishHydration(() => setHydrated(true));
+    return () => unsub();
+  }, []);
+  return hydrated;
+}
+
+function WizardContainerInner({ characterId, onSubmittingChange }: WizardContainerProps): JSX.Element {
   const router = useRouter();
   const { toolbarContent, footerActionsContent } = useWizardSlots();
+  const { setSelectedCharacter, setGamePermissions } = useAuthStore();
   const {
     currentStep,
     setCurrentStep,
@@ -56,9 +80,19 @@ function WizardContainerInner({ characterId }: WizardContainerProps): JSX.Elemen
     skills,
     dynamicSkills,
     background,
+    _draftCharacterId,
+    _serverUpdatedAt,
   } = useWizardStore();
 
-  const { data: existingCharacter, isLoading: isLoadingCharacter } = useCharacterForWizard(
+  const hasHydrated = useStoreHydrated();
+
+  const {
+    data: existingCharacter,
+    isLoading: isLoadingCharacter,
+    isError: isCharacterError,
+    error: characterError,
+    refetch: refetchCharacter,
+  } = useCharacterForWizard(
     characterId || '',
     { enabled: !!characterId }
   );
@@ -66,17 +100,35 @@ function WizardContainerInner({ characterId }: WizardContainerProps): JSX.Elemen
   const createCharacter = useCreateCharacter();
   const updateCharacter = useUpdateCharacter(characterId || '');
 
-  const hasLoadedData = useRef(false);
+  const [submitFeedback, setSubmitFeedback] = useState<SubmitFeedback>(null);
+  const feedbackRef = useRef<HTMLDivElement>(null);
+
+  const clearFeedback = useCallback(() => setSubmitFeedback(null), []);
 
   useEffect(() => {
-    if (characterId && existingCharacter && !hasLoadedData.current) {
-      loadFromDraft(existingCharacter);
-      hasLoadedData.current = true;
-    } else if (!characterId && !hasLoadedData.current) {
-      reset();
-      hasLoadedData.current = true;
+    // CRITICAL FIX: Don't wait for hydration if we have API data
+    // The API response takes priority over localStorage
+    if (!characterId || !existingCharacter) {
+      return;
     }
-  }, [characterId, existingCharacter, loadFromDraft, reset]);
+
+    // Only check localStorage state if hydration is complete
+    if (hasHydrated) {
+      const draftMatchesCharacter = _draftCharacterId === characterId
+        && basicInfo.firstName.trim() !== '';
+
+      // Skip load if draft already matches this character and server data hasn't changed
+      if (draftMatchesCharacter) {
+        const serverDataChanged = existingCharacter.updatedAt
+          && _serverUpdatedAt !== existingCharacter.updatedAt;
+        if (!serverDataChanged) {
+          return;
+        }
+      }
+    }
+
+    loadFromDraft(existingCharacter);
+  }, [hasHydrated, characterId, existingCharacter, _draftCharacterId, _serverUpdatedAt, basicInfo.firstName, loadFromDraft]);
 
   useEffect(() => {
     const hash = window.location.hash;
@@ -137,11 +189,20 @@ function WizardContainerInner({ characterId }: WizardContainerProps): JSX.Elemen
   };
 
   const handleSubmit = async () => {
+    clearFeedback();
+
     const validation = validateAll();
     if (!validation.valid) {
-      alert('Errori di validazione: ' + Object.values(validation.errors).join(', '));
+      setSubmitFeedback({
+        type: 'validation',
+        message: 'Correggi gli errori prima di inviare il personaggio',
+        details: Object.values(validation.errors),
+      });
+      setTimeout(() => feedbackRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
       return;
     }
+
+    onSubmittingChange?.(true);
 
     try {
       const payload = transformForBackend();
@@ -157,14 +218,42 @@ function WizardContainerInner({ characterId }: WizardContainerProps): JSX.Elemen
 
       await characterApi.submitForApproval(finalCharacterId);
 
-      alert(
-        'Personaggio inviato per approvazione! Lo staff lo revisionerà a breve. Riceverai una notifica quando sarà approvato.'
-      );
+      // Refresh session to update permissions (wizard access removed for pending characters)
+      try {
+        const session = await api.get<any>('/auth/session');
+        if (session.result && session.data?.valid) {
+          if (session.data.character) {
+            setSelectedCharacter(session.data.character);
+          }
+          if (session.data.gamePermissions) {
+            setGamePermissions(session.data.gamePermissions);
+          }
+        }
+      } catch {
+        // Non-critical: permissions will refresh on next page load
+      }
 
-      reset();
-      router.push('/');
+      setSubmitFeedback({
+        type: 'success',
+        message: 'Personaggio inviato per approvazione! Lo staff lo revisionerà a breve.',
+      });
+
+      setTimeout(() => {
+        onSubmittingChange?.(false);
+        reset();
+        router.push('/');
+      }, 2500);
     } catch (error: any) {
-      alert("Errore durante l'invio: " + (error.message || 'Errore sconosciuto'));
+      onSubmittingChange?.(false);
+      const backendErrors = error?.details?.errors || error?.details;
+      const backendWarnings = error?.details?.warnings;
+      setSubmitFeedback({
+        type: 'error',
+        message: error.message || 'Errore sconosciuto durante l\'invio',
+        details: Array.isArray(backendErrors) ? backendErrors : undefined,
+        warnings: Array.isArray(backendWarnings) ? backendWarnings : undefined,
+      });
+      setTimeout(() => feedbackRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
     }
   };
 
@@ -188,12 +277,29 @@ function WizardContainerInner({ characterId }: WizardContainerProps): JSX.Elemen
     );
   }
 
+  if (characterId && isCharacterError) {
+    return (
+      <div className={styles.wizardContainer}>
+        <div className={styles.loading}>
+          <p>Errore nel caricamento del personaggio: {characterError?.message || 'Errore sconosciuto'}</p>
+          <button
+            onClick={() => refetchCharacter()}
+            style={{ marginTop: '1rem', padding: '0.5rem 1.5rem', cursor: 'pointer' }}
+          >
+            Riprova
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const isSubmitting = createCharacter.isPending || updateCharacter.isPending;
+  const charName = basicInfo.firstName ? `${basicInfo.firstName} ${basicInfo.lastName}` : 'Nuovo Personaggio';
 
   return (
     <div className={styles.wizardContainer}>
       <WizardHeader
-        characterName={basicInfo.firstName || 'Nuovo Personaggio'}
+        characterName={charName}
         currentStep={currentStep}
         onStepClick={handleStepClick}
         stepValidation={stepValidation}
@@ -202,6 +308,41 @@ function WizardContainerInner({ characterId }: WizardContainerProps): JSX.Elemen
         <div className={styles.wizardBodyBackground}></div>
         <WizardStepToolbar>{toolbarContent}</WizardStepToolbar>
         <div className={styles.wizardContent}>
+          {submitFeedback && (
+            <div
+              ref={feedbackRef}
+              className={`${styles.feedbackBanner} ${styles[`feedback--${submitFeedback.type}`]}`}
+            >
+              <div className={styles.feedbackHeader}>
+                <span className={styles.feedbackIcon}>
+                  {submitFeedback.type === 'success' && '\u2713'}
+                  {submitFeedback.type === 'error' && '\u2717'}
+                  {submitFeedback.type === 'validation' && '\u26A0'}
+                </span>
+                <span className={styles.feedbackMessage}>{submitFeedback.message}</span>
+                <button
+                  type="button"
+                  className={styles.feedbackClose}
+                  onClick={clearFeedback}
+                  aria-label="Chiudi"
+                >&times;</button>
+              </div>
+              {submitFeedback.details && submitFeedback.details.length > 0 && (
+                <ul className={styles.feedbackDetails}>
+                  {submitFeedback.details.map((detail, i) => (
+                    <li key={i}>{detail}</li>
+                  ))}
+                </ul>
+              )}
+              {submitFeedback.warnings && submitFeedback.warnings.length > 0 && (
+                <ul className={styles.feedbackWarnings}>
+                  {submitFeedback.warnings.map((warning, i) => (
+                    <li key={i}>{warning}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
           {renderStepContent()}
         </div>
       </div>

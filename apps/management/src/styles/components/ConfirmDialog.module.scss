@@ -53,9 +53,42 @@
   }
 }
 
+.inputWrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+.input {
+  width: 100%;
+  padding: $spacing-sm $spacing-md;
+  font-size: 15px;
+  color: $color-text-primary;
+  background-color: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: $border-radius-md;
+  transition: border-color $transition-fast;
+  font-family: inherit;
+  resize: vertical;
+
+  &::placeholder {
+    color: $color-text-secondary;
+    opacity: 0.6;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: $color-primary;
+  }
+}
+
 .confirmButton {
   background-color: $color-primary;
   color: $color-bg-primary;
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
 
   &:hover {
     background-color: color.adjust($color-primary, $lightness: 10%);

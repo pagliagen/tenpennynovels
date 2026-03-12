@@ -181,15 +181,36 @@ export class CharacterCreationController {
         .lean();
 
       // Transform to frontend format
-      const formattedSkills = skills.map((skill: any) => ({
-        id: skill._id.toString(),
-        name: skill.name,
-        description: skill.description,
-        category: skill.category,
-        baseValue: typeof skill.baseValue === 'number' ? skill.baseValue : 0,
-        isPlaceholder: skill.isPlaceholder || false,
-        placeholderType: skill.placeholderType,
-      }));
+      const formattedSkills = skills.map((skill: any) => {
+        let resolvedBase: number;
+        let baseFormula: string | null = null;
+
+        if (typeof skill.baseValue === 'number') {
+          resolvedBase = skill.baseValue;
+        } else if (typeof skill.baseValue === 'string') {
+          if (skill.baseValue.startsWith('VALUE:')) {
+            resolvedBase = parseInt(skill.baseValue.replace('VALUE:', '')) || 0;
+          } else if (skill.baseValue.startsWith('FORMULA:')) {
+            baseFormula = skill.baseValue;
+            resolvedBase = 0;
+          } else {
+            resolvedBase = parseInt(skill.baseValue) || 0;
+          }
+        } else {
+          resolvedBase = 0;
+        }
+
+        return {
+          id: skill._id.toString(),
+          name: skill.name,
+          description: skill.description,
+          category: skill.category,
+          baseValue: resolvedBase,
+          baseFormula,
+          isPlaceholder: skill.isPlaceholder || false,
+          placeholderType: skill.placeholderType,
+        };
+      });
 
       logger.info('[CharacterCreationController] Skills list requested', {
         count: formattedSkills.length,

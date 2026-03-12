@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { Character, Occupation, Location } from '@database/models';
+import { redis } from '@config/runtime/redis';
 import { logger } from '../utils/logger';
 import { successResponse, errorResponse, getRequestId } from '../utils/apiResponse';
 import { CharacterCreationConfigService } from '@shared/services/CharacterCreationConfigService';
@@ -49,7 +50,7 @@ export class CharacterGameplayController {
       const character = await (Character.findOne({
         _id: characterId,
         userId: userId,
-        status: 'DRAFT'
+        playerStatus: 'draft'
       }) as any);
 
       if (!character) {
@@ -96,8 +97,18 @@ export class CharacterGameplayController {
       character.submittedAt = new Date();
       await character.save();
 
-      // TODO: Publish Redis event for approval queue
-      // redis.publish('character:submitted_for_approval', { characterId, userId });
+      try {
+        await redis.getClient().publish('character:events', JSON.stringify({
+          type: 'character_created',
+          characterId: character.id,
+          characterName: character.name,
+          userId,
+          username: req.user!.username,
+          timestamp: new Date().toISOString()
+        }));
+      } catch (publishError) {
+        logger.warn('Failed to publish character submission event', { characterId: character.id, error: publishError });
+      }
 
       logger.info('Character submitted for approval', {
         characterId: character.id,
@@ -149,8 +160,7 @@ export class CharacterGameplayController {
       // Allow all statuses except DELETED (DRAFT characters can be selected too)
       const character = await (Character.findOne({
         _id: characterId,
-        userId: userId,
-        status: { $ne: 'DELETED' }
+        userId: userId
       }) as any);
 
       if (!character) {

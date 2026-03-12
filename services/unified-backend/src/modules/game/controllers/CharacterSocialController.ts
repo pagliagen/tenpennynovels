@@ -23,8 +23,7 @@ export class CharacterSocialController {
       // Verify character exists and belongs to user
       const character = await Character.findOne({
         _id: characterId,
-        userId: userId,
-        status: { $ne: 'DELETED' }
+        userId: userId
       });
 
       if (!character) {

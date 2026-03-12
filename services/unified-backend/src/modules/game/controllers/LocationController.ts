@@ -155,8 +155,7 @@ export class LocationController {
       // If occupants list is empty, populate it from characters with currentLocation matching this location
       if (occupants.length === 0) {
         const charactersInLocation = await Character.find({
-          currentLocation: locationId,
-          status: { $ne: 'DELETED' }
+          currentLocation: locationId
         })
         .select('_id name currentLocation')
         .lean() as any[];
@@ -758,8 +757,7 @@ export class LocationController {
       // If occupants list is empty, populate it from characters with currentLocation matching this location
       if (occupants.length === 0) {
         const charactersInLocation = await Character.find({
-          currentLocation: locationId,
-          status: { $ne: 'DELETED' }
+          currentLocation: locationId
         })
         .select('_id name currentLocation')
         .lean() as any[];

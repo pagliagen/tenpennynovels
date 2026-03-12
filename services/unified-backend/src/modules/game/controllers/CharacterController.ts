@@ -100,8 +100,7 @@ export class CharacterController {
       const userId = req.user!.userId;
 
       const characters = await (Character.find({
-        userId,
-        status: { $ne: 'DELETED' }
+        userId
       }) as any)
         .select('id name status occupation isActive currentLocation gameplayRoles submittedAt lastActive')
         .sort({ createdAt: -1 });
@@ -151,9 +150,7 @@ export class CharacterController {
       const currentUserId = req.user!.userId;
 
       // Get all characters that are not deleted (include all users' characters)
-      const characters = await (Character.find({
-        status: { $ne: 'DELETED' } // Exclude only deleted characters
-      })
+      const characters = await (Character.find({})
       .select('_id name surname avatar status userId lastActive')
       .sort({ name: 1 })
       .limit(200) as any); // Increased limit for complete list
@@ -548,8 +545,7 @@ export class CharacterController {
       logger.info('User roles check', { isMaster, gameplayRoles: req.character?.gameplayRoles });
 
       const character = await (Character.findOne({
-        _id: characterId,
-        status: { $ne: 'DELETED' }
+        _id: characterId
       }) as any);
 
       logger.info('Character found', { found: !!character, characterName: character?.name });
@@ -738,8 +734,7 @@ export class CharacterController {
       }
 
       const character = await (Character.findOne({
-        _id: characterId,
-        status: { $ne: 'DELETED' }
+        _id: characterId
       }) as any);
 
       if (!character) {
@@ -836,8 +831,7 @@ export class CharacterController {
 
       // Fetch character
       const character = await Character.findOne({
-        _id: characterId,
-        status: { $ne: 'DELETED' }
+        _id: characterId
       }).populate('occupation').lean();
 
       if (!character) {
@@ -876,8 +870,8 @@ export class CharacterController {
         }
       }
 
-      // Fetch skill names from Skill model
-      const skillIds = Object.keys(serializedSkills);
+      // Fetch skill names from Skill model (filter out dynamic skill name-based keys)
+      const skillIds = Object.keys(serializedSkills).filter(k => k.match(/^[0-9a-f]{24}$/i));
       const skills = await Skill.find({ _id: { $in: skillIds } }).select('_id name').lean();
 
       // Create skill ID to name mapping
@@ -1009,8 +1003,7 @@ export class CharacterController {
       const isMaster = !!canReadOthersPrivate;
 
       const character = await (Character.findOne({
-        _id: characterId,
-        status: { $ne: 'DELETED' } // Exclude only deleted characters
+        _id: characterId
       }) as any);
 
       if (!character) {
@@ -1077,8 +1070,7 @@ export class CharacterController {
 
       const character = await (Character.findOne({
         _id: characterId,
-        userId: userId,
-        status: { $ne: 'DELETED' }
+        userId: userId
       }) as any);
 
       if (!character) {
@@ -1121,6 +1113,21 @@ export class CharacterController {
         if (filteredUpdates.lastName !== undefined) {
           character.surname = filteredUpdates.lastName;
         }
+        // Frontend sends "birthplace" (lowercase), model uses "birthPlace" (camelCase)
+        if (filteredUpdates.birthplace !== undefined) {
+          character.birthPlace = filteredUpdates.birthplace;
+        }
+        // Frontend sends "birthDate" 
+        if (filteredUpdates.birthDate !== undefined) {
+          character.birthDate = filteredUpdates.birthDate;
+        }
+        // Frontend sends stats.appearance, model uses stats.charm
+        if (filteredUpdates.stats?.appearance !== undefined) {
+          if (!filteredUpdates.stats.charm) {
+            filteredUpdates.stats.charm = filteredUpdates.stats.appearance;
+          }
+          delete filteredUpdates.stats.appearance;
+        }
       }
 
       // Update allowed fields based on character status
@@ -1136,7 +1143,9 @@ export class CharacterController {
           'height', 'weight', 'eyeColor', 'hairColor', 'visibleMarks', 'hiddenMarks',
           'maritalStatus', 'illnesses', 'educationTitle', 'criminalRecord', 'currentOccupation',
           // Background strutturato
-          'background'
+          'background',
+          // Dynamic skills (placeholder specializations)
+          'dynamicSkills'
         ];
       } else {
         // Non-DRAFT characters can only update limited fields
@@ -1349,10 +1358,10 @@ export class CharacterController {
             filteredUpdates.dynamicSkills.forEach((dynamicSkill: any) => {
               allSkillsToSave[dynamicSkill.skillName] = {
                 total: dynamicSkill.value || 0,
-                base: 0,
-                requiredBonus: 0,
-                manualPoints: dynamicSkill.value || 0,
-                occupationBonus: 0,
+                base: dynamicSkill.base ?? 0,
+                requiredBonus: dynamicSkill.requiredBonus ?? 0,
+                manualPoints: dynamicSkill.manualPoints ?? 0,
+                occupationBonus: dynamicSkill.occupationBonus ?? 0,
                 category: dynamicSkill.category || 'general'
               };
             });
@@ -1393,7 +1402,7 @@ export class CharacterController {
       
       // Handle other fields
       allowedFields.forEach((field: string) => {
-        if (filteredUpdates[field] !== undefined && field !== 'skills') {
+        if (filteredUpdates[field] !== undefined && field !== 'skills' && field !== 'dynamicSkills') {
             // Log per currentOccupation per debugging
             if (field === 'currentOccupation') {
               logger.info('Setting currentOccupation', {
@@ -1414,6 +1423,12 @@ export class CharacterController {
           }
         }
       });
+
+      // Handle dynamicSkills separately (Mongoose array needs markModified)
+      if (character.playerStatus === 'draft' && filteredUpdates.dynamicSkills && Array.isArray(filteredUpdates.dynamicSkills)) {
+        character.dynamicSkills = filteredUpdates.dynamicSkills;
+        character.markModified('dynamicSkills');
+      }
 
       // Handle background - support both object and JSON string (only for DRAFT)
       if (character.playerStatus === 'draft' && filteredUpdates.background !== undefined) {
@@ -1545,6 +1560,7 @@ export class CharacterController {
             gender: character.gender,
             birthPlace: character.birthPlace,
             status: character.playerStatus,
+            playerStatus: character.playerStatus,
             stats: character.stats,
             derived: character.derived,
             skills: serializedSkills,

@@ -6,6 +6,7 @@ import { setupGameHandlers } from './gameHandlers';
 // ✅ SPRINT 4: Refactored event handling system
 import { RedisSubscriber } from '../events/RedisSubscriber';
 import { RequestUser } from '@shared/types';
+import { hasAdminPermission } from '@config/admin-permissions';
 
 interface CharacterContextPayload {
   userId: string;
@@ -103,7 +104,7 @@ export async function setupWebSocket(io: SocketIOServer): Promise<void> {
   });
   
   // Connection handler
-  io.on('connection', (socket: Socket) => {
+  io.on('connection', async (socket: Socket) => {
     const user = socket.data.user;
     const character = socket.data.character;
     
@@ -123,8 +124,41 @@ export async function setupWebSocket(io: SocketIOServer): Promise<void> {
       socket.join('staff');
       socket.join(`staff_${user.userId}`);
     }
+
+    // Fallback: management panel connects without character_context.
+    // Query DB to check if user has an admin character that should join staff room.
+    if (!character && !isStaff) {
+      try {
+        const { Character } = await import('@database/models');
+        const adminChar = await Character.findOne({
+          userId: user.userId,
+          canAccessAdminPanel: true
+        }).select('isGestore gameplayRoles adminPermissions').lean() as any;
+
+        if (adminChar) {
+          const adminRoles = adminChar.gameplayRoles || [];
+          const isAdminStaff = adminChar.isGestore ||
+            adminRoles.includes('master') || adminRoles.includes('moderatore');
+          const hasApprovePerm = hasAdminPermission(
+            adminRoles,
+            adminChar.adminPermissions || [],
+            adminChar.isGestore || false,
+            'characters.approve'
+          );
+
+          if (isAdminStaff || hasApprovePerm) {
+            socket.join('admin');
+            socket.join('staff');
+            socket.join(`staff_${user.userId}`);
+            logger.info(`[WebSocket] Admin fallback: ${user.username} joined staff room via DB lookup`);
+          }
+        }
+      } catch (err) {
+        logger.error('[WebSocket] Failed to check admin character for staff room:', err);
+      }
+    }
     
-    // Join character-specific room if character context exists (all statuses except DELETED can access game)
+    // Join character-specific room if character context exists
     if (character) {
       socket.join(`character_${character.characterId}`);
     }

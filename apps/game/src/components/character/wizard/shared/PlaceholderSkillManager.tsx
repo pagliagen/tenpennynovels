@@ -37,6 +37,7 @@ export function PlaceholderSkillManager({
   const { skills, dynamicSkills, addDynamicSkill, removeDynamicSkill, updateSkill } = useWizardStore();
   const [isAdding, setIsAdding] = useState(false);
   const [specialization, setSpecialization] = useState('');
+  const [inputError, setInputError] = useState('');
 
   // Find all dynamic skills derived from this placeholder
   const derivedSkills = dynamicSkills.filter((ds) => ds.name === placeholderSkill.name);
@@ -48,17 +49,17 @@ export function PlaceholderSkillManager({
    * Handle adding new specialization
    */
   const handleAdd = () => {
+    setInputError('');
     const trimmedSpec = specialization.trim();
     if (!trimmedSpec) {
-      alert('Inserisci una specializzazione valida');
+      setInputError('Inserisci una specializzazione valida');
       return;
     }
 
-    // Check if already exists (case-insensitive)
     if (
       derivedSkills.some((ds) => ds.specialization?.toLowerCase() === trimmedSpec.toLowerCase())
     ) {
-      alert(`"${trimmedSpec}" è già stata aggiunta`);
+      setInputError(`"${trimmedSpec}" è già stata aggiunta`);
       return;
     }
 
@@ -253,32 +254,38 @@ export function PlaceholderSkillManager({
 
       {isAdding && (
         <div className={styles.addForm}>
-          <input
-            type="text"
-            value={specialization}
-            onChange={(e) => setSpecialization(e.target.value)}
-            placeholder={getPlaceholderExample(placeholderSkill.placeholderType)}
-            className={styles.inputText}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                handleAdd();
-              }
-            }}
-          />
-          <button type="button" onClick={handleAdd} className={styles.confirmButton}>
-            Aggiungi
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setIsAdding(false);
-              setSpecialization('');
-            }}
-            className={styles.cancelButton}
-          >
-            Annulla
-          </button>
+          <div className={styles.addFormRow}>
+            <input
+              type="text"
+              value={specialization}
+              onChange={(e) => { setSpecialization(e.target.value); setInputError(''); }}
+              placeholder={getPlaceholderExample(placeholderSkill.placeholderType)}
+              className={`${styles.inputText} ${inputError ? styles.inputTextError : ''}`}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleAdd();
+                }
+              }}
+            />
+            <button type="button" onClick={handleAdd} className={styles.confirmButton}>
+              Aggiungi
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setIsAdding(false);
+                setSpecialization('');
+                setInputError('');
+              }}
+              className={styles.cancelButton}
+            >
+              Annulla
+            </button>
+          </div>
+          {inputError && (
+            <div className={styles.inputErrorMessage}>{inputError}</div>
+          )}
         </div>
       )}
     </div>

@@ -164,7 +164,7 @@ export class SkillManagementController {
 
       // Get usage statistics from characters
       const skillUsageStats = await Character.aggregate([
-        { $match: { status: { $ne: 'DELETED' } } },
+        { $match: {} },
         { $unwind: '$skills' },
         {
           $group: {
@@ -254,7 +254,7 @@ export class SkillManagementController {
 
       // Get usage statistics for this skill
       const usageStats = await Character.aggregate([
-        { $match: { status: { $ne: 'DELETED' }, 'skills.name': Array.isArray(skill) ? '' : skill.name } },
+        { $match: { 'skills.name': Array.isArray(skill) ? '' : skill.name } },
         { $unwind: '$skills' },
         { $match: { 'skills.name': Array.isArray(skill) ? '' : skill.name } },
         {
@@ -598,7 +598,6 @@ export class SkillManagementController {
 
       // Check if skill is in use by characters
       const charactersUsingSkill = await Character.countDocuments({
-        status: { $ne: 'DELETED' },
         'skills.name': skill.name
       });
 
@@ -726,7 +725,6 @@ export class SkillManagementController {
           case 'delete':
             // Check which skills are in use and can't be hard deleted
             const skillsInUse = await Character.distinct('skills.name', {
-              status: { $ne: 'DELETED' },
               'skills.name': { $in: await Skill.distinct('name', { _id: { $in: validSkillIds } }) }
             });
 

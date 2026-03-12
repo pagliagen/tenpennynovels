@@ -5,13 +5,15 @@
  * Filtro fisso: status=pending
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Head from 'next/head';
 import { ManagementLayout } from '@/components/layout/ManagementLayout';
 import { ConfigurableDataTable, FilterState } from '@/components/shared/ConfigurableDataTable';
 import { SidePanel } from '@/components/shared/SidePanel';
 import { useConfirm } from '@/hooks/useConfirm';
 import { useTableConfig } from '@/hooks/useTableConfig';
+import { useURLFilter } from '@/hooks/useURLFilter';
+import { clearFilterHash } from '@/lib/utils/urlFilters';
 import {
   useCharacters,
   useApproveCharacter,
@@ -37,6 +39,17 @@ export default function CharacterPending() {
   const [activeSidePanel, setActiveSidePanel] = useState<boolean>(false);
   const [currentCharacter, setCurrentCharacter] = useState<Character | null>(null);
 
+  // URL filter (from notification click or external link)
+  const urlFilter = useURLFilter<{ search?: string }>();
+  const [defaultSearch, setDefaultSearch] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    if (urlFilter?.search) {
+      setDefaultSearch(urlFilter.search);
+      clearFilterHash();
+    }
+  }, [urlFilter]);
+
   // Hooks
   const { data, isLoading, error } = useCharacters(params);
   const tableConfig = useTableConfig('character-pending');
@@ -44,7 +57,7 @@ export default function CharacterPending() {
   const rejectCharacter = useRejectCharacter();
   const bulkApprove = useBulkApproveCharacters();
   const bulkReject = useBulkRejectCharacters();
-  const { confirm, ConfirmDialogComponent } = useConfirm();
+  const { confirm, confirmWithInput, ConfirmDialogComponent } = useConfirm();
   const addNotification = useNotificationStore(state => state.addNotification);
 
   // Prepare visible columns
@@ -80,19 +93,20 @@ export default function CharacterPending() {
         }
 
         case 'reject': {
-          const confirmed = await confirm({
+          const { confirmed, inputValue: reason } = await confirmWithInput({
             title: 'Conferma Rifiuto',
-            message: `Sei sicuro di voler rifiutare ${character.fullName}?`
+            message: `Sei sicuro di voler rifiutare ${character.fullName}?`,
+            confirmLabel: 'Rifiuta',
+            type: 'danger',
+            input: {
+              placeholder: 'Motivo del rifiuto...',
+              required: true,
+              multiline: true
+            }
           });
 
-          if (confirmed) {
-            const reason = prompt('Motivo del rifiuto:');
-            if (!reason) {
-              addNotification({ type: 'warning', message: 'Rifiuto annullato: motivo obbligatorio' });
-              return;
-            }
-
-            await rejectCharacter.mutateAsync({ id: character._id, data: { reason } });
+          if (confirmed && reason) {
+            await rejectCharacter.mutateAsync({ id: character._id, data: { note: reason.trim() } });
             addNotification({ type: 'success', message: `${character.fullName} rifiutato` });
           }
           break;
@@ -175,15 +189,6 @@ export default function CharacterPending() {
 
         setSelectedCharacters([]);
       } else if (actionKey === 'bulk-reject') {
-        const reason = prompt('Motivo del rifiuto (obbligatorio):');
-        if (!reason || reason.trim().length === 0) {
-          addNotification({
-            type: 'warning',
-            message: 'Rifiuto annullato: motivo obbligatorio'
-          });
-          return;
-        }
-
         if (allPagesSelected) {
           addNotification({
             type: 'warning',
@@ -192,14 +197,19 @@ export default function CharacterPending() {
           return;
         }
 
-        const confirmed = await confirm({
+        const { confirmed, inputValue: reason } = await confirmWithInput({
           title: 'Conferma Rifiuto Multiplo',
           message: `Vuoi rifiutare ${items.length} personaggi selezionati? Torneranno in stato DRAFT.`,
           confirmLabel: 'Rifiuta',
-          type: 'danger'
+          type: 'danger',
+          input: {
+            placeholder: 'Motivo del rifiuto...',
+            required: true,
+            multiline: true
+          }
         });
 
-        if (!confirmed) return;
+        if (!confirmed || !reason) return;
 
         const characterIds = items.map(c => c._id);
         const result = await bulkReject.mutateAsync({ characterIds, reason: reason.trim() });
@@ -258,6 +268,7 @@ export default function CharacterPending() {
           data={data?.items ?? []}
           loading={isLoading || tableConfig.loading}
           onAction={handleAction}
+          defaultSearch={defaultSearch}
           pagination={{
             page: params.page,
             pageSize: params.pageSize,

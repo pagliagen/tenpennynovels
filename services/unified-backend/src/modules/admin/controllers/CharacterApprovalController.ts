@@ -578,9 +578,10 @@ export class CharacterApprovalController {
         return;
       }
 
-      if (!note || note.trim().length === 0) {
+      // Note is required only for reject, optional for approve
+      if (action === 'reject' && (!note || note.trim().length === 0)) {
         res.status(400).json(errorResponse(
-          'La nota di revisione è richiesta',
+          'La nota di revisione è richiesta per il rifiuto',
           'REVIEW_NOTE_REQUIRED',
           undefined,
           400,

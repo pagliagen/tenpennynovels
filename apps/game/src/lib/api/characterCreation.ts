@@ -54,6 +54,7 @@ export interface Skill {
   description: string;
   category: string;
   baseValue: number;
+  baseFormula: string | null;
   isPlaceholder?: boolean;
   placeholderType?: string;
 }

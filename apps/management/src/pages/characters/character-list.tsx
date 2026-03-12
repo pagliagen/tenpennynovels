@@ -200,7 +200,7 @@ export default function CharacterList() {
     try {
       await rejectCharacter.mutateAsync({
         id: characterToReject._id,
-        data: { reason: reason.trim() }
+        data: { note: reason.trim() }
       });
       addNotification({ type: 'success', message: `${characterToReject.fullName} rifiutato` });
       setActiveSidePanel(null);

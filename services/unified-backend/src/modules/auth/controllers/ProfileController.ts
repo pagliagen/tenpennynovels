@@ -33,8 +33,7 @@ export class ProfileController {
 
       // Get user's characters (exclude deleted)
       const characters = await Character.find({ 
-        userId,
-        status: { $ne: 'DELETED' }
+        userId
       }).select('id name status occupation createdAt');
 
       successResponse(

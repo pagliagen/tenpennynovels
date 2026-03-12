@@ -48,7 +48,7 @@ export function CharacterProfile(): JSX.Element | null {
    * Opens wizard (draft) or character sheet window (pending/approved).
    */
   const handleClick = () => {
-    if (hasGamePermission('game:character:wizard')) {
+    if (hasGamePermission('game:character:wizard') && selectedCharacter?.playerStatus === 'draft') {
       router.push('/character/wizard');
     } else {
       openWindow('characterSheet', {

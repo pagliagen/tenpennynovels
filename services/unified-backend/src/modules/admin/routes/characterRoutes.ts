@@ -42,6 +42,22 @@ router.post(
   AdminAuthMiddleware.logAdminAction('character.approve', 'character_management'),
   autoLogOutcome,
   AdminAuthMiddleware.sensitiveOperationLimit(),
+  (req, _res, next) => {
+    req.body.action = 'approve';
+    req.body.note = req.body.note || ''; // Default to empty string if not provided
+    next();
+  },
+  CharacterApprovalController.submitCharacterReview
+);
+
+// Reject character - specific route (same handler, action forced to 'reject')
+router.post(
+  '/:characterId/reject',
+  requireViewPermission('characters.detail.approve'),
+  AdminAuthMiddleware.logAdminAction('character.reject', 'character_management'),
+  autoLogOutcome,
+  AdminAuthMiddleware.sensitiveOperationLimit(),
+  (req, _res, next) => { req.body.action = 'reject'; next(); },
   CharacterApprovalController.submitCharacterReview
 );
 

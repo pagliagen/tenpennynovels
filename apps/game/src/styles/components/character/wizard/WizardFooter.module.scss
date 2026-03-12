@@ -22,7 +22,7 @@
   align-items: center;
 }
 
-.buttonPrimary {
+.buttonPrimary, .submitButton {
   padding: var(--spacing-button-y) var(--spacing-button-x);
   font-size: 10px;
   font-weight: var(--font-weight-semibold);
@@ -42,12 +42,8 @@
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
-  }
-
-  &.submitButton {
-    animation: submitPulse 2s infinite;
-  }
-}
+  } 
+} 
 
 @keyframes submitPulse {
 

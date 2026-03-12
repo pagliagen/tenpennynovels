@@ -82,6 +82,9 @@ export function useCharacter(
  * Fetches character data for the wizard (draft editing). Uses GET /characters/:id/wizard
  * which requires game:character:wizard. Use this instead of useCharacter when loading
  * an existing draft into the wizard.
+ *
+ * Always fetches fresh data on mount to handle rejected→draft scenarios
+ * where the DB data may have changed since the last wizard session.
  */
 export function useCharacterForWizard(
   characterId: string,
@@ -91,8 +94,9 @@ export function useCharacterForWizard(
     queryKey: characterQueryKeys.wizard(characterId),
     queryFn: () => characterApi.getForWizard(characterId),
     enabled: options?.enabled !== false && !!characterId,
-    staleTime: 2 * 60 * 1000,
+    staleTime: 0,
     gcTime: 5 * 60 * 1000,
+    refetchOnMount: 'always',
   });
 }
 
@@ -197,9 +201,11 @@ export function useUpdateCharacter(characterId: string): UseMutationResult<
       // Invalidate characters list cache
       queryClient.invalidateQueries({ queryKey: characterQueryKeys.lists() });
 
-      // Update auth store if this is the selected character
+      // Merge (not replace!) updated fields into selectedCharacter to preserve
+      // critical fields like playerStatus, gamePermissions, gameplayRoles that
+      // the update API response does not return.
       if (selectedCharacter?._id === characterId) {
-        setSelectedCharacter(character);
+        setSelectedCharacter({ ...selectedCharacter, ...character });
       }
 
       console.log(`✅ [useUpdateCharacter] Updated character: ${character.name} (${character._id})`);

@@ -61,8 +61,7 @@ export class SocialClassManagementController {
             'skills.finanza.value': {
               $gte: socialClass.minFinanceSkill,
               $lte: socialClass.maxFinanceSkill
-            },
-            status: { $ne: 'DELETED' }
+            }
           });
 
           return {
@@ -150,7 +149,6 @@ export class SocialClassManagementController {
       const characterDistribution = await Character.aggregate([
         {
           $match: {
-            status: { $ne: 'DELETED' },
             'skills.finanza.value': { $exists: true }
           }
         },
@@ -303,8 +301,7 @@ export class SocialClassManagementController {
         'skills.finanza.value': {
           $gte: (socialClass as any).minFinanceSkill,
           $lte: (socialClass as any).maxFinanceSkill
-        },
-        status: { $ne: 'DELETED' }
+        }
       })
       .select('name surname basicInfo skills.finanza.value createdAt')
       .sort({ createdAt: -1 })
@@ -777,8 +774,7 @@ export class SocialClassManagementController {
         'skills.finanza.value': {
           $gte: socialClass.minFinanceSkill,
           $lte: socialClass.maxFinanceSkill
-        },
-        status: { $ne: 'DELETED' }
+        }
       });
 
       if (affectedCharacters > 0 && !forceDelete) {
@@ -966,7 +962,7 @@ export class SocialClassManagementController {
       const pipeline: any[] = [
         {
           $match: {
-            status: status ? status : { $ne: 'DELETED' },
+            ...(status ? { status } : {}),
             'skills.finanza.value': { $exists: true }
           }
         },

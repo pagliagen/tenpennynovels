@@ -3,11 +3,12 @@
  *
  * ✅ SPRINT 4: Refactor RedisEventManager God Object
  *
- * Handles all character-related events:
- * - Character creation
- * - Character approval/rejection
- * - Character stats changes
- * - Character review notifications
+ * Handles character-related events:
+ * - Character creation (notifies staff)
+ * - Character stats changes (corporation checks)
+ *
+ * Note: Approval/rejection is handled by CharacterReviewEventHandler
+ * via the character:review_completed Redis channel.
  */
 
 import { BaseEventHandler } from '../BaseEventHandler';
@@ -18,8 +19,6 @@ export class CharacterEventHandler extends BaseEventHandler {
   getSupportedEventTypes(): string[] {
     return [
       'character_created',
-      'character_approved',
-      'character_rejected',
       'character_stats_changed'
     ];
   }
@@ -30,14 +29,6 @@ export class CharacterEventHandler extends BaseEventHandler {
     switch (event.type) {
       case 'character_created':
         await this.handleCharacterCreated(event);
-        break;
-
-      case 'character_approved':
-        await this.handleCharacterApproved(event);
-        break;
-
-      case 'character_rejected':
-        await this.handleCharacterRejected(event);
         break;
 
       case 'character_stats_changed':
@@ -58,33 +49,7 @@ export class CharacterEventHandler extends BaseEventHandler {
       characterId: event.characterId,
       characterName: event.characterName,
       userId: event.userId,
-      timestamp: event.timestamp
-    });
-  }
-
-  /**
-   * Handle character approval event
-   * Notifies character owner about approval
-   */
-  private async handleCharacterApproved(event: any): Promise<void> {
-    this.io.to(`user_${event.userId}`).emit('character_approved', {
-      characterId: event.characterId,
-      characterName: event.characterName,
-      approvedBy: event.approvedBy,
-      timestamp: event.timestamp
-    });
-  }
-
-  /**
-   * Handle character rejection event
-   * Notifies character owner about rejection
-   */
-  private async handleCharacterRejected(event: any): Promise<void> {
-    this.io.to(`user_${event.userId}`).emit('character_rejected', {
-      characterId: event.characterId,
-      characterName: event.characterName,
-      reason: event.reason,
-      rejectedBy: event.rejectedBy,
+      username: event.username || '',
       timestamp: event.timestamp
     });
   }
@@ -94,8 +59,6 @@ export class CharacterEventHandler extends BaseEventHandler {
    * Triggers corporation membership checks
    */
   private async handleCharacterStatsChanged(event: any): Promise<void> {
-    // Publish event to corporation channel to check automatic memberships
-    // Note: This requires access to RedisPublisher, which should be injected
     logger.debug('[CharacterEventHandler] Character stats changed - corporation checks needed', {
       characterId: event.characterId
     });

@@ -12,7 +12,7 @@
  * CRITICAL: Max 250 linee (vs 335 del vecchio)
  */
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import classNames from 'classnames';
 import { TableConfig, TableColumn } from '@/lib/config/schemas';
 import { getNestedValue } from '@/lib/config/loader';
@@ -50,6 +50,7 @@ export interface ConfigurableDataTableProps<T extends object = Record<string, un
   onSortChange?: (sortBy: string, sortOrder: 'asc' | 'desc') => void;
   filters?: FilterState;
   onFilterChange?: (filters: FilterState) => void;
+  defaultSearch?: string;
   externalConfig?: {
     config: TableConfig;
     visibleColumns: TableColumn[];
@@ -82,9 +83,16 @@ export function ConfigurableDataTable<T extends object = Record<string, unknown>
   onSortChange,
   filters,
   onFilterChange,
+  defaultSearch,
   externalConfig
 }: ConfigurableDataTableProps<T>): React.ReactElement {
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(defaultSearch || '');
+
+  useEffect(() => {
+    if (defaultSearch !== undefined) {
+      setSearch(defaultSearch);
+    }
+  }, [defaultSearch]);
   const [internalSortBy, setInternalSortBy] = useState<string | null>(null);
   const [internalSortOrder, setInternalSortOrder] = useState<'asc' | 'desc'>('asc');
   const [selectAllPages, setSelectAllPages] = useState(false);

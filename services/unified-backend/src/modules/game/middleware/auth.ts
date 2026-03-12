@@ -219,13 +219,10 @@ export class AuthMiddleware {
           // Import here to avoid circular dependency
           const { Character } = await import('@database/models');
 
-          // Verify character exists (allow all statuses except DELETED)
-          // Characters in any state (DRAFT, PENDING_APPROVAL, APPROVED) can be present
-          // and interact via chatoff
+          // Verify character exists and belongs to user
           const character = await Character.findOne({
             _id: req.character!.characterId,
-            userId: req.user!.userId,
-            status: { $ne: 'DELETED' } // Exclude only deleted characters
+            userId: req.user!.userId
           });
 
           if (!character) {
@@ -238,6 +235,16 @@ export class AuthMiddleware {
             res.status(403).json(response);
             return;
           }
+
+          // Enrich req.character with fresh DB data (cookie may be stale after status changes)
+          req.character = {
+            ...req.character!,
+            playerStatus: character.playerStatus,
+            gameplayRoles: character.gameplayRoles || ['player'],
+            isApproved: character.playerStatus === 'approved',
+            isGestore: character.isGestore || false,
+            characterPermissions: character.characterPermissions || []
+          };
 
           next();
 
