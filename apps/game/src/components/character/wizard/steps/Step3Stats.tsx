@@ -39,9 +39,10 @@ export function Step3Stats(): JSX.Element {
   const { stats, derivedStats, updateStat, stepErrors, occupation } = useWizardStore();
   const { data: occupations } = useOccupations();
   const errors = stepErrors[3] || {};
-  const total = Object.values(stats).reduce((sum, val) => sum + val, 0);
+  // Type assertion safe: WizardStats declared properties are all number (index signature allows undefined for dynamic access only)
+  const total = (Object.values(stats) as number[]).reduce((sum, val) => sum + val, 0);
   const remaining = 400 - total;
-  const statsAbove80 = Object.values(stats).filter((v) => v > 80).length;
+  const statsAbove80 = (Object.values(stats) as number[]).filter((v) => v > 80).length;
 
   const selectedOcc = occupations?.find((o) => o.id === occupation.occupationId);
   const occImage = selectedOcc ? getOccupationImage(selectedOcc.image) : null;

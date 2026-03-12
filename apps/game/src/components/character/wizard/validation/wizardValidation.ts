@@ -75,8 +75,10 @@ export function validateStep2(occupation: WizardOccupation): ValidationResult {
 
 export function validateStep3(stats: WizardStats): ValidationResult {
   const errors: Record<string, string> = {};
-  const total = Object.values(stats).reduce((sum, val) => sum + val, 0);
-  const above80 = Object.values(stats).filter((val) => val > 80).length;
+  // Type assertion safe: WizardStats declared properties are all number
+  const statValues = Object.values(stats) as number[];
+  const total = statValues.reduce((sum, val) => sum + val, 0);
+  const above80 = statValues.filter((val) => val > 80).length;
 
   if (total !== 400) {
     errors.statsBudget = `Budget stats: ${total}/400 (deve essere esattamente 400)`;
@@ -84,10 +86,10 @@ export function validateStep3(stats: WizardStats): ValidationResult {
   if (above80 > 2) {
     errors.statsAbove80 = `Massimo 2 stats sopra 80 (attualmente: ${above80})`;
   }
-  if (Object.values(stats).some((val) => val > 85)) {
+  if (statValues.some((val) => val > 85)) {
     errors.statsCap = 'Nessun stat può superare 85 in creazione';
   }
-  const belowMin = Object.entries(stats)
+  const belowMin = (Object.entries(stats) as [string, number][])
     .filter(([_, val]) => val < 20)
     .map(([key, val]) => `${key}: ${val}`);
   if (belowMin.length > 0) {

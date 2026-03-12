@@ -96,6 +96,7 @@ export interface WizardStats {
   power: number;
   size: number;
   education: number;
+  [key: string]: number | undefined; // Allow dynamic access for formula resolution
 }
 
 /**

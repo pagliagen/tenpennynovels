@@ -22,7 +22,7 @@ import styles from '@/styles/components/character/wizard/Step6Review.module.scss
  * @returns {JSX.Element} Step 6 review interface
  */
 export function Step6Review(): JSX.Element {
-  const { basicInfo, occupation, stats, derivedStats, skills, background, dynamicSkills, validateAll, stepErrors } =
+  const { basicInfo, occupation, stats, derivedStats, skills, dynamicSkills, validateAll, stepErrors } =
     useWizardStore();
 
   // Fetch skill definitions for ID → name mapping
@@ -34,7 +34,8 @@ export function Step6Review(): JSX.Element {
 
   // Calculate skill totals
   const totalSkillPoints = Object.values(skills).reduce((sum, skill) => sum + skill.manualPoints, 0);
-  const totalStatPoints = Object.values(stats).reduce((sum, val) => sum + val, 0);
+  // Type assertion safe: WizardStats declared properties are all number
+  const totalStatPoints = (Object.values(stats) as number[]).reduce((sum, val) => sum + val, 0);
 
   // Helper: Get skill name from ID
   const getSkillName = (skillId: string): string => {

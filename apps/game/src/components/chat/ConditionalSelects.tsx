@@ -162,7 +162,7 @@ export function ConditionalSelects({
       <div className={styles.conditionalSelect}>
         <select value={selectedStat} onChange={(e) => onStatChange(e.target.value)} className={styles.selectInput}>
           <option value="">Seleziona Caratteristica</option>
-          {Object.entries(stats).map(([statName, statValue]) => (
+          {(Object.entries(stats) as [string, number][]).map(([statName, statValue]) => (
             <option key={statName} value={statName}>
               {statName} ({statValue})
             </option>

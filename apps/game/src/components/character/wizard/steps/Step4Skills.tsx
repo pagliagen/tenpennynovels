@@ -87,8 +87,9 @@ export function Step4Skills(): JSX.Element {
 
     apiSkills.forEach((skillDef) => {
       const resolvedBase = resolveSkillBaseValue(skillDef.baseFormula, skillDef.baseValue, stats);
+      const existingSkill = skills[skillDef.id];
 
-      if (!skills[skillDef.id]) {
+      if (!existingSkill) {
         updateSkill(skillDef.id, {
           base: resolvedBase,
           requiredBonus: 0,
@@ -97,12 +98,11 @@ export function Step4Skills(): JSX.Element {
           total: resolvedBase,
           category: skillDef.category,
         });
-      } else if (skills[skillDef.id].base !== resolvedBase) {
-        const s = skills[skillDef.id];
+      } else if (existingSkill.base !== resolvedBase) {
         updateSkill(skillDef.id, {
-          ...s,
+          ...existingSkill,
           base: resolvedBase,
-          total: resolvedBase + s.requiredBonus + s.manualPoints + s.occupationBonus,
+          total: resolvedBase + existingSkill.requiredBonus + existingSkill.manualPoints + existingSkill.occupationBonus,
         });
       }
     });

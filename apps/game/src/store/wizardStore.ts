@@ -49,7 +49,7 @@ const FORMULA_STAT_MAP: Record<string, string> = {
 export function resolveSkillBaseValue(
   baseFormula: string | null | undefined,
   baseValue: number,
-  stats: Record<string, number>,
+  stats: Record<string, number | undefined>,
 ): number {
   if (!baseFormula) return baseValue;
 
