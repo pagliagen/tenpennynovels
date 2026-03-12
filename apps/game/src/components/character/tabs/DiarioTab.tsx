@@ -53,7 +53,7 @@ export function DiarioTab({ character }: DiarioTabProps): JSX.Element {
 
       {/* Metadata Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-        <InfoCard title="📊 Stato" value={character.status} color={getStatusColor(character.status)} />
+        <InfoCard title="📊 Stato" value={getStatusDisplay(character.playerStatus)} color={getStatusColor(character.playerStatus)} />
         {character.createdAt && (
           <InfoCard title="📅 Creato il" value={new Date(character.createdAt).toLocaleDateString('it-IT')} />
         )}
@@ -74,12 +74,20 @@ function InfoCard({ title, value, color }: { title: string; value: string; color
   );
 }
 
-function getStatusColor(status: string): string {
-  switch (status) {
-    case 'APPROVED': return '#4ade80';
-    case 'PENDING_APPROVAL': return '#fbbf24';
-    case 'DRAFT': return '#94a3b8';
-    case 'REJECTED': return '#ef4444';
+function getStatusDisplay(playerStatus?: string): string {
+  switch (playerStatus) {
+    case 'approved': return 'Approvato';
+    case 'pending': return 'In Attesa';
+    case 'draft': return 'Bozza';
+    default: return 'Sconosciuto';
+  }
+}
+
+function getStatusColor(playerStatus?: string): string {
+  switch (playerStatus) {
+    case 'approved': return '#4ade80';
+    case 'pending': return '#fbbf24';
+    case 'draft': return '#94a3b8';
     default: return '#999';
   }
 }

@@ -61,6 +61,7 @@ export interface ModalState {
  * @property {'success' | 'error' | 'warning' | 'info'} type - Toast type
  * @property {string} message - Toast message content
  * @property {number} [duration] - Auto-dismiss duration in ms (default: 3000)
+ * @property {() => void} [onClick] - Optional callback when toast is clicked
  *
  * @since 2.0.0
  */
@@ -69,6 +70,7 @@ export interface Toast {
   type: 'success' | 'error' | 'warning' | 'info';
   message: string;
   duration?: number;
+  onClick?: () => void;
 }
 
 /**

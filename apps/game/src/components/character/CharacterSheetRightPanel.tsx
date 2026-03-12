@@ -79,9 +79,9 @@ export function CharacterSheetRightPanel({
 
   return (
     <div className={styles.rightPanel}>
-      {/* Edit Button (Owner Only, Approved Characters, Informazioni Tab Only) */}
+      {/* Edit Button (Owner Only, Approved or Draft Characters, Informazioni Tab Only) */}
       {permissions.isOwner &&
-        character.status === 'APPROVED' &&
+        (character.playerStatus === 'approved' || character.playerStatus === 'draft') &&
         activeTab === 'informazioni' &&
         onEdit && (
           <div className={styles.editButtonContainer}>

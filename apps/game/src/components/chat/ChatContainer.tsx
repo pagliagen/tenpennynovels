@@ -21,6 +21,7 @@ import { MessageList } from './MessageList';
 import { MessageInput } from './MessageInput';
 import { PermissionBanner } from './PermissionBanner';
 import { useLocationChat } from '@/hooks/useLocationChat';
+import { useCharacterSheetData } from '@/hooks/useCharacterSheetData';
 import { useAuthStore } from '@/store/authStore';
 import { useLocationStore } from '@/store/locationStore';
 import { useChatOccupants, useChatCurrentTag, useChatStore } from '@/store/chatStore';
@@ -59,6 +60,9 @@ export function ChatContainer({ locationSlug, locationId, locationName }: ChatCo
   const { selectedCharacter } = useAuthStore();
   const gamePermissions = useAuthStore((state) => state.gamePermissions);
 
+  // Character sheet data (skills, equipment) - React Query hook
+  const { data: characterSheet } = useCharacterSheetData(selectedCharacter?._id || '');
+
   // Location store: Get location positions
   const locations = useLocationStore((state) => state.locations);
   const currentLocation = locations.find((loc) => loc._id === locationId);
@@ -75,11 +79,9 @@ export function ChatContainer({ locationSlug, locationId, locationName }: ChatCo
     locationName
   );
 
-  // Permission check
-  // Now selectedCharacter.status uses correct backend values ('DRAFT'|'PENDING_APPROVAL'|'APPROVED'|'DELETED')
-  const isApproved = selectedCharacter?.status === 'APPROVED';
-  const characterStatus: import('@/types/character').CharacterStatus =
-    selectedCharacter?.status || 'DRAFT';
+  // Permission check - Use game permissions system
+  const hasGamePermission = useAuthStore((state) => state.hasGamePermission);
+  const canSendMessages = hasGamePermission('game:chat:send');
 
   // Master check (TODO: Get from selectedCharacter.gameplayRoles when available)
   // For now, assume non-master. Will be updated when auth system provides roles.
@@ -114,18 +116,33 @@ export function ChatContainer({ locationSlug, locationId, locationName }: ChatCo
   /**
    * Build character data for MessageInput
    *
-   * Note: selectedCharacter is the base Character type (from auth),
-   * not the full CharacterSheet (which has skills, equipment, etc.).
-   * MessageInput features requiring full character data may not work.
+   * Includes skills and equipment from character sheet (fetched via useEffect).
    */
   const characterData = {
     characterId: selectedCharacter?._id || '',
-    // TODO: skills, equippedItems are not available in base Character type
-    // These would need to be fetched separately from /game/characters/:id?view=sheet
-    skills: [], // Not available in selectedCharacter
-    stats: selectedCharacter?.stats || {},
-    equippedItems: [], // Not available in selectedCharacter
-    gamePermissions, // NEW: Game permissions from authStore
+    skills: characterSheet?.character?.skills
+      ? Object.entries(characterSheet.character.skills).map(([skillId, skillData]: [string, any]) => ({
+          id: skillId, // Skill ObjectId - needed for secure roll requests
+          name: skillData.name || 'Unknown',
+          value: skillData.total || skillData.value || 0,
+          category: skillData.category,
+        }))
+      : [],
+    stats: (() => {
+      const rawStats = characterSheet?.character?.stats || selectedCharacter?.stats || {};
+      // Filter out non-numeric fields (like damageBonus which is a string)
+      return Object.fromEntries(
+        Object.entries(rawStats).filter(([_, value]) => typeof value === 'number')
+      ) as Record<string, number>;
+    })(),
+    equippedItems: characterSheet?.character?.equipment
+      ? characterSheet.character.equipment.map(item => ({
+          id: item._id,
+          name: item.name,
+          category: undefined, // Equipment from sheet doesn't have category
+        }))
+      : [],
+    gamePermissions,
   };
 
   /**
@@ -153,8 +170,8 @@ export function ChatContainer({ locationSlug, locationId, locationName }: ChatCo
         isMaster={isMaster}
       />
 
-      {/* Message Input (only if APPROVED) OR Permission Banner (if not APPROVED) */}
-      {isApproved ? (
+      {/* Message Input (only if has permission) OR Permission Banner (if no permission) */}
+      {canSendMessages ? (
         <MessageInput
           locationId={locationId}
           characterData={characterData}
@@ -167,7 +184,7 @@ export function ChatContainer({ locationSlug, locationId, locationName }: ChatCo
           onTagChange={handleTagChange}
         />
       ) : (
-        <PermissionBanner status={characterStatus} />
+        <PermissionBanner />
       )}
     </div>
   );

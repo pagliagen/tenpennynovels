@@ -244,18 +244,29 @@ ChatSchema.statics.getLocationHistory = async function(
   locationId: string,
   characterId: string,
   limit: number = 50,
-  sessionId?: string
+  sessionId?: string,
+  isMaster: boolean = false
 ): Promise<IChat[]> {
-  const filter: any = {
-    locationId,
-    $or: [
-      { visibility: 'public' },
-      { visibility: 'whisper', $or: [
+  // Build visibility filter
+  const visibilityFilter: any[] = [
+    { visibility: 'public' },
+    {
+      visibility: 'whisper',
+      $or: [
         { characterId },
         { targetCharacters: characterId }
-      ]},
-      { visibility: 'master_only' }
-    ]
+      ]
+    }
+  ];
+
+  // Only add master_only if character is master
+  if (isMaster) {
+    visibilityFilter.push({ visibility: 'master_only' });
+  }
+
+  const filter: any = {
+    locationId,
+    $or: visibilityFilter
   };
 
   if (sessionId) {

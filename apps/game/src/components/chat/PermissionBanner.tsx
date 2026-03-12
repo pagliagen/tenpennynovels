@@ -1,8 +1,8 @@
 /**
  * Permission Banner Component
  *
- * Displays status-specific message when character cannot write in chat.
- * Replaces MessageInput when character status is not APPROVED.
+ * Displays message when character cannot write in chat due to missing permissions.
+ * Replaces MessageInput when character lacks game:chat:send permission.
  *
  * @module components/chat/PermissionBanner
  * @since 2.0.0
@@ -10,55 +10,37 @@
 
 'use client';
 
-import type { CharacterStatus } from '@/types/character';
+import { useAuthStore } from '@/store/authStore';
 import styles from '@/styles/components/chat/chat.module.scss';
-
-/**
- * Permission Banner Props
- */
-interface PermissionBannerProps {
-  /** Character status (DRAFT, PENDING_APPROVAL, DELETED) */
-  status: CharacterStatus;
-}
 
 /**
  * Permission Banner Component
  *
- * Shows why user cannot write in chat with status-specific message.
+ * Shows why user cannot write in chat based on character playerStatus.
+ * Uses game permissions system to determine access.
  *
- * @param {PermissionBannerProps} props - Component props
  * @returns {JSX.Element} Permission banner
  */
-export function PermissionBanner({ status }: PermissionBannerProps): JSX.Element {
-  // Status-specific messages
-  const messages: Record<CharacterStatus, { icon: string; text: string }> = {
-    DRAFT: {
-      icon: '⚠️',
-      text: 'Il tuo personaggio è ancora in fase di creazione. Completa la scheda per interagire nella chat.',
-    },
-    PENDING_APPROVAL: {
-      icon: '⏳',
-      text: "Il tuo personaggio è in attesa di approvazione da parte dello staff. Non puoi ancora interagire nella chat.",
-    },
-    APPROVED: {
-      icon: '✅',
-      text: '', // Should never show
-    },
-    DELETED: {
-      icon: '❌',
-      text: 'Questo personaggio non è più attivo e non può interagire nella chat.',
-    },
-  };
+export function PermissionBanner(): JSX.Element {
+  const selectedCharacter = useAuthStore((state) => state.selectedCharacter);
+  const playerStatus = selectedCharacter?.playerStatus;
 
-  const message = messages[status] || {
-    icon: '⚠️',
-    text: `Il personaggio ha uno stato non riconosciuto (${status}). Contatta l'amministrazione.`,
-  };
+  // Determine message based on playerStatus
+  let icon = '⚠️';
+  let text = 'Non hai i permessi necessari per interagire nella chat.';
+
+  if (playerStatus === 'draft') {
+    icon = '⚠️';
+    text = 'Il tuo personaggio è ancora in fase di creazione. Completa la scheda per interagire nella chat.';
+  } else if (playerStatus === 'pending') {
+    icon = '⏳';
+    text = 'Il tuo personaggio è in attesa di approvazione da parte dello staff. Non puoi ancora interagire nella chat.';
+  }
 
   return (
     <div className={styles.permissionBanner}>
-      <span className={styles.permissionIcon}>{message.icon}</span>
-      <span className={styles.permissionText}>{message.text}</span>
+      <span className={styles.permissionIcon}>{icon}</span>
+      <span className={styles.permissionText}>{text}</span>
     </div>
   );
 }

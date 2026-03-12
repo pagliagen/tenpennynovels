@@ -54,6 +54,7 @@ export interface CharacterSheetData {
       description?: string;
     };
     status: 'DRAFT' | 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED';
+    playerStatus?: 'draft' | 'pending' | 'approved'; // Backend returns this field
 
     // Public fields
     publicBackground?: string;

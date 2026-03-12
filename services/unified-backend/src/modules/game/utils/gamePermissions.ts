@@ -82,6 +82,14 @@ export function hasGamePermission(
 ): boolean {
   if (isGestore) return true;
 
+  // Apply status restrictions FIRST (before character overrides)
+  // Status-based blocks are foundational game rules that cannot be overridden
+  const config = loadGamePermissionConfig();
+  const statusRestriction = config.status_restrictions[playerStatus];
+  if (statusRestriction?.blocked_permissions.includes(permission)) {
+    return false;
+  }
+
   // Deny overrides (prefix -)
   const denyKey = permission.startsWith('-') ? permission : `-${permission}`;
   if (characterPermissions.includes(denyKey)) return false;
@@ -89,7 +97,6 @@ export function hasGamePermission(
   // Grant overrides
   if (characterPermissions.includes(permission) || characterPermissions.includes('game:*')) return true;
 
-  const config = loadGamePermissionConfig();
   const roles = gameplayRoles.length > 0 ? gameplayRoles : ['player'];
 
   for (const roleName of roles) {
@@ -118,6 +125,14 @@ export function getCharacterGamePermissions(
 
   for (const roleName of roles) {
     resolveGameplayRolePermissions(roleName, config).forEach(p => allPermissions.add(p));
+  }
+
+  // Remove status-blocked permissions (foundational game rules)
+  const statusRestriction = config.status_restrictions[playerStatus];
+  if (statusRestriction?.blocked_permissions) {
+    statusRestriction.blocked_permissions.forEach(blocked => {
+      allPermissions.delete(blocked);
+    });
   }
 
   // Apply overrides: add grants, remove denials

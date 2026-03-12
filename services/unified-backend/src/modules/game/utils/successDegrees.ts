@@ -44,8 +44,8 @@ export function calculateSuccessDegree(rollResult: number, targetValue: number):
   }
   
   // Calculate success degrees
-  const extremeThreshold = Math.floor(targetValue * 0.25);
-  const hardThreshold = Math.floor(targetValue * 0.50);
+  const extremeThreshold = Math.floor(targetValue * 0.20); // 1/5 (Call of Cthulhu standard)
+  const hardThreshold = Math.floor(targetValue * 0.50); // 1/2
   
   if (rollResult <= extremeThreshold) {
     return {
@@ -120,8 +120,8 @@ export function getSuccessDegreeLabel(degree: SuccessDegree): string {
   const labels: Record<SuccessDegree, string> = {
     critical: 'Successo Critico',
     extreme: 'Successo Estremo',
-    hard: 'Successo Arduo',
-    normal: 'Successo Normale',
+    hard: 'Successo Difficile',
+    normal: 'Successo',
     failure: 'Fallimento',
     fumble: 'Fallimento Critico'
   };

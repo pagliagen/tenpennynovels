@@ -114,7 +114,7 @@ export function useLocationChat(
   const { selectedCharacter } = useAuthStore();
 
   // WebSocket context (single-reception-point pattern)
-  const { socket, onLocationEvent } = useWebSocket();
+  const { socket, onLocationEvent, setCurrentLocationId } = useWebSocket();
 
   // Typing timeout ref
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -130,14 +130,43 @@ export function useLocationChat(
     // Initialize chat store with location context
     chatStore.initialize(locationSlug, locationId, locationName);
 
+    // Set current location ID for cross-location notification filtering
+    setCurrentLocationId(locationId);
+
     console.log(`✅ Chat initialized for location: ${locationName} (${locationSlug})`);
 
     // Cleanup on unmount
     return () => {
       chatStore.reset();
+      setCurrentLocationId(null);
       console.log(`🧹 Chat store reset`);
     };
-  }, [locationSlug, locationId, locationName]);
+  }, [locationSlug, locationId, locationName, setCurrentLocationId]);
+
+  /**
+   * Join WebSocket Room for Location
+   *
+   * Emits join_location to subscribe to real-time events for this location.
+   * CRITICAL: Without this, the client won't receive location_message_notification events.
+   */
+  useEffect(() => {
+    console.log('[useLocationChat] Join effect triggered - socket:', !!socket, 'locationId:', locationId);
+
+    if (!socket || !locationId) {
+      console.warn('[useLocationChat] Skipping join - socket or locationId missing');
+      return;
+    }
+
+    // Join the location room (send locationId as string, not object)
+    socket.emit('join_location', locationId);
+    console.log(`🔗 Joined location room: ${locationId}`);
+
+    // Leave room on unmount
+    return () => {
+      socket.emit('leave_location', locationId);
+      console.log(`🚪 Left location room: ${locationId}`);
+    };
+  }, [socket, locationId]);
 
   /**
    * Subscribe to WebSocket: New Messages

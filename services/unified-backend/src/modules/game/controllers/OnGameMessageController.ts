@@ -29,24 +29,6 @@ export class OnGameMessageController {
         characterId
       });
 
-      // Defense in depth: Verify sender is APPROVED (middleware already checks, but explicit validation for security)
-      const senderCharacter = await Character.findById(characterId);
-      if (!senderCharacter || senderCharacter.status !== 'APPROVED') {
-        logger.warn('SECURITY: DRAFT character attempted to send OnGame message', {
-          characterId,
-          status: senderCharacter?.status,
-          userId: req.user?.userId
-        });
-        res.status(403).json(errorResponse(
-          'Solo i personaggi approvati possono inviare messaggi ONGAME',
-          'CHARACTER_NOT_APPROVED',
-          undefined,
-          403,
-          getRequestId(req)
-        ));
-        return;
-      }
-
       // Validation
       if (!messageType || !to || !Array.isArray(to) || to.length === 0) {
         res.status(400).json(errorResponse(
@@ -136,11 +118,10 @@ export class OnGameMessageController {
         await finances.save();
       }
 
-      // Verify recipients exist and are APPROVED
+      // Verify recipients exist (permission system handles access control)
       const recipientIds = to.map(id => new mongoose.Types.ObjectId(id));
       const recipients = await (Character.find({
-        _id: { $in: recipientIds },
-        status: 'APPROVED' // Only APPROVED characters can receive OnGame messages
+        _id: { $in: recipientIds }
       }) as any);
 
       if (recipients.length !== recipientIds.length) {

@@ -4,7 +4,7 @@ import { logger } from '../utils/logger';
 import { redis } from '@config/runtime/redis';
 import { EmbeddingEventPublisher } from '../utils/events/embedding-publisher';
 import { successResponse, errorResponse, createResponse, getRequestId } from '../utils/apiResponse';
-import { calculateSuccessDegree, SuccessDegree } from '../utils/successDegrees';
+import { calculateSuccessDegree, getSuccessDegreeLabel, SuccessDegree } from '../utils/successDegrees';
 import { calculateSocialConflict, isValidSocialSkillPair, getDefensiveSkill } from '../utils/socialConflicts';
 import { getSocketIO } from '../websocket/socketInstance';
 
@@ -28,25 +28,6 @@ export class ChatController {
         return;
       }
 
-      // Defense in depth: Verify character is APPROVED (middleware already checks, but explicit validation for security)
-      const { Character } = await import('@database/models');
-      const fullCharacter = await Character.findById(character.characterId);
-      if (!fullCharacter || fullCharacter.status !== 'APPROVED') {
-        logger.warn('SECURITY: DRAFT character attempted location chat action', {
-          characterId: character.characterId,
-          status: fullCharacter?.status,
-          userId: req.user?.userId
-        });
-        res.status(403).json(errorResponse(
-          'Solo i personaggi approvati possono partecipare alle chat di location',
-          'CHARACTER_NOT_APPROVED',
-          undefined,
-          403,
-          getRequestId(req)
-        ));
-        return;
-      }
-
       const {
         actionType,
         content,
@@ -54,9 +35,8 @@ export class ChatController {
         visibility,
         targetCharacters,
         diceSpec,
-        skillName,
+        skillId, // ObjectId of skill (secure - looked up from character)
         statName,
-        targetValue,
         itemId,
         tag,
         isHidden
@@ -161,12 +141,51 @@ export class ChatController {
         actionData.diceResult = ChatController.rollDice();
       }
 
-      // Handle skill checks
-      if (actionType === 'skill_check' && skillName && targetValue !== undefined) {
+      // Handle skill checks (SECURE: lookup actual skill value from character DB)
+      if (actionType === 'skill_check' && skillId) {
+        // Fetch full character document to get skill value (security: prevent value manipulation)
+        const fullCharacter = await Character.findById(character.characterId).lean();
+        if (!fullCharacter) {
+          res.status(404).json(errorResponse(
+            'Character not found',
+            'CHARACTER_NOT_FOUND',
+            undefined,
+            404,
+            getRequestId(req)
+          ));
+          return;
+        }
+
+        // Get actual skill value from character (cannot be manipulated by client)
+        const skillValue = fullCharacter.skills?.[skillId];
+        if (skillValue === undefined) {
+          res.status(400).json(errorResponse(
+            'Character does not have this skill',
+            'SKILL_NOT_FOUND',
+            undefined,
+            400,
+            getRequestId(req)
+          ));
+          return;
+        }
+
+        // Extract numeric value (handle both number and SkillBreakdown)
+        const targetValue = typeof skillValue === 'number' ? skillValue : skillValue.total;
+
+        // Fetch skill name from Skill model
+        const skillDoc = await (await import('@database/models')).Skill.findById(skillId).select('name').lean();
+        const skillName = skillDoc?.name || 'Unknown Skill';
+
         const rollResult = ChatController.rollDice('1d100');
         const successDegree = calculateSuccessDegree(rollResult.result, targetValue);
+        const successLabel = getSuccessDegreeLabel(successDegree.degree);
+
+        // Format message with success degree (no dice numbers shown)
+        actionData.content = `${character.characterName} tira ${skillName} facendo un ${successLabel}`;
+
         actionData.diceResult = {
           ...rollResult,
+          skillId,
           skillName,
           target: targetValue,
           success: rollResult.result <= targetValue
@@ -174,10 +193,42 @@ export class ChatController {
         actionData.successDegree = successDegree.degree;
       }
 
-      // Handle stat checks
-      if (actionType === 'stat_check' && statName && targetValue !== undefined) {
+      // Handle stat checks (SECURE: lookup actual stat value from character DB)
+      if (actionType === 'stat_check' && statName) {
+        // Fetch full character document to get stat value (security: prevent value manipulation)
+        const fullCharacter = await Character.findById(character.characterId).lean();
+        if (!fullCharacter) {
+          res.status(404).json(errorResponse(
+            'Character not found',
+            'CHARACTER_NOT_FOUND',
+            undefined,
+            404,
+            getRequestId(req)
+          ));
+          return;
+        }
+
+        // Get actual stat value from character (cannot be manipulated by client)
+        const targetValue = fullCharacter.stats?.[statName];
+        if (targetValue === undefined) {
+          res.status(400).json(errorResponse(
+            'Character does not have this stat',
+            'STAT_NOT_FOUND',
+            undefined,
+            400,
+            getRequestId(req)
+          ));
+          return;
+        }
+
         const rollResult = ChatController.rollDice('1d100');
         const successDegree = calculateSuccessDegree(rollResult.result, targetValue);
+        const successLabel = getSuccessDegreeLabel(successDegree.degree);
+
+        // Format message with success degree (capitalize stat name for display, no dice numbers)
+        const statDisplayName = statName.charAt(0).toUpperCase() + statName.slice(1);
+        actionData.content = `${character.characterName} tira ${statDisplayName} facendo un ${successLabel}`;
+
         actionData.diceResult = {
           ...rollResult,
           statName,
@@ -266,7 +317,9 @@ export class ChatController {
 
         const notification = {
           message: chatMessage,  // ✅ Full message as frontend expects
-          locationId
+          locationId,
+          locationName: location?.name || 'Location sconosciuta',
+          locationSlug: location?.slug || null
         };
 
         console.log('🔔 ChatsController: Emitting notification to room:', roomName, 'with message:', chatMessage._id);
@@ -340,8 +393,25 @@ export class ChatController {
           if (shouldNotify) {
             const healthy = await aiGatewayClient.isHealthy();
             if (healthy) {
-              const recentActions = await Chat.find({ locationId })
+              const recentActionsRaw = await Chat.find({ locationId })
                 .sort({ timestamp: -1 }).limit(10).lean();
+
+              // Filter actions to protect privacy - AI should not see private messages
+              const recentActions = recentActionsRaw.filter((action: any) => {
+                // Only send public messages
+                if (action.visibility === 'public') return true;
+
+                // Hide whispers (private conversations)
+                if (action.visibility === 'whisper') return false;
+
+                // Hide master-only messages
+                if (action.visibility === 'master_only') return false;
+
+                // Hide hidden skill/stat checks
+                if (action.isHidden) return false;
+
+                return true;
+              });
 
               const presentChars = await Chat.distinct('characterId', {
                 locationId,

@@ -81,8 +81,9 @@ export function CharacterSheetLeftPanel({
   // Determine portrait image (prioritize profileImage, fallback to avatar)
   const portraitSrc = character.profileImage || character.avatar || '/images/sidebar/miniavatar_default.png';
 
-  // IN-GAME messages only available for APPROVED characters (and not to yourself)
-  const canSendInGameMessage = character.status === 'APPROVED' && !isOwnCharacter;
+  // IN-GAME messages only available for approved characters (and not to yourself)
+  // Check if target character is approved (playerStatus from backend is lowercase)
+  const canSendInGameMessage = character.playerStatus === 'approved' && !isOwnCharacter;
 
   return (
     <div className={styles.leftPanel}>
@@ -130,7 +131,7 @@ export function CharacterSheetLeftPanel({
           </p>
         )}
         <p style={{ margin: '0', color: '#999', fontSize: '0.8125rem' }}>
-          Status: <span style={{ color: getStatusColor(character.status) }}>{character.status}</span>
+          Status: <span style={{ color: getStatusColor(character.playerStatus) }}>{getStatusDisplay(character.playerStatus)}</span>
         </p>
         {permissions.isOwner && (
           <p style={{ margin: '0.5rem 0 0 0', color: '#ff9500', fontSize: '0.8125rem', fontWeight: 600 }}>
@@ -143,18 +144,32 @@ export function CharacterSheetLeftPanel({
 }
 
 /**
- * Get color for character status
+ * Get display name for playerStatus
  */
-function getStatusColor(status: string): string {
-  switch (status) {
-    case 'APPROVED':
+function getStatusDisplay(playerStatus?: string): string {
+  switch (playerStatus) {
+    case 'approved':
+      return 'Approvato';
+    case 'pending':
+      return 'In Attesa';
+    case 'draft':
+      return 'Bozza';
+    default:
+      return 'Sconosciuto';
+  }
+}
+
+/**
+ * Get color for character playerStatus
+ */
+function getStatusColor(playerStatus?: string): string {
+  switch (playerStatus) {
+    case 'approved':
       return '#4ade80'; // Green
-    case 'PENDING_APPROVAL':
+    case 'pending':
       return '#fbbf24'; // Yellow
-    case 'DRAFT':
+    case 'draft':
       return '#94a3b8'; // Gray
-    case 'REJECTED':
-      return '#ef4444'; // Red
     default:
       return '#999';
   }

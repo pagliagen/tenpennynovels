@@ -141,7 +141,8 @@ export class LocationController {
 
       // Get chat history for the location, filtered by current session
       const sessionId = location.activeSession?.sessionId?.toString();
-      const chatHistory = await ((Chat as any).getLocationHistory(locationId, characterId, 50, sessionId));
+      const isMaster = character.gameplayRoles?.some((r: string) => ['master', 'moderatore', 'gestore'].includes(r)) || false;
+      const chatHistory = await ((Chat as any).getLocationHistory(locationId, characterId, 50, sessionId, isMaster));
 
       // Get occupants from location, or populate from characters with currentLocation if empty
       let occupants = location.occupants?.map((occupant: any) => ({

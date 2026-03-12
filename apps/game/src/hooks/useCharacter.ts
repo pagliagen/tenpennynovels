@@ -144,8 +144,8 @@ export function useCreateCharacter(): UseMutationResult<
       // Update auth store with new character
       setSelectedCharacter(character);
 
-      // If DRAFT (not completed), redirect to wizard
-      if (character.status === 'DRAFT') {
+      // If draft (not completed), redirect to wizard
+      if (character.playerStatus === 'draft') {
         router.push('/character/wizard');
       }
 

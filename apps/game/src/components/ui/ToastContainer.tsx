@@ -49,8 +49,15 @@ export function ToastContainer(): JSX.Element | null {
       {toasts.map((toast) => (
         <div
           key={toast.id}
-          className={`${styles.toast} ${styles[toast.type]}`}
-          onClick={() => removeToast(toast.id)}
+          className={`${styles.toast} ${styles[toast.type]} ${toast.onClick ? styles.clickable : ''}`}
+          onClick={() => {
+            if (toast.onClick) {
+              toast.onClick();
+              removeToast(toast.id);
+            } else {
+              removeToast(toast.id);
+            }
+          }}
           role="alert"
           aria-live="polite"
         >

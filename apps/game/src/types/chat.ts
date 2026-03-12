@@ -176,7 +176,7 @@ export interface SendMessageRequest {
   targetCharacterId?: string;      // For whispers
   targetCharacters?: string[];     // For whispers (backend expects array)
   diceSpec?: string;               // For dice_roll (sempre '1d100')
-  skillName?: string;              // For skill_check
+  skillId?: string;                // For skill_check (ObjectId - backend does secure lookup)
   statName?: string;               // For stat_check
   targetValue?: number;            // Target value for checks
   itemId?: string;                 // For item_use

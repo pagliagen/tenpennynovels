@@ -166,10 +166,24 @@
   },
   "status_restrictions": {
     "draft": {
-      "blocked_permissions": ["game:chat:send", "game:postal:send"]
+      "blocked_permissions": [
+        "game:chat:send",
+        "game:postal:send",
+        "game:shops:list",
+        "game:shops:read",
+        "game:shops:purchase",
+        "game:economy:transfer"
+      ]
     },
     "pending": {
-      "blocked_permissions": ["game:chat:send", "game:postal:send"]
+      "blocked_permissions": [
+        "game:chat:send",
+        "game:postal:send",
+        "game:shops:list",
+        "game:shops:read",
+        "game:shops:purchase",
+        "game:economy:transfer"
+      ]
     }
   }
 }

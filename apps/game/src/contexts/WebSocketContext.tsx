@@ -26,6 +26,7 @@ import { io, Socket } from 'socket.io-client';
 import { WS_CONFIG } from '@/constants/config';
 import { useAuthStore } from '@/store/authStore';
 import { useUIStore } from '@/store/uiStore';
+import { playNotificationSound } from '@/lib/audio';
 
 /**
  * WebSocket Connection Status
@@ -101,6 +102,17 @@ interface WebSocketContextValue {
 
   /** WebSocket instance (AVOID direct use - prefer subscription methods) */
   socket: Socket | null;
+
+  /** Current location ID (for cross-location notification filtering) */
+  currentLocationId: string | null;
+
+  /**
+   * Set current location ID
+   *
+   * @param {string | null} locationId - Current location ID or null
+   * @returns {void}
+   */
+  setCurrentLocationId: (locationId: string | null) => void;
 
   /**
    * Subscribe to location events
@@ -181,6 +193,7 @@ interface WebSocketProviderProps {
  */
 export function WebSocketProvider({ children }: WebSocketProviderProps): JSX.Element {
   const [status, setStatus] = useState<ConnectionStatus>('disconnected');
+  const [currentLocationId, setCurrentLocationId] = useState<string | null>(null);
   const socketRef = useRef<Socket | null>(null);
   const reconnectAttemptsRef = useRef(0);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -279,6 +292,63 @@ export function WebSocketProvider({ children }: WebSocketProviderProps): JSX.Ele
      */
 
     socket.on('location_message_notification', (data) => {
+      // Handle cross-location notifications (toast + audio for messages in other locations)
+      if (data.locationId && currentLocationId && data.locationId !== currentLocationId) {
+        const message = data.message;
+        const character = selectedCharacter;
+
+        if (!message || !character) {
+          // Skip if no message or character
+          locationCallbacksRef.current.forEach((callback) =>
+            callback({ type: 'location_message_notification', data })
+          );
+          return;
+        }
+
+        // Determine if character should see this message based on visibility
+        let shouldNotify = false;
+        let toastMessage = '';
+
+        if (message.visibility === 'whisper') {
+          // Only notify if character is sender or target
+          if (message.characterId === character._id || message.targetCharacters?.includes(character._id)) {
+            shouldNotify = true;
+            toastMessage = `Sussurro da ${message.characterName} in ${data.locationName || 'altra location'}`;
+          }
+        } else if (message.visibility === 'master_only') {
+          // Only notify if character is master/moderatore/gestore
+          if (character.gameplayRoles?.some((r: string) => ['master', 'moderatore', 'gestore'].includes(r))) {
+            shouldNotify = true;
+            toastMessage = `[Master] ${message.characterName} in ${data.locationName || 'altra chat'}`;
+          }
+        } else if (message.visibility === 'public') {
+          // Public message - notify everyone
+          shouldNotify = true;
+          toastMessage = `${message.characterName} ha scritto in ${data.locationName || 'altra chat'}`;
+        }
+
+        if (shouldNotify) {
+          // Play audio notification
+          playNotificationSound();
+
+          // Show clickable toast that navigates to the location chat
+          useUIStore.getState().addToast({
+            type: 'info',
+            message: toastMessage,
+            duration: 6000,
+            onClick: () => {
+              // Navigation will be handled by ToastContainer which has access to router
+              if (typeof window !== 'undefined' && data.locationSlug) {
+                window.location.href = `/locations/${data.locationSlug}/chat`;
+              } else if (typeof window !== 'undefined' && data.locationId) {
+                window.location.href = `/locations/${data.locationId}/chat`;
+              }
+            },
+          });
+        }
+      }
+
+      // Always dispatch to component subscribers (for in-chat handling)
       locationCallbacksRef.current.forEach((callback) =>
         callback({ type: 'location_message_notification', data })
       );
@@ -539,6 +609,8 @@ export function WebSocketProvider({ children }: WebSocketProviderProps): JSX.Ele
     status,
     isConnected: status === 'connected',
     socket: socketRef.current,
+    currentLocationId,
+    setCurrentLocationId,
     onLocationEvent,
     onGlobalEvent,
     onMessageEvent,

@@ -3,10 +3,10 @@
  *
  * Complete message input with:
  * - Mandatory tag selection
- * - Action type selector
+ * - Action type selector (dropdown for standard, whisper, ooc, item_use, master, moderation)
  * - Conditional selects (whisper target, skill, stat, item)
  * - Textarea with character counter
- * - Action buttons (Tags, Sussurro, Tira Dado)
+ * - Action buttons (Tags, Scontro Sociale, Tiro Dado, Usa Skill/Caratteristica)
  *
  * @module components/chat/MessageInput
  * @since 2.0.0
@@ -18,6 +18,7 @@ import { useState, useEffect, useRef } from 'react';
 import { TagSelector } from './TagSelector';
 import { ActionTypeSelector } from './ActionTypeSelector';
 import { ConditionalSelects } from './ConditionalSelects';
+import { SkillStatRollModal } from './SkillStatRollModal';
 import { locationChatsApi } from '@/lib/api/locationChats';
 import type { ChatMessageType, SendMessageRequest } from '@/types/chat';
 import styles from '@/styles/components/chat/chat.module.scss';
@@ -27,7 +28,7 @@ import styles from '@/styles/components/chat/chat.module.scss';
  */
 interface CharacterData {
   characterId: string;
-  skills?: Array<{ name: string; value: number; category?: string }>;
+  skills?: Array<{ id: string; name: string; value: number; category?: string }>;
   stats?: Record<string, number>;
   equippedItems?: Array<{ id: string; name: string; category?: string }>;
   gamePermissions?: string[]; // Game permissions for checking action availability
@@ -72,9 +73,6 @@ interface MessageInputProps {
   /** Callback when tag changes */
   onTagChange: (tag: string) => void;
 
-  /** Callback to open skill roll modal (Phase 4) */
-  onOpenSkillRoll?: () => void;
-
   /** Disabled state */
   disabled?: boolean;
 
@@ -89,23 +87,14 @@ const MAX_CHARACTERS = 2000;
  * Get available action types based on character data and game permissions
  */
 function getAvailableActions(characterData: CharacterData): ChatMessageType[] {
-  const baseActions: ChatMessageType[] = ['standard', 'whisper', 'ooc', 'dice_roll'];
+  // dice_roll, skill_check, stat_check moved to dedicated buttons
+  const baseActions: ChatMessageType[] = ['standard', 'whisper', 'ooc'];
   const gamePermissions = characterData.gamePermissions || [];
 
   // Helper: Check if has permission
   const hasPermission = (permission: string): boolean => {
     return gamePermissions.includes('game:*') || gamePermissions.includes(permission);
   };
-
-  // Skill check (only if has skills)
-  if (characterData.skills && characterData.skills.length > 0) {
-    baseActions.push('skill_check');
-  }
-
-  // Stat check (only if has stats)
-  if (characterData.stats && Object.keys(characterData.stats).length > 0) {
-    baseActions.push('stat_check');
-  }
 
   // Item use (only if has equipped items)
   if (characterData.equippedItems && characterData.equippedItems.length > 0) {
@@ -161,7 +150,6 @@ export function MessageInput({
   onStartTyping,
   onStopTyping,
   onTagChange,
-  onOpenSkillRoll,
   disabled = false,
   placeholder,
 }: MessageInputProps): JSX.Element {
@@ -176,6 +164,7 @@ export function MessageInput({
   const [isTagSelectorOpen, setIsTagSelectorOpen] = useState(false);
   const [isTagButtonFlashing, setIsTagButtonFlashing] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [isSkillStatModalOpen, setIsSkillStatModalOpen] = useState(false);
 
   // Social conflict mode
   const [isSocialConflictMode, setIsSocialConflictMode] = useState(false);
@@ -190,7 +179,7 @@ export function MessageInput({
   // Check social conflict permission
   const gamePermissions = characterData.gamePermissions || [];
   const hasSocialConflictPermission = gamePermissions.includes('game:*') ||
-                                       gamePermissions.includes('game:chat:social-clash');
+    gamePermissions.includes('game:chat:social-clash');
 
   /**
    * Reset action-specific selections when action type changes
@@ -262,6 +251,51 @@ export function MessageInput({
   };
 
   /**
+   * Handle skill/stat roll from modal
+   * Auto-sends the roll after selection
+   * @param type - 'skill' or 'stat'
+   * @param id - skillId (ObjectId) for skills, statName for stats
+   * @param displayName - name to show in default message
+   */
+  const handleSkillStatRoll = async (type: 'skill' | 'stat', id: string, displayName: string) => {
+    // Validate tag first
+    if (!currentTag) {
+      setIsTagButtonFlashing(true);
+      setTimeout(() => setIsTagButtonFlashing(false), 2000);
+      return;
+    }
+
+    if (isSending) return;
+
+    setIsSending(true);
+
+    try {
+      const data: SendMessageRequest = {
+        messageType: type === 'skill' ? 'skill_check' : 'stat_check',
+        text: messageInput.trim() || `Tiro su ${displayName}`, // Default text if empty
+      };
+
+      if (type === 'skill') {
+        data.skillId = id; // Send skill ObjectId, not name - backend will look up value
+      } else {
+        data.statName = id; // For stats, name is the ID
+      }
+
+      await onSendMessage(data);
+
+      // Reset form
+      setMessageInput('');
+      setSelectedAction('standard');
+      setSelectedSkill('');
+      setSelectedStat('');
+    } catch (error) {
+      console.error('Failed to send skill/stat roll:', error);
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  /**
    * Send message (or social conflict)
    */
   const handleSendMessage = async () => {
@@ -324,9 +358,7 @@ export function MessageInput({
         data.diceSpec = '1d100';  // Sistema percentuale
       }
 
-      if (selectedAction === 'skill_check' && selectedSkill) {
-        data.skillName = selectedSkill;
-      }
+      // skill_check/stat_check handled by dedicated SkillStatRollModal, not via selectedAction
 
       if (selectedAction === 'stat_check' && selectedStat) {
         data.statName = selectedStat;
@@ -364,104 +396,108 @@ export function MessageInput({
 
   return (
     <div className={styles.messageInput}>
-      {/* Action Type Selector (hidden in social conflict mode) */}
-      {!isSocialConflictMode && (
-        <div className={styles.actionTypeRow}>
-          <ActionTypeSelector
-            selectedAction={selectedAction}
-            availableActions={availableActions}
-            onActionChange={setSelectedAction}
-          />
-        </div>
-      )}
-
-      {/* SOCIAL CONFLICT FIELDS */}
-      {isSocialConflictMode && (
-        <div className={styles.socialConflictFields}>
-          <div className={styles.fieldRow}>
-            {/* Target Selector */}
-            <select
-              value={targetCharacters[0] || ''}
-              onChange={(e) => setTargetCharacters(e.target.value ? [e.target.value] : [])}
-              className={styles.selectInput}
-              disabled={disabled}
-            >
-              <option value="">Seleziona Avversario</option>
-              {occupants
-                .filter((occ) => occ.characterId !== characterData.characterId)
-                .map((occupant) => (
-                  <option key={occupant.characterId} value={occupant.characterId}>
-                    {occupant.characterName}
-                  </option>
-                ))}
-            </select>
-
-            {/* Skill Selector (social skills only) */}
-            <select
-              value={selectedSkill}
-              onChange={(e) => setSelectedSkill(e.target.value)}
-              className={styles.selectInput}
-              disabled={disabled}
-            >
-              <option value="">Seleziona Abilità</option>
-              <option value="Ammaliare">Ammaliare (vs Autocontrollo)</option>
-              <option value="Persuadere">Persuadere (vs Tempra)</option>
-              <option value="Intimidire">Intimidire (vs Autocontrollo)</option>
-              <option value="Oratoria">Oratoria (vs Tempra)</option>
-              <option value="Raggirare">Raggirare (vs Empatia)</option>
-              <option value="Empatia">Empatia (vs Raggirare)</option>
-            </select>
-          </div>
-
-          {/* Lie Text Field (only for Raggirare) */}
-          {selectedSkill === 'Raggirare' && (
-            <div className={styles.fieldRow}>
-              <textarea
-                value={lieText}
-                onChange={(e) => setLieText(e.target.value)}
-                placeholder="Intenzione nascosta (visibile solo a te e al master)..."
-                className={styles.lieTextarea}
-                disabled={disabled}
-                rows={2}
+      <div className={styles.messageInputWrapper}>
+        <div className={styles.actionTypeWrapper}>
+          {/* Action Type Selector (hidden in social conflict mode) */}
+          {!isSocialConflictMode && (
+            <div className={styles.actionTypeRow}>
+              <ActionTypeSelector
+                selectedAction={selectedAction}
+                availableActions={availableActions}
+                onActionChange={setSelectedAction}
               />
-              <div className={styles.lieWarning}>
-                🔒 Questo testo sarà visibile solo a te e al master. Se fallisci, l'avversario saprà che stai mentendo ma non vedrà questo testo.
-              </div>
             </div>
           )}
+
+          {/* SOCIAL CONFLICT FIELDS */}
+          {isSocialConflictMode && (
+            <div className={styles.socialConflictFields}>
+              <div className={styles.fieldRow}>
+                {/* Target Selector */}
+                <select
+                  value={targetCharacters[0] || ''}
+                  onChange={(e) => setTargetCharacters(e.target.value ? [e.target.value] : [])}
+                  className={styles.selectInput}
+                  disabled={disabled}
+                >
+                  <option value="">Seleziona Avversario</option>
+                  {occupants
+                    .filter((occ) => occ.characterId !== characterData.characterId)
+                    .map((occupant) => (
+                      <option key={occupant.characterId} value={occupant.characterId}>
+                        {occupant.characterName}
+                      </option>
+                    ))}
+                </select>
+
+                {/* Skill Selector (social skills only) */}
+                <select
+                  value={selectedSkill}
+                  onChange={(e) => setSelectedSkill(e.target.value)}
+                  className={styles.selectInput}
+                  disabled={disabled}
+                >
+                  <option value="">Seleziona Abilità</option>
+                  <option value="Ammaliare">Ammaliare (vs Autocontrollo)</option>
+                  <option value="Persuadere">Persuadere (vs Tempra)</option>
+                  <option value="Intimidire">Intimidire (vs Autocontrollo)</option>
+                  <option value="Oratoria">Oratoria (vs Tempra)</option>
+                  <option value="Raggirare">Raggirare (vs Empatia)</option>
+                  <option value="Empatia">Empatia (vs Raggirare)</option>
+                </select>
+              </div>
+
+              {/* Lie Text Field (only for Raggirare) */}
+              {selectedSkill === 'Raggirare' && (
+                <div className={styles.fieldRow}>
+                  <textarea
+                    value={lieText}
+                    onChange={(e) => setLieText(e.target.value)}
+                    placeholder="Intenzione nascosta (visibile solo a te e al master)..."
+                    className={styles.lieTextarea}
+                    disabled={disabled}
+                    rows={2}
+                  />
+                  <div className={styles.lieWarning}>
+                    🔒 Questo testo sarà visibile solo a te e al master. Se fallisci, l'avversario saprà che stai mentendo ma non vedrà questo testo.
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Conditional Selects (whisper target, skill, stat, item) - hidden in social conflict mode */}
+          {!isSocialConflictMode && (
+            <ConditionalSelects
+              selectedAction={selectedAction}
+              currentCharacterId={characterData.characterId}
+              occupants={occupants}
+              skills={characterData.skills}
+              stats={characterData.stats}
+              equippedItems={characterData.equippedItems}
+              targetCharacters={targetCharacters}
+              selectedSkill={selectedSkill}
+              selectedStat={selectedStat}
+              selectedItem={selectedItem}
+              onTargetChange={setTargetCharacters}
+              onSkillChange={setSelectedSkill}
+              onStatChange={setSelectedStat}
+              onItemChange={setSelectedItem}
+            />
+          )}
         </div>
-      )}
 
-      {/* Conditional Selects (whisper target, skill, stat, item) - hidden in social conflict mode */}
-      {!isSocialConflictMode && (
-        <ConditionalSelects
-          selectedAction={selectedAction}
-          currentCharacterId={characterData.characterId}
-          occupants={occupants}
-          skills={characterData.skills}
-          stats={characterData.stats}
-          equippedItems={characterData.equippedItems}
-          targetCharacters={targetCharacters}
-          selectedSkill={selectedSkill}
-          selectedStat={selectedStat}
-          selectedItem={selectedItem}
-          onTargetChange={setTargetCharacters}
-          onSkillChange={setSelectedSkill}
-          onStatChange={setSelectedStat}
-          onItemChange={setSelectedItem}
-        />
-      )}
-
-      {/* Textarea */}
-      <div className={styles.textareaWrapper}>
-        <textarea
-          value={messageInput}
-          onChange={(e) => handleInputChange(e.target.value)}
-          onKeyPress={handleKeyPress}
-          placeholder={placeholder || `Scrivi il tuo ${getActionDisplayName(selectedAction)}...`}
-          className={`${styles.textarea} ${isExpanded ? styles.expanded : ''}`}
-          disabled={disabled}
-        />
+        {/* Textarea */}
+        <div className={styles.textareaWrapper}>
+          <textarea
+            value={messageInput}
+            onChange={(e) => handleInputChange(e.target.value)}
+            onKeyPress={handleKeyPress}
+            placeholder={placeholder || `Scrivi il tuo ${getActionDisplayName(selectedAction)}...`}
+            className={`${styles.textarea} ${isExpanded ? styles.expanded : ''}`}
+            disabled={disabled}
+          />
+        </div>
       </div>
 
       {/* Action Buttons */}
@@ -479,15 +515,6 @@ export function MessageInput({
           </button>
           <button
             type="button"
-            onClick={() => setSelectedAction('whisper')}
-            className={`${styles.actionButton} ${selectedAction === 'whisper' && !isSocialConflictMode ? styles.active : ''}`}
-            title="Sussurro"
-            disabled={disabled || isSocialConflictMode}
-          >
-            Sussurro
-          </button>
-          <button
-            type="button"
             onClick={toggleSocialConflictMode}
             className={`${styles.actionButton} ${isSocialConflictMode ? styles.active : ''}`}
             title="Scontro Sociale (Raggirare, Persuasione, Intimidazione)"
@@ -495,17 +522,24 @@ export function MessageInput({
           >
             🎭 Scontro Sociale
           </button>
-          {onOpenSkillRoll && (
-            <button
-              type="button"
-              onClick={onOpenSkillRoll}
-              className={styles.actionButton}
-              title="Tira Dado (Skill Roll)"
-              disabled={disabled || isSocialConflictMode}
-            >
-              Tira Dado
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => setSelectedAction('dice_roll')}
+            className={`${styles.actionButton} ${selectedAction === 'dice_roll' ? styles.active : ''}`}
+            title="Tiro Dado (1d100)"
+            disabled={disabled || isSocialConflictMode}
+          >
+            🎲 Tiro Dado
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsSkillStatModalOpen(true)}
+            className={styles.actionButton}
+            title="Usa Abilità o Caratteristica"
+            disabled={disabled || isSocialConflictMode}
+          >
+            📊 Usa Skill/Caratteristica
+          </button>
         </div>
 
         {/* Right Actions */}
@@ -540,6 +574,16 @@ export function MessageInput({
           availablePositions={availablePositions}
           onTagChange={handleTagSelect}
           onClose={() => setIsTagSelectorOpen(false)}
+        />
+      )}
+
+      {/* Skill/Stat Roll Modal */}
+      {isSkillStatModalOpen && (
+        <SkillStatRollModal
+          skills={characterData.skills}
+          stats={characterData.stats}
+          onRoll={handleSkillStatRoll}
+          onClose={() => setIsSkillStatModalOpen(false)}
         />
       )}
     </div>

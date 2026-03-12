@@ -30,18 +30,6 @@ export class EconomyController {
           return;
         }
 
-        // Require approved character
-        if (character.playerStatus !== 'approved') {
-          res.status(403).json(errorResponse(
-            'L\'accesso al negozio richiede un personaggio approvato',
-            'CHARACTER_NOT_APPROVED',
-            undefined,
-            403,
-            getRequestId(req)
-          ));
-          return;
-        }
-
         finances = await CharacterFinances.findOne({ characterId });
       }
 
@@ -151,18 +139,6 @@ export class EconomyController {
           'CHARACTER_NOT_FOUND',
           undefined,
           404,
-          getRequestId(req)
-        ));
-        return;
-      }
-
-      // Check if character is approved to access shop
-      if (character.playerStatus !== 'approved') {
-        res.status(403).json(errorResponse(
-          'L\'accesso al negozio richiede un personaggio approvato',
-          'CHARACTER_NOT_APPROVED',
-          undefined,
-          403,
           getRequestId(req)
         ));
         return;
@@ -390,24 +366,6 @@ export class EconomyController {
           'CHARACTER_NOT_FOUND',
           undefined,
           404,
-          getRequestId(req)
-        ));
-        return;
-      }
-
-      // Defense in depth: Verify character is APPROVED
-      if (character.playerStatus !== 'approved') {
-        logger.warn('SECURITY: DRAFT character attempted shop restock', {
-          characterId,
-          shopId,
-          status: character.playerStatus,
-          userId: req.user?.userId
-        });
-        res.status(403).json(errorResponse(
-          'Solo i personaggi approvati possono rifornire negozi',
-          'CHARACTER_NOT_APPROVED',
-          undefined,
-          403,
           getRequestId(req)
         ));
         return;

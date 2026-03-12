@@ -77,6 +77,15 @@
     border-left: 4px solid #0288d1;
     color: #e1f5fe;
   }
+
+  &.clickable {
+    cursor: pointer;
+
+    &:hover {
+      opacity: 0.9;
+      transform: scale(1.02);
+    }
+  }
 }
 
 .icon {
