@@ -161,6 +161,7 @@
     object-fit: contain;
     object-position: top center;
     z-index: -2;
+    user-select: none;
   }
 
   &__title-container {
@@ -185,6 +186,7 @@
     object-position: center;
     max-height: 40dvh;
     margin-top: var(--spacing-2xl);
+    user-select: none;
 }
 
   &__page-info {
