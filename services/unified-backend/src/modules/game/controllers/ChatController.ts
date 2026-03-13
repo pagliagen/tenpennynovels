@@ -2,7 +2,6 @@ import { Request, Response } from 'express';
 import { Chat, GamingSession, Location, Character, SkillConfrontation, CombatEncounter } from '@database/models';
 import { logger } from '../utils/logger';
 import { redis } from '@config/runtime/redis';
-import { EmbeddingEventPublisher } from '../utils/events/embedding-publisher';
 import { successResponse, errorResponse, createResponse, getRequestId } from '../utils/apiResponse';
 import { calculateSuccessDegree, getSuccessDegreeLabel, compareSuccessDegrees, SuccessDegree } from '../utils/successDegrees';
 import { calculateSocialConflict, isValidSocialSkillPair, getDefensiveSkill } from '../utils/socialConflicts';
@@ -298,23 +297,7 @@ export class ChatController {
         }
       }
 
-      // Publish Redis event for async embedding generation
-      try {
-        const redisPublisher = redis.getPublisher();
-        const embeddingPublisher = new EmbeddingEventPublisher(redisPublisher);
-        await embeddingPublisher.publishChatEvent(
-          savedAction._id.toString(),
-          character.characterId,
-          character.characterName,
-          locationId,
-          content,
-          actionType
-        );
-        logger.info(`Published embedding event for location action: ${character.characterName} @ ${locationId}`);
-      } catch (error) {
-        // Don't fail the request if event publishing fails
-        logger.error('Failed to publish location action embedding event:', error);
-      }
+      // Note: Embedding event automatically published by Chat.post('save') middleware
 
       // Emit WebSocket notification with full message (frontend expects complete ChatMessage)
       const io = getSocketIO();
@@ -1443,22 +1426,7 @@ export class ChatController {
 
       const action = await Chat.create(actionData);
 
-      // Publish embedding event for bot actions
-      try {
-        const redisPublisher = redis.getPublisher();
-        const embeddingPublisher = new EmbeddingEventPublisher(redisPublisher);
-        await embeddingPublisher.publishChatEvent(
-          action._id.toString(),
-          actionData.characterId,
-          actionData.characterName,
-          locationId,
-          content,
-          actionType
-        );
-      } catch (embeddingError) {
-        logger.warn('Failed to publish embedding event for bot action:', embeddingError);
-        // Non-critical, continue
-      }
+      // Note: Embedding event automatically published by Chat.post('save') middleware
 
       // Emit WebSocket notification (same format as player actions)
       const io = req.app.get('io');
