@@ -292,27 +292,22 @@ export class ChatController {
       if (io) {
         const roomName = `location_${locationId}`;
 
-        // Map Chat (DB) to ChatMessage (frontend format)
+        // Return DB fields directly (no mapping)
         const chatMessage = {
           _id: savedAction._id.toString(),
-          messageType: savedAction.actionType,
+          actionType: savedAction.actionType,           // DB field (was messageType)
           characterId: savedAction.characterId,
           characterName: savedAction.characterName,
-          characterTag: savedAction.tags || undefined,
+          tags: savedAction.tags || undefined,          // DB field (was characterTag)
           locationId: savedAction.locationId.toString(),
-          text: savedAction.content,
-          diceRoll: savedAction.diceResult || undefined,
-          skillCheck: savedAction.socialConflict || undefined,
+          content: savedAction.content,                 // DB field (was text)
+          diceResult: savedAction.diceResult || undefined,  // DB field (was diceRoll)
+          socialConflict: savedAction.socialConflict || undefined,  // DB field (was skillCheck)
           statCheck: savedAction.statCheck || undefined,
-          itemUse: savedAction.itemUse || undefined,
-          whisperVisibility: savedAction.targetCharacters ? {
-            senderId: savedAction.characterId,
-            targetId: savedAction.targetCharacters[0],
-            canSee: [savedAction.characterId, savedAction.targetCharacters[0]]
-          } : undefined,
-          isEdited: false,
-          createdAt: savedAction.timestamp.toISOString(),
-          updatedAt: savedAction.timestamp.toISOString()
+          itemEffect: savedAction.itemEffect || undefined,  // DB field (was itemUse)
+          targetCharacters: savedAction.targetCharacters || undefined,  // DB field (was whisperVisibility)
+          editHistory: savedAction.editHistory || [],
+          timestamp: savedAction.timestamp.toISOString()  // DB field (was createdAt/updatedAt)
         };
 
         const notification = {
@@ -477,16 +472,21 @@ export class ChatController {
         logger.error('Failed to notify AI gateway:', botError);
       }
 
-      // Prepare response action data
+      // Prepare response action data (DB fields - no mapping)
       const responseAction: any = {
-        id: savedAction._id,
+        _id: savedAction._id.toString(),
         actionType: savedAction.actionType,
+        characterId: savedAction.characterId,
         characterName: savedAction.characterName,
+        tags: savedAction.tags || undefined,  // ✅ Added missing field
+        locationId: savedAction.locationId.toString(),
         content: savedAction.content,
         timestamp: savedAction.timestamp,
         visibility: savedAction.visibility,
         diceResult: savedAction.diceResult,
-        itemEffect: savedAction.itemEffect
+        itemEffect: savedAction.itemEffect,
+        targetCharacters: savedAction.targetCharacters || undefined,
+        editHistory: savedAction.editHistory || []
       };
       
       // Filter socialConflict: for Raggirare, attacker should never see it
@@ -558,11 +558,11 @@ export class ChatController {
         timestamp: { $gte: timeThreshold },
         $or: [
           { visibility: 'public' },
-          { 
-            visibility: 'whisper', 
+          {
+            visibility: 'whisper',
             $or: [
               { characterId: character.characterId },
-              { targetCharacters: character.characterId }
+              { targetCharacters: { $in: [character.characterId] } }
             ]
           },
           { 
@@ -604,7 +604,7 @@ export class ChatController {
 
         // CRITICAL SECURITY: Filter messages with visibleToDefenderOnly flag
         // (Raggirare failure notifications should only be visible to defender and master)
-        if (action.visibleToDefenderOnly) {
+        if (action.socialConflict?.visibleToDefenderOnly) {
           if (isMaster) return true;
           // Check if current character is the defender (in targetCharacters)
           const isDefender = action.targetCharacters?.includes(character.characterId);
@@ -628,69 +628,38 @@ export class ChatController {
 
         return true;
       }).map((action: any) => {
-        // Map Chat (DB) → ChatMessage (frontend format)
+        // Return DB fields directly (no mapping)
         const chatMessage: any = {
           _id: action._id.toString(),
-          messageType: action.actionType,  // ✅ Frontend expects messageType
+          actionType: action.actionType,           // DB field (was messageType)
           characterId: action.characterId,
           characterName: action.characterName,
-          characterTag: action.tags || undefined,  // ✅ Frontend expects characterTag (singular)
+          tags: action.tags || undefined,          // DB field (was characterTag)
           locationId: action.locationId.toString(),
-          text: action.content,  // ✅ Frontend expects text
-          diceRoll: action.diceResult || undefined,
-
-          // FIX: Map socialConflict → skillCheck for frontend compatibility
-          skillCheck: action.socialConflict ? {
-            attackSkill: action.socialConflict.attackSkill,
-            defenseSkill: action.socialConflict.defenseSkill,
-            attackRoll: action.socialConflict.attackRoll,
-            defenseRoll: action.socialConflict.defenseRoll,
-            attackDegree: action.socialConflict.attackerSuccessDegree,
-            defenseDegree: action.socialConflict.defenderSuccessDegree,
-            isSuccess: action.socialConflict.result === 'victory',
-            margin: action.socialConflict.margin || 0
-          } : undefined,
-
+          content: action.content,                 // DB field (was text)
+          diceResult: action.diceResult || undefined,  // DB field (was diceRoll)
+          socialConflict: action.socialConflict || undefined,  // DB field (was skillCheck)
           statCheck: action.statCheck || undefined,
-          itemUse: action.itemEffect || undefined,
-          whisperVisibility: action.targetCharacters && action.targetCharacters.length > 0 ? {
-            senderId: action.characterId,
-            targetId: action.targetCharacters[0],
-            canSee: [action.characterId, ...action.targetCharacters]
-          } : undefined,
-
-          // Add hidden content and visibleToDefenderOnly flags
+          itemEffect: action.itemEffect || undefined,  // DB field (was itemUse)
+          targetCharacters: action.targetCharacters || undefined,  // DB field (was whisperVisibility)
           hiddenContent: action.hiddenContent || undefined,
-          visibleToDefenderOnly: action.visibleToDefenderOnly || false,
-
-          isEdited: false,
-          createdAt: action.timestamp.toISOString(),
-          updatedAt: action.timestamp.toISOString()
+          editHistory: action.editHistory || [],
+          timestamp: action.timestamp.toISOString()  // DB field (was createdAt/updatedAt)
         };
 
-        // Filter socialConflict data based on visibility rules
-        if (chatMessage.skillCheck) {
-          const socialConflict = chatMessage.skillCheck;
+        // CRITICAL SECURITY: Filter socialConflict data for Raggirare based on visibility rules
+        if (chatMessage.socialConflict?.visibleToDefenderOnly) {
+          const isAttacker = action.characterId === character.characterId;
+          const isDefender = action.targetCharacters?.includes(character.characterId);
 
-          // If socialConflict is visible only to defender
-          if (socialConflict.visibleToDefenderOnly) {
-            const isAttacker = action.characterId === character.characterId;
-            const isDefender = action.targetCharacters?.includes(character.characterId);
-
-            // Attacker should NEVER see socialConflict data for Raggirare
-            if (isAttacker) {
-              delete chatMessage.skillCheck;
-            }
-            // Defender can see it only if they detected something (result !== 'victory')
-            else if (!isDefender || socialConflict.result === 'victory') {
-              delete chatMessage.skillCheck;
-            }
-            // Other users should never see it
-            else if (!isDefender) {
-              delete chatMessage.skillCheck;
-            }
+          // Attacker should NEVER see socialConflict data for Raggirare
+          if (isAttacker) {
+            delete chatMessage.socialConflict;
           }
-          // For non-hidden social conflicts, everyone can see them
+          // Defender can see it only if they detected something (result !== 'victory')
+          else if (!isDefender || chatMessage.socialConflict.result === 'victory') {
+            delete chatMessage.socialConflict;
+          }
         }
 
         return chatMessage;
@@ -905,9 +874,19 @@ export class ChatController {
       res.json(successResponse(
         {
           action: {
-            id: action._id,
+            _id: action._id.toString(),
+            actionType: action.actionType,
+            characterId: action.characterId,
+            characterName: action.characterName,
+            tags: action.tags || undefined,
+            locationId: action.locationId.toString(),
             content: action.content,
-            editHistory: action.editHistory
+            diceResult: action.diceResult || undefined,
+            socialConflict: action.socialConflict || undefined,
+            itemEffect: action.itemEffect || undefined,
+            targetCharacters: action.targetCharacters || undefined,
+            editHistory: action.editHistory,
+            timestamp: action.timestamp.toISOString()
           }
         },
         undefined,
