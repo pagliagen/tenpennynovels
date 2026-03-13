@@ -1,0 +1,73 @@
+/**
+ * Chat Components - Shared Variables
+ *
+ * Victorian-themed color palette and common styles.
+ * @module styles/components/chat/_variables
+ * @since 2.0.0
+ */
+
+/* Color Palette */
+$gold: #b8860b;
+$brown: #8b4513;
+$parchment: #e8d4a0;
+$parchment-dark: #c9c6ad;
+
+/* Opacity Variations */
+$gold-10: rgba(184, 134, 11, 0.1);
+$gold-20: rgba(184, 134, 11, 0.2);
+$gold-30: rgba(184, 134, 11, 0.3);
+$gold-50: rgba(184, 134, 11, 0.5);
+$gold-70: rgba(184, 134, 11, 0.7);
+$gold-80: rgba(184, 134, 11, 0.8);
+$brown-10: rgba(139, 69, 19, 0.1);
+$brown-20: rgba(139, 69, 19, 0.2);
+$brown-30: rgba(139, 69, 19, 0.3);
+$brown-50: rgba(139, 69, 19, 0.5);
+$brown-80: rgba(139, 69, 19, 0.8);
+$parchment-50: rgba(232, 212, 160, 0.5);
+$parchment-60: rgba(232, 212, 160, 0.6);
+$parchment-70: rgba(232, 212, 160, 0.7);
+
+/* Typography */
+$font-serif: 'Playfair Display', serif;
+$font-sans: system-ui, -apple-system, sans-serif;
+
+/* Spacing */
+$spacing-xs: 4px;
+$spacing-sm: 8px;
+$spacing-md: 12px;
+$spacing-lg: 16px;
+$spacing-xl: 24px;
+$spacing-xxl: 32px;
+
+/* Border Radius */
+$radius-sm: 4px;
+$radius-md: 8px;
+$radius-lg: 12px;
+
+/* Transitions */
+$transition-fast: 0.15s ease;
+$transition-normal: 0.2s ease;
+$transition-slow: 0.3s ease;
+
+/* Victorian Scrollbar Mixin */
+@mixin victorian-scrollbar {
+  &::-webkit-scrollbar {
+    width: 12px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: $brown-10;
+    border-radius: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: $gold-50;
+    border-radius: 6px;
+    border: 2px solid $brown-10;
+
+    &:hover {
+      background: $gold-70;
+    }
+  }
+}

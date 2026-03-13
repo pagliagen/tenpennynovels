@@ -11,7 +11,7 @@
 'use client';
 
 import { useAuthStore } from '@/store/authStore';
-import styles from '@/styles/components/chat/chat.module.scss';
+import styles from '@/styles/components/chat/PermissionBanner.module.scss';
 
 /**
  * Permission Banner Component

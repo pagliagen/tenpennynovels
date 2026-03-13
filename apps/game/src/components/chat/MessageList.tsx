@@ -11,7 +11,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import styles from '@/styles/components/chat/chat.module.scss';
+import styles from '@/styles/components/chat/MessageList.module.scss';
 import { MessageItem } from './MessageItem';
 import type { ChatMessage } from '@/types/chat';
 

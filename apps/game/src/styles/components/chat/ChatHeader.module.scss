@@ -1,0 +1,63 @@
+@import './variables';
+
+/**
+ * Chat Header Styles
+ * Header bar with location name, back button, and occupant count.
+ * @module styles/components/chat/ChatHeader
+ * @since 2.0.0
+ */
+
+.chatHeader {
+  flex-shrink: 0;
+  padding: $spacing-xl $spacing-xxl;
+  background: $brown-10;
+  border-bottom: 2px solid $gold-30;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.backButton {
+  background: none;
+  border: 1px solid $gold-30;
+  border-radius: $radius-sm;
+  color: $parchment;
+  font-family: $font-serif;
+  font-size: 14px;
+  padding: $spacing-sm $spacing-lg;
+  cursor: pointer;
+  transition: all $transition-normal;
+
+  &:hover {
+    border-color: $gold-70;
+    background: $gold-10;
+    transform: translateX(-2px);
+  }
+}
+
+.locationName {
+  color: $parchment;
+  font-family: 'Thrifted Attire', serif;
+  font-size: 24px;
+  font-weight: 600;
+  text-align: center;
+  flex: 1;
+}
+
+.occupantCount {
+  color: $parchment-60;
+  font-family: $font-serif;
+  font-size: 14px;
+  font-style: italic;
+}
+
+/* RESPONSIVE DESIGN */
+@media (max-width: 768px) {
+  .chatHeader {
+    padding: $spacing-lg $spacing-xl;
+  }
+
+  .locationName {
+    font-size: 18px;
+  }
+}

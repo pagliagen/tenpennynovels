@@ -1,0 +1,50 @@
+@import './variables';
+
+/**
+ * Message Menu Styles
+ * Context menu for message actions (edit, delete).
+ * @module styles/components/chat/MessageMenu
+ * @since 2.0.0
+ */
+
+.messageMenu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: $spacing-xs;
+  background: rgba(30, 30, 30, 0.95);
+  border: 1px solid $gold-30;
+  border-radius: $radius-sm;
+  padding: $spacing-xs;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 120px;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.messageMenuItem {
+  background: none;
+  border: none;
+  color: $parchment;
+  font-family: $font-serif;
+  font-size: 14px;
+  text-align: left;
+  padding: $spacing-sm $spacing-md;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: background $transition-normal;
+
+  &:hover {
+    background: $gold-20;
+  }
+
+  &.dangerAction {
+    color: #ff6b6b;
+
+    &:hover {
+      background: rgba(255, 107, 107, 0.2);
+    }
+  }
+}

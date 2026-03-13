@@ -26,7 +26,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useLocationStore } from '@/store/locationStore';
 import { useChatOccupants, useChatCurrentTag, useChatStore } from '@/store/chatStore';
 import { locationChatsApi } from '@/lib/api/locationChats';
-import styles from '@/styles/components/chat/chat.module.scss';
+import styles from '@/styles/components/chat/ChatContainer.module.scss';
 
 /**
  * Chat Container Props

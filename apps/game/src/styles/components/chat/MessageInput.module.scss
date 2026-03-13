@@ -1,0 +1,227 @@
+@import './variables';
+
+/**
+ * Message Input Styles
+ * Text input area and submit button for chat messages.
+ * @module styles/components/chat/MessageInput
+ * @since 2.0.0
+ */
+
+.messageInput {
+  flex-shrink: 0;
+  padding: $spacing-xl $spacing-xxl;
+  background: $brown-10;
+  border-top: 2px solid $gold-30;
+}
+
+.messageInputWrapper {
+  display: flex;
+  gap: $spacing-lg;
+  flex-grow: 1;
+  flex-shrink: 1;
+
+  .actionTypeWrapper {
+    flex-grow: 0;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .actionTypeRow {
+    flex-grow: 0;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    width: 200px;
+  }
+
+  .textareaWrapper {
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-height: 110px;
+  }
+}
+
+.inputForm {
+  display: flex;
+  gap: $spacing-lg;
+  align-items: flex-end;
+}
+
+.textareaWrapper {
+  margin-bottom: $spacing-md;
+}
+
+.textarea {
+  width: 100%;
+  min-height: 80px;
+  max-height: 300px;
+  padding: $spacing-md $spacing-lg;
+  background: rgba(245, 245, 245, 0.05);
+  border: 1px solid $gold-30;
+  border-radius: 6px;
+  color: $parchment;
+  font-family: $font-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  resize: vertical;
+  transition: all $transition-normal;
+
+  &::placeholder {
+    color: rgba(232, 212, 160, 0.4);
+    font-style: italic;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: rgba(184, 134, 11, 0.6);
+    background: rgba(245, 245, 245, 0.08);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &.expanded {
+    min-height: 200px;
+  }
+}
+
+.submitButton {
+  padding: $spacing-md $spacing-xxl;
+  background: linear-gradient(135deg, $gold-70 0%, $gold-50 100%);
+  border: 1px solid $gold-80;
+  border-radius: 6px;
+  color: #fff;
+  font-family: $font-serif;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all $transition-normal;
+  white-space: nowrap;
+
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, rgba(184, 134, 11, 0.9) 0%, $gold-70 100%);
+    border-color: $gold;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px $gold-30;
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+.inputActions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: $spacing-lg;
+}
+
+.leftActions,
+.rightActions {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.actionButton {
+  padding: $spacing-sm $spacing-lg;
+  background: rgba(245, 245, 245, 0.05);
+  border: 1px solid $gold-30;
+  border-radius: 6px;
+  color: $parchment;
+  font-family: $font-serif;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all $transition-normal;
+
+  &:hover:not(:disabled) {
+    background: rgba(245, 245, 245, 0.1);
+    border-color: rgba(184, 134, 11, 0.6);
+  }
+
+  &.active {
+    background: linear-gradient(135deg, $gold-30 0%, $gold-20 100%);
+    border-color: $gold-80;
+    color: #f0e68c;
+    font-weight: 600;
+  }
+
+  &.mandatory {
+    border-color: rgba(255, 107, 53, 0.6);
+    color: #ff6b35;
+    font-weight: 600;
+  }
+
+  &.flashing {
+    animation: flashButton 0.5s ease-in-out 3;
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+@keyframes flashButton {
+  0%,
+  100% {
+    background: rgba(245, 245, 245, 0.05);
+  }
+  50% {
+    background: rgba(255, 107, 53, 0.3);
+    border-color: rgba(255, 107, 53, 1);
+  }
+}
+
+.characterCounter {
+  color: $parchment-60;
+  font-family: $font-serif;
+  font-size: 14px;
+}
+
+.expandCollapseButton {
+  padding: $spacing-sm $spacing-md;
+  background: rgba(245, 245, 245, 0.05);
+  border: 1px solid $gold-30;
+  border-radius: 6px;
+  color: $parchment;
+  font-family: $font-serif;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all $transition-normal;
+
+  &:hover:not(:disabled) {
+    background: rgba(245, 245, 245, 0.1);
+    border-color: rgba(184, 134, 11, 0.6);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+/* RESPONSIVE DESIGN */
+@media (max-width: 768px) {
+  .messageInput {
+    padding: $spacing-lg $spacing-xl;
+  }
+
+  .inputForm {
+    flex-direction: column;
+    gap: $spacing-md;
+  }
+
+  .submitButton {
+    width: 100%;
+  }
+}

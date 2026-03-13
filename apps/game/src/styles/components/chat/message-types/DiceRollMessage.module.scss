@@ -1,0 +1,32 @@
+/**
+ * Dice Roll Message Styles
+ *
+ * Dice roll display with percentile system (1d100).
+ */
+
+@import '../MessageCard.module.scss';
+
+/* Dice icon */
+.diceIcon {
+  font-size: 16px;
+  text-align: center;
+}
+
+/* Dice roll result display */
+.diceRollResult {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 12px 16px;
+  background: rgba(138, 43, 226, 0.1);
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 15px;
+}
+
+.diceTotal {
+  color: #ee82ee;
+  font-weight: 700;
+  font-size: 18px;
+}

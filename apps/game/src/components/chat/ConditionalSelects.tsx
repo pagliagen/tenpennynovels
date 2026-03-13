@@ -11,7 +11,7 @@
 'use client';
 
 import type { ChatMessageType } from '@/types/chat';
-import styles from '@/styles/components/chat/chat.module.scss';
+import styles from '@/styles/components/chat/ConditionalSelects.module.scss';
 
 /**
  * Occupant data for whisper targets

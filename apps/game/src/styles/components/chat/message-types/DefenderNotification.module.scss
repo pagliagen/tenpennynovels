@@ -1,0 +1,83 @@
+/**
+ * Defender Notification Styles
+ *
+ * Special notification when defender detects deception.
+ */
+
+@import '../MessageCard.module.scss';
+
+/* Defender notification container */
+.defenderNotification {
+  position: relative;
+  padding: 16px;
+  background: rgba(255, 107, 53, 0.15);
+  border: 2px solid rgba(255, 107, 53, 0.4);
+  border-radius: 8px;
+}
+
+.notificationHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  color: #ff6b35;
+  font-family: 'Playfair Display', serif;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.warningIcon {
+  font-size: 20px;
+}
+
+.notificationContent {
+  color: rgba(232, 212, 160, 0.9);
+  font-family: 'Playfair Display', serif;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.notificationText {
+  margin-bottom: 8px;
+
+  strong {
+    color: #ff6b35;
+  }
+}
+
+.notificationDetails {
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-style: italic;
+  color: rgba(232, 212, 160, 0.7);
+
+  strong {
+    color: #ff8c00;
+  }
+}
+
+.suspiciousAction {
+  margin: 12px 0;
+  padding: 12px;
+  background: rgba(139, 69, 19, 0.2);
+  border-left: 3px solid rgba(139, 69, 19, 0.5);
+  border-radius: 4px;
+}
+
+.label {
+  display: block;
+  color: rgba(139, 69, 19, 0.9);
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.notificationFooter {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 107, 53, 0.2);
+  color: rgba(232, 212, 160, 0.6);
+  font-size: 13px;
+  font-style: italic;
+  text-align: center;
+}

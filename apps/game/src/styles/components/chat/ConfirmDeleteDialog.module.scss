@@ -1,0 +1,125 @@
+@import './variables';
+
+/**
+ * Confirm Delete Dialog Styles
+ * Modal dialog for confirming message deletion.
+ * @module styles/components/chat/ConfirmDeleteDialog
+ * @since 2.0.0
+ */
+
+.confirmDialogBackdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.confirmDialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(30, 30, 30, 0.98);
+  border: 2px solid $gold-50;
+  border-radius: $radius-md;
+  padding: $spacing-xxl;
+  min-width: 400px;
+  max-width: 500px;
+  z-index: 1001;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -45%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
+.confirmDialogTitle {
+  color: $parchment;
+  font-family: $font-serif;
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0 0 $spacing-lg 0;
+  text-align: center;
+}
+
+.confirmDialogMessage {
+  color: rgba(232, 212, 160, 0.9);
+  font-family: $font-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  margin: 0 0 $spacing-xl 0;
+  text-align: center;
+}
+
+.confirmDialogWarning {
+  display: block;
+  color: #ff6b6b;
+  font-size: 14px;
+  font-style: italic;
+  margin-top: $spacing-sm;
+}
+
+.confirmDialogActions {
+  display: flex;
+  gap: $spacing-md;
+  justify-content: center;
+}
+
+.confirmDialogButtonCancel,
+.confirmDialogButtonConfirm {
+  background: none;
+  border: 2px solid $gold-50;
+  border-radius: $radius-sm;
+  color: $parchment;
+  font-family: $font-serif;
+  font-size: 16px;
+  font-weight: 600;
+  padding: $spacing-md $spacing-xxl;
+  cursor: pointer;
+  transition: all $transition-normal;
+
+  &:hover {
+    border-color: $gold-80;
+    background: $gold-10;
+  }
+
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px $gold-30;
+  }
+}
+
+.confirmDialogButtonConfirm {
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #ff6b6b;
+
+  &:hover {
+    border-color: rgba(239, 68, 68, 0.8);
+    background: rgba(239, 68, 68, 0.1);
+  }
+
+  &:focus {
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.3);
+  }
+}

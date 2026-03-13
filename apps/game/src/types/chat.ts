@@ -293,9 +293,9 @@ export const PRESET_TAGS: TagOption[] = [
 ];
 
 /**
- * Message Edit Window (3 minutes)
+ * Message Edit Window (30 seconds for testing - set to 5 minutes for production)
  */
-export const MESSAGE_EDIT_WINDOW_MS = 3 * 60 * 1000;
+export const MESSAGE_EDIT_WINDOW_MS = 30 * 1000; // 30 seconds (TEST) - Production: 5 * 60 * 1000
 
 /**
  * Can Edit Message Helper

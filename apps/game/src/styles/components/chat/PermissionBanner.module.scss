@@ -1,0 +1,31 @@
+@import './variables';
+
+/**
+ * Permission Banner Styles
+ * Warning banner shown when user lacks chat permissions.
+ * @module styles/components/chat/PermissionBanner
+ * @since 2.0.0
+ */
+
+.permissionBanner {
+  flex-shrink: 0;
+  padding: $spacing-xl $spacing-xxl;
+  background: rgba(255, 107, 53, 0.15);
+  border-top: 2px solid rgba(255, 107, 53, 0.4);
+  color: #ff6b35;
+  font-family: $font-serif;
+  font-size: 16px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-md;
+}
+
+.permissionIcon {
+  font-size: 24px;
+}
+
+.permissionText {
+  line-height: 1.5;
+}

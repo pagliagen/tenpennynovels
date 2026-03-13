@@ -1,0 +1,44 @@
+@import './variables';
+
+/**
+ * Message List Styles
+ * Scroll container for chat messages.
+ * @module styles/components/chat/MessageList
+ * @since 2.0.0
+ */
+
+.messageList {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: $spacing-xl $spacing-xxl;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+
+  /* Victorian scrollbar */
+  @include victorian-scrollbar;
+}
+
+/* Empty state */
+.messageListEmpty {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-lg;
+  color: $parchment-50;
+  font-family: $font-serif;
+  font-size: 18px;
+  font-style: italic;
+  text-align: center;
+}
+
+/* RESPONSIVE DESIGN */
+@media (max-width: 768px) {
+  .messageList {
+    padding: $spacing-lg $spacing-xl;
+  }
+}

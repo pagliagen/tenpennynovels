@@ -11,7 +11,7 @@
 'use client';
 
 import type { ChatMessageType } from '@/types/chat';
-import styles from '@/styles/components/chat/chat.module.scss';
+import styles from '@/styles/components/chat/ActionTypeSelector.module.scss';
 
 /**
  * Action Type Selector Props

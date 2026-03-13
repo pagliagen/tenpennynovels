@@ -18,13 +18,13 @@ router.get('/:locationId',
   ChatController.getMessages
 );
 
-router.patch('/:messageId',
+router.patch('/:actionId',
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:chat:edit'),
   ChatController.updateMessage
 );
 
-router.delete('/:messageId',
+router.delete('/:actionId',
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:chat:delete'),
   ChatController.deleteMessage

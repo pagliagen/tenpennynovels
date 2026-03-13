@@ -2,7 +2,9 @@
  * Item Use Message Component
  *
  * Shows item usage action with item details and effects.
- * TODO: Customize with item icon, effects visualization.
+ * Displays item name, description, and target character if applicable.
+ * Contains complete message structure with avatar, menu, content, and footer.
+ * Uses useMessageInteractions hook for shared logic.
  *
  * @module components/chat/message-types/ItemUseMessage
  * @since 2.0.0
@@ -10,44 +12,106 @@
 
 'use client';
 
-import styles from '@/styles/components/chat/chat.module.scss';
 import type { ChatMessage } from '@/types/chat';
+import { useMessageInteractions } from '@/hooks/useMessageInteractions';
+import { MessageMenu } from '../MessageMenu';
+import { MessageEditableContent } from '../MessageEditableContent';
+import { MessageFooter } from '../MessageFooter';
+import { ConfirmDeleteDialog } from '../ConfirmDeleteDialog';
+import styles from '@/styles/components/chat/message-types/ItemUseMessage.module.scss';
 
 interface ItemUseMessageProps {
   message: ChatMessage;
-  formattedTime: string;
+  currentCharacterId: string;
 }
 
-export function ItemUseMessage({ message, formattedTime }: ItemUseMessageProps): JSX.Element {
+export function ItemUseMessage({ message, currentCharacterId }: ItemUseMessageProps): JSX.Element {
+  const interactions = useMessageInteractions(message, currentCharacterId);
   const itemUse = message.itemEffect;
 
   return (
     <>
-      <div className={styles.messageHeader}>
-        <span className={styles.itemIcon}>📦</span>
+      <ConfirmDeleteDialog
+        isOpen={interactions.showDeleteDialog}
+        onConfirm={interactions.handleConfirmDelete}
+        onCancel={interactions.handleCancelDelete}
+      />
+
+      {/* Left column: Avatar + Item Icon + Name + Time */}
+      <div className={styles.messageCardLeft}>
+        <button
+          className={styles.messageAvatar}
+          onClick={interactions.handleAvatarClick}
+          type="button"
+          aria-label={`Apri scheda di ${message.characterName}`}
+        >
+          {message.characterAvatar ? (
+            <img src={message.characterAvatar} alt="" />
+          ) : (
+            <span className={styles.avatarPlaceholder}>
+              {message.characterName?.[0]?.toUpperCase() || '?'}
+            </span>
+          )}
+        </button>
         <span className={styles.characterName}>{message.characterName}</span>
-
-        {message.position && (
-          <span className={styles.characterTag}>@ {message.position}</span>
-        )}
-
-        <time className={styles.messageTimestamp} dateTime={message.timestamp}>
-          {formattedTime}
-        </time>
+        <span className={styles.itemIcon}>📦</span>
+        <time className={styles.messageTimestamp}>{interactions.formattedTime}</time>
       </div>
 
-      <div className={styles.messageContent}>{message.content}</div>
+      {/* Right column: Content + Menu + Tag */}
+      <div className={styles.messageCardRight}>
+        {/* Menu button */}
+        {interactions.canEdit && (
+          <div className={styles.messageHeaderActions}>
+            <button
+              className={styles.messageMenuButton}
+              onClick={interactions.handleMenuToggle}
+              data-menu-button
+              type="button"
+              aria-label="Opzioni messaggio"
+              aria-expanded={interactions.menuOpen}
+            >
+              ⋮
+            </button>
+            {interactions.menuOpen && (
+              <MessageMenu
+                ref={interactions.menuRef}
+                isEditing={interactions.isEditing}
+                onEdit={interactions.handleEdit}
+                onSaveEdit={interactions.handleSaveEdit}
+                onCancelEdit={interactions.handleCancelEdit}
+                onDelete={interactions.handleDelete}
+              />
+            )}
+          </div>
+        )}
 
-      {/* TODO: Render item use details */}
-      {itemUse && (
-        <div className={styles.itemUseDetails}>
-          <strong>{itemUse.itemName}</strong>
-          {itemUse.itemDescription && <p>{itemUse.itemDescription}</p>}
-          {itemUse.targetCharacterName && (
-            <span>→ {itemUse.targetCharacterName}</span>
+        {/* Content */}
+        <div className={styles.messageCardContent}>
+          {interactions.isEditing ? (
+            <MessageEditableContent
+              content={interactions.editedContent}
+              onChange={interactions.setEditedContent}
+            />
+          ) : (
+            <>
+              <div className={styles.messageContent}>{message.content}</div>
+              {itemUse && (
+                <div className={styles.itemUseDetails}>
+                  <strong>{itemUse.itemName}</strong>
+                  {itemUse.itemDescription && <p>{itemUse.itemDescription}</p>}
+                  {itemUse.targetCharacterName && (
+                    <span>→ {itemUse.targetCharacterName}</span>
+                  )}
+                </div>
+              )}
+            </>
           )}
         </div>
-      )}
+
+        {/* Footer */}
+        <MessageFooter message={message} onTagClick={interactions.handleTagClick} />
+      </div>
     </>
   );
 }

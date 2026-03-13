@@ -298,7 +298,11 @@ ChatSchema.statics.createAction = async function(actionData: Partial<IChat>): Pr
   return action;
 };
 
+const EMBEDDING_ACTION_TYPES = new Set(['standard', 'master', 'moderation']);
+
 ChatSchema.post('save', async function(doc) {
+  if (!EMBEDDING_ACTION_TYPES.has(doc.actionType)) return;
+
   try {
     const { publishChatEvent } = await import('@shared/services/EmbeddingEventPublisher');
     const action = doc.isNew ? 'created' : 'updated';

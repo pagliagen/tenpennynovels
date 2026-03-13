@@ -845,12 +845,13 @@ export class ChatController {
         return;
       }
 
-      // Check time limit: 5 minutes for non-masters
+      // Check time limit: 30 seconds for non-masters (TEST - production: 5 minutes)
       if (!isMaster) {
-        const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-        if (action.timestamp < fiveMinutesAgo) {
+        const timeWindowMs = 30 * 1000; // 30 seconds (TEST) - Production: 5 * 60 * 1000
+        const timeWindowAgo = new Date(Date.now() - timeWindowMs);
+        if (action.timestamp < timeWindowAgo) {
           res.status(403).json(errorResponse(
-            'You can only edit actions within 5 minutes of posting',
+            'You can only edit actions within 30 seconds of posting',
             'EDIT_TIME_EXPIRED',
             undefined,
             403,
@@ -984,20 +985,35 @@ export class ChatController {
         return;
       }
 
-      // Check permissions: only master can delete
-      const isMaster = character.gameplayRoles?.includes('master') || 
-                       character.gameplayRoles?.includes('moderatore') || 
-                       character.isGestore;
-      
-      if (!isMaster) {
+      // Check permissions: only the creator can delete, or master
+      const isOwner = action.characterId === character.characterId;
+      const isMaster = character.gameplayRoles?.includes('master') || character.isGestore;
+
+      if (!isOwner && !isMaster) {
         res.status(403).json(errorResponse(
-          'Only masters can delete actions',
+          'You can only delete your own actions',
           'INSUFFICIENT_PERMISSIONS',
           undefined,
           403,
           getRequestId(req)
         ));
         return;
+      }
+
+      // Check time limit: 30 seconds for non-masters (TEST - production: 5 minutes)
+      if (!isMaster) {
+        const timeWindowMs = 30 * 1000; // 30 seconds (TEST) - Production: 5 * 60 * 1000
+        const timeWindowAgo = new Date(Date.now() - timeWindowMs);
+        if (action.timestamp < timeWindowAgo) {
+          res.status(403).json(errorResponse(
+            'You can only delete actions within 30 seconds of posting',
+            'DELETE_TIME_EXPIRED',
+            undefined,
+            403,
+            getRequestId(req)
+          ));
+          return;
+        }
       }
 
       const locationId = action.locationId;

@@ -12,7 +12,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import styles from '@/styles/components/chat/chat.module.scss';
+import styles from '@/styles/components/chat/TagSelector.module.scss';
 
 /**
  * Tag Selector Props

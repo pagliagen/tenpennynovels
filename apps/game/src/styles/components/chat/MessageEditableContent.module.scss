@@ -1,0 +1,39 @@
+@import './variables';
+
+/**
+ * Message Editable Content Styles
+ * Inline editing mode for message content.
+ * @module styles/components/chat/MessageEditableContent
+ * @since 2.0.0
+ */
+
+.messageContentEditing {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.messageEditTextarea {
+  background: rgba(30, 30, 30, 0.8);
+  border: 1px solid $gold-30;
+  border-radius: $radius-sm;
+  color: $parchment;
+  font-family: $font-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  padding: $spacing-md $spacing-lg;
+  resize: vertical;
+  min-height: 80px;
+
+  &:focus {
+    outline: none;
+    border-color: rgba(184, 134, 11, 0.6);
+  }
+}
+
+.characterCounter {
+  color: $parchment-50;
+  font-family: $font-serif;
+  font-size: 12px;
+  text-align: right;
+}

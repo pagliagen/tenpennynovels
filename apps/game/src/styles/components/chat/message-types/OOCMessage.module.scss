@@ -1,0 +1,16 @@
+/**
+ * OOC Message Styles
+ *
+ * Out-of-character message with gray italic theme.
+ */
+
+@import '../MessageCard.module.scss';
+
+/* OOC prefix - gray italic */
+.oocPrefix {
+  color: rgba(128, 128, 128, 0.7);
+  font-family: 'Playfair Display', serif;
+  font-size: 12px;
+  font-style: italic;
+  text-align: center;
+}

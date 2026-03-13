@@ -1,0 +1,18 @@
+/**
+ * Master Message Styles
+ *
+ * Game master announcement with gold theme and star badge.
+ */
+
+@import '../MessageCard.module.scss';
+
+/* Master badge - gold theme with star */
+.masterBadge {
+  color: #b8860b;
+  font-family: 'Thrifted Attire', serif;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}

@@ -1,0 +1,13 @@
+/**
+ * Moderation Message Styles
+ *
+ * System or moderator message with warning theme.
+ */
+
+@import '../MessageCard.module.scss';
+
+/* Moderation icon */
+.moderationIcon {
+  font-size: 16px;
+  text-align: center;
+}

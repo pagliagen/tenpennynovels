@@ -21,7 +21,7 @@ import { ConditionalSelects } from './ConditionalSelects';
 import { SkillStatRollModal } from './SkillStatRollModal';
 import { locationChatsApi } from '@/lib/api/locationChats';
 import type { ChatMessageType, SendMessageRequest } from '@/types/chat';
-import styles from '@/styles/components/chat/chat.module.scss';
+import styles from '@/styles/components/chat/MessageInput.module.scss';
 
 /**
  * Character data needed for action availability

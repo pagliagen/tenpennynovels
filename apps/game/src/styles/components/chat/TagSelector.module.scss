@@ -1,0 +1,124 @@
+@import './variables';
+
+/**
+ * Tag Selector Modal Styles
+ * Modal for selecting message tags.
+ * @module styles/components/chat/TagSelector
+ * @since 2.0.0
+ */
+
+.tagSelectorOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.tagSelectorModal {
+  background: linear-gradient(135deg, rgba(139, 69, 19, 0.95) 0%, rgba(184, 134, 11, 0.95) 100%);
+  border: 2px solid $gold-80;
+  border-radius: $radius-md;
+  padding: $spacing-xxl;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.tagSelectorTitle {
+  color: #f0e68c;
+  font-family: 'Thrifted Attire', serif;
+  font-size: 29px;
+  margin-bottom: $spacing-sm;
+  text-align: center;
+}
+
+.tagSelectorSubtitle {
+  color: rgba(232, 212, 160, 0.8);
+  font-family: $font-serif;
+  font-size: 15px;
+  margin-bottom: $spacing-xl;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.tagList {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: $spacing-md;
+  margin-bottom: $spacing-xl;
+}
+
+.tagButton {
+  padding: $spacing-md $spacing-lg;
+  background: rgba(245, 245, 245, 0.1);
+  border: 2px solid rgba(184, 134, 11, 0.4);
+  border-radius: 6px;
+  color: $parchment;
+  font-family: $font-serif;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all $transition-normal;
+
+  &:hover {
+    background: rgba(245, 245, 245, 0.15);
+    border-color: $gold-70;
+    transform: translateY(-2px);
+  }
+
+  &.selected {
+    background: linear-gradient(135deg, $gold-50 0%, $gold-30 100%);
+    border-color: $gold;
+    color: #f0e68c;
+    font-weight: 600;
+  }
+}
+
+.tagSelectorActions {
+  display: flex;
+  gap: $spacing-lg;
+  justify-content: flex-end;
+}
+
+.cancelButton,
+.confirmButton {
+  padding: $spacing-md $spacing-xl;
+  border-radius: 6px;
+  font-family: $font-serif;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all $transition-normal;
+}
+
+.cancelButton {
+  background: rgba(100, 100, 100, 0.3);
+  border: 1px solid rgba(150, 150, 150, 0.5);
+  color: $parchment;
+
+  &:hover {
+    background: rgba(100, 100, 100, 0.5);
+  }
+}
+
+.confirmButton {
+  background: linear-gradient(135deg, $gold-70 0%, $gold-50 100%);
+  border: 1px solid $gold-80;
+  color: #fff;
+
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, rgba(184, 134, 11, 0.9) 0%, $gold-70 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px $gold-30;
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
