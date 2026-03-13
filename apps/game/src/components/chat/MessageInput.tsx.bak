@@ -271,8 +271,8 @@ export function MessageInput({
 
     try {
       const data: SendMessageRequest = {
-        actionType: type === 'skill' ? 'skill_check' : 'stat_check',
-        content: messageInput.trim() || `Tiro su ${displayName}`, // Default text if empty
+        messageType: type === 'skill' ? 'skill_check' : 'stat_check',
+        text: messageInput.trim() || `Tiro su ${displayName}`, // Default text if empty
       };
 
       if (type === 'skill') {
@@ -345,8 +345,8 @@ export function MessageInput({
       // STANDARD MESSAGE
       // Build request data
       const data: SendMessageRequest = {
-        actionType: selectedAction,
-        content: messageInput.trim(),
+        messageType: selectedAction,
+        text: messageInput.trim(),
       };
 
       // Add action-specific fields

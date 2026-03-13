@@ -19,14 +19,14 @@ interface DefenderNotificationProps {
 }
 
 export function DefenderNotification({ message, formattedTime }: DefenderNotificationProps): JSX.Element {
-  const skillCheck = message.skillCheck as any; // TODO: Update type after Phase 6
+  const skillCheck = message.socialConflict as any; // TODO: Update type after Phase 6
 
   return (
     <div className={styles.defenderNotification}>
       <div className={styles.notificationHeader}>
         <span className={styles.warningIcon}>⚠️</span>
         <strong>You sense something's wrong</strong>
-        <time className={styles.messageTimestamp} dateTime={message.createdAt}>
+        <time className={styles.messageTimestamp} dateTime={message.timestamp}>
           {formattedTime}
         </time>
       </div>
@@ -44,10 +44,10 @@ export function DefenderNotification({ message, formattedTime }: DefenderNotific
         )}
 
         {/* Show visible action text (what they said) */}
-        {message.text && (
+        {message.content && (
           <div className={styles.suspiciousAction}>
             <span className={styles.label}>What they said:</span>
-            <p>"{message.text}"</p>
+            <p>"{message.content}"</p>
           </div>
         )}
 

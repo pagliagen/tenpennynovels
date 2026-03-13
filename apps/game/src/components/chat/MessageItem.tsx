@@ -60,7 +60,7 @@ function formatTimestamp(timestamp: string): string {
  */
 export function MessageItem({ message, isDimmed = false }: MessageItemProps): JSX.Element {
   // Format timestamp
-  const formattedTime = useMemo(() => formatTimestamp(message.createdAt), [message.createdAt]);
+  const formattedTime = useMemo(() => formatTimestamp(message.timestamp), [message.timestamp]);
 
   // CSS classes based on message type
   const messageClasses = [styles.messageItem];
@@ -71,24 +71,24 @@ export function MessageItem({ message, isDimmed = false }: MessageItemProps): JS
   }
 
   // Add type-specific class (e.g., messageItem--standard, messageItem--whisper)
-  const typeClass = `messageItem--${message.messageType}`;
+  const typeClass = `messageItem--${message.actionType}`;
   if (styles[typeClass]) {
     messageClasses.push(styles[typeClass]);
   }
 
   // Legacy: Keep backward compatibility with old class names
-  if (message.messageType === 'ooc' && styles.messageItemOOC) {
+  if (message.actionType === 'ooc' && styles.messageItemOOC) {
     messageClasses.push(styles.messageItemOOC);
-  } else if (message.messageType === 'whisper' && styles.messageItemWhisper) {
+  } else if (message.actionType === 'whisper' && styles.messageItemWhisper) {
     messageClasses.push(styles.messageItemWhisper);
-  } else if (message.messageType === 'master' && styles.messageItemMaster) {
+  } else if (message.actionType === 'master' && styles.messageItemMaster) {
     messageClasses.push(styles.messageItemMaster);
   }
 
   // Render type-specific component
   let content: JSX.Element;
 
-  switch (message.messageType) {
+  switch (message.actionType) {
     case 'whisper':
       content = <WhisperMessage message={message} formattedTime={formattedTime} />;
       break;
@@ -136,7 +136,7 @@ export function MessageItem({ message, isDimmed = false }: MessageItemProps): JS
     <div
       className={messageClasses.join(' ')}
       data-message-id={message._id}
-      data-message-type={message.messageType}
+      data-message-type={message.actionType}
     >
       {content}
     </div>

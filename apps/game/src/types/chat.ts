@@ -9,11 +9,12 @@
  */
 
 /**
- * Message Type Enum
+ * Action Type Enum (MongoDB field name)
  *
- * Defines all possible message types in location chat.
+ * Defines all possible action types in location chat.
+ * **Note**: Renamed from ChatMessageType to match DB schema.
  */
-export type ChatMessageType =
+export type ActionType =
   | 'standard'      // Normal in-character message
   | 'whisper'       // Private message (only sender + target + master see)
   | 'ooc'           // Out-of-character message
@@ -23,6 +24,9 @@ export type ChatMessageType =
   | 'item_use'      // Item usage action
   | 'master'        // Master-only announcement
   | 'moderation';   // System/moderation message
+
+// Backward compatibility alias
+export type ChatMessageType = ActionType;
 
 /**
  * Dice Roll Payload
@@ -93,35 +97,42 @@ export interface WhisperVisibility {
  * Chat Message (Core Type)
  *
  * Represents a single message in location chat.
+ * **Note**: Field names match MongoDB schema exactly (no mapping).
  */
 export interface ChatMessage {
   // Identity
   _id: string;
-  messageType: ChatMessageType;
+  actionType: ActionType;  // DB field (was messageType)
 
   // Author
   characterId: string;
   characterName: string;
-  characterTag?: string;   // Sub-chat position (e.g., "Tavolo 1")
+  tags?: string;           // DB field (was characterTag) - Single string, NOT array
 
   // Location
   locationId: string;
 
   // Content
-  text: string;            // Message text or action description
+  content: string;         // DB field (was text)
 
-  // Type-specific payload
-  diceRoll?: DiceRollPayload;
-  skillCheck?: SkillCheckPayload;
+  // Type-specific payload (DB field names)
+  diceResult?: DiceRollPayload;        // DB field (was diceRoll)
+  socialConflict?: SkillCheckPayload;  // DB field (was skillCheck)
   statCheck?: StatCheckPayload;
-  itemUse?: ItemUsePayload;
-  whisperVisibility?: WhisperVisibility;
+  itemEffect?: ItemUsePayload;         // DB field (was itemUse)
+  targetCharacters?: string[];         // DB field (was whisperVisibility) - Array of character IDs
+
+  // Hidden/Defender-only fields
+  hiddenContent?: string;
+  visibleToDefenderOnly?: boolean;
 
   // Metadata
-  isEdited: boolean;
-  editedAt?: string;
-  createdAt: string;
-  updatedAt: string;
+  editHistory?: Array<{               // DB field (replaces isEdited/editedAt)
+    content: string;
+    editedAt: Date;
+    editedBy: string;
+  }>;
+  timestamp: string;                  // DB field (replaces createdAt/updatedAt)
 }
 
 /**
@@ -167,13 +178,13 @@ export interface ChatOccupant {
  */
 
 /**
- * Send Message Request
+ * Send Message Request (MongoDB field names)
  */
 export interface SendMessageRequest {
-  messageType: ChatMessageType;
-  text: string;
-  tag?: string;                    // Position tag (e.g., "Tavolo 1")
-  targetCharacterId?: string;      // For whispers
+  actionType: ActionType;          // DB field (was messageType)
+  content: string;                 // DB field (was text)
+  tags?: string;                   // DB field - Position tag (e.g., "Tavolo 1")
+  targetCharacterId?: string;      // For whispers (backend converts to targetCharacters array)
   targetCharacters?: string[];     // For whispers (backend expects array)
   diceSpec?: string;               // For dice_roll (sempre '1d100')
   skillId?: string;                // For skill_check (ObjectId - backend does secure lookup)
@@ -206,10 +217,15 @@ export interface MessageHistoryResponse {
 }
 
 /**
- * Send Message Response
+ * Send Message Response (Backend wrapper structure)
  */
 export interface SendMessageResponse {
-  message: ChatMessage;
+  result: boolean;
+  data: {
+    action: ChatMessage;
+  };
+  message: string;  // Success message (e.g., "Record creato con successo")
+  timestamp: string;
 }
 
 /**
@@ -300,7 +316,7 @@ export function canEditMessage(
 
   // Check time window
   const now = Date.now();
-  const createdAt = new Date(message.createdAt).getTime();
+  const createdAt = new Date(message.timestamp).getTime();  // Updated: timestamp (was createdAt)
   const elapsed = now - createdAt;
 
   return elapsed < MESSAGE_EDIT_WINDOW_MS;
@@ -322,7 +338,7 @@ export function canSeeMessage(
   isMaster: boolean
 ): boolean {
   // Non-whisper messages are always visible
-  if (message.messageType !== 'whisper') {
+  if (message.actionType !== 'whisper') {  // Updated: actionType (was messageType)
     return true;
   }
 
@@ -331,11 +347,12 @@ export function canSeeMessage(
     return true;
   }
 
-  // Check whisper visibility
-  const visibility = message.whisperVisibility;
-  if (!visibility) {
+  // Check whisper visibility (targetCharacters array)
+  const targetCharacters = message.targetCharacters;  // Updated: targetCharacters (was whisperVisibility)
+  if (!targetCharacters || targetCharacters.length === 0) {
     return false;
   }
 
-  return visibility.canSee.includes(characterId);
+  // Character can see if they are sender or in targetCharacters
+  return message.characterId === characterId || targetCharacters.includes(characterId);
 }

@@ -19,8 +19,8 @@ interface WhisperMessageProps {
 }
 
 export function WhisperMessage({ message, formattedTime }: WhisperMessageProps): JSX.Element {
-  // Extract target from whisperVisibility
-  const targetName = message.whisperVisibility
+  // Extract target from targetCharacters (DB field)
+  const targetName = message.targetCharacters && message.targetCharacters.length > 0
     ? '(privato)' // TODO: Fetch target character name if needed
     : '(privato)';
 
@@ -31,20 +31,20 @@ export function WhisperMessage({ message, formattedTime }: WhisperMessageProps):
         <span className={styles.characterName}>{message.characterName}</span>
         <span className={styles.whisperIndicator}>sussurra {targetName}</span>
 
-        {message.characterTag && (
-          <span className={styles.characterTag}>@ {message.characterTag}</span>
+        {message.tags && (
+          <span className={styles.characterTag}>@ {message.tags}</span>
         )}
 
-        <time className={styles.messageTimestamp} dateTime={message.createdAt}>
+        <time className={styles.messageTimestamp} dateTime={message.timestamp}>
           {formattedTime}
         </time>
       </div>
 
       {/* Content: Message text (italic for whispers) */}
-      <div className={styles.messageContent}>{message.text}</div>
+      <div className={styles.messageContent}>{message.content}</div>
 
       {/* Edited indicator */}
-      {message.isEdited && message.editedAt && (
+      {(message.editHistory?.length ?? 0) > 0 && message.editHistory?.[0]?.editedAt && (
         <div className={styles.messageEdited}>
           modificato alle {formattedTime}
         </div>

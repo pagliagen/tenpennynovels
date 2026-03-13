@@ -25,16 +25,16 @@ export function ModerationMessage({ message, formattedTime }: ModerationMessageP
         <span className={styles.moderationIcon}>⚠️</span>
         <span className={styles.characterName}>{message.characterName}</span>
 
-        {message.characterTag && (
-          <span className={styles.characterTag}>@ {message.characterTag}</span>
+        {message.tags && (
+          <span className={styles.characterTag}>@ {message.tags}</span>
         )}
 
-        <time className={styles.messageTimestamp} dateTime={message.createdAt}>
+        <time className={styles.messageTimestamp} dateTime={message.timestamp}>
           {formattedTime}
         </time>
       </div>
 
-      <div className={styles.messageContent}>{message.text}</div>
+      <div className={styles.messageContent}>{message.content}</div>
     </>
   );
 }

@@ -33,7 +33,7 @@ export function OffGameMessageItem({
   return (
     <div
       className={`${styles.messageItem} ${
-        message.messageType === 'system'
+        message.actionType === 'system'
           ? styles.system
           : isSentByMe
           ? styles.own
@@ -41,7 +41,7 @@ export function OffGameMessageItem({
       }`}
     >
       {/* Sender name (only for group chats and non-system messages) */}
-      {showSenderName && message.messageType !== 'system' && !isSentByMe && (
+      {showSenderName && message.actionType !== 'system' && !isSentByMe && (
         <div className={styles.senderName}>{message.senderName || 'Sconosciuto'}</div>
       )}
 
@@ -49,9 +49,9 @@ export function OffGameMessageItem({
       <div className={styles.messageContent}>{message.content}</div>
 
       {/* Timestamp + read receipts (only for user messages) */}
-      {message.messageType !== 'system' && (
+      {message.actionType !== 'system' && (
         <div className={styles.messageTime}>
-          {formatTime(message.sentAt)}
+          {formatTime(message.timestamp)}
           {isSentByMe && (
             <span style={{ marginLeft: '0.25rem' }}>
               {message.readBy.length === 0

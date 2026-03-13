@@ -39,7 +39,7 @@ export function MasterMessage({ message, formattedTime }: MasterMessageProps): J
       <div className={styles.messageContent}>{message.content}</div>
 
       {/* Edited indicator */}
-      {(message.editHistory?.length ?? 0) > 0 && message.editHistory?.[0]?.editedAt && (
+      {message.editHistory?.length > 0 && message.editHistory?.[0]?.editedAt && (
         <div className={styles.messageEdited}>
           modificato alle {formattedTime}
         </div>

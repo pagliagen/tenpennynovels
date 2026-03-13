@@ -1,10 +1,10 @@
 /**
- * Master Message Component
+ * Whisper Message Component
  *
- * Special announcement from game master.
- * Highlighted with gold border and bold text.
+ * Private message visible only to sender, target, and masters.
+ * Shows "whispers to [target]" prefix.
  *
- * @module components/chat/message-types/MasterMessage
+ * @module components/chat/message-types/WhisperMessage
  * @since 2.0.0
  */
 
@@ -13,18 +13,23 @@
 import styles from '@/styles/components/chat/chat.module.scss';
 import type { ChatMessage } from '@/types/chat';
 
-interface MasterMessageProps {
+interface WhisperMessageProps {
   message: ChatMessage;
   formattedTime: string;
 }
 
-export function MasterMessage({ message, formattedTime }: MasterMessageProps): JSX.Element {
+export function WhisperMessage({ message, formattedTime }: WhisperMessageProps): JSX.Element {
+  // Extract target from whisperVisibility
+  const targetName = message.whisperVisibility
+    ? '(privato)' // TODO: Fetch target character name if needed
+    : '(privato)';
+
   return (
     <>
-      {/* Header: Master prefix + character name */}
+      {/* Header: Character name, whisper indicator, timestamp */}
       <div className={styles.messageHeader}>
-        <span className={styles.masterPrefix}>★ MASTER</span>
         <span className={styles.characterName}>{message.characterName}</span>
+        <span className={styles.whisperIndicator}>sussurra {targetName}</span>
 
         {message.tags && (
           <span className={styles.characterTag}>@ {message.tags}</span>
@@ -35,11 +40,11 @@ export function MasterMessage({ message, formattedTime }: MasterMessageProps): J
         </time>
       </div>
 
-      {/* Content: Message text (bold) */}
+      {/* Content: Message text (italic for whispers) */}
       <div className={styles.messageContent}>{message.content}</div>
 
       {/* Edited indicator */}
-      {(message.editHistory?.length ?? 0) > 0 && message.editHistory?.[0]?.editedAt && (
+      {message.editHistory?.length > 0 && message.editHistory?.[0]?.editedAt && (
         <div className={styles.messageEdited}>
           modificato alle {formattedTime}
         </div>

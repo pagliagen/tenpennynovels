@@ -56,12 +56,12 @@ function isMessageVisible(
   currentCharacterId: string,
   isMaster: boolean
 ): boolean {
-  switch (message.messageType) {
+  switch (message.actionType) {
     case 'whisper':
       // Only sender + target + master can see whispers
       return (
         message.characterId === currentCharacterId ||
-        message.whisperVisibility?.canSee.includes(currentCharacterId) ||
+        message.targetCharacters?.includes(currentCharacterId) ||
         isMaster
       );
 
@@ -108,7 +108,7 @@ function shouldDimMessage(
     'stat_check',
   ];
 
-  if (neverDim.includes(message.messageType)) {
+  if (neverDim.includes(message.actionType)) {
     return false;
   }
 
@@ -136,8 +136,8 @@ function shouldDimMessage(
   }
 
   // Compare tags: if same tag as last my action → show normally
-  const lastMyTag = lastMyAction.characterTag || '';
-  const messageTag = message.characterTag || '';
+  const lastMyTag = lastMyAction.tags || '';
+  const messageTag = message.tags || '';
 
   // Different tag → dim
   return lastMyTag !== messageTag;

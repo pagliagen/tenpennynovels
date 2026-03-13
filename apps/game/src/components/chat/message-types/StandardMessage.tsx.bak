@@ -1,10 +1,9 @@
 /**
- * Master Message Component
+ * Standard Message Component
  *
- * Special announcement from game master.
- * Highlighted with gold border and bold text.
+ * Default message type for in-character actions and dialogue.
  *
- * @module components/chat/message-types/MasterMessage
+ * @module components/chat/message-types/StandardMessage
  * @since 2.0.0
  */
 
@@ -13,17 +12,16 @@
 import styles from '@/styles/components/chat/chat.module.scss';
 import type { ChatMessage } from '@/types/chat';
 
-interface MasterMessageProps {
+interface StandardMessageProps {
   message: ChatMessage;
   formattedTime: string;
 }
 
-export function MasterMessage({ message, formattedTime }: MasterMessageProps): JSX.Element {
+export function StandardMessage({ message, formattedTime }: StandardMessageProps): JSX.Element {
   return (
     <>
-      {/* Header: Master prefix + character name */}
+      {/* Header: Character name, tag, timestamp */}
       <div className={styles.messageHeader}>
-        <span className={styles.masterPrefix}>★ MASTER</span>
         <span className={styles.characterName}>{message.characterName}</span>
 
         {message.tags && (
@@ -35,11 +33,11 @@ export function MasterMessage({ message, formattedTime }: MasterMessageProps): J
         </time>
       </div>
 
-      {/* Content: Message text (bold) */}
+      {/* Content: Message text */}
       <div className={styles.messageContent}>{message.content}</div>
 
       {/* Edited indicator */}
-      {(message.editHistory?.length ?? 0) > 0 && message.editHistory?.[0]?.editedAt && (
+      {message.editHistory?.length > 0 && message.editHistory?.[0]?.editedAt && (
         <div className={styles.messageEdited}>
           modificato alle {formattedTime}
         </div>

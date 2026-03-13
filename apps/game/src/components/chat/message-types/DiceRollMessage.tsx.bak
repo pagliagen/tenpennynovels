@@ -48,7 +48,7 @@ export function DiceRollMessage({ message, formattedTime }: DiceRollMessageProps
       )}
 
       {/* Edited indicator */}
-      {(message.editHistory?.length ?? 0) > 0 && message.editHistory?.[0]?.editedAt && (
+      {message.editHistory?.length > 0 && message.editHistory?.[0]?.editedAt && (
         <div className={styles.messageEdited}>
           modificato alle {formattedTime}
         </div>

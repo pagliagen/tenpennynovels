@@ -40,8 +40,8 @@ export interface ChatMessage {
   senderName?: string;
   senderAvatar?: string;
   content: string;
-  sentAt: string;
-  messageType: 'user' | 'system';
+  timestamp: string;           // DB field (was sentAt)
+  actionType: 'user' | 'system';  // DB field (was messageType)
   replyTo?: string;
   readBy: string[]; // Array of character IDs who read the message
 }

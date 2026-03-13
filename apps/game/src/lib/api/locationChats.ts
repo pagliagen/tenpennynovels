@@ -112,17 +112,13 @@ export const locationChatsApi = {
     locationId: string,
     data: SendMessageRequest
   ): Promise<ChatMessage> {
-    // Map frontend field names to backend field names
-    const { messageType, text, ...rest } = data;
-
+    // No mapping needed - frontend uses DB field names directly
     const response = await api.post<SendMessageResponse>('/game/chats', {
       locationId,
-      actionType: messageType,  // Backend expects 'actionType'
-      content: text,            // Backend expects 'content'
-      ...rest,
+      ...data,  // actionType and content already correct
     });
 
-    return response.message;
+    return response.data.action;
   },
 
   /**
