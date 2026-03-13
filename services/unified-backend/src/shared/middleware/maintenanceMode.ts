@@ -39,7 +39,7 @@ export async function maintenanceModeMiddleware(
     }
 
     // Check if user is in allowed list
-    const userId = req.user?.userId || req.user?.id;
+    const userId = req.user?.userId;
     const allowedUsers = maintenanceMode.allowedUsers || [];
 
     if (userId && allowedUsers.includes(userId)) {
