@@ -470,6 +470,10 @@ export async function validateCharacterSubmission(character: ICharacter, config:
   // Check that all required skill slots have been satisfied.
   // Each slot contains 1+ skill options (populated ObjectIds).
   // 1 option = mandatory skill; N options = player picks one.
+
+  // Extract required minimum from config
+  const requiredSkillMinimum = config.occupation.requiredSkillMinimum || 40;
+
   let slotsValidated = 0;
   const totalSlots = occupation.requiredSkillSlots?.length || 0;
 
@@ -498,14 +502,14 @@ export async function validateCharacterSubmission(character: ICharacter, config:
         if (dynamicEntries.length > 0) {
           const resolvedBase = resolveBaseValue(skill.baseValue, character.stats as any);
           const hasImproved = dynamicEntries.some((ds: any) => {
-            if (ds.value > resolvedBase) return true;
+            if (ds.value >= requiredSkillMinimum) return true;
             const skillId = ds.skillId?.toString();
             if (skillId) {
               const skillData = skillsObj[skillId];
               if (skillData && typeof skillData === 'object' && 'total' in skillData) {
-                return (skillData as any).total > resolvedBase;
+                return (skillData as any).total >= requiredSkillMinimum;
               }
-              if (typeof skillData === 'number') return skillData > resolvedBase;
+              if (typeof skillData === 'number') return skillData >= requiredSkillMinimum;
             }
             return false;
           });
@@ -525,7 +529,7 @@ export async function validateCharacterSubmission(character: ICharacter, config:
             } else if (typeof charSkillValue === 'number') {
               totalValue = charSkillValue;
             }
-            if (totalValue > resolveBaseValue(skill.baseValue, character.stats as any)) {
+            if (totalValue >= requiredSkillMinimum) {
               slotSatisfied = true;
               break;
             }
@@ -555,7 +559,7 @@ export async function validateCharacterSubmission(character: ICharacter, config:
       }
 
       const resolvedBase = resolveBaseValue(skill.baseValue, character.stats as any);
-      if (skillValue > resolvedBase) {
+      if (skillValue >= requiredSkillMinimum) {
         slotSatisfied = true;
         break;
       }
@@ -566,9 +570,9 @@ export async function validateCharacterSubmission(character: ICharacter, config:
     } else {
       const optionNames = options.map((o: any) => o.name || 'Sconosciuta').join(' o ');
       if (options.length === 1) {
-        result.errors.push(`Abilità richiesta "${optionNames}" non è stata migliorata`);
+        result.errors.push(`Abilità richiesta "${optionNames}" deve avere almeno ${requiredSkillMinimum} punti (valore attuale insufficiente)`);
       } else {
-        result.errors.push(`Slot ${slotIdx + 1}: devi migliorare almeno una tra ${optionNames}`);
+        result.errors.push(`Slot ${slotIdx + 1}: almeno una tra ${optionNames} deve avere almeno ${requiredSkillMinimum} punti`);
       }
       result.isValid = false;
     }
