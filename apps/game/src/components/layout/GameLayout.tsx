@@ -243,101 +243,103 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
   }, [onMessageEvent, queryClient, refreshSession]);
 
   return (
-    <div className={styles.gameContainer}>
-      {/* ========================================
+    <>
+      <div className={styles.gameContainer}>
+        {/* ========================================
           SIDEBAR - Left side with character info
           ======================================== */}
-      <aside className={styles.sidebar}>
-        {/* Clock Upper - Date, Profile, Weather */}
-        <div className={styles.clockUpper}>
-          {/* Date Display */}
-          <div className={styles.dateSection}>
-            <DateDisplay />
+        <aside className={styles.sidebar}>
+          {/* Clock Upper - Date, Profile, Weather */}
+          <div className={styles.clockUpper}>
+            {/* Date Display */}
+            <div className={styles.dateSection}>
+              <DateDisplay />
+            </div>
+
+            {/* Character Profile */}
+            <div className={styles.profileSection}>
+              <CharacterProfile />
+            </div>
+
+            {/* Moon Phase and Weather */}
+            <div className={styles.moonWeatherSection}>
+              <MoonPhase />
+              <WeatherDisplay />
+            </div>
           </div>
 
-          {/* Character Profile */}
-          <div className={styles.profileSection}>
-            <CharacterProfile />
+          {/* Clock Middle - Characters List (Presenze) */}
+          <div className={styles.clockMiddle}>
+            <div className={styles.headerClockMiddle}>
+              <img
+                src="/images/sidebar/clock_middle.png"
+                alt="Clock Pattern"
+                className={styles.clockPattern}
+              />
+            </div>
+            <div className={styles.charactersSection}>
+              <CharactersList />
+            </div>
           </div>
 
-          {/* Moon Phase and Weather */}
-          <div className={styles.moonWeatherSection}>
-            <MoonPhase />
-            <WeatherDisplay />
+          {/* Clock Base - Footer */}
+          <div className={styles.clockBase}>
+            {/* Chat OffGame Button */}
+            <button
+              type="button"
+              className={styles.offGameChatButton}
+              onClick={handleOffGameChatClick}
+              title="Chat OffGame - Comunicazioni fuori dal gioco"
+            >
+              Chat OffGame →
+              {unreadOffGameChatCount > 0 && (
+                <span style={{ marginLeft: '0.5rem', color: '#25d366', fontWeight: 'bold' }}>
+                  ({unreadOffGameChatCount})
+                </span>
+              )}
+            </button>
+
+            <div className={styles.footerText}>THE VOICES OF LONDON</div>
           </div>
-        </div>
+        </aside>
 
-        {/* Clock Middle - Characters List (Presenze) */}
-        <div className={styles.clockMiddle}>
-          <div className={styles.headerClockMiddle}>
-            <img
-              src="/images/sidebar/clock_middle.png"
-              alt="Clock Pattern"
-              className={styles.clockPattern}
-            />
-          </div>
-          <div className={styles.charactersSection}>
-            <CharactersList />
-          </div>
-        </div>
-
-        {/* Clock Base - Footer */}
-        <div className={styles.clockBase}>
-          {/* Chat OffGame Button */}
-          <button
-            type="button"
-            className={styles.offGameChatButton}
-            onClick={handleOffGameChatClick}
-            title="Chat OffGame - Comunicazioni fuori dal gioco"
-          >
-            Chat OffGame →
-            {unreadOffGameChatCount > 0 && (
-              <span style={{ marginLeft: '0.5rem', color: '#25d366', fontWeight: 'bold' }}>
-                ({unreadOffGameChatCount})
-              </span>
-            )}
-          </button>
-
-          <div className={styles.footerText}>THE VOICES OF LONDON</div>
-        </div>
-      </aside>
-
-      {/* ========================================
+        {/* ========================================
           MAIN CONTENT - Right side with top bar + content
           ======================================== */}
-      <div className={styles.mainContent}>
-        {/* Top Bar - Quick actions and notifications */}
-        <TopBar
-          onQuickMapClick={handleQuickMapClick}
-          onOnGameMailClick={handleOnGameMailClick}
-          onForumClick={handleForumClick}
-          unreadOnGameMailCount={unreadMailCount}
-          onOffGameChatClick={handleOffGameChatClick}
-          unreadOffGameChatCount={unreadOffGameChatCount}
-          canAccessAdmin={user?.canAccessAdminPanel ?? false}
-          locationName={topBarLocationProps.locationName}
-          locationImageUrl={topBarLocationProps.locationImageUrl}
-          isInLondon={topBarLocationProps.isInLondon}
-        />
+        <div className={styles.mainContent}>
+          {/* Top Bar - Quick actions and notifications */}
+          <TopBar
+            onQuickMapClick={handleQuickMapClick}
+            onOnGameMailClick={handleOnGameMailClick}
+            onForumClick={handleForumClick}
+            unreadOnGameMailCount={unreadMailCount}
+            onOffGameChatClick={handleOffGameChatClick}
+            unreadOffGameChatCount={unreadOffGameChatCount}
+            canAccessAdmin={user?.canAccessAdminPanel ?? false}
+            locationName={topBarLocationProps.locationName}
+            locationImageUrl={topBarLocationProps.locationImageUrl}
+            isInLondon={topBarLocationProps.isInLondon}
+          />
 
-        {/* Body Container - Page content */}
-        <main className={styles.bodyContainer}>{children}</main>
-      </div>
+          {/* Body Container - Page content */}
+          <main className={styles.bodyContainer}>{children}</main>
+        </div>
 
-      {/* ========================================
+        {/* ========================================
           OVERLAYS - Character sheets, chat panels, etc.
           ======================================== */}
-      {/* Window Manager - Renders all open windows */}
-      <WindowRenderer />
+        {/* Window Manager - Renders all open windows */}
+        <WindowRenderer />
 
-      {/* Minimized Windows Bar - Bottom bar for minimized windows */}
-      <MinimizedWindowsBar />
+        {/* Minimized Windows Bar - Bottom bar for minimized windows */}
+        <MinimizedWindowsBar />
 
-      {/* Connection Status - Shows overlay when WebSocket disconnects */}
-      <ConnectionStatus />
+        {/* Connection Status - Shows overlay when WebSocket disconnects */}
+        <ConnectionStatus />
+      </div>
 
-      {/* Forum Modal - Fullscreen overlay */}
+      {/* Forum Modal - Full screen overlay */}
       {isForumOpen && <ForumModal />}
-    </div>
+    </>
   );
 }
