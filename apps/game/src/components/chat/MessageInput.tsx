@@ -128,6 +128,10 @@ function getActionDisplayName(action: ChatMessageType): string {
     item_use: 'uso oggetto',
     master: 'annuncio master',
     moderation: 'azione di moderazione',
+    // System-generated (not manually created)
+    social_confrontation: 'conflitto sociale',
+    combat_action: 'azione di combattimento',
+    confrontation_reaction_request: 'richiesta reazione',
   };
   return names[action] || 'messaggio';
 }

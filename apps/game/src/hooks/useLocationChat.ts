@@ -173,6 +173,9 @@ export function useLocationChat(
    *
    * Listens for `location_message_notification` events.
    * Adds message to store in real-time (< 1s latency).
+   *
+   * **TiroContrapposto Support**: If message already exists (by ID), updates it instead of adding.
+   * This handles in-place message mutations (e.g., reaction_request → combat_action).
    */
   useEffect(() => {
     const unsubscribe = onLocationEvent((event) => {
@@ -188,10 +191,18 @@ export function useLocationChat(
         return;
       }
 
-      // Add message to store
-      chatStore.addMessage(payload.message);
+      // Check if message already exists (for in-place updates)
+      const existingMessage = chatStore.messages.find((m) => m._id === payload.message._id);
 
-      console.log(`📨 New message received (real-time): ${payload.message._id}`);
+      if (existingMessage) {
+        // Update existing message (TiroContrapposto reaction processed)
+        chatStore.updateMessage(payload.message._id, payload.message);
+        console.log(`📝 Message updated (real-time): ${payload.message._id}`);
+      } else {
+        // Add new message
+        chatStore.addMessage(payload.message);
+        console.log(`📨 New message received (real-time): ${payload.message._id}`);
+      }
     });
 
     return unsubscribe; // Cleanup subscription

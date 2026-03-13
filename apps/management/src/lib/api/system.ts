@@ -9,6 +9,25 @@
 
 import { api } from './client';
 
+export interface SystemConfigRecord {
+  _id: string;
+  configKey: string;
+  configSection: string;
+  configType: 'template' | 'number' | 'string' | 'boolean' | 'json';
+  value: any;
+  defaultValue: any;
+  description: string;
+  isActive: boolean;
+  metadata: {
+    lastUpdatedBy?: string;
+    lastUpdatedAt?: string;
+    updateReason?: string;
+    version?: number;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface SystemConfig {
   gameSettings: {
     newCharacterApprovalRequired: boolean;
@@ -146,5 +165,25 @@ export const systemAPI = {
   setMaintenanceMode: async (enabled: boolean, message?: string): Promise<MaintenanceStatus> => {
     const response = await api.post('/admin/system/maintenance', { enabled, message });
     return response.data as MaintenanceStatus;
-  }
+  },
+
+  getConfigurations: async (section?: string): Promise<SystemConfigRecord[]> => {
+    const params = section ? { section } : {};
+    const response = await api.get('/admin/system/configurations', { params });
+    return (response as any).data?.configs || (response as any).configs || [];
+  },
+
+  getConfigurationByKey: async (configKey: string): Promise<SystemConfigRecord> => {
+    const response = await api.get(`/admin/system/configurations/${configKey}`);
+    return (response as any).data?.config || (response as any).config;
+  },
+
+  updateConfiguration: async (configKey: string, value: any, updateReason?: string): Promise<SystemConfigRecord> => {
+    const response = await api.patch(`/admin/system/configurations/${configKey}`, { value, updateReason });
+    return (response as any).data?.config || (response as any).config;
+  },
+
+  invalidateConfigCache: async (): Promise<void> => {
+    await api.post('/admin/system/configurations/invalidate-cache');
+  },
 };

@@ -29,6 +29,7 @@ interface ActionTypeSelectorProps {
 
 /**
  * Display names for action types (Italian)
+ * Note: Some action types are system-generated and not selectable by users
  */
 const ACTION_DISPLAY_NAMES: Record<ChatMessageType, string> = {
   standard: 'Messaggio Standard',
@@ -40,6 +41,10 @@ const ACTION_DISPLAY_NAMES: Record<ChatMessageType, string> = {
   item_use: 'Usa Oggetto',
   master: 'Annuncio Master',
   moderation: 'Moderazione',
+  // System-generated (not selectable)
+  social_confrontation: '[Sistema] Conflitto Sociale',
+  combat_action: '[Sistema] Azione di Combattimento',
+  confrontation_reaction_request: '[Sistema] Richiesta Reazione',
 };
 
 /**

@@ -60,6 +60,71 @@
   }
 }
 
+.tabBar {
+  display: flex;
+  gap: 2px;
+  overflow-x: auto;
+  background-color: $color-bg-secondary;
+  border-radius: $border-radius-md $border-radius-md 0 0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: none;
+  padding: $spacing-xs $spacing-xs 0;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+  padding: $spacing-sm $spacing-lg;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: $color-text-secondary;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all $transition-fast;
+
+  &:hover {
+    color: $color-text-primary;
+    background-color: rgba(255, 255, 255, 0.04);
+  }
+}
+
+.tabActive {
+  color: $color-primary;
+  border-bottom-color: $color-primary;
+  font-weight: 600;
+}
+
+.tabCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 18px;
+  padding: 0 5px;
+  font-size: 11px;
+  font-weight: 700;
+  background-color: rgba(255, 255, 255, 0.08);
+  border-radius: 9px;
+  color: inherit;
+
+  .tabActive & {
+    background-color: rgba($color-primary, 0.15);
+    color: $color-primary;
+  }
+}
+
+.tabPanel {
+  padding: $spacing-lg;
+  background-color: $color-bg-secondary;
+  border-radius: 0 0 $border-radius-md $border-radius-md;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
 .section {
   padding: $spacing-lg;
   background-color: $color-bg-secondary;
@@ -77,10 +142,194 @@
   }
 }
 
-.settingGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+.configList {
+  display: flex;
+  flex-direction: column;
+}
+
+.configRow {
+  padding: $spacing-md $spacing-lg;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  transition: background-color $transition-fast;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover:not(.configRowEditing) {
+    background-color: rgba(255, 255, 255, 0.02);
+  }
+}
+
+.configRowEditing {
+  background-color: rgba($color-primary, 0.04);
+  border-bottom-color: rgba($color-primary, 0.15);
+}
+
+.configRowMain {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: $spacing-lg;
+}
+
+.configInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.configName {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.configKey {
+  font-size: 14px;
+  font-weight: 600;
+  color: $color-text-primary;
+  font-family: monospace;
+}
+
+.configDesc {
+  font-size: 12px;
+  color: $color-text-secondary;
+  padding-left: calc(40px + $spacing-sm);
+}
+
+.configValueCol {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  flex-shrink: 0;
+}
+
+.configValuePreview {
+  font-size: 13px;
+  color: $color-text-secondary;
+  font-family: monospace;
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: $spacing-xs $spacing-sm;
+  background-color: $color-bg-tertiary;
+  border-radius: $border-radius-sm;
+}
+
+.valActive {
+  color: $color-success;
+  font-family: inherit;
+  font-weight: 600;
+}
+
+.valInactive {
+  color: $color-text-muted;
+  font-family: inherit;
+}
+
+.configEditPanel {
+  margin-top: $spacing-md;
+  padding: $spacing-md;
+  background-color: $color-bg-tertiary;
+  border-radius: $border-radius-sm;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+
+  input[type="text"],
+  input[type="number"],
+  select {
+    width: 100%;
+    padding: $spacing-sm $spacing-md;
+    background-color: $color-bg-primary;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: $border-radius-sm;
+    color: $color-text-primary;
+    font-size: 14px;
+
+    &:focus {
+      outline: none;
+      border-color: $color-primary;
+    }
+  }
+
+  textarea {
+    width: 100%;
+    padding: $spacing-sm $spacing-md;
+    background-color: $color-bg-primary;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: $border-radius-sm;
+    color: $color-text-primary;
+    font-size: 13px;
+    font-family: monospace;
+    resize: vertical;
+    min-height: 120px;
+
+    &:focus {
+      outline: none;
+      border-color: $color-primary;
+    }
+  }
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  cursor: pointer;
+  font-size: 14px;
+  color: $color-text-primary;
+
+  input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+  }
+}
+
+.configEditFooter {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  margin-top: $spacing-md;
+}
+
+.configEditActions {
+  display: flex;
+  gap: $spacing-sm;
+  flex-shrink: 0;
+}
+
+.cancelButton {
+  padding: $spacing-sm $spacing-lg;
+  background: transparent;
+  color: $color-text-secondary;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: $border-radius-sm;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all $transition-fast;
+
+  &:hover:not(:disabled) {
+    color: $color-text-primary;
+    border-color: rgba(255, 255, 255, 0.3);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.configMeta {
+  display: block;
+  font-size: 11px;
+  color: $color-text-muted;
+  margin-top: 4px;
+  padding-left: calc(40px + $spacing-sm);
 }
 
 .settingItem {
@@ -140,16 +389,6 @@
     color: $color-text-secondary;
     font-style: italic;
   }
-}
-
-.actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: $spacing-md;
-  padding: $spacing-lg;
-  background-color: $color-bg-secondary;
-  border-radius: $border-radius-md;
-  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .saveButton {
@@ -222,6 +461,39 @@
     &:hover {
       background-color: color.adjust($color-primary, $lightness: 10%);
     }
+  }
+}
+
+.typeBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  height: 20px;
+  padding: 0 $spacing-xs;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  background-color: rgba($color-primary, 0.1);
+  border: 1px solid rgba($color-primary, 0.25);
+  border-radius: $border-radius-sm;
+  color: $color-primary;
+  font-family: monospace;
+  flex-shrink: 0;
+}
+
+.reasonInput {
+  flex: 1;
+  padding: $spacing-sm $spacing-md;
+  background-color: $color-bg-primary;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: $border-radius-sm;
+  color: $color-text-primary;
+  font-size: 13px;
+
+  &:focus {
+    outline: none;
+    border-color: $color-primary;
   }
 }
 

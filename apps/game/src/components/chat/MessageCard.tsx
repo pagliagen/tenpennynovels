@@ -18,6 +18,8 @@ import { StatCheckMessage } from './message-types/StatCheckMessage';
 import { ItemUseMessage } from './message-types/ItemUseMessage';
 import { ModerationMessage } from './message-types/ModerationMessage';
 import { DefenderNotification } from './message-types/DefenderNotification';
+import { ReactionRequestMessage } from './message-types/ReactionRequestMessage';
+import { CombatActionMessage } from './message-types/CombatActionMessage';
 import styles from '@/styles/components/chat/MessageCard.module.scss';
 
 interface MessageCardProps {
@@ -62,6 +64,13 @@ export function MessageCard({ message, isDimmed, currentCharacterId }: MessageCa
       break;
     case 'item_use':
       component = <ItemUseMessage message={message} currentCharacterId={currentCharacterId} />;
+      break;
+    case 'confrontation_reaction_request':
+      component = <ReactionRequestMessage message={message} currentCharacterId={currentCharacterId} />;
+      break;
+    case 'combat_action':
+    case 'social_confrontation':
+      component = <CombatActionMessage message={message} currentCharacterId={currentCharacterId} />;
       break;
     default:
       component = <StandardMessage message={message} currentCharacterId={currentCharacterId} />;

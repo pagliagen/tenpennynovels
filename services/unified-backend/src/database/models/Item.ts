@@ -115,6 +115,16 @@ export interface IItem extends Document, SoftDeleteMethods {
     restockQuantity?: number;          // How much stock is added
   };
   
+  // Weapon stats (for combat system)
+  weaponStats?: {
+    weaponType: 'unarmed' | 'melee_blunt' | 'melee_blade' | 'ranged_firearm' | 'ranged_thrown';
+    skill: string;                     // Required skill name (e.g., "Armi da botta")
+    damageFormula: string;             // e.g., "1d6+2", "1d8+db"
+    range: 'melee' | 'ranged';
+    requiresExtraction: boolean;       // Weapon must be drawn first
+    applyBonusDamage: boolean;         // Apply damage bonus from STR/SIZ
+  };
+
   // Metadata
   createdBy: Schema.Types.ObjectId;                   // Staff member who created item
   createdAt: Date;
@@ -348,7 +358,23 @@ const ItemSchema = new Schema<IItem>({
     restockInterval: String,
     restockQuantity: { type: Number, min: 0 }
   },
-  
+
+  // Weapon stats (for combat system)
+  weaponStats: {
+    weaponType: {
+      type: String,
+      enum: ['unarmed', 'melee_blunt', 'melee_blade', 'ranged_firearm', 'ranged_thrown']
+    },
+    skill: String,
+    damageFormula: String,
+    range: {
+      type: String,
+      enum: ['melee', 'ranged']
+    },
+    requiresExtraction: Boolean,
+    applyBonusDamage: Boolean
+  },
+
   // Management
   createdBy: {
     type: Schema.Types.ObjectId,

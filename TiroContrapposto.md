@@ -163,10 +163,17 @@ Tabella di configurazione che definisce le regole per ogni tipo di scontro. Ogni
   // Valori: "social" | "combat_unarmed" | "combat_melee" | "combat_ranged"
 
   "counterSkills": [
-    { "skillId": "ObjectId", "skillName": "Empatia" }
+    {
+      "skillId": "ObjectId",
+      "skillName": "Empatia",
+      "label": "Empatia",
+      "specialRule": null
+    }
   ],
-  // Valore speciale: { "skillName": "_equipped_weapon_skill" }
-  // indica "la skill dell'arma equipaggiata dal difensore"
+  // skillName: skill effettiva usata per il tiro
+  // label: testo mostrato nella UI (può differire dal nome skill)
+  // specialRule: null = confronto standard | "strict_higher" = serve grado strettamente superiore
+  // Valore speciale skillName: "_equipped_weapon_skill" = skill dell'arma equipaggiata da Y
 
   "rollType": "hidden",
   // "open" = palese (tutti vedono) | "hidden" = nascosto (solo coinvolti)
@@ -190,28 +197,36 @@ Tabella di configurazione che definisce le regole per ogni tipo di scontro. Ogni
 }
 ```
 
-**Esempi di record:**
+**Esempi di record (counterSkills espanso con label e specialRule):**
 
-| skillName       | category       | counterSkills                                            | rollType | modifiers     |
-| --------------- | -------------- | -------------------------------------------------------- | -------- | ------------- |
-| Raggirare       | social         | [Empatia]                                                | hidden   | —             |
-| Intimidire      | social         | [Autocontrollo]                                          | open     | —             |
-| Ammaliare       | social         | [Autocontrollo]                                          | open     | —             |
-| Persuadere      | social         | [Tempra]                                                 | open     | —             |
-| Oratoria        | social         | [Tempra]                                                 | open     | —             |
-| Empatia         | social         | [Raggirare]                                              | open     | —             |
-| Corpo a Corpo   | combat_unarmed | [Schivata, Corpo a Corpo]                                | open     | —             |
-| Armi da botta   | combat_melee   | [Schivata, _equipped_weapon_skill, Corpo a Corpo]        | open     | —             |
-| Armi da taglio  | combat_melee   | [Schivata, _equipped_weapon_skill, Corpo a Corpo]        | open     | —             |
-| Armi da fuoco   | combat_ranged  | [Schivata, Corpo a Corpo]                                | open     | [Tiro Rapido] |
-| Armi da lancio  | combat_ranged  | [Schivata, Corpo a Corpo]                                | open     | [Tiro Rapido] |
+**Sociali:**
+
+| skillName  | counterSkills | rollType |
+| ---------- | ------------- | -------- |
+| Raggirare  | `[{ skill: "Empatia", label: "Empatia", specialRule: null }]` | hidden |
+| Intimidire | `[{ skill: "Autocontrollo", label: "Autocontrollo", specialRule: null }]` | open |
+| Ammaliare  | `[{ skill: "Autocontrollo", label: "Autocontrollo", specialRule: null }]` | open |
+| Persuadere | `[{ skill: "Tempra", label: "Tempra", specialRule: null }]` | open |
+| Oratoria   | `[{ skill: "Tempra", label: "Tempra", specialRule: null }]` | open |
+| Empatia    | `[{ skill: "Raggirare", label: "Raggirare", specialRule: null }]` | open |
+
+**Combattimento:**
+
+| skillName      | category       | counterSkills | modifiers |
+| -------------- | -------------- | ------------- | --------- |
+| Corpo a Corpo  | combat_unarmed | `[`<br>`{ skill: "Schivata", label: "Schivata", specialRule: null },`<br>`{ skill: "Corpo a Corpo", label: "Parata", specialRule: null }`<br>`]` | — |
+| Armi da botta  | combat_melee   | `[`<br>`{ skill: "Schivata", label: "Schivata", specialRule: null },`<br>`{ skill: "_equipped_weapon_skill", label: "Parata", specialRule: null },`<br>`{ skill: "Corpo a Corpo", label: "Disarmare", specialRule: "strict_higher" }`<br>`]` | — |
+| Armi da taglio | combat_melee   | `[`<br>`{ skill: "Schivata", label: "Schivata", specialRule: null },`<br>`{ skill: "_equipped_weapon_skill", label: "Parata", specialRule: null },`<br>`{ skill: "Corpo a Corpo", label: "Disarmare", specialRule: "strict_higher" }`<br>`]` | — |
+| Armi da fuoco  | combat_ranged  | `[`<br>`{ skill: "Schivata", label: "Schivata", specialRule: null },`<br>`{ skill: "Corpo a Corpo", label: "Disarmare", specialRule: "strict_higher" }`<br>`]` | [Tiro Rapido] |
+| Armi da lancio | combat_ranged  | `[`<br>`{ skill: "Schivata", label: "Schivata", specialRule: null },`<br>`{ skill: "Corpo a Corpo", label: "Disarmare", specialRule: "strict_higher" }`<br>`]` | [Tiro Rapido] |
 
 > **Logica derivata automaticamente dal BE:**
 > - `counterSkills.length === 1` → il BE tira direttamente per entrambi (flusso automatico, sezione 3).
 > - `counterSkills.length > 1` → il BE manda un messaggio temporaneo a Y per scegliere la difesa (sezione 4).
 > - `rollType === "hidden"` → il tiro è in due fasi: l'attaccante tira da solo prima, e solo in caso di successo si procede col contrapposto (sezione 5).
+> - `specialRule: "strict_higher"` → il difensore vince solo con un grado di successo **strettamente superiore** (pareggio = attaccante vince). Usato per il Disarmo.
 >
-> **`_equipped_weapon_skill`:** quando il difensore sceglie "Parata", il BE legge `weaponStats.skill` dall'arma equipaggiata da Y e usa quella skill per il tiro.
+> **`_equipped_weapon_skill`:** quando il difensore sceglie "Parata" (armi ravvicinate), il BE legge `weaponStats.skill` dall'arma equipaggiata da Y e usa quella skill per il tiro. Se Y non ha un'arma equipaggiata, l'opzione "Parata" non viene mostrata.
 
 ---
 
@@ -416,6 +431,13 @@ Si sostituisce l'attuale `socialConflict` con un unico sotto-documento `confront
 
     "attackerCharacterId": "string",
     "defenderCharacterId": "string",
+
+    "availableDefenseSkills": [
+      { "skillName": "Schivata", "label": "Schivata" },
+      { "skillName": "Corpo a Corpo", "label": "Disarmare" }
+    ],
+    // Popolato dal BE in fase "waiting_reaction", letto dal FE per mostrare i pulsanti.
+    // Una volta che Y sceglie, defenseSkill viene valorizzato.
 
     "attackSkill": "Armi da fuoco",
     "defenseSkill": "Schivata",

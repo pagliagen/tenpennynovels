@@ -2,7 +2,8 @@ import mongoose, { Schema, Document, Model } from 'mongoose';
 
 export interface IChat extends Document {
   actionType: 'standard' | 'master' | 'moderation' | 'whisper' | 'ooc' |
-             'dice_roll' | 'skill_check' | 'stat_check' | 'item_use';
+             'dice_roll' | 'skill_check' | 'stat_check' | 'item_use' |
+             'social_confrontation' | 'combat_action' | 'confrontation_reaction_request';
   characterId: string;
   characterName: string;
   characterSurname?: string;
@@ -60,7 +61,44 @@ export interface IChat extends Document {
     messageForDefender?: string;
     visibleToDefenderOnly?: boolean;
   };
-  
+
+  // TiroContrapposto - Unified confrontation field (replaces socialConflict)
+  confrontation?: {
+    type: 'social' | 'combat';
+    encounterId?: string; // CombatEncounter._id (null for social)
+    turnNumber?: number; // Combat only
+    phase: 'waiting_reaction' | 'result';
+
+    attackerCharacterId: string;
+    defenderCharacterId: string;
+
+    // Populated when phase = 'waiting_reaction'
+    availableDefenseSkills?: Array<{
+      skillName: string;
+      label: string;
+      specialRule?: string;
+    }>;
+
+    // Populated when phase = 'result'
+    attackSkill?: string;
+    defenseSkill?: string;
+    weaponName?: string; // Combat only
+    attackRoll?: number;
+    defenseRoll?: number;
+    attackSuccessLevel?: 'critical' | 'extreme' | 'hard' | 'normal' | 'failure' | 'fumble';
+    defenseSuccessLevel?: 'critical' | 'extreme' | 'hard' | 'normal' | 'failure' | 'fumble';
+
+    outcome?: 'hit' | 'miss' | 'parry' | 'dodge' | 'disarm' | 'attacker_wins' | 'defender_wins' | 'draw';
+
+    damageDealt?: number; // Combat only (Phase 2)
+    isCriticalDamage?: boolean; // Combat only (Phase 2)
+    damageFormula?: string; // Combat only (Phase 2)
+
+    // For Raggirare (Phase 3)
+    messageForDefender?: string;
+    visibleToDefenderOnly?: boolean;
+  };
+
   successDegree?: 'critical' | 'extreme' | 'hard' | 'normal' | 'failure' | 'fumble';
   
   isHidden?: boolean;
@@ -75,8 +113,9 @@ const ChatSchema = new Schema<IChat>({
   actionType: {
     type: String,
     required: true,
-    enum: ['standard', 'master', 'moderation', 'whisper', 'ooc', 
-           'dice_roll', 'skill_check', 'stat_check', 'item_use']
+    enum: ['standard', 'master', 'moderation', 'whisper', 'ooc',
+           'dice_roll', 'skill_check', 'stat_check', 'item_use',
+           'social_confrontation', 'combat_action', 'confrontation_reaction_request']
   },
   characterId: {
     type: String,
@@ -203,7 +242,50 @@ const ChatSchema = new Schema<IChat>({
     messageForDefender: String,
     visibleToDefenderOnly: Boolean
   },
-  
+
+  // TiroContrapposto - Unified confrontation field
+  confrontation: {
+    type: {
+      type: String,
+      enum: ['social', 'combat']
+    },
+    encounterId: String,
+    turnNumber: Number,
+    phase: {
+      type: String,
+      enum: ['waiting_reaction', 'result']
+    },
+    attackerCharacterId: String,
+    defenderCharacterId: String,
+    availableDefenseSkills: [{
+      skillName: String,
+      label: String,
+      specialRule: String
+    }],
+    attackSkill: String,
+    defenseSkill: String,
+    weaponName: String,
+    attackRoll: Number,
+    defenseRoll: Number,
+    attackSuccessLevel: {
+      type: String,
+      enum: ['critical', 'extreme', 'hard', 'normal', 'failure', 'fumble']
+    },
+    defenseSuccessLevel: {
+      type: String,
+      enum: ['critical', 'extreme', 'hard', 'normal', 'failure', 'fumble']
+    },
+    outcome: {
+      type: String,
+      enum: ['hit', 'miss', 'parry', 'dodge', 'disarm', 'attacker_wins', 'defender_wins', 'draw']
+    },
+    damageDealt: Number,
+    isCriticalDamage: Boolean,
+    damageFormula: String,
+    messageForDefender: String,
+    visibleToDefenderOnly: Boolean
+  },
+
   successDegree: {
     type: String,
     enum: ['critical', 'extreme', 'hard', 'normal', 'failure', 'fumble']
@@ -242,9 +324,6 @@ ChatSchema.index({ locationId: 1, timestamp: -1 });
 ChatSchema.index({ characterId: 1, timestamp: -1 });
 ChatSchema.index({ locationId: 1, visibility: 1, timestamp: -1 });
 ChatSchema.index({ sessionId: 1, timestamp: -1 });
-
-// TTL index to auto-delete old messages after 30 days
-ChatSchema.index({ timestamp: 1 }, { expireAfterSeconds: 30 * 24 * 60 * 60 });
 
 ChatSchema.statics.getLocationHistory = async function(
   locationId: string,

@@ -16,6 +16,10 @@ export { Location, type ILocation } from './Location';
 export { Chat, type IChat } from './Chat';
 export { CharacterNotes, type ICharacterNotes } from './CharacterNotes';
 
+// Combat & Confrontation System (TiroContrapposto)
+export { SkillConfrontation, type ISkillConfrontation } from './SkillConfrontation';
+export { CombatEncounter, type ICombatEncounter } from './CombatEncounter';
+
 // Corporation System
 export { 
   Corporation, 

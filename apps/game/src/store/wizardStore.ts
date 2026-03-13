@@ -35,6 +35,8 @@ import type {
   ValidationResult,
   CharacterCreatePayload,
 } from '@/types/wizard';
+import type { DamageBonusEntry } from '@/lib/api/gameConfig';
+import { gameConfigApi } from '@/lib/api/gameConfig';
 
 const FORMULA_STAT_MAP: Record<string, string> = {
   str: 'strength', dex: 'dexterity', int: 'intelligence',
@@ -63,9 +65,15 @@ export function resolveSkillBaseValue(
 }
 
 /**
- * Bonus Danno lookup table (FOR + TAG)
+ * Bonus Danno lookup table (FOR + TAG).
+ * Uses the DB-driven table when available, otherwise falls back to hardcoded values.
  */
-function getBonusDamage(forPlusTag: number): string {
+function getBonusDamage(forPlusTag: number, table?: DamageBonusEntry[] | null): string {
+  if (table && table.length > 0) {
+    const entry = table.find((e) => forPlusTag >= e.min && forPlusTag <= e.max);
+    if (entry) return entry.bonus;
+  }
+
   if (forPlusTag <= 64) return '-2';
   if (forPlusTag <= 84) return '-1';
   if (forPlusTag <= 124) return '0';
@@ -85,6 +93,10 @@ interface WizardStore extends WizardData {
   _hasHydrated: boolean;
   _draftCharacterId: string | null;
   _serverUpdatedAt: string | null;
+
+  // Cached bonus damage table from DB (NOT persisted)
+  _bonusDamageTable: DamageBonusEntry[] | null;
+  _bonusDamageTableLoading: boolean;
 
   // Validation state
   stepErrors: Record<number, Record<string, string>>; // Step → Field → Error
@@ -106,6 +118,7 @@ interface WizardStore extends WizardData {
   updateStat: (statName: keyof WizardStats, value: number) => void;
   setStats: (stats: Partial<WizardStats>) => void;
   recalculateDerivedStats: () => void;
+  fetchBonusDamageTable: () => Promise<void>;
 
   // Actions - Skills (Step 4)
   updateSkill: (skillName: string, breakdown: Partial<SkillBreakdown>) => void;
@@ -147,6 +160,7 @@ const initialState = (): Omit<
   | 'updateStat'
   | 'setStats'
   | 'recalculateDerivedStats'
+  | 'fetchBonusDamageTable'
   | 'updateSkill'
   | 'setSkillManualPoints'
   | 'applyOccupationBonuses'
@@ -167,6 +181,10 @@ const initialState = (): Omit<
   _hasHydrated: false,
   _draftCharacterId: null,
   _serverUpdatedAt: null as string | null,
+
+  // Cached bonus damage table (NOT persisted — fetched on demand)
+  _bonusDamageTable: null as DamageBonusEntry[] | null,
+  _bonusDamageTableLoading: false,
 
   // Navigation
   currentStep: 1,
@@ -448,17 +466,40 @@ export const useWizardStore = create<WizardStore>()(
        * - Tiro Idea = INT
        */
       recalculateDerivedStats: () => {
-        const { stats } = get();
+        const { stats, _bonusDamageTable, _bonusDamageTableLoading } = get();
+
+        // Lazy-load the bonus damage table if not yet fetched
+        if (!_bonusDamageTable && !_bonusDamageTableLoading) {
+          get().fetchBonusDamageTable();
+        }
 
         const derivedStats: DerivedStats = {
           hitPoints: Math.floor((stats.constitution + stats.size) / 10),
           sanity: stats.power,
           maxSanity: 99,
-          bonusDamage: getBonusDamage(stats.strength + stats.size),
+          bonusDamage: getBonusDamage(stats.strength + stats.size, _bonusDamageTable),
           ideaRoll: stats.intelligence,
         };
 
         set({ derivedStats });
+      },
+
+      fetchBonusDamageTable: async () => {
+        const { _bonusDamageTable, _bonusDamageTableLoading } = get();
+        if (_bonusDamageTable || _bonusDamageTableLoading) return;
+
+        set({ _bonusDamageTableLoading: true });
+        try {
+          const config = await gameConfigApi.getCombatConfig();
+          const table = config.combat_damage_bonus_table || null;
+          set({ _bonusDamageTable: table, _bonusDamageTableLoading: false });
+
+          // Re-derive stats now that the table is loaded
+          get().recalculateDerivedStats();
+        } catch (error) {
+          console.warn('[WizardStore] Failed to fetch bonus damage table, using fallback', error);
+          set({ _bonusDamageTableLoading: false });
+        }
       },
 
       /**

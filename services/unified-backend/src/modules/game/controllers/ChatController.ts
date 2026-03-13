@@ -1,10 +1,10 @@
 import { Request, Response } from 'express';
-import { Chat, GamingSession, Location, Character } from '@database/models';
+import { Chat, GamingSession, Location, Character, SkillConfrontation, CombatEncounter } from '@database/models';
 import { logger } from '../utils/logger';
 import { redis } from '@config/runtime/redis';
 import { EmbeddingEventPublisher } from '../utils/events/embedding-publisher';
 import { successResponse, errorResponse, createResponse, getRequestId } from '../utils/apiResponse';
-import { calculateSuccessDegree, getSuccessDegreeLabel, SuccessDegree } from '../utils/successDegrees';
+import { calculateSuccessDegree, getSuccessDegreeLabel, compareSuccessDegrees, SuccessDegree } from '../utils/successDegrees';
 import { calculateSocialConflict, isValidSocialSkillPair, getDefensiveSkill } from '../utils/socialConflicts';
 import { getSocketIO } from '../websocket/socketInstance';
 
@@ -1493,6 +1493,406 @@ export class ChatController {
       res.status(500).json(errorResponse(
         'Failed to create bot action',
         'BOT_ACTION_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
+    }
+  }
+
+  /**
+   * Create Confrontation Attack (TiroContrapposto Phase 1)
+   * POST /game/chats/confrontation-attack
+   *
+   * Initiates an opposed roll (combat or social conflict).
+   * If the skill has multiple defense options, creates a reaction request message.
+   * Otherwise, resolves immediately with single defense skill.
+   */
+  static async createConfrontationAttack(req: Request, res: Response): Promise<void> {
+    try {
+      const character = req.character;
+      if (!character) {
+        res.status(401).json(errorResponse(
+          'Character context required',
+          'CHARACTER_CONTEXT_REQUIRED',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      const {
+        locationId,
+        attackSkill,
+        defenderId,
+        content
+      } = req.body;
+
+      // Validate required fields
+      if (!locationId || !attackSkill || !defenderId || !content) {
+        res.status(400).json(errorResponse(
+          'locationId, attackSkill, defenderId, and content are required',
+          'MISSING_REQUIRED_FIELDS',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      // Load SkillConfrontation config
+      const config = await SkillConfrontation.findOne({ skillName: attackSkill });
+      if (!config) {
+        res.status(400).json(errorResponse(
+          `Invalid attack skill: ${attackSkill} is not configured for confrontations`,
+          'INVALID_ATTACK_SKILL',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      // Validate attacker has the skill
+      const attackerCharacter = await Character.findById(character.characterId);
+      if (!attackerCharacter) {
+        res.status(404).json(errorResponse(
+          'Attacker character not found',
+          'ATTACKER_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      const attackerSkillData = attackerCharacter.skills?.[attackSkill];
+      let attackerValue = 0;
+      if (attackerSkillData !== undefined) {
+        if (typeof attackerSkillData === 'number') {
+          attackerValue = attackerSkillData;
+        } else if (attackerSkillData && typeof attackerSkillData === 'object' && 'total' in attackerSkillData) {
+          attackerValue = (attackerSkillData as any).total;
+        }
+      }
+
+      if (attackerValue === 0) {
+        res.status(400).json(errorResponse(
+          `You don't have the skill ${attackSkill} or it's at 0`,
+          'ATTACKER_MISSING_SKILL',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      // Validate defender exists
+      const defenderCharacter = await Character.findById(defenderId);
+      if (!defenderCharacter) {
+        res.status(404).json(errorResponse(
+          'Defender character not found',
+          'DEFENDER_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      // Check if multi-defense (requires reaction request)
+      if (config.counterSkills.length > 1) {
+        // Create CombatEncounter to track state
+        const encounter = await CombatEncounter.create({
+          locationId,
+          status: 'waiting_reaction',
+          participants: [
+            { characterId: character.characterId, characterName: character.characterName },
+            { characterId: defenderId, characterName: defenderCharacter.name }
+          ],
+          currentTurn: {
+            turnNumber: 1,
+            attackerId: character.characterId,
+            defenderId,
+            attackSkill,
+            status: 'waiting_defense'
+          },
+          turnHistory: []
+        });
+
+        // Create reaction request message (whisper visibility, visible only to attacker and defender)
+        const message = await Chat.create({
+          actionType: 'confrontation_reaction_request',
+          characterId: character.characterId,
+          characterName: character.characterName,
+          content: content.trim(),
+          locationId,
+          visibility: 'whisper',
+          targetCharacters: [character.characterId, defenderId],
+          characterRoles: character.gameplayRoles || [],
+          timestamp: new Date(),
+          confrontation: {
+            type: config.category === 'combat_unarmed' || config.category === 'combat_melee' || config.category === 'combat_ranged' ? 'combat' : 'social',
+            encounterId: encounter._id.toString(),
+            phase: 'waiting_reaction',
+            attackerCharacterId: character.characterId,
+            defenderCharacterId: defenderId,
+            availableDefenseSkills: config.counterSkills.map(cs => ({
+              skillName: cs.skillName,
+              label: cs.label,
+              specialRule: cs.specialRule
+            })),
+            attackSkill
+          }
+        });
+
+        // Emit WebSocket notification
+        const io = req.app.get('io');
+        if (io) {
+          const roomName = `location_${locationId}`;
+          io.to(roomName).emit('location_message_notification', {
+            locationId,
+            actionId: message._id,
+            characterName: character.characterName,
+            actionType: 'confrontation_reaction_request',
+            timestamp: message.timestamp
+          });
+        }
+
+        logger.info(`Confrontation reaction request created: ${message._id} (${attackSkill} attack by ${character.characterName})`);
+
+        res.status(201).json(createResponse(
+          { action: message, requiresReaction: true },
+          'Confrontation attack initiated, waiting for defender reaction',
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      // Single defense skill - resolve immediately (fallback for Phase 2+)
+      res.status(501).json(errorResponse(
+        'Single-defense skills not yet implemented (Phase 2)',
+        'NOT_IMPLEMENTED',
+        undefined,
+        501,
+        getRequestId(req)
+      ));
+    } catch (error: any) {
+      logger.error('Create confrontation attack error:', error);
+      res.status(500).json(errorResponse(
+        'Failed to create confrontation attack',
+        'CONFRONTATION_ATTACK_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
+    }
+  }
+
+  /**
+   * Handle Confrontation Reaction (TiroContrapposto Phase 1)
+   * POST /game/chats/confrontation-reaction
+   *
+   * Defender chooses defense skill and resolves the opposed roll.
+   * Updates the reaction request message in-place with final results.
+   */
+  static async handleConfrontationReaction(req: Request, res: Response): Promise<void> {
+    try {
+      const character = req.character;
+      if (!character) {
+        res.status(401).json(errorResponse(
+          'Character context required',
+          'CHARACTER_CONTEXT_REQUIRED',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      const { messageId, defenseSkillName } = req.body;
+
+      // Validate required fields
+      if (!messageId || !defenseSkillName) {
+        res.status(400).json(errorResponse(
+          'messageId and defenseSkillName are required',
+          'MISSING_REQUIRED_FIELDS',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      // Find reaction request message
+      const message: any = await Chat.findById(messageId);
+      if (!message || message.actionType !== 'confrontation_reaction_request') {
+        res.status(404).json(errorResponse(
+          'Reaction request not found or already processed',
+          'REACTION_REQUEST_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      // Validate defender authorization
+      if (message.confrontation.defenderCharacterId !== character.characterId) {
+        res.status(403).json(errorResponse(
+          'You are not the defender of this confrontation',
+          'UNAUTHORIZED_DEFENDER',
+          undefined,
+          403,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      // Validate defense skill is in available options
+      const availableSkills = message.confrontation.availableDefenseSkills.map((s: any) => s.skillName);
+      if (!availableSkills.includes(defenseSkillName)) {
+        res.status(400).json(errorResponse(
+          `Invalid defense skill: ${defenseSkillName} is not available for this confrontation`,
+          'INVALID_DEFENSE_SKILL',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      // Get skill values
+      const attackerCharacter = await Character.findById(message.confrontation.attackerCharacterId);
+      const defenderCharacter = await Character.findById(character.characterId);
+
+      if (!attackerCharacter || !defenderCharacter) {
+        res.status(404).json(errorResponse(
+          'Character not found',
+          'CHARACTER_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      // Get attacker skill value
+      const attackSkill = message.confrontation.attackSkill;
+      const attackerSkillData = attackerCharacter.skills?.[attackSkill];
+      let attackerValue = 0;
+      if (attackerSkillData !== undefined) {
+        if (typeof attackerSkillData === 'number') {
+          attackerValue = attackerSkillData;
+        } else if (attackerSkillData && typeof attackerSkillData === 'object' && 'total' in attackerSkillData) {
+          attackerValue = (attackerSkillData as any).total;
+        }
+      }
+
+      // Get defender skill value
+      const defenderSkillData = defenderCharacter.skills?.[defenseSkillName];
+      let defenderValue = 0;
+      if (defenderSkillData !== undefined) {
+        if (typeof defenderSkillData === 'number') {
+          defenderValue = defenderSkillData;
+        } else if (defenderSkillData && typeof defenderSkillData === 'object' && 'total' in defenderSkillData) {
+          defenderValue = (defenderSkillData as any).total;
+        }
+      }
+
+      // Default to 1 if skill not found
+      if (defenderValue === 0) {
+        defenderValue = 1;
+        logger.warn(`Defender skill ${defenseSkillName} not found for character ${character.characterId}, using default value 1`);
+      }
+
+      // Roll dice
+      const attackRoll = ChatController.rollDice('1d100').result;
+      const defenseRoll = ChatController.rollDice('1d100').result;
+
+      // Calculate success degrees
+      const attackDegree = calculateSuccessDegree(attackRoll, attackerValue).degree;
+      const defenseDegree = calculateSuccessDegree(defenseRoll, defenderValue).degree;
+
+      // Compare degrees to determine outcome
+      const comparison = compareSuccessDegrees(attackDegree, defenseDegree, attackRoll, defenseRoll);
+      const outcome = comparison > 0 ? 'hit' : 'miss';
+
+      // Update message IN-PLACE (atomic update with condition)
+      const updated: any = await Chat.findOneAndUpdate(
+        {
+          _id: messageId,
+          actionType: 'confrontation_reaction_request' // Prevent double-processing
+        },
+        {
+          $set: {
+            actionType: message.confrontation.type === 'combat' ? 'combat_action' : 'social_confrontation',
+            visibility: 'public',
+            'confrontation.phase': 'result',
+            'confrontation.defenseSkill': defenseSkillName,
+            'confrontation.attackRoll': attackRoll,
+            'confrontation.defenseRoll': defenseRoll,
+            'confrontation.attackSuccessLevel': attackDegree,
+            'confrontation.defenseSuccessLevel': defenseDegree,
+            'confrontation.outcome': outcome
+          },
+          $unset: {
+            targetCharacters: '',
+            'confrontation.availableDefenseSkills': ''
+          }
+        },
+        { new: true }
+      );
+
+      if (!updated) {
+        res.status(410).json(errorResponse(
+          'Reaction request already processed',
+          'ALREADY_PROCESSED',
+          undefined,
+          410,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      // Update encounter status
+      await CombatEncounter.updateOne(
+        { _id: message.confrontation.encounterId },
+        {
+          $set: {
+            status: 'completed',
+            'currentTurn.status': 'resolved',
+            'currentTurn.defenseSkill': defenseSkillName
+          }
+        }
+      );
+
+      // Emit WebSocket notification (SAME actionId, message was updated)
+      const io = req.app.get('io');
+      if (io) {
+        const roomName = `location_${message.locationId}`;
+        io.to(roomName).emit('location_message_notification', {
+          locationId: message.locationId,
+          actionId: messageId,
+          characterName: character.characterName,
+          actionType: updated.actionType,
+          timestamp: updated.timestamp
+        });
+      }
+
+      logger.info(`Confrontation resolved: ${messageId} (${outcome}: ${attackDegree} vs ${defenseDegree})`);
+
+      res.json(createResponse(
+        { action: updated, outcome },
+        'Confrontation resolved successfully',
+        getRequestId(req)
+      ));
+    } catch (error: any) {
+      logger.error('Handle confrontation reaction error:', error);
+      res.status(500).json(errorResponse(
+        'Failed to handle confrontation reaction',
+        'CONFRONTATION_REACTION_ERROR',
         undefined,
         500,
         getRequestId(req)

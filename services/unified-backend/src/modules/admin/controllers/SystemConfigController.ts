@@ -1,8 +1,6 @@
 import { Request, Response } from 'express';
 import {
-  ApiResponse,
   SystemConfig,
-  AuditLog,
   PaginationInfo
 } from '../types/management';
 import { AdminAuthMiddleware } from '../middleware/adminAuth';
@@ -17,49 +15,60 @@ export class SystemConfigController {
    */
   static async getSystemConfig(req: Request, res: Response): Promise<void> {
     try {
-      // TODO: Implement database query for system configuration
-      const mockConfig: SystemConfig = {
+      const { ConfigurationService } = await import('@shared/services/ConfigurationService');
+      const configService = new ConfigurationService(redis.getClient() as any, logger);
+
+      const [gameConfigs, economyConfigs, moderationConfigs, postalConfigs] = await Promise.all([
+        configService.getConfigsBySection('character_creation'),
+        configService.getConfigsBySection('economy'),
+        configService.getConfigsBySection('moderation'),
+        configService.getConfigsBySection('postal_system'),
+      ]);
+
+      const maintenanceValue = await configService.getConfig('system_maintenance_mode');
+
+      const config: SystemConfig = {
         gameSettings: {
-          newCharacterApprovalRequired: true,
-          maxCharactersPerUser: 3,
-          characterCreationEnabled: true,
-          aiCharacterGenerationEnabled: true,
-          npcInteractionEnabled: true,
-          locationChatEnabled: true
+          newCharacterApprovalRequired: gameConfigs.new_character_approval_required ?? true,
+          maxCharactersPerUser: gameConfigs.max_characters_per_user ?? 3,
+          characterCreationEnabled: gameConfigs.character_creation_enabled ?? true,
+          aiCharacterGenerationEnabled: gameConfigs.ai_character_generation_enabled ?? false,
+          npcInteractionEnabled: gameConfigs.npc_interaction_enabled ?? true,
+          locationChatEnabled: gameConfigs.location_chat_enabled ?? true,
         },
         economySettings: {
-          startingCash: 50,
-          startingDeposit: 200,
-          dailySalaryEnabled: true,
-          inflationRate: 0.02,
-          taxationEnabled: false
+          startingCash: economyConfigs.starting_cash ?? 50,
+          startingDeposit: economyConfigs.starting_deposit ?? 200,
+          dailySalaryEnabled: economyConfigs.daily_salary_enabled ?? true,
+          inflationRate: economyConfigs.inflation_rate ?? 0.02,
+          taxationEnabled: economyConfigs.taxation_enabled ?? false,
         },
         moderationSettings: {
-          chatModerationEnabled: true,
-          autoModerationLevel: 'medium',
-          reportSystemEnabled: true,
-          appealProcessEnabled: true
+          chatModerationEnabled: moderationConfigs.chat_moderation_enabled ?? true,
+          autoModerationLevel: moderationConfigs.auto_moderation_level ?? 'medium',
+          reportSystemEnabled: moderationConfigs.report_system_enabled ?? true,
+          appealProcessEnabled: moderationConfigs.appeal_process_enabled ?? true,
         },
         messageSettings: {
-          maxMessageLength: 2000,
-          messageEditTimeLimit: 300,
-          messageHistoryRetention: 365,
-          postalDeliveryEnabled: true,
-          postalDelaySimulation: true
+          maxMessageLength: postalConfigs.max_message_length ?? 2000,
+          messageEditTimeLimit: postalConfigs.message_edit_time_limit ?? 300,
+          messageHistoryRetention: postalConfigs.message_history_retention ?? 365,
+          postalDeliveryEnabled: postalConfigs.postal_delivery_enabled ?? true,
+          postalDelaySimulation: postalConfigs.postal_delay_simulation ?? true,
         },
-        maintenanceMode: {
+        maintenanceMode: maintenanceValue ?? {
           enabled: false,
           message: '',
           allowedUsers: [],
-          estimatedCompletion: undefined
-        }
+          estimatedCompletion: undefined,
+        },
       };
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       logger.info('Admin viewed system configuration', auditInfo);
 
       res.json(successResponse(
-        mockConfig,
+        config,
         undefined,
         getRequestId(req)
       ));
@@ -102,34 +111,57 @@ export class SystemConfigController {
         return;
       }
 
-      // TODO: Implement configuration update logic
-      // - Validate configuration changes
-      // - Update configuration in database
-      // - Create audit log entry
-      // - Publish Redis event for real-time config updates
-      // - Restart services if needed
+      const { ConfigurationService } = await import('@shared/services/ConfigurationService');
+      const configService = new ConfigurationService(redis.getClient() as any, logger);
+      const userId = req.user?.userId || 'unknown';
+
+      const sectionMap: Record<string, Record<string, any>> = {};
+      if (updates.gameSettings) sectionMap['character_creation'] = updates.gameSettings;
+      if (updates.economySettings) sectionMap['economy'] = updates.economySettings;
+      if (updates.moderationSettings) sectionMap['moderation'] = updates.moderationSettings;
+      if (updates.messageSettings) sectionMap['postal_system'] = updates.messageSettings;
+
+      const updatePromises: Promise<any>[] = [];
+      for (const [_section, fields] of Object.entries(sectionMap)) {
+        for (const [key, value] of Object.entries(fields)) {
+          const configKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
+          updatePromises.push(
+            configService.updateConfig(configKey, value, userId, reason).catch((err: Error) => {
+              logger.warn(`Config key ${configKey} not found in DB, skipping`, { error: err.message });
+              return null;
+            })
+          );
+        }
+      }
+
+      if (updates.maintenanceMode) {
+        updatePromises.push(
+          configService.updateConfig('system_maintenance_mode', updates.maintenanceMode, userId, reason).catch((err: Error) => {
+            logger.warn('system_maintenance_mode not found in DB, skipping', { error: err.message });
+            return null;
+          })
+        );
+      }
+
+      await Promise.all(updatePromises);
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       logger.info('System configuration updated by admin', {
         ...auditInfo,
-        updates: {
-          gameSettings: updates.gameSettings,
-          economySettings: updates.economySettings,
-          moderationSettings: updates.moderationSettings,
-          messageSettings: updates.messageSettings,
-          maintenanceMode: updates.maintenanceMode
-        },
+        updates: Object.keys(sectionMap),
         reason,
         category: 'system_configuration'
       });
 
-      // TODO: Send Redis event for real-time config updates
-      // await redisClient.publish('system:config_updated', {
-      //   updates,
-      //   updatedBy: req.user?.userId,
-      //   reason,
-      //   timestamp: new Date().toISOString()
-      // });
+      const redisClient = redis.getClient();
+      if (redisClient) {
+        await redisClient.publish('system:config_updated', JSON.stringify({
+          updates: Object.keys(sectionMap),
+          updatedBy: req.user?.userId,
+          reason,
+          timestamp: new Date().toISOString()
+        }));
+      }
 
       res.json(updateResponse(
         {
@@ -188,12 +220,43 @@ export class SystemConfigController {
         return;
       }
 
-      // TODO: Implement maintenance mode logic
-      // - Update maintenance mode configuration
-      // - Notify all active users
-      // - Disconnect non-allowed users if enabled
-      // - Create audit log entry
-      // - Publish Redis event
+      const { ConfigurationService } = await import('@shared/services/ConfigurationService');
+      const configService = new ConfigurationService(redis.getClient() as any, logger);
+      const userId = req.user?.userId || 'unknown';
+
+      const maintenanceData = {
+        enabled,
+        message: enabled ? message.trim() : '',
+        allowedUsers: allowedUsers || [],
+        estimatedCompletion: estimatedCompletion || undefined,
+      };
+
+      await configService.updateConfig(
+        'system_maintenance_mode',
+        maintenanceData,
+        userId,
+        enabled ? 'Attivazione manutenzione' : 'Disattivazione manutenzione'
+      ).catch(async () => {
+        const { SystemConfiguration } = await import('@database/models');
+        await SystemConfiguration.create({
+          configKey: 'system_maintenance_mode',
+          configSection: 'system',
+          configType: 'json',
+          value: maintenanceData,
+          defaultValue: maintenanceData,
+          description: 'Configurazione modalità manutenzione del sistema',
+          metadata: { version: 1, lastUpdatedBy: userId }
+        });
+      });
+
+      const redisClient = redis.getClient();
+      if (redisClient) {
+        await redisClient.publish('system:maintenance_mode', JSON.stringify({
+          ...maintenanceData,
+          updatedBy: req.user?.userId,
+          timestamp: new Date().toISOString()
+        }));
+      }
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       logger.warn('Maintenance mode changed by admin', {
@@ -245,7 +308,6 @@ export class SystemConfigController {
       const dateFrom = req.query.dateFrom ? new Date(req.query.dateFrom as string) : undefined;
       const dateTo = req.query.dateTo ? new Date(req.query.dateTo as string) : undefined;
 
-      // Import AuditLog model
       const { AuditLog: AuditLogModel } = await import('@database/models/AuditLog');
 
       // Build query filters
@@ -374,10 +436,30 @@ export class SystemConfigController {
         source: 'frontend'
       }));
 
-      // TODO: Store logs in database
-      // await AuditLogModel.insertMany(processedLogs);
+      const { AuditLog: AuditLogModel } = await import('@database/models/AuditLog');
 
-      // Log to Winston for immediate availability
+      const auditDocs = processedLogs.map((log: any) => ({
+        action: log.action,
+        actionDescription: log.details || log.action,
+        category: log.section || 'frontend',
+        actor: {
+          userId: log.userId || 'unknown',
+          username: log.username || 'unknown',
+          userRoles: log.userRoles || [],
+        },
+        success: log.success !== false,
+        errorMessage: log.error || undefined,
+        details: log.details ? { raw: log.details } : undefined,
+        ipAddress: log.ipAddress || clientIp,
+        userAgent: log.userAgent,
+        severity: log.success === false ? 'warning' : 'info',
+        timestamp: log.timestamp ? new Date(log.timestamp) : new Date(),
+      }));
+
+      await AuditLogModel.insertMany(auditDocs, { ordered: false }).catch((err: any) => {
+        logger.warn('Partial failure inserting frontend audit logs', { error: err.message });
+      });
+
       processedLogs.forEach((log: any) => {
         const logLevel = log.success === false ? 'warn' : 'info';
         logger[logLevel]('Frontend audit log', {
@@ -395,11 +477,13 @@ export class SystemConfigController {
         });
       });
 
-      // TODO: Publish Redis event for real-time log updates
-      // await redisClient.publish('system:audit_logs_submitted', {
-      //   count: processedLogs.length,
-      //   timestamp: new Date().toISOString()
-      // });
+      const redisClient = redis.getClient();
+      if (redisClient) {
+        await redisClient.publish('system:audit_logs_submitted', JSON.stringify({
+          count: processedLogs.length,
+          timestamp: new Date().toISOString()
+        }));
+      }
 
       res.json(successResponse(
         {
@@ -432,28 +516,60 @@ export class SystemConfigController {
       const dateTo = req.query.dateTo as string;
       const format = req.query.format as string || 'csv';
 
-      // TODO: Implement audit log export
-      // - Query audit logs with filters
-      // - Format as CSV or JSON
-      // - Create downloadable file
-      // - Log the export action
+      const { AuditLog: AuditLogModel } = await import('@database/models/AuditLog');
+
+      const query: any = {};
+      if (category) query.category = category;
+      if (dateFrom || dateTo) {
+        query.timestamp = {};
+        if (dateFrom) query.timestamp.$gte = new Date(dateFrom);
+        if (dateTo) query.timestamp.$lte = new Date(dateTo);
+      }
+
+      const logs = await AuditLogModel.find(query)
+        .sort({ timestamp: -1 })
+        .limit(10000)
+        .lean();
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       logger.info('Admin exported audit logs', {
         ...auditInfo,
         filters: { category, dateFrom, dateTo },
         format,
+        count: logs.length,
         category: 'system_configuration'
       });
 
-      // Mock CSV content
-      const csvContent = `ID,Timestamp,Admin User,Action,Category,Target Type,Target ID,Severity,IP Address
-audit_1,2024-01-15T14:30:00Z,admin,character_approved,character_management,character,char1,normal,192.168.1.100
-audit_2,2024-01-15T13:15:00Z,admin,user_banned,user_management,user,user123,high,192.168.1.100`;
+      if (format === 'json') {
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Content-Disposition', `attachment; filename="audit-logs-${new Date().toISOString().split('T')[0]}.json"`);
+        res.send(JSON.stringify(logs, null, 2));
+      } else {
+        const csvHeader = 'ID,Timestamp,User,Username,Action,Category,Severity,Success,IP Address,Error';
+        const csvRows = logs.map((log: any) => {
+          const escape = (val: any) => {
+            const str = String(val ?? '');
+            return str.includes(',') || str.includes('"') ? `"${str.replace(/"/g, '""')}"` : str;
+          };
+          return [
+            log._id,
+            log.timestamp?.toISOString?.() || log.timestamp,
+            log.actor?.userId || '',
+            escape(log.actor?.username || ''),
+            escape(log.action || ''),
+            escape(log.category || ''),
+            log.severity || 'info',
+            log.success !== false ? 'true' : 'false',
+            log.ipAddress || '',
+            escape(log.errorMessage || ''),
+          ].join(',');
+        });
 
-      res.setHeader('Content-Type', 'text/csv');
-      res.setHeader('Content-Disposition', `attachment; filename="audit-logs-${new Date().toISOString().split('T')[0]}.csv"`);
-      res.send(csvContent);
+        const csvContent = [csvHeader, ...csvRows].join('\n');
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+        res.setHeader('Content-Disposition', `attachment; filename="audit-logs-${new Date().toISOString().split('T')[0]}.csv"`);
+        res.send(csvContent);
+      }
     } catch (error: any) {
       logger.error('Error exporting audit logs:', { error: error instanceof Error ? error.message : String(error) });
       
@@ -671,10 +787,18 @@ audit_2,2024-01-15T13:15:00Z,admin,user_banned,user_management,user,user123,high
         sentAt: new Date()
       });
 
-      // TODO: Future enhancements:
-      // - Send message to all connected users via WebSocket
-      // - Store message for users who are offline
-      // - Publish Redis event for real-time notifications
+      const redisClient = redis.getClient();
+      if (redisClient) {
+        await redisClient.publish('system:broadcast', JSON.stringify({
+          broadcastId: broadcastDoc._id.toString(),
+          message: message.trim(),
+          type,
+          urgent: !!urgent,
+          targetAudience,
+          targetRoles: targetAudience === 'role_specific' ? targetRoles : [],
+          timestamp: new Date().toISOString()
+        }));
+      }
 
       logger.info('System broadcast sent and saved', {
         ...auditInfo,

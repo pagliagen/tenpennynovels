@@ -37,6 +37,19 @@ router.post('/social-conflict',
   ChatController.createSocialConflict
 );
 
+// TiroContrapposto - Confrontation system (Phase 1)
+router.post('/confrontation-attack',
+  AuthMiddleware.requireCharacterAuth,
+  requireGamePermission('game:chat:social-conflicts'), // Reuse same permission
+  ChatController.createConfrontationAttack
+);
+
+router.post('/confrontation-reaction',
+  AuthMiddleware.requireCharacterAuth,
+  requireGamePermission('game:chat:social-conflicts'),
+  ChatController.handleConfrontationReaction
+);
+
 // Admin operations
 router.delete('/:locationId/clear',
   AuthMiddleware.requireCharacterAuth,

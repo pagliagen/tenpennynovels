@@ -1,0 +1,83 @@
+/**
+ * Reaction Request Message Styles
+ *
+ * Confrontation attack waiting for defender's reaction.
+ */
+
+@import '../MessageCard.module.scss';
+
+/* Confrontation icon */
+.confrontationIcon {
+  font-size: 20px;
+  text-align: center;
+}
+
+/* Defense choice UI */
+.defenseButtons {
+  margin-top: 16px;
+  padding: 16px;
+  background: rgba(138, 43, 226, 0.1);
+  border-radius: 6px;
+  border: 2px solid rgba(138, 43, 226, 0.3);
+}
+
+.defensePrompt {
+  color: #e8d4a0;
+  font-family: 'Georgia Pro', Georgia, serif;
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.buttonGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.defenseButton {
+  padding: 12px 20px;
+  background: linear-gradient(135deg, rgba(138, 43, 226, 0.5) 0%, rgba(138, 43, 226, 0.3) 100%);
+  border: 2px solid rgba(138, 43, 226, 0.6);
+  border-radius: 6px;
+  color: #e8d4a0;
+  font-family: 'Georgia Pro', Georgia, serif;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, rgba(138, 43, 226, 0.7) 0%, rgba(138, 43, 226, 0.5) 100%);
+    border-color: rgba(138, 43, 226, 0.8);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(138, 43, 226, 0.4);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.specialRule {
+  display: block;
+  font-size: 12px;
+  font-weight: 400;
+  font-style: italic;
+  margin-top: 4px;
+  color: rgba(232, 212, 160, 0.7);
+}
+
+/* Waiting status */
+.waitingStatus {
+  margin-top: 12px;
+  padding: 12px 16px;
+  background: rgba(255, 165, 0, 0.1);
+  border-radius: 4px;
+  color: rgba(232, 212, 160, 0.8);
+  font-family: 'Georgia Pro', Georgia, serif;
+  font-size: 14px;
+  font-style: italic;
+  text-align: center;
+}

@@ -23,7 +23,10 @@ export type ActionType =
   | 'stat_check'    // Attribute check result
   | 'item_use'      // Item usage action
   | 'master'        // Master-only announcement
-  | 'moderation';   // System/moderation message
+  | 'moderation'    // System/moderation message
+  | 'social_confrontation'           // TiroContrapposto - Social conflict result
+  | 'combat_action'                  // TiroContrapposto - Combat action result
+  | 'confrontation_reaction_request'; // TiroContrapposto - Waiting for defender's choice
 
 // Backward compatibility alias
 export type ChatMessageType = ActionType;
@@ -83,6 +86,48 @@ export interface ItemUsePayload {
 }
 
 /**
+ * Confrontation Payload (TiroContrapposto)
+ *
+ * Represents an opposed roll in combat or social conflicts.
+ * Unified system for all confrontations (replaces socialConflict).
+ */
+export interface ConfrontationPayload {
+  type: 'social' | 'combat';
+  encounterId?: string;        // CombatEncounter._id (null for social)
+  turnNumber?: number;          // Combat only
+  phase: 'waiting_reaction' | 'result';
+
+  attackerCharacterId: string;
+  defenderCharacterId: string;
+
+  // Populated when phase = 'waiting_reaction'
+  availableDefenseSkills?: Array<{
+    skillName: string;
+    label: string;
+    specialRule?: string;
+  }>;
+
+  // Populated when phase = 'result'
+  attackSkill?: string;
+  defenseSkill?: string;
+  weaponName?: string;          // Combat only
+  attackRoll?: number;
+  defenseRoll?: number;
+  attackSuccessLevel?: 'critical' | 'extreme' | 'hard' | 'normal' | 'failure' | 'fumble';
+  defenseSuccessLevel?: 'critical' | 'extreme' | 'hard' | 'normal' | 'failure' | 'fumble';
+
+  outcome?: 'hit' | 'miss' | 'parry' | 'dodge' | 'disarm' | 'attacker_wins' | 'defender_wins' | 'draw';
+
+  damageDealt?: number;         // Combat only (Phase 2)
+  isCriticalDamage?: boolean;   // Combat only (Phase 2)
+  damageFormula?: string;       // Combat only (Phase 2)
+
+  // For Raggirare (Phase 3)
+  messageForDefender?: string;
+  visibleToDefenderOnly?: boolean;
+}
+
+/**
  * Whisper Visibility
  *
  * Controls who can see a whisper message.
@@ -118,9 +163,10 @@ export interface ChatMessage {
 
   // Type-specific payload (DB field names)
   diceResult?: DiceRollPayload;        // DB field (was diceRoll)
-  socialConflict?: SkillCheckPayload;  // DB field (was skillCheck)
+  socialConflict?: SkillCheckPayload;  // DB field (was skillCheck) - DEPRECATED, use confrontation
   statCheck?: StatCheckPayload;
   itemEffect?: ItemUsePayload;         // DB field (was itemUse)
+  confrontation?: ConfrontationPayload; // TiroContrapposto - Unified confrontation system
   targetCharacters?: string[];         // DB field (was whisperVisibility) - Array of character IDs
 
   // Hidden/Defender-only fields

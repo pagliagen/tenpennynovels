@@ -185,6 +185,43 @@ export const locationChatsApi = {
   },
 
   /**
+   * React to Confrontation (TiroContrapposto Phase 1)
+   *
+   * Defender chooses their defense skill in response to a confrontation attack.
+   * Updates the reaction request message in-place with the final roll results.
+   *
+   * **Real-Time Flow**:
+   * 1. HTTP POST rolls dice and calculates opposed roll result
+   * 2. Backend updates message atomically (prevents double-processing)
+   * 3. Backend emits WebSocket event with SAME actionId (message updated)
+   * 4. All clients see the updated message with final results
+   *
+   * @param {string} messageId - Reaction request message ID
+   * @param {string} defenseSkillName - Chosen defense skill
+   * @returns {Promise<ChatMessage>} Updated message with results
+   * @throws {ApiError} If request fails (403 if not defender, 410 if already processed)
+   *
+   * @example
+   * ```typescript
+   * // Defender chooses Schivata to defend against Corpo a Corpo
+   * const result = await locationChatsApi.reactToConfrontation('msg123', 'Schivata');
+   * // Message updates from 'confrontation_reaction_request' to 'combat_action'
+   * // Shows final rolls and outcome
+   * ```
+   */
+  async reactToConfrontation(
+    messageId: string,
+    defenseSkillName: string
+  ): Promise<ChatMessage> {
+    const response = await api.post<{ data: { action: ChatMessage } }>(
+      '/game/chats/confrontation-reaction',
+      { messageId, defenseSkillName }
+    );
+
+    return response.data.action;
+  },
+
+  /**
    * Edit Message
    *
    * Edits an existing message (must be own message, within 3-minute window).
