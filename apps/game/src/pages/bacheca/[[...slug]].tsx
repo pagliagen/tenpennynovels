@@ -1,39 +1,27 @@
-/**
- * Bacheca (Forum) Catch-All Page
- *
- * Handles all /bacheca/* routes.
- * The forum UI is rendered as a fullscreen modal overlay via ForumModal,
- * which auto-opens when this page is active.
- *
- * @module pages/bacheca/[[...slug]]
- * @since 2.0.0
- */
-
 'use client';
 
 import { useEffect } from 'react';
-import Head from 'next/head';
-import { GameLayout } from '@/components/layout/GameLayout';
-import { useForumStore } from '@/store/forumStore';
+import { useRouter } from 'next/router';
 
-export default function BachecaPage(): JSX.Element {
-  const openForum = useForumStore((s) => s.openForum);
-  const syncWithUrl = useForumStore((s) => s.syncWithUrl);
+/**
+ * Backward Compatibility Redirect Page
+ *
+ * Vecchi link /bacheca/* vengono reindirizzati a /#bacheca/*
+ * Temporaneo: rimuovere dopo 1-2 mesi dalla migrazione
+ *
+ * @module pages/bacheca/[[...slug]]
+ */
+export default function BachecaRedirectPage(): null {
+  const router = useRouter();
 
   useEffect(() => {
-    syncWithUrl();
-    if (!useForumStore.getState().isOpen) openForum();
-  }, [syncWithUrl, openForum]);
+    // Converti /bacheca/topic/discussion → /#bacheca/topic/discussion
+    const fullPath = router.asPath; // es: /bacheca/topic/discussion?q=test
+    const hashPath = fullPath.replace('/bacheca', '#bacheca');
 
-  return (
-    <>
-      <Head>
-        <title>Bacheca - Ten Penny Novels</title>
-        <meta name="description" content="La bacheca della community di Ten Penny Novels" />
-      </Head>
-      <GameLayout>
-        <div />
-      </GameLayout>
-    </>
-  );
+    // Redirect a home page con hash
+    window.location.href = `/${hashPath}`;
+  }, [router.asPath]);
+
+  return null;
 }

@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useCallback, useState } from 'react';
-import { useRouter } from 'next/router';
 import { useForumStore } from '@/store/forumStore';
 import { TopicListView } from './views/TopicListView';
 import { DiscussionListView } from './views/DiscussionListView';
@@ -17,17 +16,23 @@ const ANIMATION_DURATION = 300; // ms
 
 export function ForumModal(): JSX.Element | null {
   const { isOpen, view, closeForum, syncWithUrl } = useForumStore();
-  const router = useRouter();
   const [isClosing, setIsClosing] = useState(false);
 
   const handleClose = useCallback(() => {
     setIsClosing(true);
     setTimeout(() => {
       closeForum();
-      router.push('/');
+      // Clear hash to return to game page
+      if (typeof window !== 'undefined') {
+        window.history.replaceState(
+          null,
+          '',
+          window.location.pathname + window.location.search
+        );
+      }
       setIsClosing(false);
     }, ANIMATION_DURATION);
-  }, [closeForum, router]);
+  }, [closeForum]);
 
   const handleOverlayClick = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {

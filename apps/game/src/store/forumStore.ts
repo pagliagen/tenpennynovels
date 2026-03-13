@@ -1,16 +1,17 @@
 /**
  * Forum Store (Zustand)
  *
- * Manages forum navigation state and URL path synchronization.
+ * Manages forum navigation state and URL hash synchronization.
  *
- * **URL Format** (Bacheca):
- * - /bacheca → topics list
- * - /bacheca/{topicSlug} → discussions list
- * - /bacheca/{topicSlug}/{discussionSlug} → thread view
- * - /bacheca/{topicSlug}/{discussionSlug}/{postId} → thread + scroll to post
- * - /bacheca/search?q=term → search results
- * - /bacheca/bookmarks → user bookmarks
- * - /bacheca/notifications → user notifications
+ * **URL Format** (Hash-based routing):
+ * - /#bacheca → topics list
+ * - /#bacheca/{topicSlug} → discussions list
+ * - /#bacheca/{topicSlug}/{discussionSlug} → thread view
+ * - /#bacheca/{topicSlug}/{discussionSlug}/{postId} → thread + scroll to post
+ * - /#bacheca/search?q=term → search results
+ * - /#bacheca/bookmarks → user bookmarks
+ * - /#bacheca/notifications → user notifications
+ * - /#bacheca/{topicSlug}/nuova-discussione → create discussion
  *
  * @module store/forumStore
  * @since 2.0.0
@@ -43,38 +44,42 @@ interface ForumStore {
   updateUrl: () => void;
 }
 
-const PATH_PREFIX = '/bacheca';
+const HASH_PREFIX = '#bacheca';
 
-function buildPath(state: Pick<ForumStore, 'view' | 'topicSlug' | 'discussionSlug' | 'postId' | 'searchQuery'>): string {
+function buildHash(state: Pick<ForumStore, 'view' | 'topicSlug' | 'discussionSlug' | 'postId' | 'searchQuery'>): string {
   switch (state.view) {
     case 'topics':
-      return PATH_PREFIX;
+      return HASH_PREFIX;
     case 'discussions':
-      return `${PATH_PREFIX}/${state.topicSlug}`;
+      return `${HASH_PREFIX}/${state.topicSlug}`;
     case 'thread':
       if (state.postId) {
-        return `${PATH_PREFIX}/${state.topicSlug}/${state.discussionSlug}/${state.postId}`;
+        return `${HASH_PREFIX}/${state.topicSlug}/${state.discussionSlug}/${state.postId}`;
       }
-      return `${PATH_PREFIX}/${state.topicSlug}/${state.discussionSlug}`;
+      return `${HASH_PREFIX}/${state.topicSlug}/${state.discussionSlug}`;
     case 'search':
       return state.searchQuery
-        ? `${PATH_PREFIX}/search?q=${encodeURIComponent(state.searchQuery)}`
-        : `${PATH_PREFIX}/search`;
+        ? `${HASH_PREFIX}/search?q=${encodeURIComponent(state.searchQuery)}`
+        : `${HASH_PREFIX}/search`;
     case 'bookmarks':
-      return `${PATH_PREFIX}/bookmarks`;
+      return `${HASH_PREFIX}/bookmarks`;
     case 'notifications':
-      return `${PATH_PREFIX}/notifications`;
+      return `${HASH_PREFIX}/notifications`;
     case 'createDiscussion':
-      return `${PATH_PREFIX}/${state.topicSlug}/nuova-discussione`;
+      return `${HASH_PREFIX}/${state.topicSlug}/nuova-discussione`;
     default:
-      return PATH_PREFIX;
+      return HASH_PREFIX;
   }
 }
 
-function parsePath(pathname: string, search?: string): Partial<Pick<ForumStore, 'view' | 'topicSlug' | 'discussionSlug' | 'postId' | 'searchQuery'>> {
-  if (!pathname.startsWith(PATH_PREFIX)) return {};
+function parseHash(hash: string): Partial<Pick<ForumStore, 'view' | 'topicSlug' | 'discussionSlug' | 'postId' | 'searchQuery'>> {
+  if (!hash || !hash.startsWith(HASH_PREFIX)) return {};
 
-  const rest = pathname.slice(PATH_PREFIX.length);
+  // Extract path and query from hash (e.g., #bacheca/search?q=test)
+  const hashContent = hash.slice(1); // Remove leading #
+  const [pathPart = '', queryPart] = hashContent.split('?');
+
+  const rest = pathPart.slice('bacheca'.length);
   if (!rest || rest === '/') {
     return { view: 'topics', topicSlug: null, discussionSlug: null, postId: null, searchQuery: '' };
   }
@@ -82,7 +87,7 @@ function parsePath(pathname: string, search?: string): Partial<Pick<ForumStore, 
   const withoutLeadingSlash = rest.startsWith('/') ? rest.slice(1) : rest;
 
   if (withoutLeadingSlash.startsWith('search')) {
-    const qMatch = search?.match(/q=(.+)$/);
+    const qMatch = queryPart?.match(/q=(.+)$/);
     return {
       view: 'search',
       searchQuery: qMatch?.[1] ? decodeURIComponent(qMatch[1]) : '',
@@ -200,11 +205,10 @@ export const useForumStore = create<ForumStore>()(
       syncWithUrl: () => {
         if (typeof window === 'undefined') return;
 
-        const pathname = window.location.pathname;
-        const search = window.location.search;
-        if (!pathname.startsWith(PATH_PREFIX)) return;
+        const hash = window.location.hash;
+        if (!hash || !hash.startsWith(HASH_PREFIX)) return;
 
-        const parsed = parsePath(pathname, search);
+        const parsed = parseHash(hash);
         if (parsed.view) {
           set({
             view: parsed.view,
@@ -221,8 +225,11 @@ export const useForumStore = create<ForumStore>()(
         if (typeof window === 'undefined') return;
 
         const state = get();
-        const path = buildPath(state);
-        window.history.replaceState(null, '', path);
+        const hash = buildHash(state);
+
+        // Use replaceState to avoid history pollution
+        const currentPath = window.location.pathname + window.location.search;
+        window.history.replaceState(null, '', currentPath + hash);
       },
     }),
     {
@@ -231,6 +238,21 @@ export const useForumStore = create<ForumStore>()(
     }
   )
 );
+
+// Initialize hash listener for browser back/forward
+if (typeof window !== 'undefined') {
+  window.addEventListener('hashchange', () => {
+    const store = useForumStore.getState();
+
+    // Only sync if forum is open
+    if (store.isOpen) {
+      store.syncWithUrl();
+    } else if (window.location.hash.startsWith('#bacheca')) {
+      // If forum closed but hash present, open it
+      store.openForum();
+    }
+  });
+}
 
 /**
  * Selector Hooks (Optimized)

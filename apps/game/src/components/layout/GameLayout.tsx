@@ -214,8 +214,9 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
   };
 
   const handleForumClick = useCallback(() => {
-    router.push('/bacheca');
-  }, [router]);
+    const { openForum } = useForumStore.getState();
+    openForum();
+  }, []);
 
   /**
    * WebSocket listener for real-time mail badge updates
