@@ -107,7 +107,8 @@ export interface ChatMessage {
   // Author
   characterId: string;
   characterName: string;
-  tags?: string;           // DB field (was characterTag) - Single string, NOT array
+  characterAvatar?: string;  // Character avatar URL
+  position?: string;         // Current position/tag in location (e.g., "Tavolo 1", "Bancone")
 
   // Location
   locationId: string;
@@ -183,7 +184,7 @@ export interface ChatOccupant {
 export interface SendMessageRequest {
   actionType: ActionType;          // DB field (was messageType)
   content: string;                 // DB field (was text)
-  tags?: string;                   // DB field - Position tag (e.g., "Tavolo 1")
+  position?: string;               // DB field - Position tag (e.g., "Tavolo 1")
   targetCharacterId?: string;      // For whispers (backend converts to targetCharacters array)
   targetCharacters?: string[];     // For whispers (backend expects array)
   diceSpec?: string;               // For dice_roll (sempre '1d100')
@@ -200,7 +201,7 @@ export interface SendMessageRequest {
  * Edit Message Request
  */
 export interface EditMessageRequest {
-  text: string;
+  content: string;  // DB field (was text)
 }
 
 /**

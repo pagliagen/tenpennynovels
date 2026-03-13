@@ -135,12 +135,12 @@ function shouldDimMessage(
     return false;
   }
 
-  // Compare tags: if same tag as last my action → show normally
-  const lastMyTag = lastMyAction.tags || '';
-  const messageTag = message.tags || '';
+  // Compare positions: if same position as last my action → show normally
+  const lastMyPosition = lastMyAction.position || '';
+  const messagePosition = message.position || '';
 
-  // Different tag → dim
-  return lastMyTag !== messageTag;
+  // Different position → dim
+  return lastMyPosition !== messagePosition;
 }
 
 /**

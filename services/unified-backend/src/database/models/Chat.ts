@@ -6,6 +6,7 @@ export interface IChat extends Document {
   characterId: string;
   characterName: string;
   characterSurname?: string;
+  characterAvatar?: string;
   isBot: boolean;
   content: string;
   locationId: string;
@@ -39,7 +40,7 @@ export interface IChat extends Document {
   targetCharacters?: string[];
   characterRoles: string[];
 
-  tags: string;
+  position?: string;
   
   editHistory?: Array<{
     content: string;
@@ -88,6 +89,12 @@ const ChatSchema = new Schema<IChat>({
   characterSurname: {
     type: String,
     required: false
+  },
+  characterAvatar: {
+    type: String,
+    required: false,
+    trim: true,
+    maxlength: 500
   },
   isBot: {
     type: Boolean,
@@ -153,11 +160,10 @@ const ChatSchema = new Schema<IChat>({
     enum: ['player', 'master', 'moderatore']
   }],
 
-  tags: {
+  position: {
     type: String,
-    required: true,
+    required: false,
     trim: true,
-    lowercase: true,
     maxlength: 50
   },
   
@@ -280,7 +286,7 @@ ChatSchema.statics.getLocationHistory = async function(
 
   const normalizedActions = actions.map((action: any) => ({
     ...action,
-    tags: action.tags || ''
+    position: action.position || undefined
   }));
 
   return normalizedActions.reverse();

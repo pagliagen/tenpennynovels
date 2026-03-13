@@ -53,6 +53,7 @@ export interface CharacterContextToken {
   userId: string;
   characterId: string;
   characterName: string;
+  avatar?: string;
   isApproved?: boolean;
   gameplayRoles?: ('player' | 'master' | 'moderatore')[];
   playerStatus?: string; // draft, pending, approved

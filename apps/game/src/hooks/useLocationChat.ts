@@ -315,10 +315,10 @@ export function useLocationChat(
       const currentTag = useChatStore.getState().currentTag;
 
       try {
-        // Include currentTag in payload (backend requires single tag string)
+        // Include current position in payload (backend stores in position field)
         const payload: SendMessageRequest = {
           ...data,
-          tags: currentTag || undefined, // Single string, undefined if not set
+          position: currentTag || undefined, // Single string, undefined if not set
         };
 
         const message = await locationChatsApi.sendMessage(locationId, payload);

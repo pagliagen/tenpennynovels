@@ -24,8 +24,8 @@ export function StandardMessage({ message, formattedTime }: StandardMessageProps
       <div className={styles.messageHeader}>
         <span className={styles.characterName}>{message.characterName}</span>
 
-        {message.tags && (
-          <span className={styles.characterTag}>@ {message.tags}</span>
+        {message.position && (
+          <span className={styles.characterTag}>@ {message.position}</span>
         )}
 
         <time className={styles.messageTimestamp} dateTime={message.timestamp}>

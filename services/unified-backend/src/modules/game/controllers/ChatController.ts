@@ -9,7 +9,34 @@ import { calculateSocialConflict, isValidSocialSkillPair, getDefensiveSkill } fr
 import { getSocketIO } from '../websocket/socketInstance';
 
 export class ChatController {
-  
+
+  /**
+   * Populate character avatars for messages
+   * Performs batch lookup of avatars from Character collection
+   */
+  private static async populateCharacterAvatars(messages: any[]): Promise<any[]> {
+    if (messages.length === 0) return messages;
+
+    // Get unique character IDs
+    const characterIds = [...new Set(messages.map(m => m.characterId))];
+
+    // Batch lookup avatars
+    const characters = await Character.find({ _id: { $in: characterIds } })
+      .select('_id avatar')
+      .lean();
+
+    // Create ID -> avatar map
+    const avatarMap = new Map(
+      characters.map((c: any) => [c._id.toString(), c.avatar])
+    );
+
+    // Add avatar to each message
+    return messages.map(message => ({
+      ...message,
+      characterAvatar: avatarMap.get(message.characterId) || undefined
+    }));
+  }
+
   /**
    * Create a new location action (message)
    * POST /game/locations/actions
@@ -38,7 +65,7 @@ export class ChatController {
         skillId, // ObjectId of skill (secure - looked up from character)
         statName,
         itemId,
-        tag,
+        position,
         isHidden
       } = req.body;
 
@@ -127,7 +154,7 @@ export class ChatController {
         timestamp: new Date(),
         visibility: visibility || ChatController.getActionVisibility(actionType),
         characterRoles: character.gameplayRoles || [],
-        tags: tag || '', // Single tag string (required field, empty string if not provided)
+        position: position || undefined,
         isHidden: shouldHide
       };
 
@@ -253,17 +280,21 @@ export class ChatController {
       // Save to database
       const savedAction = await ((Chat as any).createAction(actionData));
 
-      // Update occupant tag if a tag was provided
-      if (tag) {
+      // Lookup character avatar from DB (not from token - token may be stale)
+      const actionCharacter = await Character.findById(character.characterId).select('avatar').lean();
+      const characterAvatar = actionCharacter?.avatar;
+
+      // Update occupant position tag if position was provided
+      if (position) {
         try {
           const location = await Location.findById(locationId);
           if (location) {
-            await location.updateOccupantTag(character.characterId, tag);
-            logger.info(`Updated occupant tag for ${character.characterName} in ${locationId}: ${tag}`);
+            await location.updateOccupantTag(character.characterId, position);
+            logger.info(`Updated occupant position for ${character.characterName} in ${locationId}: ${position}`);
           }
         } catch (error) {
-          // Don't fail the request if tag update fails
-          logger.error('Failed to update occupant tag:', error);
+          // Don't fail the request if position update fails
+          logger.error('Failed to update occupant position:', error);
         }
       }
 
@@ -298,7 +329,8 @@ export class ChatController {
           actionType: savedAction.actionType,           // DB field (was messageType)
           characterId: savedAction.characterId,
           characterName: savedAction.characterName,
-          tags: savedAction.tags || undefined,          // DB field (was characterTag)
+          characterAvatar: characterAvatar || undefined,  // Looked up from DB
+          position: savedAction.position || undefined,
           locationId: savedAction.locationId.toString(),
           content: savedAction.content,                 // DB field (was text)
           diceResult: savedAction.diceResult || undefined,  // DB field (was diceRoll)
@@ -478,7 +510,8 @@ export class ChatController {
         actionType: savedAction.actionType,
         characterId: savedAction.characterId,
         characterName: savedAction.characterName,
-        tags: savedAction.tags || undefined,  // ✅ Added missing field
+        characterAvatar: characterAvatar || undefined,  // Looked up from DB
+        position: savedAction.position || undefined,
         locationId: savedAction.locationId.toString(),
         content: savedAction.content,
         timestamp: savedAction.timestamp,
@@ -634,7 +667,7 @@ export class ChatController {
           actionType: action.actionType,           // DB field (was messageType)
           characterId: action.characterId,
           characterName: action.characterName,
-          tags: action.tags || undefined,          // DB field (was characterTag)
+          position: action.position || undefined,
           locationId: action.locationId.toString(),
           content: action.content,                 // DB field (was text)
           diceResult: action.diceResult || undefined,  // DB field (was diceRoll)
@@ -665,11 +698,14 @@ export class ChatController {
         return chatMessage;
       });
 
-      logger.info(`Retrieved ${filteredActions.length} location messages for ${character.characterName} in ${locationId}`);
+      // Populate character avatars from DB (batch lookup for performance)
+      const messagesWithAvatars = await ChatController.populateCharacterAvatars(filteredActions);
+
+      logger.info(`Retrieved ${messagesWithAvatars.length} location messages for ${character.characterName} in ${locationId}`);
 
       res.json(successResponse(
         {
-          messages: filteredActions,  // ✅ Frontend expects "messages" not "actions"
+          messages: messagesWithAvatars,  // ✅ Frontend expects "messages" not "actions"
           totalCount: filteredActions.length,
           hasMore: false  // TODO: Implement pagination
         },
@@ -855,6 +891,10 @@ export class ChatController {
       action.editHistory = editHistory;
       await action.save();
 
+      // Lookup character avatar from DB
+      const actionCharacter = await Character.findById(action.characterId).select('avatar').lean();
+      const characterAvatar = actionCharacter?.avatar;
+
       // Emit WebSocket notification
       const io = req.app.get('io');
       if (io) {
@@ -873,12 +913,13 @@ export class ChatController {
 
       res.json(successResponse(
         {
-          action: {
+          message: {
             _id: action._id.toString(),
             actionType: action.actionType,
             characterId: action.characterId,
             characterName: action.characterName,
-            tags: action.tags || undefined,
+            characterAvatar: characterAvatar || undefined,  // Looked up from DB
+            position: action.position || undefined,
             locationId: action.locationId.toString(),
             content: action.content,
             diceResult: action.diceResult || undefined,

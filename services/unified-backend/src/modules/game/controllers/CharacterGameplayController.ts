@@ -190,6 +190,7 @@ export class CharacterGameplayController {
         {
           characterId: character.id,
           characterName: character.name,
+          avatar: character.avatar,
           userId: userId,
           gameplayRoles: character.gameplayRoles || [],
           isGestore: character.isGestore || false,

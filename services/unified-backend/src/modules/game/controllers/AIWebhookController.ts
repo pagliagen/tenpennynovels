@@ -51,7 +51,7 @@ export class AIWebhookController {
         character = await Character.findById(botCharacterId);
       }
 
-      const defaultTag = (location.tags && location.tags.length > 0) ? location.tags[0] : 'general';
+      const defaultPosition = (location.positions && location.positions.length > 0) ? location.positions[0] : undefined;
 
       const action = await Chat.create({
         locationId,
@@ -60,7 +60,7 @@ export class AIWebhookController {
         isBot: true,
         actionType: 'standard',
         content: response,
-        tags: defaultTag,
+        position: defaultPosition,
         visibility: 'public',
         timestamp: new Date(),
       });
@@ -73,10 +73,11 @@ export class AIWebhookController {
             locationId,
             characterId: botCharacterId,
             characterName: character?.name || botName,
+            characterAvatar: character?.avatar,
             isBot: true,
             actionType: 'standard',
             content: response,
-            tags: defaultTag,
+            position: defaultPosition,
             visibility: 'public',
             timestamp: action.timestamp,
           },

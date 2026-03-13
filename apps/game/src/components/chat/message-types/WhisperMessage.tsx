@@ -31,8 +31,8 @@ export function WhisperMessage({ message, formattedTime }: WhisperMessageProps):
         <span className={styles.characterName}>{message.characterName}</span>
         <span className={styles.whisperIndicator}>sussurra {targetName}</span>
 
-        {message.tags && (
-          <span className={styles.characterTag}>@ {message.tags}</span>
+        {message.position && (
+          <span className={styles.characterTag}>@ {message.position}</span>
         )}
 
         <time className={styles.messageTimestamp} dateTime={message.timestamp}>

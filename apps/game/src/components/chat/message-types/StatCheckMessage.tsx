@@ -27,8 +27,8 @@ export function StatCheckMessage({ message, formattedTime }: StatCheckMessagePro
         <span className={styles.statIcon}>💪</span>
         <span className={styles.characterName}>{message.characterName}</span>
 
-        {message.tags && (
-          <span className={styles.characterTag}>@ {message.tags}</span>
+        {message.position && (
+          <span className={styles.characterTag}>@ {message.position}</span>
         )}
 
         <time className={styles.messageTimestamp} dateTime={message.timestamp}>
