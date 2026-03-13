@@ -183,6 +183,36 @@ const ALL_CONFIGS: ConfigRecord[] = [
     isActive: true,
     metadata: { version: 1 },
   },
+  {
+    configKey: 'ai_moderation_enabled',
+    configSection: 'moderation',
+    configType: 'boolean',
+    value: false,
+    defaultValue: false,
+    description: 'Abilita la moderazione automatica AI dei messaggi chat (distilbert-multilingual-toxicity-classifier)',
+    isActive: true,
+    metadata: { version: 1 },
+  },
+  {
+    configKey: 'ai_moderation_threshold',
+    configSection: 'moderation',
+    configType: 'number',
+    value: 0.7,
+    defaultValue: 0.7,
+    description: 'Soglia di tossicità (0.0–1.0) oltre la quale un messaggio viene flaggato automaticamente',
+    isActive: true,
+    metadata: { version: 1 },
+  },
+  {
+    configKey: 'ai_moderation_model',
+    configSection: 'moderation',
+    configType: 'string',
+    value: 'distilbert-multilingual-toxicity-classifier',
+    defaultValue: 'distilbert-multilingual-toxicity-classifier',
+    description: 'Nome del modello AI usato per la classificazione di tossicità',
+    isActive: true,
+    metadata: { version: 1 },
+  },
 
   // ── postal_system ───────────────────────────────────────────────
   {

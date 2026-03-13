@@ -26,7 +26,7 @@ import {
   isChatEmbeddingEvent,
   isDeleteEmbeddingEvent
 } from '../types/events';
-import { PythonEmbeddingService } from '../services/PythonEmbeddingService';
+import { PythonEmbeddingService, ModerationResult } from '../services/PythonEmbeddingService';
 import { DLQService } from '../services/DLQService';
 import { parseChunks, ParsedChunk } from '../utils/ChunkParser';
 
@@ -35,7 +35,9 @@ const QDRANT_URL = process.env.QDRANT_URL || 'http://localhost:6333';
 const ELASTICSEARCH_URL = process.env.ELASTICSEARCH_URL || 'http://localhost:9200';
 const ELASTICSEARCH_INDEX_PREFIX = process.env.ELASTICSEARCH_INDEX_PREFIX || 'tenpennynovels';
 const EMBEDDING_MODEL = 'paraphrase-multilingual-MiniLM-L12-v2';
+const MODERATION_MODEL = 'distilbert-multilingual-toxicity-classifier';
 const CACHE_TTL = 3600; // 1 hour
+const MODERATION_CONFIG_CACHE_TTL = 60000; // 1 minute
 
 export class EmbeddingWorker {
   private subscriber: any; // Redis subscriber
@@ -45,6 +47,9 @@ export class EmbeddingWorker {
   private queue: Bull.Queue;
   private pythonService: PythonEmbeddingService; // Python subprocess for embeddings
   private isRunning: boolean = false;
+
+  private moderationConfigCache: { enabled: boolean; threshold: number } | null = null;
+  private moderationConfigCacheTime: number = 0;
 
   constructor(redisSubscriber: any, pythonService: PythonEmbeddingService) {
     this.subscriber = redisSubscriber;
@@ -519,7 +524,7 @@ export class EmbeddingWorker {
   }
 
   /**
-   * Handle chat embedding event
+   * Handle chat embedding event (embedding + optional moderation)
    */
   private async handleChatEvent(event: ChatEmbeddingEvent): Promise<void> {
     try {
@@ -533,42 +538,172 @@ export class EmbeddingWorker {
         throw new Error(`Location not found: ${event.locationId}`);
       }
 
-      // Generate text with context
       const locationName = location.name as string;
       const text = `${event.characterName} a ${locationName}: ${event.content}`;
 
-      // ✅ Check cache
+      // ✅ Check cache for embedding
       const cacheKey = `embedding:${this.hashContent(text)}`;
+      let embedding: number[] | null = null;
+
       if (this.redis) {
         const cached = await this.redis.get(cacheKey);
         if (cached) {
-          const embedding = JSON.parse(cached);
-          await this.saveChatEmbedding(event.chatId, locationName, embedding);
-          console.log(`✅ Location action embedding from cache: ${event.characterName}`);
-          return;
+          embedding = JSON.parse(cached);
         }
       }
 
-      // ✅ Generate embedding
-      const embedding = await this.generateEmbedding(text);
-
       if (!embedding) {
-        throw new Error(`Failed to generate embedding for chat ${event.chatId}`);
+        embedding = await this.generateEmbedding(text);
+        if (!embedding) {
+          throw new Error(`Failed to generate embedding for chat ${event.chatId}`);
+        }
+        if (this.redis) {
+          await this.redis.setEx(cacheKey, CACHE_TTL, JSON.stringify(embedding));
+        }
       }
 
-      // ✅ Cache
-      if (this.redis) {
-        await this.redis.setEx(cacheKey, CACHE_TTL, JSON.stringify(embedding));
+      // ✅ Run AI moderation if enabled
+      let moderation: ModerationResult | null = null;
+      const moderationConfig = await this.getModerationConfig();
+
+      if (moderationConfig.enabled) {
+        try {
+          moderation = await this.pythonService.moderateText(event.content);
+          console.log(`🛡️ Moderation: ${moderation.label} (${moderation.score}) for ${event.characterName}`);
+
+          if (moderation.label === 'toxic' && moderation.score >= moderationConfig.threshold) {
+            await this.createModerationAlert(event, locationName, moderation);
+          }
+        } catch (moderationError) {
+          console.error('⚠️ Moderation failed (embedding will still be saved):', moderationError);
+        }
       }
 
-      // ✅ Save to DB
-      await this.saveChatEmbedding(event.chatId, locationName, embedding);
+      // ✅ Save embedding + moderation to DB
+      await this.saveChatEmbeddingAndModeration(event.chatId, locationName, embedding, moderation);
 
-      console.log(`✅ Location action embedding saved: ${event.characterName} @ ${locationName}`);
+      console.log(`✅ Chat processed: ${event.characterName} @ ${locationName}`);
 
     } catch (error) {
       console.error('❌ Error processing chat embedding event:', error);
-      throw error; // Re-throw to trigger Bull retry
+      throw error;
+    }
+  }
+
+  /**
+   * Get AI moderation configuration (cached)
+   */
+  private async getModerationConfig(): Promise<{ enabled: boolean; threshold: number }> {
+    const now = Date.now();
+    if (this.moderationConfigCache && (now - this.moderationConfigCacheTime) < MODERATION_CONFIG_CACHE_TTL) {
+      return this.moderationConfigCache;
+    }
+
+    try {
+      const db = mongoose.connection.db;
+      if (!db) {
+        return { enabled: false, threshold: 0.7 };
+      }
+
+      const [enabledDoc, thresholdDoc] = await Promise.all([
+        db.collection('system_configurations').findOne({ configKey: 'ai_moderation_enabled' }),
+        db.collection('system_configurations').findOne({ configKey: 'ai_moderation_threshold' })
+      ]);
+
+      this.moderationConfigCache = {
+        enabled: enabledDoc?.value === true,
+        threshold: typeof thresholdDoc?.value === 'number' ? thresholdDoc.value : 0.7
+      };
+      this.moderationConfigCacheTime = now;
+
+      return this.moderationConfigCache;
+    } catch (error) {
+      console.error('⚠️ Failed to read moderation config, defaulting to disabled:', error);
+      return { enabled: false, threshold: 0.7 };
+    }
+  }
+
+  /**
+   * Create a ModerationAlert record for a toxic message
+   */
+  private async createModerationAlert(
+    event: ChatEmbeddingEvent,
+    locationName: string,
+    moderation: ModerationResult
+  ): Promise<void> {
+    try {
+      const db = mongoose.connection.db;
+      if (!db) return;
+
+      await db.collection('moderation_alerts').insertOne({
+        chatId: event.chatId,
+        characterId: event.characterId,
+        characterName: event.characterName,
+        locationId: event.locationId,
+        locationName,
+        content: event.content,
+        toxicityScore: moderation.score,
+        moderationLabel: moderation.label,
+        moderationModel: MODERATION_MODEL,
+        status: 'pending',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+
+      console.log(`🚨 ModerationAlert created: score=${moderation.score} for ${event.characterName}`);
+    } catch (error) {
+      console.error('⚠️ Failed to create ModerationAlert:', error);
+    }
+  }
+
+  /**
+   * Save chat embedding and moderation results to MongoDB + Qdrant
+   */
+  private async saveChatEmbeddingAndModeration(
+    chatId: string,
+    locationName: string,
+    embedding: number[],
+    moderation: ModerationResult | null
+  ): Promise<void> {
+    const db = mongoose.connection.db;
+    if (!db) {
+      throw new Error('Database connection not available');
+    }
+
+    const updateFields: any = {
+      locationName,
+      contentEmbedding: embedding,
+      embeddingModel: EMBEDDING_MODEL,
+      embeddingGeneratedAt: new Date()
+    };
+
+    if (moderation) {
+      updateFields.moderationScore = moderation.score;
+      updateFields.moderationLabel = moderation.label;
+      updateFields.moderationModel = MODERATION_MODEL;
+      updateFields.moderationProcessedAt = new Date();
+    }
+
+    const result = await db.collection('chats').updateOne(
+      { _id: new mongoose.Types.ObjectId(chatId) },
+      { $set: updateFields }
+    );
+
+    if (result.matchedCount === 0) {
+      throw new Error(`Chat not found: ${chatId}`);
+    }
+
+    try {
+      await this.qdrant.upsert('chats', {
+        wait: true,
+        points: [{
+          id: this.objectIdToUUID(chatId),
+          vector: embedding,
+          payload: { chatId, locationName, type: 'chat' }
+        }]
+      });
+    } catch (error) {
+      console.error('❌ Failed to save to Qdrant (MongoDB saved):', error);
     }
   }
 
@@ -864,52 +999,7 @@ export class EmbeddingWorker {
     }
   }
 
-  /**
-   * Save chat embedding to MongoDB + Qdrant
-   */
-  private async saveChatEmbedding(chatId: string, locationName: string, embedding: number[]): Promise<void> {
-    const db = mongoose.connection.db;
-    if (!db) {
-      throw new Error('Database connection not available');
-    }
-
-    // ✅ Save to MongoDB
-    const result = await db.collection('chats').updateOne(
-      { _id: new mongoose.Types.ObjectId(chatId) },
-      {
-        $set: {
-          locationName: locationName,
-          contentEmbedding: embedding,
-          embeddingModel: EMBEDDING_MODEL,
-          embeddingGeneratedAt: new Date()
-        }
-      }
-    );
-
-    if (result.matchedCount === 0) {
-      throw new Error(`Chat not found: ${chatId}`);
-    }
-
-    // ✅ ALSO save to Qdrant (for fast vector search)
-    try {
-      await this.qdrant.upsert('chats', {
-        wait: true,
-        points: [{
-          id: this.objectIdToUUID(chatId),
-          vector: embedding,
-          payload: {
-            chatId,
-            locationName,
-            type: 'chat'
-          }
-        }]
-      });
-      console.log(`✅ Embedding saved to MongoDB + Qdrant`);
-    } catch (error) {
-      console.error('❌ Failed to save to Qdrant (MongoDB saved):', error);
-      // Don't throw - MongoDB save succeeded, Qdrant is optional
-    }
-  }
+  // saveChatEmbedding replaced by saveChatEmbeddingAndModeration above
 
   /**
    * Save location embedding to Qdrant

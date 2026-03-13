@@ -117,3 +117,67 @@
   border: 2px solid rgba(138, 43, 226, 0.5);
   color: #ba55d3;
 }
+
+/* Damage section (Phase 2) */
+.damageSection {
+  margin-top: 16px;
+  padding: 12px 16px;
+  background: rgba(220, 20, 60, 0.15);
+  border-radius: 6px;
+  border: 2px solid rgba(220, 20, 60, 0.4);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.damageLabel {
+  color: #e8d4a0;
+  font-family: 'Georgia Pro', Georgia, serif;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.damageValue {
+  color: #ff6b6b;
+  font-family: 'Courier New', monospace;
+  font-size: 24px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.criticalDamage {
+  color: #ff4444;
+  text-shadow: 0 0 8px rgba(255, 68, 68, 0.6);
+  animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.criticalBadge {
+  font-size: 12px;
+  padding: 4px 8px;
+  background: rgba(255, 68, 68, 0.3);
+  border: 1px solid rgba(255, 68, 68, 0.6);
+  border-radius: 4px;
+  font-family: 'Georgia Pro', Georgia, serif;
+  letter-spacing: 1px;
+}
+
+.damageFormula {
+  color: rgba(232, 212, 160, 0.6);
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  font-style: italic;
+}

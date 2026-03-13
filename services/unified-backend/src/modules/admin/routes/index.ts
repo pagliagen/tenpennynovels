@@ -23,6 +23,7 @@ import characterSessionRoutes from './characterSessionRoutes';
 import chatManagementRoutes from './chatManagementRoutes';
 import deletedRecordsRoutes from './deletedRecordsRoutes';
 import imageGenerationRoutes from './imageGenerationRoutes';
+import moderationAlertRoutes from './moderationAlertRoutes';
 import { cdnRoutes } from './cdnRoutes';
 import { getVisibleDashboardBadges, getUserPermissions, getVisibleMenuStructure, haveAccessTo, debugPermissions } from '../utils/permissions';
 import { auditLogger } from '../utils/auditLogger';
@@ -290,6 +291,7 @@ router.use('/chat-logs', chatManagementRoutes);
 router.use('/deleted-records', deletedRecordsRoutes);
 router.use('/image-gen', imageGenerationRoutes);
 router.use('/cdn', cdnRoutes);
+router.use('/moderation', moderationAlertRoutes);
 
 export { router as apiRoutes };
 export default router;

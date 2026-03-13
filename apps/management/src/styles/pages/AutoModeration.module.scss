@@ -1,0 +1,422 @@
+@use 'sass:color';
+@use '../variables' as *;
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: $spacing-lg;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: $spacing-lg;
+  background-color: $color-bg-secondary;
+  border-radius: $border-radius-md;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+
+  h1 {
+    margin: 0 0 $spacing-xs 0;
+    font-size: 28px;
+    font-weight: 700;
+    color: $color-primary;
+  }
+
+  p {
+    margin: 0;
+    font-size: 14px;
+    color: $color-text-secondary;
+  }
+}
+
+.statsRow {
+  display: flex;
+  gap: $spacing-md;
+  flex-wrap: wrap;
+}
+
+.statCard {
+  flex: 1;
+  min-width: 140px;
+  padding: $spacing-md $spacing-lg;
+  background-color: $color-bg-secondary;
+  border-radius: $border-radius-md;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: center;
+
+  .statValue {
+    font-size: 28px;
+    font-weight: 700;
+    color: $color-text-primary;
+  }
+
+  .statLabel {
+    font-size: 12px;
+    color: $color-text-secondary;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 2px;
+  }
+
+  &.pending .statValue { color: $color-warning; }
+  &.actioned .statValue { color: $color-error; }
+}
+
+.filters {
+  display: flex;
+  gap: $spacing-md;
+  padding: $spacing-md $spacing-lg;
+  background-color: $color-bg-secondary;
+  border-radius: $border-radius-md;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  flex-wrap: wrap;
+  align-items: center;
+
+  select, input {
+    padding: $spacing-sm $spacing-md;
+    background-color: $color-bg-tertiary;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: $border-radius-sm;
+    color: $color-text-primary;
+    font-size: 13px;
+
+    &:focus {
+      outline: none;
+      border-color: $color-primary;
+    }
+  }
+
+  label {
+    font-size: 12px;
+    color: $color-text-secondary;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+}
+
+.tableWrapper {
+  background-color: $color-bg-secondary;
+  border-radius: $border-radius-md;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th {
+    padding: $spacing-sm $spacing-md;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 700;
+    color: $color-text-secondary;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    white-space: nowrap;
+  }
+
+  td {
+    padding: $spacing-sm $spacing-md;
+    font-size: 13px;
+    color: $color-text-primary;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    vertical-align: middle;
+  }
+
+  tr:hover td {
+    background-color: rgba(255, 255, 255, 0.02);
+  }
+}
+
+.contentPreview {
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: $color-text-secondary;
+  font-style: italic;
+}
+
+.locationLink {
+  color: $color-primary;
+  text-decoration: none;
+  font-weight: 500;
+
+  &:hover {
+    text-decoration: underline;
+    color: color.adjust($color-primary, $lightness: 10%);
+  }
+}
+
+.scoreBar {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+
+  .scoreFill {
+    width: 50px;
+    height: 6px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    overflow: hidden;
+
+    .scoreFillInner {
+      height: 100%;
+      border-radius: 3px;
+      transition: width $transition-fast;
+    }
+  }
+
+  .scoreText {
+    font-size: 12px;
+    font-weight: 600;
+    font-family: monospace;
+    min-width: 36px;
+  }
+}
+
+.scoreLow { color: $color-success; }
+.scoreMedium { color: $color-warning; }
+.scoreHigh { color: $color-error; }
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px $spacing-sm;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: $border-radius-sm;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+
+  &.statusPending {
+    background-color: rgba($color-warning, 0.15);
+    color: $color-warning;
+  }
+  &.statusReviewed {
+    background-color: rgba($color-info, 0.15);
+    color: $color-info;
+  }
+  &.statusDismissed {
+    background-color: rgba($color-text-muted, 0.15);
+    color: $color-text-muted;
+  }
+  &.statusActioned {
+    background-color: rgba($color-error, 0.15);
+    color: $color-error;
+  }
+}
+
+.actions {
+  display: flex;
+  gap: $spacing-xs;
+}
+
+.actionBtn {
+  padding: 4px $spacing-sm;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: $border-radius-sm;
+  color: $color-text-secondary;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all $transition-fast;
+  white-space: nowrap;
+
+  &:hover {
+    color: $color-text-primary;
+    border-color: rgba(255, 255, 255, 0.3);
+  }
+
+  &.dismiss:hover {
+    color: $color-text-muted;
+  }
+
+  &.review:hover {
+    color: $color-primary;
+    border-color: $color-primary;
+  }
+}
+
+.pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: $spacing-md $spacing-lg;
+
+  .paginationInfo {
+    font-size: 13px;
+    color: $color-text-secondary;
+  }
+
+  .paginationButtons {
+    display: flex;
+    gap: $spacing-sm;
+
+    button {
+      padding: $spacing-xs $spacing-md;
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: $border-radius-sm;
+      color: $color-text-secondary;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all $transition-fast;
+
+      &:hover:not(:disabled) {
+        color: $color-text-primary;
+        border-color: rgba(255, 255, 255, 0.3);
+      }
+
+      &:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+    }
+  }
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.7);
+}
+
+.modalContent {
+  background-color: $color-bg-secondary;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: $border-radius-md;
+  padding: $spacing-xl;
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+
+  h3 {
+    margin: 0 0 $spacing-lg 0;
+    font-size: 18px;
+    color: $color-text-primary;
+  }
+}
+
+.modalField {
+  margin-bottom: $spacing-md;
+
+  label {
+    display: block;
+    font-size: 12px;
+    color: $color-text-secondary;
+    margin-bottom: 4px;
+  }
+
+  .modalValue {
+    font-size: 14px;
+    color: $color-text-primary;
+    line-height: 1.5;
+  }
+
+  textarea, select {
+    width: 100%;
+    padding: $spacing-sm $spacing-md;
+    background-color: $color-bg-tertiary;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: $border-radius-sm;
+    color: $color-text-primary;
+    font-size: 13px;
+
+    &:focus {
+      outline: none;
+      border-color: $color-primary;
+    }
+  }
+
+  textarea {
+    min-height: 80px;
+    resize: vertical;
+    font-family: inherit;
+  }
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: $spacing-sm;
+  margin-top: $spacing-lg;
+
+  button {
+    padding: $spacing-sm $spacing-lg;
+    border-radius: $border-radius-sm;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all $transition-fast;
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  .cancelBtn {
+    background: transparent;
+    color: $color-text-secondary;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+
+    &:hover:not(:disabled) {
+      color: $color-text-primary;
+    }
+  }
+
+  .confirmBtn {
+    background-color: $color-primary;
+    color: $color-bg-primary;
+    border: none;
+
+    &:hover:not(:disabled) {
+      background-color: color.adjust($color-primary, $lightness: 10%);
+    }
+  }
+}
+
+.empty {
+  text-align: center;
+  padding: $spacing-2xl;
+  color: $color-text-secondary;
+  font-size: 15px;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  font-size: 18px;
+  color: $color-text-secondary;
+}
+
+.error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-lg;
+  min-height: 400px;
+  padding: $spacing-xl;
+  background-color: $color-bg-secondary;
+  border-radius: $border-radius-md;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+
+  h2 { margin: 0; font-size: 24px; color: $color-error; }
+  p { margin: 0; font-size: 16px; color: $color-text-secondary; }
+}

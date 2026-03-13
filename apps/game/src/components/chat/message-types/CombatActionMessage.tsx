@@ -149,6 +149,20 @@ export function CombatActionMessage({ message, currentCharacterId }: CombatActio
                       {outcomeLabels[confrontation.outcome] || confrontation.outcome}
                     </div>
                   )}
+
+                  {/* Damage (Phase 2) */}
+                  {confrontation.damageDealt !== undefined && confrontation.damageDealt > 0 && (
+                    <div className={styles.damageSection}>
+                      <div className={styles.damageLabel}>Danno Inflitto:</div>
+                      <div className={`${styles.damageValue} ${confrontation.isCriticalDamage ? styles.criticalDamage : ''}`}>
+                        {confrontation.damageDealt} HP
+                        {confrontation.isCriticalDamage && <span className={styles.criticalBadge}>CRITICO!</span>}
+                      </div>
+                      {confrontation.damageFormula && (
+                        <div className={styles.damageFormula}>({confrontation.damageFormula})</div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </>

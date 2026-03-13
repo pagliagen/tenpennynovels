@@ -19,10 +19,11 @@ RUN apt-get update && \
 COPY python/requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
-# Pre-download HuggingFace model to cache
+# Pre-download HuggingFace models to cache
 ARG HUGGINGFACE_TOKEN
 ENV HUGGINGFACE_TOKEN=${HUGGINGFACE_TOKEN}
 RUN python3 -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')"
+RUN python3 -c "from transformers import pipeline; pipeline('text-classification', model='gravitee-io/distilbert-multilingual-toxicity-classifier')"
 
 # Copy Python scripts
 COPY python/ /app/python

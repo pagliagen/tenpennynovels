@@ -107,6 +107,11 @@ export interface IChat extends Document {
   contentEmbedding?: number[];
   embeddingModel?: string;
   embeddingGeneratedAt?: Date;
+
+  moderationScore?: number;
+  moderationLabel?: string;
+  moderationModel?: string;
+  moderationProcessedAt?: Date;
 }
 
 const ChatSchema = new Schema<IChat>({
@@ -312,6 +317,26 @@ const ChatSchema = new Schema<IChat>({
     required: false
   },
   embeddingGeneratedAt: {
+    type: Date,
+    required: false
+  },
+
+  moderationScore: {
+    type: Number,
+    required: false,
+    min: 0,
+    max: 1
+  },
+  moderationLabel: {
+    type: String,
+    required: false,
+    enum: ['toxic', 'not-toxic']
+  },
+  moderationModel: {
+    type: String,
+    required: false
+  },
+  moderationProcessedAt: {
     type: Date,
     required: false
   }

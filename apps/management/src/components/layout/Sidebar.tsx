@@ -74,6 +74,14 @@ const NAV_ITEMS: NavItem[] = [
     ]
   },
   {
+    key: 'moderation',
+    label: 'Moderazione',
+    icon: '🛡️',
+    children: [
+      { key: 'auto-moderation', label: 'Auto-Moderazione AI', href: '/moderation/auto-moderation', permission: 'system.config' }
+    ]
+  },
+  {
     key: 'system',
     label: 'Sistema',
     icon: '⚙️',

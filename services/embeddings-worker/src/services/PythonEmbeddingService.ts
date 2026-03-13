@@ -10,6 +10,7 @@ import { EventEmitter } from 'events';
 import path from 'path';
 
 interface EmbeddingRequest {
+  type?: 'embed' | 'moderate';
   text: string;
 }
 
@@ -17,11 +18,18 @@ interface EmbeddingResponse {
   success: boolean;
   embedding?: number[];
   dimensions?: number;
+  label?: string;
+  score?: number;
   error?: string;
 }
 
+export interface ModerationResult {
+  label: string;
+  score: number;
+}
+
 interface PendingRequest {
-  resolve: (value: number[]) => void;
+  resolve: (value: any) => void;
   reject: (error: Error) => void;
   timeout: NodeJS.Timeout;
 }
@@ -153,31 +161,38 @@ export class PythonEmbeddingService extends EventEmitter {
    * Generate embedding
    */
   async generateEmbedding(text: string): Promise<number[]> {
+    return this.sendRequest({ type: 'embed', text });
+  }
+
+  /**
+   * Classify text toxicity
+   */
+  async moderateText(text: string): Promise<ModerationResult> {
+    return this.sendRequest({ type: 'moderate', text });
+  }
+
+  /**
+   * Send a request to the Python subprocess and wait for the response (FIFO)
+   */
+  private sendRequest(request: EmbeddingRequest): Promise<any> {
     if (!this.isReady || !this.process || !this.process.stdin) {
       throw new Error('Python subprocess not ready');
     }
 
     return new Promise((resolve, reject) => {
-      const id = this.requestId++;
+      this.requestId++;
 
-      // Set timeout
       const timeout = setTimeout(() => {
-        // Remove from pending queue
         const index = this.pendingRequests.findIndex(p => p === pending);
         if (index !== -1) {
           this.pendingRequests.splice(index, 1);
         }
-        reject(new Error(`Embedding generation timeout (${this.timeout}ms)`));
+        reject(new Error(`Python request timeout (${this.timeout}ms)`));
       }, this.timeout);
 
-      // Create pending request
       const pending: PendingRequest = { resolve, reject, timeout };
-
-      // Add to queue
       this.pendingRequests.push(pending);
 
-      // Send request
-      const request: EmbeddingRequest = { text };
       try {
         this.process!.stdin!.write(JSON.stringify(request) + '\n');
       } catch (error) {
@@ -198,28 +213,31 @@ export class PythonEmbeddingService extends EventEmitter {
     try {
       const response: EmbeddingResponse = JSON.parse(line);
 
-      // Get first pending request (FIFO)
       const pending = this.pendingRequests.shift();
       if (!pending) {
         console.warn('[Python] Received response but no pending requests');
         return;
       }
 
-      // Clear timeout
       clearTimeout(pending.timeout);
 
-      // Resolve or reject
-      if (response.success && response.embedding) {
-        pending.resolve(response.embedding);
-      } else {
+      if (!response.success) {
         pending.reject(new Error(response.error || 'Unknown error'));
+        return;
+      }
+
+      if (response.embedding) {
+        pending.resolve(response.embedding);
+      } else if (response.label !== undefined && response.score !== undefined) {
+        pending.resolve({ label: response.label, score: response.score } as ModerationResult);
+      } else {
+        pending.reject(new Error('Unexpected response format'));
       }
 
     } catch (error: any) {
       console.error(`[Python] Failed to parse response: ${error.message}`);
       console.error(`[Python] Raw line: ${line}`);
 
-      // Reject first pending if parse error
       const pending = this.pendingRequests.shift();
       if (pending) {
         clearTimeout(pending.timeout);

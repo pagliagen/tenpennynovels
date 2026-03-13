@@ -168,6 +168,7 @@ export {
 export { ChatModerationAction, type IChatModerationAction } from './ChatModerationAction';
 export { MessageReport, type IMessageReport } from './MessageReport';
 export { UserReport, type IUserReport } from './UserReport';
+export { ModerationAlert, type IModerationAlert } from './ModerationAlert';
 
 // Knowledge Base System (Documents + SubTypes)
 export {

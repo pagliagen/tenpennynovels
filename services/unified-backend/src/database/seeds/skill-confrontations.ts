@@ -42,13 +42,119 @@ export async function seedSkillConfrontations() {
     await SkillConfrontation.create(corpoACorpoConfig);
     console.log('[Seed] ✅ Created: Corpo a Corpo configuration');
 
-    // Future phases will add:
-    // - Armi da botta (melee_blunt)
-    // - Armi da taglio (melee_blade)
-    // - Armi da fuoco (ranged_firearm)
-    // - Intimidire, Persuadere, Ammaliare, Raggirare, Oratoria (social)
+    // Phase 2: Armi da botta (blunt weapons)
+    const armiDaBottaConfig = {
+      skillName: 'Armi da botta',
+      category: 'combat_melee',
+      counterSkills: [
+        { skillName: 'Schivata', label: 'Schivata' },
+        { skillName: 'Armi da botta', label: 'Parata (Armi da botta)' }
+      ],
+      rollType: 'open',
+      requiresAdditionalMessage: false
+    };
 
-    console.log('[Seed] ✅ Seed complete: 1 configuration created');
+    await SkillConfrontation.create(armiDaBottaConfig);
+    console.log('[Seed] ✅ Created: Armi da botta configuration');
+
+    // Phase 2: Armi da taglio (bladed weapons)
+    const armiDaTaglioConfig = {
+      skillName: 'Armi da taglio',
+      category: 'combat_melee',
+      counterSkills: [
+        { skillName: 'Schivata', label: 'Schivata' },
+        { skillName: 'Armi da taglio', label: 'Parata (Armi da taglio)' }
+      ],
+      rollType: 'open',
+      requiresAdditionalMessage: false
+    };
+
+    await SkillConfrontation.create(armiDaTaglioConfig);
+    console.log('[Seed] ✅ Created: Armi da taglio configuration');
+
+    // Phase 2: Armi da fuoco (firearms)
+    const armiDaFuocoConfig = {
+      skillName: 'Armi da fuoco',
+      category: 'combat_ranged',
+      counterSkills: [
+        { skillName: 'Schivata', label: 'Schivata' }
+      ],
+      rollType: 'open',
+      requiresAdditionalMessage: false
+    };
+
+    await SkillConfrontation.create(armiDaFuocoConfig);
+    console.log('[Seed] ✅ Created: Armi da fuoco configuration');
+
+    // Phase 3: Raggirare (hidden two-phase)
+    const raggirareConfig = {
+      skillName: 'Raggirare',
+      category: 'social',
+      counterSkills: [
+        { skillName: 'Empatia', label: 'Empatia (Rilevare bugia)' }
+      ],
+      rollType: 'hidden',
+      requiresAdditionalMessage: true,
+      additionalMessageLabel: 'Testo della bugia (visibile solo al master)'
+    };
+
+    await SkillConfrontation.create(raggirareConfig);
+    console.log('[Seed] ✅ Created: Raggirare configuration');
+
+    // Phase 4: Social conflicts
+    const intimidireConfig = {
+      skillName: 'Intimidire',
+      category: 'social',
+      counterSkills: [
+        { skillName: 'Autocontrollo', label: 'Autocontrollo' }
+      ],
+      rollType: 'open',
+      requiresAdditionalMessage: false
+    };
+
+    await SkillConfrontation.create(intimidireConfig);
+    console.log('[Seed] ✅ Created: Intimidire configuration');
+
+    const persuadereConfig = {
+      skillName: 'Persuadere',
+      category: 'social',
+      counterSkills: [
+        { skillName: 'Empatia', label: 'Empatia' }
+      ],
+      rollType: 'open',
+      requiresAdditionalMessage: false
+    };
+
+    await SkillConfrontation.create(persuadereConfig);
+    console.log('[Seed] ✅ Created: Persuadere configuration');
+
+    const ammaliareConfig = {
+      skillName: 'Ammaliare',
+      category: 'social',
+      counterSkills: [
+        { skillName: 'Autocontrollo', label: 'Autocontrollo' }
+      ],
+      rollType: 'open',
+      requiresAdditionalMessage: false
+    };
+
+    await SkillConfrontation.create(ammaliareConfig);
+    console.log('[Seed] ✅ Created: Ammaliare configuration');
+
+    const oratoriaConfig = {
+      skillName: 'Oratoria',
+      category: 'social',
+      counterSkills: [
+        { skillName: 'Empatia', label: 'Empatia' }
+      ],
+      rollType: 'open',
+      requiresAdditionalMessage: false
+    };
+
+    await SkillConfrontation.create(oratoriaConfig);
+    console.log('[Seed] ✅ Created: Oratoria configuration');
+
+    console.log('[Seed] ✅ Seed complete: 8 configurations created (4 combat + 4 social)');
 
     // Verify
     const count = await SkillConfrontation.countDocuments();

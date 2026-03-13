@@ -73,6 +73,25 @@ export interface ICharacter extends Document, SoftDeleteMethods {
     build: number;          // Corporatura da tabella FOR + TAG
   };
 
+  // Combat tracking (TiroContrapposto Phase 2)
+  combat?: {
+    currentHP: number;           // Current hit points
+    maxHP: number;               // Maximum hit points (from derived.hitPoints)
+    temporaryHP?: number;        // Temporary HP from buffs/spells
+    wounds?: Array<{
+      damage: number;
+      source: string;            // What caused the wound
+      timestamp: Date;
+    }>;
+    conditions?: Array<{         // Status effects
+      name: string;              // e.g., "Stunned", "Bleeding", "Poisoned"
+      duration?: number;         // Rounds remaining
+      appliedAt: Date;
+    }>;
+    isDead: boolean;
+    isIncapacitated: boolean;    // 0 HP but not dead
+  };
+
   // Skills (Victorian London modified) - Supports both simple numbers and granular breakdown
   skills: { [skillName: string]: number | SkillBreakdown };
 
@@ -347,6 +366,25 @@ const CharacterSchema = new Schema<ICharacter>({
     movementRate: { type: Number, default: 8 },   // Tasso di Movimento (default 8)
     damageBonus: { type: String, default: "0" },  // Bonus Danno da tabella
     build: { type: Number, default: 0 }           // Corporatura da tabella
+  },
+
+  // Combat tracking (TiroContrapposto Phase 2)
+  combat: {
+    currentHP: { type: Number, default: function(this: any) { return this.derived?.hitPoints || 10; } },
+    maxHP: { type: Number, default: function(this: any) { return this.derived?.hitPoints || 10; } },
+    temporaryHP: { type: Number, default: 0 },
+    wounds: [{
+      damage: { type: Number, required: true },
+      source: { type: String, required: true },
+      timestamp: { type: Date, default: Date.now }
+    }],
+    conditions: [{
+      name: { type: String, required: true },
+      duration: Number,
+      appliedAt: { type: Date, default: Date.now }
+    }],
+    isDead: { type: Boolean, default: false },
+    isIncapacitated: { type: Boolean, default: false }
   },
 
   // Skills - Supports both simple numbers and granular SkillBreakdown objects

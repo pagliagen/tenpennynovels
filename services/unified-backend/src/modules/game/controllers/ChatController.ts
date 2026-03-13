@@ -1819,24 +1819,87 @@ export class ChatController {
       const comparison = compareSuccessDegrees(attackDegree, defenseDegree, attackRoll, defenseRoll);
       const outcome = comparison > 0 ? 'hit' : 'miss';
 
+      // Calculate damage if hit (TiroContrapposto Phase 2)
+      let damageDealt = 0;
+      let isCriticalDamage = false;
+      let damageFormula = '';
+
+      if (outcome === 'hit' && message.confrontation.type === 'combat') {
+        // Import damage calculator
+        const { calculateDamage, applyDamage } = await import('../utils/damageCalculator');
+
+        // Determine damage formula (weapon or unarmed)
+        damageFormula = '1d3'; // Default: unarmed combat (1d3 base damage)
+
+        // TODO: Check if attacker has equipped weapon with weaponStats
+        // For now, use unarmed damage for Corpo a Corpo
+
+        // Calculate damage
+        const damageResult = calculateDamage(
+          damageFormula,
+          attackerCharacter.derived?.damageBonus || '0',
+          attackDegree
+        );
+
+        damageDealt = damageResult.total;
+        isCriticalDamage = damageResult.isCritical;
+
+        // Apply damage to defender
+        const defenderHP = defenderCharacter.combat?.currentHP ?? defenderCharacter.derived?.hitPoints ?? 10;
+        const defenderMaxHP = defenderCharacter.combat?.maxHP ?? defenderCharacter.derived?.hitPoints ?? 10;
+
+        const damageResult2 = applyDamage(defenderHP, defenderMaxHP, damageDealt);
+
+        // Update defender's combat state
+        await Character.updateOne(
+          { _id: defenderCharacter._id },
+          {
+            $set: {
+              'combat.currentHP': damageResult2.newHP,
+              'combat.maxHP': defenderMaxHP,
+              'combat.isDead': damageResult2.isDead,
+              'combat.isIncapacitated': damageResult2.isIncapacitated
+            },
+            $push: {
+              'combat.wounds': {
+                damage: damageDealt,
+                source: `${attackerCharacter.name} (${attackSkill})`,
+                timestamp: new Date()
+              }
+            }
+          }
+        );
+
+        logger.info(`Damage applied: ${damageDealt} HP to ${defenderCharacter.name} (${damageResult2.newHP}/${defenderMaxHP} HP remaining)`);
+      }
+
       // Update message IN-PLACE (atomic update with condition)
+      const updateFields: any = {
+        actionType: message.confrontation.type === 'combat' ? 'combat_action' : 'social_confrontation',
+        visibility: 'public',
+        'confrontation.phase': 'result',
+        'confrontation.defenseSkill': defenseSkillName,
+        'confrontation.attackRoll': attackRoll,
+        'confrontation.defenseRoll': defenseRoll,
+        'confrontation.attackSuccessLevel': attackDegree,
+        'confrontation.defenseSuccessLevel': defenseDegree,
+        'confrontation.outcome': outcome
+      };
+
+      // Add damage fields if combat
+      if (damageDealt > 0) {
+        updateFields['confrontation.damageDealt'] = damageDealt;
+        updateFields['confrontation.isCriticalDamage'] = isCriticalDamage;
+        updateFields['confrontation.damageFormula'] = damageFormula;
+      }
+
       const updated: any = await Chat.findOneAndUpdate(
         {
           _id: messageId,
           actionType: 'confrontation_reaction_request' // Prevent double-processing
         },
         {
-          $set: {
-            actionType: message.confrontation.type === 'combat' ? 'combat_action' : 'social_confrontation',
-            visibility: 'public',
-            'confrontation.phase': 'result',
-            'confrontation.defenseSkill': defenseSkillName,
-            'confrontation.attackRoll': attackRoll,
-            'confrontation.defenseRoll': defenseRoll,
-            'confrontation.attackSuccessLevel': attackDegree,
-            'confrontation.defenseSuccessLevel': defenseDegree,
-            'confrontation.outcome': outcome
-          },
+          $set: updateFields,
           $unset: {
             targetCharacters: '',
             'confrontation.availableDefenseSkills': ''
