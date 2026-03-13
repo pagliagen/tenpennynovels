@@ -33,7 +33,7 @@ export class DLQService {
    */
   static async addFailedJob(
     jobId: string,
-    eventType: 'document' | 'document_chunk' | 'chat',
+    eventType: 'document' | 'document_chunk' | 'chat' | 'forum_post',
     eventData: any,
     error: string,
     attempts: number,

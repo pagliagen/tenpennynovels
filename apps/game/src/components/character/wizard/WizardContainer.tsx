@@ -74,6 +74,8 @@ function WizardContainerInner({ characterId, onSubmittingChange }: WizardContain
     transformForBackend,
     reset,
     loadFromDraft,
+    loadCreationConfig,
+    creationConfig,
     basicInfo,
     occupation,
     stats,
@@ -114,8 +116,11 @@ function WizardContainerInner({ characterId, onSubmittingChange }: WizardContain
 
     // Only check localStorage state if hydration is complete
     if (hasHydrated) {
+      // ✅ FIX: Read firstName from store at execution time (not from dependencies)
+      // This prevents infinite loop when user types in firstName field
+      const currentFirstName = useWizardStore.getState().basicInfo.firstName;
       const draftMatchesCharacter = _draftCharacterId === characterId
-        && basicInfo.firstName.trim() !== '';
+        && currentFirstName.trim() !== '';
 
       // Skip load if draft already matches this character and server data hasn't changed
       if (draftMatchesCharacter) {
@@ -128,7 +133,14 @@ function WizardContainerInner({ characterId, onSubmittingChange }: WizardContain
     }
 
     loadFromDraft(existingCharacter);
-  }, [hasHydrated, characterId, existingCharacter, _draftCharacterId, _serverUpdatedAt, basicInfo.firstName, loadFromDraft]);
+  }, [hasHydrated, characterId, existingCharacter, _draftCharacterId, _serverUpdatedAt, loadFromDraft]);
+
+  // Load character creation config from backend on mount
+  useEffect(() => {
+    if (!creationConfig) {
+      loadCreationConfig();
+    }
+  }, [creationConfig, loadCreationConfig]);
 
   useEffect(() => {
     const hash = window.location.hash;

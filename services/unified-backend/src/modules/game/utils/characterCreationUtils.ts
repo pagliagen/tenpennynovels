@@ -2,6 +2,8 @@ import { Character, Occupation, Skill } from '@database/models';
 import { ICharacter } from '@database/models/Character';
 import { IOccupation } from '@database/models/Occupation';
 import { CharacterCreationConfig, calculateIntelligenceBonus } from '@shared/services/CharacterCreationConfigService';
+import { ConfigurationService } from '@shared/services/ConfigurationService';
+import { redis } from '@config/runtime/redis';
 import { logger } from './logger';
 
 /**
@@ -10,6 +12,14 @@ import { logger } from './logger';
  * Helper functions for the new character creation system based on Call of Cthulhu rules.
  * Implements the new occupation system with required skills (6) and bonus skills (1-2).
  */
+
+/**
+ * Create ConfigurationService instance
+ * Helper to avoid repeating instantiation code
+ */
+function getConfigService(): ConfigurationService {
+  return new ConfigurationService(redis.getClient() as any, logger);
+}
 
 interface SkillPointsCalculation {
   basePoints: number; // 200 punti base
@@ -68,23 +78,24 @@ function resolveBaseValue(baseValue: string | number, characterStats?: Record<st
 /**
  * Calculate available skill points for a character
  *
- * Formula: base points (from config) + INT/intelligenceBonusDivisor bonus
+ * Formula: flat value from SystemConfiguration (default 250, replaces old formula 200+INT/2)
  *
  * @param character - The character object
  * @param config - Character creation configuration
+ * @param totalSkillPoints - Total skill points from SystemConfiguration (optional, for async fetch)
  * @returns Skill points calculation breakdown
  */
-export function calculateAvailableSkillPoints(character: ICharacter, config: CharacterCreationConfig): SkillPointsCalculation {
-  // Parse base points from formula (currently constant, future: formula)
-  const formula = config.skills.totalPointsFormula || 'constant:200';
-  let basePoints = 200;
-  if (formula.startsWith('constant:')) {
-    basePoints = parseInt(formula.replace('constant:', '')) || 200;
-  }
+export function calculateAvailableSkillPoints(
+  character: ICharacter,
+  config: CharacterCreationConfig,
+  totalSkillPoints?: number
+): SkillPointsCalculation {
+  // Use flat value from SystemConfiguration (passed as parameter) or fallback to 250
+  const totalAvailable = totalSkillPoints ?? 250;
 
-  const intelligenceBonusFormula = config.skills.intelligenceBonusFormula || 'INT/2';
-  const intBonus = calculateIntelligenceBonus(intelligenceBonusFormula, character.stats.intelligence || 0);
-  const totalAvailable = basePoints + intBonus;
+  // For backward compatibility, keep basePoints and intBonus fields but set to total and 0
+  const basePoints = totalAvailable;
+  const intBonus = 0;
 
   // Skill caps from config
   const skillCap = config.skills.creationCap || 75;
@@ -277,20 +288,26 @@ export async function validateCharacterSubmission(character: ICharacter, config:
   }
 
   // ====== STATS VALIDATION ======
-  const statTotal = config.stats.totalPoints || 400;
+  // Fetch dynamic config values from SystemConfiguration
+  const configService = getConfigService();
+  const statTotalConfig = await configService.getConfig('character_creation_stat_total_points');
+  const statMinConfig = await configService.getConfig('character_creation_stat_minimum');
+
+  const statTotal = statTotalConfig ?? config.stats.totalPoints ?? 450;
+  const statMinimum = statMinConfig ?? config.stats.basePoints ?? 20;
   const maxStatsAbove80 = config.stats.maxStatsAbove80 || 2;
   const statCreationCap = config.stats.creationCap || 85;
 
   // Calculate minimum points from config
   const minStats = {
-    strength: config.stats.basePoints || 20,
-    size: config.stats.basePoints || 20,
-    dexterity: config.stats.basePoints || 20,
-    constitution: config.stats.basePoints || 20,
-    intelligence: config.stats.basePoints || 20,
-    education: config.stats.basePoints || 20,
-    power: config.stats.basePoints || 20,
-    appearance: config.stats.basePoints || 20
+    strength: statMinimum,
+    size: statMinimum,
+    dexterity: statMinimum,
+    constitution: statMinimum,
+    intelligence: statMinimum,
+    education: statMinimum,
+    power: statMinimum,
+    appearance: statMinimum
   };
 
   const minimumTotal = Object.values(minStats).reduce((sum, val) => sum + val, 0);
@@ -363,7 +380,11 @@ export async function validateCharacterSubmission(character: ICharacter, config:
   }
 
   // ====== SKILLS VALIDATION ======
-  const skillPoints = calculateAvailableSkillPoints(character, config);
+  // Fetch dynamic skill points total from SystemConfiguration
+  const skillTotalConfig = await configService.getConfig('character_creation_skill_total_points');
+  const totalSkillPoints = skillTotalConfig ?? 250;
+
+  const skillPoints = calculateAvailableSkillPoints(character, config, totalSkillPoints);
   const skillCap = skillPoints.skillCap;
   const finalSkillCap = skillPoints.finalSkillCap;
 

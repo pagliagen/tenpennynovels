@@ -1,995 +1,658 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
-import { db } from '@database/models';
 import slugify from 'slugify';
 import { successResponse, errorResponse, createResponse, listResponse, getRequestId } from '../utils/apiResponse';
-import { ForumTopic, IForumTopic, ForumDiscussion, IForumDiscussion, ForumPost, IForumPost, ForumTopicFavorite } from '@database/models';
-import { NotificationService } from '../services/NotificationService';
+import { ForumTopic, type IForumTopic, type TopicAccessRule } from '@database/models/ForumTopic';
+import { ForumDiscussion } from '@database/models/ForumDiscussion';
+import { ForumPost } from '@database/models/ForumPost';
+import { ForumTopicFavorite } from '@database/models/ForumTopicFavorite';
 
-// Access mongoose from the centralized connection
-const mongooseConnection = db.getConnection();
-
-// Use ObjectId from mongoose Types
-const ObjectIdConstructor = mongoose.Types.ObjectId;
-
-// Utility function to create slug from title using slugify
 const createSlug = (title: string): string => {
-  return slugify(title, {
-    lower: true,
-    strict: true,
-    locale: 'it',
-    trim: true
-  }).slice(0, 100);
+  return slugify(title, { lower: true, strict: true, locale: 'it', trim: true }).slice(0, 100);
 };
 
-// Check if user has admin permissions
-const hasAdminPermission = (user: any, permission: string): boolean => {
+const hasPermission = (req: Request, permission: string): boolean => {
+  const user = req.user;
   if (!user?.canAccessAdminPanel) return false;
-
-  // Check granular permission system
-  if (user.characterPermissions?.includes(permission)) return true;
-
-  return false;
+  return user.adminPermissions?.includes(permission) ?? false;
 };
+
+/**
+ * Check if a character can access a topic based on its accessRules (OR logic).
+ * Returns true if at least one rule matches.
+ */
+async function canAccessTopic(
+  topic: IForumTopic,
+  character?: { characterId: string; gameplayRoles?: string[] }
+): Promise<boolean> {
+  if (!topic.accessRules || topic.accessRules.length === 0) return true;
+
+  for (const rule of topic.accessRules) {
+    switch (rule.type) {
+      case 'public':
+        return true;
+      case 'authenticated':
+        if (character) return true;
+        break;
+      case 'gameplayRole':
+        if (character && rule.gameplayRole && character.gameplayRoles?.includes(rule.gameplayRole)) {
+          return true;
+        }
+        break;
+      case 'corporation':
+        if (character && rule.corporationId) {
+          const Corporation = mongoose.model('Corporation');
+          const isMember = await Corporation.exists({
+            _id: rule.corporationId,
+            'members.characterId': new mongoose.Types.ObjectId(character.characterId)
+          });
+          if (isMember) return true;
+        }
+        break;
+    }
+  }
+  return false;
+}
+
+function characterRef(req: Request) {
+  const c = req.character;
+  if (!c) return null;
+  return {
+    characterId: new mongoose.Types.ObjectId(c.characterId),
+    characterName: c.characterName
+  };
+}
 
 export class ForumController {
-  
-  // FORUM INITIALIZATION
-  
+
   static async getForumInit(req: Request, res: Response) {
     try {
-      const db = mongooseConnection.db;
-      
-      // Get forum statistics
       const totalDiscussions = await ForumDiscussion.countDocuments({ isVisible: true });
       const totalPosts = await ForumPost.countDocuments({ isDeleted: false });
-      
-      // Check if user is authenticated (optional middleware not used)
-      let authContext = {
-        isAuthenticated: false,
-        user: null as any,
-        character: null as any
+
+      const character = req.character;
+      const authContext = {
+        isAuthenticated: !!character,
+        character: character ? {
+          characterId: character.characterId,
+          characterName: character.characterName,
+          gameplayRoles: character.gameplayRoles || []
+        } : null
       };
-      
-      // Try to extract auth info if present
-      const user = (req as any).user;
-      const character = (req as any).character;
-      
-      if (user) {
-        authContext.isAuthenticated = true;
-        authContext.user = {
-          userId: user.userId,
-          username: user.username,
-          email: user.email,
-          canAccessAdminPanel: user.canAccessAdminPanel || false,
-          // Granular permission system
-          userRoles: user.userRoles || ['user'],
-          characterRoles: user.characterRoles || [],
-          characterPermissions: user.characterPermissions || []
-        };
-        
-        if (character) {
-          authContext.character = {
-            characterId: character.characterId,
-            characterName: character.characterName,
-            characterSurname: character.characterSurname,
-            gameplayRoles: character.gameplayRoles || [],
-            isApproved: character.playerStatus === 'approved'
-          };
-        }
-      }
-      
-      res.json(successResponse(
-        {
-          totalDiscussions,
-          totalPosts,
-          authContext
-        },
-        undefined,
-        getRequestId(req)
-      ));
-    } catch (error: any) {
-      console.error('Error fetching forum init data:', error);
-      res.status(500).json(errorResponse(
-        'Impossibile recuperare le statistiche del forum',
-        'GET_FORUM_INIT_ERROR',
-        undefined,
-        500,
-        getRequestId(req)
-      ));
+
+      res.json(successResponse({ totalDiscussions, totalPosts, authContext }, undefined, getRequestId(req)));
+    } catch (error) {
+      res.status(500).json(errorResponse('Impossibile recuperare le statistiche del forum', 'GET_FORUM_INIT_ERROR', undefined, 500, getRequestId(req)));
     }
   }
-  
-  // TOPIC MANAGEMENT
-  
+
+  // ========== TOPICS ==========
+
   static async getTopics(req: Request, res: Response) {
     try {
-      const db = mongooseConnection.db;
-      const user = (req as any).user;
-      
-      // Build query based on user permissions
-      let query: any = { isVisible: true };
-      
-      // If user is not authenticated, show only public topics
-      if (!user) {
-        query.isPublic = true;
-      }
-      // If user doesn't have an approved character, show only public topics
-      else if (!user.character || user.character.playerStatus !== 'approved') {
-        query.isPublic = true;
-      }
-      // If user has approved character, show both public and private
-      
-      const topics = await ForumTopic
-        .find(query)
-        .sort({ isPinned: -1, lastPostAt: -1, createdAt: -1 })
-        ;
+      const topics = await ForumTopic.find({ isVisible: true })
+        .sort({ sortOrder: 1, isPinned: -1, lastPostAt: -1 })
+        .lean();
 
-      res.json(successResponse(
-        topics.map(topic => ({
-          id: topic._id,
-          slug: topic.slug,
-          title: topic.title,
-          description: topic.description,
-          isPublic: topic.isPublic,
-          isVisible: topic.isVisible,
-          isLocked: topic.isLocked,
-          isPinned: topic.isPinned,
-          postCount: topic.postCount || 0,
-          lastPostAt: topic.lastPostAt,
-          lastPostBy: topic.lastPostBy,
-          createdAt: topic.createdAt,
-          createdBy: topic.createdBy,
-          color: topic.color,
-          icon: topic.icon
-        })),
-        undefined,
-        getRequestId(req)
-      ));
-    } catch (error: any) {
-      console.error('Error fetching topics:', error);
-      res.status(500).json(errorResponse(
-        'Impossibile recuperare i topic',
-        'GET_TOPICS_ERROR',
-        undefined,
-        500,
-        getRequestId(req)
-      ));
-    }
-  }
-
-  static async getTopic(req: Request<{ slug: string }>, res: Response) {
-    try {
-      const { slug } = req.params;
-      const db = mongooseConnection.db;
-      const user = (req as any).user;
-      
-      const topic = await ForumTopic.findOne({ 
-        slug, 
-        isVisible: true 
-      });
-
-      if (!topic) {
-        return res.status(404).json(errorResponse(
-          'Topic non trovato',
-          'TOPIC_NOT_FOUND',
-          undefined,
-          404,
-          getRequestId(req)
-        ));
-      }
-
-      // Check access permissions
-      if (!topic.isPublic) {
-        if (!user || !user.character || user.character.playerStatus !== 'approved') {
-          return res.status(403).json(errorResponse(
-            'Accesso negato: personaggio approvato richiesto',
-            'ACCESS_DENIED',
-            undefined,
-            403,
-            getRequestId(req)
-          ));
+      const character = req.character;
+      const accessible: typeof topics = [];
+      for (const topic of topics) {
+        if (await canAccessTopic(topic as IForumTopic, character ? { characterId: character.characterId, gameplayRoles: character.gameplayRoles } : undefined)) {
+          accessible.push(topic);
         }
       }
 
-      res.json(successResponse(
-        {
-          id: topic._id,
-          slug: topic.slug,
-          title: topic.title,
-          description: topic.description,
-          isPublic: topic.isPublic,
-          isVisible: topic.isVisible,
-          isLocked: topic.isLocked,
-          isPinned: topic.isPinned,
-          postCount: topic.postCount || 0,
-          lastPostAt: topic.lastPostAt,
-          lastPostBy: topic.lastPostBy,
-          createdAt: topic.createdAt,
-          createdBy: topic.createdBy,
-          color: topic.color,
-          icon: topic.icon
-        },
-        undefined,
-        getRequestId(req)
-      ));
-    } catch (error: any) {
-      console.error('Error fetching topic:', error);
-      res.status(500).json(errorResponse(
-        'Impossibile recuperare il topic',
-        'GET_TOPIC_ERROR',
-        undefined,
-        500,
-        getRequestId(req)
-      ));
+      res.json(successResponse(accessible.map(t => ({
+        id: t._id,
+        slug: t.slug,
+        title: t.title,
+        description: t.description,
+        sortOrder: t.sortOrder,
+        accessRules: t.accessRules,
+        isVisible: t.isVisible,
+        isLocked: t.isLocked,
+        isPinned: t.isPinned,
+        discussionCount: t.discussionCount,
+        postCount: t.postCount,
+        lastPostAt: t.lastPostAt,
+        lastPostBy: t.lastPostBy,
+        createdAt: t.createdAt,
+        createdBy: t.createdBy,
+        color: t.color,
+        icon: t.icon
+      })), undefined, getRequestId(req)));
+    } catch (error) {
+      res.status(500).json(errorResponse('Impossibile recuperare i topic', 'GET_TOPICS_ERROR', undefined, 500, getRequestId(req)));
     }
   }
 
-  static async createTopic(req: Request, res: Response) {
+  static async getTopic(req: Request, res: Response) {
     try {
-      const { title, description, isPublic, color, icon } = req.body;
-      const user = (req as any).user;
-      
-      // Check permissions
-      if (!hasAdminPermission(user, 'canManageForums')) {
-        return res.status(403).json(errorResponse(
-          'Accesso negato: gestione forum richiesta',
-          'ACCESS_DENIED',
-          undefined,
-          403,
-          getRequestId(req)
-        ));
+      const { slug } = req.params;
+      const topic = await ForumTopic.findOne({ slug, isVisible: true });
+      if (!topic) {
+        return res.status(404).json(errorResponse('Topic non trovato', 'TOPIC_NOT_FOUND', undefined, 404, getRequestId(req)));
       }
 
-      if (!title || title.trim().length === 0) {
-        return res.status(400).json(errorResponse(
-          'Il titolo è obbligatorio',
-          'VALIDATION_ERROR',
-          undefined,
-          400,
-          getRequestId(req)
-        ));
+      const character = req.character;
+      if (!(await canAccessTopic(topic, character ? { characterId: character.characterId, gameplayRoles: character.gameplayRoles } : undefined))) {
+        return res.status(403).json(errorResponse('Accesso negato', 'ACCESS_DENIED', undefined, 403, getRequestId(req)));
       }
 
-      const slug = createSlug(title);
-      const db = mongooseConnection.db;
-
-      // Check if slug already exists
-      const existingTopic = await ForumTopic.findOne({ slug });
-      if (existingTopic) {
-        return res.status(409).json(errorResponse(
-          'Esiste già un topic con questo titolo',
-          'DUPLICATE_TOPIC',
-          undefined,
-          409,
-          getRequestId(req)
-        ));
-      }
-
-      const topic: Partial<IForumTopic> = {
-        slug,
-        title: title.trim(),
-        description: description?.trim(),
-        isPublic: !!isPublic,
-        isVisible: true,
-        isLocked: false,
-        isPinned: false,
-        postCount: 0,
-        createdAt: new Date(),
-        createdBy: {
-          userId: user.userId,
-          username: user.username
-        },
-        color,
-        icon
-      };
-
-      const result = await ForumTopic.create(topic);
-
-      res.status(201).json(createResponse(
-        {
-          id: result._id,
-          ...topic
-        },
-        undefined,
-        getRequestId(req)
-      ));
-    } catch (error: any) {
-      console.error('Error creating topic:', error);
-      res.status(500).json(errorResponse(
-        'Impossibile creare il topic',
-        'CREATE_TOPIC_ERROR',
-        undefined,
-        500,
-        getRequestId(req)
-      ));
+      res.json(successResponse({
+        id: topic._id, slug: topic.slug, title: topic.title, description: topic.description,
+        sortOrder: topic.sortOrder, accessRules: topic.accessRules,
+        isVisible: topic.isVisible, isLocked: topic.isLocked, isPinned: topic.isPinned,
+        discussionCount: topic.discussionCount, postCount: topic.postCount,
+        lastPostAt: topic.lastPostAt, lastPostBy: topic.lastPostBy,
+        createdAt: topic.createdAt, createdBy: topic.createdBy,
+        color: topic.color, icon: topic.icon, moderatorIds: topic.moderatorIds
+      }, undefined, getRequestId(req)));
+    } catch (error) {
+      res.status(500).json(errorResponse('Impossibile recuperare il topic', 'GET_TOPIC_ERROR', undefined, 500, getRequestId(req)));
     }
   }
 
-  // DISCUSSION MANAGEMENT
+  // ========== DISCUSSIONS ==========
 
-  static async getDiscussions(req: Request<{ topicSlug: string }>, res: Response) {
+  static async getDiscussions(req: Request, res: Response) {
     try {
       const { topicSlug } = req.params;
       const page = Math.max(1, parseInt(req.query.page as string) || 1);
       const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string) || 20));
       const skip = (page - 1) * limit;
-      
-      const db = mongooseConnection.db;
-      const user = (req as any).user;
-      
-      // Check topic access
-      const topic = await ForumTopic.findOne({ 
-        slug: topicSlug, 
-        isVisible: true 
-      });
 
+      const topic = await ForumTopic.findOne({ slug: topicSlug, isVisible: true });
       if (!topic) {
-        return res.status(404).json(errorResponse(
-          'Topic non trovato',
-          'TOPIC_NOT_FOUND',
-          undefined,
-          404,
-          getRequestId(req)
-        ));
+        return res.status(404).json(errorResponse('Topic non trovato', 'TOPIC_NOT_FOUND', undefined, 404, getRequestId(req)));
       }
 
-      if (!topic.isPublic) {
-        if (!user || !user.character || user.character.playerStatus !== 'approved') {
-          return res.status(403).json(errorResponse(
-            'Accesso negato: personaggio approvato richiesto',
-            'ACCESS_DENIED',
-            undefined,
-            403,
-            getRequestId(req)
-          ));
-        }
+      const character = req.character;
+      if (!(await canAccessTopic(topic, character ? { characterId: character.characterId, gameplayRoles: character.gameplayRoles } : undefined))) {
+        return res.status(403).json(errorResponse('Accesso negato', 'ACCESS_DENIED', undefined, 403, getRequestId(req)));
       }
 
-      // Get discussions
-      const discussions = await ForumDiscussion
-        .find({ topicSlug, isVisible: true })
-        .sort({ isPinned: -1, lastPostAt: -1, createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        ;
-
-      const total = await ForumDiscussion
-        .countDocuments({ topicSlug, isVisible: true });
+      const filter = { topicSlug, isVisible: true };
+      const [discussions, total] = await Promise.all([
+        ForumDiscussion.find(filter).sort({ isPinned: -1, lastPostAt: -1 }).skip(skip).limit(limit).lean(),
+        ForumDiscussion.countDocuments(filter)
+      ]);
 
       const totalPages = Math.ceil(total / limit);
-
-      res.json(listResponse(
-        discussions.map(d => ({
-          id: d._id,
-          slug: d.slug,
-          topicSlug: d.topicSlug,
-          title: d.title,
-          isPinned: d.isPinned,
-          isLocked: d.isLocked,
-          isVisible: d.isVisible,
-          postCount: d.postCount || 0,
-          viewCount: d.viewCount || 0,
-          lastPostAt: d.lastPostAt,
-          lastPostBy: d.lastPostBy,
-          createdAt: d.createdAt,
-          createdBy: d.createdBy,
-          tags: d.tags || []
-        })),
-        {
-          page,
-          pageSize: limit,
-          total,
-          totalPages,
-          hasNext: page < totalPages,
-          hasPrev: page > 1
-        },
-        undefined,
-        getRequestId(req)
-      ));
-    } catch (error: any) {
-      console.error('Error fetching discussions:', error);
-      res.status(500).json(errorResponse(
-        'Impossibile recuperare le discussioni',
-        'GET_DISCUSSIONS_ERROR',
-        undefined,
-        500,
-        getRequestId(req)
-      ));
+      res.json(listResponse(discussions.map(d => ({
+        id: d._id, slug: d.slug, topicSlug: d.topicSlug, title: d.title,
+        isPinned: d.isPinned, isLocked: d.isLocked, postCount: d.postCount,
+        viewCount: d.viewCount, subscriberCount: d.subscriberCount,
+        lastPostAt: d.lastPostAt, lastPostBy: d.lastPostBy,
+        createdAt: d.createdAt, createdBy: d.createdBy, tags: d.tags || []
+      })), { page, pageSize: limit, total, totalPages, hasNext: page < totalPages, hasPrev: page > 1 }, undefined, getRequestId(req)));
+    } catch (error) {
+      res.status(500).json(errorResponse('Impossibile recuperare le discussioni', 'GET_DISCUSSIONS_ERROR', undefined, 500, getRequestId(req)));
     }
   }
 
-  static async getDiscussion(req: Request<{ topicSlug: string, discussionSlug: string }>, res: Response) {
+  static async getDiscussion(req: Request, res: Response) {
     try {
       const { topicSlug, discussionSlug } = req.params;
-      const db = mongooseConnection.db;
-      const user = (req as any).user;
-      
-      // Check topic access first
-      const topic = await ForumTopic.findOne({ 
-        slug: topicSlug, 
-        isVisible: true 
-      });
 
+      const topic = await ForumTopic.findOne({ slug: topicSlug, isVisible: true });
       if (!topic) {
-        return res.status(404).json(errorResponse(
-          'Topic non trovato',
-          'TOPIC_NOT_FOUND',
-          undefined,
-          404,
-          getRequestId(req)
-        ));
+        return res.status(404).json(errorResponse('Topic non trovato', 'TOPIC_NOT_FOUND', undefined, 404, getRequestId(req)));
       }
 
-      if (!topic.isPublic) {
-        if (!user || !user.character || user.character.playerStatus !== 'approved') {
-          return res.status(403).json(errorResponse(
-            'Accesso negato: personaggio approvato richiesto',
-            'ACCESS_DENIED',
-            undefined,
-            403,
-            getRequestId(req)
-          ));
-        }
+      const character = req.character;
+      if (!(await canAccessTopic(topic, character ? { characterId: character.characterId, gameplayRoles: character.gameplayRoles } : undefined))) {
+        return res.status(403).json(errorResponse('Accesso negato', 'ACCESS_DENIED', undefined, 403, getRequestId(req)));
       }
 
-      // Get discussion
-      const discussion = await ForumDiscussion.findOne({
-        topicSlug,
-        slug: discussionSlug,
-        isVisible: true
-      });
-
+      const discussion = await ForumDiscussion.findOne({ topicSlug, slug: discussionSlug, isVisible: true });
       if (!discussion) {
-        return res.status(404).json(errorResponse(
-          'Discussione non trovata',
-          'DISCUSSION_NOT_FOUND',
-          undefined,
-          404,
-          getRequestId(req)
-        ));
+        return res.status(404).json(errorResponse('Discussione non trovata', 'DISCUSSION_NOT_FOUND', undefined, 404, getRequestId(req)));
       }
 
-      // Increment view count
-      await ForumDiscussion.updateOne(
-        { _id: discussion._id },
-        { $inc: { viewCount: 1 } }
-      );
+      await ForumDiscussion.updateOne({ _id: discussion._id }, { $inc: { viewCount: 1 } });
 
-      res.json(successResponse(
-        {
-          id: discussion._id,
-          slug: discussion.slug,
-          topicSlug: discussion.topicSlug,
-          title: discussion.title,
-          isPinned: discussion.isPinned,
-          isLocked: discussion.isLocked,
-          isVisible: discussion.isVisible,
-          postCount: discussion.postCount || 0,
-          viewCount: (discussion.viewCount || 0) + 1,
-          lastPostAt: discussion.lastPostAt,
-          lastPostBy: discussion.lastPostBy,
-          createdAt: discussion.createdAt,
-          createdBy: discussion.createdBy,
-          tags: discussion.tags || []
-        },
-        undefined,
-        getRequestId(req)
-      ));
-    } catch (error: any) {
-      console.error('Error fetching discussion:', error);
-      res.status(500).json(errorResponse(
-        'Impossibile recuperare la discussione',
-        'GET_DISCUSSION_ERROR',
-        undefined,
-        500,
-        getRequestId(req)
-      ));
+      res.json(successResponse({
+        id: discussion._id, slug: discussion.slug, topicSlug: discussion.topicSlug,
+        topicId: discussion.topicId, title: discussion.title,
+        isPinned: discussion.isPinned, isLocked: discussion.isLocked,
+        postCount: discussion.postCount, viewCount: (discussion.viewCount || 0) + 1,
+        subscriberCount: discussion.subscriberCount,
+        lastPostAt: discussion.lastPostAt, lastPostBy: discussion.lastPostBy,
+        createdAt: discussion.createdAt, createdBy: discussion.createdBy,
+        tags: discussion.tags || []
+      }, undefined, getRequestId(req)));
+    } catch (error) {
+      res.status(500).json(errorResponse('Impossibile recuperare la discussione', 'GET_DISCUSSION_ERROR', undefined, 500, getRequestId(req)));
     }
   }
 
-  static async createDiscussion(req: Request<{ topicSlug: string }>, res: Response) {
+  static async createDiscussion(req: Request, res: Response) {
     try {
       const { topicSlug } = req.params;
       const { title, content, tags } = req.body;
-      const user = (req as any).user;
-      
-      if (!user) {
-        return res.status(401).json(errorResponse(
-          'Autenticazione richiesta',
-          'AUTHENTICATION_REQUIRED',
-          undefined,
-          401,
-          getRequestId(req)
-        ));
+      const author = characterRef(req);
+      if (!author) {
+        return res.status(400).json(errorResponse('Personaggio richiesto', 'CHARACTER_REQUIRED', undefined, 400, getRequestId(req)));
       }
 
-      // Check topic access
-      const db = mongooseConnection.db;
-      const topic = await ForumTopic.findOne({ 
-        slug: topicSlug, 
-        isVisible: true 
-      });
-
+      const topic = await ForumTopic.findOne({ slug: topicSlug, isVisible: true });
       if (!topic) {
-        return res.status(404).json(errorResponse(
-          'Topic non trovato',
-          'TOPIC_NOT_FOUND',
-          undefined,
-          404,
-          getRequestId(req)
-        ));
+        return res.status(404).json(errorResponse('Topic non trovato', 'TOPIC_NOT_FOUND', undefined, 404, getRequestId(req)));
       }
 
-      if (!topic.isPublic && (!user.character || user.character.playerStatus !== 'approved')) {
-        return res.status(403).json(errorResponse(
-          'Access denied: approved character required',
-          'ACCESS_DENIED',
-          undefined,
-          403,
-          getRequestId(req)
-        ));
+      if (!(await canAccessTopic(topic, { characterId: req.character!.characterId, gameplayRoles: req.character!.gameplayRoles }))) {
+        return res.status(403).json(errorResponse('Accesso negato', 'ACCESS_DENIED', undefined, 403, getRequestId(req)));
       }
 
-      if (topic.isLocked && !hasAdminPermission(user, 'canManageForums')) {
-        return res.status(403).json(errorResponse(
-          'Il topic è bloccato',
-          'TOPIC_LOCKED',
-          undefined,
-          403,
-          getRequestId(req)
-        ));
+      if (topic.isLocked && !hasPermission(req, 'forum.manage')) {
+        return res.status(403).json(errorResponse('Il topic è bloccato', 'TOPIC_LOCKED', undefined, 403, getRequestId(req)));
       }
 
-      if (!title || !content || title.trim().length === 0 || content.trim().length === 0) {
-        return res.status(400).json(errorResponse(
-          'Titolo e contenuto sono obbligatori',
-          'VALIDATION_ERROR',
-          undefined,
-          400,
-          getRequestId(req)
-        ));
+      if (!title || !content || title.trim().length < 3 || content.trim().length === 0) {
+        return res.status(400).json(errorResponse('Titolo e contenuto sono obbligatori', 'VALIDATION_ERROR', undefined, 400, getRequestId(req)));
       }
 
       const slug = createSlug(title);
-      
-      // Check if slug already exists in this topic
-      const existingDiscussion = await ForumDiscussion.findOne({ 
-        topicSlug, 
-        slug 
-      });
-      
-      if (existingDiscussion) {
-        return res.status(409).json(errorResponse(
-          'Esiste già una discussione con questo titolo in questo topic',
-          'DUPLICATE_DISCUSSION',
-          undefined,
-          409,
-          getRequestId(req)
-        ));
+      if (await ForumDiscussion.findOne({ topicSlug, slug })) {
+        return res.status(409).json(errorResponse('Esiste già una discussione con questo titolo', 'DUPLICATE_DISCUSSION', undefined, 409, getRequestId(req)));
       }
 
       const now = new Date();
-      const authorInfo = {
-        userId: user.userId,
-        username: user.username,
-        characterName: user.character?.characterName,
-        characterId: user.character?.characterId
-      };
-
-      // Create discussion
-      const discussion: Partial<IForumDiscussion> = {
+      const discussion = await ForumDiscussion.create({
         slug,
+        topicId: topic._id,
         topicSlug,
         title: title.trim(),
-        isPinned: false,
-        isLocked: false,
-        isVisible: true,
-        postCount: 1,
-        viewCount: 0,
-        lastPostAt: now,
-        lastPostBy: authorInfo,
-        createdAt: now,
-        createdBy: authorInfo,
-        tags: Array.isArray(tags) ? tags.filter(t => t && t.trim()) : []
-      };
+        isPinned: false, isLocked: false, isVisible: true,
+        postCount: 1, viewCount: 0, subscriberCount: 0,
+        lastPostAt: now, lastPostBy: author,
+        createdAt: now, createdBy: author,
+        tags: Array.isArray(tags) ? tags.filter((t: string) => t?.trim()) : []
+      });
 
-      const discussionResult = await ForumDiscussion.create(discussion);
-
-      // Create first post
-      const post: Partial<IForumPost> = {
-        topicSlug,
-        discussionSlug: slug,
+      await ForumPost.create({
+        topicId: topic._id, discussionId: discussion._id,
+        topicSlug, discussionSlug: slug,
         content: content.trim(),
-        authorUserId: user.userId,
-        authorUsername: user.username,
-        authorCharacterName: user.character?.characterName,
-        authorCharacterId: user.character?.characterId,
-        createdAt: now,
-        isEdited: false,
-        isDeleted: false
-      };
+        author,
+        createdAt: now, isEdited: false, isDeleted: false,
+        reactionCounts: { like: 0, love: 0, laugh: 0, think: 0 }
+      });
 
-      await ForumPost.create(post);
+      await ForumTopic.updateOne({ _id: topic._id }, {
+        $inc: { discussionCount: 1, postCount: 1 },
+        $set: { lastPostAt: now, lastPostBy: author }
+      });
 
-      // Update topic stats
-      await ForumTopic.updateOne(
-        { slug: topicSlug },
-        {
-          $inc: { postCount: 1 },
-          $set: {
-            lastPostAt: now,
-            lastPostBy: authorInfo
-          }
-        }
-      );
-
-      res.status(201).json(createResponse(
-        {
-          id: discussionResult._id,
-          ...discussion
-        },
-        undefined,
-        getRequestId(req)
-      ));
-    } catch (error: any) {
-      console.error('Error creating discussion:', error);
-      res.status(500).json(errorResponse(
-        'Impossibile creare la discussione',
-        'CREATE_DISCUSSION_ERROR',
-        undefined,
-        500,
-        getRequestId(req)
-      ));
+      res.status(201).json(createResponse({ id: discussion._id, slug: discussion.slug }, undefined, getRequestId(req)));
+    } catch (error) {
+      res.status(500).json(errorResponse('Impossibile creare la discussione', 'CREATE_DISCUSSION_ERROR', undefined, 500, getRequestId(req)));
     }
   }
 
-  // POST MANAGEMENT
+  static async updateDiscussion(req: Request, res: Response) {
+    try {
+      const { topicSlug, discussionSlug } = req.params;
+      const { title, tags, isPinned, isLocked, isVisible } = req.body;
+      const character = req.character;
+      if (!character) {
+        return res.status(400).json(errorResponse('Personaggio richiesto', 'CHARACTER_REQUIRED', undefined, 400, getRequestId(req)));
+      }
 
-  static async getPosts(req: Request<{ topicSlug: string, discussionSlug: string }>, res: Response) {
+      const discussion = await ForumDiscussion.findOne({ topicSlug, slug: discussionSlug });
+      if (!discussion) {
+        return res.status(404).json(errorResponse('Discussione non trovata', 'DISCUSSION_NOT_FOUND', undefined, 404, getRequestId(req)));
+      }
+
+      const isAuthor = discussion.createdBy.characterId.toString() === character.characterId;
+      const isAdmin = hasPermission(req, 'forum.manage');
+      if (!isAuthor && !isAdmin) {
+        return res.status(403).json(errorResponse('Non autorizzato', 'ACCESS_DENIED', undefined, 403, getRequestId(req)));
+      }
+
+      const update: Record<string, unknown> = {};
+      if (title !== undefined && (isAuthor || isAdmin)) update.title = title.trim();
+      if (tags !== undefined && (isAuthor || isAdmin)) update.tags = tags;
+      if (isPinned !== undefined && isAdmin) update.isPinned = isPinned;
+      if (isLocked !== undefined && isAdmin) update.isLocked = isLocked;
+      if (isVisible !== undefined && isAdmin) update.isVisible = isVisible;
+
+      await ForumDiscussion.updateOne({ _id: discussion._id }, { $set: update });
+      res.json(successResponse({ updated: true }, undefined, getRequestId(req)));
+    } catch (error) {
+      res.status(500).json(errorResponse('Impossibile aggiornare la discussione', 'UPDATE_DISCUSSION_ERROR', undefined, 500, getRequestId(req)));
+    }
+  }
+
+  static async deleteDiscussion(req: Request, res: Response) {
+    try {
+      const { topicSlug, discussionSlug } = req.params;
+      const character = req.character;
+      if (!character) {
+        return res.status(400).json(errorResponse('Personaggio richiesto', 'CHARACTER_REQUIRED', undefined, 400, getRequestId(req)));
+      }
+
+      const discussion = await ForumDiscussion.findOne({ topicSlug, slug: discussionSlug });
+      if (!discussion) {
+        return res.status(404).json(errorResponse('Discussione non trovata', 'DISCUSSION_NOT_FOUND', undefined, 404, getRequestId(req)));
+      }
+
+      const isAuthor = discussion.createdBy.characterId.toString() === character.characterId;
+      if (!isAuthor && !hasPermission(req, 'forum.manage')) {
+        return res.status(403).json(errorResponse('Non autorizzato', 'ACCESS_DENIED', undefined, 403, getRequestId(req)));
+      }
+
+      const posts = await ForumPost.find({ discussionId: discussion._id, isDeleted: false }).select('_id').lean();
+      const postCount = posts.length;
+
+      try {
+        const { publishForumPostDeletedEvent } = await import('../../../shared/services/EmbeddingEventPublisher');
+        await Promise.allSettled(posts.map(p => publishForumPostDeletedEvent(p._id.toString())));
+      } catch {
+        // Non-blocking
+      }
+
+      await ForumPost.deleteMany({ discussionId: discussion._id });
+      await ForumDiscussion.deleteOne({ _id: discussion._id });
+
+      await ForumTopic.updateOne({ _id: discussion.topicId }, {
+        $inc: { discussionCount: -1, postCount: -postCount }
+      });
+
+      res.json(successResponse({ deleted: true }, undefined, getRequestId(req)));
+    } catch (error) {
+      res.status(500).json(errorResponse('Impossibile eliminare la discussione', 'DELETE_DISCUSSION_ERROR', undefined, 500, getRequestId(req)));
+    }
+  }
+
+  // ========== POSTS ==========
+
+  static async getPosts(req: Request, res: Response) {
     try {
       const { topicSlug, discussionSlug } = req.params;
       const page = Math.max(1, parseInt(req.query.page as string) || 1);
       const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string) || 20));
       const skip = (page - 1) * limit;
-      
-      const db = mongooseConnection.db;
-      const user = (req as any).user;
-      
-      // Check access permissions
-      const topic = await ForumTopic.findOne({ 
-        slug: topicSlug, 
-        isVisible: true 
-      });
 
+      const topic = await ForumTopic.findOne({ slug: topicSlug, isVisible: true });
       if (!topic) {
-        return res.status(404).json(errorResponse(
-          'Topic non trovato',
-          'TOPIC_NOT_FOUND',
-          undefined,
-          404,
-          getRequestId(req)
-        ));
+        return res.status(404).json(errorResponse('Topic non trovato', 'TOPIC_NOT_FOUND', undefined, 404, getRequestId(req)));
       }
 
-      if (!topic.isPublic) {
-        if (!user || !user.character || user.character.playerStatus !== 'approved') {
-          return res.status(403).json(errorResponse(
-            'Accesso negato: personaggio approvato richiesto',
-            'ACCESS_DENIED',
-            undefined,
-            403,
-            getRequestId(req)
-          ));
-        }
+      const character = req.character;
+      if (!(await canAccessTopic(topic, character ? { characterId: character.characterId, gameplayRoles: character.gameplayRoles } : undefined))) {
+        return res.status(403).json(errorResponse('Accesso negato', 'ACCESS_DENIED', undefined, 403, getRequestId(req)));
       }
 
-      const discussion = await ForumDiscussion.findOne({
-        topicSlug,
-        slug: discussionSlug,
-        isVisible: true
-      });
-
+      const discussion = await ForumDiscussion.findOne({ topicSlug, slug: discussionSlug, isVisible: true });
       if (!discussion) {
-        return res.status(404).json(errorResponse(
-          'Discussione non trovata',
-          'DISCUSSION_NOT_FOUND',
-          undefined,
-          404,
-          getRequestId(req)
-        ));
+        return res.status(404).json(errorResponse('Discussione non trovata', 'DISCUSSION_NOT_FOUND', undefined, 404, getRequestId(req)));
       }
 
-      // Get posts
-      const posts = await ForumPost
-        .find({ 
-          topicSlug, 
-          discussionSlug, 
-          isDeleted: false 
-        })
-        .sort({ isPinned: -1, createdAt: 1 })
-        .skip(skip)
-        .limit(limit)
-        ;
-
-      const total = await ForumPost
-        .countDocuments({ 
-          topicSlug, 
-          discussionSlug, 
-          isDeleted: false 
-        });
+      const filter = { discussionId: discussion._id };
+      const [posts, total] = await Promise.all([
+        ForumPost.find(filter).sort({ createdAt: 1 }).skip(skip).limit(limit).lean(),
+        ForumPost.countDocuments(filter)
+      ]);
 
       const totalPages = Math.ceil(total / limit);
-
-      res.json(listResponse(
-        posts.map(p => ({
-          id: p._id,
-          topicSlug: p.topicSlug,
-          discussionSlug: p.discussionSlug,
-          content: p.content,
-          authorUserId: p.authorUserId,
-          authorUsername: p.authorUsername,
-          authorCharacterName: p.authorCharacterName,
-          authorCharacterId: p.authorCharacterId,
-          createdAt: p.createdAt,
-          updatedAt: p.updatedAt,
-          isEdited: p.isEdited,
-          editHistory: p.editHistory,
-          isPinned: p.isPinned,
-          isDeleted: p.isDeleted,
-          replyToPostId: p.replyToPostId,
-          reactionCounts: p.reactionCounts
-        })),
-        {
-          page,
-          pageSize: limit,
-          total,
-          totalPages,
-          hasNext: page < totalPages,
-          hasPrev: page > 1
-        },
-        undefined,
-        getRequestId(req)
-      ));
-    } catch (error: any) {
-      console.error('Error fetching posts:', error);
-      res.status(500).json(errorResponse(
-        'Impossibile recuperare i post',
-        'GET_POSTS_ERROR',
-        undefined,
-        500,
-        getRequestId(req)
-      ));
+      res.json(listResponse(posts.map(p => ({
+        id: p._id, topicSlug: p.topicSlug, discussionSlug: p.discussionSlug,
+        content: p.isDeleted ? '' : p.content,
+        author: p.author,
+        createdAt: p.createdAt, updatedAt: p.updatedAt,
+        isEdited: p.isEdited, isDeleted: p.isDeleted,
+        replyToPostId: p.replyToPostId,
+        reactionCounts: p.reactionCounts
+      })), { page, pageSize: limit, total, totalPages, hasNext: page < totalPages, hasPrev: page > 1 }, undefined, getRequestId(req)));
+    } catch (error) {
+      res.status(500).json(errorResponse('Impossibile recuperare i post', 'GET_POSTS_ERROR', undefined, 500, getRequestId(req)));
     }
   }
 
-  static async createPost(req: Request<{ topicSlug: string, discussionSlug: string }>, res: Response) {
+  static async createPost(req: Request, res: Response) {
     try {
       const { topicSlug, discussionSlug } = req.params;
       const { content, replyToPostId } = req.body;
-      const user = (req as any).user;
-      
-      if (!user) {
-        return res.status(401).json(errorResponse(
-          'Autenticazione richiesta',
-          'AUTHENTICATION_REQUIRED',
-          undefined,
-          401,
-          getRequestId(req)
-        ));
+      const author = characterRef(req);
+      if (!author) {
+        return res.status(400).json(errorResponse('Personaggio richiesto', 'CHARACTER_REQUIRED', undefined, 400, getRequestId(req)));
       }
 
       if (!content || content.trim().length === 0) {
-        return res.status(400).json(errorResponse(
-          'Il contenuto è obbligatorio',
-          'VALIDATION_ERROR',
-          undefined,
-          400,
-          getRequestId(req)
-        ));
+        return res.status(400).json(errorResponse('Il contenuto è obbligatorio', 'VALIDATION_ERROR', undefined, 400, getRequestId(req)));
       }
 
-      const db = mongooseConnection.db;
-      
-      // Check access permissions
-      const topic = await ForumTopic.findOne({ 
-        slug: topicSlug, 
-        isVisible: true 
-      });
-
+      const topic = await ForumTopic.findOne({ slug: topicSlug, isVisible: true });
       if (!topic) {
-        return res.status(404).json(errorResponse(
-          'Topic non trovato',
-          'TOPIC_NOT_FOUND',
-          undefined,
-          404,
-          getRequestId(req)
-        ));
+        return res.status(404).json(errorResponse('Topic non trovato', 'TOPIC_NOT_FOUND', undefined, 404, getRequestId(req)));
       }
 
-      if (!topic.isPublic && (!user.character || user.character.playerStatus !== 'approved')) {
-        return res.status(403).json(errorResponse(
-          'Access denied: approved character required',
-          'ACCESS_DENIED',
-          undefined,
-          403,
-          getRequestId(req)
-        ));
+      if (!(await canAccessTopic(topic, { characterId: req.character!.characterId, gameplayRoles: req.character!.gameplayRoles }))) {
+        return res.status(403).json(errorResponse('Accesso negato', 'ACCESS_DENIED', undefined, 403, getRequestId(req)));
       }
 
-      const discussion = await ForumDiscussion.findOne({
-        topicSlug,
-        slug: discussionSlug,
-        isVisible: true
-      });
-
+      const discussion = await ForumDiscussion.findOne({ topicSlug, slug: discussionSlug, isVisible: true });
       if (!discussion) {
-        return res.status(404).json(errorResponse(
-          'Discussione non trovata',
-          'DISCUSSION_NOT_FOUND',
-          undefined,
-          404,
-          getRequestId(req)
-        ));
+        return res.status(404).json(errorResponse('Discussione non trovata', 'DISCUSSION_NOT_FOUND', undefined, 404, getRequestId(req)));
       }
 
-      if (topic.isLocked || discussion.isLocked) {
-        if (!hasAdminPermission(user, 'canManageForums')) {
-          return res.status(403).json(errorResponse(
-            'La discussione è bloccata',
-            'DISCUSSION_LOCKED',
-            undefined,
-            403,
-            getRequestId(req)
-          ));
-        }
+      if ((topic.isLocked || discussion.isLocked) && !hasPermission(req, 'forum.manage')) {
+        return res.status(403).json(errorResponse('La discussione è bloccata', 'DISCUSSION_LOCKED', undefined, 403, getRequestId(req)));
       }
 
       const now = new Date();
-      const authorInfo = {
-        userId: user.userId,
-        username: user.username,
-        characterName: user.character?.characterName,
-        characterId: user.character?.characterId
-      };
-
-      // Create post
-      const post: Partial<IForumPost> = {
-        topicSlug,
-        discussionSlug,
+      const post = await ForumPost.create({
+        topicId: topic._id, discussionId: discussion._id,
+        topicSlug, discussionSlug,
         content: content.trim(),
-        authorUserId: user.userId,
-        authorUsername: user.username,
-        authorCharacterName: user.character?.characterName,
-        authorCharacterId: user.character?.characterId,
-        createdAt: now,
-        isEdited: false,
-        isDeleted: false,
-        replyToPostId: replyToPostId || undefined
-      };
+        author,
+        createdAt: now, isEdited: false, isDeleted: false,
+        replyToPostId: replyToPostId ? new mongoose.Types.ObjectId(replyToPostId) : undefined,
+        reactionCounts: { like: 0, love: 0, laugh: 0, think: 0 }
+      });
 
-      const result = await ForumPost.create(post);
+      await ForumDiscussion.updateOne({ _id: discussion._id }, {
+        $inc: { postCount: 1 },
+        $set: { lastPostAt: now, lastPostBy: author }
+      });
 
-      // Update discussion stats
-      await ForumDiscussion.updateOne(
-        { topicSlug, slug: discussionSlug },
-        {
-          $inc: { postCount: 1 },
-          $set: {
-            lastPostAt: now,
-            lastPostBy: authorInfo
-          }
-        }
-      );
+      await ForumTopic.updateOne({ _id: topic._id }, {
+        $inc: { postCount: 1 },
+        $set: { lastPostAt: now, lastPostBy: author }
+      });
 
-      // Update topic stats
-      await ForumTopic.updateOne(
-        { slug: topicSlug },
-        {
-          $inc: { postCount: 1 },
-          $set: {
-            lastPostAt: now,
-            lastPostBy: authorInfo
-          }
-        }
-      );
-
-      res.status(201).json(createResponse(
-        {
-          id: result._id,
-          ...post
-        },
-        undefined,
-        getRequestId(req)
-      ));
-    } catch (error: any) {
-      console.error('Error creating post:', error);
-      res.status(500).json(errorResponse(
-        'Impossibile creare il post',
-        'CREATE_POST_ERROR',
-        undefined,
-        500,
-        getRequestId(req)
-      ));
+      res.status(201).json(createResponse({ id: post._id }, undefined, getRequestId(req)));
+    } catch (error) {
+      res.status(500).json(errorResponse('Impossibile creare il post', 'CREATE_POST_ERROR', undefined, 500, getRequestId(req)));
     }
   }
 
-  // RECENT AND POPULAR DISCUSSIONS
+  static async updatePost(req: Request, res: Response) {
+    try {
+      const postIdStr = (Array.isArray(req.params.postId) ? req.params.postId[0] : req.params.postId) as string;
+      const { content } = req.body;
+      const character = req.character;
+      if (!character) {
+        return res.status(400).json(errorResponse('Personaggio richiesto', 'CHARACTER_REQUIRED', undefined, 400, getRequestId(req)));
+      }
+
+      if (!postIdStr || !mongoose.Types.ObjectId.isValid(postIdStr)) {
+        return res.status(400).json(errorResponse('ID post non valido', 'INVALID_ID', undefined, 400, getRequestId(req)));
+      }
+      const post = await ForumPost.findById(new mongoose.Types.ObjectId(postIdStr));
+      if (!post || post.isDeleted) {
+        return res.status(404).json(errorResponse('Post non trovato', 'POST_NOT_FOUND', undefined, 404, getRequestId(req)));
+      }
+
+      if (post.author.characterId.toString() !== character.characterId) {
+        return res.status(403).json(errorResponse('Non autorizzato', 'ACCESS_DENIED', undefined, 403, getRequestId(req)));
+      }
+
+      if (!content || content.trim().length === 0) {
+        return res.status(400).json(errorResponse('Il contenuto è obbligatorio', 'VALIDATION_ERROR', undefined, 400, getRequestId(req)));
+      }
+
+      const now = new Date();
+      await ForumPost.findOneAndUpdate({ _id: post._id }, {
+        $set: {
+          content: content.trim(),
+          updatedAt: now,
+          isEdited: true
+        },
+        $push: {
+          editHistory: {
+            editedAt: now,
+            previousContent: post.content
+          }
+        }
+      }, { new: true });
+
+      res.json(successResponse({ updated: true }, undefined, getRequestId(req)));
+    } catch (error) {
+      res.status(500).json(errorResponse('Impossibile modificare il post', 'UPDATE_POST_ERROR', undefined, 500, getRequestId(req)));
+    }
+  }
+
+  static async deletePost(req: Request, res: Response) {
+    try {
+      const postIdStr = (Array.isArray(req.params.postId) ? req.params.postId[0] : req.params.postId) as string;
+      const character = req.character;
+      if (!character) {
+        return res.status(400).json(errorResponse('Personaggio richiesto', 'CHARACTER_REQUIRED', undefined, 400, getRequestId(req)));
+      }
+
+      if (!postIdStr || !mongoose.Types.ObjectId.isValid(postIdStr)) {
+        return res.status(400).json(errorResponse('ID post non valido', 'INVALID_ID', undefined, 400, getRequestId(req)));
+      }
+      const post = await ForumPost.findById(new mongoose.Types.ObjectId(postIdStr));
+      if (!post || post.isDeleted) {
+        return res.status(404).json(errorResponse('Post non trovato', 'POST_NOT_FOUND', undefined, 404, getRequestId(req)));
+      }
+
+      const isAuthor = post.author.characterId.toString() === character.characterId;
+      if (!isAuthor && !hasPermission(req, 'forum.manage')) {
+        return res.status(403).json(errorResponse('Non autorizzato', 'ACCESS_DENIED', undefined, 403, getRequestId(req)));
+      }
+
+      const now = new Date();
+      await ForumPost.findOneAndUpdate({ _id: post._id }, {
+        $set: {
+          isDeleted: true,
+          deletedAt: now,
+          deletedByCharacterId: new mongoose.Types.ObjectId(character.characterId)
+        }
+      });
+
+      await ForumDiscussion.updateOne({ _id: post.discussionId }, { $inc: { postCount: -1 } });
+      await ForumTopic.updateOne({ _id: post.topicId }, { $inc: { postCount: -1 } });
+
+      try {
+        const { publishForumPostDeletedEvent } = await import('../../../shared/services/EmbeddingEventPublisher');
+        await publishForumPostDeletedEvent(post._id.toString());
+      } catch {
+        // Non-blocking
+      }
+
+      res.json(successResponse({ deleted: true }, undefined, getRequestId(req)));
+    } catch (error) {
+      res.status(500).json(errorResponse('Impossibile eliminare il post', 'DELETE_POST_ERROR', undefined, 500, getRequestId(req)));
+    }
+  }
+
+  // ========== FAVORITES ==========
+
+  static async getUserFavoriteTopics(req: Request, res: Response) {
+    try {
+      const character = req.character;
+      if (!character) {
+        return res.status(400).json(errorResponse('Personaggio richiesto', 'CHARACTER_REQUIRED', undefined, 400, getRequestId(req)));
+      }
+
+      const favorites = await ForumTopicFavorite.find({
+        characterId: new mongoose.Types.ObjectId(character.characterId)
+      }).lean();
+
+      if (favorites.length === 0) {
+        return res.json(successResponse([], undefined, getRequestId(req)));
+      }
+
+      const topicIds = favorites.map(f => f.topicId);
+      const topics = await ForumTopic.find({ _id: { $in: topicIds }, isVisible: true }).lean();
+
+      const accessible: typeof topics = [];
+      for (const topic of topics) {
+        if (await canAccessTopic(topic as IForumTopic, { characterId: character.characterId, gameplayRoles: character.gameplayRoles })) {
+          accessible.push(topic);
+        }
+      }
+
+      res.json(successResponse(accessible.map(t => ({
+        id: t._id, slug: t.slug, title: t.title, description: t.description,
+        postCount: t.postCount, discussionCount: t.discussionCount,
+        lastPostAt: t.lastPostAt, color: t.color, icon: t.icon,
+        isFavorite: true
+      })), undefined, getRequestId(req)));
+    } catch (error) {
+      res.status(500).json(errorResponse('Impossibile recuperare i preferiti', 'GET_FAVORITES_ERROR', undefined, 500, getRequestId(req)));
+    }
+  }
+
+  static async toggleTopicFavorite(req: Request, res: Response) {
+    try {
+      const { slug } = req.params;
+      const character = req.character;
+      if (!character) {
+        return res.status(400).json(errorResponse('Personaggio richiesto', 'CHARACTER_REQUIRED', undefined, 400, getRequestId(req)));
+      }
+
+      const topic = await ForumTopic.findOne({ slug, isVisible: true });
+      if (!topic) {
+        return res.status(404).json(errorResponse('Topic non trovato', 'TOPIC_NOT_FOUND', undefined, 404, getRequestId(req)));
+      }
+
+      const charId = new mongoose.Types.ObjectId(character.characterId);
+      const existing = await ForumTopicFavorite.findOne({ characterId: charId, topicId: topic._id });
+
+      if (existing) {
+        await ForumTopicFavorite.deleteOne({ _id: existing._id });
+        res.json(successResponse({ isFavorite: false }, undefined, getRequestId(req)));
+      } else {
+        await ForumTopicFavorite.create({ characterId: charId, topicId: topic._id });
+        res.json(successResponse({ isFavorite: true }, undefined, getRequestId(req)));
+      }
+    } catch (error) {
+      res.status(500).json(errorResponse('Impossibile aggiornare i preferiti', 'TOGGLE_FAVORITE_ERROR', undefined, 500, getRequestId(req)));
+    }
+  }
+
+  // ========== RECENT / POPULAR ==========
 
   static async getRecentDiscussions(req: Request, res: Response) {
     try {
       const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string) || 20));
-      const user = (req as any).user;
-      const db = mongooseConnection.db;
-      
-      // Build access control filters
-      let topicFilters: any = { isVisible: true };
-      
-      // If user doesn't have approved character, show only public topics
-      if (!user || !user.character || user.character.playerStatus !== 'approved') {
-        topicFilters.isPublic = true;
+      const character = req.character;
+
+      const topics = await ForumTopic.find({ isVisible: true }).lean();
+      const accessibleSlugs: string[] = [];
+      for (const t of topics) {
+        if (await canAccessTopic(t as IForumTopic, character ? { characterId: character.characterId, gameplayRoles: character.gameplayRoles } : undefined)) {
+          accessibleSlugs.push(t.slug);
+        }
       }
-      
-      // Get accessible topic slugs
-      const accessibleTopics = await ForumTopic
-        .find(topicFilters, { projection: { slug: 1 } })
-        ;
-      
-      const accessibleTopicSlugs = accessibleTopics.map(t => t.slug);
-      
-      // Get recent discussions from accessible topics
-      const discussions = await ForumDiscussion
-        .find({
-          topicSlug: { $in: accessibleTopicSlugs },
-          isVisible: true
-        })
-        .sort({ lastPostAt: -1, createdAt: -1 })
-        .limit(limit)
-        ;
 
-      const totalCount = await ForumDiscussion
-        .countDocuments({
-          topicSlug: { $in: accessibleTopicSlugs },
-          isVisible: true
-        });
+      const discussions = await ForumDiscussion.find({ topicSlug: { $in: accessibleSlugs }, isVisible: true })
+        .sort({ lastPostAt: -1 }).limit(limit).lean();
 
-      res.json(listResponse(
-        discussions.map(d => ({
-          id: d._id,
-          slug: d.slug,
-          topicSlug: d.topicSlug,
-          title: d.title,
-          isPinned: d.isPinned,
-          isLocked: d.isLocked,
-          isVisible: d.isVisible,
-          postCount: d.postCount || 0,
-          viewCount: d.viewCount || 0,
-          lastPostAt: d.lastPostAt,
-          lastPostBy: d.lastPostBy,
-          createdAt: d.createdAt,
-          createdBy: d.createdBy,
-          tags: d.tags || []
-        })),
-        {
-          page: 1,
-          pageSize: limit,
-          total: totalCount,
-          totalPages: Math.ceil(totalCount / limit),
-          hasNext: false,
-          hasPrev: false
-        },
-        undefined,
-        getRequestId(req)
-      ));
-    } catch (error: any) {
-      console.error('Error fetching recent discussions:', error);
-      res.status(500).json(errorResponse(
-        'Impossibile recuperare le discussioni recenti',
-        'GET_RECENT_DISCUSSIONS_ERROR',
-        undefined,
-        500,
-        getRequestId(req)
-      ));
+      res.json(successResponse(discussions.map(d => ({
+        id: d._id, slug: d.slug, topicSlug: d.topicSlug, title: d.title,
+        postCount: d.postCount, viewCount: d.viewCount,
+        lastPostAt: d.lastPostAt, lastPostBy: d.lastPostBy,
+        createdAt: d.createdAt, createdBy: d.createdBy, tags: d.tags || []
+      })), undefined, getRequestId(req)));
+    } catch (error) {
+      res.status(500).json(errorResponse('Impossibile recuperare le discussioni recenti', 'GET_RECENT_ERROR', undefined, 500, getRequestId(req)));
     }
   }
 
@@ -997,709 +660,81 @@ export class ForumController {
     try {
       const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string) || 20));
       const timeframe = req.query.timeframe as string || 'week';
-      const user = (req as any).user;
-      const db = mongooseConnection.db;
-      
-      // Calculate timeframe cutoff
+      const character = req.character;
+
       const now = new Date();
       let cutoffDate: Date;
-      
       switch (timeframe) {
-        case 'week':
-          cutoffDate = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
-          break;
-        case 'month':
-          cutoffDate = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
-          break;
-        case 'all':
-        default:
-          cutoffDate = new Date(0); // Beginning of time
-          break;
-      }
-      
-      // Build access control filters
-      let topicFilters: any = { isVisible: true };
-      
-      // If user doesn't have approved character, show only public topics
-      if (!user || !user.character || user.character.playerStatus !== 'approved') {
-        topicFilters.isPublic = true;
-      }
-      
-      // Get accessible topic slugs
-      const accessibleTopics = await ForumTopic
-        .find(topicFilters, { projection: { slug: 1 } })
-        ;
-      
-      const accessibleTopicSlugs = accessibleTopics.map(t => t.slug);
-      
-      // Get popular discussions from accessible topics
-      // Sort by a popularity score: (viewCount * 1) + (postCount * 3)
-      const discussions = await ForumDiscussion
-        .aggregate([
-          {
-            $match: {
-              topicSlug: { $in: accessibleTopicSlugs },
-              isVisible: true,
-              createdAt: { $gte: cutoffDate }
-            }
-          },
-          {
-            $addFields: {
-              popularityScore: {
-                $add: [
-                  { $ifNull: ['$viewCount', 0] },
-                  { $multiply: [{ $ifNull: ['$postCount', 0] }, 3] }
-                ]
-              }
-            }
-          },
-          {
-            $sort: { popularityScore: -1, viewCount: -1, postCount: -1 }
-          },
-          {
-            $limit: limit
-          }
-        ])
-        ;
-
-      const totalCount = await ForumDiscussion
-        .countDocuments({
-          topicSlug: { $in: accessibleTopicSlugs },
-          isVisible: true,
-          createdAt: { $gte: cutoffDate }
-        });
-
-      res.json(listResponse(
-        discussions.map(d => ({
-          id: d._id,
-          slug: d.slug,
-          topicSlug: d.topicSlug,
-          title: d.title,
-          isPinned: d.isPinned,
-          isLocked: d.isLocked,
-          isVisible: d.isVisible,
-          postCount: d.postCount || 0,
-          viewCount: d.viewCount || 0,
-          lastPostAt: d.lastPostAt,
-          lastPostBy: d.lastPostBy,
-          createdAt: d.createdAt,
-          createdBy: d.createdBy,
-          tags: d.tags || [],
-          popularityScore: d.popularityScore
-        })),
-        {
-          page: 1,
-          pageSize: limit,
-          total: totalCount,
-          totalPages: Math.ceil(totalCount / limit),
-          hasNext: false,
-          hasPrev: false
-        },
-        undefined,
-        getRequestId(req)
-      ));
-    } catch (error: any) {
-      console.error('Error fetching popular discussions:', error);
-      res.status(500).json(errorResponse(
-        'Impossibile recuperare le discussioni popolari',
-        'GET_POPULAR_DISCUSSIONS_ERROR',
-        undefined,
-        500,
-        getRequestId(req)
-      ));
-    }
-  }
-
-  // FAVORITES
-
-  static async getUserFavoriteTopics(req: Request, res: Response) {
-    try {
-      const user = (req as any).user;
-      
-      if (!user) {
-        return res.status(401).json(errorResponse(
-          'Autenticazione richiesta',
-          'AUTHENTICATION_REQUIRED',
-          undefined,
-          401,
-          getRequestId(req)
-        ));
+        case 'month': cutoffDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000); break;
+        case 'all': cutoffDate = new Date(0); break;
+        default: cutoffDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000); break;
       }
 
-      const db = mongooseConnection.db;
-      
-      // Get user's favorite topics
-      const favoriteTopics = await ForumTopicFavorite
-        .find({ characterId: user.character?.characterId })
-        ;
-
-      if (favoriteTopics.length === 0) {
-        return res.json(successResponse(
-          [],
-          undefined,
-          getRequestId(req)
-        ));
-      }
-
-      const favoriteTopicIds = favoriteTopics.map(f => f.topicId);
-
-      // Get topic details for favorites (only those user has access to)
-      let accessFilters: any = {
-        _id: { $in: favoriteTopicIds },
-        isVisible: true
-      };
-      
-      // If user doesn't have approved character, show only public topics
-      if (!user.character || user.character.playerStatus !== 'approved') {
-        accessFilters.isPublic = true;
-      }
-      
-      const topics = await ForumTopic
-        .find(accessFilters)
-        .sort({ isPinned: -1, lastPostAt: -1, createdAt: -1 })
-        ;
-
-      res.json(successResponse(
-        topics.map(topic => ({
-          id: topic._id,
-          slug: topic.slug,
-          title: topic.title,
-          description: topic.description,
-          isPublic: topic.isPublic,
-          isVisible: topic.isVisible,
-          isLocked: topic.isLocked,
-          isPinned: topic.isPinned,
-          postCount: topic.postCount || 0,
-          lastPostAt: topic.lastPostAt,
-          lastPostBy: topic.lastPostBy,
-          createdAt: topic.createdAt,
-          createdBy: topic.createdBy,
-          color: topic.color,
-          icon: topic.icon,
-          isFavorite: true
-        })),
-        undefined,
-        getRequestId(req)
-      ));
-    } catch (error: any) {
-      console.error('Error fetching user favorite topics:', error);
-      res.status(500).json(errorResponse(
-        'Impossibile recuperare i topic preferiti',
-        'GET_FAVORITE_TOPICS_ERROR',
-        undefined,
-        500,
-        getRequestId(req)
-      ));
-    }
-  }
-
-  static async addTopicToFavorites(req: Request<{ slug: string }>, res: Response) {
-    try {
-      const { slug } = req.params;
-      const user = (req as any).user;
-      
-      if (!user) {
-        return res.status(401).json(errorResponse(
-          'Autenticazione richiesta',
-          'AUTHENTICATION_REQUIRED',
-          undefined,
-          401,
-          getRequestId(req)
-        ));
-      }
-
-      const db = mongooseConnection.db;
-      
-      // Check if topic exists and user has access
-      const topic = await ForumTopic.findOne({ 
-        slug, 
-        isVisible: true 
-      });
-
-      if (!topic) {
-        return res.status(404).json(errorResponse(
-          'Topic non trovato',
-          'TOPIC_NOT_FOUND',
-          undefined,
-          404,
-          getRequestId(req)
-        ));
-      }
-
-      // Check access permissions
-      if (!topic.isPublic) {
-        if (!user.character || user.character.playerStatus !== 'approved') {
-          return res.status(403).json(errorResponse(
-            'Accesso negato: personaggio approvato richiesto',
-            'ACCESS_DENIED',
-            undefined,
-            403,
-            getRequestId(req)
-          ));
+      const topics = await ForumTopic.find({ isVisible: true }).lean();
+      const accessibleSlugs: string[] = [];
+      for (const t of topics) {
+        if (await canAccessTopic(t as IForumTopic, character ? { characterId: character.characterId, gameplayRoles: character.gameplayRoles } : undefined)) {
+          accessibleSlugs.push(t.slug);
         }
       }
 
-      // Check if already favorited
-      const existingFavorite = await ForumTopicFavorite.findOne({
-        userId: user.userId,
-        topicSlug: slug
-      });
+      const discussions = await ForumDiscussion.aggregate([
+        { $match: { topicSlug: { $in: accessibleSlugs }, isVisible: true, createdAt: { $gte: cutoffDate } } },
+        { $addFields: { popularityScore: { $add: [{ $ifNull: ['$viewCount', 0] }, { $multiply: [{ $ifNull: ['$postCount', 0] }, 3] }] } } },
+        { $sort: { popularityScore: -1 } },
+        { $limit: limit }
+      ]);
 
-      if (existingFavorite) {
-        return res.status(409).json(errorResponse(
-          'Topic già nei preferiti',
-          'ALREADY_FAVORITED',
-          undefined,
-          409,
-          getRequestId(req)
-        ));
-      }
-
-      // Add to favorites
-      await ForumTopicFavorite.create({
-        characterId: user.character?.characterId,
-        topicId: topic._id,
-        createdAt: new Date()
-      });
-
-      res.status(201).json(createResponse(
-        {
-          message: 'Topic aggiunto ai preferiti',
-          topicSlug: slug,
-          isFavorite: true
-        },
-        undefined,
-        getRequestId(req)
-      ));
-    } catch (error: any) {
-      console.error('Error adding topic to favorites:', error);
-      res.status(500).json(errorResponse(
-        'Impossibile aggiungere il topic ai preferiti',
-        'ADD_FAVORITE_ERROR',
-        undefined,
-        500,
-        getRequestId(req)
-      ));
+      res.json(successResponse(discussions.map(d => ({
+        id: d._id, slug: d.slug, topicSlug: d.topicSlug, title: d.title,
+        postCount: d.postCount, viewCount: d.viewCount,
+        lastPostAt: d.lastPostAt, createdAt: d.createdAt, tags: d.tags || [],
+        popularityScore: d.popularityScore
+      })), undefined, getRequestId(req)));
+    } catch (error) {
+      res.status(500).json(errorResponse('Impossibile recuperare le discussioni popolari', 'GET_POPULAR_ERROR', undefined, 500, getRequestId(req)));
     }
   }
 
-  static async removeTopicFromFavorites(req: Request<{ slug: string }>, res: Response) {
-    try {
-      const { slug } = req.params;
-      const user = (req as any).user;
-      
-      if (!user) {
-        return res.status(401).json(errorResponse(
-          'Autenticazione richiesta',
-          'AUTHENTICATION_REQUIRED',
-          undefined,
-          401,
-          getRequestId(req)
-        ));
-      }
-
-      const db = mongooseConnection.db;
-      
-      // Remove from favorites
-      const result = await ForumTopicFavorite.deleteOne({
-        userId: user.userId,
-        topicSlug: slug
-      });
-
-      if (result.deletedCount === 0) {
-        return res.status(404).json(errorResponse(
-          'Topic non trovato nei preferiti',
-          'FAVORITE_NOT_FOUND',
-          undefined,
-          404,
-          getRequestId(req)
-        ));
-      }
-
-      res.json(successResponse(
-        {
-          message: 'Topic rimosso dai preferiti',
-          topicSlug: slug,
-          isFavorite: false
-        },
-        undefined,
-        getRequestId(req)
-      ));
-    } catch (error: any) {
-      console.error('Error removing topic from favorites:', error);
-      res.status(500).json(errorResponse(
-        'Impossibile rimuovere il topic dai preferiti',
-        'REMOVE_FAVORITE_ERROR',
-        undefined,
-        500,
-        getRequestId(req)
-      ));
-    }
-  }
-
-  static async checkTopicFavorite(req: Request<{ slug: string }>, res: Response) {
-    try {
-      const { slug } = req.params;
-      const user = (req as any).user;
-      
-      if (!user) {
-        return res.json(successResponse(
-          { isFavorite: false },
-          undefined,
-          getRequestId(req)
-        ));
-      }
-
-      const db = mongooseConnection.db;
-      
-      const favorite = await ForumTopicFavorite.findOne({
-        userId: user.userId,
-        topicSlug: slug
-      });
-
-      res.json(successResponse(
-        { isFavorite: !!favorite },
-        undefined,
-        getRequestId(req)
-      ));
-    } catch (error: any) {
-      console.error('Error checking topic favorite status:', error);
-      res.status(500).json(errorResponse(
-        'Impossibile verificare lo stato preferito',
-        'CHECK_FAVORITE_ERROR',
-        undefined,
-        500,
-        getRequestId(req)
-      ));
-    }
-  }
-
-  // SEARCH
+  // ========== SEARCH (placeholder - will use EmbeddingService) ==========
 
   static async searchForum(req: Request, res: Response) {
     try {
-      const { 
-        q: query, 
-        topic: topicSlug, 
-        sortBy = 'relevance',
-        fuzzy = 'true'
-      } = req.query;
+      const { q: query, topicSlug } = req.query;
+
+      if (!query || typeof query !== 'string' || query.trim().length === 0) {
+        return res.status(400).json(errorResponse('La query di ricerca è obbligatoria', 'MISSING_QUERY', undefined, 400, getRequestId(req)));
+      }
+
+      // TODO: Replace with EmbeddingService.semanticSearch (todo: forum-search-semantic)
+      const filter: Record<string, unknown> = { isDeleted: false };
+      if (topicSlug && typeof topicSlug === 'string') {
+        filter.topicSlug = topicSlug;
+      }
+
       const page = Math.max(1, parseInt(req.query.page as string) || 1);
       const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string) || 20));
       const skip = (page - 1) * limit;
-      
-      const user = (req as any).user;
-      
-      if (!query || typeof query !== 'string' || query.trim().length === 0) {
-        return res.status(400).json(errorResponse(
-          'La query di ricerca è obbligatoria',
-          'MISSING_QUERY',
-          undefined,
-          400,
-          getRequestId(req)
-        ));
-      }
 
-      const db = mongooseConnection.db;
-      
-      // Enhanced query processing
-      const processedQuery = ForumController.processSearchQuery(query.trim(), fuzzy === 'true');
-      
-      // Build search filters with enhanced text search
-      let searchFilters: any = {
-        isDeleted: false
-      };
+      const escapedQuery = query.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-      // Apply the processed search query
-      if (processedQuery.textSearch) {
-        searchFilters.$text = processedQuery.textSearch;
-      }
-      
-      // Apply additional filters (regex for non-text search fields)
-      if (processedQuery.regexFilters.length > 0) {
-        searchFilters.$or = [
-          ...(searchFilters.$text ? [{ $text: searchFilters.$text }] : []),
-          ...processedQuery.regexFilters
-        ];
-        delete searchFilters.$text; // Move to $or clause
-      }
-      
-      // If topic is specified, filter by topic
-      if (topicSlug && typeof topicSlug === 'string') {
-        searchFilters.topicSlug = topicSlug;
-      }
-      
-      // Build access control filters
-      let accessFilters: any = {};
-      
-      // For private topics, require approved character
-      if (!user || !user.character || user.character.playerStatus !== 'approved') {
-        const publicTopics = await ForumTopic
-          .find({ isPublic: true, isVisible: true }, { projection: { slug: 1 } })
-          ;
-        
-        const publicTopicSlugs = publicTopics.map(t => t.slug);
-        accessFilters.topicSlug = { $in: publicTopicSlugs };
-      }
-      
-      // Combine filters
-      const finalFilters = { ...searchFilters, ...accessFilters };
-      
-      // Determine sort order
-      let sortOrder: any;
-      switch (sortBy) {
-        case 'date':
-          sortOrder = { createdAt: -1 };
-          break;
-        case 'relevance':
-        default:
-          sortOrder = processedQuery.textSearch 
-            ? { score: { $meta: 'textScore' }, createdAt: -1 }
-            : { createdAt: -1 };
-      }
-      
-      // Search posts with enhanced aggregation for better results
-      const posts = await ForumPost
-        .find(finalFilters, { score: { $meta: 'textScore' } })
-        .sort(sortOrder)
-        .skip(skip)
-        .limit(limit)
-        ;
+      const posts = await ForumPost.find({
+        ...filter,
+        content: { $regex: escapedQuery, $options: 'i' }
+      }).sort({ createdAt: -1 }).skip(skip).limit(limit).lean();
 
-      const total = await ForumPost
-        .countDocuments(finalFilters);
+      const total = await ForumPost.countDocuments({
+        ...filter,
+        content: { $regex: escapedQuery, $options: 'i' }
+      });
 
       const totalPages = Math.ceil(total / limit);
-
-      // Get search suggestions if results are limited
-      let suggestions = [];
-      if (total < 3 && query.length > 3) {
-        suggestions = await ForumController.generateSearchSuggestions(db, query, accessFilters);
-      }
-
-      res.json(listResponse(
-        posts.map(p => ({
-          id: p._id,
-          topicSlug: p.topicSlug,
-          discussionSlug: p.discussionSlug,
-          content: p.content,
-          authorUserId: p.authorUserId,
-          authorUsername: p.authorUsername,
-          authorCharacterName: p.authorCharacterName,
-          authorCharacterId: p.authorCharacterId,
-          createdAt: p.createdAt,
-          updatedAt: p.updatedAt,
-          isEdited: p.isEdited,
-          isDeleted: p.isDeleted,
-          replyToPostId: p.replyToPostId,
-          relevanceScore: (p as any).score || 0
-        })),
-        {
-          page,
-          pageSize: limit,
-          total,
-          totalPages,
-          hasNext: page < totalPages,
-          hasPrev: page > 1
-        },
-        undefined,
-        getRequestId(req)
-      ));
-    } catch (error: any) {
-      console.error('Error searching forum:', error);
-      res.status(500).json(errorResponse(
-        'Impossibile effettuare la ricerca nel forum',
-        'SEARCH_FORUM_ERROR',
-        undefined,
-        500,
-        getRequestId(req)
-      ));
-    }
-  }
-
-  /**
-   * Process and enhance search query with advanced operators
-   */
-  private static processSearchQuery(query: string, enableFuzzy: boolean = true) {
-    let processedQuery = query;
-    const regexFilters: any[] = [];
-    
-    // Handle quoted phrases - exact match
-    const phraseMatches = query.match(/"([^"]+)"/g);
-    if (phraseMatches) {
-      phraseMatches.forEach(phrase => {
-        const cleanPhrase = phrase.replace(/"/g, '');
-        processedQuery = processedQuery.replace(phrase, `"${cleanPhrase}"`);
-      });
-    }
-    
-    // Handle negation - exclude terms with minus
-    const negationMatches = query.match(/-(\w+)/g);
-    if (negationMatches) {
-      negationMatches.forEach(negation => {
-        const term = negation.substring(1);
-        processedQuery = processedQuery.replace(negation, `-${term}`);
-      });
-    }
-    
-    // Handle OR operator
-    processedQuery = processedQuery.replace(/\sOR\s/gi, ' OR ');
-    
-    // Add fuzzy search if enabled (for typo tolerance)
-    if (enableFuzzy && !processedQuery.includes('"') && !processedQuery.includes('OR')) {
-      const words = processedQuery.split(' ').filter(w => w.length > 3 && !w.startsWith('-'));
-      if (words.length > 0) {
-        const fuzzyTerms = words.map(word => `${word}~1`).join(' ');
-        processedQuery = `${processedQuery} ${fuzzyTerms}`;
-      }
-    }
-    
-    return {
-      originalQuery: query,
-      textSearch: { $search: processedQuery, $language: 'italian', $caseSensitive: false },
-      regexFilters
-    };
-  }
-
-  /**
-   * Generate search suggestions based on existing content
-   */
-  private static async generateSearchSuggestions(db: any, query: string, accessFilters: any) {
-    try {
-      const suggestions = [];
-      
-      // Get common words from titles and content
-      const aggregation = [
-        { $match: { isDeleted: false, ...accessFilters } },
-        {
-          $project: {
-            words: {
-              $split: [
-                { $toLower: { $concat: ['$title', ' ', '$content'] } },
-                ' '
-              ]
-            }
-          }
-        },
-        { $unwind: '$words' },
-        { $match: { words: { $regex: new RegExp(query, 'i'), $ne: '' } } },
-        { $group: { _id: '$words', count: { $sum: 1 } } },
-        { $match: { '_id': { $regex: /^[a-zA-ZÀ-ÿ]{3,}$/ } } }, // Only alphabetic words 3+ chars (including Italian accents)
-        { $sort: { count: -1 } },
-        { $limit: 5 }
-      ];
-      
-      const results = await ForumPost.aggregate(aggregation as any) as Array<{ _id: string; count: number }>;
-
-      return results.map(r => ({
-        term: r._id,
-        frequency: r.count
-      }));
-    } catch (error: any) {
-      console.error('Error generating suggestions:', error);
-      return [];
-    }
-  }
-
-  // SEARCH ANALYTICS
-  
-  static async getSearchStats(req: Request, res: Response) {
-    try {
-      const user = (req as any).user;
-      const db = mongooseConnection.db;
-      
-      // Build access control filters
-      let accessFilters: any = {};
-      if (!user || !user.character || user.character.playerStatus !== 'approved') {
-        const publicTopics = await ForumTopic
-          .find({ isPublic: true, isVisible: true }, { projection: { slug: 1 } })
-          ;
-        const publicTopicSlugs = publicTopics.map(t => t.slug);
-        accessFilters.topicSlug = { $in: publicTopicSlugs };
-      }
-
-      // Get most frequent words from titles and content (simplified approach)
-      const commonWords = await ForumPost.aggregate([
-        { $match: { isDeleted: false, ...accessFilters } },
-        {
-          $project: {
-            text: { $toLower: { $concat: [{ $ifNull: ['$title', ''] }, ' ', '$content'] } }
-          }
-        },
-        {
-          $project: {
-            words: { $split: ['$text', ' '] }
-          }
-        },
-        { $unwind: '$words' },
-        { 
-          $match: { 
-            words: { 
-              $regex: '^[a-zA-ZÀ-ÿ]{4,}$',
-              $nin: [
-                // Italian stop words
-                'alla', 'alle', 'allo', 'anche', 'anni', 'anno', 'avere', 'casa', 'come', 'cosa', 
-                'così', 'dalla', 'dalle', 'dello', 'dopo', 'dove', 'essere', 'fare', 'grande',
-                'già', 'infatti', 'insieme', 'lungo', 'molto', 'nella', 'nelle', 'nello',
-                'oltre', 'paese', 'parte', 'però', 'più', 'prima', 'quale', 'quando',
-                'quindi', 'stesso', 'sempre', 'sotto', 'ancora', 'attraverso', 'durante',
-                'mentre', 'proprio', 'proprio', 'tuttavia', 'invece', 'sopra', 'dentro',
-                'davanti', 'dietro', 'accanto', 'vicino', 'lontano', 'tempo', 'volta',
-                // English common words (still present in some content)
-                'this', 'that', 'with', 'have', 'will', 'from', 'they', 'been', 'said', 
-                'each', 'which', 'their', 'time', 'more', 'very', 'when', 'come', 'here', 
-                'where', 'just', 'like', 'long', 'make', 'many', 'over', 'such', 'take', 
-                'than', 'them', 'well', 'were'
-              ]
-            }
-          }
-        },
-        { $group: { _id: '$words', count: { $sum: 1 } } },
-        { $sort: { count: -1 } },
-        { $limit: 15 }
-      ]);
-
-      // Get topic activity stats
-      const topicStats = await ForumPost.aggregate([
-        { $match: { isDeleted: false, ...accessFilters } },
-        { 
-          $group: { 
-            _id: '$topicSlug', 
-            postCount: { $sum: 1 },
-            lastActivity: { $max: '$createdAt' }
-          } 
-        },
-        { $sort: { postCount: -1 } },
-        { $limit: 10 }
-      ]);
-
-      res.json(successResponse(
-        {
-          popularTerms: commonWords.map(w => ({
-            term: w._id,
-            frequency: w.count
-          })),
-          activeTopics: topicStats.map(t => ({
-            slug: t._id,
-            postCount: t.postCount,
-            lastActivity: t.lastActivity
-          })),
-          totalPosts: await ForumPost.countDocuments({ isDeleted: false, ...accessFilters }),
-          indexedAt: new Date()
-        },
-        undefined,
-        getRequestId(req)
-      ));
-
-    } catch (error: any) {
-      console.error('Error getting search stats:', error);
-      res.status(500).json(errorResponse(
-        'Impossibile recuperare le statistiche di ricerca',
-        'GET_SEARCH_STATS_ERROR',
-        undefined,
-        500,
-        getRequestId(req)
-      ));
+      res.json(listResponse(posts.map(p => ({
+        id: p._id, topicSlug: p.topicSlug, discussionSlug: p.discussionSlug,
+        content: p.content, author: p.author, createdAt: p.createdAt
+      })), { page, pageSize: limit, total, totalPages, hasNext: page < totalPages, hasPrev: page > 1 }, undefined, getRequestId(req)));
+    } catch (error) {
+      res.status(500).json(errorResponse('Impossibile effettuare la ricerca', 'SEARCH_ERROR', undefined, 500, getRequestId(req)));
     }
   }
 }

@@ -2,8 +2,10 @@ import mongoose, { Schema, Document, model, models } from 'mongoose';
 
 /**
  * ForumNotification Model
- * In-app notifications for forum events
- * TTL index auto-expires notifications after 90 days
+ *
+ * In-app notifications for forum events.
+ * TTL index auto-expires notifications after 90 days.
+ * Includes denormalized slugs for frontend deep-link navigation.
  */
 
 export type ForumNotificationType =
@@ -19,6 +21,8 @@ export interface IForumNotification extends Document {
   message: string;
   relatedDiscussionId?: mongoose.Types.ObjectId;
   relatedPostId?: mongoose.Types.ObjectId;
+  topicSlug?: string;
+  discussionSlug?: string;
   triggeredByCharacterId?: mongoose.Types.ObjectId;
   triggeredByCharacterName?: string;
   isRead: boolean;
@@ -54,43 +58,27 @@ const ForumNotificationSchema = new Schema<IForumNotification>({
     required: [true, 'Notification message is required'],
     maxlength: [500, 'Message cannot exceed 500 characters']
   },
-  relatedDiscussionId: {
-    type: Schema.Types.ObjectId,
-    ref: 'ForumDiscussion'
-  },
-  relatedPostId: {
-    type: Schema.Types.ObjectId,
-    ref: 'ForumPost'
-  },
-  triggeredByCharacterId: {
-    type: Schema.Types.ObjectId,
-    ref: 'Character'
-  },
+  relatedDiscussionId: { type: Schema.Types.ObjectId, ref: 'ForumDiscussion' },
+  relatedPostId: { type: Schema.Types.ObjectId, ref: 'ForumPost' },
+  topicSlug: { type: String, lowercase: true },
+  discussionSlug: { type: String, lowercase: true },
+  triggeredByCharacterId: { type: Schema.Types.ObjectId, ref: 'Character' },
   triggeredByCharacterName: String,
-  isRead: {
-    type: Boolean,
-    default: false
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  }
+  isRead: { type: Boolean, default: false },
+  createdAt: { type: Date, default: Date.now }
 }, {
   collection: 'forum_notifications',
-  timestamps: false // Using manual createdAt
+  timestamps: false
 });
 
-// Indexes
-ForumNotificationSchema.index({ characterId: 1, isRead: 1, createdAt: -1 }); // For listing unread notifications (most common query)
-ForumNotificationSchema.index({ characterId: 1, createdAt: -1 }); // For listing all notifications
-ForumNotificationSchema.index({ createdAt: 1 }, { expireAfterSeconds: 7776000 }); // TTL index: auto-delete after 90 days (7776000 seconds)
+ForumNotificationSchema.index({ characterId: 1, isRead: 1, createdAt: -1 });
+ForumNotificationSchema.index({ characterId: 1, createdAt: -1 });
+ForumNotificationSchema.index({ createdAt: 1 }, { expireAfterSeconds: 7776000 });
 
-// Static method to get unread count for a character
 ForumNotificationSchema.statics.getUnreadCount = async function(characterId: mongoose.Types.ObjectId): Promise<number> {
   return this.countDocuments({ characterId, isRead: false });
 };
 
-// Static method to mark all as read for a character
 ForumNotificationSchema.statics.markAllAsRead = async function(characterId: mongoose.Types.ObjectId): Promise<number> {
   const result = await this.updateMany(
     { characterId, isRead: false },

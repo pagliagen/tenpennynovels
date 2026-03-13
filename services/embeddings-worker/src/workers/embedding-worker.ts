@@ -18,12 +18,14 @@ import {
   DocumentChunkEmbeddingEvent,
   LocationEmbeddingEvent,
   ChatEmbeddingEvent,
+  ForumPostEmbeddingEvent,
   DeleteEmbeddingEvent,
   EmbeddingEvent,
   isDocumentEmbeddingEvent,
   isDocumentChunkEmbeddingEvent,
   isLocationEmbeddingEvent,
   isChatEmbeddingEvent,
+  isForumPostEmbeddingEvent,
   isDeleteEmbeddingEvent
 } from '../types/events';
 import { PythonEmbeddingService, ModerationResult } from '../services/PythonEmbeddingService';
@@ -35,7 +37,7 @@ const QDRANT_URL = process.env.QDRANT_URL || 'http://localhost:6333';
 const ELASTICSEARCH_URL = process.env.ELASTICSEARCH_URL || 'http://localhost:9200';
 const ELASTICSEARCH_INDEX_PREFIX = process.env.ELASTICSEARCH_INDEX_PREFIX || 'tenpennynovels';
 const EMBEDDING_MODEL = 'paraphrase-multilingual-MiniLM-L12-v2';
-const MODERATION_MODEL = 'distilbert-multilingual-toxicity-classifier';
+const MODERATION_MODEL = 'hate-ita';
 const CACHE_TTL = 3600; // 1 hour
 const MODERATION_CONFIG_CACHE_TTL = 60000; // 1 minute
 
@@ -160,6 +162,17 @@ export class EmbeddingWorker {
         });
       }
 
+      const hasForumPosts = collections.collections.some(c => c.name === 'forum_posts');
+      if (!hasForumPosts) {
+        console.log('📦 Creating Qdrant collection: forum_posts');
+        await this.qdrant.createCollection('forum_posts', {
+          vectors: {
+            size: 384,
+            distance: 'Cosine'
+          }
+        });
+      }
+
       // ✅ Ensure ElasticSearch document_chunks index
       const chunkIndexExists = await this.elasticsearch.indices.exists({
         index: `${ELASTICSEARCH_INDEX_PREFIX}_document_chunks`
@@ -190,6 +203,39 @@ export class EmbeddingWorker {
                 headingLevel: { type: 'integer' },
                 parentSlug: { type: 'keyword' },
                 isActive: { type: 'boolean' },
+                createdAt: { type: 'date' }
+              }
+            }
+          }
+        });
+      }
+
+      const forumIndexExists = await this.elasticsearch.indices.exists({
+        index: `${ELASTICSEARCH_INDEX_PREFIX}_forum_posts`
+      });
+
+      if (!forumIndexExists) {
+        console.log(`📦 Creating ElasticSearch index: ${ELASTICSEARCH_INDEX_PREFIX}_forum_posts`);
+        await this.elasticsearch.indices.create({
+          index: `${ELASTICSEARCH_INDEX_PREFIX}_forum_posts`,
+          body: {
+            settings: {
+              analysis: {
+                analyzer: {
+                  italian: {
+                    type: 'standard'
+                  }
+                }
+              }
+            },
+            mappings: {
+              properties: {
+                postId: { type: 'keyword' },
+                topicSlug: { type: 'keyword' },
+                discussionSlug: { type: 'keyword' },
+                authorCharacterId: { type: 'keyword' },
+                authorCharacterName: { type: 'text' },
+                content: { type: 'text', analyzer: 'italian' },
                 createdAt: { type: 'date' }
               }
             }
@@ -304,7 +350,7 @@ export class EmbeddingWorker {
       REDIS_CHANNELS.EMBEDDING_CHAT_CREATED,
       (message: string) => {
         const event = JSON.parse(message);
-        this.queue.add(event, {
+        this.queue.add({ ...event, _source: 'created' }, {
           jobId: `action-${event.chatId}-${Date.now()}`
         });
         console.log(`🎭 Queued chat: ${event.characterName}`);
@@ -315,7 +361,7 @@ export class EmbeddingWorker {
       REDIS_CHANNELS.EMBEDDING_CHAT_UPDATED,
       (message: string) => {
         const event = JSON.parse(message);
-        this.queue.add(event, {
+        this.queue.add({ ...event, _source: 'updated' }, {
           jobId: `action-upd-${event.chatId}-${Date.now()}`
         });
         console.log(`🎭 Queued chat update: ${event.characterName}`);
@@ -333,6 +379,39 @@ export class EmbeddingWorker {
       }
     );
 
+    await this.subscriber.subscribe(
+      REDIS_CHANNELS.EMBEDDING_FORUM_POST_CREATED,
+      (message: string) => {
+        const event = JSON.parse(message);
+        this.queue.add({ ...event, _source: 'created' }, {
+          jobId: `forum-${event.postId}-${Date.now()}`
+        });
+        console.log(`💬 Queued forum post: ${event.authorCharacterName}`);
+      }
+    );
+
+    await this.subscriber.subscribe(
+      REDIS_CHANNELS.EMBEDDING_FORUM_POST_UPDATED,
+      (message: string) => {
+        const event = JSON.parse(message);
+        this.queue.add({ ...event, _source: 'updated' }, {
+          jobId: `forum-upd-${event.postId}-${Date.now()}`
+        });
+        console.log(`💬 Queued forum post update: ${event.authorCharacterName}`);
+      }
+    );
+
+    await this.subscriber.subscribe(
+      REDIS_CHANNELS.EMBEDDING_FORUM_POST_DELETED,
+      (message: string) => {
+        const event = JSON.parse(message);
+        this.queue.add(event, {
+          jobId: `forum-del-${event.entityId}-${Date.now()}`
+        });
+        console.log(`🗑️  Queued forum post deletion: ${event.entityId}`);
+      }
+    );
+
     console.log('✅ Embedding Worker started with concurrency 5');
     console.log(`   Listening to channels:`);
     console.log(`   - ${REDIS_CHANNELS.EMBEDDING_DOCUMENT_CREATED}`);
@@ -345,6 +424,9 @@ export class EmbeddingWorker {
     console.log(`   - ${REDIS_CHANNELS.EMBEDDING_CHAT_CREATED}`);
     console.log(`   - ${REDIS_CHANNELS.EMBEDDING_CHAT_UPDATED}`);
     console.log(`   - ${REDIS_CHANNELS.EMBEDDING_CHAT_DELETED}`);
+    console.log(`   - ${REDIS_CHANNELS.EMBEDDING_FORUM_POST_CREATED}`);
+    console.log(`   - ${REDIS_CHANNELS.EMBEDDING_FORUM_POST_UPDATED}`);
+    console.log(`   - ${REDIS_CHANNELS.EMBEDDING_FORUM_POST_DELETED}`);
   }
 
   /**
@@ -371,6 +453,8 @@ export class EmbeddingWorker {
   private async processEmbedding(event: EmbeddingEvent): Promise<void> {
     if (isDeleteEmbeddingEvent(event)) {
       await this.handleDeleteEvent(event);
+    } else if (isForumPostEmbeddingEvent(event)) {
+      await this.handleForumPostEvent(event as ForumPostEmbeddingEvent);
     } else if (isDocumentEmbeddingEvent(event)) {
       await this.handleDocumentEvent(event);
     } else if (isDocumentChunkEmbeddingEvent(event)) {
@@ -530,15 +614,15 @@ export class EmbeddingWorker {
     try {
       console.log(`🎭 Processing chat embedding: ${event.chatId}`);
 
-      // Get location name
       const Location = mongoose.model('Location');
-      const location = await Location.findById(event.locationId).select('name').lean() as any;
+      const location = await Location.findById(event.locationId).select('name slug').lean() as any;
 
       if (!location) {
         throw new Error(`Location not found: ${event.locationId}`);
       }
 
       const locationName = location.name as string;
+      const locationSlug = (location.slug || '') as string;
       const text = `${event.characterName} a ${locationName}: ${event.content}`;
 
       // ✅ Check cache for embedding
@@ -562,20 +646,24 @@ export class EmbeddingWorker {
         }
       }
 
-      // ✅ Run AI moderation if enabled
+      // ✅ Run AI moderation only on 'updated' events to avoid duplicates
       let moderation: ModerationResult | null = null;
-      const moderationConfig = await this.getModerationConfig();
+      const eventSource = (event as any)._source;
 
-      if (moderationConfig.enabled) {
-        try {
-          moderation = await this.pythonService.moderateText(event.content);
-          console.log(`🛡️ Moderation: ${moderation.label} (${moderation.score}) for ${event.characterName}`);
+      if (eventSource === 'updated') {
+        const moderationConfig = await this.getModerationConfig();
 
-          if (moderation.label === 'toxic' && moderation.score >= moderationConfig.threshold) {
-            await this.createModerationAlert(event, locationName, moderation);
+        if (moderationConfig.enabled) {
+          try {
+            moderation = await this.pythonService.moderateText(event.content);
+            console.log(`🛡️ Moderation: ${moderation.label} (${moderation.score}) for ${event.characterName}`);
+
+            if (moderation.label === 'toxic' && moderation.score >= moderationConfig.threshold) {
+              await this.createModerationAlert(event, locationName, locationSlug, moderation);
+            }
+          } catch (moderationError) {
+            console.error('⚠️ Moderation failed (embedding will still be saved):', moderationError);
           }
-        } catch (moderationError) {
-          console.error('⚠️ Moderation failed (embedding will still be saved):', moderationError);
         }
       }
 
@@ -587,6 +675,166 @@ export class EmbeddingWorker {
     } catch (error) {
       console.error('❌ Error processing chat embedding event:', error);
       throw error;
+    }
+  }
+
+  /**
+   * Handle forum post embedding event (embedding + moderation)
+   */
+  private async handleForumPostEvent(event: ForumPostEmbeddingEvent): Promise<void> {
+    try {
+      console.log(`💬 Processing forum post embedding: ${event.postId}`);
+
+      const text = `${event.authorCharacterName} in ${event.topicSlug}/${event.discussionSlug}: ${event.content}`;
+
+      const cacheKey = `embedding:${this.hashContent(text)}`;
+      let embedding: number[] | null = null;
+
+      if (this.redis) {
+        const cached = await this.redis.get(cacheKey);
+        if (cached) {
+          embedding = JSON.parse(cached);
+        }
+      }
+
+      if (!embedding) {
+        embedding = await this.generateEmbedding(text);
+        if (!embedding) {
+          throw new Error(`Failed to generate embedding for forum post ${event.postId}`);
+        }
+        if (this.redis) {
+          await this.redis.setEx(cacheKey, CACHE_TTL, JSON.stringify(embedding));
+        }
+      }
+
+      let moderation: ModerationResult | null = null;
+      const moderationConfig = await this.getModerationConfig();
+
+      if (moderationConfig.enabled) {
+        try {
+          moderation = await this.pythonService.moderateText(event.content);
+          console.log(`🛡️ Moderation: ${moderation.label} (${moderation.score}) for ${event.authorCharacterName}`);
+
+          if (moderation.label === 'toxic' && moderation.score >= moderationConfig.threshold) {
+            await this.createForumModerationAlert(event, moderation);
+          }
+        } catch (moderationError) {
+          console.error('⚠️ Moderation failed (embedding will still be saved):', moderationError);
+        }
+      }
+
+      await this.saveForumPostEmbeddingAndModeration(event, embedding, moderation);
+
+      console.log(`✅ Forum post processed: ${event.authorCharacterName} @ ${event.topicSlug}/${event.discussionSlug}`);
+
+    } catch (error) {
+      console.error('❌ Error processing forum post embedding event:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Create a ModerationAlert record for a toxic forum post
+   */
+  private async createForumModerationAlert(
+    event: ForumPostEmbeddingEvent,
+    moderation: ModerationResult
+  ): Promise<void> {
+    try {
+      const db = mongoose.connection.db;
+      if (!db) return;
+
+      await db.collection('moderation_alerts').insertOne({
+        source: 'forum',
+        forumPostId: event.postId,
+        characterId: event.authorCharacterId,
+        characterName: event.authorCharacterName,
+        topicSlug: event.topicSlug,
+        discussionSlug: event.discussionSlug,
+        content: event.content,
+        toxicityScore: moderation.score,
+        moderationLabel: moderation.label,
+        moderationModel: MODERATION_MODEL,
+        status: 'pending',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+
+      console.log(`🚨 ModerationAlert created: score=${moderation.score} for ${event.authorCharacterName}`);
+    } catch (error) {
+      console.error('⚠️ Failed to create ModerationAlert:', error);
+    }
+  }
+
+  /**
+   * Save forum post moderation results to MongoDB + embedding to Qdrant + ElasticSearch
+   */
+  private async saveForumPostEmbeddingAndModeration(
+    event: ForumPostEmbeddingEvent,
+    embedding: number[],
+    moderation: ModerationResult | null
+  ): Promise<void> {
+    const db = mongoose.connection.db;
+    if (!db) {
+      throw new Error('Database connection not available');
+    }
+
+    const updateFields: any = {};
+
+    if (moderation) {
+      updateFields.moderationScore = moderation.score;
+      updateFields.moderationLabel = moderation.label;
+      updateFields.moderationModel = MODERATION_MODEL;
+      updateFields.moderationProcessedAt = new Date();
+    }
+
+    if (Object.keys(updateFields).length > 0) {
+      const result = await db.collection('forum_posts').updateOne(
+        { _id: new mongoose.Types.ObjectId(event.postId) },
+        { $set: updateFields }
+      );
+
+      if (result.matchedCount === 0) {
+        throw new Error(`Forum post not found: ${event.postId}`);
+      }
+    }
+
+    try {
+      await this.qdrant.upsert('forum_posts', {
+        wait: true,
+        points: [{
+          id: this.objectIdToUUID(event.postId),
+          vector: embedding,
+          payload: {
+            postId: event.postId,
+            topicSlug: event.topicSlug,
+            discussionSlug: event.discussionSlug,
+            authorCharacterId: event.authorCharacterId,
+            authorCharacterName: event.authorCharacterName,
+            type: 'forum_post'
+          }
+        }]
+      });
+    } catch (error) {
+      console.error('❌ Failed to save to Qdrant (MongoDB saved):', error);
+    }
+
+    try {
+      await this.elasticsearch.index({
+        index: `${ELASTICSEARCH_INDEX_PREFIX}_forum_posts`,
+        id: event.postId,
+        document: {
+          postId: event.postId,
+          topicSlug: event.topicSlug,
+          discussionSlug: event.discussionSlug,
+          authorCharacterId: event.authorCharacterId,
+          authorCharacterName: event.authorCharacterName,
+          content: event.content,
+          createdAt: new Date()
+        }
+      });
+    } catch (esError) {
+      console.error('❌ Failed to index to ElasticSearch:', esError);
     }
   }
 
@@ -629,6 +877,7 @@ export class EmbeddingWorker {
   private async createModerationAlert(
     event: ChatEmbeddingEvent,
     locationName: string,
+    locationSlug: string,
     moderation: ModerationResult
   ): Promise<void> {
     try {
@@ -636,11 +885,13 @@ export class EmbeddingWorker {
       if (!db) return;
 
       await db.collection('moderation_alerts').insertOne({
+        source: 'chat',
         chatId: event.chatId,
         characterId: event.characterId,
         characterName: event.characterName,
         locationId: event.locationId,
         locationName,
+        locationSlug,
         content: event.content,
         toxicityScore: moderation.score,
         moderationLabel: moderation.label,
@@ -770,6 +1021,9 @@ export class EmbeddingWorker {
         case 'chat':
           await this.deleteChatEmbedding(event.entityId);
           break;
+        case 'forum_post':
+          await this.deleteForumPostEmbedding(event.entityId);
+          break;
       }
 
       console.log(`✅ Embeddings deleted: ${event.entityType} ${event.entityId}`);
@@ -795,8 +1049,9 @@ export class EmbeddingWorker {
   /**
    * Detect event type from job data
    */
-  private detectEventType(data: any): 'document' | 'document_chunk' | 'chat' {
+  private detectEventType(data: any): 'document' | 'document_chunk' | 'chat' | 'forum_post' {
     if (data.chunkId) return 'document_chunk';
+    if (data.postId) return 'forum_post';
     if (data.chatId) return 'chat';
     return 'document';
   }
@@ -1083,6 +1338,28 @@ export class EmbeddingWorker {
       console.log(`✅ Deleted chat embedding from Qdrant`);
     } catch (error) {
       console.error(`❌ Failed to delete chat:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Delete forum post embedding from Qdrant + ElasticSearch
+   */
+  private async deleteForumPostEmbedding(postId: string): Promise<void> {
+    try {
+      await this.qdrant.delete('forum_posts', {
+        wait: true,
+        points: [this.objectIdToUUID(postId)]
+      });
+
+      await this.elasticsearch.delete({
+        index: `${ELASTICSEARCH_INDEX_PREFIX}_forum_posts`,
+        id: postId
+      }).catch(() => {});
+
+      console.log(`✅ Deleted forum post embedding from Qdrant + ElasticSearch`);
+    } catch (error) {
+      console.error(`❌ Failed to delete forum post:`, error);
       throw error;
     }
   }

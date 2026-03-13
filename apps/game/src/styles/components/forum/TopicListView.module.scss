@@ -1,0 +1,34 @@
+@use './_variables' as *;
+
+.container {
+  padding: $spacing-xl;
+  max-width: $forum-max-width;
+  margin: 0 auto;
+}
+
+.title {
+  font-family: $font-serif;
+  color: $text-primary;
+  font-size: 1.5rem;
+  margin-bottom: $spacing-xs;
+}
+
+.subtitle {
+  color: $text-muted;
+  font-size: 0.85rem;
+  margin-bottom: $spacing-xl;
+}
+
+.grid {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.loading,
+.empty,
+.error {
+  text-align: center;
+  padding: $spacing-xxl;
+  color: $text-muted;
+}

@@ -6,6 +6,8 @@ import { CharacterVisibilityFilter } from '@shared/utils/characterVisibility';
 import { hasGamePermission } from '../utils/gamePermissions';
 import { FinancialUtils } from '../utils/financialUtils';
 import { CharacterCreationConfigService } from '@shared/services/CharacterCreationConfigService';
+import { ConfigurationService } from '@shared/services/ConfigurationService';
+import { redis } from '@config/runtime/redis';
 
 /**
  * CharacterController
@@ -92,6 +94,51 @@ export class CharacterController {
   }
 
   /**
+   * POST /characters/check-name
+   * Check if character name is available
+   */
+  static async checkNameAvailability(req: Request, res: Response): Promise<void> {
+    try {
+      const { name } = req.body;
+
+      // Validate input
+      if (!name || typeof name !== 'string' || name.trim().length < 2) {
+        res.status(400).json({
+          available: false,
+          error: 'Nome deve essere almeno 2 caratteri'
+        });
+        return;
+      }
+
+      const trimmedName = name.trim();
+
+      // Check if name exists (excluding soft-deleted characters)
+      const existingCharacter = await Character.findOne({
+        name: trimmedName,
+        isDeleted: false  // Exclude soft-deleted
+      });
+
+      res.json({
+        available: !existingCharacter,
+        name: trimmedName
+      });
+
+    } catch (error: any) {
+      const err = error as Error;
+      logger.error('Error checking name availability:', {
+        message: err.message,
+        stack: err.stack,
+        name: err.name
+      });
+
+      res.status(500).json({
+        available: false,
+        error: 'Errore durante verifica disponibilità nome'
+      });
+    }
+  }
+
+  /**
    * GET /characters/my
    * Get user's characters
    */
@@ -134,6 +181,64 @@ export class CharacterController {
       res.status(500).json(errorResponse(
         'Impossibile recuperare i personaggi',
         'GET_CHARACTERS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
+    }
+  }
+
+  /**
+   * GET /character-creation-config
+   * Get character creation configuration (dynamic from SystemConfiguration)
+   */
+  static async getCharacterCreationConfig(req: Request, res: Response): Promise<void> {
+    try {
+      // Fetch config values from SystemConfiguration (cached in Redis)
+      const configService = new ConfigurationService(redis.getClient() as any, logger);
+      const statTotal = await configService.getConfig('character_creation_stat_total_points');
+      const statMin = await configService.getConfig('character_creation_stat_minimum');
+      const skillTotal = await configService.getConfig('character_creation_skill_total_points');
+
+      // Fallback to CharacterCreationConfigService for other values
+      const staticConfig = await CharacterCreationConfigService.getInstance().loadConfig();
+
+      const config = {
+        stats: {
+          totalPoints: statTotal ?? staticConfig.stats.totalPoints ?? 450,
+          minValue: statMin ?? staticConfig.stats.basePoints ?? 20,
+          maxStatsAbove80: staticConfig.stats.maxStatsAbove80,
+          creationCap: staticConfig.stats.creationCap,
+          gameplayCap: staticConfig.stats.gameplayCap,
+        },
+        skills: {
+          totalPoints: skillTotal ?? 250,  // New: flat value
+          creationCap: staticConfig.skills.creationCap,
+          creationCapWithOccupation: staticConfig.skills.creationCapWithOccupation,
+        },
+        occupation: staticConfig.occupation,
+        limits: staticConfig.limits,
+        socialClasses: staticConfig.socialClasses,
+        formulas: staticConfig.formulas,
+      };
+
+      res.json(successResponse(
+        { config },
+        undefined,
+        getRequestId(req)
+      ));
+
+    } catch (error: any) {
+      const err = error as Error;
+      logger.error('Error fetching character creation config:', {
+        message: err.message,
+        stack: err.stack,
+        name: err.name
+      });
+
+      res.status(500).json(errorResponse(
+        'Errore durante recupero configurazione',
+        'CONFIG_FETCH_ERROR',
         undefined,
         500,
         getRequestId(req)
@@ -1107,11 +1212,24 @@ export class CharacterController {
 
       // Handle field name mapping from frontend to backend (only for DRAFT)
       if (character.playerStatus === 'draft') {
+        // Construct full name from firstName + lastName
+        let nameChanged = false;
+        let currentFirstName = character.name?.split(' ')[0] || '';
+        let currentLastName = character.surname || '';
+
         if (filteredUpdates.firstName !== undefined) {
-          character.name = filteredUpdates.firstName;
+          currentFirstName = filteredUpdates.firstName;
+          nameChanged = true;
         }
         if (filteredUpdates.lastName !== undefined) {
-          character.surname = filteredUpdates.lastName;
+          currentLastName = filteredUpdates.lastName;
+          nameChanged = true;
+        }
+
+        // Update name and surname only if changed
+        if (nameChanged) {
+          character.name = [currentFirstName, currentLastName].filter(Boolean).join(' ');
+          character.surname = currentLastName;
         }
         // Frontend sends "birthplace" (lowercase), model uses "birthPlace" (camelCase)
         if (filteredUpdates.birthplace !== undefined) {

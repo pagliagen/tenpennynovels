@@ -1,11 +1,16 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
 export interface IModerationAlert extends Document {
-  chatId: string;
+  source: 'chat' | 'forum';
+  chatId?: string;
+  forumPostId?: string;
   characterId: string;
   characterName: string;
-  locationId: string;
+  locationId?: string;
   locationName?: string;
+  locationSlug?: string;
+  topicSlug?: string;
+  discussionSlug?: string;
   content: string;
   toxicityScore: number;
   moderationLabel: string;
@@ -22,9 +27,20 @@ export interface IModerationAlert extends Document {
 }
 
 const ModerationAlertSchema = new Schema<IModerationAlert>({
-  chatId: {
+  source: {
     type: String,
     required: true,
+    enum: ['chat', 'forum'],
+    default: 'chat'
+  },
+  chatId: {
+    type: String,
+    required: false,
+    index: true
+  },
+  forumPostId: {
+    type: String,
+    required: false,
     index: true
   },
   characterId: {
@@ -37,9 +53,21 @@ const ModerationAlertSchema = new Schema<IModerationAlert>({
   },
   locationId: {
     type: String,
-    required: true
+    required: false
   },
   locationName: {
+    type: String,
+    required: false
+  },
+  locationSlug: {
+    type: String,
+    required: false
+  },
+  topicSlug: {
+    type: String,
+    required: false
+  },
+  discussionSlug: {
     type: String,
     required: false
   },
@@ -93,7 +121,7 @@ const ModerationAlertSchema = new Schema<IModerationAlert>({
   collection: 'moderation_alerts'
 });
 
-ModerationAlertSchema.index({ status: 1, createdAt: -1 });
+ModerationAlertSchema.index({ source: 1, status: 1, createdAt: -1 });
 ModerationAlertSchema.index({ characterId: 1, createdAt: -1 });
 ModerationAlertSchema.index({ locationId: 1, createdAt: -1 });
 

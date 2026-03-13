@@ -24,7 +24,7 @@ import styles from '@/styles/components/character/wizard/Step4Skills.module.scss
  * @returns {JSX.Element} Step 4 form
  */
 export function Step4Skills(): JSX.Element {
-  const { stats, skills, occupation, dynamicSkills, updateSkill, autoAssignRequiredSkills, stepErrors } = useWizardStore();
+  const { stats, skills, occupation, dynamicSkills, updateSkill, autoAssignRequiredSkills, stepErrors, creationConfig } = useWizardStore();
   const errors = stepErrors[4] || {};
 
   // Fetch skills from API
@@ -66,10 +66,8 @@ export function Step4Skills(): JSX.Element {
     }
   }, [categories, activeCategory]);
 
-  // Calculate INT bonus (200 + INT/2, physical skills DON'T get bonus)
-  const intelligenceBonus = Math.floor(stats.intelligence / 2);
-  const baseBudget = 200;
-  const totalBudget = baseBudget + intelligenceBonus;
+  // Get total skill points from config (flat value, no INT bonus)
+  const totalBudget = creationConfig?.skills.totalPoints ?? 250;
 
   // Calculate spent points (manualPoints + requiredBonus count toward budget, occupationBonus does NOT)
   const spentPoints = Object.values(skills).reduce(

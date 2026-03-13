@@ -7,6 +7,7 @@ export const API_CONFIG = {
   BASE_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
   WEBSOCKET_URL: process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:3001',
   LANDING_URL: process.env.NEXT_PUBLIC_LANDING_URL || 'http://localhost:4000',
+  GAME_URL: process.env.NEXT_PUBLIC_GAME_URL || 'http://localhost:4001',
   TIMEOUT: 30000, // 30 seconds
   RETRY_COUNT: 3,
   RETRY_DELAY: 1000 // 1 second base delay (exponential backoff)

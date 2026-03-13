@@ -18,6 +18,7 @@ import type {
   DynamicSkill,
   ValidationResult,
 } from '@/types/wizard';
+import type { CharacterCreationConfig } from '@/lib/api/character';
 
 export function validateStep1(basicInfo: WizardBasicInfo): ValidationResult {
   const errors: Record<string, string> = {};
@@ -73,27 +74,34 @@ export function validateStep2(occupation: WizardOccupation): ValidationResult {
   return { valid: Object.keys(errors).length === 0, errors };
 }
 
-export function validateStep3(stats: WizardStats): ValidationResult {
+export function validateStep3(stats: WizardStats, creationConfig?: CharacterCreationConfig | null): ValidationResult {
   const errors: Record<string, string> = {};
+
+  // Get config values (fallback to defaults if not provided)
+  const TOTAL_POINTS = creationConfig?.stats.totalPoints ?? 450;
+  const MIN_VALUE = creationConfig?.stats.minValue ?? 20;
+  const MAX_ABOVE_80 = creationConfig?.stats.maxStatsAbove80 ?? 2;
+  const CREATION_CAP = creationConfig?.stats.creationCap ?? 85;
+
   // Type assertion safe: WizardStats declared properties are all number
   const statValues = Object.values(stats) as number[];
   const total = statValues.reduce((sum, val) => sum + val, 0);
   const above80 = statValues.filter((val) => val > 80).length;
 
-  if (total !== 400) {
-    errors.statsBudget = `Budget stats: ${total}/400 (deve essere esattamente 400)`;
+  if (total !== TOTAL_POINTS) {
+    errors.statsBudget = `Budget stats: ${total}/${TOTAL_POINTS} (deve essere esattamente ${TOTAL_POINTS})`;
   }
-  if (above80 > 2) {
-    errors.statsAbove80 = `Massimo 2 stats sopra 80 (attualmente: ${above80})`;
+  if (above80 > MAX_ABOVE_80) {
+    errors.statsAbove80 = `Massimo ${MAX_ABOVE_80} stats sopra 80 (attualmente: ${above80})`;
   }
-  if (statValues.some((val) => val > 85)) {
-    errors.statsCap = 'Nessun stat può superare 85 in creazione';
+  if (statValues.some((val) => val > CREATION_CAP)) {
+    errors.statsCap = `Nessun stat può superare ${CREATION_CAP} in creazione`;
   }
   const belowMin = (Object.entries(stats) as [string, number][])
-    .filter(([_, val]) => val < 20)
+    .filter(([_, val]) => val < MIN_VALUE)
     .map(([key, val]) => `${key}: ${val}`);
   if (belowMin.length > 0) {
-    errors.statsMinimum = `Tutte le statistiche devono essere almeno 20 (sotto minimo: ${belowMin.join(', ')})`;
+    errors.statsMinimum = `Tutte le statistiche devono essere almeno ${MIN_VALUE} (sotto minimo: ${belowMin.join(', ')})`;
   }
 
   return { valid: Object.keys(errors).length === 0, errors };
@@ -101,28 +109,34 @@ export function validateStep3(stats: WizardStats): ValidationResult {
 
 export function validateStep4(
   skills: Record<string, SkillBreakdown>,
-  stats: WizardStats,
+  _stats: WizardStats,
   occupation: WizardOccupation,
-  dynamicSkills: DynamicSkill[]
+  dynamicSkills: DynamicSkill[],
+  creationConfig?: CharacterCreationConfig | null
 ): ValidationResult {
   const errors: Record<string, string> = {};
+
+  // Get config values (fallback to defaults if not provided)
+  const TOTAL_SKILL_POINTS = creationConfig?.skills.totalPoints ?? 250;
+  const CREATION_CAP = creationConfig?.skills.creationCap ?? 75;
+  const CREATION_CAP_WITH_OCC = creationConfig?.skills.creationCapWithOccupation ?? 80;
+
   const totalSpent = Object.values(skills).reduce(
     (sum, skill) => sum + skill.manualPoints + skill.requiredBonus,
     0
   );
-  const budget = 200 + Math.floor(stats.intelligence / 2);
 
-  if (totalSpent !== budget) {
-    const diff = totalSpent - budget;
+  if (totalSpent !== TOTAL_SKILL_POINTS) {
+    const diff = totalSpent - TOTAL_SKILL_POINTS;
     if (diff > 0) {
-      errors.skillsBudget = `Punti abilità: ${totalSpent}/${budget} (superato di ${diff})`;
+      errors.skillsBudget = `Punti abilità: ${totalSpent}/${TOTAL_SKILL_POINTS} (superato di ${diff})`;
     } else {
-      errors.skillsBudget = `Punti abilità: ${totalSpent}/${budget} (mancano ${Math.abs(diff)} punti)`;
+      errors.skillsBudget = `Punti abilità: ${totalSpent}/${TOTAL_SKILL_POINTS} (mancano ${Math.abs(diff)} punti)`;
     }
   }
 
   for (const [skillName, skill] of Object.entries(skills)) {
-    const cap = skill.occupationBonus > 0 ? 80 : 75;
+    const cap = skill.occupationBonus > 0 ? CREATION_CAP_WITH_OCC : CREATION_CAP;
     if (skill.total > cap) {
       errors[`skill_${skillName}`] = `${skillName}: ${skill.total}/${cap} (cap superato)`;
     }

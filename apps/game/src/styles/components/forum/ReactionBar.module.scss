@@ -1,0 +1,48 @@
+@use './_variables' as *;
+
+.reactionBar {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+  margin-top: $spacing-sm;
+}
+
+.reactionBtn {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+  padding: $spacing-xs $spacing-sm;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: $radius-sm;
+  color: $text-secondary;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: $transition-fast;
+
+  &:hover:not(:disabled) {
+    background: $gold-10;
+    border-color: $gold-20;
+    color: $gold;
+  }
+
+  &.active {
+    background: $gold-10;
+    border-color: $gold-30;
+    color: $gold;
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+}
+
+.emoji {
+  font-size: 1rem;
+}
+
+.count {
+  font-size: 0.8rem;
+  color: inherit;
+}

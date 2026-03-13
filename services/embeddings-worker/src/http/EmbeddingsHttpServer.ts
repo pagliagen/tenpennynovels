@@ -107,7 +107,7 @@ export class EmbeddingsHttpServer {
      */
     this.app.post('/search', async (req: Request, res: Response) => {
       try {
-        const { query, type, limit = 10, minScore = 0.4 } = req.body;
+        const { query, type, source, limit = 10, minScore = 0.4 } = req.body;
 
         if (!query || typeof query !== 'string') {
           return res.status(400).json({
@@ -116,16 +116,22 @@ export class EmbeddingsHttpServer {
           });
         }
 
-        // 1. Generate embedding for semantic search
         const embedding = await this.pythonService.generateEmbedding(query);
 
-        // 2. Keyword search (ElasticSearch)
+        if (source === 'forum') {
+          const keywordResults = await this.forumKeywordSearch(query, limit * 2);
+          const semanticResults = await this.forumVectorSearch(embedding, limit * 2, minScore);
+          const merged = this.mergeForumWithRRF(keywordResults, semanticResults, limit);
+
+          return res.json({
+            success: true,
+            results: merged,
+            totalResults: merged.length
+          });
+        }
+
         const keywordResults = await this.keywordSearch(query, type, limit * 2);
-
-        // 3. Semantic search (Qdrant)
         const semanticResults = await this.vectorSearch(embedding, type, limit * 2, minScore);
-
-        // 4. Merge with RRF
         const merged = this.mergeWithRRF(keywordResults, semanticResults, limit);
 
         res.json({
@@ -207,6 +213,92 @@ export class EmbeddingsHttpServer {
       logger.error(`Vector search error: ${error.message}`);
       return [];
     }
+  }
+
+  private async forumKeywordSearch(query: string, limit: number = 20) {
+    try {
+      const response = await this.elasticsearch.search({
+        index: `${ELASTICSEARCH_INDEX_PREFIX}_forum_posts`,
+        body: {
+          query: {
+            bool: {
+              should: [
+                { match: { content: query } },
+                { match: { authorCharacterName: { query, boost: 1.5 } } }
+              ]
+            }
+          },
+          size: limit
+        }
+      });
+
+      return response.hits.hits.map((hit: any, i: number) => ({
+        postId: hit._source.postId,
+        topicSlug: hit._source.topicSlug,
+        discussionSlug: hit._source.discussionSlug,
+        authorCharacterId: hit._source.authorCharacterId,
+        authorCharacterName: hit._source.authorCharacterName,
+        rank: i + 1
+      }));
+    } catch (error: any) {
+      logger.error(`Forum keyword search error: ${error.message}`);
+      return [];
+    }
+  }
+
+  private async forumVectorSearch(embedding: number[], limit: number = 20, minScore: number = 0.4) {
+    try {
+      if (!embedding) return [];
+
+      const results = await this.qdrant.search('forum_posts', {
+        vector: embedding,
+        limit,
+        score_threshold: minScore
+      });
+
+      return results.map((r, i) => ({
+        postId: r.payload?.postId as string,
+        topicSlug: r.payload?.topicSlug as string,
+        discussionSlug: r.payload?.discussionSlug as string,
+        authorCharacterId: r.payload?.authorCharacterId as string,
+        authorCharacterName: r.payload?.authorCharacterName as string,
+        rank: i + 1
+      }));
+    } catch (error: any) {
+      logger.error(`Forum vector search error: ${error.message}`);
+      return [];
+    }
+  }
+
+  private mergeForumWithRRF(keywordResults: any[], semanticResults: any[], limit: number) {
+    const k = 60;
+    const scoreMap = new Map<string, { data: any; score: number }>();
+
+    for (const r of keywordResults) {
+      scoreMap.set(r.postId, { data: r, score: 1 / (k + r.rank) });
+    }
+
+    for (const r of semanticResults) {
+      const rrfScore = 1 / (k + r.rank);
+      const existing = scoreMap.get(r.postId);
+      if (existing) {
+        existing.score += rrfScore;
+      } else {
+        scoreMap.set(r.postId, { data: r, score: rrfScore });
+      }
+    }
+
+    return Array.from(scoreMap.values())
+      .sort((a, b) => b.score - a.score)
+      .slice(0, limit)
+      .map(item => ({
+        postId: item.data.postId,
+        topicSlug: item.data.topicSlug,
+        discussionSlug: item.data.discussionSlug,
+        authorCharacterId: item.data.authorCharacterId,
+        authorCharacterName: item.data.authorCharacterName,
+        score: item.score
+      }));
   }
 
   private mergeWithRRF(keywordResults: any[], semanticResults: any[], limit: number) {

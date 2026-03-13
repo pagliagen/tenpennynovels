@@ -1,0 +1,84 @@
+@use './_variables' as *;
+
+.container {
+  padding: $spacing-xl;
+  max-width: $forum-max-width;
+  margin: 0 auto;
+}
+
+.searchBar {
+  margin-bottom: $spacing-lg;
+}
+
+.searchInput {
+  width: 100%;
+  padding: $spacing-md $spacing-lg;
+  background: $dark-surface;
+  border: 1px solid $dark-border;
+  border-radius: $radius-md;
+  color: $text-primary;
+  font-family: $font-sans;
+  font-size: 1rem;
+  transition: $transition-normal;
+
+  &::placeholder {
+    color: $text-muted;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: $gold;
+  }
+}
+
+.results {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.resultCard {
+  background: $dark-surface;
+  border: 1px solid $dark-border;
+  border-radius: $radius-md;
+  padding: $spacing-lg;
+  cursor: pointer;
+  transition: $transition-normal;
+
+  &:hover {
+    border-color: $gold-30;
+    background: $dark-elevated;
+  }
+}
+
+.contentSnippet {
+  color: $text-secondary;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin-bottom: $spacing-sm;
+
+  :global(.highlight) {
+    background: $gold-20;
+    color: $gold;
+  }
+}
+
+.path {
+  font-size: 0.8rem;
+  color: $text-muted;
+  margin-bottom: $spacing-xs;
+}
+
+.meta {
+  display: flex;
+  gap: $spacing-md;
+  font-size: 0.85rem;
+  color: $text-muted;
+}
+
+.loading,
+.empty {
+  text-align: center;
+  padding: $spacing-xxl;
+  color: $text-muted;
+}

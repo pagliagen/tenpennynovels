@@ -1,0 +1,69 @@
+@use './_variables' as *;
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-md;
+  padding: $spacing-lg 0;
+  flex-wrap: wrap;
+}
+
+.prevBtn,
+.nextBtn {
+  padding: $spacing-sm $spacing-md;
+  background: $dark-surface;
+  border: 1px solid $dark-border;
+  border-radius: $radius-md;
+  color: $text-primary;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: $transition-fast;
+
+  &:hover:not(:disabled) {
+    border-color: $gold-30;
+    color: $gold;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.pages {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+}
+
+.pageBtn {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 $spacing-sm;
+  background: $dark-surface;
+  border: 1px solid $dark-border;
+  border-radius: $radius-sm;
+  color: $text-secondary;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: $transition-fast;
+
+  &:hover:not(.active) {
+    border-color: $gold-30;
+    color: $gold;
+  }
+
+  &.active {
+    background: $gold-20;
+    border-color: $gold-30;
+    color: $gold;
+    font-weight: 600;
+  }
+}
+
+.ellipsis {
+  color: $text-muted;
+  padding: 0 $spacing-xs;
+  font-size: 0.9rem;
+}

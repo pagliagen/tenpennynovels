@@ -1,36 +1,41 @@
-import { Schema, Document, model, models } from 'mongoose';
+import mongoose, { Schema, Document, model, models } from 'mongoose';
 
 /**
  * ForumDiscussion Model
- * Represents a discussion thread within a topic (e.g., "How to create a character?")
+ *
+ * Discussion thread within a topic.
+ * Identity: 100% character-based (no userId/username).
+ * Uses topicId (ObjectId) as primary FK + topicSlug denormalized for routing.
  */
 
 export interface IForumDiscussion extends Document {
   slug: string;
+  topicId: mongoose.Types.ObjectId;
   topicSlug: string;
   title: string;
   isPinned: boolean;
   isLocked: boolean;
   isVisible: boolean;
   postCount: number;
-  subscriberCount: number; // Denormalized count for performance
+  subscriberCount: number;
   viewCount: number;
   lastPostAt?: Date;
   lastPostBy?: {
-    userId: string;
-    username: string;
-    characterName?: string;
-    characterId?: string;
+    characterId: mongoose.Types.ObjectId;
+    characterName: string;
   };
   createdAt: Date;
   createdBy: {
-    userId: string;
-    username: string;
-    characterName?: string;
-    characterId?: string;
+    characterId: mongoose.Types.ObjectId;
+    characterName: string;
   };
   tags?: string[];
 }
+
+const CharacterRefSchema = new Schema({
+  characterId: { type: Schema.Types.ObjectId, ref: 'Character', required: true },
+  characterName: { type: String, required: true }
+}, { _id: false });
 
 const ForumDiscussionSchema = new Schema<IForumDiscussion>({
   slug: {
@@ -39,6 +44,11 @@ const ForumDiscussionSchema = new Schema<IForumDiscussion>({
     lowercase: true,
     trim: true,
     match: [/^[a-z0-9-]+$/, 'Slug must contain only lowercase letters, numbers, and hyphens']
+  },
+  topicId: {
+    type: Schema.Types.ObjectId,
+    ref: 'ForumTopic',
+    required: [true, 'Topic ID is required']
   },
   topicSlug: {
     type: String,
@@ -52,60 +62,25 @@ const ForumDiscussionSchema = new Schema<IForumDiscussion>({
     minlength: [3, 'Title must be at least 3 characters'],
     maxlength: [200, 'Title cannot exceed 200 characters']
   },
-  isPinned: {
-    type: Boolean,
-    default: false
-  },
-  isLocked: {
-    type: Boolean,
-    default: false
-  },
-  isVisible: {
-    type: Boolean,
-    default: true
-  },
-  postCount: {
-    type: Number,
-    default: 0,
-    min: [0, 'Post count cannot be negative']
-  },
-  subscriberCount: {
-    type: Number,
-    default: 0,
-    min: [0, 'Subscriber count cannot be negative']
-  },
-  viewCount: {
-    type: Number,
-    default: 0,
-    min: [0, 'View count cannot be negative']
-  },
+  isPinned: { type: Boolean, default: false },
+  isLocked: { type: Boolean, default: false },
+  isVisible: { type: Boolean, default: true },
+  postCount: { type: Number, default: 0, min: 0 },
+  subscriberCount: { type: Number, default: 0, min: 0 },
+  viewCount: { type: Number, default: 0, min: 0 },
   lastPostAt: Date,
-  lastPostBy: {
-    userId: String,
-    username: String,
-    characterName: String,
-    characterId: String
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  },
-  createdBy: {
-    userId: { type: String, required: true },
-    username: { type: String, required: true },
-    characterName: String,
-    characterId: String
-  },
+  lastPostBy: CharacterRefSchema,
+  createdAt: { type: Date, default: Date.now },
+  createdBy: { type: CharacterRefSchema, required: true },
   tags: [String]
 }, {
   collection: 'forum_discussions',
-  timestamps: false // Using manual createdAt
+  timestamps: false
 });
 
-// Indexes
-ForumDiscussionSchema.index({ topicSlug: 1, slug: 1 }, { unique: true }); // Compound unique index
-ForumDiscussionSchema.index({ topicSlug: 1, isPinned: -1, lastPostAt: -1 }); // For listing discussions (pinned first, then by activity)
-ForumDiscussionSchema.index({ lastPostAt: -1 }); // For recent discussions
-ForumDiscussionSchema.index({ tags: 1 }); // For filtering by tags
+ForumDiscussionSchema.index({ topicId: 1, slug: 1 }, { unique: true });
+ForumDiscussionSchema.index({ topicSlug: 1, isPinned: -1, lastPostAt: -1 });
+ForumDiscussionSchema.index({ lastPostAt: -1 });
+ForumDiscussionSchema.index({ tags: 1 });
 
 export const ForumDiscussion = models.ForumDiscussion || model<IForumDiscussion>('ForumDiscussion', ForumDiscussionSchema);

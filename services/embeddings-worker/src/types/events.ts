@@ -24,6 +24,11 @@ export const REDIS_CHANNELS = {
   EMBEDDING_CHAT_CREATED: 'embedding:chat:created',
   EMBEDDING_CHAT_UPDATED: 'embedding:chat:updated',
   EMBEDDING_CHAT_DELETED: 'embedding:chat:deleted',
+
+  // Forum post events (no chunking)
+  EMBEDDING_FORUM_POST_CREATED: 'embedding:forum_post:created',
+  EMBEDDING_FORUM_POST_UPDATED: 'embedding:forum_post:updated',
+  EMBEDDING_FORUM_POST_DELETED: 'embedding:forum_post:deleted',
 } as const;
 
 export type RedisChannel = typeof REDIS_CHANNELS[keyof typeof REDIS_CHANNELS];
@@ -71,8 +76,17 @@ export interface ChatEmbeddingEvent extends BaseEmbeddingEvent {
   actionType: string;
 }
 
+export interface ForumPostEmbeddingEvent extends BaseEmbeddingEvent {
+  postId: string;
+  content: string;
+  topicSlug: string;
+  discussionSlug: string;
+  authorCharacterId: string;
+  authorCharacterName: string;
+}
+
 export interface DeleteEmbeddingEvent extends BaseEmbeddingEvent {
-  entityType: 'document' | 'location' | 'chat';
+  entityType: 'document' | 'location' | 'chat' | 'forum_post';
   entityId: string;
 }
 
@@ -81,6 +95,7 @@ export type EmbeddingEvent =
   | DocumentChunkEmbeddingEvent
   | LocationEmbeddingEvent
   | ChatEmbeddingEvent
+  | ForumPostEmbeddingEvent
   | DeleteEmbeddingEvent;
 
 export function isDocumentEmbeddingEvent(event: EmbeddingEvent): event is DocumentEmbeddingEvent {
@@ -97,6 +112,10 @@ export function isLocationEmbeddingEvent(event: EmbeddingEvent): event is Locati
 
 export function isChatEmbeddingEvent(event: EmbeddingEvent): event is ChatEmbeddingEvent {
   return 'chatId' in event;
+}
+
+export function isForumPostEmbeddingEvent(data: unknown): data is ForumPostEmbeddingEvent {
+  return typeof data === 'object' && data !== null && 'postId' in data && 'topicSlug' in data && 'discussionSlug' in data;
 }
 
 export function isDeleteEmbeddingEvent(event: EmbeddingEvent): event is DeleteEmbeddingEvent {

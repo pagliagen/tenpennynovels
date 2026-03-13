@@ -1,0 +1,77 @@
+@use './_variables' as *;
+
+.container {
+  padding: $spacing-xl;
+  max-width: $forum-max-width;
+  margin: 0 auto;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.bookmarkItem {
+  background: $dark-surface;
+  border: 1px solid $dark-border;
+  border-radius: $radius-md;
+  padding: $spacing-lg;
+  cursor: pointer;
+  transition: $transition-normal;
+  position: relative;
+
+  &:hover {
+    border-color: $gold-30;
+    background: $dark-elevated;
+  }
+}
+
+.postContent {
+  color: $text-secondary;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+  margin-bottom: $spacing-sm;
+}
+
+.path {
+  color: $text-muted;
+  font-size: 0.85rem;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-md;
+  font-size: 0.85rem;
+  color: $text-muted;
+}
+
+.removeBtn {
+  position: absolute;
+  top: $spacing-md;
+  right: $spacing-md;
+  background: transparent;
+  border: none;
+  color: $text-muted;
+  font-size: 0.8rem;
+  cursor: pointer;
+  padding: $spacing-xs $spacing-sm;
+  border-radius: $radius-sm;
+  transition: $transition-fast;
+
+  &:hover {
+    color: $danger;
+  }
+}
+
+.loading,
+.empty {
+  text-align: center;
+  padding: $spacing-xxl;
+  color: $text-muted;
+}

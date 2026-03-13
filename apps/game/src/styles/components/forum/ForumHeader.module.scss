@@ -1,0 +1,125 @@
+@use './_variables' as *;
+
+.header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  height: $forum-header-height;
+  background: $dark-surface;
+  border-bottom: 1px solid $dark-border;
+  padding: 0 $spacing-lg;
+  gap: $spacing-md;
+  flex-shrink: 0;
+}
+
+.breadcrumb {
+  display: flex;
+  flex-direction: row;
+  gap: $spacing-sm;
+  align-items: center;
+  font-family: $font-serif;
+  color: $text-secondary;
+  flex-wrap: wrap;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.breadcrumbLink {
+  background: none;
+  border: none;
+  color: $gold;
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+  font-size: inherit;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.breadcrumbSeparator {
+  color: $text-muted;
+  user-select: none;
+}
+
+.breadcrumbCurrent {
+  color: $text-primary;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+.searchForm {
+  display: flex;
+  flex-direction: row;
+  margin-left: auto;
+  flex: 0 0 auto;
+}
+
+.searchInput {
+  background: $dark-elevated;
+  border: 1px solid $dark-border;
+  color: $text-primary;
+  border-radius: $radius-md;
+  padding: $spacing-sm $spacing-md;
+  font-family: $font-sans;
+  min-width: 180px;
+
+  &::placeholder {
+    color: $text-muted;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: $gold;
+  }
+}
+
+.actions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.iconButton {
+  background: none;
+  border: none;
+  color: $text-secondary;
+  cursor: pointer;
+  padding: $spacing-sm;
+  font-size: 1.1rem;
+
+  &:hover {
+    color: $gold;
+  }
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  color: $text-muted;
+  cursor: pointer;
+  padding: $spacing-sm;
+  font-size: 1.1rem;
+
+  &:hover {
+    color: $danger;
+  }
+}
+
+.newDiscussionBtn {
+  background: $gold-20;
+  border: 1px solid $gold;
+  color: $gold;
+  border-radius: $radius-md;
+  padding: $spacing-sm $spacing-lg;
+  font-family: $font-serif;
+  cursor: pointer;
+
+  &:hover {
+    background: $gold-30;
+  }
+}

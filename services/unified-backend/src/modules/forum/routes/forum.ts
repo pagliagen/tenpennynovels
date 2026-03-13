@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import rateLimit from 'express-rate-limit';
 import { AuthMiddleware } from '../../auth/middleware/auth';
 import { banChecks } from '@shared/middleware/banCheck';
 import { ForumController } from '../controllers/ForumController';
@@ -7,159 +8,82 @@ import { ForumFollowController } from '../controllers/ForumFollowController';
 import { ForumBookmarkController } from '../controllers/ForumBookmarkController';
 import { ForumReactionController } from '../controllers/ForumReactionController';
 import { ForumNotificationController } from '../controllers/ForumNotificationController';
-import rateLimit from 'express-rate-limit';
 
 const router = Router();
 
-// Rate limiter for forum content creation
 const forumCreationLimiter = rateLimit({
-  windowMs: 5 * 60 * 1000, // 5 minutes
-  max: 10, // limit each IP to 10 creations per windowMs
+  windowMs: 5 * 60 * 1000,
+  max: 10,
   message: {
     result: false,
-    error: 'Too many forum posts created, please try again later.',
+    error: 'Troppe richieste, riprova più tardi.',
     code: 'FORUM_RATE_LIMIT_EXCEEDED',
     timestamp: new Date().toISOString()
   }
 });
 
-// FORUM ROUTES
-// Forum initialization and stats
-router.get('/init', AuthMiddleware.authenticateUser(false), ForumController.getForumInit);
+const optionalAuth = [
+  AuthMiddleware.authenticateUser(false),
+  AuthMiddleware.authenticateCharacter(false)
+];
+const requiredAuth = [
+  AuthMiddleware.authenticateUser(),
+  AuthMiddleware.authenticateCharacter()
+];
+const requiredAuthBan = [
+  AuthMiddleware.authenticateUser(),
+  AuthMiddleware.authenticateCharacter(),
+  banChecks.forum()
+];
 
-// Topic management
-router.get('/topics', ForumController.getTopics);
-router.get('/topics/:slug', ForumController.getTopic);
-router.post('/topics', AuthMiddleware.authenticateUser(), banChecks.forum(), forumCreationLimiter, ForumController.createTopic);
+// ----- Init -----
+router.get('/init', optionalAuth, ForumController.getForumInit);
 
-// Discussion management
-router.get('/topics/:topicSlug/discussions', ForumController.getDiscussions);
-router.get('/topics/:topicSlug/discussions/:discussionSlug', ForumController.getDiscussion);
-router.post('/topics/:topicSlug/discussions', AuthMiddleware.authenticateUser(), banChecks.forum(), forumCreationLimiter, ForumController.createDiscussion);
+// ----- Topics (read-only, CRUD via /admin/forum-topics) -----
+router.get('/topics', optionalAuth, ForumController.getTopics);
+router.get('/topics/:slug', optionalAuth, ForumController.getTopic);
 
-// Post management  
-router.get('/topics/:topicSlug/discussions/:discussionSlug/posts', ForumController.getPosts);
-router.post('/topics/:topicSlug/discussions/:discussionSlug/posts', AuthMiddleware.authenticateUser(), banChecks.forum(), forumCreationLimiter, ForumController.createPost);
+// ----- Discussions -----
+router.get('/topics/:topicSlug/discussions', optionalAuth, ForumController.getDiscussions);
+router.get('/topics/:topicSlug/discussions/:discussionSlug', optionalAuth, ForumController.getDiscussion);
+router.post('/topics/:topicSlug/discussions', requiredAuthBan, forumCreationLimiter, ForumController.createDiscussion);
+router.put('/topics/:topicSlug/discussions/:discussionSlug', requiredAuth, ForumController.updateDiscussion);
+router.delete('/topics/:topicSlug/discussions/:discussionSlug', requiredAuth, ForumController.deleteDiscussion);
 
-// Recent and popular discussions
-router.get('/recent', ForumController.getRecentDiscussions);
-router.get('/popular', ForumController.getPopularDiscussions);
+// ----- Posts -----
+router.get('/topics/:topicSlug/discussions/:discussionSlug/posts', optionalAuth, ForumController.getPosts);
+router.post('/topics/:topicSlug/discussions/:discussionSlug/posts', requiredAuthBan, forumCreationLimiter, ForumController.createPost);
+router.put('/posts/:postId', requiredAuth, ForumController.updatePost);
+router.delete('/posts/:postId', requiredAuth, ForumController.deletePost);
 
-// Favorites
-router.get('/favorites', AuthMiddleware.authenticateUser(), ForumController.getUserFavoriteTopics);
-router.post('/topics/:slug/favorite', AuthMiddleware.authenticateUser(), ForumController.addTopicToFavorites);
-router.delete('/topics/:slug/favorite', AuthMiddleware.authenticateUser(), ForumController.removeTopicFromFavorites);
-router.get('/topics/:slug/favorite', ForumController.checkTopicFavorite);
+// ----- Search, Recent, Popular -----
+router.get('/search', optionalAuth, ForumController.searchForum);
+router.get('/recent', optionalAuth, ForumController.getRecentDiscussions);
+router.get('/popular', optionalAuth, ForumController.getPopularDiscussions);
 
-// Search
-router.get('/search', ForumController.searchForum);
-router.get('/search/stats', AuthMiddleware.authenticateUser(false), ForumController.getSearchStats);
+// ----- Favorites -----
+router.post('/topics/:slug/favorite', requiredAuth, ForumController.toggleTopicFavorite);
+router.get('/favorites', requiredAuth, ForumController.getUserFavoriteTopics);
 
-// ========== NEW FEATURES ==========
+// ----- Subscriptions -----
+router.post('/topics/:topicSlug/discussions/:discussionSlug/subscribe', requiredAuthBan, ForumSubscriptionController.subscribe);
+router.get('/subscriptions', requiredAuth, ForumSubscriptionController.getSubscriptions);
 
-// Discussion Subscriptions (4 routes)
-router.post('/topics/:topicSlug/discussions/:discussionSlug/subscribe',
-  AuthMiddleware.authenticateUser(),
-  banChecks.forum(),
-  ForumSubscriptionController.subscribe
-);
-router.delete('/topics/:topicSlug/discussions/:discussionSlug/subscribe',
-  AuthMiddleware.authenticateUser(),
-  ForumSubscriptionController.unsubscribe
-);
-router.get('/subscriptions',
-  AuthMiddleware.authenticateUser(),
-  ForumSubscriptionController.getSubscriptions
-);
-router.get('/topics/:topicSlug/discussions/:discussionSlug/subscribers',
-  ForumSubscriptionController.getSubscribers
-);
+// ----- Follows -----
+router.post('/characters/:characterId/follow', requiredAuthBan, ForumFollowController.follow);
+router.get('/following', requiredAuth, ForumFollowController.getFollowing);
 
-// Character Follows (5 routes)
-router.post('/characters/:characterId/follow',
-  AuthMiddleware.authenticateUser(),
-  banChecks.forum(),
-  ForumFollowController.follow
-);
-router.delete('/characters/:characterId/follow',
-  AuthMiddleware.authenticateUser(),
-  ForumFollowController.unfollow
-);
-router.get('/characters/:characterId/followers',
-  ForumFollowController.getFollowers
-);
-router.get('/characters/:characterId/following',
-  ForumFollowController.getFollowing
-);
-router.get('/my-follows',
-  AuthMiddleware.authenticateUser(),
-  ForumFollowController.getMyFollows
-);
+// ----- Bookmarks -----
+router.post('/posts/:postId/bookmark', requiredAuth, ForumBookmarkController.toggleBookmark);
+router.get('/bookmarks', requiredAuth, ForumBookmarkController.getBookmarks);
 
-// Bookmarks (5 routes)
-router.post('/bookmarks',
-  AuthMiddleware.authenticateUser(),
-  ForumBookmarkController.create
-);
-router.delete('/bookmarks/:bookmarkId',
-  AuthMiddleware.authenticateUser(),
-  ForumBookmarkController.delete
-);
-router.get('/bookmarks',
-  AuthMiddleware.authenticateUser(),
-  ForumBookmarkController.list
-);
-router.get('/bookmarks/check',
-  AuthMiddleware.authenticateUser(),
-  ForumBookmarkController.check
-);
-router.post('/bookmarks/toggle',
-  AuthMiddleware.authenticateUser(),
-  ForumBookmarkController.toggle
-);
+// ----- Reactions -----
+router.post('/posts/:postId/reactions', requiredAuthBan, ForumReactionController.create);
+router.get('/posts/:postId/reactions', optionalAuth, ForumReactionController.list);
 
-// Reactions (5 routes) - Rate limit gestito da API Gateway
-router.post('/posts/:postId/reactions',
-  AuthMiddleware.authenticateUser(),
-  banChecks.forum(),
-  ForumReactionController.create
-);
-router.delete('/posts/:postId/reactions',
-  AuthMiddleware.authenticateUser(),
-  ForumReactionController.delete
-);
-router.get('/posts/:postId/reactions',
-  ForumReactionController.list
-);
-router.get('/my-reactions',
-  AuthMiddleware.authenticateUser(),
-  ForumReactionController.getMyReactions
-);
-router.get('/posts/:postId/reactions/check',
-  AuthMiddleware.authenticateUser(),
-  ForumReactionController.check
-);
-
-// Notifications (5 routes)
-router.get('/notifications',
-  AuthMiddleware.authenticateUser(),
-  ForumNotificationController.list
-);
-router.get('/notifications/:notificationId',
-  AuthMiddleware.authenticateUser(),
-  ForumNotificationController.get
-);
-router.put('/notifications/:notificationId/read',
-  AuthMiddleware.authenticateUser(),
-  ForumNotificationController.markRead
-);
-router.put('/notifications/read-all',
-  AuthMiddleware.authenticateUser(),
-  ForumNotificationController.markAllRead
-);
-router.delete('/notifications/:notificationId',
-  AuthMiddleware.authenticateUser(),
-  ForumNotificationController.delete
-);
+// ----- Notifications -----
+router.get('/notifications', requiredAuth, ForumNotificationController.getNotifications);
+router.get('/notifications/unread-count', requiredAuth, ForumNotificationController.getUnreadCount);
+router.post('/notifications/mark-read', requiredAuth, ForumNotificationController.markRead);
 
 export default router;

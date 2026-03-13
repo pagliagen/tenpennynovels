@@ -1,0 +1,109 @@
+@use './_variables' as *;
+
+.card {
+  background: $dark-surface;
+  border: 1px solid $dark-border;
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  cursor: pointer;
+  transition: $transition-normal;
+
+  &:hover:not(.locked) {
+    border-color: $gold-30;
+    background: $dark-elevated;
+  }
+
+  &.locked {
+    cursor: not-allowed;
+    opacity: 0.85;
+  }
+}
+
+.header {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: $spacing-md;
+}
+
+.title {
+  font-family: $font-serif;
+  color: $text-primary;
+  font-size: 1rem;
+  font-weight: 600;
+  flex: 1;
+  min-width: 0;
+}
+
+.badges {
+  display: flex;
+  gap: $spacing-xs;
+  flex-shrink: 0;
+}
+
+.badge {
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: $radius-sm;
+  background: $gold-10;
+  color: $gold;
+  border: 1px solid $gold-20;
+}
+
+.cardPinned {
+  border-left: 3px solid $gold;
+}
+
+.pinnedBadge {
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: $radius-sm;
+  background: $gold-20;
+  color: $gold;
+  border: 1px solid $gold-30;
+  font-weight: 600;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-xs;
+  margin-top: $spacing-sm;
+}
+
+.tag {
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  border-radius: $radius-sm;
+  background: $brown-10;
+  color: $text-secondary;
+  border: 1px solid $dark-border;
+}
+
+.meta {
+  color: $text-muted;
+  font-size: 0.8rem;
+  margin-top: $spacing-xs;
+}
+
+.stats {
+  display: flex;
+  flex-direction: row;
+  gap: $spacing-lg;
+  color: $text-muted;
+  font-size: 0.75rem;
+  margin-top: $spacing-sm;
+}
+
+.stat {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+}
+
+.lastPost {
+  color: $text-muted;
+  font-size: 0.75rem;
+  margin-top: $spacing-sm;
+}

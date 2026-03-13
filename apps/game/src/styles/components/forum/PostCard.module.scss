@@ -1,0 +1,137 @@
+@use './_variables' as *;
+
+.card {
+  background: $dark-surface;
+  border: 1px solid $dark-border;
+  border-radius: $radius-md;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+  transition: $transition-normal;
+
+  &:hover {
+    border-color: $gold-20;
+  }
+
+  &.deleted {
+    opacity: 0.7;
+    background: $dark-bg;
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  margin-bottom: $spacing-sm;
+}
+
+.author {
+  font-family: $font-serif;
+  font-weight: 600;
+  color: $gold;
+}
+
+.date {
+  font-size: 0.8rem;
+  color: $text-muted;
+}
+
+.edited {
+  font-size: 0.75rem;
+  color: $text-muted;
+  font-style: italic;
+}
+
+.content {
+  color: $text-primary;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.deleted .content {
+  color: $text-muted;
+  font-style: italic;
+}
+
+.actions {
+  display: flex;
+  gap: $spacing-md;
+  margin-top: $spacing-sm;
+  flex-wrap: wrap;
+}
+
+.actionBtn {
+  background: none;
+  border: none;
+  color: $text-secondary;
+  font-size: 0.8rem;
+  cursor: pointer;
+  padding: 0;
+  transition: $transition-fast;
+
+  &:hover {
+    color: $gold;
+  }
+}
+
+.editArea {
+  margin: $spacing-sm 0;
+}
+
+.editTextarea {
+  width: 100%;
+  background: $dark-bg;
+  border: 1px solid $dark-border;
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  color: $text-primary;
+  font-family: $font-sans;
+  resize: vertical;
+  margin-bottom: $spacing-sm;
+
+  &:focus {
+    outline: none;
+    border-color: $gold-30;
+  }
+}
+
+.editActions {
+  display: flex;
+  gap: $spacing-sm;
+}
+
+.cancelEditBtn {
+  padding: $spacing-xs $spacing-md;
+  background: transparent;
+  border: 1px solid $dark-border;
+  border-radius: $radius-sm;
+  color: $text-secondary;
+  cursor: pointer;
+  font-size: 0.85rem;
+
+  &:hover {
+    border-color: $gold-30;
+    color: $text-primary;
+  }
+}
+
+.saveEditBtn {
+  padding: $spacing-xs $spacing-md;
+  background: $gold-20;
+  border: 1px solid $gold-30;
+  border-radius: $radius-sm;
+  color: $gold;
+  cursor: pointer;
+  font-size: 0.85rem;
+
+  &:hover:not(:disabled) {
+    background: $gold-30;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}

@@ -36,12 +36,17 @@ const STATS = [
  * @returns {JSX.Element} Step 3 form
  */
 export function Step3Stats(): JSX.Element {
-  const { stats, derivedStats, updateStat, stepErrors, occupation } = useWizardStore();
+  const { stats, derivedStats, updateStat, stepErrors, occupation, creationConfig } = useWizardStore();
   const { data: occupations } = useOccupations();
   const errors = stepErrors[3] || {};
+
+  // Get config values (fallback to defaults if not loaded yet)
+  const TOTAL_STAT_POINTS = creationConfig?.stats.totalPoints ?? 450;
+  const MAX_STATS_ABOVE_80 = creationConfig?.stats.maxStatsAbove80 ?? 2;
+
   // Type assertion safe: WizardStats declared properties are all number (index signature allows undefined for dynamic access only)
   const total = (Object.values(stats) as number[]).reduce((sum, val) => sum + val, 0);
-  const remaining = 400 - total;
+  const remaining = TOTAL_STAT_POINTS - total;
   const statsAbove80 = (Object.values(stats) as number[]).filter((v) => v > 80).length;
 
   const selectedOcc = occupations?.find((o) => o.id === occupation.occupationId);
@@ -63,9 +68,9 @@ export function Step3Stats(): JSX.Element {
       <div className={styles.pointsSummary}>
         <span className={styles.pointsLabel}>RIEPILOGO PUNTI:</span>
         <span
-          className={`${styles.pointsValue} ${total === 400 ? styles.pointsValid : total > 400 ? styles.pointsExceeded : ''}`}
+          className={`${styles.pointsValue} ${total === TOTAL_STAT_POINTS ? styles.pointsValid : total > TOTAL_STAT_POINTS ? styles.pointsExceeded : ''}`}
         >
-          utilizzati {total}/400 | rimanenti {remaining}
+          utilizzati {total}/{TOTAL_STAT_POINTS} | rimanenti {remaining}
         </span>
       </div>
     </>
@@ -74,9 +79,9 @@ export function Step3Stats(): JSX.Element {
   return (
     <div className={styles.stepContent} data-step="stats">
 
-      {statsAbove80 > 2 && (
+      {statsAbove80 > MAX_STATS_ABOVE_80 && (
         <div className={styles.warningBox}>
-          ⚠️ Hai {statsAbove80} statistiche sopra 80. Massimo consentito: 2
+          ⚠️ Hai {statsAbove80} statistiche sopra 80. Massimo consentito: {MAX_STATS_ABOVE_80}
         </div>
       )}
 

@@ -24,6 +24,11 @@ export const REDIS_CHANNELS = {
   EMBEDDING_CHAT_CREATED: 'embedding:chat:created',
   EMBEDDING_CHAT_UPDATED: 'embedding:chat:updated',
   EMBEDDING_CHAT_DELETED: 'embedding:chat:deleted',
+
+  // Forum post events (no chunking)
+  EMBEDDING_FORUM_POST_CREATED: 'embedding:forum_post:created',
+  EMBEDDING_FORUM_POST_UPDATED: 'embedding:forum_post:updated',
+  EMBEDDING_FORUM_POST_DELETED: 'embedding:forum_post:deleted',
 } as const;
 
 /**
@@ -185,7 +190,63 @@ export async function publishChatDeletedEvent(chatId: string): Promise<void> {
 
     await redis.publish(REDIS_CHANNELS.EMBEDDING_CHAT_DELETED, JSON.stringify(event));
     logger.debug(`[EmbeddingEvent] Chat deleted: ${chatId}`);
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('[EmbeddingEvent] Failed to publish chat deleted:', error);
+  }
+}
+
+/**
+ * Publish forum post created/updated event
+ */
+export async function publishForumPostEvent(
+  action: 'created' | 'updated',
+  post: {
+    _id: string;
+    content: string;
+    topicSlug: string;
+    discussionSlug: string;
+    authorCharacterId: string;
+    authorCharacterName: string;
+  }
+): Promise<void> {
+  try {
+    const channel = action === 'created'
+      ? REDIS_CHANNELS.EMBEDDING_FORUM_POST_CREATED
+      : REDIS_CHANNELS.EMBEDDING_FORUM_POST_UPDATED;
+
+    const event = {
+      eventId: crypto.randomUUID(),
+      timestamp: new Date(),
+      postId: post._id.toString(),
+      content: post.content,
+      topicSlug: post.topicSlug,
+      discussionSlug: post.discussionSlug,
+      authorCharacterId: post.authorCharacterId,
+      authorCharacterName: post.authorCharacterName
+    };
+
+    await redis.publish(channel, JSON.stringify(event));
+    logger.debug(`[EmbeddingEvent] Forum post ${action}: ${post._id}`);
+  } catch (error: unknown) {
+    logger.error(`[EmbeddingEvent] Failed to publish forum post ${action}:`, error);
+  }
+}
+
+/**
+ * Publish forum post deleted event
+ */
+export async function publishForumPostDeletedEvent(postId: string): Promise<void> {
+  try {
+    const event = {
+      eventId: crypto.randomUUID(),
+      timestamp: new Date(),
+      entityType: 'forum_post' as const,
+      entityId: postId
+    };
+
+    await redis.publish(REDIS_CHANNELS.EMBEDDING_FORUM_POST_DELETED, JSON.stringify(event));
+    logger.debug(`[EmbeddingEvent] Forum post deleted: ${postId}`);
+  } catch (error: unknown) {
+    logger.error('[EmbeddingEvent] Failed to publish forum post deleted:', error);
   }
 }

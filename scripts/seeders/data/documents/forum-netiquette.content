@@ -1,0 +1,126 @@
+{
+  "type": "doc",
+  "content": [
+    {
+      "type": "heading",
+      "attrs": { "level": 2 },
+      "content": [{ "type": "text", "text": "Dell'arte del dibattito pubblico" }]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Nella Londra del 1895 il dibattito pubblico è un'istituzione sacra quanto il Parlamento e altrettanto regolata dalla consuetudine. I caffè letterari, i circoli politici, le sale di lettura: ogni luogo dove le idee si confrontano possiede le proprie regole, scritte o non scritte, che ne garantiscono la civiltà e la fecondità. Il Forum di Ten Penny Novels è il corrispettivo digitale di questi spazi: un luogo dove i giocatori — in quanto tali, non in quanto personaggi — possono discutere, proporre, confrontarsi e contribuire alla vita della comunità. Questo Galateo dei Dibattiti Pubblici stabilisce le norme di comportamento che ogni partecipante è tenuto a rispettare quando interviene nel forum. Si noti che queste regole si applicano all'interazione tra giocatori, non tra personaggi: il forum è uno spazio fuori gioco, e come tale richiede il rispetto diretto tra le persone che vi partecipano."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": { "level": 2 },
+      "content": [{ "type": "text", "text": "Dell'apertura di nuove discussioni" }]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Prima di aprire una nuova discussione, il buon senso impone di verificare che il medesimo argomento non sia già stato trattato in un thread esistente. Un forum ordinato è un forum utile: la proliferazione di discussioni duplicate disperde l'attenzione, frammenta le risposte e rende difficile rintracciare le informazioni nel tempo. Si utilizzi la funzione di ricerca per accertarsi che la propria domanda non abbia già trovato risposta altrove. Il titolo di ogni nuova discussione deve essere chiaro, specifico e rappresentativo del contenuto: un titolo come \"Aiuto\" o \"Ho un problema\" non offre alcuna indicazione utile a chi legge l'elenco delle discussioni. Un titolo efficace potrebbe essere \"Come funziona il tiro contrapposto nelle abilità sociali?\" o \"Proposta: nuovo quartiere per ambientazione industriale\". Si scelga la sezione appropriata del forum: le discussioni sulle regole di gioco non vanno nella sezione dedicata ai suggerimenti, le presentazioni dei personaggi non vanno nella sezione delle proposte di trama."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": { "level": 2 },
+      "content": [{ "type": "text", "text": "Delle risposte e del contributo costruttivo" }]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Ogni risposta in una discussione dovrebbe aggiungere valore al dibattito. I messaggi che si limitano a \"Sono d'accordo\" o \"Anch'io\" senza argomentazione, i post composti da una sola emoticon, le risposte che ripetono verbatim quanto già detto da un altro partecipante non contribuiscono alla qualità della conversazione e ne ostacolano la leggibilità. Quando si risponde a un altro utente, è buona norma citare il passaggio specifico a cui si fa riferimento, specialmente nelle discussioni lunghe dove il contesto potrebbe non essere immediatamente chiaro. Si eviti di citare integralmente messaggi molto lunghi: si selezioni solo la porzione rilevante. Si risponda nel merito dell'argomento: le digressioni personali, le battute ricorrenti che non aggiungono nulla al tema, i riferimenti interni comprensibili solo a un ristretto gruppo di partecipanti rendono la discussione inaccessibile ai nuovi arrivati e ne compromettono l'utilità nel tempo."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": { "level": 2 },
+      "content": [{ "type": "text", "text": "Del rispetto nelle divergenze di opinione" }]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Il disaccordo è naturale e persino auspicabile in un forum di discussione: è dal confronto tra posizioni diverse che nascono le idee migliori. Tuttavia, esiste una differenza fondamentale tra criticare un'idea e attaccare la persona che l'ha espressa. La prima è legittima e necessaria; la seconda è sempre inaccettabile. Si critichi l'argomentazione, non l'interlocutore. Si evitino le generalizzazioni personali: \"Questa proposta non tiene conto del bilanciamento\" è un contributo costruttivo; \"Non capisci niente di game design\" è un attacco personale. I toni passivo-aggressivi — le frecciate velate, il sarcasmo sistematico, le finte domande retoriche volte a umiliare — sono altrettanto nocivi degli insulti diretti e vengono trattati con la medesima severità. Si accetti che non ogni discussione si concluderà con un consenso: esprimere il proprio punto di vista con chiarezza e rispetto, e poi accettare che altri possano pensarla diversamente, è il segno di una comunità matura."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": { "level": 2 },
+      "content": [{ "type": "text", "text": "Della formattazione e della leggibilità" }]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Un messaggio ben formattato è un atto di cortesia verso chi lo legge. Si strutturi il proprio testo in paragrafi logici, separando i concetti distinti. Si eviti di scrivere interamente in maiuscolo — nell'etichetta della comunicazione scritta equivale a gridare — e di abusare di grassetto, sottolineatura o colori che rendono il testo difficile da leggere. Le immagini, quando inserite, devono essere pertinenti alla discussione e di dimensioni ragionevoli: un'immagine che occupa l'intero schermo senza motivo è una mancanza di riguardo verso gli altri partecipanti. I link esterni devono essere accompagnati da una breve descrizione del loro contenuto: un link nudo senza contesto non invoglia alla lettura e non contribuisce alla discussione. La lunghezza del messaggio deve essere proporzionata al contenuto: un romanzo dove basterebbero tre righe scoraggia la lettura; tre righe dove servirebbe un'argomentazione articolata non convincono nessuno."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": { "level": 2 },
+      "content": [{ "type": "text", "text": "Del necroposting e della pertinenza temporale" }]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Riesumare una discussione inattiva da mesi — pratica comunemente nota come necroposting — è generalmente sconsigliato, a meno che il proprio intervento non aggiunga informazioni sostanziali e ancora rilevanti. Rispondere a una domanda tecnica posta sei mesi fa con una soluzione aggiornata è un contributo utile; aggiungere \"Anche a me è successo\" a una segnalazione di bug già risolta non lo è. Prima di intervenire in una discussione datata, si verifichi che il contesto non sia cambiato: regole modificate, aggiornamenti del gioco, decisioni della gestione già prese possono aver reso obsoleto l'intero thread. In questi casi, è preferibile aprire una nuova discussione facendo riferimento a quella precedente, piuttosto che riaprire un dibattito su premesse non più valide."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": { "level": 2 },
+      "content": [{ "type": "text", "text": "Dei contenuti proibiti nel forum" }]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Le regole sui contenuti proibiti stabilite nel Galateo della Corrispondenza si applicano integralmente anche al forum. Si aggiungono le seguenti norme specifiche per questo spazio: è vietato pubblicare spoiler sulle trame in corso senza utilizzare gli appositi tag di occultamento; è vietato condividere conversazioni private — messaggi in gioco, scambi OOC, comunicazioni con la gestione — senza il consenso esplicito di tutti i partecipanti; è vietato utilizzare il forum per condurre dispute personali che dovrebbero essere risolte in privato o con l'intermediazione della gestione; è vietato creare discussioni il cui unico scopo è provocare reazioni negative — il cosiddetto trolling — indipendentemente dalla sottigliezza con cui viene condotto; è vietata qualsiasi forma di pubblicità non autorizzata, inclusa la promozione di altri giochi, servizi o comunità senza l'approvazione preventiva della gestione."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": { "level": 2 },
+      "content": [{ "type": "text", "text": "Delle conseguenze e della vigilanza" }]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Le violazioni delle norme del forum sono soggette alla medesima scala di sanzioni progressive prevista dal Galateo della Corrispondenza: avvertimento formale, silenziamento temporaneo, sospensione dell'account, ban permanente. La gravità della sanzione è proporzionata alla natura della violazione e alla sua eventuale reiterazione. I moderatori hanno la facoltà di modificare i titoli delle discussioni per renderli più chiari, spostare thread nella sezione appropriata, unire discussioni duplicate, chiudere thread che hanno esaurito il loro scopo o che sono degenerati, e nascondere o rimuovere singoli messaggi che violano queste norme."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Come per le chat di gioco, anche il forum beneficia della supervisione di un sistema di analisi automatica che valuta il contenuto di ogni messaggio pubblicato. Questo sistema segnala alla moderazione i contenuti potenzialmente problematici, che vengono poi esaminati da un moderatore umano prima di qualsiasi intervento. Il sistema non censura automaticamente: il suo compito è garantire che nessuna violazione — anche quella commessa nelle ore notturne o nei momenti di minore presenza dello staff — passi inosservata. La decisione finale spetta sempre a un essere umano, e ogni provvedimento può essere contestato attraverso il processo di appello previsto dal regolamento generale."
+        }
+      ]
+    }
+  ]
+}

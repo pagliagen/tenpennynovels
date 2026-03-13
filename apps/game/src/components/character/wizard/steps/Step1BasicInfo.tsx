@@ -13,7 +13,9 @@
 
 'use client';
 
+import React from 'react';
 import { useWizardStore } from '@/store/wizardStore';
+import { characterApi } from '@/lib/api/character';
 import styles from '@/styles/components/character/wizard/Step1BasicInfo.module.scss';
 
 /**
@@ -40,6 +42,20 @@ const calculateAge = (birthDateStr: string): number | null => {
 };
 
 /**
+ * Debounce utility function
+ */
+function debounce<T extends (...args: any[]) => any>(
+  func: T,
+  delay: number
+): (...args: Parameters<T>) => void {
+  let timeoutId: NodeJS.Timeout;
+  return (...args: Parameters<T>) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => func(...args), delay);
+  };
+}
+
+/**
  * Step 1: Basic Info Component
  *
  * Complete form for character basic information.
@@ -51,11 +67,72 @@ export function Step1BasicInfo(): JSX.Element {
   const { basicInfo, updateBasicInfo, stepErrors } = useWizardStore();
   const errors = stepErrors[1] || {};
 
+  // Name availability check state
+  const [nameCheck, setNameCheck] = React.useState<{
+    checking: boolean;
+    available: boolean | null;
+    message: string;
+  }>({
+    checking: false,
+    available: null,
+    message: ''
+  });
+
+  /**
+   * Check name availability with debounce
+   */
+  const checkName = React.useCallback(
+    debounce(async (firstName: string, lastName: string) => {
+      const fullName = [firstName, lastName].filter(Boolean).join(' ').trim();
+
+      // Reset if name too short
+      if (fullName.length < 2) {
+        setNameCheck({ checking: false, available: null, message: '' });
+        return;
+      }
+
+      setNameCheck({ checking: true, available: null, message: 'Verifica disponibilità...' });
+
+      try {
+        const result = await characterApi.checkNameAvailability(fullName);
+
+        if (result.available) {
+          setNameCheck({
+            checking: false,
+            available: true,
+            message: '✓ Nome disponibile'
+          });
+        } else {
+          setNameCheck({
+            checking: false,
+            available: false,
+            message: result.error || 'Nome già in uso. Scegli un altro nome.'
+          });
+        }
+      } catch (error) {
+        console.error('Name check error:', error);
+        setNameCheck({
+          checking: false,
+          available: null,
+          message: ''
+        });
+      }
+    }, 500),
+    []
+  );
+
   /**
    * Handle Field Change
    */
   const handleChange = (field: keyof typeof basicInfo, value: any) => {
     updateBasicInfo(field, value);
+
+    // Trigger name availability check
+    if (field === 'firstName' || field === 'lastName') {
+      const newFirstName = field === 'firstName' ? value : basicInfo.firstName;
+      const newLastName = field === 'lastName' ? value : basicInfo.lastName;
+      checkName(newFirstName, newLastName);
+    }
   };
 
   /**
@@ -113,6 +190,21 @@ export function Step1BasicInfo(): JSX.Element {
             {errors.lastName && <span className={styles.error}>{errors.lastName}</span>}
           </div>
         </div>
+
+        {/* Name Availability Feedback */}
+        {(nameCheck.checking || nameCheck.available !== null) && (
+          <div className={styles.formRow}>
+            <div className={styles.formGroup} style={{ gridColumn: '1 / -1' }}>
+              <div className={`${styles.nameAvailability} ${
+                nameCheck.checking ? styles.checking :
+                nameCheck.available ? styles.available :
+                styles.unavailable
+              }`}>
+                {nameCheck.message}
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className={styles.formRow}>
           {/* Gender */}

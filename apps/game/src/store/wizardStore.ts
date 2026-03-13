@@ -37,6 +37,8 @@ import type {
 } from '@/types/wizard';
 import type { DamageBonusEntry } from '@/lib/api/gameConfig';
 import { gameConfigApi } from '@/lib/api/gameConfig';
+import type { CharacterCreationConfig } from '@/lib/api/character';
+import { characterApi } from '@/lib/api/character';
 
 const FORMULA_STAT_MAP: Record<string, string> = {
   str: 'strength', dex: 'dexterity', int: 'intelligence',
@@ -97,6 +99,10 @@ interface WizardStore extends WizardData {
   // Cached bonus damage table from DB (NOT persisted)
   _bonusDamageTable: DamageBonusEntry[] | null;
   _bonusDamageTableLoading: boolean;
+
+  // Character creation config (loaded from backend, NOT persisted)
+  creationConfig: CharacterCreationConfig | null;
+  loadCreationConfig: () => Promise<void>;
 
   // Validation state
   stepErrors: Record<number, Record<string, string>>; // Step → Field → Error
@@ -161,6 +167,7 @@ const initialState = (): Omit<
   | 'setStats'
   | 'recalculateDerivedStats'
   | 'fetchBonusDamageTable'
+  | 'loadCreationConfig'
   | 'updateSkill'
   | 'setSkillManualPoints'
   | 'applyOccupationBonuses'
@@ -185,6 +192,9 @@ const initialState = (): Omit<
   // Cached bonus damage table (NOT persisted — fetched on demand)
   _bonusDamageTable: null as DamageBonusEntry[] | null,
   _bonusDamageTableLoading: false,
+
+  // Character creation config (NOT persisted — fetched on demand)
+  creationConfig: null as CharacterCreationConfig | null,
 
   // Navigation
   currentStep: 1,
@@ -499,6 +509,26 @@ export const useWizardStore = create<WizardStore>()(
         } catch (error) {
           console.warn('[WizardStore] Failed to fetch bonus damage table, using fallback', error);
           set({ _bonusDamageTableLoading: false });
+        }
+      },
+
+      loadCreationConfig: async () => {
+        try {
+          const config = await characterApi.getCreationConfig();
+          set({ creationConfig: config });
+        } catch (error) {
+          console.error('[WizardStore] Failed to load creation config:', error);
+          // Fallback to default values if API fails
+          set({
+            creationConfig: {
+              stats: { totalPoints: 450, minValue: 20, maxStatsAbove80: 2, creationCap: 85, gameplayCap: 99 },
+              skills: { totalPoints: 250, creationCap: 75, creationCapWithOccupation: 80 },
+              occupation: {},
+              limits: {},
+              socialClasses: [],
+              formulas: {},
+            }
+          });
         }
       },
 
@@ -877,8 +907,8 @@ export const useWizardStore = create<WizardStore>()(
         const validators: Record<number, () => import('@/types/wizard').ValidationResult> = {
           1: () => require('@/components/character/wizard/validation/wizardValidation').validateStep1(state.basicInfo),
           2: () => require('@/components/character/wizard/validation/wizardValidation').validateStep2(state.occupation),
-          3: () => require('@/components/character/wizard/validation/wizardValidation').validateStep3(state.stats),
-          4: () => require('@/components/character/wizard/validation/wizardValidation').validateStep4(state.skills, state.stats, state.occupation, state.dynamicSkills),
+          3: () => require('@/components/character/wizard/validation/wizardValidation').validateStep3(state.stats, state.creationConfig),
+          4: () => require('@/components/character/wizard/validation/wizardValidation').validateStep4(state.skills, state.stats, state.occupation, state.dynamicSkills, state.creationConfig),
           5: () => require('@/components/character/wizard/validation/wizardValidation').validateStep5(state.basicInfo, state.background),
           6: () => ({ valid: true, errors: {} }),
         };

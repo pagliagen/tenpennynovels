@@ -1,12 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import Head from 'next/head';
 import { ManagementLayout } from '@/components/layout/ManagementLayout';
 import { useAutoModerationAlerts, useAutoModerationStats, useReviewAlert } from '@/hooks/api/useAutoModeration';
 import { useNotificationStore } from '@/store/notificationStore';
+import { API_CONFIG } from '@/constants/config';
 import type { ModerationAlertRecord } from '@/lib/api/moderation';
 import styles from '@/styles/pages/AutoModeration.module.scss';
-
-const GAME_BASE_URL = process.env.NEXT_PUBLIC_GAME_URL || 'http://localhost:3000';
 
 function ScoreDisplay({ score }: { score: number }) {
   const pct = Math.round(score * 100);
@@ -39,8 +38,21 @@ function StatusBadge({ status }: { status: string }) {
   return <span className={`${styles.statusBadge} ${map[status] || ''}`}>{labels[status] || status}</span>;
 }
 
-export default function AutoModerationPage() {
+export default function ForumModerationPage() {
   const addNotification = useNotificationStore((s) => s.addNotification);
+
+  const copyForumUrl = useCallback((topicSlug?: string, discussionSlug?: string) => {
+    if (!topicSlug || !discussionSlug) {
+      addNotification({ type: 'error', message: 'Slug discussione non disponibile' });
+      return;
+    }
+    const url = `${API_CONFIG.GAME_URL}/forum/${topicSlug}/${discussionSlug}`;
+    navigator.clipboard.writeText(url).then(
+      () => addNotification({ type: 'success', message: 'URL copiato negli appunti' }),
+      () => addNotification({ type: 'error', message: 'Impossibile copiare l\'URL' })
+    );
+  }, [addNotification]);
+
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [minScore, setMinScore] = useState<string>('');
@@ -52,12 +64,13 @@ export default function AutoModerationPage() {
   const filters = {
     page,
     limit: 20,
+    source: 'forum' as const,
     ...(statusFilter && { status: statusFilter }),
     ...(minScore && { minScore: parseFloat(minScore) }),
   };
 
   const { data, isLoading, error } = useAutoModerationAlerts(filters);
-  const { data: stats } = useAutoModerationStats();
+  const { data: stats } = useAutoModerationStats('forum');
   const reviewMutation = useReviewAlert();
 
   const openReview = (alert: ModerationAlertRecord) => {
@@ -114,14 +127,14 @@ export default function AutoModerationPage() {
   return (
     <ManagementLayout>
       <Head>
-        <title>Auto-Moderazione AI - Ten Penny Novels Management</title>
+        <title>Moderazione Forum AI - Ten Penny Novels Management</title>
       </Head>
 
       <div className={styles.container}>
         <header className={styles.header}>
           <div>
-            <h1>Auto-Moderazione AI</h1>
-            <p>Messaggi flaggati automaticamente dal sistema di moderazione AI</p>
+            <h1>Moderazione Forum AI</h1>
+            <p>Post del forum flaggati automaticamente dal sistema di moderazione AI</p>
           </div>
         </header>
 
@@ -165,15 +178,15 @@ export default function AutoModerationPage() {
 
         <div className={styles.tableWrapper}>
           {alerts.length === 0 ? (
-            <div className={styles.empty}>Nessun alert di moderazione trovato</div>
+            <div className={styles.empty}>Nessun alert di moderazione forum trovato</div>
           ) : (
             <>
               <table className={styles.table}>
                 <thead>
                   <tr>
                     <th>Data</th>
-                    <th>Personaggio</th>
-                    <th>Location</th>
+                    <th>Autore</th>
+                    <th>Discussione</th>
                     <th>Score</th>
                     <th>Anteprima</th>
                     <th>Stato</th>
@@ -186,14 +199,13 @@ export default function AutoModerationPage() {
                       <td>{new Date(alert.createdAt).toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</td>
                       <td>{alert.characterName}</td>
                       <td>
-                        <a
-                          href={`${GAME_BASE_URL}/location/${alert.locationId}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                        <button
                           className={styles.locationLink}
+                          onClick={() => copyForumUrl(alert.topicSlug, alert.discussionSlug)}
+                          title="Copia URL discussione"
                         >
-                          {alert.locationName || alert.locationId}
-                        </a>
+                          {alert.topicSlug}/{alert.discussionSlug}
+                        </button>
                       </td>
                       <td><ScoreDisplay score={alert.toxicityScore} /></td>
                       <td><div className={styles.contentPreview} title={alert.content}>{alert.content}</div></td>
@@ -235,19 +247,23 @@ export default function AutoModerationPage() {
       {reviewingAlert && (
         <div className={styles.modal} onClick={() => setReviewingAlert(null)}>
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-            <h3>Revisione Alert</h3>
+            <h3>Revisione Alert Forum</h3>
 
             <div className={styles.modalField}>
-              <label>Personaggio</label>
+              <label>Autore</label>
               <div className={styles.modalValue}>{reviewingAlert.characterName}</div>
             </div>
 
             <div className={styles.modalField}>
-              <label>Location</label>
+              <label>Discussione</label>
               <div className={styles.modalValue}>
-                <a href={`${GAME_BASE_URL}/location/${reviewingAlert.locationId}`} target="_blank" rel="noopener noreferrer" className={styles.locationLink}>
-                  {reviewingAlert.locationName || reviewingAlert.locationId}
-                </a>
+                <button
+                  className={styles.locationLink}
+                  onClick={() => copyForumUrl(reviewingAlert.topicSlug, reviewingAlert.discussionSlug)}
+                  title="Copia URL discussione"
+                >
+                  {reviewingAlert.topicSlug}/{reviewingAlert.discussionSlug}
+                </button>
               </div>
             </div>
 
@@ -283,8 +299,8 @@ export default function AutoModerationPage() {
                     <select value={reviewAction} onChange={(e) => setReviewAction(e.target.value)}>
                       <option value="">Seleziona...</option>
                       <option value="warning">Avvertimento</option>
-                      <option value="message_hidden">Nascondi messaggio</option>
-                      <option value="message_deleted">Elimina messaggio</option>
+                      <option value="message_hidden">Nascondi post</option>
+                      <option value="message_deleted">Elimina post</option>
                     </select>
                   </div>
                 )}

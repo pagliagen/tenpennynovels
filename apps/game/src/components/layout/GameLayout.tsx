@@ -42,6 +42,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useOnGameUnreadCount } from '@/hooks/useOnGameMail';
 import { useOffGameUnreadCount } from '@/hooks/useOffGameChat';
 import { queryKeys } from '@/lib/api/queryClient';
+import { ForumModal } from '../forum/ForumModal';
+import { useForumStore } from '@/store/forumStore';
 
 /**
  * Game Layout Props
@@ -90,6 +92,9 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
 
   // Window manager: For opening mail window
   const { openWindow } = useWindowManagerStore();
+
+  // Forum store
+  const isForumOpen = useForumStore((s) => s.isOpen);
 
   // Mail system: Unread count for TopBar badge
   const { data: unreadMailCount = 0 } = useOnGameUnreadCount();
@@ -208,6 +213,10 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
     });
   };
 
+  const handleForumClick = useCallback(() => {
+    router.push('/bacheca');
+  }, [router]);
+
   /**
    * WebSocket listener for real-time mail badge updates
    * Must work even when mail window is closed
@@ -301,6 +310,7 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
         <TopBar
           onQuickMapClick={handleQuickMapClick}
           onOnGameMailClick={handleOnGameMailClick}
+          onForumClick={handleForumClick}
           unreadOnGameMailCount={unreadMailCount}
           onOffGameChatClick={handleOffGameChatClick}
           unreadOffGameChatCount={unreadOffGameChatCount}
@@ -325,6 +335,9 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
 
       {/* Connection Status - Shows overlay when WebSocket disconnects */}
       <ConnectionStatus />
+
+      {/* Forum Modal - Fullscreen overlay */}
+      {isForumOpen && <ForumModal />}
     </div>
   );
 }

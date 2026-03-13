@@ -1,0 +1,261 @@
+/**
+ * Forum API Service
+ *
+ * Handles all HTTP API calls related to forum operations.
+ * Uses the singleton apiClient for consistent auth and error handling.
+ *
+ * **Endpoints**:
+ * - GET /forum/init - Forum init data
+ * - GET /forum/topics - List topics
+ * - GET /forum/topics/:slug - Get topic detail
+ * - GET /forum/topics/:topicSlug/discussions - List discussions
+ * - POST /forum/topics/:topicSlug/discussions - Create discussion
+ * - GET /forum/topics/:topicSlug/discussions/:discussionSlug/posts - List posts
+ * - POST /forum/topics/:topicSlug/discussions/:discussionSlug/posts - Create post
+ * - GET /forum/search - Search forum
+ * - POST /forum/topics/:slug/favorite - Toggle topic favorite
+ * - POST /forum/posts/:postId/bookmark - Toggle bookmark
+ * - POST /forum/posts/:postId/reactions - Toggle reaction
+ * - GET /forum/notifications - Get notifications
+ *
+ * @module lib/api/forum
+ * @since 2.0.0
+ */
+
+import { api } from './client';
+import type {
+  ForumInitData,
+  ForumTopic,
+  ForumDiscussion,
+  ForumPost,
+  ForumSearchResult,
+  ForumBookmark,
+  ForumNotification,
+  PaginationInfo,
+  ReactionType,
+} from '@/types/forum';
+
+/**
+ * Forum API Service
+ *
+ * Service layer for all forum CRUD operations.
+ */
+export const forumApi = {
+  // ── Init ──────────────────────────────────────────────────────────
+
+  async getInit(): Promise<ForumInitData> {
+    const response = await api.get<{ data: ForumInitData }>('/forum/init');
+    return response.data;
+  },
+
+  // ── Topics ────────────────────────────────────────────────────────
+
+  async getTopics(): Promise<ForumTopic[]> {
+    const response = await api.get<{ data: ForumTopic[] }>('/forum/topics');
+    return response.data;
+  },
+
+  async getTopic(slug: string): Promise<ForumTopic> {
+    const response = await api.get<{ data: ForumTopic }>(`/forum/topics/${slug}`);
+    return response.data;
+  },
+
+  // ── Discussions ───────────────────────────────────────────────────
+
+  async getDiscussions(
+    topicSlug: string,
+    page?: number,
+    limit?: number
+  ): Promise<{ items: ForumDiscussion[]; pagination: PaginationInfo }> {
+    const response = await api.get<{ data: { items: ForumDiscussion[]; pagination: PaginationInfo } }>(
+      `/forum/topics/${topicSlug}/discussions`,
+      { params: { page, limit } }
+    );
+    return response.data;
+  },
+
+  async getDiscussion(
+    topicSlug: string,
+    discussionSlug: string
+  ): Promise<ForumDiscussion> {
+    const response = await api.get<{ data: ForumDiscussion }>(
+      `/forum/topics/${topicSlug}/discussions/${discussionSlug}`
+    );
+    return response.data;
+  },
+
+  async createDiscussion(
+    topicSlug: string,
+    data: { title: string; content: string; tags?: string[] }
+  ): Promise<{ id: string; slug: string }> {
+    const response = await api.post<{ data: { id: string; slug: string } }>(
+      `/forum/topics/${topicSlug}/discussions`,
+      data
+    );
+    const body = response as { data?: { id: string; slug: string }; id?: string; slug?: string };
+    return body.data ?? (body as { id: string; slug: string });
+  },
+
+  async updateDiscussion(
+    topicSlug: string,
+    discussionSlug: string,
+    data: { title?: string; tags?: string[] }
+  ): Promise<void> {
+    await api.put(`/forum/topics/${topicSlug}/discussions/${discussionSlug}`, data);
+  },
+
+  async deleteDiscussion(topicSlug: string, discussionSlug: string): Promise<void> {
+    await api.delete(`/forum/topics/${topicSlug}/discussions/${discussionSlug}`);
+  },
+
+  // ── Posts ─────────────────────────────────────────────────────────
+
+  async getPosts(
+    topicSlug: string,
+    discussionSlug: string,
+    page?: number,
+    limit?: number
+  ): Promise<{ items: ForumPost[]; pagination: PaginationInfo }> {
+    const response = await api.get<{ data: { items: ForumPost[]; pagination: PaginationInfo } }>(
+      `/forum/topics/${topicSlug}/discussions/${discussionSlug}/posts`,
+      { params: { page, limit } }
+    );
+    return response.data;
+  },
+
+  async createPost(
+    topicSlug: string,
+    discussionSlug: string,
+    data: { content: string; replyToPostId?: string }
+  ): Promise<{ id: string }> {
+    const response = await api.post<{ data: { id: string } }>(
+      `/forum/topics/${topicSlug}/discussions/${discussionSlug}/posts`,
+      data
+    );
+    return response.data;
+  },
+
+  async updatePost(postId: string, content: string): Promise<void> {
+    await api.put(`/forum/posts/${postId}`, { content });
+  },
+
+  async deletePost(postId: string): Promise<void> {
+    await api.delete(`/forum/posts/${postId}`);
+  },
+
+  // ── Search ────────────────────────────────────────────────────────
+
+  async searchForum(
+    query: string,
+    topicSlug?: string
+  ): Promise<{ items: ForumSearchResult[]; pagination: PaginationInfo }> {
+    const response = await api.get<{ data: { items: ForumSearchResult[]; pagination: PaginationInfo } }>(
+      '/forum/search',
+      { params: { q: query, topicSlug } }
+    );
+    return response.data;
+  },
+
+  // ── Favorites ─────────────────────────────────────────────────────
+
+  async getFavorites(): Promise<ForumTopic[]> {
+    const response = await api.get<{ data: ForumTopic[] }>('/forum/favorites');
+    return response.data;
+  },
+
+  async toggleFavorite(topicSlug: string): Promise<{ isFavorite: boolean }> {
+    const response = await api.post<{ data: { isFavorite: boolean } }>(
+      `/forum/topics/${topicSlug}/favorite`
+    );
+    return response.data;
+  },
+
+  // ── Subscriptions ─────────────────────────────────────────────────
+
+  async subscribe(topicSlug: string, discussionSlug: string): Promise<void> {
+    await api.post(`/forum/topics/${topicSlug}/discussions/${discussionSlug}/subscribe`);
+  },
+
+  async getSubscriptions(): Promise<any[]> {
+    const response = await api.get<{ data: { subscriptions: any[] } }>('/forum/subscriptions');
+    return response.data.subscriptions;
+  },
+
+  // ── Follows ───────────────────────────────────────────────────────
+
+  async toggleFollow(characterId: string): Promise<void> {
+    await api.post(`/forum/characters/${characterId}/follow`);
+  },
+
+  async getFollowing(): Promise<any[]> {
+    const response = await api.get<{ data: { following: any[] } }>('/forum/following');
+    return response.data.following;
+  },
+
+  // ── Bookmarks ─────────────────────────────────────────────────────
+
+  async toggleBookmark(postId: string): Promise<void> {
+    await api.post(`/forum/posts/${postId}/bookmark`);
+  },
+
+  async getBookmarks(): Promise<ForumBookmark[]> {
+    const response = await api.get<{ data: { bookmarks: ForumBookmark[] } }>('/forum/bookmarks');
+    return response.data.bookmarks;
+  },
+
+  // ── Reactions ─────────────────────────────────────────────────────
+
+  async toggleReaction(postId: string, reactionType: ReactionType): Promise<void> {
+    await api.post(`/forum/posts/${postId}/reactions`, { type: reactionType });
+  },
+
+  async getReactions(postId: string): Promise<any> {
+    const response = await api.get<{ data: any }>(`/forum/posts/${postId}/reactions`);
+    return response.data;
+  },
+
+  // ── Notifications ─────────────────────────────────────────────────
+
+  async getNotifications(
+    page?: number
+  ): Promise<{ items: ForumNotification[]; pagination: PaginationInfo }> {
+    const response = await api.get<{
+      data: { notifications?: ForumNotification[]; pagination?: PaginationInfo };
+    }>('/forum/notifications', { params: { page } });
+    const responseData = response.data;
+    const items = responseData?.notifications ?? [];
+    const pagination = responseData?.pagination ?? { page: 1, pageSize: 20, total: 0, totalPages: 0, hasNext: false, hasPrev: false };
+    return { items, pagination };
+  },
+
+  async markNotificationsRead(notificationIds: string[]): Promise<void> {
+    await api.post('/forum/notifications/mark-read', { notificationIds });
+  },
+
+  async markAllNotificationsRead(): Promise<void> {
+    await api.post('/forum/notifications/mark-read', { all: true });
+  },
+
+  async getUnreadCount(): Promise<number> {
+    const response = await api.get<{ data: { unreadCount: number } }>('/forum/notifications/unread-count');
+    return response.data.unreadCount;
+  },
+
+  // ── Recent & Popular ──────────────────────────────────────────────
+
+  async getRecentDiscussions(limit?: number): Promise<ForumDiscussion[]> {
+    const response = await api.get<{ data: ForumDiscussion[] }>(
+      '/forum/recent',
+      { params: { limit } }
+    );
+    return response.data;
+  },
+
+  async getPopularDiscussions(timeframe?: string, limit?: number): Promise<ForumDiscussion[]> {
+    const response = await api.get<{ data: ForumDiscussion[] }>(
+      '/forum/popular',
+      { params: { timeframe, limit } }
+    );
+    return response.data;
+  },
+};

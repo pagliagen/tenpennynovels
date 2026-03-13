@@ -4,7 +4,7 @@ import { moderationAPI, type ModerationAlertFilters } from '@/lib/api/moderation
 export const moderationKeys = {
   all: ['moderationAlerts'] as const,
   list: (filters: ModerationAlertFilters) => ['moderationAlerts', 'list', filters] as const,
-  stats: ['moderationAlerts', 'stats'] as const,
+  stats: (source?: 'chat' | 'forum') => ['moderationAlerts', 'stats', source] as const,
   detail: (id: string) => ['moderationAlerts', 'detail', id] as const,
 };
 
@@ -16,10 +16,10 @@ export function useAutoModerationAlerts(filters: ModerationAlertFilters = {}) {
   });
 }
 
-export function useAutoModerationStats() {
+export function useAutoModerationStats(source?: 'chat' | 'forum') {
   return useQuery({
-    queryKey: moderationKeys.stats,
-    queryFn: () => moderationAPI.getStats(),
+    queryKey: moderationKeys.stats(source),
+    queryFn: () => moderationAPI.getStats(source),
     staleTime: 60 * 1000,
   });
 }
@@ -31,7 +31,6 @@ export function useReviewAlert() {
       moderationAPI.reviewAlert(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: moderationKeys.all });
-      queryClient.invalidateQueries({ queryKey: moderationKeys.stats });
     },
   });
 }

@@ -12,6 +12,7 @@ export class ModerationAlertController {
     try {
       const page = parseInt(req.query.page as string) || 1;
       const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
+      const source = req.query.source as string;
       const status = req.query.status as string;
       const characterId = req.query.characterId as string;
       const minScore = parseFloat(req.query.minScore as string);
@@ -21,6 +22,9 @@ export class ModerationAlertController {
       const { ModerationAlert } = await import('@database/models');
 
       const query: any = {};
+      if (source && ['chat', 'forum'].includes(source)) {
+        query.source = source;
+      }
       if (status && ['pending', 'reviewed', 'dismissed', 'actioned'].includes(status)) {
         query.status = status;
       }
@@ -52,7 +56,7 @@ export class ModerationAlertController {
       };
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
-      logger.info('Admin viewed moderation alerts', { ...auditInfo, filters: { status, characterId, minScore } });
+      logger.info('Admin viewed moderation alerts', { ...auditInfo, filters: { source, status, characterId, minScore } });
 
       res.json(listResponse(alerts, pagination, undefined, getRequestId(req)));
     } catch (error: any) {
@@ -66,13 +70,19 @@ export class ModerationAlertController {
    */
   static async getStats(req: Request, res: Response): Promise<void> {
     try {
+      const source = req.query.source as string;
       const { ModerationAlert } = await import('@database/models');
 
+      const baseQuery: any = {};
+      if (source && ['chat', 'forum'].includes(source)) {
+        baseQuery.source = source;
+      }
+
       const [pending, reviewed, dismissed, actioned] = await Promise.all([
-        ModerationAlert.countDocuments({ status: 'pending' }),
-        ModerationAlert.countDocuments({ status: 'reviewed' }),
-        ModerationAlert.countDocuments({ status: 'dismissed' }),
-        ModerationAlert.countDocuments({ status: 'actioned' })
+        ModerationAlert.countDocuments({ ...baseQuery, status: 'pending' }),
+        ModerationAlert.countDocuments({ ...baseQuery, status: 'reviewed' }),
+        ModerationAlert.countDocuments({ ...baseQuery, status: 'dismissed' }),
+        ModerationAlert.countDocuments({ ...baseQuery, status: 'actioned' })
       ]);
 
       res.json(successResponse({ pending, reviewed, dismissed, actioned, total: pending + reviewed + dismissed + actioned }, undefined, getRequestId(req)));

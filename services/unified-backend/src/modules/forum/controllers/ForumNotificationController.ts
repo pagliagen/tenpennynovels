@@ -1,212 +1,136 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
-import { ForumNotification } from '@database/models';
-import { successResponse, errorResponse } from '../utils/apiResponse';
-
-/**
- * ForumNotificationController
- * Handles forum notifications (new posts, follows, reactions, replies)
- */
+import { successResponse, errorResponse, getRequestId } from '../utils/apiResponse';
+import { ForumNotification } from '@database/models/ForumNotification';
 
 export class ForumNotificationController {
-  /**
-   * GET /forum/notifications
-   * Get notifications for authenticated character
-   * Query: ?unreadOnly=true&limit=20&offset=0
-   */
-  static async list(req: Request, res: Response): Promise<void> {
+  static async getNotifications(req: Request, res: Response): Promise<void> {
     try {
-      const characterId = (req as any).character?._id;
-
-      if (!characterId) {
-        res.status(401).json(errorResponse('Character not found', 'CHARACTER_NOT_FOUND'));
+      const character = req.character;
+      if (!character) {
+        res.status(401).json(errorResponse('Character not found', 'CHARACTER_NOT_FOUND', undefined, 401, getRequestId(req)));
         return;
       }
 
-      const { unreadOnly, limit = 20, offset = 0 } = req.query;
+      const characterId = new mongoose.Types.ObjectId(character.characterId);
+      const page = Math.max(1, parseInt(String(req.query.page ?? 1), 10));
+      const pageSize = Math.min(50, Math.max(1, parseInt(String(req.query.pageSize ?? 20), 10)));
+      const skip = (page - 1) * pageSize;
 
-      // Build filter
-      const filter: any = { characterId };
-      if (unreadOnly === 'true') {
-        filter.isRead = false;
-      }
+      const [notifications, total] = await Promise.all([
+        ForumNotification.find({ characterId })
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(pageSize)
+          .lean(),
+        ForumNotification.countDocuments({ characterId })
+      ]);
 
-      // Fetch notifications
-      const notifications = await ForumNotification.find(filter)
-        .sort({ createdAt: -1 })
-        .skip(Number(offset))
-        .limit(Number(limit))
-        .lean();
-
-      // Get counts
-      const unreadCount = await ForumNotification.countDocuments({ characterId, isRead: false });
-      const totalCount = await ForumNotification.countDocuments({ characterId });
+      const totalPages = Math.ceil(total / pageSize);
 
       res.status(200).json(successResponse({
         notifications,
-        unreadCount,
-        totalCount,
-        limit: Number(limit),
-        offset: Number(offset)
-      }));
-    } catch (error: any) {
-      console.error('[ForumNotificationController] List error:', error);
-      res.status(500).json(errorResponse('Failed to fetch notifications', 'LIST_NOTIFICATIONS_ERROR'));
+        pagination: {
+          page,
+          pageSize,
+          total,
+          totalPages,
+          hasNext: page < totalPages,
+          hasPrev: page > 1
+        }
+      }, undefined, getRequestId(req)));
+    } catch (error: unknown) {
+      console.error('[ForumNotificationController] Get notifications error:', error);
+      res.status(500).json(errorResponse('Failed to fetch notifications', 'GET_NOTIFICATIONS_ERROR', undefined, 500, getRequestId(req)));
     }
   }
 
-  /**
-   * GET /forum/notifications/:notificationId
-   * Get single notification and mark as read
-   */
-  static async get(req: Request<{ notificationId: string }>, res: Response): Promise<void> {
+  static async getUnreadCount(req: Request, res: Response): Promise<void> {
     try {
-      const { notificationId } = req.params;
-      const characterId = (req as any).character?._id;
-
-      if (!characterId) {
-        res.status(401).json(errorResponse('Character not found', 'CHARACTER_NOT_FOUND'));
+      const character = req.character;
+      if (!character) {
+        res.status(401).json(errorResponse('Character not found', 'CHARACTER_NOT_FOUND', undefined, 401, getRequestId(req)));
         return;
       }
 
-      if (!mongoose.Types.ObjectId.isValid(notificationId)) {
-        res.status(400).json(errorResponse('Invalid notification ID', 'INVALID_NOTIFICATION_ID'));
-        return;
-      }
+      const characterId = new mongoose.Types.ObjectId(character.characterId);
+      const count = await ForumNotification.countDocuments({ characterId, isRead: false });
 
-      const objectId = new mongoose.Types.ObjectId(notificationId);
-
-      // Find notification (must belong to character)
-      const notification = await ForumNotification.findOne({
-        _id: objectId,
-        characterId
-      });
-
-      if (!notification) {
-        res.status(404).json(errorResponse('Notification not found', 'NOTIFICATION_NOT_FOUND'));
-        return;
-      }
-
-      // Mark as read if not already
-      if (!notification.isRead) {
-        await ForumNotification.findByIdAndUpdate(objectId, { isRead: true });
-        notification.isRead = true;
-      }
-
-      res.status(200).json(successResponse({ notification }));
-    } catch (error: any) {
-      console.error('[ForumNotificationController] Get error:', error);
-      res.status(500).json(errorResponse('Failed to fetch notification', 'GET_NOTIFICATION_ERROR'));
+      res.status(200).json(successResponse({ unreadCount: count }, undefined, getRequestId(req)));
+    } catch (error: unknown) {
+      console.error('[ForumNotificationController] Get unread count error:', error);
+      res.status(500).json(errorResponse('Failed to fetch unread count', 'GET_UNREAD_COUNT_ERROR', undefined, 500, getRequestId(req)));
     }
   }
 
   /**
-   * PUT /forum/notifications/:notificationId/read
-   * Mark notification as read
-   */
-  static async markRead(req: Request<{ notificationId: string }>, res: Response): Promise<void> {
-    try {
-      const { notificationId } = req.params;
-      const characterId = (req as any).character?._id;
-
-      if (!characterId) {
-        res.status(401).json(errorResponse('Character not found', 'CHARACTER_NOT_FOUND'));
-        return;
-      }
-
-      if (!mongoose.Types.ObjectId.isValid(notificationId)) {
-        res.status(400).json(errorResponse('Invalid notification ID', 'INVALID_NOTIFICATION_ID'));
-        return;
-      }
-
-      const objectId = new mongoose.Types.ObjectId(notificationId);
-
-      // Update notification (must belong to character)
-      const result = await ForumNotification.updateOne(
-        { _id: objectId, characterId },
-        { $set: { isRead: true } }
-      );
-
-      if (result.matchedCount === 0) {
-        res.status(404).json(errorResponse('Notification not found', 'NOTIFICATION_NOT_FOUND'));
-        return;
-      }
-
-      res.status(200).json(successResponse({
-        read: true
-      }, 'Notification marked as read'));
-    } catch (error: any) {
-      console.error('[ForumNotificationController] Mark read error:', error);
-      res.status(500).json(errorResponse('Failed to mark notification as read', 'MARK_READ_ERROR'));
-    }
-  }
-
-  /**
-   * PUT /forum/notifications/read-all
-   * Mark all notifications as read for authenticated character
+   * POST /forum/notifications/mark-read - Mark all notifications as read
    */
   static async markAllRead(req: Request, res: Response): Promise<void> {
     try {
-      const characterId = (req as any).character?._id;
-
-      if (!characterId) {
-        res.status(401).json(errorResponse('Character not found', 'CHARACTER_NOT_FOUND'));
+      const character = req.character;
+      if (!character) {
+        res.status(401).json(errorResponse('Character not found', 'CHARACTER_NOT_FOUND', undefined, 401, getRequestId(req)));
         return;
       }
 
-      // Update all unread notifications
+      const characterId = new mongoose.Types.ObjectId(character.characterId);
       const result = await ForumNotification.updateMany(
         { characterId, isRead: false },
         { $set: { isRead: true } }
       );
-
       res.status(200).json(successResponse({
         markedCount: result.modifiedCount
-      }, `Marked ${result.modifiedCount} notifications as read`));
-    } catch (error: any) {
+      }, `Marked ${result.modifiedCount} notifications as read`, getRequestId(req)));
+    } catch (error: unknown) {
       console.error('[ForumNotificationController] Mark all read error:', error);
-      res.status(500).json(errorResponse('Failed to mark all as read', 'MARK_ALL_READ_ERROR'));
+      res.status(500).json(errorResponse('Failed to mark all as read', 'MARK_ALL_READ_ERROR', undefined, 500, getRequestId(req)));
     }
   }
 
-  /**
-   * DELETE /forum/notifications/:notificationId
-   * Delete a notification
-   */
-  static async delete(req: Request<{ notificationId: string }>, res: Response): Promise<void> {
+  static async markRead(req: Request, res: Response): Promise<void> {
     try {
-      const { notificationId } = req.params;
-      const characterId = (req as any).character?._id;
-
-      if (!characterId) {
-        res.status(401).json(errorResponse('Character not found', 'CHARACTER_NOT_FOUND'));
+      const character = req.character;
+      if (!character) {
+        res.status(401).json(errorResponse('Character not found', 'CHARACTER_NOT_FOUND', undefined, 401, getRequestId(req)));
         return;
       }
 
-      if (!mongoose.Types.ObjectId.isValid(notificationId)) {
-        res.status(400).json(errorResponse('Invalid notification ID', 'INVALID_NOTIFICATION_ID'));
-        return;
+      const characterId = new mongoose.Types.ObjectId(character.characterId);
+      const { notificationIds, all } = req.body as { notificationIds?: string[]; all?: boolean };
+
+      if (all) {
+        const result = await ForumNotification.updateMany(
+          { characterId, isRead: false },
+          { $set: { isRead: true } }
+        );
+        res.status(200).json(successResponse({
+          markedCount: result.modifiedCount
+        }, `Marked ${result.modifiedCount} notifications as read`, getRequestId(req)));
+      } else if (notificationIds && Array.isArray(notificationIds) && notificationIds.length > 0) {
+        const validIds = notificationIds
+          .filter(id => mongoose.Types.ObjectId.isValid(id))
+          .map(id => new mongoose.Types.ObjectId(id));
+
+        if (validIds.length === 0) {
+          res.status(400).json(errorResponse('No valid notification IDs', 'INVALID_IDS', undefined, 400, getRequestId(req)));
+          return;
+        }
+
+        const result = await ForumNotification.updateMany(
+          { _id: { $in: validIds }, characterId },
+          { $set: { isRead: true } }
+        );
+
+        res.status(200).json(successResponse({
+          markedCount: result.modifiedCount
+        }, `Marked ${result.modifiedCount} notifications as read`, getRequestId(req)));
+      } else {
+        res.status(400).json(errorResponse('notificationIds array or all: true required', 'MISSING_PARAMS', undefined, 400, getRequestId(req)));
       }
-
-      const objectId = new mongoose.Types.ObjectId(notificationId);
-
-      // Delete notification (must belong to character)
-      const result = await ForumNotification.deleteOne({
-        _id: objectId,
-        characterId
-      });
-
-      if (result.deletedCount === 0) {
-        res.status(404).json(errorResponse('Notification not found', 'NOTIFICATION_NOT_FOUND'));
-        return;
-      }
-
-      res.status(200).json(successResponse({
-        deleted: true
-      }, 'Notification deleted'));
-    } catch (error: any) {
-      console.error('[ForumNotificationController] Delete error:', error);
-      res.status(500).json(errorResponse('Failed to delete notification', 'DELETE_NOTIFICATION_ERROR'));
+    } catch (error: unknown) {
+      console.error('[ForumNotificationController] Mark read error:', error);
+      res.status(500).json(errorResponse('Failed to mark as read', 'MARK_READ_ERROR', undefined, 500, getRequestId(req)));
     }
   }
 }

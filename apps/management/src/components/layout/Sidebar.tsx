@@ -70,7 +70,8 @@ const NAV_ITEMS: NavItem[] = [
       { key: 'game-skills', label: 'Skills', href: '/game-data/skill-list', permission: 'skills.access' },
       { key: 'game-social-classes', label: 'Classi Sociali', href: '/game-data/social-class-list', permission: 'social_classes.access' },
       { key: 'game-occupations', label: 'Occupazioni', href: '/game-data/occupation-list', permission: 'skills.access' },
-      { key: 'game-items', label: 'Mercato', href: '/game-data/item-list', permission: 'items.access' }
+      { key: 'game-items', label: 'Mercato', href: '/game-data/item-list', permission: 'items.access' },
+      { key: 'game-forum-topics', label: 'Forum - Argomenti', href: '/game-data/forum-topics', permission: 'forum.manage' }
     ]
   },
   {
@@ -78,7 +79,8 @@ const NAV_ITEMS: NavItem[] = [
     label: 'Moderazione',
     icon: '🛡️',
     children: [
-      { key: 'auto-moderation', label: 'Auto-Moderazione AI', href: '/moderation/auto-moderation', permission: 'system.config' }
+      { key: 'chat-moderation', label: 'Moderazione Chat AI', href: '/moderation/chat-moderation', permission: 'moderation.chat_ai' },
+      { key: 'forum-moderation', label: 'Moderazione Forum AI', href: '/moderation/forum-moderation', permission: 'moderation.forum_ai' }
     ]
   },
   {

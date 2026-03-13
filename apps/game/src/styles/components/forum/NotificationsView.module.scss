@@ -1,0 +1,104 @@
+@use './_variables' as *;
+
+.container {
+  padding: $spacing-xl;
+  max-width: $forum-max-width;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-lg;
+}
+
+.title {
+  font-family: $font-serif;
+  color: $text-primary;
+  font-size: 1.3rem;
+}
+
+.markAllBtn {
+  background: none;
+  border: none;
+  color: $gold;
+  font-family: $font-sans;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: $transition-fast;
+
+  &:hover:not(:disabled) {
+    color: $parchment;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.notification {
+  display: flex;
+  gap: $spacing-md;
+  background: $dark-surface;
+  border: 1px solid $dark-border;
+  border-radius: $radius-md;
+  padding: $spacing-md $spacing-lg;
+  cursor: pointer;
+  transition: $transition-normal;
+
+  &:hover {
+    border-color: $gold-30;
+    background: $dark-elevated;
+  }
+}
+
+.unread {
+  background: $gold-10;
+  border-color: $gold-20;
+}
+
+.notifIcon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.notifBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.notifTitle {
+  font-family: $font-serif;
+  color: $text-primary;
+  font-size: 1rem;
+  margin-bottom: $spacing-xs;
+}
+
+.notifMessage {
+  font-size: 0.9rem;
+  color: $text-secondary;
+  line-height: 1.4;
+}
+
+.timestamp {
+  margin-top: $spacing-xs;
+  font-size: 0.8rem;
+  color: $text-muted;
+  display: flex;
+  gap: $spacing-md;
+}
+
+.loading,
+.empty {
+  text-align: center;
+  padding: $spacing-xxl;
+  color: $text-muted;
+}

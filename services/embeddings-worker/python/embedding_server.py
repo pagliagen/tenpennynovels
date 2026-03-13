@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 # Model configuration
 MODEL_NAME = 'paraphrase-multilingual-MiniLM-L12-v2'
-MODERATION_MODEL_NAME = 'gravitee-io/distilbert-multilingual-toxicity-classifier'
+MODERATION_MODEL_NAME = 'MilaNLProc/hate-ita'
 MAX_TEXT_LENGTH = 10000  # chars
 
 class EmbeddingServer:
@@ -89,6 +89,10 @@ class EmbeddingServer:
             'dimensions': len(embedding)
         }
 
+    # Label mapping: normalize model-specific labels to toxic/not-toxic
+    TOXIC_LABELS = {'hateful', 'hate', 'toxic', 'offensive', 'LABEL_1'}
+    NOT_TOXIC_LABELS = {'acceptable', 'not-toxic', 'not_toxic', 'normal', 'LABEL_0'}
+
     def _handle_moderation(self, request: Dict[str, Any]) -> Dict[str, Any]:
         """Classify text toxicity"""
         if not self.moderation_pipeline:
@@ -100,10 +104,19 @@ class EmbeddingServer:
             return {'success': False, 'error': 'Invalid text parameter'}
 
         result = self.moderation_pipeline(text[:2000])[0]
+        raw_label = result['label'].lower().strip()
+
+        if raw_label in self.TOXIC_LABELS:
+            normalized = 'toxic'
+        elif raw_label in self.NOT_TOXIC_LABELS:
+            normalized = 'not-toxic'
+        else:
+            normalized = 'toxic' if result['score'] > 0.5 else 'not-toxic'
+            logger.warning(f"Unknown label '{raw_label}', mapped to '{normalized}'")
 
         return {
             'success': True,
-            'label': result['label'],
+            'label': normalized,
             'score': round(result['score'], 4)
         }
 

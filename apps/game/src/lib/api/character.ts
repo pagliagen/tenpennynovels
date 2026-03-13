@@ -31,6 +31,25 @@ interface CharactersListResponse {
   total: number;
 }
 
+export interface CharacterCreationConfig {
+  stats: {
+    totalPoints: number;
+    minValue: number;
+    maxStatsAbove80: number;
+    creationCap: number;
+    gameplayCap: number;
+  };
+  skills: {
+    totalPoints: number;
+    creationCap: number;
+    creationCapWithOccupation: number;
+  };
+  occupation: any;
+  limits: any;
+  socialClasses: any[];
+  formulas: any;
+}
+
 /**
  * Character API Service
  *
@@ -70,6 +89,36 @@ export const characterApi = {
   async create(data: CharacterCreatePayload): Promise<Character> {
     const response = await api.post<{ data: CharacterResponse }>('/game/characters', data);
     return response.data.character;
+  },
+
+  /**
+   * Check Name Availability
+   *
+   * Checks if a character name is available (not already taken).
+   * Character names must be unique across the entire database.
+   *
+   * **Use Case**: Real-time validation in wizard Step 1 (firstName + lastName).
+   *
+   * @param {string} name - Full character name to check (e.g., "Arthur Pemberton")
+   * @returns {Promise<{ available: boolean; name?: string; error?: string }>} Name availability result
+   * @throws {ApiError} If request fails
+   *
+   * @example
+   * ```typescript
+   * const result = await characterApi.checkNameAvailability('Arthur Pemberton');
+   * if (result.available) {
+   *   console.log('Name is available!');
+   * } else {
+   *   console.log('Name already taken:', result.error);
+   * }
+   * ```
+   */
+  async checkNameAvailability(name: string): Promise<{ available: boolean; name?: string; error?: string }> {
+    const response = await api.post<{ available: boolean; name?: string; error?: string }>(
+      '/game/characters/check-name',
+      { name }
+    );
+    return response;
   },
 
   /**
@@ -228,10 +277,8 @@ export const characterApi = {
   /**
    * Get Character Creation Config
    *
-   * Fetches character creation rules from backend.
-   * Includes: stats budget (400), skills formula (200+INT/2), occupation config, formulas.
-   *
-   * **Config Location**: `/services/unified-backend/src/config/static/character-creation.json`
+   * Fetches character creation rules from backend (dynamic from SystemConfiguration).
+   * Includes: stats budget (450), stat minimum (20), skills budget (250), formulas.
    *
    * @returns {Promise<CharacterCreationConfig>} Character creation config
    * @throws {ApiError} If request fails
@@ -239,14 +286,15 @@ export const characterApi = {
    * @example
    * ```typescript
    * const config = await characterApi.getCreationConfig();
-   * console.log(`Stats budget: ${config.stats.totalPoints}`); // 400
-   * console.log(`Skills formula: ${config.skills.totalPointsFormula}`); // "constant:200"
+   * console.log(`Stats budget: ${config.stats.totalPoints}`); // 450
+   * console.log(`Skills budget: ${config.skills.totalPoints}`); // 250
    * ```
    */
-  async getCreationConfig(): Promise<any> {
-    // TODO: Add proper type from wizard.ts
-    const response = await api.get<any>('/game/config/character-creation');
-    return response;
+  async getCreationConfig(): Promise<CharacterCreationConfig> {
+    const response = await api.get<{ data: { config: CharacterCreationConfig } }>(
+      '/game/character-creation-config'
+    );
+    return response.data.config;
   },
 
   /**

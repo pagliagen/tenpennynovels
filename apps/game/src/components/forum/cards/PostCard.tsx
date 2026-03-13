@@ -1,0 +1,134 @@
+'use client';
+
+import { useState } from 'react';
+import { useForumStore } from '@/store/forumStore';
+import { useAuthStore } from '@/store/authStore';
+import { useUIStore } from '@/store/uiStore';
+import { useUpdatePost, useDeletePost } from '@/hooks/useForumPosts';
+import { ReactionBar } from '../ui/ReactionBar';
+import type { ForumPost } from '@/types/forum';
+import styles from '@/styles/components/forum/PostCard.module.scss';
+
+interface PostCardProps {
+  post: ForumPost;
+  isOwn?: boolean;
+  onReply?: (postId: string) => void;
+}
+
+function formatDate(dateStr: string): string {
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('it-IT', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+export function PostCard({ post, isOwn: isOwnProp, onReply }: PostCardProps): JSX.Element {
+  const topicSlug = useForumStore((s) => s.topicSlug);
+  const discussionSlug = useForumStore((s) => s.discussionSlug);
+  const selectedCharacter = useAuthStore((s) => s.selectedCharacter);
+  const addToast = useUIStore((s) => s.addToast);
+  const isOwn = isOwnProp ?? selectedCharacter?._id === post.author.characterId;
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState(post.content);
+
+  const updatePost = useUpdatePost();
+  const deletePost = useDeletePost();
+
+  const handleCopyLink = () => {
+    if (!topicSlug || !discussionSlug) return;
+    const hash = `#bacheca/${topicSlug}/${discussionSlug}/${post.id}`;
+    navigator.clipboard.writeText(`${window.location.origin}${window.location.pathname}${hash}`);
+    addToast({ type: 'success', message: 'Link copiato negli appunti' });
+  };
+
+  const handleSaveEdit = async () => {
+    if (!topicSlug || !discussionSlug || editContent === post.content) {
+      setIsEditing(false);
+      return;
+    }
+    try {
+      await updatePost.mutateAsync({
+        postId: post.id,
+        content: editContent,
+        topicSlug,
+        discussionSlug,
+      });
+      setIsEditing(false);
+    } catch {
+      // Error handled by mutation
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!topicSlug || !discussionSlug || !confirm('Eliminare questo messaggio?')) return;
+    try {
+      await deletePost.mutateAsync({ postId: post.id, topicSlug, discussionSlug });
+    } catch {
+      // Error handled by mutation
+    }
+  };
+
+  if (post.isDeleted) {
+    return (
+      <article id={`post-${post.id}`} className={`${styles.card} ${styles.deleted}`}>
+        <div className={styles.content}>[Post eliminato]</div>
+      </article>
+    );
+  }
+
+  return (
+    <article id={`post-${post.id}`} className={styles.card}>
+      <div className={styles.header}>
+        <span className={styles.author}>{post.author.characterName}</span>
+        <span className={styles.date}>{formatDate(post.createdAt)}</span>
+        {post.isEdited && <span className={styles.edited}>modificato</span>}
+      </div>
+      {isEditing ? (
+        <div className={styles.editArea}>
+          <textarea
+            value={editContent}
+            onChange={(e) => setEditContent(e.target.value)}
+            className={styles.editTextarea}
+            rows={4}
+          />
+          <div className={styles.editActions}>
+            <button type="button" className={styles.cancelEditBtn} onClick={() => setIsEditing(false)}>
+              Annulla
+            </button>
+            <button type="button" className={styles.saveEditBtn} onClick={handleSaveEdit} disabled={updatePost.isPending}>
+              Salva
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className={styles.content}>{post.content}</div>
+      )}
+      <div className={styles.actions}>
+        {onReply && (
+          <button type="button" className={styles.actionBtn} onClick={() => onReply(post.id)}>
+            Rispondi
+          </button>
+        )}
+        <button type="button" className={styles.actionBtn} onClick={handleCopyLink}>
+          Copia link
+        </button>
+        {isOwn && !isEditing && (
+          <>
+            <button type="button" className={styles.actionBtn} onClick={() => setIsEditing(true)}>
+              Modifica
+            </button>
+            <button type="button" className={styles.actionBtn} onClick={handleDelete} disabled={deletePost.isPending}>
+              Elimina
+            </button>
+          </>
+        )}
+      </div>
+      <ReactionBar postId={post.id} reactionCounts={post.reactionCounts} />
+    </article>
+  );
+}

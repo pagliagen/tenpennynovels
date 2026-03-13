@@ -10,6 +10,12 @@ import { SkillController } from '../controllers/SkillController';
 const router = Router();
 
 // Character creation and management
+// Check name availability (must be before /create for route matching)
+router.post('/characters/check-name',
+  AuthMiddleware.requireUserAuth,
+  CharacterController.checkNameAvailability
+);
+
 router.post('/characters/create',
   AuthMiddleware.requireUserAuth,
   requireGamePermission('game:character:create'),
@@ -123,6 +129,13 @@ router.get('/occupations/:occupationId/check-prerequisites',
   AuthMiddleware.requireUserAuth,
   requireGamePermission('game:character:occupations:read'),
   CharacterGameplayController.checkOccupationPrerequisitesEndpoint
+);
+
+// Character creation configuration (dynamic from SystemConfiguration)
+router.get('/character-creation-config',
+  AuthMiddleware.requireUserAuth,
+  requireGamePermission('game:character:create'),
+  CharacterController.getCharacterCreationConfig
 );
 
 // AI gateway callback endpoints
