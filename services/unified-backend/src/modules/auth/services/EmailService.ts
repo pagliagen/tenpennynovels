@@ -398,7 +398,7 @@ export class EmailService {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="color-scheme" content="dark">
   <meta name="supported-color-schemes" content="dark">
-  <title>${title}</title>
+  <title>Ten Penny Novels | ${title}</title>
 </head>
 <body style="margin: 0; padding: 0; background-color: #050505; font-family: Georgia, 'Times New Roman', serif;">
   <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #050505;">

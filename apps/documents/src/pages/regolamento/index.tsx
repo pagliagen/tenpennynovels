@@ -17,7 +17,7 @@ export default function RegolamentoIndex() {
   return (
     <>
       <SEO
-        title="Regolamento"
+        title="Ten Penny Novels | Regolamento"
         description="Regolamento di gioco per Ten Penny Novels - Regole Call of Cthulhu, meccaniche e linee guida per il roleplay vittoriano."
         ogType="website"
       />

@@ -90,7 +90,7 @@ export default function AuditLogs() {
   return (
     <ManagementLayout>
       <Head>
-        <title>Audit Logs - Ten Penny Novels Management</title>
+        <title>Ten Penny Novels | Audit Logs</title>
       </Head>
 
       <div className={styles.container}>

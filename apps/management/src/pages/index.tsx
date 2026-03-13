@@ -11,7 +11,7 @@ export default function Dashboard() {
   return (
     <ManagementLayout>
       <Head>
-        <title>Dashboard - Ten Penny Novels Management</title>
+        <title>Ten Penny Novels | Dashboard</title>
       </Head>
 
       <div className={styles.dashboard}>

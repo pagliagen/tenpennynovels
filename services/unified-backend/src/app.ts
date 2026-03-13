@@ -6,6 +6,7 @@ import cookieParser from 'cookie-parser';
 import morgan from 'morgan';
 import { requestIdMiddleware } from '@shared/middleware/requestId';
 import { normalizeQueryParams } from '@shared/middleware/normalizeQueryParams';
+import { maintenanceModeMiddleware } from '@shared/middleware/maintenanceMode';
 import { errorHandler, notFoundHandler } from '@shared/middleware/errorHandler';
 import { httpLoggerStream, logger } from '@shared/utils/logger';
 
@@ -49,6 +50,9 @@ app.use(requestIdMiddleware);
 
 // ===== Query Params Normalization (array → string) =====
 app.use(normalizeQueryParams);
+
+// ===== Maintenance Mode Check =====
+app.use(maintenanceModeMiddleware);
 
 // ===== Health Check =====
 app.get('/health', (req, res) => {

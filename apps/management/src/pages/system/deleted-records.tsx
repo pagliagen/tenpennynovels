@@ -221,7 +221,7 @@ export default function DeletedRecordsPage() {
         <header className={styles.header}>
           <div className={styles.headerLeft}>
             <h1>
-              🗑️ Record Cancellati
+              Record Cancellati
               {data?.counts.total !== undefined && (
                 <span className={styles.countBadge}>{data.counts.total}</span>
               )}

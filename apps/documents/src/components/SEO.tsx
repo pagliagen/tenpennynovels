@@ -82,7 +82,7 @@ export interface SEOProps {
  *   return (
  *     <>
  *       <SEO
- *         title="Londra Vittoriana - Ambientazione"
+ *         title="Ten Penny Novels | Londra Vittoriana - Ambientazione"
  *         description="Guida completa alla Londra Vittoriana del 1890 per Ten Penny Novels."
  *       />
  *       <DocumentContent />

@@ -17,14 +17,13 @@ import { GameLayout } from '@/components/layout/GameLayout';
 import { useForumStore } from '@/store/forumStore';
 
 export default function BachecaPage(): JSX.Element {
-  const isOpen = useForumStore((s) => s.isOpen);
   const openForum = useForumStore((s) => s.openForum);
   const syncWithUrl = useForumStore((s) => s.syncWithUrl);
 
   useEffect(() => {
     syncWithUrl();
-    if (!isOpen) openForum();
-  }, [syncWithUrl, openForum, isOpen]);
+    if (!useForumStore.getState().isOpen) openForum();
+  }, [syncWithUrl, openForum]);
 
   return (
     <>

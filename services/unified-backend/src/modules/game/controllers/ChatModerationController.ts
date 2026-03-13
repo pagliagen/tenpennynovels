@@ -6,6 +6,8 @@ import { OffGameChatMessage } from '@database/models/OffGameChatMessage';
 import { Character } from '@database/models/Character';
 import { logger } from '../utils/logger';
 import { successResponse, errorResponse, listResponse, createResponse, getRequestId } from '../utils/apiResponse';
+import { ConfigurationService } from '@shared/services/ConfigurationService';
+import { redis } from '@config/runtime/redis';
 
 export class ChatModerationController {
 
@@ -16,8 +18,23 @@ export class ChatModerationController {
   static async reportMessage(req: Request, res: Response): Promise<void> {
     const reporterCharacterId = req.character!.characterId;
     const reporterName = req.character!.characterName;
-    
+
     try {
+      // Check if report system is enabled
+      const configService = new ConfigurationService(redis.getClient() as any, logger);
+      const reportSystemEnabled = await configService.getConfig('report_system_enabled');
+
+      if (reportSystemEnabled === false) {
+        res.status(503).json(errorResponse(
+          'Il sistema di segnalazioni è temporaneamente disabilitato',
+          'REPORT_SYSTEM_DISABLED',
+          undefined,
+          503,
+          getRequestId(req)
+        ));
+        return;
+      }
+
       const {
         messageId,
         messageType,

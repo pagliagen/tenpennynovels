@@ -175,7 +175,7 @@ export default function LoginPage() {
 
   return (
     <FormPageLayout
-      title="Gioco di Ruolo Londra Vittoriana | Call of Cthulhu Online Gratis"
+      title="Ten Penny Novels | Gioco di Ruolo Londra Vittoriana"
       description="Ten Penny Novels: gioco di ruolo online gratuito ambientato nella Londra Vittoriana del 1890. Sistema Call of Cthulhu via chat con narrazione investigativa stile Agatha Christie. Crea il tuo personaggio vittoriano ed esplora i misteri della capitale inglese. Registrazione gratuita!"
       canonical="https://tenpennynovels.com/"
       schema={homeSchema}

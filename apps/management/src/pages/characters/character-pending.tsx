@@ -254,8 +254,8 @@ export default function CharacterPending() {
   return (
     <ManagementLayout>
       <Head>
-        <title>Personaggi In Attesa - Ten Penny Novels Management</title>
-      </Head>
+        <title>Ten Penny Novels | Personaggi In Attesa</title>
+      </Head> 
 
       <div className={styles.characterList}>
         <header className={styles.header}>

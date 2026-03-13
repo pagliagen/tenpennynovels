@@ -29,12 +29,7 @@ export class SystemConfigController {
 
       const config: SystemConfig = {
         gameSettings: {
-          newCharacterApprovalRequired: gameConfigs.new_character_approval_required ?? true,
           maxCharactersPerUser: gameConfigs.max_characters_per_user ?? 3,
-          characterCreationEnabled: gameConfigs.character_creation_enabled ?? true,
-          aiCharacterGenerationEnabled: gameConfigs.ai_character_generation_enabled ?? false,
-          npcInteractionEnabled: gameConfigs.npc_interaction_enabled ?? true,
-          locationChatEnabled: gameConfigs.location_chat_enabled ?? true,
         },
         economySettings: {
           startingCash: economyConfigs.starting_cash ?? 50,
@@ -44,10 +39,7 @@ export class SystemConfigController {
           taxationEnabled: economyConfigs.taxation_enabled ?? false,
         },
         moderationSettings: {
-          chatModerationEnabled: moderationConfigs.chat_moderation_enabled ?? true,
-          autoModerationLevel: moderationConfigs.auto_moderation_level ?? 'medium',
           reportSystemEnabled: moderationConfigs.report_system_enabled ?? true,
-          appealProcessEnabled: moderationConfigs.appeal_process_enabled ?? true,
         },
         messageSettings: {
           maxMessageLength: postalConfigs.max_message_length ?? 2000,

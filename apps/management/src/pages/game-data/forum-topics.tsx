@@ -221,7 +221,7 @@ export default function ForumTopicsPage() {
 
   return (
     <ManagementLayout>
-      <Head><title>Forum - Argomenti - Ten Penny Novels Management</title></Head>
+      <Head><title>Ten Penny Novels | Forum - Argomenti</title></Head>
       <div className={styles.forumTopics}>
         <header className={styles.header}>
           <div>

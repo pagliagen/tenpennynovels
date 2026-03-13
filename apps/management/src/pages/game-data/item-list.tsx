@@ -216,7 +216,7 @@ export default function ItemList() {
 
   return (
     <ManagementLayout>
-      <Head><title>Gestione Mercato - Ten Penny Novels Management</title></Head>
+      <Head><title>Ten Penny Novels | Gestione Mercato</title></Head>
       <div className={styles.itemList}>
         <header className={styles.header}>
           <div>

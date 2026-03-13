@@ -319,7 +319,7 @@ export default function BanList() {
   return (
     <ManagementLayout>
       <Head>
-        <title>Gestione Ban Utenti - Ten Penny Novels Management</title>
+        <title>Ten Penny Novels | Gestione Ban Utenti</title>
       </Head>
 
       <div className={styles.userList}>

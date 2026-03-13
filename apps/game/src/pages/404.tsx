@@ -32,7 +32,7 @@ export default function Custom404(): JSX.Element {
   return (
     <>
       <Head>
-        <title>Pagina Non Trovata - Ten Penny Novels</title>
+        <title>Ten Penny Novels | Pagina Non Trovata</title>
         <meta name="description" content="La pagina che cerchi è svanita nella nebbia londinese. Torna alla tua avventura su Ten Penny Novels." />
       </Head>
       <div

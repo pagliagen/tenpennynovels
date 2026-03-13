@@ -24,7 +24,7 @@ export default function PreferitiIndex() {
   if (!isAuthenticated) {
     return (
       <>
-        <SEO title="Preferiti" description="I tuoi documenti preferiti" />
+        <SEO title="Ten Penny Novels | Preferiti" description="I tuoi documenti preferiti" />
         <div style={{ textAlign: 'center', padding: '64px' }}>
           <p>Devi essere autenticato per visualizzare i tuoi documenti preferiti.</p>
         </div>
@@ -35,7 +35,7 @@ export default function PreferitiIndex() {
   if (!isLoading && favorites && favorites.length === 0) {
     return (
       <>
-        <SEO title="Preferiti" description="I tuoi documenti preferiti" />
+        <SEO title="Ten Penny Novels | Preferiti" description="I tuoi documenti preferiti" />
         <div style={{ textAlign: 'center', padding: '64px', fontStyle: 'italic' }}>
           <p>Non hai ancora aggiunto documenti ai preferiti.</p>
           <p>
@@ -49,7 +49,7 @@ export default function PreferitiIndex() {
 
   return (
     <>
-      <SEO title="Preferiti" description="I tuoi documenti preferiti" />
+      <SEO title="Ten Penny Novels | Preferiti" description="I tuoi documenti preferiti" />
       <LoadingSpinner fullPage message="Caricamento preferiti..." />
     </>
   );

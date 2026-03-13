@@ -17,7 +17,7 @@ export default function AmbientazioneIndex() {
   return (
     <>
       <SEO
-        title="Ambientazione"
+        title="Ten Penny Novels | Ambientazione"
         description="Documenti di ambientazione per Ten Penny Novels - Londra vittoriana, personaggi, luoghi e storie."
         ogType="website"
       />

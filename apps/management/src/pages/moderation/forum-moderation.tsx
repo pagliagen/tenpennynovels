@@ -127,7 +127,7 @@ export default function ForumModerationPage() {
   return (
     <ManagementLayout>
       <Head>
-        <title>Moderazione Forum AI - Ten Penny Novels Management</title>
+        <title>Ten Penny Novels | Moderazione Forum AI</title>
       </Head>
 
       <div className={styles.container}>

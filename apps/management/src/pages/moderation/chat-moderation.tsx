@@ -127,7 +127,7 @@ export default function ChatModerationPage() {
   return (
     <ManagementLayout>
       <Head>
-        <title>Moderazione Chat AI - Ten Penny Novels Management</title>
+        <title>Ten Penny Novels | Moderazione Chat AI</title>
       </Head>
 
       <div className={styles.container}>

@@ -318,12 +318,7 @@ export interface SystemConfig {
 }
 
 export interface GameSettings {
-  newCharacterApprovalRequired: boolean;
   maxCharactersPerUser: number;
-  characterCreationEnabled: boolean;
-  aiCharacterGenerationEnabled: boolean;
-  npcInteractionEnabled: boolean;
-  locationChatEnabled: boolean;
 }
 
 export interface EconomySettings {
@@ -335,10 +330,7 @@ export interface EconomySettings {
 }
 
 export interface ModerationSettings {
-  chatModerationEnabled: boolean;
-  autoModerationLevel: 'low' | 'medium' | 'high';
   reportSystemEnabled: boolean;
-  appealProcessEnabled: boolean;
 }
 
 export interface MessageSettings {

@@ -79,7 +79,7 @@ export default function LocationsPage(): JSX.Element {
     return (
       <>
         <Head>
-          <title>Mappa di Londra - Ten Penny Novels</title>
+          <title>Ten Penny Novels | Mappa di Londra</title>
           <meta name="description" content="Esplora la mappa interattiva della Londra Vittoriana del 1890. Scopri distretti, locations e luoghi nascosti nel gioco di ruolo Ten Penny Novels." />
         </Head>
         <GameLayout>
@@ -97,7 +97,7 @@ export default function LocationsPage(): JSX.Element {
     return (
       <>
         <Head>
-          <title>Mappa di Londra - Ten Penny Novels</title>
+          <title>Ten Penny Novels | Mappa di Londra</title>
           <meta name="description" content="Esplora la mappa interattiva della Londra Vittoriana del 1890. Scopri distretti, locations e luoghi nascosti nel gioco di ruolo Ten Penny Novels." />
         </Head>
         <GameLayout>
@@ -121,7 +121,7 @@ export default function LocationsPage(): JSX.Element {
     return (
       <>
         <Head>
-          <title>Mappa di Londra - Ten Penny Novels</title>
+          <title>Ten Penny Novels | Mappa di Londra</title>
           <meta name="description" content="Esplora la mappa interattiva della Londra Vittoriana del 1890. Scopri distretti, locations e luoghi nascosti nel gioco di ruolo Ten Penny Novels." />
         </Head>
         <GameLayout>
@@ -139,7 +139,7 @@ export default function LocationsPage(): JSX.Element {
   return (
     <>
       <Head>
-        <title>Mappa di Londra - Ten Penny Novels</title>
+        <title>Ten Penny Novels | Mappa di Londra</title>
         <meta name="description" content="Esplora la mappa interattiva della Londra Vittoriana del 1890. Scopri distretti, locations e luoghi nascosti nel gioco di ruolo Ten Penny Novels." />
       </Head>
       <GameLayout>

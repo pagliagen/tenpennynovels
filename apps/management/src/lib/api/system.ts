@@ -30,10 +30,7 @@ export interface SystemConfigRecord {
 
 export interface SystemConfig {
   gameSettings: {
-    newCharacterApprovalRequired: boolean;
     maxCharactersPerUser: number;
-    characterCreationEnabled: boolean;
-    aiCharacterGenerationEnabled: boolean;
   };
   economySettings: {
     startingCash: number;
@@ -41,8 +38,7 @@ export interface SystemConfig {
     dailySalaryEnabled: boolean;
   };
   moderationSettings: {
-    chatModerationEnabled: boolean;
-    autoModerationLevel: 'low' | 'medium' | 'high';
+    reportSystemEnabled: boolean;
   };
 }
 

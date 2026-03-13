@@ -139,7 +139,7 @@ export default function SkillList() {
 
   return (
     <ManagementLayout>
-      <Head><title>Gestione Skills - Ten Penny Novels Management</title></Head>
+      <Head><title>Ten Penny Novels | Gestione Skills</title></Head>
       <div className={styles.skillList}>
         <header className={styles.header}>
           <div>

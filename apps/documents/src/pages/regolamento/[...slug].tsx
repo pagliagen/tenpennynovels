@@ -30,7 +30,7 @@ export default function RegolamentoDetail({ data, error }: RegolamentoDetailProp
     return (
       <ErrorMessage
         fullPage
-        title="Documento non trovato"
+        title="Ten Penny Novels | Documento non trovato"
         message={error || 'Il documento richiesto non è disponibile o è privato.'}
         onRetry={() => router.reload()}
       />

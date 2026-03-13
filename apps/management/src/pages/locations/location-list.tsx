@@ -83,7 +83,7 @@ export default function LocationList() {
   return (
     <ManagementLayout>
       <Head>
-        <title>Gestione Location - Ten Penny Novels Management</title>
+        <title>Ten Penny Novels | Gestione Location</title>
       </Head>
 
       <div className={styles.locationList}>

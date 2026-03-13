@@ -155,7 +155,7 @@ export default function SocialClassListPage() {
   return (
     <ManagementLayout>
       <Head>
-        <title>Gestione Classi Sociali - Ten Penny Novels Management</title>
+        <title>Ten Penny Novels | Gestione Classi Sociali</title>
       </Head>
 
       <div className={styles.page}>

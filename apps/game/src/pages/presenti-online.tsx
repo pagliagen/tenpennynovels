@@ -90,7 +90,7 @@ export default function PresentiOnlinePage(): JSX.Element {
     return (
       <>
         <Head>
-          <title>Presenti Online - Ten Penny Novels</title>
+          <title>Ten Penny Novels | Presenti Online</title>
           <meta name="description" content="Vedi chi è online ora su Ten Penny Novels. Trova altri giocatori nella Londra Vittoriana e unisciti alle loro avventure." />
         </Head>
         <GameLayout>
@@ -105,7 +105,7 @@ export default function PresentiOnlinePage(): JSX.Element {
   return (
     <>
       <Head>
-        <title>Presenti Online - Ten Penny Novels</title>
+        <title>Ten Penny Novels | Presenti Online</title>
         <meta name="description" content="Vedi chi è online ora su Ten Penny Novels. Trova altri giocatori nella Londra Vittoriana e unisciti alle loro avventure." />
       </Head>
       <GameLayout>

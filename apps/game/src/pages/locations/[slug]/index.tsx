@@ -54,7 +54,7 @@ export default function LocationDetailPage(): JSX.Element {
     return (
       <>
         <Head>
-          <title>Location - Ten Penny Novels</title>
+          <title>Ten Penny Novels | Location</title>
           <meta name="description" content="Esplora le locations della Londra Vittoriana su Ten Penny Novels." />
         </Head>
         <GameLayout>
@@ -72,7 +72,7 @@ export default function LocationDetailPage(): JSX.Element {
     return (
       <>
         <Head>
-          <title>Location Non Trovata - Ten Penny Novels</title>
+          <title>Ten Penny Novels | Location Non Trovata</title>
           <meta name="description" content="La location che cerchi non esiste o non è accessibile." />
         </Head>
         <GameLayout>
@@ -94,7 +94,7 @@ export default function LocationDetailPage(): JSX.Element {
   return (
     <>
       <Head>
-        <title>{location.name} - Ten Penny Novels</title>
+        <title>Ten Penny Novels | {location.name}</title>
         <meta name="description" content={`Esplora ${location.name} nella Londra Vittoriana. ${location.description || 'Scopri misteri e avventure in questa location del gioco Ten Penny Novels.'}`} />
       </Head>
       <GameLayout>

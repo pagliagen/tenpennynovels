@@ -192,7 +192,7 @@ export default function SystemConfigurations() {
   return (
     <ManagementLayout>
       <Head>
-        <title>Configurazioni Sistema - Ten Penny Novels Management</title>
+        <title>Ten Penny Novels | Configurazioni Sistema</title>
       </Head>
 
       <div className={styles.container}>

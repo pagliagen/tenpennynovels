@@ -286,7 +286,7 @@ export default function OccupationList() {
 
   return (
     <ManagementLayout>
-      <Head><title>Gestione Occupazioni - Ten Penny Novels Management</title></Head>
+      <Head><title>Ten Penny Novels | Gestione Occupazioni</title></Head>
       <div className={styles.occupationList}>
         <header className={styles.header}>
           <div>

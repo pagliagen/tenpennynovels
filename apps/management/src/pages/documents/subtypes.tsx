@@ -242,7 +242,7 @@ export default function SubtypesPage() {
   return (
     <ManagementLayout>
       <Head>
-        <title>Gestione Sottotipi - Ten Penny Novels Management</title>
+        <title>Ten Penny Novels | Gestione Sottotipi</title>
       </Head>
 
       <div className={styles.subtypesPage}>

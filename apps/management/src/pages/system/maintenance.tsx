@@ -94,7 +94,7 @@ export default function Maintenance() {
   return (
     <ManagementLayout>
       <Head>
-        <title>Modalità Manutenzione - Ten Penny Novels Management</title>
+        <title>Ten Penny Novels | Modalità Manutenzione</title>
       </Head>
 
       <div className={styles.container}>
