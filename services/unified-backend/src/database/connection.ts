@@ -1,7 +1,8 @@
 import mongoose from 'mongoose';
 import { logger } from '@shared/utils/logger';
+import { appConfig } from '@config/runtime/appConfig';
 
-class DatabaseConnectionManager {
+export class DatabaseConnectionManager {
   private static instance: DatabaseConnectionManager;
   private isConnected = false;
 
@@ -14,11 +15,14 @@ class DatabaseConnectionManager {
     return DatabaseConnectionManager.instance;
   }
 
-  async connect(mongoUri: string): Promise<void> {
+  async connect(): Promise<void> {
     if (this.isConnected) {
       logger.info('Database already connected');
       return;
     }
+
+    const mongoUri = appConfig.db.mongodbUri;
+    if (!mongoUri) throw new Error('MONGODB_URI non configurato');
 
     await mongoose.connect(mongoUri, {
       maxPoolSize: 10,
