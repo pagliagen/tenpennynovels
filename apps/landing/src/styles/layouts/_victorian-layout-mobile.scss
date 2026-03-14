@@ -194,11 +194,15 @@
     top: 0;
     left: 0;
     right: 0;
-    bottom: 50%;
+    bottom: 0;
     overflow-y: auto;
     padding: var(--spacing-container-mobile);
     background-color: rgba(0, 0, 0, 0.7);
-    z-index: 1;
+    z-index: 2;
+
+    h2 {
+      text-align: center;
+    }
   }
 
   &__page-content {

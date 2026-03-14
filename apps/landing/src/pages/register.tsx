@@ -249,15 +249,7 @@ export default function RegisterPage() {
                   style={{ color: 'var(--color-primary)', textDecoration: 'underline', background: 'none', border: 'none', padding: 0, cursor: 'pointer', font: 'inherit' }}
                 >
                   privacy policy
-                </button>
-                {' | '}
-                <button
-                  type="button"
-                  onClick={() => setActiveInfo(activeInfo === 'credits' ? null : 'credits')}
-                  style={{ color: 'var(--color-primary)', textDecoration: 'underline', background: 'none', border: 'none', padding: 0, cursor: 'pointer', font: 'inherit' }}
-                >
-                  crediti
-                </button>
+                </button> 
               </label>
             </div>
             {errors.agreeToTerms && (

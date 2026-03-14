@@ -38,16 +38,30 @@ export class SitemapService {
       const { xml: documentsXml, count: docCount } = await this.buildDocumentsSitemap();
       const indexXml = this.buildSitemapIndex(today);
 
-      await Promise.all([
-        fs.writeFile(path.join(OUTPUT_DIR, 'sitemap.xml'), indexXml, 'utf-8'),
-        fs.writeFile(path.join(OUTPUT_DIR, 'sitemap-landing.xml'), landingXml, 'utf-8'),
-        fs.writeFile(path.join(OUTPUT_DIR, 'sitemap-documents.xml'), documentsXml, 'utf-8'),
-      ]);
+      const files: Array<[string, string]> = [
+        ['sitemap.xml', indexXml],
+        ['sitemap-landing.xml', landingXml],
+        ['sitemap-documents.xml', documentsXml],
+      ];
+
+      await this.writeToDir(OUTPUT_DIR, files);
 
       logger.info(`[SitemapService] Done. Landing: ${this.getStaticPages().length} URLs, Documents: ${docCount} URLs`);
     } catch (error) {
       logger.error('[SitemapService] Generation failed:', error);
     }
+  }
+
+  private static async writeToDir(dir: string, files: Array<[string, string]>): Promise<void> {
+    try {
+      await fs.access(dir);
+    } catch {
+      return;
+    }
+    await Promise.all(
+      files.map(([name, content]) => fs.writeFile(path.join(dir, name), content, 'utf-8')),
+    );
+    logger.info(`[SitemapService] Written ${files.length} files to ${dir}`);
   }
 
   private static getStaticPages(): SitemapUrl[] {
