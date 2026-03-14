@@ -16,7 +16,7 @@ import {
   type ApproveFaceClaimRequest,
   type RejectFaceClaimRequest
 } from '@/lib/api/faceClaims';
-import { toast } from 'react-toastify';
+import { useNotificationStore } from '@/store/notificationStore';
 
 /**
  * Query Keys
@@ -92,11 +92,11 @@ export function useApproveFaceClaim() {
       queryClient.invalidateQueries({ queryKey: faceClaimsQueryKeys.duplicates });
       queryClient.invalidateQueries({ queryKey: ['characters'] }); // Refresh character lists
 
-      toast.success('Prestavolto approvato con successo');
+      useNotificationStore.getState().success('Prestavolto approvato con successo');
     },
     onError: (error: Error) => {
       console.error('Error approving face claim:', error);
-      toast.error(`Errore nell'approvazione: ${error.message}`);
+      useNotificationStore.getState().error(`Errore nell'approvazione: ${error.message}`);
     },
   });
 }
@@ -134,11 +134,11 @@ export function useRejectFaceClaim() {
       queryClient.invalidateQueries({ queryKey: faceClaimsQueryKeys.duplicates });
       queryClient.invalidateQueries({ queryKey: ['characters'] }); // Refresh character lists
 
-      toast.success('Prestavolto rifiutato. Il personaggio dovrà scegliere un altro prestavolto.');
+      useNotificationStore.getState().success('Prestavolto rifiutato. Il personaggio dovrà scegliere un altro prestavolto.');
     },
     onError: (error: Error) => {
       console.error('Error rejecting face claim:', error);
-      toast.error(`Errore nel rifiuto: ${error.message}`);
+      useNotificationStore.getState().error(`Errore nel rifiuto: ${error.message}`);
     },
   });
 }
@@ -180,11 +180,11 @@ export function useBulkApproveFaceClaims() {
       queryClient.invalidateQueries({ queryKey: faceClaimsQueryKeys.duplicates });
       queryClient.invalidateQueries({ queryKey: ['characters'] });
 
-      toast.success(`${characterIds.length} prestavolti approvati con successo`);
+      useNotificationStore.getState().success(`${characterIds.length} prestavolti approvati con successo`);
     },
     onError: (error: Error) => {
       console.error('Error bulk approving face claims:', error);
-      toast.error(`Errore nell'approvazione multipla: ${error.message}`);
+      useNotificationStore.getState().error(`Errore nell'approvazione multipla: ${error.message}`);
     },
   });
 }

@@ -1,0 +1,81 @@
+{
+  "_meta": {
+    "version": "1.0.0",
+    "description": "Configurazione tabella prestavolti duplicati",
+    "lastUpdated": "2026-03-14"
+  },
+  "table": {
+    "name": "face-claims-list",
+    "title": "Gestione Prestavolti",
+    "icon": "👤",
+    "searchable": false,
+    "selectable": false,
+    "pagination": {
+      "defaultPageSize": 25,
+      "pageSizeOptions": [10, 25, 50, 100]
+    }
+  },
+  "columns": [
+    {
+      "key": "prestavolto",
+      "label": "Prestavolto",
+      "type": "text",
+      "visible": true,
+      "defaultVisible": true,
+      "sortable": true,
+      "width": "25%",
+      "render": {
+        "type": "text",
+        "className": "font-bold"
+      }
+    },
+    {
+      "key": "duplicateCount",
+      "label": "Duplicati",
+      "type": "text",
+      "visible": true,
+      "defaultVisible": true,
+      "sortable": true,
+      "width": "10%",
+      "render": {
+        "type": "text",
+        "className": "font-bold"
+      }
+    },
+    {
+      "key": "characters",
+      "label": "Personaggi",
+      "type": "text",
+      "visible": true,
+      "defaultVisible": true,
+      "sortable": false,
+      "width": "45%",
+      "render": {
+        "type": "text"
+      }
+    },
+    {
+      "key": "status",
+      "label": "Status",
+      "type": "text",
+      "visible": true,
+      "defaultVisible": true,
+      "sortable": true,
+      "width": "15%",
+      "render": {
+        "type": "badge"
+      }
+    }
+  ],
+  "actions": [
+    {
+      "key": "view",
+      "label": "Dettagli",
+      "icon": "👁️",
+      "type": "primary",
+      "visible": true
+    }
+  ],
+  "bulkActions": [],
+  "filters": []
+}

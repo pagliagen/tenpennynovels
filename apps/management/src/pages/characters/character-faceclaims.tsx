@@ -12,8 +12,9 @@ import React, { useState, useMemo } from 'react';
 import Head from 'next/head';
 import { ManagementLayout } from '@/components/layout/ManagementLayout';
 import { ConfigurableDataTable } from '@/components/shared/ConfigurableDataTable';
-import { SidePanel } from '@/components/shared/SidePanel';
+import { Modal } from '@/components/shared/Modal';
 import { useConfirm } from '@/hooks/useConfirm';
+import { useTableConfig } from '@/hooks/useTableConfig';
 import {
   useDuplicateFaceClaims,
   useApproveFaceClaim,
@@ -33,10 +34,16 @@ export default function CharacterFaceClaims() {
 
   // Hooks
   const { data, isLoading, error } = useDuplicateFaceClaims();
+  const tableConfig = useTableConfig('face-claims-list');
   const { mutate: approveFaceClaim, isPending: isApproving } = useApproveFaceClaim();
   const { mutate: rejectFaceClaim, isPending: isRejecting } = useRejectFaceClaim();
   const { mutate: bulkApprove, isPending: isBulkApproving } = useBulkApproveFaceClaims();
   const { confirm, ConfirmDialogComponent } = useConfirm();
+
+  const visibleColumns = useMemo(() => {
+    if (!tableConfig.config) return [];
+    return tableConfig.config.columns.filter(c => tableConfig.columnVisibility[c.key] !== false);
+  }, [tableConfig.config, tableConfig.columnVisibility]);
 
   /**
    * Prepare table data (flatten groups to rows)
@@ -54,57 +61,13 @@ export default function CharacterFaceClaims() {
   }, [data]);
 
   /**
-   * Table columns configuration
+   * Handle table action → open details side panel
    */
-  const columns = [
-    {
-      key: 'prestavolto',
-      label: 'Prestavolto',
-      sortable: true,
-      width: '25%'
-    },
-    {
-      key: 'duplicateCount',
-      label: 'Duplicati',
-      sortable: true,
-      width: '10%',
-      render: (value: number) => <span style={{ fontWeight: 'bold' }}>{value}</span>
-    },
-    {
-      key: 'characters',
-      label: 'Personaggi',
-      sortable: false,
-      width: '45%',
-      render: (value: string) => (
-        <span style={{ fontSize: '0.9em', color: 'rgba(255,255,255,0.7)' }}>{value}</span>
-      )
-    },
-    {
-      key: 'status',
-      label: 'Status',
-      sortable: true,
-      width: '15%',
-      render: (value: string) => {
-        const colors = {
-          Approved: '#4caf50',
-          Pending: '#ff9800',
-          Mixed: '#9e9e9e'
-        };
-        return (
-          <span style={{ color: colors[value as keyof typeof colors] || '#fff', fontWeight: 600 }}>
-            {value}
-          </span>
-        );
-      }
+  const handleAction = (action: string, row: any) => {
+    if (action === 'view') {
+      setSelectedGroup(row._raw);
+      setActiveSidePanel('view');
     }
-  ];
-
-  /**
-   * Handle row click → open details side panel
-   */
-  const handleRowClick = (row: any) => {
-    setSelectedGroup(row._raw);
-    setActiveSidePanel('view');
   };
 
   /**
@@ -114,8 +77,7 @@ export default function CharacterFaceClaims() {
     const confirmed = await confirm({
       title: 'Approva Prestavolto',
       message: `Confermi l'approvazione del prestavolto "${selectedGroup?.prestavolto}" per il personaggio ${character.name} ${character.surname}?`,
-      confirmText: 'Approva',
-      confirmColor: 'success'
+      confirmLabel: 'Approva'
     });
 
     if (confirmed) {
@@ -137,8 +99,8 @@ export default function CharacterFaceClaims() {
     const confirmed = await confirm({
       title: 'Rifiuta Prestavolto',
       message: `Confermi il rifiuto del prestavolto "${selectedGroup?.prestavolto}" per ${character.name} ${character.surname}? Il campo prestavolto verrà cancellato.`,
-      confirmText: 'Rifiuta',
-      confirmColor: 'danger'
+      confirmLabel: 'Rifiuta',
+      type: 'danger'
     });
 
     if (confirmed) {
@@ -162,8 +124,7 @@ export default function CharacterFaceClaims() {
     const confirmed = await confirm({
       title: 'Approva Tutti',
       message: `Confermi l'approvazione del prestavolto "${selectedGroup.prestavolto}" per tutti i ${selectedGroup.duplicateCount} personaggi?`,
-      confirmText: 'Approva Tutti',
-      confirmColor: 'success'
+      confirmLabel: 'Approva Tutti'
     });
 
     if (confirmed) {
@@ -316,27 +277,33 @@ export default function CharacterFaceClaims() {
         )}
 
         <ConfigurableDataTable
+          tableName="face-claims-list"
           data={tableData}
-          columns={columns}
-          loading={isLoading}
-          onRowClick={handleRowClick}
-          emptyMessage="Nessun prestavolto duplicato trovato"
+          loading={isLoading || tableConfig.loading}
+          onAction={handleAction}
+          externalConfig={tableConfig.config ? {
+            config: tableConfig.config,
+            visibleColumns,
+            getNestedValue: tableConfig.getNestedValue,
+            resolveConditionalValue: tableConfig.resolveConditionalValue,
+          } : undefined}
         />
 
-        {/* Side Panel - Face Claim Details */}
-        <SidePanel
+        {/* Modal - Face Claim Details */}
+        <Modal
           isOpen={activeSidePanel === 'view'}
           onClose={() => {
             setActiveSidePanel(null);
             setSelectedGroup(null);
           }}
           title="Dettagli Prestavolto"
+          size="large"
         >
           {renderSidePanelContent()}
-        </SidePanel>
+        </Modal>
 
         {/* Confirm Dialog */}
-        <ConfirmDialogComponent />
+        {ConfirmDialogComponent}
       </div>
     </ManagementLayout>
   );
