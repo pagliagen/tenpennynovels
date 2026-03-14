@@ -4,7 +4,7 @@
  * Special notification when defender detects deception.
  */
 
-@import '../MessageCard.module.scss';
+@use '../MessageCard.module.scss';
 
 /* Defender notification container */
 .defenderNotification {

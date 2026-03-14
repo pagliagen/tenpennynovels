@@ -4,7 +4,7 @@
  * Out-of-character message with gray italic theme.
  */
 
-@import '../MessageCard.module.scss';
+@use '../MessageCard.module.scss';
 
 /* OOC prefix - gray italic */
 .oocPrefix {
