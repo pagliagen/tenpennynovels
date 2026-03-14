@@ -1,5 +1,5 @@
 import { Location, Character } from '@database/models';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
 
 export interface AccessibleLocation {
   _id: string;

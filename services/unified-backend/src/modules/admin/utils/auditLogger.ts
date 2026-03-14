@@ -4,6 +4,7 @@
 
 import { logger } from './logger';
 import { getAuditActionDescription } from './permissions';
+import { appConfig } from '@config/runtime';
 
 interface AuditLogEntry {
   timestamp: Date;
@@ -69,7 +70,7 @@ class AuditLoggerClass {
     });
 
     // Log nel formato leggibile per la console in development
-    if (process.env.NODE_ENV === 'development') {
+    if (!appConfig.isProduction) {
       logger.info(
         `AUDIT: ${entry.username} (${entry.userId}) ` +
         `${entry.actionDescription} ${entry.resource ? `[${entry.resource}${entry.resourceId ? `#${entry.resourceId}` : ''}]` : ''} ` +

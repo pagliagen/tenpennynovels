@@ -9,7 +9,7 @@
 
 import { Server as SocketIOServer } from 'socket.io';
 import { redis } from '@config/runtime/redis';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
 import { EventRouter } from './EventRouter';
 import { RedisChannel, RedisEvent } from './types';
 

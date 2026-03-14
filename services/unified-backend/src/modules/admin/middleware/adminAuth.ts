@@ -4,14 +4,11 @@ import { RequestUser } from '@shared/types';
 import { AdminUser, ApiResponse } from '../types/management';
 import { logger } from '../utils/logger';
 import { errorResponse, getRequestId } from '../utils/apiResponse';
+import { appConfig } from '@config/runtime';
 
-// Helper function to get JWT_SECRET with validation
 function getJwtSecret(): string {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    throw new Error('JWT_SECRET environment variable is required');
-  }
-  return secret;
+  if (!appConfig.jwt.secret) throw new Error('JWT_SECRET non configurato');
+  return appConfig.jwt.secret;
 }
 
 // Extend Express Request interface

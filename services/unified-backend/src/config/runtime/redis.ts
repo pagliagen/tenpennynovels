@@ -1,6 +1,7 @@
 import { createClient } from 'redis';
 import type { RedisClientType } from 'redis';
 import { logger } from '@shared/utils/logger';
+import { appConfig } from '@config/runtime';
 
 /**
  * Singleton RedisConnection - Unified config for all modules
@@ -37,7 +38,7 @@ export class RedisConnection {
       return;
     }
 
-    const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+    const redisUrl = appConfig.db.redisUrl;
 
     try {
       // Create 3 clients for pub/sub pattern

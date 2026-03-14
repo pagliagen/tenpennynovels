@@ -1,11 +1,12 @@
 import { Request, Response } from 'express';
 import { Chat, GamingSession, Location, Character, SkillConfrontation, CombatEncounter } from '@database/models';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
 import { redis } from '@config/runtime/redis';
 import { successResponse, errorResponse, createResponse, getRequestId } from '../utils/apiResponse';
 import { calculateSuccessDegree, getSuccessDegreeLabel, compareSuccessDegrees, SuccessDegree } from '../utils/successDegrees';
 import { calculateSocialConflict, isValidSocialSkillPair, getDefensiveSkill } from '../utils/socialConflicts';
 import { getSocketIO } from '../websocket/socketInstance';
+import { appConfig } from '@config/runtime';
 
 export class ChatController {
 
@@ -435,8 +436,8 @@ export class ChatController {
                 ? await Character.findById(location.botCharacterId).lean()
                 : null;
 
-              const callbackSecret = process.env.AI_GATEWAY_WEBHOOK_SECRET;
-              const backendUrl = process.env.BACKEND_URL || 'https://api.tenpennynovels.it';
+              const callbackSecret = appConfig.services.aiGateway.webhookSecret;
+              const backendUrl = appConfig.urls.api;
 
               const success = await aiGatewayClient.notifyBotAction({
                 requestId: savedAction._id.toString(),

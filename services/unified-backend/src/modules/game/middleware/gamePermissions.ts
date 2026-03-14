@@ -5,7 +5,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { hasGamePermission } from '../utils/gamePermissions';
 import { ApiResponse } from '../types/game';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
 
 /**
  * Middleware: Require specific game permission

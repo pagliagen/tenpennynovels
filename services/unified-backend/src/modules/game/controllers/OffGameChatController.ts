@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { OffGameChat, OffGameChatMessage, OffGameChatParticipant, Character, db } from '@database/models';
 import { ApiResponse } from '../types/game';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
 import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
 
 // Access mongoose from the centralized connection

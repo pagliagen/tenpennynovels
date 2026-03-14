@@ -2,7 +2,8 @@ import { Request, Response, NextFunction } from 'express';
 import { redis } from '@config/runtime/redis';
 import { ApiResponse } from '@shared/types';
 import { RateLimitConfig } from '../types/auth';
-import { logger, logRate } from '../utils/logger';
+import { logger, logRate } from '../logger';
+import { appConfig } from '@config/runtime';
 
 export class RateLimitMiddleware {
   /**
@@ -12,7 +13,7 @@ export class RateLimitMiddleware {
     return async (req: Request, res: Response, next: NextFunction) => {
       try {
         // Skip rate limiting in development environment
-        if (process.env.NODE_ENV === 'development') {
+        if (!appConfig.isProduction) {
           return next();
         }
         const key = config.keyGenerator ? config.keyGenerator(req) : this.getDefaultKey(req);

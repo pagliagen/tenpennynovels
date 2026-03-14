@@ -3,8 +3,9 @@
 // =============================================================================
 
 import { readFileSync } from 'fs';
+import { appConfig } from '@config/runtime';
 import { join } from 'path';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
 
 interface GamePermissionConfig {
   _meta: {
@@ -29,7 +30,7 @@ let gamePermissionConfig: GamePermissionConfig | null = null;
  */
 function loadGamePermissionConfig(): GamePermissionConfig {
   // In development, always reload to see changes
-  if (!gamePermissionConfig || process.env.NODE_ENV === 'development') {
+  if (!gamePermissionConfig || !appConfig.isProduction) {
     try {
       const configPath = join(__dirname, '../../../config/roles/game-permissions.json');
       const configData = readFileSync(configPath, 'utf-8');

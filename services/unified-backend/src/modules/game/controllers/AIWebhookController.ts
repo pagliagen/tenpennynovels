@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { Chat, Location, Character } from '@database/models';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
 import { getSocketIO } from '../websocket/socketInstance';
 
 export class AIWebhookController {

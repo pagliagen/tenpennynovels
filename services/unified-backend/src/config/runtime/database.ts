@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import { logger } from '@shared/utils/logger';
+import { appConfig } from '@config/runtime';
 
 /**
  * Singleton DatabaseConnection - Unified config for all modules
@@ -30,7 +31,8 @@ export class DatabaseConnection {
       return;
     }
 
-    const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/tenpennynovels';
+    const mongoUri = appConfig.db.mongodbUri;
+    if (!mongoUri) throw new Error('MONGODB_URI non configurato');
 
     try {
       await mongoose.connect(mongoUri, {

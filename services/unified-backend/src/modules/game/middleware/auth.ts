@@ -2,15 +2,12 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { RequestUser } from '@shared/types';
 import { AuthUser, CharacterContext, ApiResponse } from '../types/game';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
+import { appConfig } from '@config/runtime';
 
-// Helper function to get JWT_SECRET with validation
 function getJwtSecret(): string {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    throw new Error('JWT_SECRET environment variable is required');
-  }
-  return secret;
+  if (!appConfig.jwt.secret) throw new Error('JWT_SECRET non configurato');
+  return appConfig.jwt.secret;
 }
 
 // req.user/req.character tipizzati in auth/middleware/auth.ts (RequestUser) e usati qui
@@ -179,35 +176,6 @@ export class AuthMiddleware {
    * Plus character must be APPROVED status
    */
   static requireCharacterAuth(req: Request, res: Response, next: NextFunction): void {
-    // ===== TEST BYPASS (ONLY FOR LOCAL DEVELOPMENT) =====
-    if (process.env.SKIP_AUTH_CHECK === 'true' && process.env.NODE_ENV !== 'production') {
-      // Mock character context for testing
-      req.character = {
-        characterId: process.env.TEST_CHARACTER_ID || 'test-character-id',
-        characterName: process.env.TEST_CHARACTER_NAME || 'Test Character',
-        userId: 'test-user-id',
-        gameplayRoles: ['player'],
-        isApproved: true,
-        isGestore: false,
-        playerStatus: 'approved',
-        characterPermissions: [],
-        iat: Math.floor(Date.now() / 1000),
-        exp: Math.floor(Date.now() / 1000) + 86400
-      };
-      req.user = {
-        userId: 'test-user-id',
-        username: 'testuser',
-        email: 'test@example.com',
-        userRoles: ['user'],
-        iat: Math.floor(Date.now() / 1000),
-        exp: Math.floor(Date.now() / 1000) + 86400
-      };
-      logger.warn('[AUTH BYPASS] Skipping auth check for testing');
-      next();
-      return;
-    }
-    // ===== END TEST BYPASS =====
-
     // Chain the middlewares
     AuthMiddleware.requireUserAuth(req, res, (err?: any) => {
       if (err) return;
@@ -428,7 +396,7 @@ export class AuthMiddleware {
   static requireAIGatewayAuth(req: Request, res: Response, next: NextFunction): void {
     try {
       const authHeader = req.headers['authorization'] as string;
-      const expectedSecret = process.env.AI_GATEWAY_WEBHOOK_SECRET;
+      const expectedSecret = appConfig.services.aiGateway.webhookSecret;
 
       if (!expectedSecret) {
         logger.error('AI_GATEWAY_WEBHOOK_SECRET non configurato - richiesta rifiutata');

@@ -8,6 +8,7 @@ import { UAParser } from 'ua-parser-js';
 import { AnalyticsService } from '../services/AnalyticsService';
 import { GeoLocationService } from '../services/GeoLocationService';
 import { logger } from '../utils/logger';
+import { appConfig } from '@config/runtime';
 
 // Extend Express Request to include analytics data
 declare global {
@@ -77,13 +78,13 @@ export class AnalyticsMiddleware {
           res.cookie('session_id', sessionId, {
             maxAge: 24 * 60 * 60 * 1000, // 24 hours
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
+            secure: appConfig.isProduction,
             sameSite: 'lax'
           });
         }
 
         // Geolocalizzazione: reale se abilitata, altrimenti mock
-        const useRealGeoLocation = process.env.GEOLOCATION_ENABLED === 'true';
+        const useRealGeoLocation = appConfig.features.geolocation;
         
         try {
           let geoData;

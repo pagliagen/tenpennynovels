@@ -1,6 +1,6 @@
 import { Server as SocketIOServer } from 'socket.io';
 import { WebSocketEvent } from '@database/models';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
 
 /**
  * WebSocket Event Store Service

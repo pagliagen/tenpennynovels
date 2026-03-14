@@ -4,7 +4,7 @@ import { MessageReport } from '@database/models/MessageReport';
 import { OnGameMessage } from '@database/models/OnGameMessage';
 import { OffGameChatMessage } from '@database/models/OffGameChatMessage';
 import { Character } from '@database/models/Character';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
 import { successResponse, errorResponse, listResponse, createResponse, getRequestId } from '../utils/apiResponse';
 import { ConfigurationService } from '@shared/services/ConfigurationService';
 import { redis } from '@config/runtime/redis';

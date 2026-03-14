@@ -15,7 +15,7 @@
 
 import { BaseEventHandler } from '../BaseEventHandler';
 import { RedisEvent } from '../types';
-import { logger } from '../../utils/logger';
+import { logger } from '../../logger';
 
 export class GameEventHandler extends BaseEventHandler {
   getSupportedEventTypes(): string[] {

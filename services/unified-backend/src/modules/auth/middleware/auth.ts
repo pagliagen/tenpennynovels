@@ -1,9 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
 import { CryptoUtils } from '../utils/crypto';
 import { RequestUser, CharacterContextPayload, ApiResponse } from '@shared/types';
-import { logger, logAuth, logSecurity } from '../utils/logger';
+import { logger, logAuth, logSecurity } from '../logger';
 import { CharacterSessionManager } from '../utils/characterSessionManager';
 import { User } from '@database/models';
+import { appConfig } from '@config/runtime';
 
 // Extend Express Request interface to include user data (RequestUser = token + optional character-derived fields from admin)
 declare global {
@@ -70,14 +71,7 @@ export class AuthMiddleware {
 
           next();
         } catch (error: any) {
-          // Clear invalid token
-          res.clearCookie('auth_token', {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
-            domain: process.env.NODE_ENV === 'production' ? '.tenpennynovels.com' : 'localhost',
-            path: '/'
-          });
+          res.clearCookie('auth_token', appConfig.cookie);
 
           if (required) {
             logSecurity('invalid_token_access', {
@@ -142,13 +136,7 @@ export class AuthMiddleware {
               ipAddress: req.ip
             });
 
-            res.clearCookie('character_context', {
-              httpOnly: true,
-              secure: process.env.NODE_ENV === 'production',
-              sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
-              domain: process.env.NODE_ENV === 'production' ? '.tenpennynovels.com' : 'localhost',
-              path: '/'
-            });
+            res.clearCookie('character_context', appConfig.cookie);
 
             const response: ApiResponse = {
               result: false,
@@ -173,13 +161,7 @@ export class AuthMiddleware {
               ipAddress: req.ip
             });
 
-            res.clearCookie('character_context', {
-              httpOnly: true,
-              secure: process.env.NODE_ENV === 'production',
-              sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
-              domain: process.env.NODE_ENV === 'production' ? '.tenpennynovels.com' : 'localhost',
-              path: '/'
-            });
+            res.clearCookie('character_context', appConfig.cookie);
 
             if (required) {
               const response: ApiResponse = {
@@ -197,14 +179,7 @@ export class AuthMiddleware {
           req.character = decoded;
           next();
         } catch (error: any) {
-          // Clear invalid character token
-          res.clearCookie('character_context', {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
-            domain: process.env.NODE_ENV === 'production' ? '.tenpennynovels.com' : 'localhost',
-            path: '/'
-          });
+          res.clearCookie('character_context', appConfig.cookie);
 
           if (required) {
             const response: ApiResponse = {
@@ -368,73 +343,27 @@ export class AuthMiddleware {
    * Helper method to set auth cookie
    */
   static setAuthCookie(res: Response, token: string, rememberMe = false): void {
-    const maxAge = rememberMe ? 7 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000; // 7 days or 24 hours
+    const maxAge = rememberMe ? 7 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
 
-    const cookieOptions: any = {
-      httpOnly: true,
-      path: '/',
-      maxAge
-    };
-
-    // Production settings
-    if (process.env.NODE_ENV === 'production') {
-      cookieOptions.secure = true;
-      cookieOptions.sameSite = 'strict';
-      cookieOptions.domain = '.tenpennynovels.com';
-    } else {
-      // Development: Allow cross-port cookie sharing on localhost
-      // Using secure:false for HTTP (http://localhost:XXXX)
-      // Using sameSite:lax to allow cookies between localhost:4000, localhost:4001, etc.
-      cookieOptions.secure = false;
-      cookieOptions.sameSite = 'lax';
-      cookieOptions.domain = 'localhost';
-    }
-
-    res.cookie('auth_token', token, cookieOptions);
+    res.cookie('auth_token', token, { ...appConfig.cookie, maxAge });
   }
 
   /**
    * Helper method to set character context cookie
    */
   static setCharacterCookie(res: Response, token: string): void {
-    const cookieOptions: any = {
-      httpOnly: true,
-      path: '/',
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
-    };
-
-    // Production settings
-    if (process.env.NODE_ENV === 'production') {
-      cookieOptions.secure = true;
-      cookieOptions.sameSite = 'strict';
-      cookieOptions.domain = '.tenpennynovels.com';
-    } else {
-      // Development: Allow cross-port cookie sharing on localhost
-      // Using secure:false for HTTP (http://localhost:XXXX)
-      // Using sameSite:lax to allow cookies between localhost:4000, localhost:4001, etc.
-      cookieOptions.secure = false;
-      cookieOptions.sameSite = 'lax';
-      cookieOptions.domain = 'localhost';
-    }
-
-    res.cookie('character_context', token, cookieOptions);
+    res.cookie('character_context', token, {
+      ...appConfig.cookie,
+      maxAge: 24 * 60 * 60 * 1000,
+    });
   }
 
   /**
    * Helper method to clear authentication cookies
    */
   static clearAuthCookies(res: Response): void {
-    const cookieOptions = {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: (process.env.NODE_ENV === 'production' ? 'strict' : 'lax') as 'strict' | 'lax',
-      domain: process.env.NODE_ENV === 'production' ? '.tenpennynovels.com' : 'localhost',
-      path: '/',
-      maxAge: 0,
-      expires: new Date(0)
-    };
-
-    res.clearCookie('auth_token', cookieOptions);
-    res.clearCookie('character_context', cookieOptions);
+    const clearOpts = { ...appConfig.cookie, maxAge: 0, expires: new Date(0) };
+    res.clearCookie('auth_token', clearOpts);
+    res.clearCookie('character_context', clearOpts);
   }
 }

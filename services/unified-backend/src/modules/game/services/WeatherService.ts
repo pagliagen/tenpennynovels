@@ -10,7 +10,7 @@
  */
 
 import * as SunCalc from 'suncalc';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
 
 // London coordinates
 const LONDON_LAT = 51.5074;

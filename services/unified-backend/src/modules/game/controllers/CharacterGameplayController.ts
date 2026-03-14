@@ -1,9 +1,10 @@
 import { Request, Response } from 'express';
 import { Character, Occupation, Location } from '@database/models';
 import { redis } from '@config/runtime/redis';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
 import { successResponse, errorResponse, getRequestId } from '../utils/apiResponse';
 import { CharacterCreationConfigService } from '@shared/services/CharacterCreationConfigService';
+import { appConfig } from '@config/runtime';
 import {
   validateCharacterSubmission,
   calculateAvailableSkillPoints,
@@ -13,13 +14,9 @@ import {
 import { smartTransaction } from '../utils/transactions';
 import jwt from 'jsonwebtoken';
 
-// Helper function to get JWT_SECRET with validation
 function getJwtSecret(): string {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    throw new Error('JWT_SECRET environment variable is required');
-  }
-  return secret;
+  if (!appConfig.jwt.secret) throw new Error('JWT_SECRET non configurato');
+  return appConfig.jwt.secret;
 }
 
 /**
@@ -203,12 +200,8 @@ export class CharacterGameplayController {
 
       // Set character context cookie
       res.cookie('character_context', characterToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
-        domain: process.env.NODE_ENV === 'production' ? '.tenpennynovels.com' : 'localhost',
-        path: '/',
-        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+        ...appConfig.cookie,
+        maxAge: 24 * 60 * 60 * 1000,
       });
 
       logger.info('Character selected', {

@@ -1,5 +1,5 @@
 import { OffGameChat, OffGameChatMessage, OffGameChatParticipant, Character, db } from '@database/models';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
 
 const mongoose = db.getMongoose();
 

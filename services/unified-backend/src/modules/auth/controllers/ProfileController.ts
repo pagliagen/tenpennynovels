@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { User, Character, db } from '@database/models';
 import { ApiResponse } from '../types/auth';
-import { logger, logAuth } from '../utils/logger';
+import { logger, logAuth } from '../logger';
 import { redis } from '@config/runtime/redis';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';

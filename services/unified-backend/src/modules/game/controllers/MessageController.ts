@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { Character, OnGameMessage, OffGameChatMessage, Location } from '@database/models';
 import { VictorianMessageType, LocationMessageType } from '@shared/types/messaging';
 import { ApiResponse } from '../types/game';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
 import { successResponse, errorResponse, listResponse, deleteResponse, createResponse, getRequestId } from '../utils/apiResponse';
 
 // Type aliases for message properties

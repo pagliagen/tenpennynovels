@@ -8,36 +8,28 @@ import rateLimit from 'express-rate-limit';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
 import authRoutes from './routes/auth';
-import { httpLoggerStream, logger } from './utils/logger';
+import { httpLoggerStream, logger } from './logger';
 import { AnalyticsMiddleware } from '@shared/middleware/analyticsMiddleware';
 import { successResponse, errorResponse, getRequestId } from './utils/apiResponse';
+import { appConfig } from '@config/runtime';
 
 import path from 'path';
 logger.info('Loading environment variables...');
-// Load environment variables: first global, then service-specific overrides
 const projectRoot = path.resolve(__dirname, '../../../');
 const rootEnvPath = path.join(projectRoot, '.env');
 logger.info('Loading global .env from project root:', rootEnvPath);
 dotenv.config({ path: rootEnvPath });
 logger.info('Loading service-specific .env (if exists)...');
-dotenv.config({ override: true }); // This will override with local .env if it exists
+dotenv.config({ override: true });
 logger.info('Environment variables loaded');
-logger.info('JWT_SECRET (AUTH):', process.env.JWT_SECRET || 'MISSING');
-logger.info('Key URLs:', {
-  LANDING_URL: process.env.LANDING_URL,
-  GAME_URL: process.env.GAME_URL,
-  MANAGEMENT_URL: process.env.MANAGEMENT_URL
-});
-logger.info('MongoDB:', process.env.MONGODB_URI ? `${process.env.MONGODB_URI.substring(0, 30)}...` : 'MISSING');
-logger.info('EMAIL_MOCK:', process.env.EMAIL_MOCK);
+logger.info('JWT_SECRET (AUTH):', appConfig.jwt.secret ? 'SET' : 'MISSING');
+logger.info('MongoDB:', appConfig.db.mongodbUri ? 'SET' : 'MISSING');
 
 logger.info('Setting up Authentication Backend...');
 const app = express();
-const PORT = process.env.PORT || 3000;
-logger.info(`Starting Authentication Backend on port ${PORT}...`);
+logger.info(`Starting Authentication Backend on port ${appConfig.port}...`);
 
-// Trust proxy configuration - needed for proper IP detection behind reverse proxy
-if (process.env.NODE_ENV === 'production' || process.env.TRUST_PROXY === 'true') {
+if (appConfig.trustProxy) {
   app.set('trust proxy', 1);
 }
 
@@ -46,34 +38,15 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 
-// CORS configuration - Accept from API Gateway (both internal and external URLs)
 app.use(cors({
   origin: function (origin, callback) {
-    logger.info(`[AUTHENTICATION BACKEND CORS] Received origin: "${origin}"`);
-    const allowedOrigins = [
-      'http://localhost:8000', // Internal communication on OVH
-      'http://127.0.0.1:8000', // Alternative localhost
-      'https://api.tenpennynovels.com', // External API Gateway URL
-      process.env.LANDING_URL || 'https://tenpennynovels.com',
-      process.env.GAME_URL || 'https://game.tenpennynovels.com',
-      process.env.DOCUMENTS_URL || 'https://documenti.tenpennynovels.com',
-      process.env.MANAGEMENT_URL || 'https://gestione.tenpennynovels.com',
-    ];
+    if (!origin) return callback(null, true);
 
-    // Allow requests with no origin (like server-to-server or curl)
-    if (!origin) {
-      logger.info('[AUTHENTICATION BACKEND CORS] No origin - allowing request');
-      return callback(null, true);
-    }
-
-    const isAllowed = allowedOrigins.includes(origin);
-    logger.info(`[AUTHENTICATION BACKEND CORS] Origin "${origin}" allowed: ${isAllowed}`);
-
+    const isAllowed = appConfig.cors.allowedOrigins.includes(origin);
     if (isAllowed) {
-      logger.info(`[AUTHENTICATION BACKEND CORS] Allowing origin ${origin}`);
       callback(null, true);
     } else {
-      logger.info(`[AUTHENTICATION BACKEND CORS] Blocking origin ${origin}`);
+      logger.warn(`[AUTH CORS] Blocked origin: ${origin}`);
       callback(new Error(`Origin ${origin} not allowed by CORS`));
     }
   },
@@ -127,7 +100,7 @@ app.get('/auth/health', (req, res) => {
       version: '1.0.0',
       uptime: process.uptime(),
       memory: process.memoryUsage(),
-      environment: process.env.NODE_ENV || 'development'
+      environment: appConfig.isProduction ? 'production' : 'development'
     },
     undefined,
     getRequestId(req)
@@ -149,8 +122,8 @@ app.use((req, res) => {
 
 // Global error handler
 app.use((error: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  const { httpLoggerStream } = require('./utils/logger');
-  const { logger } = require('./utils/logger');
+  const { httpLoggerStream } = require('./logger');
+  const { logger } = require('./logger');
   
   logger.error('Unhandled error:', {
     error: error.message,
@@ -162,7 +135,7 @@ app.use((error: any, req: express.Request, res: express.Response, next: express.
   });
 
   res.status(500).json(errorResponse(
-    process.env.NODE_ENV === 'production' ? 'Errore interno del server' : error.message,
+    appConfig.isProduction ? 'Errore interno del server' : error.message,
     'INTERNAL_SERVER_ERROR',
     undefined,
     500,
@@ -172,13 +145,13 @@ app.use((error: any, req: express.Request, res: express.Response, next: express.
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
-  const { logger } = require('./utils/logger');
+  const { logger } = require('./logger');
   logger.info('SIGTERM received, shutting down gracefully');
   process.exit(0);
 });
 
 process.on('SIGINT', () => {
-  const { logger } = require('./utils/logger');
+  const { logger } = require('./logger');
   logger.info('SIGINT received, shutting down gracefully');
   process.exit(0);
 });

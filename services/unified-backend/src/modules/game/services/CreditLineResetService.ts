@@ -1,5 +1,5 @@
 import cron from 'node-cron';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
 import { FinancialUtils } from '../utils/financialUtils';
 
 export class CreditLineResetService {

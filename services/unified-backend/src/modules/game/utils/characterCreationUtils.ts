@@ -4,7 +4,7 @@ import { IOccupation } from '@database/models/Occupation';
 import { CharacterCreationConfig, calculateIntelligenceBonus } from '@shared/services/CharacterCreationConfigService';
 import { ConfigurationService } from '@shared/services/ConfigurationService';
 import { redis } from '@config/runtime/redis';
-import { logger } from './logger';
+import { logger } from '../logger';
 
 /**
  * Character Creation Utilities

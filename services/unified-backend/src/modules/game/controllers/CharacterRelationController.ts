@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { CharacterRelation, CharacterRelationType } from '@database/models/CharacterRelation';
 import { Character } from '@database/models/Character';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
 import { AuthUtils } from '../middleware/auth';
 import { auditLogger } from '@modules/admin/utils/auditLogger';
 import { gameEventPublisher } from '../services/GameEventPublisher';

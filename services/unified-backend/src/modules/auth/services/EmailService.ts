@@ -1,7 +1,8 @@
 import nodemailer from 'nodemailer';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
 import { ConfigurationService } from '@shared/services/ConfigurationService';
 import { Redis } from 'ioredis';
+import { appConfig } from '@config/runtime';
 
 export class EmailService {
   private static transporter: nodemailer.Transporter;
@@ -13,7 +14,7 @@ export class EmailService {
    * @param redisClient - Redis client for caching
    */
   static initialize(redisClient?: Redis) {
-    this.isMockMode = process.env.EMAIL_MOCK === 'true';
+    this.isMockMode = appConfig.features.emailMock;
 
     // Initialize ConfigurationService if Redis client is provided
     if (redisClient) {
@@ -28,12 +29,12 @@ export class EmailService {
       return;
     }
     const emailConfig = {
-      host: process.env.SMTP_HOST || 'smtp.gmail.com',
-      port: parseInt(process.env.SMTP_PORT || '587'),
-      secure: process.env.SMTP_SECURE === 'true' || parseInt(process.env.SMTP_PORT || '587') === 465,
+      host: appConfig.smtp.host,
+      port: appConfig.smtp.port,
+      secure: appConfig.smtp.secure || appConfig.smtp.port === 465,
       auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASSWORD
+        user: appConfig.smtp.user,
+        pass: appConfig.smtp.password,
       },
       connectionTimeout: 5000, // 5 seconds timeout for SMTP connection
       greetingTimeout: 5000,   // 5 seconds timeout for greeting message
@@ -57,7 +58,7 @@ export class EmailService {
    */
   static async sendVerificationEmail(email: string, displayName: string, token: string): Promise<void> {
     try {
-      const verificationUrl = `${process.env.BASE_URL || 'http://localhost:4000'}/?token=${token}`;
+      const verificationUrl = `${appConfig.urls.landing}/?token=${token}`;
 
       let subject: string;
       let html: string;
@@ -106,7 +107,7 @@ export class EmailService {
       const mailOptions = {
         from: {
           name: 'Ten Penny Novels',
-          address: process.env.EMAIL_FROM || 'info@tenpennynovels.com'
+          address: appConfig.smtp.from
         },
         to: email,
         subject,
@@ -134,7 +135,7 @@ export class EmailService {
    */
   static async sendPasswordResetEmail(email: string, displayName: string, token: string): Promise<void> {
     try {
-      const resetUrl = `${process.env.BASE_URL || 'http://localhost:4000'}/reset-password/${token}`;
+      const resetUrl = `${appConfig.urls.landing}/reset-password/${token}`;
 
       let subject: string;
       let html: string;
@@ -184,7 +185,7 @@ export class EmailService {
       const mailOptions = {
         from: {
           name: 'Ten Penny Novels',
-          address: process.env.EMAIL_FROM || 'info@tenpennynovels.com'
+          address: appConfig.smtp.from
         },
         to: email,
         subject,
@@ -264,7 +265,7 @@ export class EmailService {
       const mailOptions = {
         from: {
           name: 'Ten Penny Novels Security',
-          address: process.env.EMAIL_FROM || 'info@tenpennynovels.com'
+          address: appConfig.smtp.from
         },
         to: email,
         subject,
@@ -286,7 +287,7 @@ export class EmailService {
    */
   static async sendAccountDeletionEmail(email: string, displayName: string, token: string): Promise<void> {
     try {
-      const deletionUrl = `${process.env.BASE_URL || 'http://localhost:4000'}/delete-account/${token}`;
+      const deletionUrl = `${appConfig.urls.landing}/delete-account/${token}`;
 
       let subject: string;
       let html: string;
@@ -342,7 +343,7 @@ export class EmailService {
       const mailOptions = {
         from: {
           name: 'Ten Penny Novels',
-          address: process.env.EMAIL_FROM || 'info@tenpennynovels.com'
+          address: appConfig.smtp.from
         },
         to: email,
         subject,

@@ -3,6 +3,7 @@
 // =============================================================================
 
 import { readFileSync } from 'fs';
+import { appConfig } from '@config/runtime';
 import { join } from 'path';
 import { hasAdminPermission, AdminPermission, gameplayRolesToAdminRoles } from '@config/admin-permissions';
 import { logger } from './logger';
@@ -36,7 +37,7 @@ let permissionConfig: PermissionConfig | null = null;
  */
 function loadPermissionConfig(): PermissionConfig {
   // In development, sempre ricarica per vedere i cambiamenti
-  if (!permissionConfig || process.env.NODE_ENV === 'development') {
+  if (!permissionConfig || !appConfig.isProduction) {
     const configPath = join(__dirname, '../../../config/roles/admin-permissions.json');
     const configData = readFileSync(configPath, 'utf-8');
     permissionConfig = JSON.parse(configData);

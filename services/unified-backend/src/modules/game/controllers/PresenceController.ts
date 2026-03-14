@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { Character } from '../../../database/models/Character';
 import { Location } from '../../../database/models/Location';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
 import { getSocketIO } from '../websocket/socketInstance';
 
 /**

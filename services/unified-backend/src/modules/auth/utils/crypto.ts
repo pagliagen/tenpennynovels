@@ -2,27 +2,20 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { AuthTokenPayload, CharacterContextPayload } from '@shared/types';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
 import { validationConfig } from '@config/runtime/validation';
+import { appConfig } from '@config/runtime';
 
-const BCRYPT_ROUNDS = parseInt(process.env.BCRYPT_ROUNDS || '12');
+const BCRYPT_ROUNDS = appConfig.bcryptRounds;
 
-// Helper function to get JWT_SECRET with validation
 function getJwtSecret(): string {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    throw new Error('JWT_SECRET environment variable is required');
-  }
-  return secret;
+  if (!appConfig.jwt.secret) throw new Error('JWT_SECRET non configurato');
+  return appConfig.jwt.secret;
 }
 
-// Helper function to get JWT_REFRESH_SECRET with validation
 function getJwtRefreshSecret(): string {
-  const secret = process.env.JWT_REFRESH_SECRET;
-  if (!secret) {
-    throw new Error('JWT_REFRESH_SECRET environment variable is required');
-  }
-  return secret;
+  if (!appConfig.jwt.refreshSecret) throw new Error('JWT_REFRESH_SECRET non configurato');
+  return appConfig.jwt.refreshSecret;
 }
 
 export class CryptoUtils {

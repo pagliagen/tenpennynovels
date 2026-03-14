@@ -3,7 +3,7 @@ import { Item } from '@database/models/Item';
 import { Location } from '@database/models/Location';
 import { Character } from '@database/models/Character';
 import { escapeRegex } from '@shared/utils/validation';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
 import { successResponse, errorResponse, listResponse, getRequestId } from '../utils/apiResponse';
 
 export class ItemController {

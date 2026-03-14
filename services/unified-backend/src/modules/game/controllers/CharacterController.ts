@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { Types } from 'mongoose';
 import { Character, Occupation, Skill } from '@database/models';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
 import { successResponse, errorResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
 import { CharacterVisibilityFilter } from '@shared/utils/characterVisibility';
 import { escapeRegex } from '@shared/utils/validation';
@@ -10,6 +10,7 @@ import { FinancialUtils } from '../utils/financialUtils';
 import { CharacterCreationConfigService } from '@shared/services/CharacterCreationConfigService';
 import { ConfigurationService } from '@shared/services/ConfigurationService';
 import { redis } from '@config/runtime/redis';
+import { appConfig } from '@config/runtime';
 
 /**
  * CharacterController
@@ -407,7 +408,7 @@ export class CharacterController {
       }
 
       // Get system bot user ID
-      const systemBotUserId = process.env.SYSTEM_BOT_USER_ID;
+      const systemBotUserId = appConfig.systemBotUserId;
       if (!systemBotUserId) {
         res.status(500).json(errorResponse(
           'SYSTEM_BOT_USER_ID not configured',
@@ -517,7 +518,7 @@ export class CharacterController {
       }
 
       // Get system bot user ID
-      const systemBotUserId = process.env.SYSTEM_BOT_USER_ID;
+      const systemBotUserId = appConfig.systemBotUserId;
       if (!systemBotUserId) {
         res.status(500).json(errorResponse(
           'SYSTEM_BOT_USER_ID not configured',

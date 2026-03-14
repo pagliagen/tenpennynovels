@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { logger } from './logger';
+import { appConfig } from '@config/runtime';
 
 export interface JWTPayload {
   userId: string;
@@ -13,11 +14,8 @@ export interface JWTPayload {
 
 export class AuthUtils {
   private static getJwtSecret(): string {
-    const secret = process.env.JWT_SECRET;
-    if (!secret) {
-      throw new Error('JWT_SECRET environment variable is required');
-    }
-    return secret;
+    if (!appConfig.jwt.secret) throw new Error('JWT_SECRET non configurato');
+    return appConfig.jwt.secret;
   }
 
   /**

@@ -5,9 +5,10 @@
  */
 
 import winston from 'winston';
+import { appConfig } from '@config/runtime';
 
-const logLevel = process.env.LOG_LEVEL || 'info';
-const isDevelopment = process.env.NODE_ENV !== 'production';
+const logLevel = appConfig.logLevel;
+const isDevelopment = !appConfig.isProduction;
 
 // Custom format for development
 const developmentFormat = winston.format.combine(
@@ -41,7 +42,7 @@ export const logger = winston.createLogger({
   transports: [
     // Console transport
     new winston.transports.Console({
-      silent: process.env.NODE_ENV === 'test'
+      silent: appConfig.isTest
     }),
     
     // File transports (always enabled)

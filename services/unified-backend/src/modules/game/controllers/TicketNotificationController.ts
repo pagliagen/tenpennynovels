@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import { TicketNotification } from '@database/models/TicketNotification';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
 
 /**
  * TicketNotificationController

@@ -2,10 +2,11 @@ import { Request, Response } from 'express';
 import { User, Character } from '@database/models';
 import { CryptoUtils } from '../utils/crypto';
 import { ApiResponse } from '../types/auth';
-import { logger, logAuth } from '../utils/logger';
+import { logger, logAuth } from '../logger';
 import { redis } from '@config/runtime/redis';
 import { EmailService } from '../services/EmailService';
 import { errorResponse, successResponse, createdResponse } from '@shared/utils/apiResponse';
+import { appConfig } from '@config/runtime';
 
 export class RegistrationController {
   /**
@@ -124,8 +125,8 @@ export class RegistrationController {
       }
 
       // DEV ONLY: Add verification URL header for testing
-      if (process.env.NODE_ENV !== 'production') {
-        const verificationUrl = `${process.env.BASE_URL || 'http://localhost:4000'}/?token=${emailVerificationToken}`;
+      if (!appConfig.isProduction) {
+        const verificationUrl = `${appConfig.urls.landing}/?token=${emailVerificationToken}`;
         res.setHeader('X-Dev-Verification-Url', verificationUrl);
         logger.debug(`[DEV] Verification URL: ${verificationUrl}`);
       }
@@ -409,8 +410,8 @@ export class RegistrationController {
       }
 
       // DEV ONLY: Add verification URL header for testing
-      if (process.env.NODE_ENV !== 'production') {
-        const verificationUrl = `${process.env.BASE_URL || 'http://localhost:4000'}/?token=${emailVerificationToken}`;
+      if (!appConfig.isProduction) {
+        const verificationUrl = `${appConfig.urls.landing}/?token=${emailVerificationToken}`;
         res.setHeader('X-Dev-Verification-Url', verificationUrl);
         logger.debug(`[DEV] Resend verification URL: ${verificationUrl}`);
       }

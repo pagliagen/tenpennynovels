@@ -1,7 +1,8 @@
 import { Request, Response } from 'express';
 import { db } from '@database/models';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
 import { listResponse, errorResponse } from '@shared/utils/apiResponse';
+import { appConfig } from '@config/runtime';
 
 /**
  * Controller for occupation-related endpoints
@@ -73,7 +74,7 @@ export class OccupationController {
       errorResponse(res, 
         'Errore interno del server durante il recupero delle occupazioni',
         'OCCUPATIONS_ERROR',
-        process.env.NODE_ENV === 'development' ? { message: error instanceof Error ? error.message : 'Unknown error' } : undefined,
+        !appConfig.isProduction ? { message: error instanceof Error ? error.message : 'Unknown error' } : undefined,
         500);
     }
   }
@@ -150,7 +151,7 @@ export class OccupationController {
       errorResponse(res, 
         'Errore interno del server durante il recupero delle occupazioni filtrate',
         'OCCUPATIONS_FILTERED_ERROR',
-        process.env.NODE_ENV === 'development' ? { message: error instanceof Error ? error.message : 'Unknown error' } : undefined,
+        !appConfig.isProduction ? { message: error instanceof Error ? error.message : 'Unknown error' } : undefined,
         500);
     }
   }

@@ -1,14 +1,15 @@
 import { Express } from 'express';
 import rateLimit from 'express-rate-limit';
-import { logger, httpLoggerStream } from '../utils/logger';
+import { logger, httpLoggerStream } from '../logger';
 import morgan from 'morgan';
+import { appConfig } from '@config/runtime';
 
 /**
  * Setup all middleware for the application
  */
 export async function setupMiddleware(app: Express): Promise<void> {
   // HTTP request logging
-  if (process.env.NODE_ENV === 'development') {
+  if (!appConfig.isProduction) {
     app.use(morgan('combined', { stream: httpLoggerStream }));
   } else {
     app.use(morgan('common', { stream: httpLoggerStream }));

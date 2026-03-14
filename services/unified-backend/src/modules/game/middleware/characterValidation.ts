@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { body, validationResult } from 'express-validator';
 import { ApiResponse } from '../types/game';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
 
 export class CharacterValidationMiddleware {
   /**

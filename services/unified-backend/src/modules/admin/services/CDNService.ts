@@ -3,6 +3,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import { logger } from '../utils/logger';
 import { FTPSyncService } from './FTPSyncService';
+import { appConfig } from '@config/runtime';
 
 export type CDNEntityType = 'locations' | 'items' | 'characters' | 'occupations';
 
@@ -34,8 +35,8 @@ class CDNServiceImpl {
   private ftpSync: FTPSyncService;
 
   constructor() {
-    this.storagePath = process.env.CDN_STORAGE_PATH || '/cdn-storage';
-    this.baseUrl = process.env.CDN_BASE_URL || 'http://localhost:8000/cdn';
+    this.storagePath = appConfig.cdn.storagePath;
+    this.baseUrl = appConfig.cdn.baseUrl;
     this.ftpSync = new FTPSyncService();
   }
 

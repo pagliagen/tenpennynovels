@@ -1,12 +1,12 @@
 import { Server as SocketIOServer, Socket } from 'socket.io';
 import jwt from 'jsonwebtoken';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
 import { setupChatHandlers } from './chatHandlers';
 import { setupGameHandlers } from './gameHandlers';
-// ✅ SPRINT 4: Refactored event handling system
 import { RedisSubscriber } from '../events/RedisSubscriber';
 import { RequestUser } from '@shared/types';
 import { hasAdminPermission } from '@config/admin-permissions';
+import { appConfig } from '@config/runtime';
 
 interface CharacterContextPayload {
   userId: string;
@@ -57,10 +57,10 @@ export async function setupWebSocket(io: SocketIOServer): Promise<void> {
         return next(new Error('Token di autenticazione richiesto'));
       }
       
-      const jwtSecret = process.env.JWT_SECRET;
-      if (!jwtSecret) {
-        return next(new Error('Errore di configurazione del server'));
+      if (!appConfig.jwt.secret) {
+        return next(new Error('JWT_SECRET non configurato'));
       }
+      const jwtSecret = appConfig.jwt.secret;
       
       // Verify auth token (solo campi token; campi admin da character non presenti in WS)
       const authPayload = jwt.verify(authToken, jwtSecret) as RequestUser;

@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { Character, Corporation, CorporationMembershipRequest, CorporationInvitation } from '@database/models';
 import { ApiResponse } from '../types/game';
 import { CorporationRole } from '@shared/types/corporation';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
 import { successResponse, errorResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
 
 export class CorporationController {

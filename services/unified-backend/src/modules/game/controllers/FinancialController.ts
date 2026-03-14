@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { CharacterFinances } from '@database/models';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
 import { CreditLineResetService } from '../services/CreditLineResetService';
 import { successResponse, errorResponse, getRequestId } from '../utils/apiResponse';
 

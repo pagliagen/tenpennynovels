@@ -14,7 +14,7 @@
 
 import { BaseEventHandler } from '../BaseEventHandler';
 import { RedisEvent } from '../types';
-import { logger } from '../../utils/logger';
+import { logger } from '../../logger';
 
 export class TicketEventHandler extends BaseEventHandler {
   getSupportedEventTypes(): string[] {

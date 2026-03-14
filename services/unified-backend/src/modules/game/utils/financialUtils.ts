@@ -1,6 +1,6 @@
 import { SocialClassConfig } from '@database/models';
 import { SocialClass } from '@shared/types/socialClass';
-import { logger } from './logger';
+import { logger } from '../logger';
 
 // Social class configuration data from database
 export interface SocialClassConfigData {

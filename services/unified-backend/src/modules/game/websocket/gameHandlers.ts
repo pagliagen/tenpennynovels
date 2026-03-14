@@ -1,5 +1,5 @@
 import { Socket, Server as SocketIOServer } from 'socket.io';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
 import { Character } from '../../../database/models/Character';
 import { Location } from '../../../database/models/Location';
 

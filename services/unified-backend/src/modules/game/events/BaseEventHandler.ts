@@ -7,7 +7,7 @@
  */
 
 import { Server as SocketIOServer } from 'socket.io';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
 import { IEventHandler, RedisEvent, EventHandlerContext } from './types';
 
 export abstract class BaseEventHandler implements IEventHandler {

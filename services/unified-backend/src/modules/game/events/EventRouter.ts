@@ -8,7 +8,7 @@
  */
 
 import { Server as SocketIOServer, RemoteSocket } from 'socket.io';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
 import { IEventHandler, RedisEvent, RedisChannel, EventHandlerContext } from './types';
 
 // Import all event handlers

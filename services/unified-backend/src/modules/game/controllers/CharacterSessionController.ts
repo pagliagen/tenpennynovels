@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { CharacterSession } from '@database/models/CharacterSession';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
 import { AuthUtils } from '../middleware/auth';
 import { auditLogger } from '@modules/admin/utils/auditLogger';
 import { successResponse, errorResponse, listResponse, getRequestId } from '../utils/apiResponse';

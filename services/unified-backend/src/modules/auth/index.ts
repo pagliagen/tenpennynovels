@@ -1,9 +1,10 @@
 import app from './app';
-import { logger } from './utils/logger';
+import { logger } from './logger';
 import { SessionCleanupJob } from './jobs/sessionCleanup';
 import 'module-alias/register';
+import { appConfig } from '@config/runtime';
 
-const PORT = process.env.PORT || 3000;
+const PORT = appConfig.port;
 
 // Function to setup database connections
 async function setupDatabaseConnections() {
@@ -49,7 +50,7 @@ app.listen(PORT, async () => {
     AnalyticsMiddleware.trackSystemMetrics('auth')();
     
     logger.info(`Authentication Backend server fully operational on port ${PORT}`);
-    logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
+    logger.info(`Environment: ${appConfig.isProduction ? 'production' : 'development'}`);
     
   } catch (error: any) {
     logger.error('Failed to start server:', error);

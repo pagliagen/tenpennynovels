@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { ConfigurationService } from '@shared/services/ConfigurationService';
 import { redis } from '@config/runtime/redis';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
 import { successResponse, errorResponse, getRequestId } from '../utils/apiResponse';
 
 export class GameConfigController {

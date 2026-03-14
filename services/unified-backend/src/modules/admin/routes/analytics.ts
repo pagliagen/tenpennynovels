@@ -6,6 +6,7 @@ import express from 'express';
 import { AnalyticsService } from '@shared/services/AnalyticsService';
 import { AdminAuthMiddleware } from '../middleware/adminAuth';
 import { logger } from '../utils/logger';
+import { appConfig } from '@config/runtime';
 
 const router = express.Router();
 
@@ -47,7 +48,7 @@ router.get('/dashboard', async (req, res): Promise<void> => {
     logger.error('Analytics dashboard error:', error);
     res.status(500).json({
       result: false,
-      error: process.env.NODE_ENV === 'production' ? 'Errore interno del server' : error instanceof Error ? error instanceof Error ? error.message : String(error) : 'Errore sconosciuto',
+      error: appConfig.isProduction ? 'Errore interno del server' : error instanceof Error ? error.message : 'Errore sconosciuto',
       code: 'ANALYTICS_ERROR',
       timestamp: new Date().toISOString()
     });
@@ -86,7 +87,7 @@ router.post('/aggregate/:date', async (req, res): Promise<void> => {
     logger.error('Analytics aggregation error:', error);
     res.status(500).json({
       result: false,
-      error: process.env.NODE_ENV === 'production' ? 'Errore interno del server' : error instanceof Error ? error instanceof Error ? error.message : String(error) : 'Errore sconosciuto',
+      error: appConfig.isProduction ? 'Errore interno del server' : error instanceof Error ? error.message : 'Errore sconosciuto',
       code: 'AGGREGATION_ERROR',
       timestamp: new Date().toISOString()
     });
@@ -112,7 +113,7 @@ router.post('/cleanup', async (req, res) => {
     logger.error('Analytics cleanup error:', error);
     res.status(500).json({
       result: false,
-      error: process.env.NODE_ENV === 'production' ? 'Errore interno del server' : error instanceof Error ? error instanceof Error ? error.message : String(error) : 'Errore sconosciuto',
+      error: appConfig.isProduction ? 'Errore interno del server' : error instanceof Error ? error.message : 'Errore sconosciuto',
       code: 'CLEANUP_ERROR',
       timestamp: new Date().toISOString()
     });

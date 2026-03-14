@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { Character, Location, Chat } from '@database/models';
 import { ApiResponse } from '../types/game';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
 import { LocationService } from '../services/LocationService';
 import { successResponse, errorResponse, getRequestId } from '../utils/apiResponse';
 import { smartTransaction } from '../utils/transactions'; // ✅ SPRINT 4: MongoDB Transactions

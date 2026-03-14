@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
 import { errorResponse, getRequestId } from '../utils/apiResponse';
+import { appConfig } from '@config/runtime';
 
 export interface AppError extends Error {
   statusCode?: number;
@@ -69,7 +70,7 @@ export function errorHandler(
   }
   
   // Don't expose internal errors in production
-  if (statusCode === 500 && process.env.NODE_ENV === 'production') {
+  if (statusCode === 500 && appConfig.isProduction) {
     message = 'Internal Server Error';
     code = 'INTERNAL_ERROR';
   }
@@ -78,7 +79,7 @@ export function errorHandler(
   res.status(statusCode).json(errorResponse(
     message,
     code,
-    process.env.NODE_ENV === 'development' ? { stack: err.stack } : undefined,
+    !appConfig.isProduction ? { stack: err.stack } : undefined,
     statusCode,
     getRequestId(req)
   ));

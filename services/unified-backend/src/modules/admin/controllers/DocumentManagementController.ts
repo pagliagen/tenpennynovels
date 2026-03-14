@@ -6,6 +6,7 @@ import { logger } from '../utils/logger';
 import { errorResponse, getRequestId } from '../utils/apiResponse';
 import { DocumentChunkService } from '../services/DocumentChunkService';
 import jwt from 'jsonwebtoken';
+import { appConfig } from '@config/runtime';
 
 const mongoose = db.getMongoose();
 
@@ -200,7 +201,7 @@ export class DocumentManagementController {
         try {
           const authToken = req.cookies?.auth_token;
           if (authToken) {
-            const decoded = jwt.verify(authToken, process.env.JWT_SECRET!) as any;
+            const decoded = jwt.verify(authToken, appConfig.jwt.secret!) as any;
             const chunkService = new DocumentChunkService();
             const result = await chunkService.regenerateChunksForDocument(
               id, updates.contentDelta, document.type, decoded.userId, decoded.username || 'Unknown'
@@ -256,7 +257,7 @@ export class DocumentManagementController {
         return;
       }
 
-      const decoded = jwt.verify(authToken, process.env.JWT_SECRET!) as any;
+      const decoded = jwt.verify(authToken, appConfig.jwt.secret!) as any;
 
       const chunkService = new DocumentChunkService();
       const result = await chunkService.regenerateChunksForDocument(

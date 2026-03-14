@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { Skill } from '@database/models/Skill';
 import { Character } from '@database/models/Character';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
 import {
   translateCategory,
   getCategoryDescription,

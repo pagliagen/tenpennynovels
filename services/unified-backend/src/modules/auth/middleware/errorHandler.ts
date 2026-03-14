@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { ApiResponse } from '../types/auth';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
 import { errorResponse, getRequestId } from '../utils/apiResponse';
+import { appConfig } from '@config/runtime';
 
 export class ErrorHandler {
   /**
@@ -18,7 +19,7 @@ export class ErrorHandler {
     });
 
     // Don't expose internal errors in production
-    const isDevelopment = process.env.NODE_ENV === 'development';
+    const isDevelopment = !appConfig.isProduction;
     
     res.status(500).json(errorResponse(
       isDevelopment ? error.message : 'Errore interno del server',

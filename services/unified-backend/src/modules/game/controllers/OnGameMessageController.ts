@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { OnGameMessage, OnGameMessageView, Character, CharacterFinances, db } from '@database/models';
 import { ApiResponse } from '../types/game';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
 import { postalSystem } from '../utils/postalSystem';
 import { successResponse, errorResponse, listResponse, createResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
 

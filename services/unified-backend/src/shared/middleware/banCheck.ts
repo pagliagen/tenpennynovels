@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { User } from '@database/models/User';
 import { logger } from '@shared/utils/logger';
 
+
 export interface BanCheckOptions {
   requiredScope: 'chat_banned' | 'game_banned' | 'forum_banned' | 'documents_banned' | 'full_site_banned';
   message?: string;
@@ -14,13 +15,6 @@ export interface BanCheckOptions {
 export function banCheck(options: BanCheckOptions) {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      // ===== TEST BYPASS (ONLY FOR LOCAL DEVELOPMENT) =====
-      if (process.env.SKIP_AUTH_CHECK === 'true') {
-        logger.warn('[BAN CHECK BYPASS] Skipping ban check for testing');
-        return next();
-      }
-      // ===== END TEST BYPASS =====
-
       const userId = req.user?.userId;
 
       if (!userId) {

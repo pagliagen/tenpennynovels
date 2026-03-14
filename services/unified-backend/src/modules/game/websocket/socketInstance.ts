@@ -9,7 +9,7 @@
  */
 
 import { Server as SocketIOServer } from 'socket.io';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
 
 /**
  * Singleton Socket.IO instance

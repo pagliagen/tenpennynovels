@@ -1,23 +1,18 @@
 /**
  * EmbeddingService
  *
- * Service for embeddings generation and vector search operations.
- * Handles semantic search with Qdrant and typo-tolerant routing.
+ * Proxy verso embeddings-worker per generazione embedding e ricerca semantica.
+ * Tutte le operazioni vettoriali (Qdrant, Elasticsearch) sono gestite da embeddings-worker.
  */
 
 import { logger } from '@shared/utils/logger';
-import { qdrant } from '../utils/qdrantClient';
+import { appConfig } from '@config/runtime';
 
-const EMBEDDINGS_SERVICE_URL = process.env.EMBEDDINGS_SERVICE_URL || 'http://127.0.0.1:5001';
-const ROUTES_COLLECTION = 'routes_vectors';
+const EMBEDDINGS_SERVICE_URL = appConfig.services.embeddingsUrl;
 
 export class EmbeddingService {
   /**
-   * Generate embedding for given text
-   *
-   * @param text - Text to embed
-   * @param timeout - Request timeout in milliseconds (default 5000)
-   * @returns Embedding vector or null if failed
+   * Generate embedding for given text via embeddings-worker
    */
   static async generateEmbedding(text: string, timeout: number = 5000): Promise<number[] | null> {
     try {
@@ -44,61 +39,6 @@ export class EmbeddingService {
 
     } catch (error: any) {
       logger.error(`Error generating embedding: ${error.message}`);
-      return null;
-    }
-  }
-
-  /**
-   * Find similar route using vector search (typo-tolerant routing)
-   *
-   * Used as fallback when route not found - searches for semantically similar routes
-   * and suggests redirect if match is good enough.
-   *
-   * @param type - Route type to filter by
-   * @param searchPath - The path that was not found (e.g., "folgore")
-   * @param minSimilarity - Minimum similarity threshold (default 0.55)
-   * @returns Similar route info or null if no good match
-   */
-  static async findSimilarRoute(
-    type: 'ambientazione' | 'regolamento',
-    searchPath: string,
-    minSimilarity: number = 0.55
-  ): Promise<{ type: string; path: string; similarity: number } | null> {
-    try {
-      // Generate embedding for search path
-      const embedding = await this.generateEmbedding(searchPath);
-
-      if (!embedding) {
-        return null;
-      }
-
-      // Vector search in Qdrant with type and kind filters
-      const searchResults = await qdrant.search(ROUTES_COLLECTION, {
-        vector: embedding,
-        limit: 1,
-        score_threshold: minSimilarity,
-        filter: {
-          must: [
-            { key: 'type', match: { value: type } },
-            { key: 'kind', match: { value: 'document' } }
-          ]
-        }
-      });
-
-      if (searchResults.length === 0) {
-        return null;
-      }
-
-      const match = searchResults[0];
-
-      return {
-        type: match.payload?.type as string,
-        path: match.payload?.path as string,
-        similarity: match.score
-      };
-
-    } catch (error: any) {
-      logger.error(`Error in findSimilarRoute: ${error.message}`);
       return null;
     }
   }

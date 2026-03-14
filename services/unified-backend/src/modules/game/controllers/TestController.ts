@@ -9,7 +9,7 @@
 
 import { Request, Response } from 'express';
 import { redis } from '@config/runtime/redis';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
 
 export class TestController {
   /**

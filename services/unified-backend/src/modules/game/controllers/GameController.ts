@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { Character, Location, Chat, Skill, Item, Occupation, User, OffGameChat, OffGameChatMessage, OffGameChatParticipant, CharacterFinances } from '@database/models';
 import { ApiResponse, DiceResult, ChatActionType } from '../types/game';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
 import { LocationService } from '../services/LocationService';
 import { redis } from '@config/runtime/redis';
 import { CharacterCreationConfigService } from '@shared/services/CharacterCreationConfigService';

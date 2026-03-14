@@ -22,8 +22,7 @@ export class EmbeddingsService {
   private scriptPath: string;
 
   constructor() {
-    // Get Python path from env or use default
-    this.pythonPath = process.env.EMBEDDINGS_PYTHON_PATH || 'python3';
+    this.pythonPath = 'python3';
 
     // Path to Python embeddings generator script
     this.scriptPath = path.join(

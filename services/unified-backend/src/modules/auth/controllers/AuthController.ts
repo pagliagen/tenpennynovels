@@ -3,7 +3,7 @@ import { User, Character, Location } from '@database/models';
 import { CryptoUtils } from '../utils/crypto';
 import { AuthMiddleware } from '../middleware/auth';
 import { RateLimitMiddleware } from '../middleware/rateLimit';
-import { logger, logAuth, logSecurity } from '../utils/logger';
+import { logger, logAuth, logSecurity } from '../logger';
 import { CharacterSessionManager } from '../utils/characterSessionManager';
 import { redis } from '@config/runtime/redis';
 import { UAParser } from 'ua-parser-js';
@@ -12,6 +12,7 @@ import { ApiResponse } from '../types/auth';
 import { DeviceInfo, LocationInfo } from '../types/auth';
 import { successResponse, errorResponse, createdResponse } from '@shared/utils/apiResponse';
 import { getEffectivePermissions as calculateEffectivePermissions } from '@config/admin-permissions';
+import { appConfig } from '@config/runtime';
 
 // Helper function to transform technical validation messages into user-friendly ones
 function transformValidationMessage(field: string, originalMessage: string, validationKind: string): string {
@@ -653,7 +654,7 @@ export class AuthController {
       errorResponse(res, 
         'Creazione personaggio fallita',
         'CHARACTER_CREATION_ERROR',
-        process.env.NODE_ENV === 'development' ? { message: error instanceof Error ? error.message : 'Unknown error' } : undefined,
+        !appConfig.isProduction ? { message: error instanceof Error ? error.message : 'Unknown error' } : undefined,
         500);
     }
   }

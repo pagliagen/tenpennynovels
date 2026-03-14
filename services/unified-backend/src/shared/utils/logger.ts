@@ -1,7 +1,8 @@
 import winston from 'winston';
 import path from 'path';
+import { appConfig } from '@config/runtime';
 
-const LOG_LEVEL = process.env.LOG_LEVEL || 'info';
+const LOG_LEVEL = appConfig.logLevel;
 
 // Base logger configuration
 const baseFormat = winston.format.combine(

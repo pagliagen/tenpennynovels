@@ -3,19 +3,16 @@ import 'module-alias/register';
 
 import app from './app';
 import { logger } from './utils/logger';
-import { db, redis } from '@config/runtime';
+import { db, redis, appConfig } from '@config/runtime';
 import { escalationService } from './services/EscalationService';
 
 logger.info('Loading environment variables...');
-// Load environment variables: first global, then service-specific overrides
-logger.info('Loading global .env from project root...');
 dotenv.config({ path: '../../.env' });
-logger.info('Loading service-specific .env (if exists)...');
-dotenv.config({ override: true }); // This will override with local .env if it exists
+dotenv.config({ override: true });
 logger.info('Environment variables loaded');
-logger.info('JWT_SECRET:', process.env.JWT_SECRET ? `${process.env.JWT_SECRET.substring(0, 10)}...` : 'MISSING');
+logger.info('JWT_SECRET:', appConfig.jwt.secret ? 'SET' : 'MISSING');
 
-const PORT = process.env.PORT || 3002;
+const PORT = appConfig.port;
 
 // Function to setup database connections
 async function setupDatabaseConnections() {
@@ -49,7 +46,7 @@ async function startServer() {
     escalationService.start();
     logger.info('Escalation service started');
     
-    logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
+    logger.info(`Environment: ${appConfig.isProduction ? 'production' : 'development'}`);
      
     // Now start the server to accept requests
     app.listen(PORT, () => {

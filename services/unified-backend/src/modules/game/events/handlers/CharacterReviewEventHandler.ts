@@ -10,7 +10,7 @@
 
 import { BaseEventHandler } from '../BaseEventHandler';
 import { RedisEvent } from '../types';
-import { logger } from '../../utils/logger';
+import { logger } from '../../logger';
 
 export class CharacterReviewEventHandler extends BaseEventHandler {
   getSupportedEventTypes(): string[] {

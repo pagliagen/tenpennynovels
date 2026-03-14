@@ -8,7 +8,7 @@
  */
 
 import mongoose, { ClientSession } from 'mongoose';
-import { logger } from './logger';
+import { logger } from '../logger';
 
 /**
  * Execute operations within a MongoDB transaction
