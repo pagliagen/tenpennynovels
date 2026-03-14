@@ -1,16 +1,11 @@
 /**
  * Forum API Response Utilities
  * Returns response objects (does not send responses directly)
+ * Standardized to match game/auth module format.
  */
 
-export interface ForumApiResponse<T = any> {
-  success: boolean;
-  data?: T;
-  error?: string;
-  code?: string;
-  timestamp: string;
-  requestId?: string;
-}
+import { Request } from 'express';
+import type { ApiResponse, PaginationInfo, ErrorDetails } from '../../auth/types/auth';
 
 /**
  * Success response object
@@ -19,22 +14,14 @@ export function successResponse<T>(
   data: T,
   message?: string,
   requestId?: string
-): ForumApiResponse<T> {
-  const response: any = {
+): ApiResponse<T> {
+  return {
     result: true,
     data,
-    timestamp: new Date().toISOString()
+    message,
+    timestamp: new Date().toISOString(),
+    requestId
   };
-
-  if (message) {
-    response.message = message;
-  }
-
-  if (requestId) {
-    response.requestId = requestId;
-  }
-
-  return response;
 }
 
 /**
@@ -43,33 +30,18 @@ export function successResponse<T>(
 export function errorResponse(
   error: string,
   code?: string,
-  details?: Record<string, any>,
-  statusCode?: number,
+  details?: ErrorDetails,
+  _statusCode?: number,
   requestId?: string
-): ForumApiResponse {
-  const response: any = {
+): ApiResponse {
+  return {
     result: false,
     error,
-    timestamp: new Date().toISOString()
+    code,
+    details,
+    timestamp: new Date().toISOString(),
+    requestId
   };
-
-  if (code) {
-    response.code = code;
-  }
-
-  if (details) {
-    response.details = details;
-  }
-
-  if (statusCode) {
-    response.statusCode = statusCode;
-  }
-
-  if (requestId) {
-    response.requestId = requestId;
-  }
-
-  return response;
 }
 
 /**
@@ -79,7 +51,7 @@ export function createResponse<T>(
   data: T,
   message?: string,
   requestId?: string
-): ForumApiResponse<T> {
+): ApiResponse<T> {
   return successResponse(data, message, requestId);
 }
 
@@ -87,44 +59,24 @@ export function createResponse<T>(
  * List response object with pagination
  */
 export function listResponse<T>(
-  items: T[],
-  pagination?: {
-    page?: number;
-    pageSize?: number;
-    total?: number;
-    totalPages?: number;
-    hasNext?: boolean;
-    hasPrev?: boolean;
-  },
+  list: T[],
+  pagination: PaginationInfo,
   message?: string,
   requestId?: string
-): ForumApiResponse {
-  const response: any = {
+): ApiResponse<T> {
+  return {
     result: true,
-    data: {
-      items
-    },
-    timestamp: new Date().toISOString()
+    list,
+    pagination,
+    message,
+    timestamp: new Date().toISOString(),
+    requestId
   };
-
-  if (pagination) {
-    response.data.pagination = pagination;
-  }
-
-  if (message) {
-    response.message = message;
-  }
-
-  if (requestId) {
-    response.requestId = requestId;
-  }
-
-  return response;
 }
 
 /**
  * Get request ID from Express request
  */
-export function getRequestId(req: any): string | undefined {
-  return req.id || req.requestId || req.headers['x-request-id'];
+export function getRequestId(req: Request): string | undefined {
+  return (req.headers['x-request-id'] as string | undefined) || (req as any).id;
 }

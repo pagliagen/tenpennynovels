@@ -8,33 +8,33 @@ import rateLimit from 'express-rate-limit';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
 import authRoutes from './routes/auth';
-import { httpLoggerStream } from './utils/logger';
+import { httpLoggerStream, logger } from './utils/logger';
 import { AnalyticsMiddleware } from '@shared/middleware/analyticsMiddleware';
 import { successResponse, errorResponse, getRequestId } from './utils/apiResponse';
 
-console.log('🔧 Loading environment variables...');
-// Load environment variables: first global, then service-specific overrides
 import path from 'path';
+logger.info('Loading environment variables...');
+// Load environment variables: first global, then service-specific overrides
 const projectRoot = path.resolve(__dirname, '../../../');
 const rootEnvPath = path.join(projectRoot, '.env');
-console.log('📁 Loading global .env from project root:', rootEnvPath);
+logger.info('Loading global .env from project root:', rootEnvPath);
 dotenv.config({ path: rootEnvPath });
-console.log('📁 Loading service-specific .env (if exists)...');
+logger.info('Loading service-specific .env (if exists)...');
 dotenv.config({ override: true }); // This will override with local .env if it exists
-console.log('✅ Environment variables loaded');
-console.log('🔍 JWT_SECRET (AUTH):', process.env.JWT_SECRET || 'MISSING');
-console.log('🔍 Key URLs:', {
+logger.info('Environment variables loaded');
+logger.info('JWT_SECRET (AUTH):', process.env.JWT_SECRET || 'MISSING');
+logger.info('Key URLs:', {
   LANDING_URL: process.env.LANDING_URL,
   GAME_URL: process.env.GAME_URL,
   MANAGEMENT_URL: process.env.MANAGEMENT_URL
 });
-console.log('🔍 MongoDB:', process.env.MONGODB_URI ? `${process.env.MONGODB_URI.substring(0, 30)}...` : 'MISSING');
-console.log('🔍 EMAIL_MOCK:', process.env.EMAIL_MOCK);
+logger.info('MongoDB:', process.env.MONGODB_URI ? `${process.env.MONGODB_URI.substring(0, 30)}...` : 'MISSING');
+logger.info('EMAIL_MOCK:', process.env.EMAIL_MOCK);
 
-console.log('📦 Setting up Authentication Backend...');
+logger.info('Setting up Authentication Backend...');
 const app = express();
 const PORT = process.env.PORT || 3000;
-console.log(`🎯 Starting Authentication Backend on port ${PORT}...`);
+logger.info(`Starting Authentication Backend on port ${PORT}...`);
 
 // Trust proxy configuration - needed for proper IP detection behind reverse proxy
 if (process.env.NODE_ENV === 'production' || process.env.TRUST_PROXY === 'true') {
@@ -49,7 +49,7 @@ app.use(helmet({
 // CORS configuration - Accept from API Gateway (both internal and external URLs)
 app.use(cors({
   origin: function (origin, callback) {
-    console.log(`🔄 [AUTHENTICATION BACKEND CORS] Received origin: "${origin}"`);
+    logger.info(`[AUTHENTICATION BACKEND CORS] Received origin: "${origin}"`);
     const allowedOrigins = [
       'http://localhost:8000', // Internal communication on OVH
       'http://127.0.0.1:8000', // Alternative localhost
@@ -62,18 +62,18 @@ app.use(cors({
 
     // Allow requests with no origin (like server-to-server or curl)
     if (!origin) {
-      console.log(`✅ [AUTHENTICATION BACKEND CORS] No origin - allowing request`);
+      logger.info('[AUTHENTICATION BACKEND CORS] No origin - allowing request');
       return callback(null, true);
     }
 
     const isAllowed = allowedOrigins.includes(origin);
-    console.log(`🔍 [AUTHENTICATION BACKEND CORS] Origin "${origin}" allowed: ${isAllowed}`);
+    logger.info(`[AUTHENTICATION BACKEND CORS] Origin "${origin}" allowed: ${isAllowed}`);
 
     if (isAllowed) {
-      console.log(`✅ [AUTHENTICATION BACKEND CORS] Allowing origin ${origin}`);
+      logger.info(`[AUTHENTICATION BACKEND CORS] Allowing origin ${origin}`);
       callback(null, true);
     } else {
-      console.log(`❌ [AUTHENTICATION BACKEND CORS] Blocking origin ${origin}`);
+      logger.info(`[AUTHENTICATION BACKEND CORS] Blocking origin ${origin}`);
       callback(new Error(`Origin ${origin} not allowed by CORS`));
     }
   },
@@ -162,7 +162,7 @@ app.use((error: any, req: express.Request, res: express.Response, next: express.
   });
 
   res.status(500).json(errorResponse(
-    process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+    process.env.NODE_ENV === 'production' ? 'Errore interno del server' : error.message,
     'INTERNAL_SERVER_ERROR',
     undefined,
     500,

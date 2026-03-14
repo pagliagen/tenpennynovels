@@ -12,6 +12,7 @@ import { createClient } from 'redis';
 import app from './app';
 import { db } from '@database/connection';
 import { logger } from '@shared/utils/logger';
+import { validateEnvironment } from '@config/runtime/envValidation';
 
 const PORT = parseInt(process.env.PORT || '3001', 10);
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/tenpennynovels';
@@ -64,6 +65,12 @@ async function setupRedisAdapter(): Promise<void> {
 // Start server
 async function startServer(): Promise<void> {
   try {
+    const envCheck = validateEnvironment();
+    if (!envCheck.isValid) {
+      logger.error('Server non avviato: variabili d\'ambiente mancanti');
+      process.exit(1);
+    }
+
     // Connect to MongoDB
     logger.info('📡 Connecting to MongoDB...');
     await db.connect(MONGODB_URI);
@@ -146,6 +153,18 @@ async function gracefulShutdown(signal: string): Promise<void> {
     logger.info('✅ HTTP server closed');
 
     try {
+      // Shutdown Redis Subscriber
+      try {
+        const { getRedisSubscriber } = await import('@modules/game/websocket');
+        const subscriber = getRedisSubscriber();
+        if (subscriber) {
+          await subscriber.shutdown();
+          logger.info('✅ Redis Subscriber chiuso');
+        }
+      } catch (e) {
+        logger.warn('Redis Subscriber shutdown skipped');
+      }
+
       // Close WebSocket connections
       io.close(() => {
         logger.info('✅ WebSocket server closed');

@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import { SkillConfrontation } from '../models/SkillConfrontation';
+import { logger } from '@shared/utils/logger';
 
 /**
  * Seed: SkillConfrontation Configuration
@@ -11,13 +12,13 @@ import { SkillConfrontation } from '../models/SkillConfrontation';
  */
 
 export async function seedSkillConfrontations() {
-  console.log('[Seed] Starting SkillConfrontation seed...');
+  logger.info('[Seed] Starting SkillConfrontation seed...');
 
   try {
     // Clear existing configurations (development only - remove this in production)
     const existing = await SkillConfrontation.countDocuments();
     if (existing > 0) {
-      console.log(`[Seed] Found ${existing} existing configurations. Clearing...`);
+      logger.info(`[Seed] Found ${existing} existing configurations. Clearing...`);
       await SkillConfrontation.deleteMany({});
     }
 
@@ -40,7 +41,7 @@ export async function seedSkillConfrontations() {
     };
 
     await SkillConfrontation.create(corpoACorpoConfig);
-    console.log('[Seed] ✅ Created: Corpo a Corpo configuration');
+    logger.info('[Seed] Created: Corpo a Corpo configuration');
 
     // Phase 2: Armi da botta (blunt weapons)
     const armiDaBottaConfig = {
@@ -55,7 +56,7 @@ export async function seedSkillConfrontations() {
     };
 
     await SkillConfrontation.create(armiDaBottaConfig);
-    console.log('[Seed] ✅ Created: Armi da botta configuration');
+    logger.info('[Seed] Created: Armi da botta configuration');
 
     // Phase 2: Armi da taglio (bladed weapons)
     const armiDaTaglioConfig = {
@@ -70,7 +71,7 @@ export async function seedSkillConfrontations() {
     };
 
     await SkillConfrontation.create(armiDaTaglioConfig);
-    console.log('[Seed] ✅ Created: Armi da taglio configuration');
+    logger.info('[Seed] Created: Armi da taglio configuration');
 
     // Phase 2: Armi da fuoco (firearms)
     const armiDaFuocoConfig = {
@@ -84,7 +85,7 @@ export async function seedSkillConfrontations() {
     };
 
     await SkillConfrontation.create(armiDaFuocoConfig);
-    console.log('[Seed] ✅ Created: Armi da fuoco configuration');
+    logger.info('[Seed] Created: Armi da fuoco configuration');
 
     // Phase 3: Raggirare (hidden two-phase)
     const raggirareConfig = {
@@ -99,7 +100,7 @@ export async function seedSkillConfrontations() {
     };
 
     await SkillConfrontation.create(raggirareConfig);
-    console.log('[Seed] ✅ Created: Raggirare configuration');
+    logger.info('[Seed] Created: Raggirare configuration');
 
     // Phase 4: Social conflicts
     const intimidireConfig = {
@@ -113,7 +114,7 @@ export async function seedSkillConfrontations() {
     };
 
     await SkillConfrontation.create(intimidireConfig);
-    console.log('[Seed] ✅ Created: Intimidire configuration');
+    logger.info('[Seed] Created: Intimidire configuration');
 
     const persuadereConfig = {
       skillName: 'Persuadere',
@@ -126,7 +127,7 @@ export async function seedSkillConfrontations() {
     };
 
     await SkillConfrontation.create(persuadereConfig);
-    console.log('[Seed] ✅ Created: Persuadere configuration');
+    logger.info('[Seed] Created: Persuadere configuration');
 
     const ammaliareConfig = {
       skillName: 'Ammaliare',
@@ -139,7 +140,7 @@ export async function seedSkillConfrontations() {
     };
 
     await SkillConfrontation.create(ammaliareConfig);
-    console.log('[Seed] ✅ Created: Ammaliare configuration');
+    logger.info('[Seed] Created: Ammaliare configuration');
 
     const oratoriaConfig = {
       skillName: 'Oratoria',
@@ -152,17 +153,17 @@ export async function seedSkillConfrontations() {
     };
 
     await SkillConfrontation.create(oratoriaConfig);
-    console.log('[Seed] ✅ Created: Oratoria configuration');
+    logger.info('[Seed] Created: Oratoria configuration');
 
-    console.log('[Seed] ✅ Seed complete: 8 configurations created (4 combat + 4 social)');
+    logger.info('[Seed] Seed complete: 8 configurations created (4 combat + 4 social)');
 
     // Verify
     const count = await SkillConfrontation.countDocuments();
-    console.log(`[Seed] Verification: ${count} configurations in database`);
+    logger.info(`[Seed] Verification: ${count} configurations in database`);
 
     return { success: true, count };
   } catch (error) {
-    console.error('[Seed] Fatal error:', error);
+    logger.error('[Seed] Fatal error:', error);
     throw error;
   }
 }
@@ -174,18 +175,18 @@ if (require.main === module) {
       // Connect to MongoDB
       const mongoUri = process.env.MONGO_URI || 'mongodb://admin:admin123@localhost:27017/tenpennynovels?authSource=admin';
       await mongoose.connect(mongoUri);
-      console.log('[Seed] Connected to MongoDB');
+      logger.info('[Seed] Connected to MongoDB');
 
       // Run seed
       await seedSkillConfrontations();
 
       // Disconnect
       await mongoose.disconnect();
-      console.log('[Seed] Disconnected from MongoDB');
+      logger.info('[Seed] Disconnected from MongoDB');
 
       process.exit(0);
     } catch (error) {
-      console.error('[Seed] Failed:', error);
+      logger.error('[Seed] Failed:', error);
       process.exit(1);
     }
   })();

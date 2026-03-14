@@ -1,5 +1,6 @@
 import { SocialClassConfig } from '@database/models';
 import { SocialClass } from '@shared/types/socialClass';
+import { logger } from './logger';
 
 // Social class configuration data from database
 export interface SocialClassConfigData {
@@ -58,7 +59,7 @@ export class FinancialUtils {
         config
       };
     } catch (error: any) {
-      console.error('Error calculating social class:', error);
+      logger.error('Error calculating social class:', error);
       return null;
     }
   }
@@ -111,7 +112,7 @@ export class FinancialUtils {
         });
         
         await finances.save();
-        console.log(`Character finances initialized for character ${characterId} with social class ${socialClass.name}`);
+        logger.info(`Character finances initialized for character ${characterId} with social class ${socialClass.name}`);
       } else {
         // Update existing finances if social class changed
         existingFinances.socialClass = socialClass.name;
@@ -123,10 +124,10 @@ export class FinancialUtils {
         }
         
         await existingFinances.save();
-        console.log(`Character finances updated for character ${characterId} with new social class ${socialClass.name}`);
+        logger.info(`Character finances updated for character ${characterId} with new social class ${socialClass.name}`);
       }
     } catch (error: any) {
-      console.error('Error initializing character finances:', error);
+      logger.error('Error initializing character finances:', error);
     }
   }
   

@@ -49,7 +49,7 @@ export function NotificationsView(): JSX.Element {
     markAllRead.mutate();
   }, [markAllRead]);
 
-  const items = data?.items ?? [];
+  const items = data?.list ?? [];
 
   if (isLoading) {
     return <div className={styles.loading}>Caricamento...</div>;

@@ -21,7 +21,7 @@ export class SkillController {
       // Check authentication
       if (!req.user) {
         res.status(401).json(errorResponse(
-          'Authentication required',
+          'Autenticazione richiesta',
           'AUTHENTICATION_REQUIRED',
           undefined,
           401,
@@ -46,7 +46,7 @@ export class SkillController {
       const character = await Character.findById(characterId);
       if (!character) {
         res.status(404).json(errorResponse(
-          'Character not found',
+          'Personaggio non trovato',
           'CHARACTER_NOT_FOUND',
           undefined,
           404,
@@ -178,7 +178,7 @@ export class SkillController {
       // Check authentication - character should be set by middleware
       if (!req.character) {
         res.status(401).json(errorResponse(
-          'Character context required',
+          'Contesto personaggio richiesto',
           'CHARACTER_CONTEXT_REQUIRED',
           undefined,
           401,
@@ -191,7 +191,7 @@ export class SkillController {
       const character = await Character.findById(req.character.characterId);
       if (!character) {
         res.status(404).json(errorResponse(
-          'Character not found',
+          'Personaggio non trovato',
           'CHARACTER_NOT_FOUND',
           undefined,
           404,
@@ -289,7 +289,7 @@ export class SkillController {
     try {
       if (!req.character) {
         res.status(401).json(errorResponse(
-          'Character context required',
+          'Contesto personaggio richiesto',
           'CHARACTER_CONTEXT_REQUIRED',
           undefined,
           401,
@@ -302,7 +302,7 @@ export class SkillController {
       const character = await Character.findById(req.character.characterId);
       if (!character) {
         res.status(404).json(errorResponse(
-          'Character not found',
+          'Personaggio non trovato',
           'CHARACTER_NOT_FOUND',
           undefined,
           404,
@@ -392,7 +392,7 @@ export class SkillController {
     try {
       if (!req.user) {
         res.status(401).json(errorResponse(
-          'Authentication required',
+          'Autenticazione richiesta',
           'AUTHENTICATION_REQUIRED',
           undefined,
           401,
@@ -461,7 +461,7 @@ export class SkillController {
     try {
       if (!req.user) {
         res.status(401).json(errorResponse(
-          'Authentication required',
+          'Autenticazione richiesta',
           'AUTHENTICATION_REQUIRED',
           undefined,
           401,
@@ -532,7 +532,7 @@ export class SkillController {
     try {
       if (!req.character) {
         res.status(401).json(errorResponse(
-          'Character context required',
+          'Contesto personaggio richiesto',
           'CHARACTER_CONTEXT_REQUIRED',
           undefined,
           401,
@@ -545,7 +545,7 @@ export class SkillController {
       const character = await Character.findById(req.character.characterId);
       if (!character) {
         res.status(404).json(errorResponse(
-          'Character not found',
+          'Personaggio non trovato',
           'CHARACTER_NOT_FOUND',
           undefined,
           404,

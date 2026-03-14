@@ -10,6 +10,7 @@ import { AdminAuthMiddleware } from '../middleware/adminAuth';
 import { logger } from '../utils/logger';
 import { User, Character, db } from '@database/models';
 import { listResponse, successResponse, errorResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
+import { escapeRegex } from '@shared/utils/validation';
 
 // Access mongoose from the centralized connection
 const mongoose = db.getMongoose();
@@ -35,10 +36,11 @@ export class UserManagementController {
 
       // Search filter (username, email, displayName)
       if (search && search.trim()) {
+        const escapedSearch = escapeRegex(search);
         filters.$or = [
-          { username: { $regex: search, $options: 'i' } },
-          { email: { $regex: search, $options: 'i' } },
-          { displayName: { $regex: search, $options: 'i' } }
+          { username: { $regex: escapedSearch, $options: 'i' } },
+          { email: { $regex: escapedSearch, $options: 'i' } },
+          { displayName: { $regex: escapedSearch, $options: 'i' } }
         ];
       }
 
@@ -236,7 +238,7 @@ export class UserManagementController {
       ));
     } catch (error: any) {
       logger.error('Error fetching users:', { error: error instanceof Error ? error.message : String(error) });
-      console.error(error);
+      logger.error(error);
       
       res.status(500).json(errorResponse(
         'Failed to fetch users',
@@ -418,7 +420,7 @@ export class UserManagementController {
 
       if (!user) {
         res.status(404).json(errorResponse(
-          'User not found',
+          'Utente non trovato',
           'USER_NOT_FOUND',
           undefined,
           404,
@@ -554,7 +556,7 @@ export class UserManagementController {
       const user = await User.findById(userId);
       if (!user) {
         res.status(404).json(errorResponse(
-          'User not found with the provided ID.',
+          'Utente non trovato con l\'ID fornito.',
           'USER_NOT_FOUND',
           {
             searchedUserId: userId
@@ -664,7 +666,7 @@ export class UserManagementController {
 
       if (!user) {
         res.status(404).json(errorResponse(
-          'User not found',
+          'Utente non trovato',
           'USER_NOT_FOUND',
           undefined,
           404,
@@ -1157,7 +1159,7 @@ export class UserManagementController {
 
       if (!updatedUser) {
         res.status(404).json(errorResponse(
-          'User not found. The specified user ID does not exist in the database.',
+          'Utente non trovato. L\'ID utente specificato non esiste nel database.',
           'USER_NOT_FOUND',
           {
             requestedUserId: userId,
@@ -1301,7 +1303,7 @@ export class UserManagementController {
       // Handle permission errors (if user tries to update their own admin status inappropriately)
       if (error instanceof Error ? error.message : String(error) && error instanceof Error ? error.message : String(error).includes('permission')) {
         res.status(403).json(errorResponse(
-          'Insufficient permissions to perform this operation.',
+          'Permessi insufficienti per eseguire questa operazione.',
           'INSUFFICIENT_PERMISSIONS',
           {
             operation: 'update_user',
@@ -1498,7 +1500,7 @@ export class UserManagementController {
 
       if (!updatedUser) {
         res.status(404).json(errorResponse(
-          'User not found',
+          'Utente non trovato',
           'USER_NOT_FOUND',
           undefined,
           404,

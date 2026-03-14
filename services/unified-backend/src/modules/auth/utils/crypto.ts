@@ -32,7 +32,7 @@ export class CryptoUtils {
       return await bcrypt.hash(password, BCRYPT_ROUNDS);
     } catch (error: any) {
       logger.error('Error hashing password:', error);
-      throw new Error('Password hashing failed');
+      throw new Error('Hashing password fallito');
     }
   }
 
@@ -49,47 +49,46 @@ export class CryptoUtils {
   static generateAuthToken(payload: Omit<AuthTokenPayload, 'iat' | 'exp'>, expiresIn = '24h'): string {
     try {
       const jwtSecret = getJwtSecret();
-      console.log(`🔍 [AUTH-BACKEND] Generating auth token with JWT_SECRET: ${jwtSecret.substring(0, 10)}...`);
-      return (jwt.sign as any)(payload, jwtSecret, {
-        expiresIn,
+      return jwt.sign(payload as object, jwtSecret, {
+        expiresIn: expiresIn as jwt.SignOptions['expiresIn'],
         issuer: 'tenpennynovels-auth',
         audience: 'tenpennynovels-users'
       });
     } catch (error: any) {
       logger.error('Error generating auth token:', error);
-      throw new Error('Token generation failed');
+      throw new Error('Generazione token fallita');
     }
   }
 
   static generateCharacterContextToken(payload: Omit<CharacterContextPayload, 'iat' | 'exp'>, expiresIn = '24h'): string {
     try {
       const jwtSecret = getJwtSecret();
-      return (jwt.sign as any)(payload, jwtSecret, {
-        expiresIn,
+      return jwt.sign(payload as object, jwtSecret, {
+        expiresIn: expiresIn as jwt.SignOptions['expiresIn'],
         issuer: 'tenpennynovels-auth',
         audience: 'tenpennynovels-game'
       });
     } catch (error: any) {
       logger.error('Error generating character context token:', error);
-      throw new Error('Character token generation failed');
+      throw new Error('Generazione token personaggio fallita');
     }
   }
 
   static verifyAuthToken(token: string): AuthTokenPayload {
     try {
       const jwtSecret = getJwtSecret();
-      return (jwt.verify as any)(token, jwtSecret, {
+      return jwt.verify(token, jwtSecret, {
         issuer: 'tenpennynovels-auth',
         audience: 'tenpennynovels-users'
       }) as AuthTokenPayload;
     } catch (error: any) {
       if (error instanceof jwt.JsonWebTokenError) {
-        throw new Error('Invalid token');
+        throw new Error('Token non valido');
       } else if (error instanceof jwt.TokenExpiredError) {
-        throw new Error('Token expired');
+        throw new Error('Token scaduto');
       } else {
         logger.error('Error verifying auth token:', error);
-        throw new Error('Token verification failed');
+        throw new Error('Verifica token fallita');
       }
     }
   }
@@ -97,18 +96,18 @@ export class CryptoUtils {
   static verifyCharacterContextToken(token: string): CharacterContextPayload {
     try {
       const jwtSecret = getJwtSecret();
-      return (jwt.verify as any)(token, jwtSecret, {
+      return jwt.verify(token, jwtSecret, {
         issuer: 'tenpennynovels-auth',
         audience: 'tenpennynovels-game'
       }) as CharacterContextPayload;
     } catch (error: any) {
       if (error instanceof jwt.JsonWebTokenError) {
-        throw new Error('Invalid character token');
+        throw new Error('Token personaggio non valido');
       } else if (error instanceof jwt.TokenExpiredError) {
-        throw new Error('Character token expired');
+        throw new Error('Token personaggio scaduto');
       } else {
         logger.error('Error verifying character context token:', error);
-        throw new Error('Character token verification failed');
+        throw new Error('Verifica token personaggio fallita');
       }
     }
   }
@@ -117,8 +116,8 @@ export class CryptoUtils {
   static generateRefreshToken(userId: string, sessionId: string): string {
     try {
       const refreshSecret = getJwtRefreshSecret();
-      return (jwt.sign as any)(
-        { userId, sessionId, type: 'refresh' },
+      return jwt.sign(
+        { userId, sessionId, type: 'refresh' } as object,
         refreshSecret,
         {
           expiresIn: '7d',
@@ -127,30 +126,30 @@ export class CryptoUtils {
       );
     } catch (error: any) {
       logger.error('Error generating refresh token:', error);
-      throw new Error('Refresh token generation failed');
+      throw new Error('Generazione refresh token fallita');
     }
   }
 
   static verifyRefreshToken(token: string): { userId: string; sessionId: string; type: string } {
     try {
       const refreshSecret = getJwtRefreshSecret();
-      const payload = (jwt.verify as any)(token, refreshSecret, {
+      const payload = jwt.verify(token, refreshSecret, {
         issuer: 'tenpennynovels-auth'
-      }) as any;
+      }) as { userId: string; sessionId: string; type: string };
       
       if (payload.type !== 'refresh') {
-        throw new Error('Invalid refresh token type');
+        throw new Error('Tipo refresh token non valido');
       }
       
       return payload;
     } catch (error: any) {
       if (error instanceof jwt.JsonWebTokenError) {
-        throw new Error('Invalid refresh token');
+        throw new Error('Refresh token non valido');
       } else if (error instanceof jwt.TokenExpiredError) {
-        throw new Error('Refresh token expired');
+        throw new Error('Refresh token scaduto');
       } else {
         logger.error('Error verifying refresh token:', error);
-        throw new Error('Refresh token verification failed');
+        throw new Error('Verifica refresh token fallita');
       }
     }
   }
@@ -209,27 +208,27 @@ export class CryptoUtils {
 
     // Minimum length check (always enforced)
     if (password.length < config.minLength) {
-      violations.push(`Password must be at least ${config.minLength} characters long`);
+      violations.push(`La password deve essere di almeno ${config.minLength} caratteri`);
     }
 
     // Optional: Uppercase letter check
     if (config.requireUppercase && !/[A-Z]/.test(password)) {
-      violations.push('Password must contain at least one uppercase letter');
+      violations.push('La password deve contenere almeno una lettera maiuscola');
     }
 
     // Optional: Lowercase letter check
     if (config.requireLowercase && !/[a-z]/.test(password)) {
-      violations.push('Password must contain at least one lowercase letter');
+      violations.push('La password deve contenere almeno una lettera minuscola');
     }
 
     // Optional: Number check
     if (config.requireNumber && !/\d/.test(password)) {
-      violations.push('Password must contain at least one number');
+      violations.push('La password deve contenere almeno un numero');
     }
 
     // Optional: Special character check
     if (config.requireSpecialChar && !config.specialCharPattern.test(password)) {
-      violations.push('Password must contain at least one special character');
+      violations.push('La password deve contenere almeno un carattere speciale');
     }
 
     // Optional: Common passwords check
@@ -240,7 +239,7 @@ export class CryptoUtils {
       ];
 
       if (commonPasswords.includes(password.toLowerCase())) {
-        violations.push('Password is too common');
+        violations.push('La password è troppo comune');
       }
     }
 

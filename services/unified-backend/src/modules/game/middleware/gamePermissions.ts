@@ -27,7 +27,7 @@ export function requireGamePermission(permission: string) {
     if (!character) {
       const response: ApiResponse = {
         result: false,
-        error: 'Character context required',
+        error: 'Contesto personaggio richiesto',
         code: 'NO_CHARACTER_CONTEXT',
         timestamp: new Date().toISOString()
       };
@@ -89,7 +89,7 @@ export function requireAnyGamePermission(permissions: string[]) {
     if (!character) {
       const response: ApiResponse = {
         result: false,
-        error: 'Character context required',
+        error: 'Contesto personaggio richiesto',
         code: 'NO_CHARACTER_CONTEXT',
         timestamp: new Date().toISOString()
       };
@@ -148,7 +148,7 @@ export function requireAllGamePermissions(permissions: string[]) {
     if (!character) {
       const response: ApiResponse = {
         result: false,
-        error: 'Character context required',
+        error: 'Contesto personaggio richiesto',
         code: 'NO_CHARACTER_CONTEXT',
         timestamp: new Date().toISOString()
       };

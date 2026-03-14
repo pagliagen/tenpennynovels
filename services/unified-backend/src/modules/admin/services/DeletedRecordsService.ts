@@ -207,7 +207,7 @@ export class DeletedRecordsService {
         results.success++;
       } catch (error: any) {
         results.failed++;
-        results.errors.push({ id, error: error.message || 'Unknown error' });
+        results.errors.push({ id, error: error.message || 'Errore sconosciuto' });
       }
     }
 

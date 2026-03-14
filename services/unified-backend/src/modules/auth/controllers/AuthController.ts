@@ -916,19 +916,19 @@ export class AuthController {
       // Decode character_context cookie
       const characterContext = req.cookies?.character_context;
       if (!characterContext) {
-        return errorResponse(res, 'No character selected', 'NO_CHARACTER_CONTEXT', undefined, 401);
+        return errorResponse(res, 'Nessun personaggio selezionato', 'NO_CHARACTER_CONTEXT', undefined, 401);
       }
 
       // Verify JWT token
       const decoded = CryptoUtils.verifyCharacterContextToken(characterContext);
       if (!decoded || !decoded.characterId) {
-        return errorResponse(res, 'Invalid character context', 'INVALID_CHARACTER_CONTEXT', undefined, 401);
+        return errorResponse(res, 'Contesto personaggio non valido', 'INVALID_CHARACTER_CONTEXT', undefined, 401);
       }
 
       // Fetch character from database
       const character = await Character.findById(decoded.characterId);
       if (!character) {
-        return errorResponse(res, 'Character not found', 'CHARACTER_NOT_FOUND', undefined, 404);
+        return errorResponse(res, 'Personaggio non trovato', 'CHARACTER_NOT_FOUND', undefined, 404);
       }
 
       // Calculate effective permissions (gameplayRoles → admin mapping + adminPermissions)
@@ -950,7 +950,7 @@ export class AuthController {
 
     } catch (error: any) {
       logger.error('Get effective permissions error:', error);
-      errorResponse(res, 'Failed to get permissions', 'GET_PERMISSIONS_ERROR', undefined, 500);
+      errorResponse(res, 'Impossibile recuperare i permessi', 'GET_PERMISSIONS_ERROR', undefined, 500);
     }
   }
 }

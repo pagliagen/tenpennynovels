@@ -403,7 +403,7 @@ export class CharacterGameplayController {
 
     } catch (error: any) {
       const err = error as Error;
-      console.error('Set character location error:', err);
+      logger.error('Set character location error:', err);
       res.status(500).json(errorResponse(
         'Impossibile impostare la location del personaggio',
         'SET_LOCATION_ERROR',

@@ -46,7 +46,7 @@ export function ThreadView(): JSX.Element {
       const el = document.getElementById(`post-${postId}`);
       el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
-  }, [postId, postsData?.items]);
+  }, [postId, postsData?.list]);
 
   useEffect(() => {
     setPage(1);
@@ -65,7 +65,7 @@ export function ThreadView(): JSX.Element {
   }
 
   const discussion = discussionData;
-  const posts = postsData?.items ?? [];
+  const posts = postsData?.list ?? [];
   const pagination = postsData?.pagination;
 
   if (!discussion) {

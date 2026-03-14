@@ -2,6 +2,8 @@
 // GeoLocation Service - Rilevamento Città Italiane da IP
 // =============================================================================
 
+import { logger } from '@shared/utils/logger';
+
 interface GeoLocationResult {
   country: string;
   city: string;
@@ -47,7 +49,7 @@ export class GeoLocationService {
       }
 
     } catch (error: any) {
-      console.error('GeoLocation error:', error);
+      logger.error('GeoLocation error:', error);
       return {
         country: 'Italia',
         city: '',
@@ -90,7 +92,7 @@ export class GeoLocationService {
       };
 
     } catch (error: any) {
-      console.error('IPAPI.CO error:', error);
+      logger.error('IPAPI.CO error:', error);
       return null;
     }
   }
@@ -128,7 +130,7 @@ export class GeoLocationService {
       };
 
     } catch (error: any) {
-      console.error('IPBASE.COM error:', error);
+      logger.error('IPBASE.COM error:', error);
       return null;
     }
   }
@@ -166,7 +168,7 @@ export class GeoLocationService {
       };
 
     } catch (error: any) {
-      console.error('IPINFO.IO error:', error);
+      logger.error('IPINFO.IO error:', error);
       return null;
     }
   }  
@@ -194,10 +196,10 @@ export class GeoLocationService {
    * Per abilitare geolocalizzazione reale in produzione
    */
   static enableRealGeoLocation(): void {
-    console.log('⚠️  Per abilitare geolocalizzazione reale:');
-    console.log('1. Registrarsi su https://ip-api.com per limiti più alti');
-    console.log('2. Oppure usare MaxMind GeoLite2 con API key');
-    console.log('3. Configurare variabili ambiente GEOLOCATION_SERVICE e API_KEY');
+    logger.warn('Per abilitare geolocalizzazione reale:');
+    logger.info('1. Registrarsi su https://ip-api.com per limiti più alti');
+    logger.info('2. Oppure usare MaxMind GeoLite2 con API key');
+    logger.info('3. Configurare variabili ambiente GEOLOCATION_SERVICE e API_KEY');
   }
 }
 

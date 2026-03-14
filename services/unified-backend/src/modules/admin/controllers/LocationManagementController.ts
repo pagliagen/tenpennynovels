@@ -10,6 +10,7 @@ import { AdminAuthMiddleware } from '../middleware/adminAuth';
 import { logger } from '../utils/logger';
 import { Location } from '@database/models/Location';
 import { listResponse, successResponse, errorResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
+import { escapeRegex } from '@shared/utils/validation';
 
 function generateSlug(name: string): string {
   return name
@@ -74,10 +75,11 @@ export class LocationManagementController {
       }
 
       if (search) {
+        const escapedSearch = escapeRegex(search);
         query.$or = [
-          { name: { $regex: search, $options: 'i' } },
-          { description: { $regex: search, $options: 'i' } },
-          { district: { $regex: search, $options: 'i' } }
+          { name: { $regex: escapedSearch, $options: 'i' } },
+          { description: { $regex: escapedSearch, $options: 'i' } },
+          { district: { $regex: escapedSearch, $options: 'i' } }
         ];
       }
 

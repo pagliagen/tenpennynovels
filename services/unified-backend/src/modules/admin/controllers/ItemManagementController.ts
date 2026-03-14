@@ -5,6 +5,7 @@ import { AdminAuthMiddleware } from '../middleware/adminAuth';
 import { logger } from '../utils/logger';
 import { Item, ItemCategory, ITEM_CATEGORY_LABELS, IItem, CharacterInventory, Shop, ShopItem } from '@database/models/Item';
 import { listResponse, successResponse, errorResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
+import { escapeRegex } from '@shared/utils/validation';
 
 export class ItemManagementController {
   
@@ -28,10 +29,11 @@ export class ItemManagementController {
       if (isAdminOnly !== undefined) query.isAdminOnly = isAdminOnly === 'true';
       
       if (search) {
+        const escapedSearch = escapeRegex(search as string);
         query.$or = [
-          { name: { $regex: search, $options: 'i' } },
-          { description: { $regex: search, $options: 'i' } },
-          { subcategory: { $regex: search, $options: 'i' } }
+          { name: { $regex: escapedSearch, $options: 'i' } },
+          { description: { $regex: escapedSearch, $options: 'i' } },
+          { subcategory: { $regex: escapedSearch, $options: 'i' } }
         ];
       }
 

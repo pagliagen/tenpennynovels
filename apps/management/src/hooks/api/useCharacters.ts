@@ -63,13 +63,13 @@ function updateCharacterInCache(
   updater: (character: Character) => Character
 ): void {
   // Aggiorna tutte le liste in cache
-  queryClient.setQueriesData<{ items: Character[] }>(
+  queryClient.setQueriesData<{ list: Character[] }>(
     { queryKey: characterKeys.lists(), exact: false },
     (old) => {
-      if (!old?.items) return old;
+      if (!old?.list) return old;
       return {
         ...old,
-        items: old.items.map(char => char._id === characterId ? updater(char) : char)
+        list: old.list.map(char => char._id === characterId ? updater(char) : char)
       };
     }
   );
@@ -146,13 +146,13 @@ export function useDeleteCharacter() {
       const previousLists = queryClient.getQueriesData({ queryKey: characterKeys.lists() });
 
       // Optimistic removal
-      queryClient.setQueriesData<{ items: Character[] }>(
+      queryClient.setQueriesData<{ list: Character[] }>(
         { queryKey: characterKeys.lists(), exact: false },
         (old) => {
-          if (!old?.items) return old;
+          if (!old?.list) return old;
           return {
             ...old,
-            items: old.items.filter(char => char._id !== id)
+            list: old.list.filter(char => char._id !== id)
           };
         }
       );
@@ -288,13 +288,13 @@ export function useBulkApproveCharacters() {
       const previousLists = queryClient.getQueriesData({ queryKey: characterKeys.lists() });
 
       // Optimistic update for all characters
-      queryClient.setQueriesData<{ items: Character[] }>(
+      queryClient.setQueriesData<{ list: Character[] }>(
         { queryKey: characterKeys.lists(), exact: false },
         (old) => {
-          if (!old?.items) return old;
+          if (!old?.list) return old;
           return {
             ...old,
-            items: old.items.map(character =>
+            list: old.list.map(character =>
               characterIds.includes(character._id)
                 ? {
                     ...character,
@@ -343,13 +343,13 @@ export function useBulkRejectCharacters() {
       const previousLists = queryClient.getQueriesData({ queryKey: characterKeys.lists() });
 
       // Optimistic update for all characters
-      queryClient.setQueriesData<{ items: Character[] }>(
+      queryClient.setQueriesData<{ list: Character[] }>(
         { queryKey: characterKeys.lists(), exact: false },
         (old) => {
-          if (!old?.items) return old;
+          if (!old?.list) return old;
           return {
             ...old,
-            items: old.items.map(character =>
+            list: old.list.map(character =>
               characterIds.includes(character._id)
                 ? {
                     ...character,
@@ -398,13 +398,13 @@ export function useBulkDeleteCharacters() {
       const previousLists = queryClient.getQueriesData({ queryKey: characterKeys.lists() });
 
       // Optimistic removal
-      queryClient.setQueriesData<{ items: Character[] }>(
+      queryClient.setQueriesData<{ list: Character[] }>(
         { queryKey: characterKeys.lists(), exact: false },
         (old) => {
-          if (!old?.items) return old;
+          if (!old?.list) return old;
           return {
             ...old,
-            items: old.items.filter(character => !characterIds.includes(character._id))
+            list: old.list.filter(character => !characterIds.includes(character._id))
           };
         }
       );

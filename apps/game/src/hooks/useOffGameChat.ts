@@ -9,7 +9,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient, UseQueryResult } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { offGameChatApi } from '@/lib/api/offGameChat';
 import { queryKeys } from '@/lib/api/queryClient';
 import { useWebSocket } from '@/contexts/WebSocketContext';
@@ -143,6 +143,7 @@ export function useOffGameChatWebSocket(selectedChatId: string | null): {
   const queryClient = useQueryClient();
   const { onMessageEvent } = useWebSocket();
   const [typingUsers, setTypingUsers] = useState<Map<string, Set<string>>>(new Map());
+  const typingTimeoutsRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
 
   useEffect(() => {
     const unsubscribe = onMessageEvent((event) => {
@@ -175,9 +176,12 @@ export function useOffGameChatWebSocket(selectedChatId: string | null): {
           return newMap;
         });
 
-        // Auto-clear typing indicator after 5 seconds
         if (isTyping) {
-          setTimeout(() => {
+          const timeoutKey = `${chatId}_${characterId}`;
+          const existing = typingTimeoutsRef.current.get(timeoutKey);
+          if (existing) clearTimeout(existing);
+
+          const timeout = setTimeout(() => {
             setTypingUsers((prev) => {
               const newMap = new Map(prev);
               const chatTypers = newMap.get(chatId);
@@ -187,7 +191,9 @@ export function useOffGameChatWebSocket(selectedChatId: string | null): {
               }
               return newMap;
             });
+            typingTimeoutsRef.current.delete(timeoutKey);
           }, 5000);
+          typingTimeoutsRef.current.set(timeoutKey, timeout);
         }
       }
 
@@ -213,6 +219,13 @@ export function useOffGameChatWebSocket(selectedChatId: string | null): {
 
     return unsubscribe;
   }, [selectedChatId, onMessageEvent, queryClient]);
+
+  useEffect(() => {
+    return () => {
+      typingTimeoutsRef.current.forEach((timeout) => clearTimeout(timeout));
+      typingTimeoutsRef.current.clear();
+    };
+  }, []);
 
   return { typingUsers };
 }

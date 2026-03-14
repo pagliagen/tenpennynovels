@@ -10,6 +10,7 @@ import {
   getAllCategoriesItalian
 } from '@shared/translations/skillCategories';
 import { successResponse, errorResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
+import { escapeRegex } from '@shared/utils/validation';
 import { AdminAuthMiddleware } from '../middleware/adminAuth';
 
 export class SkillManagementController {
@@ -36,9 +37,10 @@ export class SkillManagementController {
       
       // Text search
       if (search) {
+        const escapedSearch = escapeRegex(search as string);
         filter.$or = [
-          { name: { $regex: search, $options: 'i' } },
-          { description: { $regex: search, $options: 'i' } }
+          { name: { $regex: escapedSearch, $options: 'i' } },
+          { description: { $regex: escapedSearch, $options: 'i' } }
         ];
       }
 
@@ -744,7 +746,7 @@ export class SkillManagementController {
               } catch (error: any) {
                 failed.push({
                   skillId: skill._id.toString(),
-                  error: error instanceof Error ? error.message : 'Unknown error'
+                  error: error instanceof Error ? error.message : 'Errore sconosciuto'
                 });
               }
             }

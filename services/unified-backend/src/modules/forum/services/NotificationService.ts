@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import { ForumNotification, ForumNotificationType, ForumDiscussionSubscription, ForumPost } from '@database/models';
 import { Character } from '@database/models/Character';
+import { logger } from '../logger';
 
 /**
  * NotificationService
@@ -39,7 +40,7 @@ export class NotificationService {
         createdAt: new Date()
       });
     } catch (error: any) {
-      console.error('[NotificationService] Failed to create notification:', error.message);
+      logger.error('[NotificationService] Failed to create notification:', error.message);
       // Don't throw - notifications are non-critical, shouldn't break the main flow
     }
   }
@@ -81,9 +82,9 @@ export class NotificationService {
         notifications.map(notif => this.createNotification(notif))
       );
 
-      console.log(`[NotificationService] Sent ${notifications.length} notifications for new post in discussion`);
+      logger.info(`[NotificationService] Sent ${notifications.length} notifications for new post in discussion`);
     } catch (error: any) {
-      console.error('[NotificationService] Failed to notify new post:', error.message);
+      logger.error('[NotificationService] Failed to notify new post:', error.message);
     }
   }
 
@@ -107,9 +108,9 @@ export class NotificationService {
         triggeredByCharacterName: params.followerCharacterName
       });
 
-      console.log(`[NotificationService] Notified character about new follower`);
+      logger.info('[NotificationService] Notified character about new follower');
     } catch (error: any) {
-      console.error('[NotificationService] Failed to notify character follow:', error.message);
+      logger.error('[NotificationService] Failed to notify character follow:', error.message);
     }
   }
 
@@ -149,9 +150,9 @@ export class NotificationService {
         triggeredByCharacterName: params.reactorCharacterName
       });
 
-      console.log(`[NotificationService] Notified post author about reaction`);
+      logger.info('[NotificationService] Notified post author about reaction');
     } catch (error: any) {
-      console.error('[NotificationService] Failed to notify reaction:', error.message);
+      logger.error('[NotificationService] Failed to notify reaction:', error.message);
     }
   }
 
@@ -185,9 +186,9 @@ export class NotificationService {
         triggeredByCharacterName: params.replierCharacterName
       });
 
-      console.log(`[NotificationService] Notified post author about reply`);
+      logger.info('[NotificationService] Notified post author about reply');
     } catch (error: any) {
-      console.error('[NotificationService] Failed to notify reply:', error.message);
+      logger.error('[NotificationService] Failed to notify reply:', error.message);
     }
   }
 }

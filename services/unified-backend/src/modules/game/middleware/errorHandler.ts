@@ -59,7 +59,7 @@ export function errorHandler(
   if (err.name === 'JsonWebTokenError') {
     statusCode = 401;
     code = 'INVALID_TOKEN';
-    message = 'Invalid authentication token';
+    message = 'Token di autenticazione non valido';
   }
   
   if (err.name === 'TokenExpiredError') {

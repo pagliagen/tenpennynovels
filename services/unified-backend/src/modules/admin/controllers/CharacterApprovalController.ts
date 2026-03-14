@@ -1526,8 +1526,9 @@ export class CharacterApprovalController {
    */
   static async getDuplicateFaceClaims(req: Request, res: Response): Promise<void> {
     try {
+      const { Character } = await import('@database/models/Character');
       const duplicates = await Character.aggregate([
-        { $match: { prestavolto: { $exists: true, $ne: null, $ne: '' }, isDeleted: { $ne: true } } },
+        { $match: { prestavolto: { $exists: true, $nin: [null, ''] }, isDeleted: { $ne: true } } },
         { $group: {
             _id: { $toLower: '$prestavolto' },
             prestavolto: { $first: '$prestavolto' },
@@ -1539,7 +1540,7 @@ export class CharacterApprovalController {
         { $sort: { count: -1, prestavolto: 1 } }
       ]);
 
-      const faceClaimGroups = duplicates.map(group => ({
+      const faceClaimGroups = duplicates.map((group: any) => ({
         prestavolto: group.prestavolto,
         characters: group.characters,
         duplicateCount: group.count,
@@ -1550,7 +1551,7 @@ export class CharacterApprovalController {
       res.json(successResponse({ faceClaimGroups }, undefined, getRequestId(req)));
     } catch (error: any) {
       logger.error('Get duplicate face claims error:', { error: error.message });
-      res.status(500).json(errorResponse('Failed to get duplicates', 'GET_DUPLICATES_ERROR', undefined, 500, getRequestId(req)));
+      res.status(500).json(errorResponse('Impossibile recuperare i duplicati', 'GET_DUPLICATES_ERROR', undefined, 500, getRequestId(req)));
     }
   }
 
@@ -1560,9 +1561,11 @@ export class CharacterApprovalController {
    */
   static async approveFaceClaim(req: Request, res: Response): Promise<void> {
     try {
+      const { Character } = await import('@database/models/Character');
       const character = await Character.findById(req.params.id);
       if (!character) {
-        return res.status(404).json(errorResponse('Character not found', 'CHARACTER_NOT_FOUND', undefined, 404, getRequestId(req)));
+        res.status(404).json(errorResponse('Personaggio non trovato', 'CHARACTER_NOT_FOUND', undefined, 404, getRequestId(req)));
+        return;
       }
 
       character.prestavoltoStatus = 'approved';
@@ -1574,7 +1577,7 @@ export class CharacterApprovalController {
       res.json(successResponse({ character }, 'Face claim approved', getRequestId(req)));
     } catch (error: any) {
       logger.error('Approve face claim error:', { error: error.message });
-      res.status(500).json(errorResponse('Failed to approve', 'APPROVE_FACECLAIM_ERROR', undefined, 500, getRequestId(req)));
+      res.status(500).json(errorResponse('Impossibile approvare', 'APPROVE_FACECLAIM_ERROR', undefined, 500, getRequestId(req)));
     }
   }
 
@@ -1584,9 +1587,11 @@ export class CharacterApprovalController {
    */
   static async rejectFaceClaim(req: Request, res: Response): Promise<void> {
     try {
+      const { Character } = await import('@database/models/Character');
       const character = await Character.findById(req.params.id);
       if (!character) {
-        return res.status(404).json(errorResponse('Character not found', 'CHARACTER_NOT_FOUND', undefined, 404, getRequestId(req)));
+        res.status(404).json(errorResponse('Personaggio non trovato', 'CHARACTER_NOT_FOUND', undefined, 404, getRequestId(req)));
+        return;
       }
 
       character.prestavolto = undefined;
@@ -1599,7 +1604,7 @@ export class CharacterApprovalController {
       res.json(successResponse({ character }, 'Face claim rejected and cleared', getRequestId(req)));
     } catch (error: any) {
       logger.error('Reject face claim error:', { error: error.message });
-      res.status(500).json(errorResponse('Failed to reject', 'REJECT_FACECLAIM_ERROR', undefined, 500, getRequestId(req)));
+      res.status(500).json(errorResponse('Impossibile rifiutare', 'REJECT_FACECLAIM_ERROR', undefined, 500, getRequestId(req)));
     }
   }
 

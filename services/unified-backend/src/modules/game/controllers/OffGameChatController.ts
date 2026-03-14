@@ -831,7 +831,7 @@ export class OffGameChatController {
       logger.error('Leave chat error:', error);
 
       res.status(500).json(errorResponse(
-        'Failed to leave chat',
+        'Impossibile uscire dalla chat',
         'LEAVE_CHAT_ERROR',
         undefined,
         500,

@@ -44,7 +44,7 @@ export interface ApiResponse<T = unknown> {
   result: boolean;           // Standard: true/false
   success?: boolean;         // Optional: backward compat (mirrors result)
   data?: T;                  // Single record data or metadata object
-  items?: T[];               // Array for list responses (changed from 'list')
+  list?: T[];                // Array for list responses
   pagination?: PaginationInfo; // Pagination info for list responses
   message?: string;          // Optional message for POST/PATCH/DELETE
   error?: string;            // Error message if result = false
@@ -57,20 +57,19 @@ export interface ApiResponse<T = unknown> {
 /**
  * List Response - REQUIRED format for ALL /admin/* list endpoints
  *
- * CRITICAL: items and pagination MUST be at root level, NOT wrapped in data object
+ * CRITICAL: list and pagination MUST be at root level, NOT wrapped in data object
  *
  * Example:
  * {
  *   result: true,
- *   result: true,
- *   items: [...],
+ *   list: [...],
  *   pagination: {...},
  *   timestamp: "..."
  * }
  */
 export interface ApiListResponse<T> {
   result: true;
-  items: T[];
+  list: T[];
   pagination: PaginationInfo;
   message?: string;
   timestamp: string;
@@ -82,7 +81,6 @@ export interface ApiListResponse<T> {
  *
  * Example:
  * {
- *   result: true,
  *   result: true,
  *   data: {...},
  *   timestamp: "..."

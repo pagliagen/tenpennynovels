@@ -5,6 +5,7 @@
  */
 
 import { QdrantClient } from '@qdrant/js-client-rest';
+import { logger } from './logger';
 
 const QDRANT_URL = process.env.QDRANT_URL || 'http://localhost:6333';
 
@@ -25,7 +26,7 @@ export const COLLECTIONS = {
  */
 export async function initQdrantCollections(): Promise<void> {
   try {
-    console.log('🔍 Initializing Qdrant collections...');
+    logger.info('Initializing Qdrant collections...');
 
     // Get existing collections
     const { collections } = await qdrant.getCollections();
@@ -39,9 +40,9 @@ export async function initQdrantCollections(): Promise<void> {
           distance: 'Cosine'
         }
       });
-      console.log(`✅ Qdrant collection "${COLLECTIONS.DOCUMENTS}" created`);
+      logger.info(`Qdrant collection "${COLLECTIONS.DOCUMENTS}" created`);
     } else {
-      console.log(`✅ Qdrant collection "${COLLECTIONS.DOCUMENTS}" already exists`);
+      logger.info(`Qdrant collection "${COLLECTIONS.DOCUMENTS}" already exists`);
     }
 
     // ========== LOCATION ACTIONS COLLECTION ==========
@@ -52,16 +53,16 @@ export async function initQdrantCollections(): Promise<void> {
           distance: 'Cosine'
         }
       });
-      console.log(`✅ Qdrant collection "${COLLECTIONS.LOCATION_ACTIONS}" created`);
+      logger.info(`Qdrant collection "${COLLECTIONS.LOCATION_ACTIONS}" created`);
     } else {
-      console.log(`✅ Qdrant collection "${COLLECTIONS.LOCATION_ACTIONS}" already exists`);
+      logger.info(`Qdrant collection "${COLLECTIONS.LOCATION_ACTIONS}" already exists`);
     }
 
-    console.log('✅ Qdrant collections initialized successfully');
+    logger.info('Qdrant collections initialized successfully');
 
   } catch (error: any) {
-    console.error('❌ Qdrant initialization failed:', error.message);
-    console.error('   Make sure Qdrant is running on', QDRANT_URL);
+    logger.error('Qdrant initialization failed:', error.message);
+    logger.error('Make sure Qdrant is running on', QDRANT_URL);
     // Don't throw - allow app to start even if Qdrant is down
   }
 }
@@ -74,7 +75,7 @@ export async function checkQdrantHealth(): Promise<boolean> {
     const { collections } = await qdrant.getCollections();
     return true;
   } catch (error) {
-    console.error('Qdrant health check failed:', error);
+    logger.error('Qdrant health check failed:', error);
     return false;
   }
 }

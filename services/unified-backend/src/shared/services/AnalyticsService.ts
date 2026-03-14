@@ -13,6 +13,7 @@ import {
   BrowserStats,
   ContentStats
 } from '../schemas/analyticsSchemas';
+import { logger } from '@shared/utils/logger';
 
 import { 
   DashboardMetrics,
@@ -47,7 +48,7 @@ export class AnalyticsService {
         updatedAt: new Date()
       });
     } catch (error: any) {
-      console.error('Error tracking user session:', error);
+      logger.error('Error tracking user session:', error);
     }
   }
 
@@ -97,7 +98,7 @@ export class AnalyticsService {
         }
       );
     } catch (error: any) {
-      console.error('Error tracking page view:', error);
+      logger.error('Error tracking page view:', error);
     }
   }
 
@@ -139,7 +140,7 @@ export class AnalyticsService {
         }
       );
     } catch (error: any) {
-      console.error('Error tracking user action:', error);
+      logger.error('Error tracking user action:', error);
     }
   }
 
@@ -163,7 +164,7 @@ export class AnalyticsService {
         );
       }
     } catch (error: any) {
-      console.error('Error ending user session:', error);
+      logger.error('Error ending user session:', error);
     }
   }
 
@@ -191,7 +192,7 @@ export class AnalyticsService {
         createdAt: new Date()
       });
     } catch (error: any) {
-      console.error('Error tracking system metrics:', error);
+      logger.error('Error tracking system metrics:', error);
     }
   }
 
@@ -349,11 +350,11 @@ export class AnalyticsService {
         data: metrics
       };
     } catch (error: any) {
-      console.error('Error getting game dashboard metrics:', error);
+      logger.error('Error getting game dashboard metrics:', error);
       return {
         success: false,
         data: {} as DashboardMetrics,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Errore sconosciuto'
       };
     }
   }
@@ -531,11 +532,11 @@ export class AnalyticsService {
         data: metrics
       };
     } catch (error: any) {
-      console.error('Error getting dashboard metrics:', error);
+      logger.error('Error getting dashboard metrics:', error);
       return {
         success: false,
         data: {} as DashboardMetrics,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Errore sconosciuto'
       };
     }
   }
@@ -583,9 +584,9 @@ export class AnalyticsService {
         { upsert: true, returnDocument: 'after' }
       );
 
-      console.log(`Daily stats aggregated for ${date}`);
+      logger.info(`Daily stats aggregated for ${date}`);
     } catch (error: any) {
-      console.error('Error aggregating daily stats:', error);
+      logger.error('Error aggregating daily stats:', error);
     }
   }
 
@@ -739,7 +740,7 @@ export class AnalyticsService {
         }
       };
     } catch (error: any) {
-      console.error('Error getting real game data:', error);
+      logger.error('Error getting real game data:', error);
       // Return default values on error
       return {
         totalUsers: 0,
@@ -846,7 +847,7 @@ export class AnalyticsService {
       };
 
     } catch (error: any) {
-      console.error('Error getting gameplay activity:', error);
+      logger.error('Error getting gameplay activity:', error);
       throw error;
     }
   }
@@ -870,9 +871,9 @@ export class AnalyticsService {
       await BrowserStats.deleteMany({ createdAt: { $lt: oneYearAgo } });
       await GeographicStats.deleteMany({ createdAt: { $lt: oneYearAgo } });
 
-      console.log('Old analytics data cleaned up');
+      logger.info('Old analytics data cleaned up');
     } catch (error: any) {
-      console.error('Error cleaning up old data:', error);
+      logger.error('Error cleaning up old data:', error);
     }
   }
 }

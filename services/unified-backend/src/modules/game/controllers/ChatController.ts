@@ -45,7 +45,7 @@ export class ChatController {
       const character = req.character;
       if (!character) {
         res.status(401).json(errorResponse(
-          'Character context required',
+          'Contesto personaggio richiesto',
           'CHARACTER_CONTEXT_REQUIRED',
           undefined,
           401,
@@ -173,7 +173,7 @@ export class ChatController {
         const fullCharacter = await Character.findById(character.characterId).lean();
         if (!fullCharacter) {
           res.status(404).json(errorResponse(
-            'Character not found',
+            'Personaggio non trovato',
             'CHARACTER_NOT_FOUND',
             undefined,
             404,
@@ -225,7 +225,7 @@ export class ChatController {
         const fullCharacter = await Character.findById(character.characterId).lean();
         if (!fullCharacter) {
           res.status(404).json(errorResponse(
-            'Character not found',
+            'Personaggio non trovato',
             'CHARACTER_NOT_FOUND',
             undefined,
             404,
@@ -301,7 +301,7 @@ export class ChatController {
 
       // Emit WebSocket notification with full message (frontend expects complete ChatMessage)
       const io = getSocketIO();
-      console.log('🔌 ChatsController: io instance:', io ? 'FOUND' : 'NOT FOUND');
+      logger.debug('ChatsController: io instance:', io ? 'FOUND' : 'NOT FOUND');
 
       if (io) {
         const roomName = `location_${locationId}`;
@@ -332,14 +332,14 @@ export class ChatController {
           locationSlug: location?.slug || null
         };
 
-        console.log('🔔 ChatsController: Emitting notification to room:', roomName, 'with message:', chatMessage._id);
+        logger.debug('ChatsController: Emitting notification to room:', roomName, 'with message:', chatMessage._id);
         io.to(roomName).emit('location_message_notification', notification);
 
         // Debug: Check how many clients are in the room
         const room = io.sockets.adapter.rooms.get(roomName);
-        console.log('👥 ChatsController: Clients in room', roomName, ':', room ? room.size : 0);
+        logger.debug('ChatsController: Clients in room', roomName, ':', room ? room.size : 0);
       } else {
-        console.error('❌ ChatsController: Socket.io instance not found in req.app');
+        logger.error('ChatsController: Socket.io instance not found in req.app');
       }
 
       logger.info(`Location action created: ${character.characterName} (${actionType}) in ${locationId}`);
@@ -551,7 +551,7 @@ export class ChatController {
       const character = req.character;
       if (!character) {
         res.status(401).json(errorResponse(
-          'Character context required',
+          'Contesto personaggio richiesto',
           'CHARACTER_CONTEXT_REQUIRED',
           undefined,
           401,
@@ -777,7 +777,7 @@ export class ChatController {
       const character = req.character;
       if (!character) {
         res.status(401).json(errorResponse(
-          'Character context required',
+          'Contesto personaggio richiesto',
           'CHARACTER_CONTEXT_REQUIRED',
           undefined,
           401,
@@ -944,7 +944,7 @@ export class ChatController {
       const character = req.character;
       if (!character) {
         res.status(401).json(errorResponse(
-          'Character context required',
+          'Contesto personaggio richiesto',
           'CHARACTER_CONTEXT_REQUIRED',
           undefined,
           401,
@@ -1048,7 +1048,7 @@ export class ChatController {
       const character = req.character;
       if (!character) {
         res.status(401).json(errorResponse(
-          'Character context required',
+          'Contesto personaggio richiesto',
           'CHARACTER_CONTEXT_REQUIRED',
           undefined,
           401,
@@ -1291,7 +1291,7 @@ export class ChatController {
       const character = req.character;
       if (!character) {
         res.status(401).json(errorResponse(
-          'Character context required',
+          'Contesto personaggio richiesto',
           'CHARACTER_CONTEXT_REQUIRED',
           undefined,
           401,
@@ -1440,12 +1440,12 @@ export class ChatController {
           timestamp: action.timestamp
         };
 
-        console.log('🔔 createBotAction: Emitting notification to room:', roomName, notification);
+        logger.debug('createBotAction: Emitting notification to room:', roomName, notification);
         io.to(roomName).emit('location_message_notification', notification);
 
         // Debug: Check how many clients are in the room
         const room = io.sockets.adapter.rooms.get(roomName);
-        console.log('👥 createBotAction: Clients in room', roomName, ':', room ? room.size : 0);
+        logger.debug('createBotAction: Clients in room', roomName, ':', room ? room.size : 0);
       }
 
       logger.info(`Bot action created: ${action._id} by bot ${characterName} in location ${locationId}`);
@@ -1481,7 +1481,7 @@ export class ChatController {
       const character = req.character;
       if (!character) {
         res.status(401).json(errorResponse(
-          'Character context required',
+          'Contesto personaggio richiesto',
           'CHARACTER_CONTEXT_REQUIRED',
           undefined,
           401,
@@ -1670,7 +1670,7 @@ export class ChatController {
       const character = req.character;
       if (!character) {
         res.status(401).json(errorResponse(
-          'Character context required',
+          'Contesto personaggio richiesto',
           'CHARACTER_CONTEXT_REQUIRED',
           undefined,
           401,
@@ -1737,7 +1737,7 @@ export class ChatController {
 
       if (!attackerCharacter || !defenderCharacter) {
         res.status(404).json(errorResponse(
-          'Character not found',
+          'Personaggio non trovato',
           'CHARACTER_NOT_FOUND',
           undefined,
           404,

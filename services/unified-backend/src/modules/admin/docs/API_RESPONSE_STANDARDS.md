@@ -17,7 +17,7 @@ Questo documento definisce gli standard **OBBLIGATORI** per le risposte API di t
 {
   result: true,
   success: true,
-  items: T[],              // ⚠️ SEMPRE al root level, MAI dentro 'data'
+  list: T[],                // ⚠️ SEMPRE al root level, MAI dentro 'data'
   pagination: {
     page: number,
     totalPages: number,
@@ -34,7 +34,7 @@ Questo documento definisce gli standard **OBBLIGATORI** per le risposte API di t
 
 **Tipo TypeScript**: `ApiListResponse<T>`
 
-**Helper Function**: `listResponse(items, pagination, message?, requestId?)`
+**Helper Function**: `listResponse(list, pagination, message?, requestId?)`
 
 **Esempio**:
 ```typescript
@@ -53,7 +53,7 @@ const pagination = {
 res.json(listResponse(users, pagination, undefined, getRequestId(req)));
 
 // ❌ SBAGLIATO - NON usare successResponse per liste
-res.json(successResponse({ items: users, pagination }, getRequestId(req)));
+res.json(successResponse({ list: users, pagination }, getRequestId(req)));
 // ^ Questo wrappa in 'data' object creando un formato inconsistente
 ```
 
@@ -163,7 +163,7 @@ if (users.length === 0) {
 }
 
 // ❌ SBAGLIATO - Non usare successResponse
-return res.json(successResponse({ items: [], pagination: {...} }, getRequestId(req)));
+  return res.json(successResponse({ list: [], pagination: {...} }, getRequestId(req)));
 ```
 
 ### Early Returns in List Endpoints
@@ -178,7 +178,7 @@ if (userIds.length === 0) {
 
 // ❌ SBAGLIATO
 if (userIds.length === 0) {
-  return res.json(successResponse({ items: [], pagination: {...} }));
+  return res.json(successResponse({ list: [], pagination: {...} }));
 }
 ```
 
@@ -186,7 +186,7 @@ if (userIds.length === 0) {
 
 ## Checklist per Nuovi Endpoint
 
-- [ ] **List endpoint**: Usa `listResponse()` per ritornare `items` e `pagination` al root level
+- [ ] **List endpoint**: Usa `listResponse()` per ritornare `list` e `pagination` al root level
 - [ ] **Single record endpoint**: Usa `successResponse()` per ritornare `data` object
 - [ ] **Error handling**: Usa `errorResponse()` con status code appropriato
 - [ ] **TypeScript**: Funzione tipizzata con `ApiListResponse<T>`, `ApiSingleResponse<T>`, o `ApiErrorResponse`

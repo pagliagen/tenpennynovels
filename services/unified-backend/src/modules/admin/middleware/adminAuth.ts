@@ -32,7 +32,7 @@ export class AdminAuthMiddleware {
       const authToken = req.cookies?.auth_token;
       if (!authToken) {
         res.status(401).json(errorResponse(
-          'Authentication required',
+          'Autenticazione richiesta',
           'NO_AUTH_TOKEN',
           undefined,
           401,
@@ -43,7 +43,7 @@ export class AdminAuthMiddleware {
 
       const decoded = jwt.verify(authToken, getJwtSecret()) as any;
       if (!decoded.userId || !decoded.username) {
-        throw new Error('Invalid token payload');
+        throw new Error('Payload del token non valido');
       }
 
       const requestUser: RequestUser = {
@@ -95,7 +95,7 @@ export class AdminAuthMiddleware {
       });
       
       res.status(401).json(errorResponse(
-        'Invalid authentication token',
+        'Token di autenticazione non valido',
         'INVALID_AUTH_TOKEN',
         undefined,
         401,
@@ -112,7 +112,7 @@ export class AdminAuthMiddleware {
     return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
       if (!req.user?.canAccessAdminPanel) {
         res.status(403).json(errorResponse(
-          'Admin access required',
+          'Accesso admin richiesto',
           'ADMIN_ACCESS_REQUIRED',
           undefined,
           403,
@@ -132,7 +132,7 @@ export class AdminAuthMiddleware {
         );
 
         if (missingPermissions.length > 0) {
-          logger.warn('Insufficient permissions', {
+          logger.warn('Permessi insufficienti', {
             userId: req.user.userId,
             username: req.user.username,
             requiredPermissions: permissions,
@@ -142,7 +142,7 @@ export class AdminAuthMiddleware {
           });
 
           res.status(403).json(errorResponse(
-            'Insufficient permissions',
+            'Permessi insufficienti',
             'INSUFFICIENT_PERMISSIONS',
             { requiredPermissions: permissions, missingPermissions },
             403,
@@ -161,7 +161,7 @@ export class AdminAuthMiddleware {
         });
 
         res.status(500).json(errorResponse(
-          'Permission check failed',
+          'Controllo permessi fallito',
           'PERMISSION_CHECK_ERROR',
           undefined,
           500,
@@ -179,7 +179,7 @@ export class AdminAuthMiddleware {
     return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
       if (!req.user) {
         res.status(401).json(errorResponse(
-          'Authentication required',
+          'Autenticazione richiesta',
           'AUTHENTICATION_REQUIRED',
           undefined,
           401,
@@ -204,7 +204,7 @@ export class AdminAuthMiddleware {
           });
 
           res.status(403).json(errorResponse(
-            `Insufficient permissions for ${permission}`,
+            `Permessi insufficienti per ${permission}`,
             'INSUFFICIENT_GRANULAR_PERMISSIONS',
             { requiredPermission: permission },
             403,
@@ -223,7 +223,7 @@ export class AdminAuthMiddleware {
         });
 
         res.status(500).json(errorResponse(
-          'Permission check failed',
+          'Controllo permessi fallito',
           'PERMISSION_CHECK_ERROR',
           undefined,
           500,
@@ -325,7 +325,7 @@ export class AdminAuthMiddleware {
           });
 
           res.status(429).json(errorResponse(
-            'Too many sensitive operations. Please wait before trying again.',
+            'Troppe operazioni sensibili. Attendi prima di riprovare.',
             'ADMIN_RATE_LIMITED',
             undefined,
             429,

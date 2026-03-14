@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import { TicketNotification } from '@database/models/TicketNotification';
+import { logger } from '../utils/logger';
 
 /**
  * TicketNotificationController
@@ -26,7 +27,7 @@ export class TicketNotificationController {
       if (!characterId) {
         res.status(401).json({
           result: false,
-          error: 'Character not found',
+          error: 'Personaggio non trovato',
           code: 'CHARACTER_NOT_FOUND'
         });
         return;
@@ -63,7 +64,7 @@ export class TicketNotificationController {
         }
       });
     } catch (error: any) {
-      console.error('[TicketNotificationController] List error:', error);
+      logger.error('[TicketNotificationController] List error:', error);
       res.status(500).json({
         result: false,
         error: 'Failed to fetch notifications',
@@ -84,7 +85,7 @@ export class TicketNotificationController {
       if (!characterId) {
         res.status(401).json({
           result: false,
-          error: 'Character not found',
+          error: 'Personaggio non trovato',
           code: 'CHARACTER_NOT_FOUND'
         });
         return;
@@ -129,7 +130,7 @@ export class TicketNotificationController {
         message: 'Notification marked as read'
       });
     } catch (error: any) {
-      console.error('[TicketNotificationController] Mark read error:', error);
+      logger.error('[TicketNotificationController] Mark read error:', error);
       res.status(500).json({
         result: false,
         error: 'Failed to mark notification as read',
@@ -149,7 +150,7 @@ export class TicketNotificationController {
       if (!characterId) {
         res.status(401).json({
           result: false,
-          error: 'Character not found',
+          error: 'Personaggio non trovato',
           code: 'CHARACTER_NOT_FOUND'
         });
         return;
@@ -166,7 +167,7 @@ export class TicketNotificationController {
         message: `Marked ${markedCount} notifications as read`
       });
     } catch (error: any) {
-      console.error('[TicketNotificationController] Mark all read error:', error);
+      logger.error('[TicketNotificationController] Mark all read error:', error);
       res.status(500).json({
         result: false,
         error: 'Failed to mark all notifications as read',
@@ -186,7 +187,7 @@ export class TicketNotificationController {
       if (!characterId) {
         res.status(401).json({
           result: false,
-          error: 'Character not found',
+          error: 'Personaggio non trovato',
           code: 'CHARACTER_NOT_FOUND'
         });
         return;
@@ -201,7 +202,7 @@ export class TicketNotificationController {
         }
       });
     } catch (error: any) {
-      console.error('[TicketNotificationController] Get unread count error:', error);
+      logger.error('[TicketNotificationController] Get unread count error:', error);
       res.status(500).json({
         result: false,
         error: 'Failed to get unread count',
@@ -222,7 +223,7 @@ export class TicketNotificationController {
       if (!characterId) {
         res.status(401).json({
           result: false,
-          error: 'Character not found',
+          error: 'Personaggio non trovato',
           code: 'CHARACTER_NOT_FOUND'
         });
         return;
@@ -263,7 +264,7 @@ export class TicketNotificationController {
         message: 'Notification deleted'
       });
     } catch (error: any) {
-      console.error('[TicketNotificationController] Delete error:', error);
+      logger.error('[TicketNotificationController] Delete error:', error);
       res.status(500).json({
         result: false,
         error: 'Failed to delete notification',

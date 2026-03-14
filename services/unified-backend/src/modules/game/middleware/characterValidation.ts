@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { body, validationResult } from 'express-validator';
 import { ApiResponse } from '../types/game';
+import { logger } from '../utils/logger';
 
 export class CharacterValidationMiddleware {
   /**
@@ -388,7 +389,7 @@ export class CharacterValidationMiddleware {
       if (!character) {
         const response: ApiResponse = {
           result: false,
-          error: 'Character not found',
+          error: 'Personaggio non trovato',
           code: 'CHARACTER_NOT_FOUND',
           timestamp: new Date().toISOString()
         };
@@ -442,7 +443,7 @@ export class CharacterValidationMiddleware {
       next();
 
     } catch (error: any) {
-      console.error('Background completion validation error:', error);
+      logger.error('Background completion validation error:', error);
 
       const response: ApiResponse = {
         result: false,

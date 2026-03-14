@@ -6,6 +6,7 @@ import { Character } from '@database/models/Character';
 import { logger } from '../utils/logger';
 import { auditLogger } from '../utils/auditLogger';
 import { successResponse, errorResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
+import { escapeRegex } from '@shared/utils/validation';
 
 export class MessagingSystemController {
   
@@ -49,8 +50,9 @@ export class MessagingSystemController {
 
       // Search in name
       if (search) {
+        const escapedSearch = escapeRegex(search as string);
         filter.$or = [
-          { name: { $regex: search, $options: 'i' } }
+          { name: { $regex: escapedSearch, $options: 'i' } }
         ];
       }
 

@@ -199,7 +199,7 @@ export default function ItemList() {
     setParams(prev => ({ ...prev, sortBy, sortOrder, page: 1 }));
 
   const isSaving = createItem.isPending || updateItem.isPending;
-  const items = data?.items ?? [];
+  const items = data?.list ?? [];
   const totalItems = data?.pagination?.totalItems ?? 0;
 
   if (error) {

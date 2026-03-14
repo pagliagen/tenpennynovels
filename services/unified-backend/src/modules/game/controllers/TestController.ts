@@ -44,7 +44,7 @@ export class TestController {
       if (!eventType || !channel || !data) {
         res.status(400).json({
           result: false,
-          error: 'Missing required fields: eventType, channel, data',
+          error: 'Campi obbligatori mancanti: eventType, channel, data',
           code: 'VALIDATION_ERROR',
         });
         return;

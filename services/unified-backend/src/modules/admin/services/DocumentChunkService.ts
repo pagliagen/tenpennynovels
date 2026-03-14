@@ -220,7 +220,7 @@ export class DocumentChunkService {
         chunksCreated: 0,
         chunksDeactivated: 0,
         newVersion: 0,
-        error: error.message || 'Unknown error'
+        error: error.message || 'Errore sconosciuto'
       };
     }
   }

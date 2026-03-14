@@ -4,19 +4,20 @@ import { successResponse, errorResponse, createResponse, getRequestId } from '..
 import { ForumBookmark } from '@database/models/ForumBookmark';
 import { ForumPost } from '@database/models/ForumPost';
 import { ForumDiscussion } from '@database/models/ForumDiscussion';
+import { logger } from '../logger';
 
 export class ForumBookmarkController {
   static async toggleBookmark(req: Request<{ postId: string }>, res: Response): Promise<void> {
     try {
       const character = req.character;
       if (!character) {
-        res.status(401).json(errorResponse('Character not found', 'CHARACTER_NOT_FOUND', undefined, 401, getRequestId(req)));
+        res.status(401).json(errorResponse('Personaggio non trovato', 'CHARACTER_NOT_FOUND', undefined, 401, getRequestId(req)));
         return;
       }
 
       const { postId } = req.params;
       if (!mongoose.Types.ObjectId.isValid(postId)) {
-        res.status(400).json(errorResponse('Invalid post ID', 'INVALID_POST_ID', undefined, 400, getRequestId(req)));
+        res.status(400).json(errorResponse('ID post non valido', 'INVALID_POST_ID', undefined, 400, getRequestId(req)));
         return;
       }
 
@@ -25,7 +26,7 @@ export class ForumBookmarkController {
 
       const post = await ForumPost.findById(itemId);
       if (!post) {
-        res.status(404).json(errorResponse('Post not found', 'POST_NOT_FOUND', undefined, 404, getRequestId(req)));
+        res.status(404).json(errorResponse('Post non trovato', 'POST_NOT_FOUND', undefined, 404, getRequestId(req)));
         return;
       }
 
@@ -39,7 +40,7 @@ export class ForumBookmarkController {
         await ForumBookmark.deleteOne({ _id: existing._id });
         res.status(200).json(successResponse({
           bookmarked: false
-        }, 'Bookmark removed', getRequestId(req)));
+        }, 'Segnalibro rimosso', getRequestId(req)));
       } else {
         await ForumBookmark.create({
           characterId,
@@ -51,11 +52,11 @@ export class ForumBookmarkController {
         });
         res.status(201).json(createResponse({
           bookmarked: true
-        }, 'Bookmark added', getRequestId(req)));
+        }, 'Segnalibro aggiunto', getRequestId(req)));
       }
     } catch (error: unknown) {
-      console.error('[ForumBookmarkController] Toggle bookmark error:', error);
-      res.status(500).json(errorResponse('Failed to toggle bookmark', 'TOGGLE_BOOKMARK_ERROR', undefined, 500, getRequestId(req)));
+      logger.error('[ForumBookmarkController] Toggle bookmark error:', error);
+      res.status(500).json(errorResponse('Impossibile attivare/disattivare il segnalibro', 'TOGGLE_BOOKMARK_ERROR', undefined, 500, getRequestId(req)));
     }
   }
 
@@ -63,7 +64,7 @@ export class ForumBookmarkController {
     try {
       const character = req.character;
       if (!character) {
-        res.status(401).json(errorResponse('Character not found', 'CHARACTER_NOT_FOUND', undefined, 401, getRequestId(req)));
+        res.status(401).json(errorResponse('Personaggio non trovato', 'CHARACTER_NOT_FOUND', undefined, 401, getRequestId(req)));
         return;
       }
 
@@ -104,8 +105,8 @@ export class ForumBookmarkController {
         totalCount: items.length
       }, undefined, getRequestId(req)));
     } catch (error: unknown) {
-      console.error('[ForumBookmarkController] Get bookmarks error:', error);
-      res.status(500).json(errorResponse('Failed to fetch bookmarks', 'GET_BOOKMARKS_ERROR', undefined, 500, getRequestId(req)));
+      logger.error('[ForumBookmarkController] Get bookmarks error:', error);
+      res.status(500).json(errorResponse('Impossibile recuperare i segnalibri', 'GET_BOOKMARKS_ERROR', undefined, 500, getRequestId(req)));
     }
   }
 }

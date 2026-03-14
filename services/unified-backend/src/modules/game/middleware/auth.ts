@@ -25,14 +25,14 @@ export class AuthMiddleware {
     try {
       const authToken = req.cookies?.auth_token;
       if (!authToken) {
-        return { result: false,  error: 'No auth token' };
+        return { result: false,  error: 'Token di autenticazione mancante' };
       }
 
       const jwtSecret = getJwtSecret();
       const decoded = jwt.verify(authToken, jwtSecret) as any;
 
       if (!decoded.userId || !decoded.username) {
-        return { result: false,  error: 'Invalid token payload' };
+        return { result: false,  error: 'Payload del token non valido' };
       }
 
       const user: AuthUser = {
@@ -62,7 +62,7 @@ export class AuthMiddleware {
       if (!authToken) {
         const response: ApiResponse = {
           result: false,
-          error: 'Authentication required',
+          error: 'Autenticazione richiesta',
           code: 'NO_AUTH_TOKEN',
           timestamp: new Date().toISOString()
         };
@@ -75,7 +75,7 @@ export class AuthMiddleware {
       const decoded = jwt.verify(authToken, jwtSecret) as any;
       
       if (!decoded.userId || !decoded.username) {
-        throw new Error('Invalid token payload');
+        throw new Error('Payload del token non valido');
       }
 
       // Attach user info to request (campi admin impostati solo da admin middleware)
@@ -95,7 +95,7 @@ export class AuthMiddleware {
       
       const response: ApiResponse = {
         result: false,
-        error: 'Invalid authentication token',
+        error: 'Token di autenticazione non valido',
         code: 'INVALID_AUTH_TOKEN',
         timestamp: new Date().toISOString()
       };
@@ -111,7 +111,7 @@ export class AuthMiddleware {
   static requireCharacterContext(req: Request, res: Response, next: NextFunction): void {
     try {
       if (!req.user) {
-        throw new Error('User authentication required before character context');
+        throw new Error('Autenticazione utente richiesta prima del contesto personaggio');
       }
 
       const characterToken = req.cookies?.character_context;
@@ -119,7 +119,7 @@ export class AuthMiddleware {
       if (!characterToken) {
         const response: ApiResponse = {
           result: false,
-          error: 'Character selection required',
+          error: 'Selezione del personaggio richiesta',
           code: 'NO_CHARACTER_CONTEXT',
           timestamp: new Date().toISOString()
         };
@@ -131,12 +131,12 @@ export class AuthMiddleware {
       const decoded = jwt.verify(characterToken, getJwtSecret()) as any;
       
       if (!decoded.characterId || !decoded.userId) {
-        throw new Error('Invalid character context token');
+        throw new Error('Token contesto personaggio non valido');
       }
 
       // Verify that character belongs to authenticated user
       if (decoded.userId !== req.user.userId) {
-        throw new Error('Character context does not match authenticated user');
+        throw new Error('Il personaggio non appartiene all\'utente autenticato');
       }
 
       // Attach character context to request
@@ -165,7 +165,7 @@ export class AuthMiddleware {
       
       const response: ApiResponse = {
         result: false,
-        error: 'Invalid character context',
+        error: 'Contesto personaggio non valido',
         code: 'INVALID_CHARACTER_CONTEXT',
         timestamp: new Date().toISOString()
       };
@@ -180,7 +180,7 @@ export class AuthMiddleware {
    */
   static requireCharacterAuth(req: Request, res: Response, next: NextFunction): void {
     // ===== TEST BYPASS (ONLY FOR LOCAL DEVELOPMENT) =====
-    if (process.env.SKIP_AUTH_CHECK === 'true') {
+    if (process.env.SKIP_AUTH_CHECK === 'true' && process.env.NODE_ENV !== 'production') {
       // Mock character context for testing
       req.character = {
         characterId: process.env.TEST_CHARACTER_ID || 'test-character-id',
@@ -202,7 +202,7 @@ export class AuthMiddleware {
         iat: Math.floor(Date.now() / 1000),
         exp: Math.floor(Date.now() / 1000) + 86400
       };
-      console.log('⚠️  [AUTH BYPASS] Skipping auth check for testing');
+      logger.warn('[AUTH BYPASS] Skipping auth check for testing');
       next();
       return;
     }
@@ -253,7 +253,7 @@ export class AuthMiddleware {
 
           const response: ApiResponse = {
             result: false,
-            error: 'Character verification failed',
+            error: 'Verifica del personaggio fallita',
             code: 'CHARACTER_VERIFICATION_ERROR',
             timestamp: new Date().toISOString()
           };
@@ -272,7 +272,7 @@ export class AuthMiddleware {
     if (!req.user) {
       const response: ApiResponse = {
         result: false,
-        error: 'Authentication required',
+        error: 'Autenticazione richiesta',
         code: 'NO_AUTH_TOKEN',
         timestamp: new Date().toISOString()
       };
@@ -283,7 +283,7 @@ export class AuthMiddleware {
     if (!req.user.canAccessAdminPanel) {
       const response: ApiResponse = {
         result: false,
-        error: 'Admin access required',
+        error: 'Accesso admin richiesto',
         code: 'ADMIN_ACCESS_REQUIRED',
         timestamp: new Date().toISOString()
       };
@@ -303,7 +303,7 @@ export class AuthMiddleware {
       if (!req.user?.canAccessAdminPanel) {
         const response: ApiResponse = {
           result: false,
-          error: 'Admin access required',
+          error: 'Accesso admin richiesto',
           code: 'ADMIN_ACCESS_REQUIRED',
           timestamp: new Date().toISOString()
         };
@@ -323,7 +323,7 @@ export class AuthMiddleware {
         if (missingPermissions.length > 0) {
           const response: ApiResponse = {
             result: false,
-            error: 'Insufficient permissions',
+            error: 'Permessi insufficienti',
             code: 'INSUFFICIENT_PERMISSIONS',
             details: { missingPermissions },
             timestamp: new Date().toISOString()
@@ -336,7 +336,7 @@ export class AuthMiddleware {
         logger.error('requireAdminPermissions error', { error: err?.message, permissions });
         res.status(500).json({
           result: false,
-          error: 'Permission check failed',
+          error: 'Controllo permessi fallito',
           code: 'PERMISSION_CHECK_ERROR',
           timestamp: new Date().toISOString()
         });
@@ -360,7 +360,7 @@ export class AuthMiddleware {
       if (!req.character) {
         const response: ApiResponse = {
           result: false,
-          error: 'Character context required',
+          error: 'Contesto personaggio richiesto',
           code: 'NO_CHARACTER_CONTEXT',
           timestamp: new Date().toISOString()
         };
@@ -375,7 +375,7 @@ export class AuthMiddleware {
       if (!hasRequiredRole) {
         const response: ApiResponse = {
           result: false,
-          error: 'Insufficient gameplay permissions',
+          error: 'Permessi di gioco insufficienti',
           code: 'INSUFFICIENT_GAMEPLAY_PERMISSIONS',
           details: { 
             requiredRoles: roles,
@@ -397,8 +397,6 @@ export class AuthMiddleware {
   static optionalAuth(req: Request, res: Response, next: NextFunction): void {
     try {
       const authToken = req.cookies?.auth_token;
-      console.log('🔍 [OPTIONAL AUTH] Cookies:', Object.keys(req.cookies || {}));
-      console.log('🔍 [OPTIONAL AUTH] auth_token present:', !!authToken);
       
       if (authToken) {
         const decoded = jwt.verify(authToken, getJwtSecret()) as any;
@@ -433,8 +431,15 @@ export class AuthMiddleware {
       const expectedSecret = process.env.AI_GATEWAY_WEBHOOK_SECRET;
 
       if (!expectedSecret) {
-        logger.warn('AI_GATEWAY_WEBHOOK_SECRET not configured - skipping webhook auth');
-        return next();
+        logger.error('AI_GATEWAY_WEBHOOK_SECRET non configurato - richiesta rifiutata');
+        const response: ApiResponse = {
+          result: false,
+          error: 'Configurazione webhook mancante',
+          code: 'WEBHOOK_NOT_CONFIGURED',
+          timestamp: new Date().toISOString()
+        };
+        res.status(503).json(response);
+        return;
       }
 
       const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
@@ -442,7 +447,7 @@ export class AuthMiddleware {
       if (!token || token !== expectedSecret) {
         const response: ApiResponse = {
           result: false,
-          error: 'Invalid webhook authorization',
+          error: 'Autorizzazione webhook non valida',
           code: 'INVALID_WEBHOOK_AUTH',
           timestamp: new Date().toISOString()
         };
@@ -456,7 +461,7 @@ export class AuthMiddleware {
       logger.error('AI Gateway auth validation failed:', error);
       const response: ApiResponse = {
         result: false,
-        error: 'Authentication failed',
+        error: 'Autenticazione fallita',
         code: 'AUTH_ERROR',
         timestamp: new Date().toISOString()
       };

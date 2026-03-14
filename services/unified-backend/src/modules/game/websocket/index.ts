@@ -17,22 +17,24 @@ interface CharacterContextPayload {
   isGestore?: boolean;
 }
 
+let redisSubscriberInstance: RedisSubscriber | null = null;
+
+export function getRedisSubscriber(): RedisSubscriber | null {
+  return redisSubscriberInstance;
+}
+
 /**
  * Setup WebSocket server and handlers
  */
 export async function setupWebSocket(io: SocketIOServer): Promise<void> {
-  console.log('🔌 Setting up WebSocket server...');
-  
-  // ✅ SPRINT 4: Initialize refactored Redis Subscriber (replaces RedisEventManager god object)
-  console.log('📡 Initializing Redis Subscriber...');
+  logger.info('Inizializzazione server WebSocket...');
   const redisSubscriber = new RedisSubscriber(io);
   await redisSubscriber.initialize();
+  redisSubscriberInstance = redisSubscriber;
   logger.info('✅ Redis Subscriber initialized and subscribed to all channels');
   
   // Authentication middleware for WebSocket connections
   io.use(async (socket: Socket, next) => {
-    console.log('🔌 WebSocket authentication middleware triggered');
-    
     try {
       // Parse cookies from header
       const cookies = socket.handshake.headers.cookie;
@@ -52,12 +54,12 @@ export async function setupWebSocket(io: SocketIOServer): Promise<void> {
       }
       
       if (!authToken) {
-        return next(new Error('Authentication token required'));
+        return next(new Error('Token di autenticazione richiesto'));
       }
       
       const jwtSecret = process.env.JWT_SECRET;
       if (!jwtSecret) {
-        return next(new Error('Server configuration error'));
+        return next(new Error('Errore di configurazione del server'));
       }
       
       // Verify auth token (solo campi token; campi admin da character non presenti in WS)
@@ -78,7 +80,7 @@ export async function setupWebSocket(io: SocketIOServer): Promise<void> {
           
           // Ensure character belongs to authenticated user
           if (characterPayload.userId !== authPayload.userId) {
-            return next(new Error('Character does not belong to authenticated user'));
+            return next(new Error('Il personaggio non appartiene all\'utente autenticato'));
           }
           
           socket.data.character = {
@@ -99,7 +101,7 @@ export async function setupWebSocket(io: SocketIOServer): Promise<void> {
       
     } catch (error: any) {
       logger.error('WebSocket authentication error:', error);
-      next(new Error('Authentication failed'));
+      next(new Error('Autenticazione fallita'));
     }
   });
   
@@ -123,6 +125,10 @@ export async function setupWebSocket(io: SocketIOServer): Promise<void> {
       socket.join('admin');
       socket.join('staff');
       socket.join(`staff_${user.userId}`);
+
+      if (character?.isGestore || roles.includes('amministratore')) {
+        socket.join('staff_leadership');
+      }
     }
 
     // Fallback: management panel connects without character_context.
@@ -150,6 +156,11 @@ export async function setupWebSocket(io: SocketIOServer): Promise<void> {
             socket.join('admin');
             socket.join('staff');
             socket.join(`staff_${user.userId}`);
+
+            if (adminChar.isGestore || adminRoles.includes('amministratore')) {
+              socket.join('staff_leadership');
+            }
+
             logger.info(`[WebSocket] Admin fallback: ${user.username} joined staff room via DB lookup`);
           }
         }

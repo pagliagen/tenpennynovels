@@ -28,7 +28,7 @@ export class AuthUtils {
       const decoded = jwt.verify(authToken, this.getJwtSecret()) as JWTPayload;
       
       if (!decoded.userId || !decoded.username || !decoded.email) {
-        throw new Error('Invalid token payload - missing required fields');
+        throw new Error('Payload del token non valido - campi obbligatori mancanti');
       }
 
       return decoded;
@@ -36,7 +36,7 @@ export class AuthUtils {
       logger.warn('JWT token validation failed:', { 
         error: error instanceof Error ? error.message : String(error)
       });
-      throw new Error('Invalid authentication token');
+      throw new Error('Token di autenticazione non valido');
     }
   }
 

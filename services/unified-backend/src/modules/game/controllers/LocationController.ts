@@ -824,11 +824,11 @@ export class LocationController {
       const { locationId } = req.params;
 
       const location = await Location.findById(locationId)
-        .select('name description district locationType settings bot_enabled');
+        .select('name description district locationLevel settings bot_enabled');
 
       if (!location) {
         res.status(404).json(errorResponse(
-          'Location not found',
+          'Location non trovata',
           'LOCATION_NOT_FOUND',
           undefined,
           404,
@@ -842,7 +842,7 @@ export class LocationController {
         name: location.name,
         description: location.description,
         district: location.district,
-        locationType: location.locationType,
+        locationLevel: location.locationLevel,
         bot_enabled: location.bot_enabled
       }, undefined, getRequestId(req)));
     } catch (error: any) {
@@ -885,7 +885,7 @@ export class LocationController {
 
       if (!location) {
         res.status(404).json(errorResponse(
-          'Location not found',
+          'Location non trovata',
           'LOCATION_NOT_FOUND',
           undefined,
           404,

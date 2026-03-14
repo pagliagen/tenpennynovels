@@ -232,8 +232,8 @@ export function useLocationChat(
         return;
       }
 
-      // Update typing indicator
-      if (payload.isTyping) {
+      const isTyping = payload.isTyping ?? payload.typing ?? false;
+      if (isTyping) {
         chatStore.setTyping(payload.characterId, true);
 
         // Auto-clear after 3 seconds of inactivity
@@ -378,13 +378,7 @@ export function useLocationChat(
       clearTimeout(typingTimeoutRef.current);
     }
 
-    // Emit typing event
-    socket.emit('user_typing', {
-      locationId,
-      characterId: selectedCharacter._id,
-      characterName: selectedCharacter.name,
-      isTyping: true,
-    });
+    socket.emit('typing_start', locationId);
 
     // Auto-stop after 3 seconds of inactivity
     typingTimeoutRef.current = setTimeout(() => {
@@ -408,13 +402,7 @@ export function useLocationChat(
       typingTimeoutRef.current = null;
     }
 
-    // Emit stop typing event
-    socket.emit('user_typing', {
-      locationId,
-      characterId: selectedCharacter._id,
-      characterName: selectedCharacter.name,
-      isTyping: false,
-    });
+    socket.emit('typing_stop', locationId);
   }, [socket, selectedCharacter, locationId]);
 
   /**

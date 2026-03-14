@@ -63,7 +63,7 @@ export class CharacterSessionController {
     } catch (error: any) {
       logger.error('Error retrieving character active sessions:', error);
       res.status(500).json(errorResponse(
-        'Internal server error',
+        'Errore interno del server',
         'INTERNAL_SERVER_ERROR',
         undefined,
         500,
@@ -194,7 +194,7 @@ export class CharacterSessionController {
     } catch (error: any) {
       logger.error('Error retrieving character session history:', error);
       res.status(500).json(errorResponse(
-        'Internal server error',
+        'Errore interno del server',
         'INTERNAL_SERVER_ERROR',
         undefined,
         500,
@@ -298,7 +298,7 @@ export class CharacterSessionController {
     } catch (error: any) {
       logger.error('Error invalidating character session:', error);
       res.status(500).json(errorResponse(
-        'Internal server error',
+        'Errore interno del server',
         'INTERNAL_SERVER_ERROR',
         undefined,
         500,
@@ -388,7 +388,7 @@ export class CharacterSessionController {
     } catch (error: any) {
       logger.error('Error invalidating all other character sessions:', error);
       res.status(500).json(errorResponse(
-        'Internal server error',
+        'Errore interno del server',
         'INTERNAL_SERVER_ERROR',
         undefined,
         500,
@@ -482,7 +482,7 @@ export class CharacterSessionController {
     } catch (error: any) {
       logger.error('Error retrieving current character session:', error);
       res.status(500).json(errorResponse(
-        'Internal server error',
+        'Errore interno del server',
         'INTERNAL_SERVER_ERROR',
         undefined,
         500,

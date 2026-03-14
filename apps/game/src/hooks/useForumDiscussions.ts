@@ -49,7 +49,7 @@ export const forumDiscussionKeys = {
 export function useForumDiscussions(
   topicSlug: string | null,
   page?: number
-): UseQueryResult<{ items: ForumDiscussion[]; pagination: PaginationInfo }, Error> {
+): UseQueryResult<{ list: ForumDiscussion[]; pagination: PaginationInfo }, Error> {
   return useQuery({
     queryKey: [...forumDiscussionKeys.list(topicSlug!), page] as const,
     queryFn: () => forumApi.getDiscussions(topicSlug!, page),

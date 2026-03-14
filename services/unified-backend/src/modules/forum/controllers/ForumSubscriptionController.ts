@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import { successResponse, errorResponse, createResponse, getRequestId } from '../utils/apiResponse';
 import { ForumDiscussionSubscription } from '@database/models/ForumDiscussionSubscription';
 import { ForumDiscussion } from '@database/models/ForumDiscussion';
+import { logger } from '../logger';
 
 export class ForumSubscriptionController {
 
@@ -10,7 +11,7 @@ export class ForumSubscriptionController {
     try {
       const character = req.character;
       if (!character) {
-        res.status(401).json(errorResponse('Character not found', 'CHARACTER_NOT_FOUND', undefined, 401, getRequestId(req)));
+        res.status(401).json(errorResponse('Personaggio non trovato', 'CHARACTER_NOT_FOUND', undefined, 401, getRequestId(req)));
         return;
       }
 
@@ -19,7 +20,7 @@ export class ForumSubscriptionController {
 
       const discussion = await ForumDiscussion.findOne({ topicSlug, slug: discussionSlug });
       if (!discussion) {
-        res.status(404).json(errorResponse('Discussion not found', 'DISCUSSION_NOT_FOUND', undefined, 404, getRequestId(req)));
+        res.status(404).json(errorResponse('Discussione non trovata', 'DISCUSSION_NOT_FOUND', undefined, 404, getRequestId(req)));
         return;
       }
 
@@ -35,7 +36,7 @@ export class ForumSubscriptionController {
         res.status(200).json(successResponse({
           subscribed: false,
           subscriberCount: Math.max(0, updated?.subscriberCount ?? 0)
-        }, 'Unsubscribed from discussion', getRequestId(req)));
+        }, 'Iscrizione alla discussione annullata', getRequestId(req)));
       } else {
         await ForumDiscussionSubscription.create({
           characterId,
@@ -47,11 +48,11 @@ export class ForumSubscriptionController {
         res.status(201).json(createResponse({
           subscribed: true,
           subscriberCount: updated?.subscriberCount ?? 1
-        }, 'Subscribed to discussion', getRequestId(req)));
+        }, 'Iscrizione alla discussione effettuata', getRequestId(req)));
       }
     } catch (error: unknown) {
-      console.error('[ForumSubscriptionController] Subscribe error:', error);
-      res.status(500).json(errorResponse('Failed to subscribe', 'SUBSCRIBE_ERROR', undefined, 500, getRequestId(req)));
+      logger.error('[ForumSubscriptionController] Subscribe error:', error);
+      res.status(500).json(errorResponse('Impossibile effettuare l\'iscrizione', 'SUBSCRIBE_ERROR', undefined, 500, getRequestId(req)));
     }
   }
 
@@ -59,7 +60,7 @@ export class ForumSubscriptionController {
     try {
       const character = req.character;
       if (!character) {
-        res.status(401).json(errorResponse('Character not found', 'CHARACTER_NOT_FOUND', undefined, 401, getRequestId(req)));
+        res.status(401).json(errorResponse('Personaggio non trovato', 'CHARACTER_NOT_FOUND', undefined, 401, getRequestId(req)));
         return;
       }
 
@@ -111,8 +112,8 @@ export class ForumSubscriptionController {
         totalCount: subscriptions.length
       }, undefined, getRequestId(req)));
     } catch (error: unknown) {
-      console.error('[ForumSubscriptionController] Get subscriptions error:', error);
-      res.status(500).json(errorResponse('Failed to fetch subscriptions', 'GET_SUBSCRIPTIONS_ERROR', undefined, 500, getRequestId(req)));
+      logger.error('[ForumSubscriptionController] Get subscriptions error:', error);
+      res.status(500).json(errorResponse('Impossibile recuperare le iscrizioni', 'GET_SUBSCRIPTIONS_ERROR', undefined, 500, getRequestId(req)));
     }
   }
 }

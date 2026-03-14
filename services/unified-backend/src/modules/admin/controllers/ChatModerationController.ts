@@ -8,6 +8,7 @@ import { User } from '@database/models/User';
 import { logger } from '../utils/logger';
 import { redis } from '@config/runtime/redis';
 import { successResponse, errorResponse, listResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
+import { escapeRegex } from '@shared/utils/validation';
 import { PaginationInfo } from '../types/management';
 
 export class ChatModerationController {
@@ -535,13 +536,14 @@ export class ChatModerationController {
       }
       
       const results: any[] = [];
+      const escapedQuery = escapeRegex(query);
       
       // Search OnGame messages
       if (!messageType || messageType === 'ongame') {
         let filter: any = {
           $or: [
-            { subject: { $regex: query, $options: 'i' } },
-            { content: { $regex: query, $options: 'i' } }
+            { subject: { $regex: escapedQuery, $options: 'i' } },
+            { content: { $regex: escapedQuery, $options: 'i' } }
           ]
         };
         
@@ -570,7 +572,7 @@ export class ChatModerationController {
       // Search OffGame messages
       if (!messageType || messageType === 'offgame') {
         let filter: any = {
-          content: { $regex: query, $options: 'i' },
+          content: { $regex: escapedQuery, $options: 'i' },
           deletedAt: { $exists: false }
         };
         

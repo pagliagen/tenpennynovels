@@ -16,7 +16,7 @@ export class OccupationController {
       const character = await Character.findById(characterId);
       if (!character) {
         res.status(404).json(errorResponse(
-          'Character not found',
+          'Personaggio non trovato',
           'CHARACTER_NOT_FOUND',
           undefined,
           404,
@@ -112,7 +112,7 @@ export class OccupationController {
       const character = await Character.findById(characterId);
       if (!character) {
         res.status(404).json(errorResponse(
-          'Character not found',
+          'Personaggio non trovato',
           'CHARACTER_NOT_FOUND',
           undefined,
           404,
@@ -244,7 +244,7 @@ export class OccupationController {
       const character = await Character.findById(characterId);
       if (!character) {
         res.status(404).json(errorResponse(
-          'Character not found',
+          'Personaggio non trovato',
           'CHARACTER_NOT_FOUND',
           undefined,
           404,

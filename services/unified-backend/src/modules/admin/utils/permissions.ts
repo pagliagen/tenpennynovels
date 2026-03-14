@@ -5,6 +5,7 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { hasAdminPermission, AdminPermission, gameplayRolesToAdminRoles } from '@config/admin-permissions';
+import { logger } from './logger';
 
 interface PermissionConfig {
   _meta: {
@@ -50,7 +51,7 @@ function loadPermissionConfig(): PermissionConfig {
 function resolveAdminRolePermissions(roleName: string, config: PermissionConfig): string[] {
   const role = config.admin_roles[roleName];
   if (!role) {
-    console.warn(`Admin role ${roleName} not found in permissions config`);
+    logger.warn(`Admin role ${roleName} not found in permissions config`);
     return [];
   }
 
@@ -291,7 +292,7 @@ export function requireAccess(section: string) {
     if (!user) {
       return res.status(401).json({
         result: false,
-        error: 'Authentication required'
+        error: 'Autenticazione richiesta'
       });
     }
 
@@ -305,7 +306,7 @@ export function requireAccess(section: string) {
       if (!dbUser) {
         return res.status(404).json({
           result: false,
-          error: 'User not found'
+          error: 'Utente non trovato'
         });
       }
 
@@ -336,7 +337,7 @@ export function requireAccess(section: string) {
       const characterPermissions = selectedCharacter?.adminPermissions || [];
 
       if (!haveAccessTo(section, userRoles, characterRoles, characterPermissions)) {
-        console.warn(`Access denied to ${section}`, {
+        logger.warn(`Access denied to ${section}`, {
           userId: user.userId,
           userRoles,
           characterRoles,
@@ -351,7 +352,7 @@ export function requireAccess(section: string) {
 
       next();
     } catch (error: any) {
-      console.error('Error checking access:', error);
+      logger.error('Error checking access:', error);
       return res.status(500).json({
         result: false,
         error: 'Access check failed'
@@ -371,7 +372,7 @@ export function requireViewPermission(permission: AdminPermission) {
     if (!user) {
       return res.status(401).json({
         result: false,
-        error: 'Authentication required'
+        error: 'Autenticazione richiesta'
       });
     }
 
@@ -385,7 +386,7 @@ export function requireViewPermission(permission: AdminPermission) {
       if (!dbUser) {
         return res.status(404).json({
           result: false,
-          error: 'User not found'
+          error: 'Utente non trovato'
         });
       }
 
@@ -416,7 +417,7 @@ export function requireViewPermission(permission: AdminPermission) {
       if (isGestore) return next();
 
       if (!hasAdminPermission(gameplayRoles, adminPermissions, isGestore, permission)) {
-        console.warn(`Permission denied: ${permission}`, {
+        logger.warn(`Permission denied: ${permission}`, {
           userId: user.userId,
           characterId: selectedCharacter?._id,
           gameplayRoles,
@@ -432,10 +433,10 @@ export function requireViewPermission(permission: AdminPermission) {
 
       next();
     } catch (error: any) {
-      console.error('Error checking permissions:', error);
+      logger.error('Error checking permissions:', error);
       return res.status(500).json({
         result: false,
-        error: 'Permission check failed'
+        error: 'Controllo permessi fallito'
       });
     }
   };
@@ -455,11 +456,11 @@ export function debugPermissions(userRoles: string[], characterRoles: string[], 
   const config = loadPermissionConfig();
   const allPermissions = getUserPermissions(userRoles, characterRoles, characterPermissions);
   
-  console.log('=== DEBUG PERMISSIONS ===');
-  console.log('User Roles:', userRoles);
-  console.log('Character Roles:', characterRoles);
-  console.log('Character Permissions (override):', characterPermissions);
-  console.log('========================');
+  logger.debug('=== DEBUG PERMISSIONS ===');
+  logger.debug('User Roles:', userRoles);
+  logger.debug('Character Roles:', characterRoles);
+  logger.debug('Character Permissions (override):', characterPermissions);
+  logger.debug('========================');
 }
 
 /**

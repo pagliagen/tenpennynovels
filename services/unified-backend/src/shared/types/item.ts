@@ -14,8 +14,8 @@ export interface Item {
   availableLocations: string[];   // Location IDs where item can be purchased
   isAdminOnly: boolean;          // Only grantable through management panel
   
-  // Pricing
-  basePrice: VictorianCurrency;
+  // Pricing (in pence - matches Item model)
+  basePrice: number;
   
   // Prerequisites (same as occupations and corporations)
   prerequisites?: {
@@ -58,7 +58,7 @@ export interface Item {
   shopSettings: {
     canBePurchased: boolean;
     canBeSold: boolean;                // Can character sell back to shop
-    sellBackPrice?: VictorianCurrency; // Price when selling to shop (usually lower)
+    sellBackPrice?: number;            // Price when selling to shop in pence (usually lower)
     canBeTradedBetweenPlayers: boolean;
     
     // Stock management

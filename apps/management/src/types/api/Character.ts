@@ -123,7 +123,7 @@ export interface CharacterListParams {
 }
 
 export interface CharacterListResponse {
-  items: Character[];
+  list: Character[];
   pagination: {
     page: number;
     pageSize: number;

@@ -16,7 +16,7 @@ import {
 /**
  * Generate success response for single record (GET by id, POST, PATCH)
  *
- * Returns: { result: true, result: true, data: T, ... }
+ * Returns: { result: true, data: T, ... }
  */
 export function successResponse<T>(
   data: T,
@@ -35,20 +35,20 @@ export function successResponse<T>(
 /**
  * Generate success response for list (GET list endpoints)
  *
- * CRITICAL: Returns items and pagination at ROOT level (not wrapped in data)
- * Returns: { result: true, result: true, items: T[], pagination: {...}, ... }
+ * CRITICAL: Returns list and pagination at ROOT level (not wrapped in data)
+ * Returns: { result: true, list: T[], pagination: {...}, ... }
  *
  * USE THIS for all /admin/* list endpoints (users, characters, locations, etc.)
  */
 export function listResponse<T>(
-  items: T[],
+  list: T[],
   pagination: PaginationInfo,
   message?: string,
   requestId?: string
 ): ApiListResponse<T> {
   return {
     result: true,
-    items,
+    list,
     pagination,
     message,
     timestamp: new Date().toISOString(),
@@ -59,7 +59,7 @@ export function listResponse<T>(
 /**
  * Generate error response
  *
- * Returns: { result: false, result: false, error: string, code?: string, ... }
+ * Returns: { result: false, error: string, code?: string, ... }
  */
 export function errorResponse(
   error: string,
@@ -131,6 +131,6 @@ export function updateResponse<T>(
  * Helper to extract request ID from request (if available)
  */
 export function getRequestId(req: Request): string | undefined {
-  return req.headers['x-request-id'] as string | undefined || (req as any).id;
+  return req.headers['x-request-id'] as string | undefined;
 }
 

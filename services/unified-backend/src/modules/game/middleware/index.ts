@@ -52,7 +52,7 @@ export async function setupMiddleware(app: Express): Promise<void> {
     max: loginMax,
     message: {
       result: false,
-      error: 'Too many authentication attempts, please try again later.',
+      error: 'Troppi tentativi di autenticazione, riprova più tardi.',
       code: 'AUTH_RATE_LIMIT_EXCEEDED'
     },
     standardHeaders: true,

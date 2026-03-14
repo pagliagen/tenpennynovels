@@ -1,6 +1,7 @@
 import mongoose, { Schema, model, Document } from 'mongoose';
 // Use relative import instead of alias to fix seed script compatibility
 import { calculateAllDerivedStats, getCharacterCreationConfig, type CharacterStats, type DerivedStats } from '../../shared/services/CharacterCreationConfigService';
+import { escapeRegex } from '@shared/utils/validation';
 import { softDeletePlugin, SoftDeleteMethods } from '../plugins/softDeletePlugin';
 
 // Granular skill tracking interface for occupation bonuses
@@ -775,8 +776,9 @@ CharacterSchema.pre('save', async function(this: ICharacter) {
   // Prestavolto duplicate validation (face claim management)
   if (this.isModified('prestavolto') && this.prestavolto) {
     // Check if another character already uses this face claim
+    const escapedPrestavolto = escapeRegex(this.prestavolto.trim());
     const duplicate = await (this.constructor as any).findOne({
-      prestavolto: { $regex: new RegExp(`^${this.prestavolto.trim()}$`, 'i') },
+      prestavolto: { $regex: new RegExp(`^${escapedPrestavolto}$`, 'i') },
       _id: { $ne: this._id },
       isDeleted: { $ne: true }
     }).select('_id prestavoltoStatus');

@@ -279,7 +279,7 @@ export class OnGameMessageController {
       logger.error('Send OnGame message error:', error);
 
       res.status(500).json(errorResponse(
-        'Internal server error',
+        'Errore interno del server',
         'INTERNAL_ERROR',
         {
           system: 'Errore interno durante l\'invio del messaggio. Riprova più tardi.'
@@ -696,7 +696,7 @@ export class OnGameMessageController {
       logger.error('Get threads error:', error);
 
       res.status(500).json(errorResponse(
-        'Internal server error',
+        'Errore interno del server',
         'INTERNAL_ERROR',
         {
           system: 'Errore interno durante il caricamento dei thread. Riprova più tardi.'
@@ -785,7 +785,7 @@ export class OnGameMessageController {
       logger.error('Get thread messages error:', error);
 
       res.status(500).json(errorResponse(
-        'Internal server error',
+        'Errore interno del server',
         'INTERNAL_ERROR',
         {
           system: 'Errore interno durante il caricamento della conversazione. Riprova più tardi.'

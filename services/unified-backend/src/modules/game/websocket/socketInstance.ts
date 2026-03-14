@@ -9,6 +9,7 @@
  */
 
 import { Server as SocketIOServer } from 'socket.io';
+import { logger } from '../utils/logger';
 
 /**
  * Singleton Socket.IO instance
@@ -19,13 +20,12 @@ let io: SocketIOServer | null = null;
  * Set Socket.IO instance (called once during server initialization)
  */
 export function setSocketIO(instance: SocketIOServer): void {
-  // CRITICAL: Use direct console for debugging, bypassing logger import issues
   if (io) {
-    console.error('⚠️  [CRITICAL] Socket.IO instance already set, overwriting...');
+    logger.warn('[CRITICAL] Socket.IO instance already set, overwriting...');
   }
   io = instance;
-  console.error('✅ [CRITICAL] Socket.IO instance registered in singleton');
-  console.error('✅ [CRITICAL] Socket.IO instance status:', io ? 'AVAILABLE' : 'NULL');
+  logger.info('[CRITICAL] Socket.IO instance registered in singleton');
+  logger.info('[CRITICAL] Socket.IO instance status:', io ? 'AVAILABLE' : 'NULL');
 }
 
 /**

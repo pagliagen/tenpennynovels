@@ -59,7 +59,7 @@ export interface UserListParams {
 }
 
 export interface UserListResponse {
-  items: User[];
+  list: User[];
   pagination: {
     page: number;
     pageSize: number;

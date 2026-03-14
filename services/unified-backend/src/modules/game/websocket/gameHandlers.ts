@@ -65,7 +65,7 @@ export function setupGameHandlers(socket: Socket, io: SocketIOServer): void {
       user: {
         userId: user.userId,
         username: user.username,
-        role: user.role
+        userRoles: user.userRoles
       },
       character: character ? {
         characterId: character.characterId,
@@ -83,6 +83,10 @@ export function setupGameHandlers(socket: Socket, io: SocketIOServer): void {
    * Handle typing indicators
    */
   socket.on('typing_start', (locationId: string) => {
+    if (!locationId || typeof locationId !== 'string' || !/^[0-9a-fA-F]{24}$/.test(locationId)) {
+      return;
+    }
+
     const character = socket.data.character;
     
     if (!character || !character.isApproved) {
@@ -99,6 +103,10 @@ export function setupGameHandlers(socket: Socket, io: SocketIOServer): void {
   });
   
   socket.on('typing_stop', (locationId: string) => {
+    if (!locationId || typeof locationId !== 'string' || !/^[0-9a-fA-F]{24}$/.test(locationId)) {
+      return;
+    }
+
     const character = socket.data.character;
     
     if (!character || !character.isApproved) {

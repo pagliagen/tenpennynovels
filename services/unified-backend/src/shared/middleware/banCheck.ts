@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { User } from '@database/models/User';
+import { logger } from '@shared/utils/logger';
 
 export interface BanCheckOptions {
   requiredScope: 'chat_banned' | 'game_banned' | 'forum_banned' | 'documents_banned' | 'full_site_banned';
@@ -15,7 +16,7 @@ export function banCheck(options: BanCheckOptions) {
     try {
       // ===== TEST BYPASS (ONLY FOR LOCAL DEVELOPMENT) =====
       if (process.env.SKIP_AUTH_CHECK === 'true') {
-        console.log('⚠️  [BAN CHECK BYPASS] Skipping ban check for testing');
+        logger.warn('[BAN CHECK BYPASS] Skipping ban check for testing');
         return next();
       }
       // ===== END TEST BYPASS =====
@@ -25,7 +26,7 @@ export function banCheck(options: BanCheckOptions) {
       if (!userId) {
         return res.status(401).json({
           success: false,
-          error: 'Authentication required',
+          error: 'Autenticazione richiesta',
           code: 'AUTHENTICATION_REQUIRED'
         });
       }
@@ -37,7 +38,7 @@ export function banCheck(options: BanCheckOptions) {
       if (!user) {
         return res.status(404).json({
           success: false,
-          error: 'User not found',
+          error: 'Utente non trovato',
           code: 'USER_NOT_FOUND'
         });
       }
@@ -90,11 +91,11 @@ export function banCheck(options: BanCheckOptions) {
       next();
       
     } catch (error) {
-      console.error('Ban check middleware error:', error);
+      logger.error('Ban check middleware error:', error);
       
       return res.status(500).json({
         success: false,
-        error: 'Internal server error during ban check',
+        error: 'Errore interno del server durante il controllo ban',
         code: 'BAN_CHECK_ERROR'
       });
     }
@@ -123,7 +124,7 @@ export function banCheckMultiple(scopes: BanCheckOptions['requiredScope'][]) {
       if (!userId) {
         return res.status(401).json({
           success: false,
-          error: 'Authentication required',
+          error: 'Autenticazione richiesta',
           code: 'AUTHENTICATION_REQUIRED'
         });
       }
@@ -134,7 +135,7 @@ export function banCheckMultiple(scopes: BanCheckOptions['requiredScope'][]) {
       if (!user) {
         return res.status(404).json({
           success: false,
-          error: 'User not found',
+          error: 'Utente non trovato',
           code: 'USER_NOT_FOUND'
         });
       }
@@ -179,11 +180,11 @@ export function banCheckMultiple(scopes: BanCheckOptions['requiredScope'][]) {
       next();
       
     } catch (error) {
-      console.error('Multiple ban check middleware error:', error);
+      logger.error('Multiple ban check middleware error:', error);
       
       return res.status(500).json({
         success: false,
-        error: 'Internal server error during ban check',
+        error: 'Errore interno del server durante il controllo ban',
         code: 'BAN_CHECK_ERROR'
       });
     }

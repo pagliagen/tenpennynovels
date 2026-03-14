@@ -13,6 +13,7 @@ import { Character } from '@database/models/Character';
 import { logger } from '../utils/logger';
 import { auditLogger } from '../utils/auditLogger';
 import { successResponse, errorResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
+import { escapeRegex } from '@shared/utils/validation';
 
 export class CharacterRelationManagementController {
 
@@ -40,10 +41,11 @@ export class CharacterRelationManagementController {
       
       // Text search
       if (search) {
+        const escapedSearch = escapeRegex(search as string);
         filter.$or = [
-          { name: { $regex: search, $options: 'i' } },
-          { description: { $regex: search, $options: 'i' } },
-          { socialImplications: { $regex: search, $options: 'i' } }
+          { name: { $regex: escapedSearch, $options: 'i' } },
+          { description: { $regex: escapedSearch, $options: 'i' } },
+          { socialImplications: { $regex: escapedSearch, $options: 'i' } }
         ];
       }
 
@@ -134,7 +136,7 @@ export class CharacterRelationManagementController {
     } catch (error: any) {
       logger.error('Error fetching relationship types:', error);
       res.status(500).json(errorResponse(
-        'Internal server error while fetching relationship types',
+        'Errore interno del server durante il recupero dei tipi di relazione',
         'FETCH_RELATIONSHIP_TYPES_ERROR',
         undefined,
         500,
@@ -257,7 +259,7 @@ export class CharacterRelationManagementController {
     } catch (error: any) {
       logger.error('Error fetching relationship type statistics:', error);
       res.status(500).json(errorResponse(
-        'Internal server error while fetching statistics',
+        'Errore interno del server durante il recupero delle statistiche',
         'FETCH_RELATIONSHIP_TYPE_STATS_ERROR',
         undefined,
         500,
@@ -372,7 +374,7 @@ export class CharacterRelationManagementController {
     } catch (error: any) {
       logger.error('Error fetching character relationships:', error);
       res.status(500).json(errorResponse(
-        'Internal server error while fetching relationships',
+        'Errore interno del server durante il recupero delle relazioni',
         'FETCH_CHARACTER_RELATIONSHIPS_ERROR',
         undefined,
         500,
@@ -461,7 +463,7 @@ export class CharacterRelationManagementController {
     } catch (error: any) {
       logger.error('Error fetching relationship proposals:', error);
       res.status(500).json(errorResponse(
-        'Internal server error while fetching proposals',
+        'Errore interno del server durante il recupero delle proposte',
         'FETCH_RELATIONSHIP_PROPOSALS_ERROR',
         undefined,
         500,
@@ -601,7 +603,7 @@ export class CharacterRelationManagementController {
     } catch (error: any) {
       logger.error('Error fetching relationship statistics:', error);
       res.status(500).json(errorResponse(
-        'Internal server error while fetching relationship statistics',
+        'Errore interno del server durante il recupero delle statistiche delle relazioni',
         'FETCH_RELATIONSHIP_STATS_ERROR',
         undefined,
         500,
@@ -724,7 +726,7 @@ export class CharacterRelationManagementController {
     } catch (error: any) {
       logger.error('Error creating relationship type:', error);
       res.status(500).json(errorResponse(
-        'Internal server error while creating relationship type',
+        'Errore interno del server durante la creazione del tipo di relazione',
         'CREATE_RELATIONSHIP_TYPE_ERROR',
         undefined,
         500,
@@ -810,7 +812,7 @@ export class CharacterRelationManagementController {
     } catch (error: any) {
       logger.error('Error updating relationship type:', error);
       res.status(500).json(errorResponse(
-        'Internal server error while updating relationship type',
+        'Errore interno del server durante l\'aggiornamento del tipo di relazione',
         'UPDATE_RELATIONSHIP_TYPE_ERROR',
         undefined,
         500,
@@ -933,7 +935,7 @@ export class CharacterRelationManagementController {
     } catch (error: any) {
       logger.error('Error deleting relationship type:', error);
       res.status(500).json(errorResponse(
-        'Internal server error while deleting relationship type',
+        'Errore interno del server durante l\'eliminazione del tipo di relazione',
         'DELETE_RELATIONSHIP_TYPE_ERROR',
         undefined,
         500,
@@ -1068,7 +1070,7 @@ export class CharacterRelationManagementController {
     } catch (error: any) {
       logger.error('Error moderating relationship:', error);
       res.status(500).json(errorResponse(
-        'Internal server error while moderating relationship',
+        'Errore interno del server durante la moderazione della relazione',
         'MODERATE_RELATIONSHIP_ERROR',
         undefined,
         500,
@@ -1209,7 +1211,7 @@ export class CharacterRelationManagementController {
     } catch (error: any) {
       logger.error('Error in bulk relationship type operations:', error);
       res.status(500).json(errorResponse(
-        'Internal server error while performing bulk operations',
+        'Errore interno del server durante le operazioni bulk',
         'BULK_RELATIONSHIP_TYPE_OPERATION_ERROR',
         undefined,
         500,

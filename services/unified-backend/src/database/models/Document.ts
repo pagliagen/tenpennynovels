@@ -10,6 +10,7 @@
 
 import mongoose, { Schema, Document as MongooseDocument, Types } from 'mongoose';
 import { softDeletePlugin, SoftDeleteMethods } from '../plugins/softDeletePlugin';
+import { logger } from '@shared/utils/logger';
 
 export interface IDocument extends MongooseDocument, SoftDeleteMethods {
   // Identity
@@ -171,7 +172,7 @@ DocumentSchema.pre('save', async function() {
       const { generateHtml } = await import('../../modules/admin/services/HtmlGenerator');
       this.content = generateHtml(this.contentDelta, { injectHeadingIds: true });
     } catch (error) {
-      console.error('[Document] Failed to generate HTML from contentDelta:', error);
+      logger.error('[Document] Failed to generate HTML from contentDelta:', error);
     }
   }
 });
@@ -191,7 +192,7 @@ DocumentSchema.post('save', async function(doc) {
       type: doc.type
     });
   } catch (error) {
-    console.error('[Document] Failed to publish embedding event:', error);
+    logger.error('[Document] Failed to publish embedding event:', error);
   }
 });
 
@@ -203,7 +204,7 @@ DocumentSchema.post('deleteOne', async function(doc) {
     const { publishDocumentDeletedEvent } = await import('@shared/services/EmbeddingEventPublisher');
     await publishDocumentDeletedEvent(doc._id.toString());
   } catch (error) {
-    console.error('[Document] Failed to publish delete event:', error);
+    logger.error('[Document] Failed to publish delete event:', error);
   }
 });
 
@@ -213,7 +214,7 @@ DocumentSchema.post('findOneAndDelete', async function(doc) {
     const { publishDocumentDeletedEvent } = await import('@shared/services/EmbeddingEventPublisher');
     await publishDocumentDeletedEvent(doc._id.toString());
   } catch (error) {
-    console.error('[Document] Failed to publish delete event:', error);
+    logger.error('[Document] Failed to publish delete event:', error);
   }
 });
 

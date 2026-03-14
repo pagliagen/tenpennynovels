@@ -70,7 +70,7 @@ router.post('/offgame-chats/:id/typing',
       });
 
       if (!chat) {
-        res.status(404).json(errorResponse('Chat not found'));
+        res.status(404).json(errorResponse('Chat non trovata'));
         return;
       }
 
@@ -95,9 +95,9 @@ router.post('/offgame-chats/:id/typing',
         }
       }
 
-      res.json(successResponse(undefined, 'Typing indicator sent'));
+      res.json(successResponse(undefined, 'Indicatore di digitazione inviato'));
     } catch (error: any) {
-      res.status(500).json(errorResponse('Failed to send typing indicator'));
+      res.status(500).json(errorResponse('Impossibile inviare l\'indicatore di digitazione'));
     }
   }
 );

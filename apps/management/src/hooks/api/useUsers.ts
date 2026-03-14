@@ -62,13 +62,13 @@ function updateUserInCache(
   updater: (user: User) => User
 ): void {
   // Aggiorna tutte le liste in cache
-  queryClient.setQueriesData<{ items: User[] }>(
+  queryClient.setQueriesData<{ list: User[] }>(
     { queryKey: userKeys.lists(), exact: false },
     (old) => {
-      if (!old?.items) return old;
+      if (!old?.list) return old;
       return {
         ...old,
-        items: old.items.map(user => user._id === userId ? updater(user) : user)
+        list: old.list.map(user => user._id === userId ? updater(user) : user)
       };
     }
   );
@@ -146,13 +146,13 @@ export function useDeleteUser() {
       const previousLists = queryClient.getQueriesData({ queryKey: userKeys.lists() });
 
       // Optimistic removal
-      queryClient.setQueriesData<{ items: User[] }>(
+      queryClient.setQueriesData<{ list: User[] }>(
         { queryKey: userKeys.lists(), exact: false },
         (old) => {
-          if (!old?.items) return old;
+          if (!old?.list) return old;
           return {
             ...old,
-            items: old.items.filter(user => user._id !== id)
+            list: old.list.filter(user => user._id !== id)
           };
         }
       );
@@ -229,13 +229,13 @@ export function useBulkBanUsers() {
       const previousLists = queryClient.getQueriesData({ queryKey: userKeys.lists() });
 
       // Optimistic update for all users
-      queryClient.setQueriesData<{ items: User[] }>(
+      queryClient.setQueriesData<{ list: User[] }>(
         { queryKey: userKeys.lists(), exact: false },
         (old) => {
-          if (!old?.items) return old;
+          if (!old?.list) return old;
           return {
             ...old,
-            items: old.items.map(user =>
+            list: old.list.map(user =>
               userIds.includes(user._id)
                 ? {
                     ...user,
@@ -284,13 +284,13 @@ export function useBulkUnbanUsers() {
       const previousLists = queryClient.getQueriesData({ queryKey: userKeys.lists() });
 
       // Optimistic update for all users
-      queryClient.setQueriesData<{ items: User[] }>(
+      queryClient.setQueriesData<{ list: User[] }>(
         { queryKey: userKeys.lists(), exact: false },
         (old) => {
-          if (!old?.items) return old;
+          if (!old?.list) return old;
           return {
             ...old,
-            items: old.items.map(user =>
+            list: old.list.map(user =>
               userIds.includes(user._id)
                 ? {
                     ...user,
@@ -338,13 +338,13 @@ export function useBulkActivateUsers() {
       const previousLists = queryClient.getQueriesData({ queryKey: userKeys.lists() });
 
       // Optimistic update for all users
-      queryClient.setQueriesData<{ items: User[] }>(
+      queryClient.setQueriesData<{ list: User[] }>(
         { queryKey: userKeys.lists(), exact: false },
         (old) => {
-          if (!old?.items) return old;
+          if (!old?.list) return old;
           return {
             ...old,
-            items: old.items.map(user =>
+            list: old.list.map(user =>
               userIds.includes(user._id)
                 ? {
                     ...user,
@@ -391,13 +391,13 @@ export function useBulkDeactivateUsers() {
       const previousLists = queryClient.getQueriesData({ queryKey: userKeys.lists() });
 
       // Optimistic update for all users
-      queryClient.setQueriesData<{ items: User[] }>(
+      queryClient.setQueriesData<{ list: User[] }>(
         { queryKey: userKeys.lists(), exact: false },
         (old) => {
-          if (!old?.items) return old;
+          if (!old?.list) return old;
           return {
             ...old,
-            items: old.items.map(user =>
+            list: old.list.map(user =>
               userIds.includes(user._id)
                 ? {
                     ...user,

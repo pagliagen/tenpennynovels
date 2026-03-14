@@ -7,6 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { UAParser } from 'ua-parser-js';
 import { AnalyticsService } from '../services/AnalyticsService';
 import { GeoLocationService } from '../services/GeoLocationService';
+import { logger } from '../utils/logger';
 
 // Extend Express Request to include analytics data
 declare global {
@@ -100,7 +101,7 @@ export class AnalyticsMiddleware {
             city: geoData.city
           };
         } catch (error) {
-          console.error('Geolocation error:', error);
+          logger.error('Geolocation error:', error);
           // Fallback di sicurezza
           req.analytics.geoInfo = {
             country: 'Italia',
@@ -110,7 +111,7 @@ export class AnalyticsMiddleware {
 
         next();
       } catch (error) {
-        console.error('Analytics initialization error:', error);
+        logger.error('Analytics initialization error:', error);
         next();
       }
     };
@@ -147,7 +148,7 @@ export class AnalyticsMiddleware {
         }
         next();
       } catch (error) {
-        console.error('Page view tracking error:', error);
+        logger.error('Page view tracking error:', error);
         next();
       }
     };
@@ -193,11 +194,11 @@ export class AnalyticsMiddleware {
                 ipAddress: req.ip || 'unknown',
                 userAgent: req.headers['user-agent'] || 'unknown'
               }).catch(err => {
-                console.error('Error tracking user action:', err);
+                logger.error('Error tracking user action:', err);
               });
             }
           } catch (error) {
-            console.error('Action tracking error:', error);
+            logger.error('Action tracking error:', error);
           }
 
           // Call original end function and return result
@@ -206,7 +207,7 @@ export class AnalyticsMiddleware {
 
         next();
       } catch (error) {
-        console.error('Action tracking setup error:', error);
+        logger.error('Action tracking setup error:', error);
         next();
       }
     };
@@ -235,12 +236,12 @@ export class AnalyticsMiddleware {
             country: req.analytics.geoInfo?.country,
             city: req.analytics.geoInfo?.city
           }).catch(err => {
-            console.error('Error tracking user session:', err);
+            logger.error('Error tracking user session:', err);
           });
         }
         next();
       } catch (error) {
-        console.error('User info setting error:', error);
+        logger.error('User info setting error:', error);
         next();
       }
     };
@@ -256,7 +257,7 @@ export class AnalyticsMiddleware {
           const metrics = await this.getSystemMetrics(service);
           await AnalyticsService.trackSystemMetrics(metrics);
         } catch (error) {
-          console.error('System metrics tracking error:', error);
+          logger.error('System metrics tracking error:', error);
         }
       }, 60000); // Every minute
     };
@@ -295,7 +296,7 @@ export class AnalyticsMiddleware {
         }
         next();
       } catch (error) {
-        console.error('Session end tracking error:', error);
+        logger.error('Session end tracking error:', error);
         next();
       }
     };
@@ -322,7 +323,7 @@ export class AnalyticsMiddleware {
         }
         next();
       } catch (error) {
-        console.error('Custom event tracking error:', error);
+        logger.error('Custom event tracking error:', error);
         next();
       }
     };

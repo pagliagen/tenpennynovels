@@ -5,6 +5,7 @@ import { Character } from '@database/models/Character';
 import { logger } from '../utils/logger';
 import { auditLogger } from '../utils/auditLogger';
 import { successResponse, errorResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
+import { escapeRegex } from '@shared/utils/validation';
 
 export class SocialClassManagementController {
 
@@ -26,10 +27,11 @@ export class SocialClassManagementController {
       
       // Text search
       if (search) {
+        const escapedSearch = escapeRegex(search as string);
         filter.$or = [
-          { name: { $regex: search, $options: 'i' } },
-          { label: { $regex: search, $options: 'i' } },
-          { description: { $regex: search, $options: 'i' } }
+          { name: { $regex: escapedSearch, $options: 'i' } },
+          { label: { $regex: escapedSearch, $options: 'i' } },
+          { description: { $regex: escapedSearch, $options: 'i' } }
         ];
       }
 
@@ -94,7 +96,7 @@ export class SocialClassManagementController {
     } catch (error: any) {
       logger.error('Error fetching social classes:', error);
       res.status(500).json(errorResponse(
-        'Internal server error while fetching social classes',
+        'Errore interno del server durante il recupero delle classi sociali',
         'FETCH_SOCIAL_CLASSES_ERROR',
         undefined,
         500,
@@ -256,7 +258,7 @@ export class SocialClassManagementController {
     } catch (error: any) {
       logger.error('Error fetching social class statistics:', error);
       res.status(500).json(errorResponse(
-        'Internal server error while fetching social class statistics',
+        'Errore interno del server durante il recupero delle statistiche delle classi sociali',
         'FETCH_SOCIAL_CLASS_STATS_ERROR',
         undefined,
         500,
@@ -342,7 +344,7 @@ export class SocialClassManagementController {
     } catch (error: any) {
       logger.error('Error fetching social class details:', error);
       res.status(500).json(errorResponse(
-        'Internal server error while fetching social class details',
+        'Errore interno del server durante il recupero dei dettagli della classe sociale',
         'FETCH_SOCIAL_CLASS_DETAILS_ERROR',
         undefined,
         500,
@@ -536,7 +538,7 @@ export class SocialClassManagementController {
     } catch (error: any) {
       logger.error('Error creating social class:', error);
       res.status(500).json(errorResponse(
-        'Internal server error while creating social class',
+        'Errore interno del server durante la creazione della classe sociale',
         'CREATE_SOCIAL_CLASS_ERROR',
         undefined,
         500,
@@ -717,7 +719,7 @@ export class SocialClassManagementController {
     } catch (error: any) {
       logger.error('Error updating social class:', error);
       res.status(500).json(errorResponse(
-        'Internal server error while updating social class',
+        'Errore interno del server durante l\'aggiornamento della classe sociale',
         'UPDATE_SOCIAL_CLASS_ERROR',
         undefined,
         500,
@@ -828,7 +830,7 @@ export class SocialClassManagementController {
     } catch (error: any) {
       logger.error('Error deleting social class:', error);
       res.status(500).json(errorResponse(
-        'Internal server error while deleting social class',
+        'Errore interno del server durante l\'eliminazione della classe sociale',
         'DELETE_SOCIAL_CLASS_ERROR',
         undefined,
         500,
@@ -930,7 +932,7 @@ export class SocialClassManagementController {
     } catch (error: any) {
       logger.error('Error reordering social classes:', error);
       res.status(500).json(errorResponse(
-        'Internal server error while reordering social classes',
+        'Errore interno del server durante il riordino delle classi sociali',
         'REORDER_SOCIAL_CLASSES_ERROR',
         undefined,
         500,
@@ -1065,7 +1067,7 @@ export class SocialClassManagementController {
     } catch (error: any) {
       logger.error('Error fetching character distribution:', error);
       res.status(500).json(errorResponse(
-        'Internal server error while fetching character distribution',
+        'Errore interno del server durante il recupero della distribuzione dei personaggi',
         'FETCH_CHARACTER_DISTRIBUTION_ERROR',
         undefined,
         500,

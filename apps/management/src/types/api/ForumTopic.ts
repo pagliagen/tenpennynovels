@@ -51,7 +51,7 @@ export interface UpdateForumTopicData extends Partial<CreateForumTopicData> {
 
 export interface ForumTopicListResponse {
   result: boolean;
-  items: ForumTopic[];
+  list: ForumTopic[];
   pagination: {
     page: number;
     pageSize: number;

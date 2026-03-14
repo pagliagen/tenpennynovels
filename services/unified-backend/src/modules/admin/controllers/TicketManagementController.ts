@@ -18,6 +18,7 @@ import { AdminAuthMiddleware } from '../middleware/adminAuth';
 import { logger } from '../utils/logger';
 import { redis } from '@config/runtime/redis';
 import { listResponse, successResponse, errorResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
+import { escapeRegex } from '@shared/utils/validation';
 
 import { User, Ticket, TicketMessage } from '@database/models';
 
@@ -110,11 +111,12 @@ export class TicketManagementController {
 
       // Search filter
       if (filters.search && filters.search.trim()) {
+        const escapedSearch = escapeRegex(filters.search);
         mongoFilters.$or = [
-          { title: { $regex: filters.search, $options: 'i' } },
-          { createdByName: { $regex: filters.search, $options: 'i' } },
-          { assignedToName: { $regex: filters.search, $options: 'i' } },
-          { internalNotes: { $regex: filters.search, $options: 'i' } }
+          { title: { $regex: escapedSearch, $options: 'i' } },
+          { createdByName: { $regex: escapedSearch, $options: 'i' } },
+          { assignedToName: { $regex: escapedSearch, $options: 'i' } },
+          { internalNotes: { $regex: escapedSearch, $options: 'i' } }
         ];
       }
 
@@ -231,7 +233,7 @@ export class TicketManagementController {
       });
       
       res.status(500).json(errorResponse(
-        'Failed to fetch tickets',
+        'Impossibile recuperare i ticket',
         'FETCH_TICKETS_ERROR',
         undefined,
         500,
@@ -353,7 +355,7 @@ export class TicketManagementController {
       logger.error('Error fetching my tickets:', { error: error instanceof Error ? error.message : String(error) });
       
       res.status(500).json(errorResponse(
-        'Failed to fetch assigned tickets',
+        'Impossibile recuperare i ticket assegnati',
         'FETCH_MY_TICKETS_ERROR',
         undefined,
         500,
@@ -498,7 +500,7 @@ export class TicketManagementController {
       logger.error('Error fetching department tickets:', { error: error instanceof Error ? error.message : String(error) });
       
       res.status(500).json(errorResponse(
-        'Failed to fetch department tickets',
+        'Impossibile recuperare i ticket del reparto',
         'FETCH_DEPARTMENT_TICKETS_ERROR',
         undefined,
         500,
@@ -530,7 +532,7 @@ export class TicketManagementController {
       const requiredRoles = DEPARTMENT_ROLES_MAPPING[targetDepartment as keyof typeof DEPARTMENT_ROLES_MAPPING];
       if (!requiredRoles) {
         res.status(400).json(errorResponse(
-          'Invalid department',
+          'Reparto non valido',
           'INVALID_DEPARTMENT',
           undefined,
           400,
@@ -542,7 +544,7 @@ export class TicketManagementController {
       const hasAccess = requiredRoles.some(role => req.user?.characterRoles?.includes(role));
       if (!hasAccess) {
         res.status(403).json(errorResponse(
-          'Insufficient permissions for this department',
+          'Permessi insufficienti per questo reparto',
           'INSUFFICIENT_DEPARTMENT_PERMISSIONS',
           undefined,
           403,
@@ -647,7 +649,7 @@ export class TicketManagementController {
       });
       
       res.status(500).json(errorResponse(
-        'Failed to fetch department tickets',
+        'Impossibile recuperare i ticket del reparto',
         'FETCH_SPECIFIC_DEPARTMENT_TICKETS_ERROR',
         undefined,
         500,
@@ -814,7 +816,7 @@ export class TicketManagementController {
       logger.error('Error fetching ticket statistics:', { error: error instanceof Error ? error.message : String(error) });
       
       res.status(500).json(errorResponse(
-        'Failed to fetch ticket statistics',
+        'Impossibile recuperare le statistiche dei ticket',
         'FETCH_TICKET_STATS_ERROR',
         undefined,
         500,
@@ -833,7 +835,7 @@ export class TicketManagementController {
 
       if (!mongoose.Types.ObjectId.isValid(ticketId)) {
         res.status(400).json(errorResponse(
-          'Invalid ticket ID format',
+          'Formato ID ticket non valido',
           'INVALID_TICKET_ID',
           undefined,
           400,
@@ -865,7 +867,7 @@ export class TicketManagementController {
 
         if (!hasAccess) {
           res.status(403).json(errorResponse(
-            'Insufficient permissions to view this ticket',
+            'Permessi insufficienti per visualizzare questo ticket',
             'INSUFFICIENT_PERMISSIONS',
             undefined,
             403,
@@ -976,7 +978,7 @@ export class TicketManagementController {
 
       if (!mongoose.Types.ObjectId.isValid(ticketId)) {
         res.status(400).json(errorResponse(
-          'Invalid ticket ID format',
+          'Formato ID ticket non valido',
           'INVALID_TICKET_ID',
           undefined,
           400,
@@ -1107,7 +1109,7 @@ export class TicketManagementController {
 
       if (!mongoose.Types.ObjectId.isValid(ticketId)) {
         res.status(400).json(errorResponse(
-          'Invalid ticket ID format',
+          'Formato ID ticket non valido',
           'INVALID_TICKET_ID',
           undefined,
           400,
@@ -1240,7 +1242,7 @@ export class TicketManagementController {
 
       if (!mongoose.Types.ObjectId.isValid(ticketId)) {
         res.status(400).json(errorResponse(
-          'Invalid ticket ID format',
+          'Formato ID ticket non valido',
           'INVALID_TICKET_ID',
           undefined,
           400,
@@ -1380,7 +1382,7 @@ export class TicketManagementController {
 
       if (!mongoose.Types.ObjectId.isValid(ticketId)) {
         res.status(400).json(errorResponse(
-          'Invalid ticket ID format',
+          'Formato ID ticket non valido',
           'INVALID_TICKET_ID',
           undefined,
           400,
@@ -1501,7 +1503,7 @@ export class TicketManagementController {
 
       if (!mongoose.Types.ObjectId.isValid(ticketId)) {
         res.status(400).json(errorResponse(
-          'Invalid ticket ID format',
+          'Formato ID ticket non valido',
           'INVALID_TICKET_ID',
           undefined,
           400,
@@ -1652,7 +1654,7 @@ export class TicketManagementController {
 
       if (!mongoose.Types.ObjectId.isValid(ticketId)) {
         res.status(400).json(errorResponse(
-          'Invalid ticket ID format',
+          'Formato ID ticket non valido',
           'INVALID_TICKET_ID',
           undefined,
           400,
@@ -1852,7 +1854,7 @@ export class TicketManagementController {
 
       if (!mongoose.Types.ObjectId.isValid(ticketId)) {
         res.status(400).json(errorResponse(
-          'Invalid ticket ID format',
+          'Formato ID ticket non valido',
           'INVALID_TICKET_ID',
           undefined,
           400,

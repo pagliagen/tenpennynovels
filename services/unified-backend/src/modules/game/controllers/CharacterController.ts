@@ -1,8 +1,10 @@
 import { Request, Response } from 'express';
+import { Types } from 'mongoose';
 import { Character, Occupation, Skill } from '@database/models';
 import { logger } from '../utils/logger';
 import { successResponse, errorResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
 import { CharacterVisibilityFilter } from '@shared/utils/characterVisibility';
+import { escapeRegex } from '@shared/utils/validation';
 import { hasGamePermission } from '../utils/gamePermissions';
 import { FinancialUtils } from '../utils/financialUtils';
 import { CharacterCreationConfigService } from '@shared/services/CharacterCreationConfigService';
@@ -1747,9 +1749,10 @@ export class CharacterController {
 
       // Search by name
       if (search) {
+        const escapedSearch = escapeRegex(search);
         filter.$or = [
-          { name: { $regex: search, $options: 'i' } },
-          { surname: { $regex: search, $options: 'i' } }
+          { name: { $regex: escapedSearch, $options: 'i' } },
+          { surname: { $regex: escapedSearch, $options: 'i' } }
         ];
       }
 
@@ -1858,7 +1861,7 @@ export class CharacterController {
 
       // Fetch all face claims (cached list for reference)
       const allChars = await Character.find({
-        prestavolto: { $exists: true, $ne: null, $ne: '' },
+        prestavolto: { $exists: true, $nin: [null, ''] },
         isDeleted: { $ne: true }
       })
         .select('_id name surname prestavolto playerStatus')
@@ -1875,9 +1878,10 @@ export class CharacterController {
 
       // If query provided, search for matches
       if (query.length >= 1) {
+        const escapedQuery = escapeRegex(query);
         // Exact match
         const exactChar = await Character.findOne({
-          prestavolto: { $regex: new RegExp(`^${query}$`, 'i') },
+          prestavolto: { $regex: new RegExp(`^${escapedQuery}$`, 'i') },
           isDeleted: { $ne: true }
         })
           .select('name surname playerStatus')
@@ -1893,7 +1897,7 @@ export class CharacterController {
         // Fuzzy matches (if query >= 3 chars)
         if (query.length >= 3) {
           const fuzzyChars = await Character.find({
-            prestavolto: { $regex: new RegExp(query, 'i') },
+            prestavolto: { $regex: new RegExp(escapedQuery, 'i') },
             isDeleted: { $ne: true }
           })
             .select('prestavolto name surname playerStatus')
@@ -1967,38 +1971,39 @@ export class CharacterController {
       const userId = req.user?.userId;
 
       if (!userId) {
-        return res.status(401).json(errorResponse(
+        res.status(401).json(errorResponse(
           'Utente non autenticato',
           'UNAUTHORIZED',
           undefined,
           401,
           getRequestId(req)
         ));
+        return;
       }
 
-      // Validation
       if (!prestavolto || typeof prestavolto !== 'string' || prestavolto.trim().length === 0) {
-        return res.status(400).json(errorResponse(
+        res.status(400).json(errorResponse(
           'Prestavolto mancante o non valido',
           'INVALID_PRESTAVOLTO',
           undefined,
           400,
           getRequestId(req)
         ));
+        return;
       }
 
       const newPrestavolto = prestavolto.trim();
       if (newPrestavolto.length > 100) {
-        return res.status(400).json(errorResponse(
+        res.status(400).json(errorResponse(
           'Prestavolto troppo lungo (max 100 caratteri)',
           'PRESTAVOLTO_TOO_LONG',
           undefined,
           400,
           getRequestId(req)
         ));
+        return;
       }
 
-      // Find character
       const character = await Character.findOne({
         _id: characterId,
         userId,
@@ -2006,13 +2011,14 @@ export class CharacterController {
       });
 
       if (!character) {
-        return res.status(404).json(errorResponse(
+        res.status(404).json(errorResponse(
           'Personaggio non trovato',
           'CHARACTER_NOT_FOUND',
           undefined,
           404,
           getRequestId(req)
         ));
+        return;
       }
 
       const oldPrestavolto = character.prestavolto || null;
@@ -2020,8 +2026,9 @@ export class CharacterController {
       const isChange = !isFirstAssignment && oldPrestavolto.toLowerCase() !== newPrestavolto.toLowerCase();
 
       // Check for duplicates
+      const escapedPrestavolto = escapeRegex(newPrestavolto);
       const duplicate = await Character.findOne({
-        prestavolto: { $regex: new RegExp(`^${newPrestavolto}$`, 'i') },
+        prestavolto: { $regex: new RegExp(`^${escapedPrestavolto}$`, 'i') },
         _id: { $ne: characterId },
         isDeleted: { $ne: true }
       }).select('_id name surname prestavoltoStatus');

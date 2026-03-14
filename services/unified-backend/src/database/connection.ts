@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { logger } from '@shared/utils/logger';
 
 class DatabaseConnectionManager {
   private static instance: DatabaseConnectionManager;
@@ -15,7 +16,7 @@ class DatabaseConnectionManager {
 
   async connect(mongoUri: string): Promise<void> {
     if (this.isConnected) {
-      console.log('Database already connected');
+      logger.info('Database already connected');
       return;
     }
 
@@ -27,21 +28,21 @@ class DatabaseConnectionManager {
     });
 
     this.isConnected = true;
-    console.log('✅ MongoDB connected');
+    logger.info('MongoDB connected');
 
     // Event handlers
     mongoose.connection.on('error', (error) => {
-      console.error('MongoDB error:', error);
+      logger.error('MongoDB error:', error);
       this.isConnected = false;
     });
 
     mongoose.connection.on('disconnected', () => {
-      console.warn('MongoDB disconnected');
+      logger.warn('MongoDB disconnected');
       this.isConnected = false;
     });
 
     mongoose.connection.on('reconnected', () => {
-      console.log('MongoDB reconnected');
+      logger.info('MongoDB reconnected');
       this.isConnected = true;
     });
   }
@@ -77,7 +78,7 @@ class DatabaseConnectionManager {
       return {
         status: 'unhealthy',
         details: {
-          error: error instanceof Error ? error.message : 'Unknown error',
+          error: error instanceof Error ? error.message : 'Errore sconosciuto',
           readyState: mongoose.connection.readyState
         }
       };

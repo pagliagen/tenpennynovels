@@ -6,6 +6,7 @@ import { logger } from '../utils/logger';
 import { Occupation } from '@database/models/Occupation';
 import { Character } from '@database/models/Character';
 import { listResponse, successResponse, errorResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
+import { escapeRegex } from '@shared/utils/validation';
 
 export class OccupationManagementController {
   /**
@@ -25,9 +26,10 @@ export class OccupationManagementController {
       if (category && category !== 'all') query.category = category;
       if (isActive !== undefined) query.isActive = isActive === 'true';
       if (search) {
+        const escapedSearch = escapeRegex(search as string);
         query.$or = [
-          { name: { $regex: search, $options: 'i' } },
-          { description: { $regex: search, $options: 'i' } }
+          { name: { $regex: escapedSearch, $options: 'i' } },
+          { description: { $regex: escapedSearch, $options: 'i' } }
         ];
       }
 

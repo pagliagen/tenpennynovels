@@ -688,7 +688,7 @@ export class GameController {
         location = await (Location.findById(locationId) as any);
         if (!location) {
           res.status(404).json(errorResponse(
-            'Location not found',
+            'Location non trovata',
             'LOCATION_NOT_FOUND',
             undefined,
             404,

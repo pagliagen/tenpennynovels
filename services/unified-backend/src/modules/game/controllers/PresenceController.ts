@@ -26,7 +26,7 @@ export class PresenceController {
           result: false,
           error: {
             code: 'UNAUTHORIZED',
-            message: 'Character context required'
+            message: 'Contesto personaggio richiesto'
           }
         });
         return;
@@ -86,7 +86,7 @@ export class PresenceController {
         result: false,
         error: {
           code: 'PRESENCE_LEAVE_FAILED',
-          message: 'Failed to process leave request'
+          message: 'Impossibile elaborare la richiesta di uscita'
         }
       });
     }

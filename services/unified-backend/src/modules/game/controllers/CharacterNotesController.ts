@@ -13,7 +13,7 @@ export class CharacterNotesController {
       const character = req.character;
       if (!character) {
         res.status(401).json(errorResponse(
-          'Character context required',
+          'Contesto personaggio richiesto',
           'CHARACTER_CONTEXT_REQUIRED',
           undefined,
           401,
@@ -61,7 +61,7 @@ export class CharacterNotesController {
       const character = req.character;
       if (!character) {
         res.status(401).json(errorResponse(
-          'Character context required',
+          'Contesto personaggio richiesto',
           'CHARACTER_CONTEXT_REQUIRED',
           undefined,
           401,
@@ -133,7 +133,7 @@ export class CharacterNotesController {
       const character = req.character;
       if (!character) {
         res.status(401).json(errorResponse(
-          'Character context required',
+          'Contesto personaggio richiesto',
           'CHARACTER_CONTEXT_REQUIRED',
           undefined,
           401,

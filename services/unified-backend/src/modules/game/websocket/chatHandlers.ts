@@ -59,17 +59,17 @@ export function setupChatHandlers(socket: Socket, io: SocketIOServer): void {
    */
   socket.on('join_location', async (locationId: string) => {
     try {
-      console.log('🚪 WebSocket: join_location request for:', locationId);
-      const character = socket.data.character;
-      
-      // WebSocket accepts any valid character context - authorization is handled by HTTP endpoints
-      if (!character) {
-        console.log('❌ WebSocket: No character context found');
-        socket.emit('error', { message: 'Character context required' });
+      if (!locationId || typeof locationId !== 'string' || !/^[0-9a-fA-F]{24}$/.test(locationId)) {
+        socket.emit('error', { code: 'INVALID_LOCATION_ID', message: 'ID location non valido' });
         return;
       }
+
+      const character = socket.data.character;
       
-      console.log('✅ WebSocket: Proceeding with join for:', character.characterName);
+      if (!character) {
+        socket.emit('error', { code: 'CHARACTER_REQUIRED', message: 'Contesto personaggio richiesto' });
+        return;
+      }
       
       // Leave previous location if any
       if (socket.data.currentLocationId) {
@@ -83,13 +83,10 @@ export function setupChatHandlers(socket: Socket, io: SocketIOServer): void {
           timestamp: new Date().toISOString()
         };
         
-        console.log(`📤 WebSocket: Broadcasting player_left to room location_${socket.data.currentLocationId}:`, playerLeftEvent);
         // ✅ ROOM-BASED: Only notify players in the same location
         socket.to(`location_${socket.data.currentLocationId}`).emit('player_left', playerLeftEvent);
       }
       
-      // Join new location
-      console.log('✅ WebSocket: Joining location room:', `location_${locationId}`);
       socket.join(`location_${locationId}`);
       socket.data.currentLocationId = locationId;
       
@@ -101,7 +98,6 @@ export function setupChatHandlers(socket: Socket, io: SocketIOServer): void {
         timestamp: new Date().toISOString()
       };
       
-      console.log(`📤 WebSocket: Broadcasting player_entered to room location_${locationId}:`, playerEnteredEvent);
       // ✅ ROOM-BASED: Only notify players in the same location
       socket.to(`location_${locationId}`).emit('player_entered', playerEnteredEvent);
 
@@ -113,7 +109,7 @@ export function setupChatHandlers(socket: Socket, io: SocketIOServer): void {
           locationName = location.name;
         }
       } catch (error: any) {
-        console.warn('Failed to fetch location name for', locationId, error);
+        logger.warn('Impossibile recuperare il nome della location', { locationId, error: error?.message });
       }
 
       // Get list of characters already in this location
@@ -126,8 +122,6 @@ export function setupChatHandlers(socket: Socket, io: SocketIOServer): void {
           locationId: locationId
         }));
 
-      // Confirm to client with list of present characters
-      console.log(`📤 WebSocket: Sending location_joined confirmation for ${locationName} with ${presentCharacters.length} present characters`);
       socket.emit('location_joined', {
         locationId,
         locationName,
@@ -140,7 +134,7 @@ export function setupChatHandlers(socket: Socket, io: SocketIOServer): void {
     } catch (error: any) {
       logger.error('Join location error:', error);
       socket.emit('error', { 
-        message: 'Failed to join location' 
+        message: 'Impossibile entrare nella location' 
       });
     }
   });
@@ -150,16 +144,17 @@ export function setupChatHandlers(socket: Socket, io: SocketIOServer): void {
    */
   socket.on('leave_location', async (locationId: string) => {
     try {
-      console.log('🚪 WebSocket: leave_location request for:', locationId);
-      const character = socket.data.character;
-
-      if (!character) {
-        console.log('❌ WebSocket: No character context found');
-        socket.emit('error', { message: 'Character context required' });
+      if (!locationId || typeof locationId !== 'string' || !/^[0-9a-fA-F]{24}$/.test(locationId)) {
+        socket.emit('error', { code: 'INVALID_LOCATION_ID', message: 'ID location non valido' });
         return;
       }
 
-      console.log('✅ WebSocket: Proceeding with leave for:', character.characterName);
+      const character = socket.data.character;
+
+      if (!character) {
+        socket.emit('error', { code: 'CHARACTER_REQUIRED', message: 'Contesto personaggio richiesto' });
+        return;
+      }
 
       // Leave the location room
       socket.leave(`location_${locationId}`);
@@ -173,12 +168,7 @@ export function setupChatHandlers(socket: Socket, io: SocketIOServer): void {
         timestamp: new Date().toISOString()
       };
 
-      console.log(`📤 WebSocket: Broadcasting player_left to room location_${locationId}:`, playerLeftEvent);
-      // ✅ ROOM-BASED: Only notify players in the same location
       socket.to(`location_${locationId}`).emit('player_left', playerLeftEvent);
-
-      // ✅ REMOVED GLOBAL BROADCAST: Was causing scalability issues (broadcast to ALL clients)
-      // Frontend can fetch location presence on-demand instead of receiving global updates
 
       // Confirm to client
       socket.emit('location_left', {
@@ -191,7 +181,7 @@ export function setupChatHandlers(socket: Socket, io: SocketIOServer): void {
     } catch (error: any) {
       logger.error('Leave location error:', error);
       socket.emit('error', {
-        message: 'Failed to leave location'
+        message: 'Impossibile uscire dalla location'
       });
     }
   });
@@ -201,13 +191,10 @@ export function setupChatHandlers(socket: Socket, io: SocketIOServer): void {
    * NOTE: No room joining needed - notifications are sent to character rooms directly
    */
   socket.on('join_offgame_chats', async () => {
-    console.log('🔌 Backend: Received join_offgame_chats request');
     try {
       const character = socket.data.character;
-      console.log('🔌 Backend: Character context:', character?.characterName);
       if (!character) {
-        console.log('🔌 Backend: No character context, sending error');
-        socket.emit('error', { message: 'Character context required for OffGame chat' });
+        socket.emit('error', { code: 'CHARACTER_REQUIRED', message: 'Contesto personaggio richiesto per le chat OffGame' });
         return;
       }
 
@@ -231,7 +218,7 @@ export function setupChatHandlers(socket: Socket, io: SocketIOServer): void {
     } catch (error: any) {
       logger.error('Join OffGame chats error:', error);
       socket.emit('error', { 
-        message: 'Failed to join OffGame chats' 
+        message: 'Impossibile entrare nelle chat OffGame' 
       });
     }
   });

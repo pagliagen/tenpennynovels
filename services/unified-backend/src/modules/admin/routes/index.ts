@@ -56,7 +56,7 @@ router.get('/me',
     if (!authToken) {
       res.status(401).json({
         result: false,
-        error: 'No authentication token provided'
+        error: 'Nessun token di autenticazione fornito'
       });
       return;
     }
@@ -75,7 +75,7 @@ router.get('/me',
     if (!user) {
       res.status(404).json({
         result: false,
-        error: 'User not found'
+        error: 'Utente non trovato'
       });
       return;
     }
@@ -127,7 +127,7 @@ router.get('/me',
       });
       res.status(403).json({
         result: false,
-        error: 'Access denied to management panel',
+        error: 'Accesso negato al pannello di gestione',
         action: 'ACCESS_DENIED'
       });
       return;
@@ -181,7 +181,7 @@ router.get('/me',
     });
     res.status(500).json({
       result: false,
-      error: 'Internal server error'
+      error: 'Errore interno del server'
     });
   }
 });
@@ -195,7 +195,7 @@ router.get('/my-characters', async (req: Request, res: Response): Promise<void> 
     if (!authToken) {
       res.status(401).json({
         result: false,
-        error: 'No authentication token provided'
+        error: 'Nessun token di autenticazione fornito'
       });
       return;
     }
@@ -208,7 +208,7 @@ router.get('/my-characters', async (req: Request, res: Response): Promise<void> 
     if (!user) {
       res.status(404).json({
         result: false,
-        error: 'User not found'
+        error: 'Utente non trovato'
       });
       return;
     }
@@ -260,7 +260,7 @@ router.get('/my-characters', async (req: Request, res: Response): Promise<void> 
     });
     res.status(500).json({
       result: false,
-      error: 'Internal server error'
+      error: 'Errore interno del server'
     });
   }
 });

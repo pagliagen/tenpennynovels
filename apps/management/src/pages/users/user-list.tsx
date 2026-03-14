@@ -304,7 +304,7 @@ export default function UserList() {
 
         <ConfigurableDataTable<User>
           tableName="user-list"
-          data={data?.items ?? []}
+          data={data?.list ?? []}
           loading={isLoading || tableConfig.loading}
           onAction={handleAction}
           renderActions={(user) => (

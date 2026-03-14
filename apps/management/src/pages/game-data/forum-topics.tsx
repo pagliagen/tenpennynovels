@@ -200,7 +200,7 @@ export default function ForumTopicsPage() {
     setParams(prev => ({ ...prev, sortBy, sortOrder, page: 1 }));
 
   const isSaving = createTopic.isPending || updateTopic.isPending;
-  const topics = data?.items ?? [];
+  const topics = data?.list ?? [];
   const totalItems = data?.pagination?.totalItems ?? 0;
 
   const canAddRule = newRuleType === 'public' || newRuleType === 'authenticated'

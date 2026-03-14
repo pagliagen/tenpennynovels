@@ -67,7 +67,7 @@ export class CharacterRelationController {
     } catch (error: any) {
       logger.error('Error retrieving character relationships:', error);
       res.status(500).json(errorResponse(
-        'Internal server error',
+        'Errore interno del server',
         'INTERNAL_SERVER_ERROR',
         undefined,
         500,
@@ -108,7 +108,7 @@ export class CharacterRelationController {
     } catch (error: any) {
       logger.error('Error retrieving relationship types:', error);
       res.status(500).json(errorResponse(
-        'Internal server error',
+        'Errore interno del server',
         'INTERNAL_SERVER_ERROR',
         undefined,
         500,
@@ -367,7 +367,7 @@ export class CharacterRelationController {
     } catch (error: any) {
       logger.error('Error proposing relationship:', error);
       res.status(500).json(errorResponse(
-        'Internal server error',
+        'Errore interno del server',
         'INTERNAL_SERVER_ERROR',
         undefined,
         500,
@@ -512,7 +512,7 @@ export class CharacterRelationController {
     } catch (error: any) {
       logger.error('Error responding to relationship proposal:', error);
       res.status(500).json(errorResponse(
-        'Internal server error',
+        'Errore interno del server',
         'INTERNAL_SERVER_ERROR',
         undefined,
         500,
@@ -625,7 +625,7 @@ export class CharacterRelationController {
     } catch (error: any) {
       logger.error('Error ending relationship:', error);
       res.status(500).json(errorResponse(
-        'Internal server error',
+        'Errore interno del server',
         'INTERNAL_SERVER_ERROR',
         undefined,
         500,

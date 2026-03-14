@@ -29,7 +29,7 @@ export class AuthMiddleware {
           if (required) {
             const response: ApiResponse = {
               result: false,
-              error: 'Authentication required',
+              error: 'Autenticazione richiesta',
               code: 'AUTH_REQUIRED',
               timestamp: new Date().toISOString()
             };
@@ -81,14 +81,14 @@ export class AuthMiddleware {
 
           if (required) {
             logSecurity('invalid_token_access', {
-              error: error instanceof Error ? error.message : 'Unknown error',
+              error: error instanceof Error ? error.message : 'Errore sconosciuto',
               ipAddress: req.ip,
               userAgent: req.get('User-Agent')
             });
 
             const response: ApiResponse = {
               result: false,
-              error: 'Invalid or expired session',
+              error: 'Sessione non valida o scaduta',
               code: 'INVALID_SESSION',
               timestamp: new Date().toISOString()
             };
@@ -101,7 +101,7 @@ export class AuthMiddleware {
         logger.error('Auth middleware error:', error);
         const response: ApiResponse = {
           result: false,
-          error: 'Authentication error',
+          error: 'Errore di autenticazione',
           code: 'AUTH_ERROR',
           timestamp: new Date().toISOString()
         };
@@ -122,7 +122,7 @@ export class AuthMiddleware {
           if (required) {
             const response: ApiResponse = {
               result: false,
-              error: 'Character selection required',
+              error: 'Selezione del personaggio richiesta',
               code: 'CHARACTER_REQUIRED',
               timestamp: new Date().toISOString()
             };
@@ -152,7 +152,7 @@ export class AuthMiddleware {
 
             const response: ApiResponse = {
               result: false,
-              error: 'Character token mismatch',
+              error: 'Discrepanza token personaggio',
               code: 'CHARACTER_TOKEN_MISMATCH',
               timestamp: new Date().toISOString()
             };
@@ -184,7 +184,7 @@ export class AuthMiddleware {
             if (required) {
               const response: ApiResponse = {
                 result: false,
-                error: 'Character session is no longer valid. Another device may have logged in with this character.',
+                error: 'Sessione personaggio non più valida. Un altro dispositivo potrebbe aver effettuato l\'accesso con questo personaggio.',
                 code: 'CHARACTER_SESSION_INVALID',
                 timestamp: new Date().toISOString()
               };
@@ -209,7 +209,7 @@ export class AuthMiddleware {
           if (required) {
             const response: ApiResponse = {
               result: false,
-              error: 'Invalid or expired character session',
+              error: 'Sessione personaggio non valida o scaduta',
               code: 'INVALID_CHARACTER_SESSION',
               timestamp: new Date().toISOString()
             };
@@ -222,7 +222,7 @@ export class AuthMiddleware {
         logger.error('Character auth middleware error:', error);
         const response: ApiResponse = {
           result: false,
-          error: 'Character authentication error',
+          error: 'Errore di autenticazione del personaggio',
           code: 'CHARACTER_AUTH_ERROR',
           timestamp: new Date().toISOString()
         };
@@ -240,7 +240,7 @@ export class AuthMiddleware {
         if (!req.user) {
           const response: ApiResponse = {
             result: false,
-            error: 'Authentication required',
+            error: 'Autenticazione richiesta',
             code: 'AUTH_REQUIRED',
             timestamp: new Date().toISOString()
           };
@@ -257,7 +257,7 @@ export class AuthMiddleware {
 
           const response: ApiResponse = {
             result: false,
-            error: 'Admin privileges required',
+            error: 'Privilegi admin richiesti',
             code: 'ADMIN_REQUIRED',
             timestamp: new Date().toISOString()
           };
@@ -288,7 +288,7 @@ export class AuthMiddleware {
 
             const response: ApiResponse = {
               result: false,
-              error: 'Insufficient admin permissions',
+              error: 'Permessi admin insufficienti',
               code: 'INSUFFICIENT_PERMISSIONS',
               timestamp: new Date().toISOString()
             };
@@ -301,7 +301,7 @@ export class AuthMiddleware {
         logger.error('Admin auth middleware error:', error);
         const response: ApiResponse = {
           result: false,
-          error: 'Admin authentication error',
+          error: 'Errore di autenticazione admin',
           code: 'ADMIN_AUTH_ERROR',
           timestamp: new Date().toISOString()
         };
@@ -319,7 +319,7 @@ export class AuthMiddleware {
         if (!req.character) {
           const response: ApiResponse = {
             result: false,
-            error: 'Character selection required',
+            error: 'Selezione del personaggio richiesta',
             code: 'CHARACTER_REQUIRED',
             timestamp: new Date().toISOString()
           };
@@ -343,7 +343,7 @@ export class AuthMiddleware {
 
           const response: ApiResponse = {
             result: false,
-            error: 'Insufficient gameplay permissions',
+            error: 'Permessi di gioco insufficienti',
             code: 'INSUFFICIENT_GAMEPLAY_ROLE',
             timestamp: new Date().toISOString()
           };
@@ -355,7 +355,7 @@ export class AuthMiddleware {
         logger.error('Gameplay role middleware error:', error);
         const response: ApiResponse = {
           result: false,
-          error: 'Gameplay authentication error',
+          error: 'Errore di autenticazione di gioco',
           code: 'GAMEPLAY_AUTH_ERROR',
           timestamp: new Date().toISOString()
         };

@@ -22,7 +22,7 @@ export interface ApiResponse<T = unknown> {
 export interface PaginatedResponse<T = unknown> {
   result: boolean;
   data?: {
-    items: T[];
+    list: T[];
     pagination: PaginationInfo;
   };
   error?: string;

@@ -4,6 +4,7 @@
  */
 
 import { spawn } from 'child_process';
+import { logger } from './logger';
 import path from 'path';
 
 export interface EmbeddingResult {
@@ -142,7 +143,7 @@ export class EmbeddingsService {
       await this.generateEmbedding('test');
       return true;
     } catch (error) {
-      console.error('Embeddings service not available:', error);
+      logger.error('Embeddings service not available:', error);
       return false;
     }
   }

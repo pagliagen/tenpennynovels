@@ -21,7 +21,7 @@ export class ErrorHandler {
     const isDevelopment = process.env.NODE_ENV === 'development';
     
     res.status(500).json(errorResponse(
-      isDevelopment ? error.message : 'Internal server error',
+      isDevelopment ? error.message : 'Errore interno del server',
       'INTERNAL_SERVER_ERROR',
       isDevelopment && error.stack ? {
         stack: error.stack.split('\n').slice(0, 10) // Limit stack trace

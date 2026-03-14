@@ -280,7 +280,7 @@ export default function CharacterPermissions() {
 
         <ConfigurableDataTable<Character>
           tableName="character-permissions"
-          data={data?.items ?? []}
+          data={data?.list ?? []}
           loading={isLoading || tableConfig.loading}
           onAction={handleAction}
           pagination={{

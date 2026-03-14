@@ -4,6 +4,7 @@ import { successResponse, errorResponse, getRequestId } from '../utils/apiRespon
 import { ForumReaction } from '@database/models/ForumReaction';
 import { ForumPost } from '@database/models/ForumPost';
 import { NotificationService } from '../services/NotificationService';
+import { logger } from '../logger';
 
 const REACTION_TYPES = ['like', 'love', 'laugh', 'think'] as const;
 
@@ -12,7 +13,7 @@ export class ForumReactionController {
     try {
       const character = req.character;
       if (!character) {
-        res.status(401).json(errorResponse('Character not found', 'CHARACTER_NOT_FOUND', undefined, 401, getRequestId(req)));
+        res.status(401).json(errorResponse('Personaggio non trovato', 'CHARACTER_NOT_FOUND', undefined, 401, getRequestId(req)));
         return;
       }
 
@@ -20,12 +21,12 @@ export class ForumReactionController {
       const { reactionType } = req.body;
 
       if (!reactionType || !REACTION_TYPES.includes(reactionType)) {
-        res.status(400).json(errorResponse('Invalid reactionType (must be: like, love, laugh, think)', 'INVALID_REACTION_TYPE', undefined, 400, getRequestId(req)));
+        res.status(400).json(errorResponse('Tipo di reazione non valido (deve essere: like, love, laugh, think)', 'INVALID_REACTION_TYPE', undefined, 400, getRequestId(req)));
         return;
       }
 
       if (!mongoose.Types.ObjectId.isValid(postId)) {
-        res.status(400).json(errorResponse('Invalid post ID', 'INVALID_POST_ID', undefined, 400, getRequestId(req)));
+        res.status(400).json(errorResponse('ID post non valido', 'INVALID_POST_ID', undefined, 400, getRequestId(req)));
         return;
       }
 
@@ -34,7 +35,7 @@ export class ForumReactionController {
 
       const post = await ForumPost.findById(postObjectId);
       if (!post) {
-        res.status(404).json(errorResponse('Post not found', 'POST_NOT_FOUND', undefined, 404, getRequestId(req)));
+        res.status(404).json(errorResponse('Post non trovato', 'POST_NOT_FOUND', undefined, 404, getRequestId(req)));
         return;
       }
 
@@ -54,7 +55,7 @@ export class ForumReactionController {
             reacted: false,
             reactionType: null,
             reactionCounts: updatedPost?.reactionCounts ?? { like: 0, love: 0, laugh: 0, think: 0 }
-          }, 'Reaction removed', getRequestId(req)));
+          }, 'Reazione rimossa', getRequestId(req)));
         } else {
           const oldType = existingReaction.reactionType;
           await ForumReaction.findByIdAndUpdate(existingReaction._id, {
@@ -82,7 +83,7 @@ export class ForumReactionController {
             reacted: true,
             reactionType,
             reactionCounts: updatedPost?.reactionCounts ?? { like: 0, love: 0, laugh: 0, think: 0 }
-          }, 'Reaction updated', getRequestId(req)));
+          }, 'Reazione aggiornata', getRequestId(req)));
         }
       } else {
         await ForumReaction.create({
@@ -109,11 +110,11 @@ export class ForumReactionController {
           reacted: true,
           reactionType,
           reactionCounts: updatedPost?.reactionCounts ?? { like: 0, love: 0, laugh: 0, think: 0 }
-        }, 'Reaction added', getRequestId(req)));
+        }, 'Reazione aggiunta', getRequestId(req)));
       }
     } catch (error: unknown) {
-      console.error('[ForumReactionController] Create error:', error);
-      res.status(500).json(errorResponse('Failed to toggle reaction', 'CREATE_REACTION_ERROR', undefined, 500, getRequestId(req)));
+      logger.error('[ForumReactionController] Create error:', error);
+      res.status(500).json(errorResponse('Impossibile attivare/disattivare la reazione', 'CREATE_REACTION_ERROR', undefined, 500, getRequestId(req)));
     }
   }
 
@@ -122,7 +123,7 @@ export class ForumReactionController {
       const { postId } = req.params;
 
       if (!mongoose.Types.ObjectId.isValid(postId)) {
-        res.status(400).json(errorResponse('Invalid post ID', 'INVALID_POST_ID', undefined, 400, getRequestId(req)));
+        res.status(400).json(errorResponse('ID post non valido', 'INVALID_POST_ID', undefined, 400, getRequestId(req)));
         return;
       }
 
@@ -166,8 +167,8 @@ export class ForumReactionController {
         myReaction: myReaction ? { reactionType: myReaction.reactionType, characterId: myReaction.characterId } : null
       }, undefined, getRequestId(req)));
     } catch (error: unknown) {
-      console.error('[ForumReactionController] List error:', error);
-      res.status(500).json(errorResponse('Failed to fetch reactions', 'LIST_REACTIONS_ERROR', undefined, 500, getRequestId(req)));
+      logger.error('[ForumReactionController] List error:', error);
+      res.status(500).json(errorResponse('Impossibile recuperare le reazioni', 'LIST_REACTIONS_ERROR', undefined, 500, getRequestId(req)));
     }
   }
 }
