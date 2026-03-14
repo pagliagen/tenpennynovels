@@ -299,10 +299,9 @@ export const CharacterSchema = z.object({
   background: z.string().max(2000),
   stats: CharacterStatsSchema,
   avatar: z.string().max(500).nullable().optional(),
-  // CRITICAL: Status values MUST match backend Character model
-  // Backend enum: ['DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'DELETED']
-  // DO NOT use: 'active', 'inactive', 'deceased', 'pending' (not supported by backend)
-  status: z.enum(['DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'DELETED']),
+  // Face claim fields (prestavolto = VIP/actor used as character face reference)
+  prestavolto: z.string().optional(),
+  prestavoltoStatus: z.enum(['approved', 'pending_duplicate', 'pending_change']).nullable().optional(),
   isOnline: z.boolean(),
   lastSeenAt: z.string().datetime().nullable(),
   playerStatus: z.enum(['draft', 'pending', 'approved']).optional(),

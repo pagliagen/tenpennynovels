@@ -83,7 +83,7 @@ export const characterApi = {
    *   occupation: 'detective',
    *   // ... all other fields
    * });
-   * // character.status === 'DRAFT'
+   * // character.playerStatus === 'draft'
    * ```
    */
   async create(data: CharacterCreatePayload): Promise<Character> {
@@ -202,14 +202,14 @@ export const characterApi = {
    * **Post-Submission**: Character becomes read-only until staff approves/rejects.
    *
    * @param {string} characterId - Character ID
-   * @returns {Promise<Character>} Updated character (status: PENDING_APPROVAL)
-   * @throws {ApiError} If validation fails, character not DRAFT, or request fails
+   * @returns {Promise<Character>} Updated character (playerStatus: 'pending')
+   * @throws {ApiError} If validation fails, character not draft, or request fails
    *
    * @example
    * ```typescript
    * // After completing wizard Step 6
    * const character = await characterApi.submitForApproval('abc123');
-   * // character.status === 'PENDING_APPROVAL'
+   * // character.playerStatus === 'pending'
    * ```
    */
   async submitForApproval(characterId: string): Promise<Character> {
