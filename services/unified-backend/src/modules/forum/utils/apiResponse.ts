@@ -78,5 +78,5 @@ export function listResponse<T>(
  * Get request ID from Express request
  */
 export function getRequestId(req: Request): string | undefined {
-  return (req.headers['x-request-id'] as string | undefined) || (req as any).id;
+  return (req.headers['x-request-id'] as string | undefined) || (req as Request & { id?: string }).id;
 }

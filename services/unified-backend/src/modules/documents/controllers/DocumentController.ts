@@ -32,7 +32,7 @@ export class DocumentController {
         return;
       }
 
-      const filter: any = {
+      const filter: Record<string, unknown> = {
         type,
         path,
         deletedAt: null,
@@ -78,7 +78,7 @@ export class DocumentController {
         isPublic: doc.isPublic
       };
 
-      const convertChunk = (chunk: any, depth: number = 0) => ({
+      const convertChunk = (chunk: { _id: { toString(): string }; documentId: { toString(): string }; heading: string; slug: string; content: string; headingLevel: number; order: number }, depth: number = 0) => ({
         _id: chunk._id.toString(),
         documentId: chunk.documentId.toString(),
         title: chunk.heading,
@@ -94,7 +94,7 @@ export class DocumentController {
           data: {
             route: { path: doc.path, type: doc.type, kind: 'document', isPublic: doc.isPublic, enabled: true },
             document,
-            sections: rootChunks.map(c => convertChunk(c)),
+            sections: rootChunks.map(c => convertChunk(c as unknown as Parameters<typeof convertChunk>[0])),
             hasChildren: false
           }
         });
@@ -103,11 +103,11 @@ export class DocumentController {
 
       // Build hierarchical children
       const hierarchicalChildren = await HierarchyService.buildHierarchicalChildren(
-        doc._id, doc.path, doc.type as any, 0, 5
+        doc._id, doc.path, doc.type as 'ambientazione' | 'regolamento', 0, 5
       );
 
-      const hasAnyChildWithSeparatePage = (children: any[]): boolean =>
-        children.some(child => child.hasOwnPage || hasAnyChildWithSeparatePage(child.children || []));
+      const hasAnyChildWithSeparatePage = (children: Array<{ hasOwnPage?: boolean; children?: Array<{ hasOwnPage?: boolean; children?: unknown[] }> }>): boolean =>
+        children.some(child => child.hasOwnPage || hasAnyChildWithSeparatePage((child.children || []) as Array<{ hasOwnPage?: boolean; children?: Array<{ hasOwnPage?: boolean; children?: unknown[] }> }>));
 
       if (hasAnyChildWithSeparatePage(hierarchicalChildren)) {
         res.json({
@@ -115,7 +115,7 @@ export class DocumentController {
           data: {
             route: { path: doc.path, type: doc.type, kind: 'document', isPublic: doc.isPublic, enabled: true },
             document,
-            sections: rootChunks.map(c => convertChunk(c)),
+            sections: rootChunks.map(c => convertChunk(c as unknown as Parameters<typeof convertChunk>[0])),
             hasChildren: false,
             childDocuments: hierarchicalChildren
           }
@@ -124,7 +124,7 @@ export class DocumentController {
       }
 
       // Assemble full hierarchy
-      const allSections: any[] = rootChunks.map(c => ({ ...convertChunk(c), isRootChunk: true }));
+      const allSections: Record<string, unknown>[] = rootChunks.map(c => ({ ...convertChunk(c as unknown as Parameters<typeof convertChunk>[0]), isRootChunk: true }));
 
       for (const { document: childDoc, depth, order } of childrenWithDepth) {
         const childChunks = await db.collection('documentchunks').find({
@@ -143,16 +143,16 @@ export class DocumentController {
           isDocumentTitle: true
         });
 
-        childChunks.forEach((chunk: any, chunkIndex: number) => {
+        childChunks.forEach((chunk, chunkIndex: number) => {
           allSections.push({
-            ...convertChunk(chunk, depth),
+            ...convertChunk(chunk as unknown as Parameters<typeof convertChunk>[0], depth),
             order: order + (chunkIndex * 0.01),
             parentDocumentId: childDoc._id.toString()
           });
         });
       }
 
-      allSections.sort((a, b) => a.order - b.order);
+      allSections.sort((a, b) => (a.order as number) - (b.order as number));
 
       res.json({
         result: true,
@@ -173,7 +173,7 @@ export class DocumentController {
         }
       });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error in getByPath:', error);
       res.status(500).json({ result: false, error: 'Errore recupero documento', code: 'GET_DOCUMENT_ERROR' });
     }
@@ -187,7 +187,7 @@ export class DocumentController {
     try {
       const { type } = req.query;
 
-      const filter: any = {
+      const filter: Record<string, unknown> = {
         deletedAt: null,
         isDraft: { $ne: true },
         visible: { $ne: false },
@@ -215,7 +215,7 @@ export class DocumentController {
       }));
 
       res.json({ result: true, data });
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error in listRoutes:', error);
       res.status(500).json({ result: false, error: 'Errore recupero documenti', code: 'LIST_DOCUMENTS_ERROR' });
     }
@@ -229,7 +229,7 @@ export class DocumentController {
     try {
       const subtypes = await DocumentSubtype.find().sort({ type: 1, order: 1 }).lean();
 
-      const docFilter: any = {
+      const docFilter: Record<string, unknown> = {
         deletedAt: null,
         isDraft: { $ne: true },
         visible: { $ne: false },
@@ -245,8 +245,8 @@ export class DocumentController {
         .lean();
 
       // Index docs by parentId for fast tree building
-      const childrenByParent = new Map<string, any[]>();
-      const rootDocs: any[] = [];
+      const childrenByParent = new Map<string, typeof allDocuments>();
+      const rootDocs: typeof allDocuments = [];
 
       allDocuments.forEach(doc => {
         if (!doc.parentId) {
@@ -261,7 +261,7 @@ export class DocumentController {
       });
 
       // Recursively build tree node
-      const buildTreeNode = (doc: any): any => {
+      const buildTreeNode = (doc: typeof allDocuments[number]): Record<string, unknown> => {
         const docId = doc._id.toString();
         const kids = childrenByParent.get(docId) || [];
         return {
@@ -276,7 +276,7 @@ export class DocumentController {
       };
 
       // Group root documents by subtypeId
-      const docsBySubtype = new Map<string, any[]>();
+      const docsBySubtype = new Map<string, Record<string, unknown>[]>();
       rootDocs.forEach(doc => {
         const key = doc.subtypeId?.toString() || 'default';
         if (!docsBySubtype.has(key)) {
@@ -286,7 +286,7 @@ export class DocumentController {
       });
 
       // Build grouped response
-      const grouped: Record<string, any[]> = {
+      const grouped: Record<string, Record<string, unknown>[]> = {
         ambientazione: [],
         regolamento: []
       };
@@ -308,7 +308,7 @@ export class DocumentController {
       });
 
       res.json({ result: true, routes: grouped });
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error in listRoutesHierarchical:', error);
       res.status(500).json({ result: false, error: 'Errore recupero documenti gerarchici', code: 'LIST_HIERARCHICAL_ERROR' });
     }
@@ -331,7 +331,7 @@ export class DocumentController {
       const fetchLimit = Math.max(displayLimit, aiLimit);
 
       const searchResults = await EmbeddingService.semanticSearch(
-        query, type as any, fetchLimit, Number(minSimilarity)
+        query, type as 'ambientazione' | 'regolamento' | undefined, fetchLimit, Number(minSimilarity)
       );
 
       if (searchResults.length === 0) {
@@ -346,7 +346,7 @@ export class DocumentController {
       const chunks = await db.collection('documentchunks').find({ chunkId: { $in: chunkIds } }).toArray();
 
       const documentIds = chunks.map(c => c.documentId).filter(Boolean);
-      const docFilter: any = {
+      const docFilter: Record<string, unknown> = {
         _id: { $in: documentIds.map(id => new mongoose.Types.ObjectId(id)) },
         deletedAt: null,
         isDraft: { $ne: true },
@@ -370,7 +370,7 @@ export class DocumentController {
       const maxRrfScore = 2 / (RRF_K + 1);
 
       const results = searchResults.map(result => {
-        const chunk: any = chunks.find((c: any) => c.chunkId === result.chunkId);
+        const chunk = chunks.find(c => c.chunkId === result.chunkId);
         if (!chunk) return null;
 
         const doc = docMap.get(chunk.documentId.toString());
@@ -403,10 +403,11 @@ export class DocumentController {
         };
       }).filter(Boolean);
 
-      const displayResults = (results as any[]).slice(0, displayLimit);
+      const validResults = results.filter((r): r is NonNullable<typeof r> => r !== null);
+      const displayResults = validResults.slice(0, displayLimit);
 
       const MIN_AI_SCORE = 35;
-      const relevantResults = (results as any[]).filter((r: any) => parseInt(r.matchScore) >= MIN_AI_SCORE).slice(0, aiLimit);
+      const relevantResults = validResults.filter(r => parseInt(r.matchScore) >= MIN_AI_SCORE).slice(0, aiLimit);
       const shouldUseAI = isQuestion(query) && relevantResults.length > 0;
 
       if (!shouldUseAI) {
@@ -425,7 +426,7 @@ export class DocumentController {
         'X-Accel-Buffering': 'no',
       });
 
-      const sendSSE = (event: string, data: any) => {
+      const sendSSE = (event: string, data: unknown) => {
         res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
       };
 
@@ -445,9 +446,9 @@ export class DocumentController {
         clearInterval(keepAlive);
       });
 
-      const contextChunks = relevantResults.map((r: any) => {
+      const contextChunks = relevantResults.map(r => {
         const chunkId = searchResults.find(sr => sr.heading === r.matchHeading && sr.slug === r.route?.anchor?.replace('#', ''))?.chunkId;
-        const chunk: any = chunkId ? chunks.find((c: any) => c.chunkId === chunkId) : null;
+        const chunk = chunkId ? chunks.find(c => c.chunkId === chunkId) : null;
         return {
           heading: r.matchHeading,
           content: (chunk?.content || '').substring(0, 1500),
@@ -463,7 +464,7 @@ export class DocumentController {
 
       await DocumentSearchAgent.run(query, contextChunks, res, abortController.signal);
       clearInterval(keepAlive);
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error in semanticSearch:', error);
       if (!res.headersSent) {
         res.status(500).json({ result: false, error: 'Errore semantic search', code: 'SEARCH_ERROR' });
@@ -520,7 +521,7 @@ export class DocumentController {
       ]).toArray();
 
       res.json({ result: true, data: favorites });
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error in getFavorites:', error);
       res.status(500).json({ result: false, error: 'Errore recupero preferiti', code: 'GET_FAVORITES_ERROR' });
     }
@@ -570,7 +571,7 @@ export class DocumentController {
         });
         res.json({ result: true, data: { favorited: true }, message: 'Aggiunto ai preferiti' });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error in toggleFavorite:', error);
       res.status(500).json({ result: false, error: 'Errore toggle favorite', code: 'FAVORITE_ERROR' });
     }
@@ -605,7 +606,7 @@ export class DocumentController {
       }
 
       const searchResults = await EmbeddingService.semanticSearch(
-        question, type as any, 5, 0.01
+        question, type as 'ambientazione' | 'regolamento' | undefined, 5, 0.01
       );
 
       if (searchResults.length === 0) {
@@ -623,7 +624,7 @@ export class DocumentController {
       const chunks = await db.collection('documentchunks').find({ chunkId: { $in: chunkIds } }).toArray();
 
       const contextChunks = searchResults.map(result => {
-        const chunk = chunks.find((c: any) => c.chunkId === result.chunkId);
+        const chunk = chunks.find(c => c.chunkId === result.chunkId);
         if (!chunk) return null;
         return {
           heading: result.heading || chunk.heading || '',
@@ -640,7 +641,7 @@ export class DocumentController {
         if (healthy && contextChunks.length > 0) {
           const qaResponse = await aiGatewayClient.askQuestion({
             question,
-            context: contextChunks as any,
+            context: contextChunks.filter((c): c is NonNullable<typeof c> => c !== null),
             options: { maxTokens: 1000, locale: locale as string },
           });
 
@@ -658,8 +659,8 @@ export class DocumentController {
             return;
           }
         }
-      } catch (aiError: any) {
-        logger.warn(`[DocumentController] AI Q&A unavailable: ${aiError.message}`);
+      } catch (aiError: unknown) {
+        logger.warn(`[DocumentController] AI Q&A unavailable: ${aiError instanceof Error ? aiError.message : String(aiError)}`);
       }
 
       // Graceful degradation: return search results without AI answer
@@ -672,7 +673,7 @@ export class DocumentController {
           message: 'AI non disponibile, ecco i risultati della ricerca',
         },
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error in ask:', error);
       res.status(500).json({ result: false, error: 'Errore Q&A', code: 'ASK_ERROR' });
     }

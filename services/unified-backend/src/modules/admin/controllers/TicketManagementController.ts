@@ -222,7 +222,7 @@ export class TicketManagementController {
         undefined,
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error fetching all tickets:', { 
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
@@ -311,20 +311,20 @@ export class TicketManagementController {
           id: ticket!.assignedTo.toString(),
           name: ticket!.assignedToName || 'Unknown'
         } : undefined,
-        assignedAt: (ticket as any).assignedAt?.toISOString(),
-        closedAt: (ticket as any).closedAt?.toISOString(),
-        closedBy: (ticket as any).closedBy ? {
-          id: (ticket as any).closedBy.toString(),
+        assignedAt: ticket.assignedAt?.toISOString(),
+        closedAt: ticket.closedAt?.toISOString(),
+        closedBy: ticket.closedBy ? {
+          id: ticket.closedBy.toString(),
           name: 'Staff'
         } : undefined,
-        escalatedAt: (ticket as any).escalatedAt?.toISOString(),
-        escalationLevel: (ticket as any).escalationLevel,
+        escalatedAt: ticket.escalatedAt?.toISOString(),
+        escalationLevel: ticket.escalationLevel,
         lastReadBy: {
-          character: (ticket as any).lastReadBy?.character?.toISOString(),
-          staff: (ticket as any).lastReadBy?.staff?.toISOString()
+          character: ticket.lastReadBy?.character?.toISOString(),
+          staff: ticket.lastReadBy?.staff?.toISOString()
         },
-        tags: (ticket as any).tags,
-        internalNotes: (ticket as any).internalNotes,
+        tags: ticket.tags,
+        internalNotes: ticket.internalNotes,
         messageCount: messageCountMap.get(ticket!._id.toString()) || 0
       }));
 
@@ -351,7 +351,7 @@ export class TicketManagementController {
         undefined,
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error fetching my tickets:', { error: error instanceof Error ? error.message : String(error) });
       
       res.status(500).json(errorResponse(
@@ -452,20 +452,20 @@ export class TicketManagementController {
           id: ticket!.assignedTo.toString(),
           name: ticket!.assignedToName || 'Unknown'
         } : undefined,
-        assignedAt: (ticket as any).assignedAt?.toISOString(),
-        closedAt: (ticket as any).closedAt?.toISOString(),
-        closedBy: (ticket as any).closedBy ? {
-          id: (ticket as any).closedBy.toString(),
+        assignedAt: ticket.assignedAt?.toISOString(),
+        closedAt: ticket.closedAt?.toISOString(),
+        closedBy: ticket.closedBy ? {
+          id: ticket.closedBy.toString(),
           name: 'Staff'
         } : undefined,
-        escalatedAt: (ticket as any).escalatedAt?.toISOString(),
-        escalationLevel: (ticket as any).escalationLevel,
+        escalatedAt: ticket.escalatedAt?.toISOString(),
+        escalationLevel: ticket.escalationLevel,
         lastReadBy: {
-          character: (ticket as any).lastReadBy?.character?.toISOString(),
-          staff: (ticket as any).lastReadBy?.staff?.toISOString()
+          character: ticket.lastReadBy?.character?.toISOString(),
+          staff: ticket.lastReadBy?.staff?.toISOString()
         },
-        tags: (ticket as any).tags,
-        internalNotes: (ticket as any).internalNotes,
+        tags: ticket.tags,
+        internalNotes: ticket.internalNotes,
         messageCount: messageCountMap.get(ticket!._id.toString()) || 0
       }));
 
@@ -496,7 +496,7 @@ export class TicketManagementController {
         undefined,
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error fetching department tickets:', { error: error instanceof Error ? error.message : String(error) });
       
       res.status(500).json(errorResponse(
@@ -601,20 +601,20 @@ export class TicketManagementController {
           id: ticket!.assignedTo.toString(),
           name: ticket!.assignedToName || 'Unknown'
         } : undefined,
-        assignedAt: (ticket as any).assignedAt?.toISOString(),
-        closedAt: (ticket as any).closedAt?.toISOString(),
-        closedBy: (ticket as any).closedBy ? {
-          id: (ticket as any).closedBy.toString(),
+        assignedAt: ticket.assignedAt?.toISOString(),
+        closedAt: ticket.closedAt?.toISOString(),
+        closedBy: ticket.closedBy ? {
+          id: ticket.closedBy.toString(),
           name: 'Staff'
         } : undefined,
-        escalatedAt: (ticket as any).escalatedAt?.toISOString(),
-        escalationLevel: (ticket as any).escalationLevel,
+        escalatedAt: ticket.escalatedAt?.toISOString(),
+        escalationLevel: ticket.escalationLevel,
         lastReadBy: {
-          character: (ticket as any).lastReadBy?.character?.toISOString(),
-          staff: (ticket as any).lastReadBy?.staff?.toISOString()
+          character: ticket.lastReadBy?.character?.toISOString(),
+          staff: ticket.lastReadBy?.staff?.toISOString()
         },
-        tags: (ticket as any).tags,
-        internalNotes: (ticket as any).internalNotes,
+        tags: ticket.tags,
+        internalNotes: ticket.internalNotes,
         messageCount: messageCountMap.get(ticket!._id.toString()) || 0
       }));
 
@@ -642,7 +642,7 @@ export class TicketManagementController {
         undefined,
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error fetching specific department tickets:', { 
         error: error instanceof Error ? error.message : String(error),
         department: req.params.dept
@@ -812,7 +812,7 @@ export class TicketManagementController {
         undefined,
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error fetching ticket statistics:', { error: error instanceof Error ? error.message : String(error) });
       
       res.status(500).json(errorResponse(
@@ -858,7 +858,7 @@ export class TicketManagementController {
       }
 
       // Type assertion for ticket to avoid union type issues
-      const ticketData = ticket as any;
+      const ticketData = ticket;
 
       // Check if admin has access to this ticket's department
       if (req.user?.characterRoles) {
@@ -900,20 +900,20 @@ export class TicketManagementController {
           id: ticketData.assignedTo.toString(),
           name: ticketData.assignedToName || 'Unknown'
         } : undefined,
-        assignedAt: (ticket as any).assignedAt?.toISOString(),
-        closedAt: (ticket as any).closedAt?.toISOString(),
-        closedBy: (ticket as any).closedBy ? {
-          id: (ticket as any).closedBy.toString(),
+        assignedAt: ticket.assignedAt?.toISOString(),
+        closedAt: ticket.closedAt?.toISOString(),
+        closedBy: ticket.closedBy ? {
+          id: ticket.closedBy.toString(),
           name: 'Staff'
         } : undefined,
-        escalatedAt: (ticket as any).escalatedAt?.toISOString(),
-        escalationLevel: (ticket as any).escalationLevel,
+        escalatedAt: ticket.escalatedAt?.toISOString(),
+        escalationLevel: ticket.escalationLevel,
         lastReadBy: {
-          character: (ticket as any).lastReadBy?.character?.toISOString(),
-          staff: (ticket as any).lastReadBy?.staff?.toISOString()
+          character: ticket.lastReadBy?.character?.toISOString(),
+          staff: ticket.lastReadBy?.staff?.toISOString()
         },
-        tags: (ticket as any).tags,
-        internalNotes: (ticket as any).internalNotes,
+        tags: ticket.tags,
+        internalNotes: ticket.internalNotes,
         messageCount: messages.length
       };
 
@@ -951,7 +951,7 @@ export class TicketManagementController {
         undefined,
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error fetching ticket details:', { 
         error: error instanceof Error ? error.message : String(error),
         ticketId: req.params.id
@@ -1082,7 +1082,7 @@ export class TicketManagementController {
         wasAlreadyAssigned ? 'Ticket riassegnato con successo' : 'Ticket assegnato con successo',
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error assigning ticket:', { 
         error: error instanceof Error ? error.message : String(error),
         ticketId: req.params.id
@@ -1161,14 +1161,14 @@ export class TicketManagementController {
       ticket!.reassignmentHistory.push({
         fromStaff: ticket!.assignedTo,
         fromStaffName: ticket!.assignedToName || 'Unknown',
-        toStaff: new mongoose.Types.ObjectId(reassignmentData.toStaff) as any,
+        toStaff: new mongoose.Types.ObjectId(reassignmentData.toStaff),
         toStaffName: reassignmentData.toStaffName,
         reassignedAt: new Date(),
         reason: reassignmentData.reason
       });
 
       // Update assignment
-      ticket!.assignedTo = new mongoose.Types.ObjectId(reassignmentData.toStaff) as any;
+      ticket!.assignedTo = new mongoose.Types.ObjectId(reassignmentData.toStaff);
       ticket!.assignedToName = reassignmentData.toStaffName;
       ticket!.assignedAt = new Date();
       ticket!.lastReadBy.staff = new Date();
@@ -1215,7 +1215,7 @@ export class TicketManagementController {
         'Ticket riassegnato con successo',
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error reassigning ticket:', { 
         error: error instanceof Error ? error.message : String(error),
         ticketId: req.params.id
@@ -1306,14 +1306,14 @@ export class TicketManagementController {
       ticket!.departmentHistory.push({
         fromDepartment: ticket.department,
         toDepartment: transferData.toDepartment,
-        transferredBy: new mongoose.Types.ObjectId(req.user?.userId!) as any,
+        transferredBy: new mongoose.Types.ObjectId(req.user?.userId!),
         transferredByName: req.user?.username || 'Unknown',
         transferredAt: new Date(),
         reason: transferData.reason
       });
 
       // Update department and reset assignment
-      ticket!.department = transferData.toDepartment as any;
+      ticket!.department = transferData.toDepartment;
       ticket!.assignedTo = undefined;
       ticket!.assignedToName = undefined;
       ticket!.assignedAt = undefined;
@@ -1355,7 +1355,7 @@ export class TicketManagementController {
         'Ticket trasferito con successo',
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error transferring ticket:', { 
         error: error instanceof Error ? error.message : String(error),
         ticketId: req.params.id
@@ -1418,7 +1418,7 @@ export class TicketManagementController {
       // Close the ticket
       ticket!.status = 'closed';
       ticket!.closedAt = new Date();
-      ticket!.closedBy = new mongoose.Types.ObjectId(req.user?.userId!) as any;
+      ticket!.closedBy = new mongoose.Types.ObjectId(req.user?.userId!);
       ticket!.lastReadBy.staff = new Date();
 
       // Add resolution note if provided
@@ -1476,7 +1476,7 @@ export class TicketManagementController {
         'Ticket chiuso con successo',
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error closing ticket:', { 
         error: error instanceof Error ? error.message : String(error),
         ticketId: req.params.id
@@ -1581,7 +1581,7 @@ export class TicketManagementController {
         // Auto-assign if not already assigned and autoAssign is requested
         const { autoAssign } = req.body;
         if (autoAssign && !ticket!.assignedTo) {
-          ticket!.assignedTo = new mongoose.Types.ObjectId(req.user?.userId!) as any;
+          ticket!.assignedTo = new mongoose.Types.ObjectId(req.user?.userId!);
           ticket!.assignedToName = req.user?.username || 'Staff';
           ticket!.assignedAt = new Date();
         }
@@ -1627,7 +1627,7 @@ export class TicketManagementController {
         'Messaggio aggiunto con successo',
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error adding ticket message:', { 
         error: error instanceof Error ? error.message : String(error),
         ticketId: req.params.id
@@ -1701,7 +1701,7 @@ export class TicketManagementController {
       }
 
       const oldPriority = ticket!.priority;
-      ticket!.priority = priorityData.priority as any;
+      ticket!.priority = priorityData.priority;
       ticket!.lastReadBy.staff = new Date();
 
       // Add note about priority change
@@ -1749,7 +1749,7 @@ export class TicketManagementController {
         'Priorità ticket aggiornata con successo',
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error updating ticket priority:', { 
         error: error instanceof Error ? error.message : String(error),
         ticketId: req.params.id
@@ -1827,7 +1827,7 @@ export class TicketManagementController {
         undefined,
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error fetching staff list:', { 
         error: error instanceof Error ? error.message : String(error),
         department: req.query.department
@@ -1907,7 +1907,7 @@ export class TicketManagementController {
         'Nota interna aggiornata con successo',
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error updating internal note:', { 
         error: error instanceof Error ? error.message : String(error),
         ticketId: req.params.id

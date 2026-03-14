@@ -4,6 +4,26 @@
 
 import { logger } from '@shared/utils/logger';
 
+interface IpApiResponse {
+  error?: boolean;
+  country_code?: string;
+  city?: string;
+  region?: string;
+}
+
+interface IpBaseResponse {
+  country_code?: string;
+  city?: string;
+  region?: string;
+}
+
+interface IpInfoResponse {
+  bogon?: boolean;
+  country?: string;
+  city?: string;
+  region?: string;
+}
+
 interface GeoLocationResult {
   country: string;
   city: string;
@@ -78,7 +98,7 @@ export class GeoLocationService {
 
       if (!response.ok) return null;
       
-      const data = await response.json() as any;
+      const data = await response.json() as IpApiResponse;
       
       if (data.error) return null;
 
@@ -86,12 +106,12 @@ export class GeoLocationService {
       
       return {
         country: isItalian ? 'Italia' : 'Non Italiano',
-        city: isItalian ? data.city : 'Estero',  // Usa direttamente il nome della città
-        region: data.region,
+        city: isItalian ? (data.city ?? '') : 'Estero',
+        region: data.region ?? '',
         isItalian
       };
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('IPAPI.CO error:', error);
       return null;
     }
@@ -116,7 +136,7 @@ export class GeoLocationService {
 
       if (!response.ok) return null;
       
-      const data = await response.json() as any;
+      const data = await response.json() as IpBaseResponse;
       
       if (!data.country_code) return null;
 
@@ -124,12 +144,12 @@ export class GeoLocationService {
       
       return {
         country: isItalian ? 'Italia' : 'Non Italiano',
-        city: isItalian ? data.city : 'Estero',  // Usa direttamente il nome della città
-        region: data.region,
+        city: isItalian ? (data.city ?? '') : 'Estero',
+        region: data.region ?? '',
         isItalian
       };
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('IPBASE.COM error:', error);
       return null;
     }
@@ -154,7 +174,7 @@ export class GeoLocationService {
 
       if (!response.ok) return null;
       
-      const data = await response.json() as any;
+      const data = await response.json() as IpInfoResponse;
       
       if (data.bogon) return null; // IP privato/riservato
 
@@ -162,12 +182,12 @@ export class GeoLocationService {
       
       return {
         country: isItalian ? 'Italia' : 'Non Italiano',
-        city: isItalian ? data.city : 'Estero',  // Usa direttamente il nome della città
-        region: data.region,
+        city: isItalian ? (data.city ?? '') : 'Estero',
+        region: data.region ?? '',
         isItalian
       };
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('IPINFO.IO error:', error);
       return null;
     }

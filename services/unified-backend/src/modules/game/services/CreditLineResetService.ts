@@ -19,7 +19,7 @@ export class CreditLineResetService {
       const { ConfigurationService } = await import('@shared/services/ConfigurationService');
       const { redis } = await import('@config/runtime');
       const redisClient = redis.getClient();
-      const configService = new ConfigurationService(redisClient as any, logger);
+      const configService = new ConfigurationService(redisClient, logger);
 
       const creditResetSchedule = await configService.getConfig('cron_schedule_credit_reset') || '0 0 0 * * SUN';
 
@@ -36,7 +36,7 @@ export class CreditLineResetService {
       this.isInitialized = true;
       logger.info('✅ CreditLineResetService initialized successfully');
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Failed to initialize CreditLineResetService', error);
       throw error;
     }
@@ -79,7 +79,7 @@ export class CreditLineResetService {
           
           resetCount++;
           
-        } catch (error: any) {
+        } catch (error: unknown) {
           logger.error('Failed to reset credit line for character', {
             characterId: finance.characterId.toString(),
             error: (error as Error).message
@@ -94,7 +94,7 @@ export class CreditLineResetService {
         resetResults: resetResults.slice(0, 10) // Log first 10 for debugging
       });
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Critical error during weekly credit line reset', error);
     }
   }
@@ -116,7 +116,7 @@ export class CreditLineResetService {
         message: 'Credit lines reset successfully',
         resetCount: count
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Manual credit line reset failed', error);
       return {
         success: false,

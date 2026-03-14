@@ -131,10 +131,10 @@ export class OffGameChatController {
       }
 
       // Now fetch all participants for final validation
-      const characters = await (Character.find({
+      const characters = await Character.find({
         _id: { $in: allParticipants },
         status: { $in: ['draft', 'PENDING_APPROVAL', 'APPROVED'] }
-      }) as any);
+      });
 
       if (characters.length !== allParticipants.length) {
         res.status(400).json(errorResponse(
@@ -239,7 +239,7 @@ export class OffGameChatController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Create chat error:', error);
 
       res.status(500).json(errorResponse(
@@ -322,7 +322,7 @@ export class OffGameChatController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Get chats error:', error);
 
       res.status(500).json(errorResponse(
@@ -420,7 +420,7 @@ export class OffGameChatController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Get chat messages error:', error);
 
       res.status(500).json(errorResponse(
@@ -617,7 +617,7 @@ export class OffGameChatController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Send message error:', error);
 
       res.status(500).json(errorResponse(
@@ -701,7 +701,7 @@ export class OffGameChatController {
       await chat.save();
 
       // Create system message about name change
-      const character = await (Character.findById(characterId) as any);
+      const character = await Character.findById(characterId);
       const systemMessage = new OffGameChatMessage({
         chatId: chat._id,
         senderId: characterObjectId,
@@ -754,7 +754,7 @@ export class OffGameChatController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Update chat name error:', error);
 
       res.status(500).json(errorResponse(
@@ -805,7 +805,7 @@ export class OffGameChatController {
       });
 
       // Create system message
-      const character = await (Character.findById(characterId) as any);
+      const character = await Character.findById(characterId);
       const systemMessage = new OffGameChatMessage({
         chatId,
         senderId: characterId,
@@ -827,7 +827,7 @@ export class OffGameChatController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Leave chat error:', error);
 
       res.status(500).json(errorResponse(

@@ -113,9 +113,9 @@ export class ForumManagementController {
       res.json(listResponse(
         messages.map(msg => ({
           ...msg,
-          from: msg.from ? `${(msg.from as any).name} ${(msg.from as any).surname || ''}`.trim() : 'Unknown',
-          to: (msg.to as any[]).map((char: any) => `${char.name} ${char.surname || ''}`.trim()),
-          sentFromLocation: (msg.sentFromLocation as any)?.name || 'Unknown Location',
+          from: msg.from ? `${(msg.from as { name?: string; surname?: string }).name} ${(msg.from as { name?: string; surname?: string }).surname || ''}`.trim() : 'Unknown',
+          to: (msg.to as { name?: string; surname?: string }[]).map((char) => `${char.name} ${char.surname || ''}`.trim()),
+          sentFromLocation: (msg.sentFromLocation as { name?: string })?.name || 'Unknown Location',
           status: this.getMessageStatus(msg)
         })),
         pagination,
@@ -123,7 +123,7 @@ export class ForumManagementController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error fetching messages:', error);
       res.status(500).json(errorResponse(
         'Failed to fetch messages',
@@ -287,7 +287,7 @@ export class ForumManagementController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error fetching message statistics:', error);
       res.status(500).json(errorResponse(
         'Failed to fetch statistics',
@@ -331,9 +331,9 @@ export class ForumManagementController {
 
       // Get conversation thread if exists
       let conversationMessages: any[] = [];
-      if ((message as any).conversationId) {
+      if (message.conversationId) {
         conversationMessages = await OnGameMessage.find({
-          conversationId: (message as any).conversationId,
+          conversationId: message.conversationId,
           _id: { $ne: messageId }
         })
           .populate('from', 'name surname')
@@ -346,25 +346,25 @@ export class ForumManagementController {
         {
           message: {
             ...message,
-            from: (message as any).from ? `${((message as any).from as any).name} ${((message as any).from as any).surname || ''}`.trim() : 'Unknown',
-            to: ((message as any).to as any[]).map((char: any) => `${char.name} ${char.surname || ''}`.trim()),
-            sentFromLocation: ((message as any).sentFromLocation as any)?.name || 'Unknown Location',
+            from: message.from ? `${(message.from as { name?: string; surname?: string }).name} ${(message.from as { name?: string; surname?: string }).surname || ''}`.trim() : 'Unknown',
+            to: (message.to as { name?: string; surname?: string }[]).map((char) => `${char.name} ${char.surname || ''}`.trim()),
+            sentFromLocation: (message.sentFromLocation as { name?: string })?.name || 'Unknown Location',
             status: this.getMessageStatus(message)
           },
           views: views.map(view => ({
             ...view,
-            characterName: `${(view.characterId as any).name} ${(view.characterId as any).surname || ''}`.trim()
+            characterName: `${(view.characterId as { name?: string; surname?: string }).name} ${(view.characterId as { name?: string; surname?: string }).surname || ''}`.trim()
           })),
           conversation: conversationMessages.map(msg => ({
             ...msg,
-            from: `${(msg.from as any).name} ${(msg.from as any).surname || ''}`.trim()
+            from: `${(msg.from as { name?: string; surname?: string }).name} ${(msg.from as { name?: string; surname?: string }).surname || ''}`.trim()
           }))
         },
         undefined,
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error fetching message details:', error);
       res.status(500).json(errorResponse(
         'Failed to fetch message details',
@@ -415,8 +415,8 @@ export class ForumManagementController {
 
       // Audit log
       await auditLogger.logAdminAction({
-        userId: (req as any).user?.userId || 'unknown',
-        username: (req as any).user?.username || 'Admin',
+        userId: req.user?.userId || 'unknown',
+        username: req.user?.username || 'Admin',
         action: 'delete_message',
         resource: 'forum_management',
         resourceId: messageId,
@@ -432,7 +432,7 @@ export class ForumManagementController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error deleting message:', error);
       res.status(500).json(errorResponse(
         'Failed to delete message',
@@ -514,8 +514,8 @@ export class ForumManagementController {
 
       // Audit log
       await auditLogger.logAdminAction({
-        userId: (req as any).user?.userId || 'unknown',
-        username: (req as any).user?.username || 'Admin',
+        userId: req.user?.userId || 'unknown',
+        username: req.user?.username || 'Admin',
         action: `bulk_${operation}`,
         resource: 'forum_management',
         details: {
@@ -528,13 +528,13 @@ export class ForumManagementController {
       res.json(updateResponse(
         {
           message: `Bulk ${operation} completed successfully`,
-          affected: (result as any)[0]?.deletedCount || (result as any)?.modifiedCount || messageIds.length
+          affected: (result as { deletedCount?: number }[])[0]?.deletedCount || (result as { modifiedCount?: number })?.modifiedCount || messageIds.length
         },
         undefined,
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error in bulk message operations:', error);
       res.status(500).json(errorResponse(
         'Failed to perform bulk operation',
@@ -575,14 +575,14 @@ export class ForumManagementController {
         {
           pending: pendingMessages.map(msg => ({
             ...msg,
-            from: `${(msg.from as any).name} ${(msg.from as any).surname || ''}`.trim(),
-            to: (msg.to as any[]).map((char: any) => `${char.name} ${char.surname || ''}`.trim()),
+            from: `${(msg.from as { name?: string; surname?: string }).name} ${(msg.from as { name?: string; surname?: string }).surname || ''}`.trim(),
+            to: (msg.to as { name?: string; surname?: string }[]).map((char) => `${char.name} ${char.surname || ''}`.trim()),
             minutesUntilDelivery: Math.max(0, Math.floor((msg.scheduledDelivery!.getTime() - Date.now()) / (1000 * 60)))
           })),
           failed: failedMessages.map(msg => ({
             ...msg,
-            from: `${(msg.from as any).name} ${(msg.from as any).surname || ''}`.trim(),
-            to: (msg.to as any[]).map((char: any) => `${char.name} ${char.surname || ''}`.trim()),
+            from: `${(msg.from as { name?: string; surname?: string }).name} ${(msg.from as { name?: string; surname?: string }).surname || ''}`.trim(),
+            to: (msg.to as { name?: string; surname?: string }[]).map((char) => `${char.name} ${char.surname || ''}`.trim()),
             minutesOverdue: Math.floor((Date.now() - msg.scheduledDelivery!.getTime()) / (1000 * 60))
           }))
         },
@@ -590,7 +590,7 @@ export class ForumManagementController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error fetching delivery queue:', error);
       res.status(500).json(errorResponse(
         'Failed to fetch delivery queue',
@@ -651,8 +651,8 @@ export class ForumManagementController {
 
       // Audit log
       await auditLogger.logAdminAction({
-        userId: (req as any).user?.userId || 'unknown',
-        username: (req as any).user?.username || 'Admin',
+        userId: req.user?.userId || 'unknown',
+        username: req.user?.username || 'Admin',
         action: 'manual_delivery',
         resource: 'forum_management',
         details: {
@@ -670,7 +670,7 @@ export class ForumManagementController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error in manual delivery:', error);
       res.status(500).json(errorResponse(
         'Failed to trigger manual delivery',

@@ -13,7 +13,7 @@ export class GameConfigController {
    */
   static async getCombatConfig(req: Request, res: Response): Promise<void> {
     try {
-      const configService = new ConfigurationService(redis as any, logger);
+      const configService = new ConfigurationService(redis.getClient(), logger);
 
       const [bonusTable, unarmedDamage] = await Promise.all([
         configService.getConfig('combat_damage_bonus_table'),
@@ -28,7 +28,7 @@ export class GameConfigController {
         undefined,
         getRequestId(req),
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('[GameConfigController] Failed to fetch combat config:', error);
 
       res.status(500).json(errorResponse(

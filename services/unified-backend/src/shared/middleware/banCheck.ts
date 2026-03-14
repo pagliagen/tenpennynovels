@@ -2,6 +2,13 @@ import { Request, Response, NextFunction } from 'express';
 import { User } from '@database/models/User';
 import { logger } from '@shared/utils/logger';
 
+interface UserBanData {
+  isBanned?: boolean;
+  banScopes?: string[];
+  banReason?: string;
+  bannedUntil?: Date;
+  bannedAt?: Date;
+}
 
 export interface BanCheckOptions {
   requiredScope: 'chat_banned' | 'game_banned' | 'forum_banned' | 'documents_banned' | 'full_site_banned';
@@ -27,7 +34,7 @@ export function banCheck(options: BanCheckOptions) {
 
       // Get user ban information
       const user = await User.findById(userId).select('banScopes banReason bannedUntil bannedAt isBanned').lean();
-      const userData = user as any;
+      const userData = user as UserBanData;
       
       if (!user) {
         return res.status(404).json({
@@ -124,7 +131,7 @@ export function banCheckMultiple(scopes: BanCheckOptions['requiredScope'][]) {
       }
 
       const user = await User.findById(userId).select('banScopes banReason bannedUntil bannedAt isBanned').lean();
-      const userData = user as any;
+      const userData = user as UserBanData;
       
       if (!user) {
         return res.status(404).json({
@@ -154,7 +161,7 @@ export function banCheckMultiple(scopes: BanCheckOptions['requiredScope'][]) {
       }
 
       // Check if user has any of the specified scopes
-      const bannedScopes = scopes.filter(scope => userData.banScopes.includes(scope));
+      const bannedScopes = scopes.filter(scope => (userData.banScopes ?? []).includes(scope));
       
       if (bannedScopes.length > 0) {
         return res.status(403).json({

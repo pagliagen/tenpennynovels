@@ -109,7 +109,7 @@ export class UserManagementController {
         .lean();
 
       // Get character counts for each user
-      const userIds = users.map(user => user._id);
+      const userIds = users.map(user => user!.userId);
 
       // Skip character aggregations if no users found (avoid MongoDB limit error)
       if (userIds.length === 0) {
@@ -179,7 +179,7 @@ export class UserManagementController {
 
       // Transform to API format
       const transformedUsers: AdminUserProfile[] = users.map(user => ({
-        _id: (user._id as any)?.toString(),
+        _id: user!.userId?.toString(),
         username: user.username,
         email: user.email,
         displayName: user.displayName || '',
@@ -195,7 +195,7 @@ export class UserManagementController {
           bannedByName: user.bannedByName?.toString(),
         },
         multipleCharactersAllowed: user.multipleCharactersAllowed,
-        characters: charactersMap.get((user._id as any)?.toString()) || [],
+        characters: charactersMap.get(user!.userId?.toString()) || [],
         activity: {
           lastLoginAt: user.lastLoginAt?.toISOString(),
           loginCount: user.loginCount || 0,
@@ -236,7 +236,7 @@ export class UserManagementController {
         undefined,
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error fetching users:', { error: error instanceof Error ? error.message : String(error) });
       logger.error(error);
       
@@ -319,7 +319,7 @@ export class UserManagementController {
         undefined,
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error fetching user profile:', { 
         error: error instanceof Error ? error.message : String(error), 
         userId: req.params.userId 
@@ -443,7 +443,7 @@ export class UserManagementController {
         'User banned successfully',
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error banning user:', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
@@ -625,7 +625,7 @@ export class UserManagementController {
         'User ban updated successfully',
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error updating user ban:', { 
         error: error instanceof Error ? error.message : String(error), 
         userId: req.params.userId,
@@ -688,7 +688,7 @@ export class UserManagementController {
         'User unbanned successfully',
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error unbanning user:', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
@@ -830,7 +830,7 @@ export class UserManagementController {
         'Bulk ban completed',
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error in bulk ban users:', { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json(errorResponse(
         'Failed to bulk ban users',
@@ -911,7 +911,7 @@ export class UserManagementController {
         'Bulk unban completed',
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error in bulk unban users:', { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json(errorResponse(
         'Failed to bulk unban users',
@@ -1130,14 +1130,14 @@ export class UserManagementController {
 
         const existingUser = await User.findOne(existingUserQuery).lean();
         if (existingUser) {
-          const duplicateField = (existingUser as any).username === username?.trim() ? 'username' : 'email';
+          const duplicateField = existingUser.username === username?.trim() ? 'username' : 'email';
           res.status(409).json(errorResponse(
             `A user with this ${duplicateField} already exists.`,
             'DUPLICATE_USER_DATA',
             {
               duplicateField,
               duplicateValue: duplicateField === 'username' ? username : email,
-              existingUserId: (existingUser as any)._id.toString()
+              existingUserId: existingUser._id.toString()
             },
             409,
             getRequestId(req)
@@ -1172,7 +1172,7 @@ export class UserManagementController {
       }
 
       // Transform to API format
-      const userData = updatedUser as any;
+      const userData = updatedUser;
       const transformedUser: AdminUserProfile = {
         _id: userData._id.toString(),
         username: userData.username,
@@ -1218,21 +1218,21 @@ export class UserManagementController {
         'User updated successfully',
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as { name?: string; message?: string; code?: number; stack?: string; errors?: Record<string, { path: string; message: string; value: unknown }>; keyValue?: Record<string, unknown>; keyPattern?: Record<string, unknown>; path?: string; kind?: string; value?: unknown };
       logger.error('Error updating user:', { 
-        error: error instanceof Error ? error.message : String(error),
-        errorCode: error.code,
-        errorName: error.name,
+        error: err.message ?? String(error),
+        errorCode: err.code,
+        errorName: err.name,
         userId: req.params.userId,
-        stack: error.stack 
+        stack: err.stack 
       });
 
-      // Handle specific MongoDB validation errors
-      if (error.name === 'ValidationError') {
-        const validationErrors = Object.values(error.errors).map((err: any) => ({
-          field: err.path,
-          message: err.message,
-          value: err.value
+      if (err.name === 'ValidationError' && err.errors) {
+        const validationErrors = Object.values(err.errors).map((e) => ({
+          field: e.path,
+          message: e.message,
+          value: e.value
         }));
 
         res.status(400).json(errorResponse(
@@ -1240,7 +1240,7 @@ export class UserManagementController {
           'DATABASE_VALIDATION_ERROR',
           {
             validationErrors,
-            affectedFields: Object.keys(error.errors)
+            affectedFields: Object.keys(err.errors)
           },
           400,
           getRequestId(req)
@@ -1248,10 +1248,9 @@ export class UserManagementController {
         return;
       }
 
-      // Handle MongoDB duplicate key errors
-      if (error.code === 11000) {
-        const duplicateField = error.keyValue ? Object.keys(error.keyValue)[0] : 'unknown';
-        const duplicateValue = error.keyValue ? error.keyValue[duplicateField] : 'unknown';
+      if (err.code === 11000) {
+        const duplicateField = err.keyValue ? Object.keys(err.keyValue)[0] : 'unknown';
+        const duplicateValue = err.keyValue ? err.keyValue[duplicateField] : 'unknown';
 
         res.status(409).json(errorResponse(
           `A user with this ${duplicateField} already exists. Please choose a different value.`,
@@ -1259,8 +1258,8 @@ export class UserManagementController {
           {
             duplicateField,
             duplicateValue,
-            mongoErrorCode: error.code,
-            indexName: error.keyPattern ? Object.keys(error.keyPattern)[0] : 'unknown'
+            mongoErrorCode: err.code,
+            indexName: err.keyPattern ? Object.keys(err.keyPattern)[0] : 'unknown'
           },
           409,
           getRequestId(req)
@@ -1268,16 +1267,15 @@ export class UserManagementController {
         return;
       }
 
-      // Handle CastError (invalid data types)
-      if (error.name === 'CastError') {
+      if (err.name === 'CastError') {
         res.status(400).json(errorResponse(
-          `Invalid data type for field '${error.path}'. Expected ${error.kind} but received ${typeof error.value}.`,
+          `Invalid data type for field '${err.path}'. Expected ${err.kind} but received ${typeof err.value}.`,
           'INVALID_DATA_TYPE',
           {
-            field: error.path,
-            expectedType: error.kind,
-            receivedValue: error.value,
-            receivedType: typeof error.value
+            field: err.path,
+            expectedType: err.kind,
+            receivedValue: err.value,
+            receivedType: typeof err.value
           },
           400,
           getRequestId(req)
@@ -1285,13 +1283,12 @@ export class UserManagementController {
         return;
       }
 
-      // Handle database connection errors
-      if (error.name === 'MongoNetworkError' || error.name === 'MongoTimeoutError') {
+      if (err.name === 'MongoNetworkError' || err.name === 'MongoTimeoutError') {
         res.status(503).json(errorResponse(
           'Database connection error. Please try again later.',
           'DATABASE_CONNECTION_ERROR',
           {
-            errorType: error.name,
+            errorType: err.name,
             retryable: true
           },
           503,
@@ -1301,7 +1298,7 @@ export class UserManagementController {
       }
 
       // Handle permission errors (if user tries to update their own admin status inappropriately)
-      if (error instanceof Error ? error.message : String(error) && error instanceof Error ? error.message : String(error).includes('permission')) {
+      if (err.message?.includes('permission')) {
         res.status(403).json(errorResponse(
           'Permessi insufficienti per eseguire questa operazione.',
           'INSUFFICIENT_PERMISSIONS',
@@ -1320,7 +1317,7 @@ export class UserManagementController {
         'An unexpected error occurred while updating the user. Our team has been notified.',
         'INTERNAL_SERVER_ERROR',
         {
-          errorType: error.name || 'UnknownError',
+          errorType: (error as { name?: string }).name || 'UnknownError',
           operation: 'update_user',
           userId: req.params.userId
         },
@@ -1356,7 +1353,7 @@ export class UserManagementController {
         undefined,
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error fetching user summary:', { error: error instanceof Error ? error.message : String(error) });
       
       res.status(500).json(errorResponse(
@@ -1413,7 +1410,7 @@ export class UserManagementController {
         undefined,
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error searching users:', { error: error instanceof Error ? error.message : String(error) });
       
       res.status(500).json(errorResponse(
@@ -1436,7 +1433,7 @@ export class UserManagementController {
     try {
       const { userId } = req.params;
       const { userRoles, canAccessAdminPanel } = req.body;
-      const adminUserId = (req as any).adminUserId;
+      const adminUserId = req.user?.userId;
 
       logger.info('Update user permissions request', {
         userId,
@@ -1542,11 +1539,11 @@ export class UserManagementController {
         'User permissions updated successfully',
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error updating user permissions:', {
         error: error instanceof Error ? error.message : String(error),
         userId: req.params.userId,
-        adminUserId: (req as any).adminUserId
+        adminUserId: req.user?.userId
       });
 
       res.status(500).json(errorResponse(
@@ -1625,7 +1622,7 @@ export class UserManagementController {
         `Bulk activate completed: ${successCount} successful, ${failedCount} failed`,
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error in bulk activate users:', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
@@ -1708,7 +1705,7 @@ export class UserManagementController {
         `Bulk deactivate completed: ${successCount} successful, ${failedCount} failed`,
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error in bulk deactivate users:', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,

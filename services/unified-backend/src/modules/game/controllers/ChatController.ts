@@ -278,7 +278,7 @@ export class ChatController {
 
 
       // Save to database
-      const savedAction = await ((Chat as any).createAction(actionData));
+      const savedAction = await Chat.createAction(actionData);
 
       // Lookup character avatar from DB (not from token - token may be stale)
       const actionCharacter = await Character.findById(character.characterId).select('avatar').lean();
@@ -319,7 +319,7 @@ export class ChatController {
           content: savedAction.content,                 // DB field (was text)
           diceResult: savedAction.diceResult || undefined,  // DB field (was diceRoll)
           socialConflict: savedAction.socialConflict || undefined,  // DB field (was skillCheck)
-          statCheck: savedAction.statCheck || undefined,
+          statCheck: (savedAction as unknown as Record<string, unknown>).statCheck || undefined,
           itemEffect: savedAction.itemEffect || undefined,  // DB field (was itemUse)
           targetCharacters: savedAction.targetCharacters || undefined,  // DB field (was whisperVisibility)
           editHistory: savedAction.editHistory || [],
@@ -489,7 +489,7 @@ export class ChatController {
       }
 
       // Prepare response action data (DB fields - no mapping)
-      const responseAction: any = {
+      const responseAction: Record<string, unknown> = {
         _id: savedAction._id.toString(),
         actionType: savedAction.actionType,
         characterId: savedAction.characterId,
@@ -508,7 +508,7 @@ export class ChatController {
       
       // Filter socialConflict: for Raggirare, attacker should never see it
       if (savedAction.socialConflict) {
-        const socialConflict = savedAction.socialConflict as any;
+        const socialConflict = savedAction.socialConflict;
         if (socialConflict.visibleToDefenderOnly) {
           // Attacker should never see socialConflict for Raggirare
           // Don't include it in response
@@ -526,7 +526,7 @@ export class ChatController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('Create location action error:', {
         message: err.message,
@@ -590,7 +590,7 @@ export class ChatController {
       })
       .sort({ timestamp: 1 }) // Chronological order
       .limit(limit)
-      .lean() as any[];
+      .lean();
 
       // Check action mode status
       const Location = require('../../../database/models').Location;
@@ -656,7 +656,7 @@ export class ChatController {
           content: action.content,                 // DB field (was text)
           diceResult: action.diceResult || undefined,  // DB field (was diceRoll)
           socialConflict: action.socialConflict || undefined,  // DB field (was skillCheck)
-          statCheck: action.statCheck || undefined,
+          statCheck: (action as unknown as Record<string, unknown>).statCheck || undefined,
           itemEffect: action.itemEffect || undefined,  // DB field (was itemUse)
           targetCharacters: action.targetCharacters || undefined,  // DB field (was whisperVisibility)
           hiddenContent: action.hiddenContent || undefined,
@@ -697,7 +697,7 @@ export class ChatController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('Get location actions error:', {
         message: err.message,
@@ -919,7 +919,7 @@ export class ChatController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('Update location action error:', {
         message: err.message,
@@ -1023,7 +1023,7 @@ export class ChatController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('Delete location action error:', {
         message: err.message,
@@ -1114,7 +1114,7 @@ export class ChatController {
         if (typeof attackerSkillData === 'number') {
           attackerValue = attackerSkillData;
         } else if (attackerSkillData && typeof attackerSkillData === 'object' && 'total' in attackerSkillData) {
-          attackerValue = (attackerSkillData as any).total;
+          attackerValue = (attackerSkillData as { total: number }).total;
         }
       }
 
@@ -1152,7 +1152,7 @@ export class ChatController {
         if (typeof defenderSkillData === 'number') {
           defenderValue = defenderSkillData;
         } else if (defenderSkillData && typeof defenderSkillData === 'object' && 'total' in defenderSkillData) {
-          defenderValue = (defenderSkillData as any).total;
+          defenderValue = (defenderSkillData as { total: number }).total;
         }
       }
 
@@ -1229,7 +1229,7 @@ export class ChatController {
         };
       }
 
-      const savedAction = await (Chat as any).createAction(actionData);
+      const savedAction = await Chat.createAction(actionData);
 
       // Emit WebSocket notification
       const io = req.app.get('io');
@@ -1247,16 +1247,16 @@ export class ChatController {
       logger.info(`Social conflict created: ${attackerSkill} vs ${defenderSkill} by ${character.characterName}`);
 
       // Prepare response: attacker should never see socialConflict for Raggirare
-      const responseData: any = {
+      const responseData: Record<string, unknown> = {
         action: {
           id: savedAction._id
         }
       };
       
-      // Only include socialConflict if it's not hidden (not Raggirare)
       if (!isRaggirare) {
-        responseData.action.socialConflict = conflictResult;
-        responseData.action.messageForAttacker = conflictResult.messageForAttacker;
+        const action = responseData.action as Record<string, unknown>;
+        action.socialConflict = conflictResult;
+        action.messageForAttacker = conflictResult.messageForAttacker;
       }
       // For Raggirare, attacker gets no information about the result
 
@@ -1266,7 +1266,7 @@ export class ChatController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('Create social conflict error:', {
         message: err.message,
@@ -1340,7 +1340,7 @@ export class ChatController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('Clear chat error:', {
         message: err.message,
@@ -1457,7 +1457,7 @@ export class ChatController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Create bot action error:', error);
       res.status(500).json(errorResponse(
         'Failed to create bot action',
@@ -1542,7 +1542,7 @@ export class ChatController {
         if (typeof attackerSkillData === 'number') {
           attackerValue = attackerSkillData;
         } else if (attackerSkillData && typeof attackerSkillData === 'object' && 'total' in attackerSkillData) {
-          attackerValue = (attackerSkillData as any).total;
+          attackerValue = (attackerSkillData as { total: number }).total;
         }
       }
 
@@ -1647,7 +1647,7 @@ export class ChatController {
         501,
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Create confrontation attack error:', error);
       res.status(500).json(errorResponse(
         'Failed to create confrontation attack',
@@ -1755,7 +1755,7 @@ export class ChatController {
         if (typeof attackerSkillData === 'number') {
           attackerValue = attackerSkillData;
         } else if (attackerSkillData && typeof attackerSkillData === 'object' && 'total' in attackerSkillData) {
-          attackerValue = (attackerSkillData as any).total;
+          attackerValue = (attackerSkillData as { total: number }).total;
         }
       }
 
@@ -1766,7 +1766,7 @@ export class ChatController {
         if (typeof defenderSkillData === 'number') {
           defenderValue = defenderSkillData;
         } else if (defenderSkillData && typeof defenderSkillData === 'object' && 'total' in defenderSkillData) {
-          defenderValue = (defenderSkillData as any).total;
+          defenderValue = (defenderSkillData as { total: number }).total;
         }
       }
 
@@ -1920,7 +1920,7 @@ export class ChatController {
         'Confrontation resolved successfully',
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Handle confrontation reaction error:', error);
       res.status(500).json(errorResponse(
         'Failed to handle confrontation reaction',

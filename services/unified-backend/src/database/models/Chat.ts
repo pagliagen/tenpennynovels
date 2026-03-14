@@ -444,7 +444,12 @@ ChatSchema.post('findOneAndDelete', async function(doc) {
   }
 });
 
-export const Chat: Model<IChat> = mongoose.models.Chat ||
-  mongoose.model<IChat>('Chat', ChatSchema);
+export interface IChatModel extends Model<IChat> {
+  createAction(actionData: Partial<IChat>): Promise<IChat>;
+  getLocationHistory(locationId: string, characterId: string, limit?: number, sessionId?: string, isMaster?: boolean): Promise<IChat[]>;
+}
+
+export const Chat = (mongoose.models.Chat ||
+  mongoose.model<IChat, IChatModel>('Chat', ChatSchema)) as IChatModel;
 
 export default Chat;

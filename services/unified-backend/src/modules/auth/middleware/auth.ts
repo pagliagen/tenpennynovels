@@ -5,6 +5,7 @@ import { logger, logAuth, logSecurity } from '../logger';
 import { CharacterSessionManager } from '../utils/characterSessionManager';
 import { User } from '@database/models';
 import { appConfig } from '@config/runtime';
+import type { AdminPermission } from '@config/admin-permissions';
 
 // Extend Express Request interface to include user data (RequestUser = token + optional character-derived fields from admin)
 declare global {
@@ -70,7 +71,7 @@ export class AuthMiddleware {
           });
 
           next();
-        } catch (error: any) {
+        } catch (error: unknown) {
           res.clearCookie('auth_token', appConfig.cookie);
 
           if (required) {
@@ -91,7 +92,7 @@ export class AuthMiddleware {
 
           next();
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         logger.error('Auth middleware error:', error);
         const response: ApiResponse = {
           result: false,
@@ -178,7 +179,7 @@ export class AuthMiddleware {
 
           req.character = decoded;
           next();
-        } catch (error: any) {
+        } catch (error: unknown) {
           res.clearCookie('character_context', appConfig.cookie);
 
           if (required) {
@@ -193,7 +194,7 @@ export class AuthMiddleware {
 
           next();
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         logger.error('Character auth middleware error:', error);
         const response: ApiResponse = {
           result: false,
@@ -246,7 +247,7 @@ export class AuthMiddleware {
           const adminPermissions = req.user.adminPermissions ?? [];
           const isGestore = req.user.isGestore ?? false;
           const hasPermission = permissions.every((p) =>
-            hasAdminPermission(gameplayRoles, adminPermissions, isGestore, p as any)
+            hasAdminPermission(gameplayRoles, adminPermissions, isGestore, p as AdminPermission)
           );
 
           if (!hasPermission) {
@@ -272,7 +273,7 @@ export class AuthMiddleware {
         }
 
         next();
-      } catch (error: any) {
+      } catch (error: unknown) {
         logger.error('Admin auth middleware error:', error);
         const response: ApiResponse = {
           result: false,
@@ -326,7 +327,7 @@ export class AuthMiddleware {
         }
 
         next();
-      } catch (error: any) {
+      } catch (error: unknown) {
         logger.error('Gameplay role middleware error:', error);
         const response: ApiResponse = {
           result: false,

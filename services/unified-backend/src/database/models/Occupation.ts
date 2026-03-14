@@ -274,7 +274,7 @@ CharacterOccupationHistorySchema.methods.endOccupation = function(reason: string
 CharacterOccupationHistorySchema.pre('save', async function() {
   if (this.isModified('isCurrent') && this.isCurrent) {
     // Set all other occupations for this character to not current
-    await (this.constructor as any).updateMany(
+    await (this.constructor as mongoose.Model<ICharacterOccupationHistory>).updateMany(
       { characterId: this.characterId, _id: { $ne: this._id } },
       { isCurrent: false }
     );

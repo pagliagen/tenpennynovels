@@ -93,7 +93,7 @@ export class SocialClassManagementController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error fetching social classes:', error);
       res.status(500).json(errorResponse(
         'Errore interno del server durante il recupero delle classi sociali',
@@ -255,7 +255,7 @@ export class SocialClassManagementController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error fetching social class statistics:', error);
       res.status(500).json(errorResponse(
         'Errore interno del server durante il recupero delle statistiche delle classi sociali',
@@ -301,8 +301,8 @@ export class SocialClassManagementController {
       // Get characters in this social class
       const characters = await Character.find({
         'skills.finanza.value': {
-          $gte: (socialClass as any).minFinanceSkill,
-          $lte: (socialClass as any).maxFinanceSkill
+          $gte: socialClass.minFinanceSkill,
+          $lte: socialClass.maxFinanceSkill
         }
       })
       .select('name surname basicInfo skills.finanza.value createdAt')
@@ -341,7 +341,7 @@ export class SocialClassManagementController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error fetching social class details:', error);
       res.status(500).json(errorResponse(
         'Errore interno del server durante il recupero dei dettagli della classe sociale',
@@ -358,7 +358,7 @@ export class SocialClassManagementController {
    */
   static async createSocialClass(req: Request, res: Response): Promise<void> {
     try {
-      const { user } = req as any;
+      const user = req.user!;
       const {
         name,
         label,
@@ -510,7 +510,7 @@ export class SocialClassManagementController {
 
       // Audit log
       auditLogger.logSuccess({
-        userId: user._id.toString(),
+        userId: user!.userId.toString(),
         username: user.username,
         action: 'CREATE_SOCIAL_CLASS',
         resource: 'SOCIAL_CLASS',
@@ -526,7 +526,7 @@ export class SocialClassManagementController {
 
       logger.info(`Social class created: ${socialClass.label}`, { 
         socialClassId: socialClass._id, 
-        adminId: user._id 
+        adminId: user!.userId 
       });
 
       res.status(201).json(createResponse(
@@ -535,7 +535,7 @@ export class SocialClassManagementController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error creating social class:', error);
       res.status(500).json(errorResponse(
         'Errore interno del server durante la creazione della classe sociale',
@@ -553,7 +553,7 @@ export class SocialClassManagementController {
   static async updateSocialClass(req: Request<{ socialClassId: string }>, res: Response): Promise<void> {
     try {
       const { socialClassId } = req.params;
-      const { user } = req as any;
+      const user = req.user!;
       const { reason, ...updateData } = req.body;
 
       if (!reason || reason.trim().length === 0) {
@@ -671,7 +671,7 @@ export class SocialClassManagementController {
             ...updateData[key]
           };
         } else if (updateData[key] !== undefined) {
-          (socialClass as any)[key] = updateData[key];
+          (socialClass as Record<string, unknown>)[key] = updateData[key];
         }
       });
 
@@ -692,7 +692,7 @@ export class SocialClassManagementController {
       auditLogger.logSuccess({
         action: 'UPDATE_SOCIAL_CLASS',
         resource: 'SOCIAL_CLASS',
-        userId: user._id.toString(),
+        userId: user!.userId.toString(),
         username: user.username,
         details: { 
           socialClassId: socialClass!._id, 
@@ -706,7 +706,7 @@ export class SocialClassManagementController {
 
       logger.info(`Social class updated: ${socialClass!.label}`, { 
         socialClassId: socialClass!._id, 
-        adminId: user._id,
+        adminId: user!.userId,
         reason: reason.trim()
       });
 
@@ -716,7 +716,7 @@ export class SocialClassManagementController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error updating social class:', error);
       res.status(500).json(errorResponse(
         'Errore interno del server durante l\'aggiornamento della classe sociale',
@@ -734,7 +734,7 @@ export class SocialClassManagementController {
   static async deleteSocialClass(req: Request<{ socialClassId: string }>, res: Response): Promise<void> {
     try {
       const { socialClassId } = req.params;
-      const { user } = req as any;
+      const user = req.user!;
       const { reason, forceDelete = false } = req.body;
 
       if (!reason || reason.trim().length === 0) {
@@ -793,15 +793,15 @@ export class SocialClassManagementController {
       }
 
       await socialClass.softDelete(
-        user?.activeCharacterId || user?._id,
-        user?.activeCharacterName || user?.username || 'Unknown Admin',
+        req.character?.characterId || user!.userId,
+        req.character?.characterName || user!.username || 'Unknown Admin',
         reason.trim()
       );
 
       auditLogger.logSuccess({
         action: 'DELETE_SOCIAL_CLASS',
         resource: 'SOCIAL_CLASS',
-        userId: user._id.toString(),
+        userId: user!.userId.toString(),
         username: user.username,
         details: { 
           socialClassId: socialClass!._id, 
@@ -816,7 +816,7 @@ export class SocialClassManagementController {
 
       logger.info(`Social class deleted: ${socialClass!.label}`, { 
         socialClassId: socialClass!._id, 
-        adminId: user._id,
+        adminId: user!.userId,
         reason: reason.trim(),
         forceDelete,
         affectedCharacters
@@ -827,7 +827,7 @@ export class SocialClassManagementController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error deleting social class:', error);
       res.status(500).json(errorResponse(
         'Errore interno del server durante l\'eliminazione della classe sociale',
@@ -844,7 +844,7 @@ export class SocialClassManagementController {
    */
   static async reorderSocialClasses(req: Request, res: Response): Promise<void> {
     try {
-      const { user } = req as any;
+      const user = req.user!;
       const { classOrders } = req.body;
 
       if (!Array.isArray(classOrders) || classOrders.length === 0) {
@@ -892,10 +892,10 @@ export class SocialClassManagementController {
               error: 'Social class not found'
             });
           }
-        } catch (error: any) {
+        } catch (error: unknown) {
           errors.push({
             socialClassId: order.socialClassId,
-            error: error.message
+            error: error instanceof Error ? error.message : String(error)
           });
         }
       }
@@ -904,7 +904,7 @@ export class SocialClassManagementController {
       auditLogger.logSuccess({
         action: 'REORDER_SOCIAL_CLASSES',
         resource: 'SOCIAL_CLASS',
-        userId: user._id.toString(),
+        userId: user!.userId.toString(),
         username: user.username,
         details: { 
           processed,
@@ -917,7 +917,7 @@ export class SocialClassManagementController {
       logger.info(`Social classes reordered`, { 
         processed,
         errors: errors.length,
-        adminId: user._id
+        adminId: user!.userId
       });
 
       res.json(successResponse(
@@ -929,7 +929,7 @@ export class SocialClassManagementController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error reordering social classes:', error);
       res.status(500).json(errorResponse(
         'Errore interno del server durante il riordino delle classi sociali',
@@ -1064,7 +1064,7 @@ export class SocialClassManagementController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error fetching character distribution:', error);
       res.status(500).json(errorResponse(
         'Errore interno del server durante il recupero della distribuzione dei personaggi',

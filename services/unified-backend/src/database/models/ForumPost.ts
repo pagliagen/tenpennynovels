@@ -109,15 +109,18 @@ const ForumPostSchema = new Schema<IForumPost>({
   timestamps: false
 });
 
+const newDocuments = new WeakSet<Document>();
+
 ForumPostSchema.pre('save', function() {
-  (this as any)._wasNew = this.isNew;
+  if (this.isNew) newDocuments.add(this);
 });
 
 ForumPostSchema.post('save', async function(doc) {
   if (doc.isDeleted) return;
   try {
     const { publishForumPostEvent } = await import('../../shared/services/EmbeddingEventPublisher');
-    const action = (doc as any)._wasNew ? 'created' : 'updated';
+    const action = newDocuments.has(doc) ? 'created' : 'updated';
+    newDocuments.delete(doc);
     await publishForumPostEvent(action, {
       _id: doc._id.toString(),
       content: doc.content,

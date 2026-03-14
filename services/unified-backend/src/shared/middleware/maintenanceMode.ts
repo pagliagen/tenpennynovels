@@ -29,7 +29,7 @@ export async function maintenanceModeMiddleware(
     }
 
     // Check maintenance mode status
-    const configService = new ConfigurationService(redis.getClient() as any, logger);
+    const configService = new ConfigurationService(redis.getClient(), logger);
     const maintenanceMode = await configService.getConfig('system_maintenance_mode');
 
     // If maintenance mode is not enabled, proceed normally

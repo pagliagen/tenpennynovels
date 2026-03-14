@@ -138,10 +138,11 @@ skillSchema.virtual('categoryLabel').get(function(this: ISkill) {
 // Assicurati che i virtual siano inclusi nel JSON
 skillSchema.set('toJSON', {
   virtuals: true,
-  transform: function(doc, ret) {
-    delete (ret as any)._id;
-    delete (ret as any).__v;
-    return ret;
+  transform: function(_doc, ret) {
+    const out = { ...ret } as Record<string, unknown>;
+    delete out._id;
+    delete out.__v;
+    return out;
   }
 });
 

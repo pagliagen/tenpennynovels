@@ -21,7 +21,7 @@ export class ChatModerationController {
 
     try {
       // Check if report system is enabled
-      const configService = new ConfigurationService(redis.getClient() as any, logger);
+      const configService = new ConfigurationService(redis.getClient(), logger);
       const reportSystemEnabled = await configService.getConfig('report_system_enabled');
 
       if (reportSystemEnabled === false) {
@@ -102,7 +102,7 @@ export class ChatModerationController {
             ));
             return;
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         logger.error('Error fetching original message for report', {
           messageId,
           messageType,
@@ -229,7 +229,7 @@ export class ChatModerationController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Failed to report message', {
         messageId: req.body.messageId,
         reporterCharacterId,
@@ -283,7 +283,7 @@ export class ChatModerationController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Failed to get user reports', {
         characterId,
         error: error instanceof Error ? error.message : String(error)
@@ -348,7 +348,7 @@ export class ChatModerationController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Failed to get moderation actions', {
         characterId,
         error: error instanceof Error ? error.message : String(error)
@@ -448,7 +448,7 @@ export class ChatModerationController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Failed to appeal moderation action', {
         actionId,
         characterId,
@@ -511,7 +511,7 @@ export class ChatModerationController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Failed to check chat permissions', {
         characterId,
         error: error instanceof Error ? error.message : String(error)
@@ -538,7 +538,7 @@ export class ChatModerationController {
         ...notification,
         timestamp: new Date().toISOString()
       }));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.warn('Failed to notify moderators', { 
         notification: notification.type, 
         error: error instanceof Error ? error.message : String(error) 

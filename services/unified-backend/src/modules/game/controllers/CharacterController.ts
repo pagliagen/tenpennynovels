@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { Types } from 'mongoose';
 import { Character, Occupation, Skill } from '@database/models';
+import type { ICharacter } from '@database/models/Character';
 import { logger } from '../logger';
 import { successResponse, errorResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
 import { CharacterVisibilityFilter } from '@shared/utils/characterVisibility';
@@ -78,7 +79,7 @@ export class CharacterController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('Character creation error:', {
         message: err.message,
@@ -126,7 +127,7 @@ export class CharacterController {
         name: trimmedName
       });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('Error checking name availability:', {
         message: err.message,
@@ -149,9 +150,9 @@ export class CharacterController {
     try {
       const userId = req.user!.userId;
 
-      const characters = await (Character.find({
+      const characters = await Character.find({
         userId
-      }) as any)
+      })
         .select('id name status occupation isActive currentLocation gameplayRoles submittedAt lastActive')
         .sort({ createdAt: -1 });
 
@@ -173,7 +174,7 @@ export class CharacterController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('Get characters error:', {
         message: err.message,
@@ -198,7 +199,7 @@ export class CharacterController {
   static async getCharacterCreationConfig(req: Request, res: Response): Promise<void> {
     try {
       // Fetch config values from SystemConfiguration (cached in Redis)
-      const configService = new ConfigurationService(redis.getClient() as any, logger);
+      const configService = new ConfigurationService(redis.getClient(), logger);
       const statTotal = await configService.getConfig('character_creation_stat_total_points');
       const statMin = await configService.getConfig('character_creation_stat_minimum');
       const skillTotal = await configService.getConfig('character_creation_skill_total_points');
@@ -231,7 +232,7 @@ export class CharacterController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('Error fetching character creation config:', {
         message: err.message,
@@ -258,10 +259,10 @@ export class CharacterController {
       const currentUserId = req.user!.userId;
 
       // Get all characters that are not deleted (include all users' characters)
-      const characters = await (Character.find({})
+      const characters = await Character.find({})
       .select('_id name surname avatar status userId lastActive')
       .sort({ name: 1 })
-      .limit(200) as any); // Increased limit for complete list
+      .limit(200);
 
       // Activity timeout: 5 minutes (same as global presence logic)
       const activityTimeout = 5 * 60 * 1000; // 5 minutes in milliseconds
@@ -295,7 +296,7 @@ export class CharacterController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('Get public characters list error:', {
         message: err.message,
@@ -322,11 +323,11 @@ export class CharacterController {
       const { characterId } = req.params;
       const userId = req.user!.userId;
 
-      const character = await (Character.findOne({
+      const character = await Character.findOne({
         _id: characterId,
         userId: userId,
         status: 'draft'
-      }) as any);
+      });
 
       if (!character) {
         res.status(404).json(errorResponse(
@@ -355,7 +356,7 @@ export class CharacterController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('Character delete error:', {
         message: err.message,
@@ -474,7 +475,7 @@ export class CharacterController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Create bot character error:', error);
       res.status(500).json(errorResponse(
         'Failed to create bot character',
@@ -544,7 +545,7 @@ export class CharacterController {
       // Convert skills map to Map object with full breakdown
       const skillsMap = new Map();
       for (const [skillName, breakdown] of Object.entries(skills)) {
-        const skillBreakdown = breakdown as any;
+        const skillBreakdown = breakdown as Record<string, unknown>;
         skillsMap.set(skillName, {
           total: skillBreakdown.total,
           base: skillBreakdown.base,
@@ -622,7 +623,7 @@ export class CharacterController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('[CreateCompleteBot] Error:', error);
       res.status(500).json(errorResponse(
         'Failed to create complete bot character',
@@ -652,9 +653,9 @@ export class CharacterController {
 
       logger.info('User roles check', { isMaster, gameplayRoles: req.character?.gameplayRoles });
 
-      const character = await (Character.findOne({
+      const character = await Character.findOne({
         _id: characterId
-      }) as any);
+      });
 
       logger.info('Character found', { found: !!character, characterName: character?.name });
 
@@ -700,8 +701,8 @@ export class CharacterController {
         try {
           // Prima prova a cercare per ID
           occupation = await Occupation.findById(character.occupation);
-        } catch (error: any) {
-          logger.warn('Failed to find occupation by ID, trying by name:', { occupation: character.occupation, error: error.message });
+        } catch (error: unknown) {
+          logger.warn('Failed to find occupation by ID, trying by name:', { occupation: character.occupation, error: error instanceof Error ? error.message : String(error) });
           // Se fallisce, prova a cercare per nome
           if (typeof character.occupation === 'string') {
             occupation = await Occupation.findOne({ name: character.occupation });
@@ -803,7 +804,7 @@ export class CharacterController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('Get character error:', { 
         message: err.message, 
@@ -841,9 +842,9 @@ export class CharacterController {
         return;
       }
 
-      const character = await (Character.findOne({
+      const character = await Character.findOne({
         _id: characterId
-      }) as any);
+      });
 
       if (!character) {
         res.status(404).json(errorResponse(
@@ -879,7 +880,7 @@ export class CharacterController {
 
       if (character.occupation) {
         const { Occupation, Skill } = require('../../../database/models');
-        let occupation = await Occupation.findById(character.occupation).catch(() => null) as any;
+        let occupation = await Occupation.findById(character.occupation).catch(() => null);
         if (!occupation && typeof character.occupation === 'string') {
           occupation = await Occupation.findOne({ name: character.occupation });
         }
@@ -911,7 +912,7 @@ export class CharacterController {
         undefined,
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Get character for wizard error', { message: (error as Error).message, characterId: req.params.characterId });
       res.status(500).json(errorResponse(
         'Impossibile caricare il personaggio per il wizard',
@@ -1076,7 +1077,7 @@ export class CharacterController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('Character sheet retrieval error:', {
         message: err.message,
@@ -1110,9 +1111,9 @@ export class CharacterController {
       );
       const isMaster = !!canReadOthersPrivate;
 
-      const character = await (Character.findOne({
+      const character = await Character.findOne({
         _id: characterId
-      }) as any);
+      });
 
       if (!character) {
         res.status(404).json(errorResponse(
@@ -1153,7 +1154,7 @@ export class CharacterController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('Get public character error:', {
         message: err.message,
@@ -1176,10 +1177,10 @@ export class CharacterController {
       const userId = req.user!.userId;
       const updates = req.body;
 
-      const character = await (Character.findOne({
+      const character = await Character.findOne({
         _id: characterId,
         userId: userId
-      }) as any);
+      });
 
       if (!character) {
         res.status(404).json(errorResponse(
@@ -1355,7 +1356,7 @@ export class CharacterController {
               // Handle different payload formats
               if (typeof skillData === 'object' && skillData !== null) {
                 // Full SkillBreakdown from frontend - PRESERVE ALL FIELDS
-                const skillBreakdown = skillData as any;
+                const skillBreakdown = skillData as Record<string, unknown>;
                 breakdown = {
                   total: skillBreakdown.total || baseValue,
                   base: skillBreakdown.base || baseValue,
@@ -1620,7 +1621,7 @@ export class CharacterController {
               }
             }
           }
-        } catch (error: any) {
+        } catch (error: unknown) {
           logger.error('Error initializing character finances from FINANZA skill', {
             characterId,
             error: (error as Error).message
@@ -1697,7 +1698,7 @@ export class CharacterController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('Character update error:', {
         message: err.message,
@@ -1818,7 +1819,7 @@ export class CharacterController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('Get character directory error:', {
         message: err.message,
@@ -1890,8 +1891,8 @@ export class CharacterController {
 
         if (exactChar) {
           exactMatch = {
-            characterName: `${exactChar.name}${(exactChar as any).surname ? ' ' + (exactChar as any).surname : ''}`,
-            status: (exactChar as any).playerStatus
+            characterName: `${exactChar.name}${exactChar.surname ? ' ' + exactChar.surname : ''}`,
+            status: exactChar.playerStatus
           };
         }
 
@@ -1931,7 +1932,7 @@ export class CharacterController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('Search face claims error:', {
         message: err.message,
@@ -2061,11 +2062,11 @@ export class CharacterController {
         newValue: newPrestavolto,
         changedAt: new Date(),
         changedBy: new Types.ObjectId(userId),
-        status: isChange ? 'pending' : 'approved', // Changes require approval
+        status: isChange ? 'pending' : 'approved',
         notes: isChange ? 'Cambio prestavolto - richiede approvazione staff' :
-               duplicate ? `Duplicato rilevato: ${duplicate.name}${(duplicate as any).surname ? ' ' + (duplicate as any).surname : ''}` :
+               duplicate ? `Duplicato rilevato: ${duplicate.name}${duplicate.surname ? ' ' + duplicate.surname : ''}` :
                'Primo assegnamento'
-      } as any);
+      } as unknown as NonNullable<ICharacter['prestavoltoHistory']>[number]);
 
       // Update character
       character.prestavolto = newPrestavolto;
@@ -2092,13 +2093,13 @@ export class CharacterController {
           isChange,
           requiresApproval: newStatus === 'pending_change',
           hasDuplicate: !!duplicate,
-          duplicateCharacter: duplicate ? `${duplicate.name}${(duplicate as any).surname ? ' ' + (duplicate as any).surname : ''}` : null
+          duplicateCharacter: duplicate ? `${duplicate.name}${duplicate.surname ? ' ' + duplicate.surname : ''}` : null
         },
         isChange ? 'Prestavolto aggiornato. Richiede approvazione staff.' : 'Prestavolto aggiornato con successo',
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('Update prestavolto error:', {
         message: err.message,

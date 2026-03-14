@@ -16,7 +16,7 @@ export class SystemConfigController {
   static async getSystemConfig(req: Request, res: Response): Promise<void> {
     try {
       const { ConfigurationService } = await import('@shared/services/ConfigurationService');
-      const configService = new ConfigurationService(redis.getClient() as any, logger);
+      const configService = new ConfigurationService(redis.getClient(), logger);
 
       const [gameConfigs, economyConfigs, moderationConfigs, postalConfigs] = await Promise.all([
         configService.getConfigsBySection('character_creation'),
@@ -64,7 +64,7 @@ export class SystemConfigController {
         undefined,
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error fetching system config:', { 
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
@@ -104,7 +104,7 @@ export class SystemConfigController {
       }
 
       const { ConfigurationService } = await import('@shared/services/ConfigurationService');
-      const configService = new ConfigurationService(redis.getClient() as any, logger);
+      const configService = new ConfigurationService(redis.getClient(), logger);
       const userId = req.user?.userId || 'unknown';
 
       const sectionMap: Record<string, Record<string, any>> = {};
@@ -163,7 +163,7 @@ export class SystemConfigController {
         undefined,
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error updating system config:', { 
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
@@ -213,7 +213,7 @@ export class SystemConfigController {
       }
 
       const { ConfigurationService } = await import('@shared/services/ConfigurationService');
-      const configService = new ConfigurationService(redis.getClient() as any, logger);
+      const configService = new ConfigurationService(redis.getClient(), logger);
       const userId = req.user?.userId || 'unknown';
 
       const maintenanceData = {
@@ -268,7 +268,7 @@ export class SystemConfigController {
         undefined,
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error setting maintenance mode:', { error: error instanceof Error ? error.message : String(error) });
       
       res.status(500).json(errorResponse(
@@ -378,7 +378,7 @@ export class SystemConfigController {
         undefined,
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error fetching audit logs:', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined
@@ -484,7 +484,7 @@ export class SystemConfigController {
         undefined,
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error processing audit logs:', { error: error instanceof Error ? error.message : String(error) });
       
       res.status(500).json(errorResponse(
@@ -562,7 +562,7 @@ export class SystemConfigController {
         res.setHeader('Content-Disposition', `attachment; filename="audit-logs-${new Date().toISOString().split('T')[0]}.csv"`);
         res.send(csvContent);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error exporting audit logs:', { error: error instanceof Error ? error.message : String(error) });
       
       res.status(500).json(errorResponse(
@@ -687,7 +687,7 @@ export class SystemConfigController {
         undefined,
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error fetching system stats:', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined
@@ -758,8 +758,8 @@ export class SystemConfigController {
 
       // Get sender information from request
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
-      const user = (req as any).user;
-      const character = (req as any).character;
+      const user = req.user;
+      const character = req.character;
 
       // Save broadcast message to database
       const broadcastDoc = await BroadcastMessage.create({
@@ -770,10 +770,10 @@ export class SystemConfigController {
         targetRoles: targetAudience === 'role_specific' ? targetRoles : [],
         targetCount,
         sentBy: {
-          userId: user?._id || user?.id,
-          characterId: character?._id || character?.id,
+          userId: user?.userId,
+          characterId: character?.characterId,
           username: user?.username || 'System',
-          characterName: character ? `${character.name}${character.surname ? ' ' + character.surname : ''}` : undefined,
+          characterName: character?.characterName,
           userRoles: user?.userRoles || []
         },
         sentAt: new Date()
@@ -812,7 +812,7 @@ export class SystemConfigController {
         undefined,
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error broadcasting message:', { error: error instanceof Error ? error.message : String(error) });
 
       res.status(500).json(errorResponse(
@@ -889,7 +889,7 @@ export class SystemConfigController {
         undefined,
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error retrieving broadcast history:', { error: error instanceof Error ? error.message : String(error) });
 
       res.status(500).json(errorResponse(
@@ -937,7 +937,7 @@ export class SystemConfigController {
         undefined,
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error fetching system configurations:', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined
@@ -986,7 +986,7 @@ export class SystemConfigController {
         undefined,
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error fetching configuration:', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined
@@ -1025,7 +1025,7 @@ export class SystemConfigController {
 
       // Initialize ConfigurationService
       const { ConfigurationService } = await import('@shared/services/ConfigurationService');
-      const configService = new ConfigurationService(redis.getClient() as any, logger);
+      const configService = new ConfigurationService(redis.getClient(), logger);
 
       // Get user ID from request
       const userId = req.user?.userId || 'unknown';
@@ -1066,7 +1066,7 @@ export class SystemConfigController {
         undefined,
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error updating configuration:', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined
@@ -1090,7 +1090,7 @@ export class SystemConfigController {
     try {
       // Initialize ConfigurationService
       const { ConfigurationService } = await import('@shared/services/ConfigurationService');
-      const configService = new ConfigurationService(redis.getClient() as any, logger);
+      const configService = new ConfigurationService(redis.getClient(), logger);
 
       // Invalidate all cache
       await configService.invalidateAllCache();
@@ -1108,7 +1108,7 @@ export class SystemConfigController {
         undefined,
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error invalidating configuration cache:', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined

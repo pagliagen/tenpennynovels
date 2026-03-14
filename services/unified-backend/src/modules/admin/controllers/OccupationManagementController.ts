@@ -82,7 +82,7 @@ export class OccupationManagementController {
         undefined,
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error fetching occupations:', { 
         error: error instanceof Error ? error.message : String(error) 
       });
@@ -135,7 +135,7 @@ export class OccupationManagementController {
         undefined,
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error fetching occupation stats:', { 
         error: error instanceof Error ? error.message : String(error) 
       });
@@ -187,7 +187,7 @@ export class OccupationManagementController {
         undefined,
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error fetching occupation details:', { 
         error: error instanceof Error ? error.message : String(error), 
         occupationId: req.params.occupationId 
@@ -233,15 +233,15 @@ export class OccupationManagementController {
         undefined,
         getRequestId(req)
       ));
-    } catch (error: any) {
-      // Enhanced error logging
+    } catch (error: unknown) {
+      const err = error as { name?: string; message?: string; stack?: string; code?: number; errors?: Record<string, { message: string }> };
       logger.error('Error creating occupation:', {
-        error: error instanceof Error ? error.message : String(error),
-        errorName: error?.name,
-        errorStack: error?.stack,
-        validationErrors: error?.errors ? Object.keys(error.errors).map(key => ({
+        error: err.message ?? String(error),
+        errorName: err.name,
+        errorStack: err.stack,
+        validationErrors: err.errors ? Object.keys(err.errors).map(key => ({
           field: key,
-          message: error.errors[key].message
+          message: err.errors![key].message
         })) : undefined,
         requestBody: JSON.stringify(req.body, null, 2)
       });
@@ -250,16 +250,13 @@ export class OccupationManagementController {
       let errorCode = 'CREATE_OCCUPATION_ERROR';
       let statusCode = 500;
 
-      // Handle different error types
-      if (error.name === 'ValidationError') {
-        // Mongoose validation error
-        errorMessage = Object.keys(error.errors)
-          .map(key => `${key}: ${error.errors[key].message}`)
+      if (err.name === 'ValidationError' && err.errors) {
+        errorMessage = Object.keys(err.errors)
+          .map(key => `${key}: ${err.errors![key].message}`)
           .join(', ');
         errorCode = 'VALIDATION_ERROR';
         statusCode = 400;
-      } else if (error.code === 11000 || (error instanceof Error && error.message.includes('duplicate key'))) {
-        // Duplicate key error
+      } else if (err.code === 11000 || (error instanceof Error && error.message.includes('duplicate key'))) {
         errorMessage = 'Occupation name already exists';
         errorCode = 'OCCUPATION_NAME_EXISTS';
         statusCode = 409;
@@ -329,7 +326,7 @@ export class OccupationManagementController {
         undefined,
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error updating occupation:', { 
         error: error instanceof Error ? error.message : String(error), 
         occupationId: req.params.occupationId 
@@ -399,7 +396,7 @@ export class OccupationManagementController {
         ));
       } else {
         await occupation.softDelete(
-          auditInfo?.adminId || (req as any).user?.userId,
+          auditInfo?.adminId || req.user?.userId,
           auditInfo?.adminCharacterName || 'Unknown Admin',
           reason
         );
@@ -415,7 +412,7 @@ export class OccupationManagementController {
           getRequestId(req)
         ));
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error deactivating occupation:', { 
         error: error instanceof Error ? error.message : String(error), 
         occupationId: req.params.occupationId 
@@ -500,7 +497,7 @@ export class OccupationManagementController {
         undefined,
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error in bulk occupation operation:', { 
         error: error instanceof Error ? error.message : String(error)
       });
@@ -566,7 +563,7 @@ export class OccupationManagementController {
         undefined,
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error in bulk skill values update:', {
         error: error instanceof Error ? error.message : String(error)
       });

@@ -19,7 +19,7 @@ export class PresenceController {
    */
   static async leave(req: Request, res: Response): Promise<void> {
     try {
-      const character = (req as any).character;
+      const character = req.character;
 
       if (!character || !character.characterId) {
         res.status(401).json({
@@ -80,7 +80,7 @@ export class PresenceController {
           leftAt: new Date().toISOString()
         }
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('[PresenceController] Leave endpoint error:', error);
       res.status(500).json({
         result: false,

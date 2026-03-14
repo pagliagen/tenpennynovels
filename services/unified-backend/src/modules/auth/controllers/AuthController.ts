@@ -621,14 +621,12 @@ export class AuthController {
       
       // Handle Mongoose validation errors specifically
       if (error instanceof Error && error.name === 'ValidationError') {
-        const validationError = error as any;
+        const validationError = error as Error & { errors: Record<string, { message: string; kind: string }> };
         const details: Record<string, string> = {};
         
-        // Extract field-specific validation errors and make them user-friendly
         for (const field in validationError.errors) {
           const fieldError = validationError.errors[field];
           
-          // Transform technical validation messages into user-friendly ones
           details[field] = transformValidationMessage(field, fieldError.message, fieldError.kind);
         }
         
@@ -641,7 +639,7 @@ export class AuthController {
       }
       
       // Handle duplicate name errors
-      if (error instanceof Error && (error as any).code === 11000) {
+      if (error instanceof Error && 'code' in error && (error as Error & { code: number }).code === 11000) {
         errorResponse(res, 
           'Esiste già un personaggio con questo nome',
           'CHARACTER_NAME_EXISTS',

@@ -1,8 +1,9 @@
 import nodemailer from 'nodemailer';
 import { logger } from '../logger';
 import { ConfigurationService } from '@shared/services/ConfigurationService';
-import { Redis } from 'ioredis';
 import { appConfig } from '@config/runtime';
+
+type ConfigServiceRedisClient = ConstructorParameters<typeof ConfigurationService>[0];
 
 export class EmailService {
   private static transporter: nodemailer.Transporter;
@@ -13,12 +14,12 @@ export class EmailService {
    * Initialize Email Service with Configuration Service
    * @param redisClient - Redis client for caching
    */
-  static initialize(redisClient?: Redis) {
+  static initialize(redisClient?: ConfigServiceRedisClient) {
     this.isMockMode = appConfig.features.emailMock;
 
     // Initialize ConfigurationService if Redis client is provided
     if (redisClient) {
-      this.configService = new ConfigurationService(redisClient as any, logger);
+      this.configService = new ConfigurationService(redisClient, logger);
       logger.info('EmailService initialized with ConfigurationService');
     } else {
       logger.warn('EmailService initialized without ConfigurationService - templates will fail');

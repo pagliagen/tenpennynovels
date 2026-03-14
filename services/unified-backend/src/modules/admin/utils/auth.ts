@@ -43,7 +43,7 @@ export class AuthUtils {
    */
   static decodeCharacterContext(characterContext: string): { characterId: string; characterName: string; characterRoles: string[] } | null {
     try {
-      const decoded = jwt.verify(characterContext, this.getJwtSecret()) as any;
+      const decoded = jwt.verify(characterContext, this.getJwtSecret()) as { characterId: string; characterName: string; characterRoles?: string[] };
       return {
         characterId: decoded.characterId,
         characterName: decoded.characterName, // Include character name from JWT

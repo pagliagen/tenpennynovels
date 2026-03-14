@@ -51,7 +51,7 @@ export function errorHandler(
     message = 'Invalid ID format';
   }
   
-  if (err.name === 'MongoServerError' && (err as any).code === 11000) {
+  if (err.name === 'MongoServerError' && 'code' in err && (err as unknown as Record<string, unknown>).code === 11000) {
     statusCode = 409;
     code = 'DUPLICATE_KEY';
     message = 'Resource already exists';

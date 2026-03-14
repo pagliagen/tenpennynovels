@@ -19,7 +19,7 @@ export async function setupMiddleware(app: Express): Promise<void> {
   const { ConfigurationService } = await import('@shared/services/ConfigurationService');
   const { redis } = await import('@config/runtime');
   const redisClient = redis.getClient();
-  const configService = new ConfigurationService(redis as any, logger);
+  const configService = new ConfigurationService(redis.getClient(), logger);
 
   const authWindowMs = await configService.getConfig('rate_limit_auth_window') || 900000; // 15 min
   const authMax = await configService.getConfig('rate_limit_auth_max') || 100;

@@ -4,6 +4,7 @@ import { Response } from 'express';
 export interface ApiResponse<T = any> {
   result: boolean;
   data?: T;
+  message?: string;          // Messaggio di successo
   error?: string;           // Messaggio user-friendly IN ITALIANO
   code?: string;            // Codice errore (es: USER_NOT_FOUND)
   details?: Record<string, any>;
@@ -26,7 +27,7 @@ export function successResponse<T>(
   };
 
   if (message) {
-    (response as any).message = message;
+    response.message = message;
   }
 
   res.status(statusCode).json(response);
@@ -58,7 +59,7 @@ export function listResponse<T>(
   };
 
   if (message) {
-    (response as any).message = message;
+    response.message = message;
   }
 
   res.status(statusCode).json(response);

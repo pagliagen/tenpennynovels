@@ -59,6 +59,7 @@ export interface CharacterContextToken {
   playerStatus?: string; // draft, pending, approved
   isGestore?: boolean;
   characterPermissions?: string[];
+  sessionId?: string;
   iat: number;
   exp: number;
 }

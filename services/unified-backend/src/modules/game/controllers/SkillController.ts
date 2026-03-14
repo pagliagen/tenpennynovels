@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { Skill } from '@database/models/Skill';
-import { Character } from '@database/models/Character';
+import { Character, SkillBreakdown } from '@database/models/Character';
 import { logger } from '../logger';
 import {
   translateCategory,
@@ -114,11 +114,10 @@ export class SkillController {
           } else if (characterSkillValue && typeof characterSkillValue === 'object') {
             // SkillBreakdown object - extract total
             if ('total' in characterSkillValue) {
-              numericValue = (characterSkillValue as any).total;
+              numericValue = (characterSkillValue as SkillBreakdown).total;
             } else {
-              // Fallback: try to use the value directly if it's a number-like object
-              numericValue = typeof (characterSkillValue as any).value === 'number' 
-                ? (characterSkillValue as any).value 
+              numericValue = typeof (characterSkillValue as SkillBreakdown).base === 'number' 
+                ? (characterSkillValue as SkillBreakdown).base 
                 : 0;
             }
           } else {
@@ -161,7 +160,7 @@ export class SkillController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error retrieving character skills for dice:', error);
       res.status(500).json(errorResponse(
         'Errore interno del server',
@@ -227,7 +226,7 @@ export class SkillController {
           id: skill._id,
           name: skill.name,
           description: skill.description,
-          category: translateCategory(skill.category as any),
+          category: translateCategory(skill.category),
           categoryKey: skill.category, // Keep original English key for internal use
           baseValue: baseValue,
           pointsAssigned: Math.max(0, pointsAssigned),
@@ -273,7 +272,7 @@ export class SkillController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error retrieving character skills:', error);
       res.status(500).json(errorResponse(
         'Errore interno del server',
@@ -333,7 +332,7 @@ export class SkillController {
         id: skill._id,
         name: skill.name,
         description: skill.description,
-        category: translateCategory(skill.category as any),
+        category: translateCategory(skill.category),
         categoryKey: skill.category, // Keep original English key for internal use
         baseValue: baseValue,
         baseValueFormula: skill.baseValue, // Show the original formula
@@ -376,7 +375,7 @@ export class SkillController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error retrieving skill details:', error);
       res.status(500).json(errorResponse(
         'Errore interno del server',
@@ -428,12 +427,12 @@ export class SkillController {
       ]);
 
       const formattedCategories = categories.map(cat => ({
-        category: translateCategory(cat.category as any),
+        category: translateCategory(cat.category),
         categoryKey: cat.category, // Keep original English key for filtering
         count: cat.count,
         hasDefaultSkills: cat.hasDefaultSkills,
         hasAcademicSkills: cat.hasAcademicSkills,
-        description: getCategoryDescription(cat.category as any)
+        description: getCategoryDescription(cat.category)
       }));
 
       res.json(successResponse(
@@ -445,7 +444,7 @@ export class SkillController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error retrieving skill categories:', error);
       res.status(500).json(errorResponse(
         'Errore interno del server',
@@ -488,7 +487,7 @@ export class SkillController {
         id: skill._id,
         name: skill.name,
         description: skill.description,
-        category: translateCategory(skill.category as any),
+        category: translateCategory(skill.category),
         categoryKey: skill.category, // Keep original English key for internal use
         placeholderType: skill.placeholderType,
         baseValue: skill.baseValue,
@@ -516,7 +515,7 @@ export class SkillController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error retrieving placeholder skills:', error);
       res.status(500).json(errorResponse(
         'Errore interno del server',
@@ -628,7 +627,7 @@ export class SkillController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error calculating skill probabilities:', error);
       res.status(500).json(errorResponse(
         'Errore interno del server',

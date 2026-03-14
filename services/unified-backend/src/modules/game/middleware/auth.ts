@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { RequestUser } from '@shared/types';
+import { RequestUser, AuthToken, CharacterContextToken } from '@shared/types';
+import type { AdminPermission } from '@config/admin-permissions';
 import { AuthUser, CharacterContext, ApiResponse } from '../types/game';
 import { logger } from '../logger';
 import { appConfig } from '@config/runtime';
@@ -26,7 +27,7 @@ export class AuthMiddleware {
       }
 
       const jwtSecret = getJwtSecret();
-      const decoded = jwt.verify(authToken, jwtSecret) as any;
+      const decoded = jwt.verify(authToken, jwtSecret) as AuthToken;
 
       if (!decoded.userId || !decoded.username) {
         return { result: false,  error: 'Payload del token non valido' };
@@ -42,9 +43,10 @@ export class AuthMiddleware {
       };
 
       return { result: true,  user };
-    } catch (error: any) {
-      logger.warn('Auth token validation failed:', { error: error.message, ip: req.ip });
-      return { result: false,  error: error.message };
+    } catch (error: unknown) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      logger.warn('Auth token validation failed:', { error: errorMsg, ip: req.ip });
+      return { result: false,  error: errorMsg };
     }
   }
 
@@ -69,7 +71,7 @@ export class AuthMiddleware {
 
       // Verify JWT token
       const jwtSecret = getJwtSecret();
-      const decoded = jwt.verify(authToken, jwtSecret) as any;
+      const decoded = jwt.verify(authToken, jwtSecret) as AuthToken;
       
       if (!decoded.userId || !decoded.username) {
         throw new Error('Payload del token non valido');
@@ -87,8 +89,8 @@ export class AuthMiddleware {
 
       next();
 
-    } catch (error: any) {
-      logger.warn('Auth token validation failed:', { error: error.message, ip: req.ip });
+    } catch (error: unknown) {
+      logger.warn('Auth token validation failed:', { error: error instanceof Error ? error.message : String(error), ip: req.ip });
       
       const response: ApiResponse = {
         result: false,
@@ -125,7 +127,7 @@ export class AuthMiddleware {
       }
 
       // Verify character context token
-      const decoded = jwt.verify(characterToken, getJwtSecret()) as any;
+      const decoded = jwt.verify(characterToken, getJwtSecret()) as CharacterContextToken;
       
       if (!decoded.characterId || !decoded.userId) {
         throw new Error('Token contesto personaggio non valido');
@@ -153,9 +155,9 @@ export class AuthMiddleware {
 
       next();
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.warn('Character context validation failed:', { 
-        error: error.message, 
+        error: error instanceof Error ? error.message : String(error), 
         userId: req.user?.userId,
         ip: req.ip 
       });
@@ -216,7 +218,7 @@ export class AuthMiddleware {
 
           next();
 
-        } catch (error: any) {
+        } catch (error: unknown) {
           logger.error('Character approval check failed:', error);
 
           const response: ApiResponse = {
@@ -285,7 +287,7 @@ export class AuthMiddleware {
         const adminPermissions = req.user.adminPermissions ?? [];
         const isGestore = req.user.isGestore ?? false;
         const missingPermissions = permissions.filter(
-          (perm) => !hasAdminPermission(gameplayRoles, adminPermissions, isGestore, perm as any)
+          (perm) => !hasAdminPermission(gameplayRoles, adminPermissions, isGestore, perm as AdminPermission)
         );
 
         if (missingPermissions.length > 0) {
@@ -300,8 +302,8 @@ export class AuthMiddleware {
           return;
         }
         next();
-      } catch (err: any) {
-        logger.error('requireAdminPermissions error', { error: err?.message, permissions });
+      } catch (err: unknown) {
+        logger.error('requireAdminPermissions error', { error: err instanceof Error ? err.message : String(err), permissions });
         res.status(500).json({
           result: false,
           error: 'Controllo permessi fallito',
@@ -367,7 +369,7 @@ export class AuthMiddleware {
       const authToken = req.cookies?.auth_token;
       
       if (authToken) {
-        const decoded = jwt.verify(authToken, getJwtSecret()) as any;
+        const decoded = jwt.verify(authToken, getJwtSecret()) as AuthToken;
         
         if (decoded.userId && decoded.username) {
           req.user = {
@@ -383,7 +385,7 @@ export class AuthMiddleware {
 
       next();
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       // For optional auth, we just continue without setting user
       next();
     }
@@ -425,7 +427,7 @@ export class AuthMiddleware {
 
       next();
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('AI Gateway auth validation failed:', error);
       const response: ApiResponse = {
         result: false,
@@ -464,15 +466,15 @@ export class AuthMiddleware {
    */
   static decodeCharacterContext(token: string): { characterId: string; userId: string; characterName: string; sessionId: string; gameplayRoles: string[]; isGestore: boolean; playerStatus: string; characterPermissions: string[] } | null {
     try {
-      const decoded = jwt.verify(token, getJwtSecret()) as any;
+      const decoded = jwt.verify(token, getJwtSecret()) as CharacterContextToken;
       if (!decoded.characterId || !decoded.userId) {
         return null;
       }
       return {
         characterId: decoded.characterId,
         userId: decoded.userId,
-        characterName: decoded.characterName,
-        sessionId: decoded.sessionId,
+        characterName: decoded.characterName ?? '',
+        sessionId: decoded.sessionId ?? '',
         gameplayRoles: decoded.gameplayRoles || [],
         isGestore: decoded.isGestore || false,
         playerStatus: decoded.playerStatus || 'draft',

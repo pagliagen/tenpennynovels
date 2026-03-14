@@ -156,5 +156,5 @@ WebSocketEventSchema.statics.getEventsSince = async function(
   return events;
 };
 
-export const WebSocketEvent = mongoose.models.WebSocketEvent ||
-  mongoose.model<IWebSocketEvent, IWebSocketEventModel>('WebSocketEvent', WebSocketEventSchema);
+export const WebSocketEvent = (mongoose.models.WebSocketEvent ||
+  mongoose.model<IWebSocketEvent, IWebSocketEventModel>('WebSocketEvent', WebSocketEventSchema)) as IWebSocketEventModel;

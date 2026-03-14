@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { RequestUser } from '@shared/types';
+import { RequestUser, AuthToken, CharacterContextToken } from '@shared/types';
+import type { AdminPermission } from '@config/admin-permissions';
 import { AdminUser, ApiResponse } from '../types/management';
 import { logger } from '../utils/logger';
 import { errorResponse, getRequestId } from '../utils/apiResponse';
@@ -15,7 +16,7 @@ function getJwtSecret(): string {
 declare global {
   namespace Express {
     interface Request {
-      fullUser?: any; // Full user document from database
+      fullUser?: Record<string, unknown>;
     }
   }
 }
@@ -38,7 +39,7 @@ export class AdminAuthMiddleware {
         return;
       }
 
-      const decoded = jwt.verify(authToken, getJwtSecret()) as any;
+      const decoded = jwt.verify(authToken, getJwtSecret()) as AuthToken;
       if (!decoded.userId || !decoded.username) {
         throw new Error('Payload del token non valido');
       }
@@ -59,19 +60,19 @@ export class AdminAuthMiddleware {
       const characterContext = req.cookies?.character_context;
       if (characterContext) {
         try {
-          const characterDecoded = jwt.verify(characterContext, getJwtSecret()) as any;
+          const characterDecoded = jwt.verify(characterContext, getJwtSecret()) as CharacterContextToken;
           if (characterDecoded?.characterId) {
             const { Character } = require('@database/models/Character');
             const { gameplayRolesToAdminRoles } = require('@config/admin-permissions');
             Character.findById(characterDecoded.characterId)
               .select('gameplayRoles adminPermissions isGestore canAccessAdminPanel')
               .lean()
-              .then((char: any) => {
+              .then((char: { gameplayRoles?: string[]; adminPermissions?: string[]; isGestore?: boolean; canAccessAdminPanel?: boolean } | null) => {
                 if (char && req.user) {
                   const adminRoles = gameplayRolesToAdminRoles(char.gameplayRoles || []);
                   if (char.isGestore) adminRoles.push('amministratore');
                   req.user.characterRoles = adminRoles;
-                  req.user.gameplayRoles = char.gameplayRoles || [];
+                  req.user.gameplayRoles = (char.gameplayRoles || []) as ('player' | 'master' | 'moderatore')[];
                   req.user.adminPermissions = char.adminPermissions || [];
                   req.user.isGestore = char.isGestore || false;
                   req.user.canAccessAdminPanel = char.canAccessAdminPanel || char.isGestore || false;
@@ -84,7 +85,7 @@ export class AdminAuthMiddleware {
         } catch (_) {}
       }
       next();
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.warn('Admin auth token validation failed:', { 
         error: error instanceof Error ? error.message : String(error), 
         ip: req.ip,
@@ -125,7 +126,7 @@ export class AdminAuthMiddleware {
         const isGestore = req.user.isGestore ?? false;
 
         const missingPermissions = permissions.filter(
-          (perm: string) => !hasAdminPermission(gameplayRoles, adminPermissions, isGestore, perm as any)
+          (perm: string) => !hasAdminPermission(gameplayRoles, adminPermissions, isGestore, perm as AdminPermission)
         );
 
         if (missingPermissions.length > 0) {
@@ -150,7 +151,7 @@ export class AdminAuthMiddleware {
 
         next();
 
-      } catch (error: any) {
+      } catch (error: unknown) {
         logger.error('Error checking permissions:', {
           error: error instanceof Error ? error.message : String(error),
           userId: req.user.userId,
@@ -191,7 +192,7 @@ export class AdminAuthMiddleware {
         const adminPermissions = req.user.adminPermissions ?? [];
         const isGestore = req.user.isGestore ?? false;
 
-        if (!hasAdminPermission(gameplayRoles, adminPermissions, isGestore, permission as any)) {
+        if (!hasAdminPermission(gameplayRoles, adminPermissions, isGestore, permission as AdminPermission)) {
           logger.warn('Insufficient granular permissions', {
             userId: req.user.userId,
             username: req.user.username,
@@ -212,7 +213,7 @@ export class AdminAuthMiddleware {
 
         next();
 
-      } catch (error: any) {
+      } catch (error: unknown) {
         logger.error('Error checking granular permissions:', {
           error: error instanceof Error ? error.message : String(error),
           userId: req.user.userId,
@@ -240,7 +241,7 @@ export class AdminAuthMiddleware {
       const gameplayRoles = req.user.gameplayRoles ?? [];
       const adminPermissions = req.user.adminPermissions ?? [];
       const isGestore = req.user.isGestore ?? false;
-      return hasAdminPermission(gameplayRoles, adminPermissions, isGestore, permission as any);
+      return hasAdminPermission(gameplayRoles, adminPermissions, isGestore, permission as AdminPermission);
     } catch {
       return false;
     }

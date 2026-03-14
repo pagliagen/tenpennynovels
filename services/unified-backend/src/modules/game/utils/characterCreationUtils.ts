@@ -1,5 +1,5 @@
 import { Character, Occupation, Skill } from '@database/models';
-import { ICharacter } from '@database/models/Character';
+import { ICharacter, SkillBreakdown } from '@database/models/Character';
 import { IOccupation } from '@database/models/Occupation';
 import { CharacterCreationConfig, calculateIntelligenceBonus } from '@shared/services/CharacterCreationConfigService';
 import { ConfigurationService } from '@shared/services/ConfigurationService';
@@ -18,7 +18,7 @@ import { logger } from '../logger';
  * Helper to avoid repeating instantiation code
  */
 function getConfigService(): ConfigurationService {
-  return new ConfigurationService(redis.getClient() as any, logger);
+  return new ConfigurationService(redis.getClient(), logger);
 }
 
 interface SkillPointsCalculation {
@@ -164,7 +164,7 @@ export async function applyOccupationBonuses(
     try {
       // skillId may be populated (object with _id/name) or a raw ObjectId
       const populatedSkill = typeof bonusSkill.skillId === 'object' && bonusSkill.skillId !== null
-        ? bonusSkill.skillId as any
+        ? (bonusSkill.skillId as unknown as { _id: unknown; name: string; baseValue?: string | number; id?: string })
         : null;
 
       const skill = populatedSkill || await Skill.findById(bonusSkill.skillId);
@@ -173,9 +173,9 @@ export async function applyOccupationBonuses(
         continue;
       }
 
-      const skillId = (skill._id || skill.id).toString();
+      const skillId = String(skill._id ?? (skill as { id?: string }).id ?? '');
       const skillName = skill.name;
-      const currentValue = character.skills[skillId] || skill.baseValue || 0;
+      const currentValue = (character.skills as Record<string, number | SkillBreakdown>)[skillId] ?? (skill as { baseValue?: number }).baseValue ?? 0;
       const bonusValue = bonusSkill.bonusValue;
       const newValue = (typeof currentValue === 'number' ? currentValue : 0) + bonusValue;
 
@@ -196,12 +196,13 @@ export async function applyOccupationBonuses(
         finalValue: character.skills[skillId] as number
       });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
       logger.error('Error applying bonus skill', {
-        error: error.message,
+        error: message,
         bonusSkillId: String(bonusSkill.skillId)
       });
-      result.warnings.push(`Failed to apply bonus for skill ${bonusSkill.skillId}: ${error.message}`);
+      result.warnings.push(`Failed to apply bonus for skill ${bonusSkill.skillId}: ${message}`);
     }
   }
 
@@ -210,11 +211,11 @@ export async function applyOccupationBonuses(
   // Store selected slot choices (slot index -> chosen skill ObjectId)
   if (selectedAlternatives) {
     const mongoose = await import('mongoose');
-    const alternativesAsObjectIds: any = {};
+    const alternativesAsObjectIds: Record<string, InstanceType<typeof mongoose.Types.ObjectId>> = {};
     for (const [slotIndex, skillId] of Object.entries(selectedAlternatives)) {
       alternativesAsObjectIds[slotIndex] = new mongoose.Types.ObjectId(skillId);
     }
-    character.selectedAlternativeSkills = alternativesAsObjectIds;
+    character.selectedAlternativeSkills = alternativesAsObjectIds as unknown as ICharacter['selectedAlternativeSkills'];
   }
 
   logger.info('Occupation bonuses applied', {
@@ -321,7 +322,7 @@ export async function validateCharacterSubmission(character: ICharacter, config:
   let statsAbove80 = 0;
   for (const [statName, minValue] of Object.entries(minStats)) {
     const actualStatName = statMapping[statName] || statName;
-    const currentValue = (character.stats as any)[actualStatName] || 0;
+    const currentValue = (character.stats as Record<string, number>)[actualStatName] || 0;
 
     if (currentValue < minValue) {
       // Translate stat names to Italian
@@ -392,16 +393,15 @@ export async function validateCharacterSubmission(character: ICharacter, config:
   let skillPointsSpent = 0;
   
   // Handle Mongoose Map - convert to object and filter out internal properties
-  let skillsObj: any = {};
+  let skillsObj: Record<string, number | SkillBreakdown> = {};
   if (character.skills instanceof Map) {
     character.skills.forEach((value, key) => {
-      // Filter out Mongoose internal properties
       if (!key.startsWith('$__')) {
         skillsObj[key] = value;
       }
     });
   } else {
-    skillsObj = character.skills || {};
+    skillsObj = (character.skills || {}) as Record<string, number | SkillBreakdown>;
   }
   
   const skillEntries = Object.entries(skillsObj);
@@ -432,7 +432,7 @@ export async function validateCharacterSubmission(character: ICharacter, config:
     if (!skill) {
       // Check if this is a dynamic/placeholder skill (e.g., "Lingua straniera (Latino)")
       const dynamicEntry = (character.dynamicSkills || []).find(
-        (ds: any) => ds.skillName === skillKey
+        (ds) => ds.skillName === skillKey
       );
 
       if (!dynamicEntry) {
@@ -444,10 +444,11 @@ export async function validateCharacterSubmission(character: ICharacter, config:
       skillDisplayName = dynamicEntry.skillName;
 
       if (typeof skillValue === 'object' && skillValue !== null && 'total' in skillValue) {
-        totalValue = (skillValue as any).total;
-        manualPoints = (skillValue as any).manualPoints || 0;
-        requiredBonus = (skillValue as any).requiredBonus || 0;
-        occupationBonus = (skillValue as any).occupationBonus || 0;
+        const breakdown = skillValue as SkillBreakdown;
+        totalValue = breakdown.total;
+        manualPoints = breakdown.manualPoints || 0;
+        requiredBonus = breakdown.requiredBonus || 0;
+        occupationBonus = breakdown.occupationBonus || 0;
       } else {
         totalValue = typeof skillValue === 'number' ? skillValue : 0;
         manualPoints = totalValue;
@@ -456,10 +457,11 @@ export async function validateCharacterSubmission(character: ICharacter, config:
       skillDisplayName = skill.name;
 
       if (typeof skillValue === 'object' && skillValue !== null && 'total' in skillValue) {
-        totalValue = (skillValue as any).total;
-        manualPoints = (skillValue as any).manualPoints || 0;
-        requiredBonus = (skillValue as any).requiredBonus || 0;
-        occupationBonus = (skillValue as any).occupationBonus || 0;
+        const breakdown = skillValue as SkillBreakdown;
+        totalValue = breakdown.total;
+        manualPoints = breakdown.manualPoints || 0;
+        requiredBonus = breakdown.requiredBonus || 0;
+        occupationBonus = breakdown.occupationBonus || 0;
       } else {
         totalValue = typeof skillValue === 'number' ? skillValue : 0;
         const baseValue = skill.baseValue || 0;
@@ -500,7 +502,7 @@ export async function validateCharacterSubmission(character: ICharacter, config:
 
   for (let slotIdx = 0; slotIdx < totalSlots; slotIdx++) {
     const slot = (occupation.requiredSkillSlots || [])[slotIdx];
-    const options = (slot?.options || []) as any[];
+    const options = slot?.options || [];
     if (options.length === 0) continue;
 
     let slotSatisfied = false;
@@ -517,18 +519,18 @@ export async function validateCharacterSubmission(character: ICharacter, config:
       if (skill.isPlaceholder) {
         // Check character.dynamicSkills for specializations of this placeholder
         const dynamicEntries = (character.dynamicSkills || []).filter(
-          (ds: any) => ds.basedOnTemplate === skillName
+          (ds) => ds.basedOnTemplate === skillName
         );
 
         if (dynamicEntries.length > 0) {
-          const resolvedBase = resolveBaseValue(skill.baseValue, character.stats as any);
-          const hasImproved = dynamicEntries.some((ds: any) => {
+          const resolvedBase = resolveBaseValue(skill.baseValue, character.stats as Record<string, number>);
+          const hasImproved = dynamicEntries.some((ds: { value: number; skillId?: unknown }) => {
             if (ds.value >= requiredSkillMinimum) return true;
-            const skillId = ds.skillId?.toString();
+            const skillId = (ds as { skillId?: { toString(): string } }).skillId?.toString();
             if (skillId) {
               const skillData = skillsObj[skillId];
               if (skillData && typeof skillData === 'object' && 'total' in skillData) {
-                return (skillData as any).total >= requiredSkillMinimum;
+                return (skillData as SkillBreakdown).total >= requiredSkillMinimum;
               }
               if (typeof skillData === 'number') return skillData >= requiredSkillMinimum;
             }
@@ -546,7 +548,7 @@ export async function validateCharacterSubmission(character: ICharacter, config:
           if (charSkillKey.startsWith(`${skillName} (`)) {
             let totalValue = 0;
             if (typeof charSkillValue === 'object' && charSkillValue !== null && 'total' in charSkillValue) {
-              totalValue = (charSkillValue as any).total;
+              totalValue = (charSkillValue as SkillBreakdown).total;
             } else if (typeof charSkillValue === 'number') {
               totalValue = charSkillValue;
             }
@@ -566,20 +568,20 @@ export async function validateCharacterSubmission(character: ICharacter, config:
       if (character.skills instanceof Map) {
         const value = character.skills.get(skillId);
         if (typeof value === 'object' && value !== null && 'total' in value) {
-          skillValue = (value as any).total;
+          skillValue = (value as SkillBreakdown).total;
         } else if (typeof value === 'number') {
           skillValue = value;
         }
       } else {
-        const value = (character.skills as any)?.[skillId];
+        const value = (character.skills as Record<string, number | SkillBreakdown>)?.[skillId];
         if (typeof value === 'object' && value !== null && 'total' in value) {
-          skillValue = (value as any).total;
+          skillValue = (value as SkillBreakdown).total;
         } else if (typeof value === 'number') {
           skillValue = value;
         }
       }
 
-      const resolvedBase = resolveBaseValue(skill.baseValue, character.stats as any);
+      const resolvedBase = resolveBaseValue(skill.baseValue, character.stats as Record<string, number>);
       if (skillValue >= requiredSkillMinimum) {
         slotSatisfied = true;
         break;
@@ -589,7 +591,7 @@ export async function validateCharacterSubmission(character: ICharacter, config:
     if (slotSatisfied) {
       slotsValidated++;
     } else {
-      const optionNames = options.map((o: any) => o.name || 'Sconosciuta').join(' o ');
+      const optionNames = options.map((o: unknown) => (typeof o === 'object' && o !== null && 'name' in o ? (o as { name: string }).name : 'Sconosciuta')).join(' o ');
       if (options.length === 1) {
         result.errors.push(`Abilità richiesta "${optionNames}" deve avere almeno ${requiredSkillMinimum} punti (valore attuale insufficiente)`);
       } else {
@@ -667,8 +669,9 @@ export async function checkOccupationPrerequisites(
   const issues: string[] = [];
 
   // Use the method from Occupation model if available
-  if (typeof (occupation as any).checkPrerequisites === 'function') {
-    return (occupation as any).checkPrerequisites(character, [], []);
+  const occupationWithMethods = occupation as IOccupation & { checkPrerequisites?: (character: ICharacter, skills: unknown[], occupations: unknown[]) => { canAccess: boolean; issues: string[] } };
+  if (typeof occupationWithMethods.checkPrerequisites === 'function') {
+    return occupationWithMethods.checkPrerequisites(character, [], []);
   }
 
   return {

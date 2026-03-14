@@ -61,7 +61,7 @@ export class DatabaseConnectionManager {
     return this.isConnected && mongoose.connection.readyState === 1;
   }
 
-  async healthCheck(): Promise<{ status: string; details: any }> {
+  async healthCheck(): Promise<{ status: string; details: Record<string, unknown> }> {
     try {
       if (!this.isConnected) {
         return { status: 'unhealthy', details: { error: 'Not connected' } };
@@ -78,7 +78,7 @@ export class DatabaseConnectionManager {
           name: mongoose.connection.name,
         }
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         status: 'unhealthy',
         details: {

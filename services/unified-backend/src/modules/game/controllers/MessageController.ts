@@ -21,7 +21,7 @@ export class MessageController {
       const characterName = req.character!.characterName;
 
       // Get sender character
-      const sender = await (Character.findById(characterId) as any);
+      const sender = await Character.findById(characterId);
       if (!sender) {
         res.status(404).json(errorResponse(
           'Personaggio mittente non trovato',
@@ -47,10 +47,10 @@ export class MessageController {
       }
 
       // Validate recipients exist
-      const recipientCharacters = await (Character.find({
+      const recipientCharacters = await Character.find({
         _id: { $in: recipients },
         status: 'APPROVED'
-      }) as any);
+      });
 
       if (recipientCharacters.length !== recipients.length) {
         res.status(400).json(errorResponse(
@@ -77,7 +77,7 @@ export class MessageController {
 
       // Create message for each recipient
       const messages = [];
-      for (const recipientId of recipients as any[]) {
+      for (const recipientId of recipients) {
         const message = new OnGameMessage({
           senderId: characterId,
           senderName: characterName,
@@ -132,7 +132,7 @@ export class MessageController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('Send in-game message error:', {
         message: err.message,
@@ -162,20 +162,20 @@ export class MessageController {
       const skip = (page - 1) * limit;
 
       // Get delivered messages
-      const messages = await (OnGameMessage.find({
+      const messages = await OnGameMessage.find({
         recipientId: characterId,
         status: { $in: ['delivered', 'read'] },
         deliveredAt: { $lte: new Date() }
       })
       .sort({ deliveredAt: -1 })
       .skip(skip)
-      .limit(limit) as any);
+      .limit(limit);
 
-      const totalMessages = await (OnGameMessage.countDocuments({
+      const totalMessages = await OnGameMessage.countDocuments({
         recipientId: characterId,
         status: { $in: ['delivered', 'read'] },
         deliveredAt: { $lte: new Date() }
-      }) as any);
+      });
 
       res.json(listResponse(
         messages.map((msg: any) => ({
@@ -202,7 +202,7 @@ export class MessageController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('Get inbox error:', {
         message: err.message,
@@ -231,16 +231,16 @@ export class MessageController {
       const limit = parseInt(req.query.limit as string) || 20;
       const skip = (page - 1) * limit;
 
-      const messages = await (OnGameMessage.find({
+      const messages = await OnGameMessage.find({
         senderId: characterId
       })
       .sort({ sentAt: -1 })
       .skip(skip)
-      .limit(limit) as any);
+      .limit(limit);
 
-      const totalMessages = await (OnGameMessage.countDocuments({
+      const totalMessages = await OnGameMessage.countDocuments({
         senderId: characterId
-      }) as any);
+      });
 
       res.json(listResponse(
         messages.map((msg: any) => ({
@@ -266,7 +266,7 @@ export class MessageController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('Get sent messages error:', {
         message: err.message,
@@ -293,13 +293,13 @@ export class MessageController {
       const { messageId } = req.params;
       const characterId = req.character!.characterId;
 
-      const message = await (OnGameMessage.findOne({
+      const message = await OnGameMessage.findOne({
         _id: messageId,
         $or: [
           { recipientId: characterId },
           { senderId: characterId }
         ]
-      }) as any);
+      });
 
       if (!message) {
         res.status(404).json(errorResponse(
@@ -355,7 +355,7 @@ export class MessageController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('Read message error:', {
         message: err.message,
@@ -385,15 +385,15 @@ export class MessageController {
       const userId = req.user!.userId;
 
       // Try to find in both in-game and OOC messages
-      const inGameMessage = await (OnGameMessage.findOne({
+      const inGameMessage = await OnGameMessage.findOne({
         _id: messageId,
         senderId: characterId
-      }) as any);
+      });
 
-      const oocMessage = await (OffGameChatMessage.findOne({
+      const oocMessage = await OffGameChatMessage.findOne({
         _id: messageId,
         senderId: userId
-      }) as any);
+      });
 
       const message = inGameMessage || oocMessage;
 
@@ -445,7 +445,7 @@ export class MessageController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('Delete message error:', {
         message: err.message,
@@ -485,7 +485,7 @@ export class MessageController {
           ],
           sentAt: { $gt: new Date(Date.now() - 24 * 60 * 60 * 1000) } // Last 24 hours
         })
-      ]) as any[];
+      ]);
 
       res.json(successResponse(
         {
@@ -499,7 +499,7 @@ export class MessageController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('Get unread count error:', {
         message: err.message,

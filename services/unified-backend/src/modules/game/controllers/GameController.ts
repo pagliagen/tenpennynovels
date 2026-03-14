@@ -21,7 +21,7 @@ export class GameController {
       const exclude = req.body.exclude || [];
 
       // Get character with all needed data
-      const character = await (Character.findById(characterId) as any);
+      const character = await Character.findById(characterId);
       if (!character) {
         res.status(404).json(errorResponse(
           'Personaggio non trovato',
@@ -46,7 +46,7 @@ export class GameController {
       }
 
       // Get user data for admin permissions
-      const user = await (User.findById(userId) as any);
+      const user = await User.findById(userId);
       if (!user) {
         res.status(404).json(errorResponse(
           'Utente non trovato',
@@ -72,7 +72,7 @@ export class GameController {
       }
 
       // Load items for general use (with filters) if not excluded
-      let items = [];
+      let items: unknown[] = [];
       let characterFinances = null;
       if (!exclude.includes('items')) {
         items = await (Item.find({
@@ -83,11 +83,11 @@ export class GameController {
           isAdminOnly: false
         })
           .sort({ category: 1, name: 1 })
-          .lean() as any);
+          .lean());
 
         // Load character finances for APPROVED characters (for financial calculations)
         if (character.playerStatus === 'approved') {
-          characterFinances = await (CharacterFinances.findOne({ characterId }) as any);
+          characterFinances = await CharacterFinances.findOne({ characterId });
         }
       }
 
@@ -103,10 +103,10 @@ export class GameController {
       // Fetch base skills from database (for all character statuses, not just DRAFT)
       const baseSkills = await (Skill.find({ visible: true })
         .sort({ sortOrder: 1, name: 1 })
-        .lean() as any);
+        .lean());
 
       // Prepare response data
-      const responseData: any = {
+      const responseData: Record<string, unknown> = {
         character: {
           id: character.id,
           name: character.name,
@@ -226,7 +226,7 @@ export class GameController {
           .populate('requiredSkillSlots.options', 'name category isPlaceholder placeholderType')
           .populate('bonusSkills.skillId', 'name category')
           .sort({ category: 1, name: 1 })
-          .lean() as any);
+          .lean());
 
         // Create skill ID to name mapping for professional skills conversion
         const skillIdToName = new Map<string, string>();
@@ -245,14 +245,13 @@ export class GameController {
         });
 
         // Load baseItems for DRAFT: ALL items from occupations WITHOUT filters
-        // These items may not be in the main 'items' array if they're not sellable/public
-        let baseItems = [];
+        let baseItems: unknown[] = [];
         if (occupationItemIds.size > 0) {
           baseItems = await (Item.find({
             _id: { $in: Array.from(occupationItemIds) }
           })
             .sort({ category: 1, name: 1 })
-            .lean() as any);
+            .lean());
           
           logger.info('Fetched baseItems for DRAFT', { 
             occupationItemIds: occupationItemIds.size,
@@ -337,8 +336,8 @@ export class GameController {
           }
           unreadOffGameMessages += unreadCount;
         }
-      } catch (error: any) {
-        logger.error('Failed to get unread offgame messages count:', error);
+    } catch (error: unknown) {
+      logger.error('Failed to get unread offgame messages count:', error);
         unreadOffGameMessages = 0;
       }
 
@@ -370,7 +369,7 @@ export class GameController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('Game initialization error:', {
         message: err.message,
@@ -401,8 +400,8 @@ export class GameController {
       const before = req.query.before as string; // For pagination
 
       // Verify character has access to location
-      const character = await (Character.findById(characterId) as any);
-      const location = await (Location.findById(locationId) as any);
+      const character = await Character.findById(characterId);
+      const location = await Location.findById(locationId);
 
       if (!location || !character) {
         res.status(404).json(errorResponse(
@@ -439,9 +438,9 @@ export class GameController {
       }
 
       // Get actions that character can see
-      const actions = await (Chat.find(query)
+      const actions = await Chat.find(query)
         .sort({ timestamp: -1 })
-        .limit(limit) as any);
+        .limit(limit);
 
       // Filter actions by visibility permissions
       const visibleActions = actions.filter((action: any) => 
@@ -471,7 +470,7 @@ export class GameController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('Get location history error:', {
         message: err.message,
@@ -513,7 +512,7 @@ export class GameController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('Get global presence error:', {
         message: err.message,
@@ -567,7 +566,7 @@ export class GameController {
       modifier: 0,
       finalTarget: target,
       success,
-      level: level as any,
+      level: level as DiceResult['level'],
       description
     };
   }
@@ -663,7 +662,7 @@ export class GameController {
       }
 
       // Get character
-      const character = await (Character.findById(characterId) as any);
+      const character = await Character.findById(characterId);
       if (!character) {
         res.status(404).json(errorResponse(
           'Personaggio non trovato',
@@ -685,7 +684,7 @@ export class GameController {
         location = { name: 'London' }; // Mock location for London/root
       } else {
         // Get location and verify access for specific locations
-        location = await (Location.findById(locationId) as any);
+        location = await Location.findById(locationId);
         if (!location) {
           res.status(404).json(errorResponse(
             'Location non trovata',
@@ -740,7 +739,7 @@ export class GameController {
         };
         await redisPublisher.publish('location:events', JSON.stringify(redisEventData));
         logger.info('📡 Redis: Published location:events with character_moved type', redisEventData);
-      } catch (redisError: any) {
+      } catch (redisError: unknown) {
         logger.error('❌ Redis: Failed to publish location:character_moved event:', redisError);
       }
 
@@ -762,7 +761,7 @@ export class GameController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('❌ Set character location error:', {
         message: err.message,

@@ -120,9 +120,9 @@ export class OnGameMessageController {
 
       // Verify recipients exist (permission system handles access control)
       const recipientIds = to.map(id => new mongoose.Types.ObjectId(id));
-      const recipients = await (Character.find({
+      const recipients = await Character.find({
         _id: { $in: recipientIds }
-      }) as any);
+      });
 
       if (recipients.length !== recipientIds.length) {
         // Find which recipients are invalid for detailed error
@@ -208,7 +208,7 @@ export class OnGameMessageController {
       if (!deliveryTime || deliveryTime <= new Date()) {
         const io = req.app.get('io');
         if (io) {
-          const senderCharacter = await (Character.findById(characterId) as any);
+          const senderCharacter = await Character.findById(characterId);
           
           for (const recipient of recipients) {
             const notificationData = {
@@ -275,7 +275,7 @@ export class OnGameMessageController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Send OnGame message error:', error);
 
       res.status(500).json(errorResponse(
@@ -367,7 +367,7 @@ export class OnGameMessageController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Get inbox error:', error);
 
       res.status(500).json(errorResponse(
@@ -445,7 +445,7 @@ export class OnGameMessageController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Get outbox error:', error);
 
       res.status(500).json(errorResponse(
@@ -492,7 +492,7 @@ export class OnGameMessageController {
         // Send read receipt to sender via WebSocket
         const io = req.app.get('io');
         if (io) {
-          const reader = await (Character.findById(characterId) as any);
+          const reader = await Character.findById(characterId);
           const readReceiptData = {
             type: 'message_read_receipt',
             messageId: messageView.messageId._id.toString(),
@@ -517,7 +517,7 @@ export class OnGameMessageController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Mark as read error:', error);
 
       res.status(500).json(errorResponse(
@@ -569,7 +569,7 @@ export class OnGameMessageController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Delete message error:', error);
 
       res.status(500).json(errorResponse(
@@ -692,7 +692,7 @@ export class OnGameMessageController {
         undefined,
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Get threads error:', error);
 
       res.status(500).json(errorResponse(
@@ -736,7 +736,7 @@ export class OnGameMessageController {
       .sort({ sentAt: 1 }); // Chronological order for chat view
 
       // Get partner info
-      const partner = await (Character.findById(partnerId).select('name avatar') as any);
+      const partner = await Character.findById(partnerId).select('name avatar');
       if (!partner) {
         res.status(404).json(errorResponse(
           'Partner not found',
@@ -781,7 +781,7 @@ export class OnGameMessageController {
         undefined,
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Get thread messages error:', error);
 
       res.status(500).json(errorResponse(
@@ -811,7 +811,7 @@ export class OnGameMessageController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Get message types error:', error);
 
       res.status(500).json(errorResponse(

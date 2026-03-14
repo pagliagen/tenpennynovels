@@ -91,7 +91,7 @@ export async function setupWebSocket(io: SocketIOServer): Promise<void> {
             gameplayRoles: characterPayload.gameplayRoles || [],
             isGestore: characterPayload.isGestore || false,
           };
-        } catch (error: any) {
+        } catch (error: unknown) {
           logger.warn('Invalid character context token provided');
         }
       }
@@ -99,7 +99,7 @@ export async function setupWebSocket(io: SocketIOServer): Promise<void> {
       logger.debug(`WebSocket authenticated: ${authPayload.username} (userRoles: ${JSON.stringify(authPayload.userRoles)})`);
       next();
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('WebSocket authentication error:', error);
       next(new Error('Autenticazione fallita'));
     }
@@ -139,7 +139,7 @@ export async function setupWebSocket(io: SocketIOServer): Promise<void> {
         const adminChar = await Character.findOne({
           userId: user.userId,
           canAccessAdminPanel: true
-        }).select('isGestore gameplayRoles adminPermissions').lean() as any;
+        }).select('isGestore gameplayRoles adminPermissions').lean();
 
         if (adminChar) {
           const adminRoles = adminChar.gameplayRoles || [];
@@ -222,7 +222,7 @@ export async function setupWebSocket(io: SocketIOServer): Promise<void> {
             characterName: character.characterName,
             locationId
           });
-        } catch (error: any) {
+        } catch (error: unknown) {
           logger.error('[Disconnect] ❌ Failed to clean DB:', error);
           // Non-blocking: Events already emitted, just log error
           // User will be removed from UI via player_left event
