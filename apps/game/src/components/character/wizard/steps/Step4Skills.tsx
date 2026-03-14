@@ -15,7 +15,6 @@ import { useWizardStore, resolveSkillBaseValue } from '@/store/wizardStore';
 import { useSkills, useOccupations } from '@/hooks/useCharacterCreation';
 import { useWizardToolbar } from '../WizardSlotsContext';
 import { BudgetIndicator } from '../shared/BudgetIndicator';
-import { PlaceholderSkillManager } from '../shared/PlaceholderSkillManager';
 import styles from '@/styles/components/character/wizard/Step4Skills.module.scss';
 
 /**
