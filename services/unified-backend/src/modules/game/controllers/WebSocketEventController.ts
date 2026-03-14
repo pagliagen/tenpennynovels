@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { WebSocketEvent } from '@database/models';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
 import { successResponse, errorResponse, getRequestId } from '../utils/apiResponse';
 
 /**
@@ -55,7 +55,7 @@ export class WebSocketEventController {
       });
 
       // Get events since lastEventId for this character
-      const events = await (WebSocketEvent as any).getEventsSince(
+      const events = await WebSocketEvent.getEventsSince(
         lastEventIdNum,
         characterId,
         limit
@@ -87,7 +87,7 @@ export class WebSocketEventController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('❌ WebSocket: Failed to retrieve events:', {
         message: err.message,
@@ -136,7 +136,7 @@ export class WebSocketEventController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('❌ WebSocket: Failed to retrieve latest eventId:', {
         message: err.message,

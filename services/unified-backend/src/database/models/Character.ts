@@ -1,6 +1,7 @@
 import mongoose, { Schema, model, Document } from 'mongoose';
 // Use relative import instead of alias to fix seed script compatibility
 import { calculateAllDerivedStats, getCharacterCreationConfig, type CharacterStats, type DerivedStats } from '../../shared/services/CharacterCreationConfigService';
+import { escapeRegex } from '@shared/utils/validation';
 import { softDeletePlugin, SoftDeleteMethods } from '../plugins/softDeletePlugin';
 
 // Granular skill tracking interface for occupation bonuses
@@ -207,7 +208,6 @@ const CharacterSchema = new Schema<ICharacter>({
   name: {
     type: String,
     required: true,
-    unique: true, // NEW: Character names must be unique
     trim: true,
     minlength: 2,
     maxlength: 50
@@ -385,8 +385,8 @@ const CharacterSchema = new Schema<ICharacter>({
 
   // Combat tracking (TiroContrapposto Phase 2)
   combat: {
-    currentHP: { type: Number, default: function(this: any) { return this.derived?.hitPoints || 10; } },
-    maxHP: { type: Number, default: function(this: any) { return this.derived?.hitPoints || 10; } },
+    currentHP: { type: Number, default: function(this: ICharacter) { return this.derived?.hitPoints || 10; } },
+    maxHP: { type: Number, default: function(this: ICharacter) { return this.derived?.hitPoints || 10; } },
     temporaryHP: { type: Number, default: 0 },
     wounds: [{
       damage: { type: Number, required: true },
@@ -649,7 +649,7 @@ const CharacterSchema = new Schema<ICharacter>({
 
 // Indexes
 CharacterSchema.index({ userId: 1 });
-CharacterSchema.index({ name: 1 });
+CharacterSchema.index({ name: 1 }, { unique: true }); // Unique index for character names
 CharacterSchema.index({ playerStatus: 1 });
 CharacterSchema.index({ playerStatus: 1, submittedAt: 1 });
 CharacterSchema.index({ occupation: 1 });
@@ -688,15 +688,15 @@ CharacterSchema.methods.canPerformAction = function(actionType: string): boolean
     'item_use': ['player', 'master', 'moderatore']
   };
   const requiredRoles = rolePermissions[actionType] || [];
-  return this.isGestore || requiredRoles.some((role: string) => this.gameplayRoles.includes(role as any));
+  return this.isGestore || requiredRoles.some((role: string) => this.gameplayRoles.includes(role as 'player' | 'master' | 'moderatore'));
 };
 
 CharacterSchema.methods.getLatestReview = function() {
   if (this.reviewHistory.length === 0) return null;
-  return this.reviewHistory.sort((a: any, b: any) => b.reviewedAt.getTime() - a.reviewedAt.getTime())[0];
+  return this.reviewHistory.sort((a: { reviewedAt: Date }, b: { reviewedAt: Date }) => b.reviewedAt.getTime() - a.reviewedAt.getTime())[0];
 };
 
-CharacterSchema.methods.addReview = function(reviewData: any) {
+CharacterSchema.methods.addReview = function(reviewData: Omit<ICharacter['reviewHistory'][number], 'reviewedAt'>) {
   this.reviewHistory.push({
     ...reviewData,
     reviewedAt: new Date()
@@ -739,7 +739,7 @@ CharacterSchema.pre('save', async function(this: ICharacter) {
 
   // If character becomes active, deactivate other characters for this user
   if (this.isModified('isActive') && this.isActive) {
-    await (this.constructor as any).updateMany(
+    await (this.constructor as mongoose.Model<ICharacter>).updateMany(
       { userId: this.userId, _id: { $ne: this._id } },
       { isActive: false }
     );
@@ -775,8 +775,9 @@ CharacterSchema.pre('save', async function(this: ICharacter) {
   // Prestavolto duplicate validation (face claim management)
   if (this.isModified('prestavolto') && this.prestavolto) {
     // Check if another character already uses this face claim
-    const duplicate = await (this.constructor as any).findOne({
-      prestavolto: { $regex: new RegExp(`^${this.prestavolto.trim()}$`, 'i') },
+    const escapedPrestavolto = escapeRegex(this.prestavolto.trim());
+    const duplicate = await (this.constructor as mongoose.Model<ICharacter>).findOne({
+      prestavolto: { $regex: new RegExp(`^${escapedPrestavolto}$`, 'i') },
       _id: { $ne: this._id },
       isDeleted: { $ne: true }
     }).select('_id prestavoltoStatus');

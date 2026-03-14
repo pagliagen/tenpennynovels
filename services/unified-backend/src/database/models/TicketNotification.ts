@@ -1,4 +1,4 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Document, Schema, Model } from 'mongoose';
 
 /**
  * TicketNotification Model
@@ -313,4 +313,15 @@ TicketNotificationSchema.methods.markAsRead = async function(): Promise<void> {
 
 // ============ EXPORT ============
 
-export const TicketNotification = mongoose.model<ITicketNotification>('TicketNotification', TicketNotificationSchema);
+interface ITicketNotificationMethods {
+  markAsRead(): Promise<void>;
+}
+
+interface ITicketNotificationModel extends Model<ITicketNotification, Record<string, never>, ITicketNotificationMethods> {
+  getUnreadCount(recipientType: string, recipientId?: mongoose.Types.ObjectId, options?: Record<string, unknown>): Promise<number>;
+  markAllAsRead(recipientType: string, recipientId?: mongoose.Types.ObjectId, options?: Record<string, unknown>): Promise<number>;
+  getRecentForRecipient(recipientType: string, recipientId?: mongoose.Types.ObjectId, options?: Record<string, unknown>): Promise<ITicketNotification[]>;
+  getTotalCount(recipientType: string, recipientId?: mongoose.Types.ObjectId, options?: Record<string, unknown>): Promise<number>;
+}
+
+export const TicketNotification = mongoose.model<ITicketNotification, ITicketNotificationModel>('TicketNotification', TicketNotificationSchema);

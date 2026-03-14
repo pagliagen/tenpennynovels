@@ -398,7 +398,7 @@ export default function CharacterList() {
 
         <ConfigurableDataTable<Character>
           tableName="character-list"
-          data={data?.items ?? []}
+          data={data?.list ?? []}
           loading={isLoading || tableConfig.loading}
           onAction={handleAction}
           pagination={{

@@ -76,7 +76,7 @@ export class ChatManagementController {
           location: location ? {
             id: location._id,
             name: location.name,
-            type: location.type
+            locationLevel: location.locationLevel
           } : {
             id: action.locationId,
             name: 'Unknown Location'
@@ -116,7 +116,7 @@ export class ChatManagementController {
     } catch (error: any) {
       logger.error('Error retrieving location actions:', error);
       res.status(500).json(errorResponse(
-        'Internal server error',
+        'Errore interno del server',
         'GET_LOCATION_ACTIONS_ERROR',
         undefined,
         500,
@@ -203,7 +203,7 @@ export class ChatManagementController {
           $project: {
             locationId: '$_id',
             locationName: '$location.name',
-            locationType: '$location.type',
+            locationLevel: '$location.locationLevel',
             actionCount: '$count'
           }
         }
@@ -291,7 +291,7 @@ export class ChatManagementController {
     } catch (error: any) {
       logger.error('Error retrieving location action statistics:', error);
       res.status(500).json(errorResponse(
-        'Internal server error',
+        'Errore interno del server',
         'GET_LOCATION_ACTION_STATS_ERROR',
         undefined,
         500,
@@ -359,7 +359,7 @@ export class ChatManagementController {
     } catch (error: any) {
       logger.error('Error deleting location action:', error);
       res.status(500).json(errorResponse(
-        'Internal server error',
+        'Errore interno del server',
         'DELETE_LOCATION_ACTION_ERROR',
         undefined,
         500,
@@ -449,7 +449,7 @@ export class ChatManagementController {
     } catch (error: any) {
       logger.error('Error bulk deleting location actions:', error);
       res.status(500).json(errorResponse(
-        'Internal server error',
+        'Errore interno del server',
         'BULK_DELETE_LOCATION_ACTIONS_ERROR',
         undefined,
         500,
@@ -503,7 +503,7 @@ export class ChatManagementController {
     } catch (error: any) {
       logger.error('Error retrieving action types:', error);
       res.status(500).json(errorResponse(
-        'Internal server error',
+        'Errore interno del server',
         'GET_ACTION_TYPES_ERROR',
         undefined,
         500,
@@ -603,7 +603,7 @@ export class ChatManagementController {
     } catch (error: any) {
       logger.error('Error exporting location actions:', error);
       res.status(500).json(errorResponse(
-        'Internal server error',
+        'Errore interno del server',
         'EXPORT_LOCATION_ACTIONS_ERROR',
         undefined,
         500,

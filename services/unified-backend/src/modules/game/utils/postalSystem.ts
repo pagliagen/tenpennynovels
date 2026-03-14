@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { logger } from './logger';
+import { logger } from '../logger';
 
 interface MessageTypeConfig {
   displayName: string;
@@ -188,28 +188,28 @@ class PostalSystem {
     const config = this.getMessageType(messageType);
     
     if (!config) {
-      return { valid: false, error: 'Invalid message type' };
+      return { valid: false, error: 'Tipo di messaggio non valido' };
     }
 
     // Check role permissions
     const hasRequiredRole = config.availableToRoles.some(role => characterRoles.includes(role));
     if (!hasRequiredRole) {
-      return { valid: false, error: 'Insufficient permissions for this message type' };
+      return { valid: false, error: 'Permessi insufficienti per questo tipo di messaggio' };
     }
 
     // Check content length
     if (content.length > config.maxLength) {
-      return { valid: false, error: `Message too long (max ${config.maxLength} characters)` };
+      return { valid: false, error: `Messaggio troppo lungo (max ${config.maxLength} caratteri)` };
     }
 
     // Check recipients count
     if (recipients && recipients.length > 0) {
       if (!config.allowMultipleRecipients && recipients.length > 1) {
-        return { valid: false, error: 'This message type does not allow multiple recipients' };
+        return { valid: false, error: 'Questo tipo di messaggio non consente più destinatari' };
       }
       
       if (recipients.length > config.maxRecipients) {
-        return { valid: false, error: `Too many recipients (max ${config.maxRecipients})` };
+        return { valid: false, error: `Troppi destinatari (max ${config.maxRecipients})` };
       }
     }
 

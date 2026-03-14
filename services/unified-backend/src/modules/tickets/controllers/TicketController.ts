@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { Ticket, TicketMessage, Character } from '@database/models';
 import { ApiResponse, TicketCategory, TicketPriority, TicketDepartment, TICKET_CATEGORIES, CATEGORY_DEPARTMENT_MAPPING, CATEGORY_PRIORITY_MAPPING } from '@modules/game/types/game';
-import { logger } from '@modules/game/utils/logger';
+import { logger } from '@modules/game/logger';
 import { AuthMiddleware } from '@modules/game/middleware/auth';
 import { redis } from '@config/runtime/redis';
 import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '@modules/game/utils/apiResponse';

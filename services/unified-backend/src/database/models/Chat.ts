@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
+import { logger } from '@shared/utils/logger';
 
 export interface IChat extends Document {
   actionType: 'standard' | 'master' | 'moderation' | 'whisper' | 'ooc' |
@@ -420,7 +421,7 @@ ChatSchema.post('save', async function(doc) {
       actionType: doc.actionType
     });
   } catch (error) {
-    console.error('[Chat] Failed to publish embedding event:', error);
+    logger.error('[Chat] Failed to publish embedding event:', error);
   }
 });
 
@@ -429,7 +430,7 @@ ChatSchema.post('deleteOne', async function(doc) {
     const { publishChatDeletedEvent } = await import('@shared/services/EmbeddingEventPublisher');
     await publishChatDeletedEvent(doc._id.toString());
   } catch (error) {
-    console.error('[Chat] Failed to publish delete event:', error);
+    logger.error('[Chat] Failed to publish delete event:', error);
   }
 });
 
@@ -439,11 +440,16 @@ ChatSchema.post('findOneAndDelete', async function(doc) {
     const { publishChatDeletedEvent } = await import('@shared/services/EmbeddingEventPublisher');
     await publishChatDeletedEvent(doc._id.toString());
   } catch (error) {
-    console.error('[Chat] Failed to publish delete event:', error);
+    logger.error('[Chat] Failed to publish delete event:', error);
   }
 });
 
-export const Chat: Model<IChat> = mongoose.models.Chat ||
-  mongoose.model<IChat>('Chat', ChatSchema);
+export interface IChatModel extends Model<IChat> {
+  createAction(actionData: Partial<IChat>): Promise<IChat>;
+  getLocationHistory(locationId: string, characterId: string, limit?: number, sessionId?: string, isMaster?: boolean): Promise<IChat[]>;
+}
+
+export const Chat = (mongoose.models.Chat ||
+  mongoose.model<IChat, IChatModel>('Chat', ChatSchema)) as IChatModel;
 
 export default Chat;

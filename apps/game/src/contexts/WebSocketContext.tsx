@@ -194,6 +194,7 @@ interface WebSocketProviderProps {
 export function WebSocketProvider({ children }: WebSocketProviderProps): JSX.Element {
   const [status, setStatus] = useState<ConnectionStatus>('disconnected');
   const [currentLocationId, setCurrentLocationId] = useState<string | null>(null);
+  const currentLocationIdRef = useRef<string | null>(null);
   const socketRef = useRef<Socket | null>(null);
   const reconnectAttemptsRef = useRef(0);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -202,6 +203,9 @@ export function WebSocketProvider({ children }: WebSocketProviderProps): JSX.Ele
   const locationCallbacksRef = useRef<Set<EventCallback<LocationEvent>>>(new Set());
   const globalCallbacksRef = useRef<Set<EventCallback<GlobalEvent>>>(new Set());
   const messageCallbacksRef = useRef<Set<EventCallback<MessageEvent>>>(new Set());
+
+  // Sincronizza il ref con lo state per evitare stale closure nei callback WebSocket
+  currentLocationIdRef.current = currentLocationId;
 
   // Auth state
   const { isAuthenticated, selectedCharacter } = useAuthStore();
@@ -296,7 +300,7 @@ export function WebSocketProvider({ children }: WebSocketProviderProps): JSX.Ele
 
     socket.on('location_message_notification', (data) => {
       // Handle cross-location notifications (toast + audio for messages in other locations)
-      if (data.locationId && currentLocationId && data.locationId !== currentLocationId) {
+      if (data.locationId && currentLocationIdRef.current && data.locationId !== currentLocationIdRef.current) {
         const message = data.message;
         const character = selectedCharacter;
 

@@ -13,6 +13,7 @@ import { Character } from '@database/models/Character';
 import { logger } from '../utils/logger';
 import { auditLogger } from '../utils/auditLogger';
 import { successResponse, errorResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
+import { escapeRegex } from '@shared/utils/validation';
 
 export class CharacterRelationManagementController {
 
@@ -40,10 +41,11 @@ export class CharacterRelationManagementController {
       
       // Text search
       if (search) {
+        const escapedSearch = escapeRegex(search as string);
         filter.$or = [
-          { name: { $regex: search, $options: 'i' } },
-          { description: { $regex: search, $options: 'i' } },
-          { socialImplications: { $regex: search, $options: 'i' } }
+          { name: { $regex: escapedSearch, $options: 'i' } },
+          { description: { $regex: escapedSearch, $options: 'i' } },
+          { socialImplications: { $regex: escapedSearch, $options: 'i' } }
         ];
       }
 
@@ -131,10 +133,10 @@ export class CharacterRelationManagementController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error fetching relationship types:', error);
       res.status(500).json(errorResponse(
-        'Internal server error while fetching relationship types',
+        'Errore interno del server durante il recupero dei tipi di relazione',
         'FETCH_RELATIONSHIP_TYPES_ERROR',
         undefined,
         500,
@@ -254,10 +256,10 @@ export class CharacterRelationManagementController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error fetching relationship type statistics:', error);
       res.status(500).json(errorResponse(
-        'Internal server error while fetching statistics',
+        'Errore interno del server durante il recupero delle statistiche',
         'FETCH_RELATIONSHIP_TYPE_STATS_ERROR',
         undefined,
         500,
@@ -369,10 +371,10 @@ export class CharacterRelationManagementController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error fetching character relationships:', error);
       res.status(500).json(errorResponse(
-        'Internal server error while fetching relationships',
+        'Errore interno del server durante il recupero delle relazioni',
         'FETCH_CHARACTER_RELATIONSHIPS_ERROR',
         undefined,
         500,
@@ -458,10 +460,10 @@ export class CharacterRelationManagementController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error fetching relationship proposals:', error);
       res.status(500).json(errorResponse(
-        'Internal server error while fetching proposals',
+        'Errore interno del server durante il recupero delle proposte',
         'FETCH_RELATIONSHIP_PROPOSALS_ERROR',
         undefined,
         500,
@@ -598,10 +600,10 @@ export class CharacterRelationManagementController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error fetching relationship statistics:', error);
       res.status(500).json(errorResponse(
-        'Internal server error while fetching relationship statistics',
+        'Errore interno del server durante il recupero delle statistiche delle relazioni',
         'FETCH_RELATIONSHIP_STATS_ERROR',
         undefined,
         500,
@@ -615,7 +617,7 @@ export class CharacterRelationManagementController {
    */
   static async createCharacterRelationType(req: Request, res: Response): Promise<void> {
     try {
-      const { user } = req as any;
+      const user = req.user!;
       const {
         name,
         description,
@@ -697,7 +699,7 @@ export class CharacterRelationManagementController {
         socialImplications: socialImplications.trim(),
         isPublicRelationship,
         respectabilityModifier: Math.min(5, Math.max(-5, respectabilityModifier)),
-        createdBy: user._id
+        createdBy: user!.userId
       });
 
       await relationshipType.save();
@@ -705,14 +707,14 @@ export class CharacterRelationManagementController {
       // Audit log
       auditLogger.logSuccess({
         action: 'CREATE_RELATIONSHIP_TYPE',
-        userId: user._id.toString(),
+        userId: user!.userId.toString(),
         username: user.username,
         details: { relationshipTypeId: relationshipType._id, name: relationshipType.name },
       });
 
       logger.info(`Relationship type created: ${relationshipType.name}`, { 
         relationshipTypeId: relationshipType._id, 
-        adminId: user._id 
+        adminId: user!.userId 
       });
 
       res.status(201).json(createResponse(
@@ -721,10 +723,10 @@ export class CharacterRelationManagementController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error creating relationship type:', error);
       res.status(500).json(errorResponse(
-        'Internal server error while creating relationship type',
+        'Errore interno del server durante la creazione del tipo di relazione',
         'CREATE_RELATIONSHIP_TYPE_ERROR',
         undefined,
         500,
@@ -739,7 +741,7 @@ export class CharacterRelationManagementController {
   static async updateCharacterRelationType(req: Request<{ relationshipTypeId: string }>, res: Response): Promise<void> {
     try {
       const { relationshipTypeId } = req.params;
-      const { user } = req as any;
+      const user = req.user!;
       const { reason, ...updateData } = req.body;
 
       if (!reason || reason.trim().length === 0) {
@@ -771,7 +773,7 @@ export class CharacterRelationManagementController {
       // Apply updates
       Object.keys(updateData).forEach(key => {
         if (updateData[key] !== undefined) {
-          (relationshipType as any)[key] = updateData[key];
+          (relationshipType as Record<string, unknown>)[key] = updateData[key];
         }
       });
 
@@ -785,7 +787,7 @@ export class CharacterRelationManagementController {
       // Audit log
       auditLogger.logSuccess({
         action: 'UPDATE_RELATIONSHIP_TYPE',
-        userId: user._id.toString(),
+        userId: user!.userId.toString(),
         username: user.username,
         details: { 
           relationshipTypeId: relationshipType._id, 
@@ -797,7 +799,7 @@ export class CharacterRelationManagementController {
 
       logger.info(`Relationship type updated: ${relationshipType.name}`, { 
         relationshipTypeId: relationshipType._id, 
-        adminId: user._id,
+        adminId: user!.userId,
         reason: reason.trim()
       });
 
@@ -807,10 +809,10 @@ export class CharacterRelationManagementController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error updating relationship type:', error);
       res.status(500).json(errorResponse(
-        'Internal server error while updating relationship type',
+        'Errore interno del server durante l\'aggiornamento del tipo di relazione',
         'UPDATE_RELATIONSHIP_TYPE_ERROR',
         undefined,
         500,
@@ -825,7 +827,7 @@ export class CharacterRelationManagementController {
   static async deleteCharacterRelationType(req: Request<{ relationshipTypeId: string }>, res: Response): Promise<void> {
     try {
       const { relationshipTypeId } = req.params;
-      const { user } = req as any;
+      const user = req.user!;
       const { reason, forceDelete = false } = req.body;
 
       if (!reason || reason.trim().length === 0) {
@@ -906,7 +908,7 @@ export class CharacterRelationManagementController {
       // Audit log
       auditLogger.logSuccess({
         action: 'DELETE_RELATIONSHIP_TYPE',
-        userId: user._id.toString(),
+        userId: user!.userId.toString(),
         username: user.username,
         details: { 
           relationshipTypeId: relationshipType._id, 
@@ -920,7 +922,7 @@ export class CharacterRelationManagementController {
 
       logger.info(`Relationship type deleted: ${relationshipType.name}`, { 
         relationshipTypeId: relationshipType._id, 
-        adminId: user._id,
+        adminId: user!.userId,
         reason: reason.trim(),
         forceDelete
       });
@@ -930,10 +932,10 @@ export class CharacterRelationManagementController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error deleting relationship type:', error);
       res.status(500).json(errorResponse(
-        'Internal server error while deleting relationship type',
+        'Errore interno del server durante l\'eliminazione del tipo di relazione',
         'DELETE_RELATIONSHIP_TYPE_ERROR',
         undefined,
         500,
@@ -948,7 +950,7 @@ export class CharacterRelationManagementController {
   static async moderateRelationship(req: Request<{ relationshipId: string }>, res: Response): Promise<void> {
     try {
       const { relationshipId } = req.params;
-      const { user } = req as any;
+      const user = req.user!;
       const { action, reason } = req.body;
 
       if (!reason || reason.trim().length === 0) {
@@ -1022,7 +1024,7 @@ export class CharacterRelationManagementController {
       const relationshipAction = new CharacterRelationAction({
         actionType: 'dispute', // Admin actions are logged as disputes
         relationshipId: relationship._id,
-        performedBy: user._id,
+        performedBy: user!.userId,
         affectedCharacter: relationship.fromCharacterId,
         actionData: {
           reason: reason.trim(),
@@ -1037,21 +1039,21 @@ export class CharacterRelationManagementController {
       // Audit log
       auditLogger.logSuccess({
         action: 'MODERATE_RELATIONSHIP',
-        userId: user._id.toString(),
+        userId: user!.userId.toString(),
         username: user.username,
         details: { 
           relationshipId: relationship._id,
           action,
           reason: reason.trim(),
-          fromCharacter: (relationship.fromCharacterId as any)?.basicInfo?.fullName,
-          toCharacter: (relationship.toCharacterId as any)?.basicInfo?.fullName,
-          relationshipType: (relationship.relationshipTypeId as any)?.name
+          fromCharacter: (relationship.fromCharacterId as { basicInfo?: { fullName?: string } })?.basicInfo?.fullName,
+          toCharacter: (relationship.toCharacterId as { basicInfo?: { fullName?: string } })?.basicInfo?.fullName,
+          relationshipType: (relationship.relationshipTypeId as { name?: string })?.name
         },
       });
 
       logger.info(`Relationship moderated: ${actionTaken}`, { 
         relationshipId: relationship._id, 
-        adminId: user._id,
+        adminId: user!.userId,
         reason: reason.trim(),
         action
       });
@@ -1065,10 +1067,10 @@ export class CharacterRelationManagementController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error moderating relationship:', error);
       res.status(500).json(errorResponse(
-        'Internal server error while moderating relationship',
+        'Errore interno del server durante la moderazione della relazione',
         'MODERATE_RELATIONSHIP_ERROR',
         undefined,
         500,
@@ -1082,7 +1084,7 @@ export class CharacterRelationManagementController {
    */
   static async bulkOperations(req: Request, res: Response): Promise<void> {
     try {
-      const { user } = req as any;
+      const user = req.user!;
       const { operation, relationshipTypeIds, reason, ...operationData } = req.body;
 
       if (!operation || !Array.isArray(relationshipTypeIds) || relationshipTypeIds.length === 0) {
@@ -1163,10 +1165,10 @@ export class CharacterRelationManagementController {
 
           processed++;
 
-        } catch (error: any) {
+        } catch (error: unknown) {
           errors.push({
             relationshipTypeId,
-            error: error.message
+            error: error instanceof Error ? error.message : String(error)
           });
           skipped++;
         }
@@ -1175,7 +1177,7 @@ export class CharacterRelationManagementController {
       // Audit log
       auditLogger.logSuccess({
         action: 'BULK_RELATIONSHIP_TYPE_OPERATION',
-        userId: user._id.toString(),
+        userId: user!.userId.toString(),
         username: user.username,
         details: { 
           operation,
@@ -1191,7 +1193,7 @@ export class CharacterRelationManagementController {
         operation,
         processed,
         skipped,
-        adminId: user._id,
+        adminId: user!.userId,
         reason: reason.trim()
       });
 
@@ -1206,10 +1208,10 @@ export class CharacterRelationManagementController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error in bulk relationship type operations:', error);
       res.status(500).json(errorResponse(
-        'Internal server error while performing bulk operations',
+        'Errore interno del server durante le operazioni bulk',
         'BULK_RELATIONSHIP_TYPE_OPERATION_ERROR',
         undefined,
         500,

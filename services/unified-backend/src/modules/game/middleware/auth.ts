@@ -1,16 +1,14 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { RequestUser } from '@shared/types';
+import { RequestUser, AuthToken, CharacterContextToken } from '@shared/types';
+import type { AdminPermission } from '@config/admin-permissions';
 import { AuthUser, CharacterContext, ApiResponse } from '../types/game';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
+import { appConfig } from '@config/runtime';
 
-// Helper function to get JWT_SECRET with validation
 function getJwtSecret(): string {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    throw new Error('JWT_SECRET environment variable is required');
-  }
-  return secret;
+  if (!appConfig.jwt.secret) throw new Error('JWT_SECRET non configurato');
+  return appConfig.jwt.secret;
 }
 
 // req.user/req.character tipizzati in auth/middleware/auth.ts (RequestUser) e usati qui
@@ -25,14 +23,14 @@ export class AuthMiddleware {
     try {
       const authToken = req.cookies?.auth_token;
       if (!authToken) {
-        return { result: false,  error: 'No auth token' };
+        return { result: false,  error: 'Token di autenticazione mancante' };
       }
 
       const jwtSecret = getJwtSecret();
-      const decoded = jwt.verify(authToken, jwtSecret) as any;
+      const decoded = jwt.verify(authToken, jwtSecret) as AuthToken;
 
       if (!decoded.userId || !decoded.username) {
-        return { result: false,  error: 'Invalid token payload' };
+        return { result: false,  error: 'Payload del token non valido' };
       }
 
       const user: AuthUser = {
@@ -45,9 +43,10 @@ export class AuthMiddleware {
       };
 
       return { result: true,  user };
-    } catch (error: any) {
-      logger.warn('Auth token validation failed:', { error: error.message, ip: req.ip });
-      return { result: false,  error: error.message };
+    } catch (error: unknown) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      logger.warn('Auth token validation failed:', { error: errorMsg, ip: req.ip });
+      return { result: false,  error: errorMsg };
     }
   }
 
@@ -62,7 +61,7 @@ export class AuthMiddleware {
       if (!authToken) {
         const response: ApiResponse = {
           result: false,
-          error: 'Authentication required',
+          error: 'Autenticazione richiesta',
           code: 'NO_AUTH_TOKEN',
           timestamp: new Date().toISOString()
         };
@@ -72,10 +71,10 @@ export class AuthMiddleware {
 
       // Verify JWT token
       const jwtSecret = getJwtSecret();
-      const decoded = jwt.verify(authToken, jwtSecret) as any;
+      const decoded = jwt.verify(authToken, jwtSecret) as AuthToken;
       
       if (!decoded.userId || !decoded.username) {
-        throw new Error('Invalid token payload');
+        throw new Error('Payload del token non valido');
       }
 
       // Attach user info to request (campi admin impostati solo da admin middleware)
@@ -90,12 +89,12 @@ export class AuthMiddleware {
 
       next();
 
-    } catch (error: any) {
-      logger.warn('Auth token validation failed:', { error: error.message, ip: req.ip });
+    } catch (error: unknown) {
+      logger.warn('Auth token validation failed:', { error: error instanceof Error ? error.message : String(error), ip: req.ip });
       
       const response: ApiResponse = {
         result: false,
-        error: 'Invalid authentication token',
+        error: 'Token di autenticazione non valido',
         code: 'INVALID_AUTH_TOKEN',
         timestamp: new Date().toISOString()
       };
@@ -111,7 +110,7 @@ export class AuthMiddleware {
   static requireCharacterContext(req: Request, res: Response, next: NextFunction): void {
     try {
       if (!req.user) {
-        throw new Error('User authentication required before character context');
+        throw new Error('Autenticazione utente richiesta prima del contesto personaggio');
       }
 
       const characterToken = req.cookies?.character_context;
@@ -119,7 +118,7 @@ export class AuthMiddleware {
       if (!characterToken) {
         const response: ApiResponse = {
           result: false,
-          error: 'Character selection required',
+          error: 'Selezione del personaggio richiesta',
           code: 'NO_CHARACTER_CONTEXT',
           timestamp: new Date().toISOString()
         };
@@ -128,15 +127,15 @@ export class AuthMiddleware {
       }
 
       // Verify character context token
-      const decoded = jwt.verify(characterToken, getJwtSecret()) as any;
+      const decoded = jwt.verify(characterToken, getJwtSecret()) as CharacterContextToken;
       
       if (!decoded.characterId || !decoded.userId) {
-        throw new Error('Invalid character context token');
+        throw new Error('Token contesto personaggio non valido');
       }
 
       // Verify that character belongs to authenticated user
       if (decoded.userId !== req.user.userId) {
-        throw new Error('Character context does not match authenticated user');
+        throw new Error('Il personaggio non appartiene all\'utente autenticato');
       }
 
       // Attach character context to request
@@ -156,16 +155,16 @@ export class AuthMiddleware {
 
       next();
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.warn('Character context validation failed:', { 
-        error: error.message, 
+        error: error instanceof Error ? error.message : String(error), 
         userId: req.user?.userId,
         ip: req.ip 
       });
       
       const response: ApiResponse = {
         result: false,
-        error: 'Invalid character context',
+        error: 'Contesto personaggio non valido',
         code: 'INVALID_CHARACTER_CONTEXT',
         timestamp: new Date().toISOString()
       };
@@ -179,35 +178,6 @@ export class AuthMiddleware {
    * Plus character must be APPROVED status
    */
   static requireCharacterAuth(req: Request, res: Response, next: NextFunction): void {
-    // ===== TEST BYPASS (ONLY FOR LOCAL DEVELOPMENT) =====
-    if (process.env.SKIP_AUTH_CHECK === 'true') {
-      // Mock character context for testing
-      req.character = {
-        characterId: process.env.TEST_CHARACTER_ID || 'test-character-id',
-        characterName: process.env.TEST_CHARACTER_NAME || 'Test Character',
-        userId: 'test-user-id',
-        gameplayRoles: ['player'],
-        isApproved: true,
-        isGestore: false,
-        playerStatus: 'approved',
-        characterPermissions: [],
-        iat: Math.floor(Date.now() / 1000),
-        exp: Math.floor(Date.now() / 1000) + 86400
-      };
-      req.user = {
-        userId: 'test-user-id',
-        username: 'testuser',
-        email: 'test@example.com',
-        userRoles: ['user'],
-        iat: Math.floor(Date.now() / 1000),
-        exp: Math.floor(Date.now() / 1000) + 86400
-      };
-      console.log('⚠️  [AUTH BYPASS] Skipping auth check for testing');
-      next();
-      return;
-    }
-    // ===== END TEST BYPASS =====
-
     // Chain the middlewares
     AuthMiddleware.requireUserAuth(req, res, (err?: any) => {
       if (err) return;
@@ -248,12 +218,12 @@ export class AuthMiddleware {
 
           next();
 
-        } catch (error: any) {
+        } catch (error: unknown) {
           logger.error('Character approval check failed:', error);
 
           const response: ApiResponse = {
             result: false,
-            error: 'Character verification failed',
+            error: 'Verifica del personaggio fallita',
             code: 'CHARACTER_VERIFICATION_ERROR',
             timestamp: new Date().toISOString()
           };
@@ -272,7 +242,7 @@ export class AuthMiddleware {
     if (!req.user) {
       const response: ApiResponse = {
         result: false,
-        error: 'Authentication required',
+        error: 'Autenticazione richiesta',
         code: 'NO_AUTH_TOKEN',
         timestamp: new Date().toISOString()
       };
@@ -283,7 +253,7 @@ export class AuthMiddleware {
     if (!req.user.canAccessAdminPanel) {
       const response: ApiResponse = {
         result: false,
-        error: 'Admin access required',
+        error: 'Accesso admin richiesto',
         code: 'ADMIN_ACCESS_REQUIRED',
         timestamp: new Date().toISOString()
       };
@@ -303,7 +273,7 @@ export class AuthMiddleware {
       if (!req.user?.canAccessAdminPanel) {
         const response: ApiResponse = {
           result: false,
-          error: 'Admin access required',
+          error: 'Accesso admin richiesto',
           code: 'ADMIN_ACCESS_REQUIRED',
           timestamp: new Date().toISOString()
         };
@@ -317,13 +287,13 @@ export class AuthMiddleware {
         const adminPermissions = req.user.adminPermissions ?? [];
         const isGestore = req.user.isGestore ?? false;
         const missingPermissions = permissions.filter(
-          (perm) => !hasAdminPermission(gameplayRoles, adminPermissions, isGestore, perm as any)
+          (perm) => !hasAdminPermission(gameplayRoles, adminPermissions, isGestore, perm as AdminPermission)
         );
 
         if (missingPermissions.length > 0) {
           const response: ApiResponse = {
             result: false,
-            error: 'Insufficient permissions',
+            error: 'Permessi insufficienti',
             code: 'INSUFFICIENT_PERMISSIONS',
             details: { missingPermissions },
             timestamp: new Date().toISOString()
@@ -332,11 +302,11 @@ export class AuthMiddleware {
           return;
         }
         next();
-      } catch (err: any) {
-        logger.error('requireAdminPermissions error', { error: err?.message, permissions });
+      } catch (err: unknown) {
+        logger.error('requireAdminPermissions error', { error: err instanceof Error ? err.message : String(err), permissions });
         res.status(500).json({
           result: false,
-          error: 'Permission check failed',
+          error: 'Controllo permessi fallito',
           code: 'PERMISSION_CHECK_ERROR',
           timestamp: new Date().toISOString()
         });
@@ -360,7 +330,7 @@ export class AuthMiddleware {
       if (!req.character) {
         const response: ApiResponse = {
           result: false,
-          error: 'Character context required',
+          error: 'Contesto personaggio richiesto',
           code: 'NO_CHARACTER_CONTEXT',
           timestamp: new Date().toISOString()
         };
@@ -375,7 +345,7 @@ export class AuthMiddleware {
       if (!hasRequiredRole) {
         const response: ApiResponse = {
           result: false,
-          error: 'Insufficient gameplay permissions',
+          error: 'Permessi di gioco insufficienti',
           code: 'INSUFFICIENT_GAMEPLAY_PERMISSIONS',
           details: { 
             requiredRoles: roles,
@@ -397,11 +367,9 @@ export class AuthMiddleware {
   static optionalAuth(req: Request, res: Response, next: NextFunction): void {
     try {
       const authToken = req.cookies?.auth_token;
-      console.log('🔍 [OPTIONAL AUTH] Cookies:', Object.keys(req.cookies || {}));
-      console.log('🔍 [OPTIONAL AUTH] auth_token present:', !!authToken);
       
       if (authToken) {
-        const decoded = jwt.verify(authToken, getJwtSecret()) as any;
+        const decoded = jwt.verify(authToken, getJwtSecret()) as AuthToken;
         
         if (decoded.userId && decoded.username) {
           req.user = {
@@ -417,7 +385,7 @@ export class AuthMiddleware {
 
       next();
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       // For optional auth, we just continue without setting user
       next();
     }
@@ -430,11 +398,18 @@ export class AuthMiddleware {
   static requireAIGatewayAuth(req: Request, res: Response, next: NextFunction): void {
     try {
       const authHeader = req.headers['authorization'] as string;
-      const expectedSecret = process.env.AI_GATEWAY_WEBHOOK_SECRET;
+      const expectedSecret = appConfig.services.aiGateway.webhookSecret;
 
       if (!expectedSecret) {
-        logger.warn('AI_GATEWAY_WEBHOOK_SECRET not configured - skipping webhook auth');
-        return next();
+        logger.error('AI_GATEWAY_WEBHOOK_SECRET non configurato - richiesta rifiutata');
+        const response: ApiResponse = {
+          result: false,
+          error: 'Configurazione webhook mancante',
+          code: 'WEBHOOK_NOT_CONFIGURED',
+          timestamp: new Date().toISOString()
+        };
+        res.status(503).json(response);
+        return;
       }
 
       const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
@@ -442,7 +417,7 @@ export class AuthMiddleware {
       if (!token || token !== expectedSecret) {
         const response: ApiResponse = {
           result: false,
-          error: 'Invalid webhook authorization',
+          error: 'Autorizzazione webhook non valida',
           code: 'INVALID_WEBHOOK_AUTH',
           timestamp: new Date().toISOString()
         };
@@ -452,11 +427,11 @@ export class AuthMiddleware {
 
       next();
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('AI Gateway auth validation failed:', error);
       const response: ApiResponse = {
         result: false,
-        error: 'Authentication failed',
+        error: 'Autenticazione fallita',
         code: 'AUTH_ERROR',
         timestamp: new Date().toISOString()
       };
@@ -491,15 +466,15 @@ export class AuthMiddleware {
    */
   static decodeCharacterContext(token: string): { characterId: string; userId: string; characterName: string; sessionId: string; gameplayRoles: string[]; isGestore: boolean; playerStatus: string; characterPermissions: string[] } | null {
     try {
-      const decoded = jwt.verify(token, getJwtSecret()) as any;
+      const decoded = jwt.verify(token, getJwtSecret()) as CharacterContextToken;
       if (!decoded.characterId || !decoded.userId) {
         return null;
       }
       return {
         characterId: decoded.characterId,
         userId: decoded.userId,
-        characterName: decoded.characterName,
-        sessionId: decoded.sessionId,
+        characterName: decoded.characterName ?? '',
+        sessionId: decoded.sessionId ?? '',
         gameplayRoles: decoded.gameplayRoles || [],
         isGestore: decoded.isGestore || false,
         playerStatus: decoded.playerStatus || 'draft',

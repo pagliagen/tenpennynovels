@@ -4,6 +4,7 @@
  */
 
 import { spawn } from 'child_process';
+import { logger } from './logger';
 import path from 'path';
 
 export interface EmbeddingResult {
@@ -21,8 +22,7 @@ export class EmbeddingsService {
   private scriptPath: string;
 
   constructor() {
-    // Get Python path from env or use default
-    this.pythonPath = process.env.EMBEDDINGS_PYTHON_PATH || 'python3';
+    this.pythonPath = 'python3';
 
     // Path to Python embeddings generator script
     this.scriptPath = path.join(
@@ -142,7 +142,7 @@ export class EmbeddingsService {
       await this.generateEmbedding('test');
       return true;
     } catch (error) {
-      console.error('Embeddings service not available:', error);
+      logger.error('Embeddings service not available:', error);
       return false;
     }
   }

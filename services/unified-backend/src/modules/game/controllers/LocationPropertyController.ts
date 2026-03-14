@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { LocationProperty, CharacterFinances, Location, db } from '@database/models';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
 import { successResponse, errorResponse, createResponse, getRequestId } from '../utils/apiResponse';
 
 // Access mongoose from the centralized connection

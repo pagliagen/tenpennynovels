@@ -1,5 +1,6 @@
 import mongoose, { Schema, model, Document } from 'mongoose';
 import { softDeletePlugin, SoftDeleteMethods } from '../plugins/softDeletePlugin';
+import { logger } from '@shared/utils/logger';
 
 export interface ILocation extends Document, SoftDeleteMethods {
   // Basic info
@@ -737,7 +738,7 @@ LocationSchema.post('save', async function(doc) {
       slug: doc.slug
     });
   } catch (error) {
-    console.error('[Location] Failed to publish embedding event:', error);
+    logger.error('[Location] Failed to publish embedding event:', error);
   }
 });
 
@@ -749,7 +750,7 @@ LocationSchema.post('deleteOne', async function(doc) {
     const { publishLocationDeletedEvent } = await import('@shared/services/EmbeddingEventPublisher');
     await publishLocationDeletedEvent(doc._id.toString());
   } catch (error) {
-    console.error('[Location] Failed to publish delete event:', error);
+    logger.error('[Location] Failed to publish delete event:', error);
   }
 });
 
@@ -759,7 +760,7 @@ LocationSchema.post('findOneAndDelete', async function(doc) {
     const { publishLocationDeletedEvent } = await import('@shared/services/EmbeddingEventPublisher');
     await publishLocationDeletedEvent(doc._id.toString());
   } catch (error) {
-    console.error('[Location] Failed to publish delete event:', error);
+    logger.error('[Location] Failed to publish delete event:', error);
   }
 });
 

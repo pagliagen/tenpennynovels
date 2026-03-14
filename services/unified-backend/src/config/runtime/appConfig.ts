@@ -1,0 +1,108 @@
+/**
+ * Configurazione centralizzata dell'applicazione.
+ *
+ * UNICO punto dove si legge process.env.
+ * Tutti gli altri file usano appConfig.
+ */
+
+const isProduction = process.env.NODE_ENV === 'production';
+const isTest = process.env.NODE_ENV === 'test';
+
+export const appConfig = {
+  isProduction,
+  isTest,
+  port: 3001,
+  bindHost: isProduction ? '127.0.0.1' : '0.0.0.0',
+  logLevel: isProduction ? 'info' : 'debug',
+  trustProxy: isProduction,
+
+  jwt: {
+    secret: process.env.JWT_SECRET,
+    refreshSecret: process.env.JWT_REFRESH_SECRET,
+  },
+
+  db: {
+    mongodbUri: process.env.MONGODB_URI,
+    redisUrl: process.env.REDIS_URL || 'redis://localhost:6379',
+  },
+
+  cookie: {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: (isProduction ? 'strict' : 'lax') as 'strict' | 'lax',
+    domain: isProduction ? '.tenpennynovels.com' : 'localhost',
+    path: '/',
+  },
+
+  cors: {
+    allowedOrigins: isProduction
+      ? [
+          'https://api.tenpennynovels.com',
+          'https://tenpennynovels.com',
+          'https://game.tenpennynovels.com',
+          'https://documenti.tenpennynovels.com',
+          'https://gestione.tenpennynovels.com',
+        ]
+      : [
+          'http://localhost:8000',
+          'http://127.0.0.1:8000',
+          'http://localhost:4000',
+          'http://localhost:4001',
+          'http://localhost:4002',
+          'http://localhost:4004',
+        ],
+  },
+
+  urls: {
+    landing: isProduction ? 'https://tenpennynovels.com' : 'http://localhost:4000',
+    game: isProduction ? 'https://game.tenpennynovels.com' : 'http://localhost:4001',
+    documents: isProduction ? 'https://documenti.tenpennynovels.com' : 'http://localhost:4002',
+    management: isProduction ? 'https://gestione.tenpennynovels.com' : 'http://localhost:4004',
+    api: isProduction ? 'https://api.tenpennynovels.com' : 'http://localhost:8000',
+  },
+
+  features: {
+    presenceCleanup: true,
+    geolocation: isProduction,
+    emailMock: !isProduction,
+  },
+
+  services: {
+    embeddingsUrl: 'http://127.0.0.1:5001',
+    aiGateway: {
+      url: process.env.AI_GATEWAY_URL,
+      clientId: process.env.AI_GATEWAY_CLIENT_ID,
+      apiKey: process.env.AI_GATEWAY_API_KEY,
+      hmacSecret: process.env.AI_GATEWAY_HMAC_SECRET,
+      webhookSecret: process.env.AI_GATEWAY_WEBHOOK_SECRET,
+    },
+  },
+
+  cdn: {
+    storagePath: '/cdn-storage',
+    baseUrl: isProduction ? 'https://api.tenpennynovels.com/cdn' : 'http://localhost:8000/cdn',
+    ftp: {
+      enabled: isProduction,
+      host: process.env.CDN_FTP_HOST,
+      port: 21,
+      user: process.env.CDN_FTP_USER,
+      password: process.env.CDN_FTP_PASSWORD,
+      secure: isProduction,
+      basePath: '/',
+    },
+  },
+
+  smtp: {
+    host: isProduction ? 'mail.tenpennynovels.com' : 'smtp.gmail.com',
+    port: isProduction ? 465 : 587,
+    secure: isProduction,
+    user: process.env.SMTP_USER,
+    password: process.env.SMTP_PASSWORD || process.env.SMTP_PASS,
+    from: 'info@tenpennynovels.com',
+  },
+
+  bcryptRounds: isProduction ? 12 : 4,
+  systemBotUserId: process.env.SYSTEM_BOT_USER_ID,
+
+  sitemapOutputDir: require('path').join(__dirname, '../../../../apps/landing/public'),
+};

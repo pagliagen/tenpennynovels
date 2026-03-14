@@ -1,6 +1,8 @@
 /**
  * Utility to extract all registered routes from an Express application
  */
+import { logger } from '@shared/utils/logger';
+
 export interface RouteInfo {
   method: string;
   path: string;
@@ -65,12 +67,12 @@ export function getRegisteredRoutes(app: any): RouteInfo[] {
 export function logRegisteredRoutes(app: any, serviceName: string) {
   const routes = getRegisteredRoutes(app);
   
-  console.log('🔗 Available Routes:');
+  logger.info('Available Routes:');
   if (routes.length === 0) {
-    console.log('   No routes found');
+    logger.info('No routes found');
   } else {
     routes.forEach(route => {
-      console.log(`   ${route.method.padEnd(6)} ${route.path}`);
+      logger.info(`${route.method.padEnd(6)} ${route.path}`);
     });
   }
   

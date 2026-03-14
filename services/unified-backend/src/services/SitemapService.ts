@@ -14,11 +14,11 @@ import fs from 'fs/promises';
 import path from 'path';
 import Document from '@database/models/Document';
 import { logger } from '@shared/utils/logger';
+import { appConfig } from '@config/runtime';
 
 const LANDING_DOMAIN = 'https://tenpennynovels.com';
 const DOCUMENTS_DOMAIN = 'https://documenti.tenpennynovels.com';
-const OUTPUT_DIR = process.env.SITEMAP_OUTPUT_DIR
-  || path.join(__dirname, '../../../../apps/landing/public');
+const OUTPUT_DIR = appConfig.sitemapOutputDir;
 
 interface SitemapUrl {
   loc: string;

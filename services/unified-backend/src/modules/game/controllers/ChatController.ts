@@ -1,11 +1,12 @@
 import { Request, Response } from 'express';
 import { Chat, GamingSession, Location, Character, SkillConfrontation, CombatEncounter } from '@database/models';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
 import { redis } from '@config/runtime/redis';
 import { successResponse, errorResponse, createResponse, getRequestId } from '../utils/apiResponse';
 import { calculateSuccessDegree, getSuccessDegreeLabel, compareSuccessDegrees, SuccessDegree } from '../utils/successDegrees';
 import { calculateSocialConflict, isValidSocialSkillPair, getDefensiveSkill } from '../utils/socialConflicts';
 import { getSocketIO } from '../websocket/socketInstance';
+import { appConfig } from '@config/runtime';
 
 export class ChatController {
 
@@ -45,7 +46,7 @@ export class ChatController {
       const character = req.character;
       if (!character) {
         res.status(401).json(errorResponse(
-          'Character context required',
+          'Contesto personaggio richiesto',
           'CHARACTER_CONTEXT_REQUIRED',
           undefined,
           401,
@@ -173,7 +174,7 @@ export class ChatController {
         const fullCharacter = await Character.findById(character.characterId).lean();
         if (!fullCharacter) {
           res.status(404).json(errorResponse(
-            'Character not found',
+            'Personaggio non trovato',
             'CHARACTER_NOT_FOUND',
             undefined,
             404,
@@ -225,7 +226,7 @@ export class ChatController {
         const fullCharacter = await Character.findById(character.characterId).lean();
         if (!fullCharacter) {
           res.status(404).json(errorResponse(
-            'Character not found',
+            'Personaggio non trovato',
             'CHARACTER_NOT_FOUND',
             undefined,
             404,
@@ -277,7 +278,7 @@ export class ChatController {
 
 
       // Save to database
-      const savedAction = await ((Chat as any).createAction(actionData));
+      const savedAction = await Chat.createAction(actionData);
 
       // Lookup character avatar from DB (not from token - token may be stale)
       const actionCharacter = await Character.findById(character.characterId).select('avatar').lean();
@@ -301,7 +302,7 @@ export class ChatController {
 
       // Emit WebSocket notification with full message (frontend expects complete ChatMessage)
       const io = getSocketIO();
-      console.log('🔌 ChatsController: io instance:', io ? 'FOUND' : 'NOT FOUND');
+      logger.debug('ChatsController: io instance:', io ? 'FOUND' : 'NOT FOUND');
 
       if (io) {
         const roomName = `location_${locationId}`;
@@ -318,7 +319,7 @@ export class ChatController {
           content: savedAction.content,                 // DB field (was text)
           diceResult: savedAction.diceResult || undefined,  // DB field (was diceRoll)
           socialConflict: savedAction.socialConflict || undefined,  // DB field (was skillCheck)
-          statCheck: savedAction.statCheck || undefined,
+          statCheck: (savedAction as unknown as Record<string, unknown>).statCheck || undefined,
           itemEffect: savedAction.itemEffect || undefined,  // DB field (was itemUse)
           targetCharacters: savedAction.targetCharacters || undefined,  // DB field (was whisperVisibility)
           editHistory: savedAction.editHistory || [],
@@ -332,14 +333,14 @@ export class ChatController {
           locationSlug: location?.slug || null
         };
 
-        console.log('🔔 ChatsController: Emitting notification to room:', roomName, 'with message:', chatMessage._id);
+        logger.debug('ChatsController: Emitting notification to room:', roomName, 'with message:', chatMessage._id);
         io.to(roomName).emit('location_message_notification', notification);
 
         // Debug: Check how many clients are in the room
         const room = io.sockets.adapter.rooms.get(roomName);
-        console.log('👥 ChatsController: Clients in room', roomName, ':', room ? room.size : 0);
+        logger.debug('ChatsController: Clients in room', roomName, ':', room ? room.size : 0);
       } else {
-        console.error('❌ ChatsController: Socket.io instance not found in req.app');
+        logger.error('ChatsController: Socket.io instance not found in req.app');
       }
 
       logger.info(`Location action created: ${character.characterName} (${actionType}) in ${locationId}`);
@@ -435,8 +436,8 @@ export class ChatController {
                 ? await Character.findById(location.botCharacterId).lean()
                 : null;
 
-              const callbackSecret = process.env.AI_GATEWAY_WEBHOOK_SECRET;
-              const backendUrl = process.env.BACKEND_URL || 'https://api.tenpennynovels.it';
+              const callbackSecret = appConfig.services.aiGateway.webhookSecret;
+              const backendUrl = appConfig.urls.api;
 
               const success = await aiGatewayClient.notifyBotAction({
                 requestId: savedAction._id.toString(),
@@ -488,7 +489,7 @@ export class ChatController {
       }
 
       // Prepare response action data (DB fields - no mapping)
-      const responseAction: any = {
+      const responseAction: Record<string, unknown> = {
         _id: savedAction._id.toString(),
         actionType: savedAction.actionType,
         characterId: savedAction.characterId,
@@ -507,7 +508,7 @@ export class ChatController {
       
       // Filter socialConflict: for Raggirare, attacker should never see it
       if (savedAction.socialConflict) {
-        const socialConflict = savedAction.socialConflict as any;
+        const socialConflict = savedAction.socialConflict;
         if (socialConflict.visibleToDefenderOnly) {
           // Attacker should never see socialConflict for Raggirare
           // Don't include it in response
@@ -525,7 +526,7 @@ export class ChatController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('Create location action error:', {
         message: err.message,
@@ -551,7 +552,7 @@ export class ChatController {
       const character = req.character;
       if (!character) {
         res.status(401).json(errorResponse(
-          'Character context required',
+          'Contesto personaggio richiesto',
           'CHARACTER_CONTEXT_REQUIRED',
           undefined,
           401,
@@ -589,7 +590,7 @@ export class ChatController {
       })
       .sort({ timestamp: 1 }) // Chronological order
       .limit(limit)
-      .lean() as any[];
+      .lean();
 
       // Check action mode status
       const Location = require('../../../database/models').Location;
@@ -655,7 +656,7 @@ export class ChatController {
           content: action.content,                 // DB field (was text)
           diceResult: action.diceResult || undefined,  // DB field (was diceRoll)
           socialConflict: action.socialConflict || undefined,  // DB field (was skillCheck)
-          statCheck: action.statCheck || undefined,
+          statCheck: (action as unknown as Record<string, unknown>).statCheck || undefined,
           itemEffect: action.itemEffect || undefined,  // DB field (was itemUse)
           targetCharacters: action.targetCharacters || undefined,  // DB field (was whisperVisibility)
           hiddenContent: action.hiddenContent || undefined,
@@ -696,7 +697,7 @@ export class ChatController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('Get location actions error:', {
         message: err.message,
@@ -777,7 +778,7 @@ export class ChatController {
       const character = req.character;
       if (!character) {
         res.status(401).json(errorResponse(
-          'Character context required',
+          'Contesto personaggio richiesto',
           'CHARACTER_CONTEXT_REQUIRED',
           undefined,
           401,
@@ -918,7 +919,7 @@ export class ChatController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('Update location action error:', {
         message: err.message,
@@ -944,7 +945,7 @@ export class ChatController {
       const character = req.character;
       if (!character) {
         res.status(401).json(errorResponse(
-          'Character context required',
+          'Contesto personaggio richiesto',
           'CHARACTER_CONTEXT_REQUIRED',
           undefined,
           401,
@@ -1022,7 +1023,7 @@ export class ChatController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('Delete location action error:', {
         message: err.message,
@@ -1048,7 +1049,7 @@ export class ChatController {
       const character = req.character;
       if (!character) {
         res.status(401).json(errorResponse(
-          'Character context required',
+          'Contesto personaggio richiesto',
           'CHARACTER_CONTEXT_REQUIRED',
           undefined,
           401,
@@ -1113,7 +1114,7 @@ export class ChatController {
         if (typeof attackerSkillData === 'number') {
           attackerValue = attackerSkillData;
         } else if (attackerSkillData && typeof attackerSkillData === 'object' && 'total' in attackerSkillData) {
-          attackerValue = (attackerSkillData as any).total;
+          attackerValue = (attackerSkillData as { total: number }).total;
         }
       }
 
@@ -1151,7 +1152,7 @@ export class ChatController {
         if (typeof defenderSkillData === 'number') {
           defenderValue = defenderSkillData;
         } else if (defenderSkillData && typeof defenderSkillData === 'object' && 'total' in defenderSkillData) {
-          defenderValue = (defenderSkillData as any).total;
+          defenderValue = (defenderSkillData as { total: number }).total;
         }
       }
 
@@ -1228,7 +1229,7 @@ export class ChatController {
         };
       }
 
-      const savedAction = await (Chat as any).createAction(actionData);
+      const savedAction = await Chat.createAction(actionData);
 
       // Emit WebSocket notification
       const io = req.app.get('io');
@@ -1246,16 +1247,16 @@ export class ChatController {
       logger.info(`Social conflict created: ${attackerSkill} vs ${defenderSkill} by ${character.characterName}`);
 
       // Prepare response: attacker should never see socialConflict for Raggirare
-      const responseData: any = {
+      const responseData: Record<string, unknown> = {
         action: {
           id: savedAction._id
         }
       };
       
-      // Only include socialConflict if it's not hidden (not Raggirare)
       if (!isRaggirare) {
-        responseData.action.socialConflict = conflictResult;
-        responseData.action.messageForAttacker = conflictResult.messageForAttacker;
+        const action = responseData.action as Record<string, unknown>;
+        action.socialConflict = conflictResult;
+        action.messageForAttacker = conflictResult.messageForAttacker;
       }
       // For Raggirare, attacker gets no information about the result
 
@@ -1265,7 +1266,7 @@ export class ChatController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('Create social conflict error:', {
         message: err.message,
@@ -1291,7 +1292,7 @@ export class ChatController {
       const character = req.character;
       if (!character) {
         res.status(401).json(errorResponse(
-          'Character context required',
+          'Contesto personaggio richiesto',
           'CHARACTER_CONTEXT_REQUIRED',
           undefined,
           401,
@@ -1339,7 +1340,7 @@ export class ChatController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('Clear chat error:', {
         message: err.message,
@@ -1440,12 +1441,12 @@ export class ChatController {
           timestamp: action.timestamp
         };
 
-        console.log('🔔 createBotAction: Emitting notification to room:', roomName, notification);
+        logger.debug('createBotAction: Emitting notification to room:', roomName, notification);
         io.to(roomName).emit('location_message_notification', notification);
 
         // Debug: Check how many clients are in the room
         const room = io.sockets.adapter.rooms.get(roomName);
-        console.log('👥 createBotAction: Clients in room', roomName, ':', room ? room.size : 0);
+        logger.debug('createBotAction: Clients in room', roomName, ':', room ? room.size : 0);
       }
 
       logger.info(`Bot action created: ${action._id} by bot ${characterName} in location ${locationId}`);
@@ -1456,7 +1457,7 @@ export class ChatController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Create bot action error:', error);
       res.status(500).json(errorResponse(
         'Failed to create bot action',
@@ -1481,7 +1482,7 @@ export class ChatController {
       const character = req.character;
       if (!character) {
         res.status(401).json(errorResponse(
-          'Character context required',
+          'Contesto personaggio richiesto',
           'CHARACTER_CONTEXT_REQUIRED',
           undefined,
           401,
@@ -1541,7 +1542,7 @@ export class ChatController {
         if (typeof attackerSkillData === 'number') {
           attackerValue = attackerSkillData;
         } else if (attackerSkillData && typeof attackerSkillData === 'object' && 'total' in attackerSkillData) {
-          attackerValue = (attackerSkillData as any).total;
+          attackerValue = (attackerSkillData as { total: number }).total;
         }
       }
 
@@ -1646,7 +1647,7 @@ export class ChatController {
         501,
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Create confrontation attack error:', error);
       res.status(500).json(errorResponse(
         'Failed to create confrontation attack',
@@ -1670,7 +1671,7 @@ export class ChatController {
       const character = req.character;
       if (!character) {
         res.status(401).json(errorResponse(
-          'Character context required',
+          'Contesto personaggio richiesto',
           'CHARACTER_CONTEXT_REQUIRED',
           undefined,
           401,
@@ -1737,7 +1738,7 @@ export class ChatController {
 
       if (!attackerCharacter || !defenderCharacter) {
         res.status(404).json(errorResponse(
-          'Character not found',
+          'Personaggio non trovato',
           'CHARACTER_NOT_FOUND',
           undefined,
           404,
@@ -1754,7 +1755,7 @@ export class ChatController {
         if (typeof attackerSkillData === 'number') {
           attackerValue = attackerSkillData;
         } else if (attackerSkillData && typeof attackerSkillData === 'object' && 'total' in attackerSkillData) {
-          attackerValue = (attackerSkillData as any).total;
+          attackerValue = (attackerSkillData as { total: number }).total;
         }
       }
 
@@ -1765,7 +1766,7 @@ export class ChatController {
         if (typeof defenderSkillData === 'number') {
           defenderValue = defenderSkillData;
         } else if (defenderSkillData && typeof defenderSkillData === 'object' && 'total' in defenderSkillData) {
-          defenderValue = (defenderSkillData as any).total;
+          defenderValue = (defenderSkillData as { total: number }).total;
         }
       }
 
@@ -1919,7 +1920,7 @@ export class ChatController {
         'Confrontation resolved successfully',
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Handle confrontation reaction error:', error);
       res.status(500).json(errorResponse(
         'Failed to handle confrontation reaction',

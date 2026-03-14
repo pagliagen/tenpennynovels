@@ -10,7 +10,7 @@
 
 import { Request, Response } from 'express';
 import { getWeather } from '../services/WeatherService';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
 import { successResponse, errorResponse } from '@shared/utils/apiResponse';
 
 export class EnvironmentController {

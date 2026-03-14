@@ -10,7 +10,7 @@
 
 import { BaseEventHandler } from '../BaseEventHandler';
 import { RedisEvent } from '../types';
-import { logger } from '../../utils/logger';
+import { logger } from '../../logger';
 
 export class CharacterReviewEventHandler extends BaseEventHandler {
   getSupportedEventTypes(): string[] {
@@ -27,7 +27,13 @@ export class CharacterReviewEventHandler extends BaseEventHandler {
 
       logger.info('[CharacterReviewEventHandler] Received character review event:', event);
 
-      const { characterId, characterName, action, note, reviewedByUsername } = event as any;
+      const { characterId, characterName, action, note, reviewedByUsername } = event as {
+        characterId?: string;
+        characterName?: string;
+        action?: string;
+        note?: string;
+        reviewedByUsername?: string;
+      };
 
       // Validate required fields
       if (!characterId || !action || !reviewedByUsername) {
@@ -40,13 +46,13 @@ export class CharacterReviewEventHandler extends BaseEventHandler {
         return;
       }
 
-      // Send off-game message to the character
-      await this.sendCharacterReviewMessage(characterId, characterName, action, note, reviewedByUsername);
+      const actionTyped = action === 'approve' || action === 'reject' ? action : undefined;
+      if (actionTyped) {
+        await this.sendCharacterReviewMessage(characterId, characterName ?? '', actionTyped, note ?? '', reviewedByUsername);
+        await this.notifyCharacterStatusChange(characterId, characterName ?? '', actionTyped, note ?? '');
+      }
 
-      // Send WebSocket event to notify character data refresh
-      await this.notifyCharacterStatusChange(characterId, characterName, action, note);
-
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('[CharacterReviewEventHandler] Error handling character review event:', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined
@@ -121,7 +127,7 @@ export class CharacterReviewEventHandler extends BaseEventHandler {
         messageLength: messageContent.length
       });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('[CharacterReviewEventHandler] Error sending character review message:', error);
     }
   }
@@ -195,7 +201,7 @@ export class CharacterReviewEventHandler extends BaseEventHandler {
         notifiedParticipants: notifiedParticipants.map(p => p.characterId.toString())
       });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('[CharacterReviewEventHandler] Error in sendOffGameMessage:', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
@@ -253,7 +259,7 @@ export class CharacterReviewEventHandler extends BaseEventHandler {
         newStatus: action === 'approve' ? 'APPROVED' : 'DRAFT'
       });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('[CharacterReviewEventHandler] Error sending character status change notification:', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,

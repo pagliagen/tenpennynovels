@@ -96,7 +96,7 @@ export class CharacterCreationController {
 
       res.status(500).json({
         result: false,
-        error: 'Failed to load character creation configuration',
+        error: 'Impossibile caricare la configurazione di creazione personaggio',
         code: 'CONFIG_LOAD_ERROR',
         timestamp: new Date().toISOString(),
       });
@@ -160,7 +160,7 @@ export class CharacterCreationController {
 
       res.status(500).json({
         result: false,
-        error: 'Failed to load occupations',
+        error: 'Impossibile caricare le occupazioni',
         code: 'OCCUPATIONS_LOAD_ERROR',
         timestamp: new Date().toISOString(),
       });
@@ -229,7 +229,7 @@ export class CharacterCreationController {
 
       res.status(500).json({
         result: false,
-        error: 'Failed to load skills',
+        error: 'Impossibile caricare le skill',
         code: 'SKILLS_LOAD_ERROR',
         timestamp: new Date().toISOString(),
       });

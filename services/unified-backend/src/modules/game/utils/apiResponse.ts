@@ -115,6 +115,6 @@ export function updateResponse<T>(
  * Helper to extract request ID from request (if available)
  */
 export function getRequestId(req: Request): string | undefined {
-  return req.headers['x-request-id'] as string | undefined || (req as any).id;
+  return req.headers['x-request-id'] as string | undefined;
 }
 

@@ -4,7 +4,7 @@
  * Game master announcement with gold theme and star badge.
  */
 
-@import '../MessageCard.module.scss';
+@use '../MessageCard.module.scss';
 
 /* Master badge - gold theme with star */
 .masterBadge {

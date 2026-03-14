@@ -47,7 +47,7 @@ export function useForumPosts(
   topicSlug: string | null,
   discussionSlug: string | null,
   page?: number
-): UseQueryResult<{ items: ForumPost[]; pagination: PaginationInfo }, Error> {
+): UseQueryResult<{ list: ForumPost[]; pagination: PaginationInfo }, Error> {
   return useQuery({
     queryKey: [...forumPostKeys.list(topicSlug!, discussionSlug!), page] as const,
     queryFn: () => forumApi.getPosts(topicSlug!, discussionSlug!, page),

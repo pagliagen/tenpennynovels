@@ -33,7 +33,7 @@ export interface DeletedRecordsParams {
 }
 
 export interface DeletedRecordsResponse {
-  items: DeletedRecord[];
+  list: DeletedRecord[];
   pagination: {
     page: number;
     pageSize: number;

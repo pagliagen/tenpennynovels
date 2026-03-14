@@ -10,6 +10,7 @@ import {
   getAllCategoriesItalian
 } from '@shared/translations/skillCategories';
 import { successResponse, errorResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
+import { escapeRegex } from '@shared/utils/validation';
 import { AdminAuthMiddleware } from '../middleware/adminAuth';
 
 export class SkillManagementController {
@@ -36,9 +37,10 @@ export class SkillManagementController {
       
       // Text search
       if (search) {
+        const escapedSearch = escapeRegex(search as string);
         filter.$or = [
-          { name: { $regex: search, $options: 'i' } },
-          { description: { $regex: search, $options: 'i' } }
+          { name: { $regex: escapedSearch, $options: 'i' } },
+          { description: { $regex: escapedSearch, $options: 'i' } }
         ];
       }
 
@@ -88,7 +90,7 @@ export class SkillManagementController {
       // Translate categories in response
       const translatedSkills = skills.map(skill => ({
         ...skill,
-        category: translateCategory(skill.category as any),
+        category: translateCategory(skill.category),
         categoryKey: skill.category // Keep original English key for editing
       }));
 
@@ -113,7 +115,7 @@ export class SkillManagementController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error fetching skills:', error);
       res.status(500).json(errorResponse(
         'Impossibile recuperare le abilità',
@@ -209,7 +211,7 @@ export class SkillManagementController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error fetching skill statistics:', error);
       res.status(500).json(errorResponse(
         'Impossibile recuperare le statistiche delle abilità',
@@ -300,7 +302,7 @@ export class SkillManagementController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error fetching skill details:', error);
       res.status(500).json(errorResponse(
         'Impossibile recuperare i dettagli dell\'abilità',
@@ -402,7 +404,7 @@ export class SkillManagementController {
       // Return with Italian translation
       const skillResponse = {
         ...newSkill.toObject(),
-        category: translateCategory(newSkill.category as any),
+        category: translateCategory(newSkill.category),
         categoryKey: newSkill.category // Keep original English key
       };
 
@@ -415,7 +417,7 @@ export class SkillManagementController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error creating skill:', error);
       res.status(500).json(errorResponse(
         'Impossibile creare l\'abilità',
@@ -540,7 +542,7 @@ export class SkillManagementController {
       // Return with Italian translation
       const skillResponse = {
         ...skill.toObject(),
-        category: translateCategory(skill.category as any),
+        category: translateCategory(skill.category),
         categoryKey: skill.category // Keep original English key
       };
 
@@ -553,7 +555,7 @@ export class SkillManagementController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error updating skill:', error);
       res.status(500).json(errorResponse(
         'Impossibile aggiornare l\'abilità',
@@ -610,7 +612,7 @@ export class SkillManagementController {
       } else {
         const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
         await skill.softDelete(
-          auditInfo?.adminId || (req as any).user?.userId,
+          auditInfo?.adminId || req.user?.userId,
           auditInfo?.adminCharacterName || 'Unknown Admin',
           reason
         );
@@ -639,7 +641,7 @@ export class SkillManagementController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error deleting skill:', error);
       res.status(500).json(errorResponse(
         'Impossibile eliminare l\'abilità',
@@ -741,10 +743,10 @@ export class SkillManagementController {
                   await Skill.findByIdAndDelete(skill._id);
                 }
                 successCount++;
-              } catch (error: any) {
+              } catch (error: unknown) {
                 failed.push({
                   skillId: skill._id.toString(),
-                  error: error instanceof Error ? error.message : 'Unknown error'
+                  error: error instanceof Error ? error.message : 'Errore sconosciuto'
                 });
               }
             }
@@ -791,7 +793,7 @@ export class SkillManagementController {
           getRequestId(req)
         ));
 
-      } catch (error: any) {
+      } catch (error: unknown) {
         logger.error('Bulk operation failed:', error);
         res.status(500).json(errorResponse(
           'Operazione bulk fallita',
@@ -802,7 +804,7 @@ export class SkillManagementController {
         ));
       }
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error in bulk operations:', error);
       res.status(500).json(errorResponse(
         'Impossibile eseguire le operazioni bulk',
@@ -866,7 +868,7 @@ export class SkillManagementController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error reordering skills:', error);
       res.status(500).json(errorResponse(
         'Impossibile riordinare le abilità',

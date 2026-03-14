@@ -172,7 +172,7 @@ export class CorporationManagementController {
           options: { strictPopulate: false }
         })
         .lean()
-        .exec() as any;
+        .exec();
 
       if (!corporation) {
         res.status(404).json(errorResponse(
@@ -347,7 +347,7 @@ export class CorporationManagementController {
         .skip(skip)
         .limit(limit)
         .lean()
-        .exec() as any;
+        .exec();
 
       // Transform data
       const transformedRequests = requests.map((request: any) => {
@@ -454,7 +454,7 @@ export class CorporationManagementController {
       })
       .populate('corporationId')
       .populate('characterId')
-      .exec() as any;
+      .exec();
 
       if (!request) {
         res.status(404).json(errorResponse(
@@ -666,7 +666,7 @@ export class CorporationManagementController {
 
       const { Corporation } = await import('@database/models/Corporation');
       
-      const corporation = await Corporation.findById(corporationId).exec() as any;
+      const corporation = await Corporation.findById(corporationId).exec();
 
       if (!corporation) {
         res.status(404).json(errorResponse(
@@ -1112,7 +1112,7 @@ export class CorporationManagementController {
         .skip(skip)
         .limit(limit)
         .lean()
-        .exec() as any;
+        .exec();
 
       // Transform data
       const transformedRequests = requests.map((request: any) => {

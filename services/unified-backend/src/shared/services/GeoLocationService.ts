@@ -2,6 +2,28 @@
 // GeoLocation Service - Rilevamento Città Italiane da IP
 // =============================================================================
 
+import { logger } from '@shared/utils/logger';
+
+interface IpApiResponse {
+  error?: boolean;
+  country_code?: string;
+  city?: string;
+  region?: string;
+}
+
+interface IpBaseResponse {
+  country_code?: string;
+  city?: string;
+  region?: string;
+}
+
+interface IpInfoResponse {
+  bogon?: boolean;
+  country?: string;
+  city?: string;
+  region?: string;
+}
+
 interface GeoLocationResult {
   country: string;
   city: string;
@@ -47,7 +69,7 @@ export class GeoLocationService {
       }
 
     } catch (error: any) {
-      console.error('GeoLocation error:', error);
+      logger.error('GeoLocation error:', error);
       return {
         country: 'Italia',
         city: '',
@@ -76,7 +98,7 @@ export class GeoLocationService {
 
       if (!response.ok) return null;
       
-      const data = await response.json() as any;
+      const data = await response.json() as IpApiResponse;
       
       if (data.error) return null;
 
@@ -84,13 +106,13 @@ export class GeoLocationService {
       
       return {
         country: isItalian ? 'Italia' : 'Non Italiano',
-        city: isItalian ? data.city : 'Estero',  // Usa direttamente il nome della città
-        region: data.region,
+        city: isItalian ? (data.city ?? '') : 'Estero',
+        region: data.region ?? '',
         isItalian
       };
 
-    } catch (error: any) {
-      console.error('IPAPI.CO error:', error);
+    } catch (error: unknown) {
+      logger.error('IPAPI.CO error:', error);
       return null;
     }
   }
@@ -114,7 +136,7 @@ export class GeoLocationService {
 
       if (!response.ok) return null;
       
-      const data = await response.json() as any;
+      const data = await response.json() as IpBaseResponse;
       
       if (!data.country_code) return null;
 
@@ -122,13 +144,13 @@ export class GeoLocationService {
       
       return {
         country: isItalian ? 'Italia' : 'Non Italiano',
-        city: isItalian ? data.city : 'Estero',  // Usa direttamente il nome della città
-        region: data.region,
+        city: isItalian ? (data.city ?? '') : 'Estero',
+        region: data.region ?? '',
         isItalian
       };
 
-    } catch (error: any) {
-      console.error('IPBASE.COM error:', error);
+    } catch (error: unknown) {
+      logger.error('IPBASE.COM error:', error);
       return null;
     }
   }
@@ -152,7 +174,7 @@ export class GeoLocationService {
 
       if (!response.ok) return null;
       
-      const data = await response.json() as any;
+      const data = await response.json() as IpInfoResponse;
       
       if (data.bogon) return null; // IP privato/riservato
 
@@ -160,13 +182,13 @@ export class GeoLocationService {
       
       return {
         country: isItalian ? 'Italia' : 'Non Italiano',
-        city: isItalian ? data.city : 'Estero',  // Usa direttamente il nome della città
-        region: data.region,
+        city: isItalian ? (data.city ?? '') : 'Estero',
+        region: data.region ?? '',
         isItalian
       };
 
-    } catch (error: any) {
-      console.error('IPINFO.IO error:', error);
+    } catch (error: unknown) {
+      logger.error('IPINFO.IO error:', error);
       return null;
     }
   }  
@@ -194,10 +216,10 @@ export class GeoLocationService {
    * Per abilitare geolocalizzazione reale in produzione
    */
   static enableRealGeoLocation(): void {
-    console.log('⚠️  Per abilitare geolocalizzazione reale:');
-    console.log('1. Registrarsi su https://ip-api.com per limiti più alti');
-    console.log('2. Oppure usare MaxMind GeoLite2 con API key');
-    console.log('3. Configurare variabili ambiente GEOLOCATION_SERVICE e API_KEY');
+    logger.warn('Per abilitare geolocalizzazione reale:');
+    logger.info('1. Registrarsi su https://ip-api.com per limiti più alti');
+    logger.info('2. Oppure usare MaxMind GeoLite2 con API key');
+    logger.info('3. Configurare variabili ambiente GEOLOCATION_SERVICE e API_KEY');
   }
 }
 

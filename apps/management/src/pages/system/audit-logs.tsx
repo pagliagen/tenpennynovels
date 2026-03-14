@@ -124,7 +124,7 @@ export default function AuditLogs() {
         {/* Table */}
         <ConfigurableDataTable<AuditLog>
           tableName="audit-logs"
-          data={data?.items ?? []}
+          data={data?.list ?? []}
           loading={isLoading || tableConfig.loading}
           pagination={{
             page: params.page || 1,

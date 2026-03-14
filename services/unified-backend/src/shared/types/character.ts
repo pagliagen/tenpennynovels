@@ -97,7 +97,7 @@ export interface Character {
   occupationHistory: string[]; // Array of occupation IDs in chronological order
   currentOccupation?: string; // Free text field for current occupation (Info generali)
   residence: string;
-  birthplace: string;
+  birthPlace: string;
   
   // Physical description
   description: string; // deprecato
@@ -175,7 +175,8 @@ export const CHARACTER_VISIBILITY: CharacterVisibilityRules = {
     'publicDescription'
   ],
   masterOnly: [
-    'nationality'
+    'nationality',
+    'birthPlace'
   ]
 };
 

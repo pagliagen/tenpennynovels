@@ -1,5 +1,5 @@
 import { CharacterSessionManager } from '../utils/characterSessionManager';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
 import { db } from '@database/models';
 
 export class SessionCleanupJob {

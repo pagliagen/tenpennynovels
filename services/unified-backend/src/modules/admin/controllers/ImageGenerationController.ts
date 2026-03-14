@@ -6,6 +6,7 @@ import { AdminAuthMiddleware } from '../middleware/adminAuth';
 import { getSocketIO } from '@modules/game/websocket/socketInstance';
 import { successResponse, errorResponse, getRequestId } from '../utils/apiResponse';
 import { logger } from '../utils/logger';
+import { appConfig } from '@config/runtime';
 
 type EntityType = 'character' | 'item' | 'location';
 
@@ -148,8 +149,8 @@ export class ImageGenerationController {
       }
 
       const payload = PAYLOAD_EXTRACTORS[entityType as EntityType](record);
-      const callbackBaseUrl = process.env.UNIFIED_BACKEND_INTERNAL_URL || `http://localhost:${process.env.PORT || 3001}`;
-      const webhookSecret = process.env.AI_GATEWAY_WEBHOOK_SECRET || '';
+      const callbackBaseUrl = `http://localhost:${appConfig.port}`;
+      const webhookSecret = appConfig.services.aiGateway.webhookSecret;
 
       const callbackHeaders: Record<string, string> = {
         'Content-Type': 'application/json',

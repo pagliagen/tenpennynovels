@@ -1,6 +1,7 @@
 import axios, { AxiosError } from 'axios';
 import crypto from 'crypto';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
+import { appConfig } from '@config/runtime';
 
 interface AIGatewayConfig {
   url: string;
@@ -108,16 +109,17 @@ export class AIGatewayClient {
   private readonly HEALTH_CHECK_INTERVAL_MS = 60_000;
 
   constructor() {
+    const gw = appConfig.services.aiGateway;
     this.config = {
-      url: process.env.AI_GATEWAY_URL || 'http://localhost:9000',
-      clientId: process.env.AI_GATEWAY_CLIENT_ID || '',
-      apiKey: process.env.AI_GATEWAY_API_KEY || '',
-      hmacSecret: process.env.AI_GATEWAY_HMAC_SECRET || '',
+      url: gw.url || '',
+      clientId: gw.clientId || '',
+      apiKey: gw.apiKey || '',
+      hmacSecret: gw.hmacSecret || '',
       timeout: 60_000,
     };
 
     if (!this.config.apiKey || !this.config.clientId) {
-      logger.warn('[AIGateway] Missing AI_GATEWAY_API_KEY or AI_GATEWAY_CLIENT_ID');
+      logger.warn('[AIGateway] AI_GATEWAY_API_KEY o AI_GATEWAY_CLIENT_ID non configurati');
     }
 
     logger.info(`[AIGateway] Initialized: ${this.config.url} (client: ${this.config.clientId})`);

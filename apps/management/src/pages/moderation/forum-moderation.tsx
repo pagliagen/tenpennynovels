@@ -121,7 +121,7 @@ export default function ForumModerationPage() {
     );
   }
 
-  const alerts = data?.items || [];
+  const alerts = data?.list || [];
   const pagination = data?.pagination;
 
   return (

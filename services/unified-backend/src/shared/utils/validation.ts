@@ -1,6 +1,14 @@
 import { Error as MongooseError } from 'mongoose';
 import { ErrorCode, createError } from './errorCodes';
 
+interface ValidatorErrorProperties {
+  minlength?: number;
+  maxlength?: number;
+  min?: number;
+  max?: number;
+  enumValues?: string[];
+}
+
 // ✅ Traduzione errori Mongoose in italiano
 export function translateMongooseError(error: MongooseError.ValidationError): {
   message: string;
@@ -17,19 +25,19 @@ export function translateMongooseError(error: MongooseError.ValidationError): {
         details[field] = `Il campo ${field} è obbligatorio`;
         break;
       case 'minlength':
-        details[field] = `Il campo ${field} deve essere di almeno ${(err as any).properties.minlength} caratteri`;
+        details[field] = `Il campo ${field} deve essere di almeno ${(err as { properties: ValidatorErrorProperties }).properties.minlength} caratteri`;
         break;
       case 'maxlength':
-        details[field] = `Il campo ${field} non può superare ${(err as any).properties.maxlength} caratteri`;
+        details[field] = `Il campo ${field} non può superare ${(err as { properties: ValidatorErrorProperties }).properties.maxlength} caratteri`;
         break;
       case 'min':
-        details[field] = `Il valore di ${field} deve essere almeno ${(err as any).properties.min}`;
+        details[field] = `Il valore di ${field} deve essere almeno ${(err as { properties: ValidatorErrorProperties }).properties.min}`;
         break;
       case 'max':
-        details[field] = `Il valore di ${field} non può superare ${(err as any).properties.max}`;
+        details[field] = `Il valore di ${field} non può superare ${(err as { properties: ValidatorErrorProperties }).properties.max}`;
         break;
       case 'enum':
-        details[field] = `Il valore di ${field} non è valido. Valori accettati: ${(err as any).properties.enumValues.join(', ')}`;
+        details[field] = `Il valore di ${field} non è valido. Valori accettati: ${(err as { properties: ValidatorErrorProperties }).properties.enumValues?.join(', ')}`;
         break;
       case 'unique':
         details[field] = `Il valore di ${field} è già in uso`;
@@ -173,4 +181,38 @@ export function sanitizeInput(input: string): string {
 // ✅ Validate ObjectId format
 export function isValidObjectId(id: string): boolean {
   return /^[0-9a-fA-F]{24}$/.test(id);
+}
+
+/**
+ * Escape di caratteri speciali regex per un uso sicuro in $regex MongoDB.
+ * Previene ReDoS e NoSQL injection quando si usa input utente in pattern regex.
+ */
+export function escapeRegex(input: string): string {
+  return input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * Middleware Express per validare ObjectId nei parametri della route.
+ * Restituisce 400 se l'ID non e un ObjectId MongoDB valido.
+ *
+ * @param paramName - nome del parametro route (default: 'id')
+ *
+ * @example
+ * router.get('/:id', validateObjectId(), MyController.getById);
+ * router.get('/:characterId', validateObjectId('characterId'), MyController.getByCharacterId);
+ */
+export function validateObjectId(paramName: string = 'id') {
+  return (req: import('express').Request, res: import('express').Response, next: import('express').NextFunction): void => {
+    const id = req.params[paramName] as string | undefined;
+    if (!id || typeof id !== 'string' || !isValidObjectId(id)) {
+      res.status(400).json({
+        result: false,
+        error: `ID non valido per il parametro '${paramName}'`,
+        code: 'INVALID_OBJECT_ID',
+        timestamp: new Date().toISOString()
+      });
+      return;
+    }
+    next();
+  };
 }

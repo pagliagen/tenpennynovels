@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { GamingSession, Location, Chat } from '@database/models';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
 import { successResponse, errorResponse, getRequestId } from '../utils/apiResponse';
 
 export class QuestController {
@@ -13,7 +13,7 @@ export class QuestController {
       const character = req.character;
       if (!character) {
         res.status(401).json(errorResponse(
-          'Character context required',
+          'Contesto personaggio richiesto',
           'CHARACTER_CONTEXT_REQUIRED',
           undefined,
           401,
@@ -59,7 +59,7 @@ export class QuestController {
       const location = await Location.findById(locationId);
       if (!location) {
         res.status(404).json(errorResponse(
-          'Location not found',
+          'Location non trovata',
           'LOCATION_NOT_FOUND',
           undefined,
           404,
@@ -153,7 +153,7 @@ export class QuestController {
       const character = req.character;
       if (!character) {
         res.status(401).json(errorResponse(
-          'Character context required',
+          'Contesto personaggio richiesto',
           'CHARACTER_CONTEXT_REQUIRED',
           undefined,
           401,
@@ -228,7 +228,7 @@ export class QuestController {
       const character = req.character;
       if (!character) {
         res.status(401).json(errorResponse(
-          'Character context required',
+          'Contesto personaggio richiesto',
           'CHARACTER_CONTEXT_REQUIRED',
           undefined,
           401,
@@ -305,7 +305,7 @@ export class QuestController {
       const character = req.character;
       if (!character) {
         res.status(401).json(errorResponse(
-          'Character context required',
+          'Contesto personaggio richiesto',
           'CHARACTER_CONTEXT_REQUIRED',
           undefined,
           401,
@@ -399,7 +399,7 @@ export class QuestController {
       const character = req.character;
       if (!character) {
         res.status(401).json(errorResponse(
-          'Character context required',
+          'Contesto personaggio richiesto',
           'CHARACTER_CONTEXT_REQUIRED',
           undefined,
           401,
@@ -498,7 +498,7 @@ export class QuestController {
       const character = req.character;
       if (!character) {
         res.status(401).json(errorResponse(
-          'Character context required',
+          'Contesto personaggio richiesto',
           'CHARACTER_CONTEXT_REQUIRED',
           undefined,
           401,

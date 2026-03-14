@@ -5,6 +5,7 @@ import { AdminAuthMiddleware } from '../middleware/adminAuth';
 import { logger } from '../utils/logger';
 import { Item, ItemCategory, ITEM_CATEGORY_LABELS, IItem, CharacterInventory, Shop, ShopItem } from '@database/models/Item';
 import { listResponse, successResponse, errorResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
+import { escapeRegex } from '@shared/utils/validation';
 
 export class ItemManagementController {
   
@@ -28,10 +29,11 @@ export class ItemManagementController {
       if (isAdminOnly !== undefined) query.isAdminOnly = isAdminOnly === 'true';
       
       if (search) {
+        const escapedSearch = escapeRegex(search as string);
         query.$or = [
-          { name: { $regex: search, $options: 'i' } },
-          { description: { $regex: search, $options: 'i' } },
-          { subcategory: { $regex: search, $options: 'i' } }
+          { name: { $regex: escapedSearch, $options: 'i' } },
+          { description: { $regex: escapedSearch, $options: 'i' } },
+          { subcategory: { $regex: escapedSearch, $options: 'i' } }
         ];
       }
 
@@ -103,7 +105,7 @@ export class ItemManagementController {
         pageSize: limit,
         totalResults: totalItems
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error fetching items:', { 
         error: error instanceof Error ? error.message : String(error) 
       });
@@ -199,7 +201,7 @@ export class ItemManagementController {
         undefined,
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error fetching item stats:', { 
         error: error instanceof Error ? error.message : String(error) 
       });
@@ -297,7 +299,7 @@ export class ItemManagementController {
         undefined,
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error fetching item details:', { 
         error: error instanceof Error ? error.message : String(error), 
         itemId: req.params.itemId 
@@ -355,7 +357,7 @@ export class ItemManagementController {
         'Item creato con successo',
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error creating item:', { 
         error: error instanceof Error ? error.message : String(error) 
       });
@@ -446,7 +448,7 @@ export class ItemManagementController {
         'Item aggiornato con successo',
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error updating item:', { 
         error: error instanceof Error ? error.message : String(error), 
         itemId: req.params.itemId 
@@ -525,7 +527,7 @@ export class ItemManagementController {
       } else {
         const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
         await item.softDelete(
-          auditInfo?.adminId || (req as any).user?.userId,
+          auditInfo?.adminId || req.user?.userId,
           auditInfo?.adminCharacterName || 'Unknown Admin',
           reason
         );
@@ -543,7 +545,7 @@ export class ItemManagementController {
           getRequestId(req)
         ));
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error deleting item:', { 
         error: error instanceof Error ? error.message : String(error), 
         itemId: req.params.itemId 
@@ -644,7 +646,7 @@ export class ItemManagementController {
         'Operazione bulk completata con successo',
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error in bulk item operation:', { 
         error: error instanceof Error ? error.message : String(error)
       });

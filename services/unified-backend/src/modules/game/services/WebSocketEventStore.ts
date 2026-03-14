@@ -1,6 +1,6 @@
 import { Server as SocketIOServer } from 'socket.io';
 import { WebSocketEvent } from '@database/models';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
 
 /**
  * WebSocket Event Store Service
@@ -40,7 +40,7 @@ export class WebSocketEventStore {
       this.io.emit(eventType, payload);
 
       // 2. Save event to database (for replay after reconnection)
-      await (WebSocketEvent as any).saveEvent(eventType, payload, {
+      await WebSocketEvent.saveEvent(eventType, payload, {
         characterId: options.characterId,
         locationId: options.locationId,
         chatId: options.chatId,
@@ -54,12 +54,12 @@ export class WebSocketEventStore {
         chatId: options.chatId
       });
 
-    } catch (error: any) {
-      // Non-blocking: if save fails, at least the event was emitted
+    } catch (error: unknown) {
+      const err = error as Error;
       logger.error('❌ WebSocket: Failed to save event (non-blocking):', {
         eventType,
-        error: error.message,
-        stack: error.stack
+        error: err.message,
+        stack: err.stack
       });
     }
   }
@@ -80,7 +80,7 @@ export class WebSocketEventStore {
       this.io.to(room).emit(eventType, payload);
 
       // 2. Save event to database (for replay)
-      await (WebSocketEvent as any).saveEvent(eventType, payload, {
+      await WebSocketEvent.saveEvent(eventType, payload, {
         characterId: options.characterId,
         locationId: options.locationId,
         chatId: options.chatId,
@@ -94,12 +94,12 @@ export class WebSocketEventStore {
         locationId: options.locationId
       });
 
-    } catch (error: any) {
-      // Non-blocking: event still emitted even if save fails
+    } catch (error: unknown) {
+      const err = error as Error;
       logger.error('❌ WebSocket: Failed to save room event (non-blocking):', {
         room,
         eventType,
-        error: error.message
+        error: err.message
       });
     }
   }
@@ -121,7 +121,7 @@ export class WebSocketEventStore {
       this.io.to(socketId).emit(eventType, payload);
 
       // 2. Save event for this character
-      await (WebSocketEvent as any).saveEvent(eventType, payload, {
+      await WebSocketEvent.saveEvent(eventType, payload, {
         characterId,
         locationId: options.locationId,
         chatId: options.chatId,
@@ -134,12 +134,13 @@ export class WebSocketEventStore {
         characterId
       });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as Error;
       logger.error('❌ WebSocket: Failed to save socket event (non-blocking):', {
         socketId,
         eventType,
         characterId,
-        error: error.message
+        error: err.message
       });
     }
   }
@@ -151,7 +152,7 @@ export class WebSocketEventStore {
    */
   async getEventsSince(lastEventId: number, characterId: string, limit: number = 100) {
     try {
-      const events = await (WebSocketEvent as any).getEventsSince(lastEventId, characterId, limit);
+      const events = await WebSocketEvent.getEventsSince(lastEventId, characterId, limit);
 
       logger.info('📡 WebSocket: Retrieved events for replay', {
         characterId,
@@ -161,11 +162,12 @@ export class WebSocketEventStore {
 
       return events;
 
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as Error;
       logger.error('❌ WebSocket: Failed to retrieve events:', {
         characterId,
         lastEventId,
-        error: error.message
+        error: err.message
       });
       return [];
     }

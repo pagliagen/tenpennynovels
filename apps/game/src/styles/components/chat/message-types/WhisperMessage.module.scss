@@ -4,7 +4,7 @@
  * Private message with brown theme and lock icon.
  */
 
-@import '../MessageCard.module.scss';
+@use '../MessageCard.module.scss';
 
 /* Whisper badge - brown theme with lock icon */
 .whisperBadge {

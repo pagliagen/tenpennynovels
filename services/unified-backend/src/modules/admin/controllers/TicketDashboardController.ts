@@ -4,6 +4,7 @@ import { User } from '@database/models/User';
 import { NotificationService } from '@shared/services/NotificationService';
 import { logger } from '../utils/logger';
 import { successResponse, errorResponse, listResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+import { escapeRegex } from '@shared/utils/validation';
 
 /**
  * TicketDashboardController
@@ -188,9 +189,10 @@ export class TicketDashboardController {
 
       // Search filter (title, createdByName)
       if (search) {
+        const escapedSearch = escapeRegex(search as string);
         filter.$or = [
-          { title: { $regex: search, $options: 'i' } },
-          { createdByName: { $regex: search, $options: 'i' } }
+          { title: { $regex: escapedSearch, $options: 'i' } },
+          { createdByName: { $regex: escapedSearch, $options: 'i' } }
         ];
       }
 

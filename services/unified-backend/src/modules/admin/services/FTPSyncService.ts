@@ -2,6 +2,7 @@ import { Client } from 'basic-ftp';
 import { createReadStream } from 'fs';
 import path from 'path';
 import { logger } from '../utils/logger';
+import { appConfig } from '@config/runtime';
 
 const MAX_RETRIES = 3;
 const BACKOFF_BASE_MS = 1000;
@@ -13,7 +14,7 @@ export class FTPSyncService {
   private enabled: boolean;
 
   constructor() {
-    this.enabled = process.env.CDN_FTP_ENABLED === 'true';
+    this.enabled = appConfig.cdn.ftp.enabled;
   }
 
   async uploadFile(remotePath: string, localPath: string): Promise<void> {
@@ -24,11 +25,11 @@ export class FTPSyncService {
 
     await this.withRetry(async (client) => {
       const remoteDir = path.posix.dirname(
-        path.posix.join(process.env.CDN_FTP_BASE_PATH || '/', remotePath)
+        path.posix.join(appConfig.cdn.ftp.basePath, remotePath)
       );
       await client.ensureDir(remoteDir);
 
-      const fullRemotePath = path.posix.join(process.env.CDN_FTP_BASE_PATH || '/', remotePath);
+      const fullRemotePath = path.posix.join(appConfig.cdn.ftp.basePath, remotePath);
       await client.uploadFrom(createReadStream(localPath), fullRemotePath);
       logger.info(`FTP: uploaded ${remotePath}`);
     });
@@ -41,7 +42,7 @@ export class FTPSyncService {
     }
 
     await this.withRetry(async (client) => {
-      const fullRemotePath = path.posix.join(process.env.CDN_FTP_BASE_PATH || '/', remotePath);
+      const fullRemotePath = path.posix.join(appConfig.cdn.ftp.basePath, remotePath);
       try {
         await client.remove(fullRemotePath);
         logger.info(`FTP: deleted ${remotePath}`);
@@ -88,14 +89,14 @@ export class FTPSyncService {
     }
 
     const client = new Client();
-    client.ftp.verbose = process.env.NODE_ENV !== 'production';
+    client.ftp.verbose = !appConfig.isProduction;
 
     await client.access({
-      host: process.env.CDN_FTP_HOST || '',
-      port: parseInt(process.env.CDN_FTP_PORT || '21', 10),
-      user: process.env.CDN_FTP_USER || '',
-      password: process.env.CDN_FTP_PASSWORD || '',
-      secure: process.env.CDN_FTP_SECURE === 'true',
+      host: appConfig.cdn.ftp.host,
+      port: appConfig.cdn.ftp.port,
+      user: appConfig.cdn.ftp.user,
+      password: appConfig.cdn.ftp.password,
+      secure: appConfig.cdn.ftp.secure,
     });
 
     logger.info('FTP: connected to remote server');

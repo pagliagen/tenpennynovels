@@ -61,20 +61,16 @@ const SkillConfrontationSchema = new Schema<ISkillConfrontation>(
       type: Schema.Types.ObjectId,
       ref: 'Skill',
       required: false,
-      index: true,
     },
     skillName: {
       type: String,
       required: true,
-      unique: true,
-      index: true,
       trim: true,
     },
     category: {
       type: String,
       required: true,
       enum: ['social', 'combat_unarmed', 'combat_melee', 'combat_ranged'],
-      index: true,
     },
     counterSkills: [
       {
@@ -134,9 +130,9 @@ const SkillConfrontationSchema = new Schema<ISkillConfrontation>(
 );
 
 // Indexes for efficient queries
-SkillConfrontationSchema.index({ skillName: 1 });
-SkillConfrontationSchema.index({ category: 1 });
-SkillConfrontationSchema.index({ skillName: 1, category: 1 });
+SkillConfrontationSchema.index({ skillName: 1 }, { unique: true }); // Unique index for skill names
+SkillConfrontationSchema.index({ category: 1 }); // Category filtering
+SkillConfrontationSchema.index({ skillName: 1, category: 1 }); // Compound index for combined queries
 
 export const SkillConfrontation = mongoose.model<ISkillConfrontation>(
   'SkillConfrontation',

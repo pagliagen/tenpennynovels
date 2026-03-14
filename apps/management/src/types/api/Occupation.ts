@@ -51,7 +51,7 @@ export interface OccupationListParams {
 
 export interface OccupationListResponse {
   result: boolean;
-  items: Occupation[];
+  list: Occupation[];
   pagination: {
     page: number;
     pageSize: number;

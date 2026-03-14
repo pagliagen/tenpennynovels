@@ -73,7 +73,7 @@ export class LocationPropertyManagementController {
         getRequestId(req)
       ));
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error fetching all properties:', error);
       res.status(500).json(errorResponse(
         'Impossibile recuperare le proprietà',
@@ -205,7 +205,7 @@ export class LocationPropertyManagementController {
         getRequestId(req)
       ));
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Property creation failed:', error);
       res.status(400).json(errorResponse(
         error instanceof Error ? error.message : 'Creazione proprietà fallita',
@@ -247,7 +247,7 @@ export class LocationPropertyManagementController {
 
       allowedUpdates.forEach(field => {
         if (updates[field] !== undefined) {
-          (property as any)[field] = updates[field];
+          (property as Record<string, unknown>)[field] = updates[field];
         }
       });
 
@@ -266,7 +266,7 @@ export class LocationPropertyManagementController {
         getRequestId(req)
       ));
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Property update failed:', error);
       res.status(400).json(errorResponse(
         error instanceof Error ? error.message : 'Aggiornamento proprietà fallito',
@@ -335,7 +335,7 @@ export class LocationPropertyManagementController {
         getRequestId(req)
       ));
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Property deletion failed:', error);
       res.status(500).json(errorResponse(
         'Impossibile eliminare la proprietà',
@@ -436,7 +436,7 @@ export class LocationPropertyManagementController {
         getRequestId(req)
       ));
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Mass rent adjustment failed:', error);
       res.status(500).json(errorResponse(
         'Impossibile adeguare gli affitti',
@@ -515,12 +515,12 @@ export class LocationPropertyManagementController {
 
             evictionResults.push({
               propertyId: property._id,
-              tenantName: (property.currentTenantId as any)?.name,
+              tenantName: (property.currentTenantId as { name?: string })?.name,
               district: property.district,
               daysOverdue: Math.floor((Date.now() - property.rentPaidUntil!.getTime()) / (1000 * 60 * 60 * 24))
             });
 
-          } catch (error: any) {
+          } catch (error: unknown) {
             logger.error('Individual eviction failed:', {
               propertyId: property._id,
               tenantId: property.currentTenantId,
@@ -533,7 +533,7 @@ export class LocationPropertyManagementController {
         overdueProperties.forEach(property => {
           evictionResults.push({
             propertyId: property._id,
-            tenantName: (property.currentTenantId as any)?.name,
+            tenantName: (property.currentTenantId as { name?: string })?.name,
             district: property.district,
             daysOverdue: Math.floor((Date.now() - property.rentPaidUntil!.getTime()) / (1000 * 60 * 60 * 24))
           });
@@ -558,7 +558,7 @@ export class LocationPropertyManagementController {
         getRequestId(req)
       ));
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Eviction processing failed:', error);
       res.status(500).json(errorResponse(
         'Impossibile elaborare gli sfratti',
@@ -639,7 +639,7 @@ export class LocationPropertyManagementController {
         getRequestId(req)
       ));
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Housing reports generation failed:', error);
       res.status(500).json(errorResponse(
         'Impossibile generare report immobiliari',
@@ -711,7 +711,7 @@ export class LocationPropertyManagementController {
         getRequestId(req)
       ));
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Housing stats fetch failed:', error);
       res.status(500).json(errorResponse(
         'Impossibile recuperare le statistiche immobiliari',
@@ -765,7 +765,7 @@ export class LocationPropertyManagementController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('District fetch failed:', error);
       res.status(500).json(errorResponse(
         'Impossibile recuperare le informazioni del distretto',

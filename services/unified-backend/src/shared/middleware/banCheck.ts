@@ -1,5 +1,14 @@
 import { Request, Response, NextFunction } from 'express';
 import { User } from '@database/models/User';
+import { logger } from '@shared/utils/logger';
+
+interface UserBanData {
+  isBanned?: boolean;
+  banScopes?: string[];
+  banReason?: string;
+  bannedUntil?: Date;
+  bannedAt?: Date;
+}
 
 export interface BanCheckOptions {
   requiredScope: 'chat_banned' | 'game_banned' | 'forum_banned' | 'documents_banned' | 'full_site_banned';
@@ -13,31 +22,24 @@ export interface BanCheckOptions {
 export function banCheck(options: BanCheckOptions) {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      // ===== TEST BYPASS (ONLY FOR LOCAL DEVELOPMENT) =====
-      if (process.env.SKIP_AUTH_CHECK === 'true') {
-        console.log('⚠️  [BAN CHECK BYPASS] Skipping ban check for testing');
-        return next();
-      }
-      // ===== END TEST BYPASS =====
-
       const userId = req.user?.userId;
 
       if (!userId) {
         return res.status(401).json({
           success: false,
-          error: 'Authentication required',
+          error: 'Autenticazione richiesta',
           code: 'AUTHENTICATION_REQUIRED'
         });
       }
 
       // Get user ban information
       const user = await User.findById(userId).select('banScopes banReason bannedUntil bannedAt isBanned').lean();
-      const userData = user as any;
+      const userData = user as UserBanData;
       
       if (!user) {
         return res.status(404).json({
           success: false,
-          error: 'User not found',
+          error: 'Utente non trovato',
           code: 'USER_NOT_FOUND'
         });
       }
@@ -90,11 +92,11 @@ export function banCheck(options: BanCheckOptions) {
       next();
       
     } catch (error) {
-      console.error('Ban check middleware error:', error);
+      logger.error('Ban check middleware error:', error);
       
       return res.status(500).json({
         success: false,
-        error: 'Internal server error during ban check',
+        error: 'Errore interno del server durante il controllo ban',
         code: 'BAN_CHECK_ERROR'
       });
     }
@@ -123,18 +125,18 @@ export function banCheckMultiple(scopes: BanCheckOptions['requiredScope'][]) {
       if (!userId) {
         return res.status(401).json({
           success: false,
-          error: 'Authentication required',
+          error: 'Autenticazione richiesta',
           code: 'AUTHENTICATION_REQUIRED'
         });
       }
 
       const user = await User.findById(userId).select('banScopes banReason bannedUntil bannedAt isBanned').lean();
-      const userData = user as any;
+      const userData = user as UserBanData;
       
       if (!user) {
         return res.status(404).json({
           success: false,
-          error: 'User not found',
+          error: 'Utente non trovato',
           code: 'USER_NOT_FOUND'
         });
       }
@@ -159,7 +161,7 @@ export function banCheckMultiple(scopes: BanCheckOptions['requiredScope'][]) {
       }
 
       // Check if user has any of the specified scopes
-      const bannedScopes = scopes.filter(scope => userData.banScopes.includes(scope));
+      const bannedScopes = scopes.filter(scope => (userData.banScopes ?? []).includes(scope));
       
       if (bannedScopes.length > 0) {
         return res.status(403).json({
@@ -179,11 +181,11 @@ export function banCheckMultiple(scopes: BanCheckOptions['requiredScope'][]) {
       next();
       
     } catch (error) {
-      console.error('Multiple ban check middleware error:', error);
+      logger.error('Multiple ban check middleware error:', error);
       
       return res.status(500).json({
         success: false,
-        error: 'Internal server error during ban check',
+        error: 'Errore interno del server durante il controllo ban',
         code: 'BAN_CHECK_ERROR'
       });
     }

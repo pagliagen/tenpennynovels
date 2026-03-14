@@ -3,7 +3,7 @@ import { GamingSession } from '@database/models/GamingSession';
 import { SessionManagement } from '@database/models/SessionManagement';
 import { SessionTemplate } from '@database/models/SessionTemplate';
 import { Character } from '@database/models/Character';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
 import { successResponse, errorResponse, createResponse, listResponse, getRequestId } from '../utils/apiResponse';
 
 export class SessionManagementController {

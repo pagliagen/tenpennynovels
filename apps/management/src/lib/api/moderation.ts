@@ -45,7 +45,7 @@ export interface ModerationAlertFilters {
 }
 
 export interface ModerationAlertListResponse {
-  items: ModerationAlertRecord[];
+  list: ModerationAlertRecord[];
   pagination: {
     page: number;
     pageSize: number;

@@ -27,8 +27,16 @@
  * ```
  */
 
-import type { RedisClientType } from 'redis';
 import type { ISystemConfiguration } from '@database/models';
+
+type RedisClient = {
+  get(key: string): Promise<string | null>;
+  setEx(key: string, seconds: number, value: string): Promise<string>;
+  del(key: string | string[]): Promise<number>;
+  keys(pattern: string): Promise<string[]>;
+  publish(channel: string, message: string): Promise<number>;
+  duplicate(): { subscribe(channel: string, listener: (message: string) => void): Promise<void> };
+};
 
 const CACHE_PREFIX = 'system_config:';
 const CACHE_TTL = 3600; // 1 hour in seconds
@@ -40,7 +48,7 @@ interface Logger {
 }
 
 export class ConfigurationService {
-  private redis: RedisClientType;
+  private redis: RedisClient;
   private logger: Logger;
 
   /**
@@ -49,7 +57,7 @@ export class ConfigurationService {
    * @param redis - Redis client instance for caching
    * @param logger - Logger instance (winston or compatible)
    */
-  constructor(redis: RedisClientType, logger: Logger) {
+  constructor(redis: RedisClient, logger: Logger) {
     this.redis = redis;
     this.logger = logger;
   }

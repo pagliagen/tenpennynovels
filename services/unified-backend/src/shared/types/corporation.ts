@@ -6,8 +6,8 @@ export interface Corporation {
   name: string;
   description: string;
   
-  // Corporation type
-  type: 'guild' | 'company' | 'secret_society' | 'government' | 'religious' | 'criminal';
+  // Corporation type (matches Corporation model)
+  type: 'guild' | 'professional_association' | 'social_club' | 'government_body' | 'criminal_organization';
   
   // Membership system
   membershipType: 'manual' | 'automatic' | 'mixed';

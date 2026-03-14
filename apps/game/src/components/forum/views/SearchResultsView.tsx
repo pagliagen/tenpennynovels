@@ -35,7 +35,7 @@ export function SearchResultsView(): JSX.Element {
     [navigateToPost]
   );
 
-  const items = data?.items ?? [];
+  const items = data?.list ?? [];
 
   if (isLoading) {
     return <div className={styles.loading}>Caricamento...</div>;

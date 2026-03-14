@@ -1,34 +1,31 @@
 import app from './app';
-import { logger } from './utils/logger';
+import { logger } from './logger';
 import { SessionCleanupJob } from './jobs/sessionCleanup';
 import 'module-alias/register';
+import { appConfig } from '@config/runtime';
 
-const PORT = process.env.PORT || 3000;
+const PORT = appConfig.port;
 
 // Function to setup database connections
 async function setupDatabaseConnections() {
   try {
-    console.log('🔌 Connecting to MongoDB...');
+    logger.info('Connecting to MongoDB...');
     const { db } = await import('@config/runtime');
     await db.connect();
-    console.log('✅ MongoDB connected');
-    logger.info('Connected to MongoDB successfully');
+    logger.info('MongoDB connected');
 
-    console.log('🔌 Connecting to Redis...');
+    logger.info('Connecting to Redis...');
     const { redis } = await import('@config/runtime');
     await redis.connect();
-    console.log('✅ Redis connected');
-    logger.info('Connected to Redis successfully');
+    logger.info('Redis connected');
 
     // Initialize email service
     // Note: ConfigurationService caching disabled due to redis/ioredis library mismatch
     const { EmailService } = await import('./services/EmailService');
     EmailService.initialize();
-    console.log('✅ Email service initialized');
     logger.info('Email service initialized');
     
   } catch (error: any) {
-    console.error('❌ Failed to setup database connections:', error);
     logger.error('Failed to setup database connections:', error);
     throw error;
   }
@@ -36,31 +33,26 @@ async function setupDatabaseConnections() {
 
 // Start server
 app.listen(PORT, async () => {
-  console.log(`✅ Authentication Backend server running on port ${PORT}`);
-  logger.info(`Authentication Backend server starting on port ${PORT}`);
+  logger.info(`Authentication Backend server running on port ${PORT}`);
   
   try {
     await setupDatabaseConnections();
     
-    console.log('✅ Database connections setup completed');
+    logger.info('Database connections setup completed');
     
     // Start session cleanup job (wait for it to initialize)
-    console.log('🧹 Starting session cleanup job...');
+    logger.info('Starting session cleanup job...');
     await SessionCleanupJob.start();
     
     // Start analytics system metrics tracking
-    console.log('📊 Starting analytics metrics tracking...');
+    logger.info('Starting analytics metrics tracking...');
     const { AnalyticsMiddleware } = await import('@shared/middleware/analyticsMiddleware');
     AnalyticsMiddleware.trackSystemMetrics('auth')();
     
-    console.log(`🚀 Authentication Backend server fully operational on port ${PORT}`);
-    console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-     
-    logger.info(`Authentication Backend running on port ${PORT}`);
-    logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
+    logger.info(`Authentication Backend server fully operational on port ${PORT}`);
+    logger.info(`Environment: ${appConfig.isProduction ? 'production' : 'development'}`);
     
   } catch (error: any) {
-    console.error('❌ Failed to start server:', error);
     logger.error('Failed to start server:', error);
     process.exit(1);
   }

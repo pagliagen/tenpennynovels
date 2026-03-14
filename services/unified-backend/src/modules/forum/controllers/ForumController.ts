@@ -6,6 +6,7 @@ import { ForumTopic, type IForumTopic, type TopicAccessRule } from '@database/mo
 import { ForumDiscussion } from '@database/models/ForumDiscussion';
 import { ForumPost } from '@database/models/ForumPost';
 import { ForumTopicFavorite } from '@database/models/ForumTopicFavorite';
+import { escapeRegex } from '@shared/utils/validation';
 
 const createSlug = (title: string): string => {
   return slugify(title, { lower: true, strict: true, locale: 'it', trim: true }).slice(0, 100);
@@ -716,7 +717,7 @@ export class ForumController {
       const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string) || 20));
       const skip = (page - 1) * limit;
 
-      const escapedQuery = query.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const escapedQuery = escapeRegex(query.trim());
 
       const posts = await ForumPost.find({
         ...filter,

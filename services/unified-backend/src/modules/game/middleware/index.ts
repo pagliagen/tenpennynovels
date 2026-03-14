@@ -1,14 +1,15 @@
 import { Express } from 'express';
 import rateLimit from 'express-rate-limit';
-import { logger, httpLoggerStream } from '../utils/logger';
+import { logger, httpLoggerStream } from '../logger';
 import morgan from 'morgan';
+import { appConfig } from '@config/runtime';
 
 /**
  * Setup all middleware for the application
  */
 export async function setupMiddleware(app: Express): Promise<void> {
   // HTTP request logging
-  if (process.env.NODE_ENV === 'development') {
+  if (!appConfig.isProduction) {
     app.use(morgan('combined', { stream: httpLoggerStream }));
   } else {
     app.use(morgan('common', { stream: httpLoggerStream }));
@@ -18,7 +19,7 @@ export async function setupMiddleware(app: Express): Promise<void> {
   const { ConfigurationService } = await import('@shared/services/ConfigurationService');
   const { redis } = await import('@config/runtime');
   const redisClient = redis.getClient();
-  const configService = new ConfigurationService(redis as any, logger);
+  const configService = new ConfigurationService(redis.getClient(), logger);
 
   const authWindowMs = await configService.getConfig('rate_limit_auth_window') || 900000; // 15 min
   const authMax = await configService.getConfig('rate_limit_auth_max') || 100;
@@ -52,7 +53,7 @@ export async function setupMiddleware(app: Express): Promise<void> {
     max: loginMax,
     message: {
       result: false,
-      error: 'Too many authentication attempts, please try again later.',
+      error: 'Troppi tentativi di autenticazione, riprova più tardi.',
       code: 'AUTH_RATE_LIMIT_EXCEEDED'
     },
     standardHeaders: true,

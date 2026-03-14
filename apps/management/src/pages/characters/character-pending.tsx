@@ -265,7 +265,7 @@ export default function CharacterPending() {
 
         <ConfigurableDataTable<Character>
           tableName="character-pending"
-          data={data?.items ?? []}
+          data={data?.list ?? []}
           loading={isLoading || tableConfig.loading}
           onAction={handleAction}
           defaultSearch={defaultSearch}

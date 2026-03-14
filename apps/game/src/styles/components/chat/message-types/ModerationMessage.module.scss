@@ -4,7 +4,7 @@
  * System or moderator message with warning theme.
  */
 
-@import '../MessageCard.module.scss';
+@use '../MessageCard.module.scss';
 
 /* Moderation icon */
 .moderationIcon {

@@ -1,7 +1,16 @@
 import { CharacterSession } from '@database/models';
 import { DeviceInfo } from '../types/auth';
-import { logger } from './logger';
+import { logger } from '../logger';
 import crypto from 'crypto';
+import type { UpdateWriteOpResult } from 'mongoose';
+
+interface CharacterSessionStatics {
+  invalidateCharacterSessions(characterId: string, reason?: string, fromIp?: string): Promise<UpdateWriteOpResult>;
+  getUserActiveSessions(userId: string): Promise<Array<{ sessionId: string; characterId: string }>>;
+  cleanupExpiredSessions(): Promise<UpdateWriteOpResult>;
+}
+
+const CharacterSessionModel = CharacterSession as typeof CharacterSession & CharacterSessionStatics;
 
 export class CharacterSessionManager {
   /**
@@ -27,7 +36,7 @@ export class CharacterSessionManager {
       const expiresAt = new Date(Date.now() + expirationMs);
 
       // Invalidate any existing active sessions for this character
-      await (CharacterSession as any).invalidateCharacterSessions(
+      await CharacterSessionModel.invalidateCharacterSessions(
         characterId,
         'new_device_login',
         ipAddress
@@ -153,7 +162,7 @@ export class CharacterSessionManager {
    */
   static async getUserActiveSessions(userId: string): Promise<any[]> {
     try {
-      return await (CharacterSession as any).getUserActiveSessions(userId);
+      return await CharacterSessionModel.getUserActiveSessions(userId);
     } catch (error: any) {
       logger.error('Failed to get user sessions:', error);
       return [];
@@ -165,7 +174,7 @@ export class CharacterSessionManager {
    */
   static async cleanupExpiredSessions(): Promise<number> {
     try {
-      const result = await (CharacterSession as any).cleanupExpiredSessions();
+      const result = await CharacterSessionModel.cleanupExpiredSessions();
 
       if (result.modifiedCount > 0) {
         logger.info(`Cleaned up ${result.modifiedCount} expired character sessions`);

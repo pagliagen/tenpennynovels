@@ -6,10 +6,10 @@ export interface Location {
   parentId: string | null; // null for root
   children: Location[];
   
-  // Location type
-  type: 'root' | 'city' | 'district' | 'location';
+  // Location hierarchy (matches Location model)
+  locationLevel: 'root' | 'district' | 'location';
   
-  // Location control switches
+  // Location control switches (matches model settings)
   switches: {
     visible: boolean;     // Location appears in navigation
     chat: boolean;        // Chat functionality available

@@ -2,10 +2,11 @@ import { Request, Response } from 'express';
 import { User } from '@database/models';
 import { CryptoUtils } from '../utils/crypto';
 import { ApiResponse } from '../types/auth';
-import { logger, logAuth, logSecurity } from '../utils/logger';
+import { logger, logAuth, logSecurity } from '../logger';
 import { redis } from '@config/runtime/redis';
 import { EmailService } from '../services/EmailService';
 import { successResponse, errorResponse, updatedResponse } from '@shared/utils/apiResponse';
+import { appConfig } from '@config/runtime';
 
 export class PasswordController {
   /**
@@ -89,8 +90,8 @@ export class PasswordController {
       }
 
       // DEV ONLY: Add reset password URL header for testing
-      if (process.env.NODE_ENV !== 'production') {
-        const resetUrl = `${process.env.BASE_URL || 'http://localhost:4000'}/reset-password/${resetToken}`;
+      if (!appConfig.isProduction) {
+        const resetUrl = `${appConfig.urls.landing}/reset-password/${resetToken}`;
         res.setHeader('X-Dev-Reset-Password-Url', resetUrl);
         logger.debug(`[DEV] Reset password URL: ${resetUrl}`);
       }

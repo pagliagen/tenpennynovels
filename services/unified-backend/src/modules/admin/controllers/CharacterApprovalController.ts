@@ -133,12 +133,12 @@ export class CharacterApprovalController {
       });
 
       res.json(listResponse(
-        transformedCharacters as any,
+        transformedCharacters,
         paginationInfo,
         undefined,
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error in getAllCharacters method:', { 
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
@@ -182,16 +182,15 @@ export class CharacterApprovalController {
           age: 35,
           gender: 'male',
           stats: {
-            forza: 60,
-            destrezza: 70,
-            intelligenza: 85,
-            costituzione: 65,
-            aspetto: 70,
-            potere: 60,
-            taglia: 65,
-            educazione: 90,
-            status_sociale: 75
-          } as any,
+            str: 60,
+            dex: 70,
+            int: 85,
+            con: 65,
+            app: 70,
+            pow: 60,
+            siz: 65,
+            edu: 90
+          },
           skills: {
             'First Aid': 80,
             'Medicine': 90,
@@ -228,7 +227,7 @@ export class CharacterApprovalController {
         undefined,
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error fetching pending characters:', { 
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
@@ -269,7 +268,7 @@ export class CharacterApprovalController {
           options: { strictPopulate: false }
         })
         .lean()
-        .exec() as any;
+        .exec();
 
       if (!character) {
         res.status(404).json(errorResponse(
@@ -289,14 +288,14 @@ export class CharacterApprovalController {
         try {
           occupationDetails = await Occupation.findById(character.occupation)
             .select('name description category dailySalary benefits workingConditions')
-            .lean() as any;
+            .lean();
 
           // If occupation has startingItems, populate them too
           if (occupationDetails?.benefits?.startingItems && occupationDetails.benefits.startingItems.length > 0) {
             const itemIds = occupationDetails.benefits.startingItems.map((item: any) => item.itemId);
             const startingItemsData = await Item.find({ 
               _id: { $in: itemIds } 
-            }).select('name description category basePrice properties').lean() as any;
+            }).select('name description category basePrice properties').lean();
             
             occupationStartingItems = occupationDetails.benefits.startingItems.map((startingItem: any) => {
               const itemData = startingItemsData.find((item: any) => item._id.toString() === startingItem.itemId.toString());
@@ -337,7 +336,7 @@ export class CharacterApprovalController {
         try {
           const equipmentItems = await Item.find({ 
             _id: { $in: character.equipment } 
-          }).select('name description category basePrice properties').lean() as any;
+          }).select('name description category basePrice properties').lean();
           
           // Create detailed equipment array with quantity info
           equipmentDetails = character.equipment.map((itemId: string) => {
@@ -454,7 +453,7 @@ export class CharacterApprovalController {
         undefined,
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error fetching character details:', { 
         error: error instanceof Error ? error.message : String(error), 
         stack: error instanceof Error ? error.stack : undefined,
@@ -539,7 +538,7 @@ export class CharacterApprovalController {
         undefined,
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error updating character:', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
@@ -598,7 +597,7 @@ export class CharacterApprovalController {
       const character = await Character.findOne({
         _id: characterId,
         playerStatus: 'pending'
-      }).lean(false) as any;
+      }).lean(false);
 
       if (!character) {
         res.status(404).json(errorResponse(
@@ -645,14 +644,14 @@ export class CharacterApprovalController {
         if (character.skills instanceof Map) {
           const finanzaValue = character.skills.get('Finanza') || character.skills.get('FINANZA') || character.skills.get('finanza');
           if (typeof finanzaValue === 'object' && finanzaValue !== null && 'total' in finanzaValue) {
-            finanzaSkill = (finanzaValue as any).total;
+            finanzaSkill = (finanzaValue as { total: number }).total;
           } else if (typeof finanzaValue === 'number') {
             finanzaSkill = finanzaValue;
           }
         } else if (character.skills && typeof character.skills === 'object') {
-          const finanzaValue = (character.skills as any)['Finanza'] || (character.skills as any)['FINANZA'] || (character.skills as any)['finanza'];
+          const finanzaValue = (character.skills as Record<string, unknown>)['Finanza'] || (character.skills as Record<string, unknown>)['FINANZA'] || (character.skills as Record<string, unknown>)['finanza'];
           if (typeof finanzaValue === 'object' && finanzaValue !== null && 'total' in finanzaValue) {
-            finanzaSkill = finanzaValue.total;
+            finanzaSkill = (finanzaValue as { total: number }).total;
           } else if (typeof finanzaValue === 'number') {
             finanzaSkill = finanzaValue;
           }
@@ -841,7 +840,7 @@ export class CharacterApprovalController {
           reviewedBy: auditInfo!.adminUsername,
           eventSize: eventJson.length
         });
-      } catch (redisError: any) {
+      } catch (redisError: unknown) {
         logger.error('Failed to publish character review event to Redis', {
           error: redisError instanceof Error ? redisError.message : String(redisError),
           stack: redisError instanceof Error ? redisError.stack : undefined,
@@ -856,7 +855,7 @@ export class CharacterApprovalController {
         action === 'approve' ? 'Personaggio approvato con successo' : 'Personaggio respinto',
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error submitting character review:', { 
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
@@ -928,7 +927,7 @@ export class CharacterApprovalController {
         undefined,
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error fetching review stats:', { 
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
@@ -997,7 +996,7 @@ export class CharacterApprovalController {
         'Priorità di revisione aggiornata con successo',
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error updating review priority:', { 
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
@@ -1060,7 +1059,7 @@ export class CharacterApprovalController {
         undefined,
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error getting pending characters for review:', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined
@@ -1115,7 +1114,7 @@ export class CharacterApprovalController {
           const character = await Character.findOne({
             _id: characterId,
             playerStatus: 'pending'
-          }).lean(false) as any;
+          }).lean(false);
 
           if (!character) {
             throw new Error(`Character not found or not pending: ${characterId}`);
@@ -1231,7 +1230,7 @@ export class CharacterApprovalController {
         'Bulk approve completed',
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error in bulk approve characters:', { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json(errorResponse(
         'Failed to bulk approve characters',
@@ -1292,7 +1291,7 @@ export class CharacterApprovalController {
           const character = await Character.findOne({
             _id: characterId,
             playerStatus: 'pending'
-          }).lean(false) as any;
+          }).lean(false);
 
           if (!character) {
             throw new Error(`Character not found or not pending: ${characterId}`);
@@ -1353,7 +1352,7 @@ export class CharacterApprovalController {
         'Bulk reject completed',
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error in bulk reject characters:', { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json(errorResponse(
         'Failed to bulk reject characters',
@@ -1420,7 +1419,7 @@ export class CharacterApprovalController {
         'Character deleted successfully',
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error deleting character:', { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json(errorResponse(
         'Failed to delete character',
@@ -1508,7 +1507,7 @@ export class CharacterApprovalController {
         'Bulk delete completed',
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error in bulk delete characters:', { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json(errorResponse(
         'Failed to bulk delete characters',
@@ -1526,8 +1525,9 @@ export class CharacterApprovalController {
    */
   static async getDuplicateFaceClaims(req: Request, res: Response): Promise<void> {
     try {
+      const { Character } = await import('@database/models/Character');
       const duplicates = await Character.aggregate([
-        { $match: { prestavolto: { $exists: true, $ne: null, $ne: '' }, isDeleted: { $ne: true } } },
+        { $match: { prestavolto: { $exists: true, $nin: [null, ''] }, isDeleted: { $ne: true } } },
         { $group: {
             _id: { $toLower: '$prestavolto' },
             prestavolto: { $first: '$prestavolto' },
@@ -1539,7 +1539,7 @@ export class CharacterApprovalController {
         { $sort: { count: -1, prestavolto: 1 } }
       ]);
 
-      const faceClaimGroups = duplicates.map(group => ({
+      const faceClaimGroups = duplicates.map((group: any) => ({
         prestavolto: group.prestavolto,
         characters: group.characters,
         duplicateCount: group.count,
@@ -1548,9 +1548,9 @@ export class CharacterApprovalController {
       }));
 
       res.json(successResponse({ faceClaimGroups }, undefined, getRequestId(req)));
-    } catch (error: any) {
-      logger.error('Get duplicate face claims error:', { error: error.message });
-      res.status(500).json(errorResponse('Failed to get duplicates', 'GET_DUPLICATES_ERROR', undefined, 500, getRequestId(req)));
+    } catch (error: unknown) {
+      logger.error('Get duplicate face claims error:', { error: error instanceof Error ? error.message : String(error) });
+      res.status(500).json(errorResponse('Impossibile recuperare i duplicati', 'GET_DUPLICATES_ERROR', undefined, 500, getRequestId(req)));
     }
   }
 
@@ -1560,21 +1560,23 @@ export class CharacterApprovalController {
    */
   static async approveFaceClaim(req: Request, res: Response): Promise<void> {
     try {
+      const { Character } = await import('@database/models/Character');
       const character = await Character.findById(req.params.id);
       if (!character) {
-        return res.status(404).json(errorResponse('Character not found', 'CHARACTER_NOT_FOUND', undefined, 404, getRequestId(req)));
+        res.status(404).json(errorResponse('Personaggio non trovato', 'CHARACTER_NOT_FOUND', undefined, 404, getRequestId(req)));
+        return;
       }
 
       character.prestavoltoStatus = 'approved';
-      character.prestavoltoApprovedBy = req.user!.userId as any;
+      character.prestavoltoApprovedBy = req.user!.userId;
       character.prestavoltoApprovedAt = new Date();
       await character.save();
 
       logger.info('Face claim approved', { characterId: character._id, prestavolto: character.prestavolto, approvedBy: req.user!.userId });
       res.json(successResponse({ character }, 'Face claim approved', getRequestId(req)));
-    } catch (error: any) {
-      logger.error('Approve face claim error:', { error: error.message });
-      res.status(500).json(errorResponse('Failed to approve', 'APPROVE_FACECLAIM_ERROR', undefined, 500, getRequestId(req)));
+    } catch (error: unknown) {
+      logger.error('Approve face claim error:', { error: error instanceof Error ? error.message : String(error) });
+      res.status(500).json(errorResponse('Impossibile approvare', 'APPROVE_FACECLAIM_ERROR', undefined, 500, getRequestId(req)));
     }
   }
 
@@ -1584,9 +1586,11 @@ export class CharacterApprovalController {
    */
   static async rejectFaceClaim(req: Request, res: Response): Promise<void> {
     try {
+      const { Character } = await import('@database/models/Character');
       const character = await Character.findById(req.params.id);
       if (!character) {
-        return res.status(404).json(errorResponse('Character not found', 'CHARACTER_NOT_FOUND', undefined, 404, getRequestId(req)));
+        res.status(404).json(errorResponse('Personaggio non trovato', 'CHARACTER_NOT_FOUND', undefined, 404, getRequestId(req)));
+        return;
       }
 
       character.prestavolto = undefined;
@@ -1597,9 +1601,9 @@ export class CharacterApprovalController {
 
       logger.info('Face claim rejected', { characterId: character._id, rejectedBy: req.user!.userId });
       res.json(successResponse({ character }, 'Face claim rejected and cleared', getRequestId(req)));
-    } catch (error: any) {
-      logger.error('Reject face claim error:', { error: error.message });
-      res.status(500).json(errorResponse('Failed to reject', 'REJECT_FACECLAIM_ERROR', undefined, 500, getRequestId(req)));
+    } catch (error: unknown) {
+      logger.error('Reject face claim error:', { error: error instanceof Error ? error.message : String(error) });
+      res.status(500).json(errorResponse('Impossibile rifiutare', 'REJECT_FACECLAIM_ERROR', undefined, 500, getRequestId(req)));
     }
   }
 

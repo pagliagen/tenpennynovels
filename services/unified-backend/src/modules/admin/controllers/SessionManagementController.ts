@@ -143,7 +143,7 @@ export class SessionManagementController {
         getRequestId(req)
       ));
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Failed to get session overview', {
         error: error instanceof Error ? error.message : String(error)
       });
@@ -247,7 +247,7 @@ export class SessionManagementController {
         getRequestId(req)
       ));
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Failed to get sessions', {
         error: error instanceof Error ? error.message : String(error)
       });
@@ -313,7 +313,7 @@ export class SessionManagementController {
         getRequestId(req)
       ));
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Failed to get session detail', {
         sessionId: req.params.sessionId,
         error: error instanceof Error ? error.message : String(error)
@@ -406,7 +406,7 @@ export class SessionManagementController {
         getRequestId(req)
       ));
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Failed to get session templates', {
         error: error instanceof Error ? error.message : String(error)
       });
@@ -556,7 +556,7 @@ export class SessionManagementController {
         getRequestId(req)
       ));
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Failed to get session analytics', {
         error: error instanceof Error ? error.message : String(error)
       });
@@ -632,7 +632,7 @@ export class SessionManagementController {
         getRequestId(req)
       ));
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Failed to update session status', {
         sessionId: req.params.sessionId,
         error: error instanceof Error ? error.message : String(error)
@@ -657,7 +657,7 @@ export class SessionManagementController {
       const limit = parseInt(req.query.limit as string) || 10;
 
       // Get masterId from authenticated user
-      const masterId = (req as any).user?.characterId || (req as any).character?.id;
+      const masterId = req.character?.characterId;
 
       if (!masterId) {
         res.status(400).json(errorResponse(
@@ -701,7 +701,7 @@ export class SessionManagementController {
         undefined,
         getRequestId(req)
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error getting pending XP assignment sessions:', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined

@@ -1,24 +1,22 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { RequestUser } from '@shared/types';
+import { RequestUser, AuthToken, CharacterContextToken } from '@shared/types';
+import type { AdminPermission } from '@config/admin-permissions';
 import { AdminUser, ApiResponse } from '../types/management';
 import { logger } from '../utils/logger';
 import { errorResponse, getRequestId } from '../utils/apiResponse';
+import { appConfig } from '@config/runtime';
 
-// Helper function to get JWT_SECRET with validation
 function getJwtSecret(): string {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    throw new Error('JWT_SECRET environment variable is required');
-  }
-  return secret;
+  if (!appConfig.jwt.secret) throw new Error('JWT_SECRET non configurato');
+  return appConfig.jwt.secret;
 }
 
 // Extend Express Request interface
 declare global {
   namespace Express {
     interface Request {
-      fullUser?: any; // Full user document from database
+      fullUser?: Record<string, unknown>;
     }
   }
 }
@@ -32,7 +30,7 @@ export class AdminAuthMiddleware {
       const authToken = req.cookies?.auth_token;
       if (!authToken) {
         res.status(401).json(errorResponse(
-          'Authentication required',
+          'Autenticazione richiesta',
           'NO_AUTH_TOKEN',
           undefined,
           401,
@@ -41,9 +39,9 @@ export class AdminAuthMiddleware {
         return;
       }
 
-      const decoded = jwt.verify(authToken, getJwtSecret()) as any;
+      const decoded = jwt.verify(authToken, getJwtSecret()) as AuthToken;
       if (!decoded.userId || !decoded.username) {
-        throw new Error('Invalid token payload');
+        throw new Error('Payload del token non valido');
       }
 
       const requestUser: RequestUser = {
@@ -62,19 +60,19 @@ export class AdminAuthMiddleware {
       const characterContext = req.cookies?.character_context;
       if (characterContext) {
         try {
-          const characterDecoded = jwt.verify(characterContext, getJwtSecret()) as any;
+          const characterDecoded = jwt.verify(characterContext, getJwtSecret()) as CharacterContextToken;
           if (characterDecoded?.characterId) {
             const { Character } = require('@database/models/Character');
             const { gameplayRolesToAdminRoles } = require('@config/admin-permissions');
             Character.findById(characterDecoded.characterId)
               .select('gameplayRoles adminPermissions isGestore canAccessAdminPanel')
               .lean()
-              .then((char: any) => {
+              .then((char: { gameplayRoles?: string[]; adminPermissions?: string[]; isGestore?: boolean; canAccessAdminPanel?: boolean } | null) => {
                 if (char && req.user) {
                   const adminRoles = gameplayRolesToAdminRoles(char.gameplayRoles || []);
                   if (char.isGestore) adminRoles.push('amministratore');
                   req.user.characterRoles = adminRoles;
-                  req.user.gameplayRoles = char.gameplayRoles || [];
+                  req.user.gameplayRoles = (char.gameplayRoles || []) as ('player' | 'master' | 'moderatore')[];
                   req.user.adminPermissions = char.adminPermissions || [];
                   req.user.isGestore = char.isGestore || false;
                   req.user.canAccessAdminPanel = char.canAccessAdminPanel || char.isGestore || false;
@@ -87,7 +85,7 @@ export class AdminAuthMiddleware {
         } catch (_) {}
       }
       next();
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.warn('Admin auth token validation failed:', { 
         error: error instanceof Error ? error.message : String(error), 
         ip: req.ip,
@@ -95,7 +93,7 @@ export class AdminAuthMiddleware {
       });
       
       res.status(401).json(errorResponse(
-        'Invalid authentication token',
+        'Token di autenticazione non valido',
         'INVALID_AUTH_TOKEN',
         undefined,
         401,
@@ -112,7 +110,7 @@ export class AdminAuthMiddleware {
     return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
       if (!req.user?.canAccessAdminPanel) {
         res.status(403).json(errorResponse(
-          'Admin access required',
+          'Accesso admin richiesto',
           'ADMIN_ACCESS_REQUIRED',
           undefined,
           403,
@@ -128,11 +126,11 @@ export class AdminAuthMiddleware {
         const isGestore = req.user.isGestore ?? false;
 
         const missingPermissions = permissions.filter(
-          (perm: string) => !hasAdminPermission(gameplayRoles, adminPermissions, isGestore, perm as any)
+          (perm: string) => !hasAdminPermission(gameplayRoles, adminPermissions, isGestore, perm as AdminPermission)
         );
 
         if (missingPermissions.length > 0) {
-          logger.warn('Insufficient permissions', {
+          logger.warn('Permessi insufficienti', {
             userId: req.user.userId,
             username: req.user.username,
             requiredPermissions: permissions,
@@ -142,7 +140,7 @@ export class AdminAuthMiddleware {
           });
 
           res.status(403).json(errorResponse(
-            'Insufficient permissions',
+            'Permessi insufficienti',
             'INSUFFICIENT_PERMISSIONS',
             { requiredPermissions: permissions, missingPermissions },
             403,
@@ -153,7 +151,7 @@ export class AdminAuthMiddleware {
 
         next();
 
-      } catch (error: any) {
+      } catch (error: unknown) {
         logger.error('Error checking permissions:', {
           error: error instanceof Error ? error.message : String(error),
           userId: req.user.userId,
@@ -161,7 +159,7 @@ export class AdminAuthMiddleware {
         });
 
         res.status(500).json(errorResponse(
-          'Permission check failed',
+          'Controllo permessi fallito',
           'PERMISSION_CHECK_ERROR',
           undefined,
           500,
@@ -179,7 +177,7 @@ export class AdminAuthMiddleware {
     return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
       if (!req.user) {
         res.status(401).json(errorResponse(
-          'Authentication required',
+          'Autenticazione richiesta',
           'AUTHENTICATION_REQUIRED',
           undefined,
           401,
@@ -194,7 +192,7 @@ export class AdminAuthMiddleware {
         const adminPermissions = req.user.adminPermissions ?? [];
         const isGestore = req.user.isGestore ?? false;
 
-        if (!hasAdminPermission(gameplayRoles, adminPermissions, isGestore, permission as any)) {
+        if (!hasAdminPermission(gameplayRoles, adminPermissions, isGestore, permission as AdminPermission)) {
           logger.warn('Insufficient granular permissions', {
             userId: req.user.userId,
             username: req.user.username,
@@ -204,7 +202,7 @@ export class AdminAuthMiddleware {
           });
 
           res.status(403).json(errorResponse(
-            `Insufficient permissions for ${permission}`,
+            `Permessi insufficienti per ${permission}`,
             'INSUFFICIENT_GRANULAR_PERMISSIONS',
             { requiredPermission: permission },
             403,
@@ -215,7 +213,7 @@ export class AdminAuthMiddleware {
 
         next();
 
-      } catch (error: any) {
+      } catch (error: unknown) {
         logger.error('Error checking granular permissions:', {
           error: error instanceof Error ? error.message : String(error),
           userId: req.user.userId,
@@ -223,7 +221,7 @@ export class AdminAuthMiddleware {
         });
 
         res.status(500).json(errorResponse(
-          'Permission check failed',
+          'Controllo permessi fallito',
           'PERMISSION_CHECK_ERROR',
           undefined,
           500,
@@ -243,7 +241,7 @@ export class AdminAuthMiddleware {
       const gameplayRoles = req.user.gameplayRoles ?? [];
       const adminPermissions = req.user.adminPermissions ?? [];
       const isGestore = req.user.isGestore ?? false;
-      return hasAdminPermission(gameplayRoles, adminPermissions, isGestore, permission as any);
+      return hasAdminPermission(gameplayRoles, adminPermissions, isGestore, permission as AdminPermission);
     } catch {
       return false;
     }
@@ -325,7 +323,7 @@ export class AdminAuthMiddleware {
           });
 
           res.status(429).json(errorResponse(
-            'Too many sensitive operations. Please wait before trying again.',
+            'Troppe operazioni sensibili. Attendi prima di riprovare.',
             'ADMIN_RATE_LIMITED',
             undefined,
             429,

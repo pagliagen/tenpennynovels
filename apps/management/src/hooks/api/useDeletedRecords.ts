@@ -56,10 +56,10 @@ export function useRestoreRecord() {
       queryClient.setQueriesData(
         { queryKey: deletedRecordKeys.lists(), exact: false },
         (old: any) => {
-          if (!old?.items) return old;
+          if (!old?.list) return old;
           return {
             ...old,
-            items: old.items.filter((record: DeletedRecord) => record._id !== id),
+            list: old.list.filter((record: DeletedRecord) => record._id !== id),
             pagination: {
               ...old.pagination,
               totalItems: old.pagination.totalItems - 1
@@ -123,10 +123,10 @@ export function usePermanentlyDeleteRecord() {
       queryClient.setQueriesData(
         { queryKey: deletedRecordKeys.lists(), exact: false },
         (old: any) => {
-          if (!old?.items) return old;
+          if (!old?.list) return old;
           return {
             ...old,
-            items: old.items.filter((record: DeletedRecord) => record._id !== id),
+            list: old.list.filter((record: DeletedRecord) => record._id !== id),
             pagination: {
               ...old.pagination,
               totalItems: old.pagination.totalItems - 1
@@ -177,10 +177,10 @@ export function useBulkPermanentlyDelete() {
       queryClient.setQueriesData(
         { queryKey: deletedRecordKeys.lists(), exact: false },
         (old: any) => {
-          if (!old?.items) return old;
+          if (!old?.list) return old;
           return {
             ...old,
-            items: old.items.filter((record: DeletedRecord) => !ids.includes(record._id)),
+            list: old.list.filter((record: DeletedRecord) => !ids.includes(record._id)),
             pagination: {
               ...old.pagination,
               totalItems: old.pagination.totalItems - ids.length

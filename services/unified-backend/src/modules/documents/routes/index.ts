@@ -5,7 +5,7 @@
  * Uses direct Document lookup (no Route model).
  */
 
-import { Router } from 'express';
+import { Router, Request } from 'express';
 import { DocumentController } from '../controllers/DocumentController';
 import { AuthMiddleware } from '@modules/game/middleware/auth';
 import { requireGamePermission } from '@modules/game/middleware/gamePermissions';
@@ -28,8 +28,8 @@ router.get('/semantic-search', AuthMiddleware.optionalAuth, DocumentController.s
  
 // Get document by type + nested path (e.g., /documents/ambientazione/introduzione/presentazione)
 router.get('/:type/:category/:slug', AuthMiddleware.optionalAuth, (req, res) => {
-  req.params.path = `${req.params.category}/${req.params.slug}`;
-  return DocumentController.getByPath(req as any, res);
+  (req.params as Record<string, string>).path = `${req.params.category}/${req.params.slug}`;
+  return DocumentController.getByPath(req as Request<{ type: string; path: string }>, res);
 });
 
 // Get document by type + single-level path
@@ -49,8 +49,8 @@ router.post('/:type/:category/:slug/favorite',
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:documents:favorites:toggle'),
   (req, res) => {
-    req.params.path = `${req.params.category}/${req.params.slug}`;
-    return DocumentController.toggleFavorite(req as any, res);
+    (req.params as Record<string, string>).path = `${req.params.category}/${req.params.slug}`;
+    return DocumentController.toggleFavorite(req as Request<{ type: string; path: string }>, res);
   }
 );
 

@@ -9,7 +9,7 @@
 
 import { Server as SocketIOServer } from 'socket.io';
 import { redis } from '@config/runtime/redis';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
 import { EventRouter } from './EventRouter';
 import { RedisChannel, RedisEvent } from './types';
 
@@ -64,7 +64,7 @@ export class RedisSubscriber {
   /**
    * Handle incoming Redis message
    */
-  private handleMessage(channel: RedisChannel, message: string): void {
+  private async handleMessage(channel: RedisChannel, message: string): Promise<void> {
     try {
       // Validate message format
       if (typeof message !== 'string' || !message.trim()) {
@@ -94,8 +94,8 @@ export class RedisSubscriber {
         timestamp: event.timestamp
       });
 
-      // Route event to appropriate handler
-      this.router.routeEvent(channel, event);
+      // Route event to appropriate handler (await per catturare errori async)
+      await this.router.routeEvent(channel, event);
 
     } catch (error: any) {
       logger.error(`[RedisSubscriber] Error processing message from ${channel}:`, {

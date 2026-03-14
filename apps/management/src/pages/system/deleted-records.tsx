@@ -298,7 +298,7 @@ export default function DeletedRecordsPage() {
         ) : (
           <ConfigurableDataTable<DeletedRecord>
             tableName="deleted-records"
-            data={data?.items || []}
+            data={data?.list || []}
             pagination={{
               page: params.page ?? 1,
               pageSize: params.pageSize ?? 25,

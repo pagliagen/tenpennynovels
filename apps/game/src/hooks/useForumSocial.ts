@@ -46,7 +46,7 @@ export const forumSocialKeys = {
  */
 export function useForumSearch(
   query: string
-): UseQueryResult<{ items: ForumSearchResult[]; pagination: PaginationInfo }, Error> {
+): UseQueryResult<{ list: ForumSearchResult[]; pagination: PaginationInfo }, Error> {
   return useQuery({
     queryKey: forumSocialKeys.search(query),
     queryFn: () => forumApi.searchForum(query),
@@ -101,7 +101,7 @@ export function useToggleBookmark(): UseMutationResult<void, Error, string> {
  */
 export function useForumNotifications(
   page?: number
-): UseQueryResult<{ items: ForumNotification[]; pagination: PaginationInfo }, Error> {
+): UseQueryResult<{ list: ForumNotification[]; pagination: PaginationInfo }, Error> {
   return useQuery({
     queryKey: forumSocialKeys.notifications(page),
     queryFn: () => forumApi.getNotifications(page),

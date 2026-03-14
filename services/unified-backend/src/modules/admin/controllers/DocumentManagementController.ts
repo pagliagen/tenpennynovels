@@ -6,6 +6,7 @@ import { logger } from '../utils/logger';
 import { errorResponse, getRequestId } from '../utils/apiResponse';
 import { DocumentChunkService } from '../services/DocumentChunkService';
 import jwt from 'jsonwebtoken';
+import { appConfig } from '@config/runtime';
 
 const mongoose = db.getMongoose();
 
@@ -69,9 +70,9 @@ export class DocumentManagementController {
               parentId: doc.parentId ? doc.parentId.toString() : null,
               path: doc.path,
               subtype: doc.subtypeId ? {
-                _id: (doc.subtypeId as any)._id?.toString(),
-                slug: (doc.subtypeId as any).slug,
-                title: (doc.subtypeId as any).title
+                _id: (doc.subtypeId as { _id?: unknown; slug?: string; title?: string })._id?.toString(),
+                slug: (doc.subtypeId as { _id?: unknown; slug?: string; title?: string }).slug,
+                title: (doc.subtypeId as { _id?: unknown; slug?: string; title?: string }).title
               } : null,
               children: buildDocumentTree(docId, depth + 1)
             };
@@ -187,7 +188,7 @@ export class DocumentManagementController {
       ];
       for (const key of allowedFields) {
         if (updates[key] !== undefined) {
-          (document as any)[key] = updates[key];
+          (document as unknown as Record<string, unknown>)[key] = updates[key];
         }
       }
       document.lastUpdated = new Date();
@@ -200,7 +201,7 @@ export class DocumentManagementController {
         try {
           const authToken = req.cookies?.auth_token;
           if (authToken) {
-            const decoded = jwt.verify(authToken, process.env.JWT_SECRET!) as any;
+            const decoded = jwt.verify(authToken, appConfig.jwt.secret!) as { userId: string; username?: string };
             const chunkService = new DocumentChunkService();
             const result = await chunkService.regenerateChunksForDocument(
               id, updates.contentDelta, document.type, decoded.userId, decoded.username || 'Unknown'
@@ -256,7 +257,7 @@ export class DocumentManagementController {
         return;
       }
 
-      const decoded = jwt.verify(authToken, process.env.JWT_SECRET!) as any;
+      const decoded = jwt.verify(authToken, appConfig.jwt.secret!) as { userId: string; username?: string };
 
       const chunkService = new DocumentChunkService();
       const result = await chunkService.regenerateChunksForDocument(

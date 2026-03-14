@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import { TicketNotification, ITicketNotification } from '@database/models/TicketNotification';
 import { Ticket } from '@database/models/Ticket';
+import { logger } from '@shared/utils/logger';
 
 /**
  * NotificationService
@@ -25,7 +26,7 @@ export interface Notification {
   type: string;                                      // 'ticket:new', 'ticket:replied', 'ticket:escalated'
   title: string;
   message: string;
-  data: any;                                         // Payload custom (ticketId, priority, ecc.)
+  data: Record<string, unknown>;                      // Payload custom (ticketId, priority, ecc.)
   channels: ('in_app' | 'websocket')[];
   priority: 'low' | 'normal' | 'high' | 'urgent';
   expiresAt?: Date;
@@ -37,15 +38,15 @@ export class NotificationService {
    * WebSocket server instance (singleton)
    * Inizializzato dinamicamente dal server
    */
-  private static io: any = null;
+  private static io: import('socket.io').Server | null = null;
 
   /**
    * Initialize WebSocket server instance
    * Chiamato da server.ts dopo che Socket.IO è pronto
    */
-  static initialize(socketIOInstance: any): void {
+  static initialize(socketIOInstance: import('socket.io').Server): void {
     NotificationService.io = socketIOInstance;
-    console.log('[NotificationService] WebSocket instance initialized');
+    logger.info('[NotificationService] WebSocket instance initialized');
   }
 
   /**
@@ -64,7 +65,7 @@ export class NotificationService {
         await NotificationService.emitWebSocket(notification);
       }
     } catch (error) {
-      console.error('[NotificationService] Failed to send notification:', error);
+      logger.error('[NotificationService] Failed to send notification:', error);
       // Don't throw - notifications are best-effort, not critical
     }
   }
@@ -76,15 +77,20 @@ export class NotificationService {
   private static async saveToDatabase(notification: Notification): Promise<void> {
     // Only ticket namespace supported for now (extendable to forum, game)
     if (notification.namespace !== 'ticket') {
-      console.warn(`[NotificationService] Namespace "${notification.namespace}" not yet implemented for DB storage`);
+      logger.warn(`[NotificationService] Namespace "${notification.namespace}" not yet implemented for DB storage`);
       return;
     }
 
-    // Extract ticket info from data payload
-    const { ticketId, ticketNumber, ticketPriority, ticketCategory } = notification.data || {};
+    // Extract ticket info from data payload (with type assertions for document fields)
+    const data = notification.data || {};
+    const ticketId = data.ticketId as mongoose.Types.ObjectId | string | undefined;
+    const ticketNumber = data.ticketNumber as string | undefined;
+    const ticketPriority = data.ticketPriority as string | undefined;
+    const ticketCategory = data.ticketCategory as string | undefined;
+    const triggeredBy = data.triggeredBy as { type: 'character' | 'staff' | 'system'; id?: mongoose.Types.ObjectId; name?: string } | undefined;
 
     if (!ticketId) {
-      console.error('[NotificationService] ticketId missing in data payload for ticket notification');
+      logger.error('[NotificationService] ticketId missing in data payload for ticket notification');
       return;
     }
 
@@ -108,17 +114,17 @@ export class NotificationService {
 
     // Create notification document
     const notificationDoc: Partial<ITicketNotification> = {
-      recipientType: mappedRecipientType as any,
+      recipientType: mappedRecipientType as ITicketNotification['recipientType'],
       recipientId: recipientIdObj,
       recipientRole: notification.recipientRole,
-      type: notification.type as any,
+      type: notification.type as ITicketNotification['type'],
       title: notification.title,
       message: notification.message,
       ticketId: ticketIdObj,
       ticketNumber,
       ticketPriority,
       ticketCategory,
-      triggeredBy: notification.data?.triggeredBy,
+      triggeredBy,
       isRead: false,
       createdAt: new Date(),
       actionUrl: notification.actionUrl || `/game/tickets/${ticketId}`
@@ -133,7 +139,7 @@ export class NotificationService {
    */
   private static async emitWebSocket(notification: Notification): Promise<void> {
     if (!NotificationService.io) {
-      console.warn('[NotificationService] WebSocket not initialized, skipping WebSocket emit');
+      logger.warn('[NotificationService] WebSocket not initialized, skipping WebSocket emit');
       return;
     }
 
@@ -145,7 +151,7 @@ export class NotificationService {
       room = 'staff';  // Simplified: broadcast to all staff room
       // TODO: Future enhancement - separate rooms per role (staff_master, staff_moderatore, ecc.)
     } else if (notification.recipientType === 'character') {
-      room = `user_${notification.recipientId}`;
+      room = `character_${notification.recipientId}`;
     } else {
       // 'staff' or 'user'
       room = `staff_${notification.recipientId}`;
@@ -177,8 +183,8 @@ export class NotificationService {
       recipientRole: 'amministratore',  // Notify all admins (or department-specific staff)
       namespace: 'ticket',
       type: 'ticket:new',
-      title: `New Ticket #${ticket.ticketNumber}`,
-      message: `Category: ${ticket.category} | Priority: ${ticket.priority}`,
+      title: `Nuovo Ticket #${ticket.ticketNumber}`,
+      message: `Categoria: ${ticket.category} | Priorità: ${ticket.priority}`,
       data: {
         ticketId: ticket._id,
         ticketNumber: ticket.ticketNumber,
@@ -210,9 +216,9 @@ export class NotificationService {
         recipientId: ticket.createdBy.characterId,
         namespace: 'ticket',
         type: 'ticket:replied',
-        title: `Reply on Ticket #${ticket.ticketNumber}`,
+        title: `Risposta al Ticket #${ticket.ticketNumber}`,
         message: message.isInternal
-          ? 'Staff added internal note'
+          ? 'Lo staff ha aggiunto una nota interna'
           : `${message.sender.name}: ${message.content.substring(0, 100)}...`,
         data: {
           ticketId: ticket._id,
@@ -236,7 +242,7 @@ export class NotificationService {
           recipientId: ticket.assignedTo,
           namespace: 'ticket',
           type: 'ticket:replied',
-          title: `Character replied to Ticket #${ticket.ticketNumber}`,
+          title: `Il personaggio ha risposto al Ticket #${ticket.ticketNumber}`,
           message: `${message.sender.name}: ${message.content.substring(0, 100)}...`,
           data: {
             ticketId: ticket._id,
@@ -266,8 +272,8 @@ export class NotificationService {
       recipientId: ticket.createdBy.characterId,
       namespace: 'ticket',
       type: 'ticket:assigned',
-      title: `Ticket #${ticket.ticketNumber} Assigned`,
-      message: `Your ticket has been assigned to ${assignedStaff.username}`,
+      title: `Ticket #${ticket.ticketNumber} Assegnato`,
+      message: `Il tuo ticket è stato assegnato a ${assignedStaff.username}`,
       data: {
         ticketId: ticket._id,
         ticketNumber: ticket.ticketNumber,
@@ -288,8 +294,8 @@ export class NotificationService {
       recipientId: assignedStaff.userId || assignedStaff._id,
       namespace: 'ticket',
       type: 'ticket:assigned',
-      title: `Ticket #${ticket.ticketNumber} Assigned to You`,
-      message: `Category: ${ticket.category} | Priority: ${ticket.priority}`,
+      title: `Ticket #${ticket.ticketNumber} Assegnato a te`,
+      message: `Categoria: ${ticket.category} | Priorità: ${ticket.priority}`,
       data: {
         ticketId: ticket._id,
         ticketNumber: ticket.ticketNumber,
@@ -311,8 +317,8 @@ export class NotificationService {
       recipientId: ticket.createdBy.characterId,
       namespace: 'ticket',
       type: 'ticket:escalated',
-      title: `Ticket #${ticket.ticketNumber} Escalated`,
-      message: `Your ticket has been escalated to level ${newLevel} for faster resolution`,
+      title: `Ticket #${ticket.ticketNumber} Escalato`,
+      message: `Il tuo ticket è stato escalato al livello ${newLevel} per una risoluzione più rapida`,
       data: {
         ticketId: ticket._id,
         ticketNumber: ticket.ticketNumber,
@@ -334,8 +340,8 @@ export class NotificationService {
       recipientId: ticket.createdBy.characterId,
       namespace: 'ticket',
       type: 'ticket:closed',
-      title: `Ticket #${ticket.ticketNumber} Closed`,
-      message: 'Your ticket has been resolved and closed',
+      title: `Ticket #${ticket.ticketNumber} Chiuso`,
+      message: 'Il tuo ticket è stato risolto e chiuso',
       data: {
         ticketId: ticket._id,
         ticketNumber: ticket.ticketNumber,
@@ -358,8 +364,8 @@ export class NotificationService {
         recipientId: ticket.assignedTo,
         namespace: 'ticket',
         type: 'ticket:reopened',
-        title: `Ticket #${ticket.ticketNumber} Reopened`,
-        message: `Character has reopened their ticket`,
+        title: `Ticket #${ticket.ticketNumber} Riaperto`,
+        message: `Il personaggio ha riaperto il proprio ticket`,
         data: {
           ticketId: ticket._id,
           ticketNumber: ticket.ticketNumber,
@@ -376,8 +382,8 @@ export class NotificationService {
         recipientRole: 'amministratore',
         namespace: 'ticket',
         type: 'ticket:reopened',
-        title: `Ticket #${ticket.ticketNumber} Reopened`,
-        message: `A closed ticket has been reopened`,
+        title: `Ticket #${ticket.ticketNumber} Riaperto`,
+        message: `Un ticket chiuso è stato riaperto`,
         data: {
           ticketId: ticket._id,
           ticketNumber: ticket.ticketNumber,

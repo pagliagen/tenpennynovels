@@ -9,7 +9,7 @@
 
 import { Request, Response } from 'express';
 import { redis } from '@config/runtime/redis';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
 
 export class TestController {
   /**
@@ -44,7 +44,7 @@ export class TestController {
       if (!eventType || !channel || !data) {
         res.status(400).json({
           result: false,
-          error: 'Missing required fields: eventType, channel, data',
+          error: 'Campi obbligatori mancanti: eventType, channel, data',
           code: 'VALIDATION_ERROR',
         });
         return;
@@ -77,13 +77,13 @@ export class TestController {
           event,
         },
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('[TEST] Failed to emit test event:', error);
       res.status(500).json({
         result: false,
         error: 'Failed to emit test event',
         code: 'INTERNAL_ERROR',
-        details: error.message,
+        details: error instanceof Error ? error.message : String(error),
       });
     }
   }
@@ -101,9 +101,9 @@ export class TestController {
   static async emitQuickEvent(req: Request, res: Response): Promise<void> {
     try {
       const type = req.params.type as string;
-      const userId = (req as any).user?.userId;
-      const characterId = (req as any).character?.characterId;
-      const characterName = (req as any).character?.characterName || 'Test Character';
+      const userId = req.user?.userId;
+      const characterId = req.character?.characterId;
+      const characterName = req.character?.characterName || 'Test Character';
 
       const events: Record<string, { eventType: string; channel: string; data: any }> = {
         player_entered: {
@@ -195,13 +195,13 @@ export class TestController {
           event,
         },
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('[TEST] Failed to emit quick test event:', error);
       res.status(500).json({
         result: false,
         error: 'Failed to emit quick test event',
         code: 'INTERNAL_ERROR',
-        details: error.message,
+        details: error instanceof Error ? error.message : String(error),
       });
     }
   }

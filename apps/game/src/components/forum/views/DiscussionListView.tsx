@@ -44,7 +44,7 @@ export function DiscussionListView() {
     );
   }
 
-  const items = data?.items ?? [];
+  const items = data?.list ?? [];
   const pagination = data?.pagination;
 
   if (items.length === 0 && page === 1) {

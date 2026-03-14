@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
 import { errorResponse, getRequestId } from '../utils/apiResponse';
+import { appConfig } from '@config/runtime';
 
 export interface AppError extends Error {
   statusCode?: number;
@@ -50,7 +51,7 @@ export function errorHandler(
     message = 'Invalid ID format';
   }
   
-  if (err.name === 'MongoServerError' && (err as any).code === 11000) {
+  if (err.name === 'MongoServerError' && 'code' in err && (err as unknown as Record<string, unknown>).code === 11000) {
     statusCode = 409;
     code = 'DUPLICATE_KEY';
     message = 'Resource already exists';
@@ -59,7 +60,7 @@ export function errorHandler(
   if (err.name === 'JsonWebTokenError') {
     statusCode = 401;
     code = 'INVALID_TOKEN';
-    message = 'Invalid authentication token';
+    message = 'Token di autenticazione non valido';
   }
   
   if (err.name === 'TokenExpiredError') {
@@ -69,7 +70,7 @@ export function errorHandler(
   }
   
   // Don't expose internal errors in production
-  if (statusCode === 500 && process.env.NODE_ENV === 'production') {
+  if (statusCode === 500 && appConfig.isProduction) {
     message = 'Internal Server Error';
     code = 'INTERNAL_ERROR';
   }
@@ -78,7 +79,7 @@ export function errorHandler(
   res.status(statusCode).json(errorResponse(
     message,
     code,
-    process.env.NODE_ENV === 'development' ? { stack: err.stack } : undefined,
+    !appConfig.isProduction ? { stack: err.stack } : undefined,
     statusCode,
     getRequestId(req)
   ));

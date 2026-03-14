@@ -74,7 +74,7 @@ export interface RejectFaceClaimRequest {
  * ```
  */
 export async function getDuplicateFaceClaims(): Promise<DuplicateFaceClaimsResponse> {
-  const response = await apiClient.get<{ data: DuplicateFaceClaimsResponse }>(
+  const response = await apiClient.get<DuplicateFaceClaimsResponse>(
     '/admin/characters/face-claims/duplicates'
   );
   return response.data;

@@ -91,7 +91,7 @@ export default function OccupationList() {
   // Load all skills for dropdowns
   const { data: skillsData } = useSkills({ pageSize: 300 });
   const allSkills: SkillItem[] = useMemo(() => {
-    const items: SkillItem[] = (skillsData as any)?.items ?? (skillsData as any)?.data?.skills ?? [];
+    const items: SkillItem[] = (skillsData as any)?.list ?? (skillsData as any)?.data?.skills ?? [];
     return [...items].sort((a, b) => a.name.localeCompare(b.name));
   }, [skillsData]);
 
@@ -269,7 +269,7 @@ export default function OccupationList() {
     setParams(prev => ({ ...prev, sortBy, sortOrder, page: 1 }));
 
   const isSaving = createOccupation.isPending || updateOccupation.isPending;
-  const occupations = data?.items ?? [];
+  const occupations = data?.list ?? [];
   const totalItems = data?.pagination?.totalItems ?? 0;
 
   if (error) {

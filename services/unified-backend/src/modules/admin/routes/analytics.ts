@@ -4,8 +4,13 @@
 
 import express from 'express';
 import { AnalyticsService } from '@shared/services/AnalyticsService';
+import { AdminAuthMiddleware } from '../middleware/adminAuth';
+import { logger } from '../utils/logger';
+import { appConfig } from '@config/runtime';
 
 const router = express.Router();
+
+router.use(AdminAuthMiddleware.requireAdminAccess);
 
 /**
  * GET /admin/analytics/dashboard
@@ -26,7 +31,7 @@ router.get('/dashboard', async (req, res): Promise<void> => {
     if (!result.success) {
       res.status(500).json({
         result: false,
-        error: result.error || 'Failed to retrieve dashboard metrics',
+        error: result.error || 'Impossibile recuperare le metriche della dashboard',
         code: 'ANALYTICS_ERROR',
         timestamp: new Date().toISOString()
       });
@@ -40,10 +45,10 @@ router.get('/dashboard', async (req, res): Promise<void> => {
     });
 
   } catch (error: any) {
-    console.error('Analytics dashboard error:', error);
+    logger.error('Analytics dashboard error:', error);
     res.status(500).json({
       result: false,
-      error: process.env.NODE_ENV === 'production' ? 'Internal server error' : error instanceof Error ? error instanceof Error ? error.message : String(error) : 'Unknown error',
+      error: appConfig.isProduction ? 'Errore interno del server' : error instanceof Error ? error.message : 'Errore sconosciuto',
       code: 'ANALYTICS_ERROR',
       timestamp: new Date().toISOString()
     });
@@ -63,7 +68,7 @@ router.post('/aggregate/:date', async (req, res): Promise<void> => {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
       res.status(400).json({
         result: false,
-        error: 'Invalid date format. Use YYYY-MM-DD',
+        error: 'Formato data non valido. Usare YYYY-MM-DD',
         code: 'INVALID_DATE_FORMAT',
         timestamp: new Date().toISOString()
       });
@@ -74,15 +79,15 @@ router.post('/aggregate/:date', async (req, res): Promise<void> => {
 
     res.json({
       result: true,
-      message: `Daily analytics aggregation completed for ${date}`,
+      message: `Aggregazione analytics giornaliera completata per ${date}`,
       timestamp: new Date().toISOString()
     });
 
   } catch (error: any) {
-    console.error('Analytics aggregation error:', error);
+    logger.error('Analytics aggregation error:', error);
     res.status(500).json({
       result: false,
-      error: process.env.NODE_ENV === 'production' ? 'Internal server error' : error instanceof Error ? error instanceof Error ? error.message : String(error) : 'Unknown error',
+      error: appConfig.isProduction ? 'Errore interno del server' : error instanceof Error ? error.message : 'Errore sconosciuto',
       code: 'AGGREGATION_ERROR',
       timestamp: new Date().toISOString()
     });
@@ -100,15 +105,15 @@ router.post('/cleanup', async (req, res) => {
 
     res.json({
       result: true,
-      message: 'Old analytics data cleanup completed',
+      message: 'Pulizia dati analytics completata',
       timestamp: new Date().toISOString()
     });
 
   } catch (error: any) {
-    console.error('Analytics cleanup error:', error);
+    logger.error('Analytics cleanup error:', error);
     res.status(500).json({
       result: false,
-      error: process.env.NODE_ENV === 'production' ? 'Internal server error' : error instanceof Error ? error instanceof Error ? error.message : String(error) : 'Unknown error',
+      error: appConfig.isProduction ? 'Errore interno del server' : error instanceof Error ? error.message : 'Errore sconosciuto',
       code: 'CLEANUP_ERROR',
       timestamp: new Date().toISOString()
     });
@@ -128,7 +133,7 @@ router.get('/health', async (req, res) => {
       status: result.success ? 'healthy' : 'degraded',
       database: result.success,
       lastCheck: new Date().toISOString(),
-      message: result.success ? 'Analytics system operational' : 'Analytics system has issues'
+      message: result.success ? 'Sistema analytics operativo' : 'Il sistema analytics presenta problemi'
     };
 
     res.status(result.success ? 200 : 503).json({
@@ -138,15 +143,15 @@ router.get('/health', async (req, res) => {
     });
 
   } catch (error: any) {
-    console.error('Analytics health check error:', error);
+    logger.error('Analytics health check error:', error);
     res.status(503).json({
       result: false,
       data: {
         status: 'critical',
         database: false,
         lastCheck: new Date().toISOString(),
-        message: 'Analytics system error',
-        error: error instanceof Error ? error instanceof Error ? error.message : String(error) : 'Unknown error'
+        message: 'Errore del sistema analytics',
+        error: error instanceof Error ? error instanceof Error ? error.message : String(error) : 'Errore sconosciuto'
       },
       timestamp: new Date().toISOString()
     });

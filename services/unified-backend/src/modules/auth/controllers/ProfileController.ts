@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { User, Character, db } from '@database/models';
 import { ApiResponse } from '../types/auth';
-import { logger, logAuth } from '../utils/logger';
+import { logger, logAuth } from '../logger';
 import { redis } from '@config/runtime/redis';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
@@ -213,8 +213,8 @@ export class ProfileController {
         Character.find({ userId }).lean()
       ]);
 
-      const user = userResult as any;
-      const characters = charactersResult as any[];
+      const user = userResult;
+      const characters = charactersResult;
 
       if (!user) {
         errorResponse(
@@ -244,7 +244,7 @@ export class ProfileController {
           characterRoles: user.characterRoles || [],
           multipleCharactersAllowed: user.multipleCharactersAllowed
         },
-        characters: characters.map((char: any) => ({
+        characters: characters.map((char) => ({
           id: char._id.toString(),
           name: char.name,
           surname: char.surname,

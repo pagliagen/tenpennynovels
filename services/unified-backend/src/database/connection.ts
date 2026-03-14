@@ -1,6 +1,8 @@
 import mongoose from 'mongoose';
+import { logger } from '@shared/utils/logger';
+import { appConfig } from '@config/runtime/appConfig';
 
-class DatabaseConnectionManager {
+export class DatabaseConnectionManager {
   private static instance: DatabaseConnectionManager;
   private isConnected = false;
 
@@ -13,11 +15,14 @@ class DatabaseConnectionManager {
     return DatabaseConnectionManager.instance;
   }
 
-  async connect(mongoUri: string): Promise<void> {
+  async connect(): Promise<void> {
     if (this.isConnected) {
-      console.log('Database already connected');
+      logger.info('Database already connected');
       return;
     }
+
+    const mongoUri = appConfig.db.mongodbUri;
+    if (!mongoUri) throw new Error('MONGODB_URI non configurato');
 
     await mongoose.connect(mongoUri, {
       maxPoolSize: 10,
@@ -27,21 +32,21 @@ class DatabaseConnectionManager {
     });
 
     this.isConnected = true;
-    console.log('✅ MongoDB connected');
+    logger.info('MongoDB connected');
 
     // Event handlers
     mongoose.connection.on('error', (error) => {
-      console.error('MongoDB error:', error);
+      logger.error('MongoDB error:', error);
       this.isConnected = false;
     });
 
     mongoose.connection.on('disconnected', () => {
-      console.warn('MongoDB disconnected');
+      logger.warn('MongoDB disconnected');
       this.isConnected = false;
     });
 
     mongoose.connection.on('reconnected', () => {
-      console.log('MongoDB reconnected');
+      logger.info('MongoDB reconnected');
       this.isConnected = true;
     });
   }
@@ -56,7 +61,7 @@ class DatabaseConnectionManager {
     return this.isConnected && mongoose.connection.readyState === 1;
   }
 
-  async healthCheck(): Promise<{ status: string; details: any }> {
+  async healthCheck(): Promise<{ status: string; details: Record<string, unknown> }> {
     try {
       if (!this.isConnected) {
         return { status: 'unhealthy', details: { error: 'Not connected' } };
@@ -73,11 +78,11 @@ class DatabaseConnectionManager {
           name: mongoose.connection.name,
         }
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         status: 'unhealthy',
         details: {
-          error: error instanceof Error ? error.message : 'Unknown error',
+          error: error instanceof Error ? error.message : 'Errore sconosciuto',
           readyState: mongoose.connection.readyState
         }
       };

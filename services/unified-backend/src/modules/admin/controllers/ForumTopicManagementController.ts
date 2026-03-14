@@ -7,6 +7,7 @@ import { ForumPost } from '@database/models/ForumPost';
 import { AdminAuthMiddleware } from '../middleware/adminAuth';
 import { logger } from '../utils/logger';
 import { listResponse, successResponse, errorResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
+import { escapeRegex } from '@shared/utils/validation';
 
 function createSlug(title: string): string {
   return slugify(title, { lower: true, strict: true, locale: 'it' });
@@ -29,10 +30,11 @@ export class ForumTopicManagementController {
 
       const filter: Record<string, unknown> = {};
       if (search) {
+        const escapedSearch = escapeRegex(search as string);
         filter.$or = [
-          { title: { $regex: search, $options: 'i' } },
-          { description: { $regex: search, $options: 'i' } },
-          { slug: { $regex: search, $options: 'i' } },
+          { title: { $regex: escapedSearch, $options: 'i' } },
+          { description: { $regex: escapedSearch, $options: 'i' } },
+          { slug: { $regex: escapedSearch, $options: 'i' } },
         ];
       }
       if (isVisible === 'true' || isVisible === 'false') filter.isVisible = isVisible === 'true';

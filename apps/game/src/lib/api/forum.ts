@@ -66,12 +66,13 @@ export const forumApi = {
     topicSlug: string,
     page?: number,
     limit?: number
-  ): Promise<{ items: ForumDiscussion[]; pagination: PaginationInfo }> {
-    const response = await api.get<{ data: { items: ForumDiscussion[]; pagination: PaginationInfo } }>(
+  ): Promise<{ list: ForumDiscussion[]; pagination: PaginationInfo }> {
+    const response = await api.get<{ list: ForumDiscussion[]; pagination: PaginationInfo }>(
       `/forum/topics/${topicSlug}/discussions`,
       { params: { page, limit } }
     );
-    return response.data;
+    const defaultPagination: PaginationInfo = { page: 1, pageSize: 20, total: 0, totalPages: 0, hasNext: false, hasPrev: false };
+    return { list: response.list ?? [], pagination: response.pagination ?? defaultPagination };
   },
 
   async getDiscussion(
@@ -115,12 +116,13 @@ export const forumApi = {
     discussionSlug: string,
     page?: number,
     limit?: number
-  ): Promise<{ items: ForumPost[]; pagination: PaginationInfo }> {
-    const response = await api.get<{ data: { items: ForumPost[]; pagination: PaginationInfo } }>(
+  ): Promise<{ list: ForumPost[]; pagination: PaginationInfo }> {
+    const response = await api.get<{ list: ForumPost[]; pagination: PaginationInfo }>(
       `/forum/topics/${topicSlug}/discussions/${discussionSlug}/posts`,
       { params: { page, limit } }
     );
-    return response.data;
+    const defaultPagination: PaginationInfo = { page: 1, pageSize: 20, total: 0, totalPages: 0, hasNext: false, hasPrev: false };
+    return { list: response.list ?? [], pagination: response.pagination ?? defaultPagination };
   },
 
   async createPost(
@@ -148,12 +150,13 @@ export const forumApi = {
   async searchForum(
     query: string,
     topicSlug?: string
-  ): Promise<{ items: ForumSearchResult[]; pagination: PaginationInfo }> {
-    const response = await api.get<{ data: { items: ForumSearchResult[]; pagination: PaginationInfo } }>(
+  ): Promise<{ list: ForumSearchResult[]; pagination: PaginationInfo }> {
+    const response = await api.get<{ list: ForumSearchResult[]; pagination: PaginationInfo }>(
       '/forum/search',
       { params: { q: query, topicSlug } }
     );
-    return response.data;
+    const defaultPagination: PaginationInfo = { page: 1, pageSize: 20, total: 0, totalPages: 0, hasNext: false, hasPrev: false };
+    return { list: response.list ?? [], pagination: response.pagination ?? defaultPagination };
   },
 
   // ── Favorites ─────────────────────────────────────────────────────
@@ -218,14 +221,14 @@ export const forumApi = {
 
   async getNotifications(
     page?: number
-  ): Promise<{ items: ForumNotification[]; pagination: PaginationInfo }> {
+  ): Promise<{ list: ForumNotification[]; pagination: PaginationInfo }> {
     const response = await api.get<{
-      data: { notifications?: ForumNotification[]; pagination?: PaginationInfo };
+      list?: ForumNotification[];
+      pagination?: PaginationInfo;
     }>('/forum/notifications', { params: { page } });
-    const responseData = response.data;
-    const items = responseData?.notifications ?? [];
-    const pagination = responseData?.pagination ?? { page: 1, pageSize: 20, total: 0, totalPages: 0, hasNext: false, hasPrev: false };
-    return { items, pagination };
+    const list = response.list ?? [];
+    const pagination = response.pagination ?? { page: 1, pageSize: 20, total: 0, totalPages: 0, hasNext: false, hasPrev: false };
+    return { list, pagination };
   },
 
   async markNotificationsRead(notificationIds: string[]): Promise<void> {

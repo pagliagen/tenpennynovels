@@ -94,7 +94,7 @@ export interface MaintenanceStatus {
 }
 
 export interface AuditLogResponse {
-  items: AuditLog[];
+  list: AuditLog[];
   pagination: {
     page: number;
     pageSize: number;

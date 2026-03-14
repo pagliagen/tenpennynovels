@@ -7,8 +7,8 @@
  * Replaces the monolithic switch statements in RedisEventManager.
  */
 
-import { Server as SocketIOServer } from 'socket.io';
-import { logger } from '../utils/logger';
+import { Server as SocketIOServer, RemoteSocket } from 'socket.io';
+import { logger } from '../logger';
 import { IEventHandler, RedisEvent, RedisChannel, EventHandlerContext } from './types';
 
 // Import all event handlers
@@ -113,15 +113,15 @@ export class EventRouter {
   /**
    * Utility: Find socket by user ID
    */
-  private async findUserSocket(userId: string): Promise<any> {
+  private async findUserSocket(userId: string): Promise<RemoteSocket<any, any> | undefined> {
     const sockets = await this.io.fetchSockets();
-    return sockets.find(socket => socket.data.userId === userId);
+    return sockets.find(socket => socket.data.user?.userId === userId);
   }
 
   /**
    * Utility: Find socket by character ID
    */
-  private async findCharacterSocket(characterId: string): Promise<any> {
+  private async findCharacterSocket(characterId: string): Promise<RemoteSocket<any, any> | undefined> {
     const sockets = await this.io.fetchSockets();
 
     logger.debug('[EventRouter] Searching for character socket', {

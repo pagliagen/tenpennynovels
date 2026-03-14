@@ -7,8 +7,11 @@
 import { Router } from 'express';
 import { DeletedRecordsController } from '../controllers/DeletedRecordsController';
 import { requireViewPermission } from '../utils/permissions';
+import { AdminAuthMiddleware } from '../middleware/adminAuth';
 
 const router = Router();
+
+router.use(AdminAuthMiddleware.requireAdminAccess);
 
 /**
  * GET /admin/deleted-records

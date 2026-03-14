@@ -5,6 +5,7 @@ require('dotenv').config();
 if (process.env.NODE_ENV === 'production') {
   require('module-alias/register');
 }
+
 import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import { createAdapter } from '@socket.io/redis-adapter';
@@ -12,11 +13,8 @@ import { createClient } from 'redis';
 import app from './app';
 import { db } from '@database/connection';
 import { logger } from '@shared/utils/logger';
-
-const PORT = parseInt(process.env.PORT || '3001', 10);
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/tenpennynovels';
-const REDIS_HOST = process.env.REDIS_HOST || 'localhost';
-const REDIS_PORT = parseInt(process.env.REDIS_PORT || '6379');
+import { validateEnvironment } from '@config/runtime/envValidation';
+import { appConfig } from '@config/runtime';
 
 // Create HTTP server
 const httpServer = http.createServer(app);
@@ -25,8 +23,8 @@ const httpServer = http.createServer(app);
 // NOTE: Backend is INTERNAL - WebSocket CORS is permissive since API Gateway validates
 const io = new SocketIOServer(httpServer, {
   cors: {
-    origin: process.env.NODE_ENV === 'production' ? false : true,
-    credentials: process.env.NODE_ENV === 'production' ? false : true,
+    origin: appConfig.isProduction ? false : true,
+    credentials: appConfig.isProduction ? false : true,
     methods: ['GET', 'POST']
   },
   transports: ['websocket', 'polling']
@@ -35,12 +33,7 @@ const io = new SocketIOServer(httpServer, {
 // Setup Redis adapter for Socket.IO (for horizontal scaling)
 async function setupRedisAdapter(): Promise<void> {
   try {
-    const pubClient = createClient({
-      socket: {
-        host: REDIS_HOST,
-        port: REDIS_PORT
-      }
-    });
+    const pubClient = createClient({ url: appConfig.db.redisUrl });
 
     const subClient = pubClient.duplicate();
 
@@ -64,9 +57,15 @@ async function setupRedisAdapter(): Promise<void> {
 // Start server
 async function startServer(): Promise<void> {
   try {
+    const envCheck = validateEnvironment();
+    if (!envCheck.isValid) {
+      logger.error('Server non avviato: variabili d\'ambiente mancanti');
+      process.exit(1);
+    }
+
     // Connect to MongoDB
     logger.info('📡 Connecting to MongoDB...');
-    await db.connect(MONGODB_URI);
+    await db.connect();
     logger.info('✅ MongoDB connected');
 
     // Connect to Redis (singleton for sessions, caching, pub/sub)
@@ -77,11 +76,6 @@ async function startServer(): Promise<void> {
 
     // Setup Redis adapter for WebSocket
     await setupRedisAdapter();
-
-    // Initialize Qdrant Vector DB
-    logger.info('📡 Initializing Qdrant collections...');
-    const { initQdrantCollections } = await import('@modules/game/utils/qdrantClient');
-    await initQdrantCollections();
 
     // Initialize Email Service
     const { EmailService } = await import('@modules/auth/services/EmailService');
@@ -98,7 +92,7 @@ async function startServer(): Promise<void> {
     logger.info('✅ Sitemap CRON job started');
 
     // Start Presence Cleanup CRON Job (every 5 minutes, feature flag controlled)
-    if (process.env.ENABLE_PRESENCE_CLEANUP !== 'false') {
+    if (appConfig.features.presenceCleanup) {
       await import('./cron/presenceCleanup');
       logger.info('✅ Presence cleanup CRON job started');
     }
@@ -107,12 +101,11 @@ async function startServer(): Promise<void> {
     // IMPORTANT: Bind to 0.0.0.0 for Docker internal networking
     // Security is handled by api-gateway (only gateway can access backend)
     // External access to backend is blocked by Docker network isolation
-    const BIND_HOST = process.env.NODE_ENV === 'production' ? '127.0.0.1' : '0.0.0.0';
-    httpServer.listen(PORT, BIND_HOST, () => {
-      logger.info(`🚀 Unified Backend started on http://0.0.0.0:${PORT}`);
-      logger.info(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
-      logger.info(`🔗 MongoDB: ${MONGODB_URI}`);
-      logger.info(`🔗 Redis: ${REDIS_HOST}:${REDIS_PORT}`);
+    httpServer.listen(appConfig.port, appConfig.bindHost, () => {
+      logger.info(`🚀 Unified Backend started on http://${appConfig.bindHost}:${appConfig.port}`);
+      logger.info(`📊 Environment: ${appConfig.isProduction ? 'production' : 'development'}`);
+      logger.info(`🔗 MongoDB: ${appConfig.db.mongodbUri}`);
+      logger.info(`🔗 Redis: ${appConfig.db.redisUrl}`);
     });
 
     // Import and setup WebSocket handlers (after io is created)
@@ -146,6 +139,18 @@ async function gracefulShutdown(signal: string): Promise<void> {
     logger.info('✅ HTTP server closed');
 
     try {
+      // Shutdown Redis Subscriber
+      try {
+        const { getRedisSubscriber } = await import('@modules/game/websocket');
+        const subscriber = getRedisSubscriber();
+        if (subscriber) {
+          await subscriber.shutdown();
+          logger.info('✅ Redis Subscriber chiuso');
+        }
+      } catch (e) {
+        logger.warn('Redis Subscriber shutdown skipped');
+      }
+
       // Close WebSocket connections
       io.close(() => {
         logger.info('✅ WebSocket server closed');

@@ -6,7 +6,7 @@
  * Centralized type definitions for the refactored event handling system.
  */
 
-import { Server as SocketIOServer } from 'socket.io';
+import { Server as SocketIOServer, RemoteSocket } from 'socket.io';
 
 /**
  * Base interface for all Redis events
@@ -67,12 +67,12 @@ export interface EventHandlerContext {
   /**
    * Find a socket by user ID
    */
-  findUserSocket(userId: string): Promise<any>;
+  findUserSocket(userId: string): Promise<RemoteSocket<any, any> | undefined>;
 
   /**
    * Find a socket by character ID
    */
-  findCharacterSocket(characterId: string): Promise<any>;
+  findCharacterSocket(characterId: string): Promise<RemoteSocket<any, any> | undefined>;
 
   /**
    * Notify all members of a group (corporation, etc.)

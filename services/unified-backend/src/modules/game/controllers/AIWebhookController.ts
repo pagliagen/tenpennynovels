@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { Chat, Location, Character } from '@database/models';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
 import { getSocketIO } from '../websocket/socketInstance';
 
 export class AIWebhookController {
@@ -27,7 +27,7 @@ export class AIWebhookController {
 
       if (!requestId || !response || !locationId) {
         logger.warn('[AIWebhook] Invalid callback payload', { requestId });
-        res.status(400).json({ success: false, error: 'Missing required fields' });
+        res.status(400).json({ success: false, error: 'Campi obbligatori mancanti' });
         return;
       }
 
@@ -42,7 +42,7 @@ export class AIWebhookController {
       const location = await Location.findById(locationId);
       if (!location) {
         logger.error(`[AIWebhook] Location not found: ${locationId}`);
-        res.status(404).json({ success: false, error: 'Location not found' });
+        res.status(404).json({ success: false, error: 'Location non trovata' });
         return;
       }
 
@@ -67,7 +67,7 @@ export class AIWebhookController {
 
       const io = getSocketIO();
       if (io) {
-        io.to(`location:${locationId}`).emit('location:action', {
+        io.to(`location_${locationId}`).emit('location_action', {
           action: {
             _id: action._id.toString(),
             locationId,
@@ -92,7 +92,7 @@ export class AIWebhookController {
       });
     } catch (error: any) {
       logger.error('[AIWebhook] Error handling bot response:', error);
-      res.status(500).json({ success: false, error: 'Internal server error' });
+      res.status(500).json({ success: false, error: 'Errore interno del server' });
     }
   }
 }

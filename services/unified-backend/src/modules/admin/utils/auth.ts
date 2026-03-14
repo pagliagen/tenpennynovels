@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { logger } from './logger';
+import { appConfig } from '@config/runtime';
 
 export interface JWTPayload {
   userId: string;
@@ -13,11 +14,8 @@ export interface JWTPayload {
 
 export class AuthUtils {
   private static getJwtSecret(): string {
-    const secret = process.env.JWT_SECRET;
-    if (!secret) {
-      throw new Error('JWT_SECRET environment variable is required');
-    }
-    return secret;
+    if (!appConfig.jwt.secret) throw new Error('JWT_SECRET non configurato');
+    return appConfig.jwt.secret;
   }
 
   /**
@@ -28,7 +26,7 @@ export class AuthUtils {
       const decoded = jwt.verify(authToken, this.getJwtSecret()) as JWTPayload;
       
       if (!decoded.userId || !decoded.username || !decoded.email) {
-        throw new Error('Invalid token payload - missing required fields');
+        throw new Error('Payload del token non valido - campi obbligatori mancanti');
       }
 
       return decoded;
@@ -36,7 +34,7 @@ export class AuthUtils {
       logger.warn('JWT token validation failed:', { 
         error: error instanceof Error ? error.message : String(error)
       });
-      throw new Error('Invalid authentication token');
+      throw new Error('Token di autenticazione non valido');
     }
   }
 
@@ -45,7 +43,7 @@ export class AuthUtils {
    */
   static decodeCharacterContext(characterContext: string): { characterId: string; characterName: string; characterRoles: string[] } | null {
     try {
-      const decoded = jwt.verify(characterContext, this.getJwtSecret()) as any;
+      const decoded = jwt.verify(characterContext, this.getJwtSecret()) as { characterId: string; characterName: string; characterRoles?: string[] };
       return {
         characterId: decoded.characterId,
         characterName: decoded.characterName, // Include character name from JWT

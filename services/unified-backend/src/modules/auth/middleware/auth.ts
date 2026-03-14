@@ -1,9 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
 import { CryptoUtils } from '../utils/crypto';
 import { RequestUser, CharacterContextPayload, ApiResponse } from '@shared/types';
-import { logger, logAuth, logSecurity } from '../utils/logger';
+import { logger, logAuth, logSecurity } from '../logger';
 import { CharacterSessionManager } from '../utils/characterSessionManager';
 import { User } from '@database/models';
+import { appConfig } from '@config/runtime';
+import type { AdminPermission } from '@config/admin-permissions';
 
 // Extend Express Request interface to include user data (RequestUser = token + optional character-derived fields from admin)
 declare global {
@@ -29,7 +31,7 @@ export class AuthMiddleware {
           if (required) {
             const response: ApiResponse = {
               result: false,
-              error: 'Authentication required',
+              error: 'Autenticazione richiesta',
               code: 'AUTH_REQUIRED',
               timestamp: new Date().toISOString()
             };
@@ -69,26 +71,19 @@ export class AuthMiddleware {
           });
 
           next();
-        } catch (error: any) {
-          // Clear invalid token
-          res.clearCookie('auth_token', {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
-            domain: process.env.NODE_ENV === 'production' ? '.tenpennynovels.com' : 'localhost',
-            path: '/'
-          });
+        } catch (error: unknown) {
+          res.clearCookie('auth_token', appConfig.cookie);
 
           if (required) {
             logSecurity('invalid_token_access', {
-              error: error instanceof Error ? error.message : 'Unknown error',
+              error: error instanceof Error ? error.message : 'Errore sconosciuto',
               ipAddress: req.ip,
               userAgent: req.get('User-Agent')
             });
 
             const response: ApiResponse = {
               result: false,
-              error: 'Invalid or expired session',
+              error: 'Sessione non valida o scaduta',
               code: 'INVALID_SESSION',
               timestamp: new Date().toISOString()
             };
@@ -97,11 +92,11 @@ export class AuthMiddleware {
 
           next();
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         logger.error('Auth middleware error:', error);
         const response: ApiResponse = {
           result: false,
-          error: 'Authentication error',
+          error: 'Errore di autenticazione',
           code: 'AUTH_ERROR',
           timestamp: new Date().toISOString()
         };
@@ -122,7 +117,7 @@ export class AuthMiddleware {
           if (required) {
             const response: ApiResponse = {
               result: false,
-              error: 'Character selection required',
+              error: 'Selezione del personaggio richiesta',
               code: 'CHARACTER_REQUIRED',
               timestamp: new Date().toISOString()
             };
@@ -142,17 +137,11 @@ export class AuthMiddleware {
               ipAddress: req.ip
             });
 
-            res.clearCookie('character_context', {
-              httpOnly: true,
-              secure: process.env.NODE_ENV === 'production',
-              sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
-              domain: process.env.NODE_ENV === 'production' ? '.tenpennynovels.com' : 'localhost',
-              path: '/'
-            });
+            res.clearCookie('character_context', appConfig.cookie);
 
             const response: ApiResponse = {
               result: false,
-              error: 'Character token mismatch',
+              error: 'Discrepanza token personaggio',
               code: 'CHARACTER_TOKEN_MISMATCH',
               timestamp: new Date().toISOString()
             };
@@ -173,18 +162,12 @@ export class AuthMiddleware {
               ipAddress: req.ip
             });
 
-            res.clearCookie('character_context', {
-              httpOnly: true,
-              secure: process.env.NODE_ENV === 'production',
-              sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
-              domain: process.env.NODE_ENV === 'production' ? '.tenpennynovels.com' : 'localhost',
-              path: '/'
-            });
+            res.clearCookie('character_context', appConfig.cookie);
 
             if (required) {
               const response: ApiResponse = {
                 result: false,
-                error: 'Character session is no longer valid. Another device may have logged in with this character.',
+                error: 'Sessione personaggio non più valida. Un altro dispositivo potrebbe aver effettuato l\'accesso con questo personaggio.',
                 code: 'CHARACTER_SESSION_INVALID',
                 timestamp: new Date().toISOString()
               };
@@ -196,20 +179,13 @@ export class AuthMiddleware {
 
           req.character = decoded;
           next();
-        } catch (error: any) {
-          // Clear invalid character token
-          res.clearCookie('character_context', {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
-            domain: process.env.NODE_ENV === 'production' ? '.tenpennynovels.com' : 'localhost',
-            path: '/'
-          });
+        } catch (error: unknown) {
+          res.clearCookie('character_context', appConfig.cookie);
 
           if (required) {
             const response: ApiResponse = {
               result: false,
-              error: 'Invalid or expired character session',
+              error: 'Sessione personaggio non valida o scaduta',
               code: 'INVALID_CHARACTER_SESSION',
               timestamp: new Date().toISOString()
             };
@@ -218,11 +194,11 @@ export class AuthMiddleware {
 
           next();
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         logger.error('Character auth middleware error:', error);
         const response: ApiResponse = {
           result: false,
-          error: 'Character authentication error',
+          error: 'Errore di autenticazione del personaggio',
           code: 'CHARACTER_AUTH_ERROR',
           timestamp: new Date().toISOString()
         };
@@ -240,7 +216,7 @@ export class AuthMiddleware {
         if (!req.user) {
           const response: ApiResponse = {
             result: false,
-            error: 'Authentication required',
+            error: 'Autenticazione richiesta',
             code: 'AUTH_REQUIRED',
             timestamp: new Date().toISOString()
           };
@@ -257,7 +233,7 @@ export class AuthMiddleware {
 
           const response: ApiResponse = {
             result: false,
-            error: 'Admin privileges required',
+            error: 'Privilegi admin richiesti',
             code: 'ADMIN_REQUIRED',
             timestamp: new Date().toISOString()
           };
@@ -271,7 +247,7 @@ export class AuthMiddleware {
           const adminPermissions = req.user.adminPermissions ?? [];
           const isGestore = req.user.isGestore ?? false;
           const hasPermission = permissions.every((p) =>
-            hasAdminPermission(gameplayRoles, adminPermissions, isGestore, p as any)
+            hasAdminPermission(gameplayRoles, adminPermissions, isGestore, p as AdminPermission)
           );
 
           if (!hasPermission) {
@@ -288,7 +264,7 @@ export class AuthMiddleware {
 
             const response: ApiResponse = {
               result: false,
-              error: 'Insufficient admin permissions',
+              error: 'Permessi admin insufficienti',
               code: 'INSUFFICIENT_PERMISSIONS',
               timestamp: new Date().toISOString()
             };
@@ -297,11 +273,11 @@ export class AuthMiddleware {
         }
 
         next();
-      } catch (error: any) {
+      } catch (error: unknown) {
         logger.error('Admin auth middleware error:', error);
         const response: ApiResponse = {
           result: false,
-          error: 'Admin authentication error',
+          error: 'Errore di autenticazione admin',
           code: 'ADMIN_AUTH_ERROR',
           timestamp: new Date().toISOString()
         };
@@ -319,7 +295,7 @@ export class AuthMiddleware {
         if (!req.character) {
           const response: ApiResponse = {
             result: false,
-            error: 'Character selection required',
+            error: 'Selezione del personaggio richiesta',
             code: 'CHARACTER_REQUIRED',
             timestamp: new Date().toISOString()
           };
@@ -343,7 +319,7 @@ export class AuthMiddleware {
 
           const response: ApiResponse = {
             result: false,
-            error: 'Insufficient gameplay permissions',
+            error: 'Permessi di gioco insufficienti',
             code: 'INSUFFICIENT_GAMEPLAY_ROLE',
             timestamp: new Date().toISOString()
           };
@@ -351,11 +327,11 @@ export class AuthMiddleware {
         }
 
         next();
-      } catch (error: any) {
+      } catch (error: unknown) {
         logger.error('Gameplay role middleware error:', error);
         const response: ApiResponse = {
           result: false,
-          error: 'Gameplay authentication error',
+          error: 'Errore di autenticazione di gioco',
           code: 'GAMEPLAY_AUTH_ERROR',
           timestamp: new Date().toISOString()
         };
@@ -368,73 +344,27 @@ export class AuthMiddleware {
    * Helper method to set auth cookie
    */
   static setAuthCookie(res: Response, token: string, rememberMe = false): void {
-    const maxAge = rememberMe ? 7 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000; // 7 days or 24 hours
+    const maxAge = rememberMe ? 7 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
 
-    const cookieOptions: any = {
-      httpOnly: true,
-      path: '/',
-      maxAge
-    };
-
-    // Production settings
-    if (process.env.NODE_ENV === 'production') {
-      cookieOptions.secure = true;
-      cookieOptions.sameSite = 'strict';
-      cookieOptions.domain = '.tenpennynovels.com';
-    } else {
-      // Development: Allow cross-port cookie sharing on localhost
-      // Using secure:false for HTTP (http://localhost:XXXX)
-      // Using sameSite:lax to allow cookies between localhost:4000, localhost:4001, etc.
-      cookieOptions.secure = false;
-      cookieOptions.sameSite = 'lax';
-      cookieOptions.domain = 'localhost';
-    }
-
-    res.cookie('auth_token', token, cookieOptions);
+    res.cookie('auth_token', token, { ...appConfig.cookie, maxAge });
   }
 
   /**
    * Helper method to set character context cookie
    */
   static setCharacterCookie(res: Response, token: string): void {
-    const cookieOptions: any = {
-      httpOnly: true,
-      path: '/',
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
-    };
-
-    // Production settings
-    if (process.env.NODE_ENV === 'production') {
-      cookieOptions.secure = true;
-      cookieOptions.sameSite = 'strict';
-      cookieOptions.domain = '.tenpennynovels.com';
-    } else {
-      // Development: Allow cross-port cookie sharing on localhost
-      // Using secure:false for HTTP (http://localhost:XXXX)
-      // Using sameSite:lax to allow cookies between localhost:4000, localhost:4001, etc.
-      cookieOptions.secure = false;
-      cookieOptions.sameSite = 'lax';
-      cookieOptions.domain = 'localhost';
-    }
-
-    res.cookie('character_context', token, cookieOptions);
+    res.cookie('character_context', token, {
+      ...appConfig.cookie,
+      maxAge: 24 * 60 * 60 * 1000,
+    });
   }
 
   /**
    * Helper method to clear authentication cookies
    */
   static clearAuthCookies(res: Response): void {
-    const cookieOptions = {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: (process.env.NODE_ENV === 'production' ? 'strict' : 'lax') as 'strict' | 'lax',
-      domain: process.env.NODE_ENV === 'production' ? '.tenpennynovels.com' : 'localhost',
-      path: '/',
-      maxAge: 0,
-      expires: new Date(0)
-    };
-
-    res.clearCookie('auth_token', cookieOptions);
-    res.clearCookie('character_context', cookieOptions);
+    const clearOpts = { ...appConfig.cookie, maxAge: 0, expires: new Date(0) };
+    res.clearCookie('auth_token', clearOpts);
+    res.clearCookie('character_context', clearOpts);
   }
 }

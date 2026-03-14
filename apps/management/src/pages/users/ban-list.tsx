@@ -349,7 +349,7 @@ export default function BanList() {
 
         <ConfigurableDataTable<User>
           tableName="ban-list"
-          data={data?.items ?? []}
+          data={data?.list ?? []}
           loading={isLoading || tableConfig.loading}
           onAction={handleAction}
           pagination={{

@@ -5,6 +5,6 @@
  * Inherits base styles from parent chat.module.scss
  */
 
-@import '../MessageCard.module.scss';
+@use '../MessageCard.module.scss';
 
 /* Standard message has no specific overrides - uses all base styles */

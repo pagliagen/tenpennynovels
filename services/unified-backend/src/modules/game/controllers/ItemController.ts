@@ -2,7 +2,8 @@ import { Request, Response } from 'express';
 import { Item } from '@database/models/Item';
 import { Location } from '@database/models/Location';
 import { Character } from '@database/models/Character';
-import { logger } from '../utils/logger';
+import { escapeRegex } from '@shared/utils/validation';
+import { logger } from '../logger';
 import { successResponse, errorResponse, listResponse, getRequestId } from '../utils/apiResponse';
 
 export class ItemController {
@@ -48,10 +49,11 @@ export class ItemController {
       if (minPrice) filter.basePrice = { ...filter.basePrice, $gte: Number(minPrice) };
       
       if (search) {
+        const escapedSearch = escapeRegex(search as string);
         filter.$or = [
-          { name: { $regex: search, $options: 'i' } },
-          { description: { $regex: search, $options: 'i' } },
-          { subcategory: { $regex: search, $options: 'i' } }
+          { name: { $regex: escapedSearch, $options: 'i' } },
+          { description: { $regex: escapedSearch, $options: 'i' } },
+          { subcategory: { $regex: escapedSearch, $options: 'i' } }
         ];
       }
 
@@ -71,7 +73,7 @@ export class ItemController {
       const character = await Character.findById(characterId);
       if (!character) {
         res.status(404).json(errorResponse(
-          'Character not found',
+          'Personaggio non trovato',
           'CHARACTER_NOT_FOUND',
           undefined,
           404,
@@ -177,7 +179,7 @@ export class ItemController {
       const character = await Character.findById(characterId);
       if (!character) {
         res.status(404).json(errorResponse(
-          'Character not found',
+          'Personaggio non trovato',
           'CHARACTER_NOT_FOUND',
           undefined,
           404,
@@ -383,7 +385,7 @@ export class ItemController {
       const character = await Character.findById(characterId);
       if (!character) {
         res.status(404).json(errorResponse(
-          'Character not found',
+          'Personaggio non trovato',
           'CHARACTER_NOT_FOUND',
           undefined,
           404,
@@ -419,7 +421,7 @@ export class ItemController {
           location: {
             id: location._id,
             name: location.name,
-            type: location.type,
+            locationLevel: location.locationLevel,
             description: location.description
           },
           items: itemsWithEligibility,

@@ -13,6 +13,7 @@ import {
   BrowserStats,
   ContentStats
 } from '../schemas/analyticsSchemas';
+import { logger } from '@shared/utils/logger';
 
 import { 
   DashboardMetrics,
@@ -46,8 +47,8 @@ export class AnalyticsService {
         createdAt: new Date(),
         updatedAt: new Date()
       });
-    } catch (error: any) {
-      console.error('Error tracking user session:', error);
+    } catch (error: unknown) {
+      logger.error('Error tracking user session:', error);
     }
   }
 
@@ -96,8 +97,8 @@ export class AnalyticsService {
           updatedAt: new Date()
         }
       );
-    } catch (error: any) {
-      console.error('Error tracking page view:', error);
+    } catch (error: unknown) {
+      logger.error('Error tracking page view:', error);
     }
   }
 
@@ -138,8 +139,8 @@ export class AnalyticsService {
           updatedAt: new Date()
         }
       );
-    } catch (error: any) {
-      console.error('Error tracking user action:', error);
+    } catch (error: unknown) {
+      logger.error('Error tracking user action:', error);
     }
   }
 
@@ -162,8 +163,8 @@ export class AnalyticsService {
           }
         );
       }
-    } catch (error: any) {
-      console.error('Error ending user session:', error);
+    } catch (error: unknown) {
+      logger.error('Error ending user session:', error);
     }
   }
 
@@ -190,8 +191,8 @@ export class AnalyticsService {
         timestamp: new Date(),
         createdAt: new Date()
       });
-    } catch (error: any) {
-      console.error('Error tracking system metrics:', error);
+    } catch (error: unknown) {
+      logger.error('Error tracking system metrics:', error);
     }
   }
 
@@ -348,12 +349,12 @@ export class AnalyticsService {
         success: true,
         data: metrics
       };
-    } catch (error: any) {
-      console.error('Error getting game dashboard metrics:', error);
+    } catch (error: unknown) {
+      logger.error('Error getting game dashboard metrics:', error);
       return {
         success: false,
         data: {} as DashboardMetrics,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Errore sconosciuto'
       };
     }
   }
@@ -530,12 +531,12 @@ export class AnalyticsService {
         success: true,
         data: metrics
       };
-    } catch (error: any) {
-      console.error('Error getting dashboard metrics:', error);
+    } catch (error: unknown) {
+      logger.error('Error getting dashboard metrics:', error);
       return {
         success: false,
         data: {} as DashboardMetrics,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Errore sconosciuto'
       };
     }
   }
@@ -583,9 +584,9 @@ export class AnalyticsService {
         { upsert: true, returnDocument: 'after' }
       );
 
-      console.log(`Daily stats aggregated for ${date}`);
-    } catch (error: any) {
-      console.error('Error aggregating daily stats:', error);
+      logger.info(`Daily stats aggregated for ${date}`);
+    } catch (error: unknown) {
+      logger.error('Error aggregating daily stats:', error);
     }
   }
 
@@ -723,23 +724,23 @@ export class AnalyticsService {
           corporationsActive: 0 // TODO: Add when corporations are implemented
         },
         charactersByStatus: {
-          approved: approvedList.map((char: any) => ({
+          approved: approvedList.map((char: { name: string; surname?: string; userId: { username?: string }; gameplayRoles?: string[] }) => ({
             name: char.name + (char.surname ? ' ' + char.surname : ''),
-            username: (char.userId as any)?.username || 'unknown',
+            username: (char.userId as { username?: string })?.username || 'unknown',
             roles: char.gameplayRoles || []
           })),
-          pending_approval: pendingList.map((char: any) => ({
+          pending_approval: pendingList.map((char: { name: string; surname?: string; userId: { username?: string } }) => ({
             name: char.name + (char.surname ? ' ' + char.surname : ''),
-            username: (char.userId as any)?.username || 'unknown'
+            username: (char.userId as { username?: string })?.username || 'unknown'
           })),
-          draft: draftList.map((char: any) => ({
+          draft: draftList.map((char: { name: string; surname?: string; userId: { username?: string } }) => ({
             name: char.name + (char.surname ? ' ' + char.surname : ''),
-            username: (char.userId as any)?.username || 'unknown'
+            username: (char.userId as { username?: string })?.username || 'unknown'
           }))
         }
       };
-    } catch (error: any) {
-      console.error('Error getting real game data:', error);
+    } catch (error: unknown) {
+      logger.error('Error getting real game data:', error);
       // Return default values on error
       return {
         totalUsers: 0,
@@ -845,8 +846,8 @@ export class AnalyticsService {
         corporationsActive
       };
 
-    } catch (error: any) {
-      console.error('Error getting gameplay activity:', error);
+    } catch (error: unknown) {
+      logger.error('Error getting gameplay activity:', error);
       throw error;
     }
   }
@@ -870,9 +871,9 @@ export class AnalyticsService {
       await BrowserStats.deleteMany({ createdAt: { $lt: oneYearAgo } });
       await GeographicStats.deleteMany({ createdAt: { $lt: oneYearAgo } });
 
-      console.log('Old analytics data cleaned up');
-    } catch (error: any) {
-      console.error('Error cleaning up old data:', error);
+      logger.info('Old analytics data cleaned up');
+    } catch (error: unknown) {
+      logger.error('Error cleaning up old data:', error);
     }
   }
 }

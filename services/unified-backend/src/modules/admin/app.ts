@@ -7,17 +7,16 @@ import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
 import morgan from 'morgan';
 import { apiRoutes } from './routes';
-import { httpLoggerStream } from './utils/logger';
+import { httpLoggerStream, logger } from './utils/logger';
 import { ApiResponse } from './types/management';
 import { successResponse, errorResponse } from './utils/apiResponse';
+import { appConfig } from '@config/runtime';
 
-console.log('📦 Setting up Management Backend...');
+logger.info('Setting up Management Backend...');
 const app = express();
-const PORT = process.env.PORT || 3002;
-console.log(`🎯 Starting Management Backend on port ${PORT}...`);
+logger.info(`Starting Management Backend on port ${appConfig.port}...`);
 
-// Trust proxy configuration - needed for proper IP detection behind reverse proxy
-if (process.env.NODE_ENV === 'production' || process.env.TRUST_PROXY === 'true') {
+if (appConfig.trustProxy) {
   app.set('trust proxy', 1);
 }
 
@@ -26,34 +25,15 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 
-// CORS configuration - Accept from API Gateway (both internal and external URLs)
 app.use(cors({
   origin: function (origin, callback) {
-    console.log(`🔄 [MANAGEMENT BACKEND CORS] Received origin: "${origin}"`);
-    const allowedOrigins = [
-      'http://localhost:8000', // Internal communication on OVH
-      'http://127.0.0.1:8000', // Alternative localhost
-      'https://api.tenpennynovels.com', // External API Gateway URL
-      process.env.LANDING_URL || 'https://tenpennynovels.com',
-      process.env.GAME_URL || 'https://game.tenpennynovels.com',
-      process.env.DOCUMENTS_URL || 'https://documenti.tenpennynovels.com',
-      process.env.MANAGEMENT_URL || 'https://gestione.tenpennynovels.com',
-    ];
+    if (!origin) return callback(null, true);
 
-    // Allow requests with no origin (like server-to-server or curl)
-    if (!origin) {
-      console.log(`✅ [MANAGEMENT BACKEND CORS] No origin - allowing request`);
-      return callback(null, true);
-    }
-
-    const isAllowed = allowedOrigins.includes(origin);
-    console.log(`🔍 [MANAGEMENT BACKEND CORS] Origin "${origin}" allowed: ${isAllowed}`);
-
+    const isAllowed = appConfig.cors.allowedOrigins.includes(origin);
     if (isAllowed) {
-      console.log(`✅ [MANAGEMENT BACKEND CORS] Allowing origin ${origin}`);
       callback(null, true);
     } else {
-      console.log(`❌ [MANAGEMENT BACKEND CORS] Blocking origin ${origin}`);
+      logger.warn(`[ADMIN CORS] Blocked origin: ${origin}`);
       callback(new Error(`Origin ${origin} not allowed by CORS`));
     }
   },
@@ -78,18 +58,16 @@ app.use((req, res, next) => {
   const userAgent = req.get('User-Agent') || 'Unknown';
   const origin = req.get('Origin') || 'No origin';
   
-  console.log(`🚀 [${timestamp}] MANAGEMENT BACKEND REQUEST: ${method} ${url}`);
+  logger.info(`[${timestamp}] MANAGEMENT BACKEND REQUEST: ${method} ${url}`);
  
   // Log response when finished
   const originalSend = res.send;
   res.send = function(data) {
     const duration = Date.now() - startTime;
     const statusCode = res.statusCode;
-    const statusEmoji = statusCode >= 200 && statusCode < 300 ? '✅' :
-                       statusCode >= 400 && statusCode < 500 ? '⚠️' : '❌';
 
-    console.log(`   CallInfo: ${req.method} ${req.originalUrl} | Duration: ${duration}ms`);
-    console.log(`   ${statusEmoji} RESPONSE: ${statusCode} | Duration: ${duration}ms`);
+    logger.info(`CallInfo: ${req.method} ${req.originalUrl} | Duration: ${duration}ms`);
+    logger.info(`RESPONSE: ${statusCode} | Duration: ${duration}ms`);
 
     // Calculate data size - handle objects by stringifying them first
     let dataSize = 0;
@@ -101,8 +79,8 @@ app.use((req, res, next) => {
         dataSize = 0;
       }
     }
-    console.log(`   📊 Data size: ${dataSize} bytes`);
-    console.log('   ─────────────────────────────────────────────────────────────');
+    logger.info(`Data size: ${dataSize} bytes`);
+    logger.info('─────────────────────────────────────────────────────────────');
 
     return originalSend.call(this, data);
   };
@@ -118,7 +96,7 @@ app.use(morgan('combined', {
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: process.env.NODE_ENV === 'development' ? 10000 : 1000, // Higher limit for development
+  max: appConfig.isProduction ? 1000 : 10000,
   message: {
     result: false,
     error: 'Troppe richieste da questo indirizzo IP, riprova più tardi.',
@@ -142,7 +120,7 @@ app.get('/admin/health', (req, res) => {
     version: '1.0.0',
     uptime: process.uptime(),
     memory: process.memoryUsage(),
-    environment: process.env.NODE_ENV || 'development'
+    environment: appConfig.isProduction ? 'production' : 'development'
   }));
 });
 
@@ -172,7 +150,7 @@ app.use((error: any, req: express.Request, res: express.Response, next: express.
   });
 
   const response = errorResponse(
-    process.env.NODE_ENV === 'production' ? 'Internal server error' : error instanceof Error ? error.message : String(error),
+    appConfig.isProduction ? 'Errore interno del server' : error instanceof Error ? error.message : String(error),
     'INTERNAL_SERVER_ERROR',
     undefined,
     500

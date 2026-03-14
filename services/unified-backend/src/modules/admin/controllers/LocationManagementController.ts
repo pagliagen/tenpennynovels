@@ -10,6 +10,7 @@ import { AdminAuthMiddleware } from '../middleware/adminAuth';
 import { logger } from '../utils/logger';
 import { Location } from '@database/models/Location';
 import { listResponse, successResponse, errorResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
+import { escapeRegex } from '@shared/utils/validation';
 
 function generateSlug(name: string): string {
   return name
@@ -74,10 +75,11 @@ export class LocationManagementController {
       }
 
       if (search) {
+        const escapedSearch = escapeRegex(search);
         query.$or = [
-          { name: { $regex: search, $options: 'i' } },
-          { description: { $regex: search, $options: 'i' } },
-          { district: { $regex: search, $options: 'i' } }
+          { name: { $regex: escapedSearch, $options: 'i' } },
+          { description: { $regex: escapedSearch, $options: 'i' } },
+          { district: { $regex: escapedSearch, $options: 'i' } }
         ];
       }
 
@@ -187,7 +189,7 @@ export class LocationManagementController {
         .populate('createdBy', 'username')
         .populate('lastModifiedBy', 'username')
         .populate('parentLocation', 'name slug locationLevel')
-        .lean() as any;
+        .lean();
 
       if (!location) {
         res.status(404).json(errorResponse(
@@ -451,7 +453,7 @@ export class LocationManagementController {
           messagesExchanged: 0,
           peakHours: []
         },
-        createdBy: auditInfo?.adminId || (req as any).user?.userId
+        createdBy: auditInfo?.adminId || req.user?.userId
       });
 
       logger.info('New location created by admin', {
@@ -654,8 +656,8 @@ export class LocationManagementController {
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
 
-      await (location as any).softDelete(
-        auditInfo?.adminId || (req as any).user?.userId,
+      await location.softDelete(
+        auditInfo?.adminId || req.user?.userId,
         auditInfo?.adminCharacterName || 'Unknown Admin',
         reason
       );
@@ -699,7 +701,7 @@ export class LocationManagementController {
       const locations = await Location.find({})
         .sort({ locationLevel: 1, sortOrder: 1, name: 1 })
         .select('name slug district locationLevel parentLocation sortOrder settings.visible settings.private imageUrl occupants')
-        .lean() as any[];
+        .lean();
 
       interface TreeNode {
         id: string;
@@ -798,7 +800,7 @@ export class LocationManagementController {
         Location.countDocuments({ 'settings.private': true }),
         Location.countDocuments({ 'settings.chat': true }),
         Location.countDocuments({ 'settings.shop': true }),
-        Location.find({}).select('district occupants statistics').lean() as any
+        Location.find({}).select('district occupants statistics').lean()
       ]);
 
       const districtCounts = new Map<string, number>();
@@ -865,7 +867,7 @@ export class LocationManagementController {
 
       const location = await Location.findById(locationId)
         .select('statistics occupants name')
-        .lean() as any;
+        .lean();
 
       if (!location) {
         res.status(404).json(errorResponse(
@@ -940,7 +942,7 @@ export class LocationManagementController {
 
       const location = await Location.findById(locationId)
         .select('occupants')
-        .lean() as any;
+        .lean();
 
       if (!location) {
         res.status(404).json(errorResponse(

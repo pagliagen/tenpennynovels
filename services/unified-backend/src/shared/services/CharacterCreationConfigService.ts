@@ -340,7 +340,7 @@ export class CharacterCreationConfigService {
     const missing = required.filter(key => !config[key]);
 
     if (missing.length > 0) {
-      errors.push(`Missing required fields: ${missing.join(', ')}`);
+      errors.push(`Campi obbligatori mancanti: ${missing.join(', ')}`);
     }
 
     // Validate metadata

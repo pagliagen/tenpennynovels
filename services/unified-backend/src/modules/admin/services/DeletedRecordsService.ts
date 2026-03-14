@@ -113,7 +113,7 @@ export class DeletedRecordsService {
   async checkKeyConflicts(
     recordId: string
   ): Promise<Record<string, boolean>> {
-    const record = await DeletedRecord.findById(recordId).lean() as any;
+    const record = await DeletedRecord.findById(recordId).lean();
     if (!record) {
       throw new Error('Deleted record not found');
     }
@@ -146,7 +146,7 @@ export class DeletedRecordsService {
       throw new Error(`No model registered for collection: ${record.originalCollection}`);
     }
 
-    const docData = { ...record.data } as any;
+    const docData = { ...record.data } as Record<string, unknown>;
 
     if (newKeys) {
       for (const [key, value] of Object.entries(newKeys)) {
@@ -205,9 +205,9 @@ export class DeletedRecordsService {
       try {
         await this.permanentDelete(id);
         results.success++;
-      } catch (error: any) {
+      } catch (error: unknown) {
         results.failed++;
-        results.errors.push({ id, error: error.message || 'Unknown error' });
+        results.errors.push({ id, error: error instanceof Error ? error.message : 'Errore sconosciuto' });
       }
     }
 

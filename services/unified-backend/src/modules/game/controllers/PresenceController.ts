@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { Character } from '../../../database/models/Character';
 import { Location } from '../../../database/models/Location';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
 import { getSocketIO } from '../websocket/socketInstance';
 
 /**
@@ -19,14 +19,14 @@ export class PresenceController {
    */
   static async leave(req: Request, res: Response): Promise<void> {
     try {
-      const character = (req as any).character;
+      const character = req.character;
 
       if (!character || !character.characterId) {
         res.status(401).json({
           result: false,
           error: {
             code: 'UNAUTHORIZED',
-            message: 'Character context required'
+            message: 'Contesto personaggio richiesto'
           }
         });
         return;
@@ -80,13 +80,13 @@ export class PresenceController {
           leftAt: new Date().toISOString()
         }
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('[PresenceController] Leave endpoint error:', error);
       res.status(500).json({
         result: false,
         error: {
           code: 'PRESENCE_LEAVE_FAILED',
-          message: 'Failed to process leave request'
+          message: 'Impossibile elaborare la richiesta di uscita'
         }
       });
     }

@@ -6,6 +6,7 @@ import { Character } from '@database/models/Character';
 import { logger } from '../utils/logger';
 import { auditLogger } from '../utils/auditLogger';
 import { successResponse, errorResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
+import { escapeRegex } from '@shared/utils/validation';
 
 export class MessagingSystemController {
   
@@ -49,8 +50,9 @@ export class MessagingSystemController {
 
       // Search in name
       if (search) {
+        const escapedSearch = escapeRegex(search as string);
         filter.$or = [
-          { name: { $regex: search, $options: 'i' } }
+          { name: { $regex: escapedSearch, $options: 'i' } }
         ];
       }
 
@@ -99,19 +101,19 @@ export class MessagingSystemController {
           
           return {
             ...chat,
-            participants: (chat.participants as any[]).map((p: any) => 
+            participants: (chat.participants as { name?: string; surname?: string }[]).map((p) => 
               `${p.name} ${p.surname || ''}`.trim()
             ),
-            admins: (chat.admins as any[]).map((a: any) => 
+            admins: (chat.admins as { name?: string; surname?: string }[]).map((a) => 
               `${a.name} ${a.surname || ''}`.trim()
             ),
             createdBy: chat.createdBy ? 
-              `${(chat.createdBy as any).name} ${(chat.createdBy as any).surname || ''}`.trim() : 'Unknown',
+              `${(chat.createdBy as { name?: string; surname?: string }).name} ${(chat.createdBy as { name?: string; surname?: string }).surname || ''}`.trim() : 'Unknown',
             messageCount,
             lastMessage: chat.lastMessage ? {
-              content: (chat.lastMessage as any).content?.substring(0, 100) + '...',
-              sentAt: (chat.lastMessage as any).sentAt,
-              messageType: (chat.lastMessage as any).messageType
+              content: (chat.lastMessage as { content?: string; sentAt?: Date; messageType?: string }).content?.substring(0, 100) + '...',
+              sentAt: (chat.lastMessage as { content?: string; sentAt?: Date; messageType?: string }).sentAt,
+              messageType: (chat.lastMessage as { content?: string; sentAt?: Date; messageType?: string }).messageType
             } : null
           };
         })
@@ -133,7 +135,7 @@ export class MessagingSystemController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error fetching chats:', error);
       res.status(500).json(errorResponse(
         'Failed to fetch chats',
@@ -319,7 +321,7 @@ export class MessagingSystemController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error fetching messaging statistics:', error);
       res.status(500).json(errorResponse(
         'Failed to fetch statistics',
@@ -385,26 +387,26 @@ export class MessagingSystemController {
 
       const enrichedChat = {
         ...chat,
-        participants: ((chat as any).participants as any[]).map((p: any) =>
+        participants: (chat.participants as { name?: string; surname?: string }[]).map((p) =>
           `${p.name} ${p.surname || ''}`.trim()
         ),
-        admins: ((chat as any).admins as any[]).map((a: any) =>
+        admins: (chat.admins as { name?: string; surname?: string }[]).map((a) =>
           `${a.name} ${a.surname || ''}`.trim()
         ),
-        createdBy: (chat as any).createdBy ?
-          `${((chat as any).createdBy as any).name} ${((chat as any).createdBy as any).surname || ''}`.trim() : 'Unknown'
+        createdBy: chat.createdBy ?
+          `${(chat.createdBy as { name?: string; surname?: string }).name} ${(chat.createdBy as { name?: string; surname?: string }).surname || ''}`.trim() : 'Unknown'
       };
 
       const enrichedMessages = messages.map(msg => ({
         ...msg,
-        sender: `${(msg.senderId as any).name} ${(msg.senderId as any).surname || ''}`.trim(),
+        sender: `${(msg.senderId as { name?: string; surname?: string }).name} ${(msg.senderId as { name?: string; surname?: string }).surname || ''}`.trim(),
         isEdited: !!msg.editedAt,
         readByCount: msg.readBy.length
       }));
 
       const enrichedParticipants = participants.map(p => ({
         ...p,
-        characterName: `${(p.characterId as any).name} ${(p.characterId as any).surname || ''}`.trim(),
+        characterName: `${(p.characterId as { name?: string; surname?: string }).name} ${(p.characterId as { name?: string; surname?: string }).surname || ''}`.trim(),
         isMuted: p.mutedUntil && p.mutedUntil > new Date(),
         canModerate: p.role === 'admin' || p.role === 'owner'
       }));
@@ -432,7 +434,7 @@ export class MessagingSystemController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error fetching chat details:', error);
       res.status(500).json(errorResponse(
         'Failed to fetch chat details',
@@ -502,7 +504,7 @@ export class MessagingSystemController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error deleting chat:', error);
       res.status(500).json(errorResponse(
         'Failed to delete chat',
@@ -570,7 +572,7 @@ export class MessagingSystemController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error deleting message:', error);
       res.status(500).json(errorResponse(
         'Failed to delete message',
@@ -669,7 +671,7 @@ export class MessagingSystemController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error moderating participant:', error);
       res.status(500).json(errorResponse(
         'Failed to moderate participant',
@@ -834,7 +836,7 @@ export class MessagingSystemController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error in bulk operations:', error);
       res.status(500).json(errorResponse(
         'Failed to perform bulk operation',
@@ -923,7 +925,7 @@ export class MessagingSystemController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error getting cleanup recommendations:', error);
       res.status(500).json(errorResponse(
         'Failed to get cleanup recommendations',

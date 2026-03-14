@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { Character, Location, Chat } from '@database/models';
 import { ApiResponse } from '../types/game';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
 import { LocationService } from '../services/LocationService';
 import { successResponse, errorResponse, getRequestId } from '../utils/apiResponse';
 import { smartTransaction } from '../utils/transactions'; // ✅ SPRINT 4: MongoDB Transactions
@@ -27,7 +27,7 @@ export class LocationController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('Get accessible locations error:', {
         message: err.message,
@@ -63,7 +63,7 @@ export class LocationController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('Get location tree error:', {
         message: err.message,
@@ -92,7 +92,7 @@ export class LocationController {
       const characterId = req.character!.characterId;
 
       // Get character for permission checks
-      const character = await (Character.findById(characterId) as any);
+      const character = await Character.findById(characterId);
 
       if (!character) {
         // Return 404 to prevent information disclosure
@@ -107,7 +107,7 @@ export class LocationController {
       }
 
       // Get location
-      const location = await (Location.findById(locationId) as any);
+      const location = await Location.findById(locationId);
 
       if (!location) {
         res.status(404).json(errorResponse(
@@ -142,7 +142,7 @@ export class LocationController {
       // Get chat history for the location, filtered by current session
       const sessionId = location.activeSession?.sessionId?.toString();
       const isMaster = character.gameplayRoles?.some((r: string) => ['master', 'moderatore', 'gestore'].includes(r)) || false;
-      const chatHistory = await ((Chat as any).getLocationHistory(locationId, characterId, 50, sessionId, isMaster));
+      const chatHistory = await Chat.getLocationHistory(locationId, characterId, 50, sessionId, isMaster);
 
       // Get occupants from location, or populate from characters with currentLocation if empty
       let occupants = location.occupants?.map((occupant: any) => ({
@@ -235,7 +235,7 @@ export class LocationController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('Get location error:', {
         message: err.message,
@@ -269,7 +269,7 @@ export class LocationController {
       const [character, location] = await Promise.all([
         Character.findById(characterId),
         Location.findById(locationId)
-      ]) as any[];
+      ]);
 
       if (!character || !location) {
         res.status(404).json(errorResponse(
@@ -314,7 +314,7 @@ export class LocationController {
       });
 
       // Reload location to get updated occupants list
-      const updatedLocation = await (Location.findById(location.id) as any);
+      const updatedLocation = await Location.findById(location.id);
       const activeOccupants = updatedLocation?.occupants?.filter((o: any) => o.isActive) || [];
 
       res.json(successResponse(
@@ -338,7 +338,7 @@ export class LocationController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('Enter location error:', {
         message: err.message,
@@ -366,7 +366,7 @@ export class LocationController {
       const characterId = req.character!.characterId;
 
       // Get character
-      const character = await (Character.findById(characterId) as any);
+      const character = await Character.findById(characterId);
       if (!character) {
         res.status(404).json(errorResponse(
           'Personaggio non trovato',
@@ -399,7 +399,7 @@ export class LocationController {
       // ✅ SPRINT 4: Use MongoDB transactions for atomic bidirectional updates
       await smartTransaction(async (session) => {
         // 1. Remove from old location occupants
-        const oldLocation = await (Location.findById(oldLocationId) as any).session(session);
+        const oldLocation = await Location.findById(oldLocationId).session(session);
         if (oldLocation) {
           // Manually remove occupant (within transaction)
           oldLocation.occupants = oldLocation.occupants.filter((occ: any) =>
@@ -445,7 +445,7 @@ export class LocationController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('Leave location error:', {
         message: err.message,
@@ -476,7 +476,7 @@ export class LocationController {
       const [character, location] = await Promise.all([
         Character.findById(characterId),
         Location.findById(locationId)
-      ]) as any[];
+      ]);
 
       if (!character || !location) {
         res.status(404).json(errorResponse(
@@ -508,7 +508,7 @@ export class LocationController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('Check access error:', {
         message: err.message,
@@ -541,7 +541,7 @@ export class LocationController {
         Character.findById(characterId),
         Location.findById(locationId),
         Character.findById(targetCharacterId)
-      ]) as any[];
+      ]);
 
       if (!character || !location || !targetCharacter) {
         res.status(404).json(errorResponse(
@@ -609,7 +609,7 @@ export class LocationController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('Grant access error:', {
         message: err.message,
@@ -638,7 +638,7 @@ export class LocationController {
       if (item.requirements) {
         // Skill requirements
         if (item.requirements.skills) {
-          for (const skillReq of item.requirements.skills as any[]) {
+          for (const skillReq of item.requirements.skills) {
             if (!character.skills[skillReq.skill] || 
                 character.skills[skillReq.skill] < skillReq.minimum) {
               return false;
@@ -667,10 +667,10 @@ export class LocationController {
 
   private static async addOccupant(location: any, character: any, currentTag?: string): Promise<void> {
     // Remove character from all other locations first
-    await (Location.updateMany(
+    await Location.updateMany(
       { 'occupants.characterId': character.id },
       { $pull: { occupants: { characterId: character.id } } }
-    ) as any);
+    );
 
     // Check if occupant already exists in this location to preserve tag
     const existingOccupant = location.occupants?.find((o: any) => o.characterId.equals(character.id));
@@ -686,10 +686,10 @@ export class LocationController {
       currentTag: tagToUse
     };
 
-    await (Location.updateOne(
+    await Location.updateOne(
       { _id: location.id },
       { $addToSet: { occupants: occupant } }
-    ) as any);
+    );
   }
 
   /**
@@ -746,10 +746,11 @@ export class LocationController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as Error;
       logger.error('Get location occupants error:', {
-        message: error.message,
-        stack: error.stack
+        message: err.message,
+        stack: err.stack
       });
       
       res.status(500).json(errorResponse(
@@ -799,10 +800,11 @@ export class LocationController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as Error;
       logger.error('Update occupant tag error:', {
-        message: error.message,
-        stack: error.stack
+        message: err.message,
+        stack: err.stack
       });
       
       res.status(500).json(errorResponse(
@@ -824,11 +826,11 @@ export class LocationController {
       const { locationId } = req.params;
 
       const location = await Location.findById(locationId)
-        .select('name description district locationType settings bot_enabled');
+        .select('name description district locationLevel settings bot_enabled');
 
       if (!location) {
         res.status(404).json(errorResponse(
-          'Location not found',
+          'Location non trovata',
           'LOCATION_NOT_FOUND',
           undefined,
           404,
@@ -842,10 +844,10 @@ export class LocationController {
         name: location.name,
         description: location.description,
         district: location.district,
-        locationType: location.locationType,
+        locationLevel: location.locationLevel,
         bot_enabled: location.bot_enabled
       }, undefined, getRequestId(req)));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('[LocationController] Error fetching bot location details:', error);
       res.status(500).json(errorResponse(
         'Failed to fetch location details',
@@ -885,7 +887,7 @@ export class LocationController {
 
       if (!location) {
         res.status(404).json(errorResponse(
-          'Location not found',
+          'Location non trovata',
           'LOCATION_NOT_FOUND',
           undefined,
           404,
@@ -900,7 +902,7 @@ export class LocationController {
         locationId: location._id,
         bot_enabled: location.bot_enabled
       }, undefined, getRequestId(req)));
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('[LocationController] Error updating bot_enabled:', error);
       res.status(500).json(errorResponse(
         'Failed to update bot_enabled',

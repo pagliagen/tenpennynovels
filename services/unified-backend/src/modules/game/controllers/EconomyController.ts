@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { Character, Item, ShopItem, CharacterInventory, Location, Corporation, CharacterFinances } from '@database/models';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
 import { successResponse, errorResponse, getRequestId } from '../utils/apiResponse';
 
 export class EconomyController {
@@ -99,7 +99,7 @@ export class EconomyController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('Get general store error:', {
         error: err.message,
@@ -132,7 +132,7 @@ export class EconomyController {
       const characterId = req.character!.characterId;
 
       // Get character 
-      const character = await Character.findById(characterId) as any;
+      const character = await Character.findById(characterId);
       if (!character) {
         res.status(404).json(errorResponse(
           'Personaggio non trovato',
@@ -282,7 +282,7 @@ export class EconomyController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('Get shop items error:', {
         error: err.message,
@@ -359,7 +359,7 @@ export class EconomyController {
       const characterId = req.character!.characterId;
 
       // Get character and verify corporation access
-      const character = await (Character.findById(characterId).populate('corporations') as any);
+      const character = await Character.findById(characterId).populate('corporations');
       if (!character) {
         res.status(404).json(errorResponse(
           'Personaggio non trovato',
@@ -372,7 +372,7 @@ export class EconomyController {
       }
 
       // Get shop location and verify corporation ownership
-      const location = await (Location.findById(shopId) as any);
+      const location = await Location.findById(shopId);
       if (!location || !location.corporationId) {
         res.status(404).json(errorResponse(
           'Shop not found',
@@ -404,7 +404,7 @@ export class EconomyController {
       const [item, corporation] = await Promise.all([
         ShopItem.findOne({ _id: itemId, locationId: shopId }),
         Corporation.findById(location.corporationId)
-      ]) as any[];
+      ]);
 
       if (!item || !corporation) {
         res.status(404).json(errorResponse(
@@ -474,7 +474,7 @@ export class EconomyController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('Restock shop error:', {
         error: err.message,
@@ -541,7 +541,7 @@ export class EconomyController {
 
     // Check skill requirements
     if (item.requirements.skills) {
-      for (const skillReq of item.requirements.skills as any[]) {
+      for (const skillReq of item.requirements.skills) {
         const characterSkill = character.skills[skillReq.skill] || 0;
         if (characterSkill < skillReq.minimum) {
           return false;

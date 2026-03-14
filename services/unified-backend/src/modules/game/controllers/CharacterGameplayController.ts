@@ -1,9 +1,10 @@
 import { Request, Response } from 'express';
 import { Character, Occupation, Location } from '@database/models';
 import { redis } from '@config/runtime/redis';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
 import { successResponse, errorResponse, getRequestId } from '../utils/apiResponse';
 import { CharacterCreationConfigService } from '@shared/services/CharacterCreationConfigService';
+import { appConfig } from '@config/runtime';
 import {
   validateCharacterSubmission,
   calculateAvailableSkillPoints,
@@ -13,13 +14,9 @@ import {
 import { smartTransaction } from '../utils/transactions';
 import jwt from 'jsonwebtoken';
 
-// Helper function to get JWT_SECRET with validation
 function getJwtSecret(): string {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    throw new Error('JWT_SECRET environment variable is required');
-  }
-  return secret;
+  if (!appConfig.jwt.secret) throw new Error('JWT_SECRET non configurato');
+  return appConfig.jwt.secret;
 }
 
 /**
@@ -47,11 +44,11 @@ export class CharacterGameplayController {
       const { characterId } = req.params;
       const userId = req.user!.userId;
 
-      const character = await (Character.findOne({
+      const character = await Character.findOne({
         _id: characterId,
         userId: userId,
         playerStatus: 'draft'
-      }) as any);
+      });
 
       if (!character) {
         res.status(404).json(errorResponse(
@@ -130,7 +127,7 @@ export class CharacterGameplayController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('Character submit error:', {
         message: err.message,
@@ -158,10 +155,10 @@ export class CharacterGameplayController {
       const userId = req.user!.userId;
 
       // Allow all statuses except DELETED (DRAFT characters can be selected too)
-      const character = await (Character.findOne({
+      const character = await Character.findOne({
         _id: characterId,
         userId: userId
-      }) as any);
+      });
 
       if (!character) {
         res.status(404).json(errorResponse(
@@ -175,10 +172,10 @@ export class CharacterGameplayController {
       }
 
       // Deactivate other characters for this user
-      await (Character.updateMany(
+      await Character.updateMany(
         { userId: userId, _id: { $ne: characterId } },
         { isActive: false }
-      ) as any);
+      );
 
       // Activate selected character
       character.isActive = true;
@@ -203,12 +200,8 @@ export class CharacterGameplayController {
 
       // Set character context cookie
       res.cookie('character_context', characterToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
-        domain: process.env.NODE_ENV === 'production' ? '.tenpennynovels.com' : 'localhost',
-        path: '/',
-        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+        ...appConfig.cookie,
+        maxAge: 24 * 60 * 60 * 1000,
       });
 
       logger.info('Character selected', {
@@ -239,7 +232,7 @@ export class CharacterGameplayController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('Character select error:', {
         message: err.message,
@@ -283,7 +276,7 @@ export class CharacterGameplayController {
       }
 
       // Get character
-      const character = await (Character.findById(characterId) as any);
+      const character = await Character.findById(characterId);
       if (!character) {
         res.status(404).json(errorResponse(
           'Personaggio non trovato',
@@ -303,7 +296,7 @@ export class CharacterGameplayController {
         location = { name: 'London' }; // Mock location for London/root
       } else {
         // Get location and verify access for specific locations
-        location = await (Location.findById(locationId) as any);
+        location = await Location.findById(locationId);
         if (!location) {
           res.status(404).json(errorResponse(
             'Location non trovata',
@@ -355,19 +348,18 @@ export class CharacterGameplayController {
           const loc = await Location.findById(newLocation).session(session);
           if (loc) {
             // Check if character is already in occupants
-            const existingOccupant = loc.occupants.find((occ: any) =>
+            const existingOccupant = loc.occupants.find((occ: { characterId: { toString(): string } }) =>
               occ.characterId.toString() === character._id.toString()
             );
 
             if (!existingOccupant) {
-              // Add character to occupants
               loc.occupants.push({
                 characterId: character._id,
                 characterName: character.name,
                 enteredAt: new Date(),
                 lastSeen: new Date(),
                 isActive: true
-              } as any);
+              } as typeof loc.occupants[number]);
 
               await loc.save({ session });
 
@@ -401,9 +393,9 @@ export class CharacterGameplayController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
-      console.error('Set character location error:', err);
+      logger.error('Set character location error:', err);
       res.status(500).json(errorResponse(
         'Impossibile impostare la location del personaggio',
         'SET_LOCATION_ERROR',
@@ -463,7 +455,7 @@ export class CharacterGameplayController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('Get skill points error:', {
         message: err.message,
@@ -584,7 +576,7 @@ export class CharacterGameplayController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('Apply occupation bonuses error:', {
         message: err.message,
@@ -663,7 +655,7 @@ export class CharacterGameplayController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('Check occupation prerequisites error:', {
         message: err.message,

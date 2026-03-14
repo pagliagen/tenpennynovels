@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { Character, Corporation, CorporationMembershipRequest, CorporationInvitation } from '@database/models';
 import { ApiResponse } from '../types/game';
 import { CorporationRole } from '@shared/types/corporation';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
 import { successResponse, errorResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
 
 export class CorporationController {
@@ -13,7 +13,7 @@ export class CorporationController {
   static async getCorporations(req: Request, res: Response): Promise<void> {
     try {
       const characterId = req.character!.characterId;
-      const character = await (Character.findById(characterId) as any);
+      const character = await Character.findById(characterId);
 
       if (!character) {
         res.status(404).json(errorResponse(
@@ -27,9 +27,9 @@ export class CorporationController {
       }
 
       // Get all visible corporations using correct field from Corporation model
-      const corporations = await (Corporation.find({ 
+      const corporations = await Corporation.find({ 
         'settings.publiclyVisible': true 
-      }).populate('members.characterId') as any);
+      }).populate('members.characterId');
 
       // Check which corporations character can join
       const corporationsWithEligibility = await Promise.all(
@@ -64,7 +64,7 @@ export class CorporationController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('Get corporations error:', {
         message: err.message,
@@ -91,8 +91,8 @@ export class CorporationController {
       const { corporationId } = req.params;
       const characterId = req.character!.characterId;
 
-      const corporation = await (Corporation.findById(corporationId)
-        .populate('members') as any);
+      const corporation = await Corporation.findById(corporationId)
+        .populate('members');
 
       if (!corporation || !corporation.settings?.publiclyVisible) {
         res.status(404).json(errorResponse(
@@ -148,7 +148,7 @@ export class CorporationController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('Get corporation error:', {
         message: err.message,
@@ -181,7 +181,7 @@ export class CorporationController {
       const [character, corporation] = await Promise.all([
         Character.findById(characterId),
         Corporation.findById(corporationId).populate('members')
-      ]) as any[];
+      ]);
 
       if (!character || !corporation || !corporation.visible) {
         res.status(404).json(errorResponse(
@@ -211,11 +211,11 @@ export class CorporationController {
       }
 
       // Check existing invitation or request
-      const existingRequest = await (CorporationInvitation.findOne({
+      const existingRequest = await CorporationInvitation.findOne({
         corporationId,
         characterId,
         status: 'pending'
-      }) as any);
+      });
 
       if (existingRequest) {
         res.status(400).json(errorResponse(
@@ -305,7 +305,7 @@ export class CorporationController {
         ));
       }
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('Join corporation error:', {
         message: err.message,
@@ -332,7 +332,7 @@ export class CorporationController {
       const { corporationId } = req.params;
       const characterId = req.character!.characterId;
 
-      const corporation = await (Corporation.findById(corporationId) as any);
+      const corporation = await Corporation.findById(corporationId);
       if (!corporation) {
         res.status(404).json(errorResponse(
           'Corporazione non trovata',
@@ -386,7 +386,7 @@ export class CorporationController {
       await corporation.save();
 
       // Remove from character's corporations
-      const character = await (Character.findById(characterId) as any);
+      const character = await Character.findById(characterId);
       if (character) {
         character.corporations = character.corporations?.filter(
           (corpId: any) => corpId.toString() !== corporationId
@@ -409,7 +409,7 @@ export class CorporationController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('Leave corporation error:', {
         message: err.message,
@@ -437,7 +437,7 @@ export class CorporationController {
       const characterId = req.character!.characterId;
 
       // Check if character is officer/leader
-      const corporation = await (Corporation.findById(corporationId) as any);
+      const corporation = await Corporation.findById(corporationId);
       if (!corporation) {
         res.status(404).json(errorResponse(
           'Corporazione non trovata',
@@ -465,10 +465,10 @@ export class CorporationController {
       }
 
       // Get pending invitations
-      const invitations = await (CorporationInvitation.find({
+      const invitations = await CorporationInvitation.find({
         corporationId,
         status: 'pending'
-      }).sort({ createdAt: -1 }) as any);
+      }).sort({ createdAt: -1 });
 
       res.json(successResponse(
         {
@@ -485,7 +485,7 @@ export class CorporationController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('Get invitations error:', {
         message: err.message,
@@ -514,7 +514,7 @@ export class CorporationController {
       const characterId = req.character!.characterId;
 
       // Verify corporation and permissions
-      const corporation = await (Corporation.findById(corporationId) as any);
+      const corporation = await Corporation.findById(corporationId);
       if (!corporation) {
         res.status(404).json(errorResponse(
           'Corporazione non trovata',
@@ -542,11 +542,11 @@ export class CorporationController {
       }
 
       // Get invitation
-      const invitation = await (CorporationInvitation.findOne({
+      const invitation = await CorporationInvitation.findOne({
         _id: invitationId,
         corporationId,
         status: 'pending'
-      }) as any);
+      });
 
       if (!invitation) {
         res.status(404).json(errorResponse(
@@ -561,7 +561,7 @@ export class CorporationController {
 
       if (action === 'approve') {
         // Add character to corporation
-        const character = await (Character.findById(invitation.characterId) as any);
+        const character = await Character.findById(invitation.characterId);
         if (!character) {
           res.status(404).json(errorResponse(
             'Personaggio non trovato',
@@ -615,7 +615,7 @@ export class CorporationController {
         getRequestId(req)
       ));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as Error;
       logger.error('Handle invitation error:', {
         message: err.message,

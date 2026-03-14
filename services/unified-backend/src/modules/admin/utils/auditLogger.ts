@@ -4,6 +4,7 @@
 
 import { logger } from './logger';
 import { getAuditActionDescription } from './permissions';
+import { appConfig } from '@config/runtime';
 
 interface AuditLogEntry {
   timestamp: Date;
@@ -69,12 +70,9 @@ class AuditLoggerClass {
     });
 
     // Log nel formato leggibile per la console in development
-    if (process.env.NODE_ENV === 'development') {
-      const statusIcon = entry.success ? '✅' : '❌';
-      const severityIcon = this.getSeverityIcon(entry.severity);
-      
-      console.log(
-        `${statusIcon} ${severityIcon} AUDIT: ${entry.username} (${entry.userId}) ` +
+    if (!appConfig.isProduction) {
+      logger.info(
+        `AUDIT: ${entry.username} (${entry.userId}) ` +
         `${entry.actionDescription} ${entry.resource ? `[${entry.resource}${entry.resourceId ? `#${entry.resourceId}` : ''}]` : ''} ` +
         `from ${entry.ipAddress} ${entry.success ? '' : `- ERROR: ${entry.errorMessage}`}`
       );
@@ -293,8 +291,8 @@ class AuditLoggerClass {
     });
     
     // TODO: Implementare notifiche via webhook, email, Slack, etc.
-    console.error(
-      `🚨 CRITICAL OPERATION: ${entry.username} performed ${entry.actionDescription} ` +
+    logger.error(
+      `CRITICAL OPERATION: ${entry.username} performed ${entry.actionDescription} ` +
       `${entry.resource ? `on ${entry.resource}${entry.resourceId ? `#${entry.resourceId}` : ''}` : ''} ` +
       `from ${entry.ipAddress}`
     );

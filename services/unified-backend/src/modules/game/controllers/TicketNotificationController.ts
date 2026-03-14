@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import { TicketNotification } from '@database/models/TicketNotification';
+import { logger } from '../logger';
 
 /**
  * TicketNotificationController
@@ -21,23 +22,23 @@ export class TicketNotificationController {
    */
   static async listForCharacter(req: Request, res: Response): Promise<void> {
     try {
-      const characterId = (req as any).character?._id;
+      const characterId = req.character?.characterId;
 
       if (!characterId) {
         res.status(401).json({
           result: false,
-          error: 'Character not found',
+          error: 'Personaggio non trovato',
           code: 'CHARACTER_NOT_FOUND'
         });
         return;
       }
 
       const { unreadOnly, limit = 20, offset = 0 } = req.query;
+      const characterIdObj = new mongoose.Types.ObjectId(characterId);
 
-      // Get notifications
-      const notifications = await (TicketNotification as any).getRecentForRecipient(
+      const notifications = await TicketNotification.getRecentForRecipient(
         'character',
-        characterId,
+        characterIdObj,
         {
           unreadOnly: unreadOnly === 'true',
           limit: Number(limit),
@@ -45,9 +46,8 @@ export class TicketNotificationController {
         }
       );
 
-      // Get counts
-      const unreadCount = await (TicketNotification as any).getUnreadCount('character', characterId);
-      const totalCount = await (TicketNotification as any).getTotalCount('character', characterId, {
+      const unreadCount = await TicketNotification.getUnreadCount('character', characterIdObj);
+      const totalCount = await TicketNotification.getTotalCount('character', characterIdObj, {
         unreadOnly: unreadOnly === 'true'
       });
 
@@ -62,8 +62,8 @@ export class TicketNotificationController {
           hasMore: Number(offset) + notifications.length < totalCount
         }
       });
-    } catch (error: any) {
-      console.error('[TicketNotificationController] List error:', error);
+    } catch (error: unknown) {
+      logger.error('[TicketNotificationController] List error:', error);
       res.status(500).json({
         result: false,
         error: 'Failed to fetch notifications',
@@ -79,12 +79,12 @@ export class TicketNotificationController {
   static async markRead(req: Request<{ id: string }>, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const characterId = (req as any).character?._id;
+      const characterId = req.character?.characterId;
 
       if (!characterId) {
         res.status(401).json({
           result: false,
-          error: 'Character not found',
+          error: 'Personaggio non trovato',
           code: 'CHARACTER_NOT_FOUND'
         });
         return;
@@ -118,7 +118,7 @@ export class TicketNotificationController {
       }
 
       // Mark as read
-      await (notification as any).markAsRead();
+      await notification.markAsRead();
 
       res.status(200).json({
         result: true,
@@ -128,8 +128,8 @@ export class TicketNotificationController {
         },
         message: 'Notification marked as read'
       });
-    } catch (error: any) {
-      console.error('[TicketNotificationController] Mark read error:', error);
+    } catch (error: unknown) {
+      logger.error('[TicketNotificationController] Mark read error:', error);
       res.status(500).json({
         result: false,
         error: 'Failed to mark notification as read',
@@ -144,19 +144,19 @@ export class TicketNotificationController {
    */
   static async markAllRead(req: Request, res: Response): Promise<void> {
     try {
-      const characterId = (req as any).character?._id;
+      const characterId = req.character?.characterId;
 
       if (!characterId) {
         res.status(401).json({
           result: false,
-          error: 'Character not found',
+          error: 'Personaggio non trovato',
           code: 'CHARACTER_NOT_FOUND'
         });
         return;
       }
 
-      // Mark all unread notifications as read
-      const markedCount = await (TicketNotification as any).markAllAsRead('character', characterId);
+      const characterIdObj = new mongoose.Types.ObjectId(characterId);
+      const markedCount = await TicketNotification.markAllAsRead('character', characterIdObj);
 
       res.status(200).json({
         result: true,
@@ -165,8 +165,8 @@ export class TicketNotificationController {
         },
         message: `Marked ${markedCount} notifications as read`
       });
-    } catch (error: any) {
-      console.error('[TicketNotificationController] Mark all read error:', error);
+    } catch (error: unknown) {
+      logger.error('[TicketNotificationController] Mark all read error:', error);
       res.status(500).json({
         result: false,
         error: 'Failed to mark all notifications as read',
@@ -181,18 +181,19 @@ export class TicketNotificationController {
    */
   static async getUnreadCount(req: Request, res: Response): Promise<void> {
     try {
-      const characterId = (req as any).character?._id;
+      const characterId = req.character?.characterId;
 
       if (!characterId) {
         res.status(401).json({
           result: false,
-          error: 'Character not found',
+          error: 'Personaggio non trovato',
           code: 'CHARACTER_NOT_FOUND'
         });
         return;
       }
 
-      const unreadCount = await (TicketNotification as any).getUnreadCount('character', characterId);
+      const characterIdObj = new mongoose.Types.ObjectId(characterId);
+      const unreadCount = await TicketNotification.getUnreadCount('character', characterIdObj);
 
       res.status(200).json({
         result: true,
@@ -200,8 +201,8 @@ export class TicketNotificationController {
           unreadCount
         }
       });
-    } catch (error: any) {
-      console.error('[TicketNotificationController] Get unread count error:', error);
+    } catch (error: unknown) {
+      logger.error('[TicketNotificationController] Get unread count error:', error);
       res.status(500).json({
         result: false,
         error: 'Failed to get unread count',
@@ -217,12 +218,12 @@ export class TicketNotificationController {
   static async deleteNotification(req: Request<{ id: string }>, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const characterId = (req as any).character?._id;
+      const characterId = req.character?.characterId;
 
       if (!characterId) {
         res.status(401).json({
           result: false,
-          error: 'Character not found',
+          error: 'Personaggio non trovato',
           code: 'CHARACTER_NOT_FOUND'
         });
         return;
@@ -262,8 +263,8 @@ export class TicketNotificationController {
         },
         message: 'Notification deleted'
       });
-    } catch (error: any) {
-      console.error('[TicketNotificationController] Delete error:', error);
+    } catch (error: unknown) {
+      logger.error('[TicketNotificationController] Delete error:', error);
       res.status(500).json({
         result: false,
         error: 'Failed to delete notification',

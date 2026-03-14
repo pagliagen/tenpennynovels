@@ -1,15 +1,16 @@
-import { VictorianCurrency } from './economy';
-
 export interface Occupation {
   id: string;
   name: string;
   description: string;
   
-  // Social and economic context
-  dailySalary: VictorianCurrency; // Daily income paid by "the state"
-  socialRespectability: number; // 1-10 scale
+  // Category for organization (from esperienze_pregresse.txt - 18 categories)
+  category: OccupationCategory;
   
-  // Occupation benefits and bonuses
+  // Display information (matches Occupation model)
+  contacts: string;
+  earnings: string;
+  
+  // Occupation benefits and bonuses (legacy/optional)
   benefits?: {
     // Starting equipment/items
     startingItems?: string[];
@@ -30,8 +31,8 @@ export interface Occupation {
     specialAbilities?: string[];
   };
   
-  // Victorian context
-  workingConditions: string; // Description of typical working conditions
+  // Victorian context (optional - model uses contacts/earnings)
+  workingConditions?: string; // Description of typical working conditions
   
   // Availability
   isActive: boolean; // Can be selected by players
@@ -60,7 +61,7 @@ export interface CharacterOccupationHistory {
   achievements?: string[]; // Notable accomplishments
   
   // Reason for leaving
-  endReason?: 'promotion' | 'dismissal' | 'resignation' | 'retirement' | 'death' | 'other';
+  endReason?: 'promotion' | 'dismissal' | 'resignation' | 'retirement' | 'death' | 'career_change' | 'other';
   endReasonDetails?: string;
   
   // Current status
@@ -71,23 +72,26 @@ export interface CharacterOccupationHistory {
   updatedAt: Date;
 }
 
-// Predefined occupation categories for organization
+// Predefined occupation categories for organization (from esperienze_pregresse.txt - matches Occupation model)
 export enum OccupationCategory {
-  MEDICAL = 'medical',
-  LEGAL = 'legal',
-  CLERGY = 'clergy',
-  MILITARY = 'military',
-  EDUCATION = 'education',
-  DOMESTIC_SERVICE = 'domestic_service',
-  TRADES = 'trades',
-  COMMERCE = 'commerce',
-  ENTERTAINMENT = 'entertainment',
-  CRIMINAL = 'criminal',
-  NOBILITY = 'nobility',
-  PROFESSIONAL = 'professional',
-  INDUSTRIAL = 'industrial',
-  TRANSPORTATION = 'transportation',
-  AGRICULTURAL = 'agricultural'
+  AVVENTURIERI = 'avventurieri',
+  ARTI_CREATIVE = 'arti_creative',
+  ARTISTI_SPETTACOLO = 'artisti_spettacolo',
+  SPORT = 'sport',
+  AFFARI = 'affari',
+  RELIGIOSI = 'religiosi',
+  CRIMINALI = 'criminali',
+  GIORNALISMO = 'giornalismo',
+  LAVORO_RURALE = 'lavoro_rurale',
+  LAVORO_URBANO = 'lavoro_urbano',
+  TUTORI_ORDINE = 'tutori_ordine',
+  PROFESSIONE_LEGALE = 'professione_legale',
+  OPERATORI_SANITARI = 'operatori_sanitari',
+  SALUTE_MENTALE = 'salute_mentale',
+  FORZE_ARMATE = 'forze_armate',
+  POLITICA = 'politica',
+  STUDIOSI = 'studiosi',
+  PROFESSIONI_VARIE = 'professioni_varie'
 }
 
 export interface OccupationWithCategory extends Occupation {

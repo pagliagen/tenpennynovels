@@ -3,7 +3,7 @@ import { User, Character, Location } from '@database/models';
 import { CryptoUtils } from '../utils/crypto';
 import { AuthMiddleware } from '../middleware/auth';
 import { RateLimitMiddleware } from '../middleware/rateLimit';
-import { logger, logAuth, logSecurity } from '../utils/logger';
+import { logger, logAuth, logSecurity } from '../logger';
 import { CharacterSessionManager } from '../utils/characterSessionManager';
 import { redis } from '@config/runtime/redis';
 import { UAParser } from 'ua-parser-js';
@@ -12,6 +12,7 @@ import { ApiResponse } from '../types/auth';
 import { DeviceInfo, LocationInfo } from '../types/auth';
 import { successResponse, errorResponse, createdResponse } from '@shared/utils/apiResponse';
 import { getEffectivePermissions as calculateEffectivePermissions } from '@config/admin-permissions';
+import { appConfig } from '@config/runtime';
 
 // Helper function to transform technical validation messages into user-friendly ones
 function transformValidationMessage(field: string, originalMessage: string, validationKind: string): string {
@@ -620,14 +621,12 @@ export class AuthController {
       
       // Handle Mongoose validation errors specifically
       if (error instanceof Error && error.name === 'ValidationError') {
-        const validationError = error as any;
+        const validationError = error as Error & { errors: Record<string, { message: string; kind: string }> };
         const details: Record<string, string> = {};
         
-        // Extract field-specific validation errors and make them user-friendly
         for (const field in validationError.errors) {
           const fieldError = validationError.errors[field];
           
-          // Transform technical validation messages into user-friendly ones
           details[field] = transformValidationMessage(field, fieldError.message, fieldError.kind);
         }
         
@@ -640,7 +639,7 @@ export class AuthController {
       }
       
       // Handle duplicate name errors
-      if (error instanceof Error && (error as any).code === 11000) {
+      if (error instanceof Error && 'code' in error && (error as Error & { code: number }).code === 11000) {
         errorResponse(res, 
           'Esiste già un personaggio con questo nome',
           'CHARACTER_NAME_EXISTS',
@@ -653,7 +652,7 @@ export class AuthController {
       errorResponse(res, 
         'Creazione personaggio fallita',
         'CHARACTER_CREATION_ERROR',
-        process.env.NODE_ENV === 'development' ? { message: error instanceof Error ? error.message : 'Unknown error' } : undefined,
+        !appConfig.isProduction ? { message: error instanceof Error ? error.message : 'Unknown error' } : undefined,
         500);
     }
   }
@@ -916,19 +915,19 @@ export class AuthController {
       // Decode character_context cookie
       const characterContext = req.cookies?.character_context;
       if (!characterContext) {
-        return errorResponse(res, 'No character selected', 'NO_CHARACTER_CONTEXT', undefined, 401);
+        return errorResponse(res, 'Nessun personaggio selezionato', 'NO_CHARACTER_CONTEXT', undefined, 401);
       }
 
       // Verify JWT token
       const decoded = CryptoUtils.verifyCharacterContextToken(characterContext);
       if (!decoded || !decoded.characterId) {
-        return errorResponse(res, 'Invalid character context', 'INVALID_CHARACTER_CONTEXT', undefined, 401);
+        return errorResponse(res, 'Contesto personaggio non valido', 'INVALID_CHARACTER_CONTEXT', undefined, 401);
       }
 
       // Fetch character from database
       const character = await Character.findById(decoded.characterId);
       if (!character) {
-        return errorResponse(res, 'Character not found', 'CHARACTER_NOT_FOUND', undefined, 404);
+        return errorResponse(res, 'Personaggio non trovato', 'CHARACTER_NOT_FOUND', undefined, 404);
       }
 
       // Calculate effective permissions (gameplayRoles → admin mapping + adminPermissions)
@@ -950,7 +949,7 @@ export class AuthController {
 
     } catch (error: any) {
       logger.error('Get effective permissions error:', error);
-      errorResponse(res, 'Failed to get permissions', 'GET_PERMISSIONS_ERROR', undefined, 500);
+      errorResponse(res, 'Impossibile recuperare i permessi', 'GET_PERMISSIONS_ERROR', undefined, 500);
     }
   }
 }

@@ -80,7 +80,7 @@ export class CharacterSessionManagementController {
     } catch (error: any) {
       logger.error('Error retrieving active sessions:', error);
       res.status(500).json(errorResponse(
-        'Internal server error',
+        'Errore interno del server',
         'GET_ACTIVE_SESSIONS_ERROR',
         undefined,
         500,
@@ -274,7 +274,7 @@ export class CharacterSessionManagementController {
     } catch (error: any) {
       logger.error('Error retrieving session statistics:', error);
       res.status(500).json(errorResponse(
-        'Internal server error',
+        'Errore interno del server',
         'GET_SESSION_STATS_ERROR',
         undefined,
         500,
@@ -291,7 +291,7 @@ export class CharacterSessionManagementController {
       const character = await Character.findById(characterId);
       if (!character) {
         res.status(404).json(errorResponse(
-          'Character not found',
+          'Personaggio non trovato',
           'CHARACTER_NOT_FOUND',
           undefined,
           404,
@@ -372,7 +372,7 @@ export class CharacterSessionManagementController {
     } catch (error: any) {
       logger.error('Error retrieving character session history:', error);
       res.status(500).json(errorResponse(
-        'Internal server error',
+        'Errore interno del server',
         'GET_CHARACTER_SESSION_HISTORY_ERROR',
         undefined,
         500,
@@ -460,7 +460,7 @@ export class CharacterSessionManagementController {
     } catch (error: any) {
       logger.error('Error invalidating session:', error);
       res.status(500).json(errorResponse(
-        'Internal server error',
+        'Errore interno del server',
         'INVALIDATE_SESSION_ERROR',
         undefined,
         500,
@@ -477,7 +477,7 @@ export class CharacterSessionManagementController {
       const character = await Character.findById(characterId);
       if (!character) {
         res.status(404).json(errorResponse(
-          'Character not found',
+          'Personaggio non trovato',
           'CHARACTER_NOT_FOUND',
           undefined,
           404,
@@ -559,7 +559,7 @@ export class CharacterSessionManagementController {
     } catch (error: any) {
       logger.error('Error invalidating all character sessions:', error);
       res.status(500).json(errorResponse(
-        'Internal server error',
+        'Errore interno del server',
         'INVALIDATE_ALL_SESSIONS_ERROR',
         undefined,
         500,
@@ -634,7 +634,7 @@ export class CharacterSessionManagementController {
     } catch (error: any) {
       logger.error('Error cleaning expired sessions:', error);
       res.status(500).json(errorResponse(
-        'Internal server error',
+        'Errore interno del server',
         'CLEAN_EXPIRED_SESSIONS_ERROR',
         undefined,
         500,

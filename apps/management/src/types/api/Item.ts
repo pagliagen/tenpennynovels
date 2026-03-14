@@ -99,7 +99,7 @@ export interface ItemListParams {
 
 export interface ItemListResponse {
   result: boolean;
-  items: Item[];
+  list: Item[];
   pagination: {
     page: number;
     pageSize: number;

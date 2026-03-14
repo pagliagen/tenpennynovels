@@ -14,7 +14,7 @@
 
 import { BaseEventHandler } from '../BaseEventHandler';
 import { RedisEvent } from '../types';
-import { logger } from '../../utils/logger';
+import { logger } from '../../logger';
 
 export class TicketEventHandler extends BaseEventHandler {
   getSupportedEventTypes(): string[] {
@@ -32,7 +32,7 @@ export class TicketEventHandler extends BaseEventHandler {
 
   async handle(event: RedisEvent): Promise<void> {
     // Support both 'type' (from Game Backend) and 'eventType' (from Management Backend)
-    const eventType = event.type || (event as any).eventType;
+    const eventType = event.type || event.eventType;
 
     this.logEventHandling(eventType, event);
 

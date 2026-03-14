@@ -1,4 +1,5 @@
 import { Schema, model, Document, Model, Types } from 'mongoose';
+import { escapeRegex } from '@shared/utils/validation';
 
 /**
  * AUDIT LOG MODEL
@@ -249,7 +250,7 @@ AuditLogSchema.statics = {
     if (filters.adminUserId) query['actor.userId'] = filters.adminUserId;
     if (filters.severity) query.severity = filters.severity;
     if (filters.success !== undefined) query.success = filters.success;
-    if (filters.action) query.action = { $regex: filters.action, $options: 'i' };
+    if (filters.action) query.action = { $regex: escapeRegex(filters.action), $options: 'i' };
     if (filters.targetId) query['target.id'] = filters.targetId;
 
     if (filters.dateFrom || filters.dateTo) {

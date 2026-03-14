@@ -1,5 +1,5 @@
 import { Location, Character } from '@database/models';
-import { logger } from '../utils/logger';
+import { logger } from '../logger';
 
 export interface AccessibleLocation {
   _id: string;
@@ -94,7 +94,7 @@ export class LocationService {
       // Get character
       const character = await Character.findById(characterId);
       if (!character) {
-        throw new Error('Character not found');
+        throw new Error('Personaggio non trovato');
       }
 
 
