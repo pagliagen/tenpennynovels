@@ -109,7 +109,7 @@ export function AuthError({ type, message }: AuthErrorProps): JSX.Element {
 
         <button
           onClick={() => {
-            window.location.href = `${landingUrl}/auth/login`;
+            window.location.href = `${landingUrl}`;
           }}
           style={{
             padding: '1rem 2rem',

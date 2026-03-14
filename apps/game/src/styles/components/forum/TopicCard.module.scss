@@ -27,7 +27,7 @@
 }
 
 .icon {
-  font-size: 1.5rem;
+  font-size: 20px;
 }
 
 .colorBar {
@@ -39,7 +39,7 @@
 .title {
   font-family: $font-serif;
   color: $text-primary;
-  font-size: 1.1rem;
+  font-size: 15px;
   font-weight: 600;
 }
 
@@ -52,7 +52,7 @@
 
 .description {
   color: $text-secondary;
-  font-size: 0.85rem;
+  font-size: 13px;
   margin-top: $spacing-xs;
 }
 
@@ -61,7 +61,7 @@
   flex-direction: row;
   gap: $spacing-lg;
   color: $text-muted;
-  font-size: 0.8rem;
+  font-size: 13px;
   margin-top: $spacing-md;
 }
 
@@ -74,7 +74,7 @@
 
 .lastPost {
   color: $text-muted;
-  font-size: 0.75rem;
+  font-size: 13px;
   margin-top: $spacing-sm;
 }
 
@@ -83,7 +83,7 @@
   border: none;
   cursor: pointer;
   color: $text-muted;
-  font-size: 1.2rem;
+  font-size: 15px;
   padding: $spacing-xs;
 
   &:hover {
@@ -96,7 +96,7 @@
 }
 
 .badge {
-  font-size: 0.7rem;
+  font-size: 13px;
   padding: 2px 6px;
   border-radius: $radius-sm;
   background: $gold-10;

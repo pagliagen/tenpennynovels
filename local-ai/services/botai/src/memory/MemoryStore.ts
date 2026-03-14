@@ -1,5 +1,8 @@
 import { Memory, IMemory, MemoryType } from '../models/Memory';
-import { Types } from 'mongoose';
+import { Types, Document } from 'mongoose';
+
+// Type helper for lean query results (includes _id)
+type LeanMemory = Omit<IMemory, keyof Document> & { _id: Types.ObjectId };
 
 export class MemoryStore {
   async getRecentMemories(botId: string, characterId: string, limit: number = 5): Promise<IMemory[]> {
@@ -35,11 +38,11 @@ export class MemoryStore {
     const seen = new Set<string>();
     const result: IMemory[] = [];
 
-    for (const mem of [...recentWithChar, ...important, ...locationMems]) {
-      const id = (mem as any)._id?.toString();
+    for (const mem of [...recentWithChar, ...important, ...locationMems] as LeanMemory[]) {
+      const id = mem._id?.toString();
       if (id && !seen.has(id)) {
         seen.add(id);
-        result.push(mem);
+        result.push(mem as IMemory);
       }
     }
 

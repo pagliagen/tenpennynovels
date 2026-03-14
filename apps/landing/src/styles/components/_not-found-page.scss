@@ -15,22 +15,22 @@
   height: 100%;
 
   h2 {
-    color: #d4af37;
-    font-size: 4rem;
-    margin-bottom: 1rem;
+    color: #d4af37; 
+    font-size: 40px;
+    margin-bottom: 16px;
     font-family: var(--font-primary);
   }
 
   p {
     color: rgba(255, 255, 255, 0.9);
-    font-size: 1.1rem;
-    margin-bottom: 2rem;
+    font-size: 18px;
+    margin-bottom: 24px;
     font-style: italic;
   }
 
   &__back {
     font-family: var(--font-primary);
-    font-size: 1.1rem;
+    font-size: 18px;
     color: var(--color-homepage-green);
     text-transform: uppercase;
   }

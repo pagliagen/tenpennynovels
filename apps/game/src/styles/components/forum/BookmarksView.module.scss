@@ -29,7 +29,7 @@
 
 .postContent {
   color: $text-secondary;
-  font-size: 0.95rem;
+  font-size: 15px;
   line-height: 1.5;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -40,14 +40,14 @@
 
 .path {
   color: $text-muted;
-  font-size: 0.85rem;
+  font-size: 13px;
 }
 
 .meta {
   display: flex;
   flex-wrap: wrap;
   gap: $spacing-md;
-  font-size: 0.85rem;
+  font-size: 13px;
   color: $text-muted;
 }
 
@@ -58,7 +58,7 @@
   background: transparent;
   border: none;
   color: $text-muted;
-  font-size: 0.8rem;
+  font-size: 13px;
   cursor: pointer;
   padding: $spacing-xs $spacing-sm;
   border-radius: $radius-sm;

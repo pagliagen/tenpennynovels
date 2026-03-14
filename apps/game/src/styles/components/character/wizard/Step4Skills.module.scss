@@ -7,7 +7,6 @@
 
 .stepContent {
   @include forms.stepContent;
-  display: flex;  
 }
 
 .stepTitle {
@@ -36,91 +35,147 @@
 
 .errorSummary {
   @include forms.errorSummary;
-} 
-
-.categoryTabs {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  flex-grow: 0;
-  flex-shrink: 0;
-  width: 120px;
 }
 
 .skillsContent {
-  position: relative;
-  flex-grow: 1;
-  flex-shrink: 1;
+  width: 100%;
 }
 
-.categoryTab {
-  color: black;
-  font-family: var(--font-primary);
-  font-size: var(--font-size-sm);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border-left: 2px solid transparent;
+.badgeRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+}
 
-  &:hover { 
+.badge {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: var(--font-size-xs);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-light);
+  font-family: var(--font-primary);
+}
+
+.badgeBase {
+  @extend .badge;
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-secondary);
+}
+
+.badgeBonus {
+  @extend .badge;
+  background: #d4edda;
+  color: #155724;
+  font-weight: bold;
+  border-color: #28a745;
+}
+
+.badgeRequired {
+  @extend .badge;
+  background: #fff3cd;
+  color: #856404;
+  border-color: #ffc107;
+  font-weight: bold;
+}
+
+.totalInput {
+  @include forms.inputBase;
+  width: 100%;
+  text-align: center;
+  font-weight: bold;
+}
+
+.budgetCostLabel {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+
+  &[data-warning="true"] {
+    color: var(--color-warning);
     font-weight: bold;
   }
-
-  &.categoryTabActive {
-  border-left: 2px solid black;
-  }
-}
- 
-.skillsTable {
-  width: 100%; 
-  overflow: hidden;
 }
 
-.skillsTableHeader {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr 1fr;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-sm) var(--spacing-md);
-  background: var(--color-bg-tertiary);
-  border-bottom: var(--border-default);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-primary);
-  font-family: var(--font-primary);
+.capWarning {
+  color: var(--color-error);
+  animation: pulse 1s ease-in-out infinite;
 }
 
-.skillsTableRow {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr 1fr;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-sm) var(--spacing-md);
-  border-bottom: 1px solid var(--border-default);
-  align-items: center;
-
-  &:last-child {
-    border-bottom: none;
-  }
-}
-
-.skillsTableCell {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-primary);
-}
-
-.skillInput {
-  @include forms.inputBase;
-  width: 4rem;
-  text-align: center;
-}
-
-.skillButton {
-  @include forms.buttonSecondary;
-  padding: var(--spacing-xs) var(--spacing-sm);
-  font-size: var(--font-size-xs);
-}
-
-.skillHighValue {
-  color: var(--color-success);
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }
 
 .error {
   @include forms.error;
+}
+
+// 3-column grid layout for all skills
+.skillsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-md);
+}
+
+.skillCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm);
+  border: 1px solid var(--color-border-light);
+  border-radius: 4px;
+  background: var(--color-bg-secondary);
+  transition: box-shadow 0.2s ease;
+
+  &:hover {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+}
+
+.skillCardHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.skillName {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+}
+
+.skillCardBody {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  margin-top: var(--spacing-xs);
+
+  .totalInput {
+    flex: 1;
+  }
+
+  .capWarning {
+    font-size: var(--font-size-xs);
+    white-space: nowrap;
+  }
+}
+
+.skillCardFooter {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  padding-top: 4px;
+  border-top: 1px solid var(--color-border-light);
+}
+
+@media (max-width: 1024px) {
+  .skillsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .skillsGrid {
+    grid-template-columns: 1fr;
+  }
 }

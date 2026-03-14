@@ -8,33 +8,30 @@ const router = Router();
 /**
  * @route GET /character-creation-config
  * @desc Get complete character creation configuration
- * @access Private (User auth required, character optional)
+ * @access Private (User auth required, NO character required)
  */
 router.get('/',
   AuthMiddleware.requireUserAuth,
-  requireGamePermission('game:character-creation:config'),
   CharacterCreationController.getConfig
 );
 
 /**
  * @route GET /character-creation-config/occupations
  * @desc Get all available occupations
- * @access Private (User auth required, character optional)
+ * @access Private (User auth required, NO character required)
  */
 router.get('/occupations',
   AuthMiddleware.requireUserAuth,
-  requireGamePermission('game:character-creation:occupations'),
   CharacterCreationController.getOccupations
 );
 
 /**
  * @route GET /character-creation-config/skills
  * @desc Get all available skills
- * @access Private (User auth required, character optional)
+ * @access Private (User auth required, NO character required)
  */
 router.get('/skills',
   AuthMiddleware.requireUserAuth,
-  requireGamePermission('game:character-creation:skills'),
   CharacterCreationController.getSkills
 );
 

@@ -46,6 +46,9 @@ export default function Document(): JSX.Element {
         {/* IE Compatibility Mode */}
         <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
 
+        {/* Viewport for proper DPI scaling */}
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+
         {/* Preconnect to Google Fonts for Performance */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

@@ -8,6 +8,8 @@
 import { spawn, ChildProcess } from 'child_process';
 import { EventEmitter } from 'events';
 import path from 'path';
+import { config } from '../config';
+import { logger } from '../utils/logger';
 
 interface EmbeddingRequest {
   type?: 'embed' | 'moderate';
@@ -41,7 +43,7 @@ export class PythonEmbeddingService extends EventEmitter {
   private requestId: number = 0;
 
   constructor(
-    private pythonPath: string = process.env.PYTHON_PATH || 'python3',
+    private pythonPath: string = config.services.python.path,
     private scriptPath: string = path.join(__dirname, '../../python/embedding_server.py'),
     private timeout: number = 30000 // 30s per request
   ) {
@@ -52,7 +54,7 @@ export class PythonEmbeddingService extends EventEmitter {
    * Start Python subprocess
    */
   async start(): Promise<void> {
-    console.log(`[Python] Starting embedding server: ${this.scriptPath}`);
+    logger.info('Starting Python embedding server', { scriptPath: this.scriptPath });
 
     return new Promise((resolve, reject) => {
       // Spawn Python process
@@ -68,7 +70,7 @@ export class PythonEmbeddingService extends EventEmitter {
       // Setup stderr logging (Python logs)
       this.process.stderr.on('data', (data: Buffer) => {
         const message = data.toString().trim();
-        console.log(`[Python] ${message}`);
+        logger.debug('Python stderr', { message });
 
         // Detect model loaded
         if (message.includes('Model ready')) {
@@ -96,7 +98,7 @@ export class PythonEmbeddingService extends EventEmitter {
 
       // Handle process exit
       this.process.on('exit', (code, signal) => {
-        console.error(`[Python] Process exited: code=${code}, signal=${signal}`);
+        logger.error('Python process exited', undefined, { code, signal });
         this.isReady = false;
         this.emit('exit', code, signal);
 
@@ -110,7 +112,7 @@ export class PythonEmbeddingService extends EventEmitter {
 
       // Handle process errors
       this.process.on('error', (error) => {
-        console.error(`[Python] Process error: ${error.message}`);
+        logger.error('Python process error', error);
         reject(error);
       });
 
@@ -129,7 +131,7 @@ export class PythonEmbeddingService extends EventEmitter {
    */
   async stop(): Promise<void> {
     if (this.process) {
-      console.log('[Python] Stopping embedding server...');
+      logger.info('Stopping Python embedding server');
 
       // Graceful shutdown - close stdin to signal Python to exit
       if (this.process.stdin) {
@@ -140,7 +142,7 @@ export class PythonEmbeddingService extends EventEmitter {
       await new Promise<void>((resolve) => {
         const timeout = setTimeout(() => {
           if (this.process) {
-            console.warn('[Python] Force killing process...');
+            logger.warn('Force killing Python process (graceful shutdown timeout)');
             this.process.kill('SIGKILL');
           }
           resolve();
@@ -215,7 +217,7 @@ export class PythonEmbeddingService extends EventEmitter {
 
       const pending = this.pendingRequests.shift();
       if (!pending) {
-        console.warn('[Python] Received response but no pending requests');
+        logger.warn('Received Python response but no pending requests');
         return;
       }
 
@@ -235,8 +237,7 @@ export class PythonEmbeddingService extends EventEmitter {
       }
 
     } catch (error: any) {
-      console.error(`[Python] Failed to parse response: ${error.message}`);
-      console.error(`[Python] Raw line: ${line}`);
+      logger.error('Failed to parse Python response', error, { rawLine: line });
 
       const pending = this.pendingRequests.shift();
       if (pending) {

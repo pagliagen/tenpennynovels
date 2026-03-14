@@ -54,7 +54,7 @@ export default function CharacterWizardPage() {
     if (isSubmittingRef.current) return;
 
     if (!isAuthenticated) {
-      router.push('/auth/login');
+      router.push('/');
       return;
     }
 

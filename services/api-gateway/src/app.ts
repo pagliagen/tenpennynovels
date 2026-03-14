@@ -70,8 +70,8 @@ app.use(compression({
     if (ct && String(ct).includes('text/event-stream')) return false;
     return compression.filter(req, res);
   },
-}) as any);
-app.use(cookieParser() as any);
+}));
+app.use(cookieParser());
 app.use(morgan('combined', { stream: httpLoggerStream }));
 
 // ---------------------------------------------------------------------------

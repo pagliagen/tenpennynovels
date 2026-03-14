@@ -150,12 +150,8 @@ router.get('/occupations/:occupationId/check-prerequisites',
   CharacterGameplayController.checkOccupationPrerequisitesEndpoint
 );
 
-// Character creation configuration (dynamic from SystemConfiguration)
-router.get('/character-creation-config',
-  AuthMiddleware.requireUserAuth,
-  requireGamePermission('game:character:create'),
-  CharacterController.getCharacterCreationConfig
-);
+// Character creation configuration moved to /modules/game/routes/characterCreation.ts
+// REMOVED DUPLICATE: router.get('/character-creation-config', ...)
 
 // AI gateway callback endpoints
 router.post('/characters/bot',

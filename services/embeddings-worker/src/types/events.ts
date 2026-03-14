@@ -6,6 +6,8 @@
  * embeddings asynchronously without blocking the main API response.
  */
 
+import type { DocumentType } from '../config';
+
 export const REDIS_CHANNELS = {
   // Document events (triggers chunking + embeddings)
   EMBEDDING_DOCUMENT_CREATED: 'embedding:document:created',
@@ -44,7 +46,7 @@ export interface DocumentEmbeddingEvent extends BaseEmbeddingEvent {
   title: string;
   content: string;
   contentDelta?: any;
-  type: 'ambientazione' | 'approfondimenti' | 'regolamento';
+  type: DocumentType;
 }
 
 export interface DocumentChunkEmbeddingEvent extends BaseEmbeddingEvent {
@@ -53,7 +55,7 @@ export interface DocumentChunkEmbeddingEvent extends BaseEmbeddingEvent {
   slug: string;
   title: string;
   content: string;
-  documentType: 'ambientazione' | 'approfondimenti' | 'regolamento';
+  documentType: DocumentType;
   order: number;
   headingLevel: 2 | 3;
   parentSlug?: string;

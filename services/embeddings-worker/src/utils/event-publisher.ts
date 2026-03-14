@@ -11,6 +11,7 @@ import {
   DocumentEmbeddingEvent,
   ChatEmbeddingEvent
 } from '../types/events';
+import type { DocumentType } from '../config';
 
 export class EmbeddingEventPublisher {
   private publisher: RedisClientType;
@@ -26,7 +27,7 @@ export class EmbeddingEventPublisher {
     documentId: string,
     title: string,
     content: string,
-    type: 'ambientazione' | 'regolamento' | 'approfondimenti',
+    type: DocumentType,
     isUpdate: boolean = false
   ): Promise<void> {
     const event: DocumentEmbeddingEvent = {
@@ -78,7 +79,7 @@ export class EmbeddingEventPublisher {
       documentId: string;
       title: string;
       content: string;
-      type: 'ambientazione' | 'regolamento' | 'approfondimenti';
+      type: DocumentType;
     }>
   ): Promise<void> {
     const pipeline = this.publisher.multi();

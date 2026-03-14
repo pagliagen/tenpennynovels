@@ -5,6 +5,7 @@
 
 import mongoose from 'mongoose';
 import { FailedJob, DLQStats } from '../types/dlq';
+import { logger } from '../utils/logger';
 
 const FailedJobSchema = new mongoose.Schema<FailedJob>({
   jobId: { type: String, required: true, unique: true },
@@ -50,10 +51,10 @@ export class DLQService {
         retryable
       });
 
-      console.warn(`[DLQ] Job ${jobId} added: ${error} (retryable: ${retryable})`);
+      logger.warn('Job added to DLQ', { jobId, error, retryable, eventType });
     } catch (err: any) {
       // Log but don't throw - DLQ failure shouldn't block processing
-      console.error(`[DLQ] Failed to add job to DLQ: ${err.message}`);
+      logger.error('Failed to add job to DLQ', err, { jobId });
     }
   }
 
@@ -106,7 +107,7 @@ export class DLQService {
    */
   static async removeJob(jobId: string): Promise<void> {
     await FailedJobModel.deleteOne({ jobId });
-    console.info(`[DLQ] Job ${jobId} removed (successfully retried)`);
+    logger.info('Job removed from DLQ (successfully retried)', { jobId });
   }
 
   /**
@@ -120,7 +121,7 @@ export class DLQService {
       createdAt: { $lt: cutoffDate }
     });
 
-    console.info(`[DLQ] Cleared ${result.deletedCount} jobs older than ${daysOld} days`);
+    logger.info('Cleared old DLQ jobs', { count: result.deletedCount, daysOld });
     return result.deletedCount;
   }
 }

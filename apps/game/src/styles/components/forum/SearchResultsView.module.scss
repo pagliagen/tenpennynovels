@@ -18,7 +18,7 @@
   border-radius: $radius-md;
   color: $text-primary;
   font-family: $font-sans;
-  font-size: 1rem;
+  font-size: 15px;
   transition: $transition-normal;
 
   &::placeholder {
@@ -53,7 +53,7 @@
 
 .contentSnippet {
   color: $text-secondary;
-  font-size: 0.95rem;
+  font-size: 15px;
   line-height: 1.5;
   margin-bottom: $spacing-sm;
 
@@ -64,7 +64,7 @@
 }
 
 .path {
-  font-size: 0.8rem;
+  font-size: 13px;
   color: $text-muted;
   margin-bottom: $spacing-xs;
 }
@@ -72,7 +72,7 @@
 .meta {
   display: flex;
   gap: $spacing-md;
-  font-size: 0.85rem;
+  font-size: 13px;
   color: $text-muted;
 }
 
