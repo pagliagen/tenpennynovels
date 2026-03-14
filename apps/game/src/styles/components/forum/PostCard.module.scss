@@ -32,19 +32,19 @@
 }
 
 .date {
-  font-size: 0.8rem;
+  font-size: 13px;
   color: $text-muted;
 }
 
 .edited {
-  font-size: 0.75rem;
+  font-size: 13px;
   color: $text-muted;
   font-style: italic;
 }
 
 .content {
   color: $text-primary;
-  font-size: 0.95rem;
+  font-size: 15px;
   line-height: 1.5;
   white-space: pre-wrap;
   word-break: break-word;
@@ -66,7 +66,7 @@
   background: none;
   border: none;
   color: $text-secondary;
-  font-size: 0.8rem;
+  font-size: 13px;
   cursor: pointer;
   padding: 0;
   transition: $transition-fast;
@@ -109,7 +109,7 @@
   border-radius: $radius-sm;
   color: $text-secondary;
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: 13px;
 
   &:hover {
     border-color: $gold-30;
@@ -124,7 +124,7 @@
   border-radius: $radius-sm;
   color: $gold;
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: 13px;
 
   &:hover:not(:disabled) {
     background: $gold-30;

@@ -6,20 +6,20 @@
 
 .formBody {
   flex: 1;
-  padding: 1.5rem;
+  padding: 24px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 24px;
 }
 
 .infoBox {
-  padding: 1rem;
+  padding: 16px;
   background: #fef3c7;
   border: 1px solid #f59e0b;
   border-radius: 8px;
   color: #92400e;
-  font-size: 0.95rem;
+  font-size: 15px;
 
   strong {
     font-weight: 600;
@@ -27,32 +27,32 @@
 }
 
 .errorMessage {
-  padding: 0.75rem 1rem;
+  padding: 12px 16px;
   background: #fee2e2;
   border: 1px solid #ef4444;
   border-radius: 6px;
   color: #991b1b;
-  font-size: 0.9rem;
+  font-size: 13px;
   font-weight: 500;
 }
 
 .formActions {
   display: flex;
-  gap: 1rem;
-  padding: 1rem 1.5rem;
+  gap: 16px;
+  padding: 16px 24px;
   border-top: 1px solid #e5e7eb;
   background: #f9fafb;
 }
 
 .cancelButton {
   flex: 1;
-  padding: 0.75rem 1.5rem;
+  padding: 12px 24px;
   border: 1px solid #d1d5db;
   border-radius: 8px;
   background: white;
   color: #374151;
   font-weight: 500;
-  font-size: 0.95rem;
+  font-size: 15px;
   cursor: pointer;
   transition: all 0.2s;
 
@@ -69,13 +69,13 @@
 
 .submitButton {
   flex: 1;
-  padding: 0.75rem 1.5rem;
+  padding: 12px 24px;
   border: none;
   border-radius: 8px;
   background: #dc2626;
   color: white;
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 15px;
   cursor: pointer;
   transition: all 0.2s;
 

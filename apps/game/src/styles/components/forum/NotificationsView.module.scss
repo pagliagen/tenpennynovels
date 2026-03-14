@@ -16,7 +16,7 @@
 .title {
   font-family: $font-serif;
   color: $text-primary;
-  font-size: 1.3rem;
+  font-size: 15px;
 }
 
 .markAllBtn {
@@ -24,7 +24,7 @@
   border: none;
   color: $gold;
   font-family: $font-sans;
-  font-size: 0.9rem;
+  font-size: 15px;
   cursor: pointer;
   transition: $transition-fast;
 
@@ -66,7 +66,7 @@
 }
 
 .notifIcon {
-  font-size: 1.2rem;
+  font-size: 15px;
   flex-shrink: 0;
 }
 
@@ -78,19 +78,19 @@
 .notifTitle {
   font-family: $font-serif;
   color: $text-primary;
-  font-size: 1rem;
+  font-size: 15px;
   margin-bottom: $spacing-xs;
 }
 
 .notifMessage {
-  font-size: 0.9rem;
+  font-size: 15px;
   color: $text-secondary;
   line-height: 1.4;
 }
 
 .timestamp {
   margin-top: $spacing-xs;
-  font-size: 0.8rem;
+  font-size: 13px;
   color: $text-muted;
   display: flex;
   gap: $spacing-md;

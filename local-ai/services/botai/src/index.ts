@@ -4,8 +4,8 @@ import { createLogger } from '../../../shared/logger';
 import { warmupModel, getModel } from '../../../shared/ollama';
 
 const logger = createLogger('BotAI');
-const PORT = parseInt(process.env.BOTAI_PORT || '8080', 10);
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27030/local-ai';
+const PORT = parseInt(process.env.BOTAI_PORT as string, 10);
+const MONGODB_URI = process.env.MONGODB_URI as string;
 
 async function start() {
   await mongoose.connect(MONGODB_URI);

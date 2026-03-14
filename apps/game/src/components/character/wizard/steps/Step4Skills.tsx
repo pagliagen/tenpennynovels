@@ -175,30 +175,49 @@ export function Step4Skills(): JSX.Element {
   }, [apiSkills, dynamicSkills, activeCategory]);
 
   /**
-   * Handle manual point allocation
+   * Calculate budget cost for displaying below input
+   * Cost = manualPoints + requiredBonus (both count toward budget)
    */
-  const handlePointChange = (skillName: string, newManualPoints: number) => {
-    const skill = skills[skillName];
+  const calculateBudgetCost = (skill: { manualPoints: number; requiredBonus: number }): number => {
+    return skill.manualPoints + skill.requiredBonus;
+  };
+
+  /**
+   * Handle total value change (user inputs desired total)
+   * Reverse-calculates manualPoints from total
+   */
+  const handleTotalChange = (skillId: string, newTotal: number) => {
+    const skill = skills[skillId];
     if (!skill) return;
 
-    // Enforce budget
+    const base = skill.base;
+    const occupationBonus = skill.occupationBonus;
+    const requiredBonus = skill.requiredBonus;
+
+    // Reverse calculation: manualPoints = total - base - requiredBonus - occupationBonus
+    const calculatedManual = newTotal - base - requiredBonus - occupationBonus;
+
+    // Validation 1: Can't go below minimum (base + bonuses)
+    if (calculatedManual < 0) {
+      return; // Silently ignore
+    }
+
+    // Validation 2: Budget check
     const currentManualPoints = skill.manualPoints;
-    const pointDifference = newManualPoints - currentManualPoints;
+    const pointDifference = calculatedManual - currentManualPoints;
     if (spentPoints + pointDifference > totalBudget) {
       return; // Would exceed budget
     }
 
-    // Enforce cap (75 normally, 80 with occupation bonus)
+    // Validation 3: Cap enforcement
     const maxTotal = skill.occupationBonus > 0 ? 80 : 75;
-    const newTotal = skill.base + skill.requiredBonus + newManualPoints + skill.occupationBonus;
     if (newTotal > maxTotal) {
       return; // Would exceed cap
     }
 
-    // Update skill
-    updateSkill(skillName, {
-      manualPoints: Math.max(0, newManualPoints),
-      total: skill.base + skill.requiredBonus + Math.max(0, newManualPoints) + skill.occupationBonus,
+    // Update skill (updateSkill will recalculate total)
+    updateSkill(skillId, {
+      manualPoints: calculatedManual,
     });
   };
 
@@ -285,10 +304,8 @@ export function Step4Skills(): JSX.Element {
                     <div className={styles.skillsTable}>
                       <div className={styles.skillsTableHeader}>
                         <div className={styles.skillsTableCell}>Abilità</div>
-                        <div className={styles.skillsTableCell}>Base</div>
-                        <div className={styles.skillsTableCell}>Req.</div>
-                        <div className={styles.skillsTableCell}>Manuali</div>
-                        <div className={styles.skillsTableCell}>Totale</div>
+                        <div className={styles.skillsTableCell}>Punti Totali</div>
+                        <div className={styles.skillsTableCell}></div>
                       </div>
                       {fixedSlots.map(({ skillDef }) => {
                         const rb = resolveSkillBaseValue(skillDef.baseFormula, skillDef.baseValue, stats);
@@ -299,16 +316,61 @@ export function Step4Skills(): JSX.Element {
                           occupationBonus: 0,
                           total: rb,
                         };
+                        const budgetCost = calculateBudgetCost(skill);
+                        const maxTotal = skill.occupationBonus > 0 ? 80 : 75;
+                        const minTotal = skill.base + skill.requiredBonus + skill.occupationBonus;
+                        const isAtCap = skill.total >= maxTotal;
+
                         return (
                           <div key={skillDef.id} className={styles.skillsTableRow}>
-                            <div className={styles.skillsTableCell}><strong>{skillDef.name}</strong></div>
-                            <div className={styles.skillsTableCell}>{skill.base}</div>
-                            <div className={styles.skillsTableCell}>
-                              {skill.requiredBonus > 0 ? `+${skill.requiredBonus}` : '-'}
+                            <div className={styles.skillNameCell}>
+                              <strong>{skillDef.name}</strong>
+                              <div className={styles.badgeRow}>
+                                {skill.base > 0 && (
+                                  <span className={styles.badgeBase}>Base: {skill.base}</span>
+                                )}
+                                {skill.occupationBonus > 0 && (
+                                  <span className={styles.badgeBonus} title="Non conta verso il budget">
+                                    +{skill.occupationBonus} Bonus Mestiere
+                                  </span>
+                                )}
+                                {skill.requiredBonus > 0 && (
+                                  <span className={styles.badgeRequired} title="Abilità obbligatoria, portata a 40">
+                                    Richiesta: 40
+                                  </span>
+                                )}
+                              </div>
                             </div>
-                            <div className={styles.skillsTableCell}>{skill.manualPoints}</div>
-                            <div className={styles.skillsTableCell}>
-                              <strong className={skill.total >= 40 ? styles.skillHighValue : ''}>{skill.total}</strong>
+                            <div className={styles.inputCell}>
+                              <input
+                                type="number"
+                                value={skill.total}
+                                onChange={(e) => handleTotalChange(skillDef.id, parseInt(e.target.value) || 0)}
+                                min={minTotal}
+                                max={maxTotal}
+                                className={styles.totalInput}
+                                aria-label={`Punti totali per ${skillDef.name}`}
+                                aria-describedby={`budget-cost-req-${skillDef.id}`}
+                              />
+                              <span
+                                id={`budget-cost-req-${skillDef.id}`}
+                                className={styles.budgetCostLabel}
+                                data-cost={budgetCost}
+                                data-warning={spentPoints > totalBudget}
+                              >
+                                Costo budget: {budgetCost} {budgetCost === 1 ? 'punto' : 'punti'}
+                              </span>
+                            </div>
+                            <div className={styles.capCell}>
+                              {isAtCap ? (
+                                <span className={styles.capWarning} title={`Limite massimo (${maxTotal}) raggiunto`}>
+                                  ⚠️
+                                </span>
+                              ) : (
+                                <span className={styles.capOk} title="Entro il limite">
+                                  ✓
+                                </span>
+                              )}
                             </div>
                           </div>
                         );
@@ -361,10 +423,8 @@ export function Step4Skills(): JSX.Element {
             <div className={styles.skillsTable}>
               <div className={styles.skillsTableHeader}>
                 <div className={styles.skillsTableCell}>Abilità</div>
-                <div className={styles.skillsTableCell}>Base</div>
-                <div className={styles.skillsTableCell}>Bonus</div>
-                <div className={styles.skillsTableCell}>Manuali</div>
-                <div className={styles.skillsTableCell}>Totale</div>
+                <div className={styles.skillsTableCell}>Punti Totali</div>
+                <div className={styles.skillsTableCell}></div>
               </div>
               {(() => {
                 const selectedOccupation = occupations.find((occ) => occ.id === occupation.occupationId);
@@ -388,20 +448,61 @@ export function Step4Skills(): JSX.Element {
                     total: rbBonus,
                   };
 
+                  const budgetCost = calculateBudgetCost(skill);
+                  const maxTotal = skill.occupationBonus > 0 ? 80 : 75;
+                  const minTotal = skill.base + skill.requiredBonus + skill.occupationBonus;
+                  const isAtCap = skill.total >= maxTotal;
+
                   return (
                     <div key={skillDef.id} className={styles.skillsTableRow}>
-                      <div className={styles.skillsTableCell}>
+                      <div className={styles.skillNameCell}>
                         <strong>{skillDef.name}</strong>
+                        <div className={styles.badgeRow}>
+                          {skill.base > 0 && (
+                            <span className={styles.badgeBase}>Base: {skill.base}</span>
+                          )}
+                          {skill.occupationBonus > 0 && (
+                            <span className={styles.badgeBonus} title="Non conta verso il budget">
+                              +{skill.occupationBonus} Bonus Mestiere
+                            </span>
+                          )}
+                          {skill.requiredBonus > 0 && (
+                            <span className={styles.badgeRequired} title="Abilità obbligatoria, portata a 40">
+                              Richiesta: 40
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      <div className={styles.skillsTableCell}>{skill.base}</div>
-                      <div className={styles.skillsTableCell}>
-                        {skill.occupationBonus > 0 ? `+${skill.occupationBonus}` : '-'}
+                      <div className={styles.inputCell}>
+                        <input
+                          type="number"
+                          value={skill.total}
+                          onChange={(e) => handleTotalChange(skillDef.id, parseInt(e.target.value) || 0)}
+                          min={minTotal}
+                          max={maxTotal}
+                          className={styles.totalInput}
+                          aria-label={`Punti totali per ${skillDef.name}`}
+                          aria-describedby={`budget-cost-bonus-${skillDef.id}`}
+                        />
+                        <span
+                          id={`budget-cost-bonus-${skillDef.id}`}
+                          className={styles.budgetCostLabel}
+                          data-cost={budgetCost}
+                          data-warning={spentPoints > totalBudget}
+                        >
+                          Costo budget: {budgetCost} {budgetCost === 1 ? 'punto' : 'punti'}
+                        </span>
                       </div>
-                      <div className={styles.skillsTableCell}>{skill.manualPoints}</div>
-                      <div className={styles.skillsTableCell}>
-                        <strong className={skill.total > 75 ? styles.skillHighValue : ''}>
-                          {skill.total}
-                        </strong>
+                      <div className={styles.capCell}>
+                        {isAtCap ? (
+                          <span className={styles.capWarning} title={`Limite massimo (${maxTotal}) raggiunto`}>
+                            ⚠️
+                          </span>
+                        ) : (
+                          <span className={styles.capOk} title="Entro il limite">
+                            ✓
+                          </span>
+                        )}
                       </div>
                     </div>
                   );
@@ -416,12 +517,8 @@ export function Step4Skills(): JSX.Element {
           <div className={styles.skillsTable}>
             <div className={styles.skillsTableHeader}>
               <div className={styles.skillsTableCell}>Abilità</div>
-              <div className={styles.skillsTableCell}>Base</div>
-              <div className={styles.skillsTableCell}>Req.</div>
-              <div className={styles.skillsTableCell}>Bonus</div>
-              <div className={styles.skillsTableCell}>Manuali</div>
-              <div className={styles.skillsTableCell}>Totale</div>
-              <div className={styles.skillsTableCell}>Controlli</div>
+              <div className={styles.skillsTableCell}>Punti Totali</div>
+              <div className={styles.skillsTableCell}></div>
             </div>
 
             {filteredSkills.map((skillDef) => {
@@ -434,46 +531,66 @@ export function Step4Skills(): JSX.Element {
                 total: rbFiltered,
               };
 
+              const budgetCost = calculateBudgetCost(skill);
+              const maxTotal = skill.occupationBonus > 0 ? 80 : 75;
+              const minTotal = skill.base + skill.requiredBonus + skill.occupationBonus;
+              const isAtCap = skill.total >= maxTotal;
+
               return (
                 <div key={skillDef.id} className={styles.skillsTableRow}>
-                  <div className={styles.skillsTableCell}>
+                  {/* Column 1: Name + Badges */}
+                  <div className={styles.skillNameCell}>
                     <strong>{skillDef.name}</strong>
+                    <div className={styles.badgeRow}>
+                      {skill.base > 0 && (
+                        <span className={styles.badgeBase}>Base: {skill.base}</span>
+                      )}
+                      {skill.occupationBonus > 0 && (
+                        <span className={styles.badgeBonus} title="Non conta verso il budget">
+                          +{skill.occupationBonus} Bonus Mestiere
+                        </span>
+                      )}
+                      {skill.requiredBonus > 0 && (
+                        <span className={styles.badgeRequired} title="Abilità obbligatoria, portata a 40">
+                          Richiesta: 40
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <div className={styles.skillsTableCell}>{skill.base}</div>
-                  <div className={styles.skillsTableCell}>
-                    {skill.requiredBonus > 0 ? `+${skill.requiredBonus}` : '-'}
-                  </div>
-                  <div className={styles.skillsTableCell}>
-                    {skill.occupationBonus > 0 ? `+${skill.occupationBonus}` : '-'}
-                  </div>
-                  <div className={styles.skillsTableCell}>
+
+                  {/* Column 2: Input (total) + Budget Cost */}
+                  <div className={styles.inputCell}>
                     <input
                       type="number"
-                      value={skill.manualPoints}
-                      onChange={(e) => handlePointChange(skillDef.id, parseInt(e.target.value) || 0)}
-                      min={0}
-                      max={totalBudget}
-                      className={styles.skillInput}
+                      value={skill.total}
+                      onChange={(e) => handleTotalChange(skillDef.id, parseInt(e.target.value) || 0)}
+                      min={minTotal}
+                      max={maxTotal}
+                      className={styles.totalInput}
+                      aria-label={`Punti totali per ${skillDef.name}`}
+                      aria-describedby={`budget-cost-${skillDef.id}`}
                     />
-                  </div>
-                  <div className={styles.skillsTableCell}>
-                    <strong className={skill.total > 75 ? styles.skillHighValue : ''}>{skill.total}</strong>
-                  </div>
-                  <div className={styles.skillsTableCell}>
-                    <button
-                      type="button"
-                      onClick={() => handlePointChange(skillDef.id, skill.manualPoints - 5)}
-                      className={styles.skillButton}
+                    <span
+                      id={`budget-cost-${skillDef.id}`}
+                      className={styles.budgetCostLabel}
+                      data-cost={budgetCost}
+                      data-warning={spentPoints > totalBudget}
                     >
-                      -5
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handlePointChange(skillDef.id, skill.manualPoints + 5)}
-                      className={styles.skillButton}
-                    >
-                      +5
-                    </button>
+                      Costo budget: {budgetCost} {budgetCost === 1 ? 'punto' : 'punti'}
+                    </span>
+                  </div>
+
+                  {/* Column 3: Cap Indicator */}
+                  <div className={styles.capCell}>
+                    {isAtCap ? (
+                      <span className={styles.capWarning} title={`Limite massimo (${maxTotal}) raggiunto`}>
+                        ⚠️
+                      </span>
+                    ) : (
+                      <span className={styles.capOk} title="Entro il limite">
+                        ✓
+                      </span>
+                    )}
                   </div>
                 </div>
               );

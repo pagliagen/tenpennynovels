@@ -5,7 +5,7 @@
  */
 
 .container {
-  padding: 1.5rem;
+  padding: 24px;
   font-family: 'Playfair Display', serif;
   color: #2c2416;
   background: #faf8f3;
@@ -14,19 +14,19 @@
 }
 
 .header {
-  margin-bottom: 1.5rem;
+  margin-bottom: 24px;
   border-bottom: 2px solid #8b7355;
-  padding-bottom: 1rem;
+  padding-bottom: 16px;
 
   h2 {
-    font-size: 1.5rem;
+    font-size: 28px;
     font-weight: bold;
-    margin: 0 0 0.5rem 0;
+    margin: 0 0 8px 0;
     color: #3d2f1f;
   }
 
   p {
-    font-size: 0.9rem;
+    font-size: 15px;
     color: #5a4a3a;
     margin: 0;
     font-style: italic;
@@ -34,46 +34,46 @@
 }
 
 .statusBanner {
-  margin-bottom: 1.5rem;
+  margin-bottom: 24px;
 
   .warning {
-    padding: 1rem;
+    padding: 16px;
     background: #fff3cd;
     border: 1px solid #ffc107;
     border-radius: 4px;
     color: #856404;
-    font-size: 0.95rem;
+    font-size: 15px;
   }
 
   .success {
-    padding: 1rem;
+    padding: 16px;
     background: #d4edda;
     border: 1px solid #28a745;
     border-radius: 4px;
     color: #155724;
-    font-size: 0.95rem;
+    font-size: 15px;
   }
 }
 
 .formGroup {
-  margin-bottom: 1.5rem;
+  margin-bottom: 24px;
 }
 
 .label {
   display: block;
-  font-size: 0.95rem;
+  font-size: 15px;
   font-weight: 600;
   color: #3d2f1f;
-  margin-bottom: 0.5rem;
+  margin-bottom: 8px;
 }
 
 .input {
   width: 100%;
-  padding: 0.75rem;
+  padding: 12px;
   border: 1px solid #8b7355;
   border-radius: 4px;
   font-family: 'Playfair Display', serif;
-  font-size: 1rem;
+  font-size: 15px;
   background: #ffffff;
   color: #2c2416;
 
@@ -86,48 +86,48 @@
 
 .helpText {
   display: block;
-  margin-top: 0.5rem;
-  font-size: 0.85rem;
+  margin-top: 8px;
+  font-size: 13px;
   color: #7a6a5a;
   font-style: italic;
 }
 
 .feedback {
-  margin-bottom: 1rem;
+  margin-bottom: 16px;
 
   .checking {
-    padding: 0.75rem;
+    padding: 12px;
     background: #e8f4f8;
     border: 1px solid #b8dae4;
     border-radius: 4px;
     color: #31708f;
-    font-size: 0.9rem;
+    font-size: 15px;
   }
 
   .warning {
-    padding: 0.75rem;
+    padding: 12px;
     background: #fff3cd;
     border: 1px solid #ffc107;
     border-radius: 4px;
     color: #856404;
-    font-size: 0.9rem;
+    font-size: 15px;
   }
 
   .success {
-    padding: 0.75rem;
+    padding: 12px;
     background: #d4edda;
     border: 1px solid #28a745;
     border-radius: 4px;
     color: #155724;
-    font-size: 0.9rem;
+    font-size: 15px;
   }
 }
 
 .wikiSection {
-  margin-bottom: 1.5rem;
+  margin-bottom: 24px;
 
   small {
-    font-size: 0.85rem;
+    font-size: 13px;
     color: #7a6a5a;
     font-style: italic;
   }
@@ -136,17 +136,17 @@
 .wikiResults {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 12px;
   max-height: 300px;
   overflow-y: auto;
-  margin-top: 0.75rem;
+  margin-top: 12px;
 }
 
 .wikiCard {
   display: flex;
   align-items: flex-start;
-  gap: 1rem;
-  padding: 1rem;
+  gap: 16px;
+  padding: 16px;
   border: 1px solid #8b7355;
   background: #f5f1e8;
   border-radius: 4px;
@@ -176,46 +176,46 @@
 
 .wikiTitle {
   font-weight: bold;
-  margin-bottom: 0.5rem;
-  font-size: 1rem;
+  margin-bottom: 8px;
+  font-size: 15px;
   color: #3d2f1f;
 }
 
 .wikiDates {
   font-weight: normal;
-  margin-left: 0.5rem;
-  font-size: 0.9em;
+  margin-left: 8px;
+  font-size: 13px;
   color: #5a4a3a;
 }
 
 .wikiOccupation {
-  font-size: 0.8em;
+  font-size: 13px;
   color: #fb8500;
   font-style: italic;
-  margin-bottom: 0.3rem;
+  margin-bottom: 4px;
   font-weight: 600;
 }
 
 .wikiExtract {
-  font-size: 0.85em;
+  font-size: 13px;
   color: #5a4a3a;
   line-height: 1.4;
 }
 
 .actions {
-  margin-top: 2rem;
-  padding-top: 1.5rem;
+  margin-top: 24px;
+  padding-top: 24px;
   border-top: 1px solid #d4c4a8;
 }
 
 .saveButton {
-  padding: 0.75rem 2rem;
+  padding: 12px 32px;
   background: #8b7355;
   color: #ffffff;
   border: none;
   border-radius: 4px;
   font-family: 'Playfair Display', serif;
-  font-size: 1rem;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s ease;
@@ -232,33 +232,33 @@
 }
 
 .successMessage {
-  margin-top: 1rem;
-  padding: 0.75rem;
+  margin-top: 16px;
+  padding: 12px;
   background: #d4edda;
   border: 1px solid #28a745;
   border-radius: 4px;
   color: #155724;
-  font-size: 0.9rem;
+  font-size: 15px;
 }
 
 .warningMessage {
-  margin-top: 1rem;
-  padding: 0.75rem;
+  margin-top: 16px;
+  padding: 12px;
   background: #fff3cd;
   border: 1px solid #ffc107;
   border-radius: 4px;
   color: #856404;
-  font-size: 0.9rem;
+  font-size: 15px;
 }
 
 .errorMessage {
-  margin-top: 1rem;
-  padding: 0.75rem;
+  margin-top: 16px;
+  padding: 12px;
   background: #f8d7da;
   border: 1px solid #f5c6cb;
   border-radius: 4px;
   color: #721c24;
-  font-size: 0.9rem;
+  font-size: 15px;
 }
 
 .loading,
@@ -266,7 +266,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 3rem;
+  padding: 48px;
   font-style: italic;
   color: #7a6a5a;
 }

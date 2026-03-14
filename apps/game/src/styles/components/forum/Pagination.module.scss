@@ -17,7 +17,7 @@
   border-radius: $radius-md;
   color: $text-primary;
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: 15px;
   transition: $transition-fast;
 
   &:hover:not(:disabled) {
@@ -46,7 +46,7 @@
   border-radius: $radius-sm;
   color: $text-secondary;
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: 15px;
   transition: $transition-fast;
 
   &:hover:not(.active) {
@@ -65,5 +65,5 @@
 .ellipsis {
   color: $text-muted;
   padding: 0 $spacing-xs;
-  font-size: 0.9rem;
+  font-size: 15px;
 }

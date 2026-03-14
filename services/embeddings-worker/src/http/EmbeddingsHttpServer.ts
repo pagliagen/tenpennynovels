@@ -7,32 +7,9 @@ import express, { Request, Response, NextFunction } from 'express';
 import { PythonEmbeddingService } from '../services/PythonEmbeddingService';
 import { QdrantClient } from '@qdrant/js-client-rest';
 import { Client as ElasticsearchClient } from '@elastic/elasticsearch';
-
-const LOG_LEVEL = process.env.LOG_LEVEL || 'info';
-
-/**
- * Simple structured logger
- */
-const logger = {
-  debug: (message: string, ...args: any[]) => {
-    if (LOG_LEVEL === 'debug') {
-      console.log(`[DEBUG] ${message}`, ...args);
-    }
-  },
-  info: (message: string, ...args: any[]) => {
-    console.log(`[INFO] ${message}`, ...args);
-  },
-  warn: (message: string, ...args: any[]) => {
-    console.warn(`[WARN] ${message}`, ...args);
-  },
-  error: (message: string, ...args: any[]) => {
-    console.error(`[ERROR] ${message}`, ...args);
-  }
-};
-
-const ELASTICSEARCH_URL = process.env.ELASTICSEARCH_URL || 'http://localhost:9200';
-const ELASTICSEARCH_INDEX_PREFIX = process.env.ELASTICSEARCH_INDEX_PREFIX || 'tenpennynovels';
-const QDRANT_URL = process.env.QDRANT_URL || 'http://localhost:6333';
+import { config, DocumentType } from '../config';
+import { logger } from '../utils/logger';
+import { validateTextLength, validateSearchParams } from '../utils/validation';
 
 export class EmbeddingsHttpServer {
   private app: express.Application;
@@ -42,12 +19,13 @@ export class EmbeddingsHttpServer {
 
   constructor(
     private pythonService: PythonEmbeddingService,
-    private port: number = 5001,
-    private host: string = '0.0.0.0'  // Listen on all interfaces for Docker networking
+    private worker: any = null, // EmbeddingWorker for health stats
+    private port: number = config.http.port,
+    private host: string = config.http.host // SECURITY: 127.0.0.1 in prod
   ) {
     this.app = express();
-    this.qdrant = new QdrantClient({ url: QDRANT_URL });
-    this.elasticsearch = new ElasticsearchClient({ node: ELASTICSEARCH_URL });
+    this.qdrant = new QdrantClient({ url: config.services.qdrant.url });
+    this.elasticsearch = new ElasticsearchClient({ node: config.services.elasticsearch.url });
     this.setupMiddleware();
     this.setupRoutes();
   }
@@ -102,13 +80,14 @@ export class EmbeddingsHttpServer {
     /**
      * Hybrid search endpoint (keyword + semantic)
      * POST /search
-     * Body: { query: string, type?: string, limit?: number, minScore?: number }
+     * Body: { query: string, type?: string, source?: string, limit?: number, minScore?: number }
      * Response: { success: boolean, results: Array<...>, error?: string }
      */
     this.app.post('/search', async (req: Request, res: Response) => {
       try {
-        const { query, type, source, limit = 10, minScore = 0.4 } = req.body;
+        const { query, type, source, limit, minScore } = req.body;
 
+        // SECURITY: Validate query parameter
         if (!query || typeof query !== 'string') {
           return res.status(400).json({
             success: false,
@@ -116,12 +95,43 @@ export class EmbeddingsHttpServer {
           });
         }
 
+        // SECURITY: Validate text length (DoS prevention)
+        try {
+          validateTextLength(query, 'query');
+        } catch (err: any) {
+          return res.status(400).json({
+            success: false,
+            error: err.message
+          });
+        }
+
+        // SECURITY: Validate search params (limit, minScore, type)
+        let validatedParams: { limit: number; minScore: number; type?: DocumentType };
+        try {
+          validatedParams = validateSearchParams({ limit, minScore, type });
+        } catch (err: any) {
+          return res.status(400).json({
+            success: false,
+            error: err.message
+          });
+        }
+
+        // SECURITY: Validate source
+        if (source && !['forum', 'documents'].includes(source)) {
+          return res.status(400).json({
+            success: false,
+            error: 'Invalid source: must be "forum" or "documents"'
+          });
+        }
+
+        // Generate embedding
         const embedding = await this.pythonService.generateEmbedding(query);
 
+        // Execute search
         if (source === 'forum') {
-          const keywordResults = await this.forumKeywordSearch(query, limit * 2);
-          const semanticResults = await this.forumVectorSearch(embedding, limit * 2, minScore);
-          const merged = this.mergeForumWithRRF(keywordResults, semanticResults, limit);
+          const keywordResults = await this.forumKeywordSearch(query, validatedParams.limit * 2);
+          const semanticResults = await this.forumVectorSearch(embedding, validatedParams.limit * 2, validatedParams.minScore);
+          const merged = this.mergeForumWithRRF(keywordResults, semanticResults, validatedParams.limit);
 
           return res.json({
             success: true,
@@ -130,9 +140,9 @@ export class EmbeddingsHttpServer {
           });
         }
 
-        const keywordResults = await this.keywordSearch(query, type, limit * 2);
-        const semanticResults = await this.vectorSearch(embedding, type, limit * 2, minScore);
-        const merged = this.mergeWithRRF(keywordResults, semanticResults, limit);
+        const keywordResults = await this.keywordSearch(query, validatedParams.type, validatedParams.limit * 2);
+        const semanticResults = await this.vectorSearch(embedding, validatedParams.type, validatedParams.limit * 2, validatedParams.minScore);
+        const merged = this.mergeWithRRF(keywordResults, semanticResults, validatedParams.limit);
 
         res.json({
           success: true,
@@ -141,7 +151,7 @@ export class EmbeddingsHttpServer {
         });
 
       } catch (error: any) {
-        logger.error(`Error in /search: ${error.message}`);
+        logger.error('Error in /search endpoint', error);
         res.status(500).json({
           success: false,
           error: 'Internal server error'
@@ -164,22 +174,30 @@ export class EmbeddingsHttpServer {
       if (type) mustClauses.push({ term: { documentType: type } });
 
       const response = await this.elasticsearch.search({
-        index: `${ELASTICSEARCH_INDEX_PREFIX}_document_chunks`,
+        index: `${config.services.elasticsearch.indexPrefix}_document_chunks`,
         body: {
           query: { bool: { must: mustClauses, filter: [{ term: { isActive: true } }] } },
           size: limit
         }
       });
 
-      return response.hits.hits.map((hit: any, i: number) => ({
-        chunkId: hit._source.chunkId,
-        documentId: hit._source.documentId,
-        slug: hit._source.slug,
-        heading: hit._source.heading,
-        type: hit._source.documentType,
-        parentSlug: hit._source.parentSlug,
-        rank: i + 1
-      }));
+      return response.hits.hits.map((hit: any, i: number) => {
+        // Runtime validation for Elasticsearch payload
+        if (!hit._source || typeof hit._source.chunkId !== 'string') {
+          logger.warn('Invalid Elasticsearch result: missing chunkId', { hitId: hit._id });
+          return null;
+        }
+
+        return {
+          chunkId: hit._source.chunkId,
+          documentId: hit._source.documentId ?? '',
+          slug: hit._source.slug ?? '',
+          heading: hit._source.heading ?? '',
+          type: hit._source.documentType ?? '',
+          parentSlug: hit._source.parentSlug,
+          rank: i + 1
+        };
+      }).filter((item): item is NonNullable<typeof item> => item !== null);
     } catch (error: any) {
       logger.error(`Keyword search error: ${error.message}`);
       return [];
@@ -200,15 +218,23 @@ export class EmbeddingsHttpServer {
         filter
       });
 
-      return results.map((r, i) => ({
-        chunkId: r.payload?.chunkId as string,
-        documentId: r.payload?.documentId as string,
-        slug: r.payload?.slug as string,
-        heading: r.payload?.heading as string,
-        type: r.payload?.documentType as string,
-        parentSlug: r.payload?.parentSlug as string | undefined,
-        rank: i + 1
-      }));
+      return results.map((r, i) => {
+        // Runtime validation for Qdrant payload
+        if (!r.payload || typeof r.payload.chunkId !== 'string') {
+          logger.warn('Invalid Qdrant result: missing chunkId', { pointId: r.id });
+          return null;
+        }
+
+        return {
+          chunkId: r.payload.chunkId,
+          documentId: r.payload.documentId ?? '',
+          slug: r.payload.slug ?? '',
+          heading: r.payload.heading ?? '',
+          type: r.payload.documentType ?? '',
+          parentSlug: r.payload.parentSlug,
+          rank: i + 1
+        };
+      }).filter((item): item is NonNullable<typeof item> => item !== null);
     } catch (error: any) {
       logger.error(`Vector search error: ${error.message}`);
       return [];
@@ -218,7 +244,7 @@ export class EmbeddingsHttpServer {
   private async forumKeywordSearch(query: string, limit: number = 20) {
     try {
       const response = await this.elasticsearch.search({
-        index: `${ELASTICSEARCH_INDEX_PREFIX}_forum_posts`,
+        index: `${config.services.elasticsearch.indexPrefix}_forum_posts`,
         body: {
           query: {
             bool: {
@@ -232,14 +258,22 @@ export class EmbeddingsHttpServer {
         }
       });
 
-      return response.hits.hits.map((hit: any, i: number) => ({
-        postId: hit._source.postId,
-        topicSlug: hit._source.topicSlug,
-        discussionSlug: hit._source.discussionSlug,
-        authorCharacterId: hit._source.authorCharacterId,
-        authorCharacterName: hit._source.authorCharacterName,
-        rank: i + 1
-      }));
+      return response.hits.hits.map((hit: any, i: number) => {
+        // Runtime validation for forum post Elasticsearch payload
+        if (!hit._source || typeof hit._source.postId !== 'string') {
+          logger.warn('Invalid Elasticsearch forum post result', { hitId: hit._id });
+          return null;
+        }
+
+        return {
+          postId: hit._source.postId,
+          topicSlug: hit._source.topicSlug ?? '',
+          discussionSlug: hit._source.discussionSlug ?? '',
+          authorCharacterId: hit._source.authorCharacterId ?? '',
+          authorCharacterName: hit._source.authorCharacterName ?? '',
+          rank: i + 1
+        };
+      }).filter((item): item is NonNullable<typeof item> => item !== null);
     } catch (error: any) {
       logger.error(`Forum keyword search error: ${error.message}`);
       return [];
@@ -256,14 +290,22 @@ export class EmbeddingsHttpServer {
         score_threshold: minScore
       });
 
-      return results.map((r, i) => ({
-        postId: r.payload?.postId as string,
-        topicSlug: r.payload?.topicSlug as string,
-        discussionSlug: r.payload?.discussionSlug as string,
-        authorCharacterId: r.payload?.authorCharacterId as string,
-        authorCharacterName: r.payload?.authorCharacterName as string,
-        rank: i + 1
-      }));
+      return results.map((r, i) => {
+        // Runtime validation for forum post Qdrant payload
+        if (!r.payload || typeof r.payload.postId !== 'string') {
+          logger.warn('Invalid Qdrant forum post result', { pointId: r.id });
+          return null;
+        }
+
+        return {
+          postId: r.payload.postId,
+          topicSlug: r.payload.topicSlug ?? '',
+          discussionSlug: r.payload.discussionSlug ?? '',
+          authorCharacterId: r.payload.authorCharacterId ?? '',
+          authorCharacterName: r.payload.authorCharacterName ?? '',
+          rank: i + 1
+        };
+      }).filter((item): item is NonNullable<typeof item> => item !== null);
     } catch (error: any) {
       logger.error(`Forum vector search error: ${error.message}`);
       return [];

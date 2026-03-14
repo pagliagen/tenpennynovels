@@ -1,28 +1,28 @@
 .permissionSection {
-  margin-bottom: 2rem;
-  padding: 1.5rem;
+  margin-bottom: 32px;
+  padding: 24px;
   background: #f8f9fa;
   border-radius: 8px;
   border: 1px solid #dee2e6;
 }
 
 .sectionTitle {
-  font-size: 1.25rem;
+  font-size: 20px;
   font-weight: 600;
-  margin-bottom: 1rem;
+  margin-bottom: 16px;
   color: #212529;
   border-bottom: 2px solid #d97706;
-  padding-bottom: 0.5rem;
+  padding-bottom: 8px;
 }
 
 .gestoreNotice {
   background: #d4edda;
   border: 1px solid #c3e6cb;
   color: #155724;
-  padding: 0.75rem 1rem;
-  border-radius: 6px;
-  margin-bottom: 1rem;
-  font-size: 0.95rem;
+  padding: 12px 16px;
+  border-radius: 6px;   
+  margin-bottom: 16px;
+  font-size: 15px;
 
   strong {
     font-weight: 600;
@@ -32,15 +32,15 @@
 .permissionList {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 8px;
 }
 
 .permissionItem {
   display: grid;
   grid-template-columns: auto 1fr auto auto;
-  gap: 0.75rem;
+  gap: 12px;
   align-items: center;
-  padding: 0.75rem 1rem;
+  padding: 12px 16px;
   background: white;
   border: 1px solid #dee2e6;
   border-radius: 6px;
@@ -77,38 +77,38 @@
 
 .permissionCode {
   font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
-  font-size: 0.875rem;
+  font-size: 13px;
   color: #6c757d;
   background: #e9ecef;
-  padding: 0.25rem 0.5rem;
+  padding: 4px 8px;
   border-radius: 4px;
   white-space: nowrap;
 }
 
 .roleIndicator {
-  font-size: 0.8rem;
+  font-size: 13px;
   color: #155724;
   background: #d4edda;
-  padding: 0.25rem 0.5rem;
+  padding: 4px 8px;
   border-radius: 4px;
   white-space: nowrap;
   font-weight: 500;
   display: flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: 8px;
 }
 
 /* Responsive */
 @media (max-width: 768px) {
   .permissionItem {
     grid-template-columns: auto 1fr;
-    gap: 0.5rem;
+    gap: 8px;
   }
 
   .permissionCode,
   .roleIndicator {
     grid-column: 2 / -1;
     justify-self: start;
-    margin-left: 1.5rem;
+    margin-left: 24px;
   }
 }

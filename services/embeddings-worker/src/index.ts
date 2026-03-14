@@ -16,63 +16,64 @@ import mongoose from 'mongoose';
 import { PythonEmbeddingService } from './services/PythonEmbeddingService';
 import { EmbeddingsHttpServer } from './http/EmbeddingsHttpServer';
 import { EmbeddingWorker } from './workers/embedding-worker';
+import { config } from './config';
+import { logger } from './utils/logger';
 
 // Import models to register them with Mongoose
 import './models/Document';
 import './models/Location';
 import './models/Chat';
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/tenpennynovels';
-const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
-const HTTP_PORT = parseInt(process.env.HTTP_PORT || '5001', 10);
-const PYTHON_PATH = process.env.PYTHON_PATH || 'python3';
-
 async function main() {
-  console.log('🌱 TenPennyNovels Embeddings Worker (Unified)');
-  console.log('============================================\n');
+  logger.info('TenPennyNovels Embeddings Worker starting');
+  logger.info('Environment', {
+    nodeEnv: config.env.isProduction ? 'production' : 'development',
+    httpPort: config.http.port,
+    httpHost: config.http.host
+  });
 
   try {
     // 1. Start Python embedding service (model loading can take 60s)
-    console.log('🐍 Starting Python embedding service...');
-    const pythonService = new PythonEmbeddingService(PYTHON_PATH);
+    logger.info('Starting Python embedding service');
+    const pythonService = new PythonEmbeddingService();
     await pythonService.start();
-    console.log('✅ Python embedding service ready\n');
+    logger.info('Python embedding service ready');
 
     // 2. Connect to MongoDB
-    console.log('📊 Connecting to MongoDB...');
-    await mongoose.connect(MONGODB_URI);
-    console.log('✅ Connected to MongoDB\n');
+    logger.info('Connecting to MongoDB');
+    await mongoose.connect(config.database.mongodbUri);
+    logger.info('Connected to MongoDB');
 
     // 3. Connect to Redis
-    console.log('🔌 Connecting to Redis...');
-    const redisSubscriber = createClient({ url: REDIS_URL });
+    logger.info('Connecting to Redis');
+    const redisSubscriber = createClient({ url: config.database.redisUrl });
 
     redisSubscriber.on('error', (err: Error) => {
-      console.error('Redis Subscriber Error:', err);
+      logger.error('Redis Subscriber error', err);
     });
 
     redisSubscriber.on('reconnecting', () => {
-      console.log('🔄 Redis reconnecting...');
+      logger.info('Redis reconnecting');
     });
 
     await redisSubscriber.connect();
-    console.log('✅ Connected to Redis\n');
+    logger.info('Connected to Redis');
 
-    // 4. Start HTTP server (for unified-backend sync calls)
-    console.log('🌐 Starting HTTP server...');
-    const httpServer = new EmbeddingsHttpServer(pythonService, HTTP_PORT);
-    await httpServer.start();
-    console.log('✅ HTTP server listening on port', HTTP_PORT, '\n');
-
-    // 5. Start embedding worker (uses same Python service)
-    console.log('⚙️  Starting embedding worker...');
+    // 4. Start embedding worker (uses same Python service)
+    logger.info('Starting embedding worker');
     const worker = new EmbeddingWorker(redisSubscriber, pythonService);
     await worker.start();
-    console.log('✅ Embedding worker started\n');
+    logger.info('Embedding worker started');
+
+    // 5. Start HTTP server (for unified-backend sync calls) - pass worker for health stats
+    logger.info('Starting HTTP server');
+    const httpServer = new EmbeddingsHttpServer(pythonService, worker);
+    await httpServer.start();
+    logger.info('HTTP server listening', { port: config.http.port, host: config.http.host });
 
     // Graceful shutdown
     const shutdown = async (signal: string) => {
-      console.log(`\n\n🛑 Received ${signal}, shutting down gracefully...`);
+      logger.info('Shutting down gracefully', { signal });
 
       // Stop in reverse order
       await worker.stop();
@@ -81,19 +82,19 @@ async function main() {
       await redisSubscriber.disconnect();
       await mongoose.disconnect();
 
-      console.log('✅ Shutdown complete');
+      logger.info('Shutdown complete');
       process.exit(0);
     };
 
     process.on('SIGINT', () => shutdown('SIGINT'));
     process.on('SIGTERM', () => shutdown('SIGTERM'));
 
-    console.log('✨ Unified embeddings service running');
-    console.log(`   HTTP: http://127.0.0.1:${HTTP_PORT}`);
-    console.log(`   Press Ctrl+C to stop\n`);
+    logger.info('Embeddings service running', {
+      httpUrl: `http://${config.http.host}:${config.http.port}`
+    });
 
   } catch (error) {
-    console.error('❌ Fatal error:', error);
+    logger.error('Fatal startup error', error as Error);
     process.exit(1);
   }
 }

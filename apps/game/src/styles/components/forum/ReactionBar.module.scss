@@ -17,7 +17,7 @@
   border-radius: $radius-sm;
   color: $text-secondary;
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: 13px;
   transition: $transition-fast;
 
   &:hover:not(:disabled) {
@@ -39,10 +39,10 @@
 }
 
 .emoji {
-  font-size: 1rem;
+  font-size: 15px;
 }
 
 .count {
-  font-size: 0.8rem;
+  font-size: 13px;
   color: inherit;
 }

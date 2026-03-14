@@ -77,8 +77,8 @@
 
 .skillsTableHeader {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr 1fr;
-  gap: var(--spacing-sm);
+  grid-template-columns: 1fr auto auto;
+  gap: var(--spacing-md);
   padding: var(--spacing-sm) var(--spacing-md);
   background: var(--color-bg-tertiary);
   border-bottom: var(--border-default);
@@ -89,8 +89,8 @@
 
 .skillsTableRow {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr 1fr;
-  gap: var(--spacing-sm);
+  grid-template-columns: 1fr auto auto;
+  gap: var(--spacing-md);
   padding: var(--spacing-sm) var(--spacing-md);
   border-bottom: 1px solid var(--border-default);
   align-items: center;
@@ -105,9 +105,102 @@
   color: var(--color-text-primary);
 }
 
+.skillNameCell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.badgeRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+}
+
+.badge {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: var(--font-size-xs);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-light);
+  font-family: var(--font-primary);
+}
+
+.badgeBase {
+  @extend .badge;
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-secondary);
+}
+
+.badgeBonus {
+  @extend .badge;
+  background: #d4edda;
+  color: #155724;
+  font-weight: bold;
+  border-color: #28a745;
+}
+
+.badgeRequired {
+  @extend .badge;
+  background: #fff3cd;
+  color: #856404;
+  border-color: #ffc107;
+  font-weight: bold;
+}
+
+.inputCell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  min-width: 120px;
+}
+
+.totalInput {
+  @include forms.inputBase;
+  width: 100px;
+  text-align: center;
+  font-weight: bold;
+}
+
+.budgetCostLabel {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+
+  &[data-cost="0"] {
+    color: var(--color-text-tertiary);
+  }
+
+  &[data-warning="true"] {
+    color: var(--color-warning);
+    font-weight: bold;
+  }
+}
+
+.capCell {
+  width: 24px;
+  text-align: center;
+  font-size: var(--font-size-md);
+}
+
+.capOk {
+  color: var(--color-success);
+}
+
+.capWarning {
+  color: var(--color-error);
+  animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
 .skillInput {
   @include forms.inputBase;
-  width: 4rem;
+  width: 100px;
   text-align: center;
 }
 
@@ -123,4 +216,20 @@
 
 .error {
   @include forms.error;
+}
+
+@media (max-width: 768px) {
+  .skillsTableRow {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-sm);
+  }
+
+  .inputCell {
+    align-items: flex-start;
+    width: 100%;
+  }
+
+  .capCell {
+    display: none;
+  }
 }

@@ -8,7 +8,7 @@
  */
 
 .directoryContainer {
-  padding: 1.5rem;
+  padding: 24px;
   font-family: 'Playfair Display', serif;
   color: #2c2416;
   background: #faf8f3;
@@ -18,20 +18,20 @@
 
 /* Header */
 .header {
-  margin-bottom: 1.5rem;
+  margin-bottom: 24px;
   border-bottom: 2px solid #8b7355;
-  padding-bottom: 1rem;
+  padding-bottom: 16px;
 }
 
 .title {
-  font-size: 1.75rem;
+  font-size: 28px;
   font-weight: bold;
-  margin: 0 0 0.5rem 0;
+  margin: 0 0 8px 0;
   color: #3d2f1f;
 }
 
 .subtitle {
-  font-size: 0.9rem;
+  font-size: 15px;
   color: #5a4a3a;
   margin: 0;
   font-style: italic;
@@ -40,9 +40,9 @@
 /* Filters */
 .filters {
   display: flex;
-  gap: 1.5rem;
-  margin-bottom: 1.5rem;
-  padding: 1rem;
+  gap: 24px;
+  margin-bottom: 24px;
+  padding: 16px;
   background: #f5f1e8;
   border: 1px solid #d4c4a8;
   border-radius: 4px;
@@ -53,23 +53,23 @@
 .filterGroup {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 8px;
   min-width: 180px;
 }
 
 .filterLabel {
-  font-size: 0.9rem;
+  font-size: 15px;
   font-weight: 600;
   color: #3d2f1f;
 }
 
 .searchInput,
 .select {
-  padding: 0.5rem;
+  padding: 8px;
   border: 1px solid #8b7355;
   border-radius: 4px;
   font-family: 'Playfair Display', serif;
-  font-size: 0.95rem;
+  font-size: 15px;
   background: #ffffff;
   color: #2c2416;
 
@@ -83,11 +83,11 @@
 .checkboxLabel {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 0.95rem;
+  gap: 8px;
+  font-size: 15px;
   cursor: pointer;
   color: #3d2f1f;
-  padding-top: 1.5rem;
+  padding-top: 24px;
 
   input[type='checkbox'] {
     width: 16px;
@@ -103,8 +103,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 3rem;
-  gap: 1rem;
+  padding: 48px;
+  gap: 16px;
   color: #5a4a3a;
   font-style: italic;
 }
@@ -139,7 +139,7 @@
 .table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.9rem;
+  font-size: 15px;
 
   thead {
     background: #e8dcc8;
@@ -147,7 +147,7 @@
   }
 
   th {
-    padding: 0.75rem;
+    padding: 12px;
     text-align: left;
     font-weight: bold;
     color: #3d2f1f;
@@ -196,7 +196,7 @@
   }
 
   td {
-    padding: 0.75rem;
+    padding: 12px;
     color: #2c2416;
   }
 }
@@ -223,7 +223,7 @@
   align-items: center;
   justify-content: center;
   font-weight: bold;
-  font-size: 0.85rem;
+  font-size: 13px;
   color: #3d2f1f;
   border: 2px solid #8b7355;
   margin: 0 auto;
@@ -233,7 +233,7 @@
 .nameCell {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 4px;
 }
 
 .fullName {
@@ -250,8 +250,8 @@
 .statusOffline {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 0.85rem;
+  gap: 8px;
+  font-size: 13px;
   font-weight: 600;
 }
 
@@ -282,7 +282,7 @@
 /* Empty State */
 .emptyState {
   text-align: center;
-  padding: 3rem !important;
+  padding: 48px !important;
   color: #7a6a5a;
   font-style: italic;
 }
@@ -292,15 +292,15 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 1.5rem;
-  padding: 1rem;
+  margin-top: 24px;
+  padding: 16px;
   background: #f5f1e8;
   border: 1px solid #d4c4a8;
   border-radius: 4px;
 }
 
 .paginationButton {
-  padding: 0.5rem 1rem;
+  padding: 8px 16px;
   background: #8b7355;
   color: #ffffff;
   border: none;
@@ -322,6 +322,6 @@
 }
 
 .paginationInfo {
-  font-size: 0.9rem;
+  font-size: 15px;
   color: #5a4a3a;
 }

@@ -31,15 +31,13 @@ import {
 import { PythonEmbeddingService, ModerationResult } from '../services/PythonEmbeddingService';
 import { DLQService } from '../services/DLQService';
 import { parseChunks, ParsedChunk } from '../utils/ChunkParser';
-
-const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
-const QDRANT_URL = process.env.QDRANT_URL || 'http://localhost:6333';
-const ELASTICSEARCH_URL = process.env.ELASTICSEARCH_URL || 'http://localhost:9200';
-const ELASTICSEARCH_INDEX_PREFIX = process.env.ELASTICSEARCH_INDEX_PREFIX || 'tenpennynovels';
-const EMBEDDING_MODEL = 'paraphrase-multilingual-MiniLM-L12-v2';
-const MODERATION_MODEL = 'hate-ita';
-const CACHE_TTL = 3600; // 1 hour
-const MODERATION_CONFIG_CACHE_TTL = 60000; // 1 minute
+import { config } from '../config';
+import { logger } from '../utils/logger';
+import {
+  validateDocumentEvent,
+  validateChatEvent,
+  validateLocationEvent,
+} from '../utils/validation';
 
 export class EmbeddingWorker {
   private subscriber: any; // Redis subscriber
@@ -58,14 +56,14 @@ export class EmbeddingWorker {
     this.pythonService = pythonService;
 
     // ✅ Initialize Qdrant client
-    this.qdrant = new QdrantClient({ url: QDRANT_URL });
+    this.qdrant = new QdrantClient({ url: config.services.qdrant.url });
 
     // ✅ Initialize ElasticSearch client (v8 client for ES 8.x)
-    this.elasticsearch = new ElasticsearchClient({ node: ELASTICSEARCH_URL });
+    this.elasticsearch = new ElasticsearchClient({ node: config.services.elasticsearch.url });
 
     // ✅ Bull queue with retry
     this.queue = new Bull('embeddings', {
-      redis: REDIS_URL,
+      redis: config.database.redisUrl,
       defaultJobOptions: {
         attempts: 3,
         backoff: {
@@ -119,7 +117,7 @@ export class EmbeddingWorker {
    */
   private async initRedisCache(): Promise<void> {
     try {
-      this.redis = createClient({ url: REDIS_URL });
+      this.redis = createClient({ url: config.database.redisUrl });
       this.redis.on('error', (err: Error) => {
         console.error('Redis Cache Error:', err);
       });
@@ -175,13 +173,13 @@ export class EmbeddingWorker {
 
       // ✅ Ensure ElasticSearch document_chunks index
       const chunkIndexExists = await this.elasticsearch.indices.exists({
-        index: `${ELASTICSEARCH_INDEX_PREFIX}_document_chunks`
+        index: `${config.services.elasticsearch.indexPrefix}_document_chunks`
       });
 
       if (!chunkIndexExists) {
-        console.log(`📦 Creating ElasticSearch index: ${ELASTICSEARCH_INDEX_PREFIX}_document_chunks`);
+        console.log(`📦 Creating ElasticSearch index: ${config.services.elasticsearch.indexPrefix}_document_chunks`);
         await this.elasticsearch.indices.create({
-          index: `${ELASTICSEARCH_INDEX_PREFIX}_document_chunks`,
+          index: `${config.services.elasticsearch.indexPrefix}_document_chunks`,
           body: {
             settings: {
               analysis: {
@@ -211,13 +209,13 @@ export class EmbeddingWorker {
       }
 
       const forumIndexExists = await this.elasticsearch.indices.exists({
-        index: `${ELASTICSEARCH_INDEX_PREFIX}_forum_posts`
+        index: `${config.services.elasticsearch.indexPrefix}_forum_posts`
       });
 
       if (!forumIndexExists) {
-        console.log(`📦 Creating ElasticSearch index: ${ELASTICSEARCH_INDEX_PREFIX}_forum_posts`);
+        console.log(`📦 Creating ElasticSearch index: ${config.services.elasticsearch.indexPrefix}_forum_posts`);
         await this.elasticsearch.indices.create({
-          index: `${ELASTICSEARCH_INDEX_PREFIX}_forum_posts`,
+          index: `${config.services.elasticsearch.indexPrefix}_forum_posts`,
           body: {
             settings: {
               analysis: {
@@ -536,7 +534,7 @@ export class EmbeddingWorker {
 
             // Cache for 1 hour
             if (this.redis) {
-              await this.redis.setEx(cacheKey, CACHE_TTL, JSON.stringify(embedding));
+              await this.redis.setEx(cacheKey, config.embeddings.cacheTTL, JSON.stringify(embedding));
             }
           }
 
@@ -593,7 +591,7 @@ export class EmbeddingWorker {
 
       // ✅ Cache for 1 hour
       if (this.redis) {
-        await this.redis.setEx(cacheKey, CACHE_TTL, JSON.stringify(embedding));
+        await this.redis.setEx(cacheKey, config.embeddings.cacheTTL, JSON.stringify(embedding));
       }
 
       // ✅ Save to DB + Qdrant
@@ -614,15 +612,24 @@ export class EmbeddingWorker {
     try {
       console.log(`🎭 Processing chat embedding: ${event.chatId}`);
 
+      // Type-safe Location query result
+      interface LocationQueryResult {
+        _id: string;
+        name: string;
+        slug: string;
+      }
+
       const Location = mongoose.model('Location');
-      const location = await Location.findById(event.locationId).select('name slug').lean() as any;
+      const location = await Location.findById(event.locationId)
+        .select('name slug')
+        .lean() as LocationQueryResult | null;
 
       if (!location) {
         throw new Error(`Location not found: ${event.locationId}`);
       }
 
-      const locationName = location.name as string;
-      const locationSlug = (location.slug || '') as string;
+      const locationName = location.name;
+      const locationSlug = location.slug ?? '';
       const text = `${event.characterName} a ${locationName}: ${event.content}`;
 
       // ✅ Check cache for embedding
@@ -642,30 +649,12 @@ export class EmbeddingWorker {
           throw new Error(`Failed to generate embedding for chat ${event.chatId}`);
         }
         if (this.redis) {
-          await this.redis.setEx(cacheKey, CACHE_TTL, JSON.stringify(embedding));
+          await this.redis.setEx(cacheKey, config.embeddings.cacheTTL, JSON.stringify(embedding));
         }
       }
 
-      // ✅ Run AI moderation only on 'updated' events to avoid duplicates
-      let moderation: ModerationResult | null = null;
-      const eventSource = (event as any)._source;
-
-      if (eventSource === 'updated') {
-        const moderationConfig = await this.getModerationConfig();
-
-        if (moderationConfig.enabled) {
-          try {
-            moderation = await this.pythonService.moderateText(event.content);
-            console.log(`🛡️ Moderation: ${moderation.label} (${moderation.score}) for ${event.characterName}`);
-
-            if (moderation.label === 'toxic' && moderation.score >= moderationConfig.threshold) {
-              await this.createModerationAlert(event, locationName, locationSlug, moderation);
-            }
-          } catch (moderationError) {
-            console.error('⚠️ Moderation failed (embedding will still be saved):', moderationError);
-          }
-        }
-      }
+      // Note: Moderation disabled - dead code removed (event._source was always undefined)
+      const moderation: ModerationResult | null = null;
 
       // ✅ Save embedding + moderation to DB
       await this.saveChatEmbeddingAndModeration(event.chatId, locationName, embedding, moderation);
@@ -703,7 +692,7 @@ export class EmbeddingWorker {
           throw new Error(`Failed to generate embedding for forum post ${event.postId}`);
         }
         if (this.redis) {
-          await this.redis.setEx(cacheKey, CACHE_TTL, JSON.stringify(embedding));
+          await this.redis.setEx(cacheKey, config.embeddings.cacheTTL, JSON.stringify(embedding));
         }
       }
 
@@ -754,7 +743,7 @@ export class EmbeddingWorker {
         content: event.content,
         toxicityScore: moderation.score,
         moderationLabel: moderation.label,
-        moderationModel: MODERATION_MODEL,
+        moderationModel: config.moderation.model,
         status: 'pending',
         createdAt: new Date(),
         updatedAt: new Date()
@@ -784,7 +773,7 @@ export class EmbeddingWorker {
     if (moderation) {
       updateFields.moderationScore = moderation.score;
       updateFields.moderationLabel = moderation.label;
-      updateFields.moderationModel = MODERATION_MODEL;
+      updateFields.moderationModel = config.moderation.model;
       updateFields.moderationProcessedAt = new Date();
     }
 
@@ -821,7 +810,7 @@ export class EmbeddingWorker {
 
     try {
       await this.elasticsearch.index({
-        index: `${ELASTICSEARCH_INDEX_PREFIX}_forum_posts`,
+        index: `${config.services.elasticsearch.indexPrefix}_forum_posts`,
         id: event.postId,
         document: {
           postId: event.postId,
@@ -843,7 +832,7 @@ export class EmbeddingWorker {
    */
   private async getModerationConfig(): Promise<{ enabled: boolean; threshold: number }> {
     const now = Date.now();
-    if (this.moderationConfigCache && (now - this.moderationConfigCacheTime) < MODERATION_CONFIG_CACHE_TTL) {
+    if (this.moderationConfigCache && (now - this.moderationConfigCacheTime) < config.moderation.configCacheTTL) {
       return this.moderationConfigCache;
     }
 
@@ -895,7 +884,7 @@ export class EmbeddingWorker {
         content: event.content,
         toxicityScore: moderation.score,
         moderationLabel: moderation.label,
-        moderationModel: MODERATION_MODEL,
+        moderationModel: config.moderation.model,
         status: 'pending',
         createdAt: new Date(),
         updatedAt: new Date()
@@ -924,14 +913,14 @@ export class EmbeddingWorker {
     const updateFields: any = {
       locationName,
       contentEmbedding: embedding,
-      embeddingModel: EMBEDDING_MODEL,
+      embeddingModel: config.embeddings.model,
       embeddingGeneratedAt: new Date()
     };
 
     if (moderation) {
       updateFields.moderationScore = moderation.score;
       updateFields.moderationLabel = moderation.label;
-      updateFields.moderationModel = MODERATION_MODEL;
+      updateFields.moderationModel = config.moderation.model;
       updateFields.moderationProcessedAt = new Date();
     }
 
@@ -989,7 +978,7 @@ export class EmbeddingWorker {
 
       // ✅ Cache
       if (this.redis) {
-        await this.redis.setEx(cacheKey, CACHE_TTL, JSON.stringify(embedding));
+        await this.redis.setEx(cacheKey, config.embeddings.cacheTTL, JSON.stringify(embedding));
       }
 
       // ✅ Save to Qdrant
@@ -1082,7 +1071,7 @@ export class EmbeddingWorker {
     const Document = mongoose.model('Document');
     await Document.findByIdAndUpdate(documentId, {
       contentEmbedding: embedding,
-      embeddingModel: EMBEDDING_MODEL,
+      embeddingModel: config.embeddings.model,
       embeddingGeneratedAt: new Date()
     });
 
@@ -1116,7 +1105,7 @@ export class EmbeddingWorker {
     documentId: string,
     chunk: ParsedChunk,
     embedding: number[],
-    documentType: 'ambientazione' | 'approfondimenti' | 'regolamento'
+    documentType: 'ambientazione' | 'regolamento' | 'lore'
   ): Promise<void> {
     const db = mongoose.connection.db;
     if (!db) {
@@ -1145,7 +1134,7 @@ export class EmbeddingWorker {
             parentSlug: chunk.parentSlug,
             order: chunk.order,
             isActive: true,
-            embeddingModel: EMBEDDING_MODEL,
+            embeddingModel: config.embeddings.model,
             lastUpdated: new Date()
           }
         },
@@ -1179,7 +1168,7 @@ export class EmbeddingWorker {
     // ✅ Save to ElasticSearch (keyword search)
     try {
       await this.elasticsearch.index({
-        index: `${ELASTICSEARCH_INDEX_PREFIX}_document_chunks`,
+        index: `${config.services.elasticsearch.indexPrefix}_document_chunks`,
         id: chunkId,
         document: {
           chunkId,
@@ -1232,7 +1221,7 @@ export class EmbeddingWorker {
     // ✅ ALSO save to ElasticSearch (keyword search)
     try {
       await this.elasticsearch.index({
-        index: `${ELASTICSEARCH_INDEX_PREFIX}_document_chunks`,
+        index: `${config.services.elasticsearch.indexPrefix}_document_chunks`,
         id: event.chunkId,
         document: {
           chunkId: event.chunkId,
@@ -1287,7 +1276,7 @@ export class EmbeddingWorker {
     try {
       // Delete from ElasticSearch (all chunks for this document)
       await this.elasticsearch.deleteByQuery({
-        index: `${ELASTICSEARCH_INDEX_PREFIX}_document_chunks`,
+        index: `${config.services.elasticsearch.indexPrefix}_document_chunks`,
         body: {
           query: {
             term: { documentId }
@@ -1353,7 +1342,7 @@ export class EmbeddingWorker {
       });
 
       await this.elasticsearch.delete({
-        index: `${ELASTICSEARCH_INDEX_PREFIX}_forum_posts`,
+        index: `${config.services.elasticsearch.indexPrefix}_forum_posts`,
         id: postId
       }).catch(() => {});
 
