@@ -58,7 +58,7 @@ export default function LocationChatPage(): JSX.Element {
    */
   useEffect(() => {
     if (!isAuthenticated) {
-      router.push('/auth/login');
+      router.push('/');
     }
   }, [isAuthenticated, router]);
 

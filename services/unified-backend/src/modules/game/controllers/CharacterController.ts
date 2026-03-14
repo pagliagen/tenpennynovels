@@ -192,63 +192,8 @@ export class CharacterController {
     }
   }
 
-  /**
-   * GET /character-creation-config
-   * Get character creation configuration (dynamic from SystemConfiguration)
-   */
-  static async getCharacterCreationConfig(req: Request, res: Response): Promise<void> {
-    try {
-      // Fetch config values from SystemConfiguration (cached in Redis)
-      const configService = new ConfigurationService(redis.getClient(), logger);
-      const statTotal = await configService.getConfig('character_creation_stat_total_points');
-      const statMin = await configService.getConfig('character_creation_stat_minimum');
-      const skillTotal = await configService.getConfig('character_creation_skill_total_points');
-
-      // Fallback to CharacterCreationConfigService for other values
-      const staticConfig = await CharacterCreationConfigService.getInstance().loadConfig();
-
-      const config = {
-        stats: {
-          totalPoints: statTotal ?? staticConfig.stats.totalPoints ?? 450,
-          minValue: statMin ?? staticConfig.stats.basePoints ?? 20,
-          maxStatsAbove80: staticConfig.stats.maxStatsAbove80,
-          creationCap: staticConfig.stats.creationCap,
-          gameplayCap: staticConfig.stats.gameplayCap,
-        },
-        skills: {
-          totalPoints: skillTotal ?? 250,  // New: flat value
-          creationCap: staticConfig.skills.creationCap,
-          creationCapWithOccupation: staticConfig.skills.creationCapWithOccupation,
-        },
-        occupation: staticConfig.occupation,
-        limits: staticConfig.limits,
-        socialClasses: staticConfig.socialClasses,
-        formulas: staticConfig.formulas,
-      };
-
-      res.json(successResponse(
-        { config },
-        undefined,
-        getRequestId(req)
-      ));
-
-    } catch (error: unknown) {
-      const err = error as Error;
-      logger.error('Error fetching character creation config:', {
-        message: err.message,
-        stack: err.stack,
-        name: err.name
-      });
-
-      res.status(500).json(errorResponse(
-        'Errore durante recupero configurazione',
-        'CONFIG_FETCH_ERROR',
-        undefined,
-        500,
-        getRequestId(req)
-      ));
-    }
-  }
+  // REMOVED: getCharacterCreationConfig - moved to CharacterCreationController
+  // Use /game/character-creation-config endpoint instead (CharacterCreationController.getConfig)
 
   /**
    * GET /characters/public-list
