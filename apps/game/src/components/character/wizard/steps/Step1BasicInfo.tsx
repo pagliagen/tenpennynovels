@@ -78,6 +78,41 @@ export function Step1BasicInfo(): JSX.Element {
     message: ''
   });
 
+  // Face claim validation state
+  const [faceClaimCheck, setFaceClaimCheck] = React.useState<{
+    checking: boolean;
+    exists: boolean;
+    matches: Array<{ prestavolto: string; characterName: string; status: string }>;
+    allFaceClaims: Array<{
+      prestavolto: string;
+      characterName: string;
+      characterId: string;
+      playerStatus: string;
+    }>;
+    exactMatch: { characterName: string; status: string } | null;
+  }>({
+    checking: false,
+    exists: false,
+    matches: [],
+    allFaceClaims: [],
+    exactMatch: null
+  });
+
+  // Wikipedia search results state
+  const [wikiResults, setWikiResults] = React.useState<{
+    loading: boolean;
+    results: Array<{
+      title: string;
+      extract: string;
+      occupation?: string;
+      birth?: string;
+      death?: string;
+    }>;
+  }>({
+    loading: false,
+    results: []
+  });
+
   /**
    * Check name availability with debounce
    */
@@ -122,6 +157,140 @@ export function Step1BasicInfo(): JSX.Element {
   );
 
   /**
+   * Check face claim availability with debounce
+   */
+  const checkFaceClaim = React.useCallback(
+    debounce(async (value: string) => {
+      if (value.length < 3) {
+        setFaceClaimCheck({
+          checking: false,
+          exists: false,
+          matches: [],
+          allFaceClaims: [],
+          exactMatch: null
+        });
+        return;
+      }
+
+      setFaceClaimCheck((prev) => ({ ...prev, checking: true }));
+
+      try {
+        const result = await characterApi.searchFaceClaims(value);
+
+        setFaceClaimCheck({
+          checking: false,
+          exists: result.exactMatch !== null,
+          matches: result.matches,
+          allFaceClaims: result.allFaceClaims,
+          exactMatch: result.exactMatch
+        });
+      } catch (error) {
+        console.error('Face claim check error:', error);
+        setFaceClaimCheck({
+          checking: false,
+          exists: false,
+          matches: [],
+          allFaceClaims: [],
+          exactMatch: null
+        });
+      }
+    }, 500),
+    []
+  );
+
+  /**
+   * Search Wikipedia for face claim suggestions (multi-strategy)
+   */
+  const searchWikipedia = React.useCallback(
+    debounce(async (value: string) => {
+      if (value.length < 3) {
+        setWikiResults({ loading: false, results: [] });
+        return;
+      }
+
+      setWikiResults({ loading: true, results: [] });
+
+      try {
+        // Multi-strategy Wikipedia search (from test-wikipedia-search.html)
+        const strategies = [
+          // Strategy 1: Normal search
+          fetch(
+            `https://it.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(
+              value
+            )}&format=json&origin=*&srlimit=5`
+          ),
+          // Strategy 2: Fuzzy search with CirrusSearch
+          fetch(
+            `https://it.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(
+              value.split(' ').map(word => `${word}~2`).join(' ')
+            )}&format=json&origin=*&srlimit=5`
+          )
+        ];
+
+        const responses = await Promise.all(strategies);
+        const data = await Promise.all(responses.map(r => r.json()));
+
+        // Combine results (deduplicate by title)
+        const allResults = new Map();
+        for (const result of data) {
+          if (result.query && result.query.search) {
+            for (const page of result.query.search) {
+              if (!allResults.has(page.title)) {
+                allResults.set(page.title, page);
+              }
+            }
+          }
+        }
+
+        // Fetch extracts + Wikidata validation for top results
+        const titles = Array.from(allResults.keys()).slice(0, 10);
+        if (titles.length === 0) {
+          setWikiResults({ loading: false, results: [] });
+          return;
+        }
+
+        const extractsResponse = await fetch(
+          `https://it.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(
+            titles.join('|')
+          )}&prop=extracts|pageprops&exintro=1&explaintext=1&format=json&origin=*`
+        );
+        const extractsData = await extractsResponse.json();
+
+        const pages = extractsData.query?.pages || {};
+        const results: Array<{
+          title: string;
+          extract: string;
+          occupation?: string;
+          birth?: string;
+          death?: string;
+        }> = [];
+
+        for (const pageId in pages) {
+          const page = pages[pageId];
+          if (page.title && page.extract) {
+            // Extract birth/death from extract (simple regex)
+            const birthMatch = page.extract.match(/\(([0-9]{4})\s*[-–]\s*/);
+            const deathMatch = page.extract.match(/[-–]\s*([0-9]{4})\)/);
+
+            results.push({
+              title: page.title,
+              extract: page.extract.substring(0, 200) + '...',
+              birth: birthMatch ? birthMatch[1] : undefined,
+              death: deathMatch ? deathMatch[1] : undefined
+            });
+          }
+        }
+
+        setWikiResults({ loading: false, results: results.slice(0, 5) });
+      } catch (error) {
+        console.error('Wikipedia search error:', error);
+        setWikiResults({ loading: false, results: [] });
+      }
+    }, 500),
+    []
+  );
+
+  /**
    * Handle Field Change
    */
   const handleChange = (field: keyof typeof basicInfo, value: any) => {
@@ -132,6 +301,12 @@ export function Step1BasicInfo(): JSX.Element {
       const newFirstName = field === 'firstName' ? value : basicInfo.firstName;
       const newLastName = field === 'lastName' ? value : basicInfo.lastName;
       checkName(newFirstName, newLastName);
+    }
+
+    // Trigger face claim validation + Wikipedia search
+    if (field === 'prestavolto') {
+      checkFaceClaim(value);
+      searchWikipedia(value);
     }
   };
 
@@ -425,6 +600,148 @@ export function Step1BasicInfo(): JSX.Element {
             Segni normalmente coperti dai vestiti, visibili solo in intimità
           </small>
         </div>
+      </div>
+
+      {/* Section: Prestavolto (Face Claim) */}
+      <div className={styles.section}>
+        <h3 className={styles.sectionTitle}>Prestavolto</h3>
+
+        {/* Prestavolto Input */}
+        <div className={styles.formGroup}>
+          <label htmlFor="prestavolto" className={styles.label}>
+            Prestavolto (VIP/Attore/Scrittore)
+          </label>
+          <input
+            type="text"
+            id="prestavolto"
+            value={basicInfo.prestavolto}
+            onChange={(e) => handleChange('prestavolto', e.target.value)}
+            className={styles.input}
+            placeholder="es. Tom Hiddleston, Jane Austen..."
+          />
+          <small className={styles.helpText}>
+            Nome del VIP, attore o scrittore che "presta il volto" al tuo personaggio
+          </small>
+        </div>
+
+        {/* Face Claim Validation Feedback */}
+        {faceClaimCheck.checking && (
+          <div className={styles.formRow}>
+            <div className={styles.formGroup} style={{ gridColumn: '1 / -1' }}>
+              <div className={`${styles.nameAvailability} ${styles.checking}`}>
+                Verifica prestavolto...
+              </div>
+            </div>
+          </div>
+        )}
+
+        {!faceClaimCheck.checking && faceClaimCheck.exactMatch && (
+          <div className={styles.formRow}>
+            <div className={styles.formGroup} style={{ gridColumn: '1 / -1' }}>
+              <div className={`${styles.nameAvailability} ${styles.unavailable}`}>
+                ⚠️ Prestavolto già usato da <strong>{faceClaimCheck.exactMatch.characterName}</strong>. Richiederà
+                approvazione staff.
+              </div>
+            </div>
+          </div>
+        )}
+
+        {!faceClaimCheck.checking && !faceClaimCheck.exactMatch && basicInfo.prestavolto.length >= 3 && (
+          <div className={styles.formRow}>
+            <div className={styles.formGroup} style={{ gridColumn: '1 / -1' }}>
+              <div className={`${styles.nameAvailability} ${styles.available}`}>
+                ✓ Prestavolto disponibile
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Wikipedia Search Results */}
+        {wikiResults.loading && (
+          <div className={styles.formGroup}>
+            <small className={styles.helpText}>🔍 Ricerca Wikipedia in corso...</small>
+          </div>
+        )}
+
+        {!wikiResults.loading && wikiResults.results.length > 0 && (
+          <div className={styles.formGroup}>
+            <label className={styles.label}>Risultati Wikipedia (clicca per selezionare):</label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '300px', overflowY: 'auto' }}>
+              {wikiResults.results.map((result, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => handleChange('prestavolto', result.title)}
+                  style={{
+                    padding: '0.75rem',
+                    border: '1px solid #8b7355',
+                    background: '#f5f1e8',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    fontFamily: 'Playfair Display, serif'
+                  }}
+                >
+                  <div style={{ fontWeight: 'bold', marginBottom: '0.25rem' }}>
+                    {result.title}
+                    {result.birth && (
+                      <span style={{ fontWeight: 'normal', marginLeft: '0.5rem', fontSize: '0.9em' }}>
+                        ({result.birth}{result.death ? ` - ${result.death}` : ''})
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ fontSize: '0.85em', color: '#5a4a3a' }}>{result.extract}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Existing Face Claims List */}
+        {faceClaimCheck.allFaceClaims.length > 0 && (
+          <div className={styles.formGroup}>
+            <label className={styles.label}>Prestavolti già usati (clicca per selezionare):</label>
+            <div style={{ maxHeight: '250px', overflowY: 'auto', border: '1px solid #8b7355', borderRadius: '4px' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'Playfair Display, serif' }}>
+                <thead>
+                  <tr style={{ background: '#d4c4a8', borderBottom: '2px solid #8b7355' }}>
+                    <th style={{ padding: '0.5rem', textAlign: 'left', fontWeight: 'bold' }}>Prestavolto</th>
+                    <th style={{ padding: '0.5rem', textAlign: 'left', fontWeight: 'bold' }}>Personaggio</th>
+                    <th style={{ padding: '0.5rem', textAlign: 'left', fontWeight: 'bold' }}>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {faceClaimCheck.allFaceClaims.slice(0, 50).map((claim, idx) => (
+                    <tr
+                      key={idx}
+                      onClick={() => handleChange('prestavolto', claim.prestavolto)}
+                      style={{
+                        cursor: 'pointer',
+                        borderBottom: '1px solid #e0d5c7',
+                        background: idx % 2 === 0 ? '#f9f6f0' : '#ffffff'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = '#f0e8d8';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = idx % 2 === 0 ? '#f9f6f0' : '#ffffff';
+                      }}
+                    >
+                      <td style={{ padding: '0.5rem' }}>{claim.prestavolto}</td>
+                      <td style={{ padding: '0.5rem' }}>{claim.characterName}</td>
+                      <td style={{ padding: '0.5rem', fontSize: '0.85em', color: '#5a4a3a' }}>
+                        {claim.playerStatus === 'approved' ? '✓ Approvato' : '⏳ In attesa'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <small className={styles.helpText}>
+              Clicca su una riga per auto-compilare il campo (puoi comunque modificarlo manualmente)
+            </small>
+          </div>
+        )}
       </div>
 
       {/* Section: Background */}

@@ -325,10 +325,19 @@ export class AuthController {
           { userId: user.id },
           { isActive: false }
         );
-        await Character.findByIdAndUpdate(userCharacter.id, { 
+        await Character.findByIdAndUpdate(userCharacter.id, {
           isActive: true,
           lastActive: new Date()
         });
+
+        // Publish character activation event to Redis
+        await redis.publish('user:events', JSON.stringify({
+          type: 'user_character_selected',
+          userId: user.id,
+          characterId: userCharacter.id,
+          characterName: fullCharacterName,
+          timestamp: new Date().toISOString()
+        }));
       } else {
         logger.info(`User ${user.username}: No character context set - either admin or multipleCharactersAllowed=true or no characters`);
       }
@@ -445,11 +454,21 @@ export class AuthController {
       character.currentLocation = null; // Park character at London (root location)
       await character.save();
 
-      // Generate character context token
       // Build full character name (name + surname if present)
       const fullCharacterName = character.surname
         ? `${character.name} ${character.surname}`
         : character.name;
+
+      // Publish character activation event to Redis
+      await redis.publish('user:events', JSON.stringify({
+        type: 'user_character_selected',
+        userId: userId,
+        characterId: character.id,
+        characterName: fullCharacterName,
+        timestamp: new Date().toISOString()
+      }));
+
+      // Generate character context token
 
       const characterToken = CryptoUtils.generateCharacterContextToken({
         characterId: character.id,
@@ -778,11 +797,29 @@ export class AuthController {
           logoutAllDevices: logoutAllDevices || false
         });
 
-        // Publish Redis event
-        await redis.publish('auth:user_logout', JSON.stringify({
+        // Extract character context from cookie before clearing
+        let characterId: string | null = null;
+        let characterName: string | null = null;
+
+        try {
+          const characterToken = req.cookies?.character_context;
+          if (characterToken) {
+            const decoded = CryptoUtils.verifyCharacterContextToken(characterToken);
+            characterId = decoded.characterId;
+            characterName = decoded.characterName;
+          }
+        } catch (error) {
+          // Invalid/expired token - ignore
+        }
+
+        // Publish Redis event with character info if available
+        await redis.publish('user:events', JSON.stringify({
+          type: 'user_logout',
           userId: user.userId,
           username: user.username,
-          logoutAt: new Date().toISOString(),
+          characterId: characterId,
+          characterName: characterName,
+          timestamp: new Date().toISOString(),
           reason: reason || 'user_initiated'
         }));
 

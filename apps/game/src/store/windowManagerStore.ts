@@ -169,12 +169,23 @@ export const useWindowManagerStore = create<WindowManagerStore>()((set) => ({
       // Create new window
       const nextZIndex = Math.max(...state.windows.map((w) => w.zIndex), 1000) + 1;
 
+      // Determine window size (custom sizes for specific utilities)
+      let windowSize = DEFAULT_SIZES[type];
+      if (type === 'utility' && 'utilityName' in data) {
+        switch (data.utilityName) {
+          case 'character-directory':
+            windowSize = { width: 957, height: 600 };
+            break;
+          // Add more custom utility sizes here as needed
+        }
+      }
+
       const newWindow: WindowState = {
         id: generateId(),
         type,
         data: { type, ...data } as WindowData, // Merge type into data
         position: getCascadePosition(state.windows.length),
-        size: DEFAULT_SIZES[type],
+        size: windowSize,
         isMinimized: false,
         zIndex: nextZIndex,
       };

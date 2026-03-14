@@ -1,0 +1,327 @@
+/**
+ * Character Directory Styles
+ *
+ * Victorian-themed styling for character directory (anagrafica) window.
+ *
+ * @module styles/components/windows/CharacterDirectory
+ * @since 2.0.0
+ */
+
+.directoryContainer {
+  padding: 1.5rem;
+  font-family: 'Playfair Display', serif;
+  color: #2c2416;
+  background: #faf8f3;
+  height: 100%;
+  overflow-y: auto;
+}
+
+/* Header */
+.header {
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid #8b7355;
+  padding-bottom: 1rem;
+}
+
+.title {
+  font-size: 1.75rem;
+  font-weight: bold;
+  margin: 0 0 0.5rem 0;
+  color: #3d2f1f;
+}
+
+.subtitle {
+  font-size: 0.9rem;
+  color: #5a4a3a;
+  margin: 0;
+  font-style: italic;
+}
+
+/* Filters */
+.filters {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: #f5f1e8;
+  border: 1px solid #d4c4a8;
+  border-radius: 4px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.filterGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 180px;
+}
+
+.filterLabel {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #3d2f1f;
+}
+
+.searchInput,
+.select {
+  padding: 0.5rem;
+  border: 1px solid #8b7355;
+  border-radius: 4px;
+  font-family: 'Playfair Display', serif;
+  font-size: 0.95rem;
+  background: #ffffff;
+  color: #2c2416;
+
+  &:focus {
+    outline: none;
+    border-color: #6b5645;
+    box-shadow: 0 0 0 2px rgba(107, 86, 69, 0.1);
+  }
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  cursor: pointer;
+  color: #3d2f1f;
+  padding-top: 1.5rem;
+
+  input[type='checkbox'] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+  }
+}
+
+/* Loading / Error States */
+.loadingState,
+.errorState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  gap: 1rem;
+  color: #5a4a3a;
+  font-style: italic;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #d4c4a8;
+  border-top-color: #8b7355;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.errorState {
+  color: #8b3a3a;
+}
+
+/* Table */
+.tableContainer {
+  overflow-x: auto;
+  border: 1px solid #d4c4a8;
+  border-radius: 4px;
+  background: #ffffff;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+
+  thead {
+    background: #e8dcc8;
+    border-bottom: 2px solid #8b7355;
+  }
+
+  th {
+    padding: 0.75rem;
+    text-align: left;
+    font-weight: bold;
+    color: #3d2f1f;
+    white-space: nowrap;
+  }
+
+  .thAvatar {
+    width: 60px;
+  }
+
+  .thName {
+    min-width: 180px;
+  }
+
+  .thPrestavolto {
+    min-width: 150px;
+  }
+
+  .thOccupation {
+    min-width: 140px;
+  }
+
+  .thStatus {
+    width: 100px;
+  }
+
+  .thLastActive {
+    width: 140px;
+  }
+
+  .thLocation {
+    min-width: 150px;
+  }
+
+  tbody tr {
+    border-bottom: 1px solid #e8dcc8;
+
+    &:hover {
+      background: #f9f6f0;
+      cursor: pointer;
+    }
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  td {
+    padding: 0.75rem;
+    color: #2c2416;
+  }
+}
+
+/* Avatar Cell */
+.tdAvatar {
+  text-align: center;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #8b7355;
+}
+
+.avatarPlaceholder {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #d4c4a8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 0.85rem;
+  color: #3d2f1f;
+  border: 2px solid #8b7355;
+  margin: 0 auto;
+}
+
+/* Name Cell */
+.nameCell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.fullName {
+  font-weight: 600;
+  color: #3d2f1f;
+}
+
+/* Status Cell */
+.tdStatus {
+  white-space: nowrap;
+}
+
+.statusOnline,
+.statusOffline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.statusOnline {
+  color: #4a7c4e;
+}
+
+.statusOffline {
+  color: #7a6a5a;
+}
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.statusOnline .statusDot {
+  background: #4a7c4e;
+  box-shadow: 0 0 6px rgba(74, 124, 78, 0.6);
+}
+
+.statusOffline .statusDot {
+  background: #9a8a7a;
+}
+
+/* Empty State */
+.emptyState {
+  text-align: center;
+  padding: 3rem !important;
+  color: #7a6a5a;
+  font-style: italic;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: #f5f1e8;
+  border: 1px solid #d4c4a8;
+  border-radius: 4px;
+}
+
+.paginationButton {
+  padding: 0.5rem 1rem;
+  background: #8b7355;
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  font-family: 'Playfair Display', serif;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+
+  &:hover:not(:disabled) {
+    background: #6b5645;
+  }
+
+  &:disabled {
+    background: #c4b4a8;
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+}
+
+.paginationInfo {
+  font-size: 0.9rem;
+  color: #5a4a3a;
+}

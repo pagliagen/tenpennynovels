@@ -1520,4 +1520,87 @@ export class CharacterApprovalController {
     }
   }
 
+  /**
+   * Get Duplicate Face Claims - Admin endpoint
+   * GET /admin/characters/face-claims/duplicates
+   */
+  static async getDuplicateFaceClaims(req: Request, res: Response): Promise<void> {
+    try {
+      const duplicates = await Character.aggregate([
+        { $match: { prestavolto: { $exists: true, $ne: null, $ne: '' }, isDeleted: { $ne: true } } },
+        { $group: {
+            _id: { $toLower: '$prestavolto' },
+            prestavolto: { $first: '$prestavolto' },
+            characters: { $push: { _id: '$_id', name: '$name', surname: '$surname', avatar: '$avatar', playerStatus: '$playerStatus', prestavoltoStatus: '$prestavoltoStatus', userId: '$userId', createdAt: '$createdAt' } },
+            count: { $sum: 1 }
+          }
+        },
+        { $match: { count: { $gt: 1 } } },
+        { $sort: { count: -1, prestavolto: 1 } }
+      ]);
+
+      const faceClaimGroups = duplicates.map(group => ({
+        prestavolto: group.prestavolto,
+        characters: group.characters,
+        duplicateCount: group.count,
+        hasApproved: group.characters.some((c: any) => c.prestavoltoStatus === 'approved'),
+        hasPending: group.characters.some((c: any) => c.prestavoltoStatus === 'pending_duplicate')
+      }));
+
+      res.json(successResponse({ faceClaimGroups }, undefined, getRequestId(req)));
+    } catch (error: any) {
+      logger.error('Get duplicate face claims error:', { error: error.message });
+      res.status(500).json(errorResponse('Failed to get duplicates', 'GET_DUPLICATES_ERROR', undefined, 500, getRequestId(req)));
+    }
+  }
+
+  /**
+   * Approve Face Claim - Admin endpoint
+   * POST /admin/characters/:id/approve-faceclaim
+   */
+  static async approveFaceClaim(req: Request, res: Response): Promise<void> {
+    try {
+      const character = await Character.findById(req.params.id);
+      if (!character) {
+        return res.status(404).json(errorResponse('Character not found', 'CHARACTER_NOT_FOUND', undefined, 404, getRequestId(req)));
+      }
+
+      character.prestavoltoStatus = 'approved';
+      character.prestavoltoApprovedBy = req.user!.userId as any;
+      character.prestavoltoApprovedAt = new Date();
+      await character.save();
+
+      logger.info('Face claim approved', { characterId: character._id, prestavolto: character.prestavolto, approvedBy: req.user!.userId });
+      res.json(successResponse({ character }, 'Face claim approved', getRequestId(req)));
+    } catch (error: any) {
+      logger.error('Approve face claim error:', { error: error.message });
+      res.status(500).json(errorResponse('Failed to approve', 'APPROVE_FACECLAIM_ERROR', undefined, 500, getRequestId(req)));
+    }
+  }
+
+  /**
+   * Reject Face Claim - Admin endpoint
+   * POST /admin/characters/:id/reject-faceclaim
+   */
+  static async rejectFaceClaim(req: Request, res: Response): Promise<void> {
+    try {
+      const character = await Character.findById(req.params.id);
+      if (!character) {
+        return res.status(404).json(errorResponse('Character not found', 'CHARACTER_NOT_FOUND', undefined, 404, getRequestId(req)));
+      }
+
+      character.prestavolto = undefined;
+      character.prestavoltoStatus = null;
+      character.prestavoltoApprovedBy = undefined;
+      character.prestavoltoApprovedAt = undefined;
+      await character.save();
+
+      logger.info('Face claim rejected', { characterId: character._id, rejectedBy: req.user!.userId });
+      res.json(successResponse({ character }, 'Face claim rejected and cleared', getRequestId(req)));
+    } catch (error: any) {
+      logger.error('Reject face claim error:', { error: error.message });
+      res.status(500).json(errorResponse('Failed to reject', 'REJECT_FACECLAIM_ERROR', undefined, 500, getRequestId(req)));
+    }
+  }
+
 }

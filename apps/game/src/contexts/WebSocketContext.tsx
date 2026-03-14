@@ -397,6 +397,18 @@ export function WebSocketProvider({ children }: WebSocketProviderProps): JSX.Ele
       );
     });
 
+    socket.on('character_active', (data) => {
+      globalCallbacksRef.current.forEach((callback) =>
+        callback({ type: 'character_active', data })
+      );
+    });
+
+    socket.on('character_inactive', (data) => {
+      globalCallbacksRef.current.forEach((callback) =>
+        callback({ type: 'character_inactive', data })
+      );
+    });
+
     /**
      * Message Events (OffGame, Postal)
      */

@@ -42,6 +42,7 @@ const NAV_ITEMS: NavItem[] = [
     children: [
       { key: 'characters-list', label: 'Lista Personaggi', href: '/characters/character-list', permission: 'characters.list' },
       { key: 'characters-pending', label: 'In Attesa Approvazione', href: '/characters/character-pending', permission: 'characters.approve' },
+      { key: 'characters-faceclaims', label: 'Prestavolti', href: '/characters/character-faceclaims', permission: 'characters.approve' },
       { key: 'characters-permissions', label: 'Permessi', href: '/characters/permissions', permission: 'characters.manage_permissions' }
     ]
   },

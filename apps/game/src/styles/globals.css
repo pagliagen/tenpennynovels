@@ -53,7 +53,8 @@
   padding: 0;
 }
 
-div#__next {
+div#__next { 
+  min-width: 1400px;
   user-select: none;
 }
 

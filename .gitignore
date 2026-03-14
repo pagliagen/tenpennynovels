@@ -34,5 +34,8 @@ out/
 cdn-storage/*
 !cdn-storage/.gitkeep
 
+# Cartella fantasma (rimossa ma git la ricrea durante operazioni sui vecchi commit)
+services/cdn-service/
+
 # Generated sitemaps (created by SitemapService cron)
 apps/landing/public/sitemap*.xml

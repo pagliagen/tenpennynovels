@@ -35,7 +35,17 @@ function getWindowTitle(window: WindowState): string {
         ? window.data.conversationTitle || 'Messaggio OFF-GAME'
         : 'Messaggio OFF-GAME';
     case 'utility':
-      return window.data.type === 'utility' ? window.data.utilityName : 'Utility';
+      if (window.data.type === 'utility') {
+        switch (window.data.utilityName) {
+          case 'character-directory':
+            return '📖 Anagrafica Personaggi';
+          case 'character-faceclaim':
+            return '🎭 Gestione Prestavolto';
+          default:
+            return window.data.utilityName;
+        }
+      }
+      return 'Utility';
     default:
       return 'Window';
   }
@@ -84,7 +94,12 @@ export function MinimizedWindowsBar(): JSX.Element | null {
 
             {window.type === 'messageOffGame' && <span className={styles.emoji}>📧</span>}
 
-            {window.type === 'utility' && <span className={styles.emoji}>🔧</span>}
+            {window.type === 'utility' && window.data.type === 'utility' && (
+              <span className={styles.emoji}>
+                {window.data.utilityName === 'character-directory' ? '👥' :
+                 window.data.utilityName === 'character-faceclaim' ? '🎭' : '🔧'}
+              </span>
+            )}
           </div>
 
           {/* Title */}

@@ -1714,4 +1714,399 @@ export class CharacterController {
     }
   }
 
+  /**
+   * Get Character Directory
+   *
+   * Returns paginated list of approved characters with full details for anagrafica window.
+   * Only shows approved characters, includes online status, occupation, prestavolto.
+   *
+   * GET /game/characters/directory
+   *
+   * Query params:
+   * - page: number (default: 1)
+   * - pageSize: number (default: 25, max: 100)
+   * - sortBy: string (default: 'name')
+   * - sortOrder: 'asc' | 'desc' (default: 'asc')
+   * - search: string (optional - filters by name)
+   * - onlineOnly: boolean (optional - filters only online characters)
+   */
+  static async getCharacterDirectory(req: Request, res: Response): Promise<void> {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const pageSize = Math.min(parseInt(req.query.pageSize as string) || 25, 100);
+      const sortBy = (req.query.sortBy as string) || 'name';
+      const sortOrder = (req.query.sortOrder as string) === 'desc' ? -1 : 1;
+      const search = req.query.search as string;
+      const onlineOnly = req.query.onlineOnly === 'true';
+
+      // Build query filter
+      const filter: any = {
+        playerStatus: 'approved', // Only approved characters visible
+        isDeleted: { $ne: true }
+      };
+
+      // Search by name
+      if (search) {
+        filter.$or = [
+          { name: { $regex: search, $options: 'i' } },
+          { surname: { $regex: search, $options: 'i' } }
+        ];
+      }
+
+      // Online filter
+      if (onlineOnly) {
+        const activityTimeout = 5 * 60 * 1000; // 5 minutes
+        const cutoffTime = new Date(Date.now() - activityTimeout);
+        filter.lastActive = { $gte: cutoffTime };
+      }
+
+      // Count total
+      const total = await Character.countDocuments(filter);
+
+      // Build sort object
+      const sort: any = {};
+      sort[sortBy] = sortOrder;
+
+      // Fetch characters
+      const characters = await Character.find(filter)
+        .select('_id name surname avatar prestavolto occupation currentLocation lastActive')
+        .populate('occupation', 'name')
+        .sort(sort)
+        .skip((page - 1) * pageSize)
+        .limit(pageSize)
+        .lean();
+
+      // Calculate online status
+      const activityTimeout = 5 * 60 * 1000; // 5 minutes
+      const cutoffTime = new Date(Date.now() - activityTimeout);
+
+      const charactersList = characters.map((char: any) => ({
+        _id: char._id.toString(),
+        name: char.name,
+        surname: char.surname || '',
+        avatar: char.avatar || '',
+        prestavolto: char.prestavolto || '',
+        occupation: char.occupation?.name || '',
+        isOnline: char.lastActive && char.lastActive >= cutoffTime,
+        lastActive: char.lastActive || null,
+        currentLocation: char.currentLocation ? char.currentLocation.toString() : null
+      }));
+
+      logger.info('Character directory requested', {
+        page,
+        pageSize,
+        total,
+        resultsCount: charactersList.length,
+        userId: req.user?.userId
+      });
+
+      res.json(successResponse(
+        {
+          characters: charactersList,
+          pagination: {
+            page,
+            pageSize,
+            total,
+            totalPages: Math.ceil(total / pageSize)
+          }
+        },
+        undefined,
+        getRequestId(req)
+      ));
+
+    } catch (error: any) {
+      const err = error as Error;
+      logger.error('Get character directory error:', {
+        message: err.message,
+        stack: err.stack
+      });
+
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare l\'anagrafica personaggi',
+        'CHARACTER_DIRECTORY_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
+    }
+  }
+
+  /**
+   * Search Face Claims
+   *
+   * Real-time validation endpoint for character wizard.
+   * Returns exact match, fuzzy matches, and complete list of face claims.
+   *
+   * GET /game/characters/face-claims/search?q=...
+   *
+   * Query params:
+   * - q: string (search query, min 1 char)
+   *
+   * Response:
+   * - exactMatch: { characterName, status } | null
+   * - matches: Array<{ prestavolto, characterName, status }> (fuzzy, max 5)
+   * - allFaceClaims: Array<{ prestavolto, characterName, characterId, playerStatus }> (max 200)
+   */
+  static async searchFaceClaims(req: Request, res: Response): Promise<void> {
+    try {
+      const query = (req.query.q as string || '').trim();
+
+      // Response structure
+      let exactMatch: { characterName: string; status: string } | null = null;
+      let matches: Array<{ prestavolto: string; characterName: string; status: string }> = [];
+      let allFaceClaims: Array<{ prestavolto: string; characterName: string; characterId: string; playerStatus: string }> = [];
+
+      // Fetch all face claims (cached list for reference)
+      const allChars = await Character.find({
+        prestavolto: { $exists: true, $ne: null, $ne: '' },
+        isDeleted: { $ne: true }
+      })
+        .select('_id name surname prestavolto playerStatus')
+        .sort({ prestavolto: 1 })
+        .limit(200)
+        .lean();
+
+      allFaceClaims = allChars.map((char: any) => ({
+        prestavolto: char.prestavolto,
+        characterName: `${char.name}${char.surname ? ' ' + char.surname : ''}`,
+        characterId: char._id.toString(),
+        playerStatus: char.playerStatus
+      }));
+
+      // If query provided, search for matches
+      if (query.length >= 1) {
+        // Exact match
+        const exactChar = await Character.findOne({
+          prestavolto: { $regex: new RegExp(`^${query}$`, 'i') },
+          isDeleted: { $ne: true }
+        })
+          .select('name surname playerStatus')
+          .lean();
+
+        if (exactChar) {
+          exactMatch = {
+            characterName: `${exactChar.name}${(exactChar as any).surname ? ' ' + (exactChar as any).surname : ''}`,
+            status: (exactChar as any).playerStatus
+          };
+        }
+
+        // Fuzzy matches (if query >= 3 chars)
+        if (query.length >= 3) {
+          const fuzzyChars = await Character.find({
+            prestavolto: { $regex: new RegExp(query, 'i') },
+            isDeleted: { $ne: true }
+          })
+            .select('prestavolto name surname playerStatus')
+            .sort({ prestavolto: 1 })
+            .limit(5)
+            .lean();
+
+          matches = fuzzyChars.map((char: any) => ({
+            prestavolto: char.prestavolto,
+            characterName: `${char.name}${char.surname ? ' ' + char.surname : ''}`,
+            status: char.playerStatus
+          }));
+        }
+      }
+
+      logger.debug('Face claims search', {
+        query,
+        exactMatchFound: !!exactMatch,
+        matchesCount: matches.length,
+        allFaceClaimsCount: allFaceClaims.length
+      });
+
+      res.json(successResponse(
+        {
+          exactMatch,
+          matches,
+          allFaceClaims
+        },
+        undefined,
+        getRequestId(req)
+      ));
+
+    } catch (error: any) {
+      const err = error as Error;
+      logger.error('Search face claims error:', {
+        message: err.message,
+        stack: err.stack
+      });
+
+      res.status(500).json(errorResponse(
+        'Impossibile cercare i prestavolti',
+        'SEARCH_FACE_CLAIMS_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
+    }
+  }
+
+  /**
+   * Update Prestavolto
+   *
+   * Dedicated endpoint for updating character's face claim (prestavolto).
+   * Works even for approved characters.
+   * Logs history and requires staff approval for changes.
+   *
+   * PUT /game/characters/:characterId/prestavolto
+   *
+   * Body:
+   * - prestavolto: string (new face claim name)
+   *
+   * Rules:
+   * - First assignment: validate duplicates, possible pending_duplicate
+   * - Change (old → new): requires staff approval, prestavoltoStatus = 'pending_change'
+   * - History is logged in prestavoltoHistory array
+   */
+  static async updatePrestavolto(req: Request, res: Response): Promise<void> {
+    try {
+      const { characterId } = req.params;
+      const { prestavolto } = req.body;
+      const userId = req.user?.userId;
+
+      if (!userId) {
+        return res.status(401).json(errorResponse(
+          'Utente non autenticato',
+          'UNAUTHORIZED',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
+      }
+
+      // Validation
+      if (!prestavolto || typeof prestavolto !== 'string' || prestavolto.trim().length === 0) {
+        return res.status(400).json(errorResponse(
+          'Prestavolto mancante o non valido',
+          'INVALID_PRESTAVOLTO',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+      }
+
+      const newPrestavolto = prestavolto.trim();
+      if (newPrestavolto.length > 100) {
+        return res.status(400).json(errorResponse(
+          'Prestavolto troppo lungo (max 100 caratteri)',
+          'PRESTAVOLTO_TOO_LONG',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+      }
+
+      // Find character
+      const character = await Character.findOne({
+        _id: characterId,
+        userId,
+        isDeleted: { $ne: true }
+      });
+
+      if (!character) {
+        return res.status(404).json(errorResponse(
+          'Personaggio non trovato',
+          'CHARACTER_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
+      }
+
+      const oldPrestavolto = character.prestavolto || null;
+      const isFirstAssignment = !oldPrestavolto;
+      const isChange = !isFirstAssignment && oldPrestavolto.toLowerCase() !== newPrestavolto.toLowerCase();
+
+      // Check for duplicates
+      const duplicate = await Character.findOne({
+        prestavolto: { $regex: new RegExp(`^${newPrestavolto}$`, 'i') },
+        _id: { $ne: characterId },
+        isDeleted: { $ne: true }
+      }).select('_id name surname prestavoltoStatus');
+
+      let newStatus: 'approved' | 'pending_duplicate' | 'pending_change' | null = character.prestavoltoStatus || null;
+
+      if (isChange) {
+        // RULE: Changing prestavolto requires staff approval
+        newStatus = 'pending_change';
+      } else if (isFirstAssignment && duplicate) {
+        // RULE: First assignment with duplicate → pending_duplicate (unless already approved)
+        if (newStatus !== 'approved') {
+          newStatus = 'pending_duplicate';
+        }
+      } else if (isFirstAssignment && !duplicate) {
+        // RULE: First assignment, no duplicate → reset pending status
+        if (newStatus === 'pending_duplicate') {
+          newStatus = null;
+        }
+      }
+
+      // Add to history
+      if (!character.prestavoltoHistory) {
+        character.prestavoltoHistory = [];
+      }
+
+      character.prestavoltoHistory.push({
+        oldValue: oldPrestavolto,
+        newValue: newPrestavolto,
+        changedAt: new Date(),
+        changedBy: new Types.ObjectId(userId),
+        status: isChange ? 'pending' : 'approved', // Changes require approval
+        notes: isChange ? 'Cambio prestavolto - richiede approvazione staff' :
+               duplicate ? `Duplicato rilevato: ${duplicate.name}${(duplicate as any).surname ? ' ' + (duplicate as any).surname : ''}` :
+               'Primo assegnamento'
+      } as any);
+
+      // Update character
+      character.prestavolto = newPrestavolto;
+      character.prestavoltoStatus = newStatus;
+
+      await character.save();
+
+      logger.info('Prestavolto updated', {
+        characterId,
+        userId,
+        oldValue: oldPrestavolto,
+        newValue: newPrestavolto,
+        isFirstAssignment,
+        isChange,
+        newStatus,
+        hasDuplicate: !!duplicate
+      });
+
+      res.json(successResponse(
+        {
+          prestavolto: newPrestavolto,
+          prestavoltoStatus: newStatus,
+          isFirstAssignment,
+          isChange,
+          requiresApproval: newStatus === 'pending_change',
+          hasDuplicate: !!duplicate,
+          duplicateCharacter: duplicate ? `${duplicate.name}${(duplicate as any).surname ? ' ' + (duplicate as any).surname : ''}` : null
+        },
+        isChange ? 'Prestavolto aggiornato. Richiede approvazione staff.' : 'Prestavolto aggiornato con successo',
+        getRequestId(req)
+      ));
+
+    } catch (error: any) {
+      const err = error as Error;
+      logger.error('Update prestavolto error:', {
+        message: err.message,
+        stack: err.stack,
+        characterId: req.params.characterId,
+        userId: req.user?.userId
+      });
+
+      res.status(500).json(errorResponse(
+        'Impossibile aggiornare il prestavolto',
+        'UPDATE_PRESTAVOLTO_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
+    }
+  }
+
 }

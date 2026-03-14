@@ -10,6 +10,14 @@
 
 @use 'sass:color';
 
+.topBarContainer {
+  width: 100%;
+  height: 130px;
+  position: relative;
+  z-index: 100;
+  margin: 0 auto;
+}
+
 .topBar {
   display: flex;
   align-items: flex-start;
@@ -19,6 +27,16 @@
   position: relative;
   z-index: 100;
   margin: 0 auto;
+}
+
+.utilityButtonsContainer {
+  position: absolute;
+  z-index: 200;
+  top: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
 }
 
 /* ========================================
@@ -245,48 +263,140 @@
 }
 
 /* ========================================
-   UTILITY BUTTONS (Admin, Utility, Logout)
+   UTILITY MENU DROPDOWN SYSTEM
    ======================================== */
 
-.adminButton,
-.utilityButton,
-.logoutButton {
+// Toggle Button (Linguetta)
+.utilityToggleButton {
   position: relative;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: var(--color-bg-secondary);
-  border: none;
-  border-top: 2px solid var(--color-accent);
+  width: 50px;
+  height: 50px;
+  background: var(--color-bg-primary);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
 
   &:hover {
-    border-top-color: color.adjust(#b8860b, $lightness: 10%);
-    transform: scale(1.05);
+    color: var(--color-primary);
   }
 
   &:active {
-    transform: scale(0.95);
+    color: var(--color-primary);
+  }
+
+  &[aria-expanded="true"] {
+    color: var(--color-primary);
   }
 }
 
-.adminButton {
-  border-top-color: var(--color-warning);
+// Hamburger Icon (SVG)
+.hamburgerIcon {
+  width: 28px;
+  height: 28px;
+  color: var(--color-accent);
+  transition: color 0.2s ease;
 
-  &:hover {
-    border-top-color: color.adjust(#8b6914, $lightness: 10%);
+  .utilityToggleButton:hover & {
+    color: var(--color-primary);
+  }
+
+  .utilityToggleButton[aria-expanded="true"] & {
+    color: var(--color-primary);
   }
 }
 
-.logoutButton {
-  border-top-color: var(--color-error);
+// Dropdown Menu Container
+.utilityDropdown {
+  position: absolute;
+  top: 28px;
+  right: 0;
+  min-width: 200px;
+  background: var(--color-bg-primary);
+  border: 2px solid var(--color-accent);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  padding: 8px 0;
+  animation: slideDown 0.2s ease;
+  z-index: 300;
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+// Menu Items
+.utilityMenuItem {
+  width: 100%;
+  padding: 12px 20px;
+  background: none;
+  border: none;
+  color: var(--color-text-primary);
+  font-size: 14px;
+  font-family: 'Playfair Display', serif;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: block;
 
   &:hover {
-    border-top-color: color.adjust(#8b1a1a, $lightness: 10%);
+    background: color.adjust(#1a1410, $lightness: 5%);
+    color: var(--color-accent);
   }
+
+  &:active {
+    background: color.adjust(#1a1410, $lightness: 3%);
+  }
+}
+
+// Divider
+.utilityMenuDivider {
+  height: 1px;
+  background: var(--color-text-primary);
+  opacity: 0.3;
+  margin: 8px 12px;
+}
+
+// Logout Button (Special Styling)
+.utilityMenuLogout {
+  width: 100%;
+  padding: 12px 20px;
+  background: none;
+  border: none;
+  color: var(--color-error);
+  font-size: 14px;
+  font-weight: bold;
+  font-family: 'Playfair Display', serif;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 4px;
+
+  &:hover {
+    background: color.adjust(#8b1a1a, $lightness: 5%);
+    color: white;
+  }
+
+  &:active {
+    background: color.adjust(#8b1a1a, $lightness: 3%);
+  }
+}
+
+.logoutIcon {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
 }

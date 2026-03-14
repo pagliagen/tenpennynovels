@@ -53,6 +53,7 @@ export interface WizardBasicInfo {
   hairColor: string;
   visibleMarks: string; // Scars, tattoos, etc.
   hiddenMarks: string; // Hidden scars, birthmarks
+  prestavolto: string; // Face claim (VIP/actor/writer who "lends their face")
   maritalStatus: string; // Single, Married, Widowed, Divorced
   illnesses: string;
   educationTitle: string;
@@ -262,6 +263,7 @@ export interface CharacterCreatePayload {
   hairColor: string;
   visibleMarks: string;
   hiddenMarks: string;
+  prestavolto: string;
   maritalStatus: string;
   illnesses: string;
   educationTitle: string;

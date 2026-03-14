@@ -346,6 +346,83 @@ export const characterApi = {
     const response = await api.get<{ skills: any[] }>('/game/skills');
     return response.skills;
   },
+
+  /**
+   * Search Face Claims
+   *
+   * Real-time validation endpoint for prestavolto field.
+   * Returns exact match, fuzzy matches, and complete list of existing face claims.
+   *
+   * **Use Case**: Debounced validation in wizard Step 1 (prestavolto input).
+   *
+   * @param {string} query - Search query (e.g., "Tom Hiddleston")
+   * @returns {Promise<FaceClaimSearchResult>} Search results
+   * @throws {ApiError} If request fails
+   *
+   * @example
+   * ```typescript
+   * const result = await characterApi.searchFaceClaims('Tom Hiddleston');
+   * if (result.exactMatch) {
+   *   console.log('⚠️ Already used by:', result.exactMatch.characterName);
+   * }
+   * ```
+   */
+  async searchFaceClaims(query: string): Promise<{
+    exactMatch: { characterName: string; status: string } | null;
+    matches: Array<{ prestavolto: string; characterName: string; status: string }>;
+    allFaceClaims: Array<{
+      prestavolto: string;
+      characterName: string;
+      characterId: string;
+      playerStatus: string;
+    }>;
+  }> {
+    const response = await api.get<{
+      exactMatch: { characterName: string; status: string } | null;
+      matches: Array<{ prestavolto: string; characterName: string; status: string }>;
+      allFaceClaims: Array<{
+        prestavolto: string;
+        characterName: string;
+        characterId: string;
+        playerStatus: string;
+      }>;
+    }>('/game/characters/face-claims/search', {
+      params: { q: query }
+    });
+    return response;
+  },
+
+  /**
+   * Update Prestavolto
+   *
+   * Dedicated endpoint for updating character's face claim.
+   * Works even for approved characters.
+   * Requires staff approval for changes.
+   *
+   * @param characterId - Character ID
+   * @param prestavolto - New face claim name
+   * @returns Updated prestavolto info with approval status
+   */
+  async updatePrestavolto(characterId: string, prestavolto: string): Promise<{
+    prestavolto: string;
+    prestavoltoStatus: string | null;
+    isFirstAssignment: boolean;
+    isChange: boolean;
+    requiresApproval: boolean;
+    hasDuplicate: boolean;
+    duplicateCharacter: string | null;
+  }> {
+    const response = await api.put<{
+      prestavolto: string;
+      prestavoltoStatus: string | null;
+      isFirstAssignment: boolean;
+      isChange: boolean;
+      requiresApproval: boolean;
+      hasDuplicate: boolean;
+      duplicateCharacter: string | null;
+    }>(`/game/characters/${characterId}/prestavolto`, { prestavolto });
+    return response;
+  },
 };
 
 /**

@@ -32,6 +32,10 @@ export interface Character {
     background: string;
     goals: string;
   };
+  prestavolto?: string;
+  prestavoltoStatus?: 'approved' | 'pending_duplicate' | null;
+  prestavoltoApprovedBy?: string;
+  prestavoltoApprovedAt?: string;
   occupation?: {
     _id: string;
     name: string;

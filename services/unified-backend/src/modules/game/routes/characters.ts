@@ -37,6 +37,19 @@ router.get('/characters/public-list',
   CharacterController.getPublicCharactersList
 );
 
+// Character directory (Anagrafica) - Must be BEFORE :characterId route
+// Note: No character context required - accessible to all authenticated users
+router.get('/characters/directory',
+  AuthMiddleware.requireUserAuth,
+  CharacterController.getCharacterDirectory
+);
+
+// Face claims search (wizard validation) - Must be BEFORE :characterId route
+router.get('/characters/face-claims/search',
+  AuthMiddleware.requireUserAuth,
+  CharacterController.searchFaceClaims
+);
+
 router.get('/characters/:characterId/wizard',
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:character:wizard'),
@@ -76,6 +89,12 @@ router.put('/characters/:characterId',
   CharacterValidationMiddleware.validateVictorianContent,
   CharacterValidationMiddleware.validateNewBackgroundFormat,
   CharacterController.updateCharacter
+);
+
+// Update prestavolto (dedicated endpoint, works for approved characters)
+router.put('/characters/:characterId/prestavolto',
+  AuthMiddleware.requireUserAuth,
+  CharacterController.updatePrestavolto
 );
 
 router.post('/characters/:characterId/submit',

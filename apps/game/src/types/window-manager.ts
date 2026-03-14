@@ -98,7 +98,7 @@ export const DEFAULT_SIZES: Record<WindowType, { width: number; height: number }
   characterSheet: { width: 800, height: 600 },
   messageOnGame: { width: 1000, height: 600 },
   messageOffGame: { width: 1000, height: 600 },
-  utility: { width: 400, height: 300 }, // Default for utilities
+  utility: { width: 800, height: 600 }, // Default for utilities
 };
 
 /**

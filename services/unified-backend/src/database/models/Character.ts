@@ -134,7 +134,22 @@ export interface ICharacter extends Document, SoftDeleteMethods {
   profileImage?: string; // URL or path to character profile image (for character sheet)
   audioTheme?: string; // URL or path to character theme audio
   prestavolto?: string; // Famous person/character used as face reference
-  
+
+  // Prestavolto approval workflow (face claim management)
+  prestavoltoStatus?: 'approved' | 'pending_duplicate' | 'pending_change' | null;
+  prestavoltoApprovedBy?: Schema.Types.ObjectId;
+  prestavoltoApprovedAt?: Date;
+  prestavoltoHistory?: Array<{
+    oldValue: string | null;
+    newValue: string;
+    changedAt: Date;
+    changedBy: Schema.Types.ObjectId;
+    status: 'pending' | 'approved' | 'rejected';
+    approvedBy?: Schema.Types.ObjectId;
+    approvedAt?: Date;
+    notes?: string;
+  }>;
+
   // Equipment and possessions
   equipment: string[]; // Item IDs
   
@@ -505,7 +520,31 @@ const CharacterSchema = new Schema<ICharacter>({
     trim: true,
     maxlength: 100
   },
-  
+
+  // Prestavolto approval workflow (face claim management)
+  prestavoltoStatus: {
+    type: String,
+    enum: ['approved', 'pending_duplicate', 'pending_change', null],
+    default: null
+  },
+  prestavoltoApprovedBy: {
+    type: Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  prestavoltoHistory: [{
+    oldValue: { type: String, default: null },
+    newValue: { type: String, required: true },
+    changedAt: { type: Date, required: true },
+    changedBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    status: { type: String, enum: ['pending', 'approved', 'rejected'], required: true },
+    approvedBy: { type: Schema.Types.ObjectId, ref: 'User' },
+    approvedAt: { type: Date },
+    notes: { type: String, maxlength: 500 }
+  }],
+  prestavoltoApprovedAt: {
+    type: Date
+  },
+
   // Equipment
   equipment: [{
     type: String,
@@ -615,6 +654,7 @@ CharacterSchema.index({ playerStatus: 1 });
 CharacterSchema.index({ playerStatus: 1, submittedAt: 1 });
 CharacterSchema.index({ occupation: 1 });
 CharacterSchema.index({ currentLocation: 1 });
+CharacterSchema.index({ prestavolto: 1 }); // For face claim queries (NOT unique - duplicates allowed)
 
 // Presence query optimization
 CharacterSchema.index({ lastActive: -1 }); // DESC per sort recenti first
@@ -731,6 +771,29 @@ CharacterSchema.pre('save', async function(this: ICharacter) {
   if (!this.characterPermissions) this.characterPermissions = [];
   if (!this.adminPermissions) this.adminPermissions = [];
   if (this.isGestore === undefined || this.isGestore === null) this.isGestore = false;
+
+  // Prestavolto duplicate validation (face claim management)
+  if (this.isModified('prestavolto') && this.prestavolto) {
+    // Check if another character already uses this face claim
+    const duplicate = await (this.constructor as any).findOne({
+      prestavolto: { $regex: new RegExp(`^${this.prestavolto.trim()}$`, 'i') },
+      _id: { $ne: this._id },
+      isDeleted: { $ne: true }
+    }).select('_id prestavoltoStatus');
+
+    if (duplicate) {
+      // Duplicate found
+      // Only set pending_duplicate if staff hasn't already approved this duplicate
+      if (this.prestavoltoStatus !== 'approved') {
+        this.prestavoltoStatus = 'pending_duplicate';
+      }
+    } else {
+      // No duplicate - reset status if it was pending_duplicate
+      if (this.prestavoltoStatus === 'pending_duplicate') {
+        this.prestavoltoStatus = null;
+      }
+    }
+  }
 });
 
 // Apply soft delete plugin

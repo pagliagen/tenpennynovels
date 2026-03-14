@@ -146,7 +146,17 @@ export function Window({ windowState, children }: WindowProps): JSX.Element {
           ? windowState.data.conversationTitle || 'Messaggio OFF-GAME'
           : 'Messaggio OFF-GAME';
       case 'utility':
-        return windowState.data.type === 'utility' ? windowState.data.utilityName : 'Utility';
+        if (windowState.data.type === 'utility') {
+          switch (windowState.data.utilityName) {
+            case 'character-directory':
+              return '📖 Anagrafica Personaggi';
+            case 'character-faceclaim':
+              return '🎭 Gestione Prestavolto';
+            default:
+              return windowState.data.utilityName;
+          }
+        }
+        return 'Utility';
       default:
         return 'Window';
     }

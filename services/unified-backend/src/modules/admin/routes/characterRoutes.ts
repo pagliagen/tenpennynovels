@@ -133,4 +133,28 @@ router.get(
   CharacterApprovalController.getReviewStats
 );
 
+// Face Claims Management - NEW
+router.get(
+  '/face-claims/duplicates',
+  requireViewPermission('characters.detail.read'),
+  AdminAuthMiddleware.logAdminAction('view_face_claims_duplicates', 'character_management'),
+  CharacterApprovalController.getDuplicateFaceClaims
+);
+
+router.post(
+  '/:id/approve-faceclaim',
+  requireViewPermission('characters.detail.approve'),
+  AdminAuthMiddleware.logAdminAction('approve_face_claim', 'character_management'),
+  autoLogOutcome,
+  CharacterApprovalController.approveFaceClaim
+);
+
+router.post(
+  '/:id/reject-faceclaim',
+  requireViewPermission('characters.detail.approve'),
+  AdminAuthMiddleware.logAdminAction('reject_face_claim', 'character_management'),
+  autoLogOutcome,
+  CharacterApprovalController.rejectFaceClaim
+);
+
 export { router as characterRoutes };

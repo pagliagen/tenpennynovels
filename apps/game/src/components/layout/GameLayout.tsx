@@ -20,7 +20,7 @@
 
 'use client';
 
-import { ReactNode, useMemo, useEffect, useCallback } from 'react';
+import { ReactNode, useMemo, useEffect, useCallback, useState } from 'react';
 import { useRouter } from 'next/router';
 import styles from '@/styles/components/GameLayout.module.scss';
 import { TopBar } from './TopBar';
@@ -77,6 +77,10 @@ interface GameLayoutProps {
  */
 export function GameLayout({ children }: GameLayoutProps): JSX.Element {
   const router = useRouter();
+
+  // Utility popups state
+  const [showAudioPopup, setShowAudioPopup] = useState(false);
+  const [showChatPopup, setShowChatPopup] = useState(false);
 
   // Auth store: Get current character and permissions
   const selectedCharacter = useAuthStore((state) => state.selectedCharacter);
@@ -214,9 +218,60 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
     });
   };
 
+  /**
+   * Open Character Directory window (Anagrafica)
+   */
+  const handleCharacterDirectoryClick = () => {
+    openWindow('utility', {
+      utilityName: 'character-directory',
+    });
+  };
+
+  /**
+   * Open Character Face Claim window
+   */
+  const handleCharacterFaceClaimClick = () => {
+    openWindow('utility', {
+      utilityName: 'character-faceclaim',
+    });
+  };
+
   const handleForumClick = useCallback(() => {
     const { openForum } = useForumStore.getState();
     openForum();
+  }, []);
+
+  /**
+   * Open Audio Options popup
+   */
+  const handleAudioOptionsClick = useCallback(() => {
+    setShowAudioPopup(true);
+  }, []);
+
+  /**
+   * Open Chat Options popup
+   */
+  const handleChatOptionsClick = useCallback(() => {
+    setShowChatPopup(true);
+  }, []);
+
+  /**
+   * Handle logout
+   */
+  const handleLogout = useCallback(async () => {
+    try {
+      // Call logout endpoint
+      await api.post('/auth/logout', {});
+    } catch (error) {
+      console.error('[GameLayout] Logout error:', error);
+      // Continue anyway - cookies cleared server-side
+    } finally {
+      // Clear local auth state
+      useAuthStore.getState().logout();
+
+      // Hard redirect to landing page (absolute URL to avoid middleware interception)
+      window.location.href = process.env.NEXT_PUBLIC_LANDING_URL || 'http://localhost:4000';
+    }
   }, []);
 
   /**
@@ -314,6 +369,11 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
             onQuickMapClick={handleQuickMapClick}
             onOnGameMailClick={handleOnGameMailClick}
             onForumClick={handleForumClick}
+            onAudioOptionsClick={handleAudioOptionsClick}
+            onChatOptionsClick={handleChatOptionsClick}
+            onCharacterDirectoryClick={handleCharacterDirectoryClick}
+            onCharacterFaceClaimClick={handleCharacterFaceClaimClick}
+            onLogoutClick={handleLogout}
             unreadOnGameMailCount={unreadMailCount}
             onOffGameChatClick={handleOffGameChatClick}
             unreadOffGameChatCount={unreadOffGameChatCount}
@@ -345,6 +405,56 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
 
       {/* Presence Modal - Side drawer */}
       <PresenceModal />
+
+      {/* Audio Options Popup - Placeholder */}
+      {showAudioPopup && (
+        <div className={styles.utilityPopupOverlay} onClick={() => setShowAudioPopup(false)}>
+          <div className={styles.utilityPopupContent} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.utilityPopupHeader}>
+              <h2>Opzioni Audio</h2>
+              <button
+                type="button"
+                className={styles.utilityPopupClose}
+                onClick={() => setShowAudioPopup(false)}
+                aria-label="Chiudi"
+              >
+                ✕
+              </button>
+            </div>
+            <div className={styles.utilityPopupBody}>
+              <p>QUI CI SARANNO LE OPZIONI AUDIO</p>
+              <p style={{ fontSize: '14px', opacity: 0.7, marginTop: '1rem' }}>
+                (Placeholder - da implementare)
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Chat Options Popup - Placeholder */}
+      {showChatPopup && (
+        <div className={styles.utilityPopupOverlay} onClick={() => setShowChatPopup(false)}>
+          <div className={styles.utilityPopupContent} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.utilityPopupHeader}>
+              <h2>Opzioni Chat</h2>
+              <button
+                type="button"
+                className={styles.utilityPopupClose}
+                onClick={() => setShowChatPopup(false)}
+                aria-label="Chiudi"
+              >
+                ✕
+              </button>
+            </div>
+            <div className={styles.utilityPopupBody}>
+              <p>QUI CI SARANNO LE OPZIONI CHAT</p>
+              <p style={{ fontSize: '14px', opacity: 0.7, marginTop: '1rem' }}>
+                (Placeholder - da implementare)
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

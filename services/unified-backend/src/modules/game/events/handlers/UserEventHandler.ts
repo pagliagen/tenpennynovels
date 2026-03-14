@@ -57,15 +57,27 @@ export class UserEventHandler extends BaseEventHandler {
 
   /**
    * Handle user logout
-   * Notifies about user going offline
+   * Notifies about user going offline and character deactivation
    */
   private async handleUserLogout(event: any): Promise<void> {
+    // Emit user-level status change
     this.io.emit('user_status_change', {
       userId: event.userId,
       username: event.username,
       status: 'offline',
-      timestamp: event.timestamp
+      timestamp: event.timestamp || new Date().toISOString()
     });
+
+    // Emit character-level inactive event if character was active
+    if (event.characterId) {
+      this.io.emit('character_inactive', {
+        userId: event.userId,
+        characterId: event.characterId,
+        characterName: event.characterName,
+        status: 'offline',
+        timestamp: event.timestamp || new Date().toISOString()
+      });
+    }
   }
 
   /**

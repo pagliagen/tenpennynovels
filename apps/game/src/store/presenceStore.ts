@@ -147,6 +147,34 @@ interface PresenceActions {
   }) => void;
 
   /**
+   * Handle character_active event
+   *
+   * Adds character to global presence when they become active.
+   *
+   * @param {object} event - character_active event data
+   * @returns {void}
+   */
+  handleCharacterActive: (event: {
+    characterId: string;
+    characterName: string;
+    userId: string;
+    timestamp: string;
+  }) => void;
+
+  /**
+   * Handle character_inactive event
+   *
+   * Removes character from global presence when they go inactive.
+   *
+   * @param {object} event - character_inactive event data
+   * @returns {void}
+   */
+  handleCharacterInactive: (event: {
+    characterId: string;
+    timestamp: string;
+  }) => void;
+
+  /**
    * Get location-filtered presence
    *
    * Returns only characters in the specified location.
@@ -344,11 +372,50 @@ export const usePresenceStore = create<PresenceState & PresenceActions>((set, ge
     }
   },
 
-  handleUserStatusChange: (event) => {
-    // TODO: Implement when backend sends characterId in user_status_change event
-    // Current implementation: user_status_change doesn't include character data
-    // Frontend will rely on API refetch or character_moved events for now
-    console.log('user_status_change event received (not fully implemented):', event);
+  handleUserStatusChange: async (event) => {
+    // DEPRECATED: No longer used for presence updates
+    // Use character_active/character_inactive instead
+    console.log('📥 user_status_change event (ignored for presence):', event);
+  },
+
+  handleCharacterActive: (event) => {
+    const { globalPresence } = get();
+    const existingIndex = globalPresence.findIndex(p => p.characterId === event.characterId);
+
+    if (existingIndex !== -1) {
+      // Character already in list (reconnect or duplicate event)
+      console.log('📥 Character already in presence, skipping:', event.characterId);
+      return;
+    }
+
+    // Add new character with minimal data
+    // Full data (avatar, location) will be enriched by periodic refetch (30s)
+    console.log('📥 Adding character to presence:', event.characterId);
+    set({
+      globalPresence: [
+        ...globalPresence,
+        {
+          characterId: event.characterId,
+          characterName: event.characterName,
+          characterSurname: null, // Will be filled by API refetch
+          locationId: '', // London by default
+          locationName: 'London',
+          locationSlug: '',
+          isCurrentCharacter: false,
+          avatar: null // Will be filled by API refetch
+        }
+      ]
+    });
+  },
+
+  handleCharacterInactive: (event) => {
+    console.log('📥 Removing character from presence:', event.characterId);
+    const { globalPresence } = get();
+
+    // Remove character from presence list
+    set({
+      globalPresence: globalPresence.filter(p => p.characterId !== event.characterId)
+    });
   },
 
   getLocationPresence: (locationId) => {

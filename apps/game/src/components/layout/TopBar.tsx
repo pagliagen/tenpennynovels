@@ -19,7 +19,7 @@
 
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import styles from '@/styles/components/TopBar.module.scss';
 
 /**
@@ -55,6 +55,18 @@ interface TopBarProps {
 
   /** Logout button click handler */
   onLogoutClick?: () => void;
+
+  /** Audio options button click handler */
+  onAudioOptionsClick?: () => void;
+
+  /** Chat options button click handler */
+  onChatOptionsClick?: () => void;
+
+  /** Character directory button click handler */
+  onCharacterDirectoryClick?: () => void;
+
+  /** Character face claim button click handler */
+  onCharacterFaceClaimClick?: () => void;
 
   /** Unread OnGame mail count */
   unreadOnGameMailCount?: number;
@@ -113,6 +125,10 @@ export function TopBar({
   onTicketClick,
   onUtilityClick,
   onLogoutClick,
+  onAudioOptionsClick,
+  onChatOptionsClick,
+  onCharacterDirectoryClick,
+  onCharacterFaceClaimClick,
   unreadOnGameMailCount = 0,
   workableTicketsCount = 0,
   unreadTicketsCount = 0,
@@ -121,6 +137,10 @@ export function TopBar({
   locationImageUrl = '/images/topbar/location-image.png',
   isInLondon = true,
 }: TopBarProps): JSX.Element {
+  // State per gestire apertura/chiusura dropdown utility
+  const [isUtilityMenuOpen, setIsUtilityMenuOpen] = useState(false);
+  const utilityMenuRef = useRef<HTMLDivElement>(null);
+
   // DEBUG: Log props received
   useEffect(() => {
     console.log('[TopBar] 🎨 Rendered with props:', {
@@ -129,210 +149,321 @@ export function TopBar({
     });
   }, [locationName, isInLondon]);
 
+  // Click outside handler per chiudere il dropdown
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (utilityMenuRef.current && !utilityMenuRef.current.contains(event.target as Node)) {
+        setIsUtilityMenuOpen(false);
+      }
+    }
+
+    if (isUtilityMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isUtilityMenuOpen]);
+
+  // Toggle utility menu
+  const handleToggleUtilityMenu = () => {
+    setIsUtilityMenuOpen((prev) => !prev);
+  };
+
+  // Handle utility menu item click
+  const handleUtilityItemClick = (action?: () => void) => {
+    action?.();
+    setIsUtilityMenuOpen(false);
+  };
+
   return (
-    <div className={styles.topBar}>
-      {/* ========================================
+    <div className={styles.topBarContainer}>
+      <div className={styles.topBar}>
+        {/* ========================================
           LEFT DECORATION
           ======================================== */}
-      <div className={styles.topBarLeft}>
-        <img
-          src="/images/topbar/topbar-left.png"
-          alt="Topbar left decoration"
-          className={styles.decorationLeft}
-        />
-      </div>
-
-      {/* ========================================
-          MAIN CONTENT
-          ======================================== */}
-      <div className={styles.topBarContent}>
-        {/* Left Icons - 3 elements */}
-        <div className={styles.iconsContainerLeft}>
-          {/* Quick Map */}
-          <button
-            type="button"
-            onClick={onQuickMapClick}
-            className={styles.iconButton}
-            title="Mappa Rapida"
-          >
-            <img
-              src="/images/topbar/button-quick-map.png"
-              alt="Mappa Rapida"
-              className={styles.iconImage}
-            />
-          </button>
-
-          {/* Forum (Bacheca) - Popup */}
-          <button
-            type="button"
-            onClick={onForumClick}
-            className={styles.iconButton}
-            title="Bacheca"
-          >
-            <img
-              src="/images/topbar/button-forum.png"
-              alt="Bacheca"
-              className={styles.iconImage}
-            />
-          </button>
-
-          {/* OnGame Mail (Victorian Post) - Popup */}
-          <button
-            type="button"
-            onClick={onOnGameMailClick}
-            className={styles.iconButton}
-            title="Posta Vittoriana"
-          >
-            <img
-              src="/images/topbar/button-ongame.png"
-              alt="Posta Vittoriana"
-              className={styles.iconImage}
-            />
-            {unreadOnGameMailCount > 0 && (
-              <span className={styles.notificationBadge}>
-                {unreadOnGameMailCount > 99 ? '99+' : unreadOnGameMailCount}
-              </span>
-            )}
-          </button>
+        <div className={styles.topBarLeft}>
+          <img
+            src="/images/topbar/topbar-left.png"
+            alt="Topbar left decoration"
+            className={styles.decorationLeft}
+          />
         </div>
 
-        {/* Location Display - Center */}
-        <div className={styles.locationDisplay}>
-          <div className={styles.semicerchio}>
-            <img
-              src={locationImageUrl}
-              alt={locationName}
-              className={styles.locationImage}
-            />
-            <div className={styles.locationName}>{locationName}</div>
+        {/* ========================================
+          MAIN CONTENT
+          ======================================== */}
+        <div className={styles.topBarContent}>
+          {/* Left Icons - 3 elements */}
+          <div className={styles.iconsContainerLeft}>
+            {/* Quick Map */}
+            <button
+              type="button"
+              onClick={onQuickMapClick}
+              className={styles.iconButton}
+              title="Mappa Rapida"
+            >
+              <img
+                src="/images/topbar/button-quick-map.png"
+                alt="Mappa Rapida"
+                className={styles.iconImage}
+              />
+            </button>
 
-            {/* Conditional action buttons for non-London locations */}
-            {!isInLondon && (
-              <div className={styles.locationActions}>
-                {onLocationInfoClick && (
-                  <button
-                    type="button"
-                    onClick={onLocationInfoClick}
-                    className={styles.locationChatLink}
-                    title="Apri la chat della location"
-                  >
-                    Vai in Chat →
-                  </button>
-                )}
-                {onLeaveLocationClick && (
-                  <button
-                    type="button"
-                    onClick={onLeaveLocationClick}
-                    className={styles.locationLeaveLink}
-                    title="Torna a Londra e lascia questa location"
-                  >
-                    Torna a Londra
-                  </button>
-                )}
-              </div>
-            )}
+            {/* Forum (Bacheca) - Popup */}
+            <button
+              type="button"
+              onClick={onForumClick}
+              className={styles.iconButton}
+              title="Bacheca"
+            >
+              <img
+                src="/images/topbar/button-forum.png"
+                alt="Bacheca"
+                className={styles.iconImage}
+              />
+            </button>
+
+            {/* OnGame Mail (Victorian Post) - Popup */}
+            <button
+              type="button"
+              onClick={onOnGameMailClick}
+              className={styles.iconButton}
+              title="Posta Vittoriana"
+            >
+              <img
+                src="/images/topbar/button-ongame.png"
+                alt="Posta Vittoriana"
+                className={styles.iconImage}
+              />
+              {unreadOnGameMailCount > 0 && (
+                <span className={styles.notificationBadge}>
+                  {unreadOnGameMailCount > 99 ? '99+' : unreadOnGameMailCount}
+                </span>
+              )}
+            </button>
+          </div>
+
+          {/* Location Display - Center */}
+          <div className={styles.locationDisplay}>
+            <div className={styles.semicerchio}>
+              <img
+                src={locationImageUrl}
+                alt={locationName}
+                className={styles.locationImage}
+              />
+              <div className={styles.locationName}>{locationName}</div>
+
+              {/* Conditional action buttons for non-London locations */}
+              {!isInLondon && (
+                <div className={styles.locationActions}>
+                  {onLocationInfoClick && (
+                    <button
+                      type="button"
+                      onClick={onLocationInfoClick}
+                      className={styles.locationChatLink}
+                      title="Apri la chat della location"
+                    >
+                      Vai in Chat →
+                    </button>
+                  )}
+                  {onLeaveLocationClick && (
+                    <button
+                      type="button"
+                      onClick={onLeaveLocationClick}
+                      className={styles.locationLeaveLink}
+                      title="Torna a Londra e lascia questa location"
+                    >
+                      Torna a Londra
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Right Icons - 3 elements */}
+          <div className={styles.iconsContainerRight}>
+            {/* Utility - Popup */}
+            <button
+              type="button"
+              onClick={onUtilityClick}
+              className={styles.iconButton}
+              title={unreadTicketsCount > 0 ? `Utilità (${unreadTicketsCount} ticket non letti)` : 'Utilità'}
+            >
+              <img
+                src="/images/topbar/button-utility.png"
+                alt="Utilità"
+                className={styles.iconImage}
+              />
+              {unreadTicketsCount > 0 && (
+                <span className={styles.notificationBadge}>
+                  {unreadTicketsCount > 99 ? '99+' : unreadTicketsCount}
+                </span>
+              )}
+            </button>
+
+            {/* Documents - Link to new page */}
+            <a
+              id="tpn_documenti"
+              href={process.env.NEXT_PUBLIC_DOCUMENTS_URL}
+              target="tpn_documenti"
+              rel="noopener noreferrer"
+              className={styles.iconButton}
+              title="Documenti"
+            >
+              <img
+                src="/images/topbar/button-documents.png"
+                alt="Documenti"
+                className={styles.iconImage}
+              />
+            </a>
+
+            {/* Tickets - Popup */}
+            <button
+              type="button"
+              onClick={onTicketClick}
+              className={styles.iconButton}
+              title="Gestione Tickets"
+            >
+              <img
+                src="/images/topbar/button-ticket.png"
+                alt="Ticket"
+                className={styles.iconImage}
+              />
+              {workableTicketsCount > 0 && (
+                <span className={styles.notificationBadge}>
+                  {workableTicketsCount > 99 ? '99+' : workableTicketsCount}
+                </span>
+              )}
+            </button>
           </div>
         </div>
 
-        {/* Right Icons - 3 elements */}
-        <div className={styles.iconsContainerRight}>
-          {/* Utility - Popup */}
-          <button
-            type="button"
-            onClick={onUtilityClick}
-            className={styles.iconButton}
-            title={unreadTicketsCount > 0 ? `Utilità (${unreadTicketsCount} ticket non letti)` : 'Utilità'}
-          >
-            <img
-              src="/images/topbar/button-utility.png"
-              alt="Utilità"
-              className={styles.iconImage}
-            />
-            {unreadTicketsCount > 0 && (
-              <span className={styles.notificationBadge}>
-                {unreadTicketsCount > 99 ? '99+' : unreadTicketsCount}
-              </span>
-            )}
-          </button>
-
-          {/* Documents - Link to new page */}
-          <a
-            id="tpn_documenti"
-            href={process.env.NEXT_PUBLIC_DOCUMENTS_URL}
-            target="tpn_documenti"
-            rel="noopener noreferrer"
-            className={styles.iconButton}
-            title="Documenti"
-          >
-            <img
-              src="/images/topbar/button-documents.png"
-              alt="Documenti"
-              className={styles.iconImage}
-            />
-          </a>
-
-          {/* Tickets - Popup */}
-          <button
-            type="button"
-            onClick={onTicketClick}
-            className={styles.iconButton}
-            title="Gestione Tickets"
-          >
-            <img
-              src="/images/topbar/button-ticket.png"
-              alt="Ticket"
-              className={styles.iconImage}
-            />
-            {workableTicketsCount > 0 && (
-              <span className={styles.notificationBadge}>
-                {workableTicketsCount > 99 ? '99+' : workableTicketsCount}
-              </span>
-            )}
-          </button>
+        {/* ========================================
+          RIGHT DECORATION
+          ======================================== */}
+        <div className={styles.topBarRight}>
+          <img
+            src="/images/topbar/topbar-right.png"
+            alt="Topbar right decoration"
+            className={styles.decorationRight}
+          />
         </div>
       </div>
 
       {/* ========================================
-          RIGHT DECORATION + UTILITY BUTTONS
+          UTILITY MENU DROPDOWN
           ======================================== */}
-      <div className={styles.topBarRight}>
-        <img
-          src="/images/topbar/topbar-right.png"
-          alt="Topbar right decoration"
-          className={styles.decorationRight}
-        />
-
-        {/* Admin Button - Conditional */}
-        {canAccessAdmin && (
-          <a
-            id="tpn_management"
-            href={process.env.NEXT_PUBLIC_MANAGEMENT_URL}
-            target="tpn_management"
-            rel="noopener noreferrer"
-            className={styles.adminButton}
-            title="Pannello Amministrazione"
-          >
-            <img
-              src="/images/topbar/button-admin.png"
-              alt="Admin"
-              className={styles.iconImage}
-            />
-          </a>
-        )}
-
-        {/* Logout Button */}
+      <div className={styles.utilityButtonsContainer} ref={utilityMenuRef}>
+        {/* Toggle Button (Linguetta) */}
         <button
           type="button"
-          onClick={onLogoutClick}
-          className={styles.logoutButton}
-          title="Logout"
+          onClick={handleToggleUtilityMenu}
+          className={styles.utilityToggleButton}
+          title="Utilità"
+          aria-label="Apri menu utilità"
+          aria-expanded={isUtilityMenuOpen}
+          aria-haspopup="true"
         >
-          <img
-            src="/images/topbar/icon-exit.png"
-            alt="Logout"
-            className={styles.iconImage}
-          />
+          <svg
+            className={styles.hamburgerIcon}
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <rect y="4" width="24" height="2.5" rx="1.25" />
+            <rect y="10.75" width="24" height="2.5" rx="1.25" />
+            <rect y="17.5" width="24" height="2.5" rx="1.25" />
+          </svg>
         </button>
+
+        {/* Dropdown Menu */}
+        {isUtilityMenuOpen && (
+          <div className={styles.utilityDropdown} role="menu">
+            {/* Opzioni Audio */}
+            {onAudioOptionsClick && (
+              <button
+                type="button"
+                onClick={() => handleUtilityItemClick(onAudioOptionsClick)}
+                className={styles.utilityMenuItem}
+                role="menuitem"
+              >
+                Opzioni audio
+              </button>
+            )}
+
+            {/* Opzioni Chat */}
+            {onChatOptionsClick && (
+              <button
+                type="button"
+                onClick={() => handleUtilityItemClick(onChatOptionsClick)}
+                className={styles.utilityMenuItem}
+                role="menuitem"
+              >
+                Opzioni chat
+              </button>
+            )}
+
+            {/* Anagrafica Personaggi */}
+            {onCharacterDirectoryClick && (
+              <button
+                type="button"
+                onClick={() => handleUtilityItemClick(onCharacterDirectoryClick)}
+                className={styles.utilityMenuItem}
+                role="menuitem"
+              >
+                👥 Anagrafica
+              </button>
+            )}
+
+            {/* il mio prestavolto */}
+            {onCharacterFaceClaimClick && (
+              <button
+                type="button"
+                onClick={() => handleUtilityItemClick(onCharacterFaceClaimClick)}
+                className={styles.utilityMenuItem}
+                role="menuitem"
+              >
+                🎭 il mio prestavolto
+              </button>
+            )}
+
+            {/* Divider before admin section */}
+            {canAccessAdmin && <div className={styles.utilityMenuDivider}></div>}
+
+            {/* Pannello Amministrazione - Conditional */}
+            {canAccessAdmin && (
+              <a
+                id="tpn_management"
+                href={process.env.NEXT_PUBLIC_MANAGEMENT_URL}
+                target="tpn_management"
+                rel="noopener noreferrer"
+                className={styles.utilityMenuItem}
+                role="menuitem"
+                onClick={() => setIsUtilityMenuOpen(false)}
+              >
+                → Pannello amministrazione
+              </a>
+            )}
+
+            {/* Divider */}
+            <div className={styles.utilityMenuDivider} />
+
+            {/* Logout Button */}
+            <button
+              type="button"
+              onClick={() => handleUtilityItemClick(onLogoutClick)}
+              className={styles.utilityMenuLogout}
+              role="menuitem"
+            >
+              <img
+                src="/images/topbar/icon-exit.png"
+                alt="Logout"
+                className={styles.logoutIcon}
+              />
+              LOGOUT
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

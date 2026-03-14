@@ -82,6 +82,8 @@ export function usePresence(): UsePresenceReturn {
     handlePlayerEntered,
     handlePlayerLeft,
     handleGlobalPresenceUpdate,
+    handleCharacterActive,
+    handleCharacterInactive,
     getLocationPresence,
   } = usePresenceStore();
 
@@ -142,10 +144,21 @@ export function usePresence(): UsePresenceReturn {
           handleGlobalPresenceUpdate(event.data);
           break;
 
+        case 'character_active':
+          // Character became active (user selected character)
+          console.log('📥 usePresence: character_active event:', event.data);
+          handleCharacterActive(event.data);
+          break;
+
+        case 'character_inactive':
+          // Character went inactive (user logged out)
+          console.log('📥 usePresence: character_inactive event:', event.data);
+          handleCharacterInactive(event.data);
+          break;
+
         case 'user_status_change':
-          // User went online/offline (not fully implemented in presenceStore)
-          console.log('📥 usePresence: user_status_change event:', event.data);
-          // TODO: Implement when backend includes characterId in event
+          // DEPRECATED for presence - kept for other systems
+          console.log('📥 usePresence: user_status_change event (ignored for presence)');
           break;
 
         default:
