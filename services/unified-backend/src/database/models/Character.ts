@@ -208,7 +208,6 @@ const CharacterSchema = new Schema<ICharacter>({
   name: {
     type: String,
     required: true,
-    unique: true, // NEW: Character names must be unique
     trim: true,
     minlength: 2,
     maxlength: 50
@@ -650,7 +649,7 @@ const CharacterSchema = new Schema<ICharacter>({
 
 // Indexes
 CharacterSchema.index({ userId: 1 });
-CharacterSchema.index({ name: 1 });
+CharacterSchema.index({ name: 1 }, { unique: true }); // Unique index for character names
 CharacterSchema.index({ playerStatus: 1 });
 CharacterSchema.index({ playerStatus: 1, submittedAt: 1 });
 CharacterSchema.index({ occupation: 1 });

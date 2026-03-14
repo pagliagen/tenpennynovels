@@ -33,7 +33,9 @@ export const config = {
   trustProxy: isProduction,
 
   backend: {
-    url: isProduction ? 'http://127.0.0.1:3001' : 'http://localhost:3001',
+    url: isProduction
+      ? 'http://127.0.0.1:3001'  // PM2 production - no env needed
+      : (process.env.UNIFIED_BACKEND_URL || 'http://localhost:3001'),  // Docker dev or bare metal dev
   },
 
   cdn: {

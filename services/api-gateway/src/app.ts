@@ -85,7 +85,7 @@ const documentsRateLimitUnauth = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skip: (req) => !!req.cookies?.auth_token,
-  keyGenerator: (req) => req.ip || req.socket?.remoteAddress || 'unknown',
+  // Rimosso keyGenerator custom - usa default (normalizza IPv6 automaticamente)
   handler: (_req, res) => {
     res.status(429).json({
       success: false,
@@ -175,9 +175,9 @@ function createServiceProxy(name: string, svc: ServiceConfig) {
 // ---------------------------------------------------------------------------
 app.get('/health', async (_req, res) => {
   const healthChecks: Record<string, string> = {
-    auth: `${services.auth.target}/auth/health`,
-    game: `${services.game.target}/game/health`,
-    admin: `${services.admin.target}/admin/health`,
+    auth: `${services.auth.target}/health`,
+    game: `${services.game.target}/health`,
+    admin: `${services.admin.target}/health`,
   };
 
   interface ServiceStatus {
