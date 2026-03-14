@@ -29,6 +29,7 @@ import { api } from '@/lib/api/client';
  * @property {string | null} characterSurname - Character surname (optional)
  * @property {string} locationId - Current location ID (empty string = London)
  * @property {string} locationName - Location name or "STANZA PRIVATA" for private locations
+ * @property {string} locationSlug - Location slug for navigation (empty string = London)
  * @property {boolean} isCurrentCharacter - Whether this is the requesting character
  * @property {string | null} avatar - Avatar URL (optional)
  */
@@ -38,6 +39,7 @@ export interface GlobalPresence {
   characterSurname: string | null;
   locationId: string;
   locationName: string;
+  locationSlug: string;
   isCurrentCharacter: boolean;
   avatar: string | null;
 }
@@ -52,12 +54,14 @@ export interface GlobalPresence {
  * @property {Date | null} lastUpdated - Timestamp of last API fetch
  * @property {boolean} isLoading - Whether initial fetch is in progress
  * @property {string | null} error - Error message if fetch failed
+ * @property {boolean} isModalOpen - Whether presence modal is open
  */
 interface PresenceState {
   globalPresence: GlobalPresence[];
   lastUpdated: Date | null;
   isLoading: boolean;
   error: string | null;
+  isModalOpen: boolean;
 }
 
 /**
@@ -154,6 +158,20 @@ interface PresenceActions {
   getLocationPresence: (locationId: string | null) => GlobalPresence[];
 
   /**
+   * Open presence modal
+   *
+   * @returns {void}
+   */
+  openModal: () => void;
+
+  /**
+   * Close presence modal
+   *
+   * @returns {void}
+   */
+  closeModal: () => void;
+
+  /**
    * Reset store to initial state
    *
    * Used on logout or character switch.
@@ -171,6 +189,7 @@ const initialState: PresenceState = {
   lastUpdated: null,
   isLoading: false,
   error: null,
+  isModalOpen: false,
 };
 
 /**
@@ -248,6 +267,7 @@ export const usePresenceStore = create<PresenceState & PresenceActions>((set, ge
           ...existing,
           locationId: event.locationId,
           locationName: existing.locationName, // Keep existing name (may be "STANZA PRIVATA")
+          locationSlug: '', // WebSocket events don't have slug - will be updated by API refetch
         };
       }
       set({ globalPresence: updated });
@@ -262,6 +282,7 @@ export const usePresenceStore = create<PresenceState & PresenceActions>((set, ge
             characterSurname: null,
             locationId: event.locationId,
             locationName: 'Unknown Location', // Will be updated by global_presence_update
+            locationSlug: '', // WebSocket events don't have slug
             isCurrentCharacter: false,
             avatar: null,
           },
@@ -276,7 +297,7 @@ export const usePresenceStore = create<PresenceState & PresenceActions>((set, ge
     // Update character's location to null (London)
     const updated = globalPresence.map((p) =>
       p.characterId === event.characterId
-        ? { ...p, locationId: '', locationName: 'London' }
+        ? { ...p, locationId: '', locationName: 'London', locationSlug: '' }
         : p
     );
 
@@ -294,6 +315,7 @@ export const usePresenceStore = create<PresenceState & PresenceActions>((set, ge
               ...p,
               locationId: event.newLocationId || '',
               locationName: event.locationName || 'London',
+              locationSlug: '', // WebSocket events don't have slug
             }
           : p
       );
@@ -306,6 +328,7 @@ export const usePresenceStore = create<PresenceState & PresenceActions>((set, ge
               ...p,
               locationId: event.locationId || '',
               locationName: event.locationName || 'Unknown Location',
+              locationSlug: '', // WebSocket events don't have slug
             }
           : p
       );
@@ -314,7 +337,7 @@ export const usePresenceStore = create<PresenceState & PresenceActions>((set, ge
       // Character left location (returned to London)
       const updated = globalPresence.map((p) =>
         p.characterId === event.characterId
-          ? { ...p, locationId: '', locationName: 'London' }
+          ? { ...p, locationId: '', locationName: 'London', locationSlug: '' }
           : p
       );
       set({ globalPresence: updated });
@@ -349,6 +372,14 @@ export const usePresenceStore = create<PresenceState & PresenceActions>((set, ge
     const targetLocationId = locationId || '';
 
     return globalPresence.filter((p) => p.locationId === targetLocationId);
+  },
+
+  openModal: () => {
+    set({ isModalOpen: true });
+  },
+
+  closeModal: () => {
+    set({ isModalOpen: false });
   },
 
   reset: () => {

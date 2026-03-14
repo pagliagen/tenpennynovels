@@ -214,7 +214,6 @@
   color: $color-text-primary;
   line-height: $line-height-relaxed;
   filter: blur(8px);
-  user-select: none;
   pointer-events: none;
   animation: blurPulse 2s ease-in-out infinite;
 }

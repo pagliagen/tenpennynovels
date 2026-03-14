@@ -1,0 +1,92 @@
+/**
+ * Forum Components - Shared Variables
+ *
+ * Victorian-themed color palette and common styles for the forum.
+ * Mirrors chat/_variables.scss with forum-specific additions.
+ * @module styles/components/forum/_variables
+ */
+
+/* Color Palette */
+$gold: #b8860b;
+$brown: #8b4513;
+$parchment: #e8d4a0;
+$parchment-dark: #c9c6ad;
+
+/* Opacity Variations */
+$gold-10: rgba(184, 134, 11, 0.1);
+$gold-20: rgba(184, 134, 11, 0.2);
+$gold-30: rgba(184, 134, 11, 0.3);
+$gold-50: rgba(184, 134, 11, 0.5);
+$brown-10: rgba(139, 69, 19, 0.1);
+$brown-20: rgba(139, 69, 19, 0.2);
+$brown-50: rgba(139, 69, 19, 0.5);
+$parchment-50: rgba(232, 212, 160, 0.5);
+$parchment-80: rgba(232, 212, 160, 0.8);
+
+/* Dark tones */
+$dark-bg: #1a1108;
+$dark-surface: #2a1f12;
+$dark-elevated: #3a2e1c;
+$dark-border: #4a3d26; 
+$text-primary: #e8d4a0;
+$text-secondary: #b8a07a;
+$text-muted: #8a7a5a;
+
+/* Semantic */
+$danger: #c0392b;
+$success: #27ae60;
+$accent-color: #b8860b; // Alias for gold
+
+/* Typography */
+$font-serif: 'Playfair Display', serif;
+$font-sans: system-ui, -apple-system, sans-serif;
+$font-size-sm: 0.875rem; // 14px
+$font-size-md: 1rem;     // 16px
+$font-size-lg: 1.25rem;  // 20px
+
+/* Spacing */
+$spacing-xs: 4px;
+$spacing-sm: 8px;
+$spacing-md: 12px;
+$spacing-lg: 16px;
+$spacing-xl: 24px;
+$spacing-xxl: 32px;
+
+/* Border Radius */
+$radius-sm: 4px;
+$radius-md: 8px;
+$radius-lg: 12px;
+
+/* Transitions */
+$transition-fast: 0.15s ease;
+$transition-normal: 0.2s ease;
+$transition-slow: 0.3s ease;
+
+/* Forum-specific */
+$forum-header-height: 56px;
+$forum-sidebar-width: 280px;
+$forum-max-width: 900px;
+
+/* Victorian Scrollbar Mixin */
+@mixin victorian-scrollbar {
+  &::-webkit-scrollbar {
+    width: 12px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: $brown-10;
+    border-radius: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: $gold-50;
+    border-radius: 6px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+
+    &:hover {
+      background: $gold;
+      background-clip: content-box;
+    }
+  }
+}

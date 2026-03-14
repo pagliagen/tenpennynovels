@@ -12,6 +12,10 @@
   padding: 0;
 }
 
+div#__next {
+  user-select: none;
+}
+
 /* ========================================
    BASE STYLES - Victorian Admin Theme
    ======================================== */

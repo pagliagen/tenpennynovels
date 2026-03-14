@@ -1,0 +1,209 @@
+@use './variables' as *;
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: flex-end;
+  animation: fadeIn 0.3s ease-out;
+
+  &.closing {
+    animation: fadeOut 0.3s ease-in forwards;
+  }
+}
+
+.modal {
+  width: 500px;
+  height: 400px;
+  background: $dark-bg;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.5);
+  animation: slideInFromRight 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  border: 1px solid $dark-border;
+
+  &.closing {
+    animation: slideOutToRight 0.3s cubic-bezier(0.55, 0.06, 0.68, 0.19) forwards;
+  }
+
+  @media (max-width: 768px) {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-md $spacing-lg;
+  border-bottom: 1px solid $dark-border;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.title {
+  font-size: $font-size-lg;
+  font-weight: 600;
+  color: $text-primary;
+  margin: 0;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: $text-secondary;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+
+  &:hover {
+    color: $text-primary;
+  }
+}
+
+.search {
+  padding: $spacing-md $spacing-lg;
+  border-bottom: 1px solid $dark-border;
+}
+
+.searchInput {
+  width: 100%;
+  padding: $spacing-sm $spacing-md;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid $dark-border;
+  border-radius: 4px;
+  color: $text-primary;
+  font-size: $font-size-md;
+
+  &::placeholder {
+    color: $text-secondary;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: $accent-color;
+  }
+}
+
+.content {
+  flex: 1;
+  overflow-y: auto;
+  @include victorian-scrollbar;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+  padding: $spacing-md $spacing-lg;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  transition: background 0.2s;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.03);
+  }
+}
+
+.itemMain {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid $dark-border;
+}
+
+.info {
+  flex: 1;
+}
+
+.name {
+  font-size: $font-size-md;
+  font-weight: 500;
+  color: $text-primary;
+}
+
+.locationButton {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  color: $accent-color;
+  font-size: $font-size-sm;
+  cursor: pointer;
+  padding: $spacing-xs 0;
+  transition: opacity 0.2s;
+
+  &:hover {
+    opacity: 0.8;
+    text-decoration: underline;
+  }
+}
+
+.locationText {
+  color: $text-secondary;
+  font-size: $font-size-sm;
+  padding: $spacing-xs 0;
+}
+
+.empty {
+  padding: $spacing-xl;
+  text-align: center;
+  color: $text-secondary;
+  font-size: $font-size-md;
+}
+
+// Animations
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideOutToRight {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}

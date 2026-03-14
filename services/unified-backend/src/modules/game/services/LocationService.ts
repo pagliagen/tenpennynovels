@@ -40,6 +40,7 @@ export interface GlobalPresence {
   characterSurname: string | null;
   locationId: string;
   locationName: string;
+  locationSlug: string;
   isCurrentCharacter: boolean;
   avatar: string | null;
 }
@@ -245,22 +246,26 @@ export class LocationService {
 
         let locationId: string;
         let locationName: string;
+        let locationSlug: string;
 
         if (!character.currentLocation) {
           // Character has no location set (null) - this represents London/root state
           locationId = ''; // Empty string represents London in client-side logic
           locationName = 'London';
+          locationSlug = '';
         } else {
           // Character has a specific location
           locationId = character.currentLocation.toString();
-          
+
           if (accessibleLocationIds.includes(locationId)) {
             // User can see this location
             const location = accessibleLocations.find(loc => loc._id === locationId);
             locationName = location?.name || 'Unknown Location';
+            locationSlug = location?.slug || '';
           } else {
             // User cannot see this location - show as private
             locationName = 'STANZA PRIVATA';
+            locationSlug = '';
           }
         }
 
@@ -270,6 +275,7 @@ export class LocationService {
           characterSurname: character.surname || null,
           locationId: locationId,
           locationName: locationName,
+          locationSlug: locationSlug,
           isCurrentCharacter: character.id === characterId,
           avatar: character.avatar || null
         });

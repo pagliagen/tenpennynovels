@@ -1,7 +1,7 @@
 /**
  * Presence Button Component
  *
- * Simple sidebar button that navigates to /presenti-online page.
+ * Simple sidebar button that opens presence modal.
  *
  * @module components/sidebar/PresenceButton
  * @since 2.0.0
@@ -9,7 +9,7 @@
 
 'use client';
 
-import { useRouter } from 'next/router';
+import { usePresenceStore } from '@/store/presenceStore';
 import styles from '@/styles/components/PresenceSection.module.scss';
 
 /**
@@ -21,10 +21,10 @@ import styles from '@/styles/components/PresenceSection.module.scss';
  * @returns {JSX.Element} Presence button
  */
 export function PresenceButton(): JSX.Element {
-  const router = useRouter();
+  const openModal = usePresenceStore((s) => s.openModal);
 
   const handleClick = () => {
-    router.push('/presenti-online');
+    openModal();
   };
 
   return (

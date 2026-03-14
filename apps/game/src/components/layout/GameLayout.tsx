@@ -44,6 +44,7 @@ import { useOffGameUnreadCount } from '@/hooks/useOffGameChat';
 import { queryKeys } from '@/lib/api/queryClient';
 import { ForumModal } from '../forum/ForumModal';
 import { useForumStore } from '@/store/forumStore';
+import { PresenceModal } from '../presence/PresenceModal';
 
 /**
  * Game Layout Props
@@ -341,6 +342,9 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
 
       {/* Forum Modal - Full screen overlay */}
       {isForumOpen && <ForumModal />}
+
+      {/* Presence Modal - Side drawer */}
+      <PresenceModal />
     </>
   );
 }
