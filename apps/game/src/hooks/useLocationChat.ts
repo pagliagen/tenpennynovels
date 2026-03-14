@@ -232,8 +232,7 @@ export function useLocationChat(
         return;
       }
 
-      const isTyping = payload.isTyping ?? payload.typing ?? false;
-      if (isTyping) {
+      if (payload.isTyping) {
         chatStore.setTyping(payload.characterId, true);
 
         // Auto-clear after 3 seconds of inactivity
