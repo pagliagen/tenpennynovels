@@ -153,39 +153,6 @@ export class LocationController {
         currentTag: occupant.currentTag || null
       })) || [];
 
-      // If occupants list is empty, populate it from characters with currentLocation matching this location
-      if (occupants.length === 0) {
-        const charactersInLocation = await Character.find({
-          currentLocation: locationId
-        })
-        .select('_id name currentLocation')
-        .lean() as any[];
-
-        occupants = charactersInLocation.map((char: any) => ({
-          characterId: char._id,
-          characterName: char.name,
-          enteredAt: new Date(), // Approximate, we don't know exact entry time
-          lastSeen: new Date(),
-          currentTag: null // Will be loaded from location.occupants if available
-        }));
-
-        // Try to get currentTag from location.occupants if character exists there
-        if (location.occupants && location.occupants.length > 0) {
-          occupants.forEach((occ: any) => {
-            const locationOccupant = location.occupants.find((lo: any) => 
-              lo.characterId.toString() === occ.characterId.toString()
-            );
-            if (locationOccupant) {
-              occ.currentTag = locationOccupant.currentTag || null;
-              occ.enteredAt = locationOccupant.enteredAt;
-              occ.lastSeen = locationOccupant.lastSeen;
-            }
-          });
-        }
-
-        logger.info(`Populated occupants from currentLocation for ${locationId}: ${occupants.length} characters`);
-      }
-
       // Ensure current character is in occupants list if they're in this location
       const currentCharacterInLocation = character.currentLocation?.toString() === locationId;
       if (currentCharacterInLocation) {
@@ -754,37 +721,6 @@ export class LocationController {
         lastSeen: occupant.lastSeen,
         currentTag: occupant.currentTag || null
       })) || [];
-
-      // If occupants list is empty, populate it from characters with currentLocation matching this location
-      if (occupants.length === 0) {
-        const charactersInLocation = await Character.find({
-          currentLocation: locationId
-        })
-        .select('_id name currentLocation')
-        .lean() as any[];
-
-        occupants = charactersInLocation.map((char: any) => ({
-          characterId: char._id,
-          characterName: char.name,
-          enteredAt: new Date(),
-          lastSeen: new Date(),
-          currentTag: null
-        }));
-
-        // Try to get currentTag from location.occupants if character exists there
-        if (location.occupants && location.occupants.length > 0) {
-          occupants.forEach((occ: any) => {
-            const locationOccupant = location.occupants.find((lo: any) => 
-              lo.characterId.toString() === occ.characterId.toString()
-            );
-            if (locationOccupant) {
-              occ.currentTag = locationOccupant.currentTag || null;
-              occ.enteredAt = locationOccupant.enteredAt;
-              occ.lastSeen = locationOccupant.lastSeen;
-            }
-          });
-        }
-      }
 
       // Ensure current character is in occupants list if they're in this location
       const character = await Character.findById(characterId);

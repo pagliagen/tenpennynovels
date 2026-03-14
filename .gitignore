@@ -33,3 +33,6 @@ out/
 # CDN local storage (images)
 cdn-storage/*
 !cdn-storage/.gitkeep
+
+# Generated sitemaps (created by SitemapService cron)
+apps/landing/public/sitemap*.xml

@@ -1,5 +1,7 @@
 import { Socket, Server as SocketIOServer } from 'socket.io';
 import { logger } from '../utils/logger';
+import { Character } from '../../../database/models/Character';
+import { Location } from '../../../database/models/Location';
 
 /**
  * Setup general game-related WebSocket handlers
@@ -7,9 +9,46 @@ import { logger } from '../utils/logger';
 export function setupGameHandlers(socket: Socket, io: SocketIOServer): void {
   
   /**
-   * Ping/pong for connection health
+   * Ping/pong for connection health + presence heartbeat
    */
-  socket.on('ping', () => {
+  socket.on('ping', async () => {
+    const character = socket.data.character;
+    const currentLocationId = socket.data.currentLocationId;
+
+    if (character?.characterId) {
+      try {
+        // Update Character.lastActive (PRIMARY HEARTBEAT)
+        await Character.findByIdAndUpdate(
+          character.characterId,
+          {
+            $set: {
+              lastActive: new Date(),
+              currentLocation: currentLocationId || null
+            }
+          },
+          { timestamps: false }
+        );
+
+        // Update location.occupants[].lastSeen if in location
+        if (currentLocationId) {
+          await Location.findOneAndUpdate(
+            {
+              _id: currentLocationId,
+              'occupants.characterId': character.characterId
+            },
+            {
+              $set: {
+                'occupants.$.lastSeen': new Date(),
+                'occupants.$.isActive': true
+              }
+            }
+          );
+        }
+      } catch (err) {
+        logger.error('Ping heartbeat update failed:', err);
+      }
+    }
+
     socket.emit('pong', {
       timestamp: new Date().toISOString()
     });

@@ -204,6 +204,9 @@ services:
       AI_GATEWAY_CLIENT_ID: ${AI_GATEWAY_CLIENT_ID:-tpn-dev}
       AI_GATEWAY_API_KEY: ${AI_GATEWAY_API_KEY:-f4af240c291f57bcc23384bff9abcc4ce89f8257974b80e6179f88edd5f4a2f9}
       AI_GATEWAY_HMAC_SECRET: ${AI_GATEWAY_HMAC_SECRET:-}
+
+      # Sitemap generation output directory
+      SITEMAP_OUTPUT_DIR: /sitemap-output
     ports:
       - "3001:3001"
     volumes:
@@ -212,6 +215,7 @@ services:
       - ./services/unified-backend/logs:/app/logs
       - ./services/unified-backend/node_modules:/app/node_modules:ro
       - ./cdn-storage:/cdn-storage
+      - ./apps/landing/public:/sitemap-output
     networks:
       - tenpennynovels-network
     depends_on:

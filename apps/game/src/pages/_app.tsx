@@ -23,6 +23,7 @@
  */
 
 import type { AppProps } from 'next/app';
+import { useEffect } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { queryClient } from '@/lib/api/queryClient';
@@ -50,6 +51,39 @@ import '@/styles/main.scss';
  * // No need to import or use directly
  */
 export default function App({ Component, pageProps }: AppProps): JSX.Element {
+  /**
+   * Presence cleanup on beforeunload
+   *
+   * When user closes tab, send immediate cleanup request via navigator.sendBeacon.
+   * This is MORE RELIABLE than fetch() which may be cancelled during unload.
+   *
+   * Backend endpoint: POST /game/presence/leave (cookie-based auth)
+   */
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const endpoint = `${apiUrl}/game/presence/leave`;
+
+      // Get auth token from cookie (sendBeacon can't use fetch interceptors)
+      const token = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('auth_token='))
+        ?.split('=')[1];
+
+      if (token) {
+        const data = JSON.stringify({ timestamp: Date.now() });
+        // navigator.sendBeacon is guaranteed delivery even if tab closes immediately
+        navigator.sendBeacon(endpoint, data);
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       {/* Auth Initializer - Verifies session before rendering */}

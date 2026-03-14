@@ -616,6 +616,10 @@ CharacterSchema.index({ playerStatus: 1, submittedAt: 1 });
 CharacterSchema.index({ occupation: 1 });
 CharacterSchema.index({ currentLocation: 1 });
 
+// Presence query optimization
+CharacterSchema.index({ lastActive: -1 }); // DESC per sort recenti first
+CharacterSchema.index({ currentLocation: 1, lastActive: -1 }); // Compound per cron cleanup
+
 // Compound indexes for admin queries
 CharacterSchema.index({ playerStatus: 1, 'reviewHistory.reviewedAt': -1 });
 CharacterSchema.index({ playerStatus: 1, occupation: 1 });

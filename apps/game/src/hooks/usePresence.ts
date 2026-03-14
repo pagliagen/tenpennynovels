@@ -86,7 +86,7 @@ export function usePresence(): UsePresenceReturn {
   } = usePresenceStore();
 
   const { selectedCharacter } = useAuthStore();
-  const { onLocationEvent, onGlobalEvent } = useWebSocket();
+  const { onLocationEvent, onGlobalEvent, socket } = useWebSocket();
 
   // Initialize presence store on mount (fetch from API)
   useEffect(() => {
@@ -157,6 +157,22 @@ export function usePresence(): UsePresenceReturn {
     // Cleanup subscription on unmount
     return unsubscribe;
   }, [onGlobalEvent, handleGlobalPresenceUpdate]);
+
+  // Refetch presence after WebSocket reconnect (catch up on missed events)
+  useEffect(() => {
+    if (!socket || !selectedCharacter) return;
+
+    const handleReconnect = () => {
+      console.log('🔄 usePresence: WebSocket reconnected - refetching presence');
+      initialize(selectedCharacter._id);
+    };
+
+    socket.on('connect', handleReconnect);
+
+    return () => {
+      socket.off('connect', handleReconnect);
+    };
+  }, [socket, selectedCharacter, initialize]);
 
   // Compute location-filtered presence (characters in same location as current character)
   // SINGLE SOURCE OF TRUTH: currentLocationId from GameStateStore

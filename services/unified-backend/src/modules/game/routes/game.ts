@@ -3,6 +3,7 @@ import { AuthMiddleware } from '../middleware/auth';
 import { GameController } from '../controllers/GameController';
 import { EnvironmentController } from '../controllers/EnvironmentController';
 import { GameConfigController } from '../controllers/GameConfigController';
+import { PresenceController } from '../controllers/PresenceController';
 import { requireGamePermission } from '../middleware/gamePermissions';
 
 const router = Router();
@@ -18,6 +19,11 @@ router.get('/presence',
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:presence:read'),
   GameController.getGlobalPresence
+);
+
+router.post('/presence/leave',
+  AuthMiddleware.requireCharacterAuth,
+  PresenceController.leave
 );
 
 // Environment data (public - no auth required, no permission check)

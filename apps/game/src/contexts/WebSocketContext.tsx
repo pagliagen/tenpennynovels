@@ -251,6 +251,9 @@ export function WebSocketProvider({ children }: WebSocketProviderProps): JSX.Ele
       console.log('[WebSocket] Connected');
       setStatus('connected');
       reconnectAttemptsRef.current = 0;
+
+      // Trigger presence refetch after reconnect (catch up on missed events)
+      socket.emit('request_presence_sync');
     });
 
     socket.on('disconnect', (reason) => {

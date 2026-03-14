@@ -97,6 +97,12 @@ async function startServer(): Promise<void> {
     await import('./cron/sitemapGeneration');
     logger.info('✅ Sitemap CRON job started');
 
+    // Start Presence Cleanup CRON Job (every 5 minutes, feature flag controlled)
+    if (process.env.ENABLE_PRESENCE_CLEANUP !== 'false') {
+      await import('./cron/presenceCleanup');
+      logger.info('✅ Presence cleanup CRON job started');
+    }
+
     // Start HTTP server
     // IMPORTANT: Bind to 0.0.0.0 for Docker internal networking
     // Security is handled by api-gateway (only gateway can access backend)

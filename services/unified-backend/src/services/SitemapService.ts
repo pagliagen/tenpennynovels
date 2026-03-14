@@ -17,7 +17,8 @@ import { logger } from '@shared/utils/logger';
 
 const LANDING_DOMAIN = 'https://tenpennynovels.com';
 const DOCUMENTS_DOMAIN = 'https://documenti.tenpennynovels.com';
-const OUTPUT_DIR = path.join(__dirname, '../../../../../apps/landing/public');
+const OUTPUT_DIR = process.env.SITEMAP_OUTPUT_DIR
+  || path.join(__dirname, '../../../../apps/landing/public');
 
 interface SitemapUrl {
   loc: string;
@@ -52,10 +53,7 @@ export class SitemapService {
   private static getStaticPages(): SitemapUrl[] {
     return [
       { loc: `${LANDING_DOMAIN}/`, lastmod: '2026-02-27', changefreq: 'weekly', priority: 1.0 },
-      { loc: `${LANDING_DOMAIN}/about`, lastmod: '2026-03-06', changefreq: 'monthly', priority: 0.8 },
-      { loc: `${LANDING_DOMAIN}/credits`, lastmod: '2026-02-27', changefreq: 'monthly', priority: 0.5 },
-      { loc: `${LANDING_DOMAIN}/terms`, lastmod: '2026-02-27', changefreq: 'monthly', priority: 0.5 },
-      { loc: `${LANDING_DOMAIN}/privacy`, lastmod: '2026-02-27', changefreq: 'monthly', priority: 0.5 },
+      { loc: `${LANDING_DOMAIN}/credits`, lastmod: '2026-03-07', changefreq: 'monthly', priority: 0.5 },
     ];
   }
 
