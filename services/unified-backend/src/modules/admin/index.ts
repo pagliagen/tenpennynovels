@@ -10,7 +10,7 @@ logger.info('Loading environment variables...');
 dotenv.config({ path: '../../.env' });
 dotenv.config({ override: true });
 logger.info('Environment variables loaded');
-logger.info('JWT_SECRET:', appConfig.jwt.secret ? 'SET' : 'MISSING');
+logger.info(`JWT_SECRET: ${appConfig.jwt.secret ? 'SET' : 'MISSING'}`);
 
 const PORT = appConfig.port;
 

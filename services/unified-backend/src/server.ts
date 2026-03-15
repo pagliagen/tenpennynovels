@@ -62,7 +62,7 @@ async function startServer(): Promise<void> {
       logger.error('Server non avviato: variabili d\'ambiente mancanti');
       process.exit(1);
     }
-
+ 
     // Connect to MongoDB
     logger.info('📡 Connecting to MongoDB...');
     await db.connect();
@@ -164,7 +164,7 @@ async function gracefulShutdown(signal: string): Promise<void> {
       process.exit(0);
     } catch (error: any) {
       logger.error('❌ Error during graceful shutdown:', error);
-      process.exit(1);
+      process.exit(1); 
     }
   });
 

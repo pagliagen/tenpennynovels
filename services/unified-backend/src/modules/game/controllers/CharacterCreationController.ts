@@ -89,15 +89,17 @@ export class CharacterCreationController {
         timestamp: new Date().toISOString(),
       });
     } catch (error: any) {
-      logger.error('[CharacterCreationController] Error fetching character creation config:', {
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined,
-      });
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorStack = error instanceof Error ? error.stack : undefined;
+
+      // Include error details directly in log message (metadata objects not printed by logger)
+      logger.error(`[CharacterCreationController] Error fetching character creation config: ${errorMessage}\n${errorStack || 'No stack trace'}`);
 
       res.status(500).json({
         result: false,
         error: 'Impossibile caricare la configurazione di creazione personaggio',
         code: 'CONFIG_LOAD_ERROR',
+        details: errorMessage, // Include error details in response for debugging
         timestamp: new Date().toISOString(),
       });
     }

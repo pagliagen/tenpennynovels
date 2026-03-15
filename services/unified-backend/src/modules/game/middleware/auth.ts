@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { RequestUser, AuthToken, CharacterContextToken } from '@shared/types';
-import type { AdminPermission } from '@config/admin-permissions';
+import type { AdminPermission } from '@config/permissions';
 import { AuthUser, CharacterContext, ApiResponse } from '../types/game';
 import { logger } from '../logger';
 import { appConfig } from '@config/runtime';
@@ -282,7 +282,7 @@ export class AuthMiddleware {
       }
 
       try {
-        const { hasAdminPermission } = await import('@config/admin-permissions');
+        const { hasAdminPermission } = await import('@config/permissions');
         const gameplayRoles = req.user.gameplayRoles ?? [];
         const adminPermissions = req.user.adminPermissions ?? [];
         const isGestore = req.user.isGestore ?? false;

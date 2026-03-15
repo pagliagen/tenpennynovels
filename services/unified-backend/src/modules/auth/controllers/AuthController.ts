@@ -11,7 +11,7 @@ import geoip from 'geoip-lite';
 import { ApiResponse } from '../types/auth';
 import { DeviceInfo, LocationInfo } from '../types/auth';
 import { successResponse, errorResponse, createdResponse } from '@shared/utils/apiResponse';
-import { getEffectivePermissions as calculateEffectivePermissions } from '@config/admin-permissions';
+import { getEffectivePermissions as calculateEffectivePermissions } from '@config/permissions';
 import { appConfig } from '@config/runtime';
 
 // Helper function to transform technical validation messages into user-friendly ones
@@ -717,7 +717,7 @@ export class AuthController {
       const character = req.character;
 
       // Import game permissions utility
-      const { getCharacterGamePermissions } = await import('../../game/utils/gamePermissions');
+      const { getCharacterGamePermissions } = await import('@config/permissions');
 
       // If character exists in JWT token, fetch full character data from database
       let characterData = null;

@@ -5,7 +5,7 @@ import { logger, logAuth, logSecurity } from '../logger';
 import { CharacterSessionManager } from '../utils/characterSessionManager';
 import { User } from '@database/models';
 import { appConfig } from '@config/runtime';
-import type { AdminPermission } from '@config/admin-permissions';
+import type { AdminPermission } from '@config/permissions';
 
 // Extend Express Request interface to include user data (RequestUser = token + optional character-derived fields from admin)
 declare global {
@@ -242,7 +242,7 @@ export class AuthMiddleware {
 
         // Check specific permissions if provided (effective = gameplayRoles + adminPermissions + isGestore)
         if (permissions.length > 0) {
-          const { hasAdminPermission } = await import('@config/admin-permissions');
+          const { hasAdminPermission } = await import('@config/permissions');
           const gameplayRoles = req.user.gameplayRoles ?? [];
           const adminPermissions = req.user.adminPermissions ?? [];
           const isGestore = req.user.isGestore ?? false;

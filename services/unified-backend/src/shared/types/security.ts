@@ -126,55 +126,6 @@ export interface CookieConfig {
   };
 }
 
-// Admin permission definitions
-export const ADMIN_PERMISSIONS = {
-  // User Management
-  USER_VIEW: 'user:view',
-  USER_CREATE: 'user:create',
-  USER_EDIT: 'user:edit',
-  USER_DELETE: 'user:delete',
-  USER_BAN: 'user:ban',
-  
-  // Character Management  
-  CHARACTER_VIEW: 'character:view',
-  CHARACTER_APPROVE: 'character:approve',
-  CHARACTER_REJECT: 'character:reject',
-  CHARACTER_EDIT: 'character:edit',
-  CHARACTER_DELETE: 'character:delete',
-  
-  // Content Management
-  CONTENT_CREATE: 'content:create',
-  CONTENT_EDIT: 'content:edit',
-  CONTENT_DELETE: 'content:delete',
-  CONTENT_PUBLISH: 'content:publish',
-  
-  // Location Management
-  LOCATION_CREATE: 'location:create',
-  LOCATION_EDIT: 'location:edit',
-  LOCATION_DELETE: 'location:delete',
-  
-  // Corporation Management
-  CORPORATION_CREATE: 'corporation:create',
-  CORPORATION_EDIT: 'corporation:edit',
-  CORPORATION_DELETE: 'corporation:delete',
-  CORPORATION_FINANCE: 'corporation:finance',
-  
-  // System Administration
-  SYSTEM_CONFIG: 'system:config',
-  SYSTEM_LOGS: 'system:logs',
-  SYSTEM_BACKUP: 'system:backup',
-  
-  // Moderation
-  MODERATION_CHAT: 'moderation:chat',
-  MODERATION_FORUM: 'moderation:forum',
-  MODERATION_REPORTS: 'moderation:reports',
-  
-  // Financial Management
-  FINANCE_VIEW: 'finance:view',
-  FINANCE_EDIT: 'finance:edit',
-  FINANCE_GRANT: 'finance:grant',
-} as const;
-
 // Security audit logging
 export interface SecurityAuditLog {
   id: string;
@@ -263,5 +214,3 @@ export interface FrontendSecurity {
     characterName?: string;
   };
 }
-
-export type AdminPermission = typeof ADMIN_PERMISSIONS[keyof typeof ADMIN_PERMISSIONS];

@@ -42,6 +42,11 @@
     "seed:users": "cd scripts/seeders && npm run seed:users",
     "seed:documents": "cd scripts/seeders && npm run seed:documents"
   },
+  "workspaces": [
+    "apps/*",
+    "services/*",
+    "packages/*"
+  ],
   "engines": {
     "node": ">=18.0.0"
   },

@@ -25,7 +25,7 @@ export function setSocketIO(instance: SocketIOServer): void {
   }
   io = instance;
   logger.info('[CRITICAL] Socket.IO instance registered in singleton');
-  logger.info('[CRITICAL] Socket.IO instance status:', io ? 'AVAILABLE' : 'NULL');
+  logger.info(`[CRITICAL] Socket.IO instance status: ${io ? 'AVAILABLE' : 'NULL'}`);
 }
 
 /**

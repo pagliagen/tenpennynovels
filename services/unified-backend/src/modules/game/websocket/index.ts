@@ -5,7 +5,7 @@ import { setupChatHandlers } from './chatHandlers';
 import { setupGameHandlers } from './gameHandlers';
 import { RedisSubscriber } from '../events/RedisSubscriber';
 import { RequestUser } from '@shared/types';
-import { hasAdminPermission } from '@config/admin-permissions';
+import { hasAdminPermission, AdminPermissions } from '@config/permissions';
 import { appConfig } from '@config/runtime';
 
 interface CharacterContextPayload {
@@ -149,7 +149,7 @@ export async function setupWebSocket(io: SocketIOServer): Promise<void> {
             adminRoles,
             adminChar.adminPermissions || [],
             adminChar.isGestore || false,
-            'characters.approve'
+            AdminPermissions.CHARACTERS_DETAIL_APPROVE
           );
 
           if (isAdminStaff || hasApprovePerm) {

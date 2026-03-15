@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { RequestUser, AuthToken, CharacterContextToken } from '@shared/types';
-import type { AdminPermission } from '@config/admin-permissions';
+import type { AdminPermission } from '@config/permissions';
 import { AdminUser, ApiResponse } from '../types/management';
 import { logger } from '../utils/logger';
 import { errorResponse, getRequestId } from '../utils/apiResponse';
@@ -120,7 +120,7 @@ export class AdminAuthMiddleware {
       }
 
       try {
-        const { hasAdminPermission } = await import('@config/admin-permissions');
+        const { hasAdminPermission } = await import('@config/permissions');
         const gameplayRoles = req.user.gameplayRoles ?? [];
         const adminPermissions = req.user.adminPermissions ?? [];
         const isGestore = req.user.isGestore ?? false;
@@ -187,7 +187,7 @@ export class AdminAuthMiddleware {
       }
 
       try {
-        const { hasAdminPermission } = await import('@config/admin-permissions');
+        const { hasAdminPermission } = await import('@config/permissions');
         const gameplayRoles = req.user.gameplayRoles ?? [];
         const adminPermissions = req.user.adminPermissions ?? [];
         const isGestore = req.user.isGestore ?? false;
@@ -237,7 +237,7 @@ export class AdminAuthMiddleware {
   static async hasPermission(req: Request, permission: string): Promise<boolean> {
     if (!req.user) return false;
     try {
-      const { hasAdminPermission } = await import('@config/admin-permissions');
+      const { hasAdminPermission } = await import('@config/permissions');
       const gameplayRoles = req.user.gameplayRoles ?? [];
       const adminPermissions = req.user.adminPermissions ?? [];
       const isGestore = req.user.isGestore ?? false;

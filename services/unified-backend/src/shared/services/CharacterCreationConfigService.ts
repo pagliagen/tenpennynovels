@@ -2,19 +2,18 @@
  * Character Creation Configuration Service
  *
  * Manages loading, saving, and validation of character creation configuration
- * from /config/character-creation.json file.
+ * from SystemConfiguration database.
  *
  * Features:
  * - Singleton pattern for global access
- * - In-memory caching with TTL (1 minute)
- * - Atomic file writes with automatic backup
+ * - Redis caching via ConfigurationService
+ * - Audit trail for all configuration changes
  * - Validation of configuration structure and constraints
  * - Helper methods for calculations (skill points, social class, damage bonus)
  */
 
-import fs from 'fs/promises';
-import path from 'path';
 import { createLogger } from '../utils/logger';
+import { ConfigurationService } from './ConfigurationService';
 
 const logger = createLogger({ serviceName: 'CharacterCreationConfigService' });
 
@@ -80,14 +79,12 @@ export interface CharacterCreationConfig {
 
 export class CharacterCreationConfigService {
   private static instance: CharacterCreationConfigService;
-  private configPath: string;
-  private cachedConfig: CharacterCreationConfig | null = null;
-  private lastLoadTime: number = 0;
-  private readonly CACHE_TTL = 60000; // 1 minute cache
+  private configService: ConfigurationService;
 
   private constructor() {
-    // Path relative to project root
-    this.configPath = path.join(process.cwd(), 'services/unified-backend/src/config/static/character-creation.json');
+    // Import redis client dynamically to avoid circular dependencies
+    const { redisClient } = require('@config/runtime/redis');
+    this.configService = new ConfigurationService(redisClient, logger);
   }
 
   public static getInstance(): CharacterCreationConfigService {
@@ -98,115 +95,154 @@ export class CharacterCreationConfigService {
   }
 
   /**
-   * Load configuration from JSON file with caching
+   * Load configuration from SystemConfiguration database with Redis caching
    */
   public async loadConfig(): Promise<CharacterCreationConfig> {
-    const now = Date.now();
+    // Fetch all character_creation section configs (Redis-cached by ConfigurationService)
+    const configs = await this.configService.getConfigsBySection('character_creation');
 
-    // Return cached config if still fresh
-    if (this.cachedConfig && (now - this.lastLoadTime) < this.CACHE_TTL) {
-      logger.debug('Returning cached character creation config', {
-        cacheAge: now - this.lastLoadTime,
-        version: this.cachedConfig._meta.version
-      });
-      return this.cachedConfig;
-    }
-
-    try {
-      logger.debug('Loading character creation config from file', {
-        path: this.configPath
-      });
-
-      const fileContent = await fs.readFile(this.configPath, 'utf-8');
-      const config = JSON.parse(fileContent);
-
-      // Validate required fields
-      this.validateConfig(config);
-
-      this.cachedConfig = config;
-      this.lastLoadTime = now;
-
-      logger.info('Character creation config loaded successfully', {
-        version: config._meta.version,
-        lastUpdated: config._meta.lastUpdated,
-        cacheExpiry: this.CACHE_TTL
-      });
-
-      return config;
-    } catch (error: any) {
-      logger.error('Failed to load character creation config', {
-        error: error.message,
-        stack: error.stack,
-        path: this.configPath
-      });
-
-      // Fallback to defaults if file doesn't exist or is corrupted
-      logger.warn('Using default character creation configuration');
-      return this.getDefaultConfig();
-    }
+    // Reconstruct JSON structure from DB records (defaults for safety only)
+    return {
+      _meta: configs['character_creation_meta'] || {
+        version: '1.0.0',
+        description: 'TenPennyNovels - Call of Cthulhu Victorian RPG Character Creation Configuration',
+        lastUpdated: new Date().toISOString(),
+        lastModifiedBy: 'system',
+      },
+      stats: {
+        basePoints: configs['character_creation_stats_base_points'] || 20,
+        totalPoints: configs['character_creation_stats_total_points'] || 400,
+        maxStatsAbove80: configs['character_creation_stats_max_above_80'] || 2,
+        creationCap: configs['character_creation_stats_creation_cap'] || 85,
+        gameplayCap: configs['character_creation_stats_gameplay_cap'] || 99,
+        minValues: configs['character_creation_stats_min_values'] || {
+          strength: 20,
+          dexterity: 20,
+          intelligence: 20,
+          constitution: 20,
+          size: 20,
+          charm: 20,
+          power: 20,
+          education: 20,
+        },
+        description: configs['character_creation_stats_description'] || '',
+      },
+      skills: {
+        totalPointsFormula: configs['character_creation_skills_total_points_formula'] || 'constant:200',
+        intelligenceBonusFormula: configs['character_creation_skills_int_bonus_formula'] || 'INT/2',
+        creationCap: configs['character_creation_skills_creation_cap'] || 75,
+        creationCapWithOccupation: configs['character_creation_skills_creation_cap_with_occupation'] || 80,
+        gameplayCap: configs['character_creation_skills_gameplay_cap'] || 99,
+        physicalSkillsExcludeIntBonus: configs['character_creation_skills_physical_exclude_int_bonus'] ?? true,
+        description: configs['character_creation_skills_description'] || '',
+      },
+      occupation: {
+        requiredSkillMinimum: configs['character_creation_occupation_required_skill_minimum'] || 40,
+        bonusSkillPoints: configs['character_creation_occupation_bonus_skill_points'] || 30,
+        requiredSkillCount: configs['character_creation_occupation_required_skill_count'] || { min: 6, max: 6 },
+        bonusSkillCount: configs['character_creation_occupation_bonus_skill_count'] || { min: 1, max: 1 },
+        description: configs['character_creation_occupation_description'] || '',
+      },
+      limits: {
+        age: configs['character_creation_limits_age'] || { min: 16, max: 80 },
+        weight: configs['character_creation_limits_weight'] || { min: 30, max: 200, unit: 'kg' },
+        height: configs['character_creation_limits_height'] || { min: 100, max: 250, unit: 'cm' },
+        backgroundFields: configs['character_creation_limits_background_fields'] || {
+          briefHistoryMin: 100,
+          personalityMin: 50,
+          goalsMin: 50,
+          maxLength: 4000,
+        },
+      },
+      socialClasses: configs['character_creation_social_classes'] || this.getDefaultSocialClasses(),
+      formulas: {
+        derived: configs['character_creation_formulas_derived'] || {
+          hitPoints: 'FLOOR((CON + SIZ) / 10)',
+          sanityPoints: 'POW',
+          magicPoints: 'FLOOR(POW / 5)',
+          luck: 'POW',
+          ideaRoll: 'INT',
+          knowledge: 'EDU',
+          movementRate: '8',
+        },
+        damageBonus: configs['character_creation_formulas_damage_bonus'] || this.getDefaultDamageBonus(),
+      },
+    };
   }
 
   /**
-   * Save configuration to JSON file (atomic write with backup)
+   * Save configuration to SystemConfiguration database
    */
   public async saveConfig(
     config: CharacterCreationConfig,
     modifiedBy: string
   ): Promise<void> {
-    try {
-      logger.info('Saving character creation config', {
+    // Update metadata
+    config._meta.lastUpdated = new Date().toISOString();
+    config._meta.lastModifiedBy = modifiedBy;
+
+    // Validate before saving
+    this.validateConfig(config);
+
+    // Map all config fields to SystemConfiguration keys
+    const updates = [
+      { key: 'character_creation_meta', value: config._meta },
+      { key: 'character_creation_stats_base_points', value: config.stats.basePoints },
+      { key: 'character_creation_stats_total_points', value: config.stats.totalPoints },
+      { key: 'character_creation_stats_max_above_80', value: config.stats.maxStatsAbove80 },
+      { key: 'character_creation_stats_creation_cap', value: config.stats.creationCap },
+      { key: 'character_creation_stats_gameplay_cap', value: config.stats.gameplayCap },
+      { key: 'character_creation_stats_min_values', value: config.stats.minValues },
+      { key: 'character_creation_stats_description', value: config.stats.description },
+      { key: 'character_creation_skills_total_points_formula', value: config.skills.totalPointsFormula },
+      { key: 'character_creation_skills_int_bonus_formula', value: config.skills.intelligenceBonusFormula },
+      { key: 'character_creation_skills_creation_cap', value: config.skills.creationCap },
+      { key: 'character_creation_skills_creation_cap_with_occupation', value: config.skills.creationCapWithOccupation },
+      { key: 'character_creation_skills_gameplay_cap', value: config.skills.gameplayCap },
+      { key: 'character_creation_skills_physical_exclude_int_bonus', value: config.skills.physicalSkillsExcludeIntBonus },
+      { key: 'character_creation_skills_description', value: config.skills.description },
+      { key: 'character_creation_occupation_required_skill_minimum', value: config.occupation.requiredSkillMinimum },
+      { key: 'character_creation_occupation_bonus_skill_points', value: config.occupation.bonusSkillPoints },
+      { key: 'character_creation_occupation_required_skill_count', value: config.occupation.requiredSkillCount },
+      { key: 'character_creation_occupation_bonus_skill_count', value: config.occupation.bonusSkillCount },
+      { key: 'character_creation_occupation_description', value: config.occupation.description },
+      { key: 'character_creation_limits_age', value: config.limits.age },
+      { key: 'character_creation_limits_weight', value: config.limits.weight },
+      { key: 'character_creation_limits_height', value: config.limits.height },
+      { key: 'character_creation_limits_background_fields', value: config.limits.backgroundFields },
+      { key: 'character_creation_social_classes', value: config.socialClasses },
+      { key: 'character_creation_formulas_derived', value: config.formulas.derived },
+      { key: 'character_creation_formulas_damage_bonus', value: config.formulas.damageBonus },
+    ];
+
+    // Save all config keys to DB (audit trail handled by ConfigurationService)
+    for (const { key, value } of updates) {
+      await this.configService.updateConfig(
+        key,
+        value,
         modifiedBy,
-        version: config._meta.version
-      });
-
-      // Update metadata
-      config._meta.lastUpdated = new Date().toISOString();
-      config._meta.lastModifiedBy = modifiedBy;
-
-      // Validate before saving
-      this.validateConfig(config);
-
-      // Create backup if file exists
-      const backupPath = `${this.configPath}.backup`;
-      try {
-        await fs.access(this.configPath);
-        await fs.copyFile(this.configPath, backupPath);
-        logger.debug('Backup created', { backupPath });
-      } catch (err) {
-        // File doesn't exist yet, no backup needed
-        logger.debug('No existing config to backup');
-      }
-
-      // Atomic write: write to temp file then rename
-      const tempPath = `${this.configPath}.tmp`;
-      await fs.writeFile(tempPath, JSON.stringify(config, null, 2), 'utf-8');
-      await fs.rename(tempPath, this.configPath);
-
-      // Invalidate cache to force reload
-      this.cachedConfig = config;
-      this.lastLoadTime = Date.now();
-
-      logger.info('Character creation config saved successfully', {
-        version: config._meta.version,
-        modifiedBy
-      });
-
-    } catch (error: any) {
-      logger.error('Failed to save character creation config', {
-        error: error.message,
-        stack: error.stack,
-        modifiedBy
-      });
-      throw new Error(`Failed to save configuration: ${error.message}`);
+        'Admin config update via CharacterCreationConfigController'
+      );
     }
+
+    logger.info('Character creation config saved to DB successfully', {
+      version: config._meta.version,
+      modifiedBy,
+      keysUpdated: updates.length,
+    });
   }
 
   /**
-   * Invalidate cache (forces reload on next access)
+   * Invalidate cache (Redis cache managed by ConfigurationService)
+   *
+   * Note: Cache invalidation now handled automatically by ConfigurationService
+   * when configs are updated. This method is kept for backward compatibility.
    */
-  public invalidateCache(): void {
-    this.cachedConfig = null;
-    this.lastLoadTime = 0;
+  public async invalidateCache(): Promise<void> {
+    // ConfigurationService handles cache invalidation automatically via Redis pub/sub
+    // when updateConfig() is called, so explicit invalidation is rarely needed.
+    // Invalidate all system configuration cache:
+    await this.configService.invalidateAllCache();
     logger.debug('Character creation config cache invalidated');
   }
 
@@ -448,7 +484,7 @@ export class CharacterCreationConfigService {
       const errorMsg = `Invalid character creation configuration:\n${errors.join('\n')}`;
       logger.error('Configuration validation failed', {
         errors,
-        configPath: this.configPath
+        source: 'SystemConfiguration database'
       });
       throw new Error(errorMsg);
     }
@@ -458,6 +494,87 @@ export class CharacterCreationConfigService {
       skillsCapCheck: `creation:${config.skills.creationCap} <= withOccupation:${config.skills.creationCapWithOccupation} <= gameplay:${config.skills.gameplayCap}`,
       socialClassesCount: config.socialClasses.length
     });
+  }
+
+  /**
+   * Get default social classes (used as fallback)
+   */
+  private getDefaultSocialClasses() {
+    return [
+      {
+        id: 'destitute',
+        name: 'Indigente',
+        financeSkillRange: { min: 1, max: 9 },
+        weeklyCredit: 2,
+        initialWealth: { minCash: 5, maxCash: 15 }
+      },
+      {
+        id: 'poor',
+        name: 'Povero',
+        financeSkillRange: { min: 10, max: 19 },
+        weeklyCredit: 5,
+        initialWealth: { minCash: 20, maxCash: 40 }
+      },
+      {
+        id: 'modest',
+        name: 'Modesto',
+        financeSkillRange: { min: 20, max: 39 },
+        weeklyCredit: 15,
+        initialWealth: { minCash: 50, maxCash: 100 }
+      },
+      {
+        id: 'lower_middle',
+        name: 'Piccola borghesia',
+        financeSkillRange: { min: 40, max: 49 },
+        weeklyCredit: 30,
+        initialWealth: { minCash: 150, maxCash: 300 }
+      },
+      {
+        id: 'middle_class',
+        name: 'Media borghesia',
+        financeSkillRange: { min: 50, max: 69 },
+        weeklyCredit: 75,
+        initialWealth: { minCash: 400, maxCash: 800 }
+      },
+      {
+        id: 'wealthy',
+        name: 'Ricco',
+        financeSkillRange: { min: 70, max: 79 },
+        weeklyCredit: 150,
+        initialWealth: { minCash: 1000, maxCash: 2000 }
+      },
+      {
+        id: 'affluent',
+        name: 'Facoltoso',
+        financeSkillRange: { min: 80, max: 89 },
+        weeklyCredit: 300,
+        initialWealth: { minCash: 3000, maxCash: 5000 }
+      },
+      {
+        id: 'elite',
+        name: 'Élite',
+        financeSkillRange: { min: 90, max: 99 },
+        weeklyCredit: 500,
+        initialWealth: { minCash: 8000, maxCash: 15000 }
+      }
+    ];
+  }
+
+  /**
+   * Get default damage bonus table (used as fallback)
+   */
+  private getDefaultDamageBonus() {
+    return [
+      { maxTotal: 64, bonus: '-2', build: -2 },
+      { maxTotal: 84, bonus: '-1', build: -1 },
+      { maxTotal: 124, bonus: '0', build: 0 },
+      { maxTotal: 164, bonus: '+1d4', build: 1 },
+      { maxTotal: 204, bonus: '+1d6', build: 2 },
+      { maxTotal: 284, bonus: '+2d6', build: 3 },
+      { maxTotal: 364, bonus: '+3d6', build: 4 },
+      { maxTotal: 444, bonus: '+4d6', build: 5 },
+      { maxTotal: 9999, bonus: '+5d6', build: 6 }
+    ];
   }
 
   /**
@@ -518,64 +635,7 @@ export class CharacterCreationConfigService {
           maxLength: 4000
         }
       },
-      socialClasses: [
-        {
-          id: 'destitute',
-          name: 'Indigente',
-          financeSkillRange: { min: 1, max: 9 },
-          weeklyCredit: 2,
-          initialWealth: { minCash: 5, maxCash: 15 }
-        },
-        {
-          id: 'poor',
-          name: 'Povero',
-          financeSkillRange: { min: 10, max: 19 },
-          weeklyCredit: 5,
-          initialWealth: { minCash: 20, maxCash: 40 }
-        },
-        {
-          id: 'modest',
-          name: 'Modesto',
-          financeSkillRange: { min: 20, max: 39 },
-          weeklyCredit: 15,
-          initialWealth: { minCash: 50, maxCash: 100 }
-        },
-        {
-          id: 'lower_middle',
-          name: 'Piccola borghesia',
-          financeSkillRange: { min: 40, max: 49 },
-          weeklyCredit: 30,
-          initialWealth: { minCash: 150, maxCash: 300 }
-        },
-        {
-          id: 'middle_class',
-          name: 'Media borghesia',
-          financeSkillRange: { min: 50, max: 69 },
-          weeklyCredit: 75,
-          initialWealth: { minCash: 400, maxCash: 800 }
-        },
-        {
-          id: 'wealthy',
-          name: 'Ricco',
-          financeSkillRange: { min: 70, max: 79 },
-          weeklyCredit: 150,
-          initialWealth: { minCash: 1000, maxCash: 2000 }
-        },
-        {
-          id: 'affluent',
-          name: 'Facoltoso',
-          financeSkillRange: { min: 80, max: 89 },
-          weeklyCredit: 300,
-          initialWealth: { minCash: 3000, maxCash: 5000 }
-        },
-        {
-          id: 'elite',
-          name: 'Élite',
-          financeSkillRange: { min: 90, max: 99 },
-          weeklyCredit: 500,
-          initialWealth: { minCash: 8000, maxCash: 15000 }
-        }
-      ],
+      socialClasses: this.getDefaultSocialClasses(),
       formulas: {
         derived: {
           hitPoints: 'FLOOR((constitution + size) / 10)',
@@ -585,17 +645,7 @@ export class CharacterCreationConfigService {
           idea: 'intelligence',
           knowledge: 'education'
         },
-        damageBonus: [
-          { maxTotal: 64, bonus: '-2', build: -2 },
-          { maxTotal: 84, bonus: '-1', build: -1 },
-          { maxTotal: 124, bonus: '0', build: 0 },
-          { maxTotal: 164, bonus: '+1d4', build: 1 },
-          { maxTotal: 204, bonus: '+1d6', build: 2 },
-          { maxTotal: 284, bonus: '+2d6', build: 3 },
-          { maxTotal: 364, bonus: '+3d6', build: 4 },
-          { maxTotal: 444, bonus: '+4d6', build: 5 },
-          { maxTotal: 9999, bonus: '+5d6', build: 6 }
-        ]
+        damageBonus: this.getDefaultDamageBonus()
       }
     };
   }

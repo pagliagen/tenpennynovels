@@ -40,7 +40,7 @@ cp .env.production.example .env.production
 **`.env.local`** (Local/Docker):
 ```bash
 # MongoDB with Docker auth
-MONGO_URI=mongodb://admin:admin123@mongo:27017/tenpennynovels?authSource=admin
+MONGO_URI=mongodb://{username}:{password}@mongo:27017/tenpennynovels?authSource=admin
 ```
 
 **`.env.production`** (Production):

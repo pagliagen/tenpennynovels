@@ -6,7 +6,7 @@ import { logger } from '../logger';
 import { successResponse, errorResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
 import { CharacterVisibilityFilter } from '@shared/utils/characterVisibility';
 import { escapeRegex } from '@shared/utils/validation';
-import { hasGamePermission } from '../utils/gamePermissions';
+import { canReadOthersPrivate } from '@config/permissions';
 import { FinancialUtils } from '../utils/financialUtils';
 import { CharacterCreationConfigService } from '@shared/services/CharacterCreationConfigService';
 import { ConfigurationService } from '@shared/services/ConfigurationService';
@@ -587,14 +587,13 @@ export class CharacterController {
       logger.info('Getting character', { characterId, userId });
 
       // Può vedere dati privati di altri solo con permesso game:character:read:others:private (master)
-      const canReadOthersPrivate = req.character && hasGamePermission(
-        'game:character:read:others:private',
+      const canViewPrivate = req.character && canReadOthersPrivate(
         req.character.playerStatus || 'draft',
         req.character.isGestore || false,
         req.character.gameplayRoles || [],
         req.character.characterPermissions || []
       );
-      const isMaster = !!canReadOthersPrivate;
+      const isMaster = !!canViewPrivate;
 
       logger.info('User roles check', { isMaster, gameplayRoles: req.character?.gameplayRoles });
 
@@ -1047,14 +1046,13 @@ export class CharacterController {
       const userId = req.user!.userId;
       
       // Può vedere dati privati di altri solo con permesso game:character:read:others:private (master)
-      const canReadOthersPrivate = req.character && hasGamePermission(
-        'game:character:read:others:private',
+      const canViewPrivate = req.character && canReadOthersPrivate(
         req.character.playerStatus || 'draft',
         req.character.isGestore || false,
         req.character.gameplayRoles || [],
         req.character.characterPermissions || []
       );
-      const isMaster = !!canReadOthersPrivate;
+      const isMaster = !!canViewPrivate;
 
       const character = await Character.findOne({
         _id: characterId

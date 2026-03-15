@@ -5,7 +5,7 @@
 import { readFileSync } from 'fs';
 import { appConfig } from '@config/runtime';
 import { join } from 'path';
-import { hasAdminPermission, AdminPermission, gameplayRolesToAdminRoles } from '@config/admin-permissions';
+import { hasAdminPermission, AdminPermission, gameplayRolesToAdminRoles } from '@config/permissions';
 import { logger } from './logger';
 
 interface PermissionConfig {

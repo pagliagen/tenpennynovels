@@ -71,7 +71,7 @@ export class OnGameMessageController {
       }
 
       // Validate message type and permissions (without recipients count for now)
-      const validation = postalSystem.validateMessage(messageType, content, characterRoles || []);
+      const validation = await postalSystem.validateMessage(messageType, content, characterRoles || []);
       if (!validation.valid) {
         res.status(400).json(errorResponse(
           'Validation failed',
@@ -86,8 +86,8 @@ export class OnGameMessageController {
       }
 
       // Calculate postage and delivery time
-      const postageRequired = postalSystem.calculatePostage(messageType, isExpress || false);
-      const deliveryTime = postalSystem.calculateDeliveryTime(messageType, isExpress || false);
+      const postageRequired = await postalSystem.calculatePostage(messageType, isExpress || false);
+      const deliveryTime = await postalSystem.calculateDeliveryTime(messageType, isExpress || false);
 
       // Check sender's finances for postage
       if (postageRequired > 0) {
@@ -142,7 +142,7 @@ export class OnGameMessageController {
       }
 
       // Validate recipient count after we have recipientIds
-      const recipientValidation = postalSystem.validateMessage(messageType, content, characterRoles || [], to);
+      const recipientValidation = await postalSystem.validateMessage(messageType, content, characterRoles || [], to);
       if (!recipientValidation.valid) {
         res.status(400).json(errorResponse(
           'Validation failed',
@@ -156,6 +156,10 @@ export class OnGameMessageController {
         return;
       }
 
+      // Get message type configuration
+      const messageTypeConfig = await postalSystem.getMessageType(messageType);
+      const requiresKnowledge = await postalSystem.requiresResidenceKnowledge(messageType);
+
       // Create main message record
       const message = new OnGameMessage({
         messageType,
@@ -167,12 +171,12 @@ export class OnGameMessageController {
         scheduledDelivery: deliveryTime,
         deliveryTarget: {
           type: deliveryTarget?.type || 'character',
-          requiresKnownResidence: postalSystem.requiresResidenceKnowledge(messageType)
+          requiresKnownResidence: requiresKnowledge
         },
         sentFromLocation: new mongoose.Types.ObjectId('673f8b2d4a5e6c7d8e9f0123'), // TODO: Get from character current location
         postageCharged: postageRequired,
         isExpress: isExpress || false,
-        sealed: postalSystem.getMessageType(messageType)?.requiresSealing || false
+        sealed: messageTypeConfig?.requiresSealing || false
       });
 
       await message.save();
@@ -221,7 +225,7 @@ export class OnGameMessageController {
               content: content.trim(),
               sentAt: new Date(),
               deliveredAt: new Date(),
-              icon: postalSystem.getMessageType(messageType)?.icon || '📬',
+              icon: messageTypeConfig?.icon || '📬',
               postageCharged: postageRequired
             };
 
@@ -240,7 +244,7 @@ export class OnGameMessageController {
             content: content.trim(),
             sentAt: new Date(),
             deliveredAt: new Date(),
-            icon: postalSystem.getMessageType(messageType)?.icon || '📬',
+            icon: messageTypeConfig?.icon || '📬',
             postageCharged: postageRequired
           };
           
@@ -335,21 +339,24 @@ export class OnGameMessageController {
         isRead: false
       });
 
-      const messages = messageViews.map(view => ({
-        viewId: view._id,
-        messageId: view.messageId._id,
-        messageType: view.messageId.messageType,
-        from: view.messageId.from,
-        subject: view.messageId.subject,
-        content: view.messageId.sealed && !view.isRead ? '[Sealed Message]' : view.messageId.content,
-        sentAt: view.messageId.sentAt,
-        deliveredAt: view.deliveredAt,
-        isRead: view.isRead,
-        readAt: view.readAt,
-        isStarred: view.isStarred,
-        customFolder: view.customFolder,
-        deliveryStatus: view.deliveryStatus,
-        icon: postalSystem.getMessageType(view.messageId.messageType)?.icon || '📬'
+      const messages = await Promise.all(messageViews.map(async (view) => {
+        const msgTypeConfig = await postalSystem.getMessageType(view.messageId.messageType);
+        return {
+          viewId: view._id,
+          messageId: view.messageId._id,
+          messageType: view.messageId.messageType,
+          from: view.messageId.from,
+          subject: view.messageId.subject,
+          content: view.messageId.sealed && !view.isRead ? '[Sealed Message]' : view.messageId.content,
+          sentAt: view.messageId.sentAt,
+          deliveredAt: view.deliveredAt,
+          isRead: view.isRead,
+          readAt: view.readAt,
+          isStarred: view.isStarred,
+          customFolder: view.customFolder,
+          deliveryStatus: view.deliveryStatus,
+          icon: msgTypeConfig?.icon || '📬'
+        };
       }));
 
       res.json(successResponse(
@@ -413,22 +420,25 @@ export class OnGameMessageController {
         isDeleted: false
       });
 
-      const messages = messageViews.map(view => ({
-        viewId: view._id,
-        messageId: view.messageId._id,
-        messageType: view.messageId.messageType,
-        to: view.messageId.to,
-        subject: view.messageId.subject,
-        content: view.messageId.content,
-        sentAt: view.messageId.sentAt,
-        scheduledDelivery: view.messageId.scheduledDelivery,
-        deliveredAt: view.deliveredAt,
-        isStarred: view.isStarred,
-        deliveryStatus: view.deliveryStatus,
-        deliveryAttempts: view.deliveryAttempts,
-        deliveryError: view.deliveryError,
-        postageCharged: view.messageId.postageCharged,
-        icon: postalSystem.getMessageType(view.messageId.messageType)?.icon || '📬'
+      const messages = await Promise.all(messageViews.map(async (view) => {
+        const msgTypeConfig = await postalSystem.getMessageType(view.messageId.messageType);
+        return {
+          viewId: view._id,
+          messageId: view.messageId._id,
+          messageType: view.messageId.messageType,
+          to: view.messageId.to,
+          subject: view.messageId.subject,
+          content: view.messageId.content,
+          sentAt: view.messageId.sentAt,
+          scheduledDelivery: view.messageId.scheduledDelivery,
+          deliveredAt: view.deliveredAt,
+          isStarred: view.isStarred,
+          deliveryStatus: view.deliveryStatus,
+          deliveryAttempts: view.deliveryAttempts,
+          deliveryError: view.deliveryError,
+          postageCharged: view.messageId.postageCharged,
+          icon: msgTypeConfig?.icon || '📬'
+        };
       }));
 
       res.json(listResponse(
@@ -671,24 +681,27 @@ export class OnGameMessageController {
         thread.unreadCount = unreadCount;
       }
 
+      const formattedThreads = await Promise.all(threads.map(async (thread) => {
+        const msgTypeConfig = await postalSystem.getMessageType(thread.lastMessage.messageType);
+        return {
+          partnerId: thread.partnerId,
+          partnerName: thread.partnerName,
+          partnerAvatar: thread.partnerAvatar,
+          lastMessage: {
+            id: thread.lastMessage._id,
+            messageType: thread.lastMessage.messageType,
+            subject: thread.lastMessage.subject,
+            content: thread.lastMessage.content,
+            sentAt: thread.lastMessage.sentAt,
+            isSentByMe: thread.lastMessage.from._id.toString() === characterId,
+            icon: msgTypeConfig?.icon || '📬'
+          },
+          unreadCount: thread.unreadCount
+        };
+      }));
+
       res.json(successResponse(
-        {
-          threads: threads.map(thread => ({
-            partnerId: thread.partnerId,
-            partnerName: thread.partnerName,
-            partnerAvatar: thread.partnerAvatar,
-            lastMessage: {
-              id: thread.lastMessage._id,
-              messageType: thread.lastMessage.messageType,
-              subject: thread.lastMessage.subject,
-              content: thread.lastMessage.content,
-              sentAt: thread.lastMessage.sentAt,
-              isSentByMe: thread.lastMessage.from._id.toString() === characterId,
-              icon: postalSystem.getMessageType(thread.lastMessage.messageType)?.icon || '📬'
-            },
-            unreadCount: thread.unreadCount
-          }))
-        },
+        { threads: formattedThreads },
         undefined,
         getRequestId(req)
       ));
@@ -759,6 +772,21 @@ export class OnGameMessageController {
         readAt: new Date()
       });
 
+      const formattedMessages = await Promise.all(messages.map(async (message) => {
+        const msgTypeConfig = await postalSystem.getMessageType(message.messageType);
+        return {
+          id: message._id,
+          messageType: message.messageType,
+          subject: message.subject,
+          content: message.content,
+          sentAt: message.sentAt,
+          deliveredAt: message.deliveredAt,
+          isSentByMe: message.from._id.toString() === characterId,
+          icon: msgTypeConfig?.icon || '📬',
+          postageCharged: message.postageCharged || 0
+        };
+      }));
+
       res.json(successResponse(
         {
           partner: {
@@ -766,17 +794,7 @@ export class OnGameMessageController {
             name: partner.name,
             avatar: partner.avatar
           },
-          messages: messages.map(message => ({
-            id: message._id,
-            messageType: message.messageType,
-            subject: message.subject,
-            content: message.content,
-            sentAt: message.sentAt,
-            deliveredAt: message.deliveredAt,
-            isSentByMe: message.from._id.toString() === characterId,
-            icon: postalSystem.getMessageType(message.messageType)?.icon || '📬',
-            postageCharged: message.postageCharged || 0
-          }))
+          messages: formattedMessages
         },
         undefined,
         getRequestId(req)
@@ -803,7 +821,7 @@ export class OnGameMessageController {
   static async getMessageTypes(req: Request, res: Response): Promise<void> {
     try {
       const characterRoles = req.character!.gameplayRoles;
-      const availableTypes = postalSystem.getAvailableMessageTypes(characterRoles || []);
+      const availableTypes = await postalSystem.getAvailableMessageTypes(characterRoles || []);
 
       res.json(successResponse(
         availableTypes,

@@ -307,7 +307,7 @@ export class DocumentController {
         }
       });
 
-      res.json({ result: true, routes: grouped });
+      res.json({ result: true, data: { routes: grouped } });
     } catch (error: unknown) {
       logger.error('Error in listRoutesHierarchical:', error);
       res.status(500).json({ result: false, error: 'Errore recupero documenti gerarchici', code: 'LIST_HIERARCHICAL_ERROR' });

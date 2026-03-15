@@ -1,6 +1,5 @@
-import fs from 'fs';
-import path from 'path';
 import { logger } from '../logger';
+import { ConfigurationService } from '@shared/services/ConfigurationService';
 
 interface MessageTypeConfig {
   displayName: string;
@@ -47,50 +46,102 @@ interface PostalSystemConfig {
 }
 
 class PostalSystem {
-  private config!: PostalSystemConfig;
-  private configPath: string;
+  private config: PostalSystemConfig | null = null;
+  private configService: ConfigurationService;
+  private configLoaded: boolean = false;
+  private loadingPromise: Promise<void> | null = null;
 
   constructor() {
-    // Path to config - works with build script that copies assets to dist/config
-    this.configPath = path.join(__dirname, '../../../config/static/postal-system.json');
-    this.loadConfig();
+    // Import redis client dynamically to avoid circular dependencies
+    const { redisClient } = require('@config/runtime/redis');
+    this.configService = new ConfigurationService(redisClient, logger);
+    // Do NOT call loadConfig() here - it will be called lazily on first use
   }
 
-  private loadConfig(): void {
+  /**
+   * Ensure config is loaded (lazy loading with singleton pattern)
+   */
+  private async ensureConfigLoaded(): Promise<void> {
+    if (this.configLoaded && this.config) return;
+
+    // If already loading, wait for that promise
+    if (this.loadingPromise) {
+      return this.loadingPromise;
+    }
+
+    // Start loading
+    this.loadingPromise = this.loadConfig();
+    await this.loadingPromise;
+    this.loadingPromise = null;
+  }
+
+  private async loadConfig(): Promise<void> {
     try {
-      const configData = fs.readFileSync(this.configPath, 'utf-8');
-      this.config = JSON.parse(configData);
-      logger.info('Postal system configuration loaded successfully');
+      // Fetch all postal_system configs from SystemConfiguration DB (Redis-cached)
+      const configs = await this.configService.getConfigsBySection('postal_system');
+
+      // Reconstruct messageTypes object
+      const messageTypes: Record<string, MessageTypeConfig> = {
+        note: configs['postal_message_type_note'],
+        telegram: configs['postal_message_type_telegram'],
+        letter: configs['postal_message_type_letter'],
+        express_letter: configs['postal_message_type_express_letter'],
+        postcard: configs['postal_message_type_postcard'],
+        invitation: configs['postal_message_type_invitation'],
+        official_document: configs['postal_message_type_official_document'],
+        diary: configs['postal_message_type_diary'],
+      };
+
+      // Reconstruct settings object
+      const settings = {
+        defaultTimezone: configs['postal_settings_default_timezone'] || 'Europe/Rome',
+        maxMessagesPerDay: configs['postal_settings_max_messages_per_day'] || 50,
+        maxActiveMessagesInTransit: configs['postal_settings_max_active_in_transit'] || 20,
+        cronJobIntervals: configs['postal_settings_cron_intervals'] || {},
+        expressSurcharge: configs['postal_settings_express_surcharge'] || { enabled: false, multiplierRange: [1, 1] },
+        residenceSystem: configs['postal_settings_residence_system'] || {
+          requiresDiscovery: true,
+          allowsPublicDirectory: false,
+          unknownAddressFee: 1,
+        },
+      };
+
+      this.config = { messageTypes, settings };
+      this.configLoaded = true;
+      logger.info('Postal system configuration loaded from DB successfully');
     } catch (error: any) {
-      logger.error('Failed to load postal system configuration:', error);
-      throw new Error('Could not load postal system configuration');
+      logger.error('Failed to load postal system configuration', { error: error.message });
+      throw error;
     }
   }
 
-  public getMessageType(messageType: string): MessageTypeConfig | null {
-    return this.config.messageTypes[messageType] || null;
+  public async getMessageType(messageType: string): Promise<MessageTypeConfig | null> {
+    await this.ensureConfigLoaded();
+    return this.config!.messageTypes[messageType] || null;
   }
 
-  public getAllMessageTypes(): Record<string, MessageTypeConfig> {
-    return this.config.messageTypes;
+  public async getAllMessageTypes(): Promise<Record<string, MessageTypeConfig>> {
+    await this.ensureConfigLoaded();
+    return this.config!.messageTypes;
   }
 
-  public getAvailableMessageTypes(characterRoles: string[]): Record<string, MessageTypeConfig> {
+  public async getAvailableMessageTypes(characterRoles: string[]): Promise<Record<string, MessageTypeConfig>> {
+    await this.ensureConfigLoaded();
     const available: Record<string, MessageTypeConfig> = {};
-    
-    for (const [key, config] of Object.entries(this.config.messageTypes)) {
+
+    for (const [key, config] of Object.entries(this.config!.messageTypes)) {
       // Check if character has required roles
       const hasRequiredRole = config.availableToRoles.some(role => characterRoles.includes(role));
       if (hasRequiredRole) {
         available[key] = config;
       }
     }
-    
+
     return available;
   }
 
-  public calculateDeliveryTime(messageType: string, isExpress: boolean = false): Date | null {
-    const config = this.getMessageType(messageType);
+  public async calculateDeliveryTime(messageType: string, isExpress: boolean = false): Promise<Date | null> {
+    const config = await this.getMessageType(messageType);
     if (!config || !config.deliveryTiming) return null;
 
     const now = new Date();
@@ -168,8 +219,8 @@ class PostalSystem {
     return deliveryDate;
   }
 
-  public calculatePostage(messageType: string, isExpress: boolean = false): number {
-    const config = this.getMessageType(messageType);
+  public async calculatePostage(messageType: string, isExpress: boolean = false): Promise<number> {
+    const config = await this.getMessageType(messageType);
     if (!config) return 0;
 
     let cost = config.postageRequired;
@@ -181,11 +232,11 @@ class PostalSystem {
     return cost;
   }
 
-  public validateMessage(messageType: string, content: string, characterRoles: string[], recipients?: string[]): {
+  public async validateMessage(messageType: string, content: string, characterRoles: string[], recipients?: string[]): Promise<{
     valid: boolean;
     error?: string;
-  } {
-    const config = this.getMessageType(messageType);
+  }> {
+    const config = await this.getMessageType(messageType);
     
     if (!config) {
       return { valid: false, error: 'Tipo di messaggio non valido' };
@@ -216,32 +267,35 @@ class PostalSystem {
     return { valid: true };
   }
 
-  public canSendToResidence(messageType: string): boolean {
-    const config = this.getMessageType(messageType);
+  public async canSendToResidence(messageType: string): Promise<boolean> {
+    const config = await this.getMessageType(messageType);
     if (!config) return false;
-    
+
     return config.deliveryMethod === 'to_residence' || config.deliveryMethod === 'both_options';
   }
 
-  public canSendToPerson(messageType: string): boolean {
-    const config = this.getMessageType(messageType);
+  public async canSendToPerson(messageType: string): Promise<boolean> {
+    const config = await this.getMessageType(messageType);
     if (!config) return false;
-    
+
     return config.deliveryMethod === 'to_person' || config.deliveryMethod === 'both_options';
   }
 
-  public requiresResidenceKnowledge(messageType: string): boolean {
-    const config = this.getMessageType(messageType);
+  public async requiresResidenceKnowledge(messageType: string): Promise<boolean> {
+    const config = await this.getMessageType(messageType);
     return config?.requiresResidenceKnowledge || false;
   }
 
-  public getSettings() {
-    return this.config.settings;
+  public async getSettings() {
+    await this.ensureConfigLoaded();
+    return this.config!.settings;
   }
 
   // Reload configuration (useful for runtime updates)
-  public reloadConfig(): void {
-    this.loadConfig();
+  public async reloadConfig(): Promise<void> {
+    this.configLoaded = false;
+    this.config = null;
+    await this.loadConfig();
   }
 }
 

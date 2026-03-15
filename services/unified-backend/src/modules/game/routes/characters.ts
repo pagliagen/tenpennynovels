@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { AuthMiddleware } from '../middleware/auth';
 import { CharacterValidationMiddleware } from '../middleware/characterValidation';
 import { requireGamePermission } from '../middleware/gamePermissions';
+import { GamePermissions } from '@config/permissions';
 import { CharacterController } from '../controllers/CharacterController';
 import { CharacterGameplayController } from '../controllers/CharacterGameplayController';
 import { CharacterSocialController } from '../controllers/CharacterSocialController';
@@ -33,7 +34,7 @@ router.get('/characters/my',
 
 router.get('/characters/public-list',
   AuthMiddleware.requireUserAuth,
-  requireGamePermission('game:character:list:public'),
+  requireGamePermission(GamePermissions.CHARACTER_READ_OTHERS_PUBLIC),
   CharacterController.getPublicCharactersList
 );
 
@@ -52,7 +53,7 @@ router.get('/characters/face-claims/search',
 
 router.get('/characters/:characterId/wizard',
   AuthMiddleware.requireCharacterAuth,
-  requireGamePermission('game:character:wizard'),
+  requireGamePermission(GamePermissions.CHARACTER_READ_OWN),
   CharacterController.getCharacterForWizard
 );
 

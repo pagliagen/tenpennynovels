@@ -302,7 +302,7 @@ export class ChatController {
 
       // Emit WebSocket notification with full message (frontend expects complete ChatMessage)
       const io = getSocketIO();
-      logger.debug('ChatsController: io instance:', io ? 'FOUND' : 'NOT FOUND');
+      logger.debug(`ChatsController: io instance: ${io ? 'FOUND' : 'NOT FOUND'}`);
 
       if (io) {
         const roomName = `location_${locationId}`;
@@ -333,12 +333,12 @@ export class ChatController {
           locationSlug: location?.slug || null
         };
 
-        logger.debug('ChatsController: Emitting notification to room:', roomName, 'with message:', chatMessage._id);
+        logger.debug(`ChatsController: Emitting notification to room ${roomName} with message ${chatMessage._id}`);
         io.to(roomName).emit('location_message_notification', notification);
 
         // Debug: Check how many clients are in the room
         const room = io.sockets.adapter.rooms.get(roomName);
-        logger.debug('ChatsController: Clients in room', roomName, ':', room ? room.size : 0);
+        logger.debug(`ChatsController: Clients in room ${roomName}: ${room ? room.size : 0}`);
       } else {
         logger.error('ChatsController: Socket.io instance not found in req.app');
       }

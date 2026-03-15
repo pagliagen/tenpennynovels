@@ -213,7 +213,8 @@ services:
       # Volume mounting per hot-reload con tsx watch
       - ./services/unified-backend/src:/app/src:ro
       - ./services/unified-backend/logs:/app/logs
-      - ./services/unified-backend/node_modules:/app/node_modules:ro
+      # NOTE: node_modules NOT mounted - container uses its own installed deps
+      # (host uses workspace hoisting, incompatible with container isolation)
       - ./cdn-storage:/cdn-storage
       - ./apps/landing/public:/sitemap-output
     networks:
@@ -267,7 +268,8 @@ services:
       - "8000:8000"
     volumes:
       - ./services/api-gateway/src:/app/src:ro
-      - ./services/api-gateway/node_modules:/app/node_modules:ro
+      # NOTE: node_modules NOT mounted - container uses its own installed deps
+      # (host uses workspace hoisting, incompatible with container isolation)
       - ./cdn-storage:/cdn-storage:ro
     networks:
       - tenpennynovels-network
