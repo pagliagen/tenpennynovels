@@ -7,7 +7,7 @@ import { ForumPost } from '@database/models/ForumPost';
 import { AdminAuthMiddleware } from '../middleware/adminAuth';
 import { logger } from '../utils/logger';
 import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
-import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId , deleteResponse} from '../utils/apiResponse';
 
 import { escapeRegex } from '@shared/utils/validation';
 
@@ -52,12 +52,12 @@ export class ForumTopicManagementController {
       ]);
 
       const pagination = {
-        page,
+        currentPage: page,
         totalPages: Math.ceil(total / limit),
         totalItems: total,
         pageSize: limit,
         hasNextPage: page < Math.ceil(total / limit),
-        hasPrevPage: page > 1,
+        hasPreviousPage: page > 1,
       };
 
       res.json(listResponse(
@@ -90,7 +90,7 @@ export class ForumTopicManagementController {
       logger.info('Admin viewed forum topics list', {
         ...auditInfo,
         filters: { search, isVisible, isLocked },
-        page,
+        currentPage: page,
         pageSize: limit,
         totalResults: total,
       });

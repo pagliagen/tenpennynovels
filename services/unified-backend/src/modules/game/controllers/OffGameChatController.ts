@@ -313,12 +313,12 @@ export class OffGameChatController {
       res.json(listResponse(
         chatData,
         {
-          page,
+          currentPage: page,
           pageSize: limit,
-          total: chatData.length,
+          totalItems: chatData.length,
           totalPages: Math.ceil(chatData.length / limit),
-          hasNext: chatData.length === limit,
-          hasPrev: page > 1
+          hasNextPage: chatData.length === limit,
+          hasPreviousPage: page > 1
         },
         undefined,
         getRequestId(req)
@@ -413,7 +413,7 @@ export class OffGameChatController {
           chatId,
           messages: messages.reverse(), // Reverse to show oldest first
           pagination: {
-            page,
+          currentPage: page,
             limit,
             hasMore: messages.length === limit
           }

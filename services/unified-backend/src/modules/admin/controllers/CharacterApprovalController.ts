@@ -115,18 +115,18 @@ export class CharacterApprovalController {
       const totalPages = Math.ceil(totalItems / pageSize);
 
       const paginationInfo: PaginationInfo = {
-        page,
+        currentPage: page,
         totalPages,
         totalItems,
         pageSize,
         hasNextPage: page < totalPages,
-        hasPrevPage: page > 1
+        hasPreviousPage: page > 1
       };
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       logger.info('Admin viewed all characters', {
         ...auditInfo,
-        page,
+        currentPage: page,
         pageSize,
         statusFilter: statusFilter || 'all',
         totalResults: transformedCharacters.length,
@@ -207,19 +207,19 @@ export class CharacterApprovalController {
       ];
 
       const mockPagination: PaginationInfo = {
-        page,
+        currentPage: page,
         totalPages: 1,
         totalItems: mockCharacters.length,
         pageSize: limit,
         hasNextPage: false,
-        hasPrevPage: false
+        hasPreviousPage: false
       };
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       logger.info('Admin viewed pending characters', {
         ...auditInfo,
         filters: { priority, sortBy, sortOrder },
-        page,
+        currentPage: page,
         limit
       });
 

@@ -10,7 +10,7 @@ import {
   getAllCategoriesItalian
 } from '@shared/translations/skillCategories';
 import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
-import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId , deleteResponse} from '../utils/apiResponse';
 
 import { escapeRegex } from '@shared/utils/validation';
 import { AdminAuthMiddleware } from '../middleware/adminAuth';
@@ -105,7 +105,7 @@ export class SkillManagementController {
         {
           skills: translatedSkills,
           pagination: {
-            page: Number(page),
+            currentPage: Number(page),
             totalPages,
             totalSkills,
             pageSize: Number(limit),

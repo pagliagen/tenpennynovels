@@ -218,12 +218,12 @@ export class SessionManagementController {
       res.json(listResponse(
         sessionsWithMgmt,
         {
-          page: Math.floor(parseInt(skip as string) / parseInt(limit as string)) + 1,
+          currentPage: Math.floor(parseInt(skip as string) / parseInt(limit as string)) + 1,
           pageSize: parseInt(limit as string),
-          total: totalCount,
+        totalItems: totalCount,
           totalPages: Math.ceil(totalCount / parseInt(limit as string)),
-          hasNext: totalCount > parseInt(skip as string) + parseInt(limit as string),
-          hasPrev: parseInt(skip as string) > 0
+          hasNextPage: totalCount > parseInt(skip as string) + parseInt(limit as string),
+          hasPreviousPage: parseInt(skip as string) > 0
         },
         undefined,
         getRequestId(req)

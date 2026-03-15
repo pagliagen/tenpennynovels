@@ -21,7 +21,7 @@ export class DeletedRecordsController {
 
       const result = await service.getDeletedRecords({
         type: type as string | undefined,
-        page: page ? Number(page) : undefined,
+        currentPage: page ? Number(page) : undefined,
         pageSize: pageSize ? Number(pageSize) : undefined,
         sortBy: sortBy as string | undefined,
         sortOrder: sortOrder as 'asc' | 'desc' | undefined

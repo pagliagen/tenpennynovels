@@ -5,7 +5,7 @@ import { AdminAuthMiddleware } from '../middleware/adminAuth';
 import { logger } from '../utils/logger';
 import { Item, ItemCategory, ITEM_CATEGORY_LABELS, IItem, CharacterInventory, Shop, ShopItem } from '@database/models/Item';
 import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
-import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId , deleteResponse} from '../utils/apiResponse';
 
 import { escapeRegex } from '@shared/utils/validation';
 
@@ -50,12 +50,12 @@ export class ItemManagementController {
         .lean();
 
       const pagination = {
-        page,
+        currentPage: page,
         totalPages: Math.ceil(totalItems / limit),
         totalItems,
         pageSize: limit,
         hasNextPage: page < Math.ceil(totalItems / limit),
-        hasPrevPage: page > 1
+        hasPreviousPage: page > 1
       };
 
       res.json(listResponse(
@@ -103,7 +103,7 @@ export class ItemManagementController {
       logger.info('Admin viewed items list', {
         ...auditInfo,
         filters: { category, isPublic, isAdminOnly, search },
-        page,
+        currentPage: page,
         pageSize: limit,
         totalResults: totalItems
       });

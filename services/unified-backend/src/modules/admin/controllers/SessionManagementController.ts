@@ -234,12 +234,12 @@ export class SessionManagementController {
 
       const page = Math.floor(parseInt(skip as string) / parseInt(limit as string)) + 1;
       const pagination = {
-        page,
+        currentPage: page,
         totalPages: Math.ceil(totalCount / parseInt(limit as string)),
         totalItems: totalCount,
         pageSize: parseInt(limit as string),
         hasNextPage: totalCount > parseInt(skip as string) + parseInt(limit as string),
-        hasPrevPage: page > 1
+        hasPreviousPage: page > 1
       };
 
       res.json(listResponse(
@@ -393,12 +393,12 @@ export class SessionManagementController {
 
       const page = Math.floor(parseInt(skip as string) / parseInt(limit as string)) + 1;
       const pagination = {
-        page,
+        currentPage: page,
         totalPages: Math.ceil(totalCount / parseInt(limit as string)),
         totalItems: totalCount,
         pageSize: parseInt(limit as string),
         hasNextPage: totalCount > parseInt(skip as string) + parseInt(limit as string),
-        hasPrevPage: page > 1
+        hasPreviousPage: page > 1
       };
 
       res.json(listResponse(

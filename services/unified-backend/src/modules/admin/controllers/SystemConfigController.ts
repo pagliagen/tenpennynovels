@@ -355,19 +355,19 @@ export class SystemConfigController {
       }));
 
       const pagination: PaginationInfo = {
-        page,
+        currentPage: page,
         totalPages: result.totalPages,
         totalItems: result.totalCount,
         pageSize: limit,
         hasNextPage: page < result.totalPages,
-        hasPrevPage: page > 1
+        hasPreviousPage: page > 1
       };
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       logger.info('Admin viewed audit logs', {
         ...auditInfo,
         filters: { category, adminUserId, severity, success, action, dateFrom, dateTo },
-        page,
+        currentPage: page,
         limit,
         resultsCount: mappedLogs.length
       });

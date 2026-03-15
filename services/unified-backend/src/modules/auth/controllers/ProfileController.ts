@@ -7,7 +7,7 @@ import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 import { AuthMiddleware } from '../middleware/auth';
 import { EmailService } from '../services/EmailService';
-import { successResponse, errorResponse, updatedResponse, deletedResponse } from '@shared/utils/apiResponse';
+import { successResponse, errorResponse, updatedResponse, deletedResponse } from '../utils/apiResponse';
 
 export class ProfileController {
   /**

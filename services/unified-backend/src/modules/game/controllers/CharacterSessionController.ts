@@ -171,7 +171,7 @@ export class CharacterSessionController {
       logger.info('Character session history retrieved', {
         characterId,
         totalSessions: total,
-        page: Number(page)
+        currentPage: Number(page)
       });
 
       res.json(successResponse(
@@ -183,7 +183,7 @@ export class CharacterSessionController {
           sessions: formattedSessions,
           pagination: {
             total,
-            page: Number(page),
+            currentPage: Number(page),
             limit: Number(limit),
             pages: Math.ceil(total / Number(limit))
           },

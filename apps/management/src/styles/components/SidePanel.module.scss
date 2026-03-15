@@ -93,6 +93,7 @@
 .body {
   flex: 1;
   overflow-y: auto;
+  scrollbar-gutter: auto;
   padding: $spacing-lg;
 }
 

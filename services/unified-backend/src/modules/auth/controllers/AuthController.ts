@@ -10,7 +10,7 @@ import { UAParser } from 'ua-parser-js';
 import geoip from 'geoip-lite';
 import { ApiResponse } from '../types/auth';
 import { DeviceInfo, LocationInfo } from '../types/auth';
-import { successResponse, errorResponse, createdResponse } from '@shared/utils/apiResponse';
+import { successResponse, errorResponse, createdResponse } from '../utils/apiResponse';
 import { getEffectivePermissions as calculateEffectivePermissions } from '@config/permissions';
 import { appConfig } from '@config/runtime';
 

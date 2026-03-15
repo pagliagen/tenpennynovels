@@ -156,7 +156,9 @@ export default function LoginPage() {
 
       if (result.result && result.data) {
         // Redirect based on user configuration
-        if (result.data.multipleCharactersAllowed) {
+        // Backend returns { data: { user: { multipleCharactersAllowed }, session: {...} } }
+        const userData = result.data as any;
+        if (userData.user?.multipleCharactersAllowed) {
           router.push('/character-select');
         } else {
           window.location.href = process.env.NEXT_PUBLIC_GAME_URL || 'http://localhost:3010';

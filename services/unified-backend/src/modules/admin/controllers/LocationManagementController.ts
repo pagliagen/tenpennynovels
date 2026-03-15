@@ -10,7 +10,7 @@ import { AdminAuthMiddleware } from '../middleware/adminAuth';
 import { logger } from '../utils/logger';
 import { Location } from '@database/models/Location';
 import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
-import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId , deleteResponse} from '../utils/apiResponse';
 
 import { escapeRegex } from '@shared/utils/validation';
 
@@ -141,19 +141,19 @@ export class LocationManagementController {
       });
 
       const pagination: PaginationInfo = {
-        page,
+        currentPage: page,
         totalPages,
         totalItems,
         pageSize,
         hasNextPage: page < totalPages,
-        hasPrevPage: page > 1
+        hasPreviousPage: page > 1
       };
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       logger.info('Admin viewed locations list', {
         ...auditInfo,
         filters: { district, showHidden, sortBy, sortOrder, search, locationLevel },
-        page,
+        currentPage: page,
         pageSize,
         totalItems
       });

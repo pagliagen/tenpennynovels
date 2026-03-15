@@ -201,19 +201,19 @@ export class TicketManagementController {
 
       const totalPages = Math.ceil(totalTickets / pageSize);
       const pagination: PaginationInfo = {
-        page,
+        currentPage: page,
         totalPages,
         totalItems: totalTickets,
         pageSize,
         hasNextPage: page < totalPages,
-        hasPrevPage: page > 1
+        hasPreviousPage: page > 1
       };
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       logger.info('Admin viewed all tickets', {
         ...auditInfo,
         filters,
-        page,
+        currentPage: page,
         pageSize,
         totalTickets
       });
@@ -332,12 +332,12 @@ export class TicketManagementController {
 
       const totalPages = Math.ceil(totalTickets / pageSize);
       const pagination: PaginationInfo = {
-        page,
+        currentPage: page,
         totalPages,
         totalItems: totalTickets,
         pageSize,
         hasNextPage: page < totalPages,
-        hasPrevPage: page > 1
+        hasPreviousPage: page > 1
       };
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
@@ -473,12 +473,12 @@ export class TicketManagementController {
 
       const totalPages = Math.ceil(totalTickets / pageSize);
       const pagination: PaginationInfo = {
-        page,
+        currentPage: page,
         totalPages,
         totalItems: totalTickets,
         pageSize,
         hasNextPage: page < totalPages,
-        hasPrevPage: page > 1
+        hasPreviousPage: page > 1
       };
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
@@ -622,12 +622,12 @@ export class TicketManagementController {
 
       const totalPages = Math.ceil(totalTickets / pageSize);
       const pagination: PaginationInfo = {
-        page,
+        currentPage: page,
         totalPages,
         totalItems: totalTickets,
         pageSize,
         hasNextPage: page < totalPages,
-        hasPrevPage: page > 1
+        hasPreviousPage: page > 1
       };
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);

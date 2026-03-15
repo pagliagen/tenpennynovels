@@ -5,7 +5,7 @@ import { Character } from '@database/models/Character';
 import { logger } from '../utils/logger';
 import { auditLogger } from '../utils/auditLogger';
 import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
-import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId , deleteResponse} from '../utils/apiResponse';
 
 
 export class ChatManagementController {
@@ -94,18 +94,18 @@ export class ChatManagementController {
 
       logger.info('Location actions retrieved', {
         total,
-        page: Number(page),
+        currentPage: Number(page),
         pageSize: Number(limit),
         filters: { locationId, actionType, characterId, visibility }
       });
 
       const pagination = {
-        page: Number(page),
+        currentPage: Number(page),
         totalPages: Math.ceil(total / Number(limit)),
         totalItems: total,
         pageSize: Number(limit),
         hasNextPage: Number(page) < Math.ceil(total / Number(limit)),
-        hasPrevPage: Number(page) > 1
+        hasPreviousPage: Number(page) > 1
       };
 
       res.json(listResponse(

@@ -87,7 +87,6 @@ export const VictorianLayoutDesktop: React.FC<VictorianLayoutDesktopProps> = ({
             src={BACKGROUND_IMAGE_SRC}
             alt=""
             className=""
-            fetchPriority="high"
           />
         </div>
         {pageInfo && (

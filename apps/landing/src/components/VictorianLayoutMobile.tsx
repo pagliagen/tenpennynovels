@@ -115,14 +115,12 @@ export const VictorianLayoutMobile: React.FC<VictorianLayoutMobileProps> = ({
             src={BACKGROUND_IMAGE_SRC}
             alt=""
             className="victorian-layout-mobile__background-image"
-            fetchPriority="high"
           />
           <div className="victorian-layout-mobile__title-container">
             <img
               src={LOGO_IMAGE_SRC}
               alt=""
               className="victorian-layout-mobile__logo"
-              fetchPriority="high"
             />
             <h2 className="victorian-layout-mobile__title">Chapter One</h2>
           </div>

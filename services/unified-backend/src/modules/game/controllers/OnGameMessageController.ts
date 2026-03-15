@@ -4,7 +4,7 @@ import { ApiResponse } from '../types/game';
 import { logger } from '../logger';
 import { postalSystem } from '../utils/postalSystem';
 import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
-import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId , deleteResponse} from '../utils/apiResponse';
 
 
 // Access mongoose from the centralized connection
@@ -365,9 +365,9 @@ export class OnGameMessageController {
         {
           messages,
           pagination: {
-            page,
+          currentPage: page,
             limit,
-            total: totalCount,
+            totalItems: totalCount,
             hasMore: skip + messages.length < totalCount
           },
           unreadCount
@@ -446,12 +446,12 @@ export class OnGameMessageController {
       res.json(listResponse(
         messages,
         {
-          page,
+          currentPage: page,
           pageSize: limit,
-          total: totalCount,
+          totalItems: totalCount,
           totalPages: Math.ceil(totalCount / limit),
-          hasNext: skip + messages.length < totalCount,
-          hasPrev: page > 1
+          hasNextPage: skip + messages.length < totalCount,
+          hasPreviousPage: page > 1
         },
         undefined,
         getRequestId(req)

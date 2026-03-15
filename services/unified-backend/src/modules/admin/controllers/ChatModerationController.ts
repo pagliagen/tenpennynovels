@@ -212,12 +212,12 @@ export class ChatModerationController {
       const totalPages = Math.ceil(totalCount / limitNum);
 
       const pagination: PaginationInfo = {
-        page: pageNum,
+        currentPage: pageNum,
         totalPages,
         totalItems: totalCount,
         pageSize: limitNum,
         hasNextPage: pageNum < totalPages,
-        hasPrevPage: pageNum > 1
+        hasPreviousPage: pageNum > 1
       };
 
       res.json(successResponse(
@@ -479,12 +479,12 @@ export class ChatModerationController {
       const totalPages = Math.ceil(totalCount / limitNum);
 
       const pagination: PaginationInfo = {
-        page: pageNum,
+        currentPage: pageNum,
         totalPages,
         totalItems: totalCount,
         pageSize: limitNum,
         hasNextPage: pageNum < totalPages,
-        hasPrevPage: pageNum > 1
+        hasPreviousPage: pageNum > 1
       };
 
       res.json(successResponse(

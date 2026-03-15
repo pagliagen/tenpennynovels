@@ -188,7 +188,7 @@ export class ForumController {
         viewCount: d.viewCount, subscriberCount: d.subscriberCount,
         lastPostAt: d.lastPostAt, lastPostBy: d.lastPostBy,
         createdAt: d.createdAt, createdBy: d.createdBy, tags: d.tags || []
-      })), { page, pageSize: limit, total, totalPages, hasNext: page < totalPages, hasPrev: page > 1 }, undefined, getRequestId(req)));
+      })), { currentPage: page, pageSize: limit, totalItems: total, totalPages, hasNextPage: page < totalPages, hasPreviousPage: page > 1 }, undefined, getRequestId(req)));
     } catch (error) {
       res.status(500).json({ success: false, error: 'Impossibile recuperare le discussioni', code: 'GET_DISCUSSIONS_ERROR' });
     }
@@ -408,7 +408,7 @@ export class ForumController {
         isEdited: p.isEdited, isDeleted: p.isDeleted,
         replyToPostId: p.replyToPostId,
         reactionCounts: p.reactionCounts
-      })), { page, pageSize: limit, total, totalPages, hasNext: page < totalPages, hasPrev: page > 1 }, undefined, getRequestId(req)));
+      })), { currentPage: page, pageSize: limit, totalItems: total, totalPages, hasNextPage: page < totalPages, hasPreviousPage: page > 1 }, undefined, getRequestId(req)));
     } catch (error) {
       res.status(500).json({ success: false, error: 'Impossibile recuperare i post', code: 'GET_POSTS_ERROR' });
     }
@@ -735,7 +735,7 @@ export class ForumController {
       res.json(listResponse(posts.map(p => ({
         id: p._id, topicSlug: p.topicSlug, discussionSlug: p.discussionSlug,
         content: p.content, author: p.author, createdAt: p.createdAt
-      })), { page, pageSize: limit, total, totalPages, hasNext: page < totalPages, hasPrev: page > 1 }, undefined, getRequestId(req)));
+      })), { currentPage: page, pageSize: limit, totalItems: total, totalPages, hasNextPage: page < totalPages, hasPreviousPage: page > 1 }, undefined, getRequestId(req)));
     } catch (error) {
       res.status(500).json({ success: false, error: 'Impossibile effettuare la ricerca', code: 'SEARCH_ERROR' });
     }

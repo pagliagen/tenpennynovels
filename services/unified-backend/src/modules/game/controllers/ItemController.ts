@@ -123,12 +123,12 @@ export class ItemController {
       res.json(listResponse(
         itemsWithEligibility,
         {
-          page: Number(page),
+          currentPage: Number(page),
           pageSize: Number(limit),
-          total,
+          totalItems: total,
           totalPages: Math.ceil(total / Number(limit)),
-          hasNext: Number(page) < Math.ceil(total / Number(limit)),
-          hasPrev: Number(page) > 1
+          hasNextPage: Number(page) < Math.ceil(total / Number(limit)),
+          hasPreviousPage: Number(page) > 1
         },
         undefined,
         getRequestId(req)

@@ -117,12 +117,12 @@ export class UserManagementController {
       if (userIds.length === 0) {
         const transformedUsers: AdminUserProfile[] = [];
         const emptyPagination = {
-          page,
+          currentPage: page,
           totalPages: 0,
           totalItems: 0,
           pageSize,
           hasNextPage: false,
-          hasPrevPage: false
+          hasPreviousPage: false
         };
         res.json({ success: true, list: transformedUsers, pagination: emptyPagination });
         return;
@@ -215,19 +215,19 @@ export class UserManagementController {
 
       const totalPages = Math.ceil(totalUsers / pageSize);
       const pagination: PaginationInfo = {
-        page,
+        currentPage: page,
         totalPages,
         totalItems: totalUsers,
         pageSize,
         hasNextPage: page < totalPages,
-        hasPrevPage: page > 1
+        hasPreviousPage: page > 1
       };
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       logger.info('Admin viewed user list', {
         ...auditInfo,
         filters: { search, status, role, sortBy, sortOrder },
-        page,
+        currentPage: page,
         pageSize,
         totalUsers
       });

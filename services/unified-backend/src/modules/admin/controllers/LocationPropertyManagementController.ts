@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { LocationProperty, Location, CharacterFinances, db } from '@database/models';
 import { logger } from '../utils/logger';
 import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
-import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId , deleteResponse} from '../utils/apiResponse';
 
 import type { PaginationInfo } from '../types/management';
 
@@ -57,15 +57,15 @@ export class LocationPropertyManagementController {
       const pageSizeNum = Number(pageSize);
       const totalPages = Math.ceil(totalProperties / pageSizeNum);
       const hasNextPage = pageNum < totalPages;
-      const hasPrevPage = pageNum > 1;
+      const hasPreviousPage = pageNum > 1;
 
       const pagination: PaginationInfo = {
-        page: pageNum,
+        currentPage: pageNum,
         totalPages,
         totalItems: totalProperties,
         pageSize: pageSizeNum,
         hasNextPage,
-        hasPrevPage
+        hasPreviousPage
       };
 
       res.json(listResponse(

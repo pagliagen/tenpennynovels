@@ -9,8 +9,8 @@ import type { Request } from 'express';
 /**
  * @deprecated Use res.status(200).json({ success: true, data }) instead
  */
-export function successResponse<T>(data: T, message?: string, requestId?: string): SuccessResponse<T> {
-  return { success: true, data, message, requestId };
+export function successResponse<T>(data: T, message?: string, requestId?: string): any {
+  return { result: true, success: true, data, message, requestId, timestamp: new Date().toISOString() };
 }
 
 /**
@@ -22,8 +22,8 @@ export function errorResponse(
   details?: any,
   _statusCode?: number,
   requestId?: string
-): ErrorResponse {
-  return { success: false, error, code, details, requestId };
+): any {
+  return { result: false, success: false, error, code, details, requestId, timestamp: new Date().toISOString() };
 }
 
 /**
@@ -34,29 +34,43 @@ export function listResponse<T>(
   pagination: PaginationInfo,
   message?: string,
   requestId?: string
-): ListResponse<T> {
-  return { success: true, list, pagination, message, requestId };
+): any {
+  return { result: true, success: true, list, pagination, message, requestId, timestamp: new Date().toISOString() };
 }
 
 /**
  * @deprecated Use res.status(201).json({ success: true, data }) instead
  */
-export function createResponse<T>(data: T, message?: string, requestId?: string): SuccessResponse<T> {
-  return { success: true, data, message, requestId };
+export function createResponse<T>(data: T, message?: string, requestId?: string): any {
+  return { result: true, success: true, data, message, requestId, timestamp: new Date().toISOString() };
 }
 
 /**
  * @deprecated Use res.status(200).json({ success: true, data }) instead
  */
-export function updateResponse<T>(data: T, message?: string, requestId?: string): SuccessResponse<T> {
-  return { success: true, data, message, requestId };
+export function updateResponse<T>(data: T, message?: string, requestId?: string): any {
+  return { result: true, success: true, data, message, requestId, timestamp: new Date().toISOString() };
 }
 
 /**
  * @deprecated Use res.status(200).json({ success: true, message }) instead
  */
-export function deleteResponse(message?: string, requestId?: string): SuccessResponse<undefined> {
-  return { success: true, data: undefined, message: message || 'Record eliminato con successo', requestId };
+export function deleteResponse(message?: string, requestId?: string): any {
+  return { result: true, success: true, data: undefined, message: message || 'Record eliminato con successo', requestId, timestamp: new Date().toISOString() };
+}
+
+/**
+ * @deprecated Use res.status(201).json({ success: true, data }) instead
+ */
+export function createdResponse<T>(data: T, message?: string, requestId?: string): any {
+  return { result: true, success: true, data, message, requestId, timestamp: new Date().toISOString() };
+}
+
+/**
+ * @deprecated Use res.status(200).json({ success: true, data }) instead
+ */
+export function updatedResponse<T>(data: T, message?: string, requestId?: string): any {
+  return { result: true, success: true, data, message, requestId, timestamp: new Date().toISOString() };
 }
 
 /**

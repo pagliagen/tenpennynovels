@@ -5,7 +5,7 @@ import { ApiResponse } from '../types/auth';
 import { logger, logAuth, logSecurity } from '../logger';
 import { redis } from '@config/runtime/redis';
 import { EmailService } from '../services/EmailService';
-import { successResponse, errorResponse, updatedResponse } from '@shared/utils/apiResponse';
+import { successResponse, errorResponse, updatedResponse } from '../utils/apiResponse';
 import { appConfig } from '@config/runtime';
 
 export class PasswordController {

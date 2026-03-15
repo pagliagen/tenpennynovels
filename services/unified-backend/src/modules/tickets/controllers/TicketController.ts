@@ -1,30 +1,12 @@
 import { Request, Response } from 'express';
 import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
 import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
-
 import { Ticket, TicketMessage, Character } from '@database/models';
-import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
-import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
-
 import { ApiResponse, TicketCategory, TicketPriority, TicketDepartment, TICKET_CATEGORIES, CATEGORY_DEPARTMENT_MAPPING, CATEGORY_PRIORITY_MAPPING } from '@modules/game/types/game';
-import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
-import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
-
 import { logger } from '@modules/game/logger';
-import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
-import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
-
 import { AuthMiddleware } from '@modules/game/middleware/auth';
-import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
-import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
-
 import { redis } from '@config/runtime/redis';
-import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
-import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
-
 import { NotificationService } from '@shared/services/NotificationService';
-import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
-import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
 
 
 export class TicketController {
@@ -41,7 +23,7 @@ export class TicketController {
         characterId,
         status,
         limit: Number(limit),
-        page: Number(page)
+        currentPage: Number(page)
       });
 
       // Build query filters
@@ -110,12 +92,12 @@ export class TicketController {
       res.json(listResponse(
         formattedTickets,
         {
-          page: pageNum,
+          currentPage: pageNum,
           pageSize: limitNum,
-          total: totalCount,
+        totalItems: totalCount,
           totalPages: Math.ceil(totalCount / limitNum),
-          hasNext: skip + tickets.length < totalCount,
-          hasPrev: pageNum > 1
+          hasNextPage: skip + tickets.length < totalCount,
+          hasPreviousPage: pageNum > 1
         },
         undefined,
         getRequestId(req)

@@ -76,6 +76,7 @@
 .modalBody {
   padding: $spacing-lg;
   overflow-y: auto;
+  scrollbar-gutter: auto;
   flex: 1;
 }
 

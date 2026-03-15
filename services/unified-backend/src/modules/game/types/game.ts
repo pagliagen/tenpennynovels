@@ -1,6 +1,7 @@
 // Game Backend Types
 
 // TODO: Import from shared package when workspace configuration is complete
+import type { PaginationInfo } from '@shared/types/responses';
 
 /**
  * Error details type for API responses
@@ -37,21 +38,10 @@ export interface ErrorDetails {
 }
 
 /**
- * Pagination information for list responses
+ * @deprecated Use PaginationInfo from @shared/types/responses instead
+ * Re-export for backward compatibility
  */
-export interface PaginationInfo {
-  page: number;
-  pageSize: number;
-  total: number;
-  totalPages: number;
-  hasNext: boolean;
-  hasPrev: boolean;
-  // Additional common aliases (backend may use either naming convention)
-  currentPage?: number;
-  limit?: number;
-  totalItems?: number;
-  hasMore?: boolean;
-}
+export type { PaginationInfo } from '@shared/types/responses';
 
 /**
  * Standardized API Response interface

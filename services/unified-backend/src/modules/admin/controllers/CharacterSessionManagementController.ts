@@ -58,18 +58,18 @@ export class CharacterSessionManagementController {
 
       logger.info('Active character sessions retrieved', {
         total,
-        page: Number(page),
+        currentPage: Number(page),
         pageSize: Number(limit),
         filters: { characterId, userId, deviceType }
       });
 
       const pagination: PaginationInfo = {
-        page: Number(page),
+        currentPage: Number(page),
         totalPages: Math.ceil(total / Number(limit)),
         totalItems: total,
         pageSize: Number(limit),
         hasNextPage: Number(page) < Math.ceil(total / Number(limit)),
-        hasPrevPage: Number(page) > 1
+        hasPreviousPage: Number(page) > 1
       };
 
       res.json(listResponse(
@@ -348,7 +348,7 @@ export class CharacterSessionManagementController {
       logger.info('Character session history retrieved', {
         characterId,
         total,
-        page: Number(page)
+        currentPage: Number(page)
       });
 
       res.json(successResponse(
@@ -362,7 +362,7 @@ export class CharacterSessionManagementController {
           sessions: formattedSessions,
           pagination: {
             total,
-            page: Number(page),
+            currentPage: Number(page),
             pageSize: Number(limit),
             pages: Math.ceil(total / Number(limit))
           }

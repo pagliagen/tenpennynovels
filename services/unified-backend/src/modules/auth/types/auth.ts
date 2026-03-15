@@ -122,14 +122,13 @@ export interface ErrorDetails {
  * Pagination information for list responses
  */
 export interface PaginationInfo {
-  page: number;
+  currentPage: number;
   pageSize: number;
   total: number;
   totalPages: number;
   hasNext: boolean;
   hasPrev: boolean;
   // Additional common aliases (backend may use either naming convention)
-  currentPage?: number;
   limit?: number;
   totalItems?: number;
   hasMore?: boolean;

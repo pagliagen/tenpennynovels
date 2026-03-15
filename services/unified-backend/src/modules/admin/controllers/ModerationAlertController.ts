@@ -49,12 +49,12 @@ export class ModerationAlertController {
       ]);
 
       const pagination: PaginationInfo = {
-        page,
+        currentPage: page,
         totalPages: Math.ceil(totalCount / limit),
         totalItems: totalCount,
         pageSize: limit,
         hasNextPage: page < Math.ceil(totalCount / limit),
-        hasPrevPage: page > 1
+        hasPreviousPage: page > 1
       };
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
