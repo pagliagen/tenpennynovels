@@ -7,10 +7,18 @@
   position: relative;
   width: 100%;
 
-  &__close {
+  &__close-container {
+    z-index: 2;
+    position: sticky;
+    top: 0px;
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+    height: 0px;
+  }
+
+  &__close { 
     position: absolute;
-    top: 8px;
-    right: 8px;
     background: none;
     border: 1px solid var(--color-homepage-yellow);
     cursor: pointer;

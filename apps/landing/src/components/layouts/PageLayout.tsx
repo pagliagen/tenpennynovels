@@ -37,6 +37,10 @@ export interface PageLayoutProps extends Omit<SEOProps, 'title' | 'description'>
   subtitle?: string;
   /** Optional info panel rendered above page content */
   pageInfo?: React.ReactNode;
+  /** Optional active info type (for controlling info modal) */
+  activeInfo?: 'terms' | 'privacy' | 'credits' | null;
+  /** Optional callback to set active info */
+  onSetActiveInfo?: (info: 'terms' | 'privacy' | 'credits' | null) => void;
 }
 
 /**
@@ -116,6 +120,8 @@ export const PageLayout: React.FC<PageLayoutProps> = ({
   schema,
   subtitle,
   pageInfo,
+  activeInfo,
+  onSetActiveInfo,
   children,
 }) => {
   return (
@@ -131,7 +137,14 @@ export const PageLayout: React.FC<PageLayoutProps> = ({
         schema={schema}
       />
 
-      <VictorianLayout subtitle={subtitle} pageInfo={pageInfo}>{children}</VictorianLayout>
+      <VictorianLayout
+        subtitle={subtitle}
+        pageInfo={pageInfo}
+        activeInfo={activeInfo}
+        onSetActiveInfo={onSetActiveInfo}
+      >
+        {children}
+      </VictorianLayout>
     </>
   );
 };

@@ -5,6 +5,10 @@
  * Hamburger, overlay nav, main content; background via <img>.
  */
 
+* {
+  scrollbar-gutter: unset;
+}
+
 .victorian-layout-mobile {
   position: relative;
   min-height: 100vh;
@@ -139,7 +143,7 @@
      =========================== */
 
   &__content {
-    position: relative; 
+    position: relative;
     min-height: 100dvh;
     display: flex;
     flex-direction: column;
@@ -187,9 +191,9 @@
     max-height: 40dvh;
     margin-top: var(--spacing-2xl);
     user-select: none;
-}
+  }
 
-  &__page-info {
+  &__page-info.active {
     position: absolute;
     top: 0;
     left: 0;
@@ -198,9 +202,10 @@
     overflow-y: auto;
     padding: var(--spacing-container-mobile);
     background-color: rgba(0, 0, 0, 0.7);
-    z-index: 2;
+    z-index: 3;
 
     h2 {
+      font-size: 30px;
       text-align: center;
     }
   }
@@ -209,7 +214,7 @@
     position: absolute;
     left: 0;
     right: 0;
-    bottom: 0; 
+    bottom: 0;
     display: flex;
     flex-direction: column;
     align-items: center;

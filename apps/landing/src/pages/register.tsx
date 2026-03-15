@@ -57,19 +57,8 @@ export default function RegisterPage() {
     credits: <CreditsContent />,
   } as const;
 
-  const pageInfoContent = activeInfo ? (
-    <div className="page-info-panel">
-      <button
-        type="button"
-        className="page-info-panel__close"
-        onClick={() => setActiveInfo(null)}
-        aria-label="Chiudi"
-      >
-        ✕
-      </button>
-      {infoComponents[activeInfo]}
-    </div>
-  ) : undefined;
+  // No longer needed - VictorianLayout handles modal rendering
+  // We just pass activeInfo and setActiveInfo as props
 
   const {
     register,
@@ -171,7 +160,8 @@ export default function RegisterPage() {
       globalSuccess={globalSuccess}
       onDismissError={clearMessages}
       onDismissSuccess={clearMessages}
-      pageInfo={pageInfoContent}
+      activeInfo={activeInfo}
+      onSetActiveInfo={setActiveInfo}
     >
       <form onSubmit={handleSubmit(onSubmit)} className="register-form"> 
         <div className="register-fields">

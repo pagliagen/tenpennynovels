@@ -10,7 +10,6 @@
 import React from 'react';
 import { Button } from './Button';
 
-const BACKGROUND_IMAGE_SRC = '/images/sfondo.png';
 const LOGO_IMAGE_SRC = '/images/title.png';
 
 export interface VictorianLayoutDesktopProps {
@@ -20,10 +19,12 @@ export interface VictorianLayoutDesktopProps {
   isInfoPage: boolean;
   /** Page identifier for main content (e.g. "login-page", "register-page"). */
   pageClass: string;
-  /** Called for internal navigation (e.g. /register, /credits). */
+  /** Called for internal navigation (e.g. /register). */
   onNavigate: (path: string) => void;
   /** Called when "Documenti" is clicked (external link). */
   onDocsClick: () => void;
+  /** Called when "Crediti" is clicked (opens modal). */
+  onCreditsClick: () => void;
   /** Optional info panel rendered above page content */
   pageInfo?: React.ReactNode;
 }
@@ -34,6 +35,7 @@ export const VictorianLayoutDesktop: React.FC<VictorianLayoutDesktopProps> = ({
   pageClass,
   onNavigate,
   onDocsClick,
+  onCreditsClick,
   pageInfo,
 }) => {
   return (
@@ -73,26 +75,22 @@ export const VictorianLayoutDesktop: React.FC<VictorianLayoutDesktopProps> = ({
           </Button>
           <Button
             variant="ghost"
-            onClick={() => onNavigate('/credits')}
+            onClick={onCreditsClick}
             className="victorian-layout-desktop__nav-button"
           >
             Crediti
-          </Button>   
+          </Button>
         </nav>
       </aside>
 
       <main className={`victorian-layout-desktop__content victorian-layout-desktop__content--${pageClass}`}>
-        <div className="victorian-layout-desktop__background-image">
-          <img
-            src={BACKGROUND_IMAGE_SRC}
-            alt=""
-            className=""
-          />
+        <div className="victorian-layout-desktop__background-image"></div>
+        <div className="victorian-layout-desktop__page-content">
+          <div className={`victorian-layout-desktop__page-info ${pageInfo ? 'active' : ''}`}>
+            <div className="victorian-layout-desktop__page-info-content">{pageInfo}</div>
+          </div>
+          <div className="victorian-layout-desktop__page-form">{children}</div>
         </div>
-        {pageInfo && (
-          <div className="victorian-layout-desktop__page-info">{pageInfo}</div>
-        )}
-        <div className="victorian-layout-desktop__page-content">{children}</div>
       </main>
     </div>
   );
