@@ -2,7 +2,9 @@ import { Request, Response } from 'express';
 import multer from 'multer';
 import { CDNService, CDNEntityType } from '../services/CDNService';
 import { logger } from '../utils/logger';
-import { successResponse, errorResponse, createResponse, getRequestId } from '../utils/apiResponse';
+import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+
 
 const VALID_TYPES: CDNEntityType[] = ['locations', 'items', 'characters', 'occupations'];
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB

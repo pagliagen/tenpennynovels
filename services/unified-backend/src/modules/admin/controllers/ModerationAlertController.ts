@@ -1,7 +1,9 @@
 import { Request, Response } from 'express';
 import { AdminAuthMiddleware } from '../middleware/adminAuth';
 import { logger } from '../utils/logger';
-import { successResponse, errorResponse, listResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+
 import type { PaginationInfo } from '../types/management';
 
 export class ModerationAlertController {
@@ -58,10 +60,10 @@ export class ModerationAlertController {
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       logger.info('Admin viewed moderation alerts', { ...auditInfo, filters: { source, status, characterId, minScore } });
 
-      res.json(listResponse(alerts, pagination, undefined, getRequestId(req)));
+      res.json({ success: true, list: alerts, pagination: pagination });
     } catch (error: any) {
       logger.error('Error fetching moderation alerts:', { error: error?.message });
-      res.status(500).json(errorResponse('Errore nel recupero degli alert di moderazione', 'FETCH_ALERTS_ERROR', undefined, 500, getRequestId(req)));
+      res.status(500).json({ success: false, error: 'Errore nel recupero degli alert di moderazione', code: 'FETCH_ALERTS_ERROR' });
     }
   }
 
@@ -88,7 +90,7 @@ export class ModerationAlertController {
       res.json(successResponse({ pending, reviewed, dismissed, actioned, total: pending + reviewed + dismissed + actioned }, undefined, getRequestId(req)));
     } catch (error: any) {
       logger.error('Error fetching moderation stats:', { error: error?.message });
-      res.status(500).json(errorResponse('Errore nel recupero delle statistiche', 'FETCH_STATS_ERROR', undefined, 500, getRequestId(req)));
+      res.status(500).json({ success: false, error: 'Errore nel recupero delle statistiche', code: 'FETCH_STATS_ERROR' });
     }
   }
 
@@ -102,11 +104,11 @@ export class ModerationAlertController {
 
       const alert = await ModerationAlert.findById(id).lean();
       if (!alert) {
-        res.status(404).json(errorResponse('Alert non trovato', 'ALERT_NOT_FOUND', undefined, 404, getRequestId(req)));
+        res.status(404).json({ success: false, error: 'Alert non trovato', code: 'ALERT_NOT_FOUND' });
         return;
       }
 
-      res.json(successResponse(alert, undefined, getRequestId(req)));
+      res.json({ success: true, data: alert });
     } catch (error: any) {
       logger.error('Error fetching moderation alert:', { error: error?.message });
       res.status(500).json(errorResponse('Errore nel recupero dell\'alert', 'FETCH_ALERT_ERROR', undefined, 500, getRequestId(req)));
@@ -122,7 +124,7 @@ export class ModerationAlertController {
       const { status, reviewNotes, actionTaken } = req.body;
 
       if (!status || !['reviewed', 'dismissed', 'actioned'].includes(status)) {
-        res.status(400).json(errorResponse('Status non valido (reviewed, dismissed, actioned)', 'INVALID_STATUS', undefined, 400, getRequestId(req)));
+        res.status(400).json({ success: false, error: 'Status non valido (reviewed, dismissed, actioned)', code: 'INVALID_STATUS' });
         return;
       }
 
@@ -144,7 +146,7 @@ export class ModerationAlertController {
       ).lean();
 
       if (!alert) {
-        res.status(404).json(errorResponse('Alert non trovato', 'ALERT_NOT_FOUND', undefined, 404, getRequestId(req)));
+        res.status(404).json({ success: false, error: 'Alert non trovato', code: 'ALERT_NOT_FOUND' });
         return;
       }
 

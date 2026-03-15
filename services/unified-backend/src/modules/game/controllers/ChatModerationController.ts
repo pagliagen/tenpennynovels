@@ -5,7 +5,9 @@ import { OnGameMessage } from '@database/models/OnGameMessage';
 import { OffGameChatMessage } from '@database/models/OffGameChatMessage';
 import { Character } from '@database/models/Character';
 import { logger } from '../logger';
-import { successResponse, errorResponse, listResponse, createResponse, getRequestId } from '../utils/apiResponse';
+import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+
 import { ConfigurationService } from '@shared/services/ConfigurationService';
 import { redis } from '@config/runtime/redis';
 

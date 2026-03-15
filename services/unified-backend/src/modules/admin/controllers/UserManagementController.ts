@@ -9,7 +9,9 @@ import {
 import { AdminAuthMiddleware } from '../middleware/adminAuth';
 import { logger } from '../utils/logger';
 import { User, Character, db } from '@database/models';
-import { listResponse, successResponse, errorResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
+import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+
 import { escapeRegex } from '@shared/utils/validation';
 
 // Access mongoose from the centralized connection
@@ -122,7 +124,7 @@ export class UserManagementController {
           hasNextPage: false,
           hasPrevPage: false
         };
-        res.json(listResponse(transformedUsers, emptyPagination, undefined, getRequestId(req)));
+        res.json({ success: true, list: transformedUsers, pagination: emptyPagination });
         return;
       }
 

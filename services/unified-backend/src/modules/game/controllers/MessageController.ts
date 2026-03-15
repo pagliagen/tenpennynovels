@@ -3,7 +3,9 @@ import { Character, OnGameMessage, OffGameChatMessage, Location } from '@databas
 import { VictorianMessageType, LocationMessageType } from '@shared/types/messaging';
 import { ApiResponse } from '../types/game';
 import { logger } from '../logger';
-import { successResponse, errorResponse, listResponse, deleteResponse, createResponse, getRequestId } from '../utils/apiResponse';
+import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+
 
 // Type aliases for message properties
 type MessageType = 'letter' | 'telegram' | 'postcard' | 'invitation' | 'official_document';

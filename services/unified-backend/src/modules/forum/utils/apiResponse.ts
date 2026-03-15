@@ -1,82 +1,67 @@
 /**
- * Forum API Response Utilities
- * Returns response objects (does not send responses directly)
- * Standardized to match game/auth module format.
+ * DEPRECATED - Temporary stub for migration
+ * Use direct res.status().json() instead
  */
 
-import { Request } from 'express';
-import type { ApiResponse, PaginationInfo, ErrorDetails } from '../../auth/types/auth';
+import type { SuccessResponse, ErrorResponse, ListResponse, PaginationInfo } from '@shared/types/responses';
+import type { Request } from 'express';
 
 /**
- * Success response object
+ * @deprecated Use res.status(200).json({ success: true, data }) instead
  */
-export function successResponse<T>(
-  data: T,
-  message?: string,
-  requestId?: string
-): ApiResponse<T> {
-  return {
-    result: true,
-    data,
-    message,
-    timestamp: new Date().toISOString(),
-    requestId
-  };
+export function successResponse<T>(data: T, message?: string, requestId?: string): SuccessResponse<T> {
+  return { success: true, data, message, requestId };
 }
 
 /**
- * Error response object
+ * @deprecated Use res.status(code).json({ success: false, error, code }) instead
  */
 export function errorResponse(
   error: string,
   code?: string,
-  details?: ErrorDetails,
+  details?: any,
   _statusCode?: number,
   requestId?: string
-): ApiResponse {
-  return {
-    result: false,
-    error,
-    code,
-    details,
-    timestamp: new Date().toISOString(),
-    requestId
-  };
+): ErrorResponse {
+  return { success: false, error, code, details, requestId };
 }
 
 /**
- * Create response object (201)
- */
-export function createResponse<T>(
-  data: T,
-  message?: string,
-  requestId?: string
-): ApiResponse<T> {
-  return successResponse(data, message, requestId);
-}
-
-/**
- * List response object with pagination
+ * @deprecated Use res.status(200).json({ success: true, list, pagination }) instead
  */
 export function listResponse<T>(
   list: T[],
   pagination: PaginationInfo,
   message?: string,
   requestId?: string
-): ApiResponse<T> {
-  return {
-    result: true,
-    list,
-    pagination,
-    message,
-    timestamp: new Date().toISOString(),
-    requestId
-  };
+): ListResponse<T> {
+  return { success: true, list, pagination, message, requestId };
 }
 
 /**
- * Get request ID from Express request
+ * @deprecated Use res.status(201).json({ success: true, data }) instead
+ */
+export function createResponse<T>(data: T, message?: string, requestId?: string): SuccessResponse<T> {
+  return { success: true, data, message, requestId };
+}
+
+/**
+ * @deprecated Use res.status(200).json({ success: true, data }) instead
+ */
+export function updateResponse<T>(data: T, message?: string, requestId?: string): SuccessResponse<T> {
+  return { success: true, data, message, requestId };
+}
+
+/**
+ * @deprecated Use res.status(200).json({ success: true, message }) instead
+ */
+export function deleteResponse(message?: string, requestId?: string): SuccessResponse<undefined> {
+  return { success: true, data: undefined, message: message || 'Record eliminato con successo', requestId };
+}
+
+/**
+ * @deprecated Middleware auto-injects requestId, no need to call this
  */
 export function getRequestId(req: Request): string | undefined {
-  return (req.headers['x-request-id'] as string | undefined) || (req as Request & { id?: string }).id;
+  return req.headers['x-request-id'] as string | undefined;
 }

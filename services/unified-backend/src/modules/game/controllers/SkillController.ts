@@ -7,7 +7,9 @@ import {
   getCategoryDescription,
   getAllCategoriesItalian
 } from '@shared/translations/skillCategories';
-import { successResponse, errorResponse, getRequestId } from '../utils/apiResponse';
+import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+
 
 export class SkillController {
 

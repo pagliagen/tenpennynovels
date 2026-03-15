@@ -3,7 +3,9 @@ import { Character, Corporation, CorporationMembershipRequest, CorporationInvita
 import { ApiResponse } from '../types/game';
 import { CorporationRole } from '@shared/types/corporation';
 import { logger } from '../logger';
-import { successResponse, errorResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+
 
 export class CorporationController {
   /**

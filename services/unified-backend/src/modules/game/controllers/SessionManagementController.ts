@@ -4,7 +4,9 @@ import { SessionManagement } from '@database/models/SessionManagement';
 import { SessionTemplate } from '@database/models/SessionTemplate';
 import { Character } from '@database/models/Character';
 import { logger } from '../logger';
-import { successResponse, errorResponse, createResponse, listResponse, getRequestId } from '../utils/apiResponse';
+import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+
 
 export class SessionManagementController {
   
@@ -727,7 +729,7 @@ export class SessionManagementController {
 
       logger.info(`[SessionManagement] Turn order initialized for session ${sessionId}`);
 
-      res.json(successResponse(turnInfo, undefined, getRequestId(req)));
+      res.json({ success: true, data: turnInfo });
 
     } catch (error: any) {
       logger.error('Initialize turns error:', error);
@@ -812,7 +814,7 @@ export class SessionManagementController {
         return;
       }
 
-      res.json(successResponse(turnInfo, undefined, getRequestId(req)));
+      res.json({ success: true, data: turnInfo });
 
     } catch (error: any) {
       logger.error('Get turn info error:', error);

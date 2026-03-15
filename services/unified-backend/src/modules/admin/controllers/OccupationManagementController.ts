@@ -5,7 +5,9 @@ import { AdminAuthMiddleware } from '../middleware/adminAuth';
 import { logger } from '../utils/logger';
 import { Occupation } from '@database/models/Occupation';
 import { Character } from '@database/models/Character';
-import { listResponse, successResponse, errorResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
+import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+
 import { escapeRegex } from '@shared/utils/validation';
 
 export class OccupationManagementController {

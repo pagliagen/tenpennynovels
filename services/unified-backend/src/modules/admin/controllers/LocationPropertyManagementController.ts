@@ -1,7 +1,9 @@
 import { Request, Response } from 'express';
 import { LocationProperty, Location, CharacterFinances, db } from '@database/models';
 import { logger } from '../utils/logger';
-import { listResponse, successResponse, errorResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
+import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+
 import type { PaginationInfo } from '../types/management';
 
 // Access mongoose from the centralized connection

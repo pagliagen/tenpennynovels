@@ -4,7 +4,9 @@ import { Character } from '@database/models/Character';
 import { User } from '@database/models/User';
 import { logger } from '../utils/logger';
 import { auditLogger } from '../utils/auditLogger';
-import { listResponse, successResponse, errorResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
+import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+
 import { PaginationInfo } from '../types/management';
 
 export class CharacterSessionManagementController {

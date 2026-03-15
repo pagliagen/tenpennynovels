@@ -3,7 +3,7 @@ import { AdminAuthMiddleware } from '../middleware/adminAuth';
 import DocumentSubtype from '@database/models/DocumentSubtype';
 import Document from '@database/models/Document';
 import { logger } from '../utils/logger';
-import { errorResponse, getRequestId } from '../utils/apiResponse';
+import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
 
 const router = Router();
 

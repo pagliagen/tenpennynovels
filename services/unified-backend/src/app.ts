@@ -7,6 +7,7 @@ import morgan from 'morgan';
 import { requestIdMiddleware } from '@shared/middleware/requestId';
 import { normalizeQueryParams } from '@shared/middleware/normalizeQueryParams';
 import { maintenanceModeMiddleware } from '@shared/middleware/maintenanceMode';
+import { responseMiddleware } from '@shared/middleware/responseMiddleware';
 import { errorHandler, notFoundHandler } from '@shared/middleware/errorHandler';
 import { httpLoggerStream, logger } from '@shared/utils/logger';
 
@@ -53,6 +54,9 @@ app.use(normalizeQueryParams);
 
 // ===== Maintenance Mode Check =====
 app.use(maintenanceModeMiddleware);
+
+// ===== Response Middleware (auto-inject timestamp/requestId) =====
+app.use(responseMiddleware);
 
 // ===== Health Check =====
 app.get('/health', (req, res) => {

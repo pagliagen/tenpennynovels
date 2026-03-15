@@ -4,7 +4,7 @@ import { banChecks } from '@shared/middleware/banCheck';
 import { requireGamePermission } from '../middleware/gamePermissions';
 import { OffGameChatController } from '../controllers/OffGameChatController';
 import { OffGameChat, OffGameChatParticipant } from '@database/models';
-import { errorResponse, successResponse } from '../utils/apiResponse';
+import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
 
 const router = Router();
 

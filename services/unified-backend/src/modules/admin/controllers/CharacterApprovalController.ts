@@ -11,7 +11,9 @@ import {
 import { AdminAuthMiddleware } from '../middleware/adminAuth';
 import { logger } from '../utils/logger';
 import { redis } from '@config/runtime/redis';
-import { listResponse, successResponse, errorResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+
 
 export class CharacterApprovalController {
   /**
@@ -1547,10 +1549,10 @@ export class CharacterApprovalController {
         hasPending: group.characters.some((c: any) => c.prestavoltoStatus === 'pending_duplicate')
       }));
 
-      res.json(successResponse({ faceClaimGroups }, undefined, getRequestId(req)));
+      res.json({ success: true, data: { faceClaimGroups } });
     } catch (error: unknown) {
       logger.error('Get duplicate face claims error:', { error: error instanceof Error ? error.message : String(error) });
-      res.status(500).json(errorResponse('Impossibile recuperare i duplicati', 'GET_DUPLICATES_ERROR', undefined, 500, getRequestId(req)));
+      res.status(500).json({ success: false, error: 'Impossibile recuperare i duplicati', code: 'GET_DUPLICATES_ERROR' });
     }
   }
 
@@ -1563,7 +1565,7 @@ export class CharacterApprovalController {
       const { Character } = await import('@database/models/Character');
       const character = await Character.findById(req.params.id);
       if (!character) {
-        res.status(404).json(errorResponse('Personaggio non trovato', 'CHARACTER_NOT_FOUND', undefined, 404, getRequestId(req)));
+        res.status(404).json({ success: false, error: 'Personaggio non trovato', code: 'CHARACTER_NOT_FOUND' });
         return;
       }
 
@@ -1576,7 +1578,7 @@ export class CharacterApprovalController {
       res.json(successResponse({ character }, 'Face claim approved', getRequestId(req)));
     } catch (error: unknown) {
       logger.error('Approve face claim error:', { error: error instanceof Error ? error.message : String(error) });
-      res.status(500).json(errorResponse('Impossibile approvare', 'APPROVE_FACECLAIM_ERROR', undefined, 500, getRequestId(req)));
+      res.status(500).json({ success: false, error: 'Impossibile approvare', code: 'APPROVE_FACECLAIM_ERROR' });
     }
   }
 
@@ -1589,7 +1591,7 @@ export class CharacterApprovalController {
       const { Character } = await import('@database/models/Character');
       const character = await Character.findById(req.params.id);
       if (!character) {
-        res.status(404).json(errorResponse('Personaggio non trovato', 'CHARACTER_NOT_FOUND', undefined, 404, getRequestId(req)));
+        res.status(404).json({ success: false, error: 'Personaggio non trovato', code: 'CHARACTER_NOT_FOUND' });
         return;
       }
 
@@ -1603,7 +1605,7 @@ export class CharacterApprovalController {
       res.json(successResponse({ character }, 'Face claim rejected and cleared', getRequestId(req)));
     } catch (error: unknown) {
       logger.error('Reject face claim error:', { error: error instanceof Error ? error.message : String(error) });
-      res.status(500).json(errorResponse('Impossibile rifiutare', 'REJECT_FACECLAIM_ERROR', undefined, 500, getRequestId(req)));
+      res.status(500).json({ success: false, error: 'Impossibile rifiutare', code: 'REJECT_FACECLAIM_ERROR' });
     }
   }
 

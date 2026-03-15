@@ -10,7 +10,7 @@ import dotenv from 'dotenv';
 import authRoutes from './routes/auth';
 import { httpLoggerStream, logger } from './logger';
 import { AnalyticsMiddleware } from '@shared/middleware/analyticsMiddleware';
-import { successResponse, errorResponse, getRequestId } from './utils/apiResponse';
+import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
 import { appConfig } from '@config/runtime';
 
 import path from 'path';

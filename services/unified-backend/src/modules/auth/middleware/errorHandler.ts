@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { ApiResponse } from '../types/auth';
 import { logger } from '../logger';
-import { errorResponse, getRequestId } from '../utils/apiResponse';
+import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
 import { appConfig } from '@config/runtime';
 
 export class ErrorHandler {

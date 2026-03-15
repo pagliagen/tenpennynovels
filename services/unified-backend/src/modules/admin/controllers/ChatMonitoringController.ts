@@ -4,7 +4,9 @@ import { ApiResponse } from '../types/management';
 import { AdminAuthMiddleware } from '../middleware/adminAuth';
 import { logger } from '../utils/logger';
 import { ChatModerationAction, UserReport, type IChatModerationAction, type IUserReport } from '@database/models';
-import { listResponse, successResponse, errorResponse, getRequestId } from '../utils/apiResponse';
+import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+
 
 // Access mongoose from the centralized connection
 const mongoose = db.getMongoose();

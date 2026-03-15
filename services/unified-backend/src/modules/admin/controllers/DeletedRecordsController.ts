@@ -7,7 +7,9 @@
 
 import { Request, Response } from 'express';
 import { DeletedRecordsService } from '../services/DeletedRecordsService';
-import { successResponse, errorResponse, getRequestId } from '../utils/apiResponse';
+import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+
 import { logger } from '../utils/logger';
 
 export class DeletedRecordsController {
@@ -25,7 +27,7 @@ export class DeletedRecordsController {
         sortOrder: sortOrder as 'asc' | 'desc' | undefined
       });
 
-      res.json(successResponse(result, undefined, getRequestId(req)));
+      res.json({ success: true, data: result });
     } catch (error: any) {
       logger.error('Error fetching deleted records:', {
         error: error.message,

@@ -6,7 +6,9 @@ import { ForumDiscussion } from '@database/models/ForumDiscussion';
 import { ForumPost } from '@database/models/ForumPost';
 import { AdminAuthMiddleware } from '../middleware/adminAuth';
 import { logger } from '../utils/logger';
-import { listResponse, successResponse, errorResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
+import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+
 import { escapeRegex } from '@shared/utils/validation';
 
 function createSlug(title: string): string {
@@ -114,17 +116,17 @@ export class ForumTopicManagementController {
       const topicId = Array.isArray(req.params.topicId) ? req.params.topicId[0] : req.params.topicId;
 
       if (!topicId || !mongoose.Types.ObjectId.isValid(topicId)) {
-        res.status(400).json(errorResponse('ID argomento non valido', 'INVALID_TOPIC_ID', undefined, 400, getRequestId(req)));
+        res.status(400).json({ success: false, error: 'ID argomento non valido', code: 'INVALID_TOPIC_ID' });
         return;
       }
 
       const topic = await ForumTopic.findById(topicId).lean();
       if (!topic) {
-        res.status(404).json(errorResponse('Argomento non trovato', 'TOPIC_NOT_FOUND', undefined, 404, getRequestId(req)));
+        res.status(404).json({ success: false, error: 'Argomento non trovato', code: 'TOPIC_NOT_FOUND' });
         return;
       }
 
-      res.json(successResponse(topic, undefined, getRequestId(req)));
+      res.json({ success: true, data: topic });
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       logger.info('Admin viewed forum topic details', { ...auditInfo, topicId });
@@ -150,14 +152,14 @@ export class ForumTopicManagementController {
       const { title, description, sortOrder, accessRules, isVisible, isLocked, isPinned, color, icon, moderatorIds } = req.body;
 
       if (!title || title.trim().length < 3) {
-        res.status(400).json(errorResponse('Il titolo deve avere almeno 3 caratteri', 'VALIDATION_ERROR', undefined, 400, getRequestId(req)));
+        res.status(400).json({ success: false, error: 'Il titolo deve avere almeno 3 caratteri', code: 'VALIDATION_ERROR' });
         return;
       }
 
       const slug = createSlug(title);
       const existing = await ForumTopic.findOne({ slug });
       if (existing) {
-        res.status(409).json(errorResponse('Esiste già un argomento con questo titolo', 'DUPLICATE_TOPIC', undefined, 409, getRequestId(req)));
+        res.status(409).json({ success: false, error: 'Esiste già un argomento con questo titolo', code: 'DUPLICATE_TOPIC' });
         return;
       }
 
@@ -218,13 +220,13 @@ export class ForumTopicManagementController {
       const { title, description, sortOrder, accessRules, isVisible, isLocked, isPinned, color, icon, moderatorIds } = req.body;
 
       if (!topicId || !mongoose.Types.ObjectId.isValid(topicId)) {
-        res.status(400).json(errorResponse('ID argomento non valido', 'INVALID_TOPIC_ID', undefined, 400, getRequestId(req)));
+        res.status(400).json({ success: false, error: 'ID argomento non valido', code: 'INVALID_TOPIC_ID' });
         return;
       }
 
       const topic = await ForumTopic.findById(topicId);
       if (!topic) {
-        res.status(404).json(errorResponse('Argomento non trovato', 'TOPIC_NOT_FOUND', undefined, 404, getRequestId(req)));
+        res.status(404).json({ success: false, error: 'Argomento non trovato', code: 'TOPIC_NOT_FOUND' });
         return;
       }
 
@@ -232,7 +234,7 @@ export class ForumTopicManagementController {
       if (title !== undefined) {
         const trimmedTitle = title.trim();
         if (trimmedTitle.length < 3) {
-          res.status(400).json(errorResponse('Il titolo deve avere almeno 3 caratteri', 'VALIDATION_ERROR', undefined, 400, getRequestId(req)));
+          res.status(400).json({ success: false, error: 'Il titolo deve avere almeno 3 caratteri', code: 'VALIDATION_ERROR' });
           return;
         }
         update.title = trimmedTitle;
@@ -240,7 +242,7 @@ export class ForumTopicManagementController {
         if (newSlug !== topic.slug) {
           const slugExists = await ForumTopic.findOne({ slug: newSlug, _id: { $ne: topic._id } });
           if (slugExists) {
-            res.status(409).json(errorResponse('Esiste già un argomento con questo titolo', 'DUPLICATE_SLUG', undefined, 409, getRequestId(req)));
+            res.status(409).json({ success: false, error: 'Esiste già un argomento con questo titolo', code: 'DUPLICATE_SLUG' });
             return;
           }
           update.slug = newSlug;
@@ -263,7 +265,7 @@ export class ForumTopicManagementController {
       const updated = await ForumTopic.findByIdAndUpdate(topicId, { $set: update }, { new: true }).lean();
 
       if (!updated) {
-        res.status(404).json(errorResponse('Argomento non trovato dopo aggiornamento', 'TOPIC_NOT_FOUND', undefined, 404, getRequestId(req)));
+        res.status(404).json({ success: false, error: 'Argomento non trovato dopo aggiornamento', code: 'TOPIC_NOT_FOUND' });
         return;
       }
 
@@ -301,13 +303,13 @@ export class ForumTopicManagementController {
       const topicId = Array.isArray(req.params.topicId) ? req.params.topicId[0] : req.params.topicId;
 
       if (!topicId || !mongoose.Types.ObjectId.isValid(topicId)) {
-        res.status(400).json(errorResponse('ID argomento non valido', 'INVALID_TOPIC_ID', undefined, 400, getRequestId(req)));
+        res.status(400).json({ success: false, error: 'ID argomento non valido', code: 'INVALID_TOPIC_ID' });
         return;
       }
 
       const topic = await ForumTopic.findById(topicId);
       if (!topic) {
-        res.status(404).json(errorResponse('Argomento non trovato', 'TOPIC_NOT_FOUND', undefined, 404, getRequestId(req)));
+        res.status(404).json({ success: false, error: 'Argomento non trovato', code: 'TOPIC_NOT_FOUND' });
         return;
       }
 

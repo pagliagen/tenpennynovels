@@ -3,7 +3,9 @@ import { OnGameMessage, OnGameMessageView, Character, CharacterFinances, db } fr
 import { ApiResponse } from '../types/game';
 import { logger } from '../logger';
 import { postalSystem } from '../utils/postalSystem';
-import { successResponse, errorResponse, listResponse, createResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
+import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+
 
 // Access mongoose from the centralized connection
 const mongoose = db.getMongoose();

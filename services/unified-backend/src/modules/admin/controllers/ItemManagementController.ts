@@ -4,7 +4,9 @@ import { ApiResponse } from '../types/management';
 import { AdminAuthMiddleware } from '../middleware/adminAuth';
 import { logger } from '../utils/logger';
 import { Item, ItemCategory, ITEM_CATEGORY_LABELS, IItem, CharacterInventory, Shop, ShopItem } from '@database/models/Item';
-import { listResponse, successResponse, errorResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
+import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+
 import { escapeRegex } from '@shared/utils/validation';
 
 export class ItemManagementController {

@@ -2,7 +2,9 @@ import { Request, Response } from 'express';
 import { Chat, GamingSession, Location, Character, SkillConfrontation, CombatEncounter } from '@database/models';
 import { logger } from '../logger';
 import { redis } from '@config/runtime/redis';
-import { successResponse, errorResponse, createResponse, getRequestId } from '../utils/apiResponse';
+import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+
 import { calculateSuccessDegree, getSuccessDegreeLabel, compareSuccessDegrees, SuccessDegree } from '../utils/successDegrees';
 import { calculateSocialConflict, isValidSocialSkillPair, getDefensiveSkill } from '../utils/socialConflicts';
 import { getSocketIO } from '../websocket/socketInstance';
