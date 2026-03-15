@@ -2,7 +2,7 @@
 # ========================================
 # TenPennyNovels - Copy Production ENV Files
 # ========================================
-# Copies env templates from deploy/primo-rilascio-manuale/env-templates/
+# Copies env templates from deploy/env-templates/
 # to the correct app/service directories as .env.production files
 
 set -e  # Exit on error
@@ -16,7 +16,7 @@ NC='\033[0m' # No Color
 
 # Project root (adjust if running from different location)
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-TEMPLATE_DIR="$PROJECT_ROOT/deploy/primo-rilascio-manuale/env-templates"
+TEMPLATE_DIR="$PROJECT_ROOT/deploy/env-templates"
 
 echo -e "${BLUE}========================================${NC}"
 echo -e "${BLUE}TenPennyNovels - Copy ENV Files${NC}"

@@ -1,125 +1,71 @@
-# Deploy Scripts - Automazione Rilascio
+# Deployment Scripts
 
-Questa cartella contiene gli script usati dal workflow GitHub Actions e per operazioni manuali di deploy.
+Script utility per deployment e setup di TenPennyNovels.
 
-## 🤖 Script Automatici (usati da GitHub Actions)
+---
 
-### `install-all.sh`
-Installa tutte le dipendenze npm in:
-- Root monorepo
-- Tutti i frontend apps (apps/*)
-- Tutti i backend services (services/*)
+## 📜 Scripts
 
-**Usato da**:
-- `.github/workflows/deploy.yml` (build-check job)
-- SSH remote script (deploy job, se package-lock.json cambiato)
+### install-all.sh
 
-**Esecuzione**:
+**Purpose**: Installa tutte le dipendenze (root + apps + services)
+
+**Usage**:
 ```bash
 ./deploy/scripts/install-all.sh
 ```
 
----
+**What it does**:
+1. Install root dependencies (`npm install`)
+2. Install frontend app dependencies (landing, game, documents, management)
+3. Install backend service dependencies (api-gateway, unified-backend, embeddings-worker)
+
+**Duration**: ~5-10 minuti (primo install) | ~1-2 min (successivi con cache)
+
+**Used by**: GitHub Actions workflow (`.github/workflows/deploy.yml`)
 
 ---
 
-## 📝 Note
+### copy-env-files.sh
 
-- `scripts/` contiene SOLO script usati da GitHub Actions automaticamente
-- Per script manuali → Vedi [../utility/](../utility/)
-- Per script setup iniziale → Vedi [../primo-rilascio-manuale/](../primo-rilascio-manuale/)
+**Purpose**: Copia `.env` templates a destinazioni corrette come `.env.production`
 
----
-
-## 📦 Workflow GitHub Actions
-
-Il workflow `.github/workflows/deploy.yml` usa questi script in questa sequenza:
-
-### Build Check Job (PR + Push)
-1. Checkout code
-2. Setup Node.js 22.13.1
-3. **Run `install-all.sh`** ← Script automatico
-4. Build all frontend
-5. Build all backend
-
-### Deploy Job (Push to master only)
-1. Checkout code
-2. rsync deploy (file changes only)
-3. SSH remote:
-   - **Run `install-all.sh`** (se package-lock.json cambiato) ← Script automatico
-   - Build all frontend
-   - Build all backend
-   - PM2 restart all
-4. Health checks
-
----
-
-## 🚀 Comandi Rapidi
-
-### Deploy Completo Manuale
+**Usage**:
 ```bash
-# Sul server OVH
-cd ~/tenpennynovels
-./deploy/scripts/install-all.sh
-./deploy/scripts/build-all.sh
-pm2 restart all
+./deploy/scripts/copy-env-files.sh
 ```
 
-### Rebuild Solo Frontend
-```bash
-# Sul server OVH
-cd ~/tenpennynovels
-./deploy/scripts/rebuild-frontend.sh
-pm2 restart tenpennynovels-landing tenpennynovels-game tenpennynovels-documenti tenpennynovels-gestione
-```
+**What it does**:
+1. Copia `deploy/env-templates/*.env` → `apps/*/.env.production`
+2. Copia `deploy/env-templates/*.env` → `services/*/.env.production`
+3. Backup file esistenti (`.backup.YYYYMMDD_HHMMSS`)
+4. Set secure permissions (`chmod 600`)
 
-### Rebuild Solo Backend
-```bash
-# Sul server OVH
-cd ~/tenpennynovels
-npm run build:backend:all
-pm2 restart tenpennynovels-api-gateway tenpennynovels-unified-backend
-```
+**Targets**:
+- `apps/landing/.env.production`
+- `apps/game/.env.production`
+- `apps/documents/.env.production`
+- `apps/management/.env.production`
+- `services/api-gateway/.env.production`
+- `services/unified-backend/.env.production`
+- `services/embeddings-worker/.env.production`
 
----
-
-## 🔍 Debugging
-
-### Script fallisce con "command not found"
-```bash
-# Verifica permessi esecuzione
-chmod +x deploy/scripts/*.sh
-
-# Verifica Node version
-node -v  # Deve essere 22.13.1
-nvm use  # Se hai nvm installato
-```
-
-### Build fallisce con "MODULE_NOT_FOUND"
-```bash
-# Reinstalla dipendenze
-./deploy/scripts/install-all.sh
-```
-
-### PM2 services crashano dopo restart
-```bash
-# Verifica logs
-pm2 logs --lines 50
-
-# Verifica .env.production files
-ls -la apps/*/  .env.production
-ls -la services/*/.env.production
-```
+**⚠️ IMPORTANT**: Edit `.env.production` files AFTER running this script to add real secrets!
 
 ---
 
-## 📝 Note
+## 🚫 Deprecated Scripts
 
-- Tutti gli script assumono di essere eseguiti dalla **root del progetto**
-- Gli script sono **idempotent** - possono essere eseguiti più volte senza problemi
-- Scripts con `set -e` terminano al primo errore
-- Production usa `npm install --production` (no devDependencies)
+Questi script sono stati deprecati e spostati in `DEPRECATED/`:
+
+- ~~`setup-nginx.sh`~~ - Non necessario, nginx-configs sono già pronti
+- ~~`setup-pm2.sh`~~ - Istruzioni già in docs/05-pm2-configuration.md
+- ~~`build-all.sh`~~ - GitHub Actions fa già questo automaticamente
+- ~~`setup-env.sh`~~ - Ridondante con copy-env-files.sh
 
 ---
 
-**Vedi anche**: [../primo-rilascio-manuale/](../primo-rilascio-manuale/) per setup iniziale server
+## 📖 Documentation
+
+- [Install Dependencies Guide](../docs/01-ubuntu-from-zero.md#step-16-installa-dipendenze)
+- [GitHub Actions Workflow](../docs/02-github-setup.md)
