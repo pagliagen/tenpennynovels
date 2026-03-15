@@ -21,8 +21,7 @@
     "incremental": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"],
-      "@tenpennynovels/shared-ui": ["./apps/shared-ui/src"]
+      "@/*": ["./src/*"] 
     }
   },
   "include": ["*.ts"],
