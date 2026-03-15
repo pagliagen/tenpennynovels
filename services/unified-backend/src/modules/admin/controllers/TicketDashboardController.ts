@@ -3,7 +3,9 @@ import { Ticket } from '@database/models/Ticket';
 import { User } from '@database/models/User';
 import { NotificationService } from '@shared/services/NotificationService';
 import { logger } from '../utils/logger';
-import { successResponse, errorResponse, listResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+
 import { escapeRegex } from '@shared/utils/validation';
 
 /**
@@ -96,7 +98,7 @@ export class TicketDashboardController {
           .lean()
       };
 
-      res.json(successResponse(stats, undefined, getRequestId(req)));
+      res.json({ success: true, data: stats });
     } catch (error: any) {
       const err = error as Error;
       logger.error('Error fetching dashboard:', {
@@ -219,12 +221,12 @@ export class TicketDashboardController {
           unread: !t.lastReadBy?.staff
         })),
         {
-          page: pageNum,
+          currentPage: pageNum,
           pageSize: limitNum,
           totalItems: total,
           totalPages: Math.ceil(total / limitNum),
           hasNextPage: skip + tickets.length < total,
-          hasPrevPage: pageNum > 1
+          hasPreviousPage: pageNum > 1
         },
         undefined,
         getRequestId(req)

@@ -5,7 +5,9 @@ import { AdminAuthMiddleware } from '../middleware/adminAuth';
 import { logger } from '../utils/logger';
 import { Occupation } from '@database/models/Occupation';
 import { Character } from '@database/models/Character';
-import { listResponse, successResponse, errorResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
+import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId , deleteResponse} from '../utils/apiResponse';
+
 import { escapeRegex } from '@shared/utils/validation';
 
 export class OccupationManagementController {
@@ -45,19 +47,19 @@ export class OccupationManagementController {
         .lean();
 
       const pagination = {
-        page,
+        currentPage: page,
         totalPages: Math.ceil(totalItems / limit),
         totalItems,
         pageSize: limit,
         hasNextPage: page < Math.ceil(totalItems / limit),
-        hasPrevPage: page > 1
+        hasPreviousPage: page > 1
       };
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       logger.info('Admin viewed occupations list', {
         ...auditInfo,
         filters: { category, isActive, search },
-        page,
+        currentPage: page,
         pageSize: limit,
         totalResults: totalItems
       });

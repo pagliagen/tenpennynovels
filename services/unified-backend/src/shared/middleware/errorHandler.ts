@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { Error as MongooseError } from 'mongoose';
-import { errorResponse } from '../utils/apiResponse';
+import type { ErrorResponse } from '@shared/types/responses';
 import {
   translateMongooseError,
   translateDuplicateKeyError,
@@ -43,40 +43,43 @@ export function errorHandler(
   // ===== Mongoose Validation Error =====
   if (err.name === 'ValidationError' && err instanceof MongooseError.ValidationError) {
     const { message, code, details } = translateMongooseError(err);
-    return errorResponse(res, message, code, details, 400);
+    res.status(400).json({ success: false, error: message, code, details });
+    return;
   }
 
   // ===== Mongoose Cast Error (ObjectId invalido) =====
   if (err.name === 'CastError') {
     const { message, code, details } = translateCastError(err);
-    return errorResponse(res, message, code, details, 400);
+    res.status(400).json({ success: false, error: message, code, details });
+    return;
   }
 
   // ===== MongoDB Duplicate Key Error (code: 11000) =====
   if (err.code === 11000 && err.keyPattern) {
     const { message, code, details } = translateDuplicateKeyError(err);
-    return errorResponse(res, message, code, details, 409);
+    res.status(409).json({ success: false, error: message, code, details });
+    return;
   }
 
   // ===== JWT Errors =====
   if (err.name === 'JsonWebTokenError') {
-    return errorResponse(
-      res,
-      'Token non valido',
-      ErrorCode.TOKEN_INVALID,
-      { reason: err.message },
-      401
-    );
+    res.status(401).json({
+      success: false,
+      error: 'Token non valido',
+      code: ErrorCode.TOKEN_INVALID,
+      details: { reason: err.message }
+    });
+    return;
   }
 
   if (err.name === 'TokenExpiredError') {
-    return errorResponse(
-      res,
-      'Token scaduto',
-      ErrorCode.TOKEN_EXPIRED,
-      { expiredAt: err.expiredAt },
-      401
-    );
+    res.status(401).json({
+      success: false,
+      error: 'Token scaduto',
+      code: ErrorCode.TOKEN_EXPIRED,
+      details: { expiredAt: err.expiredAt }
+    });
+    return;
   }
 
   // ===== Express Validator Errors =====
@@ -88,24 +91,24 @@ export function errorHandler(
       details[error.param || error.path] = error.msg;
     });
 
-    return errorResponse(
-      res,
-      'Errore di validazione',
-      ErrorCode.VALIDATION_ERROR,
-      details,
-      400
-    );
+    res.status(400).json({
+      success: false,
+      error: 'Errore di validazione',
+      code: ErrorCode.VALIDATION_ERROR,
+      details
+    });
+    return;
   }
 
   // ===== Custom Error with Code (già formattato) =====
   if (err.code && Object.values(ErrorCode).includes(err.code)) {
-    return errorResponse(
-      res,
-      err.message,
-      err.code,
-      err.details,
-      err.statusCode || 400
-    );
+    res.status(err.statusCode || 400).json({
+      success: false,
+      error: err.message,
+      code: err.code,
+      details: err.details
+    });
+    return;
   }
 
   // ===== Generic Error (fallback) =====
@@ -115,7 +118,7 @@ export function errorHandler(
     ? 'Errore interno del server'
     : err.message || 'Errore sconosciuto';
 
-  return errorResponse(res, message, code, undefined, statusCode);
+  res.status(statusCode).json({ success: false, error: message, code });
 }
 
 /**
@@ -125,14 +128,13 @@ export function errorHandler(
  * IMPORTANTE: Montare PRIMA di errorHandler in app.ts
  */
 export function notFoundHandler(req: Request, res: Response, next: NextFunction): void {
-  errorResponse(
-    res,
-    `Endpoint non trovato: ${req.method} ${req.path}`,
-    ErrorCode.RESOURCE_NOT_FOUND,
-    {
+  res.status(404).json({
+    success: false,
+    error: `Endpoint non trovato: ${req.method} ${req.path}`,
+    code: ErrorCode.RESOURCE_NOT_FOUND,
+    details: {
       method: req.method,
       path: req.path
-    },
-    404
-  );
+    }
+  });
 }

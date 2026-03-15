@@ -5,7 +5,9 @@ import { OnGameMessage } from '@database/models/OnGameMessage';
 import { OffGameChatMessage } from '@database/models/OffGameChatMessage';
 import { Character } from '@database/models/Character';
 import { logger } from '../logger';
-import { successResponse, errorResponse, listResponse, createResponse, getRequestId } from '../utils/apiResponse';
+import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+
 import { ConfigurationService } from '@shared/services/ConfigurationService';
 import { redis } from '@config/runtime/redis';
 
@@ -272,12 +274,12 @@ export class ChatModerationController {
       res.json(listResponse(
         reports,
         {
-          page: Math.floor(parseInt(skip as string) / parseInt(limit as string)) + 1,
+          currentPage: Math.floor(parseInt(skip as string) / parseInt(limit as string)) + 1,
           pageSize: parseInt(limit as string),
-          total: totalCount,
+        totalItems: totalCount,
           totalPages: Math.ceil(totalCount / parseInt(limit as string)),
-          hasNext: totalCount > parseInt(skip as string) + parseInt(limit as string),
-          hasPrev: parseInt(skip as string) > 0
+          hasNextPage: totalCount > parseInt(skip as string) + parseInt(limit as string),
+          hasPreviousPage: parseInt(skip as string) > 0
         },
         undefined,
         getRequestId(req)
@@ -337,12 +339,12 @@ export class ChatModerationController {
       res.json(listResponse(
         actionsWithTimeRemaining,
         {
-          page: Math.floor(parseInt(skip as string) / parseInt(limit as string)) + 1,
+          currentPage: Math.floor(parseInt(skip as string) / parseInt(limit as string)) + 1,
           pageSize: parseInt(limit as string),
-          total: totalCount,
+        totalItems: totalCount,
           totalPages: Math.ceil(totalCount / parseInt(limit as string)),
-          hasNext: totalCount > parseInt(skip as string) + parseInt(limit as string),
-          hasPrev: parseInt(skip as string) > 0
+          hasNextPage: totalCount > parseInt(skip as string) + parseInt(limit as string),
+          hasPreviousPage: parseInt(skip as string) > 0
         },
         undefined,
         getRequestId(req)

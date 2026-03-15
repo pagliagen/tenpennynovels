@@ -2,6 +2,8 @@
 
 // TODO: Import from shared package when workspace configuration is complete
 import { SocialClass } from '@shared/types/socialClass';
+import type { PaginationInfo } from '@shared/types/responses';
+export type { PaginationInfo } from '@shared/types/responses';
 
 /**
  * Error details type for API responses
@@ -520,15 +522,7 @@ export interface AuditTarget {
   name?: string;
 }
 
-// Pagination Types
-export interface PaginationInfo {
-  page: number;              // Renamed from 'currentPage'
-  totalPages: number;
-  totalItems: number;
-  pageSize: number;          // Renamed from 'limit'
-  hasNextPage: boolean;      // Renamed from 'hasMore'
-  hasPrevPage: boolean;      // Added for prev page check
-}
+// Pagination Types - imported from @shared/types/responses
 
 // Statistics Summary Types
 export interface ReviewStats {

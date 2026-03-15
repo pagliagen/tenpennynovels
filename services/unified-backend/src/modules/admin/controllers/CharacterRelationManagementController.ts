@@ -12,7 +12,9 @@ import {
 import { Character } from '@database/models/Character';
 import { logger } from '../utils/logger';
 import { auditLogger } from '../utils/auditLogger';
-import { successResponse, errorResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
+import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
+
 import { escapeRegex } from '@shared/utils/validation';
 
 export class CharacterRelationManagementController {
@@ -121,11 +123,11 @@ export class CharacterRelationManagementController {
         {
           relationshipTypes: relationshipTypesWithStats,
           pagination: {
-            page: pageNum,
+            currentPage: pageNum,
             totalPages,
             totalCount: total,
             hasNextPage: pageNum < totalPages,
-            hasPrevPage: pageNum > 1,
+            hasPreviousPage: pageNum > 1,
             pageSize: limitNum
           }
         },
@@ -359,11 +361,11 @@ export class CharacterRelationManagementController {
         {
           relationships: filteredRelationships,
           pagination: {
-            page: pageNum,
+            currentPage: pageNum,
             totalPages,
             totalCount: total,
             hasNextPage: pageNum < totalPages,
-            hasPrevPage: pageNum > 1,
+            hasPreviousPage: pageNum > 1,
             pageSize: limitNum
           }
         },
@@ -448,11 +450,11 @@ export class CharacterRelationManagementController {
         {
           proposals,
           pagination: {
-            page: pageNum,
+            currentPage: pageNum,
             totalPages,
             totalCount: total,
             hasNextPage: pageNum < totalPages,
-            hasPrevPage: pageNum > 1,
+            hasPreviousPage: pageNum > 1,
             pageSize: limitNum
           }
         },

@@ -176,12 +176,12 @@ export default function CharacterSelectPage() {
 
           {user && user.characters && user.characters.length > 0 ? (
             <>
-              <h3 style={{ marginBottom: '1rem', color: '#d4af37' }}>I tuoi personaggi:</h3>
+              <h3 style={{ marginBottom: '1rem', color: '#ffa748' }}>I tuoi personaggi:</h3>
               {user.characters.map((character: Character) => (
                 <Card key={character.id} className="character-card">
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
-                      <h4 style={{ margin: '0 0 0.25rem 0', color: '#d4af37' }}>
+                      <h4 style={{ margin: '0 0 0.25rem 0', color: '#ffa748' }}>
                         {character.name}
                       </h4>
                       <p style={{

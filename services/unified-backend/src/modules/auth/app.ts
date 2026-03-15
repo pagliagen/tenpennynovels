@@ -10,8 +10,9 @@ import dotenv from 'dotenv';
 import authRoutes from './routes/auth';
 import { httpLoggerStream, logger } from './logger';
 import { AnalyticsMiddleware } from '@shared/middleware/analyticsMiddleware';
-import { successResponse, errorResponse, getRequestId } from './utils/apiResponse';
+import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
 import { appConfig } from '@config/runtime';
+import { errorResponse, successResponse, getRequestId } from './utils/apiResponse';
 
 import path from 'path';
 logger.info('Loading environment variables...');
@@ -75,13 +76,11 @@ app.use(morgan('combined', {
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 1000, // Limit each IP to 1000 requests per windowMs
-  message: errorResponse(
-    'Troppe richieste da questo indirizzo IP, riprova più tardi.',
-    'RATE_LIMITED',
-    undefined,
-    429,
-    undefined
-  ),
+  message: {
+    success: false,
+    error: 'Troppe richieste da questo indirizzo IP, riprova più tardi.',
+    code: 'RATE_LIMITED'
+  },
   standardHeaders: true,
   legacyHeaders: false
 });
@@ -93,38 +92,28 @@ app.use('/auth', authRoutes);
 
 // Health check endpoint
 app.get('/auth/health', (req, res) => {
-  res.json(successResponse(
-    {
-      status: 'healthy',
-      service: 'authentication-backend',
-      version: '1.0.0',
-      uptime: process.uptime(),
-      memory: process.memoryUsage(),
-      environment: appConfig.isProduction ? 'production' : 'development'
-    },
-    undefined,
-    getRequestId(req)
-  ));
+  successResponse(res, {
+    status: 'healthy',
+    service: 'authentication-backend',
+    version: '1.0.0',
+    uptime: process.uptime(),
+    memory: process.memoryUsage(),
+    environment: appConfig.isProduction ? 'production' : 'development'
+  });
 });
 
 // Root endpoint removed - not needed
 
 // 404 handler
 app.use((req, res) => {
-  res.status(404).json(errorResponse(
-    'Endpoint not found',
-    'ENDPOINT_NOT_FOUND',
-    undefined,
-    404,
-    getRequestId(req)
-  ));
+  errorResponse(res, 'Endpoint not found', 'ENDPOINT_NOT_FOUND', undefined, 404);
 });
 
 // Global error handler
 app.use((error: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   const { httpLoggerStream } = require('./logger');
   const { logger } = require('./logger');
-  
+
   logger.error('Unhandled error:', {
     error: error.message,
     stack: error.stack,
@@ -134,13 +123,13 @@ app.use((error: any, req: express.Request, res: express.Response, next: express.
     userAgent: req.get('User-Agent')
   });
 
-  res.status(500).json(errorResponse(
+  errorResponse(
+    res,
     appConfig.isProduction ? 'Errore interno del server' : error.message,
     'INTERNAL_SERVER_ERROR',
     undefined,
-    500,
-    getRequestId(req)
-  ));
+    500
+  );
 });
 
 // Graceful shutdown

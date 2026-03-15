@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { db } from '@database/models';
 import { logger } from '../logger';
-import { listResponse, errorResponse } from '@shared/utils/apiResponse';
+import { successResponse, errorResponse, listResponse } from '../utils/apiResponse';
 import { appConfig } from '@config/runtime';
 
 /**
@@ -54,7 +54,7 @@ export class OccupationController {
       listResponse(res, 
         mappedOccupations,
         {
-          page: 1,
+          currentPage: 1,
           pageSize: mappedOccupations.length,
           total: mappedOccupations.length,
           totalPages: 1,
@@ -130,7 +130,7 @@ export class OccupationController {
       listResponse(res, 
         mappedOccupations,
         {
-          page: 1,
+          currentPage: 1,
           pageSize: mappedOccupations.length,
           total: mappedOccupations.length,
           totalPages: 1,

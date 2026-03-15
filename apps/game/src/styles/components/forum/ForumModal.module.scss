@@ -37,6 +37,7 @@
 .content {
   flex-grow: 1;
   overflow-y: auto;
+  scrollbar-gutter: auto;
   @include victorian-scrollbar;
   padding: $spacing-xl;
 }

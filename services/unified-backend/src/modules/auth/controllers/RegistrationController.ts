@@ -5,7 +5,7 @@ import { ApiResponse } from '../types/auth';
 import { logger, logAuth } from '../logger';
 import { redis } from '@config/runtime/redis';
 import { EmailService } from '../services/EmailService';
-import { errorResponse, successResponse, createdResponse } from '@shared/utils/apiResponse';
+import { errorResponse, successResponse, createdResponse } from '../utils/apiResponse';
 import { appConfig } from '@config/runtime';
 
 export class RegistrationController {

@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { User, CharacterSession } from '@database/models';
-import { successResponse, errorResponse, listResponse } from '@shared/utils/apiResponse';
+import { successResponse, errorResponse, listResponse } from '../utils/apiResponse';
 import { ErrorCode } from '@shared/utils/errorCodes';
 import { logger } from '../logger';
 import { redis } from '@config/runtime/redis';
@@ -191,7 +191,7 @@ export class SecurityController {
     try {
       // ✅ NESSUN MOCK DATA - lista vuota fino a implementazione vera
       listResponse(res, [], {
-        page: 1,
+        currentPage: 1,
         pageSize: 10,
         total: 0,
         totalPages: 0,

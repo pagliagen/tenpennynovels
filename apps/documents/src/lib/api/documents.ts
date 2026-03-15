@@ -68,6 +68,6 @@ export const documentsApi = {
     regolamento: DocumentSubtype[];
   }> {
     const response = (await api.get('/documents/routes/list-hierarchical')) as any;
-    return response.routes || { ambientazione: [], regolamento: [] };
+    return response.data.routes || { ambientazione: [], regolamento: [] };
   },
 };

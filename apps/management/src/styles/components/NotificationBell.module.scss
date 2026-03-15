@@ -150,6 +150,7 @@
 // Notification list
 .notificationList {
   overflow-y: auto;
+  scrollbar-gutter: auto;
   flex: 1;
   max-height: 360px;
 }

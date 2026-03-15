@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
-import { successResponse, errorResponse, listResponse, getRequestId } from '../utils/apiResponse';
+import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+
 import { ForumNotification } from '@database/models/ForumNotification';
 import { logger } from '../logger';
 
@@ -9,7 +11,7 @@ export class ForumNotificationController {
     try {
       const character = req.character;
       if (!character) {
-        res.status(401).json(errorResponse('Personaggio non trovato', 'CHARACTER_NOT_FOUND', undefined, 401, getRequestId(req)));
+        res.status(401).json({ success: false, error: 'Personaggio non trovato', code: 'CHARACTER_NOT_FOUND' });
         return;
       }
 
@@ -37,10 +39,10 @@ export class ForumNotificationController {
         hasPrev: page > 1
       };
 
-      res.status(200).json(listResponse(notifications, pagination, undefined, getRequestId(req)));
+      res.status(200).json({ success: true, list: notifications, pagination: pagination });
     } catch (error: unknown) {
       logger.error('[ForumNotificationController] Get notifications error:', error);
-      res.status(500).json(errorResponse('Impossibile recuperare le notifiche', 'GET_NOTIFICATIONS_ERROR', undefined, 500, getRequestId(req)));
+      res.status(500).json({ success: false, error: 'Impossibile recuperare le notifiche', code: 'GET_NOTIFICATIONS_ERROR' });
     }
   }
 
@@ -48,17 +50,17 @@ export class ForumNotificationController {
     try {
       const character = req.character;
       if (!character) {
-        res.status(401).json(errorResponse('Personaggio non trovato', 'CHARACTER_NOT_FOUND', undefined, 401, getRequestId(req)));
+        res.status(401).json({ success: false, error: 'Personaggio non trovato', code: 'CHARACTER_NOT_FOUND' });
         return;
       }
 
       const characterId = new mongoose.Types.ObjectId(character.characterId);
       const count = await ForumNotification.countDocuments({ characterId, isRead: false });
 
-      res.status(200).json(successResponse({ unreadCount: count }, undefined, getRequestId(req)));
+      res.status(200).json({ success: true, data: { unreadCount: count } });
     } catch (error: unknown) {
       logger.error('[ForumNotificationController] Get unread count error:', error);
-      res.status(500).json(errorResponse('Impossibile recuperare il conteggio non letti', 'GET_UNREAD_COUNT_ERROR', undefined, 500, getRequestId(req)));
+      res.status(500).json({ success: false, error: 'Impossibile recuperare il conteggio non letti', code: 'GET_UNREAD_COUNT_ERROR' });
     }
   }
 
@@ -69,7 +71,7 @@ export class ForumNotificationController {
     try {
       const character = req.character;
       if (!character) {
-        res.status(401).json(errorResponse('Personaggio non trovato', 'CHARACTER_NOT_FOUND', undefined, 401, getRequestId(req)));
+        res.status(401).json({ success: false, error: 'Personaggio non trovato', code: 'CHARACTER_NOT_FOUND' });
         return;
       }
 
@@ -83,7 +85,7 @@ export class ForumNotificationController {
       }, `Marked ${result.modifiedCount} notifications as read`, getRequestId(req)));
     } catch (error: unknown) {
       logger.error('[ForumNotificationController] Mark all read error:', error);
-      res.status(500).json(errorResponse('Impossibile segnare tutti come letti', 'MARK_ALL_READ_ERROR', undefined, 500, getRequestId(req)));
+      res.status(500).json({ success: false, error: 'Impossibile segnare tutti come letti', code: 'MARK_ALL_READ_ERROR' });
     }
   }
 
@@ -91,7 +93,7 @@ export class ForumNotificationController {
     try {
       const character = req.character;
       if (!character) {
-        res.status(401).json(errorResponse('Personaggio non trovato', 'CHARACTER_NOT_FOUND', undefined, 401, getRequestId(req)));
+        res.status(401).json({ success: false, error: 'Personaggio non trovato', code: 'CHARACTER_NOT_FOUND' });
         return;
       }
 
@@ -112,7 +114,7 @@ export class ForumNotificationController {
           .map(id => new mongoose.Types.ObjectId(id));
 
         if (validIds.length === 0) {
-          res.status(400).json(errorResponse('Nessun ID notifica valido', 'INVALID_IDS', undefined, 400, getRequestId(req)));
+          res.status(400).json({ success: false, error: 'Nessun ID notifica valido', code: 'INVALID_IDS' });
           return;
         }
 
@@ -125,11 +127,11 @@ export class ForumNotificationController {
           markedCount: result.modifiedCount
         }, `Marked ${result.modifiedCount} notifications as read`, getRequestId(req)));
       } else {
-        res.status(400).json(errorResponse('Array notificationIds o all: true richiesto', 'MISSING_PARAMS', undefined, 400, getRequestId(req)));
+        res.status(400).json({ success: false, error: 'Array notificationIds o all: true richiesto', code: 'MISSING_PARAMS' });
       }
     } catch (error: unknown) {
       logger.error('[ForumNotificationController] Mark read error:', error);
-      res.status(500).json(errorResponse('Impossibile segnare come letto', 'MARK_READ_ERROR', undefined, 500, getRequestId(req)));
+      res.status(500).json({ success: false, error: 'Impossibile segnare come letto', code: 'MARK_READ_ERROR' });
     }
   }
 }

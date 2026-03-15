@@ -6,7 +6,9 @@ import {
 import { AdminAuthMiddleware } from '../middleware/adminAuth';
 import { logger } from '../utils/logger';
 import { redis } from '@config/runtime/redis';
-import { successResponse, listResponse, errorResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
+import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId , deleteResponse} from '../utils/apiResponse';
+
 
 export class CorporationManagementController {
   /**
@@ -93,21 +95,21 @@ export class CorporationManagementController {
 
       const totalPages = Math.ceil(totalItems / pageSize);
       const hasNextPage = page < totalPages;
-      const hasPrevPage = page > 1;
+      const hasPreviousPage = page > 1;
 
       const paginationInfo: PaginationInfo = {
-        page,
+        currentPage: page,
         totalPages,
         totalItems,
         pageSize,
         hasNextPage,
-        hasPrevPage
+        hasPreviousPage
       };
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       logger.info('Admin viewed all corporations', {
         ...auditInfo,
-        page,
+        currentPage: page,
         pageSize,
         statusFilter: status || 'all',
         totalResults: transformedCorporations.length,
@@ -375,21 +377,21 @@ export class CorporationManagementController {
 
       const totalPages = Math.ceil(totalItems / limit);
       const hasNextPage = page < totalPages;
-      const hasPrevPage = page > 1;
+      const hasPreviousPage = page > 1;
 
       const paginationInfo: PaginationInfo = {
-        page,
+        currentPage: page,
         totalPages,
         totalItems,
         pageSize: limit,
         hasNextPage,
-        hasPrevPage
+        hasPreviousPage
       };
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       logger.info('Admin viewed membership requests', {
         ...auditInfo,
-        page,
+        currentPage: page,
         pageSize: limit,
         corporationFilter: corporationId || 'all',
         totalResults: transformedRequests.length,
@@ -1135,15 +1137,15 @@ export class CorporationManagementController {
 
       const totalPages = Math.ceil(totalItems / limit);
       const hasNextPage = page < totalPages;
-      const hasPrevPage = page > 1;
+      const hasPreviousPage = page > 1;
 
       const paginationInfo: PaginationInfo = {
-        page,
+        currentPage: page,
         totalPages,
         totalItems,
         pageSize: limit,
         hasNextPage,
-        hasPrevPage
+        hasPreviousPage
       };
 
       res.json(successResponse(
@@ -1646,7 +1648,7 @@ export class CorporationManagementController {
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       logger.info('Admin fetched all membership requests', {
         ...auditInfo,
-        page,
+        currentPage: page,
         pageSize,
         corporationFilter,
         totalRequests,
@@ -1657,12 +1659,12 @@ export class CorporationManagementController {
         {
           requests: transformedRequests,
           pagination: {
-            page,
+            currentPage: page,
             totalPages,
             totalItems: totalRequests,
             pageSize,
             hasNextPage: page < totalPages,
-        hasPrevPage: page > 1
+        hasPreviousPage: page > 1
           }
         },
         undefined,

@@ -5,7 +5,9 @@ import { logger } from '../logger';
 import { LocationService } from '../services/LocationService';
 import { redis } from '@config/runtime/redis';
 import { CharacterCreationConfigService } from '@shared/services/CharacterCreationConfigService';
-import { successResponse, errorResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+
 import { getWeather } from '../services/WeatherService';
 
 export class GameController {

@@ -11,7 +11,7 @@
 import { Request, Response } from 'express';
 import { getWeather } from '../services/WeatherService';
 import { logger } from '../logger';
-import { successResponse, errorResponse } from '@shared/utils/apiResponse';
+import { successResponse, errorResponse } from '../utils/apiResponse';
 
 export class EnvironmentController {
   /**
@@ -48,17 +48,16 @@ export class EnvironmentController {
         moonPhase: environment.moonPhase,
       });
 
-      successResponse(res, environment);
+      res.json(successResponse(environment));
     } catch (error: any) {
       logger.error('[EnvironmentController] Failed to fetch environment:', error);
 
-      errorResponse(
-        res,
+      res.status(500).json(errorResponse(
         'Failed to fetch environment data',
         'WEATHER_ERROR',
         undefined,
         500
-      );
+      ));
     }
   }
 }

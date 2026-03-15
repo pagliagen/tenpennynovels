@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
-import { successResponse, errorResponse, createResponse, getRequestId } from '../utils/apiResponse';
+import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+
 import { ForumCharacterFollow } from '@database/models/ForumCharacterFollow';
 import { NotificationService } from '../services/NotificationService';
 import { logger } from '../logger';
@@ -10,7 +12,7 @@ export class ForumFollowController {
     try {
       const character = req.character;
       if (!character) {
-        res.status(401).json(errorResponse('Personaggio non trovato', 'CHARACTER_NOT_FOUND', undefined, 401, getRequestId(req)));
+        res.status(401).json({ success: false, error: 'Personaggio non trovato', code: 'CHARACTER_NOT_FOUND' });
         return;
       }
 
@@ -19,7 +21,7 @@ export class ForumFollowController {
       const followedId = new mongoose.Types.ObjectId(targetCharacterId);
 
       if (followerId.equals(followedId)) {
-        res.status(400).json(errorResponse('Non puoi seguire te stesso', 'CANNOT_FOLLOW_SELF', undefined, 400, getRequestId(req)));
+        res.status(400).json({ success: false, error: 'Non puoi seguire te stesso', code: 'CANNOT_FOLLOW_SELF' });
         return;
       }
 
@@ -50,7 +52,7 @@ export class ForumFollowController {
       }
     } catch (error: unknown) {
       logger.error('[ForumFollowController] Follow error:', error);
-      res.status(500).json(errorResponse('Impossibile attivare/disattivare il follow', 'FOLLOW_ERROR', undefined, 500, getRequestId(req)));
+      res.status(500).json({ success: false, error: 'Impossibile attivare/disattivare il follow', code: 'FOLLOW_ERROR' });
     }
   }
 
@@ -58,7 +60,7 @@ export class ForumFollowController {
     try {
       const character = req.character;
       if (!character) {
-        res.status(401).json(errorResponse('Personaggio non trovato', 'CHARACTER_NOT_FOUND', undefined, 401, getRequestId(req)));
+        res.status(401).json({ success: false, error: 'Personaggio non trovato', code: 'CHARACTER_NOT_FOUND' });
         return;
       }
 
@@ -119,7 +121,7 @@ export class ForumFollowController {
       }, undefined, getRequestId(req)));
     } catch (error: unknown) {
       logger.error('[ForumFollowController] Get my follows error:', error);
-      res.status(500).json(errorResponse('Impossibile recuperare i follow', 'GET_MY_FOLLOWS_ERROR', undefined, 500, getRequestId(req)));
+      res.status(500).json({ success: false, error: 'Impossibile recuperare i follow', code: 'GET_MY_FOLLOWS_ERROR' });
     }
   }
 
@@ -127,7 +129,7 @@ export class ForumFollowController {
     try {
       const character = req.character;
       if (!character) {
-        res.status(401).json(errorResponse('Personaggio non trovato', 'CHARACTER_NOT_FOUND', undefined, 401, getRequestId(req)));
+        res.status(401).json({ success: false, error: 'Personaggio non trovato', code: 'CHARACTER_NOT_FOUND' });
         return;
       }
 
@@ -162,7 +164,7 @@ export class ForumFollowController {
       }, undefined, getRequestId(req)));
     } catch (error: unknown) {
       logger.error('[ForumFollowController] Get following error:', error);
-      res.status(500).json(errorResponse('Impossibile recuperare i seguiti', 'GET_FOLLOWING_ERROR', undefined, 500, getRequestId(req)));
+      res.status(500).json({ success: false, error: 'Impossibile recuperare i seguiti', code: 'GET_FOLLOWING_ERROR' });
     }
   }
 
@@ -170,7 +172,7 @@ export class ForumFollowController {
     try {
       const character = req.character;
       if (!character) {
-        res.status(401).json(errorResponse('Personaggio non trovato', 'CHARACTER_NOT_FOUND', undefined, 401, getRequestId(req)));
+        res.status(401).json({ success: false, error: 'Personaggio non trovato', code: 'CHARACTER_NOT_FOUND' });
         return;
       }
 
@@ -205,7 +207,7 @@ export class ForumFollowController {
       }, undefined, getRequestId(req)));
     } catch (error: unknown) {
       logger.error('[ForumFollowController] Get followers error:', error);
-      res.status(500).json(errorResponse('Impossibile recuperare i follower', 'GET_FOLLOWERS_ERROR', undefined, 500, getRequestId(req)));
+      res.status(500).json({ success: false, error: 'Impossibile recuperare i follower', code: 'GET_FOLLOWERS_ERROR' });
     }
   }
 }

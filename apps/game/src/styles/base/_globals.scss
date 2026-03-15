@@ -107,3 +107,36 @@ a {
   color: inherit;
   text-decoration: none;
 }
+
+/* ========================================
+   SCROLLBAR - FIREFOX + WEBKIT
+   ======================================== */
+
+/**
+ * Global scrollbar styling for Firefox and WebKit browsers.
+ * Victorian gold theme (matches component-specific victorian-scrollbar mixin).
+ * Prevents layout shift when scrollbar appears/disappears.
+ */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background-color: rgba(139, 69, 19, 0.1);
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(184, 134, 11, 0.5);
+  border-radius: 6px;
+
+  &:hover {
+    background-color: rgba(184, 134, 11, 0.7);
+  }
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(184, 134, 11, 0.5) rgba(139, 69, 19, 0.1);
+  scrollbar-gutter: stable;
+}

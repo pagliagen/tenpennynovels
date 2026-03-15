@@ -1,120 +1,119 @@
-// =============================================================================
-// Standardized API Response Helpers
-// =============================================================================
-// Utility functions to generate consistent API responses across all controllers
+/**
+ * DEPRECATED - Auth module stub (vecchia signature con res param)
+ */
 
-import { Request } from 'express';
-import { ApiResponse, PaginationInfo, ErrorDetails } from '../types/auth';
+import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
+import type { Request, Response } from 'express';
 
 /**
- * Generate success response for single record (GET by id, POST, PATCH)
+ * @deprecated Old signature - Use res.status(200).json({ result: true, data }) instead
  */
 export function successResponse<T>(
+  res: Response,
   data: T,
   message?: string,
-  requestId?: string
-): ApiResponse<T> {
-  return {
+  statusCode: number = 200
+): void {
+  res.status(statusCode).json({
     result: true,
+    success: true,  // backward compat
     data,
     message,
-    timestamp: new Date().toISOString(),
-    requestId
-  };
+    timestamp: new Date().toISOString()
+  });
 }
 
 /**
- * Generate success response for list (GET list endpoints)
- */
-export function listResponse<T>(
-  list: T[],
-  pagination: PaginationInfo,
-  message?: string,
-  requestId?: string
-): ApiResponse<T> {
-  return {
-    result: true,
-    list,
-    pagination,
-    message,
-    timestamp: new Date().toISOString(),
-    requestId
-  };
-}
-
-/**
- * Generate error response
+ * @deprecated Old signature - Use res.status(code).json({ result: false, error }) instead
  */
 export function errorResponse(
+  res: Response,
   error: string,
   code?: string,
-  details?: ErrorDetails,
-  statusCode: number = 500,
-  requestId?: string
-): ApiResponse {
-  return {
+  details?: any,
+  statusCode: number = 500
+): void {
+  res.status(statusCode).json({
     result: false,
+    success: false,  // backward compat
     error,
     code,
     details,
-    timestamp: new Date().toISOString(),
-    requestId
-  };
+    timestamp: new Date().toISOString()
+  });
 }
 
 /**
- * Generate success response for DELETE operations
+ * @deprecated Old signature
  */
-export function deleteResponse(
-  message?: string,
-  requestId?: string
-): ApiResponse {
-  return {
-    result: true,
-    message: message || 'Record eliminato con successo',
-    timestamp: new Date().toISOString(),
-    requestId
-  };
-}
-
-/**
- * Generate success response for POST create operations
- */
-export function createResponse<T>(
+export function createdResponse<T>(
+  res: Response,
   data: T,
-  message?: string,
-  requestId?: string
-): ApiResponse<T> {
-  return {
+  message?: string
+): void {
+  res.status(201).json({
     result: true,
+    success: true,  // backward compat
     data,
-    message: message || 'Record creato con successo',
-    timestamp: new Date().toISOString(),
-    requestId
-  };
+    message,
+    timestamp: new Date().toISOString()
+  });
 }
 
 /**
- * Generate success response for PATCH/PUT update operations
+ * @deprecated Old signature
  */
-export function updateResponse<T>(
+export function updatedResponse<T>(
+  res: Response,
   data: T,
-  message?: string,
-  requestId?: string
-): ApiResponse<T> {
-  return {
+  message?: string
+): void {
+  res.status(200).json({
     result: true,
+    success: true,  // backward compat
     data,
-    message: message || 'Record aggiornato con successo',
-    timestamp: new Date().toISOString(),
-    requestId
-  };
+    message,
+    timestamp: new Date().toISOString()
+  });
 }
 
 /**
- * Helper to extract request ID from request (if available)
+ * @deprecated Old signature - Use res.status(200).json({ result: true, list, pagination }) instead
+ */
+export function listResponse<T>(
+  res: Response,
+  list: T[],
+  pagination?: any,
+  message?: string
+): void {
+  res.status(200).json({
+    result: true,
+    success: true,  // backward compat
+    list,
+    pagination,
+    message,
+    timestamp: new Date().toISOString()
+  });
+}
+
+/**
+ * @deprecated Old signature - Use res.status(200).json({ result: true, message }) instead
+ */
+export function deletedResponse(
+  res: Response,
+  message?: string
+): void {
+  res.status(200).json({
+    result: true,
+    success: true,  // backward compat
+    message: message || 'Deleted successfully',
+    timestamp: new Date().toISOString()
+  });
+}
+
+/**
+ * @deprecated
  */
 export function getRequestId(req: Request): string | undefined {
-  return (req.headers['x-request-id'] as string | undefined) || (req as Request & { id?: string }).id;
+  return req.headers['x-request-id'] as string | undefined;
 }
-

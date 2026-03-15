@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { Character } from '@database/models';
-import { errorResponse, getRequestId } from '../utils/apiResponse';
+import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
 import { logger } from '../logger';
+import { errorResponse, getRequestId } from '../utils/apiResponse';
 
 /**
  * Middleware to require Master gameplayRole

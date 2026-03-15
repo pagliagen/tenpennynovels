@@ -8,7 +8,8 @@
  * @since 2.0.0
  */
 
-import { apiClient } from './client';
+import { apiClient, withRetry } from './client';
+import type { ApiResponse } from '@/types/api/common';
 
 /**
  * Face Claim Character Entry
@@ -74,10 +75,15 @@ export interface RejectFaceClaimRequest {
  * ```
  */
 export async function getDuplicateFaceClaims(): Promise<DuplicateFaceClaimsResponse> {
-  const response = await apiClient.get<DuplicateFaceClaimsResponse>(
-    '/admin/characters/face-claims/duplicates'
+  const response = await withRetry(() =>
+    apiClient.get<ApiResponse<DuplicateFaceClaimsResponse>>(
+      '/admin/characters/face-claims/duplicates'
+    )
   );
-  return response.data;
+  if (!response.data.result || !response.data.data) {
+    throw new Error('Errore nel recupero duplicati face claims');
+  }
+  return response.data.data;
 }
 
 /**

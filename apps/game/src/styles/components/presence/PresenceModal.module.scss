@@ -96,6 +96,7 @@
 .content {
   flex: 1;
   overflow-y: auto;
+  scrollbar-gutter: auto;
   @include victorian-scrollbar;
 }
 

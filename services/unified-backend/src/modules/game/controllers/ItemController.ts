@@ -4,7 +4,9 @@ import { Location } from '@database/models/Location';
 import { Character } from '@database/models/Character';
 import { escapeRegex } from '@shared/utils/validation';
 import { logger } from '../logger';
-import { successResponse, errorResponse, listResponse, getRequestId } from '../utils/apiResponse';
+import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+
 
 export class ItemController {
 
@@ -121,12 +123,12 @@ export class ItemController {
       res.json(listResponse(
         itemsWithEligibility,
         {
-          page: Number(page),
+          currentPage: Number(page),
           pageSize: Number(limit),
-          total,
+          totalItems: total,
           totalPages: Math.ceil(total / Number(limit)),
-          hasNext: Number(page) < Math.ceil(total / Number(limit)),
-          hasPrev: Number(page) > 1
+          hasNextPage: Number(page) < Math.ceil(total / Number(limit)),
+          hasPreviousPage: Number(page) > 1
         },
         undefined,
         getRequestId(req)

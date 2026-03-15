@@ -5,7 +5,9 @@ import { SessionTemplate } from '@database/models/SessionTemplate';
 import { Character } from '@database/models/Character';
 import { Location } from '@database/models/Location';
 import { logger } from '../utils/logger';
-import { listResponse, successResponse, errorResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
+import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+
 
 export class SessionManagementController {
 
@@ -232,12 +234,12 @@ export class SessionManagementController {
 
       const page = Math.floor(parseInt(skip as string) / parseInt(limit as string)) + 1;
       const pagination = {
-        page,
+        currentPage: page,
         totalPages: Math.ceil(totalCount / parseInt(limit as string)),
         totalItems: totalCount,
         pageSize: parseInt(limit as string),
         hasNextPage: totalCount > parseInt(skip as string) + parseInt(limit as string),
-        hasPrevPage: page > 1
+        hasPreviousPage: page > 1
       };
 
       res.json(listResponse(
@@ -391,12 +393,12 @@ export class SessionManagementController {
 
       const page = Math.floor(parseInt(skip as string) / parseInt(limit as string)) + 1;
       const pagination = {
-        page,
+        currentPage: page,
         totalPages: Math.ceil(totalCount / parseInt(limit as string)),
         totalItems: totalCount,
         pageSize: parseInt(limit as string),
         hasNextPage: totalCount > parseInt(skip as string) + parseInt(limit as string),
-        hasPrevPage: page > 1
+        hasPreviousPage: page > 1
       };
 
       res.json(listResponse(

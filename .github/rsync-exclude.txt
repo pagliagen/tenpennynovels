@@ -104,9 +104,6 @@ docker-compose.yml
 Dockerfile
 .dockerignore
 
-# Materials (static assets not needed in production)
-Materiale Sito/
-
 # Deploy state (managed on server)
 .deps-hash
 .deploy-state

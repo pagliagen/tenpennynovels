@@ -154,7 +154,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               style={{
                 fontSize: '2.5rem',
                 marginBottom: '1.5rem',
-                color: '#d4af37',
+                color: '#ffa748',
                 fontWeight: 'bold',
               }}
             >
@@ -202,7 +202,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                   padding: '0.75rem 2rem',
                   fontSize: '1.1rem',
                   fontFamily: "'IM Fell English', serif",
-                  backgroundColor: '#d4af37',
+                  backgroundColor: '#ffa748',
                   color: '#1a0f0a',
                   border: 'none',
                   borderRadius: '4px',
@@ -214,7 +214,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                   e.currentTarget.style.backgroundColor = '#DAA520';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#d4af37';
+                  e.currentTarget.style.backgroundColor = '#ffa748';
                 }}
               >
                 Riprova
@@ -227,8 +227,8 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                   fontSize: '1.1rem',
                   fontFamily: "'IM Fell English', serif",
                   backgroundColor: 'rgba(212, 175, 55, 0.2)',
-                  color: '#d4af37',
-                  border: '1px solid #d4af37',
+                  color: '#ffa748',
+                  border: '1px solid #ffa748',
                   borderRadius: '4px',
                   cursor: 'pointer',
                   fontWeight: 'bold',

@@ -31,6 +31,10 @@ export interface FormPageLayoutProps extends Omit<PageLayoutProps, 'children'> {
   children: React.ReactNode;
   /** Optional info panel rendered above page content (e.g. terms, privacy inline) */
   pageInfo?: React.ReactNode;
+  /** Optional active info type (for controlling info modal) */
+  activeInfo?: 'terms' | 'privacy' | 'credits' | null;
+  /** Optional callback to set active info */
+  onSetActiveInfo?: (info: 'terms' | 'privacy' | 'credits' | null) => void;
   /** Global error message (null if no error) */
   globalError?: string | null;
   /** Global success message (null if no success) */
@@ -150,6 +154,8 @@ export const FormPageLayout: React.FC<FormPageLayoutProps> = ({
   schema,
   subtitle,
   pageInfo,
+  activeInfo,
+  onSetActiveInfo,
   globalError,
   globalSuccess,
   successAutoHide = 0,
@@ -167,6 +173,8 @@ export const FormPageLayout: React.FC<FormPageLayoutProps> = ({
       schema={schema}
       subtitle={subtitle}
       pageInfo={pageInfo}
+      activeInfo={activeInfo}
+      onSetActiveInfo={onSetActiveInfo}
     >
       <div className="form-page">
         {/* Global error alert */}

@@ -1,120 +1,111 @@
-// =============================================================================
-// Standardized API Response Helpers
-// =============================================================================
-// Utility functions to generate consistent API responses across all controllers
+/**
+ * DEPRECATED - Temporary stub for migration
+ * Use direct res.status().json() instead
+ */
 
-import { Request } from 'express';
-import { ApiResponse, PaginationInfo, ErrorDetails } from '../types/game';
+import type { SuccessResponse, ErrorResponse, ListResponse, PaginationInfo } from '@shared/types/responses';
+import type { Request } from 'express';
 
 /**
- * Generate success response for single record (GET by id, POST, PATCH)
+ * @deprecated Use res.status(200).json({ result: true, data }) instead
  */
-export function successResponse<T>(
-  data: T,
-  message?: string,
-  requestId?: string
-): ApiResponse<T> {
+export function successResponse<T>(data: T, message?: string, requestId?: string): any {
   return {
     result: true,
+    success: true,  // backward compat
     data,
     message,
-    timestamp: new Date().toISOString(),
-    requestId
+    requestId,
+    timestamp: new Date().toISOString()
   };
 }
 
 /**
- * Generate success response for list (GET list endpoints)
+ * @deprecated Use res.status(code).json({ result: false, error, code }) instead
+ */
+export function errorResponse(
+  error: string,
+  code?: string,
+  details?: any,
+  _statusCode?: number,
+  requestId?: string
+): any {
+  return {
+    result: false,
+    success: false,  // backward compat
+    error,
+    code,
+    details,
+    requestId,
+    timestamp: new Date().toISOString()
+  };
+}
+
+/**
+ * @deprecated Use res.status(200).json({ result: true, list, pagination }) instead
  */
 export function listResponse<T>(
   list: T[],
   pagination: PaginationInfo,
   message?: string,
   requestId?: string
-): ApiResponse<T> {
+): any {
   return {
     result: true,
+    success: true,  // backward compat
     list,
     pagination,
     message,
-    timestamp: new Date().toISOString(),
-    requestId
+    requestId,
+    timestamp: new Date().toISOString()
   };
 }
 
 /**
- * Generate error response
+ * @deprecated Use res.status(201).json({ result: true, data }) instead
  */
-export function errorResponse(
-  error: string,
-  code?: string,
-  details?: ErrorDetails,
-  statusCode: number = 500,
-  requestId?: string
-): ApiResponse {
-  return {
-    result: false,
-    error,
-    code,
-    details,
-    timestamp: new Date().toISOString(),
-    requestId
-  };
-}
-
-/**
- * Generate success response for DELETE operations
- */
-export function deleteResponse(
-  message?: string,
-  requestId?: string
-): ApiResponse {
+export function createResponse<T>(data: T, message?: string, requestId?: string): any {
   return {
     result: true,
+    success: true,  // backward compat
+    data,
+    message,
+    requestId,
+    timestamp: new Date().toISOString()
+  };
+}
+
+/**
+ * @deprecated Use res.status(200).json({ result: true, data }) instead
+ */
+export function updateResponse<T>(data: T, message?: string, requestId?: string): any {
+  return {
+    result: true,
+    success: true,  // backward compat
+    data,
+    message,
+    requestId,
+    timestamp: new Date().toISOString()
+  };
+}
+
+/**
+ * @deprecated Use res.status(200).json({ result: true, message }) instead
+ */
+export function deleteResponse(message?: string, requestId?: string): any {
+  return {
+    result: true,
+    success: true,  // backward compat
+    data: undefined,
     message: message || 'Record eliminato con successo',
-    timestamp: new Date().toISOString(),
-    requestId
+    requestId,
+    timestamp: new Date().toISOString()
   };
 }
 
 /**
- * Generate success response for POST create operations
- */
-export function createResponse<T>(
-  data: T,
-  message?: string,
-  requestId?: string
-): ApiResponse<T> {
-  return {
-    result: true,
-    data,
-    message: message || 'Record creato con successo',
-    timestamp: new Date().toISOString(),
-    requestId
-  };
-}
-
-/**
- * Generate success response for PATCH/PUT update operations
- */
-export function updateResponse<T>(
-  data: T,
-  message?: string,
-  requestId?: string
-): ApiResponse<T> {
-  return {
-    result: true,
-    data,
-    message: message || 'Record aggiornato con successo',
-    timestamp: new Date().toISOString(),
-    requestId
-  };
-}
-
-/**
- * Helper to extract request ID from request (if available)
+ * @deprecated Middleware auto-injects requestId, no need to call this
  */
 export function getRequestId(req: Request): string | undefined {
   return req.headers['x-request-id'] as string | undefined;
 }
-

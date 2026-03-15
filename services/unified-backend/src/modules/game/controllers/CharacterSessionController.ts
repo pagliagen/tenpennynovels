@@ -3,7 +3,9 @@ import { CharacterSession } from '@database/models/CharacterSession';
 import { logger } from '../logger';
 import { AuthUtils } from '../middleware/auth';
 import { auditLogger } from '@modules/admin/utils/auditLogger';
-import { successResponse, errorResponse, listResponse, getRequestId } from '../utils/apiResponse';
+import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+
 
 export class CharacterSessionController {
 
@@ -169,7 +171,7 @@ export class CharacterSessionController {
       logger.info('Character session history retrieved', {
         characterId,
         totalSessions: total,
-        page: Number(page)
+        currentPage: Number(page)
       });
 
       res.json(successResponse(
@@ -181,7 +183,7 @@ export class CharacterSessionController {
           sessions: formattedSessions,
           pagination: {
             total,
-            page: Number(page),
+            currentPage: Number(page),
             limit: Number(limit),
             pages: Math.ceil(total / Number(limit))
           },

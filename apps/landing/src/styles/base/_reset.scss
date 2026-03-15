@@ -116,6 +116,34 @@ select {
 }
 
 /**
+ * Scrollbar - Firefox + WebKit support
+ * Prevents layout shift when scrollbar appears/disappears
+ */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background-color: var(--color-bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(6, 115, 104, 0.5);
+  border-radius: 4px;
+
+  &:hover {
+    background-color: var(--color-primary);
+  }
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(6, 115, 104, 0.5) var(--color-bg-secondary);
+  scrollbar-gutter: stable;
+}
+
+/**
  * Remove default button styles
  */
 button {

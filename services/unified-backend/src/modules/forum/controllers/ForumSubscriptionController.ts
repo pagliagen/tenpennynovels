@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
-import { successResponse, errorResponse, createResponse, getRequestId } from '../utils/apiResponse';
+import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+
 import { ForumDiscussionSubscription } from '@database/models/ForumDiscussionSubscription';
 import { ForumDiscussion } from '@database/models/ForumDiscussion';
 import { logger } from '../logger';
@@ -11,7 +13,7 @@ export class ForumSubscriptionController {
     try {
       const character = req.character;
       if (!character) {
-        res.status(401).json(errorResponse('Personaggio non trovato', 'CHARACTER_NOT_FOUND', undefined, 401, getRequestId(req)));
+        res.status(401).json({ success: false, error: 'Personaggio non trovato', code: 'CHARACTER_NOT_FOUND' });
         return;
       }
 
@@ -20,7 +22,7 @@ export class ForumSubscriptionController {
 
       const discussion = await ForumDiscussion.findOne({ topicSlug, slug: discussionSlug });
       if (!discussion) {
-        res.status(404).json(errorResponse('Discussione non trovata', 'DISCUSSION_NOT_FOUND', undefined, 404, getRequestId(req)));
+        res.status(404).json({ success: false, error: 'Discussione non trovata', code: 'DISCUSSION_NOT_FOUND' });
         return;
       }
 
@@ -60,7 +62,7 @@ export class ForumSubscriptionController {
     try {
       const character = req.character;
       if (!character) {
-        res.status(401).json(errorResponse('Personaggio non trovato', 'CHARACTER_NOT_FOUND', undefined, 401, getRequestId(req)));
+        res.status(401).json({ success: false, error: 'Personaggio non trovato', code: 'CHARACTER_NOT_FOUND' });
         return;
       }
 
@@ -113,7 +115,7 @@ export class ForumSubscriptionController {
       }, undefined, getRequestId(req)));
     } catch (error: unknown) {
       logger.error('[ForumSubscriptionController] Get subscriptions error:', error);
-      res.status(500).json(errorResponse('Impossibile recuperare le iscrizioni', 'GET_SUBSCRIPTIONS_ERROR', undefined, 500, getRequestId(req)));
+      res.status(500).json({ success: false, error: 'Impossibile recuperare le iscrizioni', code: 'GET_SUBSCRIPTIONS_ERROR' });
     }
   }
 }

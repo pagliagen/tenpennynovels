@@ -1,112 +1,67 @@
-import { Response } from 'express';
+/**
+ * DEPRECATED - Temporary stub for migration
+ * Use direct res.status().json() instead
+ */
 
-// ✅ Standard Response Interface
-export interface ApiResponse<T = any> {
-  result: boolean;
-  data?: T;
-  message?: string;          // Messaggio di successo
-  error?: string;           // Messaggio user-friendly IN ITALIANO
-  code?: string;            // Codice errore (es: USER_NOT_FOUND)
-  details?: Record<string, any>;
-  timestamp: string;        // ISO 8601
-  requestId: string;        // SEMPRE presente
+import type { SuccessResponse, ErrorResponse, ListResponse, PaginationInfo } from '@shared/types/responses';
+import type { Request } from 'express';
+
+/**
+ * @deprecated Use res.status(200).json({ success: true, data }) instead
+ */
+export function successResponse<T>(data: T, message?: string, requestId?: string): SuccessResponse<T> {
+  return { success: true, data, message, requestId };
 }
 
-// ✅ Success Response
-export function successResponse<T>(
-  res: Response,
-  data: T,
-  message?: string,
-  statusCode: number = 200
-): void {
-  const response: ApiResponse<T> = {
-    result: true,
-    data,
-    timestamp: new Date().toISOString(),
-    requestId: res.locals.requestId
-  };
-
-  if (message) {
-    response.message = message;
-  }
-
-  res.status(statusCode).json(response);
-}
-
-// ✅ List Response (con paginazione)
-export function listResponse<T>(
-  res: Response,
-  items: T[],
-  pagination: {
-    page: number;
-    pageSize: number;
-    total: number;
-    totalPages: number;
-    hasNext: boolean;
-    hasPrev: boolean;
-  },
-  message?: string,
-  statusCode: number = 200
-): void {
-  const response: ApiResponse = {
-    result: true,
-    data: {
-      items,
-      pagination
-    },
-    timestamp: new Date().toISOString(),
-    requestId: res.locals.requestId
-  };
-
-  if (message) {
-    response.message = message;
-  }
-
-  res.status(statusCode).json(response);
-}
-
-// ✅ Error Response (messaggi IN ITALIANO)
+/**
+ * @deprecated Use res.status(code).json({ success: false, error, code }) instead
+ */
 export function errorResponse(
-  res: Response,
   error: string,
   code?: string,
-  details?: Record<string, any>,
-  statusCode: number = 400
-): void {
-  const response: ApiResponse = {
-    result: false,
-    error,
-    code,
-    details,
-    timestamp: new Date().toISOString(),
-    requestId: res.locals.requestId
-  };
-
-  res.status(statusCode).json(response);
+  details?: any,
+  _statusCode?: number,
+  requestId?: string
+): ErrorResponse {
+  return { success: false, error, code, details, requestId };
 }
 
-// ✅ Created Response (201)
-export function createdResponse<T>(
-  res: Response,
-  data: T,
-  message?: string
-): void {
-  successResponse(res, data, message, 201);
+/**
+ * @deprecated Use res.status(200).json({ success: true, list, pagination }) instead
+ */
+export function listResponse<T>(
+  list: T[],
+  pagination: PaginationInfo,
+  message?: string,
+  requestId?: string
+): ListResponse<T> {
+  return { success: true, list, pagination, message, requestId };
 }
 
-// ✅ Updated Response (200)
-export function updatedResponse<T>(
-  res: Response,
-  data: T,
-  message?: string
-): void {
-  successResponse(res, data, message, 200);
+/**
+ * @deprecated Use res.status(201).json({ success: true, data }) instead
+ */
+export function createResponse<T>(data: T, message?: string, requestId?: string): SuccessResponse<T> {
+  return { success: true, data, message, requestId };
 }
 
-// ✅ Deleted Response (200)
-export function deletedResponse(
-  res: Response,
-  message?: string
-): void {
-  successResponse(res, { deleted: true }, message, 200);
+/**
+ * @deprecated Use res.status(200).json({ success: true, data }) instead
+ */
+export function updateResponse<T>(data: T, message?: string, requestId?: string): SuccessResponse<T> {
+  return { success: true, data, message, requestId };
+}
+
+/**
+ * @deprecated Use res.status(200).json({ success: true, message }) instead
+ */
+export function deleteResponse(message?: string, requestId?: string): SuccessResponse<undefined> {
+  return { success: true, data: undefined, message: message || 'Record eliminato con successo', requestId };
+}
+
+/**
+ * @deprecated Middleware auto-injects requestId, no need to call this
+ */
+export function getRequestId(req: Request): string | undefined {
+  return req.headers['x-request-id'] as string | undefined;
 }

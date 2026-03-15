@@ -41,7 +41,6 @@
   position: sticky;
   top: 0;
   z-index: $z-index-sticky;
-  box-shadow: $shadow-md;
   flex-shrink: 0;
 }
 
@@ -157,6 +156,5 @@
   background-color: $color-content-bg;
   border: 1px solid $color-border;
   border-radius: $radius-md;
-  box-shadow: $shadow-lg;
   z-index: $z-index-dropdown;
 }

@@ -3,7 +3,9 @@ import { Types } from 'mongoose';
 import { Character, Occupation, Skill } from '@database/models';
 import type { ICharacter } from '@database/models/Character';
 import { logger } from '../logger';
-import { successResponse, errorResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
+import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
+
 import { CharacterVisibilityFilter } from '@shared/utils/characterVisibility';
 import { escapeRegex } from '@shared/utils/validation';
 import { canReadOthersPrivate } from '@config/permissions';

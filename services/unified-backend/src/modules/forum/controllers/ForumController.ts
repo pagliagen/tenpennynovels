@@ -1,7 +1,9 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import slugify from 'slugify';
-import { successResponse, errorResponse, createResponse, listResponse, getRequestId } from '../utils/apiResponse';
+import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+
 import { ForumTopic, type IForumTopic, type TopicAccessRule } from '@database/models/ForumTopic';
 import { ForumDiscussion } from '@database/models/ForumDiscussion';
 import { ForumPost } from '@database/models/ForumPost';
@@ -83,7 +85,7 @@ export class ForumController {
 
       res.json(successResponse({ totalDiscussions, totalPosts, authContext }, undefined, getRequestId(req)));
     } catch (error) {
-      res.status(500).json(errorResponse('Impossibile recuperare le statistiche del forum', 'GET_FORUM_INIT_ERROR', undefined, 500, getRequestId(req)));
+      res.status(500).json({ success: false, error: 'Impossibile recuperare le statistiche del forum', code: 'GET_FORUM_INIT_ERROR' });
     }
   }
 
@@ -123,7 +125,7 @@ export class ForumController {
         icon: t.icon
       })), undefined, getRequestId(req)));
     } catch (error) {
-      res.status(500).json(errorResponse('Impossibile recuperare i topic', 'GET_TOPICS_ERROR', undefined, 500, getRequestId(req)));
+      res.status(500).json({ success: false, error: 'Impossibile recuperare i topic', code: 'GET_TOPICS_ERROR' });
     }
   }
 
@@ -132,12 +134,12 @@ export class ForumController {
       const { slug } = req.params;
       const topic = await ForumTopic.findOne({ slug, isVisible: true });
       if (!topic) {
-        return res.status(404).json(errorResponse('Topic non trovato', 'TOPIC_NOT_FOUND', undefined, 404, getRequestId(req)));
+        return res.status(404).json({ success: false, error: 'Topic non trovato', code: 'TOPIC_NOT_FOUND' });
       }
 
       const character = req.character;
       if (!(await canAccessTopic(topic, character ? { characterId: character.characterId, gameplayRoles: character.gameplayRoles } : undefined))) {
-        return res.status(403).json(errorResponse('Accesso negato', 'ACCESS_DENIED', undefined, 403, getRequestId(req)));
+        return res.status(403).json({ success: false, error: 'Accesso negato', code: 'ACCESS_DENIED' });
       }
 
       res.json(successResponse({
@@ -150,7 +152,7 @@ export class ForumController {
         color: topic.color, icon: topic.icon, moderatorIds: topic.moderatorIds
       }, undefined, getRequestId(req)));
     } catch (error) {
-      res.status(500).json(errorResponse('Impossibile recuperare il topic', 'GET_TOPIC_ERROR', undefined, 500, getRequestId(req)));
+      res.status(500).json({ success: false, error: 'Impossibile recuperare il topic', code: 'GET_TOPIC_ERROR' });
     }
   }
 
@@ -165,12 +167,12 @@ export class ForumController {
 
       const topic = await ForumTopic.findOne({ slug: topicSlug, isVisible: true });
       if (!topic) {
-        return res.status(404).json(errorResponse('Topic non trovato', 'TOPIC_NOT_FOUND', undefined, 404, getRequestId(req)));
+        return res.status(404).json({ success: false, error: 'Topic non trovato', code: 'TOPIC_NOT_FOUND' });
       }
 
       const character = req.character;
       if (!(await canAccessTopic(topic, character ? { characterId: character.characterId, gameplayRoles: character.gameplayRoles } : undefined))) {
-        return res.status(403).json(errorResponse('Accesso negato', 'ACCESS_DENIED', undefined, 403, getRequestId(req)));
+        return res.status(403).json({ success: false, error: 'Accesso negato', code: 'ACCESS_DENIED' });
       }
 
       const filter = { topicSlug, isVisible: true };
@@ -186,9 +188,9 @@ export class ForumController {
         viewCount: d.viewCount, subscriberCount: d.subscriberCount,
         lastPostAt: d.lastPostAt, lastPostBy: d.lastPostBy,
         createdAt: d.createdAt, createdBy: d.createdBy, tags: d.tags || []
-      })), { page, pageSize: limit, total, totalPages, hasNext: page < totalPages, hasPrev: page > 1 }, undefined, getRequestId(req)));
+      })), { currentPage: page, pageSize: limit, totalItems: total, totalPages, hasNextPage: page < totalPages, hasPreviousPage: page > 1 }, undefined, getRequestId(req)));
     } catch (error) {
-      res.status(500).json(errorResponse('Impossibile recuperare le discussioni', 'GET_DISCUSSIONS_ERROR', undefined, 500, getRequestId(req)));
+      res.status(500).json({ success: false, error: 'Impossibile recuperare le discussioni', code: 'GET_DISCUSSIONS_ERROR' });
     }
   }
 
@@ -198,17 +200,17 @@ export class ForumController {
 
       const topic = await ForumTopic.findOne({ slug: topicSlug, isVisible: true });
       if (!topic) {
-        return res.status(404).json(errorResponse('Topic non trovato', 'TOPIC_NOT_FOUND', undefined, 404, getRequestId(req)));
+        return res.status(404).json({ success: false, error: 'Topic non trovato', code: 'TOPIC_NOT_FOUND' });
       }
 
       const character = req.character;
       if (!(await canAccessTopic(topic, character ? { characterId: character.characterId, gameplayRoles: character.gameplayRoles } : undefined))) {
-        return res.status(403).json(errorResponse('Accesso negato', 'ACCESS_DENIED', undefined, 403, getRequestId(req)));
+        return res.status(403).json({ success: false, error: 'Accesso negato', code: 'ACCESS_DENIED' });
       }
 
       const discussion = await ForumDiscussion.findOne({ topicSlug, slug: discussionSlug, isVisible: true });
       if (!discussion) {
-        return res.status(404).json(errorResponse('Discussione non trovata', 'DISCUSSION_NOT_FOUND', undefined, 404, getRequestId(req)));
+        return res.status(404).json({ success: false, error: 'Discussione non trovata', code: 'DISCUSSION_NOT_FOUND' });
       }
 
       await ForumDiscussion.updateOne({ _id: discussion._id }, { $inc: { viewCount: 1 } });
@@ -224,7 +226,7 @@ export class ForumController {
         tags: discussion.tags || []
       }, undefined, getRequestId(req)));
     } catch (error) {
-      res.status(500).json(errorResponse('Impossibile recuperare la discussione', 'GET_DISCUSSION_ERROR', undefined, 500, getRequestId(req)));
+      res.status(500).json({ success: false, error: 'Impossibile recuperare la discussione', code: 'GET_DISCUSSION_ERROR' });
     }
   }
 
@@ -234,29 +236,29 @@ export class ForumController {
       const { title, content, tags } = req.body;
       const author = characterRef(req);
       if (!author) {
-        return res.status(400).json(errorResponse('Personaggio richiesto', 'CHARACTER_REQUIRED', undefined, 400, getRequestId(req)));
+        return res.status(400).json({ success: false, error: 'Personaggio richiesto', code: 'CHARACTER_REQUIRED' });
       }
 
       const topic = await ForumTopic.findOne({ slug: topicSlug, isVisible: true });
       if (!topic) {
-        return res.status(404).json(errorResponse('Topic non trovato', 'TOPIC_NOT_FOUND', undefined, 404, getRequestId(req)));
+        return res.status(404).json({ success: false, error: 'Topic non trovato', code: 'TOPIC_NOT_FOUND' });
       }
 
       if (!(await canAccessTopic(topic, { characterId: req.character!.characterId, gameplayRoles: req.character!.gameplayRoles }))) {
-        return res.status(403).json(errorResponse('Accesso negato', 'ACCESS_DENIED', undefined, 403, getRequestId(req)));
+        return res.status(403).json({ success: false, error: 'Accesso negato', code: 'ACCESS_DENIED' });
       }
 
       if (topic.isLocked && !hasPermission(req, 'forum.manage')) {
-        return res.status(403).json(errorResponse('Il topic è bloccato', 'TOPIC_LOCKED', undefined, 403, getRequestId(req)));
+        return res.status(403).json({ success: false, error: 'Il topic è bloccato', code: 'TOPIC_LOCKED' });
       }
 
       if (!title || !content || title.trim().length < 3 || content.trim().length === 0) {
-        return res.status(400).json(errorResponse('Titolo e contenuto sono obbligatori', 'VALIDATION_ERROR', undefined, 400, getRequestId(req)));
+        return res.status(400).json({ success: false, error: 'Titolo e contenuto sono obbligatori', code: 'VALIDATION_ERROR' });
       }
 
       const slug = createSlug(title);
       if (await ForumDiscussion.findOne({ topicSlug, slug })) {
-        return res.status(409).json(errorResponse('Esiste già una discussione con questo titolo', 'DUPLICATE_DISCUSSION', undefined, 409, getRequestId(req)));
+        return res.status(409).json({ success: false, error: 'Esiste già una discussione con questo titolo', code: 'DUPLICATE_DISCUSSION' });
       }
 
       const now = new Date();
@@ -288,7 +290,7 @@ export class ForumController {
 
       res.status(201).json(createResponse({ id: discussion._id, slug: discussion.slug }, undefined, getRequestId(req)));
     } catch (error) {
-      res.status(500).json(errorResponse('Impossibile creare la discussione', 'CREATE_DISCUSSION_ERROR', undefined, 500, getRequestId(req)));
+      res.status(500).json({ success: false, error: 'Impossibile creare la discussione', code: 'CREATE_DISCUSSION_ERROR' });
     }
   }
 
@@ -298,18 +300,18 @@ export class ForumController {
       const { title, tags, isPinned, isLocked, isVisible } = req.body;
       const character = req.character;
       if (!character) {
-        return res.status(400).json(errorResponse('Personaggio richiesto', 'CHARACTER_REQUIRED', undefined, 400, getRequestId(req)));
+        return res.status(400).json({ success: false, error: 'Personaggio richiesto', code: 'CHARACTER_REQUIRED' });
       }
 
       const discussion = await ForumDiscussion.findOne({ topicSlug, slug: discussionSlug });
       if (!discussion) {
-        return res.status(404).json(errorResponse('Discussione non trovata', 'DISCUSSION_NOT_FOUND', undefined, 404, getRequestId(req)));
+        return res.status(404).json({ success: false, error: 'Discussione non trovata', code: 'DISCUSSION_NOT_FOUND' });
       }
 
       const isAuthor = discussion.createdBy.characterId.toString() === character.characterId;
       const isAdmin = hasPermission(req, 'forum.manage');
       if (!isAuthor && !isAdmin) {
-        return res.status(403).json(errorResponse('Non autorizzato', 'ACCESS_DENIED', undefined, 403, getRequestId(req)));
+        return res.status(403).json({ success: false, error: 'Non autorizzato', code: 'ACCESS_DENIED' });
       }
 
       const update: Record<string, unknown> = {};
@@ -320,9 +322,9 @@ export class ForumController {
       if (isVisible !== undefined && isAdmin) update.isVisible = isVisible;
 
       await ForumDiscussion.updateOne({ _id: discussion._id }, { $set: update });
-      res.json(successResponse({ updated: true }, undefined, getRequestId(req)));
+      res.json({ success: true, data: { updated: true } });
     } catch (error) {
-      res.status(500).json(errorResponse('Impossibile aggiornare la discussione', 'UPDATE_DISCUSSION_ERROR', undefined, 500, getRequestId(req)));
+      res.status(500).json({ success: false, error: 'Impossibile aggiornare la discussione', code: 'UPDATE_DISCUSSION_ERROR' });
     }
   }
 
@@ -331,17 +333,17 @@ export class ForumController {
       const { topicSlug, discussionSlug } = req.params;
       const character = req.character;
       if (!character) {
-        return res.status(400).json(errorResponse('Personaggio richiesto', 'CHARACTER_REQUIRED', undefined, 400, getRequestId(req)));
+        return res.status(400).json({ success: false, error: 'Personaggio richiesto', code: 'CHARACTER_REQUIRED' });
       }
 
       const discussion = await ForumDiscussion.findOne({ topicSlug, slug: discussionSlug });
       if (!discussion) {
-        return res.status(404).json(errorResponse('Discussione non trovata', 'DISCUSSION_NOT_FOUND', undefined, 404, getRequestId(req)));
+        return res.status(404).json({ success: false, error: 'Discussione non trovata', code: 'DISCUSSION_NOT_FOUND' });
       }
 
       const isAuthor = discussion.createdBy.characterId.toString() === character.characterId;
       if (!isAuthor && !hasPermission(req, 'forum.manage')) {
-        return res.status(403).json(errorResponse('Non autorizzato', 'ACCESS_DENIED', undefined, 403, getRequestId(req)));
+        return res.status(403).json({ success: false, error: 'Non autorizzato', code: 'ACCESS_DENIED' });
       }
 
       const posts = await ForumPost.find({ discussionId: discussion._id, isDeleted: false }).select('_id').lean();
@@ -361,9 +363,9 @@ export class ForumController {
         $inc: { discussionCount: -1, postCount: -postCount }
       });
 
-      res.json(successResponse({ deleted: true }, undefined, getRequestId(req)));
+      res.json({ success: true, data: { deleted: true } });
     } catch (error) {
-      res.status(500).json(errorResponse('Impossibile eliminare la discussione', 'DELETE_DISCUSSION_ERROR', undefined, 500, getRequestId(req)));
+      res.status(500).json({ success: false, error: 'Impossibile eliminare la discussione', code: 'DELETE_DISCUSSION_ERROR' });
     }
   }
 
@@ -378,17 +380,17 @@ export class ForumController {
 
       const topic = await ForumTopic.findOne({ slug: topicSlug, isVisible: true });
       if (!topic) {
-        return res.status(404).json(errorResponse('Topic non trovato', 'TOPIC_NOT_FOUND', undefined, 404, getRequestId(req)));
+        return res.status(404).json({ success: false, error: 'Topic non trovato', code: 'TOPIC_NOT_FOUND' });
       }
 
       const character = req.character;
       if (!(await canAccessTopic(topic, character ? { characterId: character.characterId, gameplayRoles: character.gameplayRoles } : undefined))) {
-        return res.status(403).json(errorResponse('Accesso negato', 'ACCESS_DENIED', undefined, 403, getRequestId(req)));
+        return res.status(403).json({ success: false, error: 'Accesso negato', code: 'ACCESS_DENIED' });
       }
 
       const discussion = await ForumDiscussion.findOne({ topicSlug, slug: discussionSlug, isVisible: true });
       if (!discussion) {
-        return res.status(404).json(errorResponse('Discussione non trovata', 'DISCUSSION_NOT_FOUND', undefined, 404, getRequestId(req)));
+        return res.status(404).json({ success: false, error: 'Discussione non trovata', code: 'DISCUSSION_NOT_FOUND' });
       }
 
       const filter = { discussionId: discussion._id };
@@ -406,9 +408,9 @@ export class ForumController {
         isEdited: p.isEdited, isDeleted: p.isDeleted,
         replyToPostId: p.replyToPostId,
         reactionCounts: p.reactionCounts
-      })), { page, pageSize: limit, total, totalPages, hasNext: page < totalPages, hasPrev: page > 1 }, undefined, getRequestId(req)));
+      })), { currentPage: page, pageSize: limit, totalItems: total, totalPages, hasNextPage: page < totalPages, hasPreviousPage: page > 1 }, undefined, getRequestId(req)));
     } catch (error) {
-      res.status(500).json(errorResponse('Impossibile recuperare i post', 'GET_POSTS_ERROR', undefined, 500, getRequestId(req)));
+      res.status(500).json({ success: false, error: 'Impossibile recuperare i post', code: 'GET_POSTS_ERROR' });
     }
   }
 
@@ -418,29 +420,29 @@ export class ForumController {
       const { content, replyToPostId } = req.body;
       const author = characterRef(req);
       if (!author) {
-        return res.status(400).json(errorResponse('Personaggio richiesto', 'CHARACTER_REQUIRED', undefined, 400, getRequestId(req)));
+        return res.status(400).json({ success: false, error: 'Personaggio richiesto', code: 'CHARACTER_REQUIRED' });
       }
 
       if (!content || content.trim().length === 0) {
-        return res.status(400).json(errorResponse('Il contenuto è obbligatorio', 'VALIDATION_ERROR', undefined, 400, getRequestId(req)));
+        return res.status(400).json({ success: false, error: 'Il contenuto è obbligatorio', code: 'VALIDATION_ERROR' });
       }
 
       const topic = await ForumTopic.findOne({ slug: topicSlug, isVisible: true });
       if (!topic) {
-        return res.status(404).json(errorResponse('Topic non trovato', 'TOPIC_NOT_FOUND', undefined, 404, getRequestId(req)));
+        return res.status(404).json({ success: false, error: 'Topic non trovato', code: 'TOPIC_NOT_FOUND' });
       }
 
       if (!(await canAccessTopic(topic, { characterId: req.character!.characterId, gameplayRoles: req.character!.gameplayRoles }))) {
-        return res.status(403).json(errorResponse('Accesso negato', 'ACCESS_DENIED', undefined, 403, getRequestId(req)));
+        return res.status(403).json({ success: false, error: 'Accesso negato', code: 'ACCESS_DENIED' });
       }
 
       const discussion = await ForumDiscussion.findOne({ topicSlug, slug: discussionSlug, isVisible: true });
       if (!discussion) {
-        return res.status(404).json(errorResponse('Discussione non trovata', 'DISCUSSION_NOT_FOUND', undefined, 404, getRequestId(req)));
+        return res.status(404).json({ success: false, error: 'Discussione non trovata', code: 'DISCUSSION_NOT_FOUND' });
       }
 
       if ((topic.isLocked || discussion.isLocked) && !hasPermission(req, 'forum.manage')) {
-        return res.status(403).json(errorResponse('La discussione è bloccata', 'DISCUSSION_LOCKED', undefined, 403, getRequestId(req)));
+        return res.status(403).json({ success: false, error: 'La discussione è bloccata', code: 'DISCUSSION_LOCKED' });
       }
 
       const now = new Date();
@@ -464,9 +466,9 @@ export class ForumController {
         $set: { lastPostAt: now, lastPostBy: author }
       });
 
-      res.status(201).json(createResponse({ id: post._id }, undefined, getRequestId(req)));
+      res.status(201).json({ success: true, data: { id: post._id } });
     } catch (error) {
-      res.status(500).json(errorResponse('Impossibile creare il post', 'CREATE_POST_ERROR', undefined, 500, getRequestId(req)));
+      res.status(500).json({ success: false, error: 'Impossibile creare il post', code: 'CREATE_POST_ERROR' });
     }
   }
 
@@ -476,23 +478,23 @@ export class ForumController {
       const { content } = req.body;
       const character = req.character;
       if (!character) {
-        return res.status(400).json(errorResponse('Personaggio richiesto', 'CHARACTER_REQUIRED', undefined, 400, getRequestId(req)));
+        return res.status(400).json({ success: false, error: 'Personaggio richiesto', code: 'CHARACTER_REQUIRED' });
       }
 
       if (!postIdStr || !mongoose.Types.ObjectId.isValid(postIdStr)) {
-        return res.status(400).json(errorResponse('ID post non valido', 'INVALID_ID', undefined, 400, getRequestId(req)));
+        return res.status(400).json({ success: false, error: 'ID post non valido', code: 'INVALID_ID' });
       }
       const post = await ForumPost.findById(new mongoose.Types.ObjectId(postIdStr));
       if (!post || post.isDeleted) {
-        return res.status(404).json(errorResponse('Post non trovato', 'POST_NOT_FOUND', undefined, 404, getRequestId(req)));
+        return res.status(404).json({ success: false, error: 'Post non trovato', code: 'POST_NOT_FOUND' });
       }
 
       if (post.author.characterId.toString() !== character.characterId) {
-        return res.status(403).json(errorResponse('Non autorizzato', 'ACCESS_DENIED', undefined, 403, getRequestId(req)));
+        return res.status(403).json({ success: false, error: 'Non autorizzato', code: 'ACCESS_DENIED' });
       }
 
       if (!content || content.trim().length === 0) {
-        return res.status(400).json(errorResponse('Il contenuto è obbligatorio', 'VALIDATION_ERROR', undefined, 400, getRequestId(req)));
+        return res.status(400).json({ success: false, error: 'Il contenuto è obbligatorio', code: 'VALIDATION_ERROR' });
       }
 
       const now = new Date();
@@ -510,9 +512,9 @@ export class ForumController {
         }
       }, { new: true });
 
-      res.json(successResponse({ updated: true }, undefined, getRequestId(req)));
+      res.json({ success: true, data: { updated: true } });
     } catch (error) {
-      res.status(500).json(errorResponse('Impossibile modificare il post', 'UPDATE_POST_ERROR', undefined, 500, getRequestId(req)));
+      res.status(500).json({ success: false, error: 'Impossibile modificare il post', code: 'UPDATE_POST_ERROR' });
     }
   }
 
@@ -521,20 +523,20 @@ export class ForumController {
       const postIdStr = (Array.isArray(req.params.postId) ? req.params.postId[0] : req.params.postId) as string;
       const character = req.character;
       if (!character) {
-        return res.status(400).json(errorResponse('Personaggio richiesto', 'CHARACTER_REQUIRED', undefined, 400, getRequestId(req)));
+        return res.status(400).json({ success: false, error: 'Personaggio richiesto', code: 'CHARACTER_REQUIRED' });
       }
 
       if (!postIdStr || !mongoose.Types.ObjectId.isValid(postIdStr)) {
-        return res.status(400).json(errorResponse('ID post non valido', 'INVALID_ID', undefined, 400, getRequestId(req)));
+        return res.status(400).json({ success: false, error: 'ID post non valido', code: 'INVALID_ID' });
       }
       const post = await ForumPost.findById(new mongoose.Types.ObjectId(postIdStr));
       if (!post || post.isDeleted) {
-        return res.status(404).json(errorResponse('Post non trovato', 'POST_NOT_FOUND', undefined, 404, getRequestId(req)));
+        return res.status(404).json({ success: false, error: 'Post non trovato', code: 'POST_NOT_FOUND' });
       }
 
       const isAuthor = post.author.characterId.toString() === character.characterId;
       if (!isAuthor && !hasPermission(req, 'forum.manage')) {
-        return res.status(403).json(errorResponse('Non autorizzato', 'ACCESS_DENIED', undefined, 403, getRequestId(req)));
+        return res.status(403).json({ success: false, error: 'Non autorizzato', code: 'ACCESS_DENIED' });
       }
 
       const now = new Date();
@@ -556,9 +558,9 @@ export class ForumController {
         // Non-blocking
       }
 
-      res.json(successResponse({ deleted: true }, undefined, getRequestId(req)));
+      res.json({ success: true, data: { deleted: true } });
     } catch (error) {
-      res.status(500).json(errorResponse('Impossibile eliminare il post', 'DELETE_POST_ERROR', undefined, 500, getRequestId(req)));
+      res.status(500).json({ success: false, error: 'Impossibile eliminare il post', code: 'DELETE_POST_ERROR' });
     }
   }
 
@@ -568,7 +570,7 @@ export class ForumController {
     try {
       const character = req.character;
       if (!character) {
-        return res.status(400).json(errorResponse('Personaggio richiesto', 'CHARACTER_REQUIRED', undefined, 400, getRequestId(req)));
+        return res.status(400).json({ success: false, error: 'Personaggio richiesto', code: 'CHARACTER_REQUIRED' });
       }
 
       const favorites = await ForumTopicFavorite.find({
@@ -576,7 +578,7 @@ export class ForumController {
       }).lean();
 
       if (favorites.length === 0) {
-        return res.json(successResponse([], undefined, getRequestId(req)));
+        return res.json({ success: true, data: [] });
       }
 
       const topicIds = favorites.map(f => f.topicId);
@@ -596,7 +598,7 @@ export class ForumController {
         isFavorite: true
       })), undefined, getRequestId(req)));
     } catch (error) {
-      res.status(500).json(errorResponse('Impossibile recuperare i preferiti', 'GET_FAVORITES_ERROR', undefined, 500, getRequestId(req)));
+      res.status(500).json({ success: false, error: 'Impossibile recuperare i preferiti', code: 'GET_FAVORITES_ERROR' });
     }
   }
 
@@ -605,12 +607,12 @@ export class ForumController {
       const { slug } = req.params;
       const character = req.character;
       if (!character) {
-        return res.status(400).json(errorResponse('Personaggio richiesto', 'CHARACTER_REQUIRED', undefined, 400, getRequestId(req)));
+        return res.status(400).json({ success: false, error: 'Personaggio richiesto', code: 'CHARACTER_REQUIRED' });
       }
 
       const topic = await ForumTopic.findOne({ slug, isVisible: true });
       if (!topic) {
-        return res.status(404).json(errorResponse('Topic non trovato', 'TOPIC_NOT_FOUND', undefined, 404, getRequestId(req)));
+        return res.status(404).json({ success: false, error: 'Topic non trovato', code: 'TOPIC_NOT_FOUND' });
       }
 
       const charId = new mongoose.Types.ObjectId(character.characterId);
@@ -618,13 +620,13 @@ export class ForumController {
 
       if (existing) {
         await ForumTopicFavorite.deleteOne({ _id: existing._id });
-        res.json(successResponse({ isFavorite: false }, undefined, getRequestId(req)));
+        res.json({ success: true, data: { isFavorite: false } });
       } else {
         await ForumTopicFavorite.create({ characterId: charId, topicId: topic._id });
-        res.json(successResponse({ isFavorite: true }, undefined, getRequestId(req)));
+        res.json({ success: true, data: { isFavorite: true } });
       }
     } catch (error) {
-      res.status(500).json(errorResponse('Impossibile aggiornare i preferiti', 'TOGGLE_FAVORITE_ERROR', undefined, 500, getRequestId(req)));
+      res.status(500).json({ success: false, error: 'Impossibile aggiornare i preferiti', code: 'TOGGLE_FAVORITE_ERROR' });
     }
   }
 
@@ -653,7 +655,7 @@ export class ForumController {
         createdAt: d.createdAt, createdBy: d.createdBy, tags: d.tags || []
       })), undefined, getRequestId(req)));
     } catch (error) {
-      res.status(500).json(errorResponse('Impossibile recuperare le discussioni recenti', 'GET_RECENT_ERROR', undefined, 500, getRequestId(req)));
+      res.status(500).json({ success: false, error: 'Impossibile recuperare le discussioni recenti', code: 'GET_RECENT_ERROR' });
     }
   }
 
@@ -693,7 +695,7 @@ export class ForumController {
         popularityScore: d.popularityScore
       })), undefined, getRequestId(req)));
     } catch (error) {
-      res.status(500).json(errorResponse('Impossibile recuperare le discussioni popolari', 'GET_POPULAR_ERROR', undefined, 500, getRequestId(req)));
+      res.status(500).json({ success: false, error: 'Impossibile recuperare le discussioni popolari', code: 'GET_POPULAR_ERROR' });
     }
   }
 
@@ -704,7 +706,7 @@ export class ForumController {
       const { q: query, topicSlug } = req.query;
 
       if (!query || typeof query !== 'string' || query.trim().length === 0) {
-        return res.status(400).json(errorResponse('La query di ricerca è obbligatoria', 'MISSING_QUERY', undefined, 400, getRequestId(req)));
+        return res.status(400).json({ success: false, error: 'La query di ricerca è obbligatoria', code: 'MISSING_QUERY' });
       }
 
       // TODO: Replace with EmbeddingService.semanticSearch (todo: forum-search-semantic)
@@ -733,9 +735,9 @@ export class ForumController {
       res.json(listResponse(posts.map(p => ({
         id: p._id, topicSlug: p.topicSlug, discussionSlug: p.discussionSlug,
         content: p.content, author: p.author, createdAt: p.createdAt
-      })), { page, pageSize: limit, total, totalPages, hasNext: page < totalPages, hasPrev: page > 1 }, undefined, getRequestId(req)));
+      })), { currentPage: page, pageSize: limit, totalItems: total, totalPages, hasNextPage: page < totalPages, hasPreviousPage: page > 1 }, undefined, getRequestId(req)));
     } catch (error) {
-      res.status(500).json(errorResponse('Impossibile effettuare la ricerca', 'SEARCH_ERROR', undefined, 500, getRequestId(req)));
+      res.status(500).json({ success: false, error: 'Impossibile effettuare la ricerca', code: 'SEARCH_ERROR' });
     }
   }
 }

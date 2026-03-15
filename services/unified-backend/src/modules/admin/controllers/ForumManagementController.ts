@@ -5,7 +5,9 @@ import { Character } from '@database/models/Character';
 import { Location } from '@database/models/Location';
 import { logger } from '../utils/logger';
 import { auditLogger } from '../utils/auditLogger';
-import { listResponse, successResponse, errorResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
+import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId , deleteResponse} from '../utils/apiResponse';
+
 import { escapeRegex } from '@shared/utils/validation';
 
 export class ForumManagementController {
@@ -102,12 +104,12 @@ export class ForumManagementController {
       const totalPages = Math.ceil(total / limitNum);
 
       const pagination = {
-        page: pageNum,
+        currentPage: pageNum,
         totalPages,
         totalItems: total,
         pageSize: limitNum,
         hasNextPage: pageNum < totalPages,
-        hasPrevPage: pageNum > 1
+        hasPreviousPage: pageNum > 1
       };
 
       res.json(listResponse(

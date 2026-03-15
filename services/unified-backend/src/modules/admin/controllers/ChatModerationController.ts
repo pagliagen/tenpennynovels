@@ -7,7 +7,9 @@ import { Character } from '@database/models/Character';
 import { User } from '@database/models/User';
 import { logger } from '../utils/logger';
 import { redis } from '@config/runtime/redis';
-import { successResponse, errorResponse, listResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
+import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+
 import { escapeRegex } from '@shared/utils/validation';
 import { PaginationInfo } from '../types/management';
 
@@ -210,12 +212,12 @@ export class ChatModerationController {
       const totalPages = Math.ceil(totalCount / limitNum);
 
       const pagination: PaginationInfo = {
-        page: pageNum,
+        currentPage: pageNum,
         totalPages,
         totalItems: totalCount,
         pageSize: limitNum,
         hasNextPage: pageNum < totalPages,
-        hasPrevPage: pageNum > 1
+        hasPreviousPage: pageNum > 1
       };
 
       res.json(successResponse(
@@ -477,12 +479,12 @@ export class ChatModerationController {
       const totalPages = Math.ceil(totalCount / limitNum);
 
       const pagination: PaginationInfo = {
-        page: pageNum,
+        currentPage: pageNum,
         totalPages,
         totalItems: totalCount,
         pageSize: limitNum,
         hasNextPage: pageNum < totalPages,
-        hasPrevPage: pageNum > 1
+        hasPreviousPage: pageNum > 1
       };
 
       res.json(successResponse(

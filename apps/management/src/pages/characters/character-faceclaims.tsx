@@ -49,7 +49,7 @@ export default function CharacterFaceClaims() {
    * Prepare table data (flatten groups to rows)
    */
   const tableData = useMemo(() => {
-    if (!data) return [];
+    if (!data?.faceClaimGroups) return [];
     return data.faceClaimGroups.map((group) => ({
       id: group.prestavolto,
       prestavolto: group.prestavolto,

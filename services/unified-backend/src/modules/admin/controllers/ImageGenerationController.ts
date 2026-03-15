@@ -4,7 +4,9 @@ import { CDNService, CDNEntityType } from '../services/CDNService';
 import { aiGatewayClient } from '@modules/game/services/AIGatewayClient';
 import { AdminAuthMiddleware } from '../middleware/adminAuth';
 import { getSocketIO } from '@modules/game/websocket/socketInstance';
-import { successResponse, errorResponse, getRequestId } from '../utils/apiResponse';
+import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+
 import { logger } from '../utils/logger';
 import { appConfig } from '@config/runtime';
 
@@ -344,6 +346,6 @@ export class ImageGenerationController {
       createdAt: job.createdAt,
     }));
 
-    res.json(successResponse({ jobs }));
+    res.json({ success: true, data: { jobs } });
   }
 }

@@ -21,10 +21,12 @@ export interface VictorianLayoutMobileProps {
   isInfoPage: boolean;
   /** Page identifier for main content (e.g. "login-page", "register-page"). */
   pageClass: string;
-  /** Called for internal navigation (e.g. /register, /credits). */
+  /** Called for internal navigation (e.g. /register). */
   onNavigate: (path: string) => void;
   /** Called when "Documenti" is clicked (external link). */
   onDocsClick: () => void;
+  /** Called when "Crediti" is clicked (opens modal). */
+  onCreditsClick: () => void;
   /** Whether the mobile nav overlay is open. */
   isMobileMenuOpen: boolean;
   /** Toggles the mobile nav overlay. */
@@ -39,6 +41,7 @@ export const VictorianLayoutMobile: React.FC<VictorianLayoutMobileProps> = ({
   pageClass,
   onNavigate,
   onDocsClick,
+  onCreditsClick,
   isMobileMenuOpen,
   onToggleMobileMenu,
   pageInfo,
@@ -101,7 +104,7 @@ export const VictorianLayoutMobile: React.FC<VictorianLayoutMobileProps> = ({
           </Button>
           <Button
             variant="ghost"
-            onClick={() => onNavigate('/credits')}
+            onClick={onCreditsClick}
             className="victorian-layout-mobile__nav-button"
           >
             Crediti
@@ -115,21 +118,17 @@ export const VictorianLayoutMobile: React.FC<VictorianLayoutMobileProps> = ({
             src={BACKGROUND_IMAGE_SRC}
             alt=""
             className="victorian-layout-mobile__background-image"
-            fetchPriority="high"
           />
           <div className="victorian-layout-mobile__title-container">
             <img
               src={LOGO_IMAGE_SRC}
               alt=""
               className="victorian-layout-mobile__logo"
-              fetchPriority="high"
             />
             <h2 className="victorian-layout-mobile__title">Chapter One</h2>
           </div>
         </div>
-        {pageInfo && (
-          <div className="victorian-layout-mobile__page-info">{pageInfo}</div>
-        )}
+        <div className={`victorian-layout-mobile__page-info ${pageInfo ? 'active' : ''}`}>{pageInfo}</div>
         <div className="victorian-layout-mobile__page-content">{children}</div>
       </main>
     </div>

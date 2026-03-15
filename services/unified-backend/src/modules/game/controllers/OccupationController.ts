@@ -3,7 +3,9 @@ import { Occupation } from '@database/models/Occupation';
 import { Character } from '@database/models/Character';
 import { Corporation } from '@database/models/Corporation';
 import { logger } from '../logger';
-import { successResponse, errorResponse, getRequestId } from '../utils/apiResponse';
+import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+
 
 export class OccupationController {
 

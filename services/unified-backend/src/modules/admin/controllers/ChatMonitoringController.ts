@@ -4,7 +4,9 @@ import { ApiResponse } from '../types/management';
 import { AdminAuthMiddleware } from '../middleware/adminAuth';
 import { logger } from '../utils/logger';
 import { ChatModerationAction, UserReport, type IChatModerationAction, type IUserReport } from '@database/models';
-import { listResponse, successResponse, errorResponse, getRequestId } from '../utils/apiResponse';
+import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+
 
 // Access mongoose from the centralized connection
 const mongoose = db.getMongoose();
@@ -221,12 +223,12 @@ export class ChatMonitoringController {
       });
 
       const pagination = {
-        page,
+        currentPage: page,
         totalPages: Math.ceil(totalCount / limit),
         totalItems: totalCount,
         pageSize: limit,
         hasNextPage: page < Math.ceil(totalCount / limit),
-        hasPrevPage: page > 1
+        hasPreviousPage: page > 1
       };
 
       res.json(successResponse(
@@ -396,7 +398,7 @@ export class ChatMonitoringController {
       logger.info('User reports viewed', {
         ...auditInfo,
         filters: { priority, assignedTo, status },
-        page,
+        currentPage: page,
         pageSize: limit,
         totalResults: totalItems
       });
@@ -404,12 +406,12 @@ export class ChatMonitoringController {
       const pageNum = parseInt(page as string);
       const limitNum = parseInt(limit as string);
       const pagination = {
-        page: pageNum,
+        currentPage: pageNum,
         totalPages: Math.ceil(totalItems / limitNum),
         totalItems,
         pageSize: limitNum,
         hasNextPage: pageNum < Math.ceil(totalItems / limitNum),
-        hasPrevPage: pageNum > 1
+        hasPreviousPage: pageNum > 1
       };
 
       res.json(successResponse(
@@ -473,7 +475,7 @@ export class ChatMonitoringController {
             pageSize: parseInt(limit as string),
             skip: parseInt(skip as string),
             hasNextPage: totalCount > parseInt(skip as string) + parseInt(limit as string),
-            hasPrevPage: page > 1
+            hasPreviousPage: page > 1
           }
         },
         undefined,

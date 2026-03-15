@@ -2,7 +2,9 @@ import { Request, Response } from 'express';
 import { OffGameChat, OffGameChatMessage, OffGameChatParticipant, Character, db } from '@database/models';
 import { ApiResponse } from '../types/game';
 import { logger } from '../logger';
+import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
 import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+
 
 // Access mongoose from the centralized connection
 const mongoose = db.getMongoose();
@@ -311,12 +313,12 @@ export class OffGameChatController {
       res.json(listResponse(
         chatData,
         {
-          page,
+          currentPage: page,
           pageSize: limit,
-          total: chatData.length,
+          totalItems: chatData.length,
           totalPages: Math.ceil(chatData.length / limit),
-          hasNext: chatData.length === limit,
-          hasPrev: page > 1
+          hasNextPage: chatData.length === limit,
+          hasPreviousPage: page > 1
         },
         undefined,
         getRequestId(req)
@@ -411,7 +413,7 @@ export class OffGameChatController {
           chatId,
           messages: messages.reverse(), // Reverse to show oldest first
           pagination: {
-            page,
+          currentPage: page,
             limit,
             hasMore: messages.length === limit
           }

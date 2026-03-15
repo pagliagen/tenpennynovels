@@ -26,7 +26,7 @@ export interface DeletedRecordDTO {
 
 export interface DeletedRecordsParams {
   type?: string;
-  page?: number;
+  currentPage?: number;
   pageSize?: number;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
@@ -35,12 +35,12 @@ export interface DeletedRecordsParams {
 export interface DeletedRecordsResponse {
   items: DeletedRecordDTO[];
   pagination: {
-    page: number;
+    currentPage: number;
     pageSize: number;
     totalItems: number;
     totalPages: number;
     hasNextPage: boolean;
-    hasPrevPage: boolean;
+    hasPreviousPage: boolean;
   };
   counts: Record<string, number> & { total: number };
 }
@@ -49,7 +49,7 @@ export class DeletedRecordsService {
   async getDeletedRecords(params: DeletedRecordsParams = {}): Promise<DeletedRecordsResponse> {
     const {
       type,
-      page = 1,
+      currentPage: page = 1,
       pageSize = 25,
       sortBy = 'deletedAt',
       sortOrder = 'desc'
@@ -85,12 +85,12 @@ export class DeletedRecordsService {
         deletionReason: doc.deletionReason
       })),
       pagination: {
-        page,
+        currentPage: page,
         pageSize,
         totalItems,
         totalPages,
         hasNextPage: page < totalPages,
-        hasPrevPage: page > 1
+        hasPreviousPage: page > 1
       },
       counts
     };

@@ -9,7 +9,9 @@ import {
 import { AdminAuthMiddleware } from '../middleware/adminAuth';
 import { logger } from '../utils/logger';
 import { User, Character, db } from '@database/models';
-import { listResponse, successResponse, errorResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '../utils/apiResponse';
+import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+
 import { escapeRegex } from '@shared/utils/validation';
 
 // Access mongoose from the centralized connection
@@ -115,14 +117,14 @@ export class UserManagementController {
       if (userIds.length === 0) {
         const transformedUsers: AdminUserProfile[] = [];
         const emptyPagination = {
-          page,
+          currentPage: page,
           totalPages: 0,
           totalItems: 0,
           pageSize,
           hasNextPage: false,
-          hasPrevPage: false
+          hasPreviousPage: false
         };
-        res.json(listResponse(transformedUsers, emptyPagination, undefined, getRequestId(req)));
+        res.json({ success: true, list: transformedUsers, pagination: emptyPagination });
         return;
       }
 
@@ -213,19 +215,19 @@ export class UserManagementController {
 
       const totalPages = Math.ceil(totalUsers / pageSize);
       const pagination: PaginationInfo = {
-        page,
+        currentPage: page,
         totalPages,
         totalItems: totalUsers,
         pageSize,
         hasNextPage: page < totalPages,
-        hasPrevPage: page > 1
+        hasPreviousPage: page > 1
       };
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       logger.info('Admin viewed user list', {
         ...auditInfo,
         filters: { search, status, role, sortBy, sortOrder },
-        page,
+        currentPage: page,
         pageSize,
         totalUsers
       });
