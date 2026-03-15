@@ -6,14 +6,19 @@ echo "📦 Installing dependencies for all apps and services..."
 # Root dependencies
 echo ""
 echo "=== Root ==="
-npm install
+rm -rf node_modules package-lock.json
+npm install 
+npm audit fix --force
 
 # Frontend apps
 for app in apps/*/; do
   if [ -f "${app}package.json" ]; then
     echo ""
     echo "=== ${app} ==="
-    (cd "$app" && npm install)
+    cd "$app" 
+    rm -rf node_modules package-lock.json
+    npm install 
+    npm audit fix --force
   fi
 done
 
@@ -22,7 +27,10 @@ for service in services/*/; do
   if [ -f "${service}package.json" ]; then
     echo ""
     echo "=== ${service} ==="
-    (cd "$service" && npm install)
+    cd "$service" 
+    rm -rf node_modules package-lock.json
+    npm install 
+    npm audit fix --force
   fi
 done
 
