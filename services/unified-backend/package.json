@@ -13,7 +13,7 @@
   "scripts": {
     "dev": "NODE_ENV=development tsx watch src/server.ts",
     "build": "tsc",
-    "start": "NODE_ENV=production node -r module-alias/register dist/server.js",
+    "start": "NODE_ENV=production node bootstrap.js",
     "type-check": "tsc --noEmit",
     "migrate:social-conflict": "tsx src/database/migrations/migrate-social-conflict.ts",
     "seed:skill-confrontations": "tsx src/database/seeds/skill-confrontations.ts"
