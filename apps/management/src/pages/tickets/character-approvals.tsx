@@ -12,6 +12,8 @@ import { ManagementLayout } from '@/components/layout/ManagementLayout';
 import { ConfigurableDataTable } from '@/components/shared/ConfigurableDataTable';
 import { useTableConfig } from '@/hooks/useTableConfig';
 import { useTableFilters } from '@/hooks/useTableFilters';
+import { api } from '@/lib/api/client';
+import { ListResponse } from '@/types/api/common';
 import styles from '@/styles/pages/TicketList.module.scss';
 
 interface TicketListParams {
@@ -21,6 +23,7 @@ interface TicketListParams {
   assignedToMe?: boolean;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
+  [key: string]: string | number | boolean | undefined;
 }
 
 export default function CharacterApprovals() {
@@ -38,32 +41,18 @@ export default function CharacterApprovals() {
   const { data, isLoading, error } = useQuery({
     queryKey: ['admin', 'tickets', 'character-approvals', params],
     queryFn: async () => {
-      const queryParams = new URLSearchParams();
-
       // Fixed filter for character_approval category
-      queryParams.append('category', 'character_approval');
-
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined && value !== null && value !== '') {
-          queryParams.append(key, String(value));
-        }
-      });
-
-      const res = await fetch(`/api/admin/tickets?${queryParams.toString()}`, {
-        credentials: 'include'
-      });
-
-      if (!res.ok) {
-        throw new Error('Failed to fetch character approval tickets');
-      }
-
-      const json = await res.json();
-      return json.data || { list: [], pagination: { totalItems: 0 } };
+      const queryString = api.buildQueryString({ ...params, category: 'character_approval' });
+      const response = await api.get(`/admin/tickets${queryString}`) as ListResponse<any>;
+      return {
+        list: response.list || [],
+        pagination: response.pagination || { totalItems: 0, totalPages: 1, currentPage: 1, pageSize: params.pageSize }
+      };
     }
   });
 
   const tickets = data?.list || [];
-  const pagination = data?.pagination || { totalItems: 0, totalPages: 1, currentPage: 1 };
+  const pagination = data?.pagination || { totalItems: 0, totalPages: 1, currentPage: 1, pageSize: params.pageSize };
 
   const visibleColumns = useMemo(() => {
     if (!tableConfig.config) return [];
@@ -104,14 +93,14 @@ export default function CharacterApprovals() {
               onClick={() => router.push('/characters/character-pending')}
               className={styles.primaryButton}
             >
-              📋 Vai a Character Pending
+              📋 In Attesa Approvazione
             </button>
           </div>
         </div>
 
         <div className={styles.infoBox}>
           <strong>ℹ️ Info:</strong> Questo pannello mostra solo i ticket di richiesta approvazione personaggio.
-          Per approvare/rifiutare il personaggio, usa il pannello <strong>Character Pending</strong>.
+          Per approvare/rifiutare il personaggio, usa il pannello <strong>In Attesa Approvazione</strong>.
           I ticket servono per comunicare con il player durante il processo di approvazione.
         </div>
 

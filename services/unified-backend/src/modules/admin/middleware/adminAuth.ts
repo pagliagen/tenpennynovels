@@ -59,12 +59,14 @@ export class AdminAuthMiddleware {
 
       // Resolve character from cookie and set effective admin roles (async, fire-and-forget for initial attach)
       const characterContext = req.cookies?.character_context;
+      logger.info(`[AdminAuth] Character context present: ${!!characterContext}`);
       if (characterContext) {
         try {
           const characterDecoded = jwt.verify(characterContext, getJwtSecret()) as CharacterContextToken;
+          logger.info(`[AdminAuth] Character context decoded: characterId=${characterDecoded?.characterId}`);
           if (characterDecoded?.characterId) {
             const { Character } = require('@database/models/Character');
-            const { gameplayRolesToAdminRoles } = require('@config/admin-permissions');
+            const { gameplayRolesToAdminRoles } = require('@config/permissions');
             Character.findById(characterDecoded.characterId)
               .select('gameplayRoles adminPermissions isGestore canAccessAdminPanel')
               .lean()
@@ -77,13 +79,34 @@ export class AdminAuthMiddleware {
                   req.user.adminPermissions = char.adminPermissions || [];
                   req.user.isGestore = char.isGestore || false;
                   req.user.canAccessAdminPanel = char.canAccessAdminPanel || char.isGestore || false;
+
+                  logger.info(`[AdminAuth] Character loaded: id=${characterDecoded.characterId} | isGestore=${char.isGestore} | roles=${JSON.stringify(char.gameplayRoles)} | canAccess=${char.canAccessAdminPanel}`);
+                } else {
+                  logger.warn('[AdminAuth] Character not found or req.user missing', {
+                    characterId: characterDecoded.characterId,
+                    hasChar: !!char,
+                    hasReqUser: !!req.user
+                  });
                 }
                 next();
               })
-              .catch(() => next());
+              .catch((err: unknown) => {
+                logger.error('[AdminAuth] Character load failed', {
+                  characterId: characterDecoded.characterId,
+                  error: err instanceof Error ? err.message : String(err)
+                });
+                next();
+              });
             return;
           }
-        } catch (_) {}
+        } catch (jwtError) {
+          logger.error('[AdminAuth] Character context processing failed', {
+            error: jwtError instanceof Error ? jwtError.message : String(jwtError),
+            stack: jwtError instanceof Error ? jwtError.stack : undefined,
+            userId: req.user?.userId,
+            hasCharacterContext: !!characterContext
+          });
+        }
       }
       next();
     } catch (error: unknown) {
@@ -193,12 +216,17 @@ export class AdminAuthMiddleware {
         const adminPermissions = req.user.adminPermissions ?? [];
         const isGestore = req.user.isGestore ?? false;
 
+        logger.info(`[AdminAuth] Permission check: ${permission} | isGestore=${isGestore} | roles=${JSON.stringify(gameplayRoles)} | perms=${JSON.stringify(adminPermissions)} | user=${req.user.userId}`);
+
         if (!hasAdminPermission(gameplayRoles, adminPermissions, isGestore, permission as AdminPermission)) {
           logger.warn('Insufficient granular permissions', {
             userId: req.user.userId,
             username: req.user.username,
             requiredPermission: permission,
             characterRoles: req.user.characterRoles,
+            isGestore,
+            gameplayRoles,
+            adminPermissions,
             endpoint: req.originalUrl
           });
 

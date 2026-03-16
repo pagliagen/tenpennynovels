@@ -16,7 +16,8 @@ import { NotificationService } from '@shared/services/NotificationService';
 async function scheduleAutoClose(ticketId: string, categoryConfig: any): Promise<void> {
   const { autoClose, autoCloseMessage, autoCloseDelaySeconds } = categoryConfig;
 
-  if (!autoClose || !autoCloseMessage || !autoCloseDelaySeconds) {
+  // Check autoClose is enabled and has required fields (allow 0 as valid delay)
+  if (!autoClose || !autoCloseMessage || autoCloseDelaySeconds == null) {
     return; // Auto-close not configured
   }
 

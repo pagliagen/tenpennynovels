@@ -1,5 +1,16 @@
+@use "sass:color";
 @use '../variables' as *;
- 
+
+// Dashboard container
+.dashboard {
+  padding: $spacing-xl;
+}
+
+.container {
+  padding: $spacing-xl;
+}
+
+// Title
 .title {
   font-size: 32px;
   font-weight: 700;
@@ -7,6 +18,28 @@
   margin-bottom: $spacing-xl;
 }
 
+.header {
+  margin-bottom: $spacing-xl;
+
+  h1 {
+    font-size: 32px;
+    font-weight: 700;
+    color: $color-primary;
+    margin-bottom: $spacing-xs;
+  }
+
+  p {
+    color: $color-text-secondary;
+    font-size: 16px;
+  }
+}
+
+.subtitle {
+  color: $color-text-secondary;
+  font-size: 16px;
+}
+
+// Cards grid
 .cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -59,6 +92,182 @@
   color: $color-text-muted;
 }
 
+// Stats grid (for ticket dashboard)
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: $spacing-lg;
+  margin-bottom: $spacing-2xl;
+}
+
+.statCard {
+  background-color: $color-bg-secondary;
+  border-radius: $border-radius-lg;
+  padding: $spacing-lg;
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-left: 4px solid;
+  transition: all $transition-fast;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+}
+
+.statIcon {
+  font-size: 36px;
+  flex-shrink: 0;
+}
+
+.statContent {
+  flex: 1;
+}
+
+.statValue {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: $spacing-xs;
+}
+
+.statTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: $color-text-secondary;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+// Section
+.section {
+  background-color: $color-bg-secondary;
+  border-radius: $border-radius-lg;
+  padding: $spacing-xl;
+  margin-bottom: $spacing-xl;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+
+  h2 {
+    font-size: 20px;
+    font-weight: 600;
+    color: $color-primary;
+    margin-bottom: $spacing-lg;
+  }
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-lg;
+}
+
+.sectionButton {
+  padding: $spacing-sm $spacing-md;
+  background: $color-primary;
+  color: white;
+  border: none;
+  border-radius: $border-radius-md;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all $transition-fast;
+
+  &:hover {
+    background: color.adjust($color-primary, $lightness: 10%);
+    transform: translateY(-1px);
+  }
+}
+
+// Table
+.tableContainer {
+  overflow-x: auto;
+  border-radius: $border-radius-md;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.simpleTable {
+  width: 100%;
+  border-collapse: collapse;
+
+  thead {
+    background-color: rgba(255, 255, 255, 0.05);
+
+    th {
+      padding: $spacing-md;
+      text-align: left;
+      font-size: 13px;
+      font-weight: 600;
+      color: $color-text-secondary;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+  }
+
+  tbody {
+    tr {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      transition: background-color $transition-fast;
+
+      &:hover {
+        background-color: rgba(255, 255, 255, 0.03);
+      }
+
+      &:last-child {
+        border-bottom: none;
+      }
+    }
+
+    td {
+      padding: $spacing-md;
+      font-size: 14px;
+      color: $color-text-primary;
+      vertical-align: middle;
+
+      strong {
+        color: $color-primary;
+      }
+    }
+  }
+}
+
+.urgentRow {
+  cursor: pointer;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+}
+
+.priorityBadge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: $border-radius-sm;
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.emptyState {
+  text-align: center;
+  padding: $spacing-2xl;
+  color: $color-text-muted;
+  font-size: 14px;
+}
+
+// Loading
+.loading {
+  text-align: center;
+  padding: $spacing-2xl;
+  color: $color-text-secondary;
+  font-size: 16px;
+}
+
+// Welcome
 .welcome {
   background-color: $color-bg-secondary;
   border-radius: $border-radius-lg;

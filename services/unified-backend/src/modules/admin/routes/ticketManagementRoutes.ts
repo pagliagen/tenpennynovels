@@ -54,7 +54,7 @@ router.get('/stats',
 );
 
 // GET /admin/tickets/staff - Get staff list (optionally filtered by department)
-router.get('/staff', 
+router.get('/staff',
   AdminAuthMiddleware.logAdminAction('view_staff_list', 'ticket_management'),
   TicketManagementController.getStaffList
 );

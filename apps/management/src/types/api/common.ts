@@ -17,7 +17,24 @@ export interface ApiResponse<T = unknown> {
 }
 
 /**
+ * List API response (for endpoints using listResponse())
+ * Matches backend: src/modules/admin/utils/apiResponse.ts#listResponse()
+ * Structure: { result, list, pagination } NOT { result, data: { list, pagination } }
+ */
+export interface ListResponse<T = unknown> {
+  result: boolean;
+  list: T[];
+  pagination: PaginationInfo;
+  error?: string;
+  code?: string;
+  message?: string;
+  timestamp?: string;
+  requestId?: string;
+}
+
+/**
  * Paginated API response
+ * @deprecated Use ListResponse instead - this structure doesn't match actual backend responses
  */
 export interface PaginatedResponse<T = unknown> {
   result: boolean;

@@ -1,3 +1,4 @@
+@use "sass:color";
 @use '../variables' as *;
 
 .container {
@@ -41,7 +42,7 @@
   transition: all $transition-fast;
 
   &:hover {
-    background-color: darken($color-primary, 10%);
+    background-color: color.adjust($color-primary, $lightness: -10%);
     transform: translateY(-1px);
   }
 }

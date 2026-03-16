@@ -12,6 +12,8 @@ import { ConfigurableDataTable } from '@/components/shared/ConfigurableDataTable
 import { useTableConfig } from '@/hooks/useTableConfig';
 import { useTableFilters } from '@/hooks/useTableFilters';
 import { useNotificationStore } from '@/store/notificationStore';
+import { api } from '@/lib/api/client';
+import { ListResponse } from '@/types/api/common';
 import styles from '@/styles/pages/TicketList.module.scss';
 
 interface TicketListParams {
@@ -23,6 +25,7 @@ interface TicketListParams {
   assignedToMe?: boolean;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
+  [key: string]: string | number | boolean | undefined;
 }
 
 export default function TicketList() {
@@ -40,29 +43,16 @@ export default function TicketList() {
   const { data, isLoading, error } = useQuery({
     queryKey: ['admin', 'tickets', 'list', params],
     queryFn: async () => {
-      const queryParams = new URLSearchParams();
-
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined && value !== null && value !== '') {
-          queryParams.append(key, String(value));
-        }
-      });
-
-      const res = await fetch(`/api/admin/tickets?${queryParams.toString()}`, {
-        credentials: 'include'
-      });
-
-      if (!res.ok) {
-        throw new Error('Failed to fetch tickets');
-      }
-
-      const json = await res.json();
-      return json.data || { list: [], pagination: { totalItems: 0 } };
+      const response = await api.get(`/admin/tickets${api.buildQueryString(params)}`) as ListResponse<any>;
+      return {
+        list: response.list || [],
+        pagination: response.pagination || { totalItems: 0, totalPages: 1, currentPage: 1, pageSize: params.pageSize }
+      };
     }
   });
 
   const tickets = data?.list || [];
-  const pagination = data?.pagination || { totalItems: 0, totalPages: 1, currentPage: 1 };
+  const pagination = data?.pagination || { totalItems: 0, totalPages: 1, currentPage: 1, pageSize: params.pageSize };
 
   const visibleColumns = useMemo(() => {
     if (!tableConfig.config) return [];
@@ -90,12 +80,7 @@ export default function TicketList() {
       try {
         await Promise.all(
           selectedIds.map(id =>
-            fetch(`/api/admin/tickets/${id}/close`, {
-              method: 'PUT',
-              credentials: 'include',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ reason: 'Chiusura massiva da staff' })
-            })
+            api.put(`/admin/tickets/${id}/close`, { reason: 'Chiusura massiva da staff' })
           )
         );
 

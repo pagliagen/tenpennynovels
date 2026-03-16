@@ -42,6 +42,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useOnGameUnreadCount } from '@/hooks/useOnGameMail';
 import { useOffGameUnreadCount } from '@/hooks/useOffGameChat';
 import { useTicketNotifications } from '@/hooks/useTicketNotifications';
+import { useUnreadTicketsCount } from '@/hooks/useTickets';
 import { queryKeys } from '@/lib/api/queryClient';
 import { ForumModal } from '../forum/ForumModal';
 import { useForumStore } from '@/store/forumStore';
@@ -107,6 +108,9 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
 
   // OffGame chat system: Unread count for TopBar badge
   const { data: unreadOffGameChatCount = 0 } = useOffGameUnreadCount();
+
+  // Ticket system: Unread count for player (messages from staff not read yet)
+  const { data: unreadTicketsCount = 0 } = useUnreadTicketsCount();
 
   // WebSocket + QueryClient: For real-time badge updates
   const { onMessageEvent } = useWebSocket();
@@ -391,6 +395,7 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
             unreadOnGameMailCount={unreadMailCount}
             onOffGameChatClick={handleOffGameChatClick}
             unreadOffGameChatCount={unreadOffGameChatCount}
+            unreadTicketsCount={unreadTicketsCount}
             canAccessAdmin={user?.canAccessAdminPanel ?? false}
             locationName={topBarLocationProps.locationName}
             locationImageUrl={topBarLocationProps.locationImageUrl}

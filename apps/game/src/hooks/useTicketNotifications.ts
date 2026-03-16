@@ -33,6 +33,8 @@ export function useTicketNotifications() {
 
       switch (event.type) {
         case 'ticket:staff_replied':
+          console.log(`[Ticket] Ticket ${event.data.ticketId} aggiornato: nuova risposta staff`, event.data);
+
           // Invalidate ticket list
           queryClient.invalidateQueries({ queryKey: ['tickets', 'list'] });
           queryClient.invalidateQueries({ queryKey: ['tickets', 'unreadCount'] });
@@ -46,6 +48,8 @@ export function useTicketNotifications() {
           break;
 
         case 'ticket:status_changed':
+          console.log(`[Ticket] Ticket ${event.data.ticketId} aggiornato: status → ${event.data.newStatus}`, event.data);
+
           // Invalidate ticket list to show updated status
           queryClient.invalidateQueries({ queryKey: ['tickets', 'list'] });
 
@@ -58,6 +62,8 @@ export function useTicketNotifications() {
           break;
 
         case 'ticket:closed':
+          console.log(`[Ticket] Ticket ${event.data.ticketId} aggiornato: CHIUSO`, event.data);
+
           // Invalidate all ticket queries
           queryClient.invalidateQueries({ queryKey: ['tickets', 'list'] });
           queryClient.invalidateQueries({ queryKey: ['tickets', 'unreadCount'] });
@@ -70,6 +76,8 @@ export function useTicketNotifications() {
           break;
 
         default:
+          console.log(`[Ticket] Evento ticket sconosciuto: ${event.type}`, event.data);
+
           // Unknown ticket event - invalidate list as fallback
           queryClient.invalidateQueries({ queryKey: ['tickets', 'list'] });
       }
