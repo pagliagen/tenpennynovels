@@ -88,6 +88,7 @@ export function Step1BasicInfo(): JSX.Element {
       characterName: string;
       characterId: string;
       playerStatus: string;
+      prestavoltoApprovedAt: Date | null;
     }>;
     exactMatch: { characterName: string; status: string } | null;
   }>({
@@ -96,21 +97,6 @@ export function Step1BasicInfo(): JSX.Element {
     matches: [],
     allFaceClaims: [],
     exactMatch: null
-  });
-
-  // Wikipedia search results state
-  const [wikiResults, setWikiResults] = React.useState<{
-    loading: boolean;
-    results: Array<{
-      title: string;
-      extract: string;
-      occupation?: string;
-      birth?: string;
-      death?: string;
-    }>;
-  }>({
-    loading: false,
-    results: []
   });
 
   /**
@@ -161,17 +147,6 @@ export function Step1BasicInfo(): JSX.Element {
    */
   const checkFaceClaim = React.useCallback(
     debounce(async (value: string) => {
-      if (value.length < 3) {
-        setFaceClaimCheck({
-          checking: false,
-          exists: false,
-          matches: [],
-          allFaceClaims: [],
-          exactMatch: null
-        });
-        return;
-      }
-
       setFaceClaimCheck((prev) => ({ ...prev, checking: true }));
 
       try {
@@ -199,98 +174,6 @@ export function Step1BasicInfo(): JSX.Element {
   );
 
   /**
-   * Search Wikipedia for face claim suggestions (multi-strategy)
-   */
-  const searchWikipedia = React.useCallback(
-    debounce(async (value: string) => {
-      if (value.length < 3) {
-        setWikiResults({ loading: false, results: [] });
-        return;
-      }
-
-      setWikiResults({ loading: true, results: [] });
-
-      try {
-        // Multi-strategy Wikipedia search (from test-wikipedia-search.html)
-        const strategies = [
-          // Strategy 1: Normal search
-          fetch(
-            `https://it.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(
-              value
-            )}&format=json&origin=*&srlimit=5`
-          ),
-          // Strategy 2: Fuzzy search with CirrusSearch
-          fetch(
-            `https://it.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(
-              value.split(' ').map(word => `${word}~2`).join(' ')
-            )}&format=json&origin=*&srlimit=5`
-          )
-        ];
-
-        const responses = await Promise.all(strategies);
-        const data = await Promise.all(responses.map(r => r.json()));
-
-        // Combine results (deduplicate by title)
-        const allResults = new Map();
-        for (const result of data) {
-          if (result.query && result.query.search) {
-            for (const page of result.query.search) {
-              if (!allResults.has(page.title)) {
-                allResults.set(page.title, page);
-              }
-            }
-          }
-        }
-
-        // Fetch extracts + Wikidata validation for top results
-        const titles = Array.from(allResults.keys()).slice(0, 10);
-        if (titles.length === 0) {
-          setWikiResults({ loading: false, results: [] });
-          return;
-        }
-
-        const extractsResponse = await fetch(
-          `https://it.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(
-            titles.join('|')
-          )}&prop=extracts|pageprops&exintro=1&explaintext=1&format=json&origin=*`
-        );
-        const extractsData = await extractsResponse.json();
-
-        const pages = extractsData.query?.pages || {};
-        const results: Array<{
-          title: string;
-          extract: string;
-          occupation?: string;
-          birth?: string;
-          death?: string;
-        }> = [];
-
-        for (const pageId in pages) {
-          const page = pages[pageId];
-          if (page.title && page.extract) {
-            // Extract birth/death from extract (simple regex)
-            const birthMatch = page.extract.match(/\(([0-9]{4})\s*[-–]\s*/);
-            const deathMatch = page.extract.match(/[-–]\s*([0-9]{4})\)/);
-
-            results.push({
-              title: page.title,
-              extract: page.extract.substring(0, 200) + '...',
-              birth: birthMatch ? birthMatch[1] : undefined,
-              death: deathMatch ? deathMatch[1] : undefined
-            });
-          }
-        }
-
-        setWikiResults({ loading: false, results: results.slice(0, 5) });
-      } catch (error) {
-        console.error('Wikipedia search error:', error);
-        setWikiResults({ loading: false, results: [] });
-      }
-    }, 500),
-    []
-  );
-
-  /**
    * Handle Field Change
    */
   const handleChange = (field: keyof typeof basicInfo, value: any) => {
@@ -303,10 +186,9 @@ export function Step1BasicInfo(): JSX.Element {
       checkName(newFirstName, newLastName);
     }
 
-    // Trigger face claim validation + Wikipedia search
+    // Trigger face claim validation
     if (field === 'prestavolto') {
       checkFaceClaim(value);
-      searchWikipedia(value);
     }
   };
 
@@ -325,6 +207,11 @@ export function Step1BasicInfo(): JSX.Element {
       updateBasicInfo('apparentAge', age);
     }
   };
+
+  // Load all face claims on mount (empty query returns all)
+  React.useEffect(() => {
+    checkFaceClaim('');
+  }, []);
 
   return (
     <div className={styles.stepContent} data-step="basic-info">
@@ -656,47 +543,6 @@ export function Step1BasicInfo(): JSX.Element {
           </div>
         )}
 
-        {/* Wikipedia Search Results */}
-        {wikiResults.loading && (
-          <div className={styles.formGroup}>
-            <small className={styles.helpText}>🔍 Ricerca Wikipedia in corso...</small>
-          </div>
-        )}
-
-        {!wikiResults.loading && wikiResults.results.length > 0 && (
-          <div className={styles.formGroup}>
-            <label className={styles.label}>Risultati Wikipedia (clicca per selezionare):</label>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '300px', overflowY: 'auto' }}>
-              {wikiResults.results.map((result, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => handleChange('prestavolto', result.title)}
-                  style={{
-                    padding: '0.75rem',
-                    border: '1px solid #8b7355',
-                    background: '#f5f1e8',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    fontFamily: 'Playfair Display, serif'
-                  }}
-                >
-                  <div style={{ fontWeight: 'bold', marginBottom: '0.25rem' }}>
-                    {result.title}
-                    {result.birth && (
-                      <span style={{ fontWeight: 'normal', marginLeft: '0.5rem', fontSize: '0.9em' }}>
-                        ({result.birth}{result.death ? ` - ${result.death}` : ''})
-                      </span>
-                    )}
-                  </div>
-                  <div style={{ fontSize: '0.85em', color: '#5a4a3a' }}>{result.extract}</div>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* Existing Face Claims List */}
         {faceClaimCheck.allFaceClaims.length > 0 && (
           <div className={styles.formGroup}>
@@ -708,6 +554,7 @@ export function Step1BasicInfo(): JSX.Element {
                     <th style={{ padding: '0.5rem', textAlign: 'left', fontWeight: 'bold' }}>Prestavolto</th>
                     <th style={{ padding: '0.5rem', textAlign: 'left', fontWeight: 'bold' }}>Personaggio</th>
                     <th style={{ padding: '0.5rem', textAlign: 'left', fontWeight: 'bold' }}>Status</th>
+                    <th style={{ padding: '0.5rem', textAlign: 'center', fontWeight: 'bold' }}>Data Assegnazione</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -731,6 +578,16 @@ export function Step1BasicInfo(): JSX.Element {
                       <td style={{ padding: '0.5rem' }}>{claim.characterName}</td>
                       <td style={{ padding: '0.5rem', fontSize: '0.85em', color: '#5a4a3a' }}>
                         {claim.playerStatus === 'approved' ? '✓ Approvato' : '⏳ In attesa'}
+                      </td>
+                      <td style={{ padding: '0.5rem', fontSize: '0.85em', color: '#5a4a3a', textAlign: 'center' }}>
+                        {claim.prestavoltoApprovedAt
+                          ? new Date(claim.prestavoltoApprovedAt).toLocaleDateString('it-IT', {
+                              day: '2-digit',
+                              month: '2-digit',
+                              year: 'numeric'
+                            })
+                          : <span style={{ color: '#fb8500', fontStyle: 'italic' }}>In attesa</span>
+                        }
                       </td>
                     </tr>
                   ))}

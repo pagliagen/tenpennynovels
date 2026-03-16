@@ -41,26 +41,17 @@ export function CharacterFaceClaimContent(): JSX.Element {
   const [faceClaimCheck, setFaceClaimCheck] = React.useState<{
     checking: boolean;
     exactMatch: { characterName: string; status: string } | null;
-  }>({
-    checking: false,
-    exactMatch: null
-  });
-
-  // Wikipedia results state
-  const [wikiResults, setWikiResults] = React.useState<{
-    loading: boolean;
-    results: Array<{
-      title: string;
-      extract: string;
-      birth?: string;
-      death?: string;
-      thumbnail?: string;
-      isHuman?: boolean;
-      occupation?: string;
+    allFaceClaims: Array<{
+      prestavolto: string;
+      characterName: string;
+      characterId: string;
+      playerStatus: string;
+      prestavoltoApprovedAt: Date | null;
     }>;
   }>({
-    loading: false,
-    results: []
+    checking: false,
+    exactMatch: null,
+    allFaceClaims: []
   });
 
   // Fetch character data
@@ -76,6 +67,11 @@ export function CharacterFaceClaimContent(): JSX.Element {
       setPrestavolto(character.prestavolto || '');
     }
   }, [character, hasChanges]);
+
+  // Load all face claims on mount (empty query returns all)
+  React.useEffect(() => {
+    checkFaceClaim('');
+  }, []);
 
   // Update mutation (uses dedicated prestavolto endpoint)
   const updateMutation = useMutation({
@@ -101,195 +97,18 @@ export function CharacterFaceClaimContent(): JSX.Element {
    */
   const checkFaceClaim = React.useCallback(
     debounce(async (value: string) => {
-      if (value.length < 3) {
-        setFaceClaimCheck({ checking: false, exactMatch: null });
-        return;
-      }
-
-      setFaceClaimCheck({ checking: true, exactMatch: null });
+      setFaceClaimCheck({ checking: true, exactMatch: null, allFaceClaims: [] });
 
       try {
         const result = await characterApi.searchFaceClaims(value);
         setFaceClaimCheck({
           checking: false,
-          exactMatch: result.exactMatch
+          exactMatch: result.exactMatch,
+          allFaceClaims: result.allFaceClaims
         });
       } catch (error) {
         console.error('Face claim check error:', error);
-        setFaceClaimCheck({ checking: false, exactMatch: null });
-      }
-    }, 500),
-    []
-  );
-
-  /**
-   * Search Wikipedia + Wikidata validation
-   * Filters results to show only real people (Wikidata P31 = Q5)
-   */
-  const searchWikipedia = React.useCallback(
-    debounce(async (value: string) => {
-      if (value.length < 3) {
-        setWikiResults({ loading: false, results: [] });
-        return;
-      }
-
-      setWikiResults({ loading: true, results: [] });
-
-      try {
-        // Step 1: Fuzzy Wikipedia search
-        const strategies = [
-          fetch(
-            `https://it.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(
-              value
-            )}&format=json&origin=*&srlimit=5`
-          ),
-          fetch(
-            `https://it.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(
-              value.split(' ').map(word => `${word}~2`).join(' ')
-            )}&format=json&origin=*&srlimit=5`
-          )
-        ];
-
-        const responses = await Promise.all(strategies);
-        const data = await Promise.all(responses.map(r => r.json()));
-
-        const allResults = new Map();
-        for (const result of data) {
-          if (result.query && result.query.search) {
-            for (const page of result.query.search) {
-              if (!allResults.has(page.title)) {
-                allResults.set(page.title, page);
-              }
-            }
-          }
-        }
-
-        const titles = Array.from(allResults.keys()).slice(0, 10);
-        if (titles.length === 0) {
-          setWikiResults({ loading: false, results: [] });
-          return;
-        }
-
-        // Step 2: Get page details + Wikidata QIDs
-        const propsResponse = await fetch(
-          `https://it.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(
-            titles.join('|')
-          )}&prop=extracts|pageimages|pageprops&ppprop=wikibase_item&exintro=1&explaintext=1&piprop=thumbnail&pithumbsize=100&format=json&origin=*`
-        );
-        const propsData = await propsResponse.json();
-
-        const pages = propsData.query?.pages || {};
-        const pageInfo: Record<string, { qid?: string; thumbnail?: string; extract?: string }> = {};
-
-        for (const pageId in pages) {
-          const page = pages[pageId];
-          if (page.title) {
-            pageInfo[page.title] = {
-              qid: page.pageprops?.wikibase_item || undefined,
-              thumbnail: page.thumbnail?.source || undefined,
-              extract: page.extract || undefined
-            };
-          }
-        }
-
-        // Step 3: Get Wikidata entity details (P31 = instance of, P106 = occupation)
-        const qids = Object.values(pageInfo).map(p => p.qid).filter(Boolean) as string[];
-        const entityDetails: Record<string, { isHuman: boolean; occupation?: string }> = {};
-
-        if (qids.length > 0) {
-          const wikidataResponse = await fetch(
-            `https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${encodeURIComponent(
-              qids.join('|')
-            )}&props=claims|labels&languages=it|en&format=json&origin=*`
-          );
-          const wikidataData = await wikidataResponse.json();
-
-          // Collect occupation QIDs for label resolution
-          const occQids = new Set<string>();
-          for (const entity of Object.values(wikidataData.entities || {}) as any[]) {
-            const claims = entity.claims || {};
-            for (const claim of (claims.P106 || [])) {
-              const occQid = claim.mainsnak?.datavalue?.value?.id;
-              if (occQid) occQids.add(occQid);
-            }
-          }
-
-          // Resolve occupation labels
-          let occLabels: Record<string, string> = {};
-          if (occQids.size > 0) {
-            const labelsResponse = await fetch(
-              `https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${encodeURIComponent(
-                Array.from(occQids).join('|')
-              )}&props=labels&languages=it|en&format=json&origin=*`
-            );
-            const labelsData = await labelsResponse.json();
-            for (const [id, entity] of Object.entries(labelsData.entities || {}) as [string, any][]) {
-              occLabels[id] = entity.labels?.it?.value || entity.labels?.en?.value || id;
-            }
-          }
-
-          // Process entities
-          for (const [qid, entity] of Object.entries(wikidataData.entities || {}) as [string, any][]) {
-            const claims = entity.claims || {};
-
-            // Check P31 (instance of) for Q5 (human)
-            const instanceOf = (claims.P31 || [])
-              .map((c: any) => c.mainsnak?.datavalue?.value?.id)
-              .filter(Boolean);
-            const isHuman = instanceOf.includes('Q5');
-
-            // Get first occupation
-            const occupations = (claims.P106 || [])
-              .map((c: any) => c.mainsnak?.datavalue?.value?.id)
-              .filter(Boolean)
-              .map((occQid: string) => occLabels[occQid] || occQid);
-
-            entityDetails[qid] = {
-              isHuman,
-              occupation: occupations[0] || undefined
-            };
-          }
-        }
-
-        // Step 4: Build results (filter only humans)
-        const results: Array<{
-          title: string;
-          extract: string;
-          birth?: string;
-          death?: string;
-          thumbnail?: string;
-          isHuman?: boolean;
-          occupation?: string;
-        }> = [];
-
-        for (const title of titles) {
-          const info = pageInfo[title];
-          if (!info) continue;
-
-          const details = info.qid ? entityDetails[info.qid] : undefined;
-
-          // Filter: only show humans (or pages without Wikidata)
-          if (details && !details.isHuman) continue;
-
-          const extract = info.extract || '';
-          const birthMatch = extract.match(/\(([0-9]{4})\s*[-–]\s*/);
-          const deathMatch = extract.match(/[-–]\s*([0-9]{4})\)/);
-
-          results.push({
-            title,
-            extract: extract.substring(0, 200) + (extract.length > 200 ? '...' : ''),
-            birth: birthMatch ? birthMatch[1] : undefined,
-            death: deathMatch ? deathMatch[1] : undefined,
-            thumbnail: info.thumbnail,
-            isHuman: details?.isHuman,
-            occupation: details?.occupation
-          });
-        }
-
-        setWikiResults({ loading: false, results: results.slice(0, 5) });
-      } catch (error) {
-        console.error('Wikipedia search error:', error);
-        setWikiResults({ loading: false, results: [] });
+        setFaceClaimCheck({ checking: false, exactMatch: null, allFaceClaims: [] });
       }
     }, 500),
     []
@@ -302,7 +121,6 @@ export function CharacterFaceClaimContent(): JSX.Element {
     setPrestavolto(value);
     setHasChanges(value !== (character?.prestavolto || ''));
     checkFaceClaim(value);
-    searchWikipedia(value);
   };
 
   /**
@@ -383,52 +201,64 @@ export function CharacterFaceClaimContent(): JSX.Element {
         </div>
       )}
 
-      {/* Wikipedia Results */}
-      {wikiResults.loading && (
-        <div className={styles.wikiSection}>
-          <small>🔍 Ricerca Wikipedia in corso...</small>
-        </div>
-      )}
+      {/* Anagrafe Prestavolti - SEMPRE VISIBILE */}
+      <div className={styles.registrySection}>
+        <h3 className={styles.registryTitle}>Anagrafe Prestavolti</h3>
+        <p className={styles.registrySubtitle}>
+          Tutti i prestavolti assegnati. Clicca su una riga per selezionarlo.
+        </p>
 
-      {!wikiResults.loading && wikiResults.results.length > 0 && (
-        <div className={styles.wikiSection}>
-          <label className={styles.label}>Risultati Wikipedia:</label>
-          <div className={styles.wikiResults}>
-            {wikiResults.results.map((result, idx) => (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => handleChange(result.title)}
-                className={styles.wikiCard}
-              >
-                <div className={styles.wikiCardContent}>
-                  <div className={styles.wikiTitle}>
-                    {result.title}
-                    {result.birth && (
-                      <span className={styles.wikiDates}>
-                        ({result.birth}{result.death ? ` - ${result.death}` : ''})
-                      </span>
-                    )}
-                  </div>
-                  {result.isHuman && result.occupation && (
-                    <div className={styles.wikiOccupation}>
-                      {result.occupation}
+        {faceClaimCheck.checking ? (
+          <div className={styles.registryLoading}>Caricamento...</div>
+        ) : (
+          <>
+            {(faceClaimCheck.allFaceClaims || []).length === 0 ? (
+              <div className={styles.registryEmpty}>Nessun prestavolto assegnato</div>
+            ) : (
+              <>
+                <div className={styles.registryTableContainer}>
+                  <table className={styles.registryTable}>
+                    <thead>
+                      <tr>
+                        <th>Prestavolto</th>
+                        <th>Personaggio</th>
+                        <th>Data Assegnazione</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(faceClaimCheck.allFaceClaims || []).slice(0, 100).map((claim, idx) => (
+                        <tr
+                          key={idx}
+                          onClick={() => handleChange(claim.prestavolto)}
+                          className={styles.registryRow}
+                        >
+                          <td className={styles.prestavoltoCell}>{claim.prestavolto}</td>
+                          <td>{claim.characterName}</td>
+                          <td className={styles.dateCell}>
+                            {claim.prestavoltoApprovedAt
+                              ? new Date(claim.prestavoltoApprovedAt).toLocaleDateString('it-IT', {
+                                  day: '2-digit',
+                                  month: '2-digit',
+                                  year: 'numeric'
+                                })
+                              : <span className={styles.pendingDate}>In attesa</span>
+                            }
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {(faceClaimCheck.allFaceClaims || []).length > 100 && (
+                    <div className={styles.registryFooter}>
+                      Mostrati primi 100 risultati di {faceClaimCheck.allFaceClaims.length} totali
                     </div>
                   )}
-                  <div className={styles.wikiExtract}>{result.extract}</div>
                 </div>
-                {result.thumbnail && (
-                  <img
-                    src={result.thumbnail}
-                    alt={result.title}
-                    className={styles.wikiThumbnail}
-                  />
-                )}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+              </>
+            )}
+          </>
+        )}
+      </div>
 
       {/* Save Button */}
       <div className={styles.actions}>

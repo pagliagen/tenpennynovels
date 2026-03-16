@@ -375,6 +375,7 @@ export const characterApi = {
       characterName: string;
       characterId: string;
       playerStatus: string;
+      prestavoltoApprovedAt: Date | null;
     }>;
   }> {
     const response = await api.get<{
@@ -385,6 +386,7 @@ export const characterApi = {
         characterName: string;
         characterId: string;
         playerStatus: string;
+        prestavoltoApprovedAt: Date | null;
       }>;
     }>('/game/characters/face-claims/search', {
       params: { q: query }

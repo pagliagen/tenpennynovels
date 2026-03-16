@@ -1811,7 +1811,7 @@ export class CharacterController {
         prestavolto: { $exists: true, $nin: [null, ''] },
         isDeleted: { $ne: true }
       })
-        .select('_id name surname prestavolto playerStatus')
+        .select('_id name surname prestavolto playerStatus prestavoltoApprovedAt')
         .sort({ prestavolto: 1 })
         .limit(200)
         .lean();
@@ -1820,7 +1820,8 @@ export class CharacterController {
         prestavolto: char.prestavolto,
         characterName: `${char.name}${char.surname ? ' ' + char.surname : ''}`,
         characterId: char._id.toString(),
-        playerStatus: char.playerStatus
+        playerStatus: char.playerStatus,
+        prestavoltoApprovedAt: char.prestavoltoApprovedAt || null
       }));
 
       // If query provided, search for matches
@@ -1991,10 +1992,12 @@ export class CharacterController {
           newStatus = 'pending_duplicate';
         }
       } else if (isFirstAssignment && !duplicate) {
-        // RULE: First assignment, no duplicate → reset pending status
+        // RULE: First assignment, no duplicate → auto-approve
         if (newStatus === 'pending_duplicate') {
           newStatus = null;
         }
+        // Set approval date for clean first assignments
+        character.prestavoltoApprovedAt = new Date();
       }
 
       // Add to history

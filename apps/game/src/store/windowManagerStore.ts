@@ -172,9 +172,13 @@ export const useWindowManagerStore = create<WindowManagerStore>()((set) => ({
       // Determine window size (custom sizes for specific utilities)
       let windowSize = DEFAULT_SIZES[type];
       if (type === 'utility' && 'utilityName' in data) {
+        console.log('data.utilityName', data.utilityName);
         switch (data.utilityName) {
           case 'character-directory':
             windowSize = { width: 957, height: 600 };
+            break;
+          case 'character-faceclaim':
+            windowSize = { width: 1200, height: 700 };
             break;
           // Add more custom utility sizes here as needed
         }
