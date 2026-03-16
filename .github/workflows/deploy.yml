@@ -159,6 +159,18 @@ jobs:
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
             nvm use
 
+            # Backend build needs devDependencies (tsc, etc.); (re)install before build
+            echo "📦 Ensuring backend devDependencies (for tsc/build)..."
+            for service in services/api-gateway services/unified-backend services/embeddings-worker; do
+              if [ -f "${service}/package.json" ]; then
+                echo "  → ${service}"
+                (cd "$service" && npm install)
+              fi
+            done
+            if [ -f "services/unified-backend/src/shared/package.json" ]; then
+              (cd "services/unified-backend/src/shared" && npm install)
+            fi
+
             echo "🏗️  Building backend services..."
             echo "Node version: $(node --version)"
             echo "npm version: $(npm --version)"
