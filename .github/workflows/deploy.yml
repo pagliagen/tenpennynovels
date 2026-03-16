@@ -287,32 +287,47 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          command_timeout: 30s
+          command_timeout: 60s
           script: |
             set -e
 
-            # Health check endpoints
-            ENDPOINTS=(
-              "https://api.tenpennynovels.com/health"
-              "https://ws.tenpennynovels.com/health"
-            )
+            # Give unified-backend (ws) time to bind and connect to MongoDB/Redis
+            echo "⏳ Waiting 15s for services to be ready..."
+            sleep 15
 
             echo "🏥 Running health checks..."
             echo ""
 
-            for url in "${ENDPOINTS[@]}"; do
-              echo "Checking $url..."
-              response=$(curl -s -o /dev/null -w "%{http_code}" "$url" --max-time 10)
+            # API Gateway
+            echo "Checking https://api.tenpennynovels.com/health..."
+            api_code=$(curl -s -o /dev/null -w "%{http_code}" "https://api.tenpennynovels.com/health" --max-time 10)
+            if [ "$api_code" -eq 200 ]; then
+              echo "✅ api.tenpennynovels.com OK ($api_code)"
+            else
+              echo "❌ api.tenpennynovels.com FAILED ($api_code)"
+              exit 1
+            fi
+            echo ""
 
-              if [ "$response" -eq 200 ]; then
-                echo "✅ $url OK ($response)"
-              else
-                echo "❌ $url FAILED ($response)"
-                exit 1
+            # WebSocket (unified-backend) - retry: può impiegare più tempo ad avviarsi
+            echo "Checking https://ws.tenpennynovels.com/health..."
+            ws_ok=0
+            for attempt in 1 2 3 4 5; do
+              ws_code=$(curl -s -o /dev/null -w "%{http_code}" "https://ws.tenpennynovels.com/health" --max-time 10)
+              if [ "$ws_code" -eq 200 ]; then
+                echo "✅ ws.tenpennynovels.com OK ($ws_code) (attempt $attempt)"
+                ws_ok=1
+                break
               fi
-              echo ""
+              echo "  Attempt $attempt: $ws_code, retrying in 5s..."
+              sleep 5
             done
+            if [ "$ws_ok" -eq 0 ]; then
+              echo "❌ ws.tenpennynovels.com FAILED after 5 attempts"
+              exit 1
+            fi
 
+            echo ""
             echo "✅ All health checks passed!"
 
       - name: Deployment summary

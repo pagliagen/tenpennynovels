@@ -4,6 +4,7 @@ logs/
 dist/
 *.js
 *.js.map
+!services/unified-backend/bootstrap.js
 *.d.ts
 *.d.ts.map 
 .env
