@@ -1,0 +1,57 @@
+/**
+ * PNG List Page
+ * Shows only characters with characterType='png' + referent info
+ */
+
+import React from 'react';
+import Head from 'next/head';
+import { useRouter } from 'next/router';
+import { ManagementLayout } from '@/components/layout/ManagementLayout';
+import { ConfigurableDataTable } from '@/components/shared/ConfigurableDataTable';
+import { useTableFilters } from '@/hooks/useTableFilters';
+import { useCharacters } from '@/hooks/api/useCharacters';
+import type { Character, CharacterListParams } from '@/types/api/Character';
+import styles from '@/styles/pages/CharacterList.module.scss';
+
+export default function PNGList() {
+  const router = useRouter();
+
+  const { filters, params, setParams } = useTableFilters<CharacterListParams>({
+    page: 1,
+    pageSize: 25,
+    sortBy: 'metadata.createdAt',
+    sortOrder: 'desc',
+    characterType: 'png' // FILTER BY TYPE
+  });
+
+  const { data, isLoading } = useCharacters(params);
+
+  return (
+    <ManagementLayout>
+      <Head>
+        <title>Ten Penny Novels | PNG Characters</title>
+      </Head>
+      <div className={styles.characterList}>
+        <header className={styles.header}>
+          <h1>PNG Characters</h1>
+          <p>Totale: {data?.pagination.totalItems ?? 0} PNG</p>
+        </header>
+        <ConfigurableDataTable<Character>
+          tableName="png-list"
+          data={data?.list ?? []}
+          loading={isLoading}
+          pagination={{
+            page: params.page,
+            pageSize: params.pageSize,
+            total: data?.pagination.totalItems ?? 0,
+            onPageChange: (page) => setParams({ ...params, page }),
+            onPageSizeChange: (pageSize) => setParams({ ...params, pageSize, page: 1 })
+          }}
+          sortBy={params.sortBy}
+          sortOrder={params.sortOrder}
+          onSortChange={(sortBy, sortOrder) => setParams({ ...params, sortBy, sortOrder })}
+        />
+      </div>
+    </ManagementLayout>
+  );
+}

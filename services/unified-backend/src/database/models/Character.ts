@@ -15,17 +15,21 @@ export interface SkillBreakdown {
 }
 
 export interface ICharacter extends Document, SoftDeleteMethods {
+  // Character type and referent
+  characterType: 'pg_principale' | 'pg_master' | 'png';
+  referentCharacterId?: Schema.Types.ObjectId; // For PNG only - points to user's PG principale
+
   // Character basic info
   name: string; // visibile a tutti (NOW UNIQUE)
   surname?: string; // cognome - opzionale, visibile a tutti
-  age: number; // età reale - visibile solo ai master
-  apparentAge: number; // età apparente - visibile a tutti
+  age?: number; // età reale - visibile solo ai master (opzionale per PNG/Master)
+  apparentAge?: number; // età apparente - visibile a tutti (opzionale per PNG/Master)
   birthDate?: string; // data di nascita in formato gg/mm/yyyy (es: "14/4/1844") - visibile solo ai master
-  physicalDescription: string; // aspetto fisico - visibile a tutti
-  birthPlace: string; // luogo di nascita - visibile solo ai master
-  publicDescription: string; // descrizione pubblica - visibile a tutti
-  privateDescription: string; // biografia privata - visibile solo ai master
-  gender: 'male' | 'female';
+  physicalDescription?: string; // aspetto fisico - visibile a tutti (opzionale per PNG/Master)
+  birthPlace?: string; // luogo di nascita - visibile solo ai master (opzionale per PNG/Master)
+  publicDescription?: string; // descrizione pubblica - visibile a tutti (opzionale)
+  privateDescription?: string; // biografia privata - visibile solo ai master (opzionale per PNG/Master)
+  gender?: 'male' | 'female'; // opzionale per PNG/Master
   isBot: boolean; // indica se il personaggio è un bot AI-controlled
 
   // NEW: Anagrafica completa da background_guidato.txt
@@ -204,6 +208,19 @@ export interface ICharacter extends Document, SoftDeleteMethods {
 }
 
 const CharacterSchema = new Schema<ICharacter>({
+  // Character type and referent
+  characterType: {
+    type: String,
+    enum: ['pg_principale', 'pg_master', 'png'],
+    default: 'pg_principale',
+    required: true
+  },
+  referentCharacterId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Character',
+    required: false
+  },
+
   // Character basic info
   name: {
     type: String,
@@ -221,12 +238,14 @@ const CharacterSchema = new Schema<ICharacter>({
   age: {
     type: Number,
     min: 16,
-    max: 80
+    max: 80,
+    required: false // Opzionale per PNG/Master
   },
   apparentAge: {
     type: Number,
     min: 16,
-    max: 80
+    max: 80,
+    required: false // Opzionale per PNG/Master
   },
   birthDate: {
     type: String,
@@ -245,28 +264,33 @@ const CharacterSchema = new Schema<ICharacter>({
     type: String,
     trim: true,
     minlength: 10,
-    maxlength: 1000
+    maxlength: 1000,
+    required: false // Opzionale per PNG/Master
   },
   birthPlace: {
     type: String,
     trim: true,
-    maxlength: 50
+    maxlength: 50,
+    required: false // Opzionale per PNG/Master
   },
   publicDescription: {
     type: String,
     trim: true,
     minlength: 50,
-    maxlength: 4000
+    maxlength: 4000,
+    required: false // Opzionale
   },
   privateDescription: {
     type: String,
     trim: true,
     minlength: 50,
-    maxlength: 4000
+    maxlength: 4000,
+    required: false // Opzionale per PNG/Master
   },
   gender: {
     type: String,
-    enum: ['male', 'female']
+    enum: ['male', 'female'],
+    required: false // Opzionale per PNG/Master
   },
   isBot: {
     type: Boolean,
@@ -650,6 +674,8 @@ const CharacterSchema = new Schema<ICharacter>({
 // Indexes
 CharacterSchema.index({ userId: 1 });
 CharacterSchema.index({ name: 1 }, { unique: true }); // Unique index for character names
+CharacterSchema.index({ userId: 1, characterType: 1 }); // Fast filtering by user + type
+CharacterSchema.index({ referentCharacterId: 1 }); // PNG referent lookups
 CharacterSchema.index({ playerStatus: 1 });
 CharacterSchema.index({ playerStatus: 1, submittedAt: 1 });
 CharacterSchema.index({ occupation: 1 });
@@ -705,6 +731,50 @@ CharacterSchema.methods.addReview = function(reviewData: Omit<ICharacter['review
 
 // Pre-save middleware
 CharacterSchema.pre('save', async function(this: ICharacter) {
+  // Validation 1: Max 1 PG Master per user
+  if (this.isModified('characterType') && this.characterType === 'pg_master') {
+    const existingMaster = await (this.constructor as mongoose.Model<ICharacter>).findOne({
+      userId: this.userId,
+      characterType: 'pg_master',
+      _id: { $ne: this._id },
+      isDeleted: { $ne: true }
+    });
+
+    if (existingMaster) {
+      throw new Error('User already has a Master character');
+    }
+  }
+
+  // Validation 2: PNG must have referentCharacterId (auto-find if missing)
+  if (this.characterType === 'png' && !this.referentCharacterId) {
+    const pgPrincipale = await (this.constructor as mongoose.Model<ICharacter>).findOne({
+      userId: this.userId,
+      characterType: 'pg_principale',
+      isDeleted: { $ne: true }
+    });
+
+    if (pgPrincipale) {
+      this.referentCharacterId = pgPrincipale._id as any;
+    } else {
+      throw new Error('PNG requires a PG principale as referent');
+    }
+  }
+
+  // Validation 3: Simplified schema for PNG and PG Master - skip full validation
+  if (this.characterType === 'png' || this.characterType === 'pg_master') {
+    // PNG/Master require only: name
+    if (!this.name || this.name.trim().length < 2) {
+      throw new Error('Character name required (min 2 chars)');
+    }
+
+    // Clear unnecessary fields for PNG/Master
+    this.skills = this.skills || {};
+    this.occupation = undefined;
+
+    // Skip full stats validation for PNG/Master - they don't need complete stats
+    // Continue with basic save operations
+  }
+
   // Calculate derived statistics when base stats change
   if (this.isModified('stats')) {
     const configService = getCharacterCreationConfig();

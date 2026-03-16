@@ -142,7 +142,7 @@ export class UserManagementController {
       const charactersData = await Character.aggregate([
         { $match: { userId: { $in: userIds } } },
         { $sort: { createdAt: -1 } },
-        { $limit: userIds.length * 3 }, // Max 3 characters per user for preview
+        { $limit: userIds.length * 10 }, // Preview limit: up to 10 characters per user in list view
         {
           $lookup: {
             from: 'occupations',
@@ -1717,6 +1717,291 @@ export class UserManagementController {
       res.status(500).json(errorResponse(
         'Failed to bulk deactivate users',
         'BULK_DEACTIVATE_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
+    }
+  }
+
+  /**
+   * POST /admin/users/:userId/assign-png
+   * Create new PNG character for user
+   */
+  static async assignPNG(req: Request, res: Response): Promise<void> {
+    try {
+      const { userId } = req.params;
+      const { name, surname, avatarUrl, description } = req.body;
+
+      // Validate required fields
+      if (!name || name.trim().length < 2) {
+        res.status(400).json(errorResponse(
+          'Nome richiesto (minimo 2 caratteri)',
+          'NAME_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      // Validate user exists
+      const user = await User.findById(userId);
+      if (!user) {
+        res.status(404).json(errorResponse(
+          'Utente non trovato',
+          'USER_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      // Find user's PG principale for referent
+      const pgPrincipale = await Character.findOne({
+        userId,
+        characterType: 'pg_principale',
+        isDeleted: { $ne: true }
+      });
+
+      if (!pgPrincipale) {
+        res.status(400).json(errorResponse(
+          'L\'utente deve avere un PG principale per creare PNG',
+          'NO_PG_PRINCIPALE',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      // Check name availability
+      const nameExists = await Character.findOne({ name: name.trim(), isDeleted: { $ne: true } });
+      if (nameExists) {
+        res.status(400).json(errorResponse(
+          'Nome personaggio già esistente',
+          'NAME_TAKEN',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      // Create PNG with minimal schema
+      const png = new Character({
+        userId,
+        characterType: 'png',
+        referentCharacterId: pgPrincipale._id,
+        name: name.trim(),
+        surname: surname?.trim() || '',
+        avatar: avatarUrl || '',
+        publicDescription: description || '',
+        playerStatus: 'approved', // PNG auto-approved
+        gameplayRoles: ['player'], // Basic permissions
+        stats: { // Minimal stats (not used for PNG)
+          strength: 50,
+          constitution: 50,
+          size: 50,
+          dexterity: 50,
+          charm: 50,
+          intelligence: 50,
+          power: 50,
+          education: 50
+        },
+        derived: {
+          ideaRoll: 50,
+          luckRoll: 50,
+          knowledge: 50,
+          hitPoints: 10,
+          sanityPoints: 50,
+          magicPoints: 10,
+          movementRate: 8,
+          damageBonus: '0',
+          build: 0
+        },
+        skills: {}, // Empty skills for PNG
+        isActive: false,
+        isBot: false
+      });
+
+      await png.save();
+
+      const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
+      logger.info('PNG assigned to user', {
+        ...auditInfo,
+        userId,
+        pngId: png._id,
+        pngName: png.name,
+        referentId: pgPrincipale._id,
+        referentName: pgPrincipale.name,
+        category: 'character_management'
+      });
+
+      res.json(createResponse(
+        {
+          character: {
+            _id: png._id.toString(),
+            name: png.name,
+            surname: png.surname,
+            characterType: png.characterType,
+            referentCharacterId: png.referentCharacterId?.toString(),
+            referentName: pgPrincipale.name
+          }
+        },
+        'PNG creato con successo',
+        getRequestId(req)
+      ));
+
+    } catch (error: unknown) {
+      logger.error('Assign PNG error:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      res.status(500).json(errorResponse(
+        'Impossibile creare PNG',
+        'ASSIGN_PNG_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
+    }
+  }
+
+  /**
+   * POST /admin/users/:userId/assign-master
+   * Create new Master character for user (max 1 per user)
+   */
+  static async assignMaster(req: Request, res: Response): Promise<void> {
+    try {
+      const { userId } = req.params;
+      const { name, surname, avatarUrl } = req.body;
+
+      // Validate required fields
+      if (!name || name.trim().length < 2) {
+        res.status(400).json(errorResponse(
+          'Nome richiesto (minimo 2 caratteri)',
+          'NAME_REQUIRED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      // Validate user exists
+      const user = await User.findById(userId);
+      if (!user) {
+        res.status(404).json(errorResponse(
+          'Utente non trovato',
+          'USER_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      // Check max 1 Master per user
+      const existingMaster = await Character.findOne({
+        userId,
+        characterType: 'pg_master',
+        isDeleted: { $ne: true }
+      });
+
+      if (existingMaster) {
+        res.status(400).json(errorResponse(
+          'L\'utente ha già un personaggio Master',
+          'MASTER_EXISTS',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      // Check name availability
+      const nameExists = await Character.findOne({ name: name.trim(), isDeleted: { $ne: true } });
+      if (nameExists) {
+        res.status(400).json(errorResponse(
+          'Nome personaggio già esistente',
+          'NAME_TAKEN',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      // Create Master with simplified schema + elevated permissions
+      const master = new Character({
+        userId,
+        characterType: 'pg_master',
+        name: name.trim(),
+        surname: surname?.trim() || '',
+        avatar: avatarUrl || '',
+        playerStatus: 'approved', // Master auto-approved
+        gameplayRoles: ['master'], // Master gameplay permissions
+        stats: { // Minimal stats (not used for Master)
+          strength: 50,
+          constitution: 50,
+          size: 50,
+          dexterity: 50,
+          charm: 50,
+          intelligence: 50,
+          power: 50,
+          education: 50
+        },
+        derived: {
+          ideaRoll: 50,
+          luckRoll: 50,
+          knowledge: 50,
+          hitPoints: 10,
+          sanityPoints: 50,
+          magicPoints: 10,
+          movementRate: 8,
+          damageBonus: '0',
+          build: 0
+        },
+        skills: {}, // Empty skills for Master
+        isActive: false,
+        isBot: false
+      });
+
+      await master.save();
+
+      const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
+      logger.info('Master assigned to user', {
+        ...auditInfo,
+        userId,
+        masterId: master._id,
+        masterName: master.name,
+        category: 'character_management'
+      });
+
+      res.json(createResponse(
+        {
+          character: {
+            _id: master._id.toString(),
+            name: master.name,
+            surname: master.surname,
+            characterType: master.characterType,
+            gameplayRoles: master.gameplayRoles
+          }
+        },
+        'Master creato con successo',
+        getRequestId(req)
+      ));
+
+    } catch (error: unknown) {
+      logger.error('Assign Master error:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      res.status(500).json(errorResponse(
+        'Impossibile creare Master',
+        'ASSIGN_MASTER_ERROR',
         undefined,
         500,
         getRequestId(req)

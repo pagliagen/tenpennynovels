@@ -30,7 +30,6 @@ export interface SystemConfigRecord {
 
 export interface SystemConfig {
   gameSettings: {
-    maxCharactersPerUser: number;
   };
   economySettings: {
     startingCash: number;

@@ -26,6 +26,7 @@ export class CharacterApprovalController {
       const pageSize = parseInt(req.query.pageSize as string) || 25;
       const statusFilter = req.query.status as string;
       const userId = req.query.userId as string;
+      const characterType = req.query.characterType as string;
 
       const skip = (page - 1) * pageSize;
 
@@ -36,6 +37,9 @@ export class CharacterApprovalController {
       }
       if (userId) {
         filter.userId = userId;
+      }
+      if (characterType && ['pg_principale', 'pg_master', 'png'].includes(characterType)) {
+        filter.characterType = characterType;
       }
 
       // Use local model with proper imports
@@ -59,7 +63,12 @@ export class CharacterApprovalController {
             select: 'username email',
             options: { strictPopulate: false }
           })
-          .select('name surname fullName occupation playerStatus createdAt submittedAt approvedAt rejectedAt userId canAccessAdminPanel isGestore gameplayRoles characterPermissions adminPermissions age gender socialClass location')
+          .populate({
+            path: 'referentCharacterId',
+            select: 'name',
+            options: { strictPopulate: false }
+          })
+          .select('name surname fullName occupation playerStatus createdAt submittedAt approvedAt rejectedAt userId canAccessAdminPanel isGestore gameplayRoles characterPermissions adminPermissions age gender socialClass location characterType referentCharacterId')
           .sort({ createdAt: -1 })
           .skip(skip)
           .limit(pageSize)
@@ -99,6 +108,12 @@ export class CharacterApprovalController {
           isGestore: char.isGestore || false,
           gameplayRoles: char.gameplayRoles || [],
           characterPermissions: char.characterPermissions || [],
+          characterType: char.characterType || 'pg_principale',
+          referentCharacterId: char.referentCharacterId?._id ? char.referentCharacterId._id.toString() : null,
+          referent: char.referentCharacterId?.name ? {
+            _id: char.referentCharacterId._id.toString(),
+            name: char.referentCharacterId.name
+          } : undefined,
           metadata: {
             createdAt: char.createdAt ? char.createdAt.toISOString() : new Date().toISOString(),
             submittedAt: char.submittedAt ? char.submittedAt.toISOString() : null,

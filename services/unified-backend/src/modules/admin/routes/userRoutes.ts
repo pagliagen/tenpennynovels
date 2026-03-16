@@ -121,4 +121,21 @@ router.patch(
   UserManagementController.updateUserPermissions
 );
 
+// Character type assignment routes
+router.post(
+  '/:userId/assign-png',
+  requireViewPermission('characters.detail.edit'),
+  AdminAuthMiddleware.logAdminAction('user.assign_png', 'user_management'),
+  autoLogOutcome,
+  UserManagementController.assignPNG
+);
+
+router.post(
+  '/:userId/assign-master',
+  requireViewPermission('characters.detail.edit'),
+  AdminAuthMiddleware.logAdminAction('user.assign_master', 'user_management'),
+  autoLogOutcome,
+  UserManagementController.assignMaster
+);
+
 export { router as userRoutes };

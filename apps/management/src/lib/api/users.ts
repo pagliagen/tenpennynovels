@@ -200,3 +200,32 @@ export async function verifyUserEmail(id: string): Promise<User> {
     accountStatus: { isEmailVerified: true }
   });
 }
+
+/**
+ * Assign PNG character to user
+ */
+export async function assignPNG(userId: string, data: {
+  name: string;
+  surname?: string;
+  avatarUrl?: string;
+  description?: string
+}): Promise<any> {
+  const response = await withRetry(() =>
+    apiClient.post(`/admin/users/${userId}/assign-png`, data)
+  );
+  return response.data;
+}
+
+/**
+ * Assign Master character to user
+ */
+export async function assignMaster(userId: string, data: {
+  name: string;
+  surname?: string;
+  avatarUrl?: string
+}): Promise<any> {
+  const response = await withRetry(() =>
+    apiClient.post(`/admin/users/${userId}/assign-master`, data)
+  );
+  return response.data;
+}

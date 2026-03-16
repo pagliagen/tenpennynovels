@@ -428,3 +428,36 @@ export function useBulkDeactivateUsers() {
     }
   });
 }
+
+/**
+ * Hook: Assign PNG to user
+ */
+export function useAssignPNG() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ userId, data }: { userId: string; data: any }) =>
+      userAPI.assignPNG(userId, data),
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+    }
+  });
+}
+
+/**
+ * Hook: Assign Master to user
+ */
+export function useAssignMaster() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ userId, data }: { userId: string; data: any }) =>
+      userAPI.assignMaster(userId, data),
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+    }
+  });
+}
+

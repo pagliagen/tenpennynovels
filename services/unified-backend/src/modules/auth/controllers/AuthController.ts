@@ -202,7 +202,7 @@ export class AuthController {
       let characters = await Character.find({
         userId: user.id,
         playerStatus: { $in: ['draft', 'pending', 'approved'] }
-      }).select('id name surname playerStatus occupation currentLocation gameplayRoles lastActive submittedAt canAccessAdminPanel isGestore characterPermissions adminPermissions');
+      }).select('id name surname playerStatus occupation currentLocation gameplayRoles characterType lastActive submittedAt canAccessAdminPanel isGestore characterPermissions adminPermissions');
       
       logger.info(`User ${user.username} login: found ${characters.length} existing characters`);
 
@@ -365,6 +365,7 @@ export class AuthController {
               occupation: char.occupation,
               currentLocation: char.currentLocation,
               gameplayRoles: char.gameplayRoles,
+              characterType: char.characterType,
               lastActive: char.lastActive,
               submittedAt: char.submittedAt
             }))
