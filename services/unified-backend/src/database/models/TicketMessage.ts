@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document, Types, type QueryFilter } from 'mongoose';
+import sanitizeHtml from 'sanitize-html';
 
 export interface ITicketMessage extends Document {
   ticketId: Schema.Types.ObjectId; // Reference to Ticket
@@ -189,6 +190,16 @@ TicketMessageSchema.pre('save', async function() {
   // Internal notes should not have character read tracking
   if (this.isInternal && this.readAt?.character) {
     delete this.readAt.character;
+  }
+});
+
+// Pre-save middleware to sanitize content (XSS protection)
+TicketMessageSchema.pre('save', async function() {
+  if (this.content) {
+    this.content = sanitizeHtml(this.content, {
+      allowedTags: [], // Strip ALL HTML tags
+      allowedAttributes: {} // No attributes allowed
+    });
   }
 });
 

@@ -10,10 +10,18 @@
  */
 
 import type { AppProps } from 'next/app';
+import dynamic from 'next/dynamic';
 import { useEffect } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { queryClient } from '@/lib/api/queryClient';
+
+/** Devtools caricati solo sul client e solo in dev (pacchetto in devDependencies, assente in prod) */
+const ReactQueryDevtools = process.env.NODE_ENV === 'development'
+  ? dynamic(
+      () => import('@tanstack/react-query-devtools').then((mod) => ({ default: mod.ReactQueryDevtools })),
+      { ssr: false }
+    )
+  : () => null;
 import { AuthInitializer } from '@/components/auth/AuthInitializer';
 import { bootstrapRenderers } from '@/lib/cellRenderers';
 import { runStorageMigrations } from '@/lib/storage/migrations';
@@ -32,10 +40,8 @@ export default function App({ Component, pageProps }: AppProps) {
     <QueryClientProvider client={queryClient}>
       <AuthInitializer>
         <Component {...pageProps} />
-        {/* DevTools only in development */}
-        {process.env.NODE_ENV === 'development' && (
-          <ReactQueryDevtools initialIsOpen={false} />
-        )}
+        {/* React Query Devtools (dynamic import, solo in dev; in prod è no-op) */}
+        <ReactQueryDevtools initialIsOpen={false} />
       </AuthInitializer>
     </QueryClientProvider>
   );

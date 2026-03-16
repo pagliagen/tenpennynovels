@@ -5,6 +5,10 @@
   "author": "Gennaro Paglia",
   "license": "MIT",
   "main": "src/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "type-check": "tsc --noEmit" 
+  },
   "dependencies": {
     "express": "^5.2.1",
     "redis": "^5.10.0",

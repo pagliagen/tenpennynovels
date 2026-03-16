@@ -505,6 +505,63 @@ export function WebSocketProvider({ children }: WebSocketProviderProps): JSX.Ele
       });
     });
 
+    /**
+     * Ticket Events (for real-time ticket updates)
+     */
+
+    socket.on('ticket:staff_replied', (data) => {
+      // Play notification sound
+      playNotificationSound();
+
+      // Show toast
+      useUIStore.getState().addToast({
+        type: 'info',
+        message: `Nuova risposta al ticket #${data.ticketNumber || data.ticketId}`,
+        duration: 5000,
+      });
+
+      // Distribute to message subscribers (for query invalidation)
+      messageCallbacksRef.current.forEach((callback) =>
+        callback({ type: 'ticket:staff_replied', data })
+      );
+    });
+
+    socket.on('ticket:status_changed', (data) => {
+      const statusLabels: Record<string, string> = {
+        assigned: 'preso in carico',
+        in_progress: 'in lavorazione',
+        waiting_user: 'in attesa di risposta',
+        resolved: 'risolto',
+        closed: 'chiuso'
+      };
+
+      const statusLabel = statusLabels[data.newStatus] || data.newStatus;
+
+      useUIStore.getState().addToast({
+        type: data.newStatus === 'resolved' ? 'success' : 'info',
+        message: `Ticket #${data.ticketNumber || data.ticketId} ${statusLabel}`,
+        duration: 5000,
+      });
+
+      // Distribute to message subscribers
+      messageCallbacksRef.current.forEach((callback) =>
+        callback({ type: 'ticket:status_changed', data })
+      );
+    });
+
+    socket.on('ticket:closed', (data) => {
+      useUIStore.getState().addToast({
+        type: 'info',
+        message: `Ticket #${data.ticketNumber || data.ticketId} chiuso`,
+        duration: 5000,
+      });
+
+      // Distribute to message subscribers
+      messageCallbacksRef.current.forEach((callback) =>
+        callback({ type: 'ticket:closed', data })
+      );
+    });
+
     socket.on('system_notification', (message) => {
       useUIStore.getState().addToast({
         type: 'info',

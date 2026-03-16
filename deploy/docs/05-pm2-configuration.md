@@ -322,58 +322,10 @@ module.exports = {
 - Unified backend NON può scalare orizzontalmente con PM2 cluster
 - Alternativa: Vertical scaling (CPU/RAM più potenti)
 - O: Sticky sessions + Redis adapter avanzato (complesso, non implementato)
-
+ 
 ---
 
-### Process 7: Embeddings Service (Python)
-
-```javascript
-{
-  name: 'tenpennynovels-embeddings-service',
-  cwd: './services/embeddings-worker/python',
-  script: 'venv/bin/python3',
-  args: '-u embedding_service.py',
-  interpreter: 'none',
-  instances: 1,
-  exec_mode: 'fork',
-  autorestart: true,
-  watch: false,
-  max_memory_restart: '2G',
-  env_production: {
-    PORT: 5001,
-  },
-}
-```
-
-**Differenze Chiave**:
-
-- **script**: `venv/bin/python3`
-  - Binario Python dal virtual environment
-  - Path relativo a `cwd`
-
-- **args**: `-u embedding_service.py`
-  - `-u`: unbuffered output (log real-time)
-  - `embedding_service.py`: script Flask da eseguire
-
-- **interpreter**: `'none'`
-  - **CRITICO**: Dice a PM2 di NON usare interprete Node.js
-  - PM2 esegue direttamente `venv/bin/python3` come binary
-
-- **max_memory_restart**: `'2G'`
-  - Modelli ML (sentence-transformers) richiedono molta RAM
-  - 2 GB è il minimo per evitare OOM
-
-**Port**: 5001
-**URL**: http://127.0.0.1:5001 (solo localhost, NON esposto su internet)
-**Mode**: Fork (Python Flask HTTP server)
-
-**Note**:
-- Python service è chiamato SOLO da unified-backend (interno)
-- Non è dietro Nginx reverse proxy pubblico
-
----
-
-### Process 8: Embeddings Worker (Node.js)
+### Process 7: Embeddings Worker (Node.js)
 
 ```javascript
 {
@@ -425,7 +377,6 @@ module.exports = {
 - tenpennynovels-documenti
 - tenpennynovels-gestione
 - tenpennynovels-unified-backend (REQUIRED)
-- tenpennynovels-embeddings-service
 - tenpennynovels-embeddings-worker
 
 ---
@@ -544,8 +495,7 @@ pm2 list --json
 │ 4   │ tenpennynovels-api-gateway        │ default     │ 1.0.0   │ cluster │ 12349    │ 2h     │ 0    │ online    │ 0.3%     │ 220.1mb  │ deploy   │ disabled │
 │ 5   │ tenpennynovels-api-gateway        │ default     │ 1.0.0   │ cluster │ 12350    │ 2h     │ 0    │ online    │ 0.3%     │ 215.7mb  │ deploy   │ disabled │
 │ 6   │ tenpennynovels-unified-backend    │ default     │ 1.0.0   │ fork    │ 12351    │ 2h     │ 0    │ online    │ 0.5%     │ 450.3mb  │ deploy   │ disabled │
-│ 7   │ tenpennynovels-embeddings-service │ default     │ 1.0.0   │ fork    │ 12352    │ 2h     │ 0    │ online    │ 0.2%     │ 1.2gb    │ deploy   │ disabled │
-│ 8   │ tenpennynovels-embeddings-worker  │ default     │ 1.0.0   │ fork    │ 12353    │ 2h     │ 0    │ online    │ 0.1%     │ 120.5mb  │ deploy   │ disabled │
+│ 7   │ tenpennynovels-embeddings-worker  │ default     │ 1.0.0   │ fork    │ 12353    │ 2h     │ 0    │ online    │ 0.1%     │ 120.5mb  │ deploy   │ disabled │
 └─────┴───────────────────────────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
 ```
 
@@ -754,29 +704,7 @@ pm2 save
 pm2 startup
 # Esegui comando suggerito dall'output
 ```
-
----
-
-### Python Service OOM (Out of Memory)
-
-**Sintomo**: embeddings-service crasha con `Killed` nei log
-
-**Causa**: Modelli ML richiedono >2 GB RAM
-
-**Fix**:
-```bash
-# Aumenta max_memory_restart
-nano ~/tenpennynovels/ecosystem.config.js
-
-# Modifica embeddings-service:
-max_memory_restart: '3G'  // Da 2G a 3G
-
-# Restart
-pm2 restart tenpennynovels-embeddings-service
-```
-
-**Alternativa**: Riduci concurrency in embeddings-worker (meno job paralleli → meno RAM).
-
+ 
 ---
 
 ## Performance Tuning

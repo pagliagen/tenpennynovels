@@ -23,10 +23,18 @@
  */
 
 import type { AppProps } from 'next/app';
+import dynamic from 'next/dynamic';
 import { useEffect } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { queryClient } from '@/lib/api/queryClient';
+
+/** Devtools caricati solo sul client e solo in dev (pacchetto in devDependencies, assente in prod) */
+const ReactQueryDevtools = process.env.NODE_ENV === 'development'
+  ? dynamic(
+      () => import('@tanstack/react-query-devtools').then((mod) => ({ default: mod.ReactQueryDevtools })),
+      { ssr: false }
+    )
+  : () => null;
 import { WebSocketProvider } from '@/contexts/WebSocketContext';
 import { EnvironmentProvider } from '@/contexts/EnvironmentContext';
 import { AuthInitializer } from '@/components/auth/AuthInitializer';
@@ -98,10 +106,8 @@ export default function App({ Component, pageProps }: AppProps): JSX.Element {
             {/* Toast Container - Global notifications (403, permission errors, etc.) */}
             <ToastContainer />
 
-            {/* React Query Devtools (dev mode only) */}
-            {process.env.NODE_ENV === 'development' && (
-              <ReactQueryDevtools initialIsOpen={false} />
-            )}
+            {/* React Query Devtools (dynamic import, solo in dev; in prod è no-op) */}
+            <ReactQueryDevtools initialIsOpen={false} />
           </EnvironmentProvider>
         </WebSocketProvider>
       </AuthInitializer>

@@ -1,2 +1,0 @@
-# L'unica variabile necessaria. Tutto il resto è derivato in config.ts.
-NODE_ENV=development

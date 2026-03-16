@@ -678,132 +678,80 @@ export class TicketManagementController {
         return;
       }
 
-      // Get overview statistics
+      // Get overview statistics for dashboard
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
       const [
-        totalTickets,
-        openTickets,
-        assignedTickets,
-        closedTickets,
-        departmentStats,
-        priorityStats,
-        categoryStats,
-        staffPerformance,
-        escalationStats
+        openCount,
+        unassignedCount,
+        inProgressCount,
+        closedThisMonthCount,
+        categoryStatsRaw
       ] = await Promise.all([
-        Ticket.countDocuments(),
+        // Open tickets (open + reopened status)
         Ticket.countDocuments({ status: { $in: ['open', 'reopened'] } }),
-        Ticket.countDocuments({ status: 'assigned' }),
-        Ticket.countDocuments({ status: 'closed' }),
-        
-        // Department breakdown
+
+        // Unassigned tickets (no assignedTo)
+        Ticket.countDocuments({
+          status: { $ne: 'closed' },
+          assignedTo: null
+        }),
+
+        // In progress tickets
+        Ticket.countDocuments({ status: 'in_progress' }),
+
+        // Closed in last 30 days
+        Ticket.countDocuments({
+          status: 'closed',
+          closedAt: { $gte: thirtyDaysAgo }
+        }),
+
+        // Category breakdown with all statuses
         Ticket.aggregate([
           {
             $group: {
-              _id: '$department',
-              total: { $sum: 1 },
-              open: { $sum: { $cond: [{ $in: ['$status', ['open', 'reopened']] }, 1, 0] } },
-              assigned: { $sum: { $cond: [{ $eq: ['$status', 'assigned'] }, 1, 0] } },
-              closed: { $sum: { $cond: [{ $eq: ['$status', 'closed'] }, 1, 0] } }
+              _id: '$category',
+              openCount: {
+                $sum: { $cond: [{ $in: ['$status', ['open', 'reopened']] }, 1, 0] }
+              },
+              inProgressCount: {
+                $sum: { $cond: [{ $eq: ['$status', 'in_progress'] }, 1, 0] }
+              },
+              closedCount: {
+                $sum: { $cond: [{ $eq: ['$status', 'closed'] }, 1, 0] }
+              },
+              totalCount: { $sum: 1 }
             }
           }
-        ]),
-        
-        // Priority breakdown
-        Ticket.aggregate([
-          { $group: { _id: '$priority', count: { $sum: 1 } } }
-        ]),
-        
-        // Category breakdown
-        Ticket.aggregate([
-          { $group: { _id: '$category', count: { $sum: 1 } } }
-        ]),
-        
-        // Staff performance
-        Ticket.aggregate([
-          { $match: { assignedTo: { $ne: null } } },
-          {
-            $group: {
-              _id: { staffId: '$assignedTo', staffName: '$assignedToName' },
-              totalHandled: { $sum: 1 },
-              currentAssigned: { 
-                $sum: { $cond: [{ $in: ['$status', ['assigned', 'in_progress', 'waiting_user']] }, 1, 0] } 
-              }
-            }
-          },
-          {
-            $project: {
-              staffId: '$_id.staffId',
-              staffName: '$_id.staffName',
-              totalHandled: 1,
-              currentAssigned: 1,
-              _id: 0
-            }
-          }
-        ]),
-        
-        // Escalation statistics
-        Ticket.aggregate([
-          { $match: { escalatedAt: { $exists: true } } },
-          { $group: { _id: '$escalationLevel', count: { $sum: 1 } } }
         ])
       ]);
 
-      // Calculate average resolution time (simplified - actual implementation would be more complex)
-      const avgResolutionTime = '2.5 days'; // Placeholder
+      // Category labels mapping
+      const categoryLabels: Record<string, string> = {
+        character_approval: 'Approvazione Personaggio',
+        character_edit: 'Modifica Personaggio',
+        quest_proposal: 'Proposta Trama',
+        game_bug_report: 'Segnalazione Bug',
+        improvement_suggestion: 'Suggerimento'
+      };
 
-      // Transform department stats
-      const byDepartment: Record<string, any> = {};
-      departmentStats.forEach((stat: any) => {
-        byDepartment[stat._id] = {
-          total: stat.total,
-          open: stat.open,
-          assigned: stat.assigned,
-          closed: stat.closed
-        };
-      });
+      // Transform category stats for dashboard
+      const categoryStats = categoryStatsRaw.map((stat: any) => ({
+        category: stat._id,
+        categoryLabel: categoryLabels[stat._id] || stat._id,
+        openCount: stat.openCount,
+        inProgressCount: stat.inProgressCount,
+        closedCount: stat.closedCount,
+        totalCount: stat.totalCount
+      }));
 
-      // Transform priority stats
-      const byPriority: Record<string, number> = {};
-      priorityStats.forEach((stat: any) => {
-        byPriority[stat._id] = stat.count;
-      });
-
-      // Transform category stats
-      const byCategory: Record<string, number> = {};
-      categoryStats.forEach((stat: any) => {
-        byCategory[stat._id] = stat.count;
-      });
-
-      // Transform escalation stats
-      const byLevel: Record<number, number> = {};
-      let totalEscalated = 0;
-      escalationStats.forEach((stat: any) => {
-        byLevel[stat._id] = stat.count;
-        totalEscalated += stat.count;
-      });
-
-      const stats: TicketStats = {
-        overview: {
-          totalTickets,
-          openTickets,
-          assignedTickets,
-          closedTickets,
-          avgResolutionTime
-        },
-        byDepartment,
-        byPriority,
-        byCategory,
-        staffPerformance: staffPerformance.map((staff: any) => ({
-          staffId: staff.staffId.toString(),
-          staffName: staff.staffName || 'Unknown',
-          totalHandled: staff.totalHandled,
-          avgResolutionTime: '2.3 days', // Placeholder
-          currentAssigned: staff.currentAssigned
-        })),
-        escalationStats: {
-          totalEscalated,
-          byLevel
-        }
+      const stats = {
+        openCount,
+        unassignedCount,
+        inProgressCount,
+        closedThisMonthCount,
+        categoryStats
       };
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);

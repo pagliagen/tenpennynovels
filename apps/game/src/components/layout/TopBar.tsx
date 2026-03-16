@@ -74,10 +74,7 @@ interface TopBarProps {
   /** Unread OffGame chat count */
   unreadOffGameChatCount?: number;
 
-  /** Workable tickets count for admin users */
-  workableTicketsCount?: number;
-
-  /** Unread tickets count for utility panel */
+  /** Unread tickets count (messages from staff not read yet) */
   unreadTicketsCount?: number;
 
   /** Whether user can access admin panel */
@@ -130,7 +127,6 @@ export function TopBar({
   onCharacterDirectoryClick,
   onCharacterFaceClaimClick,
   unreadOnGameMailCount = 0,
-  workableTicketsCount = 0,
   unreadTicketsCount = 0,
   canAccessAdmin = false,
   locationName = 'London',
@@ -329,9 +325,9 @@ export function TopBar({
                 alt="Ticket"
                 className={styles.iconImage}
               />
-              {workableTicketsCount > 0 && (
+              {unreadTicketsCount > 0 && (
                 <span className={styles.notificationBadge}>
-                  {workableTicketsCount > 99 ? '99+' : workableTicketsCount}
+                  {unreadTicketsCount > 99 ? '99+' : unreadTicketsCount}
                 </span>
               )}
             </button>

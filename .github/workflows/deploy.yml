@@ -97,14 +97,11 @@ jobs:
             if [ "$NEW_HASH" != "$OLD_HASH" ]; then
               echo "📦 Dependency files changed — installing..."
 
-              echo "📦 Installing root dependencies..."
-              npm install --production
-
               echo "📦 Installing frontend app dependencies..."
               for app in apps/*/; do
                 if [ -f "${app}package.json" ]; then
                   echo "  → ${app}"
-                  (cd "$app" && npm install --production)
+                  (cd "$app" && npm install)
                 fi
               done
 
@@ -167,6 +164,33 @@ jobs:
             echo "npm version: $(npm --version)"
             npm run build:backend:all
             echo "✅ Backend services built successfully"
+
+      - name: Cleanup development dependencies
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            cd ~/tenpennynovels
+
+            echo "🗑️  Removing development dependencies from production..."
+
+            for app in apps/*/; do
+              if [ -f "${app}package.json" ]; then
+                (cd "$app" && npm prune --production 2>/dev/null || true)
+              fi
+            done
+
+            for service in services/*/; do
+              if [ -f "${service}package.json" ]; then
+                (cd "$service" && npm prune --production 2>/dev/null || true)
+              fi
+            done
+
+            echo "✅ Development dependencies removed"
 
       - name: Setup Python for embeddings worker
         uses: appleboy/ssh-action@v1.0.3

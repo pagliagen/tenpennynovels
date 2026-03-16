@@ -59,7 +59,16 @@ export interface ITicket extends Document {
   // Metadata
   tags?: string[];
   internalNotes?: string;
-  
+
+  // Category-specific metadata
+  categoryMetadata?: {
+    targetCharacterId?: Schema.Types.ObjectId; // For character_approval, character_edit, character_sheet_review
+    targetLocationId?: Schema.Types.ObjectId;   // For location-related requests
+  };
+
+  // Activity tracking (for escalation queries)
+  lastActivityAt: Date; // Updated ogni volta che arriva messaggio o cambio status
+
   // System fields
   updatedAt: Date;
 }
@@ -77,7 +86,8 @@ const TicketSchema = new Schema<ITicket>({
     enum: [
       // Gestione Personaggi
       'character_sheet_review',
-      'character_approval', 
+      'character_approval',
+      'character_edit', // Modifica personaggio post-approvazione
       'character_access_problem',
       'character_status_change',
       
@@ -97,6 +107,9 @@ const TicketSchema = new Schema<ITicket>({
       'corporation_join_request',
       'corporation_management_problem',
       'new_corporation_request',
+
+      // Trame e Quest
+      'quest_proposal', // Proposta trama/quest personalizzata
       
       // Problemi Tecnici
       'game_bug_report',
@@ -282,6 +295,26 @@ const TicketSchema = new Schema<ITicket>({
   internalNotes: {
     type: String,
     maxlength: 5000
+  },
+
+  // Category-specific metadata
+  categoryMetadata: {
+    targetCharacterId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Character'
+    },
+    targetLocationId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Location'
+    }
+  },
+
+  // Activity tracking
+  lastActivityAt: {
+    type: Date,
+    required: true,
+    default: Date.now,
+    index: true // Index per escalation queries
   }
 }, {
   timestamps: true // Automatically creates createdAt and updatedAt
@@ -293,10 +326,11 @@ TicketSchema.index({ assignedTo: 1, status: 1 }); // For staff's assigned ticket
 TicketSchema.index({ department: 1, status: 1 }); // For department tickets
 TicketSchema.index({ category: 1, createdAt: -1 }); // For category filtering
 TicketSchema.index({ status: 1, priority: -1, createdAt: -1 }); // For priority sorting
-TicketSchema.index({ escalatedAt: 1 }, { 
-  partialFilterExpression: { escalatedAt: { $exists: true } } 
+TicketSchema.index({ escalatedAt: 1 }, {
+  partialFilterExpression: { escalatedAt: { $exists: true } }
 }); // For escalated tickets only
 TicketSchema.index({ createdAt: -1 }); // For chronological ordering
+TicketSchema.index({ lastActivityAt: 1, status: 1 }); // For escalation queries (find stale tickets)
 
 // Compound index for staff dashboard queries
 TicketSchema.index({ 
@@ -339,10 +373,14 @@ TicketSchema.pre('save', async function() {
       // MEDIA (48h escalation)
       'character_approval': 'medium',
       'character_sheet_review': 'medium',
+      'character_edit': 'medium',
       'location_problem': 'medium',
       'private_location_access': 'medium',
 
-      // BASSA (5-7 giorni escalation) - tutti gli altri
+      // BASSA (5-7 giorni escalation)
+      'quest_proposal': 'low',
+
+      // Tutti gli altri: low
     };
 
     this.priority = categoryPriorityMap[this.category] || 'low';
@@ -357,6 +395,7 @@ TicketSchema.pre('save', async function() {
       // Reparto ADMINISTRATION
       'character_sheet_review': 'administration',
       'character_approval': 'administration',
+      'character_edit': 'administration',
       'character_access_problem': 'administration',
       'character_status_change': 'administration',
 
@@ -367,6 +406,7 @@ TicketSchema.pre('save', async function() {
       'corporation_join_request': 'master',
       'corporation_management_problem': 'master',
       'new_corporation_request': 'master',
+      'quest_proposal': 'master',
 
       // Reparto TECHNICAL
       'location_problem': 'technical',

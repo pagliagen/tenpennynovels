@@ -24,7 +24,6 @@
 |----------|-------|-------------|-----------|------|
 | **api-gateway** | 8000 | `tenpennynovels-api-gateway` | 2 (cluster) | Entry point HTTP |
 | **unified-backend** | 3001 | `tenpennynovels-unified-backend` | 1 (fork) | Main backend + WebSocket |
-| **embeddings-service** | 5001 | `tenpennynovels-embeddings-service` | 1 (fork) | Python Flask ML |
 | **embeddings-worker** | - | `tenpennynovels-embeddings-worker` | 1 (fork) | Bull queue worker |
 
 ### Database Produzione
@@ -456,14 +455,8 @@ pm2 status
 - Redirect va a scheda character invece del wizard
 
 **TODO**: Verificare logica redirect post-login quando character è `DRAFT`
-
-### 2. Embeddings Service Restarts
-
-**Osservazione**: `tenpennynovels-embeddings-service` aveva 20 restarts in PM2
-
-**TODO**: Verificare logs e stabilità del servizio Python Flask
-
-### 3. Cluster Mode Unified Backend
+ 
+### 2. Cluster Mode Unified Backend
 
 **Issue**: unified-backend crasha in cluster mode nonostante Redis adapter configurato
 

@@ -298,8 +298,9 @@ export class TicketEventHandler extends BaseEventHandler {
       if (event.createdBy?.id) {
         const characterSocket = await this.findCharacterSocket(event.createdBy.id);
         if (characterSocket) {
-          characterSocket.emit('ticket_message_from_staff', {
+          characterSocket.emit('ticket:staff_replied', {
             ticketId: event.ticketId,
+            ticketNumber: event.ticketNumber,
             messageId: event.messageId,
             content: event.content,
             sender: event.sender,
@@ -312,8 +313,9 @@ export class TicketEventHandler extends BaseEventHandler {
       }
 
       // Also notify other staff members (for coordination)
-      this.io.to('staff').emit('ticket_message_staff_update', {
+      this.io.to('staff').emit('ticket:staff_replied', {
         ticketId: event.ticketId,
+        ticketNumber: event.ticketNumber,
         messageId: event.messageId,
         sender: event.sender,
         sentAt: event.sentAt,
@@ -337,8 +339,9 @@ export class TicketEventHandler extends BaseEventHandler {
     if (event.createdBy?.id) {
       const characterSocket = await this.findCharacterSocket(event.createdBy.id);
       if (characterSocket) {
-        characterSocket.emit('ticket_closed', {
+        characterSocket.emit('ticket:closed', {
           ticketId: event.ticketId,
+          ticketNumber: event.ticketNumber,
           title: event.title,
           closedBy: event.closedBy,
           closedAt: event.closedAt,
@@ -349,8 +352,9 @@ export class TicketEventHandler extends BaseEventHandler {
     }
 
     // Notify staff about ticket closure
-    this.io.to('staff').emit('ticket_closed_update', {
+    this.io.to('staff').emit('ticket:closed', {
       ticketId: event.ticketId,
+      ticketNumber: event.ticketNumber,
       title: event.title,
       closedBy: event.closedBy,
       closedAt: event.closedAt,

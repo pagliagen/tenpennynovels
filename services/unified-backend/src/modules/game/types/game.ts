@@ -530,38 +530,11 @@ export enum TicketDepartment {
 }
 
 export enum TicketCategory {
-  // Gestione Personaggi
-  CHARACTER_SHEET_REVIEW = 'character_sheet_review',
+  // v1 - 5 categorie iniziali
   CHARACTER_APPROVAL = 'character_approval',
-  CHARACTER_ACCESS_PROBLEM = 'character_access_problem',
-  CHARACTER_STATUS_CHANGE = 'character_status_change',
-  
-  // Mondo di Gioco e Location
-  PRIVATE_LOCATION_ACCESS = 'private_location_access',
-  LOCATION_PROBLEM = 'location_problem',
-  LOCATION_EVENT_CREATION = 'location_event_creation',
-  NEW_LOCATION_REQUEST = 'new_location_request',
-  
-  // Sistemi di Comunicazione
-  LOCATION_CHAT_PROBLEM = 'location_chat_problem',
-  OFFGAME_CHAT_PROBLEM = 'offgame_chat_problem',
-  POSTAL_SYSTEM_PROBLEM = 'postal_system_problem',
-  GROUP_CHAT_REQUEST = 'group_chat_request',
-  
-  // Corporazioni e Organizzazioni
-  CORPORATION_JOIN_REQUEST = 'corporation_join_request',
-  CORPORATION_MANAGEMENT_PROBLEM = 'corporation_management_problem',
-  NEW_CORPORATION_REQUEST = 'new_corporation_request',
-  
-  // Problemi Tecnici
+  CHARACTER_EDIT = 'character_edit',
+  QUEST_PROPOSAL = 'quest_proposal',
   GAME_BUG_REPORT = 'game_bug_report',
-  PERFORMANCE_PROBLEM = 'performance_problem',
-  WEBSOCKET_PROBLEM = 'websocket_problem',
-  GENERAL_SUPPORT = 'general_support',
-  
-  // Richieste Administrative
-  INFORMATION_REQUEST = 'information_request',
-  USER_REPORT = 'user_report',
   IMPROVEMENT_SUGGESTION = 'improvement_suggestion'
 }
 
@@ -572,75 +545,21 @@ export enum TicketPriority {
   CRITICAL = 'critical'  // 6h escalation (solo admin)
 }
 
-// Mapping Categoria → Label Italiana (basate sui sistemi TenPennyNovels)
+// Mapping Categoria → Label Italiana (v1 - 5 categorie iniziali)
 export const TICKET_CATEGORIES = {
-  // Gestione Personaggi
-  [TicketCategory.CHARACTER_SHEET_REVIEW]: 'Revisione Scheda Personaggio',
   [TicketCategory.CHARACTER_APPROVAL]: 'Approvazione Personaggio',
-  [TicketCategory.CHARACTER_ACCESS_PROBLEM]: 'Problema Accesso Personaggio',
-  [TicketCategory.CHARACTER_STATUS_CHANGE]: 'Cambio Status Personaggio',
-  
-  // Mondo di Gioco e Location  
-  [TicketCategory.PRIVATE_LOCATION_ACCESS]: 'Accesso Location Private',
-  [TicketCategory.LOCATION_PROBLEM]: 'Problema Location',
-  [TicketCategory.LOCATION_EVENT_CREATION]: 'Creazione Evento Location',
-  [TicketCategory.NEW_LOCATION_REQUEST]: 'Richiesta Nuova Location',
-  
-  // Sistemi di Comunicazione
-  [TicketCategory.LOCATION_CHAT_PROBLEM]: 'Problema Chat Location',
-  [TicketCategory.OFFGAME_CHAT_PROBLEM]: 'Problema Chat Off-Game',
-  [TicketCategory.POSTAL_SYSTEM_PROBLEM]: 'Problema Sistema Postale',
-  [TicketCategory.GROUP_CHAT_REQUEST]: 'Richiesta Chat Gruppo',
-  
-  // Corporazioni e Organizzazioni
-  [TicketCategory.CORPORATION_JOIN_REQUEST]: 'Richiesta Adesione Corporazione',
-  [TicketCategory.CORPORATION_MANAGEMENT_PROBLEM]: 'Problema Gestione Corporazione',
-  [TicketCategory.NEW_CORPORATION_REQUEST]: 'Creazione Nuova Corporazione',
-  
-  // Problemi Tecnici
-  [TicketCategory.GAME_BUG_REPORT]: 'Bug Sistema di Gioco',
-  [TicketCategory.PERFORMANCE_PROBLEM]: 'Problema Performance',
-  [TicketCategory.WEBSOCKET_PROBLEM]: 'Problema WebSocket',
-  [TicketCategory.GENERAL_SUPPORT]: 'Supporto Generale',
-  
-  // Richieste Administrative
-  [TicketCategory.INFORMATION_REQUEST]: 'Richiesta Informazioni',
-  [TicketCategory.USER_REPORT]: 'Segnalazione Utente',
-  [TicketCategory.IMPROVEMENT_SUGGESTION]: 'Proposta Miglioramento'
+  [TicketCategory.CHARACTER_EDIT]: 'Modifica Personaggio',
+  [TicketCategory.QUEST_PROPOSAL]: 'Proposta Trama/Quest',
+  [TicketCategory.GAME_BUG_REPORT]: 'Segnalazione Bug',
+  [TicketCategory.IMPROVEMENT_SUGGESTION]: 'Suggerimento Miglioramento'
 } as const;
 
-// Mapping Categoria → Reparto (routing automatico iniziale)
+// Mapping Categoria → Reparto (routing automatico iniziale) - v1
 export const CATEGORY_DEPARTMENT_MAPPING = {
-  // Reparto ADMINISTRATION
-  [TicketCategory.CHARACTER_SHEET_REVIEW]: TicketDepartment.ADMINISTRATION,
   [TicketCategory.CHARACTER_APPROVAL]: TicketDepartment.ADMINISTRATION,
-  [TicketCategory.CHARACTER_ACCESS_PROBLEM]: TicketDepartment.ADMINISTRATION,
-  [TicketCategory.CHARACTER_STATUS_CHANGE]: TicketDepartment.ADMINISTRATION,
-  
-  // Reparto MASTER  
-  [TicketCategory.PRIVATE_LOCATION_ACCESS]: TicketDepartment.MASTER,
-  [TicketCategory.LOCATION_EVENT_CREATION]: TicketDepartment.MASTER,
-  [TicketCategory.NEW_LOCATION_REQUEST]: TicketDepartment.MASTER,
-  [TicketCategory.CORPORATION_JOIN_REQUEST]: TicketDepartment.MASTER,
-  [TicketCategory.CORPORATION_MANAGEMENT_PROBLEM]: TicketDepartment.MASTER,
-  [TicketCategory.NEW_CORPORATION_REQUEST]: TicketDepartment.MASTER,
-  
-  // Reparto TECHNICAL
-  [TicketCategory.LOCATION_PROBLEM]: TicketDepartment.TECHNICAL,
-  [TicketCategory.LOCATION_CHAT_PROBLEM]: TicketDepartment.TECHNICAL,
-  [TicketCategory.OFFGAME_CHAT_PROBLEM]: TicketDepartment.TECHNICAL,
-  [TicketCategory.POSTAL_SYSTEM_PROBLEM]: TicketDepartment.TECHNICAL,
+  [TicketCategory.CHARACTER_EDIT]: TicketDepartment.ADMINISTRATION,
+  [TicketCategory.QUEST_PROPOSAL]: TicketDepartment.MASTER,
   [TicketCategory.GAME_BUG_REPORT]: TicketDepartment.TECHNICAL,
-  [TicketCategory.PERFORMANCE_PROBLEM]: TicketDepartment.TECHNICAL,
-  [TicketCategory.WEBSOCKET_PROBLEM]: TicketDepartment.TECHNICAL,
-  
-  // Reparto MODERATION
-  [TicketCategory.USER_REPORT]: TicketDepartment.MODERATION,
-  
-  // Reparto GENERAL (catch-all)
-  [TicketCategory.GROUP_CHAT_REQUEST]: TicketDepartment.GENERAL,
-  [TicketCategory.GENERAL_SUPPORT]: TicketDepartment.GENERAL,
-  [TicketCategory.INFORMATION_REQUEST]: TicketDepartment.GENERAL,
   [TicketCategory.IMPROVEMENT_SUGGESTION]: TicketDepartment.GENERAL
 } as const;
 
@@ -653,38 +572,12 @@ export const DEPARTMENT_ROLES_MAPPING = {
   [TicketDepartment.GENERAL]: ['master', 'moderatore', 'amministratore'] // Tutti possono gestire
 } as const;
 
-// Mapping Categoria → Priorità Automatica (per sistema escalation)
+// Mapping Categoria → Priorità Automatica (per sistema escalation) - v1
 export const CATEGORY_PRIORITY_MAPPING = {
-  // CRITICA (6h escalation)
-  [TicketCategory.GAME_BUG_REPORT]: TicketPriority.CRITICAL,
-  [TicketCategory.PERFORMANCE_PROBLEM]: TicketPriority.CRITICAL,
-  [TicketCategory.WEBSOCKET_PROBLEM]: TicketPriority.CRITICAL,
-  
-  // ALTA (24h escalation)
-  [TicketCategory.CHARACTER_ACCESS_PROBLEM]: TicketPriority.HIGH,
-  [TicketCategory.LOCATION_CHAT_PROBLEM]: TicketPriority.HIGH,
-  [TicketCategory.OFFGAME_CHAT_PROBLEM]: TicketPriority.HIGH,
-  [TicketCategory.POSTAL_SYSTEM_PROBLEM]: TicketPriority.HIGH,
-  [TicketCategory.USER_REPORT]: TicketPriority.HIGH,
-  
-  // MEDIA (48h escalation)
   [TicketCategory.CHARACTER_APPROVAL]: TicketPriority.MEDIUM,
-  [TicketCategory.CHARACTER_SHEET_REVIEW]: TicketPriority.MEDIUM,
-  [TicketCategory.LOCATION_PROBLEM]: TicketPriority.MEDIUM,
-  [TicketCategory.PRIVATE_LOCATION_ACCESS]: TicketPriority.MEDIUM,
-  
-  // BASSA (5 giorni escalation)
-  [TicketCategory.CHARACTER_STATUS_CHANGE]: TicketPriority.LOW,
-  [TicketCategory.CORPORATION_JOIN_REQUEST]: TicketPriority.LOW,
-  [TicketCategory.CORPORATION_MANAGEMENT_PROBLEM]: TicketPriority.LOW,
-  [TicketCategory.GROUP_CHAT_REQUEST]: TicketPriority.LOW,
-  [TicketCategory.GENERAL_SUPPORT]: TicketPriority.LOW,
-  [TicketCategory.INFORMATION_REQUEST]: TicketPriority.LOW,
-  
-  // BASSA (7 giorni escalation) 
-  [TicketCategory.LOCATION_EVENT_CREATION]: TicketPriority.LOW,
-  [TicketCategory.NEW_LOCATION_REQUEST]: TicketPriority.LOW,
-  [TicketCategory.NEW_CORPORATION_REQUEST]: TicketPriority.LOW,
+  [TicketCategory.CHARACTER_EDIT]: TicketPriority.MEDIUM,
+  [TicketCategory.QUEST_PROPOSAL]: TicketPriority.LOW,
+  [TicketCategory.GAME_BUG_REPORT]: TicketPriority.HIGH,
   [TicketCategory.IMPROVEMENT_SUGGESTION]: TicketPriority.LOW
 } as const;
 
