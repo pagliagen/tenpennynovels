@@ -866,6 +866,140 @@ const ALL_CONFIGS: ConfigRecord[] = [
     metadata: { version: 1 },
   },
 
+  // ── ticket_system ───────────────────────────────────────────────
+  // Category: character_approval
+  {
+    configKey: 'ticket_category_character_approval',
+    configSection: 'ticket_system',
+    configType: 'json',
+    value: {
+      label: 'Approvazione Personaggio',
+      description: 'Richiesta di approvazione scheda personaggio',
+      department: 'administration',
+      defaultPriority: 'medium',
+      escalationThresholdHours: 48,
+      whoCanCreate: 'all', // 'all' | 'approved_only' | 'staff_only'
+      requiredStaffPermissions: ['characters.detail.approve'],
+      autoClose: false,
+      autoCloseMessage: null,
+      autoCloseDelaySeconds: 0,
+    },
+    defaultValue: {},
+    description: 'Configurazione categoria ticket: Approvazione Personaggio',
+    isActive: true,
+    metadata: { version: 1 },
+  },
+
+  // Category: character_edit
+  {
+    configKey: 'ticket_category_character_edit',
+    configSection: 'ticket_system',
+    configType: 'json',
+    value: {
+      label: 'Modifica Personaggio',
+      description: 'Richiesta modifica personaggio post-approvazione (background, stats)',
+      department: 'administration',
+      defaultPriority: 'medium',
+      escalationThresholdHours: 48,
+      whoCanCreate: 'approved_only',
+      requiredStaffPermissions: ['characters.detail.edit'],
+      autoClose: false,
+      autoCloseMessage: null,
+      autoCloseDelaySeconds: 0,
+    },
+    defaultValue: {},
+    description: 'Configurazione categoria ticket: Modifica Personaggio',
+    isActive: true,
+    metadata: { version: 1 },
+  },
+
+  // Category: quest_proposal
+  {
+    configKey: 'ticket_category_quest_proposal',
+    configSection: 'ticket_system',
+    configType: 'json',
+    value: {
+      label: 'Proposta Trama/Quest',
+      description: 'Proposta trama o quest personalizzata',
+      department: 'master',
+      defaultPriority: 'low',
+      escalationThresholdHours: 120,
+      whoCanCreate: 'approved_only',
+      requiredStaffPermissions: [],
+      autoClose: true,
+      autoCloseMessage: 'Grazie per la tua proposta! L\'abbiamo presa in carico e la valuteremo attentamente. Ti contatteremo in-game se necessario.',
+      autoCloseDelaySeconds: 5,
+    },
+    defaultValue: {},
+    description: 'Configurazione categoria ticket: Proposta Trama/Quest (auto-close)',
+    isActive: true,
+    metadata: { version: 1 },
+  },
+
+  // Category: game_bug_report
+  {
+    configKey: 'ticket_category_game_bug_report',
+    configSection: 'ticket_system',
+    configType: 'json',
+    value: {
+      label: 'Segnalazione Bug',
+      description: 'Segnalazione bug in-game',
+      department: 'technical',
+      defaultPriority: 'high',
+      escalationThresholdHours: 24,
+      whoCanCreate: 'all',
+      requiredStaffPermissions: [],
+      autoClose: true,
+      autoCloseMessage: 'Grazie per la segnalazione! Il bug è stato registrato e verrà analizzato dal team tecnico. Riceverai aggiornamenti se necessario.',
+      autoCloseDelaySeconds: 5,
+    },
+    defaultValue: {},
+    description: 'Configurazione categoria ticket: Segnalazione Bug (auto-close)',
+    isActive: true,
+    metadata: { version: 1 },
+  },
+
+  // Category: improvement_suggestion
+  {
+    configKey: 'ticket_category_improvement_suggestion',
+    configSection: 'ticket_system',
+    configType: 'json',
+    value: {
+      label: 'Suggerimento Miglioramento',
+      description: 'Suggerimento per migliorare funzionalità esistenti',
+      department: 'general',
+      defaultPriority: 'low',
+      escalationThresholdHours: 168,
+      whoCanCreate: 'all',
+      requiredStaffPermissions: [],
+      autoClose: true,
+      autoCloseMessage: 'Grazie per il tuo suggerimento! Lo abbiamo ricevuto e verrà discusso dal team. Apprezziamo il tuo contributo per migliorare l\'esperienza di gioco!',
+      autoCloseDelaySeconds: 5,
+    },
+    defaultValue: {},
+    description: 'Configurazione categoria ticket: Suggerimento Miglioramento (auto-close)',
+    isActive: true,
+    metadata: { version: 1 },
+  },
+
+  // Global ticket settings
+  {
+    configKey: 'ticket_system_settings',
+    configSection: 'ticket_system',
+    configType: 'json',
+    value: {
+      maxOpenTicketsPerCharacter: 5,
+      allowReopenAfterDays: 7,
+      autoEscalationEnabled: true,
+      notifyStaffOnCreate: true,
+      notifyCharacterOnReply: true,
+    },
+    defaultValue: {},
+    description: 'Impostazioni globali sistema ticketing',
+    isActive: true,
+    metadata: { version: 1 },
+  },
+
   // ── system ──────────────────────────────────────────────────────
   {
     configKey: 'system_maintenance_mode',

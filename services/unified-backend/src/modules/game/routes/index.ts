@@ -9,7 +9,7 @@ import offGameChatRoutes from './offGameChats';
 import corporationRoutes from './corporations';
 // import forumRoutes from './forum';
 // import documentRoutes from './documents';  // REMOVED: Moved to modules/documents
-// import ticketRoutes from './tickets';
+import ticketRoutes from '../../tickets/routes/tickets';
 import chatModerationRoutes from './chatModerationRoutes';
 import characterRelationRoutes from './characterRelations';
 import occupationRoutes from './occupations';
@@ -45,7 +45,7 @@ router.use('/', corporationRoutes);
 router.use('/housing', locationPropertyRoutes);
 // router.use('/forum', forumRoutes);
 // router.use('/documents', documentRoutes);  // REMOVED: Moved to modules/documents (mount: /documents)
-// router.use('/', ticketRoutes);
+router.use('/', ticketRoutes);
 router.use('/', chatModerationRoutes);
 router.use('/relationships', characterRelationRoutes);
 router.use('/occupations', occupationRoutes);

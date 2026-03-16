@@ -94,6 +94,16 @@ const NAV_ITEMS: NavItem[] = [
       { key: 'system-broadcast', label: 'Broadcast', href: '/system/broadcast', permission: 'system.broadcast' },
       { key: 'system-deleted', label: 'Record Cancellati', href: '/system/deleted-records', permission: 'system.deleted_records' }
     ]
+  },
+  {
+    key: 'tickets',
+    label: 'Supporto',
+    icon: '🎫',
+    children: [
+      { key: 'tickets-dashboard', label: 'Dashboard', href: '/tickets/dashboard', permission: 'tickets.manage' },
+      { key: 'tickets-list', label: 'Tutti i Ticket', href: '/tickets/ticket-list', permission: 'tickets.manage' },
+      { key: 'tickets-character-approvals', label: 'Approvazioni Personaggio', href: '/tickets/character-approvals', permission: 'tickets.manage' }
+    ]
   }
 ];
 

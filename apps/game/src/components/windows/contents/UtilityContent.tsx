@@ -13,6 +13,7 @@
 import { WindowData } from '@/types/window-manager';
 import { CharacterDirectoryContent } from './CharacterDirectoryContent';
 import { CharacterFaceClaimContent } from './CharacterFaceClaimContent';
+import { TicketPanelContent } from '@/components/tickets/TicketPanelContent';
 
 /**
  * Utility Content Props
@@ -46,6 +47,9 @@ export function UtilityContent({ utilityName, data }: UtilityContentProps): JSX.
 
     case 'character-faceclaim':
       return <CharacterFaceClaimContent />;
+
+    case 'tickets':
+      return <TicketPanelContent />;
 
     default:
       // Stub for unknown utility types

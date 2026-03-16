@@ -748,6 +748,43 @@ CharacterSchema.pre('save', async function(this: ICharacter) {
   // Set submitted date when playerStatus changes to pending
   if (this.isModified('playerStatus') && this.playerStatus === 'pending' && !this.submittedAt) {
     this.submittedAt = new Date();
+
+    // Auto-create character_approval ticket
+    try {
+      const Ticket = mongoose.model('Ticket');
+
+      // Check if ticket already exists (avoid duplicates)
+      const existingTicket = await Ticket.findOne({
+        category: 'character_approval',
+        'createdBy.characterId': this._id,
+        status: { $nin: ['closed'] }
+      });
+
+      if (!existingTicket) {
+        await Ticket.create({
+          title: `Richiesta Approvazione: ${this.name}`,
+          category: 'character_approval',
+          priority: 'medium', // From category config
+          department: 'administration', // From category config
+          status: 'open',
+          createdBy: {
+            characterId: this._id,
+            characterName: this.name,
+            characterAvatar: this.avatar
+          },
+          categoryMetadata: {
+            targetCharacterId: this._id
+          },
+          lastActivityAt: new Date()
+        });
+
+        // TODO: Notify staff via NotificationService + WebSocket
+        // This will be handled by TicketController WebSocket events
+      }
+    } catch (error) {
+      // Log error but don't fail character submission
+      console.error('Failed to create character_approval ticket:', error);
+    }
   }
 
   // characterPermissions: draft = deny read + wizard only; pending = deny chat/postal; approved = []

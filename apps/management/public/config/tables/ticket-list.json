@@ -1,0 +1,111 @@
+{
+  "columns": [
+    {
+      "key": "ticketNumber",
+      "label": "#",
+      "sortable": true,
+      "width": "80px"
+    },
+    {
+      "key": "category",
+      "label": "Categoria",
+      "sortable": true,
+      "render": { "type": "badge" }
+    },
+    {
+      "key": "title",
+      "label": "Titolo",
+      "sortable": true,
+      "width": "300px"
+    },
+    {
+      "key": "status",
+      "label": "Status",
+      "sortable": true,
+      "render": { "type": "badge" }
+    },
+    {
+      "key": "priority",
+      "label": "Priorità",
+      "sortable": true,
+      "render": { "type": "badge" }
+    },
+    {
+      "key": "createdBy.characterName",
+      "label": "Character",
+      "sortable": true
+    },
+    {
+      "key": "assignedTo.username",
+      "label": "Assegnato a",
+      "sortable": true
+    },
+    {
+      "key": "createdAt",
+      "label": "Creato",
+      "sortable": true,
+      "render": { "type": "datetime" }
+    }
+  ],
+  "filters": [
+    {
+      "key": "status",
+      "label": "Status",
+      "type": "select",
+      "options": [
+        { "value": "open", "label": "Aperto" },
+        { "value": "assigned", "label": "Assegnato" },
+        { "value": "in_progress", "label": "In Lavorazione" },
+        { "value": "waiting_user", "label": "In Attesa" },
+        { "value": "closed", "label": "Chiuso" },
+        { "value": "reopened", "label": "Riaperto" }
+      ]
+    },
+    {
+      "key": "category",
+      "label": "Categoria",
+      "type": "select",
+      "options": [
+        { "value": "character_approval", "label": "Approvazione Personaggio" },
+        { "value": "character_edit", "label": "Modifica Personaggio" },
+        { "value": "quest_proposal", "label": "Proposta Trama" },
+        { "value": "game_bug_report", "label": "Segnalazione Bug" },
+        { "value": "improvement_suggestion", "label": "Suggerimento" }
+      ]
+    },
+    {
+      "key": "priority",
+      "label": "Priorità",
+      "type": "select",
+      "options": [
+        { "value": "low", "label": "Bassa" },
+        { "value": "medium", "label": "Media" },
+        { "value": "high", "label": "Alta" },
+        { "value": "critical", "label": "Critica" }
+      ]
+    },
+    {
+      "key": "assignedToMe",
+      "label": "Solo miei ticket",
+      "type": "boolean"
+    }
+  ],
+  "actions": [
+    {
+      "key": "view-details",
+      "label": "Visualizza",
+      "icon": "👁️"
+    }
+  ],
+  "bulkActions": [
+    {
+      "key": "bulk-close",
+      "label": "Chiudi Selezionati"
+    }
+  ],
+  "defaultSort": {
+    "key": "createdAt",
+    "direction": "desc"
+  },
+  "defaultPageSize": 25
+}

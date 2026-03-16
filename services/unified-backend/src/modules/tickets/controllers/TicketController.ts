@@ -1,13 +1,94 @@
 import { Request, Response } from 'express';
 import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
 import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
-import { Ticket, TicketMessage, Character } from '@database/models';
+import { Ticket, TicketMessage, Character, SystemConfiguration } from '@database/models';
 import { ApiResponse, TicketCategory, TicketPriority, TicketDepartment, TICKET_CATEGORIES, CATEGORY_DEPARTMENT_MAPPING, CATEGORY_PRIORITY_MAPPING } from '@modules/game/types/game';
 import { logger } from '@modules/game/logger';
 import { AuthMiddleware } from '@modules/game/middleware/auth';
 import { redis } from '@config/runtime/redis';
 import { NotificationService } from '@shared/services/NotificationService';
 
+/**
+ * Helper: Schedule auto-close for ticket categories with autoClose enabled
+ * @param ticketId Ticket ID to auto-close
+ * @param categoryConfig Category configuration from SystemConfiguration
+ */
+async function scheduleAutoClose(ticketId: string, categoryConfig: any): Promise<void> {
+  const { autoClose, autoCloseMessage, autoCloseDelaySeconds } = categoryConfig;
+
+  if (!autoClose || !autoCloseMessage || !autoCloseDelaySeconds) {
+    return; // Auto-close not configured
+  }
+
+  // Wait for configured delay
+  await new Promise(resolve => setTimeout(resolve, autoCloseDelaySeconds * 1000));
+
+  try {
+    // Fetch ticket to ensure it still exists and is not already closed
+    const ticket = await Ticket.findById(ticketId);
+    if (!ticket || ticket.status === 'closed') {
+      logger.info('Auto-close skipped: ticket already closed or not found', { ticketId });
+      return;
+    }
+
+    // Create auto-close message (from system/staff)
+    const autoMessage = new TicketMessage({
+      ticketId: ticket._id,
+      content: autoCloseMessage,
+      sender: {
+        type: 'staff',
+        id: ticket.createdBy, // Use character ID as placeholder (system message)
+        name: 'Sistema'
+      },
+      isInternal: false, // Visible to character
+      readAt: {} // Not read yet
+    });
+
+    await autoMessage.save();
+
+    // Close ticket atomically
+    const closedTicket = await Ticket.findByIdAndUpdate(
+      ticketId,
+      {
+        status: 'closed',
+        closedAt: new Date(),
+        closedBy: null, // System auto-close (no staff involved)
+        lastActivityAt: new Date()
+      },
+      { new: true }
+    );
+
+    if (!closedTicket) {
+      logger.warn('Auto-close failed: ticket not found after message creation', { ticketId });
+      return;
+    }
+
+    logger.info('Ticket auto-closed successfully', {
+      ticketId,
+      category: closedTicket.category,
+      autoCloseDelaySeconds
+    });
+
+    // Publish Redis event for WebSocket broadcast
+    const redisPublisher = redis.getPublisher();
+    await redisPublisher.publish('ticket:events', JSON.stringify({
+      type: 'ticket_closed',
+      ticketId: closedTicket._id.toString(),
+      category: closedTicket.category,
+      closedBy: 'system',
+      closedAt: closedTicket.closedAt,
+      autoClose: true,
+      timestamp: new Date().toISOString(),
+      source: 'auto-close-scheduler'
+    }));
+
+  } catch (error) {
+    logger.error('Auto-close error:', {
+      ticketId,
+      error: error instanceof Error ? error.message : String(error)
+    });
+  }
+}
 
 export class TicketController {
   /**
@@ -271,6 +352,34 @@ export class TicketController {
         getRequestId(req)
       ));
 
+      // Check for auto-close configuration (fire-and-forget, doesn't block response)
+      setImmediate(async () => {
+        try {
+          const categoryConfigKey = `ticket_category_${category}`;
+          const categoryConfigDoc = await SystemConfiguration.findOne({
+            configKey: categoryConfigKey,
+            configSection: 'ticket_system',
+            isActive: true
+          });
+
+          if (categoryConfigDoc && categoryConfigDoc.value?.autoClose) {
+            logger.info('Scheduling auto-close for ticket', {
+              ticketId: ticket._id.toString(),
+              category,
+              autoCloseDelaySeconds: categoryConfigDoc.value.autoCloseDelaySeconds
+            });
+
+            await scheduleAutoClose(ticket._id.toString(), categoryConfigDoc.value);
+          }
+        } catch (autoCloseError) {
+          logger.error('Auto-close scheduling error:', {
+            ticketId: ticket._id.toString(),
+            error: autoCloseError instanceof Error ? autoCloseError.message : String(autoCloseError)
+          });
+          // Don't fail ticket creation if auto-close setup fails
+        }
+      });
+
     } catch (error: any) {
       const err = error as Error;
       logger.error('Error creating ticket:', {
@@ -500,6 +609,145 @@ export class TicketController {
       res.status(500).json(errorResponse(
         'Impossibile riaprire il ticket',
         'REOPEN_TICKET_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
+    }
+  }
+
+  /**
+   * PUT /game/tickets/:id/close
+   * Chiudi ticket (solo proprietario, solo se non già chiuso)
+   */
+  static async closeTicket(req: Request<{ id: string }>, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const { reason } = req.body;
+      const characterId = req.character!.characterId;
+      const characterName = req.character!.characterName;
+
+      logger.info('Closing ticket (player-side)', {
+        ticketId: id,
+        characterId,
+        reason
+      });
+
+      // Usa findOneAndUpdate atomico per evitare race conditions
+      const ticket = await Ticket.findOneAndUpdate(
+        {
+          _id: id,
+          createdBy: characterId,
+          status: { $ne: 'closed' } // Non già chiuso
+        },
+        {
+          status: 'closed',
+          closedAt: new Date(),
+          closedBy: characterId, // Character che chiude
+          lastActivityAt: new Date()
+        },
+        {
+          returnDocument: 'after'
+        }
+      );
+
+      if (!ticket) {
+        res.status(404).json(errorResponse(
+          'Ticket non trovato o già chiuso',
+          'TICKET_NOT_CLOSEABLE',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      // Aggiungi messaggio opzionale per la chiusura
+      if (reason && reason.trim()) {
+        const closeMessage = new TicketMessage({
+          ticketId: ticket._id,
+          content: `Ticket chiuso dal personaggio.\n\nMotivo: ${reason.trim()}`,
+          sender: {
+            type: 'character',
+            id: characterId,
+            name: characterName
+          },
+          isInternal: false
+        });
+
+        await closeMessage.save();
+      }
+
+      logger.info('Ticket closed successfully (player-side)', {
+        ticketId: ticket._id.toString(),
+        characterId
+      });
+
+      // Pubblica evento Redis
+      const redisPublisher = redis.getPublisher();
+      await redisPublisher.publish('ticket:events', JSON.stringify({
+        type: 'ticket_closed',
+        ticketId: ticket._id.toString(),
+        title: ticket.title,
+        category: ticket.category,
+        categoryLabel: TICKET_CATEGORIES[ticket.category as TicketCategory],
+        priority: ticket.priority,
+        department: ticket.department,
+        closedBy: {
+          type: 'character',
+          id: characterId,
+          name: characterName
+        },
+        reason: reason?.trim() || null,
+        timestamp: new Date(),
+        source: 'game-backend'
+      }));
+
+      // Notifica staff (opzionale, solo se assigned)
+      if (ticket.assignedTo) {
+        try {
+          await NotificationService.notifyTicketClosed({
+            _id: ticket._id,
+            ticketNumber: ticket._id.toString().slice(-6).toUpperCase(),
+            category: ticket.category,
+            priority: ticket.priority,
+            department: ticket.department,
+            assignedTo: ticket.assignedTo,
+            createdBy: {
+              characterId,
+              characterName
+            }
+          });
+        } catch (notifyError) {
+          logger.error('Failed to send ticket closed notification:', notifyError);
+          // Non blocca la risposta - notifica è best-effort
+        }
+      }
+
+      res.json(updateResponse(
+        {
+          ticket: {
+            id: ticket._id.toString(),
+            status: ticket.status,
+            closedAt: ticket.closedAt
+          }
+        },
+        'Ticket chiuso con successo',
+        getRequestId(req)
+      ));
+
+    } catch (error: any) {
+      const err = error as Error;
+      logger.error('Error closing ticket:', {
+        error: err.message,
+        ticketId: req.params.id,
+        characterId: req.character?.characterId,
+        stack: err.stack
+      });
+
+      res.status(500).json(errorResponse(
+        'Impossibile chiudere il ticket',
+        'CLOSE_TICKET_ERROR',
         undefined,
         500,
         getRequestId(req)
@@ -829,14 +1077,30 @@ export class TicketController {
    */
   static async getTicketCategories(req: Request, res: Response): Promise<void> {
     try {
-      logger.info('Fetching ticket categories');
+      logger.info('Fetching ticket categories from SystemConfiguration');
 
-      const categories = Object.entries(TICKET_CATEGORIES).map(([value, label]) => ({
-        value,
-        label,
-        department: CATEGORY_DEPARTMENT_MAPPING[value as TicketCategory] || TicketDepartment.GENERAL,
-        priority: CATEGORY_PRIORITY_MAPPING[value as TicketCategory] || TicketPriority.LOW
-      }));
+      // Fetch all ticket category configs from DB
+      const categoryConfigs = await SystemConfiguration.find({
+        configSection: 'ticket_system',
+        configKey: { $regex: /^ticket_category_/ },
+        isActive: true
+      }).lean();
+
+      // Map to frontend format
+      const categories = categoryConfigs.map(config => {
+        const categoryValue = config.configKey.replace('ticket_category_', '');
+        const categoryData = config.value as any;
+
+        return {
+          value: categoryValue,
+          label: categoryData.label || TICKET_CATEGORIES[categoryValue as TicketCategory] || categoryValue,
+          description: categoryData.description || '',
+          department: categoryData.department || TicketDepartment.GENERAL,
+          priority: categoryData.defaultPriority || TicketPriority.LOW
+        };
+      });
+
+      logger.info('Ticket categories fetched from DB', { count: categories.length });
 
       res.json(successResponse(
         {

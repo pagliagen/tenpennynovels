@@ -71,6 +71,16 @@ router.put('/tickets/:id/reopen',
 );
 
 /**
+ * PUT /game/tickets/:id/close
+ * Chiudi ticket (solo proprietario, solo se non già chiuso)
+ * Body: { reason?: string }
+ */
+router.put('/tickets/:id/close',
+  AuthMiddleware.requireCharacterAuth,
+  TicketController.closeTicket
+);
+
+/**
  * POST /game/tickets/:id/messages
  * Aggiungi messaggio a ticket esistente
  * Body: { content: string }

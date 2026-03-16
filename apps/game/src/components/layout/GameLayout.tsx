@@ -41,6 +41,7 @@ import { useWebSocket } from '@/contexts/WebSocketContext';
 import { useQueryClient } from '@tanstack/react-query';
 import { useOnGameUnreadCount } from '@/hooks/useOnGameMail';
 import { useOffGameUnreadCount } from '@/hooks/useOffGameChat';
+import { useTicketNotifications } from '@/hooks/useTicketNotifications';
 import { queryKeys } from '@/lib/api/queryClient';
 import { ForumModal } from '../forum/ForumModal';
 import { useForumStore } from '@/store/forumStore';
@@ -110,6 +111,9 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
   // WebSocket + QueryClient: For real-time badge updates
   const { onMessageEvent } = useWebSocket();
   const queryClient = useQueryClient();
+
+  // Ticket notifications: Real-time updates and invalidations
+  useTicketNotifications();
 
   /**
    * Refresh auth session to pick up character status changes (e.g. approved/rejected via WebSocket)
@@ -242,6 +246,15 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
   }, []);
 
   /**
+   * Open Ticket utility window
+   */
+  const handleTicketClick = () => {
+    openWindow('utility', {
+      utilityName: 'tickets',
+    });
+  };
+
+  /**
    * Open Audio Options popup
    */
   const handleAudioOptionsClick = useCallback(() => {
@@ -369,6 +382,7 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
             onQuickMapClick={handleQuickMapClick}
             onOnGameMailClick={handleOnGameMailClick}
             onForumClick={handleForumClick}
+            onTicketClick={handleTicketClick}
             onAudioOptionsClick={handleAudioOptionsClick}
             onChatOptionsClick={handleChatOptionsClick}
             onCharacterDirectoryClick={handleCharacterDirectoryClick}
