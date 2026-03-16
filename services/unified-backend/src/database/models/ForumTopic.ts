@@ -107,7 +107,7 @@ const ForumTopicSchema = new Schema<IForumTopic>({
   timestamps: false
 });
 
-ForumTopicSchema.index({ slug: 1 }, { unique: true });
+// slug index is already created via { unique: true } in field definition
 ForumTopicSchema.index({ sortOrder: 1, isPinned: -1, lastPostAt: -1 });
 ForumTopicSchema.index({ isVisible: 1 });
 ForumTopicSchema.index({ 'accessRules.corporationId': 1 });

@@ -3,11 +3,10 @@ set -e
 
 echo "📦 Installing dependencies for all apps and services..."
 
-# Root dependencies
+# Root dependencies (optional - only devDeps for local development)
 echo ""
 echo "=== Root ==="
-npm install
-npm audit fix --force || true  # Don't fail if audit fix fails
+npm install || echo "⚠️  Root install skipped (empty dependencies)"
 
 # Frontend apps
 for app in apps/*/; do

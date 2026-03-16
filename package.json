@@ -48,21 +48,11 @@
   },
   "devDependencies": {
     "@types/yargs-parser": "^21.0.3",
-    "concurrently": "^8.2.2"
-  },
-  "dependencies": {
-    "@qdrant/js-client-rest": "^1.17.0",
-    "axios": "^1.13.5",
-    "bcrypt": "^6.0.0",
-    "bcryptjs": "^3.0.3",
+    "concurrently": "^8.2.2",
     "commander": "^14.0.3",
     "csv-parse": "^6.1.0",
     "csv-parser": "^3.2.0",
     "dotenv": "^17.3.1",
-    "ioredis": "^5.9.3",
-    "mongoose": "^9.1.6",
-    "redis": "^5.11.0",
-    "slugify": "^1.6.6",
-    "uuid": "^13.0.0"
+    "mongoose": "^9.1.6"
   }
 }

@@ -50,8 +50,8 @@ const AuditLogSchema = new Schema<IAuditLog>(
     timestamp: {
       type: Date,
       required: true,
-      default: Date.now,
-      index: true  // Index 1: timestamp (for time-based queries)
+      default: Date.now
+      // Index is created below with TTL for GDPR compliance
     },
     actor: {
       userId: {
