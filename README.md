@@ -16,7 +16,10 @@ TenPennyNovels is a web-based RPG platform that brings Victorian London to life 
   - Out-of-character chat for players
 - **AI-powered NPC Bots**: Intelligent NPCs driven by local Ollama models (zero API costs)
 - **Rich Document System**: Setting guides, rules, and historical information with semantic search and AI-powered Q&A
+- **Advanced Search**: Hybrid semantic + keyword search with 384D embeddings for intelligent content discovery
 - **Community Forum**: Discuss storylines and coordinate with other players
+- **Character Directory**: Public character registry with face claim validation and search
+- **Ticketing System**: Complete support system with department routing, priority management, and staff assignment
 - **Character Management**: Create, develop, and track your Victorian character
 - **Admin Tools**: Comprehensive management interface for game masters
 

@@ -285,9 +285,9 @@ environment:
   JWT_SECRET: <secure-secret>
   JWT_REFRESH_SECRET: <secure-secret>
 volumes:
-  # Hot-reload setup
+  # Hot-reload setup - solo source code, NON node_modules
   - ./services/unified-backend/src:/app/src:ro
-  - ./services/unified-backend/node_modules:/app/node_modules:ro
+  # node_modules NON montato - container usa proprie dependencies installate
 ```
 
 **Tech Stack**:
@@ -412,17 +412,38 @@ volumes:
 ```
 
 **Development Hot-Reload Volumes** (unified-backend):
+
+### Source Code Mounting Strategy
+
+**Solo src/ viene montato**, NON node_modules:
+
 ```yaml
 volumes:
   - ./services/unified-backend/src:/app/src:ro         # Source code (read-only)
-  - ./services/unified-backend/node_modules:/app/node_modules:ro  # Dependencies
+  # node_modules NON montato - container usa proprie dependencies
   - ./services/unified-backend/logs:/app/logs          # Logs (read-write)
 ```
 
-**Why `node_modules:ro`?**
-- Host node_modules contiene tutte le dependencies (incluse devDependencies)
-- Container può usare tsx watch senza rebuilding
-- Read-only previene modifiche accidentali da container
+**Perché NON montare node_modules?**
+
+1. **Workspace Hoisting Incompatibility**:
+   - Host usa workspace hoisting (tutte le deps in root `node_modules/`)
+   - Container usa installazione standard (deps in `service/node_modules/`)
+   - Path resolution diverso causa errori "Cannot find module"
+
+2. **Architetture Different**:
+   - Host potrebbe essere macOS (ARM64/x86_64)
+   - Container è Linux Debian (x86_64)
+   - Binary dependencies incompatibili (es. bcrypt, esbuild)
+
+3. **Versioni Diverse**:
+   - Host può avere versioni diverse installate globalmente
+   - Container usa versioni pinned da package-lock.json
+
+**Hot-Reload Funziona Comunque**:
+- Modifiche a `src/` triggherano reload (tsx watch)
+- Container ha proprie dependencies installate al build
+- Source code aggiornato in real-time
 
 ---
 

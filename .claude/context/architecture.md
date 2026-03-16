@@ -9,29 +9,34 @@ TenPennyNovels è una piattaforma RPG basata su chat per ambientazione Victorian
 ### Monorepo Structure
 ```
 tenpennynovels/
-├── apps/              # 6 applicazioni frontend Next.js
-├── services/          # 4+ servizi backend + codice condiviso
+├── apps/              # 4 applicazioni frontend Next.js
+├── services/          # 3 servizi backend + codice condiviso
 ├── scripts/           # Script di utilità e migrazioni
 └── docs/              # Documentazione completa
 ```
 
-### Frontend Applications (6)
+### Frontend Applications (4)
 1. **Landing** (porta 4000) - Autenticazione e selezione personaggio
-2. **Game** (porta 4001) - Interfaccia principale di gioco con chat real-time
-3. **Documents** (porta 4002) - Guide ambientazione e regole
-4. **Forum** (porta 4003) - Discussioni community
-5. **Management** (porta 4004) - Strumenti per game masters
-6. **Tickets** (porta 4005) - Sistema di supporto
+2. **Game** (porta 4001) - Interfaccia principale di gioco con chat real-time, ticketing, e forum integrati
+3. **Documents** (porta 4003) - Guide ambientazione e regole
+4. **Management** (porta 4004) - Strumenti per game masters e amministrazione
 
-### Backend Services (4+)
-1. **API Gateway** (porta 8000) - Routing centralizzato
-2. **Authentication Backend** (porta 3000) - Autenticazione e gestione utenti
-3. **Game Backend** (porta 3001) - Logica di gameplay e WebSocket
-4. **Management Backend** (porta 3002) - Funzionalità amministrative
+**Note**: Forum e Ticketing sono **integrati nella Game app**, non applicazioni standalone.
 
-### Servizi Aggiuntivi
-- **Embeddings Service** (Python, porta 5001) - Generazione embeddings per ricerca semantica
-- **Embeddings Worker** (TypeScript) - Worker asincrono per embeddings
+### Backend Services (3)
+1. **API Gateway** (porta 8000) - Reverse proxy, routing centralizzato, rate limiting, security
+2. **Unified Backend** (porta 3001) - Backend monolitico unificato con tutti i moduli:
+   - Auth module (autenticazione, registrazione, profili)
+   - Game module (characters, locations, chat, sessions)
+   - Documents module (knowledge base, semantic search)
+   - Tickets module (support system)
+   - Forum module (discussioni community)
+   - Admin module (gestione utenti, characters, locations, documents)
+   - WebSocket real-time via Socket.IO + Redis adapter
+3. **Embeddings Worker** (porta 5001) - Servizio Python + Node.js per semantic search:
+   - Python: Generazione embeddings (sentence-transformers)
+   - Node.js: Bull queue worker per processing asincrono
+   - Qdrant integration per vector storage
 
 ## Pattern Architetturali
 
@@ -41,16 +46,21 @@ tenpennynovels/
 - Eventi per: chat messages, character movements, notifications
 
 ### API Gateway Pattern
-- Punto di ingresso unificato per tutte le API
-- Routing basato su path prefix:
-  - `/auth/*` → Authentication Backend
-  - `/game/*` → Game Backend
-  - `/admin/*` → Management Backend
+- Punto di ingresso unificato per tutte le API frontend
+- Routing basato su path prefix (proxy a Unified Backend):
+  - `/auth/*` → Unified Backend (auth module)
+  - `/game/*` → Unified Backend (game module)
+  - `/documents/*` → Unified Backend (documents module)
+  - `/admin/*` → Unified Backend (admin module)
+- Funzionalità: CORS, helmet security, rate limiting, request logging
+- Unified Backend porta 3001 gestisce tutta la business logic
 
-### Database per Servizio
-- Tutti i servizi condividono MongoDB (per ora)
-- Modelli centralizzati in `services/database/models/`
-- Possibile evoluzione verso database separati per servizio
+### Database Architecture
+- **MongoDB 7.0**: Database condiviso da Unified Backend (36+ collections)
+- **Modelli Mongoose**: Centralizzati in `services/unified-backend/src/database/models/`
+- **Redis 7.2**: Cache, session storage, Socket.IO adapter, Bull queue
+- **Qdrant**: Vector database per semantic search (384D embeddings)
+- **Elasticsearch**: Full-text search (hybrid con semantic search)
 
 ## Comunicazione tra Servizi
 
@@ -95,22 +105,22 @@ tenpennynovels/
 ## Flussi Principali
 
 ### Autenticazione
-1. User registra/login → Authentication Backend
+1. User registra/login → API Gateway → Unified Backend (auth module)
 2. JWT token generato e salvato in HttpOnly cookie
-3. Character session avviata → Game Backend
-4. WebSocket connection stabilita per chat
+3. Character session creata in MongoDB (CharacterSession model)
+4. WebSocket connection stabilita con Unified Backend
 
 ### Gameplay
-1. User seleziona character → Character session attiva
-2. User si muove in location → Game Backend aggiorna stato
-3. User invia messaggio chat → WebSocket broadcast
-4. Eventi pubblicati su Redis → Altri servizi notificati
+1. User seleziona character → Character session attiva (via auth module)
+2. User si muove in location → Unified Backend (game module) aggiorna Location.occupants
+3. User invia messaggio chat → WebSocket broadcast via Socket.IO + Redis adapter
+4. Eventi pubblicati su Redis → Altri client WebSocket notificati in real-time
 
 ### Admin Operations
-1. Admin accede Management Backend
-2. Operazioni creano audit log
-3. Modifiche pubblicate su Redis per aggiornamenti real-time
-4. Frontend Management aggiornato via polling/WebSocket
+1. Admin accede via Management app → API Gateway → Unified Backend (admin module)
+2. Operazioni CRUD su users, characters, locations, documents
+3. Audit log automatico (AuditLog model)
+4. Real-time updates via WebSocket o polling (react-query)
 
 ## Note Importanti
 

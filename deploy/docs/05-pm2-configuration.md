@@ -269,8 +269,7 @@ module.exports = {
   // FORK mode required: cluster mode crashes with Redis adapter for Socket.IO
   name: 'tenpennynovels-unified-backend',
   cwd: './services/unified-backend',
-  script: 'dist/server.js',
-  args: '-r module-alias/register',
+  script: 'bootstrap.js',
   instances: 1,
   exec_mode: 'fork',
   autorestart: true,
@@ -301,9 +300,11 @@ module.exports = {
 
 **Differenze Chiave**:
 
-- **args**: `-r module-alias/register`
-  - Registra module aliases (path shortcuts tipo `@config`, `@database`)
-  - Necessario per risolvere import come `import { logger } from '@config/logger'`
+- **script**: `'bootstrap.js'`
+  - Nuovo pattern (da commit 9fd9e2b): bootstrap.js registra esplicitamente module-alias prima di caricare server
+  - Sostituisce vecchio pattern `node -r module-alias/register dist/server.js`
+  - Garantisce risoluzione path (`@config`, `@database`, ecc.) indipendentemente da dove viene eseguito
+  - Vedi sezione "Bootstrap.js Architecture" sotto per dettagli
 
 - **instances**: `1`
   - **Single instance** (NON scalabile orizzontalmente)
@@ -322,7 +323,64 @@ module.exports = {
 - Unified backend NON può scalare orizzontalmente con PM2 cluster
 - Alternativa: Vertical scaling (CPU/RAM più potenti)
 - O: Sticky sessions + Redis adapter avanzato (complesso, non implementato)
- 
+
+---
+
+### Bootstrap.js Module Resolution
+
+**Nuovo Pattern** (implementato da commit 9fd9e2b):
+
+`bootstrap.js` è un file di inizializzazione che registra esplicitamente module-alias prima di caricare il server principale.
+
+**File**: `services/unified-backend/bootstrap.js`
+
+```javascript
+// Registra module-alias paths PRIMA di caricare il server
+require('module-alias/register');
+
+// Ora carica il server con paths risolti
+require('./dist/server.js');
+```
+
+**Perché il Cambio dal Vecchio Pattern**:
+
+**Vecchio** (OBSOLETO):
+```javascript
+{
+  script: 'dist/server.js',
+  args: '-r module-alias/register',  // ❌ Problematico
+}
+```
+
+**Nuovo** (ATTUALE):
+```javascript
+{
+  script: 'bootstrap.js',  // ✅ Affidabile
+  // args non più necessari
+}
+```
+
+**Vantaggi**:
+
+1. **Maggiore affidabilità**: Registrazione esplicita elimina race conditions
+2. **Debuggability**: Errori di risoluzione path più chiari nel stack trace
+3. **Compatibilità**: Funziona identicamente in PM2, standalone, e Docker
+4. **Semplicità**: Un solo entry point, nessun flag da ricordare
+
+**Path Aliases Risolti**:
+- `@config/*` → `dist/config/*`
+- `@database/*` → `dist/database/*`
+- `@modules/*` → `dist/modules/*`
+- `@shared/*` → `dist/shared/*`
+- `@` → `dist/`
+
+**Troubleshooting**:
+
+Se vedi errori tipo `Cannot find module '@config/logger'`:
+1. Verifica che `bootstrap.js` esista in `services/unified-backend/`
+2. Verifica che `package.json` abbia section `_moduleAliases`
+3. Verifica che PM2 usi `script: 'bootstrap.js'` (NON `dist/server.js`)
+
 ---
 
 ### Process 7: Embeddings Worker (Node.js)

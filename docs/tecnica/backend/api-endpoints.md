@@ -4,7 +4,9 @@
 
 **Status**: ✅ Production Ready | **Last Updated**: 2026-03-08
 
-Complete reference of all API endpoints exposed by the Unified Backend. Only routes that are **mounted** in `app.ts` are documented. Forum and Tickets modules are not active (404).
+Complete reference of all API endpoints exposed by the Unified Backend. Only routes that are **mounted** in `app.ts` are documented.
+
+**Note**: Ticketing system is **fully active** with user-facing endpoints (`/game/tickets`) and admin endpoints (`/admin/tickets`). Forum functionality is integrated within game endpoints.
 
 ---
 
@@ -31,6 +33,7 @@ flowchart TB
         G3["economy, housing"]
         G4["corporations, skills"]
         G5["items, relationships"]
+        G6["tickets, forum"]
     end
 
     subgraph DocEndpoints["Documents Endpoints"]

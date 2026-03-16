@@ -311,25 +311,29 @@ dist/
 
 ---
 
-### Stage 3: Install Dependencies
+### Stage 3: Install Dependencies (Three-Phase Strategy)
+
+**IMPORTANTE**: Non usiamo più `--production` flag durante install iniziale. Strategia attuale:
+
+#### Phase 3.1: Full Install (Include devDependencies)
 
 ```yaml
-- name: Install dependencies
+- name: Install dependencies (full)
   script: |
     # Smart dependency installation: only if package.json/package-lock.json changed
     NEW_HASH=$(find . -maxdepth 3 -name 'package.json' -o -name 'package-lock.json' | sort | xargs cat | sha256sum | cut -d' ' -f1)
     OLD_HASH=$(cat .deps-hash 2>/dev/null || echo "")
 
     if [ "$NEW_HASH" != "$OLD_HASH" ]; then
-      echo "📦 Dependency files changed — installing..."
-      npm install --production  # Root
+      echo "📦 Dependency files changed — installing (FULL, not --production)..."
+      npm install  # Root (NO --production flag)
       # Apps
       for app in apps/*/; do
-        (cd "$app" && npm install --production)
+        (cd "$app" && npm install)  # NO --production
       done
       # Services
       for service in services/*/; do
-        (cd "$service" && npm install)
+        (cd "$service" && npm install)  # NO --production
       done
       echo "$NEW_HASH" > .deps-hash
     else:
@@ -337,12 +341,39 @@ dist/
     fi
 ```
 
-**Purpose**: Installa dipendenze solo se `package.json` o `package-lock.json` sono cambiati.
+**Perché FULL install (non --production)?**
+- Backend build richiede TypeScript compiler (`tsc`), `esbuild`, e altri dev tools
+- `npm install --production` escluderebbe devDependencies → build fallisce
+- Dobbiamo installare tutto PRIMA di buildare
 
-**Optimization**: Hash comparison evita `npm install` inutili (~5-10 min saved).
+#### Phase 3.2: Build (Dopo Install)
+
+Vedi Stage 4 e Stage 5 sotto.
+
+#### Phase 3.3: Production Cleanup (Dopo Build)
+
+```yaml
+- name: Prune devDependencies
+  script: |
+    echo "🧹 Removing devDependencies after build..."
+    npm prune --production
+    # Prune in each service
+    for service in services/*/; do
+      (cd "$service" && npm prune --production)
+    done
+```
+
+**Purpose**: Rimuovere devDependencies DOPO build per ridurre dimensione deployment.
+
+**CRITICO**: Sequenza DEVE essere rispettata:
+1. ✅ `npm install` (full)
+2. ✅ Build (usa devDependencies)
+3. ✅ `npm prune --production` (rimuove devDependencies)
+
+❌ **NON fare**: `npm install --production` → build fallisce (mancano devDependencies)
 
 **Duration**:
-- Se dependencies cambiate: ~5-10 minuti
+- Se dependencies cambiate: ~5-10 minuti (install + prune)
 - Se dependencies non cambiate: ~5 secondi (skip)
 
 ---

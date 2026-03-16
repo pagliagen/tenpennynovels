@@ -140,6 +140,46 @@ EMBEDDINGS_LOG_LEVEL=INFO  # DEBUG | INFO | WARNING | ERROR
 
 ---
 
+### Sitemap Generation
+
+```bash
+# Sitemap output directory (unified-backend)
+SITEMAP_OUTPUT_DIR=/sitemap-output
+```
+
+**Docker**: Volume mounted to `./apps/landing/public` for sitemap.xml generation
+**VPS**: Should point to landing app public directory
+**Default**: `/app/public` (if not set)
+
+**Purpose**: Dynamic sitemap generation for SEO (character pages, documents, locations)
+
+---
+
+### IP Geolocation (geoip-lite)
+
+```bash
+# No configuration required - auto-downloads IP database on first run
+```
+
+**Used In**: game, documents, management apps, unified-backend
+**Purpose**: User location detection, analytics, fraud prevention
+**Database**: Auto-updates monthly from MaxMind GeoLite2
+**Package Versions**:
+- `geoip-lite@1.4.10` (documents app)
+- `geoip-lite@1.2.1` (game, management, unified-backend)
+
+**First Run**: Downloads ~30MB GeoIP database to node_modules
+**Storage**: `node_modules/geoip-lite/data/`
+
+**Usage Example**:
+```javascript
+const geoip = require('geoip-lite');
+const geo = geoip.lookup('8.8.8.8');
+// { country: 'US', region: 'CA', city: 'Mountain View', ... }
+```
+
+---
+
 ## Authentication & Security
 
 ### JWT Secrets
