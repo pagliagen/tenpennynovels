@@ -26,7 +26,7 @@ export class AdminAuthMiddleware {
   /**
    * Middleware: Read and validate auth_token cookie; load selected character and set effective admin roles
    */
-  static requireAdminAccess(req: Request, res: Response, next: NextFunction): void {
+  static async requireAdminAccess(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const authToken = req.cookies?.auth_token;
       if (!authToken) {
@@ -57,7 +57,7 @@ export class AdminAuthMiddleware {
       };
       req.user = requestUser;
 
-      // Resolve character from cookie and set effective admin roles (async, fire-and-forget for initial attach)
+      // Resolve character from cookie and set effective admin roles (await for synchronous loading)
       const characterContext = req.cookies?.character_context;
       logger.info(`[AdminAuth] Character context present: ${!!characterContext}`);
       if (characterContext) {
@@ -67,37 +67,36 @@ export class AdminAuthMiddleware {
           if (characterDecoded?.characterId) {
             const { Character } = require('@database/models/Character');
             const { gameplayRolesToAdminRoles } = require('@config/permissions');
-            Character.findById(characterDecoded.characterId)
-              .select('gameplayRoles adminPermissions isGestore canAccessAdminPanel')
-              .lean()
-              .then((char: { gameplayRoles?: string[]; adminPermissions?: string[]; isGestore?: boolean; canAccessAdminPanel?: boolean } | null) => {
-                if (char && req.user) {
-                  const adminRoles = gameplayRolesToAdminRoles(char.gameplayRoles || []);
-                  if (char.isGestore) adminRoles.push('amministratore');
-                  req.user.characterRoles = adminRoles;
-                  req.user.gameplayRoles = (char.gameplayRoles || []) as ('player' | 'master' | 'moderatore')[];
-                  req.user.adminPermissions = char.adminPermissions || [];
-                  req.user.isGestore = char.isGestore || false;
-                  req.user.canAccessAdminPanel = char.canAccessAdminPanel || char.isGestore || false;
 
-                  logger.info(`[AdminAuth] Character loaded: id=${characterDecoded.characterId} | isGestore=${char.isGestore} | roles=${JSON.stringify(char.gameplayRoles)} | canAccess=${char.canAccessAdminPanel}`);
-                } else {
-                  logger.warn('[AdminAuth] Character not found or req.user missing', {
-                    characterId: characterDecoded.characterId,
-                    hasChar: !!char,
-                    hasReqUser: !!req.user
-                  });
-                }
-                next();
-              })
-              .catch((err: unknown) => {
-                logger.error('[AdminAuth] Character load failed', {
+            try {
+              const char = await Character.findById(characterDecoded.characterId)
+                .select('gameplayRoles adminPermissions isGestore canAccessAdminPanel')
+                .lean()
+                .exec();
+
+              if (char && req.user) {
+                const adminRoles = gameplayRolesToAdminRoles(char.gameplayRoles || []);
+                if (char.isGestore) adminRoles.push('amministratore');
+                req.user.characterRoles = adminRoles;
+                req.user.gameplayRoles = (char.gameplayRoles || []) as ('player' | 'master' | 'moderatore')[];
+                req.user.adminPermissions = char.adminPermissions || [];
+                req.user.isGestore = char.isGestore || false;
+                req.user.canAccessAdminPanel = char.canAccessAdminPanel || char.isGestore || false;
+
+                logger.info(`[AdminAuth] Character loaded: id=${characterDecoded.characterId} | isGestore=${char.isGestore} | roles=${JSON.stringify(char.gameplayRoles)} | canAccess=${char.canAccessAdminPanel}`);
+              } else {
+                logger.warn('[AdminAuth] Character not found', {
                   characterId: characterDecoded.characterId,
-                  error: err instanceof Error ? err.message : String(err)
+                  hasChar: !!char
                 });
-                next();
+              }
+            } catch (err: unknown) {
+              logger.error('[AdminAuth] Character load failed', {
+                characterId: characterDecoded.characterId,
+                error: err instanceof Error ? err.message : String(err)
               });
-            return;
+              // Continue with empty characterRoles - user can still access with base permissions
+            }
           }
         } catch (jwtError) {
           logger.error('[AdminAuth] Character context processing failed', {
@@ -110,12 +109,12 @@ export class AdminAuthMiddleware {
       }
       next();
     } catch (error: unknown) {
-      logger.warn('Admin auth token validation failed:', { 
-        error: error instanceof Error ? error.message : String(error), 
+      logger.warn('Admin auth token validation failed:', {
+        error: error instanceof Error ? error.message : String(error),
         ip: req.ip,
         userAgent: req.get('User-Agent')
       });
-      
+
       res.status(401).json(errorResponse(
         'Token di autenticazione non valido',
         'INVALID_AUTH_TOKEN',
