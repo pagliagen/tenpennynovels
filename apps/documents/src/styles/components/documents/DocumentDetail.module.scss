@@ -125,9 +125,9 @@
 // ========== DOCUMENT CONTENT (dangerouslySetInnerHTML) ==========
 
 .documentContent {
-  font-family: $font-body;
+  font-family: $font-body-secondary;
   font-size: $font-size-base;
-  line-height: $line-height-normal;
+  line-height: 1.25;
   color: #0d0d0d;
 
   h1,

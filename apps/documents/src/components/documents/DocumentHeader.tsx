@@ -26,9 +26,9 @@ export function DocumentHeader({ document }: DocumentHeaderProps): JSX.Element {
   return (
     <div className={styles.stickyHeader}>
       <h1 className={styles.stickyTitle}>
-        <span className={styles.titleDiamond}>&#9670;</span>
+        <span className={styles.titleDiamond}>✦</span>
         {document.title}
-        <span className={styles.titleDiamond}>&#9670;</span>
+        <span className={styles.titleDiamond}>✦</span>
       </h1>
 
       {isAuthenticated && (

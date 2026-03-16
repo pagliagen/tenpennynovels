@@ -44,7 +44,7 @@
   position: relative;
   padding: 4px 16px;
   font-family: $font-primary;
-  font-size: $font-size-base;
+  font-size: 22px;
   font-weight: $font-weight-bold;
   color: $color-text-light;
   text-transform: uppercase;
@@ -64,7 +64,7 @@
 .treeContainer {
   flex: 1;
   overflow-y: auto;
-  margin: 0 $spacing-lg;
+  margin: 0 12px;
   background-color: #0d0d0d;
 }
 
