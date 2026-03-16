@@ -12,7 +12,7 @@
   },
   "scripts": {
     "dev": "NODE_ENV=development tsx watch src/server.ts",
-    "build": "tsc && mkdir -p dist/config && cp -r src/config/* dist/config/",
+    "build": "tsc",
     "start": "NODE_ENV=production node -r module-alias/register dist/server.js",
     "type-check": "tsc --noEmit",
     "migrate:social-conflict": "tsx src/database/migrations/migrate-social-conflict.ts",
