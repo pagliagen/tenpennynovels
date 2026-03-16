@@ -27,5 +27,7 @@ for service in services/*/; do
   fi
 done
 
+(cd "services/unified-backend/src/shared" && npm install && npm audit fix --force || true)
+
 echo ""
 echo "✅ All dependencies installed!"
