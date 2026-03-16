@@ -1002,8 +1002,7 @@ pm2 status
 # │ 3   │ tenpennynovels-gestione           │ fork        │ 0      │ online  │ 0%       │
 # │ 4   │ tenpennynovels-api-gateway        │ cluster     │ 0      │ online  │ 0%       │
 # │ 5   │ tenpennynovels-unified-backend    │ fork        │ 0      │ online  │ 0%       │
-# │ 6   │ tenpennynovels-embeddings-service │ fork        │ 0      │ online  │ 0%       │
-# │ 7   │ tenpennynovels-embeddings-worker  │ fork        │ 0      │ online  │ 0%       │
+# │ 6   │ tenpennynovels-embeddings-worker  │ fork        │ 0      │ online  │ 0%       │
 # └─────┴───────────────────────────────────┴─────────────┴─────────┴─────────┴──────────┘
 
 # Se qualche processo è "errored", controlla i log:

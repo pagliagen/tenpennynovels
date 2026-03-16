@@ -104,7 +104,7 @@ jobs:
               for app in apps/*/; do
                 if [ -f "${app}package.json" ]; then
                   echo "  → ${app}"
-                  (cd "$app" && npm install --production)
+                  (cd "$app" && npm install)
                 fi
               done
 

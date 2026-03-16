@@ -64,64 +64,7 @@ flowchart TB
 
 ## Components
 
-### 1. Embeddings Service (Flask HTTP)
-
-**Container**: `tenpennynovels-embeddings-service`
-**Port**: 5001
-**Language**: Python 3.11
-**Technology**: Flask, Sentence Transformers
-
-**Model**: `paraphrase-multilingual-MiniLM-L12-v2`
-- **Dimensions**: 384 (vs 768/1536 larger models)
-- **Languages**: Italian, English, +50 languages
-- **Speed**: ~100ms per embedding, ~50ms if cached
-- **Size**: 118MB (lightweight)
-
-**Endpoints**:
-```bash
-POST /embed          # Single embedding
-POST /embed/batch    # Batch embeddings (multiple texts)
-GET  /health         # Health check
-```
-
-**Request/Response**:
-```bash
-# Single
-curl -X POST http://localhost:5001/embed \
-  -H "Content-Type: application/json" \
-  -d '{"text": "Come creare un personaggio?"}'
-
-# Response
-{
-  "success": true,
-  "embedding": [0.123, -0.456, ..., 0.789],  // 384 floats
-  "dimension": 384
-}
-
-# Batch
-curl -X POST http://localhost:5001/embed/batch \
-  -H "Content-Type: application/json" \
-  -d '{"texts": ["text1", "text2", "text3"]}'
-
-# Response
-{
-  "success": true,
-  "embeddings": [[...], [...], [...]],
-  "count": 3
-}
-```
-
-**Features**:
-- Model pre-loaded at startup (avoids reload overhead)
-- Smart text chunking (>500 chars split with overlap)
-- Batch processing for performance
-- Docker multi-stage build
-
-**Location**: `services/embeddings-service/`
-
----
-
-### 2. Embeddings Worker (Node.js/TypeScript)
+### 1. Embeddings Worker (Node.js/TypeScript)
 
 **Container**: `tenpennynovels-embeddings-worker`
 **Language**: TypeScript (Node.js 22)
@@ -157,7 +100,7 @@ const REDIS_CHANNELS = {
 
 ---
 
-### 3. Qdrant Vector Database (Port 6333)
+### 2. Qdrant Vector Database (Port 6333)
 
 **Container**: `qdrant` (from qdrant/qdrant:v1.17.0)
 **Port**: 6333
@@ -204,7 +147,7 @@ POST http://localhost:6333/collections/documents/points/search
 
 ---
 
-### 4. BotAI Embeddings Service (Port 5002) - OPTIONAL
+### 3. BotAI Embeddings Service (Port 5002) - OPTIONAL
 
 **Purpose**: Dedicated embeddings for BotAI backend (separate database).
 
@@ -491,32 +434,7 @@ curl http://localhost:5001/health
 - MongoDB connection failed → check `MONGODB_URI` env var
 
 ---
-
-### Embeddings Service 500 Error
-
-**Symptoms**: `POST /embed` returns 500 Internal Server Error.
-
-**Checks**:
-```bash
-# 1. Check service logs
-docker logs tenpennynovels-embeddings-service -f
-
-# 2. Check model loaded
-curl http://localhost:5001/health
-# Expected: model name in response
-
-# 3. Check memory
-docker stats tenpennynovels-embeddings-service
-# Expected: ~500MB RAM
-```
-
-**Common Issues**:
-- Model not downloaded → rebuild image `docker compose build embeddings-service`
-- Out of memory → increase Docker memory limit (>1GB)
-- Text too long (>10k chars) → split text before sending
-
----
-
+ 
 ### Qdrant Connection Refused
 
 **Symptoms**: Worker logs show "Qdrant connection refused".
