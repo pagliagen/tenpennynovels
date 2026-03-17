@@ -1,3 +1,5 @@
+@use "../../variables" as *;
+
 /**
  * Location Tree List Styles
  *
@@ -127,12 +129,12 @@
 
   &::-webkit-scrollbar-track {
     background: rgba(139, 69, 19, 0.1);
-    border-radius: 6px;
+    border-radius: $radius-md;
   }
 
   &::-webkit-scrollbar-thumb {
     background: rgba(184, 134, 11, 0.5);
-    border-radius: 6px;
+    border-radius: $radius-md;
     border: 2px solid rgba(139, 69, 19, 0.1);
 
     &:hover {

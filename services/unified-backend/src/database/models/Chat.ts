@@ -10,6 +10,11 @@ export interface IChat extends Document {
   characterSurname?: string;
   characterAvatar?: string;
   isBot: boolean;
+
+  // PNG Light masking
+  isMasked: boolean;
+  realCharacterName?: string;  // Admin-only field (only if masked)
+
   content: string;
   locationId: string;
   locationName?: string;
@@ -146,6 +151,18 @@ const ChatSchema = new Schema<IChat>({
     default: false,
     required: true
   },
+
+  // PNG Light masking
+  isMasked: {
+    type: Boolean,
+    default: false
+  },
+  realCharacterName: {
+    type: String,
+    trim: true,
+    maxlength: 100
+  },
+
   content: {
     type: String,
     required: true,
@@ -350,6 +367,7 @@ ChatSchema.index({ locationId: 1, timestamp: -1 });
 ChatSchema.index({ characterId: 1, timestamp: -1 });
 ChatSchema.index({ locationId: 1, visibility: 1, timestamp: -1 });
 ChatSchema.index({ sessionId: 1, timestamp: -1 });
+ChatSchema.index({ isMasked: 1, locationId: 1 });  // Admin queries
 
 ChatSchema.statics.getLocationHistory = async function(
   locationId: string,

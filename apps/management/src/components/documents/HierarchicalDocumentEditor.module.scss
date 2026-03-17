@@ -19,7 +19,7 @@
   padding: $spacing-md;
   background-color: rgba($color-warning, 0.1);
   border: 1px solid $color-warning;
-  border-radius: $border-radius-md;
+  border-radius: $radius-md;
   color: $color-warning;
   font-size: 14px;
 }
@@ -28,7 +28,7 @@
   padding: $spacing-md;
   background-color: rgba($color-primary, 0.05);
   border: 1px solid rgba($color-primary, 0.2);
-  border-radius: $border-radius-md;
+  border-radius: $radius-md;
   color: $color-text-secondary;
   font-size: 14px;
 
@@ -53,7 +53,7 @@
 .accordionItem {
   position: relative;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: $border-radius-md;
+  border-radius: $radius-md;
   overflow: visible;
   transition: all $transition-fast;
 
@@ -178,7 +178,7 @@
     padding: $spacing-xs $spacing-sm;
     background-color: $color-primary;
     color: white;
-    border-radius: $border-radius-sm;
+    border-radius: $radius-sm;
     font-size: 12px;
     font-weight: 600;
   }
@@ -206,7 +206,7 @@
     width: 100%;
     padding: $spacing-sm $spacing-md;
     border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: $border-radius-md;
+    border-radius: $radius-md;
     background-color: rgba(255, 255, 255, 0.05);
     color: $color-text-primary;
     font-size: 16px;
@@ -224,7 +224,7 @@
   padding: $spacing-xs $spacing-sm;
   background-color: rgba($color-primary, 0.1);
   color: $color-primary;
-  border-radius: $border-radius-sm;
+  border-radius: $radius-sm;
   font-size: 14px;
   font-weight: 600;
 }
@@ -232,7 +232,7 @@
 .cancelButton,
 .saveButton {
   padding: $spacing-sm $spacing-lg;
-  border-radius: $border-radius-md;
+  border-radius: $radius-md;
   font-weight: 600;
   cursor: pointer;
   transition: all $transition-fast;

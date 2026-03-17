@@ -17,6 +17,7 @@
 
 'use client';
 
+import { useEffect } from 'react';
 import { MessageList } from './MessageList';
 import { MessageInput } from './MessageInput';
 import { PermissionBanner } from './PermissionBanner';
@@ -25,7 +26,6 @@ import { useCharacterSheetData } from '@/hooks/useCharacterSheetData';
 import { useAuthStore } from '@/store/authStore';
 import { useLocationStore } from '@/store/locationStore';
 import { useChatOccupants, useChatCurrentTag, useChatStore } from '@/store/chatStore';
-import { locationChatsApi } from '@/lib/api/locationChats';
 import styles from '@/styles/components/chat/ChatContainer.module.scss';
 
 /**
@@ -72,6 +72,14 @@ export function ChatContainer({ locationSlug, locationId, locationName }: ChatCo
   const occupants = useChatOccupants();
   const currentTag = useChatCurrentTag();
 
+  // Init tag from localStorage when entering location
+  useEffect(() => {
+    const stored = localStorage.getItem(`chat-tag-${locationId}`);
+    if (stored) {
+      useChatStore.getState().setCurrentTag(stored);
+    }
+  }, [locationId]);
+
   // Chat hook: Messages, send, typing
   const { messages, isLoading, error, sendMessage, startTyping, stopTyping } = useLocationChat(
     locationSlug,
@@ -89,19 +97,14 @@ export function ChatContainer({ locationSlug, locationId, locationName }: ChatCo
 
   /**
    * Handle tag change
-   * Saves tag to chatStore and backend immediately.
+   * Saves tag to localStorage (frontend persistence) and chatStore (UI state).
    */
-  const handleTagChange = async (tag: string) => {
-    // Save to chatStore (global state)
-    useChatStore.getState().setCurrentTag(tag);
+  const handleTagChange = (tag: string) => {
+    // Save to localStorage (persists across page refresh)
+    localStorage.setItem(`chat-tag-${locationId}`, tag);
 
-    // Save tag to occupant record
-    try {
-      await locationChatsApi.updateOccupantTag(locationId, tag);
-      console.log(`✅ Tag updated to: ${tag}`);
-    } catch (error) {
-      console.error('❌ Failed to update occupant tag:', error);
-    }
+    // Save to chatStore (global UI state)
+    useChatStore.getState().setCurrentTag(tag);
   };
 
   /**
@@ -120,6 +123,9 @@ export function ChatContainer({ locationSlug, locationId, locationName }: ChatCo
    */
   const characterData = {
     characterId: selectedCharacter?._id || '',
+    name: selectedCharacter?.name || '',
+    surname: selectedCharacter?.surname,
+    avatar: selectedCharacter?.avatar || undefined,
     skills: characterSheet?.character?.skills
       ? Object.entries(characterSheet.character.skills).map(([skillId, skillData]: [string, any]) => ({
           id: skillId, // Skill ObjectId - needed for secure roll requests

@@ -40,7 +40,12 @@
     "docker:logs:embeddings": "docker compose logs -f embeddings-worker",
     "seed:admin": "cd scripts/seeders && npm run seed:users",
     "seed:users": "cd scripts/seeders && npm run seed:users",
-    "seed:documents": "cd scripts/seeders && npm run seed:documents"
+    "seed:documents": "cd scripts/seeders && npm run seed:documents",
+    "typecheck:gateway": "cd services/api-gateway && npm run type-check",
+    "typecheck:unified": "cd services/unified-backend && npm run type-check",
+    "typecheck:embeddings": "cd services/embeddings-worker && npm run type-check",
+    "typecheck:backends": "npm run typecheck:gateway && npm run typecheck:unified && npm run typecheck:embeddings",
+    "prepare": "husky"
   },
   "workspaces": [],
   "engines": {
@@ -48,11 +53,12 @@
   },
   "devDependencies": {
     "@types/yargs-parser": "^21.0.3",
-    "concurrently": "^8.2.2",
     "commander": "^14.0.3",
+    "concurrently": "^8.2.2",
     "csv-parse": "^6.1.0",
     "csv-parser": "^3.2.0",
     "dotenv": "^17.3.1",
+    "husky": "^9.1.7",
     "mongoose": "^9.1.6"
   }
 }

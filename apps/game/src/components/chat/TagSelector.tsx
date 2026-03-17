@@ -61,24 +61,48 @@ export function TagSelector({
   onTagChange,
   onClose,
 }: TagSelectorProps): JSX.Element {
-  const [localTag, setLocalTag] = useState<string>(selectedTag || '');
+  // Single source of truth: input text value
+  const [customTag, setCustomTag] = useState<string>(selectedTag || '');
 
   // Use positions from location DB, fallback to DEFAULT_TAGS if not set
   const positions = availablePositions && availablePositions.length > 0 ? availablePositions : DEFAULT_TAGS;
 
   /**
-   * Handle tag selection
+   * Handle preset button click - fills input like a shortcut
    */
   const handleSelect = (tag: string) => {
-    setLocalTag(tag);
+    setCustomTag(tag);
   };
 
   /**
-   * Confirm selection
+   * Handle custom tag input change
+   */
+  const handleCustomTagChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (value.length <= 50) {
+      setCustomTag(value);
+    }
+  };
+
+  /**
+   * Handle Enter key in input
+   */
+  const handleCustomTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      const trimmed = customTag.trim();
+      if (trimmed.length > 0 && trimmed.length <= 50) {
+        handleConfirm();
+      }
+    }
+  };
+
+  /**
+   * Confirm selection with validation
    */
   const handleConfirm = () => {
-    if (localTag) {
-      onTagChange(localTag);
+    const trimmed = customTag.trim();
+    if (trimmed.length > 0 && trimmed.length <= 50) {
+      onTagChange(trimmed);
       onClose();
     }
   };
@@ -110,18 +134,54 @@ export function TagSelector({
             <button
               key={tag}
               onClick={() => handleSelect(tag)}
-              className={`${styles.tagButton} ${localTag === tag ? styles.selected : ''}`}
+              className={`${styles.tagButton} ${customTag === tag ? styles.selected : ''}`}
             >
               {tag}
             </button>
           ))}
         </div>
 
+        {/* Divider */}
+        <div className={styles.customTagDivider}>
+          <span className={styles.customTagDividerText}>oppure</span>
+        </div>
+
+        {/* Input tag personalizzato */}
+        <div className={styles.customTagSection}>
+          <label htmlFor="custom-tag-input" className={styles.customTagLabel}>
+            Tag personalizzato
+          </label>
+          <input
+            id="custom-tag-input"
+            type="text"
+            value={customTag}
+            onChange={handleCustomTagChange}
+            onKeyDown={handleCustomTagKeyDown}
+            placeholder="es. Sala da biliardo..."
+            className={styles.customTagInput}
+            maxLength={50}
+            aria-invalid={customTag.length > 0 && customTag.trim().length === 0}
+            aria-describedby={customTag.length > 0 && customTag.trim().length === 0 ? 'custom-tag-error' : undefined}
+          />
+          <div className={styles.customTagHint}>
+            <span className={styles.charCount}>{customTag.length}/50 caratteri</span>
+            {customTag.trim().length === 0 && customTag.length > 0 && (
+              <span id="custom-tag-error" role="alert" className={styles.validationError}>
+                Il tag non può essere vuoto
+              </span>
+            )}
+          </div>
+        </div>
+
         <div className={styles.tagSelectorActions}>
           <button onClick={onClose} className={styles.cancelButton}>
             Annulla
           </button>
-          <button onClick={handleConfirm} disabled={!localTag} className={styles.confirmButton}>
+          <button
+            onClick={handleConfirm}
+            disabled={customTag.trim().length === 0 || customTag.trim().length > 50}
+            className={styles.confirmButton}
+          >
             Conferma
           </button>
         </div>

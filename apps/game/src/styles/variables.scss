@@ -1,0 +1,96 @@
+/**
+ * Global Shared Variables
+ *
+ * Victorian-themed color palette and common styles.
+ * Used across all game components.
+ * @module styles/variables
+ * @since 2.0.0
+ */
+
+/* Color Palette */
+$gold: #b8860b;
+$brown: #8b4513;
+$parchment: #e8d4a0;
+$parchment-dark: #c9c6ad;
+
+/* Opacity Variations - Gold */
+$gold-10: rgba(184, 134, 11, 0.1);
+$gold-20: rgba(184, 134, 11, 0.2);
+$gold-30: rgba(184, 134, 11, 0.3);
+$gold-40: rgba(184, 134, 11, 0.4);
+$gold-50: rgba(184, 134, 11, 0.5);
+$gold-60: rgba(184, 134, 11, 0.6);
+$gold-70: rgba(184, 134, 11, 0.7);
+$gold-80: rgba(184, 134, 11, 0.8);
+
+/* Opacity Variations - Brown */
+$brown-10: rgba(139, 69, 19, 0.1);
+$brown-20: rgba(139, 69, 19, 0.2);
+$brown-30: rgba(139, 69, 19, 0.3);
+$brown-40: rgba(139, 69, 19, 0.4);
+$brown-50: rgba(139, 69, 19, 0.5);
+$brown-60: rgba(139, 69, 19, 0.6);
+$brown-70: rgba(139, 69, 19, 0.7);
+$brown-80: rgba(139, 69, 19, 0.8);
+
+/* Opacity Variations - Parchment */
+$parchment-50: rgba(232, 212, 160, 0.5);
+$parchment-60: rgba(232, 212, 160, 0.6);
+$parchment-70: rgba(232, 212, 160, 0.7);
+
+/* Text Colors */
+$text-primary: #e8d4a0;    // Parchment color for primary text
+$text-secondary: #c9c6ad;  // Darker parchment for secondary text
+$text-tertiary: rgba(232, 212, 160, 0.5);  // Faded parchment for tertiary text
+
+/* Typography */
+$font-serif: 'Playfair Display', serif;
+$font-sans: system-ui, -apple-system, sans-serif;
+$font-heading: 'Thrifted Attire', serif;  // Victorian-style heading font
+
+/* Spacing */
+$spacing-xs: 4px;
+$spacing-sm: 8px;
+$spacing-md: 12px;
+$spacing-lg: 16px;
+$spacing-xl: 24px;
+$spacing-xxl: 32px;
+
+/* Border Radius */
+$radius-sm: 4px;
+$radius-md: 6px;
+$radius-lg: 12px;
+
+/* Transitions */
+$transition-fast: 0.15s ease;
+$transition-normal: 0.2s ease;
+$transition-slow: 0.3s ease;
+
+/* Additional Aliases (for compatibility) */
+$color-primary: #b8860b;   // Same as $gold
+$color-error: #dc3545;     // Red for errors
+$color-warning: #ffc107;   // Yellow for warnings
+$color-text-muted: rgba(232, 212, 160, 0.5);  // Same as $text-tertiary
+$color-text-secondary: #c9c6ad;  // Same as $text-secondary
+
+/* Victorian Scrollbar Mixin */
+@mixin victorian-scrollbar {
+  &::-webkit-scrollbar {
+    width: 12px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: $brown-10;
+    border-radius: $radius-md;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: $gold-50;
+    border-radius: $radius-md;
+    border: 2px solid $brown-10;
+
+    &:hover {
+      background: $gold-70;
+    }
+  }
+}

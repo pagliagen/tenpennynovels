@@ -1,3 +1,5 @@
+@use '../variables' as *;
+
 .roleSection {
   margin-bottom: 32px;
   padding: 24px;
@@ -61,7 +63,7 @@
   padding: 8px 0;
   cursor: pointer;
   transition: background 0.2s ease;
-  border-radius: 6px;
+  border-radius: $radius-md;
 
   &:hover {
     background: rgba(217, 119, 6, 0.08);

@@ -14,7 +14,7 @@
   align-items: center;
   padding: $spacing-lg;
   background-color: $color-bg-secondary;
-  border-radius: $border-radius-md;
+  border-radius: $radius-md;
   border: 1px solid rgba(255, 255, 255, 0.1);
 
   h1 {
@@ -41,7 +41,7 @@
   background-color: $color-primary;
   color: $color-bg-primary;
   border: none;
-  border-radius: $border-radius-sm;
+  border-radius: $radius-sm;
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
@@ -63,7 +63,7 @@
   gap: $spacing-md;
   padding: $spacing-md;
   background-color: $color-bg-secondary;
-  border-radius: $border-radius-md;
+  border-radius: $radius-md;
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -72,7 +72,7 @@
   background-color: transparent;
   color: $color-text-secondary;
   border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: $border-radius-sm;
+  border-radius: $radius-sm;
   font-size: 15px;
   font-weight: 500;
   cursor: pointer;
@@ -94,7 +94,7 @@
 .subtypeForm {
   padding: $spacing-lg;
   background-color: $color-bg-secondary;
-  border-radius: $border-radius-md;
+  border-radius: $radius-md;
   border: 1px solid rgba(255, 255, 255, 0.15);
 
   h3 {
@@ -130,7 +130,7 @@
     background-color: $color-bg-tertiary;
     color: $color-text-primary;
     border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: $border-radius-sm;
+    border-radius: $radius-sm;
     font-size: 15px;
     transition: border-color $transition-fast;
 
@@ -156,7 +156,7 @@
   background-color: transparent;
   color: $color-text-secondary;
   border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: $border-radius-sm;
+  border-radius: $radius-sm;
   font-size: 14px;
   cursor: pointer;
   transition: all $transition-fast;
@@ -171,7 +171,7 @@
   background-color: $color-primary;
   color: $color-bg-primary;
   border: none;
-  border-radius: $border-radius-sm;
+  border-radius: $radius-sm;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -184,7 +184,7 @@
 
 .subtypesList {
   background-color: $color-bg-secondary;
-  border-radius: $border-radius-md;
+  border-radius: $radius-md;
   border: 1px solid rgba(255, 255, 255, 0.1);
   overflow: hidden;
 }
@@ -298,7 +298,7 @@
   padding: $spacing-xs;
   background-color: transparent;
   border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: $border-radius-sm;
+  border-radius: $radius-sm;
   font-size: 12px;
   color: $color-text-muted;
   cursor: pointer;
@@ -327,7 +327,7 @@
   padding: $spacing-xs $spacing-sm;
   background-color: transparent;
   border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: $border-radius-sm;
+  border-radius: $radius-sm;
   font-size: 14px;
   cursor: pointer;
   transition: all $transition-fast;
@@ -348,7 +348,7 @@
   justify-content: center;
   padding: $spacing-2xl;
   background-color: $color-bg-secondary;
-  border-radius: $border-radius-md;
+  border-radius: $radius-md;
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: $color-text-muted;
   font-size: 15px;

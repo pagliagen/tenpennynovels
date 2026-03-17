@@ -1,3 +1,5 @@
+@use "../variables" as *;
+
 /**
  * Locations Page Styles
  *
@@ -102,7 +104,7 @@
   font-family: 'Thrifted Attire', serif;
   padding: 12px 32px;
   font-size: 16px;
-  border-radius: 6px;
+  border-radius: $radius-md;
   cursor: pointer;
   transition: all 0.2s ease;
   margin-top: 16px;

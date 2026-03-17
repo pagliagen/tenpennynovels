@@ -54,7 +54,7 @@ $spacing-xxl: 32px;
 
 /* Border Radius */
 $radius-sm: 4px;
-$radius-md: 8px;
+$radius-md: 6px;
 $radius-lg: 12px;
 
 /* Transitions */
@@ -75,12 +75,12 @@ $forum-max-width: 900px;
 
   &::-webkit-scrollbar-track {
     background: $brown-10;
-    border-radius: 6px;
+    border-radius: $radius-md;
   }
 
   &::-webkit-scrollbar-thumb {
     background: $gold-50;
-    border-radius: 6px;
+    border-radius: $radius-md;
     border: 2px solid transparent;
     background-clip: content-box;
 

@@ -145,6 +145,11 @@ export interface WhisperVisibility {
  * **Note**: Field names match MongoDB schema exactly (no mapping).
  */
 export interface ChatMessage {
+  // PNG Light masking
+  isMasked?: boolean;
+  // NOTE: characterName and characterAvatar already contain fake data if masked
+  // NOTE: realCharacterName is admin-only, not exposed to game frontend
+
   // Identity
   _id: string;
   actionType: ActionType;  // DB field (was messageType)

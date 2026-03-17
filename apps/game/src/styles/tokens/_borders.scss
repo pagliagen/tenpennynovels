@@ -77,3 +77,16 @@
   /** Focus border - Interactive elements */
   --border-focus: var(--border-width-base) solid var(--color-primary-hover);
 }
+
+/* ===========================
+   SASS VARIABLES (for compatibility)
+   =========================== */
+
+/** Border radius - SASS variables matching CSS custom properties */
+$radius-none: 0;
+$radius-sm: 4px;
+$radius-md: 6px;
+$radius-lg: 8px;
+$radius-xl: 12px;
+$radius-2xl: 16px;
+$radius-full: 9999px;

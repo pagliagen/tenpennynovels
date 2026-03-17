@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useRef } from 'react';
 import classNames from 'classnames';
 import { uploadImage, deleteImage } from '@/lib/api/cdn';
+import { ImageCropModal } from './ImageCropModal';
 import styles from '@/styles/components/ImageUploader.module.scss';
 
 export type CDNEntityType = 'locations' | 'items' | 'characters' | 'occupations';
@@ -12,6 +13,7 @@ interface ImageUploaderProps {
   entityId?: string;
   placeholder?: string;
   helpText?: string;
+  enableCrop?: boolean;
 }
 
 const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
@@ -25,12 +27,15 @@ export function ImageUploader({
   entityId,
   placeholder = 'Trascina un\'immagine qui oppure clicca per selezionare',
   helpText,
+  enableCrop = false,
 }: ImageUploaderProps): React.ReactElement {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [previewError, setPreviewError] = useState(false);
+  const [showCropModal, setShowCropModal] = useState(false);
+  const [fileToProcess, setFileToProcess] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const hasImage = value && value.trim().length > 0;
@@ -57,6 +62,13 @@ export function ImageUploader({
       return;
     }
 
+    // If crop enabled, open crop modal instead of uploading directly
+    if (enableCrop) {
+      setFileToProcess(file);
+      setShowCropModal(true);
+      return;
+    }
+
     setError(null);
     setUploading(true);
     setProgress(0);
@@ -71,7 +83,36 @@ export function ImageUploader({
       setUploading(false);
       setProgress(0);
     }
-  }, [entityType, entityId, onChange, validateFile]);
+  }, [entityType, entityId, onChange, validateFile, enableCrop]);
+
+  const handleCropConfirm = useCallback(async (croppedBlob: Blob) => {
+    setShowCropModal(false);
+    setFileToProcess(null);
+
+    // Convert blob to File to maintain compatibility with uploadImage API
+    const croppedFile = new File([croppedBlob], 'cropped.jpg', { type: 'image/jpeg' });
+
+    setError(null);
+    setUploading(true);
+    setProgress(0);
+
+    try {
+      const result = await uploadImage(croppedFile, entityType, entityId!, setProgress);
+      onChange(result.url);
+      setPreviewError(false);
+    } catch (err: any) {
+      setError(err.message || 'Errore durante il caricamento');
+    } finally {
+      setUploading(false);
+      setProgress(0);
+    }
+  }, [entityType, entityId, onChange]);
+
+  const handleCropCancel = useCallback(() => {
+    setShowCropModal(false);
+    setFileToProcess(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }, []);
 
   const handleRemove = useCallback(async () => {
     if (!hasImage) return;
@@ -194,6 +235,15 @@ export function ImageUploader({
       )}
 
       {helpText && <p className={styles.helpText}>{helpText}</p>}
+
+      {enableCrop && fileToProcess && (
+        <ImageCropModal
+          isOpen={showCropModal}
+          imageFile={fileToProcess}
+          onConfirm={handleCropConfirm}
+          onCancel={handleCropCancel}
+        />
+      )}
     </div>
   );
 }

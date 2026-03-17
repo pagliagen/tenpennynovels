@@ -1,3 +1,5 @@
+@use "../../variables" as *;
+
 /**
  * Locations Map Styles
  *
@@ -33,7 +35,7 @@
   font-family: 'Thrifted Attire', serif;
   padding: 8px 16px;
   font-size: 14px;
-  border-radius: 6px;
+  border-radius: $radius-md;
   cursor: pointer;
   transition: all 0.2s ease;
 

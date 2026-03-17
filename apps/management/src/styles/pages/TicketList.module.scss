@@ -35,7 +35,7 @@
   background-color: $color-primary;
   color: white;
   border: none;
-  border-radius: $border-radius-md;
+  border-radius: $radius-md;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -52,7 +52,7 @@
   border-left: 4px solid $color-primary;
   padding: $spacing-md;
   margin-bottom: $spacing-lg;
-  border-radius: $border-radius-sm;
+  border-radius: $radius-sm;
   font-size: 14px;
   color: $color-text-primary;
 }

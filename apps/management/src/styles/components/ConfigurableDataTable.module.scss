@@ -6,7 +6,7 @@
   flex-direction: column;
   gap: $spacing-md;
   background-color: $color-bg-secondary;
-  border-radius: $border-radius-lg;
+  border-radius: $radius-lg;
   padding: $spacing-lg;
 }
 
@@ -35,7 +35,7 @@
   min-width: 250px;
   padding: $spacing-sm $spacing-md;
   border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: $border-radius-md;
+  border-radius: $radius-md;
   background-color: $color-bg-tertiary;
   color: $color-text-primary;
 
@@ -58,7 +58,7 @@
 
 .bulkActionButton {
   padding: $spacing-sm $spacing-md;
-  border-radius: $border-radius-sm;
+  border-radius: $radius-sm;
   border: none;
   cursor: pointer;
   font-size: 14px;
@@ -82,7 +82,7 @@
   padding: $spacing-md $spacing-lg;
   background-color: rgba($color-primary, 0.1);
   border: 1px solid rgba($color-primary, 0.3);
-  border-radius: $border-radius-sm;
+  border-radius: $radius-sm;
   margin-bottom: $spacing-md;
 
   span {
@@ -194,7 +194,7 @@
 .actionButton {
   padding: $spacing-xs $spacing-sm;
   border: none;
-  border-radius: $border-radius-sm;
+  border-radius: $radius-sm;
   cursor: pointer;
   font-size: 14px;
   transition: all $transition-fast;
@@ -249,7 +249,7 @@
 .paginationButton {
   padding: $spacing-sm $spacing-md;
   border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: $border-radius-sm;
+  border-radius: $radius-sm;
   background-color: transparent;
   color: $color-text-primary;
   cursor: pointer;
@@ -275,7 +275,7 @@
 :global(.tpn-admin-boolean) {
   display: inline-block;
   padding: $spacing-xs $spacing-sm;
-  border-radius: $border-radius-sm;
+  border-radius: $radius-sm;
   font-size: 13px;
   font-weight: 500;
   border: 1px solid rgba(255, 255, 255, 0.2);

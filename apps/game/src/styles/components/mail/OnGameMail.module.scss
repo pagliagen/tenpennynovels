@@ -1,3 +1,5 @@
+@use '../../variables' as *;
+
 /**
  * OnGame Mail System Styles
  *
@@ -126,7 +128,7 @@
   align-items: flex-start;
   gap: 12px;
   padding: 12px;
-  border-radius: 6px;
+  border-radius: $radius-md;
   margin-bottom: 8px;
   background: rgba(40, 30, 20, 0.6);
   border: 1px solid rgba(139, 69, 19, 0.5);
@@ -680,7 +682,7 @@
   margin: 16px;
   background: rgba(239, 68, 68, 0.1);
   border: 1px solid rgba(239, 68, 68, 0.5);
-  border-radius: 6px;
+  border-radius: $radius-md;
   color: #fca5a5;
   font-size: 15px;
 }

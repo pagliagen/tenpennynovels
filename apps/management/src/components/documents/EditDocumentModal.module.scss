@@ -25,7 +25,7 @@
 .previewButton {
   padding: $spacing-sm $spacing-md;
   border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: $border-radius-md;
+  border-radius: $radius-md;
   background-color: rgba(255, 255, 255, 0.05);
   color: $color-text-primary;
   cursor: pointer;
@@ -52,7 +52,7 @@
     width: 100%;
     padding: $spacing-sm $spacing-md;
     border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: $border-radius-md;
+    border-radius: $radius-md;
     background-color: rgba(255, 255, 255, 0.05);
     color: $color-text-primary;
     font-size: 18px;
@@ -67,7 +67,7 @@
 .cancelButton,
 .saveButton {
   padding: $spacing-sm $spacing-lg;
-  border-radius: $border-radius-md;
+  border-radius: $radius-md;
   font-weight: 600;
   cursor: pointer;
   transition: all $transition-fast;

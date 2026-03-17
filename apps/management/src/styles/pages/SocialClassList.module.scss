@@ -14,7 +14,7 @@
   align-items: center;
   padding: $spacing-lg;
   background-color: $color-bg-secondary;
-  border-radius: $border-radius-md;
+  border-radius: $radius-md;
   border: 1px solid rgba(255, 255, 255, 0.1);
 
   h1 {
@@ -41,7 +41,7 @@
   background-color: $color-primary;
   color: $color-bg-primary;
   border: none;
-  border-radius: $border-radius-sm;
+  border-radius: $radius-sm;
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
@@ -63,7 +63,7 @@
   gap: $spacing-md;
   padding: $spacing-md;
   background-color: $color-bg-secondary;
-  border-radius: $border-radius-md;
+  border-radius: $radius-md;
   border: 1px solid rgba(255, 255, 255, 0.1);
 
   input {
@@ -72,7 +72,7 @@
     background-color: $color-bg-tertiary;
     color: $color-text-primary;
     border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: $border-radius-sm;
+    border-radius: $radius-sm;
     font-size: 15px;
     transition: border-color $transition-fast;
 
@@ -89,7 +89,7 @@
 
 .tableContainer {
   background-color: $color-bg-secondary;
-  border-radius: $border-radius-md;
+  border-radius: $radius-md;
   border: 1px solid rgba(255, 255, 255, 0.1);
   overflow: hidden;
 }
@@ -148,7 +148,7 @@
 .boolBadge {
   display: inline-block;
   padding: 2px 8px;
-  border-radius: $border-radius-sm;
+  border-radius: $radius-sm;
   font-size: 12px;
   font-weight: 600;
 
@@ -174,7 +174,7 @@
   padding: $spacing-xs $spacing-sm;
   background-color: transparent;
   border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: $border-radius-sm;
+  border-radius: $radius-sm;
   font-size: 14px;
   cursor: pointer;
   transition: all $transition-fast;
@@ -212,7 +212,7 @@
   overflow-y: auto;
   padding: $spacing-xl;
   background-color: $color-bg-secondary;
-  border-radius: $border-radius-md;
+  border-radius: $radius-md;
   border: 1px solid rgba(255, 255, 255, 0.15);
 
   h2 {
@@ -252,7 +252,7 @@
     background-color: $color-bg-tertiary;
     color: $color-text-primary;
     border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: $border-radius-sm;
+    border-radius: $radius-sm;
     font-size: 15px;
     transition: border-color $transition-fast;
 
@@ -313,7 +313,7 @@
   background-color: transparent;
   color: $color-text-secondary;
   border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: $border-radius-sm;
+  border-radius: $radius-sm;
   font-size: 14px;
   cursor: pointer;
   transition: all $transition-fast;
@@ -328,7 +328,7 @@
   background-color: $color-primary;
   color: $color-bg-primary;
   border: none;
-  border-radius: $border-radius-sm;
+  border-radius: $radius-sm;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -350,7 +350,7 @@
   justify-content: center;
   padding: $spacing-2xl;
   background-color: $color-bg-secondary;
-  border-radius: $border-radius-md;
+  border-radius: $radius-md;
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: $color-text-muted;
   font-size: 15px;

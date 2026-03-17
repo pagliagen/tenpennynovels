@@ -1,3 +1,5 @@
+@use "../../styles/components/chat/variables" as *;
+
 /**
  * Skill/Stat Roll Modal Styles
  *
@@ -124,7 +126,7 @@
   padding: 10px 40px 10px 12px;
   background: rgba(139, 111, 71, 0.1);
   border: 1px solid #8b6f47;
-  border-radius: 6px;
+  border-radius: $radius-md;
   color: #f4e4d7;
   font-size: 14px;
   font-family: 'Georgia', serif;
@@ -177,7 +179,7 @@
   padding: 12px 16px;
   background: rgba(139, 111, 71, 0.1);
   border: 1px solid transparent;
-  border-radius: 6px;
+  border-radius: $radius-md;
   cursor: pointer;
   transition: all 0.2s ease;
 
@@ -240,7 +242,7 @@
   flex: 1;
   padding: 12px 20px;
   border: none;
-  border-radius: 6px;
+  border-radius: $radius-md;
   font-size: 15px;
   font-family: 'Georgia', serif;
   font-weight: 500;

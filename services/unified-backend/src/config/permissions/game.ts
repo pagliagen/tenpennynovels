@@ -92,6 +92,7 @@ export const GamePermissions = {
   CHAT_DELETE: 'game:chat:delete', // master/moderatore
   CHAT_MASTER_ACTION: 'game:chat:master-action', // master
   CHAT_MODERATION_ACTION: 'game:chat:moderation-action', // moderatore
+  CHAT_USE_FAKE_PNG: 'game:chat:use-fake-png', // master (PNG Light masking)
   CHAT_SOCIAL_CONFLICTS: 'game:chat:social-conflicts', // master
 
   // Messages
@@ -350,6 +351,7 @@ export const GameRolePermissions: Record<string, GamePermission[]> = {
     GamePermissions.CHARACTER_READ_OTHERS_PRIVATE,
     GamePermissions.CHAT_DELETE,
     GamePermissions.CHAT_MASTER_ACTION,
+    GamePermissions.CHAT_USE_FAKE_PNG,  // PNG Light masking
     GamePermissions.CHAT_SOCIAL_CONFLICTS,
     GamePermissions.QUESTS_CREATE,
     GamePermissions.QUESTS_START,

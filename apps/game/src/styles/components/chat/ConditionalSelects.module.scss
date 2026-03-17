@@ -1,4 +1,4 @@
-@use './variables' as *;
+@use './_variables' as *;
 
 /**
  * Conditional Selects Styles
@@ -16,7 +16,7 @@
   padding: $spacing-md $spacing-lg;
   background: rgba(245, 245, 245, 0.05);
   border: 1px solid $gold-30;
-  border-radius: 6px;
+  border-radius: $radius-md;
   color: $parchment;
   font-family: $font-serif;
   font-size: 16px;
@@ -59,7 +59,7 @@
   padding: $spacing-md $spacing-lg;
   background: rgba(245, 245, 245, 0.05);
   border: 1px solid $gold-30;
-  border-radius: 6px;
+  border-radius: $radius-md;
   color: $parchment;
   font-family: $font-serif;
   font-size: 16px;

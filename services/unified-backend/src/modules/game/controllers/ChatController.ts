@@ -15,12 +15,16 @@ export class ChatController {
   /**
    * Populate character avatars for messages
    * Performs batch lookup of avatars from Character collection
+   * IMPORTANT: Does NOT overwrite existing avatars (preserves fake PNG avatars)
    */
   private static async populateCharacterAvatars(messages: any[]): Promise<any[]> {
     if (messages.length === 0) return messages;
 
-    // Get unique character IDs
-    const characterIds = [...new Set(messages.map(m => m.characterId))];
+    // Get unique character IDs that DON'T already have avatars
+    const missingAvatars = messages.filter(m => !m.characterAvatar);
+    if (missingAvatars.length === 0) return messages;
+
+    const characterIds = [...new Set(missingAvatars.map(m => m.characterId))];
 
     // Batch lookup avatars
     const characters = await Character.find({ _id: { $in: characterIds } })
@@ -32,10 +36,10 @@ export class ChatController {
       characters.map((c: any) => [c._id.toString(), c.avatar])
     );
 
-    // Add avatar to each message
+    // ONLY add avatar if missing (don't overwrite fake avatars)
     return messages.map(message => ({
       ...message,
-      characterAvatar: avatarMap.get(message.characterId) || undefined
+      characterAvatar: message.characterAvatar || avatarMap.get(message.characterId) || undefined
     }));
   }
 
@@ -145,11 +149,67 @@ export class ChatController {
         }
       }
 
+      // ========== FAKE PNG MASKING LOGIC ==========
+      // Fresh query to avoid stale middleware data
+      const freshCharacter = await Character.findById(character.characterId)
+        .select('_id name surname avatar activeFakePngId fakePngs')
+        .lean();
+
+      if (!freshCharacter) {
+        res.status(404).json(errorResponse(
+          'Personaggio non trovato',
+          'CHARACTER_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      // Helper: build full name
+      const buildFullName = (name: string, surname?: string) =>
+        name + (surname ? ' ' + surname : '');
+
+      // Check if fake PNG active + permission valid
+      let isMasked = false;
+      let displayName = buildFullName(freshCharacter.name, freshCharacter.surname);
+      let displayAvatar = freshCharacter.avatar;
+      let realCharacterName: string | undefined;
+
+      if (freshCharacter.activeFakePngId) {
+        // Verify permission (degrade gracefully if lost)
+        const { hasGamePermission, GamePermissions } = await import('@config/permissions/game');
+        const hasFakePngPermission = hasGamePermission(
+          GamePermissions.CHAT_USE_FAKE_PNG,
+          character.playerStatus || 'draft',
+          character.isGestore || false,
+          character.gameplayRoles || [],
+          character.characterPermissions || []
+        );
+
+        if (hasFakePngPermission) {
+          const activeFake = freshCharacter.fakePngs?.find(
+            (f: any) => f._id.toString() === freshCharacter.activeFakePngId.toString()
+          );
+
+          if (activeFake) {
+            isMasked = true;
+            realCharacterName = displayName;  // Save real name for admin
+            displayName = buildFullName(activeFake.name, activeFake.surname);
+            displayAvatar = activeFake.avatar;
+          }
+        }
+      }
+      // ========== END FAKE PNG MASKING LOGIC ==========
+
       // Build the location action
       const actionData: any = {
         actionType,
-        characterId: character.characterId,
-        characterName: character.characterName,
+        characterId: freshCharacter._id.toString(),  // REAL ID (ownership)
+        characterName: displayName,                  // Fake if masked, real otherwise
+        characterAvatar: displayAvatar,              // Fake if masked, real otherwise
+        isMasked,
+        realCharacterName,  // Only set if masked (admin-only)
         content: content.trim(),
         locationId,
         sessionId, // Copy sessionId from location to action
@@ -282,10 +342,6 @@ export class ChatController {
       // Save to database
       const savedAction = await Chat.createAction(actionData);
 
-      // Lookup character avatar from DB (not from token - token may be stale)
-      const actionCharacter = await Character.findById(character.characterId).select('avatar').lean();
-      const characterAvatar = actionCharacter?.avatar;
-
       // Update occupant position tag if position was provided
       if (position) {
         try {
@@ -315,7 +371,7 @@ export class ChatController {
           actionType: savedAction.actionType,           // DB field (was messageType)
           characterId: savedAction.characterId,
           characterName: savedAction.characterName,
-          characterAvatar: characterAvatar || undefined,  // Looked up from DB
+          characterAvatar: savedAction.characterAvatar || undefined,  // Use saved value (fake if masked)
           position: savedAction.position || undefined,
           locationId: savedAction.locationId.toString(),
           content: savedAction.content,                 // DB field (was text)
@@ -496,7 +552,7 @@ export class ChatController {
         actionType: savedAction.actionType,
         characterId: savedAction.characterId,
         characterName: savedAction.characterName,
-        characterAvatar: characterAvatar || undefined,  // Looked up from DB
+        characterAvatar: savedAction.characterAvatar || undefined,  // Use saved value (fake if masked)
         position: savedAction.position || undefined,
         locationId: savedAction.locationId.toString(),
         content: savedAction.content,
@@ -653,6 +709,7 @@ export class ChatController {
           actionType: action.actionType,           // DB field (was messageType)
           characterId: action.characterId,
           characterName: action.characterName,
+          characterAvatar: action.characterAvatar || undefined,  // Preserve fake avatar if masked
           position: action.position || undefined,
           locationId: action.locationId.toString(),
           content: action.content,                 // DB field (was text)
@@ -878,10 +935,6 @@ export class ChatController {
       action.editHistory = editHistory;
       await action.save();
 
-      // Lookup character avatar from DB
-      const actionCharacter = await Character.findById(action.characterId).select('avatar').lean();
-      const characterAvatar = actionCharacter?.avatar;
-
       // Emit WebSocket notification
       const io = req.app.get('io');
       if (io) {
@@ -905,7 +958,7 @@ export class ChatController {
             actionType: action.actionType,
             characterId: action.characterId,
             characterName: action.characterName,
-            characterAvatar: characterAvatar || undefined,  // Looked up from DB
+            characterAvatar: action.characterAvatar || undefined,  // Use saved value (fake if masked)
             position: action.position || undefined,
             locationId: action.locationId.toString(),
             content: action.content,

@@ -1,3 +1,5 @@
+@use '../../variables' as *;
+
 /**
  * Connection Status Overlay Styles
  *
@@ -157,7 +159,7 @@
 .retryButton,
 .reloadButton {
   padding: 12px 24px;
-  border-radius: 6px;
+  border-radius: $radius-md;
   font-size: 16px;
   font-weight: 500;
   cursor: pointer;

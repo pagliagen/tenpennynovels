@@ -156,4 +156,41 @@ router.post('/characters/bot/complete',
   CharacterController.createCompleteBotCharacter
 );
 
+// Fake PNG management (PNG Light system)
+router.get('/characters/:characterId/fake-pngs',
+  AuthMiddleware.requireCharacterAuth,
+  requireGamePermission('game:character:read'),
+  CharacterController.listFakePngs
+);
+
+router.post('/characters/:characterId/fake-pngs',
+  AuthMiddleware.requireCharacterAuth,
+  requireGamePermission('game:character:update'),
+  CharacterController.createFakePng
+);
+
+router.patch('/characters/:characterId/fake-pngs/:fakeId',
+  AuthMiddleware.requireCharacterAuth,
+  requireGamePermission('game:character:update'),
+  CharacterController.updateFakePng
+);
+
+router.delete('/characters/:characterId/fake-pngs/:fakeId',
+  AuthMiddleware.requireCharacterAuth,
+  requireGamePermission('game:character:update'),
+  CharacterController.deleteFakePng
+);
+
+router.post('/characters/:characterId/fake-pngs/:fakeId/activate',
+  AuthMiddleware.requireCharacterAuth,
+  requireGamePermission(GamePermissions.CHAT_USE_FAKE_PNG),
+  CharacterController.activateFakePng
+);
+
+router.post('/characters/:characterId/fake-pngs/deactivate',
+  AuthMiddleware.requireCharacterAuth,
+  requireGamePermission('game:character:update'),
+  CharacterController.deactivateFakePng
+);
+
 export default router;

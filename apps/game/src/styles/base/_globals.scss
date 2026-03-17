@@ -11,6 +11,8 @@
  * @since 2.0.0
  */
 
+@use '../variables' as *;
+
 /* ========================================
    CUSTOM FONTS
    ======================================== */
@@ -128,7 +130,7 @@ a {
 
 ::-webkit-scrollbar-thumb {
   background-color: rgba(184, 134, 11, 0.5);
-  border-radius: 6px;
+  border-radius: $radius-md;
 
   &:hover {
     background-color: rgba(184, 134, 11, 0.7);
