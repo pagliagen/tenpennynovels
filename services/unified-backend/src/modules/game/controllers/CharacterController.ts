@@ -918,6 +918,7 @@ export class CharacterController {
       const responseData = {
         character: {
           ...character,
+          characterType: character.characterType, // For frontend routing to type-specific sheets
           skills: serializedSkills,
           // Add frontend-expected background fields
           publicBackground,

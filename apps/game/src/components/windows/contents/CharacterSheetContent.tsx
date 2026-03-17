@@ -1,12 +1,10 @@
 /**
- * Character Sheet Content Component
+ * Character Sheet Content Router
  *
- * Type-specific content for character sheet windows.
- * Displays dual-panel layout: portrait left + tabs right.
- *
- * Phase 2: Dual-panel layout + tab state management + placeholder tabs
- * Phase 3: React Query data fetching + permissions
- * Phase 4: Real tab content with data
+ * Routes to appropriate sheet component based on characterType:
+ * - pg_principale: Full sheet with all tabs (CharacterSheetPGPrincipale)
+ * - png: Simplified sheet with name + avatar (CharacterSheetPNG)
+ * - pg_master: Simplified sheet with name + avatar (CharacterSheetMaster)
  *
  * @module components/windows/contents/CharacterSheetContent
  * @since 2.0.0
@@ -14,12 +12,14 @@
 
 'use client';
 
-import { useState } from 'react';
 import styles from '@/styles/components/character/CharacterSheetContent.module.scss';
-import { CharacterSheetLeftPanel } from '@/components/character/CharacterSheetLeftPanel';
-import { CharacterSheetRightPanel } from '@/components/character/CharacterSheetRightPanel';
-import { Tabs } from '@/components/character/Tabs';
 import { useCharacterSheetData } from '@/hooks/useCharacterSheetData';
+import { CharacterSheetPGPrincipale, type CharacterSheetTab } from './CharacterSheetPGPrincipale';
+import { CharacterSheetPNG } from './CharacterSheetPNG';
+import { CharacterSheetMaster } from './CharacterSheetMaster';
+
+// Re-export CharacterSheetTab for backward compatibility
+export type { CharacterSheetTab };
 
 /**
  * Character Sheet Content Props
@@ -33,106 +33,18 @@ interface CharacterSheetContentProps {
 }
 
 /**
- * Tab Types
+ * Character Sheet Content Router Component
  *
- * All available tabs in character sheet.
- *
- * @enum {string}
- * @since 2.0.0
- */
-export type CharacterSheetTab =
-  | 'informazioni'
-  | 'background'
-  | 'statistiche'
-  | 'abilita'
-  | 'diario'
-  | 'noteMaster'
-  | 'inventario'
-  | 'corporations'
-  | 'alloggio';
-
-/**
- * Character Sheet Content Component
- *
- * Dual-panel layout with tab state management.
+ * Fetches character data and routes to type-specific sheet component.
  *
  * @component
  * @param {CharacterSheetContentProps} props - Component props
- * @returns {JSX.Element} Character sheet content
+ * @returns {JSX.Element} Type-specific character sheet
  * @since 2.0.0
  */
 export function CharacterSheetContent({ characterId }: CharacterSheetContentProps): JSX.Element {
-  // Tab state management
-  const [activeTab, setActiveTab] = useState<CharacterSheetTab>('informazioni');
-
-  // Phase 3: React Query data fetching with permissions
+  // Fetch character data (includes characterType for routing)
   const { data, isLoading, isError, error, refetch } = useCharacterSheetData(characterId);
-
-  /**
-   * Handle Edit Action (Contextual to Active Tab)
-   *
-   * Each tab has different edit behavior:
-   * - Informazioni: Edit basic data (name, age, occupation)
-   * - Background: Edit background sections
-   * - Statistiche: Edit stats (if in draft)
-   * - Abilità: Edit skill values
-   * - Diario: Edit personality traits
-   * - Note Master: Add new review (game master only)
-   * - Inventario: Add/remove equipment
-   * - Corporations: Manage memberships
-   * - Alloggio: Edit housing details
-   */
-  const handleEdit = () => {
-    switch (activeTab) {
-      case 'informazioni':
-        console.log('[Edit] Informazioni - TODO: Open edit form for basic character data');
-        alert('Edit Informazioni: Implementa form per modificare nome, età, occupazione, descrizione fisica/pubblica');
-        break;
-
-      case 'background':
-        console.log('[Edit] Background - TODO: Open edit form for background sections');
-        alert('Edit Background: Implementa form per modificare background privato, motivazioni, paure, traumi, segreti');
-        break;
-
-      case 'statistiche':
-        console.log('[Edit] Statistiche - TODO: Open stats editor (if DRAFT status)');
-        alert('Edit Statistiche: Implementa editor per statistiche base (Charm, Constitution, etc.)');
-        break;
-
-      case 'abilita':
-        console.log('[Edit] Abilità - TODO: Open skills editor');
-        alert('Edit Abilità: Implementa editor per modificare valori skills (manualPoints, occupationBonus)');
-        break;
-
-      case 'diario':
-        console.log('[Edit] Diario - TODO: Open personality traits editor');
-        alert('Edit Diario: Implementa editor per tratti personalità e note diario');
-        break;
-
-      case 'noteMaster':
-        console.log('[Edit] Note Master - TODO: Add new review entry');
-        alert('Edit Note Master: Implementa form per aggiungere nuova review (solo Game Master)');
-        break;
-
-      case 'inventario':
-        console.log('[Edit] Inventario - TODO: Open equipment manager');
-        alert('Edit Inventario: Implementa manager per aggiungere/rimuovere/modificare equipaggiamento');
-        break;
-
-      case 'corporations':
-        console.log('[Edit] Corporations - TODO: Open memberships manager');
-        alert('Edit Corporations: Implementa manager per gestire appartenenze corporations');
-        break;
-
-      case 'alloggio':
-        console.log('[Edit] Alloggio - TODO: Open housing editor');
-        alert('Edit Alloggio: Implementa editor per dettagli alloggio (ubicazione, affitto, servizi)');
-        break;
-
-      default:
-        console.warn('[Edit] Unknown tab:', activeTab);
-    }
-  };
 
   // Loading state
   if (isLoading) {
@@ -163,7 +75,7 @@ export function CharacterSheetContent({ characterId }: CharacterSheetContentProp
     );
   }
 
-  // Data loaded successfully
+  // No data
   if (!data) {
     return (
       <div className={styles.characterSheetContent}>
@@ -177,28 +89,38 @@ export function CharacterSheetContent({ characterId }: CharacterSheetContentProp
 
   const { character, permissions, visibleSkills, visibleEquipment } = data;
 
-  return (
-    <>
-      <div className={styles.characterSheetContent}>
-        {/* Left Panel - Portrait + Action Buttons */}
-        <CharacterSheetLeftPanel
-          character={character}
-          permissions={permissions}
-        />
-
-        {/* Right Panel - Scrollable Content */}
-        <CharacterSheetRightPanel
+  // Route to appropriate sheet component based on characterType
+  switch (character.characterType) {
+    case 'pg_principale':
+      return (
+        <CharacterSheetPGPrincipale
           character={character}
           permissions={permissions}
           visibleSkills={visibleSkills}
           visibleEquipment={visibleEquipment}
-          activeTab={activeTab}
-          onEdit={handleEdit}
         />
-      </div>
+      );
 
-      {/* Tabs Bar - Vertical Sidebar */}
-      <Tabs activeTab={activeTab} onTabChange={setActiveTab} />
-    </>
-  );
+    case 'png':
+      return <CharacterSheetPNG character={character} />;
+
+    case 'pg_master':
+      return <CharacterSheetMaster character={character} />;
+
+    default:
+      // Fallback to pg_principale for unknown types (backward compatibility)
+      console.warn(
+        '[CharacterSheetContent] Unknown characterType:',
+        character.characterType,
+        '- defaulting to pg_principale'
+      );
+      return (
+        <CharacterSheetPGPrincipale
+          character={character}
+          permissions={permissions}
+          visibleSkills={visibleSkills}
+          visibleEquipment={visibleEquipment}
+        />
+      );
+  }
 }
