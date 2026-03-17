@@ -2,7 +2,6 @@
 
 import { ReactNode } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import styles from '@/styles/components/auth/AuthInitializer.module.scss';
 
 interface AuthInitializerProps {
   children: ReactNode;
