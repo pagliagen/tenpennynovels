@@ -31,7 +31,6 @@ export class SystemConfigController {
 
       const config: SystemConfig = {
         gameSettings: {
-          maxCharactersPerUser: gameConfigs.max_characters_per_user ?? 3,
         },
         economySettings: {
           startingCash: economyConfigs.starting_cash ?? 50,

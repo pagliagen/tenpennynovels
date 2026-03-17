@@ -15,7 +15,7 @@ import { ContextMenu, ContextMenuItem } from '@/components/shared/ContextMenu';
 import { useConfirm } from '@/hooks/useConfirm';
 import { useTableConfig } from '@/hooks/useTableConfig';
 import { useTableFilters } from '@/hooks/useTableFilters';
-import { useUsers, useUpdateUser, useDeleteUser, useBanUser, useUnbanUser, useBulkActivateUsers, useBulkDeactivateUsers } from '@/hooks/api/useUsers';
+import { useUsers, useUpdateUser, useDeleteUser, useBanUser, useUnbanUser, useBulkActivateUsers, useBulkDeactivateUsers, useAssignPNG, useAssignMaster } from '@/hooks/api/useUsers';
 import { useNotificationStore } from '@/store/notificationStore';
 import { useURLFilter } from '@/hooks/useURLFilter';
 import { encodeFilter, clearFilterHash } from '@/lib/utils/urlFilters';
@@ -31,7 +31,7 @@ export default function UserList() {
     sortOrder: 'desc'
   });
   const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
-  const [activeSidePanel, setActiveSidePanel] = useState<'edit' | 'view' | null>(null);
+  const [activeSidePanel, setActiveSidePanel] = useState<'edit' | 'view' | 'assign-png' | 'assign-master' | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   // Hooks
@@ -56,6 +56,8 @@ export default function UserList() {
   const bulkDeactivate = useBulkDeactivateUsers();
   const { confirm, ConfirmDialogComponent } = useConfirm();
   const addNotification = useNotificationStore(state => state.addNotification);
+  const assignPNG = useAssignPNG();
+  const assignMaster = useAssignMaster();
 
   // Prepare visible columns for ConfigurableDataTable
   const visibleColumns = useMemo(() => {
@@ -70,6 +72,7 @@ export default function UserList() {
    */
   const getMenuItems = (user: User): ContextMenuItem[] => {
     const characterCount = user.characters?.length || 0;
+    const hasMaster = user.characters?.some((c: any) => c.characterType === 'pg_master');
 
     return [
       {
@@ -87,6 +90,20 @@ export default function UserList() {
           router.push(`/characters/character-list#filter=${filter}`);
         },
         disabled: characterCount === 0,
+        dividerAfter: true
+      },
+      {
+        key: 'assign-png',
+        label: 'Assegna PNG',
+        icon: '👤',
+        onClick: () => handleAction('assign-png', user)
+      },
+      {
+        key: 'assign-master',
+        label: 'Assegna Master',
+        icon: '👑',
+        onClick: () => handleAction('assign-master', user),
+        disabled: hasMaster,
         dividerAfter: true
       },
       {
@@ -108,6 +125,16 @@ export default function UserList() {
         case 'edit':
           setCurrentUser(user);
           setActiveSidePanel('edit');
+          break;
+
+        case 'assign-png':
+          setCurrentUser(user);
+          setActiveSidePanel('assign-png');
+          break;
+
+        case 'assign-master':
+          setCurrentUser(user);
+          setActiveSidePanel('assign-master');
           break;
 
         case 'delete': {
@@ -363,6 +390,122 @@ export default function UserList() {
               'accountStatus.isEmailVerified': currentUser.accountStatus.isEmailVerified
             }}
             onAction={handleSidePanelAction}
+            onClose={() => {
+              setActiveSidePanel(null);
+              setCurrentUser(null);
+            }}
+          />
+        )}
+
+        {activeSidePanel === 'assign-png' && currentUser && (
+          <SidePanel
+            isOpen={true}
+            config={{
+              title: `Assegna PNG a ${currentUser.username}`,
+              width: 'medium',
+              fields: [
+                { key: 'name', label: 'Nome', type: 'text', required: true, disabled: false },
+                { key: 'surname', label: 'Cognome', type: 'text', required: false, disabled: false },
+                { key: 'avatar', label: 'Avatar URL (opzionale)', type: 'text', required: false, disabled: false, placeholder: 'https://...', helpText: 'Inserisci URL oppure carica immagine dopo la creazione' },
+                { key: 'description', label: 'Descrizione', type: 'textarea', required: false, disabled: false }
+              ],
+              actions: [
+                { key: 'submit', label: 'Crea PNG', type: 'primary', loading: assignPNG.isPending },
+                { key: 'cancel', label: 'Annulla', type: 'secondary', loading: false }
+              ]
+            }}
+            data={{
+              name: '',
+              surname: '',
+              avatar: '',
+              description: ''
+            }}
+            onAction={async (action, formData) => {
+              if (action === 'submit') {
+                if (!currentUser?._id) {
+                  addNotification({
+                    type: 'error',
+                    message: 'Errore: utente non selezionato correttamente'
+                  });
+                  return;
+                }
+
+                try {
+                  await assignPNG.mutateAsync({
+                    userId: currentUser._id,
+                    data: formData
+                  });
+                  addNotification({ type: 'success', message: 'PNG assegnato con successo' });
+                  setActiveSidePanel(null);
+                  setCurrentUser(null);
+                } catch (error) {
+                  addNotification({
+                    type: 'error',
+                    message: error instanceof Error ? error.message : 'Errore nell\'assegnazione PNG'
+                  });
+                }
+              } else if (action === 'cancel') {
+                setActiveSidePanel(null);
+                setCurrentUser(null);
+              }
+            }}
+            onClose={() => {
+              setActiveSidePanel(null);
+              setCurrentUser(null);
+            }}
+          />
+        )}
+
+        {activeSidePanel === 'assign-master' && currentUser && (
+          <SidePanel
+            isOpen={true}
+            config={{
+              title: `Assegna Master a ${currentUser.username}`,
+              width: 'medium',
+              fields: [
+                { key: 'name', label: 'Nome', type: 'text', required: true, disabled: false },
+                { key: 'surname', label: 'Cognome', type: 'text', required: false, disabled: false },
+                { key: 'avatar', label: 'Avatar URL (opzionale)', type: 'text', required: false, disabled: false, placeholder: 'https://...', helpText: 'Inserisci URL oppure carica immagine dopo la creazione' }
+              ],
+              actions: [
+                { key: 'submit', label: 'Crea Master', type: 'primary', loading: assignMaster.isPending },
+                { key: 'cancel', label: 'Annulla', type: 'secondary', loading: false }
+              ]
+            }}
+            data={{
+              name: '',
+              surname: '',
+              avatar: ''
+            }}
+            onAction={async (action, formData) => {
+              if (action === 'submit') {
+                if (!currentUser?._id) {
+                  addNotification({
+                    type: 'error',
+                    message: 'Errore: utente non selezionato correttamente'
+                  });
+                  return;
+                }
+
+                try {
+                  await assignMaster.mutateAsync({
+                    userId: currentUser._id,
+                    data: formData
+                  });
+                  addNotification({ type: 'success', message: 'Master assegnato con successo' });
+                  setActiveSidePanel(null);
+                  setCurrentUser(null);
+                } catch (error) {
+                  addNotification({
+                    type: 'error',
+                    message: error instanceof Error ? error.message : 'Errore nell\'assegnazione Master'
+                  });
+                }
+              } else if (action === 'cancel') {
+                setActiveSidePanel(null);
+                setCurrentUser(null);
+              }
+            }}
             onClose={() => {
               setActiveSidePanel(null);
               setCurrentUser(null);

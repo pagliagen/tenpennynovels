@@ -22,6 +22,7 @@ import Head from 'next/head';
 import { GameLayout } from '@/components/layout/GameLayout';
 import { usePresence } from '@/hooks/usePresence';
 import { useGameStateStore } from '@/store/gameStateStore';
+import { useWindowManagerStore } from '@/store/windowManagerStore';
 // @ts-ignore - Used as type in PresenceGroupProps below
 import { type GlobalPresence } from '@/store/presenceStore';
 import styles from '@/styles/pages/presenti-online.module.scss';
@@ -197,6 +198,8 @@ interface PresenceGroupProps {
 }
 
 function PresenceGroup({ title, players, highlight = false }: PresenceGroupProps): JSX.Element {
+  const { openWindow } = useWindowManagerStore();
+
   return (
     <section className={styles.presenceGroup} aria-label={title}>
       <h2 className={styles.groupHeader}>{title}</h2>
@@ -215,8 +218,11 @@ function PresenceGroup({ title, players, highlight = false }: PresenceGroupProps
                 presence.characterSurname ? ' ' + presence.characterSurname : ''
               }, in ${presence.locationName}. Clicca per profilo`}
               onClick={() => {
-                // TODO: Navigate to character profile
-                console.log('Navigate to character:', presence.characterId);
+                openWindow('characterSheet', {
+                  characterId: presence.characterId,
+                  characterName: presence.characterName,
+                  avatar: presence.avatar || undefined,
+                });
               }}
             >
               {/* Avatar */}

@@ -318,7 +318,6 @@ export interface SystemConfig {
 }
 
 export interface GameSettings {
-  maxCharactersPerUser: number;
 }
 
 export interface EconomySettings {

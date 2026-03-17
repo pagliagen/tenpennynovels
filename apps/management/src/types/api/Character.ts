@@ -17,6 +17,12 @@ export interface Character {
   name: string;
   surname: string;
   fullName: string;
+  characterType: 'pg_principale' | 'pg_master' | 'png';
+  referentCharacterId?: string;
+  referent?: {
+    _id: string;
+    name: string;
+  };
   age: number;
   gender: 'male' | 'female' | 'other';
   status: 'pending' | 'approved' | 'rejected' | 'active' | 'inactive';
@@ -71,6 +77,8 @@ export interface Character {
     actionsPerformed: number;
     eventsParticipated: number;
   };
+  avatar?: string; // URL to character avatar image
+
   metadata: {
     createdAt: string;
     updatedAt: string;
@@ -120,6 +128,7 @@ export interface CharacterListParams {
   status?: 'pending' | 'approved' | 'rejected' | 'active' | 'inactive';
   userId?: string;
   socialClass?: number;
+  characterType?: 'pg_principale' | 'pg_master' | 'png';
 }
 
 export interface CharacterListResponse {
@@ -139,6 +148,7 @@ export interface UpdateCharacterData {
   surname?: string;
   age?: number;
   gender?: 'male' | 'female' | 'other';
+  avatar?: string;
   status?: 'pending' | 'approved' | 'rejected' | 'active' | 'inactive';
   biography?: {
     appearance?: string;

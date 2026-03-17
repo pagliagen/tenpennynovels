@@ -17,15 +17,6 @@ router.post('/characters/check-name',
   CharacterController.checkNameAvailability
 );
 
-router.post('/characters/create',
-  AuthMiddleware.requireUserAuth,
-  requireGamePermission('game:character:create'),
-  CharacterValidationMiddleware.validateCharacterCreation,
-  CharacterValidationMiddleware.validateVictorianContent,
-  CharacterValidationMiddleware.validateNewBackgroundFormat,
-  CharacterController.createCharacter
-);
-
 router.get('/characters/my',
   AuthMiddleware.requireUserAuth,
   requireGamePermission('game:character:list:own'),

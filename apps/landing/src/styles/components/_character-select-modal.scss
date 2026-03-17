@@ -1,0 +1,193 @@
+/**
+ * Character Select Modal Styles
+ *
+ * Compact modal for character selection after login.
+ */
+
+.character-select-modal {
+  // Overlay
+  &__overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(4px);
+    z-index: 9998;
+  }
+
+  // Modal container
+  &__container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #1a1a1a;
+    border: 2px solid rgba(255, 149, 0, 0.3);
+    border-radius: 8px;
+    padding: 1.5rem;
+    max-width: 550px;
+    width: 90%;
+    max-height: 80vh;
+    overflow: auto;
+    z-index: 9999;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  }
+
+  // Title
+  &__title {
+    margin: 0 0 0.5rem 0;
+    color: #ffa748;
+    text-align: center;
+    font-size: 1.5rem;
+  }
+
+  // Subtitle (username welcome)
+  &__subtitle {
+    font-size: 0.85rem;
+    opacity: 0.7;
+    margin-bottom: 1rem;
+    text-align: center;
+    color: rgba(255, 149, 0, 0.8);
+  }
+
+  // Section title
+  &__section-title {
+    margin-bottom: 0.75rem;
+    color: #ffa748;
+    font-size: 1rem;
+  }
+
+  // Characters list
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  // Character card
+  &__character {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    padding: 0.75rem;
+  }
+
+  // Character avatar
+  &__avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 4px;
+    border: 2px solid rgba(255, 149, 0, 0.3);
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+
+  // Character info container
+  &__info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  // Character name row (name + badge)
+  &__name-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.25rem;
+  }
+
+  // Character name
+  &__name {
+    margin: 0;
+    color: #ffa748;
+    font-size: 1rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  // Character status text
+  &__status {
+    margin: 0;
+    font-size: 0.8rem;
+
+    &--draft {
+      color: #fbbf24;
+    }
+
+    &--pending {
+      color: #3b82f6;
+    }
+
+    &--approved {
+      color: #10b981;
+    }
+
+    &--rejected {
+      color: #6b7280;
+    }
+  }
+
+  // Character type badge
+  &__badge {
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: white;
+    font-weight: bold;
+
+    &--master {
+      background-color: #8b5cf6;
+    }
+
+    &--png {
+      background-color: #6b7280;
+    }
+  }
+
+  // Action area (button or unavailable text)
+  &__action {
+    flex-shrink: 0;
+  }
+
+  // Select button
+  &__select-button {
+    min-width: 90px;
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+  }
+
+  // Unavailable text
+  &__unavailable {
+    font-size: 0.75rem;
+    opacity: 0.5;
+    font-style: italic;
+  }
+
+  // No characters message
+  &__empty {
+    text-align: center;
+    margin: 2rem 0;
+
+    p {
+      margin-bottom: 1rem;
+      opacity: 0.8;
+    }
+  }
+
+  // Actions (logout button)
+  &__actions {
+    margin-top: 1rem;
+  }
+
+  // Logout button
+  &__logout-button {
+    font-size: 0.85rem;
+    color: rgba(255, 149, 0, 0.8);
+    border: 1px solid rgba(255, 149, 0, 0.3);
+    width: 100%;
+    padding: 0.5rem;
+  }
+}

@@ -31,6 +31,38 @@
   }
 }
 
+.tabs {
+  display: flex;
+  gap: $spacing-sm;
+  padding: 0 $spacing-lg;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.tab {
+  padding: $spacing-md $spacing-lg;
+  background-color: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: $color-text-secondary;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all $transition-fast;
+  position: relative;
+  bottom: -2px;
+
+  &:hover {
+    color: $color-primary;
+    background-color: rgba($color-primary, 0.05);
+  }
+
+  &.active {
+    color: $color-primary;
+    border-bottom-color: $color-primary;
+    font-weight: 600;
+  }
+}
+
 .filterBadge {
   display: flex;
   align-items: center;

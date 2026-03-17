@@ -70,6 +70,23 @@ export async function deleteCharacter(id: string): Promise<void> {
 }
 
 /**
+ * Change PNG referent character
+ */
+export async function changeReferent(characterId: string, newReferentId: string): Promise<Character> {
+  const response = await withRetry(() =>
+    apiClient.patch<ApiResponse<Character>>(`/admin/characters/${characterId}/change-referent`, {
+      newReferentId
+    })
+  );
+
+  if (!response.data.result || !response.data.data) {
+    throw new Error(response.data.error || 'Errore nel cambio referente');
+  }
+
+  return response.data.data;
+}
+
+/**
  * Approva character
  */
 export async function approveCharacter(id: string, data?: ApproveCharacterData): Promise<Character> {

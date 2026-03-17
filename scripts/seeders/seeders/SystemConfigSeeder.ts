@@ -29,16 +29,17 @@ interface ConfigRecord {
 
 const ALL_CONFIGS: ConfigRecord[] = [
   // ── character_creation ──────────────────────────────────────────
-  {
-    configKey: 'max_characters_per_user',
-    configSection: 'character_creation',
-    configType: 'number',
-    value: 3,
-    defaultValue: 3,
-    description: 'Numero massimo di personaggi per utente',
-    isActive: true,
-    metadata: { version: 1 },
-  },
+  // Removed - max_characters_per_user no longer used (multi-character system redesigned)
+  // {
+  //   configKey: 'max_characters_per_user',
+  //   configSection: 'character_creation',
+  //   configType: 'number',
+  //   value: 3,
+  //   defaultValue: 3,
+  //   description: 'Numero massimo di personaggi per utente',
+  //   isActive: true,
+  //   metadata: { version: 1 },
+  // },
 
   // Stats Section (9 records)
   {

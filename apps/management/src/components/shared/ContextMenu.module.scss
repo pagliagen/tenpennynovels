@@ -57,6 +57,15 @@
   &.left {
     left: 0;
   }
+
+  // Portal variant (rendered outside table via React Portal)
+  &.portal {
+    position: fixed; // Overridden by inline style but kept for clarity
+    top: auto; // Reset
+    left: auto; // Reset
+    right: auto; // Reset
+    margin-top: 0;
+  }
 }
 
 // Menu Item

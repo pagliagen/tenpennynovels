@@ -16,6 +16,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import classNames from 'classnames';
 import styles from './ContextMenu.module.scss';
 
@@ -84,7 +85,50 @@ export function ContextMenu({
   ariaLabel = 'Open menu'
 }: ContextMenuProps): JSX.Element {
   const [isOpen, setIsOpen] = useState(false);
+  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   const menuRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  /**
+   * Calculate menu position when opened
+   */
+  useEffect(() => {
+    if (!isOpen || !triggerRef.current) return;
+
+    const updatePosition = () => {
+      if (!triggerRef.current) return;
+
+      const rect = triggerRef.current.getBoundingClientRect();
+      const menuWidth = 200; // Approximate menu width
+
+      let left = rect.left;
+      if (position === 'left') {
+        left = rect.right - menuWidth;
+      }
+
+      // Adjust if menu would overflow viewport
+      if (left + menuWidth > window.innerWidth) {
+        left = window.innerWidth - menuWidth - 10;
+      }
+      if (left < 10) {
+        left = 10;
+      }
+
+      setMenuPosition({
+        top: rect.bottom + 4,
+        left
+      });
+    };
+
+    updatePosition();
+    window.addEventListener('scroll', updatePosition, true);
+    window.addEventListener('resize', updatePosition);
+
+    return () => {
+      window.removeEventListener('scroll', updatePosition, true);
+      window.removeEventListener('resize', updatePosition);
+    };
+  }, [isOpen, position]);
 
   /**
    * Close menu on click outside
@@ -93,7 +137,8 @@ export function ContextMenu({
     if (!isOpen) return;
 
     const handleClickOutside = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node) &&
+          triggerRef.current && !triggerRef.current.contains(e.target as Node)) {
         setIsOpen(false);
       }
     };
@@ -119,26 +164,36 @@ export function ContextMenu({
   }, [isOpen]);
 
   return (
-    <div className={classNames(styles.contextMenu, className)} ref={menuRef}>
-      {/* Trigger Button */}
-      <button
-        className={styles.trigger}
-        onClick={(e) => {
-          e.stopPropagation();
-          setIsOpen(!isOpen);
-        }}
-        aria-label={ariaLabel}
-        aria-haspopup="menu"
-        aria-expanded={isOpen}
-        type="button"
-      >
-        {triggerIcon}
-      </button>
+    <>
+      <div className={classNames(styles.contextMenu, className)}>
+        {/* Trigger Button */}
+        <button
+          ref={triggerRef}
+          className={styles.trigger}
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsOpen(!isOpen);
+          }}
+          aria-label={ariaLabel}
+          aria-haspopup="menu"
+          aria-expanded={isOpen}
+          type="button"
+        >
+          {triggerIcon}
+        </button>
+      </div>
 
-      {/* Dropdown Menu */}
-      {isOpen && (
+      {/* Dropdown Menu - Rendered via Portal */}
+      {isOpen && createPortal(
         <div
-          className={classNames(styles.menu, styles[position])}
+          ref={menuRef}
+          className={classNames(styles.menu, styles.portal)}
+          style={{
+            position: 'fixed',
+            top: `${menuPosition.top}px`,
+            left: `${menuPosition.left}px`,
+            zIndex: 9999
+          }}
           role="menu"
         >
           {items.map((item, index) => (
@@ -170,8 +225,9 @@ export function ContextMenu({
               )}
             </React.Fragment>
           ))}
-        </div>
+        </div>,
+        document.body
       )}
-    </div>
+    </>
   );
 }

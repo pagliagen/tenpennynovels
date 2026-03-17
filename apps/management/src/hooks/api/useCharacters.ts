@@ -175,6 +175,51 @@ export function useDeleteCharacter() {
 }
 
 /**
+ * Hook per cambiare referente PNG con optimistic updates
+ */
+export function useChangeReferent() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ characterId, newReferentId }: { characterId: string; newReferentId: string }) =>
+      characterAPI.changeReferent(characterId, newReferentId),
+
+    onMutate: async ({ characterId, newReferentId }) => {
+      await queryClient.cancelQueries({ queryKey: characterKeys.lists() });
+      await queryClient.cancelQueries({ queryKey: characterKeys.detail(characterId) });
+
+      const previousLists = queryClient.getQueriesData({ queryKey: characterKeys.lists() });
+      const previousDetail = queryClient.getQueryData(characterKeys.detail(characterId));
+
+      // Optimistic update - referentCharacterId only (userId will be refetched)
+      updateCharacterInCache(queryClient, characterId, (char) => ({
+        ...char,
+        referentCharacterId: newReferentId
+      }));
+
+      return { previousLists, previousDetail };
+    },
+
+    onError: (error, variables, context) => {
+      if (context?.previousLists) {
+        context.previousLists.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
+      if (context?.previousDetail) {
+        queryClient.setQueryData(characterKeys.detail(variables.characterId), context.previousDetail);
+      }
+    },
+
+    onSettled: (data, error, variables) => {
+      // MUST refetch because userId changes too
+      queryClient.invalidateQueries({ queryKey: characterKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: characterKeys.detail(variables.characterId) });
+    }
+  });
+}
+
+/**
  * Hook per approvare character con optimistic updates
  */
 export function useApproveCharacter() {

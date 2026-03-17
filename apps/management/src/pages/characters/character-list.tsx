@@ -11,6 +11,7 @@ import { useRouter } from 'next/router';
 import { ManagementLayout } from '@/components/layout/ManagementLayout';
 import { ConfigurableDataTable, FilterState } from '@/components/shared/ConfigurableDataTable';
 import { SidePanel } from '@/components/shared/SidePanel';
+import { ImageUploader } from '@/components/shared/ImageUploader';
 import { GenerateImageButton } from '@/components/shared/GenerateImageButton';
 import { useConfirm } from '@/hooks/useConfirm';
 import { useTableConfig } from '@/hooks/useTableConfig';
@@ -32,21 +33,43 @@ import { FormField } from '@/components/shared/FormField';
 import type { Character, CharacterListParams } from '@/types/api/Character';
 import styles from '@/styles/pages/CharacterList.module.scss';
 
-function CharacterEditContent({ character, onAvatarGenerated }: { character: Character; onAvatarGenerated: () => void }) {
+function CharacterEditContent({
+  character,
+  avatar,
+  onAvatarChange,
+  onAvatarGenerated
+}: {
+  character: Character;
+  avatar: string;
+  onAvatarChange: (url: string) => void;
+  onAvatarGenerated: () => void;
+}) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       <FormField label="Nome" name="name" value={character.name} disabled type="text" />
       <FormField label="Cognome" name="surname" value={character.surname || ''} disabled type="text" />
       <FormField label="Età" name="age" value={character.age} disabled type="number" />
+
       <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '16px' }}>
-        <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 500, color: 'rgba(255,255,255,0.7)' }}>
-          Avatar AI
-        </label>
+        <h3 style={{ marginBottom: '12px', fontSize: '14px', fontWeight: 600, color: 'rgba(255,255,255,0.9)' }}>
+          Avatar
+        </h3>
+
+        <ImageUploader
+          value={avatar}
+          onChange={onAvatarChange}
+          entityType="characters"
+          entityId={character._id}
+        />
+
         <GenerateImageButton
           entityType="character"
           entityId={character._id}
           entityName={`${character.name} ${character.surname || ''}`.trim()}
-          onSuccess={onAvatarGenerated}
+          onSuccess={(url) => {
+            onAvatarChange(url);
+            onAvatarGenerated();
+          }}
         />
       </div>
     </div>
@@ -55,6 +78,7 @@ function CharacterEditContent({ character, onAvatarGenerated }: { character: Cha
 
 export default function CharacterList() {
   // State
+  const [activeTab, setActiveTab] = useState<'all' | 'pg_principale' | 'png' | 'pg_master'>('all');
   const { filters, params, setParams, handleFilterChange } = useTableFilters<CharacterListParams>({
     page: 1,
     pageSize: 25,
@@ -68,6 +92,7 @@ export default function CharacterList() {
   const [rejectReason, setRejectReason] = useState<string>('');
   const [bulkRejectCharacters, setBulkRejectCharacters] = useState<Character[]>([]);
   const [bulkRejectReason, setBulkRejectReason] = useState<string>('');
+  const [editFormData, setEditFormData] = useState({ avatar: '' });
 
   // Hooks
   const router = useRouter();
@@ -93,6 +118,13 @@ export default function CharacterList() {
   const { confirm, ConfirmDialogComponent } = useConfirm();
   const addNotification = useNotificationStore(state => state.addNotification);
 
+  // Filter characters by active tab
+  const filteredData = useMemo(() => {
+    if (!data?.list) return [];
+    if (activeTab === 'all') return data.list;
+    return data.list.filter(char => char.characterType === activeTab);
+  }, [data?.list, activeTab]);
+
   // Prepare visible columns for ConfigurableDataTable
   const visibleColumns = useMemo(() => {
     if (!tableConfig.config) return [];
@@ -100,6 +132,13 @@ export default function CharacterList() {
       col => tableConfig.columnVisibility[col.key] !== false
     );
   }, [tableConfig.config, tableConfig.columnVisibility]);
+
+  // Initialize form data when character is selected for editing
+  useEffect(() => {
+    if (activeSidePanel === 'edit' && currentCharacter) {
+      setEditFormData({ avatar: currentCharacter.avatar || '' });
+    }
+  }, [activeSidePanel, currentCharacter]);
 
   /**
    * Handler azioni row
@@ -170,7 +209,7 @@ export default function CharacterList() {
       try {
         await updateCharacter.mutateAsync({
           id: currentCharacter._id,
-          data: formData
+          data: { ...formData, avatar: editFormData.avatar }
         });
 
         addNotification({ type: 'success', message: 'Personaggio aggiornato con successo' });
@@ -374,8 +413,36 @@ export default function CharacterList() {
       <div className={styles.characterList}>
         <header className={styles.header}>
           <h1>Gestione Personaggi</h1>
-          <p>Totale: {data?.pagination.totalItems ?? 0} personaggi</p>
+          <p>Totale: {filteredData.length} personaggi{activeTab !== 'all' ? ` (${activeTab})` : ''}</p>
         </header>
+
+        {/* Character Type Tabs */}
+        <div className={styles.tabs}>
+          <button
+            className={`${styles.tab} ${activeTab === 'all' ? styles.active : ''}`}
+            onClick={() => setActiveTab('all')}
+          >
+            Tutti
+          </button>
+          <button
+            className={`${styles.tab} ${activeTab === 'pg_principale' ? styles.active : ''}`}
+            onClick={() => setActiveTab('pg_principale')}
+          >
+            PG Principale
+          </button>
+          <button
+            className={`${styles.tab} ${activeTab === 'png' ? styles.active : ''}`}
+            onClick={() => setActiveTab('png')}
+          >
+            PNG
+          </button>
+          <button
+            className={`${styles.tab} ${activeTab === 'pg_master' ? styles.active : ''}`}
+            onClick={() => setActiveTab('pg_master')}
+          >
+            Master
+          </button>
+        </div>
 
         {/* Filter Badge */}
         {urlFilter?.userId && (
@@ -398,7 +465,7 @@ export default function CharacterList() {
 
         <ConfigurableDataTable<Character>
           tableName="character-list"
-          data={data?.list ?? []}
+          data={filteredData}
           loading={isLoading || tableConfig.loading}
           onAction={handleAction}
           pagination={{
@@ -445,6 +512,8 @@ export default function CharacterList() {
             customContent={
               <CharacterEditContent
                 character={currentCharacter}
+                avatar={editFormData.avatar}
+                onAvatarChange={(url) => setEditFormData(prev => ({ ...prev, avatar: url }))}
                 onAvatarGenerated={() => addNotification({ type: 'success', message: 'Avatar generato con successo!' })}
               />
             }

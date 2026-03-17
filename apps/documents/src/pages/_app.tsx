@@ -10,6 +10,7 @@
 
 import type { AppProps } from 'next/app';
 import dynamic from 'next/dynamic';
+import Head from 'next/head';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/lib/api/queryClient';
 
@@ -27,6 +28,9 @@ import '@/styles/globals.scss';
 export default function App({ Component, pageProps }: AppProps) {
   return (
     <QueryClientProvider client={queryClient}>
+      <Head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+      </Head>
       <AuthInitializer>
         <DocumentsLayout>
           <Component {...pageProps} />

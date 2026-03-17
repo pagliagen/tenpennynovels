@@ -66,7 +66,7 @@ export class AuthService {
    *
    * if (result.result && result.data) {
    *   console.log('Logged in as:', result.data.username);
-   *   router.push('/character-select');
+   *   // Character select modal will show automatically if needed
    * } else {
    *   console.error('Login failed:', result.error);
    * }

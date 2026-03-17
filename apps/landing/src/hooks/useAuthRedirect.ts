@@ -2,13 +2,12 @@
  * Authentication Redirect Hook
  *
  * Checks if user is authenticated and redirects to login if not.
- * Used for protected pages: character-creation, character-select.
+ * Used for protected pages that require authentication.
  *
- * **Eliminates**: 20-30 lines of auth check logic per protected page × 2 pages = 40-60 lines saved.
+ * **Eliminates**: 20-30 lines of auth check logic per protected page.
  *
  * **Use Cases**:
- * - Character creation page (requires auth)
- * - Character selection page (requires auth)
+ * - Protected pages that require authentication
  * - Any page that requires logged-in user
  *
  * **How it works**:

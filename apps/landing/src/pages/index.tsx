@@ -8,7 +8,7 @@
  * - Remember me checkbox
  * - Recoverable error handling (resend verification, forgot password)
  * - SEO-optimized welcome section with keywords
- * - Redirect to character-select or game based on user settings
+ * - Character select modal popup for users with multiple characters
  *
  * **Validation**: Uses LoginSchema from validation layer
  * **Authentication**: Uses authService singleton
@@ -27,12 +27,14 @@ import { FormPageLayout } from '@/components/layouts/FormPageLayout';
 import { MaskedInput } from '@/components/forms/MaskedInput';
 import { FormActions } from '@/components/forms/FormActions';
 import { Button } from '@/components/Button';
+import { CharacterSelectModal } from '@/components/modals/CharacterSelectModal';
 import { useFormState } from '@/hooks/useFormState';
 import { authService } from '@/services/AuthService';
 import { LoginSchema } from '@/lib/validation/schemas';
 import { handleApiFormErrors } from '@/utils/formErrorHandler';
 import { homeSchema } from '@/utils/schemas';
 import { ApiError } from '@/lib/api/errors';
+import type { Character } from '@/types';
 
 /**
  * Login form data type (inferred from Zod schema)
@@ -52,6 +54,11 @@ export default function LoginPage() {
   const [errorCode, setErrorCode] = useState<string>('');
   const [isResendingVerification, setIsResendingVerification] = useState<boolean>(false);
   const hasHandledVerificationRef = useRef(false);
+
+  // Character select modal state
+  const [showCharacterModal, setShowCharacterModal] = useState<boolean>(false);
+  const [userCharacters, setUserCharacters] = useState<Character[]>([]);
+  const [loggedInUsername, setLoggedInUsername] = useState<string>('');
 
   const {
     register,
@@ -155,12 +162,16 @@ export default function LoginPage() {
       const result = await authService.login(data);
 
       if (result.result && result.data) {
-        // Redirect based on user configuration
-        // Backend returns { data: { user: { multipleCharactersAllowed }, session: {...} } }
+        // Show character select modal or redirect based on number of characters
+        // Backend returns { data: { user: { characters, username }, session: {...} } }
         const userData = result.data as any;
-        if (userData.user?.multipleCharactersAllowed) {
-          router.push('/character-select');
+        if (userData.user?.characters?.length > 1) {
+          // Multiple characters (PG principale + PNG/Master assigned by staff) - show selection modal
+          setUserCharacters(userData.user.characters);
+          setLoggedInUsername(userData.user.username || userData.user.displayName || 'Utente');
+          setShowCharacterModal(true);
         } else {
+          // Single character or no characters - redirect to game
           window.location.href = process.env.NEXT_PUBLIC_GAME_URL || 'http://localhost:3010';
         }
       } else {
@@ -256,6 +267,14 @@ export default function LoginPage() {
           />
         </div>
       </form>
+
+      {/* Character Select Modal */}
+      <CharacterSelectModal
+        isOpen={showCharacterModal}
+        characters={userCharacters}
+        username={loggedInUsername}
+        onClose={() => setShowCharacterModal(false)}
+      />
     </FormPageLayout>
   );
 }

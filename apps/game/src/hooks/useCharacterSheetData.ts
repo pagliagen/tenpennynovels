@@ -44,6 +44,7 @@ export interface CharacterSheetData {
   character: {
     _id: string;
     name: string;
+    characterType: 'pg_principale' | 'pg_master' | 'png';
     avatar?: string;
     profileImage?: string;
     age?: number;
