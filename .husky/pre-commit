@@ -1,0 +1,14 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "🔍 Running TypeScript type check on backend services..."
+npm run typecheck:backends
+
+if [ $? -ne 0 ]; then
+  echo ""
+  echo "❌ TypeScript errors detected. Fix them before committing."
+  echo "💡 Tip: Run 'npm run typecheck:backends' to see all errors"
+  exit 1
+fi
+
+echo "✅ TypeScript type check passed"
