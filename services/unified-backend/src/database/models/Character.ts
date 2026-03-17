@@ -780,6 +780,11 @@ CharacterSchema.pre('save', async function(this: ICharacter) {
     }
   }
 
+  // Validation 2b: PG principale should NOT have referentCharacterId
+  if (this.characterType === 'pg_principale' && this.referentCharacterId) {
+    throw new Error('PG principale cannot have referentCharacterId (only PNG/Master can reference a player character)');
+  }
+
   // Validation 3: Simplified schema for PNG and PG Master - skip full validation
   if (this.characterType === 'png' || this.characterType === 'pg_master') {
     // PNG/Master require only: name

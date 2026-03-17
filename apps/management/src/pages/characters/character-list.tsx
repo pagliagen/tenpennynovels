@@ -78,6 +78,7 @@ function CharacterEditContent({
 
 export default function CharacterList() {
   // State
+  const [activeTab, setActiveTab] = useState<'all' | 'pg_principale' | 'png' | 'pg_master'>('all');
   const { filters, params, setParams, handleFilterChange } = useTableFilters<CharacterListParams>({
     page: 1,
     pageSize: 25,
@@ -116,6 +117,13 @@ export default function CharacterList() {
   const bulkDelete = useBulkDeleteCharacters();
   const { confirm, ConfirmDialogComponent } = useConfirm();
   const addNotification = useNotificationStore(state => state.addNotification);
+
+  // Filter characters by active tab
+  const filteredData = useMemo(() => {
+    if (!data?.list) return [];
+    if (activeTab === 'all') return data.list;
+    return data.list.filter(char => char.characterType === activeTab);
+  }, [data?.list, activeTab]);
 
   // Prepare visible columns for ConfigurableDataTable
   const visibleColumns = useMemo(() => {
@@ -405,8 +413,36 @@ export default function CharacterList() {
       <div className={styles.characterList}>
         <header className={styles.header}>
           <h1>Gestione Personaggi</h1>
-          <p>Totale: {data?.pagination.totalItems ?? 0} personaggi</p>
+          <p>Totale: {filteredData.length} personaggi{activeTab !== 'all' ? ` (${activeTab})` : ''}</p>
         </header>
+
+        {/* Character Type Tabs */}
+        <div className={styles.tabs}>
+          <button
+            className={`${styles.tab} ${activeTab === 'all' ? styles.active : ''}`}
+            onClick={() => setActiveTab('all')}
+          >
+            Tutti
+          </button>
+          <button
+            className={`${styles.tab} ${activeTab === 'pg_principale' ? styles.active : ''}`}
+            onClick={() => setActiveTab('pg_principale')}
+          >
+            PG Principale
+          </button>
+          <button
+            className={`${styles.tab} ${activeTab === 'png' ? styles.active : ''}`}
+            onClick={() => setActiveTab('png')}
+          >
+            PNG
+          </button>
+          <button
+            className={`${styles.tab} ${activeTab === 'pg_master' ? styles.active : ''}`}
+            onClick={() => setActiveTab('pg_master')}
+          >
+            Master
+          </button>
+        </div>
 
         {/* Filter Badge */}
         {urlFilter?.userId && (
@@ -429,7 +465,7 @@ export default function CharacterList() {
 
         <ConfigurableDataTable<Character>
           tableName="character-list"
-          data={data?.list ?? []}
+          data={filteredData}
           loading={isLoading || tableConfig.loading}
           onAction={handleAction}
           pagination={{

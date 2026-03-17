@@ -77,67 +77,20 @@ export function CharacterSheetPGPrincipale({
   /**
    * Handle Edit Action (Contextual to Active Tab)
    *
-   * Each tab has different edit behavior:
-   * - Informazioni: Edit basic data (name, age, occupation)
-   * - Background: Edit background sections
-   * - Statistiche: Edit stats (if in draft)
-   * - Abilità: Edit skill values
-   * - Diario: Edit personality traits
-   * - Note Master: Add new review (game master only)
-   * - Inventario: Add/remove equipment
-   * - Corporations: Manage memberships
-   * - Alloggio: Edit housing details
+   * TODO: Implement edit modals for each tab type
+   * Different tabs will have different edit behaviors:
+   * - informazioni: basic data (name, age, occupation, physical description)
+   * - background: private fields (motivations, fears, traumas, secrets)
+   * - statistiche: stats editor (charm, constitution, dexterity, etc.)
+   * - abilita: skills editor (manual points, occupation/interest bonuses)
+   * - diario: personality traits editor
+   * - noteMaster: review history (game master only)
+   * - inventario: equipment manager (add/remove/modify items)
+   * - corporations: memberships manager
+   * - alloggio: housing details editor
    */
   const handleEdit = () => {
-    switch (activeTab) {
-      case 'informazioni':
-        console.log('[Edit] Informazioni - TODO: Open edit form for basic character data');
-        alert('Edit Informazioni: Implementa form per modificare nome, età, occupazione, descrizione fisica/pubblica');
-        break;
-
-      case 'background':
-        console.log('[Edit] Background - TODO: Open edit form for background sections');
-        alert('Edit Background: Implementa form per modificare background privato, motivazioni, paure, traumi, segreti');
-        break;
-
-      case 'statistiche':
-        console.log('[Edit] Statistiche - TODO: Open stats editor (if DRAFT status)');
-        alert('Edit Statistiche: Implementa editor per statistiche base (Charm, Constitution, etc.)');
-        break;
-
-      case 'abilita':
-        console.log('[Edit] Abilità - TODO: Open skills editor');
-        alert('Edit Abilità: Implementa editor per modificare valori skills (manualPoints, occupationBonus)');
-        break;
-
-      case 'diario':
-        console.log('[Edit] Diario - TODO: Open personality traits editor');
-        alert('Edit Diario: Implementa editor per tratti personalità e note diario');
-        break;
-
-      case 'noteMaster':
-        console.log('[Edit] Note Master - TODO: Add new review entry');
-        alert('Edit Note Master: Implementa form per aggiungere nuova review (solo Game Master)');
-        break;
-
-      case 'inventario':
-        console.log('[Edit] Inventario - TODO: Open equipment manager');
-        alert('Edit Inventario: Implementa manager per aggiungere/rimuovere/modificare equipaggiamento');
-        break;
-
-      case 'corporations':
-        console.log('[Edit] Corporations - TODO: Open memberships manager');
-        alert('Edit Corporations: Implementa manager per gestire appartenenze corporations');
-        break;
-
-      case 'alloggio':
-        console.log('[Edit] Alloggio - TODO: Open housing editor');
-        alert('Edit Alloggio: Implementa editor per dettagli alloggio (ubicazione, affitto, servizi)');
-        break;
-
-      default:
-        console.warn('[Edit] Unknown tab:', activeTab);
-    }
+    console.debug('[CharacterSheet] Edit requested for tab:', activeTab);
   };
 
   return (
