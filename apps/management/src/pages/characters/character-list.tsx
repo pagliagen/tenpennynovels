@@ -60,6 +60,7 @@ function CharacterEditContent({
           onChange={onAvatarChange}
           entityType="characters"
           entityId={character._id}
+          enableCrop={true}
         />
 
         <GenerateImageButton
