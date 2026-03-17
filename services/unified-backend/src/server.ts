@@ -1,5 +1,7 @@
 // CRITICAL: Load .env BEFORE any imports
-require('dotenv').config();
+require('dotenv').config({
+  path: process.env.NODE_ENV === 'production' ? '.env.production' : '.env'
+});
 
 // Load module-alias only in production (tsx handles paths in dev)
 if (process.env.NODE_ENV === 'production') {
