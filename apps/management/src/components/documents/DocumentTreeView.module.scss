@@ -12,7 +12,7 @@
 .routeNode {
   background-color: $color-bg-secondary;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: $border-radius-lg;
+  border-radius: $radius-lg;
   overflow: visible; // Changed from hidden to allow dropdown menus to be visible
 }
 
@@ -51,7 +51,7 @@
     color: $color-primary;
     background-color: rgba($color-primary, 0.1);
     padding: $spacing-xs $spacing-sm;
-    border-radius: $border-radius-sm;
+    border-radius: $radius-sm;
   }
 
   .title {
@@ -62,7 +62,7 @@
   .badge {
     font-size: 12px;
     padding: $spacing-xs $spacing-sm;
-    border-radius: $border-radius-sm;
+    border-radius: $radius-sm;
     background-color: rgba(255, 255, 255, 0.1);
     color: $color-text-secondary;
     text-transform: uppercase;
@@ -86,7 +86,7 @@
 
   .actionButton {
     padding: $spacing-sm $spacing-md;
-    border-radius: $border-radius-md;
+    border-radius: $radius-md;
     border: 1px solid rgba(255, 255, 255, 0.2);
     background-color: rgba(255, 255, 255, 0.05);
     color: $color-text-secondary;
@@ -165,7 +165,7 @@
     margin-left: $spacing-sm;
     font-size: 11px;
     padding: 2px 6px;
-    border-radius: $border-radius-sm;
+    border-radius: $radius-sm;
     background-color: rgba(251, 191, 36, 0.2);
     color: #fbbf24;
     text-transform: uppercase;
@@ -176,7 +176,7 @@
     margin-left: $spacing-sm;
     font-size: 11px;
     padding: 2px 6px;
-    border-radius: $border-radius-sm;
+    border-radius: $radius-sm;
     background-color: rgba(156, 163, 175, 0.2);
     color: #9ca3af;
     text-transform: uppercase;
@@ -210,7 +210,7 @@
   &:hover {
     color: $color-text-primary;
     background-color: rgba(255, 255, 255, 0.05);
-    border-radius: $border-radius-sm;
+    border-radius: $radius-sm;
   }
 }
 
@@ -259,7 +259,7 @@
   &:hover {
     color: $color-text-primary;
     background-color: rgba(255, 255, 255, 0.05);
-    border-radius: $border-radius-sm;
+    border-radius: $radius-sm;
   }
 }
 
@@ -270,7 +270,7 @@
   margin-top: $spacing-xs;
   background-color: $color-bg-secondary;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: $border-radius-md;
+  border-radius: $radius-md;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   z-index: 1000;
   min-width: 180px;
@@ -315,7 +315,7 @@
   margin-left: $spacing-sm;
   font-size: 11px;
   padding: 2px 6px;
-  border-radius: $border-radius-sm;
+  border-radius: $radius-sm;
   background-color: rgba(156, 163, 175, 0.2);
   color: #9ca3af;
   text-transform: uppercase;
@@ -330,7 +330,7 @@
   padding: $spacing-xs $spacing-sm;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background-color: rgba(255, 255, 255, 0.03);
-  border-radius: $border-radius-sm;
+  border-radius: $radius-sm;
   color: $color-primary;
   cursor: pointer;
   font-size: 12px;

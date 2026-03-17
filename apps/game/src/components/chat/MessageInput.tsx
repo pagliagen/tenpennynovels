@@ -14,12 +14,15 @@
 
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { TagSelector } from './TagSelector';
 import { ActionTypeSelector } from './ActionTypeSelector';
 import { ConditionalSelects } from './ConditionalSelects';
 import { SkillStatRollModal } from './SkillStatRollModal';
+import { FakePngManager } from '../fake-png/FakePngManager';
 import { locationChatsApi } from '@/lib/api/locationChats';
+import { fakePngApi } from '@/lib/api/fakePng';
 import type { ChatMessageType, SendMessageRequest } from '@/types/chat';
 import styles from '@/styles/components/chat/MessageInput.module.scss';
 
@@ -28,6 +31,9 @@ import styles from '@/styles/components/chat/MessageInput.module.scss';
  */
 interface CharacterData {
   characterId: string;
+  name: string;
+  surname?: string;
+  avatar?: string;
   skills?: Array<{ id: string; name: string; value: number; category?: string }>;
   stats?: Record<string, number>;
   equippedItems?: Array<{ id: string; name: string; category?: string }>;
@@ -169,10 +175,50 @@ export function MessageInput({
   const [isTagButtonFlashing, setIsTagButtonFlashing] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [isSkillStatModalOpen, setIsSkillStatModalOpen] = useState(false);
+  const [showFakePngManager, setShowFakePngManager] = useState(false);
 
   // Social conflict mode
   const [isSocialConflictMode, setIsSocialConflictMode] = useState(false);
   const [lieText, setLieText] = useState('');
+
+  // Fake PNG query (for avatar indicator)
+  const { data: fakePngData, refetch: refetchFakePngs } = useQuery({
+    queryKey: ['fakePngs', characterData.characterId],
+    queryFn: () => fakePngApi.list(characterData.characterId),
+    enabled: !!characterData.gamePermissions?.includes('game:chat:use-fake-png'),
+    staleTime: 30000, // 30s
+  });
+
+  // Compute current avatar and name (real or fake)
+  const currentAvatar = useMemo(() => {
+    if (!fakePngData?.activeFakePngId) {
+      return characterData.avatar;
+    }
+
+    const activeFake = fakePngData.fakePngs.find(
+      f => f._id === fakePngData.activeFakePngId
+    );
+
+    return activeFake?.avatar || characterData.avatar;
+  }, [fakePngData, characterData.avatar]);
+
+  const currentName = useMemo(() => {
+    if (!fakePngData?.activeFakePngId) {
+      return `${characterData.name}${characterData.surname ? ' ' + characterData.surname : ''}`;
+    }
+
+    const activeFake = fakePngData.fakePngs.find(
+      f => f._id === fakePngData.activeFakePngId
+    );
+
+    if (activeFake) {
+      return `${activeFake.name}${activeFake.surname ? ' ' + activeFake.surname : ''}`;
+    }
+
+    return `${characterData.name}${characterData.surname ? ' ' + characterData.surname : ''}`;
+  }, [fakePngData, characterData.name, characterData.surname]);
+
+  const isMasked = !!fakePngData?.activeFakePngId;
 
   // Refs
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -502,6 +548,29 @@ export function MessageInput({
             disabled={disabled}
           />
         </div>
+ 
+      {/* PNG Avatar Indicator */}
+      {characterData.gamePermissions?.includes('game:chat:use-fake-png') && (
+        <div className={styles.pngAvatarContainer}>
+          <button
+            type="button"
+            className={`${styles.pngAvatar} ${isMasked ? styles.pngAvatarMasked : ''}`}
+            onClick={() => setShowFakePngManager(true)}
+            disabled={disabled}
+            title={isMasked ? `PNG Attivo: ${currentName}` : `Personaggio Reale: ${currentName}`}
+            aria-label="Gestisci identità PNG Light"
+          >
+            {currentAvatar ? (
+              <img src={currentAvatar} alt={currentName} />
+            ) : (
+              <span className={styles.pngAvatarPlaceholder}>
+                {currentName[0]?.toUpperCase()}
+              </span>
+            )}
+          </button>
+          {isMasked && <span className={styles.pngActiveBadge}>🎭</span>}
+        </div>
+      )}
       </div>
 
       {/* Action Buttons */}
@@ -544,6 +613,7 @@ export function MessageInput({
           >
             📊 Usa Skill/Caratteristica
           </button>
+
         </div>
 
         {/* Right Actions */}
@@ -588,6 +658,17 @@ export function MessageInput({
           stats={characterData.stats}
           onRoll={handleSkillStatRoll}
           onClose={() => setIsSkillStatModalOpen(false)}
+        />
+      )}
+
+      {/* PNG Light Manager Modal */}
+      {showFakePngManager && (
+        <FakePngManager
+          characterId={characterData.characterId}
+          onClose={() => {
+            setShowFakePngManager(false);
+            refetchFakePngs(); // Refresh avatar data
+          }}
         />
       )}
     </div>

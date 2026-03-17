@@ -289,6 +289,7 @@ export const CharacterSchema = z.object({
   userId: MongoIdSchema,
   campaignId: MongoIdSchema,
   name: z.string().min(2).max(50),
+  surname: z.string().max(50).optional(),
   title: z.string().max(100).nullable(),
   age: z.number().int().positive().max(120),
   gender: z.enum(['male', 'female', 'other']),

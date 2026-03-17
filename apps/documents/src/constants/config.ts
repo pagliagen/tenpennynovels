@@ -24,7 +24,7 @@ export const APP_URLS = {
   LANDING: process.env.NEXT_PUBLIC_LANDING_URL || 'http://localhost:4000',
   GAME: process.env.NEXT_PUBLIC_GAME_URL || 'http://localhost:4001',
   DOCUMENTS: 'http://localhost:4002', // Current app
-  MANAGEMENT: process.env.NEXT_PUBLIC_MANAGEMENT_URL || 'http://localhost:4004',
+  MANAGEMENT: process.env.NEXT_PUBLIC_MANAGEMENT_URL || 'http://localhost:4003',
 } as const;
 
 /**

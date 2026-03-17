@@ -1,3 +1,5 @@
+@use '../../variables' as *;
+
 /**
  * Minimized Windows Bar Styles
  *
@@ -55,7 +57,7 @@
   padding: 8px 16px;
   background: rgba(60, 40, 20, 0.8);
   border: 1px solid rgba(255, 149, 0, 0.6);
-  border-radius: 6px;
+  border-radius: $radius-md;
   min-width: 200px;
   max-width: 300px;
   transition: all 0.2s ease;

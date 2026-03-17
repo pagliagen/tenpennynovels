@@ -1,0 +1,277 @@
+@use '../../variables' as *;
+
+// Modal overlay
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modalContent {
+  background: $brown-10;
+  border-radius: 8px;
+  border: 2px solid $gold-30;
+  padding: $spacing-xxl;
+  max-width: 800px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-xl;
+
+  h2 {
+    margin: 0;
+    color: $text-primary;
+    font-family: $font-heading;
+  }
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  color: $text-secondary;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+
+  &:hover {
+    color: $text-primary;
+  }
+}
+
+// Active indicator
+.activeIndicator {
+  background: rgba($gold-50, 0.1);
+  border: 1px solid $gold-30;
+  border-radius: 4px;
+  padding: $spacing-md;
+  margin-bottom: $spacing-xl;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  span {
+    color: $gold-70;
+    font-weight: 500;
+  }
+}
+
+.deactivateButton {
+  background: $brown-30;
+  border: 1px solid $brown-50;
+  color: $text-primary;
+  padding: $spacing-sm $spacing-md;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+
+  &:hover {
+    background: $brown-50;
+  }
+}
+
+// Slots grid (5 slots, 2 columns)
+.slotsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: $spacing-lg;
+}
+
+// Empty slot
+.slotEmpty {
+  background: rgba($brown-30, 0.5);
+  border: 2px dashed $brown-50;
+  border-radius: 8px;
+  padding: $spacing-xxl;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-height: 120px;
+
+  &:hover {
+    background: rgba($brown-30, 0.8);
+    border-color: $brown-70;
+  }
+}
+
+.plusIcon {
+  font-size: 48px;
+  color: $brown-70;
+  margin-bottom: $spacing-sm;
+}
+
+.slotLabel {
+  color: $text-secondary;
+  font-size: 14px;
+}
+
+// Slot card
+.slotCard {
+  background: $brown-20;
+  border: 2px solid $brown-40;
+  border-radius: 8px;
+  padding: $spacing-lg;
+  display: flex;
+  gap: $spacing-md;
+  align-items: center;
+  transition: all 0.2s;
+
+  &:hover {
+    border-color: $brown-60;
+  }
+}
+
+.slotActive {
+  border-color: $gold-50;
+  background: rgba($gold-30, 0.1);
+}
+
+.slotAvatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: $brown-30;
+  border: 2px solid $brown-50;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.avatarPlaceholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: bold;
+  color: $text-secondary;
+  background: $brown-40;
+}
+
+.slotInfo {
+  flex: 1;
+}
+
+.slotName {
+  color: $text-primary;
+  font-weight: 500;
+  margin-bottom: $spacing-xs;
+}
+
+.activeBadge {
+  color: $gold-70;
+  font-size: 12px;
+}
+
+.slotActions {
+  display: flex;
+  gap: $spacing-sm;
+}
+
+.actionButton {
+  background: $brown-30;
+  border: 1px solid $brown-50;
+  color: $text-primary;
+  padding: $spacing-sm $spacing-md;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+
+  &:hover {
+    background: $brown-50;
+  }
+}
+
+// Form
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+
+  label {
+    color: $text-primary;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  input {
+    background: $brown-20;
+    border: 1px solid $brown-40;
+    color: $text-primary;
+    padding: $spacing-sm $spacing-md;
+    border-radius: 4px;
+    font-size: 14px;
+
+    &:focus {
+      outline: none;
+      border-color: $gold-50;
+    }
+
+    &::placeholder {
+      color: $text-tertiary;
+    }
+  }
+}
+
+.formActions {
+  display: flex;
+  gap: $spacing-md;
+  justify-content: flex-end;
+  margin-top: $spacing-lg;
+}
+
+.cancelButton {
+  background: $brown-30;
+  border: 1px solid $brown-50;
+  color: $text-primary;
+  padding: $spacing-sm $spacing-lg;
+  border-radius: 4px;
+  cursor: pointer;
+
+  &:hover {
+    background: $brown-50;
+  }
+}
+
+.submitButton {
+  background: $gold-50;
+  border: 1px solid $gold-70;
+  color: $brown-10;
+  padding: $spacing-sm $spacing-lg;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+
+  &:hover {
+    background: $gold-70;
+  }
+}

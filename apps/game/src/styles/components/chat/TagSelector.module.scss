@@ -1,4 +1,4 @@
-@use './variables' as *;
+@use './_variables' as *;
 
 /**
  * Tag Selector Modal Styles
@@ -58,7 +58,7 @@
   padding: $spacing-md $spacing-lg;
   background: rgba(245, 245, 245, 0.1);
   border: 2px solid rgba(184, 134, 11, 0.4);
-  border-radius: 6px;
+  border-radius: $radius-md;
   color: $parchment;
   font-family: $font-serif;
   font-size: 16px;
@@ -88,7 +88,7 @@
 .cancelButton,
 .confirmButton {
   padding: $spacing-md $spacing-xl;
-  border-radius: 6px;
+  border-radius: $radius-md;
   font-family: $font-serif;
   font-size: 16px;
   font-weight: 600;

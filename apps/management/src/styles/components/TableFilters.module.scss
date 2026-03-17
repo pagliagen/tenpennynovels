@@ -13,7 +13,7 @@
   gap: $spacing-md;
   padding: $spacing-lg;
   background-color: $color-bg-secondary;
-  border-radius: $border-radius-md;
+  border-radius: $radius-md;
   border: 1px solid rgba(255, 255, 255, 0.1);
   margin-bottom: $spacing-md;
 }
@@ -35,7 +35,7 @@
     padding: $spacing-sm $spacing-md;
     background-color: $color-bg-tertiary;
     border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: $border-radius-sm;
+    border-radius: $radius-sm;
     color: $color-text-primary;
     font-size: 14px;
     transition: all $transition-fast;

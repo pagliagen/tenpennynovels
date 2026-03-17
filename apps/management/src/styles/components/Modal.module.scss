@@ -18,7 +18,7 @@
 
 .modal {
   background-color: $color-bg-secondary;
-  border-radius: $border-radius-lg;
+  border-radius: $radius-lg;
   box-shadow: $shadow-lg;
   max-height: 90vh;
   display: flex;
@@ -117,7 +117,7 @@
     padding: $spacing-md;
     background-color: $color-bg-primary;
     border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: $border-radius-sm;
+    border-radius: $radius-sm;
     color: $color-text-primary;
     font-size: 15px;
     font-family: inherit;
@@ -169,7 +169,7 @@
 .cancelButton,
 .submitButton {
   padding: $spacing-md $spacing-lg;
-  border-radius: $border-radius-sm;
+  border-radius: $radius-sm;
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
@@ -212,7 +212,7 @@
   padding: $spacing-md;
   background-color: rgba($color-primary, 0.1);
   border: 1px solid rgba($color-primary, 0.3);
-  border-radius: $border-radius-sm;
+  border-radius: $radius-sm;
   font-size: 14px;
   color: $color-text-primary;
   margin-bottom: $spacing-lg;

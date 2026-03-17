@@ -14,7 +14,7 @@
   align-items: center;
   padding: $spacing-lg;
   background-color: $color-bg-secondary;
-  border-radius: $border-radius-md;
+  border-radius: $radius-md;
   border: 1px solid rgba(255, 255, 255, 0.1);
 
   h1 {
@@ -41,7 +41,7 @@
   background-color: $color-primary;
   color: $color-bg-primary;
   border: none;
-  border-radius: $border-radius-sm;
+  border-radius: $radius-sm;
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
@@ -69,7 +69,7 @@
   min-width: 120px;
   padding: $spacing-md;
   background-color: $color-bg-secondary;
-  border-radius: $border-radius-md;
+  border-radius: $radius-md;
   border: 1px solid rgba(255, 255, 255, 0.1);
   text-align: center;
 }
@@ -94,7 +94,7 @@
   align-items: center;
   min-height: 300px;
   background-color: $color-bg-secondary;
-  border-radius: $border-radius-md;
+  border-radius: $radius-md;
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: $color-text-secondary;
   font-size: 16px;
@@ -109,7 +109,7 @@
   min-height: 400px;
   padding: $spacing-xl;
   background-color: $color-bg-secondary;
-  border-radius: $border-radius-md;
+  border-radius: $radius-md;
   border: 1px solid rgba(255, 255, 255, 0.1);
 
   h2 {
@@ -131,7 +131,7 @@
     background-color: $color-primary;
     color: $color-bg-primary;
     border: none;
-    border-radius: $border-radius-sm;
+    border-radius: $radius-sm;
     font-size: 16px;
     font-weight: 600;
     cursor: pointer;

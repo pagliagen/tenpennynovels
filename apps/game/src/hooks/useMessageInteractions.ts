@@ -145,6 +145,11 @@ export function useMessageInteractions(
   };
 
   const handleAvatarClick = () => {
+    // Disable click if message is masked (PNG Light privacy protection)
+    if (message.isMasked) {
+      return; // No action - identity hidden
+    }
+
     // TODO: Open CharacterSheetModal
     console.log('Open character sheet for:', message.characterId);
   };

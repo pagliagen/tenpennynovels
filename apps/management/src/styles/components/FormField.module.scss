@@ -24,7 +24,7 @@ select.input,
 textarea.input {
   padding: $spacing-sm $spacing-md;
   border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: $border-radius-md;
+  border-radius: $radius-md;
   background-color: $color-bg-tertiary;
   color: $color-text-primary;
   font-size: 15px;
@@ -87,7 +87,7 @@ textarea.input {
   gap: $spacing-sm;
   padding: $spacing-sm;
   background-color: $color-bg-tertiary;
-  border-radius: $border-radius-sm;
+  border-radius: $radius-sm;
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -99,7 +99,7 @@ textarea.input {
   cursor: pointer;
   user-select: none;
   transition: background-color $transition-fast;
-  border-radius: $border-radius-sm;
+  border-radius: $radius-sm;
 
   &:hover {
     background-color: rgba(255, 255, 255, 0.03);

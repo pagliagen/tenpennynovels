@@ -15,12 +15,16 @@ export class ChatController {
   /**
    * Populate character avatars for messages
    * Performs batch lookup of avatars from Character collection
+   * IMPORTANT: Does NOT overwrite existing avatars (preserves fake PNG avatars)
    */
   private static async populateCharacterAvatars(messages: any[]): Promise<any[]> {
     if (messages.length === 0) return messages;
 
-    // Get unique character IDs
-    const characterIds = [...new Set(messages.map(m => m.characterId))];
+    // Get unique character IDs that DON'T already have avatars
+    const missingAvatars = messages.filter(m => !m.characterAvatar);
+    if (missingAvatars.length === 0) return messages;
+
+    const characterIds = [...new Set(missingAvatars.map(m => m.characterId))];
 
     // Batch lookup avatars
     const characters = await Character.find({ _id: { $in: characterIds } })
@@ -32,10 +36,10 @@ export class ChatController {
       characters.map((c: any) => [c._id.toString(), c.avatar])
     );
 
-    // Add avatar to each message
+    // ONLY add avatar if missing (don't overwrite fake avatars)
     return messages.map(message => ({
       ...message,
-      characterAvatar: avatarMap.get(message.characterId) || undefined
+      characterAvatar: message.characterAvatar || avatarMap.get(message.characterId) || undefined
     }));
   }
 
@@ -338,10 +342,6 @@ export class ChatController {
       // Save to database
       const savedAction = await Chat.createAction(actionData);
 
-      // Lookup character avatar from DB (not from token - token may be stale)
-      const actionCharacter = await Character.findById(character.characterId).select('avatar').lean();
-      const characterAvatar = actionCharacter?.avatar;
-
       // Update occupant position tag if position was provided
       if (position) {
         try {
@@ -371,7 +371,7 @@ export class ChatController {
           actionType: savedAction.actionType,           // DB field (was messageType)
           characterId: savedAction.characterId,
           characterName: savedAction.characterName,
-          characterAvatar: characterAvatar || undefined,  // Looked up from DB
+          characterAvatar: savedAction.characterAvatar || undefined,  // Use saved value (fake if masked)
           position: savedAction.position || undefined,
           locationId: savedAction.locationId.toString(),
           content: savedAction.content,                 // DB field (was text)
@@ -552,7 +552,7 @@ export class ChatController {
         actionType: savedAction.actionType,
         characterId: savedAction.characterId,
         characterName: savedAction.characterName,
-        characterAvatar: characterAvatar || undefined,  // Looked up from DB
+        characterAvatar: savedAction.characterAvatar || undefined,  // Use saved value (fake if masked)
         position: savedAction.position || undefined,
         locationId: savedAction.locationId.toString(),
         content: savedAction.content,
@@ -709,6 +709,7 @@ export class ChatController {
           actionType: action.actionType,           // DB field (was messageType)
           characterId: action.characterId,
           characterName: action.characterName,
+          characterAvatar: action.characterAvatar || undefined,  // Preserve fake avatar if masked
           position: action.position || undefined,
           locationId: action.locationId.toString(),
           content: action.content,                 // DB field (was text)
@@ -934,10 +935,6 @@ export class ChatController {
       action.editHistory = editHistory;
       await action.save();
 
-      // Lookup character avatar from DB
-      const actionCharacter = await Character.findById(action.characterId).select('avatar').lean();
-      const characterAvatar = actionCharacter?.avatar;
-
       // Emit WebSocket notification
       const io = req.app.get('io');
       if (io) {
@@ -961,7 +958,7 @@ export class ChatController {
             actionType: action.actionType,
             characterId: action.characterId,
             characterName: action.characterName,
-            characterAvatar: characterAvatar || undefined,  // Looked up from DB
+            characterAvatar: action.characterAvatar || undefined,  // Use saved value (fake if masked)
             position: action.position || undefined,
             locationId: action.locationId.toString(),
             content: action.content,

@@ -16,7 +16,7 @@
   align-items: flex-start;
   padding: $spacing-lg;
   background-color: $color-bg-secondary;
-  border-radius: $border-radius-md;
+  border-radius: $radius-md;
   border: 1px solid rgba(255, 255, 255, 0.1);
 
   h1 {
@@ -44,7 +44,7 @@
   min-width: 140px;
   padding: $spacing-md $spacing-lg;
   background-color: $color-bg-secondary;
-  border-radius: $border-radius-md;
+  border-radius: $radius-md;
   border: 1px solid rgba(255, 255, 255, 0.1);
   text-align: center;
 
@@ -71,7 +71,7 @@
   gap: $spacing-md;
   padding: $spacing-md $spacing-lg;
   background-color: $color-bg-secondary;
-  border-radius: $border-radius-md;
+  border-radius: $radius-md;
   border: 1px solid rgba(255, 255, 255, 0.1);
   flex-wrap: wrap;
   align-items: center;
@@ -80,7 +80,7 @@
     padding: $spacing-sm $spacing-md;
     background-color: $color-bg-tertiary;
     border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: $border-radius-sm;
+    border-radius: $radius-sm;
     color: $color-text-primary;
     font-size: 13px;
 
@@ -101,7 +101,7 @@
 
 .tableWrapper {
   background-color: $color-bg-secondary;
-  border-radius: $border-radius-md;
+  border-radius: $radius-md;
   border: 1px solid rgba(255, 255, 255, 0.1);
   overflow-x: auto;
 }
@@ -198,7 +198,7 @@
   padding: 2px $spacing-sm;
   font-size: 11px;
   font-weight: 600;
-  border-radius: $border-radius-sm;
+  border-radius: $radius-sm;
   text-transform: uppercase;
   letter-spacing: 0.3px;
 
@@ -229,7 +229,7 @@
   padding: 4px $spacing-sm;
   background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: $border-radius-sm;
+  border-radius: $radius-sm;
   color: $color-text-secondary;
   font-size: 11px;
   cursor: pointer;
@@ -270,7 +270,7 @@
       padding: $spacing-xs $spacing-md;
       background: transparent;
       border: 1px solid rgba(255, 255, 255, 0.15);
-      border-radius: $border-radius-sm;
+      border-radius: $radius-sm;
       color: $color-text-secondary;
       font-size: 13px;
       cursor: pointer;
@@ -302,7 +302,7 @@
 .modalContent {
   background-color: $color-bg-secondary;
   border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: $border-radius-md;
+  border-radius: $radius-md;
   padding: $spacing-xl;
   max-width: 600px;
   width: 90%;
@@ -337,7 +337,7 @@
     padding: $spacing-sm $spacing-md;
     background-color: $color-bg-tertiary;
     border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: $border-radius-sm;
+    border-radius: $radius-sm;
     color: $color-text-primary;
     font-size: 13px;
 
@@ -362,7 +362,7 @@
 
   button {
     padding: $spacing-sm $spacing-lg;
-    border-radius: $border-radius-sm;
+    border-radius: $radius-sm;
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
@@ -420,7 +420,7 @@
   min-height: 400px;
   padding: $spacing-xl;
   background-color: $color-bg-secondary;
-  border-radius: $border-radius-md;
+  border-radius: $radius-md;
   border: 1px solid rgba(255, 255, 255, 0.1);
 
   h2 { margin: 0; font-size: 24px; color: $color-error; }

@@ -14,7 +14,7 @@
   align-items: center;
   padding: $spacing-lg;
   background-color: $color-bg-secondary;
-  border-radius: $border-radius-md;
+  border-radius: $radius-md;
   border: 1px solid rgba(255, 255, 255, 0.1);
 
   h1 {
@@ -42,7 +42,7 @@
   background-color: $color-primary;
   color: $color-bg-primary;
   border: none;
-  border-radius: $border-radius-sm;
+  border-radius: $radius-sm;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -62,7 +62,7 @@
   min-height: 400px;
   padding: $spacing-xl;
   background-color: $color-bg-secondary;
-  border-radius: $border-radius-md;
+  border-radius: $radius-md;
   border: 1px solid rgba(255, 255, 255, 0.1);
 
   h2 {
@@ -84,7 +84,7 @@
     background-color: $color-primary;
     color: $color-bg-primary;
     border: none;
-    border-radius: $border-radius-sm;
+    border-radius: $radius-sm;
     font-size: 16px;
     font-weight: 600;
     cursor: pointer;
@@ -129,7 +129,7 @@
   margin: 0;
   padding: $spacing-sm;
   background: rgba(255, 255, 255, 0.03);
-  border-radius: $border-radius-sm;
+  border-radius: $radius-sm;
   border: 1px dashed rgba(255, 255, 255, 0.1);
 }
 
@@ -152,7 +152,7 @@
   padding: 4px 10px;
   background-color: rgba($color-primary, 0.15);
   color: $color-primary;
-  border-radius: $border-radius-sm;
+  border-radius: $radius-sm;
   font-size: 12px;
   font-weight: 500;
 }
@@ -182,7 +182,7 @@
   background-color: $color-bg-tertiary;
   color: $color-text-primary;
   border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: $border-radius-sm;
+  border-radius: $radius-sm;
   font-size: 13px;
   cursor: pointer;
   flex: 1;
@@ -203,7 +203,7 @@
   background-color: rgba($color-primary, 0.15);
   color: $color-primary;
   border: 1px solid rgba($color-primary, 0.3);
-  border-radius: $border-radius-sm;
+  border-radius: $radius-sm;
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
@@ -231,7 +231,7 @@
   background-color: transparent;
   color: $color-text-secondary;
   border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: $border-radius-sm;
+  border-radius: $radius-sm;
   font-size: 14px;
   cursor: pointer;
   transition: all $transition-fast;
@@ -247,7 +247,7 @@
   background-color: $color-primary;
   color: $color-bg-primary;
   border: none;
-  border-radius: $border-radius-sm;
+  border-radius: $radius-sm;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;

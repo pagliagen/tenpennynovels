@@ -1,3 +1,5 @@
+@use "../variables" as *;
+
 /**
  * Presenti Online Page Styles
  *
@@ -53,7 +55,7 @@
   padding: 12px 16px;
   background: rgba(245, 245, 245, 0.9);
   border: 2px solid #8b4513;
-  border-radius: 6px;
+  border-radius: $radius-md;
   font-family: 'Thrifted Attire', serif;
   font-size: 15px;
   color: #1a1a1a;

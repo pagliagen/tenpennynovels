@@ -34,7 +34,7 @@
 .cancelButton,
 .confirmButton {
   padding: $spacing-sm $spacing-lg;
-  border-radius: $border-radius-md;
+  border-radius: $radius-md;
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
@@ -65,7 +65,7 @@
   color: $color-text-primary;
   background-color: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: $border-radius-md;
+  border-radius: $radius-md;
   transition: border-color $transition-fast;
   font-family: inherit;
   resize: vertical;

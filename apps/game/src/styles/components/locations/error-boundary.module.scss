@@ -1,3 +1,5 @@
+@use "../../variables" as *;
+
 /**
  * Locations Error Boundary Styles
  *
@@ -144,7 +146,7 @@
   font-family: 'Thrifted Attire', serif;
   padding: 12px 24px;
   font-size: 16px;
-  border-radius: 6px;
+  border-radius: $radius-md;
   cursor: pointer;
   transition: all 0.2s ease;
   min-width: 160px;

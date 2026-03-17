@@ -1,3 +1,5 @@
+@use "../../variables" as *;
+
 /**
  * Split-Panel Styles
  *
@@ -41,7 +43,7 @@
   font-family: 'Thrifted Attire', serif;
   padding: 8px 20px;
   font-size: 15px;
-  border-radius: 6px;
+  border-radius: $radius-md;
   cursor: pointer;
   transition: all 0.2s ease;
   flex-shrink: 0;

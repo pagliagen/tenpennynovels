@@ -38,10 +38,12 @@ export function StandardMessage({ message, currentCharacterId }: StandardMessage
       {/* Left column: Avatar + Name + Time */}
       <div className={styles.messageCardLeft}>
         <button
-          className={styles.messageAvatar}
+          className={`${styles.messageAvatar} ${message.isMasked ? styles.avatarDisabled : ''}`}
           onClick={interactions.handleAvatarClick}
           type="button"
-          aria-label={`Apri scheda di ${message.characterName}`}
+          aria-label={message.isMasked ? 'Identità nascosta' : `Apri scheda di ${message.characterName}`}
+          disabled={message.isMasked}
+          title={message.isMasked ? 'Identità nascosta (PNG Light)' : undefined}
         >
           {message.characterAvatar ? (
             <img src={message.characterAvatar} alt="" />
