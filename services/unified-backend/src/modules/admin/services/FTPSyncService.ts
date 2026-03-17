@@ -97,6 +97,7 @@ export class FTPSyncService {
       user: appConfig.cdn.ftp.user,
       password: appConfig.cdn.ftp.password,
       secure: appConfig.cdn.ftp.secure,
+      secureOptions: { rejectUnauthorized: false }, // Ignore SSL certificate mismatch (hosting condiviso)
     });
 
     logger.info('FTP: connected to remote server');
