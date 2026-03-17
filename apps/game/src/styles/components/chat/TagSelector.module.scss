@@ -122,3 +122,85 @@
     cursor: not-allowed;
   }
 }
+
+// Divider "oppure"
+.customTagDivider {
+  display: flex;
+  align-items: center;
+  margin: $spacing-lg 0;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(184, 134, 11, 0.3);
+  }
+}
+
+.customTagDividerText {
+  padding: 0 $spacing-md;
+  color: rgba(232, 212, 160, 0.6);
+  font-family: $font-serif;
+  font-size: 13px;
+  font-style: italic;
+}
+
+// Sezione custom tag
+.customTagSection {
+  margin-bottom: $spacing-xl;
+}
+
+.customTagLabel {
+  display: block;
+  color: $parchment;
+  font-family: $font-serif;
+  font-size: 14px;
+  margin-bottom: $spacing-sm;
+  font-weight: 600;
+}
+
+.customTagInput {
+  width: 100%;
+  padding: $spacing-md;
+  background: rgba(245, 245, 245, 0.1);
+  border: 2px solid rgba(184, 134, 11, 0.4);
+  border-radius: $radius-md;
+  color: $parchment;
+  font-family: $font-serif;
+  font-size: 16px;
+  transition: all $transition-normal;
+
+  &::placeholder {
+    color: rgba(232, 212, 160, 0.4);
+    font-style: italic;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: $gold-70;
+    background: rgba(245, 245, 245, 0.15);
+    box-shadow: 0 0 0 3px rgba(184, 134, 11, 0.2);
+  }
+}
+
+.customTagHint {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: $spacing-xs;
+  min-height: 18px; // Prevent layout shift
+}
+
+.charCount {
+  color: rgba(232, 212, 160, 0.5);
+  font-family: $font-sans;
+  font-size: 12px;
+}
+
+.validationError {
+  color: #ff6b6b;
+  font-family: $font-serif;
+  font-size: 12px;
+  font-style: italic;
+}

@@ -279,33 +279,6 @@ export const locationChatsApi = {
   },
 
   /**
-   * Update Occupant Tag
-   *
-   * Updates current character's tag (sub-chat position) in a location.
-   * Tags represent physical positions like "Tavolo 1", "Bancone", "Angolo Nord".
-   *
-   * **Tag Persistence**: Tag is saved to occupant record in DB.
-   * Future messages will automatically include this tag.
-   *
-   * @param {string} locationId - Location ID
-   * @param {string} currentTag - New tag value
-   * @returns {Promise<void>}
-   * @throws {ApiError} If request fails
-   *
-   * @example
-   * ```typescript
-   * // User selects "Tavolo 1" in TagSelector modal
-   * await locationChatsApi.updateOccupantTag('abc123', 'Tavolo 1');
-   * // All future messages will show "@ Tavolo 1"
-   * ```
-   */
-  async updateOccupantTag(locationId: string, currentTag: string): Promise<void> {
-    await api.patch(`/game/locations/${locationId}/occupant-tag`, {
-      currentTag,
-    });
-  },
-
-  /**
    * Get Location by Slug
    *
    * Helper method to convert location slug to ID for chat API calls.
