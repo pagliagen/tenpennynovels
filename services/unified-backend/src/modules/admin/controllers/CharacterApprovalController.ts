@@ -68,7 +68,7 @@ export class CharacterApprovalController {
             select: 'name',
             options: { strictPopulate: false }
           })
-          .select('name surname fullName occupation playerStatus createdAt submittedAt approvedAt rejectedAt userId canAccessAdminPanel isGestore gameplayRoles characterPermissions adminPermissions age gender socialClass location characterType referentCharacterId')
+          .select('name surname fullName occupation playerStatus createdAt submittedAt approvedAt rejectedAt userId canAccessAdminPanel isGestore gameplayRoles characterPermissions adminPermissions age gender socialClass location characterType referentCharacterId avatar')
           .sort({ createdAt: -1 })
           .skip(skip)
           .limit(pageSize)
@@ -104,6 +104,7 @@ export class CharacterApprovalController {
           occupation: char.occupation || null,
           socialClass: char.socialClass || null,
           location: char.location || null,
+          avatar: char.avatar || '',
           playerStatus: char.playerStatus || 'draft',
           isGestore: char.isGestore || false,
           gameplayRoles: char.gameplayRoles || [],
@@ -519,6 +520,7 @@ export class CharacterApprovalController {
       const allowedFields = [
         'name', 'surname', 'age', 'gender', 'playerStatus',
         'biography', 'occupation', 'location', 'socialClass',
+        'avatar', 'profileImage',  // Character appearance fields
         'canAccessAdminPanel', 'isGestore', 'gameplayRoles', 'characterPermissions', 'adminPermissions'
       ];
 
@@ -566,6 +568,138 @@ export class CharacterApprovalController {
       res.status(500).json(errorResponse(
         error instanceof Error ? error.message : 'Impossibile aggiornare il personaggio',
         'UPDATE_CHARACTER_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
+    }
+  }
+
+  /**
+   * Change PNG referent character
+   * PATCH /admin/characters/:characterId/change-referent
+   */
+  static async changeReferent(req: Request<{ characterId: string }>, res: Response): Promise<void> {
+    try {
+      const { characterId } = req.params;
+      const { newReferentId } = req.body;
+
+      if (!newReferentId) {
+        res.status(400).json(errorResponse(
+          'newReferentId obbligatorio',
+          'MISSING_REFERENT_ID',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      const { Character } = await import('@database/models/Character');
+
+      // 1. Verify character exists and is PNG or Master
+      const character = await Character.findById(characterId);
+      if (!character) {
+        res.status(404).json(errorResponse(
+          'Personaggio non trovato',
+          'CHARACTER_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      if (character.characterType !== 'png' && character.characterType !== 'pg_master') {
+        res.status(400).json(errorResponse(
+          'Solo PNG e Master possono cambiare referente',
+          'INVALID_CHARACTER_TYPE',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      // 2. Verify new referent exists and is pg_principale
+      const newReferent = await Character.findById(newReferentId);
+      if (!newReferent) {
+        res.status(404).json(errorResponse(
+          'PG principale non trovato',
+          'REFERENT_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      if (newReferent.characterType !== 'pg_principale') {
+        res.status(400).json(errorResponse(
+          'Il referente deve essere un PG principale',
+          'INVALID_REFERENT_TYPE',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      if (newReferent.playerStatus !== 'approved') {
+        res.status(400).json(errorResponse(
+          'Il PG principale deve essere approvato',
+          'REFERENT_NOT_APPROVED',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      // 3. Update PNG: referentCharacterId AND userId (owner follows referent)
+      const oldUserId = character.userId;
+      const newUserId = newReferent.userId;
+
+      character.referentCharacterId = newReferentId as any;
+      character.userId = newUserId;
+
+      await character.save();
+
+      // 4. Log the change
+      const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
+      logger.info('Admin changed PNG referent', {
+        ...auditInfo,
+        characterId: character._id.toString(),
+        characterName: character.fullName,
+        oldUserId: oldUserId.toString(),
+        newUserId: newUserId.toString(),
+        newReferentId,
+        newReferentName: newReferent.fullName,
+        category: 'character_management'
+      });
+
+      // 5. Return updated character with populated referent
+      const updatedCharacter = await Character.findById(characterId)
+        .populate('userId', 'username email')
+        .populate('referentCharacterId', 'name')
+        .lean();
+
+      res.status(200).json(successResponse(
+        updatedCharacter,
+        'Referente aggiornato con successo',
+        getRequestId(req)
+      ));
+    } catch (error: unknown) {
+      logger.error('Error changing PNG referent:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        characterId: req.params.characterId,
+        newReferentId: req.body.newReferentId
+      });
+
+      res.status(500).json(errorResponse(
+        'Errore nel cambio referente',
+        'CHANGE_REFERENT_ERROR',
         undefined,
         500,
         getRequestId(req)

@@ -31,7 +31,7 @@
     },
     {
       "key": "user.username",
-      "label": "Referente",
+      "label": "Proprietario",
       "type": "text",
       "visible": true,
       "defaultVisible": true,
@@ -42,27 +42,16 @@
       }
     },
     {
-      "key": "age",
-      "label": "Età",
-      "type": "number",
-      "visible": true,
-      "defaultVisible": true,
-      "sortable": true,
-      "width": "80px",
-      "render": {
-        "type": "text"
-      }
-    },
-    {
-      "key": "occupation.name",
-      "label": "Occupazione",
+      "key": "referent.name",
+      "label": "PG Principale",
       "type": "text",
       "visible": true,
       "defaultVisible": true,
       "sortable": false,
-      "width": "150px",
+      "width": "180px",
       "render": {
-        "type": "text"
+        "type": "text",
+        "className": "text-secondary"
       }
     },
     {
@@ -116,6 +105,13 @@
       "key": "view-details",
       "label": "Dettagli",
       "icon": "👁️",
+      "type": "secondary",
+      "visible": true
+    },
+    {
+      "key": "change-referent",
+      "label": "Cambia PG Riferimento",
+      "icon": "🔄",
       "type": "secondary",
       "visible": true
     },

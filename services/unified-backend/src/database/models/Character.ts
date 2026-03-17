@@ -765,8 +765,8 @@ CharacterSchema.pre('save', async function(this: ICharacter) {
     }
   }
 
-  // Validation 2: PNG must have referentCharacterId (auto-find if missing)
-  if (this.characterType === 'png' && !this.referentCharacterId) {
+  // Validation 2: PNG and Master must have referentCharacterId (auto-find if missing)
+  if ((this.characterType === 'png' || this.characterType === 'pg_master') && !this.referentCharacterId) {
     const pgPrincipale = await (this.constructor as mongoose.Model<ICharacter>).findOne({
       userId: this.userId,
       characterType: 'pg_principale',
@@ -776,7 +776,7 @@ CharacterSchema.pre('save', async function(this: ICharacter) {
     if (pgPrincipale) {
       this.referentCharacterId = pgPrincipale._id as any;
     } else {
-      throw new Error('PNG requires a PG principale as referent');
+      throw new Error(`${this.characterType === 'png' ? 'PNG' : 'Master'} requires a PG principale as referent`);
     }
   }
 

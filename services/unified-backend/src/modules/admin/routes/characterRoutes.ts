@@ -70,6 +70,15 @@ router.patch(
   CharacterApprovalController.updateReviewPriority
 );
 
+// Change PNG referent - specific route
+router.patch(
+  '/:characterId/change-referent',
+  requireViewPermission('characters.detail.edit'),
+  AdminAuthMiddleware.logAdminAction('character.change_referent', 'character_management'),
+  autoLogOutcome,
+  CharacterApprovalController.changeReferent
+);
+
 // Get complete character details - generic route
 router.get(
   '/:characterId',

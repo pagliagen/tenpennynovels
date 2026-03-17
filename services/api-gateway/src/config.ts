@@ -39,7 +39,7 @@ export const config = {
   },
 
   cdn: {
-    storagePath: '/cdn-storage',
+    storagePath: '/cdn-storage',  // Docker volume mount path (same in dev and prod)
     maxAge: isProduction ? '365d' : '0',
     immutable: isProduction,
     allowedOrigins: isProduction

@@ -11,6 +11,7 @@ import { useRouter } from 'next/router';
 import { ManagementLayout } from '@/components/layout/ManagementLayout';
 import { ConfigurableDataTable, FilterState } from '@/components/shared/ConfigurableDataTable';
 import { SidePanel } from '@/components/shared/SidePanel';
+import { ImageUploader } from '@/components/shared/ImageUploader';
 import { GenerateImageButton } from '@/components/shared/GenerateImageButton';
 import { useConfirm } from '@/hooks/useConfirm';
 import { useTableConfig } from '@/hooks/useTableConfig';
@@ -32,21 +33,43 @@ import { FormField } from '@/components/shared/FormField';
 import type { Character, CharacterListParams } from '@/types/api/Character';
 import styles from '@/styles/pages/CharacterList.module.scss';
 
-function CharacterEditContent({ character, onAvatarGenerated }: { character: Character; onAvatarGenerated: () => void }) {
+function CharacterEditContent({
+  character,
+  avatar,
+  onAvatarChange,
+  onAvatarGenerated
+}: {
+  character: Character;
+  avatar: string;
+  onAvatarChange: (url: string) => void;
+  onAvatarGenerated: () => void;
+}) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       <FormField label="Nome" name="name" value={character.name} disabled type="text" />
       <FormField label="Cognome" name="surname" value={character.surname || ''} disabled type="text" />
       <FormField label="Età" name="age" value={character.age} disabled type="number" />
+
       <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '16px' }}>
-        <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 500, color: 'rgba(255,255,255,0.7)' }}>
-          Avatar AI
-        </label>
+        <h3 style={{ marginBottom: '12px', fontSize: '14px', fontWeight: 600, color: 'rgba(255,255,255,0.9)' }}>
+          Avatar
+        </h3>
+
+        <ImageUploader
+          value={avatar}
+          onChange={onAvatarChange}
+          entityType="characters"
+          entityId={character._id}
+        />
+
         <GenerateImageButton
           entityType="character"
           entityId={character._id}
           entityName={`${character.name} ${character.surname || ''}`.trim()}
-          onSuccess={onAvatarGenerated}
+          onSuccess={(url) => {
+            onAvatarChange(url);
+            onAvatarGenerated();
+          }}
         />
       </div>
     </div>
@@ -68,6 +91,7 @@ export default function CharacterList() {
   const [rejectReason, setRejectReason] = useState<string>('');
   const [bulkRejectCharacters, setBulkRejectCharacters] = useState<Character[]>([]);
   const [bulkRejectReason, setBulkRejectReason] = useState<string>('');
+  const [editFormData, setEditFormData] = useState({ avatar: '' });
 
   // Hooks
   const router = useRouter();
@@ -100,6 +124,13 @@ export default function CharacterList() {
       col => tableConfig.columnVisibility[col.key] !== false
     );
   }, [tableConfig.config, tableConfig.columnVisibility]);
+
+  // Initialize form data when character is selected for editing
+  useEffect(() => {
+    if (activeSidePanel === 'edit' && currentCharacter) {
+      setEditFormData({ avatar: currentCharacter.avatar || '' });
+    }
+  }, [activeSidePanel, currentCharacter]);
 
   /**
    * Handler azioni row
@@ -170,7 +201,7 @@ export default function CharacterList() {
       try {
         await updateCharacter.mutateAsync({
           id: currentCharacter._id,
-          data: formData
+          data: { ...formData, avatar: editFormData.avatar }
         });
 
         addNotification({ type: 'success', message: 'Personaggio aggiornato con successo' });
@@ -445,6 +476,8 @@ export default function CharacterList() {
             customContent={
               <CharacterEditContent
                 character={currentCharacter}
+                avatar={editFormData.avatar}
+                onAvatarChange={(url) => setEditFormData(prev => ({ ...prev, avatar: url }))}
                 onAvatarGenerated={() => addNotification({ type: 'success', message: 'Avatar generato con successo!' })}
               />
             }

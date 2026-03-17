@@ -406,7 +406,7 @@ export default function UserList() {
               fields: [
                 { key: 'name', label: 'Nome', type: 'text', required: true, disabled: false },
                 { key: 'surname', label: 'Cognome', type: 'text', required: false, disabled: false },
-                { key: 'avatarUrl', label: 'Avatar URL', type: 'text', required: false, disabled: false },
+                { key: 'avatar', label: 'Avatar URL (opzionale)', type: 'text', required: false, disabled: false, placeholder: 'https://...', helpText: 'Inserisci URL oppure carica immagine dopo la creazione' },
                 { key: 'description', label: 'Descrizione', type: 'textarea', required: false, disabled: false }
               ],
               actions: [
@@ -417,7 +417,7 @@ export default function UserList() {
             data={{
               name: '',
               surname: '',
-              avatarUrl: '',
+              avatar: '',
               description: ''
             }}
             onAction={async (action, formData) => {
@@ -465,7 +465,7 @@ export default function UserList() {
               fields: [
                 { key: 'name', label: 'Nome', type: 'text', required: true, disabled: false },
                 { key: 'surname', label: 'Cognome', type: 'text', required: false, disabled: false },
-                { key: 'avatarUrl', label: 'Avatar URL', type: 'text', required: false, disabled: false }
+                { key: 'avatar', label: 'Avatar URL (opzionale)', type: 'text', required: false, disabled: false, placeholder: 'https://...', helpText: 'Inserisci URL oppure carica immagine dopo la creazione' }
               ],
               actions: [
                 { key: 'submit', label: 'Crea Master', type: 'primary', loading: assignMaster.isPending },
@@ -475,7 +475,7 @@ export default function UserList() {
             data={{
               name: '',
               surname: '',
-              avatarUrl: ''
+              avatar: ''
             }}
             onAction={async (action, formData) => {
               if (action === 'submit') {

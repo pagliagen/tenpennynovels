@@ -77,6 +77,8 @@ export interface Character {
     actionsPerformed: number;
     eventsParticipated: number;
   };
+  avatar?: string; // URL to character avatar image
+
   metadata: {
     createdAt: string;
     updatedAt: string;
@@ -146,6 +148,7 @@ export interface UpdateCharacterData {
   surname?: string;
   age?: number;
   gender?: 'male' | 'female' | 'other';
+  avatar?: string;
   status?: 'pending' | 'approved' | 'rejected' | 'active' | 'inactive';
   biography?: {
     appearance?: string;

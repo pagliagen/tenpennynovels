@@ -20,6 +20,7 @@
 
 import { usePresence } from '@/hooks/usePresence';
 import { useGameStateStore } from '@/store/gameStateStore';
+import { useWindowManagerStore } from '@/store/windowManagerStore';
 import styles from '@/styles/components/PresenceSection.module.scss';
 
 /**
@@ -39,6 +40,7 @@ import styles from '@/styles/components/PresenceSection.module.scss';
  */
 export function LocationPresenceList(): JSX.Element {
   const { locationPresence, isLoading } = usePresence();
+  const { openWindow } = useWindowManagerStore();
 
   // Get current location ID (SINGLE SOURCE OF TRUTH from GameStateStore)
   const currentLocationId = useGameStateStore((state) => state.currentLocationId);
@@ -75,8 +77,11 @@ export function LocationPresenceList(): JSX.Element {
                 className={styles.playerButton}
                 aria-label={`${presence.characterName}. Clicca per vedere profilo`}
                 onClick={() => {
-                  // TODO: Navigate to character profile
-                  console.log('Navigate to character profile:', presence.characterId);
+                  openWindow('characterSheet', {
+                    characterId: presence.characterId,
+                    characterName: presence.characterName,
+                    avatar: presence.avatar || undefined,
+                  });
                 }}
               >
                 {presence.characterName}
