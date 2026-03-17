@@ -43,7 +43,7 @@ export default function RegolamentoDetail({ data, error }: RegolamentoDetailProp
     <>
       <SEO
         title={`${document.title} - Regolamento`}
-        description={document.title}
+        description={`Regole su ${document.title} - Sistema di gioco Ten Penny Novels`}
         ogType="article"
       />
 
