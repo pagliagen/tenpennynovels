@@ -145,11 +145,67 @@ export class ChatController {
         }
       }
 
+      // ========== FAKE PNG MASKING LOGIC ==========
+      // Fresh query to avoid stale middleware data
+      const freshCharacter = await Character.findById(character.characterId)
+        .select('_id name surname avatar activeFakePngId fakePngs')
+        .lean();
+
+      if (!freshCharacter) {
+        res.status(404).json(errorResponse(
+          'Personaggio non trovato',
+          'CHARACTER_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      // Helper: build full name
+      const buildFullName = (name: string, surname?: string) =>
+        name + (surname ? ' ' + surname : '');
+
+      // Check if fake PNG active + permission valid
+      let isMasked = false;
+      let displayName = buildFullName(freshCharacter.name, freshCharacter.surname);
+      let displayAvatar = freshCharacter.avatar;
+      let realCharacterName: string | undefined;
+
+      if (freshCharacter.activeFakePngId) {
+        // Verify permission (degrade gracefully if lost)
+        const { hasGamePermission, GamePermissions } = await import('@config/permissions/game');
+        const hasFakePngPermission = hasGamePermission(
+          GamePermissions.CHAT_USE_FAKE_PNG,
+          character.playerStatus || 'draft',
+          character.isGestore || false,
+          character.gameplayRoles || [],
+          character.characterPermissions || []
+        );
+
+        if (hasFakePngPermission) {
+          const activeFake = freshCharacter.fakePngs?.find(
+            (f: any) => f._id.toString() === freshCharacter.activeFakePngId.toString()
+          );
+
+          if (activeFake) {
+            isMasked = true;
+            realCharacterName = displayName;  // Save real name for admin
+            displayName = buildFullName(activeFake.name, activeFake.surname);
+            displayAvatar = activeFake.avatar;
+          }
+        }
+      }
+      // ========== END FAKE PNG MASKING LOGIC ==========
+
       // Build the location action
       const actionData: any = {
         actionType,
-        characterId: character.characterId,
-        characterName: character.characterName,
+        characterId: freshCharacter._id.toString(),  // REAL ID (ownership)
+        characterName: displayName,                  // Fake if masked, real otherwise
+        characterAvatar: displayAvatar,              // Fake if masked, real otherwise
+        isMasked,
+        realCharacterName,  // Only set if masked (admin-only)
         content: content.trim(),
         locationId,
         sessionId, // Copy sessionId from location to action

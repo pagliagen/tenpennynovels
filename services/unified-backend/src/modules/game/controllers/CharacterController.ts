@@ -1992,4 +1992,302 @@ export class CharacterController {
     }
   }
 
+  /**
+   * PNG LIGHT SYSTEM - Fake PNG Management
+   * Max 5 fake identities per character for chat masking
+   */
+
+  /**
+   * GET /characters/:characterId/fake-pngs
+   * List all fake PNGs for character
+   */
+  static async listFakePngs(req: Request, res: Response): Promise<void> {
+    try {
+      const { characterId } = req.params;
+
+      // Auth check
+      if (!req.character) {
+        res.status(401).json(errorResponse('Authentication required', 'UNAUTHORIZED', undefined, 401, getRequestId(req)));
+        return;
+      }
+
+      // Ownership check
+      if (req.character.characterId !== characterId) {
+        res.status(403).json(errorResponse('Not authorized', 'FORBIDDEN', undefined, 403, getRequestId(req)));
+        return;
+      }
+
+      const character = await Character.findById(characterId)
+        .select('fakePngs activeFakePngId')
+        .lean();
+
+      if (!character) {
+        res.status(404).json(errorResponse('Character not found', 'NOT_FOUND', undefined, 404, getRequestId(req)));
+        return;
+      }
+
+      res.json(successResponse({
+        fakePngs: character.fakePngs || [],
+        activeFakePngId: character.activeFakePngId
+      }, 'Fake PNGs retrieved successfully', getRequestId(req)));
+    } catch (error) {
+      logger.error('[CharacterController] listFakePngs error:', error);
+      res.status(500).json(errorResponse('Internal server error', 'SERVER_ERROR', undefined, 500, getRequestId(req)));
+    }
+  }
+
+  /**
+   * POST /characters/:characterId/fake-pngs
+   * Create fake PNG
+   */
+  static async createFakePng(req: Request, res: Response): Promise<void> {
+    try {
+      const { characterId } = req.params;
+      const { name, surname, avatar } = req.body;
+
+      // Auth check
+      if (!req.character) {
+        res.status(401).json(errorResponse('Authentication required', 'UNAUTHORIZED', undefined, 401, getRequestId(req)));
+        return;
+      }
+
+      // Ownership check
+      if (req.character.characterId !== characterId) {
+        res.status(403).json(errorResponse('Not authorized', 'FORBIDDEN', undefined, 403, getRequestId(req)));
+        return;
+      }
+
+      // Validation
+      if (!name || name.trim().length < 2) {
+        res.status(400).json(errorResponse('Name required (min 2 chars)', 'INVALID_NAME', undefined, 400, getRequestId(req)));
+        return;
+      }
+
+      const character = await Character.findById(characterId);
+      if (!character) {
+        res.status(404).json(errorResponse('Character not found', 'NOT_FOUND', undefined, 404, getRequestId(req)));
+        return;
+      }
+
+      // Check max limit
+      if (character.fakePngs && character.fakePngs.length >= 5) {
+        res.status(400).json(errorResponse('Max 5 fake PNGs allowed', 'MAX_LIMIT_REACHED', undefined, 400, getRequestId(req)));
+        return;
+      }
+
+      // Create fake PNG (Mongoose will auto-generate _id)
+      const newFake = {
+        name: name.trim(),
+        surname: surname?.trim(),
+        avatar: avatar?.trim(),
+        createdAt: new Date()
+      };
+
+      character.fakePngs = character.fakePngs || [];
+      character.fakePngs.push(newFake as any);
+      await character.save();
+
+      // Get the created fake with _id
+      const createdFake = character.fakePngs[character.fakePngs.length - 1];
+
+      res.status(201).json(createResponse(createdFake, 'Fake PNG created successfully', getRequestId(req)));
+    } catch (error) {
+      logger.error('[CharacterController] createFakePng error:', error);
+      res.status(500).json(errorResponse('Internal server error', 'SERVER_ERROR', undefined, 500, getRequestId(req)));
+    }
+  }
+
+  /**
+   * PATCH /characters/:characterId/fake-pngs/:fakeId
+   * Update fake PNG
+   */
+  static async updateFakePng(req: Request, res: Response): Promise<void> {
+    try {
+      const { characterId, fakeId } = req.params;
+      const { name, surname, avatar } = req.body;
+
+      // Auth check
+      if (!req.character) {
+        res.status(401).json(errorResponse('Authentication required', 'UNAUTHORIZED', undefined, 401, getRequestId(req)));
+        return;
+      }
+
+      // Ownership check
+      if (req.character.characterId !== characterId) {
+        res.status(403).json(errorResponse('Not authorized', 'FORBIDDEN', undefined, 403, getRequestId(req)));
+        return;
+      }
+
+      const character = await Character.findById(characterId);
+      if (!character) {
+        res.status(404).json(errorResponse('Character not found', 'NOT_FOUND', undefined, 404, getRequestId(req)));
+        return;
+      }
+
+      const fake = character.fakePngs?.find((f: any) => f._id?.toString() === fakeId);
+      if (!fake) {
+        res.status(404).json(errorResponse('Fake PNG not found', 'NOT_FOUND', undefined, 404, getRequestId(req)));
+        return;
+      }
+
+      // Update fields
+      if (name) (fake as any).name = name.trim();
+      if (surname !== undefined) (fake as any).surname = surname?.trim();
+      if (avatar !== undefined) (fake as any).avatar = avatar?.trim();
+      (fake as any).updatedAt = new Date();
+
+      await character.save();
+
+      res.json(updateResponse(fake, 'Fake PNG updated successfully', getRequestId(req)));
+    } catch (error) {
+      logger.error('[CharacterController] updateFakePng error:', error);
+      res.status(500).json(errorResponse('Internal server error', 'SERVER_ERROR', undefined, 500, getRequestId(req)));
+    }
+  }
+
+  /**
+   * DELETE /characters/:characterId/fake-pngs/:fakeId
+   * Delete fake PNG
+   */
+  static async deleteFakePng(req: Request, res: Response): Promise<void> {
+    try {
+      const { characterId, fakeId } = req.params;
+
+      // Auth check
+      if (!req.character) {
+        res.status(401).json(errorResponse('Authentication required', 'UNAUTHORIZED', undefined, 401, getRequestId(req)));
+        return;
+      }
+
+      // Ownership check
+      if (req.character.characterId !== characterId) {
+        res.status(403).json(errorResponse('Not authorized', 'FORBIDDEN', undefined, 403, getRequestId(req)));
+        return;
+      }
+
+      const character = await Character.findById(characterId);
+      if (!character) {
+        res.status(404).json(errorResponse('Character not found', 'NOT_FOUND', undefined, 404, getRequestId(req)));
+        return;
+      }
+
+      // Remove from array
+      const initialLength = character.fakePngs?.length || 0;
+      character.fakePngs = character.fakePngs?.filter(
+        (f: any) => f._id?.toString() !== fakeId
+      ) || [];
+
+      if (character.fakePngs.length === initialLength) {
+        res.status(404).json(errorResponse('Fake PNG not found', 'NOT_FOUND', undefined, 404, getRequestId(req)));
+        return;
+      }
+
+      // Clear activeFakePngId if deleting active fake
+      if (character.activeFakePngId?.toString() === fakeId) {
+        character.activeFakePngId = null;
+      }
+
+      await character.save();
+
+      res.json(successResponse({ deleted: true }, 'Fake PNG deleted successfully', getRequestId(req)));
+    } catch (error) {
+      logger.error('[CharacterController] deleteFakePng error:', error);
+      res.status(500).json(errorResponse('Internal server error', 'SERVER_ERROR', undefined, 500, getRequestId(req)));
+    }
+  }
+
+  /**
+   * POST /characters/:characterId/fake-pngs/:fakeId/activate
+   * Activate fake PNG
+   */
+  static async activateFakePng(req: Request, res: Response): Promise<void> {
+    try {
+      const { characterId, fakeId } = req.params;
+
+      // Auth check
+      if (!req.character) {
+        res.status(401).json(errorResponse('Authentication required', 'UNAUTHORIZED', undefined, 401, getRequestId(req)));
+        return;
+      }
+
+      // Ownership check
+      if (req.character.characterId !== characterId) {
+        res.status(403).json(errorResponse('Not authorized', 'FORBIDDEN', undefined, 403, getRequestId(req)));
+        return;
+      }
+
+      // Permission check
+      const { hasGamePermission, GamePermissions } = await import('@config/permissions/game');
+      const hasFakePngPermission = hasGamePermission(
+        GamePermissions.CHAT_USE_FAKE_PNG,
+        req.character.playerStatus || 'draft',
+        req.character.isGestore || false,
+        req.character.gameplayRoles || [],
+        req.character.characterPermissions || []
+      );
+      if (!hasFakePngPermission) {
+        res.status(403).json(errorResponse('Missing permission: game:chat:use-fake-png', 'FORBIDDEN', undefined, 403, getRequestId(req)));
+        return;
+      }
+
+      const character = await Character.findById(characterId);
+      if (!character) {
+        res.status(404).json(errorResponse('Character not found', 'NOT_FOUND', undefined, 404, getRequestId(req)));
+        return;
+      }
+
+      // Verify fake exists
+      const fakeExists = character.fakePngs?.some((f: any) => f._id?.toString() === fakeId);
+      if (!fakeExists) {
+        res.status(404).json(errorResponse('Fake PNG not found', 'NOT_FOUND', undefined, 404, getRequestId(req)));
+        return;
+      }
+
+      // Type-safe ObjectId conversion
+      character.activeFakePngId = new Types.ObjectId(Array.isArray(fakeId) ? fakeId[0] : fakeId);
+      await character.save();
+
+      res.json(successResponse({ activeFakePngId: fakeId }, 'Fake PNG activated successfully', getRequestId(req)));
+    } catch (error) {
+      logger.error('[CharacterController] activateFakePng error:', error);
+      res.status(500).json(errorResponse('Internal server error', 'SERVER_ERROR', undefined, 500, getRequestId(req)));
+    }
+  }
+
+  /**
+   * POST /characters/:characterId/fake-pngs/deactivate
+   * Deactivate fake PNG (return to real identity)
+   */
+  static async deactivateFakePng(req: Request, res: Response): Promise<void> {
+    try {
+      const { characterId } = req.params;
+
+      // Auth check
+      if (!req.character) {
+        res.status(401).json(errorResponse('Authentication required', 'UNAUTHORIZED', undefined, 401, getRequestId(req)));
+        return;
+      }
+
+      // Ownership check
+      if (req.character.characterId !== characterId) {
+        res.status(403).json(errorResponse('Not authorized', 'FORBIDDEN', undefined, 403, getRequestId(req)));
+        return;
+      }
+
+      const character = await Character.findById(characterId);
+      if (!character) {
+        res.status(404).json(errorResponse('Character not found', 'NOT_FOUND', undefined, 404, getRequestId(req)));
+        return;
+      }
+
+      character.activeFakePngId = null;
+      await character.save();
+
+      res.json(successResponse({ activeFakePngId: null }, 'Fake PNG deactivated successfully', getRequestId(req)));
+    } catch (error) {
+      logger.error('[CharacterController] deactivateFakePng error:', error);
+      res.status(500).json(errorResponse('Internal server error', 'SERVER_ERROR', undefined, 500, getRequestId(req)));
+    }
+  }
+
 }
