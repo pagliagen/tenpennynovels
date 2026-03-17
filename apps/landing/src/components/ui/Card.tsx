@@ -1,20 +1,11 @@
 /**
  * Card Component
  *
- * Reusable card component for displaying character information.
- * Used in character selection modal and character displays.
+ * Reusable card for character information. Used in the character selection modal.
  *
- * **Features**:
- * - Victorian decorative styling
- * - Hover effects
- * - Clickable / Non-clickable variants
- * - Status badges (pending, approved, rejected)
- * - Character preview (avatar, name, occupation, description)
- *
- * **Use Cases**:
- * - Character selection cards
- * - Character profile preview
- * - List of characters
+ * When onSelectCharacter is provided and the character is selectable, the entire card
+ * is clickable (no separate "Seleziona" button). When the character is not selectable,
+ * the card shows "Non disponibile" in the footer.
  *
  * @module components/ui/Card
  */
@@ -22,196 +13,166 @@
 import React from 'react';
 
 /**
- * Card component props
- *
- * @interface CardProps
+ * Character data shape for Card (from API / Character type + optional fields)
  */
-export interface CardProps {
-  /** Card title (typically character name) */
-  title?: string;
-  /** Subtitle (typically occupation) */
-  subtitle?: string;
-  /** Card description text */
+export interface CharacterCardData {
+  id: string;
+  name: string;
+  occupationDetails?: { name: string };
+  currentOccupation?: string;
   description?: string;
-  /** Status badge (e.g., 'approved', 'pending', 'rejected') */
-  status?: 'approved' | 'pending' | 'rejected' | 'draft';
-  /** Avatar image URL (optional) */
-  avatarUrl?: string;
-  /** Whether card is clickable */
-  clickable?: boolean;
-  /** Click handler (if clickable) */
-  onClick?: () => void;
-  /** Additional content (footer, actions, etc.) */
-  children?: React.ReactNode;
-  /** Additional CSS classes */
-  className?: string;
+  status?: string;
+  playerStatus?: string;
+  avatar?: string;
+  characterType?: 'pg_master' | 'png';
 }
 
 /**
- * Get status label in Italian
- *
- * @param {string} status - Status code
- * @returns {string} Italian label
+ * Card component props (character-based).
  */
+export interface CardProps {
+  /** Character data; the card derives title, subtitle, description, status, avatar and badge from it. */
+  character: CharacterCardData;
+  /** Fallback avatar URL when character.avatar is missing. */
+  fallbackAvatarUrl?: string;
+  /** When provided, the whole card is clickable (if character is selectable) and this is called on click. */
+  onSelectCharacter?: (characterId: string) => void;
+  /** ID of the character currently being selected (loading state). */
+  selectingId?: string;
+  /** Additional CSS classes. */
+  className?: string;
+}
+
+type CardStatus = 'approved' | 'pending' | 'rejected' | 'draft';
+
 function getStatusLabel(status: string): string {
   const labels: Record<string, string> = {
-    approved: 'Approvato',
+    approved: 'Disponibile',
     pending: 'In attesa',
     rejected: 'Rifiutato',
     draft: 'Bozza',
   };
-
   return labels[status] || status;
 }
 
+function normalizeStatus(c: CharacterCardData): CardStatus {
+  const s = (c.playerStatus ?? c.status)?.toLowerCase() || 'draft';
+  if (s === 'approved' || s === 'pending' || s === 'rejected' || s === 'draft') return s;
+  return 'draft';
+}
+
+function canSelectCharacter(c: CharacterCardData): boolean {
+  const status = (c.playerStatus ?? c.status)?.toLowerCase();
+  return status === 'approved' || status === 'draft' || status === 'pending';
+}
+
 /**
- * Card Component
+ * Renders a styled card. When onSelectCharacter is set and the character is selectable,
+ * the entire card is clickable (role="button"). When not selectable, the footer shows "Non disponibile".
  *
- * Renders a styled card with Victorian aesthetics.
- * Primarily used for character display in character selection modal.
- *
- * **Benefits**:
- * - **Consistent**: All character cards look the same
- * - **Reusable**: Use for any card-like content
- * - **Accessible**: Proper semantic HTML and ARIA attributes
- * - **Interactive**: Hover states and click handling
- *
- * **Variants**:
- * - **Clickable**: Has hover effect, cursor pointer, onClick handler
- * - **Non-clickable**: Static display only
- *
- * @param {CardProps} props - Component props
- * @returns {JSX.Element} Rendered card
+ * @param props - Character and optional callbacks.
+ * @returns Rendered card.
  *
  * @example
- * ```typescript
- * import { Card } from '@/components/ui/Card';
- *
- * // Character card
- * <Card
- *   title="John Watson"
- *   subtitle="Medico"
- *   description="Un medico con un passato militare..."
- *   status="approved"
- *   avatarUrl="/avatars/watson.jpg"
- *   clickable={true}
- *   onClick={() => selectCharacter('watson-id')}
- * />
- * ```
- *
- * @example
- * ```typescript
- * // Character selection list
- * function CharacterSelectPage() {
- *   const { characters } = useCharacters();
- *
- *   return (
- *     <div className="character-grid">
- *       {characters.map(char => (
- *         <Card
- *           key={char.id}
- *           title={char.name}
- *           subtitle={char.occupationDetails?.name}
- *           description={char.description}
- *           status={char.status}
- *           clickable={char.status === 'approved'}
- *           onClick={() => selectCharacter(char.id)}
- *         />
- *       ))}
- *     </div>
- *   );
- * }
- * ```
- *
- * @example
- * ```typescript
- * // Card with custom footer
- * <Card
- *   title="Character Name"
- *   subtitle="Occupation"
- *   status="pending"
- * >
- *   <div className="card-footer">
- *     <Button variant="secondary" size="small">Edit</Button>
- *     <Button variant="ghost" size="small">Delete</Button>
- *   </div>
- * </Card>
- * ```
+ * characters.map((character) => (
+ *   <Card
+ *     key={character.id}
+ *     character={character}
+ *     fallbackAvatarUrl={FALLBACK_AVATAR}
+ *     onSelectCharacter={handleSelectCharacter}
+ *     selectingId={selecting}
+ *   />
+ * ));
  */
 export const Card: React.FC<CardProps> = ({
-  title,
-  subtitle,
-  description,
-  status,
-  avatarUrl,
-  clickable = false,
-  onClick,
-  children,
+  character,
+  fallbackAvatarUrl,
+  onSelectCharacter,
+  selectingId,
   className = '',
 }) => {
+  const status = normalizeStatus(character);
+  const title = character.name;
+  const subtitle = character.occupationDetails?.name ?? character.currentOccupation;
+  const description = character.description;
+  const avatarUrl = character.avatar || fallbackAvatarUrl;
+  const characterType = character.characterType;
+  const showAction = onSelectCharacter != null;
+  const canSelect = showAction && canSelectCharacter(character);
+  const loading = selectingId === character.id;
+
   const cardClasses = [
     'card',
-    clickable && 'card--clickable',
     status && `card--status-${status}`,
+    canSelect && 'card--clickable',
+    loading && 'card--loading',
     className,
   ]
     .filter(Boolean)
     .join(' ');
 
-  const handleClick = () => {
-    if (clickable && onClick) {
-      onClick();
+  const handleClick = (e: React.MouseEvent) => {
+    if (canSelect && !loading && onSelectCharacter) {
+      e.stopPropagation();
+      onSelectCharacter(character.id);
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (clickable && onClick && (e.key === 'Enter' || e.key === ' ')) {
+    if (canSelect && !loading && onSelectCharacter && (e.key === 'Enter' || e.key === ' ')) {
       e.preventDefault();
-      onClick();
+      onSelectCharacter(character.id);
     }
   };
 
   return (
     <div
       className={cardClasses}
+      role={canSelect ? 'button' : undefined}
+      tabIndex={canSelect ? 0 : undefined}
+      aria-label={canSelect ? `Seleziona personaggio ${title}` : undefined}
+      aria-busy={loading}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
-      role={clickable ? 'button' : undefined}
-      tabIndex={clickable ? 0 : undefined}
-      aria-label={clickable ? `Seleziona ${title}` : undefined}
     >
-      {/* Status badge */}
       {status && (
         <div className={`card__status card__status--${status}`}>
           {getStatusLabel(status)}
         </div>
       )}
 
-      {/* Card header */}
       <div className="card__header">
-        {/* Avatar (optional) */}
         {avatarUrl && (
           <div className="card__avatar">
-            <img src={avatarUrl} alt={`${title} avatar`} />
+            <img src={avatarUrl} alt={`Avatar di ${title}`} />
           </div>
         )}
 
-        {/* Title + Subtitle */}
         <div className="card__title-group">
-          <h3 className="card__title">{title}</h3>
+          <div className="card__title-row">
+            <h3 className="card__title">{title}</h3>
+            {characterType === 'pg_master' && (
+              <span className="card__badge card__badge--master">MASTER</span>
+            )}
+            {characterType === 'png' && (
+              <span className="card__badge card__badge--png">PNG</span>
+            )}
+          </div>
           {subtitle && <p className="card__subtitle">{subtitle}</p>}
         </div>
       </div>
 
-      {/* Card body */}
       {description && (
         <div className="card__body">
           <p className="card__description">{description}</p>
         </div>
       )}
 
-      {/* Card footer (custom children) */}
-      {children && <div className="card__footer">{children}</div>}
+      {showAction && !canSelect && (
+        <div className="card__footer">
+          <span className="card__unavailable">Non disponibile</span>
+        </div>
+      )}
     </div>
   );
 };

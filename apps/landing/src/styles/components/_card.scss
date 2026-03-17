@@ -1,7 +1,6 @@
 /**
- * Card Component Styles
- *
- * Character cards and general-purpose cards.
+ * Card component styles.
+ * Used for character selection: when clickable, the whole card is the control.
  */
 
 .card {
@@ -10,10 +9,8 @@
   background: var(--color-bg-secondary);
   border: 2px solid var(--color-border-secondary);
   transition: var(--transition-scale);
+  outline: none;
 
-  /**
-   * Status badge
-   */
   &__status {
     position: absolute;
     top: var(--spacing-sm);
@@ -50,9 +47,6 @@
     }
   }
 
-  /**
-   * Header (avatar + title)
-   */
   &__header {
     display: flex;
     align-items: center;
@@ -60,9 +54,6 @@
     margin-bottom: var(--spacing-md);
   }
 
-  /**
-   * Avatar
-   */
   &__avatar {
     width: var(--size-avatar);
     height: var(--size-avatar);
@@ -78,26 +69,41 @@
     }
   }
 
-  /**
-   * Title group
-   */
   &__title-group {
     flex: 1;
   }
 
-  /**
-   * Title
-   */
+  &__title-row {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-xs);
+  }
+
   &__title {
     font-size: var(--font-size-xl);
     font-weight: var(--font-weight-bold);
     color: var(--color-primary);
-    margin-bottom: var(--spacing-xs);
+    margin: 0;
   }
 
-  /**
-   * Subtitle
-   */
+  &__badge {
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: white;
+    font-weight: bold;
+    flex-shrink: 0;
+
+    &--master {
+      background-color: #8b5cf6;
+    }
+
+    &--png {
+      background-color: #6b7280;
+    }
+  }
+
   &__subtitle {
     font-size: var(--font-size-sm);
     color: var(--color-text-secondary);
@@ -105,47 +111,49 @@
     letter-spacing: var(--letter-spacing-wide);
   }
 
-  /**
-   * Body
-   */
   &__body {
     margin-bottom: var(--spacing-md);
   }
 
-  /**
-   * Description
-   */
   &__description {
     font-size: var(--font-size-base);
     line-height: var(--line-height-relaxed);
     color: var(--color-text-secondary);
   }
 
-  /**
-   * Footer
-   */
   &__footer {
-    display: flex;
-    gap: var(--spacing-sm);
     padding-top: var(--spacing-md);
     border-top: 1px solid var(--color-border-secondary);
   }
 
-  /* ===========================
-     CLICKABLE VARIANT
-     =========================== */
+  &__unavailable {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-tertiary);
+    font-style: italic;
+  }
 
   &--clickable {
     cursor: pointer;
 
-    &:hover {
+    &:hover:not(.card--loading) {
       transform: var(--transform-lift-up-lg);
       border-color: var(--color-primary);
       box-shadow: var(--shadow-golden-glow);
     }
 
-    &:active {
+    &:active:not(.card--loading) {
       transform: var(--transform-lift-up);
     }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-primary);
+      outline-offset: 2px;
+    }
+  }
+
+  &--loading {
+    cursor: wait;
+    pointer-events: none;
+    opacity: 0.85;
   }
 }
