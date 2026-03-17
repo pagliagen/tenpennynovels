@@ -422,6 +422,14 @@ export default function UserList() {
             }}
             onAction={async (action, formData) => {
               if (action === 'submit') {
+                if (!currentUser?._id) {
+                  addNotification({
+                    type: 'error',
+                    message: 'Errore: utente non selezionato correttamente'
+                  });
+                  return;
+                }
+
                 try {
                   await assignPNG.mutateAsync({
                     userId: currentUser._id,
@@ -471,6 +479,14 @@ export default function UserList() {
             }}
             onAction={async (action, formData) => {
               if (action === 'submit') {
+                if (!currentUser?._id) {
+                  addNotification({
+                    type: 'error',
+                    message: 'Errore: utente non selezionato correttamente'
+                  });
+                  return;
+                }
+
                 try {
                   await assignMaster.mutateAsync({
                     userId: currentUser._id,

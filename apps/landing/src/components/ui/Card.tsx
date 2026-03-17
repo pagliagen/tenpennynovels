@@ -2,7 +2,7 @@
  * Card Component
  *
  * Reusable card component for displaying character information.
- * Used primarily in character-select page.
+ * Used in character selection modal and character displays.
  *
  * **Features**:
  * - Victorian decorative styling
@@ -68,7 +68,7 @@ function getStatusLabel(status: string): string {
  * Card Component
  *
  * Renders a styled card with Victorian aesthetics.
- * Primarily used for character display in character-select page.
+ * Primarily used for character display in character selection modal.
  *
  * **Benefits**:
  * - **Consistent**: All character cards look the same

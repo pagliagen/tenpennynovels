@@ -281,66 +281,27 @@ export class AuthController {
         loginAt: new Date().toISOString()
       }));
 
-      // Handle character context based on user settings
-      logger.info(`User ${user.username} character context logic: multipleCharactersAllowed=${user.multipleCharactersAllowed}, characters.length=${characters.length}`);
-      
-      // Set character context for all users with exactly one character (including admins)
-      if (!user.multipleCharactersAllowed && characters.length > 0) {
-        // Single character user - auto-select their character
+      // Handle character context based on character count
+      logger.info(`User ${user.username} login: ${characters.length} characters found`);
+
+      // Auto-select if user has EXACTLY one character
+      if (characters.length === 1) {
         const userCharacter = characters[0];
         logger.info(`User ${user.username}: Auto-selecting character ${userCharacter.name} (${userCharacter.id})`);
-        
-        // Auto-set character context cookie regardless of status
-        // Build full character name (name + surname if present)
-        const fullCharacterName = userCharacter.surname
-          ? `${userCharacter.name} ${userCharacter.surname}`
-          : userCharacter.name;
 
-        const characterToken = CryptoUtils.generateCharacterContextToken({
-          characterId: userCharacter.id,
-          characterName: fullCharacterName,
-          userId: user.id,
-          gameplayRoles: userCharacter.gameplayRoles || [],
-          isApproved: userCharacter.playerStatus === 'approved',
-          isGestore: userCharacter.isGestore || false,
-          playerStatus: userCharacter.playerStatus || 'draft',
-          characterPermissions: userCharacter.characterPermissions || []
-        });
-
-        // Create character session (invalidates any existing sessions for this character)
-        await CharacterSessionManager.createCharacterSession(
-          userCharacter.id,
+        // Use centralized method (same logic as character selection)
+        await CharacterSessionManager.activateCharacterContext(
+          res,
+          userCharacter,
           user.id,
-          characterToken,
           deviceInfo,
           req.ip || '127.0.0.1',
           rememberMe ? '7d' : '24h'
         );
 
-        // Set character context cookie  
-        AuthMiddleware.setCharacterCookie(res, characterToken);
         logger.info(`User ${user.username}: Character context cookie set for ${userCharacter.name}`);
-        
-        // Mark character as active
-        await Character.updateMany(
-          { userId: user.id },
-          { isActive: false }
-        );
-        await Character.findByIdAndUpdate(userCharacter.id, {
-          isActive: true,
-          lastActive: new Date()
-        });
-
-        // Publish character activation event to Redis
-        await redis.publish('user:events', JSON.stringify({
-          type: 'user_character_selected',
-          userId: user.id,
-          characterId: userCharacter.id,
-          characterName: fullCharacterName,
-          timestamp: new Date().toISOString()
-        }));
       } else {
-        logger.info(`User ${user.username}: No character context set - either admin or multipleCharactersAllowed=true or no characters`);
+        logger.info(`User ${user.username}: No character context set - ${characters.length} characters (must select manually)`);
       }
 
       createdResponse(res, 

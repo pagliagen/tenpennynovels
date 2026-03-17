@@ -15,6 +15,7 @@ import {
 } from '../utils/characterCreationUtils';
 import { smartTransaction } from '../utils/transactions';
 import jwt from 'jsonwebtoken';
+import { CharacterSessionManager } from '../../auth/utils/characterSessionManager';
 
 function getJwtSecret(): string {
   if (!appConfig.jwt.secret) throw new Error('JWT_SECRET non configurato');
@@ -148,15 +149,17 @@ export class CharacterGameplayController {
   }
 
   /**
-   * POST /characters/:characterId/select
+   * POST /game/characters/:characterId/select
    * Select character as active (generates character_context cookie)
+   *
+   * Uses centralized CharacterSessionManager.activateCharacterContext()
    */
   static async selectCharacter(req: Request, res: Response): Promise<void> {
     try {
       const { characterId } = req.params;
       const userId = req.user!.userId;
 
-      // Allow all statuses except DELETED (DRAFT characters can be selected too)
+      // Find character (allow all statuses except DELETED)
       const character = await Character.findOne({
         _id: characterId,
         userId: userId
@@ -173,44 +176,21 @@ export class CharacterGameplayController {
         return;
       }
 
-      // Deactivate other characters for this user
-      await Character.updateMany(
-        { userId: userId, _id: { $ne: characterId } },
-        { isActive: false }
-      );
-
-      // Activate selected character
-      character.isActive = true;
-      character.lastActive = new Date();
-      await character.save();
-
-      // Generate character context token
-      const characterToken = jwt.sign(
-        {
-          characterId: character.id,
-          characterName: character.name,
-          avatar: character.avatar,
-          userId: userId,
-          gameplayRoles: character.gameplayRoles || [],
-          isGestore: character.isGestore || false,
-          playerStatus: character.playerStatus || 'DRAFT',
-          characterPermissions: character.characterPermissions || []
-        },
-        getJwtSecret(),
-        { expiresIn: '24h' }
-      );
-
-      // Set character context cookie
-      res.cookie('character_context', characterToken, {
-        ...appConfig.cookie,
-        maxAge: 24 * 60 * 60 * 1000,
-      });
-
-      logger.info('Character selected', {
-        characterId: character.id,
+      // Use centralized method to activate character and set context
+      await CharacterSessionManager.activateCharacterContext(
+        res,
+        character,
         userId,
-        name: character.name
-      });
+        {
+          deviceName: req.get('User-Agent') || 'Unknown',
+          browser: 'Unknown',
+          os: 'Unknown',
+          deviceType: 'desktop',
+          userAgent: req.get('User-Agent')
+        },
+        req.ip || '127.0.0.1',
+        '24h'
+      );
 
       res.json(successResponse(
         {

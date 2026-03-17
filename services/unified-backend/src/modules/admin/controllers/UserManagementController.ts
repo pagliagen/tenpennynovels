@@ -111,7 +111,7 @@ export class UserManagementController {
         .lean();
 
       // Get character counts for each user
-      const userIds = users.map(user => user!.userId);
+      const userIds = users.map(user => user._id);
 
       // Skip character aggregations if no users found (avoid MongoDB limit error)
       if (userIds.length === 0) {
@@ -181,7 +181,7 @@ export class UserManagementController {
 
       // Transform to API format
       const transformedUsers: AdminUserProfile[] = users.map(user => ({
-        _id: user!.userId?.toString(),
+        _id: user._id?.toString(),
         username: user.username,
         email: user.email,
         displayName: user.displayName || '',
@@ -197,7 +197,7 @@ export class UserManagementController {
           bannedByName: user.bannedByName?.toString(),
         },
         multipleCharactersAllowed: user.multipleCharactersAllowed,
-        characters: charactersMap.get(user!.userId?.toString()) || [],
+        characters: charactersMap.get(user._id?.toString()) || [],
         activity: {
           lastLoginAt: user.lastLoginAt?.toISOString(),
           loginCount: user.loginCount || 0,
@@ -1859,11 +1859,16 @@ export class UserManagementController {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined
       });
-      res.status(500).json(errorResponse(
-        'Impossibile creare PNG',
-        'ASSIGN_PNG_ERROR',
+
+      // Check if it's a Mongoose validation error
+      const errorMessage = error instanceof Error ? error.message : 'Impossibile creare PNG';
+      const isValidationError = errorMessage.includes('validation failed');
+
+      res.status(isValidationError ? 400 : 500).json(errorResponse(
+        isValidationError ? `Errore di validazione: ${errorMessage}` : 'Impossibile creare PNG',
+        isValidationError ? 'VALIDATION_ERROR' : 'ASSIGN_PNG_ERROR',
         undefined,
-        500,
+        isValidationError ? 400 : 500,
         getRequestId(req)
       ));
     }
@@ -1999,11 +2004,16 @@ export class UserManagementController {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined
       });
-      res.status(500).json(errorResponse(
-        'Impossibile creare Master',
-        'ASSIGN_MASTER_ERROR',
+
+      // Check if it's a Mongoose validation error
+      const errorMessage = error instanceof Error ? error.message : 'Impossibile creare Master';
+      const isValidationError = errorMessage.includes('validation failed');
+
+      res.status(isValidationError ? 400 : 500).json(errorResponse(
+        isValidationError ? `Errore di validazione: ${errorMessage}` : 'Impossibile creare Master',
+        isValidationError ? 'VALIDATION_ERROR' : 'ASSIGN_MASTER_ERROR',
         undefined,
-        500,
+        isValidationError ? 400 : 500,
         getRequestId(req)
       ));
     }

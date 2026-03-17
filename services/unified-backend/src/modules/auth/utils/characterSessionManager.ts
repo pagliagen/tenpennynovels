@@ -1,8 +1,12 @@
-import { CharacterSession } from '@database/models';
+import { CharacterSession, Character } from '@database/models';
 import { DeviceInfo } from '../types/auth';
 import { logger } from '../logger';
 import crypto from 'crypto';
 import type { UpdateWriteOpResult } from 'mongoose';
+import { CryptoUtils } from './crypto';
+import { AuthMiddleware } from '../middleware/auth';
+import type { Response } from 'express';
+import { redis } from '@config/runtime/redis';
 
 interface CharacterSessionStatics {
   invalidateCharacterSessions(characterId: string, reason?: string, fromIp?: string): Promise<UpdateWriteOpResult>;
@@ -185,6 +189,85 @@ export class CharacterSessionManager {
     } catch (error: any) {
       logger.error('Failed to cleanup expired sessions:', error);
       return 0;
+    }
+  }
+
+  /**
+   * Centralized method to activate character and set context cookie
+   * Used by both login and character selection
+   *
+   * @returns {string} Character token that was generated
+   */
+  static async activateCharacterContext(
+    res: Response,
+    character: any, // Character document
+    userId: string,
+    deviceInfo: DeviceInfo,
+    ipAddress: string,
+    expiresIn: string = '24h'
+  ): Promise<string> {
+    try {
+      // Deactivate other characters for this user
+      await Character.updateMany(
+        { userId: userId, _id: { $ne: character._id } },
+        { isActive: false }
+      );
+
+      // Activate selected character
+      character.isActive = true;
+      character.lastActive = new Date();
+      await character.save();
+
+      // Build full character name (name + surname if present)
+      const fullCharacterName = character.surname
+        ? `${character.name} ${character.surname}`
+        : character.name;
+
+      // Generate character context token
+      const characterToken = CryptoUtils.generateCharacterContextToken({
+        characterId: character.id,
+        characterName: fullCharacterName,
+        userId: userId,
+        gameplayRoles: character.gameplayRoles || [],
+        isApproved: character.playerStatus === 'approved',
+        isGestore: character.isGestore || false,
+        playerStatus: character.playerStatus || 'draft',
+        characterPermissions: character.characterPermissions || []
+      });
+
+      // Create character session (invalidates any existing sessions for this character)
+      await this.createCharacterSession(
+        character.id,
+        userId,
+        characterToken,
+        deviceInfo,
+        ipAddress,
+        expiresIn
+      );
+
+      // Set character context cookie
+      AuthMiddleware.setCharacterCookie(res, characterToken);
+
+      // Publish character activation event to Redis
+      await redis.publish('user:events', JSON.stringify({
+        type: 'user_character_selected',
+        userId: userId,
+        characterId: character.id,
+        characterName: fullCharacterName,
+        timestamp: new Date().toISOString()
+      }));
+
+      logger.info('Character context activated', {
+        characterId: character.id,
+        userId,
+        name: fullCharacterName
+      });
+
+      return characterToken;
+
+    } catch (error: any) {
+      logger.error('Failed to activate character context:', error);
+      throw new Error('Character context activation failed');
     }
   }
 

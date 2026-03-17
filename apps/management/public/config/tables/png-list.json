@@ -1,0 +1,148 @@
+{
+  "_meta": {
+    "version": "1.0.0",
+    "description": "Configurazione tabella lista PNG (Personaggi Non Giocanti)",
+    "lastUpdated": "2026-03-17"
+  },
+  "table": {
+    "name": "png-list",
+    "title": "Gestione PNG",
+    "icon": "🎪",
+    "searchable": true,
+    "selectable": false,
+    "pagination": {
+      "defaultPageSize": 25,
+      "pageSizeOptions": [10, 25, 50, 100]
+    }
+  },
+  "columns": [
+    {
+      "key": "fullName",
+      "label": "Nome Completo",
+      "type": "text",
+      "visible": true,
+      "defaultVisible": true,
+      "sortable": true,
+      "width": "200px",
+      "render": {
+        "type": "text",
+        "className": "font-bold text-primary"
+      }
+    },
+    {
+      "key": "user.username",
+      "label": "Referente",
+      "type": "text",
+      "visible": true,
+      "defaultVisible": true,
+      "sortable": true,
+      "width": "150px",
+      "render": {
+        "type": "text"
+      }
+    },
+    {
+      "key": "age",
+      "label": "Età",
+      "type": "number",
+      "visible": true,
+      "defaultVisible": true,
+      "sortable": true,
+      "width": "80px",
+      "render": {
+        "type": "text"
+      }
+    },
+    {
+      "key": "occupation.name",
+      "label": "Occupazione",
+      "type": "text",
+      "visible": true,
+      "defaultVisible": true,
+      "sortable": false,
+      "width": "150px",
+      "render": {
+        "type": "text"
+      }
+    },
+    {
+      "key": "status",
+      "label": "Stato",
+      "type": "text",
+      "visible": true,
+      "defaultVisible": true,
+      "sortable": true,
+      "width": "120px",
+      "render": {
+        "type": "badge"
+      }
+    },
+    {
+      "key": "metadata.createdAt",
+      "label": "Creato Il",
+      "type": "datetime",
+      "visible": true,
+      "defaultVisible": true,
+      "sortable": true,
+      "width": "180px",
+      "render": {
+        "type": "datetime",
+        "format": "date"
+      }
+    },
+    {
+      "key": "metadata.approvedAt",
+      "label": "Approvato Il",
+      "type": "datetime",
+      "visible": true,
+      "defaultVisible": false,
+      "sortable": true,
+      "width": "180px",
+      "render": {
+        "type": "datetime",
+        "format": "relative"
+      }
+    }
+  ],
+  "actions": [
+    {
+      "key": "edit",
+      "label": "Modifica",
+      "icon": "✏️",
+      "type": "primary",
+      "visible": true
+    },
+    {
+      "key": "view-details",
+      "label": "Dettagli",
+      "icon": "👁️",
+      "type": "secondary",
+      "visible": true
+    },
+    {
+      "key": "delete",
+      "label": "Elimina",
+      "icon": "🗑️",
+      "type": "danger",
+      "visible": true,
+      "confirmMessage": "Sei sicuro di voler eliminare questo PNG? Questa azione è irreversibile."
+    }
+  ],
+  "bulkActions": [],
+  "filters": [
+    {
+      "key": "status",
+      "label": "Stato",
+      "type": "select",
+      "field": "status",
+      "options": [
+        { "value": "", "label": "Tutti" },
+        { "value": "pending", "label": "In Attesa" },
+        { "value": "approved", "label": "Approvati" },
+        { "value": "rejected", "label": "Rifiutati" },
+        { "value": "draft", "label": "Bozza" }
+      ],
+      "placeholder": "Filtra per stato"
+    }
+  ]
+}

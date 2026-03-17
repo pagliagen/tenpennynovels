@@ -276,14 +276,34 @@ const CharacterSchema = new Schema<ICharacter>({
   publicDescription: {
     type: String,
     trim: true,
-    minlength: 50,
     maxlength: 4000,
-    required: false // Opzionale
+    required: false, // Opzionale
+    validate: {
+      validator: function(value: string) {
+        // Only apply minlength validation for pg_principale
+        // For PNG/Master, skip validation (any length is OK)
+        if ((this as any).characterType === 'pg_principale' && value && value.length < 50) {
+          return false;
+        }
+        return true;
+      },
+      message: 'Public description must be at least 50 characters for main characters'
+    }
   },
   privateDescription: {
     type: String,
     trim: true,
-    minlength: 50,
+    validate: {
+      validator: function(value: string) {
+        // Only apply minlength validation for pg_principale
+        // For PNG/Master, skip validation (any length is OK)
+        if ((this as any).characterType === 'pg_principale' && value && value.length < 50) {
+          return false;
+        }
+        return true;
+      },
+      message: 'Private description must be at least 50 characters for main characters'
+    },
     maxlength: 4000,
     required: false // Opzionale per PNG/Master
   },
@@ -772,7 +792,7 @@ CharacterSchema.pre('save', async function(this: ICharacter) {
     this.occupation = undefined;
 
     // Skip full stats validation for PNG/Master - they don't need complete stats
-    // Continue with basic save operations
+    return; // Exit early - no need to calculate derived stats for PNG/Master
   }
 
   // Calculate derived statistics when base stats change
