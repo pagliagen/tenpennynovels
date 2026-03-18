@@ -3,6 +3,7 @@
 import { useEffect, useCallback, useState, useMemo } from 'react';
 import { useRouter } from 'next/router';
 import { usePresenceStore } from '@/store/presenceStore';
+import { useWindowManagerStore } from '@/store/windowManagerStore';
 import styles from '@/styles/components/presence/PresenceModal.module.scss';
 
 const ANIMATION_DURATION = 300; // ms
@@ -10,6 +11,7 @@ const ANIMATION_DURATION = 300; // ms
 export function PresenceModal(): JSX.Element | null {
   const router = useRouter();
   const { isModalOpen, closeModal, globalPresence } = usePresenceStore();
+  const { openWindow } = useWindowManagerStore();
   const [isClosing, setIsClosing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -56,6 +58,16 @@ export function PresenceModal(): JSX.Element | null {
       return fullName.includes(query);
     });
   }, [globalPresence, searchQuery]);
+
+  const handleAvatarClick = useCallback((characterId: string, characterName: string, characterSurname: string | undefined, avatar: string | undefined) => {
+    // Open character sheet WITHOUT closing the modal
+    const fullName = characterSurname ? `${characterName} ${characterSurname}` : characterName;
+    openWindow('characterSheet', {
+      characterId,
+      characterName: fullName,
+      avatar,
+    });
+  }, [openWindow]);
 
   const handleLocationClick = (locationSlug: string, _locationName: string) => {
     if (!locationSlug) {
@@ -118,15 +130,27 @@ export function PresenceModal(): JSX.Element | null {
                 <li key={presence.characterId} className={styles.item} role="listitem">
                   {/* Avatar + Name */}
                   <div className={styles.itemMain}>
-                    <img
-                      src={presence.avatar || '/images/sidebar/miniavatar_default.png'}
-                      onError={(e) => {
-                        e.currentTarget.src = '/images/sidebar/miniavatar_default.png';
-                      }}
-                      alt=""
-                      aria-hidden="true"
-                      className={styles.avatar}
-                    />
+                    <button
+                      type="button"
+                      className={styles.avatarButton}
+                      onClick={() => handleAvatarClick(
+                        presence.characterId,
+                        presence.characterName,
+                        presence.characterSurname ?? undefined,
+                        presence.avatar ?? undefined
+                      )}
+                      aria-label={`Apri scheda di ${presence.characterName}${presence.characterSurname ? ` ${presence.characterSurname}` : ''}`}
+                    >
+                      <img
+                        src={presence.avatar || '/images/sidebar/miniavatar_default.png'}
+                        onError={(e) => {
+                          e.currentTarget.src = '/images/sidebar/miniavatar_default.png';
+                        }}
+                        alt=""
+                        aria-hidden="true"
+                        className={styles.avatar}
+                      />
+                    </button>
                     <div className={styles.info}>
                       <div className={styles.name}>
                         {presence.characterName}

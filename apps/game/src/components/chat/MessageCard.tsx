@@ -76,11 +76,18 @@ export function MessageCard({ message, isDimmed, currentCharacterId }: MessageCa
       component = <StandardMessage message={message} currentCharacterId={currentCharacterId} />;
   }
 
+  // Build className dynamically, only include type-specific style if it exists
+  const typeClassName = styles[`messageCard--${message.actionType}`];
+  const className = [
+    styles.messageCard,
+    typeClassName || '', // Only add if exists (avoid undefined)
+    isDimmed ? styles.messageCardDimmed : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
   return (
-    <div
-      ref={cardRef}
-      className={`${styles.messageCard} ${styles[`messageCard--${message.actionType}`]} ${isDimmed ? styles.messageCardDimmed : ''}`}
-    >
+    <div ref={cardRef} className={className}>
       {component}
     </div>
   );

@@ -14,6 +14,7 @@ import { useEffect, useRef, useState } from 'react';
 import styles from '@/styles/components/chat/MessageList.module.scss';
 import { MessageItem } from './MessageItem';
 import type { ChatMessage } from '@/types/chat';
+import { useChatCurrentTag } from '@/store/chatStore';
 
 /**
  * Message List Props
@@ -77,70 +78,28 @@ function isMessageVisible(
 }
 
 /**
- * Calculate if a message should be dimmed based on tag visibility logic
+ * Calculate if a message should be dimmed based on current tag
  *
  * Logic:
- * - Some types are NEVER dimmed (ooc, whisper, master, moderation, skill_check, stat_check)
- * - For dimmable types (standard, dice_roll, item_use):
- *   - Find the most recent action by currentCharacter BEFORE this message
- *   - If no previous action → show normally (start of chat)
- *   - If message is by currentCharacter → show normally (own message)
- *   - If message tag matches lastMyAction tag → show normally
- *   - Otherwise → dim (different tag context)
+ * - If no current tag selected → show all normally
+ * - If message.position !== currentTag → dim
+ * - Applies to ALL message types without exception
  *
  * @param {ChatMessage} message - Message to check
- * @param {ChatMessage[]} allMessages - All messages in chronological order
- * @param {string} currentCharacterId - Current character ID
+ * @param {string | null} currentTag - Current active tag from chatStore
  * @returns {boolean} True if message should be dimmed
  */
 function shouldDimMessage(
   message: ChatMessage,
-  allMessages: ChatMessage[],
-  currentCharacterId: string
+  currentTag: string | null
 ): boolean {
-  // These types are NEVER dimmed (always full visibility)
-  const neverDim: string[] = [
-    'ooc',
-    'whisper',
-    'master',
-    'moderation',
-    'skill_check',
-    'stat_check',
-  ];
-
-  if (neverDim.includes(message.actionType)) {
+  // No current tag selected → show all normally
+  if (!currentTag) {
     return false;
   }
 
-  // Always show own messages normally
-  if (message.characterId === currentCharacterId) {
-    return false;
-  }
-
-  // Find index of current message
-  const messageIndex = allMessages.findIndex((m) => m._id === message._id);
-  if (messageIndex === -1) return false;
-
-  // Find most recent action by current character BEFORE this message
-  let lastMyAction: ChatMessage | null = null;
-  for (let i = messageIndex - 1; i >= 0; i--) {
-    if (allMessages[i]?.characterId === currentCharacterId) {
-      lastMyAction = allMessages[i]!;
-      break;
-    }
-  }
-
-  // No previous action by current character → show normally (start of chat)
-  if (!lastMyAction) {
-    return false;
-  }
-
-  // Compare positions: if same position as last my action → show normally
-  const lastMyPosition = lastMyAction.position || '';
-  const messagePosition = message.position || '';
-
-  // Different position → dim
-  return lastMyPosition !== messagePosition;
+  // Dim if message tag doesn't match current tag
+  return message.position !== currentTag;
 }
 
 /**
@@ -153,8 +112,9 @@ function shouldDimMessage(
  * - If user at bottom (< 150px from bottom) → NEW message arrives → auto-scroll (following conversation)
  *
  * **Tag-Based Visibility**:
- * - Messages with same tag as your last action → normal visibility
- * - Messages with different tag → dimmed (reduces visual noise)
+ * - Messages with tag matching currentTag → normal visibility
+ * - Messages with different tag → dimmed (opacity 0.4)
+ * - Applies to ALL message types without exception
  *
  * @param {MessageListProps} props - Component props
  * @returns {JSX.Element} Message list
@@ -162,6 +122,7 @@ function shouldDimMessage(
 export function MessageList({ messages, isLoading, currentCharacterId, isMaster = false }: MessageListProps): JSX.Element {
   const listRef = useRef<HTMLDivElement>(null);
   const prevMessageCountRef = useRef(messages.length);
+  const currentTag = useChatCurrentTag();
 
   // Track if user is near bottom (for smart auto-scroll)
   const [isNearBottom, setIsNearBottom] = useState(true);
@@ -275,11 +236,8 @@ export function MessageList({ messages, isLoading, currentCharacterId, isMaster 
           return isMessageVisible(message, currentCharacterId, isMaster);
         })
         .map((message) => {
-          // Calculate if message should be dimmed based on tag visibility
-          const isDimmed =
-            currentCharacterId
-              ? shouldDimMessage(message, messages, currentCharacterId)
-              : false;
+          // Calculate if message should be dimmed based on current tag
+          const isDimmed = shouldDimMessage(message, currentTag);
 
           return <MessageItem key={message._id} message={message} isDimmed={isDimmed} />;
         })}

@@ -19,6 +19,7 @@ import { ChatMessage, canEditMessage } from '@/types/chat';
 import { locationChatsApi } from '@/lib/api/locationChats';
 import { useChatStore } from '@/store/chatStore';
 import { useUIStore } from '@/store/uiStore';
+import { useWindowManagerStore } from '@/store/windowManagerStore';
 
 export function useMessageInteractions(
   message: ChatMessage,
@@ -33,6 +34,7 @@ export function useMessageInteractions(
   const menuRef = useRef<HTMLDivElement>(null);
   const { setCurrentTag } = useChatStore();
   const { addToast } = useUIStore();
+  const { openWindow } = useWindowManagerStore();
 
   // COMPUTED
   const formattedTime = useMemo(() => {
@@ -138,8 +140,12 @@ export function useMessageInteractions(
       return; // No action - identity hidden
     }
 
-    // TODO: Open CharacterSheetModal
-    console.log('Open character sheet for:', message.characterId);
+    // Open character sheet in floating window
+    openWindow('characterSheet', {
+      characterId: message.characterId,
+      characterName: message.characterName,
+      avatar: message.characterAvatar,
+    });
   };
 
   // EFFECTS

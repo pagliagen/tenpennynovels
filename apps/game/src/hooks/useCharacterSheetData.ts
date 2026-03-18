@@ -156,11 +156,6 @@ export interface CharacterSheetData {
  */
 async function fetchCharacterSheet(characterId: string): Promise<CharacterSheetData> {
   const response = await apiClient.get(`/game/characters/${characterId}?view=sheet`);
-
-  if (!response.data.result) {
-    throw new Error(response.data.message || 'Failed to fetch character sheet');
-  }
-
   return response.data.data;
 }
 
