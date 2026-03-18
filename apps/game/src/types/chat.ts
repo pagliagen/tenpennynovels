@@ -33,10 +33,26 @@ export type ChatMessageType = ActionType;
 
 /**
  * Dice Roll Payload
- * Sistema percentuale: solo 1d100, mostra risultato/100
+ * Multi-dice system: supports various dice types with modifiers
+ * Format: {count}d{type}[+/-modifier] (e.g., "2d6+3", "1d20", "3d8-2")
+ *
+ * Also used for skill_check and stat_check results with additional fields.
  */
 export interface DiceRollPayload {
-  result: number;          // Risultato 1d100 (1-100)
+  dice: string;              // Formula: "2d6+3", "1d20", "1d100"
+  result: number;            // Raw roll sum (before modifier)
+  rolls?: number[];          // Individual roll results (only if count > 1)
+  modifier?: number;         // Modifier applied (+/- value)
+  total: number;             // Final total (result + modifier)
+
+  // Skill check fields (when actionType = 'skill_check')
+  success?: boolean;         // Pass/fail
+  successDegree?: string;    // critical, extreme, hard, normal, failure, fumble
+  skillId?: string;          // Skill ObjectId
+  skillName?: string;        // Skill name
+
+  // Stat check fields (when actionType = 'stat_check')
+  statName?: string;         // Stat name (e.g., "Strength", "Dexterity")
 }
 
 /**
@@ -238,7 +254,7 @@ export interface SendMessageRequest {
   position?: string;               // DB field - Position tag (e.g., "Tavolo 1")
   targetCharacterId?: string;      // For whispers (backend converts to targetCharacters array)
   targetCharacters?: string[];     // For whispers (backend expects array)
-  diceSpec?: string;               // For dice_roll (sempre '1d100')
+  diceSpec?: string;               // For dice_roll - Format: "{count}d{type}[+/-modifier]" (e.g., "2d6+3", "1d20-2")
   skillId?: string;                // For skill_check (ObjectId - backend does secure lookup)
   statName?: string;               // For stat_check
   targetValue?: number;            // Target value for checks

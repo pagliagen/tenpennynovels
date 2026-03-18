@@ -96,10 +96,32 @@ export function DiceRollMessage({ message, currentCharacterId }: DiceRollMessage
           ) : (
             <>
               {message.content && <div className={styles.messageContent}>{message.content}</div>}
-              {/* Dice roll result: Sistema percentuale 1d100 */}
+              {/* Dice roll result: Multi-dice system */}
               {diceRoll && (
                 <div className={styles.diceRollResult}>
-                  <span className={styles.diceTotal}>{diceRoll.result}/100</span>
+                  {/* Formula */}
+                  {diceRoll.dice && (
+                    <div className={styles.diceFormula}>{diceRoll.dice}</div>
+                  )}
+
+                  {/* Individual rolls (if multiple dice) */}
+                  {diceRoll.rolls && diceRoll.rolls.length > 1 && (
+                    <div className={styles.diceRolls}>
+                      [{diceRoll.rolls.join(', ')}]
+                    </div>
+                  )}
+
+                  {/* Breakdown (if modifier exists) */}
+                  {diceRoll.modifier !== undefined && diceRoll.modifier !== 0 && (
+                    <div className={styles.diceBreakdown}>
+                      {diceRoll.result} {diceRoll.modifier >= 0 ? '+' : ''}{diceRoll.modifier}
+                    </div>
+                  )}
+
+                  {/* Final total */}
+                  <div className={styles.diceTotal}>
+                    {diceRoll.total !== undefined ? diceRoll.total : diceRoll.result}
+                  </div>
                 </div>
               )}
             </>

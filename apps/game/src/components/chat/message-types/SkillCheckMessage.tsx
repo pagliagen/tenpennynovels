@@ -28,6 +28,7 @@ interface SkillCheckMessageProps {
 export function SkillCheckMessage({ message, currentCharacterId }: SkillCheckMessageProps): JSX.Element {
   const interactions = useMessageInteractions(message, currentCharacterId);
   const skillCheck = message.socialConflict as any; // TODO: Update SkillCheckPayload type after Phase 6
+  const diceResult = message.diceResult;
 
   return (
     <>
@@ -135,6 +136,18 @@ export function SkillCheckMessage({ message, currentCharacterId }: SkillCheckMes
                       <p>{(message as any).hiddenContent}</p>
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* Simple skill check (non-opposed) - shows dice result */}
+              {!skillCheck && diceResult && (diceResult as any).skillName && (
+                <div className={styles.skillCheckResult}>
+                  <div className={styles.rollDisplay}>
+                    <span className={styles.rollValue}>🎲 {diceResult.result}</span>
+                    <span className={styles.successDegree}>
+                      {(diceResult as any).successDegree || (diceResult.success ? 'Successo' : 'Fallimento')}
+                    </span>
+                  </div>
                 </div>
               )}
 

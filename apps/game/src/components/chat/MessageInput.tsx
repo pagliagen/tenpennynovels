@@ -20,6 +20,7 @@ import { TagSelector } from './TagSelector';
 import { ActionTypeSelector } from './ActionTypeSelector';
 import { ConditionalSelects } from './ConditionalSelects';
 import { SkillStatRollModal } from './SkillStatRollModal';
+import { DiceRollModal } from './DiceRollModal';
 import { FakePngManager } from '../fake-png/FakePngManager';
 import { locationChatsApi } from '@/lib/api/locationChats';
 import { fakePngApi } from '@/lib/api/fakePng';
@@ -175,6 +176,7 @@ export function MessageInput({
   const [isTagButtonFlashing, setIsTagButtonFlashing] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [isSkillStatModalOpen, setIsSkillStatModalOpen] = useState(false);
+  const [isDiceRollModalOpen, setIsDiceRollModalOpen] = useState(false);
   const [showFakePngManager, setShowFakePngManager] = useState(false);
 
   // Social conflict mode
@@ -340,6 +342,40 @@ export function MessageInput({
       setSelectedStat('');
     } catch (error) {
       console.error('Failed to send skill/stat roll:', error);
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  /**
+   * Handle dice roll from modal
+   */
+  const handleDiceRoll = async (diceSpec: string) => {
+    // MANDATORY TAG VALIDATION
+    if (!currentTag) {
+      setIsTagButtonFlashing(true);
+      setTimeout(() => setIsTagButtonFlashing(false), 2000);
+      return;
+    }
+
+    if (isSending) return;
+    setIsSending(true);
+
+    try {
+      const data: SendMessageRequest = {
+        actionType: 'dice_roll',
+        content: messageInput.trim() || `Tiro: ${diceSpec}`,
+        diceSpec: diceSpec,
+      };
+
+      await onSendMessage(data);
+
+      // Reset form
+      setMessageInput('');
+      setSelectedAction('standard');
+      setIsDiceRollModalOpen(false);
+    } catch (error) {
+      console.error('Failed to send dice roll:', error);
     } finally {
       setIsSending(false);
     }
@@ -597,9 +633,9 @@ export function MessageInput({
           </button>
           <button
             type="button"
-            onClick={() => setSelectedAction('dice_roll')}
-            className={`${styles.actionButton} ${selectedAction === 'dice_roll' ? styles.active : ''}`}
-            title="Tiro Dado (1d100)"
+            onClick={() => setIsDiceRollModalOpen(true)}
+            className={styles.actionButton}
+            title="Tiro Dado (Configurabile)"
             disabled={disabled || isSocialConflictMode}
           >
             🎲 Tiro Dado
@@ -658,6 +694,14 @@ export function MessageInput({
           stats={characterData.stats}
           onRoll={handleSkillStatRoll}
           onClose={() => setIsSkillStatModalOpen(false)}
+        />
+      )}
+
+      {/* Dice Roll Modal */}
+      {isDiceRollModalOpen && (
+        <DiceRollModal
+          onRoll={handleDiceRoll}
+          onClose={() => setIsDiceRollModalOpen(false)}
         />
       )}
 

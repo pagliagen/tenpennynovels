@@ -24,10 +24,14 @@ export interface IChat extends Document {
   diceResult?: {
     dice: string;
     result: number;
-    success?: boolean;
-    target?: number;
-    skillName?: string;
-    statName?: string;
+    rolls?: number[];           // Individual dice rolls (for multi-dice)
+    modifier?: number;          // Modifier applied
+    total: number;              // Final total (result + modifier)
+    success?: boolean;          // Pass/fail
+    successDegree?: string;     // critical, extreme, hard, normal, failure, fumble
+    skillId?: string;           // For skill checks
+    skillName?: string;         // For skill checks
+    statName?: string;          // For stat checks
   };
   itemEffect?: {
     itemId: string;
@@ -106,9 +110,10 @@ export interface IChat extends Document {
   };
 
   successDegree?: 'critical' | 'extreme' | 'hard' | 'normal' | 'failure' | 'fumble';
-  
+
   isHidden?: boolean;
   revealedAt?: Date;
+  hiddenContent?: string;  // For hidden intentions (Raggirare, etc.)
 
   contentEmbedding?: number[];
   embeddingModel?: string;
@@ -194,10 +199,14 @@ const ChatSchema = new Schema<IChat>({
   diceResult: {
     dice: { type: String },
     result: { type: Number },
-    success: { type: Boolean },
-    target: { type: Number },
-    skillName: { type: String },
-    statName: { type: String }
+    rolls: [{ type: Number }],              // Individual dice rolls (for multi-dice)
+    modifier: { type: Number },             // Modifier applied
+    total: { type: Number },                // Final total (result + modifier)
+    success: { type: Boolean },             // Pass/fail
+    successDegree: { type: String },        // critical, extreme, hard, normal, failure, fumble
+    skillId: { type: String },              // For skill checks (ObjectId as string)
+    skillName: { type: String },            // For skill checks
+    statName: { type: String }              // For stat checks
   },
   itemEffect: {
     itemId: { type: String },
@@ -319,6 +328,10 @@ const ChatSchema = new Schema<IChat>({
     default: false
   },
   revealedAt: Date,
+  hiddenContent: {
+    type: String,
+    maxlength: 2000
+  },
 
   contentEmbedding: {
     type: [Number],
@@ -420,6 +433,59 @@ ChatSchema.statics.createAction = async function(actionData: Partial<IChat>): Pr
   await action.save();
   return action;
 };
+
+/**
+ * Pre-save middleware: Remove empty subdocuments to prevent Mongoose auto-initialization
+ *
+ * Problem: When subdocuments with nested arrays are defined in the schema (e.g., itemEffect.consumedItems[]),
+ * Mongoose auto-initializes those arrays as [] even when the parent subdocument is not set.
+ * This causes WebSocket rendering bugs where the frontend expects undefined, not empty objects.
+ *
+ * Solution: Before saving, check if subdocuments are "empty" (only contain empty arrays or no data fields)
+ * and remove them entirely. This ensures only meaningful data is persisted.
+ */
+ChatSchema.pre('save', function() {
+  // Check if itemEffect is empty (no meaningful data, only empty arrays)
+  if (this.itemEffect) {
+    const hasItemId = !!this.itemEffect.itemId;
+    const hasItemName = !!this.itemEffect.itemName;
+    const hasDescription = !!this.itemEffect.description;
+    const hasConsumedItems = this.itemEffect.consumedItems && this.itemEffect.consumedItems.length > 0;
+    const hasEffects = this.itemEffect.effects && this.itemEffect.effects.length > 0;
+
+    if (!hasItemId && !hasItemName && !hasDescription && !hasConsumedItems && !hasEffects) {
+      this.itemEffect = undefined;
+    }
+  }
+
+  // Check if confrontation is empty
+  if (this.confrontation) {
+    const hasType = !!this.confrontation.type;
+    const hasEncounterId = !!this.confrontation.encounterId;
+    const hasPhase = !!this.confrontation.phase;
+    const hasAttackerId = !!this.confrontation.attackerCharacterId;
+    const hasDefenderId = !!this.confrontation.defenderCharacterId;
+    const hasAvailableSkills = this.confrontation.availableDefenseSkills && this.confrontation.availableDefenseSkills.length > 0;
+
+    if (!hasType && !hasEncounterId && !hasPhase && !hasAttackerId && !hasDefenderId && !hasAvailableSkills) {
+      this.confrontation = undefined;
+    }
+  }
+
+  // Check if socialConflict is empty
+  if (this.socialConflict) {
+    const hasType = !!this.socialConflict.type;
+    const hasAttackerSkill = !!this.socialConflict.attackerSkill;
+    const hasDefenderSkill = !!this.socialConflict.defenderSkill;
+    const hasAttackerRoll = this.socialConflict.attackerRoll !== undefined;
+    const hasDefenderRoll = this.socialConflict.defenderRoll !== undefined;
+    const hasResult = !!this.socialConflict.result;
+
+    if (!hasType && !hasAttackerSkill && !hasDefenderSkill && !hasAttackerRoll && !hasDefenderRoll && !hasResult) {
+      this.socialConflict = undefined;
+    }
+  }
+});
 
 const EMBEDDING_ACTION_TYPES = new Set(['standard', 'master', 'moderation']);
 
