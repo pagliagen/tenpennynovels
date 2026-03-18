@@ -128,7 +128,7 @@ export const onGameMailApi = {
    * ```
    */
   async getMessageTypes(): Promise<Record<string, MessageTypeConfig>> {
-    const response = await api.get<{ result: boolean; data: Record<string, MessageTypeConfig> }>(
+    const response = await api.get<{ success: boolean; data: Record<string, MessageTypeConfig> }>(
       '/game/ongame-messages/types'
     );
     return response.data;

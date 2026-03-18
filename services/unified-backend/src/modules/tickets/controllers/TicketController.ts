@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
-import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '@shared/utils/apiResponse';
 import { Ticket, TicketMessage, Character, SystemConfiguration } from '@database/models';
 import { ApiResponse, TicketCategory, TicketPriority, TicketDepartment, TICKET_CATEGORIES, CATEGORY_DEPARTMENT_MAPPING, CATEGORY_PRIORITY_MAPPING } from '@modules/game/types/game';
 import { logger } from '@modules/game/logger';

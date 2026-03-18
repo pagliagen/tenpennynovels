@@ -23,7 +23,7 @@ export async function getItemById(id: string): Promise<Item> {
     apiClient.get<ApiResponse<Item>>(`/admin/items/${id}`)
   );
 
-  if (!response.data.result || !response.data.data) {
+  if (!response.data.success || !response.data.data) {
     throw new Error(response.data.error || 'Errore nel recupero item');
   }
 
@@ -35,7 +35,7 @@ export async function createItem(data: CreateItemData): Promise<Item> {
     apiClient.post<ApiResponse<Item>>('/admin/items', data)
   );
 
-  if (!response.data.result || !response.data.data) {
+  if (!response.data.success || !response.data.data) {
     throw new Error(response.data.error || 'Errore nella creazione item');
   }
 
@@ -47,7 +47,7 @@ export async function updateItem(id: string, data: UpdateItemData): Promise<Item
     apiClient.put<ApiResponse<Item>>(`/admin/items/${id}`, data)
   );
 
-  if (!response.data.result || !response.data.data) {
+  if (!response.data.success || !response.data.data) {
     throw new Error(response.data.error || 'Errore nell\'aggiornamento item');
   }
 
@@ -61,7 +61,7 @@ export async function deleteItem(id: string, reason?: string): Promise<void> {
     })
   );
 
-  if (!response.data.result) {
+  if (!response.data.success) {
     throw new Error(response.data.error || 'Errore nell\'eliminazione item');
   }
 }

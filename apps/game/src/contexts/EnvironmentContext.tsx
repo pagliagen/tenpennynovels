@@ -19,7 +19,7 @@ import { Environment } from '@/types/api/schemas';
  * API Response wrapper
  */
 interface ApiResponse<T> {
-  result: boolean;
+  success: boolean;
   data?: T;
   error?: string;
 }
@@ -75,7 +75,7 @@ export function EnvironmentProvider({ children }: { children: ReactNode }): JSX.
 
       const response = await api.get<ApiResponse<Environment>>('/game/environment');
 
-      if (response.result && response.data) {
+      if (response.success && response.data) {
         setEnvironment(response.data);
         setError(null);
         console.log('[EnvironmentContext] Environment data loaded:', response.data);

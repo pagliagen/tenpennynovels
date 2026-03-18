@@ -228,16 +228,17 @@ async function apiRequestWithRetry<T>(config: RequestConfig): Promise<ApiRespons
     }
   }
 
-  // All retries failed - return ApiResponse with result: false
+  // All retries failed - return ApiResponse with success: false
   // This prevents crashes and allows components to handle errors gracefully
   const error = lastError as NetworkError | ApiError | TimeoutError | Error;
 
   return {
-    result: false,
+    success: false,
     error: error.message || 'Errore di connessione',
     code: 'code' in error ? error.code : 'NETWORK_ERROR',
     message: error.message || 'Impossibile connettersi al server. Controlla la tua connessione internet.',
     details: 'details' in error ? error.details : undefined,
+    timestamp: new Date().toISOString(),
   } as ApiResponse<T>;
 }
 

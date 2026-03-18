@@ -8,7 +8,7 @@ import { User } from '@database/models/User';
 import { logger } from '../utils/logger';
 import { redis } from '@config/runtime/redis';
 import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
-import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '@shared/utils/apiResponse';
 
 import { escapeRegex } from '@shared/utils/validation';
 import { PaginationInfo } from '../types/management';

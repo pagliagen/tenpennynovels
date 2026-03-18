@@ -7,7 +7,7 @@ import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 import { AuthMiddleware } from '../middleware/auth';
 import { EmailService } from '../services/EmailService';
-import { successResponse, errorResponse, updatedResponse, deletedResponse } from '../utils/apiResponse';
+import { successResponse, errorResponse, updateResponse, deleteResponse } from '@shared/utils/apiResponse';
 
 export class ProfileController {
   /**
@@ -21,13 +21,12 @@ export class ProfileController {
       const user = await User.findById(userId).select('-passwordHash -emailVerificationToken -passwordResetToken -ipAddress');
       
       if (!user) {
-        errorResponse(
-          res,
+        res.status(404).json(errorResponse(
           'Utente non trovato',
           'USER_NOT_FOUND',
           undefined,
           404
-        );
+        ));
         return;
       }
 
@@ -36,55 +35,51 @@ export class ProfileController {
         userId
       }).select('id name status occupation createdAt');
 
-      successResponse(
-        res,
-        {
-          user: {
-            id: user.id,
-            username: user.username,
-            email: user.email,
-            displayName: user.displayName,
-            avatar: user.avatar,
-            isEmailVerified: user.isEmailVerified,
-            canAccessAdminPanel: user.canAccessAdminPanel,
-            // Granular permission system
-            userRoles: user.userRoles || ['user'],
-            characterRoles: user.characterRoles || [],
-            characterPermissions: user.characterPermissions || [],
-            account: {
-              createdAt: user.createdAt,
-              lastLoginAt: user.lastLoginAt,
-              loginCount: user.loginCount,
-              passwordChangedAt: user.passwordChangedAt
-            },
-            characters: characters.map(char => ({
-              id: char.id,
-              name: char.name,
-              status: char.status,
-              occupation: char.occupation,
-              createdAt: char.createdAt
-            })),
-            preferences: {
-              emailNotifications: user.preferences.emailNotifications,
-              marketingEmails: user.preferences.marketingEmails,
-              theme: user.preferences.theme,
-              language: user.preferences.language,
-              timezone: user.preferences.timezone
-            }
+      res.status(200).json(successResponse({
+        user: {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          displayName: user.displayName,
+          avatar: user.avatar,
+          isEmailVerified: user.isEmailVerified,
+          canAccessAdminPanel: user.canAccessAdminPanel,
+          // Granular permission system
+          userRoles: user.userRoles || ['user'],
+          characterRoles: user.characterRoles || [],
+          characterPermissions: user.characterPermissions || [],
+          account: {
+            createdAt: user.createdAt,
+            lastLoginAt: user.lastLoginAt,
+            loginCount: user.loginCount,
+            passwordChangedAt: user.passwordChangedAt
+          },
+          characters: characters.map(char => ({
+            id: char.id,
+            name: char.name,
+            status: char.status,
+            occupation: char.occupation,
+            createdAt: char.createdAt
+          })),
+          preferences: {
+            emailNotifications: user.preferences.emailNotifications,
+            marketingEmails: user.preferences.marketingEmails,
+            theme: user.preferences.theme,
+            language: user.preferences.language,
+            timezone: user.preferences.timezone
           }
-        },
-        undefined
-      );
+        }
+      }));
 
     } catch (error: any) {
       logger.error('Get profile error:', error);
       
-      errorResponse(res,
+      res.status(400).json(errorResponse(
         'Impossibile recuperare il profilo',
         'PROFILE_ERROR',
         undefined,
         500
-      );
+      ));
     }
   }
 
@@ -100,13 +95,12 @@ export class ProfileController {
       const user = await User.findById(userId);
       
       if (!user) {
-        errorResponse(
-          res,
+        res.status(404).json(errorResponse(
           'Utente non trovato',
           'USER_NOT_FOUND',
           undefined,
           404
-        );
+        ));
         return;
       }
 
@@ -170,7 +164,7 @@ export class ProfileController {
         }));
       }
 
-      updatedResponse(res, 
+      res.status(200).json(updateResponse( 
         {
           user: {
             id: user.id,
@@ -185,17 +179,17 @@ export class ProfileController {
             updatedAt: user.updatedAt
           }
         },
-        'Profile updated successfully');
+        'Profile updated successfully'));
 
     } catch (error: any) {
       logger.error('Update profile error:', error);
       
-      errorResponse(res,
+      res.status(400).json(errorResponse(
         'Impossibile aggiornare il profilo',
         'PROFILE_UPDATE_ERROR',
         undefined,
         500
-      );
+      ));
     }
   }
 
@@ -217,13 +211,12 @@ export class ProfileController {
       const characters = charactersResult;
 
       if (!user) {
-        errorResponse(
-          res,
+        res.status(404).json(errorResponse(
           'Utente non trovato',
           'USER_NOT_FOUND',
           undefined,
           404
-        );
+        ));
         return;
       }
 
@@ -277,21 +270,20 @@ export class ProfileController {
       res.setHeader('Content-Disposition', `attachment; filename="tenpennynovels-data-${userId}-${Date.now()}.json"`);
 
       // Usa successResponse per formato standard { result, data, timestamp, requestId }
-      successResponse(
-        res,
+      res.status(200).json(successResponse(
         exportData,
         'Dati esportati con successo'
-      );
+      ));
 
     } catch (error: any) {
       logger.error('Export data error:', error);
 
-      errorResponse(res,
+      res.status(400).json(errorResponse(
         'Impossibile esportare i dati',
         'EXPORT_ERROR',
         undefined,
         500
-      );
+      ));
     }
   }
 
@@ -305,13 +297,12 @@ export class ProfileController {
 
       const user = await User.findById(userId);
       if (!user) {
-        errorResponse(
-          res,
+        res.status(404).json(errorResponse(
           'Utente non trovato',
           'USER_NOT_FOUND',
           undefined,
           404
-        );
+        ));
         return;
       }
 
@@ -322,12 +313,12 @@ export class ProfileController {
       });
 
       if (pendingChars.length > 0) {
-        errorResponse(res,
+        res.status(400).json(errorResponse(
           'Hai personaggi in attesa di approvazione. Risolvili prima di eliminare l\'account.',
           'PENDING_CHARACTERS',
           undefined,
           409
-        );
+        ));
         return;
       }
 
@@ -350,12 +341,12 @@ export class ProfileController {
         );
       } catch (emailError) {
         logger.error('Failed to send account deletion email:', emailError);
-        errorResponse(res,
+        res.status(400).json(errorResponse(
           'Errore nell\'invio dell\'email di conferma',
           'EMAIL_ERROR',
           undefined,
           500
-        );
+        ));
         return;
       }
 
@@ -372,21 +363,20 @@ export class ProfileController {
         requestedAt: new Date().toISOString()
       }));
 
-      successResponse(
-        res,
+      res.status(200).json(successResponse(
         undefined,
         'Email di conferma inviata. Controlla la tua casella di posta.'
-      );
+      ));
 
     } catch (error: any) {
       logger.error('Request account deletion error:', error);
 
-      errorResponse(res,
+      res.status(400).json(errorResponse(
         'Errore durante la richiesta di cancellazione',
         'REQUEST_DELETION_ERROR',
         undefined,
         500
-      );
+      ));
     }
   }
 
@@ -399,12 +389,12 @@ export class ProfileController {
       const { token } = req.params;
 
       if (!token) {
-        errorResponse(res,
+        res.status(400).json(errorResponse(
           'Token richiesto',
           'MISSING_TOKEN',
           undefined,
           400
-        );
+        ));
         return;
       }
 
@@ -415,12 +405,12 @@ export class ProfileController {
       });
 
       if (!user) {
-        errorResponse(res,
+        res.status(400).json(errorResponse(
           'Token non valido o scaduto',
           'INVALID_TOKEN',
           undefined,
           400
-        );
+        ));
         return;
       }
 
@@ -479,11 +469,10 @@ export class ProfileController {
           anonymizedAt: user.anonymizedAt!.toISOString()
         }));
 
-        successResponse(
-          res,
+        res.status(200).json(successResponse(
           undefined,
           'Account eliminato con successo'
-        );
+        ));
 
       } catch (txError) {
         await session.abortTransaction();
@@ -495,12 +484,12 @@ export class ProfileController {
     } catch (error: any) {
       logger.error('Confirm account deletion error:', error);
 
-      errorResponse(res,
+      res.status(400).json(errorResponse(
         'Errore durante l\'eliminazione dell\'account',
         'DELETE_ERROR',
         undefined,
         500
-      );
+      ));
     }
   }
 }

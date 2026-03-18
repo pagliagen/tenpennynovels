@@ -44,7 +44,7 @@ export function CharacterSelectModal({
 
       const result = await characterService.selectCharacter(characterId);
 
-      if (result.result) {
+      if (result.success) {
         // Redirect to game
         window.location.href = process.env.NEXT_PUBLIC_GAME_URL || 'http://localhost:3010';
       } else {

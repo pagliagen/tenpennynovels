@@ -15,7 +15,7 @@ Questo documento definisce gli standard **OBBLIGATORI** per le risposte API di t
 **Formato Obbligatorio**:
 ```typescript
 {
-  result: true,
+  
   success: true,
   list: T[],                // ⚠️ SEMPRE al root level, MAI dentro 'data'
   pagination: {
@@ -27,7 +27,7 @@ Questo documento definisce gli standard **OBBLIGATORI** per le risposte API di t
     hasPrevPage: boolean
   },
   message?: string,        // Opzionale
-  timestamp: string,       // ISO 8601
+  timestamp: string,       // ISO 8601 (auto-generated)       // ISO 8601
   requestId?: string       // Per request tracing
 }
 ```
@@ -38,7 +38,7 @@ Questo documento definisce gli standard **OBBLIGATORI** per le risposte API di t
 
 **Esempio**:
 ```typescript
-import { listResponse, getRequestId } from '../utils/apiResponse';
+import { listResponse, getRequestId } from '@shared/utils/apiResponse';
 
 // ✅ CORRETTO
 const users = await User.find().limit(25);
@@ -50,10 +50,10 @@ const pagination = {
   hasNextPage: true,
   hasPrevPage: false
 };
-res.json(listResponse(users, pagination, undefined, getRequestId(req)));
+res.status(200).json(listResponse(users, pagination, undefined, getRequestId(req)));
 
 // ❌ SBAGLIATO - NON usare successResponse per liste
-res.json(successResponse({ list: users, pagination }, getRequestId(req)));
+res.status(200).json(successResponse({ list: users, pagination }, getRequestId(req)));
 // ^ Questo wrappa in 'data' object creando un formato inconsistente
 ```
 
@@ -64,11 +64,11 @@ res.json(successResponse({ list: users, pagination }, getRequestId(req)));
 **Formato Obbligatorio**:
 ```typescript
 {
-  result: true,
+  
   success: true,
   data: T,                 // ⚠️ Singolo record dentro 'data' object
   message?: string,        // Es: "Utente creato con successo"
-  timestamp: string,
+  timestamp: string,       // ISO 8601 (auto-generated)
   requestId?: string
 }
 ```
@@ -79,11 +79,11 @@ res.json(successResponse({ list: users, pagination }, getRequestId(req)));
 
 **Esempio**:
 ```typescript
-import { successResponse, getRequestId } from '../utils/apiResponse';
+import { successResponse, getRequestId } from '@shared/utils/apiResponse';
 
 // ✅ CORRETTO
 const user = await User.findById(userId);
-res.json(successResponse(user, undefined, getRequestId(req)));
+res.status(200).json(successResponse(user, undefined, getRequestId(req)));
 ```
 
 ---
@@ -93,12 +93,12 @@ res.json(successResponse(user, undefined, getRequestId(req)));
 **Formato Obbligatorio**:
 ```typescript
 {
-  result: false,
+  
   success: false,
   error: string,           // Messaggio leggibile
   code?: string,           // Es: "USER_NOT_FOUND", "VALIDATION_ERROR"
   details?: ErrorDetails,  // Dettagli aggiuntivi (field, expectedType, ecc.)
-  timestamp: string,
+  timestamp: string,       // ISO 8601 (auto-generated)
   requestId?: string
 }
 ```
@@ -109,7 +109,7 @@ res.json(successResponse(user, undefined, getRequestId(req)));
 
 **Esempio**:
 ```typescript
-import { errorResponse, getRequestId } from '../utils/apiResponse';
+import { errorResponse, getRequestId } from '@shared/utils/apiResponse';
 
 // ✅ CORRETTO
 if (!user) {
@@ -130,10 +130,10 @@ if (!user) {
 **Formato Obbligatorio**:
 ```typescript
 {
-  result: true,
+  
   success: true,
   message: string,         // Es: "Utente eliminato con successo"
-  timestamp: string,
+  timestamp: string,       // ISO 8601 (auto-generated)
   requestId?: string
 }
 ```
@@ -159,11 +159,11 @@ if (users.length === 0) {
     hasNextPage: false,
     hasPrevPage: false
   };
-  return res.json(listResponse([], emptyPagination, undefined, getRequestId(req)));
+  return res.status(200).json(listResponse([], emptyPagination, undefined, getRequestId(req)));
 }
 
 // ❌ SBAGLIATO - Non usare successResponse
-  return res.json(successResponse({ list: [], pagination: {...} }, getRequestId(req)));
+  return res.status(200).json(successResponse({ list: [], pagination: {...} }, getRequestId(req)));
 ```
 
 ### Early Returns in List Endpoints
@@ -173,12 +173,12 @@ Quando si fa early return in un list endpoint (es: validazione fallita prima di 
 ```typescript
 // ✅ CORRETTO
 if (userIds.length === 0) {
-  return res.json(listResponse([], emptyPagination, undefined, getRequestId(req)));
+  return res.status(200).json(listResponse([], emptyPagination, undefined, getRequestId(req)));
 }
 
 // ❌ SBAGLIATO
 if (userIds.length === 0) {
-  return res.json(successResponse({ list: [], pagination: {...} }));
+  return res.status(200).json(successResponse({ list: [], pagination: {...} }));
 }
 ```
 
@@ -205,7 +205,7 @@ import {
   errorResponse,
   deleteResponse,
   getRequestId
-} from '../utils/apiResponse';
+} from '@shared/utils/apiResponse';
 import type {
   ApiListResponse,
   ApiSingleResponse,
@@ -239,7 +239,7 @@ async getUsers(req: Request, res: Response): Promise<void> {
       hasPrevPage: page > 1
     };
 
-    res.json(listResponse(users, pagination, undefined, getRequestId(req)));
+    res.status(200).json(listResponse(users, pagination, undefined, getRequestId(req)));
   } catch (error) {
     res.status(500).json(errorResponse(
       'Failed to fetch users',
@@ -270,7 +270,7 @@ async getUserById(req: Request, res: Response): Promise<void> {
       ));
     }
 
-    res.json(successResponse(user, undefined, getRequestId(req)));
+    res.status(200).json(successResponse(user, undefined, getRequestId(req)));
   } catch (error) {
     res.status(500).json(errorResponse(
       'Failed to fetch user',

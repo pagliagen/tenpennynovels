@@ -183,10 +183,10 @@ services:
 
       # Frontend URLs
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:4000}
-      GAME_URL: ${GAME_URL:-http://localhost:4001}
       LANDING_URL: ${LANDING_URL:-http://localhost:4000}
-      DOCUMENTS_URL: ${DOCUMENTS_URL:-http://localhost:4003}
-      MANAGEMENT_URL: ${MANAGEMENT_URL:-http://localhost:4004}
+      GAME_URL: ${GAME_URL:-http://localhost:4001}
+      DOCUMENTS_URL: ${DOCUMENTS_URL:-http://localhost:4002}
+      MANAGEMENT_URL: ${MANAGEMENT_URL:-http://localhost:4003}
 
       # Email (optional for dev)
       EMAIL_MOCK: ${EMAIL_MOCK:-true}
@@ -258,10 +258,10 @@ services:
       FORUM_BACKEND_URL: http://unified-backend:3001
 
       # Frontend URLs (CORS)
-      GAME_URL: ${GAME_URL:-http://localhost:4001}
       LANDING_URL: ${LANDING_URL:-http://localhost:4000}
-      DOCUMENTS_URL: ${DOCUMENTS_URL:-http://localhost:4003}
-      MANAGEMENT_URL: ${MANAGEMENT_URL:-http://localhost:4004}
+      GAME_URL: ${GAME_URL:-http://localhost:4001}
+      DOCUMENTS_URL: ${DOCUMENTS_URL:-http://localhost:4002}
+      MANAGEMENT_URL: ${MANAGEMENT_URL:-http://localhost:4003}
 
       TRUST_PROXY: "true"
     ports:

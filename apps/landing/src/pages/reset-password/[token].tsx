@@ -80,7 +80,7 @@ export default function ResetPasswordPage() {
 
       const result = await authService.resetPassword(token, data.password, data.confirmPassword);
 
-      if (result.result) {
+      if (result.success) {
         setSuccess(result.message || 'Password cambiata con successo! Verrai reindirizzato al login...');
         // Redirect to login after 3 seconds
         setTimeout(() => {

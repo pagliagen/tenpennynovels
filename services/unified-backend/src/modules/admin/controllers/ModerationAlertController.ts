@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { AdminAuthMiddleware } from '../middleware/adminAuth';
 import { logger } from '../utils/logger';
 import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
-import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '@shared/utils/apiResponse';
 
 import type { PaginationInfo } from '../types/management';
 

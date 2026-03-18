@@ -90,7 +90,7 @@ export default function RegisterPage() {
   useEffect(() => {
     if (debouncedUsername.length >= 3) {
       authService.checkUsernameAvailability(debouncedUsername).then((result) => {
-        if (result.result && !result.data?.available) {
+        if (result.success && !result.data?.available) {
           setFormError('username', {
             type: 'manual',
             message: 'Nome utente non disponibile',
@@ -110,7 +110,7 @@ export default function RegisterPage() {
   useEffect(() => {
     if (debouncedEmail.includes('@')) {
       authService.checkEmailAvailability(debouncedEmail).then((result) => {
-        if (result.result && !result.data?.available) {
+        if (result.success && !result.data?.available) {
           setFormError('email', {
             type: 'manual',
             message: 'Email già registrata',
@@ -134,7 +134,7 @@ export default function RegisterPage() {
 
       const result = await authService.register(data);
 
-      if (result.result) { 
+      if (result.success) {
         setSuccess(result.message || 'Registrazione completata con successo! Verrai reindirizzato al login...');
         // Redirect to login after 5 seconds (increased from 3s to allow viewing dev URL)
         setTimeout(() => {

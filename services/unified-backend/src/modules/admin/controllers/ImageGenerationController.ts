@@ -5,7 +5,7 @@ import { aiGatewayClient } from '@modules/game/services/AIGatewayClient';
 import { AdminAuthMiddleware } from '../middleware/adminAuth';
 import { getSocketIO } from '@modules/game/websocket/socketInstance';
 import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
-import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '@shared/utils/apiResponse';
 
 import { logger } from '../utils/logger';
 import { appConfig } from '@config/runtime';

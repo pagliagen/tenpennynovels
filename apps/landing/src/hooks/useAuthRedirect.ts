@@ -143,7 +143,7 @@ export function useAuthRedirect(redirectTo: string = '/'): UseAuthRedirectReturn
       try {
         const response = await apiGet<User>('/auth/me');
 
-        if (response.result && response.data) {
+        if (response.success && response.data) {
           // User is authenticated
           await execute(Promise.resolve(response.data));
         } else {

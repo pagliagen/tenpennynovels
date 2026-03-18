@@ -3,7 +3,7 @@ import { ApiResponse } from '../types/auth';
 import { logger } from '../logger';
 import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
 import { appConfig } from '@config/runtime';
-import { errorResponse, getRequestId } from '../utils/apiResponse';
+import { errorResponse, getRequestId } from '@shared/utils/apiResponse';
 
 export class ErrorHandler {
   /**
@@ -22,23 +22,22 @@ export class ErrorHandler {
     // Don't expose internal errors in production
     const isDevelopment = !appConfig.isProduction;
 
-    errorResponse(
-      res,
+    res.status(500).json(errorResponse(
       isDevelopment ? error.message : 'Errore interno del server',
       'INTERNAL_SERVER_ERROR',
       isDevelopment && error.stack ? {
         stack: error.stack.split('\n').slice(0, 10) // Limit stack trace
       } : undefined,
-      500
-    );
+      500,
+      getRequestId(req)
+    ));
   }
 
   /**
    * Handle 404 errors for unmatched routes
    */
   static notFound(req: Request, res: Response): void {
-    errorResponse(
-      res,
+    res.status(404).json(errorResponse(
       'Endpoint not found',
       'NOT_FOUND',
       {
@@ -51,8 +50,9 @@ export class ErrorHandler {
           DELETE: ['/auth/security/sessions/:sessionId']
         }
       },
-      404
-    );
+      404,
+      getRequestId(req)
+    ));
   }
 
   /**

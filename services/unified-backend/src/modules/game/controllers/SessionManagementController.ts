@@ -5,7 +5,7 @@ import { SessionTemplate } from '@database/models/SessionTemplate';
 import { Character } from '@database/models/Character';
 import { logger } from '../logger';
 import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
-import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '@shared/utils/apiResponse';
 
 
 export class SessionManagementController {

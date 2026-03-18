@@ -95,7 +95,7 @@ export default function LoginPage() {
     authService
       .verifyEmail(token)
       .then((result) => {
-        if (result.result) {
+        if (result.success) {
           setSuccess(
             result.message ||
               'Email verificata con successo! Benvenuto su Ten Penny Novels. Puoi accedere con le tue credenziali.'
@@ -135,7 +135,7 @@ export default function LoginPage() {
       const { username } = getValues();
       const result = await authService.resendVerification(username);
 
-      if (result.result && result.data) {
+      if (result.success && result.data) {
         setSuccess(result.message || 'Email di verifica inviata! Controlla la tua casella email.');
         // Keep errorCode cleared so button disappears
       } else {
@@ -161,7 +161,7 @@ export default function LoginPage() {
 
       const result = await authService.login(data);
 
-      if (result.result && result.data) {
+      if (result.success && result.data) {
         // Show character select modal or redirect based on number of characters
         // Backend returns { data: { user: { characters, username }, session: {...} } }
         const userData = result.data as any;

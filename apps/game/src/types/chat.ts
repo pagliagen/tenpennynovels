@@ -289,7 +289,7 @@ export interface MessageHistoryResponse {
  * Send Message Response (Backend wrapper structure)
  */
 export interface SendMessageResponse {
-  result: boolean;
+  success: boolean;
   data: {
     action: ChatMessage;
   };

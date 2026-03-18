@@ -4,7 +4,7 @@ import { ApiResponse } from '../types/game';
 import { logger } from '../logger';
 import { LocationService } from '../services/LocationService';
 import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
-import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '@shared/utils/apiResponse';
 
 import { smartTransaction } from '../utils/transactions'; // ✅ SPRINT 4: MongoDB Transactions
 

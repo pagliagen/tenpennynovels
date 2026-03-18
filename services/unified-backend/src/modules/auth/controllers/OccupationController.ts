@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { db } from '@database/models';
 import { logger } from '../logger';
-import { successResponse, errorResponse, listResponse } from '../utils/apiResponse';
+import { successResponse, errorResponse, listResponse } from '@shared/utils/apiResponse';
 import { appConfig } from '@config/runtime';
 
 /**
@@ -22,11 +22,11 @@ export class OccupationController {
       const database = db.getConnection().db;
       if (!database) {
         logger.error('🏢 OccupationController: Database not connected');
-        errorResponse(res, 
+        res.status(400).json(errorResponse( 
           'Database connection not available',
           'DATABASE_ERROR',
           undefined,
-          500);
+          500));
         return;
       }
 
@@ -51,17 +51,17 @@ export class OccupationController {
         startingItems: occupation.startingItems || []
       }));
 
-      listResponse(res, 
+      res.status(200).json(listResponse( 
         mappedOccupations,
         {
           currentPage: 1,
           pageSize: mappedOccupations.length,
-          total: mappedOccupations.length,
+          totalItems: mappedOccupations.length,
           totalPages: 1,
-          hasNext: false,
-          hasPrev: false
+          hasNextPage: false,
+          hasPreviousPage: false
         },
-        undefined);
+        undefined));
 
     } catch (error: any) {
       logger.error('🏢 OccupationController: Error fetching occupations:', {
@@ -71,11 +71,11 @@ export class OccupationController {
         query: req.query,
         params: req.params
       });
-      errorResponse(res, 
+      res.status(400).json(errorResponse( 
         'Errore interno del server durante il recupero delle occupazioni',
         'OCCUPATIONS_ERROR',
         !appConfig.isProduction ? { message: error instanceof Error ? error.message : 'Unknown error' } : undefined,
-        500);
+        500));
     }
   }
 
@@ -92,11 +92,11 @@ export class OccupationController {
       const database = db.getConnection().db;
       if (!database) {
         logger.error('🏢 OccupationController: Database not connected');
-        errorResponse(res, 
+        res.status(400).json(errorResponse( 
           'Database connection not available',
           'DATABASE_ERROR',
           undefined,
-          500);
+          500));
         return;
       }
 
@@ -127,17 +127,17 @@ export class OccupationController {
         startingItems: occupation.startingItems || []
       }));
 
-      listResponse(res, 
+      res.status(200).json(listResponse( 
         mappedOccupations,
         {
           currentPage: 1,
           pageSize: mappedOccupations.length,
-          total: mappedOccupations.length,
+          totalItems: mappedOccupations.length,
           totalPages: 1,
-          hasNext: false,
-          hasPrev: false
+          hasNextPage: false,
+          hasPreviousPage: false
         },
-        undefined);
+        undefined));
 
     } catch (error: any) {
       logger.error('🏢 OccupationController: Error fetching filtered occupations:', {
@@ -148,11 +148,11 @@ export class OccupationController {
         query: req.query,
         params: req.params
       });
-      errorResponse(res, 
+      res.status(400).json(errorResponse( 
         'Errore interno del server durante il recupero delle occupazioni filtrate',
         'OCCUPATIONS_FILTERED_ERROR',
         !appConfig.isProduction ? { message: error instanceof Error ? error.message : 'Unknown error' } : undefined,
-        500);
+        500));
     }
   }
 }

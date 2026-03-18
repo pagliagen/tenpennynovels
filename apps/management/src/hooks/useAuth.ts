@@ -103,8 +103,8 @@ export function useAuth(): UseAuthReturn {
       // Call /auth/session - cookie sent automatically via withCredentials
       const response = await api.get<SessionData>('/auth/session');
 
-      // Check if session is valid (backend uses "result", not "success")
-      if (response.result && response.data?.valid && response.data.user) {
+      // Check if session is valid
+      if (response.success && response.data?.valid && response.data.user) {
         const user = response.data.user;
 
         // Transform to authStore User format

@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import slugify from 'slugify';
 import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
-import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '@shared/utils/apiResponse';
 
 import { ForumTopic, type IForumTopic, type TopicAccessRule } from '@database/models/ForumTopic';
 import { ForumDiscussion } from '@database/models/ForumDiscussion';

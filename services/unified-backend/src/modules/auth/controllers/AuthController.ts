@@ -10,7 +10,7 @@ import { UAParser } from 'ua-parser-js';
 import geoip from 'geoip-lite';
 import { ApiResponse } from '../types/auth';
 import { DeviceInfo, LocationInfo } from '../types/auth';
-import { successResponse, errorResponse, createdResponse } from '../utils/apiResponse';
+import { successResponse, errorResponse, createResponse } from '@shared/utils/apiResponse';
 import { getEffectivePermissions as calculateEffectivePermissions } from '@config/permissions';
 import { appConfig } from '@config/runtime';
 
@@ -89,7 +89,7 @@ export class AuthController {
       if (!user) {
         await RateLimitMiddleware.recordFailedLogin(username);
         
-        errorResponse(res, 
+        res.status(400).json(errorResponse( 
           'Utente non trovato. Se vuoi registrarti clicca qui.',
           'USER_NOT_FOUND',
           {
@@ -101,13 +101,14 @@ export class AuthController {
               lockoutDuration: '10 minutes after 5 failed attempts'
             }
           },
-          401);
+          401));
+        return;
         return;
       }
 
       // Check if account is banned
       if (user.isBanned) {
-        errorResponse(res, 
+        res.status(400).json(errorResponse( 
           'L\'account è stato sospeso',
           'ACCOUNT_BANNED',
           {
@@ -116,7 +117,8 @@ export class AuthController {
             canAppeal: true,
             appealUrl: '/support/appeal'
           },
-          403);
+          403));
+        return;
         return;
       }
 
@@ -135,7 +137,7 @@ export class AuthController {
           userAgent: req.get('User-Agent')
         });
 
-        errorResponse(res, 
+        res.status(400).json(errorResponse( 
           'Password non corretta. Se l\'hai dimenticata clicca qui.',
           'INVALID_PASSWORD',
           {
@@ -147,20 +149,22 @@ export class AuthController {
               lockoutDuration: '10 minutes after 5 failed attempts'
             }
           },
-          401);
+          401));
+        return;
         return;
       }
 
       // Check if email is verified (only after password is correct)
       if (!user.isEmailVerified) {
-        errorResponse(res, 
+        res.status(400).json(errorResponse( 
           'Verifica il tuo indirizzo email prima di effettuare il login',
           'EMAIL_NOT_VERIFIED',
           {
             canResendVerification: true,
             verificationUrl: '/auth/resend-verification'
           },
-          400);
+          400));
+        return;
         return;
       }
 
@@ -304,7 +308,7 @@ export class AuthController {
         logger.info(`User ${user.username}: No character context set - ${characters.length} characters (must select manually)`);
       }
 
-      createdResponse(res, 
+      res.status(201).json(createResponse( 
         {
           user: {
             id: user.id,
@@ -337,7 +341,7 @@ export class AuthController {
             deviceRegistered: true
           }
         },
-        'Login successful');
+        'Login successful'));
 
     } catch (error: any) {
       logger.error('Login error:', {
@@ -349,11 +353,12 @@ export class AuthController {
         userAgent: req.headers?.['user-agent']
       });
       
-      errorResponse(res, 
+      res.status(400).json(errorResponse( 
         'Login fallito',
         'LOGIN_ERROR',
         undefined,
-        500);
+        500));
+        return;
     }
   }
 
@@ -373,16 +378,17 @@ export class AuthController {
       });
 
       if (!character) {
-        errorResponse(res, 
+        res.status(400).json(errorResponse( 
           'Personaggio non trovato o non appartiene a questo utente',
           'CHARACTER_NOT_FOUND',
           undefined,
-          404);
+          404));
+        return;
         return;
       }
 
       if (character.status === 'DELETED') {
-        errorResponse(res, 
+        res.status(400).json(errorResponse( 
           'Il personaggio è stato eliminato e non può essere utilizzato',
           'CHARACTER_DELETED',
           {
@@ -392,7 +398,8 @@ export class AuthController {
               playerStatus: character.playerStatus
             }
           },
-          404);
+          404));
+        return;
         return;
       }
 
@@ -475,7 +482,7 @@ export class AuthController {
         ipAddress: req.ip
       });
 
-      createdResponse(res, 
+      res.status(201).json(createResponse( 
         {
           character: {
             id: character.id,
@@ -493,16 +500,17 @@ export class AuthController {
             canUseItems: true
           },
         },
-        'Character selected successfully');
+        'Character selected successfully'));
 
     } catch (error: any) {
       logger.error('Character selection error:', error);
       
-      errorResponse(res, 
+      res.status(400).json(errorResponse( 
         'Selezione personaggio fallita',
         'CHARACTER_SELECTION_ERROR',
         undefined,
-        500);
+        500));
+        return;
     }
   }
 
@@ -517,11 +525,12 @@ export class AuthController {
 
       // Basic validation
       if (!name || typeof name !== 'string' || name.trim().length < 2) {
-        errorResponse(res, 
+        res.status(400).json(errorResponse( 
           'Il nome del personaggio è richiesto e deve essere di almeno 2 caratteri',
           'VALIDATION_ERROR',
           undefined,
-          400);
+          400));
+        return;
         return;
       }
 
@@ -532,11 +541,12 @@ export class AuthController {
       });
 
       if (existingCharacter) {
-        errorResponse(res, 
+        res.status(400).json(errorResponse( 
           'Esiste già un personaggio con questo nome',
           'CHARACTER_NAME_EXISTS',
           undefined,
-          400);
+          400));
+        return;
         return;
       }
 
@@ -563,7 +573,7 @@ export class AuthController {
         ipAddress: req.ip
       });
 
-      createdResponse(res, 
+      res.status(201).json(createResponse( 
         {
           character: {
             id: character.id,
@@ -576,7 +586,7 @@ export class AuthController {
             createdAt: character.createdAt
           }
         },
-        'Character created successfully');
+        'Character created successfully'));
 
     } catch (error: any) {
       logger.error('Character creation error:', error);
@@ -592,30 +602,33 @@ export class AuthController {
           details[field] = transformValidationMessage(field, fieldError.message, fieldError.kind);
         }
         
-        errorResponse(res, 
+        res.status(400).json(errorResponse( 
           'Errori nei dati del personaggio',
           'CHARACTER_VALIDATION_ERROR',
           details,
-          400);
+          400));
+        return;
         return;
       }
       
       // Handle duplicate name errors
       if (error instanceof Error && 'code' in error && (error as Error & { code: number }).code === 11000) {
-        errorResponse(res, 
+        res.status(400).json(errorResponse( 
           'Esiste già un personaggio con questo nome',
           'CHARACTER_NAME_EXISTS',
           undefined,
-          400);
+          400));
+        return;
         return;
       }
       
       // Generic server error
-      errorResponse(res, 
+      res.status(400).json(errorResponse( 
         'Creazione personaggio fallita',
         'CHARACTER_CREATION_ERROR',
         !appConfig.isProduction ? { message: error instanceof Error ? error.message : 'Unknown error' } : undefined,
-        500);
+        500));
+        return;
     }
   }
 
@@ -640,23 +653,24 @@ export class AuthController {
       // Set new auth cookie
       AuthMiddleware.setAuthCookie(res, newAuthToken);
 
-      successResponse(res, 
+      res.status(200).json(successResponse( 
         {
           session: {
             expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
             refreshedAt: new Date().toISOString()
           }
         },
-        'Session refreshed successfully');
+        'Session refreshed successfully'));
 
     } catch (error: any) {
       logger.error('Token refresh error:', error);
       
-      errorResponse(res, 
+      res.status(400).json(errorResponse( 
         'Aggiornamento token fallito',
         'REFRESH_ERROR',
         undefined,
-        500);
+        500));
+        return;
     }
   }
 
@@ -668,11 +682,12 @@ export class AuthController {
     try {
       // If no user token, return not authenticated
       if (!req.user) {
-        return errorResponse(res,
+        res.status(400).json(errorResponse(
           'Non autenticato',
           'NOT_AUTHENTICATED',
           undefined,
-          401);
+          401));
+        return;
       }
 
       const user = req.user;
@@ -710,7 +725,7 @@ export class AuthController {
         }
       }
 
-      successResponse(res,
+      res.status(200).json(successResponse(
         {
           valid: true,
           user: {
@@ -728,16 +743,17 @@ export class AuthController {
           }
         },
         undefined
-      );
+      ));
 
     } catch (error: any) {
       logger.error('Session check error:', error);
 
-      errorResponse(res,
+      res.status(400).json(errorResponse(
         'Controllo sessione fallito',
         'SESSION_ERROR',
         undefined,
-        500);
+        500));
+        return;
     }
   }
 
@@ -798,14 +814,14 @@ export class AuthController {
       // Clear authentication cookies
       AuthMiddleware.clearAuthCookies(res);
 
-      successResponse(res, 
+      res.status(200).json(successResponse( 
         {
           session: {
             loggedOutAt: new Date().toISOString(),
             allDevicesLoggedOut: logoutAllDevices || false
           },
         },
-        'Logged out successfully');
+        'Logged out successfully'));
 
     } catch (error: any) {
       logger.error('Logout error:', error);
@@ -813,11 +829,12 @@ export class AuthController {
       // Clear cookies anyway
       AuthMiddleware.clearAuthCookies(res);
       
-      errorResponse(res, 
+      res.status(400).json(errorResponse( 
         'Logout fallito',
         'LOGOUT_ERROR',
         undefined,
-        500);
+        500));
+        return;
     }
   }
 
@@ -840,21 +857,22 @@ export class AuthController {
       // Clear authentication cookies
       AuthMiddleware.clearAuthCookies(res);
 
-      successResponse(res, 
+      res.status(200).json(successResponse( 
         {
           sessionsTerminated: 1, // Placeholder
           terminatedAt: new Date().toISOString()
         },
-        'All sessions terminated successfully');
+        'All sessions terminated successfully'));
 
     } catch (error: any) {
       logger.error('Logout all error:', error);
       
-      errorResponse(res,
+      res.status(400).json(errorResponse(
         'Logout completo fallito',
         'LOGOUT_ALL_ERROR',
         undefined,
-        500);
+        500));
+        return;
     }
   }
 
@@ -877,19 +895,22 @@ export class AuthController {
       // Decode character_context cookie
       const characterContext = req.cookies?.character_context;
       if (!characterContext) {
-        return errorResponse(res, 'Nessun personaggio selezionato', 'NO_CHARACTER_CONTEXT', undefined, 401);
+        res.status(400).json(errorResponse('Nessun personaggio selezionato', 'NO_CHARACTER_CONTEXT', undefined, 401));
+        return;
       }
 
       // Verify JWT token
       const decoded = CryptoUtils.verifyCharacterContextToken(characterContext);
       if (!decoded || !decoded.characterId) {
-        return errorResponse(res, 'Contesto personaggio non valido', 'INVALID_CHARACTER_CONTEXT', undefined, 401);
+        res.status(400).json(errorResponse('Contesto personaggio non valido', 'INVALID_CHARACTER_CONTEXT', undefined, 401));
+        return;
       }
 
       // Fetch character from database
       const character = await Character.findById(decoded.characterId);
       if (!character) {
-        return errorResponse(res, 'Personaggio non trovato', 'CHARACTER_NOT_FOUND', undefined, 404);
+        res.status(400).json(errorResponse('Personaggio non trovato', 'CHARACTER_NOT_FOUND', undefined, 404));
+        return;
       }
 
       // Calculate effective permissions (gameplayRoles → admin mapping + adminPermissions)
@@ -904,14 +925,16 @@ export class AuthController {
       );
 
       // Return permissions
-      successResponse(res, {
+      res.status(200).json(successResponse({
         isGestore,
         permissions: effectivePermissions
-      }, 'Permissions calculated successfully');
+      }, 'Permissions calculated successfully'));
+        return;
 
     } catch (error: any) {
       logger.error('Get effective permissions error:', error);
-      errorResponse(res, 'Impossibile recuperare i permessi', 'GET_PERMISSIONS_ERROR', undefined, 500);
+      res.status(400).json(errorResponse('Impossibile recuperare i permessi', 'GET_PERMISSIONS_ERROR', undefined, 500));
+        return;
     }
   }
 }

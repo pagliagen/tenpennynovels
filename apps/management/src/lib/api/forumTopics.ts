@@ -23,7 +23,7 @@ export async function getForumTopic(topicId: string): Promise<ForumTopic> {
     apiClient.get<ApiResponse<ForumTopic>>(`/admin/forum-topics/${topicId}`)
   );
 
-  if (!response.data.result || !response.data.data) {
+  if (!response.data.success || !response.data.data) {
     throw new Error(response.data.error || 'Errore nel recupero argomento');
   }
 
@@ -35,7 +35,7 @@ export async function createForumTopic(data: CreateForumTopicData): Promise<Foru
     apiClient.post<ApiResponse<ForumTopic>>('/admin/forum-topics', data)
   );
 
-  if (!response.data.result || !response.data.data) {
+  if (!response.data.success || !response.data.data) {
     throw new Error(response.data.error || 'Errore nella creazione argomento');
   }
 
@@ -47,7 +47,7 @@ export async function updateForumTopic(topicId: string, data: UpdateForumTopicDa
     apiClient.put<ApiResponse<ForumTopic>>(`/admin/forum-topics/${topicId}`, data)
   );
 
-  if (!response.data.result || !response.data.data) {
+  if (!response.data.success || !response.data.data) {
     throw new Error(response.data.error || 'Errore nell\'aggiornamento argomento');
   }
 
@@ -59,7 +59,7 @@ export async function deleteForumTopic(topicId: string): Promise<void> {
     apiClient.delete<ApiResponse<void>>(`/admin/forum-topics/${topicId}`)
   );
 
-  if (!response.data.result) {
+  if (!response.data.success) {
     throw new Error(response.data.error || 'Errore nell\'eliminazione argomento');
   }
 }

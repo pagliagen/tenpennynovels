@@ -34,7 +34,7 @@ export async function getDocumentById(id: string): Promise<Document> {
     apiClient.get<ApiResponse<Document>>(`/admin/documents/${id}`)
   );
 
-  if (!response.data.result || !response.data.data) {
+  if (!response.data.success || !response.data.data) {
     throw new Error(response.data.error || 'Errore nel recupero documento');
   }
 
@@ -54,7 +54,7 @@ export async function getDocumentWithChildren(id: string): Promise<{
     apiClient.get<ApiResponse<any>>(`/admin/documents/${id}/with-children?depth=10`)
   );
 
-  if (!response.data.result || !response.data.data) {
+  if (!response.data.success || !response.data.data) {
     throw new Error(response.data.error || 'Error fetching document hierarchy');
   }
 
@@ -69,7 +69,7 @@ export async function createDocument(data: CreateDocumentData): Promise<Document
     apiClient.post<ApiResponse<Document>>('/admin/documents', data)
   );
 
-  if (!response.data.result || !response.data.data) {
+  if (!response.data.success || !response.data.data) {
     throw new Error(response.data.error || 'Errore nella creazione documento');
   }
 
@@ -84,7 +84,7 @@ export async function updateDocument(id: string, data: UpdateDocumentData): Prom
     apiClient.patch<ApiResponse<Document>>(`/admin/documents/${id}`, data)
   );
 
-  if (!response.data.result || !response.data.data) {
+  if (!response.data.success || !response.data.data) {
     throw new Error(response.data.error || 'Errore nell\'aggiornamento documento');
   }
 
@@ -99,7 +99,7 @@ export async function deleteDocument(id: string): Promise<void> {
     apiClient.delete<ApiResponse<void>>(`/admin/documents/${id}`)
   );
 
-  if (!response.data.result) {
+  if (!response.data.success) {
     throw new Error(response.data.error || 'Errore nell\'eliminazione documento');
   }
 }
@@ -112,7 +112,7 @@ export async function reorderSiblings(parentId: string | null, orderedIds: strin
     apiClient.put<ApiResponse<void>>(`/admin/documents/reorder`, { parentId, orderedIds })
   );
 
-  if (!response.data.result) {
+  if (!response.data.success) {
     throw new Error(response.data.error || 'Errore nel riordinamento siblings');
   }
 }
@@ -125,7 +125,7 @@ export async function reorderDocument(documentId: string, order: number, parentI
     apiClient.patch<ApiResponse<void>>(`/admin/documents/${documentId}`, { order, parentId })
   );
 
-  if (!response.data.result) {
+  if (!response.data.success) {
     throw new Error(response.data.error || 'Errore nel riordinamento documento');
   }
 }
@@ -138,7 +138,7 @@ export async function toggleDocumentVisibility(id: string): Promise<void> {
     apiClient.patch<ApiResponse<void>>(`/admin/documents/${id}/toggle-visibility`)
   );
 
-  if (!response.data.result) {
+  if (!response.data.success) {
     throw new Error(response.data.error || 'Errore nel toggle visibilità documento');
   }
 }
@@ -151,7 +151,7 @@ export async function toggleDocumentDraft(id: string): Promise<void> {
     apiClient.patch<ApiResponse<void>>(`/admin/documents/${id}/toggle-draft`)
   );
 
-  if (!response.data.result) {
+  if (!response.data.success) {
     throw new Error(response.data.error || 'Errore nel toggle draft documento');
   }
 }
@@ -167,7 +167,7 @@ export async function getSubtypes(type?: string): Promise<DocumentSubtype[]> {
     apiClient.get<ApiResponse<DocumentSubtype[]>>('/admin/subtypes', { params })
   );
 
-  if (!response.data.result) {
+  if (!response.data.success) {
     throw new Error(response.data.error || 'Errore nel recupero subtypes');
   }
 
@@ -182,7 +182,7 @@ export async function createSubtype(data: { slug: string; title: string; type: s
     apiClient.post<ApiResponse<DocumentSubtype>>('/admin/subtypes', data)
   );
 
-  if (!response.data.result || !response.data.data) {
+  if (!response.data.success || !response.data.data) {
     throw new Error(response.data.error || 'Errore nella creazione subtype');
   }
 
@@ -197,7 +197,7 @@ export async function updateSubtype(id: string, data: { slug?: string; title?: s
     apiClient.patch<ApiResponse<DocumentSubtype>>(`/admin/subtypes/${id}`, data)
   );
 
-  if (!response.data.result || !response.data.data) {
+  if (!response.data.success || !response.data.data) {
     throw new Error(response.data.error || 'Errore nell\'aggiornamento subtype');
   }
 
@@ -212,7 +212,7 @@ export async function deleteSubtype(id: string): Promise<void> {
     apiClient.delete<ApiResponse<void>>(`/admin/subtypes/${id}`)
   );
 
-  if (!response.data.result) {
+  if (!response.data.success) {
     throw new Error(response.data.error || 'Errore nell\'eliminazione subtype');
   }
 }
@@ -225,7 +225,7 @@ export async function reorderSubtypes(type: string, orderedIds: string[]): Promi
     apiClient.put<ApiResponse<void>>('/admin/subtypes/reorder', { type, orderedIds })
   );
 
-  if (!response.data.result) {
+  if (!response.data.success) {
     throw new Error(response.data.error || 'Errore nel riordinamento subtypes');
   }
 }

@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
-import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '@shared/utils/apiResponse';
 
 import { ForumDiscussionSubscription } from '@database/models/ForumDiscussionSubscription';
 import { ForumDiscussion } from '@database/models/ForumDiscussion';

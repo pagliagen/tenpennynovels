@@ -8,7 +8,7 @@
 import { Request, Response } from 'express';
 import { DeletedRecordsService } from '../services/DeletedRecordsService';
 import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
-import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '@shared/utils/apiResponse';
 
 import { logger } from '../utils/logger';
 

@@ -6,7 +6,7 @@ import { LocationService } from '../services/LocationService';
 import { redis } from '@config/runtime/redis';
 import { CharacterCreationConfigService } from '@shared/services/CharacterCreationConfigService';
 import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
-import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '@shared/utils/apiResponse';
 
 import { getWeather } from '../services/WeatherService';
 

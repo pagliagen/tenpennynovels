@@ -5,7 +5,7 @@ import { ApiResponse } from '../types/auth';
 import { logger, logAuth, logSecurity } from '../logger';
 import { redis } from '@config/runtime/redis';
 import { EmailService } from '../services/EmailService';
-import { successResponse, errorResponse, updatedResponse } from '../utils/apiResponse';
+import { successResponse, errorResponse, updateResponse } from '@shared/utils/apiResponse';
 import { appConfig } from '@config/runtime';
 
 export class PasswordController {
@@ -27,11 +27,11 @@ export class PasswordController {
 
       if (!user) {
         // Return generic error without revealing if user exists
-        errorResponse(res, 
+        res.status(400).json(errorResponse( 
           'Utente non trovato',
           'USER_NOT_FOUND',
           undefined,
-          404);
+          404));
         return;
       }
 
@@ -81,11 +81,11 @@ export class PasswordController {
       } catch (emailError) {
         logger.error('Failed to send password reset email:', emailError);
 
-        errorResponse(res,
+        res.status(400).json(errorResponse(
           'Impossibile inviare l\'email di reset password',
           'EMAIL_SEND_ERROR',
           undefined,
-          500);
+          500));
         return;
       }
 
@@ -96,19 +96,19 @@ export class PasswordController {
         logger.debug(`[DEV] Reset password URL: ${resetUrl}`);
       }
 
-      successResponse(res,
+      res.status(200).json(successResponse(
         responseData,
         message
-      );
+      ));
 
     } catch (error: any) {
       logger.error('Forgot password error:', error);
       
-      errorResponse(res, 
+      res.status(400).json(errorResponse( 
         'Richiesta di reset password fallita',
         'PASSWORD_RESET_REQUEST_ERROR',
         undefined,
-        500);
+        500));
     }
   }
 
@@ -126,7 +126,7 @@ export class PasswordController {
       });
 
       if (!user) {
-        errorResponse(res, 
+        res.status(400).json(errorResponse( 
           'Token di reset non valido o scaduto',
           'INVALID_RESET_TOKEN',
           {
@@ -134,7 +134,7 @@ export class PasswordController {
             canRequestNew: true,
             requestUrl: '/auth/forgot-password'
           },
-          400);
+          400));
         return;
       }
 
@@ -142,7 +142,7 @@ export class PasswordController {
       const hoursRemaining = Math.floor(timeRemaining / (1000 * 60 * 60));
       const minutesRemaining = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
 
-      successResponse(res, 
+      res.status(200).json(successResponse( 
         {
           valid: true,
           token: token,
@@ -153,16 +153,16 @@ export class PasswordController {
           expiresAt: user.passwordResetExpires!.toISOString(),
           timeRemaining: `${hoursRemaining} hour${hoursRemaining !== 1 ? 's' : ''} ${minutesRemaining} minute${minutesRemaining !== 1 ? 's' : ''}`
         },
-        undefined);
+        undefined));
 
     } catch (error: any) {
       logger.error('Reset token verification error:', error);
       
-      errorResponse(res, 
+      res.status(400).json(errorResponse( 
         'Verifica token fallita',
         'TOKEN_VERIFICATION_ERROR',
         undefined,
-        500);
+        500));
     }
   }
 
@@ -177,11 +177,11 @@ export class PasswordController {
 
       // Validate that passwords match (should be caught by validation middleware)
       if (newPassword !== confirmPassword) {
-        errorResponse(res, 
+        res.status(400).json(errorResponse( 
           'Le password non corrispondono',
           'PASSWORDS_MISMATCH',
           undefined,
-          400);
+          400));
         return;
       }
 
@@ -191,21 +191,21 @@ export class PasswordController {
       });
 
       if (!user) {
-        errorResponse(res, 
+        res.status(400).json(errorResponse( 
           'Token di reset non valido o scaduto',
           'INVALID_RESET_TOKEN',
           {
             canRequestNew: true,
             requestUrl: '/auth/forgot-password'
           },
-          400);
+          400));
         return;
       }
 
       // Validate password strength
       const passwordValidation = CryptoUtils.validatePasswordStrength(newPassword);
       if (!passwordValidation.isValid) {
-        errorResponse(res, 
+        res.status(400).json(errorResponse( 
           'La password non soddisfa i requisiti',
           'INVALID_PASSWORD',
           {
@@ -219,7 +219,7 @@ export class PasswordController {
             },
             violations: passwordValidation.violations
           },
-          400);
+          400));
         return;
       }
 
@@ -264,7 +264,7 @@ export class PasswordController {
         logger.error('Failed to send password reset notification:', emailError);
       }
 
-      updatedResponse(res, 
+      res.status(200).json(updateResponse( 
         {
           user: {
             id: user.id,
@@ -276,16 +276,16 @@ export class PasswordController {
             loginRequired: true
           }
         },
-        'Password reset successfully');
+        'Password reset successfully'));
 
     } catch (error: any) {
       logger.error('Password reset error:', error);
       
-      errorResponse(res, 
+      res.status(400).json(errorResponse( 
         'Reset password fallito',
         'PASSWORD_RESET_ERROR',
         undefined,
-        500);
+        500));
     }
   }
 
@@ -300,21 +300,21 @@ export class PasswordController {
 
       // Validate that new passwords match
       if (newPassword !== confirmNewPassword) {
-        errorResponse(res, 
+        res.status(400).json(errorResponse( 
           'La nuova password e la conferma non corrispondono',
           'PASSWORDS_MISMATCH',
           undefined,
-          400);
+          400));
         return;
       }
 
       const user = await User.findById(userId);
       if (!user) {
-        errorResponse(res, 
+        res.status(400).json(errorResponse( 
           'Utente non trovato',
           'USER_NOT_FOUND',
           undefined,
-          404);
+          404));
         return;
       }
 
@@ -328,32 +328,32 @@ export class PasswordController {
           ipAddress: req.ip
         });
 
-        errorResponse(res, 
+        res.status(400).json(errorResponse( 
           'La password attuale non è corretta',
           'INVALID_CURRENT_PASSWORD',
           {
             attemptsRemaining: 3,
             lockoutWarning: 'Account will be temporarily locked after 5 failed attempts'
           },
-          400);
+          400));
         return;
       }
 
       // Validate that new password is different
       const isSamePassword = await CryptoUtils.comparePassword(newPassword, user.passwordHash);
       if (isSamePassword) {
-        errorResponse(res, 
+        res.status(400).json(errorResponse( 
           'La nuova password deve essere diversa da quella attuale',
           'SAME_PASSWORD',
           undefined,
-          400);
+          400));
         return;
       }
 
       // Validate password strength
       const passwordValidation = CryptoUtils.validatePasswordStrength(newPassword);
       if (!passwordValidation.isValid) {
-        errorResponse(res, 
+        res.status(400).json(errorResponse( 
           'La password non soddisfa i requisiti',
           'INVALID_PASSWORD',
           {
@@ -367,7 +367,7 @@ export class PasswordController {
             },
             violations: passwordValidation.violations
           },
-          400);
+          400));
         return;
       }
 
@@ -410,7 +410,7 @@ export class PasswordController {
         logger.error('Failed to send password change notification:', emailError);
       }
 
-      updatedResponse(res, 
+      res.status(200).json(updateResponse( 
         {
           passwordChangedAt: user.passwordChangedAt,
           security: {
@@ -418,16 +418,16 @@ export class PasswordController {
             sessionCount: logoutOtherDevices ? 0 : 1 // Placeholder
           }
         },
-        'Password changed successfully');
+        'Password changed successfully'));
 
     } catch (error: any) {
       logger.error('Password change error:', error);
       
-      errorResponse(res, 
+      res.status(400).json(errorResponse( 
         'Cambio password fallito',
         'PASSWORD_CHANGE_ERROR',
         undefined,
-        500);
+        500));
     }
   }
 }

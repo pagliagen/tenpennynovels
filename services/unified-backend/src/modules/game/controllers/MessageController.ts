@@ -4,7 +4,7 @@ import { VictorianMessageType, LocationMessageType } from '@shared/types/messagi
 import { ApiResponse } from '../types/game';
 import { logger } from '../logger';
 import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
-import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId , deleteResponse} from '../utils/apiResponse';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId , deleteResponse} from '@shared/utils/apiResponse';
 
 
 // Type aliases for message properties

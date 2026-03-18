@@ -4,7 +4,7 @@ import Document from '@database/models/Document';
 import DocumentSubtype from '@database/models/DocumentSubtype';
 import { logger } from '../utils/logger';
 import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
-import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '@shared/utils/apiResponse';
 
 import { DocumentChunkService } from '../services/DocumentChunkService';
 import jwt from 'jsonwebtoken';

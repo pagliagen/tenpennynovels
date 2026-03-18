@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { GamingSession, Location, Chat } from '@database/models';
 import { logger } from '../logger';
 import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
-import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '@shared/utils/apiResponse';
 
 
 export class QuestController {
