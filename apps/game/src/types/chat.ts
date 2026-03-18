@@ -201,6 +201,7 @@ export interface ChatMessage {
     editedBy: string;
   }>;
   timestamp: string;                  // DB field (replaces createdAt/updatedAt)
+  edited?: boolean;                   // WebSocket flag - true if this is an edit notification
 }
 
 /**

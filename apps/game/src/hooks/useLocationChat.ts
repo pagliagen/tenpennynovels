@@ -179,29 +179,65 @@ export function useLocationChat(
    */
   useEffect(() => {
     const unsubscribe = onLocationEvent((event) => {
-      // Filter by event type
-      if (event.type !== 'location_message_notification') {
-        return;
+      // Handle message notification (create/update)
+      if (event.type === 'location_message_notification') {
+        const payload = event.data as LocationMessageNotification;
+
+        // Filter by location (only process messages for current location)
+        if (payload.locationId !== locationId) {
+          return;
+        }
+
+        // Check if message already exists (for in-place updates)
+        // ✅ FIX: Use getState() to avoid stale closure - get fresh state
+        const existingMessage = useChatStore.getState().messages.find((m) => m._id === payload.message._id);
+
+        if (existingMessage) {
+          // Update existing message (edit or TiroContrapposto reaction processed)
+          chatStore.updateMessage(payload.message._id, payload.message);
+          console.log(`📝 Message updated (real-time): ${payload.message._id}`);
+
+          // Show toast if edited
+          if (payload.message.edited) {
+            useUIStore.getState().addToast({
+              type: 'info',
+              message: 'Messaggio modificato',
+              duration: 2000,
+            });
+          }
+        } else {
+          // Add new message
+          chatStore.addMessage(payload.message);
+          console.log(`📨 New message received (real-time): ${payload.message._id}`);
+        }
       }
+      // Handle message deletion
+      else if (event.type === 'location_action_deleted') {
+        const payload = event.data as { locationId: string; actionId: string };
 
-      const payload = event.data as LocationMessageNotification;
+        console.log('[useLocationChat] location_action_deleted received:', {
+          payloadLocationId: payload.locationId,
+          currentLocationId: locationId,
+          actionId: payload.actionId,
+          matches: payload.locationId === locationId,
+        });
 
-      // Filter by location (only process messages for current location)
-      if (payload.locationId !== locationId) {
-        return;
-      }
+        // Filter by location
+        if (payload.locationId !== locationId) {
+          console.log('[useLocationChat] ❌ Location mismatch, ignoring delete event');
+          return;
+        }
 
-      // Check if message already exists (for in-place updates)
-      const existingMessage = chatStore.messages.find((m) => m._id === payload.message._id);
+        // Delete message from store
+        chatStore.deleteMessage(payload.actionId);
+        console.log(`🗑️ Message deleted (real-time): ${payload.actionId}`);
 
-      if (existingMessage) {
-        // Update existing message (TiroContrapposto reaction processed)
-        chatStore.updateMessage(payload.message._id, payload.message);
-        console.log(`📝 Message updated (real-time): ${payload.message._id}`);
-      } else {
-        // Add new message
-        chatStore.addMessage(payload.message);
-        console.log(`📨 New message received (real-time): ${payload.message._id}`);
+        // Show toast
+        useUIStore.getState().addToast({
+          type: 'info',
+          message: 'Messaggio eliminato',
+          duration: 2000,
+        });
       }
     });
 

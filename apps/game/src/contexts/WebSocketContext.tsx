@@ -361,6 +361,13 @@ export function WebSocketProvider({ children }: WebSocketProviderProps): JSX.Ele
       );
     });
 
+    socket.on('location_action_deleted', (data) => {
+      // Dispatch delete event to location subscribers
+      locationCallbacksRef.current.forEach((callback) =>
+        callback({ type: 'location_action_deleted', data })
+      );
+    });
+
     socket.on('player_entered', (data) => {
       locationCallbacksRef.current.forEach((callback) =>
         callback({ type: 'player_entered', data })

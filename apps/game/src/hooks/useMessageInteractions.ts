@@ -73,22 +73,16 @@ export function useMessageInteractions(
     try {
       await locationChatsApi.editMessage(message._id, { content: editedContent });
 
-      const locationId = message.locationId;
-      const chatStore = useChatStore.getState();
-      await chatStore.loadMessages(locationId);
-
-      addToast({
-        type: 'success',
-        message: 'Messaggio modificato',
-        duration: 2000,
-      });
+      // ✅ No full refresh - WebSocket will update message
+      // Frontend listens to 'location_message_notification' with edited: true
+      // Toast will be shown by useLocationChat when WebSocket event arrives
 
       setIsEditing(false);
     } catch (error: any) {
       addToast({
         type: 'error',
-        message: error.message || 'Errore durante la modifica',
-        duration: 4000,
+        message: error.response?.data?.error || error.message || 'Errore durante la modifica',
+        duration: 3000,
       });
     }
   };
@@ -109,20 +103,14 @@ export function useMessageInteractions(
     try {
       await locationChatsApi.deleteMessage(message._id);
 
-      const locationId = message.locationId;
-      const chatStore = useChatStore.getState();
-      await chatStore.loadMessages(locationId);
-
-      addToast({
-        type: 'success',
-        message: 'Messaggio eliminato',
-        duration: 2000,
-      });
+      // ✅ No full refresh - WebSocket will remove message
+      // Frontend listens to 'location_action_deleted'
+      // Toast will be shown by useLocationChat when WebSocket event arrives
     } catch (error: any) {
       addToast({
         type: 'error',
-        message: error.message || 'Errore durante l\'eliminazione',
-        duration: 4000,
+        message: error.response?.data?.error || error.message || 'Errore durante l\'eliminazione',
+        duration: 3000,
       });
     }
   };
