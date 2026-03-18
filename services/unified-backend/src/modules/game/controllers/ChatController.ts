@@ -17,6 +17,9 @@ import { CharacterSkillService } from '../services/CharacterSkillService';
 // Message Transformer (Phase 2 refactoring)
 import { ChatMessageService } from '../services/ChatMessageService';
 
+// WebSocket Service (Centralized emissions)
+import { ChatWebSocketService } from '../services/ChatWebSocketService';
+
 export class ChatController {
   // Singleton service instance
   private static chatMessageService = new ChatMessageService();
@@ -664,13 +667,18 @@ export class ChatController {
 
   /**
    * Get visibility level for action type
+   *
+   * IMPORTANT:
+   * - master/moderation actions are PUBLIC (everyone can read)
+   * - Only masters/moderators can SEND them (permission check elsewhere)
    */
   private static getActionVisibility(actionType: string): 'public' | 'whisper' | 'master_only' {
     switch (actionType) {
       case 'whisper':
         return 'whisper';
+      case 'master':
       case 'moderation':
-        return 'master_only';
+        return 'public';  // ← FIX: Everyone can read, only masters can send
       default:
         return 'public';
     }
@@ -864,6 +872,7 @@ export class ChatController {
         position: action.position || undefined,
         locationId: action.locationId.toString(),
         content: action.content,
+        visibility: action.visibility,
         diceResult: action.diceResult || undefined,
         socialConflict:
           action.socialConflict && Object.keys(action.socialConflict).length > 0
@@ -872,23 +881,20 @@ export class ChatController {
         itemEffect: action.itemEffect || undefined,
         targetCharacters: action.targetCharacters || undefined,
         hiddenContent: action.hiddenContent || undefined,
-        editHistory: action.editHistory,
+        editHistory: action.editHistory?.map((entry: any) => ({
+          content: entry.content,
+          editedAt: entry.editedAt.toISOString(),
+          editedBy: entry.editedBy,
+        })) || [],
         timestamp: action.timestamp.toISOString(),
         edited: true, // ← Flag to indicate this is an edit
       };
 
       // Emit WebSocket notification with FULL enriched message
-      const io = getSocketIO();  // ← FIX: Use getSocketIO() instead of req.app.get('io')
-      if (io) {
-        const roomName = `location_${action.locationId}`;
-        io.to(roomName).emit('location_message_notification', {
-          message: enrichedMessage, // ← Full message (not partial)
-          locationId: action.locationId.toString(),
-        });
-        logger.debug(`[updateMessage] WebSocket event emitted to room: ${roomName}`);
-      } else {
-        logger.warn(`[updateMessage] Socket.IO not available, cannot emit edit event`);
-      }
+      ChatWebSocketService.emitMessageUpdated({
+        locationId: action.locationId.toString(),
+        message: enrichedMessage,
+      });
 
       logger.info(`Location action updated: ${actionId} by ${character.characterName}`);
 
@@ -989,23 +995,10 @@ export class ChatController {
       await Chat.findByIdAndDelete(actionId);
 
       // Emit WebSocket notification
-      const io = getSocketIO();  // ← FIX: Use getSocketIO() like createMessage does
-      logger.debug(`[deleteMessage] Socket.IO instance:`, {
-        ioAvailable: !!io,
+      ChatWebSocketService.emitMessageDeleted({
         locationId: locationId.toString(),
-        actionId: actionId.toString()
+        actionId: actionId.toString(),
       });
-
-      if (io) {
-        const roomName = `location_${locationId}`;
-        io.to(roomName).emit('location_action_deleted', {
-          locationId: locationId.toString(),
-          actionId: actionId.toString()
-        });
-        logger.debug(`[deleteMessage] WebSocket event emitted to room: ${roomName}`);
-      } else {
-        logger.warn(`[deleteMessage] Socket.IO not available, cannot emit delete event`);
-      }
 
       logger.info(`Location action deleted: ${actionId} by ${character.characterName}`);
 
@@ -1315,14 +1308,10 @@ export class ChatController {
       const result = await Chat.deleteMany({ locationId });
 
       // Emit WebSocket notification
-      const io = req.app.get('io');
-      if (io) {
-        const roomName = `location_${locationId}`;
-        io.to(roomName).emit('location_chat_cleared', {
-          locationId,
-          clearedBy: character.characterName
-        });
-      }
+      ChatWebSocketService.emitChatCleared({
+        locationId,
+        clearedBy: character.characterName,
+      });
 
       logger.info(`Location chat cleared: ${locationId} by ${character.characterName}, deleted ${result.deletedCount} actions`);
 

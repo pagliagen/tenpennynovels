@@ -21,6 +21,7 @@ import { Chat, Character, Location, GamingSession } from '@database/models';
 import { ActionRouter } from '../actions/ActionRouter';
 import { ActionInput } from '../actions/types';
 import { logger } from '@shared/utils/logger';
+import { hasGamePermission, GamePermissions } from '@config/permissions';
 
 /**
  * Chat Message Service
@@ -177,11 +178,15 @@ export class ChatMessageService {
     character: any,
     isActionModeActive: boolean = false
   ): boolean {
-    const characterRoles = character.gameplayRoles || [];
-    const isMaster =
-      characterRoles.includes('master') ||
-      characterRoles.includes('moderatore') ||
-      characterRoles.includes('Gestore');
+    // Use centralized permission system instead of duplicating logic
+    // Check if character has any master-only permission (indicates master/moderatore/gestore status)
+    const isMaster = hasGamePermission(
+      GamePermissions.CHAT_MASTER_ACTION,
+      character.playerStatus || 'approved',
+      character.isGestore || false,
+      character.gameplayRoles || [],
+      character.characterPermissions || []
+    );
 
     // Master-only messages: only masters can see
     if (action.visibility === 'master_only') {
