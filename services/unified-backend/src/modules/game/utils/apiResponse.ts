@@ -3,7 +3,7 @@
  * Use direct res.status().json() instead
  */
 
-import type { SuccessResponse, ErrorResponse, ListResponse, PaginationInfo } from '@shared/types/responses';
+import type { PaginationInfo } from '@shared/types/responses';
 import type { Request } from 'express';
 
 /**

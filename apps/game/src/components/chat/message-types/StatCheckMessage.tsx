@@ -28,6 +28,7 @@ interface StatCheckMessageProps {
 export function StatCheckMessage({ message, currentCharacterId }: StatCheckMessageProps): JSX.Element {
   const interactions = useMessageInteractions(message, currentCharacterId);
   const statCheck = message.statCheck;
+  const diceResult = message.diceResult;
 
   return (
     <>
@@ -96,9 +97,23 @@ export function StatCheckMessage({ message, currentCharacterId }: StatCheckMessa
           ) : (
             <>
               <div className={styles.messageContent}>{message.content}</div>
-              {statCheck && (
+
+              {/* Stat check from diceResult (new format - no target exposed) */}
+              {diceResult && (diceResult as any).statName && (
                 <div className={styles.statCheckResult}>
-                  {statCheck.attribute} ({statCheck.difficulty}) | Roll: {statCheck.roll} vs {statCheck.target} | {statCheck.success ? '✅' : '❌'}
+                  <div className={styles.rollDisplay}>
+                    <span className={styles.rollValue}>🎲 {diceResult.result}</span>
+                    <span className={styles.successDegree}>
+                      {(diceResult as any).successDegree || (diceResult.success ? 'Successo' : 'Fallimento')}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Legacy stat check (old format with target - should not happen anymore) */}
+              {!diceResult && statCheck && (
+                <div className={styles.statCheckResult}>
+                  Roll: {statCheck.roll} | {statCheck.success ? '✅' : '❌'}
                 </div>
               )}
             </>

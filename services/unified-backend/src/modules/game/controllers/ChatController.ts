@@ -1,21 +1,35 @@
 import { Request, Response } from 'express';
-import { Chat, GamingSession, Location, Character, SkillConfrontation, CombatEncounter } from '@database/models';
+import { Chat, GamingSession, Location, Character, SkillConfrontation, CombatEncounter, Skill, Item } from '@database/models';
 import { logger } from '../logger';
-import { redis } from '@config/runtime/redis';
-import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
-import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+import { successResponse, errorResponse, createResponse, getRequestId } from '../utils/apiResponse';
 
-import { calculateSuccessDegree, getSuccessDegreeLabel, compareSuccessDegrees, SuccessDegree } from '../utils/successDegrees';
-import { calculateSocialConflict, isValidSocialSkillPair, getDefensiveSkill } from '../utils/socialConflicts';
+import { calculateSuccessDegree, getSuccessDegreeLabel, compareSuccessDegrees } from '../utils/successDegrees';
+import { calculateSocialConflict, getDefensiveSkill } from '../utils/socialConflicts';
 import { getSocketIO } from '../websocket/socketInstance';
 import { appConfig } from '@config/runtime';
 
+// Action Router (Refactored architecture)
+import { ActionRouter } from '../actions/ActionRouter';
+import { ActionContext, ActionInput } from '../actions/types';
+import { DiceService } from '../services/DiceService';
+import { CharacterSkillService } from '../services/CharacterSkillService';
+
+// Message Transformer (Phase 2 refactoring)
+import { ChatMessageService } from '../services/ChatMessageService';
+
+// WebSocket Service (Centralized emissions)
+import { ChatWebSocketService } from '../services/ChatWebSocketService';
+
 export class ChatController {
+  // Singleton service instance
+  private static chatMessageService = new ChatMessageService();
 
   /**
    * Populate character avatars for messages
    * Performs batch lookup of avatars from Character collection
    * IMPORTANT: Does NOT overwrite existing avatars (preserves fake PNG avatars)
+   *
+   * @deprecated This method is being replaced by MessageTransformer/BaseEnricher
    */
   private static async populateCharacterAvatars(messages: any[]): Promise<any[]> {
     if (messages.length === 0) return messages;
@@ -93,7 +107,7 @@ export class ChatController {
         character.gameplayRoles || [],
         character.isGestore || false
       );
-      
+
       if (!isValidAction) {
         res.status(403).json(errorResponse(
           `You don't have permission to perform ${actionType} actions`,
@@ -203,7 +217,7 @@ export class ChatController {
       // ========== END FAKE PNG MASKING LOGIC ==========
 
       // Build the location action
-      const actionData: any = {
+      let actionData: any = {
         actionType,
         characterId: freshCharacter._id.toString(),  // REAL ID (ownership)
         characterName: displayName,                  // Fake if masked, real otherwise
@@ -220,126 +234,69 @@ export class ChatController {
         isHidden: shouldHide
       };
 
-      // Handle special action types
-      if (actionType === 'whisper' && targetCharacters) {
-        actionData.targetCharacters = targetCharacters;
-      }
+      // REFACTORED: Use Action Router for modular action handling
+      // All 11 action types are now handled through the router
+      const handledActionTypes = [
+        'standard', 'ooc', 'whisper',
+        'dice_roll', 'skill_check', 'stat_check',
+        'item_use', 'master', 'moderation',
+        'social_confrontation', 'combat_action'
+      ];
 
-      // Handle dice rolling actions (sempre 1d100)
-      if (actionType === 'dice_roll') {
-        actionData.diceResult = ChatController.rollDice();
-      }
+      logger.debug(`[ChatController] Action type: ${actionType}, handled: ${handledActionTypes.includes(actionType)}`);
 
-      // Handle skill checks (SECURE: lookup actual skill value from character DB)
-      if (actionType === 'skill_check' && skillId) {
-        // Fetch full character document to get skill value (security: prevent value manipulation)
-        const fullCharacter = await Character.findById(character.characterId).lean();
-        if (!fullCharacter) {
-          res.status(404).json(errorResponse(
-            'Personaggio non trovato',
-            'CHARACTER_NOT_FOUND',
-            undefined,
-            404,
-            getRequestId(req)
-          ));
-          return;
-        }
-
-        // Get actual skill value from character (cannot be manipulated by client)
-        const skillValue = fullCharacter.skills?.[skillId];
-        if (skillValue === undefined) {
-          res.status(400).json(errorResponse(
-            'Character does not have this skill',
-            'SKILL_NOT_FOUND',
-            undefined,
-            400,
-            getRequestId(req)
-          ));
-          return;
-        }
-
-        // Extract numeric value (handle both number and SkillBreakdown)
-        const targetValue = typeof skillValue === 'number' ? skillValue : skillValue.total;
-
-        // Fetch skill name from Skill model
-        const skillDoc = await (await import('@database/models')).Skill.findById(skillId).select('name').lean();
-        const skillName = skillDoc?.name || 'Unknown Skill';
-
-        const rollResult = ChatController.rollDice('1d100');
-        const successDegree = calculateSuccessDegree(rollResult.result, targetValue);
-        const successLabel = getSuccessDegreeLabel(successDegree.degree);
-
-        // Format message with success degree (no dice numbers shown)
-        actionData.content = `${character.characterName} tira ${skillName} facendo un ${successLabel}`;
-
-        actionData.diceResult = {
-          ...rollResult,
+      if (handledActionTypes.includes(actionType)) {
+        logger.info(`[ChatController] Routing ${actionType} through ActionRouter`);
+        // Build ActionInput for router
+        const actionInput: ActionInput = {
+          actionType,
+          content: content.trim(),
+          locationId,
+          characterId: freshCharacter._id.toString(),
+          characterName: displayName,
+          characterAvatar: displayAvatar,
+          isMasked,
+          realCharacterName,
+          visibility,
+          targetCharacters,
+          diceSpec,
           skillId,
-          skillName,
-          target: targetValue,
-          success: rollResult.result <= targetValue
-        };
-        actionData.successDegree = successDegree.degree;
-      }
-
-      // Handle stat checks (SECURE: lookup actual stat value from character DB)
-      if (actionType === 'stat_check' && statName) {
-        // Fetch full character document to get stat value (security: prevent value manipulation)
-        const fullCharacter = await Character.findById(character.characterId).lean();
-        if (!fullCharacter) {
-          res.status(404).json(errorResponse(
-            'Personaggio non trovato',
-            'CHARACTER_NOT_FOUND',
-            undefined,
-            404,
-            getRequestId(req)
-          ));
-          return;
-        }
-
-        // Get actual stat value from character (cannot be manipulated by client)
-        const targetValue = fullCharacter.stats?.[statName];
-        if (targetValue === undefined) {
-          res.status(400).json(errorResponse(
-            'Character does not have this stat',
-            'STAT_NOT_FOUND',
-            undefined,
-            400,
-            getRequestId(req)
-          ));
-          return;
-        }
-
-        const rollResult = ChatController.rollDice('1d100');
-        const successDegree = calculateSuccessDegree(rollResult.result, targetValue);
-        const successLabel = getSuccessDegreeLabel(successDegree.degree);
-
-        // Format message with success degree (capitalize stat name for display, no dice numbers)
-        const statDisplayName = statName.charAt(0).toUpperCase() + statName.slice(1);
-        actionData.content = `${character.characterName} tira ${statDisplayName} facendo un ${successLabel}`;
-
-        actionData.diceResult = {
-          ...rollResult,
           statName,
-          target: targetValue,
-          success: rollResult.result <= targetValue
+          position: position || undefined,
+          isHidden: shouldHide,
+          sessionId,
+          characterRoles: character.gameplayRoles || []
         };
-        actionData.successDegree = successDegree.degree;
-      }
 
-      // Handle item usage
-      if (actionType === 'item_use' && itemId) {
-        // TODO: Implement item usage logic with character inventory
-        actionData.itemEffect = {
-          itemId,
-          itemName: 'Item Name', // Will be fetched from database
-          description: 'Item used successfully',
-          effects: []
-        };
+        try {
+          // Route to appropriate handler
+          const router = ChatController.getActionRouter();
+          actionData = await router.route(actionInput);
+          logger.debug(`[ChatController] ActionData from router:`, {
+            actionType: actionData.actionType,
+            hasItemEffect: 'itemEffect' in actionData,
+            hasConfrontation: 'confrontation' in actionData,
+            hasSocialConflict: 'socialConflict' in actionData,
+            keys: Object.keys(actionData)
+          });
+        } catch (error: any) {
+          // Handle validation errors from handlers
+          if (error.code && error.statusCode) {
+            res.status(error.statusCode).json(errorResponse(
+              error.message,
+              error.code,
+              undefined,
+              error.statusCode,
+              getRequestId(req)
+            ));
+            return;
+          }
+          throw error; // Re-throw unexpected errors
+        }
       }
-
 
       // Save to database
+      // Note: Empty subdocuments are automatically removed by ChatSchema pre-save middleware
       const savedAction = await Chat.createAction(actionData);
 
       // Update occupant position tag if position was provided
@@ -376,10 +333,14 @@ export class ChatController {
           locationId: savedAction.locationId.toString(),
           content: savedAction.content,                 // DB field (was text)
           diceResult: savedAction.diceResult || undefined,  // DB field (was diceRoll)
-          socialConflict: savedAction.socialConflict || undefined,  // DB field (was skillCheck)
+          // Fix: Only include socialConflict if it has properties (Mongoose creates empty {} for subdocuments)
+          socialConflict: (savedAction.socialConflict && Object.keys(savedAction.socialConflict).length > 0)
+            ? savedAction.socialConflict
+            : undefined,
           statCheck: (savedAction as unknown as Record<string, unknown>).statCheck || undefined,
           itemEffect: savedAction.itemEffect || undefined,  // DB field (was itemUse)
           targetCharacters: savedAction.targetCharacters || undefined,  // DB field (was whisperVisibility)
+          hiddenContent: savedAction.hiddenContent || undefined,
           editHistory: savedAction.editHistory || [],
           timestamp: savedAction.timestamp.toISOString()  // DB field (was createdAt/updatedAt)
         };
@@ -563,7 +524,7 @@ export class ChatController {
         targetCharacters: savedAction.targetCharacters || undefined,
         editHistory: savedAction.editHistory || []
       };
-      
+
       // Filter socialConflict: for Raggirare, attacker should never see it
       if (savedAction.socialConflict) {
         const socialConflict = savedAction.socialConflict;
@@ -604,18 +565,22 @@ export class ChatController {
   /**
    * Get location action history
    * GET /game/locations/:locationId/actions
+   *
+   * Refactored to use ChatMessageService + MessageTransformer pattern
    */
   static async getMessages(req: Request<{ locationId: string }>, res: Response): Promise<void> {
     try {
       const character = req.character;
       if (!character) {
-        res.status(401).json(errorResponse(
-          'Contesto personaggio richiesto',
-          'CHARACTER_CONTEXT_REQUIRED',
-          undefined,
-          401,
-          getRequestId(req)
-        ));
+        res.status(401).json(
+          errorResponse(
+            'Contesto personaggio richiesto',
+            'CHARACTER_CONTEXT_REQUIRED',
+            undefined,
+            401,
+            getRequestId(req)
+          )
+        );
         return;
       }
 
@@ -627,149 +592,45 @@ export class ChatController {
       const timeThreshold = new Date();
       timeThreshold.setHours(timeThreshold.getHours() - hours);
 
-      // Get actions from the last X hours, visible to this character
-      const actions = await Chat.find({
+      // Service handles ALL query, filtering, enrichment
+      const enrichedMessages = await ChatController.chatMessageService.getMessages({
         locationId,
-        timestamp: { $gte: timeThreshold },
-        $or: [
-          { visibility: 'public' },
-          {
-            visibility: 'whisper',
-            $or: [
-              { characterId: character.characterId },
-              { targetCharacters: { $in: [character.characterId] } }
-            ]
-          },
-          { 
-            visibility: 'master_only',
-            // Will be filtered client-side based on roles
-          }
-        ]
-      })
-      .sort({ timestamp: 1 }) // Chronological order
-      .limit(limit)
-      .lean();
-
-      // Check action mode status
-      const Location = require('../../../database/models').Location;
-      const location = await Location.findById(locationId);
-      let isActionModeActive = false;
-      if (location?.activeSession?.sessionId) {
-        const session = await GamingSession.findById(location.activeSession.sessionId);
-        isActionModeActive = !!(session?.actionModeActive && session.actionModeEndsAt && new Date() < session.actionModeEndsAt);
-      }
-
-      // Check if character has master role (for visibility checks)
-      const isMaster = character.gameplayRoles?.some((role: string) =>
-        ['master', 'moderatore'].includes(role)
-      );
-
-      // Filter master_only messages and hidden actions based on character roles and action mode
-      const filteredActions = actions.filter((action: any) => {
-        // Filter master_only messages
-        if (action.visibility === 'master_only') {
-          if (!isMaster) return false;
-        }
-
-        // Filter hidden actions (action mode)
-        if (action.isHidden && !action.revealedAt && isActionModeActive) {
-          // Action mode still active: only show to sender
-          return action.characterId === character.characterId;
-        }
-
-        // CRITICAL SECURITY: Filter messages with visibleToDefenderOnly flag
-        // (Raggirare failure notifications should only be visible to defender and master)
-        if (action.socialConflict?.visibleToDefenderOnly) {
-          if (isMaster) return true;
-          // Check if current character is the defender (in targetCharacters)
-          const isDefender = action.targetCharacters?.includes(character.characterId);
-          return isDefender;
-        }
-
-        // CRITICAL SECURITY: Filter skill_check messages (social conflicts)
-        // Only sender and master can see skill checks (includes Raggirare, Persuasione, etc.)
-        if (action.actionType === 'skill_check') {
-          if (isMaster) return true;
-          // Only sender sees their own skill check
-          return action.characterId === character.characterId;
-        }
-
-        // CRITICAL SECURITY: Filter stat_check messages
-        // Only sender and master can see stat checks
-        if (action.actionType === 'stat_check') {
-          if (isMaster) return true;
-          return action.characterId === character.characterId;
-        }
-
-        return true;
-      }).map((action: any) => {
-        // Return DB fields directly (no mapping)
-        const chatMessage: any = {
-          _id: action._id.toString(),
-          actionType: action.actionType,           // DB field (was messageType)
-          characterId: action.characterId,
-          characterName: action.characterName,
-          characterAvatar: action.characterAvatar || undefined,  // Preserve fake avatar if masked
-          position: action.position || undefined,
-          locationId: action.locationId.toString(),
-          content: action.content,                 // DB field (was text)
-          diceResult: action.diceResult || undefined,  // DB field (was diceRoll)
-          socialConflict: action.socialConflict || undefined,  // DB field (was skillCheck)
-          statCheck: (action as unknown as Record<string, unknown>).statCheck || undefined,
-          itemEffect: action.itemEffect || undefined,  // DB field (was itemUse)
-          targetCharacters: action.targetCharacters || undefined,  // DB field (was whisperVisibility)
-          hiddenContent: action.hiddenContent || undefined,
-          editHistory: action.editHistory || [],
-          timestamp: action.timestamp.toISOString()  // DB field (was createdAt/updatedAt)
-        };
-
-        // CRITICAL SECURITY: Filter socialConflict data for Raggirare based on visibility rules
-        if (chatMessage.socialConflict?.visibleToDefenderOnly) {
-          const isAttacker = action.characterId === character.characterId;
-          const isDefender = action.targetCharacters?.includes(character.characterId);
-
-          // Attacker should NEVER see socialConflict data for Raggirare
-          if (isAttacker) {
-            delete chatMessage.socialConflict;
-          }
-          // Defender can see it only if they detected something (result !== 'victory')
-          else if (!isDefender || chatMessage.socialConflict.result === 'victory') {
-            delete chatMessage.socialConflict;
-          }
-        }
-
-        return chatMessage;
+        characterId: character.characterId,
+        timeThreshold,
+        limit,
       });
 
-      // Populate character avatars from DB (batch lookup for performance)
-      const messagesWithAvatars = await ChatController.populateCharacterAvatars(filteredActions);
+      logger.info(
+        `Retrieved ${enrichedMessages.length} enriched messages for ${character.characterName} in ${locationId}`
+      );
 
-      logger.info(`Retrieved ${messagesWithAvatars.length} location messages for ${character.characterName} in ${locationId}`);
-
-      res.json(successResponse(
-        {
-          messages: messagesWithAvatars,  // ✅ Frontend expects "messages" not "actions"
-          totalCount: filteredActions.length,
-          hasMore: false  // TODO: Implement pagination
-        },
-        undefined,
-        getRequestId(req)
-      ));
-
+      res.json(
+        successResponse(
+          {
+            messages: enrichedMessages,
+            totalCount: enrichedMessages.length,
+            hasMore: false, // TODO: Implement pagination
+          },
+          undefined,
+          getRequestId(req)
+        )
+      );
     } catch (error: unknown) {
       const err = error as Error;
       logger.error('Get location actions error:', {
         message: err.message,
         stack: err.stack,
-        name: err.name
+        name: err.name,
       });
-      res.status(500).json(errorResponse(
-        'Failed to retrieve location actions',
-        'GET_ACTIONS_ERROR',
-        undefined,
-        500,
-        getRequestId(req)
-      ));
+      res.status(500).json(
+        errorResponse(
+          'Failed to retrieve location actions',
+          'GET_ACTIONS_ERROR',
+          undefined,
+          500,
+          getRequestId(req)
+        )
+      );
     }
   }
 
@@ -797,8 +658,8 @@ export class ChatController {
       case 'item_use':
         // All approved players can perform standard actions
         return gameplayRoles.includes('player') ||
-               gameplayRoles.includes('master') ||
-               gameplayRoles.includes('moderatore');
+          gameplayRoles.includes('master') ||
+          gameplayRoles.includes('moderatore');
       default:
         return false;
     }
@@ -806,26 +667,92 @@ export class ChatController {
 
   /**
    * Get visibility level for action type
+   *
+   * IMPORTANT:
+   * - master/moderation actions are PUBLIC (everyone can read)
+   * - Only masters/moderators can SEND them (permission check elsewhere)
    */
   private static getActionVisibility(actionType: string): 'public' | 'whisper' | 'master_only' {
     switch (actionType) {
       case 'whisper':
         return 'whisper';
+      case 'master':
       case 'moderation':
-        return 'master_only';
+        return 'public';  // ← FIX: Everyone can read, only masters can send
       default:
         return 'public';
     }
   }
 
   /**
-   * Simple dice rolling function
+   * Parse dice specification string
+   * Format: {count}d{type}[+/-modifier]
+   * Examples: "2d6+3", "1d20", "3d8-2", "1d100"
    */
-  private static rollDice(diceSpec?: string): { result: number } {
-    // Sistema percentuale: SOLO 1d100
-    // Ignora diceSpec, usa sempre 1d100
-    const result = Math.floor(Math.random() * 100) + 1;
-    return { result };
+  private static parseDiceSpec(diceSpec: string): {
+    count: number;
+    type: number;
+    modifier: number;
+    isValid: boolean;
+  } {
+    const regex = /^(\d+)d(\d+)([+-]\d+)?$/i;
+    const match = diceSpec.match(regex);
+
+    if (!match) {
+      return { count: 1, type: 100, modifier: 0, isValid: false };
+    }
+
+    const count = parseInt(match[1], 10);
+    const type = parseInt(match[2], 10);
+    const modifier = match[3] ? parseInt(match[3], 10) : 0;
+
+    const validTypes = [4, 6, 8, 10, 12, 20, 100];
+    const isValid =
+      count >= 1 && count <= 20 &&
+      validTypes.includes(type) &&
+      modifier >= -99 && modifier <= 99;
+
+    return { count, type, modifier, isValid };
+  }
+
+  /**
+   * Dice rolling function with multi-dice support
+   * Parses diceSpec and rolls accordingly
+   * Format: {count}d{type}[+/-modifier]
+   * Examples: "2d6+3", "1d20", "3d8-2", "1d100"
+   */
+  private static rollDice(diceSpec?: string): {
+    dice: string;
+    result: number;
+    rolls?: number[];
+    modifier?: number;
+    total: number;
+  } {
+    const spec = diceSpec || '1d100';
+    const parsed = ChatController.parseDiceSpec(spec);
+
+    if (!parsed.isValid) {
+      logger.warn(`Invalid dice spec: ${spec}, falling back to 1d100`);
+      const result = Math.floor(Math.random() * 100) + 1;
+      return { dice: '1d100', result, total: result };
+    }
+
+    const rolls: number[] = [];
+    for (let i = 0; i < parsed.count; i++) {
+      const roll = Math.floor(Math.random() * parsed.type) + 1;
+      rolls.push(roll);
+    }
+
+    const rollSum = rolls.reduce((sum, r) => sum + r, 0);
+    const total = rollSum + parsed.modifier;
+
+    return {
+      dice: spec,
+      result: rollSum,
+      rolls: parsed.count > 1 ? rolls : undefined,
+      modifier: parsed.modifier !== 0 ? parsed.modifier : undefined,
+      total: total,
+    };
   }
 
   /**
@@ -876,7 +803,7 @@ export class ChatController {
       // Check permissions: only the creator can edit, or master
       const isOwner = action.characterId === character.characterId;
       const isMaster = character.gameplayRoles?.includes('master') || character.isGestore;
-      
+
       if (!isOwner && !isMaster) {
         res.status(403).json(errorResponse(
           'You can only edit your own actions',
@@ -935,44 +862,51 @@ export class ChatController {
       action.editHistory = editHistory;
       await action.save();
 
-      // Emit WebSocket notification
-      const io = req.app.get('io');
-      if (io) {
-        const roomName = `location_${action.locationId}`;
-        io.to(roomName).emit('location_message_notification', {
-          locationId: action.locationId,
-          actionId: action._id,
-          characterName: character.characterName,
-          actionType: action.actionType,
-          timestamp: action.timestamp,
-          edited: true
-        });
-      }
+      // Build enriched message (same format as createMessage)
+      const enrichedMessage = {
+        _id: action._id.toString(),
+        actionType: action.actionType,
+        characterId: action.characterId,
+        characterName: action.characterName,
+        characterAvatar: action.characterAvatar || undefined,
+        position: action.position || undefined,
+        locationId: action.locationId.toString(),
+        content: action.content,
+        visibility: action.visibility,
+        diceResult: action.diceResult || undefined,
+        socialConflict:
+          action.socialConflict && Object.keys(action.socialConflict).length > 0
+            ? action.socialConflict
+            : undefined,
+        itemEffect: action.itemEffect || undefined,
+        targetCharacters: action.targetCharacters || undefined,
+        hiddenContent: action.hiddenContent || undefined,
+        editHistory: action.editHistory?.map((entry: any) => ({
+          content: entry.content,
+          editedAt: entry.editedAt.toISOString(),
+          editedBy: entry.editedBy,
+        })) || [],
+        timestamp: action.timestamp.toISOString(),
+        edited: true, // ← Flag to indicate this is an edit
+      };
+
+      // Emit WebSocket notification with FULL enriched message
+      ChatWebSocketService.emitMessageUpdated({
+        locationId: action.locationId.toString(),
+        message: enrichedMessage,
+      });
 
       logger.info(`Location action updated: ${actionId} by ${character.characterName}`);
 
-      res.json(successResponse(
-        {
-          message: {
-            _id: action._id.toString(),
-            actionType: action.actionType,
-            characterId: action.characterId,
-            characterName: action.characterName,
-            characterAvatar: action.characterAvatar || undefined,  // Use saved value (fake if masked)
-            position: action.position || undefined,
-            locationId: action.locationId.toString(),
-            content: action.content,
-            diceResult: action.diceResult || undefined,
-            socialConflict: action.socialConflict || undefined,
-            itemEffect: action.itemEffect || undefined,
-            targetCharacters: action.targetCharacters || undefined,
-            editHistory: action.editHistory,
-            timestamp: action.timestamp.toISOString()
-          }
-        },
-        undefined,
-        getRequestId(req)
-      ));
+      res.json(
+        successResponse(
+          {
+            message: enrichedMessage,
+          },
+          undefined,
+          getRequestId(req)
+        )
+      );
 
     } catch (error: unknown) {
       const err = error as Error;
@@ -1061,14 +995,10 @@ export class ChatController {
       await Chat.findByIdAndDelete(actionId);
 
       // Emit WebSocket notification
-      const io = req.app.get('io');
-      if (io) {
-        const roomName = `location_${locationId}`;
-        io.to(roomName).emit('location_action_deleted', {
-          locationId,
-          actionId
-        });
-      }
+      ChatWebSocketService.emitMessageDeleted({
+        locationId: locationId.toString(),
+        actionId: actionId.toString(),
+      });
 
       logger.info(`Location action deleted: ${actionId} by ${character.characterName}`);
 
@@ -1237,7 +1167,7 @@ export class ChatController {
       // Create action for attacker
       const isRaggirare = attackerSkill === 'Raggirare';
       const isHiddenRoll = isHidden || isRaggirare;
-      
+
       const actionData: any = {
         actionType: 'standard',
         characterId: character.characterId,
@@ -1307,7 +1237,7 @@ export class ChatController {
           id: savedAction._id
         }
       };
-      
+
       if (!isRaggirare) {
         const action = responseData.action as Record<string, unknown>;
         action.socialConflict = conflictResult;
@@ -1359,10 +1289,10 @@ export class ChatController {
       const { locationId } = req.params;
 
       // Check permissions: only master can clear chat
-      const isMaster = character.gameplayRoles?.includes('master') || 
-                       character.gameplayRoles?.includes('moderatore') || 
-                       character.isGestore;
-      
+      const isMaster = character.gameplayRoles?.includes('master') ||
+        character.gameplayRoles?.includes('moderatore') ||
+        character.isGestore;
+
       if (!isMaster) {
         res.status(403).json(errorResponse(
           'Only masters can clear chat',
@@ -1378,14 +1308,10 @@ export class ChatController {
       const result = await Chat.deleteMany({ locationId });
 
       // Emit WebSocket notification
-      const io = req.app.get('io');
-      if (io) {
-        const roomName = `location_${locationId}`;
-        io.to(roomName).emit('location_chat_cleared', {
-          locationId,
-          clearedBy: character.characterName
-        });
-      }
+      ChatWebSocketService.emitChatCleared({
+        locationId,
+        clearedBy: character.characterName,
+      });
 
       logger.info(`Location chat cleared: ${locationId} by ${character.characterName}, deleted ${result.deletedCount} actions`);
 
@@ -1985,5 +1911,37 @@ export class ChatController {
         getRequestId(req)
       ));
     }
+  }
+
+  /**
+   * Action Router singleton
+   * Lazy initialization with shared ActionContext
+   */
+  private static actionRouter: ActionRouter | null = null;
+
+  private static getActionRouter(): ActionRouter {
+    if (!ChatController.actionRouter) {
+      const context: ActionContext = {
+        diceService: new DiceService(),
+        characterSkillService: new CharacterSkillService(),
+        Character,
+        Chat,
+        Location,
+        Skill,
+        Item,
+        SkillConfrontation,
+        CombatEncounter,
+        GamingSession,
+        calculateSuccessDegree,
+        getSuccessDegreeLabel,
+        calculateSocialConflict,
+        getDefensiveSkill,
+        requestId: '', // Will be set per-request if needed
+        logger
+      };
+      ChatController.actionRouter = new ActionRouter(context);
+      logger.info('[ChatController] ActionRouter initialized');
+    }
+    return ChatController.actionRouter;
   }
 }
