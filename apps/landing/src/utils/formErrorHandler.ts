@@ -36,7 +36,7 @@ export function handleApiFormErrors<T extends Record<string, any>>(
   setGlobalError?: (message: string) => void
 ): void {
   // Success - no errors
-  if (result.result) {
+  if (result.success) {
     return;
   }
 

@@ -7,7 +7,7 @@ import { ForumPost } from '@database/models/ForumPost';
 import { AdminAuthMiddleware } from '../middleware/adminAuth';
 import { logger } from '../utils/logger';
 import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
-import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId , deleteResponse} from '../utils/apiResponse';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId , deleteResponse} from '@shared/utils/apiResponse';
 
 import { escapeRegex } from '@shared/utils/validation';
 

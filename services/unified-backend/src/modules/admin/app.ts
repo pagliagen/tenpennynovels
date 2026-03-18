@@ -10,7 +10,7 @@ import { apiRoutes } from './routes';
 import { httpLoggerStream, logger } from './utils/logger';
 import { ApiResponse } from './types/management';
 import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
-import { successResponse, errorResponse } from './utils/apiResponse';
+import { successResponse, errorResponse } from '@shared/utils/apiResponse';
 import { appConfig } from '@config/runtime';
 
 logger.info('Setting up Management Backend...');

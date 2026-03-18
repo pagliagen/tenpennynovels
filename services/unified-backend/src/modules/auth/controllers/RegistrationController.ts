@@ -5,7 +5,7 @@ import { ApiResponse } from '../types/auth';
 import { logger, logAuth } from '../logger';
 import { redis } from '@config/runtime/redis';
 import { EmailService } from '../services/EmailService';
-import { errorResponse, successResponse, createdResponse } from '../utils/apiResponse';
+import { errorResponse, successResponse, createResponse } from '@shared/utils/apiResponse';
 import { appConfig } from '@config/runtime';
 
 export class RegistrationController {
@@ -26,25 +26,25 @@ export class RegistrationController {
           `${username}_player`
         ];
 
-        errorResponse(res, 
+        res.status(400).json(errorResponse( 
           'Username già esistente',
           'USERNAME_TAKEN',
           { suggestions },
-          409);
+          409));
         return;
       }
 
       // Check if email already exists
       const existingEmail = await User.findOne({ email: email.toLowerCase() });
       if (existingEmail) {
-        errorResponse(res, 
+        res.status(400).json(errorResponse( 
           'Indirizzo email già registrato',
           'EMAIL_TAKEN',
           {
             canRecover: true,
             message: 'If you forgot your password, you can reset it using the password recovery option.'
           },
-          409);
+          409));
         return;
       }
 
@@ -131,7 +131,7 @@ export class RegistrationController {
         logger.debug(`[DEV] Verification URL: ${verificationUrl}`);
       }
 
-      createdResponse(res, 
+      res.status(201).json(createResponse( 
         {
           user: {
             id: user.id,
@@ -147,16 +147,16 @@ export class RegistrationController {
             canResendAt: new Date(Date.now() + 5 * 60 * 1000).toISOString() // 5 minutes cooldown
           }
         },
-        'Registrazione completata con successo. Controlla la tua email per verificare il tuo account.');
+        'Registrazione completata con successo. Controlla la tua email per verificare il tuo account.'));
 
     } catch (error: any) {
       logger.error('Registration error:', error);
       
-      errorResponse(res, 
+      res.status(400).json(errorResponse( 
         'Registrazione fallita',
         'REGISTRATION_ERROR',
         undefined,
-        500);
+        500));
     }
   }
 
@@ -188,18 +188,18 @@ export class RegistrationController {
         };
       }
 
-      successResponse(res,
+      res.status(200).json(successResponse(
         { availability },
-        undefined);
+        undefined));
 
     } catch (error: any) {
       logger.error('Availability check error:', error);
 
-      errorResponse(res,
+      res.status(400).json(errorResponse(
         'Controllo disponibilità fallito',
         'AVAILABILITY_ERROR',
         undefined,
-        500);
+        500));
     }
   }
 
@@ -212,17 +212,17 @@ export class RegistrationController {
       const { username } = req.query;
 
       if (!username || typeof username !== 'string') {
-        errorResponse(res,
+        res.status(400).json(errorResponse(
           'Username richiesto',
           'VALIDATION_ERROR',
           undefined,
-          400);
+          400));
         return;
       }
 
       const existingUsername = await User.findOne({ username: username.toLowerCase() });
 
-      successResponse(res,
+      res.status(200).json(successResponse(
         {
           available: !existingUsername,
           suggestions: existingUsername ? [
@@ -231,16 +231,16 @@ export class RegistrationController {
             `${username}_player`
           ] : undefined
         },
-        undefined);
+        undefined));
 
     } catch (error: any) {
       logger.error('Username check error:', error);
 
-      errorResponse(res,
+      res.status(400).json(errorResponse(
         'Controllo username fallito',
         'USERNAME_CHECK_ERROR',
         undefined,
-        500);
+        500));
     }
   }
 
@@ -253,30 +253,30 @@ export class RegistrationController {
       const { email } = req.query;
 
       if (!email || typeof email !== 'string') {
-        errorResponse(res,
+        res.status(400).json(errorResponse(
           'Email richiesta',
           'VALIDATION_ERROR',
           undefined,
-          400);
+          400));
         return;
       }
 
       const existingEmail = await User.findOne({ email: email.toLowerCase() });
 
-      successResponse(res,
+      res.status(200).json(successResponse(
         {
           available: !existingEmail
         },
-        undefined);
+        undefined));
 
     } catch (error: any) {
       logger.error('Email check error:', error);
 
-      errorResponse(res,
+      res.status(400).json(errorResponse(
         'Controllo email fallito',
         'EMAIL_CHECK_ERROR',
         undefined,
-        500);
+        500));
     }
   }
 
@@ -294,14 +294,14 @@ export class RegistrationController {
       });
 
       if (!user) {
-        errorResponse(res, 
+        res.status(400).json(errorResponse( 
           'Token di verifica non valido o scaduto',
           'INVALID_VERIFICATION_TOKEN',
           {
             canResend: true,
             resendUrl: '/auth/resend-verification'
           },
-          400);
+          400));
         return;
       }
 
@@ -325,7 +325,7 @@ export class RegistrationController {
         verifiedAt: new Date().toISOString()
       }));
 
-      successResponse(res, 
+      res.status(200).json(successResponse( 
         {
           user: {
             id: user.id,
@@ -335,16 +335,16 @@ export class RegistrationController {
             verifiedAt: new Date().toISOString()
           },
         },
-        'Email verificata con successo. Ora puoi effettuare il login.');
+        'Email verificata con successo. Ora puoi effettuare il login.'));
 
     } catch (error: any) {
       logger.error('Email verification error:', error);
       
-      errorResponse(res, 
+      res.status(400).json(errorResponse( 
         'Verifica email fallita',
         'VERIFICATION_ERROR',
         undefined,
-        500);
+        500));
     }
   }
 
@@ -366,24 +366,24 @@ export class RegistrationController {
 
       if (!user) {
         // Don't reveal if email exists or not for security
-        successResponse(res, 
+        res.status(200).json(successResponse( 
           {
             emailSent: true,
             canResendAt: new Date(Date.now() + 30 * 60 * 1000).toISOString()
           },
-          'Se l\'indirizzo email esiste e non è verificato, un\'email di verifica è stata inviata.');
+          'Se l\'indirizzo email esiste e non è verificato, un\'email di verifica è stata inviata.'));
         return;
       }
 
       if (user.isEmailVerified) {
-        errorResponse(res, 
+        res.status(400).json(errorResponse( 
           'Email già verificata',
           'EMAIL_ALREADY_VERIFIED',
           {
             canLogin: true,
             loginUrl: '/login'
           },
-          400);
+          400));
         return;
       }
 
@@ -401,11 +401,11 @@ export class RegistrationController {
       } catch (emailError) {
         logger.error('Failed to resend verification email:', emailError);
 
-        errorResponse(res,
+        res.status(400).json(errorResponse(
           'Impossibile inviare l\'email di verifica',
           'EMAIL_SEND_ERROR',
           undefined,
-          500);
+          500));
         return;
       }
 
@@ -422,22 +422,22 @@ export class RegistrationController {
         ipAddress: req.ip
       });
 
-      successResponse(res, 
+      res.status(200).json(successResponse( 
         {
           emailSent: true,
           canResendAt: new Date(Date.now() + 30 * 60 * 1000).toISOString(), // 30 minutes cooldown
           expiresAt: emailVerificationExpires.toISOString()
         },
-        'Email di verifica inviata con successo');
+        'Email di verifica inviata con successo'));
 
     } catch (error: any) {
       logger.error('Resend verification error:', error);
       
-      errorResponse(res, 
+      res.status(400).json(errorResponse( 
         'Impossibile rinviare l\'email di verifica',
         'RESEND_ERROR',
         undefined,
-        500);
+        500));
     }
   }
 }

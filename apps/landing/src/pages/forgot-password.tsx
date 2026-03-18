@@ -67,7 +67,7 @@ export default function ForgotPasswordPage() {
 
       const result = await authService.forgotPassword(data.identifier);
 
-      if (result.result && result.data) {
+      if (result.success && result.data) {
         // Extract DEV header
         if (result.__devHeaders?.['x-dev-reset-password-url']) {
           setDevResetUrl(result.__devHeaders['x-dev-reset-password-url']);

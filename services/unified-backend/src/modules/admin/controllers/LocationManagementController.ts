@@ -10,7 +10,7 @@ import { AdminAuthMiddleware } from '../middleware/adminAuth';
 import { logger } from '../utils/logger';
 import { Location } from '@database/models/Location';
 import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
-import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId , deleteResponse} from '../utils/apiResponse';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId , deleteResponse} from '@shared/utils/apiResponse';
 
 import { escapeRegex } from '@shared/utils/validation';
 

@@ -6,7 +6,7 @@ import { logger } from '../utils/logger';
 import { Occupation } from '@database/models/Occupation';
 import { Character } from '@database/models/Character';
 import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
-import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId , deleteResponse} from '../utils/apiResponse';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId , deleteResponse} from '@shared/utils/apiResponse';
 
 import { escapeRegex } from '@shared/utils/validation';
 

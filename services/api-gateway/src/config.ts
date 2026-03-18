@@ -21,9 +21,7 @@ const DEV_ORIGINS = [
   'http://localhost:4000',
   'http://localhost:4001',
   'http://localhost:4002',
-  'http://localhost:4003',
-  'http://localhost:4004',
-  'http://localhost:4005',
+  'http://localhost:4003', 
 ];
 
 export const config = {

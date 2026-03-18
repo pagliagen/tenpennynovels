@@ -3,7 +3,7 @@ import multer from 'multer';
 import { CDNService, CDNEntityType } from '../services/CDNService';
 import { logger } from '../utils/logger';
 import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
-import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '@shared/utils/apiResponse';
 
 
 const VALID_TYPES: CDNEntityType[] = ['locations', 'items', 'characters', 'occupations'];

@@ -80,7 +80,7 @@ export async function getDuplicateFaceClaims(): Promise<DuplicateFaceClaimsRespo
       '/admin/characters/face-claims/duplicates'
     )
   );
-  if (!response.data.result || !response.data.data) {
+  if (!response.data.success || !response.data.data) {
     throw new Error('Errore nel recupero duplicati face claims');
   }
   return response.data.data;

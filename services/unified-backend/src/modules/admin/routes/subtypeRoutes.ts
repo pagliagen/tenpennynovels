@@ -4,7 +4,7 @@ import DocumentSubtype from '@database/models/DocumentSubtype';
 import Document from '@database/models/Document';
 import { logger } from '../utils/logger';
 import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
-import { errorResponse, getRequestId } from '../utils/apiResponse';
+import { errorResponse, getRequestId } from '@shared/utils/apiResponse';
 
 const router = Router();
 

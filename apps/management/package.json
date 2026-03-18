@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 4004 -H 0.0.0.0",
+    "dev": "next dev -p 4003 -H 0.0.0.0",
     "build": "next build",
-    "start": "next start -p 4004 -H 0.0.0.0",
+    "start": "next start -p 4003 -H 0.0.0.0",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
     "test": "jest",

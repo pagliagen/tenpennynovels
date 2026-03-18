@@ -12,7 +12,7 @@ import { httpLoggerStream, logger } from './logger';
 import { AnalyticsMiddleware } from '@shared/middleware/analyticsMiddleware';
 import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
 import { appConfig } from '@config/runtime';
-import { errorResponse, successResponse, getRequestId } from './utils/apiResponse';
+import { errorResponse, successResponse, getRequestId } from '@shared/utils/apiResponse';
 
 import path from 'path';
 logger.info('Loading environment variables...');
@@ -92,21 +92,21 @@ app.use('/auth', authRoutes);
 
 // Health check endpoint
 app.get('/auth/health', (req, res) => {
-  successResponse(res, {
+  res.status(200).json(successResponse({
     status: 'healthy',
     service: 'authentication-backend',
     version: '1.0.0',
     uptime: process.uptime(),
     memory: process.memoryUsage(),
     environment: appConfig.isProduction ? 'production' : 'development'
-  });
+  }));
 });
 
 // Root endpoint removed - not needed
 
 // 404 handler
 app.use((req, res) => {
-  errorResponse(res, 'Endpoint not found', 'ENDPOINT_NOT_FOUND', undefined, 404);
+  res.status(404).json(errorResponse('Endpoint not found', 'ENDPOINT_NOT_FOUND', undefined, 404, getRequestId(req)));
 });
 
 // Global error handler
@@ -123,13 +123,13 @@ app.use((error: any, req: express.Request, res: express.Response, next: express.
     userAgent: req.get('User-Agent')
   });
 
-  errorResponse(
-    res,
+  res.status(500).json(errorResponse(
     appConfig.isProduction ? 'Errore interno del server' : error.message,
     'INTERNAL_SERVER_ERROR',
     undefined,
-    500
-  );
+    500,
+    getRequestId(req)
+  ));
 });
 
 // Graceful shutdown

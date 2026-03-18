@@ -33,7 +33,7 @@ export async function getUserById(id: string): Promise<User> {
     apiClient.get<ApiResponse<User>>(`/admin/users/${id}`)
   );
 
-  if (!response.data.result || !response.data.data) {
+  if (!response.data.success || !response.data.data) {
     throw new Error(response.data.error || 'Errore nel recupero utente');
   }
 
@@ -48,7 +48,7 @@ export async function updateUser(id: string, data: UpdateUserData): Promise<User
     apiClient.patch<ApiResponse<User>>(`/admin/users/${id}`, data)
   );
 
-  if (!response.data.result || !response.data.data) {
+  if (!response.data.success || !response.data.data) {
     throw new Error(response.data.error || 'Errore nell\'aggiornamento utente');
   }
 
@@ -63,7 +63,7 @@ export async function deleteUser(id: string): Promise<void> {
     apiClient.delete<ApiResponse<void>>(`/admin/users/${id}`)
   );
 
-  if (!response.data.result) {
+  if (!response.data.success) {
     throw new Error(response.data.error || 'Errore nell\'eliminazione utente');
   }
 }
@@ -76,7 +76,7 @@ export async function banUser(id: string, banData: BanUserData): Promise<User> {
     apiClient.post<ApiResponse<User>>(`/admin/users/${id}/ban`, banData)
   );
 
-  if (!response.data.result || !response.data.data) {
+  if (!response.data.success || !response.data.data) {
     throw new Error(response.data.error || 'Errore nel ban utente');
   }
 
@@ -91,7 +91,7 @@ export async function unbanUser(id: string): Promise<User> {
     apiClient.delete<ApiResponse<User>>(`/admin/users/${id}/ban`)
   );
 
-  if (!response.data.result || !response.data.data) {
+  if (!response.data.success || !response.data.data) {
     throw new Error(response.data.error || 'Errore nell\'unban utente');
   }
 
@@ -116,7 +116,7 @@ export async function bulkBanUsers(
     )
   );
 
-  if (!response.data.result || !response.data.data) {
+  if (!response.data.success || !response.data.data) {
     throw new Error(response.data.error || 'Errore nel ban multiplo utenti');
   }
 
@@ -136,7 +136,7 @@ export async function bulkUnbanUsers(
     )
   );
 
-  if (!response.data.result || !response.data.data) {
+  if (!response.data.success || !response.data.data) {
     throw new Error(response.data.error || 'Errore nell\'unban multiplo utenti');
   }
 
@@ -156,7 +156,7 @@ export async function bulkActivateUsers(
     )
   );
 
-  if (!response.data.result || !response.data.data) {
+  if (!response.data.success || !response.data.data) {
     throw new Error(response.data.error || 'Errore nell\'attivazione multipla utenti');
   }
 
@@ -176,7 +176,7 @@ export async function bulkDeactivateUsers(
     )
   );
 
-  if (!response.data.result || !response.data.data) {
+  if (!response.data.success || !response.data.data) {
     throw new Error(response.data.error || 'Errore nella disattivazione multipla utenti');
   }
 

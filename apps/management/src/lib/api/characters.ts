@@ -34,7 +34,7 @@ export async function getCharacterById(id: string): Promise<Character> {
     apiClient.get<ApiResponse<Character>>(`/admin/characters/${id}`)
   );
 
-  if (!response.data.result || !response.data.data) {
+  if (!response.data.success || !response.data.data) {
     throw new Error(response.data.error || 'Errore nel recupero character');
   }
 
@@ -49,7 +49,7 @@ export async function updateCharacter(id: string, data: UpdateCharacterData): Pr
     apiClient.patch<ApiResponse<Character>>(`/admin/characters/${id}`, data)
   );
 
-  if (!response.data.result || !response.data.data) {
+  if (!response.data.success || !response.data.data) {
     throw new Error(response.data.error || 'Errore nell\'aggiornamento character');
   }
 
@@ -64,7 +64,7 @@ export async function deleteCharacter(id: string): Promise<void> {
     apiClient.delete<ApiResponse<void>>(`/admin/characters/${id}`)
   );
 
-  if (!response.data.result) {
+  if (!response.data.success) {
     throw new Error(response.data.error || 'Errore nell\'eliminazione character');
   }
 }
@@ -79,7 +79,7 @@ export async function changeReferent(characterId: string, newReferentId: string)
     })
   );
 
-  if (!response.data.result || !response.data.data) {
+  if (!response.data.success || !response.data.data) {
     throw new Error(response.data.error || 'Errore nel cambio referente');
   }
 
@@ -94,7 +94,7 @@ export async function approveCharacter(id: string, data?: ApproveCharacterData):
     apiClient.post<ApiResponse<Character>>(`/admin/characters/${id}/approve`, data || {})
   );
 
-  if (!response.data.result || !response.data.data) {
+  if (!response.data.success || !response.data.data) {
     throw new Error(response.data.error || 'Errore nell\'approvazione character');
   }
 
@@ -109,7 +109,7 @@ export async function rejectCharacter(id: string, data: RejectCharacterData): Pr
     apiClient.post<ApiResponse<Character>>(`/admin/characters/${id}/reject`, data)
   );
 
-  if (!response.data.result || !response.data.data) {
+  if (!response.data.success || !response.data.data) {
     throw new Error(response.data.error || 'Errore nel rifiuto character');
   }
 
@@ -138,7 +138,7 @@ export async function bulkApproveCharacters(
     )
   );
 
-  if (!response.data.result || !response.data.data) {
+  if (!response.data.success || !response.data.data) {
     throw new Error(response.data.error || 'Errore nell\'approvazione multipla characters');
   }
 
@@ -161,7 +161,7 @@ export async function bulkRejectCharacters(
     )
   );
 
-  if (!response.data.result || !response.data.data) {
+  if (!response.data.success || !response.data.data) {
     throw new Error(response.data.error || 'Errore nel rifiuto multiplo characters');
   }
 
@@ -181,7 +181,7 @@ export async function bulkDeleteCharacters(
     )
   );
 
-  if (!response.data.result || !response.data.data) {
+  if (!response.data.success || !response.data.data) {
     throw new Error(response.data.error || 'Errore nell\'eliminazione multipla characters');
   }
 

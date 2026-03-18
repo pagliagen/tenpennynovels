@@ -56,7 +56,7 @@ export default function DeleteAccountPage() {
 
       const result = await authService.deleteAccount(token);
 
-      if (result.result) {
+      if (result.success) {
         setSuccess('Il tuo account è stato eliminato con successo. Tutti i tuoi dati personali sono stati anonimizzati e i tuoi personaggi sono stati rimossi.');
         // Redirect to homepage after 5 seconds
         setTimeout(() => {

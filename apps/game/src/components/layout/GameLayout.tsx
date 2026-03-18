@@ -125,7 +125,7 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
   const refreshSession = useCallback(async () => {
     try {
       const session = await api.get<any>('/auth/session');
-      if (session.result && session.data?.valid) {
+      if (session.success && session.data?.valid) {
         if (session.data.character) {
           setSelectedCharacter(session.data.character);
         }

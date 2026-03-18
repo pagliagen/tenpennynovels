@@ -233,7 +233,7 @@ function WizardContainerInner({ characterId, onSubmittingChange }: WizardContain
       // Refresh session to update permissions (wizard access removed for pending characters)
       try {
         const session = await api.get<any>('/auth/session');
-        if (session.result && session.data?.valid) {
+        if (session.success && session.data?.valid) {
           if (session.data.character) {
             setSelectedCharacter(session.data.character);
           }

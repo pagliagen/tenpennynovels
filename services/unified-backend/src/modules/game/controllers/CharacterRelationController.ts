@@ -6,7 +6,7 @@ import { AuthUtils } from '../middleware/auth';
 import { auditLogger } from '@modules/admin/utils/auditLogger';
 import { gameEventPublisher } from '../services/GameEventPublisher';
 import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
-import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '@shared/utils/apiResponse';
 
 
 export class CharacterRelationController {

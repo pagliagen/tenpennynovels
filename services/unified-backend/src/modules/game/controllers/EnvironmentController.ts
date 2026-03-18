@@ -11,7 +11,7 @@
 import { Request, Response } from 'express';
 import { getWeather } from '../services/WeatherService';
 import { logger } from '../logger';
-import { successResponse, errorResponse } from '../utils/apiResponse';
+import { successResponse, errorResponse } from '@shared/utils/apiResponse';
 
 export class EnvironmentController {
   /**

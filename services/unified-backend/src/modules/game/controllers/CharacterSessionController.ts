@@ -4,7 +4,7 @@ import { logger } from '../logger';
 import { AuthUtils } from '../middleware/auth';
 import { auditLogger } from '@modules/admin/utils/auditLogger';
 import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
-import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '../utils/apiResponse';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '@shared/utils/apiResponse';
 
 
 export class CharacterSessionController {

@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { Chat, GamingSession, Location, Character, SkillConfrontation, CombatEncounter, Skill, Item } from '@database/models';
 import { logger } from '../logger';
-import { successResponse, errorResponse, createResponse, getRequestId } from '../utils/apiResponse';
+import { successResponse, errorResponse, createResponse, getRequestId } from '@shared/utils/apiResponse';
 
 import { calculateSuccessDegree, getSuccessDegreeLabel, compareSuccessDegrees } from '../utils/successDegrees';
 import { calculateSocialConflict, getDefensiveSkill } from '../utils/socialConflicts';

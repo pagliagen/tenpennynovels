@@ -34,7 +34,7 @@ export async function getLocationHierarchy(): Promise<LocationHierarchyResponse>
   const response = await withRetry(() =>
     apiClient.get<ApiResponse<LocationHierarchyResponse>>('/admin/locations/hierarchy')
   );
-  if (!response.data.result || !response.data.data) {
+  if (!response.data.success || !response.data.data) {
     throw new Error('Errore nel recupero gerarchia location');
   }
   return response.data.data;
@@ -47,7 +47,7 @@ export async function getLocationStats(): Promise<LocationStatsResponse> {
   const response = await withRetry(() =>
     apiClient.get<ApiResponse<LocationStatsResponse>>('/admin/locations/stats')
   );
-  if (!response.data.result || !response.data.data) {
+  if (!response.data.success || !response.data.data) {
     throw new Error('Errore nel recupero statistiche location');
   }
   return response.data.data;
@@ -60,7 +60,7 @@ export async function getLocationById(id: string): Promise<LocationDetail> {
   const response = await withRetry(() =>
     apiClient.get<ApiResponse<LocationDetail>>(`/admin/locations/${id}`)
   );
-  if (!response.data.result || !response.data.data) {
+  if (!response.data.success || !response.data.data) {
     throw new Error('Errore nel recupero dettaglio location');
   }
   return response.data.data;
@@ -73,7 +73,7 @@ export async function createLocation(data: CreateLocationData): Promise<{ locati
   const response = await withRetry(() =>
     apiClient.post<ApiResponse<{ locationId: string; slug: string }>>('/admin/locations', data)
   );
-  if (!response.data.result || !response.data.data) {
+  if (!response.data.success || !response.data.data) {
     throw new Error((response.data as any).error || 'Errore nella creazione location');
   }
   return response.data.data;
@@ -86,7 +86,7 @@ export async function updateLocation(id: string, data: UpdateLocationData): Prom
   const response = await withRetry(() =>
     apiClient.put<ApiResponse<any>>(`/admin/locations/${id}`, data)
   );
-  if (!response.data.result) {
+  if (!response.data.success) {
     throw new Error((response.data as any).error || 'Errore nell\'aggiornamento location');
   }
 }
@@ -100,7 +100,7 @@ export async function deleteLocation(id: string, reason: string, forceDelete = f
       data: { reason, forceDelete }
     })
   );
-  if (!response.data.result) {
+  if (!response.data.success) {
     throw new Error((response.data as any).error || 'Errore nell\'eliminazione location');
   }
 }
@@ -112,7 +112,7 @@ export async function reorderLocations(parentId: string | null, orderedIds: stri
   const response = await withRetry(() =>
     apiClient.put<ApiResponse<void>>('/admin/locations/reorder', { parentId, orderedIds })
   );
-  if (!response.data.result) {
+  if (!response.data.success) {
     throw new Error((response.data as any).error || 'Errore nel riordinamento location');
   }
 }

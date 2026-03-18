@@ -20,14 +20,14 @@
  * ```typescript
  * // Success response
  * const response: ApiResponse<User> = {
- *   result: true,
+ *   success: true,
  *   data: { id: '123', username: 'john' },
  *   timestamp: '2024-02-24T20:00:00Z'
  * };
  *
  * // Error response
  * const errorResponse: ApiResponse = {
- *   result: false,
+ *   success: false,
  *   error: 'Invalid credentials',
  *   code: 'UNAUTHORIZED',
  *   timestamp: '2024-02-24T20:00:00Z'
@@ -36,14 +36,14 @@
  */
 export interface ApiResponse<T = any> {
   /** Whether the request was successful */
-  result: boolean;
+  success: boolean;
   /** Single data object (for GET by ID, POST create, etc.) */
   data?: T;
   /** Array of data objects (for GET list endpoints) */
   list?: T[];
   /** Success message from server */
   message?: string;
-  /** Error message (present when result=false) */
+  /** Error message (present when success=false) */
   error?: string;
   /** Application-level error code (e.g., 'VALIDATION_ERROR', 'UNAUTHORIZED') */
   code?: string;
@@ -51,6 +51,8 @@ export interface ApiResponse<T = any> {
   details?: Record<string, string>;
   /** ISO timestamp of the response */
   timestamp: string;
+  /** Request ID for tracing */
+  requestId?: string;
   /** @internal - DEV ONLY: Internal dev headers (not part of API contract) */
   __devHeaders?: Record<string, string>;
 }
@@ -173,7 +175,7 @@ export interface RegisterData {
  */
 export interface AuthResponse {
   /** Whether authentication was successful */
-  result: boolean;
+  success: boolean;
   /** User data (if authentication succeeded) */
   user?: User;
   /** Success message */
@@ -213,7 +215,7 @@ export interface CharacterData {
  */
 export interface CharacterResponse {
   /** Whether character creation was successful */
-  result: boolean;
+  success: boolean;
   /** Created character data (if successful) */
   character?: Character;
   /** Success message */

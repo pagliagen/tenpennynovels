@@ -5,7 +5,7 @@ import { requireGamePermission } from '../middleware/gamePermissions';
 import { OffGameChatController } from '../controllers/OffGameChatController';
 import { OffGameChat, OffGameChatParticipant } from '@database/models';
 import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
-import { errorResponse, successResponse } from '../utils/apiResponse';
+import { errorResponse, successResponse } from '@shared/utils/apiResponse';
 
 const router = Router();
 

@@ -23,7 +23,7 @@ export async function getOccupationById(id: string): Promise<Occupation> {
     apiClient.get<ApiResponse<Occupation>>(`/admin/occupations/${id}`)
   );
 
-  if (!response.data.result || !response.data.data) {
+  if (!response.data.success || !response.data.data) {
     throw new Error(response.data.error || 'Errore nel recupero occupazione');
   }
 
@@ -35,7 +35,7 @@ export async function createOccupation(data: CreateOccupationData): Promise<Occu
     apiClient.post<ApiResponse<Occupation>>('/admin/occupations', data)
   );
 
-  if (!response.data.result || !response.data.data) {
+  if (!response.data.success || !response.data.data) {
     throw new Error(response.data.error || 'Errore nella creazione occupazione');
   }
 
@@ -47,7 +47,7 @@ export async function updateOccupation(id: string, data: UpdateOccupationData): 
     apiClient.put<ApiResponse<Occupation>>(`/admin/occupations/${id}`, data)
   );
 
-  if (!response.data.result || !response.data.data) {
+  if (!response.data.success || !response.data.data) {
     throw new Error(response.data.error || 'Errore nell\'aggiornamento occupazione');
   }
 
@@ -61,7 +61,7 @@ export async function deleteOccupation(id: string, reason?: string): Promise<voi
     })
   );
 
-  if (!response.data.result) {
+  if (!response.data.success) {
     throw new Error(response.data.error || 'Errore nell\'eliminazione occupazione');
   }
 }

@@ -49,7 +49,7 @@ export const appConfig = {
           'http://localhost:4000',
           'http://localhost:4001',
           'http://localhost:4002',
-          'http://localhost:4004',
+          'http://localhost:4003',
         ],
   },
 
@@ -57,7 +57,7 @@ export const appConfig = {
     landing: isProduction ? 'https://tenpennynovels.com' : 'http://localhost:4000',
     game: isProduction ? 'https://game.tenpennynovels.com' : 'http://localhost:4001',
     documents: isProduction ? 'https://documenti.tenpennynovels.com' : 'http://localhost:4002',
-    management: isProduction ? 'https://gestione.tenpennynovels.com' : 'http://localhost:4004',
+    management: isProduction ? 'https://gestione.tenpennynovels.com' : 'http://localhost:4003',
     api: isProduction ? 'https://api.tenpennynovels.com' : 'http://localhost:8000',
   },
 

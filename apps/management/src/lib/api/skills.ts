@@ -23,7 +23,7 @@ export async function getSkillById(id: string): Promise<Skill> {
     apiClient.get<ApiResponse<Skill>>(`/admin/skills/${id}`)
   );
 
-  if (!response.data.result || !response.data.data) {
+  if (!response.data.success || !response.data.data) {
     throw new Error(response.data.error || 'Errore nel recupero skill');
   }
 
@@ -35,7 +35,7 @@ export async function createSkill(data: CreateSkillData): Promise<Skill> {
     apiClient.post<ApiResponse<Skill>>('/admin/skills', data)
   );
 
-  if (!response.data.result || !response.data.data) {
+  if (!response.data.success || !response.data.data) {
     throw new Error(response.data.error || 'Errore nella creazione skill');
   }
 
@@ -47,7 +47,7 @@ export async function updateSkill(id: string, data: UpdateSkillData): Promise<Sk
     apiClient.put<ApiResponse<Skill>>(`/admin/skills/${id}`, data)
   );
 
-  if (!response.data.result || !response.data.data) {
+  if (!response.data.success || !response.data.data) {
     throw new Error(response.data.error || 'Errore nell\'aggiornamento skill');
   }
 
@@ -61,7 +61,7 @@ export async function deleteSkill(id: string, reason?: string): Promise<void> {
     })
   );
 
-  if (!response.data.result) {
+  if (!response.data.success) {
     throw new Error(response.data.error || 'Errore nell\'eliminazione skill');
   }
 }

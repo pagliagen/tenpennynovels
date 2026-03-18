@@ -5,7 +5,7 @@ import type { AdminPermission } from '@config/permissions';
 import { AdminUser, ApiResponse } from '../types/management';
 import { logger } from '../utils/logger';
 import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
-import { errorResponse, getRequestId } from '../utils/apiResponse';
+import { errorResponse, getRequestId } from '@shared/utils/apiResponse';
 import { appConfig } from '@config/runtime';
 
 function getJwtSecret(): string {

@@ -27,7 +27,7 @@ import type { Character } from '@/types/api/schemas';
  * @since 2.0.0
  */
 interface SessionResponse {
-  result: boolean;
+  success: boolean;
   data?: {
     valid: boolean;
     user?: {
@@ -128,8 +128,8 @@ export function useAuth(): UseAuthReturn {
 
       console.log('[useAuth] Session check RAW response:', response);
       console.log('[useAuth] Response structure check:', {
-        hasResult: 'result' in response,
-        resultValue: response.result,
+        hasSuccess: 'success' in response,
+        successValue: response.success,
         hasData: 'data' in response,
         dataValid: response.data?.valid,
         hasUser: !!response.data?.user,
@@ -137,8 +137,8 @@ export function useAuth(): UseAuthReturn {
       });
 
       // Check if session is valid
-      // Backend returns: { result: true, data: { valid: true, user: {...}, character: {...}, gamePermissions: [...] } }
-      if (response.result && response.data?.valid && response.data.user) {
+      // Backend returns: { success: true, data: { valid: true, user: {...}, character: {...}, gamePermissions: [...] } }
+      if (response.success && response.data?.valid && response.data.user) {
         const { user, character, gamePermissions } = response.data;
 
         // Populate auth store with user data

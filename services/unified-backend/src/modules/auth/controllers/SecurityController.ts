@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { User, CharacterSession } from '@database/models';
-import { successResponse, errorResponse, listResponse } from '../utils/apiResponse';
+import { successResponse, errorResponse, listResponse } from '@shared/utils/apiResponse';
 import { ErrorCode } from '@shared/utils/errorCodes';
 import { logger } from '../logger';
 import { redis } from '@config/runtime/redis';
@@ -47,14 +47,14 @@ export class SecurityController {
         isCurrent: session.sessionId === currentSessionId
       }));
 
-      listResponse(res, sessionList, {
-        page,
+      res.status(200).json(listResponse(sessionList, {
+        currentPage: page,
         pageSize,
-        total,
+        totalItems: total,
         totalPages: Math.ceil(total / pageSize),
-        hasNext: page * pageSize < total,
-        hasPrev: page > 1
-      });
+        hasNextPage: page * pageSize < total,
+        hasPreviousPage: page > 1
+      }));
 
       logger.info(`[${userId}] Retrieved ${sessionList.length} active sessions`);
     } catch (error: any) {
@@ -75,13 +75,13 @@ export class SecurityController {
 
       // Non permettere di terminare la sessione corrente
       if (sessionId === currentSessionId) {
-        return errorResponse(
-          res,
+        res.status(400).json(errorResponse(
           'Non puoi terminare la sessione corrente. Usa il logout.',
           ErrorCode.INVALID_OPERATION,
           { useLogout: true },
           400
-        );
+        ));
+        return;
       }
 
       // ✅ VERA UPDATE al database
@@ -97,13 +97,13 @@ export class SecurityController {
       );
 
       if (!session) {
-        return errorResponse(
-          res,
+        res.status(404).json(errorResponse(
           'Sessione non trovata',
           ErrorCode.SESSION_NOT_FOUND,
           undefined,
           404
-        );
+        ));
+        return;
       }
 
       logger.info(`[${userId}] Terminated session ${sessionId}`);
@@ -121,10 +121,10 @@ export class SecurityController {
         // Non bloccare la risposta se Redis fallisce
       }
 
-      successResponse(res, {
+      res.status(200).json(successResponse( {
         sessionId,
         terminatedAt: session.invalidatedAt
-      }, 'Sessione terminata con successo');
+      }, 'Sessione terminata con successo'));
 
     } catch (error: any) {
       logger.error('Terminate session error:', error);
@@ -164,14 +164,14 @@ export class SecurityController {
         isActive: entry.isActive
       }));
 
-      listResponse(res, loginHistory, {
-        page,
+      res.status(200).json(listResponse(loginHistory, {
+        currentPage: page,
         pageSize,
-        total,
+        totalItems: total,
         totalPages: Math.ceil(total / pageSize),
-        hasNext: page * pageSize < total,
-        hasPrev: page > 1
-      });
+        hasNextPage: page * pageSize < total,
+        hasPreviousPage: page > 1
+      }));
 
       logger.info(`[${userId}] Retrieved login history (${loginHistory.length} entries)`);
     } catch (error: any) {
@@ -190,14 +190,14 @@ export class SecurityController {
   static async getSecurityAlerts(req: Request, res: Response): Promise<void> {
     try {
       // ✅ NESSUN MOCK DATA - lista vuota fino a implementazione vera
-      listResponse(res, [], {
+      res.status(200).json(listResponse([], {
         currentPage: 1,
         pageSize: 10,
-        total: 0,
+        totalItems: 0,
         totalPages: 0,
-        hasNext: false,
-        hasPrev: false
-      }, 'Nessun alert di sicurezza');
+        hasNextPage: false,
+        hasPreviousPage: false
+      }, 'Nessun alert di sicurezza'));
 
       logger.info(`[${req.user!.userId}] Retrieved security alerts (none available yet)`);
     } catch (error: any) {
@@ -217,13 +217,13 @@ export class SecurityController {
 
       const user = await User.findById(userId);
       if (!user) {
-        return errorResponse(
-          res,
+        res.status(404).json(errorResponse(
           'Utente non trovato',
           ErrorCode.USER_NOT_FOUND,
           undefined,
           404
-        );
+        ));
+        return;
       }
 
       // Genera ID report univoco
@@ -255,7 +255,7 @@ export class SecurityController {
         logger.warn('Failed to publish suspicious activity event:', redisError);
       }
 
-      successResponse(res, {
+      res.status(200).json(successResponse( {
         report: {
           id: reportId,
           type,
@@ -268,7 +268,7 @@ export class SecurityController {
           allSessionsTerminated: false,
           accountSecured: true
         }
-      }, 'Segnalazione ricevuta. Il team di sicurezza esaminerà il caso.');
+      }, 'Segnalazione ricevuta. Il team di sicurezza esaminerà il caso.'));
 
     } catch (error: any) {
       logger.error('Report suspicious error:', error);
@@ -290,10 +290,10 @@ export class SecurityController {
       // TODO: Implementare storage alerts
       logger.info(`[${userId}] Alert ${alertId} acknowledged`);
 
-      successResponse(res, {
+      res.status(200).json(successResponse( {
         alertId,
         acknowledgedAt: new Date().toISOString()
-      }, 'Alert confermato con successo');
+      }, 'Alert confermato con successo'));
 
     } catch (error: any) {
       logger.error('Acknowledge alert error:', error);

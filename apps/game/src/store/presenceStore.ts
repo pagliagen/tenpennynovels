@@ -246,10 +246,10 @@ export const usePresenceStore = create<PresenceState & PresenceActions>((set, ge
 
     try {
       // Fetch global presence from backend
-      // Backend returns: { result: boolean, data: { globalPresence: GlobalPresence[] } }
-      const response = await api.get<{ result: boolean; data: { globalPresence: GlobalPresence[] } }>('/game/presence');
+      // Backend returns: { success: boolean, data: { globalPresence: GlobalPresence[] } }
+      const response = await api.get<{ success: boolean; data: { globalPresence: GlobalPresence[] } }>('/game/presence');
 
-      if (response.result && response.data) {
+      if (response.success && response.data) {
         // Backend returns { data: { globalPresence: [...] } }
         // Extract the actual array from the nested structure
         const responseData = response.data as any;

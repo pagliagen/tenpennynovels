@@ -7,7 +7,7 @@
  * Matches backend standard: services/unified-backend/src/shared/utils/apiResponse.ts
  */
 export interface ApiResponse<T = unknown> {
-  result: boolean;                // ✅ Backend standard
+  success: boolean;                // ✅ Backend standard
   data?: T;
   error?: string;
   code?: string;
@@ -19,10 +19,10 @@ export interface ApiResponse<T = unknown> {
 /**
  * List API response (for endpoints using listResponse())
  * Matches backend: src/modules/admin/utils/apiResponse.ts#listResponse()
- * Structure: { result, list, pagination } NOT { result, data: { list, pagination } }
+ * Structure: { success, list, pagination } NOT { success, data: { list, pagination } }
  */
 export interface ListResponse<T = unknown> {
-  result: boolean;
+  success: boolean;
   list: T[];
   pagination: PaginationInfo;
   error?: string;
@@ -37,7 +37,7 @@ export interface ListResponse<T = unknown> {
  * @deprecated Use ListResponse instead - this structure doesn't match actual backend responses
  */
 export interface PaginatedResponse<T = unknown> {
-  result: boolean;
+  success: boolean;
   data?: {
     list: T[];
     pagination: PaginationInfo;

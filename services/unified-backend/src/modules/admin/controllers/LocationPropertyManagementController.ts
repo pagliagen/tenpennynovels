@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { LocationProperty, Location, CharacterFinances, db } from '@database/models';
 import { logger } from '../utils/logger';
 import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
-import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId , deleteResponse} from '../utils/apiResponse';
+import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId , deleteResponse} from '@shared/utils/apiResponse';
 
 import type { PaginationInfo } from '../types/management';
 
