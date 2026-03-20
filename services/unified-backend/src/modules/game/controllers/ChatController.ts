@@ -2,6 +2,8 @@ import { Request, Response } from 'express';
 import { Chat, GamingSession, Location, Character, SkillConfrontation, CombatEncounter, Skill, Item } from '@database/models';
 import { logger } from '../logger';
 import { successResponse, errorResponse, createResponse, getRequestId } from '@shared/utils/apiResponse';
+import { ConfigurationService } from '@shared/services/ConfigurationService';
+import { redis } from '@config/runtime/redis';
 
 import { calculateSuccessDegree, getSuccessDegreeLabel, compareSuccessDegrees } from '../utils/successDegrees';
 import { calculateSocialConflict, getDefensiveSkill } from '../utils/socialConflicts';
@@ -95,6 +97,19 @@ export class ChatController {
           'actionType, content, and locationId are required',
           'MISSING_REQUIRED_FIELDS',
           undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      // CHECK: Character has pending reaction to resolve?
+      const pendingReactionId = await ChatController.checkPendingReaction(character.characterId, locationId);
+      if (pendingReactionId) {
+        res.status(400).json(errorResponse(
+          'Devi rispondere alla reazione pendente prima di fare altre azioni',
+          'PENDING_REACTION_EXISTS',
+          { pendingMessageId: pendingReactionId },
           400,
           getRequestId(req)
         ));
@@ -1064,6 +1079,19 @@ export class ChatController {
         return;
       }
 
+      // CHECK: Character has pending reaction to resolve?
+      const pendingReactionId = await ChatController.checkPendingReaction(character.characterId, locationId);
+      if (pendingReactionId) {
+        res.status(400).json(errorResponse(
+          'Devi rispondere alla reazione pendente prima di fare altre azioni',
+          'PENDING_REACTION_EXISTS',
+          { pendingMessageId: pendingReactionId },
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
+
       // Determine defender skill automatically from attacker skill
       const defenderSkill = getDefensiveSkill(attackerSkill);
       if (!defenderSkill) {
@@ -1476,7 +1504,9 @@ export class ChatController {
         locationId,
         attackSkill,
         defenderId,
-        content
+        content,
+        additionalMessage, // For Raggirare lie text
+        forceAbortPendingReaction // User confirmed abort of pending reaction
       } = req.body;
 
       // Validate required fields
@@ -1489,6 +1519,31 @@ export class ChatController {
           getRequestId(req)
         ));
         return;
+      }
+
+      // CHECK: Attacker has pending reaction to resolve?
+      const pendingReaction = await Chat.findOne({
+        locationId,
+        'confrontation.defenderCharacterId': character.characterId,
+        'confrontation.phase': 'waiting_reaction',
+      });
+
+      if (pendingReaction) {
+        if (!forceAbortPendingReaction) {
+          // User has not confirmed abort → block
+          res.status(400).json(errorResponse(
+            'Devi rispondere alla reazione pendente prima di fare altre azioni',
+            'PENDING_REACTION_EXISTS',
+            { pendingMessageId: pendingReaction._id },
+            400,
+            getRequestId(req)
+          ));
+          return;
+        }
+
+        // User confirmed abort → auto-resolve with defender fail
+        await ChatController.handlePendingReactionAbort(pendingReaction._id.toString(), character.characterId, req);
+        logger.info(`Pending reaction ${pendingReaction._id} aborted by ${character.characterId} to proceed with new action`);
       }
 
       // Load SkillConfrontation config
@@ -1551,81 +1606,139 @@ export class ChatController {
         return;
       }
 
-      // Check if multi-defense (requires reaction request)
-      if (config.counterSkills.length > 1) {
-        // Create CombatEncounter to track state
-        const encounter = await CombatEncounter.create({
-          locationId,
-          status: 'waiting_reaction',
-          participants: [
-            { characterId: character.characterId, characterName: character.characterName },
-            { characterId: defenderId, characterName: defenderCharacter.name }
-          ],
-          currentTurn: {
-            turnNumber: 1,
-            attackerId: character.characterId,
-            defenderId,
-            attackSkill,
-            status: 'waiting_defense'
-          },
-          turnHistory: []
-        });
+      // ═══ SKILL USAGE TRACKING (SOCIAL ONLY, EXCLUDE RAGGIRARE) ═══
+      const configService = new ConfigurationService(redis.getClient() as any, logger);
 
-        // Create reaction request message (whisper visibility, visible only to attacker and defender)
-        const message = await Chat.create({
-          actionType: 'confrontation_reaction_request',
-          characterId: character.characterId,
-          characterName: character.characterName,
-          content: content.trim(),
-          locationId,
-          visibility: 'whisper',
-          targetCharacters: [character.characterId, defenderId],
-          characterRoles: character.gameplayRoles || [],
-          timestamp: new Date(),
-          confrontation: {
-            type: config.category === 'combat_unarmed' || config.category === 'combat_melee' || config.category === 'combat_ranged' ? 'combat' : 'social',
-            encounterId: encounter._id.toString(),
-            phase: 'waiting_reaction',
-            attackerCharacterId: character.characterId,
-            defenderCharacterId: defenderId,
-            availableDefenseSkills: config.counterSkills.map(cs => ({
-              skillName: cs.skillName,
-              label: cs.label,
-              specialRule: cs.specialRule
-            })),
-            attackSkill
-          }
-        });
+      if (config.category === 'social' && attackSkill !== 'Raggirare') {
+        const usageLimit = await configService.getConfig('confrontation_skill_usage_limit_per_scene') as number;
 
-        // Emit WebSocket notification
-        const io = req.app.get('io');
-        if (io) {
-          const roomName = `location_${locationId}`;
-          io.to(roomName).emit('location_message_notification', {
+        if (usageLimit > 0) {
+          // Check if skill was already used against this target in this location
+          const existingUsage = await CombatEncounter.findOne({
             locationId,
-            actionId: message._id,
-            characterName: character.characterName,
-            actionType: 'confrontation_reaction_request',
-            timestamp: message.timestamp
+            encounterType: 'social_scene',
+            status: { $ne: 'completed' },
+            'skillUsageTracking': {
+              $elemMatch: {
+                characterId: character.characterId,
+                targetCharacterId: defenderId,
+                skillName: attackSkill
+              }
+            }
           });
+
+          if (existingUsage) {
+            res.status(400).json(errorResponse(
+              `Hai già usato ${attackSkill} contro ${defenderCharacter.name} in questa scena`,
+              'SKILL_USAGE_LIMIT_EXCEEDED',
+              { skill: attackSkill, limit: usageLimit },
+              400,
+              getRequestId(req)
+            ));
+            return;
+          }
         }
-
-        logger.info(`Confrontation reaction request created: ${message._id} (${attackSkill} attack by ${character.characterName})`);
-
-        res.status(201).json(createResponse(
-          { action: message, requiresReaction: true },
-          'Confrontation attack initiated, waiting for defender reaction',
-          getRequestId(req)
-        ));
-        return;
       }
 
-      // Single defense skill - resolve immediately (fallback for Phase 2+)
-      res.status(501).json(errorResponse(
-        'Single-defense skills not yet implemented (Phase 2)',
-        'NOT_IMPLEMENTED',
-        undefined,
-        501,
+      // ═══ UNIFIED 2-PHASE FLOW (ALL CONFRONTATIONS) ═══
+
+      // Build availableDefenseSkills with __NO_DEFENSE__ option
+      const availableDefenseSkills = config.counterSkills.map((cs: any) => ({
+        skillName: cs.skillName,
+        label: cs.label,
+        specialRule: cs.specialRule
+      }));
+
+      // Add "Non voglio tirare/difendermi" option (always enabled)
+      const allowNoDefense = await configService.getConfig('confrontation_allow_no_defense') as boolean;
+      if (allowNoDefense) {
+        const noDefenseLabel = config.category === 'social'
+          ? 'Non voglio tirare (Accetto automaticamente)'
+          : 'Non voglio difendermi (Fallimento automatico)';
+
+        availableDefenseSkills.push({
+          skillName: '__NO_DEFENSE__',
+          label: noDefenseLabel,
+          specialRule: 'auto_fail'
+        });
+      }
+
+      // Create CombatEncounter to track state
+      const encounterType = config.category === 'social' ? 'social_scene' : 'combat';
+      const encounter = await CombatEncounter.create({
+        locationId,
+        sessionId: character.sessionId || 'default-session', // Use character's current session
+        encounterType,
+        status: 'waiting_reaction',
+        participants: [
+          { characterId: character.characterId, characterName: character.characterName },
+          { characterId: defenderId, characterName: defenderCharacter.name }
+        ],
+        currentTurn: {
+          turnNumber: 1,
+          attackerId: character.characterId,
+          defenderId,
+          attackSkill,
+          status: 'waiting_defense'
+        },
+        skillUsageTracking: encounterType === 'social_scene' ? [{
+          characterId: character.characterId,
+          targetCharacterId: defenderId,
+          skillName: attackSkill,
+          usedAt: new Date(),
+          additionalContext: additionalMessage || undefined
+        }] : [],
+        turnHistory: []
+      });
+
+      // Create reaction request message (whisper visibility, visible only to attacker and defender)
+      const messageData: any = {
+        actionType: 'confrontation_reaction_request',
+        characterId: character.characterId,
+        characterName: character.characterName,
+        content: content.trim(),
+        locationId,
+        visibility: 'whisper',
+        targetCharacters: [character.characterId, defenderId],
+        characterRoles: character.gameplayRoles || [],
+        timestamp: new Date(),
+        confrontation: {
+          type: encounterType,
+          encounterId: encounter._id.toString(),
+          phase: 'waiting_reaction',
+          attackerCharacterId: character.characterId,
+          defenderCharacterId: defenderId,
+          availableDefenseSkills, // Use the built array with __NO_DEFENSE__
+          attackSkill,
+          hiddenResultForAttacker: attackSkill === 'Raggirare' // Attacker doesn't see rolls for Raggirare
+        }
+      };
+
+      // Save Raggirare lie text to hiddenContent (master-visible only)
+      if (attackSkill === 'Raggirare' && additionalMessage) {
+        messageData.hiddenContent = additionalMessage;
+      }
+
+      const message = await Chat.create(messageData);
+
+      // Emit WebSocket notification
+      const io = req.app.get('io');
+      if (io) {
+        const roomName = `location_${locationId}`;
+        io.to(roomName).emit('location_message_notification', {
+          locationId,
+          actionId: message._id,
+          characterName: character.characterName,
+          actionType: 'confrontation_reaction_request',
+          timestamp: message.timestamp
+        });
+      }
+
+      logger.info(`Confrontation reaction request created: ${message._id} (${attackSkill} attack by ${character.characterName})`);
+
+      res.status(201).json(createResponse(
+        { action: message, requiresReaction: true },
+        'Confrontation attack initiated, waiting for defender reaction',
         getRequestId(req)
       ));
     } catch (error: unknown) {
@@ -1713,7 +1826,7 @@ export class ChatController {
         return;
       }
 
-      // Get skill values
+      // Get characters
       const attackerCharacter = await Character.findById(message.confrontation.attackerCharacterId);
       const defenderCharacter = await Character.findById(character.characterId);
 
@@ -1727,6 +1840,146 @@ export class ChatController {
         ));
         return;
       }
+
+      // ═══ CHECK 1: NO-DEFENSE OPTION (AUTO-FAIL) ═══
+      if (defenseSkillName === '__NO_DEFENSE__') {
+        // Defender chose not to defend - auto-fail
+        const attackSkill = message.confrontation.attackSkill;
+        const attackerSkillData = attackerCharacter.skills?.[attackSkill];
+        let attackerValue = 0;
+        if (attackerSkillData !== undefined) {
+          if (typeof attackerSkillData === 'number') {
+            attackerValue = attackerSkillData;
+          } else if (attackerSkillData && typeof attackerSkillData === 'object' && 'total' in attackerSkillData) {
+            attackerValue = (attackerSkillData as { total: number }).total;
+          }
+        }
+
+        const attackRoll = ChatController.rollDice('1d100').result;
+        const attackDegree = calculateSuccessDegree(attackRoll, attackerValue).degree;
+
+        // Auto-fail: defender gets fumble, attacker rolls normally
+        const updateFields: any = {
+          actionType: message.confrontation.type === 'combat' ? 'combat_action' : 'social_confrontation',
+          visibility: 'public',
+          'confrontation.phase': 'result',
+          'confrontation.defenseSkill': 'Nessuna difesa',
+          'confrontation.attackRoll': attackRoll,
+          'confrontation.defenseRoll': 100, // Fumble
+          'confrontation.attackSuccessLevel': attackDegree,
+          'confrontation.defenseSuccessLevel': 'fumble',
+          'confrontation.outcome': 'hit'
+        };
+
+        const updated: any = await Chat.findOneAndUpdate(
+          { _id: messageId, actionType: 'confrontation_reaction_request' },
+          { $set: updateFields, $unset: { targetCharacters: '', 'confrontation.availableDefenseSkills': '' } },
+          { new: true }
+        );
+
+        if (updated) {
+          await CombatEncounter.updateOne(
+            { _id: message.confrontation.encounterId },
+            { $set: { status: 'completed', 'currentTurn.status': 'resolved', 'currentTurn.defenseSkill': 'Nessuna difesa' } }
+          );
+
+          const io = req.app.get('io');
+          if (io) {
+            io.to(`location_${message.locationId}`).emit('location_message_notification', {
+              locationId: message.locationId,
+              actionId: messageId,
+              characterName: character.characterName,
+              actionType: updated.actionType,
+              timestamp: updated.timestamp
+            });
+          }
+        }
+
+        logger.info(`No-defense auto-fail: ${messageId} (${character.characterName} chose not to defend)`);
+        res.json(createResponse({ outcome: 'hit', autoFail: true }, 'Defender chose not to defend', getRequestId(req)));
+        return;
+      }
+
+      // ═══ CHECK 2: CONSTITUTION CHECK (COMBAT ONLY, WOUNDED) ═══
+      const configService = new ConfigurationService(redis.getClient() as any, logger);
+      const isCombat = message.confrontation.type === 'combat';
+
+      if (isCombat) {
+        const currentHP = defenderCharacter.combat?.currentHP ?? defenderCharacter.derived?.hitPoints ?? 10;
+        const maxHP = defenderCharacter.combat?.maxHP ?? defenderCharacter.derived?.hitPoints ?? 10;
+        const threshold = await configService.getConfig('combat_wounded_constitution_check_threshold') as number;
+
+        if ((currentHP / maxHP) <= threshold && currentHP > 0) {
+          // Wounded - requires constitution check
+          const constitutionValue = defenderCharacter.stats?.constitution || 10;
+          const constitutionRoll = ChatController.rollDice('1d100').result;
+          const constitutionCheck = calculateSuccessDegree(constitutionRoll, constitutionValue);
+
+          if (constitutionCheck.degree === 'failure' || constitutionCheck.degree === 'fumble') {
+            // Failed constitution check - cannot defend (same as no-defense)
+            const attackSkill = message.confrontation.attackSkill;
+            const attackerSkillData = attackerCharacter.skills?.[attackSkill];
+            let attackerValue = 0;
+            if (attackerSkillData !== undefined) {
+              if (typeof attackerSkillData === 'number') {
+                attackerValue = attackerSkillData;
+              } else if (attackerSkillData && typeof attackerSkillData === 'object' && 'total' in attackerSkillData) {
+                attackerValue = (attackerSkillData as { total: number }).total;
+              }
+            }
+
+            const attackRoll = ChatController.rollDice('1d100').result;
+            const attackDegree = calculateSuccessDegree(attackRoll, attackerValue).degree;
+
+            const updateFields: any = {
+              actionType: 'combat_action',
+              visibility: 'public',
+              'confrontation.phase': 'result',
+              'confrontation.defenseSkill': 'Impossibile difendersi (ferito)',
+              'confrontation.attackRoll': attackRoll,
+              'confrontation.defenseRoll': 100,
+              'confrontation.attackSuccessLevel': attackDegree,
+              'confrontation.defenseSuccessLevel': 'fumble',
+              'confrontation.outcome': 'hit',
+              'confrontation.constitutionCheckRequired': true,
+              'confrontation.constitutionCheckPassed': false,
+              'confrontation.constitutionCheckRoll': constitutionRoll
+            };
+
+            const updated: any = await Chat.findOneAndUpdate(
+              { _id: messageId, actionType: 'confrontation_reaction_request' },
+              { $set: updateFields, $unset: { targetCharacters: '', 'confrontation.availableDefenseSkills': '' } },
+              { new: true }
+            );
+
+            if (updated) {
+              await CombatEncounter.updateOne(
+                { _id: message.confrontation.encounterId },
+                { $set: { status: 'completed', 'currentTurn.status': 'resolved' } }
+              );
+
+              const io = req.app.get('io');
+              if (io) {
+                io.to(`location_${message.locationId}`).emit('location_message_notification', {
+                  locationId: message.locationId,
+                  actionId: messageId,
+                  characterName: character.characterName,
+                  actionType: updated.actionType,
+                  timestamp: updated.timestamp
+                });
+              }
+            }
+
+            logger.info(`Constitution check failed: ${messageId} (${character.characterName} too wounded to defend, ${constitutionRoll} vs ${constitutionValue})`);
+            res.json(createResponse({ outcome: 'hit', constitutionCheckFailed: true }, 'Troppo ferito per difendersi', getRequestId(req)));
+            return;
+          }
+
+          logger.info(`Constitution check passed: ${character.characterName} can defend (${constitutionRoll} vs ${constitutionValue})`);
+        }
+      }
+
+      // ═══ NORMAL CONFRONTATION RESOLUTION ═══
 
       // Get attacker skill value
       const attackSkill = message.confrontation.attackSkill;
@@ -1769,7 +2022,105 @@ export class ChatController {
       const comparison = compareSuccessDegrees(attackDegree, defenseDegree, attackRoll, defenseRoll);
       const outcome = comparison > 0 ? 'hit' : 'miss';
 
-      // Calculate damage if hit (TiroContrapposto Phase 2)
+      // ═══ RAGGIRARE SPECIAL RESULT PRESENTATION ═══
+      if (attackSkill === 'Raggirare') {
+        // Attacker ALWAYS sees generic message (hiddenResultForAttacker flag)
+        // Defender receives message ONLY if they win
+
+        const attackerWins = comparison > 0;
+        const originalContent = message.content;
+
+        // Update main message with result (attacker won't see rolls due to hiddenResultForAttacker flag)
+        const updateFields: any = {
+          actionType: 'social_confrontation',
+          visibility: 'public',
+          'confrontation.phase': 'result',
+          'confrontation.defenseSkill': defenseSkillName,
+          'confrontation.attackRoll': attackRoll,
+          'confrontation.defenseRoll': defenseRoll,
+          'confrontation.attackSuccessLevel': attackDegree,
+          'confrontation.defenseSuccessLevel': defenseDegree,
+          'confrontation.outcome': attackerWins ? 'attacker_wins' : 'defender_wins'
+        };
+
+        const updated: any = await Chat.findOneAndUpdate(
+          { _id: messageId, actionType: 'confrontation_reaction_request' },
+          { $set: updateFields, $unset: { targetCharacters: '', 'confrontation.availableDefenseSkills': '' } },
+          { new: true }
+        );
+
+        // Update encounter
+        await CombatEncounter.updateOne(
+          { _id: message.confrontation.encounterId },
+          { $set: { status: 'completed', 'currentTurn.status': 'resolved', 'currentTurn.defenseSkill': defenseSkillName } }
+        );
+
+        // Emit update for main message
+        const io = req.app.get('io');
+        if (io) {
+          io.to(`location_${message.locationId}`).emit('location_message_notification', {
+            locationId: message.locationId,
+            actionId: messageId,
+            characterName: character.characterName,
+            actionType: updated.actionType,
+            timestamp: updated.timestamp
+          });
+        }
+
+        // CREATE DEFENDER MESSAGE (only if defender wins/tie)
+        if (!attackerWins) {
+          let defenderMessage = '';
+
+          // Y has hard/extreme/critical success → full message with lie text
+          if (defenseDegree === 'hard' || defenseDegree === 'extreme' || defenseDegree === 'critical') {
+            defenderMessage = `${attackerCharacter.name} sta evidentemente cercando di nasconderti qualcosa quando dice: "${originalContent}"`;
+          }
+          // Y has normal success → partial message
+          else if (defenseDegree === 'normal') {
+            defenderMessage = `Ti rendi conto che ${attackerCharacter.name} ti sta nascondendo qualcosa.`;
+          }
+          // Y has failure/fumble BUT X failed worse → basic message
+          else {
+            defenderMessage = `${attackerCharacter.name} sta dicendo una stronzata.`;
+          }
+
+          // Create whisper message for defender
+          await Chat.create({
+            actionType: 'social_confrontation',
+            characterId: character.characterId,
+            characterName: character.characterName,
+            content: defenderMessage,
+            locationId: message.locationId,
+            visibility: 'whisper',
+            targetCharacters: [message.confrontation.defenderCharacterId],
+            characterRoles: ['master'], // Visible to defender + master
+            timestamp: new Date(),
+            confrontation: {
+              type: 'social',
+              phase: 'result',
+              attackerCharacterId: message.confrontation.attackerCharacterId,
+              defenderCharacterId: message.confrontation.defenderCharacterId,
+              attackSkill: 'Raggirare',
+              defenseSkill: defenseSkillName,
+              attackRoll,
+              defenseRoll,
+              attackSuccessLevel: attackDegree,
+              defenseSuccessLevel: defenseDegree,
+              outcome: 'defender_wins'
+            }
+          });
+
+          logger.info(`Raggirare detected: ${defenderCharacter.name} received message (${defenseDegree})`);
+        } else {
+          logger.info(`Raggirare succeeded: ${defenderCharacter.name} did not detect the lie`);
+        }
+
+        logger.info(`Raggirare resolved: ${messageId} (${attackerWins ? 'attacker wins' : 'defender wins'}: ${attackDegree} vs ${defenseDegree})`);
+        res.json(createResponse({ outcome: attackerWins ? 'success' : 'detected' }, 'Raggirare risolto', getRequestId(req)));
+        return;
+      }
+
+      // ═══ NORMAL CONFRONTATION: CALCULATE DAMAGE IF HIT (COMBAT ONLY) ═══
       let damageDealt = 0;
       let isCriticalDamage = false;
       let damageFormula = '';
@@ -1906,6 +2257,369 @@ export class ChatController {
       res.status(500).json(errorResponse(
         'Failed to handle confrontation reaction',
         'CONFRONTATION_REACTION_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
+    }
+  }
+
+  /**
+   * Check Pending Reaction
+   *
+   * Checks if character has pending reaction to resolve.
+   * Returns message ID if pending reaction exists, null otherwise.
+   *
+   * @param characterId - Character to check
+   * @param locationId - Current location
+   * @returns Pending message ID or null
+   */
+  static async checkPendingReaction(characterId: string, locationId: string): Promise<string | null> {
+    const pending = await Chat.findOne({
+      locationId,
+      'confrontation.defenderCharacterId': characterId,
+      'confrontation.phase': 'waiting_reaction',
+    });
+
+    return pending ? pending._id.toString() : null;
+  }
+
+  /**
+   * Handle Pending Reaction Abort
+   *
+   * Automatically resolves pending reaction with defender auto-fail.
+   * Used when attacker force-aborts to proceed with new action or when timeout expires.
+   *
+   * @param messageId - Pending reaction request message ID
+   * @param abortedByCharacterId - Character who triggered the abort
+   * @param req - Express request (for WebSocket IO access)
+   */
+  static async handlePendingReactionAbort(
+    messageId: string,
+    abortedByCharacterId: string,
+    req: Request
+  ): Promise<void> {
+    const message: any = await Chat.findById(messageId);
+    if (!message || message.confrontation?.phase !== 'waiting_reaction') {
+      logger.warn(`Abort failed: message ${messageId} not found or already resolved`);
+      return;
+    }
+
+    // Get characters
+    const attackerCharacter = await Character.findById(message.confrontation.attackerCharacterId);
+    const defenderCharacter = await Character.findById(message.confrontation.defenderCharacterId);
+
+    if (!attackerCharacter || !defenderCharacter) {
+      logger.error(`Abort failed: characters not found for message ${messageId}`);
+      return;
+    }
+
+    // Get attacker skill value
+    const attackSkill = message.confrontation.attackSkill;
+    const attackerSkillData = attackerCharacter.skills?.[attackSkill];
+    let attackerValue = 0;
+    if (attackerSkillData !== undefined) {
+      if (typeof attackerSkillData === 'number') {
+        attackerValue = attackerSkillData;
+      } else if (attackerSkillData && typeof attackerSkillData === 'object' && 'total' in attackerSkillData) {
+        attackerValue = (attackerSkillData as { total: number }).total;
+      }
+    }
+
+    // Roll attack (defender auto-fails)
+    const attackRoll = ChatController.rollDice('1d100').result;
+    const attackDegree = calculateSuccessDegree(attackRoll, attackerValue).degree;
+
+    // Prepare update fields
+    const updateFields: any = {
+      actionType: message.confrontation.type === 'combat' ? 'combat_action' : 'social_confrontation',
+      visibility: 'public',
+      'confrontation.phase': 'result',
+      'confrontation.defenseSkill': 'Aborted (auto-fail)',
+      'confrontation.attackRoll': attackRoll,
+      'confrontation.defenseRoll': 100, // Auto-fumble
+      'confrontation.attackSuccessLevel': attackDegree,
+      'confrontation.defenseSuccessLevel': 'fumble',
+      'confrontation.outcome': 'hit',
+      'confrontation.abortedBy': abortedByCharacterId,
+      'confrontation.abortedAt': new Date()
+    };
+
+    // Calculate damage if combat
+    if (message.confrontation.type === 'combat') {
+      const { calculateDamage, applyDamage } = await import('../utils/damageCalculator');
+
+      const damageFormula = '1d3'; // Unarmed default
+      const damageResult = calculateDamage(
+        damageFormula,
+        attackerCharacter.derived?.damageBonus || '0',
+        attackDegree
+      );
+
+      const damageDealt = damageResult.total;
+      const isCriticalDamage = damageResult.isCritical;
+
+      // Apply damage to defender
+      const defenderHP = defenderCharacter.combat?.currentHP ?? defenderCharacter.derived?.hitPoints ?? 10;
+      const defenderMaxHP = defenderCharacter.combat?.maxHP ?? defenderCharacter.derived?.hitPoints ?? 10;
+      const damageResult2 = applyDamage(defenderHP, defenderMaxHP, damageDealt);
+
+      await Character.updateOne(
+        { _id: defenderCharacter._id },
+        {
+          $set: {
+            'combat.currentHP': damageResult2.newHP,
+            'combat.maxHP': defenderMaxHP,
+            'combat.isDead': damageResult2.isDead,
+            'combat.isIncapacitated': damageResult2.isIncapacitated
+          },
+          $push: {
+            'combat.wounds': {
+              damage: damageDealt,
+              source: `${attackerCharacter.name} (${attackSkill}) - Aborted`,
+              timestamp: new Date()
+            }
+          }
+        }
+      );
+
+      updateFields['confrontation.damageDealt'] = damageDealt;
+      updateFields['confrontation.isCriticalDamage'] = isCriticalDamage;
+      updateFields['confrontation.damageFormula'] = damageFormula;
+
+      logger.info(`Damage applied (aborted): ${damageDealt} HP to ${defenderCharacter.name}`);
+    }
+
+    // Update message
+    await Chat.findOneAndUpdate(
+      { _id: messageId, actionType: 'confrontation_reaction_request' },
+      { $set: updateFields, $unset: { targetCharacters: '', 'confrontation.availableDefenseSkills': '' } },
+      { new: true }
+    );
+
+    // Update encounter
+    await CombatEncounter.updateOne(
+      { _id: message.confrontation.encounterId },
+      { $set: { status: 'completed', 'currentTurn.status': 'resolved' } }
+    );
+
+    // Emit WebSocket update
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`location_${message.locationId}`).emit('location_message_notification', {
+        locationId: message.locationId,
+        actionId: messageId,
+        characterName: attackerCharacter.name,
+        actionType: updateFields.actionType,
+        timestamp: new Date()
+      });
+    }
+
+    logger.info(`Pending reaction aborted: ${messageId} by ${abortedByCharacterId}`);
+  }
+
+  /**
+   * Force Confrontation Outcome (MASTER ONLY)
+   * POST /game/chats/force-confrontation-outcome
+   *
+   * Allows master to forcibly resolve a pending confrontation with custom outcome.
+   * Used to bypass stuck situations or apply narrative rulings.
+   */
+  static async forceConfrontationOutcome(req: Request, res: Response): Promise<void> {
+    try {
+      const character = req.character;
+      if (!character) {
+        res.status(401).json(errorResponse(
+          'Contesto personaggio richiesto',
+          'CHARACTER_CONTEXT_REQUIRED',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      // Validate master permission
+      if (!character.gameplayRoles?.includes('master')) {
+        res.status(403).json(errorResponse(
+          'Solo il master può forzare esiti di confronti',
+          'MASTER_PERMISSION_REQUIRED',
+          undefined,
+          403,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      const { messageId, forcedOutcome, defenderSuccessLevel } = req.body;
+
+      // Validate required fields
+      if (!messageId || !forcedOutcome) {
+        res.status(400).json(errorResponse(
+          'messageId and forcedOutcome are required',
+          'MISSING_REQUIRED_FIELDS',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      // Find message
+      const message: any = await Chat.findById(messageId);
+      if (!message || message.confrontation?.phase !== 'waiting_reaction') {
+        res.status(400).json(errorResponse(
+          'Messaggio non valido o già risolto',
+          'INVALID_MESSAGE',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      // Get characters
+      const attackerCharacter = await Character.findById(message.confrontation.attackerCharacterId);
+      const defenderCharacter = await Character.findById(message.confrontation.defenderCharacterId);
+
+      if (!attackerCharacter || !defenderCharacter) {
+        res.status(404).json(errorResponse(
+          'Personaggio non trovato',
+          'CHARACTER_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      // Get skill values
+      const attackSkill = message.confrontation.attackSkill;
+      const defenseSkill = message.confrontation.availableDefenseSkills?.[0]?.skillName || 'Unknown';
+
+      const attackerSkillData = attackerCharacter.skills?.[attackSkill];
+      let attackerValue = 0;
+      if (attackerSkillData !== undefined) {
+        if (typeof attackerSkillData === 'number') {
+          attackerValue = attackerSkillData;
+        } else if (attackerSkillData && typeof attackerSkillData === 'object' && 'total' in attackerSkillData) {
+          attackerValue = (attackerSkillData as { total: number }).total;
+        }
+      }
+
+      const defenderSkillData = defenderCharacter.skills?.[defenseSkill];
+      let defenderValue = 0;
+      if (defenderSkillData !== undefined) {
+        if (typeof defenderSkillData === 'number') {
+          defenderValue = defenderSkillData;
+        } else if (defenderSkillData && typeof defenderSkillData === 'object' && 'total' in defenderSkillData) {
+          defenderValue = (defenderSkillData as { total: number }).total;
+        }
+      }
+
+      // Roll dice (for record, outcome is forced)
+      const attackRoll = ChatController.rollDice('1d100').result;
+      const defenseRoll = ChatController.rollDice('1d100').result;
+
+      // Calculate natural success levels
+      const attackDegree = calculateSuccessDegree(attackRoll, attackerValue).degree;
+      const naturalDefenseDegree = calculateSuccessDegree(defenseRoll, defenderValue).degree;
+
+      // Apply forced outcome
+      const finalDefenseDegree = defenderSuccessLevel || naturalDefenseDegree;
+      const outcome = forcedOutcome; // 'attacker_wins' or 'defender_wins'
+
+      // Update message
+      const updateFields: any = {
+        actionType: message.confrontation.type === 'combat' ? 'combat_action' : 'social_confrontation',
+        visibility: 'public',
+        'confrontation.phase': 'result',
+        'confrontation.defenseSkill': defenseSkill,
+        'confrontation.attackRoll': attackRoll,
+        'confrontation.defenseRoll': defenseRoll,
+        'confrontation.attackSuccessLevel': attackDegree,
+        'confrontation.defenseSuccessLevel': finalDefenseDegree,
+        'confrontation.outcome': outcome,
+        'confrontation.forcedByMaster': true,
+        'confrontation.forcedBy': character.characterId,
+        'confrontation.forcedAt': new Date()
+      };
+
+      // Calculate damage if combat + attacker wins
+      if (message.confrontation.type === 'combat' && outcome === 'attacker_wins') {
+        const { calculateDamage, applyDamage } = await import('../utils/damageCalculator');
+
+        const damageFormula = '1d3'; // Unarmed default
+        const damageResult = calculateDamage(
+          damageFormula,
+          attackerCharacter.derived?.damageBonus || '0',
+          attackDegree
+        );
+
+        const damageDealt = damageResult.total;
+        const isCriticalDamage = damageResult.isCritical;
+
+        // Apply damage to defender
+        const defenderHP = defenderCharacter.combat?.currentHP ?? defenderCharacter.derived?.hitPoints ?? 10;
+        const defenderMaxHP = defenderCharacter.combat?.maxHP ?? defenderCharacter.derived?.hitPoints ?? 10;
+        const damageResult2 = applyDamage(defenderHP, defenderMaxHP, damageDealt);
+
+        await Character.updateOne(
+          { _id: defenderCharacter._id },
+          {
+            $set: {
+              'combat.currentHP': damageResult2.newHP,
+              'combat.maxHP': defenderMaxHP,
+              'combat.isDead': damageResult2.isDead,
+              'combat.isIncapacitated': damageResult2.isIncapacitated
+            },
+            $push: {
+              'combat.wounds': {
+                damage: damageDealt,
+                source: `${attackerCharacter.name} (${attackSkill}) - Master Forced`,
+                timestamp: new Date()
+              }
+            }
+          }
+        );
+
+        updateFields['confrontation.damageDealt'] = damageDealt;
+        updateFields['confrontation.isCriticalDamage'] = isCriticalDamage;
+        updateFields['confrontation.damageFormula'] = damageFormula;
+      }
+
+      // Update message
+      const updated: any = await Chat.findOneAndUpdate(
+        { _id: messageId, actionType: 'confrontation_reaction_request' },
+        { $set: updateFields, $unset: { targetCharacters: '', 'confrontation.availableDefenseSkills': '' } },
+        { new: true }
+      );
+
+      // Update encounter
+      await CombatEncounter.updateOne(
+        { _id: message.confrontation.encounterId },
+        { $set: { status: 'completed', 'currentTurn.status': 'resolved', 'currentTurn.defenseSkill': defenseSkill } }
+      );
+
+      // Emit WebSocket update
+      const io = req.app.get('io');
+      if (io) {
+        io.to(`location_${message.locationId}`).emit('location_message_notification', {
+          locationId: message.locationId,
+          actionId: messageId,
+          characterName: character.characterName,
+          actionType: updated.actionType,
+          timestamp: updated.timestamp
+        });
+      }
+
+      logger.info(`Confrontation forced by master: ${messageId} (${outcome}, ${character.characterName})`);
+      res.json(createResponse({ action: updated, outcome }, 'Esito forzato dal master', getRequestId(req)));
+    } catch (error: unknown) {
+      logger.error('Force confrontation outcome error:', error);
+      res.status(500).json(errorResponse(
+        'Failed to force confrontation outcome',
+        'FORCE_OUTCOME_ERROR',
         undefined,
         500,
         getRequestId(req)

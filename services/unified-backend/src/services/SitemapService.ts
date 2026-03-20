@@ -19,6 +19,9 @@ import { appConfig } from '@config/runtime';
 const LANDING_DOMAIN = 'https://tenpennynovels.com';
 const DOCUMENTS_DOMAIN = 'https://documenti.tenpennynovels.com';
 const OUTPUT_DIR = appConfig.sitemapOutputDir;
+const LANDING_LASTMOD_STAMP = 'landing-sitemap-lastmod.txt';
+/** Usato in locale / VPS senza file stamp (deploy CI scrive la data del commit in public/) */
+const LANDING_LASTMOD_FALLBACK = '2026-02-27';
 
 interface SitemapUrl {
   loc: string;
@@ -34,7 +37,9 @@ export class SitemapService {
 
       const today = new Date().toISOString().split('T')[0];
 
-      const landingXml = this.buildUrlsetXml(this.getStaticPages());
+      const landingLastMod = await this.readLandingLastModStamp();
+      const landingUrls = this.getStaticPages(landingLastMod);
+      const landingXml = this.buildUrlsetXml(landingUrls);
       const { xml: documentsXml, count: docCount } = await this.buildDocumentsSitemap();
       const indexXml = this.buildSitemapIndex(today);
 
@@ -46,7 +51,9 @@ export class SitemapService {
 
       await this.writeToDir(OUTPUT_DIR, files);
 
-      logger.info(`[SitemapService] Done. Landing: ${this.getStaticPages().length} URLs, Documents: ${docCount} URLs`);
+      logger.info(
+        `[SitemapService] Done. Landing: ${landingUrls.length} URLs, Documents: ${docCount} URLs`,
+      );
     } catch (error) {
       logger.error('[SitemapService] Generation failed:', error);
     }
@@ -56,6 +63,9 @@ export class SitemapService {
     try {
       await fs.access(dir);
     } catch {
+      logger.warn(
+        `[SitemapService] Output directory missing or not accessible, skipping write: ${dir}`,
+      );
       return;
     }
     await Promise.all(
@@ -64,11 +74,30 @@ export class SitemapService {
     logger.info(`[SitemapService] Written ${files.length} files to ${dir}`);
   }
 
-  private static getStaticPages(): SitemapUrl[] {
+  private static getStaticPages(lastmod: string): SitemapUrl[] {
     return [
-      { loc: `${LANDING_DOMAIN}/`, lastmod: '2026-02-27', changefreq: 'weekly', priority: 1.0 },
-      { loc: `${LANDING_DOMAIN}/credits`, lastmod: '2026-03-07', changefreq: 'monthly', priority: 0.5 },
+      { loc: `${LANDING_DOMAIN}/`, lastmod, changefreq: 'weekly', priority: 1.0 },
+      { loc: `${LANDING_DOMAIN}/credits`, lastmod, changefreq: 'monthly', priority: 0.5 },
     ];
+  }
+
+  /** Data commit deployata (CI) o fallback se il file non c’è. */
+  private static async readLandingLastModStamp(): Promise<string> {
+    const stampPath = path.join(OUTPUT_DIR, LANDING_LASTMOD_STAMP);
+    try {
+      const raw = (await fs.readFile(stampPath, 'utf-8')).trim().split(/\r?\n/)[0];
+      if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+    } catch {
+      /* missing or unreadable */
+    }
+    return LANDING_LASTMOD_FALLBACK;
+  }
+
+  /** lastmod from Mongo: prefer lastUpdated (kept in sync by Document pre-save), else createdAt. */
+  private static documentLastMod(doc: { lastUpdated?: Date; createdAt?: Date }): string {
+    const d = doc.lastUpdated || doc.createdAt;
+    if (d) return new Date(d).toISOString().split('T')[0];
+    return new Date().toISOString().split('T')[0];
   }
 
   private static async buildDocumentsSitemap(): Promise<{ xml: string; count: number }> {
@@ -78,14 +107,12 @@ export class SitemapService {
       visible: true,
       deletedAt: { $exists: false },
     })
-      .select('type path lastUpdated')
+      .select('type path lastUpdated createdAt')
       .lean();
 
     const urls: SitemapUrl[] = documents.map((doc: any) => ({
       loc: `${DOCUMENTS_DOMAIN}/${doc.type}/${doc.path}`,
-      lastmod: doc.lastUpdated
-        ? new Date(doc.lastUpdated).toISOString().split('T')[0]
-        : new Date().toISOString().split('T')[0],
+      lastmod: this.documentLastMod(doc),
       changefreq: 'monthly' as const,
       priority: 0.7,
     }));

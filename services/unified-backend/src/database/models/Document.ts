@@ -175,6 +175,25 @@ DocumentSchema.pre('save', async function() {
       logger.error('[Document] Failed to generate HTML from contentDelta:', error);
     }
   }
+
+  // SEO / sitemap: bump lastUpdated when public-facing fields change (not order/parentId alone)
+  if (!this.isNew) {
+    const bumpsLastUpdated = [
+      'title',
+      'contentDelta',
+      'slug',
+      'type',
+      'subtypeId',
+      'isPublic',
+      'visible',
+      'isDraft',
+      'tags',
+      'draftNotes',
+    ];
+    if (bumpsLastUpdated.some((field) => this.isModified(field))) {
+      this.lastUpdated = new Date();
+    }
+  }
 });
 
 /**

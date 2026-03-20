@@ -40,3 +40,6 @@ services/cdn-service/
 
 # Generated sitemaps (created by SitemapService cron)
 apps/landing/public/sitemap*.xml
+
+# Deploy-generated stamp for landing lastmod (written by CI before rsync)
+apps/landing/public/landing-sitemap-lastmod.txt

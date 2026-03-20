@@ -303,3 +303,80 @@
     width: 100%;
   }
 }
+
+/* Pending Reaction Confirmation Modal */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.confirmModal {
+  background: $brown-10;
+  border: 2px solid $gold-30;
+  border-radius: 8px;
+  padding: 2rem;
+  max-width: 500px;
+  width: 100%;
+
+  h3 {
+    margin: 0 0 1rem;
+    color: $parchment;
+    font-size: 1.5rem;
+  }
+
+  p {
+    margin: 0 0 1.5rem;
+    color: $parchment-70;
+    line-height: 1.6;
+  }
+}
+
+.modalButtons {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
+.cancelButton,
+.confirmButton {
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  font-size: 1rem;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.cancelButton {
+  background: $brown-30;
+  color: $parchment;
+  border: 1px solid $brown-50;
+
+  &:hover:not(:disabled) {
+    background: $brown-50;
+  }
+}
+
+.confirmButton {
+  background: $gold-50;
+  color: $brown-10;
+
+  &:hover:not(:disabled) {
+    background: $gold-70;
+  }
+}

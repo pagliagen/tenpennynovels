@@ -50,6 +50,13 @@ router.post('/confrontation-reaction',
   ChatController.handleConfrontationReaction
 );
 
+// Master controls
+router.post('/force-confrontation-outcome',
+  AuthMiddleware.requireCharacterAuth,
+  requireGamePermission('game:chat:master-action'), // Master-only permission
+  ChatController.forceConfrontationOutcome
+);
+
 // Admin operations
 router.delete('/:locationId/clear',
   AuthMiddleware.requireCharacterAuth,

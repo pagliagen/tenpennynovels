@@ -31,7 +31,7 @@ export interface ISkillConfrontation extends Document {
     skillId?: Schema.Types.ObjectId; // ref: Skill (optional - can use skillName for lookup)
     skillName: string; // e.g., "Schivata", "Autocontrollo"
     label: string; // UI display name (e.g., "Parata" when using Corpo a Corpo for defense)
-    specialRule?: 'strict_higher'; // null = normal, strict_higher = defender needs strictly higher degree
+    specialRule?: 'strict_higher' | 'auto_fail'; // null = normal, strict_higher = defender needs strictly higher degree, auto_fail = "Non voglio tirare/difendermi"
   }>;
 
   rollType: 'open' | 'hidden'; // open = visible to all, hidden = Raggirare (two-phase)
@@ -89,7 +89,7 @@ const SkillConfrontationSchema = new Schema<ISkillConfrontation>(
         },
         specialRule: {
           type: String,
-          enum: ['strict_higher', null],
+          enum: ['strict_higher', 'auto_fail', null],
           default: null,
         },
       },

@@ -185,6 +185,42 @@ export const locationChatsApi = {
   },
 
   /**
+   * Create Confrontation Attack
+   *
+   * Initiates a confrontation (social or combat) using the unified 2-phase flow.
+   * Creates a reaction request message that the defender must respond to.
+   *
+   * @param data - Confrontation attack data
+   * @returns {Promise<ChatMessage>} Created reaction request message
+   * @throws {ApiError} If request fails
+   *
+   * @example
+   * ```typescript
+   * const attack = await locationChatsApi.createConfrontationAttack({
+   *   locationId: 'loc123',
+   *   attackSkill: 'Intimidire',
+   *   defenderId: 'char456',
+   *   content: 'Mi avvicino minaccioso...',
+   * });
+   * ```
+   */
+  async createConfrontationAttack(data: {
+    locationId: string;
+    attackSkill: string;
+    defenderId: string;
+    content: string;
+    additionalMessage?: string;
+    forceAbortPendingReaction?: boolean;
+  }): Promise<ChatMessage> {
+    const response = await api.post<{ data: { action: ChatMessage } }>(
+      '/game/chats/confrontation-attack',
+      data
+    );
+
+    return response.data.action;
+  },
+
+  /**
    * React to Confrontation (TiroContrapposto Phase 1)
    *
    * Defender chooses their defense skill in response to a confrontation attack.
@@ -216,6 +252,39 @@ export const locationChatsApi = {
     const response = await api.post<{ data: { action: ChatMessage } }>(
       '/game/chats/confrontation-reaction',
       { messageId, defenseSkillName }
+    );
+
+    return response.data.action;
+  },
+
+  /**
+   * Force Confrontation Outcome (Master Only)
+   *
+   * Forcibly resolves a pending confrontation with a custom outcome.
+   * Used by masters to bypass stuck situations or apply narrative rulings.
+   *
+   * @param data - Force outcome data
+   * @returns {Promise<ChatMessage>} Updated message with forced result
+   * @throws {ApiError} If request fails (403 if not master)
+   *
+   * @example
+   * ```typescript
+   * // Master forces defender to win with extreme success
+   * const result = await locationChatsApi.forceConfrontationOutcome({
+   *   messageId: 'msg123',
+   *   forcedOutcome: 'defender_wins',
+   *   defenderSuccessLevel: 'extreme'
+   * });
+   * ```
+   */
+  async forceConfrontationOutcome(data: {
+    messageId: string;
+    forcedOutcome: 'attacker_wins' | 'defender_wins';
+    defenderSuccessLevel?: 'critical' | 'extreme' | 'hard' | 'normal' | 'failure' | 'fumble';
+  }): Promise<ChatMessage> {
+    const response = await api.post<{ data: { action: ChatMessage } }>(
+      '/game/chats/force-confrontation-outcome',
+      data
     );
 
     return response.data.action;

@@ -21,6 +21,7 @@ import { ActionTypeSelector } from './ActionTypeSelector';
 import { ConditionalSelects } from './ConditionalSelects';
 import { SkillStatRollModal } from './SkillStatRollModal';
 import { DiceRollModal } from './DiceRollModal';
+import { ConfrontationModal } from './ConfrontationModal';
 import { FakePngManager } from '../fake-png/FakePngManager';
 import { locationChatsApi } from '@/lib/api/locationChats';
 import { fakePngApi } from '@/lib/api/fakePng';
@@ -177,6 +178,9 @@ export function MessageInput({
   const [isSending, setIsSending] = useState(false);
   const [isSkillStatModalOpen, setIsSkillStatModalOpen] = useState(false);
   const [isDiceRollModalOpen, setIsDiceRollModalOpen] = useState(false);
+  const [isConfrontationModalOpen, setIsConfrontationModalOpen] = useState(false);
+  const [showPendingReactionModal, setShowPendingReactionModal] = useState(false);
+  const [pendingMessageData, setPendingMessageData] = useState<SendMessageRequest | null>(null);
   const [showFakePngManager, setShowFakePngManager] = useState(false);
 
   // Social conflict mode
@@ -244,25 +248,6 @@ export function MessageInput({
       setTargetCharacters([]);
     }
   }, [selectedAction, isSocialConflictMode]);
-
-  /**
-   * Toggle social conflict mode
-   */
-  const toggleSocialConflictMode = () => {
-    setIsSocialConflictMode(!isSocialConflictMode);
-    if (!isSocialConflictMode) {
-      // Entering social conflict mode
-      setSelectedAction('standard'); // Reset to standard (we'll handle submit differently)
-      setTargetCharacters([]);
-      setSelectedSkill('');
-      setLieText('');
-    } else {
-      // Exiting social conflict mode
-      setTargetCharacters([]);
-      setSelectedSkill('');
-      setLieText('');
-    }
-  };
 
   /**
    * Handle input change with typing indicators
@@ -397,6 +382,8 @@ export function MessageInput({
 
     setIsSending(true);
 
+    let data: SendMessageRequest | undefined;
+
     try {
       // SOCIAL CONFLICT MODE
       if (isSocialConflictMode) {
@@ -430,7 +417,7 @@ export function MessageInput({
 
       // STANDARD MESSAGE
       // Build request data
-      const data: SendMessageRequest = {
+      data = {
         actionType: selectedAction,
         content: messageInput.trim(),
       };
@@ -463,8 +450,39 @@ export function MessageInput({
       setSelectedSkill('');
       setSelectedStat('');
       setSelectedItem('');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to send message:', error);
+
+      // Check if error is PENDING_REACTION_EXISTS
+      if (error?.response?.data?.code === 'PENDING_REACTION_EXISTS' && data) {
+        setPendingMessageData(data);
+        setShowPendingReactionModal(true);
+      }
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const handleForceAbortAndSend = async () => {
+    if (!pendingMessageData) return;
+
+    setShowPendingReactionModal(false);
+    setIsSending(true);
+
+    try {
+      // Retry with forceAbortPendingReaction flag
+      await onSendMessage({ ...pendingMessageData, forceAbortPendingReaction: true } as any);
+
+      // Reset form
+      setMessageInput('');
+      setSelectedAction('standard');
+      setTargetCharacters([]);
+      setSelectedSkill('');
+      setSelectedStat('');
+      setSelectedItem('');
+      setPendingMessageData(null);
+    } catch (error) {
+      console.error('Failed to send message with force abort:', error);
     } finally {
       setIsSending(false);
     }
@@ -624,12 +642,12 @@ export function MessageInput({
           </button>
           <button
             type="button"
-            onClick={toggleSocialConflictMode}
-            className={`${styles.actionButton} ${isSocialConflictMode ? styles.active : ''}`}
-            title="Scontro Sociale (Raggirare, Persuasione, Intimidazione)"
+            onClick={() => setIsConfrontationModalOpen(true)}
+            className={styles.actionButton}
+            title="Scontri (Sociali e Combattimento)"
             disabled={disabled || !hasSocialConflictPermission}
           >
-            🎭 Scontro Sociale
+            ⚔️ Scontri
           </button>
           <button
             type="button"
@@ -705,6 +723,21 @@ export function MessageInput({
         />
       )}
 
+      {/* Confrontation Modal */}
+      {isConfrontationModalOpen && (
+        <ConfrontationModal
+          locationId={locationId}
+          characterSkills={characterData.skills}
+          occupants={occupants}
+          currentCharacterId={characterData.characterId}
+          onClose={() => setIsConfrontationModalOpen(false)}
+          onSuccess={() => {
+            setIsConfrontationModalOpen(false);
+            // Message will appear via WebSocket
+          }}
+        />
+      )}
+
       {/* PNG Light Manager Modal */}
       {showFakePngManager && (
         <FakePngManager
@@ -714,6 +747,33 @@ export function MessageInput({
             refetchFakePngs(); // Refresh avatar data
           }}
         />
+      )}
+
+      {/* Pending Reaction Confirmation Modal */}
+      {showPendingReactionModal && (
+        <div className={styles.modalOverlay} onClick={() => setShowPendingReactionModal(false)}>
+          <div className={styles.confirmModal} onClick={(e) => e.stopPropagation()}>
+            <h3>Reazione Pendente</h3>
+            <p>
+              Hai una reazione pendente da risolvere. Se confermi, verrà dichiarata
+              automaticamente fallita e potrai procedere con questa azione.
+            </p>
+            <div className={styles.modalButtons}>
+              <button
+                onClick={() => {
+                  setShowPendingReactionModal(false);
+                  setPendingMessageData(null);
+                }}
+                className={styles.cancelButton}
+              >
+                Annulla
+              </button>
+              <button onClick={handleForceAbortAndSend} className={styles.confirmButton}>
+                Conferma
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

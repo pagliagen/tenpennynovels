@@ -193,7 +193,6 @@ export class DocumentManagementController {
           (document as unknown as Record<string, unknown>)[key] = updates[key];
         }
       }
-      document.lastUpdated = new Date();
 
       await document.save();
 
@@ -347,7 +346,6 @@ export class DocumentManagementController {
       }
 
       document.visible = !document.visible;
-      document.lastUpdated = new Date();
       await document.save();
 
       res.json({
@@ -382,7 +380,6 @@ export class DocumentManagementController {
       }
 
       document.isDraft = !document.isDraft;
-      document.lastUpdated = new Date();
       await document.save();
 
       res.json({

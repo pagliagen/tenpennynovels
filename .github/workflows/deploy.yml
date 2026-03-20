@@ -59,6 +59,13 @@ jobs:
         with:
           fetch-depth: 0  # Need full history for git diff
 
+      # Stamp YYYY-MM-DD of the deployed commit for landing sitemap lastmod (see SitemapService)
+      - name: Write landing sitemap lastmod stamp
+        run: |
+          mkdir -p apps/landing/public
+          git log -1 --format=%cs > apps/landing/public/landing-sitemap-lastmod.txt
+          echo "landing-sitemap-lastmod: $(cat apps/landing/public/landing-sitemap-lastmod.txt)"
+
       - name: Deploy files via rsync
         uses: burnett01/rsync-deployments@7.0.1
         with:

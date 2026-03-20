@@ -71,11 +71,13 @@ export function ReactionRequestMessage({ message, currentCharacterId }: Reaction
                   key={skill.skillName}
                   onClick={() => handleChooseDefense(skill.skillName)}
                   disabled={choosing}
-                  className={styles.defenseButton}
+                  className={`${styles.defenseButton} ${skill.specialRule === 'auto_fail' ? styles.autoFailButton : ''}`}
                   type="button"
                 >
                   {skill.label}
-                  {skill.specialRule && <span className={styles.specialRule}>{skill.specialRule}</span>}
+                  {skill.specialRule && skill.specialRule !== 'auto_fail' && (
+                    <span className={styles.specialRule}>{skill.specialRule}</span>
+                  )}
                 </button>
               ))}
             </div>

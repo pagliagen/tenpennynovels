@@ -25,14 +25,26 @@ export interface ICombatEncounter extends Document {
   locationId: string; // Where the combat is happening
   sessionId: string; // Game session reference
 
-  status: 'waiting_reaction' | 'in_progress' | 'completed';
+  encounterType: 'combat' | 'social_scene'; // combat = physical fight, social_scene = skill usage tracking
+
+  status: 'rolling_initiative' | 'waiting_reaction' | 'in_progress' | 'completed';
 
   participants: Array<{
     characterId: string;
     characterName: string;
     initiativeRoll?: number; // Phase 2: initiative order
+    initiativeSuccessDegree?: 'critical' | 'extreme' | 'hard' | 'normal' | 'failure' | 'fumble'; // Initiative success level
     hasWeaponDrawn?: boolean; // Phase 2: weapon readiness
     drawnWeaponId?: string; // Phase 2: equipped weapon reference
+  }>;
+
+  // For social_scene tracking (1 use per skill per scene)
+  skillUsageTracking?: Array<{
+    characterId: string;
+    targetCharacterId: string;
+    skillName: string;
+    usedAt: Date;
+    additionalContext?: string; // Testo bugia per Raggirare
   }>;
 
   currentTurn: {
@@ -76,10 +88,16 @@ const CombatEncounterSchema = new Schema<ICombatEncounter>(
       required: true,
       index: true,
     },
+    encounterType: {
+      type: String,
+      required: true,
+      enum: ['combat', 'social_scene'],
+      default: 'combat',
+    },
     status: {
       type: String,
       required: true,
-      enum: ['waiting_reaction', 'in_progress', 'completed'],
+      enum: ['rolling_initiative', 'waiting_reaction', 'in_progress', 'completed'],
       default: 'waiting_reaction',
       index: true,
     },
@@ -94,8 +112,33 @@ const CombatEncounterSchema = new Schema<ICombatEncounter>(
           required: true,
         },
         initiativeRoll: Number,
+        initiativeSuccessDegree: {
+          type: String,
+          enum: ['critical', 'extreme', 'hard', 'normal', 'failure', 'fumble'],
+        },
         hasWeaponDrawn: Boolean,
         drawnWeaponId: String,
+      },
+    ],
+    skillUsageTracking: [
+      {
+        characterId: {
+          type: String,
+          required: true,
+        },
+        targetCharacterId: {
+          type: String,
+          required: true,
+        },
+        skillName: {
+          type: String,
+          required: true,
+        },
+        usedAt: {
+          type: Date,
+          default: Date.now,
+        },
+        additionalContext: String,
       },
     ],
     currentTurn: {

@@ -143,15 +143,20 @@ EMBEDDINGS_LOG_LEVEL=INFO  # DEBUG | INFO | WARNING | ERROR
 ### Sitemap Generation
 
 ```bash
-# Sitemap output directory (unified-backend)
+# Sitemap output directory (unified-backend). If unset, resolves to monorepo apps/landing/public
+# from the compiled/runtime location of appConfig (see unified-backend source).
 SITEMAP_OUTPUT_DIR=/sitemap-output
 ```
 
-**Docker**: Volume mounted to `./apps/landing/public` for sitemap.xml generation
-**VPS**: Should point to landing app public directory
-**Default**: `/app/public` (if not set)
+**unified-backend**: Legge `SITEMAP_OUTPUT_DIR` da `appConfig`; se assente, usa il path relativo corretto verso `apps/landing/public` nella root del repo (stesso risultato in dev locale quando il backend gira dal monorepo).
 
-**Purpose**: Dynamic sitemap generation for SEO (character pages, documents, locations)
+**Docker** (`docker-compose`): `SITEMAP_OUTPUT_DIR=/sitemap-output` con volume `./apps/landing/public:/sitemap-output` — i file `sitemap*.xml` finiscono nella public della landing sull’host.
+
+**VPS / produzione senza Docker**: impostare `SITEMAP_OUTPUT_DIR` al path assoluto della directory `public` della landing (es. `/home/ubuntu/tenpennynovels/apps/landing/public`), allineato a nginx `root` per `sitemap*.xml`.
+
+**Purpose**: Generazione sitemap (indice + landing statica + documenti pubblici) per SEO; eseguita all’avvio del backend e tramite cron giornaliero (03:00, fuso del processo).
+
+**Landing `lastmod`**: il workflow [`.github/workflows/deploy.yml`](../../../.github/workflows/deploy.yml) scrive `apps/landing/public/landing-sitemap-lastmod.txt` (data `YYYY-MM-DD` dell’ultimo commit deployato) prima di rsync; `SitemapService` la legge da `sitemapOutputDir`. File in `.gitignore` (generato solo in CI). In dev senza file si usa un fallback statico nel codice.
 
 ---
 
