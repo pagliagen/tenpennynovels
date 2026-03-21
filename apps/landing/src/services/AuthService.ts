@@ -80,7 +80,13 @@ export class AuthService {
       rememberMe: credentials.rememberMe,
     };
 
-    return apiPost<User>('/auth/login', sanitized);
+    const response = await apiPost<any>('/auth/login', sanitized);
+
+    // NOTE: sessionId is saved to sessionStorage by the calling component (not here)
+    // - Login auto-select: index.tsx onSubmit() saves sessionId
+    // This ensures we're always in client-side context (event handlers run post-hydration)
+
+    return response;
   }
 
   /**
@@ -135,6 +141,17 @@ export class AuthService {
    * ```
    */
   async logout(): Promise<ApiResponse<void>> {
+    // ✅ CRITICAL: Clear sessionStorage BEFORE API call
+    // Defense: If API fails, user still logged out client-side (force re-login)
+    try {
+      sessionStorage.removeItem('character_session_id');
+      sessionStorage.removeItem('character_context'); // Legacy
+      console.log('[AuthService] SessionStorage cleared on logout');
+    } catch (error) {
+      console.error('[AuthService] Failed to clear sessionStorage on logout:', error);
+      // Non-blocking: continue logout
+    }
+
     return apiPost<void>('/auth/logout');
   }
 

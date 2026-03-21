@@ -40,23 +40,35 @@ export class CharacterService {
    * Sets character as active for gameplay session.
    * Only approved characters can be selected.
    *
+   * NEW FLOW (Multi-Tab Support):
+   * - Backend creates session in Redis (sessionId = opaque UUID)
+   * - Frontend saves sessionId to sessionStorage (isolated per tab)
+   * - API requests include X-Session-Id header (via interceptor)
+   *
    * @param {string} characterId - Character UUID
-   * @returns {Promise<ApiResponse<void>>} Selection result
+   * @returns {Promise<ApiResponse<{ sessionId: string }>>} Selection result with sessionId
    *
    * @example
    * ```typescript
    * const result = await characterService.selectCharacter('char-uuid-123');
    *
-   * if (result.result) {
-   *   console.log('Character selected for play!');
+   * if (result.result && result.data) {
+   *   console.log('Character selected! Session:', result.data.sessionId);
+   *   // sessionId automatically saved to sessionStorage
    *   window.location.href = process.env.NEXT_PUBLIC_GAME_URL;
    * } else {
    *   console.error('Cannot select:', result.error);
    * }
    * ```
    */
-  async selectCharacter(characterId: string): Promise<ApiResponse<void>> {
-    return apiPost<void>(`/game/characters/${characterId}/select`);
+  async selectCharacter(characterId: string): Promise<ApiResponse<{ sessionId: string }>> {
+    const response = await apiPost<any>(`/game/characters/${characterId}/select`);
+
+    // NOTE: sessionId is saved to sessionStorage by the calling component (not here)
+    // - Manual select: CharacterSelectModal.tsx handleSelectCharacter() saves sessionId
+    // This ensures we're always in client-side context (event handlers run post-hydration)
+
+    return response;
   }
 }
 

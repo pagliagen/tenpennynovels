@@ -249,6 +249,36 @@ interceptorManager.useRequestInterceptor((config) => {
 });
 
 /**
+ * Request Interceptor - Session ID Header
+ *
+ * Attaches X-Session-Id header from sessionStorage to all requests.
+ * Required for multi-tab session isolation.
+ *
+ * **Multi-Tab Flow**:
+ * - sessionId stored in sessionStorage (isolated per tab)
+ * - Backend validates session ownership (session.userId === auth_token.userId)
+ * - Prevents cross-tab character contamination
+ */
+interceptorManager.useRequestInterceptor((config) => {
+  // Only run on client-side
+  if (typeof window !== 'undefined') {
+    const sessionId = sessionStorage.getItem('character_session_id');
+    if (sessionId) {
+      config.headers = {
+        ...config.headers,
+        'X-Session-Id': sessionId,
+      };
+
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[API Interceptor] Attached X-Session-Id:', sessionId);
+      }
+    }
+  }
+
+  return config;
+});
+
+/**
  * Default Response Interceptor - Auth Error Handling
  *
  * Handles global authentication errors and development logging.

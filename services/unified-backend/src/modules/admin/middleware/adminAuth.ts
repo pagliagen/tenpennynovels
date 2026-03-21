@@ -57,19 +57,62 @@ export class AdminAuthMiddleware {
       };
       req.user = requestUser;
 
-      // Resolve character from cookie and set effective admin roles (await for synchronous loading)
-      const characterContext = req.cookies?.character_context;
-      logger.info(`[AdminAuth] Character context present: ${!!characterContext}`);
-      if (characterContext) {
+      // NEW FLOW: Try X-Session-Id header first (multi-tab support)
+      const sessionId = req.headers['x-session-id'] as string | undefined;
+      let characterIdFromSession: string | undefined;
+
+      if (sessionId) {
         try {
-          const characterDecoded = jwt.verify(characterContext, getJwtSecret()) as CharacterContextToken;
-          logger.info(`[AdminAuth] Character context decoded: characterId=${characterDecoded?.characterId}`);
-          if (characterDecoded?.characterId) {
+          const { SessionStore } = await import('@modules/auth/services/SessionStore');
+          const session = await SessionStore.getSession(sessionId);
+
+          if (session && session.userId === decoded.userId) {
+            characterIdFromSession = session.characterId;
+            logger.info(`[AdminAuth] Session authenticated via X-Session-Id`, {
+              sessionId,
+              characterId: characterIdFromSession
+            });
+          } else if (session) {
+            logger.warn(`[AdminAuth] Session ownership mismatch`, {
+              sessionId,
+              sessionUserId: session.userId,
+              tokenUserId: decoded.userId
+            });
+          }
+        } catch (error: unknown) {
+          logger.error(`[AdminAuth] Session validation error`, { error, sessionId });
+        }
+      }
+
+      // Resolve character from session OR cookie and set effective admin roles
+      const characterContext = req.cookies?.character_context;
+      logger.info(`[AdminAuth] Character context - sessionId: ${!!sessionId}, cookie: ${!!characterContext}`);
+
+      // Use characterId from session OR decode from cookie (fallback)
+      if (characterIdFromSession || characterContext) {
+        let finalCharacterId: string | undefined = characterIdFromSession;
+
+        // FALLBACK: Decode character_context cookie if no session
+        if (!finalCharacterId && characterContext) {
+          try {
+            const characterDecoded = jwt.verify(characterContext, getJwtSecret()) as CharacterContextToken;
+            finalCharacterId = characterDecoded?.characterId;
+            logger.warn('[AdminAuth] DEPRECATED: Using character_context cookie', {
+              userId: decoded.userId,
+              characterId: finalCharacterId
+            });
+          } catch (error: unknown) {
+            logger.error('[AdminAuth] Character context decode failed', { error });
+          }
+        }
+
+        // Load character and set admin roles
+        if (finalCharacterId) {
             const { Character } = require('@database/models/Character');
             const { gameplayRolesToAdminRoles } = require('@config/permissions');
 
             try {
-              const char = await Character.findById(characterDecoded.characterId)
+              const char = await Character.findById(finalCharacterId)
                 .select('gameplayRoles adminPermissions isGestore canAccessAdminPanel')
                 .lean()
                 .exec();
@@ -83,29 +126,21 @@ export class AdminAuthMiddleware {
                 req.user.isGestore = char.isGestore || false;
                 req.user.canAccessAdminPanel = char.canAccessAdminPanel || char.isGestore || false;
 
-                logger.info(`[AdminAuth] Character loaded: id=${characterDecoded.characterId} | isGestore=${char.isGestore} | roles=${JSON.stringify(char.gameplayRoles)} | canAccess=${char.canAccessAdminPanel}`);
+                logger.info(`[AdminAuth] Character loaded: id=${finalCharacterId} | isGestore=${char.isGestore} | roles=${JSON.stringify(char.gameplayRoles)} | canAccess=${char.canAccessAdminPanel}`);
               } else {
                 logger.warn('[AdminAuth] Character not found', {
-                  characterId: characterDecoded.characterId,
+                  characterId: finalCharacterId,
                   hasChar: !!char
                 });
               }
             } catch (err: unknown) {
               logger.error('[AdminAuth] Character load failed', {
-                characterId: characterDecoded.characterId,
+                characterId: finalCharacterId,
                 error: err instanceof Error ? err.message : String(err)
               });
               // Continue with empty characterRoles - user can still access with base permissions
             }
           }
-        } catch (jwtError) {
-          logger.error('[AdminAuth] Character context processing failed', {
-            error: jwtError instanceof Error ? jwtError.message : String(jwtError),
-            stack: jwtError instanceof Error ? jwtError.stack : undefined,
-            userId: req.user?.userId,
-            hasCharacterContext: !!characterContext
-          });
-        }
       }
       next();
     } catch (error: unknown) {

@@ -60,6 +60,8 @@ export interface Document {
   isDraft?: boolean;
   draftNotes?: string;
   displayCategory?: string;
+  createdAt?: Date | string;
+  lastUpdated?: Date | string;
 }
 
 /**

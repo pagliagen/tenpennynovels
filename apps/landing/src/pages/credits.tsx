@@ -1,5 +1,6 @@
 import React from 'react';
 import { useRouter } from 'next/router';
+import { GetStaticProps } from 'next';
 
 import { PageLayout } from '@/components/layouts/PageLayout';
 import { Button } from '@/components/Button';
@@ -78,3 +79,16 @@ export default function CreditsPage() {
     </PageLayout>
   );
 }
+
+/**
+ * Static Site Generation
+ *
+ * Credits page is fully static content (no dynamic data).
+ * Pre-rendered at build time for optimal SEO and performance.
+ */
+export const getStaticProps: GetStaticProps = async () => {
+  return {
+    props: {},
+    revalidate: false  // Truly static - no revalidation needed
+  };
+};

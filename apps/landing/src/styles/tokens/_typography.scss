@@ -34,11 +34,11 @@
      FONT FAMILIES
      =========================== */
 
-  /** Primary font - Victorian serif */
-  --font-primary: 'Thrifted Attire', Georgia, 'Times New Roman', serif;
+  /** Primary font - Victorian serif (optimized with next/font) */
+  --font-primary: var(--font-thrifted, 'Thrifted Attire'), Georgia, 'Times New Roman', serif;
 
-  /** Secondary font - Standard serif */
-  --font-secondary: 'Les Mystères de Paris', 'Thrifted Attire', Georgia, serif;
+  /** Secondary font - Standard serif (optimized with next/font) */
+  --font-secondary: var(--font-mysteres, 'Les Mystères de Paris'), var(--font-thrifted, 'Thrifted Attire'), Georgia, serif;
 
   /** Monospace font - For code, passwords, etc. */
   --font-mono: 'Courier New', Courier, monospace;

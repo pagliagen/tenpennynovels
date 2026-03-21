@@ -159,12 +159,57 @@ export default function LoginPage() {
       clearMessages();
       setErrorCode('');
 
+      // ✅ CRITICAL: Clear ALL session-related storage BEFORE login
+      // Defense: Prevent session pollution from previous user (shared device scenario)
+      try {
+        sessionStorage.removeItem('character_session_id');
+        sessionStorage.removeItem('character_context'); // Legacy compatibility
+        console.log('[Login] SessionStorage cleared');
+      } catch (storageError) {
+        console.error('[Login] Failed to clear sessionStorage:', storageError);
+        // Non-blocking: continue login even if cleanup fails
+      }
+
       const result = await authService.login(data);
+
+      // DIAGNOSTIC: Log full response
+      console.log('[DIAGNOSIS] Full login result:', JSON.stringify(result, null, 2));
+      console.log('[DIAGNOSIS] result.success:', result.success);
+      console.log('[DIAGNOSIS] result.data:', result.data);
 
       if (result.success && result.data) {
         // Show character select modal or redirect based on number of characters
-        // Backend returns { data: { user: { characters, username }, session: {...} } }
+        // Backend returns { data: { user: { characters, username }, session: {...}, sessionId?: string } }
         const userData = result.data as any;
+
+        console.log('[DIAGNOSIS] userData:', userData);
+        console.log('[DIAGNOSIS] userData.sessionId:', userData.sessionId);
+        console.log('[DIAGNOSIS] userData.user:', userData.user);
+        console.log('[DIAGNOSIS] userData.user.characters:', userData.user?.characters);
+
+        // NEW: Save sessionId to sessionStorage HERE (guaranteed client-side)
+        if (userData.sessionId) {
+          try {
+            sessionStorage.setItem('character_session_id', userData.sessionId);
+
+            // ✅ CRITICAL: Verify write succeeded (defense against QuotaExceededError)
+            const stored = sessionStorage.getItem('character_session_id');
+            if (stored !== userData.sessionId) {
+              throw new Error('sessionStorage write verification failed');
+            }
+
+            console.log('[Login Page] ✅ sessionId saved and verified:', userData.sessionId);
+          } catch (error) {
+            // ✅ CRITICAL: ABORT login on storage failure (show error to user)
+            console.error('[Login Page] ❌ sessionStorage write failed:', error);
+            setError('Impossibile salvare la sessione. Svuota la cache del browser.');
+            setLoading(false);
+            return; // Stop redirect
+          }
+        } else {
+          console.warn('[Login Page] ⚠️ No sessionId in response. Auto-select might have failed.');
+        }
+
         if (userData.user?.characters?.length > 1) {
           // Multiple characters (PG principale + PNG/Master assigned by staff) - show selection modal
           setUserCharacters(userData.user.characters);
@@ -172,7 +217,15 @@ export default function LoginPage() {
           setShowCharacterModal(true);
         } else {
           // Single character or no characters - redirect to game
-          window.location.href = process.env.NEXT_PUBLIC_GAME_URL || 'http://localhost:3010';
+          // NOTE: sessionId passed as query param because sessionStorage is NOT shared between origins (localhost:4001 vs localhost:3010)
+          const gameUrl = process.env.NEXT_PUBLIC_GAME_URL || 'http://localhost:3010';
+          const sessionId = userData.sessionId || sessionStorage.getItem('character_session_id');
+
+          if (sessionId) {
+            window.location.href = `${gameUrl}?sessionId=${sessionId}`;
+          } else {
+            window.location.href = gameUrl;
+          }
         }
       } else {
         handleApiFormErrors(result, setFormError, setError);

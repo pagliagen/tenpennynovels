@@ -8,6 +8,7 @@
  */
 
 import React from 'react';
+import Image from 'next/image';
 import { Button } from './Button';
 
 const LOGO_IMAGE_SRC = '/images/title.png';
@@ -41,11 +42,16 @@ export const VictorianLayoutDesktop: React.FC<VictorianLayoutDesktopProps> = ({
   return (
     <div className="victorian-layout-desktop">
       <aside className="victorian-layout-desktop__sidebar">
-        <img
-          src={LOGO_IMAGE_SRC}
-          alt="Ten Penny Novels"
-          className="victorian-layout-desktop__logo"
-        />
+        <div className="victorian-layout-desktop__logo-container">
+          <Image
+            src={LOGO_IMAGE_SRC}
+            alt="Ten Penny Novels"
+            className="victorian-layout-desktop__logo"
+            width={512}
+            height={512}
+            priority
+          />
+        </div>
         <nav className="victorian-layout-desktop__nav" aria-label="Navigazione principale">
           <h2 className="victorian-layout-desktop__nav-title">Chapter One</h2>
 

@@ -95,6 +95,7 @@ const createApiClient = (): AxiosInstance => {
    * Request Interceptor
    *
    * Executed before every request:
+   * - Injects X-Session-Id header from sessionStorage (multi-tab support)
    * - Adds timestamp for performance tracking
    * - Transforms request errors to ApiError
    *
@@ -110,6 +111,17 @@ const createApiClient = (): AxiosInstance => {
       // if (token) {
       //   config.headers.Authorization = `Bearer ${token}`;
       // }
+
+      // NEW: Inject X-Session-Id header from sessionStorage (multi-tab character selection)
+      // sessionId è opaco UUID salvato dal frontend dopo character selection
+      // Backend valida ownership (session.userId === auth_token.userId)
+      if (typeof window !== 'undefined') {
+        const sessionId = sessionStorage.getItem('character_session_id');
+
+        if (sessionId) {
+          config.headers['X-Session-Id'] = sessionId;
+        }
+      }
 
       // Add request timestamp for performance tracking
       config.metadata = { startTime: Date.now() };

@@ -137,6 +137,23 @@ export function TopBar({
   const [isUtilityMenuOpen, setIsUtilityMenuOpen] = useState(false);
   const utilityMenuRef = useRef<HTMLDivElement>(null);
 
+  // Build URLs with sessionId for cross-origin navigation
+  const [documentsUrl, setDocumentsUrl] = useState(process.env.NEXT_PUBLIC_DOCUMENTS_URL || '');
+  const [managementUrl, setManagementUrl] = useState(process.env.NEXT_PUBLIC_MANAGEMENT_URL || '');
+
+  useEffect(() => {
+    // Read sessionId from sessionStorage and append to URLs
+    const sessionId = sessionStorage.getItem('character_session_id');
+
+    if (sessionId) {
+      const baseDocumentsUrl = process.env.NEXT_PUBLIC_DOCUMENTS_URL || '';
+      const baseManagementUrl = process.env.NEXT_PUBLIC_MANAGEMENT_URL || '';
+
+      setDocumentsUrl(`${baseDocumentsUrl}?sessionId=${sessionId}`);
+      setManagementUrl(`${baseManagementUrl}?sessionId=${sessionId}`);
+    }
+  }, []);
+
   // DEBUG: Log props received
   useEffect(() => {
     console.log('[TopBar] 🎨 Rendered with props:', {
@@ -300,7 +317,7 @@ export function TopBar({
             {/* Documents - Link to new page */}
             <a
               id="tpn_documenti"
-              href={process.env.NEXT_PUBLIC_DOCUMENTS_URL}
+              href={documentsUrl}
               target="tpn_documenti"
               rel="noopener noreferrer"
               className={styles.iconButton}
@@ -430,7 +447,7 @@ export function TopBar({
             {canAccessAdmin && (
               <a
                 id="tpn_management"
-                href={process.env.NEXT_PUBLIC_MANAGEMENT_URL}
+                href={managementUrl}
                 target="tpn_management"
                 rel="noopener noreferrer"
                 className={styles.utilityMenuItem}

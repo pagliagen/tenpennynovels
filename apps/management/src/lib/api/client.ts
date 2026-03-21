@@ -36,6 +36,14 @@ export const apiClient: AxiosInstance = axios.create({
  */
 apiClient.interceptors.request.use(
   config => {
+    // Add X-Session-Id header from sessionStorage (multi-tab support)
+    if (typeof window !== 'undefined') {
+      const sessionId = sessionStorage.getItem('character_session_id');
+      if (sessionId) {
+        config.headers['X-Session-Id'] = sessionId;
+      }
+    }
+
     // Log request in development
     if (process.env.NODE_ENV === 'development') {
       console.log(`[API Request] ${config.method?.toUpperCase()} ${config.url}`);

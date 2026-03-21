@@ -251,6 +251,9 @@ DocumentSchema.index({ subtypeId: 1, order: 1 });
 // Tag-based search
 DocumentSchema.index({ tags: 1 });
 
+// Full-text search (for search endpoint)
+DocumentSchema.index({ title: 'text', content: 'text' });
+
 // Apply soft delete plugin
 DocumentSchema.plugin(softDeletePlugin, {
   uniqueKeys: ['slug'],

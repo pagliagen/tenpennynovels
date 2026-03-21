@@ -8,9 +8,10 @@
  */
 
 import React from 'react';
+import Image from 'next/image';
 import { Button } from './Button';
 
-/** Path for the Victorian background image (used as <img> for semantics and flexibility). */
+/** Path for the Victorian background image (optimized with next/image). */
 const BACKGROUND_IMAGE_SRC = '/images/sfondo.png';
 const LOGO_IMAGE_SRC = '/images/title.png';
 
@@ -114,16 +115,22 @@ export const VictorianLayoutMobile: React.FC<VictorianLayoutMobileProps> = ({
 
       <main className={`victorian-layout-mobile__content victorian-layout-mobile__content--${pageClass}`}>
         <div className="victorian-layout-mobile__background-image-container">
-          <img
+          <Image
             src={BACKGROUND_IMAGE_SRC}
             alt=""
+            fill
             className="victorian-layout-mobile__background-image"
+            priority
+            style={{ objectFit: 'cover' }}
           />
           <div className="victorian-layout-mobile__title-container">
-            <img
+            <Image
               src={LOGO_IMAGE_SRC}
               alt=""
+              width={512}
+              height={512}
               className="victorian-layout-mobile__logo"
+              priority
             />
             <h2 className="victorian-layout-mobile__title">Chapter One</h2>
           </div>

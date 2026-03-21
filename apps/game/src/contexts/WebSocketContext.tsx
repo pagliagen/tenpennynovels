@@ -233,12 +233,22 @@ export function WebSocketProvider({ children }: WebSocketProviderProps): JSX.Ele
 
     setStatus('connecting');
 
+    // NEW FLOW: Read sessionId from sessionStorage (multi-tab support)
+    const sessionId = sessionStorage.getItem('character_session_id');
+
+    if (!sessionId) {
+      console.error('[WebSocket] No sessionId found in sessionStorage - cannot connect');
+      setStatus('error');
+      return;
+    }
+
     // Create Socket.IO connection
     const socket = io(WS_CONFIG.URL, {
       auth: {
-        characterId: selectedCharacter._id,
+        sessionId: sessionId,  // NEW: Send sessionId (opaque UUID) for multi-tab support
+        characterId: selectedCharacter._id, // DEPRECATED: Kept for backward compatibility
       },
-      withCredentials: true, // CRITICAL: Send HTTP-only cookies for authentication
+      withCredentials: true, // CRITICAL: Send HTTP-only cookies (auth_token) for user authentication
       reconnection: true,
       reconnectionAttempts: WS_CONFIG.MAX_RECONNECT_ATTEMPTS,
       reconnectionDelay: WS_CONFIG.RECONNECT_INTERVAL,

@@ -49,6 +49,9 @@ export class SitemapService {
         ['sitemap-documents.xml', documentsXml],
       ];
 
+      // Validate all sitemaps before writing (fail fast if invalid)
+      files.forEach(([filename, xml]) => this.validateSitemapXml(xml, filename));
+
       await this.writeToDir(OUTPUT_DIR, files);
 
       logger.info(
@@ -59,19 +62,49 @@ export class SitemapService {
     }
   }
 
-  private static async writeToDir(dir: string, files: Array<[string, string]>): Promise<void> {
-    try {
-      await fs.access(dir);
-    } catch {
-      logger.warn(
-        `[SitemapService] Output directory missing or not accessible, skipping write: ${dir}`,
-      );
-      return;
+  /**
+   * Validate sitemap XML for spec compliance
+   * Throws if invalid (malformed XML, size limit exceeded)
+   */
+  private static validateSitemapXml(xml: string, filename: string): void {
+    // Basic XML structure validation
+    if (!xml.includes('<?xml version="1.0" encoding="UTF-8"?>')) {
+      throw new Error(`[${filename}] Invalid sitemap: missing XML declaration`);
     }
-    await Promise.all(
-      files.map(([name, content]) => fs.writeFile(path.join(dir, name), content, 'utf-8')),
+    if (!xml.includes('<urlset') && !xml.includes('<sitemapindex')) {
+      throw new Error(`[${filename}] Invalid sitemap: missing root element`);
+    }
+
+    // Check size (50MB limit per sitemap spec)
+    const sizeBytes = Buffer.byteLength(xml, 'utf-8');
+    const MAX_SIZE = 50 * 1024 * 1024; // 50MB
+    if (sizeBytes > MAX_SIZE) {
+      throw new Error(
+        `[${filename}] Sitemap exceeds 50MB limit: ${(sizeBytes / 1024 / 1024).toFixed(2)}MB`
+      );
+    }
+
+    logger.debug(
+      `[SitemapService] ${filename} validated: ${(sizeBytes / 1024).toFixed(2)}KB`
     );
-    logger.info(`[SitemapService] Written ${files.length} files to ${dir}`);
+  }
+
+  private static async writeToDir(dir: string, files: Array<[string, string]>): Promise<void> {
+    // Test write permission - FAIL FAST if directory not accessible
+    try {
+      await fs.access(dir, fs.constants.W_OK);
+    } catch (error) {
+      const errorMsg = `[SitemapService] Output directory not writable: ${dir}`;
+      logger.error(errorMsg, error);
+      throw new Error(errorMsg); // FAIL FAST (no silent skip)
+    }
+
+    // Write files sequentially for better error tracking
+    for (const [name, content] of files) {
+      const filePath = path.join(dir, name);
+      await fs.writeFile(filePath, content, 'utf-8');
+      logger.info(`[SitemapService] Written ${filePath} (${content.length} bytes)`);
+    }
   }
 
   private static getStaticPages(lastmod: string): SitemapUrl[] {
@@ -93,11 +126,25 @@ export class SitemapService {
     return LANDING_LASTMOD_FALLBACK;
   }
 
-  /** lastmod from Mongo: prefer lastUpdated (kept in sync by Document pre-save), else createdAt. */
+  /**
+   * lastmod from Mongo: prefer lastUpdated (kept in sync by Document pre-save), else createdAt.
+   * Defensive: If date < 2000-01-01 (epoch bug), fallback to createdAt or today.
+   */
   private static documentLastMod(doc: { lastUpdated?: Date; createdAt?: Date }): string {
-    const d = doc.lastUpdated || doc.createdAt;
-    if (d) return new Date(d).toISOString().split('T')[0];
-    return new Date().toISOString().split('T')[0];
+    const EPOCH_THRESHOLD = new Date('2000-01-01T00:00:00Z');
+    const date = doc.lastUpdated || doc.createdAt || new Date();
+    const parsedDate = new Date(date);
+
+    // Defensive: If date < 2000-01-01 (epoch bug from migration or invalid data)
+    if (parsedDate < EPOCH_THRESHOLD) {
+      const fallback =
+        doc.createdAt && new Date(doc.createdAt) > EPOCH_THRESHOLD
+          ? new Date(doc.createdAt)
+          : new Date();
+      return fallback.toISOString().split('T')[0];
+    }
+
+    return parsedDate.toISOString().split('T')[0];
   }
 
   private static async buildDocumentsSitemap(): Promise<{ xml: string; count: number }> {

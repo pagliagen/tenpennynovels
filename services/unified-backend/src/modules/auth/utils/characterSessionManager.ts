@@ -39,12 +39,9 @@ export class CharacterSessionManager {
       const expirationMs = this.parseExpirationTime(expiresIn);
       const expiresAt = new Date(Date.now() + expirationMs);
 
-      // Invalidate any existing active sessions for this character
-      await CharacterSessionModel.invalidateCharacterSessions(
-        characterId,
-        'new_device_login',
-        ipAddress
-      );
+      // MULTI-TAB SUPPORT: Non invalidiamo più le sessioni precedenti
+      // Ogni tab può avere la propria sessione attiva contemporaneamente
+      // L'invalidazione viene gestita solo al logout esplicito
 
       // Create new session
       const session = new CharacterSession({

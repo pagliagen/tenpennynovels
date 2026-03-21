@@ -64,6 +64,14 @@ const createApiClient = (): AxiosInstance => {
       //   config.headers.Authorization = `Bearer ${token}`;
       // }
 
+      // Add X-Session-Id header from sessionStorage (multi-tab support)
+      if (typeof window !== 'undefined') {
+        const sessionId = sessionStorage.getItem('character_session_id');
+        if (sessionId) {
+          config.headers['X-Session-Id'] = sessionId;
+        }
+      }
+
       // Add request timestamp for performance tracking
       config.metadata = { startTime: Date.now() };
 

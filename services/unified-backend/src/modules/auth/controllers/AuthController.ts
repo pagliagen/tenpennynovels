@@ -288,27 +288,55 @@ export class AuthController {
       // Handle character context based on character count
       logger.info(`User ${user.username} login: ${characters.length} characters found`);
 
-      // Auto-select if user has EXACTLY one character
+      // NEW FLOW: Auto-select with SessionStore (multi-tab support)
+      let sessionId: string | undefined;
+
+      // ✅ CRITICAL: Invalidate ALL previous sessions BEFORE creating new one
+      // Defense: Prevent session accumulation + revoke leaked sessions
+      try {
+        const { SessionStore } = await import('../services/SessionStore');
+
+        const deletedCount = await SessionStore.deleteUserSessions(user.id);
+
+        if (deletedCount > 0) {
+          logger.info(`Login: Invalidated ${deletedCount} previous sessions`, {
+            userId: user.id,
+            username: user.username
+          });
+        }
+      } catch (error) {
+        // ✅ CRITICAL DECISION: Non-blocking (continue login even if cleanup fails)
+        // Rationale: Availability > Consistency (user should login even if Redis down)
+        logger.error('Failed to invalidate previous sessions', {
+          error,
+          userId: user.id,
+          username: user.username
+        });
+      }
+
       if (characters.length === 1) {
         const userCharacter = characters[0];
         logger.info(`User ${user.username}: Auto-selecting character ${userCharacter.name} (${userCharacter.id})`);
 
-        // Use centralized method (same logic as character selection)
-        await CharacterSessionManager.activateCharacterContext(
-          res,
-          userCharacter,
+        // Import SessionStore dynamically
+        const { SessionStore } = await import('../services/SessionStore');
+
+        // Create session in Redis (multi-tab support)
+        sessionId = await SessionStore.createSession(
           user.id,
-          deviceInfo,
-          req.ip || '127.0.0.1',
-          rememberMe ? '7d' : '24h'
+          userCharacter.id,
+          {
+            ...deviceInfo,
+            ipAddress: req.ip || '127.0.0.1'
+          }
         );
 
-        logger.info(`User ${user.username}: Character context cookie set for ${userCharacter.name}`);
+        logger.info(`User ${user.username}: Character session created (sessionId: ${sessionId})`);
       } else {
-        logger.info(`User ${user.username}: No character context set - ${characters.length} characters (must select manually)`);
+        logger.info(`User ${user.username}: No character auto-select - ${characters.length} characters (must select manually)`);
       }
 
-      res.status(201).json(createResponse( 
+      res.status(201).json(createResponse(
         {
           user: {
             id: user.id,
@@ -339,7 +367,9 @@ export class AuthController {
             expiresAt: new Date(Date.now() + (rememberMe ? 7 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000)).toISOString(),
             refreshable: true,
             deviceRegistered: true
-          }
+          },
+          // NEW: Include sessionId if character auto-selected
+          ...(sessionId && { sessionId })
         },
         'Login successful'));
 
@@ -438,51 +468,56 @@ export class AuthController {
         timestamp: new Date().toISOString()
       }));
 
-      // Generate character context token
-
-      const characterToken = CryptoUtils.generateCharacterContextToken({
-        characterId: character.id,
-        characterName: fullCharacterName,
-        userId: userId,
-        gameplayRoles: character.gameplayRoles || [],
-        isApproved: character.playerStatus === 'approved',
-        isGestore: character.isGestore || false,
-        playerStatus: character.playerStatus || 'DRAFT',
-        characterPermissions: character.characterPermissions || []
-      });
-
       // Parse device info for session creation
       const ua = new UAParser(req.get('User-Agent'));
       const deviceType = ua.getDevice().type === 'mobile' ? 'mobile' :
                         ua.getDevice().type === 'tablet' ? 'tablet' : 'desktop';
-      
-      const deviceInfo: DeviceInfo = {
-        userAgent: req.get('User-Agent'),
+
+      const deviceInfo = {
+        userAgent: req.get('User-Agent') || 'Unknown',
         browser: ua.getBrowser().name,
         os: ua.getOS().name,
-        deviceType
+        deviceType: deviceType as 'desktop' | 'mobile' | 'tablet',
+        ipAddress: req.ip || '127.0.0.1'
       };
 
-      // Create character session (invalidates any existing sessions for this character)
-      await CharacterSessionManager.createCharacterSession(
-        character.id,
+      // NEW FLOW: Create session in Redis (multi-tab support)
+      // Import SessionStore dynamically to avoid circular dependency
+      const { SessionStore } = await import('../services/SessionStore');
+
+      const sessionId = await SessionStore.createSession(
         userId,
-        characterToken,
-        deviceInfo,
-        req.ip || '127.0.0.1',
-        '24h'
+        character.id,
+        deviceInfo
       );
 
-      // Set character context cookie
-      AuthMiddleware.setCharacterCookie(res, characterToken);
+      // OPTIONAL: Save CharacterSession in MongoDB for audit log
+      // Note: This no longer invalidates previous sessions (multi-tab support)
+      // We still save to MongoDB for audit trail but use Redis for active sessions
+      try {
+        await CharacterSessionManager.createCharacterSession(
+          character.id,
+          userId,
+          sessionId, // Use sessionId as token (audit trail)
+          deviceInfo as DeviceInfo,
+          req.ip || '127.0.0.1',
+          '24h'
+        );
+      } catch (mongoError) {
+        // Non-blocking: MongoDB audit log failed but Redis session exists
+        logger.warn('Failed to create MongoDB audit session', { error: mongoError, sessionId });
+      }
 
       logAuth('character_selected', userId, {
         characterId: character.id,
         characterName: character.name,
+        sessionId: sessionId,
         ipAddress: req.ip
       });
 
-      res.status(201).json(createResponse( 
+      // CRITICAL: Return sessionId in JSON (frontend saves to sessionStorage)
+      // NO cookie character_context (multi-tab support)
+      res.status(201).json(createResponse(
         {
           character: {
             id: character.id,
@@ -499,6 +534,7 @@ export class AuthController {
             canSendMessages: true,
             canUseItems: true
           },
+          sessionId: sessionId  // NEW: Frontend saves to sessionStorage
         },
         'Character selected successfully'));
 
@@ -800,7 +836,27 @@ export class AuthController {
           reason: reason || 'user_initiated'
         }));
 
-        // Invalidate any active character sessions for this user
+        // ✅ NEW: Invalidate Redis SessionStore sessions (multi-tab support)
+        try {
+          const { SessionStore } = await import('../services/SessionStore');
+
+          const deletedCount = await SessionStore.deleteUserSessions(user.userId);
+
+          logger.info('Logout: Invalidated Redis sessions', {
+            userId: user.userId,
+            username: user.username,
+            deletedCount
+          });
+        } catch (error) {
+          // Non-blocking: continue logout even if Redis cleanup fails
+          logger.error('Failed to invalidate Redis sessions on logout', {
+            error,
+            userId: user.userId
+          });
+        }
+
+        // ❌ LEGACY: Invalidate MongoDB CharacterSession (audit log only)
+        // NOTE: This is separate from Redis SessionStore (two systems)
         const activeSessions = await CharacterSessionManager.getUserActiveSessions(user.userId);
         for (const session of activeSessions) {
           await CharacterSessionManager.invalidateSession(
@@ -888,26 +944,62 @@ export class AuthController {
    *
    * @route GET /auth/effective-permissions
    * @requires authMiddleware
-   * @requires character_context cookie
+   * @requires X-Session-Id header OR character_context cookie (legacy)
    */
   static async getEffectivePermissions(req: Request, res: Response): Promise<void> {
     try {
-      // Decode character_context cookie
-      const characterContext = req.cookies?.character_context;
-      if (!characterContext) {
-        res.status(400).json(errorResponse('Nessun personaggio selezionato', 'NO_CHARACTER_CONTEXT', undefined, 401));
-        return;
+      let characterId: string | undefined;
+
+      // ✅ NEW FLOW: Try X-Session-Id header first (multi-tab support)
+      const sessionId = req.headers['x-session-id'] as string | undefined;
+
+      if (sessionId) {
+        try {
+          const { SessionStore } = await import('../services/SessionStore');
+          const session = await SessionStore.getSession(sessionId);
+
+          if (session && session.userId === req.user?.userId) {
+            characterId = session.characterId;
+            logger.info('[EffectivePermissions] Session authenticated via X-Session-Id', {
+              sessionId,
+              characterId
+            });
+          } else if (session) {
+            logger.warn('[EffectivePermissions] Session ownership mismatch', {
+              sessionId,
+              sessionUserId: session.userId,
+              tokenUserId: req.user?.userId
+            });
+          }
+        } catch (error: unknown) {
+          logger.error('[EffectivePermissions] Session validation error', { error, sessionId });
+        }
       }
 
-      // Verify JWT token
-      const decoded = CryptoUtils.verifyCharacterContextToken(characterContext);
-      if (!decoded || !decoded.characterId) {
-        res.status(400).json(errorResponse('Contesto personaggio non valido', 'INVALID_CHARACTER_CONTEXT', undefined, 401));
-        return;
+      // ✅ FALLBACK: Use character_context cookie (legacy)
+      if (!characterId) {
+        const characterContext = req.cookies?.character_context;
+        if (!characterContext) {
+          res.status(400).json(errorResponse('Nessun personaggio selezionato', 'NO_CHARACTER_CONTEXT', undefined, 401));
+          return;
+        }
+
+        // Verify JWT token
+        const decoded = CryptoUtils.verifyCharacterContextToken(characterContext);
+        if (!decoded || !decoded.characterId) {
+          res.status(400).json(errorResponse('Contesto personaggio non valido', 'INVALID_CHARACTER_CONTEXT', undefined, 401));
+          return;
+        }
+
+        characterId = decoded.characterId;
+        logger.warn('[EffectivePermissions] DEPRECATED: Using character_context cookie', {
+          userId: req.user?.userId,
+          characterId
+        });
       }
 
       // Fetch character from database
-      const character = await Character.findById(decoded.characterId);
+      const character = await Character.findById(characterId);
       if (!character) {
         res.status(400).json(errorResponse('Personaggio non trovato', 'CHARACTER_NOT_FOUND', undefined, 404));
         return;

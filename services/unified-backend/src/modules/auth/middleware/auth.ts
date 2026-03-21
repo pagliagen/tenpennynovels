@@ -106,11 +106,143 @@ export class AuthMiddleware {
   }
 
   /**
-   * Middleware to verify character_context cookie and set req.character
+   * Middleware to verify character session (Redis-based multi-tab support)
+   *
+   * NEW FLOW (Hybrid Server-Side Session + sessionStorage):
+   * 1. Read sessionId from header X-Session-Id (or body for sendBeacon)
+   * 2. Lookup Redis via SessionStore
+   * 3. Ownership validation: session.userId === req.user.userId (CRITICAL security)
+   * 4. Populate req.character from Character model
+   * 5. Fallback: cookie character_context (DEPRECATED, backward compatibility)
    */
   static authenticateCharacter(required = true) {
     return async (req: Request, res: Response, next: NextFunction) => {
       try {
+        // Import SessionStore dynamically to avoid circular dependency
+        const { SessionStore } = await import('../services/SessionStore');
+        const { Character } = await import('@database/models');
+
+        // 1. Read sessionId from header (or body for sendBeacon compatibility)
+        const sessionId = (req.headers['x-session-id'] as string) || req.body?.sessionId;
+
+        // NEW FLOW: Session ID in header
+        if (sessionId) {
+          try {
+            // 2. Lookup Redis session
+            const session = await SessionStore.getSession(sessionId);
+
+            if (!session) {
+              logSecurity('session_not_found', {
+                sessionId,
+                ipAddress: req.ip,
+                userAgent: req.get('User-Agent')
+              });
+
+              if (required) {
+                const response: ApiResponse = {
+                  result: false,
+                  error: 'Sessione non valida o scaduta',
+                  code: 'INVALID_SESSION',
+                  timestamp: new Date().toISOString()
+                };
+                return res.status(401).json(response);
+              }
+              return next();
+            }
+
+            // 3. CRITICAL: Ownership validation (defense in depth)
+            if (req.user && session.userId !== req.user.userId) {
+              logSecurity('session_ownership_mismatch', {
+                sessionId,
+                sessionUserId: session.userId,
+                requestUserId: req.user.userId,
+                ipAddress: req.ip
+              });
+
+              const response: ApiResponse = {
+                result: false,
+                error: 'Sessione non valida per questo utente',
+                code: 'SESSION_OWNERSHIP_MISMATCH',
+                timestamp: new Date().toISOString()
+              };
+              return res.status(403).json(response);
+            }
+
+            // 4. Populate req.character from Character model
+            const character = await Character.findById(session.characterId);
+
+            if (!character) {
+              logSecurity('character_not_found_for_session', {
+                sessionId,
+                characterId: session.characterId,
+                ipAddress: req.ip
+              });
+
+              if (required) {
+                const response: ApiResponse = {
+                  result: false,
+                  error: 'Personaggio non trovato',
+                  code: 'CHARACTER_NOT_FOUND',
+                  timestamp: new Date().toISOString()
+                };
+                return res.status(404).json(response);
+              }
+              return next();
+            }
+
+            // Build full character name
+            const fullCharacterName = character.surname
+              ? `${character.name} ${character.surname}`
+              : character.name;
+
+            // Populate req.character (same structure as JWT token)
+            req.character = {
+              characterId: character.id,
+              characterName: fullCharacterName,
+              userId: session.userId,
+              gameplayRoles: character.gameplayRoles || [],
+              isApproved: character.playerStatus === 'approved',
+              isGestore: character.isGestore || false,
+              playerStatus: character.playerStatus || 'draft',
+              characterPermissions: character.characterPermissions || [],
+              iat: Math.floor(Date.now() / 1000),
+              exp: Math.floor(Date.now() / 1000) + 86400 // 24h
+            };
+
+            // Store sessionId in request for later use
+            req.sessionId = sessionId;
+
+            // 5. Update session activity (async, non-blocking)
+            SessionStore.updateSessionActivity(sessionId).catch(err =>
+              logger.error('Failed to update session activity', { error: err, sessionId })
+            );
+
+            logAuth('character_session_validated', session.userId, {
+              sessionId,
+              characterId: character.id,
+              characterName: fullCharacterName,
+              ipAddress: req.ip
+            });
+
+            return next();
+
+          } catch (error: unknown) {
+            logger.error('Session validation error:', { error, sessionId });
+
+            if (required) {
+              const response: ApiResponse = {
+                result: false,
+                error: 'Errore validazione sessione',
+                code: 'SESSION_VALIDATION_ERROR',
+                timestamp: new Date().toISOString()
+              };
+              return res.status(500).json(response);
+            }
+            return next();
+          }
+        }
+
+        // FALLBACK FLOW: Cookie character_context (DEPRECATED - backward compatibility)
         const characterToken = req.cookies?.character_context;
 
         if (!characterToken) {
@@ -126,9 +258,15 @@ export class AuthMiddleware {
           return next();
         }
 
+        // Log deprecated cookie usage for monitoring
+        logger.warn('DEPRECATED: character_context cookie used (migrate to sessionId header)', {
+          userId: req.user?.userId,
+          ipAddress: req.ip
+        });
+
         try {
           const decoded = CryptoUtils.verifyCharacterContextToken(characterToken);
-          
+
           // Verify that character belongs to authenticated user
           if (req.user && decoded.userId !== req.user.userId) {
             logSecurity('character_token_mismatch', {
@@ -148,7 +286,7 @@ export class AuthMiddleware {
             return res.status(400).json(response);
           }
 
-          // Validate character session uniqueness
+          // Validate character session uniqueness (old flow)
           const sessionValidation = await CharacterSessionManager.validateCharacterSession(
             decoded.characterId,
             characterToken
