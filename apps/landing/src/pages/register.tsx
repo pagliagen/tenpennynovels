@@ -153,7 +153,7 @@ export default function RegisterPage() {
 
   return (
     <FormPageLayout
-      title="Registrazione Gratuita | Crea il Tuo Personaggio Vittoriano"
+      title="Ten Penny Novels | Registrazione Gratuita"
       description="Registrati gratis a Ten Penny Novels! Crea il tuo personaggio per il gioco di ruolo Call of Cthulhu ambientato nella Londra Vittoriana. Inizia subito la tua avventura investigativa."
       canonical="https://tenpennynovels.com/register/"
       globalError={globalError}

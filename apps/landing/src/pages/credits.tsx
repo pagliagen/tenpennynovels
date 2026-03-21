@@ -10,7 +10,7 @@ export default function CreditsPage() {
 
   return (
     <PageLayout
-      title="Crediti e Ringraziamenti - Ten Penny Novels"
+      title="Ten Penny Novels | Crediti e Ringraziamenti"
       description="Crediti e ringraziamenti di Ten Penny Novels. Scopri il team di sviluppo e le fonti di ispirazione per il nostro gioco di ruolo vittoriano."
       canonical="https://tenpennynovels.com/credits/"
       schema={creditsBreadcrumb}
