@@ -42,7 +42,7 @@ export default function RegolamentoDetail({ data, error }: RegolamentoDetailProp
   return (
     <>
       <SEO
-        title={`${document.title} - Regolamento`}
+        title={`Ten Penny Novels | Regolamento | ${document.title}`}
         description={`Regole su ${document.title} - Sistema di gioco Ten Penny Novels`}
         ogType="article"
       />

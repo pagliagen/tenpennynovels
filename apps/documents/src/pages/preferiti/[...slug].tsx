@@ -32,7 +32,7 @@ export default function PreferitiDetail({ data, error }: PreferitiDetailProps) {
   return (
     <>
       <SEO
-        title={`${document.title} - Preferiti`}
+        title={`Ten Penny Novels | Preferiti | ${document.title}`}
         description={document.title}
         ogType="article"
       />

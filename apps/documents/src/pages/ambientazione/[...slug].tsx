@@ -42,7 +42,7 @@ export default function AmbientazioneDetail({ data, error }: AmbientazioneDetail
   return (
     <>
       <SEO
-        title={`${document.title} - Ambientazione`}
+        title={`Ten Penny Novels | Ambientazione | ${document.title}`}
         description={`Esplora ${document.title} nell'ambientazione di Ten Penny Novels - Londra Vittoriana 1890`}
         ogType="article"
       />
