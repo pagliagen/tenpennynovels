@@ -166,25 +166,27 @@ export function validateStep4(
 }
 
 export function validateStep5(
-  basicInfo: WizardBasicInfo,
   background: WizardBackground
 ): ValidationResult {
   const errors: Record<string, string> = {};
 
-  if (!basicInfo.publicDescription || basicInfo.publicDescription.trim().length < 50) {
-    errors.publicDescription = 'Descrizione pubblica deve essere almeno 50 caratteri';
+  // All fields are optional in Step 5 (wizard5.png shows no required fields)
+  // Only validate max length if fields are filled
+
+  if (background.briefHistory && background.briefHistory.length > 4000) {
+    errors.briefHistory = 'Storia in breve non può superare 4000 caratteri';
   }
-  if (!basicInfo.privateDescription || basicInfo.privateDescription.trim().length < 50) {
-    errors.privateDescription = 'Descrizione privata deve essere almeno 50 caratteri';
+  if (background.significantEvents && background.significantEvents.length > 2500) {
+    errors.significantEvents = 'Fatti salienti non può superare 2500 caratteri';
   }
-  if (!background.briefHistory || background.briefHistory.trim().length < 100) {
-    errors.briefHistory = 'Storia in breve deve essere almeno 100 caratteri';
+  if (background.importantRelationships && background.importantRelationships.length > 2500) {
+    errors.importantRelationships = 'Relazioni importanti non può superare 2500 caratteri';
   }
-  if (!background.personality || background.personality.trim().length < 50) {
-    errors.personality = 'Personalità deve essere almeno 50 caratteri';
+  if (background.personality && background.personality.length > 2500) {
+    errors.personality = 'Personalità non può superare 2500 caratteri';
   }
-  if (!background.goalsAndMotivations || background.goalsAndMotivations.trim().length < 50) {
-    errors.goalsAndMotivations = 'Obiettivi e motivazioni deve essere almeno 50 caratteri';
+  if (background.ideology && background.ideology.length > 2500) {
+    errors.ideology = 'Ideologia/Credo non può superare 2500 caratteri';
   }
 
   return { valid: Object.keys(errors).length === 0, errors };
@@ -207,7 +209,7 @@ export function validateAllSteps(data: {
     2: validateStep2(data.occupation),
     3: validateStep3(data.stats),
     4: validateStep4(data.skills, data.stats, data.occupation, data.dynamicSkills),
-    5: validateStep5(data.basicInfo, data.background),
+    5: validateStep5(data.background),
     6: { valid: true, errors: {} },
   };
 }

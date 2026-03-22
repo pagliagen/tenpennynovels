@@ -1,177 +1,217 @@
 /**
- * Step1BasicInfo - Basic info form step styles
- * Uses CSS custom properties only. No local SCSS variables.
+ * Step1BasicInfo - Matching wizard1.png exactly
+ * 50/50 layout like Step3Stats
  */
 
 @use 'wizard-forms' as forms;
 
 .stepContent {
   @include forms.stepContent;
+  position: relative;
+  padding: 0;
 }
 
-.toolbarTitle {
-  font-size: var(--font-size-sm);
-  color: var(--color-primary);
-  font-weight: var(--font-weight-bold);
-  text-transform: uppercase;
-  letter-spacing: var(--letter-spacing-wide);
-  font-family: var(--font-primary);
+// 50/50 grid like Step3Stats
+.panels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-lg);
 }
 
-.toolbarHint {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-tertiary);
-  font-style: italic;
+.formColumn {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  min-width: 0;
+  width: 100%;
+  padding-right: var(--spacing-md);
+  overflow: hidden;
 }
 
-.section {
-  @include forms.section;
+.infoColumn {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  min-width: 0;
+  width: 100%;
+  padding-left: var(--spacing-md);
 }
 
-.sectionTitle {
-  @include forms.sectionTitle;
-}
-
+// Form row - for inline fields (DATA DI NASCITA + GENERE)
 .formRow {
-  @include forms.formRow;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-sm);
+  min-width: 0;
+  width: 100%;
 }
 
+// Form group - INLINE layout (label and input on same line)
 .formGroup {
-  @include forms.formGroup;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  margin-bottom: var(--spacing-xs);
+
+  >label {
+    width: fit-content;
+    flex-shrink: 0;
+  }
+
+  >input,
+  >select {
+    flex: 1;
+    min-width: 0;
+  }
 }
 
-.formGroupFullWidth {
-  grid-column: 1 / -1;
+// Form group single - for single-row fields (Titolo di Studio, Occupazione Attuale)
+.formGroupSingle {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: var(--spacing-sm);
+}
+
+// Form group full - for textarea (label on top)
+.formGroupFull {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: var(--spacing-sm);
 }
 
 .label {
-  @include forms.label;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 1rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: #2c2416 !important;
+  font-family: 'Thrifted Attire', var(--font-primary);
+  padding-left: 16px; // Space for eye icon or empty space for alignment
+ 
+  // Eye icon in label
+  svg {
+    width: 12px;
+    height: 12px;
+    color: #c1272d;
+    flex-shrink: 0;
+    margin-left: -16px; // Pull back into the padding space
+    margin-right: 4px;
+  }
 }
 
 .required {
-  @include forms.required;
+  color: #c1272d;
+  margin-left: 2px;
 }
 
-.input {
-  @include forms.inputBase;
-}
-
-.inputReadonly {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.inputError {
-  @include forms.inputError;
-}
-
+.input,
 .select {
-  @include forms.inputBase;
+  padding: 2px 6px;
+  font-size: 0.75rem;
+  font-family: var(--font-primary);
+  background: transparent !important;
+  color: #2c2416 !important;
+  border: none !important;
+  border-bottom: 1px solid #c4b5a0 !important;
+  border-radius: 0 !important;
+  line-height: 1.4;
+  margin-left: 16px;
+
+  &:focus {
+    outline: none;
+    border-bottom-color: var(--color-primary) !important;
+  }
+
+  &::placeholder {
+    color: #8b7355 !important;
+    font-style: italic;
+  }
 }
 
 .textarea {
-  @include forms.textarea;
+  padding: 6px 8px;
+  height: 70px;
+  margin-left: 16px;
+  font-size: 0.85rem;
+  font-family: var(--font-primary);
+  resize: none;
+  background: rgba(0, 0, 0, 0.2) !important;
+  color: #2c2416 !important;
+  border: 1px solid #c4b5a0 !important;
+  border-radius: 3px !important;
+
+  &:focus {
+    outline: none;
+    border-color: var(--color-primary) !important;
+  }
+
+  &::placeholder {
+    color: #8b7355 !important;
+    font-style: italic;
+    font-size: 0.75rem;
+  }
 }
 
 .helpText {
-  @include forms.helpText;
+  font-size: 0.6rem;
+  color: #8b7355;
+  font-style: italic;
+  margin-top: -2px;
+  margin-left: 16px;
 }
 
 .error {
-  @include forms.error;
+  color: #c1272d;
+  font-size: 0.7rem;
+  margin-top: 2px;
 }
 
+.inputError {
+  border-bottom-color: #c1272d !important;
+}
+
+.formRow + .formGroupFull {
+  margin-top: 20px;
+}
+
+// Stamp
+.stamp {
+  position: absolute;
+  bottom: var(--spacing-md);
+  right: var(--spacing-md);
+  pointer-events: none;
+  z-index: 10;
+}
+
+.stampImage {
+  width: 100px;
+  height: auto;
+  opacity: 0.9;
+}
+
+// Error summary
 .errorSummary {
   @include forms.errorSummary;
-}
-
-// Name availability feedback
-.nameAvailability {
-  padding: 8px 12px;
-  border-radius: 4px;
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  transition: all 0.2s ease;
-
-  &.checking {
-    background-color: var(--color-bg-secondary, #f0f0f0);
-    color: var(--color-text-secondary, #666);
+  margin: var(--spacing-md) var(--spacing-lg);
+} 
+ 
+// Responsive
+@media (max-width: 1024px) {
+  .panels {
+    grid-template-columns: 1fr;
   }
 
-  &.available {
-    background-color: #d4edda;
-    color: #155724;
-    border: 1px solid #c3e6cb;
+  .formGroup {
+    grid-template-columns: 1fr;
   }
 
-  &.unavailable {
-    background-color: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
-    font-weight: var(--font-weight-semibold);
+  .stamp {
+    display: none;
   }
-}
-
-.faceClaimsScroll {
-  max-height: 250px;
-  overflow-y: auto;
-  border: 1px solid #8b7355;
-  border-radius: 4px;
-}
-
-.faceClaimsTable {
-  width: 100%;
-  border-collapse: collapse;
-  font-family: 'Playfair Display', serif;
-}
-
-.faceClaimsHeaderRow {
-  background: #d4c4a8;
-  border-bottom: 2px solid #8b7355;
-}
-
-.faceClaimsTh {
-  padding: 0.5rem;
-  text-align: left;
-  font-weight: bold;
-}
-
-.faceClaimsThCenter {
-  text-align: center;
-}
-
-.faceClaimsRow {
-  cursor: pointer;
-  border-bottom: 1px solid #e0d5c7;
-
-  &:nth-child(even) {
-    background: #f9f6f0;
-  }
-
-  &:nth-child(odd) {
-    background: #fff;
-  }
-
-  &:hover {
-    background: #f0e8d8;
-  }
-}
-
-.faceClaimsTd {
-  padding: 0.5rem;
-}
-
-.faceClaimsTdMuted {
-  padding: 0.5rem;
-  font-size: 0.85em;
-  color: #5a4a3a;
-}
-
-.faceClaimsTdCenter {
-  text-align: center;
-}
-
-.faceClaimsPending {
-  color: #fb8500;
-  font-style: italic;
 }

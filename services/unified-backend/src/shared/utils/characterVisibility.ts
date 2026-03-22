@@ -18,6 +18,7 @@ export class CharacterVisibilityFilter {
       publicDescription: character.publicDescription,
       occupation: character.occupation,
       socialClass: character.socialClass,
+      visibleMarks: character.visibleMarks, // Segni visibili sono pubblici
 
       // Altri campi sempre pubblici
       currentLocation: character.currentLocation,
@@ -26,6 +27,14 @@ export class CharacterVisibilityFilter {
       playerStatus: character.playerStatus,
       createdAt: character.createdAt,
       updatedAt: character.updatedAt
+
+      // CAMPI PRIVATI (esclusi dalla vista pubblica):
+      // - hiddenMarks (segni nascosti)
+      // - pathologies (patologie)
+      // - physicalInjuries (ferite fisiche)
+      // - activeWounds (ferite attive)
+      // - currentCondition (condizione attuale)
+      // - privateDescription (descrizione privata)
     };
   }
 

@@ -220,6 +220,8 @@ const initialState = (): Omit<
     illnesses: '',
     educationTitle: '',
     criminalRecord: '',
+    // Private health info (PRIVATE - owner/master only)
+    pathologies: '',
     // Step 5 fields (moved here for consistency with backend)
     publicDescription: '',
     privateDescription: '',
@@ -911,7 +913,7 @@ export const useWizardStore = create<WizardStore>()(
           2: () => require('@/components/character/wizard/validation/wizardValidation').validateStep2(state.occupation),
           3: () => require('@/components/character/wizard/validation/wizardValidation').validateStep3(state.stats, state.creationConfig),
           4: () => require('@/components/character/wizard/validation/wizardValidation').validateStep4(state.skills, state.stats, state.occupation, state.dynamicSkills, state.creationConfig),
-          5: () => require('@/components/character/wizard/validation/wizardValidation').validateStep5(state.basicInfo, state.background),
+          5: () => require('@/components/character/wizard/validation/wizardValidation').validateStep5(state.background),
           6: () => ({ valid: true, errors: {} }),
         };
         const validator = validators[step];
@@ -1168,6 +1170,7 @@ export const useWizardStore = create<WizardStore>()(
             illnesses: character.illnesses || '',
             educationTitle: character.educationTitle || '',
             criminalRecord: character.criminalRecord || '',
+            pathologies: character.pathologies || '',
             publicDescription: character.publicDescription || '',
             privateDescription: character.privateDescription || '',
             physicalDescription: character.physicalDescription || '',

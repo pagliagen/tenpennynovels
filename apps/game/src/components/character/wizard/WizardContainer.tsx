@@ -277,6 +277,8 @@ function WizardContainerInner({ characterId, onSubmittingChange }: WizardContain
     }
   };
 
+  const isSubmitting = createCharacter.isPending || updateCharacter.isPending;
+
   const renderStepContent = () => {
     switch (currentStep) {
       case 1: return <Step1BasicInfo />;
@@ -284,7 +286,7 @@ function WizardContainerInner({ characterId, onSubmittingChange }: WizardContain
       case 3: return <Step3Stats />;
       case 4: return <Step4Skills />;
       case 5: return <Step5Background />;
-      case 6: return <Step6Review />;
+      case 6: return <Step6Review onSubmit={handleSubmit} isSubmitting={isSubmitting} />;
       default: return null;
     }
   };
@@ -314,7 +316,6 @@ function WizardContainerInner({ characterId, onSubmittingChange }: WizardContain
     );
   }
 
-  const isSubmitting = createCharacter.isPending || updateCharacter.isPending;
   const charName = basicInfo.firstName ? `${basicInfo.firstName} ${basicInfo.lastName}` : 'Nuovo Personaggio';
 
   return (
@@ -326,7 +327,7 @@ function WizardContainerInner({ characterId, onSubmittingChange }: WizardContain
         stepValidation={stepValidation}
       />
       <div className={styles.wizardBody}>
-        <div className={styles.wizardBodyBackground}></div>
+        <div className={`${styles.wizardBodyBackground} ${currentStep === 6 ? styles.step6 : ''}`}></div>
         <WizardStepToolbar>{toolbarContent}</WizardStepToolbar>
         <div className={styles.wizardContent}>
           {submitFeedback && (

@@ -51,13 +51,16 @@ export interface WizardBasicInfo {
   weight: string; // Format: "160 lbs" or "72 kg"
   eyeColor: string;
   hairColor: string;
-  visibleMarks: string; // Scars, tattoos, etc.
-  hiddenMarks: string; // Hidden scars, birthmarks
+  visibleMarks: string; // Scars, tattoos, etc. (PUBLIC)
+  hiddenMarks: string; // Hidden scars, birthmarks (PRIVATE - owner/master only)
   prestavolto: string; // Face claim (VIP/actor/writer who "lends their face")
   maritalStatus: string; // Single, Married, Widowed, Divorced
   illnesses: string;
   educationTitle: string;
   criminalRecord: string;
+
+  // Private health info (PRIVATE - owner/master only)
+  pathologies: string; // Patologie croniche (wizard1.png - right column)
 
   // Step 5 description fields (also in WizardBasicInfo for backend mapping convenience)
   publicDescription?: string; // Public background visible to all

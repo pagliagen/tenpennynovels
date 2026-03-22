@@ -20,11 +20,25 @@
 }
 
 .wizardTitle {
-  font-size: var(--font-size-2xl);
+  position: relative;
+  font-size: var(--font-size-xl);
   color: var(--color-primary);
-  font-family: var(--font-primary);
+  font-family: var(--font-heading-secondary);
   font-weight: var(--font-weight-bold);
-  text-transform: uppercase;
-  letter-spacing: var(--letter-spacing-wider);
+  letter-spacing: var(--letter-spacing-wide);
   text-align: center;
+  border-bottom: 1px solid rgba(#d4af37, 0.5);
+  padding-left: 150px;
+  padding-right: 150px;
+  padding-bottom: 10px;
+
+  &::before {
+    position: absolute;
+    width: 50%;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    content: '';
+    border-bottom: 1px solid #d4af37;
+}
 }

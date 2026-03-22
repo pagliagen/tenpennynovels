@@ -6,7 +6,7 @@ const STEP_LABELS: Record<number, string> = {
   3: 'Caratteristiche',
   4: 'Abilità',
   5: 'Background',
-  6: 'Revisione',
+  6: 'Conferma',
 };
 
 export interface WizardTabBarProps {

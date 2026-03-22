@@ -1,95 +1,131 @@
 /**
- * Step5Background - Background and story step styles
- * Uses CSS custom properties only. No local SCSS variables.
+ * Step5Background - Matching wizard5.png exactly
+ * 50/50 layout like Step1BasicInfo
  */
 
 @use 'wizard-forms' as forms;
 
 .stepContent {
   @include forms.stepContent;
+  position: relative;
+  padding: 0;
 }
 
-.toolbarTitle {
-  font-size: var(--font-size-sm);
-  color: var(--color-primary);
-  font-weight: var(--font-weight-bold);
-  text-transform: uppercase;
-  letter-spacing: var(--letter-spacing-wide);
-  font-family: var(--font-primary);
+// 50/50 grid like Step1BasicInfo
+.panels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-lg);
 }
 
-.toolbarProgress {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
-  font-weight: var(--font-weight-semibold);
+.leftColumn,
+.rightColumn {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  min-width: 0;
+  width: 100%;
 }
 
-.section {
-  @include forms.section;
+.leftColumn {
+  padding-right: var(--spacing-md);
 }
 
-.sectionTitle {
-  @include forms.sectionTitle;
+.rightColumn {
+  padding-left: var(--spacing-md);
 }
 
-.sectionDescription {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-  margin-bottom: var(--spacing-md);
-  line-height: var(--line-height-relaxed);
-}
-
-.formGroup {
-  @include forms.formGroup;
+// Form group full - for textarea (label on top)
+.formGroupFull {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: var(--spacing-sm);
 }
 
 .label {
-  @include forms.label;
-}
-
-.required {
-  @include forms.required;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 1rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: #2c2416;
+  font-family: 'Thrifted Attire', var(--font-primary);
+  padding-left: 0;
 }
 
 .textarea {
-  @include forms.textarea;
+  padding: 6px 8px;
+  min-height: 50px;
+  max-height: 50px;
+  font-size: 0.75rem;
+  font-family: var(--font-primary);
+  resize: vertical;
+  background: rgba(0, 0, 0, 0.8);
+  color: #c9c6ad;
+  border: 1px solid #c4b5a0;
+  border-radius: 3px;
+
+  &:focus {
+    outline: none;
+    border-color: var(--color-primary);
+  }
+
+  &::placeholder {
+    color: #8b7355;
+    font-style: italic;
+    font-size: 0.7rem;
+  }
 }
 
-.inputError {
-  @include forms.inputError;
+.helpTextContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  color: #8b7355;  
+}
+
+// Storia in breve gets larger max-height
+.textareaLarge {
+  max-height: 150px;
 }
 
 .helpText {
-  @include forms.helpText;
+  font-size: 0.6rem;
+  color: #8b7355;
+  font-style: italic;
+  margin-top: -2px;
 }
 
 .error {
-  @include forms.error;
+  color: #c1272d;
+  font-size: 0.7rem;
+  margin-top: 2px;
 }
 
+.inputError {
+  border-color: #c1272d;
+}
+
+// Error summary
 .errorSummary {
   @include forms.errorSummary;
+  margin: var(--spacing-md) var(--spacing-lg);
 }
 
-.infoPanel {
-  @include forms.infoBox;
-  background: var(--color-info-bg);
-  border: var(--border-width-base) solid var(--color-info);
-  border-radius: var(--radius-md);
-  padding: var(--spacing-lg);
-  margin: var(--spacing-lg) 0;
-
-  h4 {
-    color: var(--color-primary);
-    margin-bottom: var(--spacing-md);
-    font-family: var(--font-primary);
+// Responsive
+@media (max-width: 1024px) {
+  .panels {
+    grid-template-columns: 1fr;
   }
 
-  ul {
-    margin: 0;
-    padding-left: var(--spacing-lg);
-    color: var(--color-text-secondary);
-    font-size: var(--font-size-sm);
-    line-height: var(--line-height-relaxed);
+  .stamp {
+    display: none;
   }
 }
