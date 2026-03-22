@@ -5,7 +5,8 @@ import { services, ServiceConfig } from './services';
 import { authenticateClient, requirePermission } from './middleware/apiKey';
 import { verifyHMAC } from './middleware/hmac';
 import { clientRateLimit } from './middleware/rateLimit';
-import { validateBody, botRespondSchema, qaAskSchema, qaExtractKeywordsSchema, qaExtractInsightSchema, botCreateSchema, botGenerateSchema, imageGenSchema } from './middleware/validate';
+import { validateBody, botRespondSchema, qaAskSchema, qaExtractKeywordsSchema, qaExtractInsightSchema, botCreateSchema, botGenerateSchema, imageGenSchema, seoGenerateDescriptionSchema } from './middleware/validate';
+import { generateSeoDescription } from './seo/SeoDescriptionGenerator';
 
 interface RouteValidation {
   method: string;
@@ -73,6 +74,24 @@ export function createRouter(): Router {
   // 2. verifyHMAC (uses client's hmacSecret, skipped if not configured)
   // 3. clientRateLimit (uses client's maxPerMinute)
   // 4. requirePermission (checks client can access this service)
+
+  // ── SEO: native gateway endpoint (calls Ollama directly) ──
+  router.post('/seo/generate-description',
+    authenticateClient,
+    verifyHMAC,
+    clientRateLimit,
+    requirePermission('/seo'),
+    validateBody(seoGenerateDescriptionSchema),
+    async (req: Request, res: Response) => {
+      try {
+        const { title, content } = req.body;
+        const result = await generateSeoDescription(title, content);
+        res.json({ success: true, ...result });
+      } catch (error: any) {
+        res.status(500).json({ success: false, error: error.message || 'Ollama error' });
+      }
+    }
+  );
 
   for (const svc of services) {
     const prefix = svc.prefix;
