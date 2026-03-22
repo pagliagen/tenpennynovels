@@ -52,7 +52,7 @@ export default function RegolamentoDetail({ data, error }: RegolamentoDetailProp
   const schemas = [
     createArticleSchema({
       title: document.title,
-      description: `Regole su ${document.title} - Sistema di gioco Ten Penny Novels`,
+      description: document.description || `Regole su ${document.title} - Sistema di gioco Ten Penny Novels`,
       type: document.type,
       path: document.path,
       createdAt: document.createdAt ? new Date(document.createdAt) : new Date(),
@@ -68,7 +68,7 @@ export default function RegolamentoDetail({ data, error }: RegolamentoDetailProp
     <>
       <SEO
         title={`${document.title} - Ten Penny Novels`}
-        description={`Regole su ${document.title} - Sistema di gioco Ten Penny Novels`}
+        description={document.description || `Regole su ${document.title} - Sistema di gioco Ten Penny Novels`}
         canonical={canonical}
         ogType="article"
         articlePublishedTime={document.createdAt ? new Date(document.createdAt).toISOString() : undefined}

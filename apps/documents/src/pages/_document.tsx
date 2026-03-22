@@ -16,10 +16,6 @@ export default function Document() {
         {/* Favicon */}
         <link rel="icon" href="/favicon/favicon.ico" />
         <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png" />
-
-        {/* Meta Tags */}
-        <meta name="theme-color" content="#091918" />
-        <meta name="description" content="Ten Penny Novels - Archivi di Ambientazione e Regolamento" />
       </Head>
       <body>
         <Main />

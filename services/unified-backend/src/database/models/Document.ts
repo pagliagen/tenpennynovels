@@ -32,6 +32,7 @@ export interface IDocument extends MongooseDocument, SoftDeleteMethods {
   order: number;
 
   // Metadata
+  description?: string;
   tags: string[];
   isDraft: boolean;
   draftNotes?: string;
@@ -99,6 +100,10 @@ const DocumentSchema = new Schema<IDocument>({
   },
 
   // Metadata
+  description: {
+    type: String,
+    default: ''
+  },
   tags: {
     type: [String],
     default: []

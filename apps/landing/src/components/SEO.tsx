@@ -202,7 +202,7 @@ export const SEO: React.FC<SEOProps> = ({
     <Head>
       {/* Essential Meta — viewport global in _app.tsx */}
       <meta charSet="utf-8" />
-      <meta name="theme-color" content="#1a1a1a" />
+      <meta name="theme-color" content="#0a1f1c" />
 
       {/* Primary Meta Tags */}
       <title>{fullTitle}</title>
@@ -243,10 +243,6 @@ export const SEO: React.FC<SEOProps> = ({
       <meta name="twitter:title" content={fullTitle} />
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={ogImage} />
-
-      {/* Favicon & Mobile Icons */}
-      <link rel="icon" href="/favicon.ico" />
-      <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
       {/* Structured Data (JSON-LD Schema) */}
       {schemaArray && schemaArray.map((s, idx) => (

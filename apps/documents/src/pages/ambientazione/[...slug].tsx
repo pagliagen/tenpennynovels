@@ -53,7 +53,7 @@ export default function AmbientazioneDetail({ data, error }: AmbientazioneDetail
   const schemas = [
     createArticleSchema({
       title: document.title,
-      description: `Esplora ${document.title} nell'ambientazione di Ten Penny Novels - Londra Vittoriana 1890`,
+      description: document.description || `Esplora ${document.title} nell'ambientazione di Ten Penny Novels - Londra Vittoriana 1890`,
       type: document.type,
       path: document.path,
       createdAt: document.createdAt ? new Date(document.createdAt) : new Date(),
@@ -69,7 +69,7 @@ export default function AmbientazioneDetail({ data, error }: AmbientazioneDetail
     <>
       <SEO
         title={`${document.title} - Ten Penny Novels`}
-        description={`Esplora ${document.title} nell'ambientazione di Ten Penny Novels - Londra Vittoriana 1890`}
+        description={document.description || `Esplora ${document.title} nell'ambientazione di Ten Penny Novels - Londra Vittoriana 1890`}
         canonical={canonical}
         ogType="article"
         articlePublishedTime={document.createdAt ? new Date(document.createdAt).toISOString() : undefined}

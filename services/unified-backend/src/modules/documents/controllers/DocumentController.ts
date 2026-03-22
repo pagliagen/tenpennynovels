@@ -69,6 +69,7 @@ export class DocumentController {
         _id: doc._id.toString(),
         slug: doc.slug,
         title: doc.title,
+        description: doc.description || '',
         type: doc.type,
         path: doc.path,
         content: doc.content,

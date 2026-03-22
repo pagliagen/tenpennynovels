@@ -33,8 +33,11 @@ export default function PreferitiDetail({ data, error }: PreferitiDetailProps) {
     <>
       <SEO
         title={`Ten Penny Novels | Preferiti | ${document.title}`}
-        description={document.title}
+        description={document.description || `Leggi ${document.title} su Ten Penny Novels.`}
+        canonical={`https://documenti.tenpennynovels.com/${document.type}/${document.path}`}
         ogType="article"
+        noindex={true}
+        nofollow={true}
       />
 
       <div className={styles.mainContainer}>

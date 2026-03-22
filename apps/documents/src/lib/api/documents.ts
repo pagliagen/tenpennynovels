@@ -27,6 +27,7 @@ interface DocumentGetBody {
     document: {
       _id: string;
       title: string;
+      description?: string;
       content?: string;
     };
     route: {
@@ -74,6 +75,7 @@ export const documentsApi = {
       _id: payload.document._id,
       path: payload.route.path,
       title: payload.document.title,
+      description: payload.document.description || '',
       type: payload.route.type,
       kind: 'document',
       isPublic: payload.route.isPublic,
