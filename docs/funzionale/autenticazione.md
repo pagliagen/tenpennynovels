@@ -11,6 +11,7 @@ Registrazione e accesso avvengono dalla **landing** (e flussi collegati). Dopo i
 ## Per il giocatore
 
 - Crei un account con email e credenziali; dove previsto, confermi l’email prima di usare tutte le funzioni.
+  📖 **[Guida Iscrizione Completa](../guide-utente/iscrizione.md)** - Tutorial passo-passo con screenshot
 - Il personaggio attivo determina cosa puoi vedere in game (chat, location, foglio personaggio).
 - Logout e cambio password invalidano o rinnovano le sessioni secondo le regole del sito.
 

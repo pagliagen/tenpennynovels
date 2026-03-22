@@ -16,6 +16,13 @@
 - Documenti e knowledge base
 - Pannello amministrazione
 
+### [Guide Utente](./guide-utente/README.md)
+**Tutorial passo-passo** - Manuali operativi con screenshot
+
+- [Iscrizione](./guide-utente/iscrizione.md) - Come creare un account
+- [Creazione Personaggio](./guide-utente/personaggi.md) *(coming soon)*
+- [Primo Accesso e Chat](./guide-utente/primo-accesso.md) *(coming soon)*
+
 ### [Documentazione Tecnica](./tecnica/README.md)
 **Come funziona il sistema** - Architetture, API, implementazioni
 
@@ -53,8 +60,9 @@
 4. Bot / AI in locale (opzionale): [local-ai/README.md](../local-ai/README.md)
 
 **Per Utenti/Players**:
-1. Leggi [funzionale/README.md](./funzionale/README.md)
-2. Guide gameplay (coming soon)
+1. [Guida Iscrizione](./guide-utente/iscrizione.md) - Tutorial passo-passo con screenshot
+2. [Guide Utente](./guide-utente/README.md) - Tutti i manuali operativi
+3. [Docs Funzionale](./funzionale/README.md) - Overview feature e gameplay
 
 **Per Deploy**:
 1. Leggi [deploy/README.md](../deploy/README.md)
