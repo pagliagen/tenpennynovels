@@ -52,6 +52,18 @@ export interface CharacterCreationConfig {
   formulas: any;
 }
 
+interface CreationConfigResponse {
+  statsConfig: CharacterCreationConfig['stats'];
+  skillsConfig: CharacterCreationConfig['skills'];
+  occupation: any;
+  limits: any;
+  socialClasses: any[];
+  formulas: any;
+  derivedStats: any;
+  occupations: any[];
+  skills: any[];
+}
+
 /**
  * Character API Service
  *
@@ -293,10 +305,18 @@ export const characterApi = {
    * ```
    */
   async getCreationConfig(): Promise<CharacterCreationConfig> {
-    const response = await api.get<{ data: { config: CharacterCreationConfig } }>(
+    const response = await api.get<{ data: { config: CreationConfigResponse } }>(
       '/game/character-creation-config'
     );
-    return response.data.config;
+    const c = response.data.config;
+    return {
+      stats: c.statsConfig,
+      skills: c.skillsConfig,
+      occupation: c.occupation,
+      limits: c.limits,
+      socialClasses: c.socialClasses,
+      formulas: c.formulas,
+    };
   },
 
   /**

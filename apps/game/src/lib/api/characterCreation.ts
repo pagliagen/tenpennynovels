@@ -8,10 +8,7 @@
  * @since 2.0.0
  */
 
-import axios from 'axios';
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-const GAME_API_URL = `${API_BASE_URL}/game`;
+import { api } from './client';
 
 /**
  * Populated skill reference from backend
@@ -94,10 +91,10 @@ export const characterCreationApi = {
    * Requires: User authentication (auth_token cookie)
    */
   async getConfig(): Promise<CharacterCreationConfig> {
-    const response = await axios.get(`${GAME_API_URL}/character-creation-config`, {
-      withCredentials: true, // Send cookies with request
-    });
-    return response.data.data.config;
+    const response = await api.get<{ data: { config: CharacterCreationConfig } }>(
+      '/game/character-creation-config'
+    );
+    return response.data.config;
   },
 
   /**
@@ -105,10 +102,10 @@ export const characterCreationApi = {
    * Requires: User authentication (auth_token cookie)
    */
   async getOccupations(): Promise<Occupation[]> {
-    const response = await axios.get(`${GAME_API_URL}/character-creation-config/occupations`, {
-      withCredentials: true, // Send cookies with request
-    });
-    return response.data.data.occupations;
+    const response = await api.get<{ data: { occupations: Occupation[] } }>(
+      '/game/character-creation-config/occupations'
+    );
+    return response.data.occupations;
   },
 
   /**
@@ -116,9 +113,9 @@ export const characterCreationApi = {
    * Requires: User authentication (auth_token cookie)
    */
   async getSkills(): Promise<Skill[]> {
-    const response = await axios.get(`${GAME_API_URL}/character-creation-config/skills`, {
-      withCredentials: true, // Send cookies with request
-    });
-    return response.data.data.skills;
+    const response = await api.get<{ data: { skills: Skill[] } }>(
+      '/game/character-creation-config/skills'
+    );
+    return response.data.skills;
   },
 };
