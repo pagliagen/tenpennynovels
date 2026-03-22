@@ -376,19 +376,21 @@ export const characterApi = {
     }>;
   }> {
     const response = await api.get<{
-      exactMatch: { characterName: string; status: string } | null;
-      matches: Array<{ prestavolto: string; characterName: string; status: string }>;
-      allFaceClaims: Array<{
-        prestavolto: string;
-        characterName: string;
-        characterId: string;
-        playerStatus: string;
-        prestavoltoApprovedAt: Date | null;
-      }>;
+      data: {
+        exactMatch: { characterName: string; status: string } | null;
+        matches: Array<{ prestavolto: string; characterName: string; status: string }>;
+        allFaceClaims: Array<{
+          prestavolto: string;
+          characterName: string;
+          characterId: string;
+          playerStatus: string;
+          prestavoltoApprovedAt: Date | null;
+        }>;
+      };
     }>('/game/characters/face-claims/search', {
       params: { q: query }
     });
-    return response;
+    return response.data;
   },
 
   /**

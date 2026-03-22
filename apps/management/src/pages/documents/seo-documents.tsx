@@ -49,7 +49,7 @@ export default function SeoDocumentsPage() {
   const filteredData = useMemo(() => {
     const docs = data?.documents ?? [];
     if (!filters.type) return docs;
-    return docs.filter(doc => (doc as Record<string, unknown>).type === filters.type);
+    return docs.filter(doc => doc.type === filters.type);
   }, [data?.documents, filters.type]);
 
   const aiGatewayEnabled = data?.aiGatewayEnabled ?? false;

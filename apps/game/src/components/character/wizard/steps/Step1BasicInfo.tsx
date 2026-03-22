@@ -545,7 +545,7 @@ export function Step1BasicInfo(): JSX.Element {
         )}
 
         {/* Existing Face Claims List */}
-        {faceClaimCheck.allFaceClaims.length > 0 && (
+        {(faceClaimCheck.allFaceClaims?.length ?? 0) > 0 && (
           <div className={styles.formGroup}>
             <label className={styles.label}>Prestavolti già usati (clicca per selezionare):</label>
             <div className={styles.faceClaimsScroll}>
@@ -559,7 +559,7 @@ export function Step1BasicInfo(): JSX.Element {
                   </tr>
                 </thead>
                 <tbody>
-                  {faceClaimCheck.allFaceClaims.slice(0, 50).map((claim, idx) => (
+                  {(faceClaimCheck.allFaceClaims ?? []).slice(0, 50).map((claim, idx) => (
                     <tr
                       key={idx}
                       onClick={() => handleChange('prestavolto', claim.prestavolto)}
