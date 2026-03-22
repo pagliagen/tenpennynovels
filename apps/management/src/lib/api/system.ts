@@ -7,7 +7,7 @@
  * @module lib/api/system
  */
 
-import { api } from './client';
+import { api, apiClient, withRetry } from './client';
 
 export interface SystemConfigRecord {
   _id: string;
@@ -93,15 +93,18 @@ export interface MaintenanceStatus {
 }
 
 export interface AuditLogResponse {
+  success: boolean;
   list: AuditLog[];
   pagination: {
-    page: number;
+    currentPage: number;
     pageSize: number;
     totalItems: number;
     totalPages: number;
     hasNextPage: boolean;
-    hasPrevPage: boolean;
+    hasPreviousPage: boolean;
   };
+  timestamp?: string;
+  requestId?: string;
 }
 
 /**
@@ -131,8 +134,10 @@ export const systemAPI = {
    * GET /admin/system/audit-logs
    */
   getAuditLogs: async (params: AuditLogParams): Promise<AuditLogResponse> => {
-    const response = await api.get('/admin/system/audit-logs', { params });
-    return response.data as AuditLogResponse;
+    const response = await withRetry(() =>
+      apiClient.get<AuditLogResponse>('/admin/system/audit-logs', { params })
+    );
+    return response.data;
   },
 
   /**

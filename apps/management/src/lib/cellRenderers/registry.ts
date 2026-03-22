@@ -53,7 +53,12 @@ export class CellRendererRegistry {
   }
 
   /**
-   * Render a cell using the registered renderer
+   * Render a cell using the registered renderer.
+   *
+   * Uses React.createElement so that renderers that contain hooks (e.g. ImageRenderer)
+   * are treated as proper React child components with isolated hook state, instead of
+   * being called as plain functions inside the parent's render cycle (which would
+   * violate Rules of Hooks when the number of rendered rows changes between renders).
    */
   render<T = Record<string, unknown>>(
     type: string,
@@ -66,7 +71,10 @@ export class CellRendererRegistry {
       return this.defaultRenderer(props as CellRendererProps<Record<string, unknown>>);
     }
 
-    return renderer(props as CellRendererProps<Record<string, unknown>>);
+    return React.createElement(
+      renderer as React.FC<CellRendererProps<Record<string, unknown>>>,
+      props as CellRendererProps<Record<string, unknown>>
+    );
   }
 
   /**

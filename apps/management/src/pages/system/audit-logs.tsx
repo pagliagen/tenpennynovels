@@ -80,7 +80,7 @@ export default function AuditLogs() {
       <ManagementLayout>
         <div className={styles.error}>
           <h2>Errore nel caricamento log</h2>
-          <p>{error instanceof Error ? error.message : 'Errore sconosciuto'}</p>
+          <p>Impossibile recuperare i log di audit. Riprova o contatta l&apos;amministratore di sistema.</p>
           <button onClick={() => window.location.reload()}>Riprova</button>
         </div>
       </ManagementLayout>
