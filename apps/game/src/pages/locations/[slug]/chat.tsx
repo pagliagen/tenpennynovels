@@ -24,6 +24,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useGameStateStore } from '@/store/gameStateStore';
 import { useLocationStore } from '@/store/locationStore';
 import type { AccessibleLocation } from '@/types/location';
+import styles from '@/styles/pages/locations.module.scss';
 
 /**
  * Location Chat Page Component
@@ -154,19 +155,9 @@ export default function LocationChatPage(): JSX.Element {
           <meta name="description" content="Chatta in tempo reale nella Londra Vittoriana. Gioco di ruolo online con narrazione investigativa." />
         </Head>
         <GameLayout>
-          <div
-            style={{
-              width: '100%',
-              height: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#e8d4a0',
-              fontFamily: '"Playfair Display", serif',
-              fontSize: '1.2rem',
-            }}
-          >
-            Caricamento...
+          <div className={styles.loadingContainer}>
+            <div className={styles.spinner}></div>
+            <p className={styles.loadingText}>Caricamento...</p>
           </div>
         </GameLayout>
       </>
@@ -182,33 +173,15 @@ export default function LocationChatPage(): JSX.Element {
           <meta name="description" content="La location che cerchi non esiste o non è accessibile." />
         </Head>
         <GameLayout>
-          <div
-            style={{
-              width: '100%',
-              height: '100%',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '1rem',
-              color: '#e8d4a0',
-              fontFamily: '"Playfair Display", serif',
-              fontSize: '1.2rem',
-            }}
-          >
-            <p>⚠️ Location non trovata</p>
+          <div className={styles.errorContainer}>
+            <h2 className={styles.errorTitle}>Location non trovata</h2>
+            <p className={styles.errorMessage}>
+              La location richiesta non esiste o non hai accesso ad essa.
+            </p>
             <button
+              type="button"
+              className={styles.retryButton}
               onClick={() => router.push('/locations')}
-              style={{
-                padding: '0.75rem 1.5rem',
-                background: 'rgba(184, 134, 11, 0.7)',
-                border: '1px solid rgba(184, 134, 11, 1)',
-                borderRadius: '6px',
-                color: '#fff',
-                fontFamily: '"Playfair Display", serif',
-                fontSize: '1rem',
-                cursor: 'pointer',
-              }}
             >
               Torna alle Location
             </button>

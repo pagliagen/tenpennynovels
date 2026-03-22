@@ -239,6 +239,8 @@ export function MessageInput({
   const hasSocialConflictPermission = gamePermissions.includes('game:*') ||
     gamePermissions.includes('game:chat:social-clash');
 
+  const canOpenConfrontations = occupants.length >= 1;
+
   /**
    * Reset action-specific selections when action type changes
    */
@@ -641,8 +643,12 @@ export function MessageInput({
             type="button"
             onClick={() => setIsConfrontationModalOpen(true)}
             className={styles.actionButton}
-            title="Scontri (Sociali e Combattimento)"
-            disabled={disabled || !hasSocialConflictPermission}
+            title={
+              !canOpenConfrontations
+                ? 'Serve almeno un altro personaggio in questa chat per avviare uno scontro'
+                : 'Scontri (Sociali e Combattimento)'
+            }
+            disabled={disabled || !hasSocialConflictPermission || !canOpenConfrontations}
           >
             ⚔️ Scontri
           </button>
