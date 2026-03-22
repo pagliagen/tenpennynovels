@@ -1,6 +1,6 @@
 # Docker Compose Infrastructure
 
-**Navigation**: [Home](../INDEX.md) > [Infrastructure](./README.md) > Docker Compose
+**Navigation**: [Home](../../INDEX.md) > [Infrastructure](./README.md) > Docker Compose
 
 **Status**: ✅ Production Ready | **Last Updated**: 2026-03-08
 
@@ -126,10 +126,8 @@ healthcheck:
 - **Session Store**: JWT token storage
 - **Socket.IO Adapter**: Multi-instance WebSocket sync
 - **Bull Queue**: Job queue per embeddings worker
-- **Pub/Sub Channels**:
-  - `embedding:document:created`, `embedding:document:updated`, `embedding:document:deleted`
-  - `embedding:location:created`, `embedding:location:updated`, `embedding:location:deleted`
-  - `embedding:location_action:created`, `embedding:location_action:updated`, `embedding:location_action:deleted`
+- **Pub/Sub (embedding)**: `embedding:document:*`, `embedding:document_chunk:*`, `embedding:chat:*`, `embedding:forum_post:*` (dettaglio in [Redis Pub/Sub](./redis-pubsub.md))
+- **Pub/Sub (game)**: `character:events` (bus interno unified-backend)
 
 **Persistence**: AOF (Append-Only File) enabled
 
@@ -245,12 +243,9 @@ ports:
 - **Dead Letter Queue**: Failed jobs after max retries
 - **Cache**: Redis 1h TTL for embedding results
 
-**Event Subscriptions** (Redis Pub/Sub):
-- `embedding:document:created`, `embedding:document:updated`, `embedding:document:deleted`
-- `embedding:location:created`, `embedding:location:updated`, `embedding:location:deleted`
-- `embedding:location_action:created`, `embedding:location_action:updated`, `embedding:location_action:deleted`
+**Sottoscrizioni Redis** (vedi codice in `embedding-worker.ts`): documenti, chunk, chat, forum post — allineate a `EmbeddingEventPublisher` nel unified-backend.
 
-**Details**: [Embeddings Architecture](../04-ai-ml/embeddings-architecture.md)
+**Details**: [Embeddings Worker](../backend/embeddings-worker.md)
 
 ---
 
@@ -294,8 +289,9 @@ volumes:
 - **Framework**: Express 5.2.1
 - **Database**: Mongoose 9.2.1
 - **WebSocket**: Socket.IO 4.8.3
-- **Queue**: Bull 4.x
 - **Hot-reload**: tsx watch (development)
+
+**Nota**: le code Bull per gli embedding vivono in **embeddings-worker**, non nel processo unified-backend.
 
 **API Routes**:
 - `/auth/*` - Authentication endpoints
@@ -304,7 +300,7 @@ volumes:
 - `/forum/*` - Forum endpoints
 - `/game/documents/*` - Document management
 
-**Details**: [Unified Backend Architecture](../02-backend/unified-backend-architecture.md)
+**Details**: [Unified Backend](../backend/unified-backend.md)
 
 ---
 
@@ -321,8 +317,8 @@ environment:
   UNIFIED_BACKEND_URL: http://unified-backend:3001
   GAME_URL: http://localhost:4001
   LANDING_URL: http://localhost:4000
-  DOCUMENTS_URL: http://localhost:4003
-  MANAGEMENT_URL: http://localhost:4004
+  DOCUMENTS_URL: http://localhost:4002
+  MANAGEMENT_URL: http://localhost:4003
   TRUST_PROXY: "true"
 depends_on:
   - unified-backend (condition: service_healthy)
@@ -345,7 +341,7 @@ depends_on:
 - **Health Checks**: Aggregati da tutti backend
 - **Error Handling**: 502 se backend unavailable
 
-**Details**: [API Gateway](../02-backend/api-gateway.md)
+**Details**: [API Gateway](../backend/api-gateway.md)
 
 ---
 
@@ -405,11 +401,9 @@ volumes:
   elasticsearch_data:
     driver: local
     name: tenpennynovels-elasticsearch-data
-
-  cdn_storage:
-    driver: local
-    name: tenpennynovels-cdn-storage
 ```
+
+La directory CDN è montata come **bind** `./cdn-storage` sui servizi che la usano (non compare come volume nominato in `docker-compose.yml`).
 
 **Development Hot-Reload Volumes** (unified-backend):
 
@@ -541,68 +535,35 @@ docker stats tenpennynovels-unified-backend
 
 ## NPM Scripts Integration
 
-**Package.json shortcuts** (da root del progetto):
+**Script npm nella root del monorepo** (`package.json`):
 
-```json
-{
-  "scripts": {
-    "docker:all:start": "docker compose up -d",
-    "docker:all:stop": "docker compose down",
-    "docker:all:restart": "docker compose restart",
-    "docker:logs": "docker compose logs -f",
-    "docker:check": "./scripts/health-check.sh"
-  }
-}
-```
-
-**Usage**:
-```bash
-npm run docker:all:start   # Start all services
-npm run docker:logs        # Follow all logs
-npm run docker:check       # Run health checks
-npm run docker:all:stop    # Stop all services
-```
+| Script | Comando |
+|--------|---------|
+| `npm run docker:up` | `docker compose up -d` |
+| `npm run docker:down` | `docker compose down` |
+| `npm run docker:ps` | `docker compose ps` |
+| `npm run docker:restart` | `docker compose restart` |
+| `npm run docker:logs` | `docker compose logs -f` |
+| `npm run docker:logs:unified` | log solo unified-backend |
+| `npm run docker:logs:gateway` | log solo api-gateway |
+| `npm run docker:logs:embeddings` | log solo embeddings-worker |
 
 ---
 
-## Health Check Script
+## Verifica manuale dei servizi
 
-**Location**: `./scripts/health-check.sh`
+Non è presente uno script unico nel repo; puoi controllare lo stato con:
 
 ```bash
-#!/bin/bash
-# Check all services health
+docker compose ps
 
-echo "🔍 Checking TenPennyNovels services health..."
-
-# API Gateway
-curl -s http://localhost:8000/health | jq '.'
-
-# Unified Backend
-curl -s http://localhost:3001/health | jq '.'
-
-# Embeddings Worker
-curl -s http://localhost:5001/health | jq '.'
-
-# ElasticSearch
-curl -s http://localhost:9200/_cluster/health | jq '.'
-
-# Qdrant
-curl -s http://localhost:6333/healthz | jq '.'
-
-# MongoDB
-docker exec tenpennynovels-mongodb mongosh \
-  --username admin --password ${MONGO_ROOT_PASSWORD} \
-  --authenticationDatabase admin \
-  --eval "db.adminCommand('ping')"
-
-# Redis
+curl -s http://localhost:8000/health
+curl -s http://localhost:3001/health
+curl -s http://localhost:5001/health
+curl -s http://localhost:9200/_cluster/health
+curl -s http://localhost:6333/healthz
 docker exec tenpennynovels-redis redis-cli ping
-
-echo "✅ Health check complete"
 ```
-
-**Run**: `chmod +x scripts/health-check.sh && ./scripts/health-check.sh`
 
 ---
 
@@ -768,11 +729,11 @@ services:
 - [MongoDB Schemas](./mongodb-schemas.md) - Database models
 - [Redis Pub/Sub](./redis-pubsub.md) - Event channels and Bull queues
 - [Qdrant Vector DB](./qdrant-vector-db.md) - Vector search and hybrid search
-- [Unified Backend](../02-backend/unified-backend-architecture.md) - Backend modules
-- [API Gateway](../02-backend/api-gateway.md) - Proxy configuration
-- [Embeddings Architecture](../04-ai-ml/embeddings-architecture.md) - ML pipeline
-- [Deployment Guide](../06-operations/deployment-guide.md) - Production deployment
-- [Docker Troubleshooting](../06-operations/docker-troubleshooting.md) - Common issues
+- [Unified Backend](../backend/unified-backend.md) - Backend modules
+- [API Gateway](../backend/api-gateway.md) - Proxy configuration
+- [Embeddings Worker](../backend/embeddings-worker.md) - Pipeline embedding e hybrid search
+- [Deploy (README)](../../deploy/README.md) - Produzione e checklist
+- [Troubleshooting deploy](../../deploy/docs/99-troubleshooting.md) - Problemi comuni
 
 ---
 
@@ -781,9 +742,11 @@ services:
 **Start**: `docker compose up -d`
 **Stop**: `docker compose down`
 **Logs**: `docker compose logs -f`
-**Health**: `./scripts/health-check.sh`
+**Health**: vedi sezione «Verifica manuale dei servizi»
 **Rebuild**: `docker compose build --no-cache SERVICE && docker compose stop SERVICE && docker compose up -d`
 
 **Public Entry Point**: `http://localhost:8000` (API Gateway)
 **Network**: `tenpennynovels-network` (bridge)
-**Volumes**: 6 persistent (mongodb_data, mongodb_config, redis_data, qdrant_storage, elasticsearch_data, cdn_storage)
+**Storage CDN**: bind mount `./cdn-storage` su unified-backend e api-gateway (non è un volume Docker nominato).
+
+**Volumes nominati**: `mongodb_data`, `mongodb_config`, `redis_data`, `qdrant_storage`, `elasticsearch_data`

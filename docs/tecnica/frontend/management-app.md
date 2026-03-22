@@ -9,7 +9,7 @@
 **Management App** è l'interfaccia amministrativa di TenPennyNovels. Richiede `canAccessAdminPanel: true` e ruoli specifici. Implementa un sistema JSON-driven per tabelle dati, editor rich text (TipTap), e gestione gerarchica documenti con drag & drop.
 
 **Statistiche**:
-- **Port**: 4004
+- **Port**: 4003
 - **Base Path**: `/gestione` (production)
 - **Components**: 83
 - **Key Component**: ConfigurableDataTable (418 lines)
@@ -777,7 +777,7 @@ export const useUIStore = create<UIStore>((set) => ({
 ```bash
 cd apps/management
 npm install
-npm run dev # Port 4004
+npm run dev # Port 4003
 ```
 
 ### Production
@@ -798,7 +798,7 @@ npm run start
   exec_mode: 'fork',
   env: {
     NODE_ENV: 'production',
-    PORT: 4004,
+    PORT: 4003,
     NEXT_PUBLIC_BASE_PATH: '/gestione'
   }
 }
@@ -807,7 +807,7 @@ npm run start
 **Nginx Configuration**:
 ```nginx
 location /gestione {
-    proxy_pass http://127.0.0.1:4004;
+    proxy_pass http://127.0.0.1:4003;
     proxy_http_version 1.1;
     proxy_set_header Upgrade $http_upgrade;
     proxy_set_header Connection 'upgrade';

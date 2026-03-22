@@ -18,8 +18,8 @@
 
 | Documento | Descrizione | Status |
 |-----------|-------------|--------|
-| **[websocket-events](./backend/websocket-events.md)** | **27+ eventi WebSocket** | ✅ **NEW** |
-| **[error-codes](./backend/error-codes.md)** | **40+ error codes** | ✅ **NEW** |
+| [websocket-events](./backend/websocket-events.md) | Catalogo eventi Socket.IO | Aggiornato |
+| [error-codes](./backend/error-codes.md) | Registry `ErrorCode` (decine di codici) | Aggiornato |
 | [api-endpoints](./backend/api-endpoints.md) | 90+ REST endpoints | ✅ Complete |
 | [authentication](./backend/authentication.md) | Dual-token JWT | ✅ Complete |
 
@@ -29,9 +29,9 @@
 
 | Documento | Descrizione | Status |
 |-----------|-------------|--------|
-| **[game-app](./frontend/game-app.md)** | **12 message types, 9 stores** | ✅ **EXPANDED** |
-| **[documents-app](./frontend/documents-app.md)** | **Semantic search system** | ✅ **REWRITTEN** |
-| **[management-app](./frontend/management-app.md)** | **ConfigurableDataTable pattern** | ✅ **EXPANDED** |
+| [game-app](./frontend/game-app.md) | Gameplay, chat, sheet (12 tipi messaggio, 9 store) | Completo |
+| [documents-app](./frontend/documents-app.md) | Knowledge base, ricerca semantica | Completo |
+| [management-app](./frontend/management-app.md) | Admin, ConfigurableDataTable | Completo |
 | [landing-app](./frontend/landing-app.md) | Marketing + auth | ✅ Complete |
 
 ---
@@ -40,8 +40,8 @@
 
 | Documento | Descrizione | Status |
 |-----------|-------------|--------|
-| **[seeders](./scripts/seeders.md)** | **10 database seeders** | ✅ **NEW** |
-| **[glass-ball](./scripts/glass-ball.md)** | **ImageMagick processing** | ✅ **NEW** |
+| [seeders](./scripts/seeders.md) | 10 script seeder in `scripts/seeders` | Completo |
+| [glass-ball](./scripts/glass-ball.md) | Processing immagini | Completo |
 
 ---
 
@@ -70,6 +70,6 @@
 
 ---
 
-**Last Major Update**: 2026-03-15  
-**Total Documents**: 24  
-**New/Expanded**: 7 (websocket-events, error-codes, game-app, documents-app, management-app, seeders, glass-ball)
+**Last Major Update**: 2026-03-22  
+
+**Monorepo correlato**: stack AI opzionale in [local-ai/README.md](../../local-ai/README.md) (non è avviato da `docker compose` principale).

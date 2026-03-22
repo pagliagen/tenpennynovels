@@ -13,7 +13,7 @@ Docker, database, caching, vector search.
 44+ database models
 
 ### [Redis Pub/Sub](./redis-pubsub.md)
-Event channels e caching
+Adapter Socket.IO, code Bull (embeddings-worker), pub/sub embedding e bus game
 
 ### [Qdrant Vector DB](./qdrant-vector-db.md)
 Semantic search embeddings

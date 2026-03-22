@@ -1,8 +1,8 @@
-# Embeddings Architecture
+# Embeddings Worker
 
-**Navigation**: [Home](../INDEX.md) > [AI & ML](./README.md) > Embeddings Architecture
+**Navigation**: [Home](../../INDEX.md) > [Backend](./README.md) > Embeddings Worker
 
-**Status**: ✅ Production Ready | **Last Updated**: 2026-03-01
+**Status**: Production Ready | **Last Updated**: 2026-03-22
 
 Sistema di embeddings event-driven per ricerca semantica su documenti e chat.
 
@@ -542,5 +542,5 @@ const MODEL_CONFIG = {
 - [Semantic Search](./semantic-search.md) - Search implementation using embeddings
 - [Qdrant Vector DB](../01-infrastructure/qdrant-vector-db.md) - Vector database setup
 - [Redis Pub/Sub](../01-infrastructure/redis-pubsub.md) - Event channels
-- [Documents App](../05-frontend/documents-app.md) - Search UI
-- [BotAI Backend](../02-backend/botai-backend.md) - Bot memory retrieval
+- [Documents App](../frontend/documents-app.md) - UI knowledge base
+- [local-ai README](../../../local-ai/README.md) - stack AI opzionale (bot / gateway)

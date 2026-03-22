@@ -18,12 +18,12 @@ Architettura e implementazione app Next.js.
 - Socket.IO real-time
 
 ### [Documents App](./documents-app.md)
-- Port: 4003
+- Port: 4002
 - Knowledge base
 - Semantic search integration
 
 ### [Management App](./management-app.md)
-- Port: 4004
+- Port: 4003
 - Admin panel
 - ConfigurableDataTable pattern
 - TipTap editor
@@ -34,9 +34,6 @@ Architettura e implementazione app Next.js.
 
 ### [WebSocket Patterns](./websocket-patterns.md)
 Best practices Socket.IO integration
-
-### [API Client Pattern](./api-client-pattern.md)
-Anti-pattern: duplicazione client
 
 ---
 

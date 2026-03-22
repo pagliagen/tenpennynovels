@@ -1,6 +1,6 @@
 # Environment Variables
 
-**Navigation**: [Home](../INDEX.md) > [Infrastructure](./README.md) > Environment Variables
+**Navigation**: [Home](../../INDEX.md) > [Infrastructure](./README.md) > Environment Variables
 
 **Status**: ✅ Production Ready | **Last Updated**: 2026-03-01
 
@@ -262,7 +262,7 @@ CHARACTER_MIN_CHA=15     # Charisma
 **Total Free Points**: 160 (30+30+20+20+15+15+15+15)
 **Points to Distribute**: 240 (400 - 160)
 
-**Details**: [Character System](../03-game-systems/character-system.md)
+**Details**: [Personaggi (funzionale)](../../funzionale/personaggi.md)
 
 ---
 
@@ -281,7 +281,7 @@ SKILL_POINT_COST_MULTIPLIER=1.5        # Multiplier for higher levels
 
 **Cron Schedule**: `0 0 * * *` (daily at midnight UTC)
 
-**Details**: [Experience Points](../03-game-systems/experience-points.md)
+**Details**: [Glossario — XP](../../GLOSSARY.md#game-system-terminology)
 
 ---
 
@@ -300,7 +300,7 @@ EVICTION_NOTIFICATION_DAYS=7           # Days before eviction to notify
 
 **Cron Schedule**: `0 6 * * *` (daily at 6am UTC)
 
-**Details**: [Housing System](../03-game-systems/housing-system.md)
+**Details**: [Housing (funzionale)](../../funzionale/housing.md)
 
 ---
 
@@ -322,14 +322,10 @@ GAME_URL=http://localhost:4001
 DOCUMENTS_URL=http://localhost:4002
 DOCS_URL=http://localhost:4002
 
-# Forum (Future)
-FORUM_URL=http://localhost:4003
+# Management Panel (Admin) — stessa app Next su porta 4003
+MANAGEMENT_URL=http://localhost:4003
 
-# Management Panel (Admin)
-MANAGEMENT_URL=http://localhost:4004
-
-# Tickets (Future)
-TICKETS_URL=http://localhost:4005
+# Forum: non è un’app frontend separata in locale; le API vivono nel unified-backend (/forum/*) tramite gateway :8000
 ```
 
 ---
@@ -400,7 +396,7 @@ SOCKET_CORS_ORIGIN=http://localhost:4000,http://localhost:4001
 SOCKET_CORS_ORIGIN=https://tenpennynovels.com,https://game.tenpennynovels.com
 ```
 
-**Details**: [WebSocket Patterns](../05-frontend/websocket-patterns.md)
+**Details**: [WebSocket Patterns](../frontend/websocket-patterns.md)
 
 ---
 
@@ -455,7 +451,7 @@ AI_GATEWAY_WEBHOOK_SECRET=<secret-for-callback-auth>
 
 **Future**: Riabilitare quando botai-backend migrato a unified-backend paths
 
-**Details**: [BotAI Backend](../02-backend/botai-backend.md)
+**Details**: [local-ai README](../../../local-ai/README.md)
 
 ---
 
@@ -499,9 +495,9 @@ SENTRY_DSN=https://...@sentry.io/...
 | Landing | 4000 | http://localhost:4000 |
 | Game | 4001 | http://localhost:4001 |
 | Documents | 4002 | http://localhost:4002 |
-| Forum | 4003 | http://localhost:4003 |
-| Management | 4004 | http://localhost:4004 |
-| Tickets | 4005 | http://localhost:4005 |
+| Management | 4003 | http://localhost:4003 |
+
+Il forum è integrato nell’app di gioco / backend; non usa una porta `400x` dedicata in dev.
 
 ---
 
@@ -510,7 +506,6 @@ SENTRY_DSN=https://...@sentry.io/...
 | Service | Port | URL |
 |---------|------|-----|
 | Unified Backend | 3001 | http://localhost:3001 |
-| Management Backend | 3002 | http://localhost:3002 (legacy) |
 
 ---
 
@@ -729,10 +724,10 @@ MONGODB_URI=mongodb://...@mongodb:27017/tenpennynovels?authSource=admin
 ## Related Documentation
 
 - [Docker Compose](./docker-compose.md) - Service configuration
-- [Deployment Guide](../06-operations/deployment-guide.md) - Production setup
-- [Character System](../03-game-systems/character-system.md) - Character creation rules
-- [Housing System](../03-game-systems/housing-system.md) - Housing configuration
-- [BotAI Backend](../02-backend/botai-backend.md) - AI service config
+- [Deploy README](../../deploy/README.md) - Produzione
+- [Personaggi (funzionale)](../../funzionale/personaggi.md)
+- [Housing (funzionale)](../../funzionale/housing.md)
+- [local-ai README](../../../local-ai/README.md) - stack AI opzionale in locale
 
 ---
 
