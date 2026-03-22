@@ -1,6 +1,6 @@
 import winston from 'winston';
 import path from 'path';
-import { appConfig } from '@config/runtime';
+import { appConfig } from '@config/runtime/appConfig';
 
 const LOG_LEVEL = appConfig.logLevel;
 

@@ -3,7 +3,7 @@
  */
 
 import winston from 'winston';
-import { appConfig } from '@config/runtime';
+import { appConfig } from '@config/runtime/appConfig';
 
 const logLevel = appConfig.logLevel;
 const isDevelopment = !appConfig.isProduction;

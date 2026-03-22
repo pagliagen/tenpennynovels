@@ -22,17 +22,16 @@ if (process.env.NODE_ENV === 'production') {
 async function main() {
   // Import dinamici: si eseguono dopo il require('dotenv') qui sopra
   const mongoose = (await import('mongoose')).default;
-  const { logger } = await import('@shared/utils/logger');
   const { appConfig } = await import('@config/runtime');
   const { SitemapService } = await import('../services/SitemapService');
 
-  logger.info('[generate-sitemap] Connecting to MongoDB...');
+  console.log('[generate-sitemap] Connecting to MongoDB...');
   await mongoose.connect(appConfig.db.mongodbUri as string);
-  logger.info('[generate-sitemap] Connected. Generating sitemaps...');
+  console.log('[generate-sitemap] Connected. Generating sitemaps...');
 
   await SitemapService.generate();
 
-  logger.info('[generate-sitemap] Done. Disconnecting...');
+  console.log('[generate-sitemap] Done. Disconnecting...');
   await mongoose.disconnect();
   process.exit(0);
 }
