@@ -103,7 +103,7 @@ export const imageGenSchema = z.object({
 
 export const seoGenerateDescriptionSchema = z.object({
   title: z.string().min(1).max(500),
-  content: z.string().min(1).max(20000),
+  content: z.string().min(1).max(100000),
 });
 
 type ZodSchema = z.ZodType<any, any, any>;

@@ -125,3 +125,12 @@ export interface UpdateDocumentData {
   isDraft?: boolean;
   visible?: boolean;
 }
+
+export interface SeoDocument {
+  _id: string;
+  title: string;
+  slug: string;
+  type: 'ambientazione' | 'regolamento';
+  path: string;
+  description: string;
+}

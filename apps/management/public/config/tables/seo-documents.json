@@ -1,0 +1,79 @@
+{
+  "_meta": {
+    "version": "3.0.0",
+    "description": "Configurazione tabella SEO documenti",
+    "lastUpdated": "2026-03-22"
+  },
+  "table": {
+    "name": "seo-documents",
+    "title": "SEO Documenti",
+    "icon": "🔍",
+    "searchable": true,
+    "selectable": false,
+    "pagination": {
+      "defaultPageSize": 50,
+      "pageSizeOptions": [25, 50, 100]
+    }
+  },
+  "columns": [
+    {
+      "key": "title",
+      "label": "Titolo",
+      "type": "text",
+      "visible": true,
+      "defaultVisible": true,
+      "sortable": true,
+      "width": "220px",
+      "render": {
+        "type": "text",
+        "className": "font-bold text-primary"
+      }
+    },
+    {
+      "key": "type",
+      "label": "Tipo",
+      "type": "text",
+      "visible": true,
+      "defaultVisible": true,
+      "sortable": true,
+      "width": "130px",
+      "render": {
+        "type": "badge"
+      }
+    },
+    {
+      "key": "description",
+      "label": "Descrizione SEO",
+      "type": "text",
+      "visible": true,
+      "defaultVisible": true,
+      "sortable": false,
+      "render": {
+        "type": "text"
+      }
+    }
+  ],
+  "actions": [
+    {
+      "key": "regenerate-seo",
+      "label": "Rigenera SEO",
+      "icon": "🤖",
+      "type": "primary",
+      "visible": true
+    }
+  ],
+  "filters": [
+    {
+      "key": "type",
+      "label": "Tipo",
+      "type": "select",
+      "field": "type",
+      "options": [
+        { "value": "", "label": "Tutti" },
+        { "value": "ambientazione", "label": "Ambientazione" },
+        { "value": "regolamento", "label": "Regolamento" }
+      ],
+      "placeholder": "Filtra per tipo"
+    }
+  ]
+}

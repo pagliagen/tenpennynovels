@@ -17,7 +17,8 @@ import type {
   DocumentTreeResponse,
   CreateDocumentData,
   UpdateDocumentData,
-  DocumentSubtype
+  DocumentSubtype,
+  SeoDocument
 } from '@/types/api/Document';
 
 /**
@@ -31,6 +32,7 @@ export const documentKeys = {
   detail: (id: string) => [...documentKeys.details(), id] as const,
   subtypes: ['admin', 'subtypes'] as const,
   subtypesByType: (type?: string) => [...documentKeys.subtypes, type] as const,
+  seo: ['admin', 'documents', 'seo'] as const,
 };
 
 /**
@@ -335,6 +337,46 @@ export function useReorderSubtypes() {
       documentAPI.reorderSubtypes(type, orderedIds),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: documentKeys.subtypes });
+    }
+  });
+}
+
+// ========== SEO HOOKS ==========
+
+/**
+ * Hook per recuperare lista documenti con dati SEO
+ */
+export function useSeoDocuments() {
+  return useQuery({
+    queryKey: documentKeys.seo,
+    queryFn: () => documentAPI.getSeoDocuments(),
+    staleTime: 5 * 60 * 1000,
+    retry: 3
+  });
+}
+
+/**
+ * Hook per rigenerare la description SEO di un documento via AI gateway.
+ * Aggiorna ottimisticamente la cache seo dopo il successo.
+ */
+export function useRegenerateSeoDescription() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => documentAPI.regenerateSeoDescription(id),
+    onSuccess: (description, id) => {
+      queryClient.setQueryData<{ documents: SeoDocument[]; aiGatewayEnabled: boolean }>(
+        documentKeys.seo,
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            documents: old.documents.map(doc =>
+              doc._id === id ? { ...doc, description } : doc
+            )
+          };
+        }
+      );
     }
   });
 }

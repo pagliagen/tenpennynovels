@@ -3,8 +3,8 @@ import { AdminAuthMiddleware } from '../middleware/adminAuth';
 import DocumentSubtype from '@database/models/DocumentSubtype';
 import Document from '@database/models/Document';
 import { logger } from '../utils/logger';
-import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
-import { errorResponse, getRequestId } from '@shared/utils/apiResponse';
+import type { SuccessResponse, ErrorResponse } from '@shared/types/responses';
+import { successResponse, errorResponse, getRequestId } from '@shared/utils/apiResponse';
 
 const router = Router();
 
@@ -26,11 +26,7 @@ router.get('/',
 
       const subtypes = await DocumentSubtype.find(filter).sort({ type: 1, order: 1 }).lean();
 
-      res.json({
-        result: true,
-        data: subtypes,
-        timestamp: new Date().toISOString()
-      });
+      res.json(successResponse(subtypes, undefined, getRequestId(req)));
     } catch (error: any) {
       logger.error('Error fetching subtypes:', error);
       res.status(500).json(errorResponse(
@@ -88,12 +84,7 @@ router.post('/',
 
       logger.info(`DocumentSubtype created: ${subtype._id} (${type}/${slug})`);
 
-      res.status(201).json({
-        result: true,
-        data: subtype,
-        message: 'Subtype creato con successo',
-        timestamp: new Date().toISOString()
-      });
+      res.status(201).json(successResponse(subtype, undefined, getRequestId(req)));
     } catch (error: any) {
       logger.error('Error creating subtype:', error);
       res.status(500).json(errorResponse(
@@ -152,12 +143,7 @@ router.patch('/:id',
         }
       }
 
-      res.json({
-        result: true,
-        data: subtype,
-        message: 'Subtype aggiornato con successo',
-        timestamp: new Date().toISOString()
-      });
+      res.json(successResponse(subtype, undefined, getRequestId(req)));
     } catch (error: any) {
       logger.error('Error updating subtype:', error);
       res.status(500).json(errorResponse(
@@ -201,11 +187,7 @@ router.delete('/:id',
 
       logger.info(`DocumentSubtype deleted: ${id}`);
 
-      res.json({
-        result: true,
-        message: 'Subtype eliminato con successo',
-        timestamp: new Date().toISOString()
-      });
+      res.json(successResponse(null, undefined, getRequestId(req)));
     } catch (error: any) {
       logger.error('Error deleting subtype:', error);
       res.status(500).json(errorResponse(
@@ -247,11 +229,7 @@ router.put('/reorder',
 
       logger.info(`Reordered ${orderedIds.length} subtypes for type=${type}`);
 
-      res.json({
-        result: true,
-        message: `${orderedIds.length} subtypes riordinati con successo`,
-        timestamp: new Date().toISOString()
-      });
+      res.json(successResponse(null, undefined, getRequestId(req)));
     } catch (error: any) {
       logger.error('Error reordering subtypes:', error);
       res.status(500).json(errorResponse(

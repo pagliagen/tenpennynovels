@@ -18,6 +18,12 @@ router.get('/',
   DocumentManagementController.getDocuments
 );
 
+// SEO data list (all documents with title + description + aiGatewayEnabled flag)
+router.get('/seo',
+  AdminAuthMiddleware.requireGranularPermission('documents.read'),
+  DocumentManagementController.getSeoDocuments
+);
+
 // Create new document
 router.post('/',
   AdminAuthMiddleware.requireGranularPermission('documents.create'),
@@ -82,6 +88,14 @@ router.post('/:id/regenerate-chunks',
   AdminAuthMiddleware.logAdminAction('document.regenerate_chunks', 'document_management'),
   autoLogOutcome,
   DocumentManagementController.regenerateChunks
+);
+
+// Regenerate SEO description via AI gateway
+router.post('/:id/regenerate-seo',
+  AdminAuthMiddleware.requireGranularPermission('documents.update'),
+  AdminAuthMiddleware.logAdminAction('document.regenerate_seo', 'document_management'),
+  autoLogOutcome,
+  DocumentManagementController.regenerateSeoDescription
 );
 
 export { router as documentRoutes };
