@@ -6,6 +6,7 @@ dist/
 *.js.map
 !services/unified-backend/bootstrap.js
 *.d.ts
+!**/src/types/*.d.ts
 *.d.ts.map 
 .env
 .env.*
