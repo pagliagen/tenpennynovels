@@ -9,6 +9,7 @@
  */
 
 import React, { useState, useMemo } from 'react';
+import classNames from 'classnames';
 import Head from 'next/head';
 import { ManagementLayout } from '@/components/layout/ManagementLayout';
 import { ConfigurableDataTable } from '@/components/shared/ConfigurableDataTable';
@@ -144,106 +145,77 @@ export default function CharacterFaceClaims() {
     if (!selectedGroup) return null;
 
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      <div className={styles.faceClaimsStack}>
         {/* Header */}
         <div>
-          <h3 style={{ margin: 0, fontSize: '1.25rem', marginBottom: '8px' }}>
+          <h3 className={styles.faceClaimsTitle}>
             {selectedGroup.prestavolto}
           </h3>
-          <p style={{ margin: 0, fontSize: '0.9rem', color: 'rgba(255,255,255,0.6)' }}>
+          <p className={styles.faceClaimsSubtitle}>
             {selectedGroup.duplicateCount} personaggi usano questo prestavolto
           </p>
         </div>
 
         {/* Bulk Actions */}
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '16px' }}>
+        <div className={styles.faceClaimsDivider}>
           <button
+            type="button"
             onClick={handleApproveAll}
             disabled={isBulkApproving || selectedGroup.characters.every((c) => c.prestavoltoStatus === 'approved')}
-            style={{
-              width: '100%',
-              padding: '12px',
-              background: '#4caf50',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '4px',
-              fontSize: '0.95rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              opacity: isBulkApproving || selectedGroup.characters.every((c) => c.prestavoltoStatus === 'approved') ? 0.5 : 1
-            }}
+            className={styles.faceClaimsBulkBtn}
           >
             {isBulkApproving ? 'Approvazione in corso...' : '✓ Approva Tutti'}
           </button>
         </div>
 
         {/* Character List */}
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '16px' }}>
-          <h4 style={{ margin: '0 0 16px 0', fontSize: '1rem', color: 'rgba(255,255,255,0.8)' }}>
+        <div className={styles.faceClaimsDivider}>
+          <h4 className={styles.faceClaimsSectionTitle}>
             Personaggi
           </h4>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div className={styles.faceClaimsCharList}>
             {selectedGroup.characters.map((character) => (
               <div
                 key={character._id}
-                style={{
-                  padding: '16px',
-                  background: 'rgba(255,255,255,0.05)',
-                  borderRadius: '8px',
-                  border: '1px solid rgba(255,255,255,0.1)'
-                }}
+                className={styles.faceClaimsCharCard}
               >
                 {/* Character Info */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                <div className={styles.faceClaimsCharRow}>
                   {character.avatar && (
                     <img
                       src={character.avatar}
                       alt={character.name}
-                      style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover' }}
+                      className={styles.faceClaimsAvatar}
                     />
                   )}
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 600, fontSize: '1rem' }}>
+                  <div className={styles.faceClaimsCharMeta}>
+                    <div className={styles.faceClaimsCharName}>
                       {character.name} {character.surname}
                     </div>
-                    <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)' }}>
+                    <div className={styles.faceClaimsCharSub}>
                       Status: {character.playerStatus} · Prestavolto: {character.prestavoltoStatus || 'null'}
                     </div>
                   </div>
                 </div>
 
                 {/* Actions */}
-                <div style={{ display: 'flex', gap: '8px' }}>
+                <div className={styles.faceClaimsActionRow}>
                   <button
+                    type="button"
                     onClick={() => handleApproveCharacter(character)}
                     disabled={isApproving || character.prestavoltoStatus === 'approved'}
-                    style={{
-                      flex: 1,
-                      padding: '8px',
-                      background: character.prestavoltoStatus === 'approved' ? '#2e7d32' : '#4caf50',
-                      color: '#fff',
-                      border: 'none',
-                      borderRadius: '4px',
-                      fontSize: '0.85rem',
-                      cursor: character.prestavoltoStatus === 'approved' ? 'default' : 'pointer',
-                      opacity: character.prestavoltoStatus === 'approved' ? 0.7 : 1
-                    }}
+                    className={classNames(
+                      styles.faceClaimApprove,
+                      character.prestavoltoStatus === 'approved' && styles.faceClaimApproveApproved
+                    )}
                   >
                     {character.prestavoltoStatus === 'approved' ? '✓ Approvato' : 'Approva'}
                   </button>
                   <button
+                    type="button"
                     onClick={() => handleRejectCharacter(character)}
                     disabled={isRejecting}
-                    style={{
-                      flex: 1,
-                      padding: '8px',
-                      background: '#f44336',
-                      color: '#fff',
-                      border: 'none',
-                      borderRadius: '4px',
-                      fontSize: '0.85rem',
-                      cursor: 'pointer'
-                    }}
+                    className={styles.faceClaimReject}
                   >
                     Rifiuta
                   </button>
@@ -271,7 +243,7 @@ export default function CharacterFaceClaims() {
         </div>
 
         {error && (
-          <div style={{ padding: '16px', background: '#f44336', color: '#fff', borderRadius: '8px', marginBottom: '24px' }}>
+          <div className={styles.faceClaimsErrorBanner}>
             Errore nel caricamento: {(error as Error).message}
           </div>
         )}

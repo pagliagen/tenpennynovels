@@ -1,0 +1,136 @@
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: rotate(0deg);
+  }
+  50% {
+    opacity: 0.5;
+    transform: rotate(180deg);
+  }
+}
+
+.root {
+  padding: 2rem;
+  font-family: Merriweather, serif;
+  background: #000000;
+  height: 100%;
+}
+
+.title {
+  font-family: 'Playfair Display', serif;
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  color: #8b4513;
+}
+
+.tagline {
+  font-size: 1.1rem;
+  margin-bottom: 2rem;
+  color: #333;
+}
+
+.statusPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.5rem;
+  background-color: #8b4513;
+  border-radius: 8px;
+}
+
+.statusOk {
+  color: green;
+}
+
+.statusBad {
+  color: red;
+}
+
+.statusWs {
+  font-weight: inherit;
+}
+
+.statusWsConnected {
+  color: green;
+}
+
+.statusWsConnecting {
+  color: orange;
+}
+
+.statusWsDisconnected {
+  color: #666;
+}
+
+.statusWsError {
+  color: red;
+}
+
+.spinner {
+  display: inline-block;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.feedSection {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background-color: #8b4513;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+
+.feedTitle {
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+  color: #fff;
+}
+
+.feedEmpty {
+  color: #fff;
+  font-style: italic;
+}
+
+.feedList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.eventCard {
+  padding: 0.75rem;
+  background-color: #fff;
+  border-radius: 4px;
+  border: 1px solid #e0e0e0;
+  font-size: 0.9rem;
+}
+
+.eventHeader {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.25rem;
+}
+
+.eventType {
+  color: #2c5282;
+}
+
+.eventTime {
+  color: #999;
+  font-size: 0.85rem;
+}
+
+.eventPre {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #555;
+  white-space: pre-wrap;
+  word-break: break-word;
+  background-color: #f5f5f5;
+  padding: 0.5rem;
+  border-radius: 4px;
+  max-height: 100px;
+  overflow-y: auto;
+}

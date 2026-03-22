@@ -94,23 +94,20 @@ export default function DeleteAccountPage() {
     >
       {/* Show confirmation button if not yet deleted */}
       {!globalSuccess && !loading && token && (
-        <div style={{ textAlign: 'center', margin: '2rem 0' }}>
-          <p style={{ marginBottom: '2rem', fontSize: '1.1rem', lineHeight: '1.6' }}>
+        <div className="delete-account-page__block">
+          <p className="delete-account-page__lead">
             Sei sicuro di voler eliminare il tuo account?
           </p>
-          <p style={{ marginBottom: '2rem', fontSize: '0.9rem', opacity: 0.8 }}>
+          <p className="delete-account-page__warning">
             Questa azione è irreversibile. Tutti i tuoi dati personali saranno anonimizzati e i tuoi personaggi saranno rimossi.
           </p>
 
-          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+          <div className="delete-account-page__actions">
             <Button
               type="button"
               variant="primary"
+              className="delete-account-page__dangerBtn"
               onClick={() => setShowConfirmDialog(true)}
-              style={{
-                backgroundColor: '#dc3545',
-                borderColor: '#dc3545',
-              }}
             >
               Elimina Account
             </Button>
@@ -128,11 +125,11 @@ export default function DeleteAccountPage() {
 
       {/* Show loading state */}
       {loading && (
-        <div style={{ textAlign: 'center', margin: '2rem 0' }}>
-          <p style={{ color: 'rgba(255, 149, 0, 0.8)' }}>
+        <div className="delete-account-page__block">
+          <p className="delete-account-page__loadingTitle">
             Stiamo eliminando il tuo account...
           </p>
-          <p style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.9rem', marginTop: '1rem' }}>
+          <p className="delete-account-page__loadingSub">
             Questa operazione potrebbe richiedere alcuni secondi.
           </p>
         </div>
@@ -140,8 +137,8 @@ export default function DeleteAccountPage() {
 
       {/* Show success with redirect button */}
       {globalSuccess && (
-        <div style={{ textAlign: 'center', marginTop: '2rem' }}>
-          <p style={{ marginBottom: '1rem', fontSize: '0.9rem', color: 'rgba(255, 255, 255, 0.7)' }}>
+        <div className="delete-account-page__redirect">
+          <p className="delete-account-page__redirectText">
             Verrai reindirizzato alla home page...
           </p>
           <Button

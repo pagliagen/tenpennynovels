@@ -118,6 +118,10 @@
         color: $color-text-primary;
       }
     }
+
+    &.thActions {
+      text-align: right;
+    }
   }
 
   td {

@@ -12,6 +12,7 @@
 'use client';
 
 import { useState } from 'react';
+import classNames from 'classnames';
 
 import { usePublicCharacters } from '@/hooks/useOnGameMail';
 import { useAuthStore } from '@/store/authStore';
@@ -82,46 +83,18 @@ export function RecipientSelector({
 
       {/* Selected recipients display */}
       {selectedCharacters.length > 0 && (
-        <div
-          style={{
-            marginBottom: '0.75rem',
-            padding: '0.5rem',
-            background: 'rgba(255, 149, 0, 0.15)',
-            borderRadius: '4px',
-            border: '1px solid rgba(255, 149, 0, 0.4)',
-          }}
-        >
-          <div style={{ fontSize: '0.8125rem', color: '#ffd700', marginBottom: '0.5rem', fontWeight: 600 }}>
+        <div className={styles.recipientSelectedPanel}>
+          <div className={styles.recipientSelectedHeading}>
             Selezionati ({selectedCharacters.length}):
           </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+          <div className={styles.recipientChips}>
             {selectedCharacters.map((char) => (
-              <div
-                key={char!._id}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  padding: '0.25rem 0.75rem',
-                  background: 'rgba(139, 69, 19, 0.8)',
-                  borderRadius: '4px',
-                  fontSize: '0.875rem',
-                  color: '#ffe4b5',
-                }}
-              >
+              <div key={char!._id} className={styles.recipientChip}>
                 <span>{char!.name}</span>
                 <button
                   type="button"
+                  className={styles.recipientChipRemove}
                   onClick={() => handleRemove(char!._id)}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: '#ff9500',
-                    cursor: 'pointer',
-                    padding: '0',
-                    fontSize: '1rem',
-                    lineHeight: '1',
-                  }}
                   title="Rimuovi"
                 >
                   ×
@@ -142,18 +115,9 @@ export function RecipientSelector({
       />
 
       {/* Character list */}
-      <div
-        style={{
-          maxHeight: '200px',
-          overflowY: 'auto',
-          marginTop: '0.5rem',
-          border: '1px solid rgba(139, 69, 19, 0.6)',
-          borderRadius: '4px',
-          background: 'rgba(20, 20, 20, 0.8)',
-        }}
-      >
+      <div className={styles.recipientList}>
         {filteredCharacters.length === 0 && (
-          <div style={{ padding: '1rem', textAlign: 'center', color: '#999' }}>
+          <div className={styles.recipientListEmpty}>
             {search ? 'Nessun personaggio trovato' : 'Nessun personaggio disponibile'}
           </div>
         )}
@@ -162,37 +126,21 @@ export function RecipientSelector({
           return (
             <div
               key={char._id}
+              role="button"
+              tabIndex={0}
               onClick={() => handleSelect(char._id)}
-              style={{
-                padding: '0.75rem',
-                cursor: 'pointer',
-                background: isSelected
-                  ? 'rgba(255, 149, 0, 0.3)'
-                  : 'transparent',
-                borderBottom: '1px solid rgba(139, 69, 19, 0.3)',
-                borderLeft: isSelected ? '3px solid #ff9500' : '3px solid transparent',
-                transition: 'all 0.2s ease',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}
-              onMouseEnter={(e) => {
-                if (!isSelected) {
-                  e.currentTarget.style.background = 'rgba(60, 40, 20, 0.8)';
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleSelect(char._id);
                 }
               }}
-              onMouseLeave={(e) => {
-                if (!isSelected) {
-                  e.currentTarget.style.background = 'transparent';
-                }
-              }}
+              className={classNames(styles.recipientRow, isSelected && styles.recipientRowSelected)}
             >
-              <span style={{ color: isSelected ? '#ffd700' : '#e8e0d5' }}>
+              <span className={isSelected ? styles.recipientNameSelected : styles.recipientName}>
                 {char.name}
               </span>
-              {isSelected && (
-                <span style={{ color: '#ff9500', fontSize: '1.125rem' }}>✓</span>
-              )}
+              {isSelected && <span className={styles.recipientCheck}>✓</span>}
             </div>
           );
         })}

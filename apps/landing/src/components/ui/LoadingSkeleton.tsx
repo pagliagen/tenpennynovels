@@ -19,7 +19,7 @@
  * @module components/ui/LoadingSkeleton
  */
 
-import React from 'react';
+import React, { type CSSProperties } from 'react';
 
 /**
  * Skeleton variant types
@@ -150,7 +150,12 @@ export const LoadingSkeleton: React.FC<LoadingSkeletonProps> = ({
       className={`loading-skeleton loading-skeleton--${variant} ${
         animated ? 'loading-skeleton--animated' : ''
       } ${variant === 'avatar' ? 'loading-skeleton--circle' : ''} ${className}`}
-      style={{ width: finalWidth, height: finalHeight }}
+      style={
+        {
+          '--skeleton-width': finalWidth,
+          '--skeleton-height': finalHeight,
+        } as CSSProperties
+      }
       role="status"
       aria-label="Caricamento in corso..."
     />

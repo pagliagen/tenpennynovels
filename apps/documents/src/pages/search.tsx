@@ -14,6 +14,7 @@ import { SEO } from '@/components/SEO';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
 import { API_CONFIG } from '@/constants/config';
+import styles from '@/styles/pages/SearchPage.module.scss';
 
 interface SearchResult {
   title: string;
@@ -86,12 +87,12 @@ export default function SearchPage() {
         noindex  // Search results pages should not be indexed
       />
 
-      <div className="search-page" style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
+      <div className={`search-page ${styles.page}`}>
         <h1>Ricerca Documenti</h1>
 
         {/* Search Query Display */}
         {q && (
-          <p style={{ marginBottom: '2rem', color: '#666' }}>
+          <p className={styles.lead}>
             Risultati per: <strong>{q}</strong>
           </p>
         )}
@@ -111,53 +112,37 @@ export default function SearchPage() {
         {!loading && !error && searchPerformed && (
           <>
             {results.length === 0 ? (
-              <div style={{ padding: '2rem', textAlign: 'center', color: '#666' }}>
+              <div className={styles.emptyState}>
                 <p>Nessun risultato trovato per "{q}"</p>
-                <p style={{ marginTop: '1rem', fontSize: '0.9rem' }}>
+                <p className={styles.emptyHint}>
                   Prova con termini diversi o verifica l'ortografia.
                 </p>
               </div>
             ) : (
               <div className="search-results">
-                <p style={{ marginBottom: '1.5rem', color: '#666' }}>
+                <p className={styles.resultsLead}>
                   {results.length} {results.length === 1 ? 'risultato' : 'risultati'}
                 </p>
 
-                <ul style={{ listStyle: 'none', padding: 0 }}>
+                <ul className={styles.resultList}>
                   {results.map((result, index) => (
-                    <li key={`${result.url}-${index}`} style={{ marginBottom: '1.5rem' }}>
-                      <div style={{
-                        padding: '1rem',
-                        border: '1px solid #ddd',
-                        borderRadius: '4px',
-                        transition: 'border-color 0.2s'
-                      }}>
+                    <li key={`${result.url}-${index}`} className={styles.resultItem}>
+                      <div className={styles.resultCard}>
                         <Link
                           href={result.url}
-                          style={{
-                            fontSize: '1.1rem',
-                            fontWeight: 'bold',
-                            color: '#333',
-                            textDecoration: 'none'
-                          }}
+                          className={styles.resultLink}
                         >
                           {result.title}
                         </Link>
-                        <div style={{
-                          marginTop: '0.5rem',
-                          fontSize: '0.85rem',
-                          color: '#666'
-                        }}>
-                          <span style={{
-                            display: 'inline-block',
-                            padding: '0.2rem 0.5rem',
-                            background: result.type === 'ambientazione' ? '#e3f2fd' : '#f3e5f5',
-                            borderRadius: '3px',
-                            marginRight: '0.5rem'
-                          }}>
+                        <div className={styles.resultMeta}>
+                          <span
+                            className={`${styles.typeBadge} ${
+                              result.type === 'ambientazione' ? styles.typeAmbientazione : styles.typeRegolamento
+                            }`}
+                          >
                             {result.type === 'ambientazione' ? 'Ambientazione' : 'Regolamento'}
                           </span>
-                          <span style={{ color: '#999' }}>{result.url}</span>
+                          <span className={styles.resultUrl}>{result.url}</span>
                         </div>
                       </div>
                     </li>
@@ -170,7 +155,7 @@ export default function SearchPage() {
 
         {/* No Query State */}
         {!q && !loading && (
-          <div style={{ padding: '2rem', textAlign: 'center', color: '#666' }}>
+          <div className={styles.emptyState}>
             <p>Inserisci un termine di ricerca per iniziare.</p>
           </div>
         )}

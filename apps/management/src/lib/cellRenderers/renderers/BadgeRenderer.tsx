@@ -2,9 +2,11 @@
  * Badge Cell Renderer - Display value as a colored badge
  */
 
+import type { CSSProperties } from 'react';
 import React from 'react';
-import classNames from 'classnames';
 import { CellRendererProps } from '../registry';
+
+import styles from './CellRenderers.module.scss';
 
 /**
  * Default badge colors
@@ -24,7 +26,7 @@ const DEFAULT_COLORS: Record<string, string> = {
 
 export function BadgeRenderer({ value, column }: CellRendererProps): React.ReactNode {
   if (value === null || value === undefined || value === '') {
-    return <span style={{ color: '#999' }}>-</span>;
+    return <span className={styles.empty}>-</span>;
   }
 
   const stringValue = String(value).toLowerCase();
@@ -37,16 +39,8 @@ export function BadgeRenderer({ value, column }: CellRendererProps): React.React
 
   return (
     <span
-      style={{
-        display: 'inline-block',
-        padding: '4px 8px',
-        borderRadius: '4px',
-        fontSize: '0.85em',
-        fontWeight: 600,
-        backgroundColor: `${color}20`,
-        color: color,
-        border: `1px solid ${color}`
-      }}
+      className={styles.badge}
+      style={{ '--badge-color': color } as CSSProperties}
     >
       {label}
     </span>

@@ -130,6 +130,10 @@
     color: $color-text-primary;
     white-space: nowrap;
 
+    &.colWidth {
+      width: var(--col-width);
+    }
+
     &.sortable {
       cursor: pointer;
       user-select: none;

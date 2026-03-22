@@ -1,0 +1,55 @@
+/**
+ * Delete account (token) page content
+ */
+
+.delete-account-page {
+  &__block {
+    text-align: center;
+    margin: 2rem 0;
+  }
+
+  &__lead {
+    margin-bottom: 2rem;
+    font-size: 1.1rem;
+    line-height: 1.6;
+  }
+
+  &__warning {
+    margin-bottom: 2rem;
+    font-size: 0.9rem;
+    opacity: 0.8;
+  }
+
+  &__actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+  }
+
+  &__loadingTitle {
+    color: rgba(255, 149, 0, 0.8);
+  }
+
+  &__loadingSub {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.9rem;
+    margin-top: 1rem;
+  }
+
+  &__redirect {
+    text-align: center;
+    margin-top: 2rem;
+  }
+
+  &__redirectText {
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.7);
+  }
+}
+
+/* Primary button styled as destructive CTA */
+.button.button--primary.delete-account-page__dangerBtn {
+  background-color: #dc3545;
+  border-color: #dc3545;
+}

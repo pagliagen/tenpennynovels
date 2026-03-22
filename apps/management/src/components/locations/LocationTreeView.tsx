@@ -5,7 +5,7 @@
  * Supporta: espansione/collasso, azioni context menu, drag per riordinamento.
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, type CSSProperties } from 'react';
 import classNames from 'classnames';
 import styles from '@/styles/components/LocationTreeView.module.scss';
 import type { LocationTreeNode } from '@/types/api/Location';
@@ -47,7 +47,7 @@ function TreeNode({ node, depth, onEdit, onCreateChild, onDelete }: TreeNodeProp
           [styles.hidden]: !node.visible,
           [styles.private]: node.private
         })}
-        style={{ paddingLeft: `${depth * 24 + 12}px` }}
+        style={{ '--depth': depth } as CSSProperties}
       >
         {/* Expand/collapse toggle */}
         <button

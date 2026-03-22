@@ -5,9 +5,11 @@
 import React from 'react';
 import { CellRendererProps } from '../registry';
 
+import styles from './CellRenderers.module.scss';
+
 export function TextRenderer({ value }: CellRendererProps): React.ReactNode {
   if (value === null || value === undefined || value === '') {
-    return <span style={{ color: '#999' }}>-</span>;
+    return <span className={styles.empty}>-</span>;
   }
 
   // Handle arrays: show length (count)
@@ -17,7 +19,7 @@ export function TextRenderer({ value }: CellRendererProps): React.ReactNode {
 
   // Handle objects: show [Object] warning
   if (typeof value === 'object') {
-    return <span style={{ color: '#999' }}>[Object]</span>;
+    return <span className={styles.empty}>[Object]</span>;
   }
 
   return <span>{String(value)}</span>;

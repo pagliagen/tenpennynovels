@@ -130,6 +130,7 @@
 
 .documentNode {
   border-left: 2px solid rgba(255, 255, 255, 0.05);
+  padding-left: calc(var(--depth, 0) * 24px);
 }
 
 .documentRow {

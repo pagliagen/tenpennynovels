@@ -10,6 +10,8 @@
 
 'use client';
 
+import type { CSSProperties } from 'react';
+
 import { CharacterSheetData, CharacterSheetPermissions } from '@/hooks/useCharacterSheetData';
 import { useAuthStore } from '@/store/authStore';
 import { useWindowManagerStore } from '@/store/windowManagerStore';
@@ -104,10 +106,6 @@ export function CharacterSheetLeftPanel({
             onClick={handleInGameMessage}
             disabled={!canSendInGameMessage}
             title={canSendInGameMessage ? 'Invia messaggio in-character' : 'Solo personaggi approvati possono inviare messaggi IN-GAME'}
-            style={{
-              opacity: canSendInGameMessage ? 1 : 0.5,
-              cursor: canSendInGameMessage ? 'pointer' : 'not-allowed'
-            }}
           >
             <span className={styles.btnIcon}>💬</span>
             <span className={styles.btnText}>Messaggio IN-GAME</span>
@@ -122,19 +120,27 @@ export function CharacterSheetLeftPanel({
 
       {/* Character Info Preview */}
       <div className={styles.infoPreview}>
-        <h3 style={{ margin: '0 0 0.5rem 0', color: '#ff9500', fontSize: '1.125rem' }}>
+        <h3 className={styles.infoName}>
           {character.name}
         </h3>
         {character.occupation && (
-          <p style={{ margin: '0 0 0.5rem 0', color: '#e8e0d5', fontSize: '0.9375rem' }}>
+          <p className={styles.infoOccupation}>
             {character.occupation.name}
           </p>
         )}
-        <p style={{ margin: '0', color: '#999', fontSize: '0.8125rem' }}>
-          Status: <span style={{ color: getStatusColor(character.playerStatus) }}>{getStatusDisplay(character.playerStatus)}</span>
+        <p className={styles.statusLine}>
+          Status:{' '}
+          <span
+            className={styles.statusValue}
+            style={
+              { '--character-status-color': getStatusColor(character.playerStatus) } as CSSProperties
+            }
+          >
+            {getStatusDisplay(character.playerStatus)}
+          </span>
         </p>
         {permissions.isOwner && (
-          <p style={{ margin: '0.5rem 0 0 0', color: '#ff9500', fontSize: '0.8125rem', fontWeight: 600 }}>
+          <p className={styles.ownerNote}>
             👤 Tuo Personaggio
           </p>
         )}

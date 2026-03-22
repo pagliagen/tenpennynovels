@@ -60,11 +60,12 @@
 
   // Portal variant (rendered outside table via React Portal)
   &.portal {
-    position: fixed; // Overridden by inline style but kept for clarity
-    top: auto; // Reset
-    left: auto; // Reset
-    right: auto; // Reset
+    position: fixed;
+    top: var(--menu-top, 0);
+    left: var(--menu-left, 0);
+    right: auto;
     margin-top: 0;
+    z-index: 9999;
   }
 }
 

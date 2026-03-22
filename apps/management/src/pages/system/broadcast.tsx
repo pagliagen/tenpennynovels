@@ -101,8 +101,8 @@ export default function Broadcast() {
         {/* Usage Tips */}
         <section className={styles.section}>
           <h2>💡 Linee Guida</h2>
-          <div style={{ padding: '0 16px' }}>
-            <ul style={{ color: 'var(--color-text-secondary)', lineHeight: '1.8', fontSize: '14px' }}>
+          <div className={styles.infoListPad}>
+            <ul className={styles.infoListTips}>
               <li>Mantieni i messaggi brevi e chiari (max {MAX_MESSAGE_LENGTH} caratteri)</li>
               <li>Usa broadcast solo per annunci importanti (manutenzione, nuove funzionalità, eventi)</li>
               <li>Evita spam: limita i broadcast a massimo 2-3 al giorno</li>

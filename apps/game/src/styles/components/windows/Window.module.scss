@@ -47,6 +47,18 @@
   }
 }
 
+.headerGrab {
+  cursor: grab;
+}
+
+.headerGrabbing {
+  cursor: grabbing;
+}
+
+.headerNoDrag {
+  cursor: default;
+}
+
 .title {
   font-family: 'Georgia', 'Times New Roman', serif;
   font-size: 18px;

@@ -4,8 +4,10 @@
  * Perfect for rendering arrays like characterRoles, tags, categories, etc.
  */
 
-import React from 'react';
+import React, { type CSSProperties } from 'react';
 import { CellRendererProps } from '../registry';
+
+import styles from './CellRenderers.module.scss';
 
 /**
  * Default badge colors for roles
@@ -17,10 +19,10 @@ const ROLE_COLORS: Record<string, string> = {
   gestore: '#f44336'      // Red
 };
 
-export function BadgeListRenderer({ value, column }: CellRendererProps): React.ReactNode {
+export function BadgeListRenderer({ value }: CellRendererProps): React.ReactNode {
   // Handle null/undefined
   if (value === null || value === undefined) {
-    return <span style={{ color: '#999' }}>-</span>;
+    return <span className={styles.empty}>-</span>;
   }
 
   // Convert to array if needed
@@ -34,12 +36,12 @@ export function BadgeListRenderer({ value, column }: CellRendererProps): React.R
 
   // Empty array
   if (items.length === 0) {
-    return <span style={{ color: '#999' }}>Nessuno</span>;
+    return <span className={styles.empty}>Nessuno</span>;
   }
 
   // Render badges
   return (
-    <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+    <div className={styles.badgeList}>
       {items.map((item, index) => {
         const itemLower = String(item).toLowerCase();
         const color = ROLE_COLORS[itemLower] || '#666';
@@ -47,17 +49,8 @@ export function BadgeListRenderer({ value, column }: CellRendererProps): React.R
         return (
           <span
             key={index}
-            style={{
-              display: 'inline-block',
-              padding: '4px 8px',
-              borderRadius: '4px',
-              fontSize: '0.85em',
-              fontWeight: 600,
-              backgroundColor: `${color}20`,
-              color: color,
-              border: `1px solid ${color}`,
-              whiteSpace: 'nowrap'
-            }}
+            className={styles.badgeListItem}
+            style={{ '--badge-color': color } as CSSProperties}
           >
             {String(item)}
           </span>

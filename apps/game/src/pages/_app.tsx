@@ -29,6 +29,8 @@ import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 
+import sessionBootStyles from '@/styles/SessionBoot.module.scss';
+
 
 /** Devtools caricati solo sul client e solo in dev (pacchetto in devDependencies, assente in prod) */
 const ReactQueryDevtools = process.env.NODE_ENV === 'development'
@@ -165,17 +167,7 @@ export default function App({ Component, pageProps }: AppProps): JSX.Element {
   // This prevents race condition where useAuth runs before sessionId is saved
   if (!isSessionReady) {
     return (
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          minHeight: '100vh',
-          fontFamily: 'system-ui, -apple-system, sans-serif',
-          fontSize: '1.5rem',
-          color: '#555',
-        }}
-      >
+      <div className={sessionBootStyles.root}>
         Initializing...
       </div>
     );

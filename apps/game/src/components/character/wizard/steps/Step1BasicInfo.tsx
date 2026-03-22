@@ -257,7 +257,7 @@ export function Step1BasicInfo(): JSX.Element {
         {/* Name Availability Feedback */}
         {(nameCheck.checking || nameCheck.available !== null) && (
           <div className={styles.formRow}>
-            <div className={styles.formGroup} style={{ gridColumn: '1 / -1' }}>
+            <div className={`${styles.formGroup} ${styles.formGroupFullWidth}`}>
               <div className={`${styles.nameAvailability} ${
                 nameCheck.checking ? styles.checking :
                 nameCheck.available ? styles.available :
@@ -515,7 +515,7 @@ export function Step1BasicInfo(): JSX.Element {
         {/* Face Claim Validation Feedback */}
         {faceClaimCheck.checking && (
           <div className={styles.formRow}>
-            <div className={styles.formGroup} style={{ gridColumn: '1 / -1' }}>
+            <div className={`${styles.formGroup} ${styles.formGroupFullWidth}`}>
               <div className={`${styles.nameAvailability} ${styles.checking}`}>
                 Verifica prestavolto...
               </div>
@@ -525,7 +525,7 @@ export function Step1BasicInfo(): JSX.Element {
 
         {!faceClaimCheck.checking && faceClaimCheck.exactMatch && (
           <div className={styles.formRow}>
-            <div className={styles.formGroup} style={{ gridColumn: '1 / -1' }}>
+            <div className={`${styles.formGroup} ${styles.formGroupFullWidth}`}>
               <div className={`${styles.nameAvailability} ${styles.unavailable}`}>
                 ⚠️ Prestavolto già usato da <strong>{faceClaimCheck.exactMatch.characterName}</strong>. Richiederà
                 approvazione staff.
@@ -536,7 +536,7 @@ export function Step1BasicInfo(): JSX.Element {
 
         {!faceClaimCheck.checking && !faceClaimCheck.exactMatch && basicInfo.prestavolto.length >= 3 && (
           <div className={styles.formRow}>
-            <div className={styles.formGroup} style={{ gridColumn: '1 / -1' }}>
+            <div className={`${styles.formGroup} ${styles.formGroupFullWidth}`}>
               <div className={`${styles.nameAvailability} ${styles.available}`}>
                 ✓ Prestavolto disponibile
               </div>
@@ -548,14 +548,14 @@ export function Step1BasicInfo(): JSX.Element {
         {faceClaimCheck.allFaceClaims.length > 0 && (
           <div className={styles.formGroup}>
             <label className={styles.label}>Prestavolti già usati (clicca per selezionare):</label>
-            <div style={{ maxHeight: '250px', overflowY: 'auto', border: '1px solid #8b7355', borderRadius: '4px' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'Playfair Display, serif' }}>
+            <div className={styles.faceClaimsScroll}>
+              <table className={styles.faceClaimsTable}>
                 <thead>
-                  <tr style={{ background: '#d4c4a8', borderBottom: '2px solid #8b7355' }}>
-                    <th style={{ padding: '0.5rem', textAlign: 'left', fontWeight: 'bold' }}>Prestavolto</th>
-                    <th style={{ padding: '0.5rem', textAlign: 'left', fontWeight: 'bold' }}>Personaggio</th>
-                    <th style={{ padding: '0.5rem', textAlign: 'left', fontWeight: 'bold' }}>Status</th>
-                    <th style={{ padding: '0.5rem', textAlign: 'center', fontWeight: 'bold' }}>Data Assegnazione</th>
+                  <tr className={styles.faceClaimsHeaderRow}>
+                    <th className={styles.faceClaimsTh}>Prestavolto</th>
+                    <th className={styles.faceClaimsTh}>Personaggio</th>
+                    <th className={styles.faceClaimsTh}>Status</th>
+                    <th className={`${styles.faceClaimsTh} ${styles.faceClaimsThCenter}`}>Data Assegnazione</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -563,31 +563,21 @@ export function Step1BasicInfo(): JSX.Element {
                     <tr
                       key={idx}
                       onClick={() => handleChange('prestavolto', claim.prestavolto)}
-                      style={{
-                        cursor: 'pointer',
-                        borderBottom: '1px solid #e0d5c7',
-                        background: idx % 2 === 0 ? '#f9f6f0' : '#ffffff'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = '#f0e8d8';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = idx % 2 === 0 ? '#f9f6f0' : '#ffffff';
-                      }}
+                      className={styles.faceClaimsRow}
                     >
-                      <td style={{ padding: '0.5rem' }}>{claim.prestavolto}</td>
-                      <td style={{ padding: '0.5rem' }}>{claim.characterName}</td>
-                      <td style={{ padding: '0.5rem', fontSize: '0.85em', color: '#5a4a3a' }}>
+                      <td className={styles.faceClaimsTd}>{claim.prestavolto}</td>
+                      <td className={styles.faceClaimsTd}>{claim.characterName}</td>
+                      <td className={styles.faceClaimsTdMuted}>
                         {claim.playerStatus === 'approved' ? '✓ Approvato' : '⏳ In attesa'}
                       </td>
-                      <td style={{ padding: '0.5rem', fontSize: '0.85em', color: '#5a4a3a', textAlign: 'center' }}>
+                      <td className={`${styles.faceClaimsTdMuted} ${styles.faceClaimsTdCenter}`}>
                         {claim.prestavoltoApprovedAt
                           ? new Date(claim.prestavoltoApprovedAt).toLocaleDateString('it-IT', {
                               day: '2-digit',
                               month: '2-digit',
                               year: 'numeric'
                             })
-                          : <span style={{ color: '#fb8500', fontStyle: 'italic' }}>In attesa</span>
+                          : <span className={styles.faceClaimsPending}>In attesa</span>
                         }
                       </td>
                     </tr>

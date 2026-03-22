@@ -53,7 +53,7 @@ export function OffGameMessageItem({
         <div className={styles.messageTime}>
           {formatTime(message.timestamp)}
           {isSentByMe && (
-            <span style={{ marginLeft: '0.25rem' }}>
+            <span className={styles.readReceipt}>
               {message.readBy.length === 0
                 ? '✓' // Sent
                 : message.readBy.length === 1

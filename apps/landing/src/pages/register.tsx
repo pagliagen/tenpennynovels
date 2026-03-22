@@ -214,36 +214,36 @@ export default function RegisterPage() {
           />
 
           {/* Terms and Conditions Checkbox */}
-          <div style={{ marginTop: '1rem' }}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
+          <div className="register-terms">
+            <div className="register-terms__row">
               <input
                 type="checkbox"
                 id="agreeToTerms"
                 {...register('agreeToTerms')}
                 disabled={loading}
-                style={{ marginTop: '0.25rem', cursor: 'pointer' }}
+                className="register-terms__checkbox"
               />
-              <label htmlFor="agreeToTerms" style={{ fontSize: '0.9rem', color: 'var(--color-text-primary)', cursor: 'pointer' }}>
+              <label htmlFor="agreeToTerms" className="register-terms__label">
                 Accetto i{' '}
                 <button
                   type="button"
+                  className="register-terms__linkBtn"
                   onClick={() => setActiveInfo(activeInfo === 'terms' ? null : 'terms')}
-                  style={{ color: 'var(--color-primary)', textDecoration: 'underline', background: 'none', border: 'none', padding: 0, cursor: 'pointer', font: 'inherit' }}
                 >
                   termini e condizioni
                 </button>{' '}
                 e la{' '}
                 <button
                   type="button"
+                  className="register-terms__linkBtn"
                   onClick={() => setActiveInfo(activeInfo === 'privacy' ? null : 'privacy')}
-                  style={{ color: 'var(--color-primary)', textDecoration: 'underline', background: 'none', border: 'none', padding: 0, cursor: 'pointer', font: 'inherit' }}
                 >
                   privacy policy
-                </button> 
+                </button>
               </label>
             </div>
             {errors.agreeToTerms && (
-              <div style={{ fontSize: '0.85rem', color: 'var(--color-error)', marginTop: '0.25rem' }}>
+              <div className="register-terms__error">
                 {errors.agreeToTerms.message}
               </div>
             )}

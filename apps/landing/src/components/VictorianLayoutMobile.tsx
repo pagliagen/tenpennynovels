@@ -121,7 +121,6 @@ export const VictorianLayoutMobile: React.FC<VictorianLayoutMobileProps> = ({
             fill
             className="victorian-layout-mobile__background-image"
             priority
-            style={{ objectFit: 'cover' }}
           />
           <div className="victorian-layout-mobile__title-container">
             <Image

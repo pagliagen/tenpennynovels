@@ -139,3 +139,158 @@
     }
   }
 }
+
+// Side panel: edit form blocks (character list, permissions, face claims)
+.editFormStack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.editFormSection {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 16px;
+}
+
+.editFormSectionTitle {
+  margin: 0 0 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.sidePanelBody {
+  padding: 1rem;
+}
+
+// Face claims side panel
+.faceClaimsStack {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.faceClaimsTitle {
+  margin: 0;
+  font-size: 1.25rem;
+  margin-bottom: 8px;
+}
+
+.faceClaimsSubtitle {
+  margin: 0;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.faceClaimsDivider {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 16px;
+}
+
+.faceClaimsBulkBtn {
+  width: 100%;
+  padding: 12px;
+  background: #4caf50;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.faceClaimsSectionTitle {
+  margin: 0 0 16px;
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.faceClaimsCharList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.faceClaimsCharCard {
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.faceClaimsCharRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.faceClaimsAvatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.faceClaimsCharMeta {
+  flex: 1;
+}
+
+.faceClaimsCharName {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.faceClaimsCharSub {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.faceClaimsActionRow {
+  display: flex;
+  gap: 8px;
+}
+
+.faceClaimApprove {
+  flex: 1;
+  padding: 8px;
+  background: #4caf50;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.7;
+  }
+}
+
+.faceClaimApproveApproved {
+  background: #2e7d32;
+}
+
+.faceClaimReject {
+  flex: 1;
+  padding: 8px;
+  background: #f44336;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.faceClaimsErrorBanner {
+  padding: 16px;
+  background: #f44336;
+  color: #fff;
+  border-radius: 8px;
+  margin-bottom: 24px;
+}

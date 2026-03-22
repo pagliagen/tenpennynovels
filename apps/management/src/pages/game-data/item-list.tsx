@@ -284,7 +284,7 @@ export default function ItemList() {
             <div className={styles.slideViewport}>
               <div
                 className={styles.slideTrack}
-                style={{ transform: `translateX(-${TABS.findIndex(t => t.key === activeTab) * 100}%)` }}
+                style={{ '--slide-index': TABS.findIndex(t => t.key === activeTab) } as React.CSSProperties}
               >
                 {/* Tab: Base */}
                 <div className={styles.slidePanel}>

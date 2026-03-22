@@ -12,10 +12,12 @@
 
 import Head from 'next/head';
 import { useState, useEffect } from 'react';
+import classNames from 'classnames';
 
 import { GameLayout } from '@/components/layout/GameLayout';
 import { useWebSocket } from '@/contexts/WebSocketContext';
 import { useAuthStore } from '@/store/authStore';
+import styles from '@/styles/pages/HomePage.module.scss';
 
 /**
  * Home Page Component
@@ -63,61 +65,35 @@ export default function HomePage(): JSX.Element {
     };
   }, [isConnected, onLocationEvent, onGlobalEvent, onMessageEvent]);
 
+  const wsStatusClass =
+    status === 'connected'
+      ? styles.statusWsConnected
+      : status === 'connecting' || status === 'reconnecting'
+        ? styles.statusWsConnecting
+        : status === 'disconnected'
+          ? styles.statusWsDisconnected
+          : styles.statusWsError;
+
   return (
     <>
       <Head>
         <title>Ten Penny Novels | Gioco di Ruolo Vittoriano Online</title>
         <meta name="description" content="Gioca a Ten Penny Novels, GDR online ambientato nella Londra Vittoriana del 1890. Sistema Call of Cthulhu con narrazione investigativa in tempo reale." />
       </Head>
-      <style jsx>{`
-        @keyframes pulse {
-          0%, 100% {
-            opacity: 1;
-            transform: rotate(0deg);
-          }
-          50% {
-            opacity: 0.5;
-            transform: rotate(180deg);
-          }
-        }
-      `}</style>
       <GameLayout>
-      <div
-        style={{
-          padding: '2rem',
-          fontFamily: 'Merriweather, serif',
-          background: '#000000',
-          height: '100%',
-        }}
-      >
-        <h1
-          style={{
-            fontFamily: 'Playfair Display, serif',
-            fontSize: '2.5rem',
-            marginBottom: '1rem',
-            color: '#8B4513',
-          }}
-        >
+      <div className={styles.root}>
+        <h1 className={styles.title}>
           Welcome to Ten Penny Novels
         </h1>
 
-        <p style={{ fontSize: '1.1rem', marginBottom: '2rem', color: '#333' }}>
+        <p className={styles.tagline}>
           Victorian Gothic Interactive Fiction
         </p>
 
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '1rem',
-            padding: '1.5rem',
-            backgroundColor: '#8B4513',
-            borderRadius: '8px',
-          }}
-        >
+        <div className={styles.statusPanel}>
           <div>
             <strong>Authentication:</strong>{' '}
-            <span style={{ color: isAuthenticated ? 'green' : 'red' }}>
+            <span className={isAuthenticated ? styles.statusOk : styles.statusBad}>
               {isAuthenticated ? '✓ Authenticated' : '✗ Not Authenticated'}
             </span>
           </div>
@@ -136,21 +112,10 @@ export default function HomePage(): JSX.Element {
 
           <div>
             <strong>WebSocket:</strong>{' '}
-            <span
-              style={{
-                color:
-                  status === 'connected'
-                    ? 'green'
-                    : status === 'connecting' || status === 'reconnecting'
-                    ? 'orange'
-                    : status === 'disconnected'
-                    ? '#666'
-                    : 'red', // error
-              }}
-            >
+            <span className={classNames(styles.statusWs, wsStatusClass)}>
               {status === 'connecting' || status === 'reconnecting' ? (
                 <>
-                  <span style={{ display: 'inline-block', animation: 'pulse 1.5s ease-in-out infinite' }}>
+                  <span className={styles.spinner}>
                     ⟳
                   </span>{' '}
                   {status.charAt(0).toUpperCase() + status.slice(1)}...
@@ -164,62 +129,27 @@ export default function HomePage(): JSX.Element {
 
         {/* WebSocket Event Feed - Live Events Display */}
         {isConnected && (
-          <div
-            style={{
-              marginTop: '2rem',
-              padding: '1.5rem',
-              backgroundColor: '#8B4513',
-              borderRadius: '8px',
-              border: '1px solid #ddd',
-            }}
-          >
-            <h3 style={{ fontSize: '1.2rem', marginBottom: '1rem', color: '#fff' }}>
+          <div className={styles.feedSection}>
+            <h3 className={styles.feedTitle}>
               📡 WebSocket Events (Live Feed)
             </h3>
 
             {events.length === 0 ? (
-              <p style={{ color: '#fff', fontStyle: 'italic' }}>
+              <p className={styles.feedEmpty}>
                 No events received yet. Waiting for WebSocket events...
               </p>
             ) : (
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '0.5rem',
-                  maxHeight: '300px',
-                  overflowY: 'auto',
-                }}
-              >
+              <div className={styles.feedList}>
                 {events.map((event, index) => (
                   <div
                     key={index}
-                    style={{
-                      padding: '0.75rem',
-                      backgroundColor: '#fff',
-                      borderRadius: '4px',
-                      border: '1px solid #e0e0e0',
-                      fontSize: '0.9rem',
-                    }}
+                    className={styles.eventCard}
                   >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-                      <strong style={{ color: '#2c5282' }}>{event.type}</strong>
-                      <span style={{ color: '#999', fontSize: '0.85rem' }}>{event.time}</span>
+                    <div className={styles.eventHeader}>
+                      <strong className={styles.eventType}>{event.type}</strong>
+                      <span className={styles.eventTime}>{event.time}</span>
                     </div>
-                    <pre
-                      style={{
-                        margin: 0,
-                        fontSize: '0.8rem',
-                        color: '#555',
-                        whiteSpace: 'pre-wrap',
-                        wordBreak: 'break-word',
-                        backgroundColor: '#f5f5f5',
-                        padding: '0.5rem',
-                        borderRadius: '4px',
-                        maxHeight: '100px',
-                        overflowY: 'auto',
-                      }}
-                    >
+                    <pre className={styles.eventPre}>
                       {JSON.stringify(event.data, null, 2)}
                     </pre>
                   </div>

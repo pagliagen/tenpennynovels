@@ -27,6 +27,7 @@ import { useEffect, useRef, useCallback } from 'react';
 
 import { WizardContainer } from '@/components/character/wizard/WizardContainer';
 import { GameLayout } from '@/components/layout/GameLayout';
+import styles from '@/styles/pages/WizardPage.module.scss';
 import { useAuthStore } from '@/store/authStore';
 
 /**
@@ -79,18 +80,7 @@ export default function CharacterWizardPage() {
           <meta name="description" content="Crea il tuo personaggio vittoriano per Ten Penny Novels. Sistema Call of Cthulhu con background dettagliato e skills personalizzabili." />
         </Head>
         <GameLayout>
-          <div
-            style={{
-              width: '100%',
-              height: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#e8d4a0',
-              fontFamily: '"Playfair Display", serif',
-              fontSize: '1.2rem',
-            }}
-          >
+          <div className={styles.loadingRoot}>
             Caricamento wizard...
           </div>
         </GameLayout>

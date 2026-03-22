@@ -13,6 +13,7 @@
 'use client';
 
 import { useEffect, useRef, useState, ReactNode } from 'react';
+import classNames from 'classnames';
 
 import { useWindowManagerStore } from '@/store/windowManagerStore';
 import styles from '@/styles/components/windows/Window.module.scss';
@@ -177,9 +178,11 @@ export function Window({ windowState, children }: WindowProps): JSX.Element {
     >
       {/* Window Header */}
       <div
-        className={styles.header}
+        className={classNames(
+          styles.header,
+          isMobile ? styles.headerNoDrag : isDragging ? styles.headerGrabbing : styles.headerGrab
+        )}
         onMouseDown={handleMouseDown}
-        style={{ cursor: isMobile ? 'default' : isDragging ? 'grabbing' : 'grab' }}
       >
         <span className={styles.title}>{getWindowTitle()}</span>
 

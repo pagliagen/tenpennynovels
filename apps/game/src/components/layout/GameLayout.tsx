@@ -387,7 +387,7 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
             >
               Chat OffGame →
               {unreadOffGameChatCount > 0 && (
-                <span style={{ marginLeft: '0.5rem', color: '#25d366', fontWeight: 'bold' }}>
+                <span className={styles.offGameUnreadCount}>
                   ({unreadOffGameChatCount})
                 </span>
               )}
@@ -464,7 +464,7 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
             </div>
             <div className={styles.utilityPopupBody}>
               <p>QUI CI SARANNO LE OPZIONI AUDIO</p>
-              <p style={{ fontSize: '14px', opacity: 0.7, marginTop: '1rem' }}>
+              <p className={styles.utilityPopupPlaceholderNote}>
                 (Placeholder - da implementare)
               </p>
             </div>
@@ -489,7 +489,7 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
             </div>
             <div className={styles.utilityPopupBody}>
               <p>QUI CI SARANNO LE OPZIONI CHAT</p>
-              <p style={{ fontSize: '14px', opacity: 0.7, marginTop: '1rem' }}>
+              <p className={styles.utilityPopupPlaceholderNote}>
                 (Placeholder - da implementare)
               </p>
             </div>

@@ -142,12 +142,11 @@ export function OnGameComposeView({
           Contenuto ({charCount}/{maxLength})
         </label>
         <textarea
-          className={styles.textarea}
+          className={`${styles.textarea} ${styles.composeTextareaTall}`}
           placeholder="Scrivi il tuo messaggio..."
           value={content}
           onChange={(e) => setContent(e.target.value)}
           maxLength={maxLength}
-          style={{ minHeight: '150px' }}
         />
       </div>
 
@@ -155,8 +154,8 @@ export function OnGameComposeView({
       {typeConfig?.deliveryMethod === 'both_options' && (
         <div className={styles.formGroup}>
           <label className={styles.label}>Consegna</label>
-          <div style={{ display: 'flex', gap: '1rem' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div className={styles.deliveryRow}>
+            <label className={styles.radioLabel}>
               <input
                 type="radio"
                 checked={deliveryTarget === 'character'}
@@ -164,7 +163,7 @@ export function OnGameComposeView({
               />
               <span>A mano</span>
             </label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <label className={styles.radioLabel}>
               <input
                 type="radio"
                 checked={deliveryTarget === 'residence'}
@@ -179,13 +178,13 @@ export function OnGameComposeView({
       {/* Express delivery (if type supports it) */}
       {typeConfig?.expressCostMultiplier && (
         <div className={styles.formGroup}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <label className={styles.expressLabelInline}>
             <input
               type="checkbox"
               checked={isExpress}
               onChange={(e) => setIsExpress(e.target.checked)}
             />
-            <span className={styles.label} style={{ marginBottom: 0 }}>
+            <span className={`${styles.label} ${styles.labelInline}`}>
               Consegna espressa (×{typeConfig.expressCostMultiplier})
             </span>
           </label>
@@ -193,21 +192,21 @@ export function OnGameComposeView({
       )}
 
       {/* Postage summary */}
-      <div style={{ padding: '1rem', background: 'rgba(40, 30, 20, 0.8)', borderRadius: '6px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+      <div className={styles.postageBox}>
+        <div className={styles.postageRow}>
           <span>Costo postale:</span>
           <span className={styles.postageCost}>{totalCost}p</span>
         </div>
         {!walletError && wallet && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', color: '#999' }}>
+          <div className={styles.walletRow}>
             <span>Saldo disponibile:</span>
-            <span style={{ color: canAfford ? '#4ade80' : '#ef4444' }}>
+            <span className={canAfford ? styles.walletBalanceOk : styles.walletBalanceBad}>
               {wallet.total}p
             </span>
           </div>
         )}
         {walletError && (
-          <div style={{ fontSize: '0.8125rem', color: '#fbbf24', marginTop: '0.5rem' }}>
+          <div className={styles.walletWarning}>
             ⚠️ Impossibile verificare saldo - procedi comunque
           </div>
         )}

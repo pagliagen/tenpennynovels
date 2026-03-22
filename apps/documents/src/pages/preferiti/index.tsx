@@ -6,6 +6,7 @@ import { SEO } from '@/components/SEO';
 import { useAuthStore } from '@/store/authStore';
 import { useFavorites } from '@/hooks/useFavorites';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import styles from '@/styles/pages/PreferitiIndex.module.scss';
 
 export default function PreferitiIndex() {
   const router = useRouter();
@@ -25,7 +26,7 @@ export default function PreferitiIndex() {
     return (
       <>
         <SEO title="Ten Penny Novels | Preferiti" description="I tuoi documenti preferiti" />
-        <div style={{ textAlign: 'center', padding: '64px' }}>
+        <div className={styles.centerBox}>
           <p>Devi essere autenticato per visualizzare i tuoi documenti preferiti.</p>
         </div>
       </>
@@ -36,7 +37,7 @@ export default function PreferitiIndex() {
     return (
       <>
         <SEO title="Ten Penny Novels | Preferiti" description="I tuoi documenti preferiti" />
-        <div style={{ textAlign: 'center', padding: '64px', fontStyle: 'italic' }}>
+        <div className={styles.centerBoxItalic}>
           <p>Non hai ancora aggiunto documenti ai preferiti.</p>
           <p>
             Usa il pulsante <strong>&#9734; Aggiungi ai preferiti</strong> nelle pagine dei documenti

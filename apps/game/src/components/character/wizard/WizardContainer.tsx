@@ -303,8 +303,9 @@ function WizardContainerInner({ characterId, onSubmittingChange }: WizardContain
         <div className={styles.loading}>
           <p>Errore nel caricamento del personaggio: {characterError?.message || 'Errore sconosciuto'}</p>
           <button
+            type="button"
             onClick={() => refetchCharacter()}
-            style={{ marginTop: '1rem', padding: '0.5rem 1.5rem', cursor: 'pointer' }}
+            className={styles.retryButton}
           >
             Riprova
           </button>

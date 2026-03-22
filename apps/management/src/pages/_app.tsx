@@ -14,6 +14,8 @@ import dynamic from 'next/dynamic';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
+
+import sessionBootStyles from '@/styles/SessionBoot.module.scss';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/lib/api/queryClient';
 
@@ -86,17 +88,7 @@ export default function App({ Component, pageProps }: AppProps) {
   // This prevents race condition where useAuth runs before sessionId is saved
   if (!isSessionReady) {
     return (
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          minHeight: '100vh',
-          fontFamily: 'system-ui, -apple-system, sans-serif',
-          fontSize: '1.5rem',
-          color: '#555',
-        }}
-      >
+      <div className={sessionBootStyles.root}>
         Initializing...
       </div>
     );

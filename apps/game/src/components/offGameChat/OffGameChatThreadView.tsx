@@ -72,7 +72,7 @@ export function OffGameChatThreadView({
           {data?.chat.type === 'group' ? '👥 ' : ''}
           {chatName}
           {data?.chat.type === 'group' && (
-            <span style={{ fontSize: '0.875rem', fontWeight: 'normal', marginLeft: '0.5rem' }}>
+            <span className={styles.titleMeta}>
               ({data.chat.participants.length} partecipanti)
             </span>
           )}
@@ -94,7 +94,7 @@ export function OffGameChatThreadView({
             {data.messages.length === 0 && (
               <div className={styles.empty}>
                 <p>Nessun messaggio ancora</p>
-                <p style={{ fontSize: '0.875rem', marginTop: '0.5rem', opacity: 0.7 }}>
+                <p className={styles.emptyHint}>
                   Inizia la conversazione!
                 </p>
               </div>

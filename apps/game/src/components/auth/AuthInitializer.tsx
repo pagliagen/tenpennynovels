@@ -14,6 +14,7 @@
 import { ReactNode } from 'react';
 
 import { useAuth } from '@/hooks/useAuth';
+import styles from '@/styles/components/auth/AuthInitializer.module.scss';
 
 import { AuthError } from './AuthError';
 
@@ -56,17 +57,7 @@ export function AuthInitializer({ children }: AuthInitializerProps): JSX.Element
   // Show loading state while checking session
   if (isLoading || !isInitialized) {
     return (
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          minHeight: '100vh',
-          fontFamily: 'Playfair Display, serif',
-          fontSize: '1.5rem',
-          color: '#8B4513',
-        }}
-      >
+      <div className={styles.loadingRoot}>
         Verifying session...
       </div>
     );

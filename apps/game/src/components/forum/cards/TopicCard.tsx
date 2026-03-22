@@ -1,5 +1,7 @@
 'use client';
 
+import type { CSSProperties } from 'react';
+
 import { useToggleFavorite } from '@/hooks/useForumTopics';
 import { useForumStore } from '@/store/forumStore';
 import styles from '@/styles/components/forum/TopicCard.module.scss';
@@ -59,7 +61,7 @@ export function TopicCard({ topic, onFavoriteToggle }: TopicCardProps) {
         {topic.color && (
           <div
             className={styles.colorBar}
-            style={{ backgroundColor: topic.color }}
+            style={{ '--topic-color': topic.color } as CSSProperties}
           />
         )}
         {topic.icon && <span className={styles.icon}>{topic.icon}</span>}

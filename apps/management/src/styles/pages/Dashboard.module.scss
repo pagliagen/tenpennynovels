@@ -140,6 +140,79 @@
   letter-spacing: 0.5px;
 }
 
+.statCardBlue {
+  border-left-color: #3b82f6;
+
+  .statValue {
+    color: #3b82f6;
+  }
+}
+
+.statCardRed {
+  border-left-color: #ef4444;
+
+  .statValue {
+    color: #ef4444;
+  }
+}
+
+.statCardAmber {
+  border-left-color: #f59e0b;
+
+  .statValue {
+    color: #f59e0b;
+  }
+}
+
+.statCardGreen {
+  border-left-color: #10b981;
+
+  .statValue {
+    color: #10b981;
+  }
+}
+
+.thW60 {
+  width: 60px;
+}
+
+.thW100 {
+  width: 100px;
+}
+
+.thW120 {
+  width: 120px;
+}
+
+.thW150 {
+  width: 150px;
+}
+
+.priorityCritical {
+  background-color: #dc2626;
+}
+
+.priorityHigh {
+  background-color: #ea580c;
+}
+
+.priorityMedium {
+  background-color: #ca8a04;
+}
+
+.priorityLow {
+  background-color: #65a30d;
+}
+
+.priorityDefault {
+  background-color: #6b7280;
+}
+
+.urgentDateCell {
+  color: #dc2626;
+  font-weight: 600;
+}
+
 // Section
 .section {
   background-color: $color-bg-secondary;

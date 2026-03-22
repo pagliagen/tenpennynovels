@@ -1,0 +1,47 @@
+.empty {
+  color: #999;
+}
+
+.badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.85em;
+  font-weight: 600;
+  color: var(--badge-color, #666);
+  border: 1px solid var(--badge-color, #666);
+  background-color: color-mix(in srgb, var(--badge-color, #666) 12.5%, transparent);
+}
+
+.badgeList {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.badgeListItem {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.85em;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--badge-color, #666);
+  border: 1px solid var(--badge-color, #666);
+  background-color: color-mix(in srgb, var(--badge-color, #666) 12.5%, transparent);
+}
+
+.imageThumb {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 4px;
+  display: block;
+}
+
+.imageFallback {
+  font-size: 1.5rem;
+  display: inline-block;
+  width: 40px;
+  text-align: center;
+}

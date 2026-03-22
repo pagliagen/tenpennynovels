@@ -40,6 +40,10 @@
   @include forms.formGroup;
 }
 
+.formGroupFullWidth {
+  grid-column: 1 / -1;
+}
+
 .label {
   @include forms.label;
 }
@@ -106,4 +110,68 @@
     border: 1px solid #f5c6cb;
     font-weight: var(--font-weight-semibold);
   }
+}
+
+.faceClaimsScroll {
+  max-height: 250px;
+  overflow-y: auto;
+  border: 1px solid #8b7355;
+  border-radius: 4px;
+}
+
+.faceClaimsTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'Playfair Display', serif;
+}
+
+.faceClaimsHeaderRow {
+  background: #d4c4a8;
+  border-bottom: 2px solid #8b7355;
+}
+
+.faceClaimsTh {
+  padding: 0.5rem;
+  text-align: left;
+  font-weight: bold;
+}
+
+.faceClaimsThCenter {
+  text-align: center;
+}
+
+.faceClaimsRow {
+  cursor: pointer;
+  border-bottom: 1px solid #e0d5c7;
+
+  &:nth-child(even) {
+    background: #f9f6f0;
+  }
+
+  &:nth-child(odd) {
+    background: #fff;
+  }
+
+  &:hover {
+    background: #f0e8d8;
+  }
+}
+
+.faceClaimsTd {
+  padding: 0.5rem;
+}
+
+.faceClaimsTdMuted {
+  padding: 0.5rem;
+  font-size: 0.85em;
+  color: #5a4a3a;
+}
+
+.faceClaimsTdCenter {
+  text-align: center;
+}
+
+.faceClaimsPending {
+  color: #fb8500;
+  font-style: italic;
 }

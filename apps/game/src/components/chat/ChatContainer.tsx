@@ -165,7 +165,7 @@ export function ChatContainer({ locationSlug, locationId, locationName }: ChatCo
     <div className={styles.chatContainer}>
       {/* Error Banner (API errors) */}
       {error && (
-        <div className={styles.permissionBanner} style={{ background: 'rgba(255, 0, 0, 0.2)' }}>
+        <div className={styles.errorBanner}>
           ⚠️ Errore: {error}
         </div>
       )}

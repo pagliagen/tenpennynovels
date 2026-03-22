@@ -95,6 +95,7 @@
 
 .progressFill {
   height: 100%;
+  width: var(--progress, 0%);
   background-color: $color-primary;
   border-radius: 3px;
   transition: width 0.2s ease;
