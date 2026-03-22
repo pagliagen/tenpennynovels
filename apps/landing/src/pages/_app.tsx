@@ -75,9 +75,9 @@ export default function App({ Component, pageProps }: AppProps) {
       GA_ID &&
       typeof window !== 'undefined' &&
       readAnalyticsConsent() &&
-      (window as any).gtag
+      window.gtag
     ) {
-      (window as any).gtag('event', metric.name, {
+      window.gtag('event', metric.name, {
         value: Math.round(metric.name === 'CLS' ? metric.value * 1000 : metric.value),
         event_label: metric.id,
         non_interaction: true,

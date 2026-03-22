@@ -668,7 +668,7 @@ export class CharacterApprovalController {
       const oldUserId = character.userId;
       const newUserId = newReferent.userId;
 
-      character.referentCharacterId = newReferentId as any;
+      character.referentCharacterId = newReferent._id;
       character.userId = newUserId;
 
       await character.save();

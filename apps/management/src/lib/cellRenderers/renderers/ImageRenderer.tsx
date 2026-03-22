@@ -4,7 +4,7 @@ import { CellRendererProps } from '../registry';
 import styles from './CellRenderers.module.scss';
 
 export function ImageRenderer({ value, column }: CellRendererProps): React.ReactNode {
-  const fallback = (column.render as any)?.fallback || '📷';
+  const fallback = column.render?.fallback ?? '📷';
   const [failed, setFailed] = useState(false);
 
   if (!value || typeof value !== 'string' || failed) {

@@ -361,28 +361,26 @@ export class AdminAuthMiddleware {
   }
 
   /**
-   * Middleware: Rate limiting for sensitive admin operations
+   * Middleware: Rate limiting for sensitive admin operations (Redis-backed, safe for PM2 multi-instance).
    */
   static sensitiveOperationLimit() {
-    const attempts = new Map<string, { count: number; resetTime: number }>();
     const maxAttempts = 10;
     const windowMs = 60 * 60 * 1000; // 1 hour
+    const ttlSeconds = Math.ceil(windowMs / 1000);
 
-    return (req: Request, res: Response, next: NextFunction): void => {
-      const key = `${req.user?.userId}-${req.ip}`;
-      const now = Date.now();
-      
-      const userAttempts = attempts.get(key);
-      
-      if (userAttempts) {
-        if (now > userAttempts.resetTime) {
-          // Reset window
-          attempts.set(key, { count: 1, resetTime: now + windowMs });
-        } else if (userAttempts.count >= maxAttempts) {
+    return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+      try {
+        const { redis } = await import('@config/runtime/redis');
+        const key = `admin_sensitive:${req.user?.userId ?? 'anon'}-${req.ip}`;
+        const windowKey = `${key}:${Math.floor(Date.now() / windowMs)}`;
+
+        const count = await redis.incrementRateLimit(windowKey, ttlSeconds);
+
+        if (count > maxAttempts) {
           logger.warn('Admin rate limit exceeded', {
             userId: req.user?.userId,
             ip: req.ip,
-            attempts: userAttempts.count
+            count,
           });
 
           res.status(429).json(errorResponse(
@@ -393,11 +391,10 @@ export class AdminAuthMiddleware {
             getRequestId(req)
           ));
           return;
-        } else {
-          userAttempts.count++;
         }
-      } else {
-        attempts.set(key, { count: 1, resetTime: now + windowMs });
+      } catch (err) {
+        // Se Redis non è raggiungibile, lasciamo passare la richiesta senza bloccarla
+        logger.error('Admin sensitiveOperationLimit Redis error:', err);
       }
 
       next();

@@ -305,7 +305,8 @@ const CharacterSchema = new Schema<ICharacter>({
       validator: function(value: string) {
         // Only apply minlength validation for pg_principale
         // For PNG/Master, skip validation (any length is OK)
-        if ((this as any).characterType === 'pg_principale' && value && value.length < 50) {
+        const doc = this as unknown as ICharacter;
+        if (doc.characterType === 'pg_principale' && value && value.length < 50) {
           return false;
         }
         return true;
@@ -320,7 +321,8 @@ const CharacterSchema = new Schema<ICharacter>({
       validator: function(value: string) {
         // Only apply minlength validation for pg_principale
         // For PNG/Master, skip validation (any length is OK)
-        if ((this as any).characterType === 'pg_principale' && value && value.length < 50) {
+        const doc = this as unknown as ICharacter;
+        if (doc.characterType === 'pg_principale' && value && value.length < 50) {
           return false;
         }
         return true;
@@ -868,7 +870,7 @@ CharacterSchema.pre('save', async function(this: ICharacter) {
     });
 
     if (pgPrincipale) {
-      this.referentCharacterId = pgPrincipale._id as any;
+      this.referentCharacterId = pgPrincipale._id as unknown as Schema.Types.ObjectId;
     } else {
       throw new Error(`${this.characterType === 'png' ? 'PNG' : 'Master'} requires a PG principale as referent`);
     }

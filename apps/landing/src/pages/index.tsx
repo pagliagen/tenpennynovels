@@ -180,7 +180,7 @@ export default function LoginPage() {
       if (result.success && result.data) {
         // Show character select modal or redirect based on number of characters
         // Backend returns { data: { user: { characters, username }, session: {...}, sessionId?: string } }
-        const userData = result.data as any;
+        const userData = result.data;
 
         // NEW: Save sessionId to sessionStorage HERE (guaranteed client-side)
         if (userData.sessionId) {
@@ -207,9 +207,10 @@ export default function LoginPage() {
           console.warn('[Login Page] No sessionId in response (auto-select may have been skipped).');
         }
 
-        if (userData.user?.characters?.length > 1) {
+        const userCharacters = userData.user?.characters;
+        if (userCharacters && userCharacters.length > 1) {
           // Multiple characters (PG principale + PNG/Master assigned by staff) - show selection modal
-          setUserCharacters(userData.user.characters);
+          setUserCharacters(userCharacters);
           setLoggedInUsername(userData.user.username || userData.user.displayName || 'Utente');
           setShowCharacterModal(true);
         } else {

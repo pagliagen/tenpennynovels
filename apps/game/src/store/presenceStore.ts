@@ -236,10 +236,7 @@ export const usePresenceStore = create<PresenceState & PresenceActions>((set, ge
       const response = await api.get<{ success: boolean; data: { globalPresence: GlobalPresence[] } }>('/game/presence');
 
       if (response.success && response.data) {
-        // Backend returns { data: { globalPresence: [...] } }
-        // Extract the actual array from the nested structure
-        const responseData = response.data as any;
-        const presenceArray = responseData.globalPresence || [];
+        const presenceArray = response.data.globalPresence ?? [];
 
         if (!Array.isArray(presenceArray)) {
           console.error('❌ initialize: presenceArray is not an array!', presenceArray);
@@ -409,7 +406,8 @@ export const usePresenceStore = create<PresenceState & PresenceActions>((set, ge
     } else if (state.globalPresence && typeof state.globalPresence === 'object' && 'globalPresence' in state.globalPresence) {
       // Handle nested structure bug
       console.warn('⚠️ getLocationPresence: Detected nested globalPresence structure, extracting array');
-      globalPresence = (state.globalPresence as any).globalPresence || [];
+      const nested = state.globalPresence as { globalPresence?: GlobalPresence[] };
+      globalPresence = nested.globalPresence ?? [];
     } else {
       console.warn('⚠️ getLocationPresence: globalPresence is not an array, defaulting to []');
       globalPresence = [];

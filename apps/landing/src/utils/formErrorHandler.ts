@@ -11,7 +11,7 @@
  * @module utils/formErrorHandler
  */
 
-import type { UseFormSetError, FieldErrors } from 'react-hook-form';
+import type { UseFormSetError, FieldErrors, FieldPath } from 'react-hook-form';
 import type { ApiResponse } from '@/types';
 
 /**
@@ -43,7 +43,7 @@ export function handleApiFormErrors<T extends Record<string, any>>(
   // Handle field-specific errors (details contains per-field errors)
   if (result.details) {
     Object.entries(result.details).forEach(([field, message]) => {
-      setError(field as any, {
+      setError(field as FieldPath<T>, {
         type: 'server',
         message: typeof message === 'string' ? message : 'Errore di validazione',
       });

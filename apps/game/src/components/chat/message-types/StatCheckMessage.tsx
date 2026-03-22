@@ -101,12 +101,12 @@ export function StatCheckMessage({ message, currentCharacterId }: StatCheckMessa
               <div className={styles.messageContent}>{message.content}</div>
 
               {/* Stat check from diceResult (new format - no target exposed) */}
-              {diceResult && (diceResult as any).statName && (
+              {diceResult?.statName && (
                 <div className={styles.statCheckResult}>
                   <div className={styles.rollDisplay}>
                     <span className={styles.rollValue}>🎲 {diceResult.result}</span>
                     <span className={styles.successDegree}>
-                      {(diceResult as any).successDegree || (diceResult.success ? 'Successo' : 'Fallimento')}
+                      {diceResult.successDegree || (diceResult.success ? 'Successo' : 'Fallimento')}
                     </span>
                   </div>
                 </div>

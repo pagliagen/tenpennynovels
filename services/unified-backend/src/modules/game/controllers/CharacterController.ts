@@ -2073,7 +2073,7 @@ export class CharacterController {
       }
 
       // Create fake PNG (Mongoose will auto-generate _id)
-      const newFake = {
+      const newFake: NonNullable<ICharacter['fakePngs']>[number] = {
         name: name.trim(),
         surname: surname?.trim(),
         avatar: avatar?.trim(),
@@ -2081,7 +2081,7 @@ export class CharacterController {
       };
 
       character.fakePngs = character.fakePngs || [];
-      character.fakePngs.push(newFake as any);
+      character.fakePngs.push(newFake);
       await character.save();
 
       // Get the created fake with _id
@@ -2121,17 +2121,18 @@ export class CharacterController {
         return;
       }
 
-      const fake = character.fakePngs?.find((f: any) => f._id?.toString() === fakeId);
+      type FakePngWithId = NonNullable<ICharacter['fakePngs']>[number] & { _id?: Types.ObjectId };
+      const fake = character.fakePngs?.find((f: FakePngWithId) => f._id?.toString() === fakeId);
       if (!fake) {
         res.status(404).json(errorResponse('Fake PNG not found', 'NOT_FOUND', undefined, 404, getRequestId(req)));
         return;
       }
 
       // Update fields
-      if (name) (fake as any).name = name.trim();
-      if (surname !== undefined) (fake as any).surname = surname?.trim();
-      if (avatar !== undefined) (fake as any).avatar = avatar?.trim();
-      (fake as any).updatedAt = new Date();
+      if (name) fake.name = name.trim();
+      if (surname !== undefined) fake.surname = surname?.trim();
+      if (avatar !== undefined) fake.avatar = avatar?.trim();
+      fake.updatedAt = new Date();
 
       await character.save();
 

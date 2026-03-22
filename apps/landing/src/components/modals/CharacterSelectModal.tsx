@@ -55,7 +55,7 @@ export function CharacterSelectModal({
 
       if (result.success) {
         // NEW: Save sessionId to sessionStorage HERE (guaranteed client-side)
-        const responseData = result.data as any;
+        const responseData = result.data;
         if (responseData?.sessionId) {
           try {
             sessionStorage.setItem('character_session_id', responseData.sessionId);

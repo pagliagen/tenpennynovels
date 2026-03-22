@@ -783,29 +783,29 @@ export class ForumController {
       }
 
       const totalPages = Math.ceil(total / limit);
-      const response = listResponse(
-        posts.map(p => ({
-          id: p._id,
-          topicSlug: p.topicSlug,
-          discussionSlug: p.discussionSlug,
-          content: p.content,
-          author: p.author,
-          createdAt: p.createdAt
-        })),
-        {
-          currentPage: page,
-          pageSize: limit,
-          totalItems: total,
-          totalPages,
-          hasNextPage: page < totalPages,
-          hasPreviousPage: page > 1
-        },
-        undefined,
-        getRequestId(req)
-      );
-
-      // Add searchMethod to response metadata
-      (response as any).searchMethod = searchMethod;
+      const response = {
+        ...listResponse(
+          posts.map(p => ({
+            id: p._id,
+            topicSlug: p.topicSlug,
+            discussionSlug: p.discussionSlug,
+            content: p.content,
+            author: p.author,
+            createdAt: p.createdAt
+          })),
+          {
+            currentPage: page,
+            pageSize: limit,
+            totalItems: total,
+            totalPages,
+            hasNextPage: page < totalPages,
+            hasPreviousPage: page > 1
+          },
+          undefined,
+          getRequestId(req)
+        ),
+        searchMethod,
+      };
 
       res.json(response);
     } catch (error) {

@@ -40,10 +40,18 @@ export interface FavoriteEntry {
   addedAt: string;
 }
 
+interface FavoritesListBody {
+  data?: FavoriteEntry[];
+}
+
+interface FavoriteToggleBody {
+  data?: { favorited: boolean };
+}
+
 export const favoritesApi = {
   async list(): Promise<FavoriteEntry[]> {
-    const response = (await api.get('/documents/favorites')) as any;
-    const favorites: FavoriteEntry[] = response.data || [];
+    const body = await api.get<FavoritesListBody>('/documents/favorites');
+    const favorites: FavoriteEntry[] = body.data ?? [];
 
     const ids = favorites.map((f) => f.document._id);
     setCachedFavoriteIds(ids);
@@ -52,7 +60,7 @@ export const favoritesApi = {
   },
 
   async toggle(type: string, path: string): Promise<{ favorited: boolean }> {
-    const response = (await api.post(`/documents/${type}/${path}/favorite`)) as any;
-    return response.data || { favorited: false };
+    const body = await api.post<FavoriteToggleBody>(`/documents/${type}/${path}/favorite`);
+    return body.data ?? { favorited: false };
   },
 };

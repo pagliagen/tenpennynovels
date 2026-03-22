@@ -11,6 +11,20 @@
 import { api } from './client';
 import type { SearchResponse, DocumentType } from '@/types/document';
 
+interface SemanticSearchBody {
+  data: {
+    results?: SearchResponse['results'];
+    totalResults?: number;
+    query?: string;
+  };
+}
+
+/** Forme possibili del payload suggerimenti (gateway/backend). */
+interface SuggestionsBody {
+  data?: { suggestions?: string[] } | string[];
+  suggestions?: string[];
+}
+
 export interface SemanticSearchParams {
   q: string; // Search query
   type?: DocumentType; // Filter by document type
@@ -44,19 +58,19 @@ export const searchApi = {
       };
     }
 
-    const response = (await api.get('/documents/semantic-search', {
+    const body = await api.get<SemanticSearchBody>('/documents/semantic-search', {
       params: {
         q: q.trim(),
         ...(type && { type }),
         limit,
         minSimilarity,
       },
-    })) as any;
+    });
 
     return {
-      results: response.data.results || [],
-      totalResults: response.data.totalResults || 0,
-      query: response.data.query || q,
+      results: body.data.results || [],
+      totalResults: body.data.totalResults || 0,
+      query: body.data.query || q,
     };
   },
 
@@ -76,14 +90,20 @@ export const searchApi = {
     }
 
     try {
-      const response = (await api.get('/documents/search-suggestions', {
+      const body = await api.get<SuggestionsBody>('/documents/search-suggestions', {
         params: {
           q: query.trim(),
           ...(type && { type }),
         },
-      })) as any;
+      });
 
-      return response.data.suggestions || response.data || [];
+      if (Array.isArray(body.data)) {
+        return body.data;
+      }
+      if (body.data && typeof body.data === 'object' && 'suggestions' in body.data) {
+        return body.data.suggestions ?? [];
+      }
+      return body.suggestions ?? [];
     } catch (error) {
       if (process.env.NODE_ENV === 'development') {
         console.warn('[Ricerca] Endpoint suggerimenti non disponibile:', error);

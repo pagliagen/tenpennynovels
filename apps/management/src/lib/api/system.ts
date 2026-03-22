@@ -164,18 +164,35 @@ export const systemAPI = {
 
   getConfigurations: async (section?: string): Promise<SystemConfigRecord[]> => {
     const params = section ? { section } : {};
-    const response = await api.get('/admin/system/configurations', { params });
-    return (response as any).data?.configs || (response as any).configs || [];
+    const body = (await api.get('/admin/system/configurations', { params })) as {
+      data?: { configs?: SystemConfigRecord[] };
+      configs?: SystemConfigRecord[];
+    };
+    return body.data?.configs ?? body.configs ?? [];
   },
 
   getConfigurationByKey: async (configKey: string): Promise<SystemConfigRecord> => {
-    const response = await api.get(`/admin/system/configurations/${configKey}`);
-    return (response as any).data?.config || (response as any).config;
+    const body = (await api.get(`/admin/system/configurations/${configKey}`)) as {
+      data?: { config?: SystemConfigRecord };
+      config?: SystemConfigRecord;
+    };
+    const record = body.data?.config ?? body.config;
+    if (!record) {
+      throw new Error('Configurazione non trovata');
+    }
+    return record;
   },
 
   updateConfiguration: async (configKey: string, value: any, updateReason?: string): Promise<SystemConfigRecord> => {
-    const response = await api.patch(`/admin/system/configurations/${configKey}`, { value, updateReason });
-    return (response as any).data?.config || (response as any).config;
+    const body = (await api.patch(`/admin/system/configurations/${configKey}`, { value, updateReason })) as {
+      data?: { config?: SystemConfigRecord };
+      config?: SystemConfigRecord;
+    };
+    const record = body.data?.config ?? body.config;
+    if (!record) {
+      throw new Error('Aggiornamento configurazione fallito');
+    }
+    return record;
   },
 
   invalidateConfigCache: async (): Promise<void> => {

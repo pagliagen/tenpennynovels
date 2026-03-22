@@ -151,6 +151,18 @@ export interface LoginCredentials {
 }
 
 /**
+ * Payload `data` su login riuscito (struttura gateway/auth).
+ */
+export interface LoginSuccessPayload {
+  sessionId?: string;
+  user: {
+    username?: string;
+    displayName?: string;
+    characters?: Character[];
+  };
+}
+
+/**
  * Registration form data
  *
  * @interface RegisterData

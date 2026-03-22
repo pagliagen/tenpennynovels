@@ -1090,7 +1090,12 @@ export class TicketController {
       // Map to frontend format
       const categories = categoryConfigs.map(config => {
         const categoryValue = config.configKey.replace('ticket_category_', '');
-        const categoryData = config.value as any;
+        const categoryData = (config.value ?? {}) as {
+          label?: string;
+          description?: string;
+          department?: string;
+          defaultPriority?: string;
+        };
 
         return {
           value: categoryValue,

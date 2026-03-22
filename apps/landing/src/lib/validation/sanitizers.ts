@@ -338,7 +338,8 @@ export function sanitizeObject<T extends Record<string, any>>(obj: T): T {
     const value = obj[key];
 
     if (typeof value === 'string') {
-      obj[key] = sanitizeUserInput(value) as any;
+      const mutable = obj as Record<string, unknown>;
+      mutable[key] = sanitizeUserInput(value);
     } else if (typeof value === 'object' && value !== null) {
       sanitizeObject(value);
     }

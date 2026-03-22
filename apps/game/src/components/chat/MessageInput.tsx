@@ -470,7 +470,7 @@ export function MessageInput({
 
     try {
       // Retry with forceAbortPendingReaction flag
-      await onSendMessage({ ...pendingMessageData, forceAbortPendingReaction: true } as any);
+      await onSendMessage({ ...pendingMessageData, forceAbortPendingReaction: true });
 
       // Reset form
       setMessageInput('');

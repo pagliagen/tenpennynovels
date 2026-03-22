@@ -88,13 +88,29 @@ function isSameWindow(
 
   switch (type) {
     case 'characterSheet':
-      return window.data.type === 'characterSheet' && window.data.characterId === (data as any).characterId;
+      return (
+        window.data.type === 'characterSheet' &&
+        'characterId' in data &&
+        window.data.characterId === data.characterId
+      );
     case 'messageOnGame':
-      return window.data.type === 'messageOnGame' && window.data.conversationId === (data as any).conversationId;
+      return (
+        window.data.type === 'messageOnGame' &&
+        'conversationId' in data &&
+        window.data.conversationId === data.conversationId
+      );
     case 'messageOffGame':
-      return window.data.type === 'messageOffGame' && window.data.conversationId === (data as any).conversationId;
+      return (
+        window.data.type === 'messageOffGame' &&
+        'conversationId' in data &&
+        window.data.conversationId === data.conversationId
+      );
     case 'utility':
-      return window.data.type === 'utility' && window.data.utilityName === (data as any).utilityName;
+      return (
+        window.data.type === 'utility' &&
+        'utilityName' in data &&
+        window.data.utilityName === data.utilityName
+      );
     default:
       return false;
   }
@@ -150,7 +166,8 @@ export const useWindowManagerStore = create<WindowManagerStore>()((set) => ({
         const nextZIndex = Math.max(...state.windows.map((w) => w.zIndex), 1000) + 1;
 
         // Update data if new data has prefilledRecipientId (for mail window switching recipients)
-        const shouldUpdateData = (data as any).prefilledRecipientId !== undefined;
+        const shouldUpdateData =
+          'prefilledRecipientId' in data && data.prefilledRecipientId !== undefined;
         const updatedData = shouldUpdateData ? { ...existingWindow.data, ...data } : existingWindow.data;
 
         return {

@@ -22,6 +22,19 @@ import { useUIStore } from '@/store/uiStore';
 
 import { parseAxiosError, ApiError } from './errors';
 
+/** Payload errore JSON tipico del backend (403, ecc.). */
+interface ApiErrorBody {
+  error?: string;
+  message?: string;
+  requiredPermission?: string;
+  code?: string;
+}
+
+function asApiErrorBody(data: unknown): ApiErrorBody | null {
+  if (data === null || typeof data !== 'object') return null;
+  return data as ApiErrorBody;
+}
+
 /**
  * Set auth token in localStorage
  *
@@ -169,9 +182,9 @@ const createApiClient = (): AxiosInstance => {
 
       // Handle 403 Forbidden - Show permission denied toast
       if (error.response?.status === 403) {
-        // Extract error message from response
-        const errorData = error.response.data as any;
-        const message = errorData?.error || 'Non sei autorizzato ad eseguire questa operazione';
+        const errorData = asApiErrorBody(error.response.data);
+        const message =
+          errorData?.error || errorData?.message || 'Non sei autorizzato ad eseguire questa operazione';
 
         // Show toast notification
         if (typeof window !== 'undefined') {

@@ -1614,7 +1614,7 @@ export class ChatController {
       }
 
       // ═══ SKILL USAGE TRACKING (SOCIAL ONLY, EXCLUDE RAGGIRARE) ═══
-      const configService = new ConfigurationService(redis.getClient() as any, logger);
+      const configService = new ConfigurationService(redis.getClient(), logger);
 
       if (config.category === 'social' && attackSkill !== 'Raggirare') {
         const usageLimit = await configService.getConfig('confrontation_skill_usage_limit_per_scene') as number;
@@ -1908,7 +1908,7 @@ export class ChatController {
       }
 
       // ═══ CHECK 2: CONSTITUTION CHECK (COMBAT ONLY, WOUNDED) ═══
-      const configService = new ConfigurationService(redis.getClient() as any, logger);
+      const configService = new ConfigurationService(redis.getClient(), logger);
       const isCombat = message.confrontation.type === 'combat';
 
       if (isCombat) {
@@ -2731,31 +2731,31 @@ export class ChatController {
       }
 
       const totalPages = Math.ceil(total / limit);
-      const response = listResponse(
-        messages.map(m => ({
-          id: m._id,
-          locationId: m.locationId,
-          characterId: m.characterId,
-          characterName: m.characterName,
-          content: m.content,
-          timestamp: m.timestamp,
-          actionType: m.actionType,
-          visibility: m.visibility
-        })),
-        {
-          currentPage: page,
-          pageSize: limit,
-          totalItems: total,
-          totalPages,
-          hasNextPage: page < totalPages,
-          hasPreviousPage: page > 1
-        },
-        undefined,
-        getRequestId(req)
-      );
-
-      // Add searchMethod to response metadata
-      (response as any).searchMethod = searchMethod;
+      const response = {
+        ...listResponse(
+          messages.map(m => ({
+            id: m._id,
+            locationId: m.locationId,
+            characterId: m.characterId,
+            characterName: m.characterName,
+            content: m.content,
+            timestamp: m.timestamp,
+            actionType: m.actionType,
+            visibility: m.visibility
+          })),
+          {
+            currentPage: page,
+            pageSize: limit,
+            totalItems: total,
+            totalPages,
+            hasNextPage: page < totalPages,
+            hasPreviousPage: page > 1
+          },
+          undefined,
+          getRequestId(req)
+        ),
+        searchMethod,
+      };
 
       res.json(response);
     } catch (error) {

@@ -74,7 +74,7 @@ export async function createLocation(data: CreateLocationData): Promise<{ locati
     apiClient.post<ApiResponse<{ locationId: string; slug: string }>>('/admin/locations', data)
   );
   if (!response.data.success || !response.data.data) {
-    throw new Error((response.data as any).error || 'Errore nella creazione location');
+    throw new Error(response.data.error || 'Errore nella creazione location');
   }
   return response.data.data;
 }
@@ -87,7 +87,7 @@ export async function updateLocation(id: string, data: UpdateLocationData): Prom
     apiClient.put<ApiResponse<any>>(`/admin/locations/${id}`, data)
   );
   if (!response.data.success) {
-    throw new Error((response.data as any).error || 'Errore nell\'aggiornamento location');
+    throw new Error(response.data.error || 'Errore nell\'aggiornamento location');
   }
 }
 
@@ -101,7 +101,7 @@ export async function deleteLocation(id: string, reason: string, forceDelete = f
     })
   );
   if (!response.data.success) {
-    throw new Error((response.data as any).error || 'Errore nell\'eliminazione location');
+    throw new Error(response.data.error || 'Errore nell\'eliminazione location');
   }
 }
 
@@ -113,6 +113,6 @@ export async function reorderLocations(parentId: string | null, orderedIds: stri
     apiClient.put<ApiResponse<void>>('/admin/locations/reorder', { parentId, orderedIds })
   );
   if (!response.data.success) {
-    throw new Error((response.data as any).error || 'Errore nel riordinamento location');
+    throw new Error(response.data.error || 'Errore nel riordinamento location');
   }
 }

@@ -10,9 +10,15 @@
 'use client';
 
 import { useWizardStore } from '@/store/wizardStore';
+import type { WizardBasicInfo } from '@/types/wizard';
 import styles from '@/styles/components/character/wizard/Step5Background.module.scss';
 
 import { useWizardToolbar } from '../WizardSlotsContext';
+
+type BasicDescriptionField = keyof Pick<
+  WizardBasicInfo,
+  'publicDescription' | 'privateDescription' | 'physicalDescription'
+>;
 
 /**
  * Step 5: Background Component
@@ -26,8 +32,8 @@ export function Step5Background(): JSX.Element {
   /**
    * Handle basic info field change (publicDescription, privateDescription, physicalDescription)
    */
-  const handleBasicChange = (field: string, value: string) => {
-    updateBasicInfo(field as any, value);
+  const handleBasicChange = (field: BasicDescriptionField, value: string) => {
+    updateBasicInfo(field, value);
   };
 
   /**
@@ -40,8 +46,8 @@ export function Step5Background(): JSX.Element {
   };
 
   const requiredFields = [
-    { label: 'Desc. pubblica', done: ((basicInfo as any).publicDescription || '').trim().length >= 50 },
-    { label: 'Desc. privata', done: ((basicInfo as any).privateDescription || '').trim().length >= 50 },
+    { label: 'Desc. pubblica', done: (basicInfo.publicDescription || '').trim().length >= 50 },
+    { label: 'Desc. privata', done: (basicInfo.privateDescription || '').trim().length >= 50 },
     { label: 'Storia', done: (background.briefHistory || '').trim().length >= 100 },
     { label: 'Personalità', done: (background.personality || '').trim().length >= 50 },
     { label: 'Obiettivi', done: (background.goalsAndMotivations || '').trim().length >= 50 },
@@ -76,7 +82,7 @@ export function Step5Background(): JSX.Element {
           </p>
           <textarea
             id="publicDescription"
-            value={(basicInfo as any).publicDescription || ''}
+            value={basicInfo.publicDescription || ''}
             onChange={(e) => handleBasicChange('publicDescription', e.target.value)}
             className={`${styles.textarea} ${errors.publicDescription ? styles.inputError : ''}`}
             rows={4}
@@ -85,8 +91,8 @@ export function Step5Background(): JSX.Element {
           />
           <small className={styles.helpText}>
             Minimo 50 caratteri, massimo 4000
-            {(basicInfo as any).publicDescription && (basicInfo as any).publicDescription.length < 50 && (
-              <span className={styles.error}> - {(basicInfo as any).publicDescription.length}/50 caratteri</span>
+            {basicInfo.publicDescription && basicInfo.publicDescription.length < 50 && (
+              <span className={styles.error}> - {basicInfo.publicDescription.length}/50 caratteri</span>
             )}
           </small>
           {errors.publicDescription && <span className={styles.error}>{errors.publicDescription}</span>}
@@ -102,7 +108,7 @@ export function Step5Background(): JSX.Element {
           </p>
           <textarea
             id="privateDescription"
-            value={(basicInfo as any).privateDescription || ''}
+            value={basicInfo.privateDescription || ''}
             onChange={(e) => handleBasicChange('privateDescription', e.target.value)}
             className={`${styles.textarea} ${errors.privateDescription ? styles.inputError : ''}`}
             rows={4}
@@ -111,8 +117,8 @@ export function Step5Background(): JSX.Element {
           />
           <small className={styles.helpText}>
             Minimo 50 caratteri, massimo 4000
-            {(basicInfo as any).privateDescription && (basicInfo as any).privateDescription.length < 50 && (
-              <span className={styles.error}> - {(basicInfo as any).privateDescription.length}/50 caratteri</span>
+            {basicInfo.privateDescription && basicInfo.privateDescription.length < 50 && (
+              <span className={styles.error}> - {basicInfo.privateDescription.length}/50 caratteri</span>
             )}
           </small>
           {errors.privateDescription && <span className={styles.error}>{errors.privateDescription}</span>}
@@ -128,7 +134,7 @@ export function Step5Background(): JSX.Element {
           </p>
           <textarea
             id="physicalDescription"
-            value={(basicInfo as any).physicalDescription || ''}
+            value={basicInfo.physicalDescription || ''}
             onChange={(e) => handleBasicChange('physicalDescription', e.target.value)}
             className={styles.textarea}
             rows={3}

@@ -46,7 +46,7 @@ export const DocumentNode: React.FC<DocumentNodeProps> = React.memo(({
     const baseUrl = process.env.NODE_ENV === 'production'
       ? 'https://documenti.tenpennynovels.com'
       : 'http://localhost:4002';
-    return `${baseUrl}/${doc.subtype ? (doc as any).type || 'ambientazione' : 'ambientazione'}/${doc.path}`;
+    return `${baseUrl}/${doc.subtype ? doc.type ?? 'ambientazione' : 'ambientazione'}/${doc.path}`;
   };
 
   const documentUrl = getDocumentUrl();

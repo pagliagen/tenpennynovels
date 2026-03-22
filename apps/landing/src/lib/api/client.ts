@@ -192,7 +192,7 @@ async function apiRequestWithRetry<T>(config: RequestConfig): Promise<ApiRespons
           }
         });
         if (Object.keys(devHeaders).length > 0) {
-          (data as any).__devHeaders = devHeaders;
+          data.__devHeaders = devHeaders;
         }
       }
 

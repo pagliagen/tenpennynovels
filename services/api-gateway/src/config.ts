@@ -68,6 +68,23 @@ export const config = {
       /** Disattiva del tutto il rate limit su /documents (solo se esplicitamente richiesto). */
       disabled: process.env.DOCUMENTS_RATE_LIMIT_DISABLED === 'true',
     },
+    /**
+     * Fallback gateway-level per /auth.
+     * Il backend ha limiti granulari per endpoint con Redis; questo è lo scudo IP
+     * che ferma volumi di traffico anomali prima ancora che raggiungano il backend.
+     */
+    auth: {
+      windowMs: 60_000,
+      max: 60,
+    },
+    /**
+     * Fallback gateway-level per /game.
+     * Il modulo game non ha rate limit propri; questo è l'unica protezione attuale.
+     */
+    game: {
+      windowMs: 60_000,
+      max: 300,
+    },
   },
 
   proxy: {

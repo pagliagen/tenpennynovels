@@ -42,7 +42,8 @@ export const TableColumnSchema = z.object({
       label: z.string(),
       color: z.string().optional()
     })).optional(),
-    format: z.string().optional() // date format
+    format: z.string().optional(), // date format
+    fallback: z.string().optional() // es. ImageRenderer placeholder
   }).optional()
 });
 

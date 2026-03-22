@@ -91,7 +91,7 @@ export default function OccupationList() {
   // Load all skills for dropdowns
   const { data: skillsData } = useSkills({ pageSize: 300 });
   const allSkills: SkillItem[] = useMemo(() => {
-    const items: SkillItem[] = (skillsData as any)?.list ?? (skillsData as any)?.data?.skills ?? [];
+    const items = skillsData?.data?.skills ?? [];
     return [...items].sort((a, b) => a.name.localeCompare(b.name));
   }, [skillsData]);
 

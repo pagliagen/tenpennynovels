@@ -40,7 +40,7 @@ export async function createSocialClass(data: CreateSocialClassData): Promise<So
     apiClient.post<ApiResponse<SocialClass>>('/admin/social-classes', data)
   );
   if (!response.data.success || !response.data.data) {
-    throw new Error((response.data as any).error || 'Errore nella creazione classe sociale');
+    throw new Error(response.data.error || 'Errore nella creazione classe sociale');
   }
   return response.data.data;
 }
@@ -50,7 +50,7 @@ export async function updateSocialClass(id: string, data: UpdateSocialClassData)
     apiClient.put<ApiResponse<SocialClass>>(`/admin/social-classes/${id}`, data)
   );
   if (!response.data.success || !response.data.data) {
-    throw new Error((response.data as any).error || 'Errore nell\'aggiornamento classe sociale');
+    throw new Error(response.data.error || 'Errore nell\'aggiornamento classe sociale');
   }
   return response.data.data;
 }
@@ -66,7 +66,7 @@ export async function deleteSocialClass(
     })
   );
   if (!response.data.success) {
-    throw new Error((response.data as any).error || 'Errore nell\'eliminazione classe sociale');
+    throw new Error(response.data.error || 'Errore nell\'eliminazione classe sociale');
   }
 }
 
@@ -77,6 +77,6 @@ export async function reorderSocialClasses(
     apiClient.post<ApiResponse<void>>('/admin/social-classes/reorder', { classOrders })
   );
   if (!response.data.success) {
-    throw new Error((response.data as any).error || 'Errore nel riordinamento classi sociali');
+    throw new Error(response.data.error || 'Errore nel riordinamento classi sociali');
   }
 }

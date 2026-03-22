@@ -23,7 +23,7 @@
 
 import { apiPost, apiGet } from '@/lib/api/client';
 import { sanitizeUserInput } from '@/lib/validation/sanitizers';
-import type { ApiResponse, User, LoginCredentials, RegisterData } from '@/types';
+import type { ApiResponse, User, LoginCredentials, LoginSuccessPayload, RegisterData } from '@/types';
 
 /**
  * Authentication Service Class
@@ -72,7 +72,7 @@ export class AuthService {
    * }
    * ```
    */
-  async login(credentials: LoginCredentials): Promise<ApiResponse<User>> {
+  async login(credentials: LoginCredentials): Promise<ApiResponse<LoginSuccessPayload>> {
     // Sanitize inputs (XSS protection)
     const sanitized = {
       username: sanitizeUserInput(credentials.username),
@@ -80,7 +80,7 @@ export class AuthService {
       rememberMe: credentials.rememberMe,
     };
 
-    const response = await apiPost<any>('/auth/login', sanitized);
+    const response = await apiPost<LoginSuccessPayload>('/auth/login', sanitized);
 
     // NOTE: sessionId is saved to sessionStorage by the calling component (not here)
     // - Login auto-select: index.tsx onSubmit() saves sessionId

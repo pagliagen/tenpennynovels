@@ -232,6 +232,8 @@ export interface SendMessageRequest {
   itemId?: string;                 // For item_use
   statCheck?: Omit<StatCheckPayload, 'roll' | 'success'>;       // Backend rolls dice
   itemUse?: ItemUsePayload;
+  /** Retry invio dopo errore PENDING_REACTION_EXISTS (solo client → backend). */
+  forceAbortPendingReaction?: boolean;
 }
 
 /**

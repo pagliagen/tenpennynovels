@@ -37,6 +37,8 @@ export interface DocumentTreeNode {
   order: number;
   parentId: string | null;
   path?: string;
+  /** Tipo route pubblica documenti (se noto dal backend). */
+  type?: 'ambientazione' | 'regolamento';
   subtype: {
     _id: string;
     slug: string;

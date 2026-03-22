@@ -16,6 +16,21 @@ import type { EnrichedChatMessage, EnrichedStatCheck } from '../types';
 import type { MessageContext } from '../MessageContext';
 import { logger } from '@shared/utils/logger';
 
+/** Payload azione stat_check in ingresso al transformer. */
+interface StatCheckActionInput {
+  statName?: string;
+  diceResult?: {
+    dice?: string;
+    result?: number;
+    rolls?: number[];
+    modifier?: number;
+    total?: number;
+    success?: boolean;
+    successDegree?: string;
+    statName?: string;
+  };
+}
+
 /**
  * Enricher for stat check actions
  */
@@ -24,7 +39,7 @@ export class StatCheckEnricher implements IMessageEnricher {
     return actionType === 'stat_check';
   }
 
-  async enrich(action: any, _context: MessageContext): Promise<Partial<EnrichedChatMessage>> {
+  async enrich(action: StatCheckActionInput, _context: MessageContext): Promise<Partial<EnrichedChatMessage>> {
     // Check if action has stat data
     if (!action.diceResult) {
       logger.debug('[StatCheckEnricher] No diceResult found, skipping enrichment');
@@ -32,7 +47,7 @@ export class StatCheckEnricher implements IMessageEnricher {
     }
 
     // Stat name should be in action (stored directly, not ID)
-    const statName = (action as any).statName || action.diceResult.statName;
+    const statName = action.statName || action.diceResult.statName;
     if (!statName) {
       logger.warn('[StatCheckEnricher] No statName found in action');
       return {};
@@ -41,10 +56,10 @@ export class StatCheckEnricher implements IMessageEnricher {
     // Build enriched stat check
     const enrichedStatCheck: EnrichedStatCheck = {
       dice: action.diceResult.dice || '1d100',
-      result: action.diceResult.result,
+      result: action.diceResult.result ?? 0,
       rolls: action.diceResult.rolls,
       modifier: action.diceResult.modifier,
-      total: action.diceResult.total,
+      total: action.diceResult.total ?? 0,
       statName,
       success: action.diceResult.success || false,
       successDegree: action.diceResult.successDegree || 'failure',
