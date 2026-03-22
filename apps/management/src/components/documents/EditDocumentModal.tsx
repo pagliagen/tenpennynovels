@@ -21,7 +21,7 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({
   isOpen,
   onClose
 }) => {
-  const { data: document, isLoading } = useDocument(documentId);
+  const { data: document, isLoading, isError, error } = useDocument(documentId);
   const [contentDelta, setContentDelta] = useState<any>(null);
   const [title, setTitle] = useState('');
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -61,7 +61,7 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({
     }
   };
 
-  if (isLoading || !contentDelta) {
+  if (isLoading || (!contentDelta && !isError)) {
     return (
       <Modal
         isOpen={isOpen}
@@ -70,6 +70,21 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({
         size="large"
       >
         <div className={styles.loading}>Caricamento documento...</div>
+      </Modal>
+    );
+  }
+
+  if (isError || !document) {
+    return (
+      <Modal
+        isOpen={isOpen}
+        onClose={onClose}
+        title="Errore"
+        size="large"
+      >
+        <div className={styles.loading}>
+          Impossibile caricare il documento: {error instanceof Error ? error.message : 'Errore sconosciuto'}
+        </div>
       </Modal>
     );
   }

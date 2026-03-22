@@ -412,17 +412,13 @@ export class DocumentManagementController {
         return;
       }
 
-      res.json({
-        result: true,
-        data: {
-          ...document,
-          _id: document._id.toString(),
-          parentId: document.parentId?.toString() || null,
-          subtypeId: document.subtypeId,
-          lastUpdated: document.lastUpdated
-        },
-        timestamp: new Date().toISOString()
-      });
+      res.json(successResponse({
+        ...document,
+        _id: document._id.toString(),
+        parentId: document.parentId?.toString() || null,
+        subtypeId: document.subtypeId,
+        lastUpdated: document.lastUpdated
+      }, undefined, getRequestId(req)));
     } catch (error: any) {
       logger.error('Error fetching document:', error);
       res.status(500).json(errorResponse(
