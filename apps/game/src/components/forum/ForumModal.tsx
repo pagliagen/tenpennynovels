@@ -1,16 +1,19 @@
 'use client';
 
 import { useEffect, useCallback, useState } from 'react';
+
 import { useForumStore } from '@/store/forumStore';
-import { TopicListView } from './views/TopicListView';
-import { DiscussionListView } from './views/DiscussionListView';
-import { ThreadView } from './views/ThreadView';
-import { CreateDiscussionView } from './views/CreateDiscussionView';
-import { SearchResultsView } from './views/SearchResultsView';
-import { BookmarksView } from './views/BookmarksView';
-import { NotificationsView } from './views/NotificationsView';
-import { ForumHeader } from './ForumHeader';
 import styles from '@/styles/components/forum/ForumModal.module.scss';
+
+import { ForumHeader } from './ForumHeader';
+import { BookmarksView } from './views/BookmarksView';
+import { CreateDiscussionView } from './views/CreateDiscussionView';
+import { DiscussionListView } from './views/DiscussionListView';
+import { NotificationsView } from './views/NotificationsView';
+import { SearchResultsView } from './views/SearchResultsView';
+import { ThreadView } from './views/ThreadView';
+import { TopicListView } from './views/TopicListView';
+
 
 const ANIMATION_DURATION = 300; // ms
 

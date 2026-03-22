@@ -15,11 +15,12 @@
  */
 
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { ChatMessage, canEditMessage } from '@/types/chat';
+
 import { locationChatsApi } from '@/lib/api/locationChats';
 import { useChatStore } from '@/store/chatStore';
 import { useUIStore } from '@/store/uiStore';
 import { useWindowManagerStore } from '@/store/windowManagerStore';
+import { ChatMessage, canEditMessage } from '@/types/chat';
 
 export function useMessageInteractions(
   message: ChatMessage,

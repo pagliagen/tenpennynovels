@@ -10,8 +10,9 @@
 'use client';
 
 import { useWizardStore } from '@/store/wizardStore';
-import { useWizardToolbar } from '../WizardSlotsContext';
 import styles from '@/styles/components/character/wizard/Step5Background.module.scss';
+
+import { useWizardToolbar } from '../WizardSlotsContext';
 
 /**
  * Step 5: Background Component

@@ -1,9 +1,10 @@
 import { Request, Response } from 'express';
-import { 
-  ApiResponse, 
-  PendingCharacter, 
-  Character,
-  CharacterReview, 
+import type { SocialClass } from '@shared/types/socialClass';
+import {
+  ApiResponse,
+  PendingCharacter,
+  CharacterReview,
+  CharacterStats,
   ValidationChecks,
   ReviewStats,
   PaginationInfo
@@ -181,54 +182,61 @@ export class CharacterApprovalController {
    */
   static async getPendingCharacters(req: Request, res: Response): Promise<void> {
     try {
+      const { Character: CharacterModel } = await import('@database/models/Character');
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 20;
       const priority = req.query.priority as string;
       const sortBy = req.query.sortBy as string || 'submittedAt';
       const sortOrder = req.query.sortOrder as string || 'desc';
 
-      // TODO: Implement database query
-      const mockCharacters: PendingCharacter[] = [
-        {
-          id: '1',
-          name: 'John Smith',
-          playerUsername: 'player1',
-          playerEmail: 'player1@example.com',
-          submittedAt: '2024-01-01T10:00:00Z',
-          occupation: 'Doctor',
-          socialClass: 'middle_class',
-          age: 35,
-          gender: 'male',
-          stats: {
-            str: 60,
-            dex: 70,
-            int: 85,
-            con: 65,
-            app: 70,
-            pow: 60,
-            siz: 65,
-            edu: 90
-          },
-          skills: {
-            'First Aid': 80,
-            'Medicine': 90,
-            'Psychology': 60
-          },
-          background: 'A Victorian doctor practicing in London',
-          description: 'Tall, well-dressed gentleman with a kind demeanor',
-          equipment: ['Medical Bag', 'Stethoscope', 'Morphine'],
-          aiGenerated: true,
-          reviewPriority: 'normal'
-        }
-      ];
+      const filter: { playerStatus: 'pending'; reviewPriority?: 'high' | 'normal' | 'low' } = {
+        playerStatus: 'pending',
+      };
+      if (priority && priority !== 'all' && ['high', 'normal', 'low'].includes(priority)) {
+        filter.reviewPriority = priority as 'high' | 'normal' | 'low';
+      }
 
-      const mockPagination: PaginationInfo = {
+      const sortField =
+        sortBy === 'submittedAt' || sortBy === 'createdAt' || sortBy === 'name' ? sortBy : 'submittedAt';
+
+      const characters = await CharacterModel.find(filter)
+        .populate('userId', 'username email')
+        .populate('occupation', 'name')
+        .sort({ [sortField]: sortOrder === 'asc' ? 1 : -1 })
+        .limit(limit)
+        .lean();
+
+      const pendingCharacters: PendingCharacter[] = characters.map((char) => {
+        const { username: playerUsername, email: playerEmail } =
+          CharacterApprovalController.populatedUserFields(char.userId);
+        return {
+          id: char._id.toString(),
+          name: char.name,
+          playerUsername,
+          playerEmail,
+          submittedAt: char.submittedAt?.toISOString() || new Date().toISOString(),
+          occupation: CharacterApprovalController.occupationNameFromPopulate(char.occupation),
+          socialClass: CharacterApprovalController.normalizeSocialClass(char.socialClass),
+          age: typeof char.age === 'number' ? char.age : 0,
+          gender: CharacterApprovalController.narrowGender(char.gender),
+          stats: CharacterApprovalController.mapDbStatsToCharacterStats(char.stats),
+          skills: CharacterApprovalController.flattenSkillsForPending(char.skills as Record<string, number | object> | undefined),
+          background: char.privateDescription || '',
+          description: char.physicalDescription || '',
+          equipment: [],
+          aiGenerated: Boolean(char.aiGenerated),
+          reviewPriority: CharacterApprovalController.narrowReviewPriority(char.reviewPriority),
+        };
+      });
+
+      const totalPending = await CharacterModel.countDocuments(filter);
+      const pagination: PaginationInfo = {
         currentPage: page,
-        totalPages: 1,
-        totalItems: mockCharacters.length,
+        totalPages: Math.ceil(totalPending / limit),
+        totalItems: totalPending,
         pageSize: limit,
-        hasNextPage: false,
-        hasPreviousPage: false
+        hasNextPage: page * limit < totalPending,
+        hasPreviousPage: page > 1
       };
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
@@ -240,8 +248,8 @@ export class CharacterApprovalController {
       });
 
       res.json(listResponse(
-        mockCharacters,
-        mockPagination,
+        pendingCharacters,
+        pagination,
         undefined,
         getRequestId(req)
       ));
@@ -1033,38 +1041,72 @@ export class CharacterApprovalController {
    */
   static async getReviewStats(req: Request, res: Response): Promise<void> {
     try {
-      const period = req.query.period as 'day' | 'week' | 'month' | 'year' || 'week';
+      const { Character: CharacterModel } = await import('@database/models/Character');
+      const rawPeriod = req.query.period;
+      const period: 'day' | 'week' | 'month' | 'year' =
+        rawPeriod === 'day' || rawPeriod === 'week' || rawPeriod === 'month' || rawPeriod === 'year'
+          ? rawPeriod
+          : 'week';
 
-      // TODO: Implement database queries for stats
-      const mockStats: ReviewStats = {
+      const now = new Date();
+      const startDate = new Date();
+      switch (period) {
+        case 'day':
+          startDate.setDate(now.getDate() - 1);
+          break;
+        case 'week':
+          startDate.setDate(now.getDate() - 7);
+          break;
+        case 'month':
+          startDate.setMonth(now.getMonth() - 1);
+          break;
+        case 'year':
+          startDate.setFullYear(now.getFullYear() - 1);
+          break;
+      }
+
+      type PlayerStatusBucket = { _id: string | null; count: number };
+      const statusCounts = await CharacterModel.aggregate<PlayerStatusBucket>([
+        { $match: { submittedAt: { $gte: startDate, $lte: now } } },
+        { $group: { _id: '$playerStatus', count: { $sum: 1 } } },
+      ]);
+
+      const countByPlayerStatus: Record<string, number> = {};
+      for (const row of statusCounts) {
+        if (row._id !== undefined && row._id !== null) {
+          countByPlayerStatus[row._id] = row.count;
+        }
+      }
+
+      const approved = countByPlayerStatus.approved ?? 0;
+      const pending = countByPlayerStatus.pending ?? 0;
+      const draft = countByPlayerStatus.draft ?? 0;
+
+      const rejected = await CharacterModel.countDocuments({
+        rejectedAt: { $gte: startDate, $lte: now },
+      });
+
+      const totalReviewed = approved + rejected;
+      const approvalRate = totalReviewed > 0 ? (approved / totalReviewed) * 100 : 0;
+
+      const stats: ReviewStats = {
         period,
         stats: {
-          totalReviewed: 45,
-          approved: 38,
-          rejected: 5,
-          changesRequested: 2,
-          approvalRate: 84.4,
-          avgReviewTime: '2h 15m',
-          byReviewer: [
-            {
-              reviewerId: 'admin1',
-              reviewerName: 'Admin User',
-              totalReviewed: 25,
-              approved: 22,
-              rejected: 2,
-              changesRequested: 1,
-              avgReviewTime: '1h 45m'
-            }
-          ],
+          totalReviewed,
+          approved,
+          rejected,
+          changesRequested: 0,
+          approvalRate: Math.round(approvalRate * 10) / 10,
+          avgReviewTime: 'N/A',
+          byReviewer: [],
           byCategory: {
-            aiGenerated: 30,
-            manualCreated: 15
+            pending,
+            approved,
+            rejected,
+            draft,
           },
-          commonRejectionReasons: [
-            { reason: 'Inappropriate background', count: 3 },
-            { reason: 'Stats too high', count: 2 }
-          ]
-        }
+          commonRejectionReasons: [],
+        },
       };
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
@@ -1074,7 +1116,7 @@ export class CharacterApprovalController {
       });
 
       res.json(successResponse(
-        mockStats,
+        stats,
         undefined,
         getRequestId(req)
       ));
@@ -1095,6 +1137,91 @@ export class CharacterApprovalController {
         getRequestId(req)
       ));
     }
+  }
+
+  private static readonly SOCIAL_CLASSES: readonly SocialClass[] = [
+    'destitute',
+    'poor',
+    'modest',
+    'lower_middle',
+    'middle_class',
+    'wealthy',
+    'affluent',
+    'elite',
+  ];
+
+  private static normalizeSocialClass(value: unknown): SocialClass {
+    if (typeof value === 'string' && CharacterApprovalController.SOCIAL_CLASSES.includes(value as SocialClass)) {
+      return value as SocialClass;
+    }
+    return 'modest';
+  }
+
+  private static mapDbStatsToCharacterStats(
+    stats:
+      | {
+          strength: number;
+          constitution: number;
+          size: number;
+          dexterity: number;
+          charm: number;
+          intelligence: number;
+          power: number;
+          education: number;
+        }
+      | undefined
+  ): CharacterStats {
+    const z = (n: unknown) => (typeof n === 'number' && !Number.isNaN(n) ? n : 0);
+    if (!stats) {
+      return { str: 0, dex: 0, int: 0, con: 0, app: 0, pow: 0, siz: 0, edu: 0 };
+    }
+    return {
+      str: z(stats.strength),
+      dex: z(stats.dexterity),
+      int: z(stats.intelligence),
+      con: z(stats.constitution),
+      app: z(stats.charm),
+      pow: z(stats.power),
+      siz: z(stats.size),
+      edu: z(stats.education),
+    };
+  }
+
+  private static flattenSkillsForPending(skills: Record<string, number | object> | undefined): Record<string, number> {
+    if (!skills) return {};
+    const out: Record<string, number> = {};
+    for (const [k, v] of Object.entries(skills)) {
+      if (typeof v === 'number') out[k] = v;
+    }
+    return out;
+  }
+
+  private static narrowGender(value: unknown): 'male' | 'female' {
+    return value === 'female' ? 'female' : 'male';
+  }
+
+  private static populatedUserFields(ref: unknown): { username: string; email: string } {
+    if (ref && typeof ref === 'object') {
+      const o = ref as { username?: unknown; email?: unknown };
+      return {
+        username: typeof o.username === 'string' ? o.username : 'Unknown',
+        email: typeof o.email === 'string' ? o.email : 'Unknown',
+      };
+    }
+    return { username: 'Unknown', email: 'Unknown' };
+  }
+
+  private static occupationNameFromPopulate(ref: unknown): string {
+    if (ref && typeof ref === 'object' && 'name' in ref) {
+      const n = (ref as { name?: unknown }).name;
+      return typeof n === 'string' ? n : 'Unknown';
+    }
+    return 'Unknown';
+  }
+
+  private static narrowReviewPriority(value: unknown): 'high' | 'normal' | 'low' {
+    if (value === 'high' || value === 'low') return value;
+    return 'normal';
   }
 
   /**
@@ -1118,6 +1245,7 @@ export class CharacterApprovalController {
    */
   static async updateReviewPriority(req: Request<{ characterId: string }>, res: Response): Promise<void> {
     try {
+      const { Character: CharacterModel } = await import('@database/models/Character');
       const characterId = req.params.characterId;
       const { priority } = req.body;
 
@@ -1132,7 +1260,23 @@ export class CharacterApprovalController {
         return;
       }
 
-      // TODO: Update priority in database
+      // Update priority in database
+      const character = await CharacterModel.findByIdAndUpdate(
+        characterId,
+        { reviewPriority: priority },
+        { new: true }
+      );
+
+      if (!character) {
+        res.status(404).json(errorResponse(
+          'Character not found',
+          'CHARACTER_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
+        return;
+      }
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       logger.info('Character review priority updated', {

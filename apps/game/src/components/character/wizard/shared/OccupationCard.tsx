@@ -1,9 +1,11 @@
 'use client';
 
 import Image from 'next/image';
+
 import { Occupation } from '@/lib/api/characterCreation';
-import { getOccupationImage } from './OccupationIconMap';
 import styles from '@/styles/components/character/wizard/OccupationCard.module.scss';
+
+import { getOccupationImage } from './OccupationIconMap';
 
 interface OccupationCardProps {
   occupation: Occupation;

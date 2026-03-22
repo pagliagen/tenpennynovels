@@ -10,8 +10,8 @@
 
 'use client';
 
-import type { ChatMessageType } from '@/types/chat';
 import styles from '@/styles/components/chat/ConditionalSelects.module.scss';
+import type { ActionType } from '@/types/chat';
 
 /**
  * Occupant data for whisper targets
@@ -44,7 +44,7 @@ interface Item {
  */
 interface ConditionalSelectsProps {
   /** Selected action type */
-  selectedAction: ChatMessageType;
+  selectedAction: ActionType;
 
   /** Current character ID (to exclude from whisper targets) */
   currentCharacterId: string;
@@ -96,15 +96,12 @@ export function ConditionalSelects({
   selectedAction,
   currentCharacterId,
   occupants,
-  skills = [],
   stats = {},
   equippedItems = [],
   targetCharacters,
-  selectedSkill,
   selectedStat,
   selectedItem,
   onTargetChange,
-  onSkillChange,
   onStatChange,
   onItemChange,
 }: ConditionalSelectsProps): JSX.Element | null {
@@ -133,22 +130,6 @@ export function ConditionalSelects({
           {otherOccupants.map((occupant) => (
             <option key={occupant.characterId} value={occupant.characterId}>
               {occupant.characterName}
-            </option>
-          ))}
-        </select>
-      </div>
-    );
-  }
-
-  // Skill selection
-  if (selectedAction === 'skill_check') {
-    return (
-      <div className={styles.conditionalSelect}>
-        <select value={selectedSkill} onChange={(e) => onSkillChange(e.target.value)} className={styles.selectInput}>
-          <option value="">Seleziona Abilità</option>
-          {skills.map((skill) => (
-            <option key={skill.name} value={skill.name}>
-              {skill.name} ({skill.value}) {skill.category && `[${skill.category}]`}
             </option>
           ))}
         </select>

@@ -1,8 +1,9 @@
 /**
- * Ambientazione Document Detail Page (Catch-all)
+ * Dettaglio documento ambientazione (catch-all).
  *
- * Handles paths like /ambientazione/introduzione/presentazione.
- * Uses Server-Side Rendering (SSR) for authenticated access to private documents.
+ * Esempio: /ambientazione/introduzione/presentazione.
+ * ISR (getStaticProps): contenuto rigenerato a intervalli; l’endpoint API restituisce
+ * solo ciò che il backend espone senza sessione (documenti pubblici in build/ISR).
  *
  * @module pages/ambientazione/[...slug]
  * @since 2.0.0
@@ -17,6 +18,7 @@ import { ErrorMessage } from '@/components/ui/ErrorMessage';
 import type { DocumentDetail as DocumentDetailType } from '@/types/document';
 import { DocumentHeader } from '@/components/documents/DocumentHeader';
 import { createArticleSchema, createDocumentBreadcrumbSchema } from '@/utils/schemas';
+import { API_CONFIG } from '@/constants/config';
 import styles from '@/styles/components/documents/MainContent.module.scss';
 
 interface AmbientazioneDetailProps {
@@ -91,12 +93,13 @@ export default function AmbientazioneDetail({ data, error }: AmbientazioneDetail
  */
 export const getStaticPaths: GetStaticPaths = async () => {
   try {
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
-    const response = await fetch(`${API_URL}/documents/routes/list?type=ambientazione&all=true`);
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}/documents/routes/list?type=ambientazione&all=true`
+    );
     const result = await response.json();
 
     if (!result.result || !result.data) {
-      console.warn('[getStaticPaths] Failed to fetch ambientazione routes');
+      console.warn('[getStaticPaths] Impossibile recuperare le route ambientazione');
       return { paths: [], fallback: 'blocking' };
     }
 
@@ -109,7 +112,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
       fallback: 'blocking'  // ISR on-demand for new documents
     };
   } catch (error) {
-    console.error('[getStaticPaths] Error:', error);
+    console.error('[getStaticPaths] Errore:', error);
     return { paths: [], fallback: 'blocking' };
   }
 };
@@ -137,7 +140,7 @@ export const getStaticProps: GetStaticProps<AmbientazioneDetailProps> = async ({
       revalidate: 3600  // Regenerate every 1 hour if requested
     };
   } catch (error: any) {
-    console.error(`[Ambientazione Detail] Error fetching ${path}:`, error);
+    console.error(`[Dettaglio ambientazione] Errore caricamento ${path}:`, error);
 
     if (error?.statusCode === 404 || error?.response?.status === 404) {
       return { notFound: true };

@@ -12,6 +12,7 @@
 'use client';
 
 import { useState } from 'react';
+
 import { usePublicCharacters } from '@/hooks/useOnGameMail';
 import { useAuthStore } from '@/store/authStore';
 import styles from '@/styles/components/mail/OnGameMail.module.scss';

@@ -16,9 +16,11 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { User, Character } from '@/types/api/schemas';
+
 import { AUTH_CONFIG } from '@/constants/config';
 import { clearAuthToken } from '@/lib/api/client';
+import type { CharacterBanSessionPayload } from '@/types/authSession';
+import { User, Character } from '@/types/api/schemas';
 
 /**
  * Authentication Store State
@@ -31,6 +33,8 @@ import { clearAuthToken } from '@/lib/api/client';
  * @property {boolean} isAuthenticated - Whether user is authenticated
  * @property {boolean} isInitialized - Whether store has been hydrated from localStorage
  * @property {string[]} gamePermissions - Game permissions for current character (NOT persisted - fetched fresh from backend)
+ * @property {boolean} adminPanelAccessFromSession - Link pannello admin (da GET /auth/session, deriva dal PG attivo; NON persistere)
+ * @property {CharacterBanSessionPayload | null} characterBan - Stato ban sul PG in sessione (non persistere)
  */
 interface AuthState {
   user: User | null;
@@ -38,6 +42,8 @@ interface AuthState {
   isAuthenticated: boolean;
   isInitialized: boolean;
   gamePermissions: string[];
+  adminPanelAccessFromSession: boolean;
+  characterBan: CharacterBanSessionPayload | null;
 }
 
 /**
@@ -83,6 +89,14 @@ interface AuthActions {
    * @returns {void}
    */
   setGamePermissions: (permissions: string[]) => void;
+
+  /**
+   * Aggiorna visibilità link admin da risposta /auth/session (allineato al personaggio in sessione Redis).
+   */
+  setAdminPanelAccessFromSession: (allowed: boolean) => void;
+
+  /** Aggiorna il payload ban da GET /auth/session o POST select-character */
+  setCharacterBan: (ban: CharacterBanSessionPayload | null) => void;
 
   /**
    * Check if current character has a specific game permission
@@ -160,6 +174,8 @@ export const useAuthStore = create<AuthStore>()(
       isAuthenticated: false,
       isInitialized: false,
       gamePermissions: [],
+      adminPanelAccessFromSession: false,
+      characterBan: null,
 
       /**
        * Set authenticated user
@@ -207,7 +223,12 @@ export const useAuthStore = create<AuthStore>()(
        * @since 2.0.0
        */
       clearSelectedCharacter: () => {
-        set({ selectedCharacter: null, gamePermissions: [] });
+        set({
+          selectedCharacter: null,
+          gamePermissions: [],
+          adminPanelAccessFromSession: false,
+          characterBan: null,
+        });
       },
 
       /**
@@ -225,6 +246,14 @@ export const useAuthStore = create<AuthStore>()(
         set({ gamePermissions: permissions });
       },
 
+      setAdminPanelAccessFromSession: (allowed) => {
+        set({ adminPanelAccessFromSession: allowed });
+      },
+
+      setCharacterBan: (ban) => {
+        set({ characterBan: ban });
+      },
+
       /**
        * Check if current character has a specific game permission
        *
@@ -239,10 +268,9 @@ export const useAuthStore = create<AuthStore>()(
       hasGamePermission: (permission) => {
         const state = get();
 
-        // Gestore bypasses all permissions
-        if (state.selectedCharacter?.isGestore) {
-          return true;
-        }
+        // IMPORTANT: No bypasses here - permissions are the single source of truth.
+        // If gestore needs all permissions, backend must grant 'game:*' permission,
+        // not frontend bypassing the check.
 
         // Check wildcard permission
         if (state.gamePermissions.includes('game:*')) {
@@ -273,6 +301,8 @@ export const useAuthStore = create<AuthStore>()(
           selectedCharacter: null,
           isAuthenticated: false,
           gamePermissions: [],
+          adminPanelAccessFromSession: false,
+          characterBan: null,
         });
 
         // Clear game state (NEW - reset currentLocation)

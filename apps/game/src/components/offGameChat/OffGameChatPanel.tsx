@@ -12,11 +12,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+
 import { useOffGameChatWebSocket } from '@/hooks/useOffGameChat';
+import styles from '@/styles/components/offGameChat/OffGameChat.module.scss';
+
 import { OffGameChatListView } from './OffGameChatListView';
 import { OffGameChatThreadView } from './OffGameChatThreadView';
 import { OffGameNewChatView } from './OffGameNewChatView';
-import styles from '@/styles/components/offGameChat/OffGameChat.module.scss';
 
 /**
  * OffGame Chat Panel Props

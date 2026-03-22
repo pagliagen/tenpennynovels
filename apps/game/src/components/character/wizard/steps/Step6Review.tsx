@@ -10,11 +10,13 @@
 
 'use client';
 
-import { useWizardStore } from '@/store/wizardStore';
 import { useSkills } from '@/hooks/useCharacterCreation';
+import { useWizardStore } from '@/store/wizardStore';
+import styles from '@/styles/components/character/wizard/Step6Review.module.scss';
+
 import { DataSummaryCard } from '../shared/DataSummaryCard';
 import { useWizardToolbar } from '../WizardSlotsContext';
-import styles from '@/styles/components/character/wizard/Step6Review.module.scss';
+
 
 /**
  * Step 6: Review Component

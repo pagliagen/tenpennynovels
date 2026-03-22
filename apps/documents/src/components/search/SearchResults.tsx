@@ -174,7 +174,7 @@ function ResultItem({ result, onClose }: { result: SearchResult; onClose: () => 
           <h4 className={styles.resultTitle}>{result.document.title}</h4>
           <span
             className={styles.matchScore}
-            title={`Similarity: ${result.similarity.toFixed(3)}`}
+            title={`Rilevanza (similarità): ${result.similarity.toFixed(3)}`}
           >
             {result.matchScore}
           </span>
@@ -197,7 +197,7 @@ function ResultItem({ result, onClose }: { result: SearchResult; onClose: () => 
 
         {result.matchHeading && (
           <p className={styles.matchSection}>
-            <span className={styles.matchSectionIcon}>§</span>
+            <span className={styles.matchSectionIcon} aria-hidden>¶</span>
             {result.matchHeading}
           </p>
         )}

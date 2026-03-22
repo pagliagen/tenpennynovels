@@ -16,9 +16,11 @@
  */
 
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
+
 import { API_CONFIG, AUTH_CONFIG } from '@/constants/config';
-import { parseAxiosError, ApiError } from './errors';
 import { useUIStore } from '@/store/uiStore';
+
+import { parseAxiosError, ApiError } from './errors';
 
 /**
  * Set auth token in localStorage

@@ -31,22 +31,7 @@ export interface ListResponse<T = unknown> {
   timestamp?: string;
   requestId?: string;
 }
-
-/**
- * Paginated API response
- * @deprecated Use ListResponse instead - this structure doesn't match actual backend responses
- */
-export interface PaginatedResponse<T = unknown> {
-  success: boolean;
-  data?: {
-    list: T[];
-    pagination: PaginationInfo;
-  };
-  error?: string;
-  code?: string;
-  message?: string;
-}
-
+ 
 /**
  * Pagination information
  */

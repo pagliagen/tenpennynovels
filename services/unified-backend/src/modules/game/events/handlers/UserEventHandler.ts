@@ -9,7 +9,7 @@
  */
 
 import { BaseEventHandler } from '../BaseEventHandler';
-import { RedisEvent } from '../types';
+import type { RedisEvent } from '../types';
 import { logger } from '../../logger';
 
 export class UserEventHandler extends BaseEventHandler {
@@ -17,7 +17,8 @@ export class UserEventHandler extends BaseEventHandler {
     return [
       'user_login',
       'user_logout',
-      'user_character_selected'
+      'user_character_selected',
+      'character_ban_updated',
     ];
   }
 
@@ -35,6 +36,15 @@ export class UserEventHandler extends BaseEventHandler {
 
       case 'user_character_selected':
         await this.handleCharacterSelection(event);
+        break;
+
+      case 'character_ban_updated':
+        await this.handleCharacterBanUpdated(event as RedisEvent & {
+          userId: string;
+          characterId: string;
+          banScope: string | null;
+          active: boolean;
+        });
         break;
 
       default:
@@ -90,6 +100,26 @@ export class UserEventHandler extends BaseEventHandler {
       characterId: event.characterId,
       characterName: event.characterName,
       timestamp: event.timestamp
+    });
+  }
+
+  /**
+   * Ban / unban sul personaggio: tutte le tab dello stesso utente (room user_${id}).
+   */
+  private async handleCharacterBanUpdated(event: {
+    userId: string;
+    characterId: string;
+    banScope: string | null;
+    active: boolean;
+    timestamp?: string;
+  }): Promise<void> {
+    if (!event.userId) return;
+    this.io.to(`user_${event.userId}`).emit('character_ban_updated', {
+      userId: event.userId,
+      characterId: event.characterId,
+      banScope: event.banScope,
+      active: event.active,
+      timestamp: event.timestamp || new Date().toISOString(),
     });
   }
 }

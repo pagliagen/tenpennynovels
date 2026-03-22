@@ -1,6 +1,5 @@
 // Game Backend Types
 
-// TODO: Import from shared package when workspace configuration is complete
 import type { PaginationInfo } from '@shared/types/responses';
 
 /**
@@ -535,7 +534,9 @@ export enum TicketCategory {
   CHARACTER_EDIT = 'character_edit',
   QUEST_PROPOSAL = 'quest_proposal',
   GAME_BUG_REPORT = 'game_bug_report',
-  IMPROVEMENT_SUGGESTION = 'improvement_suggestion'
+  IMPROVEMENT_SUGGESTION = 'improvement_suggestion',
+  /** Contestazione / chiarimenti su sanzioni (ban parziale o comunicazione con staff) */
+  SANCTION_APPEAL = 'sanction_appeal',
 }
 
 export enum TicketPriority {
@@ -551,7 +552,8 @@ export const TICKET_CATEGORIES = {
   [TicketCategory.CHARACTER_EDIT]: 'Modifica Personaggio',
   [TicketCategory.QUEST_PROPOSAL]: 'Proposta Trama/Quest',
   [TicketCategory.GAME_BUG_REPORT]: 'Segnalazione Bug',
-  [TicketCategory.IMPROVEMENT_SUGGESTION]: 'Suggerimento Miglioramento'
+  [TicketCategory.IMPROVEMENT_SUGGESTION]: 'Suggerimento Miglioramento',
+  [TicketCategory.SANCTION_APPEAL]: 'Sanzione / contestazione',
 } as const;
 
 // Mapping Categoria → Reparto (routing automatico iniziale) - v1
@@ -560,7 +562,8 @@ export const CATEGORY_DEPARTMENT_MAPPING = {
   [TicketCategory.CHARACTER_EDIT]: TicketDepartment.ADMINISTRATION,
   [TicketCategory.QUEST_PROPOSAL]: TicketDepartment.MASTER,
   [TicketCategory.GAME_BUG_REPORT]: TicketDepartment.TECHNICAL,
-  [TicketCategory.IMPROVEMENT_SUGGESTION]: TicketDepartment.GENERAL
+  [TicketCategory.IMPROVEMENT_SUGGESTION]: TicketDepartment.GENERAL,
+  [TicketCategory.SANCTION_APPEAL]: TicketDepartment.MODERATION,
 } as const;
 
 // Mapping Reparto → Ruoli Staff Autorizzati
@@ -578,7 +581,8 @@ export const CATEGORY_PRIORITY_MAPPING = {
   [TicketCategory.CHARACTER_EDIT]: TicketPriority.MEDIUM,
   [TicketCategory.QUEST_PROPOSAL]: TicketPriority.LOW,
   [TicketCategory.GAME_BUG_REPORT]: TicketPriority.HIGH,
-  [TicketCategory.IMPROVEMENT_SUGGESTION]: TicketPriority.LOW
+  [TicketCategory.IMPROVEMENT_SUGGESTION]: TicketPriority.LOW,
+  [TicketCategory.SANCTION_APPEAL]: TicketPriority.HIGH,
 } as const;
 
 // Interfacce per Ticket
@@ -706,7 +710,6 @@ export interface TicketNotification {
 }
 
 // Error Types
-// Error Types - TODO: Import from shared package when workspace configuration is complete
 export interface ValidationError {
   field: string;
   message: string;

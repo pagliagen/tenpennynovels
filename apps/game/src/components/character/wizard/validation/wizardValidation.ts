@@ -9,6 +9,7 @@
  * @since 2.1.0
  */
 
+import type { CharacterCreationConfig } from '@/lib/api/character';
 import type {
   WizardBasicInfo,
   WizardOccupation,
@@ -18,7 +19,6 @@ import type {
   DynamicSkill,
   ValidationResult,
 } from '@/types/wizard';
-import type { CharacterCreationConfig } from '@/lib/api/character';
 
 export function validateStep1(basicInfo: WizardBasicInfo): ValidationResult {
   const errors: Record<string, string> = {};

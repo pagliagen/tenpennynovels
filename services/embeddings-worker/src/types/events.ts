@@ -17,11 +17,6 @@ export const REDIS_CHANNELS = {
   // Document chunk events (legacy - deprecated, handled by Document events)
   EMBEDDING_DOCUMENT_CHUNK_CREATED: 'embedding:document_chunk:created',
 
-  // Location events (no chunking)
-  EMBEDDING_LOCATION_CREATED: 'embedding:location:created',
-  EMBEDDING_LOCATION_UPDATED: 'embedding:location:updated',
-  EMBEDDING_LOCATION_DELETED: 'embedding:location:deleted',
-
   // Chat events (no chunking)
   EMBEDDING_CHAT_CREATED: 'embedding:chat:created',
   EMBEDDING_CHAT_UPDATED: 'embedding:chat:updated',
@@ -61,14 +56,6 @@ export interface DocumentChunkEmbeddingEvent extends BaseEmbeddingEvent {
   parentSlug?: string;
 }
 
-export interface LocationEmbeddingEvent extends BaseEmbeddingEvent {
-  locationId: string;
-  name: string;
-  description: string;
-  district: string;
-  slug: string;
-}
-
 export interface ChatEmbeddingEvent extends BaseEmbeddingEvent {
   chatId: string;
   characterId: string;
@@ -88,14 +75,13 @@ export interface ForumPostEmbeddingEvent extends BaseEmbeddingEvent {
 }
 
 export interface DeleteEmbeddingEvent extends BaseEmbeddingEvent {
-  entityType: 'document' | 'location' | 'chat' | 'forum_post';
+  entityType: 'document' | 'chat' | 'forum_post';
   entityId: string;
 }
 
 export type EmbeddingEvent =
   | DocumentEmbeddingEvent
   | DocumentChunkEmbeddingEvent
-  | LocationEmbeddingEvent
   | ChatEmbeddingEvent
   | ForumPostEmbeddingEvent
   | DeleteEmbeddingEvent;
@@ -106,10 +92,6 @@ export function isDocumentEmbeddingEvent(event: EmbeddingEvent): event is Docume
 
 export function isDocumentChunkEmbeddingEvent(event: EmbeddingEvent): event is DocumentChunkEmbeddingEvent {
   return 'chunkId' in event;
-}
-
-export function isLocationEmbeddingEvent(event: EmbeddingEvent): event is LocationEmbeddingEvent {
-  return 'locationId' in event && !('chatId' in event) && !('entityType' in event);
 }
 
 export function isChatEmbeddingEvent(event: EmbeddingEvent): event is ChatEmbeddingEvent {

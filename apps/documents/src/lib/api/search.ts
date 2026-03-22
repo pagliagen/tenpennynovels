@@ -85,8 +85,9 @@ export const searchApi = {
 
       return response.data.suggestions || response.data || [];
     } catch (error) {
-      // Suggestions are optional, don't fail if endpoint doesn't exist
-      console.warn('[Search] Suggestions endpoint not available:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('[Ricerca] Endpoint suggerimenti non disponibile:', error);
+      }
       return [];
     }
   },

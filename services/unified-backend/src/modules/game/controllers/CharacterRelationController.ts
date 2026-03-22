@@ -4,7 +4,7 @@ import { Character } from '@database/models/Character';
 import { logger } from '../logger';
 import { AuthUtils } from '../middleware/auth';
 import { auditLogger } from '@modules/admin/utils/auditLogger';
-import { gameEventPublisher } from '../services/GameEventPublisher';
+import { redis } from '@config/runtime/redis';
 import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
 import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '@shared/utils/apiResponse';
 
@@ -329,16 +329,15 @@ export class CharacterRelationController {
         userAgent: req.get('User-Agent')
       });
 
-      await gameEventPublisher.publishRelationshipEvent({
+      await redis.publish('relationship:events', JSON.stringify({
         type: 'RELATIONSHIP_PROPOSED',
         characterId: characterId.toString(),
         relationshipId: newRelationship._id.toString(),
-        data: {
-          toCharacterId: targetCharacterId,
-          relationshipType: relationshipType.name,
-          requiresApproval: relationshipType.requiresMutualApproval
-        }
-      });
+        toCharacterId: targetCharacterId,
+        relationshipType: relationshipType.name,
+        requiresApproval: relationshipType.requiresMutualApproval,
+        timestamp: new Date().toISOString()
+      }));
 
       logger.info('Relationship proposed', {
         relationshipId: newRelationship._id,
@@ -482,15 +481,14 @@ export class CharacterRelationController {
         userAgent: req.get('User-Agent')
       });
 
-      await gameEventPublisher.publishRelationshipEvent({
+      await redis.publish('relationship:events', JSON.stringify({
         type: `RELATIONSHIP_${action.toUpperCase()}ED`,
         characterId: relationship.fromCharacterId._id.toString(),
         relationshipId: relationship._id.toString(),
-        data: {
-          toCharacterId: characterId.toString(),
-          relationshipType: relationship.relationshipTypeName
-        }
-      });
+        toCharacterId: characterId.toString(),
+        relationshipType: relationship.relationshipTypeName,
+        timestamp: new Date().toISOString()
+      }));
 
       logger.info(`Relationship proposal ${action}ed`, {
         relationshipId: relationship._id,
@@ -600,16 +598,15 @@ export class CharacterRelationController {
         userAgent: req.get('User-Agent')
       });
 
-      await gameEventPublisher.publishRelationshipEvent({
+      await redis.publish('relationship:events', JSON.stringify({
         type: 'RELATIONSHIP_ENDED',
         characterId: relationship.fromCharacterId._id.toString(),
         relationshipId: relationship._id.toString(),
-        data: {
-          toCharacterId: relationship.toCharacterId._id.toString(),
-          relationshipType: relationship.relationshipTypeName,
-          endedBy: characterId.toString()
-        }
-      });
+        toCharacterId: relationship.toCharacterId._id.toString(),
+        relationshipType: relationship.relationshipTypeName,
+        endedBy: characterId.toString(),
+        timestamp: new Date().toISOString()
+      }));
 
       logger.info('Relationship ended', {
         relationshipId: relationship._id,

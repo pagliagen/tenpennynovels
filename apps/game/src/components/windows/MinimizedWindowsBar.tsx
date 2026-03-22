@@ -11,8 +11,8 @@
 'use client';
 
 import { useWindowManagerStore } from '@/store/windowManagerStore';
-import { WindowState } from '@/types/window-manager';
 import styles from '@/styles/components/windows/MinimizedWindowsBar.module.scss';
+import { WindowState } from '@/types/window-manager';
 
 /**
  * Get Window Title Helper

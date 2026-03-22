@@ -8,11 +8,13 @@
 
 'use client';
 
-import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
+
 import { api } from '@/lib/api/client';
-import { TicketStatusBadge } from './TicketStatusBadge';
+
 import { StaffTicketDetailView } from './StaffTicketDetailView';
+import { TicketStatusBadge } from './TicketStatusBadge';
 
 export function StaffTicketPanel() {
   const [currentTicketId, setCurrentTicketId] = useState<string | null>(null);

@@ -13,6 +13,7 @@ import Link from 'next/link';
 import { SEO } from '@/components/SEO';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
+import { API_CONFIG } from '@/constants/config';
 
 interface SearchResult {
   title: string;
@@ -51,9 +52,8 @@ export default function SearchPage() {
     setSearchPerformed(false);
 
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
       const response = await fetch(
-        `${API_URL}/documents/search?q=${encodeURIComponent(query)}`
+        `${API_CONFIG.BASE_URL}/documents/search?q=${encodeURIComponent(query)}`
       );
 
       const data: SearchResponse = await response.json();
@@ -66,7 +66,7 @@ export default function SearchPage() {
 
       setSearchPerformed(true);
     } catch (err) {
-      console.error('[Search] Error:', err);
+      console.error('[Ricerca] Errore:', err);
       setError('Errore di connessione. Riprova più tardi.');
     } finally {
       setLoading(false);

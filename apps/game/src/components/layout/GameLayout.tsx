@@ -1,18 +1,12 @@
 /**
  * Game Layout Component
  *
- * Main layout structure for authenticated game pages.
- * Provides sidebar, top bar, and main content container.
+ * Struttura principale delle pagine autenticate: sidebar, top bar, area contenuto.
  *
- * Architecture:
- * - Sidebar (left): Character info, presence list, weather/time
- * - TopBar (top): Quick actions, notifications
- * - MainContent (center): Page-specific content
- * - Overlays: CharacterSheets, Chat panels, Utility panel
- *
- * CRITICAL: This component is ONLY for visual structure.
- * NO business logic, NO API calls, NO WebSocket subscriptions.
- * All data comes from contexts or TanStack Query.
+ * Comportamento (non è solo “presentational”):
+ * - Composizione UI (sidebar, TopBar, finestre modali, ecc.)
+ * - Orchestrazione: hook di query (mail, chat, ticket), WebSocket per invalidazioni,
+ *   refresh sessione dopo eventi, redirect wizard, init location store.
  *
  * @module components/layout/GameLayout
  * @since 2.0.0
@@ -20,33 +14,37 @@
 
 'use client';
 
-import { ReactNode, useMemo, useEffect, useCallback, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/router';
+import { ReactNode, useMemo, useEffect, useCallback, useState } from 'react';
+
+import { useWebSocket } from '@/contexts/WebSocketContext';
+import { useOffGameUnreadCount } from '@/hooks/useOffGameChat';
+import { useOnGameUnreadCount } from '@/hooks/useOnGameMail';
+import { useTicketNotifications } from '@/hooks/useTicketNotifications';
+import { useUnreadTicketsCount } from '@/hooks/useTickets';
+import { api } from '@/lib/api/client';
+import { queryKeys } from '@/lib/api/queryClient';
+import { useAuthStore } from '@/store/authStore';
+import { useForumStore } from '@/store/forumStore';
+import { useGameStateStore } from '@/store/gameStateStore';
+import { useLocationStore } from '@/store/locationStore';
+import { useWindowManagerStore } from '@/store/windowManagerStore';
 import styles from '@/styles/components/GameLayout.module.scss';
-import { TopBar } from './TopBar';
+import type { AuthSessionApiResponse, CharacterBanSessionPayload } from '@/types/authSession';
+
+import { ConnectionStatus } from '../connection/ConnectionStatus';
+import { ForumModal } from '../forum/ForumModal';
+import { PresenceModal } from '../presence/PresenceModal';
 import { CharacterProfile } from '../sidebar/CharacterProfile';
+import { CharactersList } from '../sidebar/CharactersList';
 import { DateDisplay } from '../sidebar/DateDisplay';
 import { MoonPhase } from '../sidebar/MoonPhase';
 import { WeatherDisplay } from '../sidebar/WeatherDisplay';
-import { CharactersList } from '../sidebar/CharactersList';
-import { WindowRenderer } from '../windows/WindowRenderer';
 import { MinimizedWindowsBar } from '../windows/MinimizedWindowsBar';
-import { ConnectionStatus } from '../connection/ConnectionStatus';
-import { useAuthStore } from '@/store/authStore';
-import { api } from '@/lib/api/client';
-import { useLocationStore } from '@/store/locationStore';
-import { useGameStateStore } from '@/store/gameStateStore';
-import { useWindowManagerStore } from '@/store/windowManagerStore';
-import { useWebSocket } from '@/contexts/WebSocketContext';
-import { useQueryClient } from '@tanstack/react-query';
-import { useOnGameUnreadCount } from '@/hooks/useOnGameMail';
-import { useOffGameUnreadCount } from '@/hooks/useOffGameChat';
-import { useTicketNotifications } from '@/hooks/useTicketNotifications';
-import { useUnreadTicketsCount } from '@/hooks/useTickets';
-import { queryKeys } from '@/lib/api/queryClient';
-import { ForumModal } from '../forum/ForumModal';
-import { useForumStore } from '@/store/forumStore';
-import { PresenceModal } from '../presence/PresenceModal';
+import { WindowRenderer } from '../windows/WindowRenderer';
+
+import { TopBar } from './TopBar';
 
 /**
  * Game Layout Props
@@ -60,22 +58,7 @@ interface GameLayoutProps {
 }
 
 /**
- * Game Layout Component
- *
- * Renders the main game layout with sidebar, top bar, and content area.
- * This is a pure presentational component - all data comes from contexts.
- *
- * @component
- * @param {GameLayoutProps} props - Component props
- * @returns {JSX.Element} Game layout structure
- * @since 2.0.0
- *
- * @example
- * ```tsx
- * <GameLayout>
- *   <LocationChat />
- * </GameLayout>
- * ```
+ * Layout di gioco con shell UI, stato globale e sottoscrizioni real-time dove servono.
  */
 export function GameLayout({ children }: GameLayoutProps): JSX.Element {
   const router = useRouter();
@@ -87,9 +70,13 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
   // Auth store: Get current character and permissions
   const selectedCharacter = useAuthStore((state) => state.selectedCharacter);
   const user = useAuthStore((state) => state.user);
+  const adminPanelAccessFromSession = useAuthStore((state) => state.adminPanelAccessFromSession);
   const hasGamePermission = useAuthStore((state) => state.hasGamePermission);
   const setSelectedCharacter = useAuthStore((state) => state.setSelectedCharacter);
   const setGamePermissions = useAuthStore((state) => state.setGamePermissions);
+  const setAdminPanelAccessFromSession = useAuthStore((state) => state.setAdminPanelAccessFromSession);
+  const characterBan = useAuthStore((state) => state.characterBan);
+  const setCharacterBan = useAuthStore((state) => state.setCharacterBan);
 
   // Game state: Get current location (SINGLE SOURCE OF TRUTH)
   const currentLocationId = useGameStateStore((state) => state.currentLocationId);
@@ -113,7 +100,7 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
   const { data: unreadTicketsCount = 0 } = useUnreadTicketsCount();
 
   // WebSocket + QueryClient: For real-time badge updates
-  const { onMessageEvent } = useWebSocket();
+  const { onMessageEvent, onGlobalEvent } = useWebSocket();
   const queryClient = useQueryClient();
 
   // Ticket notifications: Real-time updates and invalidations
@@ -124,19 +111,45 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
    */
   const refreshSession = useCallback(async () => {
     try {
-      const session = await api.get<any>('/auth/session');
+      const session = await api.get<AuthSessionApiResponse>('/auth/session');
       if (session.success && session.data?.valid) {
+        if (session.data.user) {
+          setAdminPanelAccessFromSession(!!session.data.user.canAccessAdminPanel);
+        }
         if (session.data.character) {
           setSelectedCharacter(session.data.character);
         }
         if (session.data.gamePermissions) {
           setGamePermissions(session.data.gamePermissions);
         }
+        const b = session.data.ban as CharacterBanSessionPayload | null | undefined;
+        setCharacterBan(b ?? null);
       }
     } catch {
       // Non-critical: session will refresh on next page load
     }
-  }, [setSelectedCharacter, setGamePermissions]);
+  }, [setSelectedCharacter, setGamePermissions, setAdminPanelAccessFromSession, setCharacterBan]);
+
+  /**
+   * Ban aggiornato da staff: socket → refresh sessione.
+   */
+  useEffect(() => {
+    const unsub = onGlobalEvent((ev) => {
+      if (ev.type === 'character_ban_updated') {
+        void refreshSession();
+      }
+    });
+    return unsub;
+  }, [onGlobalEvent, refreshSession]);
+
+  /**
+   * Ban full (blocco land): reindirizza alla pagina informativa (ticket restano usabili da TopBar).
+   */
+  useEffect(() => {
+    if (!selectedCharacter || !characterBan?.active || !characterBan.blocksLandAccess) return;
+    if (router.pathname === '/character-banned') return;
+    void router.replace('/character-banned');
+  }, [selectedCharacter, characterBan, router]);
 
   /**
    * Redirect to wizard when character has game:character:wizard (draft) and we're on game home.
@@ -156,7 +169,9 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
    */
   useEffect(() => {
     if (selectedCharacter && locations.length === 0) {
-      console.log('[GameLayout] Initializing locationStore...');
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('[GameLayout] Initializing locationStore');
+      }
       useLocationStore.getState().initialize(selectedCharacter._id);
     }
   }, [selectedCharacter?._id, locations.length]);
@@ -184,17 +199,22 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
 
     // If location not found, fallback to default
     if (!currentLocation) {
-      console.warn('[GameLayout] ⚠️ Location not found for ID:', currentLocationId, '| Available:', locations.length);
+      if (process.env.NODE_ENV === 'development') {
+        console.warn(
+          '[GameLayout] Location not found for ID:',
+          currentLocationId,
+          '| Available locations:',
+          locations.length
+        );
+      }
       return defaultProps;
     }
-
-    console.log('[GameLayout] ✅ TopBar updated:', currentLocation.name, '| ID:', currentLocation._id);
 
     // Return actual location props
     return {
       locationName: currentLocation.name,
       locationImageUrl: currentLocation.imageUrl || '/images/topbar/location-image.png',
-      isInLondon: currentLocation.slug === 'londra', // TODO: Check if there's a better way to identify London
+      isInLondon: currentLocation.slug === 'londra', // Slug-based check is correct (SEO-friendly)
     };
   }, [currentLocationId, locations]);
 
@@ -396,7 +416,9 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
             onOffGameChatClick={handleOffGameChatClick}
             unreadOffGameChatCount={unreadOffGameChatCount}
             unreadTicketsCount={unreadTicketsCount}
-            canAccessAdmin={user?.canAccessAdminPanel ?? false}
+            canAccessAdmin={
+              adminPanelAccessFromSession || user?.canAccessAdminPanel === true
+            }
             locationName={topBarLocationProps.locationName}
             locationImageUrl={topBarLocationProps.locationImageUrl}
             isInLondon={topBarLocationProps.isInLondon}

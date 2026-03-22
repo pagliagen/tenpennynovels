@@ -13,6 +13,11 @@ import { DeviceInfo, LocationInfo } from '../types/auth';
 import { successResponse, errorResponse, createResponse } from '@shared/utils/apiResponse';
 import { getEffectivePermissions as calculateEffectivePermissions } from '@config/permissions';
 import { appConfig } from '@config/runtime';
+import {
+  resolveEffectiveBan,
+  type CharacterBanFields,
+  type LegacyUserBanFields,
+} from '@shared/utils/characterBan';
 
 // Helper function to transform technical validation messages into user-friendly ones
 function transformValidationMessage(field: string, originalMessage: string, validationKind: string): string {
@@ -106,21 +111,7 @@ export class AuthController {
         return;
       }
 
-      // Check if account is banned
-      if (user.isBanned) {
-        res.status(400).json(errorResponse( 
-          'L\'account è stato sospeso',
-          'ACCOUNT_BANNED',
-          {
-            bannedUntil: user.bannedUntil?.toISOString() || null,
-            reason: user.banReason || 'Community guidelines violation',
-            canAppeal: true,
-            appealUrl: '/support/appeal'
-          },
-          403));
-        return;
-        return;
-      }
+      // Ban di gioco/chat/forum sono sul singolo personaggio (e legacy sullo User): non si blocca il login qui.
 
       // Password verification will be done first, email verification after
 
@@ -515,6 +506,14 @@ export class AuthController {
         ipAddress: req.ip
       });
 
+      const legacyUser = await User.findById(userId)
+        .select('isBanned banScope banReason bannedAt bannedUntil')
+        .lean();
+      const ban = resolveEffectiveBan(
+        character.toObject() as unknown as CharacterBanFields,
+        legacyUser as unknown as LegacyUserBanFields
+      );
+
       // CRITICAL: Return sessionId in JSON (frontend saves to sessionStorage)
       // NO cookie character_context (multi-tab support)
       res.status(201).json(createResponse(
@@ -528,11 +527,13 @@ export class AuthController {
             gameplayRoles: character.gameplayRoles,
             lastActive: character.lastActive
           },
+          ban,
           gameAccess: {
-            canAccessGame: true,
-            canAccessLocations: true,
-            canSendMessages: true,
-            canUseItems: true
+            canAccessGame: !ban.blocksLandAccess,
+            canAccessLocations: !ban.blocksLandAccess,
+            canSendMessages: !ban.blocksChatWrite,
+            canUseItems: !ban.blocksLandAccess,
+            canWriteForum: !ban.blocksForumWrite,
           },
           sessionId: sessionId  // NEW: Frontend saves to sessionStorage
         },
@@ -718,7 +719,7 @@ export class AuthController {
     try {
       // If no user token, return not authenticated
       if (!req.user) {
-        res.status(400).json(errorResponse(
+        res.status(401).json(errorResponse(
           'Non autenticato',
           'NOT_AUTHENTICATED',
           undefined,
@@ -737,9 +738,13 @@ export class AuthController {
       let gamePermissions: string[] = [];
       let fullCharacter: any = null;
 
+      let banPayload: ReturnType<typeof resolveEffectiveBan> | null = null;
+
       if (character) {
         fullCharacter = await Character.findById(character.characterId)
-          .select('_id name surname avatar playerStatus canAccessAdminPanel isGestore gameplayRoles characterPermissions adminPermissions')
+          .select(
+            '_id name surname avatar playerStatus canAccessAdminPanel isGestore gameplayRoles characterPermissions adminPermissions isBanned banScope banReason bannedAt bannedUntil userId'
+          )
           .lean();
 
         if (fullCharacter) {
@@ -758,6 +763,14 @@ export class AuthController {
             fullCharacter.gameplayRoles || [],
             fullCharacter.characterPermissions || []
           );
+
+          const legacyUser = await User.findById(user.userId)
+            .select('isBanned banScope banReason bannedAt bannedUntil')
+            .lean();
+          banPayload = resolveEffectiveBan(
+            fullCharacter as unknown as CharacterBanFields,
+            legacyUser as unknown as LegacyUserBanFields
+          );
         }
       }
 
@@ -773,6 +786,7 @@ export class AuthController {
           },
           character: characterData,
           gamePermissions: gamePermissions, // NEW: Game permissions for frontend
+          ban: banPayload,
           session: {
             expiresAt: new Date(user.exp * 1000).toISOString(),
             timeRemaining: `${Math.floor((user.exp * 1000 - Date.now()) / (1000 * 60 * 60))} hours ${Math.floor(((user.exp * 1000 - Date.now()) % (1000 * 60 * 60)) / (1000 * 60))} minutes`
@@ -902,8 +916,16 @@ export class AuthController {
     try {
       const user = req.user!;
 
-      // TODO: Implement session invalidation in Redis when session management is fully implemented
-      // For now, just clear current session cookies
+      // Invalidate Redis session
+      await redis.del(`session:${user.userId}`);
+
+      // Publish force logout event for WebSocket disconnect
+      await redis.publish('user:events', JSON.stringify({
+        type: 'force_logout',
+        userId: user.userId,
+        reason: 'logout_all',
+        timestamp: new Date().toISOString()
+      }));
 
       logAuth('user_logout_all', user.userId, {
         username: user.username,
@@ -913,9 +935,9 @@ export class AuthController {
       // Clear authentication cookies
       AuthMiddleware.clearAuthCookies(res);
 
-      res.status(200).json(successResponse( 
+      res.status(200).json(successResponse(
         {
-          sessionsTerminated: 1, // Placeholder
+          sessionsTerminated: 1,
           terminatedAt: new Date().toISOString()
         },
         'All sessions terminated successfully'));

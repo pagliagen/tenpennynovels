@@ -8,12 +8,15 @@
 
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api } from '@/lib/api/client';
-import { useTicketMessages } from '@/hooks/useTickets';
-import { TicketStatusBadge } from './TicketStatusBadge';
 import { useRouter } from 'next/router';
+import { useState, useEffect, useRef } from 'react';
+
+import { useTicketMessages } from '@/hooks/useTickets';
+import { api } from '@/lib/api/client';
+
+import { TicketStatusBadge } from './TicketStatusBadge';
+
 
 interface StaffTicketDetailViewProps {
   ticketId: string;

@@ -16,9 +16,43 @@
  */
 
 import { useEffect, useState } from 'react';
-import { useAuthStore } from '@/store/authStore';
+
 import { api } from '@/lib/api/client';
+import { useAuthStore } from '@/store/authStore';
+import type { CharacterBanSessionPayload } from '@/types/authSession';
 import type { Character } from '@/types/api/schemas';
+
+/**
+ * Session User Data (subset returned by /auth/session)
+ *
+ * Contains only the essential user fields needed for session validation.
+ * Full User model has more fields but backend only returns these 3.
+ *
+ * @interface SessionUser
+ * @since 2.0.0
+ */
+interface SessionUser {
+  id: string;                    // User MongoDB _id as string
+  username: string;              // User's username
+  canAccessAdminPanel: boolean;  // Whether user/character can access admin panel
+}
+
+/**
+ * Session Character Data (subset returned by /auth/session)
+ *
+ * Contains only selected character fields needed for game permissions.
+ *
+ * @interface SessionCharacter
+ * @since 2.0.0
+ */
+interface SessionCharacter {
+  _id: string;
+  name: string;
+  surname: string;
+  avatar: string | null;
+  playerStatus: string;
+  isGestore: boolean;
+}
 
 /**
  * Session Check Response from /auth/session
@@ -30,24 +64,13 @@ interface SessionResponse {
   success: boolean;
   data?: {
     valid: boolean;
-    user?: {
-      id: string;
-      username: string;
-      email?: string;
-      displayName?: string;
-      canAccessAdminPanel?: boolean;
-      userRoles?: string[];
-      characterRoles?: string[];
-      characterPermissions?: string[];
-      isEmailVerified?: boolean;
-      multipleCharactersAllowed?: boolean;
-      characters?: Character[];
-    };
-    character?: Character | null;
-    gamePermissions?: string[]; // NEW: Game permissions from backend
+    user?: SessionUser;
+    character?: SessionCharacter | null;
+    gamePermissions?: string[];
+    ban?: CharacterBanSessionPayload | null;
     session?: {
       expiresAt: string;
-      timeRemaining?: string;
+      timeRemaining: string;
     };
   };
 }
@@ -104,7 +127,8 @@ export function useAuth(): UseAuthReturn {
   const [error, setError] = useState<string | null>(null);
   const [errorType, setErrorType] = useState<'network' | 'session' | 'server' | null>(null);
 
-  const { setUser, setSelectedCharacter, setGamePermissions, setInitialized, logout } = useAuthStore();
+  const { setSelectedCharacter, setGamePermissions, setInitialized, logout, setAdminPanelAccessFromSession, setCharacterBan } =
+    useAuthStore();
 
   /**
    * Check session with backend
@@ -126,28 +150,29 @@ export function useAuth(): UseAuthReturn {
       // Call /auth/session - cookie sent automatically via withCredentials
       const response = await api.get<SessionResponse>('/auth/session');
 
-      console.log('[useAuth] Session check RAW response:', response);
-      console.log('[useAuth] Response structure check:', {
-        hasSuccess: 'success' in response,
-        successValue: response.success,
-        hasData: 'data' in response,
-        dataValid: response.data?.valid,
-        hasUser: !!response.data?.user,
-        userUsername: response.data?.user?.username,
-      });
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[useAuth] /auth/session ok:', response.success, 'valid:', response.data?.valid);
+      }
 
       // Check if session is valid
       // Backend returns: { success: true, data: { valid: true, user: {...}, character: {...}, gamePermissions: [...] } }
       if (response.success && response.data?.valid && response.data.user) {
-        const { user, character, gamePermissions } = response.data;
+        const { character, gamePermissions, ban } = response.data;
 
-        // Populate auth store with user data
-        // TODO: Fix type mismatch between session response and User schema
-        setUser(user as any);
+        setCharacterBan(ban ?? null);
+
+        // Backend restituisce un sottoinsieme utente; non salviamo l'intero User nello store,
+        // ma `canAccessAdminPanel` è derivato dal PG in sessione (Redis) ed è la fonte corretta per il link admin in TopBar.
+        setAdminPanelAccessFromSession(!!response.data.user?.canAccessAdminPanel);
+        useAuthStore.setState({ isAuthenticated: true });
 
         // Set selected character if available
+        // NOTE: Backend returns only 6 fields (_id, name, surname, avatar, playerStatus, isGestore)
+        // but Character type has many more required fields. This is safe because:
+        // 1. UI only uses these 6 fields from session validation
+        // 2. Full character data is loaded separately by game components when needed
         if (character) {
-          setSelectedCharacter(character);
+          setSelectedCharacter(character as unknown as Character);
         }
 
         // Set game permissions from backend
@@ -155,13 +180,20 @@ export function useAuth(): UseAuthReturn {
           setGamePermissions(gamePermissions);
         }
 
-        console.log('[useAuth] ✅ Session valid - user authenticated:', user.username);
-        console.log('[useAuth] Game permissions loaded:', gamePermissions?.length || 0, 'permissions');
+        if (process.env.NODE_ENV === 'development') {
+          console.log(
+            '[useAuth] Session valid:',
+            response.data.user.username,
+            'permissions:',
+            gamePermissions?.length ?? 0
+          );
+        }
         setIsInitialized(true);
       } else {
         // No valid session - show error page instead of redirect
-        console.warn('[useAuth] ❌ No valid session detected');
-        console.warn('[useAuth] Response was:', JSON.stringify(response, null, 2));
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('[useAuth] No valid session');
+        }
         logout();
 
         // Show session error page

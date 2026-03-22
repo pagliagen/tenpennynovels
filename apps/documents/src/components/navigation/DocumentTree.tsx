@@ -42,14 +42,14 @@ export function DocumentTree({ documents, isLoading }: DocumentTreeProps): JSX.E
 
   return (
     <div className={styles.tree}>
-      {/* Expand/Collapse All Controls */}
+      {/* Controlli espandi/comprimi tutto */}
       {groups.length > 1 && (
         <div className={styles.controls}>
           <button
             type="button"
             className={styles.controlButton}
             onClick={expandAll}
-            aria-label="Expand all groups"
+            aria-label="Espandi tutti i gruppi"
           >
             ▼ Espandi tutto
           </button>
@@ -57,7 +57,7 @@ export function DocumentTree({ documents, isLoading }: DocumentTreeProps): JSX.E
             type="button"
             className={styles.controlButton}
             onClick={collapseAll}
-            aria-label="Collapse all groups"
+            aria-label="Comprimi tutti i gruppi"
           >
             ▶ Comprimi tutto
           </button>

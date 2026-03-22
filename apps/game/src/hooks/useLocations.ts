@@ -12,9 +12,10 @@
  */
 
 import { useEffect } from 'react';
-import { useLocationStore } from '@/store/locationStore';
-import { useAuthStore } from '@/store/authStore';
+
 import { useWebSocket } from '@/contexts/WebSocketContext';
+import { useAuthStore } from '@/store/authStore';
+import { useLocationStore } from '@/store/locationStore';
 
 /**
  * useLocations Hook

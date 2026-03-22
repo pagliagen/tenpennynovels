@@ -1,8 +1,5 @@
 /**
- * SearchBar Component
- *
- * Semantic search input with real-time results.
- * Powered by Qdrant vector database.
+ * Barra di ricerca semantica con risultati in tempo reale.
  *
  * @module components/search/SearchBar
  * @since 1.0.0
@@ -30,14 +27,14 @@ export function SearchBar({ placeholder = 'Cerca nei documenti...', className, a
   const { query, setQuery, isOpen, setIsOpen, results, totalResults, isLoading, aiAnswer, aiEnrichments, aiLoading, aiComplete, handleClose } =
     useSearchState();
 
-  // Auto-focus on mount if requested
+  // Focus automatico all’apertura se richiesto
   useEffect(() => {
     if (autoFocus && inputRef.current) {
       inputRef.current.focus();
     }
   }, [autoFocus]);
 
-  // Close on outside click
+  // Chiudi al clic fuori dal pannello
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
@@ -51,22 +48,22 @@ export function SearchBar({ placeholder = 'Cerca nei documenti...', className, a
     }
   }, [isOpen, handleClose]);
 
-  // Close on route change
+  // Chiudi al cambio pagina
   useEffect(() => {
     handleClose();
   }, [router.asPath, handleClose]);
 
-  // Keyboard shortcuts
+  // Scorciatoie da tastiera
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
-      // Cmd+K or Ctrl+K to focus search
+      // Cmd+K / Ctrl+K: focus sulla ricerca
       if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
         event.preventDefault();
         inputRef.current?.focus();
         setIsOpen(true);
       }
 
-      // Escape to close
+      // Esc: chiudi
       if (event.key === 'Escape' && isOpen) {
         event.preventDefault();
         handleClose();
@@ -126,7 +123,7 @@ export function SearchBar({ placeholder = 'Cerca nei documenti...', className, a
             type="button"
             className={styles.clearButton}
             onClick={handleClose}
-            aria-label="Clear search"
+            aria-label="Cancella ricerca"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <path

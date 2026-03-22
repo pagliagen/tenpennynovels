@@ -163,8 +163,9 @@ export default function LoginPage() {
       // Defense: Prevent session pollution from previous user (shared device scenario)
       try {
         sessionStorage.removeItem('character_session_id');
-        sessionStorage.removeItem('character_context'); // Legacy compatibility
-        console.log('[Login] SessionStorage cleared');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[Login] SessionStorage cleared');
+        }
       } catch (storageError) {
         console.error('[Login] Failed to clear sessionStorage:', storageError);
         // Non-blocking: continue login even if cleanup fails
@@ -172,20 +173,14 @@ export default function LoginPage() {
 
       const result = await authService.login(data);
 
-      // DIAGNOSTIC: Log full response
-      console.log('[DIAGNOSIS] Full login result:', JSON.stringify(result, null, 2));
-      console.log('[DIAGNOSIS] result.success:', result.success);
-      console.log('[DIAGNOSIS] result.data:', result.data);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[Login] result.success:', result.success, 'hasData:', !!result.data);
+      }
 
       if (result.success && result.data) {
         // Show character select modal or redirect based on number of characters
         // Backend returns { data: { user: { characters, username }, session: {...}, sessionId?: string } }
         const userData = result.data as any;
-
-        console.log('[DIAGNOSIS] userData:', userData);
-        console.log('[DIAGNOSIS] userData.sessionId:', userData.sessionId);
-        console.log('[DIAGNOSIS] userData.user:', userData.user);
-        console.log('[DIAGNOSIS] userData.user.characters:', userData.user?.characters);
 
         // NEW: Save sessionId to sessionStorage HERE (guaranteed client-side)
         if (userData.sessionId) {
@@ -198,7 +193,9 @@ export default function LoginPage() {
               throw new Error('sessionStorage write verification failed');
             }
 
-            console.log('[Login Page] ✅ sessionId saved and verified:', userData.sessionId);
+            if (process.env.NODE_ENV === 'development') {
+              console.log('[Login Page] sessionId saved and verified');
+            }
           } catch (error) {
             // ✅ CRITICAL: ABORT login on storage failure (show error to user)
             console.error('[Login Page] ❌ sessionStorage write failed:', error);
@@ -206,8 +203,8 @@ export default function LoginPage() {
             setLoading(false);
             return; // Stop redirect
           }
-        } else {
-          console.warn('[Login Page] ⚠️ No sessionId in response. Auto-select might have failed.');
+        } else if (process.env.NODE_ENV === 'development') {
+          console.warn('[Login Page] No sessionId in response (auto-select may have been skipped).');
         }
 
         if (userData.user?.characters?.length > 1) {

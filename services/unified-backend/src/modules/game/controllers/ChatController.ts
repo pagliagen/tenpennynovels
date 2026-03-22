@@ -1,9 +1,11 @@
 import { Request, Response } from 'express';
 import { Chat, GamingSession, Location, Character, SkillConfrontation, CombatEncounter, Skill, Item } from '@database/models';
 import { logger } from '../logger';
-import { successResponse, errorResponse, createResponse, getRequestId } from '@shared/utils/apiResponse';
+import { successResponse, errorResponse, createResponse, listResponse, getRequestId } from '@shared/utils/apiResponse';
 import { ConfigurationService } from '@shared/services/ConfigurationService';
 import { redis } from '@config/runtime/redis';
+import { escapeRegex } from '@shared/utils/validation';
+import { EmbeddingService } from '@modules/documents/services/EmbeddingService';
 
 import { calculateSuccessDegree, getSuccessDegreeLabel, compareSuccessDegrees } from '../utils/successDegrees';
 import { calculateSocialConflict, getDefensiveSkill } from '../utils/socialConflicts';
@@ -15,6 +17,7 @@ import { ActionRouter } from '../actions/ActionRouter';
 import { ActionContext, ActionInput } from '../actions/types';
 import { DiceService } from '../services/DiceService';
 import { CharacterSkillService } from '../services/CharacterSkillService';
+import { WeaponService } from '../services/WeaponService';
 
 // Message Transformer (Phase 2 refactoring)
 import { ChatMessageService } from '../services/ChatMessageService';
@@ -601,30 +604,34 @@ export class ChatController {
 
       const { locationId } = req.params;
       const hours = parseInt(req.query.hours as string) || 3;
-      const limit = parseInt(req.query.limit as string) || 100;
+      const limit = Math.min(200, Math.max(10, parseInt(req.query.limit as string) || 100));
+      const offset = Math.max(0, parseInt(req.query.offset as string) || 0);
 
       // Calculate time threshold
       const timeThreshold = new Date();
       timeThreshold.setHours(timeThreshold.getHours() - hours);
 
-      // Service handles ALL query, filtering, enrichment
-      const enrichedMessages = await ChatController.chatMessageService.getMessages({
+      // Service handles ALL query, filtering, enrichment with pagination
+      const result = await ChatController.chatMessageService.getMessages({
         locationId,
         characterId: character.characterId,
         timeThreshold,
         limit,
+        offset,
       });
 
       logger.info(
-        `Retrieved ${enrichedMessages.length} enriched messages for ${character.characterName} in ${locationId}`
+        `Retrieved ${result.messages.length} enriched messages for ${character.characterName} in ${locationId} (total: ${result.totalCount}, offset: ${offset})`
       );
 
       res.json(
         successResponse(
           {
-            messages: enrichedMessages,
-            totalCount: enrichedMessages.length,
-            hasMore: false, // TODO: Implement pagination
+            messages: result.messages,
+            totalCount: result.totalCount,
+            hasMore: result.hasMore,
+            offset,
+            limit,
           },
           undefined,
           getRequestId(req)
@@ -2130,10 +2137,15 @@ export class ChatController {
         const { calculateDamage, applyDamage } = await import('../utils/damageCalculator');
 
         // Determine damage formula (weapon or unarmed)
-        damageFormula = '1d3'; // Default: unarmed combat (1d3 base damage)
+        const weaponStats = await WeaponService.getEquippedWeapon(attackerCharacter._id.toString());
 
-        // TODO: Check if attacker has equipped weapon with weaponStats
-        // For now, use unarmed damage for Corpo a Corpo
+        if (weaponStats) {
+          damageFormula = weaponStats.damageFormula;
+          logger.info(`[Combat] ${attackerCharacter.name} uses ${weaponStats.weaponType}: ${damageFormula}`);
+        } else {
+          damageFormula = '1d3'; // Fallback: unarmed combat
+          logger.info(`[Combat] ${attackerCharacter.name} uses unarmed combat: 1d3`);
+        }
 
         // Calculate damage
         const damageResult = calculateDamage(
@@ -2620,6 +2632,137 @@ export class ChatController {
       res.status(500).json(errorResponse(
         'Failed to force confrontation outcome',
         'FORCE_OUTCOME_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
+    }
+  }
+
+  /**
+   * Semantic search in chat messages
+   * GET /api/game/chat/search?q=query&locationId=&characterId=&dateStart=&dateEnd=&page=1&limit=20
+   */
+  static async searchChat(req: Request, res: Response): Promise<void> {
+    try {
+      const { q: query, locationId, characterId, dateStart, dateEnd } = req.query;
+
+      if (!query || typeof query !== 'string' || query.trim().length === 0) {
+        res.status(400).json({
+          success: false,
+          error: 'La query di ricerca è obbligatoria',
+          code: 'MISSING_QUERY'
+        });
+        return;
+      }
+
+      const page = Math.max(1, parseInt(req.query.page as string) || 1);
+      const limit = Math.min(100, Math.max(10, parseInt(req.query.limit as string) || 20));
+      const skip = (page - 1) * limit;
+
+      // Build filters object
+      const filters: Record<string, any> = {};
+      if (locationId && typeof locationId === 'string') filters.locationId = locationId;
+      if (characterId && typeof characterId === 'string') filters.characterId = characterId;
+      if (dateStart && typeof dateStart === 'string') filters.dateStart = dateStart;
+      if (dateEnd && typeof dateEnd === 'string') filters.dateEnd = dateEnd;
+
+      let messages: any[] = [];
+      let total = 0;
+      let searchMethod = 'semantic';
+
+      // Try semantic search first (with timeout)
+      try {
+        const semanticResults = await Promise.race([
+          EmbeddingService.semanticSearch(query.trim(), undefined, limit * 3, 0.3, 'chat', filters),
+          new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Timeout')), 2000))
+        ]);
+
+        if (semanticResults && semanticResults.length > 0) {
+          const chatIds = semanticResults
+            .map((r: any) => r.chatId)
+            .slice(skip, skip + limit);
+
+          if (chatIds.length > 0) {
+            messages = await Chat.find({
+              _id: { $in: chatIds }
+            }).lean();
+
+            // Re-order by semantic score
+            const scoreMap = new Map(semanticResults.map((r: any) => [r.chatId, r.score]));
+            messages.sort((a: any, b: any) => (scoreMap.get(b._id.toString()) || 0) - (scoreMap.get(a._id.toString()) || 0));
+
+            total = messages.length;
+
+            logger.info(`[ChatSearch] Semantic: ${messages.length} results for "${query}" with filters ${JSON.stringify(filters)}`);
+          }
+        }
+      } catch (semanticError) {
+        logger.warn('[ChatSearch] Semantic failed, fallback to regex:', semanticError);
+        searchMethod = 'regex_fallback';
+      }
+
+      // Fallback to regex if semantic search failed or returned no results
+      if (messages.length === 0) {
+        const filter: Record<string, unknown> = {};
+        if (locationId && typeof locationId === 'string') filter.locationId = locationId;
+        if (characterId && typeof characterId === 'string') filter.characterId = characterId;
+        if (dateStart || dateEnd) {
+          const dateFilter: any = {};
+          if (dateStart) dateFilter.$gte = new Date(dateStart as string);
+          if (dateEnd) dateFilter.$lte = new Date(dateEnd as string);
+          filter.timestamp = dateFilter;
+        }
+
+        const escapedQuery = escapeRegex(query.trim());
+
+        messages = await Chat.find({
+          ...filter,
+          content: { $regex: escapedQuery, $options: 'i' }
+        }).sort({ timestamp: -1 }).skip(skip).limit(limit).lean();
+
+        total = await Chat.countDocuments({
+          ...filter,
+          content: { $regex: escapedQuery, $options: 'i' }
+        });
+
+        searchMethod = 'regex';
+        logger.info(`[ChatSearch] Regex: ${messages.length} results for "${query}" with filters ${JSON.stringify(filters)}`);
+      }
+
+      const totalPages = Math.ceil(total / limit);
+      const response = listResponse(
+        messages.map(m => ({
+          id: m._id,
+          locationId: m.locationId,
+          characterId: m.characterId,
+          characterName: m.characterName,
+          content: m.content,
+          timestamp: m.timestamp,
+          actionType: m.actionType,
+          visibility: m.visibility
+        })),
+        {
+          currentPage: page,
+          pageSize: limit,
+          totalItems: total,
+          totalPages,
+          hasNextPage: page < totalPages,
+          hasPreviousPage: page > 1
+        },
+        undefined,
+        getRequestId(req)
+      );
+
+      // Add searchMethod to response metadata
+      (response as any).searchMethod = searchMethod;
+
+      res.json(response);
+    } catch (error) {
+      logger.error('[ChatSearch] Error:', error);
+      res.status(500).json(errorResponse(
+        'Impossibile effettuare la ricerca',
+        'SEARCH_ERROR',
         undefined,
         500,
         getRequestId(req)

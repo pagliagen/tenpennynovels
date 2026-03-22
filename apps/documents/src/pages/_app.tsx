@@ -80,12 +80,11 @@ export default function App({ Component, pageProps }: AppProps) {
     if (sessionId && typeof sessionId === 'string') {
       try {
         sessionStorage.setItem('character_session_id', sessionId);
-        console.log('[Documents App] SessionId received and saved:', sessionId);
 
         // Clean URL (remove query param)
         router.replace(router.pathname, undefined, { shallow: true });
       } catch (error) {
-        console.error('[Documents App] Failed to save sessionId:', error);
+        console.error('[App documenti] Impossibile salvare sessionId:', error);
       }
     }
   }, [router.query.sessionId]);
@@ -102,14 +101,14 @@ export default function App({ Component, pageProps }: AppProps) {
 
     // Log in development
     if (process.env.NODE_ENV === 'development') {
-      console.log('[Web Vitals]', metric);
+      console.log('[Indicatori web]', metric);
     }
   });
 
   return (
     <QueryClientProvider client={queryClient}>
       <Head>
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
       {/* Google Analytics 4 */}

@@ -22,13 +22,13 @@
  * @since 2.0.0
  */
 
+import { QueryClientProvider } from '@tanstack/react-query';
 import type { AppProps } from 'next/app';
 import dynamic from 'next/dynamic';
 import Head from 'next/head';
-import { useEffect, useLayoutEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { QueryClientProvider } from '@tanstack/react-query';
-import { queryClient } from '@/lib/api/queryClient';
+import { useEffect, useState } from 'react';
+
 
 /** Devtools caricati solo sul client e solo in dev (pacchetto in devDependencies, assente in prod) */
 const ReactQueryDevtools = process.env.NODE_ENV === 'development'
@@ -37,10 +37,11 @@ const ReactQueryDevtools = process.env.NODE_ENV === 'development'
       { ssr: false }
     )
   : () => null;
-import { WebSocketProvider } from '@/contexts/WebSocketContext';
-import { EnvironmentProvider } from '@/contexts/EnvironmentContext';
 import { AuthInitializer } from '@/components/auth/AuthInitializer';
 import { ToastContainer } from '@/components/ui/ToastContainer';
+import { EnvironmentProvider } from '@/contexts/EnvironmentContext';
+import { WebSocketProvider } from '@/contexts/WebSocketContext';
+import { queryClient } from '@/lib/api/queryClient';
 import '@/styles/main.scss';
 
 /**
@@ -94,7 +95,9 @@ export default function App({ Component, pageProps }: AppProps): JSX.Element {
       try {
         // Save to sessionStorage (game app origin: localhost:3010)
         sessionStorage.setItem('character_session_id', sessionId);
-        console.log('[App] SessionId received from landing app and saved:', sessionId);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[App] SessionId received from landing and saved to sessionStorage');
+        }
 
         // Clean URL (remove query param) for better UX
         router.replace(router.pathname, undefined, { shallow: true });

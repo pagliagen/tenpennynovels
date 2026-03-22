@@ -14,14 +14,15 @@
  * @since 2.0.0
  */
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/router';
 import Head from 'next/head';
-import { GameLayout } from '@/components/layout/GameLayout';
+import { useRouter } from 'next/router';
+import { useEffect, useState } from 'react';
+
 import { ChatContainer } from '@/components/chat/ChatContainer';
+import { GameLayout } from '@/components/layout/GameLayout';
 import { useAuthStore } from '@/store/authStore';
-import { useLocationStore } from '@/store/locationStore';
 import { useGameStateStore } from '@/store/gameStateStore';
+import { useLocationStore } from '@/store/locationStore';
 import type { AccessibleLocation } from '@/types/location';
 
 /**

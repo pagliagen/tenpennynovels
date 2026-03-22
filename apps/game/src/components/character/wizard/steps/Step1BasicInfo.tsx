@@ -14,8 +14,9 @@
 'use client';
 
 import React from 'react';
-import { useWizardStore } from '@/store/wizardStore';
+
 import { characterApi } from '@/lib/api/character';
+import { useWizardStore } from '@/store/wizardStore';
 import styles from '@/styles/components/character/wizard/Step1BasicInfo.module.scss';
 
 /**

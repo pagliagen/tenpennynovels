@@ -52,7 +52,7 @@ export class CharacterService {
    * ```typescript
    * const result = await characterService.selectCharacter('char-uuid-123');
    *
-   * if (result.result && result.data) {
+   * if (result.success && result.data) {
    *   console.log('Character selected! Session:', result.data.sessionId);
    *   // sessionId automatically saved to sessionStorage
    *   window.location.href = process.env.NEXT_PUBLIC_GAME_URL;

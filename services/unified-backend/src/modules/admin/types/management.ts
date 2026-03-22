@@ -1,6 +1,5 @@
 // Management Backend Type Definitions
 
-// TODO: Import from shared package when workspace configuration is complete
 import { SocialClass } from '@shared/types/socialClass';
 import type { PaginationInfo } from '@shared/types/responses';
 export type { PaginationInfo } from '@shared/types/responses';
@@ -534,7 +533,7 @@ export interface ReviewStats {
     approvalRate: number;
     avgReviewTime: string;
     byReviewer: ReviewerStats[];
-    byCategory: Record<string, any>;
+    byCategory: Record<string, number>;
     commonRejectionReasons: Array<{
       reason: string;
       count: number;

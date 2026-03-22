@@ -15,9 +15,11 @@
  * @since 2.0.0
  */
 
-import { api } from './client';
 import type { Character } from '@/types/api/schemas';
+import type { OccupationData, SkillDefinition } from '@/types/game';
 import type { CharacterCreatePayload } from '@/types/wizard';
+
+import { api } from './client';
 
 /**
  * Character API Response Wrappers
@@ -181,7 +183,7 @@ export const characterApi = {
    */
   async update(
     characterId: string,
-    data: Partial<CharacterCreatePayload>
+    data: Record<string, any>
   ): Promise<Character> {
     const response = await api.put<{ data: CharacterResponse }>(
       `/game/characters/${characterId}`,
@@ -316,9 +318,8 @@ export const characterApi = {
    * console.log(detective.requiredSkillSlots); // [{options: [{skillId, name}, ...]}, ...]
    * ```
    */
-  async getOccupations(): Promise<any[]> {
-    // TODO: Add proper Occupation type from wizard.ts
-    const response = await api.get<{ occupations: any[] }>('/game/occupations');
+  async getOccupations(): Promise<OccupationData[]> {
+    const response = await api.get<{ occupations: OccupationData[] }>('/game/occupations');
     return response.occupations;
   },
 
@@ -327,9 +328,6 @@ export const characterApi = {
    *
    * Fetches all available skills with base values and categories.
    * Used for wizard Step 4 skill allocation.
-   *
-   * **Note**: This endpoint might not exist yet.
-   * Fallback: Use static config or hardcode skills in frontend.
    *
    * @returns {Promise<SkillDefinition[]>} Skills list
    * @throws {ApiError} If request fails
@@ -341,9 +339,8 @@ export const characterApi = {
    * console.log(`${accounting.name}: ${accounting.base}%`); // Accounting: 15%
    * ```
    */
-  async getSkills(): Promise<any[]> {
-    // TODO: Add proper SkillDefinition type from wizard.ts
-    const response = await api.get<{ skills: any[] }>('/game/skills');
+  async getSkills(): Promise<SkillDefinition[]> {
+    const response = await api.get<{ skills: SkillDefinition[] }>('/game/skills');
     return response.skills;
   },
 
@@ -426,8 +423,3 @@ export const characterApi = {
     return response;
   },
 };
-
-/**
- * Re-export for backward compatibility
- */
-export default characterApi;

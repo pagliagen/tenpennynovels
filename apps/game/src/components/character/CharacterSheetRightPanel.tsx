@@ -10,20 +10,19 @@
 
 'use client';
 
-import { CharacterSheetTab } from '../windows/contents/CharacterSheetContent';
-import styles from '@/styles/components/character/CharacterSheetContent.module.scss';
 import { CharacterSheetData, CharacterSheetPermissions } from '@/hooks/useCharacterSheetData';
+import styles from '@/styles/components/character/CharacterSheetContent.module.scss';
 
-// Tab components (placeholder for Phase 2)
-import { InformazioniTab } from './tabs/InformazioniTab';
-import { BackgroundTab } from './tabs/BackgroundTab';
-import { StatisticheTab } from './tabs/StatisticheTab';
+import { CharacterSheetTab } from '../windows/contents/CharacterSheetPGPrincipale';
+
+// Tab components
 import { AbilitaTab } from './tabs/AbilitaTab';
+import { BackgroundTab } from './tabs/BackgroundTab';
 import { DiarioTab } from './tabs/DiarioTab';
-import { NoteMasterTab } from './tabs/NoteMasterTab';
+import { InformazioniTab } from './tabs/InformazioniTab';
 import { InventarioTab } from './tabs/InventarioTab';
-import { CorporationsTab } from './tabs/CorporationsTab';
-import { AlloggioTab } from './tabs/AlloggioTab';
+import { NoteMasterTab } from './tabs/NoteMasterTab';
+import { StatisticheTab } from './tabs/StatisticheTab';
 
 /**
  * Character Sheet Right Panel Props
@@ -104,8 +103,6 @@ export function CharacterSheetRightPanel({
         {activeTab === 'diario' && <DiarioTab {...tabProps} />}
         {activeTab === 'noteMaster' && <NoteMasterTab {...tabProps} />}
         {activeTab === 'inventario' && <InventarioTab {...tabProps} />}
-        {activeTab === 'corporations' && <CorporationsTab {...tabProps} />}
-        {activeTab === 'alloggio' && <AlloggioTab {...tabProps} />}
       </div>
     </div>
   );

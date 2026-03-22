@@ -9,7 +9,6 @@ import { config, DocumentType } from '../config';
 import type {
   DocumentEmbeddingEvent,
   ChatEmbeddingEvent,
-  LocationEmbeddingEvent,
 } from '../types/events';
 
 // MongoDB ObjectId validation
@@ -104,8 +103,3 @@ export function validateChatEvent(event: ChatEmbeddingEvent): void {
   }
 }
 
-export function validateLocationEvent(event: LocationEmbeddingEvent): void {
-  validateObjectId(event.locationId, 'locationId');
-  validateTextLength(event.name, 'name');
-  validateTextLength(event.description, 'description');
-}

@@ -14,19 +14,22 @@
 
 'use client';
 
-import { useState, useEffect, useRef, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { TagSelector } from './TagSelector';
+import { useState, useEffect, useRef, useMemo } from 'react';
+
+import { fakePngApi } from '@/lib/api/fakePng';
+import { locationChatsApi } from '@/lib/api/locationChats';
+import styles from '@/styles/components/chat/MessageInput.module.scss';
+import type { ActionType, SendMessageRequest } from '@/types/chat';
+
+import { FakePngManager } from '../fake-png/FakePngManager';
+
 import { ActionTypeSelector } from './ActionTypeSelector';
 import { ConditionalSelects } from './ConditionalSelects';
-import { SkillStatRollModal } from './SkillStatRollModal';
-import { DiceRollModal } from './DiceRollModal';
 import { ConfrontationModal } from './ConfrontationModal';
-import { FakePngManager } from '../fake-png/FakePngManager';
-import { locationChatsApi } from '@/lib/api/locationChats';
-import { fakePngApi } from '@/lib/api/fakePng';
-import type { ChatMessageType, SendMessageRequest } from '@/types/chat';
-import styles from '@/styles/components/chat/MessageInput.module.scss';
+import { DiceRollModal } from './DiceRollModal';
+import { SkillStatRollModal } from './SkillStatRollModal';
+import { TagSelector } from './TagSelector';
 
 /**
  * Character data needed for action availability
@@ -94,9 +97,9 @@ const MAX_CHARACTERS = 2000;
 /**
  * Get available action types based on character data and game permissions
  */
-function getAvailableActions(characterData: CharacterData): ChatMessageType[] {
-  // dice_roll, skill_check, stat_check moved to dedicated buttons
-  const baseActions: ChatMessageType[] = ['standard', 'whisper', 'ooc'];
+function getAvailableActions(characterData: CharacterData): ActionType[] {
+  // dice_roll, stat_check moved to dedicated buttons
+  const baseActions: ActionType[] = ['standard', 'whisper', 'ooc'];
   const gamePermissions = characterData.gamePermissions || [];
 
   // Helper: Check if has permission
@@ -125,13 +128,12 @@ function getAvailableActions(characterData: CharacterData): ChatMessageType[] {
 /**
  * Get action display name for placeholder
  */
-function getActionDisplayName(action: ChatMessageType): string {
-  const names: Record<ChatMessageType, string> = {
+function getActionDisplayName(action: ActionType): string {
+  const names: Record<ActionType, string> = {
     standard: 'messaggio',
     whisper: 'sussurro',
     ooc: 'messaggio fuori dal gioco',
     dice_roll: 'tiro dado',
-    skill_check: 'tiro abilità',
     stat_check: 'tiro caratteristica',
     item_use: 'uso oggetto',
     master: 'annuncio master',
@@ -167,7 +169,7 @@ export function MessageInput({
 }: MessageInputProps): JSX.Element {
   // State
   const [messageInput, setMessageInput] = useState('');
-  const [selectedAction, setSelectedAction] = useState<ChatMessageType>('standard');
+  const [selectedAction, setSelectedAction] = useState<ActionType>('standard');
   const [targetCharacters, setTargetCharacters] = useState<string[]>([]);
   const [selectedSkill, setSelectedSkill] = useState('');
   const [selectedStat, setSelectedStat] = useState('');
@@ -294,7 +296,7 @@ export function MessageInput({
    * @param id - skillId (ObjectId) for skills, statName for stats
    * @param displayName - name to show in default message
    */
-  const handleSkillStatRoll = async (type: 'skill' | 'stat', id: string, displayName: string) => {
+  const handleSkillStatRoll = async (_type: 'skill' | 'stat', id: string, displayName: string) => {
     // Validate tag first
     if (!currentTag) {
       setIsTagButtonFlashing(true);
@@ -308,15 +310,10 @@ export function MessageInput({
 
     try {
       const data: SendMessageRequest = {
-        actionType: type === 'skill' ? 'skill_check' : 'stat_check',
+        actionType: 'stat_check',
         content: messageInput.trim() || `Tiro su ${displayName}`, // Default text if empty
+        statName: id, // For stats, name is the ID
       };
-
-      if (type === 'skill') {
-        data.skillId = id; // Send skill ObjectId, not name - backend will look up value
-      } else {
-        data.statName = id; // For stats, name is the ID
-      }
 
       await onSendMessage(data);
 

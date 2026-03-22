@@ -59,17 +59,10 @@ export class CharacterEventHandler extends BaseEventHandler {
    * Triggers corporation membership checks
    */
   private async handleCharacterStatsChanged(event: any): Promise<void> {
-    logger.debug('[CharacterEventHandler] Character stats changed - corporation checks needed', {
+    logger.debug('[CharacterEventHandler] Character stats changed', {
       characterId: event.characterId
     });
 
-    // TODO: Inject RedisPublisher to publish this event
-    // await this.publisher.publish('corporation:events', JSON.stringify({
-    //   type: 'check_automatic_memberships',
-    //   characterId: event.characterId,
-    //   triggeredBy: 'stats_change',
-    //   timestamp: new Date().toISOString(),
-    //   source: 'game-backend'
-    // }));
+    // Corporation automatic membership checks - feature not yet implemented
   }
 }

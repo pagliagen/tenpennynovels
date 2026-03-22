@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+
 import {
   useForumNotifications,
   useMarkAllNotificationsRead,
 } from '@/hooks/useForumSocial';
 import { useForumStore } from '@/store/forumStore';
-import type { ForumNotification, ForumNotificationType } from '@/types/forum';
 import styles from '@/styles/components/forum/NotificationsView.module.scss';
+import type { ForumNotification, ForumNotificationType } from '@/types/forum';
 
 const NOTIF_ICONS: Record<ForumNotificationType, string> = {
   new_post_in_subscribed_discussion: '💬',

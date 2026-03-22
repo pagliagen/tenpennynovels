@@ -12,12 +12,14 @@
 'use client';
 
 import { useState } from 'react';
-import type { ChatMessage } from '@/types/chat';
+
 import { useMessageInteractions } from '@/hooks/useMessageInteractions';
-import { MessageFooter } from '../MessageFooter';
 import { locationChatsApi } from '@/lib/api/locationChats';
 import { useUIStore } from '@/store/uiStore';
 import styles from '@/styles/components/chat/message-types/ReactionRequestMessage.module.scss';
+import type { ChatMessage } from '@/types/chat';
+
+import { MessageFooter } from '../MessageFooter';
 
 interface ReactionRequestMessageProps {
   message: ChatMessage;

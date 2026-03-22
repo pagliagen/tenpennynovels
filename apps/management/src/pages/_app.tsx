@@ -13,11 +13,11 @@ import type { AppProps } from 'next/app';
 import dynamic from 'next/dynamic';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
-import { useEffect, useLayoutEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/lib/api/queryClient';
 
-/** Devtools caricati solo sul client e solo in dev (pacchetto in devDependencies, assente in prod) */
+/** Devtools: dynamic import + solo in dev; il pacchetto resta in dependencies perché Next deve risolverlo in build. */
 const ReactQueryDevtools = process.env.NODE_ENV === 'development'
   ? dynamic(
       () => import('@tanstack/react-query-devtools').then((mod) => ({ default: mod.ReactQueryDevtools })),
@@ -56,10 +56,18 @@ export default function App({ Component, pageProps }: AppProps) {
     if (sessionId && typeof sessionId === 'string') {
       try {
         sessionStorage.setItem('character_session_id', sessionId);
-        console.log('[Management App] SessionId received and saved:', sessionId);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[Management App] SessionId received and saved');
+        }
 
-        // Clean URL
-        router.replace(router.pathname, undefined, { shallow: true });
+        // Rimuovi solo sessionId dalla query preservando altri parametri
+        const nextQuery = { ...router.query };
+        delete nextQuery.sessionId;
+        void router.replace(
+          { pathname: router.pathname, query: nextQuery },
+          undefined,
+          { shallow: true }
+        );
       } catch (error) {
         console.error('[Management App] Failed to save sessionId:', error);
       }

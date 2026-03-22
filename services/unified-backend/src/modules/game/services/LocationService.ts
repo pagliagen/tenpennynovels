@@ -73,14 +73,8 @@ export class LocationService {
           return access.permissions.includes('view');
         }
       }
-      
-      // TODO: Add corporation membership check when Character.corporations field is implemented
-      // if (location.access?.corporationAccess && character.corporations) {
-      //   const corpAccess = location.access.corporationAccess.find(ca => 
-      //     character.corporations.some(corp => corp.id.toString() === ca.corporationId.toString())
-      //   );
-      //   if (corpAccess) return true;
-      // }
+
+      // Corporation membership - feature not yet implemented
     }
 
     return false;

@@ -20,7 +20,6 @@
  * @since 2.0.0
  */
 
-import { api } from './client';
 import type {
   OnGameThread,
   OnGameThreadMessage,
@@ -30,6 +29,8 @@ import type {
   WalletInfo,
   SendMessagePayload,
 } from '@/types/mail';
+
+import { api } from './client';
 
 /**
  * OnGame Mail API Service

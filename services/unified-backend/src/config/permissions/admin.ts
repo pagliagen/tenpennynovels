@@ -4,7 +4,7 @@
  * Flat permission system for admin panel access control.
  * Format: section.action (2 parts, type-safe enum)
  *
- * This file replaces the legacy hybrid system (admin-permissions.ts + admin-permissions.json)
+ * This file replaces il vecchio sistema ibrido basato su JSON separato (rimosso).
  * and contains ONLY the 59 actually used permissions (71% dead code removed).
  *
  * Architecture:

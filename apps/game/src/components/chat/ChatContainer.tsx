@@ -18,15 +18,17 @@
 'use client';
 
 import { useEffect } from 'react';
-import { MessageList } from './MessageList';
-import { MessageInput } from './MessageInput';
-import { PermissionBanner } from './PermissionBanner';
-import { useLocationChat } from '@/hooks/useLocationChat';
+
 import { useCharacterSheetData } from '@/hooks/useCharacterSheetData';
+import { useLocationChat } from '@/hooks/useLocationChat';
 import { useAuthStore } from '@/store/authStore';
-import { useLocationStore } from '@/store/locationStore';
 import { useChatOccupants, useChatCurrentTag, useChatStore } from '@/store/chatStore';
+import { useLocationStore } from '@/store/locationStore';
 import styles from '@/styles/components/chat/ChatContainer.module.scss';
+
+import { MessageInput } from './MessageInput';
+import { MessageList } from './MessageList';
+import { PermissionBanner } from './PermissionBanner';
 
 /**
  * Chat Container Props
@@ -91,9 +93,9 @@ export function ChatContainer({ locationSlug, locationId, locationName }: ChatCo
   const hasGamePermission = useAuthStore((state) => state.hasGamePermission);
   const canSendMessages = hasGamePermission('game:chat:send');
 
-  // Master check (TODO: Get from selectedCharacter.gameplayRoles when available)
-  // For now, assume non-master. Will be updated when auth system provides roles.
-  const isMaster = false; // TODO: selectedCharacter?.gameplayRoles?.includes('master')
+  // Master check - Backend provides 'game:chat:master-action' permission for masters/moderators
+  // This is driven by character.isGestore + gameplayRoles in backend permission calculation
+  const isMaster = hasGamePermission('game:chat:master-action');
 
   /**
    * Handle tag change

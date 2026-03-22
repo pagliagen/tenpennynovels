@@ -20,10 +20,11 @@
  */
 
 import { useEffect } from 'react';
-import { usePresenceStore, GlobalPresence } from '@/store/presenceStore';
+
+import { useWebSocket } from '@/contexts/WebSocketContext';
 import { useAuthStore } from '@/store/authStore';
 import { useGameStateStore } from '@/store/gameStateStore';
-import { useWebSocket } from '@/contexts/WebSocketContext';
+import { usePresenceStore, GlobalPresence } from '@/store/presenceStore';
 
 /**
  * usePresence Hook Return Type

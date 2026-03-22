@@ -14,6 +14,7 @@
  */
 
 import { create } from 'zustand';
+
 import { api } from '@/lib/api/client';
 
 /**
@@ -128,21 +129,6 @@ interface PresenceActions {
     newLocationId?: string;
     locationId?: string;
     locationName?: string;
-    timestamp: string;
-  }) => void;
-
-  /**
-   * Handle user_status_change event
-   *
-   * Adds/removes character from global presence when going online/offline.
-   *
-   * @param {object} event - user_status_change event data
-   * @returns {void}
-   */
-  handleUserStatusChange: (event: {
-    userId: string;
-    username: string;
-    status: 'online' | 'offline';
     timestamp: string;
   }) => void;
 
@@ -370,12 +356,6 @@ export const usePresenceStore = create<PresenceState & PresenceActions>((set, ge
       );
       set({ globalPresence: updated });
     }
-  },
-
-  handleUserStatusChange: async (event) => {
-    // DEPRECATED: No longer used for presence updates
-    // Use character_active/character_inactive instead
-    console.log('📥 user_status_change event (ignored for presence):', event);
   },
 
   handleCharacterActive: (event) => {

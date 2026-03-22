@@ -12,7 +12,9 @@
 'use client';
 
 import { ReactNode } from 'react';
+
 import { useAuth } from '@/hooks/useAuth';
+
 import { AuthError } from './AuthError';
 
 /**

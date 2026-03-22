@@ -9,7 +9,9 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+
 import { useTicketMessages, useAddTicketMessage, useCloseTicket, useUserTickets } from '@/hooks/useTickets';
+
 import { TicketStatusBadge } from './TicketStatusBadge';
 
 interface TicketThreadViewProps {

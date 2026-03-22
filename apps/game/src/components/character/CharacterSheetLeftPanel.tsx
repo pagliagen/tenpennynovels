@@ -10,10 +10,10 @@
 
 'use client';
 
-import styles from '@/styles/components/character/CharacterSheetContent.module.scss';
 import { CharacterSheetData, CharacterSheetPermissions } from '@/hooks/useCharacterSheetData';
-import { useWindowManagerStore } from '@/store/windowManagerStore';
 import { useAuthStore } from '@/store/authStore';
+import { useWindowManagerStore } from '@/store/windowManagerStore';
+import styles from '@/styles/components/character/CharacterSheetContent.module.scss';
 
 /**
  * Character Sheet Left Panel Props

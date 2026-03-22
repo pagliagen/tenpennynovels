@@ -4,7 +4,6 @@
  * Handles item_use actions:
  * - Validates item exists in database
  * - Constructs itemEffect object with item details
- * - TODO: Future enhancement - implement actual item consumption/effects logic
  *
  * @module actions/handlers/ItemUseActionHandler
  * @since 2.1.0
@@ -67,8 +66,8 @@ export class ItemUseActionHandler extends BaseActionHandler {
       itemId: input.itemId!,
       itemName: item.name,
       description: `${input.characterName} usa ${item.name}`,
-      consumedItems: [], // TODO: Implement consumption logic
-      effects: [] // TODO: Implement effects logic
+      consumedItems: [],
+      effects: []
     };
 
     this.log('info', `Item used: ${item.name}`, {

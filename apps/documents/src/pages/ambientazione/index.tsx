@@ -7,13 +7,27 @@
  * @since 2.0.0
  */
 
+import { useEffect } from 'react';
 import { GetStaticProps } from 'next';
+import { useRouter } from 'next/router';
 import { SEO } from '@/components/SEO';
 import { documentsApi } from '@/lib/api/documents';
 import { findFirstLeafPath } from '@/lib/findFirstLeafPath';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
-export default function AmbientazioneIndex() {
+type AmbientazioneIndexProps = {
+  redirectTo: string | null;
+};
+
+export default function AmbientazioneIndex({ redirectTo }: AmbientazioneIndexProps) {
+  const router = useRouter();
+
+  useEffect(() => {
+    if (redirectTo) {
+      void router.replace(redirectTo);
+    }
+  }, [redirectTo, router]);
+
   return (
     <>
       <SEO
@@ -29,8 +43,8 @@ export default function AmbientazioneIndex() {
 /**
  * Static Props Generation (ISR)
  *
- * Redirects to first available ambientazione document.
- * Revalidates every hour to reflect document structure changes.
+ * Supplies the first ambientazione leaf path; the page redirects client-side
+ * (Next.js 16 disallows `redirect` from getStaticProps during prerender).
  */
 export const getStaticProps: GetStaticProps = async () => {
   try {
@@ -38,21 +52,15 @@ export const getStaticProps: GetStaticProps = async () => {
     const subtypes = hierarchical.ambientazione || [];
     const firstPath = findFirstLeafPath(subtypes, 'ambientazione');
 
-    if (firstPath) {
-      return {
-        redirect: { destination: firstPath, permanent: false },
-      };
-    }
-
     return {
-      props: {},
-      revalidate: 3600  // Revalidate redirect every 1 hour
+      props: { redirectTo: firstPath ?? null },
+      revalidate: 3600,
     };
   } catch (error) {
-    console.error('[Ambientazione Index] Error:', error);
+    console.error('[Indice ambientazione] Errore:', error);
     return {
-      props: {},
-      revalidate: 60  // Retry on error after 1 minute
+      props: { redirectTo: null },
+      revalidate: 60,
     };
   }
 };

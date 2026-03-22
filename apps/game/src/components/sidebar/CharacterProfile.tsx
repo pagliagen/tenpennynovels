@@ -13,6 +13,7 @@
 'use client';
 
 import { useRouter } from 'next/router';
+
 import { useAuthStore } from '@/store/authStore';
 import { useWindowManagerStore } from '@/store/windowManagerStore';
 import styles from '@/styles/components/sidebar/CharacterProfile.module.scss';

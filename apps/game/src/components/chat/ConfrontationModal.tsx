@@ -13,6 +13,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+
 import { locationChatsApi } from '@/lib/api/locationChats';
 import styles from '@/styles/components/chat/ConfrontationModal.module.scss';
 

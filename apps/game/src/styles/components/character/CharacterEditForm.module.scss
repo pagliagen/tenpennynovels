@@ -1,0 +1,135 @@
+/**
+ * Character Edit Form Styles
+ *
+ * Victorian-themed form styling for character editing.
+ */
+
+.editForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.label {
+  font-family: 'Georgia', serif;
+  font-size: 0.95rem;
+  color: #ff9500;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.required {
+  color: #ff4444;
+  font-size: 1.1rem;
+}
+
+.hint {
+  font-size: 0.85rem;
+  color: rgba(232, 224, 213, 0.7);
+  font-style: italic;
+  margin: -0.25rem 0 0.25rem 0;
+  line-height: 1.4;
+}
+
+.input,
+.select,
+.textarea {
+  background: rgba(40, 30, 20, 0.6);
+  border: 1px solid rgba(255, 149, 0, 0.3);
+  border-radius: 6px;
+  padding: 0.75rem;
+  color: #e8e0d5;
+  font-family: 'Georgia', serif;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: rgba(255, 149, 0, 0.5);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: #ff9500;
+    box-shadow: 0 0 0 3px rgba(255, 149, 0, 0.1);
+    background: rgba(40, 30, 20, 0.8);
+  }
+
+  &::placeholder {
+    color: rgba(232, 224, 213, 0.4);
+    font-style: italic;
+  }
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 100px;
+  line-height: 1.6;
+}
+
+.charCount {
+  font-size: 0.8rem;
+  color: rgba(232, 224, 213, 0.5);
+  text-align: right;
+  margin-top: -0.25rem;
+}
+
+.formActions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 149, 0, 0.2);
+  margin-top: 0.5rem;
+}
+
+.cancelButton,
+.submitButton {
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  font-family: 'Georgia', serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.cancelButton {
+  background: transparent;
+  border: 1px solid rgba(232, 224, 213, 0.3);
+  color: #e8e0d5;
+
+  &:hover:not(:disabled) {
+    background: rgba(232, 224, 213, 0.1);
+    border-color: rgba(232, 224, 213, 0.5);
+  }
+}
+
+.submitButton {
+  background: linear-gradient(135deg, #ff9500 0%, #cc7700 100%);
+  color: #1a0f0a;
+  box-shadow: 0 2px 8px rgba(255, 149, 0, 0.3);
+
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, #ffaa00 0%, #dd8800 100%);
+    box-shadow: 0 4px 12px rgba(255, 149, 0, 0.4);
+    transform: translateY(-1px);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+}

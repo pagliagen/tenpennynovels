@@ -15,6 +15,8 @@ interface CharacterContextPayload {
   isApproved: boolean;
   gameplayRoles?: string[];
   isGestore?: boolean;
+  playerStatus?: string;
+  characterPermissions?: string[];
 }
 
 let redisSubscriberInstance: RedisSubscriber | null = null;
@@ -121,7 +123,9 @@ export async function setupWebSocket(io: SocketIOServer): Promise<void> {
             userId: session.userId,
             isApproved: character.playerStatus === 'approved',
             gameplayRoles: character.gameplayRoles || [],
-            isGestore: character.isGestore || false
+            isGestore: character.isGestore || false,
+            playerStatus: character.playerStatus || 'draft',
+            characterPermissions: character.characterPermissions || []
           };
 
           logger.debug(`WebSocket: Session authenticated for character ${fullCharacterName}`, { sessionId });
@@ -151,7 +155,9 @@ export async function setupWebSocket(io: SocketIOServer): Promise<void> {
             userId: characterPayload.userId,
             isApproved: characterPayload.isApproved,
             gameplayRoles: characterPayload.gameplayRoles || [],
-            isGestore: characterPayload.isGestore || false
+            isGestore: characterPayload.isGestore || false,
+            playerStatus: characterPayload.playerStatus || 'draft',
+            characterPermissions: characterPayload.characterPermissions || []
           };
         } catch (error: unknown) {
           logger.warn('Invalid character context token provided');
@@ -180,15 +186,16 @@ export async function setupWebSocket(io: SocketIOServer): Promise<void> {
     // Join user-specific room
     socket.join(`user_${user.userId}`);
 
-    // Join role-specific rooms based on character gameplayRoles or isGestore flag
+    // Join role-specific rooms: gameplayRoles sono solo player | master | moderatore (mai "amministratore")
     const roles = character?.gameplayRoles || [];
-    const isStaff = character?.isGestore || roles.includes('amministratore') || roles.includes('master') || roles.includes('moderatore');
+    const isStaff =
+      character?.isGestore || roles.includes('master') || roles.includes('moderatore');
     if (isStaff) {
       socket.join('admin');
       socket.join('staff');
       socket.join(`staff_${user.userId}`);
 
-      if (character?.isGestore || roles.includes('amministratore')) {
+      if (character?.isGestore) {
         socket.join('staff_leadership');
       }
     }
@@ -219,7 +226,7 @@ export async function setupWebSocket(io: SocketIOServer): Promise<void> {
             socket.join('staff');
             socket.join(`staff_${user.userId}`);
 
-            if (adminChar.isGestore || adminRoles.includes('amministratore')) {
+            if (adminChar.isGestore) {
               socket.join('staff_leadership');
             }
 

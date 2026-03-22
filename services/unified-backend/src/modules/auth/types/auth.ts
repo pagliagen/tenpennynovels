@@ -77,7 +77,6 @@ export interface RateLimitConfig {
   keyGenerator?: (req: any) => string;
 }
 
-// TODO: Import from shared package when workspace configuration is complete
 export interface ValidationError {
   field: string;
   message: string;

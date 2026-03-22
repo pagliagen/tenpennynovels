@@ -162,6 +162,9 @@ export class OnGameMessageController {
       const messageTypeConfig = await postalSystem.getMessageType(messageType);
       const requiresKnowledge = await postalSystem.requiresResidenceKnowledge(messageType);
 
+      // Fetch sender character to get current location
+      const senderChar = await Character.findById(characterId).select('currentLocation').lean();
+
       // Create main message record
       const message = new OnGameMessage({
         messageType,
@@ -175,7 +178,7 @@ export class OnGameMessageController {
           type: deliveryTarget?.type || 'character',
           requiresKnownResidence: requiresKnowledge
         },
-        sentFromLocation: new mongoose.Types.ObjectId('673f8b2d4a5e6c7d8e9f0123'), // TODO: Get from character current location
+        sentFromLocation: senderChar?.currentLocation || null,
         postageCharged: postageRequired,
         isExpress: isExpress || false,
         sealed: messageTypeConfig?.requiresSealing || false

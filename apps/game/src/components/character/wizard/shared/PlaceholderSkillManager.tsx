@@ -11,6 +11,7 @@
 'use client';
 
 import { useState } from 'react';
+
 import { useWizardStore } from '@/store/wizardStore';
 import styles from '@/styles/components/character/wizard/PlaceholderSkillManager.module.scss';
 

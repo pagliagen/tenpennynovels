@@ -6,14 +6,14 @@
 
 import { useState, useMemo } from 'react';
 import Head from 'next/head';
-import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/router';
 import { ManagementLayout } from '@/components/layout/ManagementLayout';
+import { TicketDetailSidePanel } from '@/components/tickets/TicketDetailSidePanel';
 import { ConfigurableDataTable } from '@/components/shared/ConfigurableDataTable';
+import { useAdminTicketsListQuery } from '@/hooks/api/useAdminTicketsList';
 import { useTableConfig } from '@/hooks/useTableConfig';
 import { useTableFilters } from '@/hooks/useTableFilters';
-import { api } from '@/lib/api/client';
-import { ListResponse } from '@/types/api/common';
+import type { AdminTicketRow } from '@/types/api/AdminTicket';
 import styles from '@/styles/pages/TicketList.module.scss';
 
 interface TicketListParams {
@@ -37,22 +37,13 @@ export default function CharacterApprovals() {
 
   const tableConfig = useTableConfig('character-approvals');
 
-  // Fetch tickets with fixed category filter
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['admin', 'tickets', 'character-approvals', params],
-    queryFn: async () => {
-      // Fixed filter for character_approval category
-      const queryString = api.buildQueryString({ ...params, category: 'character_approval' });
-      const response = await api.get(`/admin/tickets${queryString}`) as ListResponse<any>;
-      return {
-        list: response.list || [],
-        pagination: response.pagination || { totalItems: 0, totalPages: 1, currentPage: 1, pageSize: params.pageSize }
-      };
-    }
+  const { data, isLoading } = useAdminTicketsListQuery({
+    variant: 'character-approvals',
+    params,
   });
 
-  const tickets = data?.list || [];
-  const pagination = data?.pagination || { totalItems: 0, totalPages: 1, currentPage: 1, pageSize: params.pageSize };
+  const tickets = data?.list ?? [];
+  const totalItems = data?.pagination?.totalItems ?? 0;
 
   const visibleColumns = useMemo(() => {
     if (!tableConfig.config) return [];
@@ -61,22 +52,23 @@ export default function CharacterApprovals() {
 
   const handlePageChange = (page: number) => setParams({ ...params, page });
   const handlePageSizeChange = (pageSize: number) => setParams({ ...params, page: 1, pageSize });
-  const handleSortChange = (sortBy?: string, sortOrder?: 'asc' | 'desc') => setParams({ ...params, sortBy, sortOrder });
+  const handleSortChange = (sortBy?: string, sortOrder?: 'asc' | 'desc') =>
+    setParams({ ...params, sortBy, sortOrder });
 
-  const handleAction = (action: string, ticket: any) => {
+  const handleAction = (action: string, ticket: AdminTicketRow) => {
     switch (action) {
       case 'view-details':
         setSelectedTicketId(ticket.id);
         break;
       case 'go-to-pending':
-        router.push('/characters/character-pending');
+        void router.push('/characters/character-pending');
         break;
       default:
-        console.log('Unknown action:', action, ticket);
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Unknown action:', action, ticket);
+        }
     }
   };
-
-  const totalItems = pagination?.totalItems ?? 0;
 
   return (
     <ManagementLayout>
@@ -90,7 +82,8 @@ export default function CharacterApprovals() {
           <p className={styles.subtitle}>Ticket di approvazione personaggi</p>
           <div className={styles.headerActions}>
             <button
-              onClick={() => router.push('/characters/character-pending')}
+              type="button"
+              onClick={() => void router.push('/characters/character-pending')}
               className={styles.primaryButton}
             >
               📋 In Attesa Approvazione
@@ -104,7 +97,7 @@ export default function CharacterApprovals() {
           I ticket servono per comunicare con il player durante il processo di approvazione.
         </div>
 
-        <ConfigurableDataTable<any>
+        <ConfigurableDataTable<AdminTicketRow>
           tableName="character-approvals"
           data={tickets}
           loading={isLoading || tableConfig.loading}
@@ -129,21 +122,10 @@ export default function CharacterApprovals() {
           } : undefined}
         />
 
-        {/* TODO: Add SidePanel for ticket detail */}
-        {selectedTicketId && (
-          <div className={styles.sidePanelOverlay} onClick={() => setSelectedTicketId(null)}>
-            <div className={styles.sidePanel} onClick={(e) => e.stopPropagation()}>
-              <div className={styles.sidePanelHeader}>
-                <h2>Ticket #{selectedTicketId}</h2>
-                <button onClick={() => setSelectedTicketId(null)}>✕</button>
-              </div>
-              <div className={styles.sidePanelContent}>
-                <p>TODO: Implement TicketDetailContent component with character preview</p>
-                <p>Ticket ID: {selectedTicketId}</p>
-              </div>
-            </div>
-          </div>
-        )}
+        <TicketDetailSidePanel
+          selectedTicketId={selectedTicketId}
+          onClose={() => setSelectedTicketId(null)}
+        />
       </div>
     </ManagementLayout>
   );

@@ -65,7 +65,7 @@ export const getServerSideProps: GetServerSideProps = async ({ params, req }) =>
 
     return { props: { data } };
   } catch (error: any) {
-    console.error(`[Preferiti Detail] Error fetching ${type}/${path}:`, error);
+    console.error(`[Dettaglio preferiti] Errore caricamento ${type}/${path}:`, error);
 
     if (error?.statusCode === 404 || error?.response?.status === 404) {
       return { notFound: true };

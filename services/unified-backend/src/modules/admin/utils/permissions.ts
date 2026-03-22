@@ -1,272 +1,378 @@
 // =============================================================================
-// Sistema di Autorizzazioni Granulari
+// Sistema di Autorizzazioni Granulari (solo @config/permissions, nessun JSON)
 // =============================================================================
 
-import { readFileSync } from 'fs';
-import { appConfig } from '@config/runtime';
-import { join } from 'path';
-import { hasAdminPermission, AdminPermission, gameplayRolesToAdminRoles } from '@config/permissions';
+import {
+  hasAdminPermission,
+  AdminPermission,
+  AdminPermissions,
+  gameplayRolesToAdminRoles,
+  getEffectivePermissions,
+} from '@config/permissions';
 import { logger } from './logger';
-
-interface PermissionConfig {
-  _meta: {
-    version: string;
-    description: string;
-    lastUpdated: string;
-  };
-  admin_roles: Record<string, {
-    description: string;
-    inherits?: string;
-    permissions: string[];
-  }>;
-  user_roles: Record<string, {
-    description: string;
-  }>;
-  menu_structure: Record<string, any>;
-  dashboard_badges: Record<string, {
-    permission: string;
-    desc: string;
-  }>;
-  audit_actions: Record<string, string>;
-}
-
-let permissionConfig: PermissionConfig | null = null;
+import { AuthUtils } from '../utils/auth';
 
 /**
- * Carica la configurazione dei permessi dal file JSON
+ * Contesto personaggio per middleware admin: allineato a AdminAuthMiddleware
+ * (X-Session-Id + Redis prima del cookie character_context deprecato).
  */
-function loadPermissionConfig(): PermissionConfig {
-  // In development, sempre ricarica per vedere i cambiamenti
-  if (!permissionConfig || !appConfig.isProduction) {
-    const configPath = join(__dirname, '../../../config/roles/admin-permissions.json');
-    const configData = readFileSync(configPath, 'utf-8');
-    permissionConfig = JSON.parse(configData);
-  }
-  return permissionConfig!;
-}
+export async function resolveAdminCharacterSelectionContext(
+  req: { headers?: NodeJS.Dict<string | string[] | undefined>; cookies?: Record<string, string | undefined> },
+  userId: string
+): Promise<{ characterId: string; characterRoles: string[] } | undefined> {
+  const raw = req.headers?.['x-session-id'] ?? req.headers?.['X-Session-Id'];
+  const sessionId = typeof raw === 'string' ? raw : Array.isArray(raw) ? raw[0] : undefined;
 
-/**
- * Risolve i permessi per un ruolo admin, includendo l'ereditarietà.
- * Formato flat come game-permissions: array di stringhe "admin:resource:action"
- */
-function resolveAdminRolePermissions(roleName: string, config: PermissionConfig): string[] {
-  const role = config.admin_roles[roleName];
-  if (!role) {
-    logger.warn(`Admin role ${roleName} not found in permissions config`);
-    return [];
-  }
-
-  let permissions = [...role.permissions];
-
-  if (role.inherits) {
-    const inheritedPermissions = resolveAdminRolePermissions(role.inherits, config);
-    permissions = [...new Set([...inheritedPermissions, ...permissions])];
-  }
-
-  return permissions;
-}
-
-/**
- * Ottiene tutti i permessi effettivi (characterRoles = gameplayRoles, mapped to admin roles per config)
- */
-function getResolvedPermissions(characterRoles: string[], characterPermissions: string[], isGestore: boolean, config: PermissionConfig): string[] {
-  if (isGestore) return [];
-
-  const adminRoles = gameplayRolesToAdminRoles(characterRoles);
-  let permissions: string[] = [];
-  for (const role of adminRoles) {
-    permissions = [...new Set([...permissions, ...resolveAdminRolePermissions(role, config)])];
-  }
-
-  if (characterPermissions.includes('all')) {
-    return []; // all = tutti i permessi
-  }
-
-  for (const p of characterPermissions) {
-    if (p.startsWith('admin:')) {
-      permissions.push(p);
-    } else if (p.includes('.')) {
-      const parts = p.split('.');
-      if (parts.length === 2 && parts[1] === 'access') {
-        permissions.push(`admin:${parts[0]}:access`);
-      } else if (parts.length === 3 && parts[1] === 'detail') {
-        permissions.push(`admin:${parts[0]}:${parts[2]}`);
+  if (sessionId) {
+    try {
+      const { SessionStore } = await import('@modules/auth/services/SessionStore');
+      const session = await SessionStore.getSession(sessionId);
+      if (session && session.userId === userId) {
+        return { characterId: session.characterId, characterRoles: [] };
       }
+    } catch (e: unknown) {
+      logger.warn('[resolveAdminCharacterSelectionContext] Session lookup failed', {
+        error: e instanceof Error ? e.message : String(e)
+      });
     }
   }
 
-  return [...new Set(permissions)];
-}
-
-/**
- * Verifica se l'utente ha un permesso specifico (da config JSON)
- */
-function hasPermissionFromConfig(
-  characterRoles: string[],
-  characterPermissions: string[],
-  isGestore: boolean,
-  requiredPermission: string
-): boolean {
-  if (isGestore) return true;
-
-  const config = loadPermissionConfig();
-  const resolved = getResolvedPermissions(characterRoles, characterPermissions, false, config);
-
-  if (characterPermissions.includes('all')) return true;
-  if (resolved.includes(requiredPermission)) return true;
-
-  return false;
-}
-
-/**
- * Funzione principale per verificare accesso - haveAccessTo('dashboard')
- * characterRoles = gameplayRoles (player, master, moderatore); mapped to admin roles for config lookup
- */
-export function haveAccessTo(section: string, userRoles: string[], characterRoles: string[], characterPermissions: string[] = []): boolean {
-  if (characterPermissions.includes('all')) return true;
-
-  const accessPermission = `admin:${section}:access`;
-  if (characterPermissions.includes(accessPermission) || characterPermissions.includes(`${section}.access`)) return true;
-
-  const config = loadPermissionConfig();
-  const adminRoles = gameplayRolesToAdminRoles(characterRoles);
-  for (const role of adminRoles) {
-    const rolePermissions = resolveAdminRolePermissions(role, config);
-    if (rolePermissions.includes(accessPermission)) return true;
+  const characterContext = req.cookies?.character_context;
+  if (characterContext) {
+    return AuthUtils.decodeCharacterContext(characterContext) || undefined;
   }
 
-  return false;
+  return undefined;
 }
 
-/**
- * Converte permessi flat in struttura nested (per API backward compatibility)
- */
-function flatToNestedPermissions(flatPermissions: string[]): Record<string, { access: boolean; detail: Record<string, boolean> }> {
-  const result: Record<string, { access: boolean; detail: Record<string, boolean> }> = {};
-  const allSections = ['dashboard', 'users', 'characters', 'content', 'documents', 'system', 'economy', 'locations', 'gamedata', 'skills', 'occupations', 'tickets'];
+/** Sezioni UI / middleware requireAccess: prefissi permesso `section...` (formato AdminPermission) */
+const SECTION_ACCESS_PREFIXES: Record<string, string[]> = {
+  dashboard: [],
+  users: ['users.'],
+  characters: ['characters.'],
+  documents: ['documents.'],
+  system: ['system.'],
+  locations: ['locations.'],
+  forum: ['forum.'],
+  chat: ['chat.'],
+  content: ['documents.', 'forum.', 'chat.'],
+  economy: [],
+  gamedata: ['items.', 'skills.', 'social_classes.', 'relationships.', 'forum.'],
+  skills: ['skills.'],
+  occupations: ['skills.'],
+  tickets: ['tickets.'],
+  items: ['items.'],
+  messaging: ['messaging.'],
+  relationships: ['relationships.'],
+  social_classes: ['social_classes.'],
+  image_generation: ['image_generation.'],
+  manager: ['manager.'],
+};
 
-  for (const section of allSections) {
+const PERMISSION_NEST_SECTIONS = [
+  'dashboard',
+  'users',
+  'characters',
+  'content',
+  'documents',
+  'system',
+  'economy',
+  'locations',
+  'gamedata',
+  'skills',
+  'occupations',
+  'tickets',
+  'forum',
+  'chat',
+  'items',
+  'messaging',
+  'relationships',
+  'social_classes',
+  'image_generation',
+  'manager',
+];
+
+function emptyNestedPermissions(): Record<string, { access: boolean; detail: Record<string, boolean> }> {
+  const result: Record<string, { access: boolean; detail: Record<string, boolean> }> = {};
+  for (const section of PERMISSION_NEST_SECTIONS) {
     result[section] = { access: false, detail: {} };
   }
-
-  for (const p of flatPermissions) {
-    if (!p.startsWith('admin:')) continue;
-    const parts = p.slice(6).split(':');
-    if (parts.length >= 2) {
-      const section = parts[0];
-      const action = parts[1];
-      if (!result[section]) result[section] = { access: false, detail: {} };
-      if (action === 'access') {
-        result[section].access = true;
-      } else {
-        result[section].detail[action] = true;
-      }
-    }
-  }
-
   return result;
 }
 
 /**
- * Ottieni tutti i permessi per un utente (characterRoles = gameplayRoles, characterPermissions = adminPermissions)
+ * Converte permessi effettivi (formato section.action[.sotto...]) in struttura nested per API legacy /admin/me
  */
-export function getUserPermissions(userRoles: string[], characterRoles: string[], characterPermissions: string[] = []): any {
-  const config = loadPermissionConfig();
+function effectivePermissionsToNested(effective: AdminPermission[]): Record<string, { access: boolean; detail: Record<string, boolean> }> {
+  const result = emptyNestedPermissions();
+  for (const perm of effective) {
+    const parts = perm.split('.');
+    if (parts.length < 2) continue;
+    const section = parts[0];
+    if (!result[section]) {
+      result[section] = { access: false, detail: {} };
+    }
+    const detailKey = parts.slice(1).join('.');
+    result[section].detail[detailKey] = true;
+    result[section].access = true;
+  }
+  return result;
+}
 
-  const adminRoles = gameplayRolesToAdminRoles(characterRoles);
-  let flatPermissions: string[] = [];
-  for (const role of adminRoles) {
-    flatPermissions = [...new Set([...flatPermissions, ...resolveAdminRolePermissions(role, config)])];
+/**
+ * Verifica accesso a una sezione menu/management (characterRoles = gameplayRoles)
+ */
+export function haveAccessTo(
+  section: string,
+  userRoles: string[],
+  characterRoles: string[],
+  characterPermissions: string[] = [],
+  isGestore = false
+): boolean {
+  if (isGestore) return true;
+  if (characterPermissions.includes('all')) return true;
+
+  const accessPermission = `admin:${section}:access`;
+  if (characterPermissions.includes(accessPermission) || characterPermissions.includes(`${section}.access`)) {
+    return true;
   }
 
-  if (characterPermissions.includes('all')) {
-    flatPermissions = ['all'];
-  } else {
-    for (const p of characterPermissions) {
-      if (p.startsWith('admin:')) {
-        flatPermissions.push(p);
-      } else if (p.includes('.')) {
-        const parts = p.split('.');
-        if (parts.length === 2 && parts[1] === 'access') {
-          flatPermissions.push(`admin:${parts[0]}:access`);
-        } else if (parts.length === 3 && parts[1] === 'detail') {
-          flatPermissions.push(`admin:${parts[0]}:${parts[2]}`);
-        }
-      }
+  if (section === 'dashboard') {
+    return true;
+  }
+
+  const prefixes = SECTION_ACCESS_PREFIXES[section];
+  if (prefixes === undefined) {
+    const effective = getEffectivePermissions(characterRoles, characterPermissions, isGestore);
+    return effective.some(p => p.startsWith(`${section}.`));
+  }
+
+  if (prefixes.length === 0 && section === 'economy') {
+    return characterPermissions.some(p => p.includes('economy'));
+  }
+
+  if (prefixes.length === 0) {
+    return false;
+  }
+
+  const effective = getEffectivePermissions(characterRoles, characterPermissions, isGestore);
+  for (const p of effective) {
+    for (const prefix of prefixes) {
+      if (p.startsWith(prefix)) return true;
     }
   }
+  return false;
+}
 
-  if (flatPermissions.includes('all')) {
-    const sections = ['dashboard', 'users', 'characters', 'content', 'documents', 'system', 'economy', 'locations', 'gamedata', 'skills', 'occupations', 'tickets'];
+/**
+ * Permessi nested per utente (characterRoles = gameplayRoles, characterPermissions = adminPermissions)
+ */
+export function getUserPermissions(
+  userRoles: string[],
+  characterRoles: string[],
+  characterPermissions: string[] = [],
+  isGestore = false
+): Record<string, { access: boolean; detail: Record<string, boolean> }> {
+  if (characterPermissions.includes('all')) {
     const allDetail: Record<string, boolean> = {
-      view_basic_stats: true, view_user_count: true, view_character_stats: true,
-      view_system_health: true, view_gameplay_stats: true, view_financial_stats: true,
-      view_activity_logs: true, read: true, create: true, update: true, delete: true,
-      ban: true, approve: true, reject: true, edit: true, view_transactions: true,
-      grant_money: true, adjust_balances: true, view_reports: true, manage_access: true,
-      manage_groups: true, publish: true, view_logs: true, broadcast_messages: true, export_data: true,
-      view: true, assign: true, close: true, manage_all: true, transfer: true, internal_notes: true
+      view_basic_stats: true,
+      view_user_count: true,
+      view_character_stats: true,
+      view_system_health: true,
+      view_gameplay_stats: true,
+      view_financial_stats: true,
+      view_activity_logs: true,
+      read: true,
+      create: true,
+      update: true,
+      delete: true,
+      ban: true,
+      approve: true,
+      reject: true,
+      edit: true,
+      view_transactions: true,
+      grant_money: true,
+      adjust_balances: true,
+      view_reports: true,
+      manage_access: true,
+      manage_groups: true,
+      publish: true,
+      view_logs: true,
+      broadcast_messages: true,
+      export_data: true,
+      view: true,
+      assign: true,
+      close: true,
+      manage_all: true,
+      transfer: true,
+      internal_notes: true,
     };
-    const allPermissions: any = {};
-    for (const section of sections) {
+    const allPermissions: Record<string, { access: boolean; detail: Record<string, boolean> }> = {};
+    for (const section of PERMISSION_NEST_SECTIONS) {
       allPermissions[section] = { access: true, detail: { ...allDetail } };
     }
     return allPermissions;
   }
 
-  return flatToNestedPermissions([...new Set(flatPermissions)]);
+  const effective = getEffectivePermissions(characterRoles, characterPermissions, isGestore);
+  return effectivePermissionsToNested(effective);
 }
 
-/**
- * Filtra i badge della dashboard in base ai permessi dell'utente
- */
-export function getVisibleDashboardBadges(userRoles: string[], characterRoles: string[], characterPermissions: string[] = [], isGestore: boolean = false): string[] {
-  const config = loadPermissionConfig();
-  const visibleBadges: string[] = [];
+/** Badge dashboard: id → permesso richiesto */
+const DASHBOARD_BADGES: Record<string, AdminPermission> = {
+  character_stats: AdminPermissions.CHARACTERS_DETAIL_READ,
+  user_activity: AdminPermissions.USERS_READ,
+  system_health: AdminPermissions.SYSTEM_VIEW_LOGS,
+  tickets_open: AdminPermissions.TICKETS_VIEW_STATS,
+};
 
-  for (const [badgeId, badgeConfig] of Object.entries(config.dashboard_badges)) {
-    if (badgeConfig.permission.startsWith('admin:')) {
-      if (hasPermissionFromConfig(characterRoles, characterPermissions, isGestore, badgeConfig.permission)) {
-        visibleBadges.push(badgeId);
-      }
-    } else {
-      if (hasAdminPermission(characterRoles, characterPermissions, isGestore, badgeConfig.permission as AdminPermission)) {
-        visibleBadges.push(badgeId);
-      }
+export function getVisibleDashboardBadges(
+  userRoles: string[],
+  characterRoles: string[],
+  characterPermissions: string[] = [],
+  isGestore = false
+): string[] {
+  const visibleBadges: string[] = [];
+  for (const [badgeId, perm] of Object.entries(DASHBOARD_BADGES)) {
+    if (hasAdminPermission(characterRoles, characterPermissions, isGestore, perm)) {
+      visibleBadges.push(badgeId);
     }
   }
-
   return visibleBadges;
 }
 
 /**
- * Ottieni la struttura menu visibile per l'utente
+ * Struttura menu management (allineata ai permessi TypeScript)
  */
-export function getVisibleMenuStructure(userRoles: string[], characterRoles: string[], characterPermissions: string[] = [], isGestore: boolean = false): any {
-  const config = loadPermissionConfig();
-  const visibleMenu: any = {};
+const MENU_STRUCTURE: Record<
+  string,
+  { icon: string; label: string; permission: string; children?: Array<{ permission: string; label: string }> }
+> = {
+  dashboard: { icon: '📊', label: 'Dashboard', permission: 'dashboard' },
+  users: {
+    icon: '👥',
+    label: 'Utenti',
+    permission: 'users',
+    children: [
+      { permission: AdminPermissions.USERS_READ, label: 'Lista utenti' },
+      { permission: AdminPermissions.USERS_BAN, label: 'Ban' },
+    ],
+  },
+  characters: {
+    icon: '🎭',
+    label: 'Personaggi',
+    permission: 'characters',
+    children: [
+      { permission: AdminPermissions.CHARACTERS_DETAIL_READ, label: 'Lista / dettaglio' },
+      { permission: AdminPermissions.CHARACTERS_DETAIL_APPROVE, label: 'Approvazioni' },
+      { permission: AdminPermissions.CHARACTERS_DETAIL_EDIT, label: 'Modifica' },
+    ],
+  },
+  locations: {
+    icon: '🗺️',
+    label: 'Location',
+    permission: 'locations',
+    children: [{ permission: AdminPermissions.LOCATIONS_READ, label: 'Gestione location' }],
+  },
+  documents: {
+    icon: '📄',
+    label: 'Documenti',
+    permission: 'documents',
+    children: [
+      { permission: AdminPermissions.DOCUMENTS_READ, label: 'Lista documenti' },
+      { permission: AdminPermissions.DOCUMENTS_CREATE, label: 'Creazione' },
+    ],
+  },
+  gamedata: {
+    icon: '🎲',
+    label: 'Dati di gioco',
+    permission: 'gamedata',
+    children: [
+      { permission: AdminPermissions.SKILLS_ACCESS, label: 'Skills' },
+      { permission: AdminPermissions.SOCIAL_CLASSES_ACCESS, label: 'Classi sociali' },
+      { permission: AdminPermissions.ITEMS_ACCESS, label: 'Mercato / item' },
+      { permission: AdminPermissions.FORUM_MANAGE, label: 'Forum' },
+    ],
+  },
+  forum: {
+    icon: '💬',
+    label: 'Forum',
+    permission: 'forum',
+    children: [
+      { permission: AdminPermissions.FORUM_ACCESS, label: 'Accesso forum' },
+      { permission: AdminPermissions.FORUM_LIST, label: 'Lista' },
+    ],
+  },
+  chat: {
+    icon: '💭',
+    label: 'Chat',
+    permission: 'chat',
+    children: [
+      { permission: AdminPermissions.CHAT_SEARCH_MESSAGES, label: 'Ricerca messaggi' },
+      { permission: AdminPermissions.CHAT_VIEW_MODERATION, label: 'Moderazione' },
+    ],
+  },
+  system: {
+    icon: '⚙️',
+    label: 'Sistema',
+    permission: 'system',
+    children: [
+      { permission: AdminPermissions.SYSTEM_VIEW_LOGS, label: 'Log' },
+      { permission: AdminPermissions.SYSTEM_BROADCAST_MESSAGES, label: 'Broadcast' },
+      { permission: AdminPermissions.SYSTEM_DELETED_RECORDS, label: 'Record cancellati' },
+    ],
+  },
+  tickets: {
+    icon: '🎫',
+    label: 'Supporto',
+    permission: 'tickets',
+    children: [{ permission: AdminPermissions.TICKETS_VIEW_STATS, label: 'Ticket / statistiche' }],
+  },
+};
 
-  for (const [menuId, menuConfig] of Object.entries(config.menu_structure)) {
-    if (haveAccessTo(menuId, userRoles, characterRoles, characterPermissions)) {
-      visibleMenu[menuId] = {
-        icon: menuConfig.icon,
-        label: menuConfig.label,
-        permission: menuConfig.permission
-      };
+const AUDIT_ACTION_DESCRIPTIONS: Record<string, string> = {
+  access_denied: 'Accesso negato',
+  login: 'Accesso effettuato',
+  logout: 'Uscita',
+  create: 'Creazione risorsa',
+  update: 'Aggiornamento risorsa',
+  delete: 'Eliminazione risorsa',
+  read: 'Lettura risorsa',
+};
 
-      if (menuConfig.children) {
-        const visibleChildren = menuConfig.children.filter((child: any) => {
-          if (child.permission === 'manager.manage_user_permissions') {
-            return userRoles.includes('gestore');
-          }
-          if (child.permission.startsWith('admin:')) {
-            return hasPermissionFromConfig(characterRoles, characterPermissions, isGestore, child.permission);
-          }
-          return hasAdminPermission(characterRoles, characterPermissions, isGestore, child.permission as AdminPermission);
-        });
-        if (visibleChildren.length > 0) {
-          visibleMenu[menuId].children = visibleChildren;
+export function getVisibleMenuStructure(
+  userRoles: string[],
+  characterRoles: string[],
+  characterPermissions: string[] = [],
+  isGestore = false
+): Record<string, { icon: string; label: string; permission: string; children?: Array<{ permission: string; label: string }> }> {
+  const visibleMenu: Record<string, { icon: string; label: string; permission: string; children?: Array<{ permission: string; label: string }> }> = {};
+
+  for (const [menuId, menuConfig] of Object.entries(MENU_STRUCTURE)) {
+    if (!haveAccessTo(menuId, userRoles, characterRoles, characterPermissions, isGestore)) {
+      continue;
+    }
+
+    visibleMenu[menuId] = {
+      icon: menuConfig.icon,
+      label: menuConfig.label,
+      permission: menuConfig.permission,
+    };
+
+    if (menuConfig.children) {
+      const visibleChildren = menuConfig.children.filter((child) => {
+        if (child.permission === 'manager.manage_user_permissions') {
+          return userRoles.includes('gestore');
         }
+        return hasAdminPermission(
+          characterRoles,
+          characterPermissions,
+          isGestore,
+          child.permission as AdminPermission
+        );
+      });
+      if (visibleChildren.length > 0) {
+        visibleMenu[menuId].children = visibleChildren;
       }
     }
   }
@@ -274,12 +380,8 @@ export function getVisibleMenuStructure(userRoles: string[], characterRoles: str
   return visibleMenu;
 }
 
-/**
- * Ottieni la descrizione di un'azione per l'audit log
- */
 export function getAuditActionDescription(action: string): string {
-  const config = loadPermissionConfig();
-  return config.audit_actions[action] || `Azione sconosciuta: ${action}`;
+  return AUDIT_ACTION_DESCRIPTIONS[action] || `Azione: ${action}`;
 }
 
 /**
@@ -298,11 +400,8 @@ export function requireAccess(section: string) {
     }
 
     try {
-      // Import models
       const { User, Character } = await import('@database/models');
-      const { AuthUtils } = await import('../utils/auth');
 
-      // Fetch user from database
       const dbUser = await User.findById(user.userId);
       if (!dbUser) {
         return res.status(404).json({
@@ -311,14 +410,6 @@ export function requireAccess(section: string) {
         });
       }
 
-      // Decode character_context cookie to get selected character
-      const characterContext = req.cookies?.character_context;
-      let characterContextData: { characterId: string; characterRoles: string[] } | undefined = undefined;
-      if (characterContext) {
-        characterContextData = AuthUtils.decodeCharacterContext(characterContext) || undefined;
-      }
-
-      // Fetch user's characters (soft delete filtered by plugin)
       const allCharacters = await Character.find({ userId: dbUser._id });
 
       const availableCharacters = AuthUtils.getAvailableCharacters(
@@ -327,6 +418,7 @@ export function requireAccess(section: string) {
       );
 
       const requestedCharacterId = req.query?.characterId as string;
+      const characterContextData = await resolveAdminCharacterSelectionContext(req, user.userId);
       const selectedCharacter = AuthUtils.determineActiveCharacter(
         availableCharacters,
         requestedCharacterId,
@@ -336,8 +428,9 @@ export function requireAccess(section: string) {
       const characterRoles = selectedCharacter?.gameplayRoles || [];
       const userRoles = dbUser.userRoles || [];
       const characterPermissions = selectedCharacter?.adminPermissions || [];
+      const isGestore = selectedCharacter?.isGestore || false;
 
-      if (!haveAccessTo(section, userRoles, characterRoles, characterPermissions)) {
+      if (!haveAccessTo(section, userRoles, characterRoles, characterPermissions, isGestore)) {
         logger.warn(`Access denied to ${section}`, {
           userId: user.userId,
           userRoles,
@@ -378,11 +471,8 @@ export function requireViewPermission(permission: AdminPermission) {
     }
 
     try {
-      // Import models
       const { User, Character } = await import('@database/models');
-      const { AuthUtils } = await import('../utils/auth');
 
-      // Fetch user from database
       const dbUser = await User.findById(user.userId);
       if (!dbUser) {
         return res.status(404).json({
@@ -391,26 +481,19 @@ export function requireViewPermission(permission: AdminPermission) {
         });
       }
 
-      // Decode character_context cookie to get selected character
-      const characterContext = req.cookies?.character_context;
-      let characterContextData: { characterId: string; characterRoles: string[] } | undefined = undefined;
-      if (characterContext) {
-        characterContextData = AuthUtils.decodeCharacterContext(characterContext) || undefined;
-      }
-
       const allCharacters = await Character.find({ userId: dbUser._id });
       const availableCharacters = AuthUtils.getAvailableCharacters(
         allCharacters,
         dbUser.multipleCharactersAllowed
       );
       const requestedCharacterId = req.query?.characterId as string;
+      const characterContextData = await resolveAdminCharacterSelectionContext(req, user.userId);
       const selectedCharacter = AuthUtils.determineActiveCharacter(
         availableCharacters,
         requestedCharacterId,
         characterContextData
       );
 
-      // Get gameplayRoles and adminPermissions from selected CHARACTER
       const gameplayRoles = selectedCharacter?.gameplayRoles || [];
       const adminPermissions = selectedCharacter?.adminPermissions || [];
       const isGestore = selectedCharacter?.isGestore || false;
@@ -443,30 +526,26 @@ export function requireViewPermission(permission: AdminPermission) {
   };
 }
 
-/**
- * Legacy middleware per backward compatibility
- */
 export function requirePermission(permission: AdminPermission) {
   return requireViewPermission(permission);
 }
 
-/**
- * Utility per log di debug dei permessi
- */
-export function debugPermissions(userRoles: string[], characterRoles: string[], characterPermissions: string[] = []) {
-  const config = loadPermissionConfig();
-  const allPermissions = getUserPermissions(userRoles, characterRoles, characterPermissions);
-  
+export function debugPermissions(
+  userRoles: string[],
+  characterRoles: string[],
+  characterPermissions: string[] = [],
+  isGestore = false
+) {
+  const allPermissions = getUserPermissions(userRoles, characterRoles, characterPermissions, isGestore);
+
   logger.debug('=== DEBUG PERMISSIONS ===');
   logger.debug('User Roles:', userRoles);
   logger.debug('Character Roles:', characterRoles);
   logger.debug('Character Permissions (override):', characterPermissions);
+  logger.debug('Effective nested:', allPermissions);
   logger.debug('========================');
 }
 
-/**
- * Controlla se l'utente può accedere agli audit logs (master = full admin, isGestore checked elsewhere)
- */
 export function canViewAuditLogs(userRoles: string[], characterRoles: string[]): boolean {
   const adminRoles = gameplayRolesToAdminRoles(characterRoles);
   return adminRoles.includes('master');

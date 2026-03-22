@@ -1,8 +1,9 @@
 'use client';
 
 import { useForumTopics } from '@/hooks/useForumTopics';
-import { TopicCard } from '../cards/TopicCard';
 import styles from '@/styles/components/forum/TopicListView.module.scss';
+
+import { TopicCard } from '../cards/TopicCard';
 
 export function TopicListView() {
   const { data: topics = [], isLoading, error } = useForumTopics();

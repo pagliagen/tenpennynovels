@@ -10,10 +10,11 @@
 
 'use client';
 
-import React from 'react';
-import { useAuthStore } from '@/store/authStore';
-import { characterApi } from '@/lib/api/character';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import React from 'react';
+
+import { characterApi } from '@/lib/api/character';
+import { useAuthStore } from '@/store/authStore';
 import styles from '@/styles/components/windows/CharacterFaceClaim.module.scss';
 
 /**

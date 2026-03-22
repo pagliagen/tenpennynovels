@@ -1,11 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+
 import { fakePngApi } from '@/lib/api/fakePng';
-import { FakePngSlot } from './FakePngSlot';
-import { FakePngForm } from './FakePngForm';
-import type { FakePng } from '@/types/fakePng';
 import styles from '@/styles/components/fake-png/FakePngManager.module.scss';
+import type { FakePng } from '@/types/fakePng';
+
+import { FakePngForm } from './FakePngForm';
+import { FakePngSlot } from './FakePngSlot';
+
 
 interface FakePngManagerProps {
   characterId: string;

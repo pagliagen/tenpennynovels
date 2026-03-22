@@ -19,6 +19,7 @@
 
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
+
 import { locationChatsApi } from '@/lib/api/locationChats';
 import type { ChatMessage, ChatOccupant } from '@/types/chat';
 
@@ -68,7 +69,6 @@ function saveTagForLocation(locationId: string, tag: string): void {
     tags[locationId] = tag;
 
     localStorage.setItem(LOCATION_TAGS_KEY, JSON.stringify(tags));
-    console.log(`💾 Tag saved for location ${locationId}: ${tag}`);
   } catch (error) {
     console.error('Failed to save location tag to localStorage:', error);
   }
@@ -228,30 +228,13 @@ export const useChatStore = create<ChatStore>()(
         try {
           const response = await locationChatsApi.getHistory(locationId);
 
-          console.log('🔍 API Response structure:', response);
+          // API returns MessageHistoryResponse { messages: [...], totalCount, hasMore }
+          const messages = response.messages && Array.isArray(response.messages)
+            ? response.messages
+            : [];
 
-          // Handle different response structures (backwards compatibility)
-          // Note: Cast to any for legacy format checks - correct type is MessageHistoryResponse
-          const anyResponse = response as any;
-          let messages: ChatMessage[] = [];
-
-          if (Array.isArray(response)) {
-            // API returns array directly
-            messages = response;
-          } else if (anyResponse.data && Array.isArray(anyResponse.data.messages)) {
-            // Legacy: API returns { data: { messages: [...] } }
-            messages = anyResponse.data.messages;
-            console.log(`📊 Loaded ${anyResponse.data.totalCount} messages (hasMore: ${anyResponse.data.hasMore})`);
-          } else if (response.messages && Array.isArray(response.messages)) {
-            // ✅ CURRENT: API returns { messages: [...], totalCount, hasMore } (MessageHistoryResponse)
-            messages = response.messages;
-            console.log(`📊 Loaded ${response.totalCount} messages (hasMore: ${response.hasMore})`);
-          } else if (anyResponse.data && Array.isArray(anyResponse.data)) {
-            // Legacy: API returns { data: [...] }
-            messages = anyResponse.data;
-          } else {
+          if (messages.length === 0 && response.messages) {
             console.warn('⚠️  Unexpected API response structure:', response);
-            messages = [];
           }
 
           set({
@@ -259,7 +242,10 @@ export const useChatStore = create<ChatStore>()(
             isLoading: false,
           });
 
-          console.log(`✅ Loaded ${messages.length} messages for location ${locationId}`);
+          console.log(`✅ Loaded ${messages.length} messages for location ${locationId}`, {
+            totalCount: response.totalCount,
+            hasMore: response.hasMore
+          });
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'Failed to load messages';
 

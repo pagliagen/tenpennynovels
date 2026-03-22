@@ -165,17 +165,16 @@ async function apiRequestWithRetry<T>(config: RequestConfig): Promise<ApiRespons
         await sleep(delay);
       }
 
-      // Make the request with timeout
+      // Peel url/timeout so fetch() never receives non-RequestInit fields; force credentials last
+      const { url: requestUrl, timeout: requestTimeout, ...fetchInit } = config;
+
       const response = await fetchWithTimeout(
-        config.url,
+        requestUrl,
         {
-          method: config.method,
-          headers: config.headers,
-          body: config.body,
-          credentials: 'include', // Include cookies for session auth
-          ...config,
+          ...fetchInit,
+          credentials: 'include',
         },
-        config.timeout || API_CONFIG.DEFAULT_TIMEOUT
+        requestTimeout || API_CONFIG.DEFAULT_TIMEOUT
       );
 
       // Run response interceptors

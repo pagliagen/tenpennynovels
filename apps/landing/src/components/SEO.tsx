@@ -12,7 +12,7 @@
  * - Canonical URLs (prevents duplicate content)
  * - Robots directives (noindex/nofollow)
  * - JSON-LD structured data (supports arrays)
- * - Mobile optimization (viewport, theme-color)
+ * - Theme-color (viewport impostato globalmente in landing `_app.tsx`)
  * - Favicon links
  *
  * **Best Practices**:
@@ -200,9 +200,8 @@ export const SEO: React.FC<SEOProps> = ({
 
   return (
     <Head>
-      {/* Essential Meta */}
+      {/* Essential Meta — viewport global in _app.tsx */}
       <meta charSet="utf-8" />
-      <meta name="viewport" content="width=device-width, initial-scale=1" />
       <meta name="theme-color" content="#1a1a1a" />
 
       {/* Primary Meta Tags */}

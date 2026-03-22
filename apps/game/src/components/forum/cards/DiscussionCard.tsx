@@ -1,8 +1,8 @@
 'use client';
 
 import { useForumStore } from '@/store/forumStore';
-import type { ForumDiscussion } from '@/types/forum';
 import styles from '@/styles/components/forum/DiscussionCard.module.scss';
+import type { ForumDiscussion } from '@/types/forum';
 
 interface DiscussionCardProps {
   discussion: ForumDiscussion;

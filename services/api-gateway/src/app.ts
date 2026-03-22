@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { type Request } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
@@ -57,7 +57,14 @@ app.use(cors({
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'X-Requested-With', 'X-Session-Id'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'Cookie',
+    'X-Requested-With',
+    'X-Session-Id',
+    'X-Tenpenny-Documents-Build',
+  ],
   optionsSuccessStatus: 200,
 }));
 
@@ -77,14 +84,23 @@ app.use(morgan('combined', { stream: httpLoggerStream }));
 // ---------------------------------------------------------------------------
 // Rate limiting — solo /documents
 // ---------------------------------------------------------------------------
-const { unauthenticated, authenticated } = config.rateLimit.documents;
+const { unauthenticated, authenticated, buildBypassSecret, disabled: documentsRateLimitDisabled } =
+  config.rateLimit.documents;
+
+/** Evita 429 durante next build / ISR (molte richieste parallele). */
+function shouldSkipDocumentsRateLimit(req: Request): boolean {
+  if (documentsRateLimitDisabled) return true;
+  if (!config.isProduction) return true;
+  if (!buildBypassSecret) return false;
+  return req.get('x-tenpenny-documents-build') === buildBypassSecret;
+}
 
 const documentsRateLimitUnauth = rateLimit({
   windowMs: unauthenticated.windowMs,
   max: unauthenticated.max,
   standardHeaders: true,
   legacyHeaders: false,
-  skip: (req) => !!req.cookies?.auth_token,
+  skip: (req) => !!req.cookies?.auth_token || shouldSkipDocumentsRateLimit(req),
   // Rimosso keyGenerator custom - usa default (normalizza IPv6 automaticamente)
   handler: (_req, res) => {
     res.status(429).json({
@@ -102,7 +118,7 @@ const documentsRateLimitAuth = rateLimit({
   max: authenticated.max,
   standardHeaders: true,
   legacyHeaders: false,
-  skip: (req) => !req.cookies?.auth_token,
+  skip: (req) => !req.cookies?.auth_token || shouldSkipDocumentsRateLimit(req),
   keyGenerator: (req) => req.cookies?.auth_token || 'unknown',
   handler: (_req, res) => {
     res.status(429).json({

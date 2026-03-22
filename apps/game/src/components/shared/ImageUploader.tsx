@@ -1,8 +1,10 @@
-import React, { useState, useCallback, useRef } from 'react';
 import classNames from 'classnames';
+import React, { useState, useCallback, useRef } from 'react';
+
 import { uploadImage, deleteImage } from '@/lib/api/cdn';
-import { ImageCropModal } from './ImageCropModal';
 import styles from '@/styles/components/ImageUploader.module.scss';
+
+import { ImageCropModal } from './ImageCropModal';
 
 export type CDNEntityType = 'locations' | 'items' | 'characters' | 'occupations';
 

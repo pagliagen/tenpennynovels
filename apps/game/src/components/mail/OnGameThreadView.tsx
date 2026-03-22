@@ -11,10 +11,12 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+
 import { useOnGameThread } from '@/hooks/useOnGameMail';
+import styles from '@/styles/components/mail/OnGameMail.module.scss';
+
 import { OnGameMessageItem } from './OnGameMessageItem';
 import { OnGameReplyForm } from './OnGameReplyForm';
-import styles from '@/styles/components/mail/OnGameMail.module.scss';
 
 interface OnGameThreadViewProps {
   partnerId: string;

@@ -17,6 +17,7 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+
 import { UI_CONFIG } from '@/constants/config';
 
 /**

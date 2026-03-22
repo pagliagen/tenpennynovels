@@ -10,12 +10,15 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { useWizardStore } from '@/store/wizardStore';
+
 import { useOccupations } from '@/hooks/useCharacterCreation';
-import { useWizardToolbar } from '../WizardSlotsContext';
-import { OccupationCard } from '../shared/OccupationCard';
-import { CategoryFilter } from '../shared/CategoryFilter';
+import { useWizardStore } from '@/store/wizardStore';
 import styles from '@/styles/components/character/wizard/Step2Occupation.module.scss';
+
+import { CategoryFilter } from '../shared/CategoryFilter';
+import { OccupationCard } from '../shared/OccupationCard';
+import { useWizardToolbar } from '../WizardSlotsContext';
+
 
 /**
  * Step 2: Occupation Component

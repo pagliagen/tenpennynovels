@@ -14,6 +14,7 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+
 import { api } from '@/lib/api/client';
 import type { AccessibleLocation, LocationsResponse } from '@/types/location';
 

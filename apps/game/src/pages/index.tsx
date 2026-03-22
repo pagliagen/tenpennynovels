@@ -10,11 +10,12 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
 import Head from 'next/head';
+import { useState, useEffect } from 'react';
+
 import { GameLayout } from '@/components/layout/GameLayout';
-import { useAuthStore } from '@/store/authStore';
 import { useWebSocket } from '@/contexts/WebSocketContext';
+import { useAuthStore } from '@/store/authStore';
 
 /**
  * Home Page Component

@@ -1,7 +1,7 @@
 'use client';
 
-import type { FakePng } from '@/types/fakePng';
 import styles from '@/styles/components/fake-png/FakePngManager.module.scss';
+import type { FakePng } from '@/types/fakePng';
 
 interface FakePngSlotProps {
   fake: FakePng | null;

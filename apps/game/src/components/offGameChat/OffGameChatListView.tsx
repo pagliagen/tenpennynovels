@@ -11,8 +11,9 @@
 'use client';
 
 import { useOffGameChats } from '@/hooks/useOffGameChat';
-import { OffGameChatItem } from './OffGameChatItem';
 import styles from '@/styles/components/offGameChat/OffGameChat.module.scss';
+
+import { OffGameChatItem } from './OffGameChatItem';
 
 interface OffGameChatListViewProps {
   onChatSelect: (chatId: string) => void;

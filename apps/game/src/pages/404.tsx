@@ -12,8 +12,8 @@
  * @since 2.0.0
  */
 
-import Link from 'next/link';
 import Head from 'next/head';
+import Link from 'next/link';
 
 /**
  * 404 Error Page Component

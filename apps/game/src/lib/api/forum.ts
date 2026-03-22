@@ -22,7 +22,6 @@
  * @since 2.0.0
  */
 
-import { api } from './client';
 import type {
   ForumInitData,
   ForumTopic,
@@ -34,6 +33,8 @@ import type {
   PaginationInfo,
   ReactionType,
 } from '@/types/forum';
+
+import { api } from './client';
 
 /**
  * Forum API Service

@@ -42,13 +42,11 @@ export function LocationPresenceList(): JSX.Element {
   const { locationPresence, isLoading } = usePresence();
   const { openWindow } = useWindowManagerStore();
 
-  // Get current location ID (SINGLE SOURCE OF TRUTH from GameStateStore)
-  const currentLocationId = useGameStateStore((state) => state.currentLocationId);
+  // Get current location from GameStateStore (SINGLE SOURCE OF TRUTH)
+  const currentLocationName = useGameStateStore((state) => state.currentLocationName);
 
-  // Get current location name
-  const locationName = currentLocationId
-    ? 'In questa location' // TODO: Get actual location name from API if needed
-    : 'A Londra';
+  // Display location name (fallback to "A Londra" if not in location)
+  const locationName = currentLocationName || 'A Londra';
 
   // Defensive: ensure array
   const characters = locationPresence || [];

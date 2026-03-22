@@ -1,9 +1,9 @@
 'use client';
 
-import { useForumStore } from '@/store/forumStore';
 import { useToggleFavorite } from '@/hooks/useForumTopics';
-import type { ForumTopic, TopicAccessRule } from '@/types/forum';
+import { useForumStore } from '@/store/forumStore';
 import styles from '@/styles/components/forum/TopicCard.module.scss';
+import type { ForumTopic, TopicAccessRule } from '@/types/forum';
 
 interface TopicCardProps {
   topic: ForumTopic;

@@ -2,15 +2,13 @@
  * Location Seeder - Standalone Script
  *
  * Reads locations from CSV, builds hierarchy (root → district → location),
- * seeds MongoDB, and publishes embedding events.
+ * seeds MongoDB.
  */
 
 import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { parse } from 'csv-parse/sync';
-import Redis from 'ioredis';
-import crypto from 'crypto';
 import { getConnection } from '../utils/connection.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -57,8 +55,6 @@ function isPrivateLocation(name: string): boolean {
 async function seedLocations() {
   console.log('📍 Location Seeder\n');
   const { client, db } = await getConnection();
-
-  let redis: Redis | null = null;
 
   try {
     const locationsCol = db.collection('locations');
@@ -203,34 +199,6 @@ async function seedLocations() {
 
     console.log(`\n   ✅ Created ${createdLocations.size} locations total\n`);
 
-    // Publish embedding events
-    try {
-      const redisHost = process.env.REDIS_HOST || 'localhost';
-      const redisPort = parseInt(process.env.REDIS_PORT || '6379', 10);
-      redis = new Redis({ host: redisHost, port: redisPort, maxRetriesPerRequest: null });
-
-      console.log('   📝 Publishing embedding events...');
-      const allLocations = await locationsCol.find({}).toArray();
-      let published = 0;
-
-      for (const location of allLocations) {
-        const event = {
-          eventId: crypto.randomUUID(),
-          timestamp: new Date(),
-          locationId: location._id.toString(),
-          name: location.name,
-          description: location.description,
-          district: location.district,
-          slug: location.slug
-        };
-        await redis.publish('embedding:location:created', JSON.stringify(event));
-        published++;
-      }
-      console.log(`   ✅ Published ${published} embedding events\n`);
-    } catch (redisError) {
-      console.warn('   ⚠️  Redis not available, skipping embedding events\n');
-    }
-
     // Stats
     const stats = await locationsCol.aggregate([
       { $group: { _id: '$locationLevel', count: { $sum: 1 } } },
@@ -245,7 +213,6 @@ async function seedLocations() {
     console.error('❌ Failed:', error);
     process.exit(1);
   } finally {
-    if (redis) await redis.quit();
     await client.close();
     console.log('👋 Done');
   }

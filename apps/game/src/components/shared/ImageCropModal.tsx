@@ -10,9 +10,11 @@
 
 import React, { useState, useCallback, useEffect } from 'react';
 import Cropper, { Area } from 'react-easy-crop';
-import { Modal } from './Modal';
+
 import { getCroppedImage, readFileAsDataURL } from '@/lib/utils/imageProcessing';
 import styles from '@/styles/components/ImageCropModal.module.scss';
+
+import { Modal } from './Modal';
 
 interface ImageCropModalProps {
   isOpen: boolean;

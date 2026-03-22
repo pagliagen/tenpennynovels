@@ -1101,11 +1101,24 @@ export class TicketController {
         };
       });
 
-      logger.info('Ticket categories fetched from DB', { count: categories.length });
+      const seen = new Set(categories.map((c) => c.value));
+      const staticFallback = (Object.values(TicketCategory) as string[])
+        .filter((v) => !seen.has(v))
+        .map((value) => ({
+          value,
+          label: TICKET_CATEGORIES[value as TicketCategory] || value,
+          description: '',
+          department: CATEGORY_DEPARTMENT_MAPPING[value as TicketCategory] || TicketDepartment.GENERAL,
+          priority: CATEGORY_PRIORITY_MAPPING[value as TicketCategory] || TicketPriority.LOW,
+        }));
+
+      const merged = [...categories, ...staticFallback];
+
+      logger.info('Ticket categories fetched from DB', { count: merged.length });
 
       res.json(successResponse(
         {
-          categories
+          categories: merged
         },
         undefined,
         getRequestId(req)

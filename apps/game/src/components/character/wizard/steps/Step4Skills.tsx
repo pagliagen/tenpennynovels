@@ -11,11 +11,14 @@
 'use client';
 
 import { useEffect, useMemo } from 'react';
-import { useWizardStore, resolveSkillBaseValue } from '@/store/wizardStore';
+
 import { useSkills, useOccupations } from '@/hooks/useCharacterCreation';
-import { useWizardToolbar } from '../WizardSlotsContext';
-import { BudgetIndicator } from '../shared/BudgetIndicator';
+import { useWizardStore, resolveSkillBaseValue } from '@/store/wizardStore';
 import styles from '@/styles/components/character/wizard/Step4Skills.module.scss';
+
+import { BudgetIndicator } from '../shared/BudgetIndicator';
+import { useWizardToolbar } from '../WizardSlotsContext';
+
 
 /**
  * Step 4: Skills Component

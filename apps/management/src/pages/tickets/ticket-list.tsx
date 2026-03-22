@@ -6,14 +6,16 @@
 
 import { useState, useMemo } from 'react';
 import Head from 'next/head';
-import { useQuery } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { ManagementLayout } from '@/components/layout/ManagementLayout';
+import { TicketDetailSidePanel } from '@/components/tickets/TicketDetailSidePanel';
 import { ConfigurableDataTable } from '@/components/shared/ConfigurableDataTable';
+import { useAdminTicketsListQuery, adminTicketsQueryKeys } from '@/hooks/api/useAdminTicketsList';
 import { useTableConfig } from '@/hooks/useTableConfig';
 import { useTableFilters } from '@/hooks/useTableFilters';
 import { useNotificationStore } from '@/store/notificationStore';
 import { api } from '@/lib/api/client';
-import { ListResponse } from '@/types/api/common';
+import type { AdminTicketRow } from '@/types/api/AdminTicket';
 import styles from '@/styles/pages/TicketList.module.scss';
 
 interface TicketListParams {
@@ -29,6 +31,7 @@ interface TicketListParams {
 }
 
 export default function TicketList() {
+  const queryClient = useQueryClient();
   const { filters, params, setParams, handleFilterChange } = useTableFilters<TicketListParams>({
     page: 1,
     pageSize: 25,
@@ -39,20 +42,13 @@ export default function TicketList() {
   const tableConfig = useTableConfig('ticket-list');
   const addNotification = useNotificationStore(s => s.addNotification);
 
-  // Fetch tickets
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['admin', 'tickets', 'list', params],
-    queryFn: async () => {
-      const response = await api.get(`/admin/tickets${api.buildQueryString(params)}`) as ListResponse<any>;
-      return {
-        list: response.list || [],
-        pagination: response.pagination || { totalItems: 0, totalPages: 1, currentPage: 1, pageSize: params.pageSize }
-      };
-    }
+  const { data, isLoading } = useAdminTicketsListQuery({
+    variant: 'list',
+    params,
   });
 
-  const tickets = data?.list || [];
-  const pagination = data?.pagination || { totalItems: 0, totalPages: 1, currentPage: 1, pageSize: params.pageSize };
+  const tickets = data?.list ?? [];
+  const totalItems = data?.pagination?.totalItems ?? 0;
 
   const visibleColumns = useMemo(() => {
     if (!tableConfig.config) return [];
@@ -61,20 +57,38 @@ export default function TicketList() {
 
   const handlePageChange = (page: number) => setParams({ ...params, page });
   const handlePageSizeChange = (pageSize: number) => setParams({ ...params, page: 1, pageSize });
-  const handleSortChange = (sortBy?: string, sortOrder?: 'asc' | 'desc') => setParams({ ...params, sortBy, sortOrder });
+  const handleSortChange = (sortBy?: string, sortOrder?: 'asc' | 'desc') =>
+    setParams({ ...params, sortBy, sortOrder });
 
-  const handleAction = (action: string, ticket: any) => {
+  const handleAction = (action: string, ticket: AdminTicketRow) => {
     switch (action) {
       case 'view-details':
         setSelectedTicketId(ticket.id);
         break;
       default:
-        console.log('Unknown action:', action, ticket);
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Unknown action:', action, ticket);
+        }
     }
   };
 
-  const handleBulkAction = async (action: string, selectedIds: string[]) => {
+  const handleBulkAction = async (
+    action: string,
+    items: AdminTicketRow[],
+    allPagesSelected?: boolean
+  ) => {
     if (action === 'bulk-close') {
+      if (allPagesSelected) {
+        addNotification({
+          type: 'error',
+          message: 'Seleziona i ticket nella pagina corrente: la chiusura massiva su tutte le pagine non è supportata qui.',
+        });
+        return;
+      }
+
+      const selectedIds = items.map((row) => row.id).filter(Boolean);
+      if (!selectedIds.length) return;
+
       if (!confirm(`Chiudere ${selectedIds.length} ticket?`)) return;
 
       try {
@@ -89,9 +103,8 @@ export default function TicketList() {
           message: `${selectedIds.length} ticket chiusi con successo`,
         });
 
-        // Refetch data
-        // queryClient.invalidateQueries(['admin', 'tickets', 'list']);
-      } catch (error) {
+        await queryClient.invalidateQueries({ queryKey: adminTicketsQueryKeys.all });
+      } catch {
         addNotification({
           type: 'error',
           message: 'Errore durante la chiusura dei ticket',
@@ -99,8 +112,6 @@ export default function TicketList() {
       }
     }
   };
-
-  const totalItems = data?.pagination?.totalItems ?? 0;
 
   return (
     <ManagementLayout>
@@ -114,7 +125,7 @@ export default function TicketList() {
           <p className={styles.subtitle}>Lista completa ticket di supporto</p>
         </div>
 
-        <ConfigurableDataTable<any>
+        <ConfigurableDataTable<AdminTicketRow>
           tableName="ticket-list"
           data={tickets}
           loading={isLoading || tableConfig.loading}
@@ -140,21 +151,10 @@ export default function TicketList() {
           } : undefined}
         />
 
-        {/* TODO: Add SidePanel for ticket detail */}
-        {selectedTicketId && (
-          <div className={styles.sidePanelOverlay} onClick={() => setSelectedTicketId(null)}>
-            <div className={styles.sidePanel} onClick={(e) => e.stopPropagation()}>
-              <div className={styles.sidePanelHeader}>
-                <h2>Ticket #{selectedTicketId}</h2>
-                <button onClick={() => setSelectedTicketId(null)}>✕</button>
-              </div>
-              <div className={styles.sidePanelContent}>
-                <p>TODO: Implement TicketDetailContent component</p>
-                <p>Ticket ID: {selectedTicketId}</p>
-              </div>
-            </div>
-          </div>
-        )}
+        <TicketDetailSidePanel
+          selectedTicketId={selectedTicketId}
+          onClose={() => setSelectedTicketId(null)}
+        />
       </div>
     </ManagementLayout>
   );

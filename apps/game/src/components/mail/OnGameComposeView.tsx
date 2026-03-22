@@ -11,9 +11,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+
 import { useMessageTypes, useWallet, useSendOnGameMessage } from '@/hooks/useOnGameMail';
-import { RecipientSelector } from './RecipientSelector';
 import styles from '@/styles/components/mail/OnGameMail.module.scss';
+
+import { RecipientSelector } from './RecipientSelector';
 
 interface OnGameComposeViewProps {
   initialRecipientId?: string;

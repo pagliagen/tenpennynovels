@@ -9,10 +9,12 @@
 'use client';
 
 import { useState } from 'react';
+
 import { useUserTickets } from '@/hooks/useTickets';
+
+import { CreateTicketModal } from './CreateTicketModal';
 import { TicketStatusBadge } from './TicketStatusBadge';
 import { TicketThreadView } from './TicketThreadView';
-import { CreateTicketModal } from './CreateTicketModal';
 
 export function TicketPanelContent() {
   const [statusFilter, setStatusFilter] = useState<string | undefined>(undefined);

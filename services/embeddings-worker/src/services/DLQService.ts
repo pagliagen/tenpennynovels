@@ -4,7 +4,7 @@
  */
 
 import mongoose from 'mongoose';
-import { FailedJob, DLQStats } from '../types/dlq';
+import { FailedJob, DLQStats, FailedJobEventType } from '../types/dlq';
 import { logger } from '../utils/logger';
 
 const FailedJobSchema = new mongoose.Schema<FailedJob>({
@@ -12,7 +12,7 @@ const FailedJobSchema = new mongoose.Schema<FailedJob>({
   eventType: {
     type: String,
     required: true,
-    enum: ['document', 'document_chunk', 'chat']
+    enum: ['document', 'document_chunk', 'chat', 'forum_post', 'delete']
   },
   eventData: { type: mongoose.Schema.Types.Mixed, required: true },
   error: { type: String, required: true },
@@ -34,7 +34,7 @@ export class DLQService {
    */
   static async addFailedJob(
     jobId: string,
-    eventType: 'document' | 'document_chunk' | 'chat' | 'forum_post',
+    eventType: FailedJobEventType,
     eventData: any,
     error: string,
     attempts: number,

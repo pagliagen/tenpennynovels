@@ -6,6 +6,7 @@
  */
 
 import { useEffect } from 'react';
+
 import styles from '@/styles/components/chat/ConfirmDeleteDialog.module.scss';
 
 interface ConfirmDeleteDialogProps {

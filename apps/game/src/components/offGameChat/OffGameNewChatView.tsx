@@ -10,11 +10,12 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useCreateOffGameChat } from '@/hooks/useOffGameChat';
 import { useQueryClient } from '@tanstack/react-query';
-import { queryKeys } from '@/lib/api/queryClient';
+import { useState, useEffect } from 'react';
+
 import { RecipientSelector } from '@/components/mail/RecipientSelector';
+import { useCreateOffGameChat } from '@/hooks/useOffGameChat';
+import { queryKeys } from '@/lib/api/queryClient';
 import styles from '@/styles/components/offGameChat/OffGameChat.module.scss';
 
 interface OffGameNewChatViewProps {

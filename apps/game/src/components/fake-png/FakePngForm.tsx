@@ -1,9 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { ImageUploader } from '../shared/ImageUploader';
-import type { FakePng } from '@/types/fakePng';
+
 import styles from '@/styles/components/fake-png/FakePngManager.module.scss';
+import type { FakePng } from '@/types/fakePng';
+
+import { ImageUploader } from '../shared/ImageUploader';
 
 interface FakePngFormProps {
   characterId: string;

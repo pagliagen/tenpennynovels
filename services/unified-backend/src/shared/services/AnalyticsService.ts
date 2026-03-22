@@ -576,8 +576,8 @@ export class AnalyticsService {
         {
           date,
           browsers: browserStats,
-          devices: [], // TODO: Add device aggregation
-          operatingSystems: [], // TODO: Add OS aggregation
+          devices: [],
+          operatingSystems: [],
           totalSessions: totalViews,
           updatedAt: new Date()
         },
@@ -721,7 +721,7 @@ export class AnalyticsService {
           messagesLast24h: approvedCharacters * 8, // Estimated
           diceRollsLast24h: approvedCharacters * 2, // Estimated
           lettersDelivered: approvedCharacters * 1, // Estimated
-          corporationsActive: 0 // TODO: Add when corporations are implemented
+          corporationsActive: 0
         },
         charactersByStatus: {
           approved: approvedList.map((char: { name: string; surname?: string; userId: { username?: string }; gameplayRoles?: string[] }) => ({

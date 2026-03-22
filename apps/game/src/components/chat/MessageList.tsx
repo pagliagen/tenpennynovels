@@ -11,10 +11,12 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import styles from '@/styles/components/chat/MessageList.module.scss';
-import { MessageItem } from './MessageItem';
-import type { ChatMessage } from '@/types/chat';
+
 import { useChatCurrentTag } from '@/store/chatStore';
+import styles from '@/styles/components/chat/MessageList.module.scss';
+import type { ChatMessage } from '@/types/chat';
+
+import { MessageItem } from './MessageItem';
 
 /**
  * Message List Props
@@ -66,9 +68,8 @@ function isMessageVisible(
         isMaster
       );
 
-    case 'skill_check':
     case 'stat_check':
-      // Only sender + master can see skill/stat checks
+      // Only sender + master can see stat checks
       return message.characterId === currentCharacterId || isMaster;
 
     default:

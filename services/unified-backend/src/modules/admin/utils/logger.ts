@@ -1,7 +1,5 @@
 /**
  * Management Backend Logger
- * TODO: Migrate to shared logger factory when workspace imports are configured
- * Currently using local implementation for compatibility
  */
 
 import winston from 'winston';

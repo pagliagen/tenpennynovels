@@ -8,13 +8,14 @@
  * @since 2.0.0
  */
 
-import { api } from './client';
 import type {
   ChatPreview,
   ChatDetail,
   CreateChatPayload,
   SendMessagePayload,
 } from '@/types/offGameChat';
+
+import { api } from './client';
 
 export const offGameChatApi = {
   /**

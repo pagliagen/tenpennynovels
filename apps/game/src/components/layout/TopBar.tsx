@@ -20,6 +20,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+
 import styles from '@/styles/components/TopBar.module.scss';
 
 /**

@@ -10,8 +10,8 @@
 
 'use client';
 
-import type { ChatMessage } from '@/types/offGameChat';
 import styles from '@/styles/components/offGameChat/OffGameChat.module.scss';
+import type { ChatMessage } from '@/types/offGameChat';
 
 interface OffGameMessageItemProps {
   message: ChatMessage;

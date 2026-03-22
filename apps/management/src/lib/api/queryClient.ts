@@ -12,7 +12,7 @@ const queryClientConfig: QueryClientConfig = {
   defaultOptions: {
     queries: {
       staleTime: QUERY_CONFIG.STALE_TIME,
-      gcTime: QUERY_CONFIG.CACHE_TIME, // formerly cacheTime
+      gcTime: QUERY_CONFIG.GC_TIME,
       retry: QUERY_CONFIG.RETRY,
       refetchOnWindowFocus: QUERY_CONFIG.REFETCH_ON_WINDOW_FOCUS,
       refetchOnReconnect: true,

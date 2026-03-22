@@ -446,9 +446,6 @@ export class EconomyController {
       item.currentStock = Math.min(item.currentStock + quantity, item.maxStock);
       await item.save();
 
-      // TODO: Publish Redis event
-      // redis.publish('economy:stock_restocked', { shopId, itemId, quantityAdded: quantity, corporationId: corporation.id, costPaid: restockCost });
-
       logger.info('Shop restocked', {
         shopId,
         itemId,

@@ -133,11 +133,12 @@ router.get('/me',
       return;
     }
 
-    const effectivePermissions = getUserPermissions(user.userRoles, characterRoles, characterPermissions);
-    const visibleBadges = getVisibleDashboardBadges(user.userRoles, characterRoles, characterPermissions, selectedCharacter?.isGestore || false);
-    const visibleMenu = getVisibleMenuStructure(user.userRoles, characterRoles, characterPermissions, selectedCharacter?.isGestore || false);
+    const isGestoreChar = selectedCharacter?.isGestore || false;
+    const effectivePermissions = getUserPermissions(user.userRoles, characterRoles, characterPermissions, isGestoreChar);
+    const visibleBadges = getVisibleDashboardBadges(user.userRoles, characterRoles, characterPermissions, isGestoreChar);
+    const visibleMenu = getVisibleMenuStructure(user.userRoles, characterRoles, characterPermissions, isGestoreChar);
 
-    debugPermissions(user.userRoles, characterRoles, characterPermissions);
+    debugPermissions(user.userRoles, characterRoles, characterPermissions, isGestoreChar);
 
     // Create safe user object
     const safeUser = {

@@ -16,14 +16,15 @@
 
 'use client';
 
-import { useState } from 'react';
 import Image from 'next/image';
-import styles from '@/styles/components/locations/map.module.scss';
-import type { AccessibleLocation } from '@/types/location';
+import { useState } from 'react';
+
 import {
   getDistrictCoordinates,
   hasMapCoordinates,
 } from '@/config/mapCoordinates';
+import styles from '@/styles/components/locations/map.module.scss';
+import type { AccessibleLocation } from '@/types/location';
 
 /**
  * Locations Map Props

@@ -9,6 +9,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { classifySessionCheckError } from '@/lib/auth/sessionError';
 import { useAuthStore } from '@/store/authStore';
 import { api } from '@/lib/api/client';
 
@@ -124,15 +125,15 @@ export function useAuth(): UseAuthReturn {
         setError('Sessione non valida o scaduta');
         setErrorType('session');
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('[useAuth] Session check failed:', err);
       setUser(null);
 
-      // Determine error type based on error details
-      if (err?.message?.includes('Network') || err?.code === 'ECONNREFUSED' || err?.code === 'ERR_NETWORK') {
+      const kind = classifySessionCheckError(err);
+      if (kind === 'network') {
         setError('Impossibile connettersi al server di autenticazione');
         setErrorType('network');
-      } else if (err?.response?.status >= 500) {
+      } else if (kind === 'server') {
         setError('Il server sta riscontrando problemi tecnici');
         setErrorType('server');
       } else {

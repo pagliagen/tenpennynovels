@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useCallback, useState, useMemo } from 'react';
 import { useRouter } from 'next/router';
+import { useEffect, useCallback, useState, useMemo } from 'react';
+
 import { usePresenceStore } from '@/store/presenceStore';
 import { useWindowManagerStore } from '@/store/windowManagerStore';
 import styles from '@/styles/components/presence/PresenceModal.module.scss';

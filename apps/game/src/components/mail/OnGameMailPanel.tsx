@@ -12,11 +12,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+
 import { useOnGameMailWebSocket } from '@/hooks/useOnGameMail';
+import styles from '@/styles/components/mail/OnGameMail.module.scss';
+
+import { OnGameComposeView } from './OnGameComposeView';
 import { OnGameInboxView } from './OnGameInboxView';
 import { OnGameThreadView } from './OnGameThreadView';
-import { OnGameComposeView } from './OnGameComposeView';
-import styles from '@/styles/components/mail/OnGameMail.module.scss';
 
 /**
  * OnGame Mail Panel Props

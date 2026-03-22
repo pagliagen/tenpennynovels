@@ -8,9 +8,10 @@
  * - Focus trap
  */
 
+import classNames from 'classnames';
 import React, { useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import classNames from 'classnames';
+
 import styles from '@/styles/components/Modal.module.scss';
 
 export interface ModalProps {

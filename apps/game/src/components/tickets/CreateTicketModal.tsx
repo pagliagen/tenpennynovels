@@ -9,6 +9,7 @@
 'use client';
 
 import { useState } from 'react';
+
 import { useTicketCategories, useCreateTicket } from '@/hooks/useTickets';
 
 interface CreateTicketModalProps {

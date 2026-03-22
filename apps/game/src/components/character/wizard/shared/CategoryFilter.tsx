@@ -10,10 +10,13 @@
 
 'use client';
 
-import { useRef, useEffect, useState } from 'react';
 import Image from 'next/image';
-import { CATEGORY_LABELS } from './OccupationIconMap';
+import { useRef, useEffect, useState } from 'react';
+
 import styles from '@/styles/components/character/wizard/CategoryFilter.module.scss';
+
+import { CATEGORY_LABELS } from './OccupationIconMap';
+
 
 function FilterIcon() {
   return (

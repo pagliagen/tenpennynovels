@@ -11,12 +11,14 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+
 import { useOffGameChat, useSendOffGameMessage, useOffGameChatWebSocket } from '@/hooks/useOffGameChat';
 import { useAuthStore } from '@/store/authStore';
+import styles from '@/styles/components/offGameChat/OffGameChat.module.scss';
+
+import { MessageInput } from './MessageInput';
 import { OffGameMessageItem } from './OffGameMessageItem';
 import { TypingIndicator } from './TypingIndicator';
-import { MessageInput } from './MessageInput';
-import styles from '@/styles/components/offGameChat/OffGameChat.module.scss';
 
 interface OffGameChatThreadViewProps {
   chatId: string;

@@ -13,9 +13,10 @@
 'use client';
 
 import { useEffect, useRef, useState, ReactNode } from 'react';
-import { WindowState } from '@/types/window-manager';
+
 import { useWindowManagerStore } from '@/store/windowManagerStore';
 import styles from '@/styles/components/windows/Window.module.scss';
+import { WindowState } from '@/types/window-manager';
 
 /**
  * Window Props

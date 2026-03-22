@@ -10,8 +10,9 @@
 
 'use client';
 
-import { CharacterSheetTab } from '../windows/contents/CharacterSheetContent';
 import styles from '@/styles/components/character/CharacterSheetContent.module.scss';
+
+import { CharacterSheetTab } from '../windows/contents/CharacterSheetPGPrincipale';
 
 /**
  * Tab Configuration
@@ -33,8 +34,6 @@ const TABS: TabConfig[] = [
   { key: 'diario', label: 'Diario', icon: '📔' },
   { key: 'noteMaster', label: 'Note Master', icon: '🎭' },
   { key: 'inventario', label: 'Inventario', icon: '🎒' },
-  { key: 'corporations', label: 'Corporations', icon: '🏢' },
-  { key: 'alloggio', label: 'Alloggio', icon: '🏠' },
 ];
 
 /**

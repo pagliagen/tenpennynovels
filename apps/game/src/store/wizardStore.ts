@@ -23,6 +23,11 @@
 
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
+
+import type { CharacterCreationConfig } from '@/lib/api/character';
+import { characterApi } from '@/lib/api/character';
+import type { DamageBonusEntry } from '@/lib/api/gameConfig';
+import { gameConfigApi } from '@/lib/api/gameConfig';
 import type {
   WizardData,
   WizardBasicInfo,
@@ -35,10 +40,6 @@ import type {
   ValidationResult,
   CharacterCreatePayload,
 } from '@/types/wizard';
-import type { DamageBonusEntry } from '@/lib/api/gameConfig';
-import { gameConfigApi } from '@/lib/api/gameConfig';
-import type { CharacterCreationConfig } from '@/lib/api/character';
-import { characterApi } from '@/lib/api/character';
 
 const FORMULA_STAT_MAP: Record<string, string> = {
   str: 'strength', dex: 'dexterity', int: 'intelligence',

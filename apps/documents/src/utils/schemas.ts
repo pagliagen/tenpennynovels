@@ -91,12 +91,7 @@ export const webApplicationSchema = {
   },
   "genre": ["Horror", "Mystery", "Victorian Era", "Role-Playing Game"],
   "gamePlatform": "Web",
-  "inLanguage": "it",
-  "aggregateRating": {
-    "@type": "AggregateRating",
-    "ratingValue": "4.5",
-    "ratingCount": "47"
-  }
+  "inLanguage": "it"
 };
 
 /**

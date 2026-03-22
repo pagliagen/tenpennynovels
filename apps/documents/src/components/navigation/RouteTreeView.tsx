@@ -80,18 +80,18 @@ export function RouteTreeView({ routes, type, currentPath, depth }: RouteTreeVie
         style={{ '--depth': currentDepth } as React.CSSProperties}
       >
         <div className={styles.routeRow}>
-          {/* Expand button (if has children) */}
+          {/* Pulsante espandi (se ci sono figli) */}
           {hasChildren && (
             <button
               className={styles.expandButton}
               onClick={(e) => toggleRoute(route._id, e)}
-              aria-label={isExpanded ? 'Collapse' : 'Expand'}
+              aria-label={isExpanded ? 'Comprimi' : 'Espandi'}
             >
               {isExpanded ? '▼' : '▶'}
             </button>
           )}
 
-          {/* Route link */}
+          {/* Link alla voce */}
           <Link
             href={routePath}
             className={`${styles.routeLink} ${isActive ? styles.active : ''}`}
@@ -101,7 +101,7 @@ export function RouteTreeView({ routes, type, currentPath, depth }: RouteTreeVie
           </Link>
         </div>
 
-        {/* Recursive children */}
+        {/* Figli ricorsivi */}
         {hasChildren && isExpanded && (
           <div className={styles.routeChildren}>
             {route.children.map((child: any) => renderRoute(child, currentDepth + 1))}

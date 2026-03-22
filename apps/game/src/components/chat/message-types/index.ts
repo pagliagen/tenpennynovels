@@ -12,8 +12,6 @@ export { WhisperMessage } from './WhisperMessage';
 export { OOCMessage } from './OOCMessage';
 export { MasterMessage } from './MasterMessage';
 export { DiceRollMessage } from './DiceRollMessage';
-export { SkillCheckMessage } from './SkillCheckMessage';
 export { StatCheckMessage } from './StatCheckMessage';
 export { ItemUseMessage } from './ItemUseMessage';
 export { ModerationMessage } from './ModerationMessage';
-export { DefenderNotification } from './DefenderNotification';

@@ -1,13 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { useForumStore } from '@/store/forumStore';
-import { useAuthStore } from '@/store/authStore';
-import { useUIStore } from '@/store/uiStore';
+
 import { useUpdatePost, useDeletePost } from '@/hooks/useForumPosts';
-import { ReactionBar } from '../ui/ReactionBar';
-import type { ForumPost } from '@/types/forum';
+import { useAuthStore } from '@/store/authStore';
+import { useForumStore } from '@/store/forumStore';
+import { useUIStore } from '@/store/uiStore';
 import styles from '@/styles/components/forum/PostCard.module.scss';
+import type { ForumPost } from '@/types/forum';
+
+import { ReactionBar } from '../ui/ReactionBar';
 
 interface PostCardProps {
   post: ForumPost;

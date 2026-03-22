@@ -12,24 +12,21 @@
  * - Victorian styling
  *
  * **Cookie Usage**:
- * This application uses only essential cookies for:
- * - Authentication sessions
- * - Game state management
- *
- * No tracking or advertising cookies are used.
+ * - Cookie essenziali per autenticazione e sessione di gioco.
+ * - Con consenso: Google Analytics (solo se `NEXT_PUBLIC_GA_ID` è configurato in build).
  *
  * @module components/CookieBanner
  */
 
 import React, { useState, useEffect } from 'react';
 import { ClientOnly } from './ClientOnly';
+import {
+  COOKIE_CONSENT_STORAGE_KEY,
+  COOKIE_CONSENT_ACCEPTED,
+  COOKIE_CONSENT_EVENT,
+} from '@/lib/cookieConsent';
 
-/**
- * LocalStorage key for cookie consent
- *
- * @constant
- */
-const COOKIE_CONSENT_KEY = 'tpn_cookie_consent';
+const hasAnalyticsInBuild = Boolean(process.env.NEXT_PUBLIC_GA_ID);
 
 /**
  * Cookie Banner Content Component
@@ -50,7 +47,7 @@ const CookieBannerContent: React.FC = () => {
    */
   useEffect(() => {
     try {
-      const consent = localStorage.getItem(COOKIE_CONSENT_KEY);
+      const consent = localStorage.getItem(COOKIE_CONSENT_STORAGE_KEY);
       if (!consent) {
         setIsVisible(true);
       }
@@ -69,12 +66,12 @@ const CookieBannerContent: React.FC = () => {
    */
   const handleAccept = () => {
     try {
-      localStorage.setItem(COOKIE_CONSENT_KEY, 'accepted');
+      localStorage.setItem(COOKIE_CONSENT_STORAGE_KEY, COOKIE_CONSENT_ACCEPTED);
     } catch (error) {
       console.warn('[CookieBanner] Failed to save consent:', error);
     }
 
-    // Hide banner regardless of save success
+    window.dispatchEvent(new Event(COOKIE_CONSENT_EVENT));
     setIsVisible(false);
   };
 
@@ -91,9 +88,17 @@ const CookieBannerContent: React.FC = () => {
         <div className="cookie-banner__text">
           <h4 className="cookie-banner__title">🍪 Cookie & Privacy</h4>
           <p className="cookie-banner__description">
-            Questo sito utilizza <strong>cookie essenziali</strong> per il funzionamento
-            dell'autenticazione e della gestione delle sessioni di gioco.
-            Non utilizziamo cookie di tracciamento pubblicitario.
+            Questo sito utilizza <strong>cookie essenziali</strong> per l&apos;autenticazione e le
+            sessioni di gioco.
+            {hasAnalyticsInBuild ? (
+              <>
+                {' '}
+                Se clicchi &quot;Accetto&quot;, attiviamo anche <strong>Google Analytics</strong> in
+                forma aggregata per capire come viene usato il sito (nessuna pubblicità).
+              </>
+            ) : (
+              <> Non utilizziamo cookie pubblicitari.</>
+            )}
           </p>
         </div>
 

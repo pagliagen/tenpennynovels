@@ -21,12 +21,13 @@
  * @since 2.0.0
  */
 
-import { useEffect, useRef, useCallback } from 'react';
-import { useRouter } from 'next/router';
 import Head from 'next/head';
-import { useAuthStore } from '@/store/authStore';
+import { useRouter } from 'next/router';
+import { useEffect, useRef, useCallback } from 'react';
+
 import { WizardContainer } from '@/components/character/wizard/WizardContainer';
 import { GameLayout } from '@/components/layout/GameLayout';
+import { useAuthStore } from '@/store/authStore';
 
 /**
  * Character Wizard Page Component

@@ -13,15 +13,17 @@
 
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/router';
 import Head from 'next/head';
+import { useRouter } from 'next/router';
+import { useState } from 'react';
+
 import { GameLayout } from '@/components/layout/GameLayout';
-import { LocationsMap } from '@/components/locations/LocationsMap';
-import { LocationsList } from '@/components/locations/LocationsList';
 import { LocationsErrorBoundary } from '@/components/locations/LocationsErrorBoundary';
+import { LocationsList } from '@/components/locations/LocationsList';
+import { LocationsMap } from '@/components/locations/LocationsMap';
 import { ViewModeSelector, ViewMode } from '@/components/locations/ViewModeSelector';
 import { useLocations } from '@/hooks/useLocations';
+import { useGameStateStore } from '@/store/gameStateStore';
 import styles from '@/styles/pages/locations.module.scss';
 
 /**
@@ -69,9 +71,25 @@ export default function LocationsPage(): JSX.Element {
    * Handle London label click
    * Returns character to London (leaves current location)
    */
-  const handleLondonClick = () => {
-    // TODO: Implement leave location API call if character is in a location
-    console.log('Return to London clicked');
+  const handleLondonClick = async () => {
+    const currentLocationId = useGameStateStore.getState().currentLocationId;
+
+    // If not in a location, already in London - navigate to home
+    if (!currentLocationId) {
+      router.push('/game');
+      return;
+    }
+
+    // Leave current location and return to London
+    try {
+      await useGameStateStore.getState().leaveLocation();
+      console.log('[LocationsPage] ✅ Returned to London');
+      router.push('/game'); // Redirect to London home
+    } catch (error) {
+      console.error('[LocationsPage] ❌ Leave location failed:', error);
+      // Still navigate (optimistic UX - state already cleared)
+      router.push('/game');
+    }
   };
 
   // Loading state
@@ -160,16 +178,6 @@ export default function LocationsPage(): JSX.Element {
             {/* Textual/List View */}
             {viewMode === 'testuale' && (
               <LocationsList locationTree={locationTree} />
-            )}
-
-            {/* Apartments View - TODO: Future */}
-            {viewMode === 'appartamenti' && (
-              <div className={styles.placeholderContainer}>
-                <h2 className={styles.placeholderTitle}>Appartamenti</h2>
-                <p className={styles.placeholderMessage}>
-                  Gestione appartamenti privati (coming soon)
-                </p>
-              </div>
             )}
           </div>
         </LocationsErrorBoundary>

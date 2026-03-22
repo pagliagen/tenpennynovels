@@ -1,24 +1,27 @@
 'use client';
 
-import { useEffect, useRef, useMemo, useState, useCallback } from 'react';
 import { useRouter } from 'next/router';
-import { useWizardStore } from '@/store/wizardStore';
+import { useEffect, useRef, useMemo, useState, useCallback } from 'react';
+
 import { useCharacterForWizard, useCreateCharacter, useUpdateCharacter } from '@/hooks/useCharacter';
 import { characterApi } from '@/lib/api/character';
 import { api } from '@/lib/api/client';
 import { useAuthStore } from '@/store/authStore';
-import { validateAllSteps } from './validation/wizardValidation';
-import { WizardHeader } from './WizardHeader';
-import { WizardFooter } from './WizardFooter';
-import { WizardStepToolbar } from './WizardStepToolbar';
-import { WizardSlotsProvider, useWizardSlots } from './WizardSlotsContext';
+import { useWizardStore } from '@/store/wizardStore';
+import styles from '@/styles/components/character/wizard/WizardContainer.module.scss';
+import type { AuthSessionApiResponse } from '@/types/authSession';
+
 import { Step1BasicInfo } from './steps/Step1BasicInfo';
 import { Step2Occupation } from './steps/Step2Occupation';
 import { Step3Stats } from './steps/Step3Stats';
 import { Step4Skills } from './steps/Step4Skills';
 import { Step5Background } from './steps/Step5Background';
 import { Step6Review } from './steps/Step6Review';
-import styles from '@/styles/components/character/wizard/WizardContainer.module.scss';
+import { validateAllSteps } from './validation/wizardValidation';
+import { WizardFooter } from './WizardFooter';
+import { WizardHeader } from './WizardHeader';
+import { WizardSlotsProvider, useWizardSlots } from './WizardSlotsContext';
+import { WizardStepToolbar } from './WizardStepToolbar';
 
 type SubmitFeedback = {
   type: 'success' | 'error' | 'validation';
@@ -65,7 +68,8 @@ function useStoreHydrated(): boolean {
 function WizardContainerInner({ characterId, onSubmittingChange }: WizardContainerProps): JSX.Element {
   const router = useRouter();
   const { toolbarContent, footerActionsContent } = useWizardSlots();
-  const { setSelectedCharacter, setGamePermissions } = useAuthStore();
+  const { setSelectedCharacter, setGamePermissions, setAdminPanelAccessFromSession, setCharacterBan } =
+    useAuthStore();
   const {
     currentStep,
     setCurrentStep,
@@ -232,14 +236,18 @@ function WizardContainerInner({ characterId, onSubmittingChange }: WizardContain
 
       // Refresh session to update permissions (wizard access removed for pending characters)
       try {
-        const session = await api.get<any>('/auth/session');
+        const session = await api.get<AuthSessionApiResponse>('/auth/session');
         if (session.success && session.data?.valid) {
+          if (session.data.user) {
+            setAdminPanelAccessFromSession(!!session.data.user.canAccessAdminPanel);
+          }
           if (session.data.character) {
             setSelectedCharacter(session.data.character);
           }
           if (session.data.gamePermissions) {
             setGamePermissions(session.data.gamePermissions);
           }
+          setCharacterBan(session.data.ban ?? null);
         }
       } catch {
         // Non-critical: permissions will refresh on next page load

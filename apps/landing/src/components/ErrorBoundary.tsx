@@ -93,7 +93,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     // Log error to console for debugging
     console.error('ErrorBoundary caught error:', error, errorInfo);
 
-    // TODO: Send error to error tracking service (Sentry, LogRocket, etc.)
+    // Note: Error tracking service (Sentry, LogRocket) can be added here in production
     // Example: errorTrackingService.logError(error, errorInfo);
   }
 

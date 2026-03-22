@@ -232,6 +232,18 @@ class InterceptorManager {
  */
 export const interceptorManager = new InterceptorManager();
 
+/** Paths where a 401 should not force redirect to login (token flows, auth forms). */
+const AUTH_FLOW_EXACT_PATHS = ['/', '/register', '/forgot-password'] as const;
+
+const AUTH_FLOW_PREFIXES = ['/reset-password', '/delete-account'] as const;
+
+function isAuthFlowPath(pathname: string): boolean {
+  if (AUTH_FLOW_EXACT_PATHS.includes(pathname as (typeof AUTH_FLOW_EXACT_PATHS)[number])) {
+    return true;
+  }
+  return AUTH_FLOW_PREFIXES.some(prefix => pathname === prefix || pathname.startsWith(`${prefix}/`));
+}
+
 /**
  * Default Request Interceptor - Development Logging
  *
@@ -300,12 +312,9 @@ interceptorManager.useResponseInterceptor(async (response) => {
   // Handle 401 - Unauthorized (session expired)
   if (response.status === 401) {
     if (typeof window !== 'undefined') {
-      // Don't redirect on login/register pages - let local error handlers work
-      const authPages = ['/', '/register', '/forgot-password', '/reset-password'];
       const currentPath = window.location.pathname;
 
-      if (!authPages.includes(currentPath)) {
-        // Only redirect on protected pages (expired session)
+      if (!isAuthFlowPath(currentPath)) {
         window.location.href = '/';
       }
     }

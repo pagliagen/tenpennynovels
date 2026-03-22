@@ -16,7 +16,6 @@
  * @since 2.0.0
  */
 
-import { api } from './client';
 import type {
   ChatMessage,
   SendMessageRequest,
@@ -24,6 +23,8 @@ import type {
   MessageHistoryResponse,
   SendMessageResponse,
 } from '@/types/chat';
+
+import { api } from './client';
 
 /**
  * Location Chats API Service
@@ -373,8 +374,3 @@ export const locationChatsApi = {
     return response.location._id;
   },
 };
-
-/**
- * Re-export for backward compatibility
- */
-export default locationChatsApi;

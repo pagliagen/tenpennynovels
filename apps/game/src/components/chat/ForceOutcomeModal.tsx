@@ -10,6 +10,7 @@
 'use client';
 
 import { useState } from 'react';
+
 import { locationChatsApi } from '@/lib/api/locationChats';
 import styles from '@/styles/components/chat/ForceOutcomeModal.module.scss';
 

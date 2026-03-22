@@ -3,6 +3,7 @@ import mongoose, { Schema, model, Document } from 'mongoose';
 import { calculateAllDerivedStats, getCharacterCreationConfig, type CharacterStats, type DerivedStats } from '../../shared/services/CharacterCreationConfigService';
 import { escapeRegex } from '@shared/utils/validation';
 import { softDeletePlugin, SoftDeleteMethods } from '../plugins/softDeletePlugin';
+import { NotificationService } from '../../shared/services/NotificationService';
 
 // Granular skill tracking interface for occupation bonuses
 export interface SkillBreakdown {
@@ -175,11 +176,22 @@ export interface ICharacter extends Document, SoftDeleteMethods {
 
   // Permission system: gameplayRoles drives both game and admin (admin = player→personaggio, master→master, mod→moderatore)
   playerStatus: 'draft' | 'pending' | 'approved';
+  /** Priorità in coda approvazione (solo significativo se playerStatus === 'pending') */
+  reviewPriority?: 'high' | 'normal' | 'low';
   canAccessAdminPanel: boolean; // Gate for admin panel access
   isGestore: boolean; // Bypass all permissions
   gameplayRoles: ('player' | 'master' | 'moderatore')[];
   characterPermissions: string[]; // Game permission overrides (e.g. '-game:chat:send' to deny)
-  adminPermissions: string[]; // Admin permission overrides (same format, see admin-permissions.json)
+  adminPermissions: string[]; // Override permessi management (formato @config/permissions: section.action, deny con -prefix)
+
+  /** Moderazione: ban sul singolo PG (full / chat_only / forum_only) */
+  isBanned?: boolean;
+  banScope?: 'full' | 'chat_only' | 'forum_only';
+  banReason?: string;
+  bannedAt?: Date;
+  bannedUntil?: Date | null;
+  bannedBy?: Schema.Types.ObjectId;
+  bannedByName?: string;
 
   // Bot AI integration
   bot_id?: string; // If present, this Character is a bot (references bot in botai database)
@@ -412,7 +424,12 @@ const CharacterSchema = new Schema<ICharacter>({
     enum: ['draft', 'pending', 'approved'],
     default: 'draft'
   },
-  
+  reviewPriority: {
+    type: String,
+    enum: ['high', 'normal', 'low'],
+    default: 'normal'
+  },
+
   // Call of Cthulhu Stats - Statistiche base
   stats: {
     strength: { type: Number, min: 1, max: 100, default: 50 },      // FOR
@@ -679,6 +696,32 @@ const CharacterSchema = new Schema<ICharacter>({
     trim: true
   }],
 
+  isBanned: {
+    type: Boolean,
+    default: false
+  },
+  banScope: {
+    type: String,
+    enum: ['full', 'chat_only', 'forum_only'],
+    required: false
+  },
+  banReason: {
+    type: String,
+    maxlength: 2000,
+    trim: true
+  },
+  bannedAt: { type: Date },
+  bannedUntil: { type: Date, default: null },
+  bannedBy: {
+    type: Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  bannedByName: {
+    type: String,
+    maxlength: 200,
+    trim: true
+  },
+
   // Bot AI integration
   bot_id: {
     type: String,
@@ -751,6 +794,7 @@ CharacterSchema.index({ playerStatus: 1, submittedAt: 1 });
 CharacterSchema.index({ occupation: 1 });
 CharacterSchema.index({ currentLocation: 1 });
 CharacterSchema.index({ prestavolto: 1 }); // For face claim queries (NOT unique - duplicates allowed)
+CharacterSchema.index({ userId: 1, isBanned: 1 });
 
 // Presence query optimization
 CharacterSchema.index({ lastActive: -1 }); // DESC per sort recenti first
@@ -906,7 +950,7 @@ CharacterSchema.pre('save', async function(this: ICharacter) {
       });
 
       if (!existingTicket) {
-        await Ticket.create({
+        const ticket = await Ticket.create({
           title: `Richiesta Approvazione: ${this.name}`,
           category: 'character_approval',
           priority: 'medium', // From category config
@@ -923,8 +967,23 @@ CharacterSchema.pre('save', async function(this: ICharacter) {
           lastActivityAt: new Date()
         });
 
-        // TODO: Notify staff via NotificationService + WebSocket
-        // This will be handled by TicketController WebSocket events
+        // ✅ Notify staff via WebSocket
+        try {
+          await NotificationService.notifyNewTicket({
+            _id: ticket._id,
+            ticketNumber: ticket._id.toString().slice(-6).toUpperCase(),
+            category: ticket.category,
+            priority: 'normal',
+            department: 'character_approval',
+            createdBy: {
+              characterId: this._id,
+              characterName: this.name
+            }
+          });
+        } catch (notifyError) {
+          console.error('Failed to send character approval notification:', notifyError);
+          // Non-blocking: notification failure shouldn't prevent submission
+        }
       }
     } catch (error) {
       // Log error but don't fail character submission

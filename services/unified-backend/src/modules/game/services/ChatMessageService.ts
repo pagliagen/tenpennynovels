@@ -6,7 +6,6 @@
  *
  * Key Responsibilities:
  * - getMessages(): Fetch + enrich messages for GET endpoints
- * - createMessage(): Create + enrich for POST endpoints
  * - Uses MessageTransformer for type-specific enrichment
  * - Uses MessageContext to avoid N+1 queries
  *
@@ -14,7 +13,7 @@
  * @since 2.2.0
  */
 
-import type { EnrichedChatMessage, GetMessagesParams, CreateMessageParams } from '../transformers/types';
+import type { EnrichedChatMessage, GetMessagesParams } from '../transformers/types';
 import { MessageTransformer } from '../transformers/MessageTransformer';
 import { MessageContext } from '../transformers/MessageContext';
 import { Chat, Character, Location, GamingSession } from '@database/models';
@@ -38,24 +37,30 @@ export class ChatMessageService {
    * Get messages for location (GET endpoint)
    *
    * @param params - Query parameters
-   * @returns Enriched messages for API response
+   * @returns Enriched messages with pagination info
    */
-  async getMessages(params: GetMessagesParams): Promise<EnrichedChatMessage[]> {
+  async getMessages(params: GetMessagesParams): Promise<{
+    messages: EnrichedChatMessage[],
+    totalCount: number,
+    hasMore: boolean
+  }> {
     const {
       locationId,
       characterId,
       timeThreshold = new Date(Date.now() - 3 * 60 * 60 * 1000), // Default 3h
       limit = 100,
+      offset = 0,
     } = params;
 
     logger.debug('[ChatMessageService.getMessages] Fetching messages:', {
       locationId,
       characterId,
       limit,
+      offset,
     });
 
-    // Query messages from DB
-    const actions = await Chat.find({
+    // Build query
+    const query = {
       locationId,
       timestamp: { $gte: timeThreshold },
       $or: [
@@ -66,18 +71,29 @@ export class ChatMessageService {
         },
         { visibility: 'master_only' },
       ],
-    })
+    };
+
+    // Count total BEFORE applying pagination
+    const totalCount = await Chat.countDocuments(query);
+
+    // Query messages from DB with pagination
+    const actions = await Chat.find(query)
       .sort({ timestamp: 1 })
+      .skip(offset)
       .limit(limit)
       .lean();
 
-    logger.debug(`[ChatMessageService.getMessages] Fetched ${actions.length} raw messages`);
+    logger.debug(`[ChatMessageService.getMessages] Fetched ${actions.length} raw messages (total: ${totalCount})`);
 
     // Fetch character for permission checks
     const character = await Character.findById(characterId).lean();
     if (!character) {
       logger.warn(`[ChatMessageService.getMessages] Character not found: ${characterId}`);
-      return [];
+      return {
+        messages: [],
+        totalCount: 0,
+        hasMore: false
+      };
     }
 
     // Check if action mode is active
@@ -96,72 +112,22 @@ export class ChatMessageService {
     const context = new MessageContext();
     const enriched = await this.transformer.transformBatch(filtered, context);
 
+    // Calculate hasMore
+    const hasMore = offset + enriched.length < totalCount;
+
     logger.info('[ChatMessageService.getMessages] Complete:', {
       total: enriched.length,
+      totalCount,
+      offset,
+      hasMore,
       cacheStats: context.getStats(),
     });
 
-    return enriched;
-  }
-
-  /**
-   * Create message (POST endpoint)
-   *
-   * @param params - Message creation parameters
-   * @returns Enriched message for API response
-   */
-  async createMessage(params: CreateMessageParams): Promise<EnrichedChatMessage> {
-    logger.debug('[ChatMessageService.createMessage] Creating message:', {
-      actionType: params.actionType,
-      characterId: params.characterId,
-      locationId: params.locationId,
-    });
-
-    // Step 1: Build ActionInput
-    const actionInput: ActionInput = {
-      actionType: params.actionType,
-      content: params.content,
-      locationId: params.locationId,
-      characterId: params.characterId,
-      characterName: params.characterName,
-      characterAvatar: params.characterAvatar,
-      isMasked: params.isMasked,
-      realCharacterName: params.realCharacterName,
-      visibility: params.visibility,
-      targetCharacters: params.targetCharacters,
-      diceSpec: params.diceSpec,
-      skillId: params.skillId,
-      statName: params.statName,
-      itemId: params.itemId,
-      position: params.position,
-      isHidden: params.isHidden,
-      sessionId: params.sessionId,
-      characterRoles: params.characterRoles,
+    return {
+      messages: enriched,
+      totalCount,
+      hasMore
     };
-
-    // Step 2: Route to handler (existing ActionRouter)
-    // TODO: Get ActionRouter instance (will need to be injected or singleton)
-    // const actionRouter = getActionRouter();
-    // const actionData = await actionRouter.route(actionInput);
-
-    // For now, throw not implemented
-    throw new Error(
-      '[ChatMessageService.createMessage] Integration with ActionRouter not yet complete'
-    );
-
-    // Step 3: Save to DB
-    // const savedAction = await Chat.createAction(actionData);
-
-    // Step 4: Transform for API response
-    // const context = new MessageContext();
-    // const enriched = await this.transformer.transform(savedAction, context);
-
-    // logger.info('[ChatMessageService.createMessage] Complete:', {
-    //   messageId: enriched._id,
-    //   actionType: enriched.actionType,
-    // });
-
-    // return enriched;
   }
 
   /**

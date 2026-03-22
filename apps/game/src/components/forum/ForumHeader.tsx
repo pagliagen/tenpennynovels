@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect, FormEvent } from 'react';
-import { useForumStore } from '@/store/forumStore';
-import { useForumTopic } from '@/hooks/useForumTopics';
+
 import { useForumDiscussion } from '@/hooks/useForumDiscussions';
+import { useForumTopic } from '@/hooks/useForumTopics';
+import { useForumStore } from '@/store/forumStore';
 import styles from '@/styles/components/forum/ForumHeader.module.scss';
 
 interface ForumHeaderProps {
