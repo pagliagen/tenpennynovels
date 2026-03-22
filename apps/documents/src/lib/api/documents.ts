@@ -86,7 +86,7 @@ export const documentsApi = {
       document,
       sections,
       hasChildren: payload.hasChildren ?? false,
-      childDocuments: payload.childDocuments === null ? undefined : payload.childDocuments,
+      ...(payload.childDocuments != null ? { childDocuments: payload.childDocuments } : {}),
     };
   },
 
