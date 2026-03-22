@@ -217,6 +217,12 @@ export class AIGatewayClient {
     return this.request<ImageGenResponse>('POST', '/image-gen/generate', payload);
   }
 
+  async generateSeoDescription(title: string, content: string): Promise<string | null> {
+    const result = await this.request<{ success: boolean; description: string }>('POST', '/seo/generate-description', { title, content });
+    if (result?.success && result.description) return result.description;
+    return null;
+  }
+
   async createBot(data: any) { return this.request('POST', '/botai/bots', data); }
   async generateBot(data: any) { return this.request('POST', '/botai/bots/generate', data); }
   async getBots() { return this.request('GET', '/botai/bots'); }
