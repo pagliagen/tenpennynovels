@@ -112,27 +112,25 @@ function WizardContainerInner({ characterId, onSubmittingChange }: WizardContain
   const clearFeedback = useCallback(() => setSubmitFeedback(null), []);
 
   useEffect(() => {
-    // CRITICAL FIX: Don't wait for hydration if we have API data
-    // The API response takes priority over localStorage
-    if (!characterId || !existingCharacter) {
-      return;
-    }
+    // Wait for localStorage rehydration BEFORE anything else.
+    // React Query may return cached data synchronously on first render,
+    // which would cause loadFromDraft to overwrite localStorage data
+    // before Zustand has had a chance to rehydrate from it.
+    if (!hasHydrated) return;
+    if (!characterId || !existingCharacter) return;
 
-    // Only check localStorage state if hydration is complete
-    if (hasHydrated) {
-      // ✅ FIX: Read firstName from store at execution time (not from dependencies)
-      // This prevents infinite loop when user types in firstName field
-      const currentFirstName = useWizardStore.getState().basicInfo.firstName;
-      const draftMatchesCharacter = _draftCharacterId === characterId
-        && currentFirstName.trim() !== '';
+    // ✅ FIX: Read firstName from store at execution time (not from dependencies)
+    // This prevents infinite loop when user types in firstName field
+    const currentFirstName = useWizardStore.getState().basicInfo.firstName;
+    const draftMatchesCharacter = _draftCharacterId === characterId
+      && currentFirstName.trim() !== '';
 
-      // Skip load if draft already matches this character and server data hasn't changed
-      if (draftMatchesCharacter) {
-        const serverDataChanged = existingCharacter.updatedAt
-          && _serverUpdatedAt !== existingCharacter.updatedAt;
-        if (!serverDataChanged) {
-          return;
-        }
+    // Skip load if draft already matches this character and server data hasn't changed
+    if (draftMatchesCharacter) {
+      const serverDataChanged = existingCharacter.updatedAt
+        && _serverUpdatedAt !== existingCharacter.updatedAt;
+      if (!serverDataChanged) {
+        return;
       }
     }
 
