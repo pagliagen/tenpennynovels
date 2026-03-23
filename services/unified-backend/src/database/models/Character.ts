@@ -43,7 +43,8 @@ export interface ICharacter extends Document, SoftDeleteMethods {
   maritalStatus?: string; // stato civile (private - only master/owner)
   illnesses?: string; // patologie (private - only master/owner)
   educationTitle?: string; // titolo di studio (private - only master/owner)
-  criminalRecord?: string; // fedina penale
+  criminalRecord?: string;
+  pathologies?: string;    // patologie psicologiche/fisiche (private - only master/owner)
 
   // Occupation (changed from string to ObjectId reference)
   occupation?: Schema.Types.ObjectId; // Reference to Occupation model
@@ -60,7 +61,7 @@ export interface ICharacter extends Document, SoftDeleteMethods {
     constitution: number;    // COS - Costituzione  
     size: number;           // TAG - Taglia
     dexterity: number;      // DES - Destrezza
-    charm: number;          // FAS - Fascino (corretto da appearance)
+    appearance: number;     // APP - Aspetto
     intelligence: number;   // INT - Intelligenza
     power: number;          // POT - Potere
     education: number;      // EDU - Educazione
@@ -72,10 +73,11 @@ export interface ICharacter extends Document, SoftDeleteMethods {
     luckRoll: number;       // Tiro Fortuna = POT
     knowledge: number;      // Conoscenze = EDU
     hitPoints: number;      // Punti Ferita = (TAG + COS) / 10 arrotondato per difetto
-    sanityPoints: number;   // Punti Sanità = POT iniziali
+    sanity: number;         // Punti Sanità = POT iniziali
+    maxSanity: number;      // Sanità massima = 99 - Occulto
     magicPoints: number;    // Punti Magia = POT / 5 arrotondato per difetto
     movementRate: number;   // Tasso di Movimento = dipendente da DES e FOR (default 8)
-    damageBonus: string;    // Bonus al Danno da tabella FOR + TAG
+    bonusDamage: string;    // Bonus al Danno da tabella FOR + TAG
     build: number;          // Corporatura da tabella FOR + TAG
   };
 
@@ -394,6 +396,11 @@ const CharacterSchema = new Schema<ICharacter>({
     trim: true,
     maxlength: 500
   },
+  pathologies: {
+    type: String,
+    trim: true,
+    maxlength: 500
+  },
 
   // Occupation (changed from string to ObjectId)
   occupation: {
@@ -438,7 +445,7 @@ const CharacterSchema = new Schema<ICharacter>({
     constitution: { type: Number, min: 1, max: 100, default: 50 },  // COS  
     size: { type: Number, min: 1, max: 100, default: 50 },          // TAG
     dexterity: { type: Number, min: 1, max: 100, default: 50 },     // DES
-    charm: { type: Number, min: 1, max: 100, default: 50 },         // FAS - Fascino
+    appearance: { type: Number, min: 1, max: 100, default: 50 },    // APP - Aspetto
     intelligence: { type: Number, min: 1, max: 100, default: 50 },  // INT
     power: { type: Number, min: 1, max: 100, default: 50 },         // POT
     education: { type: Number, min: 1, max: 100, default: 50 }      // EDU
@@ -450,10 +457,11 @@ const CharacterSchema = new Schema<ICharacter>({
     luckRoll: { type: Number, default: 50 },      // Tiro Fortuna = POT
     knowledge: { type: Number, default: 50 },     // Conoscenze = EDU
     hitPoints: { type: Number, default: 10 },     // PF = (TAG + COS) / 10
-    sanityPoints: { type: Number, default: 50 },  // SAN = POT iniziali
+    sanity: { type: Number, default: 50 },        // SAN = POT iniziali
+    maxSanity: { type: Number, default: 99 },     // SAN max = 99 - Occulto
     magicPoints: { type: Number, default: 10 },   // PM = POT / 5
     movementRate: { type: Number, default: 8 },   // Tasso di Movimento (default 8)
-    damageBonus: { type: String, default: "0" },  // Bonus Danno da tabella
+    bonusDamage: { type: String, default: "0" },  // Bonus Danno da tabella
     build: { type: Number, default: 0 }           // Corporatura da tabella
   },
 
@@ -910,7 +918,7 @@ CharacterSchema.pre('save', async function(this: ICharacter) {
       intelligence: this.stats.intelligence,
       education: this.stats.education,
       power: this.stats.power,
-      charm: this.stats.charm
+      appearance: this.stats.appearance
     };
 
     // Calculate all derived stats using config-based parser
@@ -921,10 +929,11 @@ CharacterSchema.pre('save', async function(this: ICharacter) {
     this.derived.luckRoll = derived.luckRoll;
     this.derived.knowledge = derived.knowledge;
     this.derived.hitPoints = derived.hitPoints;
-    this.derived.sanityPoints = derived.sanityPoints;
+    this.derived.sanity = derived.sanity;
+    this.derived.maxSanity = derived.maxSanity;
     this.derived.magicPoints = derived.magicPoints;
     this.derived.movementRate = derived.movementRate;
-    this.derived.damageBonus = derived.damageBonus;
+    this.derived.bonusDamage = derived.bonusDamage;
     this.derived.build = derived.build;
   }
 

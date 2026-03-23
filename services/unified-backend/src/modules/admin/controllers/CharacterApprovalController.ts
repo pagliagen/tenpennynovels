@@ -1164,7 +1164,7 @@ export class CharacterApprovalController {
           constitution: number;
           size: number;
           dexterity: number;
-          charm: number;
+          appearance: number;
           intelligence: number;
           power: number;
           education: number;
@@ -1180,7 +1180,7 @@ export class CharacterApprovalController {
       dex: z(stats.dexterity),
       int: z(stats.intelligence),
       con: z(stats.constitution),
-      app: z(stats.charm),
+      app: z(stats.appearance),
       pow: z(stats.power),
       siz: z(stats.size),
       edu: z(stats.education),

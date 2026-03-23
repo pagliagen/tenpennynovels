@@ -1970,7 +1970,7 @@ export class UserManagementController {
           constitution: 50,
           size: 50,
           dexterity: 50,
-          charm: 50,
+          appearance: 50,
           intelligence: 50,
           power: 50,
           education: 50
@@ -1980,10 +1980,10 @@ export class UserManagementController {
           luckRoll: 50,
           knowledge: 50,
           hitPoints: 10,
-          sanityPoints: 50,
+          sanity: 50,
           magicPoints: 10,
           movementRate: 8,
-          damageBonus: '0',
+          bonusDamage: '0',
           build: 0
         },
         skills: {}, // Empty skills for PNG
@@ -2118,7 +2118,7 @@ export class UserManagementController {
           constitution: 50,
           size: 50,
           dexterity: 50,
-          charm: 50,
+          appearance: 50,
           intelligence: 50,
           power: 50,
           education: 50
@@ -2128,10 +2128,10 @@ export class UserManagementController {
           luckRoll: 50,
           knowledge: 50,
           hitPoints: 10,
-          sanityPoints: 50,
+          sanity: 50,
           magicPoints: 10,
           movementRate: 8,
-          damageBonus: '0',
+          bonusDamage: '0',
           build: 0
         },
         skills: {}, // Empty skills for Master

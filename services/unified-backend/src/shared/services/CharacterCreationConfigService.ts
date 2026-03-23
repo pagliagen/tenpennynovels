@@ -121,7 +121,7 @@ export class CharacterCreationConfigService {
           intelligence: 20,
           constitution: 20,
           size: 20,
-          charm: 20,
+          appearance: 20,
           power: 20,
           education: 20,
         },
@@ -158,7 +158,7 @@ export class CharacterCreationConfigService {
       formulas: {
         derived: configs['character_creation_formulas_derived'] || {
           hitPoints: 'FLOOR((CON + SIZ) / 10)',
-          sanityPoints: 'POW',
+          sanity: 'POW',
           magicPoints: 'FLOOR(POW / 5)',
           luck: 'POW',
           ideaRoll: 'INT',
@@ -602,7 +602,7 @@ export class CharacterCreationConfigService {
           intelligence: 20,
           constitution: 20,
           size: 20,
-          charm: 20,
+          appearance: 20,
           power: 20,
           education: 20
         },
@@ -639,7 +639,7 @@ export class CharacterCreationConfigService {
       formulas: {
         derived: {
           hitPoints: 'FLOOR((constitution + size) / 10)',
-          sanityPoints: 'power',
+          sanity: 'power',
           magicPoints: 'FLOOR(power / 5)',
           luck: 'power',
           idea: 'intelligence',
@@ -778,7 +778,7 @@ export interface CharacterStats {
   intelligence: number;
   education: number;
   power: number;
-  charm: number;
+  appearance: number;
 }
 
 /**
@@ -789,10 +789,11 @@ export interface DerivedStats {
   luckRoll: number;
   knowledge: number;
   hitPoints: number;
-  sanityPoints: number;
+  sanity: number;
+  maxSanity: number;
   magicPoints: number;
   movementRate: number;
-  damageBonus: string;
+  bonusDamage: string;
   build: number;
 }
 
@@ -816,7 +817,7 @@ const STAT_MAP: Record<string, keyof CharacterStats> = {
   INT: 'intelligence',
   EDU: 'education',
   POW: 'power',
-  APP: 'charm'
+  APP: 'appearance'
 };
 
 /**
@@ -943,7 +944,7 @@ export function validateDerivedFormula(formula: string): { valid: boolean; error
     intelligence: 50,
     education: 50,
     power: 50,
-    charm: 50
+    appearance: 50
   };
 
   try {
@@ -1018,14 +1019,15 @@ export function calculateAllDerivedStats(
     hitPoints: formulas.hitPoints
       ? calculateDerivedStat(formulas.hitPoints, stats)
       : Math.floor((stats.constitution + stats.size) / 10),
-    sanityPoints: formulas.sanityPoints
-      ? calculateDerivedStat(formulas.sanityPoints, stats)
+    sanity: formulas.sanity
+      ? calculateDerivedStat(formulas.sanity, stats)
       : stats.power,
+    maxSanity: 99,
     magicPoints: formulas.magicPoints
       ? calculateDerivedStat(formulas.magicPoints, stats)
       : Math.floor(stats.power / 5),
     movementRate: formulas.movementRate ? calculateDerivedStat(formulas.movementRate, stats) : 8,
-    damageBonus: damageData.bonus,
+    bonusDamage: damageData.bonus,
     build: damageData.build
   };
 }

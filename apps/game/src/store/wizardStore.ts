@@ -137,7 +137,6 @@ interface WizardStore extends WizardData {
 
   // Actions - Background (Step 5)
   updateBackground: (data: Partial<WizardBackground>) => void;
-  setBackgroundResponse: (questionIndex: number, response: string) => void;
 
   // Actions - Validation
   validateStep: (step: number) => ValidationResult;
@@ -176,7 +175,7 @@ const initialState = (): Omit<
   | 'addDynamicSkill'
   | 'removeDynamicSkill'
   | 'updateBackground'
-  | 'setBackgroundResponse'
+  | 'validateAll'
   | 'validateStep'
   | 'validateAll'
   | 'setStepErrors'
@@ -205,10 +204,10 @@ const initialState = (): Omit<
     firstName: '',
     lastName: '',
     birthDate: '',
-    birthplace: '', // lowercase (backend format)
+    birthPlace: '', // matches ICharacter.birthPlace
     age: 25,
     apparentAge: 25,
-    gender: '',
+    gender: '' as 'male' | 'female' | '',
     height: '',
     weight: '',
     eyeColor: '',
@@ -890,22 +889,6 @@ export const useWizardStore = create<WizardStore>()(
        * @param questionIndex - Question index (0-8)
        * @param response - Response text
        */
-      setBackgroundResponse: (questionIndex, response) => {
-        const { background } = get();
-        const updatedResponses = [...(background.backgroundResponses || [])];
-        updatedResponses[questionIndex] = {
-          question: updatedResponses[questionIndex]?.question || '',
-          response,
-        };
-
-        set({
-          background: {
-            ...background,
-            backgroundResponses: updatedResponses,
-          },
-        });
-      },
-
       validateStep: (step) => {
         const state = get();
         const validators: Record<number, () => import('@/types/wizard').ValidationResult> = {
@@ -975,9 +958,10 @@ export const useWizardStore = create<WizardStore>()(
        * Handles field name reconciliation and skills mapping.
        *
        * **Field Mapping**:
-       * - firstName + lastName → name
-       * - birthPlace → birthplace (lowercase)
-       * - charm → appearance
+       * - firstName → name (direct, no concatenation)
+       * - lastName → surname (optional)
+       * - birthPlace → birthPlace (same name, no transformation)
+       * - appearance → appearance (same name, no transformation)
        * - SkillBreakdown → VictorianSkills (83 static fields)
        *
        * @returns CharacterCreatePayload ready for POST /game/characters
@@ -1017,13 +1001,13 @@ export const useWizardStore = create<WizardStore>()(
 
         const payload: CharacterCreatePayload = {
           // Basic info (field name reconciliation as per CharacterCreatePayload type)
-          name: [basicInfo.firstName, basicInfo.lastName].filter(Boolean).join(' '),
-          surname: basicInfo.lastName || '',
+          name: basicInfo.firstName,
+          surname: basicInfo.lastName || undefined,
           birthDate: basicInfo.birthDate || undefined,
-          birthplace: basicInfo.birthplace, // lowercase!
+          birthPlace: basicInfo.birthPlace,
           age: basicInfo.age,
           apparentAge: basicInfo.apparentAge,
-          gender: basicInfo.gender,
+          gender: basicInfo.gender as 'male' | 'female',
           height: basicInfo.height,
           weight: basicInfo.weight,
           eyeColor: basicInfo.eyeColor,
@@ -1035,8 +1019,7 @@ export const useWizardStore = create<WizardStore>()(
           illnesses: basicInfo.illnesses,
           educationTitle: basicInfo.educationTitle,
           criminalRecord: basicInfo.criminalRecord,
-
-          // Occupation
+          pathologies: basicInfo.pathologies,
           occupation: occupation.occupationId,
           currentOccupation: occupation.currentOccupation,
 
@@ -1116,12 +1099,9 @@ export const useWizardStore = create<WizardStore>()(
           updatedAt: character.updatedAt,
         });
 
-        // Reconstruct firstName: if surname exists, strip it from the full name
-        const fullName = character.name || '';
+        // name → firstName, surname → lastName (no concatenation)
+        const firstName = character.name || '';
         const surname = character.surname || '';
-        const firstName = surname && fullName.endsWith(surname)
-          ? fullName.slice(0, -surname.length).trim()
-          : fullName;
 
         // Process skills (handle both Map and plain object)
         const skillsObj: Record<string, any> = {};
@@ -1155,10 +1135,10 @@ export const useWizardStore = create<WizardStore>()(
             firstName,
             lastName: surname,
             birthDate: character.birthDate || '',
-            birthplace: character.birthPlace || '',
+            birthPlace: character.birthPlace || '',
             age: character.age || 25,
             apparentAge: character.apparentAge || 25,
-            gender: character.gender || '',
+            gender: (character.gender as 'male' | 'female' | '') || '',
             height: character.height || '',
             weight: character.weight || '',
             eyeColor: character.eyeColor || '',
@@ -1187,16 +1167,16 @@ export const useWizardStore = create<WizardStore>()(
             dexterity: charStats.dexterity || 20,
             intelligence: charStats.intelligence || 20,
             constitution: charStats.constitution || 20,
-            appearance: charStats.charm || 20,
+            appearance: charStats.appearance || charStats.charm || 20,
             power: charStats.power || 20,
             size: charStats.size || 20,
             education: charStats.education || 20,
           },
           derivedStats: {
             hitPoints: derived.hitPoints || charStats.hitPoints || 4,
-            sanity: derived.sanityPoints ?? derived.sanity ?? charStats.sanity ?? 20,
-            maxSanity: derived.maxSanity ?? charStats.maxSanity ?? 99,
-            bonusDamage: derived.damageBonus ?? derived.bonusDamage ?? charStats.bonusDamage ?? '-2',
+          sanity: derived.sanity ?? derived.sanityPoints ?? charStats.sanity ?? 20,
+          maxSanity: derived.maxSanity ?? charStats.maxSanity ?? 99,
+          bonusDamage: derived.bonusDamage ?? derived.damageBonus ?? charStats.bonusDamage ?? '-2',
             ideaRoll: derived.ideaRoll ?? charStats.ideaRoll ?? 20,
           },
           skills: skillsObj,

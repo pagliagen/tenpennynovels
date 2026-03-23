@@ -2150,7 +2150,7 @@ export class ChatController {
         // Calculate damage
         const damageResult = calculateDamage(
           damageFormula,
-          attackerCharacter.derived?.damageBonus || '0',
+          attackerCharacter.derived?.bonusDamage || '0',
           attackDegree
         );
 
@@ -2364,7 +2364,7 @@ export class ChatController {
       const damageFormula = '1d3'; // Unarmed default
       const damageResult = calculateDamage(
         damageFormula,
-        attackerCharacter.derived?.damageBonus || '0',
+        attackerCharacter.derived?.bonusDamage || '0',
         attackDegree
       );
 
@@ -2564,7 +2564,7 @@ export class ChatController {
         const damageFormula = '1d3'; // Unarmed default
         const damageResult = calculateDamage(
           damageFormula,
-          attackerCharacter.derived?.damageBonus || '0',
+          attackerCharacter.derived?.bonusDamage || '0',
           attackDegree
         );
 

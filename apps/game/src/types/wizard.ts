@@ -43,10 +43,10 @@ export interface WizardBasicInfo {
   firstName: string;
   lastName: string;
   birthDate: string; // ISO format
-  birthplace: string; // ⚠️ lowercase (backend uses "birthplace" not "birthPlace")
+  birthPlace: string;
   age: number;
   apparentAge: number;
-  gender: string;
+  gender: 'male' | 'female' | ''; // Empty string = not yet selected (validated before submit)
   height: string; // Format: "5'10\"" or "178 cm"
   weight: string; // Format: "160 lbs" or "72 kg"
   eyeColor: string;
@@ -96,7 +96,7 @@ export interface WizardStats {
   dexterity: number;
   intelligence: number;
   constitution: number;
-  appearance: number; // ⚠️ Archive uses "charm", backend uses "appearance"
+  appearance: number; // APP - Aspetto
   power: number;
   size: number;
   education: number;
@@ -118,24 +118,7 @@ export interface DerivedStats {
  * Background - Step 5 Data
  */
 export interface WizardBackground {
-  /** 9 structured questions (childhood, family, mentors, etc.) - Optional (alternative to direct fields) */
-  backgroundResponses?: Array<{
-    question: string;
-    response: string;
-  }>;
-
-  /** Alternative structured format (backend accepts both) */
-  guidedBackground?: {
-    childhood: string;
-    family: string;
-    mentors: string;
-    fears: string;
-    secrets: string;
-    motivations: string;
-    relationships: string;
-    goals: string;
-    flaws: string;
-  };
+  /** 9 structured questions (childhood, family, mentors, etc.) - stored in ICharacter.backgroundResponses (different format, not wizard-managed) */
 
   /**
    * Backend Character.background schema fields
@@ -253,13 +236,13 @@ export interface CharacterCreationConfig {
  */
 export interface CharacterCreatePayload {
   // Basic info (field name reconciliation)
-  name: string; // firstName + ' ' + lastName (full name for backward compat)
-  surname?: string; // lastName stored separately for wizard round-trip
+  name: string; // firstName maps directly to name
+  surname?: string; // lastName maps directly to surname (optional)
   birthDate?: string; // gg/mm/yyyy format
-  birthplace: string; // lowercase!
+  birthPlace: string;
   age: number;
   apparentAge: number;
-  gender: string;
+  gender: 'male' | 'female';
   height: string;
   weight: string;
   eyeColor: string;
@@ -271,8 +254,7 @@ export interface CharacterCreatePayload {
   illnesses: string;
   educationTitle: string;
   criminalRecord: string;
-
-  // Occupation
+  pathologies?: string;
   occupation: string; // occupationId
   currentOccupation: string;
 
@@ -282,10 +264,11 @@ export interface CharacterCreatePayload {
     dexterity: number;
     intelligence: number;
     constitution: number;
-    appearance: number; // NOT charm!
+    appearance: number;
     power: number;
     size: number;
     education: number;
+    // Derived (pre-calculated by wizard, recalculated by backend pre-save hook)
     sanity: number;
     maxSanity: number;
     hitPoints: number;
@@ -297,23 +280,11 @@ export interface CharacterCreatePayload {
   skills: Record<string, number>; // Will be cast to VictorianSkills
 
   // Description fields (from Step 5)
-  publicDescription?: string; // Public background visible to all
-  privateDescription?: string; // Private background visible only to owner/master
-  physicalDescription?: string; // Physical appearance description
+  publicDescription?: string;
+  privateDescription?: string;
+  physicalDescription?: string;
 
-  // Background (send both formats for safety)
-  backgroundResponses?: Array<{ question: string; response: string }>;
-  guidedBackground?: {
-    childhood: string;
-    family: string;
-    mentors: string;
-    fears: string;
-    secrets: string;
-    motivations: string;
-    relationships: string;
-    goals: string;
-    flaws: string;
-  };
+  // Background structured fields
   background?: {
     briefHistory?: string; // Storia in breve
     significantEvents?: string; // Fatti salienti

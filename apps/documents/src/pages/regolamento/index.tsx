@@ -34,6 +34,8 @@ export default function RegolamentoIndex({ redirectTo }: RegolamentoIndexProps) 
         title="Ten Penny Novels | Regolamento"
         description="Regolamento di gioco per Ten Penny Novels - Regole Call of Cthulhu, meccaniche e linee guida per il roleplay vittoriano."
         ogType="website"
+        noindex
+        nofollow
       />
       <LoadingSpinner fullPage message="Caricamento..." />
     </>

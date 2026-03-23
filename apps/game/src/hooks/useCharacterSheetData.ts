@@ -73,7 +73,7 @@ export interface CharacterSheetData {
 
     // Stats
     stats?: {
-      charm?: number;
+      appearance?: number;
       constitution?: number;
       dexterity?: number;
       education?: number;
@@ -82,7 +82,7 @@ export interface CharacterSheetData {
       size?: number;
       strength?: number;
       // Derived stats
-      damageBonus?: string;
+      bonusDamage?: string;
       build?: number;
       luck?: number;
       idea?: number;

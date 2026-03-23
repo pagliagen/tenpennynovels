@@ -64,7 +64,7 @@ function resolveBaseValue(baseValue: string | number, characterStats?: Record<st
     if (!characterStats) return 0;
     const statMapping: Record<string, string> = {
       str: 'strength', dex: 'dexterity', int: 'intelligence',
-      con: 'constitution', app: 'charm', pow: 'power',
+      con: 'constitution', app: 'appearance', pow: 'power',
       siz: 'size', edu: 'education',
     };
     const fullStat = statMapping[stat] || stat;
@@ -313,16 +313,10 @@ export async function validateCharacterSubmission(character: ICharacter, config:
 
   const minimumTotal = Object.values(minStats).reduce((sum, val) => sum + val, 0);
 
-  // Check each stat against minimum
-  // Map appearance to charm (the actual field name in Character schema)
-  const statMapping: { [key: string]: string } = {
-    appearance: 'charm'
-  };
-  
+  // Check each stat against minimum (no mapping needed - model now uses 'appearance')
   let statsAbove80 = 0;
   for (const [statName, minValue] of Object.entries(minStats)) {
-    const actualStatName = statMapping[statName] || statName;
-    const currentValue = (character.stats as Record<string, number>)[actualStatName] || 0;
+    const currentValue = (character.stats as Record<string, number>)[statName] || 0;
 
     if (currentValue < minValue) {
       // Translate stat names to Italian

@@ -34,6 +34,8 @@ export default function AmbientazioneIndex({ redirectTo }: AmbientazioneIndexPro
         title="Ten Penny Novels | Ambientazione"
         description="Documenti di ambientazione per Ten Penny Novels - Londra vittoriana, personaggi, luoghi e storie."
         ogType="website"
+        noindex
+        nofollow
       />
       <LoadingSpinner fullPage message="Caricamento..." />
     </>

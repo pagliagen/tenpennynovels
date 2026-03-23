@@ -38,7 +38,7 @@ export function StatisticheTab({ character }: StatisticheTabProps): JSX.Element 
         ⚡ Caratteristiche Base
       </h3>
       <div className={classNames(styles.gridAuto150, styles.statGridMb)}>
-        <StatCard label="Charm" value={stats.charm || 0} icon="✨" />
+        <StatCard label="Appearance" value={stats.appearance || 0} icon="✨" />
         <StatCard label="Constitution" value={stats.constitution || 0} icon="💪" />
         <StatCard label="Dexterity" value={stats.dexterity || 0} icon="🎯" />
         <StatCard label="Education" value={stats.education || 0} icon="📚" />
@@ -62,7 +62,7 @@ export function StatisticheTab({ character }: StatisticheTabProps): JSX.Element 
         <StatCard label="Build" value={stats.build || 0} icon="🏋️" />
         <StatCard
           label="Damage Bonus"
-          value={stats.damageBonus || 'N/A'}
+          value={stats.bonusDamage || 'N/A'}
           icon="💥"
           isString
         />

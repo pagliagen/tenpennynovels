@@ -23,7 +23,7 @@ interface SearchResult {
 }
 
 interface SearchResponse {
-  result: boolean;
+  success: boolean;
   data?: {
     query: string;
     results: SearchResult[];
@@ -59,7 +59,7 @@ export default function SearchPage() {
 
       const data: SearchResponse = await response.json();
 
-      if (data.result && data.data) {
+      if (data.success && data.data) {
         setResults(data.data.results);
       } else {
         setError(data.error || 'Errore durante la ricerca');

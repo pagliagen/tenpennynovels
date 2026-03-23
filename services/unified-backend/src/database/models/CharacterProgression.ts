@@ -118,7 +118,7 @@ const CharacterProgressionSchema = new Schema<ICharacterProgression>({
   statsImproved: [{
     stat: {
       type: String,
-      enum: ['strength', 'constitution', 'size', 'dexterity', 'charm', 'intelligence', 'power', 'education']
+      enum: ['strength', 'constitution', 'size', 'dexterity', 'appearance', 'intelligence', 'power', 'education']
     },
     timesImproved: { type: Number, default: 0 },
     totalPointsSpent: { type: Number, default: 0 },

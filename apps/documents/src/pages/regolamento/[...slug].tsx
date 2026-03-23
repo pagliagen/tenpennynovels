@@ -97,7 +97,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
     );
     const result = await response.json();
 
-    if (!result.result || !result.data) {
+    if (!result.success || !result.data) {
       console.warn('[getStaticPaths] Impossibile recuperare le route regolamento');
       return { paths: [], fallback: 'blocking' };
     }

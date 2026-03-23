@@ -45,7 +45,7 @@ export class CharacterValidationMiddleware {
       .withMessage('Nome deve essere tra 2 e 50 caratteri')
       .trim(),
 
-    body('birthplace')
+    body('birthPlace')
       .notEmpty()
       .withMessage('Luogo di nascita è richiesto')
       .isLength({ min: 2, max: 100 })

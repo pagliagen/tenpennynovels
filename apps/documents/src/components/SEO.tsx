@@ -29,7 +29,6 @@
 
 import React from 'react';
 import Head from 'next/head';
-import { useRouter } from 'next/router';
 
 /**
  * SEO component props
@@ -41,7 +40,7 @@ export interface SEOProps {
   title: string;
   /** Meta description (150-160 chars recommended) */
   description: string;
-  /** Canonical URL (optional, defaults to current URL) */
+  /** Canonical URL (absolute URL; if omitted, no canonical/og:url/twitter:url tags are emitted) */
   canonical?: string;
 
   // Open Graph
@@ -89,10 +88,16 @@ export interface SEOProps {
  *
  * **Automatic Features**:
  * - Appends site name to title if not present
- * - Generates canonical URL from current route
  * - Sets Italian locale (it_IT)
  * - Includes favicon and mobile icons
  * - Validates and normalizes all inputs
+ *
+ * **Canonical URL**:
+ * Must be passed explicitly as an absolute URL via the `canonical` prop.
+ * If omitted, the `<link rel="canonical">`, `og:url`, and `twitter:url` tags
+ * are not emitted — this avoids the hydration mismatch caused by
+ * `router.asPath`/`window.location` being unavailable or wrong during
+ * SSR/ISR build. Pages that need to be indexed **must** pass `canonical`.
  *
  * **Open Graph**:
  * Enables rich previews when sharing on Facebook, LinkedIn, etc.
@@ -174,15 +179,12 @@ export const SEO: React.FC<SEOProps> = ({
   locale = 'it_IT',
   twitterCard = 'summary_large_image',
 }) => {
-  const router = useRouter();
-
-  // Site configuration (auto-detect from hostname or default)
-  const baseUrl = typeof window !== 'undefined'
-    ? `${window.location.protocol}//${window.location.host}`
-    : 'https://tenpennynovels.com';
-
-  // Generate full URL (canonical or current path)
-  const fullUrl = canonical || `${baseUrl}${router.asPath}`;
+  // Canonical URL comes exclusively from the prop.
+  // Computing it from router.asPath/window causes hydration mismatches and
+  // produces wrong URLs during ISR build (asPath is empty, baseUrl is
+  // server-hardcoded). When the caller doesn't supply a canonical the tags
+  // that depend on it are simply omitted.
+  const fullUrl = canonical || undefined;
 
   // Generate full title (append site name if not present)
   const fullTitle = title.includes(siteName) ? title : `${title} | ${siteName}`;
@@ -213,11 +215,11 @@ export const SEO: React.FC<SEOProps> = ({
       <meta name="robots" content={robots} />
 
       {/* Canonical URL */}
-      <link rel="canonical" href={fullUrl} />
+      {fullUrl && <link rel="canonical" href={fullUrl} />}
 
       {/* Open Graph / Facebook */}
       <meta property="og:type" content={ogType} />
-      <meta property="og:url" content={fullUrl} />
+      {fullUrl && <meta property="og:url" content={fullUrl} />}
       <meta property="og:title" content={fullTitle} />
       <meta property="og:description" content={description} />
       <meta property="og:site_name" content={siteName} />
@@ -239,7 +241,7 @@ export const SEO: React.FC<SEOProps> = ({
 
       {/* Twitter Card */}
       <meta name="twitter:card" content={twitterCard} />
-      <meta name="twitter:url" content={fullUrl} />
+      {fullUrl && <meta name="twitter:url" content={fullUrl} />}
       <meta name="twitter:title" content={fullTitle} />
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={ogImage} />

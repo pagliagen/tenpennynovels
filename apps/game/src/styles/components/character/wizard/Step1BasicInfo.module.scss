@@ -63,6 +63,7 @@
   >select {
     flex: 1;
     min-width: 0;
+    width: 100%;
   }
 }
 
@@ -138,7 +139,7 @@
   padding: 6px 8px;
   height: 70px;
   margin-left: 16px;
-  font-size: 0.85rem;
+  font-size: 0.65rem;
   font-family: var(--font-primary);
   resize: none;
   background: rgba(0, 0, 0, 0.2) !important;
@@ -193,6 +194,10 @@
   width: 100px;
   height: auto;
   opacity: 0.9;
+}
+
+input#currentOccupation {
+  margin-right: 100px;
 }
 
 // Error summary

@@ -38,8 +38,8 @@ export function validateStep1(basicInfo: WizardBasicInfo): ValidationResult {
   if (!basicInfo.gender) {
     errors.gender = 'Seleziona un genere';
   }
-  if (!basicInfo.birthplace) {
-    errors.birthplace = 'Inserisci luogo di nascita';
+  if (!basicInfo.birthPlace) {
+    errors.birthPlace = 'Inserisci luogo di nascita';
   }
   if (!basicInfo.height || basicInfo.height.trim() === '') {
     errors.height = 'Altezza è obbligatoria';

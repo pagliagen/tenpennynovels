@@ -95,7 +95,7 @@ export function Step1BasicInfo(): JSX.Element {
                 value={basicInfo.firstName}
                 onChange={(e) => handleChange('firstName', e.target.value)}
                 className={`${styles.input} ${errors.firstName ? styles.inputError : ''}`}
-                placeholder="Nome del personaggio"
+                placeholder="Nome"
               />
             </div>
 
@@ -109,7 +109,7 @@ export function Step1BasicInfo(): JSX.Element {
                 value={basicInfo.lastName}
                 onChange={(e) => handleChange('lastName', e.target.value)}
                 className={`${styles.input} ${errors.lastName ? styles.inputError : ''}`}
-                placeholder="Cognome del personaggio"
+                placeholder="Cognome"
               />
             </div>
           </div>

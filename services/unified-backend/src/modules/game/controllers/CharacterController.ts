@@ -296,7 +296,7 @@ export class CharacterController {
         constitution: 50,
         size: 50,
         dexterity: 50,
-        charm: 50,
+        appearance: 50,
         intelligence: 50,
         power: 50,
         education: 50
@@ -1084,39 +1084,15 @@ export class CharacterController {
 
       // Handle field name mapping from frontend to backend (only for DRAFT)
       if (character.playerStatus === 'draft') {
-        // Construct full name from firstName + lastName
-        let nameChanged = false;
-        let currentFirstName = character.name?.split(' ')[0] || '';
-        let currentLastName = character.surname || '';
-
         if (filteredUpdates.firstName !== undefined) {
-          currentFirstName = filteredUpdates.firstName;
-          nameChanged = true;
+          character.name = filteredUpdates.firstName;
         }
         if (filteredUpdates.lastName !== undefined) {
-          currentLastName = filteredUpdates.lastName;
-          nameChanged = true;
+          character.surname = filteredUpdates.lastName;
         }
-
-        // Update name and surname only if changed
-        if (nameChanged) {
-          character.name = [currentFirstName, currentLastName].filter(Boolean).join(' ');
-          character.surname = currentLastName;
-        }
-        // Frontend sends "birthplace" (lowercase), model uses "birthPlace" (camelCase)
-        if (filteredUpdates.birthplace !== undefined) {
-          character.birthPlace = filteredUpdates.birthplace;
-        }
-        // Frontend sends "birthDate" 
+        // Frontend sends "birthDate"
         if (filteredUpdates.birthDate !== undefined) {
           character.birthDate = filteredUpdates.birthDate;
-        }
-        // Frontend sends stats.appearance, model uses stats.charm
-        if (filteredUpdates.stats?.appearance !== undefined) {
-          if (!filteredUpdates.stats.charm) {
-            filteredUpdates.stats.charm = filteredUpdates.stats.appearance;
-          }
-          delete filteredUpdates.stats.appearance;
         }
       }
 
@@ -1131,7 +1107,7 @@ export class CharacterController {
           'prestavolto', 'motivations', 'fears', 'audioTheme',
           // Anagrafica completa
           'height', 'weight', 'eyeColor', 'hairColor', 'visibleMarks', 'hiddenMarks',
-          'maritalStatus', 'illnesses', 'educationTitle', 'criminalRecord', 'currentOccupation',
+          'maritalStatus', 'illnesses', 'educationTitle', 'criminalRecord', 'pathologies', 'currentOccupation',
           // Background strutturato
           'background',
           // Dynamic skills (placeholder specializations)
