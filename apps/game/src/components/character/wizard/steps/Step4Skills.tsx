@@ -17,6 +17,7 @@ import { useWizardStore, resolveSkillBaseValue } from '@/store/wizardStore';
 import styles from '@/styles/components/character/wizard/Step4Skills.module.scss';
 
 import { BudgetIndicator } from '../shared/BudgetIndicator';
+import { PlaceholderSkillManager } from '../shared/PlaceholderSkillManager';
 import { useWizardToolbar } from '../WizardSlotsContext';
 
 
@@ -142,14 +143,6 @@ export function Step4Skills(): JSX.Element {
   }, [apiSkills, dynamicSkills, stats]);
 
   /**
-   * Calculate budget cost for displaying below input
-   * Cost = manualPoints + requiredBonus (both count toward budget)
-   */
-  const calculateBudgetCost = (skill: { manualPoints: number; requiredBonus: number }): number => {
-    return skill.manualPoints + skill.requiredBonus;
-  };
-
-  /**
    * Handle total value change (user inputs desired total)
    * Reverse-calculates manualPoints from total
    */
@@ -211,12 +204,31 @@ export function Step4Skills(): JSX.Element {
     );
   }
 
+  // Placeholder skills that need specialization (e.g. Lingua Straniera, Arte, Scienza)
+  const placeholderSkills = apiSkills.filter((s) => s.isPlaceholder);
+
+  // Required minimum from global config (occupation.requiredSkillMinimum), default 40
+  const requiredSkillMinimum = creationConfig?.occupation?.requiredSkillMinimum ?? 40;
+
   return (
     <div className={styles.stepContent} data-step="skills">
       <div className={styles.skillsContent}>
+        {/* Placeholder Skills (specializations like Lingua Straniera) */}
+        {placeholderSkills.length > 0 && (
+          <div className={styles.section}>
+            <h3 className={styles.sectionTitle}>Abilità con Specializzazione</h3>
+            {placeholderSkills.map((placeholderSkill) => (
+              <PlaceholderSkillManager
+                key={placeholderSkill.id}
+                placeholderSkill={placeholderSkill}
+                requiredMinimum={requiredSkillMinimum}
+              />
+            ))}
+          </div>
+        )}
+
         {/* All Skills - 3 Column Layout */}
         <div className={styles.section}>
-          <h3 className={styles.sectionTitle}>Tutte le Abilità</h3>
           <div className={styles.skillsGrid}>
             {allSkills.map((skillDef) => {
               const rbFiltered = resolveSkillBaseValue(skillDef.baseFormula, skillDef.baseValue, stats);
@@ -228,7 +240,6 @@ export function Step4Skills(): JSX.Element {
                 total: rbFiltered,
               };
 
-              const budgetCost = calculateBudgetCost(skill);
               const maxTotal = skill.occupationBonus > 0 ? 80 : 75;
               const minTotal = skill.base + skill.requiredBonus + skill.occupationBonus;
               const isAtCap = skill.total >= maxTotal;
@@ -237,21 +248,6 @@ export function Step4Skills(): JSX.Element {
                 <div key={skillDef.id} className={styles.skillCard}>
                   <div className={styles.skillCardHeader}>
                     <strong className={styles.skillName}>{skillDef.name}</strong>
-                    <div className={styles.badgeRow}>
-                      {skill.base > 0 && (
-                        <span className={styles.badgeBase}>Base: {skill.base}</span>
-                      )}
-                      {skill.occupationBonus > 0 && (
-                        <span className={styles.badgeBonus} title="Non conta verso il budget">
-                          +{skill.occupationBonus}
-                        </span>
-                      )}
-                      {skill.requiredBonus > 0 && (
-                        <span className={styles.badgeRequired} title="Abilità obbligatoria, portata a 40">
-                          Richiesta
-                        </span>
-                      )}
-                    </div>
                   </div>
 
                   <div className={styles.skillCardBody}>
@@ -271,16 +267,21 @@ export function Step4Skills(): JSX.Element {
                     )}
                   </div>
 
-                  {budgetCost > 0 && (
                     <div className={styles.skillCardFooter}>
-                      <span
-                        className={styles.budgetCostLabel}
-                        data-warning={spentPoints > totalBudget}
-                      >
-                        Costo: {budgetCost}
-                      </span>
+                    <div className={styles.badgeRow}>
+                        <span className={styles.badgeBase}>Base: {skill.base}</span>
                     </div>
-                  )}
+                      {skill.occupationBonus > 0 && (
+                        <span className={styles.badgeBonus} title="Non conta verso il budget">
+                          +{skill.occupationBonus}
+                        </span>
+                      )}
+                      {skill.requiredBonus > 0 && (
+                        <span className={styles.badgeRequired} title="Abilità obbligatoria, portata a 40">
+                          Richiesta
+                        </span>
+                      )}
+                    </div>
                 </div>
               );
             })}

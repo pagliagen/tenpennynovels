@@ -80,6 +80,12 @@ export interface CharacterCreationConfig {
     };
   };
   derivedStats: Record<string, { formula: string; description: string }>;
+  /**
+   * Visibilità dei campi del personaggio.
+   * true = pubblico (visibile a tutti), false = privato (solo master/owner).
+   * Usato dal wizard per mostrare l'EyeIcon.
+   */
+  fieldVisibility: Record<string, boolean>;
 }
 
 /**

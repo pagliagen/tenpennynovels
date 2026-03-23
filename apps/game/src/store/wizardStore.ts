@@ -892,12 +892,25 @@ export const useWizardStore = create<WizardStore>()(
       validateStep: (step) => {
         const state = get();
         const validators: Record<number, () => import('@/types/wizard').ValidationResult> = {
-          1: () => require('@/components/character/wizard/validation/wizardValidation').validateStep1(state.basicInfo),
+          1: () => require('@/components/character/wizard/validation/wizardValidation').validateStep1(state.basicInfo, state.creationConfig),
           2: () => require('@/components/character/wizard/validation/wizardValidation').validateStep2(state.occupation),
           3: () => require('@/components/character/wizard/validation/wizardValidation').validateStep3(state.stats, state.creationConfig),
           4: () => require('@/components/character/wizard/validation/wizardValidation').validateStep4(state.skills, state.stats, state.occupation, state.dynamicSkills, state.creationConfig),
-          5: () => require('@/components/character/wizard/validation/wizardValidation').validateStep5(state.background),
-          6: () => ({ valid: true, errors: {} }),
+          5: () => require('@/components/character/wizard/validation/wizardValidation').validateStep5(state.background, state.creationConfig),
+          6: () => {
+            const v = require('@/components/character/wizard/validation/wizardValidation');
+            const allValid = [1, 2, 3, 4, 5].every((s) => {
+              const r = {
+                1: v.validateStep1(state.basicInfo, state.creationConfig),
+                2: v.validateStep2(state.occupation),
+                3: v.validateStep3(state.stats, state.creationConfig),
+                4: v.validateStep4(state.skills, state.stats, state.occupation, state.dynamicSkills, state.creationConfig),
+                5: v.validateStep5(state.background, state.creationConfig),
+              }[s];
+              return r?.valid ?? true;
+            });
+            return { valid: allValid, errors: {} };
+          },
         };
         const validator = validators[step];
         return validator ? validator() : { valid: true, errors: {} };

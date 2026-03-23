@@ -642,10 +642,18 @@ export class CharacterController {
         } else {
           // Altri utenti vedono solo quello che sono autorizzati a vedere
           logger.info('Filtering character for other user', { isMaster });
+          let fieldVisibility: Record<string, boolean> | undefined;
+          try {
+            const rulesConfig = await CharacterCreationConfigService.getInstance().loadConfig();
+            fieldVisibility = rulesConfig.fieldVisibility;
+          } catch {
+            // Se la config non è disponibile, filterForPublic usa il fallback hardcoded
+          }
           filteredCharacter = CharacterVisibilityFilter.filterCharacter(
             characterJson,
             userId,
-            isMaster
+            isMaster,
+            fieldVisibility
           );
         }
         logger.info('Character filtering completed');
@@ -1007,10 +1015,18 @@ export class CharacterController {
         filteredCharacter = characterJson;
       } else {
         // Altri: solo dati pubblici, oppure tutto se ha game:character:read:others:private
+        let fieldVisibility: Record<string, boolean> | undefined;
+        try {
+          const rulesConfig = await CharacterCreationConfigService.getInstance().loadConfig();
+          fieldVisibility = rulesConfig.fieldVisibility;
+        } catch {
+          // Se la config non è disponibile, filterForPublic usa il fallback hardcoded
+        }
         filteredCharacter = CharacterVisibilityFilter.filterCharacter(
-          characterJson, 
-          userId, 
-          isMaster
+          characterJson,
+          userId,
+          isMaster,
+          fieldVisibility
         );
       }
 

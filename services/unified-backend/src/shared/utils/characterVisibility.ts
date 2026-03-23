@@ -1,41 +1,92 @@
 import { Character, FilteredCharacter } from '../types/character';
 
 /**
+ * Campi sempre pubblici indipendentemente dalla configurazione fieldVisibility.
+ * Sono metadati di sistema o info di presenza che non contengono dati sensibili.
+ */
+const SYSTEM_PUBLIC_FIELDS: (keyof Character)[] = [
+  'id',
+  'physicalDescription',
+  'publicDescription',
+  'socialClass',
+  'visibleMarks',
+  'currentLocation',
+  'isActive',
+  'isBot',
+  'playerStatus',
+  'createdAt',
+  'updatedAt',
+];
+
+/**
+ * Campi background (sotto character.background) la cui visibilità
+ * è configurabile tramite fieldVisibility.
+ */
+const BACKGROUND_SUBFIELDS = [
+  'briefHistory',
+  'significantEvents',
+  'importantRelationships',
+  'personality',
+  'ideology',
+] as const;
+
+/**
  * Utility per filtrare i dati del personaggio in base ai permessi dell'utente
  */
 export class CharacterVisibilityFilter {
-  
+
   /**
-   * Filtra i dati del personaggio per la visualizzazione pubblica
-   * (tutti possono vedere questi campi)
+   * Filtra i dati del personaggio per la visualizzazione pubblica.
+   * Quando fieldVisibility è fornita (dalla config DB), il filtro è dinamico.
+   * In assenza, usa la lista hardcoded di fallback per retrocompatibilità.
    */
-  static filterForPublic(character: Character): FilteredCharacter {
-    return {
-      id: character.id,
-      name: character.name,
-      apparentAge: character.apparentAge,
-      physicalDescription: character.physicalDescription,
-      publicDescription: character.publicDescription,
-      occupation: character.occupation,
-      socialClass: character.socialClass,
-      visibleMarks: character.visibleMarks, // Segni visibili sono pubblici
+  static filterForPublic(
+    character: Character,
+    fieldVisibility?: Record<string, boolean>
+  ): FilteredCharacter {
+    const result: Partial<Character> = {};
 
-      // Altri campi sempre pubblici
-      currentLocation: character.currentLocation,
-      isActive: character.isActive,
-      isBot: character.isBot, // Indica se è un bot (campo pubblico)
-      playerStatus: character.playerStatus,
-      createdAt: character.createdAt,
-      updatedAt: character.updatedAt
+    // System fields: sempre pubblici
+    for (const field of SYSTEM_PUBLIC_FIELDS) {
+      if ((character as any)[field] !== undefined) {
+        (result as any)[field] = (character as any)[field];
+      }
+    }
 
-      // CAMPI PRIVATI (esclusi dalla vista pubblica):
-      // - hiddenMarks (segni nascosti)
-      // - pathologies (patologie)
-      // - physicalInjuries (ferite fisiche)
-      // - activeWounds (ferite attive)
-      // - currentCondition (condizione attuale)
-      // - privateDescription (descrizione privata)
-    };
+    if (fieldVisibility) {
+      // Campi top-level configurabili
+      for (const [field, isPublic] of Object.entries(fieldVisibility)) {
+        if (!isPublic) continue;
+        if (BACKGROUND_SUBFIELDS.includes(field as any)) continue;
+
+        if ((character as any)[field] !== undefined) {
+          (result as any)[field] = (character as any)[field];
+        }
+      }
+
+      // Background: includi i sotto-campi pubblici
+      const publicBackgroundFields = BACKGROUND_SUBFIELDS.filter(
+        (f) => fieldVisibility[f] === true
+      );
+      if (publicBackgroundFields.length > 0 && character.background) {
+        const partialBackground: Record<string, any> = {};
+        for (const f of publicBackgroundFields) {
+          if ((character.background as any)[f] !== undefined) {
+            partialBackground[f] = (character.background as any)[f];
+          }
+        }
+        if (Object.keys(partialBackground).length > 0) {
+          (result as any).background = partialBackground;
+        }
+      }
+    } else {
+      // Fallback: lista hardcoded (retrocompatibilità)
+      result.name = character.name;
+      result.apparentAge = character.apparentAge;
+      result.occupation = character.occupation;
+    }
+
+    return result as FilteredCharacter;
   }
 
   /**
@@ -43,7 +94,6 @@ export class CharacterVisibilityFilter {
    * (i master possono vedere tutto)
    */
   static filterForMaster(character: Character): FilteredCharacter {
-    // I master possono vedere tutti i campi
     return { ...character };
   }
 
@@ -56,38 +106,38 @@ export class CharacterVisibilityFilter {
   }
 
   /**
-   * Determina il livello di accesso e filtra di conseguenza
+   * Determina il livello di accesso e filtra di conseguenza.
+   * Se fieldVisibility è fornita, il filtro pubblico è dinamico (da DB config).
    */
   static filterCharacter(
-    character: Character, 
-    requestingUserId: string, 
-    isMaster: boolean = false
+    character: Character,
+    requestingUserId: string,
+    isMaster: boolean = false,
+    fieldVisibility?: Record<string, boolean>
   ): FilteredCharacter {
-    
-    // Il proprietario del personaggio può vedere tutto
+
     if (character.userId === requestingUserId) {
       return this.filterForOwner(character);
     }
-    
-    // I master possono vedere tutto
+
     if (isMaster) {
       return this.filterForMaster(character);
     }
-    
-    // Altri utenti vedono solo i campi pubblici
-    return this.filterForPublic(character);
+
+    return this.filterForPublic(character, fieldVisibility);
   }
 
   /**
    * Filtra un array di personaggi
    */
   static filterCharacters(
-    characters: Character[], 
-    requestingUserId: string, 
-    isMaster: boolean = false
+    characters: Character[],
+    requestingUserId: string,
+    isMaster: boolean = false,
+    fieldVisibility?: Record<string, boolean>
   ): FilteredCharacter[] {
-    return characters.map(character => 
-      this.filterCharacter(character, requestingUserId, isMaster)
+    return characters.map(character =>
+      this.filterCharacter(character, requestingUserId, isMaster, fieldVisibility)
     );
   }
 
@@ -95,8 +145,8 @@ export class CharacterVisibilityFilter {
    * Controlla se un utente può vedere i segreti di un personaggio
    */
   static canViewSecrets(
-    character: Character, 
-    requestingUserId: string, 
+    character: Character,
+    requestingUserId: string,
     isMaster: boolean = false
   ): boolean {
     return character.userId === requestingUserId || isMaster;
@@ -106,8 +156,8 @@ export class CharacterVisibilityFilter {
    * Controlla se un utente può vedere la nazionalità di un personaggio
    */
   static canViewNationality(
-    character: Character, 
-    requestingUserId: string, 
+    character: Character,
+    requestingUserId: string,
     isMaster: boolean = false
   ): boolean {
     return character.userId === requestingUserId || isMaster;

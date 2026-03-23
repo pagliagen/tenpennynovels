@@ -47,21 +47,38 @@ export interface CharacterCreationConfig {
     creationCapWithOccupation: number;
   };
   occupation: any;
-  limits: any;
+  limits: {
+    age: { min: number; max: number };
+    weight: { min: number; max: number; unit: string };
+    height: { min: number; max: number; unit: string };
+    backgroundFields: {
+      briefHistory:           { minChar: number; maxChar: number };
+      significantEvents:      { minChar: number; maxChar: number };
+      importantRelationships: { minChar: number; maxChar: number };
+      personality:            { minChar: number; maxChar: number };
+      ideology:               { minChar: number; maxChar: number };
+    };
+  };
   socialClasses: any[];
   formulas: any;
+  /**
+   * Visibilità dei campi del personaggio.
+   * true = pubblico (visibile a tutti), false = privato (solo master/owner).
+   */
+  fieldVisibility?: Record<string, boolean>;
 }
 
 interface CreationConfigResponse {
   statsConfig: CharacterCreationConfig['stats'];
   skillsConfig: CharacterCreationConfig['skills'];
   occupation: any;
-  limits: any;
+  limits: CharacterCreationConfig['limits'];
   socialClasses: any[];
   formulas: any;
   derivedStats: any;
   occupations: any[];
   skills: any[];
+  fieldVisibility?: Record<string, boolean>;
 }
 
 /**
@@ -316,6 +333,7 @@ export const characterApi = {
       limits: c.limits,
       socialClasses: c.socialClasses,
       formulas: c.formulas,
+      fieldVisibility: c.fieldVisibility,
     };
   },
 

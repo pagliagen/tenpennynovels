@@ -13,6 +13,7 @@
 
 import { useWizardStore } from '@/store/wizardStore';
 import styles from '@/styles/components/character/wizard/Step1BasicInfo.module.scss';
+import { EyeIcon } from '../EyeIcon';
 
 /**
  * Calculate age from birthdate (relative to 1895 Victorian setting)
@@ -36,32 +37,25 @@ const calculateAge = (birthDateStr: string): number | null => {
   return age;
 };
 
-/**
- * Red Eye icon for private fields
- */
-const EyeIcon = ({ visible }: { visible: boolean }) => (
-  <svg
-    width="12"
-    height="12"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    style={{ visibility: visible ? 'visible' : 'hidden' }}
-  >
-    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-    <circle cx="12" cy="12" r="3" />
-    <line x1="1" y1="1" x2="23" y2="23" />
-  </svg>
-);
+interface Step1BasicInfoProps {
+  fieldVisibility?: Record<string, boolean>;
+}
 
 /**
  * Step 1: Basic Info Component
  */
-export function Step1BasicInfo(): JSX.Element {
-  const { basicInfo, updateBasicInfo, occupation, updateOccupation, stepErrors } = useWizardStore();
+export function Step1BasicInfo({ fieldVisibility }: Step1BasicInfoProps): JSX.Element {
+  const { basicInfo, updateBasicInfo, occupation, updateOccupation, stepErrors, creationConfig } = useWizardStore();
+
+  const ageMin = creationConfig?.limits.age.min ?? 16;
+  const ageMax = creationConfig?.limits.age.max ?? 80;
+
+  /**
+   * Restituisce true (eye icon visibile) se il campo è privato.
+   * Quando fieldVisibility non è ancora caricata, usa il default hardcoded.
+   */
+  const isPrivate = (configKey: string, defaultIsPublic = true): boolean =>
+    fieldVisibility ? !fieldVisibility[configKey] : !defaultIsPublic;
   const errors = stepErrors[1] || {};
 
   const handleChange = (field: keyof typeof basicInfo, value: any) => {
@@ -72,7 +66,7 @@ export function Step1BasicInfo(): JSX.Element {
     const age = calculateAge(value);
     updateBasicInfo('birthDate', value);
 
-    if (age !== null && age >= 18 && age <= 80) {
+    if (age !== null && age >= ageMin && age <= ageMax) {
       updateBasicInfo('age', age);
       updateBasicInfo('apparentAge', age);
     }
@@ -87,7 +81,7 @@ export function Step1BasicInfo(): JSX.Element {
           <div className={styles.formRow}>
             <div className={styles.formGroup}>
               <label htmlFor="firstName" className={styles.label}>
-                <EyeIcon visible={false} /> NOME <span className={styles.required}>*</span>
+                <EyeIcon visible={isPrivate('name')} /> NOME <span className={styles.required}>*</span>
               </label>
               <input
                 type="text"
@@ -101,7 +95,7 @@ export function Step1BasicInfo(): JSX.Element {
 
             <div className={styles.formGroup}>
               <label htmlFor="lastName" className={styles.label}>
-                <EyeIcon visible={false} /> COGNOME <span className={styles.required}>*</span>
+                <EyeIcon visible={isPrivate('surname')} /> COGNOME <span className={styles.required}>*</span>
               </label>
               <input
                 type="text"
@@ -118,7 +112,7 @@ export function Step1BasicInfo(): JSX.Element {
           <div className={styles.formRow}>
             <div className={styles.formGroup}>
               <label htmlFor="birthDate" className={styles.label}>
-                <EyeIcon visible={true} /> DATA DI NASCITA <span className={styles.required}>*</span>
+                <EyeIcon visible={isPrivate('birthDate', false)} /> DATA DI NASCITA <span className={styles.required}>*</span>
               </label>
               <input
                 type="text"
@@ -132,7 +126,7 @@ export function Step1BasicInfo(): JSX.Element {
 
             <div className={styles.formGroup}>
               <label htmlFor="apparentAge" className={styles.label}>
-                <EyeIcon visible={false} /> ETÀ APPARENTE
+                <EyeIcon visible={isPrivate('apparentAge')} /> ETÀ APPARENTE
               </label>
               <input
                 type="number"
@@ -140,8 +134,8 @@ export function Step1BasicInfo(): JSX.Element {
                 value={basicInfo.apparentAge}
                 onChange={(e) => handleChange('apparentAge', parseInt(e.target.value) || 0)}
                 className={styles.input}
-                min={16}
-                max={80}
+                min={ageMin}
+                max={ageMax}
               />
             </div>
           </div>
@@ -150,7 +144,7 @@ export function Step1BasicInfo(): JSX.Element {
           <div className={styles.formRow}>
             <div className={styles.formGroup}>
               <label htmlFor="gender" className={styles.label}>
-                <EyeIcon visible={false} /> GENERE <span className={styles.required}>*</span>
+                <EyeIcon visible={isPrivate('gender')} /> GENERE <span className={styles.required}>*</span>
               </label>
               <select
                 id="gender"
@@ -166,7 +160,7 @@ export function Step1BasicInfo(): JSX.Element {
 
             <div className={styles.formGroup}>
               <label htmlFor="maritalStatus" className={styles.label}>
-                <EyeIcon visible={true} /> STATO CIVILE
+                <EyeIcon visible={isPrivate('maritalStatus', false)} /> STATO CIVILE
               </label>
               <select
                 id="maritalStatus"
@@ -188,7 +182,7 @@ export function Step1BasicInfo(): JSX.Element {
           <div className={styles.formRow}>
             <div className={styles.formGroup}>
               <label htmlFor="height" className={styles.label}>
-                <EyeIcon visible={false} /> ALTEZZA <span className={styles.required}>*</span>
+                <EyeIcon visible={isPrivate('height')} /> ALTEZZA <span className={styles.required}>*</span>
               </label>
               <input
                 type="text"
@@ -196,13 +190,13 @@ export function Step1BasicInfo(): JSX.Element {
                 value={basicInfo.height}
                 onChange={(e) => handleChange('height', e.target.value)}
                 className={`${styles.input} ${errors.height ? styles.inputError : ''}`}
-                placeholder="es. 175 cm"
+                placeholder={`es. 175 ${creationConfig?.limits.height.unit ?? 'cm'}`}
               />
             </div>
 
             <div className={styles.formGroup}>
               <label htmlFor="weight" className={styles.label}>
-                <EyeIcon visible={false} /> PESO <span className={styles.required}>*</span>
+                <EyeIcon visible={isPrivate('weight')} /> PESO <span className={styles.required}>*</span>
               </label>
               <input
                 type="text"
@@ -210,7 +204,7 @@ export function Step1BasicInfo(): JSX.Element {
                 value={basicInfo.weight}
                 onChange={(e) => handleChange('weight', e.target.value)}
                 className={`${styles.input} ${errors.weight ? styles.inputError : ''}`}
-                placeholder="es. 70 kg"
+                placeholder={`es. 70 ${creationConfig?.limits.weight.unit ?? 'kg'}`}
               />
             </div>
           </div>
@@ -218,7 +212,7 @@ export function Step1BasicInfo(): JSX.Element {
           {/* SEGNI PARTICOLARI NON VISIBILI */}
           <div className={styles.formGroupFull}>
             <label htmlFor="hiddenMarks" className={styles.label}>
-              <EyeIcon visible={true} /> SEGNI PARTICOLARI NON VISIBILI
+              <EyeIcon visible={isPrivate('hiddenMarks', false)} /> SEGNI PARTICOLARI NON VISIBILI
             </label>
             <textarea
               id="hiddenMarks"
@@ -255,7 +249,7 @@ export function Step1BasicInfo(): JSX.Element {
           {/* PATOLOGIE */}
           <div className={styles.formGroupFull}>
             <label htmlFor="pathologies" className={styles.label}>
-              <EyeIcon visible={true} /> PATOLOGIE
+              <EyeIcon visible={isPrivate('pathologies', false)} /> PATOLOGIE
             </label>
             <textarea
               id="pathologies"
@@ -272,7 +266,7 @@ export function Step1BasicInfo(): JSX.Element {
           {/* FEDINA PENALE */}
           <div className={styles.formGroupFull}>
             <label htmlFor="criminalRecord" className={styles.label}>
-              <EyeIcon visible={true} /> FEDINA PENALE
+              <EyeIcon visible={isPrivate('criminalRecord', false)} /> FEDINA PENALE
             </label>
             <textarea
               id="criminalRecord"
@@ -291,7 +285,7 @@ export function Step1BasicInfo(): JSX.Element {
           <div className={styles.formGroupFull}>
           <div className={styles.formGroup}>
             <label htmlFor="educationTitle" className={styles.label}>
-              <EyeIcon visible={true} /> TITOLO DI STUDIO
+              <EyeIcon visible={isPrivate('educationTitle', false)} /> TITOLO DI STUDIO
             </label>
             <input
               type="text"
@@ -311,7 +305,7 @@ export function Step1BasicInfo(): JSX.Element {
           <div className={styles.formGroupFull}> 
           <div className={styles.formGroup}>
             <label htmlFor="currentOccupation" className={styles.label}>
-              <EyeIcon visible={false} /> OCCUPAZIONE ATTUALE
+              <EyeIcon visible={isPrivate('occupation')} /> OCCUPAZIONE ATTUALE
             </label>
             <input
               type="text"

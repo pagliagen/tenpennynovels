@@ -100,6 +100,7 @@ export class CharacterCreationController {
         socialClasses: rulesConfig.socialClasses,
         occupation: rulesConfig.occupation,
         formulas: rulesConfig.formulas,
+        fieldVisibility: rulesConfig.fieldVisibility,
       };
 
       logger.info('[CharacterCreationController] Complete character creation config requested', {

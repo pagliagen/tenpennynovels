@@ -186,13 +186,14 @@ function WizardContainerInner({ characterId, onSubmittingChange }: WizardContain
       skills,
       dynamicSkills,
       background,
+      creationConfig,
     });
     const validation: Record<number, boolean> = {};
     for (let i = 1; i <= 6; i++) {
       validation[i] = results[i]?.valid ?? true;
     }
     return validation;
-  }, [basicInfo, occupation, stats, skills, dynamicSkills, background]);
+  }, [basicInfo, occupation, stats, skills, dynamicSkills, background, creationConfig]);
 
   const handleNext = () => {
     nextStep();
@@ -277,13 +278,15 @@ function WizardContainerInner({ characterId, onSubmittingChange }: WizardContain
 
   const isSubmitting = createCharacter.isPending || updateCharacter.isPending;
 
+  const fieldVisibility = creationConfig?.fieldVisibility;
+
   const renderStepContent = () => {
     switch (currentStep) {
-      case 1: return <Step1BasicInfo />;
+      case 1: return <Step1BasicInfo fieldVisibility={fieldVisibility} />;
       case 2: return <Step2Occupation />;
       case 3: return <Step3Stats />;
       case 4: return <Step4Skills />;
-      case 5: return <Step5Background />;
+      case 5: return <Step5Background fieldVisibility={fieldVisibility} />;
       case 6: return <Step6Review onSubmit={handleSubmit} isSubmitting={isSubmitting} />;
       default: return null;
     }
