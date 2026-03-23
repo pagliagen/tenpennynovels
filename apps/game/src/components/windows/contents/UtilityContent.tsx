@@ -10,10 +10,12 @@
 
 'use client';
 
+import { TicketPanelContent } from '@/components/tickets/TicketPanelContent';
+import styles from '@/styles/components/windows/UtilityContent.module.scss';
 import { WindowData } from '@/types/window-manager';
+
 import { CharacterDirectoryContent } from './CharacterDirectoryContent';
 import { CharacterFaceClaimContent } from './CharacterFaceClaimContent';
-import { TicketPanelContent } from '@/components/tickets/TicketPanelContent';
 
 /**
  * Utility Content Props
@@ -52,12 +54,14 @@ export function UtilityContent({ utilityName, data }: UtilityContentProps): JSX.
       return <TicketPanelContent />;
 
     default:
-      // Stub for unknown utility types
+      // Stub for unknown utility types (fallback for extensibility)
       return (
-        <div style={{ padding: '2rem' }}>
-          <h3>Utility Window (Stub)</h3>
+        <div className={styles.stub}>
+          <h3>Utility Window</h3>
           <p>Utility Name: {utilityName}</p>
-          <p>TODO: Implement utility-specific UI based on utilityName</p>
+          <p className={styles.stubHint}>
+            This utility type is not yet implemented.
+          </p>
           <pre>{JSON.stringify(data, null, 2)}</pre>
         </div>
       );

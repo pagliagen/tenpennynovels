@@ -23,18 +23,18 @@ interface ApiResponse<T = any> {
 
 ### Helper Functions
 
-Usa sempre helper da `utils/apiResponse.ts`:
+Usa sempre helper da `services/unified-backend/src/shared/utils/apiResponse.ts` (import tipico: `from '@shared/utils/apiResponse'`).
 
 #### Success Response (Single Record)
 ```typescript
-import { successResponse, getRequestId } from '../utils/apiResponse';
+import { successResponse, getRequestId } from '@shared/utils/apiResponse';
 
 res.json(successResponse(data, message, getRequestId(req)));
 ```
 
 #### List Response (con Paginazione)
 ```typescript
-import { listResponse, getRequestId } from '../utils/apiResponse';
+import { listResponse, getRequestId } from '@shared/utils/apiResponse';
 
 const pagination: PaginationInfo = {
   page: 1,
@@ -50,7 +50,7 @@ res.json(listResponse(items, pagination, message, getRequestId(req)));
 
 #### Error Response
 ```typescript
-import { errorResponse, getRequestId } from '../utils/apiResponse';
+import { errorResponse, getRequestId } from '@shared/utils/apiResponse';
 
 res.status(400).json(errorResponse(
   'Error message',
@@ -67,8 +67,8 @@ res.status(400).json(errorResponse(
 
 ```typescript
 import { Request, Response } from 'express';
-import { logger } from '../utils/logger';
-import { successResponse, errorResponse, listResponse, getRequestId } from '../utils/apiResponse';
+import { logger } from '@shared/utils/logger';
+import { successResponse, errorResponse, listResponse, getRequestId } from '@shared/utils/apiResponse';
 
 export class [ControllerName] {
   /**
@@ -104,6 +104,7 @@ export class [ControllerName] {
 ```typescript
 import { Router } from 'express';
 import { [ControllerName] } from '../controllers/[ControllerName]';
+// Esempio modulo game:
 import { AuthMiddleware } from '../middleware/auth';
 
 const router = Router();
@@ -177,22 +178,16 @@ try {
 }
 ```
 
-## Autenticazione
+## Autenticazione (tutto sullo **unified-backend**, moduli distinti)
 
-### Game Backend
-- Usa `CharacterSessionMiddleware`
-- Accesso a `req.character` dopo middleware
-- Verifica character attivo e approvato
+### Modulo `game`
+- Usa `AuthMiddleware` da `modules/game/middleware/auth` (`requireUserAuth`, ecc.) e middleware di dominio (`gamePermissions`, validazione character dove previsto). Non esiste una classe `CharacterSessionMiddleware` nel repo.
 
-### Management Backend
-- Usa `AdminAuthMiddleware`
-- Verifica permessi admin
-- Log tutte le operazioni
+### Modulo `admin` (app Management)
+- Usa `AdminAuthMiddleware` e permessi granulari; audit dove implementato.
 
-### Authentication Backend
-- Gestisce autenticazione utente
-- JWT tokens con HttpOnly cookies
-- Character session management separato
+### Modulo `auth`
+- Login/registrazione, JWT in cookie HttpOnly; selezione personaggio `POST /auth/select-character` con sessione in **Redis** (`SessionStore`) e header **`X-Session-Id`** lato client (cookie `character_context` in deprecazione per alcuni flussi).
 
 ## Best Practices
 

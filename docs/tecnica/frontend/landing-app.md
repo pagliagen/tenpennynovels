@@ -1,6 +1,6 @@
 # Landing App
 
-**Navigation**: [Home](../INDEX.md) > [Frontend](./README.md) > Landing App
+**Navigation**: [Home](../../INDEX.md) > [Frontend](./README.md) > Landing App
 
 **Status**: ✅ Production Ready | **Last Updated**: 2026-03-08
 
@@ -153,4 +153,4 @@ apps/landing/
 ## Related Documentation
 
 - [Frontend README](./README.md) - Overview
-- [Backend API - Auth](../02-backend/api-reference.md) - Auth endpoints
+- [API Endpoints](../backend/api-endpoints.md) e [Authentication](../backend/authentication.md)

@@ -6,6 +6,7 @@ import { SEO } from '@/components/SEO';
 import { useAuthStore } from '@/store/authStore';
 import { useFavorites } from '@/hooks/useFavorites';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import styles from '@/styles/pages/PreferitiIndex.module.scss';
 
 export default function PreferitiIndex() {
   const router = useRouter();
@@ -24,8 +25,8 @@ export default function PreferitiIndex() {
   if (!isAuthenticated) {
     return (
       <>
-        <SEO title="Ten Penny Novels | Preferiti" description="I tuoi documenti preferiti" />
-        <div style={{ textAlign: 'center', padding: '64px' }}>
+        <SEO title="Ten Penny Novels | Preferiti" description="I tuoi documenti preferiti" noindex={true} nofollow={true} />
+        <div className={styles.centerBox}>
           <p>Devi essere autenticato per visualizzare i tuoi documenti preferiti.</p>
         </div>
       </>
@@ -35,8 +36,8 @@ export default function PreferitiIndex() {
   if (!isLoading && favorites && favorites.length === 0) {
     return (
       <>
-        <SEO title="Ten Penny Novels | Preferiti" description="I tuoi documenti preferiti" />
-        <div style={{ textAlign: 'center', padding: '64px', fontStyle: 'italic' }}>
+        <SEO title="Ten Penny Novels | Preferiti" description="I tuoi documenti preferiti" noindex={true} nofollow={true} />
+        <div className={styles.centerBoxItalic}>
           <p>Non hai ancora aggiunto documenti ai preferiti.</p>
           <p>
             Usa il pulsante <strong>&#9734; Aggiungi ai preferiti</strong> nelle pagine dei documenti
@@ -49,7 +50,7 @@ export default function PreferitiIndex() {
 
   return (
     <>
-      <SEO title="Ten Penny Novels | Preferiti" description="I tuoi documenti preferiti" />
+      <SEO title="Ten Penny Novels | Preferiti" description="I tuoi documenti preferiti" noindex={true} nofollow={true} />
       <LoadingSpinner fullPage message="Caricamento preferiti..." />
     </>
   );

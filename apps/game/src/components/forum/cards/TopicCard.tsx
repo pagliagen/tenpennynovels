@@ -1,9 +1,11 @@
 'use client';
 
-import { useForumStore } from '@/store/forumStore';
+import type { CSSProperties } from 'react';
+
 import { useToggleFavorite } from '@/hooks/useForumTopics';
-import type { ForumTopic, TopicAccessRule } from '@/types/forum';
+import { useForumStore } from '@/store/forumStore';
 import styles from '@/styles/components/forum/TopicCard.module.scss';
+import type { ForumTopic, TopicAccessRule } from '@/types/forum';
 
 interface TopicCardProps {
   topic: ForumTopic;
@@ -59,7 +61,7 @@ export function TopicCard({ topic, onFavoriteToggle }: TopicCardProps) {
         {topic.color && (
           <div
             className={styles.colorBar}
-            style={{ backgroundColor: topic.color }}
+            style={{ '--topic-color': topic.color } as CSSProperties}
           />
         )}
         {topic.icon && <span className={styles.icon}>{topic.icon}</span>}

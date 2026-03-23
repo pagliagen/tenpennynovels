@@ -319,7 +319,7 @@ export default function CharacterPermissions() {
             }}
             data={{}}
             customContent={
-              <div style={{ padding: '1rem' }}>
+              <div className={styles.sidePanelBody}>
                 <RoleCheckboxGroup
                   title="🧑‍🤝‍🧑 Ruoli"
                   roles={CHARACTER_ROLES}

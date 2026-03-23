@@ -12,13 +12,15 @@
 
 'use client';
 
-import type { ChatMessage } from '@/types/chat';
 import { useMessageInteractions } from '@/hooks/useMessageInteractions';
-import { MessageMenu } from '../MessageMenu';
+import styles from '@/styles/components/chat/message-types/StatCheckMessage.module.scss';
+import type { ChatMessage } from '@/types/chat';
+
+import { ConfirmDeleteDialog } from '../ConfirmDeleteDialog';
 import { MessageEditableContent } from '../MessageEditableContent';
 import { MessageFooter } from '../MessageFooter';
-import { ConfirmDeleteDialog } from '../ConfirmDeleteDialog';
-import styles from '@/styles/components/chat/message-types/StatCheckMessage.module.scss';
+import { MessageMenu } from '../MessageMenu';
+
 
 interface StatCheckMessageProps {
   message: ChatMessage;
@@ -99,12 +101,12 @@ export function StatCheckMessage({ message, currentCharacterId }: StatCheckMessa
               <div className={styles.messageContent}>{message.content}</div>
 
               {/* Stat check from diceResult (new format - no target exposed) */}
-              {diceResult && (diceResult as any).statName && (
+              {diceResult?.statName && (
                 <div className={styles.statCheckResult}>
                   <div className={styles.rollDisplay}>
                     <span className={styles.rollValue}>🎲 {diceResult.result}</span>
                     <span className={styles.successDegree}>
-                      {(diceResult as any).successDegree || (diceResult.success ? 'Successo' : 'Fallimento')}
+                      {diceResult.successDegree || (diceResult.success ? 'Successo' : 'Fallimento')}
                     </span>
                   </div>
                 </div>

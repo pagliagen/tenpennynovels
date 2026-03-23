@@ -22,6 +22,8 @@
 
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 
+import styles from '@/styles/components/ErrorBoundary.module.scss';
+
 /**
  * Error Boundary Props
  */
@@ -93,7 +95,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     // Log error to console for debugging
     console.error('ErrorBoundary caught error:', error, errorInfo);
 
-    // TODO: Send error to error tracking service (Sentry, LogRocket, etc.)
+    // Note: Error tracking service (Sentry, LogRocket) can be added here in production
     // Example: errorTrackingService.logError(error, errorInfo);
   }
 
@@ -126,120 +128,34 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
       // Default fallback UI (Victorian-styled error message)
       return (
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            minHeight: '100vh',
-            padding: '2rem',
-            backgroundColor: '#1a0f0a',
-            color: '#f5f5dc',
-            fontFamily: "'IM Fell English', serif",
-          }}
-        >
-          <div
-            style={{
-              maxWidth: '600px',
-              width: '100%',
-              padding: '3rem',
-              backgroundColor: 'rgba(139, 69, 19, 0.2)',
-              border: '2px solid rgba(212, 175, 55, 0.5)',
-              borderRadius: '8px',
-              textAlign: 'center',
-            }}
-          >
-            <h1
-              style={{
-                fontSize: '2.5rem',
-                marginBottom: '1.5rem',
-                color: '#ffa748',
-                fontWeight: 'bold',
-              }}
-            >
+        <div className={styles.root}>
+          <div className={styles.card}>
+            <h1 className={styles.title}>
               Si è verificato un errore
             </h1>
 
-            <p
-              style={{
-                fontSize: '1.2rem',
-                marginBottom: '2rem',
-                lineHeight: '1.6',
-                color: '#f5f5dc',
-              }}
-            >
+            <p className={styles.lead}>
               Ci scusiamo per l'inconveniente. Si è verificato un errore imprevisto durante il
               caricamento della pagina.
             </p>
 
-            {/* Show error message in development mode */}
             {process.env.NODE_ENV === 'development' && (
-              <div
-                style={{
-                  marginBottom: '2rem',
-                  padding: '1rem',
-                  backgroundColor: 'rgba(220, 53, 69, 0.1)',
-                  border: '1px solid rgba(220, 53, 69, 0.3)',
-                  borderRadius: '4px',
-                  textAlign: 'left',
-                  fontFamily: 'monospace',
-                  fontSize: '0.9rem',
-                  color: '#dc3545',
-                  wordBreak: 'break-word',
-                }}
-              >
+              <div className={styles.devBox}>
                 <strong>Errore (dev only):</strong>
                 <br />
                 {error.message}
               </div>
             )}
 
-            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
-              <button
-                onClick={this.resetError}
-                style={{
-                  padding: '0.75rem 2rem',
-                  fontSize: '1.1rem',
-                  fontFamily: "'IM Fell English', serif",
-                  backgroundColor: '#ffa748',
-                  color: '#1a0f0a',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontWeight: 'bold',
-                  transition: 'background-color 0.2s',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#DAA520';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#ffa748';
-                }}
-              >
+            <div className={styles.actions}>
+              <button type="button" onClick={this.resetError} className={styles.primaryButton}>
                 Riprova
               </button>
 
               <button
+                type="button"
                 onClick={() => window.location.reload()}
-                style={{
-                  padding: '0.75rem 2rem',
-                  fontSize: '1.1rem',
-                  fontFamily: "'IM Fell English', serif",
-                  backgroundColor: 'rgba(212, 175, 55, 0.2)',
-                  color: '#ffa748',
-                  border: '1px solid #ffa748',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontWeight: 'bold',
-                  transition: 'background-color 0.2s',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(212, 175, 55, 0.3)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(212, 175, 55, 0.2)';
-                }}
+                className={styles.secondaryButton}
               >
                 Ricarica pagina
               </button>

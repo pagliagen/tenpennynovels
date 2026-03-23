@@ -23,10 +23,12 @@
 
 import { createContext, useContext, useEffect, useRef, useState, useCallback, ReactNode } from 'react';
 import { io, Socket } from 'socket.io-client';
+
 import { WS_CONFIG } from '@/constants/config';
+import { playNotificationSound } from '@/lib/audio';
+import { wsClient } from '@/lib/websocket/client';
 import { useAuthStore } from '@/store/authStore';
 import { useUIStore } from '@/store/uiStore';
-import { playNotificationSound } from '@/lib/audio';
 
 /**
  * WebSocket Connection Status
@@ -47,7 +49,7 @@ export type ConnectionStatus = 'connecting' | 'connected' | 'disconnected' | 're
  */
 export interface LocationEvent {
   type: string;
-  data: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  data: any;  
 }
 
 /**
@@ -61,7 +63,7 @@ export interface LocationEvent {
  */
 export interface GlobalEvent {
   type: string;
-  data: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  data: any;  
 }
 
 /**
@@ -75,7 +77,7 @@ export interface GlobalEvent {
  */
 export interface MessageEvent {
   type: string;
-  data: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  data: any;  
 }
 
 /**
@@ -233,12 +235,22 @@ export function WebSocketProvider({ children }: WebSocketProviderProps): JSX.Ele
 
     setStatus('connecting');
 
+    // NEW FLOW: Read sessionId from sessionStorage (multi-tab support)
+    const sessionId = sessionStorage.getItem('character_session_id');
+
+    if (!sessionId) {
+      console.error('[WebSocket] No sessionId found in sessionStorage - cannot connect');
+      setStatus('error');
+      return;
+    }
+
     // Create Socket.IO connection
     const socket = io(WS_CONFIG.URL, {
       auth: {
-        characterId: selectedCharacter._id,
+        sessionId: sessionId,  // NEW: Send sessionId (opaque UUID) for multi-tab support
+        characterId: selectedCharacter._id, // DEPRECATED: Kept for backward compatibility
       },
-      withCredentials: true, // CRITICAL: Send HTTP-only cookies for authentication
+      withCredentials: true, // CRITICAL: Send HTTP-only cookies (auth_token) for user authentication
       reconnection: true,
       reconnectionAttempts: WS_CONFIG.MAX_RECONNECT_ATTEMPTS,
       reconnectionDelay: WS_CONFIG.RECONNECT_INTERVAL,
@@ -256,6 +268,9 @@ export function WebSocketProvider({ children }: WebSocketProviderProps): JSX.Ele
       setStatus('connected');
       reconnectAttemptsRef.current = 0;
 
+      // Register socket in singleton for use in stores
+      wsClient.setSocket(socket);
+
       // Trigger presence refetch after reconnect (catch up on missed events)
       socket.emit('request_presence_sync');
     });
@@ -263,6 +278,9 @@ export function WebSocketProvider({ children }: WebSocketProviderProps): JSX.Ele
     socket.on('disconnect', (reason) => {
       console.log('[WebSocket] Disconnected:', reason);
       setStatus('disconnected');
+
+      // Deregister socket from singleton
+      wsClient.setSocket(null);
     });
 
     socket.on('connect_error', (error) => {
@@ -323,11 +341,11 @@ export function WebSocketProvider({ children }: WebSocketProviderProps): JSX.Ele
             toastMessage = `Sussurro da ${message.characterName} in ${data.locationName || 'altra location'}`;
           }
         } else if (message.visibility === 'master_only') {
-          // Only notify if character is master/moderatore/gestore
-          if (character.gameplayRoles?.some((r: string) => ['master', 'moderatore', 'gestore'].includes(r))) {
-            shouldNotify = true;
-            toastMessage = `[Master] ${message.characterName} in ${data.locationName || 'altra chat'}`;
-          }
+          // IMPORTANT: Backend already filters who receives this WebSocket event.
+          // If we received it, we have permission to see it. Don't re-check roles here.
+          // Permissions are the single source of truth - enforced by backend.
+          shouldNotify = true;
+          toastMessage = `[Master] ${message.characterName} in ${data.locationName || 'altra chat'}`;
         } else if (message.visibility === 'public') {
           // Public message - notify everyone
           shouldNotify = true;
@@ -417,6 +435,12 @@ export function WebSocketProvider({ children }: WebSocketProviderProps): JSX.Ele
     socket.on('character_inactive', (data) => {
       globalCallbacksRef.current.forEach((callback) =>
         callback({ type: 'character_inactive', data })
+      );
+    });
+
+    socket.on('character_ban_updated', (data) => {
+      globalCallbacksRef.current.forEach((callback) =>
+        callback({ type: 'character_ban_updated', data })
       );
     });
 

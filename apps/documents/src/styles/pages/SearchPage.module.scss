@@ -1,0 +1,79 @@
+.page {
+  padding: 2rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.lead {
+  margin-bottom: 2rem;
+  color: #666;
+}
+
+.emptyState {
+  padding: 2rem;
+  text-align: center;
+  color: #666;
+}
+
+.emptyHint {
+  margin-top: 1rem;
+  font-size: 0.9rem;
+}
+
+.resultsLead {
+  margin-bottom: 1.5rem;
+  color: #666;
+}
+
+.resultList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.resultItem {
+  margin-bottom: 1.5rem;
+}
+
+.resultCard {
+  padding: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  transition: border-color 0.2s;
+}
+
+.resultLink {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #333;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.resultMeta {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.typeBadge {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  border-radius: 3px;
+  margin-right: 0.5rem;
+}
+
+.typeAmbientazione {
+  background: #e3f2fd;
+}
+
+.typeRegolamento {
+  background: #f3e5f5;
+}
+
+.resultUrl {
+  color: #999;
+}

@@ -27,4 +27,3 @@ export * from './occupation';
 export * from './characterRelation';
 export * from './security';
 export * from './websocket';
-// export * from './ai'; // TODO: Create AI types when needed

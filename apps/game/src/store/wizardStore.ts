@@ -23,6 +23,11 @@
 
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
+
+import type { CharacterCreationConfig } from '@/lib/api/character';
+import { characterApi } from '@/lib/api/character';
+import type { DamageBonusEntry } from '@/lib/api/gameConfig';
+import { gameConfigApi } from '@/lib/api/gameConfig';
 import type {
   WizardData,
   WizardBasicInfo,
@@ -35,10 +40,6 @@ import type {
   ValidationResult,
   CharacterCreatePayload,
 } from '@/types/wizard';
-import type { DamageBonusEntry } from '@/lib/api/gameConfig';
-import { gameConfigApi } from '@/lib/api/gameConfig';
-import type { CharacterCreationConfig } from '@/lib/api/character';
-import { characterApi } from '@/lib/api/character';
 
 const FORMULA_STAT_MAP: Record<string, string> = {
   str: 'strength', dex: 'dexterity', int: 'intelligence',
@@ -136,7 +137,6 @@ interface WizardStore extends WizardData {
 
   // Actions - Background (Step 5)
   updateBackground: (data: Partial<WizardBackground>) => void;
-  setBackgroundResponse: (questionIndex: number, response: string) => void;
 
   // Actions - Validation
   validateStep: (step: number) => ValidationResult;
@@ -175,7 +175,7 @@ const initialState = (): Omit<
   | 'addDynamicSkill'
   | 'removeDynamicSkill'
   | 'updateBackground'
-  | 'setBackgroundResponse'
+  | 'validateAll'
   | 'validateStep'
   | 'validateAll'
   | 'setStepErrors'
@@ -204,10 +204,10 @@ const initialState = (): Omit<
     firstName: '',
     lastName: '',
     birthDate: '',
-    birthplace: '', // lowercase (backend format)
+    birthPlace: '', // matches ICharacter.birthPlace
     age: 25,
     apparentAge: 25,
-    gender: '',
+    gender: '' as 'male' | 'female' | '',
     height: '',
     weight: '',
     eyeColor: '',
@@ -219,6 +219,8 @@ const initialState = (): Omit<
     illnesses: '',
     educationTitle: '',
     criminalRecord: '',
+    // Private health info (PRIVATE - owner/master only)
+    pathologies: '',
     // Step 5 fields (moved here for consistency with backend)
     publicDescription: '',
     privateDescription: '',
@@ -525,7 +527,18 @@ export const useWizardStore = create<WizardStore>()(
               stats: { totalPoints: 450, minValue: 20, maxStatsAbove80: 2, creationCap: 85, gameplayCap: 99 },
               skills: { totalPoints: 250, creationCap: 75, creationCapWithOccupation: 80 },
               occupation: {},
-              limits: {},
+              limits: {
+                age: { min: 16, max: 80 },
+                weight: { min: 30, max: 200, unit: 'kg' },
+                height: { min: 100, max: 250, unit: 'cm' },
+                backgroundFields: {
+                  briefHistory:           { minChar: 50,  maxChar: 4000 },
+                  significantEvents:      { minChar: 0,   maxChar: 2500 },
+                  importantRelationships: { minChar: 0,   maxChar: 2500 },
+                  personality:            { minChar: 50,  maxChar: 2500 },
+                  ideology:               { minChar: 0,   maxChar: 2500 },
+                },
+              },
               socialClasses: [],
               formulas: {},
             }
@@ -887,31 +900,28 @@ export const useWizardStore = create<WizardStore>()(
        * @param questionIndex - Question index (0-8)
        * @param response - Response text
        */
-      setBackgroundResponse: (questionIndex, response) => {
-        const { background } = get();
-        const updatedResponses = [...(background.backgroundResponses || [])];
-        updatedResponses[questionIndex] = {
-          question: updatedResponses[questionIndex]?.question || '',
-          response,
-        };
-
-        set({
-          background: {
-            ...background,
-            backgroundResponses: updatedResponses,
-          },
-        });
-      },
-
       validateStep: (step) => {
         const state = get();
         const validators: Record<number, () => import('@/types/wizard').ValidationResult> = {
-          1: () => require('@/components/character/wizard/validation/wizardValidation').validateStep1(state.basicInfo),
+          1: () => require('@/components/character/wizard/validation/wizardValidation').validateStep1(state.basicInfo, state.creationConfig),
           2: () => require('@/components/character/wizard/validation/wizardValidation').validateStep2(state.occupation),
           3: () => require('@/components/character/wizard/validation/wizardValidation').validateStep3(state.stats, state.creationConfig),
           4: () => require('@/components/character/wizard/validation/wizardValidation').validateStep4(state.skills, state.stats, state.occupation, state.dynamicSkills, state.creationConfig),
-          5: () => require('@/components/character/wizard/validation/wizardValidation').validateStep5(state.basicInfo, state.background),
-          6: () => ({ valid: true, errors: {} }),
+          5: () => require('@/components/character/wizard/validation/wizardValidation').validateStep5(state.background, state.creationConfig),
+          6: () => {
+            const v = require('@/components/character/wizard/validation/wizardValidation');
+            const allValid = [1, 2, 3, 4, 5].every((s) => {
+              const r = {
+                1: v.validateStep1(state.basicInfo, state.creationConfig),
+                2: v.validateStep2(state.occupation),
+                3: v.validateStep3(state.stats, state.creationConfig),
+                4: v.validateStep4(state.skills, state.stats, state.occupation, state.dynamicSkills, state.creationConfig),
+                5: v.validateStep5(state.background, state.creationConfig),
+              }[s];
+              return r?.valid ?? true;
+            });
+            return { valid: allValid, errors: {} };
+          },
         };
         const validator = validators[step];
         return validator ? validator() : { valid: true, errors: {} };
@@ -972,9 +982,10 @@ export const useWizardStore = create<WizardStore>()(
        * Handles field name reconciliation and skills mapping.
        *
        * **Field Mapping**:
-       * - firstName + lastName → name
-       * - birthPlace → birthplace (lowercase)
-       * - charm → appearance
+       * - firstName → name (direct, no concatenation)
+       * - lastName → surname (optional)
+       * - birthPlace → birthPlace (same name, no transformation)
+       * - appearance → appearance (same name, no transformation)
        * - SkillBreakdown → VictorianSkills (83 static fields)
        *
        * @returns CharacterCreatePayload ready for POST /game/characters
@@ -1014,13 +1025,13 @@ export const useWizardStore = create<WizardStore>()(
 
         const payload: CharacterCreatePayload = {
           // Basic info (field name reconciliation as per CharacterCreatePayload type)
-          name: [basicInfo.firstName, basicInfo.lastName].filter(Boolean).join(' '),
-          surname: basicInfo.lastName || '',
+          name: basicInfo.firstName,
+          surname: basicInfo.lastName || undefined,
           birthDate: basicInfo.birthDate || undefined,
-          birthplace: basicInfo.birthplace, // lowercase!
+          birthPlace: basicInfo.birthPlace,
           age: basicInfo.age,
           apparentAge: basicInfo.apparentAge,
-          gender: basicInfo.gender,
+          gender: basicInfo.gender as 'male' | 'female',
           height: basicInfo.height,
           weight: basicInfo.weight,
           eyeColor: basicInfo.eyeColor,
@@ -1032,8 +1043,7 @@ export const useWizardStore = create<WizardStore>()(
           illnesses: basicInfo.illnesses,
           educationTitle: basicInfo.educationTitle,
           criminalRecord: basicInfo.criminalRecord,
-
-          // Occupation
+          pathologies: basicInfo.pathologies,
           occupation: occupation.occupationId,
           currentOccupation: occupation.currentOccupation,
 
@@ -1113,12 +1123,9 @@ export const useWizardStore = create<WizardStore>()(
           updatedAt: character.updatedAt,
         });
 
-        // Reconstruct firstName: if surname exists, strip it from the full name
-        const fullName = character.name || '';
+        // name → firstName, surname → lastName (no concatenation)
+        const firstName = character.name || '';
         const surname = character.surname || '';
-        const firstName = surname && fullName.endsWith(surname)
-          ? fullName.slice(0, -surname.length).trim()
-          : fullName;
 
         // Process skills (handle both Map and plain object)
         const skillsObj: Record<string, any> = {};
@@ -1152,10 +1159,10 @@ export const useWizardStore = create<WizardStore>()(
             firstName,
             lastName: surname,
             birthDate: character.birthDate || '',
-            birthplace: character.birthPlace || '',
+            birthPlace: character.birthPlace || '',
             age: character.age || 25,
             apparentAge: character.apparentAge || 25,
-            gender: character.gender || '',
+            gender: (character.gender as 'male' | 'female' | '') || '',
             height: character.height || '',
             weight: character.weight || '',
             eyeColor: character.eyeColor || '',
@@ -1167,6 +1174,7 @@ export const useWizardStore = create<WizardStore>()(
             illnesses: character.illnesses || '',
             educationTitle: character.educationTitle || '',
             criminalRecord: character.criminalRecord || '',
+            pathologies: character.pathologies || '',
             publicDescription: character.publicDescription || '',
             privateDescription: character.privateDescription || '',
             physicalDescription: character.physicalDescription || '',
@@ -1183,16 +1191,16 @@ export const useWizardStore = create<WizardStore>()(
             dexterity: charStats.dexterity || 20,
             intelligence: charStats.intelligence || 20,
             constitution: charStats.constitution || 20,
-            appearance: charStats.charm || 20,
+            appearance: charStats.appearance || charStats.charm || 20,
             power: charStats.power || 20,
             size: charStats.size || 20,
             education: charStats.education || 20,
           },
           derivedStats: {
             hitPoints: derived.hitPoints || charStats.hitPoints || 4,
-            sanity: derived.sanityPoints ?? derived.sanity ?? charStats.sanity ?? 20,
-            maxSanity: derived.maxSanity ?? charStats.maxSanity ?? 99,
-            bonusDamage: derived.damageBonus ?? derived.bonusDamage ?? charStats.bonusDamage ?? '-2',
+          sanity: derived.sanity ?? derived.sanityPoints ?? charStats.sanity ?? 20,
+          maxSanity: derived.maxSanity ?? charStats.maxSanity ?? 99,
+          bonusDamage: derived.bonusDamage ?? derived.damageBonus ?? charStats.bonusDamage ?? '-2',
             ideaRoll: derived.ideaRoll ?? charStats.ideaRoll ?? 20,
           },
           skills: skillsObj,

@@ -1,6 +1,6 @@
 # API Reference
 
-**Navigation**: [Home](../INDEX.md) > [Backend](./README.md) > API Reference
+**Navigation**: [Home](../../INDEX.md) > [Backend](./README.md) > API Reference
 
 **Status**: ✅ Production Ready | **Last Updated**: 2026-03-08
 

@@ -129,7 +129,9 @@ export const FormField = forwardRef<
 
         // Call onChange from register() if provided
         if (props.onChange) {
-          props.onChange({ target: { value: newValue } } as any);
+          props.onChange({
+            target: { value: newValue },
+          } as unknown as React.ChangeEvent<HTMLInputElement>);
         }
       };
 

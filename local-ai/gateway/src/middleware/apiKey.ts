@@ -1,14 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { resolveClient, ClientConfig } from '../clients';
 
-declare global {
-  namespace Express {
-    interface Request {
-      client?: ClientConfig;
-    }
-  }
-}
-
 /**
  * Resolves the calling client from X-API-Key + optional X-Client-Id.
  * Attaches the client config to req.client for downstream use.

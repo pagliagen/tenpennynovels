@@ -1,6 +1,6 @@
 # Qdrant Vector Database
 
-**Navigation**: [Home](../INDEX.md) > [Infrastructure](./README.md) > Qdrant Vector DB
+**Navigation**: [Home](../../INDEX.md) > [Infrastructure](./README.md) > Qdrant Vector DB
 
 **Status**: ✅ Production Ready | **Last Updated**: 2026-03-08
 
@@ -171,6 +171,6 @@ Returns `{"title":"qdrant - vector search engine","version":"1.17.0"}` when heal
 
 - [Docker Compose](./docker-compose.md) - Qdrant container configuration
 - [Redis Pub/Sub](./redis-pubsub.md) - Event flow for embedding indexing
-- [Embeddings Architecture](../04-ai-ml/embeddings-architecture.md) - Full ML pipeline
-- [Semantic Search](../04-ai-ml/semantic-search.md) - Search strategy and API usage
+- [Embeddings Worker](../backend/embeddings-worker.md) - Pipeline e API hybrid search
+- [Documents App](../frontend/documents-app.md) - UI e flussi di ricerca semantica
 - [Environment Variables](./environment-variables.md) - QDRANT_URL configuration

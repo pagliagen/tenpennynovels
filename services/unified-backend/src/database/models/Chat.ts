@@ -77,7 +77,20 @@ export interface IChat extends Document {
     type: 'social' | 'combat';
     encounterId?: string; // CombatEncounter._id (null for social)
     turnNumber?: number; // Combat only
-    phase: 'waiting_reaction' | 'result';
+    phase: 'rolling_initiative' | 'waiting_reaction' | 'result';
+
+    // Initiative tracking
+    initiativeRolls?: { [characterId: string]: { roll: number; successDegree: string } };
+    firstAttacker?: string;
+
+    // Constitution check
+    constitutionCheckRequired?: boolean;
+    constitutionCheckPassed?: boolean;
+    constitutionCheckRoll?: number;
+
+    // Raggirare hidden result
+    hiddenResultForAttacker?: boolean; // true for Raggirare (attacker doesn't see rolls)
+    visibleToAttackerOnly?: boolean; // Message "Stai provando a raggirare Y" visible only to attacker
 
     attackerCharacterId: string;
     defenderCharacterId: string;
@@ -285,8 +298,15 @@ const ChatSchema = new Schema<IChat>({
     turnNumber: Number,
     phase: {
       type: String,
-      enum: ['waiting_reaction', 'result']
+      enum: ['rolling_initiative', 'waiting_reaction', 'result']
     },
+    initiativeRolls: Schema.Types.Mixed,
+    firstAttacker: String,
+    constitutionCheckRequired: Boolean,
+    constitutionCheckPassed: Boolean,
+    constitutionCheckRoll: Number,
+    hiddenResultForAttacker: Boolean,
+    visibleToAttackerOnly: Boolean,
     attackerCharacterId: String,
     defenderCharacterId: String,
     availableDefenseSkills: [{

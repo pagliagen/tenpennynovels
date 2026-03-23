@@ -22,7 +22,7 @@ interface SessionUser {
 }
 
 interface SessionResponse {
-  result: boolean;
+  success: boolean;
   data?: {
     valid: boolean;
     user?: SessionUser;
@@ -50,7 +50,7 @@ export function useAuth(): UseAuthReturn {
 
         if (cancelled) return;
 
-        if (response.result && response.data?.valid && response.data.user) {
+        if (response.success && response.data?.valid && response.data.user) {
           setUser(response.data.user);
         } else {
           logout();

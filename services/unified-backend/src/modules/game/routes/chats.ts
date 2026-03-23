@@ -5,6 +5,13 @@ import { requireGamePermission } from '../middleware/gamePermissions';
 
 const router = Router();
 
+// Semantic search in chat messages
+router.get('/search',
+  AuthMiddleware.requireCharacterAuth,
+  requireGamePermission('game:chat:read'),
+  ChatController.searchChat
+);
+
 // Chat messages in locations
 router.post('/',
   AuthMiddleware.requireCharacterAuth,
@@ -48,6 +55,13 @@ router.post('/confrontation-reaction',
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:chat:social-conflicts'),
   ChatController.handleConfrontationReaction
+);
+
+// Master controls
+router.post('/force-confrontation-outcome',
+  AuthMiddleware.requireCharacterAuth,
+  requireGamePermission('game:chat:master-action'), // Master-only permission
+  ChatController.forceConfrontationOutcome
 );
 
 // Admin operations

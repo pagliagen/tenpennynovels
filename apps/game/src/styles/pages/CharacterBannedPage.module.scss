@@ -1,0 +1,53 @@
+.card {
+  max-width: 36rem;
+  margin: 2rem auto;
+  padding: 1.5rem;
+  background: rgba(15, 12, 10, 0.92);
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  border-radius: 8px;
+  color: #e8dcc8;
+  font-family: Georgia, serif;
+  line-height: 1.6;
+}
+
+.title {
+  margin: 0 0 1rem;
+  font-size: 1.35rem;
+  color: #d4af37;
+}
+
+.paragraph {
+  margin: 0 0 1rem;
+}
+
+.paragraphMuted {
+  margin: 0 0 1rem;
+  opacity: 0.9;
+}
+
+.reasonBlock {
+  margin: 0 0 1rem;
+}
+
+.reasonLabel {
+  margin: 0 0 0.35rem;
+  font-size: 0.85rem;
+  opacity: 0.75;
+}
+
+.reasonText {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.until {
+  margin: 0 0 1rem;
+  font-size: 0.95rem;
+  opacity: 0.85;
+}
+
+.footerNote {
+  margin: 0;
+  font-size: 0.95rem;
+  opacity: 0.88;
+}

@@ -9,7 +9,9 @@
  */
 
 import { QueryClient, DefaultOptions, QueryCache, MutationCache } from '@tanstack/react-query';
+
 import { QUERY_CONFIG } from '@/constants/config';
+
 import { parseError } from './errors';
 
 /**

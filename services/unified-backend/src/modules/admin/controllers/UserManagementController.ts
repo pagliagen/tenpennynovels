@@ -8,14 +8,54 @@ import {
 } from '../types/management';
 import { AdminAuthMiddleware } from '../middleware/adminAuth';
 import { logger } from '../utils/logger';
-import { User, Character, db } from '@database/models';
+import { Types } from 'mongoose';
+import { User, Character, Chat } from '@database/models';
+import type { UserCharacter } from '../types/management';
+import type { SocialClass } from '@shared/types/socialClass';
+import { redis } from '@config/runtime/redis';
 import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
 import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '@shared/utils/apiResponse';
 
 import { escapeRegex } from '@shared/utils/validation';
 
-// Access mongoose from the centralized connection
-const mongoose = db.getMongoose();
+const SOCIAL_CLASSES: readonly SocialClass[] = [
+  'destitute',
+  'poor',
+  'modest',
+  'lower_middle',
+  'middle_class',
+  'wealthy',
+  'affluent',
+  'elite',
+] as const;
+
+function normalizeSocialClassForUserCharacter(value: unknown): SocialClass {
+  if (typeof value === 'string' && (SOCIAL_CLASSES as readonly string[]).includes(value)) {
+    return value as SocialClass;
+  }
+  return 'modest';
+}
+
+function mapPlayerStatusToUserCharacterStatus(playerStatus: string | undefined): UserCharacter['status'] {
+  switch (playerStatus) {
+    case 'draft':
+      return 'DRAFT';
+    case 'pending':
+      return 'PENDING_APPROVAL';
+    case 'approved':
+      return 'APPROVED';
+    default:
+      return 'DELETED';
+  }
+}
+
+function occupationDisplayName(occupation: unknown): string {
+  if (occupation && typeof occupation === 'object' && 'name' in occupation) {
+    const n = (occupation as { name?: unknown }).name;
+    return typeof n === 'string' ? n : 'Unknown';
+  }
+  return 'Unknown';
+}
 
 export class UserManagementController {
   /**
@@ -128,15 +168,40 @@ export class UserManagementController {
         return;
       }
 
-      const characterCounts = await Character.aggregate([
+      type UserIdCountRow = { _id: Types.ObjectId; count: number };
+      const characterCounts = await Character.aggregate<UserIdCountRow>([
         { $match: { userId: { $in: userIds } } },
-        { $group: { _id: '$userId', count: { $sum: 1 } } }
+        { $group: { _id: '$userId', count: { $sum: 1 } } },
       ]);
 
-      const characterCountMap = new Map();
-      characterCounts.forEach(({ _id, count }) => {
-        characterCountMap.set(_id.toString(), count);
-      });
+      const characterCountMap = new Map<string, number>();
+      for (const row of characterCounts) {
+        characterCountMap.set(row._id.toString(), row.count);
+      }
+
+      const userCharacters = await Character.find({ userId: { $in: userIds } }).select('_id userId');
+      const charIdToUserIdMap = new Map<string, string>();
+      for (const char of userCharacters) {
+        charIdToUserIdMap.set(char._id.toString(), char.userId.toString());
+      }
+
+      const characterIdStrings = userCharacters.map((c) => c._id.toString());
+      type CharacterIdCountRow = { _id: string; count: number };
+      const messageCounts =
+        characterIdStrings.length > 0
+          ? await Chat.aggregate<CharacterIdCountRow>([
+              { $match: { characterId: { $in: characterIdStrings } } },
+              { $group: { _id: '$characterId', count: { $sum: 1 } } },
+            ])
+          : [];
+
+      const messageCountMap = new Map<string, number>();
+      for (const row of messageCounts) {
+        const uid = charIdToUserIdMap.get(row._id);
+        if (uid) {
+          messageCountMap.set(uid, (messageCountMap.get(uid) ?? 0) + row.count);
+        }
+      }
 
       // Get characters for each user (limited to recent ones) with occupation lookup
       const charactersData = await Character.aggregate([
@@ -155,29 +220,42 @@ export class UserManagementController {
           $project: {
             userId: 1,
             name: 1,
-            status: 1,
+            playerStatus: 1,
+            socialClass: 1,
             occupation: { $ifNull: [{ $arrayElemAt: ['$occupationData.name', 0] }, 'Unknown'] },
             createdAt: 1,
-            lastActive: 1
-          }
-        }
+            lastActive: 1,
+          },
+        },
       ]);
 
-      const charactersMap = new Map();
-      charactersData.forEach(char => {
-        const userId = char.userId.toString();
-        if (!charactersMap.has(userId)) {
-          charactersMap.set(userId, []);
-        }
-        charactersMap.get(userId).push({
+      type CharacterListAggRow = {
+        _id: Types.ObjectId;
+        userId: Types.ObjectId;
+        name: string;
+        playerStatus?: string;
+        socialClass?: string;
+        occupation?: string;
+        createdAt?: Date;
+        lastActive?: Date;
+      };
+
+      const charactersMap = new Map<string, UserCharacter[]>();
+      for (const char of charactersData as CharacterListAggRow[]) {
+        const uid = char.userId.toString();
+        const list = charactersMap.get(uid) ?? [];
+        const row: UserCharacter = {
           id: char._id.toString(),
           name: char.name,
-          status: char.status,
-          occupation: char.occupation || 'Unknown', // Now comes from the lookup
-          createdAt: char.createdAt?.toISOString(),
-          lastActive: char.lastActive?.toISOString()
-        });
-      });
+          status: mapPlayerStatusToUserCharacterStatus(char.playerStatus),
+          occupation: typeof char.occupation === 'string' && char.occupation.length > 0 ? char.occupation : 'Unknown',
+          socialClass: normalizeSocialClassForUserCharacter(char.socialClass),
+          createdAt: char.createdAt?.toISOString() ?? new Date(0).toISOString(),
+          lastActive: char.lastActive?.toISOString(),
+        };
+        list.push(row);
+        charactersMap.set(uid, list);
+      }
 
       // Transform to API format
       const transformedUsers: AdminUserProfile[] = users.map(user => ({
@@ -201,15 +279,15 @@ export class UserManagementController {
         activity: {
           lastLoginAt: user.lastLoginAt?.toISOString(),
           loginCount: user.loginCount || 0,
-          messagesSent: 0, // TODO: Implement message counting
-          documentsCreated: 0, // TODO: Implement document counting
-          moderationActions: 0 // TODO: Implement moderation action counting
+          messagesSent: messageCountMap.get(user._id?.toString()) || 0,
+          documentsCreated: 0, // N/A - documents are system content, not user-created
+          moderationActions: 0 // N/A - no moderation action tracking per user
         },
         registrationInfo: {
           registeredAt: user.createdAt?.toISOString(),
           registrationSource: user.registrationSource || 'web',
           ipAddress: user.ipAddress || '',
-          referrer: 'organic' // TODO: Implement referrer tracking
+          referrer: user.metadata?.referrer || 'organic'
         }
       }));
 
@@ -260,52 +338,72 @@ export class UserManagementController {
     try {
       const userId = req.params.userId;
 
-      // TODO: Implement database query
-      // Mock data simulating a gestore user with full permissions
-      const mockUser: AdminUserProfile = {
-        _id: userId,
-        username: userId === '68977cc5d4c78ce0d9fd0d49' ? 'admin' : 'gestore_user',
-        email: userId === '68977cc5d4c78ce0d9fd0d49' ? 'admin@tenpennynovels.com' : 'gestore@tenpennynovels.com',
-        displayName: userId === '68977cc5d4c78ce0d9fd0d49' ? 'System Administrator' : 'Site Manager',
-        avatar: '/avatars/admin.jpg',
-        canAccessAdminPanel: true,
-        // Granular permission system
-        userRoles: ['user'],
-        characterRoles: ['amministratore'],
-        characterPermissions: [
-          'system.maintenance_mode',
-          'users.delete',
-          'locations.delete'
-        ],
+      // Fetch user from database
+      const user = await User.findById(userId).select('-password').lean();
+      if (!user) {
+        res.status(404).json(errorResponse(
+          'User not found',
+          'USER_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      // Get user's characters
+      const characters = await Character.find({ userId })
+        .populate('occupation', 'name')
+        .select('name playerStatus socialClass occupation createdAt lastActive')
+        .lean();
+
+      const characterIds = characters.map((c) => c._id.toString());
+      const messageCount = characterIds.length > 0
+        ? await Chat.countDocuments({ characterId: { $in: characterIds } })
+        : 0;
+
+      const profile: AdminUserProfile = {
+        _id: user._id.toString(),
+        username: user.username,
+        email: user.email,
+        displayName: user.displayName || '',
+        avatar: user.avatar,
+        canAccessAdminPanel: user.canAccessAdminPanel || false,
+        userRoles: user.userRoles || ['user'],
+        characterRoles: user.characterRoles || [],
+        characterPermissions: user.characterPermissions || [],
         accountStatus: {
-          isActive: true,
-          isEmailVerified: true,
-          isBanned: false
+          isActive: user.isActive !== false,
+          isEmailVerified: user.isEmailVerified || false,
+          isBanned: user.isBanned || false,
+          banReason: user.banReason,
+          bannedAt: user.bannedAt?.toISOString(),
+          bannedBy: user.bannedBy?.toString(),
+          bannedUntil: user.bannedUntil?.toISOString(),
+          bannedByName: user.bannedByName?.toString(),
         },
-        multipleCharactersAllowed: true,
-        characters: [
-          {
-            id: 'char_admin_1',
-            name: 'Lord Victorian Administrator',
-            status: 'APPROVED',
-            occupation: 'Government Official',
-            socialClass: 'affluent',
-            createdAt: '2024-01-01T10:00:00Z',
-            lastActive: '2025-01-15T14:30:00Z'
-          }
-        ],
+        multipleCharactersAllowed: user.multipleCharactersAllowed !== false,
+        characters: characters.map((char) => ({
+          id: char._id.toString(),
+          name: char.name,
+          status: mapPlayerStatusToUserCharacterStatus(char.playerStatus),
+          occupation: occupationDisplayName(char.occupation),
+          socialClass: normalizeSocialClassForUserCharacter(char.socialClass),
+          createdAt: char.createdAt?.toISOString() ?? new Date(0).toISOString(),
+          lastActive: char.lastActive?.toISOString(),
+        })),
         activity: {
-          lastLoginAt: '2025-01-15T14:30:00Z',
-          loginCount: 234,
-          messagesSent: 567,
-          documentsCreated: 45,
-          moderationActions: 89
+          lastLoginAt: user.lastLoginAt?.toISOString(),
+          loginCount: user.loginCount || 0,
+          messagesSent: messageCount,
+          documentsCreated: 0,
+          moderationActions: 0
         },
         registrationInfo: {
-          registeredAt: '2024-01-01T10:00:00Z',
-          registrationSource: 'admin_setup',
-          ipAddress: '127.0.0.1',
-          referrer: 'direct'
+          registeredAt: user.createdAt?.toISOString(),
+          registrationSource: user.registrationSource || 'web',
+          ipAddress: user.ipAddress || '',
+          referrer: user.metadata?.referrer || 'organic'
         }
       };
 
@@ -313,11 +411,11 @@ export class UserManagementController {
       logger.info('Admin viewed user profile', {
         ...auditInfo,
         targetUserId: userId,
-        targetUsername: mockUser.username
+        targetUsername: user.username
       });
 
       res.json(successResponse(
-        mockUser,
+        profile,
         undefined,
         getRequestId(req)
       ));
@@ -473,7 +571,7 @@ export class UserManagementController {
       const banData = req.body;
 
       // Validate userId format
-      if (!mongoose.Types.ObjectId.isValid(userId)) {
+      if (!Types.ObjectId.isValid(userId)) {
         res.status(400).json(errorResponse(
           'Invalid user ID format. User ID must be a valid MongoDB ObjectId.',
           'INVALID_USER_ID_FORMAT',
@@ -569,14 +667,38 @@ export class UserManagementController {
         return;
       }
 
+      const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
+      if (!auditInfo) {
+        res.status(401).json(errorResponse(
+          'Sessione admin non valida per audit',
+          'ADMIN_AUDIT_REQUIRED',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      const bannedByObjectId = new Types.ObjectId(auditInfo.adminId);
+
       // Build update object (note: fields are flat in schema, not nested under accountStatus)
-      const updateData: Record<string, any> = {
+      const updateData: {
+        isBanned: true;
+        banReason: string;
+        banScope: string;
+        bannedAt: Date;
+        bannedBy: Types.ObjectId;
+        bannedByName: string;
+        updatedAt: Date;
+        bannedUntil?: Date | null;
+      } = {
         isBanned: true,
         banReason: banData.reason.trim(),
-        banScope: banData.banScopes[0], // Take first scope for now (schema only supports single scope)
+        banScope: banData.banScopes[0],
         bannedAt: new Date(),
-        bannedBy: 'Administrator', // TODO: Get actual admin info from token
-        updatedAt: new Date()
+        bannedBy: bannedByObjectId,
+        bannedByName: auditInfo.adminUsername,
+        updatedAt: new Date(),
       };
 
       // Add bannedUntil only for temporary bans
@@ -598,7 +720,6 @@ export class UserManagementController {
       }
 
       // Log audit action
-      const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       logger.warn('User ban updated by admin', {
         ...auditInfo,
         targetUserId: userId,
@@ -610,16 +731,19 @@ export class UserManagementController {
         category: 'user_management'
       });
 
-      // TODO: Send Redis event to force disconnect user and update sessions
-      // await redisClient.publish('user:ban_updated', {
-      //   userId,
-      //   bannedBy: auditInfo.adminUserId,
-      //   reason: banData.reason,
-      //   duration: banData.duration,
-      //   scopes: banData.banScopes,
-      //   bannedUntil: banData.bannedUntil,
-      //   timestamp: new Date().toISOString()
-      // });
+      // Invalidate user sessions in Redis
+      await redis.del(`session:${userId}`);
+
+      // Publish event to force disconnect banned user via WebSocket
+      await redis.publish('user:events', JSON.stringify({
+        type: 'user_banned',
+        userId,
+        bannedBy: auditInfo.adminId,
+        reason: banData.reason,
+        scopes: banData.banScopes,
+        bannedUntil: banData.bannedUntil,
+        timestamp: new Date().toISOString()
+      }));
 
       // Return the updated user object (frontend expects User, not metadata)
       res.json(updateResponse(
@@ -661,7 +785,7 @@ export class UserManagementController {
         userId,
         {
           isBanned: false,
-          $unset: { banReason: '', bannedAt: '', bannedUntil: '', bannedBy: '', bannedByName: '' }
+          $unset: { banReason: '', bannedAt: '', bannedUntil: '', bannedBy: '', bannedByName: '', banScope: '' }
         },
         { returnDocument: 'after' }
       );
@@ -777,7 +901,7 @@ export class UserManagementController {
       // Ban all users
       const results = await Promise.allSettled(
         userIds.map(async (userId: string) => {
-          if (!mongoose.Types.ObjectId.isValid(userId)) {
+          if (!Types.ObjectId.isValid(userId)) {
             throw new Error(`Invalid userId: ${userId}`);
           }
 
@@ -869,7 +993,7 @@ export class UserManagementController {
       // Unban all users
       const results = await Promise.allSettled(
         userIds.map(async (userId: string) => {
-          if (!mongoose.Types.ObjectId.isValid(userId)) {
+          if (!Types.ObjectId.isValid(userId)) {
             throw new Error(`Invalid userId: ${userId}`);
           }
 
@@ -934,7 +1058,7 @@ export class UserManagementController {
       const userId = req.params.userId;
       
       // Validate userId format
-      if (!mongoose.Types.ObjectId.isValid(userId)) {
+      if (!Types.ObjectId.isValid(userId)) {
         res.status(400).json(errorResponse(
           'Invalid user ID format. User ID must be a valid MongoDB ObjectId.',
           'INVALID_USER_ID_FORMAT',
@@ -1331,27 +1455,50 @@ export class UserManagementController {
 
   static async getUserSummary(req: Request, res: Response): Promise<void> {
     try {
-      // TODO: Implement database queries for user statistics
-      const mockSummary: UserSummary = {
-        totalUsers: 1250,
-        activeUsers: 890,
-        adminUsers: 12,
-        byUserRole: {
-          'gestore': 1
-        },
-        byCharacterRole: {
-          'amministratore': 2,
-          'master': 3,
-          'moderatore': 4,
-          'personaggio': 890
-        }
+      // Real database aggregations
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+      const [totalUsers, activeUsers, adminUsers] = await Promise.all([
+        User.countDocuments({}),
+        User.countDocuments({ lastLoginAt: { $gte: thirtyDaysAgo } }),
+        User.countDocuments({ canAccessAdminPanel: true })
+      ]);
+
+      // Aggregate user roles
+      const userRoles = await User.aggregate([
+        { $unwind: { path: '$userRoles', preserveNullAndEmptyArrays: true } },
+        { $group: { _id: '$userRoles', count: { $sum: 1 } } }
+      ]);
+
+      const byUserRole: { [role: string]: number } = {};
+      userRoles.forEach(({ _id, count }) => {
+        if (_id) byUserRole[_id] = count;
+      });
+
+      // Aggregate character roles from all characters
+      const characterRoles = await Character.aggregate([
+        { $unwind: { path: '$gameplayRoles', preserveNullAndEmptyArrays: true } },
+        { $group: { _id: '$gameplayRoles', count: { $sum: 1 } } }
+      ]);
+
+      const byCharacterRole: { [role: string]: number } = {};
+      characterRoles.forEach(({ _id, count }) => {
+        if (_id) byCharacterRole[_id] = count;
+      });
+
+      const summary: UserSummary = {
+        totalUsers,
+        activeUsers,
+        adminUsers,
+        byUserRole,
+        byCharacterRole
       };
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       logger.info('Admin viewed user summary', auditInfo);
 
       res.json(successResponse(
-        mockSummary,
+        summary,
         undefined,
         getRequestId(req)
       ));
@@ -1388,27 +1535,45 @@ export class UserManagementController {
         return;
       }
 
-      // TODO: Implement user search
-      const mockResults = [
-        {
-          id: '1',
-          username: 'player1',
-          email: 'player1@example.com',
-          isActive: true,
-          isBanned: false,
-          characterCount: 1
-        }
-      ];
+      // Search users by username or email (case-insensitive)
+      const searchRegex = new RegExp(escapeRegex(query), 'i');
+      const users = await User.find({
+        $or: [
+          { username: searchRegex },
+          { email: searchRegex }
+        ]
+      })
+        .select('username email isActive isBanned')
+        .limit(limit)
+        .lean();
+
+      // Get character counts for matching users
+      const userIds = users.map(u => u._id);
+      const characterCounts = await Character.aggregate([
+        { $match: { userId: { $in: userIds } } },
+        { $group: { _id: '$userId', count: { $sum: 1 } } }
+      ]);
+
+      const countMap = new Map(characterCounts.map(c => [c._id.toString(), c.count]));
+
+      const results = users.map(user => ({
+        id: user._id.toString(),
+        username: user.username,
+        email: user.email,
+        isActive: user.isActive !== false,
+        isBanned: user.isBanned || false,
+        characterCount: countMap.get(user._id.toString()) || 0
+      }));
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       logger.info('Admin searched users', {
         ...auditInfo,
         searchQuery: query,
-        resultsCount: mockResults.length
+        resultsCount: results.length
       });
 
       res.json(successResponse(
-        mockResults,
+        results,
         undefined,
         getRequestId(req)
       ));
@@ -1583,7 +1748,7 @@ export class UserManagementController {
       // Activate all users
       const results = await Promise.allSettled(
         userIds.map(async (userId: string) => {
-          if (!mongoose.Types.ObjectId.isValid(userId)) {
+          if (!Types.ObjectId.isValid(userId)) {
             throw new Error(`Invalid userId: ${userId}`);
           }
 
@@ -1666,7 +1831,7 @@ export class UserManagementController {
       // Deactivate all users
       const results = await Promise.allSettled(
         userIds.map(async (userId: string) => {
-          if (!mongoose.Types.ObjectId.isValid(userId)) {
+          if (!Types.ObjectId.isValid(userId)) {
             throw new Error(`Invalid userId: ${userId}`);
           }
 
@@ -1805,7 +1970,7 @@ export class UserManagementController {
           constitution: 50,
           size: 50,
           dexterity: 50,
-          charm: 50,
+          appearance: 50,
           intelligence: 50,
           power: 50,
           education: 50
@@ -1815,10 +1980,10 @@ export class UserManagementController {
           luckRoll: 50,
           knowledge: 50,
           hitPoints: 10,
-          sanityPoints: 50,
+          sanity: 50,
           magicPoints: 10,
           movementRate: 8,
-          damageBonus: '0',
+          bonusDamage: '0',
           build: 0
         },
         skills: {}, // Empty skills for PNG
@@ -1953,7 +2118,7 @@ export class UserManagementController {
           constitution: 50,
           size: 50,
           dexterity: 50,
-          charm: 50,
+          appearance: 50,
           intelligence: 50,
           power: 50,
           education: 50
@@ -1963,10 +2128,10 @@ export class UserManagementController {
           luckRoll: 50,
           knowledge: 50,
           hitPoints: 10,
-          sanityPoints: 50,
+          sanity: 50,
           magicPoints: 10,
           movementRate: 8,
-          damageBonus: '0',
+          bonusDamage: '0',
           build: 0
         },
         skills: {}, // Empty skills for Master

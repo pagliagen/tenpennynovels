@@ -55,6 +55,9 @@ export class RegistrationController {
       const emailVerificationToken = CryptoUtils.generateSecureToken();
       const emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
+      // Capture referrer for analytics
+      const referrer = (req.headers.referer || req.query.utm_source as string || 'organic');
+
       // Create user
       const user = new User({
         username: username.toLowerCase(),
@@ -66,6 +69,10 @@ export class RegistrationController {
         emailVerificationExpires,
         registrationSource: 'web',
         ipAddress: req.ip,
+        metadata: {
+          referrer,
+          registeredAt: new Date()
+        },
         preferences: {
           emailNotifications: true,
           marketingEmails: subscribeNewsletter || false,

@@ -8,13 +8,28 @@
  * @since 2.0.0
  */
 
-import { api } from './client';
 import type {
   ChatPreview,
   ChatDetail,
   CreateChatPayload,
   SendMessagePayload,
 } from '@/types/offGameChat';
+
+import { api } from './client';
+
+/** Payload lista chat (corpo HTTP dopo un livello di unwrap dal client). */
+interface OffGameChatsListBody {
+  data?: {
+    chats?: ChatPreview[];
+    list?: ChatPreview[];
+  };
+}
+
+interface OffGameMessagesBody {
+  data?: {
+    messages?: ChatDetail['messages'];
+  };
+}
 
 export const offGameChatApi = {
   /**
@@ -26,9 +41,8 @@ export const offGameChatApi = {
    * @returns {Promise<{ chats: ChatPreview[] }>}
    */
   async getChats(): Promise<{ chats: ChatPreview[] }> {
-    const response = (await api.get('/game/offgame-chats')) as any;
-    // Backend can return data.chats or data.list
-    return { chats: response.data?.chats || response.data?.list || [] };
+    const body = await api.get<OffGameChatsListBody>('/game/offgame-chats');
+    return { chats: body.data?.chats ?? body.data?.list ?? [] };
   },
 
   /**
@@ -41,8 +55,8 @@ export const offGameChatApi = {
    * @returns {Promise<ChatDetail>} Chat with messages
    */
   async getChatMessages(chatId: string): Promise<ChatDetail> {
-    const response = (await api.get(`/game/offgame-chats/${chatId}/messages`)) as any;
-    const messages = response.data?.messages || [];
+    const body = await api.get<OffGameMessagesBody>(`/game/offgame-chats/${chatId}/messages`);
+    const messages = body.data?.messages ?? [];
 
     // Fetch chat metadata from chats list
     const chatsResponse = await this.getChats();

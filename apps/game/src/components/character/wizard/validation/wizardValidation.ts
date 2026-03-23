@@ -9,6 +9,7 @@
  * @since 2.1.0
  */
 
+import type { CharacterCreationConfig } from '@/lib/api/character';
 import type {
   WizardBasicInfo,
   WizardOccupation,
@@ -18,10 +19,18 @@ import type {
   DynamicSkill,
   ValidationResult,
 } from '@/types/wizard';
-import type { CharacterCreationConfig } from '@/lib/api/character';
 
-export function validateStep1(basicInfo: WizardBasicInfo): ValidationResult {
+export function validateStep1(basicInfo: WizardBasicInfo, creationConfig?: CharacterCreationConfig | null): ValidationResult {
   const errors: Record<string, string> = {};
+
+  const ageMin = creationConfig?.limits.age.min ?? 16;
+  const ageMax = creationConfig?.limits.age.max ?? 80;
+  const heightMin = creationConfig?.limits.height.min ?? 100;
+  const heightMax = creationConfig?.limits.height.max ?? 250;
+  const weightMin = creationConfig?.limits.weight.min ?? 30;
+  const weightMax = creationConfig?.limits.weight.max ?? 200;
+  const weightUnit = creationConfig?.limits.weight.unit ?? 'kg';
+  const heightUnit = creationConfig?.limits.height.unit ?? 'cm';
 
   if (!basicInfo.firstName || basicInfo.firstName.length < 2) {
     errors.firstName = 'Nome deve essere almeno 2 caratteri';
@@ -29,32 +38,29 @@ export function validateStep1(basicInfo: WizardBasicInfo): ValidationResult {
   if (!basicInfo.lastName || basicInfo.lastName.length < 2) {
     errors.lastName = 'Cognome deve essere almeno 2 caratteri';
   }
-  if (basicInfo.age < 16 || basicInfo.age > 80) {
-    errors.age = 'Età deve essere tra 16 e 80';
+  if (basicInfo.age < ageMin || basicInfo.age > ageMax) {
+    errors.age = `Età deve essere tra ${ageMin} e ${ageMax}`;
   }
-  if (basicInfo.apparentAge < 16 || basicInfo.apparentAge > 80) {
-    errors.apparentAge = 'Età apparente deve essere tra 16 e 80';
+  if (basicInfo.apparentAge < ageMin || basicInfo.apparentAge > ageMax) {
+    errors.apparentAge = `Età apparente deve essere tra ${ageMin} e ${ageMax}`;
   }
   if (!basicInfo.gender) {
     errors.gender = 'Seleziona un genere';
-  }
-  if (!basicInfo.birthplace) {
-    errors.birthplace = 'Inserisci luogo di nascita';
   }
   if (!basicInfo.height || basicInfo.height.trim() === '') {
     errors.height = 'Altezza è obbligatoria';
   } else {
     const heightNum = parseFloat(basicInfo.height);
-    if (isNaN(heightNum) || heightNum < 100 || heightNum > 250) {
-      errors.height = 'Altezza deve essere tra 100 e 250 cm';
+    if (isNaN(heightNum) || heightNum < heightMin || heightNum > heightMax) {
+      errors.height = `Altezza deve essere tra ${heightMin} e ${heightMax} ${heightUnit}`;
     }
   }
   if (!basicInfo.weight || basicInfo.weight.trim() === '') {
     errors.weight = 'Peso è obbligatorio';
   } else {
     const weightNum = parseFloat(basicInfo.weight);
-    if (isNaN(weightNum) || weightNum < 30 || weightNum > 200) {
-      errors.weight = 'Peso deve essere tra 30 e 200 kg';
+    if (isNaN(weightNum) || weightNum < weightMin || weightNum > weightMax) {
+      errors.weight = `Peso deve essere tra ${weightMin} e ${weightMax} ${weightUnit}`;
     }
   }
 
@@ -166,25 +172,41 @@ export function validateStep4(
 }
 
 export function validateStep5(
-  basicInfo: WizardBasicInfo,
-  background: WizardBackground
+  background: WizardBackground,
+  creationConfig?: CharacterCreationConfig | null
 ): ValidationResult {
   const errors: Record<string, string> = {};
 
-  if (!basicInfo.publicDescription || basicInfo.publicDescription.trim().length < 50) {
-    errors.publicDescription = 'Descrizione pubblica deve essere almeno 50 caratteri';
+  const bgFields = creationConfig?.limits.backgroundFields;
+
+  const briefHistoryMin = bgFields?.briefHistory?.minChar ?? 50;
+  const briefHistoryMax = bgFields?.briefHistory?.maxChar ?? 4000;
+  const significantEventsMax = bgFields?.significantEvents?.maxChar ?? 2500;
+  const importantRelationshipsMax = bgFields?.importantRelationships?.maxChar ?? 2500;
+  const personalityMin = bgFields?.personality?.minChar ?? 50;
+  const personalityMax = bgFields?.personality?.maxChar ?? 2500;
+  const ideologyMax = bgFields?.ideology?.maxChar ?? 2500;
+
+  if (briefHistoryMin > 0 && (!background.briefHistory || background.briefHistory.length < briefHistoryMin)) {
+    errors.briefHistory = `Storia in breve deve essere almeno ${briefHistoryMin} caratteri`;
   }
-  if (!basicInfo.privateDescription || basicInfo.privateDescription.trim().length < 50) {
-    errors.privateDescription = 'Descrizione privata deve essere almeno 50 caratteri';
+  if (background.briefHistory && background.briefHistory.length > briefHistoryMax) {
+    errors.briefHistory = `Storia in breve non può superare ${briefHistoryMax} caratteri`;
   }
-  if (!background.briefHistory || background.briefHistory.trim().length < 100) {
-    errors.briefHistory = 'Storia in breve deve essere almeno 100 caratteri';
+  if (background.significantEvents && background.significantEvents.length > significantEventsMax) {
+    errors.significantEvents = `Fatti salienti non può superare ${significantEventsMax} caratteri`;
   }
-  if (!background.personality || background.personality.trim().length < 50) {
-    errors.personality = 'Personalità deve essere almeno 50 caratteri';
+  if (background.importantRelationships && background.importantRelationships.length > importantRelationshipsMax) {
+    errors.importantRelationships = `Relazioni importanti non può superare ${importantRelationshipsMax} caratteri`;
   }
-  if (!background.goalsAndMotivations || background.goalsAndMotivations.trim().length < 50) {
-    errors.goalsAndMotivations = 'Obiettivi e motivazioni deve essere almeno 50 caratteri';
+  if (personalityMin > 0 && background.personality && background.personality.length < personalityMin) {
+    errors.personality = `Personalità deve essere almeno ${personalityMin} caratteri`;
+  }
+  if (background.personality && background.personality.length > personalityMax) {
+    errors.personality = `Personalità non può superare ${personalityMax} caratteri`;
+  }
+  if (background.ideology && background.ideology.length > ideologyMax) {
+    errors.ideology = `Ideologia/Credo non può superare ${ideologyMax} caratteri`;
   }
 
   return { valid: Object.keys(errors).length === 0, errors };
@@ -201,13 +223,21 @@ export function validateAllSteps(data: {
   skills: Record<string, SkillBreakdown>;
   dynamicSkills: DynamicSkill[];
   background: WizardBackground;
+  creationConfig?: CharacterCreationConfig | null;
 }): Record<number, ValidationResult> {
+  const step1 = validateStep1(data.basicInfo, data.creationConfig);
+  const step2 = validateStep2(data.occupation);
+  const step3 = validateStep3(data.stats, data.creationConfig);
+  const step4 = validateStep4(data.skills, data.stats, data.occupation, data.dynamicSkills, data.creationConfig);
+  const step5 = validateStep5(data.background, data.creationConfig);
+  const allValid = step1.valid && step2.valid && step3.valid && step4.valid && step5.valid;
+
   return {
-    1: validateStep1(data.basicInfo),
-    2: validateStep2(data.occupation),
-    3: validateStep3(data.stats),
-    4: validateStep4(data.skills, data.stats, data.occupation, data.dynamicSkills),
-    5: validateStep5(data.basicInfo, data.background),
-    6: { valid: true, errors: {} },
+    1: step1,
+    2: step2,
+    3: step3,
+    4: step4,
+    5: step5,
+    6: { valid: allValid, errors: {} },
   };
 }

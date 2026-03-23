@@ -19,6 +19,7 @@
 'use client';
 
 import { useRouter } from 'next/router';
+
 import styles from '@/styles/components/locations/detail.module.scss';
 import type { AccessibleLocation } from '@/types/location';
 
@@ -72,14 +73,6 @@ export function LocationDetail({
     }
   };
 
-  /**
-   * Handle "Visit Shop" button click (future feature)
-   */
-  const handleVisitShop = () => {
-    if (!location) return;
-    console.log('Visit shop:', location._id);
-    // TODO: Navigate to shop page
-  };
 
   // Empty state
   if (!location) {
@@ -143,19 +136,6 @@ export function LocationDetail({
               onClick={handleEnterChat}
             >
               Entra In Chat
-            </button>
-          )}
-
-          {/* Visit Shop Button (Future) */}
-          {location.hasShop && (
-            <button
-              type="button"
-              className={styles.secondaryButton}
-              onClick={handleVisitShop}
-              disabled
-              title="Funzionalità in arrivo"
-            >
-              Visita Negozio
             </button>
           )}
         </div>

@@ -1,0 +1,39 @@
+.badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.open {
+  color: #10b981;
+  background-color: #d1fae5;
+}
+
+.assigned {
+  color: #3b82f6;
+  background-color: #dbeafe;
+}
+
+.in_progress {
+  color: #f59e0b;
+  background-color: #fef3c7;
+}
+
+.waiting_user {
+  color: #ef4444;
+  background-color: #fee2e2;
+}
+
+.closed {
+  color: #6b7280;
+  background-color: #f3f4f6;
+}
+
+.reopened {
+  color: #8b5cf6;
+  background-color: #ede9fe;
+}

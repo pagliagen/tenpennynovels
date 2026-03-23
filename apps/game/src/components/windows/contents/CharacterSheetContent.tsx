@@ -12,14 +12,12 @@
 
 'use client';
 
-import styles from '@/styles/components/character/CharacterSheetContent.module.scss';
 import { useCharacterSheetData } from '@/hooks/useCharacterSheetData';
-import { CharacterSheetPGPrincipale, type CharacterSheetTab } from './CharacterSheetPGPrincipale';
-import { CharacterSheetPNG } from './CharacterSheetPNG';
-import { CharacterSheetMaster } from './CharacterSheetMaster';
+import styles from '@/styles/components/character/CharacterSheetContent.module.scss';
 
-// Re-export CharacterSheetTab for backward compatibility
-export type { CharacterSheetTab };
+import { CharacterSheetMaster } from './CharacterSheetMaster';
+import { CharacterSheetPGPrincipale } from './CharacterSheetPGPrincipale';
+import { CharacterSheetPNG } from './CharacterSheetPNG';
 
 /**
  * Character Sheet Content Props

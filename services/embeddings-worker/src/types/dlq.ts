@@ -3,10 +3,17 @@
  * Failed job tracking for manual retry and audit
  */
 
+export type FailedJobEventType =
+  | 'document'
+  | 'document_chunk'
+  | 'chat'
+  | 'forum_post'
+  | 'delete';
+
 export interface FailedJob {
   _id?: string;
   jobId: string;
-  eventType: 'document' | 'document_chunk' | 'chat';
+  eventType: FailedJobEventType;
   eventData: any;
   error: string;
   attempts: number;

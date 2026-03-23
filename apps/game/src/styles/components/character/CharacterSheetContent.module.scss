@@ -190,6 +190,11 @@
   &:active {
     transform: translateY(0);
   }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 }
 
 .btnIcon {
@@ -216,6 +221,35 @@
   margin: 0;
   color: #999;
   font-size: 13px;
+}
+
+.infoName {
+  margin: 0 0 0.5rem 0;
+  color: #ff9500;
+  font-size: 1.125rem;
+}
+
+.infoOccupation {
+  margin: 0 0 0.5rem 0;
+  color: #e8e0d5;
+  font-size: 0.9375rem;
+}
+
+.statusLine {
+  margin: 0;
+  color: #999;
+  font-size: 0.8125rem;
+}
+
+.statusValue {
+  color: var(--character-status-color, #999);
+}
+
+.ownerNote {
+  margin: 0.5rem 0 0 0;
+  color: #ff9500;
+  font-size: 0.8125rem;
+  font-weight: 600;
 }
 
 /* ========================================

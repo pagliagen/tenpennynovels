@@ -52,58 +52,7 @@ export const TimestampSchema = z.object({
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
-
-/**
- * Pagination Metadata Schema
- *
- * Standard pagination information for paginated API responses.
- *
- * @constant
- * @since 2.0.0
- *
- * @example
- * ```typescript
- * const pagination = {
- *   page: 1,
- *   limit: 50,
- *   total: 234,
- *   totalPages: 5
- * };
- * PaginationSchema.parse(pagination);
- * ```
- */
-export const PaginationSchema = z.object({
-  page: z.number().int().positive(),
-  limit: z.number().int().positive(),
-  total: z.number().int().nonnegative(),
-  totalPages: z.number().int().nonnegative(),
-});
-
-/**
- * Paginated Response Schema Factory
- *
- * Creates a schema for paginated API responses with typed data array.
- *
- * @template T - Zod schema type for individual items
- * @param {T} itemSchema - Schema for items in the data array
- * @returns {z.ZodObject} Schema for paginated response
- *
- * @function
- * @since 2.0.0
- *
- * @example
- * ```typescript
- * const PaginatedUsersSchema = PaginatedResponseSchema(UserSchema);
- * type PaginatedUsers = z.infer<typeof PaginatedUsersSchema>;
- * // { data: User[], pagination: Pagination }
- * ```
- */
-export const PaginatedResponseSchema = <T extends z.ZodTypeAny>(itemSchema: T) =>
-  z.object({
-    data: z.array(itemSchema),
-    pagination: PaginationSchema,
-  });
-
+ 
 /**
  * User Schema
  *

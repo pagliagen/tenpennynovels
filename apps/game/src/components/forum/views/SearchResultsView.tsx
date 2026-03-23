@@ -1,10 +1,11 @@
 'use client';
 
 import { useCallback } from 'react';
+
 import { useForumSearch } from '@/hooks/useForumSocial';
 import { useForumStore } from '@/store/forumStore';
-import type { ForumSearchResult } from '@/types/forum';
 import styles from '@/styles/components/forum/SearchResultsView.module.scss';
+import type { ForumSearchResult } from '@/types/forum';
 
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr);

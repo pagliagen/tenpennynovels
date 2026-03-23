@@ -69,13 +69,16 @@ export class DocumentController {
         _id: doc._id.toString(),
         slug: doc.slug,
         title: doc.title,
+        description: doc.description || '',
         type: doc.type,
         path: doc.path,
         content: doc.content,
         tags: doc.tags || [],
         isDraft: doc.isDraft || false,
         draftNotes: doc.draftNotes,
-        isPublic: doc.isPublic
+        isPublic: doc.isPublic,
+        createdAt: doc.createdAt,
+        lastUpdated: doc.lastUpdated
       };
 
       const convertChunk = (chunk: { _id: { toString(): string }; documentId: { toString(): string }; heading: string; slug: string; content: string; headingLevel: number; order: number }, depth: number = 0) => ({
@@ -185,14 +188,18 @@ export class DocumentController {
    */
   static async listRoutes(req: Request, res: Response): Promise<void> {
     try {
-      const { type } = req.query;
+      const { type, all } = req.query;
 
       const filter: Record<string, unknown> = {
         deletedAt: null,
         isDraft: { $ne: true },
         visible: { $ne: false },
-        parentId: null
       };
+
+      // Include all documents (not just roots) when all=true (for ISR getStaticPaths)
+      if (all !== 'true') {
+        filter.parentId = null;
+      }
 
       if (type && ['ambientazione', 'regolamento'].includes(type as string)) {
         filter.type = type;
@@ -311,6 +318,63 @@ export class DocumentController {
     } catch (error: unknown) {
       logger.error('Error in listRoutesHierarchical:', error);
       res.status(500).json({ result: false, error: 'Errore recupero documenti gerarchici', code: 'LIST_HIERARCHICAL_ERROR' });
+    }
+  }
+
+  /**
+   * GET /documents/search
+   * Full-text search using MongoDB text index
+   */
+  static async textSearch(req: Request, res: Response): Promise<void> {
+    try {
+      const { q, type } = req.query;
+
+      if (!q || typeof q !== 'string') {
+        res.status(400).json({ result: false, error: 'Query parameter "q" required', code: 'MISSING_QUERY' });
+        return;
+      }
+
+      // MongoDB text search query
+      const filter: Record<string, unknown> = {
+        $text: { $search: q },
+        deletedAt: null,
+        isDraft: { $ne: true },
+        visible: { $ne: false }
+      };
+
+      // Only show public documents to non-authenticated users
+      if (!req.user) {
+        filter.isPublic = true;
+      }
+
+      // Optional type filter
+      if (type && ['ambientazione', 'regolamento'].includes(type as string)) {
+        filter.type = type;
+      }
+
+      const results = await Document.find(filter)
+        .select('title path type slug')
+        .sort({ score: { $meta: 'textScore' } })
+        .limit(20)
+        .lean();
+
+      const data = results.map(doc => ({
+        title: doc.title,
+        url: `/${doc.type}/${doc.path}`,
+        type: doc.type
+      }));
+
+      res.json({
+        result: true,
+        data: {
+          query: q,
+          results: data,
+          count: data.length
+        }
+      });
+    } catch (error: unknown) {
+      logger.error('[textSearch] Error:', error);
+      res.status(500).json({ result: false, error: 'Search failed', code: 'SEARCH_ERROR' });
     }
   }
 

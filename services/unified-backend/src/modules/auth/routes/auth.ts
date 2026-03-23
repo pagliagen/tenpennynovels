@@ -47,6 +47,7 @@ router.post('/resend-verification',
 // Authentication routes  
 router.post('/login',
   RateLimitMiddleware.loginLimit(),
+  RateLimitMiddleware.failedLoginLimit(),
   ValidationMiddleware.validateLogin,
   AuthController.login
 );

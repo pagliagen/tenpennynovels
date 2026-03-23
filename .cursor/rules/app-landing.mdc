@@ -1,0 +1,29 @@
+---
+description: Convenzioni app Landing — auth, fetch client, form, niente React Query
+globs: apps/landing/**
+alwaysApply: false
+---
+
+# App `apps/landing`
+
+## Nuova pagina
+
+- Aggiungi in `src/pages/`. Meta e layout: pattern con `Head`, layout vittoriani (`VictorianLayout`, `PageLayout`, ecc.) come nelle pagine esistenti.
+
+## Chiamate API
+
+- **Non** usare TanStack Query in questa app: il client HTTP è **fetch-based** in `src/lib/api/client.ts` (retry, timeout, dedup, interceptor).
+- `NEXT_PUBLIC_API_URL` (default `http://localhost:8000`) per il gateway.
+- Errori e tipi risposta: `src/lib/api/errors.ts`, `src/types` (es. `ApiResponse`) — resta coerente con questi file.
+
+## Form e validazione
+
+- Pattern consolidati: `react-hook-form` + `zod` + `@hookform/resolvers`; schemi in `lib/validation/schemas.ts` o `utils/schemas.ts` a seconda del flusso. Sanitizzazione: `lib/validation/sanitizers.ts` dove serve.
+
+## Servizi
+
+- Logica di dominio spesso in `src/services/*.ts` (Auth, Character, Settings) che chiama il client API — preferisci questo strato alle chiamate sparse nei componenti.
+
+## Stili
+
+- Tema globale: `src/styles/main.scss`. Componenti UI in `src/components/`. Usa SCSS/CSS esistenti invece di nuovi sistemi di styling.

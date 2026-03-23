@@ -3,6 +3,7 @@ import { Character, Location, Chat } from '@database/models';
 import { ApiResponse } from '../types/game';
 import { logger } from '../logger';
 import { LocationService } from '../services/LocationService';
+import { redis } from '@config/runtime/redis';
 import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
 import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '@shared/utils/apiResponse';
 
@@ -137,8 +138,7 @@ export class LocationController {
         return;
       }
 
-      // Filter shop items by character permissions
-      // TODO: Implement shop items when Shop system is properly integrated
+      // Shop items - feature not yet implemented
       const availableItems: any[] = [];
 
       // Get chat history for the location, filtered by current session
@@ -305,8 +305,14 @@ export class LocationController {
       // Add to location occupants
       await LocationController.addOccupant(location, character, currentTag);
 
-      // TODO: Publish Redis event for WebSocket
-      // redis.publish('location:character_entered', { locationId, characterId, characterName });
+      // Publish Redis event for real-time WebSocket updates
+      await redis.publish('location:events', JSON.stringify({
+        type: 'character_entered',
+        locationId: locationId.toString(),
+        characterId: character._id.toString(),
+        characterName: character.name,
+        timestamp: new Date().toISOString()
+      }));
 
       logger.info('Character entered location', {
         characterId,
@@ -422,12 +428,14 @@ export class LocationController {
         });
       });
 
-      // TODO: Publish Redis event for WebSocket
-      // redis.publish('location:character_left', {
-      //   locationId: oldLocationId,
-      //   characterId,
-      //   characterName: character.name
-      // });
+      // Publish Redis event for real-time WebSocket updates
+      await redis.publish('location:events', JSON.stringify({
+        type: 'character_left',
+        locationId: oldLocationId.toString(),
+        characterId: character._id.toString(),
+        characterName: character.name,
+        timestamp: new Date().toISOString()
+      }));
 
       logger.info('Character left location', {
         characterId,
@@ -655,10 +663,8 @@ export class LocationController {
           }
         }
 
-        // Corporation requirements - disabled until corporations are implemented
+        // Corporation requirements - feature not yet implemented
         if (item.requirements.corporations && item.requirements.corporations.length > 0) {
-          // TODO: Implement corporation membership check when Character.corporations field is added
-          // For now, assume no corporation access
           return false;
         }
       }
@@ -949,10 +955,9 @@ export class LocationController {
         }
       }
       
-      // Check corporation access - disabled until corporations are implemented
+      // Corporation access - feature not yet implemented
       if (location.access?.corporationAccess) {
-        // TODO: Implement corporation membership check when Character.corporations field is added
-        // For now, skip corporation access checks
+        // Skipped until corporations feature is developed
       }
     }
 
@@ -986,10 +991,9 @@ export class LocationController {
         }
       }
       
-      // Check corporation access - disabled until corporations are implemented
+      // Corporation access - feature not yet implemented
       if (location.access?.corporationAccess) {
-        // TODO: Implement corporation membership check when Character.corporations field is added
-        // For now, skip corporation access checks
+        // Skipped until corporations feature is developed
       }
     }
 

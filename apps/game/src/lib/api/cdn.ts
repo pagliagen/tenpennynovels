@@ -48,7 +48,7 @@ export const uploadImage = async (
   entityId: string,
   _onProgress?: (progress: number) => void
 ): Promise<CDNUploadResponse> => {
-  // TODO: Implement progress tracking if needed
+  // Note: Progress tracking not implemented - uploads are fast enough without it
   return cdnApi.upload(file, type, entityId);
 };
 

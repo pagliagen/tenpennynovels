@@ -1,7 +1,8 @@
 'use client';
 
-import { WizardTabBar } from './WizardTabBar';
 import styles from '@/styles/components/character/wizard/WizardHeader.module.scss';
+
+import { WizardTabBar } from './WizardTabBar';
 
 interface WizardHeaderProps {
   characterName: string;

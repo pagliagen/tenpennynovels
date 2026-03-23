@@ -159,20 +159,71 @@ export default function LoginPage() {
       clearMessages();
       setErrorCode('');
 
+      // ✅ CRITICAL: Clear ALL session-related storage BEFORE login
+      // Defense: Prevent session pollution from previous user (shared device scenario)
+      try {
+        sessionStorage.removeItem('character_session_id');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[Login] SessionStorage cleared');
+        }
+      } catch (storageError) {
+        console.error('[Login] Failed to clear sessionStorage:', storageError);
+        // Non-blocking: continue login even if cleanup fails
+      }
+
       const result = await authService.login(data);
+
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[Login] result.success:', result.success, 'hasData:', !!result.data);
+      }
 
       if (result.success && result.data) {
         // Show character select modal or redirect based on number of characters
-        // Backend returns { data: { user: { characters, username }, session: {...} } }
-        const userData = result.data as any;
-        if (userData.user?.characters?.length > 1) {
+        // Backend returns { data: { user: { characters, username }, session: {...}, sessionId?: string } }
+        const userData = result.data;
+
+        // NEW: Save sessionId to sessionStorage HERE (guaranteed client-side)
+        if (userData.sessionId) {
+          try {
+            sessionStorage.setItem('character_session_id', userData.sessionId);
+
+            // ✅ CRITICAL: Verify write succeeded (defense against QuotaExceededError)
+            const stored = sessionStorage.getItem('character_session_id');
+            if (stored !== userData.sessionId) {
+              throw new Error('sessionStorage write verification failed');
+            }
+
+            if (process.env.NODE_ENV === 'development') {
+              console.log('[Login Page] sessionId saved and verified');
+            }
+          } catch (error) {
+            // ✅ CRITICAL: ABORT login on storage failure (show error to user)
+            console.error('[Login Page] ❌ sessionStorage write failed:', error);
+            setError('Impossibile salvare la sessione. Svuota la cache del browser.');
+            setLoading(false);
+            return; // Stop redirect
+          }
+        } else if (process.env.NODE_ENV === 'development') {
+          console.warn('[Login Page] No sessionId in response (auto-select may have been skipped).');
+        }
+
+        const userCharacters = userData.user?.characters;
+        if (userCharacters && userCharacters.length > 1) {
           // Multiple characters (PG principale + PNG/Master assigned by staff) - show selection modal
-          setUserCharacters(userData.user.characters);
+          setUserCharacters(userCharacters);
           setLoggedInUsername(userData.user.username || userData.user.displayName || 'Utente');
           setShowCharacterModal(true);
         } else {
           // Single character or no characters - redirect to game
-          window.location.href = process.env.NEXT_PUBLIC_GAME_URL || 'http://localhost:3010';
+          // NOTE: sessionId passed as query param because sessionStorage is NOT shared between origins (localhost:4001 vs localhost:3010)
+          const gameUrl = process.env.NEXT_PUBLIC_GAME_URL || 'http://localhost:3010';
+          const sessionId = userData.sessionId || sessionStorage.getItem('character_session_id');
+
+          if (sessionId) {
+            window.location.href = `${gameUrl}?sessionId=${sessionId}`;
+          } else {
+            window.location.href = gameUrl;
+          }
         }
       } else {
         handleApiFormErrors(result, setFormError, setError);
@@ -189,7 +240,7 @@ export default function LoginPage() {
   return (
     <FormPageLayout
       title="Ten Penny Novels | Gioco di Ruolo Londra Vittoriana"
-      description="Ten Penny Novels: gioco di ruolo online gratuito ambientato nella Londra Vittoriana del 1890. Sistema Call of Cthulhu via chat con narrazione investigativa stile Agatha Christie. Crea il tuo personaggio vittoriano ed esplora i misteri della capitale inglese. Registrazione gratuita!"
+      description="Ten Penny Novels: GDR gratuito nella Londra Vittoriana 1890. Call of Cthulhu via chat, narrazione investigativa. Crea il tuo personaggio e gioca."
       canonical="https://tenpennynovels.com/"
       schema={homeSchema}
       noindex={false}

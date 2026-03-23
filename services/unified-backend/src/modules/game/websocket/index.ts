@@ -15,6 +15,8 @@ interface CharacterContextPayload {
   isApproved: boolean;
   gameplayRoles?: string[];
   isGestore?: boolean;
+  playerStatus?: string;
+  characterPermissions?: string[];
 }
 
 let redisSubscriberInstance: RedisSubscriber | null = null;
@@ -73,16 +75,80 @@ export async function setupWebSocket(io: SocketIOServer): Promise<void> {
         exp: authPayload.exp
       } as RequestUser;
       
-      // Verify character context token if provided
-      if (characterToken) {
+      // NEW FLOW: Session ID from auth payload (multi-tab support)
+      const sessionId = socket.handshake.auth?.sessionId;
+
+      if (sessionId) {
+        try {
+          // Import SessionStore and Character dynamically
+          const { SessionStore } = await import('../../../modules/auth/services/SessionStore');
+          const { Character } = await import('@database/models');
+
+          // Lookup Redis session
+          const session = await SessionStore.getSession(sessionId);
+
+          if (!session) {
+            logger.warn('WebSocket: Session not found', { sessionId, userId: authPayload.userId });
+            return next(new Error('Sessione non valida o scaduta'));
+          }
+
+          // CRITICAL: Ownership validation
+          if (session.userId !== authPayload.userId) {
+            logger.error('WebSocket: Session ownership mismatch', {
+              sessionId,
+              sessionUserId: session.userId,
+              authUserId: authPayload.userId
+            });
+            return next(new Error('Sessione non valida per questo utente'));
+          }
+
+          // Populate socket.data.character from Character model
+          const character = await Character.findById(session.characterId);
+
+          if (!character) {
+            logger.warn('WebSocket: Character not found for session', {
+              sessionId,
+              characterId: session.characterId
+            });
+            return next(new Error('Personaggio non trovato'));
+          }
+
+          const fullCharacterName = character.surname
+            ? `${character.name} ${character.surname}`
+            : character.name;
+
+          socket.data.character = {
+            characterId: character.id,
+            characterName: fullCharacterName,
+            userId: session.userId,
+            isApproved: character.playerStatus === 'approved',
+            gameplayRoles: character.gameplayRoles || [],
+            isGestore: character.isGestore || false,
+            playerStatus: character.playerStatus || 'draft',
+            characterPermissions: character.characterPermissions || []
+          };
+
+          logger.debug(`WebSocket: Session authenticated for character ${fullCharacterName}`, { sessionId });
+
+        } catch (error: unknown) {
+          logger.error('WebSocket: Session validation error', { error, sessionId });
+          return next(new Error('Errore validazione sessione'));
+        }
+      }
+      // FALLBACK FLOW: Cookie character_context (DEPRECATED - backward compatibility)
+      else if (characterToken) {
+        logger.warn('DEPRECATED: WebSocket using character_context cookie', {
+          userId: authPayload.userId
+        });
+
         try {
           const characterPayload = jwt.verify(characterToken, jwtSecret) as CharacterContextPayload;
-          
+
           // Ensure character belongs to authenticated user
           if (characterPayload.userId !== authPayload.userId) {
             return next(new Error('Il personaggio non appartiene all\'utente autenticato'));
           }
-          
+
           socket.data.character = {
             characterId: characterPayload.characterId,
             characterName: characterPayload.characterName,
@@ -90,6 +156,8 @@ export async function setupWebSocket(io: SocketIOServer): Promise<void> {
             isApproved: characterPayload.isApproved,
             gameplayRoles: characterPayload.gameplayRoles || [],
             isGestore: characterPayload.isGestore || false,
+            playerStatus: characterPayload.playerStatus || 'draft',
+            characterPermissions: characterPayload.characterPermissions || []
           };
         } catch (error: unknown) {
           logger.warn('Invalid character context token provided');
@@ -118,15 +186,16 @@ export async function setupWebSocket(io: SocketIOServer): Promise<void> {
     // Join user-specific room
     socket.join(`user_${user.userId}`);
 
-    // Join role-specific rooms based on character gameplayRoles or isGestore flag
+    // Join role-specific rooms: gameplayRoles sono solo player | master | moderatore (mai "amministratore")
     const roles = character?.gameplayRoles || [];
-    const isStaff = character?.isGestore || roles.includes('amministratore') || roles.includes('master') || roles.includes('moderatore');
+    const isStaff =
+      character?.isGestore || roles.includes('master') || roles.includes('moderatore');
     if (isStaff) {
       socket.join('admin');
       socket.join('staff');
       socket.join(`staff_${user.userId}`);
 
-      if (character?.isGestore || roles.includes('amministratore')) {
+      if (character?.isGestore) {
         socket.join('staff_leadership');
       }
     }
@@ -157,7 +226,7 @@ export async function setupWebSocket(io: SocketIOServer): Promise<void> {
             socket.join('staff');
             socket.join(`staff_${user.userId}`);
 
-            if (adminChar.isGestore || adminRoles.includes('amministratore')) {
+            if (adminChar.isGestore) {
               socket.join('staff_leadership');
             }
 

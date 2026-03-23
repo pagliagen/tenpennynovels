@@ -22,12 +22,15 @@
  * @since 2.0.0
  */
 
+import { QueryClientProvider } from '@tanstack/react-query';
 import type { AppProps } from 'next/app';
 import dynamic from 'next/dynamic';
 import Head from 'next/head';
-import { useEffect } from 'react';
-import { QueryClientProvider } from '@tanstack/react-query';
-import { queryClient } from '@/lib/api/queryClient';
+import { useRouter } from 'next/router';
+import { useEffect, useState } from 'react';
+
+import sessionBootStyles from '@/styles/SessionBoot.module.scss';
+
 
 /** Devtools caricati solo sul client e solo in dev (pacchetto in devDependencies, assente in prod) */
 const ReactQueryDevtools = process.env.NODE_ENV === 'development'
@@ -36,10 +39,11 @@ const ReactQueryDevtools = process.env.NODE_ENV === 'development'
       { ssr: false }
     )
   : () => null;
-import { WebSocketProvider } from '@/contexts/WebSocketContext';
-import { EnvironmentProvider } from '@/contexts/EnvironmentContext';
 import { AuthInitializer } from '@/components/auth/AuthInitializer';
 import { ToastContainer } from '@/components/ui/ToastContainer';
+import { EnvironmentProvider } from '@/contexts/EnvironmentContext';
+import { WebSocketProvider } from '@/contexts/WebSocketContext';
+import { queryClient } from '@/lib/api/queryClient';
 import '@/styles/main.scss';
 
 /**
@@ -60,30 +64,96 @@ import '@/styles/main.scss';
  * // No need to import or use directly
  */
 export default function App({ Component, pageProps }: AppProps): JSX.Element {
+  const router = useRouter();
+  const [isSessionReady, setIsSessionReady] = useState(false);
+
+  /**
+   * Initialize sessionId from query parameter
+   *
+   * ✅ CRITICAL: Wait for router.query to be ready, then process sessionId
+   * When redirecting from landing app (different origin), sessionStorage is NOT shared.
+   * Landing app passes sessionId as query param: ?sessionId=xxx
+   * This effect reads it and saves to sessionStorage (once).
+   *
+   * Flow:
+   * 1. User selects character in landing app (localhost:4001)
+   * 2. Landing redirects to game: localhost:3010?sessionId=xxx
+   * 3. Router.isReady becomes true, router.query is populated
+   * 4. This effect runs, saves sessionId to sessionStorage
+   * 5. setIsSessionReady(true) allows AuthInitializer to render
+   * 6. sessionId is now available for API interceptor (X-Session-Id header)
+   *
+   * RACE CONDITION FIX: Don't let AuthInitializer run until we've processed sessionId
+   */
+  useEffect(() => {
+    // Wait for router to be ready (router.query populated)
+    if (!router.isReady) {
+      return;
+    }
+
+    const { sessionId } = router.query;
+
+    if (sessionId && typeof sessionId === 'string') {
+      try {
+        // Save to sessionStorage (game app origin: localhost:3010)
+        sessionStorage.setItem('character_session_id', sessionId);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[App] SessionId received from landing and saved to sessionStorage');
+        }
+
+        // Clean URL (remove query param) for better UX
+        router.replace(router.pathname, undefined, { shallow: true });
+      } catch (error) {
+        console.error('[App] Failed to save sessionId to sessionStorage:', error);
+      }
+    }
+
+    // Mark session as ready (either saved or no sessionId in URL)
+    setIsSessionReady(true);
+  }, [router.isReady, router.query.sessionId]);
+
   /**
    * Presence cleanup on beforeunload
    *
    * When user closes tab, send immediate cleanup request via navigator.sendBeacon.
    * This is MORE RELIABLE than fetch() which may be cancelled during unload.
    *
-   * Backend endpoint: POST /game/presence/leave (cookie-based auth)
+   * NEW FLOW (Multi-Tab Support):
+   * - Read sessionId from sessionStorage (isolated per tab)
+   * - Send sessionId in request body (sendBeacon doesn't support custom headers)
+   * - Backend validates session ownership (session.userId === auth_token.userId)
+   * - Backend deletes session from Redis
+   *
+   * Backend endpoint: POST /game/presence/leave (dual auth: cookie + sessionId)
    */
   useEffect(() => {
     const handleBeforeUnload = () => {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
       const endpoint = `${apiUrl}/game/presence/leave`;
 
-      // Get auth token from cookie (sendBeacon can't use fetch interceptors)
-      const token = document.cookie
-        .split('; ')
-        .find(row => row.startsWith('auth_token='))
-        ?.split('=')[1];
+      // NEW: Read sessionId from sessionStorage (multi-tab support)
+      const sessionId = sessionStorage.getItem('character_session_id');
 
-      if (token) {
-        const data = JSON.stringify({ timestamp: Date.now() });
-        // navigator.sendBeacon is guaranteed delivery even if tab closes immediately
-        navigator.sendBeacon(endpoint, data);
+      if (!sessionId) {
+        // No session to cleanup (user not logged in with character)
+        return;
       }
+
+      // WORKAROUND: sendBeacon doesn't support custom headers
+      // Send sessionId in request body (backend reads from body OR header)
+      const data = new Blob(
+        [JSON.stringify({ sessionId })],
+        { type: 'application/json' }
+      );
+
+      // navigator.sendBeacon is guaranteed delivery even if tab closes immediately
+      const sent = navigator.sendBeacon(endpoint, data);
+
+      if (!sent) {
+        console.warn('[Cleanup] sendBeacon failed - session may not be cleaned up');
+      }
+
+      // sessionStorage auto-cleared on tab close (no manual cleanup needed)
     };
 
     window.addEventListener('beforeunload', handleBeforeUnload);
@@ -92,6 +162,16 @@ export default function App({ Component, pageProps }: AppProps): JSX.Element {
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, []);
+
+  // ✅ CRITICAL: Don't render AuthInitializer until sessionId is processed
+  // This prevents race condition where useAuth runs before sessionId is saved
+  if (!isSessionReady) {
+    return (
+      <div className={sessionBootStyles.root}>
+        Initializing...
+      </div>
+    );
+  }
 
   return (
     <QueryClientProvider client={queryClient}>

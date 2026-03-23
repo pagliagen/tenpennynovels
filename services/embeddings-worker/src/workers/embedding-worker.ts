@@ -16,14 +16,12 @@ import {
   REDIS_CHANNELS,
   DocumentEmbeddingEvent,
   DocumentChunkEmbeddingEvent,
-  LocationEmbeddingEvent,
   ChatEmbeddingEvent,
   ForumPostEmbeddingEvent,
   DeleteEmbeddingEvent,
   EmbeddingEvent,
   isDocumentEmbeddingEvent,
   isDocumentChunkEmbeddingEvent,
-  isLocationEmbeddingEvent,
   isChatEmbeddingEvent,
   isForumPostEmbeddingEvent,
   isDeleteEmbeddingEvent
@@ -36,7 +34,6 @@ import { logger } from '../utils/logger';
 import {
   validateDocumentEvent,
   validateChatEvent,
-  validateLocationEvent,
 } from '../utils/validation';
 
 export class EmbeddingWorker {
@@ -65,18 +62,17 @@ export class EmbeddingWorker {
     this.queue = new Bull('embeddings', {
       redis: config.database.redisUrl,
       defaultJobOptions: {
-        attempts: 3,
+        attempts: config.queue.maxAttempts,
         backoff: {
           type: 'exponential',
-          delay: 2000
+          delay: config.queue.backoffDelay
         },
-        removeOnComplete: 100, // Keep last 100 completed jobs
+        removeOnComplete: config.queue.keepCompleted,
         removeOnFail: false    // DON'T auto-remove failed jobs - use DLQ
       }
     });
 
-    // ✅ Process queue with concurrency 5
-    this.queue.process(5, async (job) => {
+    this.queue.process(config.queue.concurrency, async (job) => {
       return this.processEmbedding(job.data);
     });
 
@@ -89,8 +85,7 @@ export class EmbeddingWorker {
     this.queue.on('failed', async (job, err) => {
       console.error(`❌ Job ${job.id} failed after ${job.attemptsMade} attempts:`, err.message);
 
-      // After max attempts, move to DLQ
-      if (job.attemptsMade >= 3) {
+      if (job.attemptsMade >= config.queue.maxAttempts) {
         const eventType = this.detectEventType(job.data);
         const retryable = !this.isPermanentError(err);
 
@@ -171,6 +166,17 @@ export class EmbeddingWorker {
         });
       }
 
+      const hasChatMessages = collections.collections.some(c => c.name === 'chat_messages');
+      if (!hasChatMessages) {
+        console.log('📦 Creating Qdrant collection: chat_messages');
+        await this.qdrant.createCollection('chat_messages', {
+          vectors: {
+            size: 384,
+            distance: 'Cosine'
+          }
+        });
+      }
+
       // ✅ Ensure ElasticSearch document_chunks index
       const chunkIndexExists = await this.elasticsearch.indices.exists({
         index: `${config.services.elasticsearch.indexPrefix}_document_chunks`
@@ -235,6 +241,40 @@ export class EmbeddingWorker {
                 authorCharacterName: { type: 'text' },
                 content: { type: 'text', analyzer: 'italian' },
                 createdAt: { type: 'date' }
+              }
+            }
+          }
+        });
+      }
+
+      const chatIndexExists = await this.elasticsearch.indices.exists({
+        index: `${config.services.elasticsearch.indexPrefix}_chat_messages`
+      });
+
+      if (!chatIndexExists) {
+        console.log(`📦 Creating ElasticSearch index: ${config.services.elasticsearch.indexPrefix}_chat_messages`);
+        await this.elasticsearch.indices.create({
+          index: `${config.services.elasticsearch.indexPrefix}_chat_messages`,
+          body: {
+            settings: {
+              analysis: {
+                analyzer: {
+                  italian: {
+                    type: 'standard'
+                  }
+                }
+              }
+            },
+            mappings: {
+              properties: {
+                chatId: { type: 'keyword' },
+                locationId: { type: 'keyword' },
+                characterId: { type: 'keyword' },
+                characterName: { type: 'text' },
+                content: { type: 'text', analyzer: 'italian' },
+                timestamp: { type: 'date' },
+                actionType: { type: 'keyword' },
+                visibility: { type: 'keyword' }
               }
             }
           }
@@ -312,39 +352,6 @@ export class EmbeddingWorker {
     );
 
     await this.subscriber.subscribe(
-      REDIS_CHANNELS.EMBEDDING_LOCATION_CREATED,
-      (message: string) => {
-        const event = JSON.parse(message);
-        this.queue.add(event, {
-          jobId: `loc-${event.locationId}-${Date.now()}`
-        });
-        console.log(`📍 Queued location: ${event.name}`);
-      }
-    );
-
-    await this.subscriber.subscribe(
-      REDIS_CHANNELS.EMBEDDING_LOCATION_UPDATED,
-      (message: string) => {
-        const event = JSON.parse(message);
-        this.queue.add(event, {
-          jobId: `loc-upd-${event.locationId}-${Date.now()}`
-        });
-        console.log(`📍 Queued location update: ${event.name}`);
-      }
-    );
-
-    await this.subscriber.subscribe(
-      REDIS_CHANNELS.EMBEDDING_LOCATION_DELETED,
-      (message: string) => {
-        const event = JSON.parse(message);
-        this.queue.add(event, {
-          jobId: `loc-del-${event.entityId}-${Date.now()}`
-        });
-        console.log(`🗑️  Queued location deletion: ${event.entityId}`);
-      }
-    );
-
-    await this.subscriber.subscribe(
       REDIS_CHANNELS.EMBEDDING_CHAT_CREATED,
       (message: string) => {
         const event = JSON.parse(message);
@@ -410,15 +417,12 @@ export class EmbeddingWorker {
       }
     );
 
-    console.log('✅ Embedding Worker started with concurrency 5');
+    console.log(`✅ Embedding Worker started with concurrency ${config.queue.concurrency}`);
     console.log(`   Listening to channels:`);
     console.log(`   - ${REDIS_CHANNELS.EMBEDDING_DOCUMENT_CREATED}`);
     console.log(`   - ${REDIS_CHANNELS.EMBEDDING_DOCUMENT_UPDATED}`);
     console.log(`   - ${REDIS_CHANNELS.EMBEDDING_DOCUMENT_DELETED}`);
     console.log(`   - ${REDIS_CHANNELS.EMBEDDING_DOCUMENT_CHUNK_CREATED}`);
-    console.log(`   - ${REDIS_CHANNELS.EMBEDDING_LOCATION_CREATED}`);
-    console.log(`   - ${REDIS_CHANNELS.EMBEDDING_LOCATION_UPDATED}`);
-    console.log(`   - ${REDIS_CHANNELS.EMBEDDING_LOCATION_DELETED}`);
     console.log(`   - ${REDIS_CHANNELS.EMBEDDING_CHAT_CREATED}`);
     console.log(`   - ${REDIS_CHANNELS.EMBEDDING_CHAT_UPDATED}`);
     console.log(`   - ${REDIS_CHANNELS.EMBEDDING_CHAT_DELETED}`);
@@ -457,8 +461,6 @@ export class EmbeddingWorker {
       await this.handleDocumentEvent(event);
     } else if (isDocumentChunkEmbeddingEvent(event)) {
       await this.handleDocumentChunkEvent(event);
-    } else if (isLocationEmbeddingEvent(event)) {
-      await this.handleLocationEvent(event);
     } else if (isChatEmbeddingEvent(event)) {
       await this.handleChatEvent(event);
     }
@@ -933,79 +935,72 @@ export class EmbeddingWorker {
       throw new Error(`Chat not found: ${chatId}`);
     }
 
+    // Fetch full chat document for Qdrant/ElasticSearch indexing
+    const chat = await db.collection('chats').findOne({ _id: new mongoose.Types.ObjectId(chatId) });
+    if (!chat) {
+      throw new Error(`Chat document not found after update: ${chatId}`);
+    }
+
+    // Save to Qdrant (chat_messages collection)
     try {
-      await this.qdrant.upsert('chats', {
+      await this.qdrant.upsert('chat_messages', {
         wait: true,
         points: [{
           id: this.objectIdToUUID(chatId),
           vector: embedding,
-          payload: { chatId, locationName, type: 'chat' }
+          payload: {
+            chatId,
+            locationId: chat.locationId?.toString() || '',
+            characterId: chat.characterId?.toString() || '',
+            characterName: chat.characterName || '',
+            actionType: chat.actionType || 'say',
+            visibility: chat.visibility || 'public',
+            type: 'chat'
+          }
         }]
       });
     } catch (error) {
       console.error('❌ Failed to save to Qdrant (MongoDB saved):', error);
     }
-  }
 
-  /**
-   * Handle location embedding event (created/updated)
-   */
-  private async handleLocationEvent(event: LocationEmbeddingEvent): Promise<void> {
+    // Save to ElasticSearch (chat_messages index)
     try {
-      console.log(`📍 Processing location embedding: ${event.name}`);
-
-      // Generate text from location data
-      const text = `${event.name}\n${event.district}\n\n${event.description}`;
-
-      // ✅ Check cache
-      const cacheKey = `embedding:${this.hashContent(text)}`;
-      if (this.redis) {
-        const cached = await this.redis.get(cacheKey);
-        if (cached) {
-          const embedding = JSON.parse(cached);
-          await this.saveLocationEmbedding(event.locationId, embedding);
-          console.log(`✅ Location embedding from cache: ${event.name}`);
-          return;
+      await this.elasticsearch.index({
+        index: `${config.services.elasticsearch.indexPrefix}_chat_messages`,
+        id: chatId,
+        document: {
+          chatId,
+          locationId: chat.locationId?.toString() || '',
+          characterId: chat.characterId?.toString() || '',
+          characterName: chat.characterName || '',
+          content: chat.content || '',
+          timestamp: chat.timestamp || new Date(),
+          actionType: chat.actionType || 'say',
+          visibility: chat.visibility || 'public'
         }
-      }
-
-      // ✅ Generate embedding
-      const embedding = await this.generateEmbedding(text);
-
-      if (!embedding) {
-        throw new Error(`Failed to generate embedding for location ${event.locationId}`);
-      }
-
-      // ✅ Cache
-      if (this.redis) {
-        await this.redis.setEx(cacheKey, config.embeddings.cacheTTL, JSON.stringify(embedding));
-      }
-
-      // ✅ Save to Qdrant
-      await this.saveLocationEmbedding(event.locationId, embedding);
-
-      console.log(`✅ Location embedding saved: ${event.name}`);
-
+      });
     } catch (error) {
-      console.error('❌ Error processing location embedding event:', error);
-      throw error; // Re-throw to trigger Bull retry
+      console.error('❌ Failed to save to ElasticSearch (MongoDB+Qdrant saved):', error);
     }
   }
 
   /**
-   * Handle delete event (Document, Location, Chat)
+   * Handle delete event (document, chat, forum_post)
    * Removes embeddings from Qdrant + ElasticSearch
    */
   private async handleDeleteEvent(event: DeleteEmbeddingEvent): Promise<void> {
     try {
+      const entityType = event.entityType as string;
+      if (entityType === 'location') {
+        console.warn('⚠️ Ignoring legacy location delete (locations are not indexed in Qdrant)');
+        return;
+      }
+
       console.log(`🗑️  Processing deletion: ${event.entityType} ${event.entityId}`);
 
       switch (event.entityType) {
         case 'document':
           await this.deleteDocumentEmbeddings(event.entityId);
-          break;
-        case 'location':
-          await this.deleteLocationEmbedding(event.entityId);
           break;
         case 'chat':
           await this.deleteChatEmbedding(event.entityId);
@@ -1038,9 +1033,15 @@ export class EmbeddingWorker {
   /**
    * Detect event type from job data
    */
-  private detectEventType(data: any): 'document' | 'document_chunk' | 'chat' | 'forum_post' {
+  private detectEventType(data: any):
+    | 'document'
+    | 'document_chunk'
+    | 'chat'
+    | 'forum_post'
+    | 'delete' {
+    if (data.entityType && data.entityId) return 'delete';
     if (data.chunkId) return 'document_chunk';
-    if (data.postId) return 'forum_post';
+    if (data.postId && data.topicSlug) return 'forum_post';
     if (data.chatId) return 'chat';
     return 'document';
   }
@@ -1246,29 +1247,6 @@ export class EmbeddingWorker {
   // saveChatEmbedding replaced by saveChatEmbeddingAndModeration above
 
   /**
-   * Save location embedding to Qdrant
-   */
-  private async saveLocationEmbedding(locationId: string, embedding: number[]): Promise<void> {
-    try {
-      await this.qdrant.upsert('chats', {
-        wait: true,
-        points: [{
-          id: this.objectIdToUUID(locationId),
-          vector: embedding,
-          payload: {
-            locationId,
-            type: 'location'
-          }
-        }]
-      });
-      console.log(`✅ Location embedding saved to Qdrant`);
-    } catch (error) {
-      console.error('❌ Failed to save location to Qdrant:', error);
-      throw error;
-    }
-  }
-
-  /**
    * Delete all document chunks (Qdrant + ElasticSearch)
    * Called when a document is deleted
    */
@@ -1300,31 +1278,21 @@ export class EmbeddingWorker {
   }
 
   /**
-   * Delete location embedding from Qdrant
-   */
-  private async deleteLocationEmbedding(locationId: string): Promise<void> {
-    try {
-      await this.qdrant.delete('chats', {
-        wait: true,
-        points: [this.objectIdToUUID(locationId)]
-      });
-      console.log(`✅ Deleted location embedding from Qdrant`);
-    } catch (error) {
-      console.error(`❌ Failed to delete location:`, error);
-      throw error;
-    }
-  }
-
-  /**
    * Delete chat embedding from Qdrant
    */
   private async deleteChatEmbedding(chatId: string): Promise<void> {
     try {
-      await this.qdrant.delete('chats', {
+      await this.qdrant.delete('chat_messages', {
         wait: true,
         points: [this.objectIdToUUID(chatId)]
       });
-      console.log(`✅ Deleted chat embedding from Qdrant`);
+
+      await this.elasticsearch.delete({
+        index: `${config.services.elasticsearch.indexPrefix}_chat_messages`,
+        id: chatId
+      }).catch(() => {});
+
+      console.log(`✅ Deleted chat embedding from Qdrant + ElasticSearch`);
     } catch (error) {
       console.error(`❌ Failed to delete chat:`, error);
       throw error;

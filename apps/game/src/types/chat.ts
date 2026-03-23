@@ -19,7 +19,6 @@ export type ActionType =
   | 'whisper'       // Private message (only sender + target + master see)
   | 'ooc'           // Out-of-character message
   | 'dice_roll'     // Dice roll result
-  | 'skill_check'   // Social conflict / skill check result
   | 'stat_check'    // Attribute check result
   | 'item_use'      // Item usage action
   | 'master'        // Master-only announcement
@@ -27,9 +26,6 @@ export type ActionType =
   | 'social_confrontation'           // TiroContrapposto - Social conflict result
   | 'combat_action'                  // TiroContrapposto - Combat action result
   | 'confrontation_reaction_request'; // TiroContrapposto - Waiting for defender's choice
-
-// Backward compatibility alias
-export type ChatMessageType = ActionType;
 
 /**
  * Dice Roll Payload
@@ -53,30 +49,6 @@ export interface DiceRollPayload {
 
   // Stat check fields (when actionType = 'stat_check')
   statName?: string;         // Stat name (e.g., "Strength", "Dexterity")
-}
-
-/**
- * Skill Check Payload (Social Conflicts)
- */
-export interface SkillCheckPayload {
-  skill: string;                    // e.g., "Raggirare", "Persuadere"
-  targetCharacterId: string;
-  targetCharacterName: string;
-  intent: string;                   // What the character is trying to achieve
-  lieText?: string;                 // Only for Raggirare (lie detection)
-  success: boolean;                 // Overall success/failure
-  results: SkillCheckResult[];      // Per-target results
-}
-
-/**
- * Individual Skill Check Result (for multi-target checks)
- */
-export interface SkillCheckResult {
-  characterId: string;
-  characterName: string;
-  passed: boolean;           // Did this character pass the check?
-  roll: number;              // Dice roll result
-  difficulty: number;        // Target difficulty
 }
 
 /**
@@ -184,7 +156,6 @@ export interface ChatMessage {
 
   // Type-specific payload (DB field names)
   diceResult?: DiceRollPayload;        // DB field (was diceRoll)
-  socialConflict?: SkillCheckPayload;  // DB field (was skillCheck) - DEPRECATED, use confrontation
   statCheck?: StatCheckPayload;
   itemEffect?: ItemUsePayload;         // DB field (was itemUse)
   confrontation?: ConfrontationPayload; // TiroContrapposto - Unified confrontation system
@@ -256,13 +227,13 @@ export interface SendMessageRequest {
   targetCharacterId?: string;      // For whispers (backend converts to targetCharacters array)
   targetCharacters?: string[];     // For whispers (backend expects array)
   diceSpec?: string;               // For dice_roll - Format: "{count}d{type}[+/-modifier]" (e.g., "2d6+3", "1d20-2")
-  skillId?: string;                // For skill_check (ObjectId - backend does secure lookup)
   statName?: string;               // For stat_check
   targetValue?: number;            // Target value for checks
   itemId?: string;                 // For item_use
-  skillCheck?: Omit<SkillCheckPayload, 'results' | 'success'>;  // Backend calculates results
   statCheck?: Omit<StatCheckPayload, 'roll' | 'success'>;       // Backend rolls dice
   itemUse?: ItemUsePayload;
+  /** Retry invio dopo errore PENDING_REACTION_EXISTS (solo client → backend). */
+  forceAbortPendingReaction?: boolean;
 }
 
 /**

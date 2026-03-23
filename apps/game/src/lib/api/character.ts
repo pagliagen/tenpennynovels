@@ -15,9 +15,11 @@
  * @since 2.0.0
  */
 
-import { api } from './client';
 import type { Character } from '@/types/api/schemas';
+import type { OccupationData, SkillDefinition } from '@/types/game';
 import type { CharacterCreatePayload } from '@/types/wizard';
+
+import { api } from './client';
 
 /**
  * Character API Response Wrappers
@@ -45,9 +47,38 @@ export interface CharacterCreationConfig {
     creationCapWithOccupation: number;
   };
   occupation: any;
-  limits: any;
+  limits: {
+    age: { min: number; max: number };
+    weight: { min: number; max: number; unit: string };
+    height: { min: number; max: number; unit: string };
+    backgroundFields: {
+      briefHistory:           { minChar: number; maxChar: number };
+      significantEvents:      { minChar: number; maxChar: number };
+      importantRelationships: { minChar: number; maxChar: number };
+      personality:            { minChar: number; maxChar: number };
+      ideology:               { minChar: number; maxChar: number };
+    };
+  };
   socialClasses: any[];
   formulas: any;
+  /**
+   * Visibilità dei campi del personaggio.
+   * true = pubblico (visibile a tutti), false = privato (solo master/owner).
+   */
+  fieldVisibility?: Record<string, boolean>;
+}
+
+interface CreationConfigResponse {
+  statsConfig: CharacterCreationConfig['stats'];
+  skillsConfig: CharacterCreationConfig['skills'];
+  occupation: any;
+  limits: CharacterCreationConfig['limits'];
+  socialClasses: any[];
+  formulas: any;
+  derivedStats: any;
+  occupations: any[];
+  skills: any[];
+  fieldVisibility?: Record<string, boolean>;
 }
 
 /**
@@ -181,7 +212,7 @@ export const characterApi = {
    */
   async update(
     characterId: string,
-    data: Partial<CharacterCreatePayload>
+    data: Record<string, any>
   ): Promise<Character> {
     const response = await api.put<{ data: CharacterResponse }>(
       `/game/characters/${characterId}`,
@@ -291,10 +322,19 @@ export const characterApi = {
    * ```
    */
   async getCreationConfig(): Promise<CharacterCreationConfig> {
-    const response = await api.get<{ data: { config: CharacterCreationConfig } }>(
+    const response = await api.get<{ data: { config: CreationConfigResponse } }>(
       '/game/character-creation-config'
     );
-    return response.data.config;
+    const c = response.data.config;
+    return {
+      stats: c.statsConfig,
+      skills: c.skillsConfig,
+      occupation: c.occupation,
+      limits: c.limits,
+      socialClasses: c.socialClasses,
+      formulas: c.formulas,
+      fieldVisibility: c.fieldVisibility,
+    };
   },
 
   /**
@@ -316,9 +356,8 @@ export const characterApi = {
    * console.log(detective.requiredSkillSlots); // [{options: [{skillId, name}, ...]}, ...]
    * ```
    */
-  async getOccupations(): Promise<any[]> {
-    // TODO: Add proper Occupation type from wizard.ts
-    const response = await api.get<{ occupations: any[] }>('/game/occupations');
+  async getOccupations(): Promise<OccupationData[]> {
+    const response = await api.get<{ occupations: OccupationData[] }>('/game/occupations');
     return response.occupations;
   },
 
@@ -327,9 +366,6 @@ export const characterApi = {
    *
    * Fetches all available skills with base values and categories.
    * Used for wizard Step 4 skill allocation.
-   *
-   * **Note**: This endpoint might not exist yet.
-   * Fallback: Use static config or hardcode skills in frontend.
    *
    * @returns {Promise<SkillDefinition[]>} Skills list
    * @throws {ApiError} If request fails
@@ -341,9 +377,8 @@ export const characterApi = {
    * console.log(`${accounting.name}: ${accounting.base}%`); // Accounting: 15%
    * ```
    */
-  async getSkills(): Promise<any[]> {
-    // TODO: Add proper SkillDefinition type from wizard.ts
-    const response = await api.get<{ skills: any[] }>('/game/skills');
+  async getSkills(): Promise<SkillDefinition[]> {
+    const response = await api.get<{ skills: SkillDefinition[] }>('/game/skills');
     return response.skills;
   },
 
@@ -379,19 +414,21 @@ export const characterApi = {
     }>;
   }> {
     const response = await api.get<{
-      exactMatch: { characterName: string; status: string } | null;
-      matches: Array<{ prestavolto: string; characterName: string; status: string }>;
-      allFaceClaims: Array<{
-        prestavolto: string;
-        characterName: string;
-        characterId: string;
-        playerStatus: string;
-        prestavoltoApprovedAt: Date | null;
-      }>;
+      data: {
+        exactMatch: { characterName: string; status: string } | null;
+        matches: Array<{ prestavolto: string; characterName: string; status: string }>;
+        allFaceClaims: Array<{
+          prestavolto: string;
+          characterName: string;
+          characterId: string;
+          playerStatus: string;
+          prestavoltoApprovedAt: Date | null;
+        }>;
+      };
     }>('/game/characters/face-claims/search', {
       params: { q: query }
     });
-    return response;
+    return response.data;
   },
 
   /**
@@ -426,8 +463,3 @@ export const characterApi = {
     return response;
   },
 };
-
-/**
- * Re-export for backward compatibility
- */
-export default characterApi;

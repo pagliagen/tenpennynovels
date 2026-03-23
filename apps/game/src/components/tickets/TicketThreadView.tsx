@@ -10,6 +10,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useTicketMessages, useAddTicketMessage, useCloseTicket, useUserTickets } from '@/hooks/useTickets';
+import styles from '@/styles/components/tickets/TicketThreadView.module.scss';
+
 import { TicketStatusBadge } from './TicketStatusBadge';
 
 interface TicketThreadViewProps {
@@ -59,60 +61,35 @@ export function TicketThreadView({ ticketId, onBack }: TicketThreadViewProps) {
   };
 
   const canReply = ticket && ticket.status !== 'closed';
+  const canSend = !!replyContent.trim() && !addMessage.isPending;
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <div className={styles.root}>
       {/* Header */}
-      <div style={{ padding: '1rem', borderBottom: '1px solid #e5e7eb', backgroundColor: 'white' }}>
-        <button
-          onClick={onBack}
-          style={{
-            padding: '0.5rem',
-            backgroundColor: 'transparent',
-            border: 'none',
-            color: '#3b82f6',
-            fontSize: '0.875rem',
-            cursor: 'pointer',
-            marginBottom: '0.5rem'
-          }}
-        >
+      <div className={styles.header}>
+        <button type="button" onClick={onBack} className={styles.backBtn}>
           ← Torna alla lista
         </button>
 
         {ticket && (
           <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '0.5rem' }}>
-              <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', margin: 0 }}>{ticket.title}</h2>
+            <div className={styles.headerRow}>
+              <h2 className={styles.headerTitle}>{ticket.title}</h2>
               {ticket.status !== 'closed' && (
                 <button
+                  type="button"
                   onClick={handleCloseTicket}
                   disabled={closeTicket.isPending}
-                  style={{
-                    padding: '0.375rem 0.75rem',
-                    backgroundColor: '#ef4444',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '0.375rem',
-                    fontSize: '0.75rem',
-                    fontWeight: '600',
-                    cursor: closeTicket.isPending ? 'not-allowed' : 'pointer',
-                    opacity: closeTicket.isPending ? 0.5 : 1
-                  }}
+                  className={styles.closeBtn}
                 >
                   {closeTicket.isPending ? 'Chiusura...' : 'Chiudi Ticket'}
                 </button>
               )}
             </div>
 
-            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <div className={styles.badgeRow}>
               <TicketStatusBadge status={ticket.status} />
-              <span style={{
-                padding: '0.25rem 0.75rem',
-                backgroundColor: '#f3f4f6',
-                borderRadius: '9999px',
-                fontSize: '0.75rem',
-                color: '#6b7280'
-              }}>
+              <span className={styles.categoryChip}>
                 {ticket.categoryLabel}
               </span>
             </div>
@@ -121,15 +98,15 @@ export function TicketThreadView({ ticketId, onBack }: TicketThreadViewProps) {
       </div>
 
       {/* Messages Thread */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', backgroundColor: '#f9fafb' }}>
+      <div className={styles.thread}>
         {isLoading && (
-          <div style={{ textAlign: 'center', padding: '2rem', color: '#6b7280' }}>
+          <div className={styles.stateMessage}>
             Caricamento messaggi...
           </div>
         )}
 
         {!isLoading && messages.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '2rem', color: '#6b7280' }}>
+          <div className={styles.stateMessage}>
             Nessun messaggio
           </div>
         )}
@@ -143,38 +120,20 @@ export function TicketThreadView({ ticketId, onBack }: TicketThreadViewProps) {
 
       {/* Reply Form */}
       {canReply && (
-        <div style={{ padding: '1rem', borderTop: '1px solid #e5e7eb', backgroundColor: 'white' }}>
+        <div className={styles.replyBar}>
           <textarea
             value={replyContent}
             onChange={(e) => setReplyContent(e.target.value)}
             placeholder="Scrivi la tua risposta..."
             disabled={addMessage.isPending}
-            style={{
-              width: '100%',
-              minHeight: '80px',
-              padding: '0.75rem',
-              border: '1px solid #d1d5db',
-              borderRadius: '0.375rem',
-              fontSize: '0.875rem',
-              resize: 'vertical',
-              fontFamily: 'inherit',
-              marginBottom: '0.75rem'
-            }}
+            className={styles.replyTextarea}
           />
-          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <div className={styles.replyActions}>
             <button
+              type="button"
               onClick={handleSendMessage}
-              disabled={!replyContent.trim() || addMessage.isPending}
-              style={{
-                padding: '0.5rem 1.5rem',
-                backgroundColor: addMessage.isPending || !replyContent.trim() ? '#9ca3af' : '#3b82f6',
-                color: 'white',
-                border: 'none',
-                borderRadius: '0.375rem',
-                fontSize: '0.875rem',
-                fontWeight: '600',
-                cursor: addMessage.isPending || !replyContent.trim() ? 'not-allowed' : 'pointer'
-              }}
+              disabled={!canSend}
+              className={styles.sendBtn}
             >
               {addMessage.isPending ? 'Invio...' : 'Invia Risposta'}
             </button>
@@ -183,8 +142,8 @@ export function TicketThreadView({ ticketId, onBack }: TicketThreadViewProps) {
       )}
 
       {!canReply && ticket?.status === 'closed' && (
-        <div style={{ padding: '1rem', borderTop: '1px solid #e5e7eb', backgroundColor: '#fef3c7', textAlign: 'center' }}>
-          <p style={{ margin: 0, color: '#92400e', fontSize: '0.875rem' }}>
+        <div className={styles.closedBanner}>
+          <p className={styles.closedText}>
             Questo ticket è stato chiuso. Non è possibile inviare nuovi messaggi.
           </p>
         </div>
@@ -202,30 +161,15 @@ function MessageBubble({ message }: MessageBubbleProps) {
   const isStaff = message.sender.type === 'staff';
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        justifyContent: isStaff ? 'flex-start' : 'flex-end',
-        marginBottom: '1rem'
-      }}
-    >
-      <div
-        style={{
-          maxWidth: '70%',
-          padding: '0.75rem 1rem',
-          backgroundColor: isStaff ? 'white' : '#3b82f6',
-          color: isStaff ? '#1f2937' : 'white',
-          borderRadius: '0.75rem',
-          boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)'
-        }}
-      >
-        <div style={{ fontSize: '0.75rem', fontWeight: '600', marginBottom: '0.25rem', opacity: 0.8 }}>
+    <div className={isStaff ? styles.bubbleRowStaff : styles.bubbleRowUser}>
+      <div className={isStaff ? styles.bubbleStaff : styles.bubbleUser}>
+        <div className={styles.bubbleSender}>
           {message.sender.name} {isStaff && '(Staff)'}
         </div>
-        <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: '0.875rem' }}>
+        <div className={styles.bubbleContent}>
           {message.content}
         </div>
-        <div style={{ fontSize: '0.65rem', marginTop: '0.25rem', opacity: 0.7 }}>
+        <div className={styles.bubbleTime}>
           {new Date(message.sentAt).toLocaleString('it-IT', {
             day: '2-digit',
             month: '2-digit',

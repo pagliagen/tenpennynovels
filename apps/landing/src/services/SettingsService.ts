@@ -66,7 +66,7 @@ export class SettingsService {
    * ```typescript
    * const result = await settingsService.getSettings();
    *
-   * if (result.result && result.data) {
+   * if (result.success && result.data) {
    *   console.log('Email notifications:', result.data.emailNotifications);
    * }
    * ```
@@ -90,7 +90,7 @@ export class SettingsService {
    *   newsletter: false
    * });
    *
-   * if (result.result) {
+   * if (result.success) {
    *   console.log('Settings updated');
    * }
    * ```

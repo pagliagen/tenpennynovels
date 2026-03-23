@@ -1,8 +1,23 @@
+# Ten Penny Novels - Landing & Auth
+# Updated: 2026-03-21
+
 User-agent: *
 Allow: /
-Disallow: /character-select/
-Disallow: /character-creation/
+Allow: /credits
+
+# Block authentication & user flows (private) — aligned with apps/landing pages
+Disallow: /register
 Disallow: /delete-account/
 Disallow: /reset-password/
+Disallow: /forgot-password/
+Disallow: /maintenance
 
+# Block Next.js internals
+Disallow: /_next/
+Disallow: /api/
+
+# Sitemap
 Sitemap: https://tenpennynovels.com/sitemap.xml
+
+# Crawl rate (conservative)
+Crawl-delay: 2

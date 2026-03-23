@@ -1,6 +1,6 @@
 # Unified Backend Architecture
 
-**Navigation**: [Home](../INDEX.md) > [Backend](./README.md) > Unified Backend Architecture
+**Navigation**: [Home](../../INDEX.md) > [Backend](./README.md) > Unified Backend
 
 **Status**: ✅ Production Ready | **Last Updated**: 2026-03-08
 
@@ -237,11 +237,11 @@ src/modules/game/
 - **WebSocket**: Real-time updates via Socket.IO
 
 **Details**:
-- [Character System](../03-game-systems/character-system.md)
-- [Location System](../03-game-systems/location-system.md)
-- [Housing System](../03-game-systems/housing-system.md)
-- [Session Management](../03-game-systems/session-management.md)
-- [WebSocket Patterns](../05-frontend/websocket-patterns.md)
+- [Personaggi (funzionale)](../../funzionale/personaggi.md)
+- [Locations (funzionale)](../../funzionale/locations.md)
+- [Housing (funzionale)](../../funzionale/housing.md)
+- [Chat e sessioni (funzionale)](../../funzionale/chat-sessioni.md)
+- [WebSocket Patterns](../frontend/websocket-patterns.md)
 
 ---
 
@@ -304,7 +304,7 @@ GET    /documents/favorites             - User favorites
 POST   /documents/:type/:path/favorite - Toggle favorite
 ```
 
-**Details**: [Semantic Search](../04-ai-ml/semantic-search.md)
+**Details**: [Documents App](../frontend/documents-app.md) (ricerca semantica)
 
 ---
 
@@ -406,7 +406,7 @@ export async function connectDatabase() {
 - **Redis Adapter**: Multi-instance synchronization
 - **Automatic Reconnection**: Client resilience
 
-**Details**: [WebSocket Patterns](../05-frontend/websocket-patterns.md)
+**Details**: [WebSocket Patterns](../frontend/websocket-patterns.md)
 
 ---
 
@@ -512,5 +512,5 @@ npm run dev
 - [Authentication System](./authentication-system.md) - JWT system
 - [API Reference](./api-reference.md) - Complete endpoint list
 - [MongoDB Schemas](../01-infrastructure/mongodb-schemas.md) - Database structure
-- [WebSocket Patterns](../05-frontend/websocket-patterns.md) - Real-time events
-- [Deployment Guide](../06-operations/deployment-guide.md) - Production deployment
+- [WebSocket Patterns](../frontend/websocket-patterns.md) - Eventi real-time
+- [Deploy README](../../deploy/README.md) - Produzione

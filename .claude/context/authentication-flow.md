@@ -45,41 +45,32 @@ TenPennyNovels usa un sistema di autenticazione a due livelli:
 
 ## Flusso Character Session
 
-### Avvio Sessione Character
-1. User seleziona character → `POST /auth/character-session/start`
-2. Authentication Backend:
-   - Verifica character appartiene a user
-   - Verifica character è approvato
-   - Crea CharacterSession in database
-   - Salva session ID in Redis
-3. Risposta: Sessione character avviata
+### Avvio sessione (selezione personaggio)
+1. Utente seleziona il personaggio → **`POST /auth/select-character`** (body: `characterId`), definito in `modules/auth/routes/auth.ts`.
+2. Auth module (`AuthController.selectCharacter`):
+   - Verifica ownership del character e stato (es. non `DELETED`)
+   - Crea/aggiorna sessione in **Redis** tramite `SessionStore.createSession` → ottiene un **`sessionId`** opaco (multi-tab)
+   - Opzionale: traccia audit su MongoDB (`CharacterSessionManager` / `CharacterSession`) senza vincolo di un solo tab
+3. Risposta: il client deve conservare `sessionId` (es. `sessionStorage` come `character_session_id`) e inviarlo come header **`X-Session-Id`** sulle API; per WebSocket si passa `auth: { sessionId }` lato `socket.io-client`.
 
-### Sessione Attiva
-- Character session ID disponibile in `req.character.sessionId`
-- Character data disponibile in `req.character`
-- Usato da Game Backend per autenticazione gameplay
+### Sessione attiva
+- Il middleware auth carica il contesto character dalla sessione Redis quando è presente `X-Session-Id` (flusso attuale); il cookie `character_context` resta per compatibilità ma è **deprecato** in favore della session ID.
+- Le route sotto `/game` usano i middleware del **modulo game** (`modules/game/middleware/auth`), non un ipotetico `CharacterSessionMiddleware` sul modulo auth.
 
-### Terminazione Sessione
-1. User termina sessione → `POST /auth/character-session/end`
-2. Authentication Backend:
-   - Aggiorna CharacterSession.endTime
-   - Rimuove session da Redis
-3. Risposta: Sessione terminata
+### Terminazione / cambio personaggio
+- Non fare affidamento su un endpoint documentato come `POST /auth/character-session/end`: usare i flussi reali (`POST /auth/logout`, cambio character con nuova `select-character`, invalidazione sessioni da `SecurityController` dove esposto, ecc.). Consultare `AuthController` e `CharacterSessionManager` per il comportamento aggiornato.
 
 ## Middleware Autenticazione
 
-### AuthMiddleware (Authentication Backend)
+### AuthMiddleware (modulo `auth` — route `/auth`)
 - Verifica JWT token da cookie
 - Estrae user info da token
 - Aggiunge `req.user` con dati utente
 
-### CharacterSessionMiddleware (Game Backend)
-- Verifica character session attiva
-- Estrae character data da session
-- Aggiunge `req.character` con dati character
-- Verifica character è approvato
+### AuthMiddleware (modulo `game`)
+- Autenticazione utente e permessi di gioco per le route `/game`; vedi `modules/game/middleware/auth.ts`.
 
-### AdminAuthMiddleware (Management Backend)
+### AdminAuthMiddleware (modulo `admin` / app Management)
 - Verifica JWT token
 - Verifica user ha ruoli admin
 - Verifica permessi specifici per operazione

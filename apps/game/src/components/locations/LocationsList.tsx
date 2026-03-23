@@ -16,9 +16,11 @@
 'use client';
 
 import { useRouter } from 'next/router';
+
 import styles from '@/styles/components/locations/list.module.scss';
-import { LocationTreeNode } from './LocationTreeNode';
 import type { AccessibleLocation } from '@/types/location';
+
+import { LocationTreeNode } from './LocationTreeNode';
 
 /**
  * Locations List Props

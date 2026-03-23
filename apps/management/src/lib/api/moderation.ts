@@ -56,24 +56,50 @@ export interface ModerationAlertListResponse {
   };
 }
 
+/** GET /alerts restituisce lista in chiaro (non dentro `data`). */
+type ModerationAlertsListHttp = ModerationAlertListResponse & { success: boolean };
+
 export const moderationAPI = {
   getAlerts: async (filters: ModerationAlertFilters = {}): Promise<ModerationAlertListResponse> => {
-    const response = await api.get('/admin/moderation/alerts', { params: filters });
-    return response as any;
+    const body = (await api.get('/admin/moderation/alerts', { params: filters })) as ModerationAlertsListHttp;
+    return { list: body.list, pagination: body.pagination };
   },
 
   getAlertById: async (id: string): Promise<ModerationAlertRecord> => {
-    const response = await api.get(`/admin/moderation/alerts/${id}`);
-    return (response as any).data;
+    const body = (await api.get(`/admin/moderation/alerts/${id}`)) as {
+      success: boolean;
+      data?: ModerationAlertRecord;
+    };
+    const alert = body.data;
+    if (!alert) {
+      throw new Error('Alert non trovato');
+    }
+    return alert;
   },
 
   getStats: async (source?: 'chat' | 'forum'): Promise<ModerationAlertStats> => {
-    const response = await api.get('/admin/moderation/alerts/stats', { params: source ? { source } : {} });
-    return (response as any).data;
+    const body = (await api.get('/admin/moderation/alerts/stats', {
+      params: source ? { source } : {},
+    })) as { success: boolean; data?: ModerationAlertStats };
+    const stats = body.data;
+    if (!stats) {
+      throw new Error('Statistiche moderazione non disponibili');
+    }
+    return stats;
   },
 
-  reviewAlert: async (id: string, data: { status: string; reviewNotes?: string; actionTaken?: string }): Promise<ModerationAlertRecord> => {
-    const response = await api.patch(`/admin/moderation/alerts/${id}/review`, data);
-    return (response as any).data?.alert;
+  reviewAlert: async (
+    id: string,
+    data: { status: string; reviewNotes?: string; actionTaken?: string }
+  ): Promise<ModerationAlertRecord> => {
+    const body = (await api.patch(`/admin/moderation/alerts/${id}/review`, data)) as {
+      success: boolean;
+      data?: { message?: string; alert?: ModerationAlertRecord };
+    };
+    const alert = body.data?.alert;
+    if (!alert) {
+      throw new Error('Risposta review alert non valida');
+    }
+    return alert;
   },
 };

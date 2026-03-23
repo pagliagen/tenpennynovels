@@ -56,7 +56,8 @@ const TICKET_CATEGORIES = {
   'general_support': 'Supporto Generale',
   'information_request': 'Richiesta Informazioni',
   'user_report': 'Segnalazione Utente',
-  'improvement_suggestion': 'Proposta Miglioramento'
+  'improvement_suggestion': 'Proposta Miglioramento',
+  'sanction_appeal': 'Sanzione / contestazione'
 } as const;
 
 export class TicketManagementController {
@@ -186,7 +187,7 @@ export class TicketManagementController {
         closedAt: ticket.closedAt?.toISOString(),
         closedBy: ticket.closedBy ? {
           id: ticket.closedBy.toString(),
-          name: 'Staff' // TODO: Get actual staff name
+          name: ticket!.closedByName || 'Unknown'
         } : undefined,
         escalatedAt: ticket.escalatedAt?.toISOString(),
         escalationLevel: ticket.escalationLevel,
@@ -1366,9 +1367,11 @@ export class TicketManagementController {
       }
 
       // Close the ticket
+      const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       ticket!.status = 'closed';
       ticket!.closedAt = new Date();
       ticket!.closedBy = new mongoose.Types.ObjectId(req.user?.userId!);
+      ticket!.closedByName = auditInfo?.adminUsername ?? req.user?.username ?? 'Staff';
       ticket!.lastReadBy.staff = new Date();
 
       // Add resolution note if provided
@@ -1410,7 +1413,6 @@ export class TicketManagementController {
         }
       }));
 
-      const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       logger.info('Ticket closed', {
         ...auditInfo,
         ticketId,

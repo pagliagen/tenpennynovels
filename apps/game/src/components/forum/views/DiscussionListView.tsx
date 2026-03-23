@@ -1,11 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+
 import { useForumDiscussions } from '@/hooks/useForumDiscussions';
-import { useForumStore } from '@/store/forumStore';
 import { useForumTopic } from '@/hooks/useForumTopics';
-import { DiscussionCard } from '../cards/DiscussionCard';
+import { useForumStore } from '@/store/forumStore';
 import styles from '@/styles/components/forum/DiscussionListView.module.scss';
+
+import { DiscussionCard } from '../cards/DiscussionCard';
+
 
 export function DiscussionListView() {
   const topicSlug = useForumStore((s) => s.topicSlug);

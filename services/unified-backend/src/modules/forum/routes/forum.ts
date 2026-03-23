@@ -47,14 +47,14 @@ router.get('/topics/:slug', optionalAuth, ForumController.getTopic);
 router.get('/topics/:topicSlug/discussions', optionalAuth, ForumController.getDiscussions);
 router.get('/topics/:topicSlug/discussions/:discussionSlug', optionalAuth, ForumController.getDiscussion);
 router.post('/topics/:topicSlug/discussions', requiredAuthBan, forumCreationLimiter, ForumController.createDiscussion);
-router.put('/topics/:topicSlug/discussions/:discussionSlug', requiredAuth, ForumController.updateDiscussion);
-router.delete('/topics/:topicSlug/discussions/:discussionSlug', requiredAuth, ForumController.deleteDiscussion);
+router.put('/topics/:topicSlug/discussions/:discussionSlug', requiredAuthBan, ForumController.updateDiscussion);
+router.delete('/topics/:topicSlug/discussions/:discussionSlug', requiredAuthBan, ForumController.deleteDiscussion);
 
 // ----- Posts -----
 router.get('/topics/:topicSlug/discussions/:discussionSlug/posts', optionalAuth, ForumController.getPosts);
 router.post('/topics/:topicSlug/discussions/:discussionSlug/posts', requiredAuthBan, forumCreationLimiter, ForumController.createPost);
-router.put('/posts/:postId', requiredAuth, ForumController.updatePost);
-router.delete('/posts/:postId', requiredAuth, ForumController.deletePost);
+router.put('/posts/:postId', requiredAuthBan, ForumController.updatePost);
+router.delete('/posts/:postId', requiredAuthBan, ForumController.deletePost);
 
 // ----- Search, Recent, Popular -----
 router.get('/search', optionalAuth, ForumController.searchForum);

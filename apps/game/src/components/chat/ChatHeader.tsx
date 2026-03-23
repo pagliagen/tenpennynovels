@@ -11,6 +11,7 @@
 'use client';
 
 import { useRouter } from 'next/router';
+
 import styles from '@/styles/components/chat/ChatHeader.module.scss';
 
 /**

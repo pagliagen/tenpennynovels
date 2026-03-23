@@ -8,12 +8,16 @@
 
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api } from '@/lib/api/client';
-import { useTicketMessages } from '@/hooks/useTickets';
-import { TicketStatusBadge } from './TicketStatusBadge';
 import { useRouter } from 'next/router';
+import { useState, useEffect, useRef } from 'react';
+
+import { useTicketMessages } from '@/hooks/useTickets';
+import { api } from '@/lib/api/client';
+import styles from '@/styles/components/tickets/StaffTicketDetailView.module.scss';
+
+import { TicketStatusBadge } from './TicketStatusBadge';
+
 
 interface StaffTicketDetailViewProps {
   ticketId: string;
@@ -93,60 +97,33 @@ export function StaffTicketDetailView({ ticketId, onBack }: StaffTicketDetailVie
   const isCharacterApproval = ticket?.category === 'character_approval';
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <div className={styles.root}>
       {/* Header */}
-      <div style={{ padding: '1rem', borderBottom: '1px solid #e5e7eb', backgroundColor: 'white' }}>
-        <button
-          onClick={onBack}
-          style={{
-            padding: '0.5rem',
-            backgroundColor: 'transparent',
-            border: 'none',
-            color: '#3b82f6',
-            fontSize: '0.875rem',
-            cursor: 'pointer',
-            marginBottom: '0.5rem'
-          }}
-        >
+      <div className={styles.header}>
+        <button type="button" onClick={onBack} className={styles.backButton}>
           ← Torna alla lista
         </button>
 
         {ticket && (
           <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '0.5rem' }}>
-              <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', margin: 0 }}>{ticket.title}</h2>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <div className={styles.titleRow}>
+              <h2 className={styles.title}>{ticket.title}</h2>
+              <div className={styles.headerActions}>
                 {isUnassigned && (
                   <button
+                    type="button"
                     onClick={handleTakeTicket}
                     disabled={takeMutation.isPending}
-                    style={{
-                      padding: '0.375rem 0.75rem',
-                      backgroundColor: takeMutation.isPending ? '#9ca3af' : '#10b981',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '0.375rem',
-                      fontSize: '0.75rem',
-                      fontWeight: '600',
-                      cursor: takeMutation.isPending ? 'not-allowed' : 'pointer'
-                    }}
+                    className={styles.takeButton}
                   >
                     {takeMutation.isPending ? 'Assegnazione...' : '✋ Prendi in Carico'}
                   </button>
                 )}
                 {isCharacterApproval && (
                   <button
+                    type="button"
                     onClick={handleGoToCharacterPending}
-                    style={{
-                      padding: '0.375rem 0.75rem',
-                      backgroundColor: '#8b5cf6',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '0.375rem',
-                      fontSize: '0.75rem',
-                      fontWeight: '600',
-                      cursor: 'pointer'
-                    }}
+                    className={styles.characterButton}
                   >
                     📋 Vai a Character Pending
                   </button>
@@ -154,25 +131,19 @@ export function StaffTicketDetailView({ ticketId, onBack }: StaffTicketDetailVie
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
+            <div className={styles.metaRow}>
               <TicketStatusBadge status={ticket.status} />
-              <span style={{
-                padding: '0.25rem 0.75rem',
-                backgroundColor: '#f3f4f6',
-                borderRadius: '9999px',
-                fontSize: '0.75rem',
-                color: '#6b7280'
-              }}>
+              <span className={styles.categoryPill}>
                 {ticket.categoryLabel}
               </span>
             </div>
 
-            <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+            <div className={styles.metaLine}>
               Da: {ticket.createdBy?.characterName || 'N/A'}
               {' • '}
               Creato il {new Date(ticket.createdAt).toLocaleString('it-IT')}
               {ticket.assignedTo && (
-                <span style={{ marginLeft: '0.5rem' }}>
+                <span className={styles.metaAssigned}>
                   • Assegnato a: {ticket.assignedTo.name}
                 </span>
               )}
@@ -182,15 +153,15 @@ export function StaffTicketDetailView({ ticketId, onBack }: StaffTicketDetailVie
       </div>
 
       {/* Messages Thread */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', backgroundColor: '#f9fafb' }}>
+      <div className={styles.thread}>
         {isLoading && (
-          <div style={{ textAlign: 'center', padding: '2rem', color: '#6b7280' }}>
+          <div className={styles.centerMuted}>
             Caricamento messaggi...
           </div>
         )}
 
         {!isLoading && messages.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '2rem', color: '#6b7280' }}>
+          <div className={styles.centerMuted}>
             Nessun messaggio
           </div>
         )}
@@ -204,38 +175,20 @@ export function StaffTicketDetailView({ ticketId, onBack }: StaffTicketDetailVie
 
       {/* Reply Form */}
       {canReply && isAssignedToMe && (
-        <div style={{ padding: '1rem', borderTop: '1px solid #e5e7eb', backgroundColor: 'white' }}>
+        <div className={styles.replySection}>
           <textarea
             value={replyContent}
             onChange={(e) => setReplyContent(e.target.value)}
             placeholder="Scrivi la tua risposta (staff)..."
             disabled={replyMutation.isPending}
-            style={{
-              width: '100%',
-              minHeight: '80px',
-              padding: '0.75rem',
-              border: '1px solid #d1d5db',
-              borderRadius: '0.375rem',
-              fontSize: '0.875rem',
-              resize: 'vertical',
-              fontFamily: 'inherit',
-              marginBottom: '0.75rem'
-            }}
+            className={styles.replyTextarea}
           />
-          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <div className={styles.replyActions}>
             <button
+              type="button"
               onClick={handleSendMessage}
               disabled={!replyContent.trim() || replyMutation.isPending}
-              style={{
-                padding: '0.5rem 1.5rem',
-                backgroundColor: replyMutation.isPending || !replyContent.trim() ? '#9ca3af' : '#3b82f6',
-                color: 'white',
-                border: 'none',
-                borderRadius: '0.375rem',
-                fontSize: '0.875rem',
-                fontWeight: '600',
-                cursor: replyMutation.isPending || !replyContent.trim() ? 'not-allowed' : 'pointer'
-              }}
+              className={styles.sendButton}
             >
               {replyMutation.isPending ? 'Invio...' : 'Invia Risposta'}
             </button>
@@ -244,8 +197,8 @@ export function StaffTicketDetailView({ ticketId, onBack }: StaffTicketDetailVie
       )}
 
       {!isAssignedToMe && !isUnassigned && (
-        <div style={{ padding: '1rem', borderTop: '1px solid #e5e7eb', backgroundColor: '#fef3c7', textAlign: 'center' }}>
-          <p style={{ margin: 0, color: '#92400e', fontSize: '0.875rem' }}>
+        <div className={styles.assignedBanner}>
+          <p className={styles.assignedText}>
             Questo ticket è assegnato a {ticket?.assignedTo?.name}. Usa il pannello Gestionale per riassegnare o rispondere.
           </p>
         </div>
@@ -264,29 +217,20 @@ function MessageBubble({ message }: MessageBubbleProps) {
 
   return (
     <div
-      style={{
-        display: 'flex',
-        justifyContent: isStaff ? 'flex-end' : 'flex-start',
-        marginBottom: '1rem'
-      }}
+      className={`${styles.messageRow} ${isStaff ? styles.messageRowEnd : styles.messageRowStart}`}
     >
       <div
-        style={{
-          maxWidth: '70%',
-          padding: '0.75rem 1rem',
-          backgroundColor: isStaff ? '#3b82f6' : 'white',
-          color: isStaff ? 'white' : '#1f2937',
-          borderRadius: '0.75rem',
-          boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)'
-        }}
+        className={`${styles.messageBubble} ${
+          isStaff ? styles.messageBubbleStaff : styles.messageBubbleGuest
+        }`}
       >
-        <div style={{ fontSize: '0.75rem', fontWeight: '600', marginBottom: '0.25rem', opacity: 0.8 }}>
+        <div className={styles.senderLine}>
           {message.sender.name} {isStaff && '(Staff)'}
         </div>
-        <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: '0.875rem' }}>
+        <div className={styles.bodyLine}>
           {message.content}
         </div>
-        <div style={{ fontSize: '0.65rem', marginTop: '0.25rem', opacity: 0.7 }}>
+        <div className={styles.timeLine}>
           {new Date(message.sentAt).toLocaleString('it-IT', {
             day: '2-digit',
             month: '2-digit',

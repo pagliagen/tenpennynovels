@@ -43,10 +43,10 @@ export function useWizardSlots() {
  * @param contentFactory - Render function returning the toolbar JSX
  * @param deps - Dependency array (data values that trigger re-render of toolbar)
  */
-// eslint-disable-next-line react-hooks/exhaustive-deps
+ 
 export function useWizardToolbar(contentFactory: () => ReactNode, deps: unknown[]) {
   const { setToolbarContent } = useWizardSlotsContext();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   useLayoutEffect(() => {
     setToolbarContent(contentFactory());
     return () => setToolbarContent(null);
@@ -60,10 +60,10 @@ export function useWizardToolbar(contentFactory: () => ReactNode, deps: unknown[
  * @param contentFactory - Render function returning the footer actions JSX
  * @param deps - Dependency array (data values that trigger re-render of footer actions)
  */
-// eslint-disable-next-line react-hooks/exhaustive-deps
+ 
 export function useWizardFooterActions(contentFactory: () => ReactNode, deps: unknown[]) {
   const { setFooterActionsContent } = useWizardSlotsContext();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   useLayoutEffect(() => {
     setFooterActionsContent(contentFactory());
     return () => setFooterActionsContent(null);

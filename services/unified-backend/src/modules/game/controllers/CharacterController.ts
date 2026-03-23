@@ -296,7 +296,7 @@ export class CharacterController {
         constitution: 50,
         size: 50,
         dexterity: 50,
-        charm: 50,
+        appearance: 50,
         intelligence: 50,
         power: 50,
         education: 50
@@ -642,10 +642,18 @@ export class CharacterController {
         } else {
           // Altri utenti vedono solo quello che sono autorizzati a vedere
           logger.info('Filtering character for other user', { isMaster });
+          let fieldVisibility: Record<string, boolean> | undefined;
+          try {
+            const rulesConfig = await CharacterCreationConfigService.getInstance().loadConfig();
+            fieldVisibility = rulesConfig.fieldVisibility;
+          } catch {
+            // Se la config non è disponibile, filterForPublic usa il fallback hardcoded
+          }
           filteredCharacter = CharacterVisibilityFilter.filterCharacter(
             characterJson,
             userId,
-            isMaster
+            isMaster,
+            fieldVisibility
           );
         }
         logger.info('Character filtering completed');
@@ -1007,10 +1015,18 @@ export class CharacterController {
         filteredCharacter = characterJson;
       } else {
         // Altri: solo dati pubblici, oppure tutto se ha game:character:read:others:private
+        let fieldVisibility: Record<string, boolean> | undefined;
+        try {
+          const rulesConfig = await CharacterCreationConfigService.getInstance().loadConfig();
+          fieldVisibility = rulesConfig.fieldVisibility;
+        } catch {
+          // Se la config non è disponibile, filterForPublic usa il fallback hardcoded
+        }
         filteredCharacter = CharacterVisibilityFilter.filterCharacter(
-          characterJson, 
-          userId, 
-          isMaster
+          characterJson,
+          userId,
+          isMaster,
+          fieldVisibility
         );
       }
 
@@ -1084,39 +1100,15 @@ export class CharacterController {
 
       // Handle field name mapping from frontend to backend (only for DRAFT)
       if (character.playerStatus === 'draft') {
-        // Construct full name from firstName + lastName
-        let nameChanged = false;
-        let currentFirstName = character.name?.split(' ')[0] || '';
-        let currentLastName = character.surname || '';
-
         if (filteredUpdates.firstName !== undefined) {
-          currentFirstName = filteredUpdates.firstName;
-          nameChanged = true;
+          character.name = filteredUpdates.firstName;
         }
         if (filteredUpdates.lastName !== undefined) {
-          currentLastName = filteredUpdates.lastName;
-          nameChanged = true;
+          character.surname = filteredUpdates.lastName;
         }
-
-        // Update name and surname only if changed
-        if (nameChanged) {
-          character.name = [currentFirstName, currentLastName].filter(Boolean).join(' ');
-          character.surname = currentLastName;
-        }
-        // Frontend sends "birthplace" (lowercase), model uses "birthPlace" (camelCase)
-        if (filteredUpdates.birthplace !== undefined) {
-          character.birthPlace = filteredUpdates.birthplace;
-        }
-        // Frontend sends "birthDate" 
+        // Frontend sends "birthDate"
         if (filteredUpdates.birthDate !== undefined) {
           character.birthDate = filteredUpdates.birthDate;
-        }
-        // Frontend sends stats.appearance, model uses stats.charm
-        if (filteredUpdates.stats?.appearance !== undefined) {
-          if (!filteredUpdates.stats.charm) {
-            filteredUpdates.stats.charm = filteredUpdates.stats.appearance;
-          }
-          delete filteredUpdates.stats.appearance;
         }
       }
 
@@ -1131,7 +1123,7 @@ export class CharacterController {
           'prestavolto', 'motivations', 'fears', 'audioTheme',
           // Anagrafica completa
           'height', 'weight', 'eyeColor', 'hairColor', 'visibleMarks', 'hiddenMarks',
-          'maritalStatus', 'illnesses', 'educationTitle', 'criminalRecord', 'currentOccupation',
+          'maritalStatus', 'illnesses', 'educationTitle', 'criminalRecord', 'pathologies', 'currentOccupation',
           // Background strutturato
           'background',
           // Dynamic skills (placeholder specializations)
@@ -2073,7 +2065,7 @@ export class CharacterController {
       }
 
       // Create fake PNG (Mongoose will auto-generate _id)
-      const newFake = {
+      const newFake: NonNullable<ICharacter['fakePngs']>[number] = {
         name: name.trim(),
         surname: surname?.trim(),
         avatar: avatar?.trim(),
@@ -2081,7 +2073,7 @@ export class CharacterController {
       };
 
       character.fakePngs = character.fakePngs || [];
-      character.fakePngs.push(newFake as any);
+      character.fakePngs.push(newFake);
       await character.save();
 
       // Get the created fake with _id
@@ -2121,17 +2113,18 @@ export class CharacterController {
         return;
       }
 
-      const fake = character.fakePngs?.find((f: any) => f._id?.toString() === fakeId);
+      type FakePngWithId = NonNullable<ICharacter['fakePngs']>[number] & { _id?: Types.ObjectId };
+      const fake = character.fakePngs?.find((f: FakePngWithId) => f._id?.toString() === fakeId);
       if (!fake) {
         res.status(404).json(errorResponse('Fake PNG not found', 'NOT_FOUND', undefined, 404, getRequestId(req)));
         return;
       }
 
       // Update fields
-      if (name) (fake as any).name = name.trim();
-      if (surname !== undefined) (fake as any).surname = surname?.trim();
-      if (avatar !== undefined) (fake as any).avatar = avatar?.trim();
-      (fake as any).updatedAt = new Date();
+      if (name) fake.name = name.trim();
+      if (surname !== undefined) fake.surname = surname?.trim();
+      if (avatar !== undefined) fake.avatar = avatar?.trim();
+      fake.updatedAt = new Date();
 
       await character.save();
 

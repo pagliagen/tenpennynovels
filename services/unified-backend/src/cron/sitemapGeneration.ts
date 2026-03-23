@@ -8,9 +8,4 @@ cron.schedule('0 3 * * *', async () => {
   await SitemapService.generate();
 });
 
-// Generate immediately on boot so deploy always gets fresh sitemap
-SitemapService.generate().then(() => {
-  logger.info('[SitemapCron] Initial sitemap generation complete');
-});
-
 logger.info('[SitemapCron] Scheduled daily at 03:00');

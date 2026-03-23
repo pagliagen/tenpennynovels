@@ -8,10 +8,7 @@
  * @since 2.0.0
  */
 
-import axios from 'axios';
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-const GAME_API_URL = `${API_BASE_URL}/game`;
+import { api } from './client';
 
 export interface DamageBonusEntry {
   min: number;
@@ -30,9 +27,7 @@ export const gameConfigApi = {
    * Public endpoint — no authentication required.
    */
   async getCombatConfig(): Promise<CombatConfig> {
-    const response = await axios.get(`${GAME_API_URL}/config/combat`, {
-      withCredentials: true,
-    });
-    return response.data.data;
+    const response = await api.get<{ data: CombatConfig }>('/game/config/combat');
+    return response.data;
   },
 };

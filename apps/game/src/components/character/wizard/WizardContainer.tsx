@@ -1,24 +1,27 @@
 'use client';
 
-import { useEffect, useRef, useMemo, useState, useCallback } from 'react';
 import { useRouter } from 'next/router';
-import { useWizardStore } from '@/store/wizardStore';
+import { useEffect, useRef, useMemo, useState, useCallback } from 'react';
+
 import { useCharacterForWizard, useCreateCharacter, useUpdateCharacter } from '@/hooks/useCharacter';
 import { characterApi } from '@/lib/api/character';
 import { api } from '@/lib/api/client';
 import { useAuthStore } from '@/store/authStore';
-import { validateAllSteps } from './validation/wizardValidation';
-import { WizardHeader } from './WizardHeader';
-import { WizardFooter } from './WizardFooter';
-import { WizardStepToolbar } from './WizardStepToolbar';
-import { WizardSlotsProvider, useWizardSlots } from './WizardSlotsContext';
+import { useWizardStore } from '@/store/wizardStore';
+import styles from '@/styles/components/character/wizard/WizardContainer.module.scss';
+import type { AuthSessionApiResponse } from '@/types/authSession';
+
 import { Step1BasicInfo } from './steps/Step1BasicInfo';
 import { Step2Occupation } from './steps/Step2Occupation';
 import { Step3Stats } from './steps/Step3Stats';
 import { Step4Skills } from './steps/Step4Skills';
 import { Step5Background } from './steps/Step5Background';
 import { Step6Review } from './steps/Step6Review';
-import styles from '@/styles/components/character/wizard/WizardContainer.module.scss';
+import { validateAllSteps } from './validation/wizardValidation';
+import { WizardFooter } from './WizardFooter';
+import { WizardHeader } from './WizardHeader';
+import { WizardSlotsProvider, useWizardSlots } from './WizardSlotsContext';
+import { WizardStepToolbar } from './WizardStepToolbar';
 
 type SubmitFeedback = {
   type: 'success' | 'error' | 'validation';
@@ -65,7 +68,8 @@ function useStoreHydrated(): boolean {
 function WizardContainerInner({ characterId, onSubmittingChange }: WizardContainerProps): JSX.Element {
   const router = useRouter();
   const { toolbarContent, footerActionsContent } = useWizardSlots();
-  const { setSelectedCharacter, setGamePermissions } = useAuthStore();
+  const { setSelectedCharacter, setGamePermissions, setAdminPanelAccessFromSession, setCharacterBan } =
+    useAuthStore();
   const {
     currentStep,
     setCurrentStep,
@@ -108,27 +112,25 @@ function WizardContainerInner({ characterId, onSubmittingChange }: WizardContain
   const clearFeedback = useCallback(() => setSubmitFeedback(null), []);
 
   useEffect(() => {
-    // CRITICAL FIX: Don't wait for hydration if we have API data
-    // The API response takes priority over localStorage
-    if (!characterId || !existingCharacter) {
-      return;
-    }
+    // Wait for localStorage rehydration BEFORE anything else.
+    // React Query may return cached data synchronously on first render,
+    // which would cause loadFromDraft to overwrite localStorage data
+    // before Zustand has had a chance to rehydrate from it.
+    if (!hasHydrated) return;
+    if (!characterId || !existingCharacter) return;
 
-    // Only check localStorage state if hydration is complete
-    if (hasHydrated) {
-      // ✅ FIX: Read firstName from store at execution time (not from dependencies)
-      // This prevents infinite loop when user types in firstName field
-      const currentFirstName = useWizardStore.getState().basicInfo.firstName;
-      const draftMatchesCharacter = _draftCharacterId === characterId
-        && currentFirstName.trim() !== '';
+    // ✅ FIX: Read firstName from store at execution time (not from dependencies)
+    // This prevents infinite loop when user types in firstName field
+    const currentFirstName = useWizardStore.getState().basicInfo.firstName;
+    const draftMatchesCharacter = _draftCharacterId === characterId
+      && currentFirstName.trim() !== '';
 
-      // Skip load if draft already matches this character and server data hasn't changed
-      if (draftMatchesCharacter) {
-        const serverDataChanged = existingCharacter.updatedAt
-          && _serverUpdatedAt !== existingCharacter.updatedAt;
-        if (!serverDataChanged) {
-          return;
-        }
+    // Skip load if draft already matches this character and server data hasn't changed
+    if (draftMatchesCharacter) {
+      const serverDataChanged = existingCharacter.updatedAt
+        && _serverUpdatedAt !== existingCharacter.updatedAt;
+      if (!serverDataChanged) {
+        return;
       }
     }
 
@@ -184,13 +186,14 @@ function WizardContainerInner({ characterId, onSubmittingChange }: WizardContain
       skills,
       dynamicSkills,
       background,
+      creationConfig,
     });
     const validation: Record<number, boolean> = {};
     for (let i = 1; i <= 6; i++) {
       validation[i] = results[i]?.valid ?? true;
     }
     return validation;
-  }, [basicInfo, occupation, stats, skills, dynamicSkills, background]);
+  }, [basicInfo, occupation, stats, skills, dynamicSkills, background, creationConfig]);
 
   const handleNext = () => {
     nextStep();
@@ -232,14 +235,18 @@ function WizardContainerInner({ characterId, onSubmittingChange }: WizardContain
 
       // Refresh session to update permissions (wizard access removed for pending characters)
       try {
-        const session = await api.get<any>('/auth/session');
+        const session = await api.get<AuthSessionApiResponse>('/auth/session');
         if (session.success && session.data?.valid) {
+          if (session.data.user) {
+            setAdminPanelAccessFromSession(!!session.data.user.canAccessAdminPanel);
+          }
           if (session.data.character) {
             setSelectedCharacter(session.data.character);
           }
           if (session.data.gamePermissions) {
             setGamePermissions(session.data.gamePermissions);
           }
+          setCharacterBan(session.data.ban ?? null);
         }
       } catch {
         // Non-critical: permissions will refresh on next page load
@@ -257,26 +264,41 @@ function WizardContainerInner({ characterId, onSubmittingChange }: WizardContain
       }, 2500);
     } catch (error: any) {
       onSubmittingChange?.(false);
-      const backendErrors = error?.details?.errors || error?.details;
-      const backendWarnings = error?.details?.warnings;
+      const rawErrors = error?.details?.errors || error?.details;
+      const rawWarnings = error?.details?.warnings;
+
+      const toDetailsArray = (raw: any): string[] | undefined => {
+        if (!raw) return undefined;
+        if (Array.isArray(raw)) return raw.length > 0 ? raw : undefined;
+        if (typeof raw === 'object') {
+          const vals = Object.values(raw).filter((v) => typeof v === 'string') as string[];
+          return vals.length > 0 ? vals : undefined;
+        }
+        return undefined;
+      };
+
       setSubmitFeedback({
         type: 'error',
         message: error.message || 'Errore sconosciuto durante l\'invio',
-        details: Array.isArray(backendErrors) ? backendErrors : undefined,
-        warnings: Array.isArray(backendWarnings) ? backendWarnings : undefined,
+        details: toDetailsArray(rawErrors),
+        warnings: toDetailsArray(rawWarnings),
       });
       setTimeout(() => feedbackRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
     }
   };
 
+  const isSubmitting = createCharacter.isPending || updateCharacter.isPending;
+
+  const fieldVisibility = creationConfig?.fieldVisibility;
+
   const renderStepContent = () => {
     switch (currentStep) {
-      case 1: return <Step1BasicInfo />;
+      case 1: return <Step1BasicInfo fieldVisibility={fieldVisibility} />;
       case 2: return <Step2Occupation />;
       case 3: return <Step3Stats />;
       case 4: return <Step4Skills />;
-      case 5: return <Step5Background />;
-      case 6: return <Step6Review />;
+      case 5: return <Step5Background fieldVisibility={fieldVisibility} />;
+      case 6: return <Step6Review onSubmit={handleSubmit} isSubmitting={isSubmitting} />;
       default: return null;
     }
   };
@@ -295,8 +317,9 @@ function WizardContainerInner({ characterId, onSubmittingChange }: WizardContain
         <div className={styles.loading}>
           <p>Errore nel caricamento del personaggio: {characterError?.message || 'Errore sconosciuto'}</p>
           <button
+            type="button"
             onClick={() => refetchCharacter()}
-            style={{ marginTop: '1rem', padding: '0.5rem 1.5rem', cursor: 'pointer' }}
+            className={styles.retryButton}
           >
             Riprova
           </button>
@@ -305,7 +328,6 @@ function WizardContainerInner({ characterId, onSubmittingChange }: WizardContain
     );
   }
 
-  const isSubmitting = createCharacter.isPending || updateCharacter.isPending;
   const charName = basicInfo.firstName ? `${basicInfo.firstName} ${basicInfo.lastName}` : 'Nuovo Personaggio';
 
   return (
@@ -317,7 +339,7 @@ function WizardContainerInner({ characterId, onSubmittingChange }: WizardContain
         stepValidation={stepValidation}
       />
       <div className={styles.wizardBody}>
-        <div className={styles.wizardBodyBackground}></div>
+        <div className={`${styles.wizardBodyBackground} ${currentStep === 6 ? styles.step6 : ''}`}></div>
         <WizardStepToolbar>{toolbarContent}</WizardStepToolbar>
         <div className={styles.wizardContent}>
           {submitFeedback && (

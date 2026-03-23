@@ -5,6 +5,8 @@
  * Tutti gli altri file usano appConfig.
  */
 
+import path from 'path';
+
 const isProduction = process.env.NODE_ENV === 'production';
 const isTest = process.env.NODE_ENV === 'test';
 
@@ -101,8 +103,15 @@ export const appConfig = {
     from: 'info@tenpennynovels.com',
   },
 
+  admin: {
+    notificationEmail: process.env.ADMIN_EMAIL || 'admin@tenpennynovels.com',
+  },
+
   bcryptRounds: isProduction ? 12 : 4,
   systemBotUserId: process.env.SYSTEM_BOT_USER_ID,
 
-  sitemapOutputDir: require('path').join(__dirname, '../../../../apps/landing/public'),
+  /** Docker: SITEMAP_OUTPUT_DIR=/sitemap-output (volume → apps/landing/public). Dev: monorepo apps/landing/public. */
+  sitemapOutputDir:
+    process.env.SITEMAP_OUTPUT_DIR ||
+    path.join(__dirname, '../../../../../apps/landing/public'),
 };

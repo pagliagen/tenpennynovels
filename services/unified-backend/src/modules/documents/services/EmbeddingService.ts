@@ -53,22 +53,30 @@ export class EmbeddingService {
    * @param type - Document type filter (optional)
    * @param limit - Max results to return (default 10)
    * @param minScore - Minimum similarity score threshold (default 0.4)
-   * @returns Array of matching document chunks with hybrid scores
+   * @param source - Source type: 'documents', 'forum', 'chat' (optional)
+   * @param filters - Additional filters (e.g., topicSlug, locationId, characterId, dateStart, dateEnd)
+   * @returns Array of matching results with hybrid scores
    */
   static async semanticSearch(
     query: string,
     type?: 'ambientazione' | 'regolamento',
     limit: number = 10,
-    minScore: number = 0.4
-  ): Promise<Array<{ chunkId: string; documentId: string; slug: string; heading: string; score: number; type: string; parentSlug?: string }>> {
+    minScore: number = 0.4,
+    source?: 'documents' | 'forum' | 'chat',
+    filters?: Record<string, any>
+  ): Promise<any[]> {
     try {
+      const requestBody: any = { query, type, limit, minScore };
+      if (source) requestBody.source = source;
+      if (filters) requestBody.filters = filters;
+
       logger.info(`[EmbeddingService] Calling embeddings-worker: ${EMBEDDINGS_SERVICE_URL}/search`);
-      logger.info(`[EmbeddingService] Request payload: ${JSON.stringify({ query, type, limit, minScore })}`);
+      logger.info(`[EmbeddingService] Request payload: ${JSON.stringify(requestBody)}`);
 
       const response = await fetch(`${EMBEDDINGS_SERVICE_URL}/search`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query, type, limit, minScore }),
+        body: JSON.stringify(requestBody),
         signal: AbortSignal.timeout(10000)
       });
 

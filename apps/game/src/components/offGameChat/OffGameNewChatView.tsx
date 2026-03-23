@@ -10,11 +10,12 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useCreateOffGameChat } from '@/hooks/useOffGameChat';
 import { useQueryClient } from '@tanstack/react-query';
-import { queryKeys } from '@/lib/api/queryClient';
+import { useState, useEffect } from 'react';
+
 import { RecipientSelector } from '@/components/mail/RecipientSelector';
+import { useCreateOffGameChat } from '@/hooks/useOffGameChat';
+import { queryKeys } from '@/lib/api/queryClient';
 import styles from '@/styles/components/offGameChat/OffGameChat.module.scss';
 
 interface OffGameNewChatViewProps {
@@ -22,6 +23,21 @@ interface OffGameNewChatViewProps {
   initialRecipientName?: string;
   onBack: () => void;
   onCreated: (chatId: string) => void;
+}
+
+/** Supporta risposte `{ data: { _id } }` e `{ data: { data: { _id } } }` dal gateway. */
+function extractCreatedOffGameChatId(payload: unknown): string | undefined {
+  if (payload === null || typeof payload !== 'object') return undefined;
+  const root = payload as { data?: unknown };
+  const layer1 = root.data;
+  if (!layer1 || typeof layer1 !== 'object') return undefined;
+  const o1 = layer1 as { _id?: unknown; data?: unknown };
+  if (typeof o1._id === 'string') return o1._id;
+  const layer2 = o1.data;
+  if (layer2 && typeof layer2 === 'object' && typeof (layer2 as { _id?: unknown })._id === 'string') {
+    return (layer2 as { _id: string })._id;
+  }
+  return undefined;
 }
 
 export function OffGameNewChatView({
@@ -68,7 +84,7 @@ export function OffGameNewChatView({
       await queryClient.refetchQueries({ queryKey: queryKeys.offGameChat.chats });
 
       // Navigate to the created chat
-      const chatId = (response as any).data?._id || (response as any).data?.data?._id;
+      const chatId = extractCreatedOffGameChatId(response);
       if (chatId) {
         onCreated(chatId);
       } else {

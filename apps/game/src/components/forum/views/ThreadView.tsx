@@ -1,13 +1,15 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useForumPosts } from '@/hooks/useForumPosts';
+
 import { useForumDiscussion } from '@/hooks/useForumDiscussions';
+import { useForumPosts } from '@/hooks/useForumPosts';
 import { useForumStore } from '@/store/forumStore';
-import { PostCard } from '../cards/PostCard';
-import { ReplyForm } from '../ui/ReplyForm';
-import { Pagination } from '../ui/Pagination';
 import styles from '@/styles/components/forum/ThreadView.module.scss';
+
+import { PostCard } from '../cards/PostCard';
+import { Pagination } from '../ui/Pagination';
+import { ReplyForm } from '../ui/ReplyForm';
 
 function formatDate(dateStr?: string): string {
   if (!dateStr) return '';

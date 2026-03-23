@@ -64,6 +64,19 @@ const createApiClient = (): AxiosInstance => {
       //   config.headers.Authorization = `Bearer ${token}`;
       // }
 
+      // Add X-Session-Id header from sessionStorage (multi-tab support)
+      if (typeof window !== 'undefined') {
+        const sessionId = sessionStorage.getItem('character_session_id');
+        if (sessionId) {
+          config.headers['X-Session-Id'] = sessionId;
+        }
+      }
+
+      // SSG/ISR/API Gateway: bypass rate limit (solo Node, mai esposto al browser)
+      if (typeof window === 'undefined' && process.env.DOCUMENTS_BUILD_BYPASS_SECRET) {
+        config.headers['X-Tenpenny-Documents-Build'] = process.env.DOCUMENTS_BUILD_BYPASS_SECRET;
+      }
+
       // Add request timestamp for performance tracking
       config.metadata = { startTime: Date.now() };
 
@@ -80,8 +93,7 @@ const createApiClient = (): AxiosInstance => {
    * Executed after every response (success or error):
    * - Logs performance metrics in development
    * - Transforms errors to ApiError
-   * - Handles 401 by clearing auth tokens
-   * - Logs errors in development
+ * - Logs errors in development
    *
    * @since 2.0.0
    */
@@ -91,7 +103,7 @@ const createApiClient = (): AxiosInstance => {
       if (process.env.NODE_ENV === 'development') {
         const duration = Date.now() - (response.config.metadata?.startTime || 0);
         console.log(
-          `[API] ${response.config.method?.toUpperCase()} ${response.config.url} - ${duration}ms`
+          `[API] ${response.config.method?.toUpperCase()} ${response.config.url} — ${duration} ms`
         );
       }
 
@@ -102,7 +114,7 @@ const createApiClient = (): AxiosInstance => {
 
       // Log errors in development with full context
       if (process.env.NODE_ENV === 'development') {
-        console.error('[API Error]', {
+        console.error('[Errore API]', {
           url: error.config?.url,
           category: apiError.category,
           status: apiError.statusCode,

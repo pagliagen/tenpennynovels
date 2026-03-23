@@ -1,6 +1,6 @@
 # MongoDB Schemas
 
-**Navigation**: [Home](../INDEX.md) > [Infrastructure](./README.md) > MongoDB Schemas
+**Navigation**: [Home](../../INDEX.md) > [Infrastructure](./README.md) > MongoDB Schemas
 
 **Status**: ✅ Production Ready | **Last Updated**: 2026-03-01
 
@@ -230,7 +230,7 @@ interface ICharacter {
 - `status`
 - `currentLocation`
 
-**Details**: [Character System](../03-game-systems/character-system.md)
+**Details**: [Personaggi (funzionale)](../../funzionale/personaggi.md)
 
 ---
 
@@ -334,7 +334,7 @@ interface ICharacterFinances {
 **Indexes**:
 - `characterId` (unique)
 
-**Details**: [Economy System](../03-game-systems/economy-system.md)
+**Details**: [Unified Backend](../backend/unified-backend.md) (modulo game / economia)
 
 ---
 
@@ -405,7 +405,7 @@ London (root)
     └── Whitechapel Market (location)
 ```
 
-**Details**: [Location System](../03-game-systems/location-system.md)
+**Details**: [Locations (funzionale)](../../funzionale/locations.md)
 
 ---
 
@@ -457,7 +457,7 @@ interface ILocationProperty {
 - Rent collection: Daily at 6am UTC
 - Eviction: 14+ days overdue
 
-**Details**: [Housing System](../03-game-systems/housing-system.md)
+**Details**: [Housing (funzionale)](../../funzionale/housing.md)
 
 ---
 
@@ -504,7 +504,7 @@ interface IOnGameMessage {
 
 **Postal Delivery**: Cron job daily (simula tempi di consegna vittoriani)
 
-**Details**: [Messaging System](../03-game-systems/messaging-system.md)
+**Details**: [WebSocket Events](../backend/websocket-events.md)
 
 ---
 
@@ -555,7 +555,7 @@ interface IDocument {
 
 **Embeddings**: Generati async via embeddings-worker → Qdrant
 
-**Details**: [Embeddings Architecture](../04-ai-ml/embeddings-architecture.md)
+**Details**: [Embeddings Worker](../backend/embeddings-worker.md)
 
 ---
 
@@ -630,7 +630,7 @@ interface IOccupation {
 
 **Examples**: Detective, Physician, Artist, Journalist, Antiquarian, Dilettante
 
-**Details**: [Occupations Reference](../08-reference/occupations-reference.md)
+**Details**: [Glossario — Occupation](../../GLOSSARY.md#game-system-terminology)
 
 ---
 
@@ -665,7 +665,7 @@ interface ISkill {
 
 **Total Skills**: ~80 (base + specializations)
 
-**Details**: [Skills Reference](../08-reference/skills-reference.md)
+**Details**: [Glossario — Skills](../../GLOSSARY.md#game-system-terminology)
 
 ---
 
@@ -715,7 +715,7 @@ interface ICorporation {
 - `members.characterId`
 - `isActive`
 
-**Details**: [Corporation Management](../03-game-systems/corporation-management.md)
+**Details**: [Corporazioni (funzionale)](../../funzionale/corporazioni.md)
 
 ---
 
@@ -750,7 +750,7 @@ interface IWebSocketEvent {
 - `targetUserId`
 - `createdAt` (TTL: 24h auto-delete)
 
-**Details**: [WebSocket Patterns](../05-frontend/websocket-patterns.md)
+**Details**: [WebSocket Patterns](../frontend/websocket-patterns.md)
 
 ---
 
@@ -995,7 +995,7 @@ docker exec -i tenpennynovels-mongodb mongorestore \
   /backups/20260301/tenpennynovels
 ```
 
-**Details**: [Backup & Restore](../06-operations/backup-restore.md)
+**Details**: [Deploy README](../../deploy/README.md) (backup DB / volumi secondo ambiente)
 
 ---
 
@@ -1003,10 +1003,10 @@ docker exec -i tenpennynovels-mongodb mongorestore \
 
 - [Docker Compose](./docker-compose.md) - MongoDB container configuration
 - [Environment Variables](./environment-variables.md) - MONGODB_URI setup
-- [Character System](../03-game-systems/character-system.md) - Character schemas usage
-- [Location System](../03-game-systems/location-system.md) - Location schemas usage
-- [Housing System](../03-game-systems/housing-system.md) - Housing schemas usage
-- [Messaging System](../03-game-systems/messaging-system.md) - Message schemas usage
+- [Personaggi (funzionale)](../../funzionale/personaggi.md)
+- [Locations (funzionale)](../../funzionale/locations.md)
+- [Housing (funzionale)](../../funzionale/housing.md)
+- [WebSocket Events](../backend/websocket-events.md)
 
 ---
 

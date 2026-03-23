@@ -1,92 +1,162 @@
 /**
- * Step6Review - Final review step styles
- * Uses CSS custom properties only. No local SCSS variables.
+ * Step6Review - Conferma (matching wizard6.png)
+ * Centered card with confirmation message or validation errors
  */
 
 @use 'wizard-forms' as forms;
 
 .stepContent {
   @include forms.stepContent;
-}
-
-.toolbarTitle {
-  font-size: var(--font-size-sm);
-  color: var(--color-primary);
-  font-weight: var(--font-weight-bold);
-  text-transform: uppercase;
-  letter-spacing: var(--letter-spacing-wide);
-  font-family: var(--font-primary);
-}
-
-.toolbarValid {
-  font-size: var(--font-size-sm);
-  color: var(--color-success);
-  font-weight: var(--font-weight-semibold);
-}
-
-.toolbarErrors {
-  font-size: var(--font-size-sm);
-  color: var(--color-error);
-  font-weight: var(--font-weight-semibold);
-}
-
-.errorSummary {
-  @include forms.errorSummary;
-}
-
-.successBox {
-  @include forms.successBox;
-}
-
-.summaryRow {
+  position: relative;
+  padding: var(--spacing-xl);
   display: flex;
-  justify-content: space-between;
-  gap: var(--spacing-md);
-  padding: var(--spacing-xs) 0;
-  border-bottom: 1px solid var(--border-default);
-  font-size: var(--font-size-sm);
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+} 
 
-  &:last-child {
-    border-bottom: none;
+// ERROR STATE: Validation errors box
+.errorBox {
+  background: #e8e2d5; // Beige background like wizard6.png
+  border: 2px solid #c1272d;
+  border-radius: 8px;
+  padding: var(--spacing-xl);
+  max-width: 600px;
+  width: 100%;
+
+  h4 {
+    color: #c1272d;
+    font-size: var(--font-size-lg);
+    font-family: 'Thrifted Attire', var(--font-primary);
+    margin: 0 0 var(--spacing-md);
+    text-transform: uppercase;
+  }
+
+  p {
+    color: #2c2416; // Dark text on beige background
+    font-size: var(--font-size-sm);
+    margin: 0 0 var(--spacing-md);
+    font-family: var(--font-primary);
   }
 }
 
-.summaryLabel {
-  color: var(--color-text-secondary);
-  font-weight: var(--font-weight-medium);
-  flex-shrink: 0;
+.errorList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+
+  li {
+    padding: var(--spacing-xs) 0;
+    color: #2c2416;
+    font-size: var(--font-size-sm);
+    font-family: var(--font-primary);
+
+    strong {
+      color: #c1272d;
+      font-weight: 600;
+    }
+
+    &:not(:last-child) {
+      border-bottom: 1px solid rgba(193, 39, 45, 0.2);
+    }
+  }
 }
 
-.summaryValue {
-  color: var(--color-text-primary);
-  text-align: right;
+// SUCCESS STATE: Confirmation box
+.confirmBox {
+  background: #e8e2d5;
+  border: 2px solid #c4b5a0;
+  border-radius: 8px;
+  padding: var(--spacing-xl);
+  max-width: 700px;
+  width: 100%;
+  text-align: center;
 }
 
-.summaryGrid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--spacing-xs);
-  margin-bottom: var(--spacing-md);
+.confirmMessage {
+  margin-bottom: var(--spacing-xl);
 }
 
-.subsectionTitle {
+.confirmTitle {
+  font-size: var(--font-size-xl);
+  font-family: 'Thrifted Attire', var(--font-primary);
+  color: #2c2416;
+  font-weight: 700;
+  margin: 0 0 var(--spacing-md);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.confirmSubtitle {
   font-size: var(--font-size-base);
-  color: var(--color-primary);
-  margin: var(--spacing-md) 0 var(--spacing-sm);
   font-family: var(--font-primary);
-  font-weight: var(--font-weight-bold);
+  color: #2c2416;
+  font-weight: 600;
+  margin: 0 0 var(--spacing-lg);
 }
 
-.skillsList {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xs);
+.confirmText {
+  font-size: var(--font-size-sm);
+  font-family: var(--font-primary);
+  color: #4a4035;
+  line-height: 1.6;
+  margin: 0 0 var(--spacing-md);
+  text-align: left;
+
+  &:last-of-type {
+    margin-bottom: 0;
+  }
 }
 
-.section {
-  @include forms.section;
+.submitButton {
+  background: #8b3a3a;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: var(--spacing-md) var(--spacing-xl);
+  font-size: var(--font-size-base);
+  font-family: 'Thrifted Attire', var(--font-primary);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+
+  &:hover:not(:disabled) {
+    background: #a04545;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  &:disabled {
+    background: #6d6d6d;
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
 }
 
-.infoBox {
-  @include forms.infoBox;
+// Responsive
+@media (max-width: 768px) {
+  .stepContent {
+    padding: var(--spacing-md);
+  }
+
+  .confirmBox,
+  .errorBox {
+    max-width: 100%;
+  }
+
+  .confirmTitle {
+    font-size: var(--font-size-lg);
+  }
+
+  .confirmText {
+    font-size: var(--font-size-xs);
+  }
 }

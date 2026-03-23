@@ -16,9 +16,10 @@
 
 'use client';
 
-import { PresenceButton } from './PresenceButton';
-import { LocationPresenceList } from './LocationPresenceList';
 import styles from '@/styles/components/PresenceSection.module.scss';
+
+import { LocationPresenceList } from './LocationPresenceList';
+import { PresenceButton } from './PresenceButton';
 
 /**
  * Characters List Component

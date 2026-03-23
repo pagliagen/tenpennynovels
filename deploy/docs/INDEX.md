@@ -29,6 +29,7 @@ Indice completo della documentazione di deployment per TenPennyNovels.
 | # | Document | Status | Description |
 |---|----------|--------|-------------|
 | [07](./07-cdn-setup.md) | ✅ Complete | **CDN Setup** | Image upload, FTP sync Serverplan, produzione + development |
+| [08](./08-semantic-search-setup.md) | ✅ Complete | **Semantic Search Setup** | Qdrant + ElasticSearch + embeddings-worker, forum/chat search con filtri |
 
 ### Operations
 
@@ -58,17 +59,20 @@ Indice completo della documentazione di deployment per TenPennyNovels.
 **📸 CDN e Media**
 - [07 - CDN Setup](./07-cdn-setup.md) - Upload immagini, FTP
 
+**🔍 Semantic Search**
+- [08 - Semantic Search Setup](./08-semantic-search-setup.md) - Qdrant, ElasticSearch, embeddings-worker
+
 ---
 
 ## 📊 Documentation Status
 
 | Status | Count | Documents |
 |--------|-------|-----------|
-| ✅ Complete | 5 | 01, 02, 05, 07, 99 |
+| ✅ Complete | 6 | 01, 02, 05, 07, 08, 99 |
 | 📝 TODO | 3 | 03, 04, 06 |
-| **Total** | **8** | All deployment docs |
+| **Total** | **9** | All deployment docs |
 
-**Completion**: 62.5% (5/8)
+**Completion**: 66.7% (6/9)
 
 ---
 
@@ -108,7 +112,8 @@ Setup VPS Ubuntu 22.04+ da zero:
 - User creation (non-root)
 - SSH key authentication
 - Firewall (ufw)
-- Software install (Node.js 22.13.1, PM2, Nginx, MongoDB 7.0, Redis 7.2, Qdrant, Python)
+- Software install (Node.js 22.13.1, PM2, Nginx, MongoDB 7.0, Redis 7.2, Python)
+- Qdrant + ElasticSearch (vedi [08 - Semantic Search](./08-semantic-search-setup.md))
 - Environment variables setup
 - Build processo
 - Nginx + SSL
@@ -157,6 +162,24 @@ CDN per immagini:
 - Production (FTP + Apache)
 
 **Endpoints**: POST /admin/cdn/upload
+
+### 08 - Semantic Search Setup
+
+**Length**: 950+ lines | **Completeness**: ✅ 100%
+
+Sistema di ricerca semantica completo:
+- **Qdrant** (vector database) - Docker setup, collections, backup
+- **ElasticSearch** (full-text search) - Docker setup, indices, mappings
+- **Embeddings Worker** - Python venv, TypeScript worker, Bull queue
+- **Forum Search** - Semantic + keyword con filtri (topic, discussion, author)
+- **Chat Search** - Semantic + keyword con filtri (location, character, date)
+- **Monitoring** - Health checks, resource usage, statistics
+- **Troubleshooting** - 5+ common issues con soluzioni
+- **Performance Tuning** - HNSW config, ElasticSearch optimization
+
+**Architecture**: Redis Pub/Sub → Bull Queue → Python Embeddings → Qdrant + ElasticSearch
+
+**Collections**: document_chunks, forum_posts, chat_messages
 
 ### 99 - Troubleshooting
 

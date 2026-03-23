@@ -18,8 +18,8 @@ tenpennynovels/
 ### Frontend Applications (4)
 1. **Landing** (porta 4000) - Autenticazione e selezione personaggio
 2. **Game** (porta 4001) - Interfaccia principale di gioco con chat real-time, ticketing, e forum integrati
-3. **Documents** (porta 4003) - Guide ambientazione e regole
-4. **Management** (porta 4004) - Strumenti per game masters e amministrazione
+3. **Documents** (porta 4002) - Guide ambientazione e regole
+4. **Management** (porta 4003) - Strumenti per game masters e amministrazione
 
 **Note**: Forum e Ticketing sono **integrati nella Game app**, non applicazioni standalone.
 
@@ -47,11 +47,14 @@ tenpennynovels/
 
 ### API Gateway Pattern
 - Punto di ingresso unificato per tutte le API frontend
-- Routing basato su path prefix (proxy a Unified Backend):
+- Routing basato su path prefix (proxy a Unified Backend), inclusi (vedi `services/api-gateway/src/app.ts`):
   - `/auth/*` → Unified Backend (auth module)
   - `/game/*` → Unified Backend (game module)
+  - `/forum/*` → Unified Backend (forum module)
   - `/documents/*` → Unified Backend (documents module)
   - `/admin/*` → Unified Backend (admin module)
+  - `/cdn/*` → asset/CDN gestiti dal gateway
+  - `/socket.io` → WebSocket Socket.IO verso lo stesso backend (stesso processo HTTP del unified-backend, porta interna tipica 3001)
 - Funzionalità: CORS, helmet security, rate limiting, request logging
 - Unified Backend porta 3001 gestisce tutta la business logic
 
@@ -76,7 +79,7 @@ tenpennynovels/
 
 ### WebSocket
 - Connessioni persistenti per chat real-time
-- Gestito da Game Backend
+- Socket.IO sul processo HTTP del **unified-backend** (handler in `modules/game/websocket`); il browser si connette al **gateway** (es. `ws://localhost:8000` / `NEXT_PUBLIC_WS_URL`), non alla porta 3001 esposta direttamente in produzione
 - Socket.io per gestione connessioni
 
 ## Stack Tecnologico
@@ -84,7 +87,7 @@ tenpennynovels/
 ### Frontend
 - **Framework**: Next.js (React)
 - **Language**: TypeScript
-- **Styling**: SCSS Modules + Design System condiviso
+- **Styling**: SCSS Modules per app (nessun package “design system” condiviso sotto `packages/`; coerenza visiva per convenzioni interne a ciascuna app)
 - **State**: React Hooks + Context API
 
 ### Backend
@@ -94,7 +97,7 @@ tenpennynovels/
 - **ORM**: Mongoose (MongoDB)
 
 ### Database & Cache
-- **Database**: MongoDB v6.x
+- **Database**: MongoDB 7.x in Docker (`mongo:7.0` in `docker-compose.yml`; allineare la doc operativa a questa versione)
 - **Cache**: Redis v7.x
 - **Models**: 37+ modelli Mongoose
 

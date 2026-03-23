@@ -1,6 +1,6 @@
 # WebSocket Patterns
 
-**Navigation**: [Home](../INDEX.md) > [Frontend](./README.md) > WebSocket Patterns
+**Navigation**: [Home](../../INDEX.md) > [Frontend](./README.md) > WebSocket Patterns
 
 **Status**: ⚠️ CRITICAL | **Last Updated**: 2026-03-01
 
@@ -674,6 +674,6 @@ function Component() {
 ## Related Documentation
 
 - [Game App](./game-app.md) - WebSocket usage in game interface
-- [Unified Backend](../02-backend/unified-backend-architecture.md) - WebSocket server
-- [API Gateway](../02-backend/api-gateway.md) - WebSocket proxy
-- [Location System](../03-game-systems/location-system.md) - Location events
+- [Unified Backend](../backend/unified-backend.md) - server Socket.IO
+- [API Gateway](../backend/api-gateway.md) - proxy WebSocket
+- [Locations (funzionale)](../../funzionale/locations.md) - concetti di navigazione

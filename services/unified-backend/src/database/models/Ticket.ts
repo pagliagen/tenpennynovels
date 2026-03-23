@@ -39,7 +39,8 @@ export interface ITicket extends Document {
 
   closedAt?: Date;
   closedBy?: Schema.Types.ObjectId; // Admin ID
-  
+  closedByName?: string;
+
   // Tracking lettura
   lastReadBy: {
     character?: Date;
@@ -120,7 +121,10 @@ const TicketSchema = new Schema<ITicket>({
       // Richieste Administrative
       'information_request',
       'user_report',
-      'improvement_suggestion'
+      'improvement_suggestion',
+
+      // Moderazione / sanzioni (giocatore apre manualmente se desidera)
+      'sanction_appeal'
     ]
   },
   priority: {
@@ -245,7 +249,11 @@ const TicketSchema = new Schema<ITicket>({
     type: Schema.Types.ObjectId,
     ref: 'User'
   },
-  
+  closedByName: {
+    type: String,
+    maxlength: 100
+  },
+
   // Tracking lettura
   lastReadBy: {
     character: {

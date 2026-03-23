@@ -9,7 +9,7 @@ export default function NotFoundPage() {
 
   return (
     <PageLayout
-      title="404 - Pagina non trovata | Ten Penny Novels"
+      title="Ten Penny Novels | 404 - Pagina non trovata"
       description="La pagina che cerchi non esiste. Torna alla home di Ten Penny Novels."
       noindex
       nofollow

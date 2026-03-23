@@ -12,9 +12,10 @@
 
 import { useQuery, useMutation, useQueryClient, UseQueryResult, UseMutationResult } from '@tanstack/react-query';
 import { useEffect } from 'react';
+
+import { useWebSocket } from '@/contexts/WebSocketContext';
 import { onGameMailApi } from '@/lib/api/onGameMail';
 import { queryKeys } from '@/lib/api/queryClient';
-import { useWebSocket } from '@/contexts/WebSocketContext';
 import type {
   OnGameThread,
   OnGameThreadMessage,

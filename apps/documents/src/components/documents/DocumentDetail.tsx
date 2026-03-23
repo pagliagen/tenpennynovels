@@ -47,7 +47,7 @@ export function DocumentDetail({ data }: DocumentDetailProps): JSX.Element {
                     'ul', 'ol', 'li', 'blockquote', 'a', 'img', 'code', 'pre', 'hr',
                     'table', 'thead', 'tbody', 'tr', 'th', 'td', 's', 'mark', 'sub', 'sup', 'span'
                   ],
-                  ALLOWED_ATTR: ['href', 'title', 'alt', 'src', 'class', 'id', 'target', 'rel', 'style']
+                  ALLOWED_ATTR: ['href', 'title', 'alt', 'src', 'class', 'id', 'target', 'rel']
                 })
               }}
             />

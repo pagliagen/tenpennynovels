@@ -12,7 +12,7 @@
  * CRITICAL: Max 250 linee (vs 335 del vecchio)
  */
 
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, type CSSProperties } from 'react';
 import classNames from 'classnames';
 import { TableConfig, TableColumn } from '@/lib/config/schemas';
 import { getNestedValue } from '@/lib/config/loader';
@@ -309,9 +309,14 @@ export function ConfigurableDataTable<T extends object = Record<string, unknown>
                   onClick={() => handleHeaderClick(column)}
                   className={classNames(
                     column.sortable && styles.sortable,
-                    effectiveSortBy === column.key && styles.sorted
+                    effectiveSortBy === column.key && styles.sorted,
+                    column.width && styles.colWidth
                   )}
-                  style={{ width: column.width }}
+                  style={
+                    column.width
+                      ? ({ '--col-width': column.width } as CSSProperties)
+                      : undefined
+                  }
                 >
                   {column.label}
                   {effectiveSortBy === column.key && (

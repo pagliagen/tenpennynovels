@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { CharacterApprovalController } from '../controllers/CharacterApprovalController';
+import { CharacterBanController } from '../controllers/CharacterBanController';
 import { AdminAuthMiddleware } from '../middleware/adminAuth';
 import { requireViewPermission } from '../utils/permissions';
 import { autoLogOutcome } from '../middleware/auditMiddleware';
@@ -77,6 +78,23 @@ router.patch(
   AdminAuthMiddleware.logAdminAction('character.change_referent', 'character_management'),
   autoLogOutcome,
   CharacterApprovalController.changeReferent
+);
+
+router.post(
+  '/:characterId/ban',
+  requireViewPermission('users.ban'),
+  AdminAuthMiddleware.logAdminAction('character.ban', 'character_management'),
+  autoLogOutcome,
+  AdminAuthMiddleware.sensitiveOperationLimit(),
+  CharacterBanController.banCharacter
+);
+
+router.delete(
+  '/:characterId/ban',
+  requireViewPermission('users.ban'),
+  AdminAuthMiddleware.logAdminAction('character.unban', 'character_management'),
+  autoLogOutcome,
+  CharacterBanController.unbanCharacter
 );
 
 // Get complete character details - generic route

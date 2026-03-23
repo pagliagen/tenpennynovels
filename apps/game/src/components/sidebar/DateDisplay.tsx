@@ -10,6 +10,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+
 import styles from '@/styles/components/DateDisplay.module.scss';
 
 const GAME_YEAR = 1839;

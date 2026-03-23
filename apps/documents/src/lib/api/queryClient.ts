@@ -72,7 +72,7 @@ const queryCache = new QueryCache({
 
     // Log errors in development
     if (process.env.NODE_ENV === 'development') {
-      console.error('[Query Error]', {
+      console.error('[Errore query]', {
         category: apiError.category,
         message: apiError.message,
         details: apiError.details,
@@ -99,7 +99,7 @@ const mutationCache = new MutationCache({
 
     // Log errors in development
     if (process.env.NODE_ENV === 'development') {
-      console.error('[Mutation Error]', {
+      console.error('[Errore mutazione]', {
         category: apiError.category,
         message: apiError.message,
         details: apiError.details,

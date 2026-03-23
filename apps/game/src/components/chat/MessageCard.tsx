@@ -7,20 +7,20 @@
  */
 
 import { useRef } from 'react';
-import type { ChatMessage } from '@/types/chat';
-import { StandardMessage } from './message-types/StandardMessage';
-import { WhisperMessage } from './message-types/WhisperMessage';
-import { OOCMessage } from './message-types/OOCMessage';
-import { MasterMessage } from './message-types/MasterMessage';
-import { DiceRollMessage } from './message-types/DiceRollMessage';
-import { SkillCheckMessage } from './message-types/SkillCheckMessage';
-import { StatCheckMessage } from './message-types/StatCheckMessage';
-import { ItemUseMessage } from './message-types/ItemUseMessage';
-import { ModerationMessage } from './message-types/ModerationMessage';
-import { DefenderNotification } from './message-types/DefenderNotification';
-import { ReactionRequestMessage } from './message-types/ReactionRequestMessage';
-import { CombatActionMessage } from './message-types/CombatActionMessage';
+
 import styles from '@/styles/components/chat/MessageCard.module.scss';
+import type { ChatMessage } from '@/types/chat';
+
+import { CombatActionMessage } from './message-types/CombatActionMessage';
+import { DiceRollMessage } from './message-types/DiceRollMessage';
+import { ItemUseMessage } from './message-types/ItemUseMessage';
+import { MasterMessage } from './message-types/MasterMessage';
+import { ModerationMessage } from './message-types/ModerationMessage';
+import { OOCMessage } from './message-types/OOCMessage';
+import { ReactionRequestMessage } from './message-types/ReactionRequestMessage';
+import { StandardMessage } from './message-types/StandardMessage';
+import { StatCheckMessage } from './message-types/StatCheckMessage';
+import { WhisperMessage } from './message-types/WhisperMessage';
 
 interface MessageCardProps {
   message: ChatMessage;
@@ -51,13 +51,6 @@ export function MessageCard({ message, isDimmed, currentCharacterId }: MessageCa
       break;
     case 'dice_roll':
       component = <DiceRollMessage message={message} currentCharacterId={currentCharacterId} />;
-      break;
-    case 'skill_check':
-      if ((message as any).visibleToDefenderOnly) {
-        component = <DefenderNotification message={message} currentCharacterId={currentCharacterId} />;
-      } else {
-        component = <SkillCheckMessage message={message} currentCharacterId={currentCharacterId} />;
-      }
       break;
     case 'stat_check':
       component = <StatCheckMessage message={message} currentCharacterId={currentCharacterId} />;

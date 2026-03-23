@@ -83,7 +83,7 @@ export function DocumentsLayoutMobile({ children }: DocumentsLayoutMobileProps):
 
   return (
     <div className={styles.layout}>
-      {/* Header: Hamburger + Logo + Search */}
+      {/* Intestazione: menu, logo, ricerca */}
       <header className={styles.header}>
         <HamburgerMenu />
 

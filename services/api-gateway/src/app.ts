@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { type Request } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
@@ -57,7 +57,14 @@ app.use(cors({
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'X-Requested-With'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'Cookie',
+    'X-Requested-With',
+    'X-Session-Id',
+    'X-Tenpenny-Documents-Build',
+  ],
   optionsSuccessStatus: 200,
 }));
 
@@ -75,16 +82,28 @@ app.use(cookieParser());
 app.use(morgan('combined', { stream: httpLoggerStream }));
 
 // ---------------------------------------------------------------------------
-// Rate limiting — solo /documents
+// Rate limiting
 // ---------------------------------------------------------------------------
-const { unauthenticated, authenticated } = config.rateLimit.documents;
+
+// --- /documents ----
+
+const { unauthenticated, authenticated, buildBypassSecret, disabled: documentsRateLimitDisabled } =
+  config.rateLimit.documents;
+
+/** Evita 429 durante next build / ISR (molte richieste parallele). */
+function shouldSkipDocumentsRateLimit(req: Request): boolean {
+  if (documentsRateLimitDisabled) return true;
+  if (!config.isProduction) return true;
+  if (!buildBypassSecret) return false;
+  return req.get('x-tenpenny-documents-build') === buildBypassSecret;
+}
 
 const documentsRateLimitUnauth = rateLimit({
   windowMs: unauthenticated.windowMs,
   max: unauthenticated.max,
   standardHeaders: true,
   legacyHeaders: false,
-  skip: (req) => !!req.cookies?.auth_token,
+  skip: (req) => !!req.cookies?.auth_token || shouldSkipDocumentsRateLimit(req),
   // Rimosso keyGenerator custom - usa default (normalizza IPv6 automaticamente)
   handler: (_req, res) => {
     res.status(429).json({
@@ -102,7 +121,7 @@ const documentsRateLimitAuth = rateLimit({
   max: authenticated.max,
   standardHeaders: true,
   legacyHeaders: false,
-  skip: (req) => !req.cookies?.auth_token,
+  skip: (req) => !req.cookies?.auth_token || shouldSkipDocumentsRateLimit(req),
   keyGenerator: (req) => req.cookies?.auth_token || 'unknown',
   handler: (_req, res) => {
     res.status(429).json({
@@ -110,6 +129,45 @@ const documentsRateLimitAuth = rateLimit({
       error: 'Troppe richieste. Riprova più tardi.',
       code: 'RATE_LIMIT_EXCEEDED',
       retryAfter: authenticated.windowMs / 1000,
+      timestamp: new Date().toISOString(),
+    });
+  },
+});
+
+// --- /auth — fallback IP (60 req/min) ----------------------------------
+// Rete di sicurezza gateway-level: il backend ha limiti granulari per endpoint,
+// ma questo blocca rafiche anomale prima che raggiungano il backend.
+const authRateLimitGateway = rateLimit({
+  windowMs: config.rateLimit.auth.windowMs,
+  max: config.rateLimit.auth.max,
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: () => !config.isProduction,
+  handler: (_req, res) => {
+    res.status(429).json({
+      success: false,
+      error: 'Troppe richieste. Riprova più tardi.',
+      code: 'RATE_LIMIT_EXCEEDED',
+      retryAfter: config.rateLimit.auth.windowMs / 1000,
+      timestamp: new Date().toISOString(),
+    });
+  },
+});
+
+// --- /game — fallback IP (300 req/min) ---------------------------------
+// Il modulo game non ha rate limit propri: questo è l'unico scudo attuale.
+const gameRateLimitGateway = rateLimit({
+  windowMs: config.rateLimit.game.windowMs,
+  max: config.rateLimit.game.max,
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: () => !config.isProduction,
+  handler: (_req, res) => {
+    res.status(429).json({
+      success: false,
+      error: 'Troppe richieste. Riprova più tardi.',
+      code: 'RATE_LIMIT_EXCEEDED',
+      retryAfter: config.rateLimit.game.windowMs / 1000,
       timestamp: new Date().toISOString(),
     });
   },
@@ -291,6 +349,10 @@ app.use('/documents', (req, _res, next) => {
 
 // Rate limiting su /documents
 app.use('/documents', documentsRateLimitUnauth, documentsRateLimitAuth);
+
+// Rate limiting di fallback su /auth e /game
+app.use('/auth', authRateLimitGateway);
+app.use('/game', gameRateLimitGateway);
 
 // Route proxy verso il backend
 for (const [name, svc] of Object.entries(services)) {

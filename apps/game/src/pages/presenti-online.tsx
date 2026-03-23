@@ -17,14 +17,15 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
 import Head from 'next/head';
+import { useState, useMemo } from 'react';
+
 import { GameLayout } from '@/components/layout/GameLayout';
 import { usePresence } from '@/hooks/usePresence';
 import { useGameStateStore } from '@/store/gameStateStore';
+import { type GlobalPresence } from '@/store/presenceStore';
 import { useWindowManagerStore } from '@/store/windowManagerStore';
 // @ts-ignore - Used as type in PresenceGroupProps below
-import { type GlobalPresence } from '@/store/presenceStore';
 import styles from '@/styles/pages/presenti-online.module.scss';
 
 /**

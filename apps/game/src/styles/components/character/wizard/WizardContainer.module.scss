@@ -13,7 +13,7 @@
   flex: 1;
   overflow-y: hidden;
   margin-right: 10px;
-  border: 20px solid #c9c6ad;
+  border: 3px solid #c9c6ad;
   padding: 10px 10px 0 10px;
   background-color: black;
   border-bottom: unset;
@@ -32,6 +32,11 @@
       #a9a690 50%,
       #c9c6ad 52%,
       #c9c6ad 100%);
+
+  &.step6 {
+    background-image: none;
+    background-color: black;
+  }
 }
 
 .wizardContent {
@@ -41,7 +46,6 @@
   min-height: 0;
   width: 100%;
   padding-left: 10px;
-  padding-top: 20px;
 
   &::-webkit-scrollbar {
     width: 10px;
@@ -63,12 +67,19 @@
 
 .loading {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   height: 100%;
   color: var(--color-text-secondary);
   font-family: var(--font-primary);
   font-size: var(--font-size-lg);
+}
+
+.retryButton {
+  margin-top: 1rem;
+  padding: 0.5rem 1.5rem;
+  cursor: pointer;
 }
 
 /* ===== Submit Feedback Banners ===== */

@@ -104,14 +104,9 @@ CharacterSessionSchema.index({ tokenHash: 1, isActive: 1 });
 CharacterSessionSchema.index({ expiresAt: 1 }); // For cleanup
 CharacterSessionSchema.index({ lastActiveAt: 1 }); // For activity tracking
 
-// Ensure only one active session per character (also covers characterId + isActive)
-CharacterSessionSchema.index(
-  { characterId: 1, isActive: 1 }, 
-  { 
-    unique: true, 
-    partialFilterExpression: { isActive: true } 
-  }
-);
+// MULTI-TAB SUPPORT: Allow multiple active sessions per character
+// Index NON unique - supporta sessioni multiple (tab diversi) per stesso personaggio
+CharacterSessionSchema.index({ characterId: 1, isActive: 1 });
 
 // Methods
 CharacterSessionSchema.methods.invalidate = function(reason: string, fromIp?: string) {

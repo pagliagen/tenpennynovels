@@ -1,0 +1,31 @@
+---
+description: Convenzioni app Documents — knowledge base, Axios, React Query, build SSR
+globs: apps/documents/**
+alwaysApply: false
+---
+
+# App `apps/documents`
+
+## Nuova pagina
+
+- Routing: `src/pages/` (Pages Router). Coerenza con le pagine esistenti (documenti, ricerca, preferiti, ecc.).
+- Shell globale: `src/pages/_app.tsx` — QueryClientProvider, AuthInitializer, font locali (`next/font/local`), stili globali.
+
+## Chiamate API
+
+- Client: `src/lib/api/client.ts` — Axios, `API_CONFIG` da `src/constants/config.ts`, `withCredentials: true`, cookie auth.
+- Header `X-Session-Id` da `sessionStorage` (`character_session_id`) come in game, quando serve contesto personaggio.
+- **SSR / build**: se presente `DOCUMENTS_BUILD_BYPASS_SECRET`, il client in ambiente Node aggiunge `X-Tenpenny-Documents-Build` per bypass rate limit lato gateway — non rimuovere questo ramo se tocchi il client.
+- Moduli API per dominio: `src/lib/api/*.ts` (es. `documents.ts`, `search.ts`, `favorites.ts`).
+
+## TanStack Query
+
+- `src/lib/api/queryClient.ts`; usa gli stessi pattern di invalidazione/chiavi che trovi nelle pagine esistenti.
+
+## Tipizzazione
+
+- Allinea i tipi alle risposte reali del modulo `documents` del backend (`/documents/...` tramite gateway). Riferimento formato: `.claude/context/api-patterns.md`.
+
+## Stili
+
+- SCSS modules + eventuali variabili/font definiti in `_app`. Mantieni coerenza tipografica vittoriana già usata nell’app.

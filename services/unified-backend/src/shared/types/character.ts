@@ -98,6 +98,8 @@ export interface Character {
   currentOccupation?: string; // Free text field for current occupation (Info generali)
   residence: string;
   birthPlace: string;
+  visibleMarks?: string; // segni particolari visibili (PUBLIC)
+  hiddenMarks?: string; // segni particolari non visibili (PRIVATE - owner/master only)
   
   // Physical description
   description: string; // deprecato

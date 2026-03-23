@@ -1,4 +1,5 @@
 import React from 'react';
+
 import styles from '@/styles/components/character/wizard/WizardStepToolbar.module.scss';
 
 export interface WizardStepToolbarProps {

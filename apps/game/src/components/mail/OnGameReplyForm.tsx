@@ -11,6 +11,7 @@
 'use client';
 
 import { useState } from 'react';
+
 import { useMessageTypes, useWallet, useSendOnGameMessage } from '@/hooks/useOnGameMail';
 import styles from '@/styles/components/mail/OnGameMail.module.scss';
 

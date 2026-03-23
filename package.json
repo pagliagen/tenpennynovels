@@ -41,6 +41,7 @@
     "seed:admin": "cd scripts/seeders && npm run seed:users",
     "seed:users": "cd scripts/seeders && npm run seed:users",
     "seed:documents": "cd scripts/seeders && npm run seed:documents",
+    "sitemap:generate": "cd services/unified-backend && npm run generate:sitemap",
     "typecheck:gateway": "cd services/api-gateway && npm run type-check",
     "typecheck:unified": "cd services/unified-backend && npm run type-check",
     "typecheck:embeddings": "cd services/embeddings-worker && npm run type-check",

@@ -17,6 +17,39 @@ import { ConfigurationService } from './ConfigurationService';
 
 const logger = createLogger({ serviceName: 'CharacterCreationConfigService' });
 
+// ==================== HELPERS ====================
+
+const DEFAULT_BG_FIELDS = {
+  briefHistory:           { minChar: 50,  maxChar: 4000 },
+  significantEvents:      { minChar: 0,   maxChar: 2500 },
+  importantRelationships: { minChar: 0,   maxChar: 2500 },
+  personality:            { minChar: 50,  maxChar: 2500 },
+  ideology:               { minChar: 0,   maxChar: 2500 },
+};
+
+/**
+ * Normalizes backgroundFields from DB, handling both the old flat format
+ * ({ briefHistoryMin, personalityMin, goalsMin, maxLength }) and the new
+ * per-field format ({ briefHistory: { minChar, maxChar }, ... }).
+ */
+function normalizeBgFields(raw: any): typeof DEFAULT_BG_FIELDS {
+  if (!raw) return DEFAULT_BG_FIELDS;
+
+  // Already in new per-field format
+  if (raw.briefHistory && typeof raw.briefHistory === 'object') {
+    return {
+      briefHistory:           raw.briefHistory           || DEFAULT_BG_FIELDS.briefHistory,
+      significantEvents:      raw.significantEvents      || DEFAULT_BG_FIELDS.significantEvents,
+      importantRelationships: raw.importantRelationships || DEFAULT_BG_FIELDS.importantRelationships,
+      personality:            raw.personality            || DEFAULT_BG_FIELDS.personality,
+      ideology:               raw.ideology               || DEFAULT_BG_FIELDS.ideology,
+    };
+  }
+
+  // Old flat format — migrate on the fly using new default values
+  return { ...DEFAULT_BG_FIELDS };
+}
+
 // ==================== INTERFACES ====================
 
 export interface CharacterCreationConfig {
@@ -46,7 +79,6 @@ export interface CharacterCreationConfig {
   };
   occupation: {
     requiredSkillMinimum: number;
-    bonusSkillPoints: number;
     requiredSkillCount: { min: number; max: number };
     bonusSkillCount: { min: number; max: number };
     description: string;
@@ -56,10 +88,11 @@ export interface CharacterCreationConfig {
     weight: { min: number; max: number; unit: string };
     height: { min: number; max: number; unit: string };
     backgroundFields: {
-      briefHistoryMin: number;
-      personalityMin: number;
-      goalsMin: number;
-      maxLength: number;
+      briefHistory:           { minChar: number; maxChar: number };
+      significantEvents:      { minChar: number; maxChar: number };
+      importantRelationships: { minChar: number; maxChar: number };
+      personality:            { minChar: number; maxChar: number };
+      ideology:               { minChar: number; maxChar: number };
     };
   };
   socialClasses: Array<{
@@ -73,6 +106,12 @@ export interface CharacterCreationConfig {
     derived: Record<string, string>;
     damageBonus: Array<{ maxTotal: number; bonus: string; build: number }>;
   };
+  /**
+   * Visibilità dei campi del personaggio.
+   * true = pubblico (visibile a tutti), false = privato (solo master/owner).
+   * Usato dal wizard per mostrare l'EyeIcon e da characterVisibility.ts per filtrare.
+   */
+  fieldVisibility: Record<string, boolean>;
 }
 
 // ==================== SERVICE CLASS ====================
@@ -121,7 +160,7 @@ export class CharacterCreationConfigService {
           intelligence: 20,
           constitution: 20,
           size: 20,
-          charm: 20,
+          appearance: 20,
           power: 20,
           education: 20,
         },
@@ -138,7 +177,6 @@ export class CharacterCreationConfigService {
       },
       occupation: {
         requiredSkillMinimum: configs['character_creation_occupation_required_skill_minimum'] || 40,
-        bonusSkillPoints: configs['character_creation_occupation_bonus_skill_points'] || 30,
         requiredSkillCount: configs['character_creation_occupation_required_skill_count'] || { min: 6, max: 6 },
         bonusSkillCount: configs['character_creation_occupation_bonus_skill_count'] || { min: 1, max: 1 },
         description: configs['character_creation_occupation_description'] || '',
@@ -147,18 +185,13 @@ export class CharacterCreationConfigService {
         age: configs['character_creation_limits_age'] || { min: 16, max: 80 },
         weight: configs['character_creation_limits_weight'] || { min: 30, max: 200, unit: 'kg' },
         height: configs['character_creation_limits_height'] || { min: 100, max: 250, unit: 'cm' },
-        backgroundFields: configs['character_creation_limits_background_fields'] || {
-          briefHistoryMin: 100,
-          personalityMin: 50,
-          goalsMin: 50,
-          maxLength: 4000,
-        },
+        backgroundFields: normalizeBgFields(configs['character_creation_limits_background_fields']),
       },
       socialClasses: configs['character_creation_social_classes'] || this.getDefaultSocialClasses(),
       formulas: {
         derived: configs['character_creation_formulas_derived'] || {
           hitPoints: 'FLOOR((CON + SIZ) / 10)',
-          sanityPoints: 'POW',
+          sanity: 'POW',
           magicPoints: 'FLOOR(POW / 5)',
           luck: 'POW',
           ideaRoll: 'INT',
@@ -166,6 +199,26 @@ export class CharacterCreationConfigService {
           movementRate: '8',
         },
         damageBonus: configs['character_creation_formulas_damage_bonus'] || this.getDefaultDamageBonus(),
+      },
+      fieldVisibility: configs['character_creation_field_visibility'] || {
+        name: true,
+        surname: true,
+        apparentAge: true,
+        gender: true,
+        height: true,
+        weight: true,
+        occupation: true,
+        briefHistory: true,
+        significantEvents: true,
+        importantRelationships: true,
+        personality: true,
+        ideology: true,
+        birthDate: false,
+        maritalStatus: false,
+        hiddenMarks: false,
+        pathologies: false,
+        criminalRecord: false,
+        educationTitle: false,
       },
     };
   }
@@ -202,7 +255,6 @@ export class CharacterCreationConfigService {
       { key: 'character_creation_skills_physical_exclude_int_bonus', value: config.skills.physicalSkillsExcludeIntBonus },
       { key: 'character_creation_skills_description', value: config.skills.description },
       { key: 'character_creation_occupation_required_skill_minimum', value: config.occupation.requiredSkillMinimum },
-      { key: 'character_creation_occupation_bonus_skill_points', value: config.occupation.bonusSkillPoints },
       { key: 'character_creation_occupation_required_skill_count', value: config.occupation.requiredSkillCount },
       { key: 'character_creation_occupation_bonus_skill_count', value: config.occupation.bonusSkillCount },
       { key: 'character_creation_occupation_description', value: config.occupation.description },
@@ -213,6 +265,7 @@ export class CharacterCreationConfigService {
       { key: 'character_creation_social_classes', value: config.socialClasses },
       { key: 'character_creation_formulas_derived', value: config.formulas.derived },
       { key: 'character_creation_formulas_damage_bonus', value: config.formulas.damageBonus },
+      { key: 'character_creation_field_visibility', value: config.fieldVisibility },
     ];
 
     // Save all config keys to DB (audit trail handled by ConfigurationService)
@@ -432,10 +485,6 @@ export class CharacterCreationConfigService {
       if (config.occupation.requiredSkillMinimum < 20 || config.occupation.requiredSkillMinimum > 60) {
         errors.push('occupation.requiredSkillMinimum must be between 20 and 60');
       }
-
-      if (config.occupation.bonusSkillPoints < 10 || config.occupation.bonusSkillPoints > 50) {
-        errors.push('occupation.bonusSkillPoints must be between 10 and 50');
-      }
     }
 
     // Validate social classes
@@ -602,7 +651,7 @@ export class CharacterCreationConfigService {
           intelligence: 20,
           constitution: 20,
           size: 20,
-          charm: 20,
+          appearance: 20,
           power: 20,
           education: 20
         },
@@ -619,7 +668,6 @@ export class CharacterCreationConfigService {
       },
       occupation: {
         requiredSkillMinimum: 40,
-        bonusSkillPoints: 30,
         requiredSkillCount: { min: 6, max: 6 },
         bonusSkillCount: { min: 1, max: 1 },
         description: 'Default occupation system'
@@ -629,24 +677,45 @@ export class CharacterCreationConfigService {
         weight: { min: 30, max: 200, unit: 'kg' },
         height: { min: 100, max: 250, unit: 'cm' },
         backgroundFields: {
-          briefHistoryMin: 100,
-          personalityMin: 50,
-          goalsMin: 50,
-          maxLength: 4000
+          briefHistory:           { minChar: 50,  maxChar: 4000 },
+          significantEvents:      { minChar: 0,   maxChar: 2500 },
+          importantRelationships: { minChar: 0,   maxChar: 2500 },
+          personality:            { minChar: 50,  maxChar: 2500 },
+          ideology:               { minChar: 0,   maxChar: 2500 },
         }
       },
       socialClasses: this.getDefaultSocialClasses(),
       formulas: {
         derived: {
           hitPoints: 'FLOOR((constitution + size) / 10)',
-          sanityPoints: 'power',
+          sanity: 'power',
           magicPoints: 'FLOOR(power / 5)',
           luck: 'power',
           idea: 'intelligence',
           knowledge: 'education'
         },
         damageBonus: this.getDefaultDamageBonus()
-      }
+      },
+      fieldVisibility: {
+        name: true,
+        surname: true,
+        apparentAge: true,
+        gender: true,
+        height: true,
+        weight: true,
+        occupation: true,
+        briefHistory: true,
+        significantEvents: true,
+        importantRelationships: true,
+        personality: true,
+        ideology: true,
+        birthDate: false,
+        maritalStatus: false,
+        hiddenMarks: false,
+        pathologies: false,
+        criminalRecord: false,
+        educationTitle: false,
+      },
     };
   }
 }
@@ -778,7 +847,7 @@ export interface CharacterStats {
   intelligence: number;
   education: number;
   power: number;
-  charm: number;
+  appearance: number;
 }
 
 /**
@@ -789,10 +858,11 @@ export interface DerivedStats {
   luckRoll: number;
   knowledge: number;
   hitPoints: number;
-  sanityPoints: number;
+  sanity: number;
+  maxSanity: number;
   magicPoints: number;
   movementRate: number;
-  damageBonus: string;
+  bonusDamage: string;
   build: number;
 }
 
@@ -816,7 +886,7 @@ const STAT_MAP: Record<string, keyof CharacterStats> = {
   INT: 'intelligence',
   EDU: 'education',
   POW: 'power',
-  APP: 'charm'
+  APP: 'appearance'
 };
 
 /**
@@ -943,7 +1013,7 @@ export function validateDerivedFormula(formula: string): { valid: boolean; error
     intelligence: 50,
     education: 50,
     power: 50,
-    charm: 50
+    appearance: 50
   };
 
   try {
@@ -1018,14 +1088,15 @@ export function calculateAllDerivedStats(
     hitPoints: formulas.hitPoints
       ? calculateDerivedStat(formulas.hitPoints, stats)
       : Math.floor((stats.constitution + stats.size) / 10),
-    sanityPoints: formulas.sanityPoints
-      ? calculateDerivedStat(formulas.sanityPoints, stats)
+    sanity: formulas.sanity
+      ? calculateDerivedStat(formulas.sanity, stats)
       : stats.power,
+    maxSanity: 99,
     magicPoints: formulas.magicPoints
       ? calculateDerivedStat(formulas.magicPoints, stats)
       : Math.floor(stats.power / 5),
     movementRate: formulas.movementRate ? calculateDerivedStat(formulas.movementRate, stats) : 8,
-    damageBonus: damageData.bonus,
+    bonusDamage: damageData.bonus,
     build: damageData.build
   };
 }

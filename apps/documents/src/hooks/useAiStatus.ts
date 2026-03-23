@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
 
 interface AiStatusResponse {
-  result: boolean;
+  success: boolean;
   data: { aiAvailable: boolean };
 }
 

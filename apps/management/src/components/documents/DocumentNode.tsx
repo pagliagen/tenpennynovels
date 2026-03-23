@@ -3,7 +3,7 @@
  * Displays document hierarchy with subtype info
  */
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, type CSSProperties } from 'react';
 import classNames from 'classnames';
 import styles from './DocumentTreeView.module.scss';
 import type { DocumentTreeNode } from '@/types/api/Document';
@@ -46,7 +46,7 @@ export const DocumentNode: React.FC<DocumentNodeProps> = React.memo(({
     const baseUrl = process.env.NODE_ENV === 'production'
       ? 'https://documenti.tenpennynovels.com'
       : 'http://localhost:4002';
-    return `${baseUrl}/${doc.subtype ? (doc as any).type || 'ambientazione' : 'ambientazione'}/${doc.path}`;
+    return `${baseUrl}/${doc.subtype ? doc.type ?? 'ambientazione' : 'ambientazione'}/${doc.path}`;
   };
 
   const documentUrl = getDocumentUrl();
@@ -76,7 +76,10 @@ export const DocumentNode: React.FC<DocumentNodeProps> = React.memo(({
   }, [menuOpen]);
 
   return (
-    <div className={styles.documentNode} style={{ paddingLeft: `${depth * 24}px` }}>
+    <div
+      className={styles.documentNode}
+      style={{ '--depth': depth } as CSSProperties}
+    >
       <div className={styles.documentRow}>
         {hasChildren && (
           <button

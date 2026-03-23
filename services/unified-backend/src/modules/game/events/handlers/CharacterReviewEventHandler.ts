@@ -14,7 +14,7 @@ import { logger } from '../../logger';
 
 export class CharacterReviewEventHandler extends BaseEventHandler {
   getSupportedEventTypes(): string[] {
-    return ['character_review_completed'];
+    return ['character:review_completed'];
   }
 
   async handle(event: RedisEvent): Promise<void> {

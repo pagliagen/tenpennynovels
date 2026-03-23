@@ -1,0 +1,432 @@
+/**
+ * Shared layout for character sheet tabs (Victorian / gold theme)
+ */
+
+.root {
+  padding: 1.5rem;
+  color: #e8e0d5;
+  font-family: Georgia, serif;
+}
+
+.title {
+  color: #ff9500;
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+  border-bottom: 2px solid rgba(255, 149, 0, 0.3);
+  padding-bottom: 0.5rem;
+}
+
+.section {
+  margin-bottom: 1.5rem;
+}
+
+.sectionTitle {
+  color: #ff9500;
+  font-size: 1.125rem;
+  margin-bottom: 0.75rem;
+}
+
+.sectionTitleFlex {
+  color: #ff9500;
+  font-size: 1.125rem;
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sectionTitleLg {
+  color: #ff9500;
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.bodyBox {
+  background: rgba(40, 30, 20, 0.6);
+  padding: 1rem;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 149, 0, 0.2);
+}
+
+.bodyPre {
+  line-height: 1.6;
+  white-space: pre-wrap;
+  margin: 0;
+}
+
+.grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.grid3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+}
+
+.gridAuto250 {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.gridAuto200 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.gridAuto150 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.75rem;
+}
+
+.gridAuto280 {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0.5rem;
+}
+
+.mtSection {
+  margin-top: 1.5rem;
+}
+
+.infoField {
+  background: rgba(40, 30, 20, 0.4);
+  padding: 0.75rem;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 149, 0, 0.2);
+}
+
+.infoLabel {
+  font-size: 0.8125rem;
+  color: #999;
+  margin-bottom: 0.25rem;
+}
+
+.infoValue {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #ffe4b5;
+}
+
+.statBox {
+  background: rgba(40, 30, 20, 0.6);
+  padding: 0.75rem;
+  border-radius: 6px;
+  border: 2px solid color-mix(in srgb, var(--stat-accent, #4ade80) 25%, transparent);
+  text-align: center;
+}
+
+.statLabel {
+  font-size: 0.75rem;
+  color: #999;
+  margin-bottom: 0.25rem;
+}
+
+.statValue {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--stat-accent, #4ade80);
+}
+
+.calloutInfo {
+  background: rgba(255, 149, 0, 0.1);
+  border: 1px solid rgba(255, 149, 0, 0.3);
+  border-radius: 6px;
+  padding: 0.75rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.875rem;
+  color: #fbbf24;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 3rem;
+  color: #999;
+}
+
+.emptyStatePadded {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  color: #999;
+}
+
+.emptyIcon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.emptyIconSm {
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+}
+
+.lockPanel {
+  background: rgba(139, 69, 19, 0.3);
+  border: 2px solid rgba(255, 149, 0, 0.4);
+  border-radius: 8px;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.lockPanelMt {
+  background: rgba(139, 69, 19, 0.3);
+  border: 2px solid rgba(255, 149, 0, 0.4);
+  border-radius: 8px;
+  padding: 1.5rem;
+  text-align: center;
+  margin-top: 1.5rem;
+}
+
+.lockTitle {
+  color: #ff9500;
+  font-size: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.lockText {
+  color: #999;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.lockTextPlain {
+  color: #999;
+  margin: 0;
+}
+
+/* Note master */
+.reviewList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.reviewCard {
+  background: rgba(40, 30, 20, 0.6);
+  border: 1px solid rgba(255, 149, 0, 0.3);
+  border-radius: 6px;
+  padding: 1rem;
+}
+
+.reviewMeta {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  color: #999;
+}
+
+.reviewNotes {
+  margin: 0;
+  line-height: 1.6;
+  color: #ffe4b5;
+}
+
+/* Diario */
+.traitRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.traitPill {
+  background: rgba(255, 149, 0, 0.2);
+  border: 1px solid rgba(255, 149, 0, 0.4);
+  border-radius: 20px;
+  padding: 0.5rem 1rem;
+  font-size: 0.9375rem;
+  color: #ffe4b5;
+}
+
+.diarioCard {
+  background: rgba(40, 30, 20, 0.6);
+  border: 1px solid rgba(255, 149, 0, 0.3);
+  border-radius: 6px;
+  padding: 1rem;
+}
+
+.diarioCardTitle {
+  font-size: 0.875rem;
+  color: #999;
+  margin-bottom: 0.5rem;
+}
+
+.diarioCardValue {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--accent, #ffe4b5);
+}
+
+/* Abilità */
+.skillsMeta {
+  margin-bottom: 1rem;
+  color: #999;
+  font-size: 0.875rem;
+}
+
+.skillRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.625rem 0.75rem;
+  background: rgba(40, 30, 20, 0.4);
+  border: 1px solid rgba(255, 149, 0, 0.2);
+  border-radius: 4px;
+  font-size: 0.9375rem;
+}
+
+.skillRowPro {
+  background: rgba(255, 149, 0, 0.15);
+  border-color: rgba(255, 149, 0, 0.4);
+}
+
+.skillNameRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.skillName {
+  color: #ffe4b5;
+  font-weight: 400;
+}
+
+.skillNameBold {
+  font-weight: 600;
+}
+
+.skillRight {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.skillBreakdown {
+  font-size: 0.75rem;
+  color: #999;
+}
+
+.skillTotal {
+  font-weight: bold;
+  min-width: 3rem;
+  text-align: right;
+}
+
+.skillTotalHigh {
+  font-weight: bold;
+  min-width: 3rem;
+  text-align: right;
+  color: #4ade80;
+}
+
+.skillTotalMid {
+  font-weight: bold;
+  min-width: 3rem;
+  text-align: right;
+  color: #fbbf24;
+}
+
+.skillTotalLow {
+  font-weight: bold;
+  min-width: 3rem;
+  text-align: right;
+  color: #ffe4b5;
+}
+
+/* Statistiche tab — StatCard */
+.statCard {
+  padding: 1rem;
+  border-radius: 6px;
+  text-align: center;
+  transition: transform 0.2s ease;
+}
+
+.statCardPlain {
+  padding: 1rem;
+  border-radius: 6px;
+  text-align: center;
+  transition: transform 0.2s ease;
+  background: rgba(40, 30, 20, 0.6);
+  border: 2px solid rgba(255, 149, 0, 0.3);
+}
+
+.statCardHighlight {
+  padding: 1rem;
+  border-radius: 6px;
+  text-align: center;
+  transition: transform 0.2s ease;
+  background: color-mix(in srgb, var(--highlight) 20%, transparent);
+  border: 2px solid var(--highlight);
+}
+
+.statCardIcon {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.statCardLabel {
+  font-size: 0.875rem;
+  color: #999;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.statCardValue {
+  font-size: 2rem;
+  font-weight: bold;
+  color: var(--highlight, #ffe4b5);
+}
+
+.statCardValueString {
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: var(--highlight, #ffe4b5);
+}
+
+.statGridMb {
+  margin-bottom: 2rem;
+}
+
+/* Inventario */
+.itemCard {
+  background: rgba(40, 30, 20, 0.6);
+  border: 1px solid rgba(255, 149, 0, 0.3);
+  border-radius: 6px;
+  padding: 1rem;
+}
+
+.itemHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  margin-bottom: 0.5rem;
+}
+
+.itemName {
+  margin: 0;
+  color: #ff9500;
+  font-size: 1rem;
+}
+
+.qtyBadge {
+  background: rgba(255, 149, 0, 0.3);
+  border-radius: 12px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.itemDesc {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #e8e0d5;
+  line-height: 1.5;
+}

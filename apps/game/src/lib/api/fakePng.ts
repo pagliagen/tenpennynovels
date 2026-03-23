@@ -2,13 +2,14 @@
  * Fake PNG API Client
  */
 
-import { apiClient } from './client';
 import type {
   FakePng,
   FakePngListResponse,
   CreateFakePngRequest,
   UpdateFakePngRequest
 } from '@/types/fakePng';
+
+import { apiClient } from './client';
 
 const BASE_PATH = '/game/characters';
 

@@ -1,6 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
+
 import styles from '@/styles/components/character/wizard/WizardFooter.module.scss';
 
 interface WizardFooterProps {

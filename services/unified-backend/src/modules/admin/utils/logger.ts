@@ -1,11 +1,9 @@
 /**
  * Management Backend Logger
- * TODO: Migrate to shared logger factory when workspace imports are configured
- * Currently using local implementation for compatibility
  */
 
 import winston from 'winston';
-import { appConfig } from '@config/runtime';
+import { appConfig } from '@config/runtime/appConfig';
 
 const logLevel = appConfig.logLevel;
 const isDevelopment = !appConfig.isProduction;

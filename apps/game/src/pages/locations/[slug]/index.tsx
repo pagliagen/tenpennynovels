@@ -18,8 +18,9 @@
 
 'use client';
 
-import { useRouter } from 'next/router';
 import Head from 'next/head';
+import { useRouter } from 'next/router';
+
 import { GameLayout } from '@/components/layout/GameLayout';
 import { DistrictView } from '@/components/locations/DistrictView';
 import { LocationsErrorBoundary } from '@/components/locations/LocationsErrorBoundary';

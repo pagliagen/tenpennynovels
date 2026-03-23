@@ -232,6 +232,18 @@ class InterceptorManager {
  */
 export const interceptorManager = new InterceptorManager();
 
+/** Paths where a 401 should not force redirect to login (token flows, auth forms). */
+const AUTH_FLOW_EXACT_PATHS = ['/', '/register', '/forgot-password'] as const;
+
+const AUTH_FLOW_PREFIXES = ['/reset-password', '/delete-account'] as const;
+
+function isAuthFlowPath(pathname: string): boolean {
+  if (AUTH_FLOW_EXACT_PATHS.includes(pathname as (typeof AUTH_FLOW_EXACT_PATHS)[number])) {
+    return true;
+  }
+  return AUTH_FLOW_PREFIXES.some(prefix => pathname === prefix || pathname.startsWith(`${prefix}/`));
+}
+
 /**
  * Default Request Interceptor - Development Logging
  *
@@ -243,6 +255,36 @@ interceptorManager.useRequestInterceptor((config) => {
   // Log request in development
   if (process.env.NODE_ENV === 'development') {
     console.log(`[API Request] ${config.method || 'GET'} ${config.url}`);
+  }
+
+  return config;
+});
+
+/**
+ * Request Interceptor - Session ID Header
+ *
+ * Attaches X-Session-Id header from sessionStorage to all requests.
+ * Required for multi-tab session isolation.
+ *
+ * **Multi-Tab Flow**:
+ * - sessionId stored in sessionStorage (isolated per tab)
+ * - Backend validates session ownership (session.userId === auth_token.userId)
+ * - Prevents cross-tab character contamination
+ */
+interceptorManager.useRequestInterceptor((config) => {
+  // Only run on client-side
+  if (typeof window !== 'undefined') {
+    const sessionId = sessionStorage.getItem('character_session_id');
+    if (sessionId) {
+      config.headers = {
+        ...config.headers,
+        'X-Session-Id': sessionId,
+      };
+
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[API Interceptor] Attached X-Session-Id:', sessionId);
+      }
+    }
   }
 
   return config;
@@ -270,12 +312,9 @@ interceptorManager.useResponseInterceptor(async (response) => {
   // Handle 401 - Unauthorized (session expired)
   if (response.status === 401) {
     if (typeof window !== 'undefined') {
-      // Don't redirect on login/register pages - let local error handlers work
-      const authPages = ['/', '/register', '/forgot-password', '/reset-password'];
       const currentPath = window.location.pathname;
 
-      if (!authPages.includes(currentPath)) {
-        // Only redirect on protected pages (expired session)
+      if (!isAuthFlowPath(currentPath)) {
         window.location.href = '/';
       }
     }

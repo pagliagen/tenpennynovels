@@ -9,6 +9,7 @@ import { successResponse, errorResponse, listResponse, createResponse, updateRes
 import { DocumentChunkService } from '../services/DocumentChunkService';
 import jwt from 'jsonwebtoken';
 import { appConfig } from '@config/runtime';
+import { aiGatewayClient } from '../../game/services/AIGatewayClient';
 
 const mongoose = db.getMongoose();
 
@@ -147,16 +148,11 @@ export class DocumentManagementController {
 
       logger.info(`Reordered ${orderedIds.length} siblings for parentId=${parentId || 'root'}`);
 
-      res.json({
-        result: true,
-        data: {
-          parentId: parentId || null,
-          updated_count: orderedIds.length,
-          order_range: [1, orderedIds.length]
-        },
-        message: `${orderedIds.length} documenti riordinati con successo`,
-        timestamp: new Date().toISOString()
-      });
+      res.json(successResponse({
+        parentId: parentId || null,
+        updated_count: orderedIds.length,
+        order_range: [1, orderedIds.length]
+      }, undefined, getRequestId(req)));
     } catch (error: any) {
       logger.error('Error reordering siblings:', error);
       res.status(500).json(errorResponse(
@@ -193,7 +189,6 @@ export class DocumentManagementController {
           (document as unknown as Record<string, unknown>)[key] = updates[key];
         }
       }
-      document.lastUpdated = new Date();
 
       await document.save();
 
@@ -220,12 +215,7 @@ export class DocumentManagementController {
         }
       }
 
-      res.json({
-        result: true,
-        data: document,
-        message: 'Documento aggiornato con successo',
-        timestamp: new Date().toISOString()
-      });
+      res.json(successResponse(document, undefined, getRequestId(req)));
     } catch (error: any) {
       logger.error('Error updating document:', error);
       res.status(500).json(errorResponse(
@@ -268,12 +258,10 @@ export class DocumentManagementController {
 
       if (result.success) {
         logger.info(`[ManualSync] Document ${id}: ${result.chunksCreated} chunks created (v${result.newVersion})`);
-        res.json({
-          result: true,
-          data: { chunksCreated: result.chunksCreated, chunksDeactivated: result.chunksDeactivated, newVersion: result.newVersion },
-          message: 'Chunks rigenerati con successo',
-          timestamp: new Date().toISOString()
-        });
+        res.json(successResponse(
+          { chunksCreated: result.chunksCreated, chunksDeactivated: result.chunksDeactivated, newVersion: result.newVersion },
+          undefined, getRequestId(req)
+        ));
       } else {
         res.status(500).json(errorResponse(
           result.error || 'Errore durante la rigenerazione dei chunks',
@@ -320,7 +308,7 @@ export class DocumentManagementController {
       }
 
       logger.info(`Document ${id} soft deleted`);
-      res.json({ result: true, message: 'Documento eliminato con successo', timestamp: new Date().toISOString() });
+      res.json(successResponse(null, undefined, getRequestId(req)));
     } catch (error: any) {
       logger.error('Error deleting document:', error);
       res.status(500).json(errorResponse(
@@ -347,15 +335,9 @@ export class DocumentManagementController {
       }
 
       document.visible = !document.visible;
-      document.lastUpdated = new Date();
       await document.save();
 
-      res.json({
-        result: true,
-        data: { visible: document.visible },
-        message: `Documento ${document.visible ? 'reso visibile' : 'nascosto'} con successo`,
-        timestamp: new Date().toISOString()
-      });
+      res.json(successResponse({ visible: document.visible }, undefined, getRequestId(req)));
     } catch (error: any) {
       logger.error('Error toggling document visibility:', error);
       res.status(500).json(errorResponse(
@@ -382,15 +364,9 @@ export class DocumentManagementController {
       }
 
       document.isDraft = !document.isDraft;
-      document.lastUpdated = new Date();
       await document.save();
 
-      res.json({
-        result: true,
-        data: { isDraft: document.isDraft },
-        message: `Documento ${document.isDraft ? 'segnato come bozza' : 'pubblicato'} con successo`,
-        timestamp: new Date().toISOString()
-      });
+      res.json(successResponse({ isDraft: document.isDraft }, undefined, getRequestId(req)));
     } catch (error: any) {
       logger.error('Error toggling document draft:', error);
       res.status(500).json(errorResponse(
@@ -415,17 +391,13 @@ export class DocumentManagementController {
         return;
       }
 
-      res.json({
-        result: true,
-        data: {
-          ...document,
-          _id: document._id.toString(),
-          parentId: document.parentId?.toString() || null,
-          subtypeId: document.subtypeId,
-          lastUpdated: document.lastUpdated
-        },
-        timestamp: new Date().toISOString()
-      });
+      res.json(successResponse({
+        ...document,
+        _id: document._id.toString(),
+        parentId: document.parentId?.toString() || null,
+        subtypeId: document.subtypeId,
+        lastUpdated: document.lastUpdated
+      }, undefined, getRequestId(req)));
     } catch (error: any) {
       logger.error('Error fetching document:', error);
       res.status(500).json(errorResponse(
@@ -470,16 +442,12 @@ export class DocumentManagementController {
 
       const children = await fetchChildren(id, 0);
 
-      res.json({
-        result: true,
-        data: {
-          document: { ...rootDoc, _id: rootDoc._id.toString(), parentId: rootDoc.parentId?.toString() || null },
-          children,
-          childCount: children.length,
-          exceededLimit: children.length > 10
-        },
-        timestamp: new Date().toISOString()
-      });
+      res.json(successResponse({
+        document: { ...rootDoc, _id: rootDoc._id.toString(), parentId: rootDoc.parentId?.toString() || null },
+        children,
+        childCount: children.length,
+        exceededLimit: children.length > 10
+      }, undefined, getRequestId(req)));
     } catch (error: any) {
       logger.error('Error fetching document with children:', error);
       res.status(500).json(errorResponse(
@@ -571,17 +539,108 @@ export class DocumentManagementController {
 
       logger.info(`Document created: ${newDocument._id} (${title})`);
 
-      res.status(201).json({
-        result: true,
-        data: newDocument,
-        message: 'Documento creato con successo',
-        timestamp: new Date().toISOString()
-      });
+      res.status(201).json(successResponse(newDocument, undefined, getRequestId(req)));
     } catch (error: any) {
       logger.error('Error creating document:', error);
       res.status(500).json(errorResponse(
         error.message || 'Errore creazione documento',
         'CREATE_DOCUMENT_ERROR', undefined, 500, getRequestId(req)
+      ));
+    }
+  }
+
+  /**
+   * Get all documents with SEO fields only
+   * GET /admin/documents/seo
+   */
+  static async getSeoDocuments(req: Request, res: Response): Promise<void> {
+    try {
+      const documents = await Document
+        .find({ deletedAt: null })
+        .select('_id title slug type path description')
+        .sort({ type: 1, path: 1 })
+        .lean();
+
+      const aiGatewayEnabled = !!appConfig.services.aiGateway.url;
+
+      res.json(successResponse(
+        {
+          documents: documents.map(doc => ({
+            _id: doc._id.toString(),
+            title: doc.title,
+            slug: doc.slug,
+            type: doc.type,
+            path: doc.path,
+            description: doc.description || ''
+          })),
+          aiGatewayEnabled
+        },
+        undefined,
+        getRequestId(req)
+      ));
+    } catch (error: any) {
+      logger.error('Error fetching SEO documents:', error);
+      res.status(500).json(errorResponse(
+        error.message || 'Errore recupero documenti SEO',
+        'GET_SEO_DOCUMENTS_ERROR', undefined, 500, getRequestId(req)
+      ));
+    }
+  }
+
+  /**
+   * Regenerate SEO description for a single document via AI gateway
+   * POST /admin/documents/:id/regenerate-seo
+   */
+  static async regenerateSeoDescription(req: Request, res: Response): Promise<void> {
+    try {
+      if (!appConfig.services.aiGateway.url) {
+        res.status(503).json(errorResponse(
+          'AI gateway non configurato',
+          'AI_GATEWAY_NOT_CONFIGURED', undefined, 503, getRequestId(req)
+        ));
+        return;
+      }
+
+      const { id } = req.params;
+      const document = await Document.findById(id).lean();
+
+      if (!document) {
+        res.status(404).json(errorResponse(
+          'Documento non trovato', 'DOCUMENT_NOT_FOUND', undefined, 404, getRequestId(req)
+        ));
+        return;
+      }
+
+      if (!document.content) {
+        res.status(400).json(errorResponse(
+          'Il documento non ha contenuto HTML da cui generare la description',
+          'DOCUMENT_NO_CONTENT', undefined, 400, getRequestId(req)
+        ));
+        return;
+      }
+
+      const description = await aiGatewayClient.generateSeoDescription(
+        document.title,
+        document.content || ''
+      );
+
+      if (!description) {
+        res.status(502).json(errorResponse(
+          'Il gateway AI non ha restituito una descrizione valida',
+          'AI_GATEWAY_NO_RESULT', undefined, 502, getRequestId(req)
+        ));
+        return;
+      }
+
+      await Document.updateOne({ _id: id }, { $set: { description } });
+      logger.info(`[SeoDescription] Regenerated for document ${id} (${description.length} chars)`);
+
+      res.json(successResponse({ description }, undefined, getRequestId(req)));
+    } catch (error: any) {
+      logger.error('Error regenerating SEO description:', error);
+      res.status(500).json(errorResponse(
+        error.message || 'Errore rigenerazione descrizione SEO',
+        'REGENERATE_SEO_ERROR', undefined, 500, getRequestId(req)
       ));
     }
   }

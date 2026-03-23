@@ -3,6 +3,7 @@ import mongoose, { Schema, model, Document } from 'mongoose';
 import { calculateAllDerivedStats, getCharacterCreationConfig, type CharacterStats, type DerivedStats } from '../../shared/services/CharacterCreationConfigService';
 import { escapeRegex } from '@shared/utils/validation';
 import { softDeletePlugin, SoftDeleteMethods } from '../plugins/softDeletePlugin';
+import { NotificationService } from '../../shared/services/NotificationService';
 
 // Granular skill tracking interface for occupation bonuses
 export interface SkillBreakdown {
@@ -42,7 +43,8 @@ export interface ICharacter extends Document, SoftDeleteMethods {
   maritalStatus?: string; // stato civile (private - only master/owner)
   illnesses?: string; // patologie (private - only master/owner)
   educationTitle?: string; // titolo di studio (private - only master/owner)
-  criminalRecord?: string; // fedina penale
+  criminalRecord?: string;
+  pathologies?: string;    // patologie psicologiche/fisiche (private - only master/owner)
 
   // Occupation (changed from string to ObjectId reference)
   occupation?: Schema.Types.ObjectId; // Reference to Occupation model
@@ -59,7 +61,7 @@ export interface ICharacter extends Document, SoftDeleteMethods {
     constitution: number;    // COS - Costituzione  
     size: number;           // TAG - Taglia
     dexterity: number;      // DES - Destrezza
-    charm: number;          // FAS - Fascino (corretto da appearance)
+    appearance: number;     // APP - Aspetto
     intelligence: number;   // INT - Intelligenza
     power: number;          // POT - Potere
     education: number;      // EDU - Educazione
@@ -71,10 +73,11 @@ export interface ICharacter extends Document, SoftDeleteMethods {
     luckRoll: number;       // Tiro Fortuna = POT
     knowledge: number;      // Conoscenze = EDU
     hitPoints: number;      // Punti Ferita = (TAG + COS) / 10 arrotondato per difetto
-    sanityPoints: number;   // Punti Sanità = POT iniziali
+    sanity: number;         // Punti Sanità = POT iniziali
+    maxSanity: number;      // Sanità massima = 99 - Occulto
     magicPoints: number;    // Punti Magia = POT / 5 arrotondato per difetto
     movementRate: number;   // Tasso di Movimento = dipendente da DES e FOR (default 8)
-    damageBonus: string;    // Bonus al Danno da tabella FOR + TAG
+    bonusDamage: string;    // Bonus al Danno da tabella FOR + TAG
     build: number;          // Corporatura da tabella FOR + TAG
   };
 
@@ -175,11 +178,22 @@ export interface ICharacter extends Document, SoftDeleteMethods {
 
   // Permission system: gameplayRoles drives both game and admin (admin = player→personaggio, master→master, mod→moderatore)
   playerStatus: 'draft' | 'pending' | 'approved';
+  /** Priorità in coda approvazione (solo significativo se playerStatus === 'pending') */
+  reviewPriority?: 'high' | 'normal' | 'low';
   canAccessAdminPanel: boolean; // Gate for admin panel access
   isGestore: boolean; // Bypass all permissions
   gameplayRoles: ('player' | 'master' | 'moderatore')[];
   characterPermissions: string[]; // Game permission overrides (e.g. '-game:chat:send' to deny)
-  adminPermissions: string[]; // Admin permission overrides (same format, see admin-permissions.json)
+  adminPermissions: string[]; // Override permessi management (formato @config/permissions: section.action, deny con -prefix)
+
+  /** Moderazione: ban sul singolo PG (full / chat_only / forum_only) */
+  isBanned?: boolean;
+  banScope?: 'full' | 'chat_only' | 'forum_only';
+  banReason?: string;
+  bannedAt?: Date;
+  bannedUntil?: Date | null;
+  bannedBy?: Schema.Types.ObjectId;
+  bannedByName?: string;
 
   // Bot AI integration
   bot_id?: string; // If present, this Character is a bot (references bot in botai database)
@@ -237,7 +251,6 @@ const CharacterSchema = new Schema<ICharacter>({
     type: String,
     required: true,
     trim: true,
-    minlength: 2,
     maxlength: 50
   },
   surname: {
@@ -248,15 +261,11 @@ const CharacterSchema = new Schema<ICharacter>({
   },
   age: {
     type: Number,
-    min: 16,
-    max: 80,
-    required: false // Opzionale per PNG/Master
+    required: false
   },
   apparentAge: {
     type: Number,
-    min: 16,
-    max: 80,
-    required: false // Opzionale per PNG/Master
+    required: false
   },
   birthDate: {
     type: String,
@@ -274,9 +283,8 @@ const CharacterSchema = new Schema<ICharacter>({
   physicalDescription: {
     type: String,
     trim: true,
-    minlength: 10,
-    maxlength: 1000,
-    required: false // Opzionale per PNG/Master
+    maxlength: 5000,
+    required: false
   },
   birthPlace: {
     type: String,
@@ -287,36 +295,14 @@ const CharacterSchema = new Schema<ICharacter>({
   publicDescription: {
     type: String,
     trim: true,
-    maxlength: 4000,
-    required: false, // Opzionale
-    validate: {
-      validator: function(value: string) {
-        // Only apply minlength validation for pg_principale
-        // For PNG/Master, skip validation (any length is OK)
-        if ((this as any).characterType === 'pg_principale' && value && value.length < 50) {
-          return false;
-        }
-        return true;
-      },
-      message: 'Public description must be at least 50 characters for main characters'
-    }
+    maxlength: 5000,
+    required: false
   },
   privateDescription: {
     type: String,
     trim: true,
-    validate: {
-      validator: function(value: string) {
-        // Only apply minlength validation for pg_principale
-        // For PNG/Master, skip validation (any length is OK)
-        if ((this as any).characterType === 'pg_principale' && value && value.length < 50) {
-          return false;
-        }
-        return true;
-      },
-      message: 'Private description must be at least 50 characters for main characters'
-    },
-    maxlength: 4000,
-    required: false // Opzionale per PNG/Master
+    maxlength: 5000,
+    required: false
   },
   gender: {
     type: String,
@@ -380,6 +366,11 @@ const CharacterSchema = new Schema<ICharacter>({
     trim: true,
     maxlength: 500
   },
+  pathologies: {
+    type: String,
+    trim: true,
+    maxlength: 500
+  },
 
   // Occupation (changed from string to ObjectId)
   occupation: {
@@ -412,14 +403,19 @@ const CharacterSchema = new Schema<ICharacter>({
     enum: ['draft', 'pending', 'approved'],
     default: 'draft'
   },
-  
+  reviewPriority: {
+    type: String,
+    enum: ['high', 'normal', 'low'],
+    default: 'normal'
+  },
+
   // Call of Cthulhu Stats - Statistiche base
   stats: {
     strength: { type: Number, min: 1, max: 100, default: 50 },      // FOR
     constitution: { type: Number, min: 1, max: 100, default: 50 },  // COS  
     size: { type: Number, min: 1, max: 100, default: 50 },          // TAG
     dexterity: { type: Number, min: 1, max: 100, default: 50 },     // DES
-    charm: { type: Number, min: 1, max: 100, default: 50 },         // FAS - Fascino
+    appearance: { type: Number, min: 1, max: 100, default: 50 },    // APP - Aspetto
     intelligence: { type: Number, min: 1, max: 100, default: 50 },  // INT
     power: { type: Number, min: 1, max: 100, default: 50 },         // POT
     education: { type: Number, min: 1, max: 100, default: 50 }      // EDU
@@ -431,10 +427,11 @@ const CharacterSchema = new Schema<ICharacter>({
     luckRoll: { type: Number, default: 50 },      // Tiro Fortuna = POT
     knowledge: { type: Number, default: 50 },     // Conoscenze = EDU
     hitPoints: { type: Number, default: 10 },     // PF = (TAG + COS) / 10
-    sanityPoints: { type: Number, default: 50 },  // SAN = POT iniziali
+    sanity: { type: Number, default: 50 },        // SAN = POT iniziali
+    maxSanity: { type: Number, default: 99 },     // SAN max = 99 - Occulto
     magicPoints: { type: Number, default: 10 },   // PM = POT / 5
     movementRate: { type: Number, default: 8 },   // Tasso di Movimento (default 8)
-    damageBonus: { type: String, default: "0" },  // Bonus Danno da tabella
+    bonusDamage: { type: String, default: "0" },  // Bonus Danno da tabella
     build: { type: Number, default: 0 }           // Corporatura da tabella
   },
 
@@ -478,51 +475,15 @@ const CharacterSchema = new Schema<ICharacter>({
 
   // Background guidato strutturato
   background: {
-    briefHistory: {
-      type: String,
-      trim: true,
-      maxlength: 4000
-    },
-    significantEvents: {
-      type: String,
-      trim: true,
-      maxlength: 2500
-    },
-    importantRelationships: {
-      type: String,
-      trim: true,
-      maxlength: 2500
-    },
-    personality: {
-      type: String,
-      trim: true,
-      maxlength: 2500
-    },
-    ideology: {
-      type: String,
-      trim: true,
-      maxlength: 2500
-    },
-    significantPlaces: {
-      type: String,
-      trim: true,
-      maxlength: 2500
-    },
-    fearsAndPhobias: {
-      type: String,
-      trim: true,
-      maxlength: 2500
-    },
-    secrets: {
-      type: String,
-      trim: true,
-      maxlength: 2500
-    },
-    goalsAndMotivations: {
-      type: String,
-      trim: true,
-      maxlength: 2500
-    }
+    briefHistory:           { type: String, trim: true, maxlength: 5000 },
+    significantEvents:      { type: String, trim: true, maxlength: 5000 },
+    importantRelationships: { type: String, trim: true, maxlength: 5000 },
+    personality:            { type: String, trim: true, maxlength: 5000 },
+    ideology:               { type: String, trim: true, maxlength: 5000 },
+    significantPlaces:      { type: String, trim: true, maxlength: 5000 },
+    fearsAndPhobias:        { type: String, trim: true, maxlength: 5000 },
+    secrets:                { type: String, trim: true, maxlength: 5000 },
+    goalsAndMotivations:    { type: String, trim: true, maxlength: 5000 }
   },
 
   backgroundCompleted: {
@@ -679,6 +640,32 @@ const CharacterSchema = new Schema<ICharacter>({
     trim: true
   }],
 
+  isBanned: {
+    type: Boolean,
+    default: false
+  },
+  banScope: {
+    type: String,
+    enum: ['full', 'chat_only', 'forum_only'],
+    required: false
+  },
+  banReason: {
+    type: String,
+    maxlength: 2000,
+    trim: true
+  },
+  bannedAt: { type: Date },
+  bannedUntil: { type: Date, default: null },
+  bannedBy: {
+    type: Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  bannedByName: {
+    type: String,
+    maxlength: 200,
+    trim: true
+  },
+
   // Bot AI integration
   bot_id: {
     type: String,
@@ -751,6 +738,7 @@ CharacterSchema.index({ playerStatus: 1, submittedAt: 1 });
 CharacterSchema.index({ occupation: 1 });
 CharacterSchema.index({ currentLocation: 1 });
 CharacterSchema.index({ prestavolto: 1 }); // For face claim queries (NOT unique - duplicates allowed)
+CharacterSchema.index({ userId: 1, isBanned: 1 });
 
 // Presence query optimization
 CharacterSchema.index({ lastActive: -1 }); // DESC per sort recenti first
@@ -824,7 +812,7 @@ CharacterSchema.pre('save', async function(this: ICharacter) {
     });
 
     if (pgPrincipale) {
-      this.referentCharacterId = pgPrincipale._id as any;
+      this.referentCharacterId = pgPrincipale._id as unknown as Schema.Types.ObjectId;
     } else {
       throw new Error(`${this.characterType === 'png' ? 'PNG' : 'Master'} requires a PG principale as referent`);
     }
@@ -864,7 +852,7 @@ CharacterSchema.pre('save', async function(this: ICharacter) {
       intelligence: this.stats.intelligence,
       education: this.stats.education,
       power: this.stats.power,
-      charm: this.stats.charm
+      appearance: this.stats.appearance
     };
 
     // Calculate all derived stats using config-based parser
@@ -875,10 +863,11 @@ CharacterSchema.pre('save', async function(this: ICharacter) {
     this.derived.luckRoll = derived.luckRoll;
     this.derived.knowledge = derived.knowledge;
     this.derived.hitPoints = derived.hitPoints;
-    this.derived.sanityPoints = derived.sanityPoints;
+    this.derived.sanity = derived.sanity;
+    this.derived.maxSanity = derived.maxSanity;
     this.derived.magicPoints = derived.magicPoints;
     this.derived.movementRate = derived.movementRate;
-    this.derived.damageBonus = derived.damageBonus;
+    this.derived.bonusDamage = derived.bonusDamage;
     this.derived.build = derived.build;
   }
 
@@ -906,7 +895,7 @@ CharacterSchema.pre('save', async function(this: ICharacter) {
       });
 
       if (!existingTicket) {
-        await Ticket.create({
+        const ticket = await Ticket.create({
           title: `Richiesta Approvazione: ${this.name}`,
           category: 'character_approval',
           priority: 'medium', // From category config
@@ -923,8 +912,23 @@ CharacterSchema.pre('save', async function(this: ICharacter) {
           lastActivityAt: new Date()
         });
 
-        // TODO: Notify staff via NotificationService + WebSocket
-        // This will be handled by TicketController WebSocket events
+        // ✅ Notify staff via WebSocket
+        try {
+          await NotificationService.notifyNewTicket({
+            _id: ticket._id,
+            ticketNumber: ticket._id.toString().slice(-6).toUpperCase(),
+            category: ticket.category,
+            priority: 'normal',
+            department: 'character_approval',
+            createdBy: {
+              characterId: this._id,
+              characterName: this.name
+            }
+          });
+        } catch (notifyError) {
+          console.error('Failed to send character approval notification:', notifyError);
+          // Non-blocking: notification failure shouldn't prevent submission
+        }
       }
     } catch (error) {
       // Log error but don't fail character submission

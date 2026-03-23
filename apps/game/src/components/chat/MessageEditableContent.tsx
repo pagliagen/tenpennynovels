@@ -6,6 +6,7 @@
  */
 
 import { useEffect, useRef } from 'react';
+
 import styles from '@/styles/components/chat/MessageEditableContent.module.scss';
 
 interface MessageEditableContentProps {

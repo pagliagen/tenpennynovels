@@ -12,6 +12,7 @@
 'use client';
 
 import { Component, ReactNode, ErrorInfo } from 'react';
+
 import styles from '@/styles/components/locations/error-boundary.module.scss';
 
 /**
@@ -88,7 +89,7 @@ export class LocationsErrorBoundary extends Component<
       errorInfo,
     });
 
-    // TODO: Send to error tracking service (Sentry, etc.)
+    // Note: Error tracking service (Sentry) can be added here in production
     // reportError(error, errorInfo);
   }
 

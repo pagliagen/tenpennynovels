@@ -9,8 +9,9 @@
 
 'use client';
 
-import type { ChatMessage } from '@/types/chat';
 import { useAuthStore } from '@/store/authStore';
+import type { ChatMessage } from '@/types/chat';
+
 import { MessageCard } from './MessageCard';
 
 /**

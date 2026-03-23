@@ -19,6 +19,9 @@ import { appConfig } from '@config/runtime';
 const LANDING_DOMAIN = 'https://tenpennynovels.com';
 const DOCUMENTS_DOMAIN = 'https://documenti.tenpennynovels.com';
 const OUTPUT_DIR = appConfig.sitemapOutputDir;
+const LANDING_LASTMOD_STAMP = 'landing-sitemap-lastmod.txt';
+/** Usato in locale / VPS senza file stamp (deploy CI scrive la data del commit in public/) */
+const LANDING_LASTMOD_FALLBACK = '2026-02-27';
 
 interface SitemapUrl {
   loc: string;
@@ -34,7 +37,9 @@ export class SitemapService {
 
       const today = new Date().toISOString().split('T')[0];
 
-      const landingXml = this.buildUrlsetXml(this.getStaticPages());
+      const landingLastMod = await this.readLandingLastModStamp();
+      const landingUrls = this.getStaticPages(landingLastMod);
+      const landingXml = this.buildUrlsetXml(landingUrls);
       const { xml: documentsXml, count: docCount } = await this.buildDocumentsSitemap();
       const indexXml = this.buildSitemapIndex(today);
 
@@ -44,31 +49,102 @@ export class SitemapService {
         ['sitemap-documents.xml', documentsXml],
       ];
 
+      // Validate all sitemaps before writing (fail fast if invalid)
+      files.forEach(([filename, xml]) => this.validateSitemapXml(xml, filename));
+
       await this.writeToDir(OUTPUT_DIR, files);
 
-      logger.info(`[SitemapService] Done. Landing: ${this.getStaticPages().length} URLs, Documents: ${docCount} URLs`);
+      logger.info(
+        `[SitemapService] Done. Landing: ${landingUrls.length} URLs, Documents: ${docCount} URLs`,
+      );
     } catch (error) {
       logger.error('[SitemapService] Generation failed:', error);
     }
   }
 
-  private static async writeToDir(dir: string, files: Array<[string, string]>): Promise<void> {
-    try {
-      await fs.access(dir);
-    } catch {
-      return;
+  /**
+   * Validate sitemap XML for spec compliance
+   * Throws if invalid (malformed XML, size limit exceeded)
+   */
+  private static validateSitemapXml(xml: string, filename: string): void {
+    // Basic XML structure validation
+    if (!xml.includes('<?xml version="1.0" encoding="UTF-8"?>')) {
+      throw new Error(`[${filename}] Invalid sitemap: missing XML declaration`);
     }
-    await Promise.all(
-      files.map(([name, content]) => fs.writeFile(path.join(dir, name), content, 'utf-8')),
+    if (!xml.includes('<urlset') && !xml.includes('<sitemapindex')) {
+      throw new Error(`[${filename}] Invalid sitemap: missing root element`);
+    }
+
+    // Check size (50MB limit per sitemap spec)
+    const sizeBytes = Buffer.byteLength(xml, 'utf-8');
+    const MAX_SIZE = 50 * 1024 * 1024; // 50MB
+    if (sizeBytes > MAX_SIZE) {
+      throw new Error(
+        `[${filename}] Sitemap exceeds 50MB limit: ${(sizeBytes / 1024 / 1024).toFixed(2)}MB`
+      );
+    }
+
+    logger.debug(
+      `[SitemapService] ${filename} validated: ${(sizeBytes / 1024).toFixed(2)}KB`
     );
-    logger.info(`[SitemapService] Written ${files.length} files to ${dir}`);
   }
 
-  private static getStaticPages(): SitemapUrl[] {
+  private static async writeToDir(dir: string, files: Array<[string, string]>): Promise<void> {
+    // Test write permission - FAIL FAST if directory not accessible
+    try {
+      await fs.access(dir, fs.constants.W_OK);
+    } catch (error) {
+      const errorMsg = `[SitemapService] Output directory not writable: ${dir}`;
+      logger.error(errorMsg, error);
+      throw new Error(errorMsg); // FAIL FAST (no silent skip)
+    }
+
+    // Write files sequentially for better error tracking
+    for (const [name, content] of files) {
+      const filePath = path.join(dir, name);
+      await fs.writeFile(filePath, content, 'utf-8');
+      logger.info(`[SitemapService] Written ${filePath} (${content.length} bytes)`);
+    }
+  }
+
+  private static getStaticPages(lastmod: string): SitemapUrl[] {
     return [
-      { loc: `${LANDING_DOMAIN}/`, lastmod: '2026-02-27', changefreq: 'weekly', priority: 1.0 },
-      { loc: `${LANDING_DOMAIN}/credits`, lastmod: '2026-03-07', changefreq: 'monthly', priority: 0.5 },
+      { loc: `${LANDING_DOMAIN}/`, lastmod, changefreq: 'weekly', priority: 1.0 },
+      { loc: `${LANDING_DOMAIN}/credits`, lastmod, changefreq: 'monthly', priority: 0.5 },
     ];
+  }
+
+  /** Data commit deployata (CI) o fallback se il file non c’è. */
+  private static async readLandingLastModStamp(): Promise<string> {
+    const stampPath = path.join(OUTPUT_DIR, LANDING_LASTMOD_STAMP);
+    try {
+      const raw = (await fs.readFile(stampPath, 'utf-8')).trim().split(/\r?\n/)[0];
+      if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+    } catch {
+      /* missing or unreadable */
+    }
+    return LANDING_LASTMOD_FALLBACK;
+  }
+
+  /**
+   * lastmod from Mongo: prefer lastUpdated (kept in sync by Document pre-save), else createdAt.
+   * Defensive: If date < 2000-01-01 (epoch bug), fallback to createdAt or today.
+   */
+  private static documentLastMod(doc: { lastUpdated?: Date; createdAt?: Date }): string {
+    const EPOCH_THRESHOLD = new Date('2000-01-01T00:00:00Z');
+    const date = doc.lastUpdated || doc.createdAt || new Date();
+    const parsedDate = new Date(date);
+
+    // Defensive: If date < 2000-01-01 (epoch bug from migration or invalid data)
+    if (parsedDate < EPOCH_THRESHOLD) {
+      const fallback =
+        doc.createdAt && new Date(doc.createdAt) > EPOCH_THRESHOLD
+          ? new Date(doc.createdAt)
+          : new Date();
+      return fallback.toISOString().split('T')[0];
+    }
+
+    return parsedDate.toISOString().split('T')[0];
   }
 
   private static async buildDocumentsSitemap(): Promise<{ xml: string; count: number }> {
@@ -78,14 +154,12 @@ export class SitemapService {
       visible: true,
       deletedAt: { $exists: false },
     })
-      .select('type path lastUpdated')
+      .select('type path lastUpdated createdAt')
       .lean();
 
     const urls: SitemapUrl[] = documents.map((doc: any) => ({
       loc: `${DOCUMENTS_DOMAIN}/${doc.type}/${doc.path}`,
-      lastmod: doc.lastUpdated
-        ? new Date(doc.lastUpdated).toISOString().split('T')[0]
-        : new Date().toISOString().split('T')[0],
+      lastmod: this.documentLastMod(doc),
       changefreq: 'monthly' as const,
       priority: 0.7,
     }));

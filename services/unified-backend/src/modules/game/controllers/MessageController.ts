@@ -3,6 +3,7 @@ import { Character, OnGameMessage, OffGameChatMessage, Location } from '@databas
 import { VictorianMessageType, LocationMessageType } from '@shared/types/messaging';
 import { ApiResponse } from '../types/game';
 import { logger } from '../logger';
+import { redis } from '@config/runtime/redis';
 import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
 import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId , deleteResponse} from '@shared/utils/apiResponse';
 
@@ -101,11 +102,14 @@ export class MessageController {
         messages.push(message);
       }
 
-      // TODO: Publish Redis event for delivery scheduling
-      // redis.publish('messages:in_game_sent', { 
-      //   messageIds: messages.map(m => m.id), 
-      //   deliveryTime: deliveredAt 
-      // });
+      // Publish Redis event for delivery scheduling
+      await redis.publish('messages:in_game', JSON.stringify({
+        type: 'message_sent',
+        messageIds: messages.map(m => m._id.toString()),
+        senderId: characterId.toString(),
+        deliveryTime: deliveredAt,
+        timestamp: new Date().toISOString()
+      }));
 
       logger.info('In-game message sent', {
         senderId: characterId,

@@ -11,8 +11,9 @@
 'use client';
 
 import { useOnGameThreads } from '@/hooks/useOnGameMail';
-import { OnGameThreadItem } from './OnGameThreadItem';
 import styles from '@/styles/components/mail/OnGameMail.module.scss';
+
+import { OnGameThreadItem } from './OnGameThreadItem';
 
 interface OnGameInboxViewProps {
   onThreadSelect: (partnerId: string, partnerName: string) => void;

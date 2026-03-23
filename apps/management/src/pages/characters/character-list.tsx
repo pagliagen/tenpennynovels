@@ -45,13 +45,13 @@ function CharacterEditContent({
   onAvatarGenerated: () => void;
 }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+    <div className={styles.editFormStack}>
       <FormField label="Nome" name="name" value={character.name} disabled type="text" />
       <FormField label="Cognome" name="surname" value={character.surname || ''} disabled type="text" />
       <FormField label="Età" name="age" value={character.age} disabled type="number" />
 
-      <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '16px' }}>
-        <h3 style={{ marginBottom: '12px', fontSize: '14px', fontWeight: 600, color: 'rgba(255,255,255,0.9)' }}>
+      <div className={styles.editFormSection}>
+        <h3 className={styles.editFormSectionTitle}>
           Avatar
         </h3>
 

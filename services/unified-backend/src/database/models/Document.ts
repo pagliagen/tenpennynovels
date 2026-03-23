@@ -32,6 +32,7 @@ export interface IDocument extends MongooseDocument, SoftDeleteMethods {
   order: number;
 
   // Metadata
+  description?: string;
   tags: string[];
   isDraft: boolean;
   draftNotes?: string;
@@ -99,6 +100,10 @@ const DocumentSchema = new Schema<IDocument>({
   },
 
   // Metadata
+  description: {
+    type: String,
+    default: ''
+  },
   tags: {
     type: [String],
     default: []
@@ -174,11 +179,32 @@ DocumentSchema.pre('save', async function() {
     } catch (error) {
       logger.error('[Document] Failed to generate HTML from contentDelta:', error);
     }
+    // Flag for post-save SEO description generation
+    (this as any)._seoTrigger = true;
+  }
+
+  // SEO / sitemap: bump lastUpdated when public-facing fields change (not order/parentId alone)
+  if (!this.isNew) {
+    const bumpsLastUpdated = [
+      'title',
+      'contentDelta',
+      'slug',
+      'type',
+      'subtypeId',
+      'isPublic',
+      'visible',
+      'isDraft',
+      'tags',
+      'draftNotes',
+    ];
+    if (bumpsLastUpdated.some((field) => this.isModified(field))) {
+      this.lastUpdated = new Date();
+    }
   }
 });
 
 /**
- * Post-save hook: Trigger embedding generation or cleanup
+ * Post-save hook: Trigger embedding generation or cleanup + SEO description generation
  */
 DocumentSchema.post('save', async function(doc) {
   try {
@@ -193,6 +219,12 @@ DocumentSchema.post('save', async function(doc) {
     });
   } catch (error) {
     logger.error('[Document] Failed to publish embedding event:', error);
+  }
+
+  // Fire-and-forget SEO description generation when content changed
+  if ((doc as any)._seoTrigger && doc.content) {
+    const { SeoDescriptionService } = await import('../../modules/documents/services/SeoDescriptionService');
+    SeoDescriptionService.generateAndSave(doc._id.toString(), doc.title, doc.content);
   }
 });
 
@@ -231,6 +263,9 @@ DocumentSchema.index({ subtypeId: 1, order: 1 });
 
 // Tag-based search
 DocumentSchema.index({ tags: 1 });
+
+// Full-text search (for search endpoint)
+DocumentSchema.index({ title: 'text', content: 'text' });
 
 // Apply soft delete plugin
 DocumentSchema.plugin(softDeletePlugin, {

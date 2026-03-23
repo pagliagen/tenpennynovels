@@ -10,14 +10,17 @@
 
 'use client';
 
-import { useWizardStore } from '@/store/wizardStore';
-import { useOccupations } from '@/hooks/useCharacterCreation';
-import { useWizardToolbar } from '../WizardSlotsContext';
-import { StatControl } from '../shared/StatControl';
-import { DerivedStatCard } from '../shared/DerivedStatCard';
 import Image from 'next/image';
-import { getOccupationImage } from '../shared/OccupationIconMap';
+
+import { useOccupations } from '@/hooks/useCharacterCreation';
+import { useWizardStore } from '@/store/wizardStore';
 import styles from '@/styles/components/character/wizard/Step3Stats.module.scss';
+
+import { DerivedStatCard } from '../shared/DerivedStatCard';
+import { getOccupationImage } from '../shared/OccupationIconMap';
+import { StatControl } from '../shared/StatControl';
+import { useWizardToolbar } from '../WizardSlotsContext';
+
 
 const STATS = [
   { key: 'strength' as const, label: 'Forza (FOR)', abbreviation: 'FOR', description: 'Potenza fisica, capacità di sollevare, spingere.' },

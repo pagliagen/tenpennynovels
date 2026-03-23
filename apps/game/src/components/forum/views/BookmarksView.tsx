@@ -1,10 +1,11 @@
 'use client';
 
 import { useCallback } from 'react';
+
 import { useForumBookmarks, useToggleBookmark } from '@/hooks/useForumSocial';
 import { useForumStore } from '@/store/forumStore';
-import type { ForumBookmark } from '@/types/forum';
 import styles from '@/styles/components/forum/BookmarksView.module.scss';
+import type { ForumBookmark } from '@/types/forum';
 
 const TRUNCATE_LEN = 120;
 

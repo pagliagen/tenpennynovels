@@ -12,8 +12,10 @@
  * @since 2.0.0
  */
 
-import Link from 'next/link';
 import Head from 'next/head';
+import Link from 'next/link';
+
+import styles from '@/styles/pages/NotFoundPage.module.scss';
 
 /**
  * 404 Error Page Component
@@ -35,76 +37,28 @@ export default function Custom404(): JSX.Element {
         <title>Ten Penny Novels | Pagina Non Trovata</title>
         <meta name="description" content="La pagina che cerchi è svanita nella nebbia londinese. Torna alla tua avventura su Ten Penny Novels." />
       </Head>
-      <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: '100vh',
-        padding: '2rem',
-        fontFamily: 'Merriweather, serif',
-        backgroundColor: '#f5f5f5',
-      }}
-    >
-      <h1
-        style={{
-          fontFamily: 'Playfair Display, serif',
-          fontSize: '6rem',
-          marginBottom: '0',
-          color: '#8B4513',
-        }}
-      >
+      <div className={styles.root}>
+      <h1 className={styles.code}>
         404
       </h1>
 
-      <h2
-        style={{
-          fontFamily: 'Playfair Display, serif',
-          fontSize: '2rem',
-          marginBottom: '1rem',
-          color: '#333',
-        }}
-      >
+      <h2 className={styles.heading}>
         Page Not Found
       </h2>
 
-      <p
-        style={{
-          fontSize: '1.1rem',
-          marginBottom: '2rem',
-          color: '#666',
-          textAlign: 'center',
-          maxWidth: '500px',
-          fontStyle: 'italic',
-        }}
-      >
+      <p className={styles.quote}>
         "I fear the page you seek has vanished into the London fog, much like a certain gentleman
         of dubious repute..."
       </p>
 
       <Link
         href="/"
-        style={{
-          padding: '0.75rem 2rem',
-          backgroundColor: '#8B4513',
-          color: 'white',
-          textDecoration: 'none',
-          borderRadius: '4px',
-          fontSize: '1rem',
-          transition: 'background-color 0.2s',
-        }}
+        className={styles.homeLink}
       >
         Return to Safety
       </Link>
 
-      <p
-        style={{
-          marginTop: '3rem',
-          fontSize: '0.85rem',
-          color: '#999',
-        }}
-      >
+      <p className={styles.footer}>
         Ten Penny Novels - Victorian Gothic Interactive Fiction
       </p>
     </div>

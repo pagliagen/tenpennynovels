@@ -19,10 +19,12 @@
 'use client';
 
 import { useState } from 'react';
+
 import styles from '@/styles/components/locations/split.module.scss';
-import { LocationTreeNode } from './LocationTreeNode';
-import { LocationDetail } from './LocationDetail';
 import type { AccessibleLocation } from '@/types/location';
+
+import { LocationDetail } from './LocationDetail';
+import { LocationTreeNode } from './LocationTreeNode';
 
 /**
  * District View Props

@@ -15,7 +15,9 @@
  */
 
 import { create } from 'zustand';
+
 import { locationsApi } from '@/lib/api/locations';
+import { wsClient } from '@/lib/websocket/client';
 
 /**
  * Game State Store State
@@ -96,14 +98,8 @@ export const useGameStateStore = create<GameStateStore>((set, get) => ({
       console.log('[GameState] ✅ Backend persisted');
 
       // 3. Join WebSocket room
-      // TODO: Fix WebSocket integration - cannot use hook outside React component
-      // Hooks can only be called inside component body, not in store actions
-      // Options: (1) Move emit to component level, (2) Use WebSocket singleton, (3) Pass socket as param
-      // For now: Commented to allow build - WebSocket join should happen in component useEffect
-      // if (typeof window !== 'undefined') {
-      //   // This pattern doesn't work - useWebSocket is a hook, not a store
-      //   socket?.emit('join_location', locationId);
-      // }
+      wsClient.joinLocation(locationId);
+      console.log('[GameState] ✅ WebSocket room joined');
     } catch (error) {
       console.error('[GameState] ❌ Enter failed, rolling back:', error);
       // Rollback on error (clear location state)
@@ -134,14 +130,11 @@ export const useGameStateStore = create<GameStateStore>((set, get) => ({
     try {
       console.log('[GameState] 🔄 Leaving location:', currentLocationId);
 
-      // 1. Clear local state
-      set({ currentLocationId: null, currentLocationName: null });
+      // 1. Emit WebSocket leave (BEFORE clearing state, needs currentLocationId)
+      wsClient.leaveLocation(currentLocationId);
 
-      // 2. Emit WebSocket leave
-      // TODO: Same as join - WebSocket emit should happen at component level
-      // if (typeof window !== 'undefined') {
-      //   socket?.emit('leave_location', currentLocationId);
-      // }
+      // 2. Clear local state
+      set({ currentLocationId: null, currentLocationName: null });
 
       // 3. Backend cleanup (optional - WebSocket disconnect handler cleans up)
       // await locationsApi.leave();

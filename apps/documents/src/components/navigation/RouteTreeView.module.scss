@@ -187,3 +187,12 @@
   margin-bottom: $spacing-lg;
   overflow-x: hidden;
 }
+
+// Indentation for hierarchical document rows (SubtypeTreeView, FavoritesTreeView)
+.documentNode {
+  padding-left: calc(var(--depth, 0) * 20px);
+}
+
+.routeItem {
+  padding-left: calc(var(--depth, 0) * 12px);
+}

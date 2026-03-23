@@ -1,9 +1,11 @@
 'use client';
 
 import Image from 'next/image';
+
 import { Occupation } from '@/lib/api/characterCreation';
-import { getOccupationImage } from './OccupationIconMap';
 import styles from '@/styles/components/character/wizard/OccupationCard.module.scss';
+
+import { getOccupationImage } from './OccupationIconMap';
 
 interface OccupationCardProps {
   occupation: Occupation;
@@ -45,18 +47,20 @@ export function OccupationCard({ occupation, isSelected, onSelect }: OccupationC
         <p className={styles.description}>{occupation.description}</p>
       </div>
 
+      <img src="/images/separatore.gif" alt="Separatore" className={styles.separator} />
+
       <footer className={styles.footer}>
         <div className={styles.infoSection}>
           <span className={styles.infoLabel}>Contatti:</span>
           <span className={styles.infoValue}>{occupation.contacts || '—'}</span>
         </div>
         <div className={styles.infoSection}>
-          <span className={styles.infoLabel}>Guadagni:</span>
-          <span className={styles.infoValue}>{occupation.earnings || '—'}</span>
-        </div>
-        <div className={styles.infoSection}>
           <span className={styles.infoLabel}>Requisiti:</span>
           <span className={styles.infoValue}>{requiredSkillNames || '—'}</span>
+        </div>
+        <div className={styles.infoSection}>
+          <span className={styles.infoLabel}>Guadagni:</span>
+          <span className={styles.infoValue}>{occupation.earnings || '—'}</span>
         </div>
         <div className={styles.infoSection}>
           <span className={styles.infoLabel}>Bonus:</span>

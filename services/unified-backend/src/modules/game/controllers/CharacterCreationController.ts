@@ -40,6 +40,14 @@ export class CharacterCreationController {
         .sort({ name: 1 })
         .lean();
 
+      // Parse skill total points formula (e.g. "constant:200" → 200)
+      const parseSkillTotalPoints = (formula: string): number => {
+        if (formula?.startsWith('constant:')) {
+          return parseInt(formula.replace('constant:', ''), 10) || 200;
+        }
+        return 200;
+      };
+
       // Format complete configuration for frontend
       const completeConfig = {
         occupations: occupations.map((occ: any) => ({
@@ -76,6 +84,23 @@ export class CharacterCreationController {
         })),
         limits: rulesConfig.limits,
         derivedStats: rulesConfig.formulas.derived,
+        // Creation rules (used by wizard for budget/cap validation)
+        statsConfig: {
+          totalPoints: rulesConfig.stats.totalPoints,
+          minValue: rulesConfig.stats.basePoints,
+          maxStatsAbove80: rulesConfig.stats.maxStatsAbove80,
+          creationCap: rulesConfig.stats.creationCap,
+          gameplayCap: rulesConfig.stats.gameplayCap,
+        },
+        skillsConfig: {
+          totalPoints: parseSkillTotalPoints(rulesConfig.skills.totalPointsFormula),
+          creationCap: rulesConfig.skills.creationCap,
+          creationCapWithOccupation: rulesConfig.skills.creationCapWithOccupation,
+        },
+        socialClasses: rulesConfig.socialClasses,
+        occupation: rulesConfig.occupation,
+        formulas: rulesConfig.formulas,
+        fieldVisibility: rulesConfig.fieldVisibility,
       };
 
       logger.info('[CharacterCreationController] Complete character creation config requested', {

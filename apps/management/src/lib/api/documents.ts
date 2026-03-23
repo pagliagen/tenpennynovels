@@ -11,7 +11,8 @@ import type {
   DocumentTreeResponse,
   CreateDocumentData,
   UpdateDocumentData,
-  DocumentSubtype
+  DocumentSubtype,
+  SeoDocument
 } from '@/types/api/Document';
 import type { ApiResponse } from '@/types/api/common';
 
@@ -228,4 +229,37 @@ export async function reorderSubtypes(type: string, orderedIds: string[]): Promi
   if (!response.data.success) {
     throw new Error(response.data.error || 'Errore nel riordinamento subtypes');
   }
+}
+
+// ========== SEO API ==========
+
+/**
+ * Get all documents with SEO fields + aiGatewayEnabled flag
+ */
+export async function getSeoDocuments(): Promise<{ documents: SeoDocument[]; aiGatewayEnabled: boolean }> {
+  const response = await withRetry(() =>
+    apiClient.get<ApiResponse<{ documents: SeoDocument[]; aiGatewayEnabled: boolean }>>('/admin/documents/seo')
+  );
+
+  if (!response.data.success || !response.data.data) {
+    throw new Error(response.data.error || 'Errore nel recupero documenti SEO');
+  }
+
+  return response.data.data;
+}
+
+/**
+ * Regenerate SEO description for a single document via AI gateway
+ * Returns the newly generated description
+ */
+export async function regenerateSeoDescription(id: string): Promise<string> {
+  const response = await withRetry(() =>
+    apiClient.post<ApiResponse<{ description: string }>>(`/admin/documents/${id}/regenerate-seo`)
+  );
+
+  if (!response.data.success || !response.data.data) {
+    throw new Error(response.data.error || 'Errore nella rigenerazione descrizione SEO');
+  }
+
+  return response.data.data.description;
 }

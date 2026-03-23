@@ -10,8 +10,8 @@
 
 'use client';
 
-import type { ChatPreview } from '@/types/offGameChat';
 import styles from '@/styles/components/offGameChat/OffGameChat.module.scss';
+import type { ChatPreview } from '@/types/offGameChat';
 
 interface OffGameChatItemProps {
   chat: ChatPreview;

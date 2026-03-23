@@ -20,9 +20,10 @@
  */
 
 import { useQuery, useMutation, useQueryClient, type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
+import { useRouter } from 'next/router';
+
 import { characterApi } from '@/lib/api/character';
 import { useAuthStore } from '@/store/authStore';
-import { useRouter } from 'next/router';
 import type { Character } from '@/types/api/schemas';
 import type { CharacterCreatePayload } from '@/types/wizard';
 

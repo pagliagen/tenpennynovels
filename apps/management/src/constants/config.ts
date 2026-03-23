@@ -22,7 +22,8 @@ export const APP_CONFIG = {
 // TanStack Query Configuration
 export const QUERY_CONFIG = {
   STALE_TIME: 5 * 60 * 1000, // 5 minutes
-  CACHE_TIME: 10 * 60 * 1000, // 10 minutes
+  /** Tempo in cache (TanStack Query v5: gcTime) */
+  GC_TIME: 10 * 60 * 1000, // 10 minutes
   RETRY: 3,
   REFETCH_ON_WINDOW_FOCUS: false
 } as const;

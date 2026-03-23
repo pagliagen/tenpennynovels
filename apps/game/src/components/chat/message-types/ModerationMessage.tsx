@@ -12,13 +12,15 @@
 
 'use client';
 
-import type { ChatMessage } from '@/types/chat';
 import { useMessageInteractions } from '@/hooks/useMessageInteractions';
-import { MessageMenu } from '../MessageMenu';
+import styles from '@/styles/components/chat/message-types/ModerationMessage.module.scss';
+import type { ChatMessage } from '@/types/chat';
+
+import { ConfirmDeleteDialog } from '../ConfirmDeleteDialog';
 import { MessageEditableContent } from '../MessageEditableContent';
 import { MessageFooter } from '../MessageFooter';
-import { ConfirmDeleteDialog } from '../ConfirmDeleteDialog';
-import styles from '@/styles/components/chat/message-types/ModerationMessage.module.scss';
+import { MessageMenu } from '../MessageMenu';
+
 
 interface ModerationMessageProps {
   message: ChatMessage;

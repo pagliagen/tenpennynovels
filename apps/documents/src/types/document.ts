@@ -52,6 +52,7 @@ export interface Document {
   _id: string;
   path: string;
   title: string;
+  description?: string;
   content?: string;
   type: DocumentType;
   kind: 'document';
@@ -60,6 +61,8 @@ export interface Document {
   isDraft?: boolean;
   draftNotes?: string;
   displayCategory?: string;
+  createdAt?: Date | string;
+  lastUpdated?: Date | string;
 }
 
 /**

@@ -123,13 +123,6 @@ export function LocationTreeNode({
             💬
           </span>
         )}
-
-        {/* Shop Available Indicator */}
-        {location.hasShop && (
-          <span className={styles.nodeShopBadge} title="Negozio disponibile">
-            🛍️
-          </span>
-        )}
       </div>
 
       {/* Children (Recursive - Always Expanded) */}

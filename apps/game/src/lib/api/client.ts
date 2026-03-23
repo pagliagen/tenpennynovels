@@ -16,9 +16,24 @@
  */
 
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
+
 import { API_CONFIG, AUTH_CONFIG } from '@/constants/config';
-import { parseAxiosError, ApiError } from './errors';
 import { useUIStore } from '@/store/uiStore';
+
+import { parseAxiosError, ApiError } from './errors';
+
+/** Payload errore JSON tipico del backend (403, ecc.). */
+interface ApiErrorBody {
+  error?: string;
+  message?: string;
+  requiredPermission?: string;
+  code?: string;
+}
+
+function asApiErrorBody(data: unknown): ApiErrorBody | null {
+  if (data === null || typeof data !== 'object') return null;
+  return data as ApiErrorBody;
+}
 
 /**
  * Set auth token in localStorage
@@ -95,6 +110,7 @@ const createApiClient = (): AxiosInstance => {
    * Request Interceptor
    *
    * Executed before every request:
+   * - Injects X-Session-Id header from sessionStorage (multi-tab support)
    * - Adds timestamp for performance tracking
    * - Transforms request errors to ApiError
    *
@@ -110,6 +126,17 @@ const createApiClient = (): AxiosInstance => {
       // if (token) {
       //   config.headers.Authorization = `Bearer ${token}`;
       // }
+
+      // NEW: Inject X-Session-Id header from sessionStorage (multi-tab character selection)
+      // sessionId è opaco UUID salvato dal frontend dopo character selection
+      // Backend valida ownership (session.userId === auth_token.userId)
+      if (typeof window !== 'undefined') {
+        const sessionId = sessionStorage.getItem('character_session_id');
+
+        if (sessionId) {
+          config.headers['X-Session-Id'] = sessionId;
+        }
+      }
 
       // Add request timestamp for performance tracking
       config.metadata = { startTime: Date.now() };
@@ -155,9 +182,9 @@ const createApiClient = (): AxiosInstance => {
 
       // Handle 403 Forbidden - Show permission denied toast
       if (error.response?.status === 403) {
-        // Extract error message from response
-        const errorData = error.response.data as any;
-        const message = errorData?.error || 'Non sei autorizzato ad eseguire questa operazione';
+        const errorData = asApiErrorBody(error.response.data);
+        const message =
+          errorData?.error || errorData?.message || 'Non sei autorizzato ad eseguire questa operazione';
 
         // Show toast notification
         if (typeof window !== 'undefined') {

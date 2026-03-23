@@ -210,7 +210,7 @@ export default function SocialClassListPage() {
                   <th className={styles.sortable} onClick={() => handleSort('displayOrder')}>
                     Ordine{sortIndicator('displayOrder')}
                   </th>
-                  <th style={{ textAlign: 'right' }}>Azioni</th>
+                  <th className={styles.thActions}>Azioni</th>
                 </tr>
               </thead>
               <tbody>

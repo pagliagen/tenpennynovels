@@ -1,8 +1,10 @@
-import React, { useState, useCallback, useRef } from 'react';
 import classNames from 'classnames';
+import React, { useState, useCallback, useRef, type CSSProperties } from 'react';
+
 import { uploadImage, deleteImage } from '@/lib/api/cdn';
-import { ImageCropModal } from './ImageCropModal';
 import styles from '@/styles/components/ImageUploader.module.scss';
+
+import { ImageCropModal } from './ImageCropModal';
 
 export type CDNEntityType = 'locations' | 'items' | 'characters' | 'occupations';
 
@@ -203,7 +205,10 @@ export function ImageUploader({
           {uploading ? (
             <div className={styles.uploadingState}>
               <div className={styles.progressBar}>
-                <div className={styles.progressFill} style={{ width: `${progress}%` }} />
+                <div
+                  className={styles.progressFill}
+                  style={{ '--progress': `${progress}%` } as CSSProperties}
+                />
               </div>
               <span className={styles.progressText}>Caricamento... {progress}%</span>
             </div>

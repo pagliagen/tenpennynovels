@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, type CSSProperties } from 'react';
 import classNames from 'classnames';
 import { uploadImage, deleteImage } from '@/lib/api/cdn';
 import { ImageCropModal } from './ImageCropModal';
@@ -202,7 +202,10 @@ export function ImageUploader({
           {uploading ? (
             <div className={styles.uploadingState}>
               <div className={styles.progressBar}>
-                <div className={styles.progressFill} style={{ width: `${progress}%` }} />
+                <div
+                  className={styles.progressFill}
+                  style={{ '--progress': `${progress}%` } as CSSProperties}
+                />
               </div>
               <span className={styles.progressText}>Caricamento... {progress}%</span>
             </div>

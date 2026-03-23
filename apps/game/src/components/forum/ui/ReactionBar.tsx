@@ -2,8 +2,8 @@
 
 import { useToggleReaction } from '@/hooks/useForumPosts';
 import { useForumStore } from '@/store/forumStore';
-import type { ReactionCounts, ReactionType } from '@/types/forum';
 import styles from '@/styles/components/forum/ReactionBar.module.scss';
+import type { ReactionCounts, ReactionType } from '@/types/forum';
 
 const REACTIONS: { type: ReactionType; emoji: string }[] = [
   { type: 'like', emoji: '👍' },
@@ -31,7 +31,8 @@ export function ReactionBar({ postId, reactionCounts }: ReactionBarProps): JSX.E
     <div className={styles.reactionBar}>
       {REACTIONS.map(({ type, emoji }) => {
         const count = reactionCounts[type] ?? 0;
-        const isActive = false; // TODO: track from API when user has reacted
+        // Note: Backend doesn't yet return user's reaction state - always inactive for now
+        const isActive = false;
         return (
           <button
             key={type}

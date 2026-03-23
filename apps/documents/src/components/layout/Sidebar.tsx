@@ -58,7 +58,7 @@ export function Sidebar(): JSX.Element {
       <Link href="/" className={styles.logo}>
         <Image
           src="/images/title.png"
-          alt="Ten Penny Novels - Chapter One"
+          alt="Ten Penny Novels"
           width={140}
           height={60}
           priority

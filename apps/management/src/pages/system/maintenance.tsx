@@ -124,7 +124,7 @@ export default function Maintenance() {
           )}
 
           {isEnabled && status?.enabledAt && (
-            <div style={{ marginTop: '12px', fontSize: '14px', color: 'var(--color-text-secondary)' }}>
+            <div className={styles.enabledMeta}>
               Attivata il: {new Date(status.enabledAt).toLocaleString('it-IT')}
               {status.enabledBy && ` da ${status.enabledBy.username}`}
             </div>
@@ -175,7 +175,6 @@ export default function Maintenance() {
                 className={styles.saveButton}
                 onClick={handleToggle}
                 disabled={toggleMutation.isPending}
-                style={{ backgroundColor: 'var(--color-success)' }}
               >
                 {toggleMutation.isPending ? 'Disattivazione...' : '🟢 Disattiva Modalità Manutenzione'}
               </button>
@@ -186,8 +185,8 @@ export default function Maintenance() {
         {/* Info */}
         <section className={styles.section}>
           <h2>ℹ️ Informazioni</h2>
-          <div style={{ padding: '0 16px' }}>
-            <ul style={{ color: 'var(--color-text-secondary)', lineHeight: '1.8', fontSize: '14px' }}>
+          <div className={styles.infoListPad}>
+            <ul className={styles.infoListTips}>
               <li>Durante la manutenzione, solo gli admin possono accedere al sistema</li>
               <li>Gli utenti connessi verranno automaticamente disconnessi</li>
               <li>Nuovi tentativi di login verranno bloccati con il messaggio impostato</li>

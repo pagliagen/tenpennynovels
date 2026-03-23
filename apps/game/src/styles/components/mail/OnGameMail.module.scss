@@ -567,6 +567,64 @@
   }
 }
 
+.composeTextareaTall {
+  min-height: 150px;
+}
+
+.deliveryRow {
+  display: flex;
+  gap: 1rem;
+}
+
+.radioLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.expressLabelInline {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.labelInline {
+  margin-bottom: 0;
+}
+
+.postageBox {
+  padding: 1rem;
+  background: rgba(40, 30, 20, 0.8);
+  border-radius: 6px;
+}
+
+.postageRow {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.walletRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.875rem;
+  color: #999;
+}
+
+.walletBalanceOk {
+  color: #4ade80;
+}
+
+.walletBalanceBad {
+  color: #ef4444;
+}
+
+.walletWarning {
+  font-size: 0.8125rem;
+  color: #fbbf24;
+  margin-top: 0.5rem;
+}
+
 .formGroup {
   margin-bottom: 16px;
 }
@@ -685,4 +743,103 @@
   border-radius: $radius-md;
   color: #fca5a5;
   font-size: 15px;
+}
+
+/* ==========================================================================
+   RECIPIENT SELECTOR
+   ========================================================================== */
+
+.recipientSelectedPanel {
+  margin-bottom: 0.75rem;
+  padding: 0.5rem;
+  background: rgba(255, 149, 0, 0.15);
+  border-radius: 4px;
+  border: 1px solid rgba(255, 149, 0, 0.4);
+}
+
+.recipientSelectedHeading {
+  font-size: 0.8125rem;
+  color: #ffd700;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.recipientChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.recipientChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  background: rgba(139, 69, 19, 0.8);
+  border-radius: 4px;
+  font-size: 0.875rem;
+  color: #ffe4b5;
+}
+
+.recipientChipRemove {
+  background: none;
+  border: none;
+  color: #ff9500;
+  cursor: pointer;
+  padding: 0;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.recipientList {
+  max-height: 200px;
+  overflow-y: auto;
+  margin-top: 0.5rem;
+  border: 1px solid rgba(139, 69, 19, 0.6);
+  border-radius: 4px;
+  background: rgba(20, 20, 20, 0.8);
+}
+
+.recipientListEmpty {
+  padding: 1rem;
+  text-align: center;
+  color: #999;
+}
+
+.recipientRow {
+  padding: 0.75rem;
+  cursor: pointer;
+  background: transparent;
+  border-bottom: 1px solid rgba(139, 69, 19, 0.3);
+  border-left: 3px solid transparent;
+  transition: background 0.2s ease, border-left-color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  &:hover {
+    background: rgba(60, 40, 20, 0.8);
+  }
+}
+
+.recipientRowSelected {
+  background: rgba(255, 149, 0, 0.3);
+  border-left-color: #ff9500;
+
+  &:hover {
+    background: rgba(255, 149, 0, 0.4);
+  }
+}
+
+.recipientName {
+  color: #e8e0d5;
+}
+
+.recipientNameSelected {
+  color: #ffd700;
+}
+
+.recipientCheck {
+  color: #ff9500;
+  font-size: 1.125rem;
 }

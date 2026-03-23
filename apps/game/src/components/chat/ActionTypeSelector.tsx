@@ -10,33 +10,32 @@
 
 'use client';
 
-import type { ChatMessageType } from '@/types/chat';
 import styles from '@/styles/components/chat/ActionTypeSelector.module.scss';
+import type { ActionType } from '@/types/chat';
 
 /**
  * Action Type Selector Props
  */
 interface ActionTypeSelectorProps {
   /** Currently selected action type */
-  selectedAction: ChatMessageType;
+  selectedAction: ActionType;
 
   /** Available action types (depends on character data) */
-  availableActions: ChatMessageType[];
+  availableActions: ActionType[];
 
   /** Callback when action type changes */
-  onActionChange: (action: ChatMessageType) => void;
+  onActionChange: (action: ActionType) => void;
 }
 
 /**
  * Display names for action types (Italian)
  * Note: Some action types are system-generated and not selectable by users
  */
-const ACTION_DISPLAY_NAMES: Record<ChatMessageType, string> = {
+const ACTION_DISPLAY_NAMES: Record<ActionType, string> = {
   standard: 'Messaggio Standard',
   whisper: 'Sussurro',
   ooc: 'Fuori dal Gioco (OOC)',
   dice_roll: 'Tiro Dado',
-  skill_check: 'Tiro Abilità',
   stat_check: 'Tiro Caratteristica',
   item_use: 'Usa Oggetto',
   master: 'Annuncio Master',
@@ -63,7 +62,7 @@ export function ActionTypeSelector({
   return (
     <select
       value={selectedAction}
-      onChange={(e) => onActionChange(e.target.value as ChatMessageType)}
+      onChange={(e) => onActionChange(e.target.value as ActionType)}
       className={styles.actionTypeSelect}
     >
       {availableActions.map((action) => (

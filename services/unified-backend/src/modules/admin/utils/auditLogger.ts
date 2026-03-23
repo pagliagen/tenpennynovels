@@ -35,7 +35,7 @@ class AuditLoggerClass {
   /**
    * Log di un'operazione con tutti i dettagli necessari
    */
-  logOperation(params: {
+  async logOperation(params: {
     userId: string;
     username: string;
     action: string;
@@ -78,16 +78,16 @@ class AuditLoggerClass {
       );
     }
 
-    // Per operazioni critiche, invio notifica immediata (TODO: implementare webhook/email)
+    // Per operazioni critiche, invio notifica immediata
     if (entry.severity === 'critical') {
-      this.notifyCriticalOperation(entry);
+      await this.notifyCriticalOperation(entry);
     }
   }
 
   /**
    * Shortcut per log di operazioni riuscite
    */
-  logSuccess(params: {
+  async logSuccess(params: {
     userId: string;
     username: string;
     action: string;
@@ -97,13 +97,13 @@ class AuditLoggerClass {
     request?: any;
     severity?: 'low' | 'medium' | 'high' | 'critical';
   }) {
-    this.logOperation({ ...params, success: true });
+    await this.logOperation({ ...params, success: true });
   }
 
   /**
    * Shortcut per log di operazioni fallite
    */
-  logError(params: {
+  async logError(params: {
     userId: string;
     username: string;
     action: string;
@@ -114,13 +114,13 @@ class AuditLoggerClass {
     errorMessage: string;
     severity?: 'low' | 'medium' | 'high' | 'critical';
   }) {
-    this.logOperation({ ...params, success: false });
+    await this.logOperation({ ...params, success: false });
   }
 
   /**
    * Log specifico per accessi negati
    */
-  logAccessDenied(params: {
+  async logAccessDenied(params: {
     userId: string;
     username: string;
     action: string;
@@ -128,7 +128,7 @@ class AuditLoggerClass {
     requiredPermission: string;
     request?: any;
   }) {
-    this.logOperation({
+    await this.logOperation({
       ...params,
       action: 'access_denied',
       success: false,
@@ -144,7 +144,7 @@ class AuditLoggerClass {
   /**
    * Log azione amministrativa (backward compatibility)
    */
-  logAdminAction(params: {
+  async logAdminAction(params: {
     userId: string;
     username: string;
     action: string;
@@ -154,14 +154,14 @@ class AuditLoggerClass {
     request?: any;
     severity?: 'low' | 'medium' | 'high' | 'critical';
   }) {
-    this.logSuccess(params);
+    await this.logSuccess(params);
   }
 
   /**
    * Generic log method (backward compatibility)
    * Adapts new actor/resource interface to logOperation interface
    */
-  log(params: {
+  async log(params: {
     action: string;
     actorType?: string;
     actorId?: string;
@@ -180,7 +180,7 @@ class AuditLoggerClass {
     severity?: 'low' | 'medium' | 'high' | 'critical';
   }) {
     // Adapt to logOperation interface
-    this.logOperation({
+    await this.logOperation({
       userId: params.actorId || 'unknown',
       username: params.actorName || 'unknown',
       action: params.action,
@@ -282,20 +282,79 @@ class AuditLoggerClass {
   }
 
   /**
-   * Notifica per operazioni critiche (placeholder per future implementazioni)
+   * Notifica per operazioni critiche con email alert
    */
-  private notifyCriticalOperation(entry: AuditLogEntry) {
+  private async notifyCriticalOperation(entry: AuditLogEntry) {
     logger.error('CRITICAL_AUDIT_OPERATION', {
       audit: entry,
       category: 'SECURITY_ALERT'
     });
-    
-    // TODO: Implementare notifiche via webhook, email, Slack, etc.
-    logger.error(
-      `CRITICAL OPERATION: ${entry.username} performed ${entry.actionDescription} ` +
-      `${entry.resource ? `on ${entry.resource}${entry.resourceId ? `#${entry.resourceId}` : ''}` : ''} ` +
-      `from ${entry.ipAddress}`
-    );
+
+    const criticalMessage =
+      `CRITICAL: ${entry.username} performed ${entry.actionDescription} ` +
+      `on ${entry.resource}${entry.resourceId ? `#${entry.resourceId}` : ''} from ${entry.ipAddress}`;
+
+    logger.error(criticalMessage);
+
+    // Send email notification (non-blocking)
+    try {
+      const { EmailService } = await import('@modules/auth/services/EmailService');
+      const { appConfig } = await import('@config/runtime');
+
+      if (!appConfig.admin.notificationEmail) {
+        logger.warn('[AuditLogger] Admin email not configured, skipping email alert');
+        return;
+      }
+
+      const emailSubject = `🚨 CRITICAL SECURITY ALERT - ${entry.actionDescription}`;
+      const emailHtml = `
+        <h2 style="color: #d32f2f;">Critical Security Operation Detected</h2>
+        <table style="border-collapse: collapse; width: 100%; max-width: 600px;">
+          <tr style="background: #f5f5f5;">
+            <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">User</td>
+            <td style="padding: 8px; border: 1px solid #ddd;">${entry.username} (${entry.userId})</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">Action</td>
+            <td style="padding: 8px; border: 1px solid #ddd;">${entry.actionDescription}</td>
+          </tr>
+          <tr style="background: #f5f5f5;">
+            <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">Resource</td>
+            <td style="padding: 8px; border: 1px solid #ddd;">${entry.resource}${entry.resourceId ? ` #${entry.resourceId}` : ''}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">IP Address</td>
+            <td style="padding: 8px; border: 1px solid #ddd;">${entry.ipAddress}</td>
+          </tr>
+          <tr style="background: #f5f5f5;">
+            <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">Timestamp</td>
+            <td style="padding: 8px; border: 1px solid #ddd;">${entry.timestamp.toISOString()}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">Status</td>
+            <td style="padding: 8px; border: 1px solid #ddd; color: ${entry.success ? '#4caf50' : '#d32f2f'}; font-weight: bold;">
+              ${entry.success ? '✅ SUCCESS' : '❌ FAILED'}
+            </td>
+          </tr>
+        </table>
+        <p style="margin-top: 20px; color: #666; font-size: 12px;">
+          This is an automated security alert from Ten Penny Novels audit system.
+        </p>
+      `;
+
+      await EmailService.sendEmail({
+        to: appConfig.admin.notificationEmail,
+        subject: emailSubject,
+        html: emailHtml,
+        text: criticalMessage + '\n\n' + JSON.stringify(entry, null, 2)
+      });
+
+      logger.info(`[AuditLogger] Critical email sent to ${appConfig.admin.notificationEmail}`);
+
+    } catch (emailError: any) {
+      // Email failure should NOT crash audit logging
+      logger.error('[AuditLogger] Failed to send critical email:', emailError.message);
+    }
   }
 
   /**

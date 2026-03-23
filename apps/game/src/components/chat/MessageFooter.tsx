@@ -5,8 +5,8 @@
  * Tag click sets currentTag in chat form.
  */
 
-import { ChatMessage } from '@/types/chat';
 import styles from '@/styles/components/chat/MessageFooter.module.scss';
+import { ChatMessage } from '@/types/chat';
 
 interface MessageFooterProps {
   message: ChatMessage;

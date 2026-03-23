@@ -1,6 +1,6 @@
 # API Gateway
 
-**Navigation**: [Home](../INDEX.md) > [Backend](./README.md) > API Gateway
+**Navigation**: [Home](../../INDEX.md) > [Backend](./README.md) > API Gateway
 
 **Status**: ✅ Production Ready | **Last Updated**: 2026-03-01
 
@@ -271,31 +271,21 @@ app.use(socketioProxy);
 - Mounting at `/socket.io` would create `/socket.io/socket.io/` double prefix
 - Global middleware with `pathFilter` preserves correct path
 
-**Details**: [WebSocket Patterns](../05-frontend/websocket-patterns.md)
+**Details**: [WebSocket Patterns](../frontend/websocket-patterns.md)
 
 ---
 
 ## CORS Configuration
 
-### Origin Whitelist
+### Origin whitelist (allineato al codice)
 
-```typescript
-const allowedOrigins = [
-  // Production
-  process.env.LANDING_URL || 'https://tenpennynovels.com',
-  process.env.GAME_URL || 'https://game.tenpennynovels.com',
-  process.env.DOCUMENTS_URL || 'https://documenti.tenpennynovels.com',
-  process.env.MANAGEMENT_URL || 'https://gestione.tenpennynovels.com',
+Fonte: `services/api-gateway/src/config.ts`.
 
-  // Development localhost
-  'http://localhost:4000',
-  'http://localhost:4001',
-  'http://localhost:4002',
-  'http://localhost:4003',
-  'http://localhost:4004',
-  'http://localhost:4005'
-];
-```
+**Produzione**: `tenpennynovels.com`, `game.tenpennynovels.com`, `documenti.tenpennynovels.com`, `gestione.tenpennynovels.com`.
+
+**Sviluppo**: `http://localhost:4000` … `http://localhost:4003` (landing, game, documents, management). Non sono elencate `4004`/`4005` nel CORS principale.
+
+**CDN (dev)**: origini consentite per asset statici includono anche `http://localhost:4004` in configurazione attuale — verificare `config.ts` se aggiungi nuove app.
 
 ---
 
@@ -841,10 +831,10 @@ curl -i -N -H "Connection: Upgrade" \
 ## Related Documentation
 
 - [Unified Backend](./unified-backend-architecture.md) - Backend modules
-- [WebSocket Patterns](../05-frontend/websocket-patterns.md) - Socket.IO usage
+- [WebSocket Patterns](../frontend/websocket-patterns.md) - Socket.IO usage
 - [Docker Compose](../01-infrastructure/docker-compose.md) - Service configuration
 - [Environment Variables](../01-infrastructure/environment-variables.md) - Configuration
-- [Deployment Guide](../06-operations/deployment-guide.md) - Production setup
+- [Deploy README](../../deploy/README.md) - Produzione
 
 ---
 

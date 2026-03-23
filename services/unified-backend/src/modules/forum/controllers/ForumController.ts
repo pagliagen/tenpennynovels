@@ -9,6 +9,8 @@ import { ForumDiscussion } from '@database/models/ForumDiscussion';
 import { ForumPost } from '@database/models/ForumPost';
 import { ForumTopicFavorite } from '@database/models/ForumTopicFavorite';
 import { escapeRegex } from '@shared/utils/validation';
+import { EmbeddingService } from '@modules/documents/services/EmbeddingService';
+import { logger } from '@shared/utils/logger';
 
 const createSlug = (title: string): string => {
   return slugify(title, { lower: true, strict: true, locale: 'it', trim: true }).slice(0, 100);
@@ -703,40 +705,111 @@ export class ForumController {
 
   static async searchForum(req: Request, res: Response) {
     try {
-      const { q: query, topicSlug } = req.query;
+      const { q: query, topicSlug, discussionSlug, authorCharacterId } = req.query;
 
       if (!query || typeof query !== 'string' || query.trim().length === 0) {
         return res.status(400).json({ success: false, error: 'La query di ricerca è obbligatoria', code: 'MISSING_QUERY' });
-      }
-
-      // TODO: Replace with EmbeddingService.semanticSearch (todo: forum-search-semantic)
-      const filter: Record<string, unknown> = { isDeleted: false };
-      if (topicSlug && typeof topicSlug === 'string') {
-        filter.topicSlug = topicSlug;
       }
 
       const page = Math.max(1, parseInt(req.query.page as string) || 1);
       const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string) || 20));
       const skip = (page - 1) * limit;
 
-      const escapedQuery = escapeRegex(query.trim());
+      let posts: any[] = [];
+      let total = 0;
+      let searchMethod = 'semantic';
 
-      const posts = await ForumPost.find({
-        ...filter,
-        content: { $regex: escapedQuery, $options: 'i' }
-      }).sort({ createdAt: -1 }).skip(skip).limit(limit).lean();
+      // Build filters object
+      const filters: Record<string, any> = {};
+      if (topicSlug && typeof topicSlug === 'string') filters.topicSlug = topicSlug;
+      if (discussionSlug && typeof discussionSlug === 'string') filters.discussionSlug = discussionSlug;
+      if (authorCharacterId && typeof authorCharacterId === 'string') filters.authorCharacterId = authorCharacterId;
 
-      const total = await ForumPost.countDocuments({
-        ...filter,
-        content: { $regex: escapedQuery, $options: 'i' }
-      });
+      // Try semantic search first (with timeout)
+      try {
+        const semanticResults = await Promise.race([
+          EmbeddingService.semanticSearch(query.trim(), undefined, limit * 3, 0.3, 'forum', filters),
+          new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Timeout')), 2000))
+        ]);
+
+        if (semanticResults && semanticResults.length > 0) {
+          const forumPostIds = semanticResults
+            .map((r: any) => r.postId)
+            .slice(skip, skip + limit);
+
+          if (forumPostIds.length > 0) {
+            posts = await ForumPost.find({
+              _id: { $in: forumPostIds },
+              isDeleted: false
+            }).lean();
+
+            // Re-order by semantic score
+            const scoreMap = new Map(semanticResults.map((r: any) => [r.postId, r.score]));
+            posts.sort((a: any, b: any) => (scoreMap.get(b._id.toString()) || 0) - (scoreMap.get(a._id.toString()) || 0));
+
+            total = posts.length;
+
+            logger.info(`[ForumSearch] Semantic: ${posts.length} results for "${query}" with filters ${JSON.stringify(filters)}`);
+          }
+        }
+      } catch (semanticError) {
+        logger.warn('[ForumSearch] Semantic failed, fallback to regex:', semanticError);
+        searchMethod = 'regex_fallback';
+      }
+
+      // Fallback to regex if semantic search failed or returned no results
+      if (posts.length === 0) {
+        const filter: Record<string, unknown> = { isDeleted: false };
+        if (topicSlug && typeof topicSlug === 'string') filter.topicSlug = topicSlug;
+        if (discussionSlug && typeof discussionSlug === 'string') filter.discussionSlug = discussionSlug;
+        if (authorCharacterId && typeof authorCharacterId === 'string') {
+          filter['author.characterId'] = authorCharacterId;
+        }
+
+        const escapedQuery = escapeRegex(query.trim());
+
+        posts = await ForumPost.find({
+          ...filter,
+          content: { $regex: escapedQuery, $options: 'i' }
+        }).sort({ createdAt: -1 }).skip(skip).limit(limit).lean();
+
+        total = await ForumPost.countDocuments({
+          ...filter,
+          content: { $regex: escapedQuery, $options: 'i' }
+        });
+
+        searchMethod = 'regex';
+        logger.info(`[ForumSearch] Regex: ${posts.length} results for "${query}" with filters ${JSON.stringify(filters)}`);
+      }
 
       const totalPages = Math.ceil(total / limit);
-      res.json(listResponse(posts.map(p => ({
-        id: p._id, topicSlug: p.topicSlug, discussionSlug: p.discussionSlug,
-        content: p.content, author: p.author, createdAt: p.createdAt
-      })), { currentPage: page, pageSize: limit, totalItems: total, totalPages, hasNextPage: page < totalPages, hasPreviousPage: page > 1 }, undefined, getRequestId(req)));
+      const response = {
+        ...listResponse(
+          posts.map(p => ({
+            id: p._id,
+            topicSlug: p.topicSlug,
+            discussionSlug: p.discussionSlug,
+            content: p.content,
+            author: p.author,
+            createdAt: p.createdAt
+          })),
+          {
+            currentPage: page,
+            pageSize: limit,
+            totalItems: total,
+            totalPages,
+            hasNextPage: page < totalPages,
+            hasPreviousPage: page > 1
+          },
+          undefined,
+          getRequestId(req)
+        ),
+        searchMethod,
+      };
+
+      res.json(response);
     } catch (error) {
+      logger.error('[ForumSearch] Error:', error);
       res.status(500).json({ success: false, error: 'Impossibile effettuare la ricerca', code: 'SEARCH_ERROR' });
     }
   }

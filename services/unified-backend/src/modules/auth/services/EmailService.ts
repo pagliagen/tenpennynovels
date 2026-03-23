@@ -284,6 +284,76 @@ export class EmailService {
   }
 
   /**
+   * Generic email sending method
+   */
+  static async sendEmail(options: {
+    to: string;
+    subject: string;
+    html: string;
+    text: string;
+  }): Promise<void> {
+    try {
+      if (this.isMockMode) {
+        logger.info('=== MOCK EMAIL ===');
+        logger.info(`To: ${options.to}`);
+        logger.info(`Subject: ${options.subject}`);
+        logger.info('--- EMAIL TEXT CONTENT ---');
+        logger.info(options.text);
+        logger.info('=== END MOCK EMAIL ===');
+        return;
+      }
+
+      const mailOptions = {
+        from: {
+          name: 'Ten Penny Novels',
+          address: appConfig.smtp.from
+        },
+        to: options.to,
+        subject: options.subject,
+        html: options.html,
+        text: options.text
+      };
+
+      await this.transporter.sendMail(mailOptions);
+      logger.info(`Email sent successfully to ${options.to}`);
+    } catch (error: any) {
+      logger.error(`Failed to send email to ${options.to}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Avviso ban completo sul personaggio (accesso al gioco sospeso). Template inline.
+   */
+  static async sendCharacterFullBanNotice(params: {
+    email: string;
+    displayName: string;
+    characterName: string;
+    reason: string;
+    bannedUntilIso: string | null;
+  }): Promise<void> {
+    const { email, displayName, characterName, reason, bannedUntilIso } = params;
+    const untilText = bannedUntilIso
+      ? `La restrizione è temporanea e termina il ${new Date(bannedUntilIso).toLocaleString('it-IT')}.`
+      : 'La restrizione non ha una data di fine indicata; riceverai aggiornamenti via email se applicabile.';
+    const subject = `Ten Penny Novels — Restrizione sul personaggio ${characterName}`;
+    const text = `Caro ${displayName},\n\nÈ stata applicata una restrizione completa sul personaggio "${characterName}" sulla piattaforma Ten Penny Novels.\n\nMotivazione indicata dallo staff:\n${reason}\n\n${untilText}\n\nPer chiarimenti puoi rispondere a questa email o, quando disponibile, aprire un ticket dal gioco nella categoria dedicata alle sanzioni.\n\nCordiali saluti,\nIl Team di Ten Penny Novels`;
+    const html = this.buildEmailHtml({
+      title: 'Restrizione sul personaggio',
+      bodyHtml: `
+                <p style="margin: 0 0 16px; color: #d4c4b0;">Caro <strong style="color: #f5f5dc;">${displayName}</strong>,</p>
+                <p style="margin: 0 0 12px;">È stata applicata una <strong>restrizione completa</strong> sul personaggio <strong>${characterName}</strong>.</p>
+                <p style="margin: 0 0 8px; color: #a89884;">Motivazione:</p>
+                <p style="margin: 0 0 16px; white-space: pre-wrap;">${reason.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
+                <p style="margin: 0 0 12px; color: #c4b8a8;">${untilText}</p>
+                <p style="margin: 0; font-size: 14px; color: #a89884;">Puoi rispondere a questa email o aprire un ticket in-game (categoria sanzione/contestazione) se desideri contattare lo staff.</p>`,
+      footerExtra: '',
+    });
+
+    await this.sendEmail({ to: email, subject, html, text });
+  }
+
+  /**
    * Send account deletion confirmation email
    */
   static async sendAccountDeletionEmail(email: string, displayName: string, token: string): Promise<void> {

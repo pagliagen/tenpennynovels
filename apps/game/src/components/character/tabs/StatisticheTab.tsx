@@ -11,7 +11,11 @@
 
 'use client';
 
+import type { CSSProperties } from 'react';
+import classNames from 'classnames';
+
 import { CharacterSheetData, CharacterSheetPermissions } from '@/hooks/useCharacterSheetData';
+import styles from '@/styles/components/character/CharacterSheetTab.module.scss';
 
 interface StatisticheTabProps {
   character: CharacterSheetData['character'];
@@ -24,22 +28,17 @@ export function StatisticheTab({ character }: StatisticheTabProps): JSX.Element 
   const stats = character.stats || {};
 
   return (
-    <div style={{ padding: '1.5rem', color: '#e8e0d5', fontFamily: 'Georgia, serif' }}>
-      <h2 style={{ color: '#ff9500', marginBottom: '1.5rem', fontSize: '1.5rem', borderBottom: '2px solid rgba(255, 149, 0, 0.3)', paddingBottom: '0.5rem' }}>
+    <div className={styles.root}>
+      <h2 className={styles.title}>
         📊 Statistiche del Personaggio
       </h2>
 
       {/* Base Stats */}
-      <h3 style={{ color: '#ff9500', fontSize: '1.25rem', marginBottom: '1rem' }}>
+      <h3 className={styles.sectionTitleLg}>
         ⚡ Caratteristiche Base
       </h3>
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-        gap: '0.75rem',
-        marginBottom: '2rem'
-      }}>
-        <StatCard label="Charm" value={stats.charm || 0} icon="✨" />
+      <div className={classNames(styles.gridAuto150, styles.statGridMb)}>
+        <StatCard label="Appearance" value={stats.appearance || 0} icon="✨" />
         <StatCard label="Constitution" value={stats.constitution || 0} icon="💪" />
         <StatCard label="Dexterity" value={stats.dexterity || 0} icon="🎯" />
         <StatCard label="Education" value={stats.education || 0} icon="📚" />
@@ -50,14 +49,10 @@ export function StatisticheTab({ character }: StatisticheTabProps): JSX.Element 
       </div>
 
       {/* Derived Stats */}
-      <h3 style={{ color: '#ff9500', fontSize: '1.25rem', marginBottom: '1rem' }}>
+      <h3 className={styles.sectionTitleLg}>
         🎲 Caratteristiche Derivate
       </h3>
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-        gap: '0.75rem'
-      }}>
+      <div className={styles.gridAuto150}>
         <StatCard label="HP" value={stats.hp || 0} icon="❤️" highlight="#4ade80" />
         <StatCard label="Sanity" value={stats.sanity || 0} icon="🧘" highlight="#fbbf24" />
         <StatCard label="MP" value={stats.mp || 0} icon="✨" highlight="#60a5fa" />
@@ -67,7 +62,7 @@ export function StatisticheTab({ character }: StatisticheTabProps): JSX.Element 
         <StatCard label="Build" value={stats.build || 0} icon="🏋️" />
         <StatCard
           label="Damage Bonus"
-          value={stats.damageBonus || 'N/A'}
+          value={stats.bonusDamage || 'N/A'}
           icon="💥"
           isString
         />
@@ -90,30 +85,21 @@ function StatCard({
   highlight?: string;
   isString?: boolean;
 }) {
+  const varStyle = highlight ? ({ '--highlight': highlight } as CSSProperties) : undefined;
+
   return (
-    <div style={{
-      background: highlight ? `${highlight}20` : 'rgba(40, 30, 20, 0.6)',
-      padding: '1rem',
-      borderRadius: '6px',
-      border: `2px solid ${highlight || 'rgba(255, 149, 0, 0.3)'}`,
-      textAlign: 'center',
-      transition: 'transform 0.2s ease'
-    }}>
-      <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>{icon}</div>
-      <div style={{
-        fontSize: '0.875rem',
-        color: '#999',
-        marginBottom: '0.5rem',
-        textTransform: 'uppercase',
-        letterSpacing: '0.5px'
-      }}>
+    <div
+      className={highlight ? styles.statCardHighlight : styles.statCardPlain}
+      style={varStyle}
+    >
+      <div className={styles.statCardIcon}>{icon}</div>
+      <div className={styles.statCardLabel}>
         {label}
       </div>
-      <div style={{
-        fontSize: isString ? '1.25rem' : '2rem',
-        fontWeight: 'bold',
-        color: highlight || '#ffe4b5'
-      }}>
+      <div
+        className={isString ? styles.statCardValueString : styles.statCardValue}
+        style={varStyle}
+      >
         {value}
       </div>
     </div>

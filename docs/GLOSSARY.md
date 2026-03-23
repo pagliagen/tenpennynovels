@@ -2,7 +2,7 @@
 
 **Navigation**: [Home](./INDEX.md) > Glossary
 
-**Status**: ✅ Reference | **Last Updated**: 2026-03-01
+**Status**: ✅ Reference | **Last Updated**: 2026-03-22
 
 Terminologia Victorian e tecnica usata nel progetto TenPennyNovels.
 
@@ -76,9 +76,9 @@ Terminologia Victorian e tecnica usata nel progetto TenPennyNovels.
 ### Backend Architecture
 
 **Unified Backend**
-- Backend monolitico modulare (port 3001)
-- 5 moduli: auth, game, admin, forum, documents
-- Consolidamento di auth-backend, game-backend, management-backend
+- Backend monolitico modulare (porta 3001 diretta; in prod il client usa di solito API Gateway :8000)
+- Moduli principali sotto `src/modules/`: auth, game, admin, forum, documents, tickets
+- Le code Bull per gli embedding non girano qui: sono in **embeddings-worker**
 
 **API Gateway**
 - Single entry point per tutte le richieste (port 8000)
@@ -92,9 +92,9 @@ Terminologia Victorian e tecnica usata nel progetto TenPennyNovels.
 - Character session manager per unicità sessione
 
 **Redis Pub/Sub**
-- Sistema publish/subscribe per eventi inter-service
-- Channels: CHARACTER_EVENTS, LOCATION_EVENTS, EMBEDDING_EVENTS
-- Event-driven architecture
+- Publish/subscribe per embedding (`embedding:document:*`, `embedding:chat:*`, `embedding:forum_post:*`, ecc.) verso **embeddings-worker**
+- Canale game `character:events` per il bus eventi interno (subscriber nel unified-backend)
+- Adapter Redis per Socket.IO quando si scalano più istanze di backend
 
 **WebSocket**
 - Comunicazione real-time bi-direzionale (Socket.IO 4.8.3)
@@ -260,9 +260,9 @@ Terminologia Victorian e tecnica usata nel progetto TenPennyNovels.
 ### Development & Operations
 
 **Docker Compose**
-- Orchestrazione multi-container (7 services)
-- docker-compose.yml configuration
-- Hot-reload volumes per development
+- Orchestrazione multi-container (nell’ordine: MongoDB, Redis, embeddings-worker, Qdrant, Elasticsearch, unified-backend, api-gateway)
+- File `docker-compose.yml` in root del monorepo
+- Bind mount di `./cdn-storage` per asset serviti dal gateway/backend
 
 **Health Check**
 - Endpoint /health per service status
@@ -302,9 +302,11 @@ Terminologia Victorian e tecnica usata nel progetto TenPennyNovels.
 
 ---
 
-## Related Documentation
+## Documentazione collegata
 
-- [Getting Started](./00-getting-started/README.md) - Onboarding guide
-- [Call of Cthulhu Rules](./08-reference/call-of-cthulhu-rules.md) - Game system details
-- [BotAI Psychology](./04-ai-ml/botai-psychology.md) - Bot AI terminology
-- [Embeddings Architecture](./04-ai-ml/embeddings-architecture.md) - ML terminology
+- [Indice documentazione](./INDEX.md)
+- [Documentazione tecnica](./tecnica/README.md)
+- [Documentazione funzionale](./funzionale/README.md)
+- [Deploy / produzione](../deploy/README.md)
+- [Stack AI locale (opzionale)](../local-ai/README.md)
+- Terminologia di gioco (CoC, skill, occupation): sezioni **Game System Terminology** e **Bot AI System** in questo glossario

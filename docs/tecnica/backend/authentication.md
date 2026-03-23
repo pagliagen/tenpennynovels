@@ -2,28 +2,50 @@
 
 ## Overview
 
-TenPennyNovels implementa un sistema di autenticazione dual-token avanzato con separazione tra ruoli USER (amministrativi) e CHARACTER (gameplay), utilizzando JWT e cookie cross-domain per accesso seamless tra le 6 applicazioni frontend.
+TenPennyNovels usa il backend unificato in `services/unified-backend`: autenticazione **utente** tramite JWT in cookie HttpOnly (`auth_token`) e contesto **personaggio** per il gameplay tramite **sessione Redis** (opaco `sessionId`) inviata dal client come header `X-Session-Id`. I frontend (`apps/landing`, `apps/game`, `apps/documents`, `apps/management`, …) parlano con lo stesso API e inviano i cookie con `withCredentials: true` sul dominio cookie condiviso (es. `.tenpennynovels.com` / `.localhost`).
 
-## 🏗️ Dual-Token Architecture
+### Implementazione attuale (riepilogo)
 
-### Token Structure
+1. **Login** (`POST /auth/login`): imposta `auth_token`; se l’utente ha un solo personaggio idoneo, il backend crea una entry in Redis (`SessionStore`) e restituisce `sessionId` nel JSON.
+2. **Selezione personaggio** (`POST /auth/select-character`, cookie utente obbligatorio): crea nuova sessione Redis e restituisce `sessionId` (non si affida più al solo cookie `character_context` per il flusso principale).
+3. **Landing → Game**: `sessionStorage` non è condiviso tra origini diverse; la landing reindirizza a `NEXT_PUBLIC_GAME_URL?sessionId=...`. L’app game (`apps/game/src/pages/_app.tsx`) legge il parametro, salva `character_session_id` in `sessionStorage` e ripulisce l’URL.
+4. **API e WebSocket**: le route che richiedono il personaggio usano `AuthMiddleware.authenticateCharacter`, che legge `X-Session-Id` (o body per `sendBeacon`), verifica che `session.userId === req.user.userId`, e popola `req.character`. Il cookie `character_context` resta solo come **fallback deprecato**.
+
+### Note sulla documentazione sotto
+
+Le sezioni con pseudocodice (middleware, hook React di esempio, endpoint inventariati) sono **di riferimento concettuale**: il comportamento reale è definito da `services/unified-backend/src/modules/auth/` e dalle route effettive (`/auth/session`, `/auth/select-character`, ecc.).
+
+## 🏗️ Architettura token e sessione
+
+### Token utente (JWT in cookie)
+
 ```typescript
 interface AuthTokenPayload {
   userId: string;
   username: string;
   email: string;
   canAccessAdminPanel: boolean;
-  userRoles: string[];        // ['user', 'gestore']
+  userRoles: string[];        // es. ['user', 'gestore']
   type: 'auth';
   iat: number;
   exp: number;
 }
+```
 
+### Personaggio: sessione Redis + header (flusso principale)
+
+- Il server memorizza in Redis i dati della sessione gameplay legati a `sessionId` (UUID opaco).
+- Il client salva `sessionId` in `sessionStorage` (`character_session_id`) e lo invia come **`X-Session-Id`** su Axios/fetch con `withCredentials: true`.
+
+### Legacy: JWT personaggio in cookie (opzionale)
+
+```typescript
+// Solo fallback / compatibilità — preferire Redis + X-Session-Id
 interface CharacterTokenPayload {
   characterId: string;
   characterName: string;
   userId: string;
-  gameplayRoles: string[];    // ['personaggio', 'master', 'moderatore', 'amministratore']
+  gameplayRoles: string[];
   currentLocation?: string;
   type: 'character';
   iat: number;
@@ -31,22 +53,23 @@ interface CharacterTokenPayload {
 }
 ```
 
-### Cookie Configuration
+### Cookie Configuration (effettivo per auth utente)
+
 ```typescript
 const cookieConfig = {
-  domain: process.env.NODE_ENV === 'production' 
-    ? '.tenpennynovels.com' 
+  domain: process.env.NODE_ENV === 'production'
+    ? '.tenpennynovels.com'
     : '.localhost',
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
   sameSite: 'lax' as const,
-  maxAge: 24 * 60 * 60 * 1000, // 24 hours
+  maxAge: 24 * 60 * 60 * 1000, // o esteso con "remember me" lato backend
   path: '/'
 };
 
-// Dual cookie setup
+// Cookie principale utente
 res.cookie('auth_token', authJWT, cookieConfig);
-res.cookie('character_context', characterJWT, cookieConfig);
+// character_context: eventuale legacy; il flusso corrente usa sessionId + Redis
 ```
 
 ## 🔄 Authentication Flow
@@ -65,14 +88,18 @@ Email Link → Auth Backend → Account Activation → Login Redirect
 ### 2. Login & Character Selection Flow
 ```
 Login Flow:
-User → Landing App → API Gateway → Auth Backend → JWT Generation
-                                               → Set auth_token Cookie
-                                               → Character Selection Redirect
+User → Landing App → unified-backend POST /auth/login
+  → Set-Cookie auth_token
+  → Se un solo PG: SessionStore (Redis) + sessionId nel body JSON
+  → Se più PG: modal scelta su landing
 
-Character Selection:
-Character Choice → Game Backend → Character Context JWT → character_context Cookie
-                                                      → Redis Event (character:activated)
-                                                      → Game App Redirect
+Character Selection (multi-PG):
+Landing → POST /auth/select-character (cookie utente)
+  → Nuova sessione Redis + sessionId nel JSON
+  → Redirect verso Game con ?sessionId=... (cross-origin)
+
+Game:
+  → Salva sessionId in sessionStorage; richieste successive con X-Session-Id + cookie
 ```
 
 ### 3. Cross-Application Navigation
@@ -127,14 +154,14 @@ const getCharacterAccessLevel = (state: CharacterState) => {
 
 ## 🏢 Application Access Matrix
 
-| Application | Base Access | USER Roles Required | CHARACTER Roles | Admin Gate |
-|-------------|-------------|---------------------|-----------------|------------|
-| **Landing** | Public | - | - | - |
-| **Game** | `auth_token` + `character_context` | - | All approved characters | - |
-| **Documents** | `auth_token` | - | - | - |
-| **Forum** | `auth_token` | - | Role-based sections | - |
-| **Management** | `auth_token` + `canAccessAdminPanel=true` | `gestore` | - | ✅ |
-| **Tickets** | `auth_token` + `character_context` | - | `master`, `moderatore`, `amministratore` | - |
+| Application | Base Access | Note |
+|-------------|-------------|------|
+| **Landing** | Pubblica; login imposta cookie su dominio condiviso | Dopo login, redirect verso game con `sessionId` in query se serve |
+| **Game** | `auth_token` + contesto PG via **`X-Session-Id`** (Redis) o legacy `character_context` | `GET /auth/session` con middleware utente + character opzionale |
+| **Documents** | `auth_token` per aree autenticate; app tratta auth come opzionale | `sessionStorage` PG di solito assente (origine diversa) |
+| **Forum** | `auth_token` (se applicabile al deploy) | Allineare alle route reali del modulo forum |
+| **Management** | `auth_token`; verifica sessione all’avvio | 401 su API → redirect a login landing |
+| **Tickets** | `auth_token` + permessi utente/PG secondo endpoint | Contesti PG via stesso modello sessione se richiesto dall’API |
 
 ## 🔐 Middleware & Security
 

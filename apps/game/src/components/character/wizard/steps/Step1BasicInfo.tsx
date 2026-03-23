@@ -1,11 +1,9 @@
 /**
  * Step 1: Basic Info Component
  *
- * Character basic information form:
- * - Personal info (name, age, gender, birthplace)
- * - Appearance (height, weight, eye/hair color)
- * - Background (marital status, education, criminal record)
- * - Health (illnesses, visible/hidden marks)
+ * Layout matching wizard1.png EXACTLY:
+ * - Left: Nome+Cognome, DataNascita+EtàApparente, Genere+StatoCivile, Altezza+Peso, Titolo, Occupazione, Segni
+ * - Right: Patologie, Fedina Penale
  *
  * @module components/character/wizard/steps/Step1BasicInfo
  * @since 2.0.0
@@ -13,10 +11,9 @@
 
 'use client';
 
-import React from 'react';
 import { useWizardStore } from '@/store/wizardStore';
-import { characterApi } from '@/lib/api/character';
 import styles from '@/styles/components/character/wizard/Step1BasicInfo.module.scss';
+import { EyeIcon } from '../EyeIcon';
 
 /**
  * Calculate age from birthdate (relative to 1895 Victorian setting)
@@ -26,11 +23,10 @@ const calculateAge = (birthDateStr: string): number | null => {
 
   const [day, month, year] = birthDateStr.split('/').map(Number);
 
-  // Validation: ensure all parts are valid numbers and year must be < 1895
   if (!day || !month || !year || year >= 1895) return null;
 
   const birthDate = new Date(year, month - 1, day);
-  const referenceDate = new Date(1895, 0, 1); // January 1, 1895
+  const referenceDate = new Date(1895, 0, 1);
   let age = referenceDate.getFullYear() - birthDate.getFullYear();
   const monthDiff = referenceDate.getMonth() - birthDate.getMonth();
 
@@ -41,595 +37,255 @@ const calculateAge = (birthDateStr: string): number | null => {
   return age;
 };
 
-/**
- * Debounce utility function
- */
-function debounce<T extends (...args: any[]) => any>(
-  func: T,
-  delay: number
-): (...args: Parameters<T>) => void {
-  let timeoutId: NodeJS.Timeout;
-  return (...args: Parameters<T>) => {
-    clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => func(...args), delay);
-  };
+interface Step1BasicInfoProps {
+  fieldVisibility?: Record<string, boolean>;
 }
 
 /**
  * Step 1: Basic Info Component
- *
- * Complete form for character basic information.
- * Fields are organized into logical sections.
- *
- * @returns {JSX.Element} Step 1 form
  */
-export function Step1BasicInfo(): JSX.Element {
-  const { basicInfo, updateBasicInfo, stepErrors } = useWizardStore();
+export function Step1BasicInfo({ fieldVisibility }: Step1BasicInfoProps): JSX.Element {
+  const { basicInfo, updateBasicInfo, occupation, updateOccupation, stepErrors, creationConfig } = useWizardStore();
+
+  const ageMin = creationConfig?.limits.age.min ?? 16;
+  const ageMax = creationConfig?.limits.age.max ?? 80;
+
+  /**
+   * Restituisce true (eye icon visibile) se il campo è privato.
+   * Quando fieldVisibility non è ancora caricata, usa il default hardcoded.
+   */
+  const isPrivate = (configKey: string, defaultIsPublic = true): boolean =>
+    fieldVisibility ? !fieldVisibility[configKey] : !defaultIsPublic;
   const errors = stepErrors[1] || {};
 
-  // Name availability check state
-  const [nameCheck, setNameCheck] = React.useState<{
-    checking: boolean;
-    available: boolean | null;
-    message: string;
-  }>({
-    checking: false,
-    available: null,
-    message: ''
-  });
-
-  // Face claim validation state
-  const [faceClaimCheck, setFaceClaimCheck] = React.useState<{
-    checking: boolean;
-    exists: boolean;
-    matches: Array<{ prestavolto: string; characterName: string; status: string }>;
-    allFaceClaims: Array<{
-      prestavolto: string;
-      characterName: string;
-      characterId: string;
-      playerStatus: string;
-      prestavoltoApprovedAt: Date | null;
-    }>;
-    exactMatch: { characterName: string; status: string } | null;
-  }>({
-    checking: false,
-    exists: false,
-    matches: [],
-    allFaceClaims: [],
-    exactMatch: null
-  });
-
-  /**
-   * Check name availability with debounce
-   */
-  const checkName = React.useCallback(
-    debounce(async (firstName: string, lastName: string) => {
-      const fullName = [firstName, lastName].filter(Boolean).join(' ').trim();
-
-      // Reset if name too short
-      if (fullName.length < 2) {
-        setNameCheck({ checking: false, available: null, message: '' });
-        return;
-      }
-
-      setNameCheck({ checking: true, available: null, message: 'Verifica disponibilità...' });
-
-      try {
-        const result = await characterApi.checkNameAvailability(fullName);
-
-        if (result.available) {
-          setNameCheck({
-            checking: false,
-            available: true,
-            message: '✓ Nome disponibile'
-          });
-        } else {
-          setNameCheck({
-            checking: false,
-            available: false,
-            message: result.error || 'Nome già in uso. Scegli un altro nome.'
-          });
-        }
-      } catch (error) {
-        console.error('Name check error:', error);
-        setNameCheck({
-          checking: false,
-          available: null,
-          message: ''
-        });
-      }
-    }, 500),
-    []
-  );
-
-  /**
-   * Check face claim availability with debounce
-   */
-  const checkFaceClaim = React.useCallback(
-    debounce(async (value: string) => {
-      setFaceClaimCheck((prev) => ({ ...prev, checking: true }));
-
-      try {
-        const result = await characterApi.searchFaceClaims(value);
-
-        setFaceClaimCheck({
-          checking: false,
-          exists: result.exactMatch !== null,
-          matches: result.matches,
-          allFaceClaims: result.allFaceClaims,
-          exactMatch: result.exactMatch
-        });
-      } catch (error) {
-        console.error('Face claim check error:', error);
-        setFaceClaimCheck({
-          checking: false,
-          exists: false,
-          matches: [],
-          allFaceClaims: [],
-          exactMatch: null
-        });
-      }
-    }, 500),
-    []
-  );
-
-  /**
-   * Handle Field Change
-   */
   const handleChange = (field: keyof typeof basicInfo, value: any) => {
     updateBasicInfo(field, value);
-
-    // Trigger name availability check
-    if (field === 'firstName' || field === 'lastName') {
-      const newFirstName = field === 'firstName' ? value : basicInfo.firstName;
-      const newLastName = field === 'lastName' ? value : basicInfo.lastName;
-      checkName(newFirstName, newLastName);
-    }
-
-    // Trigger face claim validation
-    if (field === 'prestavolto') {
-      checkFaceClaim(value);
-    }
   };
 
-  /**
-   * Handle Birth Date Change with Age Calculation
-   */
   const handleBirthDateChange = (value: string) => {
     const age = calculateAge(value);
-
-    // Update birthDate
     updateBasicInfo('birthDate', value);
 
-    // Auto-update age and apparentAge if valid
-    if (age !== null && age >= 18 && age <= 80) {
+    if (age !== null && age >= ageMin && age <= ageMax) {
       updateBasicInfo('age', age);
       updateBasicInfo('apparentAge', age);
     }
   };
 
-  // Load all face claims on mount (empty query returns all)
-  React.useEffect(() => {
-    checkFaceClaim('');
-  }, []);
-
   return (
     <div className={styles.stepContent} data-step="basic-info">
-      {/* Section: Personal Info */}
-      <div className={styles.section}>
-        <h3 className={styles.sectionTitle}>Informazioni Personali</h3>
-
-        <div className={styles.formRow}>
-          {/* First Name */}
-          <div className={styles.formGroup}>
-            <label htmlFor="firstName" className={styles.label}>
-              Nome <span className={styles.required}>*</span>
-            </label>
-            <input
-              type="text"
-              id="firstName"
-              value={basicInfo.firstName}
-              onChange={(e) => handleChange('firstName', e.target.value)}
-              className={`${styles.input} ${errors.firstName ? styles.inputError : ''}`}
-              placeholder="es. Arthur"
-            />
-            {errors.firstName && <span className={styles.error}>{errors.firstName}</span>}
-          </div>
-
-          {/* Last Name */}
-          <div className={styles.formGroup}>
-            <label htmlFor="lastName" className={styles.label}>
-              Cognome <span className={styles.required}>*</span>
-            </label>
-            <input
-              type="text"
-              id="lastName"
-              value={basicInfo.lastName}
-              onChange={(e) => handleChange('lastName', e.target.value)}
-              className={`${styles.input} ${errors.lastName ? styles.inputError : ''}`}
-              placeholder="es. Pemberton"
-            />
-            {errors.lastName && <span className={styles.error}>{errors.lastName}</span>}
-          </div>
-        </div>
-
-        {/* Name Availability Feedback */}
-        {(nameCheck.checking || nameCheck.available !== null) && (
+      <div className={styles.panels}>
+        {/* LEFT COLUMN */}
+        <div className={styles.formColumn}>
+          {/* NOME + COGNOME (stessa riga) */}
           <div className={styles.formRow}>
-            <div className={styles.formGroup} style={{ gridColumn: '1 / -1' }}>
-              <div className={`${styles.nameAvailability} ${
-                nameCheck.checking ? styles.checking :
-                nameCheck.available ? styles.available :
-                styles.unavailable
-              }`}>
-                {nameCheck.message}
-              </div>
+            <div className={styles.formGroup}>
+              <label htmlFor="firstName" className={styles.label}>
+                <EyeIcon visible={isPrivate('name')} /> NOME <span className={styles.required}>*</span>
+              </label>
+              <input
+                type="text"
+                id="firstName"
+                value={basicInfo.firstName}
+                onChange={(e) => handleChange('firstName', e.target.value)}
+                className={`${styles.input} ${errors.firstName ? styles.inputError : ''}`}
+                placeholder="Nome"
+              />
+            </div>
+
+            <div className={styles.formGroup}>
+              <label htmlFor="lastName" className={styles.label}>
+                <EyeIcon visible={isPrivate('surname')} /> COGNOME <span className={styles.required}>*</span>
+              </label>
+              <input
+                type="text"
+                id="lastName"
+                value={basicInfo.lastName}
+                onChange={(e) => handleChange('lastName', e.target.value)}
+                className={`${styles.input} ${errors.lastName ? styles.inputError : ''}`}
+                placeholder="Cognome"
+              />
             </div>
           </div>
-        )}
 
-        <div className={styles.formRow}>
-          {/* Gender */}
-          <div className={styles.formGroup}>
-            <label htmlFor="gender" className={styles.label}>
-              Genere <span className={styles.required}>*</span>
-            </label>
-            <select
-              id="gender"
-              value={basicInfo.gender}
-              onChange={(e) => handleChange('gender', e.target.value)}
-              className={`${styles.select} ${errors.gender ? styles.inputError : ''}`}
-            >
-              <option value="">Seleziona...</option>
-              <option value="male">Maschile</option>
-              <option value="female">Femminile</option>
-              <option value="other">Altro</option>
-            </select>
-            {errors.gender && <span className={styles.error}>{errors.gender}</span>}
+          {/* DATA DI NASCITA + ETÀ APPARENTE (stessa riga) */}
+          <div className={styles.formRow}>
+            <div className={styles.formGroup}>
+              <label htmlFor="birthDate" className={styles.label}>
+                <EyeIcon visible={isPrivate('birthDate', false)} /> DATA DI NASCITA <span className={styles.required}>*</span>
+              </label>
+              <input
+                type="text"
+                id="birthDate"
+                value={basicInfo.birthDate}
+                onChange={(e) => handleBirthDateChange(e.target.value)}
+                className={`${styles.input} ${errors.birthDate ? styles.inputError : ''}`}
+                placeholder="gg/mm/aaaa"
+              />
+            </div>
+
+            <div className={styles.formGroup}>
+              <label htmlFor="apparentAge" className={styles.label}>
+                <EyeIcon visible={isPrivate('apparentAge')} /> ETÀ APPARENTE
+              </label>
+              <input
+                type="number"
+                id="apparentAge"
+                value={basicInfo.apparentAge}
+                onChange={(e) => handleChange('apparentAge', parseInt(e.target.value) || 0)}
+                className={styles.input}
+                min={ageMin}
+                max={ageMax}
+              />
+            </div>
           </div>
 
-          {/* Birthplace */}
-          <div className={styles.formGroup}>
-            <label htmlFor="birthplace" className={styles.label}>
-              Luogo di Nascita <span className={styles.required}>*</span>
-            </label>
-            <input
-              type="text"
-              id="birthplace"
-              value={basicInfo.birthplace}
-              onChange={(e) => handleChange('birthplace', e.target.value)}
-              className={`${styles.input} ${errors.birthplace ? styles.inputError : ''}`}
-              placeholder="es. Londra, Inghilterra"
-            />
-            {errors.birthplace && <span className={styles.error}>{errors.birthplace}</span>}
-          </div>
-        </div>
+          {/* GENERE + STATO CIVILE (stessa riga) */}
+          <div className={styles.formRow}>
+            <div className={styles.formGroup}>
+              <label htmlFor="gender" className={styles.label}>
+                <EyeIcon visible={isPrivate('gender')} /> GENERE <span className={styles.required}>*</span>
+              </label>
+              <select
+                id="gender"
+                value={basicInfo.gender}
+                onChange={(e) => handleChange('gender', e.target.value)}
+                className={`${styles.select} ${errors.gender ? styles.inputError : ''}`}
+              >
+                <option value="">Seleziona...</option>
+                <option value="male">Maschile</option>
+                <option value="female">Femminile</option> 
+              </select>
+            </div>
 
-        <div className={styles.formRow}>
-          {/* Birth Date */}
-          <div className={styles.formGroup}>
-            <label htmlFor="birthDate" className={styles.label}>
-              Data di Nascita <span className={styles.required}>*</span>
-            </label>
-            <input
-              type="text"
-              id="birthDate"
-              value={basicInfo.birthDate}
-              onChange={(e) => handleBirthDateChange(e.target.value)}
-              className={`${styles.input} ${
-                basicInfo.birthDate &&
-                /^\d{2}\/\d{2}\/\d{4}$/.test(basicInfo.birthDate) &&
-                parseInt(basicInfo.birthDate.split('/')[2] ?? '0', 10) >= 1895
-                  ? styles.inputError
-                  : ''
-              }`}
-              placeholder="es. 15/03/1870"
-            />
-            {basicInfo.birthDate &&
-            /^\d{2}\/\d{2}\/\d{4}$/.test(basicInfo.birthDate) &&
-            parseInt(basicInfo.birthDate.split('/')[2] ?? '0', 10) >= 1895 ? (
-              <small className={styles.error}>
-                ⛔ Anno di nascita deve essere inferiore al 1895 (ambientazione vittoriana del 1895)
-              </small>
-            ) : (
-              <small className={styles.helpText}>
-                Formato: gg/mm/aaaa. Anno &lt; 1895. Età al 1895:{' '}
-                {basicInfo.age && basicInfo.age > 0 ? `${basicInfo.age} anni` : '-'}
-              </small>
-            )}
+            <div className={styles.formGroup}>
+              <label htmlFor="maritalStatus" className={styles.label}>
+                <EyeIcon visible={isPrivate('maritalStatus', false)} /> STATO CIVILE
+              </label>
+              <select
+                id="maritalStatus"
+                value={basicInfo.maritalStatus}
+                onChange={(e) => handleChange('maritalStatus', e.target.value)}
+                className={styles.select}
+              >
+                <option value="">Seleziona...</option>
+                <option value="single">Celibe/Nubile</option>
+                <option value="married">Coniugato/a</option>
+                <option value="widowed">Vedovo/a</option>
+                <option value="divorced">Divorziato/a</option>
+                <option value="engaged">Fidanzato/a</option>
+              </select>
+            </div>
           </div>
 
-          {/* Age (Read-only, calculated from birthDate) */}
-          <div className={styles.formGroup}>
-            <label htmlFor="age" className={styles.label}>
-              Età <span className={styles.required}>*</span>
-            </label>
-            <input
-              type="number"
-              id="age"
-              value={basicInfo.age || ''}
-              readOnly
-              className={`${styles.input} ${styles.inputReadonly} ${errors.age ? styles.inputError : ''}`}
-            />
-            <small className={styles.helpText}>Calcolata automaticamente dalla data di nascita (18-80 anni)</small>
-            {errors.age && <span className={styles.error}>{errors.age}</span>}
+          {/* ALTEZZA + PESO (stessa riga) */}
+          <div className={styles.formRow}>
+            <div className={styles.formGroup}>
+              <label htmlFor="height" className={styles.label}>
+                <EyeIcon visible={isPrivate('height')} /> ALTEZZA <span className={styles.required}>*</span>
+              </label>
+              <input
+                type="text"
+                id="height"
+                value={basicInfo.height}
+                onChange={(e) => handleChange('height', e.target.value)}
+                className={`${styles.input} ${errors.height ? styles.inputError : ''}`}
+                placeholder={`es. 175 ${creationConfig?.limits.height.unit ?? 'cm'}`}
+              />
+            </div>
+
+            <div className={styles.formGroup}>
+              <label htmlFor="weight" className={styles.label}>
+                <EyeIcon visible={isPrivate('weight')} /> PESO <span className={styles.required}>*</span>
+              </label>
+              <input
+                type="text"
+                id="weight"
+                value={basicInfo.weight}
+                onChange={(e) => handleChange('weight', e.target.value)}
+                className={`${styles.input} ${errors.weight ? styles.inputError : ''}`}
+                placeholder={`es. 70 ${creationConfig?.limits.weight.unit ?? 'kg'}`}
+              />
+            </div>
           </div>
 
-          {/* Apparent Age */}
-          <div className={styles.formGroup}>
-            <label htmlFor="apparentAge" className={styles.label}>
-              Età Apparente
+          {/* SEGNI PARTICOLARI NON VISIBILI */}
+          <div className={styles.formGroupFull}>
+            <label htmlFor="hiddenMarks" className={styles.label}>
+              <EyeIcon visible={isPrivate('hiddenMarks', false)} /> SEGNI PARTICOLARI NON VISIBILI
             </label>
-            <input
-              type="number"
-              id="apparentAge"
-              value={basicInfo.apparentAge}
-              onChange={(e) => handleChange('apparentAge', parseInt(e.target.value) || 0)}
-              min={16}
-              max={80}
-              className={styles.input}
+            <textarea
+              id="hiddenMarks"
+              value={basicInfo.hiddenMarks}
+              onChange={(e) => handleChange('hiddenMarks', e.target.value)}
+              className={styles.textarea}
+              rows={3}
             />
             <small className={styles.helpText}>
-              L'età che il personaggio dimostra (può differire dall'età reale)
+              Segni normalmente coperti dai vestiti
+            </small>
+          </div>
+
+          {/* SEGNI PARTICOLARI VISIBILI */}
+          <div className={styles.formGroupFull}>
+            <label htmlFor="visibleMarks" className={styles.label}>
+              SEGNI PARTICOLARI VISIBILI
+            </label>
+            <textarea
+              id="visibleMarks"
+              value={basicInfo.visibleMarks}
+              onChange={(e) => handleChange('visibleMarks', e.target.value)}
+              className={styles.textarea}
+              rows={3}
+            />
+            <small className={styles.helpText}>
+              Cicatrici, nei, tatuaggi visibili
             </small>
           </div>
         </div>
-      </div>
 
-      {/* Section: Appearance */}
-      <div className={styles.section}>
-        <h3 className={styles.sectionTitle}>Aspetto Fisico</h3>
-
-        <div className={styles.formRow}>
-          {/* Height */}
-          <div className={styles.formGroup}>
-            <label htmlFor="height" className={styles.label}>
-              Altezza <span className={styles.required}>*</span>
+        {/* RIGHT COLUMN */}
+        <div className={styles.infoColumn}>
+          {/* PATOLOGIE */}
+          <div className={styles.formGroupFull}>
+            <label htmlFor="pathologies" className={styles.label}>
+              <EyeIcon visible={isPrivate('pathologies', false)} /> PATOLOGIE
             </label>
-            <input
-              type="number"
-              id="height"
-              value={basicInfo.height}
-              onChange={(e) => handleChange('height', e.target.value)}
-              className={`${styles.input} ${errors.height ? styles.inputError : ''}`}
-              placeholder="es. 175"
-              min={100}
-              max={250}
+            <textarea
+              id="pathologies"
+              value={basicInfo.pathologies}
+              onChange={(e) => handleChange('pathologies', e.target.value)}
+              className={styles.textarea}
+              rows={12}
             />
-            <small className={styles.helpText}>Altezza in centimetri (100-250 cm)</small>
-            {errors.height && <span className={styles.error}>{errors.height}</span>}
-          </div>
-
-          {/* Weight */}
-          <div className={styles.formGroup}>
-            <label htmlFor="weight" className={styles.label}>
-              Peso <span className={styles.required}>*</span>
-            </label>
-            <input
-              type="number"
-              id="weight"
-              value={basicInfo.weight}
-              onChange={(e) => handleChange('weight', e.target.value)}
-              className={`${styles.input} ${errors.weight ? styles.inputError : ''}`}
-              placeholder="es. 70"
-              min={30}
-              max={200}
-            />
-            <small className={styles.helpText}>Peso in kilogrammi (30-200 kg)</small>
-            {errors.weight && <span className={styles.error}>{errors.weight}</span>}
-          </div>
-        </div>
-
-        <div className={styles.formRow}>
-          {/* Eye Color */}
-          <div className={styles.formGroup}>
-            <label htmlFor="eyeColor" className={styles.label}>
-              Colore Occhi
-            </label>
-            <input
-              type="text"
-              id="eyeColor"
-              value={basicInfo.eyeColor}
-              onChange={(e) => handleChange('eyeColor', e.target.value)}
-              className={styles.input}
-              placeholder="es. Azzurri"
-            />
-          </div>
-
-          {/* Hair Color */}
-          <div className={styles.formGroup}>
-            <label htmlFor="hairColor" className={styles.label}>
-              Colore Capelli
-            </label>
-            <input
-              type="text"
-              id="hairColor"
-              value={basicInfo.hairColor}
-              onChange={(e) => handleChange('hairColor', e.target.value)}
-              className={styles.input}
-              placeholder="es. Castani"
-            />
-          </div>
-        </div>
-
-        {/* Visible Marks */}
-        <div className={styles.formGroup}>
-          <label htmlFor="visibleMarks" className={styles.label}>
-            Segni Particolari Visibili
-          </label>
-          <textarea
-            id="visibleMarks"
-            value={basicInfo.visibleMarks}
-            onChange={(e) => handleChange('visibleMarks', e.target.value)}
-            className={styles.textarea}
-            rows={3}
-            placeholder="es. Cicatrice sulla guancia sinistra, tatuaggio sul braccio..."
-          />
-          <small className={styles.helpText}>
-            Cicatrici, tatuaggi, nei o altri segni visibili agli altri
-          </small>
-        </div>
-
-        {/* Hidden Marks */}
-        <div className={styles.formGroup}>
-          <label htmlFor="hiddenMarks" className={styles.label}>
-            Segni Particolari Nascosti
-          </label>
-          <textarea
-            id="hiddenMarks"
-            value={basicInfo.hiddenMarks}
-            onChange={(e) => handleChange('hiddenMarks', e.target.value)}
-            className={styles.textarea}
-            rows={3}
-            placeholder="es. Bruciature sul torso, voglia sulla schiena..."
-          />
-          <small className={styles.helpText}>
-            Segni normalmente coperti dai vestiti, visibili solo in intimità
-          </small>
-        </div>
-      </div>
-
-      {/* Section: Prestavolto (Face Claim) */}
-      <div className={styles.section}>
-        <h3 className={styles.sectionTitle}>Prestavolto</h3>
-
-        {/* Prestavolto Input */}
-        <div className={styles.formGroup}>
-          <label htmlFor="prestavolto" className={styles.label}>
-            Prestavolto (VIP/Attore/Scrittore)
-          </label>
-          <input
-            type="text"
-            id="prestavolto"
-            value={basicInfo.prestavolto}
-            onChange={(e) => handleChange('prestavolto', e.target.value)}
-            className={styles.input}
-            placeholder="es. Tom Hiddleston, Jane Austen..."
-          />
-          <small className={styles.helpText}>
-            Nome del VIP, attore o scrittore che "presta il volto" al tuo personaggio
-          </small>
-        </div>
-
-        {/* Face Claim Validation Feedback */}
-        {faceClaimCheck.checking && (
-          <div className={styles.formRow}>
-            <div className={styles.formGroup} style={{ gridColumn: '1 / -1' }}>
-              <div className={`${styles.nameAvailability} ${styles.checking}`}>
-                Verifica prestavolto...
-              </div>
-            </div>
-          </div>
-        )}
-
-        {!faceClaimCheck.checking && faceClaimCheck.exactMatch && (
-          <div className={styles.formRow}>
-            <div className={styles.formGroup} style={{ gridColumn: '1 / -1' }}>
-              <div className={`${styles.nameAvailability} ${styles.unavailable}`}>
-                ⚠️ Prestavolto già usato da <strong>{faceClaimCheck.exactMatch.characterName}</strong>. Richiederà
-                approvazione staff.
-              </div>
-            </div>
-          </div>
-        )}
-
-        {!faceClaimCheck.checking && !faceClaimCheck.exactMatch && basicInfo.prestavolto.length >= 3 && (
-          <div className={styles.formRow}>
-            <div className={styles.formGroup} style={{ gridColumn: '1 / -1' }}>
-              <div className={`${styles.nameAvailability} ${styles.available}`}>
-                ✓ Prestavolto disponibile
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Existing Face Claims List */}
-        {faceClaimCheck.allFaceClaims.length > 0 && (
-          <div className={styles.formGroup}>
-            <label className={styles.label}>Prestavolti già usati (clicca per selezionare):</label>
-            <div style={{ maxHeight: '250px', overflowY: 'auto', border: '1px solid #8b7355', borderRadius: '4px' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'Playfair Display, serif' }}>
-                <thead>
-                  <tr style={{ background: '#d4c4a8', borderBottom: '2px solid #8b7355' }}>
-                    <th style={{ padding: '0.5rem', textAlign: 'left', fontWeight: 'bold' }}>Prestavolto</th>
-                    <th style={{ padding: '0.5rem', textAlign: 'left', fontWeight: 'bold' }}>Personaggio</th>
-                    <th style={{ padding: '0.5rem', textAlign: 'left', fontWeight: 'bold' }}>Status</th>
-                    <th style={{ padding: '0.5rem', textAlign: 'center', fontWeight: 'bold' }}>Data Assegnazione</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {faceClaimCheck.allFaceClaims.slice(0, 50).map((claim, idx) => (
-                    <tr
-                      key={idx}
-                      onClick={() => handleChange('prestavolto', claim.prestavolto)}
-                      style={{
-                        cursor: 'pointer',
-                        borderBottom: '1px solid #e0d5c7',
-                        background: idx % 2 === 0 ? '#f9f6f0' : '#ffffff'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = '#f0e8d8';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = idx % 2 === 0 ? '#f9f6f0' : '#ffffff';
-                      }}
-                    >
-                      <td style={{ padding: '0.5rem' }}>{claim.prestavolto}</td>
-                      <td style={{ padding: '0.5rem' }}>{claim.characterName}</td>
-                      <td style={{ padding: '0.5rem', fontSize: '0.85em', color: '#5a4a3a' }}>
-                        {claim.playerStatus === 'approved' ? '✓ Approvato' : '⏳ In attesa'}
-                      </td>
-                      <td style={{ padding: '0.5rem', fontSize: '0.85em', color: '#5a4a3a', textAlign: 'center' }}>
-                        {claim.prestavoltoApprovedAt
-                          ? new Date(claim.prestavoltoApprovedAt).toLocaleDateString('it-IT', {
-                              day: '2-digit',
-                              month: '2-digit',
-                              year: 'numeric'
-                            })
-                          : <span style={{ color: '#fb8500', fontStyle: 'italic' }}>In attesa</span>
-                        }
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
             <small className={styles.helpText}>
-              Clicca su una riga per auto-compilare il campo (puoi comunque modificarlo manualmente)
+              Condizioni mediche croniche o problemi di salute. Coerente con i valori di Costituzione. Lasciare il campo vuoto se il pg è in salute.
             </small>
           </div>
-        )}
-      </div>
 
-      {/* Section: Background */}
-      <div className={styles.section}>
-        <h3 className={styles.sectionTitle}>Background Sociale</h3>
-
-        <div className={styles.formRow}>
-          {/* Marital Status */}
-          <div className={styles.formGroup}>
-            <label htmlFor="maritalStatus" className={styles.label}>
-              Stato Civile
+          {/* FEDINA PENALE */}
+          <div className={styles.formGroupFull}>
+            <label htmlFor="criminalRecord" className={styles.label}>
+              <EyeIcon visible={isPrivate('criminalRecord', false)} /> FEDINA PENALE
             </label>
-            <select
-              id="maritalStatus"
-              value={basicInfo.maritalStatus}
-              onChange={(e) => handleChange('maritalStatus', e.target.value)}
-              className={styles.select}
-            >
-              <option value="">Seleziona...</option>
-              <option value="single">Celibe/Nubile</option>
-              <option value="married">Coniugato/a</option>
-              <option value="widowed">Vedovo/a</option>
-              <option value="divorced">Divorziato/a</option>
-              <option value="engaged">Fidanzato/a</option>
-            </select>
+            <textarea
+              id="criminalRecord"
+              value={basicInfo.criminalRecord}
+              onChange={(e) => handleChange('criminalRecord', e.target.value)}
+              className={styles.textarea}
+              rows={8}
+              placeholder="Nessuna, oppure descrivi..."
+            />
+            <small className={styles.helpText}>
+              Elencare anno, luogo e reato commesso. Es: 1870, Londra, Rapina a mano armata
+            </small>
           </div>
 
-          {/* Education Title */}
+          {/* TITOLO DI STUDIO */}
+          <div className={styles.formGroupFull}>
           <div className={styles.formGroup}>
             <label htmlFor="educationTitle" className={styles.label}>
-              Titolo di Studio
+              <EyeIcon visible={isPrivate('educationTitle', false)} /> TITOLO DI STUDIO
             </label>
             <input
               type="text"
@@ -637,50 +293,39 @@ export function Step1BasicInfo(): JSX.Element {
               value={basicInfo.educationTitle}
               onChange={(e) => handleChange('educationTitle', e.target.value)}
               className={styles.input}
-              placeholder="es. Laurea in Legge, Diploma Classico..."
+              placeholder="es. Laurea in Legge, Diploma..."
+            />
+            </div>
+            <small className={styles.helpText}>
+              Indicare il titolo di studio ed eventuale specializzazione, in coerenza con il valore di Educazione. Nessun PG è analfabeta e tutti sono in grado di leggere e scrivere.
+            </small>
+          </div>
+
+          {/* OCCUPAZIONE ATTUALE */}
+          <div className={styles.formGroupFull}> 
+          <div className={styles.formGroup}>
+            <label htmlFor="currentOccupation" className={styles.label}>
+              <EyeIcon visible={isPrivate('occupation')} /> OCCUPAZIONE ATTUALE
+            </label>
+            <input
+              type="text"
+              id="currentOccupation"
+              value={occupation.currentOccupation || ''}
+              onChange={(e) => updateOccupation({ currentOccupation: e.target.value })}
+              className={styles.input}
+              placeholder="es. Avvocato, Medico..."
             />
           </div>
-        </div>
-
-        {/* Criminal Record */}
-        <div className={styles.formGroup}>
-          <label htmlFor="criminalRecord" className={styles.label}>
-            Precedenti Penali
-          </label>
-          <textarea
-            id="criminalRecord"
-            value={basicInfo.criminalRecord}
-            onChange={(e) => handleChange('criminalRecord', e.target.value)}
-            className={styles.textarea}
-            rows={2}
-            placeholder="Nessuno, oppure descrivi eventuali reati commessi..."
-          />
+          </div>
         </div>
       </div>
 
-      {/* Section: Health */}
-      <div className={styles.section}>
-        <h3 className={styles.sectionTitle}>Salute</h3>
-
-        <div className={styles.formGroup}>
-          <label htmlFor="illnesses" className={styles.label}>
-            Malattie o Condizioni Mediche
-          </label>
-          <textarea
-            id="illnesses"
-            value={basicInfo.illnesses}
-            onChange={(e) => handleChange('illnesses', e.target.value)}
-            className={styles.textarea}
-            rows={3}
-            placeholder="es. Asma, ferite di guerra, dipendenza da laudano..."
-          />
-          <small className={styles.helpText}>
-            Malattie croniche, disabilità, dipendenze o condizioni mediche rilevanti
-          </small>
-        </div>
+      {/* Stamp */}
+      <div className={styles.stamp}>
+        <img src="/images/tenpenny.png" alt="" className={styles.stampImage} />
       </div>
 
-      {/* Validation Errors Summary */}
+      {/* Error Summary */}
       {Object.keys(errors).length > 0 && (
         <div className={styles.errorSummary}>
           <h4>Errori di Validazione:</h4>

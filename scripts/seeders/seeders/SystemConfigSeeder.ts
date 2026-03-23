@@ -102,7 +102,7 @@ const ALL_CONFIGS: ConfigRecord[] = [
       intelligence: 20,
       constitution: 20,
       size: 20,
-      charm: 20,
+      appearance: 20,
       power: 20,
       education: 20,
     },
@@ -112,7 +112,7 @@ const ALL_CONFIGS: ConfigRecord[] = [
       intelligence: 20,
       constitution: 20,
       size: 20,
-      charm: 20,
+      appearance: 20,
       power: 20,
       education: 20,
     },
@@ -335,7 +335,7 @@ const ALL_CONFIGS: ConfigRecord[] = [
     configType: 'json',
     value: {
       hitPoints: 'FLOOR((CON + SIZ) / 10)',
-      sanityPoints: 'POW',
+      sanity: 'POW',
       magicPoints: 'FLOOR(POW / 5)',
       luck: 'POW',
       ideaRoll: 'INT',
@@ -381,6 +381,37 @@ const ALL_CONFIGS: ConfigRecord[] = [
     },
     defaultValue: {},
     description: 'Metadata configurazione character creation',
+    isActive: true,
+    metadata: { version: 1 },
+  },
+
+  // Field visibility per wizard e filterForPublic (true = pubblico, false = privato/solo master+owner)
+  {
+    configKey: 'character_creation_field_visibility',
+    configSection: 'character_creation',
+    configType: 'json',
+    value: {
+      name: true,
+      surname: true,
+      apparentAge: true,
+      gender: true,
+      height: true,
+      weight: true,
+      occupation: true,
+      briefHistory: true,
+      significantEvents: true,
+      importantRelationships: true,
+      personality: true,
+      ideology: true,
+      birthDate: false,
+      maritalStatus: false,
+      hiddenMarks: false,
+      pathologies: false,
+      criminalRecord: false,
+      educationTitle: false,
+    },
+    defaultValue: {},
+    description: 'Visibilità dei campi del personaggio: true = pubblico (visibile a tutti), false = privato (solo master/owner)',
     isActive: true,
     metadata: { version: 1 },
   },
@@ -866,6 +897,56 @@ const ALL_CONFIGS: ConfigRecord[] = [
     isActive: true,
     metadata: { version: 1 },
   },
+  {
+    configKey: 'confrontation_timeout_seconds',
+    configSection: 'combat_system',
+    configType: 'number',
+    value: 900,
+    defaultValue: 900,
+    description: 'Timeout per scelta difesa - defender auto-fails dopo questo tempo (900s = 15 minuti)',
+    isActive: true,
+    metadata: { version: 1 },
+  },
+  {
+    configKey: 'confrontation_allow_no_defense',
+    configSection: 'combat_system',
+    configType: 'boolean',
+    value: true,
+    defaultValue: true,
+    description: 'Permetti opzione "Non voglio difendermi" (fallimento automatico per RP)',
+    isActive: true,
+    metadata: { version: 1 },
+  },
+  {
+    configKey: 'combat_initiative_stat',
+    configSection: 'combat_system',
+    configType: 'string',
+    value: 'dexterity',
+    defaultValue: 'dexterity',
+    description: 'Statistica usata per tiro iniziativa in combattimenti formali multi-turno',
+    isActive: true,
+    metadata: { version: 1 },
+  },
+  {
+    configKey: 'combat_wounded_constitution_check_threshold',
+    configSection: 'combat_system',
+    configType: 'number',
+    value: 0.5,
+    defaultValue: 0.5,
+    description: 'Soglia HP% per check Costituzione obbligatorio prima di difendersi (0.5 = 50%)',
+    isActive: true,
+    metadata: { version: 1 },
+  },
+  {
+    configKey: 'confrontation_skill_usage_limit_per_scene',
+    configSection: 'combat_system',
+    configType: 'number',
+    value: 1,
+    defaultValue: 1,
+    description: 'Max usi per skill sociale per scena contro stesso target (0 = illimitato, Raggirare esente)',
+    isActive: true,
+    metadata: { version: 1 },
+  },
 
   // ── ticket_system ───────────────────────────────────────────────
   // Category: character_approval
@@ -1020,36 +1101,47 @@ const ALL_CONFIGS: ConfigRecord[] = [
 ];
 
 async function main() {
-  console.log('⚙️  System Configuration Seeder\n');
+  const force = process.argv.includes('--force');
+  console.log(`⚙️  System Configuration Seeder${force ? ' [FORCE MODE]' : ''}\n`);
 
   const { client, db } = await getConnection();
 
   try {
     const collection = db.collection(COLLECTION);
     let seeded = 0;
+    let updated = 0;
     let skipped = 0;
 
     for (const config of ALL_CONFIGS) {
       const existing = await collection.findOne({ configKey: config.configKey });
 
-      if (existing) {
-        console.log(`  [SKIP] "${config.configKey}" already exists (v${existing.metadata?.version || '?'})`);
+      if (existing && !force) {
+        console.log(`  [SKIP]   "${config.configKey}" already exists (v${existing.metadata?.version || '?'})`);
         skipped++;
         continue;
       }
 
       const now = new Date();
-      await collection.insertOne({
-        ...config,
-        createdAt: now,
-        updatedAt: now,
-      });
 
-      console.log(`  [OK]   "${config.configKey}" (${config.configSection}/${config.configType})`);
-      seeded++;
+      if (existing && force) {
+        await collection.updateOne(
+          { configKey: config.configKey },
+          { $set: { ...config, updatedAt: now } }
+        );
+        console.log(`  [UPDATE] "${config.configKey}" (${config.configSection}/${config.configType})`);
+        updated++;
+      } else {
+        await collection.insertOne({
+          ...config,
+          createdAt: now,
+          updatedAt: now,
+        });
+        console.log(`  [OK]     "${config.configKey}" (${config.configSection}/${config.configType})`);
+        seeded++;
+      }
     }
 
-    console.log(`\n[DONE] Seeded: ${seeded}, Skipped: ${skipped}, Total: ${ALL_CONFIGS.length}`);
+    console.log(`\n[DONE] Seeded: ${seeded}, Updated: ${updated}, Skipped: ${skipped}, Total: ${ALL_CONFIGS.length}`);
   } finally {
     await client.close();
   }

@@ -36,7 +36,6 @@
     "axios": "^1.7.9",
     "classnames": "^2.5.1",
     "date-fns": "^4.1.0",
-    "geoip-lite": "1.2.1",
     "isomorphic-dompurify": "^2.30.0",
     "next": "^16.1.6",
     "react": "^18.3.1",
@@ -50,6 +49,7 @@
   "devDependencies": {
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^14.3.1",
+    "@types/jest": "^29.5.14",
     "@types/node": "^25.2.0",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",

@@ -15,8 +15,11 @@
 
 'use client';
 
+import { useQuery } from '@tanstack/react-query';
 import React from 'react';
+
 import { useCharacterDirectory, type CharacterDirectoryFilters } from '@/hooks/useCharacterDirectory';
+import { characterApi } from '@/lib/api/character';
 import { useWindowManagerStore } from '@/store/windowManagerStore';
 import styles from '@/styles/components/windows/CharacterDirectory.module.scss';
 
@@ -69,6 +72,13 @@ export function CharacterDirectoryContent(): JSX.Element {
 
   // Fetch data (auto-refetch every 30s for online status)
   const { data, isLoading, error } = useCharacterDirectory(filters);
+
+  // Fetch occupations list for filter dropdown
+  const { data: occupations = [] } = useQuery({
+    queryKey: ['occupations'],
+    queryFn: characterApi.getOccupations,
+    staleTime: 5 * 60 * 1000, // Cache 5 minutes (occupations rarely change)
+  });
 
   /**
    * Handle character row click → open character sheet window
@@ -141,12 +151,11 @@ export function CharacterDirectoryContent(): JSX.Element {
             className={styles.select}
           >
             <option value="">Tutte</option>
-            <option value="detective">Detective</option>
-            <option value="journalist">Giornalista</option>
-            <option value="doctor">Medico</option>
-            <option value="artist">Artista</option>
-            <option value="aristocrat">Aristocratico</option>
-            {/* TODO: Populate dynamically from backend */}
+            {occupations.map((occ) => (
+              <option key={occ._id} value={occ.name}>
+                {occ.name}
+              </option>
+            ))}
           </select>
         </div>
       </div>

@@ -1,192 +1,222 @@
 import { Request, Response, NextFunction } from 'express';
+import { Character } from '@database/models/Character';
 import { User } from '@database/models/User';
 import { logger } from '@shared/utils/logger';
-
-interface UserBanData {
-  isBanned?: boolean;
-  banScopes?: string[];
-  banReason?: string;
-  bannedUntil?: Date;
-  bannedAt?: Date;
-}
+import {
+  blocksChatWrite as charBlocksChat,
+  blocksForumWrite as charBlocksForum,
+  blocksLandAccess as charBlocksLand,
+  isCharacterBanActive,
+  legacyUserBlocksChat,
+  legacyUserBlocksForum,
+  legacyUserBlocksGame,
+  type CharacterBanFields,
+  type LegacyUserBanFields,
+} from '@shared/utils/characterBan';
 
 export interface BanCheckOptions {
   requiredScope: 'chat_banned' | 'game_banned' | 'forum_banned' | 'documents_banned' | 'full_site_banned';
   message?: string;
 }
 
+type LeanChar = CharacterBanFields & { userId: { toString(): string } };
+type LeanUser = LegacyUserBanFields;
+
+async function loadBanContext(characterId: string): Promise<{
+  character: LeanChar | null;
+  user: LeanUser | null;
+}> {
+  const character = await Character.findById(characterId)
+    .select('userId isBanned banScope banReason bannedAt bannedUntil')
+    .lean();
+  if (!character) {
+    return { character: null, user: null };
+  }
+  const user = await User.findById(character.userId)
+    .select('isBanned banScope banReason bannedAt bannedUntil')
+    .lean();
+  return {
+    character: character as unknown as LeanChar,
+    user: user as unknown as LeanUser,
+  };
+}
+
+function isBlockedForScope(
+  scope: BanCheckOptions['requiredScope'],
+  character: LeanChar | null,
+  user: LeanUser | null
+): boolean {
+  if (scope === 'documents_banned' || scope === 'full_site_banned') {
+    if (isCharacterBanActive(character)) {
+      return character!.banScope === 'full';
+    }
+    return legacyUserBlocksGame(user) && legacyUserBlocksChat(user) && legacyUserBlocksForum(user);
+  }
+  if (scope === 'game_banned') {
+    if (isCharacterBanActive(character) && charBlocksLand(character)) return true;
+    return legacyUserBlocksGame(user);
+  }
+  if (scope === 'chat_banned') {
+    if (isCharacterBanActive(character) && charBlocksChat(character)) return true;
+    return legacyUserBlocksChat(user);
+  }
+  if (scope === 'forum_banned') {
+    if (isCharacterBanActive(character) && charBlocksForum(character)) return true;
+    return legacyUserBlocksForum(user);
+  }
+  return false;
+}
+
+function buildBanInfo(character: LeanChar | null, user: LeanUser | null) {
+  const charActive = isCharacterBanActive(character);
+  if (charActive) {
+    return {
+      reason: character!.banReason,
+      bannedUntil: character!.bannedUntil,
+      bannedAt: character!.bannedAt,
+      scopes: [character!.banScope],
+      source: 'character' as const,
+    };
+  }
+  if (user?.isBanned) {
+    return {
+      reason: user.banReason,
+      bannedUntil: user.bannedUntil,
+      bannedAt: user.bannedAt,
+      scopes: user.banScope ? [user.banScope] : ['full'],
+      source: 'user' as const,
+    };
+  }
+  return null;
+}
+
 /**
- * Middleware to check if user is banned from specific functionality
- * Usage: banCheck({ requiredScope: 'chat_banned' })
+ * Middleware: verifica ban sul **personaggio** corrente (e fallback ban legacy sullo User).
  */
 export function banCheck(options: BanCheckOptions) {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = req.user?.userId;
+      const characterId = req.character?.characterId;
 
-      if (!userId) {
+      if (!characterId) {
         return res.status(401).json({
           success: false,
-          error: 'Autenticazione richiesta',
-          code: 'AUTHENTICATION_REQUIRED'
+          error: 'Autenticazione personaggio richiesta',
+          code: 'CHARACTER_AUTH_REQUIRED',
         });
       }
 
-      // Get user ban information
-      const user = await User.findById(userId).select('banScopes banReason bannedUntil bannedAt isBanned').lean();
-      const userData = user as UserBanData;
-      
-      if (!user) {
+      const { character, user } = await loadBanContext(characterId);
+
+      if (!character) {
         return res.status(404).json({
           success: false,
-          error: 'Utente non trovato',
-          code: 'USER_NOT_FOUND'
+          error: 'Personaggio non trovato',
+          code: 'CHARACTER_NOT_FOUND',
         });
       }
 
-      // Check if user has any bans
-      if (!userData.isBanned || !userData.banScopes || !Array.isArray(userData.banScopes)) {
-        return next(); // User is not banned, continue
+      if (!isBlockedForScope(options.requiredScope, character, user)) {
+        return next();
       }
 
-      // Check for full site ban first
-      if (userData.banScopes.includes('full_site_banned')) {
+      if (options.requiredScope === 'full_site_banned' || options.requiredScope === 'documents_banned') {
         return res.status(403).json({
           success: false,
-          error: 'Il tuo account è stato bannato da tutta la piattaforma.',
-          code: 'FULL_SITE_BAN_ACTIVE',
-          banInfo: {
-            reason: userData.banReason,
-            bannedUntil: userData.bannedUntil,
-            bannedAt: userData.bannedAt,
-            scopes: userData.banScopes
-          }
+          error:
+            options.requiredScope === 'documents_banned'
+              ? 'Non puoi accedere ai documenti. Restrizione attiva sul personaggio.'
+              : 'Accesso negato: restrizione attiva sul personaggio.',
+          code:
+            options.requiredScope === 'documents_banned'
+              ? 'DOCUMENTS_BAN_ACTIVE'
+              : 'FULL_RESTRICTION_ACTIVE',
+          banInfo: buildBanInfo(character, user),
         });
       }
 
-      // Check for specific scope ban
-      if (userData.banScopes.includes(options.requiredScope)) {
-        const scopeMessages = {
-          'chat_banned': 'Non puoi inviare messaggi in chat. Sei stato bannato dalla chat.',
-          'game_banned': 'Non puoi accedere al gioco. Sei stato bannato dal gameplay.',
-          'forum_banned': 'Non puoi scrivere nel forum. Sei stato bannato dalle discussioni.',
-          'documents_banned': 'Non puoi accedere ai documenti. Sei stato bannato dai documenti.',
-          'full_site_banned': 'Il tuo account è stato bannato da tutta la piattaforma.'
-        };
+      const scopeMessages: Record<string, string> = {
+        chat_banned: 'Non puoi inviare messaggi in chat. Restrizione attiva sul personaggio.',
+        game_banned: 'Non puoi accedere al gameplay con questo personaggio.',
+        forum_banned: 'Non puoi scrivere nel forum con questo personaggio.',
+        documents_banned: 'Non puoi accedere ai documenti. Sei stato bannato dai documenti.',
+        full_site_banned: 'Accesso negato.',
+      };
 
-        return res.status(403).json({
-          success: false,
-          error: options.message || scopeMessages[options.requiredScope],
-          code: `${options.requiredScope.toUpperCase()}_ACTIVE`,
-          banInfo: {
-            reason: userData.banReason,
-            bannedUntil: userData.bannedUntil,
-            bannedAt: userData.bannedAt,
-            scopes: userData.banScopes,
-            specificScope: options.requiredScope
-          }
-        });
-      }
-
-      // User is not banned for this specific scope, continue
-      next();
-      
+      return res.status(403).json({
+        success: false,
+        error: options.message || scopeMessages[options.requiredScope],
+        code: `${options.requiredScope.toUpperCase()}_ACTIVE`,
+        banInfo: {
+          ...buildBanInfo(character, user),
+          specificScope: options.requiredScope,
+        },
+      });
     } catch (error) {
       logger.error('Ban check middleware error:', error);
-      
+
       return res.status(500).json({
         success: false,
         error: 'Errore interno del server durante il controllo ban',
-        code: 'BAN_CHECK_ERROR'
+        code: 'BAN_CHECK_ERROR',
       });
     }
   };
 }
 
-/**
- * Quick helper functions for common ban checks
- */
 export const banChecks = {
   chat: () => banCheck({ requiredScope: 'chat_banned' }),
   game: () => banCheck({ requiredScope: 'game_banned' }),
   forum: () => banCheck({ requiredScope: 'forum_banned' }),
   documents: () => banCheck({ requiredScope: 'documents_banned' }),
-  fullSite: () => banCheck({ requiredScope: 'full_site_banned' })
+  fullSite: () => banCheck({ requiredScope: 'full_site_banned' }),
 };
 
-/**
- * Check multiple ban scopes at once
- */
 export function banCheckMultiple(scopes: BanCheckOptions['requiredScope'][]) {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = req.user?.userId;
-      
-      if (!userId) {
+      const characterId = req.character?.characterId;
+
+      if (!characterId) {
         return res.status(401).json({
           success: false,
-          error: 'Autenticazione richiesta',
-          code: 'AUTHENTICATION_REQUIRED'
+          error: 'Autenticazione personaggio richiesta',
+          code: 'CHARACTER_AUTH_REQUIRED',
         });
       }
 
-      const user = await User.findById(userId).select('banScopes banReason bannedUntil bannedAt isBanned').lean();
-      const userData = user as UserBanData;
-      
-      if (!user) {
+      const { character, user } = await loadBanContext(characterId);
+
+      if (!character) {
         return res.status(404).json({
           success: false,
-          error: 'Utente non trovato',
-          code: 'USER_NOT_FOUND'
+          error: 'Personaggio non trovato',
+          code: 'CHARACTER_NOT_FOUND',
         });
       }
 
-      if (!userData.isBanned || !userData.banScopes || !Array.isArray(userData.banScopes)) {
+      const conflicting = scopes.filter((s) => isBlockedForScope(s, character, user));
+
+      if (conflicting.length === 0) {
         return next();
       }
 
-      // Check for full site ban first
-      if (userData.banScopes.includes('full_site_banned')) {
-        return res.status(403).json({
-          success: false,
-          error: 'Il tuo account è stato bannato da tutta la piattaforma.',
-          code: 'FULL_SITE_BAN_ACTIVE',
-          banInfo: {
-            reason: userData.banReason,
-            bannedUntil: userData.bannedUntil,
-            bannedAt: userData.bannedAt,
-            scopes: userData.banScopes
-          }
-        });
-      }
-
-      // Check if user has any of the specified scopes
-      const bannedScopes = scopes.filter(scope => (userData.banScopes ?? []).includes(scope));
-      
-      if (bannedScopes.length > 0) {
-        return res.status(403).json({
-          success: false,
-          error: 'Non hai i permessi per eseguire questa azione a causa di restrizioni attive.',
-          code: 'MULTIPLE_BANS_ACTIVE',
-          banInfo: {
-            reason: userData.banReason,
-            bannedUntil: userData.bannedUntil,
-            bannedAt: userData.bannedAt,
-            scopes: userData.banScopes,
-            conflictingScopes: bannedScopes
-          }
-        });
-      }
-
-      next();
-      
+      return res.status(403).json({
+        success: false,
+        error: 'Non hai i permessi per eseguire questa azione a causa di restrizioni attive.',
+        code: 'MULTIPLE_BANS_ACTIVE',
+        banInfo: {
+          ...buildBanInfo(character, user),
+          conflictingScopes: conflicting,
+        },
+      });
     } catch (error) {
       logger.error('Multiple ban check middleware error:', error);
-      
+
       return res.status(500).json({
         success: false,
         error: 'Errore interno del server durante il controllo ban',
-        code: 'BAN_CHECK_ERROR'
+        code: 'BAN_CHECK_ERROR',
       });
     }
   };

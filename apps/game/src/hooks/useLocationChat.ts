@@ -19,10 +19,11 @@
  */
 
 import { useEffect, useCallback, useRef } from 'react';
-import { useChatStore } from '@/store/chatStore';
-import { useAuthStore } from '@/store/authStore';
-import { locationChatsApi } from '@/lib/api/locationChats';
+
 import { useWebSocket } from '@/contexts/WebSocketContext';
+import { locationChatsApi } from '@/lib/api/locationChats';
+import { useAuthStore } from '@/store/authStore';
+import { useChatStore } from '@/store/chatStore';
 import { useUIStore } from '@/store/uiStore';
 import type {
   ChatMessage,

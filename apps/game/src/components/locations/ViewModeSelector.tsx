@@ -7,7 +7,6 @@
  * Views:
  * - Mappa: Interactive London map with clickable districts
  * - Testuale: Expandable tree list of all locations
- * - Appartamenti: Private apartments/housing (future feature)
  *
  * @module components/locations/ViewModeSelector
  * @since 2.0.0
@@ -20,7 +19,7 @@ import styles from '@/styles/components/locations/map.module.scss';
 /**
  * View Mode Type
  */
-export type ViewMode = 'mappa' | 'testuale' | 'appartamenti';
+export type ViewMode = 'mappa' | 'testuale';
 
 /**
  * View Mode Selector Props
@@ -76,18 +75,6 @@ export function ViewModeSelector({
         aria-pressed={mode === 'testuale'}
       >
         Lista
-      </button>
-
-      <button
-        type="button"
-        className={`${styles.viewButton} ${mode === 'appartamenti' ? styles.active : ''}`}
-        onClick={() => onChange('appartamenti')}
-        aria-label="Vista appartamenti"
-        aria-pressed={mode === 'appartamenti'}
-        disabled
-        title="Funzionalità in arrivo"
-      >
-        Appartamenti
       </button>
     </div>
   );

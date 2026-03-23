@@ -11,6 +11,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+
 import { useWebSocket } from '@/contexts/WebSocketContext';
 import styles from '@/styles/components/connection/ConnectionStatus.module.scss';
 

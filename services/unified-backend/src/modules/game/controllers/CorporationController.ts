@@ -257,9 +257,6 @@ export class CorporationController {
 
         await request.save();
 
-        // TODO: Publish Redis event for admin notification
-        // redis.publish('corporation:join_request', { corporationId, characterId, requestId: request.id });
-
         logger.info('Corporation join request created', {
           corporationId,
           characterId,
@@ -395,9 +392,6 @@ export class CorporationController {
         ) || [];
         await character.save();
       }
-
-      // TODO: Publish Redis event
-      // redis.publish('corporation:member_left', { corporationId, characterId });
 
       logger.info('Character left corporation', {
         corporationId,
@@ -603,14 +597,6 @@ export class CorporationController {
 
       await invitation.save();
 
-      // TODO: Publish Redis event
-      // redis.publish('corporation:invitation_handled', { 
-      //   invitationId, 
-      //   action, 
-      //   corporationId, 
-      //   characterId: invitation.characterId 
-      // });
-
       res.json(updateResponse(
         undefined,
         `Invito ${action === 'approve' ? 'approvato' : 'respinto'} con successo`,
@@ -675,11 +661,9 @@ export class CorporationController {
           }
         }
 
-        // Check item requirements
+        // Item requirements - feature not yet implemented
         if (corporation.requirements.items?.length > 0) {
-          // TODO: Check character inventory for required items
-          // const hasRequiredItems = await checkCharacterItems(character, corporation.requirements.items);
-          // if (!hasRequiredItems) return { canJoin: false, reason: 'Missing required items' };
+          // Inventory check skipped until inventory system is developed
         }
       }
     }
@@ -706,11 +690,6 @@ export class CorporationController {
     character.corporations.push(corporation.id);
     await character.save();
 
-    // TODO: Publish Redis event
-    // redis.publish('corporation:member_added', { 
-    //   corporationId: corporation.id, 
-    //   characterId: character.id, 
-    //   role 
-    // });
+    // Corporation events - feature not yet fully implemented
   }
 }

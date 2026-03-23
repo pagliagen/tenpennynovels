@@ -1,17 +1,19 @@
 /**
- * SEO Component
+ * SEO Component (Unified & Enhanced)
  *
- * Manages all SEO-related meta tags for each page.
+ * Manages all SEO-related meta tags for pages across TenPennyNovels apps.
  * Handles Open Graph, Twitter Cards, canonical URLs, and structured data.
  *
  * **Features**:
  * - Dynamic page titles with site name
- * - Meta descriptions
- * - Open Graph tags (Facebook sharing)
+ * - Complete Open Graph metadata (with image dimensions)
+ * - Article-specific OG tags (published/modified time)
  * - Twitter Card tags
  * - Canonical URLs (prevents duplicate content)
  * - Robots directives (noindex/nofollow)
- * - JSON-LD structured data for rich results
+ * - JSON-LD structured data (supports arrays)
+ * - Mobile optimization (viewport, theme-color)
+ * - Favicon links
  *
  * **Best Practices**:
  * - Use unique titles and descriptions per page
@@ -19,12 +21,14 @@
  * - Keep descriptions between 150-160 characters
  * - Always provide OG image (1200×630px recommended)
  *
+ * **Note**: This component is duplicated in apps/landing and apps/documents
+ * until workspace shared packages are configured. Keep in sync manually.
+ *
  * @module components/SEO
  */
 
 import React from 'react';
 import Head from 'next/head';
-import { useRouter } from 'next/router';
 
 /**
  * SEO component props
@@ -32,22 +36,48 @@ import { useRouter } from 'next/router';
  * @interface SEOProps
  */
 export interface SEOProps {
-  /** Page title (will be appended with "| Ten Penny Novels" if not included) */
+  /** Page title (will be appended with site name if not included) */
   title: string;
   /** Meta description (150-160 chars recommended) */
   description: string;
-  /** Canonical URL (optional, defaults to current URL) */
+  /** Canonical URL (absolute URL; if omitted, no canonical/og:url/twitter:url tags are emitted) */
   canonical?: string;
-  /** Open Graph type (default: 'article' for documents) */
+
+  // Open Graph
+  /** Open Graph type (default: 'website') */
   ogType?: 'website' | 'article';
-  /** Open Graph image URL (absolute URL) */
+  /** Open Graph image URL (absolute URL, 1200x630px recommended) */
   ogImage?: string;
+  /** OG image width (default: 1200) */
+  ogImageWidth?: string;
+  /** OG image height (default: 630) */
+  ogImageHeight?: string;
+  /** OG image MIME type (default: image/jpeg) */
+  ogImageType?: string;
+
+  // Article-specific (for documents)
+  /** Article published time (ISO 8601) */
+  articlePublishedTime?: string;
+  /** Article modified time (ISO 8601) */
+  articleModifiedTime?: string;
+
+  // Robots
   /** Prevent search engine indexing */
   noindex?: boolean;
   /** Prevent following links on this page */
   nofollow?: boolean;
-  /** Structured data (JSON-LD schema) */
-  schema?: object;
+
+  // Structured Data
+  /** Structured data (JSON-LD schema) - supports single object or array */
+  schema?: object | object[];
+
+  // Additional
+  /** Site name override (default: "Ten Penny Novels") */
+  siteName?: string;
+  /** Locale override (default: "it_IT") */
+  locale?: string;
+  /** Twitter card type (default: "summary_large_image") */
+  twitterCard?: 'summary' | 'summary_large_image';
 }
 
 /**
@@ -58,9 +88,16 @@ export interface SEOProps {
  *
  * **Automatic Features**:
  * - Appends site name to title if not present
- * - Generates canonical URL from current route
  * - Sets Italian locale (it_IT)
- * - Includes favicon reference
+ * - Includes favicon and mobile icons
+ * - Validates and normalizes all inputs
+ *
+ * **Canonical URL**:
+ * Must be passed explicitly as an absolute URL via the `canonical` prop.
+ * If omitted, the `<link rel="canonical">`, `og:url`, and `twitter:url` tags
+ * are not emitted — this avoids the hydration mismatch caused by
+ * `router.asPath`/`window.location` being unavailable or wrong during
+ * SSR/ISR build. Pages that need to be indexed **must** pass `canonical`.
  *
  * **Open Graph**:
  * Enables rich previews when sharing on Facebook, LinkedIn, etc.
@@ -70,6 +107,7 @@ export interface SEOProps {
  *
  * **Structured Data**:
  * Helps search engines understand page content for rich results.
+ * Supports arrays of schemas for complex pages.
  *
  * @param {SEOProps} props - Component props
  * @returns {JSX.Element} Head element with meta tags
@@ -78,86 +116,146 @@ export interface SEOProps {
  * ```typescript
  * import { SEO } from '@/components/SEO';
  *
- * function DocumentPage() {
- *   return (
- *     <>
- *       <SEO
- *         title="Ten Penny Novels | Londra Vittoriana - Ambientazione"
- *         description="Guida completa alla Londra Vittoriana del 1890 per Ten Penny Novels."
- *       />
- *       <DocumentContent />
- *     </>
- *   );
- * }
+ * // Basic usage
+ * <SEO
+ *   title="Login"
+ *   description="Accedi a TenPennyNovels per giocare."
+ * />
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Article page with published/modified dates
+ * <SEO
+ *   title="Londra Vittoriana - Ambientazione"
+ *   description="Guida completa alla Londra del 1890."
+ *   ogType="article"
+ *   articlePublishedTime="2026-01-15T10:00:00Z"
+ *   articleModifiedTime="2026-03-20T15:30:00Z"
+ * />
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // With multiple schemas (Article + BreadcrumbList)
+ * const schemas = [
+ *   { "@type": "Article", "headline": "..." },
+ *   { "@type": "BreadcrumbList", "itemListElement": [...] }
+ * ];
+ *
+ * <SEO
+ *   title="Document Title"
+ *   description="Description"
+ *   schema={schemas}
+ * />
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Private page (noindex)
+ * <SEO
+ *   title="Character Creation"
+ *   description="Create your character."
+ *   noindex
+ *   nofollow
+ * />
  * ```
  */
 export const SEO: React.FC<SEOProps> = ({
   title,
   description,
   canonical,
-  ogType = 'article',
-  ogImage = 'https://documenti.tenpennynovels.com/images/og-image.jpg',
+  ogType = 'website',
+  ogImage = 'https://tenpennynovels.com/images/og-image.jpg',
+  ogImageWidth = '1200',
+  ogImageHeight = '630',
+  ogImageType = 'image/jpeg',
+  articlePublishedTime,
+  articleModifiedTime,
   noindex = false,
   nofollow = false,
   schema,
+  siteName = 'Ten Penny Novels',
+  locale = 'it_IT',
+  twitterCard = 'summary_large_image',
 }) => {
-  const router = useRouter();
-
-  // Site configuration
-  const siteName = 'Ten Penny Novels';
-  const baseUrl = 'https://documenti.tenpennynovels.com';
-
-  // Generate full URL (canonical or current path)
-  const fullUrl = canonical || `${baseUrl}${router.asPath}`;
+  // Canonical URL comes exclusively from the prop.
+  // Computing it from router.asPath/window causes hydration mismatches and
+  // produces wrong URLs during ISR build (asPath is empty, baseUrl is
+  // server-hardcoded). When the caller doesn't supply a canonical the tags
+  // that depend on it are simply omitted.
+  const fullUrl = canonical || undefined;
 
   // Generate full title (append site name if not present)
-  const fullTitle = title.includes(siteName) ? title : `${title} - ${siteName}`;
+  const fullTitle = title.includes(siteName) ? title : `${title} | ${siteName}`;
 
   // Robots meta content
-  const robotsContent = noindex || nofollow
-    ? `${noindex ? 'noindex' : 'index'},${nofollow ? 'nofollow' : 'follow'}`
-    : undefined;
+  const robots = [
+    noindex && 'noindex',
+    nofollow && 'nofollow',
+  ].filter(Boolean).join(', ') || 'index, follow';
+
+  // Normalize schema to array for consistent rendering
+  const schemaArray = schema
+    ? (Array.isArray(schema) ? schema : [schema])
+    : null;
 
   return (
     <Head>
+      {/* Essential Meta — viewport global in _app.tsx */}
+      <meta charSet="utf-8" />
+      <meta name="theme-color" content="#0a1f1c" />
+
       {/* Primary Meta Tags */}
       <title>{fullTitle}</title>
       <meta name="title" content={fullTitle} />
       <meta name="description" content={description} />
 
-      {/* Viewport & Charset */}
-      <meta name="viewport" content="width=device-width, initial-scale=1" />
-      <meta charSet="UTF-8" />
-
       {/* Robots Directives */}
-      {robotsContent && <meta name="robots" content={robotsContent} />}
+      <meta name="robots" content={robots} />
 
       {/* Canonical URL */}
-      <link rel="canonical" href={fullUrl} />
+      {fullUrl && <link rel="canonical" href={fullUrl} />}
 
       {/* Open Graph / Facebook */}
       <meta property="og:type" content={ogType} />
-      <meta property="og:url" content={fullUrl} />
+      {fullUrl && <meta property="og:url" content={fullUrl} />}
       <meta property="og:title" content={fullTitle} />
       <meta property="og:description" content={description} />
-      <meta property="og:image" content={ogImage} />
       <meta property="og:site_name" content={siteName} />
-      <meta property="og:locale" content="it_IT" />
+      <meta property="og:locale" content={locale} />
+
+      {/* OG Image (complete metadata) */}
+      <meta property="og:image" content={ogImage} />
+      <meta property="og:image:width" content={ogImageWidth} />
+      <meta property="og:image:height" content={ogImageHeight} />
+      <meta property="og:image:type" content={ogImageType} />
+
+      {/* Article-specific OG tags */}
+      {ogType === 'article' && articlePublishedTime && (
+        <meta property="article:published_time" content={articlePublishedTime} />
+      )}
+      {ogType === 'article' && articleModifiedTime && (
+        <meta property="article:modified_time" content={articleModifiedTime} />
+      )}
 
       {/* Twitter Card */}
-      <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:url" content={fullUrl} />
+      <meta name="twitter:card" content={twitterCard} />
+      {fullUrl && <meta name="twitter:url" content={fullUrl} />}
       <meta name="twitter:title" content={fullTitle} />
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={ogImage} />
 
       {/* Structured Data (JSON-LD Schema) */}
-      {schema && (
+      {schemaArray && schemaArray.map((s, idx) => (
         <script
+          key={`schema-${idx}`}
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(s)
+          }}
         />
-      )}
+      ))}
     </Head>
   );
 };

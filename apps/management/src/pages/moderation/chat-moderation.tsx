@@ -15,7 +15,10 @@ function ScoreDisplay({ score }: { score: number }) {
   return (
     <div className={styles.scoreBar}>
       <div className={styles.scoreFill}>
-        <div className={styles.scoreFillInner} style={{ width: `${pct}%`, backgroundColor: bg }} />
+        <div
+          className={styles.scoreFillInner}
+          style={{ '--score-pct': `${pct}%`, '--score-bg': bg } as React.CSSProperties}
+        />
       </div>
       <span className={`${styles.scoreText} ${cls}`}>{pct}%</span>
     </div>
@@ -274,7 +277,7 @@ export default function ChatModerationPage() {
 
             <div className={styles.modalField}>
               <label>Contenuto flaggato</label>
-              <div className={styles.modalValue} style={{ whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>{reviewingAlert.content}</div>
+              <div className={styles.modalValuePreWrap}>{reviewingAlert.content}</div>
             </div>
 
             <div className={styles.modalField}>

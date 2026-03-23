@@ -18,7 +18,7 @@
 }
 
 .section {
-  @include forms.section;
+  position: relative;
 }
 
 .sectionTitle {
@@ -120,23 +120,17 @@
 
 .skillCard {
   display: flex;
-  flex-direction: column;
   gap: var(--spacing-xs);
-  padding: var(--spacing-sm);
-  border: 1px solid var(--color-border-light);
-  border-radius: 4px;
-  background: var(--color-bg-secondary);
-  transition: box-shadow 0.2s ease;
-
-  &:hover {
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  }
+  transition: box-shadow 0.2s ease; 
 }
 
 .skillCardHeader {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  width: 100px;
+  flex-shrink: 0;
+  flex-grow: 0;
 }
 
 .skillName {
@@ -150,6 +144,9 @@
   align-items: center;
   gap: var(--spacing-xs);
   margin-top: var(--spacing-xs);
+  width: 100%;
+  flex-grow: 1;
+  flex-shrink: 1;
 
   .totalInput {
     flex: 1;
@@ -162,6 +159,9 @@
 }
 
 .skillCardFooter {
+  width: 100px;
+  flex-shrink: 0;
+  flex-grow: 0;
   font-size: var(--font-size-xs);
   color: var(--color-text-secondary);
   padding-top: 4px;

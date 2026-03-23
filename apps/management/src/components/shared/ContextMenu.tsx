@@ -188,12 +188,12 @@ export function ContextMenu({
         <div
           ref={menuRef}
           className={classNames(styles.menu, styles.portal)}
-          style={{
-            position: 'fixed',
-            top: `${menuPosition.top}px`,
-            left: `${menuPosition.left}px`,
-            zIndex: 9999
-          }}
+          style={
+            {
+              '--menu-top': `${menuPosition.top}px`,
+              '--menu-left': `${menuPosition.left}px`,
+            } as React.CSSProperties
+          }
           role="menu"
         >
           {items.map((item, index) => (

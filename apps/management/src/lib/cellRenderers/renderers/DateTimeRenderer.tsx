@@ -7,9 +7,11 @@ import { format, formatDistanceToNow, isValid, parseISO } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { CellRendererProps } from '../registry';
 
+import styles from './CellRenderers.module.scss';
+
 export function DateTimeRenderer({ value, column }: CellRendererProps): React.ReactNode {
   if (!value) {
-    return <span style={{ color: '#999' }}>-</span>;
+    return <span className={styles.empty}>-</span>;
   }
 
   try {
@@ -17,7 +19,7 @@ export function DateTimeRenderer({ value, column }: CellRendererProps): React.Re
     const date = typeof value === 'string' ? parseISO(value) : new Date(value as string | number | Date);
 
     if (!isValid(date)) {
-      return <span style={{ color: '#999' }}>Data non valida</span>;
+      return <span className={styles.empty}>Data non valida</span>;
     }
 
     // Get format from column config
@@ -43,6 +45,6 @@ export function DateTimeRenderer({ value, column }: CellRendererProps): React.Re
     return <span>{formattedDate}</span>;
   } catch (error) {
     console.error('Error formatting date:', error);
-    return <span style={{ color: '#999' }}>Errore formato</span>;
+    return <span className={styles.empty}>Errore formato</span>;
   }
 }

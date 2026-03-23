@@ -23,7 +23,7 @@
 
 import { apiPost, apiGet } from '@/lib/api/client';
 import { sanitizeUserInput } from '@/lib/validation/sanitizers';
-import type { ApiResponse, User, LoginCredentials, RegisterData } from '@/types';
+import type { ApiResponse, User, LoginCredentials, LoginSuccessPayload, RegisterData } from '@/types';
 
 /**
  * Authentication Service Class
@@ -64,7 +64,7 @@ export class AuthService {
    *   rememberMe: true
    * });
    *
-   * if (result.result && result.data) {
+   * if (result.success && result.data) {
    *   console.log('Logged in as:', result.data.username);
    *   // Character select modal will show automatically if needed
    * } else {
@@ -72,7 +72,7 @@ export class AuthService {
    * }
    * ```
    */
-  async login(credentials: LoginCredentials): Promise<ApiResponse<User>> {
+  async login(credentials: LoginCredentials): Promise<ApiResponse<LoginSuccessPayload>> {
     // Sanitize inputs (XSS protection)
     const sanitized = {
       username: sanitizeUserInput(credentials.username),
@@ -80,7 +80,13 @@ export class AuthService {
       rememberMe: credentials.rememberMe,
     };
 
-    return apiPost<User>('/auth/login', sanitized);
+    const response = await apiPost<LoginSuccessPayload>('/auth/login', sanitized);
+
+    // NOTE: sessionId is saved to sessionStorage by the calling component (not here)
+    // - Login auto-select: index.tsx onSubmit() saves sessionId
+    // This ensures we're always in client-side context (event handlers run post-hydration)
+
+    return response;
   }
 
   /**
@@ -101,7 +107,7 @@ export class AuthService {
    *   agreeToTerms: true
    * });
    *
-   * if (result.result) {
+   * if (result.success) {
    *   console.log('Registration successful! Check email for verification.');
    * }
    * ```
@@ -129,12 +135,25 @@ export class AuthService {
    * ```typescript
    * const result = await authService.logout();
    *
-   * if (result.result) {
+   * if (result.success) {
    *   router.push('/');
    * }
    * ```
    */
   async logout(): Promise<ApiResponse<void>> {
+    // ✅ CRITICAL: Clear sessionStorage BEFORE API call
+    // Defense: If API fails, user still logged out client-side (force re-login)
+    try {
+      sessionStorage.removeItem('character_session_id');
+      sessionStorage.removeItem('character_context'); // Legacy
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[AuthService] SessionStorage cleared on logout');
+      }
+    } catch (error) {
+      console.error('[AuthService] Failed to clear sessionStorage on logout:', error);
+      // Non-blocking: continue logout
+    }
+
     return apiPost<void>('/auth/logout');
   }
 
@@ -150,7 +169,7 @@ export class AuthService {
    * ```typescript
    * const result = await authService.getProfile();
    *
-   * if (result.result && result.data) {
+   * if (result.success && result.data) {
    *   console.log('Current user:', result.data.username);
    * } else {
    *   console.log('Not authenticated');
@@ -173,7 +192,7 @@ export class AuthService {
    * ```typescript
    * const result = await authService.forgotPassword('user@example.com');
    *
-   * if (result.result) {
+   * if (result.success) {
    *   console.log('Reset email sent!');
    * }
    * ```
@@ -200,7 +219,7 @@ export class AuthService {
    * ```typescript
    * const result = await authService.resetPassword(token, 'NewSecurePass123!', 'NewSecurePass123!');
    *
-   * if (result.result) {
+   * if (result.success) {
    *   console.log('Password updated successfully!');
    *   router.push('/');
    * }
@@ -225,7 +244,7 @@ export class AuthService {
    * ```typescript
    * const result = await authService.verifyEmail(token);
    *
-   * if (result.result) {
+   * if (result.success) {
    *   console.log('Email verified successfully!');
    * }
    * ```
@@ -247,7 +266,7 @@ export class AuthService {
    * ```typescript
    * const result = await authService.resendVerification('john');
    *
-   * if (result.result && result.data) {
+   * if (result.success && result.data) {
    *   console.log('Verification email sent!');
    *   console.log('Can resend at:', result.data.canResendAt);
    * }
@@ -274,7 +293,7 @@ export class AuthService {
    * ```typescript
    * const result = await authService.deleteAccount(token);
    *
-   * if (result.result) {
+   * if (result.success) {
    *   console.log('Account deleted permanently');
    *   router.push('/');
    * }
@@ -297,7 +316,7 @@ export class AuthService {
    * ```typescript
    * const result = await authService.checkUsernameAvailability('john');
    *
-   * if (result.result && result.data?.available) {
+   * if (result.success && result.data?.available) {
    *   console.log('Username available!');
    * } else {
    *   console.log('Username already taken');
@@ -322,7 +341,7 @@ export class AuthService {
    * ```typescript
    * const result = await authService.checkEmailAvailability('user@example.com');
    *
-   * if (result.result && result.data?.available) {
+   * if (result.success && result.data?.available) {
    *   console.log('Email available!');
    * } else {
    *   console.log('Email already registered');

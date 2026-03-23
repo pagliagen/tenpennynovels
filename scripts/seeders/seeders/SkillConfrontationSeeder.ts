@@ -15,6 +15,7 @@ const CONFRONTATIONS = [
     counterSkills: [
       { skillName: 'Schivata', label: 'Schivata' },
       { skillName: 'Corpo a Corpo', label: 'Parata (Corpo a Corpo)' },
+      { skillName: 'Corpo a Corpo', label: 'Disarmare', specialRule: 'strict_higher' },
     ],
     rollType: 'open',
     requiresAdditionalMessage: false,
@@ -71,7 +72,7 @@ const CONFRONTATIONS = [
     skillName: 'Persuadere',
     category: 'social',
     counterSkills: [
-      { skillName: 'Empatia', label: 'Empatia' },
+      { skillName: 'Tempra', label: 'Tempra' },
     ],
     rollType: 'open',
     requiresAdditionalMessage: false,
@@ -89,7 +90,16 @@ const CONFRONTATIONS = [
     skillName: 'Oratoria',
     category: 'social',
     counterSkills: [
-      { skillName: 'Empatia', label: 'Empatia' },
+      { skillName: 'Tempra', label: 'Tempra' },
+    ],
+    rollType: 'open',
+    requiresAdditionalMessage: false,
+  },
+  {
+    skillName: 'Empatia',
+    category: 'social',
+    counterSkills: [
+      { skillName: 'Raggirare', label: 'Raggirare' },
     ],
     rollType: 'open',
     requiresAdditionalMessage: false,

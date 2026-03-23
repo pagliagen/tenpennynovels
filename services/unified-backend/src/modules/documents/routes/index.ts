@@ -23,6 +23,9 @@ router.get('/routes/list-hierarchical', AuthMiddleware.optionalAuth, DocumentCon
 // AI availability status
 router.get('/ai-status', DocumentController.aiStatus);
 
+// Text search (full-text via MongoDB)
+router.get('/search', AuthMiddleware.optionalAuth, DocumentController.textSearch);
+
 // Semantic search
 router.get('/semantic-search', AuthMiddleware.optionalAuth, DocumentController.semanticSearch);
  

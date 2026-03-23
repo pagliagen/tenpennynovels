@@ -31,7 +31,7 @@ export function DocumentLink({ document }: DocumentLinkProps): JSX.Element {
     >
       <span className={styles.documentTitle}>{document.title}</span>
       {!document.isPublic && (
-        <span className={styles.privateBadge} title="Documento privato (richiede login)">
+        <span className={styles.privateBadge} title="Ten Penny Novels | Documento privato (richiede login)">
           🔒
         </span>
       )}

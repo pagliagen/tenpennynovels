@@ -14,15 +14,54 @@ import type {
   DocumentDetail,
   DocumentListFilter,
   DocumentSubtype,
+  DocumentType,
 } from '@/types/document';
+
+/** Corpo risposta lista documenti (axios `data` già estratto dal client). */
+interface DocumentsListBody {
+  data?: Document[];
+}
+
+interface DocumentGetBody {
+  data: {
+    document: {
+      _id: string;
+      title: string;
+      description?: string;
+      content?: string;
+    };
+    route: {
+      path: string;
+      type: DocumentType;
+      isPublic: boolean;
+    };
+    sections?: DocumentSection[];
+    hasChildren?: boolean;
+    childDocuments?: DocumentDetail['childDocuments'];
+  };
+}
+
+interface SectionsBody {
+  data?: { sections?: DocumentSection[] } | DocumentSection[];
+  sections?: DocumentSection[];
+}
+
+interface HierarchicalBody {
+  data?: {
+    routes?: {
+      ambientazione: DocumentSubtype[];
+      regolamento: DocumentSubtype[];
+    };
+  };
+}
 
 export const documentsApi = {
   /**
    * Get list of documents
    */
   async list(params?: DocumentListFilter): Promise<Document[]> {
-    const response = (await api.get('/documents/routes/list', { params })) as any;
-    return response.data || [];
+    const body = await api.get<DocumentsListBody>('/documents/routes/list', { params });
+    return body.data ?? [];
   },
 
   /**
@@ -30,25 +69,26 @@ export const documentsApi = {
    */
   async get(type: string, path: string, cookies?: string): Promise<DocumentDetail> {
     const config = cookies ? { headers: { Cookie: cookies } } : {};
-    const response = (await api.get(`/documents/${type}/${path}`, config)) as any;
+    const { data: payload } = await api.get<DocumentGetBody>(`/documents/${type}/${path}`, config);
 
     const document: Document = {
-      _id: response.data.document._id,
-      path: response.data.route.path,
-      title: response.data.document.title,
-      type: response.data.route.type,
+      _id: payload.document._id,
+      path: payload.route.path,
+      title: payload.document.title,
+      description: payload.document.description || '',
+      type: payload.route.type,
       kind: 'document',
-      isPublic: response.data.route.isPublic,
-      content: response.data.document.content || '',
+      isPublic: payload.route.isPublic,
+      content: payload.document.content || '',
     };
 
-    const sections: DocumentSection[] = response.data.sections || [];
+    const sections: DocumentSection[] = payload.sections || [];
 
     return {
       document,
       sections,
-      hasChildren: response.data.hasChildren ?? false,
-      childDocuments: response.data.childDocuments ?? null,
+      hasChildren: payload.hasChildren ?? false,
+      ...(payload.childDocuments != null ? { childDocuments: payload.childDocuments } : {}),
     };
   },
 
@@ -56,8 +96,13 @@ export const documentsApi = {
    * Get document sections only
    */
   async getSections(documentId: string): Promise<DocumentSection[]> {
-    const response = (await api.get(`/documents/${documentId}/sections`)) as any;
-    return response.data.sections || response.data || [];
+    const body = await api.get<SectionsBody>(`/documents/${documentId}/sections`);
+    const nested = body.data;
+    if (Array.isArray(nested)) return nested;
+    if (nested && typeof nested === 'object' && 'sections' in nested) {
+      return nested.sections ?? [];
+    }
+    return body.sections ?? [];
   },
 
   /**
@@ -67,7 +112,7 @@ export const documentsApi = {
     ambientazione: DocumentSubtype[];
     regolamento: DocumentSubtype[];
   }> {
-    const response = (await api.get('/documents/routes/list-hierarchical')) as any;
-    return response.data.routes || { ambientazione: [], regolamento: [] };
+    const body = await api.get<HierarchicalBody>('/documents/routes/list-hierarchical');
+    return body.data?.routes ?? { ambientazione: [], regolamento: [] };
   },
 };

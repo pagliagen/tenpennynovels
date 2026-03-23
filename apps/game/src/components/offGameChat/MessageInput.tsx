@@ -11,6 +11,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+
 import { useSendTypingIndicator } from '@/hooks/useOffGameChat';
 import styles from '@/styles/components/offGameChat/OffGameChat.module.scss';
 

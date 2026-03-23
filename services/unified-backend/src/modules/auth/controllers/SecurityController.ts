@@ -1,9 +1,12 @@
 import { Request, Response } from 'express';
+import mongoose from 'mongoose';
 import { User, CharacterSession } from '@database/models';
+import { SecurityAlert } from '@database/models/SecurityAlert';
 import { successResponse, errorResponse, listResponse } from '@shared/utils/apiResponse';
 import { ErrorCode } from '@shared/utils/errorCodes';
 import { logger } from '../logger';
 import { redis } from '@config/runtime/redis';
+import { GeoIPService } from '@shared/services/GeoIPService';
 
 export class SecurityController {
   /**
@@ -27,24 +30,30 @@ export class SecurityController {
       // Ottieni sessionId corrente dal cookie (se presente)
       const currentSessionId = req.cookies?.auth_token_session;
 
-      const sessionList = sessions.map(session => ({
-        id: session.sessionId,
-        deviceInfo: {
-          browser: session.deviceInfo.browser || 'Sconosciuto',
-          os: session.deviceInfo.os || 'Sconosciuto',
-          deviceType: session.deviceInfo.deviceType || 'desktop'
-        },
-        location: {
-          ipAddress: session.deviceInfo.ipAddress,
-          country: 'Sconosciuto', // TODO: GeoIP lookup
-          city: 'Sconosciuto'
-        },
-        activity: {
-          createdAt: session.createdAt,
-          lastActiveAt: session.lastActiveAt,
-          expiresAt: session.expiresAt
-        },
-        isCurrent: session.sessionId === currentSessionId
+      // ✅ GeoIP lookup parallelo per tutte le sessioni
+      const sessionList = await Promise.all(sessions.map(async session => {
+        const ipAddress = session.deviceInfo.ipAddress || '127.0.0.1';
+        const geoLocation = await GeoIPService.lookup(ipAddress);
+
+        return {
+          id: session.sessionId,
+          deviceInfo: {
+            browser: session.deviceInfo.browser || 'Sconosciuto',
+            os: session.deviceInfo.os || 'Sconosciuto',
+            deviceType: session.deviceInfo.deviceType || 'desktop'
+          },
+          location: {
+            ipAddress,
+            country: geoLocation.country,
+            city: geoLocation.city || 'Sconosciuto'
+          },
+          activity: {
+            createdAt: session.createdAt,
+            lastActiveAt: session.lastActiveAt,
+            expiresAt: session.expiresAt
+          },
+          isCurrent: session.sessionId === currentSessionId
+        };
       }));
 
       res.status(200).json(listResponse(sessionList, {
@@ -150,18 +159,24 @@ export class SecurityController {
         .limit(pageSize)
         .lean();
 
-      const loginHistory = history.map(entry => ({
-        id: entry.sessionId,
-        timestamp: entry.createdAt,
-        ipAddress: entry.deviceInfo.ipAddress,
-        location: 'Sconosciuto', // TODO: GeoIP lookup
-        deviceInfo: `${entry.deviceInfo.browser || 'Sconosciuto'} su ${entry.deviceInfo.os || 'Sconosciuto'}`,
-        result: true, // Se è nel database, login è riuscito
-        sessionDuration: entry.invalidatedAt
-          ? Math.floor((entry.invalidatedAt.getTime() - entry.createdAt.getTime()) / 1000)
-          : undefined,
-        terminatedBy: entry.invalidatedBy,
-        isActive: entry.isActive
+      // ✅ GeoIP lookup parallelo per tutta la history
+      const loginHistory = await Promise.all(history.map(async entry => {
+        const ipAddress = entry.deviceInfo.ipAddress || '127.0.0.1';
+        const geoLocation = await GeoIPService.lookup(ipAddress);
+
+        return {
+          id: entry.sessionId,
+          timestamp: entry.createdAt,
+          ipAddress,
+          location: GeoIPService.formatLocation(geoLocation),
+          deviceInfo: `${entry.deviceInfo.browser || 'Sconosciuto'} su ${entry.deviceInfo.os || 'Sconosciuto'}`,
+          result: true, // Se è nel database, login è riuscito
+          sessionDuration: entry.invalidatedAt
+            ? Math.floor((entry.invalidatedAt.getTime() - entry.createdAt.getTime()) / 1000)
+            : undefined,
+          terminatedBy: entry.invalidatedBy,
+          isActive: entry.isActive
+        };
       }));
 
       res.status(200).json(listResponse(loginHistory, {
@@ -174,8 +189,8 @@ export class SecurityController {
       }));
 
       logger.info(`[${userId}] Retrieved login history (${loginHistory.length} entries)`);
-    } catch (error: any) {
-      logger.error('Get login history error:', error);
+    } catch (error: unknown) {
+      logger.error('Get login history error:', error instanceof Error ? error : String(error));
       throw error;
     }
   }
@@ -183,25 +198,48 @@ export class SecurityController {
   /**
    * ✅ GET /auth/security/alerts
    * Get security alerts
-   *
-   * NOTE: Per ora ritorna lista vuota.
-   * TODO: Implementare quando avremo sistema eventi sicurezza
    */
   static async getSecurityAlerts(req: Request, res: Response): Promise<void> {
     try {
-      // ✅ NESSUN MOCK DATA - lista vuota fino a implementazione vera
-      res.status(200).json(listResponse([], {
-        currentPage: 1,
-        pageSize: 10,
-        totalItems: 0,
-        totalPages: 0,
-        hasNextPage: false,
-        hasPreviousPage: false
-      }, 'Nessun alert di sicurezza'));
+      const userId = req.user!.userId;
+      const page = parseInt(req.query.page as string) || 1;
+      const pageSize = parseInt(req.query.pageSize as string) || 10;
 
-      logger.info(`[${req.user!.userId}] Retrieved security alerts (none available yet)`);
-    } catch (error: any) {
-      logger.error('Get security alerts error:', error);
+      const userObjectId = new mongoose.Types.ObjectId(userId);
+
+      // ✅ Query SecurityAlert dal database
+      const total = await SecurityAlert.countDocuments({ userId: userObjectId });
+      const alerts = await SecurityAlert.find({ userId: userObjectId })
+        .sort({ timestamp: -1 })
+        .skip((page - 1) * pageSize)
+        .limit(pageSize)
+        .lean();
+
+      const alertList = alerts.map(alert => ({
+        id: alert._id.toString(),
+        type: alert.type,
+        severity: alert.severity,
+        ipAddress: alert.ipAddress,
+        location: alert.location || 'Unknown',
+        userAgent: alert.userAgent,
+        timestamp: alert.timestamp,
+        acknowledged: alert.acknowledged,
+        acknowledgedAt: alert.acknowledgedAt,
+        metadata: alert.metadata
+      }));
+
+      res.status(200).json(listResponse(alertList, {
+        currentPage: page,
+        pageSize,
+        totalItems: total,
+        totalPages: Math.ceil(total / pageSize),
+        hasNextPage: page * pageSize < total,
+        hasPreviousPage: page > 1
+      }));
+
+      logger.info(`[${userId}] Retrieved ${alertList.length} security alerts`);
+    } catch (error: unknown) {
+      logger.error('Get security alerts error:', error instanceof Error ? error : String(error));
       throw error;
     }
   }
@@ -251,8 +289,8 @@ export class SecurityController {
           },
           timestamp: new Date().toISOString()
         }));
-      } catch (redisError: any) {
-        logger.warn('Failed to publish suspicious activity event:', redisError);
+      } catch (redisError: unknown) {
+        logger.warn('Failed to publish suspicious activity event:', redisError instanceof Error ? redisError : String(redisError));
       }
 
       res.status(200).json(successResponse( {
@@ -270,8 +308,8 @@ export class SecurityController {
         }
       }, 'Segnalazione ricevuta. Il team di sicurezza esaminerà il caso.'));
 
-    } catch (error: any) {
-      logger.error('Report suspicious error:', error);
+    } catch (error: unknown) {
+      logger.error('Report suspicious error:', error instanceof Error ? error : String(error));
       throw error;
     }
   }
@@ -279,24 +317,54 @@ export class SecurityController {
   /**
    * ✅ POST /auth/security/acknowledge-alert/:alertId
    * Acknowledge a security alert
-   *
-   * NOTE: Placeholder fino a implementazione sistema alerts
    */
   static async acknowledgeAlert(req: Request<{ alertId: string }>, res: Response): Promise<void> {
     try {
       const { alertId } = req.params;
       const userId = req.user!.userId;
 
-      // TODO: Implementare storage alerts
+      if (!mongoose.isValidObjectId(alertId)) {
+        res.status(400).json(errorResponse(
+          'ID alert non valido',
+          ErrorCode.INVALID_FORMAT,
+          undefined,
+          400
+        ));
+        return;
+      }
+
+      const ownerObjectId = new mongoose.Types.ObjectId(userId);
+      const alertObjectId = new mongoose.Types.ObjectId(alertId);
+
+      const alertDoc = await SecurityAlert.findOne({
+        _id: alertObjectId,
+        userId: ownerObjectId,
+      });
+
+      if (!alertDoc) {
+        res.status(404).json(errorResponse(
+          'Alert non trovato',
+          ErrorCode.RESOURCE_NOT_FOUND,
+          undefined,
+          404
+        ));
+        return;
+      }
+
+      alertDoc.acknowledged = true;
+      alertDoc.acknowledgedBy = ownerObjectId;
+      alertDoc.acknowledgedAt = new Date();
+      await alertDoc.save();
+
       logger.info(`[${userId}] Alert ${alertId} acknowledged`);
 
-      res.status(200).json(successResponse( {
+      res.status(200).json(successResponse({
         alertId,
-        acknowledgedAt: new Date().toISOString()
+        acknowledgedAt: alertDoc.acknowledgedAt!.toISOString()
       }, 'Alert confermato con successo'));
 
-    } catch (error: any) {
-      logger.error('Acknowledge alert error:', error);
+    } catch (error: unknown) {
+      logger.error('Acknowledge alert error:', error instanceof Error ? error : String(error));
       throw error;
     }
   }

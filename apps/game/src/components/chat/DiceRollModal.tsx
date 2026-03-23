@@ -11,6 +11,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+
 import styles from './DiceRollModal.module.scss';
 
 /**

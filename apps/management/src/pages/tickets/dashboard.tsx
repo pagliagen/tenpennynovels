@@ -55,13 +55,18 @@ export default function TicketDashboard() {
     }
   });
 
-  const getPriorityColor = (priority: string) => {
+  const getPriorityBadgeClass = (priority: string) => {
     switch (priority) {
-      case 'critical': return '#dc2626';
-      case 'high': return '#ea580c';
-      case 'medium': return '#ca8a04';
-      case 'low': return '#65a30d';
-      default: return '#6b7280';
+      case 'critical':
+        return styles.priorityCritical;
+      case 'high':
+        return styles.priorityHigh;
+      case 'medium':
+        return styles.priorityMedium;
+      case 'low':
+        return styles.priorityLow;
+      default:
+        return styles.priorityDefault;
     }
   };
 
@@ -127,40 +132,40 @@ export default function TicketDashboard() {
         {!isLoading && stats && (
           <>
             <div className={styles.statsGrid}>
-              <div className={styles.statCard} style={{ borderLeftColor: '#3b82f6' }}>
+              <div className={`${styles.statCard} ${styles.statCardBlue}`}>
                 <div className={styles.statIcon}>📩</div>
                 <div className={styles.statContent}>
-                  <div className={styles.statValue} style={{ color: '#3b82f6' }}>
+                  <div className={styles.statValue}>
                     {stats.openCount || 0}
                   </div>
                   <div className={styles.statTitle}>Ticket Aperti</div>
                 </div>
               </div>
 
-              <div className={styles.statCard} style={{ borderLeftColor: '#ef4444' }}>
+              <div className={`${styles.statCard} ${styles.statCardRed}`}>
                 <div className={styles.statIcon}>⏳</div>
                 <div className={styles.statContent}>
-                  <div className={styles.statValue} style={{ color: '#ef4444' }}>
+                  <div className={styles.statValue}>
                     {stats.unassignedCount || 0}
                   </div>
                   <div className={styles.statTitle}>Non Assegnati</div>
                 </div>
               </div>
 
-              <div className={styles.statCard} style={{ borderLeftColor: '#f59e0b' }}>
+              <div className={`${styles.statCard} ${styles.statCardAmber}`}>
                 <div className={styles.statIcon}>⚙️</div>
                 <div className={styles.statContent}>
-                  <div className={styles.statValue} style={{ color: '#f59e0b' }}>
+                  <div className={styles.statValue}>
                     {stats.inProgressCount || 0}
                   </div>
                   <div className={styles.statTitle}>In Lavorazione</div>
                 </div>
               </div>
 
-              <div className={styles.statCard} style={{ borderLeftColor: '#10b981' }}>
+              <div className={`${styles.statCard} ${styles.statCardGreen}`}>
                 <div className={styles.statIcon}>✅</div>
                 <div className={styles.statContent}>
-                  <div className={styles.statValue} style={{ color: '#10b981' }}>
+                  <div className={styles.statValue}>
                     {stats.closedThisMonthCount || 0}
                   </div>
                   <div className={styles.statTitle}>Chiusi (30gg)</div>
@@ -187,14 +192,14 @@ export default function TicketDashboard() {
                   <table className={styles.simpleTable}>
                     <thead>
                       <tr>
-                        <th style={{ width: '60px' }}>#</th>
+                        <th className={styles.thW60}>#</th>
                         <th>Titolo</th>
-                        <th style={{ width: '120px' }}>Categoria</th>
-                        <th style={{ width: '100px' }}>Priorità</th>
-                        <th style={{ width: '120px' }}>Stato</th>
-                        <th style={{ width: '150px' }}>Character</th>
-                        <th style={{ width: '120px' }}>Assegnato</th>
-                        <th style={{ width: '100px' }}>Apertura</th>
+                        <th className={styles.thW120}>Categoria</th>
+                        <th className={styles.thW100}>Priorità</th>
+                        <th className={styles.thW120}>Stato</th>
+                        <th className={styles.thW150}>Character</th>
+                        <th className={styles.thW120}>Assegnato</th>
+                        <th className={styles.thW100}>Apertura</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -209,8 +214,7 @@ export default function TicketDashboard() {
                           <td>{getCategoryLabel(ticket.category)}</td>
                           <td>
                             <span
-                              className={styles.priorityBadge}
-                              style={{ backgroundColor: getPriorityColor(ticket.priority) }}
+                              className={`${styles.priorityBadge} ${getPriorityBadgeClass(ticket.priority)}`}
                             >
                               {getPriorityLabel(ticket.priority)}
                             </span>
@@ -218,7 +222,7 @@ export default function TicketDashboard() {
                           <td>{getStatusLabel(ticket.status)}</td>
                           <td>{ticket.createdBy.characterName}</td>
                           <td>{ticket.assignedTo?.username || '-'}</td>
-                          <td style={{ color: '#dc2626', fontWeight: 600 }}>
+                          <td className={styles.urgentDateCell}>
                             {formatDate(ticket.createdAt)}
                           </td>
                         </tr>

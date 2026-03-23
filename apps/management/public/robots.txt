@@ -1,7 +1,7 @@
-# TenPennyNovels Management - Robots.txt
-# Admin panel - block all crawlers
+# Ten Penny Novels - Management (Admin Only)
+# Updated: 2026-03-21
 
 User-agent: *
 Disallow: /
 
-# No sitemap (admin panel, authentication required)
+# Security: Block all crawling (admin interface)

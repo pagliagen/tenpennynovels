@@ -228,10 +228,6 @@ export class CharacterCreationConfigController {
         if (config.occupation.requiredSkillMinimum < 20 || config.occupation.requiredSkillMinimum > 60) {
           errors.push('Required skill minimum deve essere tra 20 e 60');
         }
-
-        if (config.occupation.bonusSkillPoints < 10 || config.occupation.bonusSkillPoints > 50) {
-          warnings.push('Bonus skill points fuori dal range raccomandato (10-50)');
-        }
       }
 
       // Validate social classes

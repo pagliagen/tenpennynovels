@@ -14,18 +14,22 @@
 
 'use client';
 
-import { useState, useEffect, useRef, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { TagSelector } from './TagSelector';
+import { useState, useEffect, useRef, useMemo } from 'react';
+
+import { fakePngApi } from '@/lib/api/fakePng';
+import { locationChatsApi } from '@/lib/api/locationChats';
+import styles from '@/styles/components/chat/MessageInput.module.scss';
+import type { ActionType, SendMessageRequest } from '@/types/chat';
+
+import { FakePngManager } from '../fake-png/FakePngManager';
+
 import { ActionTypeSelector } from './ActionTypeSelector';
 import { ConditionalSelects } from './ConditionalSelects';
-import { SkillStatRollModal } from './SkillStatRollModal';
+import { ConfrontationModal } from './ConfrontationModal';
 import { DiceRollModal } from './DiceRollModal';
-import { FakePngManager } from '../fake-png/FakePngManager';
-import { locationChatsApi } from '@/lib/api/locationChats';
-import { fakePngApi } from '@/lib/api/fakePng';
-import type { ChatMessageType, SendMessageRequest } from '@/types/chat';
-import styles from '@/styles/components/chat/MessageInput.module.scss';
+import { SkillStatRollModal } from './SkillStatRollModal';
+import { TagSelector } from './TagSelector';
 
 /**
  * Character data needed for action availability
@@ -93,9 +97,9 @@ const MAX_CHARACTERS = 2000;
 /**
  * Get available action types based on character data and game permissions
  */
-function getAvailableActions(characterData: CharacterData): ChatMessageType[] {
-  // dice_roll, skill_check, stat_check moved to dedicated buttons
-  const baseActions: ChatMessageType[] = ['standard', 'whisper', 'ooc'];
+function getAvailableActions(characterData: CharacterData): ActionType[] {
+  // dice_roll, stat_check moved to dedicated buttons
+  const baseActions: ActionType[] = ['standard', 'whisper', 'ooc'];
   const gamePermissions = characterData.gamePermissions || [];
 
   // Helper: Check if has permission
@@ -124,13 +128,12 @@ function getAvailableActions(characterData: CharacterData): ChatMessageType[] {
 /**
  * Get action display name for placeholder
  */
-function getActionDisplayName(action: ChatMessageType): string {
-  const names: Record<ChatMessageType, string> = {
+function getActionDisplayName(action: ActionType): string {
+  const names: Record<ActionType, string> = {
     standard: 'messaggio',
     whisper: 'sussurro',
     ooc: 'messaggio fuori dal gioco',
     dice_roll: 'tiro dado',
-    skill_check: 'tiro abilità',
     stat_check: 'tiro caratteristica',
     item_use: 'uso oggetto',
     master: 'annuncio master',
@@ -166,7 +169,7 @@ export function MessageInput({
 }: MessageInputProps): JSX.Element {
   // State
   const [messageInput, setMessageInput] = useState('');
-  const [selectedAction, setSelectedAction] = useState<ChatMessageType>('standard');
+  const [selectedAction, setSelectedAction] = useState<ActionType>('standard');
   const [targetCharacters, setTargetCharacters] = useState<string[]>([]);
   const [selectedSkill, setSelectedSkill] = useState('');
   const [selectedStat, setSelectedStat] = useState('');
@@ -177,6 +180,9 @@ export function MessageInput({
   const [isSending, setIsSending] = useState(false);
   const [isSkillStatModalOpen, setIsSkillStatModalOpen] = useState(false);
   const [isDiceRollModalOpen, setIsDiceRollModalOpen] = useState(false);
+  const [isConfrontationModalOpen, setIsConfrontationModalOpen] = useState(false);
+  const [showPendingReactionModal, setShowPendingReactionModal] = useState(false);
+  const [pendingMessageData, setPendingMessageData] = useState<SendMessageRequest | null>(null);
   const [showFakePngManager, setShowFakePngManager] = useState(false);
 
   // Social conflict mode
@@ -233,6 +239,8 @@ export function MessageInput({
   const hasSocialConflictPermission = gamePermissions.includes('game:*') ||
     gamePermissions.includes('game:chat:social-clash');
 
+  const canOpenConfrontations = occupants.length >= 1;
+
   /**
    * Reset action-specific selections when action type changes
    */
@@ -244,25 +252,6 @@ export function MessageInput({
       setTargetCharacters([]);
     }
   }, [selectedAction, isSocialConflictMode]);
-
-  /**
-   * Toggle social conflict mode
-   */
-  const toggleSocialConflictMode = () => {
-    setIsSocialConflictMode(!isSocialConflictMode);
-    if (!isSocialConflictMode) {
-      // Entering social conflict mode
-      setSelectedAction('standard'); // Reset to standard (we'll handle submit differently)
-      setTargetCharacters([]);
-      setSelectedSkill('');
-      setLieText('');
-    } else {
-      // Exiting social conflict mode
-      setTargetCharacters([]);
-      setSelectedSkill('');
-      setLieText('');
-    }
-  };
 
   /**
    * Handle input change with typing indicators
@@ -309,7 +298,7 @@ export function MessageInput({
    * @param id - skillId (ObjectId) for skills, statName for stats
    * @param displayName - name to show in default message
    */
-  const handleSkillStatRoll = async (type: 'skill' | 'stat', id: string, displayName: string) => {
+  const handleSkillStatRoll = async (_type: 'skill' | 'stat', id: string, displayName: string) => {
     // Validate tag first
     if (!currentTag) {
       setIsTagButtonFlashing(true);
@@ -323,15 +312,10 @@ export function MessageInput({
 
     try {
       const data: SendMessageRequest = {
-        actionType: type === 'skill' ? 'skill_check' : 'stat_check',
+        actionType: 'stat_check',
         content: messageInput.trim() || `Tiro su ${displayName}`, // Default text if empty
+        statName: id, // For stats, name is the ID
       };
-
-      if (type === 'skill') {
-        data.skillId = id; // Send skill ObjectId, not name - backend will look up value
-      } else {
-        data.statName = id; // For stats, name is the ID
-      }
 
       await onSendMessage(data);
 
@@ -397,6 +381,8 @@ export function MessageInput({
 
     setIsSending(true);
 
+    let data: SendMessageRequest | undefined;
+
     try {
       // SOCIAL CONFLICT MODE
       if (isSocialConflictMode) {
@@ -430,7 +416,7 @@ export function MessageInput({
 
       // STANDARD MESSAGE
       // Build request data
-      const data: SendMessageRequest = {
+      data = {
         actionType: selectedAction,
         content: messageInput.trim(),
       };
@@ -463,8 +449,39 @@ export function MessageInput({
       setSelectedSkill('');
       setSelectedStat('');
       setSelectedItem('');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to send message:', error);
+
+      // Check if error is PENDING_REACTION_EXISTS
+      if (error?.response?.data?.code === 'PENDING_REACTION_EXISTS' && data) {
+        setPendingMessageData(data);
+        setShowPendingReactionModal(true);
+      }
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const handleForceAbortAndSend = async () => {
+    if (!pendingMessageData) return;
+
+    setShowPendingReactionModal(false);
+    setIsSending(true);
+
+    try {
+      // Retry with forceAbortPendingReaction flag
+      await onSendMessage({ ...pendingMessageData, forceAbortPendingReaction: true });
+
+      // Reset form
+      setMessageInput('');
+      setSelectedAction('standard');
+      setTargetCharacters([]);
+      setSelectedSkill('');
+      setSelectedStat('');
+      setSelectedItem('');
+      setPendingMessageData(null);
+    } catch (error) {
+      console.error('Failed to send message with force abort:', error);
     } finally {
       setIsSending(false);
     }
@@ -624,12 +641,16 @@ export function MessageInput({
           </button>
           <button
             type="button"
-            onClick={toggleSocialConflictMode}
-            className={`${styles.actionButton} ${isSocialConflictMode ? styles.active : ''}`}
-            title="Scontro Sociale (Raggirare, Persuasione, Intimidazione)"
-            disabled={disabled || !hasSocialConflictPermission}
+            onClick={() => setIsConfrontationModalOpen(true)}
+            className={styles.actionButton}
+            title={
+              !canOpenConfrontations
+                ? 'Serve almeno un altro personaggio in questa chat per avviare uno scontro'
+                : 'Scontri (Sociali e Combattimento)'
+            }
+            disabled={disabled || !hasSocialConflictPermission || !canOpenConfrontations}
           >
-            🎭 Scontro Sociale
+            ⚔️ Scontri
           </button>
           <button
             type="button"
@@ -705,6 +726,21 @@ export function MessageInput({
         />
       )}
 
+      {/* Confrontation Modal */}
+      {isConfrontationModalOpen && (
+        <ConfrontationModal
+          locationId={locationId}
+          characterSkills={characterData.skills}
+          occupants={occupants}
+          currentCharacterId={characterData.characterId}
+          onClose={() => setIsConfrontationModalOpen(false)}
+          onSuccess={() => {
+            setIsConfrontationModalOpen(false);
+            // Message will appear via WebSocket
+          }}
+        />
+      )}
+
       {/* PNG Light Manager Modal */}
       {showFakePngManager && (
         <FakePngManager
@@ -714,6 +750,33 @@ export function MessageInput({
             refetchFakePngs(); // Refresh avatar data
           }}
         />
+      )}
+
+      {/* Pending Reaction Confirmation Modal */}
+      {showPendingReactionModal && (
+        <div className={styles.modalOverlay} onClick={() => setShowPendingReactionModal(false)}>
+          <div className={styles.confirmModal} onClick={(e) => e.stopPropagation()}>
+            <h3>Reazione Pendente</h3>
+            <p>
+              Hai una reazione pendente da risolvere. Se confermi, verrà dichiarata
+              automaticamente fallita e potrai procedere con questa azione.
+            </p>
+            <div className={styles.modalButtons}>
+              <button
+                onClick={() => {
+                  setShowPendingReactionModal(false);
+                  setPendingMessageData(null);
+                }}
+                className={styles.cancelButton}
+              >
+                Annulla
+              </button>
+              <button onClick={handleForceAbortAndSend} className={styles.confirmButton}>
+                Conferma
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

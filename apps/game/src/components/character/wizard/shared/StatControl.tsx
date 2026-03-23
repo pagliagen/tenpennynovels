@@ -7,6 +7,7 @@
 'use client';
 
 import React, { useCallback } from 'react';
+
 import styles from '@/styles/components/character/wizard/StatControl.module.scss';
 
 export interface StatControlProps {

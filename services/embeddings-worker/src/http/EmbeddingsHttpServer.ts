@@ -85,7 +85,7 @@ export class EmbeddingsHttpServer {
      */
     this.app.post('/search', async (req: Request, res: Response) => {
       try {
-        const { query, type, source, limit, minScore } = req.body;
+        const { query, type, source, limit, minScore, filters } = req.body;
 
         // SECURITY: Validate query parameter
         if (!query || typeof query !== 'string') {
@@ -117,10 +117,10 @@ export class EmbeddingsHttpServer {
         }
 
         // SECURITY: Validate source
-        if (source && !['forum', 'documents'].includes(source)) {
+        if (source && !['forum', 'documents', 'chat'].includes(source)) {
           return res.status(400).json({
             success: false,
-            error: 'Invalid source: must be "forum" or "documents"'
+            error: 'Invalid source: must be "forum", "documents", or "chat"'
           });
         }
 
@@ -129,9 +129,21 @@ export class EmbeddingsHttpServer {
 
         // Execute search
         if (source === 'forum') {
-          const keywordResults = await this.forumKeywordSearch(query, validatedParams.limit * 2);
-          const semanticResults = await this.forumVectorSearch(embedding, validatedParams.limit * 2, validatedParams.minScore);
+          const keywordResults = await this.forumKeywordSearch(query, filters, validatedParams.limit * 2);
+          const semanticResults = await this.forumVectorSearch(embedding, filters, validatedParams.limit * 2, validatedParams.minScore);
           const merged = this.mergeForumWithRRF(keywordResults, semanticResults, validatedParams.limit);
+
+          return res.json({
+            success: true,
+            results: merged,
+            totalResults: merged.length
+          });
+        }
+
+        if (source === 'chat') {
+          const keywordResults = await this.chatKeywordSearch(query, filters, validatedParams.limit * 2);
+          const semanticResults = await this.chatVectorSearch(embedding, filters, validatedParams.limit * 2, validatedParams.minScore);
+          const merged = this.mergeChatWithRRF(keywordResults, semanticResults, validatedParams.limit);
 
           return res.json({
             success: true,
@@ -241,17 +253,39 @@ export class EmbeddingsHttpServer {
     }
   }
 
-  private async forumKeywordSearch(query: string, limit: number = 20) {
+  private async forumKeywordSearch(query: string, filters: any = {}, limit: number = 20) {
     try {
+      const mustClauses: any[] = [];
+      const filterClauses: any[] = [];
+
+      // Text search
+      mustClauses.push({
+        bool: {
+          should: [
+            { match: { content: query } },
+            { match: { authorCharacterName: { query, boost: 1.5 } } }
+          ]
+        }
+      });
+
+      // Apply filters
+      if (filters.topicSlug) {
+        filterClauses.push({ term: { topicSlug: filters.topicSlug } });
+      }
+      if (filters.discussionSlug) {
+        filterClauses.push({ term: { discussionSlug: filters.discussionSlug } });
+      }
+      if (filters.authorCharacterId) {
+        filterClauses.push({ term: { authorCharacterId: filters.authorCharacterId } });
+      }
+
       const response = await this.elasticsearch.search({
         index: `${config.services.elasticsearch.indexPrefix}_forum_posts`,
         body: {
           query: {
             bool: {
-              should: [
-                { match: { content: query } },
-                { match: { authorCharacterName: { query, boost: 1.5 } } }
-              ]
+              must: mustClauses,
+              filter: filterClauses
             }
           },
           size: limit
@@ -280,15 +314,33 @@ export class EmbeddingsHttpServer {
     }
   }
 
-  private async forumVectorSearch(embedding: number[], limit: number = 20, minScore: number = 0.4) {
+  private async forumVectorSearch(embedding: number[], filters: any = {}, limit: number = 20, minScore: number = 0.4) {
     try {
       if (!embedding) return [];
 
-      const results = await this.qdrant.search('forum_posts', {
+      // Build Qdrant filter
+      const mustClauses: any[] = [];
+      if (filters.topicSlug) {
+        mustClauses.push({ key: 'topicSlug', match: { value: filters.topicSlug } });
+      }
+      if (filters.discussionSlug) {
+        mustClauses.push({ key: 'discussionSlug', match: { value: filters.discussionSlug } });
+      }
+      if (filters.authorCharacterId) {
+        mustClauses.push({ key: 'authorCharacterId', match: { value: filters.authorCharacterId } });
+      }
+
+      const searchParams: any = {
         vector: embedding,
         limit,
         score_threshold: minScore
-      });
+      };
+
+      if (mustClauses.length > 0) {
+        searchParams.filter = { must: mustClauses };
+      }
+
+      const results = await this.qdrant.search('forum_posts', searchParams);
 
       return results.map((r, i) => {
         // Runtime validation for forum post Qdrant payload
@@ -310,6 +362,148 @@ export class EmbeddingsHttpServer {
       logger.error(`Forum vector search error: ${error.message}`);
       return [];
     }
+  }
+
+  private async chatKeywordSearch(query: string, filters: any = {}, limit: number = 20) {
+    try {
+      const mustClauses: any[] = [];
+      const filterClauses: any[] = [];
+
+      // Text search
+      mustClauses.push({
+        bool: {
+          should: [
+            { match: { content: query } },
+            { match: { characterName: { query, boost: 1.5 } } }
+          ]
+        }
+      });
+
+      // Apply filters
+      if (filters.locationId) {
+        filterClauses.push({ term: { locationId: filters.locationId } });
+      }
+      if (filters.characterId) {
+        filterClauses.push({ term: { characterId: filters.characterId } });
+      }
+      if (filters.dateStart || filters.dateEnd) {
+        const rangeFilter: any = {};
+        if (filters.dateStart) rangeFilter.gte = filters.dateStart;
+        if (filters.dateEnd) rangeFilter.lte = filters.dateEnd;
+        filterClauses.push({ range: { timestamp: rangeFilter } });
+      }
+
+      const response = await this.elasticsearch.search({
+        index: `${config.services.elasticsearch.indexPrefix}_chat_messages`,
+        body: {
+          query: {
+            bool: {
+              must: mustClauses,
+              filter: filterClauses
+            }
+          },
+          sort: [{ timestamp: 'desc' }],
+          size: limit
+        }
+      });
+
+      return response.hits.hits.map((hit: any, i: number) => {
+        if (!hit._source || typeof hit._source.chatId !== 'string') {
+          logger.warn('Invalid Elasticsearch chat result', { hitId: hit._id });
+          return null;
+        }
+
+        return {
+          chatId: hit._source.chatId,
+          locationId: hit._source.locationId ?? '',
+          characterId: hit._source.characterId ?? '',
+          characterName: hit._source.characterName ?? '',
+          content: hit._source.content ?? '',
+          timestamp: hit._source.timestamp ?? new Date(),
+          rank: i + 1
+        };
+      }).filter((item): item is NonNullable<typeof item> => item !== null);
+    } catch (error: any) {
+      logger.error(`Chat keyword search error: ${error.message}`);
+      return [];
+    }
+  }
+
+  private async chatVectorSearch(embedding: number[], filters: any = {}, limit: number = 20, minScore: number = 0.4) {
+    try {
+      if (!embedding) return [];
+
+      // Build Qdrant filter
+      const mustClauses: any[] = [];
+      if (filters.locationId) {
+        mustClauses.push({ key: 'locationId', match: { value: filters.locationId } });
+      }
+      if (filters.characterId) {
+        mustClauses.push({ key: 'characterId', match: { value: filters.characterId } });
+      }
+
+      const searchParams: any = {
+        vector: embedding,
+        limit,
+        score_threshold: minScore
+      };
+
+      if (mustClauses.length > 0) {
+        searchParams.filter = { must: mustClauses };
+      }
+
+      const results = await this.qdrant.search('chat_messages', searchParams);
+
+      return results.map((r, i) => {
+        if (!r.payload || typeof r.payload.chatId !== 'string') {
+          logger.warn('Invalid Qdrant chat result', { pointId: r.id });
+          return null;
+        }
+
+        return {
+          chatId: r.payload.chatId,
+          locationId: r.payload.locationId ?? '',
+          characterId: r.payload.characterId ?? '',
+          characterName: r.payload.characterName ?? '',
+          rank: i + 1
+        };
+      }).filter((item): item is NonNullable<typeof item> => item !== null);
+    } catch (error: any) {
+      logger.error(`Chat vector search error: ${error.message}`);
+      return [];
+    }
+  }
+
+  private mergeChatWithRRF(keywordResults: any[], semanticResults: any[], limit: number) {
+    const k = 60;
+    const scoreMap = new Map<string, { data: any; score: number }>();
+
+    for (const r of keywordResults) {
+      scoreMap.set(r.chatId, { data: r, score: 1 / (k + r.rank) });
+    }
+
+    for (const r of semanticResults) {
+      const rrfScore = 1 / (k + r.rank);
+      const existing = scoreMap.get(r.chatId);
+      if (existing) {
+        existing.score += rrfScore;
+      } else {
+        scoreMap.set(r.chatId, { data: r, score: rrfScore });
+      }
+    }
+
+    return Array.from(scoreMap.values())
+      .sort((a, b) => b.score - a.score)
+      .slice(0, limit)
+      .map(item => ({
+        chatId: item.data.chatId,
+        locationId: item.data.locationId,
+        characterId: item.data.characterId,
+        characterName: item.data.characterName,
+        content: item.data.content,
+        timestamp: item.data.timestamp,
+        score: item.score
+      }));
   }
 
   private mergeForumWithRRF(keywordResults: any[], semanticResults: any[], limit: number) {

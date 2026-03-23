@@ -3,7 +3,7 @@
  *
  * Full character sheet with all tabs and functionality.
  * Dual-panel layout: portrait left + tabs right.
- * All 9 tabs: informazioni, background, statistiche, abilità, diario, noteMaster, inventario, corporations, alloggio
+ * All 7 tabs: informazioni, background, statistiche, abilità, diario, noteMaster, inventario
  *
  * @module components/windows/contents/CharacterSheetPGPrincipale
  * @since 2.0.0
@@ -12,11 +12,15 @@
 'use client';
 
 import { useState } from 'react';
-import styles from '@/styles/components/character/CharacterSheetContent.module.scss';
+
 import { CharacterSheetLeftPanel } from '@/components/character/CharacterSheetLeftPanel';
 import { CharacterSheetRightPanel } from '@/components/character/CharacterSheetRightPanel';
+import { EditBackgroundForm } from '@/components/character/forms/EditBackgroundForm';
+import { EditInformazioniForm } from '@/components/character/forms/EditInformazioniForm';
+import { CharacterEditModal } from '@/components/character/modals/CharacterEditModal';
 import { Tabs } from '@/components/character/Tabs';
 import type { CharacterSheetData } from '@/hooks/useCharacterSheetData';
+import styles from '@/styles/components/character/CharacterSheetContent.module.scss';
 
 /**
  * Tab Types
@@ -33,9 +37,7 @@ export type CharacterSheetTab =
   | 'abilita'
   | 'diario'
   | 'noteMaster'
-  | 'inventario'
-  | 'corporations'
-  | 'alloggio';
+  | 'inventario';
 
 /**
  * Character Sheet PG Principale Props
@@ -74,23 +76,56 @@ export function CharacterSheetPGPrincipale({
   // Tab state management
   const [activeTab, setActiveTab] = useState<CharacterSheetTab>('informazioni');
 
+  // Modal state
+  const [showEditInfoModal, setShowEditInfoModal] = useState(false);
+  const [showEditBackgroundModal, setShowEditBackgroundModal] = useState(false);
+
   /**
    * Handle Edit Action (Contextual to Active Tab)
    *
-   * TODO: Implement edit modals for each tab type
-   * Different tabs will have different edit behaviors:
-   * - informazioni: basic data (name, age, occupation, physical description)
+   * Opens appropriate edit modal based on active tab.
+   *
+   * Implemented modals:
+   * - informazioni: basic data (name, age, gender, descriptions)
    * - background: private fields (motivations, fears, traumas, secrets)
-   * - statistiche: stats editor (charm, constitution, dexterity, etc.)
-   * - abilita: skills editor (manual points, occupation/interest bonuses)
+   *
+   * Future implementations:
+   * - statistiche: stats editor (requires complex validation with derived stats)
+   * - abilita: skills editor (83 skills with breakdown tracking)
    * - diario: personality traits editor
-   * - noteMaster: review history (game master only)
-   * - inventario: equipment manager (add/remove/modify items)
-   * - corporations: memberships manager
-   * - alloggio: housing details editor
+   * - inventario: equipment manager (CRUD operations)
+   *
+   * Not editable:
+   * - noteMaster: review history (read-only, master use only)
    */
   const handleEdit = () => {
     console.debug('[CharacterSheet] Edit requested for tab:', activeTab);
+
+    switch (activeTab) {
+      case 'informazioni':
+        setShowEditInfoModal(true);
+        break;
+      case 'background':
+        setShowEditBackgroundModal(true);
+        break;
+      case 'statistiche':
+        console.debug('[CharacterSheet] Stats editor - complex feature, planned for future release');
+        break;
+      case 'abilita':
+        console.debug('[CharacterSheet] Skills editor - complex feature, planned for future release');
+        break;
+      case 'diario':
+        console.debug('[CharacterSheet] Diary editor - feature planned for future release');
+        break;
+      case 'inventario':
+        console.debug('[CharacterSheet] Inventory manager - feature planned for future release');
+        break;
+      case 'noteMaster':
+        console.debug('[CharacterSheet] Note Master is read-only (master use only)');
+        break;
+      default:
+        console.debug('[CharacterSheet] No editor for tab:', activeTab);
+    }
   };
 
   return (
@@ -115,6 +150,35 @@ export function CharacterSheetPGPrincipale({
 
       {/* Tabs Bar - Vertical Sidebar */}
       <Tabs activeTab={activeTab} onTabChange={setActiveTab} />
+
+      {/* Edit Modals */}
+      {/* Informazioni Modal */}
+      <CharacterEditModal
+        title="✏️ Modifica Informazioni"
+        isOpen={showEditInfoModal}
+        onClose={() => setShowEditInfoModal(false)}
+      >
+        <EditInformazioniForm
+          characterId={character._id}
+          character={character}
+          onSuccess={() => setShowEditInfoModal(false)}
+          onCancel={() => setShowEditInfoModal(false)}
+        />
+      </CharacterEditModal>
+
+      {/* Background Modal */}
+      <CharacterEditModal
+        title="🔒 Modifica Background Privato"
+        isOpen={showEditBackgroundModal}
+        onClose={() => setShowEditBackgroundModal(false)}
+      >
+        <EditBackgroundForm
+          characterId={character._id}
+          character={character}
+          onSuccess={() => setShowEditBackgroundModal(false)}
+          onCancel={() => setShowEditBackgroundModal(false)}
+        />
+      </CharacterEditModal>
     </>
   );
 }

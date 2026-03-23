@@ -10,6 +10,8 @@
 
 'use client';
 
+import type { CSSProperties } from 'react';
+
 import styles from '@/styles/components/character/wizard/BudgetIndicator.module.scss';
 
 /**
@@ -60,7 +62,9 @@ export function BudgetIndicator({ spent, total, label }: BudgetIndicatorProps): 
       <div className={styles.budgetBar}>
         <div
           className={styles.budgetFill}
-          style={{ width: `${Math.min(percentage, 100)}%` }}
+          style={
+            { '--progress-pct': `${Math.min(percentage, 100)}%` } as CSSProperties
+          }
         />
       </div>
       {percentage > 100 && (

@@ -87,7 +87,7 @@ export default function ForgotPasswordPage() {
 
   return (
     <FormPageLayout
-      title="Recupera Password - Ten Penny Novels"
+      title="Ten Penny Novels | Recupera Password"
       description="Recupera la password del tuo account Ten Penny Novels."
       canonical="https://tenpennynovels.com/forgot-password/"
       noindex

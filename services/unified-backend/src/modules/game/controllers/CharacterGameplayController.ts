@@ -176,22 +176,25 @@ export class CharacterGameplayController {
         return;
       }
 
-      // Use centralized method to activate character and set context
-      await CharacterSessionManager.activateCharacterContext(
-        res,
-        character,
+      // NEW FLOW: Create session in Redis (multi-tab support)
+      const { SessionStore } = await import('../../../modules/auth/services/SessionStore');
+
+      const deviceInfo = {
+        userAgent: req.get('User-Agent') || 'Unknown',
+        browser: 'Unknown',
+        os: 'Unknown',
+        deviceType: 'desktop' as const,
+        ipAddress: req.ip || '127.0.0.1'
+      };
+
+      const sessionId = await SessionStore.createSession(
         userId,
-        {
-          deviceName: req.get('User-Agent') || 'Unknown',
-          browser: 'Unknown',
-          os: 'Unknown',
-          deviceType: 'desktop',
-          userAgent: req.get('User-Agent')
-        },
-        req.ip || '127.0.0.1',
-        '24h'
+        character.id,
+        deviceInfo
       );
 
+      // CRITICAL: Return sessionId in JSON (frontend saves to sessionStorage)
+      // NO cookie character_context (multi-tab support)
       res.json(successResponse(
         {
           character: {
@@ -208,7 +211,8 @@ export class CharacterGameplayController {
             canAccessLocations: true,
             canSendMessages: true,
             canUseItems: true
-          }
+          },
+          sessionId: sessionId  // NEW: Frontend saves to sessionStorage
         },
         'Personaggio selezionato con successo',
         getRequestId(req)

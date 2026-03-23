@@ -16,9 +16,11 @@
  */
 
 import { useQuery, useMutation, useQueryClient, type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
+
 import { forumApi } from '@/lib/api/forum';
-import { forumDiscussionKeys } from './useForumDiscussions';
 import type { ForumPost, PaginationInfo, ReactionType } from '@/types/forum';
+
+import { forumDiscussionKeys } from './useForumDiscussions';
 
 /**
  * Query Keys

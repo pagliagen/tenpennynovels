@@ -15,11 +15,6 @@ export const REDIS_CHANNELS = {
   EMBEDDING_DOCUMENT_UPDATED: 'embedding:document:updated',
   EMBEDDING_DOCUMENT_DELETED: 'embedding:document:deleted',
 
-  // Location events (no chunking)
-  EMBEDDING_LOCATION_CREATED: 'embedding:location:created',
-  EMBEDDING_LOCATION_UPDATED: 'embedding:location:updated',
-  EMBEDDING_LOCATION_DELETED: 'embedding:location:deleted',
-
   // Chat events (no chunking)
   EMBEDDING_CHAT_CREATED: 'embedding:chat:created',
   EMBEDDING_CHAT_UPDATED: 'embedding:chat:updated',
@@ -82,60 +77,6 @@ export async function publishDocumentDeletedEvent(documentId: string): Promise<v
     logger.debug(`[EmbeddingEvent] Document deleted: ${documentId}`);
   } catch (error: any) {
     logger.error('[EmbeddingEvent] Failed to publish document deleted:', error);
-  }
-}
-
-/**
- * Publish location created/updated event
- */
-export async function publishLocationEvent(
-  action: 'created' | 'updated',
-  location: {
-    _id: string;
-    name: string;
-    description: string;
-    district: string;
-    slug: string;
-  }
-): Promise<void> {
-  try {
-    const channel = action === 'created'
-      ? REDIS_CHANNELS.EMBEDDING_LOCATION_CREATED
-      : REDIS_CHANNELS.EMBEDDING_LOCATION_UPDATED;
-
-    const event = {
-      eventId: crypto.randomUUID(),
-      timestamp: new Date(),
-      locationId: location._id.toString(),
-      name: location.name,
-      description: location.description,
-      district: location.district,
-      slug: location.slug
-    };
-
-    await redis.publish(channel, JSON.stringify(event));
-    logger.debug(`[EmbeddingEvent] Location ${action}: ${location.name}`);
-  } catch (error: any) {
-    logger.error(`[EmbeddingEvent] Failed to publish location ${action}:`, error);
-  }
-}
-
-/**
- * Publish location deleted event
- */
-export async function publishLocationDeletedEvent(locationId: string): Promise<void> {
-  try {
-    const event = {
-      eventId: crypto.randomUUID(),
-      timestamp: new Date(),
-      entityType: 'location' as const,
-      entityId: locationId
-    };
-
-    await redis.publish(REDIS_CHANNELS.EMBEDDING_LOCATION_DELETED, JSON.stringify(event));
-    logger.debug(`[EmbeddingEvent] Location deleted: ${locationId}`);
-  } catch (error: any) {
-    logger.error('[EmbeddingEvent] Failed to publish location deleted:', error);
   }
 }
 

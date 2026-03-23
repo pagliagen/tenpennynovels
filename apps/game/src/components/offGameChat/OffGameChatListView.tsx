@@ -11,8 +11,9 @@
 'use client';
 
 import { useOffGameChats } from '@/hooks/useOffGameChat';
-import { OffGameChatItem } from './OffGameChatItem';
 import styles from '@/styles/components/offGameChat/OffGameChat.module.scss';
+
+import { OffGameChatItem } from './OffGameChatItem';
 
 interface OffGameChatListViewProps {
   onChatSelect: (chatId: string) => void;
@@ -30,7 +31,7 @@ export function OffGameChatListView({
       {/* Header */}
       <div className={styles.header}>
         <h2 className={styles.title}>Chat OFF-GAME</h2>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <div className={styles.headerActions}>
           <button className={styles.actionButton} onClick={() => onNewChat('direct')}>
             👤 Nuova Chat
           </button>
@@ -53,7 +54,7 @@ export function OffGameChatListView({
         {!isLoading && !error && chats.length === 0 && (
           <div className={styles.empty}>
             <p>Nessuna chat trovata</p>
-            <p style={{ fontSize: '0.875rem', marginTop: '0.5rem', opacity: 0.7 }}>
+            <p className={styles.emptyHint}>
               Crea una nuova chat per iniziare a comunicare
             </p>
           </div>

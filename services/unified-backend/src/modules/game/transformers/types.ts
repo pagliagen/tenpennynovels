@@ -31,7 +31,7 @@ export interface EnrichedChatMessage {
   statCheck?: EnrichedStatCheck;
   itemEffect?: EnrichedItemEffect;
   whisper?: EnrichedWhisper;
-  socialConflict?: any; // TODO: type this properly
+  socialConflict?: EnrichedSocialConflict;
 
   // Optional metadata
   editHistory?: Array<{
@@ -102,6 +102,22 @@ export interface EnrichedWhisper {
 }
 
 /**
+ * Social conflict result
+ */
+export interface EnrichedSocialConflict {
+  type: string;
+  attackerSkill: string;
+  defenderSkill: string;
+  attackerRoll: number;
+  defenderRoll: number;
+  result: string;
+  attackerSuccessDegree?: 'critical' | 'extreme' | 'hard' | 'normal' | 'failure' | 'fumble';
+  defenderSuccessDegree?: 'critical' | 'extreme' | 'hard' | 'normal' | 'failure' | 'fumble';
+  messageForDefender?: string;
+  visibleToDefenderOnly?: boolean;
+}
+
+/**
  * Parameters for ChatMessageService.getMessages()
  */
 export interface GetMessagesParams {
@@ -109,28 +125,5 @@ export interface GetMessagesParams {
   characterId: string;
   timeThreshold?: Date;
   limit?: number;
-}
-
-/**
- * Parameters for ChatMessageService.createMessage()
- */
-export interface CreateMessageParams {
-  actionType: string;
-  content: string;
-  locationId: string;
-  characterId: string;
-  characterName: string;
-  characterAvatar?: string;
-  isMasked: boolean;
-  realCharacterName?: string;
-  visibility?: 'public' | 'whisper' | 'master_only';
-  targetCharacters?: string[];
-  diceSpec?: string;
-  skillId?: string;
-  statName?: string;
-  itemId?: string;
-  position?: string;
-  isHidden?: boolean;
-  sessionId?: string;
-  characterRoles: string[];
+  offset?: number;
 }

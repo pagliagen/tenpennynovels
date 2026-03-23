@@ -1,6 +1,6 @@
 # Redis Pub/Sub and Queues
 
-**Navigation**: [Home](../INDEX.md) > [Infrastructure](./README.md) > Redis Pub/Sub
+**Navigation**: [Home](../../INDEX.md) > [Infrastructure](./README.md) > Redis Pub/Sub
 
 **Status**: ✅ Production Ready | **Last Updated**: 2026-03-08
 
@@ -26,8 +26,9 @@ flowchart TB
     subgraph Redis["Redis (Port 6379)"]
         subgraph PubSub["Pub/Sub Channels"]
             E1["embedding:document:*"]
-            E2["embedding:location:*"]
-            E3["embedding:location_action:*"]
+            E2["embedding:chat:*"]
+            E3["embedding:forum_post:*"]
+            E4["character:events (game)"]
         end
 
         subgraph Bull["Bull Queues"]
@@ -176,21 +177,24 @@ The unified-backend must run in **fork mode** (not cluster mode). Cluster mode c
 
 ## Pub/Sub Channels
 
-### Embedding Events
+### Embedding events (Redis)
 
-Events published by unified-backend when content is created/updated/deleted:
+Pubblicati da **unified-backend** (es. `EmbeddingEventPublisher`) quando cambiano contenuti indicizzabili. **embeddings-worker** si sottoscrive a questi canali e accoda i job Bull.
 
 | Channel | Trigger | Consumer |
 |---------|---------|----------|
-| `embedding:document:created` | New document saved | embeddings-worker |
-| `embedding:document:updated` | Document content changed | embeddings-worker |
-| `embedding:document:deleted` | Document removed | embeddings-worker |
-| `embedding:location:created` | New location | embeddings-worker |
-| `embedding:location:updated` | Location updated | embeddings-worker |
-| `embedding:location:deleted` | Location removed | embeddings-worker |
-| `embedding:location_action:created` | New location action | embeddings-worker |
-| `embedding:location_action:updated` | Location action updated | embeddings-worker |
-| `embedding:location_action:deleted` | Location action removed | embeddings-worker |
+| `embedding:document:created` / `updated` / `deleted` | Documenti knowledge base | embeddings-worker |
+| `embedding:document_chunk:created` | Nuovo chunk (pipeline documenti) | embeddings-worker |
+| `embedding:chat:created` / `updated` / `deleted` | Messaggi chat location | embeddings-worker |
+| `embedding:forum_post:created` / `updated` / `deleted` | Post forum | embeddings-worker |
+
+**Nota**: eventuali canali legacy `embedding:location:*` non sono più la fonte principale nel codice attuale; verificare `services/embeddings-worker/src/workers/embedding-worker.ts` per l’elenco effettivo delle sottoscrizioni.
+
+### Game events (Redis)
+
+| Channel | Ruolo |
+|---------|--------|
+| `character:events` | Bus interno game (subscriber lato unified-backend, vedi `RedisSubscriber` / `EventRouter`) |
 
 ### Event Flow
 
@@ -237,6 +241,6 @@ This ensures queue state and cached data survive container restarts.
 - [Docker Compose](./docker-compose.md) - Service orchestration and Redis container
 - [Environment Variables](./environment-variables.md) - REDIS_* configuration
 - [Qdrant Vector DB](./qdrant-vector-db.md) - Vector search (consumes embedding jobs)
-- [Unified Backend Architecture](../02-backend/unified-backend-architecture.md) - Event publishing
-- [Embeddings Architecture](../04-ai-ml/embeddings-architecture.md) - Embedding pipeline
-- [WebSocket Patterns](../05-frontend/websocket-patterns.md) - Client-side Socket.IO usage
+- [Unified Backend](../backend/unified-backend.md) - Pubblicazione eventi e API
+- [Embeddings Worker](../backend/embeddings-worker.md) - Coda e worker embedding
+- [WebSocket Patterns](../frontend/websocket-patterns.md) - Socket.IO lato client

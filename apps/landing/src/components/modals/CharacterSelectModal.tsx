@@ -42,11 +42,53 @@ export function CharacterSelectModal({
       setSelecting(characterId);
       setError('');
 
+      // ✅ CRITICAL: Clear session storage BEFORE character selection
+      try {
+        sessionStorage.removeItem('character_session_id');
+        sessionStorage.removeItem('character_context');
+        console.log('[CharacterSelectModal] SessionStorage cleared');
+      } catch (storageError) {
+        console.error('[CharacterSelectModal] Failed to clear sessionStorage:', storageError);
+      }
+
       const result = await characterService.selectCharacter(characterId);
 
       if (result.success) {
-        // Redirect to game
-        window.location.href = process.env.NEXT_PUBLIC_GAME_URL || 'http://localhost:3010';
+        // NEW: Save sessionId to sessionStorage HERE (guaranteed client-side)
+        const responseData = result.data;
+        if (responseData?.sessionId) {
+          try {
+            sessionStorage.setItem('character_session_id', responseData.sessionId);
+
+            // ✅ CRITICAL: Verify write succeeded
+            const stored = sessionStorage.getItem('character_session_id');
+            if (stored !== responseData.sessionId) {
+              throw new Error('sessionStorage write verification failed');
+            }
+
+            console.log('[CharacterSelectModal] ✅ sessionId saved and verified:', responseData.sessionId);
+          } catch (error) {
+            // ✅ CRITICAL: ABORT on storage failure
+            console.error('[CharacterSelectModal] ❌ sessionStorage write failed:', error);
+            setError('Impossibile salvare la sessione. Svuota la cache del browser.');
+            setSelecting('');
+            return; // Stop redirect
+          }
+        } else {
+          console.warn('[CharacterSelectModal] ⚠️ No sessionId in response');
+        }
+
+        // Redirect to game with sessionId as query param
+        // NOTE: sessionStorage is NOT shared between origins (localhost:4001 vs localhost:3010)
+        const gameUrl = process.env.NEXT_PUBLIC_GAME_URL || 'http://localhost:3010';
+        const sessionId = responseData?.sessionId || sessionStorage.getItem('character_session_id');
+
+        if (sessionId) {
+          window.location.href = `${gameUrl}?sessionId=${sessionId}`;
+        } else {
+          console.error('[CharacterSelectModal] No sessionId found - redirect without it');
+          window.location.href = gameUrl;
+        }
       } else {
         setError(result.error || 'Errore durante la selezione del personaggio');
       }

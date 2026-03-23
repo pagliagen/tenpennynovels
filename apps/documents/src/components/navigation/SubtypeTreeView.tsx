@@ -11,7 +11,7 @@
  * @since 2.0.0
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, type CSSProperties } from 'react';
 import Link from 'next/link';
 import type { DocumentSubtype, SubtypeDocument } from '@/types/document';
 import styles from './RouteTreeView.module.scss';
@@ -122,7 +122,7 @@ export function SubtypeTreeView({ subtypes, type, currentPath }: SubtypeTreeView
       <div key={doc._id}>
         <div
           className={styles.documentNode}
-          style={{ paddingLeft: `${depth * 20}px` }}
+          style={{ '--depth': depth } as CSSProperties}
         >
           <div className={styles.documentRow}> 
             {hasChildren ? (

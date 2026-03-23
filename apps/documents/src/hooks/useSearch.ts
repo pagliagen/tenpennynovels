@@ -238,7 +238,7 @@ function useSSESearch(query: string, options: UseSearchOptions = {}) {
         });
 
         if (!response.ok || !response.body) {
-          console.error('[SSE] Bad response:', response.status);
+          console.error('[SSE] Risposta non valida:', response.status);
           setAiLoading(false);
           setIsLoading(false);
           return;
@@ -257,7 +257,9 @@ function useSSESearch(query: string, options: UseSearchOptions = {}) {
           sseBuffer = remaining;
 
           for (const { event, data } of events) {
-            console.log(`[SSE] +${Date.now() - t0}ms event: ${event}`);
+            if (process.env.NODE_ENV === 'development') {
+              console.log(`[SSE] +${Date.now() - t0}ms event: ${event}`);
+            }
 
             if (event === 'results') {
               try {
@@ -309,7 +311,7 @@ function useSSESearch(query: string, options: UseSearchOptions = {}) {
         setAiComplete(true);
       } catch (err: any) {
         if (err.name === 'AbortError') return;
-        console.error('[SSE] Fetch error:', err);
+        console.error('[SSE] Errore di rete:', err);
         setAiLoading(false);
         setIsLoading(false);
       }

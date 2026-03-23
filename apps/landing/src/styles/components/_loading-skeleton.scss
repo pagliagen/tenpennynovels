@@ -6,6 +6,8 @@
 
 .loading-skeleton {
   display: block;
+  width: var(--skeleton-width, 100%);
+  height: var(--skeleton-height, 1rem);
   background: linear-gradient(
     90deg,
     var(--color-bg-secondary) 0%,
@@ -30,16 +32,8 @@
   }
 
   /**
-   * Variant-specific defaults
+   * Variant-specific defaults supplied via --skeleton-width / --skeleton-height from component
    */
-  &--avatar {
-    width: 48px;
-    height: 48px;
-  }
-
-  &--card {
-    height: 200px;
-  }
 }
 
 /**

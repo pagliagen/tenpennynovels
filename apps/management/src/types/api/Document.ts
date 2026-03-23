@@ -37,6 +37,8 @@ export interface DocumentTreeNode {
   order: number;
   parentId: string | null;
   path?: string;
+  /** Tipo route pubblica documenti (se noto dal backend). */
+  type?: 'ambientazione' | 'regolamento';
   subtype: {
     _id: string;
     slug: string;
@@ -122,4 +124,13 @@ export interface UpdateDocumentData {
   tags?: string[];
   isDraft?: boolean;
   visible?: boolean;
+}
+
+export interface SeoDocument {
+  _id: string;
+  title: string;
+  slug: string;
+  type: 'ambientazione' | 'regolamento';
+  path: string;
+  description: string;
 }

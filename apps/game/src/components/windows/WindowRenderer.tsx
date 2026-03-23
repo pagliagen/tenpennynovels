@@ -11,11 +11,12 @@
 'use client';
 
 import { useWindowManagerStore } from '@/store/windowManagerStore';
-import { Window } from './Window';
+
 import { CharacterSheetContent } from './contents/CharacterSheetContent';
-import { MessageOnGameContent } from './contents/MessageOnGameContent';
 import { MessageOffGameContent } from './contents/MessageOffGameContent';
+import { MessageOnGameContent } from './contents/MessageOnGameContent';
 import { UtilityContent } from './contents/UtilityContent';
+import { Window } from './Window';
 
 /**
  * Window Renderer Component
