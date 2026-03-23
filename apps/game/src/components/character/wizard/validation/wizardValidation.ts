@@ -179,10 +179,11 @@ export function validateStep5(
 
   const bgFields = creationConfig?.limits.backgroundFields;
 
-  const briefHistoryMin = bgFields?.briefHistory?.minChar ?? 0;
+  const briefHistoryMin = bgFields?.briefHistory?.minChar ?? 50;
   const briefHistoryMax = bgFields?.briefHistory?.maxChar ?? 4000;
   const significantEventsMax = bgFields?.significantEvents?.maxChar ?? 2500;
   const importantRelationshipsMax = bgFields?.importantRelationships?.maxChar ?? 2500;
+  const personalityMin = bgFields?.personality?.minChar ?? 50;
   const personalityMax = bgFields?.personality?.maxChar ?? 2500;
   const ideologyMax = bgFields?.ideology?.maxChar ?? 2500;
 
@@ -197,6 +198,9 @@ export function validateStep5(
   }
   if (background.importantRelationships && background.importantRelationships.length > importantRelationshipsMax) {
     errors.importantRelationships = `Relazioni importanti non può superare ${importantRelationshipsMax} caratteri`;
+  }
+  if (personalityMin > 0 && background.personality && background.personality.length < personalityMin) {
+    errors.personality = `Personalità deve essere almeno ${personalityMin} caratteri`;
   }
   if (background.personality && background.personality.length > personalityMax) {
     errors.personality = `Personalità non può superare ${personalityMax} caratteri`;

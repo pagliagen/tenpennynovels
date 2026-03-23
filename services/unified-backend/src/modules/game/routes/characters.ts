@@ -78,8 +78,6 @@ router.put('/characters/:characterId',
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:character:update'),
   CharacterValidationMiddleware.validateCharacterUpdate,
-  CharacterValidationMiddleware.validateVictorianContent,
-  CharacterValidationMiddleware.validateNewBackgroundFormat,
   CharacterController.updateCharacter
 );
 

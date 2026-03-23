@@ -251,7 +251,6 @@ const CharacterSchema = new Schema<ICharacter>({
     type: String,
     required: true,
     trim: true,
-    minlength: 2,
     maxlength: 50
   },
   surname: {
@@ -262,15 +261,11 @@ const CharacterSchema = new Schema<ICharacter>({
   },
   age: {
     type: Number,
-    min: 16,
-    max: 80,
-    required: false // Opzionale per PNG/Master
+    required: false
   },
   apparentAge: {
     type: Number,
-    min: 16,
-    max: 80,
-    required: false // Opzionale per PNG/Master
+    required: false
   },
   birthDate: {
     type: String,
@@ -288,9 +283,8 @@ const CharacterSchema = new Schema<ICharacter>({
   physicalDescription: {
     type: String,
     trim: true,
-    minlength: 10,
-    maxlength: 1000,
-    required: false // Opzionale per PNG/Master
+    maxlength: 5000,
+    required: false
   },
   birthPlace: {
     type: String,
@@ -301,38 +295,14 @@ const CharacterSchema = new Schema<ICharacter>({
   publicDescription: {
     type: String,
     trim: true,
-    maxlength: 4000,
-    required: false, // Opzionale
-    validate: {
-      validator: function(value: string) {
-        // Only apply minlength validation for pg_principale
-        // For PNG/Master, skip validation (any length is OK)
-        const doc = this as unknown as ICharacter;
-        if (doc.characterType === 'pg_principale' && value && value.length < 50) {
-          return false;
-        }
-        return true;
-      },
-      message: 'Public description must be at least 50 characters for main characters'
-    }
+    maxlength: 5000,
+    required: false
   },
   privateDescription: {
     type: String,
     trim: true,
-    validate: {
-      validator: function(value: string) {
-        // Only apply minlength validation for pg_principale
-        // For PNG/Master, skip validation (any length is OK)
-        const doc = this as unknown as ICharacter;
-        if (doc.characterType === 'pg_principale' && value && value.length < 50) {
-          return false;
-        }
-        return true;
-      },
-      message: 'Private description must be at least 50 characters for main characters'
-    },
-    maxlength: 4000,
-    required: false // Opzionale per PNG/Master
+    maxlength: 5000,
+    required: false
   },
   gender: {
     type: String,
@@ -505,51 +475,15 @@ const CharacterSchema = new Schema<ICharacter>({
 
   // Background guidato strutturato
   background: {
-    briefHistory: {
-      type: String,
-      trim: true,
-      maxlength: 4000
-    },
-    significantEvents: {
-      type: String,
-      trim: true,
-      maxlength: 2500
-    },
-    importantRelationships: {
-      type: String,
-      trim: true,
-      maxlength: 2500
-    },
-    personality: {
-      type: String,
-      trim: true,
-      maxlength: 2500
-    },
-    ideology: {
-      type: String,
-      trim: true,
-      maxlength: 2500
-    },
-    significantPlaces: {
-      type: String,
-      trim: true,
-      maxlength: 2500
-    },
-    fearsAndPhobias: {
-      type: String,
-      trim: true,
-      maxlength: 2500
-    },
-    secrets: {
-      type: String,
-      trim: true,
-      maxlength: 2500
-    },
-    goalsAndMotivations: {
-      type: String,
-      trim: true,
-      maxlength: 2500
-    }
+    briefHistory:           { type: String, trim: true, maxlength: 5000 },
+    significantEvents:      { type: String, trim: true, maxlength: 5000 },
+    importantRelationships: { type: String, trim: true, maxlength: 5000 },
+    personality:            { type: String, trim: true, maxlength: 5000 },
+    ideology:               { type: String, trim: true, maxlength: 5000 },
+    significantPlaces:      { type: String, trim: true, maxlength: 5000 },
+    fearsAndPhobias:        { type: String, trim: true, maxlength: 5000 },
+    secrets:                { type: String, trim: true, maxlength: 5000 },
+    goalsAndMotivations:    { type: String, trim: true, maxlength: 5000 }
   },
 
   backgroundCompleted: {

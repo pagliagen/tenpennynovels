@@ -264,13 +264,24 @@ function WizardContainerInner({ characterId, onSubmittingChange }: WizardContain
       }, 2500);
     } catch (error: any) {
       onSubmittingChange?.(false);
-      const backendErrors = error?.details?.errors || error?.details;
-      const backendWarnings = error?.details?.warnings;
+      const rawErrors = error?.details?.errors || error?.details;
+      const rawWarnings = error?.details?.warnings;
+
+      const toDetailsArray = (raw: any): string[] | undefined => {
+        if (!raw) return undefined;
+        if (Array.isArray(raw)) return raw.length > 0 ? raw : undefined;
+        if (typeof raw === 'object') {
+          const vals = Object.values(raw).filter((v) => typeof v === 'string') as string[];
+          return vals.length > 0 ? vals : undefined;
+        }
+        return undefined;
+      };
+
       setSubmitFeedback({
         type: 'error',
         message: error.message || 'Errore sconosciuto durante l\'invio',
-        details: Array.isArray(backendErrors) ? backendErrors : undefined,
-        warnings: Array.isArray(backendWarnings) ? backendWarnings : undefined,
+        details: toDetailsArray(rawErrors),
+        warnings: toDetailsArray(rawWarnings),
       });
       setTimeout(() => feedbackRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
     }

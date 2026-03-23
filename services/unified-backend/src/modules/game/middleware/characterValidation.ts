@@ -3,13 +3,29 @@ import { body, validationResult } from 'express-validator';
 import { ApiResponse } from '../types/game';
 import { logger } from '../logger';
 
+const MAX_TEXT = 5000;
+const MAX_SHORT = 100;
+const MAX_NAME = 50;
+
+const optionalUrl = (field: string) =>
+  body(field)
+    .optional({ checkFalsy: true })
+    .custom((value) => {
+      try {
+        new URL(value);
+        return true;
+      } catch {
+        throw new Error(`${field} deve essere un URL valido`);
+      }
+    });
+
 export class CharacterValidationMiddleware {
   /**
    * Handle validation results and return errors if any
    */
   static handleValidationErrors(req: Request, res: Response, next: NextFunction) {
     const errors = validationResult(req);
-    
+
     if (!errors.isEmpty()) {
       const validationErrors = errors.array().map(error => ({
         field: error.type === 'field' ? error.path : 'unknown',
@@ -35,351 +51,157 @@ export class CharacterValidationMiddleware {
   }
 
   /**
-   * Character creation validation
+   * PUT /characters/:id — salvataggio progressivo dal wizard.
+   *
+   * Tutti i campi sono opzionali (il wizard salva anche stati parziali).
+   * Unico scopo: cap anti-DDOS (max 5000 char per i testi) e validazione
+   * di formato per i campi strutturati (URL, numeri).
+   * Le regole di business (min char, completezza background) sono gestite
+   * da validateBackgroundCompletion (submit) e characterCreationUtils.
    */
-  static validateCharacterCreation = [
+  static validateCharacterUpdate = [
     body('name')
-      .notEmpty()
-      .withMessage('Nome è richiesto')
-      .isLength({ min: 2, max: 50 })
-      .withMessage('Nome deve essere tra 2 e 50 caratteri')
-      .trim(),
-
-    body('birthPlace')
-      .notEmpty()
-      .withMessage('Luogo di nascita è richiesto')
-      .isLength({ min: 2, max: 100 })
-      .withMessage('Luogo di nascita deve essere tra 2 e 100 caratteri')
-      .trim(),
-
-    body('currentOccupation')
-      .notEmpty()
-      .withMessage('Occupazione attuale è richiesta')
-      .isLength({ min: 2, max: 100 })
-      .withMessage('Occupazione attuale deve essere tra 2 e 100 caratteri')
+      .optional()
+      .isLength({ min: 2, max: MAX_NAME })
+      .withMessage(`Nome deve essere tra 2 e ${MAX_NAME} caratteri`)
       .trim(),
 
     body('apparentAge')
-      .isInt({ min: 16, max: 80 })
-      .withMessage('Età apparente deve essere tra 16 e 80 anni'),
+      .optional({ checkFalsy: true })
+      .isInt({ min: 0, max: 150 })
+      .withMessage('Età apparente deve essere un numero intero'),
+
+    body('nationality')
+      .optional({ checkFalsy: true })
+      .isLength({ max: MAX_SHORT })
+      .withMessage(`Nazionalità non può superare ${MAX_SHORT} caratteri`)
+      .trim(),
+
+    body('prestavolto')
+      .optional({ checkFalsy: true })
+      .isLength({ max: MAX_SHORT })
+      .withMessage(`Prestavolto non può superare ${MAX_SHORT} caratteri`)
+      .trim(),
 
     body('height')
-      .notEmpty()
-      .withMessage('Altezza è obbligatoria')
+      .optional({ checkFalsy: true })
       .isLength({ max: 20 })
-      .withMessage('Altezza non può superare 20 caratteri')
       .trim()
       .custom((value) => {
+        if (!value) return true;
         const num = parseFloat(value);
-        if (isNaN(num) || num < 100 || num > 250) {
-          throw new Error('Altezza deve essere tra 100 e 250 cm');
+        if (isNaN(num) || num < 50 || num > 300) {
+          throw new Error('Altezza non valida (atteso: 50–300 cm)');
         }
         return true;
       }),
 
     body('weight')
-      .notEmpty()
-      .withMessage('Peso è obbligatorio')
+      .optional({ checkFalsy: true })
       .isLength({ max: 20 })
-      .withMessage('Peso non può superare 20 caratteri')
       .trim()
       .custom((value) => {
+        if (!value) return true;
         const num = parseFloat(value);
-        if (isNaN(num) || num < 30 || num > 200) {
-          throw new Error('Peso deve essere tra 30 e 200 kg');
+        if (isNaN(num) || num < 10 || num > 500) {
+          throw new Error('Peso non valido (atteso: 10–500 kg)');
         }
         return true;
       }),
 
+    // Campi testo libero: solo cap anti-DDOS
     body('physicalDescription')
-      .notEmpty()
-      .withMessage('Descrizione fisica è richiesta')
-      .isLength({ min: 10, max: 1000 })
-      .withMessage('Descrizione fisica deve essere tra 10 e 1000 caratteri')
-      .trim(),
-
-    body('nationality')
-      .notEmpty()
-      .withMessage('Nazionalità è richiesta')
-      .isLength({ max: 50 })
-      .withMessage('Nazionalità non può superare 50 caratteri')
+      .optional({ checkFalsy: true })
+      .isLength({ max: MAX_TEXT })
+      .withMessage(`Descrizione fisica non può superare ${MAX_TEXT} caratteri`)
       .trim(),
 
     body('publicDescription')
-      .notEmpty()
-      .withMessage('Descrizione pubblica è richiesta')
-      .isLength({ min: 10, max: 1000 })
-      .withMessage('Descrizione pubblica deve essere tra 10 e 1000 caratteri')
-      .trim(),
-
-    CharacterValidationMiddleware.handleValidationErrors
-  ];
-
-  /**
-   * Character update validation
-   */
-  static validateCharacterUpdate = [
-    body('name')
-      .optional()
-      .isLength({ min: 2, max: 50 })
-      .withMessage('Nome deve essere tra 2 e 50 caratteri')
-      .trim(),
-
-    body('apparentAge')
-      .optional()
-      .isInt({ min: 16, max: 80 })
-      .withMessage('Età apparente deve essere tra 16 e 80 anni'),
-
-    body('physicalDescription')
-      .optional()
-      .isLength({ min: 10, max: 1000 })
-      .withMessage('Descrizione fisica deve essere tra 10 e 1000 caratteri')
-      .trim(),
-
-    body('nationality')
-      .optional()
-      .isLength({ max: 50 })
-      .withMessage('Nazionalità non può superare 50 caratteri')
-      .trim(),
-
-    body('publicDescription')
-      .optional()
-      .isLength({ min: 10, max: 1000 })
-      .withMessage('Descrizione pubblica deve essere tra 10 e 1000 caratteri')
-      .trim(),
-
-    body('avatar')
-      .optional()
-      .custom((value) => {
-        if (!value || value.trim() === '') {
-          return true; // Allow empty values
-        }
-        try {
-          new URL(value);
-          return true;
-        } catch {
-          throw new Error('Avatar deve essere un URL valido');
-        }
-      }),
-
-    body('profileImage')
-      .optional()
-      .custom((value) => {
-        if (!value || value.trim() === '') {
-          return true; // Allow empty values
-        }
-        try {
-          new URL(value);
-          return true;
-        } catch {
-          throw new Error('Immagine di profilo deve essere un URL valido');
-        }
-      }),
-
-    body('audioTheme')
-      .optional()
-      .custom((value) => {
-        if (!value || value.trim() === '') {
-          return true; // Allow empty values
-        }
-        // Check if it's a valid URL (including YouTube URLs)
-        try {
-          new URL(value);
-          return true;
-        } catch {
-          throw new Error('Audio tema deve essere un URL valido');
-        }
-      }),
-
-    body('prestavolto')
-      .optional()
-      .isLength({ max: 100 })
-      .withMessage('Prestavolto non può superare 100 caratteri')
-      .trim(),
-
-    CharacterValidationMiddleware.handleValidationErrors
-  ];
-
-  /**
-   * Validation for character submission
-   */
-  static validateCharacterSubmission = [
-    CharacterValidationMiddleware.handleValidationErrors
-  ];
-
-  /**
-   * Validation for background questionnaire responses
-   */
-  static validateBackgroundResponses = [
-    body('responses')
-      .isArray()
-      .withMessage('Responses must be an array'),
-
-    body('responses.*.questionId')
-      .notEmpty()
-      .withMessage('Question ID is required')
-      .trim(),
-
-    body('responses.*.response')
-      .notEmpty()
-      .withMessage('Response is required')
-      .trim(),
-
-    CharacterValidationMiddleware.handleValidationErrors
-  ];
-
-  /**
-   * Validate new background format (9 structured fields)
-   *
-   * Validates the background object with fields:
-   * - briefHistory* (min 100 chars)
-   * - personality* (min 50 chars)
-   * - goalsAndMotivations* (min 50 chars)
-   * - significantEvents, importantRelationships, ideology, significantPlaces, fearsAndPhobias, secrets (optional)
-   *
-   * Also validates basicInfo fields:
-   * - publicDescription* (min 50 chars)
-   * - privateDescription* (min 50 chars)
-   * - physicalDescription (optional)
-   */
-  static validateNewBackgroundFormat = [
-    // BasicInfo required fields
-    body('publicDescription')
-      .notEmpty()
-      .withMessage('Descrizione pubblica è richiesta')
-      .isLength({ min: 50, max: 4000 })
-      .withMessage('Descrizione pubblica deve essere tra 50 e 4000 caratteri')
+      .optional({ checkFalsy: true })
+      .isLength({ max: MAX_TEXT })
+      .withMessage(`Descrizione pubblica non può superare ${MAX_TEXT} caratteri`)
       .trim(),
 
     body('privateDescription')
-      .notEmpty()
-      .withMessage('Descrizione privata è richiesta')
-      .isLength({ min: 50, max: 4000 })
-      .withMessage('Descrizione privata deve essere tra 50 e 4000 caratteri')
+      .optional({ checkFalsy: true })
+      .isLength({ max: MAX_TEXT })
+      .withMessage(`Descrizione privata non può superare ${MAX_TEXT} caratteri`)
       .trim(),
 
-    body('physicalDescription')
-      .optional()
-      .isLength({ max: 4000 })
-      .withMessage('Descrizione fisica non può superare 4000 caratteri')
-      .trim(),
-
-    // Background required fields
+    // Background: campi testo libero, solo cap
     body('background.briefHistory')
-      .notEmpty()
-      .withMessage('Storia in breve è richiesta')
-      .isLength({ min: 100, max: 4000 })
-      .withMessage('Storia in breve deve essere tra 100 e 4000 caratteri')
+      .optional({ checkFalsy: true })
+      .isLength({ max: MAX_TEXT })
+      .withMessage(`Storia in breve non può superare ${MAX_TEXT} caratteri`)
       .trim(),
 
     body('background.personality')
-      .notEmpty()
-      .withMessage('Personalità è richiesta')
-      .isLength({ min: 50, max: 2500 })
-      .withMessage('Personalità deve essere tra 50 e 2500 caratteri')
+      .optional({ checkFalsy: true })
+      .isLength({ max: MAX_TEXT })
+      .withMessage(`Personalità non può superare ${MAX_TEXT} caratteri`)
       .trim(),
 
     body('background.goalsAndMotivations')
-      .notEmpty()
-      .withMessage('Obiettivi e motivazioni sono richiesti')
-      .isLength({ min: 50, max: 2500 })
-      .withMessage('Obiettivi e motivazioni devono essere tra 50 e 2500 caratteri')
+      .optional({ checkFalsy: true })
+      .isLength({ max: MAX_TEXT })
+      .withMessage(`Obiettivi e motivazioni non possono superare ${MAX_TEXT} caratteri`)
       .trim(),
 
-    // Background optional fields
     body('background.significantEvents')
-      .optional()
-      .isLength({ max: 2500 })
-      .withMessage('Fatti salienti non possono superare 2500 caratteri')
+      .optional({ checkFalsy: true })
+      .isLength({ max: MAX_TEXT })
+      .withMessage(`Fatti salienti non possono superare ${MAX_TEXT} caratteri`)
       .trim(),
 
     body('background.importantRelationships')
-      .optional()
-      .isLength({ max: 2500 })
-      .withMessage('Relazioni importanti non possono superare 2500 caratteri')
+      .optional({ checkFalsy: true })
+      .isLength({ max: MAX_TEXT })
+      .withMessage(`Relazioni importanti non possono superare ${MAX_TEXT} caratteri`)
       .trim(),
 
     body('background.ideology')
-      .optional()
-      .isLength({ max: 2500 })
-      .withMessage('Ideologia non può superare 2500 caratteri')
+      .optional({ checkFalsy: true })
+      .isLength({ max: MAX_TEXT })
+      .withMessage(`Ideologia non può superare ${MAX_TEXT} caratteri`)
       .trim(),
 
     body('background.significantPlaces')
-      .optional()
-      .isLength({ max: 2500 })
-      .withMessage('Luoghi significativi non possono superare 2500 caratteri')
+      .optional({ checkFalsy: true })
+      .isLength({ max: MAX_TEXT })
+      .withMessage(`Luoghi significativi non possono superare ${MAX_TEXT} caratteri`)
       .trim(),
 
     body('background.fearsAndPhobias')
-      .optional()
-      .isLength({ max: 2500 })
-      .withMessage('Paure e fobie non possono superare 2500 caratteri')
+      .optional({ checkFalsy: true })
+      .isLength({ max: MAX_TEXT })
+      .withMessage(`Paure e fobie non possono superare ${MAX_TEXT} caratteri`)
       .trim(),
 
     body('background.secrets')
-      .optional()
-      .isLength({ max: 2500 })
-      .withMessage('Segreti non possono superare 2500 caratteri')
+      .optional({ checkFalsy: true })
+      .isLength({ max: MAX_TEXT })
+      .withMessage(`Segreti non possono superare ${MAX_TEXT} caratteri`)
       .trim(),
 
-    CharacterValidationMiddleware.handleValidationErrors
-  ];
-
-  /**
-   * Victorian era appropriate content validation
-   */
-  static validateVictorianContent = [
-    body('physicalDescription')
-      .optional()
-      .custom((value) => {
-        // Lista di parole/concetti non appropriati per l'era vittoriana
-        const modernTerms = ['computer', 'internet', 'cellphone', 'wifi', 'bluetooth'];
-        const valueToCheck = value.toLowerCase();
-        
-        for (const term of modernTerms) {
-          if (valueToCheck.includes(term)) {
-            throw new Error(`Termine non appropriato per l'ambientazione vittoriana: ${term}`);
-          }
-        }
-        
-        return true;
-      }),
-
-    body('publicDescription')
-      .optional()
-      .custom((value) => {
-        const modernTerms = ['computer', 'internet', 'cellphone', 'wifi', 'bluetooth'];
-        const valueToCheck = value.toLowerCase();
-        
-        for (const term of modernTerms) {
-          if (valueToCheck.includes(term)) {
-            throw new Error(`Termine non appropriato per l'ambientazione vittoriana: ${term}`);
-          }
-        }
-        
-        return true;
-      }),
+    // Campi URL
+    optionalUrl('avatar'),
+    optionalUrl('profileImage'),
+    optionalUrl('audioTheme'),
 
     CharacterValidationMiddleware.handleValidationErrors
   ];
 
   /**
-   * Validate background completion for character submission
+   * POST /characters/:id/submit — validazione completezza pre-invio.
    *
-   * Checks that the character has complete background information in the new format:
-   * - publicDescription (min 50 chars)
-   * - privateDescription (min 50 chars)
-   * - background.briefHistory (min 100 chars)
-   * - background.personality (min 50 chars)
-   * - background.goalsAndMotivations (min 50 chars)
+   * Legge il personaggio dal DB e verifica che i campi obbligatori
+   * per la sottomissione siano presenti e rispettino i minimi.
    */
   static async validateBackgroundCompletion(req: Request, res: Response, next: NextFunction) {
     try {
       const characterId = req.params.characterId;
       const userId = req.user!.userId;
 
-      // Find character
       const Character = require('../../../database/models').Character;
       const character = await Character.findOne({
         _id: characterId,
@@ -396,50 +218,30 @@ export class CharacterValidationMiddleware {
         return res.status(404).json(response);
       }
 
-      // Validate required background fields
       const errors: string[] = [];
 
-      // Check basicInfo fields
-      if (!character.publicDescription || character.publicDescription.length < 50) {
-        errors.push('Descrizione pubblica mancante o troppo breve (minimo 50 caratteri)');
-      }
-
-      if (!character.privateDescription || character.privateDescription.length < 50) {
-        errors.push('Descrizione privata mancante o troppo breve (minimo 50 caratteri)');
-      }
-
-      // Check background object fields
       if (!character.background) {
         errors.push('Background strutturato mancante');
       } else {
-        if (!character.background.briefHistory || character.background.briefHistory.length < 100) {
-          errors.push('Storia in breve mancante o troppo breve (minimo 100 caratteri)');
+        if (!character.background.briefHistory || character.background.briefHistory.length < 50) {
+          errors.push('Storia in breve mancante o troppo breve (minimo 50 caratteri)');
         }
-
         if (!character.background.personality || character.background.personality.length < 50) {
           errors.push('Personalità mancante o troppo breve (minimo 50 caratteri)');
-        }
-
-        if (!character.background.goalsAndMotivations || character.background.goalsAndMotivations.length < 50) {
-          errors.push('Obiettivi e motivazioni mancanti o troppo brevi (minimo 50 caratteri)');
         }
       }
 
       if (errors.length > 0) {
         const response: ApiResponse = {
           result: false,
-          error: 'Background incomplete',
+          error: 'Background incompleto',
           code: 'BACKGROUND_INCOMPLETE',
-          details: {
-            errors,
-            missingFields: errors.length
-          },
+          details: { errors, missingFields: errors.length },
           timestamp: new Date().toISOString()
         };
         return res.status(400).json(response);
       }
 
-      // All checks passed
       next();
 
     } catch (error: any) {
@@ -451,7 +253,6 @@ export class CharacterValidationMiddleware {
         code: 'BACKGROUND_VALIDATION_ERROR',
         timestamp: new Date().toISOString()
       };
-
       return res.status(500).json(response);
     }
   }

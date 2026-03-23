@@ -2,8 +2,6 @@ import { Character, Occupation, Skill } from '@database/models';
 import { ICharacter, SkillBreakdown } from '@database/models/Character';
 import { IOccupation } from '@database/models/Occupation';
 import { CharacterCreationConfig, calculateIntelligenceBonus } from '@shared/services/CharacterCreationConfigService';
-import { ConfigurationService } from '@shared/services/ConfigurationService';
-import { redis } from '@config/runtime/redis';
 import { logger } from '../logger';
 
 /**
@@ -12,14 +10,6 @@ import { logger } from '../logger';
  * Helper functions for the new character creation system based on Call of Cthulhu rules.
  * Implements the new occupation system with required skills (6) and bonus skills (1-2).
  */
-
-/**
- * Create ConfigurationService instance
- * Helper to avoid repeating instantiation code
- */
-function getConfigService(): ConfigurationService {
-  return new ConfigurationService(redis.getClient(), logger);
-}
 
 interface SkillPointsCalculation {
   basePoints: number; // 200 punti base
@@ -278,24 +268,11 @@ export async function validateCharacterSubmission(character: ICharacter, config:
     result.isValid = false;
   }
 
-  if (!character.publicDescription || character.publicDescription.length < 50) {
-    result.errors.push(`La descrizione pubblica deve essere di almeno 50 caratteri (attuale: ${character.publicDescription?.length || 0})`);
-    result.isValid = false;
-  }
-
-  if (!character.privateDescription || character.privateDescription.length < 50) {
-    result.errors.push(`La descrizione privata deve essere di almeno 50 caratteri (attuale: ${character.privateDescription?.length || 0})`);
-    result.isValid = false;
-  }
-
   // ====== STATS VALIDATION ======
-  // Fetch dynamic config values from SystemConfiguration
-  const configService = getConfigService();
-  const statTotalConfig = await configService.getConfig('character_creation_stat_total_points');
-  const statMinConfig = await configService.getConfig('character_creation_stat_minimum');
-
-  const statTotal = statTotalConfig ?? config.stats.totalPoints ?? 450;
-  const statMinimum = statMinConfig ?? config.stats.basePoints ?? 20;
+  // Use the config object passed in (loaded via CharacterCreationConfigService.loadConfig())
+  // to ensure consistency with what the API serves to the frontend.
+  const statTotal = config.stats.totalPoints ?? 400;
+  const statMinimum = config.stats.basePoints ?? 20;
   const maxStatsAbove80 = config.stats.maxStatsAbove80 || 2;
   const statCreationCap = config.stats.creationCap || 85;
 
@@ -375,9 +352,12 @@ export async function validateCharacterSubmission(character: ICharacter, config:
   }
 
   // ====== SKILLS VALIDATION ======
-  // Fetch dynamic skill points total from SystemConfiguration
-  const skillTotalConfig = await configService.getConfig('character_creation_skill_total_points');
-  const totalSkillPoints = skillTotalConfig ?? 250;
+  // Parse skill total from formula (e.g. "constant:200" → 200), same logic as CharacterCreationController.
+  const parseSkillFormula = (formula: string): number => {
+    if (formula?.startsWith('constant:')) return parseInt(formula.replace('constant:', ''), 10) || 200;
+    return 200;
+  };
+  const totalSkillPoints = parseSkillFormula(config.skills.totalPointsFormula);
 
   const skillPoints = calculateAvailableSkillPoints(character, config, totalSkillPoints);
   const skillCap = skillPoints.skillCap;
@@ -603,34 +583,18 @@ export async function validateCharacterSubmission(character: ICharacter, config:
   // ====== BACKGROUND VALIDATION ======
   // Check required background fields directly (don't rely on backgroundCompleted flag)
   const backgroundErrors: string[] = [];
-  
-  // Required: publicDescription and privateDescription (legacy fields)
-  if (!character.publicDescription || character.publicDescription.trim().length < 50) {
-    backgroundErrors.push(`La descrizione pubblica deve essere di almeno 50 caratteri (attuale: ${character.publicDescription?.trim().length || 0})`);
-  }
-
-  if (!character.privateDescription || character.privateDescription.trim().length < 50) {
-    backgroundErrors.push(`La descrizione privata deve essere di almeno 50 caratteri (attuale: ${character.privateDescription?.trim().length || 0})`);
-  }
 
   // Required: structured background fields
   if (character.background) {
-    if (!character.background.briefHistory || character.background.briefHistory.trim().length < 100) {
-      backgroundErrors.push(`La storia breve deve essere di almeno 100 caratteri (attuale: ${character.background.briefHistory?.trim().length || 0})`);
+    if (!character.background.briefHistory || character.background.briefHistory.trim().length < 50) {
+      backgroundErrors.push(`La storia breve deve essere di almeno 50 caratteri (attuale: ${character.background.briefHistory?.trim().length || 0})`);
     }
 
     if (!character.background.personality || character.background.personality.trim().length < 50) {
       backgroundErrors.push(`La descrizione della personalità deve essere di almeno 50 caratteri (attuale: ${character.background.personality?.trim().length || 0})`);
     }
-
-    if (!character.background.goalsAndMotivations || character.background.goalsAndMotivations.trim().length < 50) {
-      backgroundErrors.push(`Obiettivi e motivazioni devono essere di almeno 50 caratteri (attuale: ${character.background.goalsAndMotivations?.trim().length || 0})`);
-    }
   } else {
-    // If background object doesn't exist, check if at least legacy fields are present
-    if (!character.publicDescription || character.publicDescription.trim().length < 50) {
-      backgroundErrors.push('Il background del personaggio deve essere completato');
-    }
+    backgroundErrors.push('Il background del personaggio deve essere completato');
   }
 
   // Add all background errors

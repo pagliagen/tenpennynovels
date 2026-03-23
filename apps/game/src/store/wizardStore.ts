@@ -527,7 +527,18 @@ export const useWizardStore = create<WizardStore>()(
               stats: { totalPoints: 450, minValue: 20, maxStatsAbove80: 2, creationCap: 85, gameplayCap: 99 },
               skills: { totalPoints: 250, creationCap: 75, creationCapWithOccupation: 80 },
               occupation: {},
-              limits: {},
+              limits: {
+                age: { min: 16, max: 80 },
+                weight: { min: 30, max: 200, unit: 'kg' },
+                height: { min: 100, max: 250, unit: 'cm' },
+                backgroundFields: {
+                  briefHistory:           { minChar: 50,  maxChar: 4000 },
+                  significantEvents:      { minChar: 0,   maxChar: 2500 },
+                  importantRelationships: { minChar: 0,   maxChar: 2500 },
+                  personality:            { minChar: 50,  maxChar: 2500 },
+                  ideology:               { minChar: 0,   maxChar: 2500 },
+                },
+              },
               socialClasses: [],
               formulas: {},
             }

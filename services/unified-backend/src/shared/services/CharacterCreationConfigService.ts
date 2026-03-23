@@ -23,7 +23,7 @@ const DEFAULT_BG_FIELDS = {
   briefHistory:           { minChar: 50,  maxChar: 4000 },
   significantEvents:      { minChar: 0,   maxChar: 2500 },
   importantRelationships: { minChar: 0,   maxChar: 2500 },
-  personality:            { minChar: 0,   maxChar: 2500 },
+  personality:            { minChar: 50,  maxChar: 2500 },
   ideology:               { minChar: 0,   maxChar: 2500 },
 };
 
@@ -680,7 +680,7 @@ export class CharacterCreationConfigService {
           briefHistory:           { minChar: 50,  maxChar: 4000 },
           significantEvents:      { minChar: 0,   maxChar: 2500 },
           importantRelationships: { minChar: 0,   maxChar: 2500 },
-          personality:            { minChar: 0,   maxChar: 2500 },
+          personality:            { minChar: 50,  maxChar: 2500 },
           ideology:               { minChar: 0,   maxChar: 2500 },
         }
       },
