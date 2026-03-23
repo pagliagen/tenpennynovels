@@ -385,6 +385,37 @@ const ALL_CONFIGS: ConfigRecord[] = [
     metadata: { version: 1 },
   },
 
+  // Field visibility per wizard e filterForPublic (true = pubblico, false = privato/solo master+owner)
+  {
+    configKey: 'character_creation_field_visibility',
+    configSection: 'character_creation',
+    configType: 'json',
+    value: {
+      name: true,
+      surname: true,
+      apparentAge: true,
+      gender: true,
+      height: true,
+      weight: true,
+      occupation: true,
+      briefHistory: true,
+      significantEvents: true,
+      importantRelationships: true,
+      personality: true,
+      ideology: true,
+      birthDate: false,
+      maritalStatus: false,
+      hiddenMarks: false,
+      pathologies: false,
+      criminalRecord: false,
+      educationTitle: false,
+    },
+    defaultValue: {},
+    description: 'Visibilità dei campi del personaggio: true = pubblico (visibile a tutti), false = privato (solo master/owner)',
+    isActive: true,
+    metadata: { version: 1 },
+  },
+
   // ── economy ─────────────────────────────────────────────────────
   {
     configKey: 'starting_cash',
@@ -1070,36 +1101,47 @@ const ALL_CONFIGS: ConfigRecord[] = [
 ];
 
 async function main() {
-  console.log('⚙️  System Configuration Seeder\n');
+  const force = process.argv.includes('--force');
+  console.log(`⚙️  System Configuration Seeder${force ? ' [FORCE MODE]' : ''}\n`);
 
   const { client, db } = await getConnection();
 
   try {
     const collection = db.collection(COLLECTION);
     let seeded = 0;
+    let updated = 0;
     let skipped = 0;
 
     for (const config of ALL_CONFIGS) {
       const existing = await collection.findOne({ configKey: config.configKey });
 
-      if (existing) {
-        console.log(`  [SKIP] "${config.configKey}" already exists (v${existing.metadata?.version || '?'})`);
+      if (existing && !force) {
+        console.log(`  [SKIP]   "${config.configKey}" already exists (v${existing.metadata?.version || '?'})`);
         skipped++;
         continue;
       }
 
       const now = new Date();
-      await collection.insertOne({
-        ...config,
-        createdAt: now,
-        updatedAt: now,
-      });
 
-      console.log(`  [OK]   "${config.configKey}" (${config.configSection}/${config.configType})`);
-      seeded++;
+      if (existing && force) {
+        await collection.updateOne(
+          { configKey: config.configKey },
+          { $set: { ...config, updatedAt: now } }
+        );
+        console.log(`  [UPDATE] "${config.configKey}" (${config.configSection}/${config.configType})`);
+        updated++;
+      } else {
+        await collection.insertOne({
+          ...config,
+          createdAt: now,
+          updatedAt: now,
+        });
+        console.log(`  [OK]     "${config.configKey}" (${config.configSection}/${config.configType})`);
+        seeded++;
+      }
     }
 
-    console.log(`\n[DONE] Seeded: ${seeded}, Skipped: ${skipped}, Total: ${ALL_CONFIGS.length}`);
+    console.log(`\n[DONE] Seeded: ${seeded}, Updated: ${updated}, Skipped: ${skipped}, Total: ${ALL_CONFIGS.length}`);
   } finally {
     await client.close();
   }
