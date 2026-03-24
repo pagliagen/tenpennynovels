@@ -183,4 +183,20 @@ Lingua: ${locale}. Rispondi SOLO col JSON.`;
 
     return parsed;
   }
+
+  async refineBot(current: Record<string, any>, hints: Record<string, any>, options: GenerateBotOptions = {}): Promise<any> {
+    const { style, locale = 'it' } = options;
+    const styleContext = style ? `\nAmbientazione/stile: ${style}.` : '\nAmbientazione: Londra vittoriana, fine 1800.';
+
+    const systemPrompt = `Sei un creatore di personaggi NPC per un GDR by chat.${styleContext}
+Integra gli aggiornamenti richiesti nei dati attuali del bot mantenendo coerenza.
+Restituisci SOLO il JSON completo con: name, gender, publicDescription, personality (traits, speech_style, background, coreValues), narrativeStyle (author, guidance), systemPrompt.
+Lingua: ${locale}.`;
+
+    const userMessage = `Dati attuali: ${JSON.stringify(current)}\nAggiornamenti: ${JSON.stringify(hints)}`;
+    const result = await this.generate(systemPrompt, userMessage, 2048, 0.7);
+    const jsonMatch = result.text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('No JSON in refineBot response');
+    return JSON.parse(jsonMatch[0]);
+  }
 }

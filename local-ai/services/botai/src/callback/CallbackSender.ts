@@ -31,15 +31,36 @@ interface CallbackConfig {
   headers: Record<string, string>;
 }
 
+/**
+ * Invia un evento di progresso senza retry (fire-and-forget).
+ * Non blocca il flusso in caso di errore.
+ */
+export async function sendProgressCallback(config: CallbackConfig, requestId: string, message: string): Promise<void> {
+  if (!isAllowedCallbackUrl(config.url)) return;
+  try {
+    await axios({
+      method: config.method,
+      url: config.url,
+      data: { requestId, type: 'progress', message },
+      headers: config.headers,
+      timeout: 5000,
+    });
+  } catch {
+    // progress callback failures are non-blocking
+  }
+}
+
 export async function sendCallback(config: CallbackConfig, payload: any): Promise<boolean> {
   if (!isAllowedCallbackUrl(config.url)) {
     logger.error(`Callback URL rejected (host not in allowlist): ${config.url}`);
     return false;
   }
 
+  logger.info(`Sending callback to ${config.url}`);
+
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {
-      await axios({
+      const response = await axios({
         method: config.method,
         url: config.url,
         data: payload,
@@ -47,10 +68,13 @@ export async function sendCallback(config: CallbackConfig, payload: any): Promis
         timeout: 10000,
       });
 
-      logger.info(`Callback sent successfully`);
+      logger.info(`Callback sent successfully (status: ${response.status})`);
       return true;
     } catch (error: any) {
-      logger.warn(`Callback attempt ${attempt + 1}/${MAX_RETRIES + 1} failed: ${error.message}`);
+      const status = error.response?.status;
+      const body = JSON.stringify(error.response?.data)?.slice(0, 200);
+      const code = error.code;
+      logger.warn(`Callback attempt ${attempt + 1}/${MAX_RETRIES + 1} failed: msg="${error.message}" code=${code} status=${status} body=${body}`);
 
       if (attempt < MAX_RETRIES) {
         await new Promise((r) => setTimeout(r, RETRY_DELAY_MS * (attempt + 1)));

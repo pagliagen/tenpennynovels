@@ -198,6 +198,26 @@ export interface ICharacter extends Document, SoftDeleteMethods {
   // Bot AI integration
   bot_id?: string; // If present, this Character is a bot (references bot in botai database)
 
+  // Full bot configuration — copy of the bot's data from local-ai, kept in sync
+  botConfig?: {
+    localAiBotId: string;
+    name: string;
+    gender?: string;
+    publicDescription?: string;
+    personality?: {
+      traits: string[];
+      speech_style: string;
+      background: string;
+      coreValues: string[];
+    };
+    systemPrompt?: string;
+    narrativeStyle?: {
+      author: string;
+      guidance: string;
+    };
+    syncedAt: Date;
+  };
+
   // Approval workflow
   reviewHistory: {
     reviewedBy: Schema.Types.ObjectId;
@@ -671,6 +691,26 @@ const CharacterSchema = new Schema<ICharacter>({
     type: String,
     trim: true,
     maxlength: 100
+  },
+
+  // Full bot configuration (mirrored from local-ai for management)
+  botConfig: {
+    localAiBotId: { type: String, trim: true },
+    name: { type: String, trim: true },
+    gender: { type: String, trim: true },
+    publicDescription: { type: String, trim: true },
+    personality: {
+      traits: [{ type: String }],
+      speech_style: { type: String, trim: true },
+      background: { type: String, trim: true },
+      coreValues: [{ type: String }],
+    },
+    systemPrompt: { type: String, trim: true },
+    narrativeStyle: {
+      author: { type: String, trim: true },
+      guidance: { type: String, trim: true },
+    },
+    syncedAt: { type: Date },
   },
 
   // Approval workflow

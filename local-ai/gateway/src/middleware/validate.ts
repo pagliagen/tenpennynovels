@@ -107,6 +107,12 @@ export const botCreateSchema = z.object({
   }).optional(),
 });
 
+export const botRefineSchema = z.object({
+  hints: z.record(z.unknown()).optional(),
+  style: z.string().optional(),
+  locale: z.string().optional(),
+});
+
 export const botGenerateSchema = z.object({
   requestId: z.string().min(1),
   description: z.string().min(10).max(2000),
@@ -116,12 +122,38 @@ export const botGenerateSchema = z.object({
   }).optional(),
   style: z.string().optional(),
   locale: z.string().optional(),
-  callback: callbackSchema,
 });
 
 export const seoGenerateDescriptionSchema = z.object({
   title: z.string().min(1).max(500),
   content: z.string().min(1).max(100000),
+});
+
+export const characterGenSchema = z.object({
+  requestId: z.string().min(1),
+  character: z.object({
+    firstName: z.string().min(1).max(100),
+    lastName: z.string().min(1).max(100),
+    gender: z.enum(['male', 'female', 'other']),
+    description: z.string().min(10).max(2000),
+  }),
+  gameConfig: z.object({
+    skills: z.array(z.object({
+      id: z.string().min(1),
+      name: z.string().min(1),
+      baseValue: z.number().int().min(0).max(100),
+      category: z.string(),
+      isPlaceholder: z.boolean().optional(),
+    })).default([]),
+    occupations: z.array(z.object({
+      id: z.string().min(1),
+      name: z.string().min(1),
+      description: z.string().optional(),
+      bonusSkills: z.array(z.string()).optional(),
+    })).default([]),
+    statsBudget: z.number().int().min(300).max(600).default(450),
+    skillsBudget: z.number().int().min(100).max(500).default(250),
+  }).default({}),
 });
 
 type ZodSchema = z.ZodType<any, any, any>;

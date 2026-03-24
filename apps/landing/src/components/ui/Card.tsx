@@ -24,7 +24,8 @@ export interface CharacterCardData {
   status?: string;
   playerStatus?: string;
   avatar?: string;
-  characterType?: 'pg_master' | 'png';
+  characterType?: 'pg_principale' | 'pg_master' | 'png';
+  isBot?: boolean;
 }
 
 /**
@@ -97,6 +98,7 @@ export const Card: React.FC<CardProps> = ({
   const description = character.description;
   const avatarUrl = character.avatar || fallbackAvatarUrl;
   const characterType = character.characterType;
+  const isBot = character.isBot;
   const showAction = onSelectCharacter != null;
   const canSelect = showAction && canSelectCharacter(character);
   const loading = selectingId === character.id;
@@ -151,10 +153,13 @@ export const Card: React.FC<CardProps> = ({
         <div className="card__title-group">
           <div className="card__title-row">
             <h3 className="card__title">{title}</h3>
-            {characterType === 'pg_master' && (
+            {isBot && (
+              <span className="card__badge card__badge--bot">BOT</span>
+            )}
+            {!isBot && characterType === 'pg_master' && (
               <span className="card__badge card__badge--master">MASTER</span>
             )}
-            {characterType === 'png' && (
+            {!isBot && characterType === 'png' && (
               <span className="card__badge card__badge--png">PNG</span>
             )}
           </div>

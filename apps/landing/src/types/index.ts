@@ -112,6 +112,10 @@ export interface Character {
   status: 'draft' | 'pending' | 'approved' | 'rejected';
   /** Reason for rejection (if status=rejected) */
   rejectedReason?: string;
+  /** Character type (pg_principale, pg_master, png) */
+  characterType?: 'pg_principale' | 'pg_master' | 'png';
+  /** Whether this character is an AI bot */
+  isBot?: boolean;
   /** ISO timestamp of character creation */
   createdAt: string;
   /** ISO timestamp of last update */

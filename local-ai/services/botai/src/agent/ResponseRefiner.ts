@@ -49,7 +49,15 @@ export class ResponseRefiner {
 
     for (let i = 0; i < budget; i++) {
       attempts++;
-      const evaluation = await this.evaluate(bot, current, insights, maskedActions, activeEmotions);
+
+      let evaluation: RefineResult;
+      try {
+        evaluation = await this.evaluate(bot, current, insights, maskedActions, activeEmotions);
+      } catch (err: any) {
+        // JSON parse failures from the LLM are non-fatal: treat the response as consistent
+        logger.warn(`[Refiner] Attempt ${attempts}: evaluation failed (${err.message}) — treating as consistent`);
+        break;
+      }
 
       if (evaluation.isConsistent) {
         logger.info(`[Refiner] Attempt ${attempts}: response consistent, stopping`);
@@ -119,12 +127,11 @@ export class ResponseRefiner {
 L'attore interpreta "${bot.name}".${emotionCtx}${styleCtx}
 
 Analizza la risposta e produci un JSON:
-{
-  "isConsistent": true/false,
-  "hasFixableIssues": true/false,
-  "issues": ["problema 1", "problema 2"],
-  "refinedResponse": "versione corretta se non e coerente, oppure la stessa risposta se va bene"
-}
+- Se va bene: { "isConsistent": true, "hasFixableIssues": false, "issues": [] }
+- Se ci sono problemi correggibili: { "isConsistent": false, "hasFixableIssues": true, "issues": ["problema"], "refinedResponse": "testo corretto" }
+- Se problemi non correggibili: { "isConsistent": false, "hasFixableIssues": false, "issues": ["problema"] }
+
+IMPORTANTE: includi "refinedResponse" SOLO quando "isConsistent" è false e "hasFixableIssues" è true.
 
 Controlla RIGOROSAMENTE questi aspetti:
 

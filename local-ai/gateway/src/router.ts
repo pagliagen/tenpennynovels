@@ -5,7 +5,7 @@ import { services, ServiceConfig } from './services';
 import { authenticateClient, requirePermission } from './middleware/apiKey';
 import { verifyHMAC } from './middleware/hmac';
 import { clientRateLimit } from './middleware/rateLimit';
-import { validateBody, botRespondSchema, qaAskSchema, qaExtractKeywordsSchema, qaExtractInsightSchema, botCreateSchema, botGenerateSchema, seoGenerateDescriptionSchema } from './middleware/validate';
+import { validateBody, botRespondSchema, qaAskSchema, qaExtractKeywordsSchema, qaExtractInsightSchema, botCreateSchema, botGenerateSchema, botRefineSchema, seoGenerateDescriptionSchema, characterGenSchema } from './middleware/validate';
 import { generateSeoDescription } from './seo/SeoDescriptionGenerator';
 
 interface RouteValidation {
@@ -16,14 +16,18 @@ interface RouteValidation {
 
 const routeValidations: Record<string, RouteValidation[]> = {
   '/botai': [
-    { method: 'POST', path: '/respond',       schema: validateBody(botRespondSchema) },
-    { method: 'POST', path: '/bots/generate',  schema: validateBody(botGenerateSchema) },
-    { method: 'POST', path: '/bots',           schema: validateBody(botCreateSchema) },
+    { method: 'POST', path: '/respond',           schema: validateBody(botRespondSchema) },
+    { method: 'POST', path: '/bots/generate',     schema: validateBody(botGenerateSchema) },
+    { method: 'POST', path: '/bots',              schema: validateBody(botCreateSchema) },
+    { method: 'POST', path: '/bots/:id/refine',   schema: validateBody(botRefineSchema) },
   ],
   '/qa': [
     { method: 'POST', path: '/ask', schema: validateBody(qaAskSchema) },
     { method: 'POST', path: '/extract-keywords', schema: validateBody(qaExtractKeywordsSchema) },
     { method: 'POST', path: '/extract-insight', schema: validateBody(qaExtractInsightSchema) },
+  ],
+  '/character-gen': [
+    { method: 'POST', path: '/generate', schema: validateBody(characterGenSchema) },
   ],
 };
 
@@ -124,12 +128,14 @@ export function createRouter(): Router {
 }
 
 function createServiceProxy(svc: ServiceConfig, prefix: string) {
+  // character-gen può impiegare fino a 5 minuti (Anthropic sincrono)
+  const proxyTimeout = prefix === '/character-gen' ? 330_000 : 130_000;
   return createProxyMiddleware({
     target: svc.target,
     changeOrigin: true,
     pathRewrite: { [`^${prefix}`]: '' },
-    timeout: 60_000,
-    proxyTimeout: 60_000,
+    timeout: proxyTimeout,
+    proxyTimeout: proxyTimeout,
     on: {
       proxyReq: (proxyReq, req: any) => {
         if (req.client) {

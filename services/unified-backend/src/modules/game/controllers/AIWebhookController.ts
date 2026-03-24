@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { Chat, Location, Character } from '@database/models';
+import { Chat, Location, Character, GamingSession } from '@database/models';
 import { logger } from '../logger';
 import { getSocketIO } from '../websocket/socketInstance';
 
@@ -23,10 +23,17 @@ export class AIWebhookController {
    */
   static async handleBotResponse(req: Request, res: Response): Promise<void> {
     try {
-      const { requestId, botName, botCharacterId, locationId, response, metadata } = req.body;
+      const { requestId, botId, botName, botCharacterId, locationId, response, metadata } = req.body;
 
       if (!requestId || !response || !locationId) {
-        logger.warn('[AIWebhook] Invalid callback payload', { requestId });
+        logger.warn('[AIWebhook] Invalid callback payload', {
+          requestId,
+          hasResponse: !!response,
+          responseLength: typeof response === 'string' ? response.length : undefined,
+          hasLocationId: !!locationId,
+          locationId,
+          bodyKeys: Object.keys(req.body),
+        });
         res.status(400).json({ success: false, error: 'Campi obbligatori mancanti' });
         return;
       }
@@ -46,16 +53,37 @@ export class AIWebhookController {
         return;
       }
 
+      // Resolve bot character: prefer explicit ID, fallback to bot_id lookup
       let character = null;
       if (botCharacterId) {
         character = await Character.findById(botCharacterId);
       }
+      if (!character && botId) {
+        character = await Character.findOne({ bot_id: botId, isBot: true }).lean();
+      }
 
-      const defaultPosition = (location.positions && location.positions.length > 0) ? location.positions[0] : undefined;
+      // Use the position from the triggering action (requestId = action._id)
+      let triggerPosition: string | undefined;
+      try {
+        const triggerAction = await Chat.findById(requestId).select('position').lean();
+        triggerPosition = (triggerAction as any)?.position;
+      } catch {
+        // requestId might not be a valid ObjectId in edge cases — ignore
+      }
+      const defaultPosition = triggerPosition
+        || ((location.positions && location.positions.length > 0) ? location.positions[0] : undefined);
+
+      const resolvedCharacterId = (character as any)?._id?.toString() || botCharacterId || undefined;
+
+      if (!resolvedCharacterId) {
+        logger.error(`[AIWebhook] Cannot resolve bot character for bot_id=${botId}, botCharacterId=${botCharacterId}`);
+        res.status(500).json({ success: false, error: 'Personaggio bot non trovato' });
+        return;
+      }
 
       const action = await Chat.create({
         locationId,
-        characterId: botCharacterId || '',
+        characterId: resolvedCharacterId,
         characterName: character?.name || botName || 'Bot',
         isBot: true,
         actionType: 'standard',
@@ -67,24 +95,54 @@ export class AIWebhookController {
 
       const io = getSocketIO();
       if (io) {
-        io.to(`location_${locationId}`).emit('location_action', {
-          action: {
-            _id: action._id.toString(),
-            locationId,
-            characterId: botCharacterId,
-            characterName: character?.name || botName,
-            characterAvatar: character?.avatar,
-            isBot: true,
-            actionType: 'standard',
-            content: response,
-            position: defaultPosition,
-            visibility: 'public',
-            timestamp: action.timestamp,
-          },
-        });
+        const roomName = `location_${locationId}`;
+        const chatMessage = {
+          _id: action._id.toString(),
+          actionType: action.actionType,
+          characterId: resolvedCharacterId,
+          characterName: (character as any)?.name || botName || 'Bot',
+          characterAvatar: (character as any)?.avatar || undefined,
+          position: defaultPosition || undefined,
+          locationId: action.locationId.toString(),
+          content: response,
+          isBot: true,
+          visibility: 'public',
+          timestamp: action.timestamp?.toISOString?.() ?? new Date().toISOString(),
+        };
+        const notification = {
+          message: chatMessage,
+          locationId,
+          locationName: location.name || 'Location',
+          locationSlug: (location as any).slug || null,
+        };
+        const room = io.sockets.adapter.rooms.get(roomName);
+        logger.info(`[AIWebhook] Emitting location_message_notification to ${roomName} (clients: ${room?.size ?? 0})`);
+        io.to(roomName).emit('location_message_notification', notification);
       }
 
       logger.info(`[AIWebhook] Bot action created: ${action._id}`);
+
+      // Advance TurnManager if an active session exists for this location
+      try {
+        const freshLocation = await Location.findById(locationId).select('activeSession botRound').lean();
+        const sessionId = freshLocation?.activeSession?.sessionId;
+        if (sessionId) {
+          const { turnManager } = await import('../services/TurnManager');
+          await turnManager.completeBotTurn(sessionId);
+          logger.info(`[AIWebhook] Bot turn completed for session ${sessionId}`);
+        }
+
+        // Emit round_reset so clients can update UI state
+        if (io) {
+          const roundNumber = freshLocation?.botRound?.roundNumber ?? 0;
+          io.to(`location_${locationId}`).emit('round_reset', {
+            locationId,
+            roundNumber,
+          });
+        }
+      } catch (turnError: any) {
+        logger.warn(`[AIWebhook] Turn/round cleanup error (non-blocking): ${turnError.message}`);
+      }
 
       res.json({
         success: true,

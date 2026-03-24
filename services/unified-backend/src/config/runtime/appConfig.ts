@@ -39,20 +39,20 @@ export const appConfig = {
   cors: {
     allowedOrigins: isProduction
       ? [
-          'https://api.tenpennynovels.com',
-          'https://tenpennynovels.com',
-          'https://game.tenpennynovels.com',
-          'https://documenti.tenpennynovels.com',
-          'https://gestione.tenpennynovels.com',
-        ]
+        'https://api.tenpennynovels.com',
+        'https://tenpennynovels.com',
+        'https://game.tenpennynovels.com',
+        'https://documenti.tenpennynovels.com',
+        'https://gestione.tenpennynovels.com',
+      ]
       : [
-          'http://localhost:8000',
-          'http://127.0.0.1:8000',
-          'http://localhost:4000',
-          'http://localhost:4001',
-          'http://localhost:4002',
-          'http://localhost:4003',
-        ],
+        'http://localhost:8000',
+        'http://127.0.0.1:8000',
+        'http://localhost:4000',
+        'http://localhost:4001',
+        'http://localhost:4002',
+        'http://localhost:4003',
+      ],
   },
 
   urls: {
@@ -60,7 +60,9 @@ export const appConfig = {
     game: isProduction ? 'https://game.tenpennynovels.com' : 'http://localhost:4001',
     documents: isProduction ? 'https://documenti.tenpennynovels.com' : 'http://localhost:4002',
     management: isProduction ? 'https://gestione.tenpennynovels.com' : 'http://localhost:4003',
-    api: isProduction ? 'https://api.tenpennynovels.com' : 'http://localhost:8000',
+    api: isProduction
+      ? 'https://api.tenpennynovels.com'
+      : (process.env.API_CALLBACK_BASE_URL || 'http://localhost:8000'),
   },
 
   features: {

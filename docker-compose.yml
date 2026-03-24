@@ -204,6 +204,10 @@ services:
       AI_GATEWAY_CLIENT_ID: ${AI_GATEWAY_CLIENT_ID:-tpn-dev}
       AI_GATEWAY_API_KEY: ${AI_GATEWAY_API_KEY:-f4af240c291f57bcc23384bff9abcc4ce89f8257974b80e6179f88edd5f4a2f9}
       AI_GATEWAY_HMAC_SECRET: ${AI_GATEWAY_HMAC_SECRET:-}
+      AI_GATEWAY_WEBHOOK_SECRET: ${AI_GATEWAY_WEBHOOK_SECRET:-local-dev-webhook-secret}
+
+      # Callback base URL (usata da local-ai botai per richiamare il backend via gateway)
+      API_CALLBACK_BASE_URL: http://tenpennynovels-api-gateway:8000
 
       # Sitemap generation output directory
       SITEMAP_OUTPUT_DIR: /sitemap-output
@@ -264,6 +268,9 @@ services:
       MANAGEMENT_URL: ${MANAGEMENT_URL:-http://localhost:4003}
 
       TRUST_PROXY: "true"
+
+      # Webhook secret (per validare le callback da servizi interni come local-ai)
+      AI_GATEWAY_WEBHOOK_SECRET: ${AI_GATEWAY_WEBHOOK_SECRET:-local-dev-webhook-secret}
     ports:
       - "8000:8000"
     volumes:
