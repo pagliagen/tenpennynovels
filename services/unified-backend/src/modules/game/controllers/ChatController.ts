@@ -510,7 +510,7 @@ export class ChatController {
                     // Use active non-bot occupants as presentCharacters
                     const presentCharacterIds = activeNonBotOccupants.map((occ: any) => occ.characterId);
                     const presentCharacters = await Character.find({ _id: { $in: presentCharacterIds } })
-                      .select('_id name').lean();
+                      .select('_id name gender apparentAge physicalDescription visibleMarks height eyeColor hairColor').lean();
 
                     const botLocalAiId = (botCharacter as any)?.bot_id || '';
                     const lastAction = roundActions[roundActions.length - 1];
@@ -551,6 +551,13 @@ export class ChatController {
                         presentCharacters: presentCharacters.map((c: any) => ({
                           id: c._id.toString(),
                           name: c.name,
+                          gender: c.gender,
+                          apparentAge: c.apparentAge,
+                          physicalDescription: c.physicalDescription,
+                          visibleMarks: c.visibleMarks,
+                          height: c.height,
+                          eyeColor: c.eyeColor,
+                          hairColor: c.hairColor,
                         })),
                       },
                       callback: callbackSecret

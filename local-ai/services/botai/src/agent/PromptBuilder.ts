@@ -2,10 +2,22 @@ import { IBot, IActiveEmotion } from '../models/Bot';
 import { ContextInsights } from './ContextAnalyzer';
 import { describeEmotions } from './EmotionManager';
 
+interface CharacterAppearance {
+  id?: string;
+  name: string;
+  gender?: string;
+  apparentAge?: number;
+  physicalDescription?: string;
+  visibleMarks?: string;
+  height?: string;
+  eyeColor?: string;
+  hairColor?: string;
+}
+
 interface ActionContext {
   location: { id?: string; name: string; description?: string };
   actions: Array<{ characterId?: string; characterName: string; content: string; timestamp?: string }>;
-  presentCharacters?: Array<{ id?: string; name: string }>;
+  presentCharacters?: Array<CharacterAppearance>;
 }
 
 export function buildSystemPrompt(
@@ -107,11 +119,20 @@ export function buildUserMessage(
   }
 
   if (context.presentCharacters && context.presentCharacters.length > 0) {
-    const maskedPresent = context.presentCharacters.map((c) => {
-      return knownNames.get(c.id || '') || 'Qualcuno';
-    });
-    const unique = [...new Set(maskedPresent)];
-    parts.push(`[Presenti: ${unique.join(', ')}]`);
+    parts.push('\n[PERSONE PRESENTI — aspetto visibile]');
+    for (const c of context.presentCharacters) {
+      const displayName = knownNames.get(c.id || '') || 'Sconosciuto';
+      const details: string[] = [];
+      if (c.gender) details.push(c.gender === 'male' ? 'uomo' : c.gender === 'female' ? 'donna' : c.gender);
+      if (c.apparentAge) details.push(`dimostra circa ${c.apparentAge} anni`);
+      if (c.height) details.push(`altezza ${c.height}`);
+      if (c.hairColor) details.push(`capelli ${c.hairColor}`);
+      if (c.eyeColor) details.push(`occhi ${c.eyeColor}`);
+      const summary = details.length > 0 ? ` (${details.join(', ')})` : '';
+      parts.push(`- ${displayName}${summary}`);
+      if (c.physicalDescription) parts.push(`  Aspetto: ${c.physicalDescription}`);
+      if (c.visibleMarks) parts.push(`  Segni visibili: ${c.visibleMarks}`);
+    }
   }
 
   const actions = context.actions.slice(-10);

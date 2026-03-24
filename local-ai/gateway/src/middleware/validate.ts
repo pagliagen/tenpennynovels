@@ -42,6 +42,13 @@ export const botRespondSchema = z.object({
     presentCharacters: z.array(z.object({
       id: z.string().optional(),
       name: z.string(),
+      gender: z.string().optional(),
+      apparentAge: z.number().optional(),
+      physicalDescription: z.string().optional(),
+      visibleMarks: z.string().optional(),
+      height: z.string().optional(),
+      eyeColor: z.string().optional(),
+      hairColor: z.string().optional(),
     })).optional(),
   }).transform((ctx) => {
     // Normalise to actions[] regardless of input shape
