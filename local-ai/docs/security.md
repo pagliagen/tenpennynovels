@@ -15,14 +15,14 @@ I client sono definiti nel file `clients.json` (array JSON, montato nel gateway 
     "name": "TenPennyNovels VPS",
     "apiKey": "a1b2c3d4...",
     "hmacSecret": "e5f6g7h8...",
-    "permissions": ["botai", "qa", "item-image-gen", "location-image-gen", "avatar-gen"],
+    "permissions": ["botai", "qa"],
     "rateLimit": { "maxPerMinute": 30 }
   },
   {
     "id": "tpn-dev",
     "name": "Local Development",
     "apiKey": "x9y8z7w6...",
-    "permissions": ["botai", "qa", "item-image-gen", "location-image-gen", "avatar-gen"],
+    "permissions": ["botai", "qa"],
     "rateLimit": { "maxPerMinute": 120 }
   }
 ]
@@ -137,7 +137,6 @@ Tutti i payload POST sono validati con schemi **Zod** nel gateway, prima che la 
 - `POST /botai/bots` → `botCreateSchema`
 - `POST /botai/bots/generate` → `botGenerateSchema`
 - `POST /qa/ask` → `qaAskSchema`
-- `POST /*/generate` → `imageGenSchema`
 
 Richieste malformate ricevono `400` con dettagli strutturati:
 

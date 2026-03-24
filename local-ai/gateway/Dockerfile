@@ -14,5 +14,7 @@ RUN npm install --omit=dev
 COPY patches/ ../patches/
 RUN npx patch-package --patch-dir ../patches
 COPY --from=builder /app/gateway/dist ./dist
+RUN chown -R node:node /app
+USER node
 EXPOSE 9000
 CMD ["node", "dist/index.js"]

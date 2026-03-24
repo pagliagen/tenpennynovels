@@ -39,7 +39,7 @@ export async function generateSeoDescription(
   const client = new Ollama({
     host: process.env.OLLAMA_URL || 'http://localhost:11434',
   });
-  const model = process.env.OLLAMA_MODEL || 'gemma3:4b';
+  const model = process.env.OLLAMA_MODEL || 'mistral:7b-instruct';
 
   const cleanContent = stripHtml(content).slice(0, 800);
 

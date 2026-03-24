@@ -31,17 +31,15 @@ caller (unified-backend, CLI, qualsiasi client)
 │  6. Proxy al servizio backend       │
 └──────────┬──────────────────────────┘
            │
-     ┌─────┼─────┬──────────┐
-     ▼     ▼     ▼          ▼
-  BotAI   Q&A   ImgGen*   ...
-  :8080   :8090  :8100+
+     ┌─────┼─────┐
+     ▼     ▼     ...
+  BotAI   Q&A
+  :8080   :8090
      │     │
      ▼     ▼
    Ollama (:11434)
    mistral:7b-instruct
 ```
-
-*ImgGen = stub, servizi futuri per generazione immagini.
 
 ## Struttura del progetto
 
@@ -70,33 +68,16 @@ local-ai/
 │   │       ├── models/       # Bot, Memory, Relationship (Mongoose)
 │   │       └── callback/     # CallbackSender (retry con backoff)
 │   │
-│   ├── qa/                   # Q&A RAG
-│   │   └── src/
-│   │       ├── routes.ts     # POST /ask
-│   │       └── services/     # RAGPipeline, OllamaChat
-│   │
-│   ├── item-image-gen/       # Stub (:8100)
-│   ├── location-image-gen/   # Stub (:8110)
-│   └── avatar-gen/           # Stub (:8120)
+│   └── qa/                   # Q&A RAG
+│       └── src/
+│           ├── routes.ts     # POST /ask
+│           └── services/     # RAGPipeline, OllamaChat
 │
 ├── shared/                   # Codice condiviso
 │   ├── ollama.ts             # Client Ollama singleton
 │   ├── logger.ts             # Winston logger factory
 │   ├── health.ts             # Health endpoint standard/stub
 │   └── types.ts              # Tipi condivisi
-│
-├── tools/
-│   └── test-ui/              # Servizio di test isolato (profilo Docker: test)
-│       ├── client/            # React + Vite (dark theme)
-│       │   └── src/
-│       │       ├── App.tsx
-│       │       ├── components/ # Sidebar, Chat
-│       │       └── hooks/      # useSSE
-│       ├── server/            # Express (:3100)
-│       │   └── src/
-│       │       ├── index.ts   # Serve React build + API
-│       │       └── routes.ts  # SSE, callback, config
-│       └── Dockerfile         # Multi-stage: build React, run Express
 │
 ├── docs/                     # Questa documentazione
 ├── docker-compose.yml        # Stack completo standalone
@@ -191,32 +172,6 @@ La risposta 202 include `queue: { pending, size }` per visibilita:
 - `size`: richieste in attesa
 
 Non esiste modalita sincrona. `callback` e obbligatorio.
-
-### Test UI (servizio separato)
-
-Il test UI e un servizio completamente isolato dal gateway, con una propria app React e un backend Express. Gira sulla porta `3100` e si avvia solo con il profilo Docker `test`:
-
-```bash
-docker compose --profile test up -d test-ui
-```
-
-Flusso:
-
-```
-Browser ──SSE──> GET test-ui:3100/api/events (connessione persistente)
-Browser ──POST─> gateway:9000/botai/respond (callback.url = http://test-ui:3100/api/callback)
-BotAI   ──POST─> test-ui:3100/api/callback (risultato della generazione)
-test-ui ──SSE──> Browser (push della risposta)
-```
-
-Endpoint del servizio test-ui:
-
-- `GET /` — App React (build statico servito da Express)
-- `GET /api/events` — Server-Sent Events (con keepalive e auto-reconnect)
-- `GET /api/config` — restituisce `{ gatewayUrl, callbackUrl, apiKey }` (letti da env)
-- `POST /api/callback` — riceve callback da BotAI, le pusha via SSE a tutti i client collegati
-
-Il test-ui non ha dipendenze dal codice del gateway. Le chiamate API passano direttamente dal browser al gateway.
 
 ### Perche Zod per la validazione
 

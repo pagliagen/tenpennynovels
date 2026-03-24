@@ -1,15 +1,10 @@
 import * as http from 'http';
+import { IAgent, GenerateBotOptions } from './IAgent';
 import { createLogger } from '../../../../shared/logger';
 
 const logger = createLogger('OllamaAgent');
 
 const REQUEST_TIMEOUT_MS = 15 * 60 * 1000;
-
-interface GenerateBotOptions {
-  location?: { name: string; description?: string };
-  style?: string;
-  locale?: string;
-}
 
 interface OllamaChatResponse {
   message: { role: string; content: string };
@@ -17,7 +12,7 @@ interface OllamaChatResponse {
   prompt_eval_count?: number;
 }
 
-export class OllamaAgent {
+export class OllamaAgent implements IAgent {
   private host: string;
   private model: string;
 
@@ -55,7 +50,14 @@ export class OllamaAgent {
     });
   }
 
-  async generate(systemPrompt: string, userMessage: string, numPredict = 1024): Promise<{ text: string; tokensUsed: number }> {
+  async generate(
+    systemPrompt: string,
+    userMessage: string,
+    numPredict = 1024,
+    temperature = 0.72,
+    topP = 0.85,
+    repeatPenalty = 1.2,
+  ): Promise<{ text: string; tokensUsed: number }> {
     const startMs = Date.now();
     logger.info('Starting response generation...');
 
@@ -66,7 +68,9 @@ export class OllamaAgent {
         { role: 'user', content: userMessage },
       ],
       options: {
-        temperature: 0.8,
+        temperature,
+        top_p: topP,
+        repeat_penalty: repeatPenalty,
         num_predict: numPredict,
       },
     });

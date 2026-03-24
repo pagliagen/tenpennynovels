@@ -6,6 +6,25 @@ const logger = createLogger('CallbackSender');
 const MAX_RETRIES = 2;
 const RETRY_DELAY_MS = 2000;
 
+/**
+ * Comma-separated list of allowed callback hostnames.
+ * If unset, defaults to localhost + host.docker.internal (local-only deployments).
+ * Example: CALLBACK_ALLOWED_HOSTS=localhost,host.docker.internal,myserver.internal
+ */
+const ALLOWED_HOSTS: Set<string> = (() => {
+  const raw = process.env.CALLBACK_ALLOWED_HOSTS || 'localhost,host.docker.internal,127.0.0.1,::1';
+  return new Set(raw.split(',').map(h => h.trim().toLowerCase()).filter(Boolean));
+})();
+
+function isAllowedCallbackUrl(rawUrl: string): boolean {
+  try {
+    const { hostname } = new URL(rawUrl);
+    return ALLOWED_HOSTS.has(hostname.toLowerCase());
+  } catch {
+    return false;
+  }
+}
+
 interface CallbackConfig {
   url: string;
   method: 'POST' | 'PUT' | 'PATCH';
@@ -13,6 +32,11 @@ interface CallbackConfig {
 }
 
 export async function sendCallback(config: CallbackConfig, payload: any): Promise<boolean> {
+  if (!isAllowedCallbackUrl(config.url)) {
+    logger.error(`Callback URL rejected (host not in allowlist): ${config.url}`);
+    return false;
+  }
+
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {
       await axios({
@@ -23,7 +47,7 @@ export async function sendCallback(config: CallbackConfig, payload: any): Promis
         timeout: 10000,
       });
 
-      logger.info(`Callback sent to ${config.url}`);
+      logger.info(`Callback sent successfully`);
       return true;
     } catch (error: any) {
       logger.warn(`Callback attempt ${attempt + 1}/${MAX_RETRIES + 1} failed: ${error.message}`);
@@ -34,6 +58,6 @@ export async function sendCallback(config: CallbackConfig, payload: any): Promis
     }
   }
 
-  logger.error(`Callback failed after ${MAX_RETRIES + 1} attempts to ${config.url}`);
+  logger.error(`Callback failed after ${MAX_RETRIES + 1} attempts`);
   return false;
 }

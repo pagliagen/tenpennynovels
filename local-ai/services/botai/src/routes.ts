@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { Bot } from './models/Bot';
-import { OllamaAgent } from './agent/OllamaAgent';
+import { getAgent } from './agent/AgentFactory';
 import { buildSystemPrompt, buildUserMessage, getLastCharacterFromActions, maskActions } from './agent/PromptBuilder';
 import { formatResponse } from './agent/ResponseFormatter';
 import { ContextAnalyzer } from './agent/ContextAnalyzer';
@@ -14,7 +14,7 @@ import { enqueue, getQueueStatus } from './queue/RequestQueue';
 import { createLogger } from '../../../shared/logger';
 
 const logger = createLogger('BotAI');
-const agent = new OllamaAgent();
+const agent = getAgent();
 const contextAnalyzer = new ContextAnalyzer(agent);
 const responseRefiner = new ResponseRefiner(agent);
 const postAnalyzer = new PostResponseAnalyzer(agent);
@@ -154,7 +154,17 @@ async function buildKnownNames(
   return knownNames;
 }
 
-async function processResponse(bot: any, context: any) {
+/**
+ * Steps 1–3: context analysis, generation, refinement.
+ * Returns the final response + a closure that runs Step 4 (post-analysis + persistence).
+ * Keeping Step 4 as a separate closure lets the caller send the callback first
+ * and then persist asynchronously without blocking the player.
+ */
+async function runResponsePipeline(bot: any, context: any): Promise<{
+  response: string;
+  metadata: Record<string, any>;
+  persistInteraction: () => Promise<void>;
+}> {
   const pipelineStart = Date.now();
   const { characterId, characterName } = getLastCharacterFromActions(context.actions);
   const locationId = context.location?.id || '';
@@ -163,9 +173,8 @@ async function processResponse(bot: any, context: any) {
   logger.info(`Pipeline START for bot "${bot.name}" ← [${characterId}]`);
 
   // ── Load data + resolve display names ──
-  const [memories, relationships, relationship, knownNames] = await Promise.all([
+  const [memories, relationship, knownNames] = await Promise.all([
     memoryStore.getContextualMemories(botId, characterId, locationId),
-    relationshipStore.getRelationships(botId),
     characterId ? relationshipStore.getRelationship(botId, characterId) : Promise.resolve(null),
     buildKnownNames(botId, context.actions, context.presentCharacters),
   ]);
@@ -189,100 +198,127 @@ async function processResponse(bot: any, context: any) {
   });
   logger.info(`[Step 1/4] Done — firstEncounter: ${insights.isFirstEncounter}, intent: ${insights.messageAnalysis.intent}`);
 
-  // ── STEP 2: Generate Response ──
+  // ── STEP 2: Generate Response (temperature lowered to 0.7 for better on-character consistency) ──
   logger.info('[Step 2/4] Generating response...');
   const systemPrompt = buildSystemPrompt(bot, insights, activeEmotions);
   const userMessage = buildUserMessage(context, knownNames);
-  const { text: draftText, tokensUsed: genTokens } = await agent.generate(systemPrompt, userMessage, 1024);
+  const numPredict = bot.narrativeStyle ? 950 : 700;
+  const { text: draftText, tokensUsed: genTokens } = await agent.generate(systemPrompt, userMessage, numPredict, 0.72, 0.85, 1.2);
   const draftResponse = formatResponse(draftText);
   logger.info(`[Step 2/4] Done — draft: "${draftResponse.substring(0, 80)}..."`);
 
-  // ── STEP 3: Self-critique & Refine ──
+  // ── STEP 3: Self-critique & Refine (with loop budget + emotion coherence) ──
   logger.info('[Step 3/4] Refining response...');
-  const finalResponse = await responseRefiner.refine(
+  const refineOutput = await responseRefiner.refine(
     bot,
     draftResponse,
     insights,
     maskedActionsList.slice(-5),
+    activeEmotions,
   );
-  const wasRefined = finalResponse !== draftResponse;
+  const { response: finalResponse, wasRefined, attempts: refinerAttempts } = refineOutput;
   if (wasRefined) {
-    logger.info(`[Step 3/4] Response REFINED: "${finalResponse.substring(0, 80)}..."`);
+    logger.info(`[Step 3/4] Response REFINED after ${refinerAttempts} attempt(s): "${finalResponse.substring(0, 80)}..."`);
   } else {
-    logger.info('[Step 3/4] Response consistent, no changes needed');
+    logger.info(`[Step 3/4] Response consistent (${refinerAttempts} attempt(s), no changes needed)`);
   }
 
-  // ── STEP 4: Post-response Analysis ──
-  logger.info('[Step 4/4] Analyzing interaction...');
-  const analysis = await postAnalyzer.analyze(
-    bot,
-    displayName,
-    insights,
-    maskedActionsList.slice(-5),
-    finalResponse,
-  );
-  logger.info(`[Step 4/4] Done — sentiment: ${analysis.sentimentDelta}, trust: ${analysis.trustDelta}, learned: ${analysis.characterLearned ? 'yes' : 'no'}`);
+  const step3Ms = Date.now() - pipelineStart;
 
-  // ── Persist: Memory (uses real characterName for DB indexing) ──
-  await memoryStore.addMemory(botId, characterId, characterName, analysis.memorySummary, {
-    sentiment: analysis.sentimentDelta > 0 ? 'positive' : analysis.sentimentDelta < 0 ? 'negative' : 'neutral',
-    type: analysis.memoryType,
-    importance: analysis.memoryImportance,
-    locationId,
-  });
+  // ── STEP 4: Post-response Analysis + Persistence (returned as closure, run after callback) ──
+  const persistInteraction = async () => {
+    logger.info('[Step 4/4] Analyzing interaction (background)...');
+    const analysis = await postAnalyzer.analyze(
+      bot,
+      displayName,
+      insights,
+      maskedActionsList.slice(-5),
+      finalResponse,
+    );
+    logger.info(`[Step 4/4] Done — sentiment: ${analysis.sentimentDelta}, trust: ${analysis.trustDelta}, learned: ${analysis.characterLearned ? 'yes' : 'no'}`);
 
-  if (analysis.characterLearned) {
-    await memoryStore.addMemory(botId, characterId, characterName, analysis.characterLearned, {
-      type: 'observation',
-      importance: Math.max(60, analysis.memoryImportance),
+    await memoryStore.addMemory(botId, characterId, characterName, analysis.memorySummary, {
+      sentiment: analysis.sentimentDelta > 0 ? 'positive' : analysis.sentimentDelta < 0 ? 'negative' : 'neutral',
+      type: analysis.memoryType,
+      importance: analysis.memoryImportance,
       locationId,
     });
-  }
 
-  // ── Persist: Relationship (uses real characterName for DB indexing) ──
-  if (characterId) {
-    await relationshipStore.updateRelationship(botId, characterId, characterName, {
-      trust: analysis.trustDelta,
-      familiarity: analysis.familiarityDelta,
-      sentiment: analysis.sentimentDelta,
-    });
-
-    if (analysis.significantEvent) {
-      await relationshipStore.addSignificantEvent(botId, characterId, analysis.significantEvent);
+    if (analysis.characterLearned) {
+      await memoryStore.addMemory(botId, characterId, characterName, analysis.characterLearned, {
+        type: 'observation',
+        importance: Math.max(60, analysis.memoryImportance),
+        locationId,
+      });
     }
-  }
 
-  // ── Persist: Emotional state ──
-  const updatedEmotions = buildUpdatedEmotions(bot.activeEmotions || [], analysis.emotionalReaction);
-  const newMood = deriveMood(updatedEmotions);
-  await Bot.updateOne(
-    { _id: bot._id },
-    {
-      $set: {
-        activeEmotions: updatedEmotions,
-        'currentMood.type': newMood,
-        'currentMood.since': new Date(),
+    if (characterId) {
+      await relationshipStore.updateRelationship(botId, characterId, characterName, {
+        trust: analysis.trustDelta,
+        familiarity: analysis.familiarityDelta,
+        sentiment: analysis.sentimentDelta,
+      });
+
+      if (analysis.significantEvent) {
+        await relationshipStore.addSignificantEvent(botId, characterId, analysis.significantEvent);
+      }
+    }
+
+    const updatedEmotions = buildUpdatedEmotions(bot.activeEmotions || [], analysis.emotionalReaction);
+    const newMood = deriveMood(updatedEmotions);
+    await Bot.updateOne(
+      { _id: bot._id },
+      {
+        $set: {
+          activeEmotions: updatedEmotions,
+          'currentMood.type': newMood,
+          'currentMood.since': new Date(),
+        },
       },
-    },
-  );
+    );
 
-  const totalMs = Date.now() - pipelineStart;
-  logger.info(`Pipeline COMPLETE in ${totalMs}ms (${(totalMs / 1000).toFixed(1)}s)`);
+    logger.info(`[Step 4/4] Persistence complete (${Date.now() - pipelineStart - step3Ms}ms)`);
+  };
+
+  logger.info(`Pipeline steps 1-3 COMPLETE in ${step3Ms}ms (${(step3Ms / 1000).toFixed(1)}s)`);
 
   return {
     response: finalResponse,
     metadata: {
-      model: process.env.OLLAMA_MODEL || 'mistral:7b-instruct',
+      model: process.env.ANTHROPIC_API_KEY
+        ? (process.env.ANTHROPIC_MODEL || 'claude')
+        : (process.env.OLLAMA_MODEL || 'ollama'),
       tokensUsed: genTokens,
-      processingMs: totalMs,
+      processingMs: step3Ms,
       pipelineSteps: 4,
       wasRefined,
+      refinerAttempts,
     },
+    persistInteraction,
   };
 }
 
 async function processAndCallback(requestId: string, bot: any, context: any, callback: any) {
-  const result = await processResponse(bot, context);
+  let response: string;
+  let metadata: Record<string, any>;
+  let persistInteraction: () => Promise<void>;
+
+  try {
+    ({ response, metadata, persistInteraction } = await runResponsePipeline(bot, context));
+  } catch (err: any) {
+    logger.error(`[Pipeline] FAILED for ${requestId}: ${err.message}`);
+    // Send a graceful fallback callback so the client is not left hanging
+    await sendCallback(callback, {
+      requestId,
+      botId: bot._id.toString(),
+      botName: bot.name,
+      botCharacterId: context.presentCharacters?.find((c: any) => c.name === bot.name)?.id || '',
+      locationId: context.location.id || '',
+      response: '',
+      metadata: { error: err.message, model: process.env.OLLAMA_MODEL || 'unknown' },
+    }).catch((cbErr) => logger.error(`[Pipeline] Fallback callback also failed: ${cbErr.message}`));
+    return;
+  }
 
   const callbackPayload = {
     requestId,
@@ -290,11 +326,17 @@ async function processAndCallback(requestId: string, bot: any, context: any, cal
     botName: bot.name,
     botCharacterId: context.presentCharacters?.find((c: any) => c.name === bot.name)?.id || '',
     locationId: context.location.id || '',
-    response: result.response,
-    metadata: result.metadata,
+    response,
+    metadata,
   };
 
+  // Send response to the game immediately after steps 1-3
   await sendCallback(callback, callbackPayload);
+
+  // Step 4 runs in background without blocking the player
+  persistInteraction().catch((err: any) =>
+    logger.error(`[Step 4/4] Background persistence failed for ${requestId}: ${err.message}`),
+  );
 }
 
 export default router;

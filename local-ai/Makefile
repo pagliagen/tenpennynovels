@@ -21,6 +21,3 @@ health:
 
 ngrok:
 	ngrok start --config ngrok.yml ai-gateway
-
-start-all:
-	docker compose --profile image-gen up -d

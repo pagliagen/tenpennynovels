@@ -35,14 +35,14 @@ Struttura di `clients.json`:
     "name": "TenPennyNovels VPS",
     "apiKey": "<chiave-prod>",
     "hmacSecret": "<hmac-prod>",
-    "permissions": ["botai", "qa", "item-image-gen", "location-image-gen", "avatar-gen"],
+    "permissions": ["botai", "qa"],
     "rateLimit": { "maxPerMinute": 30 }
   },
   {
     "id": "tpn-dev",
     "name": "Local Development",
     "apiKey": "<chiave-dev>",
-    "permissions": ["botai", "qa", "item-image-gen", "location-image-gen", "avatar-gen"],
+    "permissions": ["botai", "qa"],
     "rateLimit": { "maxPerMinute": 120 }
   }
 ]
@@ -72,7 +72,7 @@ Ci vuole qualche minuto (il modello pesa ~4GB).
 curl http://localhost:9000/health | python3 -m json.tool
 ```
 
-Devi vedere `"status": "healthy"` con tutti i servizi `up` (o `stub` per le immagini).
+Devi vedere `"status": "healthy"` con tutti i servizi `up`.
 
 ### 5. Test rapido
 
@@ -121,51 +121,13 @@ I campi `gender`, `publicDescription` e `coreValues` sono opzionali ma consiglia
 
 > **Nota**: anche `POST /botai/bots/generate` e asincrono — risponde `202 Accepted` immediatamente. Il bot generato arriva via callback con `type: "bot-generated"`.
 
-### 6. Pagina di test interattiva
-
-Per testare la generazione bot e la chat asincrona in modo visuale, avvia il servizio test-ui:
-
-```bash
-docker compose --profile test up -d test-ui
-```
-
-Poi apri nel browser:
-
-```
-http://localhost:3100
-```
-
-La pagina di test (React) consente di:
-
-- Generare un bot con Ollama (descrizione + location) — API key pre-configurata
-- Chattare col bot in modo asincrono (risposte via SSE in real-time)
-- Caricare bot esistenti tramite ID
-- Visualizzare dettagli e personalita del bot attivo
-
-**Come funziona internamente:**
-
-1. Il browser apre una connessione SSE su `GET /api/events` (test-ui Express)
-2. Quando invii un messaggio, l'app chiama `POST /botai/respond` (gateway) con callback URL = `http://test-ui:3100/api/callback`
-3. BotAI processa la richiesta in background via coda e invia il risultato alla callback
-4. Il server test-ui riceve la callback e la pusha via SSE al browser
-
-Il servizio test-ui e completamente isolato dal gateway. Si avvia solo con `--profile test` e si ferma con `docker compose --profile test down`.
-
-Per configurare la API key del test-ui, impostare `TEST_UI_API_KEY` nel `.env`:
-
-```bash
-TEST_UI_API_KEY=<apiKey-del-client-tpn-dev>
-```
-
-> **Nota**: tutti gli endpoint BotAI sono asincroni — rispondono `202 Accepted` immediatamente. Le richieste vengono messe in coda ed elaborate una alla volta da Ollama.
-
 ## Sviluppo senza Docker (servizi in foreground)
 
 Per sviluppare i servizi con hot-reload:
 
 ```bash
 # 1. Avvia solo l'infrastruttura
-docker compose up -d ollama mongodb
+docker compose up -d mongodb
 
 # 2. Installa dipendenze
 npm install
@@ -195,7 +157,6 @@ make logs           # docker compose logs -f
 make pull-models    # pull mistral:7b-instruct
 make health         # curl /health
 make ngrok          # avvia tunnel ngrok
-make start-all      # avvia tutto inclusi stub immagini
 ```
 
 ## Struttura dei file di configurazione

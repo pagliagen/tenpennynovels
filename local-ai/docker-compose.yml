@@ -23,20 +23,6 @@ services:
       - mongo_data:/data/db
     environment:
       MONGO_INITDB_DATABASE: local-ai
-    profiles:
-      - botai
-
-  gateway:
-    build:
-      context: .
-      dockerfile: gateway/Dockerfile
-    ports:
-      - "9000:9000"
-    env_file: .env
-    environment:
-      - IMAGE_GEN_TARGET=http://host.docker.internal:8100
-    volumes:
-      - ./clients.json:/app/clients.json:ro
 
   botai:
     build:
@@ -47,8 +33,6 @@ services:
     env_file: .env
     depends_on:
       - mongodb
-    profiles:
-      - botai
 
   qa:
     build:
@@ -57,38 +41,19 @@ services:
     expose:
       - "8090"
     env_file: .env
-    profiles:
-      - qa
 
-  image-gen:
+  gateway:
     build:
       context: .
-      dockerfile: services/image-gen/Dockerfile
-    expose:
-      - "8100"
-    env_file: .env
-    environment:
-      - HUGGINGFACE_TOKEN=${HUGGINGFACE_TOKEN:-}
-      - FLUX_MODEL_ID=${FLUX_MODEL_ID:-black-forest-labs/FLUX.1-dev}
-      - FLUX_STEPS=${FLUX_STEPS:-30}
-    profiles:
-      - image-gen
-
-  test-ui:
-    build:
-      context: .
-      dockerfile: tools/test-ui/Dockerfile
+      dockerfile: gateway/Dockerfile
     ports:
-      - "3100:3100"
-    environment:
-      - GATEWAY_URL=http://gateway:9000
-      - CALLBACK_URL=http://test-ui:3100
+      - "9000:9000"
+    env_file: .env
     volumes:
       - ./clients.json:/app/clients.json:ro
     depends_on:
-      - gateway
-    profiles:
-      - test
+      - botai
+      - qa
 
 volumes:
   ollama_models:

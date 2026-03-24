@@ -7,6 +7,21 @@ const callbackSchema = z.object({
   headers: z.record(z.string()),
 });
 
+const actionSchema = z.object({
+  id: z.string().optional(),
+  characterId: z.string().optional(),
+  characterName: z.string().min(1),
+  content: z.string().min(1),
+  type: z.string().optional(),
+  timestamp: z.string().optional(),
+});
+
+/**
+ * Accepts two equivalent payload shapes:
+ *  A) context.actions[]           — used by test scripts and direct API calls
+ *  B) context.triggeringAction + context.recentActions[]  — used by unified-backend
+ * Both are normalised to context.actions[] before reaching botai.
+ */
 export const botRespondSchema = z.object({
   requestId: z.string().min(1),
   bot: z.object({
@@ -19,18 +34,29 @@ export const botRespondSchema = z.object({
       name: z.string().min(1),
       description: z.string().optional(),
     }),
-    actions: z.array(z.object({
-      characterId: z.string().optional(),
-      characterName: z.string().min(1),
-      content: z.string().min(1),
-      timestamp: z.string().optional(),
-    })).min(1),
+    // Shape A
+    actions: z.array(actionSchema).optional(),
+    // Shape B (unified-backend)
+    triggeringAction: actionSchema.optional(),
+    recentActions: z.array(actionSchema).optional(),
     presentCharacters: z.array(z.object({
       id: z.string().optional(),
       name: z.string(),
     })).optional(),
+  }).transform((ctx) => {
+    // Normalise to actions[] regardless of input shape
+    if (!ctx.actions || ctx.actions.length === 0) {
+      const combined = [
+        ...(ctx.recentActions ?? []),
+        ...(ctx.triggeringAction ? [ctx.triggeringAction] : []),
+      ];
+      return { ...ctx, actions: combined };
+    }
+    return ctx;
+  }).refine((ctx) => ctx.actions && ctx.actions.length > 0, {
+    message: 'context must include at least one action (via actions[] or triggeringAction)',
   }),
-  callback: callbackSchema,
+  callback: callbackSchema.optional(),
 });
 
 export const qaAskSchema = z.object({
@@ -75,6 +101,10 @@ export const botCreateSchema = z.object({
     coreValues: z.array(z.string()).optional(),
   }),
   systemPrompt: z.string().min(1),
+  narrativeStyle: z.object({
+    author: z.string().min(1).max(200),
+    guidance: z.string().min(1),
+  }).optional(),
 });
 
 export const botGenerateSchema = z.object({
@@ -86,18 +116,6 @@ export const botGenerateSchema = z.object({
   }).optional(),
   style: z.string().optional(),
   locale: z.string().optional(),
-  callback: callbackSchema,
-});
-
-export const imageGenSchema = z.object({
-  entityType: z.enum(['character', 'item', 'location']),
-  record: z.record(z.any()),
-  style: z.string().optional(),
-  options: z.object({
-    width: z.number().int().min(64).max(2048).optional(),
-    height: z.number().int().min(64).max(2048).optional(),
-    format: z.enum(['png', 'jpeg', 'webp']).optional(),
-  }).optional(),
   callback: callbackSchema,
 });
 

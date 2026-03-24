@@ -13,7 +13,6 @@
     "start": "docker compose up -d",
     "stop": "docker compose down",
     "logs": "docker compose logs -f",
-    "pull-models": "docker compose exec ollama ollama pull mistral:7b-instruct",
     "health": "curl -s http://localhost:9000/health | jq"
   },
   "devDependencies": {

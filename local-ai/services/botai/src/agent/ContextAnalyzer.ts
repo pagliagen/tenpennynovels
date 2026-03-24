@@ -1,4 +1,4 @@
-import { OllamaAgent } from './OllamaAgent';
+import { IAgent } from './IAgent';
 import { IBot, IActiveEmotion } from '../models/Bot';
 import { IMemory } from '../models/Memory';
 import { IRelationship } from '../models/Relationship';
@@ -29,7 +29,7 @@ interface AnalyzeParams {
 }
 
 export class ContextAnalyzer {
-  constructor(private agent: OllamaAgent) {}
+  constructor(private agent: IAgent) {}
 
   async analyze(params: AnalyzeParams): Promise<ContextInsights> {
     const systemPrompt = this.buildPrompt(params);
@@ -39,7 +39,7 @@ export class ContextAnalyzer {
       'ContextAnalyzer',
       systemPrompt,
       userMessage,
-      { temperature: 0.3, numPredict: 512 },
+      { temperature: 0.3, numPredict: 900 },
     );
 
     return {

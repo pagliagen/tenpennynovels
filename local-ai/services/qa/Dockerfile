@@ -14,5 +14,7 @@ WORKDIR /app/services/qa
 COPY services/qa/package.json ./
 RUN npm install --omit=dev
 COPY --from=builder /app/services/qa/dist ./dist
+RUN chown -R node:node /app
+USER node
 EXPOSE 8090
 CMD ["node", "dist/services/qa/src/index.js"]

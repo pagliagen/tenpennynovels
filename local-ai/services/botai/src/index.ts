@@ -16,9 +16,14 @@ async function start() {
   app.listen(PORT, () => {
     logger.info(`BotAI service listening on port ${PORT}`);
 
-    warmupModel()
-      .then(() => logger.info(`Model ${getModel()} warmed up and locked in memory`))
-      .catch((err) => logger.warn(`Warmup failed (will load on first request): ${err.message}`));
+    if (process.env.ANTHROPIC_API_KEY) {
+      const model = process.env.ANTHROPIC_MODEL || 'claude';
+      logger.info(`Using Anthropic API — model: ${model} (no warmup needed)`);
+    } else {
+      warmupModel()
+        .then(() => logger.info(`Model ${getModel()} warmed up and locked in memory`))
+        .catch((err) => logger.warn(`Warmup failed (will load on first request): ${err.message}`));
+    }
   });
 }
 

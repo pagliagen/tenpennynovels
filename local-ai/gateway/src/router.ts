@@ -5,7 +5,7 @@ import { services, ServiceConfig } from './services';
 import { authenticateClient, requirePermission } from './middleware/apiKey';
 import { verifyHMAC } from './middleware/hmac';
 import { clientRateLimit } from './middleware/rateLimit';
-import { validateBody, botRespondSchema, qaAskSchema, qaExtractKeywordsSchema, qaExtractInsightSchema, botCreateSchema, botGenerateSchema, imageGenSchema, seoGenerateDescriptionSchema } from './middleware/validate';
+import { validateBody, botRespondSchema, qaAskSchema, qaExtractKeywordsSchema, qaExtractInsightSchema, botCreateSchema, botGenerateSchema, seoGenerateDescriptionSchema } from './middleware/validate';
 import { generateSeoDescription } from './seo/SeoDescriptionGenerator';
 
 interface RouteValidation {
@@ -24,9 +24,6 @@ const routeValidations: Record<string, RouteValidation[]> = {
     { method: 'POST', path: '/ask', schema: validateBody(qaAskSchema) },
     { method: 'POST', path: '/extract-keywords', schema: validateBody(qaExtractKeywordsSchema) },
     { method: 'POST', path: '/extract-insight', schema: validateBody(qaExtractInsightSchema) },
-  ],
-  '/image-gen': [
-    { method: 'POST', path: '/generate', schema: validateBody(imageGenSchema) },
   ],
 };
 

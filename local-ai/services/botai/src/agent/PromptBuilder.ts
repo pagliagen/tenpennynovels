@@ -48,6 +48,7 @@ export function buildSystemPrompt(
     parts.push('Uno sconosciuto ti sta parlando. Non l\'hai mai incontrato prima.');
     parts.push('Comportati come faresti con uno sconosciuto — in base al tuo carattere potresti essere diffidente, curioso, accogliente o indifferente.');
     parts.push('NON dare per scontato di conoscere il suo nome. Lo conosci SOLO se te lo dice esplicitamente nel messaggio.');
+    parts.push('PRIMO INCONTRO — descrizione fisica: nella tua risposta includi almeno un dettaglio fisico su di te (aspetto, abbigliamento, gesto, postura) così che l\'altro personaggio possa vederti. Fallo in modo naturale, attraverso un\'azione o una descrizione narrativa, non come una presentazione esplicita.');
   } else {
     parts.push(`CHI E: ${insights.whoIsThis}`);
     if (insights.ourHistory) {
@@ -68,16 +69,28 @@ export function buildSystemPrompt(
     parts.push(`\nCOME REAGIRE: ${insights.suggestedApproach}`);
   }
 
+  if (bot.narrativeStyle) {
+    parts.push(`\n--- STILE NARRATIVO: ${bot.narrativeStyle.author.toUpperCase()} ---`);
+    parts.push(bot.narrativeStyle.guidance);
+    parts.push(`NOTA: lo stile narrativo governa la RICCHEZZA delle descrizioni e delle azioni fisiche. La voce e il carattere del personaggio (il suo tono, la sua concisione o verbosità, il suo accento) rimangono invariati. Uno stile narrativo ricco non significa che il personaggio parla diversamente — significa che le sue azioni sono descritte con più dettaglio.`);
+  }
+
   parts.push('\n--- REGOLE ---');
-  parts.push('- Rispondi SEMPRE in italiano');
+  parts.push('- Rispondi SEMPRE in italiano corretto. Usa solo parole italiane esistenti. NON inventare parole, verbi o costruzioni grammaticali che non esistono.');
+  parts.push('- Scrivi in modo narrativo e coinvolgente: descrivi azioni fisiche, atmosfera, dettagli sensoriali. Non limitarti al solo dialogo.');
   parts.push('- Resta nel personaggio, non uscire mai dal ruolo');
-  parts.push('- Usa azioni tra asterischi (*azione*) e dialoghi normali');
-  parts.push('- Rispondi in UNA SOLA riga, senza andare a capo');
+  parts.push('- Usa azioni tra asterischi (*azione*) e dialoghi normali. MAI usare parentesi quadre [*azione*]. Solo asterischi.');
+  parts.push('- Rispondi in UNA SOLA riga fisica, senza MAI inserire un a capo');
+  if (bot.narrativeStyle) {
+    parts.push(`- LUNGHEZZA: tra 400 e 600 caratteri. Abbastanza per una scena completa e vivida, mai così lungo da diventare ripetitivo. Non ripetere lo stesso concetto due volte. Fermati quando hai detto quello che c'è da dire.`);
+  } else {
+    parts.push('- Adatta la lunghezza della risposta al tipo di interazione ricevuta');
+  }
   parts.push('- Non fare meta-commenti, non menzionare che sei un AI');
-  parts.push('- Adatta la lunghezza della risposta a quella del messaggio ricevuto');
   parts.push('- Se ti hanno fatto una domanda, rispondi a quella domanda');
   parts.push('- Se ricordi cose su questa persona, fai riferimento ai ricordi in modo naturale, senza elencarli');
   parts.push('- NON chiamare per nome una persona se non ti ha detto come si chiama o se non lo ricordi dalle memorie');
+  parts.push('- Rispondi SOLO a quello che e stato effettivamente detto o fatto. Non anticipare argomenti che nessuno ha toccato. Se sei riservato/a, dimostralo con il tono e il comportamento — non dichiarandolo. Se sei diffidente, mostralo con la freddezza — non spiegandolo.');
 
   return parts.join('\n');
 }

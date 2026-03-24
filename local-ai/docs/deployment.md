@@ -125,22 +125,6 @@ curl https://xxx.ngrok-free.dev/health
 
 Deve rispondere con `"status": "healthy"`.
 
-### 6. Test interattivo
-
-Per verificare il flusso completo (generazione bot + chat asincrona), avviare il servizio test-ui:
-
-```bash
-docker compose --profile test up -d test-ui
-```
-
-Poi aprire nel browser:
-
-```
-http://localhost:3100
-```
-
-L'app React consente di generare un bot e chattare con lui. Le risposte arrivano via SSE, confermando che il flusso asincrono (coda + callback) funziona correttamente. Il servizio test-ui e isolato dal gateway e si ferma con `docker compose --profile test down`.
-
 ## Mantenere il servizio attivo
 
 ### Avvio automatico al boot

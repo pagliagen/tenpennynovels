@@ -1,4 +1,4 @@
-import { OllamaAgent } from './OllamaAgent';
+import { IAgent } from './IAgent';
 import { IBot } from '../models/Bot';
 import { ContextInsights } from './ContextAnalyzer';
 
@@ -19,7 +19,7 @@ export interface PostAnalysisResult {
 }
 
 export class PostResponseAnalyzer {
-  constructor(private agent: OllamaAgent) {}
+  constructor(private agent: IAgent) {}
 
   async analyze(
     bot: IBot,

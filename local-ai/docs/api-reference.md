@@ -10,7 +10,7 @@ Tutti gli endpoint passano attraverso il gateway sulla porta 9000. Le richieste 
 
 Endpoint pubblico (no autenticazione). Controlla lo stato di tutti i servizi.
 
-**Risposta (con servizi image-gen avviati):**
+**Risposta:**
 
 ```json
 {
@@ -19,32 +19,12 @@ Endpoint pubblico (no autenticazione). Controlla lo stato di tutti i servizi.
     "gateway": { "status": "up" },
     "botai": { "status": "up", "service": "botai", "mongodb": "connected" },
     "qa": { "status": "up", "service": "qa" },
-    "item-image-gen": { "status": "stub", "service": "item-image-gen" },
-    "location-image-gen": { "status": "stub", "service": "location-image-gen" },
-    "avatar-gen": { "status": "stub", "service": "avatar-gen" },
     "ollama": { "status": "up", "models": ["mistral:7b-instruct"] }
   }
 }
 ```
 
-**Risposta tipica (senza profilo `image-gen`):**
-
-```json
-{
-  "status": "degraded",
-  "services": {
-    "gateway": { "status": "up" },
-    "botai": { "status": "up", "service": "botai", "mongodb": "connected" },
-    "qa": { "status": "up", "service": "qa" },
-    "item-image-gen": { "status": "down" },
-    "location-image-gen": { "status": "down" },
-    "avatar-gen": { "status": "down" },
-    "ollama": { "status": "up", "models": [] }
-  }
-}
-```
-
-Lo `status` globale e `"healthy"` se tutti i servizi sono `up` o `stub`. Se uno o piu servizi sono `down` (es. gli stub image-gen non avviati), lo status diventa `"degraded"`. I servizi image-gen sono nel profilo Docker `image-gen` e si avviano con `docker compose --profile image-gen up -d`.
+Lo `status` globale e `"healthy"` se tutti i servizi sono `up`. Se uno o piu servizi sono `down`, lo status diventa `"degraded"`.
 
 ---
 
@@ -290,49 +270,6 @@ Il caller fornisce la domanda e il contesto (chunk di testo). Il servizio Q&A no
   }
 }
 ```
-
----
-
-## Image Generation (stub)
-
-### `POST /item-image-gen/generate`
-### `POST /location-image-gen/generate`
-### `POST /avatar-gen/generate`
-
-Tutti rispondono `501 Not Implemented` con un campo `todo` che descrive l'implementazione futura.
-
-### `GET /*/styles`
-
-Lista gli stili supportati (placeholder).
-
-### `GET /location-image-gen/moods`
-
-Lista i mood supportati per location.
-
-### `POST /avatar-gen/regenerate`
-
-Stub per rigenerazione con seed fissato. Risponde `501`.
-
----
-
-## Test UI (servizio separato)
-
-Il test UI e un servizio isolato (React + Express) che gira sulla porta `3100`. Si avvia solo con il profilo Docker `test`:
-
-```bash
-docker compose --profile test up -d test-ui
-```
-
-### Endpoint del servizio test-ui
-
-| Endpoint | Descrizione |
-|----------|-------------|
-| `GET /` | App React (generazione bot + chat) |
-| `GET /api/events` | SSE — riceve risposte in real-time |
-| `GET /api/config` | Config (gateway URL, callback URL, API key) |
-| `POST /api/callback` | Riceve callback da BotAI, le pusha via SSE |
-
-Il flusso: il browser chiama direttamente il gateway per le API (`/botai/*`), passando come callback URL l'endpoint del test-ui (`http://test-ui:3100/api/callback`). Quando BotAI completa l'elaborazione, invia il risultato alla callback, che viene pushata al browser via SSE.
 
 ---
 

@@ -7,6 +7,11 @@ export interface IActiveEmotion {
   createdAt: Date;
 }
 
+export interface INarrativeStyle {
+  author: string;
+  guidance: string;
+}
+
 export interface IBot extends Document {
   name: string;
   gender?: 'male' | 'female';
@@ -18,6 +23,7 @@ export interface IBot extends Document {
     coreValues?: string[];
   };
   systemPrompt: string;
+  narrativeStyle?: INarrativeStyle;
   activeEmotions: IActiveEmotion[];
   currentMood: { type: string; since: Date };
   isActive: boolean;
@@ -32,6 +38,11 @@ const ActiveEmotionSchema = new Schema<IActiveEmotion>({
   createdAt: { type: Date, default: Date.now },
 }, { _id: false });
 
+const NarrativeStyleSchema = new Schema<INarrativeStyle>({
+  author: { type: String, required: true },
+  guidance: { type: String, required: true },
+}, { _id: false });
+
 const BotSchema = new Schema<IBot>({
   name: { type: String, required: true },
   gender: { type: String, enum: ['male', 'female'] },
@@ -43,6 +54,7 @@ const BotSchema = new Schema<IBot>({
     coreValues: [String],
   },
   systemPrompt: { type: String, required: true },
+  narrativeStyle: { type: NarrativeStyleSchema, default: undefined },
   activeEmotions: { type: [ActiveEmotionSchema], default: [] },
   currentMood: {
     type: { type: String, default: 'neutro' },

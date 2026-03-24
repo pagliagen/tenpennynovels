@@ -14,5 +14,7 @@ WORKDIR /app/services/botai
 COPY services/botai/package.json ./
 RUN npm install --omit=dev
 COPY --from=builder /app/services/botai/dist ./dist
+RUN chown -R node:node /app
+USER node
 EXPOSE 8080
 CMD ["node", "dist/services/botai/src/index.js"]

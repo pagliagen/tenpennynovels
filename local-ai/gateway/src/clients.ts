@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { timingSafeEqual } from 'crypto';
 
 export interface ClientConfig {
   id: string;
@@ -65,8 +66,19 @@ function resolveClientsFile(): string {
   return candidates[0];
 }
 
+function safeEqual(a: string, b: string): boolean {
+  try {
+    const ba = Buffer.from(a);
+    const bb = Buffer.from(b);
+    if (ba.length !== bb.length) return false;
+    return timingSafeEqual(ba, bb);
+  } catch {
+    return false;
+  }
+}
+
 export function resolveClient(apiKey: string, clientId?: string): ClientConfig | null {
-  const match = clients.find(c => c.apiKey === apiKey);
+  const match = clients.find(c => safeEqual(c.apiKey, apiKey));
   if (!match) return null;
 
   if (clientId && match.id !== clientId) return null;
