@@ -438,16 +438,21 @@ export class ChatController {
         if (location?.bot_enabled && actionType === 'standard') {
           const { aiGatewayClient } = await import('../services/AIGatewayClient');
 
-          // Identify active non-bot occupants
-          const allOccupants: any[] = location.occupants || [];
-          const botCharacter = location.botCharacterId
-            ? await Character.findById(location.botCharacterId).select('_id name bot_id').lean()
+          // Re-fetch location to get up-to-date occupants (the outer `location` may be stale)
+          const freshLocation = await Location.findById(locationId).lean();
+          const allOccupants: any[] = (freshLocation as any)?.occupants || [];
+          const botCharacterId = (freshLocation as any)?.botCharacterId;
+          const botCharacter = botCharacterId
+            ? await Character.findById(botCharacterId).select('_id name bot_id').lean()
             : null;
           const botCharIdStr = botCharacter?._id?.toString();
 
           const activeNonBotOccupants = allOccupants.filter(
             (occ: any) => occ.isActive && occ.characterId.toString() !== botCharIdStr
           );
+
+          // Fallback: if occupant tracking is out of sync, treat the acting character as 1 active player
+          const effectiveCount = activeNonBotOccupants.length > 0 ? activeNonBotOccupants.length : 1;
 
           if (activeNonBotOccupants.length > 5) {
             logger.warn(`[BotRound] Location ${locationId} has ${activeNonBotOccupants.length} active players (max 5 for bot locations)`);
@@ -474,9 +479,9 @@ export class ChatController {
             }
 
             const actedCount = updatedLoc.botRound?.actedCharacterIds?.length ?? 0;
-            const expectedCount = Math.min(activeNonBotOccupants.length, 5);
+            const expectedCount = Math.min(effectiveCount, 5);
 
-            logger.info(`[BotRound] ${actedCount}/${expectedCount} players acted in round ${updatedLoc.botRound?.roundNumber ?? 0}`);
+            logger.info(`[BotRound] ${actedCount}/${expectedCount} players acted in round ${updatedLoc.botRound?.roundNumber ?? 0} (occupants tracked: ${activeNonBotOccupants.length})`);
 
             if (actedCount >= expectedCount && expectedCount > 0) {
               // Atomically claim the right to notify the bot by resetting the round.

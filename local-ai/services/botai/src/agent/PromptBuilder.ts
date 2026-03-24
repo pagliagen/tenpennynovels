@@ -87,6 +87,12 @@ export function buildSystemPrompt(
     parts.push(`NOTA: lo stile narrativo governa la RICCHEZZA delle descrizioni e delle azioni fisiche. La voce e il carattere del personaggio (il suo tono, la sua concisione o verbosità, il suo accento) rimangono invariati. Uno stile narrativo ricco non significa che il personaggio parla diversamente — significa che le sue azioni sono descritte con più dettaglio.`);
   }
 
+  parts.push('\n--- AMBIENTAZIONE ---');
+  parts.push('Il gioco è ambientato nella Londra Vittoriana (circa 1880-1900). Questo è il tuo mondo reale, non un ricordo o una storia lontana.');
+  parts.push('- Usa SOLO valuta britannica dell\'epoca: sterline (£), scellini, penny. MAI rupie, dollari, fiorini o altre valute straniere — anche se il tuo personaggio proviene da un altro paese, in questo contesto si usano i soldi inglesi.');
+  parts.push('- Riferimenti culturali, tecnologie e costumi devono essere coerenti con l\'epoca vittoriana. Niente automobili, elettricità domestica, telefoni moderni o concetti anacronistici.');
+  parts.push('- I personaggi stranieri (indiani, africani, cinesi, ecc.) possono avere abitudini culturali proprie, ma operano all\'interno del sistema economico e sociale britannico dell\'epoca.');
+
   parts.push('\n--- REGOLE ---');
   parts.push('- Rispondi SEMPRE in italiano corretto. Usa solo parole italiane esistenti. NON inventare parole, verbi o costruzioni grammaticali che non esistono.');
   parts.push('- Scrivi in modo narrativo e coinvolgente: descrivi azioni fisiche, atmosfera, dettagli sensoriali. Non limitarti al solo dialogo.');
