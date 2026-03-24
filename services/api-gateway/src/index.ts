@@ -1,8 +1,10 @@
 import dotenv from 'dotenv';
 
-// Carica variabili d'ambiente: prima globali, poi specifiche del servizio
+// Carica variabili d'ambiente: root → root.env.NODE_ENV → locale → locale.env.NODE_ENV
 dotenv.config({ path: '../../.env' });
+if (process.env.NODE_ENV) dotenv.config({ path: `../../.env.${process.env.NODE_ENV}`, override: true });
 dotenv.config({ override: true });
+if (process.env.NODE_ENV) dotenv.config({ path: `.env.${process.env.NODE_ENV}`, override: true });
 
 import app from './app';
 import { logger } from './utils/logger';
