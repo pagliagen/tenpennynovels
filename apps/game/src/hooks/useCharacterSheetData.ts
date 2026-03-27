@@ -137,6 +137,10 @@ export interface CharacterSheetData {
       notes: string;
     }>;
 
+    // Bot
+    isBot?: boolean;
+    bot_id?: string;
+
     // Metadata
     createdAt: string;
     lastActive?: string;
