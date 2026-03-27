@@ -67,8 +67,8 @@ flowchart TB
     subgraph "PM2 Processes"
         L[Landing :4000]
         G[Game :4001]
-        D[Documents :4003]
-        M[Management :4004]
+        D[Documents :4002]
+        M[Management :4003]
         GW[API Gateway :8000]
         UB[Unified Backend :3001]
     end
@@ -95,8 +95,8 @@ flowchart TB
 
 - `tenpennynovels.com` → Landing (4000)
 - `game.tenpennynovels.com` → Game (4001)
-- `documenti.tenpennynovels.com` → Documents (4003)
-- `gestione.tenpennynovels.com` → Management (4004)
+- `documenti.tenpennynovels.com` → Documents (4002)
+- `gestione.tenpennynovels.com` → Management (4003)
 - `api.tenpennynovels.com` → API Gateway (8000)
 - `ws.tenpennynovels.com` → WebSocket (3001)
 - `cdn.tenpennynovels.com` → CDN static files

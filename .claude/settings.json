@@ -10,7 +10,9 @@
     "additionalDirectories": [
       "/Users/gennaropaglia/.claude/skills",
       "/tmp",
-      "/private/tmp"
+      "/private/tmp",
+      "/Users/gennaropaglia/Documents/SitiPersonali/tenpennynovels/.claude/context",
+      "/Users/gennaropaglia/.claude/projects/-Users-gennaropaglia-Documents-SitiPersonali-tenpennynovels/memory"
     ]
   }
 }

@@ -47,7 +47,7 @@ Management panel moderno per TenPennyNovels, costruito con Next.js 16, TypeScrip
 # Install dependencies
 npm install
 
-# Run development server (port 4004)
+# Run development server (port 4003)
 npm run dev
 
 # Build for production
@@ -71,7 +71,7 @@ npm run lint
 
 ## URL
 
-- **Development**: http://localhost:4004/gestione
+- **Development**: http://localhost:4003/gestione
 - **Production**: https://tenpennynovels.com/gestione
 
 ## Autenticazione
@@ -140,7 +140,7 @@ src/
 
 ```nginx
 location /gestione/ {
-  proxy_pass http://localhost:4004/gestione/;
+  proxy_pass http://localhost:4003/gestione/;
   proxy_http_version 1.1;
   proxy_set_header Upgrade $http_upgrade;
   proxy_set_header Connection 'upgrade';

@@ -25,7 +25,7 @@ TenPennyNovels is a web-based RPG platform that brings Victorian London to life 
 
 ## Technology Stack
 
-- **Frontend**: Next.js 15, React, TypeScript, SCSS Modules
+- **Frontend**: Next.js 16, React, TypeScript, SCSS Modules
 - **Backend**: Node.js 22, Express, TypeScript (unified backend)
 - **Real-time**: Socket.IO for WebSocket connections
 - **Database**: MongoDB 7 with Mongoose ODM
@@ -46,8 +46,8 @@ flowchart TD
     subgraph frontend ["Frontend (Next.js SSR)"]
         Landing["Landing\n:4000"]
         Game["Game\n:4001"]
-        Documents["Documents\n:4003"]
-        Management["Management\n:4004"]
+        Documents["Documents\n:4002"]
+        Management["Management\n:4003"]
     end
 
     subgraph backend ["Backend (VPS)"]
@@ -93,8 +93,8 @@ flowchart TD
 |-----|------|---------------|-------------|
 | Landing | 4000 | tenpennynovels.com | Authentication and character selection |
 | Game | 4001 | game.tenpennynovels.com | Main gameplay interface with real-time chat, forum |
-| Documents | 4003 | documenti.tenpennynovels.com | Setting guides and rules reference |
-| Management | 4004 | gestione.tenpennynovels.com | Game master and admin tools |
+| Documents | 4002 | documenti.tenpennynovels.com | Setting guides and rules reference |
+| Management | 4003 | gestione.tenpennynovels.com | Game master and admin tools |
 
 **Backend Services (VPS):**
 
@@ -190,8 +190,8 @@ npm run all
 |---------|-----|
 | Landing/Login | http://localhost:4000 |
 | Game Interface | http://localhost:4001 |
-| Documents | http://localhost:4003 |
-| Management | http://localhost:4004 |
+| Documents | http://localhost:4002 |
+| Management | http://localhost:4003 |
 | API Gateway | http://localhost:8000 |
 | AI Gateway Health | http://localhost:9000/health |
 

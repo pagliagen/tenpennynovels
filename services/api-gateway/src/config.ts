@@ -47,7 +47,7 @@ export const config = {
         ]
       : [
           'http://localhost:4001',
-          'http://localhost:4004',
+          'http://localhost:4003',
         ],
   },
 

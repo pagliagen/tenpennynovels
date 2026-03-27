@@ -42,6 +42,22 @@ module.exports = {
       name: 'tenpennynovels-documenti',
       cwd: './apps/documents',
       script: './node_modules/.bin/next',
+      args: 'start -p 4002',
+      instances: 1,
+      exec_mode: 'fork',
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '512M',
+      env_production: {
+        NODE_ENV: 'production',
+        PORT: 4002,
+      },
+    },
+
+    {
+      name: 'tenpennynovels-gestione',
+      cwd: './apps/management',
+      script: './node_modules/.bin/next',
       args: 'start -p 4003',
       instances: 1,
       exec_mode: 'fork',
@@ -51,22 +67,6 @@ module.exports = {
       env_production: {
         NODE_ENV: 'production',
         PORT: 4003,
-      },
-    },
-
-    {
-      name: 'tenpennynovels-gestione',
-      cwd: './apps/management',
-      script: './node_modules/.bin/next',
-      args: 'start -p 4004',
-      instances: 1,
-      exec_mode: 'fork',
-      autorestart: true,
-      watch: false,
-      max_memory_restart: '512M',
-      env_production: {
-        NODE_ENV: 'production',
-        PORT: 4004,
       },
     },
 
