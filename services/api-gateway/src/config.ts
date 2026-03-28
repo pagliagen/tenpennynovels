@@ -47,7 +47,7 @@ export const config = {
         ]
       : [
           'http://localhost:4001',
-          'http://localhost:4004',
+          'http://localhost:4003',
         ],
   },
 
@@ -91,5 +91,9 @@ export const config = {
     defaultTimeout: 30_000,
     documentsTimeout: 120_000,
     socketTimeout: 60_000,
+  },
+
+  webhooks: {
+    secret: process.env.AI_GATEWAY_WEBHOOK_SECRET || '',
   },
 };

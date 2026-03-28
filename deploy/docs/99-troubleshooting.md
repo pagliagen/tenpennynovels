@@ -13,8 +13,8 @@
 |-----------|----------|---------------|-------------|------|
 | `tenpennynovels.com` | Landing App | 4000 | `tenpennynovels-landing` | Next.js SSR |
 | `game.tenpennynovels.com` | Game App | 4001 | `tenpennynovels-game` | Next.js SSR |
-| `documenti.tenpennynovels.com` | Documents App | 4003 | `tenpennynovels-documenti` | Next.js SSR |
-| `gestione.tenpennynovels.com` | Management App | 4004 | `tenpennynovels-gestione` | Next.js SSR |
+| `documenti.tenpennynovels.com` | Documents App | 4002 | `tenpennynovels-documenti` | Next.js SSR |
+| `gestione.tenpennynovels.com` | Management App | 4003 | `tenpennynovels-gestione` | Next.js SSR |
 | `api.tenpennynovels.com` | API Gateway | 8000 | `tenpennynovels-api-gateway` | Express (cluster x2) |
 | `ws.tenpennynovels.com` | WebSocket Server | 3001 | `tenpennynovels-unified-backend` | Socket.IO (fork x1) |
 

@@ -431,99 +431,169 @@ export class ChatController {
       }
       // ========== END TURN MANAGEMENT ==========
 
-      // Check if location has bot configured and notify AI gateway
+      // ========== BOT ROUND GATE ==========
+      // Notify bot only after ALL active players in the location have sent a standard action.
+      // Supports max 5 non-bot players per bot-enabled location.
       try {
-        const { aiGatewayClient } = await import('../services/AIGatewayClient');
+        if (location?.bot_enabled && actionType === 'standard') {
+          const { aiGatewayClient } = await import('../services/AIGatewayClient');
 
-        if (location?.bot_enabled) {
-          const shouldNotify = !sessionId || !(await GamingSession.findById(sessionId))?.botDisabledForSession;
+          // Re-fetch location to get up-to-date occupants (the outer `location` may be stale)
+          const freshLocation = await Location.findById(locationId).lean();
+          const allOccupants: any[] = (freshLocation as any)?.occupants || [];
+          const botCharacterId = (freshLocation as any)?.botCharacterId;
+          const botCharacter = botCharacterId
+            ? await Character.findById(botCharacterId).select('_id name bot_id').lean()
+            : null;
+          const botCharIdStr = botCharacter?._id?.toString();
 
-          if (shouldNotify) {
-            const healthy = await aiGatewayClient.isHealthy();
-            if (healthy) {
-              const recentActionsRaw = await Chat.find({ locationId })
-                .sort({ timestamp: -1 }).limit(10).lean();
+          const activeNonBotOccupants = allOccupants.filter(
+            (occ: any) => occ.isActive && occ.characterId.toString() !== botCharIdStr
+          );
 
-              // Filter actions to protect privacy - AI should not see private messages
-              const recentActions = recentActionsRaw.filter((action: any) => {
-                // Only send public messages
-                if (action.visibility === 'public') return true;
+          // Fallback: if occupant tracking is out of sync, treat the acting character as 1 active player
+          const effectiveCount = activeNonBotOccupants.length > 0 ? activeNonBotOccupants.length : 1;
 
-                // Hide whispers (private conversations)
-                if (action.visibility === 'whisper') return false;
+          if (activeNonBotOccupants.length > 5) {
+            logger.warn(`[BotRound] Location ${locationId} has ${activeNonBotOccupants.length} active players (max 5 for bot locations)`);
+          }
 
-                // Hide master-only messages
-                if (action.visibility === 'master_only') return false;
+          // Atomically register this player's action in the current round
+          const updatedLoc = await Location.findOneAndUpdate(
+            { _id: locationId },
+            {
+              $addToSet: {
+                'botRound.actedCharacterIds': character.characterId,
+                'botRound.roundActionIds': savedAction._id,
+              },
+            },
+            { new: true }
+          );
 
-                // Hide hidden skill/stat checks
-                if (action.isHidden) return false;
+          if (!updatedLoc) {
+            logger.warn('[BotRound] Could not update location round state');
+          } else {
+            // Set startedAt on first action of the round
+            if (!updatedLoc.botRound?.startedAt) {
+              await Location.updateOne({ _id: locationId }, { $set: { 'botRound.startedAt': new Date() } });
+            }
 
-                return true;
-              });
+            const actedCount = updatedLoc.botRound?.actedCharacterIds?.length ?? 0;
+            const expectedCount = Math.min(effectiveCount, 5);
 
-              const presentChars = await Chat.distinct('characterId', {
-                locationId,
-                timestamp: { $gte: new Date(Date.now() - 60 * 60 * 1000) },
-              });
-              const presentCharacters = await Character.find({ _id: { $in: presentChars } })
-                .select('_id name').lean();
+            logger.info(`[BotRound] ${actedCount}/${expectedCount} players acted in round ${updatedLoc.botRound?.roundNumber ?? 0} (occupants tracked: ${activeNonBotOccupants.length})`);
 
-              const botId = location.bot_id || '';
-              const botCharacter = location.botCharacterId
-                ? await Character.findById(location.botCharacterId).lean()
-                : null;
+            if (actedCount >= expectedCount && expectedCount > 0) {
+              // Atomically claim the right to notify the bot by resetting the round.
+              // Only the request that successfully resets sends to the bot (prevents double-send).
+              const beforeReset = await Location.findOneAndUpdate(
+                { _id: locationId, 'botRound.actedCharacterIds.0': { $exists: true } },
+                {
+                  $set: { 'botRound.actedCharacterIds': [], 'botRound.roundActionIds': [], 'botRound.startedAt': new Date() },
+                  $inc: { 'botRound.roundNumber': 1 },
+                }
+              );
 
-              const callbackSecret = appConfig.services.aiGateway.webhookSecret;
-              const backendUrl = appConfig.urls.api;
+              if (!beforeReset) {
+                logger.info('[BotRound] Round already processed by concurrent request, skipping');
+              } else {
+                const shouldNotify = !sessionId || !(await GamingSession.findById(sessionId))?.botDisabledForSession;
 
-              const success = await aiGatewayClient.notifyBotAction({
-                requestId: savedAction._id.toString(),
-                bot: { id: botId.toString(), name: botCharacter?.name || 'Bot' },
-                context: {
-                  location: {
-                    id: locationId,
-                    name: location.name,
-                    description: location.description,
-                  },
-                  triggeringAction: {
-                    id: savedAction._id.toString(),
-                    characterId: character.characterId,
-                    characterName: character.characterName,
-                    content: content.trim(),
-                    type: actionType,
-                  },
-                  recentActions: recentActions.reverse().map((a: any) => ({
-                    characterId: a.characterId?.toString(),
-                    characterName: a.characterName,
-                    content: a.content,
-                    timestamp: a.timestamp?.toISOString(),
-                  })),
-                  presentCharacters: presentCharacters.map((c: any) => ({
-                    id: c._id.toString(),
-                    name: c.name,
-                  })),
-                },
-                callback: callbackSecret ? {
-                  url: `${backendUrl}/game/webhooks/bot-response`,
-                  method: 'POST',
-                  headers: { Authorization: `Bearer ${callbackSecret}` },
-                } : undefined,
-              });
+                if (shouldNotify) {
+                  const healthy = await aiGatewayClient.isHealthy();
+                  if (healthy) {
+                    const roundActionIds = beforeReset.botRound?.roundActionIds || [];
 
-              if (!success && sessionId) {
-                const session = await GamingSession.findById(sessionId);
-                if (session) {
-                  session.botDisabledForSession = true;
-                  await session.save();
-                  logger.info(`[AIGateway] Bot disabled for session ${session._id} due to connection failure`);
+                    // Fetch round actions in chronological order, filtering private messages
+                    const roundActionsRaw = await Chat.find({ _id: { $in: roundActionIds } })
+                      .sort({ timestamp: 1 }).lean();
+
+                    const roundActions = roundActionsRaw.filter((a: any) =>
+                      a.visibility !== 'whisper' && a.visibility !== 'master_only' && !a.isHidden
+                    );
+
+                    // Use active non-bot occupants as presentCharacters
+                    const presentCharacterIds = activeNonBotOccupants.map((occ: any) => occ.characterId);
+                    const presentCharacters = await Character.find({ _id: { $in: presentCharacterIds } })
+                      .select('_id name gender apparentAge physicalDescription visibleMarks height eyeColor hairColor').lean();
+
+                    const botLocalAiId = (botCharacter as any)?.bot_id || '';
+                    const lastAction = roundActions[roundActions.length - 1];
+
+                    const callbackSecret = appConfig.services.aiGateway.webhookSecret;
+                    const backendUrl = appConfig.urls.api;
+
+                    const success = await aiGatewayClient.notifyBotAction({
+                      requestId: savedAction._id.toString(),
+                      bot: { id: botLocalAiId.toString(), name: botCharacter?.name || 'Bot' },
+                      context: {
+                        location: {
+                          id: locationId,
+                          name: location.name,
+                          description: location.description,
+                        },
+                        triggeringAction: lastAction
+                          ? {
+                              id: lastAction._id.toString(),
+                              characterId: lastAction.characterId?.toString(),
+                              characterName: lastAction.characterName,
+                              content: lastAction.content,
+                              type: lastAction.actionType,
+                            }
+                          : {
+                              id: savedAction._id.toString(),
+                              characterId: character.characterId,
+                              characterName: character.characterName,
+                              content: content.trim(),
+                              type: actionType,
+                            },
+                        recentActions: roundActions.map((a: any) => ({
+                          characterId: a.characterId?.toString(),
+                          characterName: a.characterName,
+                          content: a.content,
+                          timestamp: a.timestamp?.toISOString(),
+                        })),
+                        presentCharacters: presentCharacters.map((c: any) => ({
+                          id: c._id.toString(),
+                          name: c.name,
+                          gender: c.gender,
+                          apparentAge: c.apparentAge,
+                          physicalDescription: c.physicalDescription,
+                          visibleMarks: c.visibleMarks,
+                          height: c.height,
+                          eyeColor: c.eyeColor,
+                          hairColor: c.hairColor,
+                        })),
+                      },
+                      callback: callbackSecret
+                        ? {
+                            url: `${backendUrl}/webhooks/bot-response`,
+                            method: 'POST',
+                            headers: { Authorization: `Bearer ${callbackSecret}` },
+                          }
+                        : undefined,
+                    });
+
+                    logger.info(`[BotRound] Round ${(beforeReset.botRound?.roundNumber ?? 0)} complete — bot notified with ${roundActions.length} actions`);
+
+                    if (!success && sessionId) {
+                      const session = await GamingSession.findById(sessionId);
+                      if (session) {
+                        session.botDisabledForSession = true;
+                        await session.save();
+                        logger.info(`[AIGateway] Bot disabled for session ${session._id} due to connection failure`);
+                      }
+                    }
+                  }
                 }
               }
             }
           }
         }
       } catch (botError) {
-        logger.error('Failed to notify AI gateway:', botError);
+        logger.error('[BotRound] Error in bot round gate:', botError);
       }
+      // ========== END BOT ROUND GATE ==========
 
       // Prepare response action data (DB fields - no mapping)
       const responseAction: Record<string, unknown> = {

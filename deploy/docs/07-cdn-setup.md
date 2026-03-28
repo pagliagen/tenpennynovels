@@ -10,7 +10,7 @@ Il naming usa un hash SHA256 del contenuto (12 caratteri) per content-addressabl
 ### Sviluppo locale (Docker Compose)
 
 ```
-Management UI (:4004)
+Management UI (:4003)
     |
     | POST /admin/cdn/upload (multipart)
     v

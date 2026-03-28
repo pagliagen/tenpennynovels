@@ -18,6 +18,7 @@ import adminRoutes from '@modules/admin/routes';
 import documentsRoutes from '@modules/documents/routes';
 import forumRoutes from '@modules/forum/routes/forum';
 import { webhookRoutes } from '@modules/admin/routes/webhookRoutes';
+import inboundWebhookRoutes from './routes/webhooks';
 
 const app: Application = express();
 
@@ -74,6 +75,9 @@ app.get('/health', (req, res) => {
 
 // ===== Webhook Routes (before admin auth middleware) =====
 app.use('/webhooks', webhookRoutes);
+
+// ===== Inbound Webhook Routes (from internal services — auth via Bearer secret) =====
+app.use('/webhooks', inboundWebhookRoutes);
 
 // ===== Module Routes =====
 app.use('/auth', authRoutes);

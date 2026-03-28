@@ -138,6 +138,7 @@ export class AIGatewayClient {
     method: 'GET' | 'POST' | 'PUT' | 'DELETE',
     path: string,
     data?: any,
+    timeoutMs?: number,
   ): Promise<T | null> {
     const url = `${this.config.url}${path}`;
     const body = data ? JSON.stringify(data) : '';
@@ -155,7 +156,10 @@ export class AIGatewayClient {
     }
 
     try {
-      const response = await axios({ method, url, data, headers, timeout: this.config.timeout });
+      const response = await axios({
+        method, url, data, headers,
+        timeout: timeoutMs ?? this.config.timeout,
+      });
       return response.data;
     } catch (error) {
       if (error instanceof AxiosError) {
@@ -224,11 +228,17 @@ export class AIGatewayClient {
   }
 
   async createBot(data: any) { return this.request('POST', '/botai/bots', data); }
-  async generateBot(data: any) { return this.request('POST', '/botai/bots/generate', data); }
+  // Timeout 120s — generazione sincrona con Anthropic
+  async generateBot(data: any) { return this.request('POST', '/botai/bots/generate', data, 120_000); }
+  // Timeout 120s — refine AI-powered con Anthropic
+  async refineBot(id: string, data: any) { return this.request('POST', `/botai/bots/${id}/refine`, data, 120_000); }
   async getBots() { return this.request('GET', '/botai/bots'); }
   async getBot(id: string) { return this.request('GET', `/botai/bots/${id}`); }
   async updateBot(id: string, data: any) { return this.request('PUT', `/botai/bots/${id}`, data); }
   async deleteBot(id: string) { return this.request('DELETE', `/botai/bots/${id}`); }
+
+  // Timeout 300s — generazione personaggio sincrona con Anthropic (più lunga)
+  async generateCharacter(data: any) { return this.request('POST', '/character-gen/generate', data, 300_000); }
 }
 
 export const aiGatewayClient = new AIGatewayClient();

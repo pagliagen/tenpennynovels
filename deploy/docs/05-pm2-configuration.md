@@ -19,8 +19,8 @@ flowchart TD
     subgraph Frontend[Frontend Apps - Fork Mode]
         L[Landing :4000]
         G[Game :4001]
-        D[Documents :4003]
-        M[Management :4004]
+        D[Documents :4002]
+        M[Management :4003]
     end
 
     subgraph Backend[Backend Services]
@@ -195,7 +195,7 @@ module.exports = {
   name: 'tenpennynovels-gestione',
   cwd: './apps/management',
   script: 'node_modules/.bin/next',
-  args: 'start -p 4004',
+  args: 'start -p 4003',
   instances: 1,
   exec_mode: 'fork',
   autorestart: true,
@@ -203,12 +203,12 @@ module.exports = {
   max_memory_restart: '512M',
   env_production: {
     NODE_ENV: 'production',
-    PORT: 4004,
+    PORT: 4003,
   },
 }
 ```
 
-**Port**: 4004
+**Port**: 4003
 **URL**: https://gestione.tenpennynovels.com (via Nginx reverse proxy)
 **Mode**: Fork (Next.js SSR, single instance OK)
 
@@ -924,8 +924,8 @@ flowchart TB
         subgraph "Frontend Tier"
             L[Landing<br/>Fork :4000]
             G[Game<br/>Fork :4001]
-            D[Documents<br/>Fork :4003]
-            M[Management<br/>Fork :4004]
+            D[Documents<br/>Fork :4002]
+            M[Management<br/>Fork :4003]
         end
 
         subgraph "API Tier"
@@ -944,7 +944,7 @@ flowchart TB
     end
 
     Users[Users] -->|HTTPS| Nginx[Nginx Reverse Proxy]
-    Nginx -->|Port 4000-4004| Frontend
+    Nginx -->|Port 4000-4003| Frontend
     Nginx -->|Port 8000| API
     Nginx -->|Port 3001| UB
 

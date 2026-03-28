@@ -10,8 +10,8 @@ Configurazioni Nginx per tutti i 7 subdomini di TenPennyNovels.
 |--------|-----------|------|-------------|
 | `tenpennynovels.com.conf` | tenpennynovels.com | 4000 | tenpennynovels-landing |
 | `game.tenpennynovels.com.conf` | game.tenpennynovels.com | 4001 | tenpennynovels-game |
-| `documenti.tenpennynovels.com.conf` | documenti.tenpennynovels.com | 4003 | tenpennynovels-documenti |
-| `gestione.tenpennynovels.com.conf` | gestione.tenpennynovels.com | 4004 | tenpennynovels-gestione |
+| `documenti.tenpennynovels.com.conf` | documenti.tenpennynovels.com | 4002 | tenpennynovels-documenti |
+| `gestione.tenpennynovels.com.conf` | gestione.tenpennynovels.com | 4003 | tenpennynovels-gestione |
 | `api.tenpennynovels.com.conf` | api.tenpennynovels.com | 8000 | tenpennynovels-api-gateway |
 | `ws.tenpennynovels.com.conf` | ws.tenpennynovels.com | 3001 | tenpennynovels-unified-backend |
 | `cdn.tenpennynovels.com.conf` | cdn.tenpennynovels.com | - | Static files (Nginx) |
@@ -66,7 +66,7 @@ sudo certbot --nginx \
 
 ## ⚙️ Configuration Details
 
-### Frontend Apps (4000-4004)
+### Frontend Apps (4000-4003)
 
 - **Gzip compression** abilitato
 - **Cache Control** per `/_next/static/` (1 year)

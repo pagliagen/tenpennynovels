@@ -57,12 +57,9 @@ router.get('/bots', async (_req: Request, res: Response) => {
 });
 
 router.post('/bots/generate', async (req: Request, res: Response) => {
-  const { requestId, description, location, style, locale, callback } = req.body;
+  const { requestId, description, location, style, locale } = req.body;
 
-  const queueStatus = getQueueStatus();
-  res.status(202).json({ success: true, requestId, status: 'queued', queue: queueStatus });
-
-  enqueue(async () => {
+  try {
     const generated = await agent.generateBot(description, {
       location,
       style,
@@ -75,16 +72,14 @@ router.post('/bots/generate', async (req: Request, res: Response) => {
       publicDescription: generated.publicDescription,
       personality: generated.personality,
       systemPrompt: generated.systemPrompt,
+      narrativeStyle: generated.narrativeStyle,
     });
 
-    await sendCallback(callback, {
-      requestId,
-      type: 'bot-generated',
-      data: bot.toObject(),
-    });
-  }).catch((err) => {
+    res.json({ success: true, requestId, data: bot.toObject() });
+  } catch (err: any) {
     logger.error(`Generate failed ${requestId}: ${err.message}`);
-  });
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 router.get('/bots/:id', async (req: Request, res: Response) => {
@@ -113,6 +108,48 @@ router.put('/bots/:id', async (req: Request, res: Response) => {
     return;
   }
   res.json({ success: true, data: bot });
+});
+
+/**
+ * POST /bots/:id/refine
+ * Prende i dati attuali del bot + gli hint dell'admin, li manda ad Anthropic
+ * che li integra in modo coerente, poi aggiorna il DB e restituisce il bot aggiornato.
+ */
+router.post('/bots/:id/refine', async (req: Request, res: Response) => {
+  const { hints, style, locale } = req.body;
+
+  try {
+    const bot = await Bot.findById(req.params.id);
+    if (!bot) {
+      res.status(404).json({ success: false, error: 'Bot not found' });
+      return;
+    }
+
+    const current = bot.toObject();
+    const refined = await agent.refineBot(current, hints || {}, {
+      style: style || 'Londra vittoriana, fine 1800, Call of Cthulhu',
+      locale: locale || 'it',
+    });
+
+    // Aggiorna il DB con i dati raffinati
+    const updated = await Bot.findByIdAndUpdate(
+      req.params.id,
+      {
+        name: refined.name,
+        gender: refined.gender,
+        publicDescription: refined.publicDescription,
+        personality: refined.personality,
+        narrativeStyle: refined.narrativeStyle,
+        systemPrompt: refined.systemPrompt,
+      },
+      { new: true }
+    );
+
+    res.json({ success: true, data: updated });
+  } catch (err: any) {
+    logger.error(`Refine failed for bot ${req.params.id}: ${err.message}`);
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 router.delete('/bots/:id', async (req: Request, res: Response) => {
@@ -299,6 +336,10 @@ async function runResponsePipeline(bot: any, context: any): Promise<{
 }
 
 async function processAndCallback(requestId: string, bot: any, context: any, callback: any) {
+  if (!callback?.url) {
+    logger.warn(`[Pipeline] No callback URL provided for ${requestId} — response will not be delivered`);
+  }
+
   let response: string;
   let metadata: Record<string, any>;
   let persistInteraction: () => Promise<void>;
@@ -307,16 +348,8 @@ async function processAndCallback(requestId: string, bot: any, context: any, cal
     ({ response, metadata, persistInteraction } = await runResponsePipeline(bot, context));
   } catch (err: any) {
     logger.error(`[Pipeline] FAILED for ${requestId}: ${err.message}`);
-    // Send a graceful fallback callback so the client is not left hanging
-    await sendCallback(callback, {
-      requestId,
-      botId: bot._id.toString(),
-      botName: bot.name,
-      botCharacterId: context.presentCharacters?.find((c: any) => c.name === bot.name)?.id || '',
-      locationId: context.location.id || '',
-      response: '',
-      metadata: { error: err.message, model: process.env.OLLAMA_MODEL || 'unknown' },
-    }).catch((cbErr) => logger.error(`[Pipeline] Fallback callback also failed: ${cbErr.message}`));
+    // Do NOT send a callback with empty response — the backend would reject it.
+    // Log the failure and abort so no broken state is sent to the game.
     return;
   }
 
@@ -330,8 +363,11 @@ async function processAndCallback(requestId: string, bot: any, context: any, cal
     metadata,
   };
 
-  // Send response to the game immediately after steps 1-3
-  await sendCallback(callback, callbackPayload);
+  if (callback?.url) {
+    await sendCallback(callback, callbackPayload);
+  } else {
+    logger.warn(`[Pipeline] Response generated but no callback URL — skipping delivery for ${requestId}`);
+  }
 
   // Step 4 runs in background without blocking the player
   persistInteraction().catch((err: any) =>

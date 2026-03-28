@@ -1,0 +1,450 @@
+@use 'sass:color';
+@use '../variables' as *;
+
+// ── Wrapper ────────────────────────────────────────────────────────────────────
+.panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+// ── Step indicator ─────────────────────────────────────────────────────────────
+.steps {
+  display: flex;
+  padding: $spacing-md $spacing-lg;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: $color-bg-tertiary;
+  gap: 0;
+}
+
+.step {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $spacing-xs;
+  font-size: 11px;
+  font-weight: 500;
+  color: $color-text-muted;
+  text-align: center;
+  position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 9px;
+    left: 60%;
+    width: 80%;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.1);
+    z-index: 0;
+  }
+
+  &:last-child::after { display: none; }
+
+  &.active {
+    color: $color-primary;
+
+    .stepDot {
+      background: $color-primary;
+      border-color: $color-primary;
+      color: $color-bg-primary;
+    }
+  }
+
+  &.done {
+    color: $color-success;
+
+    .stepDot {
+      background: $color-success;
+      border-color: $color-success;
+      color: #fff;
+    }
+  }
+}
+
+.stepDot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  color: $color-text-muted;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  z-index: 1;
+  position: relative;
+  background: $color-bg-tertiary;
+}
+
+// ── Body ───────────────────────────────────────────────────────────────────────
+.body {
+  flex: 1;
+  padding: $spacing-lg;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+// ── Form fields ────────────────────────────────────────────────────────────────
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+
+  label {
+    font-size: 13px;
+    font-weight: 600;
+    color: $color-text-primary;
+  }
+
+  input,
+  textarea,
+  select {
+    width: 100%;
+    padding: $spacing-sm $spacing-md;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: $radius-md;
+    font-size: 14px;
+    color: $color-text-primary;
+    background: $color-bg-tertiary;
+    box-sizing: border-box;
+    font-family: inherit;
+    transition: border-color $transition-fast, box-shadow $transition-fast;
+
+    &::placeholder {
+      color: $color-text-muted;
+    }
+
+    &:focus {
+      outline: none;
+      border-color: $color-primary;
+      box-shadow: 0 0 0 3px rgba($color-primary, 0.15);
+    }
+
+    option {
+      background: $color-bg-tertiary;
+      color: $color-text-primary;
+    }
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 90px;
+    line-height: 1.5;
+  }
+}
+
+.optional {
+  font-weight: 400;
+  color: $color-text-muted;
+  font-size: 12px;
+}
+
+.helpText {
+  font-size: 12px;
+  color: $color-text-secondary;
+  line-height: 1.4;
+}
+
+// ── Review fields (Step 2) ────────────────────────────────────────────────────
+.reviewRow {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+
+  label {
+    font-size: 11px;
+    font-weight: 600;
+    color: $color-text-muted;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+
+  input,
+  textarea,
+  select {
+    font-size: 13px;
+    padding: $spacing-sm $spacing-md;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: $radius-md;
+    color: $color-text-primary;
+    background: $color-bg-secondary;
+    width: 100%;
+    box-sizing: border-box;
+    font-family: inherit;
+    transition: border-color $transition-fast;
+
+    &::placeholder {
+      color: $color-text-muted;
+    }
+
+    &:focus {
+      outline: none;
+      border-color: $color-primary;
+    }
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 65px;
+    line-height: 1.5;
+  }
+}
+
+.systemPromptToggle {
+  font-size: 12px;
+  color: $color-primary;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 2px 0;
+  text-decoration: underline;
+  align-self: flex-start;
+  transition: color $transition-fast;
+
+  &:hover { color: color.adjust($color-primary, $lightness: 10%); }
+}
+
+// ── Location selector ──────────────────────────────────────────────────────────
+.locationSelector {
+  padding: $spacing-md;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: $radius-lg;
+  background: $color-bg-tertiary;
+
+  p {
+    margin: 0 0 $spacing-sm;
+    font-size: 13px;
+    font-weight: 500;
+    color: $color-text-secondary;
+  }
+
+  select {
+    width: 100%;
+    padding: $spacing-sm $spacing-md;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: $radius-md;
+    font-size: 14px;
+    color: $color-text-primary;
+    background: $color-bg-secondary;
+    cursor: pointer;
+    box-sizing: border-box;
+    font-family: inherit;
+    transition: border-color $transition-fast;
+
+    option {
+      background: $color-bg-secondary;
+      color: $color-text-primary;
+    }
+
+    &:focus {
+      outline: none;
+      border-color: $color-primary;
+    }
+  }
+}
+
+.noLocations {
+  font-size: 13px;
+  color: $color-error;
+}
+
+// ── Confirm summary (Step 3) ───────────────────────────────────────────────────
+.confirmSummary {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.confirmIntro {
+  margin: 0;
+  font-size: 14px;
+  color: $color-text-secondary;
+  line-height: 1.6;
+
+  strong { color: $color-text-primary; }
+  em { color: $color-primary; font-style: normal; font-weight: 600; }
+}
+
+.summaryList {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: $spacing-xs $spacing-md;
+  padding: $spacing-md;
+  background: $color-bg-tertiary;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: $radius-md;
+
+  dt {
+    font-size: 11px;
+    font-weight: 600;
+    color: $color-text-muted;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    padding-top: 2px;
+  }
+
+  dd {
+    margin: 0;
+    font-size: 13px;
+    color: $color-text-primary;
+    line-height: 1.5;
+    word-break: break-word;
+  }
+}
+
+.confirmHint {
+  margin: 0;
+  font-size: 12px;
+  color: $color-text-muted;
+  font-style: italic;
+}
+
+// ── Loading ────────────────────────────────────────────────────────────────────
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-md;
+  padding: $spacing-2xl $spacing-lg;
+  color: $color-text-secondary;
+  font-size: 14px;
+  text-align: center;
+
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    border-top-color: $color-primary;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  .loadingMsg {
+    max-width: 260px;
+    line-height: 1.5;
+    color: $color-text-primary;
+    font-size: 13px;
+    font-weight: 500;
+
+    &::after {
+      content: '';
+      display: inline-block;
+      width: 1.2em;
+      animation: dots 1.5s steps(4, end) infinite;
+    }
+  }
+
+  .loadingHint {
+    font-size: 11px;
+    color: $color-text-muted;
+    margin-top: -$spacing-xs;
+  }
+}
+
+// ── Alerts ─────────────────────────────────────────────────────────────────────
+.errorBox {
+  padding: $spacing-sm $spacing-md;
+  background: rgba($color-error, 0.15);
+  border: 1px solid rgba($color-error, 0.4);
+  border-radius: $radius-md;
+  color: color.adjust($color-error, $lightness: 30%);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.successBox {
+  padding: $spacing-sm $spacing-md;
+  background: rgba($color-success, 0.15);
+  border: 1px solid rgba($color-success, 0.4);
+  border-radius: $radius-md;
+  color: color.adjust($color-success, $lightness: 40%);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+// ── Footer ─────────────────────────────────────────────────────────────────────
+.footer {
+  display: flex;
+  gap: $spacing-md;
+  padding: $spacing-lg;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+// ── Buttons ────────────────────────────────────────────────────────────────────
+.btn {
+  flex: 1;
+  padding: $spacing-md $spacing-lg;
+  border-radius: $radius-sm;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all $transition-fast;
+  border: none;
+  white-space: nowrap;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.btnPrimary {
+  background: $color-primary;
+  color: $color-bg-primary;
+
+  &:hover:not(:disabled) {
+    background: color.adjust($color-primary, $lightness: 10%);
+    transform: translateY(-1px);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+}
+
+.btnSecondary {
+  background: transparent;
+  color: $color-text-secondary;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+
+  &:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.05);
+    color: $color-text-primary;
+    border-color: rgba(255, 255, 255, 0.3);
+  }
+}
+
+.btnDanger {
+  background: $color-error;
+  color: #fff;
+
+  &:hover:not(:disabled) {
+    background: color.adjust($color-error, $lightness: -10%);
+    transform: translateY(-1px);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+}
+
+// ── Keyframes ──────────────────────────────────────────────────────────────────
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes dots {
+  0%   { content: ''; }
+  25%  { content: '.'; }
+  50%  { content: '..'; }
+  75%  { content: '...'; }
+  100% { content: ''; }
+}

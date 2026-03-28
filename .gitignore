@@ -5,6 +5,8 @@ dist/
 *.js
 *.js.map
 !services/unified-backend/bootstrap.js
+!services/api-gateway/bootstrap.js
+!ecosystem.config.js
 *.d.ts
 !**/src/types/*.d.ts
 *.d.ts.map 

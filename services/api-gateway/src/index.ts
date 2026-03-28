@@ -1,8 +1,5 @@
-import dotenv from 'dotenv';
-
-// Carica variabili d'ambiente: prima globali, poi specifiche del servizio
-dotenv.config({ path: '../../.env' });
-dotenv.config({ override: true });
+// dotenv is loaded by bootstrap.js before this module is required.
+// Do not call dotenv.config() here — process.env is already populated.
 
 import app from './app';
 import { logger } from './utils/logger';

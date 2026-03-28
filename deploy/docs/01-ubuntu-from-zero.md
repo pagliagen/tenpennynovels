@@ -929,7 +929,7 @@ sudo nginx -t
 sudo systemctl reload nginx
 ```
 
-**NOTA**: Le configurazioni Nginx puntano a HTTP (port 4000-4004, 8000, 3001) ma usano SSL. Certbot modificherà automaticamente le config per aggiungere SSL (prossimo step).
+**NOTA**: Le configurazioni Nginx puntano a HTTP (port 4000-4003, 8000, 3001) ma usano SSL. Certbot modificherà automaticamente le config per aggiungere SSL (prossimo step).
 
 ---
 

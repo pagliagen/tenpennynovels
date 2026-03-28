@@ -151,6 +151,77 @@ export class AnthropicAgent implements IAgent {
     return { result, tokensUsed };
   }
 
+  async refineBot(current: Record<string, any>, hints: Record<string, any>, options: GenerateBotOptions = {}): Promise<any> {
+    const { style, locale = 'it' } = options;
+
+    const styleContext = style
+      ? `\nAmbientazione/stile: ${style}.`
+      : '\nAmbientazione: Londra vittoriana, fine 1800, in stile Call of Cthulhu.';
+
+    const systemPrompt = `Sei un creatore di personaggi NPC per un GDR by chat.${styleContext}
+
+Ricevi i dati ATTUALI di un bot NPC e degli AGGIORNAMENTI parziali richiesti dall'amministratore.
+Il tuo compito è:
+1. Integrare gli aggiornamenti nel personaggio in modo coerente.
+2. Adattare gli altri campi (systemPrompt, narrativeStyle, ecc.) se necessario per mantenere tutto compatibile.
+3. Restituire il personaggio COMPLETO e COERENTE.
+
+Struttura JSON da restituire:
+{
+  "name": "Nome completo",
+  "gender": "male" o "female",
+  "publicDescription": "Aspetto fisico in 2-3 frasi.",
+  "personality": {
+    "traits": ["tratto1", "tratto2", "tratto3", "tratto4", "tratto5"],
+    "speech_style": "Come parla il personaggio.",
+    "background": "Storia in 3-4 frasi.",
+    "coreValues": ["valore1", "valore2", "valore3"]
+  },
+  "narrativeStyle": {
+    "author": "Scrittore di riferimento (es. Charles Dickens).",
+    "guidance": "2-3 frasi su come applicare quello stile alle risposte del bot."
+  },
+  "systemPrompt": "Prompt completo in seconda persona (Sei...) coerente con tutti i dati aggiornati."
+}
+
+Lingua: ${locale}. Rispondi SOLO col JSON.`;
+
+    const userMessage = `DATI ATTUALI DEL BOT:
+${JSON.stringify(current, null, 2)}
+
+AGGIORNAMENTI RICHIESTI DALL'AMMINISTRATORE:
+${JSON.stringify(hints, null, 2)}
+
+Integra gli aggiornamenti e restituisci il bot completo e coerente.`;
+
+    logger.info(`Refining bot "${current.name}" with admin hints`);
+
+    const response = await this.request({
+      model: this.model,
+      max_tokens: 3000,
+      temperature: 0.7,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userMessage } as AnthropicMessage],
+    });
+
+    const raw = this.extractText(response);
+    const jsonMatch = raw.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      throw new Error(`No JSON found in refineBot response. Raw: ${raw.substring(0, 300)}`);
+    }
+
+    let parsed: any;
+    try {
+      parsed = JSON.parse(jsonMatch[0]);
+    } catch (parseErr: any) {
+      throw new Error(`JSON parse failed in refineBot: ${parseErr.message}`);
+    }
+
+    const tokensUsed = (response.usage?.input_tokens || 0) + (response.usage?.output_tokens || 0);
+    logger.info(`Refined bot "${parsed.name}" (${tokensUsed} tokens)`);
+    return parsed;
+  }
+
   async generateBot(description: string, options: GenerateBotOptions = {}): Promise<any> {
     const { location, style, locale = 'it' } = options;
 
@@ -171,30 +242,43 @@ Genera un JSON con questa struttura:
   "publicDescription": "Aspetto fisico in 2-3 frasi.",
   "personality": {
     "traits": ["tratto1", "tratto2", "tratto3", "tratto4", "tratto5"],
-    "speech_style": "Come parla.",
-    "background": "Storia in 3-4 frasi.",
+    "speech_style": "Come parla il personaggio (tono, registro, tic linguistici).",
+    "background": "Storia del personaggio in 3-4 frasi.",
     "coreValues": ["valore1", "valore2", "valore3"]
   },
-  "systemPrompt": "Prompt dettagliato per interpretare il personaggio"
+  "narrativeStyle": {
+    "author": "Nome di uno scrittore reale il cui stile si adatta al personaggio (es. Charles Dickens, Arthur Conan Doyle, Wilkie Collins).",
+    "guidance": "2-3 frasi su come applicare lo stile di quell'autore alle risposte del bot: ritmo, lessico, descrizioni, emozioni."
+  },
+  "systemPrompt": "Prompt dettagliato per interpretare il personaggio in seconda persona (Sei...): identità, psicologia, comportamento, reazioni emotive, obiettivi, segreti, stile di parlata."
 }
-
-Il "systemPrompt" descrive il personaggio in seconda persona ("Sei...") e copre: identità, psicologia, comportamento, reazioni emotive, obiettivi, segreti, stile di parlata.${locationContext}
-
+${locationContext}
 Lingua: ${locale}. Rispondi SOLO col JSON.`;
 
     logger.info(`Starting bot generation for: "${description.substring(0, 60)}..."`);
 
     const response = await this.request({
       model: this.model,
-      max_tokens: 2048,
+      max_tokens: 3000,
       temperature: 0.9,
       system: systemPrompt,
       messages: [{ role: 'user', content: description } as AnthropicMessage],
     });
 
     const raw = this.extractText(response);
+
+    // Estrai il blocco JSON dalla risposta (gestisce markdown fencing e testo extra)
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
-    const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : raw);
+    if (!jsonMatch) {
+      throw new Error(`No JSON found in Anthropic response. Raw (first 300 chars): ${raw.substring(0, 300)}`);
+    }
+
+    let parsed: any;
+    try {
+      parsed = JSON.parse(jsonMatch[0]);
+    } catch (parseErr: any) {
+      throw new Error(`JSON parse failed: ${parseErr.message}. Raw snippet: ${jsonMatch[0].substring(0, 200)}`);
+    }
 
     if (!parsed.name || !parsed.systemPrompt) {
       throw new Error('Generated bot missing required fields (name, systemPrompt)');

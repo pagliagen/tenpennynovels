@@ -36,4 +36,9 @@ export interface IAgent {
    * Generate a bot definition from a natural-language description.
    */
   generateBot(description: string, options?: GenerateBotOptions): Promise<any>;
+
+  /**
+   * Refine an existing bot by integrating admin-provided hints and making everything coherent.
+   */
+  refineBot(current: Record<string, any>, hints: Record<string, any>, options?: GenerateBotOptions): Promise<any>;
 }

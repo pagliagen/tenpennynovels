@@ -33,6 +33,9 @@ services:
     env_file: .env
     depends_on:
       - mongodb
+    networks:
+      - default
+      - tenpennynovels-network
 
   qa:
     build:
@@ -40,6 +43,14 @@ services:
       dockerfile: services/qa/Dockerfile
     expose:
       - "8090"
+    env_file: .env
+
+  character-gen:
+    build:
+      context: .
+      dockerfile: services/character-gen/Dockerfile
+    expose:
+      - "8130"
     env_file: .env
 
   gateway:
@@ -54,7 +65,13 @@ services:
     depends_on:
       - botai
       - qa
+      - character-gen
 
 volumes:
   ollama_models:
   mongo_data:
+
+networks:
+  default:
+  tenpennynovels-network:
+    external: true

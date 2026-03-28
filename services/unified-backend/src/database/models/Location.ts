@@ -89,6 +89,15 @@ export interface ILocation extends Document, SoftDeleteMethods {
 
   // Bot AI integration
   bot_enabled: boolean; // true = bot interaction enabled for this location
+  botCharacterId?: Schema.Types.ObjectId; // Character ID of the bot assigned to this location
+
+  // Bot round tracking — collects all player actions before notifying the bot
+  botRound?: {
+    roundNumber: number;
+    actedCharacterIds: Schema.Types.ObjectId[];
+    roundActionIds: Schema.Types.ObjectId[];
+    startedAt: Date;
+  };
 
   // Location statistics (updated periodically)
   statistics: {
@@ -335,6 +344,18 @@ const LocationSchema = new Schema<ILocation>({
   bot_enabled: {
     type: Boolean,
     default: false
+  },
+  botCharacterId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Character'
+  },
+
+  // Bot round tracking
+  botRound: {
+    roundNumber: { type: Number, default: 0 },
+    actedCharacterIds: [{ type: Schema.Types.ObjectId, ref: 'Character' }],
+    roundActionIds: [{ type: Schema.Types.ObjectId, ref: 'Chat' }],
+    startedAt: { type: Date }
   },
 
   // Statistics

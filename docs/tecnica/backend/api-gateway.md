@@ -283,9 +283,9 @@ Fonte: `services/api-gateway/src/config.ts`.
 
 **Produzione**: `tenpennynovels.com`, `game.tenpennynovels.com`, `documenti.tenpennynovels.com`, `gestione.tenpennynovels.com`.
 
-**Sviluppo**: `http://localhost:4000` … `http://localhost:4003` (landing, game, documents, management). Non sono elencate `4004`/`4005` nel CORS principale.
+**Sviluppo**: `http://localhost:4000` … `http://localhost:4003` (landing, game, documents, management).
 
-**CDN (dev)**: origini consentite per asset statici includono anche `http://localhost:4004` in configurazione attuale — verificare `config.ts` se aggiungi nuove app.
+**CDN (dev)**: origini consentite per asset statici includono anche `http://localhost:4003` in configurazione attuale — verificare `config.ts` se aggiungi nuove app.
 
 ---
 
@@ -830,7 +830,7 @@ curl -i -N -H "Connection: Upgrade" \
 
 ## Related Documentation
 
-- [Unified Backend](./unified-backend-architecture.md) - Backend modules
+- [Unified Backend](./unified-backend.md) - Backend modules
 - [WebSocket Patterns](../frontend/websocket-patterns.md) - Socket.IO usage
 - [Docker Compose](../01-infrastructure/docker-compose.md) - Service configuration
 - [Environment Variables](../01-infrastructure/environment-variables.md) - Configuration

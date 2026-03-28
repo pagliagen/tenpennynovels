@@ -55,14 +55,14 @@ export const locationChatsApi = {
     limit: number = 100,
     offset: number = 0
   ): Promise<MessageHistoryResponse> {
-    const response = await api.get<MessageHistoryResponse>(
+    const response = await api.get<{ success: boolean; data: MessageHistoryResponse }>(
       `/game/chats/${locationId}`,
       {
         params: { limit, offset },
       }
     );
 
-    return response;
+    return response.data;
   },
 
   /**

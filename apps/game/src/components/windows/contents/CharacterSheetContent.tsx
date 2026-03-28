@@ -15,6 +15,7 @@
 import { useCharacterSheetData } from '@/hooks/useCharacterSheetData';
 import styles from '@/styles/components/character/CharacterSheetContent.module.scss';
 
+import { CharacterSheetBot } from './CharacterSheetBot';
 import { CharacterSheetMaster } from './CharacterSheetMaster';
 import { CharacterSheetPGPrincipale } from './CharacterSheetPGPrincipale';
 import { CharacterSheetPNG } from './CharacterSheetPNG';
@@ -86,6 +87,18 @@ export function CharacterSheetContent({ characterId }: CharacterSheetContentProp
   }
 
   const { character, permissions, visibleSkills, visibleEquipment } = data;
+
+  // Bot characters get their own dedicated sheet (takes priority over characterType)
+  if (character.isBot) {
+    return (
+      <CharacterSheetBot
+        character={character}
+        permissions={permissions}
+        visibleSkills={visibleSkills}
+        visibleEquipment={visibleEquipment}
+      />
+    );
+  }
 
   // Route to appropriate sheet component based on characterType
   switch (character.characterType) {
