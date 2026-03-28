@@ -71,7 +71,13 @@ Questo progetto usa un sistema modulare di regole in `.claude/rules/` per preven
    - Branch naming
    - Pre-commit hook handling
 
-5. **[docker-deployment.md](.claude/rules/docker-deployment.md)** - Docker
+5. **[04-ci-cd.md](.claude/rules/04-ci-cd.md)** - CI/CD & GitHub Actions
+   - Dual-branch production deploy (master + develop)
+   - Smart dependency installation (hash-based)
+   - PM2 restart pattern
+   - Health checks with retry
+
+6. **[docker-deployment.md](.claude/rules/docker-deployment.md)** - Docker
    - Multi-stage builds
    - `docker compose stop + up -d` dopo build (NON restart)
    - Health checks
