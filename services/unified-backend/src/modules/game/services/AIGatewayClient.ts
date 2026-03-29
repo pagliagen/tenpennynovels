@@ -236,6 +236,9 @@ export class AIGatewayClient {
   async getBot(id: string) { return this.request('GET', `/botai/bots/${id}`); }
   async updateBot(id: string, data: any) { return this.request('PUT', `/botai/bots/${id}`, data); }
   async deleteBot(id: string) { return this.request('DELETE', `/botai/bots/${id}`); }
+  async getBotRelationships(id: string) { return this.request('GET', `/botai/bots/${id}/relationships`); }
+  async getBotMemories(id: string, limit = 50) { return this.request('GET', `/botai/bots/${id}/memories?limit=${limit}`); }
+  async getBotCharacterMemories(id: string, characterId: string, limit = 30) { return this.request('GET', `/botai/bots/${id}/memories/${characterId}?limit=${limit}`); }
 
   // Timeout 300s — generazione personaggio sincrona con Anthropic (più lunga)
   async generateCharacter(data: any) { return this.request('POST', '/character-gen/generate', data, 300_000); }

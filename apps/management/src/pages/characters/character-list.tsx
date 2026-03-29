@@ -79,7 +79,7 @@ function CharacterEditContent({
 
 export default function CharacterList() {
   // State
-  const [activeTab, setActiveTab] = useState<'all' | 'pg_principale' | 'png' | 'pg_master'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'pg_principale' | 'png' | 'pg_master' | 'bot'>('all');
   const { filters, params, setParams, handleFilterChange } = useTableFilters<CharacterListParams>({
     page: 1,
     pageSize: 25,
@@ -123,7 +123,9 @@ export default function CharacterList() {
   const filteredData = useMemo(() => {
     if (!data?.list) return [];
     if (activeTab === 'all') return data.list;
-    return data.list.filter(char => char.characterType === activeTab);
+    if (activeTab === 'bot') return data.list.filter(char => char.isBot);
+    // For standard types, exclude bots (they have characterType 'png' but should only show in Bot tab)
+    return data.list.filter(char => char.characterType === activeTab && !char.isBot);
   }, [data?.list, activeTab]);
 
   // Prepare visible columns for ConfigurableDataTable
@@ -442,6 +444,12 @@ export default function CharacterList() {
             onClick={() => setActiveTab('pg_master')}
           >
             Master
+          </button>
+          <button
+            className={`${styles.tab} ${activeTab === 'bot' ? styles.active : ''}`}
+            onClick={() => setActiveTab('bot')}
+          >
+            Bot
           </button>
         </div>
 

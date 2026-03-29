@@ -7,6 +7,17 @@ const router = Router();
 // Tutte le route richiedono auth admin
 router.use(AdminAuthMiddleware.requireAdminAccess);
 
+// Lista e dettaglio bot
+router.get('/list', BotController.list);
+router.get('/:localAiBotId/detail', BotController.detail);
+router.get('/:localAiBotId/memories/:characterId', BotController.characterMemories);
+
+// Aggiorna bot (personalità, etc.)
+router.put('/:localAiBotId/update', BotController.update);
+
+// Cambia location del bot
+router.put('/:localAiBotId/location', BotController.changeLocation);
+
 // Step 1: avvia generazione bot (sincrono, aspetta local-ai)
 router.post('/generate', BotController.generate);
 

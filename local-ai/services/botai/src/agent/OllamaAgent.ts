@@ -95,37 +95,54 @@ export class OllamaAgent implements IAgent {
     const startMs = Date.now();
     const temp = options.temperature ?? 0.3;
     const numPredict = options.numPredict ?? 512;
+    const MAX_JSON_RETRIES = 1;
 
-    logger.info(`[${stepName}] Starting analysis...`);
+    let lastError: Error | null = null;
+    let totalTokens = 0;
 
-    const response = await this.chat({
-      model: this.model,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userMessage },
-      ],
-      options: { temperature: temp, num_predict: numPredict },
-      format: 'json',
-    });
-
-    const elapsed = Date.now() - startMs;
-    const tokensUsed = (response.eval_count || 0) + (response.prompt_eval_count || 0);
-
-    let result: T;
-    try {
-      result = JSON.parse(response.message.content);
-    } catch {
-      logger.warn(`[${stepName}] Failed to parse JSON, attempting extraction...`);
-      const jsonMatch = response.message.content.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        result = JSON.parse(jsonMatch[0]);
+    for (let attempt = 0; attempt <= MAX_JSON_RETRIES; attempt++) {
+      if (attempt === 0) {
+        logger.info(`[${stepName}] Starting analysis...`);
       } else {
-        throw new Error(`[${stepName}] No valid JSON in response`);
+        logger.warn(`[${stepName}] JSON retry attempt ${attempt}...`);
+      }
+
+      const response = await this.chat({
+        model: this.model,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userMessage },
+        ],
+        options: { temperature: temp, num_predict: numPredict },
+        format: 'json',
+      });
+
+      const elapsed = Date.now() - startMs;
+      const tokensUsed = (response.eval_count || 0) + (response.prompt_eval_count || 0);
+      totalTokens += tokensUsed;
+
+      logger.info(`[${stepName}] Completed in ${elapsed}ms (${tokensUsed} tokens)`);
+
+      try {
+        const result: T = JSON.parse(response.message.content);
+        return { result, tokensUsed: totalTokens };
+      } catch {
+        logger.warn(`[${stepName}] Failed to parse JSON, attempting extraction...`);
+        const jsonMatch = response.message.content.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          try {
+            const result: T = JSON.parse(jsonMatch[0]);
+            return { result, tokensUsed: totalTokens };
+          } catch (extractErr: any) {
+            lastError = new Error(`[${stepName}] JSON extraction failed: ${extractErr.message}`);
+          }
+        } else {
+          lastError = new Error(`[${stepName}] No valid JSON in response`);
+        }
       }
     }
 
-    logger.info(`[${stepName}] Completed in ${elapsed}ms (${tokensUsed} tokens)`);
-    return { result, tokensUsed };
+    throw lastError || new Error(`[${stepName}] JSON parsing failed after ${MAX_JSON_RETRIES + 1} attempts`);
   }
 
   async generateBot(description: string, options: GenerateBotOptions = {}): Promise<any> {

@@ -88,7 +88,7 @@ export class AnthropicAgent implements IAgent {
     numPredict = 950,
     temperature = 0.72,
     _topP = 0.85,
-    _repeatPenalty = 1.2,
+    _repeatPenalty = 1.2, // Not supported by Anthropic API — Claude handles repetition natively
   ): Promise<{ text: string; tokensUsed: number }> {
     const startMs = Date.now();
     logger.info('Starting response generation...');
@@ -97,6 +97,7 @@ export class AnthropicAgent implements IAgent {
       model: this.model,
       max_tokens: numPredict,
       temperature,
+      // top_p omesso: Anthropic non accetta temperature + top_p insieme
       system: systemPrompt,
       messages: [{ role: 'user', content: userMessage } as AnthropicMessage],
     });
@@ -119,36 +120,52 @@ export class AnthropicAgent implements IAgent {
     const startMs = Date.now();
     const temperature = options.temperature ?? 0.3;
     const maxTokens = options.numPredict ?? 900;
+    const MAX_JSON_RETRIES = 1;
 
-    logger.info(`[${stepName}] Starting analysis...`);
+    let lastError: Error | null = null;
+    let totalTokens = 0;
 
-    const response = await this.request({
-      model: this.model,
-      max_tokens: maxTokens,
-      temperature,
-      system: systemPrompt + '\n\nRispondi SOLO con JSON valido, senza testo aggiuntivo prima o dopo.',
-      messages: [{ role: 'user', content: userMessage } as AnthropicMessage],
-    });
-
-    const raw = this.extractText(response);
-    const tokensUsed = (response.usage?.input_tokens || 0) + (response.usage?.output_tokens || 0);
-
-    logger.info(`[${stepName}] Completed in ${Date.now() - startMs}ms (${tokensUsed} tokens)`);
-
-    let result: T;
-    try {
-      result = JSON.parse(raw);
-    } catch {
-      logger.warn(`[${stepName}] Failed to parse JSON, attempting extraction...`);
-      const jsonMatch = raw.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        result = JSON.parse(jsonMatch[0]);
+    for (let attempt = 0; attempt <= MAX_JSON_RETRIES; attempt++) {
+      if (attempt === 0) {
+        logger.info(`[${stepName}] Starting analysis...`);
       } else {
-        throw new Error(`[${stepName}] No valid JSON in Anthropic response`);
+        logger.warn(`[${stepName}] JSON retry attempt ${attempt}...`);
+      }
+
+      const response = await this.request({
+        model: this.model,
+        max_tokens: maxTokens,
+        temperature,
+        system: systemPrompt + '\n\nRispondi SOLO con JSON valido, senza testo aggiuntivo prima o dopo.',
+        messages: [{ role: 'user', content: userMessage } as AnthropicMessage],
+      });
+
+      const raw = this.extractText(response);
+      const tokensUsed = (response.usage?.input_tokens || 0) + (response.usage?.output_tokens || 0);
+      totalTokens += tokensUsed;
+
+      logger.info(`[${stepName}] Completed in ${Date.now() - startMs}ms (${tokensUsed} tokens)`);
+
+      try {
+        const result: T = JSON.parse(raw);
+        return { result, tokensUsed: totalTokens };
+      } catch {
+        logger.warn(`[${stepName}] Failed to parse JSON, attempting extraction...`);
+        const jsonMatch = raw.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          try {
+            const result: T = JSON.parse(jsonMatch[0]);
+            return { result, tokensUsed: totalTokens };
+          } catch (extractErr: any) {
+            lastError = new Error(`[${stepName}] JSON extraction failed: ${extractErr.message}`);
+          }
+        } else {
+          lastError = new Error(`[${stepName}] No valid JSON in Anthropic response`);
+        }
       }
     }
 
-    return { result, tokensUsed };
+    throw lastError || new Error(`[${stepName}] JSON parsing failed after ${MAX_JSON_RETRIES + 1} attempts`);
   }
 
   async refineBot(current: Record<string, any>, hints: Record<string, any>, options: GenerateBotOptions = {}): Promise<any> {
