@@ -548,24 +548,24 @@ export class ChatModerationController {
             { content: { $regex: escapedQuery, $options: 'i' } }
           ]
         };
-        
-        if (senderId) filter.from = senderId;
+
+        if (senderId) filter.senderId = senderId;
         if (startDate) filter.sentAt = { $gte: new Date(startDate as string) };
         if (endDate) filter.sentAt = { ...filter.sentAt, $lte: new Date(endDate as string) };
-        
+
         const ongameMessages = await OnGameMessage.find(filter)
-          .populate('from', 'name')
-          .populate('to', 'name')
+          .populate('senderId', 'name')
+          .populate('recipientId', 'name')
           .sort({ sentAt: -1 })
           .limit(Math.min(parseInt(limit as string), 50));
-        
+
         results.push(...ongameMessages.map(msg => ({
           messageType: 'ongame',
           messageId: msg._id,
           content: msg.content,
           subject: msg.subject,
-          sender: msg.from,
-          recipients: msg.to,
+          sender: msg.senderId,
+          recipients: [msg.recipientId], // NEW schema: single recipient, return array for consistency
           timestamp: msg.sentAt,
           deliveredAt: msg.deliveredAt
         })));

@@ -1,5 +1,24 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
+/**
+ * OffGameChat Model (LEGACY SYSTEM - Coexists with OffGameThread)
+ *
+ * NOTE: This is the ORIGINAL off-game chat system that supports:
+ * - Group chats (multiple participants)
+ * - Admin roles
+ * - Chat names
+ * - Message retention configuration
+ *
+ * Used by:
+ * - Character review notifications (CharacterReviewEventHandler)
+ * - Legacy /offgame-chats API endpoints
+ *
+ * The NEW messaging system (OffGameThread + OffGameMessage) is being built
+ * for simple 1-to-1 thread-based messaging. Both systems coexist during migration.
+ *
+ * TODO: Migrate CharacterReviewEventHandler to use OffGameThread
+ * TODO: Deprecate /offgame-chats endpoints in favor of /offgame-threads
+ */
 export interface IOffGameChat extends Document {
   type: 'direct' | 'group';
   name?: string; // Solo per gruppi

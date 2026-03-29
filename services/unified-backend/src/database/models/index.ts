@@ -44,7 +44,11 @@ export {
   ITEM_CATEGORY_LABELS
 } from './Item';
 
-// OffGame Chat System (character-to-character OOC)
+// OffGame Chat System (LEGACY - Group chats with admin roles)
+// NOTE: This is the ORIGINAL system that coexists with the NEW OffGameThread system
+// LEGACY system: Supports groups, admins, configurable retention
+// NEW system: Simple 1-to-1 threads (see below)
+// Both systems are in production during gradual migration
 export {
   OffGameChat,
   type IOffGameChat
@@ -63,10 +67,25 @@ export {
   OnGameMessage,
   type IOnGameMessage
 } from './OnGameMessage';
+// NOTE: OnGameMessageView model removed - view logic moved to controllers in new architecture
+
+// New Dual Messaging Architecture (Thread-based)
 export {
-  OnGameMessageView,
-  type IOnGameMessageView
-} from './OnGameMessageView';
+  OnGameThread,
+  type IOnGameThread
+} from './OnGameThread';
+export {
+  OffGameThread,
+  type IOffGameThread
+} from './OffGameThread';
+export {
+  OffGameMessage,
+  type IOffGameMessage
+} from './OffGameMessage';
+export {
+  MessageBackup,
+  type IMessageBackup
+} from './MessageBackup';
 
 // Relationship System
 export {

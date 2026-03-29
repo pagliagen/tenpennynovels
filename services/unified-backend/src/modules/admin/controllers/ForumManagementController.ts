@@ -1,6 +1,5 @@
 import { Request, Response } from 'express';
 import { OnGameMessage } from '@database/models/OnGameMessage';
-import { OnGameMessageView } from '@database/models/OnGameMessageView';
 import { Character } from '@database/models/Character';
 import { Location } from '@database/models/Location';
 import { logger } from '../utils/logger';
@@ -73,16 +72,13 @@ export class ForumManagementController {
 
       // Character filters
       if (fromCharacter) {
-        filter.from = fromCharacter;
+        filter.senderId = fromCharacter;
       }
       if (toCharacter) {
-        filter.to = { $in: [toCharacter] };
+        filter.recipientId = toCharacter; // NEW schema: single recipient
       }
 
-      // Location filter
-      if (location) {
-        filter.sentFromLocation = location;
-      }
+      // Location filter removed (sentFromLocation doesn't exist in NEW schema)
 
       // Sort configuration
       const sort: any = {};
@@ -91,9 +87,8 @@ export class ForumManagementController {
       // Execute queries in parallel
       const [messages, total] = await Promise.all([
         OnGameMessage.find(filter)
-          .populate('from', 'name surname')
-          .populate('to', 'name surname')
-          .populate('sentFromLocation', 'name')
+          .populate('senderId', 'name surname')
+          .populate('recipientId', 'name surname')
           .sort(sort)
           .skip(skip)
           .limit(limitNum)
@@ -115,9 +110,8 @@ export class ForumManagementController {
       res.json(listResponse(
         messages.map(msg => ({
           ...msg,
-          from: msg.from ? `${(msg.from as { name?: string; surname?: string }).name} ${(msg.from as { name?: string; surname?: string }).surname || ''}`.trim() : 'Unknown',
-          to: (msg.to as { name?: string; surname?: string }[]).map((char) => `${char.name} ${char.surname || ''}`.trim()),
-          sentFromLocation: (msg.sentFromLocation as { name?: string })?.name || 'Unknown Location',
+          from: msg.senderId ? `${(msg.senderId as { name?: string; surname?: string }).name} ${(msg.senderId as { name?: string; surname?: string }).surname || ''}`.trim() : 'Unknown',
+          to: [(msg.recipientId as { name?: string; surname?: string }).name, (msg.recipientId as { name?: string; surname?: string }).surname || ''].join(' ').trim(), // NEW schema: single recipient
           status: this.getMessageStatus(msg)
         })),
         pagination,
@@ -309,10 +303,9 @@ export class ForumManagementController {
       const { messageId } = req.params;
 
       const message = await OnGameMessage.findById(messageId)
-        .populate('from', 'name surname')
-        .populate('to', 'name surname')
-        .populate('sentFromLocation', 'name description')
-        .populate('replyTo', 'subject from to')
+        .populate('senderId', 'name surname')
+        .populate('recipientId', 'name surname')
+        .populate('replyTo', 'subject senderId recipientId')
         .lean();
 
       if (!message) {
@@ -326,20 +319,18 @@ export class ForumManagementController {
         return;
       }
 
-      // Get all views for this message
-      const views = await OnGameMessageView.find({ messageId })
-        .populate('characterId', 'name surname')
-        .lean();
+      // Message views feature removed (OnGameMessageView model deleted in NEW schema)
+      const views: any[] = [];
 
-      // Get conversation thread if exists
+      // Get conversation thread if exists (using onGameThreadId from NEW schema)
       let conversationMessages: any[] = [];
-      if (message.conversationId) {
+      if (message.onGameThreadId) {
         conversationMessages = await OnGameMessage.find({
-          conversationId: message.conversationId,
+          onGameThreadId: message.onGameThreadId,
           _id: { $ne: messageId }
         })
-          .populate('from', 'name surname')
-          .populate('to', 'name surname')
+          .populate('senderId', 'name surname')
+          .populate('recipientId', 'name surname')
           .sort({ sentAt: 1 })
           .lean();
       }
@@ -348,9 +339,8 @@ export class ForumManagementController {
         {
           message: {
             ...message,
-            from: message.from ? `${(message.from as { name?: string; surname?: string }).name} ${(message.from as { name?: string; surname?: string }).surname || ''}`.trim() : 'Unknown',
-            to: (message.to as { name?: string; surname?: string }[]).map((char) => `${char.name} ${char.surname || ''}`.trim()),
-            sentFromLocation: (message.sentFromLocation as { name?: string })?.name || 'Unknown Location',
+            from: message.senderId ? `${(message.senderId as { name?: string; surname?: string }).name} ${(message.senderId as { name?: string; surname?: string }).surname || ''}`.trim() : 'Unknown',
+            to: (message.recipientId as { name?: string; surname?: string }) ? `${(message.recipientId as { name?: string; surname?: string }).name} ${(message.recipientId as { name?: string; surname?: string }).surname || ''}`.trim() : 'Unknown', // NEW schema: single recipient
             status: this.getMessageStatus(message)
           },
           views: views.map(view => ({
@@ -359,7 +349,7 @@ export class ForumManagementController {
           })),
           conversation: conversationMessages.map(msg => ({
             ...msg,
-            from: `${(msg.from as { name?: string; surname?: string }).name} ${(msg.from as { name?: string; surname?: string }).surname || ''}`.trim()
+            from: `${(msg.senderId as { name?: string; surname?: string }).name} ${(msg.senderId as { name?: string; surname?: string }).surname || ''}`.trim()
           }))
         },
         undefined,
@@ -409,11 +399,8 @@ export class ForumManagementController {
         return;
       }
 
-      // Delete the message and all associated views
-      await Promise.all([
-        OnGameMessage.findByIdAndDelete(messageId),
-        OnGameMessageView.deleteMany({ messageId })
-      ]);
+      // Delete the message (views feature removed in NEW schema)
+      await OnGameMessage.findByIdAndDelete(messageId);
 
       // Audit log
       await auditLogger.logAdminAction({
@@ -478,10 +465,8 @@ export class ForumManagementController {
       let result;
       switch (operation) {
         case 'delete':
-          result = await Promise.all([
-            OnGameMessage.deleteMany({ _id: { $in: messageIds } }),
-            OnGameMessageView.deleteMany({ messageId: { $in: messageIds } })
-          ]);
+          // Views feature removed in NEW schema
+          result = await OnGameMessage.deleteMany({ _id: { $in: messageIds } });
           break;
 
         case 'mark_delivered':
@@ -530,7 +515,7 @@ export class ForumManagementController {
       res.json(updateResponse(
         {
           message: `Bulk ${operation} completed successfully`,
-          affected: (result as { deletedCount?: number }[])[0]?.deletedCount || (result as { modifiedCount?: number })?.modifiedCount || messageIds.length
+          affected: (result as { deletedCount?: number; modifiedCount?: number }).deletedCount || (result as { deletedCount?: number; modifiedCount?: number }).modifiedCount || messageIds.length
         },
         undefined,
         getRequestId(req)
@@ -557,8 +542,8 @@ export class ForumManagementController {
         scheduledDelivery: { $exists: true },
         deliveredAt: { $exists: false }
       })
-        .populate('from', 'name surname')
-        .populate('to', 'name surname')
+        .populate('senderId', 'name surname')
+        .populate('recipientId', 'name surname')
         .sort({ scheduledDelivery: 1 })
         .limit(100)
         .lean();
@@ -567,8 +552,8 @@ export class ForumManagementController {
         scheduledDelivery: { $lt: new Date() },
         deliveredAt: { $exists: false }
       })
-        .populate('from', 'name surname')
-        .populate('to', 'name surname')
+        .populate('senderId', 'name surname')
+        .populate('recipientId', 'name surname')
         .sort({ scheduledDelivery: 1 })
         .limit(50)
         .lean();
@@ -577,14 +562,14 @@ export class ForumManagementController {
         {
           pending: pendingMessages.map(msg => ({
             ...msg,
-            from: `${(msg.from as { name?: string; surname?: string }).name} ${(msg.from as { name?: string; surname?: string }).surname || ''}`.trim(),
-            to: (msg.to as { name?: string; surname?: string }[]).map((char) => `${char.name} ${char.surname || ''}`.trim()),
+            from: `${(msg.senderId as { name?: string; surname?: string }).name} ${(msg.senderId as { name?: string; surname?: string }).surname || ''}`.trim(),
+            to: (msg.recipientId as { name?: string; surname?: string }) ? `${(msg.recipientId as { name?: string; surname?: string }).name} ${(msg.recipientId as { name?: string; surname?: string }).surname || ''}`.trim() : 'Unknown', // NEW schema: single recipient
             minutesUntilDelivery: Math.max(0, Math.floor((msg.scheduledDelivery!.getTime() - Date.now()) / (1000 * 60)))
           })),
           failed: failedMessages.map(msg => ({
             ...msg,
-            from: `${(msg.from as { name?: string; surname?: string }).name} ${(msg.from as { name?: string; surname?: string }).surname || ''}`.trim(),
-            to: (msg.to as { name?: string; surname?: string }[]).map((char) => `${char.name} ${char.surname || ''}`.trim()),
+            from: `${(msg.senderId as { name?: string; surname?: string }).name} ${(msg.senderId as { name?: string; surname?: string }).surname || ''}`.trim(),
+            to: (msg.recipientId as { name?: string; surname?: string }) ? `${(msg.recipientId as { name?: string; surname?: string }).name} ${(msg.recipientId as { name?: string; surname?: string }).surname || ''}`.trim() : 'Unknown', // NEW schema: single recipient
             minutesOverdue: Math.floor((Date.now() - msg.scheduledDelivery!.getTime()) / (1000 * 60))
           }))
         },
@@ -627,29 +612,7 @@ export class ForumManagementController {
         { $set: { deliveredAt: new Date() } }
       );
 
-      // Create delivery views for recipients
-      const messages = await OnGameMessage.find({ _id: { $in: messageIds } });
-      
-      for (const message of messages) {
-        // Create inbox views for all recipients
-        const inboxViews = message.to.map((recipientId: any) => ({
-          messageId: message._id,
-          characterId: recipientId,
-          viewType: 'inbox' as const,
-          deliveredAt: new Date()
-        }));
-
-        // Create outbox view for sender
-        const outboxView = {
-          messageId: message._id,
-          characterId: message.from,
-          viewType: 'outbox' as const,
-          deliveryStatus: 'delivered' as const,
-          deliveredAt: new Date()
-        };
-
-        await OnGameMessageView.insertMany([...inboxViews, outboxView]);
-      }
+      // Message views feature removed (OnGameMessageView model deleted in NEW schema)
 
       // Audit log
       await auditLogger.logAdminAction({

@@ -2,9 +2,16 @@ import { api } from './client';
 
 export interface ModerationAlertRecord {
   _id: string;
-  source: 'chat' | 'forum';
+  source: 'chat' | 'forum' | 'ongame_message' | 'offgame_message';
   chatId?: string;
   forumPostId?: string;
+  onGameMessageId?: string;
+  offGameMessageId?: string;
+  onGameThreadId?: string;
+  offGameThreadId?: string;
+  mailSenderName?: string;
+  mailRecipientName?: string;
+  mailSubject?: string;
   characterId: string;
   characterName: string;
   locationId?: string;
@@ -36,7 +43,7 @@ export interface ModerationAlertStats {
 export interface ModerationAlertFilters {
   page?: number;
   limit?: number;
-  source?: 'chat' | 'forum';
+  source?: 'chat' | 'forum' | 'ongame_message' | 'offgame_message';
   status?: string;
   characterId?: string;
   minScore?: number;
@@ -77,7 +84,7 @@ export const moderationAPI = {
     return alert;
   },
 
-  getStats: async (source?: 'chat' | 'forum'): Promise<ModerationAlertStats> => {
+  getStats: async (source?: 'chat' | 'forum' | 'ongame_message' | 'offgame_message'): Promise<ModerationAlertStats> => {
     const body = (await api.get('/admin/moderation/alerts/stats', {
       params: source ? { source } : {},
     })) as { success: boolean; data?: ModerationAlertStats };

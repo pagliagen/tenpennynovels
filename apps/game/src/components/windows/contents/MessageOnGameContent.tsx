@@ -10,7 +10,10 @@
 
 'use client';
 
-import { OnGameMailPanel } from '@/components/mail/OnGameMailPanel';
+import { useState } from 'react';
+import { OnGameInbox } from '@/components/messaging/OnGameInbox';
+import { OnGameThread } from '@/components/messaging/OnGameThread';
+import { OnGameCompose } from '@/components/messaging/OnGameCompose';
 
 /**
  * Message On-Game Content Props
@@ -32,6 +35,17 @@ interface MessageOnGameContentProps {
   prefilledRecipientName?: string;
 }
 
+type ViewState =
+  | { type: 'inbox' }
+  | { type: 'thread'; threadId: string; partnerName: string }
+  | {
+      type: 'compose';
+      replyToMessageId?: string;
+      prefilledSubject?: string;
+      prefilledRecipientId?: string;
+      prefilledRecipientName?: string;
+    };
+
 /**
  * Message On-Game Content Component
  *
@@ -45,11 +59,67 @@ export function MessageOnGameContent({
   prefilledRecipientId,
   prefilledRecipientName,
 }: MessageOnGameContentProps): JSX.Element {
-  return (
-    <OnGameMailPanel
-      initialView={initialView}
-      prefilledRecipientId={prefilledRecipientId}
-      prefilledRecipientName={prefilledRecipientName}
-    />
-  );
+  const [viewState, setViewState] = useState<ViewState>(() => {
+    if (initialView === 'compose') {
+      return {
+        type: 'compose',
+        prefilledRecipientId,
+        prefilledRecipientName,
+      };
+    }
+    return { type: 'inbox' };
+  });
+
+  const handleThreadSelect = (threadId: string, partnerName: string) => {
+    setViewState({ type: 'thread', threadId, partnerName });
+  };
+
+  const handleCompose = () => {
+    setViewState({ type: 'compose' });
+  };
+
+  const handleReply = (replyToMessageId?: string, prefilledSubject?: string) => {
+    setViewState({
+      type: 'compose',
+      replyToMessageId,
+      prefilledSubject,
+    });
+  };
+
+  const handleBack = () => {
+    setViewState({ type: 'inbox' });
+  };
+
+  const handleComposeSuccess = () => {
+    setViewState({ type: 'inbox' });
+  };
+
+  if (viewState.type === 'inbox') {
+    return <OnGameInbox onThreadSelect={handleThreadSelect} onCompose={handleCompose} />;
+  }
+
+  if (viewState.type === 'thread') {
+    return (
+      <OnGameThread
+        threadId={viewState.threadId}
+        onBack={handleBack}
+        onReply={handleReply}
+      />
+    );
+  }
+
+  if (viewState.type === 'compose') {
+    return (
+      <OnGameCompose
+        onCancel={handleBack}
+        onSuccess={handleComposeSuccess}
+        prefilledRecipientId={viewState.prefilledRecipientId}
+        prefilledRecipientName={viewState.prefilledRecipientName}
+        replyToMessageId={viewState.replyToMessageId}
+        prefilledSubject={viewState.prefilledSubject}
+      />
+    );
+  }
+
+  return <div>Unknown view state</div>;
 }

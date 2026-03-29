@@ -19,10 +19,7 @@ import { api } from './client';
 
 /** Payload lista chat (corpo HTTP dopo un livello di unwrap dal client). */
 interface OffGameChatsListBody {
-  data?: {
-    chats?: ChatPreview[];
-    list?: ChatPreview[];
-  };
+  list: ChatPreview[];
 }
 
 interface OffGameMessagesBody {
@@ -42,7 +39,7 @@ export const offGameChatApi = {
    */
   async getChats(): Promise<{ chats: ChatPreview[] }> {
     const body = await api.get<OffGameChatsListBody>('/game/offgame-chats');
-    return { chats: body.data?.chats ?? body.data?.list ?? [] };
+    return { chats: body.list };
   },
 
   /**

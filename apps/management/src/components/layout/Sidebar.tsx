@@ -77,6 +77,15 @@ const NAV_ITEMS: NavItem[] = [
     ]
   },
   {
+    key: 'messages',
+    label: 'Messaggi',
+    icon: '✉️',
+    children: [
+      { key: 'messages-ongame', label: 'Posta OnGame', href: '/messages/ongame', permission: 'messaging.moderation.manage' },
+      { key: 'messages-offgame', label: 'Chat OffGame', href: '/messages/offgame', permission: 'messaging.moderation.manage' }
+    ]
+  },
+  {
     key: 'moderation',
     label: 'Moderazione',
     icon: '🛡️',

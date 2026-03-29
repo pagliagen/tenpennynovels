@@ -37,6 +37,7 @@ export class RedisSubscriber {
       await this.subscribeToChannel(RedisChannel.CORPORATION_EVENTS);
       await this.subscribeToChannel(RedisChannel.RELATIONSHIP_EVENTS);
       await this.subscribeToChannel(RedisChannel.TICKET_EVENTS);
+      await this.subscribeToChannel(RedisChannel.SYSTEM_BROADCAST);
 
       logger.info('✅ Redis Subscriber initialized and subscribed to all channels');
     } catch (error: any) {

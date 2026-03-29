@@ -6,6 +6,8 @@ import economyRoutes from './economy';
 import messageRoutes from './messages';
 import chatRoutes from './chats';
 import offGameChatRoutes from './offGameChats';
+import onGameMessagesRoutes from './onGameMessages';
+import offGameMessagesRoutes from './offGameMessages';
 import corporationRoutes from './corporations';
 // import forumRoutes from './forum';
 // import documentRoutes from './documents';  // REMOVED: Moved to modules/documents
@@ -40,6 +42,8 @@ router.use('/', gameRoutes);
 router.use('/', economyRoutes);
 router.use('/', messageRoutes);
 router.use('/', offGameChatRoutes); // OffGame chat system
+router.use('/', onGameMessagesRoutes); // On-game postal system
+router.use('/', offGameMessagesRoutes); // Off-game messaging system
 router.use('/chats', chatRoutes); // Location chats (renamed from location actions)
 router.use('/', corporationRoutes);
 router.use('/housing', locationPropertyRoutes);
