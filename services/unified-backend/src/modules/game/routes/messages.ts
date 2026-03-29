@@ -2,12 +2,21 @@ import { Router } from 'express';
 import { AuthMiddleware } from '../middleware/auth';
 import { banChecks } from '@shared/middleware/banCheck';
 import { requireGamePermission } from '../middleware/gamePermissions';
-import { MessageController } from '../controllers/MessageController';
+// TODO: MessageController uses OLD OnGameMessage schema - entire controller needs migration to NEW architecture
+// - OLD schema uses: from, to, status, readAt, senderName, isPrivate, metadata properties
+// - NEW schema uses: senderId, recipientId, deliveredAt, onGameThreadId, deliveryConfig
+// - Migration task: Refactor MessageController to use NEW schema or deprecate in favor of OnGameMessageController
+// - Priority: User-facing code (higher than admin code)
+// import { MessageController } from '../controllers/MessageController';
 import { OnGameMessageController } from '../controllers/OnGameMessageController';
 
 const router = Router();
 
-// Direct Messages routes (OOC - Out of Character)
+// TODO: Direct Messages routes (OOC - Out of Character) - COMMENTED OUT pending migration
+// MessageController uses OLD OnGameMessage schema (from, to, status, readAt, etc.)
+// See MessageController.ts for full migration requirements
+// These routes need to be migrated to NEW OnGameMessageController or deprecated
+/*
 router.post('/messages/send',
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:messages:send'),
@@ -43,6 +52,7 @@ router.get('/messages/unread-count',
   requireGamePermission('game:messages:read'),
   MessageController.getUnreadCount
 );
+*/
 
 // OnGame Messages routes (Victorian postal system - IN-CHARACTER)
 router.post('/ongame-messages',

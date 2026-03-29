@@ -1,848 +1,775 @@
 import { Request, Response } from 'express';
-import { OnGameMessage, OnGameMessageView, Character, CharacterFinances, db } from '@database/models';
-import { ApiResponse } from '../types/game';
-import { logger } from '../logger';
-import { postalSystem } from '../utils/postalSystem';
-import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
-import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId , deleteResponse} from '@shared/utils/apiResponse';
+import mongoose from 'mongoose';
+import { OnGameMessage } from '@database/models/OnGameMessage';
+import { MessageService } from '../services/MessageService';
+import { OnGameThreadService } from '../services/OnGameThreadService';
+import { logger } from '@shared/utils/logger';
+import { successResponse, errorResponse, listResponse } from '@shared/utils/apiResponse';
 
-
-// Access mongoose from the centralized connection
-const mongoose = db.getMongoose();
-
+/**
+ * OnGameMessageController
+ *
+ * Controller for on-game postal system HTTP endpoints.
+ *
+ * Endpoints:
+ * - POST /game/messages - Send message (multi-recipient support)
+ * - GET /game/messages/inbox - List received messages (paginated)
+ * - GET /game/messages/sent - List sent messages (paginated)
+ * - GET /game/ongame-threads/:id - Get thread with messages
+ * - DELETE /game/messages/:id - Soft delete message
+ */
 export class OnGameMessageController {
   /**
-   * POST /game/ongame-messages
-   * Send new message through Victorian postal system
+   * POST /game/messages
+   * Send on-game message
+   *
+   * Multi-recipient support: Creates separate message + thread for each recipient
+   *
+   * Request body:
+   * {
+   *   recipientIds: string[],     // Character IDs
+   *   messageType: string,        // 'letter' | 'note' | 'telegram' | 'dispatch' | 'flyer'
+   *   subject: string,
+   *   content: string,
+   *   replyTo?: string            // Message ID if replying
+   * }
    */
   static async sendMessage(req: Request, res: Response): Promise<void> {
     try {
-      const { messageType, to, subject, content, deliveryTarget, isExpress } = req.body;
-      const characterId = req.character!.characterId;
-      const characterRoles = req.character!.gameplayRoles;
-
-      logger.info('🔍 SendMessage - Start', {
-        messageType,
-        to: to?.length || 0,
-        subject,
-        contentLength: content?.length || 0,
-        deliveryTarget,
-        isExpress,
-        characterId
-      });
+      const { recipientIds, messageType, subject, content, replyTo } = req.body;
 
       // Validation
-      if (!messageType || !to || !Array.isArray(to) || to.length === 0) {
+      if (!req.character) {
         res.status(400).json(errorResponse(
-          'Validation failed',
-          'VALIDATION_ERROR',
-          {
-            ...((!messageType) && { messageType: 'Tipo di messaggio richiesto' }),
-            ...((!to || !Array.isArray(to) || to.length === 0) && { recipients: 'Almeno un destinatario è richiesto' })
-          },
-          400,
-          getRequestId(req)
+          'Selezione del personaggio richiesta',
+          'CHARACTER_REQUIRED'
         ));
         return;
       }
 
-      if (!subject || subject.trim().length === 0) {
+      if (!recipientIds || !Array.isArray(recipientIds) || recipientIds.length === 0) {
         res.status(400).json(errorResponse(
-          'Validation failed',
-          'VALIDATION_ERROR',
-          {
-            subject: 'Oggetto del messaggio richiesto'
-          },
-          400,
-          getRequestId(req)
+          'Almeno un destinatario richiesto',
+          'RECIPIENTS_REQUIRED'
         ));
         return;
       }
 
-      if (!content || content.trim().length === 0) {
+      if (!messageType || !subject || !content) {
         res.status(400).json(errorResponse(
-          'Validation failed',
-          'VALIDATION_ERROR',
-          {
-            content: 'Contenuto del messaggio richiesto'
-          },
-          400,
-          getRequestId(req)
+          'Tipo messaggio, oggetto e contenuto sono obbligatori',
+          'MISSING_REQUIRED_FIELDS'
         ));
         return;
       }
 
-      // Validate message type and permissions (without recipients count for now)
-      const validation = await postalSystem.validateMessage(messageType, content, characterRoles || []);
-      if (!validation.valid) {
+      // Get message type configuration from SystemConfiguration
+      const { SystemConfiguration } = await import('@database/models/SystemConfiguration');
+      const configKey = `postal_message_type_${messageType}`;
+      const config = await SystemConfiguration.findOne({ configKey });
+
+      if (!config || !config.value) {
         res.status(400).json(errorResponse(
-          'Validation failed',
-          'VALIDATION_ERROR',
-          {
-            message: validation.error || 'Errore di validazione del messaggio'
-          },
-          400,
-          getRequestId(req)
+          `Tipo di messaggio non valido: ${messageType}`,
+          'INVALID_MESSAGE_TYPE'
         ));
         return;
       }
 
-      // Calculate postage and delivery time
-      const postageRequired = await postalSystem.calculatePostage(messageType, isExpress || false);
-      const deliveryTime = await postalSystem.calculateDeliveryTime(messageType, isExpress || false);
+      const messageConfig = config.value as any;
 
-      // Check sender's finances for postage
-      if (postageRequired > 0) {
-        const finances = await CharacterFinances.findOne({ characterId });
-        if (!finances || (finances.cash + finances.bankDeposit) < postageRequired) {
-          const available = finances ? (finances.cash + finances.bankDeposit) : 0;
+      // Validate content length
+      if (messageConfig.maxLength && content.length > messageConfig.maxLength) {
+        res.status(400).json(errorResponse(
+          `Contenuto troppo lungo (max ${messageConfig.maxLength} caratteri)`,
+          'CONTENT_TOO_LONG'
+        ));
+        return;
+      }
+
+      // Validate max recipients for flyer
+      if (messageConfig.allowMultipleRecipients && messageConfig.maxRecipients) {
+        if (recipientIds.length > messageConfig.maxRecipients) {
           res.status(400).json(errorResponse(
-            'Validation failed',
-            'VALIDATION_ERROR',
-            {
-              postage: `Fondi insufficienti. Richiesti: ${postageRequired} pence, disponibili: ${available} pence`
-            },
-            400,
-            getRequestId(req)
+            `Troppi destinatari (max ${messageConfig.maxRecipients})`,
+            'TOO_MANY_RECIPIENTS'
           ));
           return;
         }
-
-        // Deduct postage from cash first, then bank deposit
-        let remaining = postageRequired;
-        if (finances.cash >= remaining) {
-          finances.cash -= remaining;
-        } else {
-          remaining -= finances.cash;
-          finances.cash = 0;
-          finances.bankDeposit -= remaining;
-        }
-        await finances.save();
       }
 
-      // Verify recipients exist (permission system handles access control)
-      const recipientIds = to.map(id => new mongoose.Types.ObjectId(id));
-      const recipients = await Character.find({
-        _id: { $in: recipientIds }
-      });
+      // Calculate total cost
+      const totalCost = messageConfig.postageRequired * recipientIds.length;
 
-      if (recipients.length !== recipientIds.length) {
-        // Find which recipients are invalid for detailed error
-        const validIds = recipients.map((r: any) => r._id.toString());
-        const invalidIds = recipientIds.filter(id => !validIds.includes(id));
-        
-        res.status(400).json(errorResponse(
-          'Validation failed',
-          'VALIDATION_ERROR',
-          {
-            recipients: `Destinatari non validi o non esistenti: ${invalidIds.length > 0 ? invalidIds.join(', ') : 'alcuni destinatari non sono stati trovati'}`
-          },
-          400,
-          getRequestId(req)
+      // Get sender character
+      const { Character } = await import('@database/models/Character');
+      const sender = await Character.findById(req.character.characterId);
+
+      if (!sender) {
+        res.status(404).json(errorResponse(
+          'Personaggio mittente non trovato',
+          'SENDER_NOT_FOUND'
         ));
         return;
       }
 
-      // Validate recipient count after we have recipientIds
-      const recipientValidation = await postalSystem.validateMessage(messageType, content, characterRoles || [], to);
-      if (!recipientValidation.valid) {
+      // Validate credits
+      if (sender.credits < totalCost) {
         res.status(400).json(errorResponse(
-          'Validation failed',
-          'VALIDATION_ERROR',
-          {
-            recipients: recipientValidation.error || 'Errore di validazione dei destinatari'
-          },
-          400,
-          getRequestId(req)
+          `Crediti insufficienti (richiesti ${totalCost}, disponibili ${sender.credits})`,
+          'INSUFFICIENT_CREDITS',
+          { required: totalCost, available: sender.credits }
         ));
         return;
       }
 
-      // Get message type configuration
-      const messageTypeConfig = await postalSystem.getMessageType(messageType);
-      const requiresKnowledge = await postalSystem.requiresResidenceKnowledge(messageType);
+      // Calculate delivery delay
+      let deliveryDelay = 0;
+      if (messageConfig.deliveryMode === 'realtime') {
+        deliveryDelay = 0;
+      } else if (messageConfig.deliveryMode === 'scheduled_fixed') {
+        deliveryDelay = (messageConfig.deliveryTiming?.fixedDelayMinutes || 0) * 60 * 1000;
+      } else if (messageConfig.deliveryMode === 'scheduled_variable') {
+        const min = messageConfig.deliveryTiming?.variableDelayRange?.min || 0;
+        const max = messageConfig.deliveryTiming?.variableDelayRange?.max || 0;
+        const randomMinutes = Math.floor(Math.random() * (max - min + 1)) + min;
+        deliveryDelay = randomMinutes * 60 * 1000;
+      }
 
-      // Fetch sender character to get current location
-      const senderChar = await Character.findById(characterId).select('currentLocation').lean();
+      // Create deliveryConfig snapshot (immutable to future config changes)
+      const deliveryConfig = {
+        deliveryDelay,
+        cost: messageConfig.postageRequired,
+        canReply: messageConfig.allowsReply ?? true,
+        displayName: messageConfig.displayName
+      };
 
-      // Create main message record
-      const message = new OnGameMessage({
-        messageType,
-        from: new mongoose.Types.ObjectId(characterId),
-        to: recipientIds,
-        subject: subject.trim(),
-        content: content.trim(),
-        sentAt: new Date(),
-        scheduledDelivery: deliveryTime,
-        deliveryTarget: {
-          type: deliveryTarget?.type || 'character',
-          requiresKnownResidence: requiresKnowledge
-        },
-        sentFromLocation: senderChar?.currentLocation || null,
-        postageCharged: postageRequired,
-        isExpress: isExpress || false,
-        sealed: messageTypeConfig?.requiresSealing || false
-      });
+      // Send message to each recipient (separate message + thread per recipient)
+      const sentMessages: any[] = [];
 
-      await message.save();
-
-      // Create message views (Gmail-style)
-      const messageViews = [];
-
-      // Outbox view for sender
-      messageViews.push({
-        messageId: message._id,
-        characterId: new mongoose.Types.ObjectId(characterId),
-        viewType: 'outbox',
-        isRead: true, // Sender has "read" their own message
-        readAt: new Date(),
-        deliveryStatus: deliveryTime ? 'sent' : 'delivered'
-      });
-
-      // Inbox views for recipients
       for (const recipientId of recipientIds) {
-        messageViews.push({
-          messageId: message._id,
-          characterId: recipientId,
-          viewType: 'inbox',
-          isRead: false,
-          deliveryStatus: deliveryTime ? 'in_transit' : 'delivered',
-          deliveredAt: deliveryTime || new Date()
-        });
-      }
-
-      await OnGameMessageView.insertMany(messageViews);
-
-      // For realtime delivery, trigger WebSocket notification immediately
-      if (!deliveryTime || deliveryTime <= new Date()) {
-        const io = req.app.get('io');
-        if (io) {
-          const senderCharacter = await Character.findById(characterId);
-          
-          for (const recipient of recipients) {
-            const notificationData = {
-              messageId: message._id.toString(),
-              fromCharacterId: characterId,
-              fromCharacterName: senderCharacter?.name || 'Unknown',
-              toCharacterIds: [recipient._id.toString()],
-              messageType,
-              subject: subject.trim(),
-              content: content.trim(),
-              sentAt: new Date(),
-              deliveredAt: new Date(),
-              icon: messageTypeConfig?.icon || '📬',
-              postageCharged: postageRequired
-            };
-
-            const recipientRoom = `character_${recipient._id}`;
-            io.to(recipientRoom).emit('ongame:message_delivered', notificationData);
-          }
-          
-          // Also send notification to sender to update their thread view
-          const senderNotificationData = {
-            messageId: message._id.toString(),
-            fromCharacterId: characterId,
-            fromCharacterName: senderCharacter?.name || 'Unknown',
-            toCharacterIds: recipients.map((r: any) => r._id.toString()),
+        try {
+          const message = await MessageService.sendOnGameMessage({
+            senderId: new mongoose.Types.ObjectId(req.character.characterId),
+            recipientId: new mongoose.Types.ObjectId(recipientId),
             messageType,
-            subject: subject.trim(),
-            content: content.trim(),
-            sentAt: new Date(),
-            deliveredAt: new Date(),
-            icon: messageTypeConfig?.icon || '📬',
-            postageCharged: postageRequired
-          };
-          
-          const senderRoom = `character_${characterId}`;
-          io.to(senderRoom).emit('ongame:message_sent', senderNotificationData);
-          
-          logger.info('OnGame message delivered immediately via WebSocket', {
-            messageId: message._id,
-            messageType,
-            recipientCount: recipients.length
+            subject,
+            content,
+            deliveryConfig,
+            replyTo: replyTo ? new mongoose.Types.ObjectId(replyTo) : undefined
           });
+
+          sentMessages.push(message);
+
+          logger.info('OnGame message sent', {
+            messageId: message._id,
+            senderId: req.character.characterId,
+            recipientId,
+            messageType
+          });
+        } catch (error) {
+          logger.error('Failed to send message to recipient', {
+            error,
+            senderId: req.character.characterId,
+            recipientId
+          });
+          // Continue with other recipients even if one fails
         }
       }
 
-      logger.info('OnGame message sent successfully', {
-        messageId: message._id,
-        messageType,
-        from: characterId,
-        recipientCount: recipients.length,
-        postageCharged: postageRequired,
-        scheduledDelivery: deliveryTime
-      });
+      if (sentMessages.length === 0) {
+        res.status(500).json(errorResponse(
+          'Impossibile inviare il messaggio a nessun destinatario',
+          'SEND_FAILED'
+        ));
+        return;
+      }
 
-      res.status(201).json(createResponse(
+      res.status(201).json(successResponse(
         {
-          messageId: message._id,
-          scheduledDelivery: deliveryTime,
-          postageCharged: postageRequired,
-          deliveryStatus: deliveryTime ? 'sent' : 'delivered'
+          sent: sentMessages.length,
+          failed: recipientIds.length - sentMessages.length,
+          messages: sentMessages,
+          creditsSpent: totalCost
         },
-        'Message sent successfully',
-        getRequestId(req)
+        'Messaggio inviato con successo'
       ));
-
-    } catch (error: unknown) {
-      logger.error('Send OnGame message error:', error);
-
+    } catch (error) {
+      logger.error('Error sending OnGame message', { error, body: req.body });
       res.status(500).json(errorResponse(
-        'Errore interno del server',
-        'INTERNAL_ERROR',
-        {
-          system: 'Errore interno durante l\'invio del messaggio. Riprova più tardi.'
-        },
-        500,
-        getRequestId(req)
+        'Errore durante l\'invio del messaggio',
+        'INTERNAL_ERROR'
       ));
     }
   }
 
   /**
-   * GET /game/ongame-messages/inbox
-   * Get character's inbox (received messages)
+   * GET /game/messages/inbox
+   * List received messages (paginated)
+   *
+   * Query params:
+   * - page: number (default 1)
+   * - limit: number (default 25)
    */
   static async getInbox(req: Request, res: Response): Promise<void> {
     try {
-      const characterId = req.character!.characterId;
+      if (!req.character) {
+        res.status(400).json(errorResponse(
+          'Selezione del personaggio richiesta',
+          'CHARACTER_REQUIRED'
+        ));
+        return;
+      }
+
       const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 20;
-      const folder = req.query.folder as string;
-      const unreadOnly = req.query.unreadOnly === 'true';
+      const limit = parseInt(req.query.limit as string) || 25;
       const skip = (page - 1) * limit;
 
-      const query: any = {
-        characterId: new mongoose.Types.ObjectId(characterId),
-        viewType: 'inbox',
-        isDeleted: false
+      // Query: received messages (NOT deleted by recipient, deliveredAt exists)
+      const query = {
+        recipientId: new mongoose.Types.ObjectId(req.character.characterId),
+        'deletedBy.recipient': { $exists: false },
+        deliveredAt: { $exists: true }
       };
 
-      if (folder) {
-        query.customFolder = folder;
-      }
-
-      if (unreadOnly) {
-        query.isRead = false;
-      }
-
-      const messageViews = await OnGameMessageView.find(query)
-        .populate({
-          path: 'messageId',
-          populate: {
-            path: 'from',
-            select: 'name avatar'
-          }
-        })
-        .sort({ 'createdAt': -1 })
+      const total = await OnGameMessage.countDocuments(query);
+      const messages = await OnGameMessage.find(query)
+        .populate('senderId', 'name surname avatar')
+        .populate('onGameThreadId')
+        .sort({ deliveredAt: -1 })
         .skip(skip)
-        .limit(limit);
+        .limit(limit)
+        .lean();
 
-      const totalCount = await OnGameMessageView.countDocuments(query);
-      const unreadCount = await OnGameMessageView.countDocuments({
-        ...query,
-        isRead: false
-      });
+      const totalPages = Math.ceil(total / limit);
 
-      const messages = await Promise.all(messageViews.map(async (view) => {
-        const msgTypeConfig = await postalSystem.getMessageType(view.messageId.messageType);
-        return {
-          viewId: view._id,
-          messageId: view.messageId._id,
-          messageType: view.messageId.messageType,
-          from: view.messageId.from,
-          subject: view.messageId.subject,
-          content: view.messageId.sealed && !view.isRead ? '[Sealed Message]' : view.messageId.content,
-          sentAt: view.messageId.sentAt,
-          deliveredAt: view.deliveredAt,
-          isRead: view.isRead,
-          readAt: view.readAt,
-          isStarred: view.isStarred,
-          customFolder: view.customFolder,
-          deliveryStatus: view.deliveryStatus,
-          icon: msgTypeConfig?.icon || '📬'
-        };
-      }));
-
-      res.json(successResponse(
+      res.status(200).json(listResponse(
+        messages,
         {
-          messages,
-          pagination: {
           currentPage: page,
-            limit,
-            totalItems: totalCount,
-            hasMore: skip + messages.length < totalCount
-          },
-          unreadCount
-        },
-        undefined,
-        getRequestId(req)
+          pageSize: limit,
+          totalItems: total,
+          totalPages,
+          hasNextPage: page < totalPages,
+          hasPreviousPage: page > 1
+        }
       ));
-
-    } catch (error: unknown) {
-      logger.error('Get inbox error:', error);
-
+    } catch (error) {
+      logger.error('Error fetching inbox', { error, characterId: req.character?.characterId });
       res.status(500).json(errorResponse(
-        'Failed to get inbox',
-        'GET_INBOX_ERROR',
+        'Errore durante il caricamento della posta in arrivo',
+        'INTERNAL_ERROR'
+      ));
+    }
+  }
+
+  /**
+   * GET /game/messages/sent
+   * List sent messages (paginated)
+   *
+   * Query params:
+   * - page: number (default 1)
+   * - limit: number (default 25)
+   */
+  static async getSent(req: Request, res: Response): Promise<void> {
+    try {
+      if (!req.character) {
+        res.status(400).json(errorResponse(
+          'Selezione del personaggio richiesta',
+          'CHARACTER_REQUIRED'
+        ));
+        return;
+      }
+
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 25;
+      const skip = (page - 1) * limit;
+
+      // Query: sent messages (NOT deleted by sender)
+      const query = {
+        senderId: new mongoose.Types.ObjectId(req.character.characterId),
+        'deletedBy.sender': { $exists: false }
+      };
+
+      const total = await OnGameMessage.countDocuments(query);
+      const messages = await OnGameMessage.find(query)
+        .populate('recipientId', 'name surname avatar')
+        .populate('onGameThreadId')
+        .sort({ sentAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean();
+
+      const totalPages = Math.ceil(total / limit);
+
+      res.status(200).json(listResponse(
+        messages,
+        {
+          currentPage: page,
+          pageSize: limit,
+          totalItems: total,
+          totalPages,
+          hasNextPage: page < totalPages,
+          hasPreviousPage: page > 1
+        }
+      ));
+    } catch (error) {
+      logger.error('Error fetching sent messages', { error, characterId: req.character?.characterId });
+      res.status(500).json(errorResponse(
+        'Errore durante il caricamento dei messaggi inviati',
+        'INTERNAL_ERROR'
+      ));
+    }
+  }
+
+  /**
+   * GET /game/ongame-threads/:id
+   * Get thread with messages
+   *
+   * Params:
+   * - id: OnGameThread ID
+   */
+  static async getThread(req: Request, res: Response): Promise<void> {
+    try {
+      if (!req.character) {
+        res.status(400).json(errorResponse(
+          'Selezione del personaggio richiesta',
+          'CHARACTER_REQUIRED'
+        ));
+        return;
+      }
+
+      const threadId = req.params.id as string;
+      const { OnGameThread } = await import('@database/models/OnGameThread');
+
+      // Get thread
+      const thread = await OnGameThread.findById(threadId)
+        .populate('participants', 'name surname avatar')
+        .lean();
+
+      if (!thread) {
+        res.status(404).json(errorResponse(
+          'Thread non trovato',
+          'THREAD_NOT_FOUND'
+        ));
+        return;
+      }
+
+      // Verify character is participant
+      const isParticipant = thread.participants.some((p: any) =>
+        p._id.toString() === req.character!.characterId
+      );
+
+      if (!isParticipant) {
+        res.status(403).json(errorResponse(
+          'Non sei un partecipante di questo thread',
+          'FORBIDDEN'
+        ));
+        return;
+      }
+
+      // Get thread messages (ordered by sentAt)
+      const messages = await OnGameMessage.find({
+        onGameThreadId: new mongoose.Types.ObjectId(threadId)
+      })
+        .populate('senderId', 'name surname avatar')
+        .sort({ sentAt: 1 })
+        .lean();
+
+      // Reset unread count for this character
+      await OnGameThreadService.resetUnreadCount(
+        new mongoose.Types.ObjectId(threadId),
+        new mongoose.Types.ObjectId(req.character.characterId)
+      );
+
+      res.status(200).json(successResponse({
+        thread,
+        messages
+      }));
+    } catch (error) {
+      logger.error('Error fetching thread', { error, threadId: req.params.id });
+      res.status(500).json(errorResponse(
+        'Errore durante il caricamento del thread',
+        'INTERNAL_ERROR'
+      ));
+    }
+  }
+
+  /**
+   * DELETE /game/messages/:id
+   * Soft delete message
+   *
+   * Permissions:
+   * - Sender can delete if sentAt < 5 minutes ago OR isMaster
+   * - Recipient can always delete (their view)
+   */
+  static async deleteMessage(req: Request, res: Response): Promise<void> {
+    try {
+      if (!req.character) {
+        res.status(400).json(errorResponse(
+          'Selezione del personaggio richiesta',
+          'CHARACTER_REQUIRED'
+        ));
+        return;
+      }
+
+      const messageId = req.params.id as string;
+      const message = await OnGameMessage.findById(messageId);
+
+      if (!message) {
+        res.status(404).json(errorResponse(
+          'Messaggio non trovato',
+          'MESSAGE_NOT_FOUND'
+        ));
+        return;
+      }
+
+      const characterId = req.character.characterId;
+      const isSender = message.senderId.toString() === characterId;
+      const isRecipient = message.recipientId.toString() === characterId;
+
+      if (!isSender && !isRecipient) {
+        res.status(403).json(errorResponse(
+          'Non sei il mittente o il destinatario di questo messaggio',
+          'FORBIDDEN'
+        ));
+        return;
+      }
+
+      // Sender-specific validation: 5-minute time limit (unless master)
+      if (isSender) {
+        const now = Date.now();
+        const sentAt = message.sentAt.getTime();
+        const fiveMinutes = 5 * 60 * 1000;
+        const isMaster = req.character.gameplayRoles?.includes('master') || req.character.isGestore;
+
+        if (now - sentAt > fiveMinutes && !isMaster) {
+          res.status(403).json(errorResponse(
+            'Non puoi eliminare messaggi inviati da più di 5 minuti',
+            'DELETE_TIME_EXPIRED'
+          ));
+          return;
+        }
+      }
+
+      // Soft delete via MessageService
+      await MessageService.deleteMessage(
+        new mongoose.Types.ObjectId(messageId),
+        new mongoose.Types.ObjectId(characterId),
+        'ongame'
+      );
+
+      res.status(200).json(successResponse(
         undefined,
-        500,
-        getRequestId(req)
+        'Messaggio eliminato con successo'
+      ));
+    } catch (error) {
+      logger.error('Error deleting message', { error, messageId: req.params.id });
+      res.status(500).json(errorResponse(
+        'Errore durante l\'eliminazione del messaggio',
+        'INTERNAL_ERROR'
       ));
     }
   }
 
   /**
    * GET /game/ongame-messages/outbox
-   * Get character's outbox (sent messages)
+   * List sent messages (paginated)
+   *
+   * Query params:
+   * - page: number (default 1)
+   * - limit: number (default 25)
    */
   static async getOutbox(req: Request, res: Response): Promise<void> {
     try {
-      const characterId = req.character!.characterId;
+      if (!req.character) {
+        res.status(400).json(errorResponse(
+          'Selezione del personaggio richiesta',
+          'CHARACTER_REQUIRED'
+        ));
+        return;
+      }
+
       const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 20;
+      const limit = parseInt(req.query.limit as string) || 25;
       const skip = (page - 1) * limit;
 
-      const messageViews = await OnGameMessageView.find({
-        characterId: new mongoose.Types.ObjectId(characterId),
-        viewType: 'outbox',
-        isDeleted: false
-      })
-      .populate({
-        path: 'messageId',
-        populate: {
-          path: 'to',
-          select: 'name avatar'
-        }
-      })
-      .sort({ 'createdAt': -1 })
-      .skip(skip)
-      .limit(limit);
+      // Query: sent messages (NOT deleted by sender)
+      const query = {
+        senderId: new mongoose.Types.ObjectId(req.character.characterId),
+        'deletedBy.sender': { $exists: false }
+      };
 
-      const totalCount = await OnGameMessageView.countDocuments({
-        characterId: new mongoose.Types.ObjectId(characterId),
-        viewType: 'outbox',
-        isDeleted: false
-      });
+      const total = await OnGameMessage.countDocuments(query);
+      const messages = await OnGameMessage.find(query)
+        .populate('recipientId', 'name surname avatar')
+        .populate('onGameThreadId')
+        .sort({ sentAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean();
 
-      const messages = await Promise.all(messageViews.map(async (view) => {
-        const msgTypeConfig = await postalSystem.getMessageType(view.messageId.messageType);
-        return {
-          viewId: view._id,
-          messageId: view.messageId._id,
-          messageType: view.messageId.messageType,
-          to: view.messageId.to,
-          subject: view.messageId.subject,
-          content: view.messageId.content,
-          sentAt: view.messageId.sentAt,
-          scheduledDelivery: view.messageId.scheduledDelivery,
-          deliveredAt: view.deliveredAt,
-          isStarred: view.isStarred,
-          deliveryStatus: view.deliveryStatus,
-          deliveryAttempts: view.deliveryAttempts,
-          deliveryError: view.deliveryError,
-          postageCharged: view.messageId.postageCharged,
-          icon: msgTypeConfig?.icon || '📬'
-        };
-      }));
+      const totalPages = Math.ceil(total / limit);
 
-      res.json(listResponse(
+      res.status(200).json(listResponse(
         messages,
         {
           currentPage: page,
           pageSize: limit,
-          totalItems: totalCount,
-          totalPages: Math.ceil(totalCount / limit),
-          hasNextPage: skip + messages.length < totalCount,
+          totalItems: total,
+          totalPages,
+          hasNextPage: page < totalPages,
           hasPreviousPage: page > 1
-        },
-        undefined,
-        getRequestId(req)
+        }
       ));
-
-    } catch (error: unknown) {
-      logger.error('Get outbox error:', error);
-
+    } catch (error) {
+      logger.error('Error fetching outbox', { error, characterId: req.character?.characterId });
       res.status(500).json(errorResponse(
-        'Failed to get outbox',
-        'GET_OUTBOX_ERROR',
-        undefined,
-        500,
-        getRequestId(req)
+        'Errore durante il caricamento dei messaggi inviati',
+        'INTERNAL_ERROR'
       ));
     }
   }
 
   /**
    * PATCH /game/ongame-messages/:id/read
-   * Mark message as read and trigger read receipt
+   * Mark message as read (resets unread count on thread)
    */
-  static async markAsRead(req: Request<{ id: string }>, res: Response): Promise<void> {
+  static async markAsRead(req: Request, res: Response): Promise<void> {
     try {
-      const viewId = req.params.id;
-      const characterId = req.character!.characterId;
-
-      const messageView = await OnGameMessageView.findOne({
-        _id: viewId,
-        characterId: new mongoose.Types.ObjectId(characterId),
-        viewType: 'inbox'
-      }).populate('messageId');
-
-      if (!messageView) {
-        res.status(404).json(errorResponse(
-          'Message not found',
-          'MESSAGE_NOT_FOUND',
-          undefined,
-          404,
-          getRequestId(req)
+      if (!req.character) {
+        res.status(400).json(errorResponse(
+          'Selezione del personaggio richiesta',
+          'CHARACTER_REQUIRED'
         ));
         return;
       }
 
-      if (!messageView.isRead) {
-        messageView.isRead = true;
-        messageView.readAt = new Date();
-        await messageView.save();
+      const messageId = req.params.id as string;
+      const message = await OnGameMessage.findById(messageId);
 
-        // Send read receipt to sender via WebSocket
-        const io = req.app.get('io');
-        if (io) {
-          const reader = await Character.findById(characterId);
-          const readReceiptData = {
-            type: 'message_read_receipt',
-            messageId: messageView.messageId._id.toString(),
-            readBy: reader?.name || 'Unknown',
-            readAt: messageView.readAt
-          };
-
-          const senderRoom = `character_${messageView.messageId.from}`;
-          io.to(senderRoom).emit('ongame:message_read', readReceiptData);
-        }
-
-        logger.info('OnGame message marked as read', {
-          viewId,
-          messageId: messageView.messageId._id,
-          characterId
-        });
-      }
-
-      res.json(successResponse(
-        undefined,
-        'Message marked as read',
-        getRequestId(req)
-      ));
-
-    } catch (error: unknown) {
-      logger.error('Mark as read error:', error);
-
-      res.status(500).json(errorResponse(
-        'Failed to mark message as read',
-        'MARK_READ_ERROR',
-        undefined,
-        500,
-        getRequestId(req)
-      ));
-    }
-  }
-
-  /**
-   * DELETE /game/ongame-messages/:id
-   * Soft delete message view (Gmail-style)
-   */
-  static async deleteMessage(req: Request<{ id: string }>, res: Response): Promise<void> {
-    try {
-      const viewId = req.params.id;
-      const characterId = req.character!.characterId;
-
-      const messageView = await OnGameMessageView.findOne({
-        _id: viewId,
-        characterId: new mongoose.Types.ObjectId(characterId)
-      });
-
-      if (!messageView) {
+      if (!message) {
         res.status(404).json(errorResponse(
-          'Message not found',
-          'MESSAGE_NOT_FOUND',
-          undefined,
-          404,
-          getRequestId(req)
+          'Messaggio non trovato',
+          'MESSAGE_NOT_FOUND'
         ));
         return;
       }
 
-      messageView.isDeleted = true;
-      await messageView.save();
-
-      logger.info('OnGame message soft deleted', {
-        viewId,
-        characterId,
-        viewType: messageView.viewType
-      });
-
-      res.json(deleteResponse(
-        'Message deleted successfully',
-        getRequestId(req)
-      ));
-
-    } catch (error: unknown) {
-      logger.error('Delete message error:', error);
-
-      res.status(500).json(errorResponse(
-        'Failed to delete message',
-        'DELETE_MESSAGE_ERROR',
-        undefined,
-        500,
-        getRequestId(req)
-      ));
-    }
-  }
-
-  /**
-   * GET /game/ongame-messages/threads
-   * Get conversation threads for current character
-   */
-  static async getThreads(req: Request, res: Response): Promise<void> {
-    try {
-      const characterId = req.character!.characterId;
-
-      // Get all messages where this character is sender or recipient
-      const messages = await OnGameMessage.find({
-        $or: [
-          { from: new mongoose.Types.ObjectId(characterId) },
-          { to: { $in: [new mongoose.Types.ObjectId(characterId)] } }
-        ]
-      })
-      .populate('from', 'name avatar')
-      .populate('to', 'name avatar')
-      .sort({ sentAt: -1 });
-
-      // Group messages by conversation partner
-      const threadsMap = new Map();
-
-      for (const message of messages) {
-        // Determine the other participant(s) in the conversation
-        const isSender = message.from._id.toString() === characterId;
-        
-        if (isSender) {
-          // If we sent the message, create threads for each recipient
-          for (const recipient of message.to) {
-            const partnerId = recipient._id.toString();
-            if (partnerId !== characterId) {
-              const threadKey = partnerId;
-              if (!threadsMap.has(threadKey)) {
-                threadsMap.set(threadKey, {
-                  partnerId,
-                  partnerName: recipient.name,
-                  partnerAvatar: recipient.avatar,
-                  lastMessage: message,
-                  lastMessageDate: message.sentAt,
-                  unreadCount: 0 // We'll calculate this properly later
-                });
-              } else {
-                const existing = threadsMap.get(threadKey);
-                if (message.sentAt > existing.lastMessageDate) {
-                  existing.lastMessage = message;
-                  existing.lastMessageDate = message.sentAt;
-                }
-              }
-            }
-          }
-        } else {
-          // If we received the message, create thread with sender
-          const partnerId = message.from._id.toString();
-          const threadKey = partnerId;
-          if (!threadsMap.has(threadKey)) {
-            threadsMap.set(threadKey, {
-              partnerId,
-              partnerName: message.from.name,
-              partnerAvatar: message.from.avatar,
-              lastMessage: message,
-              lastMessageDate: message.sentAt,
-              unreadCount: 0 // We'll calculate this properly later
-            });
-          } else {
-            const existing = threadsMap.get(threadKey);
-            if (message.sentAt > existing.lastMessageDate) {
-              existing.lastMessage = message;
-              existing.lastMessageDate = message.sentAt;
-            }
-          }
-        }
-      }
-
-      // Convert map to array and sort by last message date
-      const threads = Array.from(threadsMap.values()).sort((a, b) => 
-        new Date(b.lastMessageDate).getTime() - new Date(a.lastMessageDate).getTime()
-      );
-
-      // Calculate unread counts
-      for (const thread of threads) {
-        const unreadCount = await OnGameMessageView.countDocuments({
-          characterId: new mongoose.Types.ObjectId(characterId),
-          viewType: 'inbox',
-          isRead: false,
-          'messageId.from': new mongoose.Types.ObjectId(thread.partnerId)
-        });
-        thread.unreadCount = unreadCount;
-      }
-
-      const formattedThreads = await Promise.all(threads.map(async (thread) => {
-        const msgTypeConfig = await postalSystem.getMessageType(thread.lastMessage.messageType);
-        return {
-          partnerId: thread.partnerId,
-          partnerName: thread.partnerName,
-          partnerAvatar: thread.partnerAvatar,
-          lastMessage: {
-            id: thread.lastMessage._id,
-            messageType: thread.lastMessage.messageType,
-            subject: thread.lastMessage.subject,
-            content: thread.lastMessage.content,
-            sentAt: thread.lastMessage.sentAt,
-            isSentByMe: thread.lastMessage.from._id.toString() === characterId,
-            icon: msgTypeConfig?.icon || '📬'
-          },
-          unreadCount: thread.unreadCount
-        };
-      }));
-
-      res.json(successResponse(
-        { threads: formattedThreads },
-        undefined,
-        getRequestId(req)
-      ));
-    } catch (error: unknown) {
-      logger.error('Get threads error:', error);
-
-      res.status(500).json(errorResponse(
-        'Errore interno del server',
-        'INTERNAL_ERROR',
-        {
-          system: 'Errore interno durante il caricamento dei thread. Riprova più tardi.'
-        },
-        500,
-        getRequestId(req)
-      ));
-    }
-  }
-
-  /**
-   * GET /game/ongame-messages/thread/:partnerId
-   * Get full conversation with a specific partner
-   */
-  static async getThreadMessages(req: Request<{ partnerId: string }>, res: Response): Promise<void> {
-    try {
-      const characterId = req.character!.characterId;
-      const { partnerId } = req.params;
-
-      // Get all messages between these two characters
-      const messages = await OnGameMessage.find({
-        $or: [
-          // Messages from current character to partner
-          { 
-            from: new mongoose.Types.ObjectId(characterId),
-            to: { $in: [new mongoose.Types.ObjectId(partnerId)] }
-          },
-          // Messages from partner to current character
-          { 
-            from: new mongoose.Types.ObjectId(partnerId),
-            to: { $in: [new mongoose.Types.ObjectId(characterId)] }
-          }
-        ]
-      })
-      .populate('from', 'name avatar')
-      .populate('to', 'name avatar')
-      .sort({ sentAt: 1 }); // Chronological order for chat view
-
-      // Get partner info
-      const partner = await Character.findById(partnerId).select('name avatar');
-      if (!partner) {
-        res.status(404).json(errorResponse(
-          'Partner not found',
-          'PARTNER_NOT_FOUND',
-          undefined,
-          404,
-          getRequestId(req)
+      // Only recipient can mark as read
+      if (message.recipientId.toString() !== req.character.characterId) {
+        res.status(403).json(errorResponse(
+          'Non sei il destinatario di questo messaggio',
+          'FORBIDDEN'
         ));
         return;
       }
 
-      // Mark messages from partner as read
-      await OnGameMessageView.updateMany({
-        characterId: new mongoose.Types.ObjectId(characterId),
-        viewType: 'inbox',
-        'messageId.from': new mongoose.Types.ObjectId(partnerId),
-        isRead: false
-      }, {
-        isRead: true,
-        readAt: new Date()
-      });
+      // Reset unread count on thread
+      if (message.onGameThreadId) {
+        await OnGameThreadService.resetUnreadCount(
+          message.onGameThreadId,
+          new mongoose.Types.ObjectId(req.character.characterId)
+        );
+      }
 
-      const formattedMessages = await Promise.all(messages.map(async (message) => {
-        const msgTypeConfig = await postalSystem.getMessageType(message.messageType);
-        return {
-          id: message._id,
-          messageType: message.messageType,
-          subject: message.subject,
-          content: message.content,
-          sentAt: message.sentAt,
-          deliveredAt: message.deliveredAt,
-          isSentByMe: message.from._id.toString() === characterId,
-          icon: msgTypeConfig?.icon || '📬',
-          postageCharged: message.postageCharged || 0
-        };
-      }));
-
-      res.json(successResponse(
-        {
-          partner: {
-            id: partner._id,
-            name: partner.name,
-            avatar: partner.avatar
-          },
-          messages: formattedMessages
-        },
+      res.status(200).json(successResponse(
         undefined,
-        getRequestId(req)
+        'Messaggio segnato come letto'
       ));
-    } catch (error: unknown) {
-      logger.error('Get thread messages error:', error);
-
+    } catch (error) {
+      logger.error('Error marking message as read', { error, messageId: req.params.id });
       res.status(500).json(errorResponse(
-        'Errore interno del server',
-        'INTERNAL_ERROR',
-        {
-          system: 'Errore interno durante il caricamento della conversazione. Riprova più tardi.'
-        },
-        500,
-        getRequestId(req)
+        'Errore durante la marcatura del messaggio',
+        'INTERNAL_ERROR'
       ));
     }
   }
 
   /**
    * GET /game/ongame-messages/types
-   * Get available message types for character
+   * Get available message types from SystemConfiguration
    */
   static async getMessageTypes(req: Request, res: Response): Promise<void> {
     try {
-      const characterRoles = req.character!.gameplayRoles;
-      const availableTypes = await postalSystem.getAvailableMessageTypes(characterRoles || []);
+      if (!req.character) {
+        res.status(400).json(errorResponse(
+          'Selezione del personaggio richiesta',
+          'CHARACTER_REQUIRED'
+        ));
+        return;
+      }
 
-      res.json(successResponse(
-        availableTypes,
-        undefined,
-        getRequestId(req)
+      const { SystemConfiguration } = await import('@database/models/SystemConfiguration');
+
+      // Fetch all postal message type configurations
+      const configs = await SystemConfiguration.find({
+        configKey: { $regex: /^postal_message_type_/ }
+      });
+
+      const messageTypes = configs.map(config => ({
+        type: config.configKey.replace('postal_message_type_', ''),
+        config: config.value
+      }));
+
+      res.status(200).json(successResponse(
+        messageTypes,
+        'Tipi di messaggio recuperati con successo'
       ));
-
-    } catch (error: unknown) {
-      logger.error('Get message types error:', error);
-
+    } catch (error) {
+      logger.error('Error fetching message types', { error });
       res.status(500).json(errorResponse(
-        'Failed to get message types',
-        'GET_MESSAGE_TYPES_ERROR',
-        undefined,
-        500,
-        getRequestId(req)
+        'Errore durante il caricamento dei tipi di messaggio',
+        'INTERNAL_ERROR'
+      ));
+    }
+  }
+
+  /**
+   * GET /game/ongame-messages/threads
+   * List all threads for character (paginated)
+   *
+   * Query params:
+   * - page: number (default 1)
+   * - limit: number (default 25)
+   */
+  static async getThreads(req: Request, res: Response): Promise<void> {
+    try {
+      if (!req.character) {
+        res.status(400).json(errorResponse(
+          'Selezione del personaggio richiesta',
+          'CHARACTER_REQUIRED'
+        ));
+        return;
+      }
+
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 25;
+
+      const threads = await OnGameThreadService.listThreads(
+        new mongoose.Types.ObjectId(req.character.characterId),
+        false, // includeDeleted = false
+        page,
+        limit
+      );
+
+      res.status(200).json(successResponse(
+        {
+          threads: threads.threads,
+          pagination: {
+            currentPage: threads.page,
+            pageSize: limit,
+            totalItems: threads.total,
+            totalPages: threads.totalPages,
+            hasNextPage: threads.page < threads.totalPages,
+            hasPreviousPage: threads.page > 1
+          }
+        },
+        'Thread recuperati con successo'
+      ));
+    } catch (error) {
+      logger.error('Error fetching threads', { error, characterId: req.character?.characterId });
+      res.status(500).json(errorResponse(
+        'Errore durante il caricamento dei thread',
+        'INTERNAL_ERROR'
+      ));
+    }
+  }
+
+  /**
+   * GET /game/ongame-messages/thread/:partnerId
+   * Get messages in thread with specific partner
+   *
+   * Query params:
+   * - page: number (default 1)
+   * - limit: number (default 50)
+   */
+  static async getThreadMessages(req: Request, res: Response): Promise<void> {
+    try {
+      if (!req.character) {
+        res.status(400).json(errorResponse(
+          'Selezione del personaggio richiesta',
+          'CHARACTER_REQUIRED'
+        ));
+        return;
+      }
+
+      const partnerId = req.params.partnerId as string;
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 50;
+      const skip = (page - 1) * limit;
+
+      // Find or create thread with partner
+      const { OnGameThread } = await import('@database/models/OnGameThread');
+      const characterId = new mongoose.Types.ObjectId(req.character.characterId);
+      const partnerObjectId = new mongoose.Types.ObjectId(partnerId);
+
+      const thread = await OnGameThread.findOne({
+        participants: { $all: [characterId, partnerObjectId] }
+      });
+
+      if (!thread) {
+        // No thread exists yet
+        res.status(200).json(successResponse(
+          {
+            thread: null,
+            messages: [],
+            pagination: {
+              currentPage: 1,
+              pageSize: limit,
+              totalItems: 0,
+              totalPages: 0,
+              hasNextPage: false,
+              hasPreviousPage: false
+            }
+          },
+          'Nessun thread trovato'
+        ));
+        return;
+      }
+
+      // Get messages in thread
+      const query = {
+        onGameThreadId: thread._id,
+        $or: [
+          { 'deletedBy.sender': { $exists: false } },
+          { 'deletedBy.recipient': { $exists: false } }
+        ]
+      };
+
+      const total = await OnGameMessage.countDocuments(query);
+      const messages = await OnGameMessage.find(query)
+        .populate('senderId', 'name surname avatar')
+        .sort({ sentAt: 1 }) // Chronological order
+        .skip(skip)
+        .limit(limit)
+        .lean();
+
+      const totalPages = Math.ceil(total / limit);
+
+      // Reset unread count
+      await OnGameThreadService.resetUnreadCount(thread._id, characterId);
+
+      res.status(200).json(successResponse(
+        {
+          thread,
+          messages,
+          pagination: {
+            currentPage: page,
+            pageSize: limit,
+            totalItems: total,
+            totalPages,
+            hasNextPage: page < totalPages,
+            hasPreviousPage: page > 1
+          }
+        },
+        'Messaggi recuperati con successo'
+      ));
+    } catch (error) {
+      logger.error('Error fetching thread messages', { error, partnerId: req.params.partnerId });
+      res.status(500).json(errorResponse(
+        'Errore durante il caricamento dei messaggi',
+        'INTERNAL_ERROR'
       ));
     }
   }

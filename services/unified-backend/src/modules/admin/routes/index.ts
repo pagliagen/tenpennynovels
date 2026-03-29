@@ -25,6 +25,7 @@ import chatManagementRoutes from './chatManagementRoutes';
 import deletedRecordsRoutes from './deletedRecordsRoutes';
 import imageGenerationRoutes from './imageGenerationRoutes';
 import moderationAlertRoutes from './moderationAlertRoutes';
+import mailModerationRoutes from './mailModerationRoutes';
 import { botRoutes } from './botRoutes';
 import { cdnRoutes } from './cdnRoutes';
 import { getVisibleDashboardBadges, getUserPermissions, getVisibleMenuStructure, haveAccessTo, debugPermissions } from '../utils/permissions';
@@ -296,6 +297,7 @@ router.use('/deleted-records', deletedRecordsRoutes);
 router.use('/image-gen', imageGenerationRoutes);
 router.use('/cdn', cdnRoutes);
 router.use('/moderation', moderationAlertRoutes);
+router.use('/mail', mailModerationRoutes);
 router.use('/bots', botRoutes);
 
 export { router as apiRoutes };

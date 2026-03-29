@@ -20,7 +20,7 @@ import { ReactNode, useMemo, useEffect, useCallback, useState } from 'react';
 
 import { useWebSocket } from '@/contexts/WebSocketContext';
 import { useOffGameUnreadCount } from '@/hooks/useOffGameChat';
-import { useOnGameUnreadCount } from '@/hooks/useOnGameMail';
+import { useOnGameUnreadCount } from '@/hooks/useOnGameMessages';
 import { useTicketNotifications } from '@/hooks/useTicketNotifications';
 import { useUnreadTicketsCount } from '@/hooks/useTickets';
 import { api } from '@/lib/api/client';

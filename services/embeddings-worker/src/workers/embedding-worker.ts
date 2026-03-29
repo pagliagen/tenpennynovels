@@ -18,12 +18,16 @@ import {
   DocumentChunkEmbeddingEvent,
   ChatEmbeddingEvent,
   ForumPostEmbeddingEvent,
+  OnGameMessageModerationEvent,
+  OffGameMessageModerationEvent,
   DeleteEmbeddingEvent,
   EmbeddingEvent,
   isDocumentEmbeddingEvent,
   isDocumentChunkEmbeddingEvent,
   isChatEmbeddingEvent,
   isForumPostEmbeddingEvent,
+  isOnGameMessageModerationEvent,
+  isOffGameMessageModerationEvent,
   isDeleteEmbeddingEvent
 } from '../types/events';
 import { PythonEmbeddingService, ModerationResult } from '../services/PythonEmbeddingService';
@@ -417,6 +421,29 @@ export class EmbeddingWorker {
       }
     );
 
+    // Mail moderation subscriptions
+    await this.subscriber.subscribe(
+      REDIS_CHANNELS.EMBEDDING_ONGAME_MESSAGE_CREATED,
+      (message: string) => {
+        const event = JSON.parse(message);
+        this.queue.add(event, {
+          jobId: `ongame-mod-${event.messageId}-${Date.now()}`
+        });
+        console.log(`📧 Queued OnGame message moderation: ${event.subject}`);
+      }
+    );
+
+    await this.subscriber.subscribe(
+      REDIS_CHANNELS.EMBEDDING_OFFGAME_MESSAGE_CREATED,
+      (message: string) => {
+        const event = JSON.parse(message);
+        this.queue.add(event, {
+          jobId: `offgame-mod-${event.messageId}-${Date.now()}`
+        });
+        console.log(`💬 Queued OffGame message moderation: ${event.messageId}`);
+      }
+    );
+
     console.log(`✅ Embedding Worker started with concurrency ${config.queue.concurrency}`);
     console.log(`   Listening to channels:`);
     console.log(`   - ${REDIS_CHANNELS.EMBEDDING_DOCUMENT_CREATED}`);
@@ -429,6 +456,8 @@ export class EmbeddingWorker {
     console.log(`   - ${REDIS_CHANNELS.EMBEDDING_FORUM_POST_CREATED}`);
     console.log(`   - ${REDIS_CHANNELS.EMBEDDING_FORUM_POST_UPDATED}`);
     console.log(`   - ${REDIS_CHANNELS.EMBEDDING_FORUM_POST_DELETED}`);
+    console.log(`   - ${REDIS_CHANNELS.EMBEDDING_ONGAME_MESSAGE_CREATED}`);
+    console.log(`   - ${REDIS_CHANNELS.EMBEDDING_OFFGAME_MESSAGE_CREATED}`);
   }
 
   /**
@@ -463,6 +492,10 @@ export class EmbeddingWorker {
       await this.handleDocumentChunkEvent(event);
     } else if (isChatEmbeddingEvent(event)) {
       await this.handleChatEvent(event);
+    } else if (isOnGameMessageModerationEvent(event)) {
+      await this.handleOnGameMessageModeration(event);
+    } else if (isOffGameMessageModerationEvent(event)) {
+      await this.handleOffGameMessageModeration(event);
     }
   }
 
@@ -754,6 +787,194 @@ export class EmbeddingWorker {
       console.log(`🚨 ModerationAlert created: score=${moderation.score} for ${event.authorCharacterName}`);
     } catch (error) {
       console.error('⚠️ Failed to create ModerationAlert:', error);
+    }
+  }
+
+  /**
+   * Handle OnGame message moderation
+   */
+  private async handleOnGameMessageModeration(event: OnGameMessageModerationEvent): Promise<void> {
+    try {
+      console.log(`📧 Processing OnGame message moderation: ${event.subject}`);
+
+      const moderationConfig = await this.getModerationConfig();
+
+      if (!moderationConfig.enabled) {
+        console.log('   ⏭️  Moderation disabled, skipping');
+        return;
+      }
+
+      let moderation: ModerationResult | null = null;
+      try {
+        moderation = await this.pythonService.moderateText(event.content);
+        console.log(`   🛡️ Moderation: ${moderation.label} (${moderation.score})`);
+
+        // Update message with moderation results
+        const db = mongoose.connection.db;
+        if (db) {
+          await db.collection('ongame_messages').updateOne(
+            { _id: new mongoose.Types.ObjectId(event.messageId) },
+            {
+              $set: {
+                moderationScore: moderation.score,
+                moderationLabel: moderation.label,
+                moderationModel: config.moderation.model,
+                moderationProcessedAt: new Date()
+              }
+            }
+          );
+        }
+
+        // Create alert if toxic
+        if (moderation.label === 'toxic' && moderation.score >= moderationConfig.threshold) {
+          await this.createOnGameModerationAlert(event, moderation);
+        }
+      } catch (moderationError) {
+        console.error('⚠️ OnGame message moderation failed:', moderationError);
+      }
+
+      console.log(`✅ OnGame message moderation completed: ${event.messageId}`);
+    } catch (error) {
+      console.error('❌ Error processing OnGame message moderation:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Handle OffGame message moderation
+   */
+  private async handleOffGameMessageModeration(event: OffGameMessageModerationEvent): Promise<void> {
+    try {
+      console.log(`💬 Processing OffGame message moderation: ${event.messageId}`);
+
+      const moderationConfig = await this.getModerationConfig();
+
+      if (!moderationConfig.enabled) {
+        console.log('   ⏭️  Moderation disabled, skipping');
+        return;
+      }
+
+      let moderation: ModerationResult | null = null;
+      try {
+        moderation = await this.pythonService.moderateText(event.content);
+        console.log(`   🛡️ Moderation: ${moderation.label} (${moderation.score})`);
+
+        // Update message with moderation results
+        const db = mongoose.connection.db;
+        if (db) {
+          await db.collection('offgame_messages').updateOne(
+            { _id: new mongoose.Types.ObjectId(event.messageId) },
+            {
+              $set: {
+                moderationScore: moderation.score,
+                moderationLabel: moderation.label,
+                moderationModel: config.moderation.model,
+                moderationProcessedAt: new Date()
+              }
+            }
+          );
+        }
+
+        // Create alert if toxic
+        if (moderation.label === 'toxic' && moderation.score >= moderationConfig.threshold) {
+          await this.createOffGameModerationAlert(event, moderation);
+        }
+      } catch (moderationError) {
+        console.error('⚠️ OffGame message moderation failed:', moderationError);
+      }
+
+      console.log(`✅ OffGame message moderation completed: ${event.messageId}`);
+    } catch (error) {
+      console.error('❌ Error processing OffGame message moderation:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Create a ModerationAlert record for a toxic OnGame message
+   */
+  private async createOnGameModerationAlert(
+    event: OnGameMessageModerationEvent,
+    moderation: ModerationResult
+  ): Promise<void> {
+    try {
+      const db = mongoose.connection.db;
+      if (!db) return;
+
+      // Fetch sender and recipient character names
+      const Character = mongoose.model('Character');
+      const [sender, recipient] = await Promise.all([
+        Character.findById(event.senderId).select('name surname').lean<{ name: string; surname?: string } | null>(),
+        Character.findById(event.recipientId).select('name surname').lean<{ name: string; surname?: string } | null>()
+      ]);
+
+      const senderName = sender ? `${sender.name} ${sender.surname || ''}`.trim() : 'Unknown';
+      const recipientName = recipient ? `${recipient.name} ${recipient.surname || ''}`.trim() : 'Unknown';
+
+      await db.collection('moderation_alerts').insertOne({
+        source: 'ongame_message',
+        onGameMessageId: event.messageId,
+        onGameThreadId: event.threadId,
+        mailSenderId: event.senderId,
+        mailSenderName: senderName,
+        mailRecipientId: event.recipientId,
+        mailRecipientName: recipientName,
+        mailSubject: event.subject,
+        mailMessageType: event.messageType,
+        characterId: event.senderId,
+        characterName: senderName,
+        content: event.content.substring(0, 2000), // Truncate to schema limit
+        toxicityScore: moderation.score,
+        moderationLabel: moderation.label,
+        moderationModel: config.moderation.model,
+        status: 'pending',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+
+      console.log(`   🚨 ModerationAlert created: score=${moderation.score} for ${senderName}`);
+    } catch (error) {
+      console.error('⚠️ Failed to create OnGame ModerationAlert:', error);
+    }
+  }
+
+  /**
+   * Create a ModerationAlert record for a toxic OffGame message
+   */
+  private async createOffGameModerationAlert(
+    event: OffGameMessageModerationEvent,
+    moderation: ModerationResult
+  ): Promise<void> {
+    try {
+      const db = mongoose.connection.db;
+      if (!db) return;
+
+      // Fetch sender character name
+      const Character = mongoose.model('Character');
+      const sender = await Character.findById(event.senderId).select('name surname').lean<{ name: string; surname?: string } | null>();
+
+      const senderName = sender ? `${sender.name} ${sender.surname || ''}`.trim() : 'Unknown';
+
+      await db.collection('moderation_alerts').insertOne({
+        source: 'offgame_message',
+        offGameMessageId: event.messageId,
+        offGameThreadId: event.threadId,
+        mailSenderId: event.senderId,
+        mailSenderName: senderName,
+        characterId: event.senderId,
+        characterName: senderName,
+        content: event.content.substring(0, 2000), // Truncate to schema limit
+        toxicityScore: moderation.score,
+        moderationLabel: moderation.label,
+        moderationModel: config.moderation.model,
+        status: 'pending',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+
+      console.log(`   🚨 ModerationAlert created: score=${moderation.score} for ${senderName}`);
+    } catch (error) {
+      console.error('⚠️ Failed to create OffGame ModerationAlert:', error);
     }
   }
 

@@ -1,9 +1,22 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
 export interface IModerationAlert extends Document {
-  source: 'chat' | 'forum';
+  source: 'chat' | 'forum' | 'ongame_message' | 'offgame_message';
   chatId?: string;
   forumPostId?: string;
+
+  // Mail-specific fields
+  onGameMessageId?: string;
+  offGameMessageId?: string;
+  onGameThreadId?: string;
+  offGameThreadId?: string;
+  mailSenderId?: string;
+  mailSenderName?: string;
+  mailRecipientId?: string;
+  mailRecipientName?: string;
+  mailSubject?: string;
+  mailMessageType?: string;
+
   characterId: string;
   characterName: string;
   locationId?: string;
@@ -30,7 +43,7 @@ const ModerationAlertSchema = new Schema<IModerationAlert>({
   source: {
     type: String,
     required: true,
-    enum: ['chat', 'forum'],
+    enum: ['chat', 'forum', 'ongame_message', 'offgame_message'],
     default: 'chat'
   },
   chatId: {
@@ -42,6 +55,51 @@ const ModerationAlertSchema = new Schema<IModerationAlert>({
     type: String,
     required: false,
     index: true
+  },
+
+  // Mail-specific fields
+  onGameMessageId: {
+    type: String,
+    required: false,
+    index: true
+  },
+  offGameMessageId: {
+    type: String,
+    required: false,
+    index: true
+  },
+  onGameThreadId: {
+    type: String,
+    required: false
+  },
+  offGameThreadId: {
+    type: String,
+    required: false
+  },
+  mailSenderId: {
+    type: String,
+    required: false,
+    index: true
+  },
+  mailSenderName: {
+    type: String,
+    required: false
+  },
+  mailRecipientId: {
+    type: String,
+    required: false
+  },
+  mailRecipientName: {
+    type: String,
+    required: false
+  },
+  mailSubject: {
+    type: String,
+    required: false
+  },
+  mailMessageType: {
+    type: String,
+    required: false
   },
   characterId: {
     type: String,

@@ -769,6 +769,124 @@ const createRouteForOrphan = async (documentId: string) => {
 
 ---
 
+## Aggiungere una Nuova Pagina (CHECKLIST)
+
+**Regola**: Quando crei una nuova pagina nel management panel, DEVI completare TUTTI questi step. Se ne salti uno, la pagina non sarà visibile o non funzionerà.
+
+### Step 1: Aggiungi voce sidebar in NAV_ITEMS
+
+**File**: `apps/management/src/components/layout/Sidebar.tsx`
+
+```typescript
+// Trova la categoria appropriata in NAV_ITEMS e aggiungi la voce
+const NAV_ITEMS: NavItem[] = [
+  // ...
+  {
+    key: 'moderation',       // Categoria esistente
+    label: 'Moderazione',
+    icon: '🛡️',
+    children: [
+      // ... voci esistenti ...
+      { key: 'mail-moderation', label: 'Moderazione Posta', href: '/moderation/mail-moderation', permission: 'moderation.mail' }
+    ]
+  }
+];
+```
+
+**Interfaccia NavItem**:
+```typescript
+interface NavItem {
+  key: string;        // Identificativo unico
+  label: string;      // Testo visualizzato nel menu
+  icon?: string;      // Emoji (solo per categorie top-level)
+  href?: string;      // Route della pagina (obbligatorio per foglie)
+  permission?: string; // Permesso admin richiesto (se assente, visibile a tutti)
+  children?: NavItem[]; // Sotto-voci (solo per categorie)
+}
+```
+
+**Visibilità**: `hasPermission()` controlla il permesso. Se l'utente è `isGestore`, bypassa tutti i controlli. Se TUTTI i children di una categoria sono nascosti, la categoria intera sparisce.
+
+### Step 2: Crea il file pagina
+
+**Path**: `apps/management/src/pages/<categoria>/<nome-pagina>.tsx`
+
+Il path del file DEVE corrispondere esattamente all'`href` nel NAV_ITEMS.
+
+```typescript
+// apps/management/src/pages/moderation/mail-moderation.tsx
+import ManagementLayout from '@/components/layout/ManagementLayout';
+
+export default function MailModerationPage() {
+  return (
+    <ManagementLayout title="Moderazione Posta">
+      {/* Contenuto pagina */}
+    </ManagementLayout>
+  );
+}
+```
+
+### Step 3: Crea API client
+
+**Path**: `apps/management/src/lib/api/<nome>.ts`
+
+```typescript
+import { api } from './client';
+
+export const mailApi = {
+  async getMessages(params: QueryParams) {
+    return api.get('/admin/mail', { params });
+  },
+  // ...
+};
+```
+
+### Step 4: Crea React Query hooks
+
+**Path**: `apps/management/src/hooks/api/use<Nome>.ts`
+
+```typescript
+import { useQuery } from '@tanstack/react-query';
+import { mailApi } from '@/lib/api/mail';
+
+export function useMail(params: QueryParams) {
+  return useQuery({
+    queryKey: ['admin', 'mail', params],
+    queryFn: () => mailApi.getMessages(params),
+  });
+}
+```
+
+### Step 5: Verifica permesso backend (se necessario)
+
+**File**: `services/unified-backend/src/config/permissions/admin.ts`
+
+Se il permesso NON esiste già, aggiungilo:
+```typescript
+export const ADMIN_PERMISSIONS = {
+  // ...
+  MAIL_MODERATION: 'moderation.mail',
+};
+```
+
+E assegnalo ai ruoli appropriati nel mapping.
+
+### Step 6: Crea route backend (se necessario)
+
+**File**: `services/unified-backend/src/modules/admin/routes/`
+
+Aggiungi le route API per il CRUD del nuovo pannello con middleware admin auth.
+
+### Errore Comune
+
+**Pagina creata ma non visibile nel menu**: Hai dimenticato Step 1 (voce sidebar). È l'errore più frequente perché il Next.js routing funziona anche senza voce sidebar, quindi la pagina è raggiungibile via URL diretto ma invisibile nel menu.
+
+**File di Riferimento**:
+- `/apps/management/src/components/layout/Sidebar.tsx` (NAV_ITEMS, righe 27-110)
+- `/apps/management/src/store/permissionsStore.ts` (hasPermission, isGestore bypass)
+
+---
+
 ## Cross-References
 
 - **Shared Frontend**: `/Users/gennaropaglia/Documents/SitiPersonali/tenpennynovels/.claude/rules/apps/shared-frontend.md`

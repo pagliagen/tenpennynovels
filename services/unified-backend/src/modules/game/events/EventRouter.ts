@@ -18,6 +18,7 @@ import { LocationEventHandler } from './handlers/LocationEventHandler';
 import { UserEventHandler } from './handlers/UserEventHandler';
 import { GameEventHandler } from './handlers/GameEventHandler';
 import { TicketEventHandler } from './handlers/TicketEventHandler';
+import { BroadcastEventHandler } from './handlers/BroadcastEventHandler';
 
 export class EventRouter {
   private handlers: Map<string, IEventHandler> = new Map();
@@ -42,6 +43,7 @@ export class EventRouter {
     this.registerHandler('location', new LocationEventHandler(this.context));
     this.registerHandler('game', new GameEventHandler(this.context));
     this.registerHandler('ticket', new TicketEventHandler(this.context));
+    this.registerHandler('broadcast', new BroadcastEventHandler(this.context));
 
     logger.info('✅ Event Router initialized with all handlers');
   }
@@ -104,6 +106,9 @@ export class EventRouter {
 
       case RedisChannel.TICKET_EVENTS:
         return this.handlers.get('ticket');
+
+      case RedisChannel.SYSTEM_BROADCAST:
+        return this.handlers.get('broadcast');
 
       default:
         return undefined;

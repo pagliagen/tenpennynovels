@@ -537,6 +537,40 @@ export function WebSocketProvider({ children }: WebSocketProviderProps): JSX.Ele
     });
 
     /**
+     * Broadcast Events
+     *
+     * System-wide broadcast messages from admin panel.
+     * Display toast with appropriate styling based on priority.
+     */
+
+    socket.on('broadcast:message', (data) => {
+      console.log('[WebSocket] Broadcast received', { id: data.id, title: data.message?.title });
+
+      // Determine toast type based on broadcast priority
+      const toastType = data.type === 'emergency' ? 'error' : data.type === 'warning' ? 'warning' : 'info';
+
+      // Urgent messages stay longer
+      const duration = data.urgent ? 10000 : 6000;
+
+      // Display toast notification
+      useUIStore.getState().addToast({
+        type: toastType,
+        message: `📢 ${data.message?.title}: ${data.message?.content}`,
+        duration
+      });
+
+      // Play sound notification for urgent broadcasts
+      if (data.urgent) {
+        try {
+          const audio = new Audio('/sounds/urgent-notification.mp3');
+          audio.play().catch(err => console.error('[WebSocket] Failed to play sound', { error: err }));
+        } catch (error) {
+          console.error('[WebSocket] Error creating audio element', { error });
+        }
+      }
+    });
+
+    /**
      * Ticket Events (for real-time ticket updates)
      */
 

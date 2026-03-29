@@ -30,7 +30,8 @@ export enum RedisChannel {
   LOCATION_EVENTS = 'location:events',
   CORPORATION_EVENTS = 'corporation:events',
   RELATIONSHIP_EVENTS = 'relationship:events',
-  TICKET_EVENTS = 'ticket:events'
+  TICKET_EVENTS = 'ticket:events',
+  SYSTEM_BROADCAST = 'system:broadcast'
 }
 
 /**
