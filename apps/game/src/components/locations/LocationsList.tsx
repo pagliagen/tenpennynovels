@@ -63,7 +63,7 @@ export function LocationsList({
       onLocationClick(location);
     } else {
       // Default navigation
-      router.push(`/locations/${location._id}`);
+      router.push(`/locations/${location.slug}/chat`);
     }
   };
 
