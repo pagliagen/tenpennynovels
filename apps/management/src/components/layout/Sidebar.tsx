@@ -92,7 +92,8 @@ const NAV_ITEMS: NavItem[] = [
     icon: '🛡️',
     children: [
       { key: 'chat-moderation', label: 'Moderazione Chat AI', href: '/moderation/chat-moderation', permission: 'moderation.chat_ai' },
-      { key: 'forum-moderation', label: 'Moderazione Forum AI', href: '/moderation/forum-moderation', permission: 'moderation.forum_ai' }
+      { key: 'forum-moderation', label: 'Moderazione Forum AI', href: '/moderation/forum-moderation', permission: 'moderation.forum_ai' },
+      { key: 'mail-moderation', label: 'Moderazione Messaggi AI', href: '/moderation/mail-moderation', permission: 'messaging.moderation.manage' }
     ]
   },
   {
