@@ -1,6 +1,7 @@
 import { IAgent } from './IAgent';
 import { OllamaAgent } from './OllamaAgent';
 import { AnthropicAgent } from './AnthropicAgent';
+import { InceptionAgent } from './InceptionAgent';
 import { createLogger } from '../../../../shared/logger';
 
 const logger = createLogger('AgentFactory');
@@ -8,39 +9,57 @@ const logger = createLogger('AgentFactory');
 let _creativeAgent: IAgent | null = null;
 let _analyticalAgent: IAgent | null = null;
 
+type AIProvider = 'anthropic' | 'inception' | 'ollama';
+
+/**
+ * Resolves the active provider from AI_PROVIDER env var.
+ * Falls back to legacy behaviour: ANTHROPIC_API_KEY present → anthropic, else ollama.
+ */
+export function resolveProvider(): AIProvider {
+  const explicit = process.env.AI_PROVIDER?.toLowerCase();
+  if (explicit === 'anthropic' || explicit === 'inception' || explicit === 'ollama') {
+    return explicit;
+  }
+  return process.env.ANTHROPIC_API_KEY ? 'anthropic' : 'ollama';
+}
+
+function createAgent(role: string): IAgent {
+  const provider = resolveProvider();
+
+  switch (provider) {
+    case 'inception': {
+      logger.info(`[${role}] Using InceptionAgent (model: ${process.env.INCEPTION_MODEL || 'mercury-2'})`);
+      return new InceptionAgent();
+    }
+    case 'anthropic': {
+      logger.info(`[${role}] Using AnthropicAgent (model: ${process.env.ANTHROPIC_MODEL || 'default'})`);
+      return new AnthropicAgent();
+    }
+    default: {
+      const model = role === 'Analytical'
+        ? (process.env.OLLAMA_ANALYTICAL_MODEL || process.env.OLLAMA_MODEL || 'default')
+        : (process.env.OLLAMA_MODEL || 'default');
+      logger.info(`[${role}] Using OllamaAgent (model: ${model})`);
+      return new OllamaAgent();
+    }
+  }
+}
+
 /**
  * Returns the creative LLM agent (dialogue generation, arc summaries, bot creation).
- * Uses Anthropic if ANTHROPIC_API_KEY is set, otherwise falls back to Ollama.
  */
 export function getCreativeAgent(): IAgent {
   if (_creativeAgent) return _creativeAgent;
-
-  if (process.env.ANTHROPIC_API_KEY) {
-    logger.info(`[Creative] Using AnthropicAgent (model: ${process.env.ANTHROPIC_MODEL || 'default'})`);
-    _creativeAgent = new AnthropicAgent();
-  } else {
-    logger.info(`[Creative] Using OllamaAgent (model: ${process.env.OLLAMA_MODEL || 'default'})`);
-    _creativeAgent = new OllamaAgent();
-  }
-
+  _creativeAgent = createAgent('Creative');
   return _creativeAgent;
 }
 
 /**
  * Returns the analytical LLM agent (post-analysis, structured JSON extraction).
- * Uses Anthropic if available (better at complex structured output), otherwise Ollama.
  */
 export function getAnalyticalAgent(): IAgent {
   if (_analyticalAgent) return _analyticalAgent;
-
-  if (process.env.ANTHROPIC_API_KEY) {
-    logger.info(`[Analytical] Using AnthropicAgent (model: ${process.env.ANTHROPIC_MODEL || 'default'})`);
-    _analyticalAgent = new AnthropicAgent();
-  } else {
-    logger.info(`[Analytical] Using OllamaAgent (model: ${process.env.OLLAMA_ANALYTICAL_MODEL || process.env.OLLAMA_MODEL || 'default'})`);
-    _analyticalAgent = new OllamaAgent();
-  }
-
+  _analyticalAgent = createAgent('Analytical');
   return _analyticalAgent;
 }
 

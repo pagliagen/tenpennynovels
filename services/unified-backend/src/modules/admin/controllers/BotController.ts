@@ -184,10 +184,17 @@ export class BotController {
         return undefined;
       };
 
+      // Tronca stringhe AI-generated per rispettare i maxlength dello schema Character
+      const t = (val: unknown, max: number): string | undefined => {
+        if (val == null) return undefined;
+        const s = typeof val === 'string' ? val : String(val);
+        return s.slice(0, max);
+      };
+
       // Crea il Character nel DB
       const character = await Character.create({
-        name: charPayload.firstName || firstName,
-        surname: charPayload.lastName || lastName,
+        name: t(charPayload.firstName || firstName, 50),
+        surname: t(charPayload.lastName || lastName, 50),
         gender: charPayload.gender || botData?.gender || 'male',
         characterType: 'png',
         isBot: true,
@@ -209,19 +216,19 @@ export class BotController {
         birthDate: convertBirthDate(charPayload.birthDate),
         age: charPayload.age,
         apparentAge: charPayload.apparentAge,
-        height: charPayload.height,
-        weight: charPayload.weight,
-        eyeColor: charPayload.eyeColor,
-        hairColor: charPayload.hairColor,
-        visibleMarks: charPayload.visibleMarks,
-        hiddenMarks: charPayload.hiddenMarks,
-        maritalStatus: charPayload.maritalStatus,
-        educationTitle: charPayload.educationTitle,
-        publicDescription: charPayload.publicDescription || botData?.publicDescription,
-        privateDescription: charPayload.privateDescription,
-        physicalDescription: charPayload.physicalDescription,
+        height: t(charPayload.height, 20),
+        weight: t(charPayload.weight, 20),
+        eyeColor: t(charPayload.eyeColor, 50),
+        hairColor: t(charPayload.hairColor, 50),
+        visibleMarks: t(charPayload.visibleMarks, 500),
+        hiddenMarks: t(charPayload.hiddenMarks, 500),
+        maritalStatus: t(charPayload.maritalStatus, 50),
+        educationTitle: t(charPayload.educationTitle, 100),
+        publicDescription: t(charPayload.publicDescription || botData?.publicDescription, 5000),
+        privateDescription: t(charPayload.privateDescription, 5000),
+        physicalDescription: t(charPayload.physicalDescription, 5000),
         occupation: charPayload.occupation,
-        currentOccupation: charPayload.currentOccupation,
+        currentOccupation: t(charPayload.currentOccupation, 100),
         stats: charPayload.stats,
         skills: charPayload.skills,
         background: charPayload.background,

@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { Bot } from './models/Bot';
-import { getCreativeAgent, getAnalyticalAgent } from './agent/AgentFactory';
+import { getCreativeAgent, getAnalyticalAgent, resolveProvider } from './agent/AgentFactory';
 import { buildSystemPrompt, buildUserMessage, getLastCharacterFromActions, maskActions } from './agent/PromptBuilder';
 import { formatResponse } from './agent/ResponseFormatter';
 import { buildContext, ContextData } from './agent/ContextBuilder';
@@ -403,11 +403,25 @@ async function runResponsePipeline(bot: any, context: any): Promise<{
 
   const userMessage = buildUserMessage(context, knownNames);
   const numPredict = bot.narrativeStyle ? 950 : 700;
-  const { text: draftText, tokensUsed: genTokens } = await creativeAgent.generate(
-    systemPrompt, userMessage, numPredict, 0.72, 0.85, 1.2,
-  );
-  const draftResponse = formatResponse(draftText);
-  logger.info(`[Step 3/4] Done — draft: "${draftResponse.substring(0, 80)}..."`);
+
+  let draftResponse = '';
+  let genTokens = 0;
+  const MAX_GEN_ATTEMPTS = 2;
+  for (let genAttempt = 1; genAttempt <= MAX_GEN_ATTEMPTS; genAttempt++) {
+    const { text: draftText, tokensUsed } = await creativeAgent.generate(
+      systemPrompt, userMessage, numPredict, 0.72, 0.85, 1.2,
+    );
+    genTokens = tokensUsed;
+    draftResponse = formatResponse(draftText);
+    if (draftResponse.length > 0) break;
+    logger.warn(`[Step 3/4] Attempt ${genAttempt}/${MAX_GEN_ATTEMPTS}: empty response (raw length: ${draftText.length}), retrying...`);
+  }
+  logger.info(`[Step 3/4] Done — draft (${draftResponse.length} chars): "${draftResponse.substring(0, 80)}..."`);
+
+  if (!draftResponse) {
+    logger.error(`[Step 3/4] All ${MAX_GEN_ATTEMPTS} generation attempts returned empty response — aborting pipeline`);
+    throw new Error('LLM returned empty response after retries');
+  }
 
   // ── STEP 4: Self-critique & Refine (LLM, max 2 loops) ──
   logger.info('[Step 4/4] Refining response...');
@@ -723,9 +737,12 @@ async function runResponsePipeline(bot: any, context: any): Promise<{
   return {
     response: finalResponse,
     metadata: {
-      model: process.env.ANTHROPIC_API_KEY
-        ? (process.env.ANTHROPIC_MODEL || 'claude')
-        : (process.env.OLLAMA_MODEL || 'ollama'),
+      model: (() => {
+        const p = resolveProvider();
+        if (p === 'inception') return process.env.INCEPTION_MODEL || 'mercury-2';
+        if (p === 'anthropic') return process.env.ANTHROPIC_MODEL || 'claude';
+        return process.env.OLLAMA_MODEL || 'ollama';
+      })(),
       tokensUsed: genTokens,
       processingMs: blockingMs,
       pipelineSteps: 4,
@@ -752,15 +769,28 @@ async function processAndCallback(requestId: string, bot: any, context: any, cal
     return;
   }
 
+  const locationId = context.location?.id || '';
   const callbackPayload = {
     requestId,
     botId: bot._id.toString(),
     botName: bot.name,
     botCharacterId: context.presentCharacters?.find((c: any) => c.name === bot.name)?.id || '',
-    locationId: context.location.id || '',
+    locationId,
     response,
     metadata,
   };
+
+  if (!requestId || !response || !locationId) {
+    logger.error(`[Pipeline] Cannot send callback for ${requestId}: missing fields`, {
+      hasRequestId: !!requestId,
+      hasResponse: !!response,
+      responseLength: response?.length ?? 0,
+      hasLocationId: !!locationId,
+      locationKeys: context.location ? Object.keys(context.location) : [],
+    });
+    // Non inviare callback con campi mancanti — il webhook rifiuterebbe con 400
+    return;
+  }
 
   if (callback?.url) {
     await sendCallback(callback, callbackPayload);
