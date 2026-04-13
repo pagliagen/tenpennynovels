@@ -1,13 +1,11 @@
 /**
  * SitemapService
  *
- * Generates sitemap index + sub-sitemaps for tenpennynovels.com
- * All files are written to apps/landing/public/ (single source of truth).
+ * Generates one autonomous sitemap.xml per domain:
+ *   - apps/landing/public/sitemap.xml   → tenpennynovels.com URLs
+ *   - apps/documents/public/sitemap.xml → documenti.tenpennynovels.com URLs
  *
- * Output:
- *   sitemap.xml            - Sitemap Index pointing to sub-sitemaps
- *   sitemap-landing.xml    - Static pages (tenpennynovels.com)
- *   sitemap-documents.xml  - Public documents (documenti.tenpennynovels.com)
+ * Each domain owns its sitemap: no cross-domain references, no sitemap index.
  */
 
 import fs from 'fs/promises';
@@ -18,7 +16,8 @@ import { appConfig } from '@config/runtime';
 
 const LANDING_DOMAIN = 'https://tenpennynovels.com';
 const DOCUMENTS_DOMAIN = 'https://documenti.tenpennynovels.com';
-const OUTPUT_DIR = appConfig.sitemapOutputDir;
+const LANDING_OUTPUT_DIR = appConfig.sitemapOutputDir;
+const DOCUMENTS_OUTPUT_DIR = appConfig.documentsSitemapOutputDir;
 const LANDING_LASTMOD_STAMP = 'landing-sitemap-lastmod.txt';
 /** Usato in locale / VPS senza file stamp (deploy CI scrive la data del commit in public/) */
 const LANDING_LASTMOD_FALLBACK = '2026-02-27';
@@ -35,24 +34,19 @@ export class SitemapService {
     try {
       logger.info('[SitemapService] Generating sitemaps...');
 
-      const today = new Date().toISOString().split('T')[0];
-
+      // Landing sitemap → apps/landing/public/sitemap.xml
       const landingLastMod = await this.readLandingLastModStamp();
       const landingUrls = this.getStaticPages(landingLastMod);
       const landingXml = this.buildUrlsetXml(landingUrls);
+
+      this.validateSitemapXml(landingXml, 'landing/sitemap.xml');
+      await this.writeToDir(LANDING_OUTPUT_DIR, [['sitemap.xml', landingXml]]);
+
+      // Documents sitemap → apps/documents/public/sitemap.xml
       const { xml: documentsXml, count: docCount } = await this.buildDocumentsSitemap();
-      const indexXml = this.buildSitemapIndex(today);
 
-      const files: Array<[string, string]> = [
-        ['sitemap.xml', indexXml],
-        ['sitemap-landing.xml', landingXml],
-        ['sitemap-documents.xml', documentsXml],
-      ];
-
-      // Validate all sitemaps before writing (fail fast if invalid)
-      files.forEach(([filename, xml]) => this.validateSitemapXml(xml, filename));
-
-      await this.writeToDir(OUTPUT_DIR, files);
+      this.validateSitemapXml(documentsXml, 'documents/sitemap.xml');
+      await this.writeToDir(DOCUMENTS_OUTPUT_DIR, [['sitemap.xml', documentsXml]]);
 
       logger.info(
         `[SitemapService] Done. Landing: ${landingUrls.length} URLs, Documents: ${docCount} URLs`,
@@ -71,7 +65,7 @@ export class SitemapService {
     if (!xml.includes('<?xml version="1.0" encoding="UTF-8"?>')) {
       throw new Error(`[${filename}] Invalid sitemap: missing XML declaration`);
     }
-    if (!xml.includes('<urlset') && !xml.includes('<sitemapindex')) {
+    if (!xml.includes('<urlset')) {
       throw new Error(`[${filename}] Invalid sitemap: missing root element`);
     }
 
@@ -116,7 +110,7 @@ export class SitemapService {
 
   /** Data commit deployata (CI) o fallback se il file non c’è. */
   private static async readLandingLastModStamp(): Promise<string> {
-    const stampPath = path.join(OUTPUT_DIR, LANDING_LASTMOD_STAMP);
+    const stampPath = path.join(LANDING_OUTPUT_DIR, LANDING_LASTMOD_STAMP);
     try {
       const raw = (await fs.readFile(stampPath, 'utf-8')).trim().split(/\r?\n/)[0];
       if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
@@ -165,21 +159,6 @@ export class SitemapService {
     }));
 
     return { xml: this.buildUrlsetXml(urls), count: urls.length };
-  }
-
-  private static buildSitemapIndex(lastmod: string): string {
-    return `<?xml version="1.0" encoding="UTF-8"?>
-<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <sitemap>
-    <loc>${LANDING_DOMAIN}/sitemap-landing.xml</loc>
-    <lastmod>${lastmod}</lastmod>
-  </sitemap>
-  <sitemap>
-    <loc>${LANDING_DOMAIN}/sitemap-documents.xml</loc>
-    <lastmod>${lastmod}</lastmod>
-  </sitemap>
-</sitemapindex>
-`;
   }
 
   private static buildUrlsetXml(urls: SitemapUrl[]): string {
