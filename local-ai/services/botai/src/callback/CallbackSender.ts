@@ -68,6 +68,11 @@ export async function sendCallback(config: CallbackConfig, payload: any): Promis
   let validatedUrl: URL;
   try {
     validatedUrl = new URL(config.url);
+    // Re-validate hostname after parsing to satisfy taint tracking
+    if (!ALLOWED_HOSTS.has(validatedUrl.hostname.toLowerCase())) {
+      logger.error(`Callback hostname rejected (not in allowlist): ${validatedUrl.hostname}`);
+      return false;
+    }
   } catch (error) {
     logger.error(`Callback URL is malformed: ${config.url}`);
     return false;

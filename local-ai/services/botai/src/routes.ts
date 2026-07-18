@@ -33,6 +33,23 @@ import { createLogger } from '../../../shared/logger';
 
 const logger = createLogger('BotAI');
 
+// Rate limiting middleware for GET endpoints
+const getBotsLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 100,
+  message: 'Too many requests to GET /bots, please try again later',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const getBotByIdLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 100,
+  message: 'Too many requests to GET /bots/:id, please try again later',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 /** Calcola overlap tra keyword significative di due testi (0-1). Ignora stopwords. */
 function keywordOverlap(a: string, b: string): number {
   const stopwords = new Set(['il', 'lo', 'la', 'i', 'gli', 'le', 'di', 'a', 'da', 'in', 'con', 'su', 'per', 'tra', 'fra',
@@ -103,7 +120,7 @@ router.post('/respond', async (req: Request, res: Response) => {
   }
 });
 
-router.get('/bots', async (req: Request, res: Response) => {
+router.get('/bots', getBotsLimiter, async (req: Request, res: Response) => {
   const filter: Record<string, any> = { isActive: true };
   const status = req.query.status as string | undefined;
   if (status === 'active') {
@@ -136,8 +153,13 @@ router.post('/bots/generate', async (req: Request, res: Response) => {
   }
 });
 
-router.get('/bots/:id', async (req: Request, res: Response) => {
-  const bot = await Bot.findById(req.params.id).lean();
+router.get('/bots/:id', getBotByIdLimiter, async (req: Request, res: Response) => {
+  const id = req.params.id as string;
+  if (!Types.ObjectId.isValid(id)) {
+    res.status(400).json({ success: false, error: 'Invalid bot ID format' });
+    return;
+  }
+  const bot = await Bot.findById(id).lean();
   if (!bot) {
     res.status(404).json({ success: false, error: 'Bot not found' });
     return;
@@ -631,7 +653,7 @@ async function runResponsePipeline(bot: any, context: any): Promise<{
         const attachStyle = deriveAttachmentStyle(bot.personality?.traits || []);
         const disgustoLevel = relPair.felt.disgusto || 0;
         const conflictUpdate = updateConflictState(relForConflict, analysis, attachStyle, disgustoLevel);
-        if (conflictUpdate) {
+        if (conflictUpdate && characterId) {
           await Relationship.updateOne(
             { botId: bot._id, externalCharacterId: characterId },
             { $set: { activeConflict: conflictUpdate } },
@@ -649,10 +671,10 @@ async function runResponsePipeline(bot: any, context: any): Promise<{
       if (relAfterUpdates) {
         const attachmentStyle = deriveAttachmentStyle(bot.personality?.traits || []);
         const newPhase = detectPhaseTransition(relAfterUpdates, attachmentStyle);
-        if (newPhase && newPhase !== relAfterUpdates.phase) {
+        if (newPhase && newPhase !== relAfterUpdates.phase && characterId) {
           const updatedHistory = recordPhaseTransition(relAfterUpdates.phaseHistory || [], newPhase);
           await Relationship.updateOne(
-            { botId: bot._id, externalCharacterId: characterId },
+            { botId: bot._id, externalCharacterId: new Types.ObjectId(characterId) },
             { $set: { phase: newPhase, phaseEnteredAt: new Date(), phaseHistory: updatedHistory } },
           );
           logger.info(`[Background] Phase transition: ${relAfterUpdates.phase} → ${newPhase}`);
@@ -665,10 +687,10 @@ async function runResponsePipeline(bot: any, context: any): Promise<{
       }
 
       // Pattern detection (max 4 per relazione, dedup per keyword overlap)
-      if (analysis.detectedPattern) {
+      if (analysis.detectedPattern && characterId) {
         const existingPatterns = await Memory.find({
           botId: bot._id,
-          externalCharacterId: characterId,
+          externalCharacterId: new Types.ObjectId(characterId),
           type: 'pattern',
         }).lean();
 
@@ -747,10 +769,12 @@ async function runResponsePipeline(bot: any, context: any): Promise<{
           updatedRelState.axes, relExpressed.axes, updatedRelState.suppressionBurden || 0,
         );
       }
-      await Relationship.updateOne(
-        { botId: bot._id, externalCharacterId: characterId },
-        { $set: { emotionState: updatedRelState } },
-      );
+      if (characterId) {
+        await Relationship.updateOne(
+          { botId: bot._id, externalCharacterId: new Types.ObjectId(characterId) },
+          { $set: { emotionState: updatedRelState } },
+        );
+      }
     }
 
     // Needs & goals
