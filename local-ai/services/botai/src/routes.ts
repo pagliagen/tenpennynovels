@@ -106,8 +106,10 @@ router.post('/respond', async (req: Request, res: Response) => {
 router.get('/bots', async (req: Request, res: Response) => {
   const filter: Record<string, any> = { isActive: true };
   const status = req.query.status as string | undefined;
-  if (status === 'active' || status === 'pending') {
-    filter.status = status;
+  if (status === 'active') {
+    filter.status = 'active';
+  } else if (status === 'pending') {
+    filter.status = 'pending';
   }
   const bots = await Bot.find(filter).lean();
   res.json({ success: true, data: bots });
