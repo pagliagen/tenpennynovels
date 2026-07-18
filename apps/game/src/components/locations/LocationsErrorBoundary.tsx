@@ -14,6 +14,7 @@
 import { Component, ReactNode, ErrorInfo } from 'react';
 
 import styles from '@/styles/components/locations/error-boundary.module.scss';
+import { logger } from '@/lib/logger';
 
 /**
  * Error Boundary Props
@@ -81,8 +82,8 @@ export class LocationsErrorBoundary extends Component<
    */
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
     // Log to console in development
-    console.error('🚨 [LocationsErrorBoundary] Caught error:', error);
-    console.error('Error info:', errorInfo);
+    logger.error('🚨 [LocationsErrorBoundary] Caught error:', { error });
+    logger.error('Error info:', { errorInfo });
 
     // Update state with error info
     this.setState({

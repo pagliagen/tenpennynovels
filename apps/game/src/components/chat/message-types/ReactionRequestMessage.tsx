@@ -20,6 +20,7 @@ import styles from '@/styles/components/chat/message-types/ReactionRequestMessag
 import type { ChatMessage } from '@/types/chat';
 
 import { MessageFooter } from '../MessageFooter';
+import { logger } from '@/lib/logger';
 
 interface ReactionRequestMessageProps {
   message: ChatMessage;
@@ -41,7 +42,7 @@ export function ReactionRequestMessage({ message, currentCharacterId }: Reaction
       await locationChatsApi.reactToConfrontation(message._id, defenseSkill);
       // Message will be updated via WebSocket, no need to manually update
     } catch (error: any) {
-      console.error('Error choosing defense:', error);
+      logger.error('Error choosing defense:', { error });
       addToast({
         type: 'error',
         message: error.message || 'Errore nella scelta della difesa'

@@ -334,12 +334,14 @@ GET /health → { status, python, qdrant, elasticsearch, queue }
 
 ## Incidents & Lessons Learned
 
-### Incident: esbuild Missing in botai-backend (2026-03-04)
-**Problem:** Production deployment used `npm install --production` which excluded devDependencies, but build.mjs imported esbuild from devDependencies.
+### Lesson: esbuild-in-devDependencies pitfall (general pattern, no service currently affected)
+**Problem (historical/generic):** if production deployment runs `npm install --production` (which excludes devDependencies) and a build script imports esbuild from devDependencies, the build step fails with `Cannot find package 'esbuild'`.
 
-**Solution:** Moved esbuild to production dependencies. Build tools used in deployment MUST be in `dependencies`, not `devDependencies`.
+**Solution:** Move the build tool to production dependencies. Build tools used in deployment MUST be in `dependencies`, not `devDependencies`.
 
 **Pattern:** If deployment script runs `npm install --production`, any build tool (esbuild, tsc, webpack) must be in `dependencies`.
+
+**Current repo state:** every service builds with `tsc` (see `scripts.build` in each `package.json`). `esbuild` sits unused in `devDependencies` of `api-gateway` and `embeddings-worker` — not a live incident, just the pattern to watch for if a service ever switches its build tool.
 
 ### Incident: WebSocket res.status Crash (2026-03-03)
 **Problem:** api-gateway WebSocket proxy error handler called `res.status(502)` but after upgrade, `res` is a TCP socket without `.status()` method.

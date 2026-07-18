@@ -19,6 +19,7 @@ import styles from '@/styles/components/character/wizard/Step4Skills.module.scss
 import { BudgetIndicator } from '../shared/BudgetIndicator';
 import { PlaceholderSkillManager } from '../shared/PlaceholderSkillManager';
 import { useWizardToolbar } from '../WizardSlotsContext';
+import { logger } from '@/lib/logger';
 
 
 /**
@@ -98,7 +99,7 @@ export function Step4Skills(): JSX.Element {
     );
 
     if (!selectedOccupation) {
-      console.warn('[Step4Skills] Selected occupation not found in data');
+      logger.warn('[Step4Skills] Selected occupation not found in data');
       return;
     }
 

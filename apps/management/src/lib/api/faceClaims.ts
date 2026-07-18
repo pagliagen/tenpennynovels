@@ -10,6 +10,7 @@
 
 import { apiClient, withRetry } from './client';
 import type { ApiResponse } from '@/types/api/common';
+import { logger } from '@/lib/logger';
 
 /**
  * Face Claim Character Entry
@@ -71,7 +72,7 @@ export interface RejectFaceClaimRequest {
  * @example
  * ```typescript
  * const response = await getDuplicateFaceClaims();
- * console.log(`${response.totalGroups} face claims have duplicates`);
+ * logger.info(`${response.totalGroups} face claims have duplicates`);
  * ```
  */
 export async function getDuplicateFaceClaims(): Promise<DuplicateFaceClaimsResponse> {

@@ -7,6 +7,7 @@ import React, { useState, useRef, useEffect, type CSSProperties } from 'react';
 import classNames from 'classnames';
 import styles from './DocumentTreeView.module.scss';
 import type { DocumentTreeNode } from '@/types/api/Document';
+import { logger } from '@/lib/logger';
 
 interface DocumentNodeProps {
   doc: DocumentTreeNode;
@@ -58,7 +59,7 @@ export const DocumentNode: React.FC<DocumentNodeProps> = React.memo(({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error('Failed to copy URL:', err);
+      logger.error('Failed to copy URL:', { err });
     }
   };
 

@@ -16,6 +16,7 @@ import React from 'react';
 import { characterApi } from '@/lib/api/character';
 import { useAuthStore } from '@/store/authStore';
 import styles from '@/styles/components/windows/CharacterFaceClaim.module.scss';
+import { logger } from '@/lib/logger';
 
 /**
  * Debounce utility
@@ -86,9 +87,9 @@ export function CharacterFaceClaimContent(): JSX.Element {
 
       // Show feedback based on approval status
       if (data.requiresApproval) {
-        console.log('⚠️ Cambio prestavolto richiede approvazione staff');
+        logger.info('⚠️ Cambio prestavolto richiede approvazione staff');
       } else if (data.hasDuplicate) {
-        console.log('⚠️ Prestavolto duplicato rilevato');
+        logger.info('⚠️ Prestavolto duplicato rilevato');
       }
     }
   });
@@ -108,7 +109,7 @@ export function CharacterFaceClaimContent(): JSX.Element {
           allFaceClaims: result.allFaceClaims
         });
       } catch (error) {
-        console.error('Face claim check error:', error);
+        logger.error('Face claim check error:', { error });
         setFaceClaimCheck({ checking: false, exactMatch: null, allFaceClaims: [] });
       }
     }, 500),

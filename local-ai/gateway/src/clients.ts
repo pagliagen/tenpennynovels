@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { timingSafeEqual } from 'crypto';
+import { logger } from './logger';
 
 export interface ClientConfig {
   id: string;
@@ -33,13 +34,13 @@ export function loadClients(): void {
     }
 
     clients = parsed;
-    console.log(`[Gateway] Loaded ${clients.length} client(s) from ${filePath}: ${clients.map(c => c.id).join(', ')}`);
+    logger.info(`Loaded ${clients.length} client(s) from ${filePath}: ${clients.map(c => c.id).join(', ')}`);
   } catch (err: any) {
     if (err.code === 'ENOENT') {
-      console.error(`[Gateway] Client file not found: ${filePath}`);
-      console.error('[Gateway] Copy clients.json.example to clients.json and configure your API keys.');
+      logger.error(`Client file not found: ${filePath}`);
+      logger.error('Copy clients.json.example to clients.json and configure your API keys.');
     } else {
-      console.error(`[Gateway] Failed to load clients from ${filePath}: ${err.message}`);
+      logger.error(`Failed to load clients from ${filePath}: ${err.message}`);
     }
     process.exit(1);
   }

@@ -361,6 +361,23 @@ config.headers['X-Session-Id'] = sessionId;
 
 ---
 
+## Logging: `@/lib/logger` (game e management)
+
+**Regola**: In game e management, mai `console.*` diretto in codice applicativo — usare `@/lib/logger` (`logger.debug/info/warn/error(message, meta?)`). `debug`/`info` sono no-op in produzione (`NODE_ENV === 'production'`), `warn`/`error` restano sempre attivi. Enforced via ESLint `no-console: 'error'` in entrambe le app (eccetto il file `src/lib/logger.ts` stesso).
+
+```typescript
+// ✅ CORRETTO
+import { logger } from '@/lib/logger';
+logger.error('Failed to send message', { error });
+
+// ❌ SBAGLIATO
+console.error('Failed to send message', error);
+```
+
+**Eccezione**: landing e documents NON hanno questo wrapper — `console.*` è ammesso in quelle due app (vedi [landing-app.md](./landing-app.md#logging-nessun-liblogger-in-questa-app) e [documents-app.md](./documents-app.md#logging-nessun-liblogger-in-questa-app)).
+
+---
+
 ## ESLint 9 Flat Config
 
 **Regola**: Il progetto usa ESLint 9 con flat config (eslint.config.mjs), NON `.eslintrc.json`.

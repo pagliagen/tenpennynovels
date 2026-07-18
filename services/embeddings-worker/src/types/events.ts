@@ -26,6 +26,10 @@ export const REDIS_CHANNELS = {
   EMBEDDING_FORUM_POST_CREATED: 'embedding:forum_post:created',
   EMBEDDING_FORUM_POST_UPDATED: 'embedding:forum_post:updated',
   EMBEDDING_FORUM_POST_DELETED: 'embedding:forum_post:deleted',
+
+  // Mail moderation events (OnGame and OffGame)
+  EMBEDDING_ONGAME_MESSAGE_CREATED: 'embedding:ongame_message:created',
+  EMBEDDING_OFFGAME_MESSAGE_CREATED: 'embedding:offgame_message:created',
 } as const;
 
 export type RedisChannel = typeof REDIS_CHANNELS[keyof typeof REDIS_CHANNELS];
@@ -74,6 +78,23 @@ export interface ForumPostEmbeddingEvent extends BaseEmbeddingEvent {
   authorCharacterName: string;
 }
 
+export interface OnGameMessageModerationEvent extends BaseEmbeddingEvent {
+  messageId: string;
+  threadId: string;
+  senderId: string;
+  recipientId: string;
+  messageType: string;
+  subject: string;
+  content: string;
+}
+
+export interface OffGameMessageModerationEvent extends BaseEmbeddingEvent {
+  messageId: string;
+  threadId: string;
+  senderId: string;
+  content: string;
+}
+
 export interface DeleteEmbeddingEvent extends BaseEmbeddingEvent {
   entityType: 'document' | 'chat' | 'forum_post';
   entityId: string;
@@ -84,6 +105,8 @@ export type EmbeddingEvent =
   | DocumentChunkEmbeddingEvent
   | ChatEmbeddingEvent
   | ForumPostEmbeddingEvent
+  | OnGameMessageModerationEvent
+  | OffGameMessageModerationEvent
   | DeleteEmbeddingEvent;
 
 export function isDocumentEmbeddingEvent(event: EmbeddingEvent): event is DocumentEmbeddingEvent {
@@ -100,6 +123,14 @@ export function isChatEmbeddingEvent(event: EmbeddingEvent): event is ChatEmbedd
 
 export function isForumPostEmbeddingEvent(data: unknown): data is ForumPostEmbeddingEvent {
   return typeof data === 'object' && data !== null && 'postId' in data && 'topicSlug' in data && 'discussionSlug' in data;
+}
+
+export function isOnGameMessageModerationEvent(event: EmbeddingEvent): event is OnGameMessageModerationEvent {
+  return 'messageId' in event && 'messageType' in event && 'subject' in event && 'recipientId' in event;
+}
+
+export function isOffGameMessageModerationEvent(event: EmbeddingEvent): event is OffGameMessageModerationEvent {
+  return 'messageId' in event && 'threadId' in event && !('messageType' in event) && !('recipientId' in event);
 }
 
 export function isDeleteEmbeddingEvent(event: EmbeddingEvent): event is DeleteEmbeddingEvent {

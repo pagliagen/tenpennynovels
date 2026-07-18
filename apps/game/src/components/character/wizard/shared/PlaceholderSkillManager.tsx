@@ -14,6 +14,7 @@ import { useState } from 'react';
 
 import { useWizardStore } from '@/store/wizardStore';
 import styles from '@/styles/components/character/wizard/PlaceholderSkillManager.module.scss';
+import { logger } from '@/lib/logger';
 
 interface PlaceholderSkillManagerProps {
   /** Placeholder skill definition from API */
@@ -84,9 +85,7 @@ export function PlaceholderSkillManager({
       category: placeholderSkill.category,
     });
 
-    console.log(
-      `[PlaceholderSkillManager] Added ${placeholderSkill.name} (${trimmedSpec}) without bonus`
-    );
+    logger.info(`[PlaceholderSkillManager] Added ${placeholderSkill.name} (${trimmedSpec}) without bonus`);
 
     // Reset form
     setSpecialization('');
@@ -111,7 +110,7 @@ export function PlaceholderSkillManager({
     const { [skillId]: removed, ...remainingSkills } = currentSkills;
     useWizardStore.setState({ skills: remainingSkills });
 
-    console.log(`[PlaceholderSkillManager] Removed ${skillId}${wasPrimary ? ' (was primary)' : ''}`);
+    logger.info(`[PlaceholderSkillManager] Removed ${skillId}${wasPrimary ? ' (was primary)' : ''}`);
   };
 
   /**
@@ -150,7 +149,7 @@ export function PlaceholderSkillManager({
     // Update store
     useWizardStore.setState({ skills: updatedSkills });
 
-    console.log(`[PlaceholderSkillManager] Set primary: ${selectedSkillId}`);
+    logger.info(`[PlaceholderSkillManager] Set primary: ${selectedSkillId}`);
   };
 
   // Find which skill is currently primary (has requiredBonus > 0)

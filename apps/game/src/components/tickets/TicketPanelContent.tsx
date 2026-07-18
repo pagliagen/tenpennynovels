@@ -97,9 +97,9 @@ export function TicketPanelContent() {
           <div className={styles.ticketList}>
             {tickets.map((ticket) => (
               <TicketCard
-                key={ticket.id}
+                key={ticket._id}
                 ticket={ticket}
-                onClick={() => setCurrentTicketId(ticket.id)}
+                onClick={() => setCurrentTicketId(ticket._id)}
               />
             ))}
           </div>

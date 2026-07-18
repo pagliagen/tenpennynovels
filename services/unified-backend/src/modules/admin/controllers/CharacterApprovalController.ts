@@ -39,8 +39,11 @@ export class CharacterApprovalController {
       if (userId) {
         filter.userId = userId;
       }
-      if (characterType && ['pg_principale', 'pg_master', 'png'].includes(characterType)) {
+      if (characterType === 'bot') {
+        filter.isBot = true;
+      } else if (characterType && ['pg_principale', 'pg_master', 'png'].includes(characterType)) {
         filter.characterType = characterType;
+        filter.isBot = { $ne: true };
       }
 
       // Use local model with proper imports
@@ -69,7 +72,12 @@ export class CharacterApprovalController {
             select: 'name',
             options: { strictPopulate: false }
           })
-          .select('name surname fullName occupation playerStatus createdAt submittedAt approvedAt rejectedAt userId canAccessAdminPanel isGestore gameplayRoles characterPermissions adminPermissions age gender socialClass location characterType referentCharacterId avatar')
+          .populate({
+            path: 'currentLocation',
+            select: 'name slug',
+            options: { strictPopulate: false }
+          })
+          .select('name surname fullName occupation playerStatus createdAt submittedAt approvedAt rejectedAt userId canAccessAdminPanel isGestore gameplayRoles characterPermissions adminPermissions age gender socialClass location characterType referentCharacterId avatar isBot currentLocation')
           .sort({ createdAt: -1 })
           .skip(skip)
           .limit(pageSize)
@@ -111,6 +119,12 @@ export class CharacterApprovalController {
           gameplayRoles: char.gameplayRoles || [],
           characterPermissions: char.characterPermissions || [],
           characterType: char.characterType || 'pg_principale',
+          isBot: char.isBot || false,
+          currentLocation: char.currentLocation ? {
+            _id: char.currentLocation._id?.toString() || char.currentLocation.toString(),
+            name: char.currentLocation.name || null,
+            slug: char.currentLocation.slug || null
+          } : null,
           referentCharacterId: char.referentCharacterId?._id ? char.referentCharacterId._id.toString() : null,
           referent: char.referentCharacterId?.name ? {
             _id: char.referentCharacterId._id.toString(),
@@ -1856,7 +1870,16 @@ export class CharacterApprovalController {
   static async approveFaceClaim(req: Request, res: Response): Promise<void> {
     try {
       const { Character } = await import('@database/models/Character');
-      const character = await Character.findById(req.params.id);
+      const { Types } = await import('mongoose');
+
+      // Validate characterId to prevent SQL injection
+      const characterId = req.params.id as string;
+      if (!Types.ObjectId.isValid(characterId)) {
+        res.status(400).json({ success: false, error: 'ID personaggio non valido', code: 'INVALID_CHARACTER_ID' });
+        return;
+      }
+
+      const character = await Character.findById(characterId);
       if (!character) {
         res.status(404).json({ success: false, error: 'Personaggio non trovato', code: 'CHARACTER_NOT_FOUND' });
         return;
@@ -1882,7 +1905,16 @@ export class CharacterApprovalController {
   static async rejectFaceClaim(req: Request, res: Response): Promise<void> {
     try {
       const { Character } = await import('@database/models/Character');
-      const character = await Character.findById(req.params.id);
+      const { Types } = await import('mongoose');
+
+      // Validate characterId to prevent SQL injection
+      const characterId = req.params.id as string;
+      if (!Types.ObjectId.isValid(characterId)) {
+        res.status(400).json({ success: false, error: 'ID personaggio non valido', code: 'INVALID_CHARACTER_ID' });
+        return;
+      }
+
+      const character = await Character.findById(characterId);
       if (!character) {
         res.status(404).json({ success: false, error: 'Personaggio non trovato', code: 'CHARACTER_NOT_FOUND' });
         return;

@@ -435,167 +435,101 @@ await axios.post(userProvidedUrl, data);
 
 ---
 
-## Ollama vs Anthropic Agent Selection
+## Ollama (default) vs Inception Agent Selection
 
-### AgentFactory Pattern
+**Provider di default: Ollama (LLM locale).** Inception è disponibile come alternativa opzionale via `AI_PROVIDER=inception` (richiede `INCEPTION_API_KEY`). Nessun provider esterno a pagamento è richiesto per il funzionamento base del sistema.
 
-Location: `/local-ai/services/botai/src/agents/AgentFactory.ts`
+### AgentFactory Pattern (dual-role: creativo / analitico)
+
+Location: `/local-ai/services/botai/src/agent/AgentFactory.ts`
+
+BotAI usa **due agent separati**: uno per il ruolo creativo (dialoghi, generazione/refine bot, modello `OLLAMA_MODEL`) e uno per il ruolo analitico (context analysis, JSON strutturato, modello `OLLAMA_ANALYTICAL_MODEL` con fallback su `OLLAMA_MODEL`). Entrambi sono singleton lazy.
 
 ```typescript
 import { IAgent } from './IAgent';
 import { OllamaAgent } from './OllamaAgent';
-import { AnthropicAgent } from './AnthropicAgent';
+import { InceptionAgent } from './InceptionAgent';
 
-export class AgentFactory {
-  private static agent: IAgent | null = null;
+type AIProvider = 'inception' | 'ollama';
 
-  /**
-   * Get singleton agent instance
-   * Selects Anthropic if ANTHROPIC_API_KEY is set, otherwise Ollama
-   */
-  static getAgent(): IAgent {
-    if (!this.agent) {
-      if (process.env.ANTHROPIC_API_KEY) {
-        logger.info('Using Anthropic Claude agent');
-        this.agent = new AnthropicAgent();
-      } else {
-        logger.info('Using Ollama local agent');
-        this.agent = new OllamaAgent();
-      }
-    }
-    return this.agent;
-  }
-
-  /**
-   * Force reset (for testing)
-   */
-  static reset(): void {
-    this.agent = null;
-  }
+export function resolveProvider(): AIProvider {
+  const explicit = process.env.AI_PROVIDER?.toLowerCase();
+  if (explicit === 'inception' || explicit === 'ollama') return explicit;
+  return 'ollama'; // default
 }
+
+function createAgent(role: string): IAgent {
+  const provider = resolveProvider();
+  if (provider === 'inception') {
+    return new InceptionAgent();
+  }
+  return new OllamaAgent(); // legge OLLAMA_MODEL / OLLAMA_ANALYTICAL_MODEL internamente
+}
+
+export function getCreativeAgent(): IAgent { /* singleton, role='Creative' */ }
+export function getAnalyticalAgent(): IAgent { /* singleton, role='Analytical' */ }
 ```
 
-### IAgent Interface
+### IAgent Interface (reale)
 
 ```typescript
 export interface IAgent {
-  /**
-   * Generate text completion
-   */
-  generateText(
-    prompt: string,
-    config?: GenerationConfig
-  ): Promise<string>;
+  generate(
+    systemPrompt: string,
+    userMessage: string,
+    numPredict?: number,
+    temperature?: number,
+    topP?: number,
+    repeatPenalty?: number,
+  ): Promise<{ text: string; tokensUsed: number }>;
 
-  /**
-   * Check if agent is available
-   */
-  isAvailable(): Promise<boolean>;
-}
+  analyzeJSON<T = Record<string, unknown>>(
+    stepName: string,
+    systemPrompt: string,
+    userMessage: string,
+    options?: { temperature?: number; numPredict?: number },
+  ): Promise<{ result: T; tokensUsed: number }>;
 
-export interface GenerationConfig {
-  temperature?: number;      // 0.0-1.0, default 0.72
-  topP?: number;            // 0.0-1.0, default 0.85
-  maxTokens?: number;       // Max response length, default 950
-  repeatPenalty?: number;   // 1.0-2.0, default 1.2
+  generateBot(description: string, options?: GenerateBotOptions): Promise<any>;
+  refineBot(current: Record<string, any>, hints: Record<string, any>, options?: GenerateBotOptions): Promise<any>;
 }
 ```
 
-### OllamaAgent Implementation
+### OllamaAgent Implementation (reale, HTTP raw verso `/api/chat`)
+
+Location: `/local-ai/services/botai/src/agent/OllamaAgent.ts`
 
 ```typescript
-import axios from 'axios';
-
 export class OllamaAgent implements IAgent {
-  private baseUrl = process.env.OLLAMA_URL || 'http://localhost:11434';
-  private model = process.env.OLLAMA_MODEL || 'llama2';
+  private host = process.env.OLLAMA_URL || 'http://localhost:11434';
+  private model = process.env.OLLAMA_MODEL || 'gemma3:12b';
 
-  async generateText(prompt: string, config: GenerationConfig = {}): Promise<string> {
-    const response = await axios.post(`${this.baseUrl}/api/generate`, {
+  async generate(systemPrompt, userMessage, numPredict = 1024, temperature = 0.72, topP = 0.85, repeatPenalty = 1.2) {
+    const response = await this.chat({
       model: this.model,
-      prompt,
-      stream: false,
-      options: {
-        temperature: config.temperature ?? 0.72,
-        top_p: config.topP ?? 0.85,
-        num_predict: config.maxTokens ?? 950,
-        repeat_penalty: config.repeatPenalty ?? 1.2
-      }
+      messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userMessage }],
+      options: { temperature, top_p: topP, repeat_penalty: repeatPenalty, num_predict: numPredict },
     });
-
-    return response.data.response;
+    // ... normalizza whitespace, ritorna { text, tokensUsed }
   }
 
-  async isAvailable(): Promise<boolean> {
-    try {
-      await axios.get(`${this.baseUrl}/api/tags`, { timeout: 3000 });
-      return true;
-    } catch {
-      return false;
-    }
+  async analyzeJSON<T>(stepName, systemPrompt, userMessage, options = {}) {
+    // chiama /api/chat con format: 'json', 1 retry se il parsing fallisce
   }
 }
 ```
 
-### AnthropicAgent Implementation
-
-```typescript
-import Anthropic from '@anthropic-ai/sdk';
-
-export class AnthropicAgent implements IAgent {
-  private client: Anthropic;
-  private model = 'claude-3-5-sonnet-20241022';
-
-  constructor() {
-    this.client = new Anthropic({
-      apiKey: process.env.ANTHROPIC_API_KEY
-    });
-  }
-
-  async generateText(prompt: string, config: GenerationConfig = {}): Promise<string> {
-    const message = await this.client.messages.create({
-      model: this.model,
-      max_tokens: config.maxTokens ?? 950,
-      temperature: config.temperature ?? 0.72,
-      top_p: config.topP ?? 0.85,
-      messages: [{
-        role: 'user',
-        content: prompt
-      }]
-    });
-
-    const textContent = message.content.find(c => c.type === 'text');
-    return textContent?.text || '';
-  }
-
-  async isAvailable(): Promise<boolean> {
-    try {
-      await this.client.messages.create({
-        model: this.model,
-        max_tokens: 10,
-        messages: [{ role: 'user', content: 'test' }]
-      });
-      return true;
-    } catch {
-      return false;
-    }
-  }
-}
-```
+**Nota**: character-gen e qa NON condividono `OllamaAgent`/`AgentFactory` di botai (che è service-local, non in `shared/`); implementano la propria chiamata Ollama (raw HTTP o client `ollama` npm) seguendo lo stesso pattern.
 
 ### Usage Pattern
 
 ```typescript
-// Automatic selection
-const agent = AgentFactory.getAgent();
+// Selezione automatica in base al ruolo
+const creative = getCreativeAgent();
+const response = await creative.generate(systemPrompt, userMessage, 950, 0.72, 0.85, 1.2);
 
-// Generate response
-const response = await agent.generateText(prompt, {
-  temperature: 0.72,
-  topP: 0.85,
-  maxTokens: 950,
-  repeatPenalty: 1.2
-});
+const analytical = getAnalyticalAgent();
+const { result } = await analytical.analyzeJSON('context-analysis', systemPrompt, userMessage);
 ```
 
 ---

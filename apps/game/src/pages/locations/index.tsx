@@ -25,6 +25,7 @@ import { ViewModeSelector, ViewMode } from '@/components/locations/ViewModeSelec
 import { useLocations } from '@/hooks/useLocations';
 import { useGameStateStore } from '@/store/gameStateStore';
 import styles from '@/styles/pages/locations.module.scss';
+import { logger } from '@/lib/logger';
 
 /**
  * Locations Page Component
@@ -83,10 +84,10 @@ export default function LocationsPage(): JSX.Element {
     // Leave current location and return to London
     try {
       await useGameStateStore.getState().leaveLocation();
-      console.log('[LocationsPage] ✅ Returned to London');
+      logger.info('[LocationsPage] ✅ Returned to London');
       router.push('/game'); // Redirect to London home
     } catch (error) {
-      console.error('[LocationsPage] ❌ Leave location failed:', error);
+      logger.error('[LocationsPage] ❌ Leave location failed:', { error });
       // Still navigate (optimistic UX - state already cleared)
       router.push('/game');
     }

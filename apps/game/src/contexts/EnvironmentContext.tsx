@@ -15,6 +15,7 @@ import { createContext, useContext, useState, useEffect, useCallback, ReactNode 
 
 import { api } from '@/lib/api/client';
 import { Environment } from '@/types/api/schemas';
+import { logger } from '@/lib/logger';
 
 /**
  * API Response wrapper
@@ -79,14 +80,14 @@ export function EnvironmentProvider({ children }: { children: ReactNode }): JSX.
       if (response.success && response.data) {
         setEnvironment(response.data);
         setError(null);
-        console.log('[EnvironmentContext] Environment data loaded:', response.data);
+        logger.info('[EnvironmentContext] Environment data loaded:', { data: response.data });
       } else {
         throw new Error(response.error || 'Failed to fetch environment');
       }
     } catch (err: any) {
       const errorMessage = err.message || 'Unknown error';
       setError(errorMessage);
-      console.error('[EnvironmentContext] Failed to fetch environment:', err);
+      logger.error('[EnvironmentContext] Failed to fetch environment:', { err });
 
       // Keep using stale data if available
       if (!environment) {
@@ -114,7 +115,7 @@ export function EnvironmentProvider({ children }: { children: ReactNode }): JSX.
     const AUTO_REFRESH_INTERVAL = 5 * 60 * 1000; // 5 minutes
 
     const interval = setInterval(() => {
-      console.log('[EnvironmentContext] Auto-refreshing environment data...');
+      logger.info('[EnvironmentContext] Auto-refreshing environment data...');
       fetchEnvironment();
     }, AUTO_REFRESH_INTERVAL);
 

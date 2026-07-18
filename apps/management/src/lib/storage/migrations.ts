@@ -5,6 +5,7 @@
  */
 
 import { STORAGE_VERSION, STORAGE_KEYS } from '@/constants/config';
+import { logger } from '@/lib/logger';
 
 /**
  * Migration function type
@@ -18,7 +19,7 @@ const migrations: Record<string, MigrationFn> = {
   // Example migration from v1.0.0 to v2.0.0
   '1.0.0': (data: unknown) => {
     // Transform data structure
-    console.log('[Migration] Migrating from 1.0.0 to 2.0.0');
+    logger.info('[Migration] Migrating from 1.0.0 to 2.0.0');
     return data; // Return transformed data
   }
 };
@@ -34,7 +35,7 @@ export function applyMigrations(fromVersion: string, data: unknown): unknown {
 
   for (const version of versions) {
     if (version > fromVersion && version <= STORAGE_VERSION) {
-      console.log(`[Migration] Applying migration for version ${version}`);
+      logger.info(`[Migration] Applying migration for version ${version}`);
       currentData = migrations[version](currentData);
     }
   }
@@ -59,7 +60,7 @@ export function migrateColumnVisibility(tableName: string): Record<string, boole
     // Check if it has version info
     if (parsed.version) {
       if (parsed.version !== STORAGE_VERSION) {
-        console.warn(`[Migration] Column visibility version mismatch for "${tableName}": ${parsed.version} -> ${STORAGE_VERSION}`);
+        logger.warn(`[Migration] Column visibility version mismatch for "${tableName}": ${parsed.version} -> ${STORAGE_VERSION}`);
         // Apply migrations
         const migrated = applyMigrations(parsed.version, parsed.data);
         // Save migrated data
@@ -73,11 +74,11 @@ export function migrateColumnVisibility(tableName: string): Record<string, boole
     }
 
     // Old format without version - reset
-    console.warn(`[Migration] Resetting unversioned column visibility for "${tableName}"`);
+    logger.warn(`[Migration] Resetting unversioned column visibility for "${tableName}"`);
     localStorage.removeItem(key);
     return null;
   } catch (error) {
-    console.error(`[Migration] Error migrating column visibility for "${tableName}":`, error);
+    logger.error(`[Migration] Error migrating column visibility for "${tableName}":`, { error });
     localStorage.removeItem(key);
     return null;
   }
@@ -87,19 +88,19 @@ export function migrateColumnVisibility(tableName: string): Record<string, boole
  * Run all necessary migrations on app startup
  */
 export function runStorageMigrations(): void {
-  console.log(`[Migration] Running storage migrations to version ${STORAGE_VERSION}`);
+  logger.info(`[Migration] Running storage migrations to version ${STORAGE_VERSION}`);
 
   // Check version in localStorage
   const storedVersion = localStorage.getItem(STORAGE_KEYS.VERSION);
 
   if (!storedVersion) {
-    console.log('[Migration] First run, setting version');
+    logger.info('[Migration] First run, setting version');
     localStorage.setItem(STORAGE_KEYS.VERSION, STORAGE_VERSION);
     return;
   }
 
   if (storedVersion !== STORAGE_VERSION) {
-    console.log(`[Migration] Version change: ${storedVersion} -> ${STORAGE_VERSION}`);
+    logger.info(`[Migration] Version change: ${storedVersion} -> ${STORAGE_VERSION}`);
 
     // Run migrations here
     // ...

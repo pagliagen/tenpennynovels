@@ -18,6 +18,7 @@ import { AuditLog, AuditLogParams } from '@/lib/api/system';
 import { useURLFilter } from '@/hooks/useURLFilter';
 import { clearFilterHash } from '@/lib/utils/urlFilters';
 import styles from '@/styles/pages/SystemConfig.module.scss';
+import { logger } from '@/lib/logger';
 
 export default function AuditLogs() {
   const { filters, params, setParams, handleFilterChange } = useTableFilters<AuditLogParams>({
@@ -72,7 +73,7 @@ export default function AuditLogs() {
    */
   const handleBulkAction = async (actionKey: string, items: AuditLog[], allPagesSelected: boolean = false) => {
     // Audit logs are read-only, no bulk actions needed
-    console.log('Bulk action not applicable for audit logs');
+    logger.info('Bulk action not applicable for audit logs');
   };
 
   if (error) {

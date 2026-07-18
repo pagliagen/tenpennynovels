@@ -13,6 +13,7 @@
 
 import { useWizardStore } from '@/store/wizardStore';
 import styles from '@/styles/components/character/wizard/Step6Review.module.scss';
+import { logger } from '@/lib/logger';
 
 interface Step6ReviewProps {
   onSubmit: () => Promise<void>;
@@ -43,7 +44,7 @@ export function Step6Review({ onSubmit, isSubmitting }: Step6ReviewProps): JSX.E
     try {
       await onSubmit();
     } catch (error) {
-      console.error('Submission error:', error);
+      logger.error('Submission error:', { error });
     }
   };
 

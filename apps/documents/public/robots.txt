@@ -8,8 +8,8 @@ Allow: /
 Disallow: /_next/
 Disallow: /api/
 
-# Sitemap (SAME DOMAIN - fixed cross-domain reference)
-Sitemap: https://tenpennynovels.com/sitemap-documents.xml
+# Sitemap
+Sitemap: https://documenti.tenpennynovels.com/sitemap.xml
 
 # Crawl rate (permissive - public content)
 # Crawl-delay removed - let Google decide optimal rate

@@ -78,6 +78,12 @@ export interface Character {
     eventsParticipated: number;
   };
   avatar?: string; // URL to character avatar image
+  isBot: boolean;
+  currentLocation?: {
+    _id: string;
+    name: string | null;
+    slug: string | null;
+  } | null;
 
   metadata: {
     createdAt: string;
@@ -128,7 +134,7 @@ export interface CharacterListParams {
   status?: 'pending' | 'approved' | 'rejected' | 'active' | 'inactive';
   userId?: string;
   socialClass?: number;
-  characterType?: 'pg_principale' | 'pg_master' | 'png';
+  characterType?: 'pg_principale' | 'pg_master' | 'png' | 'bot';
 }
 
 export interface CharacterListResponse {

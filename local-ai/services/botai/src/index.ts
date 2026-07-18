@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import { createApp } from './app';
 import { createLogger } from '../../../shared/logger';
 import { warmupModel, getModel } from '../../../shared/ollama';
+import { resolveProvider } from './agent/AgentFactory';
 
 const logger = createLogger('BotAI');
 const PORT = parseInt(process.env.BOTAI_PORT as string, 10);
@@ -16,9 +17,9 @@ async function start() {
   app.listen(PORT, () => {
     logger.info(`BotAI service listening on port ${PORT}`);
 
-    if (process.env.ANTHROPIC_API_KEY) {
-      const model = process.env.ANTHROPIC_MODEL || 'claude';
-      logger.info(`Using Anthropic API — model: ${model} (no warmup needed)`);
+    const provider = resolveProvider();
+    if (provider === 'inception') {
+      logger.info(`Using Inception API — model: ${process.env.INCEPTION_MODEL || 'mercury-2'} (no warmup needed)`);
     } else {
       warmupModel()
         .then(() => logger.info(`Model ${getModel()} warmed up and locked in memory`))

@@ -224,10 +224,12 @@ All apps use strict mode + additional safety flags:
 
 | Service | URL |
 |---------|-----|
-| Landing | https://landing.tenpennynovels.com |
-| Game | https://tenpennynovels.com |
-| Documents | https://docs.tenpennynovels.com |
-| Management | https://admin.tenpennynovels.com |
+| Landing | https://tenpennynovels.com |
+| Game | https://game.tenpennynovels.com |
+| Documents | https://documenti.tenpennynovels.com |
+| Management | https://gestione.tenpennynovels.com |
+| API Gateway | https://api.tenpennynovels.com |
+| WebSocket Server | https://ws.tenpennynovels.com |
 
 ---
 

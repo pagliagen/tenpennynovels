@@ -135,7 +135,7 @@ export class OffGameChatController {
       // Now fetch all participants for final validation
       const characters = await Character.find({
         _id: { $in: allParticipants },
-        status: { $in: ['draft', 'PENDING_APPROVAL', 'APPROVED'] }
+        playerStatus: { $in: ['draft', 'pending', 'approved'] }
       });
 
       if (characters.length !== allParticipants.length) {

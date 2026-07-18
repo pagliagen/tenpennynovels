@@ -12,6 +12,7 @@ import { useEffect, useState } from 'react';
 import { classifySessionCheckError } from '@/lib/auth/sessionError';
 import { useAuthStore } from '@/store/authStore';
 import { api } from '@/lib/api/client';
+import { logger } from '@/lib/logger';
 
 /**
  * Session Data from /auth/session
@@ -126,7 +127,7 @@ export function useAuth(): UseAuthReturn {
         setErrorType('session');
       }
     } catch (err: unknown) {
-      console.error('[useAuth] Session check failed:', err);
+      logger.error('[useAuth] Session check failed:', { err });
       setUser(null);
 
       const kind = classifySessionCheckError(err);

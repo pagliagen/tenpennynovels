@@ -934,6 +934,12 @@ function LoginPage() {
 
 ---
 
+## Logging: nessun `@/lib/logger` in questa app
+
+**Eccezione**: a differenza di game e management, landing NON ha un wrapper `@/lib/logger`. `console.*` è ammesso in questa app — preferire `console.error` nei soli error path (login/register/session), evitare `console.log` di debug lasciato in codice committato.
+
+---
+
 ## Cross-References
 
 - **Shared Frontend**: `/Users/gennaropaglia/Documents/SitiPersonali/tenpennynovels/.claude/rules/apps/shared-frontend.md`

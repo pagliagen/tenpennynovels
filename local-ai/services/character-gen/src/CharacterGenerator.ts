@@ -1,4 +1,5 @@
 import * as https from 'https';
+import * as http from 'http';
 import { createLogger } from '../../../shared/logger';
 import { CharacterGenInput, CharacterGenResult, GeneratedStats, GeneratedBackground } from './types';
 import { allocateStats } from './StatAllocator';
@@ -6,27 +7,86 @@ import { allocateSkills } from './SkillAllocator';
 
 const logger = createLogger('CharacterGenerator');
 
-const ANTHROPIC_API_VERSION = '2023-06-01';
 const REQUEST_TIMEOUT_MS = 5 * 60 * 1000;
 
-interface AnthropicResponse {
-  content: Array<{ type: string; text: string }>;
-  usage: { input_tokens: number; output_tokens: number };
+type AIProvider = 'inception' | 'ollama';
+
+interface LLMResponse {
+  text: string;
+  tokensUsed: number;
 }
 
-function anthropicRequest(apiKey: string, model: string, body: Record<string, unknown>): Promise<AnthropicResponse> {
+function resolveProvider(): AIProvider {
+  const explicit = process.env.AI_PROVIDER?.toLowerCase();
+  if (explicit === 'inception' || explicit === 'ollama') {
+    return explicit;
+  }
+  return 'ollama';
+}
+
+function ollamaRequest(
+  host: string,
+  model: string,
+  systemPrompt: string,
+  userMessage: string,
+  maxTokens: number,
+  temperature: number
+): Promise<LLMResponse> {
+  return new Promise((resolve, reject) => {
+    const payload = JSON.stringify({
+      model,
+      stream: false,
+      keep_alive: -1,
+      options: { temperature, num_predict: maxTokens },
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userMessage },
+      ],
+    });
+    const url = new URL('/api/chat', host);
+    const req = http.request(
+      url,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) },
+        timeout: REQUEST_TIMEOUT_MS,
+      },
+      (res) => {
+        let data = '';
+        res.on('data', (chunk: Buffer) => (data += chunk));
+        res.on('end', () => {
+          if (res.statusCode && res.statusCode >= 400) {
+            reject(new Error(`Ollama ${res.statusCode}: ${data.substring(0, 300)}`));
+            return;
+          }
+          try {
+            const parsed = JSON.parse(data);
+            const text = parsed.message?.content ?? '';
+            const tokensUsed = (parsed.prompt_eval_count || 0) + (parsed.eval_count || 0);
+            resolve({ text, tokensUsed });
+          } catch { reject(new Error(`Invalid JSON from Ollama: ${data.substring(0, 200)}`)); }
+        });
+      }
+    );
+    req.on('error', (err) => reject(new Error(`Ollama connection error: ${err.message}`)));
+    req.on('timeout', () => { req.destroy(); reject(new Error('Ollama timeout')); });
+    req.write(payload);
+    req.end();
+  });
+}
+
+function inceptionRequest(apiKey: string, model: string, body: Record<string, unknown>): Promise<LLMResponse> {
   return new Promise((resolve, reject) => {
     const payload = JSON.stringify(body);
     const req = https.request(
       {
-        hostname: 'api.anthropic.com',
-        path: '/v1/messages',
+        hostname: 'api.inceptionlabs.ai',
+        path: '/v1/chat/completions',
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Content-Length': Buffer.byteLength(payload),
-          'x-api-key': apiKey,
-          'anthropic-version': ANTHROPIC_API_VERSION,
+          'Authorization': `Bearer ${apiKey}`,
         },
         timeout: REQUEST_TIMEOUT_MS,
       },
@@ -35,23 +95,24 @@ function anthropicRequest(apiKey: string, model: string, body: Record<string, un
         res.on('data', (chunk: Buffer) => (data += chunk));
         res.on('end', () => {
           if (res.statusCode && res.statusCode >= 400) {
-            reject(new Error(`Anthropic ${res.statusCode}: ${data.substring(0, 300)}`));
+            reject(new Error(`Inception ${res.statusCode}: ${data.substring(0, 300)}`));
             return;
           }
-          try { resolve(JSON.parse(data)); }
-          catch { reject(new Error(`Invalid JSON from Anthropic: ${data.substring(0, 200)}`)); }
+          try {
+            const parsed = JSON.parse(data);
+            const text = parsed.choices?.[0]?.message?.content ?? '';
+            const usage = parsed.usage || {};
+            const tokensUsed = usage.total_tokens ?? ((usage.prompt_tokens || 0) + (usage.completion_tokens || 0));
+            resolve({ text, tokensUsed });
+          } catch { reject(new Error(`Invalid JSON from Inception: ${data.substring(0, 200)}`)); }
         });
       }
     );
-    req.on('error', (err) => reject(new Error(`Anthropic connection error: ${err.message}`)));
-    req.on('timeout', () => { req.destroy(); reject(new Error('Anthropic timeout')); });
+    req.on('error', (err) => reject(new Error(`Inception connection error: ${err.message}`)));
+    req.on('timeout', () => { req.destroy(); reject(new Error('Inception timeout')); });
     req.write(payload);
     req.end();
   });
-}
-
-function extractText(res: AnthropicResponse): string {
-  return res.content.filter(c => c.type === 'text').map(c => c.text).join('');
 }
 
 function parseJSON<T>(raw: string, step: string): T {
@@ -64,13 +125,40 @@ function parseJSON<T>(raw: string, step: string): T {
 }
 
 export class CharacterGenerator {
+  private provider: AIProvider;
   private apiKey: string;
   private model: string;
+  private ollamaHost: string;
 
   constructor() {
-    this.apiKey = process.env.ANTHROPIC_API_KEY || '';
-    this.model = process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5-20251001';
-    if (!this.apiKey) throw new Error('ANTHROPIC_API_KEY is not set');
+    this.provider = resolveProvider();
+    this.ollamaHost = process.env.OLLAMA_URL || 'http://localhost:11434';
+
+    if (this.provider === 'inception') {
+      this.apiKey = process.env.INCEPTION_API_KEY || '';
+      this.model = process.env.INCEPTION_MODEL || 'mercury-2';
+      if (!this.apiKey) throw new Error('INCEPTION_API_KEY is not set');
+    } else {
+      this.apiKey = '';
+      // Generazione di JSON strutturato: preferisce il modello analitico se configurato.
+      this.model = process.env.OLLAMA_ANALYTICAL_MODEL || process.env.OLLAMA_MODEL || 'qwen3:8b';
+    }
+  }
+
+  private async llmRequest(systemPrompt: string, userMessage: string, maxTokens: number, temperature: number): Promise<LLMResponse> {
+    if (this.provider === 'inception') {
+      return inceptionRequest(this.apiKey, this.model, {
+        model: this.model,
+        max_tokens: maxTokens,
+        temperature,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userMessage },
+        ],
+      });
+    }
+
+    return ollamaRequest(this.ollamaHost, this.model, systemPrompt, userMessage, maxTokens, temperature);
   }
 
   async generate(input: CharacterGenInput): Promise<CharacterGenResult> {
@@ -78,23 +166,12 @@ export class CharacterGenerator {
     const statsBudget = gameConfig.statsBudget ?? 450;
     const skillsBudget = gameConfig.skillsBudget ?? 250;
 
-    logger.info(`Generating character: ${character.firstName} ${character.lastName}`);
+    logger.info(`Generating character: ${character.firstName} ${character.lastName} (provider: ${this.provider})`);
 
-    // ── Step 1: Narrative data via Anthropic ──
     const narrativePrompt = buildNarrativePrompt(character, gameConfig.occupations);
 
-    const res1 = await anthropicRequest(this.apiKey, this.model, {
-      model: this.model,
-      max_tokens: 3000,
-      temperature: 0.8,
-      system: narrativePrompt.system,
-      messages: [{ role: 'user', content: narrativePrompt.user }],
-    });
-
-    const raw1 = extractText(res1);
-    const tokens1 = (res1.usage?.input_tokens || 0) + (res1.usage?.output_tokens || 0);
-    logger.info(`Narrative generation complete (${tokens1} tokens)`);
-
+    const res1 = await this.llmRequest(narrativePrompt.system, narrativePrompt.user, 3000, 0.8);
+    logger.info(`Narrative generation complete (${res1.tokensUsed} tokens)`);
 
     interface NarrativeOutput {
       basicInfo: {
@@ -111,22 +188,18 @@ export class CharacterGenerator {
       prioritySkillIds: string[];
     }
 
-    const narrative: NarrativeOutput = parseJSON<NarrativeOutput>(raw1, 'narrative');
+    const narrative: NarrativeOutput = parseJSON<NarrativeOutput>(res1.text, 'narrative');
 
-    // ── Step 2: Allocate stats ──
     const stats = allocateStats(narrative.statWeights ?? {}, statsBudget);
 
-    // ── Step 3: Allocate skills ──
     const skills = allocateSkills(
       gameConfig.skills,
       narrative.prioritySkillIds ?? [],
       skillsBudget
     );
 
-    // ── Step 4: Resolve occupation ID ──
     const occupationId = resolveOccupation(narrative.occupationId, gameConfig.occupations);
 
-    // ── Assemble result ──
     const info = narrative.basicInfo ?? {};
 
     return {
@@ -236,7 +309,6 @@ function resolveOccupation(
   if (!suggestedId) return undefined;
   const found = occupations.find(o => o.id === suggestedId);
   if (found) return found.id;
-  // Fuzzy fallback: try name match
   const nameFuzzy = occupations.find(o => o.name.toLowerCase().includes(suggestedId.toLowerCase()));
   return nameFuzzy?.id;
 }

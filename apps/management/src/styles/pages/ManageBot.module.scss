@@ -1,0 +1,297 @@
+@use '../variables' as *;
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+  height: 100%;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: $spacing-lg;
+  background-color: $color-bg-secondary;
+  border-radius: $radius-md;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+
+  h1 { margin: 0; font-size: 28px; font-weight: 700; color: $color-primary; }
+  p { margin: 0; font-size: 15px; color: $color-text-secondary; }
+}
+
+// ─── Bot List ───────────────────────────────────────────────
+.botGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: $spacing-lg;
+}
+
+.botCard {
+  background: $color-bg-secondary;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: $radius-md;
+  padding: $spacing-lg;
+  cursor: pointer;
+  transition: all $transition-fast;
+
+  &:hover { border-color: $color-primary; box-shadow: $shadow-md; }
+  &.active { border-color: $color-primary; background: rgba($color-primary, 0.08); }
+}
+
+.botCardHeader {
+  display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: $spacing-md;
+}
+
+.botName { font-size: 18px; font-weight: 600; color: $color-text-primary; margin: 0; }
+
+.botMood {
+  font-size: 12px; padding: 2px 8px; border-radius: 12px; font-weight: 500;
+  &.positivo { background: rgba($color-success, 0.3); color: lighten($color-success, 30%); }
+  &.cupo { background: rgba($color-error, 0.3); color: lighten($color-error, 30%); }
+  &.neutro { background: rgba(255, 255, 255, 0.1); color: $color-text-secondary; }
+}
+
+.botCard.pending {
+  border-color: rgba($color-warning, 0.3); opacity: 0.85;
+  &:hover { border-color: $color-warning; }
+}
+
+.statusPending {
+  font-size: 11px; padding: 2px 8px; border-radius: 12px; font-weight: 600;
+  background: rgba($color-warning, 0.25); color: lighten($color-warning, 25%);
+}
+
+.pendingActions {
+  display: flex; gap: $spacing-sm; margin-top: $spacing-md;
+  padding-top: $spacing-sm; border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.deleteBtn {
+  padding: 4px 14px; border-radius: $radius-sm; font-size: 13px;
+  background: rgba($color-error, 0.15); color: lighten($color-error, 25%);
+  border: 1px solid rgba($color-error, 0.3); cursor: pointer;
+  &:hover { background: rgba($color-error, 0.3); }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+.botMeta {
+  display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: $color-text-secondary;
+  span { display: flex; align-items: center; gap: 6px; }
+}
+
+// ─── Detail Panel ───────────────────────────────────────────
+.detailOverlay {
+  position: fixed; top: 0; right: 0; bottom: 0; left: 0;
+  background: rgba(0, 0, 0, 0.5); z-index: $z-modal-backdrop;
+}
+
+.detailPanel {
+  position: fixed; top: 0; right: 0; bottom: 0;
+  width: min(720px, 90vw); background: $color-bg-primary;
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: $z-modal; overflow-y: auto;
+  padding: $spacing-lg;
+}
+
+.detailHeader {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: $spacing-xl;
+  h2 { margin: 0; font-size: 22px; color: $color-primary; }
+}
+
+.closeBtn {
+  background: none; border: 1px solid rgba(255, 255, 255, 0.15);
+  color: $color-text-secondary; padding: 6px 12px; border-radius: $radius-sm;
+  cursor: pointer; font-size: 14px;
+  &:hover { color: $color-text-primary; border-color: rgba(255, 255, 255, 0.3); }
+}
+
+// ─── Sections ───────────────────────────────────────────────
+.section {
+  margin-bottom: $spacing-xl;
+}
+
+.sectionTitle {
+  font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+  color: $color-primary; margin-bottom: $spacing-md;
+  padding-bottom: $spacing-sm; border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.fieldGroup {
+  display: flex; flex-direction: column; gap: $spacing-md;
+}
+
+.field {
+  display: flex; flex-direction: column; gap: 4px;
+}
+
+.fieldLabel {
+  font-size: 12px; font-weight: 500; color: $color-text-secondary; text-transform: uppercase; letter-spacing: 0.3px;
+}
+
+.fieldValue {
+  font-size: 14px; color: $color-text-primary; line-height: 1.5;
+}
+
+.fieldInput {
+  background: $color-bg-tertiary; border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: $radius-sm; padding: 8px 12px; color: $color-text-primary;
+  font-size: 14px; font-family: inherit; width: 100%;
+  &:focus { outline: none; border-color: $color-primary; }
+}
+
+.fieldTextarea {
+  @extend .fieldInput;
+  resize: vertical; min-height: 80px;
+}
+
+.fieldSelect {
+  @extend .fieldInput;
+  cursor: pointer;
+}
+
+.tagsInput {
+  display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px;
+}
+
+.tag {
+  font-size: 12px; padding: 3px 10px; border-radius: 12px;
+  background: rgba($color-primary, 0.15); color: $color-primary;
+}
+
+// ─── Emotions ───────────────────────────────────────────────
+.emotionList {
+  display: flex; flex-wrap: wrap; gap: $spacing-sm;
+}
+
+.emotionChip {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 12px; border-radius: 16px; font-size: 13px;
+  background: rgba(255, 255, 255, 0.06); color: $color-text-primary;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.emotionName {
+  min-width: 150px;
+  max-width: 150px;
+  display: block;
+  flex-grow: 0;
+  flex-shrink: 0;
+}
+
+.emotionIntensity {
+  min-width: 100px;
+  max-width: 100px;
+  height: 6px; border-radius: 3px; background: $color-bg-tertiary; width: 40px; overflow: hidden;
+  .bar { height: 100%; border-radius: 3px; background: $color-primary; }
+}
+
+// ─── Relationships ──────────────────────────────────────────
+.relationshipList {
+  display: flex; flex-direction: column; gap: $spacing-sm;
+}
+
+.relationshipCard {
+  background: $color-bg-tertiary; border-radius: $radius-sm;
+  padding: $spacing-md; cursor: pointer;
+  border: 1px solid transparent; transition: all $transition-fast;
+  &:hover { border-color: rgba(255, 255, 255, 0.15); }
+  &.expanded { border-color: $color-primary; }
+}
+
+.relationshipHeader {
+  display: flex; justify-content: space-between; align-items: center;
+}
+
+.relationshipName { font-size: 14px; font-weight: 600; color: $color-text-primary; }
+
+.relationshipStats {
+  display: flex; gap: $spacing-md; font-size: 12px; color: $color-text-secondary;
+}
+
+.statBar {
+  display: flex; align-items: center; gap: 4px;
+  .label { min-width: 60px; }
+  .track { width: 60px; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
+  .fill { height: 100%; border-radius: 2px; }
+  .trustFill { background: #4a9; }
+  .familiarityFill { background: $color-primary; }
+  .sentimentFill { background: $color-info; }
+}
+
+.relationshipMeta {
+  margin-top: $spacing-sm; font-size: 12px; color: $color-text-muted;
+  display: flex; gap: $spacing-lg;
+}
+
+.significantEvents {
+  margin-top: $spacing-sm; padding-top: $spacing-sm;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  font-size: 12px; color: $color-text-secondary;
+  ul { margin: 4px 0 0; padding-left: 18px; }
+  li { margin-bottom: 2px; }
+}
+
+// ─── Memories ───────────────────────────────────────────────
+.memoryFilters {
+  display: flex; gap: $spacing-sm; margin-bottom: $spacing-md;
+}
+
+.filterBtn {
+  padding: 4px 12px; border-radius: 14px; font-size: 12px; border: 1px solid rgba(255, 255, 255, 0.1);
+  background: transparent; color: $color-text-secondary; cursor: pointer;
+  transition: all $transition-fast;
+  &:hover { border-color: rgba(255, 255, 255, 0.2); }
+  &.active { background: rgba($color-primary, 0.15); color: $color-primary; border-color: $color-primary; }
+}
+
+.memoryList {
+  display: flex; flex-direction: column; gap: $spacing-sm;
+}
+
+.memoryItem {
+  padding: $spacing-sm $spacing-md; border-radius: $radius-sm;
+  background: $color-bg-tertiary; font-size: 13px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+
+.memorySummary { color: $color-text-primary; line-height: 1.4; }
+
+.memoryMeta {
+  display: flex; gap: $spacing-md; font-size: 11px; color: $color-text-muted;
+}
+
+.memoryType {
+  padding: 1px 6px; border-radius: 8px; font-size: 10px; font-weight: 500;
+  &.interaction { background: rgba($color-info, 0.2); color: lighten($color-info, 20%); }
+  &.observation { background: rgba($color-primary, 0.2); color: $color-primary; }
+  &.emotional { background: rgba($color-warning, 0.2); color: lighten($color-warning, 20%); }
+  &.event { background: rgba($color-success, 0.2); color: lighten($color-success, 20%); }
+}
+
+.memoryImportance {
+  &.high { color: lighten($color-warning, 20%); font-weight: 600; }
+}
+
+// ─── Action Bar ─────────────────────────────────────────────
+.actionBar {
+  display: flex; gap: $spacing-md; margin-top: $spacing-lg;
+  padding-top: $spacing-lg; border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.saveBtn {
+  padding: 8px 20px; border-radius: $radius-sm; font-size: 14px; font-weight: 500;
+  background: $color-primary; color: #fff; border: none; cursor: pointer;
+  transition: all $transition-fast;
+  &:hover { background: lighten($color-primary, 8%); }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+.cancelBtn {
+  @extend .closeBtn;
+}
+
+.loading { text-align: center; padding: $spacing-xl; color: $color-text-secondary; }
+.error { text-align: center; padding: $spacing-xl; color: $color-error; }
+.empty { text-align: center; padding: $spacing-xl; color: $color-text-muted; font-style: italic; }

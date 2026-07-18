@@ -28,6 +28,14 @@ export default [
       'react-hooks/use-memo': 'off',
       'react-hooks/immutability': 'off',
       'react/no-unescaped-entities': 'warn',
+      // Usare @/lib/logger, mai console.* direttamente (vedi 00-project-wide.md)
+      'no-console': 'error',
+    },
+  },
+  {
+    files: ['src/lib/logger.ts'],
+    rules: {
+      'no-console': 'off',
     },
   },
 ];

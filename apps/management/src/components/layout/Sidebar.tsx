@@ -43,7 +43,8 @@ const NAV_ITEMS: NavItem[] = [
       { key: 'characters-list', label: 'Lista Personaggi', href: '/characters/character-list', permission: 'characters.list' },
       { key: 'characters-pending', label: 'In Attesa Approvazione', href: '/characters/character-pending', permission: 'characters.approve' },
       { key: 'characters-faceclaims', label: 'Prestavolti', href: '/characters/character-faceclaims', permission: 'characters.approve' },
-      { key: 'characters-permissions', label: 'Permessi', href: '/characters/permissions', permission: 'characters.manage_permissions' }
+      { key: 'characters-permissions', label: 'Permessi', href: '/characters/permissions', permission: 'characters.manage_permissions' },
+      { key: 'characters-bots', label: 'Gestione Bot', href: '/characters/manage-bot', permission: 'characters.list' }
     ]
   },
   {
@@ -77,12 +78,22 @@ const NAV_ITEMS: NavItem[] = [
     ]
   },
   {
+    key: 'messages',
+    label: 'Messaggi',
+    icon: '✉️',
+    children: [
+      { key: 'messages-ongame', label: 'Posta OnGame', href: '/messages/ongame', permission: 'messaging.moderation.manage' },
+      { key: 'messages-offgame', label: 'Chat OffGame', href: '/messages/offgame', permission: 'messaging.moderation.manage' }
+    ]
+  },
+  {
     key: 'moderation',
     label: 'Moderazione',
     icon: '🛡️',
     children: [
       { key: 'chat-moderation', label: 'Moderazione Chat AI', href: '/moderation/chat-moderation', permission: 'moderation.chat_ai' },
-      { key: 'forum-moderation', label: 'Moderazione Forum AI', href: '/moderation/forum-moderation', permission: 'moderation.forum_ai' }
+      { key: 'forum-moderation', label: 'Moderazione Forum AI', href: '/moderation/forum-moderation', permission: 'moderation.forum_ai' },
+      { key: 'mail-moderation', label: 'Moderazione Messaggi AI', href: '/moderation/mail-moderation', permission: 'messaging.moderation.manage' }
     ]
   },
   {

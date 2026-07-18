@@ -1,0 +1,150 @@
+.compose {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--color-bg-primary);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 2px solid var(--color-border);
+
+  h2 {
+    margin: 0;
+    font-family: var(--font-heading);
+    font-size: 1.5rem;
+    color: var(--color-text-primary);
+  }
+}
+
+.form {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  label {
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+}
+
+.input,
+.select,
+.textarea {
+  padding: 0.75rem;
+  border: 2px solid var(--color-border);
+  background: var(--color-bg-secondary);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  color: var(--color-text-primary);
+  transition: border-color 0.2s ease;
+
+  &:focus {
+    outline: none;
+    border-color: var(--color-text-primary);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 200px;
+  line-height: 1.6;
+}
+
+.select {
+  cursor: pointer;
+}
+
+.recipientSelect {
+  padding: 1rem;
+  border: 2px dashed var(--color-border);
+  background: var(--color-bg-secondary);
+  min-height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.placeholder {
+  font-family: var(--font-body);
+  color: var(--color-text-secondary);
+  font-style: italic;
+  margin: 0;
+}
+
+.charCount {
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  text-align: right;
+}
+
+.error {
+  padding: 1rem;
+  background: rgba(220, 38, 38, 0.1);
+  border: 2px solid var(--color-danger);
+  color: var(--color-danger);
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding-top: 1rem;
+  border-top: 2px solid var(--color-border);
+}
+
+.cancelButton,
+.submitButton {
+  padding: 0.75rem 1.5rem;
+  border: 2px solid var(--color-text-primary);
+  font-family: var(--font-display);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.cancelButton {
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+
+  &:hover {
+    background: var(--color-border);
+  }
+}
+
+.submitButton {
+  background: var(--color-error);
+  color: var(--color-text-primary);
+
+  &:hover:not(:disabled) {
+    background: var(--color-text-primary);
+    color: var(----color-text-primary);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}

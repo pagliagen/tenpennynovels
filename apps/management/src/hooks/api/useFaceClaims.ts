@@ -17,6 +17,7 @@ import {
   type RejectFaceClaimRequest
 } from '@/lib/api/faceClaims';
 import { useNotificationStore } from '@/store/notificationStore';
+import { logger } from '@/lib/logger';
 
 /**
  * Query Keys
@@ -75,7 +76,7 @@ export function useDuplicateFaceClaims() {
  *     { characterId, notes: 'Twin characters approved' },
  *     {
  *       onSuccess: () => {
- *         console.log('Face claim approved!');
+ *         logger.info('Face claim approved!');
  *       }
  *     }
  *   );
@@ -95,7 +96,7 @@ export function useApproveFaceClaim() {
       useNotificationStore.getState().success('Prestavolto approvato con successo');
     },
     onError: (error: Error) => {
-      console.error('Error approving face claim:', error);
+      logger.error('Error approving face claim:', { error });
       useNotificationStore.getState().error(`Errore nell'approvazione: ${error.message}`);
     },
   });
@@ -117,7 +118,7 @@ export function useApproveFaceClaim() {
  *     { characterId, reason: 'Face claim already in use' },
  *     {
  *       onSuccess: () => {
- *         console.log('Face claim rejected!');
+ *         logger.info('Face claim rejected!');
  *       }
  *     }
  *   );
@@ -137,7 +138,7 @@ export function useRejectFaceClaim() {
       useNotificationStore.getState().success('Prestavolto rifiutato. Il personaggio dovrà scegliere un altro prestavolto.');
     },
     onError: (error: Error) => {
-      console.error('Error rejecting face claim:', error);
+      logger.error('Error rejecting face claim:', { error });
       useNotificationStore.getState().error(`Errore nel rifiuto: ${error.message}`);
     },
   });
@@ -183,7 +184,7 @@ export function useBulkApproveFaceClaims() {
       useNotificationStore.getState().success(`${characterIds.length} prestavolti approvati con successo`);
     },
     onError: (error: Error) => {
-      console.error('Error bulk approving face claims:', error);
+      logger.error('Error bulk approving face claims:', { error });
       useNotificationStore.getState().error(`Errore nell'approvazione multipla: ${error.message}`);
     },
   });

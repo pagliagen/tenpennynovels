@@ -5,14 +5,19 @@
       "mcp__puppeteer__puppeteer_screenshot",
       "mcp__puppeteer__puppeteer_click",
       "mcp__puppeteer__puppeteer_evaluate",
-      "mcp__puppeteer__puppeteer_fill"
+      "mcp__puppeteer__puppeteer_fill",
+      "Read(//services/unified-backend/src/modules/admin/routes/**)",
+      "Read(//services/unified-backend/src/modules/admin/controllers/**)",
+      "Read(//services/unified-backend/src/database/models/**)",
+      "Read(//apps/management/src/pages/moderation/**)"
     ],
     "additionalDirectories": [
       "/Users/gennaropaglia/.claude/skills",
       "/tmp",
       "/private/tmp",
       "/Users/gennaropaglia/Documents/SitiPersonali/tenpennynovels/.claude/context",
-      "/Users/gennaropaglia/.claude/projects/-Users-gennaropaglia-Documents-SitiPersonali-tenpennynovels/memory"
+      "/Users/gennaropaglia/.claude/projects/-Users-gennaropaglia-Documents-SitiPersonali-tenpennynovels/memory",
+      "/Users/gennaropaglia/.claude/plans"
     ]
   }
 }

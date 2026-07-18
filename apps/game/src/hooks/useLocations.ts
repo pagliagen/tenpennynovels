@@ -16,6 +16,7 @@ import { useEffect } from 'react';
 import { useWebSocket } from '@/contexts/WebSocketContext';
 import { useAuthStore } from '@/store/authStore';
 import { useLocationStore } from '@/store/locationStore';
+import { logger } from '@/lib/logger';
 
 /**
  * useLocations Hook
@@ -53,18 +54,14 @@ export function useLocations() {
     const unsubscribe = onGlobalEvent((event) => {
       // Admin updated location structure
       if (event.type === 'locations_structure_updated') {
-        console.log(
-          '🔔 [useLocations] Admin updated locations, invalidating cache and refetching'
-        );
+        logger.info('🔔 [useLocations] Admin updated locations, invalidating cache and refetching');
         store.invalidateCache();
         store.forceRefresh(selectedCharacter._id);
       }
 
       // Character gained access to new location
       if (event.type === 'location_access_granted') {
-        console.log(
-          '🔓 [useLocations] New location access granted, refetching locations'
-        );
+        logger.info('🔓 [useLocations] New location access granted, refetching locations');
         store.forceRefresh(selectedCharacter._id);
       }
     });

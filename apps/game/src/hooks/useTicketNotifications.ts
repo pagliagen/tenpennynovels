@@ -12,6 +12,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 
 import { useWebSocket } from '@/contexts/WebSocketContext';
+import { logger } from '@/lib/logger';
 
 /**
  * Hook to handle real-time ticket notifications
@@ -34,7 +35,7 @@ export function useTicketNotifications() {
 
       switch (event.type) {
         case 'ticket:staff_replied':
-          console.log(`[Ticket] Ticket ${event.data.ticketId} aggiornato: nuova risposta staff`, event.data);
+          logger.info(`[Ticket] Ticket ${event.data.ticketId} aggiornato: nuova risposta staff`, { data: event.data });
 
           // Invalidate ticket list
           queryClient.invalidateQueries({ queryKey: ['tickets', 'list'] });
@@ -49,7 +50,7 @@ export function useTicketNotifications() {
           break;
 
         case 'ticket:status_changed':
-          console.log(`[Ticket] Ticket ${event.data.ticketId} aggiornato: status → ${event.data.newStatus}`, event.data);
+          logger.info(`[Ticket] Ticket ${event.data.ticketId} aggiornato: status → ${event.data.newStatus}`, { data: event.data });
 
           // Invalidate ticket list to show updated status
           queryClient.invalidateQueries({ queryKey: ['tickets', 'list'] });
@@ -63,7 +64,7 @@ export function useTicketNotifications() {
           break;
 
         case 'ticket:closed':
-          console.log(`[Ticket] Ticket ${event.data.ticketId} aggiornato: CHIUSO`, event.data);
+          logger.info(`[Ticket] Ticket ${event.data.ticketId} aggiornato: CHIUSO`, { data: event.data });
 
           // Invalidate all ticket queries
           queryClient.invalidateQueries({ queryKey: ['tickets', 'list'] });
@@ -77,7 +78,7 @@ export function useTicketNotifications() {
           break;
 
         default:
-          console.log(`[Ticket] Evento ticket sconosciuto: ${event.type}`, event.data);
+          logger.info(`[Ticket] Evento ticket sconosciuto: ${event.type}`, { data: event.data });
 
           // Unknown ticket event - invalidate list as fallback
           queryClient.invalidateQueries({ queryKey: ['tickets', 'list'] });

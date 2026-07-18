@@ -15,6 +15,7 @@ import { useTableConfig } from '@/hooks/useTableConfig';
 import { useTableFilters } from '@/hooks/useTableFilters';
 import type { AdminTicketRow } from '@/types/api/AdminTicket';
 import styles from '@/styles/pages/TicketList.module.scss';
+import { logger } from '@/lib/logger';
 
 interface TicketListParams {
   page: number;
@@ -65,7 +66,7 @@ export default function CharacterApprovals() {
         break;
       default:
         if (process.env.NODE_ENV === 'development') {
-          console.warn('Unknown action:', action, ticket);
+          logger.warn('Unknown action:', { args: [action, ticket] });
         }
     }
   };

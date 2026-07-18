@@ -1,131 +1,236 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
+/**
+ * OnGameMessage Model
+ *
+ * Messaggi on-game (sistema postale in-character): lettere, telegrammi, note.
+ *
+ * Features:
+ * - Thread 1-to-1 (multi-destinatario crea messaggi separati)
+ * - Solo personaggi APPROVED possono inviare
+ * - Delivery config snapshot (immutabile a modifiche config runtime)
+ * - Consegna programmata via CRON (scheduledDelivery)
+ * - Soft delete per-utente (sender/recipient indipendenti)
+ * - Costo in crediti + ritardi consegna configurabili
+ */
+
 export interface IOnGameMessage extends Document {
-  messageType: string; // Reference to postal-system.json configuration
-  from: Schema.Types.ObjectId; // Character ID
-  to: Schema.Types.ObjectId[]; // Recipient Character IDs
+  onGameThreadId: mongoose.Types.ObjectId; // Riferimento a OnGameThread
+  senderId: mongoose.Types.ObjectId; // Character (sempre approved)
+  recipientId: mongoose.Types.ObjectId; // Character (sempre approved)
+
+  messageType: 'letter' | 'note' | 'telegram' | 'dispatch' | 'flyer';
   subject: string;
   content: string;
 
-  // Postal System
+  // Snapshot configurazione al momento invio (immutabile)
+  deliveryConfig: {
+    deliveryDelay: number; // Millisecondi
+    cost: number; // Crediti
+    canReply: boolean;
+    displayName: string; // Nome tipo messaggio per UI
+  };
+
   sentAt: Date;
-  scheduledDelivery?: Date; // For cron job processing
+  scheduledDelivery?: Date; // Per CRON job
   deliveredAt?: Date;
 
-  // Delivery Configuration
-  deliveryTarget: {
-    type: 'character' | 'residence';
-    requiresKnownResidence: boolean;
+  // Soft delete per-utente
+  deletedBy: {
+    sender?: Date;
+    recipient?: Date;
   };
-  sentFromLocation: Schema.Types.ObjectId; // Location where message was sent
 
-  // Costs and Properties
-  postageCharged: number; // in pence
-  isExpress: boolean;
-  sealed: boolean;
+  replyTo?: mongoose.Types.ObjectId; // Riferimento a messaggio originale
 
-  // Message Chain
-  replyTo?: Schema.Types.ObjectId; // Reference to original message
-  conversationId?: string; // Group related messages
-  
-  // System fields
+  // Moderation fields (AI toxicity check)
+  moderationScore?: number;
+  moderationLabel?: string;
+  moderationModel?: string;
+  moderationProcessedAt?: Date;
+
   createdAt: Date;
   updatedAt: Date;
+
+  // Methods
+  markDelivered(): void;
+  markDeletedBySender(): void;
+  markDeletedByRecipient(): void;
 }
 
-const OnGameMessageSchema = new Schema<IOnGameMessage>({
-  messageType: {
-    type: String,
-    required: true,
-    enum: ['note', 'telegram', 'letter', 'express_letter', 'postcard', 'invitation', 'official_document', 'diary']
-  },
-  from: {
-    type: Schema.Types.ObjectId,
-    ref: 'Character',
-    required: true
-  },
-  to: [{
-    type: Schema.Types.ObjectId,
-    ref: 'Character',
-    required: true
-  }],
-  subject: {
-    type: String,
-    required: true,
-    maxlength: 200
-  },
-  content: {
-    type: String,
-    required: true,
-    maxlength: 10000 // Max for diary
-  },
-  
-  // Postal System
-  sentAt: {
-    type: Date,
-    default: Date.now
-  },
-  scheduledDelivery: {
-    type: Date
-  },
-  deliveredAt: {
-    type: Date
-  },
-  
-  // Delivery Configuration
-  deliveryTarget: {
-    type: {
-      type: String,
-      enum: ['character', 'residence'],
-      required: true
+const OnGameMessageSchema = new Schema<IOnGameMessage>(
+  {
+    onGameThreadId: {
+      type: Schema.Types.ObjectId,
+      ref: 'OnGameThread',
+      required: true,
+      index: true
     },
-    requiresKnownResidence: {
-      type: Boolean,
-      default: false
+    senderId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Character',
+      required: true,
+      index: true
+    },
+    recipientId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Character',
+      required: true,
+      index: true
+    },
+    messageType: {
+      type: String,
+      required: true,
+      enum: ['letter', 'note', 'telegram', 'dispatch', 'flyer']
+    },
+    subject: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 200
+    },
+    content: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 10000
+    },
+    deliveryConfig: {
+      deliveryDelay: {
+        type: Number,
+        required: true,
+        min: 0
+      },
+      cost: {
+        type: Number,
+        required: true,
+        min: 0
+      },
+      canReply: {
+        type: Boolean,
+        required: true
+      },
+      displayName: {
+        type: String,
+        required: true,
+        trim: true
+      }
+    },
+    sentAt: {
+      type: Date,
+      required: true,
+      default: Date.now,
+      index: true
+    },
+    scheduledDelivery: {
+      type: Date,
+      sparse: true // Index sparse per CRON query
+    },
+    deliveredAt: {
+      type: Date
+    },
+    deletedBy: {
+      sender: {
+        type: Date
+      },
+      recipient: {
+        type: Date
+      }
+    },
+    replyTo: {
+      type: Schema.Types.ObjectId,
+      ref: 'OnGameMessage'
+    },
+
+    // Moderation fields (AI toxicity check)
+    moderationScore: {
+      type: Number,
+      min: 0,
+      max: 1
+    },
+    moderationLabel: {
+      type: String,
+      enum: ['toxic', 'not-toxic']
+    },
+    moderationModel: {
+      type: String
+    },
+    moderationProcessedAt: {
+      type: Date
     }
   },
-  sentFromLocation: {
-    type: Schema.Types.ObjectId,
-    ref: 'Location',
-    required: true
-  },
-  
-  // Costs and Properties
-  postageCharged: {
-    type: Number,
-    min: 0,
-    default: 0
-  },
-  isExpress: {
-    type: Boolean,
-    default: false
-  },
-  sealed: {
-    type: Boolean,
-    default: false
-  },
-  
-  // Message Chain
-  replyTo: {
-    type: Schema.Types.ObjectId,
-    ref: 'OnGameMessage'
-  },
-  conversationId: {
-    type: String
+  {
+    timestamps: true,
+    collection: 'ongame_messages'
   }
-}, {
-  timestamps: true
+);
+
+// Index composto per query thread messaggi (ordinati per data)
+OnGameMessageSchema.index({ onGameThreadId: 1, sentAt: -1 });
+
+// Index sparse per CRON job consegna programmata
+OnGameMessageSchema.index(
+  { scheduledDelivery: 1 },
+  {
+    sparse: true,
+    partialFilterExpression: { scheduledDelivery: { $exists: true } }
+  }
+);
+
+// Index per query inbox (messaggi ricevuti non cancellati)
+OnGameMessageSchema.index({ recipientId: 1, 'deletedBy.recipient': 1, deliveredAt: -1 });
+
+// Index per query sent (messaggi inviati non cancellati)
+OnGameMessageSchema.index({ senderId: 1, 'deletedBy.sender': 1, sentAt: -1 });
+
+// Virtual per verificare se consegnato
+OnGameMessageSchema.virtual('isDelivered').get(function(this: IOnGameMessage) {
+  return !!this.deliveredAt;
 });
 
-// Indexes for efficient queries
-OnGameMessageSchema.index({ from: 1, sentAt: -1 });
-OnGameMessageSchema.index({ to: 1, deliveredAt: -1 });
-OnGameMessageSchema.index({ scheduledDelivery: 1 }, { 
-  partialFilterExpression: { scheduledDelivery: { $exists: true } } 
-});
-OnGameMessageSchema.index({ messageType: 1 });
-OnGameMessageSchema.index({ conversationId: 1 }, { 
-  partialFilterExpression: { conversationId: { $exists: true } } 
+// Virtual per verificare se cancellato da sender
+OnGameMessageSchema.virtual('isDeletedBySender').get(function(this: IOnGameMessage) {
+  return !!this.deletedBy?.sender;
 });
 
-export const OnGameMessage = mongoose.models.OnGameMessage || mongoose.model<IOnGameMessage>('OnGameMessage', OnGameMessageSchema);
+// Virtual per verificare se cancellato da recipient
+OnGameMessageSchema.virtual('isDeletedByRecipient').get(function(this: IOnGameMessage) {
+  return !!this.deletedBy?.recipient;
+});
+
+// Virtual per verificare se cancellato da entrambi (pronto per backup)
+OnGameMessageSchema.virtual('isDeletedByBoth').get(function(this: IOnGameMessage) {
+  return !!(this.deletedBy?.sender && this.deletedBy?.recipient);
+});
+
+// Method per marcare come cancellato da sender
+OnGameMessageSchema.methods.markDeletedBySender = function(
+  this: IOnGameMessage
+): void {
+  if (!this.deletedBy) {
+    this.deletedBy = {};
+  }
+  this.deletedBy.sender = new Date();
+};
+
+// Method per marcare come cancellato da recipient
+OnGameMessageSchema.methods.markDeletedByRecipient = function(
+  this: IOnGameMessage
+): void {
+  if (!this.deletedBy) {
+    this.deletedBy = {};
+  }
+  this.deletedBy.recipient = new Date();
+};
+
+// Method per marcare come consegnato
+OnGameMessageSchema.methods.markDelivered = function(
+  this: IOnGameMessage
+): void {
+  this.deliveredAt = new Date();
+};
+
+export const OnGameMessage = mongoose.model<IOnGameMessage>(
+  'OnGameMessage',
+  OnGameMessageSchema
+);

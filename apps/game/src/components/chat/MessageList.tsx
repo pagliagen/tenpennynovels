@@ -17,6 +17,7 @@ import styles from '@/styles/components/chat/MessageList.module.scss';
 import type { ChatMessage } from '@/types/chat';
 
 import { MessageItem } from './MessageItem';
+import { logger } from '@/lib/logger';
 
 /**
  * Message List Props
@@ -178,7 +179,7 @@ export function MessageList({ messages, isLoading, currentCharacterId, isMaster 
         scrollToBottom('smooth');
       } else {
         // User scrolled up → do NOT auto-scroll (would lose reading position)
-        console.log('📜 New message arrived, but user scrolled up - not auto-scrolling');
+        logger.info('📜 New message arrived, but user scrolled up - not auto-scrolling');
       }
     }
 

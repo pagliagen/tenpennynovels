@@ -12,7 +12,7 @@ export function getOllamaClient(): Ollama {
 }
 
 export function getModel(): string {
-  return process.env.OLLAMA_MODEL || 'mistral:7b-instruct';
+  return process.env.OLLAMA_MODEL || 'gemma3:12b';
 }
 
 export async function warmupModel(): Promise<void> {

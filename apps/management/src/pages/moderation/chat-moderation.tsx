@@ -57,6 +57,7 @@ export default function ChatModerationPage() {
   }, [addNotification]);
 
   const [page, setPage] = useState(1);
+  const [sourceFilter, setSourceFilter] = useState<'chat' | 'forum' | 'ongame_message' | 'offgame_message'>('chat');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [minScore, setMinScore] = useState<string>('');
   const [reviewingAlert, setReviewingAlert] = useState<ModerationAlertRecord | null>(null);
@@ -67,13 +68,13 @@ export default function ChatModerationPage() {
   const filters = {
     page,
     limit: 20,
-    source: 'chat' as const,
+    source: sourceFilter,
     ...(statusFilter && { status: statusFilter }),
     ...(minScore && { minScore: parseFloat(minScore) }),
   };
 
   const { data, isLoading, error } = useAutoModerationAlerts(filters);
-  const { data: stats } = useAutoModerationStats('chat');
+  const { data: stats } = useAutoModerationStats(sourceFilter);
   const reviewMutation = useReviewAlert();
 
   const openReview = (alert: ModerationAlertRecord) => {
@@ -127,17 +128,24 @@ export default function ChatModerationPage() {
   const alerts = data?.list || [];
   const pagination = data?.pagination;
 
+  const sourceLabels: Record<string, string> = {
+    chat: 'Chat',
+    forum: 'Forum',
+    ongame_message: 'Mail OnGame',
+    offgame_message: 'Mail OffGame',
+  };
+
   return (
     <ManagementLayout>
       <Head>
-        <title>Ten Penny Novels | Moderazione Chat AI</title>
+        <title>Ten Penny Novels | Moderazione AI</title>
       </Head>
 
       <div className={styles.container}>
         <header className={styles.header}>
           <div>
-            <h1>Moderazione Chat AI</h1>
-            <p>Messaggi chat flaggati automaticamente dal sistema di moderazione AI</p>
+            <h1>Moderazione AI</h1>
+            <p>Contenuti flaggati automaticamente dal sistema di moderazione AI</p>
           </div>
         </header>
 
@@ -164,6 +172,15 @@ export default function ChatModerationPage() {
 
         <div className={styles.filters}>
           <label>
+            Tipo
+            <select value={sourceFilter} onChange={(e) => { setSourceFilter(e.target.value as any); setPage(1); }}>
+              <option value="chat">Chat</option>
+              <option value="forum">Forum</option>
+              <option value="ongame_message">Mail OnGame</option>
+              <option value="offgame_message">Mail OffGame</option>
+            </select>
+          </label>
+          <label>
             Stato
             <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}>
               <option value="">Tutti</option>
@@ -188,8 +205,18 @@ export default function ChatModerationPage() {
                 <thead>
                   <tr>
                     <th>Data</th>
-                    <th>Personaggio</th>
-                    <th>Location</th>
+                    {(sourceFilter === 'ongame_message' || sourceFilter === 'offgame_message') ? (
+                      <>
+                        <th>Mittente</th>
+                        {sourceFilter === 'ongame_message' && <th>Destinatario</th>}
+                        {sourceFilter === 'ongame_message' && <th>Oggetto</th>}
+                      </>
+                    ) : (
+                      <>
+                        <th>Personaggio</th>
+                        <th>Location</th>
+                      </>
+                    )}
                     <th>Score</th>
                     <th>Anteprima</th>
                     <th>Stato</th>
@@ -200,16 +227,26 @@ export default function ChatModerationPage() {
                   {alerts.map((alert) => (
                     <tr key={alert._id}>
                       <td>{new Date(alert.createdAt).toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</td>
-                      <td>{alert.characterName}</td>
-                      <td>
-                        <button
-                          className={styles.locationLink}
-                          onClick={() => copyLocationUrl(alert.locationSlug)}
-                          title="Copia URL location"
-                        >
-                          {alert.locationName || alert.locationId}
-                        </button>
-                      </td>
+                      {(sourceFilter === 'ongame_message' || sourceFilter === 'offgame_message') ? (
+                        <>
+                          <td>{alert.mailSenderName || alert.characterName}</td>
+                          {sourceFilter === 'ongame_message' && <td>{alert.mailRecipientName || '-'}</td>}
+                          {sourceFilter === 'ongame_message' && <td><div className={styles.contentPreview} title={alert.mailSubject}>{alert.mailSubject}</div></td>}
+                        </>
+                      ) : (
+                        <>
+                          <td>{alert.characterName}</td>
+                          <td>
+                            <button
+                              className={styles.locationLink}
+                              onClick={() => copyLocationUrl(alert.locationSlug)}
+                              title="Copia URL location"
+                            >
+                              {alert.locationName || alert.locationId}
+                            </button>
+                          </td>
+                        </>
+                      )}
                       <td><ScoreDisplay score={alert.toxicityScore} /></td>
                       <td><div className={styles.contentPreview} title={alert.content}>{alert.content}</div></td>
                       <td><StatusBadge status={alert.status} /></td>
@@ -250,25 +287,59 @@ export default function ChatModerationPage() {
       {reviewingAlert && (
         <div className={styles.modal} onClick={() => setReviewingAlert(null)}>
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-            <h3>Revisione Alert Chat</h3>
+            <h3>Revisione Alert {sourceLabels[reviewingAlert.source] || reviewingAlert.source}</h3>
 
-            <div className={styles.modalField}>
-              <label>Personaggio</label>
-              <div className={styles.modalValue}>{reviewingAlert.characterName}</div>
-            </div>
+            {(reviewingAlert.source === 'ongame_message' || reviewingAlert.source === 'offgame_message') ? (
+              <>
+                <div className={styles.modalField}>
+                  <label>Mittente</label>
+                  <div className={styles.modalValue}>{reviewingAlert.mailSenderName || reviewingAlert.characterName}</div>
+                </div>
 
-            <div className={styles.modalField}>
-              <label>Location</label>
-              <div className={styles.modalValue}>
-                <button
-                  className={styles.locationLink}
-                  onClick={() => copyLocationUrl(reviewingAlert.locationSlug)}
-                  title="Copia URL location"
-                >
-                  {reviewingAlert.locationName || reviewingAlert.locationId}
-                </button>
-              </div>
-            </div>
+                {reviewingAlert.source === 'ongame_message' && (
+                  <>
+                    <div className={styles.modalField}>
+                      <label>Destinatario</label>
+                      <div className={styles.modalValue}>{reviewingAlert.mailRecipientName || '-'}</div>
+                    </div>
+
+                    <div className={styles.modalField}>
+                      <label>Oggetto</label>
+                      <div className={styles.modalValue}>{reviewingAlert.mailSubject || '-'}</div>
+                    </div>
+                  </>
+                )}
+
+                <div className={styles.modalField}>
+                  <label>Thread ID</label>
+                  <div className={styles.modalValue}>
+                    {reviewingAlert.source === 'ongame_message'
+                      ? reviewingAlert.onGameThreadId
+                      : reviewingAlert.offGameThreadId}
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className={styles.modalField}>
+                  <label>Personaggio</label>
+                  <div className={styles.modalValue}>{reviewingAlert.characterName}</div>
+                </div>
+
+                <div className={styles.modalField}>
+                  <label>Location</label>
+                  <div className={styles.modalValue}>
+                    <button
+                      className={styles.locationLink}
+                      onClick={() => copyLocationUrl(reviewingAlert.locationSlug)}
+                      title="Copia URL location"
+                    >
+                      {reviewingAlert.locationName || reviewingAlert.locationId}
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
 
             <div className={styles.modalField}>
               <label>Score tossicita</label>

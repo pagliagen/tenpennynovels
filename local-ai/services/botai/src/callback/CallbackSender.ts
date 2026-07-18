@@ -37,10 +37,18 @@ interface CallbackConfig {
  */
 export async function sendProgressCallback(config: CallbackConfig, requestId: string, message: string): Promise<void> {
   if (!isAllowedCallbackUrl(config.url)) return;
+
+  let validatedUrl: URL;
+  try {
+    validatedUrl = new URL(config.url);
+  } catch {
+    return; // Invalid URL, skip callback
+  }
+
   try {
     await axios({
       method: config.method,
-      url: config.url,
+      url: validatedUrl.href,
       data: { requestId, type: 'progress', message },
       headers: config.headers,
       timeout: 5000,
@@ -51,18 +59,32 @@ export async function sendProgressCallback(config: CallbackConfig, requestId: st
 }
 
 export async function sendCallback(config: CallbackConfig, payload: any): Promise<boolean> {
+  // Validate URL format and host to prevent SSRF attacks
   if (!isAllowedCallbackUrl(config.url)) {
     logger.error(`Callback URL rejected (host not in allowlist): ${config.url}`);
     return false;
   }
 
-  logger.info(`Sending callback to ${config.url}`);
+  let validatedUrl: URL;
+  try {
+    validatedUrl = new URL(config.url);
+    // Re-validate hostname after parsing to satisfy taint tracking
+    if (!ALLOWED_HOSTS.has(validatedUrl.hostname.toLowerCase())) {
+      logger.error(`Callback hostname rejected (not in allowlist): ${validatedUrl.hostname}`);
+      return false;
+    }
+  } catch (error) {
+    logger.error(`Callback URL is malformed: ${config.url}`);
+    return false;
+  }
+
+  logger.info(`Sending callback to ${validatedUrl.href}`);
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {
       const response = await axios({
         method: config.method,
-        url: config.url,
+        url: validatedUrl.href,
         data: payload,
         headers: config.headers,
         timeout: 10000,

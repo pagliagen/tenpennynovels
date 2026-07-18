@@ -154,7 +154,7 @@ export class TicketController {
 
       // Format response
       const formattedTickets = tickets.map(ticket => ({
-        id: ticket._id.toString(),
+        _id: ticket._id.toString(),
         title: ticket.title,
         category: ticket.category,
         categoryLabel: TICKET_CATEGORIES[ticket.category as TicketCategory] || ticket.category,
@@ -338,7 +338,7 @@ export class TicketController {
       res.status(201).json(createResponse(
         {
           ticket: {
-            id: ticket._id.toString(),
+            _id: ticket._id.toString(),
             title: ticket.title,
             category: ticket.category,
             categoryLabel: TICKET_CATEGORIES[ticket.category as TicketCategory],
@@ -438,7 +438,7 @@ export class TicketController {
 
       // Format ticket details
       const ticketDetails = {
-        id: ticket._id.toString(),
+        _id: ticket._id.toString(),
         title: ticket.title,
         category: ticket.category,
         categoryLabel: TICKET_CATEGORIES[ticket.category as TicketCategory] || ticket.category,
@@ -590,7 +590,7 @@ export class TicketController {
       res.json(updateResponse(
         {
           ticket: {
-            id: ticket._id.toString(),
+            _id: ticket._id.toString(),
             status: ticket.status
           }
         },
@@ -728,7 +728,7 @@ export class TicketController {
       res.json(updateResponse(
         {
           ticket: {
-            id: ticket._id.toString(),
+            _id: ticket._id.toString(),
             status: ticket.status,
             closedAt: ticket.closedAt
           }
@@ -880,7 +880,7 @@ export class TicketController {
       res.status(201).json(createResponse(
         {
           message: {
-            id: message._id.toString(),
+            _id: message._id.toString(),
             content: message.content,
             sender: message.sender,
             sentAt: message.sentAt,
@@ -961,7 +961,7 @@ export class TicketController {
 
       // Format messages
       const formattedMessages = messages.map(msg => ({
-        id: msg._id.toString(),
+        _id: msg._id.toString(),
         content: msg.content,
         sender: msg.sender,
         sentAt: msg.sentAt,

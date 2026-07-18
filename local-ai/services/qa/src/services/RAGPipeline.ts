@@ -67,7 +67,7 @@ Rispondi in ${lang}, in 2-4 frasi sintetiche ma complete.`;
     answer,
     sources,
     metadata: {
-      model: process.env.OLLAMA_MODEL || 'mistral:7b-instruct',
+      model: process.env.OLLAMA_MODEL || 'qwen3:8b',
       tokensUsed,
     },
   };

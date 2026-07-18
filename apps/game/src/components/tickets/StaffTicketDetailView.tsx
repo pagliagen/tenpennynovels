@@ -17,6 +17,7 @@ import { api } from '@/lib/api/client';
 import styles from '@/styles/components/tickets/StaffTicketDetailView.module.scss';
 
 import { TicketStatusBadge } from './TicketStatusBadge';
+import { logger } from '@/lib/logger';
 
 
 interface StaffTicketDetailViewProps {
@@ -75,7 +76,7 @@ export function StaffTicketDetailView({ ticketId, onBack }: StaffTicketDetailVie
     try {
       await replyMutation.mutateAsync(replyContent.trim());
     } catch (error) {
-      console.error('Failed to send message:', error);
+      logger.error('Failed to send message:', { error });
     }
   };
 
@@ -83,7 +84,7 @@ export function StaffTicketDetailView({ ticketId, onBack }: StaffTicketDetailVie
     try {
       await takeMutation.mutateAsync();
     } catch (error) {
-      console.error('Failed to take ticket:', error);
+      logger.error('Failed to take ticket:', { error });
     }
   };
 
@@ -167,7 +168,7 @@ export function StaffTicketDetailView({ ticketId, onBack }: StaffTicketDetailVie
         )}
 
         {!isLoading && messages.map((message) => (
-          <MessageBubble key={message.id} message={message} />
+          <MessageBubble key={message._id} message={message} />
         ))}
 
         <div ref={messagesEndRef} />

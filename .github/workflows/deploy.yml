@@ -2,9 +2,9 @@ name: Deploy to OVH VPS
 
 on:
   pull_request:
-    branches: [master]
+    branches: [master, develop]
   push:
-    branches: [master]
+    branches: [master, develop]
   workflow_dispatch:
     inputs:
       skip_health_check:
@@ -41,7 +41,9 @@ jobs:
     name: Deploy to Production
     runs-on: ubuntu-latest
     needs: build-check
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    # CRITICAL: deploy SOLO da master, anche per workflow_dispatch manuale.
+    # develop esegue solo build-check (vedi 04-ci-cd.md).
+    if: github.ref == 'refs/heads/master' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
 
     # Use production environment
     environment:

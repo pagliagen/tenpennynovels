@@ -27,6 +27,17 @@ export class TurnManager {
     locationId: string
   ): Promise<TurnInfo | null> {
     try {
+      // Validate IDs
+      if (typeof sessionId === 'string' && !Types.ObjectId.isValid(sessionId)) {
+        logger.error(`[TurnManager] Invalid session ID: ${sessionId}`);
+        return null;
+      }
+
+      if (!Types.ObjectId.isValid(locationId)) {
+        logger.error(`[TurnManager] Invalid location ID: ${locationId}`);
+        return null;
+      }
+
       const session = await GamingSession.findById(sessionId);
       if (!session) {
         logger.error(`[TurnManager] Session ${sessionId} not found`);
@@ -89,12 +100,25 @@ export class TurnManager {
    */
   async getCurrentTurnInfo(sessionId: Types.ObjectId | string): Promise<TurnInfo | null> {
     try {
+      // Validate session ID
+      if (typeof sessionId === 'string' && !Types.ObjectId.isValid(sessionId)) {
+        logger.error(`[TurnManager] Invalid session ID: ${sessionId}`);
+        return null;
+      }
+
       const session = await GamingSession.findById(sessionId);
       if (!session || !session.turnOrder || session.turnOrder.length === 0) {
         return null;
       }
 
       const currentCharacterId = session.turnOrder[session.currentTurnIndex || 0];
+
+      // Validate character ID
+      if (currentCharacterId && !Types.ObjectId.isValid(currentCharacterId)) {
+        logger.error(`[TurnManager] Invalid character ID: ${currentCharacterId}`);
+        return null;
+      }
+
       const currentCharacter = await Character.findById(currentCharacterId);
 
       if (!currentCharacter) {
@@ -130,6 +154,12 @@ export class TurnManager {
    */
   async advanceTurn(sessionId: Types.ObjectId | string): Promise<TurnInfo | null> {
     try {
+      // Validate session ID
+      if (typeof sessionId === 'string' && !Types.ObjectId.isValid(sessionId)) {
+        logger.error(`[TurnManager] Invalid session ID: ${sessionId}`);
+        return null;
+      }
+
       const session = await GamingSession.findById(sessionId);
       if (!session || !session.turnOrder || session.turnOrder.length === 0) {
         logger.warn(`[TurnManager] Cannot advance turn: session has no turn order`);
@@ -143,6 +173,13 @@ export class TurnManager {
 
       // Determine if it's bot turn
       const nextCharacterId = session.turnOrder[nextIndex];
+
+      // Validate character ID
+      if (nextCharacterId && !Types.ObjectId.isValid(nextCharacterId)) {
+        logger.error(`[TurnManager] Invalid character ID: ${nextCharacterId}`);
+        return null;
+      }
+
       const nextCharacter = await Character.findById(nextCharacterId);
 
       if (nextCharacter?.bot_id) {
@@ -204,6 +241,17 @@ export class TurnManager {
     characterId: Types.ObjectId
   ): Promise<void> {
     try {
+      // Validate IDs
+      if (typeof sessionId === 'string' && !Types.ObjectId.isValid(sessionId)) {
+        logger.error(`[TurnManager] Invalid session ID: ${sessionId}`);
+        return;
+      }
+
+      if (!Types.ObjectId.isValid(characterId)) {
+        logger.error(`[TurnManager] Invalid character ID: ${characterId}`);
+        return;
+      }
+
       const session = await GamingSession.findById(sessionId);
       if (!session) return;
 
@@ -254,6 +302,17 @@ export class TurnManager {
     characterId: Types.ObjectId
   ): Promise<void> {
     try {
+      // Validate IDs
+      if (typeof sessionId === 'string' && !Types.ObjectId.isValid(sessionId)) {
+        logger.error(`[TurnManager] Invalid session ID: ${sessionId}`);
+        return;
+      }
+
+      if (!Types.ObjectId.isValid(characterId)) {
+        logger.error(`[TurnManager] Invalid character ID: ${characterId}`);
+        return;
+      }
+
       const session = await GamingSession.findById(sessionId);
       if (!session || !session.turnOrder) return;
 
@@ -290,7 +349,15 @@ export class TurnManager {
    */
   private async findBotIndexInTurnOrder(turnOrder: Types.ObjectId[]): Promise<number> {
     for (let i = 0; i < turnOrder.length; i++) {
-      const char = await Character.findById(turnOrder[i]);
+      const characterId = turnOrder[i];
+
+      // Validate character ID
+      if (!Types.ObjectId.isValid(characterId)) {
+        logger.error(`[TurnManager] Invalid character ID in turn order: ${characterId}`);
+        continue;
+      }
+
+      const char = await Character.findById(characterId);
       if (char?.bot_id) {
         return i;
       }

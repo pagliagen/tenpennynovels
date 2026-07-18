@@ -4,7 +4,7 @@ import { moderationAPI, type ModerationAlertFilters } from '@/lib/api/moderation
 export const moderationKeys = {
   all: ['moderationAlerts'] as const,
   list: (filters: ModerationAlertFilters) => ['moderationAlerts', 'list', filters] as const,
-  stats: (source?: 'chat' | 'forum') => ['moderationAlerts', 'stats', source] as const,
+  stats: (source?: 'chat' | 'forum' | 'ongame_message' | 'offgame_message') => ['moderationAlerts', 'stats', source] as const,
   detail: (id: string) => ['moderationAlerts', 'detail', id] as const,
 };
 
@@ -16,7 +16,7 @@ export function useAutoModerationAlerts(filters: ModerationAlertFilters = {}) {
   });
 }
 
-export function useAutoModerationStats(source?: 'chat' | 'forum') {
+export function useAutoModerationStats(source?: 'chat' | 'forum' | 'ongame_message' | 'offgame_message') {
   return useQuery({
     queryKey: moderationKeys.stats(source),
     queryFn: () => moderationAPI.getStats(source),

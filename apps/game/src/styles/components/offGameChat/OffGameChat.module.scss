@@ -392,6 +392,7 @@ $border-color: #2a3942; // Subtle borders
     display: flex;
     gap: 12px;
     margin-top: 16px;
+    background: $bg-secondary;
 
     button {
       flex: 1;
@@ -401,6 +402,7 @@ $border-color: #2a3942; // Subtle borders
       font-size: 15px;
       cursor: pointer;
       transition: background 0.2s;
+      color: $text-primary;
 
       &.cancel {
         background: $bg-secondary;
@@ -436,9 +438,6 @@ $border-color: #2a3942; // Subtle borders
 .loading,
 .error,
 .empty {
-  display: flex;
-  align-items: center;
-  justify-content: center;
   padding: 32px;
   text-align: center;
   color: $text-secondary;

@@ -17,6 +17,7 @@ import { persist } from 'zustand/middleware';
 
 import { api } from '@/lib/api/client';
 import type { AccessibleLocation, LocationsResponse } from '@/types/location';
+import { logger } from '@/lib/logger';
 
 /**
  * Cache Configuration
@@ -150,14 +151,12 @@ export const useLocationStore = create<LocationStore>()(
 
         if (isCacheValid) {
           const cacheAgeMinutes = Math.round((now - state.lastFetched) / 1000 / 60);
-          console.log(
-            `✅ Using cached locations (age: ${cacheAgeMinutes} min, ${state.locations.length} locations)`
-          );
+          logger.info(`✅ Using cached locations (age: ${cacheAgeMinutes} min, ${state.locations.length} locations)`);
           return;
         }
 
         // Cache invalid, fetch fresh data
-        console.log('🔄 Cache invalid, fetching fresh locations');
+        logger.info('🔄 Cache invalid, fetching fresh locations');
         await get().forceRefresh(characterId);
       },
 
@@ -188,11 +187,9 @@ export const useLocationStore = create<LocationStore>()(
             error: null,
           });
 
-          console.log(
-            `✅ Locations refreshed: ${enrichedLocations.length} total, ${tree.length} root nodes`
-          );
+          logger.info(`✅ Locations refreshed: ${enrichedLocations.length} total, ${tree.length} root nodes`);
         } catch (error) {
-          console.error('❌ Failed to fetch locations:', error);
+          logger.error('❌ Failed to fetch locations:', { error });
           set({
             isLoading: false,
             error: error instanceof Error ? error.message : 'Failed to fetch locations',
@@ -207,7 +204,7 @@ export const useLocationStore = create<LocationStore>()(
        * Used when admin updates locations via WebSocket.
        */
       invalidateCache: () => {
-        console.log('❌ Location cache invalidated');
+        logger.info('❌ Location cache invalidated');
         set({
           locations: [],
           locationTree: [],

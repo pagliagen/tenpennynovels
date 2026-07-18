@@ -28,6 +28,7 @@ import type { CharacterCreationConfig } from '@/lib/api/character';
 import { characterApi } from '@/lib/api/character';
 import type { DamageBonusEntry } from '@/lib/api/gameConfig';
 import { gameConfigApi } from '@/lib/api/gameConfig';
+import { logger } from '@/lib/logger';
 import type {
   WizardData,
   WizardBasicInfo,
@@ -319,7 +320,7 @@ export const useWizardStore = create<WizardStore>()(
        */
       setCurrentStep: (step) => {
         if (step < 1 || step > 6) {
-          console.warn(`[WizardStore] Invalid step: ${step}, must be 1-6`);
+          logger.warn(`[WizardStore] Invalid step: ${step}, must be 1-6`);
           return;
         }
         set({ currentStep: step });
@@ -510,7 +511,7 @@ export const useWizardStore = create<WizardStore>()(
           // Re-derive stats now that the table is loaded
           get().recalculateDerivedStats();
         } catch (error) {
-          console.warn('[WizardStore] Failed to fetch bonus damage table, using fallback', error);
+          logger.warn('[WizardStore] Failed to fetch bonus damage table, using fallback', { error });
           set({ _bonusDamageTableLoading: false });
         }
       },
@@ -520,7 +521,7 @@ export const useWizardStore = create<WizardStore>()(
           const config = await characterApi.getCreationConfig();
           set({ creationConfig: config });
         } catch (error) {
-          console.error('[WizardStore] Failed to load creation config:', error);
+          logger.error('[WizardStore] Failed to load creation config:', { error });
           // Fallback to default values if API fails
           set({
             creationConfig: {
@@ -665,7 +666,7 @@ export const useWizardStore = create<WizardStore>()(
        */
       autoAssignRequiredSkills: (occupationData, skillDefinitions) => {
         if (!occupationData?.requiredSkillSlots || !skillDefinitions?.length) {
-          console.warn('[wizardStore] Cannot auto-assign: missing occupation or skill data');
+          logger.warn('[wizardStore] Cannot auto-assign: missing occupation or skill data');
           return;
         }
 
@@ -714,7 +715,7 @@ export const useWizardStore = create<WizardStore>()(
           );
 
           if (!skillDef) {
-            console.warn(`[wizardStore] Skill not found: ${skillOption.name}`);
+            logger.warn(`[wizardStore] Skill not found: ${skillOption.name}`);
             return;
           }
 
@@ -782,7 +783,7 @@ export const useWizardStore = create<WizardStore>()(
             );
 
             if (!skillDef) {
-              console.warn(`[wizardStore] Bonus skill not found: ${bonusSkill.name}`);
+              logger.warn(`[wizardStore] Bonus skill not found: ${bonusSkill.name}`);
               return;
             }
 
@@ -837,9 +838,7 @@ export const useWizardStore = create<WizardStore>()(
         }
 
         set(updates);
-        console.log(
-          `[wizardStore] Auto-assigned required skills. Placeholders tracked: [${requiredPlaceholderSkills.join(', ')}]`
-        );
+        logger.info(`[wizardStore] Auto-assigned required skills. Placeholders tracked: [${requiredPlaceholderSkills.join(', ')}]`);
       },
 
       /**
@@ -854,7 +853,7 @@ export const useWizardStore = create<WizardStore>()(
 
         // Check if already exists
         if (dynamicSkills.some((s) => s.skillId === skill.skillId)) {
-          console.warn(`[WizardStore] Skill already exists: ${skill.skillId}`);
+          logger.warn(`[WizardStore] Skill already exists: ${skill.skillId}`);
           return;
         }
 
@@ -1112,7 +1111,7 @@ export const useWizardStore = create<WizardStore>()(
        * @param character - Existing character data
        */
       loadFromDraft: (character) => {
-        console.log('[WizardStore] loadFromDraft called', {
+        logger.info('[WizardStore] loadFromDraft called', { value: {
           id: character._id,
           name: character.name,
           surname: character.surname,
@@ -1121,7 +1120,7 @@ export const useWizardStore = create<WizardStore>()(
           hasSkills: !!character.skills,
           hasBackground: !!character.background,
           updatedAt: character.updatedAt,
-        });
+        } });
 
         // name → firstName, surname → lastName (no concatenation)
         const firstName = character.name || '';
@@ -1217,13 +1216,13 @@ export const useWizardStore = create<WizardStore>()(
           } : get().background,
         });
 
-        console.log('[WizardStore] loadFromDraft completed', {
+        logger.info('[WizardStore] loadFromDraft completed', { value: {
           firstName: get().basicInfo.firstName,
           occupationId: get().occupation.occupationId,
           skillCount: Object.keys(get().skills).length,
           stats: get().stats,
           derivedStats: get().derivedStats,
-        });
+        } });
       },
     }),
       {

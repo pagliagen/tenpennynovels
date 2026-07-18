@@ -112,8 +112,13 @@ export const appConfig = {
   bcryptRounds: isProduction ? 12 : 4,
   systemBotUserId: process.env.SYSTEM_BOT_USER_ID,
 
-  /** Docker: SITEMAP_OUTPUT_DIR=/sitemap-output (volume → apps/landing/public). Dev: monorepo apps/landing/public. */
+  /** Output dir for landing sitemap. Docker: SITEMAP_OUTPUT_DIR volume. Dev: monorepo apps/landing/public. */
   sitemapOutputDir:
     process.env.SITEMAP_OUTPUT_DIR ||
     path.join(__dirname, '../../../../../apps/landing/public'),
+
+  /** Output dir for documents sitemap. Docker: DOCUMENTS_SITEMAP_OUTPUT_DIR volume. Dev: monorepo apps/documents/public. */
+  documentsSitemapOutputDir:
+    process.env.DOCUMENTS_SITEMAP_OUTPUT_DIR ||
+    path.join(__dirname, '../../../../../apps/documents/public'),
 };

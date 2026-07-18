@@ -30,6 +30,7 @@ import { ConfrontationModal } from './ConfrontationModal';
 import { DiceRollModal } from './DiceRollModal';
 import { SkillStatRollModal } from './SkillStatRollModal';
 import { TagSelector } from './TagSelector';
+import { logger } from '@/lib/logger';
 
 /**
  * Character data needed for action availability
@@ -325,7 +326,7 @@ export function MessageInput({
       setSelectedSkill('');
       setSelectedStat('');
     } catch (error) {
-      console.error('Failed to send skill/stat roll:', error);
+      logger.error('Failed to send skill/stat roll:', { error });
     } finally {
       setIsSending(false);
     }
@@ -359,7 +360,7 @@ export function MessageInput({
       setSelectedAction('standard');
       setIsDiceRollModalOpen(false);
     } catch (error) {
-      console.error('Failed to send dice roll:', error);
+      logger.error('Failed to send dice roll:', { error });
     } finally {
       setIsSending(false);
     }
@@ -388,11 +389,11 @@ export function MessageInput({
       if (isSocialConflictMode) {
         // Validate social conflict fields
         if (!selectedSkill) {
-          console.error('Social conflict requires a skill selection');
+          logger.error('Social conflict requires a skill selection');
           return;
         }
         if (targetCharacters.length === 0) {
-          console.error('Social conflict requires a target character');
+          logger.error('Social conflict requires a target character');
           return;
         }
 
@@ -450,7 +451,7 @@ export function MessageInput({
       setSelectedStat('');
       setSelectedItem('');
     } catch (error: any) {
-      console.error('Failed to send message:', error);
+      logger.error('Failed to send message:', { error });
 
       // Check if error is PENDING_REACTION_EXISTS
       if (error?.response?.data?.code === 'PENDING_REACTION_EXISTS' && data) {
@@ -481,7 +482,7 @@ export function MessageInput({
       setSelectedItem('');
       setPendingMessageData(null);
     } catch (error) {
-      console.error('Failed to send message with force abort:', error);
+      logger.error('Failed to send message with force abort:', { error });
     } finally {
       setIsSending(false);
     }

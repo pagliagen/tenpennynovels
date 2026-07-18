@@ -8,6 +8,7 @@ import { it } from 'date-fns/locale';
 import { CellRendererProps } from '../registry';
 
 import styles from './CellRenderers.module.scss';
+import { logger } from '@/lib/logger';
 
 export function DateTimeRenderer({ value, column }: CellRendererProps): React.ReactNode {
   if (!value) {
@@ -44,7 +45,7 @@ export function DateTimeRenderer({ value, column }: CellRendererProps): React.Re
 
     return <span>{formattedDate}</span>;
   } catch (error) {
-    console.error('Error formatting date:', error);
+    logger.error('Error formatting date:', { error });
     return <span className={styles.empty}>Errore formato</span>;
   }
 }

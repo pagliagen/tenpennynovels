@@ -29,6 +29,7 @@ const ReactQueryDevtools = process.env.NODE_ENV === 'development'
 import { AuthInitializer } from '@/components/auth/AuthInitializer';
 import { bootstrapRenderers } from '@/lib/cellRenderers';
 import { runStorageMigrations } from '@/lib/storage/migrations';
+import { logger } from '@/lib/logger';
 import '@/styles/globals.scss';
 
 // Bootstrap cell renderers on app start
@@ -59,7 +60,7 @@ export default function App({ Component, pageProps }: AppProps) {
       try {
         sessionStorage.setItem('character_session_id', sessionId);
         if (process.env.NODE_ENV === 'development') {
-          console.log('[Management App] SessionId received and saved');
+          logger.info('[Management App] SessionId received and saved');
         }
 
         // Rimuovi solo sessionId dalla query preservando altri parametri
@@ -71,7 +72,7 @@ export default function App({ Component, pageProps }: AppProps) {
           { shallow: true }
         );
       } catch (error) {
-        console.error('[Management App] Failed to save sessionId:', error);
+        logger.error('[Management App] Failed to save sessionId:', { error });
       }
     }
 

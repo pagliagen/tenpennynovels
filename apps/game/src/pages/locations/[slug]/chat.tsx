@@ -25,6 +25,7 @@ import { useGameStateStore } from '@/store/gameStateStore';
 import { useLocationStore } from '@/store/locationStore';
 import type { AccessibleLocation } from '@/types/location';
 import styles from '@/styles/pages/locations.module.scss';
+import { logger } from '@/lib/logger';
 
 /**
  * Location Chat Page Component
@@ -41,7 +42,7 @@ export default function LocationChatPage(): JSX.Element {
 
   // Debug: Log URL changes
   useEffect(() => {
-    console.log('[Chat] 📍 URL changed - slug:', slug, '| pathname:', router.pathname, '| asPath:', router.asPath);
+    logger.info('[Chat] 📍 URL changed - slug:', { args: [slug, '| pathname:', router.pathname, '| asPath:', router.asPath] });
   }, [slug, router.pathname, router.asPath]);
 
   // Auth store: Check if user logged in
@@ -79,7 +80,7 @@ export default function LocationChatPage(): JSX.Element {
    */
   useEffect(() => {
     if (selectedCharacter && locations.length === 0 && !isLocationStoreLoading) {
-      console.log('[LocationChat] Initializing locationStore...');
+      logger.info('[LocationChat] Initializing locationStore...');
       useLocationStore.getState().initialize(selectedCharacter._id);
     }
   }, [selectedCharacter?._id, locations.length, isLocationStoreLoading]);
@@ -89,11 +90,11 @@ export default function LocationChatPage(): JSX.Element {
    */
   useEffect(() => {
     if (!slug || typeof slug !== 'string') {
-      console.log('[Chat] ⏭️  Skipping location lookup - no slug yet');
+      logger.info('[Chat] ⏭️  Skipping location lookup - no slug yet');
       return;
     }
 
-    console.log('[Chat] 🔍 Looking for location with slug:', slug, '| Available locations:', locations.length);
+    logger.info('[Chat] 🔍 Looking for location with slug:', { args: [slug, '| Available locations:', locations.length] });
 
     // Find location in store
     const foundLocation = locations.find((loc) => loc.slug === slug);
@@ -101,12 +102,12 @@ export default function LocationChatPage(): JSX.Element {
     if (foundLocation) {
       setLocation(foundLocation);
       setIsLoadingLocation(false);
-      console.log(`[Chat] ✅ Location found: ${foundLocation.name} (${slug}) - ID: ${foundLocation._id}`);
+      logger.info(`[Chat] ✅ Location found: ${foundLocation.name} (${slug}) - ID: ${foundLocation._id}`);
     } else {
       // Location not found → 404
       setLocation(null);
       setIsLoadingLocation(false);
-      console.warn(`[Chat] ⚠️  Location NOT found: ${slug} - Available locations:`, locations.map(l => l.slug));
+      logger.warn('[Chat] ⚠️  Location NOT found', { slug, available: locations.map(l => l.slug) });
     }
   }, [slug, locations]);
 
@@ -127,21 +128,21 @@ export default function LocationChatPage(): JSX.Element {
       return;
     }
 
-    console.log('[Chat] 📍 Location detected:', location.name, '- entering via GameStateStore');
+    logger.info('[Chat] 📍 Location detected:', { args: [location.name, '- entering via GameStateStore'] });
 
     // Enter location (centralized)
     const { enterLocation, leaveLocation } = useGameStateStore.getState();
 
     enterLocation(location._id, location.name).catch((error) => {
-      console.error('[Chat] ❌ Failed to enter location:', error);
+      logger.error('[Chat] ❌ Failed to enter location:', { error });
       // NOTE: User still sees chat even if enter fails (graceful degradation)
     });
 
     // Cleanup: Leave on unmount
     return () => {
-      console.log('[Chat] 🚪 Component unmounting - leaving location');
+      logger.info('[Chat] 🚪 Component unmounting - leaving location');
       leaveLocation().catch((error) => {
-        console.error('[Chat] ❌ Failed to leave location:', error);
+        logger.error('[Chat] ❌ Failed to leave location:', { error });
       });
     };
   }, [location?._id, location?.name]);

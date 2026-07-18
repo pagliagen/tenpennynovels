@@ -29,7 +29,54 @@ export interface BotConfirmParams {
   locationId: string;
 }
 
+export interface BotUpdateParams {
+  name?: string;
+  gender?: string;
+  publicDescription?: string;
+  personality?: {
+    traits?: string[];
+    speech_style?: string;
+    background?: string;
+    coreValues?: string[];
+  };
+  systemPrompt?: string;
+  narrativeStyle?: {
+    author?: string;
+    guidance?: string;
+  } | null;
+}
+
 export const botsApi = {
+  /** Lista bot attivi con info Character/Location */
+  list: async (): Promise<any[]> => {
+    const { data } = await apiClient.get('/admin/bots/list');
+    return data.data;
+  },
+
+  /** Dettaglio bot completo: bot + relazioni + memorie + character info */
+  getDetail: async (localAiBotId: string): Promise<any> => {
+    const { data } = await apiClient.get(`/admin/bots/${localAiBotId}/detail`);
+    return data.data;
+  },
+
+  /** Aggiorna campi del bot (personalità, prompt, ecc.) */
+  update: async (localAiBotId: string, params: BotUpdateParams): Promise<any> => {
+    const { data } = await apiClient.put(`/admin/bots/${localAiBotId}/update`, params);
+    return data.data;
+  },
+
+  /** Cambia la location del bot */
+  changeLocation: async (localAiBotId: string, locationId: string): Promise<any> => {
+    const { data } = await apiClient.put(`/admin/bots/${localAiBotId}/location`, { locationId });
+    return data.data;
+  },
+
+  /** Memorie del bot con un personaggio specifico */
+  getCharacterMemories: async (localAiBotId: string, characterId: string): Promise<any[]> => {
+    const { data } = await apiClient.get(`/admin/bots/${localAiBotId}/memories/${characterId}`);
+    return data.data;
+  },
+
   /**
    * Genera il bot (sincrono). Risponde con { localAiBotId, bot } quando local-ai ha finito.
    * Timeout lato server: 120s.

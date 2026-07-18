@@ -3,6 +3,7 @@
  */
 
 import { TableConfig, TableConfigSchema } from './schemas';
+import { logger } from '@/lib/logger';
 
 /**
  * Load and validate table configuration from JSON
@@ -22,13 +23,13 @@ export async function loadTableConfig(tableName: string): Promise<TableConfig> {
     const validationResult = TableConfigSchema.safeParse(data);
 
     if (!validationResult.success) {
-      console.error(`Invalid table config for "${tableName}":`, validationResult.error.format());
+      logger.error(`Invalid table config for "${tableName}":`, { value: validationResult.error.format() });
       throw new Error(`Invalid configuration for table "${tableName}"`);
     }
 
     return validationResult.data;
   } catch (error) {
-    console.error(`Error loading table config for "${tableName}":`, error);
+    logger.error(`Error loading table config for "${tableName}":`, { error });
     throw error;
   }
 }

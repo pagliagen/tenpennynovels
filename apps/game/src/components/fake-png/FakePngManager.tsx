@@ -8,6 +8,7 @@ import type { FakePng } from '@/types/fakePng';
 
 import { FakePngForm } from './FakePngForm';
 import { FakePngSlot } from './FakePngSlot';
+import { logger } from '@/lib/logger';
 
 
 interface FakePngManagerProps {
@@ -35,7 +36,7 @@ export function FakePngManager({ characterId, onClose }: FakePngManagerProps) {
       setFakePngs(data.fakePngs);
       setActiveFakePngId(data.activeFakePngId);
     } catch (error) {
-      console.error('Failed to load fake PNGs:', error);
+      logger.error('Failed to load fake PNGs:', { error });
     } finally {
       setLoading(false);
     }
@@ -47,7 +48,7 @@ export function FakePngManager({ characterId, onClose }: FakePngManagerProps) {
       await loadFakePngs();
       setIsCreating(false);
     } catch (error) {
-      console.error('Failed to create fake PNG:', error);
+      logger.error('Failed to create fake PNG:', { error });
       alert('Errore durante la creazione');
     }
   };
@@ -58,7 +59,7 @@ export function FakePngManager({ characterId, onClose }: FakePngManagerProps) {
       await loadFakePngs();
       setEditingFake(null);
     } catch (error) {
-      console.error('Failed to update fake PNG:', error);
+      logger.error('Failed to update fake PNG:', { error });
       alert('Errore durante l\'aggiornamento');
     }
   };
@@ -70,7 +71,7 @@ export function FakePngManager({ characterId, onClose }: FakePngManagerProps) {
       await fakePngApi.delete(characterId, fakeId);
       await loadFakePngs();
     } catch (error) {
-      console.error('Failed to delete fake PNG:', error);
+      logger.error('Failed to delete fake PNG:', { error });
       alert('Errore durante l\'eliminazione');
     }
   };
@@ -80,7 +81,7 @@ export function FakePngManager({ characterId, onClose }: FakePngManagerProps) {
       await fakePngApi.activate(characterId, fakeId);
       setActiveFakePngId(fakeId);
     } catch (error) {
-      console.error('Failed to activate fake PNG:', error);
+      logger.error('Failed to activate fake PNG:', { error });
       alert('Errore durante l\'attivazione');
     }
   };
@@ -90,7 +91,7 @@ export function FakePngManager({ characterId, onClose }: FakePngManagerProps) {
       await fakePngApi.deactivate(characterId);
       setActiveFakePngId(null);
     } catch (error) {
-      console.error('Failed to deactivate fake PNG:', error);
+      logger.error('Failed to deactivate fake PNG:', { error });
       alert('Errore durante la disattivazione');
     }
   };

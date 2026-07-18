@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { Types } from 'mongoose';
 import { GamingSession } from '@database/models/GamingSession';
 import { SessionManagement } from '@database/models/SessionManagement';
 import { SessionTemplate } from '@database/models/SessionTemplate';
@@ -19,6 +20,18 @@ export class SessionManagementController {
     const masterName = req.character!.characterName;
     
     try {
+      // Validate ObjectID format
+      if (!Types.ObjectId.isValid(masterId)) {
+        res.status(400).json(errorResponse(
+          'ID formato non valido',
+          'INVALID_OBJECT_ID',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
+
       // Verify master permissions
       const master = await Character.findById(masterId);
       if (!master || !master.gameplayRoles.includes('master')) {
@@ -48,6 +61,18 @@ export class SessionManagementController {
       // Load template if provided
       let templateData = null;
       if (templateId) {
+        // Validate ObjectID format
+        if (!Types.ObjectId.isValid(templateId)) {
+          res.status(400).json(errorResponse(
+            'ID formato non valido per template',
+            'INVALID_OBJECT_ID',
+            undefined,
+            400,
+            getRequestId(req)
+          ));
+          return;
+        }
+
         const template = await SessionTemplate.findById(templateId);
         if (!template) {
           res.status(404).json(errorResponse(
@@ -254,8 +279,20 @@ export class SessionManagementController {
     const characterId = req.character!.characterId;
     const characterName = req.character!.characterName;
     const { characterNotes } = req.body;
-    
+
     try {
+      // Validate ObjectID format
+      if (!Types.ObjectId.isValid(sessionId)) {
+        res.status(400).json(errorResponse(
+          'ID formato non valido',
+          'INVALID_OBJECT_ID',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
+
       const session = await GamingSession.findById(sessionId);
       if (!session) {
         res.status(404).json(errorResponse(
@@ -403,8 +440,20 @@ export class SessionManagementController {
   static async startSession(req: Request<{ sessionId: string }>, res: Response): Promise<void> {
     const { sessionId } = req.params;
     const masterId = req.character!.characterId;
-    
+
     try {
+      // Validate ObjectID format
+      if (!Types.ObjectId.isValid(sessionId)) {
+        res.status(400).json(errorResponse(
+          'ID formato non valido',
+          'INVALID_OBJECT_ID',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
+
       const session = await GamingSession.findOne({ 
         _id: sessionId, 
         masterId,
@@ -702,10 +751,34 @@ export class SessionManagementController {
       const { sessionId } = req.params;
       const { locationId } = req.body;
 
+      // Validate ObjectID format
+      if (!Types.ObjectId.isValid(sessionId)) {
+        res.status(400).json(errorResponse(
+          'ID formato non valido',
+          'INVALID_OBJECT_ID',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
+
       if (!locationId) {
         res.status(400).json(errorResponse(
           'locationId is required',
           'MISSING_PARAMETER',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      // Validate locationId ObjectID format
+      if (!Types.ObjectId.isValid(locationId)) {
+        res.status(400).json(errorResponse(
+          'ID formato non valido per location',
+          'INVALID_OBJECT_ID',
           undefined,
           400,
           getRequestId(req)
@@ -751,6 +824,18 @@ export class SessionManagementController {
   static async completeBotTurn(req: Request<{ sessionId: string }>, res: Response): Promise<void> {
     try {
       const { sessionId } = req.params;
+
+      // Validate ObjectID format
+      if (!Types.ObjectId.isValid(sessionId)) {
+        res.status(400).json(errorResponse(
+          'ID formato non valido',
+          'INVALID_OBJECT_ID',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
 
       const { turnManager } = await import('../services/TurnManager');
       await turnManager.completeBotTurn(sessionId);
@@ -800,6 +885,18 @@ export class SessionManagementController {
     try {
       const { sessionId } = req.params;
 
+      // Validate ObjectID format
+      if (!Types.ObjectId.isValid(sessionId)) {
+        res.status(400).json(errorResponse(
+          'ID formato non valido',
+          'INVALID_OBJECT_ID',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
+
       const { turnManager } = await import('../services/TurnManager');
       const turnInfo = await turnManager.getCurrentTurnInfo(sessionId);
 
@@ -840,6 +937,18 @@ export class SessionManagementController {
         res.status(400).json(errorResponse(
           'Session ID is required',
           'INVALID_REQUEST',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      // Validate ObjectID format
+      if (!Types.ObjectId.isValid(sessionId)) {
+        res.status(400).json(errorResponse(
+          'ID formato non valido',
+          'INVALID_OBJECT_ID',
           undefined,
           400,
           getRequestId(req)
@@ -891,6 +1000,18 @@ export class SessionManagementController {
         res.status(400).json(errorResponse(
           'Session ID is required',
           'INVALID_REQUEST',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      // Validate ObjectID format
+      if (!Types.ObjectId.isValid(sessionId)) {
+        res.status(400).json(errorResponse(
+          'ID formato non valido',
+          'INVALID_OBJECT_ID',
           undefined,
           400,
           getRequestId(req)

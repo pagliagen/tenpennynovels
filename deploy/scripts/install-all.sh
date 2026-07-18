@@ -13,7 +13,7 @@ for app in apps/*/; do
   if [ -f "${app}package.json" ]; then
     echo ""
     echo "=== ${app} ==="
-    (cd "$app" && npm install && npm audit fix --force || true)
+    (cd "$app" && npm install || true)
   fi
 done
 
@@ -22,11 +22,11 @@ for service in services/*/; do
   if [ -f "${service}package.json" ]; then
     echo ""
     echo "=== ${service} ==="
-    (cd "$service" && npm install && npm audit fix --force || true)
+    (cd "$service" && npm install || true)
   fi
 done
 
-(cd "services/unified-backend/src/shared" && npm install && npm audit fix --force || true)
+(cd "services/unified-backend/src/shared" && npm install || true)
 
 echo ""
 echo "✅ All dependencies installed!"

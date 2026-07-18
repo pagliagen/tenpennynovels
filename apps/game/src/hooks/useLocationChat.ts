@@ -25,6 +25,7 @@ import { locationChatsApi } from '@/lib/api/locationChats';
 import { useAuthStore } from '@/store/authStore';
 import { useChatStore } from '@/store/chatStore';
 import { useUIStore } from '@/store/uiStore';
+import { logger } from '@/lib/logger';
 import type {
   ChatMessage,
   SendMessageRequest,
@@ -134,13 +135,13 @@ export function useLocationChat(
     // Set current location ID for cross-location notification filtering
     setCurrentLocationId(locationId);
 
-    console.log(`✅ Chat initialized for location: ${locationName} (${locationSlug})`);
+    logger.info(`✅ Chat initialized for location: ${locationName} (${locationSlug})`);
 
     // Cleanup on unmount
     return () => {
       chatStore.reset();
       setCurrentLocationId(null);
-      console.log(`🧹 Chat store reset`);
+      logger.info(`🧹 Chat store reset`);
     };
   }, [locationSlug, locationId, locationName, setCurrentLocationId]);
 
@@ -151,21 +152,21 @@ export function useLocationChat(
    * CRITICAL: Without this, the client won't receive location_message_notification events.
    */
   useEffect(() => {
-    console.log('[useLocationChat] Join effect triggered - socket:', !!socket, 'locationId:', locationId);
+    logger.info('[useLocationChat] Join effect triggered - socket:', { args: [!!socket, 'locationId:', locationId] });
 
     if (!socket || !locationId) {
-      console.warn('[useLocationChat] Skipping join - socket or locationId missing');
+      logger.warn('[useLocationChat] Skipping join - socket or locationId missing');
       return;
     }
 
     // Join the location room (send locationId as string, not object)
     socket.emit('join_location', locationId);
-    console.log(`🔗 Joined location room: ${locationId}`);
+    logger.info(`🔗 Joined location room: ${locationId}`);
 
     // Leave room on unmount
     return () => {
       socket.emit('leave_location', locationId);
-      console.log(`🚪 Left location room: ${locationId}`);
+      logger.info(`🚪 Left location room: ${locationId}`);
     };
   }, [socket, locationId]);
 
@@ -196,7 +197,7 @@ export function useLocationChat(
         if (existingMessage) {
           // Update existing message (edit or TiroContrapposto reaction processed)
           chatStore.updateMessage(payload.message._id, payload.message);
-          console.log(`📝 Message updated (real-time): ${payload.message._id}`);
+          logger.info(`📝 Message updated (real-time): ${payload.message._id}`);
 
           // Show toast if edited
           if (payload.message.edited) {
@@ -209,29 +210,29 @@ export function useLocationChat(
         } else {
           // Add new message
           chatStore.addMessage(payload.message);
-          console.log(`📨 New message received (real-time): ${payload.message._id}`);
+          logger.info(`📨 New message received (real-time): ${payload.message._id}`);
         }
       }
       // Handle message deletion
       else if (event.type === 'location_action_deleted') {
         const payload = event.data as { locationId: string; actionId: string };
 
-        console.log('[useLocationChat] location_action_deleted received:', {
+        logger.info('[useLocationChat] location_action_deleted received:', { value: {
           payloadLocationId: payload.locationId,
           currentLocationId: locationId,
           actionId: payload.actionId,
           matches: payload.locationId === locationId,
-        });
+        } });
 
         // Filter by location
         if (payload.locationId !== locationId) {
-          console.log('[useLocationChat] ❌ Location mismatch, ignoring delete event');
+          logger.info('[useLocationChat] ❌ Location mismatch, ignoring delete event');
           return;
         }
 
         // Delete message from store
         chatStore.deleteMessage(payload.actionId);
-        console.log(`🗑️ Message deleted (real-time): ${payload.actionId}`);
+        logger.info(`🗑️ Message deleted (real-time): ${payload.actionId}`);
 
         // Show toast
         useUIStore.getState().addToast({
@@ -311,7 +312,7 @@ export function useLocationChat(
 
       // Add to chatStore occupants list (triggers UI update)
       chatStore.addOccupant(occupant);
-      console.log('👋 Player entered location', occupant);
+      logger.info('👋 Player entered location', { occupant });
     });
 
     const unsubscribeLeft = onLocationEvent((event) => {
@@ -322,7 +323,7 @@ export function useLocationChat(
       const characterId = event.data.characterId;
       if (characterId) {
         chatStore.removeOccupant(characterId);
-        console.log(`👋 Player left location: ${characterId}`);
+        logger.info(`👋 Player left location: ${characterId}`);
       }
     });
 
@@ -349,12 +350,12 @@ export function useLocationChat(
   const sendMessage = useCallback(
     async (data: SendMessageRequest): Promise<ChatMessage | null> => {
       if (!locationId) {
-        console.error('❌ Cannot send message: locationId not set');
+        logger.error('❌ Cannot send message: locationId not set');
         return null;
       }
 
       if (!selectedCharacter) {
-        console.error('❌ Cannot send message: no character selected');
+        logger.error('❌ Cannot send message: no character selected');
         return null;
       }
 
@@ -370,14 +371,14 @@ export function useLocationChat(
 
         const message = await locationChatsApi.sendMessage(locationId, payload);
 
-        console.log(`✅ Message sent successfully: ${message._id}${currentTag ? ` @ ${currentTag}` : ''}`);
+        logger.info(`✅ Message sent successfully: ${message._id}${currentTag ? ` @ ${currentTag}` : ''}`);
 
         // Message will appear via WebSocket broadcast (location_message_notification)
         // No need to manually add to store here - trust the WebSocket flow
 
         return message;
       } catch (error) {
-        console.error('❌ Failed to send message:', error);
+        logger.error('❌ Failed to send message:', { error });
 
         const errorMessage = error instanceof Error ? error.message : 'Invio messaggio fallito';
         chatStore.error = errorMessage;
@@ -454,7 +455,7 @@ export function useLocationChat(
       return;
     }
 
-    console.log('🔄 Refreshing messages...');
+    logger.info('🔄 Refreshing messages...');
     await chatStore.loadMessages(locationId);
   }, [locationId]);
 

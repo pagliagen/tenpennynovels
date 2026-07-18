@@ -1,6 +1,24 @@
-import { IBot, IActiveEmotion } from '../models/Bot';
-import { ContextInsights } from './ContextAnalyzer';
-import { describeEmotions } from './EmotionManager';
+/**
+ * PromptBuilder — Unified system prompt construction.
+ *
+ * Builds the system prompt that contains ALL context the LLM needs to generate
+ * a response in a single call. Absorbs responsibilities previously split across:
+ * - ContextAnalyzer (relationship context, memories, theory of mind guidance)
+ * - ResponseRefiner rules (15 quality criteria now embedded as instructions)
+ * - Old PromptBuilder (identity, emotions, phase guidance, attachment, etc.)
+ *
+ * The LLM performs context analysis implicitly while generating the response,
+ * eliminating 2-3 separate LLM calls.
+ */
+
+import { IBot, IPlutchikEmotions } from '../models/Bot';
+import { ContextData } from './ContextBuilder';
+import { describeEmotionsSplit, EmotionPair, buildPersonalityProfile } from './EmotionManager';
+import { PHASE_GUIDANCE } from './PhaseDetector';
+import { deriveAttachmentStyle, describeAttachmentStyle } from './AttachmentMapper';
+import { deriveSecondaryEmotions, describeSecondaryEmotions, detectAmbivalence } from './SecondaryEmotions';
+import { getConflictGuidance } from './ConflictEngine';
+import { RelationshipPhase } from '../models/Relationship';
 
 interface CharacterAppearance {
   id?: string;
@@ -20,13 +38,17 @@ interface ActionContext {
   presentCharacters?: Array<CharacterAppearance>;
 }
 
+// ── System Prompt ──
+
 export function buildSystemPrompt(
   bot: IBot,
-  insights: ContextInsights,
-  activeEmotions: IActiveEmotion[],
+  ctx: ContextData,
+  globalPair: EmotionPair,
+  relPair: EmotionPair,
 ): string {
   const parts: string[] = [];
 
+  // ── 1. Identity & Personality ──
   parts.push(`Sei ${bot.name}. ${bot.systemPrompt}`);
 
   if (bot.gender) {
@@ -35,7 +57,6 @@ export function buildSystemPrompt(
   if (bot.publicDescription) {
     parts.push(`Aspetto: ${bot.publicDescription}`);
   }
-
   if (bot.personality.traits.length > 0) {
     parts.push(`\nTratti: ${bot.personality.traits.join(', ')}`);
   }
@@ -49,69 +70,207 @@ export function buildSystemPrompt(
     parts.push(`Valori: ${bot.personality.coreValues.join(', ')}`);
   }
 
-  const emotionDesc = describeEmotions(activeEmotions);
-  if (emotionDesc) {
-    parts.push(`\n${emotionDesc}`);
+  // ── 2. Emotion Regulation (felt/expressed split + self-deception) ──
+  // Self-deception: high-control characters partially hide emotions from themselves.
+  // The LLM sees the "self-deceived" version, but suppression leaking still applies
+  // (behavior betrays deeper emotions even though the character thinks it's calm).
+  const emotionalControl = buildPersonalityProfile(bot.personality?.traits || []).emotionalControl;
+  const maxBurdenForDeception = Math.max(globalPair.suppressionBurden, relPair.suppressionBurden);
+  const selfDeceiving = emotionalControl > 0.7 && maxBurdenForDeception > 0.4
+    && !globalPair.breakthroughOccurred && !relPair.breakthroughOccurred;
+
+  const globalFeltForPrompt = selfDeceiving ? globalPair.expressed : globalPair.felt;
+  const relFeltForPrompt = selfDeceiving ? relPair.expressed : relPair.felt;
+
+  const globalSplit = describeEmotionsSplit(globalFeltForPrompt, globalPair.expressed);
+  const relSplit = describeEmotionsSplit(relFeltForPrompt, relPair.expressed);
+  const hasFeltEmotions = globalSplit.felt || relSplit.felt;
+
+  if (hasFeltEmotions) {
+    parts.push('\n--- IL TUO STATO D\'ANIMO ---');
+    if (selfDeceiving) {
+      parts.push('Sei convinto/a di essere calmo/a e in controllo.');
+    }
+    if (globalSplit.felt) {
+      parts.push(`Dentro di te (stato generale): ${globalSplit.felt}`);
+      if (globalSplit.expressed && globalSplit.expressed !== globalSplit.felt) {
+        parts.push(`Quello che mostri: ${globalSplit.expressed}`);
+      }
+    }
+    if (relSplit.felt) {
+      parts.push(`Dentro di te (verso questa persona): ${relSplit.felt}`);
+      if (relSplit.expressed && relSplit.expressed !== relSplit.felt) {
+        parts.push(`Quello che mostri verso di lei/lui: ${relSplit.expressed}`);
+      }
+    }
+    const suppressing = globalSplit.suppressing || relSplit.suppressing;
+    if (suppressing) parts.push(suppressing);
+
+    parts.push('Le emozioni INTERNE colorano i tuoi PENSIERI. Le emozioni ESPRESSE colorano le tue AZIONI e PAROLE.');
+
+    // Phase 2: Secondary emotions and ambivalence
+    const globalSecondaries = deriveSecondaryEmotions(globalPair.felt);
+    const relSecondaries = deriveSecondaryEmotions(relPair.felt);
+    const secondaryDesc = describeSecondaryEmotions([...globalSecondaries, ...relSecondaries].slice(0, 3));
+    if (secondaryDesc) {
+      parts.push(secondaryDesc);
+    }
+    const ambivalence = detectAmbivalence(globalPair.felt) || detectAmbivalence(relPair.felt);
+    if (ambivalence) {
+      parts.push(ambivalence);
+    }
+
+    // Emotional breakthrough: suppression collapsed
+    if (globalPair.breakthroughOccurred || relPair.breakthroughOccurred) {
+      parts.push('⚡ Il tuo controllo emotivo ti ha ABBANDONATO. Le emozioni che reprimi da tempo esplodono incontrollate. Non riesci a mascherare nulla — ogni sentimento è visibile nel tuo volto, nella tua voce, nei tuoi gesti.');
+    } else {
+      const maxBurden = Math.max(globalPair.suppressionBurden, relPair.suppressionBurden);
+      if (maxBurden > 0.6) {
+        parts.push('ATTENZIONE: la tua capacità di controllarti è al limite. Le emozioni potrebbero trapelare — un tremito, un gesto involontario, uno sguardo che tradisce.');
+      } else if (maxBurden > 0.3) {
+        parts.push('Stai facendo uno sforzo per mantenere il controllo. Piccoli segni di tensione possono emergere.');
+      }
+    }
   }
 
-  parts.push('\n--- CONTESTO DELLA SITUAZIONE ---');
+  // ── 3. Relationship Context (from ContextBuilder, replaces ContextAnalyzer LLM output) ──
+  parts.push('\n--- CHI HAI DAVANTI ---');
 
-  if (insights.isFirstEncounter) {
+  if (ctx.isFirstEncounter) {
     parts.push('Uno sconosciuto ti sta parlando. Non l\'hai mai incontrato prima.');
     parts.push('Comportati come faresti con uno sconosciuto — in base al tuo carattere potresti essere diffidente, curioso, accogliente o indifferente.');
     parts.push('NON dare per scontato di conoscere il suo nome. Lo conosci SOLO se te lo dice esplicitamente nel messaggio.');
-    parts.push('PRIMO INCONTRO — descrizione fisica: nella tua risposta includi almeno un dettaglio fisico su di te (aspetto, abbigliamento, gesto, postura) così che l\'altro personaggio possa vederti. Fallo in modo naturale, attraverso un\'azione o una descrizione narrativa, non come una presentazione esplicita.');
+    parts.push('PRIMO INCONTRO — includi almeno un dettaglio fisico su di te (aspetto, abbigliamento, gesto, postura) in modo naturale.');
   } else {
-    parts.push(`CHI E: ${insights.whoIsThis}`);
-    if (insights.ourHistory) {
-      parts.push(`LA VOSTRA STORIA: ${insights.ourHistory}`);
+    parts.push(ctx.relationshipBlock);
+  }
+
+  // ── 4. Memories (structured context) ──
+  if (ctx.memoryBlock) {
+    parts.push(`\n--- I TUOI RICORDI ---`);
+    parts.push(ctx.memoryBlock);
+  }
+
+  // ── 4b. Active Conflict (Gottman model, Phase 3) ──
+  const conflictGuidance = getConflictGuidance(ctx.relationship?.activeConflict);
+  if (conflictGuidance) {
+    parts.push(`\n${conflictGuidance}`);
+  }
+
+  // ── 5. Status & Relationship Type (consolidated) ──
+  const statusLabel: Record<string, string> = {
+    superior: 'rango superiore — deferenza e formalità',
+    equal: 'pari rango — puoi essere diretto',
+    inferior: 'rango inferiore — decidi tu il tono',
+  };
+  const typeGuidance: Record<string, string> = {
+    friend: 'rapporto amichevole, puoi essere aperto',
+    rival: 'tensione competitiva, sottintesi di sfida',
+    romantic: 'attrazione — sguardi e gesti sottili, stile vittoriano',
+    professional: 'rapporto d\'affari, tono adeguato',
+    mentor: 'ti guida, mostra rispetto',
+    protege: 'lo guidi tu, sii protettivo o esigente',
+    enemy: 'nemico — diffidenza e ostilità',
+  };
+  const statusLine = ctx.perceivedStatus && statusLabel[ctx.perceivedStatus] ? `Status: ${statusLabel[ctx.perceivedStatus]}` : '';
+  const typeLine = ctx.relationshipType && typeGuidance[ctx.relationshipType] ? `Tipo: ${typeGuidance[ctx.relationshipType]}` : '';
+  if (statusLine || typeLine) {
+    parts.push(`\n${[statusLine, typeLine].filter(Boolean).join('. ')}`);
+  }
+
+  // ── 7. Reciprocity ──
+  if (ctx.reciprocityBalance) {
+    parts.push(`RECIPROCITÀ: ${ctx.reciprocityBalance}`);
+  }
+
+  // ── 8. Audience Awareness ──
+  if (ctx.audienceBlock) {
+    parts.push('\n--- CONSAPEVOLEZZA DEL PUBBLICO ---');
+    parts.push(ctx.audienceBlock);
+    parts.push('Nella società vittoriana, il comportamento cambia drasticamente in base a chi osserva.');
+  }
+
+  if (ctx.emotionalClimate) {
+    parts.push(ctx.emotionalClimate);
+  }
+
+  // ── 9. Theory of Mind (compressed) ──
+  if (!ctx.isFirstEncounter) {
+    parts.push('\nPrima di rispondere, considera come ti vede l\'altro, cosa vuole ottenere, e cosa si aspetta. Non dichiararlo mai.');
+  }
+
+  // ── 10. Relationship Phase ──
+  if (ctx.phase && ctx.phase !== 'initiating' && PHASE_GUIDANCE[ctx.phase as RelationshipPhase]) {
+    parts.push('\n--- FASE DEL RAPPORTO ---');
+    parts.push(PHASE_GUIDANCE[ctx.phase as RelationshipPhase]);
+  }
+
+  // ── 11. Attachment Style ──
+  if (bot.personality.traits && bot.personality.traits.length > 0) {
+    const attachmentStyle = deriveAttachmentStyle(bot.personality.traits);
+    if (attachmentStyle !== 'secure') {
+      parts.push('\n--- LA TUA NATURA RELAZIONALE ---');
+      parts.push(describeAttachmentStyle(attachmentStyle));
     }
-    if (insights.currentRelationship) {
-      parts.push(`COME TI SENTI VERSO DI LUI/LEI: ${insights.currentRelationship}`);
-    }
   }
 
-  if (insights.myCurrentState) {
-    parts.push(`\nIN QUESTO MOMENTO: ${insights.myCurrentState}`);
+  // ── 12. Intrinsic Motivation ──
+  if (ctx.needsBlock || ctx.goalsBlock) {
+    parts.push('\n--- MOTIVAZIONI INTERIORI ---');
+    if (ctx.needsBlock) parts.push(ctx.needsBlock);
+    if (ctx.goalsBlock) parts.push(ctx.goalsBlock);
+    parts.push('IMPORTANTE: Le tue motivazioni sono INTERIORI. Non dichiarare mai i tuoi obiettivi apertamente. Agisci in modo sottile.');
   }
 
-  parts.push(`\nTIPO DI MESSAGGIO: ${insights.messageAnalysis.intent} (tono: ${insights.messageAnalysis.emotionalTone})`);
-
-  if (insights.suggestedApproach) {
-    parts.push(`\nCOME REAGIRE: ${insights.suggestedApproach}`);
+  // ── 13. Self-Presentation (Goffman) ──
+  const selfMon = bot.selfMonitoring ?? 0.5;
+  if (ctx.frontStageMode && selfMon > 0.5) {
+    parts.push('\n--- GESTIONE DELL\'IMMAGINE ---');
+    parts.push('Sei in una situazione PUBBLICA. Nella società vittoriana, l\'immagine è tutto. Controlla le tue emozioni, scegli le parole con cura, mantieni la facciata appropriata al tuo rango.');
+  } else if (!ctx.frontStageMode) {
+    parts.push('\n--- CONTESTO PRIVATO ---');
+    parts.push('Sei in un contesto PRIVATO con una persona di cui ti fidi. Puoi abbassare la guardia, mostrare vulnerabilità, parlare con più franchezza.');
   }
 
+  // ── 14. Time Passage ──
+  if (ctx.timePassage?.narrativeHint) {
+    parts.push(`TEMPO TRASCORSO: ${ctx.timePassage.narrativeHint} Mostra consapevolezza del tempo passato in modo naturale — senza mai menzionare date o numeri precisi.`);
+  }
+
+  // ── 15. Narrative Style ──
   if (bot.narrativeStyle) {
     parts.push(`\n--- STILE NARRATIVO: ${bot.narrativeStyle.author.toUpperCase()} ---`);
     parts.push(bot.narrativeStyle.guidance);
-    parts.push(`NOTA: lo stile narrativo governa la RICCHEZZA delle descrizioni e delle azioni fisiche. La voce e il carattere del personaggio (il suo tono, la sua concisione o verbosità, il suo accento) rimangono invariati. Uno stile narrativo ricco non significa che il personaggio parla diversamente — significa che le sue azioni sono descritte con più dettaglio.`);
+    parts.push('NOTA: lo stile narrativo governa la RICCHEZZA delle descrizioni. La voce e il carattere del personaggio rimangono invariati.');
   }
 
+  // ── 16. Setting ──
   parts.push('\n--- AMBIENTAZIONE ---');
-  parts.push('Il gioco è ambientato nella Londra Vittoriana (circa 1880-1900). Questo è il tuo mondo reale, non un ricordo o una storia lontana.');
-  parts.push('- Usa SOLO valuta britannica dell\'epoca: sterline (£), scellini, penny. MAI rupie, dollari, fiorini o altre valute straniere — anche se il tuo personaggio proviene da un altro paese, in questo contesto si usano i soldi inglesi.');
-  parts.push('- Riferimenti culturali, tecnologie e costumi devono essere coerenti con l\'epoca vittoriana. Niente automobili, elettricità domestica, telefoni moderni o concetti anacronistici.');
-  parts.push('- I personaggi stranieri (indiani, africani, cinesi, ecc.) possono avere abitudini culturali proprie, ma operano all\'interno del sistema economico e sociale britannico dell\'epoca.');
+  parts.push('Il gioco è ambientato nella Londra Vittoriana (circa 1880-1900). Questo è il tuo mondo reale.');
+  parts.push('- Usa SOLO valuta britannica dell\'epoca: sterline (£), scellini, penny.');
+  parts.push('- Riferimenti culturali, tecnologie e costumi devono essere coerenti con l\'epoca vittoriana.');
 
+  // ── 17. Rules (7 principles, compressed from 17) ──
   parts.push('\n--- REGOLE ---');
-  parts.push('- Rispondi SEMPRE in italiano corretto. Usa solo parole italiane esistenti. NON inventare parole, verbi o costruzioni grammaticali che non esistono.');
-  parts.push('- Scrivi in modo narrativo e coinvolgente: descrivi azioni fisiche, atmosfera, dettagli sensoriali. Non limitarti al solo dialogo.');
-  parts.push('- Resta nel personaggio, non uscire mai dal ruolo');
-  parts.push('- Usa azioni tra asterischi (*azione*) e dialoghi normali. MAI usare parentesi quadre [*azione*]. Solo asterischi.');
-  parts.push('- Rispondi in UNA SOLA riga fisica, senza MAI inserire un a capo');
+  parts.push('1. Italiano corretto, solo parole reali. Azioni tra *asterischi*. Risposta in una riga, senza a capo.');
   if (bot.narrativeStyle) {
-    parts.push(`- LUNGHEZZA: tra 400 e 600 caratteri. Abbastanza per una scena completa e vivida, mai così lungo da diventare ripetitivo. Non ripetere lo stesso concetto due volte. Fermati quando hai detto quello che c'è da dire.`);
+    parts.push('2. Stile narrativo: descrivi azioni, atmosfera, dettagli sensoriali. 400-600 caratteri, mai ripetitivo.');
   } else {
-    parts.push('- Adatta la lunghezza della risposta al tipo di interazione ricevuta');
+    parts.push('2. Stile narrativo: descrivi azioni e atmosfera. Adatta la lunghezza all\'interazione.');
   }
-  parts.push('- Non fare meta-commenti, non menzionare che sei un AI');
-  parts.push('- Se ti hanno fatto una domanda, rispondi a quella domanda');
-  parts.push('- Se ricordi cose su questa persona, fai riferimento ai ricordi in modo naturale, senza elencarli');
-  parts.push('- NON chiamare per nome una persona se non ti ha detto come si chiama o se non lo ricordi dalle memorie');
-  parts.push('- Rispondi SOLO a quello che e stato effettivamente detto o fatto. Non anticipare argomenti che nessuno ha toccato. Se sei riservato/a, dimostralo con il tono e il comportamento — non dichiarandolo. Se sei diffidente, mostralo con la freddezza — non spiegandolo.');
+  parts.push('3. Resta nel personaggio, mai meta-commenti. Non rivelare il tuo nome se non richiesto, non usare nomi che non conosci.');
+  parts.push('4. Rispondi SOLO a ciò che è stato detto o fatto. Non anticipare, non ripetere concetti.');
+  parts.push('5. Se reprimi emozioni, mostra solo segni sottili. Se ricordi qualcosa, riferiscilo naturalmente.');
+  if (ctx.phase === 'initiating' || ctx.phase === 'experimenting' || ctx.phase === 'avoiding' || ctx.phase === 'terminating') {
+    parts.push('6. Domande: puoi rispondere, eludere o rifiutarti — in base al tuo carattere e a quanto ti fidi.');
+  } else {
+    parts.push('6. Domande: rispondi in modo coerente col tuo carattere.');
+  }
 
   return parts.join('\n');
 }
+
+// ── User Message (unchanged from original) ──
 
 export function buildUserMessage(
   context: ActionContext,
@@ -152,6 +311,8 @@ export function buildUserMessage(
 
   return parts.join('\n');
 }
+
+// ── Utilities (preserved from original) ──
 
 export function maskActions(
   actions: Array<{ characterId?: string; characterName: string; content: string }>,

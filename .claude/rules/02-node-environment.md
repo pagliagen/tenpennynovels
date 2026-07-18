@@ -222,8 +222,7 @@ const envSchema = z.object({
   PORT: z.string().transform(Number).pipe(z.number().min(1).max(65535)),
   MONGODB_URI: z.string().url(),
   REDIS_URL: z.string().url(),
-  JWT_SECRET: z.string().min(32),
-  ANTHROPIC_API_KEY: z.string().optional()
+  JWT_SECRET: z.string().min(32)
 });
 
 export const env = envSchema.parse(process.env);
@@ -235,39 +234,46 @@ console.log(env.PORT);  // Type-safe number
 
 ---
 
-## npm Workspaces (Monorepo)
+## Struttura Monorepo (NO npm Workspaces)
 
-### Root package.json:
+**Il progetto NON usa npm workspaces.** Il root `package.json` ha `"workspaces": []`: ogni app/service ha il proprio `node_modules` installato separatamente (via `cd <path> && npm install`), non un `node_modules` condiviso a livello root.
+
+### Root package.json (reale):
 
 ```json
 {
   "name": "tenpennynovels-monorepo",
   "private": true,
-  "workspaces": [
-    "apps/*",
-    "services/*",
-    "local-ai/services/*"
-  ],
+  "workspaces": [],
+  "engines": {
+    "node": ">=22.13.1"
+  },
   "scripts": {
-    "dev:all": "concurrently \"npm run dev --workspace=apps/game\" \"npm run dev --workspace=services/unified-backend\"",
-    "build:all": "npm run build --workspaces",
-    "lint:all": "npm run lint --workspaces"
+    "frontend:all": "concurrently -n \"landing,game,docs,mgmt\" ... ",
+    "backend:all": "concurrently -n \"gateway,unified,embed\" ...",
+    "all": "concurrently \"npm run backend:all\" \"npm run frontend:all\"",
+    "build:frontend:all": "npm run build:frontend:landing && npm run build:frontend:game && ...",
+    "build:backend:all": "npm run build:backend:gateway && npm run build:backend:unified && ...",
+    "build:all": "npm run build:backend:all && npm run build:frontend:all",
+    "typecheck:backends": "npm run typecheck:gateway && npm run typecheck:unified && npm run typecheck:embeddings"
   }
 }
 ```
 
-### Installing in Workspace:
+Ogni script `*:all` è una catena di `cd <app|service> && npm run <script>` orchestrata da `concurrently` (dev) o in sequenza (build), NON la feature nativa `npm run --workspaces`.
+
+### Installare una dipendenza in un'app/service:
 
 ```bash
-# Install in specific workspace
-npm install express --workspace=services/unified-backend
+# Ogni progetto ha il proprio package.json + node_modules: installare dentro la directory specifica
+cd services/unified-backend && npm install express
 
-# Install in all workspaces
-npm install lodash --workspaces
-
-# Install in root (affects all)
-npm install typescript --save-dev
+# NON esiste --workspace= o --workspaces in questo repo (nessun workspace npm configurato)
 ```
+
+### CI/deploy — installazione dipendenze:
+
+Lo script di deploy (`.github/workflows/deploy.yml` + `deploy/scripts/install-all.sh`) itera manualmente su `apps/*/` e `services/*/` eseguendo `npm install` in ciascuna directory (hash-based, vedi [04-ci-cd.md](./04-ci-cd.md#smart-dependency-installation)).
 
 ---
 
@@ -276,11 +282,11 @@ npm install typescript --save-dev
 ### Check Outdated:
 
 ```bash
-# Check all workspaces
-npm outdated --workspaces
+# Nessun workspace npm: controllare ogni app/service singolarmente
+cd services/unified-backend && npm outdated
 
-# Check specific workspace
-npm outdated --workspace=services/unified-backend
+# Oppure iterare su tutte le directory
+for d in apps/*/ services/*/ local-ai/services/*/; do (cd "$d" && npm outdated); done
 ```
 
 ### Update Strategy:

@@ -228,16 +228,19 @@ export class AIGatewayClient {
   }
 
   async createBot(data: any) { return this.request('POST', '/botai/bots', data); }
-  // Timeout 120s — generazione sincrona con Anthropic
+  // Timeout 120s — generazione sincrona LLM
   async generateBot(data: any) { return this.request('POST', '/botai/bots/generate', data, 120_000); }
-  // Timeout 120s — refine AI-powered con Anthropic
+  // Timeout 120s — refine AI-powered LLM
   async refineBot(id: string, data: any) { return this.request('POST', `/botai/bots/${id}/refine`, data, 120_000); }
   async getBots() { return this.request('GET', '/botai/bots'); }
   async getBot(id: string) { return this.request('GET', `/botai/bots/${id}`); }
   async updateBot(id: string, data: any) { return this.request('PUT', `/botai/bots/${id}`, data); }
   async deleteBot(id: string) { return this.request('DELETE', `/botai/bots/${id}`); }
+  async getBotRelationships(id: string) { return this.request('GET', `/botai/bots/${id}/relationships`); }
+  async getBotMemories(id: string, limit = 50) { return this.request('GET', `/botai/bots/${id}/memories?limit=${limit}`); }
+  async getBotCharacterMemories(id: string, characterId: string, limit = 30) { return this.request('GET', `/botai/bots/${id}/memories/${characterId}?limit=${limit}`); }
 
-  // Timeout 300s — generazione personaggio sincrona con Anthropic (più lunga)
+  // Timeout 300s — generazione personaggio sincrona LLM (più lunga)
   async generateCharacter(data: any) { return this.request('POST', '/character-gen/generate', data, 300_000); }
 }
 
