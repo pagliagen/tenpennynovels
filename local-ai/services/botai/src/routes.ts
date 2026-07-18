@@ -311,10 +311,11 @@ async function runResponsePipeline(bot: any, context: any): Promise<{
 }> {
   const pipelineStart = Date.now();
   const { characterId, characterName } = getLastCharacterFromActions(context.actions);
+  const safeCharacterId = typeof characterId === 'string' ? characterId : '';
   const locationId = context.location?.id || '';
   const botId = bot._id.toString();
 
-  logger.info(`Pipeline START for bot "${bot.name}" ← [${characterId}]`);
+  logger.info(`Pipeline START for bot "${bot.name}" ← [${safeCharacterId}]`);
 
   // ── Data Loading (parallel) ──
   // Compute personality baseline ONCE (used for both memory recall and emotion pairs)
@@ -323,20 +324,20 @@ async function runResponsePipeline(bot: any, context: any): Promise<{
   const globalEmotionsForRecall = getGlobalEmotions(bot, personalityBaseline);
 
   const [memories, relationship, knownNames] = await Promise.all([
-    memoryStore.getContextualMemories(botId, characterId, locationId, globalEmotionsForRecall),
-    characterId ? relationshipStore.getRelationship(botId, characterId) : Promise.resolve(null),
+    memoryStore.getContextualMemories(botId, safeCharacterId, locationId, globalEmotionsForRecall),
+    safeCharacterId ? relationshipStore.getRelationship(botId, safeCharacterId) : Promise.resolve(null),
     buildKnownNames(botId, context.actions, context.presentCharacters),
   ]);
 
   // Audience awareness: relationships with other present characters
   const presentCharacterIds = (context.presentCharacters || [])
     .map((c: any) => c.id)
-    .filter((id: string) => id && id !== characterId);
+    .filter((id: string) => id && id !== safeCharacterId);
   const presentRelationships = presentCharacterIds.length > 0
     ? await relationshipStore.getRelationshipsForCharacters(botId, presentCharacterIds)
     : [];
 
-  const displayName = knownNames.get(characterId) || 'Sconosciuto';
+  const displayName = knownNames.get(safeCharacterId) || 'Sconosciuto';
 
   // Compute full emotional baselines (personality + relationship)
   const relBaseline = relationship ? computeRelationshipBaseline(relationship) : null;
@@ -552,7 +553,7 @@ async function runResponsePipeline(bot: any, context: any): Promise<{
       const trustDelta = analysis.trustDeltas
         ? (analysis.trustDeltas.competence + analysis.trustDeltas.benevolence + analysis.trustDeltas.integrity) / 3
         : 0;
-      await relationshipStore.updateRelationship(botId, characterId, characterName, {
+      await relationshipStore.updateRelationship(botId, safeCharacterId, characterName, {
         trust: trustDelta,
         familiarity: analysis.familiarityDelta,
         sentiment: analysis.sentimentDelta,
@@ -571,7 +572,7 @@ async function runResponsePipeline(bot: any, context: any): Promise<{
         + (analysis.familiarityDelta || 0.02) * 10
         + (analysis.turningPoint ? analysis.turningPoint.importanceWeight * 0.5 : 0);
       await Relationship.updateOne(
-        { botId: bot._id, externalCharacterId: characterId },
+        { botId: bot._id, externalCharacterId: safeCharacterId },
         { $inc: { qualityScore: interactionQuality } },
       );
 
@@ -588,7 +589,7 @@ async function runResponsePipeline(bot: any, context: any): Promise<{
           milestone: 'first_meeting',
           abandonment: 'abandonment',
         };
-        await relationshipStore.addTurningPoint(botId, characterId, {
+        await relationshipStore.addTurningPoint(botId, safeCharacterId, {
           type: (tpTypeMap[analysis.turningPoint.type] || 'revelation') as any,
           description: analysis.turningPoint.description || '',
           emotionalImpact: analysis.turningPoint.emotionalImpact,
