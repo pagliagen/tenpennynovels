@@ -86,7 +86,7 @@ async function seedUsers() {
       };
 
       const userResult = await usersCol.insertOne(adminData);
-      console.log(`   ✓ Created admin: ${admin.username}/${admin.password}`);
+      console.log(`   ✓ Created admin: ${admin.username}`);
 
       await charsCol.insertOne({
         userId: userResult.insertedId,

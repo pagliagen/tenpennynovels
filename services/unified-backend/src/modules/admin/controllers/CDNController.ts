@@ -22,6 +22,14 @@ export const upload = multer({
   },
 });
 
+// ✅ SECURITY: Validate path segments to prevent traversal attacks
+function validatePathSegment(segment: string, fieldName: string): boolean {
+  if (!segment || typeof segment !== 'string') return false;
+  if (segment.includes('..') || segment.includes('/') || segment.includes('\\') || segment.includes('\0')) return false;
+  if (segment.length > 255) return false;
+  return true;
+}
+
 export class CDNController {
   static async uploadImage(req: Request, res: Response): Promise<void> {
     try {
@@ -39,8 +47,9 @@ export class CDNController {
         return;
       }
 
-      if (!entityId || typeof entityId !== 'string' || entityId.length < 10) {
-        res.status(400).json(errorResponse('entityId non valido', 'INVALID_ENTITY_ID', undefined, 400, reqId));
+      // ✅ SECURITY: Strict validation of entityId to prevent path traversal
+      if (typeof entityId !== 'string' || !validatePathSegment(entityId, 'entityId')) {
+        res.status(400).json(errorResponse('entityId non valido o contiene caratteri non consentiti', 'INVALID_ENTITY_ID', undefined, 400, reqId));
         return;
       }
 
@@ -69,13 +78,14 @@ export class CDNController {
         return;
       }
 
-      if (!entityId || !filename) {
-        res.status(400).json(errorResponse('entityId e filename sono obbligatori', 'MISSING_PARAMS', undefined, 400, reqId));
+      // ✅ SECURITY: Strict validation using validatePathSegment
+      if (typeof entityId !== 'string' || !validatePathSegment(entityId, 'entityId')) {
+        res.status(400).json(errorResponse('entityId non valido o contiene caratteri non consentiti', 'INVALID_ENTITY_ID', undefined, 400, reqId));
         return;
       }
 
-      if (filename.includes('..') || filename.includes('/')) {
-        res.status(400).json(errorResponse('Filename non valido', 'INVALID_FILENAME', undefined, 400, reqId));
+      if (typeof filename !== 'string' || !validatePathSegment(filename, 'filename')) {
+        res.status(400).json(errorResponse('Filename non valido o contiene caratteri non consentiti', 'INVALID_FILENAME', undefined, 400, reqId));
         return;
       }
 
@@ -100,8 +110,9 @@ export class CDNController {
         return;
       }
 
-      if (!entityId) {
-        res.status(400).json(errorResponse('entityId obbligatorio', 'MISSING_ENTITY_ID', undefined, 400, reqId));
+      // ✅ SECURITY: Strict validation of entityId
+      if (typeof entityId !== 'string' || !validatePathSegment(entityId, 'entityId')) {
+        res.status(400).json(errorResponse('entityId non valido o contiene caratteri non consentiti', 'INVALID_ENTITY_ID', undefined, 400, reqId));
         return;
       }
 
