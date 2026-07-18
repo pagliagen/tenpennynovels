@@ -1870,7 +1870,16 @@ export class CharacterApprovalController {
   static async approveFaceClaim(req: Request, res: Response): Promise<void> {
     try {
       const { Character } = await import('@database/models/Character');
-      const character = await Character.findById(req.params.id);
+      const { Types } = await import('mongoose');
+
+      // Validate characterId to prevent SQL injection
+      const characterId = req.params.id as string;
+      if (!Types.ObjectId.isValid(characterId)) {
+        res.status(400).json({ success: false, error: 'ID personaggio non valido', code: 'INVALID_CHARACTER_ID' });
+        return;
+      }
+
+      const character = await Character.findById(characterId);
       if (!character) {
         res.status(404).json({ success: false, error: 'Personaggio non trovato', code: 'CHARACTER_NOT_FOUND' });
         return;
@@ -1896,7 +1905,16 @@ export class CharacterApprovalController {
   static async rejectFaceClaim(req: Request, res: Response): Promise<void> {
     try {
       const { Character } = await import('@database/models/Character');
-      const character = await Character.findById(req.params.id);
+      const { Types } = await import('mongoose');
+
+      // Validate characterId to prevent SQL injection
+      const characterId = req.params.id as string;
+      if (!Types.ObjectId.isValid(characterId)) {
+        res.status(400).json({ success: false, error: 'ID personaggio non valido', code: 'INVALID_CHARACTER_ID' });
+        return;
+      }
+
+      const character = await Character.findById(characterId);
       if (!character) {
         res.status(404).json({ success: false, error: 'Personaggio non trovato', code: 'CHARACTER_NOT_FOUND' });
         return;
