@@ -23,9 +23,31 @@ import inboundWebhookRoutes from './routes/webhooks';
 const app: Application = express();
 
 // ===== Security & Performance Middleware =====
+// ✅ SECURITY: Helmet with proper security headers configuration
 app.use(helmet({
-  contentSecurityPolicy: false,
-  crossOriginEmbedderPolicy: false
+  // ✅ Enable Content Security Policy to prevent XSS attacks
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],  // Unsafe-inline for inline styles
+      scriptSrc: ["'self'"],                     // No external scripts
+      imgSrc: ["'self'", 'data:', 'https:'],
+      connectSrc: ["'self'"],                    // API calls to same origin
+      fontSrc: ["'self'"],
+      objectSrc: ["'none'"],                     // No plugins
+      mediaSrc: ["'self'"],
+      frameSrc: ["'none'"]                       // No iframes
+    }
+  },
+  // ✅ Enable Cross-Origin-Embedder-Policy for better isolation
+  crossOriginEmbedderPolicy: true,
+  // Standard security headers
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+  hsts: {
+    maxAge: 31536000,  // 1 year
+    includeSubDomains: true,
+    preload: true
+  }
 }));
 app.use(compression());
 

@@ -14,7 +14,6 @@ import { logger } from '../utils/logger';
 import { auditLogger } from '../utils/auditLogger';
 import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
 import { successResponse, errorResponse, listResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '@shared/utils/apiResponse';
-
 import { escapeRegex } from '@shared/utils/validation';
 
 export class CharacterRelationManagementController {
@@ -670,9 +669,9 @@ export class CharacterRelationManagementController {
         return;
       }
 
-      // Check if name already exists
-      const existingType = await CharacterRelationType.findOne({ 
-        name: new RegExp(`^${name.trim()}$`, 'i') 
+      // ✅ SECURITY: Escape regex special characters to prevent regex injection
+      const existingType = await CharacterRelationType.findOne({
+        name: new RegExp(`^${escapeRegex(name.trim())}$`, 'i')
       });
 
       if (existingType) {
