@@ -1,4 +1,6 @@
 import { Router, Request, Response } from 'express';
+import { Types } from 'mongoose';
+import rateLimit from 'express-rate-limit';
 import { Bot } from './models/Bot';
 import { getCreativeAgent, getAnalyticalAgent, resolveProvider } from './agent/AgentFactory';
 import { buildSystemPrompt, buildUserMessage, getLastCharacterFromActions, maskActions } from './agent/PromptBuilder';
@@ -57,6 +59,15 @@ const memoryStore = new MemoryStore();
 const relationshipStore = new RelationshipStore();
 
 const router = Router();
+
+// Rate limiting for data-fetching endpoints
+const dataFetchLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 50, // 50 requests per minute
+  message: { success: false, error: 'Too many requests, please try again later' },
+  standardHeaders: false,
+  legacyHeaders: false,
+});
 
 // ──────────────────────────────────────────
 //  CRUD Routes (unchanged)
@@ -179,9 +190,16 @@ router.post('/bots/:id/refine', async (req: Request, res: Response) => {
   }
 });
 
-router.get('/bots/:id/relationships', async (req: Request, res: Response) => {
+router.get('/bots/:id/relationships', dataFetchLimiter, async (req: Request, res: Response) => {
   try {
-    const relationships = await Relationship.find({ botId: req.params.id })
+    const id = req.params.id as string;
+    // Validate botId as ObjectId to prevent query injection
+    if (!Types.ObjectId.isValid(id)) {
+      res.status(400).json({ success: false, error: 'Invalid bot ID format' });
+      return;
+    }
+    const botId = new Types.ObjectId(id);
+    const relationships = await Relationship.find({ botId })
       .sort({ lastInteraction: -1 })
       .lean();
     res.json({ success: true, data: relationships });
@@ -191,10 +209,18 @@ router.get('/bots/:id/relationships', async (req: Request, res: Response) => {
   }
 });
 
-router.get('/bots/:id/memories', async (req: Request, res: Response) => {
+router.get('/bots/:id/memories', dataFetchLimiter, async (req: Request, res: Response) => {
   try {
-    const limit = Math.min(Number(req.query.limit) || 50, 200);
-    const memories = await Memory.find({ botId: req.params.id })
+    const id = req.params.id as string;
+    // Validate botId as ObjectId to prevent query injection
+    if (!Types.ObjectId.isValid(id)) {
+      res.status(400).json({ success: false, error: 'Invalid bot ID format' });
+      return;
+    }
+    const botId = new Types.ObjectId(id);
+    const limitParam = typeof req.query.limit === 'string' ? req.query.limit : undefined;
+    const limit = Math.min(Number(limitParam) || 50, 200);
+    const memories = await Memory.find({ botId })
       .sort({ timestamp: -1 })
       .limit(limit)
       .lean();
@@ -205,12 +231,25 @@ router.get('/bots/:id/memories', async (req: Request, res: Response) => {
   }
 });
 
-router.get('/bots/:id/memories/:characterId', async (req: Request, res: Response) => {
+router.get('/bots/:id/memories/:characterId', dataFetchLimiter, async (req: Request, res: Response) => {
   try {
-    const limit = Math.min(Number(req.query.limit) || 30, 100);
+    const id = req.params.id as string;
+    // Validate botId as ObjectId to prevent query injection
+    if (!Types.ObjectId.isValid(id)) {
+      res.status(400).json({ success: false, error: 'Invalid bot ID format' });
+      return;
+    }
+    const botId = new Types.ObjectId(id);
+    const { characterId } = req.params;
+    if (!characterId || typeof characterId !== 'string' || characterId.trim() === '') {
+      res.status(400).json({ success: false, error: 'Invalid character ID' });
+      return;
+    }
+    const limitParam = typeof req.query.limit === 'string' ? req.query.limit : undefined;
+    const limit = Math.min(Number(limitParam) || 30, 100);
     const memories = await Memory.find({
-      botId: req.params.id,
-      externalCharacterId: req.params.characterId,
+      botId,
+      externalCharacterId: characterId,
     })
       .sort({ timestamp: -1 })
       .limit(limit)

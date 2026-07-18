@@ -34,6 +34,10 @@ export interface RelationshipDeltas {
 
 export class RelationshipStore {
   async getRelationship(botId: string, characterId: string): Promise<IRelationship | null> {
+    // Validate botId to prevent query injection
+    if (!Types.ObjectId.isValid(botId)) {
+      throw new Error('Invalid bot ID format');
+    }
     return Relationship.findOne({
       botId: new Types.ObjectId(botId),
       externalCharacterId: characterId,
@@ -41,6 +45,10 @@ export class RelationshipStore {
   }
 
   async getRelationships(botId: string): Promise<IRelationship[]> {
+    // Validate botId to prevent query injection
+    if (!Types.ObjectId.isValid(botId)) {
+      throw new Error('Invalid bot ID format');
+    }
     return Relationship.find({
       botId: new Types.ObjectId(botId),
     }).sort({ lastInteraction: -1 }).limit(10).lean();
@@ -51,6 +59,10 @@ export class RelationshipStore {
    */
   async getRelationshipsForCharacters(botId: string, characterIds: string[]): Promise<IRelationship[]> {
     if (characterIds.length === 0) return [];
+    // Validate botId to prevent query injection
+    if (!Types.ObjectId.isValid(botId)) {
+      throw new Error('Invalid bot ID format');
+    }
     return Relationship.find({
       botId: new Types.ObjectId(botId),
       externalCharacterId: { $in: characterIds },

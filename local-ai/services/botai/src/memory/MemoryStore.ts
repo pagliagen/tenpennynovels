@@ -58,6 +58,10 @@ export class MemoryStore {
   // ── Main retrieval: tier-based con accessibility scoring ──────────
 
   async getContextualMemories(botId: string, characterId: string, locationId: string, currentEmotions?: IPlutchikEmotions): Promise<IMemory[]> {
+    // Validate botId to prevent query injection
+    if (!Types.ObjectId.isValid(botId)) {
+      throw new Error('Invalid bot ID format');
+    }
     const botOid = new Types.ObjectId(botId);
     const charFilter = { botId: botOid, externalCharacterId: characterId, ...NOT_SUPERSEDED };
 
@@ -149,6 +153,11 @@ export class MemoryStore {
   async getLearnedName(botId: string, characterId: string): Promise<string | null> {
     if (!characterId) return null;
 
+    // Validate botId to prevent query injection
+    if (!Types.ObjectId.isValid(botId)) {
+      throw new Error('Invalid bot ID format');
+    }
+
     const observations = await Memory.find({
       botId: new Types.ObjectId(botId),
       externalCharacterId: characterId,
@@ -195,6 +204,10 @@ export class MemoryStore {
   // ── Bulk fetch per arc summarization ──────────────────────────────
 
   async getAllMemoriesForCharacter(botId: string, characterId: string, limit: number = 50): Promise<IMemory[]> {
+    // Validate botId to prevent query injection
+    if (!Types.ObjectId.isValid(botId)) {
+      throw new Error('Invalid bot ID format');
+    }
     return Memory.find({
       botId: new Types.ObjectId(botId),
       externalCharacterId: characterId,
@@ -204,6 +217,10 @@ export class MemoryStore {
   }
 
   async getActiveArcSummary(botId: string, characterId: string): Promise<IMemory | null> {
+    // Validate botId to prevent query injection
+    if (!Types.ObjectId.isValid(botId)) {
+      throw new Error('Invalid bot ID format');
+    }
     return Memory.findOne({
       botId: new Types.ObjectId(botId),
       externalCharacterId: characterId,
