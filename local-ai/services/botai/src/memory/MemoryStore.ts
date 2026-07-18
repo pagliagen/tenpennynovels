@@ -230,6 +230,10 @@ export class MemoryStore {
     if (!Types.ObjectId.isValid(botId)) {
       throw new Error('Invalid bot ID format');
     }
+    // Validate characterId to ensure it is treated as a literal value
+    if (typeof characterId !== 'string' || !characterId.trim()) {
+      throw new Error('Invalid character ID format');
+    }
     return Memory.findOne({
       botId: new Types.ObjectId(botId),
       externalCharacterId: characterId,
