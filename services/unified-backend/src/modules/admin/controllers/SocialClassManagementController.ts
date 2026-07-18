@@ -439,9 +439,9 @@ export class SocialClassManagementController {
         return;
       }
 
-      // Check for name conflicts
-      const existingClass = await SocialClassConfig.findOne({ 
-        name: new RegExp(`^${name.trim()}$`, 'i') 
+      // ✅ SECURITY: Escape regex special characters to prevent regex injection
+      const existingClass = await SocialClassConfig.findOne({
+        name: new RegExp(`^${escapeRegex(name.trim())}$`, 'i')
       });
 
       if (existingClass) {
