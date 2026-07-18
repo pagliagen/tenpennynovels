@@ -1,0 +1,35 @@
+name: "CodeQL Configuration"
+description: "Project-specific CodeQL analysis configuration"
+
+# Security: Disable rules that generate false positives for this project
+disable-default-queries: false
+queries:
+  # js/sql-injection: FALSE POSITIVES on Mongoose queries
+  # MongoDB uses BSON queries (not SQL), and Mongoose parametrizes all inputs
+  # See: docs/SECURITY_ANALYSIS.md - "SQL Injection False Positives Analysis"
+  - uses: security-and-quality
+
+query-filters:
+  - include:
+      kind:
+        - problem
+        - path-problem
+        - metric
+        - diagnostic
+  # Exclude SQL injection checks on JavaScript/TypeScript (Mongoose false positives)
+  # Re-enable once CodeQL understands MongoDB/Mongoose safety patterns
+  # - exclude:
+  #     id:
+  #       - js/sql-injection
+
+# Database options for code scanning
+paths-ignore:
+  - node_modules
+  - dist
+  - build
+  - coverage
+  - ".next"
+
+# Python analysis (local-ai services)
+python-setup:
+  setup-tests: false
