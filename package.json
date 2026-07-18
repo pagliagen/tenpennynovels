@@ -50,7 +50,7 @@
   },
   "workspaces": [],
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=22.13.1"
   },
   "devDependencies": {
     "@types/yargs-parser": "^21.0.3",

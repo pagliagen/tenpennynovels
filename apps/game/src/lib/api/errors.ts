@@ -24,7 +24,7 @@ import { z } from 'zod';
  * ```typescript
  * const result = ErrorResponseSchema.safeParse(response.data);
  * if (result.success) {
- *   console.error(result.data.error);
+ *   logger.error(result.data.error);
  * }
  * ```
  */
@@ -326,8 +326,8 @@ export class ApiError extends Error {
  *   await axios.get('/api/users/me');
  * } catch (error) {
  *   const apiError = parseAxiosError(error as AxiosError);
- *   console.log(apiError.category); // ErrorCategory.AUTH
- *   console.log(apiError.statusCode); // 401
+ *   logger.info(apiError.category); // ErrorCategory.AUTH
+ *   logger.info(apiError.statusCode); // 401
  * }
  * ```
  */

@@ -19,6 +19,7 @@ import { useURLFilter } from '@/hooks/useURLFilter';
 import { clearFilterHash } from '@/lib/utils/urlFilters';
 import type { User, UserListParams } from '@/types/api/User';
 import styles from '@/styles/pages/UserList.module.scss';
+import { logger } from '@/lib/logger';
 
 export default function BanList() {
   // State
@@ -435,7 +436,7 @@ export default function BanList() {
             }}
             onAction={(action, formData) => {
               if (action === 'submit') {
-                console.log('BULK BAN formData:', formData);
+                logger.info('BULK BAN formData:', { formData });
                 const reason = formData.bulkBanReason as string;
                 const duration = formData.bulkBanDuration as string;
                 handleBulkBanSubmit(reason, duration);
@@ -497,7 +498,7 @@ export default function BanList() {
             }}
             onAction={(action, formData) => {
               if (action === 'submit') {
-                console.log('SINGLE BAN formData:', formData);
+                logger.info('SINGLE BAN formData:', { formData });
                 const reason = formData.banReason as string;
                 const duration = formData.banDuration as string;
                 handleBanSubmit(reason, duration);

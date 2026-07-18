@@ -780,10 +780,12 @@ node --version  # Deve essere v22.13.1
 ### In Dockerfile:
 
 ```dockerfile
-# ✅ CORRETTO - Match .nvmrc version
-FROM node:22.13.1-alpine AS builder
+# ✅ CORRETTO - Major version allineata a .nvmrc (v22.x). Tutti i Dockerfile del
+# repo usano il tag major floating (non pinnato alla patch), per ricevere
+# automaticamente patch di sicurezza Alpine/Node minori.
+FROM node:22-alpine AS builder
 
-# ❌ SBAGLIATO - Hardcoded different version
+# ❌ SBAGLIATO - Major version diversa da .nvmrc
 FROM node:20-alpine AS builder
 ```
 
@@ -812,7 +814,7 @@ Se build tool è in devDependencies → Step 2 fails!
 
 ### ❌ SBAGLIATO:
 ```json
-// services/botai-backend/package.json
+// esempio: un service che builda con esbuild invece di tsc
 {
   "devDependencies": {
     "esbuild": "^0.20.2",  // ❌ NO se usato durante deployment!
@@ -831,7 +833,7 @@ Se build tool è in devDependencies → Step 2 fails!
 
 ### ✅ CORRETTO:
 ```json
-// services/botai-backend/package.json
+// esempio: stesso service, esbuild spostato in dependencies
 {
   "dependencies": {
     "esbuild": "^0.20.2"  // ✅ YES - usato in npm run build
@@ -887,29 +889,26 @@ Se build tool è in devDependencies → Step 2 fails!
 }
 ```
 
-### Incidente Reale (2026-03-04):
+### Lezione generale (pattern da un incidente storico, non legato a un service specifico attuale)
 
-**Bug**: botai-backend deployment failed
-
-**Errore**: `Cannot find package 'esbuild' imported from .../build.mjs`
+**Bug tipico**: deployment fallisce con `Cannot find package 'esbuild'` quando il deploy esegue `npm install --production` seguito da `npm run build`, ma `esbuild` è dichiarato solo in `devDependencies`.
 
 **Root Cause**:
-- Build script `build.mjs` imports esbuild
-- esbuild era in `devDependencies`
-- CI build-check: `install-all.sh` → full `npm install` (includes devDependencies) → ✅ Passed
-- Production deployment: `npm install --production` → excludes devDependencies → ❌ Failed
+- Build script usa `esbuild` invece di `tsc`
+- `esbuild` è in `devDependencies`
+- CI build-check (full `npm install`, incluse devDependencies) → ✅ Passa
+- Deployment produzione (`npm install --production`, esclude devDependencies) → ❌ Fallisce
 
-**Why esbuild needed**:
-- TypeScript compiler (`tsc`) crashed with OOM (4GB+ heap exhaustion) on botai-backend
-- esbuild è ~100x faster e memory-efficient (107ms build vs tsc crash)
-- Attempted alignment with other backends (api-gateway, unified-backend use tsc) but failed
+**Perché si sceglie esbuild al posto di tsc**: `tsc` può andare in OOM su progetti grandi/con molte dipendenze di tipo; esbuild è ordini di grandezza più veloce e leggero in memoria — ma se usato in build, va spostato in `dependencies`.
 
-**Fix**: Spostato `esbuild` da devDependencies a dependencies
+**Fix**: spostare il build tool da `devDependencies` a `dependencies`.
 
-**Pattern**: Build tools used in deployment → dependencies. Alternative: remove `--production` flag but installs unnecessary devDeps in prod.
+**Pattern**: build tool usato durante il deploy → `dependencies`. Alternativa: non usare `--production` nell'`npm install` (installa devDeps superflue in prod, ma evita il problema).
+
+**Stato attuale nel repo**: nessun service builda con esbuild oggi (tutti usano `tsc`, vedi `scripts.build` in ogni `package.json`). `esbuild` è presente in `devDependencies` di `api-gateway` ed `embeddings-worker` ma inutilizzato nello script di build — verificare `scripts.build` prima di applicare questa regola a un service specifico.
 
 **File da Verificare**:
-- `/services/*/package.json` - Check build scripts and dependencies
+- `/services/*/package.json` e `/local-ai/services/*/package.json` - Check build scripts and dependencies
 
 ```bash
 # Verifica build tools nelle dependencies

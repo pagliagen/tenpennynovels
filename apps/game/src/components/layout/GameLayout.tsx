@@ -45,6 +45,7 @@ import { MinimizedWindowsBar } from '../windows/MinimizedWindowsBar';
 import { WindowRenderer } from '../windows/WindowRenderer';
 
 import { TopBar } from './TopBar';
+import { logger } from '@/lib/logger';
 
 /**
  * Game Layout Props
@@ -170,7 +171,7 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
   useEffect(() => {
     if (selectedCharacter && locations.length === 0) {
       if (process.env.NODE_ENV === 'development') {
-        console.warn('[GameLayout] Initializing locationStore');
+        logger.warn('[GameLayout] Initializing locationStore');
       }
       useLocationStore.getState().initialize(selectedCharacter._id);
     }
@@ -200,12 +201,7 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
     // If location not found, fallback to default
     if (!currentLocation) {
       if (process.env.NODE_ENV === 'development') {
-        console.warn(
-          '[GameLayout] Location not found for ID:',
-          currentLocationId,
-          '| Available locations:',
-          locations.length
-        );
+        logger.warn('[GameLayout] Location not found for ID:', { args: [currentLocationId, '| Available locations:', locations.length] });
       }
       return defaultProps;
     }
@@ -300,7 +296,7 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
       // Call logout endpoint
       await api.post('/auth/logout', {});
     } catch (error) {
-      console.error('[GameLayout] Logout error:', error);
+      logger.error('[GameLayout] Logout error:', { error });
       // Continue anyway - cookies cleared server-side
     } finally {
       // Clear local auth state

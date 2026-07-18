@@ -12,6 +12,7 @@ import { DateTimeRenderer } from './renderers/DateTimeRenderer';
 import { BooleanRenderer } from './renderers/BooleanRenderer';
 import { ConflictBadgeRenderer } from './renderers/ConflictBadgeRenderer';
 import { ImageRenderer } from './renderers/ImageRenderer';
+import { logger } from '@/lib/logger';
 
 /**
  * Bootstrap default renderers
@@ -28,7 +29,7 @@ export function bootstrapRenderers(): void {
   cellRenderers.register('image', ImageRenderer);
 
   if (process.env.NODE_ENV === 'development') {
-    console.log('[CellRenderers] Registered types:', cellRenderers.getRegisteredTypes());
+    logger.info('[CellRenderers] Registered types:', { value: cellRenderers.getRegisteredTypes() });
   }
 }
 

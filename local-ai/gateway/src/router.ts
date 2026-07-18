@@ -128,7 +128,7 @@ export function createRouter(): Router {
 }
 
 function createServiceProxy(svc: ServiceConfig, prefix: string) {
-  // character-gen può impiegare fino a 5 minuti (Anthropic sincrono)
+  // character-gen può impiegare fino a 5 minuti (generazione LLM sincrona)
   const proxyTimeout = prefix === '/character-gen' ? 330_000 : 130_000;
   return createProxyMiddleware({
     target: svc.target,

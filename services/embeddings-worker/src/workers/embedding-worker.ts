@@ -82,12 +82,12 @@ export class EmbeddingWorker {
 
     // Queue event listeners
     this.queue.on('completed', (job, result) => {
-      console.log(`✅ Job ${job.id} completed`);
+      logger.info(`✅ Job ${job.id} completed`);
     });
 
     // Failed job handler → DLQ
     this.queue.on('failed', async (job, err) => {
-      console.error(`❌ Job ${job.id} failed after ${job.attemptsMade} attempts:`, err.message);
+      logger.error(`❌ Job ${job.id} failed after ${job.attemptsMade} attempts:`, err.message);
 
       if (job.attemptsMade >= config.queue.maxAttempts) {
         const eventType = this.detectEventType(job.data);
@@ -118,12 +118,12 @@ export class EmbeddingWorker {
     try {
       this.redis = createClient({ url: config.database.redisUrl });
       this.redis.on('error', (err: Error) => {
-        console.error('Redis Cache Error:', err);
+        logger.error('Redis Cache Error:', err);
       });
       await this.redis.connect();
-      console.log('✅ Redis cache client connected');
+      logger.info('✅ Redis cache client connected');
     } catch (error) {
-      console.error('❌ Redis cache initialization failed:', error);
+      logger.error('❌ Redis cache initialization failed:', error);
     }
   }
 
@@ -132,7 +132,7 @@ export class EmbeddingWorker {
    */
   private async ensureCollections(): Promise<void> {
     try {
-      console.log('🔍 Checking Qdrant collections and ElasticSearch indices...');
+      logger.info('🔍 Checking Qdrant collections and ElasticSearch indices...');
 
       // ✅ Ensure Qdrant document_chunks collection
       const collections = await this.qdrant.getCollections();
@@ -140,7 +140,7 @@ export class EmbeddingWorker {
       const hasDocuments = collections.collections.some(c => c.name === 'documents');
 
       if (!hasDocumentChunks) {
-        console.log('📦 Creating Qdrant collection: document_chunks');
+        logger.info('📦 Creating Qdrant collection: document_chunks');
         await this.qdrant.createCollection('document_chunks', {
           vectors: {
             size: 384, // paraphrase-multilingual-MiniLM-L12-v2
@@ -150,7 +150,7 @@ export class EmbeddingWorker {
       }
 
       if (!hasDocuments) {
-        console.log('📦 Creating Qdrant collection: documents');
+        logger.info('📦 Creating Qdrant collection: documents');
         await this.qdrant.createCollection('documents', {
           vectors: {
             size: 384,
@@ -161,7 +161,7 @@ export class EmbeddingWorker {
 
       const hasForumPosts = collections.collections.some(c => c.name === 'forum_posts');
       if (!hasForumPosts) {
-        console.log('📦 Creating Qdrant collection: forum_posts');
+        logger.info('📦 Creating Qdrant collection: forum_posts');
         await this.qdrant.createCollection('forum_posts', {
           vectors: {
             size: 384,
@@ -172,7 +172,7 @@ export class EmbeddingWorker {
 
       const hasChatMessages = collections.collections.some(c => c.name === 'chat_messages');
       if (!hasChatMessages) {
-        console.log('📦 Creating Qdrant collection: chat_messages');
+        logger.info('📦 Creating Qdrant collection: chat_messages');
         await this.qdrant.createCollection('chat_messages', {
           vectors: {
             size: 384,
@@ -187,7 +187,7 @@ export class EmbeddingWorker {
       });
 
       if (!chunkIndexExists) {
-        console.log(`📦 Creating ElasticSearch index: ${config.services.elasticsearch.indexPrefix}_document_chunks`);
+        logger.info(`📦 Creating ElasticSearch index: ${config.services.elasticsearch.indexPrefix}_document_chunks`);
         await this.elasticsearch.indices.create({
           index: `${config.services.elasticsearch.indexPrefix}_document_chunks`,
           body: {
@@ -223,7 +223,7 @@ export class EmbeddingWorker {
       });
 
       if (!forumIndexExists) {
-        console.log(`📦 Creating ElasticSearch index: ${config.services.elasticsearch.indexPrefix}_forum_posts`);
+        logger.info(`📦 Creating ElasticSearch index: ${config.services.elasticsearch.indexPrefix}_forum_posts`);
         await this.elasticsearch.indices.create({
           index: `${config.services.elasticsearch.indexPrefix}_forum_posts`,
           body: {
@@ -256,7 +256,7 @@ export class EmbeddingWorker {
       });
 
       if (!chatIndexExists) {
-        console.log(`📦 Creating ElasticSearch index: ${config.services.elasticsearch.indexPrefix}_chat_messages`);
+        logger.info(`📦 Creating ElasticSearch index: ${config.services.elasticsearch.indexPrefix}_chat_messages`);
         await this.elasticsearch.indices.create({
           index: `${config.services.elasticsearch.indexPrefix}_chat_messages`,
           body: {
@@ -285,10 +285,10 @@ export class EmbeddingWorker {
         });
       }
 
-      console.log('✅ Collections and indices ready');
+      logger.info('✅ Collections and indices ready');
 
     } catch (error) {
-      console.error('❌ Failed to ensure collections:', error);
+      logger.error('❌ Failed to ensure collections:', error);
       throw error;
     }
   }
@@ -298,11 +298,11 @@ export class EmbeddingWorker {
    */
   async start(): Promise<void> {
     if (this.isRunning) {
-      console.warn('⚠️  Worker already running');
+      logger.warn('⚠️  Worker already running');
       return;
     }
 
-    console.log('🚀 Starting Embedding Worker with Bull Queue...');
+    logger.info('🚀 Starting Embedding Worker with Bull Queue...');
 
     // ✅ Ensure collections exist before processing
     await this.ensureCollections();
@@ -318,7 +318,7 @@ export class EmbeddingWorker {
         this.queue.add(event, {
           jobId: `doc-${event.documentId}-${Date.now()}` // Unique job ID
         });
-        console.log(`📄 Queued document embedding: ${event.title}`);
+        logger.info(`📄 Queued document embedding: ${event.title}`);
       }
     );
 
@@ -329,7 +329,7 @@ export class EmbeddingWorker {
         this.queue.add(event, {
           jobId: `doc-upd-${event.documentId}-${Date.now()}`
         });
-        console.log(`📄 Queued document update: ${event.title}`);
+        logger.info(`📄 Queued document update: ${event.title}`);
       }
     );
 
@@ -340,7 +340,7 @@ export class EmbeddingWorker {
         this.queue.add(event, {
           jobId: `chunk-${event.chunkId}-${Date.now()}`
         });
-        console.log(`📑 Queued document chunk: ${event.title} (#${event.slug})`);
+        logger.info(`📑 Queued document chunk: ${event.title} (#${event.slug})`);
       }
     );
 
@@ -351,7 +351,7 @@ export class EmbeddingWorker {
         this.queue.add(event, {
           jobId: `doc-del-${event.entityId}-${Date.now()}`
         });
-        console.log(`🗑️  Queued document deletion: ${event.entityId}`);
+        logger.info(`🗑️  Queued document deletion: ${event.entityId}`);
       }
     );
 
@@ -362,7 +362,7 @@ export class EmbeddingWorker {
         this.queue.add({ ...event, _source: 'created' }, {
           jobId: `action-${event.chatId}-${Date.now()}`
         });
-        console.log(`🎭 Queued chat: ${event.characterName}`);
+        logger.info(`🎭 Queued chat: ${event.characterName}`);
       }
     );
 
@@ -373,7 +373,7 @@ export class EmbeddingWorker {
         this.queue.add({ ...event, _source: 'updated' }, {
           jobId: `action-upd-${event.chatId}-${Date.now()}`
         });
-        console.log(`🎭 Queued chat update: ${event.characterName}`);
+        logger.info(`🎭 Queued chat update: ${event.characterName}`);
       }
     );
 
@@ -384,7 +384,7 @@ export class EmbeddingWorker {
         this.queue.add(event, {
           jobId: `action-del-${event.entityId}-${Date.now()}`
         });
-        console.log(`🗑️  Queued chat deletion: ${event.entityId}`);
+        logger.info(`🗑️  Queued chat deletion: ${event.entityId}`);
       }
     );
 
@@ -395,7 +395,7 @@ export class EmbeddingWorker {
         this.queue.add({ ...event, _source: 'created' }, {
           jobId: `forum-${event.postId}-${Date.now()}`
         });
-        console.log(`💬 Queued forum post: ${event.authorCharacterName}`);
+        logger.info(`💬 Queued forum post: ${event.authorCharacterName}`);
       }
     );
 
@@ -406,7 +406,7 @@ export class EmbeddingWorker {
         this.queue.add({ ...event, _source: 'updated' }, {
           jobId: `forum-upd-${event.postId}-${Date.now()}`
         });
-        console.log(`💬 Queued forum post update: ${event.authorCharacterName}`);
+        logger.info(`💬 Queued forum post update: ${event.authorCharacterName}`);
       }
     );
 
@@ -417,7 +417,7 @@ export class EmbeddingWorker {
         this.queue.add(event, {
           jobId: `forum-del-${event.entityId}-${Date.now()}`
         });
-        console.log(`🗑️  Queued forum post deletion: ${event.entityId}`);
+        logger.info(`🗑️  Queued forum post deletion: ${event.entityId}`);
       }
     );
 
@@ -429,7 +429,7 @@ export class EmbeddingWorker {
         this.queue.add(event, {
           jobId: `ongame-mod-${event.messageId}-${Date.now()}`
         });
-        console.log(`📧 Queued OnGame message moderation: ${event.subject}`);
+        logger.info(`📧 Queued OnGame message moderation: ${event.subject}`);
       }
     );
 
@@ -440,24 +440,24 @@ export class EmbeddingWorker {
         this.queue.add(event, {
           jobId: `offgame-mod-${event.messageId}-${Date.now()}`
         });
-        console.log(`💬 Queued OffGame message moderation: ${event.messageId}`);
+        logger.info(`💬 Queued OffGame message moderation: ${event.messageId}`);
       }
     );
 
-    console.log(`✅ Embedding Worker started with concurrency ${config.queue.concurrency}`);
-    console.log(`   Listening to channels:`);
-    console.log(`   - ${REDIS_CHANNELS.EMBEDDING_DOCUMENT_CREATED}`);
-    console.log(`   - ${REDIS_CHANNELS.EMBEDDING_DOCUMENT_UPDATED}`);
-    console.log(`   - ${REDIS_CHANNELS.EMBEDDING_DOCUMENT_DELETED}`);
-    console.log(`   - ${REDIS_CHANNELS.EMBEDDING_DOCUMENT_CHUNK_CREATED}`);
-    console.log(`   - ${REDIS_CHANNELS.EMBEDDING_CHAT_CREATED}`);
-    console.log(`   - ${REDIS_CHANNELS.EMBEDDING_CHAT_UPDATED}`);
-    console.log(`   - ${REDIS_CHANNELS.EMBEDDING_CHAT_DELETED}`);
-    console.log(`   - ${REDIS_CHANNELS.EMBEDDING_FORUM_POST_CREATED}`);
-    console.log(`   - ${REDIS_CHANNELS.EMBEDDING_FORUM_POST_UPDATED}`);
-    console.log(`   - ${REDIS_CHANNELS.EMBEDDING_FORUM_POST_DELETED}`);
-    console.log(`   - ${REDIS_CHANNELS.EMBEDDING_ONGAME_MESSAGE_CREATED}`);
-    console.log(`   - ${REDIS_CHANNELS.EMBEDDING_OFFGAME_MESSAGE_CREATED}`);
+    logger.info(`✅ Embedding Worker started with concurrency ${config.queue.concurrency}`);
+    logger.info(`   Listening to channels:`);
+    logger.info(`   - ${REDIS_CHANNELS.EMBEDDING_DOCUMENT_CREATED}`);
+    logger.info(`   - ${REDIS_CHANNELS.EMBEDDING_DOCUMENT_UPDATED}`);
+    logger.info(`   - ${REDIS_CHANNELS.EMBEDDING_DOCUMENT_DELETED}`);
+    logger.info(`   - ${REDIS_CHANNELS.EMBEDDING_DOCUMENT_CHUNK_CREATED}`);
+    logger.info(`   - ${REDIS_CHANNELS.EMBEDDING_CHAT_CREATED}`);
+    logger.info(`   - ${REDIS_CHANNELS.EMBEDDING_CHAT_UPDATED}`);
+    logger.info(`   - ${REDIS_CHANNELS.EMBEDDING_CHAT_DELETED}`);
+    logger.info(`   - ${REDIS_CHANNELS.EMBEDDING_FORUM_POST_CREATED}`);
+    logger.info(`   - ${REDIS_CHANNELS.EMBEDDING_FORUM_POST_UPDATED}`);
+    logger.info(`   - ${REDIS_CHANNELS.EMBEDDING_FORUM_POST_DELETED}`);
+    logger.info(`   - ${REDIS_CHANNELS.EMBEDDING_ONGAME_MESSAGE_CREATED}`);
+    logger.info(`   - ${REDIS_CHANNELS.EMBEDDING_OFFGAME_MESSAGE_CREATED}`);
   }
 
   /**
@@ -468,14 +468,14 @@ export class EmbeddingWorker {
       return;
     }
 
-    console.log('🛑 Stopping Embedding Worker...');
+    logger.info('🛑 Stopping Embedding Worker...');
     await this.subscriber.unsubscribe();
     await this.queue.close();
     if (this.redis) {
       await this.redis.disconnect();
     }
     this.isRunning = false;
-    console.log('✅ Embedding Worker stopped');
+    logger.info('✅ Embedding Worker stopped');
   }
 
   /**
@@ -522,19 +522,19 @@ export class EmbeddingWorker {
    */
   private async handleDocumentEvent(event: DocumentEmbeddingEvent): Promise<void> {
     try {
-      console.log(`📄 Processing document: ${event.title} (${event.documentId})`);
+      logger.info(`📄 Processing document: ${event.title} (${event.documentId})`);
 
       // ✅ Parse contentDelta to extract chunks
       if (!event.contentDelta) {
-        console.warn(`⚠️  No contentDelta provided for ${event.title}, skipping chunking`);
+        logger.warn(`⚠️  No contentDelta provided for ${event.title}, skipping chunking`);
         return;
       }
 
       const chunks: ParsedChunk[] = parseChunks(event.contentDelta);
-      console.log(`   📑 Extracted ${chunks.length} chunks from document`);
+      logger.info(`   📑 Extracted ${chunks.length} chunks from document`);
 
       if (chunks.length === 0) {
-        console.warn(`⚠️  No chunks extracted from ${event.title}`);
+        logger.warn(`⚠️  No chunks extracted from ${event.title}`);
         return;
       }
 
@@ -562,7 +562,7 @@ export class EmbeddingWorker {
             embedding = await this.generateEmbedding(chunkText);
             if (!embedding) {
               const error = new Error(`Failed to generate embedding for chunk: ${chunk.heading}`);
-              console.error(`   ❌ ${error.message}`);
+              logger.error(`   ❌ ${error.message}`);
               errors.push(error);
               continue;
             }
@@ -578,7 +578,7 @@ export class EmbeddingWorker {
           processedChunks++;
 
         } catch (chunkError) {
-          console.error(`   ❌ Error processing chunk "${chunk.heading}":`, chunkError);
+          logger.error(`   ❌ Error processing chunk "${chunk.heading}":`, chunkError);
           errors.push(chunkError as Error);
         }
       }
@@ -588,10 +588,10 @@ export class EmbeddingWorker {
         throw new Error(`Failed to process ${errors.length}/${chunks.length} chunks. First error: ${errors[0].message}`);
       }
 
-      console.log(`✅ Document chunked and embedded: ${event.title} (${processedChunks}/${chunks.length} chunks)`);
+      logger.info(`✅ Document chunked and embedded: ${event.title} (${processedChunks}/${chunks.length} chunks)`);
 
     } catch (error) {
-      console.error('❌ Error processing document embedding event:', error);
+      logger.error('❌ Error processing document embedding event:', error);
       throw error; // Re-throw to trigger Bull retry
     }
   }
@@ -601,7 +601,7 @@ export class EmbeddingWorker {
    */
   private async handleDocumentChunkEvent(event: DocumentChunkEmbeddingEvent): Promise<void> {
     try {
-      console.log(`📑 Processing document chunk embedding: ${event.title} (#${event.slug})`);
+      logger.info(`📑 Processing document chunk embedding: ${event.title} (#${event.slug})`);
 
       const text = `${event.title}\n\n${event.content}`;
 
@@ -612,7 +612,7 @@ export class EmbeddingWorker {
         if (cached) {
           const embedding = JSON.parse(cached);
           await this.saveDocumentChunkEmbedding(event, embedding);
-          console.log(`✅ Chunk embedding from cache: ${event.title}`);
+          logger.info(`✅ Chunk embedding from cache: ${event.title}`);
           return;
         }
       }
@@ -632,10 +632,10 @@ export class EmbeddingWorker {
       // ✅ Save to DB + Qdrant
       await this.saveDocumentChunkEmbedding(event, embedding);
 
-      console.log(`✅ Chunk embedding saved: ${event.title} (#${event.slug})`);
+      logger.info(`✅ Chunk embedding saved: ${event.title} (#${event.slug})`);
 
     } catch (error) {
-      console.error('❌ Error processing chunk embedding event:', error);
+      logger.error('❌ Error processing chunk embedding event:', error);
       throw error; // Re-throw to trigger Bull retry
     }
   }
@@ -645,7 +645,7 @@ export class EmbeddingWorker {
    */
   private async handleChatEvent(event: ChatEmbeddingEvent): Promise<void> {
     try {
-      console.log(`🎭 Processing chat embedding: ${event.chatId}`);
+      logger.info(`🎭 Processing chat embedding: ${event.chatId}`);
 
       // Type-safe Location query result
       interface LocationQueryResult {
@@ -694,10 +694,10 @@ export class EmbeddingWorker {
       // ✅ Save embedding + moderation to DB
       await this.saveChatEmbeddingAndModeration(event.chatId, locationName, embedding, moderation);
 
-      console.log(`✅ Chat processed: ${event.characterName} @ ${locationName}`);
+      logger.info(`✅ Chat processed: ${event.characterName} @ ${locationName}`);
 
     } catch (error) {
-      console.error('❌ Error processing chat embedding event:', error);
+      logger.error('❌ Error processing chat embedding event:', error);
       throw error;
     }
   }
@@ -707,7 +707,7 @@ export class EmbeddingWorker {
    */
   private async handleForumPostEvent(event: ForumPostEmbeddingEvent): Promise<void> {
     try {
-      console.log(`💬 Processing forum post embedding: ${event.postId}`);
+      logger.info(`💬 Processing forum post embedding: ${event.postId}`);
 
       const text = `${event.authorCharacterName} in ${event.topicSlug}/${event.discussionSlug}: ${event.content}`;
 
@@ -737,22 +737,22 @@ export class EmbeddingWorker {
       if (moderationConfig.enabled) {
         try {
           moderation = await this.pythonService.moderateText(event.content);
-          console.log(`🛡️ Moderation: ${moderation.label} (${moderation.score}) for ${event.authorCharacterName}`);
+          logger.info(`🛡️ Moderation: ${moderation.label} (${moderation.score}) for ${event.authorCharacterName}`);
 
           if (moderation.label === 'toxic' && moderation.score >= moderationConfig.threshold) {
             await this.createForumModerationAlert(event, moderation);
           }
         } catch (moderationError) {
-          console.error('⚠️ Moderation failed (embedding will still be saved):', moderationError);
+          logger.error('⚠️ Moderation failed (embedding will still be saved):', moderationError);
         }
       }
 
       await this.saveForumPostEmbeddingAndModeration(event, embedding, moderation);
 
-      console.log(`✅ Forum post processed: ${event.authorCharacterName} @ ${event.topicSlug}/${event.discussionSlug}`);
+      logger.info(`✅ Forum post processed: ${event.authorCharacterName} @ ${event.topicSlug}/${event.discussionSlug}`);
 
     } catch (error) {
-      console.error('❌ Error processing forum post embedding event:', error);
+      logger.error('❌ Error processing forum post embedding event:', error);
       throw error;
     }
   }
@@ -784,9 +784,9 @@ export class EmbeddingWorker {
         updatedAt: new Date()
       });
 
-      console.log(`🚨 ModerationAlert created: score=${moderation.score} for ${event.authorCharacterName}`);
+      logger.info(`🚨 ModerationAlert created: score=${moderation.score} for ${event.authorCharacterName}`);
     } catch (error) {
-      console.error('⚠️ Failed to create ModerationAlert:', error);
+      logger.error('⚠️ Failed to create ModerationAlert:', error);
     }
   }
 
@@ -795,19 +795,19 @@ export class EmbeddingWorker {
    */
   private async handleOnGameMessageModeration(event: OnGameMessageModerationEvent): Promise<void> {
     try {
-      console.log(`📧 Processing OnGame message moderation: ${event.subject}`);
+      logger.info(`📧 Processing OnGame message moderation: ${event.subject}`);
 
       const moderationConfig = await this.getModerationConfig();
 
       if (!moderationConfig.enabled) {
-        console.log('   ⏭️  Moderation disabled, skipping');
+        logger.info('   ⏭️  Moderation disabled, skipping');
         return;
       }
 
       let moderation: ModerationResult | null = null;
       try {
         moderation = await this.pythonService.moderateText(event.content);
-        console.log(`   🛡️ Moderation: ${moderation.label} (${moderation.score})`);
+        logger.info(`   🛡️ Moderation: ${moderation.label} (${moderation.score})`);
 
         // Update message with moderation results
         const db = mongoose.connection.db;
@@ -830,12 +830,12 @@ export class EmbeddingWorker {
           await this.createOnGameModerationAlert(event, moderation);
         }
       } catch (moderationError) {
-        console.error('⚠️ OnGame message moderation failed:', moderationError);
+        logger.error('⚠️ OnGame message moderation failed:', moderationError);
       }
 
-      console.log(`✅ OnGame message moderation completed: ${event.messageId}`);
+      logger.info(`✅ OnGame message moderation completed: ${event.messageId}`);
     } catch (error) {
-      console.error('❌ Error processing OnGame message moderation:', error);
+      logger.error('❌ Error processing OnGame message moderation:', error);
       throw error;
     }
   }
@@ -845,19 +845,19 @@ export class EmbeddingWorker {
    */
   private async handleOffGameMessageModeration(event: OffGameMessageModerationEvent): Promise<void> {
     try {
-      console.log(`💬 Processing OffGame message moderation: ${event.messageId}`);
+      logger.info(`💬 Processing OffGame message moderation: ${event.messageId}`);
 
       const moderationConfig = await this.getModerationConfig();
 
       if (!moderationConfig.enabled) {
-        console.log('   ⏭️  Moderation disabled, skipping');
+        logger.info('   ⏭️  Moderation disabled, skipping');
         return;
       }
 
       let moderation: ModerationResult | null = null;
       try {
         moderation = await this.pythonService.moderateText(event.content);
-        console.log(`   🛡️ Moderation: ${moderation.label} (${moderation.score})`);
+        logger.info(`   🛡️ Moderation: ${moderation.label} (${moderation.score})`);
 
         // Update message with moderation results
         const db = mongoose.connection.db;
@@ -880,12 +880,12 @@ export class EmbeddingWorker {
           await this.createOffGameModerationAlert(event, moderation);
         }
       } catch (moderationError) {
-        console.error('⚠️ OffGame message moderation failed:', moderationError);
+        logger.error('⚠️ OffGame message moderation failed:', moderationError);
       }
 
-      console.log(`✅ OffGame message moderation completed: ${event.messageId}`);
+      logger.info(`✅ OffGame message moderation completed: ${event.messageId}`);
     } catch (error) {
-      console.error('❌ Error processing OffGame message moderation:', error);
+      logger.error('❌ Error processing OffGame message moderation:', error);
       throw error;
     }
   }
@@ -932,9 +932,9 @@ export class EmbeddingWorker {
         updatedAt: new Date()
       });
 
-      console.log(`   🚨 ModerationAlert created: score=${moderation.score} for ${senderName}`);
+      logger.info(`   🚨 ModerationAlert created: score=${moderation.score} for ${senderName}`);
     } catch (error) {
-      console.error('⚠️ Failed to create OnGame ModerationAlert:', error);
+      logger.error('⚠️ Failed to create OnGame ModerationAlert:', error);
     }
   }
 
@@ -972,9 +972,9 @@ export class EmbeddingWorker {
         updatedAt: new Date()
       });
 
-      console.log(`   🚨 ModerationAlert created: score=${moderation.score} for ${senderName}`);
+      logger.info(`   🚨 ModerationAlert created: score=${moderation.score} for ${senderName}`);
     } catch (error) {
-      console.error('⚠️ Failed to create OffGame ModerationAlert:', error);
+      logger.error('⚠️ Failed to create OffGame ModerationAlert:', error);
     }
   }
 
@@ -1028,7 +1028,7 @@ export class EmbeddingWorker {
         }]
       });
     } catch (error) {
-      console.error('❌ Failed to save to Qdrant (MongoDB saved):', error);
+      logger.error('❌ Failed to save to Qdrant (MongoDB saved):', error);
     }
 
     try {
@@ -1046,7 +1046,7 @@ export class EmbeddingWorker {
         }
       });
     } catch (esError) {
-      console.error('❌ Failed to index to ElasticSearch:', esError);
+      logger.error('❌ Failed to index to ElasticSearch:', esError);
     }
   }
 
@@ -1078,7 +1078,7 @@ export class EmbeddingWorker {
 
       return this.moderationConfigCache;
     } catch (error) {
-      console.error('⚠️ Failed to read moderation config, defaulting to disabled:', error);
+      logger.error('⚠️ Failed to read moderation config, defaulting to disabled:', error);
       return { enabled: false, threshold: 0.7 };
     }
   }
@@ -1113,9 +1113,9 @@ export class EmbeddingWorker {
         updatedAt: new Date()
       });
 
-      console.log(`🚨 ModerationAlert created: score=${moderation.score} for ${event.characterName}`);
+      logger.info(`🚨 ModerationAlert created: score=${moderation.score} for ${event.characterName}`);
     } catch (error) {
-      console.error('⚠️ Failed to create ModerationAlert:', error);
+      logger.error('⚠️ Failed to create ModerationAlert:', error);
     }
   }
 
@@ -1181,7 +1181,7 @@ export class EmbeddingWorker {
         }]
       });
     } catch (error) {
-      console.error('❌ Failed to save to Qdrant (MongoDB saved):', error);
+      logger.error('❌ Failed to save to Qdrant (MongoDB saved):', error);
     }
 
     // Save to ElasticSearch (chat_messages index)
@@ -1201,7 +1201,7 @@ export class EmbeddingWorker {
         }
       });
     } catch (error) {
-      console.error('❌ Failed to save to ElasticSearch (MongoDB+Qdrant saved):', error);
+      logger.error('❌ Failed to save to ElasticSearch (MongoDB+Qdrant saved):', error);
     }
   }
 
@@ -1213,11 +1213,11 @@ export class EmbeddingWorker {
     try {
       const entityType = event.entityType as string;
       if (entityType === 'location') {
-        console.warn('⚠️ Ignoring legacy location delete (locations are not indexed in Qdrant)');
+        logger.warn('⚠️ Ignoring legacy location delete (locations are not indexed in Qdrant)');
         return;
       }
 
-      console.log(`🗑️  Processing deletion: ${event.entityType} ${event.entityId}`);
+      logger.info(`🗑️  Processing deletion: ${event.entityType} ${event.entityId}`);
 
       switch (event.entityType) {
         case 'document':
@@ -1231,10 +1231,10 @@ export class EmbeddingWorker {
           break;
       }
 
-      console.log(`✅ Embeddings deleted: ${event.entityType} ${event.entityId}`);
+      logger.info(`✅ Embeddings deleted: ${event.entityType} ${event.entityId}`);
 
     } catch (error) {
-      console.error(`❌ Error deleting ${event.entityType} embeddings:`, error);
+      logger.error(`❌ Error deleting ${event.entityType} embeddings:`, error);
       throw error; // Re-throw to trigger Bull retry
     }
   }
@@ -1246,7 +1246,7 @@ export class EmbeddingWorker {
     try {
       return await this.pythonService.generateEmbedding(text);
     } catch (error: any) {
-      console.error('Error generating embedding:', error.message);
+      logger.error('Error generating embedding:', error.message);
       throw error; // Re-throw to trigger Bull retry
     }
   }
@@ -1310,9 +1310,9 @@ export class EmbeddingWorker {
           }
         }]
       });
-      console.log(`✅ Embedding saved to MongoDB + Qdrant (type: ${documentType})`);
+      logger.info(`✅ Embedding saved to MongoDB + Qdrant (type: ${documentType})`);
     } catch (error) {
-      console.error('❌ Failed to save to Qdrant (MongoDB saved):', error);
+      logger.error('❌ Failed to save to Qdrant (MongoDB saved):', error);
       // Don't throw - MongoDB save succeeded, Qdrant is optional
     }
   }
@@ -1363,7 +1363,7 @@ export class EmbeddingWorker {
         { upsert: true }
       );
     } catch (mongoError) {
-      console.error('❌ Failed to save chunk to MongoDB:', mongoError);
+      logger.error('❌ Failed to save chunk to MongoDB:', mongoError);
       // Don't throw - continue with Qdrant/ES
     }
 
@@ -1406,7 +1406,7 @@ export class EmbeddingWorker {
         }
       });
     } catch (esError) {
-      console.error('❌ Failed to index to ElasticSearch:', esError);
+      logger.error('❌ Failed to index to ElasticSearch:', esError);
       // Don't throw - Qdrant save succeeded
     }
   }
@@ -1438,7 +1438,7 @@ export class EmbeddingWorker {
       }]
     });
 
-    console.log(`✅ Chunk embedding saved to Qdrant (type: ${event.documentType}, level: H${event.headingLevel})`);
+    logger.info(`✅ Chunk embedding saved to Qdrant (type: ${event.documentType}, level: H${event.headingLevel})`);
 
     // ✅ ALSO save to ElasticSearch (keyword search)
     try {
@@ -1458,9 +1458,9 @@ export class EmbeddingWorker {
           order: event.order
         }
       });
-      console.log(`✅ Chunk also indexed to ElasticSearch (keyword search)`);
+      logger.info(`✅ Chunk also indexed to ElasticSearch (keyword search)`);
     } catch (error) {
-      console.error('❌ Failed to index to ElasticSearch (Qdrant saved):', error);
+      logger.error('❌ Failed to index to ElasticSearch (Qdrant saved):', error);
       // Don't throw - Qdrant save succeeded, ElasticSearch is optional
     }
   }
@@ -1491,9 +1491,9 @@ export class EmbeddingWorker {
         }
       });
 
-      console.log(`✅ Deleted all chunks for document ${documentId}`);
+      logger.info(`✅ Deleted all chunks for document ${documentId}`);
     } catch (error) {
-      console.error(`❌ Failed to delete document chunks:`, error);
+      logger.error(`❌ Failed to delete document chunks:`, error);
       throw error;
     }
   }
@@ -1513,9 +1513,9 @@ export class EmbeddingWorker {
         id: chatId
       }).catch(() => {});
 
-      console.log(`✅ Deleted chat embedding from Qdrant + ElasticSearch`);
+      logger.info(`✅ Deleted chat embedding from Qdrant + ElasticSearch`);
     } catch (error) {
-      console.error(`❌ Failed to delete chat:`, error);
+      logger.error(`❌ Failed to delete chat:`, error);
       throw error;
     }
   }
@@ -1535,9 +1535,9 @@ export class EmbeddingWorker {
         id: postId
       }).catch(() => {});
 
-      console.log(`✅ Deleted forum post embedding from Qdrant + ElasticSearch`);
+      logger.info(`✅ Deleted forum post embedding from Qdrant + ElasticSearch`);
     } catch (error) {
-      console.error(`❌ Failed to delete forum post:`, error);
+      logger.error(`❌ Failed to delete forum post:`, error);
       throw error;
     }
   }

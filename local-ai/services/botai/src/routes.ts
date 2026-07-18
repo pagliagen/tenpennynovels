@@ -740,7 +740,6 @@ async function runResponsePipeline(bot: any, context: any): Promise<{
       model: (() => {
         const p = resolveProvider();
         if (p === 'inception') return process.env.INCEPTION_MODEL || 'mercury-2';
-        if (p === 'anthropic') return process.env.ANTHROPIC_MODEL || 'claude';
         return process.env.OLLAMA_MODEL || 'ollama';
       })(),
       tokensUsed: genTokens,

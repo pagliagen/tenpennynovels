@@ -138,9 +138,9 @@ export const characterApi = {
    * ```typescript
    * const result = await characterApi.checkNameAvailability('Arthur Pemberton');
    * if (result.available) {
-   *   console.log('Name is available!');
+   *   logger.info('Name is available!');
    * } else {
-   *   console.log('Name already taken:', result.error);
+   *   logger.info('Name already taken:', { error: result.error });
    * }
    * ```
    */
@@ -165,7 +165,7 @@ export const characterApi = {
    * @example
    * ```typescript
    * const character = await characterApi.getById('abc123');
-   * console.log(`${character.name} - ${character.occupation}`);
+   * logger.info(`${character.name} - ${character.occupation}`);
    * ```
    */
   async getById(characterId: string): Promise<Character> {
@@ -317,8 +317,8 @@ export const characterApi = {
    * @example
    * ```typescript
    * const config = await characterApi.getCreationConfig();
-   * console.log(`Stats budget: ${config.stats.totalPoints}`); // 450
-   * console.log(`Skills budget: ${config.skills.totalPoints}`); // 250
+   * logger.info(`Stats budget: ${config.stats.totalPoints}`); // 450
+   * logger.info(`Skills budget: ${config.skills.totalPoints}`); // 250
    * ```
    */
   async getCreationConfig(): Promise<CharacterCreationConfig> {
@@ -353,7 +353,7 @@ export const characterApi = {
    * ```typescript
    * const occupations = await characterApi.getOccupations();
    * const detective = occupations.find(o => o.name === 'Detective');
-   * console.log(detective.requiredSkillSlots); // [{options: [{skillId, name}, ...]}, ...]
+   * logger.info(detective.requiredSkillSlots); // [{options: [{skillId, name}, ...]}, ...]
    * ```
    */
   async getOccupations(): Promise<OccupationData[]> {
@@ -374,7 +374,7 @@ export const characterApi = {
    * ```typescript
    * const skills = await characterApi.getSkills();
    * const accounting = skills.find(s => s.name === 'Accounting');
-   * console.log(`${accounting.name}: ${accounting.base}%`); // Accounting: 15%
+   * logger.info(`${accounting.name}: ${accounting.base}%`); // Accounting: 15%
    * ```
    */
   async getSkills(): Promise<SkillDefinition[]> {
@@ -398,7 +398,7 @@ export const characterApi = {
    * ```typescript
    * const result = await characterApi.searchFaceClaims('Tom Hiddleston');
    * if (result.exactMatch) {
-   *   console.log('⚠️ Already used by:', result.exactMatch.characterName);
+   *   logger.info('⚠️ Already used by:', { characterName: result.exactMatch.characterName });
    * }
    * ```
    */

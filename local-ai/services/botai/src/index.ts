@@ -20,8 +20,6 @@ async function start() {
     const provider = resolveProvider();
     if (provider === 'inception') {
       logger.info(`Using Inception API — model: ${process.env.INCEPTION_MODEL || 'mercury-2'} (no warmup needed)`);
-    } else if (provider === 'anthropic') {
-      logger.info(`Using Anthropic API — model: ${process.env.ANTHROPIC_MODEL || 'claude'} (no warmup needed)`);
     } else {
       warmupModel()
         .then(() => logger.info(`Model ${getModel()} warmed up and locked in memory`))

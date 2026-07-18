@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 /**
  * URL Filter Encoding/Decoding Utilities
  *
@@ -47,7 +48,7 @@ export function encodeFilter(filter: FilterParams): string {
     const json = JSON.stringify(filter);
     return btoa(json);  // Base64 encode
   } catch (error) {
-    console.error('[urlFilters] Encode error:', error);
+    logger.error('[urlFilters] Encode error:', { error });
     return '';
   }
 }
@@ -70,7 +71,7 @@ export function decodeFilter(encoded: string): FilterParams | null {
     const json = atob(encoded);  // Base64 decode
     return JSON.parse(json);
   } catch (error) {
-    console.error('[urlFilters] Decode error:', error);
+    logger.error('[urlFilters] Decode error:', { error });
     return null;
   }
 }

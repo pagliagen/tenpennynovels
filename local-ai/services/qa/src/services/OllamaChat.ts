@@ -8,7 +8,7 @@ export class OllamaChat {
     this.client = new Ollama({
       host: process.env.OLLAMA_URL || 'http://localhost:11434',
     });
-    this.model = process.env.OLLAMA_MODEL || 'mistral:7b-instruct';
+    this.model = process.env.OLLAMA_MODEL || 'qwen3:8b';
   }
 
   async chat(systemPrompt: string, userMessage: string, maxTokens: number = 500): Promise<{ text: string; tokensUsed: number }> {

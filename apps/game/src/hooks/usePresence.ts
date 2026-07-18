@@ -11,7 +11,7 @@
  * - Automatic cleanup on unmount
  *
  * CRITICAL: This hook follows MEMORY.md WebSocket pattern.
- * - Subscriptions via onLocationEvent / onGlobalEvent callbacks
+ * - Subscriptions via onLocationEvent / onGlobalEvent / onConnectionEvent callbacks
  * - NO direct socket.on() calls (violates pattern)
  * - Automatic unsubscribe on unmount
  *
@@ -25,6 +25,7 @@ import { useWebSocket } from '@/contexts/WebSocketContext';
 import { useAuthStore } from '@/store/authStore';
 import { useGameStateStore } from '@/store/gameStateStore';
 import { usePresenceStore, GlobalPresence } from '@/store/presenceStore';
+import { logger } from '@/lib/logger';
 
 /**
  * usePresence Hook Return Type
@@ -89,12 +90,12 @@ export function usePresence(): UsePresenceReturn {
   } = usePresenceStore();
 
   const { selectedCharacter } = useAuthStore();
-  const { onLocationEvent, onGlobalEvent, socket } = useWebSocket();
+  const { onLocationEvent, onGlobalEvent, onConnectionEvent } = useWebSocket();
 
   // Initialize presence store on mount (fetch from API)
   useEffect(() => {
     if (selectedCharacter) {
-      console.log('🔄 usePresence: Initializing presence store for character:', selectedCharacter._id);
+      logger.info('🔄 usePresence: Initializing presence store for character:', { _id: selectedCharacter._id });
       initialize(selectedCharacter._id);
     }
   }, [selectedCharacter?._id, initialize]);
@@ -102,7 +103,7 @@ export function usePresence(): UsePresenceReturn {
   // Subscribe to location events (MEMORY.md pattern)
   useEffect(() => {
     const unsubscribe = onLocationEvent((event) => {
-      console.log('📥 usePresence: Received location event:', event.type, event.data);
+      logger.info('📥 usePresence: Received location event:', { args: [event.type, event.data] });
 
       switch (event.type) {
         case 'player_entered':
@@ -119,7 +120,7 @@ export function usePresence(): UsePresenceReturn {
           // Current character joined new location (confirmation)
           // Refetch presence to sync with server truth
           if (selectedCharacter) {
-            console.log('🔄 usePresence: location_joined event - refetching presence');
+            logger.info('🔄 usePresence: location_joined event - refetching presence');
             initialize(selectedCharacter._id);
           }
           break;
@@ -137,7 +138,7 @@ export function usePresence(): UsePresenceReturn {
   // Subscribe to global events (MEMORY.md pattern)
   useEffect(() => {
     const unsubscribe = onGlobalEvent((event) => {
-      console.log('📥 usePresence: Received global event:', event.type, event.data);
+      logger.info('📥 usePresence: Received global event:', { args: [event.type, event.data] });
 
       switch (event.type) {
         case 'global_presence_update':
@@ -147,19 +148,19 @@ export function usePresence(): UsePresenceReturn {
 
         case 'character_active':
           // Character became active (user selected character)
-          console.log('📥 usePresence: character_active event:', event.data);
+          logger.info('📥 usePresence: character_active event:', { data: event.data });
           handleCharacterActive(event.data);
           break;
 
         case 'character_inactive':
           // Character went inactive (user logged out)
-          console.log('📥 usePresence: character_inactive event:', event.data);
+          logger.info('📥 usePresence: character_inactive event:', { data: event.data });
           handleCharacterInactive(event.data);
           break;
 
         case 'user_status_change':
           // DEPRECATED for presence - kept for other systems
-          console.log('📥 usePresence: user_status_change event (ignored for presence)');
+          logger.info('📥 usePresence: user_status_change event (ignored for presence)');
           break;
 
         default:
@@ -174,19 +175,17 @@ export function usePresence(): UsePresenceReturn {
 
   // Refetch presence after WebSocket reconnect (catch up on missed events)
   useEffect(() => {
-    if (!socket || !selectedCharacter) return;
+    if (!selectedCharacter) return;
 
-    const handleReconnect = () => {
-      console.log('🔄 usePresence: WebSocket reconnected - refetching presence');
-      initialize(selectedCharacter._id);
-    };
+    const unsubscribe = onConnectionEvent((event) => {
+      if (event.type === 'reconnected') {
+        logger.info('🔄 usePresence: WebSocket reconnected - refetching presence');
+        initialize(selectedCharacter._id);
+      }
+    });
 
-    socket.on('connect', handleReconnect);
-
-    return () => {
-      socket.off('connect', handleReconnect);
-    };
-  }, [socket, selectedCharacter, initialize]);
+    return unsubscribe;
+  }, [onConnectionEvent, selectedCharacter, initialize]);
 
   // Compute location-filtered presence (characters in same location as current character)
   // SINGLE SOURCE OF TRUTH: currentLocationId from GameStateStore

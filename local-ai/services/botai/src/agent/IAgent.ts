@@ -1,5 +1,5 @@
 /**
- * Common interface for all LLM agent implementations (Ollama, Anthropic, etc.)
+ * Common interface for all LLM agent implementations (Ollama, Inception, etc.)
  * Any new provider must implement this interface to be usable in the pipeline.
  */
 

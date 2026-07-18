@@ -44,6 +44,7 @@ import { ToastContainer } from '@/components/ui/ToastContainer';
 import { EnvironmentProvider } from '@/contexts/EnvironmentContext';
 import { WebSocketProvider } from '@/contexts/WebSocketContext';
 import { queryClient } from '@/lib/api/queryClient';
+import { logger } from '@/lib/logger';
 import '@/styles/main.scss';
 
 /**
@@ -98,13 +99,13 @@ export default function App({ Component, pageProps }: AppProps): JSX.Element {
         // Save to sessionStorage (game app origin: localhost:3010)
         sessionStorage.setItem('character_session_id', sessionId);
         if (process.env.NODE_ENV === 'development') {
-          console.log('[App] SessionId received from landing and saved to sessionStorage');
+          logger.info('[App] SessionId received from landing and saved to sessionStorage');
         }
 
         // Clean URL (remove query param) for better UX
         router.replace(router.pathname, undefined, { shallow: true });
       } catch (error) {
-        console.error('[App] Failed to save sessionId to sessionStorage:', error);
+        logger.error('[App] Failed to save sessionId to sessionStorage:', { error });
       }
     }
 
@@ -150,7 +151,7 @@ export default function App({ Component, pageProps }: AppProps): JSX.Element {
       const sent = navigator.sendBeacon(endpoint, data);
 
       if (!sent) {
-        console.warn('[Cleanup] sendBeacon failed - session may not be cleaned up');
+        logger.warn('[Cleanup] sendBeacon failed - session may not be cleaned up');
       }
 
       // sessionStorage auto-cleared on tab close (no manual cleanup needed)

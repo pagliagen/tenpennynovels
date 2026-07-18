@@ -22,6 +22,7 @@ import { devtools } from 'zustand/middleware';
 
 import { locationChatsApi } from '@/lib/api/locationChats';
 import type { ChatMessage, ChatOccupant } from '@/types/chat';
+import { logger } from '@/lib/logger';
 
 /**
  * LocalStorage Key for Location Tags
@@ -46,7 +47,7 @@ function loadTagForLocation(locationId: string): string | null {
     const tags = JSON.parse(saved) as Record<string, string>;
     return tags[locationId] || null;
   } catch (error) {
-    console.error('Failed to load location tag from localStorage:', error);
+    logger.error('Failed to load location tag from localStorage:', { error });
     return null;
   }
 }
@@ -70,7 +71,7 @@ function saveTagForLocation(locationId: string, tag: string): void {
 
     localStorage.setItem(LOCATION_TAGS_KEY, JSON.stringify(tags));
   } catch (error) {
-    console.error('Failed to save location tag to localStorage:', error);
+    logger.error('Failed to save location tag to localStorage:', { error });
   }
 }
 
@@ -198,7 +199,7 @@ export const useChatStore = create<ChatStore>()(
         const savedTag = loadTagForLocation(locationId);
         if (savedTag) {
           set({ currentTag: savedTag });
-          console.log(`🔖 Restored saved tag for location: ${savedTag}`);
+          logger.info(`🔖 Restored saved tag for location: ${savedTag}`);
         }
 
         // Load messages
@@ -234,7 +235,7 @@ export const useChatStore = create<ChatStore>()(
             : [];
 
           if (messages.length === 0 && response.messages) {
-            console.warn('⚠️  Unexpected API response structure:', response);
+            logger.warn('⚠️  Unexpected API response structure:', { response });
           }
 
           set({
@@ -242,10 +243,10 @@ export const useChatStore = create<ChatStore>()(
             isLoading: false,
           });
 
-          console.log(`✅ Loaded ${messages.length} messages for location ${locationId}`, {
+          logger.info(`✅ Loaded ${messages.length} messages for location ${locationId}`, { value: {
             totalCount: response.totalCount,
             hasMore: response.hasMore
-          });
+          } });
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'Failed to load messages';
 
@@ -254,7 +255,7 @@ export const useChatStore = create<ChatStore>()(
             isLoading: false,
           });
 
-          console.error('❌ Failed to load chat messages:', error);
+          logger.error('❌ Failed to load chat messages:', { error });
         }
       },
 
@@ -273,7 +274,7 @@ export const useChatStore = create<ChatStore>()(
           // Check if message already exists (prevent duplicates)
           const exists = state.messages.some((m) => m._id === message._id);
           if (exists) {
-            console.warn(`⚠️  Duplicate message ignored: ${message._id}`);
+            logger.warn(`⚠️  Duplicate message ignored: ${message._id}`);
             return state;
           }
 
@@ -339,7 +340,7 @@ export const useChatStore = create<ChatStore>()(
           // Check if already in list (prevent duplicates)
           const exists = state.occupants.some((o) => o.characterId === occupant.characterId);
           if (exists) {
-            console.warn(`⚠️  Occupant already in list: ${occupant.characterName}`);
+            logger.warn(`⚠️  Occupant already in list: ${occupant.characterName}`);
             return state;
           }
 
@@ -393,7 +394,7 @@ export const useChatStore = create<ChatStore>()(
         const { locationId } = get();
 
         set({ currentTag: tag });
-        console.log(`✅ Tag set to: ${tag}`);
+        logger.info(`✅ Tag set to: ${tag}`);
 
         // Save to localStorage for this location
         if (locationId) {

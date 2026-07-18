@@ -13,6 +13,7 @@ import { useTicketMessages, useAddTicketMessage, useCloseTicket, useUserTickets 
 import styles from '@/styles/components/tickets/TicketThreadView.module.scss';
 
 import { TicketStatusBadge } from './TicketStatusBadge';
+import { logger } from '@/lib/logger';
 
 interface TicketThreadViewProps {
   ticketId: string;
@@ -28,7 +29,7 @@ export function TicketThreadView({ ticketId, onBack }: TicketThreadViewProps) {
   const addMessage = useAddTicketMessage();
   const closeTicket = useCloseTicket();
 
-  const ticket = tickets.find(t => t.id === ticketId);
+  const ticket = tickets.find(t => t._id === ticketId);
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -45,7 +46,7 @@ export function TicketThreadView({ ticketId, onBack }: TicketThreadViewProps) {
       });
       setReplyContent('');
     } catch (error) {
-      console.error('Failed to send message:', error);
+      logger.error('Failed to send message:', { error });
     }
   };
 
@@ -56,7 +57,7 @@ export function TicketThreadView({ ticketId, onBack }: TicketThreadViewProps) {
       await closeTicket.mutateAsync({ ticketId });
       onBack();
     } catch (error) {
-      console.error('Failed to close ticket:', error);
+      logger.error('Failed to close ticket:', { error });
     }
   };
 
@@ -112,7 +113,7 @@ export function TicketThreadView({ ticketId, onBack }: TicketThreadViewProps) {
         )}
 
         {!isLoading && messages.map((message) => (
-          <MessageBubble key={message.id} message={message} />
+          <MessageBubble key={message._id} message={message} />
         ))}
 
         <div ref={messagesEndRef} />

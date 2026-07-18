@@ -12,6 +12,7 @@
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from 'axios';
 import { API_CONFIG } from '@/constants/config';
 import { ApiError, ApiResponse } from '@/types/api/common';
+import { logger } from '@/lib/logger';
 
 /**
  * Sleep utility for retry delays
@@ -46,7 +47,7 @@ apiClient.interceptors.request.use(
 
     // Log request in development
     if (process.env.NODE_ENV === 'development') {
-      console.log(`[API Request] ${config.method?.toUpperCase()} ${config.url}`);
+      logger.info(`[API Request] ${config.method?.toUpperCase()} ${config.url}`);
     }
     return config;
   },
@@ -60,14 +61,14 @@ apiClient.interceptors.response.use(
   response => {
     // Log response in development
     if (process.env.NODE_ENV === 'development') {
-      console.log(`[API Response] ${response.config.method?.toUpperCase()} ${response.config.url} - ${response.status}`);
+      logger.info(`[API Response] ${response.config.method?.toUpperCase()} ${response.config.url} - ${response.status}`);
     }
     return response;
   },
   (error: AxiosError) => {
     // Log error in development
     if (process.env.NODE_ENV === 'development') {
-      console.error(`[API Error]`, error);
+      logger.error(`[API Error]`, { error });
     }
 
     // Handle 401 - Redirect to landing login
@@ -110,7 +111,7 @@ export async function withRetry<T>(
       if (attempt < retries - 1) {
         const delay = baseDelay * Math.pow(2, attempt);
         if (process.env.NODE_ENV === 'development') {
-          console.log(`[Retry] Attempt ${attempt + 1}/${retries} failed, retrying in ${delay}ms...`);
+          logger.info(`[Retry] Attempt ${attempt + 1}/${retries} failed, retrying in ${delay}ms...`);
         }
         await sleep(delay);
       }

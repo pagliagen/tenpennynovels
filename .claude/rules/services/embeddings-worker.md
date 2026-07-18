@@ -846,7 +846,7 @@ interface DeleteEmbeddingEvent {
 
 ## Cross-References
 
-- **Logger patterns:** See shared-backend.md → Winston Logger
+- **Logger patterns:** embeddings-worker usa un logger strutturato custom (`src/utils/logger.ts`), NON Winston — vedi shared-backend.md → Winston Logger per il principio generale (mai console.*) e l'eccezione di questo service
 - **Redis pub/sub:** See unified-backend.md → Redis Pub/Sub Pattern
 - **Bull queue:** Official docs - https://github.com/OptimalBits/bull
 - **Qdrant:** Official docs - https://qdrant.tech/documentation/

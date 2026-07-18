@@ -3,6 +3,7 @@
  */
 
 import { STORAGE_VERSION } from '@/constants/config';
+import { logger } from '@/lib/logger';
 
 /**
  * Versioned storage data
@@ -27,7 +28,7 @@ export function getVersionedData<T>(key: string): T | null {
 
     // Check version
     if (parsed.version !== STORAGE_VERSION) {
-      console.warn(`[Storage] Version mismatch for "${key}": stored ${parsed.version}, expected ${STORAGE_VERSION}`);
+      logger.warn(`[Storage] Version mismatch for "${key}": stored ${parsed.version}, expected ${STORAGE_VERSION}`);
       // Clear old version
       localStorage.removeItem(key);
       return null;
@@ -35,7 +36,7 @@ export function getVersionedData<T>(key: string): T | null {
 
     return parsed.data;
   } catch (error) {
-    console.error(`[Storage] Error reading "${key}":`, error);
+    logger.error(`[Storage] Error reading "${key}":`, { error });
     localStorage.removeItem(key);
     return null;
   }
@@ -53,7 +54,7 @@ export function setVersionedData<T>(key: string, data: T): void {
 
     localStorage.setItem(key, JSON.stringify(versioned));
   } catch (error) {
-    console.error(`[Storage] Error writing "${key}":`, error);
+    logger.error(`[Storage] Error writing "${key}":`, { error });
   }
 }
 

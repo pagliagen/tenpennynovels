@@ -7,6 +7,7 @@
 
 import React, { ReactNode } from 'react';
 import { TableColumn } from '../config/schemas';
+import { logger } from '@/lib/logger';
 
 /**
  * Cell renderer props
@@ -40,7 +41,7 @@ export class CellRendererRegistry {
    */
   register(type: string, renderer: CellRendererFn): void {
     if (this.renderers.has(type)) {
-      console.warn(`[CellRendererRegistry] Renderer for type "${type}" already exists, overwriting`);
+      logger.warn(`[CellRendererRegistry] Renderer for type "${type}" already exists, overwriting`);
     }
     this.renderers.set(type, renderer);
   }
@@ -67,7 +68,7 @@ export class CellRendererRegistry {
     const renderer = this.renderers.get(type);
 
     if (!renderer) {
-      console.warn(`[CellRendererRegistry] No renderer found for type "${type}", using default`);
+      logger.warn(`[CellRendererRegistry] No renderer found for type "${type}", using default`);
       return this.defaultRenderer(props as CellRendererProps<Record<string, unknown>>);
     }
 

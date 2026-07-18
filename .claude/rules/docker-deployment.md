@@ -18,7 +18,7 @@ Pattern Docker, multi-stage builds, e deployment strategies.
 # ============================================
 # Stage 1: Builder
 # ============================================
-FROM node:22.13.1-alpine AS builder
+FROM node:22-alpine AS builder
 
 WORKDIR /app
 
@@ -36,7 +36,7 @@ RUN npm run build
 # ============================================
 # Stage 2: Production
 # ============================================
-FROM node:22.13.1-alpine
+FROM node:22-alpine
 
 WORKDIR /app
 
@@ -76,6 +76,8 @@ CMD ["node", "dist/index.js"]
 | Security | Dev dependencies exposed | Only production code |
 | Build speed | Slower (no cache separation) | Faster (layer caching) |
 | Attack surface | Larger | Minimal |
+
+**Eccezione — `services/embeddings-worker/Dockerfile`**: è `FROM python:3.12-slim`, non Node. Il container esiste per il subprocess Python (sentence-transformers) usato dal worker; il servizio Node dell'embeddings-worker in produzione gira via PM2 sull'host, non in questo container. Non applicare il pattern multi-stage Node a questo Dockerfile.
 
 ---
 
@@ -358,9 +360,6 @@ REDIS_URL=redis://redis:6379
 # Security
 JWT_SECRET=${JWT_SECRET}  # Injected from host environment
 
-# API Keys
-ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
-
 # Ports
 PORT=3001
 ```
@@ -374,7 +373,6 @@ PORT=3001
 ```bash
 # On host (CI/CD or local)
 export JWT_SECRET=your-secret-here
-export ANTHROPIC_API_KEY=sk-ant-xxx
 
 # Docker Compose reads from host environment
 docker compose up -d

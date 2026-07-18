@@ -1,6 +1,5 @@
 import { IAgent } from './IAgent';
 import { OllamaAgent } from './OllamaAgent';
-import { AnthropicAgent } from './AnthropicAgent';
 import { InceptionAgent } from './InceptionAgent';
 import { createLogger } from '../../../../shared/logger';
 
@@ -9,18 +8,17 @@ const logger = createLogger('AgentFactory');
 let _creativeAgent: IAgent | null = null;
 let _analyticalAgent: IAgent | null = null;
 
-type AIProvider = 'anthropic' | 'inception' | 'ollama';
+type AIProvider = 'inception' | 'ollama';
 
 /**
- * Resolves the active provider from AI_PROVIDER env var.
- * Falls back to legacy behaviour: ANTHROPIC_API_KEY present → anthropic, else ollama.
+ * Resolves the active provider from AI_PROVIDER env var. Defaults to ollama (LLM locale).
  */
 export function resolveProvider(): AIProvider {
   const explicit = process.env.AI_PROVIDER?.toLowerCase();
-  if (explicit === 'anthropic' || explicit === 'inception' || explicit === 'ollama') {
+  if (explicit === 'inception' || explicit === 'ollama') {
     return explicit;
   }
-  return process.env.ANTHROPIC_API_KEY ? 'anthropic' : 'ollama';
+  return 'ollama';
 }
 
 function createAgent(role: string): IAgent {
@@ -30,10 +28,6 @@ function createAgent(role: string): IAgent {
     case 'inception': {
       logger.info(`[${role}] Using InceptionAgent (model: ${process.env.INCEPTION_MODEL || 'mercury-2'})`);
       return new InceptionAgent();
-    }
-    case 'anthropic': {
-      logger.info(`[${role}] Using AnthropicAgent (model: ${process.env.ANTHROPIC_MODEL || 'default'})`);
-      return new AnthropicAgent();
     }
     default: {
       const model = role === 'Analytical'

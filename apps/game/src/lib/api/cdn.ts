@@ -4,6 +4,7 @@
  */
 
 import { apiClient } from './client';
+import { logger } from '@/lib/logger';
 
 export interface CDNUploadResponse {
   url: string;
@@ -59,5 +60,5 @@ export const deleteImage = async (
 ): Promise<void> => {
   // Best-effort delete (not critical if fails)
   // CDN cleanup handled server-side
-  console.log('[CDN] Delete image:', { type, entityId, filename });
+  logger.info('[CDN] Delete image:', { value: { type, entityId, filename } });
 };

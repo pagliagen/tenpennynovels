@@ -21,6 +21,7 @@ import { clearFilterHash } from '@/lib/utils/urlFilters';
 import { useAuthStore, selectUser } from '@/store/authStore';
 import type { Character, CharacterListParams } from '@/types/api/Character';
 import styles from '@/styles/pages/CharacterList.module.scss';
+import { logger } from '@/lib/logger';
 
 // ============================================================================
 // ROLES AND PERMISSIONS (synced with services/unified-backend/src/config/roles/roles.json)
@@ -160,12 +161,12 @@ export default function CharacterPermissions() {
   const handleAction = async (action: string, character: Character) => {
     if (action === 'edit-permissions') {
       // DEBUG: Log character data to verify fields
-      console.log('📊 Character data:', {
+      logger.info('📊 Character data:', { value: {
         fullName: character.fullName,
         isGestore: character.isGestore,
         characterRoles: character.characterRoles,
         characterPermissions: character.characterPermissions
-      });
+      } });
 
       setCurrentCharacter(character);
       setSelectedRoles(character.characterRoles || []);

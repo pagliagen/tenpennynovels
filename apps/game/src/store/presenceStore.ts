@@ -16,6 +16,7 @@
 import { create } from 'zustand';
 
 import { api } from '@/lib/api/client';
+import { logger } from '@/lib/logger';
 
 /**
  * Global Presence Data Structure
@@ -239,7 +240,7 @@ export const usePresenceStore = create<PresenceState & PresenceActions>((set, ge
         const presenceArray = response.data.globalPresence ?? [];
 
         if (!Array.isArray(presenceArray)) {
-          console.error('❌ initialize: presenceArray is not an array!', presenceArray);
+          logger.error('❌ initialize: presenceArray is not an array!', { presenceArray });
           throw new Error('API response data.globalPresence is not an array');
         }
 
@@ -253,7 +254,7 @@ export const usePresenceStore = create<PresenceState & PresenceActions>((set, ge
         throw new Error('Invalid API response format');
       }
     } catch (error: any) {
-      console.error('Failed to fetch global presence:', error);
+      logger.error('Failed to fetch global presence:', { error });
       set({
         isLoading: false,
         error: error.message || 'Failed to fetch presence data',
@@ -361,13 +362,13 @@ export const usePresenceStore = create<PresenceState & PresenceActions>((set, ge
 
     if (existingIndex !== -1) {
       // Character already in list (reconnect or duplicate event)
-      console.log('📥 Character already in presence, skipping:', event.characterId);
+      logger.info('📥 Character already in presence, skipping:', { characterId: event.characterId });
       return;
     }
 
     // Add new character with minimal data
     // Full data (avatar, location) will be enriched by periodic refetch (30s)
-    console.log('📥 Adding character to presence:', event.characterId);
+    logger.info('📥 Adding character to presence:', { characterId: event.characterId });
     set({
       globalPresence: [
         ...globalPresence,
@@ -386,7 +387,7 @@ export const usePresenceStore = create<PresenceState & PresenceActions>((set, ge
   },
 
   handleCharacterInactive: (event) => {
-    console.log('📥 Removing character from presence:', event.characterId);
+    logger.info('📥 Removing character from presence:', { characterId: event.characterId });
     const { globalPresence } = get();
 
     // Remove character from presence list
@@ -405,11 +406,11 @@ export const usePresenceStore = create<PresenceState & PresenceActions>((set, ge
       globalPresence = state.globalPresence;
     } else if (state.globalPresence && typeof state.globalPresence === 'object' && 'globalPresence' in state.globalPresence) {
       // Handle nested structure bug
-      console.warn('⚠️ getLocationPresence: Detected nested globalPresence structure, extracting array');
+      logger.warn('⚠️ getLocationPresence: Detected nested globalPresence structure, extracting array');
       const nested = state.globalPresence as { globalPresence?: GlobalPresence[] };
       globalPresence = nested.globalPresence ?? [];
     } else {
-      console.warn('⚠️ getLocationPresence: globalPresence is not an array, defaulting to []');
+      logger.warn('⚠️ getLocationPresence: globalPresence is not an array, defaulting to []');
       globalPresence = [];
     }
 

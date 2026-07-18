@@ -732,6 +732,12 @@ export default function App({ Component, pageProps }: AppProps) {
 
 ---
 
+## Logging: nessun `@/lib/logger` in questa app
+
+**Eccezione**: a differenza di game e management, documents NON ha un wrapper `@/lib/logger`. `console.*` è ammesso in questa app — preferire `console.error` nei soli error path SSR (`getServerSideProps`), evitare `console.log` di debug lasciato in codice committato.
+
+---
+
 ## Cross-References
 
 - **Shared Frontend**: `/Users/gennaropaglia/Documents/SitiPersonali/tenpennynovels/.claude/rules/apps/shared-frontend.md`

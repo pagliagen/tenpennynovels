@@ -21,6 +21,7 @@ import { API_CONFIG, AUTH_CONFIG } from '@/constants/config';
 import { useUIStore } from '@/store/uiStore';
 
 import { parseAxiosError, ApiError } from './errors';
+import { logger } from '@/lib/logger';
 
 /** Payload errore JSON tipico del backend (403, ecc.). */
 interface ApiErrorBody {
@@ -164,9 +165,7 @@ const createApiClient = (): AxiosInstance => {
       // Log performance metrics in development
       if (process.env.NODE_ENV === 'development') {
         const duration = Date.now() - (response.config.metadata?.startTime || 0);
-        console.log(
-          `[API] ${response.config.method?.toUpperCase()} ${response.config.url} - ${duration}ms`
-        );
+        logger.info(`[API] ${response.config.method?.toUpperCase()} ${response.config.url} - ${duration}ms`);
       }
 
       return response;
@@ -197,23 +196,23 @@ const createApiClient = (): AxiosInstance => {
 
         // Log for debugging in development
         if (process.env.NODE_ENV === 'development') {
-          console.warn('[Permission Denied]', {
+          logger.warn('[Permission Denied]', { value: {
             url: error.config?.url,
             requiredPermission: errorData?.requiredPermission,
             code: errorData?.code,
-          });
+          } });
         }
       }
 
       // Log errors in development with full context
       if (process.env.NODE_ENV === 'development') {
-        console.error('[API Error]', {
+        logger.error('[API Error]', { value: {
           url: error.config?.url,
           category: apiError.category,
           status: apiError.statusCode,
           message: apiError.message,
           details: apiError.details,
-        });
+        } });
       }
 
       return Promise.reject(apiError);

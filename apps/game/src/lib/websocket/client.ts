@@ -14,6 +14,7 @@
  */
 
 import type { Socket } from 'socket.io-client';
+import { logger } from '@/lib/logger';
 
 /**
  * WebSocket Client Singleton Class
@@ -36,9 +37,9 @@ class WebSocketClient {
   setSocket(socket: Socket | null): void {
     this.socket = socket;
     if (socket) {
-      console.log('[WebSocketClient] Socket registered');
+      logger.info('[WebSocketClient] Socket registered');
     } else {
-      console.log('[WebSocketClient] Socket cleared');
+      logger.info('[WebSocketClient] Socket cleared');
     }
   }
 
@@ -53,7 +54,7 @@ class WebSocketClient {
    */
   emit(event: string, data?: any): void {
     if (!this.socket || !this.socket.connected) {
-      console.warn(`[WebSocketClient] Cannot emit '${event}' - socket not connected`);
+      logger.warn(`[WebSocketClient] Cannot emit '${event}' - socket not connected`);
       return;
     }
     this.socket.emit(event, data);
@@ -69,7 +70,7 @@ class WebSocketClient {
    * @returns {void}
    */
   joinLocation(locationId: string): void {
-    console.log('[WebSocketClient] Joining location:', locationId);
+    logger.info('[WebSocketClient] Joining location:', { locationId });
     this.emit('join_location', locationId);
   }
 
@@ -83,7 +84,7 @@ class WebSocketClient {
    * @returns {void}
    */
   leaveLocation(locationId: string): void {
-    console.log('[WebSocketClient] Leaving location:', locationId);
+    logger.info('[WebSocketClient] Leaving location:', { locationId });
     this.emit('leave_location', locationId);
   }
 

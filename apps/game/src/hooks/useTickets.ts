@@ -14,7 +14,7 @@ import { api } from '@/lib/api/client';
 
 // Types
 export interface Ticket {
-  id: string;
+  _id: string;
   title: string;
   category: string;
   categoryLabel: string;
@@ -31,7 +31,7 @@ export interface Ticket {
 }
 
 export interface TicketMessage {
-  id: string;
+  _id: string;
   ticketId: string;
   content: string;
   sender: {

@@ -29,6 +29,7 @@ import { playNotificationSound } from '@/lib/audio';
 import { wsClient } from '@/lib/websocket/client';
 import { useAuthStore } from '@/store/authStore';
 import { useUIStore } from '@/store/uiStore';
+import { logger } from '@/lib/logger';
 
 /**
  * WebSocket Connection Status
@@ -77,7 +78,23 @@ export interface GlobalEvent {
  */
 export interface MessageEvent {
   type: string;
-  data: any;  
+  data: any;
+}
+
+/**
+ * Connection Event Types
+ *
+ * Fired on 'connect' (first connection of this socket lifecycle) and
+ * 'reconnected' (subsequent connects after a disconnect) so consumers can
+ * catch up on missed events without subscribing to socket.on('connect') directly.
+ *
+ * @typedef {Object} ConnectionEvent
+ * @property {'connected' | 'reconnected'} type - Event type
+ *
+ * @since 2.1.0
+ */
+export interface ConnectionEvent {
+  type: 'connected' | 'reconnected';
 }
 
 /**
@@ -139,6 +156,14 @@ interface WebSocketContextValue {
    * @returns {() => void} Unsubscribe function
    */
   onMessageEvent: (callback: EventCallback<MessageEvent>) => () => void;
+
+  /**
+   * Subscribe to connection events (connected / reconnected)
+   *
+   * @param {EventCallback<ConnectionEvent>} callback - Event handler
+   * @returns {() => void} Unsubscribe function
+   */
+  onConnectionEvent: (callback: EventCallback<ConnectionEvent>) => () => void;
 
   /**
    * Manually reconnect WebSocket
@@ -205,6 +230,7 @@ export function WebSocketProvider({ children }: WebSocketProviderProps): JSX.Ele
   const locationCallbacksRef = useRef<Set<EventCallback<LocationEvent>>>(new Set());
   const globalCallbacksRef = useRef<Set<EventCallback<GlobalEvent>>>(new Set());
   const messageCallbacksRef = useRef<Set<EventCallback<MessageEvent>>>(new Set());
+  const connectionCallbacksRef = useRef<Set<EventCallback<ConnectionEvent>>>(new Set());
 
   // Sincronizza il ref con lo state per evitare stale closure nei callback WebSocket
   currentLocationIdRef.current = currentLocationId;
@@ -239,7 +265,7 @@ export function WebSocketProvider({ children }: WebSocketProviderProps): JSX.Ele
     const sessionId = sessionStorage.getItem('character_session_id');
 
     if (!sessionId) {
-      console.error('[WebSocket] No sessionId found in sessionStorage - cannot connect');
+      logger.error('[WebSocket] No sessionId found in sessionStorage - cannot connect');
       setStatus('error');
       return;
     }
@@ -259,12 +285,17 @@ export function WebSocketProvider({ children }: WebSocketProviderProps): JSX.Ele
 
     socketRef.current = socket;
 
+    // Tracks whether this is the first 'connect' of this socket's lifecycle
+    // (vs. a reconnect after a disconnect). Reset naturally each time
+    // initializeSocket() runs (new socket instance).
+    let hasConnectedOnce = false;
+
     /**
      * Connection Event Handlers
      */
 
     socket.on('connect', () => {
-      console.log('[WebSocket] Connected');
+      logger.info('[WebSocket] Connected');
       setStatus('connected');
       reconnectAttemptsRef.current = 0;
 
@@ -273,10 +304,17 @@ export function WebSocketProvider({ children }: WebSocketProviderProps): JSX.Ele
 
       // Trigger presence refetch after reconnect (catch up on missed events)
       socket.emit('request_presence_sync');
+
+      // Dispatch to connection event subscribers (single reception point)
+      const eventType = hasConnectedOnce ? 'reconnected' : 'connected';
+      hasConnectedOnce = true;
+      connectionCallbacksRef.current.forEach((callback) =>
+        callback({ type: eventType })
+      );
     });
 
     socket.on('disconnect', (reason) => {
-      console.log('[WebSocket] Disconnected:', reason);
+      logger.info('[WebSocket] Disconnected:', { reason });
       setStatus('disconnected');
 
       // Deregister socket from singleton
@@ -284,7 +322,7 @@ export function WebSocketProvider({ children }: WebSocketProviderProps): JSX.Ele
     });
 
     socket.on('connect_error', (error) => {
-      console.error('[WebSocket] Connection error:', error);
+      logger.error('[WebSocket] Connection error:', { error });
 
       // Exponential backoff reconnection
       reconnectAttemptsRef.current += 1;
@@ -298,14 +336,14 @@ export function WebSocketProvider({ children }: WebSocketProviderProps): JSX.Ele
           30000
         );
 
-        console.log(`[WebSocket] Retrying connection in ${delay}ms (attempt ${reconnectAttemptsRef.current}/${WS_CONFIG.MAX_RECONNECT_ATTEMPTS})`);
+        logger.info(`[WebSocket] Retrying connection in ${delay}ms (attempt ${reconnectAttemptsRef.current}/${WS_CONFIG.MAX_RECONNECT_ATTEMPTS})`);
 
         reconnectTimeoutRef.current = setTimeout(() => {
           socket.connect();
         }, delay);
       } else {
         // All retry attempts exhausted - NOW show error
-        console.error('[WebSocket] Max reconnection attempts reached');
+        logger.error('[WebSocket] Max reconnection attempts reached');
         setStatus('error');
       }
     });
@@ -544,7 +582,7 @@ export function WebSocketProvider({ children }: WebSocketProviderProps): JSX.Ele
      */
 
     socket.on('broadcast:message', (data) => {
-      console.log('[WebSocket] Broadcast received', { id: data.id, title: data.message?.title });
+      logger.info('[WebSocket] Broadcast received', { value: { id: data.id, title: data.message?.title } });
 
       // Determine toast type based on broadcast priority
       const toastType = data.type === 'emergency' ? 'error' : data.type === 'warning' ? 'warning' : 'info';
@@ -563,9 +601,9 @@ export function WebSocketProvider({ children }: WebSocketProviderProps): JSX.Ele
       if (data.urgent) {
         try {
           const audio = new Audio('/sounds/urgent-notification.mp3');
-          audio.play().catch(err => console.error('[WebSocket] Failed to play sound', { error: err }));
+          audio.play().catch(err => logger.error('[WebSocket] Failed to play sound', { value: { error: err } }));
         } catch (error) {
-          console.error('[WebSocket] Error creating audio element', { error });
+          logger.error('[WebSocket] Error creating audio element', { value: { error } });
         }
       }
     });
@@ -719,6 +757,21 @@ export function WebSocketProvider({ children }: WebSocketProviderProps): JSX.Ele
   }, []);
 
   /**
+   * Subscribe to connection events (connected / reconnected)
+   *
+   * @function onConnectionEvent
+   * @param {EventCallback<ConnectionEvent>} callback - Event handler
+   * @returns {() => void} Unsubscribe function
+   * @since 2.1.0
+   */
+  const onConnectionEvent = useCallback((callback: EventCallback<ConnectionEvent>) => {
+    connectionCallbacksRef.current.add(callback);
+    return () => {
+      connectionCallbacksRef.current.delete(callback);
+    };
+  }, []);
+
+  /**
    * Manually reconnect WebSocket
    *
    * @function reconnect
@@ -755,6 +808,7 @@ export function WebSocketProvider({ children }: WebSocketProviderProps): JSX.Ele
     onLocationEvent,
     onGlobalEvent,
     onMessageEvent,
+    onConnectionEvent,
     reconnect,
     disconnect,
   };
@@ -781,7 +835,7 @@ export function WebSocketProvider({ children }: WebSocketProviderProps): JSX.Ele
  *   useEffect(() => {
  *     const unsubscribe = onLocationEvent((event) => {
  *       if (event.type === 'location_message_notification') {
- *         console.log('New message:', event.data);
+ *         logger.info('New message:', { data: event.data });
  *       }
  *     });
  *

@@ -12,7 +12,7 @@ related:
 
 ## Overview
 
-Monorepo of 3 independent AI microservices built with Express + TypeScript, running in Docker containers. Services communicate via HTTP callbacks and use either Ollama (local LLM) or Anthropic Claude API based on environment configuration.
+Monorepo of 3 independent AI microservices built with Express 4 + TypeScript, running in Docker containers. Services communicate via HTTP callbacks and use Ollama (LLM locale) come provider di default, con Inception come alternativa opzionale via `AI_PROVIDER=inception`.
 
 ## Services
 
@@ -94,21 +94,23 @@ local-ai/
 **Gateway**: Port 9000 (API gateway for external access)
 
 **Internal Communication**:
-- Services call unified-backend: `http://unified-backend:4001`
+- Services call unified-backend: `http://unified-backend:3001` (porta reale del servizio, NON 4001 che è la game app)
 - Main project calls AI services: `http://botai:8080`, etc.
 
 ### LLM Selection
 
-**Environment-Based**:
-- `ANTHROPIC_API_KEY` present → AnthropicAgent
-- No API key → OllamaAgent (local)
+**Environment-Based** (`AI_PROVIDER` env var, default `ollama`):
+- `AI_PROVIDER=ollama` (default) → OllamaAgent, LLM locale
+- `AI_PROVIDER=inception` → InceptionAgent (richiede `INCEPTION_API_KEY`)
+
+**Dual-model (solo botai)**: ruolo creativo (dialoghi, generazione bot) e ruolo analitico (context analysis, JSON strutturato) possono usare modelli Ollama diversi tramite `OLLAMA_MODEL` (creativo) e `OLLAMA_ANALYTICAL_MODEL` (analitico, fallback su `OLLAMA_MODEL`).
 
 **AgentFactory Pattern**: Singleton provides IAgent interface abstraction
 
 **Configuration**:
 ```typescript
 // Automatic selection via AgentFactory
-const agent = AgentFactory.getAgent();
+const agent = getCreativeAgent(); // o getAnalyticalAgent()
 const response = await agent.generateText(prompt, config);
 ```
 
@@ -122,7 +124,7 @@ All services share common patterns documented in `shared-patterns.md`:
 4. **Health Endpoints** - Standardized health checks
 5. **Callback Patterns with Retry** - MAX_RETRIES=2, hostname whitelist
 6. **Docker Multi-Stage Builds** - Builder + runtime stages
-7. **Agent Abstraction** - Ollama/Anthropic interface
+7. **Agent Abstraction** - Ollama/Inception interface
 8. **202 Accepted Pattern** - Immediate response, background processing
 
 See [shared-patterns.md](./shared-patterns.md) for complete implementation details.
@@ -134,21 +136,25 @@ See [shared-patterns.md](./shared-patterns.md) for complete implementation detai
 **BotAI**:
 ```bash
 PORT=8080
-UNIFIED_BACKEND_URL=http://unified-backend:4001
-ANTHROPIC_API_KEY=sk-ant-xxx  # Optional, falls back to Ollama
+UNIFIED_BACKEND_URL=http://unified-backend:3001
+OLLAMA_URL=http://ollama:11434
+OLLAMA_MODEL=gemma3:12b            # ruolo creativo
+OLLAMA_ANALYTICAL_MODEL=qwen3:8b   # ruolo analitico (opzionale, fallback su OLLAMA_MODEL)
 CALLBACK_ALLOWED_HOSTS=unified-backend,localhost
 ```
 
 **QA**:
 ```bash
 PORT=8090
-UNIFIED_BACKEND_URL=http://unified-backend:4001
+UNIFIED_BACKEND_URL=http://unified-backend:3001
+OLLAMA_MODEL=qwen3:8b
 ```
 
 **Character Gen**:
 ```bash
 PORT=8130
-UNIFIED_BACKEND_URL=http://unified-backend:4001
+UNIFIED_BACKEND_URL=http://unified-backend:3001
+OLLAMA_ANALYTICAL_MODEL=qwen3:8b
 ```
 
 ### Local Development
@@ -195,7 +201,8 @@ services:
     networks:
       - tenpennynovels_default
     environment:
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - OLLAMA_URL=http://ollama:11434
+      - OLLAMA_MODEL=gemma3:12b
 ```
 
 ### Build & Deploy
@@ -240,5 +247,5 @@ Consult `shared-patterns.md` when:
 - Configuring logging
 - Implementing queue-based processing
 - Creating health checks
-- Switching between Ollama and Anthropic
+- Switching between Ollama and Inception
 - Understanding the BotAI 4-step pipeline

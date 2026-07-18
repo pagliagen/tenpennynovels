@@ -8,52 +8,50 @@ Pattern di deployment automatico con GitHub Actions per TenpennyNovels.
 
 **File**: `.github/workflows/deploy.yml`
 
-### Branch Strategy (DUAL-BRANCH PRODUCTION DEPLOY)
+### Branch Strategy (MASTER-ONLY PRODUCTION DEPLOY)
 
-**CRITICAL**: Configurazione INTENZIONALE - entrambi i branch deployano in production.
+**CRITICAL**: `develop` NON deve MAI deployare in produzione. Solo `master` deploya.
 
 ```yaml
 on:
   pull_request:
     branches: [master, develop]  # Build check only
   push:
-    branches: [master, develop]  # Build + deploy to production
-  workflow_dispatch:             # Manual trigger
+    branches: [master, develop]  # build-check sempre; deploy SOLO se ref == master
+  workflow_dispatch:             # Manual trigger (rispetta comunque il vincolo su master)
 ```
 
 **Behavior**:
 - **Pull Requests** su master/develop → Solo `build-check` job (NO deploy)
-- **Push** su master/develop → `build-check` + `deploy` job → **PRODUCTION**
-- **Manual dispatch** → Deploy immediato
+- **Push su develop** → Solo `build-check` job (NO deploy, serve solo a validare che il branch compili)
+- **Push su master** → `build-check` + `deploy` job → **PRODUCTION**
+- **Manual dispatch** → Deploy solo se lanciato sul branch `master`; su qualsiasi altro branch il job `deploy` viene skippato
 
-### Why Both Branches Deploy to Production
+### Perché SOLO master deploya
 
-**Reason**: Branch `develop` serve come **backup deployment path**.
+**Reason**: Un solo canale di deploy elimina il rischio di pubblicare per errore codice non pronto (es. push accidentale su develop, o `workflow_dispatch` lanciato sul branch sbagliato).
 
-**Use Cases**:
-- Hotfix urgente su develop mentre master ha WIP
-- Rollback rapido a versione stabile su develop
-- Testing pre-merge in ambiente production-like
+**Enforcement**: il job `deploy` ha la condizione:
 
-**Trade-offs**:
-- ✅ Flessibilità: due entry point per production
-- ✅ Backup: se master ha issue, develop può deployare
-- ⚠️ Rischio: push accidentale su develop va in production
-- ⚠️ Coordination: team deve sapere quale branch è "current"
+```yaml
+if: github.ref == 'refs/heads/master' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+```
+
+Il controllo su `github.ref` vale **anche per `workflow_dispatch`**: selezionare `develop` come branch nel trigger manuale esegue comunque solo `build-check` (il job `deploy` viene skippato per condizione).
 
 ### Environment Configuration
 
 ```yaml
 # deploy job
 environment:
-  name: production              # ✅ BOTH branches deploy here
+  name: production              # Solo master arriva qui
   url: https://tenpennynovels.com
 ```
 
 **NO staging environment** - deployment strategy è:
-1. Develop localmente
-2. Push su develop → production deploy (backup path)
-3. Merge develop → master → production deploy (main path)
+1. Sviluppo su `develop` (push → solo build-check, nessun deploy)
+2. Merge `develop` → `master` (via PR o merge diretto)
+3. Push su `master` → production deploy (unico canale)
 
 ---
 
@@ -95,11 +93,11 @@ build-check:
 
 ### Deploy Job
 
-Runs on: Push + workflow_dispatch (NOT pull requests)
+Runs on: Push to `master` + workflow_dispatch on `master` (NOT pull requests, NOT `develop`)
 
 **Condition**:
 ```yaml
-if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+if: github.ref == 'refs/heads/master' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
 ```
 
 **Concurrency Control**:
@@ -248,7 +246,7 @@ sleep 15  # Give services time to bind and connect to MongoDB/Redis
 1. Go to Actions tab
 2. Select "Deploy to OVH VPS" workflow
 3. Click "Run workflow"
-4. Select branch (master or develop)
+4. Select branch: **deve essere `master`** — su qualsiasi altro branch il job `deploy` viene skippato per condizione (vedi Branch Strategy)
 5. Optional: Check "Skip health checks" (for emergencies)
 
 ### Via SSH (Emergency)

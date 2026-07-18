@@ -22,6 +22,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 import styles from '@/styles/components/TopBar.module.scss';
+import { logger } from '@/lib/logger';
 
 /**
  * Top Bar Props
@@ -157,10 +158,10 @@ export function TopBar({
 
   // DEBUG: Log props received
   useEffect(() => {
-    console.log('[TopBar] 🎨 Rendered with props:', {
+    logger.info('[TopBar] 🎨 Rendered with props:', { value: {
       locationName,
       isInLondon
-    });
+    } });
   }, [locationName, isInLondon]);
 
   // Click outside handler per chiudere il dropdown

@@ -19,6 +19,7 @@ import { CharacterSheetBot } from './CharacterSheetBot';
 import { CharacterSheetMaster } from './CharacterSheetMaster';
 import { CharacterSheetPGPrincipale } from './CharacterSheetPGPrincipale';
 import { CharacterSheetPNG } from './CharacterSheetPNG';
+import { logger } from '@/lib/logger';
 
 /**
  * Character Sheet Content Props
@@ -120,11 +121,7 @@ export function CharacterSheetContent({ characterId }: CharacterSheetContentProp
 
     default:
       // Fallback to pg_principale for unknown types (backward compatibility)
-      console.warn(
-        '[CharacterSheetContent] Unknown characterType:',
-        character.characterType,
-        '- defaulting to pg_principale'
-      );
+      logger.warn('[CharacterSheetContent] Unknown characterType:', { args: [character.characterType, '- defaulting to pg_principale'] });
       return (
         <CharacterSheetPGPrincipale
           character={character}

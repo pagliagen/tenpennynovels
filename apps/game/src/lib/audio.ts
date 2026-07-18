@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 /**
  * Audio notification utilities
  * Plays notification sounds for in-game events
@@ -17,9 +18,9 @@ export function playNotificationSound(volume: number = 0.5): void {
     const audio = new Audio(soundFile);
     audio.volume = volume;
     audio.play().catch(err => {
-      console.warn('Failed to play notification sound:', err);
+      logger.warn('Failed to play notification sound:', { err });
     });
   } catch (error) {
-    console.error('Audio playback error:', error);
+    logger.error('Audio playback error:', { error });
   }
 }

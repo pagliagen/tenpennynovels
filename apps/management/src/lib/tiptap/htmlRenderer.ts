@@ -10,6 +10,7 @@ import Image from '@tiptap/extension-image';
 import TextStyle from '@tiptap/extension-text-style';
 import Color from '@tiptap/extension-color';
 import Highlight from '@tiptap/extension-highlight';
+import { logger } from '@/lib/logger';
 
 /**
  * TipTap extensions (must match editor config)
@@ -50,7 +51,7 @@ export function tiptapDeltaToHTML(delta: any): string {
   try {
     return generateHTML(delta, extensions);
   } catch (error) {
-    console.error('Error converting Delta to HTML:', error);
+    logger.error('Error converting Delta to HTML:', { error });
     return '<p>Error rendering content</p>';
   }
 }

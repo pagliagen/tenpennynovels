@@ -83,7 +83,7 @@ export class BotController {
    * PUT /admin/bots/:localAiBotId/refine
    * Body: { hints: { name?, publicDescription?, personality?, narrativeStyle?, systemPrompt? } }
    *
-   * Invia i dati attuali del bot + gli hint dell'admin ad Anthropic,
+   * Invia i dati attuali del bot + gli hint dell'admin all'LLM configurato,
    * che li integra in modo coerente e aggiorna il DB di local-ai.
    */
   static async refine(req: Request, res: Response): Promise<void> {

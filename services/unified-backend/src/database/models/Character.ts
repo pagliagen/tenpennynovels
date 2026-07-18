@@ -4,6 +4,9 @@ import { calculateAllDerivedStats, getCharacterCreationConfig, type CharacterSta
 import { escapeRegex } from '@shared/utils/validation';
 import { softDeletePlugin, SoftDeleteMethods } from '../plugins/softDeletePlugin';
 import { NotificationService } from '../../shared/services/NotificationService';
+import { createModuleLogger } from '@shared/utils/logger';
+
+const logger = createModuleLogger('character-model');
 
 // Granular skill tracking interface for occupation bonuses
 export interface SkillBreakdown {
@@ -966,13 +969,19 @@ CharacterSchema.pre('save', async function(this: ICharacter) {
             }
           });
         } catch (notifyError) {
-          console.error('Failed to send character approval notification:', notifyError);
+          logger.error('Failed to send character approval notification', {
+            error: notifyError instanceof Error ? notifyError.message : notifyError,
+            characterId: this._id
+          });
           // Non-blocking: notification failure shouldn't prevent submission
         }
       }
     } catch (error) {
       // Log error but don't fail character submission
-      console.error('Failed to create character_approval ticket:', error);
+      logger.error('Failed to create character_approval ticket', {
+        error: error instanceof Error ? error.message : error,
+        characterId: this._id
+      });
     }
   }
 

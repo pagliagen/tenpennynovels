@@ -107,6 +107,14 @@ onMessageEvent((event) => {
     case 'ticket:closed':                  // Ticket closed
   }
 });
+
+// Connection events (connect/reconnect, per catch-up refetch dopo disconnessioni)
+onConnectionEvent((event) => {
+  switch (event.type) {
+    case 'connected':      // Prima connessione di questo socket
+    case 'reconnected':    // Riconnessione dopo una disconnessione (usare per refetch di sync)
+  }
+});
 ```
 
 **File di Riferimento**:

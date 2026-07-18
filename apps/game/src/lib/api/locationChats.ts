@@ -47,7 +47,7 @@ export const locationChatsApi = {
    * @example
    * ```typescript
    * const history = await locationChatsApi.getHistory('abc123');
-   * console.log(`Loaded ${history.messages.length} messages`);
+   * logger.info(`Loaded ${history.messages.length} messages`);
    * ```
    */
   async getHistory(

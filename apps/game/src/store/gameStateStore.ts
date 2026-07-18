@@ -18,6 +18,7 @@ import { create } from 'zustand';
 
 import { locationsApi } from '@/lib/api/locations';
 import { wsClient } from '@/lib/websocket/client';
+import { logger } from '@/lib/logger';
 
 /**
  * Game State Store State
@@ -91,17 +92,17 @@ export const useGameStateStore = create<GameStateStore>((set, get) => ({
     try {
       // 1. Optimistic update (set local state first)
       set({ currentLocationId: locationId, currentLocationName: locationName });
-      console.log('[GameState] 🔄 Entering location:', locationName);
+      logger.info('[GameState] 🔄 Entering location:', { locationName });
 
       // 2. Persist to backend (HTTP)
       await locationsApi.enter(locationId);
-      console.log('[GameState] ✅ Backend persisted');
+      logger.info('[GameState] ✅ Backend persisted');
 
       // 3. Join WebSocket room
       wsClient.joinLocation(locationId);
-      console.log('[GameState] ✅ WebSocket room joined');
+      logger.info('[GameState] ✅ WebSocket room joined');
     } catch (error) {
-      console.error('[GameState] ❌ Enter failed, rolling back:', error);
+      logger.error('[GameState] ❌ Enter failed, rolling back:', { error });
       // Rollback on error (clear location state)
       set({ currentLocationId: null, currentLocationName: null });
       throw error;
@@ -123,12 +124,12 @@ export const useGameStateStore = create<GameStateStore>((set, get) => ({
   leaveLocation: async () => {
     const { currentLocationId } = get();
     if (!currentLocationId) {
-      console.log('[GameState] ⏭️ No location to leave');
+      logger.info('[GameState] ⏭️ No location to leave');
       return;
     }
 
     try {
-      console.log('[GameState] 🔄 Leaving location:', currentLocationId);
+      logger.info('[GameState] 🔄 Leaving location:', { currentLocationId });
 
       // 1. Emit WebSocket leave (BEFORE clearing state, needs currentLocationId)
       wsClient.leaveLocation(currentLocationId);
@@ -139,9 +140,9 @@ export const useGameStateStore = create<GameStateStore>((set, get) => ({
       // 3. Backend cleanup (optional - WebSocket disconnect handler cleans up)
       // await locationsApi.leave();
 
-      console.log('[GameState] ✅ Left location');
+      logger.info('[GameState] ✅ Left location');
     } catch (error) {
-      console.error('[GameState] ❌ Leave failed:', error);
+      logger.error('[GameState] ❌ Leave failed:', { error });
       throw error;
     }
   },
@@ -173,7 +174,7 @@ export const useGameStateStore = create<GameStateStore>((set, get) => ({
    * @since 3.0.0
    */
   reset: () => {
-    console.log('[GameState] 🔄 Resetting store');
+    logger.info('[GameState] 🔄 Resetting store');
     set({ currentLocationId: null, currentLocationName: null });
   },
 }));

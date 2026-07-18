@@ -620,9 +620,9 @@ export const ApiResponseSchema = <T extends z.ZodTypeAny>(dataSchema: T) =>
  * ```typescript
  * try {
  *   const user = validate(UserSchema, apiResponse.data);
- *   console.log(user.username); // Fully typed
+ *   logger.info(user.username); // Fully typed
  * } catch (error) {
- *   console.error('Validation failed:', error);
+ *   logger.error('Validation failed:', { error });
  * }
  * ```
  */
@@ -648,9 +648,9 @@ export function validate<T>(schema: z.ZodSchema<T>, data: unknown): T {
  * ```typescript
  * const result = validateSafe(UserSchema, apiResponse.data);
  * if (result.success) {
- *   console.log(result.data.username); // Fully typed
+ *   logger.info(result.data.username); // Fully typed
  * } else {
- *   console.error('Validation errors:', result.error.errors);
+ *   logger.error('Validation errors:', { errors: result.error.errors });
  * }
  * ```
  */

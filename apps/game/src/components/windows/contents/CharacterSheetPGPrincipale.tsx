@@ -21,6 +21,7 @@ import { CharacterEditModal } from '@/components/character/modals/CharacterEditM
 import { Tabs } from '@/components/character/Tabs';
 import type { CharacterSheetData } from '@/hooks/useCharacterSheetData';
 import styles from '@/styles/components/character/CharacterSheetContent.module.scss';
+import { logger } from '@/lib/logger';
 
 /**
  * Tab Types
@@ -99,7 +100,7 @@ export function CharacterSheetPGPrincipale({
    * - noteMaster: review history (read-only, master use only)
    */
   const handleEdit = () => {
-    console.debug('[CharacterSheet] Edit requested for tab:', activeTab);
+    logger.debug('[CharacterSheet] Edit requested for tab:', { activeTab });
 
     switch (activeTab) {
       case 'informazioni':
@@ -109,22 +110,22 @@ export function CharacterSheetPGPrincipale({
         setShowEditBackgroundModal(true);
         break;
       case 'statistiche':
-        console.debug('[CharacterSheet] Stats editor - complex feature, planned for future release');
+        logger.debug('[CharacterSheet] Stats editor - complex feature, planned for future release');
         break;
       case 'abilita':
-        console.debug('[CharacterSheet] Skills editor - complex feature, planned for future release');
+        logger.debug('[CharacterSheet] Skills editor - complex feature, planned for future release');
         break;
       case 'diario':
-        console.debug('[CharacterSheet] Diary editor - feature planned for future release');
+        logger.debug('[CharacterSheet] Diary editor - feature planned for future release');
         break;
       case 'inventario':
-        console.debug('[CharacterSheet] Inventory manager - feature planned for future release');
+        logger.debug('[CharacterSheet] Inventory manager - feature planned for future release');
         break;
       case 'noteMaster':
-        console.debug('[CharacterSheet] Note Master is read-only (master use only)');
+        logger.debug('[CharacterSheet] Note Master is read-only (master use only)');
         break;
       default:
-        console.debug('[CharacterSheet] No editor for tab:', activeTab);
+        logger.debug('[CharacterSheet] No editor for tab:', { activeTab });
     }
   };
 

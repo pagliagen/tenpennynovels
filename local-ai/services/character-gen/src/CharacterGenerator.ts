@@ -1,4 +1,5 @@
 import * as https from 'https';
+import * as http from 'http';
 import { createLogger } from '../../../shared/logger';
 import { CharacterGenInput, CharacterGenResult, GeneratedStats, GeneratedBackground } from './types';
 import { allocateStats } from './StatAllocator';
@@ -6,10 +7,9 @@ import { allocateSkills } from './SkillAllocator';
 
 const logger = createLogger('CharacterGenerator');
 
-const ANTHROPIC_API_VERSION = '2023-06-01';
 const REQUEST_TIMEOUT_MS = 5 * 60 * 1000;
 
-type AIProvider = 'anthropic' | 'inception' | 'ollama';
+type AIProvider = 'inception' | 'ollama';
 
 interface LLMResponse {
   text: string;
@@ -18,26 +18,37 @@ interface LLMResponse {
 
 function resolveProvider(): AIProvider {
   const explicit = process.env.AI_PROVIDER?.toLowerCase();
-  if (explicit === 'anthropic' || explicit === 'inception' || explicit === 'ollama') {
+  if (explicit === 'inception' || explicit === 'ollama') {
     return explicit;
   }
-  return process.env.ANTHROPIC_API_KEY ? 'anthropic' : 'ollama';
+  return 'ollama';
 }
 
-function anthropicRequest(apiKey: string, model: string, body: Record<string, unknown>): Promise<LLMResponse> {
+function ollamaRequest(
+  host: string,
+  model: string,
+  systemPrompt: string,
+  userMessage: string,
+  maxTokens: number,
+  temperature: number
+): Promise<LLMResponse> {
   return new Promise((resolve, reject) => {
-    const payload = JSON.stringify(body);
-    const req = https.request(
+    const payload = JSON.stringify({
+      model,
+      stream: false,
+      keep_alive: -1,
+      options: { temperature, num_predict: maxTokens },
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userMessage },
+      ],
+    });
+    const url = new URL('/api/chat', host);
+    const req = http.request(
+      url,
       {
-        hostname: 'api.anthropic.com',
-        path: '/v1/messages',
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Content-Length': Buffer.byteLength(payload),
-          'x-api-key': apiKey,
-          'anthropic-version': ANTHROPIC_API_VERSION,
-        },
+        headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) },
         timeout: REQUEST_TIMEOUT_MS,
       },
       (res) => {
@@ -45,20 +56,20 @@ function anthropicRequest(apiKey: string, model: string, body: Record<string, un
         res.on('data', (chunk: Buffer) => (data += chunk));
         res.on('end', () => {
           if (res.statusCode && res.statusCode >= 400) {
-            reject(new Error(`Anthropic ${res.statusCode}: ${data.substring(0, 300)}`));
+            reject(new Error(`Ollama ${res.statusCode}: ${data.substring(0, 300)}`));
             return;
           }
           try {
             const parsed = JSON.parse(data);
-            const text = (parsed.content || []).filter((c: any) => c.type === 'text').map((c: any) => c.text).join('');
-            const tokensUsed = (parsed.usage?.input_tokens || 0) + (parsed.usage?.output_tokens || 0);
+            const text = parsed.message?.content ?? '';
+            const tokensUsed = (parsed.prompt_eval_count || 0) + (parsed.eval_count || 0);
             resolve({ text, tokensUsed });
-          } catch { reject(new Error(`Invalid JSON from Anthropic: ${data.substring(0, 200)}`)); }
+          } catch { reject(new Error(`Invalid JSON from Ollama: ${data.substring(0, 200)}`)); }
         });
       }
     );
-    req.on('error', (err) => reject(new Error(`Anthropic connection error: ${err.message}`)));
-    req.on('timeout', () => { req.destroy(); reject(new Error('Anthropic timeout')); });
+    req.on('error', (err) => reject(new Error(`Ollama connection error: ${err.message}`)));
+    req.on('timeout', () => { req.destroy(); reject(new Error('Ollama timeout')); });
     req.write(payload);
     req.end();
   });
@@ -117,18 +128,20 @@ export class CharacterGenerator {
   private provider: AIProvider;
   private apiKey: string;
   private model: string;
+  private ollamaHost: string;
 
   constructor() {
     this.provider = resolveProvider();
+    this.ollamaHost = process.env.OLLAMA_URL || 'http://localhost:11434';
 
     if (this.provider === 'inception') {
       this.apiKey = process.env.INCEPTION_API_KEY || '';
       this.model = process.env.INCEPTION_MODEL || 'mercury-2';
       if (!this.apiKey) throw new Error('INCEPTION_API_KEY is not set');
     } else {
-      this.apiKey = process.env.ANTHROPIC_API_KEY || '';
-      this.model = process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5-20251001';
-      if (!this.apiKey) throw new Error('ANTHROPIC_API_KEY is not set');
+      this.apiKey = '';
+      // Generazione di JSON strutturato: preferisce il modello analitico se configurato.
+      this.model = process.env.OLLAMA_ANALYTICAL_MODEL || process.env.OLLAMA_MODEL || 'qwen3:8b';
     }
   }
 
@@ -145,13 +158,7 @@ export class CharacterGenerator {
       });
     }
 
-    return anthropicRequest(this.apiKey, this.model, {
-      model: this.model,
-      max_tokens: maxTokens,
-      temperature,
-      system: systemPrompt,
-      messages: [{ role: 'user', content: userMessage }],
-    });
+    return ollamaRequest(this.ollamaHost, this.model, systemPrompt, userMessage, maxTokens, temperature);
   }
 
   async generate(input: CharacterGenInput): Promise<CharacterGenResult> {

@@ -18,6 +18,7 @@ import { useState } from 'react';
 import type { CharacterSheetData } from '@/hooks/useCharacterSheetData';
 import { characterApi } from '@/lib/api/character';
 import styles from '@/styles/components/character/CharacterEditForm.module.scss';
+import { logger } from '@/lib/logger';
 
 /**
  * Edit Informazioni Form Props
@@ -74,7 +75,7 @@ export function EditInformazioniForm({
       onSuccess();
     },
     onError: (error: any) => {
-      console.error('[EditInformazioniForm] Update failed:', error);
+      logger.error('[EditInformazioniForm] Update failed:', { error });
       alert(`Errore durante il salvataggio: ${error.message || 'Riprova'}`);
     },
   });

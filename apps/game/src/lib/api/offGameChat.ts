@@ -16,6 +16,7 @@ import type {
 } from '@/types/offGameChat';
 
 import { api } from './client';
+import { logger } from '@/lib/logger';
 
 /** Payload lista chat (corpo HTTP dopo un livello di unwrap dal client). */
 interface OffGameChatsListBody {
@@ -61,7 +62,7 @@ export const offGameChatApi = {
 
     // If chat not found in list (race condition after create), create placeholder
     if (!chat) {
-      console.warn(`[OffGameChat] Chat ${chatId} not found in list, using placeholder`);
+      logger.warn(`[OffGameChat] Chat ${chatId} not found in list, using placeholder`);
       chat = {
         _id: chatId,
         type: 'direct',

@@ -26,6 +26,7 @@ import { characterApi } from '@/lib/api/character';
 import { useAuthStore } from '@/store/authStore';
 import type { Character } from '@/types/api/schemas';
 import type { CharacterCreatePayload } from '@/types/wizard';
+import { logger } from '@/lib/logger';
 
 /**
  * Query Keys
@@ -120,9 +121,9 @@ export function useCharacterForWizard(
  * const handleSubmit = async (data: CharacterCreatePayload) => {
  *   try {
  *     const character = await createCharacter.mutateAsync(data);
- *     console.log(`Created: ${character.name}`);
+ *     logger.info(`Created: ${character.name}`);
  *   } catch (error) {
- *     console.error('Creation failed:', error);
+ *     logger.error('Creation failed:', { error });
  *   }
  * };
  * ```
@@ -150,10 +151,10 @@ export function useCreateCharacter(): UseMutationResult<
         router.push('/character/wizard');
       }
 
-      console.log(`✅ [useCreateCharacter] Created character: ${character.name} (${character._id})`);
+      logger.info(`✅ [useCreateCharacter] Created character: ${character.name} (${character._id})`);
     },
     onError: (error) => {
-      console.error('❌ [useCreateCharacter] Failed to create character:', error);
+      logger.error('❌ [useCreateCharacter] Failed to create character:', { error });
     },
   });
 }
@@ -209,10 +210,10 @@ export function useUpdateCharacter(characterId: string): UseMutationResult<
         setSelectedCharacter({ ...selectedCharacter, ...character });
       }
 
-      console.log(`✅ [useUpdateCharacter] Updated character: ${character.name} (${character._id})`);
+      logger.info(`✅ [useUpdateCharacter] Updated character: ${character.name} (${character._id})`);
     },
     onError: (error) => {
-      console.error('❌ [useUpdateCharacter] Failed to update character:', error);
+      logger.error('❌ [useUpdateCharacter] Failed to update character:', { error });
     },
   });
 }
@@ -269,10 +270,10 @@ export function useSubmitForApproval(characterId: string): UseMutationResult<
         setSelectedCharacter(character);
       }
 
-      console.log(`✅ [useSubmitForApproval] Character submitted: ${character.name} → PENDING_APPROVAL`);
+      logger.info(`✅ [useSubmitForApproval] Character submitted: ${character.name} → PENDING_APPROVAL`);
     },
     onError: (error) => {
-      console.error('❌ [useSubmitForApproval] Submission failed:', error);
+      logger.error('❌ [useSubmitForApproval] Submission failed:', { error });
     },
   });
 }
@@ -316,10 +317,10 @@ export function useDeleteCharacter(): UseMutationResult<void, Error, string> {
       // Redirect to character list
       router.push('/characters');
 
-      console.log(`✅ [useDeleteCharacter] Character deleted: ${characterId}`);
+      logger.info(`✅ [useDeleteCharacter] Character deleted: ${characterId}`);
     },
     onError: (error) => {
-      console.error('❌ [useDeleteCharacter] Failed to delete character:', error);
+      logger.error('❌ [useDeleteCharacter] Failed to delete character:', { error });
     },
   });
 }
@@ -370,7 +371,7 @@ export function useCharactersList(options?: { status?: string }): UseQueryResult
  * const { data: config, isLoading } = useCreationConfig();
  *
  * if (!isLoading) {
- *   console.log(`Stats budget: ${config.stats.totalPoints}`); // 400
+ *   logger.info(`Stats budget: ${config.stats.totalPoints}`); // 400
  * }
  * ```
  */
@@ -424,7 +425,7 @@ export function useOccupations(): UseQueryResult<any[], Error> {
  * const { data: skills, isLoading } = useSkills();
  *
  * const accounting = skills?.find(s => s.name === 'Accounting');
- * console.log(`${accounting.name}: ${accounting.base}%`); // Accounting: 15%
+ * logger.info(`${accounting.name}: ${accounting.base}%`); // Accounting: 15%
  * ```
  */
 export function useSkills(): UseQueryResult<any[], Error> {

@@ -13,6 +13,7 @@ import { QueryClient, DefaultOptions, QueryCache, MutationCache } from '@tanstac
 import { QUERY_CONFIG } from '@/constants/config';
 
 import { parseError } from './errors';
+import { logger } from '@/lib/logger';
 
 /**
  * Default Query Options
@@ -74,11 +75,11 @@ const queryCache = new QueryCache({
 
     // Log errors in development
     if (process.env.NODE_ENV === 'development') {
-      console.error('[Query Error]', {
+      logger.error('[Query Error]', { value: {
         category: apiError.category,
         message: apiError.message,
         details: apiError.details,
-      });
+      } });
     }
 
     // Additional error handling can be added here
@@ -101,11 +102,11 @@ const mutationCache = new MutationCache({
 
     // Log errors in development
     if (process.env.NODE_ENV === 'development') {
-      console.error('[Mutation Error]', {
+      logger.error('[Mutation Error]', { value: {
         category: apiError.category,
         message: apiError.message,
         details: apiError.details,
-      });
+      } });
     }
 
     // Additional error handling can be added here

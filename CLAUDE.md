@@ -35,8 +35,8 @@ tenpennynovels/
 
 ### Stack Tecnologico:
 - **Frontend**: Next.js 16 (Pages Router), React 18, TypeScript, Zustand, React Query, Socket.IO client
-- **Backend**: Express 5, TypeScript, MongoDB, Redis, Socket.IO server, Bull queues
-- **AI**: Ollama/Anthropic, Qdrant (vector DB), embeddings multilingua
+- **Backend**: Express (v5 in api-gateway/unified-backend, v4 in embeddings-worker/local-ai), TypeScript, MongoDB, Redis, Socket.IO server, Bull queues
+- **AI**: Ollama (LLM locale, dual-model creativo/analitico), Qdrant (vector DB), embeddings multilingua
 - **Infrastructure**: Docker Compose, PM2, Nginx, Ubuntu VPS
 - **Node**: v22.13.1 (`.nvmrc` è source of truth)
 
@@ -72,7 +72,7 @@ Questo progetto usa un sistema modulare di regole in `.claude/rules/` per preven
    - Pre-commit hook handling
 
 5. **[04-ci-cd.md](.claude/rules/04-ci-cd.md)** - CI/CD & GitHub Actions
-   - Dual-branch production deploy (master + develop)
+   - Deploy in produzione SOLO da master (develop = solo build-check, non deploya mai)
    - Smart dependency installation (hash-based)
    - PM2 restart pattern
    - Health checks with retry
@@ -155,7 +155,7 @@ Questo progetto usa un sistema modulare di regole in `.claude/rules/` per preven
 - **[local-ai/shared-patterns.md](.claude/rules/local-ai/shared-patterns.md)** - Pattern comuni
   - p-queue sequential processing
   - Callback patterns con retry
-  - Ollama vs Anthropic agents
+  - Ollama dual-model (creativo/analitico) + Inception agent
   - Docker multi-stage builds
 
 ---

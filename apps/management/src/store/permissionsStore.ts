@@ -15,6 +15,7 @@
 
 import { create } from 'zustand';
 import { apiClient } from '@/lib/api/client';
+import { logger } from '@/lib/logger';
 
 /**
  * Permissions state interface
@@ -81,10 +82,10 @@ export const usePermissionsStore = create<PermissionsStore>((set, get) => ({
         error: null
       });
 
-      console.log('[PermissionsStore] Loaded permissions:', {
+      logger.info('[PermissionsStore] Loaded permissions:', { value: {
         isGestore: permissionsData.isGestore,
         permissionsCount: (permissionsData.permissions || []).length
-      });
+      } });
 
     } catch (error: any) {
       // If no character selected or unauthorized, clear permissions
@@ -98,7 +99,7 @@ export const usePermissionsStore = create<PermissionsStore>((set, get) => ({
         return;
       }
 
-      console.error('[PermissionsStore] Failed to load permissions:', error);
+      logger.error('[PermissionsStore] Failed to load permissions:', { error });
       set({
         isGestore: false,
         permissions: [],

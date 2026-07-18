@@ -15,7 +15,11 @@ Common patterns, utilities, and CRITICAL rules that apply to ALL backend service
 **Memory reference:** 2026-03-03 - Fixed api-gateway to replace all console.log with Winston logger.
 
 ### Rule
-**ALWAYS use Winston logger. NEVER use console.log, console.error, console.warn, or console.debug in ANY backend service.**
+**ALWAYS use a structured logger. NEVER use console.log, console.error, console.warn, or console.debug in ANY backend service.**
+
+Winston is the standard in api-gateway, unified-backend and local-ai (`local-ai/shared/logger.ts` wraps Winston). **Eccezione**: `embeddings-worker` usa un logger strutturato custom (`services/embeddings-worker/src/utils/logger.ts`, classe `Logger` con gli stessi livelli `debug/info/warn/error`), non Winston — stesso principio (mai console.*), implementazione diversa. Vedi [embeddings-worker.md](./embeddings-worker.md).
+
+**Debito tecnico**: nessuno dei backend service (`services/*`, `local-ai/services/*`, `local-ai/gateway`) ha una configurazione ESLint propria (nessun `.eslintrc*`/`eslint.config.*` in quelle directory), quindi la regola "mai console.*" NON è enforced automaticamente lì come lo è in game/management (`no-console` via ESLint). Verificare manualmente in code review finché non viene aggiunta una config ESLint ai services.
 
 ### Why
 - Structured logging with timestamps, module tags, log levels
@@ -781,12 +785,12 @@ require('./dist/index.js');
 
 **Pattern:** ALWAYS use `_id` for MongoDB documents. Check project schemas before creating API responses.
 
-### Incident: esbuild in devDependencies (2026-03-04)
-**Problem:** Production deployment with `npm install --production` excluded devDependencies, but build.mjs imported esbuild.
+### Lesson: esbuild-in-devDependencies pitfall (general pattern, no service currently affected)
+**Problem (historical/generic):** Production deployment with `npm install --production` excludes devDependencies; if a build script imports esbuild from devDependencies, the build fails.
 
-**Solution:** Moved esbuild to production dependencies.
+**Solution:** Move the build tool to production dependencies.
 
-**Pattern:** Build tools used in deployment scripts MUST be in `dependencies`, not `devDependencies`.
+**Pattern:** Build tools used in deployment scripts MUST be in `dependencies`, not `devDependencies`. Today every service builds with `tsc`, so this isn't a live issue — keep the pattern in mind if a service switches build tool.
 
 ---
 

@@ -21,6 +21,7 @@ import { api } from '@/lib/api/client';
 import { useAuthStore } from '@/store/authStore';
 import type { CharacterBanSessionPayload } from '@/types/authSession';
 import type { Character } from '@/types/api/schemas';
+import { logger } from '@/lib/logger';
 
 /**
  * Session User Data (subset returned by /auth/session)
@@ -151,7 +152,7 @@ export function useAuth(): UseAuthReturn {
       const response = await api.get<SessionResponse>('/auth/session');
 
       if (process.env.NODE_ENV === 'development') {
-        console.log('[useAuth] /auth/session ok:', response.success, 'valid:', response.data?.valid);
+        logger.info('[useAuth] /auth/session ok:', { args: [response.success, 'valid:', response.data?.valid] });
       }
 
       // Check if session is valid
@@ -181,18 +182,13 @@ export function useAuth(): UseAuthReturn {
         }
 
         if (process.env.NODE_ENV === 'development') {
-          console.log(
-            '[useAuth] Session valid:',
-            response.data.user.username,
-            'permissions:',
-            gamePermissions?.length ?? 0
-          );
+          logger.info('[useAuth] Session valid:', { args: [response.data.user.username, 'permissions:', gamePermissions?.length ?? 0] });
         }
         setIsInitialized(true);
       } else {
         // No valid session - show error page instead of redirect
         if (process.env.NODE_ENV === 'development') {
-          console.warn('[useAuth] No valid session');
+          logger.warn('[useAuth] No valid session');
         }
         logout();
 
@@ -201,7 +197,7 @@ export function useAuth(): UseAuthReturn {
         setErrorType('session');
       }
     } catch (err: any) {
-      console.error('[useAuth] Session check failed:', err);
+      logger.error('[useAuth] Session check failed:', { err });
       logout();
 
       // Determine error type based on error details
