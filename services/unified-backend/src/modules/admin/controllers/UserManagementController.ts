@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import validator from 'validator';
 import {
   ApiResponse,
   AdminUserProfile,
@@ -1120,7 +1121,7 @@ export class UserManagementController {
       if (email !== undefined) {
         if (typeof email !== 'string') {
           validationErrors.push('Email must be a string');
-        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+        } else if (!validator.isEmail(email.trim())) {
           validationErrors.push('Email must be a valid email address');
         }
       }

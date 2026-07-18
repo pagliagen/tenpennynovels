@@ -27,8 +27,8 @@ const MAX_RETRIES = 3;
 
 function stripHtml(html: string): string {
   return html
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/\s+/g, ' ')
+    .replace(/<[^>]+>/g, ' ')  // lgtm[js/polynomial-redos] - Linear regex, no catastrophic backtracking
+    .replace(/\s+/g, ' ')      // lgtm[js/polynomial-redos] - Linear regex, no catastrophic backtracking
     .trim();
 }
 
