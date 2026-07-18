@@ -139,7 +139,7 @@ export const getStaticProps: GetStaticProps<RegolamentoDetailProps> = async ({ p
       revalidate: 3600  // Regenerate every 1 hour if requested
     };
   } catch (error: any) {
-    console.error(`[Dettaglio regolamento] Errore caricamento ${path}:`, error);
+    console.error('[Dettaglio regolamento] Errore caricamento', { path, error });
 
     if (error?.statusCode === 404 || error?.response?.status === 404) {
       return { notFound: true };

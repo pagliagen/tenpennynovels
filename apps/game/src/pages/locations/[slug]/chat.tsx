@@ -107,7 +107,7 @@ export default function LocationChatPage(): JSX.Element {
       // Location not found → 404
       setLocation(null);
       setIsLoadingLocation(false);
-      logger.warn(`[Chat] ⚠️  Location NOT found: ${slug} - Available locations:`, { value: locations.map(l => l.slug) });
+      logger.warn('[Chat] ⚠️  Location NOT found', { slug, available: locations.map(l => l.slug) });
     }
   }, [slug, locations]);
 
