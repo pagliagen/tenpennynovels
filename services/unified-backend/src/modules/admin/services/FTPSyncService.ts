@@ -8,6 +8,16 @@ const MAX_RETRIES = 3;
 const BACKOFF_BASE_MS = 1000;
 const IDLE_TIMEOUT_MS = 30_000;
 
+// Validate path to prevent traversal attacks
+function validateRemotePath(remotePath: string): void {
+  if (!remotePath || typeof remotePath !== 'string') {
+    throw new Error('remotePath deve essere una stringa non vuota');
+  }
+  if (remotePath.includes('..') || remotePath.startsWith('/')) {
+    throw new Error('remotePath contiene caratteri non consentiti');
+  }
+}
+
 export class FTPSyncService {
   private client: Client | null = null;
   private idleTimer: ReturnType<typeof setTimeout> | null = null;
@@ -18,6 +28,9 @@ export class FTPSyncService {
   }
 
   async uploadFile(remotePath: string, localPath: string): Promise<void> {
+    // Validate path to prevent traversal attacks
+    validateRemotePath(remotePath);
+
     if (!this.enabled) {
       logger.debug(`FTP sync disabled, skipping upload: ${remotePath}`);
       return;
@@ -36,6 +49,9 @@ export class FTPSyncService {
   }
 
   async deleteFile(remotePath: string): Promise<void> {
+    // Validate path to prevent traversal attacks
+    validateRemotePath(remotePath);
+
     if (!this.enabled) {
       logger.debug(`FTP sync disabled, skipping delete: ${remotePath}`);
       return;

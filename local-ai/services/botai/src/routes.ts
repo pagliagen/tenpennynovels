@@ -1,4 +1,6 @@
 import { Router, Request, Response } from 'express';
+import { Types } from 'mongoose';
+import rateLimit from 'express-rate-limit';
 import { Bot } from './models/Bot';
 import { getCreativeAgent, getAnalyticalAgent, resolveProvider } from './agent/AgentFactory';
 import { buildSystemPrompt, buildUserMessage, getLastCharacterFromActions, maskActions } from './agent/PromptBuilder';
@@ -31,6 +33,23 @@ import { createLogger } from '../../../shared/logger';
 
 const logger = createLogger('BotAI');
 
+// Rate limiting middleware for GET endpoints
+const getBotsLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 100,
+  message: 'Too many requests to GET /bots, please try again later',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const getBotByIdLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 100,
+  message: 'Too many requests to GET /bots/:id, please try again later',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 /** Calcola overlap tra keyword significative di due testi (0-1). Ignora stopwords. */
 function keywordOverlap(a: string, b: string): number {
   const stopwords = new Set(['il', 'lo', 'la', 'i', 'gli', 'le', 'di', 'a', 'da', 'in', 'con', 'su', 'per', 'tra', 'fra',
@@ -57,6 +76,15 @@ const memoryStore = new MemoryStore();
 const relationshipStore = new RelationshipStore();
 
 const router = Router();
+
+// Rate limiting for data-fetching endpoints
+const dataFetchLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 50, // 50 requests per minute
+  message: { success: false, error: 'Too many requests, please try again later' },
+  standardHeaders: false,
+  legacyHeaders: false,
+});
 
 // ──────────────────────────────────────────
 //  CRUD Routes (unchanged)
@@ -92,11 +120,13 @@ router.post('/respond', async (req: Request, res: Response) => {
   }
 });
 
-router.get('/bots', async (req: Request, res: Response) => {
+router.get('/bots', getBotsLimiter, async (req: Request, res: Response) => {
   const filter: Record<string, any> = { isActive: true };
   const status = req.query.status as string | undefined;
-  if (status === 'active' || status === 'pending') {
-    filter.status = status;
+  if (status === 'active') {
+    filter.status = 'active';
+  } else if (status === 'pending') {
+    filter.status = 'pending';
   }
   const bots = await Bot.find(filter).lean();
   res.json({ success: true, data: bots });
@@ -123,8 +153,13 @@ router.post('/bots/generate', async (req: Request, res: Response) => {
   }
 });
 
-router.get('/bots/:id', async (req: Request, res: Response) => {
-  const bot = await Bot.findById(req.params.id).lean();
+router.get('/bots/:id', getBotByIdLimiter, async (req: Request, res: Response) => {
+  const id = req.params.id as string;
+  if (!Types.ObjectId.isValid(id)) {
+    res.status(400).json({ success: false, error: 'Invalid bot ID format' });
+    return;
+  }
+  const bot = await Bot.findById(id).lean();
   if (!bot) {
     res.status(404).json({ success: false, error: 'Bot not found' });
     return;
@@ -179,9 +214,16 @@ router.post('/bots/:id/refine', async (req: Request, res: Response) => {
   }
 });
 
-router.get('/bots/:id/relationships', async (req: Request, res: Response) => {
+router.get('/bots/:id/relationships', dataFetchLimiter, async (req: Request, res: Response) => {
   try {
-    const relationships = await Relationship.find({ botId: req.params.id })
+    const id = req.params.id as string;
+    // Validate botId as ObjectId to prevent query injection
+    if (!Types.ObjectId.isValid(id)) {
+      res.status(400).json({ success: false, error: 'Invalid bot ID format' });
+      return;
+    }
+    const botId = new Types.ObjectId(id);
+    const relationships = await Relationship.find({ botId })
       .sort({ lastInteraction: -1 })
       .lean();
     res.json({ success: true, data: relationships });
@@ -191,10 +233,18 @@ router.get('/bots/:id/relationships', async (req: Request, res: Response) => {
   }
 });
 
-router.get('/bots/:id/memories', async (req: Request, res: Response) => {
+router.get('/bots/:id/memories', dataFetchLimiter, async (req: Request, res: Response) => {
   try {
-    const limit = Math.min(Number(req.query.limit) || 50, 200);
-    const memories = await Memory.find({ botId: req.params.id })
+    const id = req.params.id as string;
+    // Validate botId as ObjectId to prevent query injection
+    if (!Types.ObjectId.isValid(id)) {
+      res.status(400).json({ success: false, error: 'Invalid bot ID format' });
+      return;
+    }
+    const botId = new Types.ObjectId(id);
+    const limitParam = typeof req.query.limit === 'string' ? req.query.limit : undefined;
+    const limit = Math.min(Number(limitParam) || 50, 200);
+    const memories = await Memory.find({ botId })
       .sort({ timestamp: -1 })
       .limit(limit)
       .lean();
@@ -205,12 +255,25 @@ router.get('/bots/:id/memories', async (req: Request, res: Response) => {
   }
 });
 
-router.get('/bots/:id/memories/:characterId', async (req: Request, res: Response) => {
+router.get('/bots/:id/memories/:characterId', dataFetchLimiter, async (req: Request, res: Response) => {
   try {
-    const limit = Math.min(Number(req.query.limit) || 30, 100);
+    const id = req.params.id as string;
+    // Validate botId as ObjectId to prevent query injection
+    if (!Types.ObjectId.isValid(id)) {
+      res.status(400).json({ success: false, error: 'Invalid bot ID format' });
+      return;
+    }
+    const botId = new Types.ObjectId(id);
+    const { characterId } = req.params;
+    if (!characterId || typeof characterId !== 'string' || characterId.trim() === '') {
+      res.status(400).json({ success: false, error: 'Invalid character ID' });
+      return;
+    }
+    const limitParam = typeof req.query.limit === 'string' ? req.query.limit : undefined;
+    const limit = Math.min(Number(limitParam) || 30, 100);
     const memories = await Memory.find({
-      botId: req.params.id,
-      externalCharacterId: req.params.characterId,
+      botId,
+      externalCharacterId: characterId,
     })
       .sort({ timestamp: -1 })
       .limit(limit)
@@ -270,10 +333,11 @@ async function runResponsePipeline(bot: any, context: any): Promise<{
 }> {
   const pipelineStart = Date.now();
   const { characterId, characterName } = getLastCharacterFromActions(context.actions);
+  const safeCharacterId = typeof characterId === 'string' ? characterId : '';
   const locationId = context.location?.id || '';
   const botId = bot._id.toString();
 
-  logger.info(`Pipeline START for bot "${bot.name}" ← [${characterId}]`);
+  logger.info(`Pipeline START for bot "${bot.name}" ← [${safeCharacterId}]`);
 
   // ── Data Loading (parallel) ──
   // Compute personality baseline ONCE (used for both memory recall and emotion pairs)
@@ -282,20 +346,20 @@ async function runResponsePipeline(bot: any, context: any): Promise<{
   const globalEmotionsForRecall = getGlobalEmotions(bot, personalityBaseline);
 
   const [memories, relationship, knownNames] = await Promise.all([
-    memoryStore.getContextualMemories(botId, characterId, locationId, globalEmotionsForRecall),
-    characterId ? relationshipStore.getRelationship(botId, characterId) : Promise.resolve(null),
+    memoryStore.getContextualMemories(botId, safeCharacterId, locationId, globalEmotionsForRecall),
+    safeCharacterId ? relationshipStore.getRelationship(botId, safeCharacterId) : Promise.resolve(null),
     buildKnownNames(botId, context.actions, context.presentCharacters),
   ]);
 
   // Audience awareness: relationships with other present characters
   const presentCharacterIds = (context.presentCharacters || [])
     .map((c: any) => c.id)
-    .filter((id: string) => id && id !== characterId);
+    .filter((id: string) => id && id !== safeCharacterId);
   const presentRelationships = presentCharacterIds.length > 0
     ? await relationshipStore.getRelationshipsForCharacters(botId, presentCharacterIds)
     : [];
 
-  const displayName = knownNames.get(characterId) || 'Sconosciuto';
+  const displayName = knownNames.get(safeCharacterId) || 'Sconosciuto';
 
   // Compute full emotional baselines (personality + relationship)
   const relBaseline = relationship ? computeRelationshipBaseline(relationship) : null;
@@ -511,7 +575,7 @@ async function runResponsePipeline(bot: any, context: any): Promise<{
       const trustDelta = analysis.trustDeltas
         ? (analysis.trustDeltas.competence + analysis.trustDeltas.benevolence + analysis.trustDeltas.integrity) / 3
         : 0;
-      await relationshipStore.updateRelationship(botId, characterId, characterName, {
+      await relationshipStore.updateRelationship(botId, safeCharacterId, characterName, {
         trust: trustDelta,
         familiarity: analysis.familiarityDelta,
         sentiment: analysis.sentimentDelta,
@@ -530,7 +594,7 @@ async function runResponsePipeline(bot: any, context: any): Promise<{
         + (analysis.familiarityDelta || 0.02) * 10
         + (analysis.turningPoint ? analysis.turningPoint.importanceWeight * 0.5 : 0);
       await Relationship.updateOne(
-        { botId: bot._id, externalCharacterId: characterId },
+        { botId: bot._id, externalCharacterId: safeCharacterId },
         { $inc: { qualityScore: interactionQuality } },
       );
 
@@ -547,7 +611,7 @@ async function runResponsePipeline(bot: any, context: any): Promise<{
           milestone: 'first_meeting',
           abandonment: 'abandonment',
         };
-        await relationshipStore.addTurningPoint(botId, characterId, {
+        await relationshipStore.addTurningPoint(botId, safeCharacterId, {
           type: (tpTypeMap[analysis.turningPoint.type] || 'revelation') as any,
           description: analysis.turningPoint.description || '',
           emotionalImpact: analysis.turningPoint.emotionalImpact,
@@ -577,7 +641,7 @@ async function runResponsePipeline(bot: any, context: any): Promise<{
             ? addSupportEvent(newEvents, { ...evt, direction: 'received' as const })
             : newEvents;
           await Relationship.updateOne(
-            { botId: bot._id, externalCharacterId: characterId },
+            { botId: bot._id, externalCharacterId: { $eq: characterId } },
             { $set: { supportEvents: finalEvents } },
           );
         }
@@ -589,7 +653,7 @@ async function runResponsePipeline(bot: any, context: any): Promise<{
         const attachStyle = deriveAttachmentStyle(bot.personality?.traits || []);
         const disgustoLevel = relPair.felt.disgusto || 0;
         const conflictUpdate = updateConflictState(relForConflict, analysis, attachStyle, disgustoLevel);
-        if (conflictUpdate) {
+        if (conflictUpdate && characterId) {
           await Relationship.updateOne(
             { botId: bot._id, externalCharacterId: characterId },
             { $set: { activeConflict: conflictUpdate } },
@@ -607,10 +671,10 @@ async function runResponsePipeline(bot: any, context: any): Promise<{
       if (relAfterUpdates) {
         const attachmentStyle = deriveAttachmentStyle(bot.personality?.traits || []);
         const newPhase = detectPhaseTransition(relAfterUpdates, attachmentStyle);
-        if (newPhase && newPhase !== relAfterUpdates.phase) {
+        if (newPhase && newPhase !== relAfterUpdates.phase && characterId) {
           const updatedHistory = recordPhaseTransition(relAfterUpdates.phaseHistory || [], newPhase);
           await Relationship.updateOne(
-            { botId: bot._id, externalCharacterId: characterId },
+            { botId: bot._id, externalCharacterId: new Types.ObjectId(characterId) },
             { $set: { phase: newPhase, phaseEnteredAt: new Date(), phaseHistory: updatedHistory } },
           );
           logger.info(`[Background] Phase transition: ${relAfterUpdates.phase} → ${newPhase}`);
@@ -623,10 +687,10 @@ async function runResponsePipeline(bot: any, context: any): Promise<{
       }
 
       // Pattern detection (max 4 per relazione, dedup per keyword overlap)
-      if (analysis.detectedPattern) {
+      if (analysis.detectedPattern && characterId) {
         const existingPatterns = await Memory.find({
           botId: bot._id,
-          externalCharacterId: characterId,
+          externalCharacterId: new Types.ObjectId(characterId),
           type: 'pattern',
         }).lean();
 
@@ -705,10 +769,12 @@ async function runResponsePipeline(bot: any, context: any): Promise<{
           updatedRelState.axes, relExpressed.axes, updatedRelState.suppressionBurden || 0,
         );
       }
-      await Relationship.updateOne(
-        { botId: bot._id, externalCharacterId: characterId },
-        { $set: { emotionState: updatedRelState } },
-      );
+      if (characterId) {
+        await Relationship.updateOne(
+          { botId: bot._id, externalCharacterId: new Types.ObjectId(characterId) },
+          { $set: { emotionState: updatedRelState } },
+        );
+      }
     }
 
     // Needs & goals

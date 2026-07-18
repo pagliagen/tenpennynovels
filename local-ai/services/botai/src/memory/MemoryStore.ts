@@ -58,8 +58,21 @@ export class MemoryStore {
   // ── Main retrieval: tier-based con accessibility scoring ──────────
 
   async getContextualMemories(botId: string, characterId: string, locationId: string, currentEmotions?: IPlutchikEmotions): Promise<IMemory[]> {
+    // Validate botId to prevent query injection
+    if (!Types.ObjectId.isValid(botId)) {
+      throw new Error('Invalid bot ID format');
+    }
+    if (typeof characterId !== 'string') {
+      throw new Error('Invalid character ID format');
+    }
+    if (typeof locationId !== 'string') {
+      throw new Error('Invalid location ID format');
+    }
+
     const botOid = new Types.ObjectId(botId);
-    const charFilter = { botId: botOid, externalCharacterId: characterId, ...NOT_SUPERSEDED };
+    const safeCharacterId = characterId.trim();
+    const safeLocationId = locationId.trim();
+    const charFilter = { botId: botOid, externalCharacterId: safeCharacterId, ...NOT_SUPERSEDED };
 
     // Parallel fetch per tier
     const [arcSummaries, patterns, contradictions, charMemories, importantMemories, locationMems] = await Promise.all([
@@ -82,9 +95,9 @@ export class MemoryStore {
         ...NOT_SUPERSEDED,
       }).sort({ importance: -1, timestamp: -1 }).limit(10).lean(),
       // Tier 5: location-specific
-      locationId ? Memory.find({
+      safeLocationId ? Memory.find({
         botId: botOid,
-        locationId,
+        locationId: safeLocationId,
         type: { $nin: ['arc_summary', 'pattern', 'contradiction'] },
         ...NOT_SUPERSEDED,
       }).sort({ timestamp: -1 }).limit(5).lean() : Promise.resolve([]),
@@ -149,6 +162,11 @@ export class MemoryStore {
   async getLearnedName(botId: string, characterId: string): Promise<string | null> {
     if (!characterId) return null;
 
+    // Validate botId to prevent query injection
+    if (!Types.ObjectId.isValid(botId)) {
+      throw new Error('Invalid bot ID format');
+    }
+
     const observations = await Memory.find({
       botId: new Types.ObjectId(botId),
       externalCharacterId: characterId,
@@ -195,6 +213,10 @@ export class MemoryStore {
   // ── Bulk fetch per arc summarization ──────────────────────────────
 
   async getAllMemoriesForCharacter(botId: string, characterId: string, limit: number = 50): Promise<IMemory[]> {
+    // Validate botId to prevent query injection
+    if (!Types.ObjectId.isValid(botId)) {
+      throw new Error('Invalid bot ID format');
+    }
     return Memory.find({
       botId: new Types.ObjectId(botId),
       externalCharacterId: characterId,
@@ -204,6 +226,14 @@ export class MemoryStore {
   }
 
   async getActiveArcSummary(botId: string, characterId: string): Promise<IMemory | null> {
+    // Validate botId to prevent query injection
+    if (!Types.ObjectId.isValid(botId)) {
+      throw new Error('Invalid bot ID format');
+    }
+    // Validate characterId to ensure it is treated as a literal value
+    if (typeof characterId !== 'string' || !characterId.trim()) {
+      throw new Error('Invalid character ID format');
+    }
     return Memory.findOne({
       botId: new Types.ObjectId(botId),
       externalCharacterId: characterId,

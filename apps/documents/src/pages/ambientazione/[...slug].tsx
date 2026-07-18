@@ -140,7 +140,7 @@ export const getStaticProps: GetStaticProps<AmbientazioneDetailProps> = async ({
       revalidate: 3600  // Regenerate every 1 hour if requested
     };
   } catch (error: any) {
-    console.error(`[Dettaglio ambientazione] Errore caricamento ${path}:`, error);
+    console.error('[Dettaglio ambientazione] Errore caricamento', { path, error });
 
     if (error?.statusCode === 404 || error?.response?.status === 404) {
       return { notFound: true };

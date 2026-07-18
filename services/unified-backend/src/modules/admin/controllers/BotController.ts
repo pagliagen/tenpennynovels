@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { Types } from 'mongoose';
 import { Character, Location, Skill, Occupation } from '@database/models';
 import { logger } from '../utils/logger';
 import { aiGatewayClient } from '../../game/services/AIGatewayClient';
@@ -123,6 +124,12 @@ export class BotController {
 
       if (!localAiBotId || !locationId) {
         res.status(400).json({ result: false, error: 'localAiBotId e locationId sono obbligatori' });
+        return;
+      }
+
+      // Validate locationId to prevent query injection
+      if (!Types.ObjectId.isValid(locationId)) {
+        res.status(400).json({ result: false, error: 'Invalid location ID format' });
         return;
       }
 
@@ -412,6 +419,12 @@ export class BotController {
 
       if (!locationId) {
         res.status(400).json({ result: false, error: 'locationId è obbligatorio' });
+        return;
+      }
+
+      // Validate locationId to prevent query injection
+      if (!Types.ObjectId.isValid(locationId)) {
+        res.status(400).json({ result: false, error: 'Invalid location ID format' });
         return;
       }
 

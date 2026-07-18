@@ -4,6 +4,24 @@
 
 import { logger } from '@shared/utils/logger';
 
+// Validate IPv4 and IPv6 addresses to prevent SSRF attacks
+function isValidIPAddress(ip: string): boolean {
+  if (!ip || typeof ip !== 'string') return false;
+
+  // IPv4 pattern
+  const ipv4 = /^(\d{1,3}\.){3}\d{1,3}$/;
+  if (ipv4.test(ip)) {
+    return ip.split('.').every(octet => {
+      const num = parseInt(octet, 10);
+      return num >= 0 && num <= 255;
+    });
+  }
+
+  // IPv6 pattern (simplified)
+  const ipv6 = /^([\da-f]{0,4}:){2,7}[\da-f]{0,4}$/i;
+  return ipv6.test(ip);
+}
+
 interface IpApiResponse {
   error?: boolean;
   country_code?: string;
@@ -83,10 +101,16 @@ export class GeoLocationService {
    * Servizio ipapi.co (gratuito, 1000 richieste/giorno)
    */
   private static async getLocationFromIPAPICO(ipAddress: string): Promise<GeoLocationResult | null> {
+    // Validate IP address to prevent SSRF attacks
+    if (!isValidIPAddress(ipAddress)) {
+      logger.warn('Invalid IP address for IPAPI.CO request', { ipAddress });
+      return null;
+    }
+
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
-      
+
       const response = await fetch(`https://ipapi.co/${ipAddress}/json/`, {
         signal: controller.signal,
         headers: {
@@ -121,10 +145,16 @@ export class GeoLocationService {
    * Servizio ipbase.com (gratuito, accurato per città italiane)
    */
   private static async getLocationFromIPBase(ipAddress: string): Promise<GeoLocationResult | null> {
+    // Validate IP address to prevent SSRF attacks
+    if (!isValidIPAddress(ipAddress)) {
+      logger.warn('Invalid IP address for IPBASE.COM request', { ipAddress });
+      return null;
+    }
+
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
-      
+
       const response = await fetch(`https://api.ipbase.com/v1/json/${ipAddress}`, {
         signal: controller.signal,
         headers: {
@@ -159,10 +189,16 @@ export class GeoLocationService {
    * Servizio ipinfo.io (gratuito, 50k richieste/mese, TESTATO ACCURATO per Terni)
    */
   private static async getLocationFromIPInfo(ipAddress: string): Promise<GeoLocationResult | null> {
+    // Validate IP address to prevent SSRF attacks
+    if (!isValidIPAddress(ipAddress)) {
+      logger.warn('Invalid IP address for IPINFO.IO request', { ipAddress });
+      return null;
+    }
+
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
-      
+
       const response = await fetch(`https://ipinfo.io/${ipAddress}/json`, {
         signal: controller.signal,
         headers: {

@@ -10,8 +10,16 @@ import { DocumentChunkService } from '../services/DocumentChunkService';
 import jwt from 'jsonwebtoken';
 import { appConfig } from '@config/runtime';
 import { aiGatewayClient } from '../../game/services/AIGatewayClient';
+import { Types } from 'mongoose';
 
 const mongoose = db.getMongoose();
+
+/**
+ * Validate ObjectId to prevent SQL injection attacks
+ */
+function isValidObjectId(id: unknown): boolean {
+  return typeof id === 'string' && Types.ObjectId.isValid(id);
+}
 
 /**
  * Document Management Controller
@@ -118,6 +126,13 @@ export class DocumentManagementController {
       }
 
       if (parentId) {
+        if (!isValidObjectId(parentId)) {
+          res.status(400).json(errorResponse(
+            'ID parent documento non valido', 'INVALID_PARENT_ID', undefined, 400, getRequestId(req)
+          ));
+          return;
+        }
+
         const parent = await Document.findById(parentId);
         if (!parent) {
           res.status(404).json(errorResponse(
@@ -169,6 +184,14 @@ export class DocumentManagementController {
   static async updateDocument(req: Request, res: Response): Promise<void> {
     try {
       const id = req.params.id as string;
+
+      if (!isValidObjectId(id)) {
+        res.status(400).json(errorResponse(
+          'ID documento non valido', 'INVALID_DOCUMENT_ID', undefined, 400, getRequestId(req)
+        ));
+        return;
+      }
+
       const updates = req.body;
 
       const document = await Document.findById(id);
@@ -233,6 +256,13 @@ export class DocumentManagementController {
     try {
       const id = req.params.id as string;
 
+      if (!isValidObjectId(id)) {
+        res.status(400).json(errorResponse(
+          'ID documento non valido', 'INVALID_DOCUMENT_ID', undefined, 400, getRequestId(req)
+        ));
+        return;
+      }
+
       const document = await Document.findById(id);
       if (!document) {
         res.status(404).json(errorResponse(
@@ -283,9 +313,16 @@ export class DocumentManagementController {
    */
   static async deleteDocument(req: Request, res: Response): Promise<void> {
     try {
-      const { id } = req.params;
+      const { id } = req.params as { id: string };
 
-      const hasChildren = await Document.countDocuments({ parentId: id, deleted: { $ne: true } });
+      if (!isValidObjectId(id)) {
+        res.status(400).json(errorResponse(
+          'ID documento non valido', 'INVALID_DOCUMENT_ID', undefined, 400, getRequestId(req)
+        ));
+        return;
+      }
+
+      const hasChildren = await Document.countDocuments({ parentId: new Types.ObjectId(id), deleted: { $ne: true } });
       if (hasChildren > 0) {
         res.status(400).json(errorResponse(
           'Impossibile eliminare un documento con figli. Eliminare prima i documenti figli.',
@@ -324,7 +361,15 @@ export class DocumentManagementController {
    */
   static async toggleDocumentVisibility(req: Request, res: Response): Promise<void> {
     try {
-      const { id } = req.params;
+      const { id } = req.params as { id: string };
+
+      if (!isValidObjectId(id)) {
+        res.status(400).json(errorResponse(
+          'ID documento non valido', 'INVALID_DOCUMENT_ID', undefined, 400, getRequestId(req)
+        ));
+        return;
+      }
+
       const document = await Document.findById(id);
 
       if (!document) {
@@ -353,7 +398,15 @@ export class DocumentManagementController {
    */
   static async toggleDocumentDraft(req: Request, res: Response): Promise<void> {
     try {
-      const { id } = req.params;
+      const { id } = req.params as { id: string };
+
+      if (!isValidObjectId(id)) {
+        res.status(400).json(errorResponse(
+          'ID documento non valido', 'INVALID_DOCUMENT_ID', undefined, 400, getRequestId(req)
+        ));
+        return;
+      }
+
       const document = await Document.findById(id);
 
       if (!document) {
@@ -381,7 +434,15 @@ export class DocumentManagementController {
    */
   static async getDocumentById(req: Request, res: Response): Promise<void> {
     try {
-      const { id } = req.params;
+      const { id } = req.params as { id: string };
+
+      if (!isValidObjectId(id)) {
+        res.status(400).json(errorResponse(
+          'ID documento non valido', 'INVALID_DOCUMENT_ID', undefined, 400, getRequestId(req)
+        ));
+        return;
+      }
+
       const document = await Document.findById(id).populate('subtypeId', 'slug title type order').lean();
 
       if (!document) {
@@ -413,6 +474,14 @@ export class DocumentManagementController {
   static async getDocumentWithChildren(req: Request, res: Response): Promise<void> {
     try {
       const id = req.params.id as string;
+
+      if (!isValidObjectId(id)) {
+        res.status(400).json(errorResponse(
+          'ID documento non valido', 'INVALID_DOCUMENT_ID', undefined, 400, getRequestId(req)
+        ));
+        return;
+      }
+
       const depth = parseInt(req.query.depth as string) || 10;
 
       const rootDoc = await Document.findById(id).lean();
@@ -483,6 +552,13 @@ export class DocumentManagementController {
       }
 
       // Validate subtype exists and type matches
+      if (!isValidObjectId(subtypeId)) {
+        res.status(400).json(errorResponse(
+          'ID subtype non valido', 'INVALID_SUBTYPE_ID', undefined, 400, getRequestId(req)
+        ));
+        return;
+      }
+
       const subtype = await DocumentSubtype.findById(subtypeId);
       if (!subtype) {
         res.status(404).json(errorResponse(
@@ -509,6 +585,13 @@ export class DocumentManagementController {
       }
 
       if (parentId) {
+        if (!isValidObjectId(parentId)) {
+          res.status(400).json(errorResponse(
+            'ID parent documento non valido', 'INVALID_PARENT_ID', undefined, 400, getRequestId(req)
+          ));
+          return;
+        }
+
         const parentExists = await Document.findById(parentId);
         if (!parentExists) {
           res.status(404).json(errorResponse(
@@ -601,7 +684,15 @@ export class DocumentManagementController {
         return;
       }
 
-      const { id } = req.params;
+      const { id } = req.params as { id: string };
+
+      if (!isValidObjectId(id)) {
+        res.status(400).json(errorResponse(
+          'ID documento non valido', 'INVALID_DOCUMENT_ID', undefined, 400, getRequestId(req)
+        ));
+        return;
+      }
+
       const document = await Document.findById(id).lean();
 
       if (!document) {
