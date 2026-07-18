@@ -251,9 +251,11 @@ export class RelationshipStore {
    * Keeps max 20 via $slice.
    */
   async recordTrendSnapshot(botId: string, characterId: string): Promise<void> {
+    if (typeof characterId !== 'string') return;
+
     const rel = await Relationship.findOne({
       botId: new Types.ObjectId(botId),
-      externalCharacterId: characterId,
+      externalCharacterId: { $eq: characterId },
     }).lean();
     if (!rel) return;
 
@@ -265,7 +267,7 @@ export class RelationshipStore {
     };
 
     await Relationship.updateOne(
-      { botId: new Types.ObjectId(botId), externalCharacterId: characterId },
+      { botId: new Types.ObjectId(botId), externalCharacterId: { $eq: characterId } },
       {
         $push: {
           trendSnapshots: { $each: [snapshot], $slice: -MAX_TREND_SNAPSHOTS },
