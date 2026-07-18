@@ -619,7 +619,7 @@ async function runResponsePipeline(bot: any, context: any): Promise<{
             ? addSupportEvent(newEvents, { ...evt, direction: 'received' as const })
             : newEvents;
           await Relationship.updateOne(
-            { botId: bot._id, externalCharacterId: characterId },
+            { botId: bot._id, externalCharacterId: { $eq: characterId } },
             { $set: { supportEvents: finalEvents } },
           );
         }
