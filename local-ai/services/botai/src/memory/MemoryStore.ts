@@ -62,8 +62,17 @@ export class MemoryStore {
     if (!Types.ObjectId.isValid(botId)) {
       throw new Error('Invalid bot ID format');
     }
+    if (typeof characterId !== 'string') {
+      throw new Error('Invalid character ID format');
+    }
+    if (typeof locationId !== 'string') {
+      throw new Error('Invalid location ID format');
+    }
+
     const botOid = new Types.ObjectId(botId);
-    const charFilter = { botId: botOid, externalCharacterId: characterId, ...NOT_SUPERSEDED };
+    const safeCharacterId = characterId.trim();
+    const safeLocationId = locationId.trim();
+    const charFilter = { botId: botOid, externalCharacterId: safeCharacterId, ...NOT_SUPERSEDED };
 
     // Parallel fetch per tier
     const [arcSummaries, patterns, contradictions, charMemories, importantMemories, locationMems] = await Promise.all([
@@ -86,9 +95,9 @@ export class MemoryStore {
         ...NOT_SUPERSEDED,
       }).sort({ importance: -1, timestamp: -1 }).limit(10).lean(),
       // Tier 5: location-specific
-      locationId ? Memory.find({
+      safeLocationId ? Memory.find({
         botId: botOid,
-        locationId,
+        locationId: safeLocationId,
         type: { $nin: ['arc_summary', 'pattern', 'contradiction'] },
         ...NOT_SUPERSEDED,
       }).sort({ timestamp: -1 }).limit(5).lean() : Promise.resolve([]),
