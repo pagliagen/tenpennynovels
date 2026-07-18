@@ -7,6 +7,16 @@ import { appConfig } from '@config/runtime';
 
 export type CDNEntityType = 'locations' | 'items' | 'characters' | 'occupations';
 
+// Validate path segment to prevent traversal attacks
+function validatePathSegment(segment: string, fieldName: string): void {
+  if (!segment || typeof segment !== 'string') {
+    throw new Error(`${fieldName} deve essere una stringa non vuota`);
+  }
+  if (segment.includes('..') || segment.includes('/') || segment.includes('\\')) {
+    throw new Error(`${fieldName} contiene caratteri non consentiti`);
+  }
+}
+
 export interface CDNUploadResult {
   url: string;
   hash: string;
@@ -45,6 +55,9 @@ class CDNServiceImpl {
     type: CDNEntityType,
     entityId: string
   ): Promise<CDNUploadResult> {
+    // Validate path segments to prevent traversal attacks
+    validatePathSegment(entityId, 'entityId');
+
     if (!ALLOWED_MIME_TYPES.includes(file.mimetype)) {
       throw new Error(`Tipo file non supportato: ${file.mimetype}. Accettati: JPEG, PNG, WebP, GIF`);
     }
@@ -77,6 +90,10 @@ class CDNServiceImpl {
   }
 
   async deleteImage(type: CDNEntityType, entityId: string, filename: string): Promise<void> {
+    // Validate path segments to prevent traversal attacks
+    validatePathSegment(entityId, 'entityId');
+    validatePathSegment(filename, 'filename');
+
     const filePath = path.join(this.storagePath, type, entityId, filename);
 
     try {
@@ -91,6 +108,9 @@ class CDNServiceImpl {
   }
 
   async listImages(type: CDNEntityType, entityId: string): Promise<CDNFileInfo[]> {
+    // Validate path segments to prevent traversal attacks
+    validatePathSegment(entityId, 'entityId');
+
     const entityDir = path.join(this.storagePath, type, entityId);
 
     try {
@@ -98,6 +118,8 @@ class CDNServiceImpl {
       const results: CDNFileInfo[] = [];
 
       for (const file of files) {
+        // Validate filename to prevent traversal attacks
+        validatePathSegment(file, 'filename');
         const fp = path.join(entityDir, file);
         const stat = await fs.stat(fp);
 
