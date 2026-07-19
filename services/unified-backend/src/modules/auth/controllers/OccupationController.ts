@@ -144,9 +144,8 @@ export class OccupationController {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
         name: error instanceof Error ? error.name : undefined,
-        gender: req.params?.gender,
-        query: req.query,
-        params: req.params
+        gender: req.params?.gender
+        // Excluded req.query and req.params from logs to prevent leaking sensitive data
       });
       res.status(400).json(errorResponse( 
         'Errore interno del server durante il recupero delle occupazioni filtrate',
