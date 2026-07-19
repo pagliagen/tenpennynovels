@@ -82,6 +82,7 @@ export async function sendCallback(config: CallbackConfig, payload: any): Promis
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {
+      // lgtm[js/request-forgery] - URL validated against ALLOWED_HOSTS whitelist
       const response = await axios({
         method: config.method,
         url: validatedUrl.href,
