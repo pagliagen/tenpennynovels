@@ -1,33 +1,24 @@
 /**
  * Ambientazione Section Index Page
  *
- * Redirects to the first available leaf document in the sidebar.
+ * Server-side redirect (307) to the first available leaf document.
+ * SSR redirect lets crawlers follow through to the content; the previous
+ * ISR + client-side redirect forced noindex/nofollow on this entry point.
+ * (Next.js 16 disallows `redirect` from getStaticProps during prerender,
+ * hence getServerSideProps.)
  *
  * @module pages/ambientazione/index
  * @since 2.0.0
  */
 
-import { useEffect } from 'react';
-import { GetStaticProps } from 'next';
-import { useRouter } from 'next/router';
+import { GetServerSideProps } from 'next';
 import { SEO } from '@/components/SEO';
 import { documentsApi } from '@/lib/api/documents';
 import { findFirstLeafPath } from '@/lib/findFirstLeafPath';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
-type AmbientazioneIndexProps = {
-  redirectTo: string | null;
-};
-
-export default function AmbientazioneIndex({ redirectTo }: AmbientazioneIndexProps) {
-  const router = useRouter();
-
-  useEffect(() => {
-    if (redirectTo) {
-      void router.replace(redirectTo);
-    }
-  }, [redirectTo, router]);
-
+export default function AmbientazioneIndex() {
+  // Rendered only when no leaf document exists (API empty or unreachable).
   return (
     <>
       <SEO
@@ -35,34 +26,30 @@ export default function AmbientazioneIndex({ redirectTo }: AmbientazioneIndexPro
         description="Documenti di ambientazione per Ten Penny Novels - Londra vittoriana, personaggi, luoghi e storie."
         ogType="website"
         noindex
-        nofollow
       />
       <LoadingSpinner fullPage message="Caricamento..." />
     </>
   );
 }
 
-/**
- * Static Props Generation (ISR)
- *
- * Supplies the first ambientazione leaf path; the page redirects client-side
- * (Next.js 16 disallows `redirect` from getStaticProps during prerender).
- */
-export const getStaticProps: GetStaticProps = async () => {
+export const getServerSideProps: GetServerSideProps = async () => {
   try {
     const hierarchical = await documentsApi.listHierarchical();
     const subtypes = hierarchical.ambientazione || [];
     const firstPath = findFirstLeafPath(subtypes, 'ambientazione');
 
-    return {
-      props: { redirectTo: firstPath ?? null },
-      revalidate: 3600,
-    };
-  } catch (error) {
-    console.error('[Indice ambientazione] Errore:', error);
-    return {
-      props: { redirectTo: null },
-      revalidate: 60,
-    };
+    if (firstPath) {
+      return {
+        redirect: {
+          destination: firstPath,
+          permanent: false,
+        },
+      };
+    }
+
+    return { props: {} };
+  } catch {
+    // API unreachable: render fallback page instead of erroring
+    return { props: {} };
   }
 };

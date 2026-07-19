@@ -1,0 +1,77 @@
+# Ten Penny Novels — Archivi
+
+> Archivi di ambientazione e regolamento di Ten Penny Novels, gioco di ruolo (GDR) via chat gratuito e in italiano, ambientato nella Londra vittoriana del 1890-1895. Narrazione investigativa in stile Agatha Christie con sistema Basic Role-Playing (Call of Cthulhu). Sito di gioco: https://tenpennynovels.com
+
+Questi documenti descrivono l'ambientazione storica (Londra vittoriana, società, criminalità, vita quotidiana) e le regole del gioco. Tutti i contenuti sono in italiano e liberamente consultabili.
+
+## Introduzione
+
+- [Presentazione](https://documenti.tenpennynovels.com/ambientazione/introduzione/presentazione): cos'è Ten Penny Novels, come si gioca
+- [Epoca Vittoriana](https://documenti.tenpennynovels.com/ambientazione/introduzione/epoca-vittoriana): il periodo storico dell'ambientazione
+- [FAQ](https://documenti.tenpennynovels.com/ambientazione/introduzione/faq): domande frequenti sul gioco
+- [FAQ — Pronomi e ruolo sociale](https://documenti.tenpennynovels.com/ambientazione/introduzione/faq-pronomi-ruolo-sociale)
+
+## Londra
+
+- [Strati sociali](https://documenti.tenpennynovels.com/ambientazione/londra-1985/strati-sociali)
+- [Folklore](https://documenti.tenpennynovels.com/ambientazione/londra-1985/folklore)
+- [Personaggi noti (PNG)](https://documenti.tenpennynovels.com/ambientazione/londra-1985/png-noti)
+
+## Società vittoriana
+
+- [Società](https://documenti.tenpennynovels.com/ambientazione/approfondimenti/societa)
+- [Classi sociali](https://documenti.tenpennynovels.com/ambientazione/approfondimenti/classi-sociali)
+- [Upper class](https://documenti.tenpennynovels.com/ambientazione/approfondimenti/upper-class)
+- [Middle class](https://documenti.tenpennynovels.com/ambientazione/approfondimenti/middle-class)
+- [Lower class](https://documenti.tenpennynovels.com/ambientazione/approfondimenti/lower-class)
+- [Gerarchia nobiliare](https://documenti.tenpennynovels.com/ambientazione/approfondimenti/gerarchia-nobiliare)
+- [La donna nell'epoca vittoriana](https://documenti.tenpennynovels.com/ambientazione/approfondimenti/donna)
+- [Norme sociali](https://documenti.tenpennynovels.com/ambientazione/approfondimenti/norme-sociali)
+- [Interazioni sociali](https://documenti.tenpennynovels.com/ambientazione/approfondimenti/interazioni)
+- [Sesso e società](https://documenti.tenpennynovels.com/ambientazione/approfondimenti/sesso-societa)
+- [Sessualità](https://documenti.tenpennynovels.com/ambientazione/approfondimenti/sessualita)
+- [Migrazioni](https://documenti.tenpennynovels.com/ambientazione/approfondimenti/migrazioni)
+- [Istruzione](https://documenti.tenpennynovels.com/ambientazione/approfondimenti/istruzione)
+- [Cultura](https://documenti.tenpennynovels.com/ambientazione/approfondimenti/cultura)
+- [Media e stampa](https://documenti.tenpennynovels.com/ambientazione/approfondimenti/media)
+- [Sport e svago](https://documenti.tenpennynovels.com/ambientazione/approfondimenti/sport-svago)
+
+## Storia e politica
+
+- [Storia](https://documenti.tenpennynovels.com/ambientazione/approfondimenti/storia)
+- [Cronologia 1837-1895](https://documenti.tenpennynovels.com/ambientazione/approfondimenti/cronologia-1837-1895)
+- [Contesto 1885-1895](https://documenti.tenpennynovels.com/ambientazione/approfondimenti/contesto-1885-1895)
+- [Politica](https://documenti.tenpennynovels.com/ambientazione/approfondimenti/politica)
+
+## Criminalità e forze dell'ordine
+
+- [Criminalità](https://documenti.tenpennynovels.com/ambientazione/approfondimenti/criminalita)
+- [Forze dell'ordine](https://documenti.tenpennynovels.com/ambientazione/approfondimenti/forze-ordine)
+- [Scotland Yard](https://documenti.tenpennynovels.com/ambientazione/approfondimenti/scotland-yard)
+- [Storia delle forze dell'ordine](https://documenti.tenpennynovels.com/ambientazione/approfondimenti/storia-forze)
+- [Ordine quotidiano](https://documenti.tenpennynovels.com/ambientazione/approfondimenti/ordine-quotidiano)
+- [Tribunali e pene](https://documenti.tenpennynovels.com/ambientazione/approfondimenti/tribunali-pene)
+- [Armi](https://documenti.tenpennynovels.com/ambientazione/approfondimenti/armi)
+
+## Vita quotidiana
+
+- [Panoramica](https://documenti.tenpennynovels.com/ambientazione/approfondimenti/vita-quotidiana-panoramica)
+- [Vita quotidiana](https://documenti.tenpennynovels.com/ambientazione/approfondimenti/vita-quotidiana)
+- [Vita rurale](https://documenti.tenpennynovels.com/ambientazione/approfondimenti/vita-rurale)
+- [Abbigliamento](https://documenti.tenpennynovels.com/ambientazione/approfondimenti/abbigliamento)
+- [Moneta](https://documenti.tenpennynovels.com/ambientazione/approfondimenti/moneta)
+- [Tecnologia](https://documenti.tenpennynovels.com/ambientazione/approfondimenti/tecnologia)
+- [Trasporti](https://documenti.tenpennynovels.com/ambientazione/approfondimenti/trasporti)
+- [Salute](https://documenti.tenpennynovels.com/ambientazione/approfondimenti/salute)
+- [Psichiatria](https://documenti.tenpennynovels.com/ambientazione/approfondimenti/psichiatria)
+- [Droghe](https://documenti.tenpennynovels.com/ambientazione/approfondimenti/droghe)
+
+## Regolamento
+
+- [Basic Role-Playing](https://documenti.tenpennynovels.com/regolamento/regole-base/basic-role-playing): il sistema di gioco (BRP / Call of Cthulhu)
+- [Netiquette di chat](https://documenti.tenpennynovels.com/regolamento/regole-base/chat-netiquette)
+- [Netiquette del forum](https://documenti.tenpennynovels.com/regolamento/regole-base/forum-netiquette)
+
+## Optional
+
+- [Sitemap XML](https://documenti.tenpennynovels.com/sitemap.xml): elenco completo e aggiornato di tutte le pagine
