@@ -1,0 +1,26 @@
+# Ten Penny Novels
+
+> Ten Penny Novels è un gioco di ruolo (GDR) via chat gratuito, in italiano, ambientato nella Londra vittoriana del 1890-1895. Narrazione investigativa in stile Agatha Christie: misteri, scienza e occulto nella città più grande del mondo. Sistema di gioco Basic Role-Playing (Call of Cthulhu). Si gioca via browser, senza download.
+
+Caratteristiche principali:
+
+- Play by chat testuale: ogni chat rappresenta un luogo di Londra, i giocatori interpretano i propri personaggi in tempo reale
+- Ambientazione storica curata: Londra vittoriana 1890-1895, con documentazione dettagliata su società, criminalità e vita quotidiana
+- Sistema BRP (Basic Role-Playing), lo stesso di Call of Cthulhu
+- Gratuito, in italiano, giocabile da browser
+
+## Collegamenti
+
+- [Gioca / Registrati](https://tenpennynovels.com/): pagina principale, login e creazione del personaggio
+- [Crediti](https://tenpennynovels.com/credits): il team dietro al progetto
+
+## Documentazione (ambientazione e regolamento)
+
+- [Archivi di gioco](https://documenti.tenpennynovels.com/): tutti i documenti di ambientazione e regolamento
+- [Presentazione del gioco](https://documenti.tenpennynovels.com/ambientazione/introduzione/presentazione)
+- [FAQ](https://documenti.tenpennynovels.com/ambientazione/introduzione/faq)
+- [Indice completo dei documenti (llms.txt)](https://documenti.tenpennynovels.com/llms.txt)
+
+## Optional
+
+- [Sitemap XML](https://tenpennynovels.com/sitemap.xml)
