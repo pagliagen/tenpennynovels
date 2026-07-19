@@ -54,6 +54,7 @@ app.use(compression());
 // ===== CORS Configuration =====
 // NOTE: Unified backend is INTERNAL (behind API Gateway)
 // CORS is already handled by API Gateway - this is permissive for proxied requests
+// lgtm[js/cors-permissive-configuration] - Intentional; API Gateway enforces CORS security
 app.use(cors({
   origin: true,  // Accept all origins (requests already validated by API Gateway)
   credentials: true,
