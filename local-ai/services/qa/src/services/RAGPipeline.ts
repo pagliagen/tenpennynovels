@@ -29,15 +29,26 @@ export async function askWithContext(
 
   const lang = locale === 'it' ? 'italiano' : 'English';
 
-  const systemPrompt = `Sei il Bibliotecario, l'assistente esperto di un gioco di ruolo play-by-chat ambientato nell'epoca vittoriana (Londra, 1885-1895).
+  // CRITICAL: If no context provided, be explicit that answer cannot be given
+  const hasContext = contextChunks.length > 0 && contextText.trim().length > 0;
+
+  const systemPrompt = hasContext
+    ? `Sei il Bibliotecario, l'assistente esperto di un gioco di ruolo play-by-chat ambientato nell'epoca vittoriana (Londra, 1885-1895).
 
 Rispondi alla domanda del giocatore usando SOLO le informazioni nel contesto.
 Scrivi una risposta fluida e naturale come se fosse conoscenza tua: MAI dire "il documento", "nel contesto", "secondo le fonti" o simili.
 Motiva sempre brevemente la risposta.
 Se il contesto non contiene abbastanza informazioni, dillo.
-Rispondi in ${lang}, in 2-4 frasi sintetiche ma complete.`;
+Rispondi in ${lang}, in 2-4 frasi sintetiche ma complete.`
+    : `ISTRUZIONE CRITICA: Non hai alcuna documentazione di contesto fornita.
+DEVI RISPONDERE OBBLIGATORIAMENTE CON: "Non dispongo di informazioni nel contesto fornito per rispondere a questa domanda. Ti prego di fornire la documentazione rilevante."
+NON PUOI usare conoscenza generale o storica.
+Rispondi SEMPRE con il messaggio sopra, indipendentemente dalla domanda.
+Rispondi in ${lang}.`;
 
-  const userMessage = `Documenti di contesto:\n${contextText}\n\nDomanda del giocatore: ${question}`;
+  const userMessage = hasContext
+    ? `Documenti di contesto:\n${contextText}\n\nDomanda del giocatore: ${question}`
+    : `Domanda del giocatore: ${question}`;
 
   const startMs = Date.now();
   const { text, tokensUsed } = await ollamaChat.chat(systemPrompt, userMessage, maxTokens);

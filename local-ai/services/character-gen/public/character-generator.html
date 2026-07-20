@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Character Generator Debug</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #1a1a1a; color: #fff; }
+    .container { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 20px; padding: 20px; width: 100%; height: 100vh; margin: 0; overflow: hidden; }
+
+    .panel { background: #2a2a2a; border: 1px solid #444; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; }
+    .panel:first-child { height: calc(100vh - 40px); position: sticky; top: 0; overflow-y: auto; }
+    .panel:nth-child(2) { height: calc(100vh - 40px); overflow-y: auto; }
+    .panel h2 { margin-bottom: 15px; font-size: 14px; text-transform: uppercase; color: #0a9; }
+
+    textarea { background: #1a1a1a; border: 1px solid #444; color: #fff; padding: 10px; border-radius: 4px; font-family: monospace; resize: vertical; flex: 1; min-height: 100px; }
+    button { background: #0a9; color: #000; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+    button:hover { background: #0c0; }
+    button:disabled { background: #666; cursor: not-allowed; }
+
+    .events-log { flex: 1; background: #1a1a1a; border: 1px solid #444; border-radius: 4px; padding: 10px; overflow-y: auto; font-size: 12px; font-family: monospace; margin-top: 10px; max-height: 300px; }
+    .event { padding: 5px 0; border-bottom: 1px solid #333; }
+    .event.start { color: #0a9; }
+    .event.complete { color: #0c0; }
+    .event.error { color: #c00; }
+    .event.inprogress { color: #aa0; }
+
+    /* CENTER: 3 sub-columns for data */
+    .center-columns { display: grid; grid-template-columns: 1fr 1.5fr 1fr; gap: 15px; }
+    .sub-column { display: flex; flex-direction: column; gap: 15px; }
+    .center-columns > .sub-column:nth-child(2) { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+
+    .fields-grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
+    .field { display: flex; flex-direction: column; }
+    .field label { font-size: 12px; text-transform: uppercase; color: #888; margin-bottom: 5px; }
+    .field input, .field textarea, .field select { background: #1a1a1a; border: 1px solid #444; color: #0c0; padding: 8px; border-radius: 4px; font-family: monospace; font-size: 12px; }
+    .field input { min-height: 32px; }
+    .field textarea { min-height: 80px; resize: vertical; }
+    .field select { min-height: 32px; cursor: pointer; }
+
+    .stats-skills-container { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+    .stats-panel, .skills-panel { background: #1a1a1a; border: 1px solid #444; border-radius: 4px; padding: 10px; }
+    .stats-panel h3, .skills-panel h3 { font-size: 12px; color: #0a9; margin-bottom: 10px; text-transform: uppercase; }
+
+    /* RIGHT: Basic Info + Modification */
+    .modification { background: #2a2a2a; border: 1px solid #444; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; height: calc(100vh - 40px); position: sticky; top: 0; overflow-y: auto; }
+    .modification h2 { margin-bottom: 15px; font-size: 14px; text-transform: uppercase; color: #0a9; }
+
+    .basic-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+    .basic-info-grid .field { margin-bottom: 0; }
+
+    .modification textarea { min-height: 100px; flex: 1; margin-top: 10px; }
+    .step-selector { display: flex; flex-direction: column; margin-top: 15px; }
+    .step-selector label { font-size: 12px; text-transform: uppercase; color: #888; margin-bottom: 5px; }
+    .step-selector select { background: #1a1a1a; border: 1px solid #444; color: #fff; padding: 8px; border-radius: 4px; }
+
+    .info { font-size: 12px; color: #888; margin-top: 10px; padding: 10px; background: #1a1a1a; border-radius: 4px; }
+    .spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid #444; border-top-color: #0a9; border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .approval-panel { background: #2a3a2a; border: 2px solid #0a9; border-radius: 8px; padding: 15px; margin-top: 15px; display: none; }
+    .approval-panel.active { display: flex; flex-direction: column; }
+    .approval-panel h3 { font-size: 12px; color: #0a9; margin-bottom: 10px; }
+    .approval-buttons { display: flex; gap: 10px; margin-top: 10px; }
+    .approval-buttons button { flex: 1; padding: 8px 15px; font-size: 12px; }
+
+    .json-section { margin-top: 15px; }
+    .json-section button { margin-top: 5px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- LEFT: Input -->
+    <div class="panel">
+      <h2>🎬 Genera Personaggio</h2>
+      <textarea id="promptInput" placeholder="Descrivi il tuo personaggio vittoriano...">Un detective ossessionato dalla verità e dalla risoluzione di casi irrisolti. Alto, corporatura snella, occhi acuti. Comportamento serio.</textarea>
+      <button id="generateBtn" onclick="startGeneration()">Invia</button>
+      <h2 style="margin-top: 30px;">📡 Log Eventi</h2>
+      <div class="events-log" id="eventsLog"></div>
+    </div>
+
+    <!-- MIDDLE: Character Fields (3 sub-columns) -->
+    <div class="panel">
+      <h2>📋 Dati Personaggio</h2>
+      <div class="center-columns">
+
+        <!-- COL 1: Input & Select fields -->
+        <div class="sub-column">
+          <div class="field">
+            <label>Nome</label>
+            <input id="firstName" readonly>
+          </div>
+          <div class="field">
+            <label>Cognome</label>
+            <input id="lastName" readonly>
+          </div>
+          <div class="field">
+            <label>Età</label>
+            <input id="age" readonly>
+          </div>
+          <div class="field">
+            <label>Genere</label>
+            <select id="gender" readonly>
+              <option value="">Seleziona...</option>
+              <option value="male">Maschile</option>
+              <option value="female">Femminile</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Professione</label>
+            <input id="currentOccupation" readonly>
+          </div>
+          <div class="field">
+            <label>Altezza (cm)</label>
+            <input id="height" readonly>
+          </div>
+          <div class="field">
+            <label>Peso (kg)</label>
+            <input id="weight" readonly>
+          </div>
+          <div class="field">
+            <label>Data Nascita</label>
+            <input id="birthDate" readonly>
+          </div>
+          <div class="field">
+            <label>Luogo Nascita</label>
+            <input id="birthPlace" readonly>
+          </div>
+          <div class="field">
+            <label>Età Apparente</label>
+            <input id="apparentAge" readonly>
+          </div>
+          <div class="field">
+            <label>Colore Occhi</label>
+            <input id="eyeColor" readonly>
+          </div>
+          <div class="field">
+            <label>Colore Capelli</label>
+            <input id="hairColor" readonly>
+          </div>
+          <div class="field">
+            <label>Stato Civile</label>
+            <select id="maritalStatus" readonly>
+              <option value="">Seleziona...</option>
+              <option value="single">Celibe/Nubile</option>
+              <option value="married">Coniugato/a</option>
+              <option value="widowed">Vedovo/a</option>
+              <option value="divorced">Divorziato/a</option>
+              <option value="engaged">Fidanzato/a</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Titolo Studio</label>
+            <input id="educationTitle" readonly>
+          </div>
+        </div>
+
+        <!-- COL 2: Textarea fields (descriptions & background) -->
+        <div class="sub-column">
+          <div class="field">
+            <label>Descrizione Fisica Dettagliata</label>
+            <textarea id="physicalDescription" readonly></textarea>
+          </div>
+          <div class="field">
+            <label>Cicatrici/Marchi Visibili</label>
+            <textarea id="visibleMarks" readonly></textarea>
+          </div>
+          <div class="field">
+            <label>Cicatrici/Marchi Nascosti</label>
+            <textarea id="hiddenMarks" readonly></textarea>
+          </div>
+          <div class="field">
+            <label>Background - Breve Storia</label>
+            <textarea id="briefHistory" readonly></textarea>
+          </div>
+          <div class="field">
+            <label>Background - Fatti Salienti</label>
+            <textarea id="significantEvents" readonly></textarea>
+          </div>
+          <div class="field">
+            <label>Background - Relazioni Importanti</label>
+            <textarea id="importantRelationships" readonly></textarea>
+          </div>
+          <div class="field">
+            <label>Background - Personalità</label>
+            <textarea id="personality" readonly></textarea>
+          </div>
+          <div class="field">
+            <label>Background - Ideologia/Credo</label>
+            <textarea id="ideology" readonly></textarea>
+          </div>
+          <div class="field">
+            <label>Background - Luoghi Significativi</label>
+            <textarea id="significantPlaces" readonly></textarea>
+          </div>
+          <div class="field">
+            <label>Background - Paure e Fobie</label>
+            <textarea id="fearsAndPhobias" readonly></textarea>
+          </div>
+          <div class="field">
+            <label>Background - Segreti</label>
+            <textarea id="secrets" readonly></textarea>
+          </div>
+          <div class="field">
+            <label>Background - Obiettivi e Motivazioni</label>
+            <textarea id="goalsAndMotivations" readonly></textarea>
+          </div>
+          <div class="field">
+            <label>Descrizione Pubblica</label>
+            <textarea id="publicDescription" readonly></textarea>
+          </div>
+          <div class="field">
+            <label>Descrizione Privata</label>
+            <textarea id="privateDescription" readonly></textarea>
+          </div>
+          <div class="field">
+            <label>Fedina Penale</label>
+            <textarea id="criminalRecord" readonly placeholder="(vuoto = nessun precedente penale)"></textarea>
+          </div>
+          <div class="field">
+            <label>Patologie/Disturbi</label>
+            <textarea id="pathologies" readonly placeholder="(vuoto = personaggio in salute)"></textarea>
+          </div>
+        </div>
+
+        <!-- COL 3: Stats & Skills -->
+        <div class="sub-column">
+          <div class="field">
+            <label>Caratteristiche</label>
+            <div id="statsDisplay" style="background: #1a1a1a; border: 1px solid #444; color: #0c0; padding: 8px; border-radius: 4px; font-family: monospace; font-size: 12px; min-height: 200px; overflow: auto; flex: 1;"></div>
+          </div>
+          <div class="field">
+            <label>Abilità</label>
+            <div id="skillsDisplay" style="background: #1a1a1a; border: 1px solid #444; color: #0c0; padding: 8px; border-radius: 4px; font-family: monospace; font-size: 12px; min-height: 200px; overflow: auto; flex: 1;"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- RIGHT: Modification -->
+    <div class="modification">
+      <h2 style="display: none;">✏️ Modifica & Ricomincia</h2>
+      <textarea style="display: none;" id="modifyPrompt" placeholder="Es: Un lavoro più militare?&#10;Oppure: Voglio che sia più misteriosa..."></textarea>
+
+      <div style="display: none;" class="step-selector">
+        <label>Ricomincia da (auto o manuale):</label>
+        <select id="stepSelector">
+          <option value="auto">Auto-rilevamento</option>
+          <option value="2">Step 2 - Dati Base</option>
+          <option value="3">Step 3 - Background</option>
+          <option value="4">Step 4 - Abilità</option>
+          <option value="5">Step 5 - Caratteristiche</option>
+          <option value="6">Step 6 - Allocazione Abilità</option>
+        </select>
+      </div>
+
+      <button style="display: none;" id="resumeBtn" onclick="resumeGeneration()" style="margin-top: 20px;">Ricomincia Generazione</button>
+
+      <div class="info">
+        <strong>Sessione:</strong> <span id="sessionDisplay">—</span><br>
+        <strong>ID Generazione:</strong> <span id="genIdDisplay">—</span><br>
+        <strong>Stato:</strong> <span id="statusDisplay">—</span>
+        <button style="display: none;" id="toggleJsonBtn" onclick="toggleJson()" style="margin-top: 10px; background: #0a6; padding: 6px 12px; font-size: 11px;">📋 Mostra JSON</button>
+      </div>
+
+      <div id="jsonPanel" style="margin-top: 15px;">
+        <h3 style="margin-bottom: 10px; font-size: 13px;">📊 JSON Processato</h3>
+        <textarea id="jsonDisplay" readonly style="width: 100%; min-height: 200px; background: #1a1a1a; border: 1px solid #444; color: #0c0; padding: 8px; border-radius: 4px; font-family: monospace; font-size: 11px;"></textarea>
+      </div>
+
+      <div class="approval-panel" id="approvalPanel">
+        <h3 style="margin-bottom: 10px;">⏸️ Conferma Narrativa</h3>
+        <p style="font-size: 12px; color: #888; margin-bottom: 10px;">La narrativa è stata generata. Approva per continuare oppure modifica e ricomincia.</p>
+        <textarea id="narrativeReview" readonly style="min-height: 150px; flex: 1; background: #1a1a1a; border: 1px solid #444; color: #0c0; padding: 8px; border-radius: 4px; font-family: monospace; font-size: 11px;"></textarea>
+        <div class="approval-buttons">
+          <button class="approve" onclick="approveNarrative()">✓ Approva</button>
+          <button class="reject" onclick="rejectNarrative()">✗ Modifica</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = 'http://localhost:8130';
+    let sessionKey = `debug-${Date.now()}`;
+    let currentGenerationId = 0;
+    let currentEventSource = null;
+    let partialCharacter = {};
+    let isNarrativeApproved = false;
+    let gameConfig = null;
+
+    // Stats labels (replica from Step3Stats.tsx)
+    const STATS_LABELS = {
+      strength: 'Forza (FOR)',
+      dexterity: 'Destrezza (DES)',
+      intelligence: 'Intelligenza (INT)',
+      constitution: 'Costituzione (COS)',
+      appearance: 'Carisma (CAR)',
+      size: 'Taglia (TAG)',
+      power: 'Potere (POT)',
+      education: 'Educazione (EDU)'
+    };
+
+    function log(type, message, data = {}) {
+      const el = document.getElementById('eventsLog');
+      const entry = document.createElement('div');
+      entry.className = `event ${type}`;
+      const timestamp = new Date().toLocaleTimeString();
+      entry.textContent = `[${timestamp}] ${message}`;
+      el.appendChild(entry);
+      el.scrollTop = el.scrollHeight;
+    }
+
+    function renderTable(data, baseValues = {}, labelMap = {}) {
+      if (!data || Object.keys(data).length === 0) return '<em>—</em>';
+      const rows = Object.entries(data)
+        .map(([key, value]) => {
+          const label = labelMap[key] || key;
+          const base = baseValues[key] || '—';
+          return `<tr><td>${label}</td><td>${base}</td><td><strong>${value}</strong></td></tr>`;
+        })
+        .join('');
+      return `<table style="width:100%; border-collapse: collapse; font-size: 12px;">
+        <tr style="border-bottom: 1px solid #444;">
+          <th style="text-align: left; padding: 4px; color: #888;">Attributo</th>
+          <th style="text-align: left; padding: 4px; color: #888;">Base</th>
+          <th style="text-align: left; padding: 4px; color: #888;">Totale</th>
+        </tr>
+        ${rows}
+      </table>`;
+    }
+
+    /**
+     * Rende solo le skill su cui sono stati spesi punti (mestiere, required o manuali).
+     * Il nome arriva dal breakdown quando disponibile (risultato finale), altrimenti
+     * dal gameConfig (durante la generazione, quando il breakdown ha solo l'id).
+     */
+    function renderSkills(skills) {
+      const nameById = {};
+      if (gameConfig?.skills) {
+        gameConfig.skills.forEach(s => { nameById[s.id] = s.name; });
+      }
+
+      const rows = Object.entries(skills)
+        .filter(([, b]) => b && ((b.manualPoints > 0) || (b.occupationBonus > 0) || (b.requiredBonus > 0)))
+        .map(([skillId, b]) => ({
+          name: b.name || nameById[skillId] || skillId,
+          base: b.base ?? 0,
+          total: b.total ?? 0,
+        }))
+        .sort((a, b) => b.total - a.total);
+
+      if (rows.length === 0) return '<em>—</em>';
+
+      const body = rows
+        .map(r => `<tr><td style="padding:2px 4px;">${r.name}</td><td style="padding:2px 4px;">${r.base}</td><td style="padding:2px 4px;"><strong>${r.total}</strong></td></tr>`)
+        .join('');
+
+      return `<table style="width:100%; border-collapse: collapse; font-size: 12px;">
+        <tr style="border-bottom: 1px solid #444;">
+          <th style="text-align: left; padding: 4px; color: #888;">Abilità</th>
+          <th style="text-align: left; padding: 4px; color: #888;">Base</th>
+          <th style="text-align: left; padding: 4px; color: #888;">Totale</th>
+        </tr>
+        ${body}
+      </table>`;
+    }
+
+    function updateFields() {
+      // Basic info fields
+      document.getElementById('firstName').value = partialCharacter.firstName || '';
+      document.getElementById('lastName').value = partialCharacter.lastName || '';
+      document.getElementById('age').value = partialCharacter.age || '';
+      document.getElementById('gender').value = partialCharacter.gender || '';
+      document.getElementById('currentOccupation').value = partialCharacter.currentOccupation || '';
+      document.getElementById('weight').value = partialCharacter.weight || '';
+      document.getElementById('birthDate').value = partialCharacter.birthDate || '';
+      document.getElementById('birthPlace').value = partialCharacter.birthPlace || '';
+      document.getElementById('apparentAge').value = partialCharacter.apparentAge || '';
+      document.getElementById('height').value = partialCharacter.height || '';
+      document.getElementById('eyeColor').value = partialCharacter.eyeColor || '';
+      document.getElementById('hairColor').value = partialCharacter.hairColor || '';
+      document.getElementById('maritalStatus').value = partialCharacter.maritalStatus || '';
+      document.getElementById('educationTitle').value = partialCharacter.educationTitle || '';
+
+      // Text descriptions
+      document.getElementById('criminalRecord').value = partialCharacter.criminalRecord || '';
+      document.getElementById('pathologies').value = partialCharacter.pathologies || '';
+      document.getElementById('publicDescription').value = partialCharacter.publicDescription || '';
+      document.getElementById('privateDescription').value = partialCharacter.privateDescription || '';
+
+      // Physical & marks descriptions
+      document.getElementById('physicalDescription').value = partialCharacter.physicalDescription || '';
+      document.getElementById('visibleMarks').value = partialCharacter.visibleMarks || '';
+      document.getElementById('hiddenMarks').value = partialCharacter.hiddenMarks || '';
+
+      // Background sections (read from top-level during generation, from background object on final)
+      const getBgField = (fieldName) => partialCharacter[fieldName] || (partialCharacter.background?.[fieldName]) || '';
+
+      document.getElementById('briefHistory').value = getBgField('briefHistory');
+      document.getElementById('significantEvents').value = getBgField('significantEvents');
+      document.getElementById('importantRelationships').value = getBgField('importantRelationships');
+      document.getElementById('personality').value = getBgField('personality');
+      document.getElementById('ideology').value = getBgField('ideology');
+      document.getElementById('significantPlaces').value = getBgField('significantPlaces');
+      document.getElementById('fearsAndPhobias').value = getBgField('fearsAndPhobias');
+      document.getElementById('secrets').value = getBgField('secrets');
+      document.getElementById('goalsAndMotivations').value = getBgField('goalsAndMotivations');
+
+      // Stats and skills tables
+      if (partialCharacter.stats) {
+        document.getElementById('statsDisplay').innerHTML = renderTable(partialCharacter.stats, {}, STATS_LABELS);
+      }
+
+      if (partialCharacter.skills && Object.keys(partialCharacter.skills).length > 0) {
+        document.getElementById('skillsDisplay').innerHTML = renderSkills(partialCharacter.skills);
+      }
+
+      // JSON display (exclude narrativeText after approval)
+      const jsonForDisplay = { ...partialCharacter };
+      if (isNarrativeApproved && jsonForDisplay.narrativeText) {
+        delete jsonForDisplay.narrativeText;
+      }
+      document.getElementById('jsonDisplay').value = JSON.stringify(jsonForDisplay, null, 2);
+    }
+
+    function toggleJson() {
+      const panel = document.getElementById('jsonPanel');
+      const btn = document.getElementById('toggleJsonBtn');
+      if (panel.style.display === 'none') {
+        panel.style.display = 'block';
+        btn.textContent = '📋 Nascondi JSON';
+      } else {
+        panel.style.display = 'none';
+        btn.textContent = '📋 Mostra JSON';
+      }
+    }
+
+    // Load game config on page startup
+    async function loadGameConfig() {
+      try {
+        // Same-origin: character-gen fa da proxy al backend (nessun secret nel client)
+        const response = await fetch('/config');
+        if (!response.ok) {
+          log('error', '⚠️ Game config non disponibile (HTTP ' + response.status + ')');
+          return;
+        }
+        const data = await response.json();
+        gameConfig = data.data || {};
+        log('inprogress', '✅ Game config loaded (' + (gameConfig.skills?.length || 0) + ' skills)');
+        // Ri-renderizza le skill già a video ora che i nomi sono disponibili
+        if (Object.keys(partialCharacter).length > 0) updateFields();
+      } catch (error) {
+        log('error', '⚠️ Failed to load game config: ' + error.message);
+      }
+    }
+
+    function startGeneration() {
+      const description = document.getElementById('promptInput').value.trim();
+      if (!description) { alert('Scrivi una descrizione!'); return; }
+
+      if (currentEventSource) currentEventSource.close();
+      document.getElementById('eventsLog').innerHTML = '';
+      partialCharacter = {};
+      updateFields();
+
+      const promptInput = document.getElementById('promptInput');
+      promptInput.readOnly = true;
+      document.getElementById('generateBtn').disabled = true;
+      document.getElementById('resumeBtn').disabled = true;
+
+      log('start', `🚀 Starting generation...`);
+      document.getElementById('sessionDisplay').textContent = sessionKey;
+
+      fetch(`${API_URL}/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionKey, description })
+      })
+        .then(r => r.json())
+        .then(data => {
+          currentGenerationId = data.generationId;
+          document.getElementById('genIdDisplay').textContent = data.generationId;
+          document.getElementById('statusDisplay').textContent = 'queued';
+          log('info', `✓ Queued: generationId=${data.generationId}`);
+          subscribeToStatus();
+        })
+        .catch(err => {
+          log('error', `❌ ${err.message}`);
+          document.getElementById('generateBtn').disabled = false;
+        });
+    }
+
+    function subscribeToStatus() {
+      currentEventSource = new EventSource(`${API_URL}/status/${sessionKey}`);
+
+      currentEventSource.addEventListener('step', (e) => {
+        const data = JSON.parse(e.data);
+        if (data.generationId !== currentGenerationId) return;
+
+        const { step, message, status, character } = data;
+        log(status || 'info', `Step ${step}: ${message}`);
+
+        if (character) {
+          partialCharacter = { ...partialCharacter, ...character };
+          updateFields();
+        }
+
+        document.getElementById('statusDisplay').textContent = status || 'processing';
+      });
+
+      currentEventSource.addEventListener('approval_needed', (e) => {
+        const data = JSON.parse(e.data);
+        log('info', `⏸️ In attesa di approvazione della narrativa...`);
+        document.getElementById('narrativeReview').value = data.narrativeText || '';
+        document.getElementById('approvalPanel').classList.add('active');
+        document.getElementById('statusDisplay').textContent = 'in_attesa';
+      });
+
+      currentEventSource.addEventListener('complete', (e) => {
+        const data = JSON.parse(e.data);
+        log('complete', `✓ Generazione completata!`);
+        document.getElementById('statusDisplay').textContent = 'completato';
+        document.getElementById('promptInput').readOnly = false;
+        document.getElementById('generateBtn').disabled = false;
+        document.getElementById('resumeBtn').disabled = false;
+        document.getElementById('approvalPanel').classList.remove('active');
+        currentEventSource.close();
+      });
+
+      currentEventSource.addEventListener('error', (e) => {
+        const data = JSON.parse(e.data);
+        log('error', `❌ ${data.error}`);
+        document.getElementById('statusDisplay').textContent = 'errore';
+        document.getElementById('promptInput').readOnly = false;
+        document.getElementById('generateBtn').disabled = false;
+        document.getElementById('approvalPanel').classList.remove('active');
+        currentEventSource.close();
+      });
+
+      currentEventSource.addEventListener('aborted', (e) => {
+        log('error', `⚠️ Abortito`);
+        document.getElementById('statusDisplay').textContent = 'abortito';
+        document.getElementById('promptInput').readOnly = false;
+        document.getElementById('generateBtn').disabled = false;
+        document.getElementById('approvalPanel').classList.remove('active');
+        currentEventSource.close();
+      });
+    }
+
+    function approveNarrative() {
+      fetch(`${API_URL}/approve/${sessionKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
+      })
+        .then(r => r.json())
+        .then(data => {
+          log('info', '✓ Narrativa approvata, continuo la generazione...');
+          document.getElementById('approvalPanel').classList.remove('active');
+          isNarrativeApproved = true;
+          updateFields();  // Refresh JSON display to remove narrativeText
+        })
+        .catch(err => {
+          log('error', `❌ ${err.message}`);
+        });
+    }
+
+    function rejectNarrative() {
+      fetch(`${API_URL}/reject/${sessionKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
+      })
+        .then(r => r.json())
+        .then(data => {
+          log('info', '✓ Narrativa rifiutata, pronta per la modifica');
+          document.getElementById('approvalPanel').classList.remove('active');
+          document.getElementById('modifyPrompt').focus();
+        })
+        .catch(err => {
+          log('error', `❌ ${err.message}`);
+        });
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      loadGameConfig();
+    });
+
+    function resumeGeneration() {
+      const modification = document.getElementById('modifyPrompt').value.trim();
+      if (!modification) { alert('Scrivi una modifica!'); return; }
+      if (!currentGenerationId) { alert('Genera prima un personaggio!'); return; }
+
+      if (currentEventSource) currentEventSource.close();
+      document.getElementById('eventsLog').innerHTML = '';
+
+      const stepOverride = document.getElementById('stepSelector').value === 'auto' ? null : parseInt(document.getElementById('stepSelector').value);
+
+      log('start', `🔄 Ricominciando da step ${stepOverride || 'auto'}...`);
+      document.getElementById('generateBtn').disabled = true;
+      document.getElementById('resumeBtn').disabled = true;
+
+      fetch(`${API_URL}/resume`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionKey,
+          modification,
+          resumeFromStep: stepOverride
+        })
+      })
+        .then(r => r.json())
+        .then(data => {
+          currentGenerationId = data.generationId;
+          document.getElementById('genIdDisplay').textContent = data.generationId;
+          log('info', `✓ Resumed: generationId=${data.generationId}, resumeFromStep=${data.resumeFromStep}`);
+          subscribeToStatus();
+        })
+        .catch(err => {
+          log('error', `❌ ${err.message}`);
+          document.getElementById('generateBtn').disabled = false;
+          document.getElementById('resumeBtn').disabled = false;
+        });
+    }
+
+    // Init
+    document.getElementById('generateBtn').disabled = false;
+    document.getElementById('resumeBtn').disabled = true;
+    log('info', `Ready. Session: ${sessionKey}`);
+  </script>
+</body>
+</html>

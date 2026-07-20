@@ -1,0 +1,39 @@
+import { Router, Request, Response, NextFunction } from 'express';
+import { CharacterCreationController } from '../controllers/CharacterCreationController';
+import { createLogger } from '@shared/utils/logger';
+
+const logger = createLogger({ serviceName: 'CharacterGenConfig' });
+const router = Router();
+
+/**
+ * Middleware: Verify Character Generation Service Token
+ * Used by character-gen service to fetch configuration
+ */
+function verifyCharGenToken(req: Request, res: Response, next: NextFunction) {
+  const chargenSecret = process.env.CHARACTER_GEN_SECRET || 'default-chargen-secret-key-change-me';
+  const token = req.headers['x-character-gen-secret'];
+
+  if (token !== chargenSecret) {
+    logger.warn('Invalid character-gen token', { ip: req.ip });
+    return res.status(401).json({
+      success: false,
+      error: 'Invalid or missing character-gen secret',
+      code: 'INVALID_TOKEN'
+    });
+  }
+
+  next();
+}
+
+/**
+ * @route GET /character-gen/config
+ * @desc Get complete character creation configuration (for character-gen service)
+ * @access Protected with CHARACTER_GEN_SECRET header
+ * @header X-Character-Gen-Secret - Service token
+ */
+router.get('/config',
+  verifyCharGenToken,
+  CharacterCreationController.getConfig
+);
+
+export default router;
