@@ -41,14 +41,13 @@ export function StandardMessage({ message, currentCharacterId }: StandardMessage
 
       {/* Left column: Avatar + Name + Time */}
       <div className={styles.messageCardLeft}>
+        <span className={styles.characterName}>{message.characterName}</span>
         <MessageAvatar
           avatar={message.characterAvatar}
           characterName={message.characterName}
           onClick={interactions.handleAvatarClick}
           isMasked={message.isMasked}
         />
-        <span className={styles.characterName}>{message.characterName}</span>
-        <time className={styles.messageTimestamp}>{interactions.formattedTime}</time>
       </div>
 
       {/* Right column: Content + Menu + Tag */}
@@ -88,13 +87,16 @@ export function StandardMessage({ message, currentCharacterId }: StandardMessage
             />
           ) : (
             <div className={styles.messageContent}>
+              <div className={styles.messageTimestampContainer}>
+                <time className={styles.messageTimestamp}>{interactions.formattedTime}</time>
+                <MessageFooter message={message} onTagClick={interactions.handleTagClick} />
+              </div>
               <MessageContent content={message.content} />
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <MessageFooter message={message} onTagClick={interactions.handleTagClick} />
       </div>
     </>
   );

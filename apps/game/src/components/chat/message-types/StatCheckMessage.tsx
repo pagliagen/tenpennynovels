@@ -40,19 +40,7 @@ export function StatCheckMessage({ message, currentCharacterId }: StatCheckMessa
         onConfirm={interactions.handleConfirmDelete}
         onCancel={interactions.handleCancelDelete}
       />
-
-      {/* Left column: Avatar + Stat Icon + Name + Time */}
-      <div className={styles.messageCardLeft}>
-        <MessageAvatar
-          avatar={message.characterAvatar}
-          characterName={message.characterName}
-          onClick={interactions.handleAvatarClick}
-        />
-        <span className={styles.characterName}>{message.characterName}</span>
-        <span className={styles.statIcon}>💪</span>
-        <time className={styles.messageTimestamp}>{interactions.formattedTime}</time>
-      </div>
-
+ 
       {/* Right column: Content + Menu + Tag */}
       <div className={styles.messageCardRight}>
         {/* Menu button */}
@@ -90,32 +78,21 @@ export function StatCheckMessage({ message, currentCharacterId }: StatCheckMessa
             />
           ) : (
             <>
-              <div className={styles.messageContent}>{message.content}</div>
-
-              {/* Stat check from diceResult (new format - no target exposed) */}
-              {diceResult?.statName && (
-                <div className={styles.statCheckResult}>
-                  <div className={styles.rollDisplay}>
+              <div className={styles.messageContent}>
+                {message.content}
+                {diceResult?.statName && (
+                  <div className={styles.diceResultContainer}>
                     <span className={styles.rollValue}>🎲 {diceResult.result}</span>
+                    {/* Stat check from diceResult (new format - no target exposed) */}
                     <span className={styles.successDegree}>
                       {diceResult.successDegree || (diceResult.success ? 'Successo' : 'Fallimento')}
                     </span>
                   </div>
-                </div>
-              )}
-
-              {/* Legacy stat check (old format with target - should not happen anymore) */}
-              {!diceResult && statCheck && (
-                <div className={styles.statCheckResult}>
-                  Roll: {statCheck.roll} | {statCheck.success ? '✅' : '❌'}
-                </div>
-              )}
+                )}
+              </div>
             </>
           )}
-        </div>
-
-        {/* Footer */}
-        <MessageFooter message={message} onTagClick={interactions.handleTagClick} />
+        </div> 
       </div>
     </>
   );

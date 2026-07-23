@@ -42,6 +42,22 @@
 .messageCardContent {
   flex: 1;
   padding-right: $spacing-xxl; // Space for menu button
+
+  .messageTimestampContainer {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: $spacing-sm;
+    margin-bottom: 15px;
+
+    * {
+      font-size: 14px;
+      font-family: 'Bahnschrift SemiLight', serif;
+      padding: 0;
+      margin: 0;
+      line-height: 15px;
+    }
+  }
 }
 
 .messageCardDimmed {
@@ -63,10 +79,39 @@
 }
 
 .messageCard--master {
+  position: relative;
   background: #4f1914;
   border-radius: 15px;
-  border-left-color: $gold-80;
+  border: none;
   box-shadow: 0 0 8px $gold-30;
+
+  &:before {
+    content: '';
+    position: absolute;
+    border-radius: 15px;
+    top: 0;
+    left: 0;
+    width: calc(100% - 10px);
+    height: calc(100% - 10px);
+    border: 1px solid $gold-80;
+    inset: 5px;
+  }
+
+  .messageTimestampContainer {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: $spacing-sm;
+    margin-bottom: 15px;
+    font-size: 14px;
+    line-height: 15px;
+
+    time {
+      font-family: 'Bahnschrift SemiLight' !important;
+      padding: 0;
+      margin: 0;
+    } 
+  }
 }
 
 .messageCard--dice_roll {
@@ -79,6 +124,26 @@
 
 .messageCard--stat_check {
   border-left-color: rgba(0, 0, 0, 0.6);
+  margin-left: 15px;
+  position: relative;
+  padding: 5px 24px;
+
+  &::before {
+    // In CSS, you cannot use a URL or image in the 'content' property directly.
+    // To insert an image with ::before, you must use background-image (recommended), or create an <img> element in markup.
+    // Example with background-image:
+    background-image: url('/icons/stat-check.png');
+    background-repeat: no-repeat;
+    background-position: left center;
+    background-size: 40px 40px; // adjust as needed
+    content: '';
+    width: 40px;   // required to show background image!
+    height: 40px;  // required to show background image!
+    display: inline-block;
+    position: absolute;
+    top: 5px;
+    left: -20px; 
+  }
 }
 
 .messageCard--item_use {

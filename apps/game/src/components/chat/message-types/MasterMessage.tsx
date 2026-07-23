@@ -40,18 +40,6 @@ export function MasterMessage({ message, currentCharacterId }: MasterMessageProp
         onCancel={interactions.handleCancelDelete}
       />
 
-      {/* Left column: Avatar + Master Badge + Name + Time */}
-      <div className={styles.messageCardLeft}>
-        <MessageAvatar
-          avatar={message.characterAvatar}
-          characterName={message.characterName}
-          onClick={interactions.handleAvatarClick}
-        />
-        <span className={styles.masterBadge}>★ MASTER</span>
-        <span className={styles.characterName}>{message.characterName}</span>
-        <time className={styles.messageTimestamp}>{interactions.formattedTime}</time>
-      </div>
-
       {/* Right column: Content + Menu + Tag */}
       <div className={styles.messageCardRight}>
         {/* Menu button */}
@@ -89,6 +77,10 @@ export function MasterMessage({ message, currentCharacterId }: MasterMessageProp
             />
           ) : (
             <div className={styles.messageContent}>
+              <div className={styles.messageTimestampContainer}>
+                <span className={styles.characterName}>{message.characterName}</span>
+                <time className={styles.messageTimestamp}>{interactions.formattedTime}</time>
+              </div>
               <MessageContent content={message.content} mentionVariant="master" />
             </div>
           )}
