@@ -17,7 +17,6 @@ import styles from '@/styles/components/chat/message-types/MasterMessage.module.
 import type { ChatMessage } from '@/types/chat';
 
 import { ConfirmDeleteDialog } from '../ConfirmDeleteDialog';
-import { MessageAvatar } from '../MessageAvatar';
 import { MessageContent } from '../MessageContent';
 import { MessageEditableContent } from '../MessageEditableContent';
 import { MessageFooter } from '../MessageFooter';

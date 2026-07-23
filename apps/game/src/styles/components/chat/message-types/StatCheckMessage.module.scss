@@ -4,21 +4,31 @@
  * Attribute check result display.
  */
 
+@use '../_variables' as *;
 @use '../MessageCard.module.scss';
 
-/* Stat icon */
-.statIcon {
-  font-size: 16px;
-  text-align: center;
-}
-
-/* Stat check result display */
-.statCheckResult {
+/* Dice roll result (roll value + success degree) */
+.diceResultContainer {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
   margin-top: 8px;
   padding: 12px 16px;
   background: rgba(70, 130, 180, 0.1);
-  border-radius: 4px;
-  color: #87ceeb;
-  font-size: 14px;
+  border-radius: $radius-sm;
   font-family: 'Courier New', monospace;
+}
+
+.rollValue {
+  color: #87ceeb;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.successDegree {
+  color: $parchment-70;
+  font-size: 13px;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }

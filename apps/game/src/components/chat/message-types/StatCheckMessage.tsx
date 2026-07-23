@@ -3,7 +3,7 @@
  *
  * Shows attribute check result (Strength, Dexterity, etc.).
  * Displays attribute, difficulty, roll vs target, and success/failure.
- * Contains complete message structure with avatar, menu, content, and footer.
+ * Compact layout: no avatar/header/footer, just content and menu.
  * Uses useMessageInteractions hook for shared logic.
  *
  * @module components/chat/message-types/StatCheckMessage
@@ -17,9 +17,7 @@ import styles from '@/styles/components/chat/message-types/StatCheckMessage.modu
 import type { ChatMessage } from '@/types/chat';
 
 import { ConfirmDeleteDialog } from '../ConfirmDeleteDialog';
-import { MessageAvatar } from '../MessageAvatar';
 import { MessageEditableContent } from '../MessageEditableContent';
-import { MessageFooter } from '../MessageFooter';
 import { MessageMenu } from '../MessageMenu';
 
 
@@ -30,7 +28,6 @@ interface StatCheckMessageProps {
 
 export function StatCheckMessage({ message, currentCharacterId }: StatCheckMessageProps): JSX.Element {
   const interactions = useMessageInteractions(message, currentCharacterId);
-  const statCheck = message.statCheck;
   const diceResult = message.diceResult;
 
   return (
@@ -40,8 +37,8 @@ export function StatCheckMessage({ message, currentCharacterId }: StatCheckMessa
         onConfirm={interactions.handleConfirmDelete}
         onCancel={interactions.handleCancelDelete}
       />
- 
-      {/* Right column: Content + Menu + Tag */}
+
+      {/* Content + Menu */}
       <div className={styles.messageCardRight}>
         {/* Menu button */}
         {interactions.canEdit && (
@@ -77,22 +74,19 @@ export function StatCheckMessage({ message, currentCharacterId }: StatCheckMessa
               onChange={interactions.setEditedContent}
             />
           ) : (
-            <>
-              <div className={styles.messageContent}>
-                {message.content}
-                {diceResult?.statName && (
-                  <div className={styles.diceResultContainer}>
-                    <span className={styles.rollValue}>🎲 {diceResult.result}</span>
-                    {/* Stat check from diceResult (new format - no target exposed) */}
-                    <span className={styles.successDegree}>
-                      {diceResult.successDegree || (diceResult.success ? 'Successo' : 'Fallimento')}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </>
+            <div className={styles.messageContent}>
+              {message.content}
+              {diceResult && (
+                <div className={styles.diceResultContainer}>
+                  <span className={styles.rollValue}>🎲 {diceResult.result}</span>
+                  <span className={styles.successDegree}>
+                    {diceResult.successDegree || (diceResult.success ? 'Successo' : 'Fallimento')}
+                  </span>
+                </div>
+              )}
+            </div>
           )}
-        </div> 
+        </div>
       </div>
     </>
   );

@@ -1,9 +1,9 @@
 /**
  * Dice Roll Message Component
  *
- * Shows dice roll with large dice icon and result display.
+ * Shows dice roll with result display.
  * System uses 1d100 percentile rolls.
- * Contains complete message structure with avatar, menu, content, and footer.
+ * Compact layout: no avatar/header/footer, just content and menu (dice icon via CSS).
  * Uses useMessageInteractions hook for shared logic.
  *
  * @module components/chat/message-types/DiceRollMessage
@@ -17,9 +17,7 @@ import styles from '@/styles/components/chat/message-types/DiceRollMessage.modul
 import type { ChatMessage } from '@/types/chat';
 
 import { ConfirmDeleteDialog } from '../ConfirmDeleteDialog';
-import { MessageAvatar } from '../MessageAvatar';
 import { MessageEditableContent } from '../MessageEditableContent';
-import { MessageFooter } from '../MessageFooter';
 import { MessageMenu } from '../MessageMenu';
 
 
@@ -40,19 +38,7 @@ export function DiceRollMessage({ message, currentCharacterId }: DiceRollMessage
         onCancel={interactions.handleCancelDelete}
       />
 
-      {/* Left column: Avatar + Dice Icon + Name + Time */}
-      <div className={styles.messageCardLeft}>
-        <MessageAvatar
-          avatar={message.characterAvatar}
-          characterName={message.characterName}
-          onClick={interactions.handleAvatarClick}
-        />
-        <span className={styles.characterName}>{message.characterName}</span>
-        <span className={styles.diceIcon}>🎲</span>
-        <time className={styles.messageTimestamp}>{interactions.formattedTime}</time>
-      </div>
-
-      {/* Right column: Content + Menu + Tag */}
+      {/* Content + Menu */}
       <div className={styles.messageCardRight}>
         {/* Menu button */}
         {interactions.canEdit && (
@@ -88,42 +74,35 @@ export function DiceRollMessage({ message, currentCharacterId }: DiceRollMessage
               onChange={interactions.setEditedContent}
             />
           ) : (
-            <>
-              {message.content && <div className={styles.messageContent}>{message.content}</div>}
+            <div className={styles.messageContent}>
               {/* Dice roll result: Multi-dice system */}
               {diceRoll && (
-                <div className={styles.diceRollResult}>
-                  {/* Formula */}
-                  {diceRoll.dice && (
-                    <div className={styles.diceFormula}>{diceRoll.dice}</div>
-                  )}
+                <div className={styles.diceResultContainer}>
+                  <span className={styles.textContent}>{message.content}</span>
 
                   {/* Individual rolls (if multiple dice) */}
                   {diceRoll.rolls && diceRoll.rolls.length > 1 && (
-                    <div className={styles.diceRolls}>
-                      [{diceRoll.rolls.join(', ')}]
-                    </div>
+                    <span className={styles.diceRolls}>
+                      [{diceRoll.rolls.join(', ')}]:
+                    </span>
                   )}
 
                   {/* Breakdown (if modifier exists) */}
                   {diceRoll.modifier !== undefined && diceRoll.modifier !== 0 && (
-                    <div className={styles.diceBreakdown}>
+                    <span className={styles.diceBreakdown}>
                       {diceRoll.result} {diceRoll.modifier >= 0 ? '+' : ''}{diceRoll.modifier}
-                    </div>
+                    </span>
                   )}
 
                   {/* Final total */}
-                  <div className={styles.diceTotal}>
+                  <span className={styles.diceTotal}>
                     {diceRoll.total !== undefined ? diceRoll.total : diceRoll.result}
-                  </div>
+                  </span>
                 </div>
               )}
-            </>
+            </div>
           )}
         </div>
-
-        {/* Footer */}
-        <MessageFooter message={message} onTagClick={interactions.handleTagClick} />
       </div>
     </>
   );

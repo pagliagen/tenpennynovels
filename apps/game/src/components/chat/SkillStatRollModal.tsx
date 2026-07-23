@@ -12,7 +12,7 @@
 
 import { useState } from 'react';
 
-import styles from './SkillStatRollModal.module.scss';
+import styles from '@/styles/components/chat/SkillStatRollModal.module.scss';
 
 /**
  * Skill data structure (matches CharacterData.skills from MessageInput)

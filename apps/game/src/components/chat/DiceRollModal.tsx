@@ -12,7 +12,7 @@
 
 import { useState, useMemo } from 'react';
 
-import styles from './DiceRollModal.module.scss';
+import styles from '@/styles/components/chat/DiceRollModal.module.scss';
 
 /**
  * Dice type options

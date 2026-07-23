@@ -2,8 +2,7 @@
  * Whisper Message Component
  *
  * Private message visible only to sender, target, and masters.
- * Features brown-themed styling with lock icon indicator.
- * Contains complete message structure with avatar, menu, content, and footer.
+ * Compact layout: no avatar/header/footer, just content and menu (whisper icon via CSS).
  * Uses useMessageInteractions hook for shared logic.
  *
  * @module components/chat/message-types/WhisperMessage
@@ -17,10 +16,8 @@ import styles from '@/styles/components/chat/message-types/WhisperMessage.module
 import type { ChatMessage } from '@/types/chat';
 
 import { ConfirmDeleteDialog } from '../ConfirmDeleteDialog';
-import { MessageAvatar } from '../MessageAvatar';
 import { MessageContent } from '../MessageContent';
 import { MessageEditableContent } from '../MessageEditableContent';
-import { MessageFooter } from '../MessageFooter';
 import { MessageMenu } from '../MessageMenu';
 
 
@@ -32,12 +29,6 @@ interface WhisperMessageProps {
 export function WhisperMessage({ message, currentCharacterId }: WhisperMessageProps): JSX.Element {
   const interactions = useMessageInteractions(message, currentCharacterId);
 
-  // Extract target from targetCharacters (DB field)
-  // Intentionally shows "(privato)" for privacy - master can see in full message
-  const targetName = message.targetCharacters && message.targetCharacters.length > 0
-    ? '(privato)'
-    : '(privato)';
-
   return (
     <>
       <ConfirmDeleteDialog
@@ -46,19 +37,7 @@ export function WhisperMessage({ message, currentCharacterId }: WhisperMessagePr
         onCancel={interactions.handleCancelDelete}
       />
 
-      {/* Left column: Avatar + Name + Whisper Badge + Time */}
-      <div className={styles.messageCardLeft}>
-        <MessageAvatar
-          avatar={message.characterAvatar}
-          characterName={message.characterName}
-          onClick={interactions.handleAvatarClick}
-        />
-        <span className={styles.characterName}>{message.characterName}</span>
-        <span className={styles.whisperBadge}>🔒 {targetName}</span>
-        <time className={styles.messageTimestamp}>{interactions.formattedTime}</time>
-      </div>
-
-      {/* Right column: Content + Menu + Tag */}
+      {/* Content + Menu */}
       <div className={styles.messageCardRight}>
         {/* Menu button */}
         {interactions.canEdit && (
@@ -99,9 +78,6 @@ export function WhisperMessage({ message, currentCharacterId }: WhisperMessagePr
             </div>
           )}
         </div>
-
-        {/* Footer */}
-        <MessageFooter message={message} onTagClick={interactions.handleTagClick} />
       </div>
     </>
   );

@@ -2,7 +2,7 @@
  * Chat Types
  *
  * Frontend types for the location chat system.
- * Supports 8 message types: standard, whisper, ooc, dice_roll, skill_check, stat_check, item_use, master.
+ * Supports the message types listed in {@link ActionType}.
  *
  * @module types/chat
  * @since 2.0.0
@@ -32,7 +32,7 @@ export type ActionType =
  * Multi-dice system: supports various dice types with modifiers
  * Format: {count}d{type}[+/-modifier] (e.g., "2d6+3", "1d20", "3d8-2")
  *
- * Also used for skill_check and stat_check results with additional fields.
+ * Also used for stat_check results (and skill-based rolls) with additional fields.
  */
 export interface DiceRollPayload {
   dice: string;              // Formula: "2d6+3", "1d20", "1d100"
@@ -41,7 +41,7 @@ export interface DiceRollPayload {
   modifier?: number;         // Modifier applied (+/- value)
   total: number;             // Final total (result + modifier)
 
-  // Skill check fields (when actionType = 'skill_check')
+  // Skill-based roll fields
   success?: boolean;         // Pass/fail
   successDegree?: string;    // critical, extreme, hard, normal, failure, fumble
   skillId?: string;          // Skill ObjectId

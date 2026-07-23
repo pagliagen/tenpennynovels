@@ -71,6 +71,23 @@
   border-radius: 15px;
   border-left-color: $gold-80;
   box-shadow: 0 0 8px $gold-30;
+  margin-left: 15px;
+  position: relative;
+  padding: 5px 24px 5px 30px;
+
+  &::before {
+    background-image: url('/icons/whisper.png');
+    background-repeat: no-repeat;
+    background-position: left center;
+    background-size: 40px 40px;
+    content: '';
+    width: 40px;
+    height: 40px;
+    display: inline-block;
+    position: absolute;
+    top: -5px;
+    left: -20px;
+  }
 }
 
 .messageCard--ooc {
@@ -116,17 +133,29 @@
 
 .messageCard--dice_roll {
   border-left-color: rgba(147, 51, 234, 0.5);
-}
+  margin-left: 15px;
+  position: relative;
+  padding: 5px 24px 5px 30px;
 
-.messageCard--skill_check {
-  border-left-color: rgba(0, 0, 0, 0.6);
+  &::before {
+    content: '🎲';
+    width: 40px;
+    height: 40px;
+    display: inline-block;
+    font-size: 28px;
+    line-height: 40px;
+    text-align: center;
+    position: absolute;
+    top: -5px;
+    left: -20px;
+  }
 }
 
 .messageCard--stat_check {
   border-left-color: rgba(0, 0, 0, 0.6);
   margin-left: 15px;
   position: relative;
-  padding: 5px 24px;
+  padding: 5px 24px 5px 30px;
 
   &::before {
     // In CSS, you cannot use a URL or image in the 'content' property directly.
@@ -141,7 +170,7 @@
     height: 40px;  // required to show background image!
     display: inline-block;
     position: absolute;
-    top: 5px;
+    top: -5px;
     left: -20px; 
   }
 }

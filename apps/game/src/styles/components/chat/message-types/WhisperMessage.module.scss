@@ -5,12 +5,3 @@
  */
 
 @use '../MessageCard.module.scss';
-
-/* Whisper badge - brown theme with lock icon */
-.whisperBadge {
-  color: rgba(139, 69, 19, 0.9);
-  font-family: 'Playfair Display', serif;
-  font-size: 12px;
-  font-weight: 600;
-  text-align: center;
-}
