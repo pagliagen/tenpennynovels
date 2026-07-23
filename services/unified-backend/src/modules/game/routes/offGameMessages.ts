@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import { OffGameMessageController } from '../controllers/OffGameMessageController';
 import { AuthMiddleware } from '../middleware/auth';
 
@@ -28,7 +28,7 @@ const router = Router();
 const sendMessageLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 30,
-  keyGenerator: (req) => req.user?.userId || req.ip || 'unknown',
+  keyGenerator: (req) => req.user?.userId || ipKeyGenerator(req.ip ?? '') || 'unknown',
   skip: (req) => !req.user,
   handler: (_req, res) => {
     res.status(429).json({
@@ -43,21 +43,21 @@ const sendMessageLimiter = rateLimit({
 const readMarkerLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 60,
-  keyGenerator: (req) => req.user?.userId || req.ip || 'unknown',
+  keyGenerator: (req) => req.user?.userId || ipKeyGenerator(req.ip ?? '') || 'unknown',
   skip: (req) => !req.user
 });
 
 const typingLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 120,
-  keyGenerator: (req) => req.user?.userId || req.ip || 'unknown',
+  keyGenerator: (req) => req.user?.userId || ipKeyGenerator(req.ip ?? '') || 'unknown',
   skip: (req) => !req.user
 });
 
 const deleteMessageLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 30,
-  keyGenerator: (req) => req.user?.userId || req.ip || 'unknown',
+  keyGenerator: (req) => req.user?.userId || ipKeyGenerator(req.ip ?? '') || 'unknown',
   skip: (req) => !req.user
 });
 

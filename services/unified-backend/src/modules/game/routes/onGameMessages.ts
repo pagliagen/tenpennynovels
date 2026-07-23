@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import { OnGameMessageController } from '../controllers/OnGameMessageController';
 import { AuthMiddleware } from '../middleware/auth';
 
@@ -26,7 +26,7 @@ const router = Router();
 const sendMessageLimiter = rateLimit({
   windowMs: 60 * 1000,  // 1 minute
   max: 20,              // 20 messages per minute
-  keyGenerator: (req) => req.user?.userId || req.ip || 'unknown',
+  keyGenerator: (req) => req.user?.userId || ipKeyGenerator(req.ip ?? '') || 'unknown',
   skip: (req) => !req.user,  // Skip if not authenticated
   handler: (_req, res) => {
     res.status(429).json({
@@ -41,7 +41,7 @@ const sendMessageLimiter = rateLimit({
 const deleteMessageLimiter = rateLimit({
   windowMs: 60 * 1000,  // 1 minute
   max: 30,              // 30 deletions per minute
-  keyGenerator: (req) => req.user?.userId || req.ip || 'unknown',
+  keyGenerator: (req) => req.user?.userId || ipKeyGenerator(req.ip ?? '') || 'unknown',
   skip: (req) => !req.user,
   handler: (_req, res) => {
     res.status(429).json({
