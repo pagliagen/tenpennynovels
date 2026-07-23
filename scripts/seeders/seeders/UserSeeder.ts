@@ -88,16 +88,52 @@ async function seedUsers() {
       const userResult = await usersCol.insertOne(adminData);
       console.log(`   ✓ Created admin: ${admin.username}`);
 
+      // Get or create default location (Londra)
+      const defaultLocation = await db.collection('locations').findOne({ slug: 'london' });
+      const locationId = defaultLocation?._id || new (await import('mongodb')).ObjectId();
+
       await charsCol.insertOne({
+        characterType: 'pg_master',
         userId: userResult.insertedId,
-        name: admin.username,
-        status: 'APPROVED',
-        adminRoles: ['amministratore'],
-        gameplayRoles: ['master'],
+        name: admin.displayName || admin.username,
+        playerStatus: 'approved',
+        canAccessAdminPanel: true,
         isGestore: true,
+        gameplayRoles: ['master'],
         characterPermissions: [],
+        adminPermissions: [],
         skills: {},
+        equipment: [],
+        currentLocation: locationId,
         isActive: false,
+        isBanned: false,
+        stats: {
+          strength: 50,
+          constitution: 50,
+          size: 50,
+          dexterity: 50,
+          appearance: 50,
+          intelligence: 50,
+          power: 50,
+          education: 50
+        },
+        derived: {
+          ideaRoll: 50,
+          luckRoll: 50,
+          knowledge: 50,
+          hitPoints: 10,
+          sanity: 50,
+          maxSanity: 50,
+          magicPoints: 10,
+          movementRate: 8,
+          bonusDamage: '0',
+          build: 0
+        },
+        forumStats: {
+          followerCount: 0,
+          followingCount: 0,
+          postCount: 0
+        },
         createdAt: new Date(),
         updatedAt: new Date(),
         submittedAt: new Date(),
@@ -105,7 +141,7 @@ async function seedUsers() {
         approvedBy: userResult.insertedId,
         approvedByName: 'System'
       });
-      console.log(`   ✓ Created admin character: ${admin.username} (isGestore=true)`);
+      console.log(`   ✓ Created admin character: ${admin.displayName || admin.username} (isGestore=true)`);
     }
 
     // Test user

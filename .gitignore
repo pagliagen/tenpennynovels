@@ -12,6 +12,8 @@ dist/
 *.d.ts.map 
 .env
 .env.*
+# I template .env.example DEVONO essere versionati (documentano le variabili richieste)
+!.env.example
 .DS_Store
 nginx-api.conf
 __pycache__/

@@ -141,6 +141,9 @@ function createServiceProxy(svc: ServiceConfig, prefix: string) {
         if (req.client) {
           proxyReq.setHeader('X-Client-Id', req.client.id);
         }
+        // Necessario quando il target è un tunnel ngrok (gateway VPS -> botai/character-gen
+        // sulla macchina DEV): salta l'interstitial del free tier. Innocuo per target non-ngrok.
+        proxyReq.setHeader('ngrok-skip-browser-warning', 'true');
         fixRequestBody(proxyReq, req);
       },
       error: (_err, _req, res: any) => {

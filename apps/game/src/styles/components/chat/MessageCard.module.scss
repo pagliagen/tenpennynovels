@@ -12,15 +12,13 @@
   flex-direction: row;
   gap: $spacing-lg;
   padding: $spacing-lg $spacing-xl;
-  background: rgba(245, 245, 245, 0.05);
-  border-left: 3px solid $gold-30;
-  border-radius: $radius-sm;
+  background: rgba(0, 0, 0, 0.6);
+  border-left: 10px solid #ffa748;
+  border-radius: 5px;
   transition: all $transition-normal;
-
-  &:hover {
-    background: rgba(245, 245, 245, 0.08);
-    border-left-color: rgba(184, 134, 11, 0.6);
-  }
+  color: #a9aa9b;
+  font-family: 'Bahnschrift SemiLight', serif;
+  font-size: 14px;
 }
 
 .messageCardLeft {
@@ -53,7 +51,10 @@
 
 /* Type-specific styling */
 .messageCard--whisper {
-  border-left-color: $brown-50;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 15px;
+  border-left-color: $gold-80;
+  box-shadow: 0 0 8px $gold-30;
 }
 
 .messageCard--ooc {
@@ -62,6 +63,8 @@
 }
 
 .messageCard--master {
+  background: #4f1914;
+  border-radius: 15px;
   border-left-color: $gold-80;
   box-shadow: 0 0 8px $gold-30;
 }
@@ -71,11 +74,11 @@
 }
 
 .messageCard--skill_check {
-  border-left-color: rgba(34, 197, 94, 0.5);
+  border-left-color: rgba(0, 0, 0, 0.6);
 }
 
 .messageCard--stat_check {
-  border-left-color: rgba(59, 130, 246, 0.5);
+  border-left-color: rgba(0, 0, 0, 0.6);
 }
 
 .messageCard--item_use {
@@ -121,39 +124,24 @@
   }
 }
 
-.avatarPlaceholder {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-  background: $gold-20;
-  color: $gold;
-  font-family: 'Thrifted Attire', serif;
-  font-size: 32px;
-  font-weight: 600;
-}
-
 .characterName {
-  color: $parchment;
-  font-family: $font-serif;
+  color: #ffa748;
+  font-family: 'Thrifted Attire', serif;
   font-size: 14px;
-  font-weight: 600;
   text-align: center;
   word-break: break-word;
 }
 
 .messageTimestamp {
-  color: $parchment-60;
-  font-family: $font-serif;
-  font-size: 12px;
-  font-style: italic;
+  color: #daddc4;
+  font-family: 'Bahnschrift SemiLight', serif;
+  font-size: 14px;
 }
 
 .messageContent {
-  color: $parchment;
-  font-family: $font-serif;
-  font-size: 16px;
+  color: #a9aa9b;
+  font-family: 'Bahnschrift SemiLight', serif;
+  font-size: 14px;
   line-height: 1.6;
   white-space: pre-wrap;
   word-break: break-word;

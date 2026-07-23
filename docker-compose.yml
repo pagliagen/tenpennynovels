@@ -202,12 +202,13 @@ services:
       CDN_BASE_URL: http://localhost:8000/cdn
       CDN_FTP_ENABLED: "false"
 
-      # AI Gateway (local-ai)
-      AI_GATEWAY_URL: ${AI_GATEWAY_URL:-https://onomatopoeically-unforgeable-ozie.ngrok-free.dev}
+      # AI Gateway (local-ai) — valori reali SOLO da .env (mai defaults committati).
+      # API key e URL ngrok erano hardcoded qui: rimossi e da RUOTARE.
+      AI_GATEWAY_URL: ${AI_GATEWAY_URL:-}
       AI_GATEWAY_CLIENT_ID: ${AI_GATEWAY_CLIENT_ID:-tpn-dev}
-      AI_GATEWAY_API_KEY: ${AI_GATEWAY_API_KEY:-f4af240c291f57bcc23384bff9abcc4ce89f8257974b80e6179f88edd5f4a2f9}
+      AI_GATEWAY_API_KEY: ${AI_GATEWAY_API_KEY:-}
       AI_GATEWAY_HMAC_SECRET: ${AI_GATEWAY_HMAC_SECRET:-}
-      AI_GATEWAY_WEBHOOK_SECRET: ${AI_GATEWAY_WEBHOOK_SECRET:-local-dev-webhook-secret}
+      AI_GATEWAY_WEBHOOK_SECRET: ${AI_GATEWAY_WEBHOOK_SECRET:-}
 
       # Callback base URL (usata da local-ai botai per richiamare il backend via gateway)
       API_CALLBACK_BASE_URL: http://tenpennynovels-api-gateway:8000
@@ -273,7 +274,8 @@ services:
       TRUST_PROXY: "true"
 
       # Webhook secret (per validare le callback da servizi interni come local-ai)
-      AI_GATEWAY_WEBHOOK_SECRET: ${AI_GATEWAY_WEBHOOK_SECRET:-local-dev-webhook-secret}
+      # Valore reale SOLO da .env — mai default committato.
+      AI_GATEWAY_WEBHOOK_SECRET: ${AI_GATEWAY_WEBHOOK_SECRET:-}
     ports:
       - "8000:8000"
     volumes:

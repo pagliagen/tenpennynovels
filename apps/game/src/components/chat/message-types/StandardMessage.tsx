@@ -16,6 +16,8 @@ import styles from '@/styles/components/chat/message-types/StandardMessage.modul
 import type { ChatMessage } from '@/types/chat';
 
 import { ConfirmDeleteDialog } from '../ConfirmDeleteDialog';
+import { MessageAvatar } from '../MessageAvatar';
+import { MessageContent } from '../MessageContent';
 import { MessageEditableContent } from '../MessageEditableContent';
 import { MessageFooter } from '../MessageFooter';
 import { MessageMenu } from '../MessageMenu';
@@ -39,22 +41,12 @@ export function StandardMessage({ message, currentCharacterId }: StandardMessage
 
       {/* Left column: Avatar + Name + Time */}
       <div className={styles.messageCardLeft}>
-        <button
-          className={`${styles.messageAvatar} ${message.isMasked ? styles.avatarDisabled : ''}`}
+        <MessageAvatar
+          avatar={message.characterAvatar}
+          characterName={message.characterName}
           onClick={interactions.handleAvatarClick}
-          type="button"
-          aria-label={message.isMasked ? 'Identità nascosta' : `Apri scheda di ${message.characterName}`}
-          disabled={message.isMasked}
-          title={message.isMasked ? 'Identità nascosta (PNG Light)' : undefined}
-        >
-          {message.characterAvatar ? (
-            <img src={message.characterAvatar} alt="" />
-          ) : (
-            <span className={styles.avatarPlaceholder}>
-              {message.characterName?.[0]?.toUpperCase() || '?'}
-            </span>
-          )}
-        </button>
+          isMasked={message.isMasked}
+        />
         <span className={styles.characterName}>{message.characterName}</span>
         <time className={styles.messageTimestamp}>{interactions.formattedTime}</time>
       </div>
@@ -95,7 +87,9 @@ export function StandardMessage({ message, currentCharacterId }: StandardMessage
               onChange={interactions.setEditedContent}
             />
           ) : (
-            <div className={styles.messageContent}>{message.content}</div>
+            <div className={styles.messageContent}>
+              <MessageContent content={message.content} />
+            </div>
           )}
         </div>
 

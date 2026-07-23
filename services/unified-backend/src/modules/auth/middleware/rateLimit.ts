@@ -5,6 +5,16 @@ import { RateLimitConfig } from '../types/auth';
 import { logger, logRate } from '../logger';
 import { appConfig } from '@config/runtime';
 
+/**
+ * Extract client IP address handling IPv6 correctly
+ * Removes IPv6 prefix (::ffff:) and uses the actual IP
+ */
+function getClientIP(req: Request): string {
+  const ip = req.ip || 'unknown';
+  // Remove IPv6 prefix if present (e.g., ::ffff:127.0.0.1 → 127.0.0.1)
+  return ip.replace(/^::ffff:/, '');
+}
+
 export class RateLimitMiddleware {
   /**
    * Generic rate limiting middleware
@@ -80,7 +90,7 @@ export class RateLimitMiddleware {
     return this.createRateLimit({
       windowMs: 60 * 60 * 1000, // 1 hour
       maxRequests: 5,
-      keyGenerator: (req: Request) => `registration:${req.ip}`
+      keyGenerator: (req: Request) => `registration:${getClientIP(req)}`
     });
   }
 
@@ -91,7 +101,7 @@ export class RateLimitMiddleware {
     return this.createRateLimit({
       windowMs: 60 * 1000, // 1 minute
       maxRequests: 10,
-      keyGenerator: (req: Request) => `login:${req.ip}`
+      keyGenerator: (req: Request) => `login:${getClientIP(req)}`
     });
   }
 
@@ -149,7 +159,7 @@ export class RateLimitMiddleware {
     return this.createRateLimit({
       windowMs: 60 * 60 * 1000, // 1 hour
       maxRequests: 3,
-      keyGenerator: (req: Request) => `password_reset:${req.body.identifier?.toLowerCase() || req.ip}`
+      keyGenerator: (req: Request) => `password_reset:${req.body.identifier?.toLowerCase() || getClientIP(req)}`
     });
   }
 
@@ -160,7 +170,7 @@ export class RateLimitMiddleware {
     return this.createRateLimit({
       windowMs: 60 * 60 * 1000, // 1 hour
       maxRequests: 3,
-      keyGenerator: (req: Request) => `email_verification:${req.body.username?.toLowerCase() || req.body.email?.toLowerCase() || req.ip}`
+      keyGenerator: (req: Request) => `email_verification:${req.body.username?.toLowerCase() || req.body.email?.toLowerCase() || getClientIP(req)}`
     });
   }
 
@@ -182,7 +192,7 @@ export class RateLimitMiddleware {
     return this.createRateLimit({
       windowMs: 60 * 1000, // 1 minute
       maxRequests: 20,
-      keyGenerator: (req: Request) => `availability:${req.ip}`
+      keyGenerator: (req: Request) => `availability:${getClientIP(req)}`
     });
   }
 
@@ -193,7 +203,7 @@ export class RateLimitMiddleware {
     return this.createRateLimit({
       windowMs: 60 * 60 * 1000, // 1 hour
       maxRequests: 10,
-      keyGenerator: (req: Request) => `profile_update:${req.user?.userId || req.ip}`
+      keyGenerator: (req: Request) => `profile_update:${req.user?.userId || getClientIP(req)}`
     });
   }
 
@@ -204,7 +214,7 @@ export class RateLimitMiddleware {
     return this.createRateLimit({
       windowMs: 60 * 1000, // 1 minute
       maxRequests: 5,
-      keyGenerator: (req: Request) => `security:${req.user?.userId || req.ip}`
+      keyGenerator: (req: Request) => `security:${req.user?.userId || getClientIP(req)}`
     });
   }
 
@@ -215,7 +225,7 @@ export class RateLimitMiddleware {
     return this.createRateLimit({
       windowMs: 60 * 1000, // 1 minute
       maxRequests: 100,
-      keyGenerator: (req: Request) => `api_calls:${req.ip}`
+      keyGenerator: (req: Request) => `api_calls:${getClientIP(req)}`
     });
   }
 

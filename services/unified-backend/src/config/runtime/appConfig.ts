@@ -19,12 +19,12 @@ export const appConfig = {
   trustProxy: isProduction,
 
   jwt: {
-    secret: process.env.JWT_SECRET,
-    refreshSecret: process.env.JWT_REFRESH_SECRET,
+    secret: process.env.JWT_SECRET || (isProduction ? undefined : 'dev-secret-key-change-in-production'),
+    refreshSecret: process.env.JWT_REFRESH_SECRET || (isProduction ? undefined : 'dev-refresh-secret-change-in-production'),
   },
 
   db: {
-    mongodbUri: process.env.MONGODB_URI,
+    mongodbUri: process.env.MONGODB_URI || (isProduction ? undefined : 'mongodb://admin:admin123@localhost:27017/tenpennynovels?authSource=admin'),
     redisUrl: process.env.REDIS_URL || 'redis://localhost:6379',
   },
 

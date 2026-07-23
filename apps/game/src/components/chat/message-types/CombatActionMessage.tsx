@@ -15,6 +15,7 @@ import styles from '@/styles/components/chat/message-types/CombatActionMessage.m
 import type { ChatMessage } from '@/types/chat';
 
 import { ConfirmDeleteDialog } from '../ConfirmDeleteDialog';
+import { MessageAvatar } from '../MessageAvatar';
 import { MessageEditableContent } from '../MessageEditableContent';
 import { MessageFooter } from '../MessageFooter';
 import { MessageMenu } from '../MessageMenu';
@@ -61,20 +62,11 @@ export function CombatActionMessage({ message, currentCharacterId }: CombatActio
 
       {/* Left column: Avatar + Name + Time */}
       <div className={styles.messageCardLeft}>
-        <button
-          className={styles.messageAvatar}
+        <MessageAvatar
+          avatar={message.characterAvatar}
+          characterName={message.characterName}
           onClick={interactions.handleAvatarClick}
-          type="button"
-          aria-label={`Apri scheda di ${message.characterName}`}
-        >
-          {message.characterAvatar ? (
-            <img src={message.characterAvatar} alt="" />
-          ) : (
-            <span className={styles.avatarPlaceholder}>
-              {message.characterName?.[0]?.toUpperCase() || '?'}
-            </span>
-          )}
-        </button>
+        />
         <span className={styles.characterName}>{message.characterName}</span>
         <time className={styles.messageTimestamp}>{interactions.formattedTime}</time>
       </div>

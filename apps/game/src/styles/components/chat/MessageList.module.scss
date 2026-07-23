@@ -10,8 +10,7 @@
 .messageList {
   flex: 1;
   overflow-y: auto;
-  overflow-x: hidden;
-  padding: $spacing-xl $spacing-xxl;
+  overflow-x: hidden; 
   display: flex;
   flex-direction: column;
   gap: $spacing-lg;
