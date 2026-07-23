@@ -9,8 +9,6 @@ import { useUIStore } from '@/store/uiStore';
 import styles from '@/styles/components/forum/PostCard.module.scss';
 import type { ForumPost } from '@/types/forum';
 
-import { ReactionBar } from '../ui/ReactionBar';
-
 interface PostCardProps {
   post: ForumPost;
   isOwn?: boolean;
@@ -130,7 +128,6 @@ export function PostCard({ post, isOwn: isOwnProp, onReply }: PostCardProps): JS
           </>
         )}
       </div>
-      <ReactionBar postId={post.id} reactionCounts={post.reactionCounts} />
     </article>
   );
 }

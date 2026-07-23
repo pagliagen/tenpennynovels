@@ -2,7 +2,7 @@
  * Forum Types
  *
  * Frontend types for the forum system (Bacheca).
- * Supports topics, discussions, posts, reactions, bookmarks, notifications, and search.
+ * Supports topics, discussions, posts, bookmarks, notifications, and search.
  *
  * @module types/forum
  * @since 2.0.0
@@ -73,17 +73,7 @@ export interface ForumPost {
   isEdited: boolean;
   isDeleted: boolean;
   replyToPostId?: string;
-  reactionCounts: ReactionCounts;
 }
-
-export interface ReactionCounts {
-  like: number;
-  love: number;
-  laugh: number;
-  think: number;
-}
-
-export type ReactionType = 'like' | 'love' | 'laugh' | 'think';
 
 export interface ForumBookmark {
   _id: string;
@@ -100,8 +90,6 @@ export interface ForumBookmark {
 
 export type ForumNotificationType =
   | 'new_post_in_subscribed_discussion'
-  | 'character_followed_you'
-  | 'reaction_on_your_post'
   | 'reply_to_your_post';
 
 export interface ForumNotification {

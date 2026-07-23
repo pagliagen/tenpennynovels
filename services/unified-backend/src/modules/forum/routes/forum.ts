@@ -4,9 +4,7 @@ import { AuthMiddleware } from '../../auth/middleware/auth';
 import { banChecks } from '@shared/middleware/banCheck';
 import { ForumController } from '../controllers/ForumController';
 import { ForumSubscriptionController } from '../controllers/ForumSubscriptionController';
-import { ForumFollowController } from '../controllers/ForumFollowController';
 import { ForumBookmarkController } from '../controllers/ForumBookmarkController';
-import { ForumReactionController } from '../controllers/ForumReactionController';
 import { ForumNotificationController } from '../controllers/ForumNotificationController';
 
 const router = Router();
@@ -92,17 +90,9 @@ router.get('/favorites', forumReadLimiter, requiredAuth, ForumController.getUser
 router.post('/topics/:topicSlug/discussions/:discussionSlug/subscribe', forumCreationLimiter, requiredAuthBan, ForumSubscriptionController.subscribe);
 router.get('/subscriptions', forumReadLimiter, requiredAuth, ForumSubscriptionController.getSubscriptions);
 
-// ----- Follows -----
-router.post('/characters/:characterId/follow', forumCreationLimiter, requiredAuthBan, ForumFollowController.follow);
-router.get('/following', forumReadLimiter, requiredAuth, ForumFollowController.getFollowing);
-
 // ----- Bookmarks -----
 router.post('/posts/:postId/bookmark', forumCreationLimiter, requiredAuth, ForumBookmarkController.toggleBookmark);
 router.get('/bookmarks', forumReadLimiter, requiredAuth, ForumBookmarkController.getBookmarks);
-
-// ----- Reactions -----
-router.post('/posts/:postId/reactions', forumCreationLimiter, requiredAuthBan, ForumReactionController.create);
-router.get('/posts/:postId/reactions', forumReadLimiter, optionalAuth, ForumReactionController.list);
 
 // ----- Notifications -----
 router.get('/notifications', forumReadLimiter, requiredAuth, ForumNotificationController.getNotifications);

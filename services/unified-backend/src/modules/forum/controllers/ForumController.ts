@@ -281,8 +281,7 @@ export class ForumController {
         topicSlug, discussionSlug: slug,
         content: content.trim(),
         author,
-        createdAt: now, isEdited: false, isDeleted: false,
-        reactionCounts: { like: 0, love: 0, laugh: 0, think: 0 }
+        createdAt: now, isEdited: false, isDeleted: false
       });
 
       await ForumTopic.updateOne({ _id: topic._id }, {
@@ -408,8 +407,7 @@ export class ForumController {
         author: p.author,
         createdAt: p.createdAt, updatedAt: p.updatedAt,
         isEdited: p.isEdited, isDeleted: p.isDeleted,
-        replyToPostId: p.replyToPostId,
-        reactionCounts: p.reactionCounts
+        replyToPostId: p.replyToPostId
       })), { currentPage: page, pageSize: limit, totalItems: total, totalPages, hasNextPage: page < totalPages, hasPreviousPage: page > 1 }, undefined, getRequestId(req)));
     } catch (error) {
       res.status(500).json({ success: false, error: 'Impossibile recuperare i post', code: 'GET_POSTS_ERROR' });
@@ -454,8 +452,7 @@ export class ForumController {
         content: content.trim(),
         author,
         createdAt: now, isEdited: false, isDeleted: false,
-        replyToPostId: replyToPostId ? new mongoose.Types.ObjectId(replyToPostId) : undefined,
-        reactionCounts: { like: 0, love: 0, laugh: 0, think: 0 }
+        replyToPostId: replyToPostId ? new mongoose.Types.ObjectId(replyToPostId) : undefined
       });
 
       await ForumDiscussion.updateOne({ _id: discussion._id }, {

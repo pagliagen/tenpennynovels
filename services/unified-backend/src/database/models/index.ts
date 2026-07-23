@@ -210,9 +210,7 @@ export { ForumDiscussion, type IForumDiscussion } from './ForumDiscussion';
 export { ForumPost, type IForumPost } from './ForumPost';
 export { ForumTopicFavorite, type IForumTopicFavorite } from './ForumTopicFavorite';
 export { ForumDiscussionSubscription, type IForumDiscussionSubscription } from './ForumDiscussionSubscription';
-export { ForumCharacterFollow, type IForumCharacterFollow } from './ForumCharacterFollow';
 export { ForumBookmark, BookmarkItemType, type IForumBookmark } from './ForumBookmark';
-export { ForumReaction, ReactionType, type IForumReaction } from './ForumReaction';
 export { ForumNotification, ForumNotificationType, type IForumNotification } from './ForumNotification';
 
 // Deleted Records Archive

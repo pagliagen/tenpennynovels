@@ -9,7 +9,6 @@
  * - useCreatePost() - Create new post
  * - useUpdatePost() - Update post content
  * - useDeletePost() - Delete post
- * - useToggleReaction() - Toggle reaction on a post
  *
  * @module hooks/useForumPosts
  * @since 2.0.0
@@ -18,7 +17,7 @@
 import { useQuery, useMutation, useQueryClient, type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
 
 import { forumApi } from '@/lib/api/forum';
-import type { ForumPost, PaginationInfo, ReactionType } from '@/types/forum';
+import type { ForumPost, PaginationInfo } from '@/types/forum';
 
 import { forumDiscussionKeys } from './useForumDiscussions';
 
@@ -31,7 +30,6 @@ export const forumPostKeys = {
   all: ['forum', 'posts'] as const,
   list: (topicSlug: string, discussionSlug: string) =>
     [...forumPostKeys.all, 'list', topicSlug, discussionSlug] as const,
-  reactions: (postId: string) => [...forumPostKeys.all, 'reactions', postId] as const,
 };
 
 /**
@@ -128,30 +126,6 @@ export function useDeletePost(): UseMutationResult<
     onSuccess: (_, { topicSlug, discussionSlug }) => {
       queryClient.invalidateQueries({ queryKey: forumPostKeys.list(topicSlug, discussionSlug) });
       queryClient.invalidateQueries({ queryKey: forumDiscussionKeys.detail(topicSlug, discussionSlug) });
-    },
-  });
-}
-
-/**
- * useToggleReaction Hook
- *
- * Toggles a reaction on a post (like, love, laugh, think).
- * Invalidates post reactions and posts list on success.
- *
- * @returns {UseMutationResult} Mutation result
- */
-export function useToggleReaction(): UseMutationResult<
-  void,
-  Error,
-  { postId: string; reactionType: ReactionType; topicSlug: string; discussionSlug: string }
-> {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ postId, reactionType }) => forumApi.toggleReaction(postId, reactionType),
-    onSuccess: (_, { postId, topicSlug, discussionSlug }) => {
-      queryClient.invalidateQueries({ queryKey: forumPostKeys.reactions(postId) });
-      queryClient.invalidateQueries({ queryKey: forumPostKeys.list(topicSlug, discussionSlug) });
     },
   });
 }

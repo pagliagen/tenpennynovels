@@ -31,12 +31,6 @@ export interface IForumPost extends Document {
   deletedAt?: Date;
   deletedByCharacterId?: mongoose.Types.ObjectId;
   replyToPostId?: mongoose.Types.ObjectId;
-  reactionCounts: {
-    like: number;
-    love: number;
-    laugh: number;
-    think: number;
-  };
   moderationScore?: number;
   moderationLabel?: string;
   moderationModel?: string;
@@ -46,13 +40,6 @@ export interface IForumPost extends Document {
 const CharacterRefSchema = new Schema({
   characterId: { type: Schema.Types.ObjectId, ref: 'Character', required: true },
   characterName: { type: String, required: true }
-}, { _id: false });
-
-const ReactionCountsSchema = new Schema({
-  like: { type: Number, default: 0, min: 0 },
-  love: { type: Number, default: 0, min: 0 },
-  laugh: { type: Number, default: 0, min: 0 },
-  think: { type: Number, default: 0, min: 0 }
 }, { _id: false });
 
 const ForumPostSchema = new Schema<IForumPost>({
@@ -96,10 +83,6 @@ const ForumPostSchema = new Schema<IForumPost>({
   deletedAt: Date,
   deletedByCharacterId: { type: Schema.Types.ObjectId, ref: 'Character' },
   replyToPostId: { type: Schema.Types.ObjectId, ref: 'ForumPost' },
-  reactionCounts: {
-    type: ReactionCountsSchema,
-    default: () => ({ like: 0, love: 0, laugh: 0, think: 0 })
-  },
   moderationScore: { type: Number, min: 0, max: 1 },
   moderationLabel: { type: String, enum: ['toxic', 'not-toxic'] },
   moderationModel: String,

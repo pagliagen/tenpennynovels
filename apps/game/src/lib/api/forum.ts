@@ -15,7 +15,6 @@
  * - GET /forum/search - Search forum
  * - POST /forum/topics/:slug/favorite - Toggle topic favorite
  * - POST /forum/posts/:postId/bookmark - Toggle bookmark
- * - POST /forum/posts/:postId/reactions - Toggle reaction
  * - GET /forum/notifications - Get notifications
  *
  * @module lib/api/forum
@@ -31,7 +30,6 @@ import type {
   ForumBookmark,
   ForumNotification,
   PaginationInfo,
-  ReactionType,
 } from '@/types/forum';
 
 import { api } from './client';
@@ -185,17 +183,6 @@ export const forumApi = {
     return response.data.subscriptions;
   },
 
-  // ── Follows ───────────────────────────────────────────────────────
-
-  async toggleFollow(characterId: string): Promise<void> {
-    await api.post(`/forum/characters/${characterId}/follow`);
-  },
-
-  async getFollowing(): Promise<any[]> {
-    const response = await api.get<{ data: { following: any[] } }>('/forum/following');
-    return response.data.following;
-  },
-
   // ── Bookmarks ─────────────────────────────────────────────────────
 
   async toggleBookmark(postId: string): Promise<void> {
@@ -205,17 +192,6 @@ export const forumApi = {
   async getBookmarks(): Promise<ForumBookmark[]> {
     const response = await api.get<{ data: { bookmarks: ForumBookmark[] } }>('/forum/bookmarks');
     return response.data.bookmarks;
-  },
-
-  // ── Reactions ─────────────────────────────────────────────────────
-
-  async toggleReaction(postId: string, reactionType: ReactionType): Promise<void> {
-    await api.post(`/forum/posts/${postId}/reactions`, { type: reactionType });
-  },
-
-  async getReactions(postId: string): Promise<any> {
-    const response = await api.get<{ data: any }>(`/forum/posts/${postId}/reactions`);
-    return response.data;
   },
 
   // ── Notifications ─────────────────────────────────────────────────

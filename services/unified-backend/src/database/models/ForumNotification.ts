@@ -10,8 +10,6 @@ import mongoose, { Schema, Document, model, models } from 'mongoose';
 
 export type ForumNotificationType =
   | 'new_post_in_subscribed_discussion'
-  | 'character_followed_you'
-  | 'reaction_on_your_post'
   | 'reply_to_your_post';
 
 export interface IForumNotification extends Document {
@@ -40,8 +38,6 @@ const ForumNotificationSchema = new Schema<IForumNotification>({
     enum: {
       values: [
         'new_post_in_subscribed_discussion',
-        'character_followed_you',
-        'reaction_on_your_post',
         'reply_to_your_post'
       ],
       message: 'Invalid notification type'
