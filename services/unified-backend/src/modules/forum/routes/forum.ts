@@ -70,12 +70,14 @@ router.get('/topics/:topicSlug/discussions/:discussionSlug', forumReadLimiter, o
 router.post('/topics/:topicSlug/discussions', forumCreationLimiter, requiredAuthBan, ForumController.createDiscussion);
 router.put('/topics/:topicSlug/discussions/:discussionSlug', forumModificationLimiter, requiredAuthBan, ForumController.updateDiscussion);
 router.delete('/topics/:topicSlug/discussions/:discussionSlug', forumModificationLimiter, requiredAuthBan, ForumController.deleteDiscussion);
+router.post('/topics/:topicSlug/discussions/:discussionSlug/restore', forumModificationLimiter, requiredAuthBan, ForumController.restoreDiscussion);
 
 // ----- Posts -----
 router.get('/topics/:topicSlug/discussions/:discussionSlug/posts', forumReadLimiter, optionalAuth, ForumController.getPosts);
 router.post('/topics/:topicSlug/discussions/:discussionSlug/posts', forumCreationLimiter, requiredAuthBan, ForumController.createPost);
 router.put('/posts/:postId', forumModificationLimiter, requiredAuthBan, ForumController.updatePost);
 router.delete('/posts/:postId', forumModificationLimiter, requiredAuthBan, ForumController.deletePost);
+router.post('/posts/:postId/restore', forumModificationLimiter, requiredAuthBan, ForumController.restorePost);
 
 // ----- Search, Recent, Popular -----
 router.get('/search', forumReadLimiter, optionalAuth, ForumController.searchForum);

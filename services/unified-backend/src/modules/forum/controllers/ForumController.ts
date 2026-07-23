@@ -68,6 +68,49 @@ function characterRef(req: Request) {
   };
 }
 
+/**
+ * Recompute a discussion's denormalized lastPostAt/lastPostBy from its
+ * non-deleted posts. Call after soft-deleting or restoring a post.
+ */
+async function recalculateDiscussionLastPost(discussionId: mongoose.Types.ObjectId): Promise<void> {
+  const latest = await ForumPost.findOne({ discussionId, isDeleted: false })
+    .sort({ createdAt: -1 })
+    .select('createdAt author')
+    .lean();
+
+  if (latest) {
+    await ForumDiscussion.updateOne({ _id: discussionId }, {
+      $set: { lastPostAt: latest.createdAt, lastPostBy: latest.author }
+    });
+  } else {
+    await ForumDiscussion.updateOne({ _id: discussionId }, {
+      $unset: { lastPostAt: '', lastPostBy: '' }
+    });
+  }
+}
+
+/**
+ * Recompute a topic's denormalized lastPostAt/lastPostBy from its
+ * non-deleted, visible discussions. Call after soft-deleting or restoring
+ * a discussion (or a post whose parent discussion's lastPost may have changed).
+ */
+async function recalculateTopicLastPost(topicId: mongoose.Types.ObjectId): Promise<void> {
+  const latest = await ForumDiscussion.findOne({ topicId, isDeleted: false, isVisible: true })
+    .sort({ lastPostAt: -1 })
+    .select('lastPostAt lastPostBy')
+    .lean();
+
+  if (latest) {
+    await ForumTopic.updateOne({ _id: topicId }, {
+      $set: { lastPostAt: latest.lastPostAt, lastPostBy: latest.lastPostBy }
+    });
+  } else {
+    await ForumTopic.updateOne({ _id: topicId }, {
+      $unset: { lastPostAt: '', lastPostBy: '' }
+    });
+  }
+}
+
 export class ForumController {
 
   static async getForumInit(req: Request, res: Response) {
@@ -177,7 +220,7 @@ export class ForumController {
         return res.status(403).json({ success: false, error: 'Accesso negato', code: 'ACCESS_DENIED' });
       }
 
-      const filter = { topicSlug, isVisible: true };
+      const filter = { topicSlug, isVisible: true, isDeleted: false };
       const [discussions, total] = await Promise.all([
         ForumDiscussion.find(filter).sort({ isPinned: -1, lastPostAt: -1 }).skip(skip).limit(limit).lean(),
         ForumDiscussion.countDocuments(filter)
@@ -210,7 +253,7 @@ export class ForumController {
         return res.status(403).json({ success: false, error: 'Accesso negato', code: 'ACCESS_DENIED' });
       }
 
-      const discussion = await ForumDiscussion.findOne({ topicSlug, slug: discussionSlug, isVisible: true });
+      const discussion = await ForumDiscussion.findOne({ topicSlug, slug: discussionSlug, isVisible: true, isDeleted: false });
       if (!discussion) {
         return res.status(404).json({ success: false, error: 'Discussione non trovata', code: 'DISCUSSION_NOT_FOUND' });
       }
@@ -304,7 +347,7 @@ export class ForumController {
         return res.status(400).json({ success: false, error: 'Personaggio richiesto', code: 'CHARACTER_REQUIRED' });
       }
 
-      const discussion = await ForumDiscussion.findOne({ topicSlug, slug: discussionSlug });
+      const discussion = await ForumDiscussion.findOne({ topicSlug, slug: discussionSlug, isDeleted: false });
       if (!discussion) {
         return res.status(404).json({ success: false, error: 'Discussione non trovata', code: 'DISCUSSION_NOT_FOUND' });
       }
@@ -329,6 +372,11 @@ export class ForumController {
     }
   }
 
+  /**
+   * Soft-delete a discussion: the discussion is hidden (isDeleted: true), its posts
+   * are left untouched in their collection and become reachable again automatically
+   * on restore. Only staff can restore (see restoreDiscussion), author or staff can delete.
+   */
   static async deleteDiscussion(req: Request, res: Response) {
     try {
       const { topicSlug, discussionSlug } = req.params;
@@ -337,7 +385,7 @@ export class ForumController {
         return res.status(400).json({ success: false, error: 'Personaggio richiesto', code: 'CHARACTER_REQUIRED' });
       }
 
-      const discussion = await ForumDiscussion.findOne({ topicSlug, slug: discussionSlug });
+      const discussion = await ForumDiscussion.findOne({ topicSlug, slug: discussionSlug, isDeleted: false });
       if (!discussion) {
         return res.status(404).json({ success: false, error: 'Discussione non trovata', code: 'DISCUSSION_NOT_FOUND' });
       }
@@ -357,16 +405,76 @@ export class ForumController {
         // Non-blocking
       }
 
-      await ForumPost.deleteMany({ discussionId: discussion._id });
-      await ForumDiscussion.deleteOne({ _id: discussion._id });
+      const now = new Date();
+      await ForumDiscussion.updateOne({ _id: discussion._id }, {
+        $set: {
+          isDeleted: true,
+          deletedAt: now,
+          deletedByCharacterId: new mongoose.Types.ObjectId(character.characterId)
+        }
+      });
 
       await ForumTopic.updateOne({ _id: discussion.topicId }, {
         $inc: { discussionCount: -1, postCount: -postCount }
       });
+      await recalculateTopicLastPost(discussion.topicId);
 
       res.json({ success: true, data: { deleted: true } });
     } catch (error) {
       res.status(500).json({ success: false, error: 'Impossibile eliminare la discussione', code: 'DELETE_DISCUSSION_ERROR' });
+    }
+  }
+
+  /**
+   * Restore a soft-deleted discussion. Staff-only (no author bypass): restoring
+   * a removed thread is an administrative action, not an authoring right.
+   */
+  static async restoreDiscussion(req: Request, res: Response) {
+    try {
+      const { topicSlug, discussionSlug } = req.params;
+      const character = req.character;
+      if (!character) {
+        return res.status(400).json({ success: false, error: 'Personaggio richiesto', code: 'CHARACTER_REQUIRED' });
+      }
+
+      if (!hasPermission(req, 'forum.manage')) {
+        return res.status(403).json({ success: false, error: 'Non autorizzato', code: 'ACCESS_DENIED' });
+      }
+
+      const discussion = await ForumDiscussion.findOne({ topicSlug, slug: discussionSlug, isDeleted: true });
+      if (!discussion) {
+        return res.status(404).json({ success: false, error: 'Discussione eliminata non trovata', code: 'DISCUSSION_NOT_FOUND' });
+      }
+
+      await ForumDiscussion.updateOne({ _id: discussion._id }, {
+        $set: { isDeleted: false },
+        $unset: { deletedAt: '', deletedByCharacterId: '' }
+      });
+
+      const restoredPosts = await ForumPost.find({ discussionId: discussion._id, isDeleted: false }).lean();
+
+      await ForumTopic.updateOne({ _id: discussion.topicId }, {
+        $inc: { discussionCount: 1, postCount: restoredPosts.length }
+      });
+      await recalculateTopicLastPost(discussion.topicId);
+
+      try {
+        const { publishForumPostEvent } = await import('../../../shared/services/EmbeddingEventPublisher');
+        await Promise.allSettled(restoredPosts.map(p => publishForumPostEvent('created', {
+          _id: p._id.toString(),
+          content: p.content,
+          topicSlug: p.topicSlug,
+          discussionSlug: p.discussionSlug,
+          authorCharacterId: p.author.characterId.toString(),
+          authorCharacterName: p.author.characterName
+        })));
+      } catch {
+        // Non-blocking
+      }
+
+      res.json({ success: true, data: { restored: true } });
+    } catch (error) {
+      res.status(500).json({ success: false, error: 'Impossibile ripristinare la discussione', code: 'RESTORE_DISCUSSION_ERROR' });
     }
   }
 
@@ -389,7 +497,7 @@ export class ForumController {
         return res.status(403).json({ success: false, error: 'Accesso negato', code: 'ACCESS_DENIED' });
       }
 
-      const discussion = await ForumDiscussion.findOne({ topicSlug, slug: discussionSlug, isVisible: true });
+      const discussion = await ForumDiscussion.findOne({ topicSlug, slug: discussionSlug, isVisible: true, isDeleted: false });
       if (!discussion) {
         return res.status(404).json({ success: false, error: 'Discussione non trovata', code: 'DISCUSSION_NOT_FOUND' });
       }
@@ -436,7 +544,7 @@ export class ForumController {
         return res.status(403).json({ success: false, error: 'Accesso negato', code: 'ACCESS_DENIED' });
       }
 
-      const discussion = await ForumDiscussion.findOne({ topicSlug, slug: discussionSlug, isVisible: true });
+      const discussion = await ForumDiscussion.findOne({ topicSlug, slug: discussionSlug, isVisible: true, isDeleted: false });
       if (!discussion) {
         return res.status(404).json({ success: false, error: 'Discussione non trovata', code: 'DISCUSSION_NOT_FOUND' });
       }
@@ -549,6 +657,8 @@ export class ForumController {
 
       await ForumDiscussion.updateOne({ _id: post.discussionId }, { $inc: { postCount: -1 } });
       await ForumTopic.updateOne({ _id: post.topicId }, { $inc: { postCount: -1 } });
+      await recalculateDiscussionLastPost(post.discussionId);
+      await recalculateTopicLastPost(post.topicId);
 
       try {
         const { publishForumPostDeletedEvent } = await import('../../../shared/services/EmbeddingEventPublisher');
@@ -560,6 +670,59 @@ export class ForumController {
       res.json({ success: true, data: { deleted: true } });
     } catch (error) {
       res.status(500).json({ success: false, error: 'Impossibile eliminare il post', code: 'DELETE_POST_ERROR' });
+    }
+  }
+
+  /**
+   * Restore a soft-deleted post. Staff-only (no author bypass), symmetric to deletePost.
+   */
+  static async restorePost(req: Request, res: Response) {
+    try {
+      const postIdStr = (Array.isArray(req.params.postId) ? req.params.postId[0] : req.params.postId) as string;
+      const character = req.character;
+      if (!character) {
+        return res.status(400).json({ success: false, error: 'Personaggio richiesto', code: 'CHARACTER_REQUIRED' });
+      }
+
+      if (!hasPermission(req, 'forum.manage')) {
+        return res.status(403).json({ success: false, error: 'Non autorizzato', code: 'ACCESS_DENIED' });
+      }
+
+      if (!postIdStr || !mongoose.Types.ObjectId.isValid(postIdStr)) {
+        return res.status(400).json({ success: false, error: 'ID post non valido', code: 'INVALID_ID' });
+      }
+      const post = await ForumPost.findOne({ _id: new mongoose.Types.ObjectId(postIdStr), isDeleted: true });
+      if (!post) {
+        return res.status(404).json({ success: false, error: 'Post eliminato non trovato', code: 'POST_NOT_FOUND' });
+      }
+
+      await ForumPost.findOneAndUpdate({ _id: post._id }, {
+        $set: { isDeleted: false },
+        $unset: { deletedAt: '', deletedByCharacterId: '' }
+      });
+
+      await ForumDiscussion.updateOne({ _id: post.discussionId }, { $inc: { postCount: 1 } });
+      await ForumTopic.updateOne({ _id: post.topicId }, { $inc: { postCount: 1 } });
+      await recalculateDiscussionLastPost(post.discussionId);
+      await recalculateTopicLastPost(post.topicId);
+
+      try {
+        const { publishForumPostEvent } = await import('../../../shared/services/EmbeddingEventPublisher');
+        await publishForumPostEvent('created', {
+          _id: post._id.toString(),
+          content: post.content,
+          topicSlug: post.topicSlug,
+          discussionSlug: post.discussionSlug,
+          authorCharacterId: post.author.characterId.toString(),
+          authorCharacterName: post.author.characterName
+        });
+      } catch {
+        // Non-blocking
+      }
+
+      res.json({ success: true, data: { restored: true } });
+    } catch (error) {
+      res.status(500).json({ success: false, error: 'Impossibile ripristinare il post', code: 'RESTORE_POST_ERROR' });
     }
   }
 
@@ -644,7 +807,7 @@ export class ForumController {
         }
       }
 
-      const discussions = await ForumDiscussion.find({ topicSlug: { $in: accessibleSlugs }, isVisible: true })
+      const discussions = await ForumDiscussion.find({ topicSlug: { $in: accessibleSlugs }, isVisible: true, isDeleted: false })
         .sort({ lastPostAt: -1 }).limit(limit).lean();
 
       res.json(successResponse(discussions.map(d => ({
@@ -681,7 +844,7 @@ export class ForumController {
       }
 
       const discussions = await ForumDiscussion.aggregate([
-        { $match: { topicSlug: { $in: accessibleSlugs }, isVisible: true, createdAt: { $gte: cutoffDate } } },
+        { $match: { topicSlug: { $in: accessibleSlugs }, isVisible: true, isDeleted: false, createdAt: { $gte: cutoffDate } } },
         { $addFields: { popularityScore: { $add: [{ $ifNull: ['$viewCount', 0] }, { $multiply: [{ $ifNull: ['$postCount', 0] }, 3] }] } } },
         { $sort: { popularityScore: -1 } },
         { $limit: limit }
@@ -756,7 +919,14 @@ export class ForumController {
 
       // Fallback to regex if semantic search failed or returned no results
       if (posts.length === 0) {
+        // Posts aren't touched when their parent discussion is soft-deleted (they stay
+        // isDeleted: false), so the regex path needs an explicit exclusion here. The
+        // semantic path doesn't need this: deleted discussions already unpublish their
+        // posts from the embedding index (see deleteDiscussion).
+        const deletedDiscussionIds = await ForumDiscussion.find({ isDeleted: true }).distinct('_id');
+
         const filter: Record<string, unknown> = { isDeleted: false };
+        if (deletedDiscussionIds.length > 0) filter.discussionId = { $nin: deletedDiscussionIds };
         if (topicSlug && typeof topicSlug === 'string') filter.topicSlug = topicSlug;
         if (discussionSlug && typeof discussionSlug === 'string') filter.discussionSlug = discussionSlug;
         if (authorCharacterId && typeof authorCharacterId === 'string') {

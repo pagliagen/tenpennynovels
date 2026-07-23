@@ -30,6 +30,9 @@ export interface IForumDiscussion extends Document {
     characterName: string;
   };
   tags?: string[];
+  isDeleted: boolean;
+  deletedAt?: Date;
+  deletedByCharacterId?: mongoose.Types.ObjectId;
 }
 
 const CharacterRefSchema = new Schema({
@@ -72,7 +75,10 @@ const ForumDiscussionSchema = new Schema<IForumDiscussion>({
   lastPostBy: CharacterRefSchema,
   createdAt: { type: Date, default: Date.now },
   createdBy: { type: CharacterRefSchema, required: true },
-  tags: [String]
+  tags: [String],
+  isDeleted: { type: Boolean, default: false },
+  deletedAt: Date,
+  deletedByCharacterId: { type: Schema.Types.ObjectId, ref: 'Character' }
 }, {
   collection: 'forum_discussions',
   timestamps: false
@@ -82,5 +88,6 @@ ForumDiscussionSchema.index({ topicId: 1, slug: 1 }, { unique: true });
 ForumDiscussionSchema.index({ topicSlug: 1, isPinned: -1, lastPostAt: -1 });
 ForumDiscussionSchema.index({ lastPostAt: -1 });
 ForumDiscussionSchema.index({ tags: 1 });
+ForumDiscussionSchema.index({ isDeleted: 1 });
 
 export const ForumDiscussion = models.ForumDiscussion || model<IForumDiscussion>('ForumDiscussion', ForumDiscussionSchema);
