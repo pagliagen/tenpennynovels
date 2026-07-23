@@ -205,6 +205,7 @@ export {
 } from './DocumentChunk';
 
 // Forum System
+export { ForumCategory, type IForumCategory } from './ForumCategory';
 export { ForumTopic, type IForumTopic } from './ForumTopic';
 export { ForumDiscussion, type IForumDiscussion } from './ForumDiscussion';
 export { ForumPost, type IForumPost } from './ForumPost';

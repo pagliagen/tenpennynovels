@@ -74,6 +74,7 @@ const NAV_ITEMS: NavItem[] = [
       { key: 'game-social-classes', label: 'Classi Sociali', href: '/game-data/social-class-list', permission: 'social_classes.access' },
       { key: 'game-occupations', label: 'Occupazioni', href: '/game-data/occupation-list', permission: 'skills.access' },
       { key: 'game-items', label: 'Mercato', href: '/game-data/item-list', permission: 'items.access' },
+      { key: 'game-forum-categories', label: 'Forum - Categorie', href: '/game-data/forum-categories', permission: 'forum.manage' },
       { key: 'game-forum-topics', label: 'Forum - Argomenti', href: '/game-data/forum-topics', permission: 'forum.manage' }
     ]
   },

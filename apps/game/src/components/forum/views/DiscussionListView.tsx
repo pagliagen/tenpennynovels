@@ -13,7 +13,7 @@ import { DiscussionCard } from '../cards/DiscussionCard';
 export function DiscussionListView() {
   const topicSlug = useForumStore((s) => s.topicSlug);
   const navigateToCreateDiscussion = useForumStore((s) => s.navigateToCreateDiscussion);
-  const navigateToTopics = useForumStore((s) => s.navigateToTopics);
+  const navigateToCategories = useForumStore((s) => s.navigateToCategories);
 
   const [page, setPage] = useState(1);
 
@@ -28,7 +28,7 @@ export function DiscussionListView() {
     return (
       <div className={styles.empty}>
         Nessun argomento selezionato.{' '}
-        <button type="button" className={styles.backLink} onClick={() => navigateToTopics()}>
+        <button type="button" className={styles.backLink} onClick={() => navigateToCategories()}>
           Torna alla bacheca
         </button>
       </div>

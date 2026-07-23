@@ -5,6 +5,7 @@ import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types
 import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '@shared/utils/apiResponse';
 
 import { ForumTopic, type IForumTopic, type TopicAccessRule } from '@database/models/ForumTopic';
+import { ForumCategory } from '@database/models/ForumCategory';
 import { ForumDiscussion } from '@database/models/ForumDiscussion';
 import { ForumPost } from '@database/models/ForumPost';
 import { ForumTopicFavorite } from '@database/models/ForumTopicFavorite';
@@ -23,16 +24,31 @@ const hasPermission = (req: Request, permission: string): boolean => {
 };
 
 /**
- * Check if a character can access a topic based on its accessRules (OR logic).
- * Returns true if at least one rule matches.
+ * Resolve the access rules that actually govern a topic: its own accessRules
+ * if it has no category or explicitly overrides (accessRulesOverride: true),
+ * otherwise the parent ForumCategory's defaultAccessRules (inherited).
+ */
+async function getEffectiveAccessRules(topic: IForumTopic): Promise<TopicAccessRule[]> {
+  if (topic.accessRulesOverride || !topic.categoryId) {
+    return topic.accessRules;
+  }
+
+  const category = await ForumCategory.findById(topic.categoryId).select('defaultAccessRules').lean();
+  return category?.defaultAccessRules ?? topic.accessRules;
+}
+
+/**
+ * Check if a character can access a topic based on its effective accessRules
+ * (OR logic, see getEffectiveAccessRules). Returns true if at least one rule matches.
  */
 async function canAccessTopic(
   topic: IForumTopic,
   character?: { characterId: string; gameplayRoles?: string[] }
 ): Promise<boolean> {
-  if (!topic.accessRules || topic.accessRules.length === 0) return true;
+  const accessRules = await getEffectiveAccessRules(topic);
+  if (!accessRules || accessRules.length === 0) return true;
 
-  for (const rule of topic.accessRules) {
+  for (const rule of accessRules) {
     switch (rule.type) {
       case 'public':
         return true;
@@ -134,6 +150,28 @@ export class ForumController {
     }
   }
 
+  // ========== CATEGORIES (read-only, CRUD via /admin/forum-categories) ==========
+
+  static async getCategories(req: Request, res: Response) {
+    try {
+      const categories = await ForumCategory.find({ isVisible: true })
+        .sort({ sortOrder: 1 })
+        .lean();
+
+      res.json(successResponse(categories.map(c => ({
+        id: c._id,
+        slug: c.slug,
+        title: c.title,
+        description: c.description,
+        sortOrder: c.sortOrder,
+        color: c.color,
+        icon: c.icon
+      })), undefined, getRequestId(req)));
+    } catch (error) {
+      res.status(500).json({ success: false, error: 'Impossibile recuperare le categorie', code: 'GET_CATEGORIES_ERROR' });
+    }
+  }
+
   // ========== TOPICS ==========
 
   static async getTopics(req: Request, res: Response) {
@@ -167,7 +205,9 @@ export class ForumController {
         createdAt: t.createdAt,
         createdBy: t.createdBy,
         color: t.color,
-        icon: t.icon
+        icon: t.icon,
+        categoryId: t.categoryId,
+        categorySlug: t.categorySlug
       })), undefined, getRequestId(req)));
     } catch (error) {
       res.status(500).json({ success: false, error: 'Impossibile recuperare i topic', code: 'GET_TOPICS_ERROR' });
@@ -194,7 +234,8 @@ export class ForumController {
         discussionCount: topic.discussionCount, postCount: topic.postCount,
         lastPostAt: topic.lastPostAt, lastPostBy: topic.lastPostBy,
         createdAt: topic.createdAt, createdBy: topic.createdBy,
-        color: topic.color, icon: topic.icon, moderatorIds: topic.moderatorIds
+        color: topic.color, icon: topic.icon, moderatorIds: topic.moderatorIds,
+        categoryId: topic.categoryId, categorySlug: topic.categorySlug
       }, undefined, getRequestId(req)));
     } catch (error) {
       res.status(500).json({ success: false, error: 'Impossibile recuperare il topic', code: 'GET_TOPIC_ERROR' });

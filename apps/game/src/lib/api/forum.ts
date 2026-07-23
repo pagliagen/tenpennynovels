@@ -23,6 +23,7 @@
 
 import type {
   ForumInitData,
+  ForumCategory,
   ForumTopic,
   ForumDiscussion,
   ForumPost,
@@ -44,6 +45,13 @@ export const forumApi = {
 
   async getInit(): Promise<ForumInitData> {
     const response = await api.get<{ data: ForumInitData }>('/forum/init');
+    return response.data;
+  },
+
+  // ── Categories ────────────────────────────────────────────────────
+
+  async getCategories(): Promise<ForumCategory[]> {
+    const response = await api.get<{ data: ForumCategory[] }>('/forum/categories');
     return response.data;
   },
 

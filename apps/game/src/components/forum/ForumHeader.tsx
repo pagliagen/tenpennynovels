@@ -2,6 +2,7 @@
 
 import { useState, useEffect, FormEvent } from 'react';
 
+import { useForumCategories } from '@/hooks/useForumCategories';
 import { useForumDiscussion } from '@/hooks/useForumDiscussions';
 import { useForumTopic } from '@/hooks/useForumTopics';
 import { useForumStore } from '@/store/forumStore';
@@ -14,10 +15,11 @@ interface ForumHeaderProps {
 export function ForumHeader({ onClose }: ForumHeaderProps): JSX.Element {
   const {
     view,
+    categorySlug,
     topicSlug,
     discussionSlug,
     searchQuery,
-    navigateToTopics,
+    navigateToCategories,
     navigateToDiscussions,
     navigateToSearch,
     navigateToBookmarks,
@@ -31,9 +33,11 @@ export function ForumHeader({ onClose }: ForumHeaderProps): JSX.Element {
     setSearchInput(searchQuery);
   }, [searchQuery]);
 
+  const { data: categories = [] } = useForumCategories();
   const { data: topic } = useForumTopic(topicSlug);
   const { data: discussion } = useForumDiscussion(topicSlug, discussionSlug);
 
+  const categoryTitle = categorySlug ? categories.find((c) => c.slug === categorySlug)?.title : undefined;
   const topicTitle = topic?.title ?? topicSlug ?? '';
   const discussionTitle = discussion?.title ?? discussionSlug ?? '';
 
@@ -51,11 +55,20 @@ export function ForumHeader({ onClose }: ForumHeaderProps): JSX.Element {
         <button
           type="button"
           className={styles.breadcrumbLink}
-          onClick={navigateToTopics}
-          aria-label="Torna alla lista argomenti"
+          onClick={navigateToCategories}
+          aria-label="Torna alla bacheca"
         >
           Home
         </button>
+
+        {view === 'topics' && (
+          <>
+            <span className={styles.breadcrumbSeparator}>›</span>
+            <span className={styles.breadcrumbCurrent}>
+              {categorySlug ? (categoryTitle || categorySlug) : 'Tutti gli argomenti'}
+            </span>
+          </>
+        )}
 
         {topicSlug && (
           <>

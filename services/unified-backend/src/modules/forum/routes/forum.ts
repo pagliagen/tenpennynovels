@@ -60,6 +60,9 @@ const requiredAuthBan = [
 // ----- Init -----
 router.get('/init', forumReadLimiter, optionalAuth, ForumController.getForumInit);
 
+// ----- Categories (read-only, CRUD via /admin/forum-categories) -----
+router.get('/categories', forumReadLimiter, optionalAuth, ForumController.getCategories);
+
 // ----- Topics (read-only, CRUD via /admin/forum-topics) -----
 router.get('/topics', forumReadLimiter, optionalAuth, ForumController.getTopics);
 router.get('/topics/:slug', forumReadLimiter, optionalAuth, ForumController.getTopic);

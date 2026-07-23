@@ -22,6 +22,16 @@ export interface ForumAuthor {
   characterName: string;
 }
 
+export interface ForumCategory {
+  id: string;
+  slug: string;
+  title: string;
+  description?: string;
+  sortOrder: number;
+  color?: string;
+  icon?: string;
+}
+
 export interface ForumTopic {
   id: string;
   slug: string;
@@ -41,6 +51,8 @@ export interface ForumTopic {
   color?: string;
   icon?: string;
   isFavorite?: boolean;
+  categoryId?: string;
+  categorySlug?: string;
 }
 
 export interface ForumDiscussion {
@@ -133,4 +145,4 @@ export interface ForumInitData {
   };
 }
 
-export type ForumView = 'topics' | 'discussions' | 'thread' | 'search' | 'bookmarks' | 'notifications' | 'createDiscussion';
+export type ForumView = 'categories' | 'topics' | 'discussions' | 'thread' | 'search' | 'bookmarks' | 'notifications' | 'createDiscussion';

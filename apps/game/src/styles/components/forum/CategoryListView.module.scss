@@ -6,31 +6,10 @@
   margin: 0 auto;
 }
 
-.backLink {
-  display: inline-block;
-  background: none;
-  border: none;
-  color: $text-muted;
-  font-size: 13px;
-  cursor: pointer;
-  margin-bottom: $spacing-md;
-  padding: 0;
-
-  &:hover {
-    color: $gold;
-  }
-}
-
 .title {
   font-family: $font-serif;
   color: $text-primary;
   font-size: 20px;
-  margin-bottom: $spacing-xs;
-}
-
-.subtitle {
-  color: $text-muted;
-  font-size: 13px;
   margin-bottom: $spacing-xl;
 }
 
@@ -38,6 +17,25 @@
   display: flex;
   flex-direction: column;
   gap: $spacing-md;
+}
+
+.allTopicsLink {
+  display: block;
+  text-align: left;
+  background: none;
+  border: 1px dashed $dark-border;
+  border-radius: $radius-lg;
+  padding: $spacing-md $spacing-lg;
+  color: $text-secondary;
+  font-size: 14px;
+  cursor: pointer;
+  margin-bottom: $spacing-lg;
+  transition: $transition-normal;
+
+  &:hover {
+    border-color: $gold-30;
+    color: $text-primary;
+  }
 }
 
 .loading,
