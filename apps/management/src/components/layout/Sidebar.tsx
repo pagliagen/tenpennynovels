@@ -94,6 +94,8 @@ const NAV_ITEMS: NavItem[] = [
     children: [
       { key: 'chat-moderation', label: 'Moderazione Chat AI', href: '/moderation/chat-moderation', permission: 'moderation.chat_ai' },
       { key: 'forum-moderation', label: 'Moderazione Forum AI', href: '/moderation/forum-moderation', permission: 'moderation.forum_ai' },
+      { key: 'forum-discussions-moderation', label: 'Moderazione Discussioni Forum', href: '/moderation/forum-discussions', permission: 'forum.manage' },
+      { key: 'forum-posts-moderation', label: 'Moderazione Post Forum', href: '/moderation/forum-posts', permission: 'forum.manage' },
       { key: 'mail-moderation', label: 'Moderazione Messaggi AI', href: '/moderation/mail-moderation', permission: 'messaging.moderation.manage' }
     ]
   },

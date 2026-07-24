@@ -42,7 +42,10 @@ const ForumTopicPermissionOverrideSchema = new Schema<IForumTopicPermissionOverr
     reply: { type: String, enum: ['allow', 'deny'] },
     attachImages: { type: String, enum: ['allow', 'deny'] }
   },
-  grantedBy: { type: Schema.Types.ObjectId, ref: 'Character', required: true },
+  // Set from AdminAuthMiddleware.getAuditInfo(req).adminId, which is the acting
+  // admin's User _id (not a Character) - this is an admin-panel audit field,
+  // not gameplay data, so it intentionally refs User here.
+  grantedBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   grantedByCharacterName: { type: String, required: true },
   grantedAt: { type: Date, default: Date.now },
   reason: { type: String, maxlength: 500 }

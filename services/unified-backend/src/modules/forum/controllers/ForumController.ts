@@ -111,7 +111,7 @@ function characterRef(req: Request) {
  * Recompute a discussion's denormalized lastPostAt/lastPostBy from its
  * non-deleted posts. Call after soft-deleting or restoring a post.
  */
-async function recalculateDiscussionLastPost(discussionId: mongoose.Types.ObjectId): Promise<void> {
+export async function recalculateDiscussionLastPost(discussionId: mongoose.Types.ObjectId): Promise<void> {
   const latest = await ForumPost.findOne({ discussionId, isDeleted: false })
     .sort({ createdAt: -1 })
     .select('createdAt author')
@@ -133,7 +133,7 @@ async function recalculateDiscussionLastPost(discussionId: mongoose.Types.Object
  * non-deleted, visible discussions. Call after soft-deleting or restoring
  * a discussion (or a post whose parent discussion's lastPost may have changed).
  */
-async function recalculateTopicLastPost(topicId: mongoose.Types.ObjectId): Promise<void> {
+export async function recalculateTopicLastPost(topicId: mongoose.Types.ObjectId): Promise<void> {
   const latest = await ForumDiscussion.findOne({ topicId, isDeleted: false, isVisible: true })
     .sort({ lastPostAt: -1 })
     .select('lastPostAt lastPostBy')
