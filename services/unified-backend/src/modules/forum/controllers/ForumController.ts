@@ -21,6 +21,9 @@ import {
   evaluateDiscussionVisibility,
   type ForumCharacterContext
 } from '../services/ForumAccessService';
+import { serializePostAuthor } from '../services/ForumSerializer';
+
+const EDIT_WINDOW_MS = 15 * 60 * 1000;
 
 const createSlug = (title: string): string => {
   return slugify(title, { lower: true, strict: true, locale: 'it', trim: true }).slice(0, 100);
@@ -329,7 +332,7 @@ export class ForumController {
   static async createDiscussion(req: Request, res: Response) {
     try {
       const { topicSlug } = req.params;
-      const { title, content, tags, visibility: visibilityInput } = req.body;
+      const { title, content, tags, visibility: visibilityInput, isAnonymous } = req.body;
       const author = characterRef(req);
       if (!author) {
         return res.status(400).json({ success: false, error: 'Personaggio richiesto', code: 'CHARACTER_REQUIRED' });
@@ -381,7 +384,8 @@ export class ForumController {
         topicSlug, discussionSlug: slug,
         content: content.trim(),
         author,
-        createdAt: now, isEdited: false, isDeleted: false
+        createdAt: now, isEdited: false, isDeleted: false,
+        isAnonymous: topic.mode === 'ON' && !!isAnonymous
       });
 
       await ForumTopic.updateOne({ _id: topic._id }, {
@@ -413,6 +417,16 @@ export class ForumController {
       const isAdmin = hasPermission(req, 'forum.manage');
       if (!isAuthor && !isAdmin) {
         return res.status(403).json({ success: false, error: 'Non autorizzato', code: 'ACCESS_DENIED' });
+      }
+
+      // Title edit window: 15 minutes for the author, always for staff. Applies
+      // regardless of topic mode (spec ties this only to the title, unlike the
+      // reply-content edit window which is ON-only).
+      if (title !== undefined && isAuthor && !isAdmin) {
+        const withinEditWindow = (Date.now() - discussion.createdAt.getTime()) < EDIT_WINDOW_MS;
+        if (!withinEditWindow) {
+          return res.status(403).json({ success: false, error: 'Tempo per la modifica del titolo scaduto (15 minuti)', code: 'EDIT_WINDOW_EXPIRED' });
+        }
       }
 
       const update: Record<string, unknown> = {};
@@ -694,15 +708,25 @@ export class ForumController {
         ForumPost.countDocuments(filter)
       ]);
 
+      const viewerHasModerationAccess = hasPermission(req, 'forum.manage');
       const totalPages = Math.ceil(total / limit);
-      res.json(listResponse(posts.map(p => ({
-        id: p._id, topicSlug: p.topicSlug, discussionSlug: p.discussionSlug,
-        content: p.isDeleted ? '' : p.content,
-        author: p.author,
-        createdAt: p.createdAt, updatedAt: p.updatedAt,
-        isEdited: p.isEdited, isDeleted: p.isDeleted,
-        replyToPostId: p.replyToPostId
-      })), { currentPage: page, pageSize: limit, totalItems: total, totalPages, hasNextPage: page < totalPages, hasPreviousPage: page > 1 }, undefined, getRequestId(req)));
+      res.json(listResponse(posts.map(p => {
+        // Computed BEFORE masking: an anonymous post's author must still be able
+        // to edit/delete their own post even though `author` is hidden from them
+        // in the response below (they know it's theirs; other non-staff viewers don't).
+        const isOwnPost = !!character && p.author.characterId.toString() === character.characterId;
+        const serialized = serializePostAuthor(p, viewerHasModerationAccess || isOwnPost);
+        return {
+          id: p._id, topicSlug: p.topicSlug, discussionSlug: p.discussionSlug,
+          content: p.isDeleted ? '' : p.content,
+          author: serialized.author,
+          isAnonymous: p.isAnonymous,
+          isOwnPost,
+          createdAt: p.createdAt, updatedAt: p.updatedAt,
+          isEdited: p.isEdited, isDeleted: p.isDeleted,
+          replyToPostId: p.replyToPostId
+        };
+      }), { currentPage: page, pageSize: limit, totalItems: total, totalPages, hasNextPage: page < totalPages, hasPreviousPage: page > 1 }, undefined, getRequestId(req)));
     } catch (error) {
       res.status(500).json({ success: false, error: 'Impossibile recuperare i post', code: 'GET_POSTS_ERROR' });
     }
@@ -711,7 +735,7 @@ export class ForumController {
   static async createPost(req: Request, res: Response) {
     try {
       const { topicSlug, discussionSlug } = req.params;
-      const { content, replyToPostId } = req.body;
+      const { content, replyToPostId, isAnonymous } = req.body;
       const author = characterRef(req);
       if (!author) {
         return res.status(400).json({ success: false, error: 'Personaggio richiesto', code: 'CHARACTER_REQUIRED' });
@@ -751,7 +775,10 @@ export class ForumController {
         content: content.trim(),
         author,
         createdAt: now, isEdited: false, isDeleted: false,
-        replyToPostId: replyToPostId ? new mongoose.Types.ObjectId(replyToPostId) : undefined
+        replyToPostId: replyToPostId ? new mongoose.Types.ObjectId(replyToPostId) : undefined,
+        // Anonymous posting is only an ON-board feature (spec: "possibilità di
+        // postare in modo anonimo" is listed under BACHECA ON, absent from OFF).
+        isAnonymous: topic.mode === 'ON' && !!isAnonymous
       });
 
       await ForumDiscussion.updateOne({ _id: discussion._id }, {
@@ -789,6 +816,15 @@ export class ForumController {
 
       if (post.author.characterId.toString() !== character.characterId) {
         return res.status(403).json({ success: false, error: 'Non autorizzato', code: 'ACCESS_DENIED' });
+      }
+
+      // Reply edit window: unlimited for the author in OFF boards, 15 minutes in
+      // ON boards (spec: "possibilità di modificare una risposta entro 15 min",
+      // listed only under BACHECA ON - OFF has no such limit).
+      const topic = await ForumTopic.findById(post.topicId).select('mode').lean();
+      const withinEditWindow = topic?.mode === 'OFF' || (Date.now() - post.createdAt.getTime()) < EDIT_WINDOW_MS;
+      if (!withinEditWindow) {
+        return res.status(403).json({ success: false, error: 'Tempo per la modifica scaduto (15 minuti)', code: 'EDIT_WINDOW_EXPIRED' });
       }
 
       if (!content || content.trim().length === 0) {
@@ -1172,17 +1208,21 @@ export class ForumController {
         total = posts.length;
       }
 
+      const searchViewerHasModerationAccess = hasPermission(req, 'forum.manage');
       const totalPages = Math.ceil(total / limit);
       const response = {
         ...listResponse(
-          posts.map(p => ({
-            id: p._id,
-            topicSlug: p.topicSlug,
-            discussionSlug: p.discussionSlug,
-            content: p.content,
-            author: p.author,
-            createdAt: p.createdAt
-          })),
+          posts.map(p => {
+            const serialized = serializePostAuthor(p, searchViewerHasModerationAccess);
+            return {
+              id: p._id,
+              topicSlug: p.topicSlug,
+              discussionSlug: p.discussionSlug,
+              content: p.content,
+              author: serialized.author,
+              createdAt: p.createdAt
+            };
+          }),
           {
             currentPage: page,
             pageSize: limit,

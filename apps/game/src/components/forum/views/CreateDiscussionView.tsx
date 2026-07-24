@@ -3,6 +3,7 @@
 import { useState } from 'react';
 
 import { useCreateDiscussion } from '@/hooks/useForumDiscussions';
+import { useForumTopic } from '@/hooks/useForumTopics';
 import { useForumStore } from '@/store/forumStore';
 import { useUIStore } from '@/store/uiStore';
 import styles from '@/styles/components/forum/CreateDiscussionView.module.scss';
@@ -28,7 +29,9 @@ export function CreateDiscussionView(): JSX.Element {
   const [visibilityType, setVisibilityType] = useState<DiscussionVisibilityType>('public');
   const [corporationId, setCorporationId] = useState('');
   const [characterIdsInput, setCharacterIdsInput] = useState('');
+  const [isAnonymous, setIsAnonymous] = useState(false);
 
+  const { data: topic } = useForumTopic(topicSlug);
   const createDiscussion = useCreateDiscussion();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -54,7 +57,13 @@ export function CreateDiscussionView(): JSX.Element {
 
       const result = await createDiscussion.mutateAsync({
         topicSlug,
-        data: { title: title.trim(), content: content.trim(), tags: tags.length > 0 ? tags : undefined, visibility },
+        data: {
+          title: title.trim(),
+          content: content.trim(),
+          tags: tags.length > 0 ? tags : undefined,
+          visibility,
+          isAnonymous: topic?.mode === 'ON' && isAnonymous,
+        },
       });
       const slug = result.slug;
       if (slug) {
@@ -173,6 +182,18 @@ export function CreateDiscussionView(): JSX.Element {
               className={styles.input}
               required
             />
+          </div>
+        )}
+        {topic?.mode === 'ON' && (
+          <div className={styles.field}>
+            <label className={styles.label}>
+              <input
+                type="checkbox"
+                checked={isAnonymous}
+                onChange={(e) => setIsAnonymous(e.target.checked)}
+              />
+              {' '}Pubblica anonimamente
+            </label>
           </div>
         )}
         <div className={styles.actions}>

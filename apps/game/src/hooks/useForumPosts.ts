@@ -68,7 +68,7 @@ export function useForumPosts(
 export function useCreatePost(): UseMutationResult<
   { id: string },
   Error,
-  { topicSlug: string; discussionSlug: string; data: { content: string; replyToPostId?: string } }
+  { topicSlug: string; discussionSlug: string; data: { content: string; replyToPostId?: string; isAnonymous?: boolean } }
 > {
   const queryClient = useQueryClient();
 

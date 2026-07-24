@@ -99,6 +99,13 @@ export interface ForumPost {
   isEdited: boolean;
   isDeleted: boolean;
   replyToPostId?: string;
+  /** True if posted anonymously (ON boards only). `author` is already masked
+   * server-side for non-staff/non-owner viewers when this is true. */
+  isAnonymous?: boolean;
+  /** Computed server-side before author masking: true if the viewer is this
+   * post's author. Use this instead of comparing author.characterId, which
+   * is masked to null for anonymous posts (except to the author/staff). */
+  isOwnPost?: boolean;
 }
 
 export interface ForumBookmark {

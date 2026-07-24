@@ -95,7 +95,7 @@ export const forumApi = {
 
   async createDiscussion(
     topicSlug: string,
-    data: { title: string; content: string; tags?: string[]; visibility?: DiscussionVisibility }
+    data: { title: string; content: string; tags?: string[]; visibility?: DiscussionVisibility; isAnonymous?: boolean }
   ): Promise<{ id: string; slug: string }> {
     const response = await api.post<{ data: { id: string; slug: string } }>(
       `/forum/topics/${topicSlug}/discussions`,
@@ -151,7 +151,7 @@ export const forumApi = {
   async createPost(
     topicSlug: string,
     discussionSlug: string,
-    data: { content: string; replyToPostId?: string }
+    data: { content: string; replyToPostId?: string; isAnonymous?: boolean }
   ): Promise<{ id: string }> {
     const response = await api.post<{ data: { id: string } }>(
       `/forum/topics/${topicSlug}/discussions/${discussionSlug}/posts`,

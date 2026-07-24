@@ -12,8 +12,12 @@ import type { ForumPost } from '@/types/forum';
 interface PostCardProps {
   post: ForumPost;
   isOwn?: boolean;
+  /** Parent topic's mode: 'ON' caps editing to 15 minutes after posting, 'OFF'/undefined leaves it unlimited. */
+  topicMode?: 'ON' | 'OFF';
   onReply?: (postId: string) => void;
 }
+
+const EDIT_WINDOW_MS = 15 * 60 * 1000;
 
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr);
@@ -26,12 +30,14 @@ function formatDate(dateStr: string): string {
   });
 }
 
-export function PostCard({ post, isOwn: isOwnProp, onReply }: PostCardProps): JSX.Element {
+export function PostCard({ post, isOwn: isOwnProp, topicMode, onReply }: PostCardProps): JSX.Element {
   const topicSlug = useForumStore((s) => s.topicSlug);
   const discussionSlug = useForumStore((s) => s.discussionSlug);
   const selectedCharacter = useAuthStore((s) => s.selectedCharacter);
   const addToast = useUIStore((s) => s.addToast);
-  const isOwn = isOwnProp ?? selectedCharacter?._id === post.author.characterId;
+  const isOwn = isOwnProp ?? post.isOwnPost ?? selectedCharacter?._id === post.author.characterId;
+  const withinEditWindow = topicMode !== 'ON' || (Date.now() - new Date(post.createdAt).getTime()) < EDIT_WINDOW_MS;
+  const canEdit = isOwn && withinEditWindow;
 
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(post.content);
@@ -85,6 +91,11 @@ export function PostCard({ post, isOwn: isOwnProp, onReply }: PostCardProps): JS
     <article id={`post-${post.id}`} className={styles.card}>
       <div className={styles.header}>
         <span className={styles.author}>{post.author.characterName}</span>
+        {post.isAnonymous && (
+          <span className={styles.edited} title={isOwn ? 'Visibile solo a te e allo staff' : undefined}>
+            anonimo
+          </span>
+        )}
         <span className={styles.date}>{formatDate(post.createdAt)}</span>
         {post.isEdited && <span className={styles.edited}>modificato</span>}
       </div>
@@ -119,9 +130,11 @@ export function PostCard({ post, isOwn: isOwnProp, onReply }: PostCardProps): JS
         </button>
         {isOwn && !isEditing && (
           <>
-            <button type="button" className={styles.actionBtn} onClick={() => setIsEditing(true)}>
-              Modifica
-            </button>
+            {canEdit && (
+              <button type="button" className={styles.actionBtn} onClick={() => setIsEditing(true)}>
+                Modifica
+              </button>
+            )}
             <button type="button" className={styles.actionBtn} onClick={handleDelete} disabled={deletePost.isPending}>
               Elimina
             </button>

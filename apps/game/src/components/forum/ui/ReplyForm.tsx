@@ -10,6 +10,8 @@ interface ReplyFormProps {
   topicSlug: string;
   discussionSlug: string;
   replyToPostId?: string | null;
+  /** ON boards only: shows the "post anonymously" checkbox. */
+  allowAnonymous?: boolean;
   onSuccess?: () => void;
 }
 
@@ -17,9 +19,11 @@ export function ReplyForm({
   topicSlug,
   discussionSlug,
   replyToPostId,
+  allowAnonymous,
   onSuccess,
 }: ReplyFormProps): JSX.Element {
   const [content, setContent] = useState('');
+  const [isAnonymous, setIsAnonymous] = useState(false);
   const addToast = useUIStore((s) => s.addToast);
   const createPost = useCreatePost();
 
@@ -31,9 +35,10 @@ export function ReplyForm({
       await createPost.mutateAsync({
         topicSlug,
         discussionSlug,
-        data: { content: content.trim(), replyToPostId: replyToPostId ?? undefined },
+        data: { content: content.trim(), replyToPostId: replyToPostId ?? undefined, isAnonymous: allowAnonymous && isAnonymous },
       });
       setContent('');
+      setIsAnonymous(false);
       addToast({ type: 'success', message: 'Messaggio inviato con successo' });
       onSuccess?.();
     } catch {
@@ -52,6 +57,17 @@ export function ReplyForm({
         disabled={createPost.isPending}
       />
       <div className={styles.actions}>
+        {allowAnonymous && (
+          <label className={styles.anonymousLabel}>
+            <input
+              type="checkbox"
+              checked={isAnonymous}
+              onChange={(e) => setIsAnonymous(e.target.checked)}
+              disabled={createPost.isPending}
+            />
+            Pubblica anonimamente
+          </label>
+        )}
         <button
           type="submit"
           className={styles.submitBtn}

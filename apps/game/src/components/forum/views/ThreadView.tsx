@@ -140,6 +140,7 @@ export function ThreadView(): JSX.Element {
             <PostCard
               key={post.id}
               post={post}
+              topicMode={topic?.mode}
               onReply={(id) => setReplyToPostId(id)}
             />
           ))
@@ -152,6 +153,7 @@ export function ThreadView(): JSX.Element {
             topicSlug={topicSlug}
             discussionSlug={discussionSlug}
             replyToPostId={replyToPostId}
+            allowAnonymous={topic?.mode === 'ON'}
             onSuccess={() => setReplyToPostId(null)}
           />
         </div>

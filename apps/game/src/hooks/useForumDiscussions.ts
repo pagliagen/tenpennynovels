@@ -96,7 +96,7 @@ export function useForumDiscussion(
 export function useCreateDiscussion(): UseMutationResult<
   { id: string; slug: string },
   Error,
-  { topicSlug: string; data: { title: string; content: string; tags?: string[]; visibility?: DiscussionVisibility } }
+  { topicSlug: string; data: { title: string; content: string; tags?: string[]; visibility?: DiscussionVisibility; isAnonymous?: boolean } }
 > {
   const queryClient = useQueryClient();
 

@@ -31,6 +31,11 @@ export interface IForumPost extends Document {
   deletedAt?: Date;
   deletedByCharacterId?: mongoose.Types.ObjectId;
   replyToPostId?: mongoose.Types.ObjectId;
+  // Settable by the author only when the parent topic is in 'ON' mode. Display-only:
+  // the real author identity is NEVER removed from `author` below - masking happens
+  // only in the API response serialization for viewers without moderation access
+  // (see ForumSerializer.ts). Staff can always see the real author.
+  isAnonymous?: boolean;
   moderationScore?: number;
   moderationLabel?: string;
   moderationModel?: string;
@@ -83,6 +88,7 @@ const ForumPostSchema = new Schema<IForumPost>({
   deletedAt: Date,
   deletedByCharacterId: { type: Schema.Types.ObjectId, ref: 'Character' },
   replyToPostId: { type: Schema.Types.ObjectId, ref: 'ForumPost' },
+  isAnonymous: { type: Boolean, default: false },
   moderationScore: { type: Number, min: 0, max: 1 },
   moderationLabel: { type: String, enum: ['toxic', 'not-toxic'] },
   moderationModel: String,
