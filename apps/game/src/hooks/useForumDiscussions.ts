@@ -9,6 +9,8 @@
  * - useForumDiscussion(topicSlug, discussionSlug) - Get single discussion
  * - useCreateDiscussion() - Create new discussion
  * - useUpdateDiscussion() - Update discussion
+ * - useUpdateDiscussionVisibility() - Update discussion visibility/exclusion list
+ * - useBroadcastDiscussion() - Broadcast ("segnala") a discussion to all characters
  * - useDeleteDiscussion() - Delete discussion
  * - useToggleSubscription() - Toggle discussion subscription
  * - useRecentDiscussions(limit) - Get recent discussions
@@ -21,7 +23,7 @@
 import { useQuery, useMutation, useQueryClient, type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
 
 import { forumApi } from '@/lib/api/forum';
-import type { ForumDiscussion, PaginationInfo } from '@/types/forum';
+import type { ForumDiscussion, DiscussionVisibility, PaginationInfo } from '@/types/forum';
 
 /**
  * Query Keys
@@ -94,7 +96,7 @@ export function useForumDiscussion(
 export function useCreateDiscussion(): UseMutationResult<
   { id: string; slug: string },
   Error,
-  { topicSlug: string; data: { title: string; content: string; tags?: string[] } }
+  { topicSlug: string; data: { title: string; content: string; tags?: string[]; visibility?: DiscussionVisibility } }
 > {
   const queryClient = useQueryClient();
 
@@ -129,6 +131,48 @@ export function useUpdateDiscussion(): UseMutationResult<
       queryClient.invalidateQueries({ queryKey: forumDiscussionKeys.detail(topicSlug, discussionSlug) });
       queryClient.invalidateQueries({ queryKey: forumDiscussionKeys.list(topicSlug) });
     },
+  });
+}
+
+/**
+ * useUpdateDiscussionVisibility Hook
+ *
+ * Updates a discussion's visibility type/exclusion list.
+ * Invalidates discussion detail cache on success.
+ *
+ * @returns {UseMutationResult} Mutation result
+ */
+export function useUpdateDiscussionVisibility(): UseMutationResult<
+  void,
+  Error,
+  { topicSlug: string; discussionSlug: string; data: { visibility?: DiscussionVisibility; excludedCharacterIds?: string[] } }
+> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ topicSlug, discussionSlug, data }) =>
+      forumApi.updateDiscussionVisibility(topicSlug, discussionSlug, data),
+    onSuccess: (_, { topicSlug, discussionSlug }) => {
+      queryClient.invalidateQueries({ queryKey: forumDiscussionKeys.detail(topicSlug, discussionSlug) });
+    },
+  });
+}
+
+/**
+ * useBroadcastDiscussion Hook
+ *
+ * Broadcasts ("segnala") a discussion link to all approved characters.
+ * Only available in OFF boards, staff-only (enforced server-side).
+ *
+ * @returns {UseMutationResult} Mutation result
+ */
+export function useBroadcastDiscussion(): UseMutationResult<
+  { recipientCount: number },
+  Error,
+  { topicSlug: string; discussionSlug: string }
+> {
+  return useMutation({
+    mutationFn: ({ topicSlug, discussionSlug }) => forumApi.broadcastDiscussion(topicSlug, discussionSlug),
   });
 }
 

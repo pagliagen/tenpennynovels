@@ -43,6 +43,7 @@ export interface IForumTopic extends Document {
   categoryId?: mongoose.Types.ObjectId;
   categorySlug?: string;
   accessRulesOverride: boolean;
+  mode: 'ON' | 'OFF';
 }
 
 export const AccessRuleSchema = new Schema({
@@ -110,8 +111,12 @@ const ForumTopicSchema = new Schema<IForumTopic>({
   // If false (default), effective access rules are inherited from the parent
   // ForumCategory's defaultAccessRules (when categoryId is set). If true, this
   // topic's own accessRules are used regardless of category. See canAccessTopic
-  // in ForumController.ts.
-  accessRulesOverride: { type: Boolean, default: false }
+  // in ForumAccessService.ts.
+  accessRulesOverride: { type: Boolean, default: false },
+  // ON: anonymous posting allowed, 15-minute reply edit window, no broadcast.
+  // OFF (default, for compatibility with existing topics): no anonymity,
+  // authors can always edit their own replies, staff can broadcast ("segnalare").
+  mode: { type: String, enum: ['ON', 'OFF'], default: 'OFF' }
 }, {
   collection: 'forum_topics',
   timestamps: false

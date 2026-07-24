@@ -43,6 +43,7 @@ const EMPTY_FORM: CreateForumTopicData = {
   accessRules: [],
   color: '',
   icon: '',
+  mode: 'OFF',
 };
 
 function topicToFormData(topic: ForumTopic): CreateForumTopicData {
@@ -53,6 +54,7 @@ function topicToFormData(topic: ForumTopic): CreateForumTopicData {
     accessRules: topic.accessRules || [],
     color: topic.color || '',
     icon: topic.icon || '',
+    mode: topic.mode || 'OFF',
   };
 }
 
@@ -294,6 +296,20 @@ export default function ForumTopicsPage() {
                 value={formData.icon || ''}
                 onChange={(e: any) => handleChange('icon', e.target.value)}
                 placeholder="es. 💬" />
+            </div>
+
+            <div className={styles.formRow}>
+              <FormField
+                label="Modalità"
+                name="mode"
+                type="select"
+                value={formData.mode || 'OFF'}
+                onChange={(e: any) => handleChange('mode', e.target.value)}
+                options={[
+                  { value: 'OFF', label: 'OFF — nessun anonimato, editing libero, segnalazione consentita' },
+                  { value: 'ON', label: 'ON — anonimato consentito, editing risposta entro 15min' },
+                ]}
+              />
             </div>
 
             <p className={styles.sectionTitle}>Regole di Accesso</p>

@@ -53,6 +53,16 @@ export interface ForumTopic {
   isFavorite?: boolean;
   categoryId?: string;
   categorySlug?: string;
+  /** ON: anonymous posting + 15min reply edit window. OFF (default): no anonymity, broadcast ("segnala") allowed. */
+  mode?: 'ON' | 'OFF';
+}
+
+export type DiscussionVisibilityType = 'public' | 'staff' | 'corporation' | 'characterList' | 'private';
+
+export interface DiscussionVisibility {
+  type: DiscussionVisibilityType;
+  corporationId?: string;
+  characterIds?: string[];
 }
 
 export interface ForumDiscussion {
@@ -72,6 +82,10 @@ export interface ForumDiscussion {
   createdBy: ForumAuthor;
   tags: string[];
   popularityScore?: number;
+  /** Absent = inherits fully from the topic (no additional restriction). */
+  visibility?: DiscussionVisibility;
+  /** Always applies on top of `visibility`, even 'staff'/'private'. Staff-only to set. */
+  excludedCharacterIds?: string[];
 }
 
 export interface ForumPost {
@@ -102,7 +116,8 @@ export interface ForumBookmark {
 
 export type ForumNotificationType =
   | 'new_post_in_subscribed_discussion'
-  | 'reply_to_your_post';
+  | 'reply_to_your_post'
+  | 'staff_announcement';
 
 export interface ForumNotification {
   _id: string;

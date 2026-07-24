@@ -2,9 +2,11 @@
 
 import { useState, useEffect, useRef } from 'react';
 
-import { useForumDiscussion } from '@/hooks/useForumDiscussions';
+import { useBroadcastDiscussion, useForumDiscussion } from '@/hooks/useForumDiscussions';
 import { useForumPosts } from '@/hooks/useForumPosts';
+import { useForumTopic } from '@/hooks/useForumTopics';
 import { useForumStore } from '@/store/forumStore';
+import { useUIStore } from '@/store/uiStore';
 import styles from '@/styles/components/forum/ThreadView.module.scss';
 
 import { PostCard } from '../cards/PostCard';
@@ -32,6 +34,7 @@ export function ThreadView(): JSX.Element {
   const [page, setPage] = useState(1);
   const [replyToPostId, setReplyToPostId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const addToast = useUIStore((s) => s.addToast);
 
   const { data: discussionData, isLoading: isLoadingDiscussion } = useForumDiscussion(
     topicSlug,
@@ -42,6 +45,18 @@ export function ThreadView(): JSX.Element {
     discussionSlug,
     page
   );
+  const { data: topic } = useForumTopic(topicSlug);
+  const broadcastDiscussion = useBroadcastDiscussion();
+
+  const handleBroadcast = async () => {
+    if (!topicSlug || !discussionSlug) return;
+    try {
+      const result = await broadcastDiscussion.mutateAsync({ topicSlug, discussionSlug });
+      addToast({ type: 'success', message: `Segnalazione inviata a ${result.recipientCount} personaggi` });
+    } catch {
+      addToast({ type: 'error', message: 'Impossibile inviare la segnalazione' });
+    }
+  };
 
   useEffect(() => {
     if (postId && scrollRef.current) {
@@ -94,6 +109,17 @@ export function ThreadView(): JSX.Element {
           <span>{formatDate(discussion.createdAt)}</span>
           <span>{discussion.postCount} messaggi</span>
           <span>{discussion.viewCount} visualizzazioni</span>
+          {topic?.mode === 'OFF' && (
+            <button
+              type="button"
+              className={styles.backBtn}
+              onClick={handleBroadcast}
+              disabled={broadcastDiscussion.isPending}
+              title="Invia una segnalazione con link a questo thread a tutti i personaggi"
+            >
+              {broadcastDiscussion.isPending ? 'Invio...' : '📢 Segnala'}
+            </button>
+          )}
         </div>
         {discussion.tags && discussion.tags.length > 0 && (
           <div className={styles.tags}>

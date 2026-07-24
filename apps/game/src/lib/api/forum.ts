@@ -26,6 +26,7 @@ import type {
   ForumCategory,
   ForumTopic,
   ForumDiscussion,
+  DiscussionVisibility,
   ForumPost,
   ForumSearchResult,
   ForumBookmark,
@@ -94,7 +95,7 @@ export const forumApi = {
 
   async createDiscussion(
     topicSlug: string,
-    data: { title: string; content: string; tags?: string[] }
+    data: { title: string; content: string; tags?: string[]; visibility?: DiscussionVisibility }
   ): Promise<{ id: string; slug: string }> {
     const response = await api.post<{ data: { id: string; slug: string } }>(
       `/forum/topics/${topicSlug}/discussions`,
@@ -110,6 +111,21 @@ export const forumApi = {
     data: { title?: string; tags?: string[] }
   ): Promise<void> {
     await api.put(`/forum/topics/${topicSlug}/discussions/${discussionSlug}`, data);
+  },
+
+  async updateDiscussionVisibility(
+    topicSlug: string,
+    discussionSlug: string,
+    data: { visibility?: DiscussionVisibility; excludedCharacterIds?: string[] }
+  ): Promise<void> {
+    await api.put(`/forum/topics/${topicSlug}/discussions/${discussionSlug}/visibility`, data);
+  },
+
+  async broadcastDiscussion(topicSlug: string, discussionSlug: string): Promise<{ recipientCount: number }> {
+    const response = await api.post<{ data: { broadcasted: boolean; recipientCount: number } }>(
+      `/forum/topics/${topicSlug}/discussions/${discussionSlug}/broadcast`
+    );
+    return response.data;
   },
 
   async deleteDiscussion(topicSlug: string, discussionSlug: string): Promise<void> {

@@ -4,14 +4,23 @@ import slugify from 'slugify';
 import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
 import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '@shared/utils/apiResponse';
 
-import { ForumTopic, type IForumTopic, type TopicAccessRule } from '@database/models/ForumTopic';
+import { ForumTopic, type IForumTopic } from '@database/models/ForumTopic';
 import { ForumCategory } from '@database/models/ForumCategory';
-import { ForumDiscussion } from '@database/models/ForumDiscussion';
+import { ForumDiscussion, type DiscussionVisibilityType } from '@database/models/ForumDiscussion';
 import { ForumPost } from '@database/models/ForumPost';
 import { ForumTopicFavorite } from '@database/models/ForumTopicFavorite';
+import { ForumNotification } from '@database/models/ForumNotification';
+import { Character } from '@database/models/Character';
 import { escapeRegex } from '@shared/utils/validation';
 import { EmbeddingService } from '@modules/documents/services/EmbeddingService';
 import { logger } from '@shared/utils/logger';
+import {
+  canAccessTopic,
+  matchesDiscussionVisibility,
+  buildDiscussionVisibilityFilter,
+  evaluateDiscussionVisibility,
+  type ForumCharacterContext
+} from '../services/ForumAccessService';
 
 const createSlug = (title: string): string => {
   return slugify(title, { lower: true, strict: true, locale: 'it', trim: true }).slice(0, 100);
@@ -23,56 +32,46 @@ const hasPermission = (req: Request, permission: string): boolean => {
   return user.adminPermissions?.includes(permission) ?? false;
 };
 
-/**
- * Resolve the access rules that actually govern a topic: its own accessRules
- * if it has no category or explicitly overrides (accessRulesOverride: true),
- * otherwise the parent ForumCategory's defaultAccessRules (inherited).
- */
-async function getEffectiveAccessRules(topic: IForumTopic): Promise<TopicAccessRule[]> {
-  if (topic.accessRulesOverride || !topic.categoryId) {
-    return topic.accessRules;
-  }
-
-  const category = await ForumCategory.findById(topic.categoryId).select('defaultAccessRules').lean();
-  return category?.defaultAccessRules ?? topic.accessRules;
+/** Builds the character context object consumed by ForumAccessService from req.character. */
+function toCharCtx(character: Request['character']): ForumCharacterContext | undefined {
+  if (!character) return undefined;
+  return {
+    characterId: character.characterId,
+    gameplayRoles: character.gameplayRoles,
+    isGestore: character.isGestore
+  };
 }
 
-/**
- * Check if a character can access a topic based on its effective accessRules
- * (OR logic, see getEffectiveAccessRules). Returns true if at least one rule matches.
- */
-async function canAccessTopic(
-  topic: IForumTopic,
-  character?: { characterId: string; gameplayRoles?: string[] }
-): Promise<boolean> {
-  const accessRules = await getEffectiveAccessRules(topic);
-  if (!accessRules || accessRules.length === 0) return true;
+const DISCUSSION_VISIBILITY_TYPES: DiscussionVisibilityType[] = ['public', 'staff', 'corporation', 'characterList', 'private'];
 
-  for (const rule of accessRules) {
-    switch (rule.type) {
-      case 'public':
-        return true;
-      case 'authenticated':
-        if (character) return true;
-        break;
-      case 'gameplayRole':
-        if (character && rule.gameplayRole && character.gameplayRoles?.includes(rule.gameplayRole)) {
-          return true;
-        }
-        break;
-      case 'corporation':
-        if (character && rule.corporationId) {
-          const Corporation = mongoose.model('Corporation');
-          const isMember = await Corporation.exists({
-            _id: rule.corporationId,
-            'members.characterId': new mongoose.Types.ObjectId(character.characterId)
-          });
-          if (isMember) return true;
-        }
-        break;
-    }
+/** Parses/validates a discussion visibility payload from a request body. */
+function parseVisibilityInput(input: unknown): { visibility?: Record<string, unknown>; error?: string } {
+  if (input === undefined || input === null) return {};
+  if (typeof input !== 'object') return { error: 'Visibilità non valida' };
+
+  const { type, corporationId, characterIds } = input as Record<string, unknown>;
+  if (typeof type !== 'string' || !DISCUSSION_VISIBILITY_TYPES.includes(type as DiscussionVisibilityType)) {
+    return { error: 'Tipo di visibilità non valido' };
   }
-  return false;
+
+  if (type === 'corporation') {
+    if (typeof corporationId !== 'string' || !mongoose.Types.ObjectId.isValid(corporationId)) {
+      return { error: 'corporationId richiesto per il tipo corporation' };
+    }
+    return { visibility: { type, corporationId: new mongoose.Types.ObjectId(corporationId) } };
+  }
+
+  if (type === 'characterList') {
+    const ids = Array.isArray(characterIds)
+      ? characterIds.filter((id): id is string => typeof id === 'string' && mongoose.Types.ObjectId.isValid(id))
+      : [];
+    if (ids.length === 0) {
+      return { error: 'characterIds richiesto per il tipo characterList' };
+    }
+    return { visibility: { type, characterIds: ids.map((id) => new mongoose.Types.ObjectId(id)) } };
+  }
+
+  return { visibility: { type } };
 }
 
 function characterRef(req: Request) {
@@ -183,7 +182,7 @@ export class ForumController {
       const character = req.character;
       const accessible: typeof topics = [];
       for (const topic of topics) {
-        if (await canAccessTopic(topic as IForumTopic, character ? { characterId: character.characterId, gameplayRoles: character.gameplayRoles } : undefined)) {
+        if (await canAccessTopic(topic as IForumTopic, toCharCtx(character))) {
           accessible.push(topic);
         }
       }
@@ -207,7 +206,8 @@ export class ForumController {
         color: t.color,
         icon: t.icon,
         categoryId: t.categoryId,
-        categorySlug: t.categorySlug
+        categorySlug: t.categorySlug,
+        mode: t.mode
       })), undefined, getRequestId(req)));
     } catch (error) {
       res.status(500).json({ success: false, error: 'Impossibile recuperare i topic', code: 'GET_TOPICS_ERROR' });
@@ -223,7 +223,7 @@ export class ForumController {
       }
 
       const character = req.character;
-      if (!(await canAccessTopic(topic, character ? { characterId: character.characterId, gameplayRoles: character.gameplayRoles } : undefined))) {
+      if (!(await canAccessTopic(topic, toCharCtx(character)))) {
         return res.status(403).json({ success: false, error: 'Accesso negato', code: 'ACCESS_DENIED' });
       }
 
@@ -235,7 +235,8 @@ export class ForumController {
         lastPostAt: topic.lastPostAt, lastPostBy: topic.lastPostBy,
         createdAt: topic.createdAt, createdBy: topic.createdBy,
         color: topic.color, icon: topic.icon, moderatorIds: topic.moderatorIds,
-        categoryId: topic.categoryId, categorySlug: topic.categorySlug
+        categoryId: topic.categoryId, categorySlug: topic.categorySlug,
+        mode: topic.mode
       }, undefined, getRequestId(req)));
     } catch (error) {
       res.status(500).json({ success: false, error: 'Impossibile recuperare il topic', code: 'GET_TOPIC_ERROR' });
@@ -257,11 +258,13 @@ export class ForumController {
       }
 
       const character = req.character;
-      if (!(await canAccessTopic(topic, character ? { characterId: character.characterId, gameplayRoles: character.gameplayRoles } : undefined))) {
+      const charCtx = toCharCtx(character);
+      if (!(await canAccessTopic(topic, charCtx))) {
         return res.status(403).json({ success: false, error: 'Accesso negato', code: 'ACCESS_DENIED' });
       }
 
-      const filter = { topicSlug, isVisible: true, isDeleted: false };
+      const visibilityFilter = await buildDiscussionVisibilityFilter(charCtx);
+      const filter = { topicSlug, isVisible: true, isDeleted: false, ...visibilityFilter };
       const [discussions, total] = await Promise.all([
         ForumDiscussion.find(filter).sort({ isPinned: -1, lastPostAt: -1 }).skip(skip).limit(limit).lean(),
         ForumDiscussion.countDocuments(filter)
@@ -273,7 +276,8 @@ export class ForumController {
         isPinned: d.isPinned, isLocked: d.isLocked, postCount: d.postCount,
         viewCount: d.viewCount, subscriberCount: d.subscriberCount,
         lastPostAt: d.lastPostAt, lastPostBy: d.lastPostBy,
-        createdAt: d.createdAt, createdBy: d.createdBy, tags: d.tags || []
+        createdAt: d.createdAt, createdBy: d.createdBy, tags: d.tags || [],
+        visibility: d.visibility, excludedCharacterIds: d.excludedCharacterIds
       })), { currentPage: page, pageSize: limit, totalItems: total, totalPages, hasNextPage: page < totalPages, hasPreviousPage: page > 1 }, undefined, getRequestId(req)));
     } catch (error) {
       res.status(500).json({ success: false, error: 'Impossibile recuperare le discussioni', code: 'GET_DISCUSSIONS_ERROR' });
@@ -290,13 +294,18 @@ export class ForumController {
       }
 
       const character = req.character;
-      if (!(await canAccessTopic(topic, character ? { characterId: character.characterId, gameplayRoles: character.gameplayRoles } : undefined))) {
+      const charCtx = toCharCtx(character);
+      if (!(await canAccessTopic(topic, charCtx))) {
         return res.status(403).json({ success: false, error: 'Accesso negato', code: 'ACCESS_DENIED' });
       }
 
       const discussion = await ForumDiscussion.findOne({ topicSlug, slug: discussionSlug, isVisible: true, isDeleted: false });
       if (!discussion) {
         return res.status(404).json({ success: false, error: 'Discussione non trovata', code: 'DISCUSSION_NOT_FOUND' });
+      }
+
+      if (!(await matchesDiscussionVisibility(discussion, charCtx))) {
+        return res.status(403).json({ success: false, error: 'Accesso negato', code: 'ACCESS_DENIED' });
       }
 
       await ForumDiscussion.updateOne({ _id: discussion._id }, { $inc: { viewCount: 1 } });
@@ -309,7 +318,8 @@ export class ForumController {
         subscriberCount: discussion.subscriberCount,
         lastPostAt: discussion.lastPostAt, lastPostBy: discussion.lastPostBy,
         createdAt: discussion.createdAt, createdBy: discussion.createdBy,
-        tags: discussion.tags || []
+        tags: discussion.tags || [],
+        visibility: discussion.visibility, excludedCharacterIds: discussion.excludedCharacterIds
       }, undefined, getRequestId(req)));
     } catch (error) {
       res.status(500).json({ success: false, error: 'Impossibile recuperare la discussione', code: 'GET_DISCUSSION_ERROR' });
@@ -319,7 +329,7 @@ export class ForumController {
   static async createDiscussion(req: Request, res: Response) {
     try {
       const { topicSlug } = req.params;
-      const { title, content, tags } = req.body;
+      const { title, content, tags, visibility: visibilityInput } = req.body;
       const author = characterRef(req);
       if (!author) {
         return res.status(400).json({ success: false, error: 'Personaggio richiesto', code: 'CHARACTER_REQUIRED' });
@@ -330,7 +340,7 @@ export class ForumController {
         return res.status(404).json({ success: false, error: 'Topic non trovato', code: 'TOPIC_NOT_FOUND' });
       }
 
-      if (!(await canAccessTopic(topic, { characterId: req.character!.characterId, gameplayRoles: req.character!.gameplayRoles }))) {
+      if (!(await canAccessTopic(topic, toCharCtx(req.character)))) {
         return res.status(403).json({ success: false, error: 'Accesso negato', code: 'ACCESS_DENIED' });
       }
 
@@ -340,6 +350,11 @@ export class ForumController {
 
       if (!title || !content || title.trim().length < 3 || content.trim().length === 0) {
         return res.status(400).json({ success: false, error: 'Titolo e contenuto sono obbligatori', code: 'VALIDATION_ERROR' });
+      }
+
+      const { visibility, error: visibilityError } = parseVisibilityInput(visibilityInput);
+      if (visibilityError) {
+        return res.status(400).json({ success: false, error: visibilityError, code: 'VALIDATION_ERROR' });
       }
 
       const slug = createSlug(title);
@@ -357,7 +372,8 @@ export class ForumController {
         postCount: 1, viewCount: 0, subscriberCount: 0,
         lastPostAt: now, lastPostBy: author,
         createdAt: now, createdBy: author,
-        tags: Array.isArray(tags) ? tags.filter((t: string) => t?.trim()) : []
+        tags: Array.isArray(tags) ? tags.filter((t: string) => t?.trim()) : [],
+        visibility
       });
 
       await ForumPost.create({
@@ -410,6 +426,130 @@ export class ForumController {
       res.json({ success: true, data: { updated: true } });
     } catch (error) {
       res.status(500).json({ success: false, error: 'Impossibile aggiornare la discussione', code: 'UPDATE_DISCUSSION_ERROR' });
+    }
+  }
+
+  /**
+   * Update a discussion's visibility (5-tier model). The `type` itself can be
+   * set by the author (their own thread) or staff. `excludedCharacterIds` is
+   * staff-only: per spec, excluding a specific character from an otherwise
+   * visible thread ("anche se è staff") is a moderation action, not an
+   * authoring right.
+   */
+  static async updateDiscussionVisibility(req: Request, res: Response) {
+    try {
+      const { topicSlug, discussionSlug } = req.params;
+      const { visibility: visibilityInput, excludedCharacterIds } = req.body;
+      const character = req.character;
+      if (!character) {
+        return res.status(400).json({ success: false, error: 'Personaggio richiesto', code: 'CHARACTER_REQUIRED' });
+      }
+
+      const discussion = await ForumDiscussion.findOne({ topicSlug, slug: discussionSlug, isDeleted: false });
+      if (!discussion) {
+        return res.status(404).json({ success: false, error: 'Discussione non trovata', code: 'DISCUSSION_NOT_FOUND' });
+      }
+
+      const isAuthor = discussion.createdBy.characterId.toString() === character.characterId;
+      const isAdmin = hasPermission(req, 'forum.manage');
+      if (!isAuthor && !isAdmin) {
+        return res.status(403).json({ success: false, error: 'Non autorizzato', code: 'ACCESS_DENIED' });
+      }
+
+      const update: Record<string, unknown> = {};
+
+      if (visibilityInput !== undefined) {
+        const { visibility, error: visibilityError } = parseVisibilityInput(visibilityInput);
+        if (visibilityError) {
+          return res.status(400).json({ success: false, error: visibilityError, code: 'VALIDATION_ERROR' });
+        }
+        update.visibility = visibility;
+      }
+
+      if (excludedCharacterIds !== undefined) {
+        if (!isAdmin) {
+          return res.status(403).json({ success: false, error: 'Solo lo staff può escludere personaggi specifici', code: 'ACCESS_DENIED' });
+        }
+        update.excludedCharacterIds = Array.isArray(excludedCharacterIds)
+          ? excludedCharacterIds
+              .filter((id: unknown): id is string => typeof id === 'string' && mongoose.Types.ObjectId.isValid(id))
+              .map((id: string) => new mongoose.Types.ObjectId(id))
+          : [];
+      }
+
+      if (Object.keys(update).length === 0) {
+        return res.status(400).json({ success: false, error: 'Nessuna modifica specificata', code: 'VALIDATION_ERROR' });
+      }
+
+      await ForumDiscussion.updateOne({ _id: discussion._id }, { $set: update });
+      res.json({ success: true, data: { updated: true } });
+    } catch (error) {
+      res.status(500).json({ success: false, error: 'Impossibile aggiornare la visibilità della discussione', code: 'UPDATE_VISIBILITY_ERROR' });
+    }
+  }
+
+  /**
+   * Broadcast a discussion link to every approved character ("segnalare").
+   * Only available in OFF boards, staff-only. Delivered as an in-app forum
+   * notification (not the postal MP system) - a deliberate simplification to
+   * keep this self-contained; wiring it into the OffGame postal system is a
+   * possible future enhancement if literal "posta" delivery is required.
+   */
+  static async broadcastDiscussion(req: Request, res: Response) {
+    try {
+      const { topicSlug, discussionSlug } = req.params;
+      const character = req.character;
+      if (!character) {
+        return res.status(400).json({ success: false, error: 'Personaggio richiesto', code: 'CHARACTER_REQUIRED' });
+      }
+
+      if (!hasPermission(req, 'forum.manage')) {
+        return res.status(403).json({ success: false, error: 'Non autorizzato', code: 'ACCESS_DENIED' });
+      }
+
+      const topic = await ForumTopic.findOne({ slug: topicSlug, isVisible: true });
+      if (!topic) {
+        return res.status(404).json({ success: false, error: 'Topic non trovato', code: 'TOPIC_NOT_FOUND' });
+      }
+
+      if (topic.mode !== 'OFF') {
+        return res.status(403).json({
+          success: false,
+          error: 'La segnalazione è disponibile solo nelle bacheche OFF',
+          code: 'BROADCAST_NOT_ALLOWED_ON_BOARD'
+        });
+      }
+
+      const discussion = await ForumDiscussion.findOne({ topicSlug, slug: discussionSlug, isDeleted: false });
+      if (!discussion) {
+        return res.status(404).json({ success: false, error: 'Discussione non trovata', code: 'DISCUSSION_NOT_FOUND' });
+      }
+
+      const recipients = await Character.find({ playerStatus: 'approved' }).select('_id').lean();
+      const now = new Date();
+      const notifications = recipients
+        .filter((r) => r._id.toString() !== character.characterId)
+        .map((r) => ({
+          characterId: r._id,
+          type: 'staff_announcement' as const,
+          title: `Annuncio: ${discussion.title}`,
+          message: `${character.characterName} ha segnalato un thread nella bacheca "${topic.title}"`,
+          relatedDiscussionId: discussion._id,
+          topicSlug: discussion.topicSlug,
+          discussionSlug: discussion.slug,
+          triggeredByCharacterId: new mongoose.Types.ObjectId(character.characterId),
+          triggeredByCharacterName: character.characterName,
+          isRead: false,
+          createdAt: now
+        }));
+
+      if (notifications.length > 0) {
+        await ForumNotification.insertMany(notifications, { ordered: false });
+      }
+
+      res.json({ success: true, data: { broadcasted: true, recipientCount: notifications.length } });
+    } catch (error) {
+      res.status(500).json({ success: false, error: 'Impossibile inviare la segnalazione', code: 'BROADCAST_ERROR' });
     }
   }
 
@@ -534,13 +674,18 @@ export class ForumController {
       }
 
       const character = req.character;
-      if (!(await canAccessTopic(topic, character ? { characterId: character.characterId, gameplayRoles: character.gameplayRoles } : undefined))) {
+      const charCtx = toCharCtx(character);
+      if (!(await canAccessTopic(topic, charCtx))) {
         return res.status(403).json({ success: false, error: 'Accesso negato', code: 'ACCESS_DENIED' });
       }
 
       const discussion = await ForumDiscussion.findOne({ topicSlug, slug: discussionSlug, isVisible: true, isDeleted: false });
       if (!discussion) {
         return res.status(404).json({ success: false, error: 'Discussione non trovata', code: 'DISCUSSION_NOT_FOUND' });
+      }
+
+      if (!(await matchesDiscussionVisibility(discussion, charCtx))) {
+        return res.status(403).json({ success: false, error: 'Accesso negato', code: 'ACCESS_DENIED' });
       }
 
       const filter = { discussionId: discussion._id };
@@ -581,13 +726,18 @@ export class ForumController {
         return res.status(404).json({ success: false, error: 'Topic non trovato', code: 'TOPIC_NOT_FOUND' });
       }
 
-      if (!(await canAccessTopic(topic, { characterId: req.character!.characterId, gameplayRoles: req.character!.gameplayRoles }))) {
+      const charCtx = toCharCtx(req.character);
+      if (!(await canAccessTopic(topic, charCtx))) {
         return res.status(403).json({ success: false, error: 'Accesso negato', code: 'ACCESS_DENIED' });
       }
 
       const discussion = await ForumDiscussion.findOne({ topicSlug, slug: discussionSlug, isVisible: true, isDeleted: false });
       if (!discussion) {
         return res.status(404).json({ success: false, error: 'Discussione non trovata', code: 'DISCUSSION_NOT_FOUND' });
+      }
+
+      if (!(await matchesDiscussionVisibility(discussion, charCtx))) {
+        return res.status(403).json({ success: false, error: 'Accesso negato', code: 'ACCESS_DENIED' });
       }
 
       if ((topic.isLocked || discussion.isLocked) && !hasPermission(req, 'forum.manage')) {
@@ -789,7 +939,7 @@ export class ForumController {
 
       const accessible: typeof topics = [];
       for (const topic of topics) {
-        if (await canAccessTopic(topic as IForumTopic, { characterId: character.characterId, gameplayRoles: character.gameplayRoles })) {
+        if (await canAccessTopic(topic as IForumTopic, toCharCtx(character))) {
           accessible.push(topic);
         }
       }
@@ -840,15 +990,17 @@ export class ForumController {
       const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string) || 20));
       const character = req.character;
 
+      const charCtx = toCharCtx(character);
       const topics = await ForumTopic.find({ isVisible: true }).lean();
       const accessibleSlugs: string[] = [];
       for (const t of topics) {
-        if (await canAccessTopic(t as IForumTopic, character ? { characterId: character.characterId, gameplayRoles: character.gameplayRoles } : undefined)) {
+        if (await canAccessTopic(t as IForumTopic, charCtx)) {
           accessibleSlugs.push(t.slug);
         }
       }
 
-      const discussions = await ForumDiscussion.find({ topicSlug: { $in: accessibleSlugs }, isVisible: true, isDeleted: false })
+      const visibilityFilter = await buildDiscussionVisibilityFilter(charCtx);
+      const discussions = await ForumDiscussion.find({ topicSlug: { $in: accessibleSlugs }, isVisible: true, isDeleted: false, ...visibilityFilter })
         .sort({ lastPostAt: -1 }).limit(limit).lean();
 
       res.json(successResponse(discussions.map(d => ({
@@ -876,16 +1028,18 @@ export class ForumController {
         default: cutoffDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000); break;
       }
 
+      const charCtx = toCharCtx(character);
       const topics = await ForumTopic.find({ isVisible: true }).lean();
       const accessibleSlugs: string[] = [];
       for (const t of topics) {
-        if (await canAccessTopic(t as IForumTopic, character ? { characterId: character.characterId, gameplayRoles: character.gameplayRoles } : undefined)) {
+        if (await canAccessTopic(t as IForumTopic, charCtx)) {
           accessibleSlugs.push(t.slug);
         }
       }
 
+      const visibilityFilter = await buildDiscussionVisibilityFilter(charCtx);
       const discussions = await ForumDiscussion.aggregate([
-        { $match: { topicSlug: { $in: accessibleSlugs }, isVisible: true, isDeleted: false, createdAt: { $gte: cutoffDate } } },
+        { $match: { topicSlug: { $in: accessibleSlugs }, isVisible: true, isDeleted: false, createdAt: { $gte: cutoffDate }, ...visibilityFilter } },
         { $addFields: { popularityScore: { $add: [{ $ifNull: ['$viewCount', 0] }, { $multiply: [{ $ifNull: ['$postCount', 0] }, 3] }] } } },
         { $sort: { popularityScore: -1 } },
         { $limit: limit }
@@ -988,6 +1142,34 @@ export class ForumController {
 
         searchMethod = 'regex';
         logger.info(`[ForumSearch] Regex: ${posts.length} results for "${query}" with filters ${JSON.stringify(filters)}`);
+      }
+
+      // Safety net: neither the semantic index nor the regex path above are aware of
+      // per-discussion visibility (staff/corporation/characterList/private, exclusion
+      // lists) - only of soft-deletion. Without this, search could surface posts from
+      // a restricted or private thread to a character who couldn't otherwise see it.
+      // This re-checks each result's parent discussion+topic before returning it, at
+      // the cost of `total`/pagination becoming approximate for restricted content.
+      if (posts.length > 0) {
+        const charCtx = toCharCtx(req.character);
+        const discussionIds = [...new Set(posts.map((p) => p.discussionId.toString()))];
+        const [relevantDiscussions, relevantTopics] = await Promise.all([
+          ForumDiscussion.find({ _id: { $in: discussionIds } }).lean(),
+          ForumTopic.find({ topicSlug: { $in: [...new Set(posts.map((p) => p.topicSlug))] } }).lean()
+        ]);
+        const discussionById = new Map(relevantDiscussions.map((d) => [d._id.toString(), d]));
+        const topicBySlug = new Map(relevantTopics.map((t) => [t.slug, t]));
+
+        const visiblePosts = [];
+        for (const p of posts) {
+          const discussion = discussionById.get(p.discussionId.toString());
+          const topic = discussion ? topicBySlug.get(discussion.topicSlug) : undefined;
+          if (discussion && topic && await evaluateDiscussionVisibility(discussion, topic as IForumTopic, charCtx)) {
+            visiblePosts.push(p);
+          }
+        }
+        posts = visiblePosts;
+        total = posts.length;
       }
 
       const totalPages = Math.ceil(total / limit);

@@ -13,6 +13,7 @@ import type { ForumNotification, ForumNotificationType } from '@/types/forum';
 const NOTIF_ICONS: Record<ForumNotificationType, string> = {
   new_post_in_subscribed_discussion: '💬',
   reply_to_your_post: '↩️',
+  staff_announcement: '📢',
 };
 
 function formatDate(dateStr: string): string {

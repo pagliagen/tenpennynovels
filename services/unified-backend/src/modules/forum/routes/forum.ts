@@ -74,6 +74,8 @@ router.post('/topics/:topicSlug/discussions', forumCreationLimiter, requiredAuth
 router.put('/topics/:topicSlug/discussions/:discussionSlug', forumModificationLimiter, requiredAuthBan, ForumController.updateDiscussion);
 router.delete('/topics/:topicSlug/discussions/:discussionSlug', forumModificationLimiter, requiredAuthBan, ForumController.deleteDiscussion);
 router.post('/topics/:topicSlug/discussions/:discussionSlug/restore', forumModificationLimiter, requiredAuthBan, ForumController.restoreDiscussion);
+router.put('/topics/:topicSlug/discussions/:discussionSlug/visibility', forumModificationLimiter, requiredAuthBan, ForumController.updateDiscussionVisibility);
+router.post('/topics/:topicSlug/discussions/:discussionSlug/broadcast', forumModificationLimiter, requiredAuthBan, ForumController.broadcastDiscussion);
 
 // ----- Posts -----
 router.get('/topics/:topicSlug/discussions/:discussionSlug/posts', forumReadLimiter, optionalAuth, ForumController.getPosts);
