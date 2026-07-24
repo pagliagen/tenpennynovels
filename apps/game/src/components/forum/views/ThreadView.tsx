@@ -4,10 +4,12 @@ import { useState, useEffect, useRef } from 'react';
 
 import { useBroadcastDiscussion, useForumDiscussion } from '@/hooks/useForumDiscussions';
 import { useForumPosts } from '@/hooks/useForumPosts';
+import { useUpdateForumPreferences } from '@/hooks/useForumPreferences';
 import { useForumTopic } from '@/hooks/useForumTopics';
 import { useForumStore } from '@/store/forumStore';
 import { useUIStore } from '@/store/uiStore';
 import styles from '@/styles/components/forum/ThreadView.module.scss';
+import type { ForumReplyOrder } from '@/types/forum';
 
 import { PostCard } from '../cards/PostCard';
 import { Pagination } from '../ui/Pagination';
@@ -33,6 +35,7 @@ export function ThreadView(): JSX.Element {
 
   const [page, setPage] = useState(1);
   const [replyToPostId, setReplyToPostId] = useState<string | null>(null);
+  const [orderOverride, setOrderOverride] = useState<ForumReplyOrder | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const addToast = useUIStore((s) => s.addToast);
 
@@ -43,10 +46,21 @@ export function ThreadView(): JSX.Element {
   const { data: postsData, isLoading: isLoadingPosts } = useForumPosts(
     topicSlug,
     discussionSlug,
-    page
+    page,
+    orderOverride ?? undefined
   );
   const { data: topic } = useForumTopic(topicSlug);
   const broadcastDiscussion = useBroadcastDiscussion();
+  const updatePreferences = useUpdateForumPreferences();
+
+  const replyOrder: ForumReplyOrder = postsData?.replyOrder ?? 'asc';
+
+  const handleToggleReplyOrder = () => {
+    const next: ForumReplyOrder = replyOrder === 'asc' ? 'desc' : 'asc';
+    setOrderOverride(next);
+    setPage(1);
+    updatePreferences.mutate(next);
+  };
 
   const handleBroadcast = async () => {
     if (!topicSlug || !discussionSlug) return;
@@ -113,6 +127,14 @@ export function ThreadView(): JSX.Element {
           <span>{formatDate(discussion.createdAt)}</span>
           <span>{discussion.postCount} messaggi</span>
           <span>{discussion.viewCount} visualizzazioni</span>
+          <button
+            type="button"
+            className={styles.backBtn}
+            onClick={handleToggleReplyOrder}
+            title="Inverti l'ordine delle risposte (la preferenza viene salvata)"
+          >
+            {replyOrder === 'asc' ? '↓ Meno recenti prima' : '↑ Più recenti prima'}
+          </button>
           {topic?.mode === 'OFF' && (
             <button
               type="button"

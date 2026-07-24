@@ -9,8 +9,12 @@ import { ForumCategory } from '@database/models/ForumCategory';
 import { ForumDiscussion, type DiscussionVisibilityType } from '@database/models/ForumDiscussion';
 import { ForumPost } from '@database/models/ForumPost';
 import { ForumTopicFavorite } from '@database/models/ForumTopicFavorite';
+import { ForumDiscussionFavorite } from '@database/models/ForumDiscussionFavorite';
+import { ForumCharacterPreference } from '@database/models/ForumCharacterPreference';
+import { ForumTopicReadState } from '@database/models/ForumTopicReadState';
 import { ForumNotification } from '@database/models/ForumNotification';
 import { Character } from '@database/models/Character';
+import { NotificationService } from '../services/NotificationService';
 import { escapeRegex } from '@shared/utils/validation';
 import { EmbeddingService } from '@modules/documents/services/EmbeddingService';
 import { logger } from '@shared/utils/logger';
@@ -722,6 +726,22 @@ export class ForumController {
 
       const filter = { discussionId: discussion._id };
 
+      // Reply order: explicit ?order= wins, else the character's saved
+      // preference (ForumCharacterPreference), else 'asc'. The opening post
+      // itself always stays first regardless of direction ("resta sempre
+      // fisso in alto" - spec ties this only to the opening message, not to
+      // replies), and the pinned reply (if any) always sorts immediately
+      // after it, in both directions.
+      const requestedOrder = req.query.order === 'desc' || req.query.order === 'asc' ? req.query.order : undefined;
+      let replyOrder: 'asc' | 'desc' = 'asc';
+      if (requestedOrder) {
+        replyOrder = requestedOrder;
+      } else if (character) {
+        const pref = await ForumCharacterPreference.findOne({ characterId: character.characterId }).select('replyOrder').lean();
+        if (pref?.replyOrder) replyOrder = pref.replyOrder;
+      }
+      const sortDir: 1 | -1 = replyOrder === 'desc' ? -1 : 1;
+
       // The opening post always stays first regardless of pin status (it's the
       // thread's own message, not a reply); a pinned reply sorts immediately
       // after it. Both are only ever within page 1 (earliest createdAt), so the
@@ -736,7 +756,7 @@ export class ForumController {
         const restLimit = Math.max(0, limit - (openingPost ? 1 : 0));
         const [openingDoc, rest, totalCount] = await Promise.all([
           openingPost ? ForumPost.findById(openingPost._id).lean() : Promise.resolve(null),
-          ForumPost.find(restFilter).sort({ isPinned: -1, createdAt: 1 }).limit(restLimit).lean(),
+          ForumPost.find(restFilter).sort({ isPinned: -1, createdAt: sortDir }).limit(restLimit).lean(),
           ForumPost.countDocuments(filter)
         ]);
         posts = openingDoc ? [openingDoc, ...rest] : rest;
@@ -744,7 +764,7 @@ export class ForumController {
       } else {
         const restSkip = Math.max(0, skip - (openingPost ? 1 : 0));
         const [rest, totalCount] = await Promise.all([
-          ForumPost.find(restFilter).sort({ isPinned: -1, createdAt: 1 }).skip(restSkip).limit(limit).lean(),
+          ForumPost.find(restFilter).sort({ isPinned: -1, createdAt: sortDir }).skip(restSkip).limit(limit).lean(),
           ForumPost.countDocuments(filter)
         ]);
         posts = rest;
@@ -753,25 +773,28 @@ export class ForumController {
 
       const viewerHasModerationAccess = hasPermission(req, 'forum.manage');
       const totalPages = Math.ceil(total / limit);
-      res.json(listResponse(posts.map(p => {
-        // Computed BEFORE masking: an anonymous post's author must still be able
-        // to edit/delete their own post even though `author` is hidden from them
-        // in the response below (they know it's theirs; other non-staff viewers don't).
-        const isOwnPost = !!character && p.author.characterId.toString() === character.characterId;
-        const serialized = serializePostAuthor(p, viewerHasModerationAccess || isOwnPost);
-        return {
-          id: p._id, topicSlug: p.topicSlug, discussionSlug: p.discussionSlug,
-          content: p.isDeleted ? '' : p.content,
-          author: serialized.author,
-          isAnonymous: p.isAnonymous,
-          isOwnPost,
-          createdAt: p.createdAt, updatedAt: p.updatedAt,
-          isEdited: p.isEdited, isDeleted: p.isDeleted,
-          replyToPostId: p.replyToPostId,
-          isPinned: p.isPinned,
-          quotedContent: p.quotedContent
-        };
-      }), { currentPage: page, pageSize: limit, totalItems: total, totalPages, hasNextPage: page < totalPages, hasPreviousPage: page > 1 }, undefined, getRequestId(req)));
+      res.json({
+        ...listResponse(posts.map(p => {
+          // Computed BEFORE masking: an anonymous post's author must still be able
+          // to edit/delete their own post even though `author` is hidden from them
+          // in the response below (they know it's theirs; other non-staff viewers don't).
+          const isOwnPost = !!character && p.author.characterId.toString() === character.characterId;
+          const serialized = serializePostAuthor(p, viewerHasModerationAccess || isOwnPost);
+          return {
+            id: p._id, topicSlug: p.topicSlug, discussionSlug: p.discussionSlug,
+            content: p.isDeleted ? '' : p.content,
+            author: serialized.author,
+            isAnonymous: p.isAnonymous,
+            isOwnPost,
+            createdAt: p.createdAt, updatedAt: p.updatedAt,
+            isEdited: p.isEdited, isDeleted: p.isDeleted,
+            replyToPostId: p.replyToPostId,
+            isPinned: p.isPinned,
+            quotedContent: p.quotedContent
+          };
+        }), { currentPage: page, pageSize: limit, totalItems: total, totalPages, hasNextPage: page < totalPages, hasPreviousPage: page > 1 }, undefined, getRequestId(req)),
+        replyOrder
+      });
     } catch (error) {
       res.status(500).json({ success: false, error: 'Impossibile recuperare i post', code: 'GET_POSTS_ERROR' });
     }
@@ -817,6 +840,7 @@ export class ForumController {
       // Quote snapshot: taken now, not a live reference - stays stable even if
       // the quoted post is later edited/deleted (same rationale as editHistory).
       let quotedContent: { postId: mongoose.Types.ObjectId; authorCharacterName: string; excerptHtml: string } | undefined;
+      let quotedPostAuthorId: mongoose.Types.ObjectId | undefined;
       if (replyToPostId && mongoose.Types.ObjectId.isValid(replyToPostId)) {
         const quotedPost = await ForumPost.findOne({ _id: replyToPostId, discussionId: discussion._id, isDeleted: false })
           .select('author content')
@@ -827,6 +851,7 @@ export class ForumController {
             authorCharacterName: quotedPost.author.characterName,
             excerptHtml: quotedPost.content.slice(0, 500)
           };
+          quotedPostAuthorId = quotedPost.author.characterId;
         }
       }
 
@@ -855,6 +880,34 @@ export class ForumController {
       });
 
       res.status(201).json({ success: true, data: { id: post._id } });
+
+      // Fire-and-forget: notify subscribers + the quoted post's author (if any).
+      // Both self-exclude the acting character internally. Not awaited before
+      // responding - notifications are non-critical and NotificationService
+      // already swallows its own errors.
+      const topicSlugStr = Array.isArray(topicSlug) ? String(topicSlug[0]) : String(topicSlug);
+      const discussionSlugStr = Array.isArray(discussionSlug) ? String(discussionSlug[0]) : String(discussionSlug);
+
+      NotificationService.notifyNewPostInSubscription({
+        discussionId: discussion._id,
+        discussionTitle: discussion.title,
+        topicSlug: topicSlugStr, discussionSlug: discussionSlugStr,
+        postId: post._id,
+        authorCharacterId: author.characterId,
+        authorCharacterName: author.characterName
+      }).catch(() => {});
+
+      if (quotedContent && quotedPostAuthorId) {
+        NotificationService.notifyReplyToPost({
+          originalPostId: quotedContent.postId,
+          originalPostAuthorId: quotedPostAuthorId,
+          replyPostId: post._id,
+          replierCharacterId: author.characterId,
+          replierCharacterName: author.characterName,
+          discussionId: discussion._id,
+          topicSlug: topicSlugStr, discussionSlug: discussionSlugStr
+        }).catch(() => {});
+      }
     } catch (error) {
       res.status(500).json({ success: false, error: 'Impossibile creare il post', code: 'CREATE_POST_ERROR' });
     }
@@ -1132,6 +1185,194 @@ export class ForumController {
     }
   }
 
+  /**
+   * Toggle a THREAD favorite (distinct from toggleTopicFavorite above, which is
+   * bacheca-level, and from bookmarks, which are post-level). Kept as a
+   * separate concept from ForumDiscussionSubscription (notifications) per
+   * explicit product decision.
+   */
+  static async toggleDiscussionFavorite(req: Request, res: Response) {
+    try {
+      const { topicSlug, discussionSlug } = req.params;
+      const character = req.character;
+      if (!character) {
+        return res.status(400).json({ success: false, error: 'Personaggio richiesto', code: 'CHARACTER_REQUIRED' });
+      }
+
+      const discussion = await ForumDiscussion.findOne({ topicSlug, slug: discussionSlug, isDeleted: false });
+      if (!discussion) {
+        return res.status(404).json({ success: false, error: 'Discussione non trovata', code: 'DISCUSSION_NOT_FOUND' });
+      }
+
+      const charId = new mongoose.Types.ObjectId(character.characterId);
+      const existing = await ForumDiscussionFavorite.findOne({ characterId: charId, discussionId: discussion._id });
+
+      if (existing) {
+        await ForumDiscussionFavorite.deleteOne({ _id: existing._id });
+        res.json({ success: true, data: { isFavorite: false } });
+      } else {
+        await ForumDiscussionFavorite.create({ characterId: charId, discussionId: discussion._id, topicId: discussion.topicId });
+        res.json({ success: true, data: { isFavorite: true } });
+      }
+    } catch (error) {
+      res.status(500).json({ success: false, error: 'Impossibile aggiornare i preferiti', code: 'TOGGLE_DISCUSSION_FAVORITE_ERROR' });
+    }
+  }
+
+  static async getUserFavoriteDiscussions(req: Request, res: Response) {
+    try {
+      const character = req.character;
+      if (!character) {
+        return res.status(400).json({ success: false, error: 'Personaggio richiesto', code: 'CHARACTER_REQUIRED' });
+      }
+
+      const favorites = await ForumDiscussionFavorite.find({
+        characterId: new mongoose.Types.ObjectId(character.characterId)
+      }).sort({ createdAt: -1 }).lean();
+
+      if (favorites.length === 0) {
+        return res.json({ success: true, data: [] });
+      }
+
+      const discussionIds = favorites.map(f => f.discussionId);
+      const discussions = await ForumDiscussion.find({ _id: { $in: discussionIds }, isDeleted: false }).lean();
+      const charCtx = toCharCtx(character);
+
+      const visible = [];
+      for (const d of discussions) {
+        const topic = await ForumTopic.findById(d.topicId).lean();
+        if (topic && await evaluateDiscussionVisibility(d, topic as IForumTopic, charCtx)) {
+          visible.push(d);
+        }
+      }
+
+      res.json(successResponse(visible.map(d => ({
+        id: d._id, slug: d.slug, topicSlug: d.topicSlug, title: d.title,
+        postCount: d.postCount, viewCount: d.viewCount,
+        lastPostAt: d.lastPostAt, lastPostBy: d.lastPostBy,
+        createdAt: d.createdAt, createdBy: d.createdBy, tags: d.tags || [],
+        isFavorite: true
+      })), undefined, getRequestId(req)));
+    } catch (error) {
+      res.status(500).json({ success: false, error: 'Impossibile recuperare i thread preferiti', code: 'GET_FAVORITE_DISCUSSIONS_ERROR' });
+    }
+  }
+
+  // ========== PREFERENCES ==========
+
+  /**
+   * GET /forum/preferences - current character's forum preferences (currently
+   * only replyOrder: "L'utente può invertire l'ordine di visualizzazione
+   * mantenendo la preferenza salvata").
+   */
+  static async getPreferences(req: Request, res: Response) {
+    try {
+      const character = req.character;
+      if (!character) {
+        return res.status(400).json({ success: false, error: 'Personaggio richiesto', code: 'CHARACTER_REQUIRED' });
+      }
+
+      const pref = await ForumCharacterPreference.findOne({ characterId: character.characterId }).lean();
+      res.json(successResponse({ replyOrder: pref?.replyOrder ?? 'asc' }, undefined, getRequestId(req)));
+    } catch (error) {
+      res.status(500).json({ success: false, error: 'Impossibile recuperare le preferenze', code: 'GET_PREFERENCES_ERROR' });
+    }
+  }
+
+  static async updatePreferences(req: Request, res: Response) {
+    try {
+      const character = req.character;
+      const { replyOrder } = req.body;
+      if (!character) {
+        return res.status(400).json({ success: false, error: 'Personaggio richiesto', code: 'CHARACTER_REQUIRED' });
+      }
+      if (replyOrder !== 'asc' && replyOrder !== 'desc') {
+        return res.status(400).json({ success: false, error: 'replyOrder deve essere asc o desc', code: 'VALIDATION_ERROR' });
+      }
+
+      await ForumCharacterPreference.findOneAndUpdate(
+        { characterId: character.characterId },
+        { $set: { replyOrder, updatedAt: new Date() } },
+        { upsert: true }
+      );
+
+      res.json({ success: true, data: { replyOrder } });
+    } catch (error) {
+      res.status(500).json({ success: false, error: 'Impossibile aggiornare le preferenze', code: 'UPDATE_PREFERENCES_ERROR' });
+    }
+  }
+
+  // ========== UNREAD SUMMARY ==========
+
+  /**
+   * GET /forum/unread-summary - per-topic + aggregate "has new content" flags,
+   * for the global navbar badge. Compares ForumTopic.lastPostAt against the
+   * character's ForumTopicReadState.lastVisitedAt (missing read-state = unread).
+   * Only considers topics the character can currently view.
+   */
+  static async getUnreadSummary(req: Request, res: Response) {
+    try {
+      const character = req.character;
+      if (!character) {
+        return res.json(successResponse({ hasUnread: false, count: 0, topics: [] }, undefined, getRequestId(req)));
+      }
+
+      const charCtx = toCharCtx(character);
+      const topics = await ForumTopic.find({ isVisible: true }).lean();
+      const accessible = [];
+      for (const t of topics) {
+        if (await canAccessTopic(t as IForumTopic, charCtx)) accessible.push(t);
+      }
+
+      const readStates = await ForumTopicReadState.find({ characterId: character.characterId }).lean();
+      const lastVisitedByTopic = new Map(readStates.map(r => [r.topicId.toString(), r.lastVisitedAt]));
+
+      const unreadTopics = accessible.filter((t) => {
+        if (!t.lastPostAt) return false;
+        const lastVisited = lastVisitedByTopic.get(t._id.toString());
+        return !lastVisited || new Date(t.lastPostAt) > new Date(lastVisited);
+      });
+
+      res.json(successResponse({
+        hasUnread: unreadTopics.length > 0,
+        count: unreadTopics.length,
+        topics: unreadTopics.map(t => ({ id: t._id, slug: t.slug }))
+      }, undefined, getRequestId(req)));
+    } catch (error) {
+      res.status(500).json({ success: false, error: 'Impossibile recuperare il riepilogo notifiche', code: 'GET_UNREAD_SUMMARY_ERROR' });
+    }
+  }
+
+  /**
+   * POST /forum/topics/:topicSlug/visited - marks the topic as visited now by
+   * the current character (clears its unread badge). Called by the frontend
+   * when a bacheca's discussion list is opened.
+   */
+  static async markTopicVisited(req: Request, res: Response) {
+    try {
+      const { topicSlug } = req.params;
+      const character = req.character;
+      if (!character) {
+        return res.status(400).json({ success: false, error: 'Personaggio richiesto', code: 'CHARACTER_REQUIRED' });
+      }
+
+      const topic = await ForumTopic.findOne({ slug: topicSlug }).select('_id').lean();
+      if (!topic) {
+        return res.status(404).json({ success: false, error: 'Topic non trovato', code: 'TOPIC_NOT_FOUND' });
+      }
+
+      await ForumTopicReadState.findOneAndUpdate(
+        { characterId: character.characterId, topicId: topic._id },
+        { $set: { lastVisitedAt: new Date() } },
+        { upsert: true }
+      );
+
+      res.json({ success: true, data: { visited: true } });
+    } catch (error) {
+      res.status(500).json({ success: false, error: 'Impossibile aggiornare lo stato di lettura', code: 'MARK_VISITED_ERROR' });
+    }
+  }
+
   // ========== RECENT / POPULAR ==========
 
   static async getRecentDiscussions(req: Request, res: Response) {
@@ -1209,7 +1450,7 @@ export class ForumController {
 
   static async searchForum(req: Request, res: Response) {
     try {
-      const { q: query, topicSlug, discussionSlug, authorCharacterId } = req.query;
+      const { q: query, topicSlug, discussionSlug, authorCharacterId, dateFrom, dateTo, isLocked } = req.query;
 
       if (!query || typeof query !== 'string' || query.trim().length === 0) {
         return res.status(400).json({ success: false, error: 'La query di ricerca è obbligatoria', code: 'MISSING_QUERY' });
@@ -1218,6 +1459,14 @@ export class ForumController {
       const page = Math.max(1, parseInt(req.query.page as string) || 1);
       const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string) || 20));
       const skip = (page - 1) * limit;
+
+      // Parsed once, applied uniformly to whichever search path ran (see the
+      // post-filter loop below) - the semantic index doesn't know about date/
+      // lock-state, and threading them through its filter contract isn't worth
+      // the risk; a post-filter is correct regardless of which path executed.
+      const parsedDateFrom = typeof dateFrom === 'string' && dateFrom ? new Date(dateFrom) : undefined;
+      const parsedDateTo = typeof dateTo === 'string' && dateTo ? new Date(dateTo) : undefined;
+      const isLockedFilter = isLocked === 'true' ? true : isLocked === 'false' ? false : undefined;
 
       let posts: any[] = [];
       let total = 0;
@@ -1276,6 +1525,12 @@ export class ForumController {
         if (authorCharacterId && typeof authorCharacterId === 'string') {
           filter['author.characterId'] = authorCharacterId;
         }
+        if (parsedDateFrom || parsedDateTo) {
+          filter.createdAt = {
+            ...(parsedDateFrom ? { $gte: parsedDateFrom } : {}),
+            ...(parsedDateTo ? { $lte: parsedDateTo } : {}),
+          };
+        }
 
         const escapedQuery = escapeRegex(query.trim());
 
@@ -1313,9 +1568,12 @@ export class ForumController {
         for (const p of posts) {
           const discussion = discussionById.get(p.discussionId.toString());
           const topic = discussion ? topicBySlug.get(discussion.topicSlug) : undefined;
-          if (discussion && topic && await evaluateDiscussionVisibility(discussion, topic as IForumTopic, charCtx)) {
-            visiblePosts.push(p);
-          }
+          if (!discussion || !topic) continue;
+          if (!(await evaluateDiscussionVisibility(discussion, topic as IForumTopic, charCtx))) continue;
+          if (isLockedFilter !== undefined && discussion.isLocked !== isLockedFilter) continue;
+          if (parsedDateFrom && new Date(p.createdAt) < parsedDateFrom) continue;
+          if (parsedDateTo && new Date(p.createdAt) > parsedDateTo) continue;
+          visiblePosts.push(p);
         }
         posts = visiblePosts;
         total = posts.length;

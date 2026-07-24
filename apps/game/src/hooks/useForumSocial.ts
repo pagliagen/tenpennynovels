@@ -21,13 +21,19 @@ import { useQuery, useMutation, useQueryClient, type UseQueryResult, type UseMut
 import { forumApi } from '@/lib/api/forum';
 import type { ForumSearchResult, ForumBookmark, ForumNotification, PaginationInfo } from '@/types/forum';
 
+export interface SearchFilters {
+  dateFrom?: string;
+  dateTo?: string;
+  isLocked?: boolean;
+}
+
 /**
  * Query Keys
  *
  * Centralized query keys for cache invalidation.
  */
 export const forumSocialKeys = {
-  search: (query: string) => ['forum', 'search', query] as const,
+  search: (query: string, filters?: SearchFilters) => ['forum', 'search', query, filters] as const,
   bookmarks: () => ['forum', 'bookmarks'] as const,
   notifications: (page?: number) => ['forum', 'notifications', page] as const,
   unreadCount: () => ['forum', 'notifications', 'unread'] as const,
@@ -43,11 +49,12 @@ export const forumSocialKeys = {
  * @returns {UseQueryResult} Query result with search results and pagination
  */
 export function useForumSearch(
-  query: string
+  query: string,
+  filters?: SearchFilters
 ): UseQueryResult<{ list: ForumSearchResult[]; pagination: PaginationInfo }, Error> {
   return useQuery({
-    queryKey: forumSocialKeys.search(query),
-    queryFn: () => forumApi.searchForum(query),
+    queryKey: forumSocialKeys.search(query, filters),
+    queryFn: () => forumApi.searchForum(query, undefined, filters),
     enabled: query.length >= 2,
     staleTime: 30 * 1000,
     gcTime: 5 * 60 * 1000,

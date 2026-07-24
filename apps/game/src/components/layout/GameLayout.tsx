@@ -19,6 +19,7 @@ import { useRouter } from 'next/router';
 import { ReactNode, useMemo, useEffect, useCallback, useState } from 'react';
 
 import { useWebSocket } from '@/contexts/WebSocketContext';
+import { useForumUnreadSummary } from '@/hooks/useForumPreferences';
 import { useOffGameUnreadCount } from '@/hooks/useOffGameChat';
 import { useOnGameUnreadCount } from '@/hooks/useOnGameMessages';
 import { useTicketNotifications } from '@/hooks/useTicketNotifications';
@@ -99,6 +100,9 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
 
   // Ticket system: Unread count for player (messages from staff not read yet)
   const { data: unreadTicketsCount = 0 } = useUnreadTicketsCount();
+
+  // Forum system: bacheche with unread content, for TopBar badge
+  const { data: forumUnreadSummary } = useForumUnreadSummary();
 
   // WebSocket + QueryClient: For real-time badge updates
   const { onMessageEvent, onGlobalEvent } = useWebSocket();
@@ -409,6 +413,7 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
             onCharacterFaceClaimClick={handleCharacterFaceClaimClick}
             onLogoutClick={handleLogout}
             unreadOnGameMailCount={unreadMailCount}
+            unreadForumCount={forumUnreadSummary?.count ?? 0}
             onOffGameChatClick={handleOffGameChatClick}
             unreadOffGameChatCount={unreadOffGameChatCount}
             unreadTicketsCount={unreadTicketsCount}

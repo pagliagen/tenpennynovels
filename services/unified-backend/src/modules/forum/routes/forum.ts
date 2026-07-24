@@ -76,6 +76,8 @@ router.delete('/topics/:topicSlug/discussions/:discussionSlug', forumModificatio
 router.post('/topics/:topicSlug/discussions/:discussionSlug/restore', forumModificationLimiter, requiredAuthBan, ForumController.restoreDiscussion);
 router.put('/topics/:topicSlug/discussions/:discussionSlug/visibility', forumModificationLimiter, requiredAuthBan, ForumController.updateDiscussionVisibility);
 router.post('/topics/:topicSlug/discussions/:discussionSlug/broadcast', forumModificationLimiter, requiredAuthBan, ForumController.broadcastDiscussion);
+router.post('/topics/:topicSlug/discussions/:discussionSlug/favorite', forumCreationLimiter, requiredAuth, ForumController.toggleDiscussionFavorite);
+router.get('/favorites/discussions', forumReadLimiter, requiredAuth, ForumController.getUserFavoriteDiscussions);
 
 // ----- Posts -----
 router.get('/topics/:topicSlug/discussions/:discussionSlug/posts', forumReadLimiter, optionalAuth, ForumController.getPosts);
@@ -106,5 +108,13 @@ router.get('/bookmarks', forumReadLimiter, requiredAuth, ForumBookmarkController
 router.get('/notifications', forumReadLimiter, requiredAuth, ForumNotificationController.getNotifications);
 router.get('/notifications/unread-count', forumReadLimiter, requiredAuth, ForumNotificationController.getUnreadCount);
 router.post('/notifications/mark-read', forumCreationLimiter, requiredAuth, ForumNotificationController.markRead);
+
+// ----- Preferences -----
+router.get('/preferences', forumReadLimiter, requiredAuth, ForumController.getPreferences);
+router.put('/preferences', forumModificationLimiter, requiredAuth, ForumController.updatePreferences);
+
+// ----- Unread summary (global navbar badge) -----
+router.get('/unread-summary', forumReadLimiter, requiredAuth, ForumController.getUnreadSummary);
+router.post('/topics/:topicSlug/visited', forumModificationLimiter, requiredAuth, ForumController.markTopicVisited);
 
 export default router;

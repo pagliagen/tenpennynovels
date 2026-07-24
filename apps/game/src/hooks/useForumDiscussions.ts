@@ -37,6 +37,7 @@ export const forumDiscussionKeys = {
     [...forumDiscussionKeys.all, 'detail', topicSlug, discussionSlug] as const,
   recent: () => [...forumDiscussionKeys.all, 'recent'] as const,
   popular: (timeframe?: string) => [...forumDiscussionKeys.all, 'popular', timeframe] as const,
+  favorites: () => [...forumDiscussionKeys.all, 'favorites'] as const,
 };
 
 /**
@@ -237,6 +238,48 @@ export function useRecentDiscussions(limit?: number): UseQueryResult<ForumDiscus
   return useQuery({
     queryKey: [...forumDiscussionKeys.recent(), limit] as const,
     queryFn: () => forumApi.getRecentDiscussions(limit),
+    staleTime: 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+  });
+}
+
+/**
+ * useToggleDiscussionFavorite Hook
+ *
+ * Toggles favorite status on a discussion (distinct from topic-level favorites/
+ * subscriptions - see ForumDiscussionFavorite).
+ *
+ * @returns {UseMutationResult} Mutation result
+ */
+export function useToggleDiscussionFavorite(): UseMutationResult<
+  { isFavorite: boolean },
+  Error,
+  { topicSlug: string; discussionSlug: string }
+> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ topicSlug, discussionSlug }) =>
+      forumApi.toggleDiscussionFavorite(topicSlug, discussionSlug),
+    onSuccess: (_, { topicSlug, discussionSlug }) => {
+      queryClient.invalidateQueries({ queryKey: forumDiscussionKeys.favorites() });
+      queryClient.invalidateQueries({ queryKey: forumDiscussionKeys.detail(topicSlug, discussionSlug) });
+      queryClient.invalidateQueries({ queryKey: forumDiscussionKeys.list(topicSlug) });
+    },
+  });
+}
+
+/**
+ * useFavoriteDiscussions Hook
+ *
+ * Fetches the current character's favorite discussions.
+ *
+ * @returns {UseQueryResult<ForumDiscussion[]>} Query result
+ */
+export function useFavoriteDiscussions(): UseQueryResult<ForumDiscussion[], Error> {
+  return useQuery({
+    queryKey: forumDiscussionKeys.favorites(),
+    queryFn: () => forumApi.getFavoriteDiscussions(),
     staleTime: 60 * 1000,
     gcTime: 5 * 60 * 1000,
   });

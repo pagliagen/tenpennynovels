@@ -31,6 +31,9 @@ import type {
   ForumSearchResult,
   ForumBookmark,
   ForumNotification,
+  ForumPreferences,
+  ForumReplyOrder,
+  ForumUnreadSummary,
   PaginationInfo,
 } from '@/types/forum';
 
@@ -138,14 +141,15 @@ export const forumApi = {
     topicSlug: string,
     discussionSlug: string,
     page?: number,
-    limit?: number
-  ): Promise<{ list: ForumPost[]; pagination: PaginationInfo }> {
-    const response = await api.get<{ list: ForumPost[]; pagination: PaginationInfo }>(
+    limit?: number,
+    order?: ForumReplyOrder
+  ): Promise<{ list: ForumPost[]; pagination: PaginationInfo; replyOrder: ForumReplyOrder }> {
+    const response = await api.get<{ list: ForumPost[]; pagination: PaginationInfo; replyOrder?: ForumReplyOrder }>(
       `/forum/topics/${topicSlug}/discussions/${discussionSlug}/posts`,
-      { params: { page, limit } }
+      { params: { page, limit, order } }
     );
     const defaultPagination: PaginationInfo = { page: 1, pageSize: 20, total: 0, totalPages: 0, hasNext: false, hasPrev: false };
-    return { list: response.list ?? [], pagination: response.pagination ?? defaultPagination };
+    return { list: response.list ?? [], pagination: response.pagination ?? defaultPagination, replyOrder: response.replyOrder ?? 'asc' };
   },
 
   async createPost(
@@ -176,11 +180,20 @@ export const forumApi = {
 
   async searchForum(
     query: string,
-    topicSlug?: string
+    topicSlug?: string,
+    filters?: { dateFrom?: string; dateTo?: string; isLocked?: boolean }
   ): Promise<{ list: ForumSearchResult[]; pagination: PaginationInfo }> {
     const response = await api.get<{ list: ForumSearchResult[]; pagination: PaginationInfo }>(
       '/forum/search',
-      { params: { q: query, topicSlug } }
+      {
+        params: {
+          q: query,
+          topicSlug,
+          dateFrom: filters?.dateFrom,
+          dateTo: filters?.dateTo,
+          isLocked: filters?.isLocked === undefined ? undefined : String(filters.isLocked),
+        },
+      }
     );
     const defaultPagination: PaginationInfo = { page: 1, pageSize: 20, total: 0, totalPages: 0, hasNext: false, hasPrev: false };
     return { list: response.list ?? [], pagination: response.pagination ?? defaultPagination };
@@ -197,6 +210,18 @@ export const forumApi = {
     const response = await api.post<{ data: { isFavorite: boolean } }>(
       `/forum/topics/${topicSlug}/favorite`
     );
+    return response.data;
+  },
+
+  async toggleDiscussionFavorite(topicSlug: string, discussionSlug: string): Promise<{ isFavorite: boolean }> {
+    const response = await api.post<{ data: { isFavorite: boolean } }>(
+      `/forum/topics/${topicSlug}/discussions/${discussionSlug}/favorite`
+    );
+    return response.data;
+  },
+
+  async getFavoriteDiscussions(): Promise<ForumDiscussion[]> {
+    const response = await api.get<{ data: ForumDiscussion[] }>('/forum/favorites/discussions');
     return response.data;
   },
 
@@ -265,5 +290,28 @@ export const forumApi = {
       { params: { timeframe, limit } }
     );
     return response.data;
+  },
+
+  // ── Preferences ───────────────────────────────────────────────────
+
+  async getPreferences(): Promise<ForumPreferences> {
+    const response = await api.get<{ data: ForumPreferences }>('/forum/preferences');
+    return response.data;
+  },
+
+  async updatePreferences(replyOrder: ForumReplyOrder): Promise<ForumPreferences> {
+    const response = await api.put<{ data: ForumPreferences }>('/forum/preferences', { replyOrder });
+    return response.data;
+  },
+
+  // ── Unread summary ────────────────────────────────────────────────
+
+  async getUnreadSummary(): Promise<ForumUnreadSummary> {
+    const response = await api.get<{ data: ForumUnreadSummary }>('/forum/unread-summary');
+    return response.data;
+  },
+
+  async markTopicVisited(topicSlug: string): Promise<void> {
+    await api.post(`/forum/topics/${topicSlug}/visited`);
   },
 };

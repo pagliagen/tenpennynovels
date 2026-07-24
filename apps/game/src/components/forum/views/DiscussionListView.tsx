@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 
 import { useForumDiscussions } from '@/hooks/useForumDiscussions';
+import { useMarkTopicVisited } from '@/hooks/useForumPreferences';
 import { useForumTopic } from '@/hooks/useForumTopics';
 import { useForumStore } from '@/store/forumStore';
 import styles from '@/styles/components/forum/DiscussionListView.module.scss';
@@ -16,9 +17,18 @@ export function DiscussionListView() {
   const navigateToCategories = useForumStore((s) => s.navigateToCategories);
 
   const [page, setPage] = useState(1);
+  const markTopicVisited = useMarkTopicVisited();
 
   useEffect(() => {
     setPage(1);
+  }, [topicSlug]);
+
+  useEffect(() => {
+    if (topicSlug) {
+      markTopicVisited.mutate(topicSlug);
+    }
+    // Only re-run when the topic changes - not on every markTopicVisited identity change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [topicSlug]);
 
   const { data, isLoading, error } = useForumDiscussions(topicSlug, page);

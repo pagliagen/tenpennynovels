@@ -86,6 +86,7 @@ export interface ForumDiscussion {
   visibility?: DiscussionVisibility;
   /** Always applies on top of `visibility`, even 'staff'/'private'. Staff-only to set. */
   excludedCharacterIds?: string[];
+  isFavorite?: boolean;
 }
 
 export interface ForumPost {
@@ -176,3 +177,15 @@ export interface ForumInitData {
 }
 
 export type ForumView = 'categories' | 'topics' | 'discussions' | 'thread' | 'search' | 'bookmarks' | 'notifications' | 'createDiscussion';
+
+export type ForumReplyOrder = 'asc' | 'desc';
+
+export interface ForumPreferences {
+  replyOrder: ForumReplyOrder;
+}
+
+export interface ForumUnreadSummary {
+  hasUnread: boolean;
+  count: number;
+  topics: Array<{ id: string; slug: string }>;
+}

@@ -17,7 +17,7 @@
 import { useQuery, useMutation, useQueryClient, type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
 
 import { forumApi } from '@/lib/api/forum';
-import type { ForumPost, PaginationInfo } from '@/types/forum';
+import type { ForumPost, ForumReplyOrder, PaginationInfo } from '@/types/forum';
 
 import { forumDiscussionKeys } from './useForumDiscussions';
 
@@ -46,11 +46,12 @@ export const forumPostKeys = {
 export function useForumPosts(
   topicSlug: string | null,
   discussionSlug: string | null,
-  page?: number
-): UseQueryResult<{ list: ForumPost[]; pagination: PaginationInfo }, Error> {
+  page?: number,
+  order?: ForumReplyOrder
+): UseQueryResult<{ list: ForumPost[]; pagination: PaginationInfo; replyOrder: ForumReplyOrder }, Error> {
   return useQuery({
-    queryKey: [...forumPostKeys.list(topicSlug!, discussionSlug!), page] as const,
-    queryFn: () => forumApi.getPosts(topicSlug!, discussionSlug!, page),
+    queryKey: [...forumPostKeys.list(topicSlug!, discussionSlug!), page, order] as const,
+    queryFn: () => forumApi.getPosts(topicSlug!, discussionSlug!, page, undefined, order),
     enabled: !!topicSlug && !!discussionSlug,
     staleTime: 30 * 1000,
     gcTime: 5 * 60 * 1000,

@@ -31,6 +31,36 @@
   }
 }
 
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-lg;
+  margin-bottom: $spacing-lg;
+}
+
+.filterLabel {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+  font-size: 13px;
+  color: $text-muted;
+}
+
+.filterInput {
+  padding: $spacing-xs $spacing-sm;
+  background: $dark-surface;
+  border: 1px solid $dark-border;
+  border-radius: $radius-sm;
+  color: $text-primary;
+  font-family: $font-sans;
+  font-size: 13px;
+
+  &:focus {
+    outline: none;
+    border-color: $gold;
+  }
+}
+
 .results {
   display: flex;
   flex-direction: column;

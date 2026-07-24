@@ -211,9 +211,12 @@ export { ForumTopicPermissionOverride, type IForumTopicPermissionOverride, type 
 export { ForumDiscussion, type IForumDiscussion } from './ForumDiscussion';
 export { ForumPost, type IForumPost } from './ForumPost';
 export { ForumTopicFavorite, type IForumTopicFavorite } from './ForumTopicFavorite';
+export { ForumDiscussionFavorite, type IForumDiscussionFavorite } from './ForumDiscussionFavorite';
 export { ForumDiscussionSubscription, type IForumDiscussionSubscription } from './ForumDiscussionSubscription';
 export { ForumBookmark, BookmarkItemType, type IForumBookmark } from './ForumBookmark';
 export { ForumNotification, ForumNotificationType, type IForumNotification } from './ForumNotification';
+export { ForumCharacterPreference, type IForumCharacterPreference, type ForumReplyOrder } from './ForumCharacterPreference';
+export { ForumTopicReadState, type IForumTopicReadState } from './ForumTopicReadState';
 
 // Deleted Records Archive
 export { DeletedRecord, type IDeletedRecord } from './DeletedRecord';

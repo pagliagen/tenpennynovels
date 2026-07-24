@@ -16,6 +16,8 @@ interface NotificationData {
   message: string;
   relatedDiscussionId?: mongoose.Types.ObjectId;
   relatedPostId?: mongoose.Types.ObjectId;
+  topicSlug?: string;
+  discussionSlug?: string;
   triggeredByCharacterId?: mongoose.Types.ObjectId;
   triggeredByCharacterName?: string;
 }
@@ -34,6 +36,10 @@ export class NotificationService {
         message: data.message,
         relatedDiscussionId: data.relatedDiscussionId,
         relatedPostId: data.relatedPostId,
+        // Previously never set despite being present on the schema - deep-links
+        // from the notifications UI need these to build #bacheca/{topic}/{discussion} URLs.
+        topicSlug: data.topicSlug,
+        discussionSlug: data.discussionSlug,
         triggeredByCharacterId: data.triggeredByCharacterId,
         triggeredByCharacterName: data.triggeredByCharacterName,
         isRead: false,
@@ -53,6 +59,8 @@ export class NotificationService {
   static async notifyNewPostInSubscription(params: {
     discussionId: mongoose.Types.ObjectId;
     discussionTitle: string;
+    topicSlug: string;
+    discussionSlug: string;
     postId: mongoose.Types.ObjectId;
     authorCharacterId: mongoose.Types.ObjectId;
     authorCharacterName: string;
@@ -73,6 +81,8 @@ export class NotificationService {
           message: `${params.authorCharacterName} ha risposto alla discussione`,
           relatedDiscussionId: params.discussionId,
           relatedPostId: params.postId,
+          topicSlug: params.topicSlug,
+          discussionSlug: params.discussionSlug,
           triggeredByCharacterId: params.authorCharacterId,
           triggeredByCharacterName: params.authorCharacterName
         }));
@@ -100,6 +110,8 @@ export class NotificationService {
     replierCharacterId: mongoose.Types.ObjectId;
     replierCharacterName: string;
     discussionId: mongoose.Types.ObjectId;
+    topicSlug: string;
+    discussionSlug: string;
   }): Promise<void> {
     try {
       // Don't notify if author replied to their own post
@@ -114,6 +126,8 @@ export class NotificationService {
         message: `${params.replierCharacterName} ha risposto al tuo messaggio`,
         relatedDiscussionId: params.discussionId,
         relatedPostId: params.replyPostId,
+        topicSlug: params.topicSlug,
+        discussionSlug: params.discussionSlug,
         triggeredByCharacterId: params.replierCharacterId,
         triggeredByCharacterName: params.replierCharacterName
       });
