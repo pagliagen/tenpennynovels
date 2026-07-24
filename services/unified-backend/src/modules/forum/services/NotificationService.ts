@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import { ForumNotification, ForumNotificationType, ForumDiscussionSubscription, ForumPost } from '@database/models';
 import { Character } from '@database/models/Character';
+import { redis } from '@config/runtime/redis';
 import { logger } from '../logger';
 
 /**
@@ -29,7 +30,7 @@ export class NotificationService {
    */
   private static async createNotification(data: NotificationData): Promise<void> {
     try {
-      await ForumNotification.create({
+      const notification = await ForumNotification.create({
         characterId: data.characterId,
         type: data.type,
         title: data.title,
@@ -45,6 +46,23 @@ export class NotificationService {
         isRead: false,
         createdAt: new Date()
       });
+
+      try {
+        await redis.getPublisher().publish('forum:events', JSON.stringify({
+          type: 'notification_new',
+          characterId: data.characterId.toString(),
+          notificationId: notification._id.toString(),
+          notificationType: data.type,
+          title: data.title,
+          message: data.message,
+          topicSlug: data.topicSlug,
+          discussionSlug: data.discussionSlug,
+          timestamp: new Date().toISOString(),
+          source: 'game-backend'
+        }));
+      } catch {
+        // Non-blocking: realtime push failure should not affect the persisted notification
+      }
     } catch (error: any) {
       logger.error(`[NotificationService] Failed to create notification: ${error.message}`, error);
       // Don't throw - notifications are non-critical, shouldn't break the main flow

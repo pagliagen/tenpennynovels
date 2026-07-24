@@ -19,7 +19,8 @@ import { useRouter } from 'next/router';
 import { ReactNode, useMemo, useEffect, useCallback, useState } from 'react';
 
 import { useWebSocket } from '@/contexts/WebSocketContext';
-import { useForumUnreadSummary } from '@/hooks/useForumPreferences';
+import { forumPreferenceKeys, useForumUnreadSummary } from '@/hooks/useForumPreferences';
+import { forumSocialKeys } from '@/hooks/useForumSocial';
 import { useOffGameUnreadCount } from '@/hooks/useOffGameChat';
 import { useOnGameUnreadCount } from '@/hooks/useOnGameMessages';
 import { useTicketNotifications } from '@/hooks/useTicketNotifications';
@@ -105,7 +106,7 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
   const { data: forumUnreadSummary } = useForumUnreadSummary();
 
   // WebSocket + QueryClient: For real-time badge updates
-  const { onMessageEvent, onGlobalEvent } = useWebSocket();
+  const { onMessageEvent, onGlobalEvent, onForumEvent } = useWebSocket();
   const queryClient = useQueryClient();
 
   // Ticket notifications: Real-time updates and invalidations
@@ -335,6 +336,28 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
     });
     return unsubscribe;
   }, [onMessageEvent, queryClient, refreshSession]);
+
+  /**
+   * WebSocket listener for real-time forum badge updates (unread bacheche).
+   * Must work even when the forum modal is closed.
+   */
+  useEffect(() => {
+    const unsubscribe = onForumEvent((event) => {
+      if (
+        event.type === 'forum:discussion:created' ||
+        event.type === 'forum:post:created' ||
+        event.type === 'forum:notification:new'
+      ) {
+        queryClient.invalidateQueries({ queryKey: forumPreferenceKeys.unreadSummary() });
+      }
+
+      if (event.type === 'forum:notification:new') {
+        queryClient.invalidateQueries({ queryKey: forumSocialKeys.unreadCount() });
+        queryClient.invalidateQueries({ queryKey: ['forum', 'notifications'] });
+      }
+    });
+    return unsubscribe;
+  }, [onForumEvent, queryClient]);
 
   return (
     <>

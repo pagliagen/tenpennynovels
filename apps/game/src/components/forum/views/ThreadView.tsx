@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 
+import { useWebSocket } from '@/contexts/WebSocketContext';
 import { useBroadcastDiscussion, useForumDiscussion } from '@/hooks/useForumDiscussions';
-import { useForumPosts } from '@/hooks/useForumPosts';
+import { forumPostKeys, useForumPosts } from '@/hooks/useForumPosts';
 import { useUpdateForumPreferences } from '@/hooks/useForumPreferences';
 import { useForumTopic } from '@/hooks/useForumTopics';
 import { useForumStore } from '@/store/forumStore';
@@ -52,6 +54,22 @@ export function ThreadView(): JSX.Element {
   const { data: topic } = useForumTopic(topicSlug);
   const broadcastDiscussion = useBroadcastDiscussion();
   const updatePreferences = useUpdateForumPreferences();
+  const { onForumEvent } = useWebSocket();
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (!topicSlug || !discussionSlug) return;
+    const unsubscribe = onForumEvent((event) => {
+      if (
+        event.type === 'forum:post:created' &&
+        event.data?.topicSlug === topicSlug &&
+        event.data?.discussionSlug === discussionSlug
+      ) {
+        queryClient.invalidateQueries({ queryKey: forumPostKeys.list(topicSlug, discussionSlug) });
+      }
+    });
+    return unsubscribe;
+  }, [onForumEvent, queryClient, topicSlug, discussionSlug]);
 
   const replyOrder: ForumReplyOrder = postsData?.replyOrder ?? 'asc';
 

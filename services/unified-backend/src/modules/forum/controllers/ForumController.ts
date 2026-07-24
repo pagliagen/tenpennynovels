@@ -29,6 +29,7 @@ import {
 } from '../services/ForumAccessService';
 import { serializePostAuthor } from '../services/ForumSerializer';
 import { sanitizeForumHtml } from '../services/ForumContentSanitizer';
+import { redis } from '@config/runtime/redis';
 
 const EDIT_WINDOW_MS = 15 * 60 * 1000;
 
@@ -96,6 +97,25 @@ function parseVisibilityInput(input: unknown): { visibility?: Record<string, unk
   }
 
   return { visibility: { type } };
+}
+
+/**
+ * Publishes a forum realtime event to Redis channel 'forum:events', consumed
+ * by ForumEventHandler (modules/game/events/handlers/ForumEventHandler.ts)
+ * and re-broadcast over the existing Socket.IO server. Fire-and-forget: a
+ * Redis hiccup must never fail the HTTP request it's attached to.
+ */
+async function publishForumRealtimeEvent(type: string, payload: Record<string, unknown>): Promise<void> {
+  try {
+    await redis.getPublisher().publish('forum:events', JSON.stringify({
+      type,
+      ...payload,
+      timestamp: new Date().toISOString(),
+      source: 'game-backend'
+    }));
+  } catch {
+    // Non-blocking: realtime notification failure should not break forum actions
+  }
 }
 
 function characterRef(req: Request) {
@@ -416,6 +436,15 @@ export class ForumController {
       });
 
       res.status(201).json(createResponse({ id: discussion._id, slug: discussion.slug }, undefined, getRequestId(req)));
+
+      publishForumRealtimeEvent('discussion_created', {
+        discussionId: discussion._id,
+        topicId: topic._id,
+        topicSlug,
+        discussionSlug: discussion.slug,
+        title: discussion.title,
+        createdBy: author
+      }).catch(() => {});
     } catch (error) {
       res.status(500).json({ success: false, error: 'Impossibile creare la discussione', code: 'CREATE_DISCUSSION_ERROR' });
     }
@@ -908,6 +937,16 @@ export class ForumController {
           topicSlug: topicSlugStr, discussionSlug: discussionSlugStr
         }).catch(() => {});
       }
+
+      publishForumRealtimeEvent('post_created', {
+        postId: post._id,
+        topicId: topic._id,
+        topicSlug: topicSlugStr,
+        discussionId: discussion._id,
+        discussionSlug: discussionSlugStr,
+        authorCharacterId: author.characterId,
+        authorCharacterName: author.characterName
+      }).catch(() => {});
     } catch (error) {
       res.status(500).json({ success: false, error: 'Impossibile creare il post', code: 'CREATE_POST_ERROR' });
     }
