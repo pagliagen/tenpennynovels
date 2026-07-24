@@ -129,3 +129,26 @@ export function useDeletePost(): UseMutationResult<
     },
   });
 }
+
+/**
+ * useTogglePinPost Hook
+ *
+ * Pins/unpins a post. Staff-only server-side (pinning a new post automatically
+ * unpins whichever was pinned before in the same discussion).
+ *
+ * @returns {UseMutationResult} Mutation result
+ */
+export function useTogglePinPost(): UseMutationResult<
+  void,
+  Error,
+  { postId: string; pinned: boolean; topicSlug: string; discussionSlug: string }
+> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ postId, pinned }) => forumApi.togglePinPost(postId, pinned),
+    onSuccess: (_, { topicSlug, discussionSlug }) => {
+      queryClient.invalidateQueries({ queryKey: forumPostKeys.list(topicSlug, discussionSlug) });
+    },
+  });
+}

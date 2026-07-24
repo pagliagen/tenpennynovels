@@ -2,12 +2,14 @@
 
 import { useState } from 'react';
 
-import { useUpdatePost, useDeletePost } from '@/hooks/useForumPosts';
+import { useUpdatePost, useDeletePost, useTogglePinPost } from '@/hooks/useForumPosts';
 import { useAuthStore } from '@/store/authStore';
 import { useForumStore } from '@/store/forumStore';
 import { useUIStore } from '@/store/uiStore';
 import styles from '@/styles/components/forum/PostCard.module.scss';
 import type { ForumPost } from '@/types/forum';
+
+import { ForumRichTextEditor } from '../ui/ForumRichTextEditor';
 
 interface PostCardProps {
   post: ForumPost;
@@ -34,6 +36,10 @@ export function PostCard({ post, isOwn: isOwnProp, topicMode, onReply }: PostCar
   const topicSlug = useForumStore((s) => s.topicSlug);
   const discussionSlug = useForumStore((s) => s.discussionSlug);
   const selectedCharacter = useAuthStore((s) => s.selectedCharacter);
+  // Proxy for "might be staff" - same flag the app already uses to show/hide
+  // the admin panel link. Real authorization is always enforced server-side;
+  // hiding the button for non-staff is a UX nicety, not a security boundary.
+  const canModerate = useAuthStore((s) => s.adminPanelAccessFromSession);
   const addToast = useUIStore((s) => s.addToast);
   const isOwn = isOwnProp ?? post.isOwnPost ?? selectedCharacter?._id === post.author.characterId;
   const withinEditWindow = topicMode !== 'ON' || (Date.now() - new Date(post.createdAt).getTime()) < EDIT_WINDOW_MS;
@@ -44,6 +50,7 @@ export function PostCard({ post, isOwn: isOwnProp, topicMode, onReply }: PostCar
 
   const updatePost = useUpdatePost();
   const deletePost = useDeletePost();
+  const togglePin = useTogglePinPost();
 
   const handleCopyLink = () => {
     if (!topicSlug || !discussionSlug) return;
@@ -79,6 +86,15 @@ export function PostCard({ post, isOwn: isOwnProp, topicMode, onReply }: PostCar
     }
   };
 
+  const handleTogglePin = async () => {
+    if (!topicSlug || !discussionSlug) return;
+    try {
+      await togglePin.mutateAsync({ postId: post.id, pinned: !post.isPinned, topicSlug, discussionSlug });
+    } catch {
+      addToast({ type: 'error', message: 'Impossibile aggiornare il pin' });
+    }
+  };
+
   if (post.isDeleted) {
     return (
       <article id={`post-${post.id}`} className={`${styles.card} ${styles.deleted}`}>
@@ -88,8 +104,9 @@ export function PostCard({ post, isOwn: isOwnProp, topicMode, onReply }: PostCar
   }
 
   return (
-    <article id={`post-${post.id}`} className={styles.card}>
+    <article id={`post-${post.id}`} className={`${styles.card} ${post.isPinned ? styles.pinned : ''}`}>
       <div className={styles.header}>
+        {post.isPinned && <span className={styles.edited}>📌 fissato</span>}
         <span className={styles.author}>{post.author.characterName}</span>
         {post.isAnonymous && (
           <span className={styles.edited} title={isOwn ? 'Visibile solo a te e allo staff' : undefined}>
@@ -101,12 +118,7 @@ export function PostCard({ post, isOwn: isOwnProp, topicMode, onReply }: PostCar
       </div>
       {isEditing ? (
         <div className={styles.editArea}>
-          <textarea
-            value={editContent}
-            onChange={(e) => setEditContent(e.target.value)}
-            className={styles.editTextarea}
-            rows={4}
-          />
+          <ForumRichTextEditor content={editContent} onChange={setEditContent} disabled={updatePost.isPending} />
           <div className={styles.editActions}>
             <button type="button" className={styles.cancelEditBtn} onClick={() => setIsEditing(false)}>
               Annulla
@@ -117,17 +129,30 @@ export function PostCard({ post, isOwn: isOwnProp, topicMode, onReply }: PostCar
           </div>
         </div>
       ) : (
-        <div className={styles.content}>{post.content}</div>
+        <>
+          {post.quotedContent && (
+            <div className={styles.quotedContent}>
+              <span className={styles.quotedAuthor}>{post.quotedContent.authorCharacterName} ha scritto:</span>
+              <div dangerouslySetInnerHTML={{ __html: post.quotedContent.excerptHtml }} />
+            </div>
+          )}
+          <div className={styles.content} dangerouslySetInnerHTML={{ __html: post.content }} />
+        </>
       )}
       <div className={styles.actions}>
         {onReply && (
           <button type="button" className={styles.actionBtn} onClick={() => onReply(post.id)}>
-            Rispondi
+            Cita
           </button>
         )}
         <button type="button" className={styles.actionBtn} onClick={handleCopyLink}>
           Copia link
         </button>
+        {canModerate && (
+          <button type="button" className={styles.actionBtn} onClick={handleTogglePin} disabled={togglePin.isPending}>
+            {post.isPinned ? 'Rimuovi pin' : 'Fissa'}
+          </button>
+        )}
         {isOwn && !isEditing && (
           <>
             {canEdit && (

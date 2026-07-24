@@ -106,6 +106,14 @@ export interface ForumPost {
    * post's author. Use this instead of comparing author.characterId, which
    * is masked to null for anonymous posts (except to the author/staff). */
   isOwnPost?: boolean;
+  /** At most one pinned post per discussion. */
+  isPinned?: boolean;
+  /** Snapshot taken at quote time, stable even if the original post changes later. */
+  quotedContent?: {
+    postId: string;
+    authorCharacterName: string;
+    excerptHtml: string;
+  };
 }
 
 export interface ForumBookmark {

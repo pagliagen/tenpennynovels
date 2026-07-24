@@ -83,6 +83,7 @@ router.post('/topics/:topicSlug/discussions/:discussionSlug/posts', forumCreatio
 router.put('/posts/:postId', forumModificationLimiter, requiredAuthBan, ForumController.updatePost);
 router.delete('/posts/:postId', forumModificationLimiter, requiredAuthBan, ForumController.deletePost);
 router.post('/posts/:postId/restore', forumModificationLimiter, requiredAuthBan, ForumController.restorePost);
+router.put('/posts/:postId/pin', forumModificationLimiter, requiredAuthBan, ForumController.pinPost);
 
 // ----- Search, Recent, Popular -----
 router.get('/search', forumReadLimiter, optionalAuth, ForumController.searchForum);

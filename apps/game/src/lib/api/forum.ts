@@ -168,6 +168,10 @@ export const forumApi = {
     await api.delete(`/forum/posts/${postId}`);
   },
 
+  async togglePinPost(postId: string, pinned: boolean): Promise<void> {
+    await api.put(`/forum/posts/${postId}/pin`, { pinned });
+  },
+
   // ── Search ────────────────────────────────────────────────────────
 
   async searchForum(

@@ -9,6 +9,12 @@ import { useUIStore } from '@/store/uiStore';
 import styles from '@/styles/components/forum/CreateDiscussionView.module.scss';
 import type { DiscussionVisibilityType } from '@/types/forum';
 
+import { ForumRichTextEditor } from '../ui/ForumRichTextEditor';
+
+function isEmptyHtml(html: string): boolean {
+  return !html.replace(/<[^>]*>/g, '').trim();
+}
+
 const VISIBILITY_OPTIONS: { value: DiscussionVisibilityType; label: string }[] = [
   { value: 'public', label: 'Pubblico (visibile a chi accede alla bacheca)' },
   { value: 'staff', label: 'Solo staff' },
@@ -36,7 +42,7 @@ export function CreateDiscussionView(): JSX.Element {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!topicSlug || !title.trim() || !content.trim()) return;
+    if (!topicSlug || !title.trim() || isEmptyHtml(content)) return;
 
     try {
       const tags = tagsInput
@@ -59,7 +65,7 @@ export function CreateDiscussionView(): JSX.Element {
         topicSlug,
         data: {
           title: title.trim(),
-          content: content.trim(),
+          content,
           tags: tags.length > 0 ? tags : undefined,
           visibility,
           isAnonymous: topic?.mode === 'ON' && isAnonymous,
@@ -111,17 +117,14 @@ export function CreateDiscussionView(): JSX.Element {
           />
         </div>
         <div className={styles.field}>
-          <label htmlFor="discussion-content" className={styles.label}>
+          <label className={styles.label}>
             Contenuto
           </label>
-          <textarea
-            id="discussion-content"
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
+          <ForumRichTextEditor
+            content={content}
+            onChange={setContent}
             placeholder="Scrivi il contenuto del primo messaggio..."
-            className={styles.textarea}
-            required
-            rows={8}
+            disabled={createDiscussion.isPending}
           />
         </div>
         <div className={styles.field}>
@@ -208,7 +211,7 @@ export function CreateDiscussionView(): JSX.Element {
           <button
             type="submit"
             className={styles.submitBtn}
-            disabled={createDiscussion.isPending || !title.trim() || !content.trim()}
+            disabled={createDiscussion.isPending || !title.trim() || isEmptyHtml(content)}
           >
             {createDiscussion.isPending ? 'Creazione...' : 'Crea discussione'}
           </button>

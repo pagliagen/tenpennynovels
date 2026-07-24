@@ -36,6 +36,19 @@ export interface IForumPost extends Document {
   // only in the API response serialization for viewers without moderation access
   // (see ForumSerializer.ts). Staff can always see the real author.
   isAnonymous?: boolean;
+  // At most one pinned post per discussion, enforced in the controller (unpins
+  // the previous one), not in the schema.
+  isPinned?: boolean;
+  pinnedAt?: Date;
+  pinnedByCharacterId?: mongoose.Types.ObjectId;
+  // Snapshot (not a live reference) of the quoted post, taken at quote time -
+  // stays stable even if the original is later edited/deleted, same rationale
+  // as editHistory below.
+  quotedContent?: {
+    postId: mongoose.Types.ObjectId;
+    authorCharacterName: string;
+    excerptHtml: string;
+  };
   moderationScore?: number;
   moderationLabel?: string;
   moderationModel?: string;
@@ -73,7 +86,9 @@ const ForumPostSchema = new Schema<IForumPost>({
     required: [true, 'Post content is required'],
     trim: true,
     minlength: [1, 'Content must be at least 1 character'],
-    maxlength: [10000, 'Content cannot exceed 10000 characters']
+    // Raised from 10000: this is now sanitized HTML (see ForumContentSanitizer),
+    // which carries markup overhead over the same amount of visible text.
+    maxlength: [20000, 'Content cannot exceed 20000 characters']
   },
   author: { type: CharacterRefSchema, required: true },
   createdAt: { type: Date, default: Date.now },
@@ -89,6 +104,14 @@ const ForumPostSchema = new Schema<IForumPost>({
   deletedByCharacterId: { type: Schema.Types.ObjectId, ref: 'Character' },
   replyToPostId: { type: Schema.Types.ObjectId, ref: 'ForumPost' },
   isAnonymous: { type: Boolean, default: false },
+  isPinned: { type: Boolean, default: false },
+  pinnedAt: Date,
+  pinnedByCharacterId: { type: Schema.Types.ObjectId, ref: 'Character' },
+  quotedContent: {
+    postId: { type: Schema.Types.ObjectId, ref: 'ForumPost' },
+    authorCharacterName: String,
+    excerptHtml: String
+  },
   moderationScore: { type: Number, min: 0, max: 1 },
   moderationLabel: { type: String, enum: ['toxic', 'not-toxic'] },
   moderationModel: String,
@@ -108,11 +131,14 @@ ForumPostSchema.post('save', async function(doc) {
   if (doc.isDeleted) return;
   try {
     const { publishForumPostEvent } = await import('../../shared/services/EmbeddingEventPublisher');
+    const { stripToPlainText } = await import('../../modules/forum/services/ForumContentSanitizer');
     const action = newDocuments.has(doc) ? 'created' : 'updated';
     newDocuments.delete(doc);
     await publishForumPostEvent(action, {
       _id: doc._id.toString(),
-      content: doc.content,
+      // content is sanitized HTML at this point (see ForumContentSanitizer) -
+      // the embedding index wants clean text, not markup.
+      content: stripToPlainText(doc.content),
       topicSlug: doc.topicSlug,
       discussionSlug: doc.discussionSlug,
       authorCharacterId: doc.author.characterId.toString(),
@@ -127,9 +153,10 @@ ForumPostSchema.post('findOneAndUpdate', async function(doc) {
   if (!doc || doc.isDeleted) return;
   try {
     const { publishForumPostEvent } = await import('../../shared/services/EmbeddingEventPublisher');
+    const { stripToPlainText } = await import('../../modules/forum/services/ForumContentSanitizer');
     await publishForumPostEvent('updated', {
       _id: doc._id.toString(),
-      content: doc.content,
+      content: stripToPlainText(doc.content),
       topicSlug: doc.topicSlug,
       discussionSlug: doc.discussionSlug,
       authorCharacterId: doc.author.characterId.toString(),
@@ -145,5 +172,6 @@ ForumPostSchema.index({ topicId: 1, discussionId: 1 });
 ForumPostSchema.index({ 'author.characterId': 1, createdAt: -1 });
 ForumPostSchema.index({ replyToPostId: 1 });
 ForumPostSchema.index({ isDeleted: 1 });
+ForumPostSchema.index({ discussionId: 1, isPinned: -1 });
 
 export const ForumPost = models.ForumPost || model<IForumPost>('ForumPost', ForumPostSchema);

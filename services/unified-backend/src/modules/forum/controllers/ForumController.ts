@@ -24,6 +24,7 @@ import {
   type ForumCharacterContext
 } from '../services/ForumAccessService';
 import { serializePostAuthor } from '../services/ForumSerializer';
+import { sanitizeForumHtml } from '../services/ForumContentSanitizer';
 
 const EDIT_WINDOW_MS = 15 * 60 * 1000;
 
@@ -399,7 +400,7 @@ export class ForumController {
       await ForumPost.create({
         topicId: topic._id, discussionId: discussion._id,
         topicSlug, discussionSlug: slug,
-        content: content.trim(),
+        content: sanitizeForumHtml(content.trim()),
         author,
         createdAt: now, isEdited: false, isDeleted: false,
         isAnonymous: topic.mode === 'ON' && !!isAnonymous
@@ -720,10 +721,35 @@ export class ForumController {
       }
 
       const filter = { discussionId: discussion._id };
-      const [posts, total] = await Promise.all([
-        ForumPost.find(filter).sort({ createdAt: 1 }).skip(skip).limit(limit).lean(),
-        ForumPost.countDocuments(filter)
-      ]);
+
+      // The opening post always stays first regardless of pin status (it's the
+      // thread's own message, not a reply); a pinned reply sorts immediately
+      // after it. Both are only ever within page 1 (earliest createdAt), so the
+      // special-case fetch only runs there - later pages sort the remaining
+      // (non-opening) posts by pin then chronologically as usual.
+      const openingPost = await ForumPost.findOne(filter).sort({ createdAt: 1 }).select('_id').lean();
+      const restFilter = openingPost ? { ...filter, _id: { $ne: openingPost._id } } : filter;
+
+      let posts: any[];
+      let total: number;
+      if (page === 1) {
+        const restLimit = Math.max(0, limit - (openingPost ? 1 : 0));
+        const [openingDoc, rest, totalCount] = await Promise.all([
+          openingPost ? ForumPost.findById(openingPost._id).lean() : Promise.resolve(null),
+          ForumPost.find(restFilter).sort({ isPinned: -1, createdAt: 1 }).limit(restLimit).lean(),
+          ForumPost.countDocuments(filter)
+        ]);
+        posts = openingDoc ? [openingDoc, ...rest] : rest;
+        total = totalCount;
+      } else {
+        const restSkip = Math.max(0, skip - (openingPost ? 1 : 0));
+        const [rest, totalCount] = await Promise.all([
+          ForumPost.find(restFilter).sort({ isPinned: -1, createdAt: 1 }).skip(restSkip).limit(limit).lean(),
+          ForumPost.countDocuments(filter)
+        ]);
+        posts = rest;
+        total = totalCount;
+      }
 
       const viewerHasModerationAccess = hasPermission(req, 'forum.manage');
       const totalPages = Math.ceil(total / limit);
@@ -741,7 +767,9 @@ export class ForumController {
           isOwnPost,
           createdAt: p.createdAt, updatedAt: p.updatedAt,
           isEdited: p.isEdited, isDeleted: p.isDeleted,
-          replyToPostId: p.replyToPostId
+          replyToPostId: p.replyToPostId,
+          isPinned: p.isPinned,
+          quotedContent: p.quotedContent
         };
       }), { currentPage: page, pageSize: limit, totalItems: total, totalPages, hasNextPage: page < totalPages, hasPreviousPage: page > 1 }, undefined, getRequestId(req)));
     } catch (error) {
@@ -786,14 +814,31 @@ export class ForumController {
         return res.status(403).json({ success: false, error: 'La discussione è bloccata', code: 'DISCUSSION_LOCKED' });
       }
 
+      // Quote snapshot: taken now, not a live reference - stays stable even if
+      // the quoted post is later edited/deleted (same rationale as editHistory).
+      let quotedContent: { postId: mongoose.Types.ObjectId; authorCharacterName: string; excerptHtml: string } | undefined;
+      if (replyToPostId && mongoose.Types.ObjectId.isValid(replyToPostId)) {
+        const quotedPost = await ForumPost.findOne({ _id: replyToPostId, discussionId: discussion._id, isDeleted: false })
+          .select('author content')
+          .lean();
+        if (quotedPost) {
+          quotedContent = {
+            postId: quotedPost._id,
+            authorCharacterName: quotedPost.author.characterName,
+            excerptHtml: quotedPost.content.slice(0, 500)
+          };
+        }
+      }
+
       const now = new Date();
       const post = await ForumPost.create({
         topicId: topic._id, discussionId: discussion._id,
         topicSlug, discussionSlug,
-        content: content.trim(),
+        content: sanitizeForumHtml(content.trim()),
         author,
         createdAt: now, isEdited: false, isDeleted: false,
         replyToPostId: replyToPostId ? new mongoose.Types.ObjectId(replyToPostId) : undefined,
+        quotedContent,
         // Anonymous posting is only an ON-board feature (spec: "possibilità di
         // postare in modo anonimo" is listed under BACHECA ON, absent from OFF).
         isAnonymous: topic.mode === 'ON' && !!isAnonymous
@@ -852,7 +897,7 @@ export class ForumController {
       const now = new Date();
       await ForumPost.findOneAndUpdate({ _id: post._id }, {
         $set: {
-          content: content.trim(),
+          content: sanitizeForumHtml(content.trim()),
           updatedAt: now,
           isEdited: true
         },
@@ -915,6 +960,56 @@ export class ForumController {
       res.json({ success: true, data: { deleted: true } });
     } catch (error) {
       res.status(500).json({ success: false, error: 'Impossibile eliminare il post', code: 'DELETE_POST_ERROR' });
+    }
+  }
+
+  /**
+   * Pin/unpin a post. Staff-only. At most one pinned post per discussion:
+   * pinning a new one automatically unpins whichever was pinned before.
+   * POST /posts/:postId/pin { pinned: boolean }
+   */
+  static async pinPost(req: Request, res: Response) {
+    try {
+      const postIdStr = (Array.isArray(req.params.postId) ? req.params.postId[0] : req.params.postId) as string;
+      const { pinned } = req.body;
+      const character = req.character;
+      if (!character) {
+        return res.status(400).json({ success: false, error: 'Personaggio richiesto', code: 'CHARACTER_REQUIRED' });
+      }
+
+      if (!hasPermission(req, 'forum.manage')) {
+        return res.status(403).json({ success: false, error: 'Non autorizzato', code: 'ACCESS_DENIED' });
+      }
+
+      if (!postIdStr || !mongoose.Types.ObjectId.isValid(postIdStr)) {
+        return res.status(400).json({ success: false, error: 'ID post non valido', code: 'INVALID_ID' });
+      }
+      const post = await ForumPost.findById(new mongoose.Types.ObjectId(postIdStr));
+      if (!post || post.isDeleted) {
+        return res.status(404).json({ success: false, error: 'Post non trovato', code: 'POST_NOT_FOUND' });
+      }
+
+      if (pinned === false) {
+        await ForumPost.updateOne({ _id: post._id }, { $set: { isPinned: false }, $unset: { pinnedAt: '', pinnedByCharacterId: '' } });
+        return res.json({ success: true, data: { pinned: false } });
+      }
+
+      // Unpin whatever was previously pinned in this discussion before pinning the new one.
+      await ForumPost.updateMany(
+        { discussionId: post.discussionId, isPinned: true },
+        { $set: { isPinned: false }, $unset: { pinnedAt: '', pinnedByCharacterId: '' } }
+      );
+      await ForumPost.updateOne({ _id: post._id }, {
+        $set: {
+          isPinned: true,
+          pinnedAt: new Date(),
+          pinnedByCharacterId: new mongoose.Types.ObjectId(character.characterId)
+        }
+      });
+
+      res.json({ success: true, data: { pinned: true } });
+    } catch (error) {
+      res.status(500).json({ success: false, error: 'Impossibile aggiornare il pin del post', code: 'PIN_POST_ERROR' });
     }
   }
 

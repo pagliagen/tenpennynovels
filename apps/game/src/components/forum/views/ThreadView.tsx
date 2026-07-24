@@ -84,6 +84,10 @@ export function ThreadView(): JSX.Element {
   const discussion = discussionData;
   const posts = postsData?.list ?? [];
   const pagination = postsData?.pagination;
+  const quotedPostSource = replyToPostId ? posts.find((p) => p.id === replyToPostId) : null;
+  const quotedPost = quotedPostSource
+    ? { authorName: quotedPostSource.author.characterName, contentHtml: quotedPostSource.content }
+    : null;
 
   if (!discussion) {
     return (
@@ -153,6 +157,7 @@ export function ThreadView(): JSX.Element {
             topicSlug={topicSlug}
             discussionSlug={discussionSlug}
             replyToPostId={replyToPostId}
+            quotedPost={quotedPost}
             allowAnonymous={topic?.mode === 'ON'}
             onSuccess={() => setReplyToPostId(null)}
           />
