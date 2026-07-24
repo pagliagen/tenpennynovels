@@ -14,6 +14,7 @@ import {
   useDeleteForumTopic
 } from '@/hooks/api/useForumTopics';
 import { useNotificationStore } from '@/store/notificationStore';
+import { TopicPermissionsPanel } from '@/components/forum/TopicPermissionsPanel';
 import { apiClient } from '@/lib/api/client';
 import type {
   ForumTopic,
@@ -384,6 +385,13 @@ export default function ForumTopicsPage() {
                 </button>
               </div>
             </div>
+
+            {editingTopic && (
+              <>
+                <p className={styles.sectionTitle}>Permessi per Personaggio</p>
+                <TopicPermissionsPanel topicId={editingTopic._id} />
+              </>
+            )}
           </form>
         </Modal>
         {ConfirmDialogComponent}

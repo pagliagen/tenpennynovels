@@ -14,11 +14,13 @@ import { Character } from '@database/models/Character';
 import { escapeRegex } from '@shared/utils/validation';
 import { EmbeddingService } from '@modules/documents/services/EmbeddingService';
 import { logger } from '@shared/utils/logger';
+import { AdminPermissions, hasAdminPermission, type AdminPermission } from '@config/permissions/admin';
 import {
   canAccessTopic,
   matchesDiscussionVisibility,
   buildDiscussionVisibilityFilter,
   evaluateDiscussionVisibility,
+  evaluateTopicPermissions,
   type ForumCharacterContext
 } from '../services/ForumAccessService';
 import { serializePostAuthor } from '../services/ForumSerializer';
@@ -29,10 +31,23 @@ const createSlug = (title: string): string => {
   return slugify(title, { lower: true, strict: true, locale: 'it', trim: true }).slice(0, 100);
 };
 
-const hasPermission = (req: Request, permission: string): boolean => {
+/**
+ * Checks moderation/admin access for the forum ('forum.manage' by default).
+ * Uses hasAdminPermission (role-derived + explicit grant/deny), NOT a raw
+ * string lookup in req.user.adminPermissions: the previous implementation
+ * only matched explicit grants and silently ignored role-derived permissions
+ * (e.g. a 'master' whose FORUM_MANAGE comes from AdminRolePermissions, not an
+ * explicit per-user grant, would incorrectly fail this check).
+ */
+const hasPermission = (req: Request, permission: AdminPermission = AdminPermissions.FORUM_MANAGE): boolean => {
   const user = req.user;
-  if (!user?.canAccessAdminPanel) return false;
-  return user.adminPermissions?.includes(permission) ?? false;
+  if (!user) return false;
+  return hasAdminPermission(
+    user.gameplayRoles ?? [],
+    user.adminPermissions ?? [],
+    user.isGestore ?? false,
+    permission
+  );
 };
 
 /** Builds the character context object consumed by ForumAccessService from req.character. */
@@ -41,7 +56,8 @@ function toCharCtx(character: Request['character']): ForumCharacterContext | und
   return {
     characterId: character.characterId,
     gameplayRoles: character.gameplayRoles,
-    isGestore: character.isGestore
+    isGestore: character.isGestore,
+    isApproved: character.isApproved
   };
 }
 
@@ -226,7 +242,7 @@ export class ForumController {
       }
 
       const character = req.character;
-      if (!(await canAccessTopic(topic, toCharCtx(character)))) {
+      if (!(await evaluateTopicPermissions(topic, toCharCtx(character))).view) {
         return res.status(403).json({ success: false, error: 'Accesso negato', code: 'ACCESS_DENIED' });
       }
 
@@ -298,7 +314,7 @@ export class ForumController {
 
       const character = req.character;
       const charCtx = toCharCtx(character);
-      if (!(await canAccessTopic(topic, charCtx))) {
+      if (!(await evaluateTopicPermissions(topic, charCtx)).view) {
         return res.status(403).json({ success: false, error: 'Accesso negato', code: 'ACCESS_DENIED' });
       }
 
@@ -343,8 +359,9 @@ export class ForumController {
         return res.status(404).json({ success: false, error: 'Topic non trovato', code: 'TOPIC_NOT_FOUND' });
       }
 
-      if (!(await canAccessTopic(topic, toCharCtx(req.character)))) {
-        return res.status(403).json({ success: false, error: 'Accesso negato', code: 'ACCESS_DENIED' });
+      const permissions = await evaluateTopicPermissions(topic, toCharCtx(req.character));
+      if (!permissions.openThread) {
+        return res.status(403).json({ success: false, error: 'Non hai il permesso di aprire una discussione in questa bacheca', code: 'ACCESS_DENIED' });
       }
 
       if (topic.isLocked && !hasPermission(req, 'forum.manage')) {
@@ -689,7 +706,7 @@ export class ForumController {
 
       const character = req.character;
       const charCtx = toCharCtx(character);
-      if (!(await canAccessTopic(topic, charCtx))) {
+      if (!(await evaluateTopicPermissions(topic, charCtx)).view) {
         return res.status(403).json({ success: false, error: 'Accesso negato', code: 'ACCESS_DENIED' });
       }
 
@@ -751,8 +768,9 @@ export class ForumController {
       }
 
       const charCtx = toCharCtx(req.character);
-      if (!(await canAccessTopic(topic, charCtx))) {
-        return res.status(403).json({ success: false, error: 'Accesso negato', code: 'ACCESS_DENIED' });
+      const permissions = await evaluateTopicPermissions(topic, charCtx);
+      if (!permissions.reply) {
+        return res.status(403).json({ success: false, error: 'Non hai il permesso di rispondere in questa bacheca', code: 'ACCESS_DENIED' });
       }
 
       const discussion = await ForumDiscussion.findOne({ topicSlug, slug: discussionSlug, isVisible: true, isDeleted: false });

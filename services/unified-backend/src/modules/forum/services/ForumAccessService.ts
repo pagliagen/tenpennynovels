@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import { ForumCategory } from '@database/models/ForumCategory';
 import type { IForumTopic, TopicAccessRule } from '@database/models/ForumTopic';
 import type { IForumDiscussion } from '@database/models/ForumDiscussion';
+import { ForumTopicPermissionOverride } from '@database/models/ForumTopicPermissionOverride';
 
 /**
  * ForumAccessService
@@ -25,6 +26,8 @@ export interface ForumCharacterContext {
   characterId: string;
   gameplayRoles?: string[];
   isGestore?: boolean;
+  /** playerStatus === 'approved'. Drives the ON-board "aprire thread" default. */
+  isApproved?: boolean;
 }
 
 function isStaffContext(character?: ForumCharacterContext): boolean {
@@ -188,4 +191,76 @@ export async function buildDiscussionVisibilityFilter(
     : {};
 
   return { $and: [{ $or: visibilityOr }, exclusionFilter] };
+}
+
+export interface ForumTopicPermissions {
+  view: boolean;
+  openThread: boolean;
+  reply: boolean;
+  attachImages: boolean;
+}
+
+/**
+ * Resolve the 4 player-facing granular permissions (view/openThread/reply/
+ * attachImages) for a character on a topic: mode-aware defaults, then an
+ * explicit per-character ForumTopicPermissionOverride (allow/deny) if one
+ * exists. 'moderare'/'amministrare' are NOT covered here - those stay on the
+ * existing admin permission system (hasAdminPermission). Gestore gets all 4.
+ *
+ * Default for openThread depends on topic.mode (spec: "tutti i pg possono
+ * aprire thread in tutte le bacheche ON" vs "se hanno il permesso o sono
+ * bacheche pubbliche" in OFF):
+ * - ON: default = baseView AND isApproved (revocable via override 'deny').
+ * - OFF: default = baseView AND the topic has an unconditional 'public' rule
+ *   (otherwise a character needs an explicit override 'allow').
+ * view/reply/attachImages default to baseView in both modes.
+ */
+export async function evaluateTopicPermissions(
+  topic: IForumTopic,
+  character?: ForumCharacterContext
+): Promise<ForumTopicPermissions> {
+  if (character?.isGestore) {
+    return { view: true, openThread: true, reply: true, attachImages: true };
+  }
+
+  const baseView = await canAccessTopic(topic, character);
+
+  let defaultOpenThread: boolean;
+  if (topic.mode === 'ON') {
+    defaultOpenThread = baseView && !!character?.isApproved;
+  } else {
+    const accessRules = await getEffectiveAccessRules(topic);
+    const isUnconditionallyPublic = accessRules.some((rule) => rule.type === 'public');
+    defaultOpenThread = baseView && isUnconditionallyPublic;
+  }
+
+  const defaults: ForumTopicPermissions = {
+    view: baseView,
+    openThread: defaultOpenThread,
+    reply: baseView,
+    attachImages: baseView
+  };
+
+  if (!character) return defaults;
+
+  const override = await ForumTopicPermissionOverride.findOne({
+    topicId: topic._id,
+    characterId: new mongoose.Types.ObjectId(character.characterId)
+  }).lean();
+
+  if (!override) return defaults;
+
+  const resolve = (key: keyof ForumTopicPermissions): boolean => {
+    const decision = override.overrides?.[key];
+    if (decision === 'allow') return true;
+    if (decision === 'deny') return false;
+    return defaults[key];
+  };
+
+  return {
+    view: resolve('view'),
+    openThread: resolve('openThread'),
+    reply: resolve('reply'),
+    attachImages: resolve('attachImages')
+  };
 }

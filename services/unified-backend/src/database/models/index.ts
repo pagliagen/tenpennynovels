@@ -207,6 +207,7 @@ export {
 // Forum System
 export { ForumCategory, type IForumCategory } from './ForumCategory';
 export { ForumTopic, type IForumTopic } from './ForumTopic';
+export { ForumTopicPermissionOverride, type IForumTopicPermissionOverride, type ForumPermissionDecision, type ForumTopicPermissionOverrides } from './ForumTopicPermissionOverride';
 export { ForumDiscussion, type IForumDiscussion } from './ForumDiscussion';
 export { ForumPost, type IForumPost } from './ForumPost';
 export { ForumTopicFavorite, type IForumTopicFavorite } from './ForumTopicFavorite';

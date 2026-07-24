@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { ForumTopicManagementController } from '../controllers/ForumTopicManagementController';
+import { ForumTopicPermissionManagementController } from '../controllers/ForumTopicPermissionManagementController';
 import { AdminAuthMiddleware } from '../middleware/adminAuth';
 import { requireViewPermission } from '../utils/permissions';
 
@@ -43,6 +44,31 @@ router.delete(
   AdminAuthMiddleware.logAdminAction('delete_forum_topic', 'forum_topic_management'),
   AdminAuthMiddleware.sensitiveOperationLimit(),
   ForumTopicManagementController.deleteTopic
+);
+
+// ----- Per-character granular permission overrides -----
+
+router.get(
+  '/:topicId/permissions',
+  requireViewPermission('forum.manage'),
+  AdminAuthMiddleware.logAdminAction('view_forum_topic_permissions', 'forum_topic_management'),
+  ForumTopicPermissionManagementController.getOverrides
+);
+
+router.put(
+  '/:topicId/permissions/:characterId',
+  requireViewPermission('forum.manage'),
+  AdminAuthMiddleware.logAdminAction('update_forum_topic_permission', 'forum_topic_management'),
+  AdminAuthMiddleware.sensitiveOperationLimit(),
+  ForumTopicPermissionManagementController.upsertOverride
+);
+
+router.delete(
+  '/:topicId/permissions/:characterId',
+  requireViewPermission('forum.manage'),
+  AdminAuthMiddleware.logAdminAction('delete_forum_topic_permission', 'forum_topic_management'),
+  AdminAuthMiddleware.sensitiveOperationLimit(),
+  ForumTopicPermissionManagementController.deleteOverride
 );
 
 export default router;
