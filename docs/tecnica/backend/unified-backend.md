@@ -2,7 +2,7 @@
 
 **Navigation**: [Home](../../INDEX.md) > [Backend](./README.md) > Unified Backend
 
-**Status**: ✅ Production Ready | **Last Updated**: 2026-03-08
+**Status**: ✅ Production Ready | **Last Updated**: 2026-07-25
 
 Complete documentation of the TenPennyNovels Unified Backend architecture — modular structure with all services consolidated in a single Express application.
 
@@ -10,7 +10,7 @@ Complete documentation of the TenPennyNovels Unified Backend architecture — mo
 
 ## Overview
 
-TenPennyNovels uses a **Unified Backend** that consolidates all backend modules (authentication, game, admin, documents) in a single Express service. Forum and Tickets modules have code implemented but **routes are not mounted** — requests to `/forum` and `/tickets` return 404.
+TenPennyNovels uses a **Unified Backend** that consolidates all backend modules (authentication, game, admin, documents, forum, tickets) in a single Express service.
 
 **Key Benefits**:
 - ✅ **Single Deployment**: One process, one port (3001)
@@ -41,20 +41,16 @@ flowchart TB
         G["/game"]
         AD["/admin"]
         D["/documents"]
+        F["/forum"]
+        T["/game/tickets"]
     end
 
     GW --> A
     GW --> G
     GW --> AD
     GW --> D
-
-    subgraph NotMounted["⚠️ Not Active - Routes Not Mounted"]
-        F["/forum"]
-        T["/tickets"]
-    end
-
-    GW -.->|"404"| F
-    GW -.->|"404"| T
+    GW --> F
+    GW --> T
 
     subgraph Infra["Infrastructure"]
         MongoDB[(MongoDB)]
@@ -67,7 +63,7 @@ flowchart TB
     Backend --> Qdrant
 ```
 
-> **CRITICAL**: Only **4 modules** are mounted in `app.ts`: `auth`, `documents`, `game`, `admin`. The API Gateway exposes `/forum` and `/tickets` but the backend does not mount these routes — requests return **404**.
+**6 moduli, tutti mounted**: `auth`, `documents`, `game`, `admin` in `app.ts`; `forum` in `app.ts` (`/forum`); `tickets` sotto il router `game` (`/game/tickets`, non `/tickets`).
 
 ---
 
@@ -77,7 +73,7 @@ flowchart TB
 |-----------|---------|
 | **Entry Point** | `src/server.ts` → `src/app.ts` |
 | **Port** | 3001 |
-| **Node.js** | 22.x |
+| **Node.js** | 24.x (`.nvmrc`: v24.18.0) |
 | **Express** | 5.2.1 |
 | **TypeScript** | 5.9 |
 | **Mongoose** | 9.2.1 |
@@ -97,8 +93,8 @@ flowchart TB
             GAME["game/"]
             ADMIN["admin/"]
             DOCS["documents/"]
-            FORUM["forum/ ⚠️ Not Active"]
-            TICKETS["tickets/ ⚠️ Not Active"]
+            FORUM["forum/"]
+            TICKETS["tickets/"]
         end
         DB["database/"]
         MW["middleware/"]
@@ -121,8 +117,8 @@ services/unified-backend/
 │   │   ├── game/             # Core gameplay logic ✅ Mounted
 │   │   ├── admin/            # Administrative operations ✅ Mounted
 │   │   ├── documents/        # Document management ✅ Mounted
-│   │   ├── forum/            # Forum system ⚠️ In Development (routes NOT mounted)
-│   │   └── tickets/          # Support tickets ⚠️ In Development (routes NOT mounted)
+│   │   ├── forum/            # Forum system (mounted at /forum)
+│   │   └── tickets/          # Support tickets (mounted at /game/tickets)
 │   ├── database/
 │   │   ├── models/           # 42 Mongoose schemas
 │   │   ├── migrations/       # Database migrations
@@ -308,52 +304,46 @@ POST   /documents/:type/:path/favorite - Toggle favorite
 
 ---
 
-### 5. Forum Module (`/forum`) ⚠️ In Development — Not Active
+### 5. Forum Module (`/forum`) ✅ Active
 
-**Purpose**: Community discussions, announcements, bookmarks, reactions, follows, notifications
+**Purpose**: Community discussions (topics → discussions → posts), bookmarks, subscriptions, notifications, favorites
 
-**Status**: Code exists (10 files with controllers for bookmarks, reactions, follows, notifications, subscriptions) but **routes are NOT mounted** in `app.ts`. The API Gateway exposes `/forum` but requests return **404**.
+**Status**: Mounted in `app.ts` (`app.use('/forum', forumRoutes)`). Sviluppo attivo — verificare sempre lo stato reale nel codice prima di fidarsi di questa sezione, il modulo si è mosso più volte.
 
-**Existing Structure**:
+**Struttura reale** (`src/modules/forum/`):
 ```
-src/modules/forum/
-├── controllers/
-│   ├── ForumController.ts           # Topics, discussions, posts
-│   ├── ForumBookmarkController.ts   # Bookmarks
-│   ├── ForumReactionController.ts  # Reactions
-│   ├── ForumFollowController.ts    # Character follows
-│   ├── ForumSubscriptionController.ts # Discussion subscriptions
-│   └── ForumNotificationController.ts # Notifications
-├── routes/
-│   └── forum.ts                    # Forum router (NOT mounted)
-└── services/
-    └── NotificationService.ts
+controllers/
+├── ForumController.ts               # Categorie, topic, discussioni, post
+├── ForumBookmarkController.ts       # Bookmark sui post
+├── ForumSubscriptionController.ts   # Sottoscrizioni alle discussioni
+└── ForumNotificationController.ts   # Notifiche
+routes/forum.ts                      # Router (mounted at /forum)
+services/
+├── ForumAccessService.ts            # Permessi/visibilità per categoria e topic
+├── ForumContentSanitizer.ts         # Sanitizzazione HTML dei post
+├── ForumSerializer.ts               # Serializzazione response
+└── NotificationService.ts
 ```
 
-**Planned Endpoints** (when mounted):
-- Topics, discussions, posts CRUD
-- Bookmarks, reactions, follows
-- Subscriptions, notifications
+⚠️ `ForumReactionController` e `ForumFollowController` citati in versioni precedenti di questo doc **non esistono più** — sostituiti da `ForumAccessService`/`ForumContentSanitizer`/`ForumSerializer`.
+
+**Endpoint principali** (`routes/forum.ts`): `GET /forum/init`, `/categories`, `/topics`, `/topics/:slug`, `/topics/:topicSlug/discussions[/:discussionSlug]`, CRUD post su `/posts/:postId`, `favorite`/`bookmark`/`subscribe` toggle, `/search`, `/recent`, `/popular`, `/notifications`.
+
+Moderazione forum: `ForumManagementController` nel modulo Admin (`/admin`).
 
 ---
 
-### 6. Tickets Module (`/tickets` or `/game/tickets`) ⚠️ In Development — Not Active
+### 6. Tickets Module (`/game/tickets`) ✅ Active
 
-**Purpose**: Support ticket system for character assistance
+**Purpose**: Sistema di ticket di supporto per i personaggi
 
-**Status**: Code exists (3 files: TicketController, routes, logger) but **routes are NOT mounted**. The ticket routes would be mounted under `/game` (e.g. `/game/tickets`). The API Gateway may expose `/tickets` or `/game/tickets` — in both cases requests return **404** because the backend does not mount the ticket routes.
+**Status**: Mounted sotto `/game` (`router.use('/', ticketRoutes)` in `modules/game/routes/index.ts`) → endpoint reali su `/game/tickets`, non `/tickets`.
 
-**Existing Structure**:
-```
-src/modules/tickets/
-├── controllers/
-│   └── TicketController.ts    # User tickets, categories, messages
-├── routes/
-│   └── tickets.ts            # Ticket router (NOT mounted in game routes)
-└── logger.ts
-```
+**Struttura reale** (`src/modules/tickets/`): `controllers/TicketController.ts`, `routes/tickets.ts`, `logger.ts`.
 
-**Note**: Admin ticket management (`/admin/tickets/*`) **is active** — it is part of the Admin module. Only the user-facing ticket creation and management endpoints are not mounted.
+**Endpoint**: `GET/POST /game/tickets`, `/game/tickets/categories`, `/game/tickets/unread-count`, `/game/tickets/:id`, `PUT /:id/reopen`, `/:id/close`, `POST /:id/messages`, `GET /:id/messages`, `PUT /:id/read`.
+
+Gestione admin (`TicketManagementController`, `TicketDashboardController`, `EscalationService`) è nel modulo Admin, sotto `/admin`.
 
 ---
 
@@ -497,12 +487,11 @@ npm run dev
 | **Port** | 3001 |
 | **Entry Point** | `src/server.ts` → `src/app.ts` |
 | **Framework** | Express 5.2.1 |
-| **ORM** | Mongoose 9.2.1 |
+| **ORM** | Mongoose 9.3.0 |
 | **WebSocket** | Socket.IO 4.8.3 |
-| **Node** | 22.x |
+| **Node** | 24.x (`.nvmrc`: v24.18.0) |
 | **TypeScript** | 5.9 |
-| **Mounted Modules** | auth, documents, game, admin |
-| **Not Active** | forum, tickets (code exists, routes not mounted) |
+| **Mounted Modules** | auth, documents, game, admin, forum, tickets (sotto `/game`) |
 
 ---
 

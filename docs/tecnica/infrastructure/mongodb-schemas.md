@@ -2,20 +2,22 @@
 
 **Navigation**: [Home](../../INDEX.md) > [Infrastructure](./README.md) > MongoDB Schemas
 
-**Status**: ✅ Production Ready | **Last Updated**: 2026-03-01
+**Status**: ✅ Production Ready | **Last Updated**: 2026-07-25
 
-Complete reference per tutti gli schema MongoDB di TenPennyNovels (36 collections).
+Complete reference per tutti gli schema MongoDB di TenPennyNovels (56 collections).
 
 ---
 
 ## Overview
 
-TenPennyNovels utilizza MongoDB 7.0 come database principale con **36 collections** organizzate per categoria funzionale. Tutti gli schema sono definiti con Mongoose 9.2.1 e includono indexes ottimizzati per performance.
+TenPennyNovels utilizza MongoDB 7.0 come database principale con **56 collections** organizzate per categoria funzionale. Tutti gli schema sono definiti con Mongoose 9.3.0 e includono indexes ottimizzati per performance.
 
 **Database**: `tenpennynovels`
-**ORM**: Mongoose 9.2.1
-**Total Collections**: 36
+**ORM**: Mongoose 9.3.0
+**Total Collections**: 56
 **Auth Mode**: Enabled (`--auth`)
+
+Fonte autorevole per l'elenco: `ls services/unified-backend/src/database/models/`. Questo documento raggruppa i 56 modelli per dominio; la sezione [Core Schemas Details](#core-schemas-details) più sotto entra nel dettaglio dei campi solo per i modelli più centrali — per gli altri, leggere il file del modello.
 
 ---
 
@@ -31,56 +33,71 @@ flowchart LR
     end
 ```
 
-### Characters (4)
+### Characters (5)
 ```mermaid
 flowchart LR
     subgraph Characters["Characters"]
         Character[Character - Dati base personaggi]
         CharacterProgression[CharacterProgression - Stats, skills, experience]
         CharacterFinances[CharacterFinances - Credits, transactions]
-    end
-```
-
-### Locations & Gameplay (5)
-```mermaid
-flowchart LR
-    subgraph Locations["Locations & Gameplay"]
-        Location[Location - Hierarchical locations]
-        Chat[Chat - Messaggi chat location]
-        Route[Route - Collegamenti tra locations]
         CharacterNotes[CharacterNotes - Note Master]
+        CharacterRelation[CharacterRelation - Relazioni tra character]
     end
 ```
 
-### Housing & Economy (1)
+### Locations & Housing (2)
 ```mermaid
 flowchart LR
-    subgraph Housing["Housing & Economy"]
+    subgraph Locations["Locations & Housing"]
+        Location[Location - Hierarchical locations]
         LocationProperty[LocationProperty - Proprietà immobiliari]
     end
 ```
-*Removed: EstateTransaction, Economy, FinancialTransaction*
 
-### Messaging & Communication (6)
+### Chat & Messaging (11)
 ```mermaid
 flowchart LR
-    subgraph MsgComm["Messaging & Communication"]
-        OnGameMessage[OnGameMessage - Postal system]
-        OnGameMessageView[OnGameMessageView - Tracking lettura]
+    subgraph MsgComm["Chat & Messaging"]
+        Chat[Chat - Messaggi chat location]
+        ChatModerationAction[ChatModerationAction - Moderazione chat]
+        MessageReport[MessageReport - Segnalazioni messaggi]
+        MessageBackup[MessageBackup - Backup messaggi]
         OffGameChat[OffGameChat - Chat off-game]
-        OffGameChatMessage[OffGameChatMessage - Messaggi chat]
-        OffGameChatParticipant[OffGameChatParticipant - Partecipanti]
-        MessageReport[MessageReport - Segnalazioni]
+        OffGameChatMessage[OffGameChatMessage - Messaggi chat OOC]
+        OffGameChatParticipant[OffGameChatParticipant - Partecipanti chat OOC]
+        OffGameMessage[OffGameMessage - Messaggistica off-game]
+        OffGameThread[OffGameThread - Thread off-game]
+        OnGameMessage[OnGameMessage - Postal system]
+        OnGameThread[OnGameThread - Thread postal system]
     end
 ```
-*Removed: Messaging (legacy)*
+
+### Forum (12)
+```mermaid
+flowchart LR
+    subgraph Forum["Forum"]
+        ForumCategory[ForumCategory - Categorie]
+        ForumTopic[ForumTopic - Topic]
+        ForumTopicFavorite[ForumTopicFavorite - Preferiti topic]
+        ForumTopicPermissionOverride[ForumTopicPermissionOverride - Permessi custom]
+        ForumTopicReadState[ForumTopicReadState - Stato lettura]
+        ForumDiscussion[ForumDiscussion - Discussioni]
+        ForumDiscussionFavorite[ForumDiscussionFavorite - Preferiti discussione]
+        ForumDiscussionSubscription[ForumDiscussionSubscription - Sottoscrizioni]
+        ForumPost[ForumPost - Post]
+        ForumBookmark[ForumBookmark - Bookmark sui post]
+        ForumNotification[ForumNotification - Notifiche]
+        ForumCharacterPreference[ForumCharacterPreference - Preferenze utente]
+    end
+```
+Retrieval: `docs/tecnica/backend/unified-backend.md` §5 (modulo mounted su `/forum`).
 
 ### Documents & Content (3)
 ```mermaid
 flowchart LR
     subgraph Documents["Documents & Content"]
         Document[Document - Ambientazione/regolamento]
-        DocumentSection[DocumentSection - Sezioni gerarchiche]
+        DocumentSubtype[DocumentSubtype - Sottotipi documento]
         DocumentChunk[DocumentChunk - Chunks semantic search]
     end
 ```
@@ -94,7 +111,15 @@ flowchart LR
         SessionTemplate[SessionTemplate - Template sessioni]
     end
 ```
-*Removed: Campaign*
+
+### Combat & Skill Checks (2)
+```mermaid
+flowchart LR
+    subgraph Combat["Combat & Skill Checks"]
+        CombatEncounter[CombatEncounter - Incontri di combattimento]
+        SkillConfrontation[SkillConfrontation - Confronti/opposed check]
+    end
+```
 
 ### Tickets & Support (3)
 ```mermaid
@@ -106,12 +131,11 @@ flowchart LR
     end
 ```
 
-### Corporations & Relationships (2)
+### Corporations (1)
 ```mermaid
 flowchart LR
-    subgraph Corp["Corporations & Relationships"]
+    subgraph Corp["Corporations"]
         Corporation[Corporation - Clubs/aziende/gang]
-        CharacterRelation[CharacterRelation - Relazioni tra character]
     end
 ```
 
@@ -133,23 +157,24 @@ flowchart LR
     end
 ```
 
-### Experience & Progression (0)
-*Removed: ExperienceGrant*
-
-### Moderation & Admin (2)
+### Moderation, Security & Audit (5)
 ```mermaid
 flowchart LR
-    subgraph Mod["Moderation & Admin"]
-        ChatModerationAction[ChatModerationAction - Moderazione chat]
-        BroadcastMessage[BroadcastMessage - Messaggi broadcast]
+    subgraph Mod["Moderation, Security & Audit"]
+        ModerationAlert[ModerationAlert - Alert moderazione]
+        SecurityAlert[SecurityAlert - Alert sicurezza]
+        UserReport[UserReport - Segnalazioni utenti]
+        AuditLog[AuditLog - Log di audit]
+        DeletedRecord[DeletedRecord - Archivio record eliminati]
     end
 ```
 
-### System Events (1)
+### System Events (2)
 ```mermaid
 flowchart LR
     subgraph Events["System Events"]
         WebSocketEvent[WebSocketEvent - Eventi real-time]
+        BroadcastMessage[BroadcastMessage - Messaggi broadcast]
     end
 ```
 
@@ -525,7 +550,7 @@ interface IDocument {
   content: string;            // Markdown
 
   // Hierarchy
-  sectionId?: ObjectId;       // ref: DocumentSection
+  sectionId?: ObjectId;       // ref: DocumentSubtype
   parentDocumentId?: ObjectId; // ref: Document
   order: number;              // Sort order within section
 
@@ -882,7 +907,7 @@ schema.index({ createdAt: 1 }, { expireAfterSeconds: 86400 });
 ### Connection Pooling
 
 ```typescript
-// Mongoose 9.2.1 connection
+// Mongoose 9.3.0 connection
 mongoose.connect(process.env.MONGODB_URI, {
   maxPoolSize: 10,      // Max connections
   minPoolSize: 2,       // Min connections
@@ -1012,10 +1037,10 @@ docker exec -i tenpennynovels-mongodb mongorestore \
 
 ## Quick Reference
 
-**Total Collections**: 36
+**Total Collections**: 56
 **Database**: `tenpennynovels`
 **MongoDB Version**: 7.0
-**ORM**: Mongoose 9.2.1
+**ORM**: Mongoose 9.3.0
 **Auth**: Enabled (`--auth`)
 **Connection URI**: `mongodb://username:password@mongodb:27017/tenpennynovels?authSource=admin`
 **Backup**: Daily at 2am UTC (cron)

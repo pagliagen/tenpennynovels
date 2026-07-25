@@ -1,6 +1,6 @@
 # Database schema — dove trovare la verità
 
-Questo file **non** elenca più i modelli: la lista si de-sincronizzava a ogni aggiunta (documentava 41 modelli su 56 reali). Lo schema si muove spesso — il forum è in sviluppo attivo — quindi qui trovi solo come ottenere il dato aggiornato.
+Questo file **non** elenca più i modelli: la lista si de-sincronizzava a ogni aggiunta. Lo schema si muove spesso — il forum è in sviluppo attivo — quindi qui trovi solo come ottenere il dato aggiornato.
 
 ## Fonte autorevole: il codice
 
@@ -11,14 +11,11 @@ cat services/unified-backend/src/database/models/index.ts # barrel export
 
 ## Documentazione descrittiva
 
-`docs/tecnica/infrastructure/mongodb-schemas.md` — campi, indici e relazioni raggruppati per dominio.
+`docs/tecnica/infrastructure/mongodb-schemas.md` — catalogo per dominio (56/56 modelli, aggiornato 2026-07-25) + dettaglio campi/indici per i ~15 modelli più centrali (User, Character, Location, Document, …).
 
-⚠️ **È parziale**: copre ~42 collection su 56 modelli reali. Tra i non documentati:
-`ForumCategory`, `ForumTopic*`, `ForumDiscussion*`, `ForumBookmark`, `ForumNotification`, `ForumCharacterPreference`,
-`CombatEncounter`, `SkillConfrontation`, `SecurityAlert`, `ModerationAlert`,
-`MessageBackup`, `OffGameThread`, `OnGameThread`, `OffGameChatParticipant`.
+⚠️ Il catalogo per categoria è completo, ma il **dettaglio dei campi** (interfacce TypeScript) copre solo i modelli centrali. Per un modello non dettagliato lì, leggi il file sorgente in `database/models/`.
 
-Se un modello non è nel doc, **non concludere che non esista**: verifica con `ls`.
+Verifica sempre il conteggio (`ls | wc -l`) prima di citare un numero: lo schema cresce spesso, il doc può tornare indietro tra due letture.
 
 ## Relazioni principali
 
