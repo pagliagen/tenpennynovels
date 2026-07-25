@@ -138,6 +138,85 @@
   margin: 2px;
 }
 
+// Anchor for the "Utilità" feature hub popup (wraps the icon button so the
+// dropdown positions relative to it, matching the .utilityDropdown pattern)
+.featureHubAnchor {
+  position: relative;
+  display: inline-flex;
+}
+
+.featureHubDropdown {
+  position: absolute;
+  top: 70px;
+  right: 0;
+  min-width: 220px;
+  background: var(--color-bg-primary);
+  border: 2px solid var(--color-accent);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  padding: 8px 0;
+  animation: slideDown 0.2s ease;
+  z-index: 300;
+}
+
+.featureHubTitle {
+  padding: 4px 20px 10px;
+  font-family: 'Thrifted Attire', serif;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  opacity: 0.8;
+}
+
+.featureHubItem {
+  width: 100%;
+  padding: 10px 20px;
+  background: none;
+  border: none;
+  color: var(--color-text-primary);
+  font-size: 14px;
+  font-family: 'Playfair Display', serif;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  text-decoration: none;
+
+  &:hover {
+    background: color.adjust(#1a1410, $lightness: 5%);
+    color: var(--color-accent);
+  }
+}
+
+.featureHubBadge {
+  background: var(--color-error);
+  color: white;
+  border-radius: 10px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.featureHubItemDisabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+
+  &:hover {
+    background: none;
+    color: var(--color-text-primary);
+  }
+}
+
+.featureHubComingSoon {
+  font-size: 11px;
+  font-style: italic;
+  white-space: nowrap;
+}
+
 .notificationBadge {
   position: absolute;
   top: -5px;
