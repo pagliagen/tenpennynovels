@@ -7,10 +7,9 @@
  * - Standalone location detail pages
  *
  * Features:
- * - Location image (if available)
- * - Name, description, district
+ * - Name, district header
+ * - Location image with typewriter-animated description and "Entra" button overlaid (if available)
  * - Statistics (occupants, features)
- * - Action buttons ("Entra In Chat", "Visit Shop", etc.)
  *
  * @module components/locations/LocationDetail
  * @since 2.0.0
@@ -20,6 +19,8 @@
 
 import { useRouter } from 'next/router';
 
+import { useTypewriter } from '@/hooks/useTypewriter';
+import { playTypewriterTick } from '@/lib/audio';
 import styles from '@/styles/components/locations/detail.module.scss';
 import type { AccessibleLocation } from '@/types/location';
 
@@ -59,6 +60,18 @@ export function LocationDetail({
 }: LocationDetailProps): JSX.Element {
   const router = useRouter();
 
+  // NOTE: hook must run unconditionally (before the early return) per Rules of Hooks
+  const { displayedText: typedDescription, isDone: isTypingDone } = useTypewriter(
+    location?.description || '',
+    {
+      minSpeed: 18,
+      maxSpeed: 55,
+      onChar: (char) => {
+        if (char.trim()) playTypewriterTick();
+      },
+    }
+  );
+
   /**
    * Handle "Entra In Chat" button click
    */
@@ -86,30 +99,53 @@ export function LocationDetail({
   }
 
   const hasOccupants = (location.occupantCount || 0) > 0;
+  const imageSrc = location.imageUrl || (location.image ? `/artifacts/locations/${location.image}` : undefined);
+
+  const enterButton = showActions && location.hasChat && (
+    <button
+      type="button"
+      className={imageSrc ? styles.enterButtonOverlay : styles.primaryButton}
+      onClick={handleEnterChat}
+    >
+      Entra In Chat
+    </button>
+  );
 
   return (
     <div className={styles.detailContainer}>
-      {/* Location Image */}
-      {location.imageUrl && (
-        <div className={styles.imageWrapper}>
-          <img
-            src={location.imageUrl}
-            alt={location.name}
-            className={styles.locationImage}
-          />
-        </div>
-      )}
-
       {/* Location Header */}
       <div className={styles.header}>
         <h2 className={styles.locationName}>{location.name}</h2>
         <span className={styles.locationDistrict}>{location.district}</span>
       </div>
 
-      {/* Location Description */}
-      <div className={styles.description}>
-        <p>{location.description}</p>
-      </div>
+      {/* Location Image with description overlay + Entra button */}
+      {imageSrc ? (
+        <div className={styles.imageBlock}>
+          <img
+            src={imageSrc}
+            alt={location.name}
+            className={styles.locationImage}
+          />
+          <div className={styles.imageOverlayGradient} />
+          <p className={styles.overlayDescription}>
+            {typedDescription}
+            {!isTypingDone && <span className={styles.typewriterCursor} aria-hidden="true" />}
+          </p>
+          {enterButton}
+        </div>
+      ) : (
+        <>
+          {/* Location Description (fallback when no image is available) */}
+          <div className={styles.description}>
+            <p>
+              {typedDescription}
+              {!isTypingDone && <span className={styles.typewriterCursor} aria-hidden="true" />}
+            </p>
+          </div>
+          {enterButton && <div className={styles.actions}>{enterButton}</div>}
+        </>
+      )}
 
       {/* Location Stats */}
       {hasOccupants ?
@@ -124,22 +160,6 @@ export function LocationDetail({
           )}
         </div>
         : null}
-
-      {/* Action Buttons */}
-      {showActions && (
-        <div className={styles.actions}>
-          {/* Enter Chat Button */}
-          {location.hasChat && (
-            <button
-              type="button"
-              className={styles.primaryButton}
-              onClick={handleEnterChat}
-            >
-              Entra In Chat
-            </button>
-          )}
-        </div>
-      )}
 
       {/* Occupants List (if present) */}
       {hasOccupants && location.occupants && location.occupants.length > 0 && (
