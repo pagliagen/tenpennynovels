@@ -10,6 +10,10 @@ import { Client as ElasticsearchClient } from '@elastic/elasticsearch';
 import { config, DocumentType } from '../config';
 import { logger } from '../utils/logger';
 import { validateTextLength, validateSearchParams } from '../utils/validation';
+import { checkOllamaHealth } from '../services/qa/OllamaChat';
+import { askWithContext } from '../services/qa/RAGPipeline';
+import { extractKeywords } from '../services/qa/AnswerEvaluator';
+import { extractInsight } from '../services/qa/DocumentInsightExtractor';
 
 export class EmbeddingsHttpServer {
   private app: express.Application;
@@ -59,20 +63,26 @@ export class EmbeddingsHttpServer {
      * Health check endpoint
      * Returns 503 if Python subprocess not ready
      */
-    this.app.get('/health', (_req: Request, res: Response) => {
+    this.app.get('/health', async (_req: Request, res: Response) => {
+      // Ollama is reported alongside but does NOT gate the overall status/code:
+      // search/embeddings must stay reported healthy even if the RAG (/ask) path is down.
+      const ollama = await checkOllamaHealth();
+
       if (this.pythonService.ready) {
         res.json({
           status: 'healthy',
           service: 'embeddings-worker',
           model: 'paraphrase-multilingual-MiniLM-L12-v2',
-          loaded: true
+          loaded: true,
+          ollama
         });
       } else {
         res.status(503).json({
           status: 'unhealthy',
           service: 'embeddings-worker',
           loaded: false,
-          reason: 'Python subprocess not ready'
+          reason: 'Python subprocess not ready',
+          ollama
         });
       }
     });
@@ -168,6 +178,78 @@ export class EmbeddingsHttpServer {
           success: false,
           error: 'Internal server error'
         });
+      }
+    });
+
+    /**
+     * RAG answer generation (Bibliotecario)
+     * POST /ask
+     * Body: { question: string, context: Array<{heading, content, source?}>, options?: {maxTokens?, locale?} }
+     */
+    this.app.post('/ask', async (req: Request, res: Response) => {
+      try {
+        const { question, context, options } = req.body;
+
+        if (!question || typeof question !== 'string') {
+          return res.status(400).json({ success: false, error: 'Missing or invalid question parameter' });
+        }
+        if (!Array.isArray(context)) {
+          return res.status(400).json({ success: false, error: 'Missing or invalid context parameter' });
+        }
+
+        const result = await askWithContext(
+          question,
+          context,
+          options?.locale || 'it',
+          options?.maxTokens || 800
+        );
+
+        res.json({ success: true, ...result });
+      } catch (error: any) {
+        logger.error('Error in /ask endpoint', error);
+        res.status(500).json({ success: false, error: 'Internal server error' });
+      }
+    });
+
+    /**
+     * Suggest follow-up search keywords from a question/answer pair
+     * POST /extract-keywords
+     * Body: { question: string, answer: string }
+     */
+    this.app.post('/extract-keywords', async (req: Request, res: Response) => {
+      try {
+        const { question, answer } = req.body;
+
+        if (!question || typeof question !== 'string' || !answer || typeof answer !== 'string') {
+          return res.status(400).json({ success: false, error: 'Missing or invalid question/answer parameter' });
+        }
+
+        const result = await extractKeywords({ question, answer });
+        res.json({ success: true, ...result });
+      } catch (error: any) {
+        logger.error('Error in /extract-keywords endpoint', error);
+        res.status(500).json({ success: false, error: 'Internal server error' });
+      }
+    });
+
+    /**
+     * Extract a new insight from a candidate document, if any
+     * POST /extract-insight
+     * Body: { question: string, existingAnswer: string, documentContent: string, documentTitle: string }
+     */
+    this.app.post('/extract-insight', async (req: Request, res: Response) => {
+      try {
+        const { question, existingAnswer, documentContent, documentTitle } = req.body;
+
+        if (!question || !existingAnswer || !documentContent || !documentTitle) {
+          return res.status(400).json({ success: false, error: 'Missing required parameters' });
+        }
+
+        const result = await extractInsight({ question, existingAnswer, documentContent, documentTitle });
+        res.json({ success: true, ...result });
+      } catch (error: any) {
+        logger.error('Error in /extract-insight endpoint', error);
+        res.status(500).json({ success: false, error: 'Internal server error' });
       }
     });
   }

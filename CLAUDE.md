@@ -26,10 +26,9 @@ tenpennynovels/
 ├── services/            # 3 Backend services
 │   ├── api-gateway/     # Reverse proxy (port 8000)
 │   ├── unified-backend/ # Main backend (port 3001)
-│   └── embeddings-worker/ # Vector embeddings (port 5001)
-└── local-ai/            # 3 AI services
+│   └── embeddings-worker/ # Vector embeddings + Q&A RAG "Bibliotecario" (port 5001)
+└── local-ai/            # 2 AI services
     ├── services/botai/  # Character AI (port 8080)
-    ├── services/qa/     # Question answering (port 8090)
     └── services/character-gen/ # Character generation (port 8130)
 ```
 
@@ -38,7 +37,7 @@ tenpennynovels/
 - **Backend**: Express (v5 in api-gateway/unified-backend, v4 in embeddings-worker/local-ai), TypeScript, MongoDB, Redis, Socket.IO server, Bull queues
 - **AI**: Ollama (LLM locale, dual-model creativo/analitico), Qdrant (vector DB), embeddings multilingua
 - **Infrastructure**: Docker Compose, PM2, Nginx, Ubuntu VPS
-- **Node**: v22.13.1 (`.nvmrc` è source of truth)
+- **Node**: v24.18.0 (`.nvmrc` è source of truth)
 
 ---
 
@@ -62,7 +61,7 @@ Questo progetto usa un sistema modulare di regole in `.claude/rules/` per preven
    - No `any` types senza giustificazione
 
 3. **[02-node-environment.md](.claude/rules/02-node-environment.md)** - Node & npm
-   - Node v22.13.1 da `.nvmrc`
+   - Node v24.18.0 da `.nvmrc`
    - npm ci per CI/CD, npm install per local
    - Production vs dev dependencies
 
@@ -182,7 +181,6 @@ Questo progetto usa un sistema modulare di regole in `.claude/rules/` per preven
 
 **AI Services:**
 - BotAI: `8080`
-- QA: `8090`
 - Character-Gen: `8130`
 - AI Gateway: `9000`
 

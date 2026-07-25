@@ -1,7 +1,6 @@
 import { Response } from 'express';
 import mongoose from 'mongoose';
 import { EmbeddingService } from './EmbeddingService';
-import { aiGatewayClient } from '../../game/services/AIGatewayClient';
 import { logger } from '@shared/utils/logger';
 
 const MAX_KEYWORDS = 3;
@@ -143,7 +142,7 @@ export class DocumentSearchAgent {
     try {
       if (signal.aborted) return;
 
-      const healthy = await aiGatewayClient.isHealthy();
+      const healthy = await EmbeddingService.isAiAvailable();
       if (!healthy) {
         logger.warn('[SearchAgent] AI gateway not healthy, skipping');
         sendSSE(res, 'complete', {});
@@ -152,7 +151,7 @@ export class DocumentSearchAgent {
       }
 
       // Step 1: Get initial AI answer
-      const qaResponse = await aiGatewayClient.askQuestion({
+      const qaResponse = await EmbeddingService.askQuestion({
         question,
         context: initialContextChunks,
         options: { maxTokens: 400, locale: 'it' },
@@ -174,7 +173,7 @@ export class DocumentSearchAgent {
       });
 
       // Step 2: Extract keywords for further research
-      const keywordsResponse = await aiGatewayClient.extractKeywords({
+      const keywordsResponse = await EmbeddingService.extractKeywords({
         question,
         answer: qaResponse.answer,
       });
@@ -233,7 +232,7 @@ export class DocumentSearchAgent {
             fullPath: doc.fullPath,
           });
 
-          const insightResponse = await aiGatewayClient.extractInsight({
+          const insightResponse = await EmbeddingService.extractInsight({
             question,
             existingAnswer: qaResponse.answer,
             documentContent: doc.content,

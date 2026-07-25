@@ -1,6 +1,6 @@
 # Local AI
 
-Piattaforma AI locale e indipendente per TenPennyNovels. Genera risposte NPC, risponde a domande sul regolamento, e (in futuro) genera immagini — tutto con modelli locali, zero costi cloud.
+Piattaforma AI locale e indipendente per TenPennyNovels. Genera risposte NPC e (in futuro) immagini — tutto con modelli locali, zero costi cloud. Il Q&A ("Bibliotecario") per la ricerca semantica dei documenti NON vive più qui: è in `services/embeddings-worker`, come feature di produzione del sito.
 
 ## Principio fondamentale
 
@@ -38,7 +38,6 @@ docker compose --profile test up -d test-ui
 |----------|-------|-------|-------------|
 | Gateway | 9000 | Attivo | Entry point, sicurezza, routing |
 | BotAI | 8080 | Attivo | NPC bot con memoria e relazioni |
-| Q&A | 8090 | Attivo | Risposte a domande con contesto |
 | Item Image Gen | 8100 | Stub | Generazione immagini oggetti |
 | Location Image Gen | 8110 | Stub | Generazione immagini location |
 | Avatar Gen | 8120 | Stub | Generazione avatar personaggi |

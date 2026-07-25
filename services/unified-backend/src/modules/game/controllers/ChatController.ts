@@ -341,6 +341,20 @@ export class ChatController {
       if (io) {
         const roomName = `location_${locationId}`;
 
+        // Resolve whisper target names for display (sender/targets/master already
+        // authorized to see the message itself, so this adds no new exposure)
+        let whisperEnrichment: { targetCharacterIds: string[]; targetCharacterNames: string[] } | undefined;
+        if (savedAction.visibility === 'whisper' && savedAction.targetCharacters?.length) {
+          const targetChars = await Character.find({ _id: { $in: savedAction.targetCharacters } })
+            .select('_id name')
+            .lean();
+          const nameById = new Map(targetChars.map((c: any) => [c._id.toString(), c.name]));
+          whisperEnrichment = {
+            targetCharacterIds: savedAction.targetCharacters,
+            targetCharacterNames: savedAction.targetCharacters.map((id: string) => nameById.get(id) || 'Unknown')
+          };
+        }
+
         // Return DB fields directly (no mapping)
         const chatMessage = {
           _id: savedAction._id.toString(),
@@ -351,6 +365,7 @@ export class ChatController {
           position: savedAction.position || undefined,
           locationId: savedAction.locationId.toString(),
           content: savedAction.content,                 // DB field (was text)
+          visibility: savedAction.visibility,            // Needed by frontend for client-side visibility filtering
           diceResult: savedAction.diceResult || undefined,  // DB field (was diceRoll)
           // Fix: Only include socialConflict if it has properties (Mongoose creates empty {} for subdocuments)
           socialConflict: (savedAction.socialConflict && Object.keys(savedAction.socialConflict).length > 0)
@@ -359,6 +374,7 @@ export class ChatController {
           statCheck: (savedAction as unknown as Record<string, unknown>).statCheck || undefined,
           itemEffect: savedAction.itemEffect || undefined,  // DB field (was itemUse)
           targetCharacters: savedAction.targetCharacters || undefined,  // DB field (was whisperVisibility)
+          whisper: whisperEnrichment,
           hiddenContent: savedAction.hiddenContent || undefined,
           editHistory: savedAction.editHistory || [],
           timestamp: savedAction.timestamp.toISOString()  // DB field (was createdAt/updatedAt)
@@ -371,12 +387,32 @@ export class ChatController {
           locationSlug: location?.slug || null
         };
 
-        logger.debug(`ChatsController: Emitting notification to room ${roomName} with message ${chatMessage._id}`);
-        io.to(roomName).emit('location_message_notification', notification);
+        // SECURITY: Non-public messages must NEVER be broadcast to the whole
+        // location room. The full message content (whisper text, master/mod
+        // narration, hidden action-mode content) is only sent to sockets that
+        // are actually authorized to see it, mirroring ChatMessageService.canSeeAction.
+        // Broadcasting unfiltered to `roomName` would leak private content to every
+        // client's network layer regardless of what the UI chooses to render.
+        const isHiddenUntilRevealed = !!savedAction.isHidden && !savedAction.revealedAt;
 
-        // Debug: Check how many clients are in the room
-        const room = io.sockets.adapter.rooms.get(roomName);
-        logger.debug(`ChatsController: Clients in room ${roomName}: ${room ? room.size : 0}`);
+        if (savedAction.visibility === 'whisper') {
+          const recipientRooms = [`character_${savedAction.characterId}`, ...(savedAction.targetCharacters || []).map((id: string) => `character_${id}`)];
+          io.to(recipientRooms).emit('location_message_notification', notification);
+          logger.debug(`ChatsController: Emitted whisper notification to ${recipientRooms.length} character room(s)`, { messageId: chatMessage._id });
+        } else if (savedAction.visibility === 'master_only') {
+          io.to([`character_${savedAction.characterId}`, 'staff']).emit('location_message_notification', notification);
+          logger.debug(`ChatsController: Emitted master_only notification to sender + staff room`, { messageId: chatMessage._id });
+        } else if (isHiddenUntilRevealed) {
+          io.to(`character_${savedAction.characterId}`).emit('location_message_notification', notification);
+          logger.debug(`ChatsController: Emitted hidden action-mode notification to sender only`, { messageId: chatMessage._id });
+        } else {
+          logger.debug(`ChatsController: Emitting notification to room ${roomName} with message ${chatMessage._id}`);
+          io.to(roomName).emit('location_message_notification', notification);
+
+          // Debug: Check how many clients are in the room
+          const room = io.sockets.adapter.rooms.get(roomName);
+          logger.debug(`ChatsController: Clients in room ${roomName}: ${room ? room.size : 0}`);
+        }
       } else {
         logger.error('ChatsController: Socket.io instance not found in req.app');
       }

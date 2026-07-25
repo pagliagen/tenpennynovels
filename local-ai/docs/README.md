@@ -35,7 +35,6 @@ Il mondo esterno gli dice cosa fare, lui lo fa.
 |----------|-------|-------|
 | Gateway | 9000 | Attivo |
 | BotAI | 8080 | Attivo |
-| Q&A | 8090 | Attivo |
 | Item Image Gen | 8100 | Stub (501) |
 | Location Image Gen | 8110 | Stub (501) |
 | Avatar Gen | 8120 | Stub (501) |

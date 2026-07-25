@@ -18,7 +18,6 @@ Endpoint pubblico (no autenticazione). Controlla lo stato di tutti i servizi.
   "services": {
     "gateway": { "status": "up" },
     "botai": { "status": "up", "service": "botai", "mongodb": "connected" },
-    "qa": { "status": "up", "service": "qa" },
     "ollama": { "status": "up", "models": ["mistral:7b-instruct"] }
   }
 }
@@ -226,50 +225,7 @@ Disattiva un bot (soft delete: `isActive: false`).
 
 ## Q&A
 
-### `POST /qa/ask`
-
-Il caller fornisce la domanda e il contesto (chunk di testo). Il servizio Q&A non cerca nulla.
-
-**Request:**
-
-```json
-{
-  "question": "Come funzionano le armi da fuoco nel gioco?",
-  "context": [
-    {
-      "heading": "Armi da Fuoco",
-      "content": "Le armi da fuoco richiedono un tiro su Firearms...",
-      "source": { "documentId": "abc", "slug": "armi-da-fuoco" }
-    },
-    {
-      "heading": "Combattimento",
-      "content": "Durante il combattimento...",
-      "source": { "documentId": "def", "slug": "combattimento" }
-    }
-  ],
-  "options": {
-    "maxTokens": 500,
-    "locale": "it"
-  }
-}
-```
-
-**Risposta:**
-
-```json
-{
-  "success": true,
-  "answer": "Le armi da fuoco richiedono un tiro su Firearms...",
-  "sources": [
-    { "heading": "Armi da Fuoco", "slug": "armi-da-fuoco", "fullPath": "/rules/armi", "title": "Armi da Fuoco", "used": true },
-    { "heading": "Combattimento", "slug": "combattimento", "fullPath": "/rules/combattimento", "title": "Combattimento", "used": false }
-  ],
-  "metadata": {
-    "model": "mistral:7b-instruct",
-    "tokensUsed": 412
-  }
-}
-```
+Il Q&A RAG ("Bibliotecario") non passa più dal gateway di local-ai: è stato spostato in `services/embeddings-worker` (endpoint `POST /ask`, `POST /extract-keywords`, `POST /extract-insight` sulla porta 5001), chiamato direttamente da `unified-backend` senza autenticazione API key/HMAC (rete interna fidata). Vedi `.claude/rules/services/embeddings-worker.md` per request/response.
 
 ---
 

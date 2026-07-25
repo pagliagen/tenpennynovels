@@ -1,0 +1,17 @@
+# Pipeline immagini carte a 2 pass (FLUX per lo step1, SDXL+LoRA per lo step2).
+# Su NVIDIA installare la torch adatta alla propria CUDA (vedi https://pytorch.org);
+# su Mac (MPS)/CPU va quella di default.
+torch>=2.4
+diffusers>=0.31        # supporto FluxPipeline / FluxImg2ImgPipeline
+transformers>=4.44
+accelerate
+peft                   # LoRA in diffusers
+safetensors
+sentencepiece          # tokenizer T5 (FLUX)
+protobuf               # richiesto da T5/FLUX
+invisible-watermark    # richiesto da SDXL
+pillow
+fastapi
+uvicorn[standard]
+pydantic>=2
+requests

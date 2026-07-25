@@ -34,6 +34,32 @@ export class WhisperActionHandler extends BaseActionHandler {
       );
     }
 
+    // A whisper cannot target only the sender (e.g. UI sent an empty "everyone" selection)
+    const targetsOtherThanSelf = input.targetCharacters.filter((id) => id !== input.characterId);
+    if (targetsOtherThanSelf.length === 0) {
+      return this.validationError(
+        'Nessun destinatario valido per il sussurro',
+        'MISSING_TARGET_CHARACTERS'
+      );
+    }
+
+    // Targets must be active occupants of the location (prevents whispering to
+    // arbitrary character IDs who never actually joined the scene)
+    const location = await context.Location.findById(input.locationId).select('occupants').lean();
+    const activeOccupantIds = new Set(
+      (location?.occupants || [])
+        .filter((occ: any) => occ.isActive)
+        .map((occ: any) => occ.characterId.toString())
+    );
+
+    const invalidTargets = targetsOtherThanSelf.filter((id) => !activeOccupantIds.has(id));
+    if (invalidTargets.length > 0) {
+      return this.validationError(
+        'Uno o più destinatari del sussurro non sono presenti in questa location',
+        'INVALID_WHISPER_TARGET'
+      );
+    }
+
     return this.validationSuccess();
   }
 

@@ -28,6 +28,9 @@ interface ItemRow {
   consumesItems: string;
   providesSkillBonus: string;
   rarity: string;
+  filename: string;
+  // "prompt" esiste in items.csv (prompt AI per local-tools/imagegen) ma NON va a DB:
+  // volutamente non incluso in questa interfaccia/mapping.
 }
 
 async function seedItems() {
@@ -85,6 +88,7 @@ async function seedItems() {
         description: row.description,
         category: row.category,
         subcategory: row.subcategory || null,
+        image: row.filename || null,
         basePrice: parseFloat(row.basePrice),
         prerequisites: Object.keys(prerequisites).length > 0 ? prerequisites : undefined,
         isPublic: true,

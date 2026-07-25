@@ -19,6 +19,7 @@ export type ActionType =
   | 'whisper'       // Private message (only sender + target + master see)
   | 'ooc'           // Out-of-character message
   | 'dice_roll'     // Dice roll result
+  | 'skill_check'   // Skill check result (only sender + master see)
   | 'stat_check'    // Attribute check result
   | 'item_use'      // Item usage action
   | 'master'        // Master-only announcement
@@ -153,6 +154,7 @@ export interface ChatMessage {
 
   // Content
   content: string;         // DB field (was text)
+  visibility?: 'public' | 'whisper' | 'master_only';  // Backend authorization tier (see ChatMessageService.canSeeAction)
 
   // Type-specific payload (DB field names)
   diceResult?: DiceRollPayload;        // DB field (was diceRoll)
@@ -160,6 +162,10 @@ export interface ChatMessage {
   itemEffect?: ItemUsePayload;         // DB field (was itemUse)
   confrontation?: ConfrontationPayload; // TiroContrapposto - Unified confrontation system
   targetCharacters?: string[];         // DB field (was whisperVisibility) - Array of character IDs
+  whisper?: {                         // Enriched whisper target names (whisper visibility only)
+    targetCharacterIds: string[];
+    targetCharacterNames: string[];
+  };
 
   // Hidden/Defender-only fields
   hiddenContent?: string;

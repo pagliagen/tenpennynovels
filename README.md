@@ -59,7 +59,6 @@ flowchart TD
     subgraph localai ["Local AI (standalone, via ngrok)"]
         AIGateway["AI Gateway\n:9000"]
         BotAI["BotAI\n:8080"]
-        QA["Q&A\n:8090"]
         Ollama["Ollama\n:11434"]
     end
 
@@ -78,13 +77,12 @@ flowchart TD
     Unified --> Embeddings
     Unified -->|"contesto + callback\n(via ngrok)"| AIGateway
     AIGateway --> BotAI
-    AIGateway --> QA
     BotAI --> Ollama
-    QA --> Ollama
     BotAI -->|"callback"| Unified
     Embeddings --> Qdrant
     Embeddings --> ES
     Embeddings --> MongoDB
+    Embeddings -->|"RAG /ask (Bibliotecario)"| Ollama
 ```
 
 **Frontend Applications:**
@@ -102,7 +100,7 @@ flowchart TD
 |---------|------|-------------|
 | API Gateway | 8000 | Centralized routing and proxy to unified-backend |
 | Unified Backend | 3001 | All modules: auth, game, admin, documents, tickets, forum, WebSocket |
-| Embeddings Worker | 5001 | HTTP API + Python subprocess + Bull queue for semantic embeddings |
+| Embeddings Worker | 5001 | HTTP API + Python subprocess + Bull queue for semantic embeddings; RAG Q&A ("Bibliotecario") via Ollama |
 
 **Local AI Platform (macchina locale, esposta via ngrok):**
 
@@ -110,7 +108,6 @@ flowchart TD
 |---------|------|-------------|
 | AI Gateway | 9000 | Autenticazione multi-client, routing, rate limiting, validazione |
 | BotAI | 8080 | NPC bot responses via Ollama |
-| Q&A | 8090 | RAG-based Q&A su documenti di gioco |
 | Ollama | 11434 | LLM inference locale (mistral:7b-instruct) |
 
 > La piattaforma Local AI è **completamente indipendente**: non accede al database del gioco, non importa codice dal backend, funziona standalone. Vedi [local-ai/docs/](local-ai/docs/) per la documentazione completa.
@@ -119,7 +116,7 @@ flowchart TD
 
 ### Prerequisites
 
-- Node.js v22.x (see `.nvmrc`)
+- Node.js v24.x (see `.nvmrc`)
 - MongoDB 7.x
 - Redis 7.x
 - Docker (per Local AI e infrastruttura)
@@ -221,7 +218,7 @@ tenpennynovels/
 │   ├── gateway/                 # Multi-client gateway + security
 │   ├── services/
 │   │   ├── botai/               # NPC bot AI (Ollama)
-│   │   ├── qa/                  # RAG Q&A
+│   │   ├── character-gen/       # Character generation
 │   │   ├── item-image-gen/      # Image gen (stub)
 │   │   ├── location-image-gen/  # Image gen (stub)
 │   │   └── avatar-gen/          # Image gen (stub)

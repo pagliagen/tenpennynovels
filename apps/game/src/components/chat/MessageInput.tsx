@@ -96,12 +96,18 @@ interface MessageInputProps {
 const MAX_CHARACTERS = 2000;
 
 /**
- * Get available action types based on character data and game permissions
+ * Get available action types based on character data, game permissions, and
+ * whether there is anyone else in the chat to whisper to.
  */
-function getAvailableActions(characterData: CharacterData): ActionType[] {
+function getAvailableActions(characterData: CharacterData, hasWhisperTargets: boolean): ActionType[] {
   // dice_roll, stat_check moved to dedicated buttons
-  const baseActions: ActionType[] = ['standard', 'whisper', 'ooc'];
+  const baseActions: ActionType[] = ['standard', 'ooc'];
   const gamePermissions = characterData.gamePermissions || [];
+
+  // Whisper only makes sense if there's at least one other character present
+  if (hasWhisperTargets) {
+    baseActions.push('whisper');
+  }
 
   // Helper: Check if has permission
   const hasPermission = (permission: string): boolean => {
@@ -135,6 +141,7 @@ function getActionDisplayName(action: ActionType): string {
     whisper: 'sussurro',
     ooc: 'messaggio fuori dal gioco',
     dice_roll: 'tiro dado',
+    skill_check: 'tiro abilità',
     stat_check: 'tiro caratteristica',
     item_use: 'uso oggetto',
     master: 'annuncio master',
@@ -232,8 +239,9 @@ export function MessageInput({
   // Refs
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Available actions
-  const availableActions = getAvailableActions(characterData);
+  // Available actions (whisper requires at least one other character present)
+  const hasWhisperTargets = occupants.some((occ) => occ.characterId !== characterData.characterId);
+  const availableActions = getAvailableActions(characterData, hasWhisperTargets);
 
   // Check social conflict permission
   const gamePermissions = characterData.gamePermissions || [];
@@ -241,6 +249,17 @@ export function MessageInput({
     gamePermissions.includes('game:chat:social-clash');
 
   const canOpenConfrontations = occupants.length >= 1;
+
+  /**
+   * Fall back to 'standard' if the selected action stops being available
+   * (e.g. whisper target left the chat while composing)
+   */
+  useEffect(() => {
+    if (!availableActions.includes(selectedAction)) {
+      setSelectedAction('standard');
+      setTargetCharacters([]);
+    }
+  }, [availableActions, selectedAction]);
 
   /**
    * Reset action-specific selections when action type changes

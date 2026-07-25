@@ -143,7 +143,7 @@ sudo tail -f /var/log/nginx/error.log
 - **CPU**: 4 vCPU
 - **RAM**: 8 GB
 - **Storage**: 100 GB SSD
-- **Node.js**: v22.13.1
+- **Node.js**: v24.18.0
 - **MongoDB**: 7.0+
 - **Redis**: 7.2+
 - **Qdrant**: 1.17+

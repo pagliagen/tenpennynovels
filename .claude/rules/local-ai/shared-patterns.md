@@ -1,6 +1,6 @@
 ---
 category: AI Services
-scope: Shared patterns across botai, qa, character-gen
+scope: Shared patterns across botai, character-gen
 related:
   - ./README.md
   - ../docker-deployment.md
@@ -9,7 +9,7 @@ related:
 
 # Local AI Services - Shared Patterns
 
-Complete implementation patterns used across all AI services (botai, qa, character-gen).
+Complete implementation patterns used across all AI services (botai, character-gen).
 
 ## p-queue Sequential Processing
 
@@ -519,7 +519,7 @@ export class OllamaAgent implements IAgent {
 }
 ```
 
-**Nota**: character-gen e qa NON condividono `OllamaAgent`/`AgentFactory` di botai (che è service-local, non in `shared/`); implementano la propria chiamata Ollama (raw HTTP o client `ollama` npm) seguendo lo stesso pattern.
+**Nota**: character-gen NON condivide `OllamaAgent`/`AgentFactory` di botai (che è service-local, non in `shared/`); implementa la propria chiamata Ollama (raw HTTP o client `ollama` npm) seguendo lo stesso pattern. Lo stesso vale per il modulo RAG "Bibliotecario" in `services/embeddings-worker/src/services/qa/` (client `ollama` locale, non condiviso).
 
 ### Usage Pattern
 
@@ -542,7 +542,7 @@ Location: `/local-ai/services/botai/Dockerfile`
 
 ```dockerfile
 # Stage 1: Builder
-FROM node:22-alpine AS builder
+FROM node:24-alpine AS builder
 
 # Set working directory
 WORKDIR /app/services/botai
@@ -565,7 +565,7 @@ COPY services/botai/ ./
 RUN npx tsc
 
 # Stage 2: Production Runtime
-FROM node:22-alpine
+FROM node:24-alpine
 
 # Set working directory
 WORKDIR /app/services/botai

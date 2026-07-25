@@ -38,7 +38,7 @@
     "ioredis": "^5.9.3",
     "jsonwebtoken": "^9.0.3",
     "module-alias": "^2.3.4",
-    "mongoose": "^9.2.1",
+    "mongoose": "9.3.0",
     "morgan": "^1.10.1",
     "multer": "^2.1.1",
     "node-cron": "^4.2.1",
@@ -74,6 +74,11 @@
     "typescript": "^5.9.3"
   },
   "engines": {
-    "node": ">=22.13.1"
+    "node": ">=24.18.0"
+  },
+  "allowScripts": {
+    "bcrypt@6.0.0": true,
+    "esbuild@0.28.1": true,
+    "fsevents@2.3.3": true
   }
 }

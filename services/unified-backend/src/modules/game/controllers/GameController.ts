@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import { Character, Location, Chat, Skill, Item, Occupation, User, OffGameChat, OffGameChatMessage, OffGameChatParticipant, CharacterFinances } from '@database/models';
-import { ApiResponse, DiceResult, ChatActionType } from '../types/game';
+import { Character, Location, Skill, Item, Occupation, User, OffGameChat, OffGameChatMessage, OffGameChatParticipant, CharacterFinances } from '@database/models';
+import { ApiResponse, DiceResult } from '../types/game';
 import { logger } from '../logger';
 import { LocationService } from '../services/LocationService';
 import { redis } from '@config/runtime/redis';
@@ -391,106 +391,6 @@ export class GameController {
 
 
   /**
-   * GET /game/location-history/:locationId
-   * Get recent location actions (chat history)
-   */
-  static async getLocationHistory(req: Request<{ locationId: string }>, res: Response): Promise<void> {
-    try {
-      const { locationId } = req.params;
-      const characterId = req.character!.characterId;
-      const limit = parseInt(req.query.limit as string) || 50;
-      const before = req.query.before as string; // For pagination
-
-      // Verify character has access to location
-      const character = await Character.findById(characterId);
-      const location = await Location.findById(locationId);
-
-      if (!location || !character) {
-        res.status(404).json(errorResponse(
-          'Location non trovata',
-          'LOCATION_NOT_FOUND',
-          undefined,
-          404,
-          getRequestId(req)
-        ));
-        return;
-      }
-
-      // Check location access (reuse LocationController logic)
-      const hasAccess = await GameController.checkLocationAccess(location, character);
-      if (!hasAccess) {
-        res.status(404).json(errorResponse(
-          'Location non trovata',
-          'LOCATION_NOT_FOUND',
-          undefined,
-          404,
-          getRequestId(req)
-        ));
-        return;
-      }
-
-      // Build query for location actions (filter by current session)
-      const query: any = { locationId };
-      if (before) {
-        query.timestamp = { $lt: new Date(before) };
-      }
-      // Filter by current session if active
-      if (location.activeSession?.sessionId) {
-        query.sessionId = location.activeSession.sessionId.toString();
-      }
-
-      // Get actions that character can see
-      const actions = await Chat.find(query)
-        .sort({ timestamp: -1 })
-        .limit(limit);
-
-      // Filter actions by visibility permissions
-      const visibleActions = actions.filter((action: any) => 
-        GameController.canSeeAction(action, character)
-      );
-
-      res.json(successResponse(
-        {
-          actions: visibleActions.map((action: any) => ({
-            id: action.id,
-            actionType: action.actionType,
-            characterId: action.characterId,
-            characterName: action.characterName,
-            content: action.content,
-            timestamp: action.timestamp,
-            visibility: action.visibility,
-            diceResult: action.diceResult,
-            itemEffect: action.itemEffect,
-            characterRoles: action.characterRoles
-          })),
-          hasMore: visibleActions.length === limit,
-          nextPage: visibleActions.length > 0 
-            ? visibleActions[visibleActions.length - 1].timestamp.toISOString()
-            : null
-        },
-        undefined,
-        getRequestId(req)
-      ));
-
-    } catch (error: unknown) {
-      const err = error as Error;
-      logger.error('Get location history error:', {
-        message: err.message,
-        stack: err.stack,
-        name: err.name
-      });
-      
-      res.status(500).json(errorResponse(
-        'Impossibile recuperare lo storico della location',
-        'LOCATION_HISTORY_ERROR',
-        undefined,
-        500,
-        getRequestId(req)
-      ));
-    }
-  }
-
-  /**
    * GET /game/presence
    * Get global presence data (all active characters and their locations)
    */
@@ -571,66 +471,6 @@ export class GameController {
       level: level as DiceResult['level'],
       description
     };
-  }
-
-  private static validateActionPermissions(actionType: ChatActionType, roles: string[]): boolean {
-    const requiredRoles = GameController.getRequiredRoles(actionType);
-    return requiredRoles.some(role => roles.includes(role));
-  }
-
-  private static getRequiredRoles(actionType: ChatActionType): string[] {
-    const roleMap = {
-      standard: ['personaggio'],
-      master: ['master', 'gestore'],
-      moderation: ['moderatore', 'gestore'],
-      whisper: ['personaggio'],
-      ooc: ['personaggio'],
-      dice_generic: ['personaggio'],
-      dice_action: ['personaggio'],
-      item_usage: ['personaggio']
-    };
-
-    return roleMap[actionType] || ['personaggio'];
-  }
-
-  private static getActionVisibility(actionType: ChatActionType, targetCharacters?: string[]): 'public' | 'whisper' | 'master_only' {
-    if (actionType === 'whisper' && targetCharacters && targetCharacters.length > 0) {
-      return 'whisper';
-    }
-    if (actionType === 'moderation') {
-      return 'master_only';
-    }
-    return 'public';
-  }
-
-  private static async getBroadcastTargets(location: any, actionType: ChatActionType, targetCharacters?: string[]): Promise<string[]> {
-    if (actionType === 'whisper' && targetCharacters) {
-      // Include sender + targets for whispers
-      return targetCharacters;
-    }
-
-    // For public actions, return all characters in location
-    return location.occupants?.map((occ: any) => occ.characterId) || [];
-  }
-
-  private static canSeeAction(action: any, character: any): boolean {
-    // Public actions - everyone can see
-    if (action.visibility === 'public') return true;
-
-    // Whisper actions - only sender and targets
-    if (action.visibility === 'whisper') {
-      return action.characterId === character.id || 
-             action.targetCharacters?.includes(character.id);
-    }
-
-    // Master-only actions - only masters/moderators/gestori
-    if (action.visibility === 'master_only') {
-      return character.gameplayRoles?.some((role: string) => 
-        ['master', 'moderatore', 'gestore'].includes(role)
-      );
-    }
-
-    return false;
   }
 
   /**
@@ -781,50 +621,6 @@ export class GameController {
         getRequestId(req)
       ));
     }
-  }
-
-  private static async checkLocationAccess(location: any, character: any): Promise<boolean> {
-    // Location must be visible first
-    if (!location.settings?.visible) {
-      return false;
-    }
-
-    // Public locations are accessible to all
-    if (!location.settings?.private) {
-      return true;
-    }
-
-    // Private locations access control
-    if (location.settings?.private) {
-      // Check if character is the owner
-      if (location.access?.ownerId?.toString() === character.id) {
-        return true;
-      }
-
-      // Check character-specific access
-      if (location.access?.characterAccess) {
-        const access = location.access.characterAccess.find((a: any) => a.characterId.toString() === character.id);
-        if (access) {
-          // Check if access is expired
-          if (access.duration === 'temporary' && access.expiresAt && new Date() > access.expiresAt) {
-            return false;
-          }
-          return access.permissions.includes('view');
-        }
-      }
-
-      // Check corporation access
-      if (location.access?.corporationAccess && character.corporations) {
-        const isCorporationMember = character.corporations.some(
-          (corp: any) => location.access.corporationAccess.some((corpAccess: any) =>
-            corpAccess.corporationId.toString() === corp.id.toString()
-          )
-        );
-        if (isCorporationMember) return true;
-      }
-    }
-
-    return false;
   }
 
   // Financial Helper Methods (for item purchase calculations at /game/init)

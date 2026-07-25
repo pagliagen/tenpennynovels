@@ -15,7 +15,7 @@ Standard per gestione Node.js version e dipendenze npm.
 ### Source of Truth: .nvmrc
 
 **File**: `/Users/gennaropaglia/Documents/SitiPersonali/tenpennynovels/.nvmrc`
-**Current Version**: `v22.13.1`
+**Current Version**: `v24.18.0`
 
 ```bash
 # Always use nvm to switch to project version
@@ -23,11 +23,11 @@ cd /Users/gennaropaglia/Documents/SitiPersonali/tenpennynovels
 nvm use  # Reads .nvmrc automatically
 
 # Verify
-node --version  # Must output: v22.13.1
-npm --version   # Should be npm bundled with Node 22.13.1
+node --version  # Must output: v24.18.0
+npm --version   # Should be npm bundled with Node 24.18.0
 ```
 
-### Why v22.13.1?
+### Why v24.18.0?
 
 - ESM support (import/export) nativo
 - Performance improvements
@@ -246,7 +246,7 @@ console.log(env.PORT);  // Type-safe number
   "private": true,
   "workspaces": [],
   "engines": {
-    "node": ">=22.13.1"
+    "node": ">=24.18.0"
   },
   "scripts": {
     "frontend:all": "concurrently -n \"landing,game,docs,mgmt\" ... ",

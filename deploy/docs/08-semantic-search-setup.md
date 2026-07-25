@@ -113,7 +113,7 @@ Il sistema semantic search combina:
 - ✅ Docker installed (for Qdrant + ElasticSearch)
 - ✅ MongoDB + Redis running
 - ✅ Python 3.8+ installed
-- ✅ Node.js 22.13.1 installed
+- ✅ Node.js 24.18.0 installed
 
 **Resources Required**:
 - **Disk**: 5-10 GB (Qdrant storage + ElasticSearch indices)

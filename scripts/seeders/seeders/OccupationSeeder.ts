@@ -25,6 +25,9 @@ interface OccupationRow {
   earnings: string;
   requiredSkills: string;
   bonusSkills: string;
+  filename: string;
+  // "prompt" esiste in occupations.csv (prompt AI per local-tools/imagegen) ma
+  // NON va a DB: volutamente non incluso in questa interfaccia/mapping.
 }
 
 async function seedOccupations() {
@@ -113,7 +116,10 @@ async function seedOccupations() {
         earnings: row.earnings || 'Variabile',
         requiredSkillSlots,
         bonusSkills,
-        image: null,
+        // getOccupationImage() in apps/game consuma questo campo come path
+        // diretto (fallback su DEFAULT_OCCUPATION_IMAGE se null) — va quindi
+        // memorizzato già come path completo, non come filename nudo.
+        image: row.filename ? `/artifacts/occupations/${row.filename}` : null,
         isActive: true,
         createdBy: new ObjectId(systemUserId),
         createdAt: new Date(),

@@ -12,7 +12,9 @@ related:
 
 ## Overview
 
-Monorepo of 3 independent AI microservices built with Express 4 + TypeScript, running in Docker containers. Services communicate via HTTP callbacks and use Ollama (LLM locale) come provider di default, con Inception come alternativa opzionale via `AI_PROVIDER=inception`.
+Monorepo of 2 independent AI microservices built with Express 4 + TypeScript, running in Docker containers. Services communicate via HTTP callbacks and use Ollama (LLM locale) come provider di default, con Inception come alternativa opzionale via `AI_PROVIDER=inception`.
+
+**Nota**: il servizio Q&A ("Bibliotecario", RAG per la ricerca semantica dei documenti) NON vive più qui — è stato spostato in `services/embeddings-worker` (endpoint `/ask`, `/extract-keywords`, `/extract-insight`) perché è una feature di produzione del sito, non più parte della sandbox AI esterna. Vedi [services/embeddings-worker.md](../services/embeddings-worker.md).
 
 ## Services
 
@@ -34,19 +36,7 @@ Monorepo of 3 independent AI microservices built with Express 4 + TypeScript, ru
 
 **Processing**: Sequential queue (p-queue concurrency: 1), background processing with callback on completion
 
-### 2. QA Service (Port 8090)
-
-**Purpose**: Question answering system (minimal implementation)
-
-**Features**:
-- Simple question processing
-- Callback-based response delivery
-
-**Endpoints**:
-- `POST /ask` - Process question (202 Accepted)
-- `GET /health` - Health check
-
-### 3. Character Gen Service (Port 8130)
+### 2. Character Gen Service (Port 8130)
 
 **Purpose**: Character generation with background processing
 
@@ -82,7 +72,6 @@ local-ai/
 │   │   │   └── analysis/PostResponseAnalyzer.ts
 │   │   ├── Dockerfile
 │   │   └── package.json
-│   ├── qa/                   # Port 8090
 │   └── character-gen/        # Port 8130
 └── tsconfig.base.json
 ```
@@ -141,13 +130,6 @@ OLLAMA_URL=http://ollama:11434
 OLLAMA_MODEL=gemma3:12b            # ruolo creativo
 OLLAMA_ANALYTICAL_MODEL=qwen3:8b   # ruolo analitico (opzionale, fallback su OLLAMA_MODEL)
 CALLBACK_ALLOWED_HOSTS=unified-backend,localhost
-```
-
-**QA**:
-```bash
-PORT=8090
-UNIFIED_BACKEND_URL=http://unified-backend:3001
-OLLAMA_MODEL=qwen3:8b
 ```
 
 **Character Gen**:

@@ -32,7 +32,7 @@ Tutti i comandi vanno eseguiti dalla root del progetto.
 |----------|-------|
 | gateway | 9000 |
 | botai | 8080 |
-| qa | 8090 |
+| character-gen | 8130 |
 | mongodb | 27030 |
 
 Profili opzionali: `ollama-docker`, `image-gen`, `test`.

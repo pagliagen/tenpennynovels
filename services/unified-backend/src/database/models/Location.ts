@@ -8,8 +8,10 @@ export interface ILocation extends Document, SoftDeleteMethods {
   description: string;
   district: string;
   parentLocation?: Schema.Types.ObjectId;
-  imageUrl?: string; // URL dell'immagine di riferimento della location
-  
+  imageUrl?: string; // URL CDN (upload manuale via pannello gestione)
+  image?: string;    // Filename statico in apps/game/public/artifacts/locations/ (es. "london.png"),
+                      // generato da local-tools/imagegen — stesso pattern di Item.image
+
   // Location settings (control switches)
   settings: {
     visible: boolean;    // Location appears in navigation
@@ -162,7 +164,12 @@ const LocationSchema = new Schema<ILocation>({
     trim: true,
     maxlength: 500
   },
-  
+  image: {
+    type: String,
+    trim: true,
+    maxlength: 255
+  },
+
   // Location settings
   settings: {
     visible: { type: Boolean, default: true },

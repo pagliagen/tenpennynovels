@@ -722,7 +722,7 @@ onSuccess: () => {
 **Regola**: SEMPRE usare la versione Node da `.nvmrc`, mai assumere versione.
 
 **File**: `/Users/gennaropaglia/Documents/SitiPersonali/tenpennynovels/.nvmrc`
-**Current**: `v22.13.1`
+**Current**: `v24.18.0`
 
 **Perché**:
 - Consistent versions across dev/CI/prod
@@ -749,7 +749,7 @@ cd /Users/gennaropaglia/Documents/SitiPersonali/tenpennynovels
 nvm use  # ✅ Reads .nvmrc
 
 # Verifica
-node --version  # Output: v22.13.1
+node --version  # Output: v24.18.0
 
 # In CI/CD (GitHub Actions, GitLab CI)
 - uses: actions/setup-node@v4
@@ -759,7 +759,7 @@ node --version  # Output: v22.13.1
 
 ### .nvmrc Content:
 ```
-v22.13.1
+v24.18.0
 ```
 
 ### Come Verificare:
@@ -774,16 +774,16 @@ node --version
 nvm use
 
 # Verifica dopo switch
-node --version  # Deve essere v22.13.1
+node --version  # Deve essere v24.18.0
 ```
 
 ### In Dockerfile:
 
 ```dockerfile
-# ✅ CORRETTO - Major version allineata a .nvmrc (v22.x). Tutti i Dockerfile del
+# ✅ CORRETTO - Major version allineata a .nvmrc (v24.x). Tutti i Dockerfile del
 # repo usano il tag major floating (non pinnato alla patch), per ricevere
 # automaticamente patch di sicurezza Alpine/Node minori.
-FROM node:22-alpine AS builder
+FROM node:24-alpine AS builder
 
 # ❌ SBAGLIATO - Major version diversa da .nvmrc
 FROM node:20-alpine AS builder

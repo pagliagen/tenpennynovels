@@ -108,6 +108,18 @@ export function ConditionalSelects({
   // Whisper target selection
   if (selectedAction === 'whisper') {
     const otherOccupants = occupants.filter((occ) => occ.characterId !== currentCharacterId);
+
+    // Defensive fallback: whisper shouldn't be selectable without other occupants
+    // (see MessageInput.getAvailableActions), but handle it gracefully if it happens
+    // (e.g. the last other occupant just left while the selector was open).
+    if (otherOccupants.length === 0) {
+      return (
+        <div className={styles.conditionalSelect}>
+          <span className={styles.selectInput}>Nessun altro personaggio presente per un sussurro</span>
+        </div>
+      );
+    }
+
     const isWhisperGlobal = targetCharacters.length === otherOccupants.length;
 
     return (

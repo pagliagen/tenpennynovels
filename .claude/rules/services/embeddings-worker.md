@@ -716,6 +716,51 @@ export class EmbeddingsHttpServer {
 }
 ```
 
+## RAG / Q&A Endpoints ("Bibliotecario")
+
+**Memory reference**: migrato da `local-ai/services/qa` (porta 8090, dietro `local-ai/gateway` con auth API key/HMAC pensata per client esterni) a `services/embeddings-worker` perché è una feature di produzione del sito, non più parte della sandbox AI esterna. Retrieval (Qdrant/Elasticsearch via `/search`) e generazione RAG (Ollama via `/ask`) vivono ora nello stesso servizio interno, raggiunto da `unified-backend` con lo stesso pattern `fetch` non autenticato di `/search`/`/embed` (rete fidata, nessun hop su `local-ai/gateway`).
+
+**File**: `services/embeddings-worker/src/services/qa/` (`OllamaChat.ts`, `RAGPipeline.ts`, `AnswerEvaluator.ts`, `DocumentInsightExtractor.ts`) + route in `EmbeddingsHttpServer.ts`.
+
+**Config**: `config.services.ollama.url`/`.model` (env `OLLAMA_URL`, `OLLAMA_MODEL`, default `qwen3:8b`) in `src/config/index.ts`. Dependency `ollama` npm aggiunta a `package.json`. Il modello viene "warmed up" (`keep_alive: -1`) all'avvio in `src/index.ts`, non bloccante.
+
+### POST /ask
+
+Genera la risposta RAG del "Bibliotecario" dato un contesto già recuperato (retrieval fatta a monte da `unified-backend` via `/search`, NON da questo endpoint).
+
+```
+Body: { question: string, context: Array<{heading, content, source?}>, options?: {maxTokens?, locale?} }
+Response: { success: true, answer, sources, metadata: {model, tokensUsed} }
+```
+
+### POST /extract-keywords
+
+Suggerisce 2-3 keyword di follow-up da una coppia domanda/risposta, per l'arricchimento agentic della ricerca (`DocumentSearchAgent` in unified-backend).
+
+```
+Body: { question: string, answer: string }
+Response: { success: true, keywords: string[] }
+```
+
+### POST /extract-insight
+
+Valuta se un documento candidato aggiunge informazioni nuove rispetto a una risposta già data.
+
+```
+Body: { question, existingAnswer, documentContent, documentTitle }
+Response: { success: true, hasNewInfo: boolean, insight: string }
+```
+
+### GET /health — campo `ollama`
+
+`/health` resta gated SOLO sullo stato del subprocess Python (embeddings): un Ollama down non deve far apparire l'intero servizio unhealthy, dato che `/search` funziona comunque. Il campo aggiuntivo `ollama: boolean` (ping leggero `client.list()` con timeout) permette ai chiamanti di sapere se il RAG è disponibile senza toccare lo status/code complessivo:
+
+```json
+{ "status": "healthy", "service": "embeddings-worker", "loaded": true, "ollama": true }
+```
+
+Lato `unified-backend`, `EmbeddingService.isAiAvailable()` legge questo campo con cache di 60s (stesso TTL che aveva `AIGatewayClient.isHealthy()` prima della migrazione), per non fare un ping Ollama ad ogni domanda.
+
 ## ElasticSearch Integration (Full-Text Search)
 
 Used alongside Qdrant for hybrid search (semantic + keyword).

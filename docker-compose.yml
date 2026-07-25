@@ -83,6 +83,11 @@ services:
       ELASTICSEARCH_INDEX_PREFIX: tenpennynovels
       LOG_LEVEL: info
       HUGGINGFACE_TOKEN: ${HUGGINGFACE_TOKEN:-}  # HuggingFace token for runtime
+      # RAG "Bibliotecario" (/ask, /extract-keywords, /extract-insight): Ollama gira
+      # sulla macchina host (Docker Desktop Mac/Windows), non in questo stack Docker.
+      # host.docker.internal risolve all'host da dentro il container.
+      OLLAMA_URL: http://host.docker.internal:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen3:8b}
     ports:
       - "5001:5001"  # HTTP API for embeddings
     networks:

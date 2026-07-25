@@ -61,47 +61,6 @@ interface ImageGenResponse {
   queuePosition?: number;
 }
 
-interface QAPayload {
-  question: string;
-  context: Array<{
-    heading: string;
-    content: string;
-    source?: { documentId?: string; slug?: string; fullPath?: string; title?: string; subtypeTitle?: string };
-  }>;
-  options?: { maxTokens?: number; locale?: string };
-}
-
-interface QAResponse {
-  success: boolean;
-  answer?: string;
-  sources?: Array<{ heading: string; slug?: string; fullPath?: string; title?: string; used: boolean }>;
-  metadata?: { model: string; tokensUsed: number };
-  error?: string;
-}
-
-interface QAExtractKeywordsPayload {
-  question: string;
-  answer: string;
-}
-
-interface QAExtractKeywordsResponse {
-  success: boolean;
-  keywords: string[];
-}
-
-interface QAExtractInsightPayload {
-  question: string;
-  existingAnswer: string;
-  documentContent: string;
-  documentTitle: string;
-}
-
-interface QAExtractInsightResponse {
-  success: boolean;
-  hasNewInfo: boolean;
-  insight: string;
-}
-
 export class AIGatewayClient {
   private config: AIGatewayConfig;
   private healthy: boolean | null = null;
@@ -203,18 +162,6 @@ export class AIGatewayClient {
   async notifyBotAction(payload: BotRespondPayload): Promise<boolean> {
     const result = await this.request('POST', '/botai/respond', payload);
     return result !== null;
-  }
-
-  async askQuestion(payload: QAPayload): Promise<QAResponse | null> {
-    return this.request<QAResponse>('POST', '/qa/ask', payload);
-  }
-
-  async extractKeywords(payload: QAExtractKeywordsPayload): Promise<QAExtractKeywordsResponse | null> {
-    return this.request<QAExtractKeywordsResponse>('POST', '/qa/extract-keywords', payload);
-  }
-
-  async extractInsight(payload: QAExtractInsightPayload): Promise<QAExtractInsightResponse | null> {
-    return this.request<QAExtractInsightResponse>('POST', '/qa/extract-insight', payload);
   }
 
   async generateImage(payload: ImageGenPayload): Promise<ImageGenResponse | null> {
