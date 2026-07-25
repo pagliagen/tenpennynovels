@@ -85,6 +85,50 @@ export class LocationController {
   }
 
   /**
+   * GET /game/locations/root
+   * Get the root location (London): excluded from getAccessibleLocations
+   * but needed by the frontend topbar as the default "no currentLocation" state.
+   */
+  static async getRootLocation(req: Request, res: Response): Promise<void> {
+    try {
+      const rootLocation = await LocationService.getRootLocation();
+
+      if (!rootLocation) {
+        res.status(404).json(errorResponse(
+          'Location radice non trovata',
+          'ROOT_LOCATION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      res.json(successResponse(
+        { rootLocation },
+        undefined,
+        getRequestId(req)
+      ));
+
+    } catch (error: unknown) {
+      const err = error as Error;
+      logger.error('Get root location error:', {
+        message: err.message,
+        stack: err.stack,
+        name: err.name
+      });
+
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare la location radice',
+        'GET_ROOT_LOCATION_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
+    }
+  }
+
+  /**
    * GET /game/locations/:locationId
    * Get location details with access control
    * Security: Returns 404 if character doesn't have access

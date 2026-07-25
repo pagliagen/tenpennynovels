@@ -16,6 +16,14 @@ router.get('/locations',
   LocationController.getAccessibleLocations
 );
 
+// NOTE: must be registered before '/locations/:locationId' — otherwise Express
+// matches "root" as a :locationId value and Location.findById('root') throws.
+router.get('/locations/root',
+  AuthMiddleware.requireCharacterAuth,
+  requireGamePermission('game:locations:list'),
+  LocationController.getRootLocation
+);
+
 router.get('/locations/:locationId',
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:locations:read'),

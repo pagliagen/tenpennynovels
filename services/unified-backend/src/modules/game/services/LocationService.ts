@@ -9,6 +9,7 @@ export interface AccessibleLocation {
   district?: string;
   parentLocation?: string;
   imageUrl?: string;
+  image?: string; // Filename statico, fallback quando imageUrl non è definito
 
   // Settings object
   settings: {
@@ -32,6 +33,14 @@ export interface AccessibleLocation {
   // Optional fields
   occupants: any[];
   children?: AccessibleLocation[];
+}
+
+export interface RootLocation {
+  _id: string;
+  slug: string;
+  name: string;
+  imageUrl?: string;
+  image?: string;
 }
 
 export interface GlobalPresence {
@@ -118,6 +127,7 @@ export class LocationService {
             district: location.district,
             parentLocation: location.parentLocation?.toString(),
             imageUrl: location.imageUrl,
+            image: location.image,
 
             // Settings object (CRITICAL - frontend expects this)
             settings: {
@@ -156,6 +166,25 @@ export class LocationService {
       logger.error('Error getting accessible locations:', error);
       throw error;
     }
+  }
+
+  /**
+   * Get the root location (London) — deliberately excluded from
+   * getAccessibleLocations since it's not enterable as a normal location,
+   * but its name/image are still needed by the frontend (topbar default
+   * state, when the character has no currentLocationId set).
+   */
+  static async getRootLocation(): Promise<RootLocation | null> {
+    const root = await Location.findOne({ locationLevel: 'root' });
+    if (!root) return null;
+
+    return {
+      _id: root._id.toString(),
+      slug: root.slug,
+      name: root.name,
+      imageUrl: root.imageUrl,
+      image: root.image,
+    };
   }
 
   /**

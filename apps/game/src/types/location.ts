@@ -57,6 +57,7 @@ export interface AccessibleLocation {
   district: string;
   parentLocation?: string;
   imageUrl?: string;
+  image?: string; // Filename statico in /artifacts/locations/, fallback quando imageUrl non è definito
 
   // Settings (may not be returned by backend)
   settings?: LocationSettings;
@@ -127,4 +128,21 @@ export interface LocationTreeResponse {
 
 export interface LocationDetailResponse {
   location: AccessibleLocation;
+}
+
+/**
+ * Root Location (London) — excluded from AccessibleLocation lists since it's
+ * not enterable as a normal location, but still needed by the topbar as the
+ * default "no currentLocation" state.
+ */
+export interface RootLocation {
+  _id: string;
+  slug: string;
+  name: string;
+  imageUrl?: string;
+  image?: string;
+}
+
+export interface RootLocationResponse {
+  rootLocation: RootLocation;
 }

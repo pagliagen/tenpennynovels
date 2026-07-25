@@ -182,16 +182,48 @@
   width: 240px;
   height: 120px;
   box-sizing: border-box;
-  background: var(--color-accent); 
+  background: var(--color-accent);
   border-radius: 0px 0px 300px 300px;
-  position: relative; 
+  position: relative;
   overflow: hidden;
-  transition: box-shadow 0.2s ease;
-  box-shadow: inset 0 0 10px 0 rgba(184, 134, 11, 0.5); // usa rgba per opacity
   cursor: pointer;
- 
-  &:hover {
-    box-shadow: inset 0 0 10px 0 rgb(184, 134, 11); 
+
+  /*
+   * Glass-dome effect, CSS-only (no baked-in highlight in the source image).
+   * A pseudo-element sits above the <img> (z-index 1, between the image at 0
+   * and the text/actions at 1 — DOM order breaks the tie in our favor) and
+   * layers a specular highlight, an edge vignette and inset rim shadows to
+   * fake curvature and glare. The old amber inset glow lived directly on
+   * .semicerchio, but the full-bleed <img> painted over it and hid it
+   * completely — moved here, on top of the image, where it's actually seen.
+   */
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background:
+      radial-gradient(120% 80% at 32% 0%, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.16) 22%, rgba(255, 255, 255, 0) 45%),
+      radial-gradient(90% 90% at 78% 100%, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0) 55%),
+      radial-gradient(140% 100% at 50% 100%, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0) 60%),
+      radial-gradient(100% 100% at 50% 30%, rgba(0, 0, 0, 0) 55%, rgba(0, 0, 0, 0.3) 100%);
+    box-shadow:
+      inset 0 14px 22px rgba(255, 255, 255, 0.35),
+      inset 0 -22px 34px rgba(0, 0, 0, 0.55),
+      inset 10px 0 18px rgba(0, 0, 0, 0.2),
+      inset -10px 0 18px rgba(0, 0, 0, 0.2),
+      inset 0 0 10px 0 rgba(184, 134, 11, 0.5);
+    transition: box-shadow 0.2s ease;
+  }
+
+  &:hover::before {
+    box-shadow:
+      inset 0 14px 22px rgba(255, 255, 255, 0.35),
+      inset 0 -22px 34px rgba(0, 0, 0, 0.55),
+      inset 10px 0 18px rgba(0, 0, 0, 0.2),
+      inset -10px 0 18px rgba(0, 0, 0, 0.2),
+      inset 0 0 10px 0 rgb(184, 134, 11);
   }
 }
 

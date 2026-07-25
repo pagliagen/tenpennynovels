@@ -86,6 +86,7 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
 
   // Location store: Get all accessible locations
   const locations = useLocationStore((state) => state.locations);
+  const rootLocation = useLocationStore((state) => state.rootLocation);
 
   // Window manager: For opening mail window
   const { openWindow } = useWindowManagerStore();
@@ -188,10 +189,13 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
    * SINGLE SOURCE OF TRUTH: currentLocationId from GameStateStore
    */
   const topBarLocationProps = useMemo(() => {
-    // Default: London (when no currentLocation set)
+    // Default: root location (London) — excluded from locationStore.locations
+    // by design (see LocationService.getAccessibleLocations), fetched separately.
     const defaultProps = {
-      locationName: 'London',
-      locationImageUrl: '/images/topbar/location-image.png',
+      locationName: rootLocation?.name || 'London',
+      locationImageUrl:
+        rootLocation?.imageUrl ||
+        (rootLocation?.image ? `/artifacts/locations/${rootLocation.image}` : '/images/topbar/location-image.png'),
       isInLondon: true,
     };
 
@@ -214,10 +218,12 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
     // Return actual location props
     return {
       locationName: currentLocation.name,
-      locationImageUrl: currentLocation.imageUrl || '/images/topbar/location-image.png',
+      locationImageUrl:
+        currentLocation.imageUrl ||
+        (currentLocation.image ? `/artifacts/locations/${currentLocation.image}` : '/images/topbar/location-image.png'),
       isInLondon: currentLocation.slug === 'londra', // Slug-based check is correct (SEO-friendly)
     };
-  }, [currentLocationId, locations]);
+  }, [currentLocationId, locations, rootLocation]);
 
   /**
    * Navigate to locations/map page
