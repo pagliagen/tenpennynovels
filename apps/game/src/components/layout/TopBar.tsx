@@ -216,12 +216,6 @@ export function TopBar({
     setIsFeatureHubOpen((prev) => !prev);
   };
 
-  // Handle feature hub item click
-  const handleFeatureHubItemClick = (action?: () => void) => {
-    action?.();
-    setIsFeatureHubOpen(false);
-  };
-
   return (
     <div className={styles.topBarContainer}>
       <div className={styles.topBar}>
@@ -357,81 +351,10 @@ export function TopBar({
                 <div className={styles.featureHubDropdown} role="menu">
                   <div className={styles.featureHubTitle}>Utilità</div>
 
-                  <button
-                    type="button"
-                    onClick={() => handleFeatureHubItemClick(onForumClick)}
-                    className={styles.featureHubItem}
-                    role="menuitem"
-                  >
-                    <span>📜 Bacheca</span>
-                    {unreadForumCount > 0 && (
-                      <span className={styles.featureHubBadge}>{unreadForumCount > 99 ? '99+' : unreadForumCount}</span>
-                    )}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleFeatureHubItemClick(onTicketClick)}
-                    className={styles.featureHubItem}
-                    role="menuitem"
-                  >
-                    <span>🎫 Tickets</span>
-                    {unreadTicketsCount > 0 && (
-                      <span className={styles.featureHubBadge}>{unreadTicketsCount > 99 ? '99+' : unreadTicketsCount}</span>
-                    )}
-                  </button>
-
-                  <a
-                    id="tpn_documenti_hub"
-                    href={documentsUrl}
-                    target="tpn_documenti"
-                    rel="noopener noreferrer"
-                    className={styles.featureHubItem}
-                    role="menuitem"
-                    onClick={() => setIsFeatureHubOpen(false)}
-                  >
-                    <span>📄 Documenti</span>
-                  </a>
-
-                  <button
-                    type="button"
-                    onClick={() => handleFeatureHubItemClick(onCharacterDirectoryClick)}
-                    className={styles.featureHubItem}
-                    role="menuitem"
-                  >
-                    <span>👥 Anagrafica</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleFeatureHubItemClick(onCharacterFaceClaimClick)}
-                    className={styles.featureHubItem}
-                    role="menuitem"
-                  >
-                    <span>🎭 Il mio prestavolto</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleFeatureHubItemClick(onAudioOptionsClick)}
-                    className={styles.featureHubItem}
-                    role="menuitem"
-                  >
-                    <span>🔊 Opzioni audio</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleFeatureHubItemClick(onChatOptionsClick)}
-                    className={styles.featureHubItem}
-                    role="menuitem"
-                  >
-                    <span>💬 Opzioni chat</span>
-                  </button>
-
-                  <div className={styles.utilityMenuDivider} />
-
-                  {/* Coming soon: not implemented yet, shown disabled rather than hidden */}
+                  {/* Coming soon: not implemented yet, shown disabled rather than hidden.
+                      Everything already built (Bacheca, Tickets, Documenti, Anagrafica,
+                      Prestavolto, Opzioni audio/chat) already has its own place — the
+                      dedicated topbar icons, or the ☰ menu — so it doesn't belong here too. */}
                   <div className={`${styles.featureHubItem} ${styles.featureHubItemDisabled}`} role="menuitem" aria-disabled="true">
                     <span>🏪 Mercato</span>
                     <span className={styles.featureHubComingSoon}>Presto disponibile</span>
