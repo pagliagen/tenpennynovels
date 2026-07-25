@@ -1,0 +1,51 @@
+@use './_variables' as *;
+
+.card {
+  background: $dark-surface;
+  border: 1px solid $dark-border;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  cursor: pointer;
+  transition: $transition-normal;
+
+  &:hover {
+    border-color: $gold-30;
+    background: $dark-elevated;
+  }
+}
+
+.header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: $spacing-md;
+}
+
+.headerContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.icon {
+  font-size: 20px;
+}
+
+.colorBar {
+  width: 4px;
+  border-radius: 2px;
+  align-self: stretch;
+  background-color: var(--category-color, transparent);
+}
+
+.title {
+  font-family: $font-serif;
+  color: $text-primary;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.description {
+  color: $text-secondary;
+  font-size: 13px;
+  margin-top: $spacing-xs;
+}

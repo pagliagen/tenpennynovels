@@ -1,0 +1,84 @@
+@use './_variables' as *;
+
+.wrapper {
+  border: 1px solid $dark-border;
+  border-radius: $radius-md;
+  background: $dark-bg;
+  overflow: hidden;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: $spacing-sm;
+  background: $dark-surface;
+  border-bottom: 1px solid $dark-border;
+
+  button {
+    min-width: 28px;
+    height: 28px;
+    padding: 0 $spacing-xs;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: $radius-sm;
+    color: $text-secondary;
+    cursor: pointer;
+    font-size: 13px;
+
+    &:hover {
+      background: $dark-elevated;
+      color: $text-primary;
+    }
+  }
+}
+
+.active {
+  background: $gold-20 !important;
+  border-color: $gold-30 !important;
+  color: $gold !important;
+}
+
+.select {
+  height: 28px;
+  padding: 0 $spacing-xs;
+  background: $dark-bg;
+  border: 1px solid $dark-border;
+  border-radius: $radius-sm;
+  color: $text-secondary;
+  font-size: 12px;
+
+  option {
+    background: $dark-surface;
+    color: $text-primary;
+  }
+}
+
+.editorContent {
+  padding: $spacing-md;
+  min-height: 100px;
+  color: $text-primary;
+  font-family: $font-sans;
+  outline: none;
+
+  p {
+    margin: 0 0 $spacing-sm;
+  }
+
+  blockquote {
+    border-left: 3px solid $gold-30;
+    padding-left: $spacing-md;
+    margin: $spacing-sm 0;
+    color: $text-secondary;
+  }
+
+  img {
+    max-width: 100%;
+    border-radius: $radius-sm;
+  }
+}
+
+.loading {
+  padding: $spacing-md;
+  color: $text-muted;
+}

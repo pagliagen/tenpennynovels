@@ -16,6 +16,11 @@
     opacity: 0.7;
     background: $dark-bg;
   }
+
+  &.pinned {
+    border-color: $gold-30;
+    background: $dark-elevated;
+  }
 }
 
 .header {
@@ -46,8 +51,45 @@
   color: $text-primary;
   font-size: 15px;
   line-height: 1.5;
-  white-space: pre-wrap;
   word-break: break-word;
+
+  p {
+    margin: 0 0 $spacing-sm;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  blockquote {
+    border-left: 3px solid $gold-30;
+    padding-left: $spacing-md;
+    margin: $spacing-sm 0;
+    color: $text-secondary;
+  }
+
+  img {
+    max-width: 100%;
+    border-radius: $radius-sm;
+  }
+}
+
+.quotedContent {
+  border-left: 3px solid $dark-border;
+  padding-left: $spacing-md;
+  margin-bottom: $spacing-sm;
+  color: $text-muted;
+  font-size: 13px;
+
+  p {
+    margin: 0;
+  }
+}
+
+.quotedAuthor {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 2px;
 }
 
 .deleted .content {

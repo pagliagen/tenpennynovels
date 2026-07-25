@@ -9,7 +9,6 @@
  * - useCreatePost() - Create new post
  * - useUpdatePost() - Update post content
  * - useDeletePost() - Delete post
- * - useToggleReaction() - Toggle reaction on a post
  *
  * @module hooks/useForumPosts
  * @since 2.0.0
@@ -18,7 +17,7 @@
 import { useQuery, useMutation, useQueryClient, type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
 
 import { forumApi } from '@/lib/api/forum';
-import type { ForumPost, PaginationInfo, ReactionType } from '@/types/forum';
+import type { ForumPost, ForumReplyOrder, PaginationInfo } from '@/types/forum';
 
 import { forumDiscussionKeys } from './useForumDiscussions';
 
@@ -31,7 +30,6 @@ export const forumPostKeys = {
   all: ['forum', 'posts'] as const,
   list: (topicSlug: string, discussionSlug: string) =>
     [...forumPostKeys.all, 'list', topicSlug, discussionSlug] as const,
-  reactions: (postId: string) => [...forumPostKeys.all, 'reactions', postId] as const,
 };
 
 /**
@@ -48,11 +46,12 @@ export const forumPostKeys = {
 export function useForumPosts(
   topicSlug: string | null,
   discussionSlug: string | null,
-  page?: number
-): UseQueryResult<{ list: ForumPost[]; pagination: PaginationInfo }, Error> {
+  page?: number,
+  order?: ForumReplyOrder
+): UseQueryResult<{ list: ForumPost[]; pagination: PaginationInfo; replyOrder: ForumReplyOrder }, Error> {
   return useQuery({
-    queryKey: [...forumPostKeys.list(topicSlug!, discussionSlug!), page] as const,
-    queryFn: () => forumApi.getPosts(topicSlug!, discussionSlug!, page),
+    queryKey: [...forumPostKeys.list(topicSlug!, discussionSlug!), page, order] as const,
+    queryFn: () => forumApi.getPosts(topicSlug!, discussionSlug!, page, undefined, order),
     enabled: !!topicSlug && !!discussionSlug,
     staleTime: 30 * 1000,
     gcTime: 5 * 60 * 1000,
@@ -70,7 +69,7 @@ export function useForumPosts(
 export function useCreatePost(): UseMutationResult<
   { id: string },
   Error,
-  { topicSlug: string; discussionSlug: string; data: { content: string; replyToPostId?: string } }
+  { topicSlug: string; discussionSlug: string; data: { content: string; replyToPostId?: string; isAnonymous?: boolean } }
 > {
   const queryClient = useQueryClient();
 
@@ -133,24 +132,23 @@ export function useDeletePost(): UseMutationResult<
 }
 
 /**
- * useToggleReaction Hook
+ * useTogglePinPost Hook
  *
- * Toggles a reaction on a post (like, love, laugh, think).
- * Invalidates post reactions and posts list on success.
+ * Pins/unpins a post. Staff-only server-side (pinning a new post automatically
+ * unpins whichever was pinned before in the same discussion).
  *
  * @returns {UseMutationResult} Mutation result
  */
-export function useToggleReaction(): UseMutationResult<
+export function useTogglePinPost(): UseMutationResult<
   void,
   Error,
-  { postId: string; reactionType: ReactionType; topicSlug: string; discussionSlug: string }
+  { postId: string; pinned: boolean; topicSlug: string; discussionSlug: string }
 > {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ postId, reactionType }) => forumApi.toggleReaction(postId, reactionType),
-    onSuccess: (_, { postId, topicSlug, discussionSlug }) => {
-      queryClient.invalidateQueries({ queryKey: forumPostKeys.reactions(postId) });
+    mutationFn: ({ postId, pinned }) => forumApi.togglePinPost(postId, pinned),
+    onSuccess: (_, { topicSlug, discussionSlug }) => {
       queryClient.invalidateQueries({ queryKey: forumPostKeys.list(topicSlug, discussionSlug) });
     },
   });

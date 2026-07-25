@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import slugify from 'slugify';
 import { ForumTopic } from '@database/models/ForumTopic';
+import { ForumCategory } from '@database/models/ForumCategory';
 import { ForumDiscussion } from '@database/models/ForumDiscussion';
 import { ForumPost } from '@database/models/ForumPost';
 import { AdminAuthMiddleware } from '../middleware/adminAuth';
@@ -80,6 +81,10 @@ export class ForumTopicManagementController {
           color: t.color,
           icon: t.icon,
           moderatorIds: t.moderatorIds,
+          categoryId: t.categoryId,
+          categorySlug: t.categorySlug,
+          accessRulesOverride: t.accessRulesOverride,
+          mode: t.mode,
         })),
         pagination,
         undefined,
@@ -149,7 +154,7 @@ export class ForumTopicManagementController {
    */
   static async createTopic(req: Request, res: Response): Promise<void> {
     try {
-      const { title, description, sortOrder, accessRules, isVisible, isLocked, isPinned, color, icon, moderatorIds } = req.body;
+      const { title, description, sortOrder, accessRules, isVisible, isLocked, isPinned, color, icon, moderatorIds, categoryId, accessRulesOverride, mode } = req.body;
 
       if (!title || title.trim().length < 3) {
         res.status(400).json({ success: false, error: 'Il titolo deve avere almeno 3 caratteri', code: 'VALIDATION_ERROR' });
@@ -177,6 +182,9 @@ export class ForumTopicManagementController {
         color,
         icon,
         moderatorIds: Array.isArray(moderatorIds) ? moderatorIds.filter((id: string) => mongoose.Types.ObjectId.isValid(id)) : [],
+        categoryId: categoryId && mongoose.Types.ObjectId.isValid(categoryId) ? new mongoose.Types.ObjectId(categoryId) : undefined,
+        accessRulesOverride: accessRulesOverride ?? false,
+        mode: mode === 'ON' ? 'ON' : 'OFF',
         discussionCount: 0,
         postCount: 0,
         createdAt: new Date(),
@@ -185,6 +193,13 @@ export class ForumTopicManagementController {
           characterName: auditInfo?.adminCharacterName || auditInfo?.adminUsername || 'Admin',
         },
       });
+
+      if (topic.categoryId) {
+        const category = await ForumCategory.findById(topic.categoryId).select('slug').lean();
+        if (category) {
+          await ForumTopic.updateOne({ _id: topic._id }, { $set: { categorySlug: category.slug } });
+        }
+      }
 
       res.status(201).json(createResponse(
         {
@@ -217,7 +232,7 @@ export class ForumTopicManagementController {
   static async updateTopic(req: Request, res: Response): Promise<void> {
     try {
       const topicId = Array.isArray(req.params.topicId) ? req.params.topicId[0] : req.params.topicId;
-      const { title, description, sortOrder, accessRules, isVisible, isLocked, isPinned, color, icon, moderatorIds } = req.body;
+      const { title, description, sortOrder, accessRules, isVisible, isLocked, isPinned, color, icon, moderatorIds, categoryId, accessRulesOverride, mode } = req.body;
 
       if (!topicId || !mongoose.Types.ObjectId.isValid(topicId)) {
         res.status(400).json({ success: false, error: 'ID argomento non valido', code: 'INVALID_TOPIC_ID' });
@@ -260,6 +275,22 @@ export class ForumTopicManagementController {
         update.moderatorIds = Array.isArray(moderatorIds)
           ? moderatorIds.filter((id: string) => mongoose.Types.ObjectId.isValid(id))
           : [];
+      }
+      if (accessRulesOverride !== undefined) update.accessRulesOverride = !!accessRulesOverride;
+      if (mode !== undefined) update.mode = mode === 'ON' ? 'ON' : 'OFF';
+      if (categoryId !== undefined) {
+        if (categoryId === null || categoryId === '') {
+          update.categoryId = null;
+          update.categorySlug = null;
+        } else if (mongoose.Types.ObjectId.isValid(categoryId)) {
+          const category = await ForumCategory.findById(categoryId).select('slug').lean();
+          if (!category) {
+            res.status(400).json({ success: false, error: 'Categoria non trovata', code: 'CATEGORY_NOT_FOUND' });
+            return;
+          }
+          update.categoryId = category._id;
+          update.categorySlug = category.slug;
+        }
       }
 
       const updated = await ForumTopic.findByIdAndUpdate(topicId, { $set: update }, { new: true }).lean();

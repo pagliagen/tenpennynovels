@@ -1,0 +1,113 @@
+{
+  "_meta": {
+    "version": "1.0.0",
+    "description": "Configurazione tabella gestione macrocategorie forum",
+    "lastUpdated": "2026-07-23"
+  },
+  "table": {
+    "name": "forum-categories",
+    "title": "Forum - Categorie",
+    "icon": "🗂️",
+    "searchable": true,
+    "selectable": false,
+    "pagination": {
+      "defaultPageSize": 25,
+      "pageSizeOptions": [10, 25, 50]
+    }
+  },
+  "columns": [
+    {
+      "key": "icon",
+      "label": "Icona",
+      "type": "text",
+      "visible": true,
+      "defaultVisible": true,
+      "sortable": false,
+      "width": "60px",
+      "render": {
+        "type": "text"
+      }
+    },
+    {
+      "key": "title",
+      "label": "Titolo",
+      "type": "text",
+      "visible": true,
+      "defaultVisible": true,
+      "sortable": true,
+      "width": "250px",
+      "render": {
+        "type": "text",
+        "className": "font-bold text-primary"
+      }
+    },
+    {
+      "key": "slug",
+      "label": "Slug",
+      "type": "text",
+      "visible": true,
+      "defaultVisible": true,
+      "sortable": false,
+      "width": "180px",
+      "render": {
+        "type": "text"
+      }
+    },
+    {
+      "key": "sortOrder",
+      "label": "Ordine",
+      "type": "number",
+      "visible": true,
+      "defaultVisible": true,
+      "sortable": true,
+      "width": "80px",
+      "render": {
+        "type": "text"
+      }
+    },
+    {
+      "key": "isVisible",
+      "label": "Visibile",
+      "type": "boolean",
+      "visible": true,
+      "defaultVisible": true,
+      "sortable": false,
+      "width": "90px",
+      "render": {
+        "type": "boolean"
+      }
+    }
+  ],
+  "actions": [
+    {
+      "key": "edit",
+      "label": "Modifica",
+      "icon": "✏️",
+      "type": "primary",
+      "visible": true
+    },
+    {
+      "key": "delete",
+      "label": "Elimina",
+      "icon": "🗑️",
+      "type": "danger",
+      "visible": true,
+      "confirmMessage": "Sei sicuro di voler eliminare questa categoria? Gli argomenti associati NON verranno eliminati, resteranno solo non categorizzati."
+    }
+  ],
+  "bulkActions": [],
+  "filters": [
+    {
+      "key": "isVisible",
+      "label": "Visibilità",
+      "type": "select",
+      "field": "isVisible",
+      "options": [
+        { "value": "", "label": "Tutti" },
+        { "value": "true", "label": "Visibili" },
+        { "value": "false", "label": "Nascosti" }
+      ],
+      "placeholder": "Filtra per visibilità"
+    }
+  ]
+}

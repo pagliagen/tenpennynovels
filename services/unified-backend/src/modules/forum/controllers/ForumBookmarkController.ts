@@ -84,7 +84,7 @@ export class ForumBookmarkController {
       const postIds = bookmarks.filter(b => b.itemType === 'post').map(b => b.itemId);
 
       const [discussions, posts] = await Promise.all([
-        ForumDiscussion.find({ _id: { $in: discussionIds } }).lean(),
+        ForumDiscussion.find({ _id: { $in: discussionIds }, isDeleted: false }).lean(),
         ForumPost.find({ _id: { $in: postIds } }).lean()
       ]);
 

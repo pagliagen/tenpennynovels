@@ -1,12 +1,13 @@
 import mongoose from 'mongoose';
 import { ForumNotification, ForumNotificationType, ForumDiscussionSubscription, ForumPost } from '@database/models';
 import { Character } from '@database/models/Character';
+import { redis } from '@config/runtime/redis';
 import { logger } from '../logger';
 
 /**
  * NotificationService
  * Centralized service for creating forum notifications
- * Handles all 4 notification types with proper triggers
+ * Handles all notification types with proper triggers
  */
 
 interface NotificationData {
@@ -16,6 +17,8 @@ interface NotificationData {
   message: string;
   relatedDiscussionId?: mongoose.Types.ObjectId;
   relatedPostId?: mongoose.Types.ObjectId;
+  topicSlug?: string;
+  discussionSlug?: string;
   triggeredByCharacterId?: mongoose.Types.ObjectId;
   triggeredByCharacterName?: string;
 }
@@ -27,18 +30,39 @@ export class NotificationService {
    */
   private static async createNotification(data: NotificationData): Promise<void> {
     try {
-      await ForumNotification.create({
+      const notification = await ForumNotification.create({
         characterId: data.characterId,
         type: data.type,
         title: data.title,
         message: data.message,
         relatedDiscussionId: data.relatedDiscussionId,
         relatedPostId: data.relatedPostId,
+        // Previously never set despite being present on the schema - deep-links
+        // from the notifications UI need these to build #bacheca/{topic}/{discussion} URLs.
+        topicSlug: data.topicSlug,
+        discussionSlug: data.discussionSlug,
         triggeredByCharacterId: data.triggeredByCharacterId,
         triggeredByCharacterName: data.triggeredByCharacterName,
         isRead: false,
         createdAt: new Date()
       });
+
+      try {
+        await redis.getPublisher().publish('forum:events', JSON.stringify({
+          type: 'notification_new',
+          characterId: data.characterId.toString(),
+          notificationId: notification._id.toString(),
+          notificationType: data.type,
+          title: data.title,
+          message: data.message,
+          topicSlug: data.topicSlug,
+          discussionSlug: data.discussionSlug,
+          timestamp: new Date().toISOString(),
+          source: 'game-backend'
+        }));
+      } catch {
+        // Non-blocking: realtime push failure should not affect the persisted notification
+      }
     } catch (error: any) {
       logger.error(`[NotificationService] Failed to create notification: ${error.message}`, error);
       // Don't throw - notifications are non-critical, shouldn't break the main flow
@@ -53,6 +77,8 @@ export class NotificationService {
   static async notifyNewPostInSubscription(params: {
     discussionId: mongoose.Types.ObjectId;
     discussionTitle: string;
+    topicSlug: string;
+    discussionSlug: string;
     postId: mongoose.Types.ObjectId;
     authorCharacterId: mongoose.Types.ObjectId;
     authorCharacterName: string;
@@ -73,6 +99,8 @@ export class NotificationService {
           message: `${params.authorCharacterName} ha risposto alla discussione`,
           relatedDiscussionId: params.discussionId,
           relatedPostId: params.postId,
+          topicSlug: params.topicSlug,
+          discussionSlug: params.discussionSlug,
           triggeredByCharacterId: params.authorCharacterId,
           triggeredByCharacterName: params.authorCharacterName
         }));
@@ -89,75 +117,7 @@ export class NotificationService {
   }
 
   /**
-   * Notification Type 2: character_followed_you
-   * Trigger: When a character follows another character
-   * Recipient: The character being followed
-   */
-  static async notifyCharacterFollowed(params: {
-    followedCharacterId: mongoose.Types.ObjectId;
-    followerCharacterId: mongoose.Types.ObjectId;
-    followerCharacterName: string;
-  }): Promise<void> {
-    try {
-      await this.createNotification({
-        characterId: params.followedCharacterId,
-        type: 'character_followed_you',
-        title: `${params.followerCharacterName} ti sta seguendo`,
-        message: 'Ora seguono la tua attività nel forum',
-        triggeredByCharacterId: params.followerCharacterId,
-        triggeredByCharacterName: params.followerCharacterName
-      });
-
-      logger.info('[NotificationService] Notified character about new follower');
-    } catch (error: any) {
-      logger.error(`[NotificationService] Failed to notify character follow: ${error.message}`, error);
-    }
-  }
-
-  /**
-   * Notification Type 3: reaction_on_your_post
-   * Trigger: When someone reacts to a post
-   * Recipient: The post author (if not the reactor)
-   */
-  static async notifyReactionOnPost(params: {
-    postId: mongoose.Types.ObjectId;
-    postAuthorCharacterId: mongoose.Types.ObjectId;
-    reactorCharacterId: mongoose.Types.ObjectId;
-    reactorCharacterName: string;
-    reactionType: 'like' | 'love' | 'laugh' | 'think';
-  }): Promise<void> {
-    try {
-      // Don't notify if author reacted to their own post
-      if (params.postAuthorCharacterId.equals(params.reactorCharacterId)) {
-        return;
-      }
-
-      // Emoji mapping
-      const emojiMap: Record<string, string> = {
-        like: '👍',
-        love: '❤️',
-        laugh: '😂',
-        think: '🤔'
-      };
-
-      await this.createNotification({
-        characterId: params.postAuthorCharacterId,
-        type: 'reaction_on_your_post',
-        title: 'Reazione al tuo post',
-        message: `${params.reactorCharacterName} ha reagito con ${emojiMap[params.reactionType]}`,
-        relatedPostId: params.postId,
-        triggeredByCharacterId: params.reactorCharacterId,
-        triggeredByCharacterName: params.reactorCharacterName
-      });
-
-      logger.info('[NotificationService] Notified post author about reaction');
-    } catch (error: any) {
-      logger.error(`[NotificationService] Failed to notify reaction: ${error.message}`, error);
-    }
-  }
-
-  /**
-   * Notification Type 4: reply_to_your_post
+   * Notification Type 2: reply_to_your_post
    * Trigger: When someone replies to a specific post (using replyToPostId)
    * Recipient: The original post author (if not the replier)
    */
@@ -168,6 +128,8 @@ export class NotificationService {
     replierCharacterId: mongoose.Types.ObjectId;
     replierCharacterName: string;
     discussionId: mongoose.Types.ObjectId;
+    topicSlug: string;
+    discussionSlug: string;
   }): Promise<void> {
     try {
       // Don't notify if author replied to their own post
@@ -182,6 +144,8 @@ export class NotificationService {
         message: `${params.replierCharacterName} ha risposto al tuo messaggio`,
         relatedDiscussionId: params.discussionId,
         relatedPostId: params.replyPostId,
+        topicSlug: params.topicSlug,
+        discussionSlug: params.discussionSlug,
         triggeredByCharacterId: params.replierCharacterId,
         triggeredByCharacterName: params.replierCharacterName
       });

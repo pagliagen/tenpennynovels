@@ -7,6 +7,7 @@ import styles from '@/styles/components/forum/ForumModal.module.scss';
 
 import { ForumHeader } from './ForumHeader';
 import { BookmarksView } from './views/BookmarksView';
+import { CategoryListView } from './views/CategoryListView';
 import { CreateDiscussionView } from './views/CreateDiscussionView';
 import { DiscussionListView } from './views/DiscussionListView';
 import { NotificationsView } from './views/NotificationsView';
@@ -68,6 +69,8 @@ export function ForumModal(): JSX.Element | null {
 
   const renderView = () => {
     switch (view) {
+      case 'categories':
+        return <CategoryListView />;
       case 'topics':
         return <TopicListView />;
       case 'discussions':
@@ -83,7 +86,7 @@ export function ForumModal(): JSX.Element | null {
       case 'notifications':
         return <NotificationsView />;
       default:
-        return <TopicListView />;
+        return <CategoryListView />;
     }
   };
 

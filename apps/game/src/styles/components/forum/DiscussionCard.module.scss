@@ -107,3 +107,21 @@
   font-size: 13px;
   margin-top: $spacing-sm;
 }
+
+.favoriteBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: $text-muted;
+  font-size: 15px;
+  padding: $spacing-xs;
+  flex-shrink: 0;
+
+  &:hover {
+    color: $gold;
+  }
+}
+
+.favoriteActive {
+  color: $gold;
+}

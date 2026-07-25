@@ -4,9 +4,7 @@ import { AuthMiddleware } from '../../auth/middleware/auth';
 import { banChecks } from '@shared/middleware/banCheck';
 import { ForumController } from '../controllers/ForumController';
 import { ForumSubscriptionController } from '../controllers/ForumSubscriptionController';
-import { ForumFollowController } from '../controllers/ForumFollowController';
 import { ForumBookmarkController } from '../controllers/ForumBookmarkController';
-import { ForumReactionController } from '../controllers/ForumReactionController';
 import { ForumNotificationController } from '../controllers/ForumNotificationController';
 
 const router = Router();
@@ -62,6 +60,9 @@ const requiredAuthBan = [
 // ----- Init -----
 router.get('/init', forumReadLimiter, optionalAuth, ForumController.getForumInit);
 
+// ----- Categories (read-only, CRUD via /admin/forum-categories) -----
+router.get('/categories', forumReadLimiter, optionalAuth, ForumController.getCategories);
+
 // ----- Topics (read-only, CRUD via /admin/forum-topics) -----
 router.get('/topics', forumReadLimiter, optionalAuth, ForumController.getTopics);
 router.get('/topics/:slug', forumReadLimiter, optionalAuth, ForumController.getTopic);
@@ -72,12 +73,19 @@ router.get('/topics/:topicSlug/discussions/:discussionSlug', forumReadLimiter, o
 router.post('/topics/:topicSlug/discussions', forumCreationLimiter, requiredAuthBan, ForumController.createDiscussion);
 router.put('/topics/:topicSlug/discussions/:discussionSlug', forumModificationLimiter, requiredAuthBan, ForumController.updateDiscussion);
 router.delete('/topics/:topicSlug/discussions/:discussionSlug', forumModificationLimiter, requiredAuthBan, ForumController.deleteDiscussion);
+router.post('/topics/:topicSlug/discussions/:discussionSlug/restore', forumModificationLimiter, requiredAuthBan, ForumController.restoreDiscussion);
+router.put('/topics/:topicSlug/discussions/:discussionSlug/visibility', forumModificationLimiter, requiredAuthBan, ForumController.updateDiscussionVisibility);
+router.post('/topics/:topicSlug/discussions/:discussionSlug/broadcast', forumModificationLimiter, requiredAuthBan, ForumController.broadcastDiscussion);
+router.post('/topics/:topicSlug/discussions/:discussionSlug/favorite', forumCreationLimiter, requiredAuth, ForumController.toggleDiscussionFavorite);
+router.get('/favorites/discussions', forumReadLimiter, requiredAuth, ForumController.getUserFavoriteDiscussions);
 
 // ----- Posts -----
 router.get('/topics/:topicSlug/discussions/:discussionSlug/posts', forumReadLimiter, optionalAuth, ForumController.getPosts);
 router.post('/topics/:topicSlug/discussions/:discussionSlug/posts', forumCreationLimiter, requiredAuthBan, ForumController.createPost);
 router.put('/posts/:postId', forumModificationLimiter, requiredAuthBan, ForumController.updatePost);
 router.delete('/posts/:postId', forumModificationLimiter, requiredAuthBan, ForumController.deletePost);
+router.post('/posts/:postId/restore', forumModificationLimiter, requiredAuthBan, ForumController.restorePost);
+router.put('/posts/:postId/pin', forumModificationLimiter, requiredAuthBan, ForumController.pinPost);
 
 // ----- Search, Recent, Popular -----
 router.get('/search', forumReadLimiter, optionalAuth, ForumController.searchForum);
@@ -92,21 +100,21 @@ router.get('/favorites', forumReadLimiter, requiredAuth, ForumController.getUser
 router.post('/topics/:topicSlug/discussions/:discussionSlug/subscribe', forumCreationLimiter, requiredAuthBan, ForumSubscriptionController.subscribe);
 router.get('/subscriptions', forumReadLimiter, requiredAuth, ForumSubscriptionController.getSubscriptions);
 
-// ----- Follows -----
-router.post('/characters/:characterId/follow', forumCreationLimiter, requiredAuthBan, ForumFollowController.follow);
-router.get('/following', forumReadLimiter, requiredAuth, ForumFollowController.getFollowing);
-
 // ----- Bookmarks -----
 router.post('/posts/:postId/bookmark', forumCreationLimiter, requiredAuth, ForumBookmarkController.toggleBookmark);
 router.get('/bookmarks', forumReadLimiter, requiredAuth, ForumBookmarkController.getBookmarks);
-
-// ----- Reactions -----
-router.post('/posts/:postId/reactions', forumCreationLimiter, requiredAuthBan, ForumReactionController.create);
-router.get('/posts/:postId/reactions', forumReadLimiter, optionalAuth, ForumReactionController.list);
 
 // ----- Notifications -----
 router.get('/notifications', forumReadLimiter, requiredAuth, ForumNotificationController.getNotifications);
 router.get('/notifications/unread-count', forumReadLimiter, requiredAuth, ForumNotificationController.getUnreadCount);
 router.post('/notifications/mark-read', forumCreationLimiter, requiredAuth, ForumNotificationController.markRead);
+
+// ----- Preferences -----
+router.get('/preferences', forumReadLimiter, requiredAuth, ForumController.getPreferences);
+router.put('/preferences', forumModificationLimiter, requiredAuth, ForumController.updatePreferences);
+
+// ----- Unread summary (global navbar badge) -----
+router.get('/unread-summary', forumReadLimiter, requiredAuth, ForumController.getUnreadSummary);
+router.post('/topics/:topicSlug/visited', forumModificationLimiter, requiredAuth, ForumController.markTopicVisited);
 
 export default router;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 
 import { useForumSearch } from '@/hooks/useForumSocial';
 import { useForumStore } from '@/store/forumStore';
@@ -20,7 +20,15 @@ function formatDate(dateStr: string): string {
 
 export function SearchResultsView(): JSX.Element {
   const { searchQuery, setSearchQuery, navigateToPost } = useForumStore();
-  const { data, isLoading, error } = useForumSearch(searchQuery);
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [isLockedFilter, setIsLockedFilter] = useState<'' | 'true' | 'false'>('');
+
+  const { data, isLoading, error } = useForumSearch(searchQuery, {
+    dateFrom: dateFrom || undefined,
+    dateTo: dateTo || undefined,
+    isLocked: isLockedFilter === '' ? undefined : isLockedFilter === 'true',
+  });
 
   const handleInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -61,6 +69,38 @@ export function SearchResultsView(): JSX.Element {
           className={styles.searchInput}
           autoFocus
         />
+      </div>
+      <div className={styles.filters}>
+        <label className={styles.filterLabel}>
+          Dal
+          <input
+            type="date"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            className={styles.filterInput}
+          />
+        </label>
+        <label className={styles.filterLabel}>
+          Al
+          <input
+            type="date"
+            value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            className={styles.filterInput}
+          />
+        </label>
+        <label className={styles.filterLabel}>
+          Stato
+          <select
+            value={isLockedFilter}
+            onChange={(e) => setIsLockedFilter(e.target.value as '' | 'true' | 'false')}
+            className={styles.filterInput}
+          >
+            <option value="">Tutte</option>
+            <option value="false">Solo aperte</option>
+            <option value="true">Solo chiuse</option>
+          </select>
+        </label>
       </div>
       <div className={styles.results}>
         {items.length === 0 ? (

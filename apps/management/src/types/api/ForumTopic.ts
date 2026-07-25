@@ -7,6 +7,8 @@ export interface TopicAccessRule {
   label?: string;
 }
 
+export type ForumTopicMode = 'ON' | 'OFF';
+
 export interface ForumTopic {
   _id: string;
   slug: string;
@@ -23,6 +25,10 @@ export interface ForumTopic {
   color?: string;
   icon?: string;
   createdAt: string;
+  categoryId?: string;
+  categorySlug?: string;
+  accessRulesOverride?: boolean;
+  mode: ForumTopicMode;
 }
 
 export interface ForumTopicListParams {
@@ -41,6 +47,7 @@ export interface CreateForumTopicData {
   accessRules?: TopicAccessRule[];
   color?: string;
   icon?: string;
+  mode?: ForumTopicMode;
 }
 
 export interface UpdateForumTopicData extends Partial<CreateForumTopicData> {

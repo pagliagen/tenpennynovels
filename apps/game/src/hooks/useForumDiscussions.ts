@@ -9,6 +9,8 @@
  * - useForumDiscussion(topicSlug, discussionSlug) - Get single discussion
  * - useCreateDiscussion() - Create new discussion
  * - useUpdateDiscussion() - Update discussion
+ * - useUpdateDiscussionVisibility() - Update discussion visibility/exclusion list
+ * - useBroadcastDiscussion() - Broadcast ("segnala") a discussion to all characters
  * - useDeleteDiscussion() - Delete discussion
  * - useToggleSubscription() - Toggle discussion subscription
  * - useRecentDiscussions(limit) - Get recent discussions
@@ -21,7 +23,7 @@
 import { useQuery, useMutation, useQueryClient, type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
 
 import { forumApi } from '@/lib/api/forum';
-import type { ForumDiscussion, PaginationInfo } from '@/types/forum';
+import type { ForumDiscussion, DiscussionVisibility, PaginationInfo } from '@/types/forum';
 
 /**
  * Query Keys
@@ -35,6 +37,7 @@ export const forumDiscussionKeys = {
     [...forumDiscussionKeys.all, 'detail', topicSlug, discussionSlug] as const,
   recent: () => [...forumDiscussionKeys.all, 'recent'] as const,
   popular: (timeframe?: string) => [...forumDiscussionKeys.all, 'popular', timeframe] as const,
+  favorites: () => [...forumDiscussionKeys.all, 'favorites'] as const,
 };
 
 /**
@@ -94,7 +97,7 @@ export function useForumDiscussion(
 export function useCreateDiscussion(): UseMutationResult<
   { id: string; slug: string },
   Error,
-  { topicSlug: string; data: { title: string; content: string; tags?: string[] } }
+  { topicSlug: string; data: { title: string; content: string; tags?: string[]; visibility?: DiscussionVisibility; isAnonymous?: boolean } }
 > {
   const queryClient = useQueryClient();
 
@@ -129,6 +132,48 @@ export function useUpdateDiscussion(): UseMutationResult<
       queryClient.invalidateQueries({ queryKey: forumDiscussionKeys.detail(topicSlug, discussionSlug) });
       queryClient.invalidateQueries({ queryKey: forumDiscussionKeys.list(topicSlug) });
     },
+  });
+}
+
+/**
+ * useUpdateDiscussionVisibility Hook
+ *
+ * Updates a discussion's visibility type/exclusion list.
+ * Invalidates discussion detail cache on success.
+ *
+ * @returns {UseMutationResult} Mutation result
+ */
+export function useUpdateDiscussionVisibility(): UseMutationResult<
+  void,
+  Error,
+  { topicSlug: string; discussionSlug: string; data: { visibility?: DiscussionVisibility; excludedCharacterIds?: string[] } }
+> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ topicSlug, discussionSlug, data }) =>
+      forumApi.updateDiscussionVisibility(topicSlug, discussionSlug, data),
+    onSuccess: (_, { topicSlug, discussionSlug }) => {
+      queryClient.invalidateQueries({ queryKey: forumDiscussionKeys.detail(topicSlug, discussionSlug) });
+    },
+  });
+}
+
+/**
+ * useBroadcastDiscussion Hook
+ *
+ * Broadcasts ("segnala") a discussion link to all approved characters.
+ * Only available in OFF boards, staff-only (enforced server-side).
+ *
+ * @returns {UseMutationResult} Mutation result
+ */
+export function useBroadcastDiscussion(): UseMutationResult<
+  { recipientCount: number },
+  Error,
+  { topicSlug: string; discussionSlug: string }
+> {
+  return useMutation({
+    mutationFn: ({ topicSlug, discussionSlug }) => forumApi.broadcastDiscussion(topicSlug, discussionSlug),
   });
 }
 
@@ -193,6 +238,48 @@ export function useRecentDiscussions(limit?: number): UseQueryResult<ForumDiscus
   return useQuery({
     queryKey: [...forumDiscussionKeys.recent(), limit] as const,
     queryFn: () => forumApi.getRecentDiscussions(limit),
+    staleTime: 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+  });
+}
+
+/**
+ * useToggleDiscussionFavorite Hook
+ *
+ * Toggles favorite status on a discussion (distinct from topic-level favorites/
+ * subscriptions - see ForumDiscussionFavorite).
+ *
+ * @returns {UseMutationResult} Mutation result
+ */
+export function useToggleDiscussionFavorite(): UseMutationResult<
+  { isFavorite: boolean },
+  Error,
+  { topicSlug: string; discussionSlug: string }
+> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ topicSlug, discussionSlug }) =>
+      forumApi.toggleDiscussionFavorite(topicSlug, discussionSlug),
+    onSuccess: (_, { topicSlug, discussionSlug }) => {
+      queryClient.invalidateQueries({ queryKey: forumDiscussionKeys.favorites() });
+      queryClient.invalidateQueries({ queryKey: forumDiscussionKeys.detail(topicSlug, discussionSlug) });
+      queryClient.invalidateQueries({ queryKey: forumDiscussionKeys.list(topicSlug) });
+    },
+  });
+}
+
+/**
+ * useFavoriteDiscussions Hook
+ *
+ * Fetches the current character's favorite discussions.
+ *
+ * @returns {UseQueryResult<ForumDiscussion[]>} Query result
+ */
+export function useFavoriteDiscussions(): UseQueryResult<ForumDiscussion[], Error> {
+  return useQuery({
+    queryKey: forumDiscussionKeys.favorites(),
+    queryFn: () => forumApi.getFavoriteDiscussions(),
     staleTime: 60 * 1000,
     gcTime: 5 * 60 * 1000,
   });

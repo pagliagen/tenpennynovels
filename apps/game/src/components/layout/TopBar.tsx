@@ -73,6 +73,9 @@ interface TopBarProps {
   /** Unread OnGame mail count */
   unreadOnGameMailCount?: number;
 
+  /** Number of forum bacheche with unread content */
+  unreadForumCount?: number;
+
   /** Unread OffGame chat count */
   unreadOffGameChatCount?: number;
 
@@ -129,6 +132,7 @@ export function TopBar({
   onCharacterDirectoryClick,
   onCharacterFaceClaimClick,
   unreadOnGameMailCount = 0,
+  unreadForumCount = 0,
   unreadTicketsCount = 0,
   canAccessAdmin = false,
   locationName = 'London',
@@ -228,13 +232,18 @@ export function TopBar({
               type="button"
               onClick={onForumClick}
               className={styles.iconButton}
-              title="Bacheca"
+              title={unreadForumCount > 0 ? `Bacheca (${unreadForumCount} argomenti con novità)` : 'Bacheca'}
             >
               <img
                 src="/images/topbar/button-forum.png"
                 alt="Bacheca"
                 className={styles.iconImage}
               />
+              {unreadForumCount > 0 && (
+                <span className={styles.notificationBadge}>
+                  {unreadForumCount > 99 ? '99+' : unreadForumCount}
+                </span>
+              )}
             </button>
 
             {/* OnGame Mail (Victorian Post) - Popup */}
