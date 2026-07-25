@@ -847,7 +847,14 @@ CharacterSchema.pre('save', async function(this: ICharacter) {
   }
 
   // Validation 2: PNG and Master must have referentCharacterId (auto-find if missing)
-  if ((this.characterType === 'png' || this.characterType === 'pg_master') && !this.referentCharacterId) {
+  // Gated on isNew/isModified like Validation 1: a Master-only account (no PG
+  // principale ever created — legitimate for staff/moderation) would otherwise
+  // fail this check on EVERY unrelated save() (e.g. entering a location), forever.
+  if (
+    (this.isNew || this.isModified('characterType')) &&
+    (this.characterType === 'png' || this.characterType === 'pg_master') &&
+    !this.referentCharacterId
+  ) {
     const pgPrincipale = await (this.constructor as mongoose.Model<ICharacter>).findOne({
       userId: this.userId,
       characterType: 'pg_principale',
