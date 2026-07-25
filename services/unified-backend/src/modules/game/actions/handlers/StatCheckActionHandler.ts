@@ -84,8 +84,8 @@ export class StatCheckActionHandler extends BaseActionHandler {
     // Capitalize stat name for display (e.g., "forza" → "Forza")
     const statDisplayName = input.statName!.charAt(0).toUpperCase() + input.statName!.slice(1);
 
-    // Format message with success degree (no dice numbers shown - privacy)
-    actionData.content = `${input.characterName} tira ${statDisplayName} facendo un ${successLabel}`;
+    // Format message with success degree + roll (target stat value stays hidden - privacy)
+    actionData.content = `${input.characterName} tira ${statDisplayName} facendo un ${successLabel} (${rollResult.result}/100)`;
 
     // Add dice result with stat metadata
     actionData.diceResult = {

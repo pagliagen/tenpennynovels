@@ -1,8 +1,9 @@
 /**
  * Stat Check Message Component
  *
- * Shows attribute check result (Strength, Dexterity, etc.).
- * Displays attribute, difficulty, roll vs target, and success/failure.
+ * Shows attribute check result (Strength, Dexterity, etc.) as a single line:
+ * "{character} tira {attribute} facendo un {esito} ({tiro}/100)" — the full
+ * sentence, roll included, is generated server-side (StatCheckActionHandler).
  * Compact layout: no avatar/header/footer, just content and menu.
  * Uses useMessageInteractions hook for shared logic.
  *
@@ -28,7 +29,6 @@ interface StatCheckMessageProps {
 
 export function StatCheckMessage({ message, currentCharacterId }: StatCheckMessageProps): JSX.Element {
   const interactions = useMessageInteractions(message, currentCharacterId);
-  const diceResult = message.diceResult;
 
   return (
     <>
@@ -76,14 +76,6 @@ export function StatCheckMessage({ message, currentCharacterId }: StatCheckMessa
           ) : (
             <div className={styles.messageContent}>
               {message.content}
-              {diceResult && (
-                <div className={styles.diceResultContainer}>
-                  <span className={styles.rollValue}>🎲 {diceResult.result}</span>
-                  <span className={styles.successDegree}>
-                    {diceResult.successDegree || (diceResult.success ? 'Successo' : 'Fallimento')}
-                  </span>
-                </div>
-              )}
             </div>
           )}
         </div>

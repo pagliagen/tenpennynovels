@@ -85,8 +85,8 @@ export class SkillCheckActionHandler extends BaseActionHandler {
     // Build action data
     const actionData = this.buildBaseActionData(input);
 
-    // Format message with success degree (no dice numbers shown - privacy)
-    actionData.content = `${input.characterName} tira ${skillName} facendo un ${successLabel}`;
+    // Format message with success degree + roll (target skill value stays hidden - privacy)
+    actionData.content = `${input.characterName} tira ${skillName} facendo un ${successLabel} (${rollResult.result}/100)`;
 
     // Add dice result with skill metadata
     actionData.diceResult = {

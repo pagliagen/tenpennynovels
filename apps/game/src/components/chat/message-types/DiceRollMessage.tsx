@@ -1,8 +1,8 @@
 /**
  * Dice Roll Message Component
  *
- * Shows dice roll with result display.
- * System uses 1d100 percentile rolls.
+ * Shows dice roll as a single line: "{character} tira {formula} facendo {totale}"
+ * — the full sentence, result included, is generated server-side (DiceRollActionHandler).
  * Compact layout: no avatar/header/footer, just content and menu (dice icon via CSS).
  * Uses useMessageInteractions hook for shared logic.
  *
@@ -28,7 +28,6 @@ interface DiceRollMessageProps {
 
 export function DiceRollMessage({ message, currentCharacterId }: DiceRollMessageProps): JSX.Element {
   const interactions = useMessageInteractions(message, currentCharacterId);
-  const diceRoll = message.diceResult;
 
   return (
     <>
@@ -75,31 +74,7 @@ export function DiceRollMessage({ message, currentCharacterId }: DiceRollMessage
             />
           ) : (
             <div className={styles.messageContent}>
-              {/* Dice roll result: Multi-dice system */}
-              {diceRoll && (
-                <div className={styles.diceResultContainer}>
-                  <span className={styles.textContent}>{message.content}</span>
-
-                  {/* Individual rolls (if multiple dice) */}
-                  {diceRoll.rolls && diceRoll.rolls.length > 1 && (
-                    <span className={styles.diceRolls}>
-                      [{diceRoll.rolls.join(', ')}]:
-                    </span>
-                  )}
-
-                  {/* Breakdown (if modifier exists) */}
-                  {diceRoll.modifier !== undefined && diceRoll.modifier !== 0 && (
-                    <span className={styles.diceBreakdown}>
-                      {diceRoll.result} {diceRoll.modifier >= 0 ? '+' : ''}{diceRoll.modifier}
-                    </span>
-                  )}
-
-                  {/* Final total */}
-                  <span className={styles.diceTotal}>
-                    {diceRoll.total !== undefined ? diceRoll.total : diceRoll.result}
-                  </span>
-                </div>
-              )}
+              {message.content}
             </div>
           )}
         </div>
