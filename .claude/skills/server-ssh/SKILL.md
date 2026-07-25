@@ -40,4 +40,4 @@ bash .claude/skills/server-ssh/scripts/run.sh "sudo nginx -t"
 
 - Se manca `.env` o una credenziale, lo script si ferma con un messaggio chiaro (non prosegue a vuoto).
 - Non eseguire comandi distruttivi (restart di servizi, modifiche a config, `docker compose down`, ecc.) senza conferma esplicita dell'utente — vedi le regole del progetto su azioni rischiose.
-- Per riavvii applicativi dopo modifiche, seguire i pattern documentati in `.claude/rules/04-ci-cd.md` (PM2 `startOrRestart`) e `.claude/rules/docker-deployment.md` (Docker `stop` + `up -d`, mai `restart` dopo una build).
+- Per riavvii applicativi dopo modifiche, seguire i pattern documentati in `.claude/rules/40-workflow.md`: PM2 `startOrRestart` e Docker `stop` + `up -d` (mai `restart` dopo una build).

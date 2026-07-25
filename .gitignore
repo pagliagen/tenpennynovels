@@ -48,3 +48,6 @@ apps/landing/public/sitemap*.xml
 
 # Deploy-generated stamp for landing lastmod (written by CI before rsync)
 apps/landing/public/landing-sitemap-lastmod.txt
+# Claude Code: override locali per-macchina e artefatti runtime (NON versionare)
+.claude/settings.local.json
+.claude/scheduled_tasks.lock

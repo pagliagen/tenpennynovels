@@ -1,324 +1,99 @@
-# TenpennyNovels - Istruzioni per Claude
+# TenpennyNovels — Istruzioni per Claude
 
-## ⚠️ Preferenze Utente Critiche
+## ⚠️ Preferenza utente critica
 
-**L'utente richiede SEMPRE risposte critiche e NON accondiscendenti.**
-
-- ❌ NON dire "va bene" se ci sono margini di miglioramento
-- ✅ Analizzare problemi reali
-- ✅ Identificare limiti e issue
-- ✅ Proporre miglioramenti concreti
+**Risposte SEMPRE critiche e non accondiscendenti.** Non dire "va bene" se ci sono margini di miglioramento: identificare problemi reali, limiti, e proporre fix concreti.
 
 ---
 
-## Architettura Progetto
+## Cos'è il progetto
 
-TenpennyNovels è un monorepo TypeScript/Node.js per un gioco di ruolo vittoriano multiplayer con AI.
+Monorepo TypeScript/Node.js per un gioco di ruolo vittoriano multiplayer con AI locale.
 
-### Struttura:
 ```
-tenpennynovels/
-├── apps/                 # 4 Frontend Next.js apps
-│   ├── landing/         # Auth & character selection (port 4000)
-│   ├── game/            # Main gameplay UI (port 4001)
-│   ├── documents/       # Knowledge base (port 4002)
-│   └── management/      # Admin panel (port 4003)
-├── services/            # 3 Backend services
-│   ├── api-gateway/     # Reverse proxy (port 8000)
-│   ├── unified-backend/ # Main backend (port 3001)
-│   └── embeddings-worker/ # Vector embeddings + Q&A RAG "Bibliotecario" (port 5001)
-└── local-ai/            # 2 AI services
-    ├── services/botai/  # Character AI (port 8080)
-    └── services/character-gen/ # Character generation (port 8130)
+apps/          4 frontend Next.js: landing(4000) game(4001) documents(4002) management(4003)
+services/      3 backend: api-gateway(8000) unified-backend(3001) embeddings-worker(5001)
+local-ai/      2 AI: botai(8080) character-gen(8130)
 ```
 
-### Stack Tecnologico:
-- **Frontend**: Next.js 16 (Pages Router), React 18, TypeScript, Zustand, React Query, Socket.IO client
-- **Backend**: Express (v5 in api-gateway/unified-backend, v4 in embeddings-worker/local-ai), TypeScript, MongoDB, Redis, Socket.IO server, Bull queues
-- **AI**: Ollama (LLM locale, dual-model creativo/analitico), Qdrant (vector DB), embeddings multilingua
-- **Infrastructure**: Docker Compose, PM2, Nginx, Ubuntu VPS
-- **Node**: v24.18.0 (`.nvmrc` è source of truth)
+**Stack**: Next.js 16 Pages Router · React 18 · Express 5 (v4 in embeddings-worker/local-ai) · MongoDB/Mongoose · Redis · Socket.IO · Bull · Ollama · Qdrant · PM2 · Docker
+
+**Node**: `.nvmrc` è source of truth (`v24.18.0`). **Nessun npm workspace**: ogni app/service ha il proprio `node_modules`, si installa con `cd <dir> && npm install`.
 
 ---
 
-## Sistema Rules
+## Le 7 regole non negoziabili
 
-Questo progetto usa un sistema modulare di regole in `.claude/rules/` per prevenire errori ricorrenti e standardizzare i pattern.
+Violarle causa bug in produzione. Dettagli e incidenti reali in [00-critical.md](.claude/rules/00-critical.md).
 
-### 📋 Regole Globali (leggi SEMPRE per qualsiasi task):
-
-1. **[00-project-wide.md](.claude/rules/00-project-wide.md)** - Regole critiche
-   - MongoDB: SEMPRE `_id` (MAI `id`)
-   - Logging: Winston logger (MAI console.log in production)
-   - WebSocket: Single reception point (WebSocketContext)
-   - Optimistic updates: NO invalidate in onSuccess
-   - Build tools: In dependencies se usati nel deployment
-
-2. **[01-typescript.md](.claude/rules/01-typescript.md)** - Standard TypeScript
-   - Strict mode enabled
-   - Zod per runtime validation
-   - Path aliases (@/, @/components/, @shared/, @modules/)
-   - No `any` types senza giustificazione
-
-3. **[02-node-environment.md](.claude/rules/02-node-environment.md)** - Node & npm
-   - Node v24.18.0 da `.nvmrc`
-   - npm ci per CI/CD, npm install per local
-   - Production vs dev dependencies
-
-4. **[03-git-workflow.md](.claude/rules/03-git-workflow.md)** - Git patterns
-   - Commit conventions
-   - Branch naming
-   - Pre-commit hook handling
-
-5. **[04-ci-cd.md](.claude/rules/04-ci-cd.md)** - CI/CD & GitHub Actions
-   - Deploy in produzione SOLO da master (develop = solo build-check, non deploya mai)
-   - Smart dependency installation (hash-based)
-   - PM2 restart pattern
-   - Health checks with retry
-
-6. **[docker-deployment.md](.claude/rules/docker-deployment.md)** - Docker
-   - Multi-stage builds
-   - `docker compose stop + up -d` dopo build (NON restart)
-   - Health checks
+| # | Regola |
+|---|--------|
+| 1 | **MongoDB**: sempre `_id`, mai `id`, in ogni response |
+| 2 | **Logging**: logger strutturato, mai `console.*` in codice applicativo |
+| 3 | **API response**: formato standard `successResponse`/`errorResponse`/`listResponse` |
+| 4 | **WebSocket frontend**: solo via `WebSocketContext`, mai `socket.on()` nei componenti |
+| 5 | **Optimistic updates**: niente `invalidateQueries` in `onSuccess`/`onSettled` (race → flicker) |
+| 6 | **Node version**: `nvm use` da `.nvmrc`, mai assumere la versione |
+| 7 | **Build tools**: in `dependencies` se usati durante il deploy |
 
 ---
 
-### 🎨 Frontend Rules (apps/*)
+## Due livelli di documentazione
 
-**Leggi quando lavori su frontend:**
+**`.claude/rules/` — normativo, precaricato a ogni sessione.** Cosa fare e cosa non fare, più gli incidenti reali. 5 file, deliberatamente snelli: ogni riga costa contesto.
 
-- **[apps/README.md](.claude/rules/apps/README.md)** - Overview architettura frontend
-- **[apps/shared-frontend.md](.claude/rules/apps/shared-frontend.md)** - Pattern comuni
-  - Next.js Pages Router, React Query, Zustand, SCSS modules
+| File | Contenuto |
+|---|---|
+| [00-critical.md](.claude/rules/00-critical.md) | Le 7 regole in dettaglio + incidenti reali — **leggi sempre** |
+| [10-frontend.md](.claude/rules/10-frontend.md) | Regole per le 4 app, ESLint reale, checklist nuova pagina management |
+| [20-backend.md](.claude/rules/20-backend.md) | Regole per i 3 service, auth a due livelli, Qdrant, ordine proxy |
+| [30-ai-services.md](.claude/rules/30-ai-services.md) | botai e character-gen, agent dual-role, p-queue, callback |
+| [40-workflow.md](.claude/rules/40-workflow.md) | TypeScript, npm senza workspace, git, CI/CD, Docker, deploy |
 
-**Per app specifiche:**
+**`docs/` — descrittivo, da leggere SOLO all'occorrenza.** Architetture, cataloghi, API. Non caricarlo preventivamente: aprilo quando serve il dettaglio su un'area specifica.
 
-- **[apps/game-app.md](.claude/rules/apps/game-app.md)** - Game app (più complesso)
-  - WebSocket via WebSocketContext (CRITICAL)
-  - Optimistic updates senza invalidation
-  - Zustand stores: authStore, gameStateStore, chatStore, uiStore
-  - Session management
+| Doc | Quando aprirlo |
+|---|---|
+| [docs/INDEX.md](docs/INDEX.md) | punto di ingresso a tutta la documentazione |
+| `docs/tecnica/frontend/game-app.md` | 12 tipi di messaggio, 9 store Zustand, virtual scrolling |
+| `docs/tecnica/frontend/websocket-patterns.md` | API del `WebSocketContext`, errori tipici |
+| `docs/tecnica/backend/websocket-events.md` | catalogo completo eventi Socket.IO |
+| `docs/tecnica/backend/error-codes.md` | registry dei codici errore (~59 voci) |
+| `docs/tecnica/backend/api-endpoints.md` | 90+ endpoint REST |
+| `docs/tecnica/backend/authentication.md` | flusso JWT + sessione personaggio |
+| `docs/tecnica/infrastructure/` | mongodb-schemas, docker-compose, env vars, redis, qdrant |
+| [.claude/context/database-schema.md](.claude/context/database-schema.md) | dove trovare la verità sui modelli |
 
-- **[apps/management-app.md](.claude/rules/apps/management-app.md)** - Admin panel
-  - TipTap editor
-  - CRUD patterns con audit
-  - react-hook-form + Zod
-
-- **[apps/documents-app.md](.claude/rules/apps/documents-app.md)** - Knowledge base
-  - SSR patterns
-  - Semantic search
-
-- **[apps/landing-app.md](.claude/rules/apps/landing-app.md)** - Authentication
-  - Fetch API (non Axios)
-  - Victorian theme
-
----
-
-### ⚙️ Backend Rules (services/*)
-
-**Leggi quando lavori su backend:**
-
-- **[services/README.md](.claude/rules/services/README.md)** - Overview architettura backend
-- **[services/shared-backend.md](.claude/rules/services/shared-backend.md)** - Pattern comuni
-  - Winston logger (CRITICAL - mai console.log)
-  - API response format standard
-  - MongoDB `_id` usage
-  - Express-validator patterns
-
-**Per service specifici:**
-
-- **[services/unified-backend.md](.claude/rules/services/unified-backend.md)** - Main backend
-  - Module structure (auth, game, admin, documents, forum)
-  - Controller/Service pattern
-  - WebSocket handlers
-  - Redis pub/sub
-  - SessionStore
-
-- **[services/api-gateway.md](.claude/rules/services/api-gateway.md)** - Gateway
-  - Reverse proxy config
-  - Rate limiting per-path
-  - CORS & security headers
-
-- **[services/embeddings-worker.md](.claude/rules/services/embeddings-worker.md)** - Vector worker
-  - Bull queue
-  - Qdrant integration (UUID format)
-  - Retry policies
+Se rules e `docs/` divergono, **il codice decide**. Correggi quello che è sbagliato nello stesso commit.
 
 ---
 
-### 🤖 AI Services Rules (local-ai/*)
+## Porte e infrastruttura
 
-**Leggi quando lavori su AI services:**
+| Frontend | | Backend | | AI | | Data | |
+|---|---|---|---|---|---|---|---|
+| landing | 4000 | api-gateway | 8000 | botai | 8080 | MongoDB | 27017 |
+| game | 4001 | unified-backend | 3001 | character-gen | 8130 | Redis | 6379 |
+| documents | 4002 | embeddings-worker | 5001 | | | Qdrant | 6333 |
+| management | 4003 | | | | | | |
 
-- **[local-ai/README.md](.claude/rules/local-ai/README.md)** - Overview AI services
-- **[local-ai/shared-patterns.md](.claude/rules/local-ai/shared-patterns.md)** - Pattern comuni
-  - p-queue sequential processing
-  - Callback patterns con retry
-  - Ollama dual-model (creativo/analitico) + Inception agent
-  - Docker multi-stage builds
-
----
-
-## Quick Reference
-
-### File Paths Critici:
-- **Node version**: `/Users/gennaropaglia/Documents/SitiPersonali/tenpennynovels/.nvmrc`
-- **Memory**: `/Users/gennaropaglia/.claude/projects/-Users-gennaropaglia-Documents-SitiPersonali-tenpennynovels/memory/`
-- **Rules**: `/Users/gennaropaglia/Documents/SitiPersonali/tenpennynovels/.claude/rules/`
-
-### Porte Servizi:
-
-**Frontend:**
-- Landing: `4000`
-- Game: `4001`
-- Documents: `4002`
-- Management: `4003`
-
-**Backend:**
-- API Gateway: `8000`
-- Unified Backend: `3001`
-- Embeddings Worker: `5001`
-
-**AI Services:**
-- BotAI: `8080`
-- Character-Gen: `8130`
-- AI Gateway: `9000`
-
-### Database & Infrastructure:
-- MongoDB: `27017` (production), `27030` (local-ai)
-- Redis: `6379`
-- Qdrant: `6333`
+**Produzione**: `tenpennynovels.com` (landing) · `game.` · `documenti.` · `gestione.` · `api.` · `ws.`
 
 ---
 
-## Pattern Critici (SEMPRE rispettare)
+## Come lavorare
 
-### 1. ✅ MongoDB: Usa `_id` (NON `id`)
-```typescript
-// ✅ CORRETTO
-return { _id: user._id.toString(), name: user.name };
+1. Leggi `00-critical.md` + il file rules dell'area interessata (non tutti)
+2. Verifica i pattern **contro il codice reale** prima di proporre modifiche — le rules possono essere in drift
+3. Per un bug: controlla se è un pattern ricorrente già documentato negli "Incidenti reali"
+4. Se scopri un anti-pattern nuovo o una rule sbagliata, **aggiorna la rule** nello stesso commit
 
-// ❌ SBAGLIATO
-return { id: user._id.toString(), name: user.name };
-```
+### Manutenzione delle rules
 
-### 2. ✅ Logging: Winston (NON console.log)
-```typescript
-// ✅ CORRETTO
-import { logger } from '@shared/utils/logger';
-logger.info('User logged in', { userId });
+Queste rules sono precaricate a ogni sessione: ogni riga costa contesto. Regole di scrittura:
 
-// ❌ SBAGLIATO
-console.log('User logged in', userId);
-```
-
-### 3. ✅ WebSocket: WebSocketContext (NON socket.on() diretto)
-```typescript
-// ✅ CORRETTO
-const { onLocationEvent } = useWebSocket();
-useEffect(() => {
-  const unsubscribe = onLocationEvent((event) => { /* ... */ });
-  return unsubscribe;
-}, []);
-
-// ❌ SBAGLIATO
-socket.on('new_message', (msg) => { /* ... */ });
-```
-
-### 4. ✅ Optimistic Updates: NO invalidate in onSuccess
-```typescript
-// ✅ CORRETTO
-useMutation({
-  mutationFn: updateData,
-  onMutate: async () => {
-    // Optimistic update
-    queryClient.setQueryData(key, newData);
-    return { previousData };
-  },
-  onError: (err, vars, context) => {
-    // Rollback on error
-    queryClient.setQueryData(key, context.previousData);
-  }
-  // NO onSuccess invalidation
-});
-
-// ❌ SBAGLIATO (causa race condition)
-useMutation({
-  mutationFn: updateData,
-  onSuccess: () => {
-    queryClient.invalidateQueries(key); // ❌ NO!
-  }
-});
-```
-
-### 5. ✅ Docker: stop + up dopo build
-```bash
-# ✅ CORRETTO
-docker compose stop unified-backend
-docker compose build unified-backend
-docker compose up -d unified-backend
-
-# ❌ SBAGLIATO (non carica nuova build)
-docker compose restart unified-backend
-```
-
-### 6. ✅ Build Tools: Dependencies se usati in production
-```json
-// ✅ CORRETTO se esbuild usato durante deployment
-{
-  "dependencies": {
-    "esbuild": "^0.20.2"
-  }
-}
-
-// ❌ SBAGLIATO (deployment con --production fallisce)
-{
-  "devDependencies": {
-    "esbuild": "^0.20.2"
-  }
-}
-```
-
----
-
-## Come Usare Questo Sistema
-
-### Per un nuovo task:
-
-1. **Leggi sempre**: [00-project-wide.md](.claude/rules/00-project-wide.md) (regole critiche)
-
-2. **Identifica l'area**:
-   - Frontend? → Leggi `apps/shared-frontend.md` + app-specific rules
-   - Backend? → Leggi `services/shared-backend.md` + service-specific rules
-   - AI? → Leggi `local-ai/shared-patterns.md`
-   - Docker? → Leggi `docker-deployment.md`
-
-3. **Verifica pattern specifici** nei file dell'area
-
-4. **Riferisci file concreti** dal codebase per esempi
-
-### Per un bug fix:
-
-1. Verifica se il bug è un **pattern ricorrente** in [00-project-wide.md](.claude/rules/00-project-wide.md)
-2. Controlla la sezione "Incidenti Reali" nelle rules per pattern simili
-3. Applica il fix seguendo gli esempi ✅ CORRETTO
-4. Verifica che non violi altre regole critiche
-
----
-
-## Maintenance
-
-Quando aggiungi/modifichi codice:
-
-1. **Verifica conformità** con le regole prima di proporre modifiche
-2. **Usa esempi concreti** dal codebase per validare pattern
-3. **Aggiorna le rules** se scopri nuovi anti-pattern ricorrenti
-4. **Cross-reference** tra file rules quando appropriato
-
----
-
-## Emergency Contacts & Resources
-
-- **Bug ricorrenti**: Vedi memory in `~/.claude/projects/.../memory/`
-- **Incidenti passati**: Documentati in MEMORY.md con date
-- **Architecture decisions**: Documentati nei file rules con "Perché" section
+- ✅ Solo ciò che è **specifico di questo progetto** e non derivabile dal codice
+- ✅ Incidenti reali: data, sintomo, root cause, fix — in forma compatta
+- ✅ Puntatori a file (`path/file.ts`), non copie del loro contenuto
+- ❌ Niente conoscenza generale (come si usa git, npm, Zod, Docker)
+- ❌ Niente blocchi di codice lunghi che reimplementano file esistenti: si de-sincronizzano

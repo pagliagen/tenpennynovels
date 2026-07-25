@@ -225,7 +225,7 @@ Disattiva un bot (soft delete: `isActive: false`).
 
 ## Q&A
 
-Il Q&A RAG ("Bibliotecario") non passa più dal gateway di local-ai: è stato spostato in `services/embeddings-worker` (endpoint `POST /ask`, `POST /extract-keywords`, `POST /extract-insight` sulla porta 5001), chiamato direttamente da `unified-backend` senza autenticazione API key/HMAC (rete interna fidata). Vedi `.claude/rules/services/embeddings-worker.md` per request/response.
+Il Q&A RAG ("Bibliotecario") non passa più dal gateway di local-ai: è stato spostato in `services/embeddings-worker` (endpoint `POST /ask`, `POST /extract-keywords`, `POST /extract-insight` sulla porta 5001), chiamato direttamente da `unified-backend` senza autenticazione API key/HMAC (rete interna fidata). Vedi `.claude/rules/20-backend.md` per request/response.
 
 ---
 

@@ -52,7 +52,7 @@ echo "=================================================================="
 # NOTA: "local-ai" usa npm workspaces reali (gateway + services/*), quindi
 # un solo "npm install" nella sua root installa anche gateway e tutti i
 # services/* — NON vanno installati separatamente (a differenza del resto
-# del monorepo, che non usa workspaces npm, vedi .claude/rules/02-node-environment.md).
+# del monorepo, che non usa workspaces npm, vedi .claude/rules/40-workflow.md).
 NPM_DIRS=(
   "."
   "apps/landing"
