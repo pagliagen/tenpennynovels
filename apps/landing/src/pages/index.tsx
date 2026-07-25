@@ -215,8 +215,8 @@ export default function LoginPage() {
           setShowCharacterModal(true);
         } else {
           // Single character or no characters - redirect to game
-          // NOTE: sessionId passed as query param because sessionStorage is NOT shared between origins (localhost:4001 vs localhost:3010)
-          const gameUrl = process.env.NEXT_PUBLIC_GAME_URL || 'http://localhost:3010';
+          // NOTE: sessionId passed as query param because sessionStorage is NOT shared between origins (landing vs game app)
+          const gameUrl = process.env.NEXT_PUBLIC_GAME_URL || 'http://localhost:4001';
           const sessionId = userData.sessionId || sessionStorage.getItem('character_session_id');
 
           if (sessionId) {
