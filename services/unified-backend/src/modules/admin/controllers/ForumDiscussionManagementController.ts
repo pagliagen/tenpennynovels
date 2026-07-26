@@ -40,18 +40,21 @@ export class ForumDiscussionManagementController {
 
       const filter: Record<string, unknown> = {};
       if (!includeDeleted) filter.isDeleted = false;
-      // typeof guard: Express parses `?topicSlug[$ne]=x` into an object, not a
-      // string — without this check that object would reach Mongo as a query
-      // operator instead of a literal value (NoSQL injection).
-      if (topicSlug && typeof topicSlug === 'string') filter.topicSlug = topicSlug;
+      // $eq forces Mongo to treat the value as a literal, never as a query
+      // operator — Express parses `?topicSlug[$ne]=x` into an object, and a
+      // bare `filter.topicSlug = topicSlug` would let that object reach the
+      // query as-is (NoSQL injection). typeof-narrowing alone isn't enough
+      // for this: it protects the value, not the shape CodeQL's taint
+      // tracker expects to see cleared at the query boundary.
+      if (topicSlug && typeof topicSlug === 'string') filter.topicSlug = { $eq: topicSlug };
       if (search && typeof search === 'string') {
         const escapedSearch = escapeRegex(search);
         filter.title = { $regex: escapedSearch, $options: 'i' };
       }
-      if (isLocked === 'true' || isLocked === 'false') filter.isLocked = isLocked === 'true';
-      if (isPinned === 'true' || isPinned === 'false') filter.isPinned = isPinned === 'true';
+      if (isLocked === 'true' || isLocked === 'false') filter.isLocked = { $eq: isLocked === 'true' };
+      if (isPinned === 'true' || isPinned === 'false') filter.isPinned = { $eq: isPinned === 'true' };
       if ((dateFrom && typeof dateFrom === 'string') || (dateTo && typeof dateTo === 'string')) {
-        const createdAt: Record<string, Date> = {};
+        const createdAt: Record<string, unknown> = {};
         if (dateFrom && typeof dateFrom === 'string') createdAt.$gte = new Date(dateFrom);
         if (dateTo && typeof dateTo === 'string') createdAt.$lte = new Date(dateTo);
         filter.createdAt = createdAt;

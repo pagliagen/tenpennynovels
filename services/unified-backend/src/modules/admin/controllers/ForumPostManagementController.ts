@@ -38,21 +38,24 @@ export class ForumPostManagementController {
 
       const filter: Record<string, unknown> = {};
       if (!includeDeleted) filter.isDeleted = false;
-      // typeof guard: Express parses `?topicSlug[$ne]=x` into an object, not a
-      // string — without this check that object would reach Mongo as a query
-      // operator instead of a literal value (NoSQL injection).
-      if (topicSlug && typeof topicSlug === 'string') filter.topicSlug = topicSlug;
-      if (discussionSlug && typeof discussionSlug === 'string') filter.discussionSlug = discussionSlug;
+      // $eq forces Mongo to treat the value as a literal, never as a query
+      // operator — Express parses `?topicSlug[$ne]=x` into an object, and a
+      // bare `filter.topicSlug = topicSlug` would let that object reach the
+      // query as-is (NoSQL injection). typeof-narrowing alone isn't enough
+      // for this: it protects the value, not the shape CodeQL's taint
+      // tracker expects to see cleared at the query boundary.
+      if (topicSlug && typeof topicSlug === 'string') filter.topicSlug = { $eq: topicSlug };
+      if (discussionSlug && typeof discussionSlug === 'string') filter.discussionSlug = { $eq: discussionSlug };
       if (authorCharacterId && mongoose.Types.ObjectId.isValid(authorCharacterId)) {
-        filter['author.characterId'] = new mongoose.Types.ObjectId(authorCharacterId);
+        filter['author.characterId'] = { $eq: new mongoose.Types.ObjectId(authorCharacterId) };
       }
-      if (moderationLabel === 'toxic' || moderationLabel === 'not-toxic') filter.moderationLabel = moderationLabel;
+      if (moderationLabel === 'toxic' || moderationLabel === 'not-toxic') filter.moderationLabel = { $eq: moderationLabel };
       if (search && typeof search === 'string') {
         const escapedSearch = escapeRegex(search);
         filter.content = { $regex: escapedSearch, $options: 'i' };
       }
       if ((dateFrom && typeof dateFrom === 'string') || (dateTo && typeof dateTo === 'string')) {
-        const createdAt: Record<string, Date> = {};
+        const createdAt: Record<string, unknown> = {};
         if (dateFrom && typeof dateFrom === 'string') createdAt.$gte = new Date(dateFrom);
         if (dateTo && typeof dateTo === 'string') createdAt.$lte = new Date(dateTo);
         filter.createdAt = createdAt;
