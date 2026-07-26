@@ -1,5 +1,5 @@
 /**
- * Embedding Worker with Bull Queue
+ * Embedding Worker with BullMQ
  *
  * Subscribes to Redis events and processes embeddings asynchronously
  * with retry queue, caching, and concurrency control
@@ -8,7 +8,8 @@
 import type { RedisClientType } from 'redis';
 import { createClient } from 'redis';
 import mongoose from 'mongoose';
-import Bull from 'bull';
+import { Queue, Worker, Job } from 'bullmq';
+import IORedis from 'ioredis';
 import crypto from 'crypto';
 import { QdrantClient } from '@qdrant/js-client-rest';
 import { Client as ElasticsearchClient } from '@elastic/elasticsearch';
@@ -45,7 +46,8 @@ export class EmbeddingWorker {
   private redis: any; // Redis client for caching
   private qdrant: QdrantClient; // Qdrant vector DB client
   private elasticsearch: ElasticsearchClient; // ElasticSearch full-text search client
-  private queue: Bull.Queue;
+  private queue: Queue;
+  private worker: Worker;
   private pythonService: PythonEmbeddingService; // Python subprocess for embeddings
   private isRunning: boolean = false;
 
@@ -62,31 +64,43 @@ export class EmbeddingWorker {
     // ✅ Initialize ElasticSearch client (v8 client for ES 8.x)
     this.elasticsearch = new ElasticsearchClient({ node: config.services.elasticsearch.url });
 
-    // ✅ Bull queue with retry
-    this.queue = new Bull('embeddings', {
-      redis: config.database.redisUrl,
+    // ✅ BullMQ requires a dedicated ioredis connection with maxRetriesPerRequest: null
+    const connection = new IORedis(config.database.redisUrl, {
+      maxRetriesPerRequest: null
+    });
+
+    // ✅ BullMQ queue with retry
+    this.queue = new Queue('embeddings', {
+      connection,
       defaultJobOptions: {
         attempts: config.queue.maxAttempts,
         backoff: {
           type: 'exponential',
           delay: config.queue.backoffDelay
         },
-        removeOnComplete: config.queue.keepCompleted,
+        removeOnComplete: { count: config.queue.keepCompleted },
         removeOnFail: false    // DON'T auto-remove failed jobs - use DLQ
       }
     });
 
-    this.queue.process(config.queue.concurrency, async (job) => {
-      return this.processEmbedding(job.data);
-    });
+    this.worker = new Worker(
+      'embeddings',
+      async (job) => this.processEmbedding(job.data),
+      { connection, concurrency: config.queue.concurrency }
+    );
 
-    // Queue event listeners
-    this.queue.on('completed', (job, result) => {
+    // Worker event listeners
+    this.worker.on('completed', (job) => {
       logger.info(`✅ Job ${job.id} completed`);
     });
 
     // Failed job handler → DLQ
-    this.queue.on('failed', async (job, err) => {
+    this.worker.on('failed', async (job: Job | undefined, err: Error) => {
+      if (!job) {
+        logger.error('❌ Job failed before it could be read:', err.message);
+        return;
+      }
+
       logger.error(`❌ Job ${job.id} failed after ${job.attemptsMade} attempts:`, err.message);
 
       if (job.attemptsMade >= config.queue.maxAttempts) {
@@ -102,7 +116,7 @@ export class EmbeddingWorker {
           retryable
         );
 
-        // Now safe to remove from Bull queue
+        // Now safe to remove from the queue
         await job.remove();
       }
     });
@@ -302,7 +316,7 @@ export class EmbeddingWorker {
       return;
     }
 
-    logger.info('🚀 Starting Embedding Worker with Bull Queue...');
+    logger.info('🚀 Starting Embedding Worker with BullMQ...');
 
     // ✅ Ensure collections exist before processing
     await this.ensureCollections();
@@ -315,7 +329,7 @@ export class EmbeddingWorker {
       (message: string) => {
         const event = JSON.parse(message);
         // ✅ Add to queue instead of processing immediately
-        this.queue.add(event, {
+        this.queue.add('embedding-event', event, {
           jobId: `doc-${event.documentId}-${Date.now()}` // Unique job ID
         });
         logger.info(`📄 Queued document embedding: ${event.title}`);
@@ -326,7 +340,7 @@ export class EmbeddingWorker {
       REDIS_CHANNELS.EMBEDDING_DOCUMENT_UPDATED,
       (message: string) => {
         const event = JSON.parse(message);
-        this.queue.add(event, {
+        this.queue.add('embedding-event', event, {
           jobId: `doc-upd-${event.documentId}-${Date.now()}`
         });
         logger.info(`📄 Queued document update: ${event.title}`);
@@ -337,7 +351,7 @@ export class EmbeddingWorker {
       REDIS_CHANNELS.EMBEDDING_DOCUMENT_CHUNK_CREATED,
       (message: string) => {
         const event = JSON.parse(message);
-        this.queue.add(event, {
+        this.queue.add('embedding-event', event, {
           jobId: `chunk-${event.chunkId}-${Date.now()}`
         });
         logger.info(`📑 Queued document chunk: ${event.title} (#${event.slug})`);
@@ -348,7 +362,7 @@ export class EmbeddingWorker {
       REDIS_CHANNELS.EMBEDDING_DOCUMENT_DELETED,
       (message: string) => {
         const event = JSON.parse(message);
-        this.queue.add(event, {
+        this.queue.add('embedding-event', event, {
           jobId: `doc-del-${event.entityId}-${Date.now()}`
         });
         logger.info(`🗑️  Queued document deletion: ${event.entityId}`);
@@ -359,7 +373,7 @@ export class EmbeddingWorker {
       REDIS_CHANNELS.EMBEDDING_CHAT_CREATED,
       (message: string) => {
         const event = JSON.parse(message);
-        this.queue.add({ ...event, _source: 'created' }, {
+        this.queue.add('embedding-event', { ...event, _source: 'created' }, {
           jobId: `action-${event.chatId}-${Date.now()}`
         });
         logger.info(`🎭 Queued chat: ${event.characterName}`);
@@ -370,7 +384,7 @@ export class EmbeddingWorker {
       REDIS_CHANNELS.EMBEDDING_CHAT_UPDATED,
       (message: string) => {
         const event = JSON.parse(message);
-        this.queue.add({ ...event, _source: 'updated' }, {
+        this.queue.add('embedding-event', { ...event, _source: 'updated' }, {
           jobId: `action-upd-${event.chatId}-${Date.now()}`
         });
         logger.info(`🎭 Queued chat update: ${event.characterName}`);
@@ -381,7 +395,7 @@ export class EmbeddingWorker {
       REDIS_CHANNELS.EMBEDDING_CHAT_DELETED,
       (message: string) => {
         const event = JSON.parse(message);
-        this.queue.add(event, {
+        this.queue.add('embedding-event', event, {
           jobId: `action-del-${event.entityId}-${Date.now()}`
         });
         logger.info(`🗑️  Queued chat deletion: ${event.entityId}`);
@@ -392,7 +406,7 @@ export class EmbeddingWorker {
       REDIS_CHANNELS.EMBEDDING_FORUM_POST_CREATED,
       (message: string) => {
         const event = JSON.parse(message);
-        this.queue.add({ ...event, _source: 'created' }, {
+        this.queue.add('embedding-event', { ...event, _source: 'created' }, {
           jobId: `forum-${event.postId}-${Date.now()}`
         });
         logger.info(`💬 Queued forum post: ${event.authorCharacterName}`);
@@ -403,7 +417,7 @@ export class EmbeddingWorker {
       REDIS_CHANNELS.EMBEDDING_FORUM_POST_UPDATED,
       (message: string) => {
         const event = JSON.parse(message);
-        this.queue.add({ ...event, _source: 'updated' }, {
+        this.queue.add('embedding-event', { ...event, _source: 'updated' }, {
           jobId: `forum-upd-${event.postId}-${Date.now()}`
         });
         logger.info(`💬 Queued forum post update: ${event.authorCharacterName}`);
@@ -414,7 +428,7 @@ export class EmbeddingWorker {
       REDIS_CHANNELS.EMBEDDING_FORUM_POST_DELETED,
       (message: string) => {
         const event = JSON.parse(message);
-        this.queue.add(event, {
+        this.queue.add('embedding-event', event, {
           jobId: `forum-del-${event.entityId}-${Date.now()}`
         });
         logger.info(`🗑️  Queued forum post deletion: ${event.entityId}`);
@@ -426,7 +440,7 @@ export class EmbeddingWorker {
       REDIS_CHANNELS.EMBEDDING_ONGAME_MESSAGE_CREATED,
       (message: string) => {
         const event = JSON.parse(message);
-        this.queue.add(event, {
+        this.queue.add('embedding-event', event, {
           jobId: `ongame-mod-${event.messageId}-${Date.now()}`
         });
         logger.info(`📧 Queued OnGame message moderation: ${event.subject}`);
@@ -437,7 +451,7 @@ export class EmbeddingWorker {
       REDIS_CHANNELS.EMBEDDING_OFFGAME_MESSAGE_CREATED,
       (message: string) => {
         const event = JSON.parse(message);
-        this.queue.add(event, {
+        this.queue.add('embedding-event', event, {
           jobId: `offgame-mod-${event.messageId}-${Date.now()}`
         });
         logger.info(`💬 Queued OffGame message moderation: ${event.messageId}`);
@@ -470,6 +484,7 @@ export class EmbeddingWorker {
 
     logger.info('🛑 Stopping Embedding Worker...');
     await this.subscriber.unsubscribe();
+    await this.worker.close();
     await this.queue.close();
     if (this.redis) {
       await this.redis.disconnect();
@@ -479,7 +494,7 @@ export class EmbeddingWorker {
   }
 
   /**
-   * Process embedding event (called by Bull queue)
+   * Process embedding event (called by BullMQ worker)
    */
   private async processEmbedding(event: EmbeddingEvent): Promise<void> {
     if (isDeleteEmbeddingEvent(event)) {
@@ -583,7 +598,7 @@ export class EmbeddingWorker {
         }
       }
 
-      // If ANY chunk failed, throw error to trigger Bull retry
+      // If ANY chunk failed, throw error to trigger BullMQ retry
       if (errors.length > 0) {
         throw new Error(`Failed to process ${errors.length}/${chunks.length} chunks. First error: ${errors[0].message}`);
       }
@@ -592,7 +607,7 @@ export class EmbeddingWorker {
 
     } catch (error) {
       logger.error('❌ Error processing document embedding event:', error);
-      throw error; // Re-throw to trigger Bull retry
+      throw error; // Re-throw to trigger BullMQ retry
     }
   }
 
@@ -636,7 +651,7 @@ export class EmbeddingWorker {
 
     } catch (error) {
       logger.error('❌ Error processing chunk embedding event:', error);
-      throw error; // Re-throw to trigger Bull retry
+      throw error; // Re-throw to trigger BullMQ retry
     }
   }
 
@@ -1235,7 +1250,7 @@ export class EmbeddingWorker {
 
     } catch (error) {
       logger.error(`❌ Error deleting ${event.entityType} embeddings:`, error);
-      throw error; // Re-throw to trigger Bull retry
+      throw error; // Re-throw to trigger BullMQ retry
     }
   }
 
@@ -1247,7 +1262,7 @@ export class EmbeddingWorker {
       return await this.pythonService.generateEmbedding(text);
     } catch (error: any) {
       logger.error('Error generating embedding:', error.message);
-      throw error; // Re-throw to trigger Bull retry
+      throw error; // Re-throw to trigger BullMQ retry
     }
   }
 
