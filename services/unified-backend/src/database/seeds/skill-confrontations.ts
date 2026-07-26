@@ -10,10 +10,17 @@
  * against the real Skill catalog (all skill names confirmed to exist,
  * category: 'social').
  *
- * Combat skills (Armi da botta/fuoco/lancio/taglio/pesanti, Corpo a corpo,
- * Schivare) are deliberately NOT seeded here — their category assignment
- * (combat_unarmed vs combat_melee vs combat_ranged) and counter-skill rules
- * need game-design input, not a guess.
+ * Combat categories are derived from each skill's own description in the
+ * Skill catalog (not guessed): Corpo a corpo = mani nude (unarmed); Armi da
+ * botta/taglio = melee (bastoni/martelli/mazze, ascia/spada/pugnale); Armi
+ * da fuoco/lancio/pesanti = ranged (revolver/fucili, archi/balestre,
+ * cannoni/mortai/mitragliatrici).
+ *
+ * Defense is NOT a fixed pair like the social skills: the defender can
+ * respond with any combat skill they're holding/using in the moment (parry
+ * a blade with a blade, shoot back at a melee attacker if their gun is
+ * already drawn, etc.), or dodge. So every combat attack skill's
+ * counterSkills is the full combat skill set (including itself) + Schivare.
  *
  * Idempotent: upserts by skillName, safe to re-run.
  *
@@ -22,6 +29,20 @@
 
 import mongoose from 'mongoose';
 import { SkillConfrontation } from '../models/SkillConfrontation';
+
+const COMBAT_SKILLS = [
+  'Armi da botta',
+  'Armi da fuoco',
+  'Armi da lancio',
+  'Armi da taglio',
+  'Armi pesanti',
+  'Corpo a corpo',
+] as const;
+
+const COMBAT_COUNTERS = [
+  ...COMBAT_SKILLS.map((skillName) => ({ skillName, label: skillName })),
+  { skillName: 'Schivare', label: 'Schivata' },
+];
 
 const SOCIAL_CONFRONTATIONS = [
   {
@@ -62,11 +83,25 @@ const SOCIAL_CONFRONTATIONS = [
   },
 ];
 
+const COMBAT_CONFRONTATIONS = [
+  { skillName: 'Corpo a corpo', category: 'combat_unarmed' as const },
+  { skillName: 'Armi da botta', category: 'combat_melee' as const },
+  { skillName: 'Armi da taglio', category: 'combat_melee' as const },
+  { skillName: 'Armi da fuoco', category: 'combat_ranged' as const },
+  { skillName: 'Armi da lancio', category: 'combat_ranged' as const },
+  { skillName: 'Armi pesanti', category: 'combat_ranged' as const },
+].map((entry) => ({
+  ...entry,
+  counterSkills: COMBAT_COUNTERS,
+  rollType: 'open' as const,
+  requiresAdditionalMessage: false,
+}));
+
 async function seed(): Promise<void> {
   const uri = process.env.MONGODB_URI || 'mongodb://admin:admin123@localhost:27017/tenpennynovels?authSource=admin';
   await mongoose.connect(uri);
 
-  for (const config of SOCIAL_CONFRONTATIONS) {
+  for (const config of [...SOCIAL_CONFRONTATIONS, ...COMBAT_CONFRONTATIONS]) {
     await SkillConfrontation.updateOne(
       { skillName: config.skillName },
       { $set: config },
