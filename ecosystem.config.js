@@ -85,7 +85,8 @@ module.exports = {
         NODE_ENV: 'production',
         PORT: 8000,
         CDN_STORAGE_PATH: '/home/ubuntu/tenpennynovels/cdn-storage',
-        AI_GATEWAY_WEBHOOK_SECRET: '15cbfc916a414d9120782be7529f12625038ef6405622d09bce79b53dc676cd7'
+        // AI_GATEWAY_WEBHOOK_SECRET: caricato da services/api-gateway/.env via bootstrap.js
+        // (rimosso da qui: era un segreto committato in git — RUOTARLO).
       },
     },
 

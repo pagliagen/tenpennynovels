@@ -7,10 +7,10 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# Install Node.js 22.x from NodeSource
+# Install Node.js 24.x from NodeSource
 RUN apt-get update && \
     apt-get install -y curl && \
-    curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
+    curl -fsSL https://deb.nodesource.com/setup_24.x | bash - && \
     apt-get install -y nodejs && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*

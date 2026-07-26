@@ -14,6 +14,7 @@ import {
   useDeleteForumTopic
 } from '@/hooks/api/useForumTopics';
 import { useNotificationStore } from '@/store/notificationStore';
+import { TopicPermissionsPanel } from '@/components/forum/TopicPermissionsPanel';
 import { apiClient } from '@/lib/api/client';
 import type {
   ForumTopic,
@@ -43,6 +44,7 @@ const EMPTY_FORM: CreateForumTopicData = {
   accessRules: [],
   color: '',
   icon: '',
+  mode: 'OFF',
 };
 
 function topicToFormData(topic: ForumTopic): CreateForumTopicData {
@@ -53,6 +55,7 @@ function topicToFormData(topic: ForumTopic): CreateForumTopicData {
     accessRules: topic.accessRules || [],
     color: topic.color || '',
     icon: topic.icon || '',
+    mode: topic.mode || 'OFF',
   };
 }
 
@@ -296,6 +299,20 @@ export default function ForumTopicsPage() {
                 placeholder="es. 💬" />
             </div>
 
+            <div className={styles.formRow}>
+              <FormField
+                label="Modalità"
+                name="mode"
+                type="select"
+                value={formData.mode || 'OFF'}
+                onChange={(e: any) => handleChange('mode', e.target.value)}
+                options={[
+                  { value: 'OFF', label: 'OFF — nessun anonimato, editing libero, segnalazione consentita' },
+                  { value: 'ON', label: 'ON — anonimato consentito, editing risposta entro 15min' },
+                ]}
+              />
+            </div>
+
             <p className={styles.sectionTitle}>Regole di Accesso</p>
             <p className={styles.helpText}>
               Definisci chi può visualizzare e partecipare a questo argomento.
@@ -368,6 +385,13 @@ export default function ForumTopicsPage() {
                 </button>
               </div>
             </div>
+
+            {editingTopic && (
+              <>
+                <p className={styles.sectionTitle}>Permessi per Personaggio</p>
+                <TopicPermissionsPanel topicId={editingTopic._id} />
+              </>
+            )}
           </form>
         </Modal>
         {ConfirmDialogComponent}

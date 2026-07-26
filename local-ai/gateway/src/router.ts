@@ -5,7 +5,7 @@ import { services, ServiceConfig } from './services';
 import { authenticateClient, requirePermission } from './middleware/apiKey';
 import { verifyHMAC } from './middleware/hmac';
 import { clientRateLimit } from './middleware/rateLimit';
-import { validateBody, botRespondSchema, qaAskSchema, qaExtractKeywordsSchema, qaExtractInsightSchema, botCreateSchema, botGenerateSchema, botRefineSchema, seoGenerateDescriptionSchema, characterGenSchema } from './middleware/validate';
+import { validateBody, botRespondSchema, botCreateSchema, botGenerateSchema, botRefineSchema, seoGenerateDescriptionSchema, characterGenSchema } from './middleware/validate';
 import { generateSeoDescription } from './seo/SeoDescriptionGenerator';
 
 interface RouteValidation {
@@ -20,11 +20,6 @@ const routeValidations: Record<string, RouteValidation[]> = {
     { method: 'POST', path: '/bots/generate',     schema: validateBody(botGenerateSchema) },
     { method: 'POST', path: '/bots',              schema: validateBody(botCreateSchema) },
     { method: 'POST', path: '/bots/:id/refine',   schema: validateBody(botRefineSchema) },
-  ],
-  '/qa': [
-    { method: 'POST', path: '/ask', schema: validateBody(qaAskSchema) },
-    { method: 'POST', path: '/extract-keywords', schema: validateBody(qaExtractKeywordsSchema) },
-    { method: 'POST', path: '/extract-insight', schema: validateBody(qaExtractInsightSchema) },
   ],
   '/character-gen': [
     { method: 'POST', path: '/generate', schema: validateBody(characterGenSchema) },
@@ -141,6 +136,9 @@ function createServiceProxy(svc: ServiceConfig, prefix: string) {
         if (req.client) {
           proxyReq.setHeader('X-Client-Id', req.client.id);
         }
+        // Necessario quando il target è un tunnel ngrok (gateway VPS -> botai/character-gen
+        // sulla macchina DEV): salta l'interstitial del free tier. Innocuo per target non-ngrok.
+        proxyReq.setHeader('ngrok-skip-browser-warning', 'true');
         fixRequestBody(proxyReq, req);
       },
       error: (_err, _req, res: any) => {

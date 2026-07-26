@@ -66,37 +66,6 @@ export const botRespondSchema = z.object({
   callback: callbackSchema.optional(),
 });
 
-export const qaAskSchema = z.object({
-  question: z.string().min(1).max(2000),
-  context: z.array(z.object({
-    heading: z.string(),
-    content: z.string(),
-    source: z.object({
-      documentId: z.string().optional(),
-      slug: z.string().optional(),
-      fullPath: z.string().optional(),
-      title: z.string().optional(),
-      subtypeTitle: z.string().optional(),
-    }).optional(),
-  })).min(1),
-  options: z.object({
-    maxTokens: z.number().int().min(50).max(2000).optional(),
-    locale: z.string().optional(),
-  }).optional(),
-});
-
-export const qaExtractKeywordsSchema = z.object({
-  question: z.string().min(1).max(2000),
-  answer: z.string().min(1).max(5000),
-});
-
-export const qaExtractInsightSchema = z.object({
-  question: z.string().min(1).max(2000),
-  existingAnswer: z.string().min(1).max(5000),
-  documentContent: z.string().min(1).max(5000),
-  documentTitle: z.string().min(1).max(500),
-});
-
 export const botCreateSchema = z.object({
   name: z.string().min(1).max(200),
   gender: z.enum(['male', 'female']).optional(),

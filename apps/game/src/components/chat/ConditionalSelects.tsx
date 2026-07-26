@@ -108,31 +108,75 @@ export function ConditionalSelects({
   // Whisper target selection
   if (selectedAction === 'whisper') {
     const otherOccupants = occupants.filter((occ) => occ.characterId !== currentCharacterId);
-    const isWhisperGlobal = targetCharacters.length === otherOccupants.length;
 
+    // Defensive fallback: whisper shouldn't be selectable without other occupants
+    // (see MessageInput.getAvailableActions), but handle it gracefully if it happens
+    // (e.g. the last other occupant just left while the selector was open).
+    if (otherOccupants.length === 0) {
+      return (
+        <div className={styles.conditionalSelect}>
+          <span className={styles.selectInput}>Nessun altro personaggio presente per un sussurro</span>
+        </div>
+      );
+    }
+
+    // Whisper is strictly one character to another — no "to everyone" option:
+    // a message meant for everyone is an OOC or a standard message, not a whisper.
     return (
       <div className={styles.conditionalSelect}>
         <select
-          value={isWhisperGlobal ? 'all' : targetCharacters[0] || ''}
-          onChange={(e) => {
-            if (e.target.value === 'all') {
-              onTargetChange(otherOccupants.map((occ) => occ.characterId));
-            } else if (e.target.value) {
-              onTargetChange([e.target.value]);
-            } else {
-              onTargetChange([]);
-            }
-          }}
+          value={targetCharacters[0] || ''}
+          onChange={(e) => onTargetChange(e.target.value ? [e.target.value] : [])}
           className={styles.selectInput}
         >
           <option value="">Seleziona Destinatario</option>
-          <option value="all">Sussurro a Tutti</option>
           {otherOccupants.map((occupant) => (
             <option key={occupant.characterId} value={occupant.characterId}>
               {occupant.characterName}
             </option>
           ))}
         </select>
+      </div>
+    );
+  }
+
+  // Master "esito riservato": optional targeting. No selection → normal
+  // public master message (unchanged default). One or more checked → visible
+  // only to master + the selected characters (visibility: master_only).
+  if (selectedAction === 'master') {
+    const otherOccupants = occupants.filter((occ) => occ.characterId !== currentCharacterId);
+
+    if (otherOccupants.length === 0) {
+      return null;
+    }
+
+    const toggleTarget = (characterId: string) => {
+      if (targetCharacters.includes(characterId)) {
+        onTargetChange(targetCharacters.filter((id) => id !== characterId));
+      } else {
+        onTargetChange([...targetCharacters, characterId]);
+      }
+    };
+
+    return (
+      <div className={styles.conditionalSelect}>
+        <div className={styles.masterTargetLabel}>
+          {targetCharacters.length === 0
+            ? 'Visibile a tutti (default) — seleziona per rendere l\'esito riservato:'
+            : `Riservato a ${targetCharacters.length} personaggi + master:`}
+        </div>
+        <div className={styles.masterTargetPicker}>
+          {otherOccupants.map((occupant) => (
+            <label key={occupant.characterId} className={styles.masterTargetOption}>
+              <input
+                type="checkbox"
+                checked={targetCharacters.includes(occupant.characterId)}
+                onChange={() => toggleTarget(occupant.characterId)}
+              />
+              {occupant.characterName}
+            </label>
+          ))}
+        </div>
       </div>
     );
   }

@@ -31,6 +31,10 @@ export const config = {
     python: {
       path: process.env.PYTHON_PATH || 'python3',
     },
+    ollama: {
+      url: process.env.OLLAMA_URL || 'http://localhost:11434',
+      model: process.env.OLLAMA_MODEL || 'qwen3:8b',
+    },
   },
 
   // HTTP server

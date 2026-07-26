@@ -36,6 +36,7 @@ const ACTION_DISPLAY_NAMES: Record<ActionType, string> = {
   whisper: 'Sussurro',
   ooc: 'Fuori dal Gioco (OOC)',
   dice_roll: 'Tiro Dado',
+  skill_check: 'Tiro Abilità',
   stat_check: 'Tiro Caratteristica',
   item_use: 'Usa Oggetto',
   master: 'Annuncio Master',

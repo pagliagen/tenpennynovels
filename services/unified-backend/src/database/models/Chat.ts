@@ -136,9 +136,13 @@ export interface IChat extends Document {
   moderationLabel?: string;
   moderationModel?: string;
   moderationProcessedAt?: Date;
+
+  // Soft delete — set by deleteMessage. Excluded from the in-game live view
+  // (ChatBackup) entirely; retained here for master/gestionale audit access.
+  deletedAt?: Date;
 }
 
-const ChatSchema = new Schema<IChat>({
+export const ChatSchema = new Schema<IChat>({
   actionType: {
     type: String,
     required: true,
@@ -184,7 +188,7 @@ const ChatSchema = new Schema<IChat>({
   content: {
     type: String,
     required: true,
-    maxlength: 2000
+    maxlength: 1200
   },
   locationId: {
     type: String,
@@ -350,7 +354,7 @@ const ChatSchema = new Schema<IChat>({
   revealedAt: Date,
   hiddenContent: {
     type: String,
-    maxlength: 2000
+    maxlength: 1200
   },
 
   contentEmbedding: {
@@ -390,6 +394,12 @@ const ChatSchema = new Schema<IChat>({
   moderationProcessedAt: {
     type: Date,
     required: false
+  },
+
+  deletedAt: {
+    type: Date,
+    required: false,
+    index: true
   }
 }, {
   timestamps: true,
@@ -409,25 +419,29 @@ ChatSchema.statics.getLocationHistory = async function(
   sessionId?: string,
   isMaster: boolean = false
 ): Promise<IChat[]> {
-  // Build visibility filter
-  const visibilityFilter: any[] = [
-    { visibility: 'public' },
-    {
+  // Build visibility filter — master sees every whisper and every master_only
+  // message regardless of targeting; a regular character sees only whispers/
+  // targeted master_only rows they're actually part of.
+  const visibilityFilter: any[] = [{ visibility: 'public' }];
+
+  if (isMaster) {
+    visibilityFilter.push({ visibility: 'whisper' });
+    visibilityFilter.push({ visibility: 'master_only' });
+  } else {
+    visibilityFilter.push({
       visibility: 'whisper',
       $or: [
         { characterId },
         { targetCharacters: characterId }
       ]
-    }
-  ];
-
-  // Only add master_only if character is master
-  if (isMaster) {
-    visibilityFilter.push({ visibility: 'master_only' });
+    });
+    // Targeted master_only ("esito riservato") — visible to the listed characters too
+    visibilityFilter.push({ visibility: 'master_only', targetCharacters: characterId });
   }
 
   const filter: any = {
     locationId,
+    deletedAt: { $exists: false },
     $or: visibilityFilter
   };
 
@@ -546,6 +560,56 @@ ChatSchema.post('findOneAndDelete', async function(doc) {
   } catch (error) {
     logger.error('[Chat] Failed to publish delete event:', error);
   }
+});
+
+/**
+ * Two-table chat architecture:
+ * - `Chat` (this collection, "chats") is the permanent archive — everything
+ *   ever written, including soft-deleted rows (deletedAt). Master/gestionale
+ *   reads from here.
+ * - `ChatBackup` ("chatbackups") is a TTL-expired (3h) mirror. The in-game
+ *   chat UI reads ONLY from ChatBackup (see ChatMessageService.getMessages).
+ *   clearChat wipes ChatBackup only — the archive is untouched.
+ *
+ * Every create/update on `Chat` is mirrored here via post-save /
+ * post-findOneAndUpdate hooks, so callers never have to remember to write
+ * to both collections by hand. A soft-delete (deletedAt just set) removes
+ * the mirrored row instead of copying it, so it disappears from the live
+ * view immediately rather than waiting out the TTL.
+ *
+ * Guarded by modelName to avoid self-mirroring: ChatBackup's schema is a
+ * `.clone()` of this one (see ChatBackup.ts) and therefore inherits these
+ * same hooks — without the guard, writes to ChatBackup would recursively
+ * try to mirror themselves.
+ */
+async function mirrorToChatBackup(doc: any): Promise<void> {
+  if (!doc || doc.constructor?.modelName !== 'Chat') return;
+
+  try {
+    const { ChatBackup } = await import('./ChatBackup');
+
+    if (doc.deletedAt) {
+      await ChatBackup.deleteOne({ _id: doc._id });
+      return;
+    }
+
+    const { _id, ...rest } = typeof doc.toObject === 'function' ? doc.toObject() : doc;
+    await ChatBackup.findByIdAndUpdate(
+      _id,
+      { $set: rest },
+      { upsert: true, setDefaultsOnInsert: true }
+    );
+  } catch (error) {
+    logger.error('[Chat] Failed to mirror to ChatBackup:', error);
+  }
+}
+
+ChatSchema.post('save', function(doc) {
+  void mirrorToChatBackup(doc);
+});
+
+ChatSchema.post('findOneAndUpdate', function(doc) {
+  void mirrorToChatBackup(doc);
 });
 
 export interface IChatModel extends Model<IChat> {

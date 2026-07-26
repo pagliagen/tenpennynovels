@@ -16,15 +16,9 @@
 }
 
 .characterTag {
-  background: none;
-  border: none;
-  color: $parchment-60;
-  font-family: $font-serif;
-  font-size: 14px;
-  font-style: italic;
-  cursor: pointer;
-  padding: 2px $spacing-xs;
-  transition: color $transition-normal;
+  color: #a13925;
+  font-family: 'Thrifted Attire', serif;
+  font-size: 12px;  
 
   &:hover {
     color: rgba(232, 212, 160, 0.9);

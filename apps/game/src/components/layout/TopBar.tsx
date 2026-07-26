@@ -6,7 +6,11 @@
  * Features:
  * - Quick navigation (Map, OnGame Mail, OffGame Chat)
  * - Location display with conditional actions
- * - Utility buttons (Forum, Tickets, Market)
+ * - "Utilità" feature hub popup: Bacheca, Tickets, Documenti, Anagrafica,
+ *   Prestavolto, Opzioni audio/chat, plus not-yet-built features (Mercato,
+ *   Banca) shown disabled rather than omitted or silently dead
+ * - Separate ☰ menu (linguetta): audio/chat options, anagrafica, prestavolto,
+ *   admin panel access (conditional), logout
  * - Admin panel access (conditional)
  * - Logout button
  *
@@ -52,9 +56,6 @@ interface TopBarProps {
   /** Ticket button click handler */
   onTicketClick?: () => void;
 
-  /** Utility panel button click handler */
-  onUtilityClick?: () => void;
-
   /** Logout button click handler */
   onLogoutClick?: () => void;
 
@@ -72,6 +73,9 @@ interface TopBarProps {
 
   /** Unread OnGame mail count */
   unreadOnGameMailCount?: number;
+
+  /** Number of forum bacheche with unread content */
+  unreadForumCount?: number;
 
   /** Unread OffGame chat count */
   unreadOffGameChatCount?: number;
@@ -122,22 +126,26 @@ export function TopBar({
   onLeaveLocationClick,
   onForumClick,
   onTicketClick,
-  onUtilityClick,
   onLogoutClick,
   onAudioOptionsClick,
   onChatOptionsClick,
   onCharacterDirectoryClick,
   onCharacterFaceClaimClick,
   unreadOnGameMailCount = 0,
+  unreadForumCount = 0,
   unreadTicketsCount = 0,
   canAccessAdmin = false,
   locationName = 'London',
   locationImageUrl = '/images/topbar/location-image.png',
   isInLondon = true,
 }: TopBarProps): JSX.Element {
-  // State per gestire apertura/chiusura dropdown utility
+  // State per gestire apertura/chiusura dropdown utility (linguetta ☰)
   const [isUtilityMenuOpen, setIsUtilityMenuOpen] = useState(false);
   const utilityMenuRef = useRef<HTMLDivElement>(null);
+
+  // State per gestire apertura/chiusura del popup "Utilità" (hub funzionalità di gioco)
+  const [isFeatureHubOpen, setIsFeatureHubOpen] = useState(false);
+  const featureHubRef = useRef<HTMLDivElement>(null);
 
   // Build URLs with sessionId for cross-origin navigation
   const [documentsUrl, setDocumentsUrl] = useState(process.env.NEXT_PUBLIC_DOCUMENTS_URL || '');
@@ -164,7 +172,7 @@ export function TopBar({
     } });
   }, [locationName, isInLondon]);
 
-  // Click outside handler per chiudere il dropdown
+  // Click outside handler per chiudere il dropdown (linguetta ☰)
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (utilityMenuRef.current && !utilityMenuRef.current.contains(event.target as Node)) {
@@ -178,15 +186,34 @@ export function TopBar({
     }
   }, [isUtilityMenuOpen]);
 
-  // Toggle utility menu
+  // Click outside handler per chiudere il popup "Utilità"
+  useEffect(() => {
+    function handleClickOutsideFeatureHub(event: MouseEvent) {
+      if (featureHubRef.current && !featureHubRef.current.contains(event.target as Node)) {
+        setIsFeatureHubOpen(false);
+      }
+    }
+
+    if (isFeatureHubOpen) {
+      document.addEventListener('mousedown', handleClickOutsideFeatureHub);
+      return () => document.removeEventListener('mousedown', handleClickOutsideFeatureHub);
+    }
+  }, [isFeatureHubOpen]);
+
+  // Toggle utility menu (linguetta ☰)
   const handleToggleUtilityMenu = () => {
     setIsUtilityMenuOpen((prev) => !prev);
   };
 
-  // Handle utility menu item click
+  // Handle utility menu item click (linguetta ☰)
   const handleUtilityItemClick = (action?: () => void) => {
     action?.();
     setIsUtilityMenuOpen(false);
+  };
+
+  // Toggle "Utilità" feature hub popup
+  const handleToggleFeatureHub = () => {
+    setIsFeatureHubOpen((prev) => !prev);
   };
 
   return (
@@ -228,13 +255,18 @@ export function TopBar({
               type="button"
               onClick={onForumClick}
               className={styles.iconButton}
-              title="Bacheca"
+              title={unreadForumCount > 0 ? `Bacheca (${unreadForumCount} argomenti con novità)` : 'Bacheca'}
             >
               <img
                 src="/images/topbar/button-forum.png"
                 alt="Bacheca"
                 className={styles.iconImage}
               />
+              {unreadForumCount > 0 && (
+                <span className={styles.notificationBadge}>
+                  {unreadForumCount > 99 ? '99+' : unreadForumCount}
+                </span>
+              )}
             </button>
 
             {/* OnGame Mail (Victorian Post) - Popup */}
@@ -297,24 +329,44 @@ export function TopBar({
 
           {/* Right Icons - 3 elements */}
           <div className={styles.iconsContainerRight}>
-            {/* Utility - Popup */}
-            <button
-              type="button"
-              onClick={onUtilityClick}
-              className={styles.iconButton}
-              title={unreadTicketsCount > 0 ? `Utilità (${unreadTicketsCount} ticket non letti)` : 'Utilità'}
-            >
-              <img
-                src="/images/topbar/button-utility.png"
-                alt="Utilità"
-                className={styles.iconImage}
-              />
-              {unreadTicketsCount > 0 && (
-                <span className={styles.notificationBadge}>
-                  {unreadTicketsCount > 99 ? '99+' : unreadTicketsCount}
-                </span>
+            {/* Utility - Feature hub popup */}
+            <div className={styles.featureHubAnchor} ref={featureHubRef}>
+              <button
+                type="button"
+                onClick={handleToggleFeatureHub}
+                className={styles.iconButton}
+                title="Utilità"
+                aria-label="Apri hub funzionalità"
+                aria-expanded={isFeatureHubOpen}
+                aria-haspopup="true"
+              >
+                <img
+                  src="/images/topbar/button-utility.png"
+                  alt="Utilità"
+                  className={styles.iconImage}
+                />
+              </button>
+
+              {isFeatureHubOpen && (
+                <div className={styles.featureHubDropdown} role="menu">
+                  <div className={styles.featureHubTitle}>Utilità</div>
+
+                  {/* Coming soon: not implemented yet, shown disabled rather than hidden.
+                      Everything already built (Bacheca, Tickets, Documenti, Anagrafica,
+                      Prestavolto, Opzioni audio/chat) already has its own place — the
+                      dedicated topbar icons, or the ☰ menu — so it doesn't belong here too. */}
+                  <div className={`${styles.featureHubItem} ${styles.featureHubItemDisabled}`} role="menuitem" aria-disabled="true">
+                    <span>🏪 Mercato</span>
+                    <span className={styles.featureHubComingSoon}>Presto disponibile</span>
+                  </div>
+
+                  <div className={`${styles.featureHubItem} ${styles.featureHubItemDisabled}`} role="menuitem" aria-disabled="true">
+                    <span>🏦 Banca</span>
+                    <span className={styles.featureHubComingSoon}>Presto disponibile</span>
+                  </div>
+                </div>
               )}
-            </button>
+            </div>
 
             {/* Documents - Link to new page */}
             <a

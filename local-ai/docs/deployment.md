@@ -17,7 +17,7 @@
 │  Macchina locale             │
 │  ngrok (:9000 → URL pubblica)│
 │    → local-ai gateway        │
-│    → botai, qa, ollama, etc  │
+│    → botai, ollama, ecc     │
 └──────────────────────────────┘
 ```
 
@@ -177,7 +177,7 @@ Per consentire a un altro servizio/utente di usare local-ai:
   "id": "altro-servizio",
   "name": "Altro Servizio",
   "apiKey": "<nuova-chiave>",
-  "permissions": ["qa"],
+  "permissions": ["botai"],
   "rateLimit": { "maxPerMinute": 10 }
 }
 ```

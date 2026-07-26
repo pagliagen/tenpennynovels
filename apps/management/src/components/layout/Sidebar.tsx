@@ -74,6 +74,7 @@ const NAV_ITEMS: NavItem[] = [
       { key: 'game-social-classes', label: 'Classi Sociali', href: '/game-data/social-class-list', permission: 'social_classes.access' },
       { key: 'game-occupations', label: 'Occupazioni', href: '/game-data/occupation-list', permission: 'skills.access' },
       { key: 'game-items', label: 'Mercato', href: '/game-data/item-list', permission: 'items.access' },
+      { key: 'game-forum-categories', label: 'Forum - Categorie', href: '/game-data/forum-categories', permission: 'forum.manage' },
       { key: 'game-forum-topics', label: 'Forum - Argomenti', href: '/game-data/forum-topics', permission: 'forum.manage' }
     ]
   },
@@ -93,6 +94,8 @@ const NAV_ITEMS: NavItem[] = [
     children: [
       { key: 'chat-moderation', label: 'Moderazione Chat AI', href: '/moderation/chat-moderation', permission: 'moderation.chat_ai' },
       { key: 'forum-moderation', label: 'Moderazione Forum AI', href: '/moderation/forum-moderation', permission: 'moderation.forum_ai' },
+      { key: 'forum-discussions-moderation', label: 'Moderazione Discussioni Forum', href: '/moderation/forum-discussions', permission: 'forum.manage' },
+      { key: 'forum-posts-moderation', label: 'Moderazione Post Forum', href: '/moderation/forum-posts', permission: 'forum.manage' },
       { key: 'mail-moderation', label: 'Moderazione Messaggi AI', href: '/moderation/mail-moderation', permission: 'messaging.moderation.manage' }
     ]
   },

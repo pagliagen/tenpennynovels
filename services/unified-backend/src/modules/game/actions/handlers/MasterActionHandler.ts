@@ -2,9 +2,9 @@
  * Master Action Handler
  *
  * Handles master actions (Game Master messages):
- * - Sets visibility to 'master_only' by default
- * - Used for GM narration, system messages, plot revelations
- * - Simple handler similar to StandardActionHandler but for master-only content
+ * - Default: visible to everyone (GM narration, system messages, plot revelations)
+ * - If the master selects targetCharacters ("esito riservato"), visibility is
+ *   forced to master_only and restricted to master + those characters
  *
  * @module actions/handlers/MasterActionHandler
  * @since 2.1.0
@@ -36,12 +36,24 @@ export class MasterActionHandler extends BaseActionHandler {
   async process(input: ActionInput, context: ActionContext): Promise<ActionData> {
     const actionData = this.buildBaseActionData(input);
 
-    // Force visibility to master_only for master actions
-    actionData.visibility = 'master_only';
+    if (input.targetCharacters && input.targetCharacters.length > 0) {
+      // "Esito riservato": master targeted specific characters — the message
+      // is visible only to master + those characters. Visibility is forced
+      // server-side (not trusted from the client) whenever targets are set.
+      actionData.targetCharacters = input.targetCharacters;
+      actionData.visibility = 'master_only';
+    } else {
+      // Default: master narration/announcements are visible to everyone
+      // (GM narration, plot revelations — see module doc). An explicit
+      // master_only request (untargeted private note) is still honored.
+      actionData.visibility = input.visibility === 'master_only' ? 'master_only' : 'public';
+    }
 
     this.log('info', `Master action created`, {
       characterId: input.characterId,
-      locationId: input.locationId
+      locationId: input.locationId,
+      visibility: actionData.visibility,
+      targetCount: input.targetCharacters?.length || 0
     });
 
     return actionData;

@@ -67,19 +67,103 @@
    LOCATION IMAGE
    ======================================== */
 
-.imageWrapper {
-  width: 100%;
-  margin-bottom: 32px;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-}
-
 .locationImage {
   width: 100%;
   height: auto;
   display: block;
   filter: sepia(15%) contrast(1.05) brightness(0.9) saturate(0.95);
+}
+
+/* Image block with description + Entra button overlaid */
+.imageBlock {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  margin-bottom: 32px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+
+  .locationImage {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.imageOverlayGradient {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(15, 10, 5, 0.92) 0%,
+    rgba(15, 10, 5, 0.6) 42%,
+    rgba(15, 10, 5, 0) 75%
+  );
+  pointer-events: none;
+}
+
+.overlayDescription {
+  position: absolute;
+  left: 24px;
+  right: 24px;
+  bottom: 84px;
+  margin: 0;
+  color: #f0e2c0;
+  font-family: 'Playfair Display', serif;
+  font-size: 16px;
+  line-height: 1.6;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
+  z-index: 1;
+}
+
+.typewriterCursor {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 2px;
+  background: #d4a017;
+  vertical-align: text-bottom;
+  animation: typewriterBlink 1s steps(1) infinite;
+}
+
+@keyframes typewriterBlink {
+  0%, 50% {
+    opacity: 1;
+  }
+  50.01%, 100% {
+    opacity: 0;
+  }
+}
+
+.enterButtonOverlay {
+  position: absolute;
+  left: 24px;
+  bottom: 24px;
+  z-index: 2;
+  background: rgba(15, 10, 5, 0.75);
+  border: 2px solid #b8860b;
+  color: #d4a017;
+  font-family: 'Thrifted Attire', serif;
+  padding: 10px 28px;
+  font-size: 16px;
+  border-radius: $radius-md;
+  cursor: pointer;
+  backdrop-filter: blur(2px);
+  transition: all 0.2s ease;
+
+  &:hover {
+    color: #f0c040;
+    border-color: #d4a017;
+    background: rgba(15, 10, 5, 0.9);
+    transform: translateY(-2px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
 }
 
 /* ========================================
@@ -311,6 +395,25 @@
     width: 100%;
     padding: 10px 24px;
     font-size: 15px;
+  }
+
+  .imageBlock {
+    aspect-ratio: 4 / 3;
+    margin-bottom: 24px;
+  }
+
+  .overlayDescription {
+    left: 16px;
+    right: 16px;
+    bottom: 68px;
+    font-size: 14px;
+  }
+
+  .enterButtonOverlay {
+    left: 16px;
+    bottom: 16px;
+    padding: 8px 20px;
+    font-size: 14px;
   }
 
   .occupantsList {

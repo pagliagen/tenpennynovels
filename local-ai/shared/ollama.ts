@@ -12,7 +12,7 @@ export function getOllamaClient(): Ollama {
 }
 
 export function getModel(): string {
-  return process.env.OLLAMA_MODEL || 'gemma3:12b';
+  return process.env.OLLAMA_MODEL || 'hermes3:8b';
 }
 
 export async function warmupModel(): Promise<void> {

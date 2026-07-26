@@ -54,5 +54,11 @@
     "prettier": "^3.4.2",
     "sass": "^1.97.3",
     "typescript": "^5.9.3"
+  },
+  "allowScripts": {
+    "@parcel/watcher@2.6.0": true,
+    "fsevents@2.3.3": true,
+    "sharp@0.34.5": true,
+    "unrs-resolver@1.12.2": true
   }
 }

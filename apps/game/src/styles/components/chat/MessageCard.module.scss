@@ -12,15 +12,13 @@
   flex-direction: row;
   gap: $spacing-lg;
   padding: $spacing-lg $spacing-xl;
-  background: rgba(245, 245, 245, 0.05);
-  border-left: 3px solid $gold-30;
-  border-radius: $radius-sm;
+  background: rgba(0, 0, 0, 0.6);
+  border-left: 10px solid #ffa748;
+  border-radius: 5px;
   transition: all $transition-normal;
-
-  &:hover {
-    background: rgba(245, 245, 245, 0.08);
-    border-left-color: rgba(184, 134, 11, 0.6);
-  }
+  color: #a9aa9b;
+  font-family: 'Bahnschrift SemiLight', serif;
+  font-size: 14px;
 }
 
 .messageCardLeft {
@@ -44,6 +42,22 @@
 .messageCardContent {
   flex: 1;
   padding-right: $spacing-xxl; // Space for menu button
+
+  .messageTimestampContainer {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: $spacing-sm;
+    margin-bottom: 15px;
+
+    * {
+      font-size: 14px;
+      font-family: 'Bahnschrift SemiLight', serif;
+      padding: 0;
+      margin: 0;
+      line-height: 15px;
+    }
+  }
 }
 
 .messageCardDimmed {
@@ -53,7 +67,27 @@
 
 /* Type-specific styling */
 .messageCard--whisper {
-  border-left-color: $brown-50;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 15px;
+  border-left-color: $gold-80;
+  box-shadow: 0 0 8px $gold-30;
+  margin-left: 15px;
+  position: relative;
+  padding: 5px 24px 5px 30px;
+
+  &::before {
+    background-image: url('/icons/whisper.png');
+    background-repeat: no-repeat;
+    background-position: left center;
+    background-size: 40px 40px;
+    content: '';
+    width: 40px;
+    height: 40px;
+    display: inline-block;
+    position: absolute;
+    top: -5px;
+    left: -20px;
+  }
 }
 
 .messageCard--ooc {
@@ -62,20 +96,83 @@
 }
 
 .messageCard--master {
-  border-left-color: $gold-80;
+  position: relative;
+  background: #4f1914;
+  border-radius: 15px;
+  border: none;
   box-shadow: 0 0 8px $gold-30;
+
+  &:before {
+    content: '';
+    position: absolute;
+    border-radius: 15px;
+    top: 0;
+    left: 0;
+    width: calc(100% - 10px);
+    height: calc(100% - 10px);
+    border: 1px solid $gold-80;
+    inset: 5px;
+  }
+
+  .messageTimestampContainer {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: $spacing-sm;
+    margin-bottom: 15px;
+    font-size: 14px;
+    line-height: 15px;
+
+    time {
+      font-family: 'Bahnschrift SemiLight' !important;
+      padding: 0;
+      margin: 0;
+    } 
+  }
 }
 
 .messageCard--dice_roll {
   border-left-color: rgba(147, 51, 234, 0.5);
-}
+  margin-left: 15px;
+  position: relative;
+  padding: 5px 24px 5px 30px;
 
-.messageCard--skill_check {
-  border-left-color: rgba(34, 197, 94, 0.5);
+  &::before {
+    content: '🎲';
+    width: 40px;
+    height: 40px;
+    display: inline-block;
+    font-size: 28px;
+    line-height: 40px;
+    text-align: center;
+    position: absolute;
+    top: -5px;
+    left: -20px;
+  }
 }
 
 .messageCard--stat_check {
-  border-left-color: rgba(59, 130, 246, 0.5);
+  border-left-color: rgba(0, 0, 0, 0.6);
+  margin-left: 15px;
+  position: relative;
+  padding: 5px 24px 5px 30px;
+
+  &::before {
+    // In CSS, you cannot use a URL or image in the 'content' property directly.
+    // To insert an image with ::before, you must use background-image (recommended), or create an <img> element in markup.
+    // Example with background-image:
+    background-image: url('/icons/stat-check.png');
+    background-repeat: no-repeat;
+    background-position: left center;
+    background-size: 40px 40px; // adjust as needed
+    content: '';
+    width: 40px;   // required to show background image!
+    height: 40px;  // required to show background image!
+    display: inline-block;
+    position: absolute;
+    top: -5px;
+    left: -20px; 
+  }
 }
 
 .messageCard--item_use {
@@ -87,6 +184,50 @@
 }
 
 /* LEFT COLUMN (Avatar + Name + Time) */
+.messageAvatarWrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.messageAvatarHoverCard {
+  position: absolute;
+  top: 50%;
+  left: calc(100% + #{$spacing-md});
+  transform: translateY(-50%);
+  z-index: 20;
+  min-width: 160px;
+  max-width: 240px;
+  background: rgba(20, 15, 10, 0.95);
+  border: 1px solid $gold-50;
+  border-radius: 6px;
+  padding: $spacing-sm $spacing-md;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+
+  // Hidden on touch devices — there is no hover there; click still opens the full scheda.
+  @media (hover: none) {
+    display: none;
+  }
+}
+
+.messageAvatarHoverLine {
+  color: #daddc4;
+  font-family: 'Bahnschrift SemiLight', serif;
+  font-size: 12px;
+  line-height: 1.4;
+  margin: 0;
+
+  & + & {
+    margin-top: $spacing-xs;
+    padding-top: $spacing-xs;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+}
+
+.messageAvatarHoverMaster {
+  color: $gold-80;
+}
+
 .messageAvatar {
   width: 80px;
   height: 80px;
@@ -121,39 +262,24 @@
   }
 }
 
-.avatarPlaceholder {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-  background: $gold-20;
-  color: $gold;
-  font-family: 'Thrifted Attire', serif;
-  font-size: 32px;
-  font-weight: 600;
-}
-
 .characterName {
-  color: $parchment;
-  font-family: $font-serif;
+  color: #ffa748;
+  font-family: 'Thrifted Attire', serif;
   font-size: 14px;
-  font-weight: 600;
   text-align: center;
   word-break: break-word;
 }
 
 .messageTimestamp {
-  color: $parchment-60;
-  font-family: $font-serif;
-  font-size: 12px;
-  font-style: italic;
+  color: #daddc4;
+  font-family: 'Bahnschrift SemiLight', serif;
+  font-size: 14px;
 }
 
 .messageContent {
-  color: $parchment;
-  font-family: $font-serif;
-  font-size: 16px;
+  color: #a9aa9b;
+  font-family: 'Bahnschrift SemiLight', serif;
+  font-size: 14px;
   line-height: 1.6;
   white-space: pre-wrap;
   word-break: break-word;

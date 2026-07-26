@@ -1,0 +1,47 @@
+@use './_variables' as *;
+
+.container {
+  padding: $spacing-xl;
+  max-width: $forum-max-width;
+  margin: 0 auto;
+}
+
+.title {
+  font-family: $font-serif;
+  color: $text-primary;
+  font-size: 20px;
+  margin-bottom: $spacing-xl;
+}
+
+.grid {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.allTopicsLink {
+  display: block;
+  text-align: left;
+  background: none;
+  border: 1px dashed $dark-border;
+  border-radius: $radius-lg;
+  padding: $spacing-md $spacing-lg;
+  color: $text-secondary;
+  font-size: 14px;
+  cursor: pointer;
+  margin-bottom: $spacing-lg;
+  transition: $transition-normal;
+
+  &:hover {
+    border-color: $gold-30;
+    color: $text-primary;
+  }
+}
+
+.loading,
+.empty,
+.error {
+  text-align: center;
+  padding: $spacing-xxl;
+  color: $text-muted;
+}

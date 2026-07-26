@@ -1,0 +1,51 @@
+@use './_variables' as *;
+
+/**
+ * Message Content Styles
+ * Dialogue spans and character mention tokens parsed from raw message content.
+ * @module styles/components/chat/MessageContent
+ */
+
+.dialogue {
+  font-family: 'Bahnschrift SemiLight', serif;
+  font-size: 14px;
+  color: #ffa748;
+
+  &::before {
+    content: '«';
+    margin-right: 1px;
+  }
+
+  &::after {
+    content: '»';
+    margin-left: 1px;
+  }
+}
+
+.mention {
+  display: inline;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font-family: 'Bahnschrift SemiLight', serif;
+  font-size: 14px;
+  color: #ffa748;
+  cursor: pointer;
+  transition: color $transition-normal;
+
+  &:hover {
+    color: $parchment;
+  }
+}
+
+// Master screen only, provvisorio: nome pg in evidenza va in maiuscolo e sottolineato
+.mentionMaster {
+  text-transform: uppercase;
+  text-decoration: underline;
+}
+
+.mentionUnresolved {
+  color: $parchment-dark;
+  font-style: italic;
+}

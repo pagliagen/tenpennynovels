@@ -15,14 +15,14 @@ I client sono definiti nel file `clients.json` (array JSON, montato nel gateway 
     "name": "TenPennyNovels VPS",
     "apiKey": "a1b2c3d4...",
     "hmacSecret": "e5f6g7h8...",
-    "permissions": ["botai", "qa"],
+    "permissions": ["botai"],
     "rateLimit": { "maxPerMinute": 30 }
   },
   {
     "id": "tpn-dev",
     "name": "Local Development",
     "apiKey": "x9y8z7w6...",
-    "permissions": ["botai", "qa"],
+    "permissions": ["botai"],
     "rateLimit": { "maxPerMinute": 120 }
   }
 ]
@@ -136,7 +136,6 @@ Tutti i payload POST sono validati con schemi **Zod** nel gateway, prima che la 
 - `POST /botai/respond` → `botRespondSchema`
 - `POST /botai/bots` → `botCreateSchema`
 - `POST /botai/bots/generate` → `botGenerateSchema`
-- `POST /qa/ask` → `qaAskSchema`
 
 Richieste malformate ricevono `400` con dettagli strutturati:
 
@@ -152,7 +151,7 @@ Richieste malformate ricevono `400` con dettagli strutturati:
 
 ## Isolamento dei servizi
 
-I servizi backend (botai, qa, ecc.) sono esposti solo sulla rete Docker interna (`expose`, non `ports`). Non sono raggiungibili dall'esterno. Solo il gateway e esposto sulla porta 9000.
+I servizi backend (botai, character-gen, ecc.) sono esposti solo sulla rete Docker interna (`expose`, non `ports`). Non sono raggiungibili dall'esterno. Solo il gateway e esposto sulla porta 9000.
 
 ## Generazione chiavi
 

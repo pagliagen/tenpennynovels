@@ -2,7 +2,7 @@
  * Forum Types
  *
  * Frontend types for the forum system (Bacheca).
- * Supports topics, discussions, posts, reactions, bookmarks, notifications, and search.
+ * Supports topics, discussions, posts, bookmarks, notifications, and search.
  *
  * @module types/forum
  * @since 2.0.0
@@ -20,6 +20,16 @@ export interface TopicAccessRule {
 export interface ForumAuthor {
   characterId: string;
   characterName: string;
+}
+
+export interface ForumCategory {
+  id: string;
+  slug: string;
+  title: string;
+  description?: string;
+  sortOrder: number;
+  color?: string;
+  icon?: string;
 }
 
 export interface ForumTopic {
@@ -41,6 +51,18 @@ export interface ForumTopic {
   color?: string;
   icon?: string;
   isFavorite?: boolean;
+  categoryId?: string;
+  categorySlug?: string;
+  /** ON: anonymous posting + 15min reply edit window. OFF (default): no anonymity, broadcast ("segnala") allowed. */
+  mode?: 'ON' | 'OFF';
+}
+
+export type DiscussionVisibilityType = 'public' | 'staff' | 'corporation' | 'characterList' | 'private';
+
+export interface DiscussionVisibility {
+  type: DiscussionVisibilityType;
+  corporationId?: string;
+  characterIds?: string[];
 }
 
 export interface ForumDiscussion {
@@ -60,6 +82,11 @@ export interface ForumDiscussion {
   createdBy: ForumAuthor;
   tags: string[];
   popularityScore?: number;
+  /** Absent = inherits fully from the topic (no additional restriction). */
+  visibility?: DiscussionVisibility;
+  /** Always applies on top of `visibility`, even 'staff'/'private'. Staff-only to set. */
+  excludedCharacterIds?: string[];
+  isFavorite?: boolean;
 }
 
 export interface ForumPost {
@@ -73,17 +100,22 @@ export interface ForumPost {
   isEdited: boolean;
   isDeleted: boolean;
   replyToPostId?: string;
-  reactionCounts: ReactionCounts;
+  /** True if posted anonymously (ON boards only). `author` is already masked
+   * server-side for non-staff/non-owner viewers when this is true. */
+  isAnonymous?: boolean;
+  /** Computed server-side before author masking: true if the viewer is this
+   * post's author. Use this instead of comparing author.characterId, which
+   * is masked to null for anonymous posts (except to the author/staff). */
+  isOwnPost?: boolean;
+  /** At most one pinned post per discussion. */
+  isPinned?: boolean;
+  /** Snapshot taken at quote time, stable even if the original post changes later. */
+  quotedContent?: {
+    postId: string;
+    authorCharacterName: string;
+    excerptHtml: string;
+  };
 }
-
-export interface ReactionCounts {
-  like: number;
-  love: number;
-  laugh: number;
-  think: number;
-}
-
-export type ReactionType = 'like' | 'love' | 'laugh' | 'think';
 
 export interface ForumBookmark {
   _id: string;
@@ -100,9 +132,8 @@ export interface ForumBookmark {
 
 export type ForumNotificationType =
   | 'new_post_in_subscribed_discussion'
-  | 'character_followed_you'
-  | 'reaction_on_your_post'
-  | 'reply_to_your_post';
+  | 'reply_to_your_post'
+  | 'staff_announcement';
 
 export interface ForumNotification {
   _id: string;
@@ -145,4 +176,16 @@ export interface ForumInitData {
   };
 }
 
-export type ForumView = 'topics' | 'discussions' | 'thread' | 'search' | 'bookmarks' | 'notifications' | 'createDiscussion';
+export type ForumView = 'categories' | 'topics' | 'discussions' | 'thread' | 'search' | 'bookmarks' | 'notifications' | 'createDiscussion';
+
+export type ForumReplyOrder = 'asc' | 'desc';
+
+export interface ForumPreferences {
+  replyOrder: ForumReplyOrder;
+}
+
+export interface ForumUnreadSummary {
+  hasUnread: boolean;
+  count: number;
+  topics: Array<{ id: string; slug: string }>;
+}

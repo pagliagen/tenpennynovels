@@ -4,14 +4,14 @@
     "name": "TenPennyNovels VPS",
     "apiKey": "CHANGE_ME_prod_key",
     "hmacSecret": "CHANGE_ME_prod_hmac",
-    "permissions": ["botai", "qa", "seo"],
+    "permissions": ["botai", "seo"],
     "rateLimit": { "maxPerMinute": 30 }
   },
   {
     "id": "tpn-dev",
     "name": "Local Development",
     "apiKey": "CHANGE_ME_dev_key",
-    "permissions": ["botai", "qa", "seo"],
+    "permissions": ["botai", "seo"],
     "rateLimit": { "maxPerMinute": 120 }
   }
 ]

@@ -26,6 +26,13 @@ export class MessageContext {
   private skills: Map<string, any> = new Map();
   private items: Map<string, any> = new Map();
 
+  /** Whether the character requesting these messages is a master — editHistory is master-only. */
+  public readonly isViewerMaster: boolean;
+
+  constructor(isViewerMaster: boolean = false) {
+    this.isViewerMaster = isViewerMaster;
+  }
+
   /**
    * Get character by ID (cached)
    */

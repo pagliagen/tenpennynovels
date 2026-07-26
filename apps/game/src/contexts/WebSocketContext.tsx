@@ -82,6 +82,24 @@ export interface MessageEvent {
 }
 
 /**
+ * Forum Event Types (Bacheca)
+ *
+ * discussion_created/post_created are global (no per-topic room to join
+ * yet) - consumers filter by topicSlug/discussionSlug themselves.
+ * notification_new is already targeted server-side to the recipient.
+ *
+ * @typedef {Object} ForumEvent
+ * @property {string} type - Event type
+ * @property {any} data - Event data (varies by type)
+ *
+ * @since 2.1.0
+ */
+export interface ForumEvent {
+  type: string;
+  data: any;
+}
+
+/**
  * Connection Event Types
  *
  * Fired on 'connect' (first connection of this socket lifecycle) and
@@ -166,6 +184,14 @@ interface WebSocketContextValue {
   onConnectionEvent: (callback: EventCallback<ConnectionEvent>) => () => void;
 
   /**
+   * Subscribe to forum events (bacheca)
+   *
+   * @param {EventCallback<ForumEvent>} callback - Event handler
+   * @returns {() => void} Unsubscribe function
+   */
+  onForumEvent: (callback: EventCallback<ForumEvent>) => () => void;
+
+  /**
    * Manually reconnect WebSocket
    *
    * @returns {void}
@@ -231,6 +257,7 @@ export function WebSocketProvider({ children }: WebSocketProviderProps): JSX.Ele
   const globalCallbacksRef = useRef<Set<EventCallback<GlobalEvent>>>(new Set());
   const messageCallbacksRef = useRef<Set<EventCallback<MessageEvent>>>(new Set());
   const connectionCallbacksRef = useRef<Set<EventCallback<ConnectionEvent>>>(new Set());
+  const forumCallbacksRef = useRef<Set<EventCallback<ForumEvent>>>(new Set());
 
   // Sincronizza il ref con lo state per evitare stale closure nei callback WebSocket
   currentLocationIdRef.current = currentLocationId;
@@ -682,6 +709,36 @@ export function WebSocketProvider({ children }: WebSocketProviderProps): JSX.Ele
     });
 
     /**
+     * Forum Events (Bacheca)
+     */
+
+    socket.on('forum:discussion:created', (data) => {
+      forumCallbacksRef.current.forEach((callback) =>
+        callback({ type: 'forum:discussion:created', data })
+      );
+    });
+
+    socket.on('forum:post:created', (data) => {
+      forumCallbacksRef.current.forEach((callback) =>
+        callback({ type: 'forum:post:created', data })
+      );
+    });
+
+    socket.on('forum:notification:new', (data) => {
+      playNotificationSound();
+
+      useUIStore.getState().addToast({
+        type: 'info',
+        message: data?.title || 'Nuova notifica dalla bacheca',
+        duration: 5000,
+      });
+
+      forumCallbacksRef.current.forEach((callback) =>
+        callback({ type: 'forum:notification:new', data })
+      );
+    });
+
+    /**
      * Keepalive Ping
      */
 
@@ -772,6 +829,21 @@ export function WebSocketProvider({ children }: WebSocketProviderProps): JSX.Ele
   }, []);
 
   /**
+   * Subscribe to forum events (bacheca)
+   *
+   * @function onForumEvent
+   * @param {EventCallback<ForumEvent>} callback - Event handler
+   * @returns {() => void} Unsubscribe function
+   * @since 2.1.0
+   */
+  const onForumEvent = useCallback((callback: EventCallback<ForumEvent>) => {
+    forumCallbacksRef.current.add(callback);
+    return () => {
+      forumCallbacksRef.current.delete(callback);
+    };
+  }, []);
+
+  /**
    * Manually reconnect WebSocket
    *
    * @function reconnect
@@ -809,6 +881,7 @@ export function WebSocketProvider({ children }: WebSocketProviderProps): JSX.Ele
     onGlobalEvent,
     onMessageEvent,
     onConnectionEvent,
+    onForumEvent,
     reconnect,
     disconnect,
   };

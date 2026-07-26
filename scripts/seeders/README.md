@@ -10,7 +10,7 @@ Seeders populate the database with initial data. All seeders automatically detec
 
 ## Prerequisites
 
-- Node.js >= 22.13.1 (see `.nvmrc` in project root)
+- Node.js >= 24.18.0 (see `.nvmrc` in project root)
 - MongoDB running (locally via Docker or production instance)
 - For DocumentSeeder embeddings (optional): `embeddings-service`, `embeddings-worker`, and Redis must be running
 

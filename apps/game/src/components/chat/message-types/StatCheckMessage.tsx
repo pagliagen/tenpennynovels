@@ -1,9 +1,10 @@
 /**
  * Stat Check Message Component
  *
- * Shows attribute check result (Strength, Dexterity, etc.).
- * Displays attribute, difficulty, roll vs target, and success/failure.
- * Contains complete message structure with avatar, menu, content, and footer.
+ * Shows attribute check result (Strength, Dexterity, etc.) as a single line:
+ * "{character} tira {attribute} facendo un {esito} ({tiro}/100)" — the full
+ * sentence, roll included, is generated server-side (StatCheckActionHandler).
+ * Compact layout: no avatar/header/footer, just content and menu.
  * Uses useMessageInteractions hook for shared logic.
  *
  * @module components/chat/message-types/StatCheckMessage
@@ -18,7 +19,6 @@ import type { ChatMessage } from '@/types/chat';
 
 import { ConfirmDeleteDialog } from '../ConfirmDeleteDialog';
 import { MessageEditableContent } from '../MessageEditableContent';
-import { MessageFooter } from '../MessageFooter';
 import { MessageMenu } from '../MessageMenu';
 
 
@@ -29,8 +29,6 @@ interface StatCheckMessageProps {
 
 export function StatCheckMessage({ message, currentCharacterId }: StatCheckMessageProps): JSX.Element {
   const interactions = useMessageInteractions(message, currentCharacterId);
-  const statCheck = message.statCheck;
-  const diceResult = message.diceResult;
 
   return (
     <>
@@ -40,28 +38,7 @@ export function StatCheckMessage({ message, currentCharacterId }: StatCheckMessa
         onCancel={interactions.handleCancelDelete}
       />
 
-      {/* Left column: Avatar + Stat Icon + Name + Time */}
-      <div className={styles.messageCardLeft}>
-        <button
-          className={styles.messageAvatar}
-          onClick={interactions.handleAvatarClick}
-          type="button"
-          aria-label={`Apri scheda di ${message.characterName}`}
-        >
-          {message.characterAvatar ? (
-            <img src={message.characterAvatar} alt="" />
-          ) : (
-            <span className={styles.avatarPlaceholder}>
-              {message.characterName?.[0]?.toUpperCase() || '?'}
-            </span>
-          )}
-        </button>
-        <span className={styles.characterName}>{message.characterName}</span>
-        <span className={styles.statIcon}>💪</span>
-        <time className={styles.messageTimestamp}>{interactions.formattedTime}</time>
-      </div>
-
-      {/* Right column: Content + Menu + Tag */}
+      {/* Content + Menu */}
       <div className={styles.messageCardRight}>
         {/* Menu button */}
         {interactions.canEdit && (
@@ -97,33 +74,11 @@ export function StatCheckMessage({ message, currentCharacterId }: StatCheckMessa
               onChange={interactions.setEditedContent}
             />
           ) : (
-            <>
-              <div className={styles.messageContent}>{message.content}</div>
-
-              {/* Stat check from diceResult (new format - no target exposed) */}
-              {diceResult?.statName && (
-                <div className={styles.statCheckResult}>
-                  <div className={styles.rollDisplay}>
-                    <span className={styles.rollValue}>🎲 {diceResult.result}</span>
-                    <span className={styles.successDegree}>
-                      {diceResult.successDegree || (diceResult.success ? 'Successo' : 'Fallimento')}
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              {/* Legacy stat check (old format with target - should not happen anymore) */}
-              {!diceResult && statCheck && (
-                <div className={styles.statCheckResult}>
-                  Roll: {statCheck.roll} | {statCheck.success ? '✅' : '❌'}
-                </div>
-              )}
-            </>
+            <div className={styles.messageContent}>
+              {message.content}
+            </div>
           )}
         </div>
-
-        {/* Footer */}
-        <MessageFooter message={message} onTagClick={interactions.handleTagClick} />
       </div>
     </>
   );

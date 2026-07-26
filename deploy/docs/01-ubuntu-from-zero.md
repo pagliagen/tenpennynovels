@@ -61,7 +61,7 @@ Usa questa checklist per verificare ogni step:
 - [ ] Setup SSH key authentication
 - [ ] Disable password SSH login
 - [ ] Configura firewall (ufw)
-- [ ] Installa Node.js 22.13.1 (nvm)
+- [ ] Installa Node.js 24.18.0 (nvm)
 - [ ] Installa PM2 globale
 - [ ] Installa Nginx
 - [ ] Installa Certbot
@@ -295,7 +295,7 @@ sudo ufw status verbose
 
 ## STEP 7: Installa Node.js via NVM
 
-**IMPORTANTE**: Installare Node.js 22.13.1 (versione esatta da `.nvmrc`)
+**IMPORTANTE**: Installare Node.js 24.18.0 (versione esatta da `.nvmrc`)
 
 ```bash
 # Come utente deploy
@@ -309,15 +309,15 @@ export NVM_DIR="$HOME/.nvm"
 nvm --version
 # Output: 0.39.7
 
-# Installa Node.js 22.13.1
-nvm install 22.13.1
+# Installa Node.js 24.18.0
+nvm install 24.18.0
 
 # Imposta come default
-nvm alias default 22.13.1
+nvm alias default 24.18.0
 
 # Verifica versione
 node --version
-# Output: v22.13.1
+# Output: v24.18.0
 
 npm --version
 # Output: 10.x.x
@@ -326,7 +326,7 @@ npm --version
 exit
 ssh tenpennynovels
 node --version
-# Output: v22.13.1
+# Output: v24.18.0
 ```
 
 ---
@@ -345,7 +345,7 @@ pm2 startup
 # Output: un comando "sudo env PATH=..." da eseguire
 
 # Copia e incolla il comando suggerito, esempio:
-sudo env PATH=$PATH:/home/deploy/.nvm/versions/node/v22.13.1/bin /home/deploy/.nvm/versions/node/v22.13.1/lib/node_modules/pm2/bin/pm2 startup systemd -u deploy --hp /home/deploy
+sudo env PATH=$PATH:/home/deploy/.nvm/versions/node/v24.18.0/bin /home/deploy/.nvm/versions/node/v24.18.0/lib/node_modules/pm2/bin/pm2 startup systemd -u deploy --hp /home/deploy
 
 # Verifica: PM2 deve partire automaticamente al reboot (testeremo dopo)
 ```
@@ -625,11 +625,11 @@ git branch
 
 # Verifica .nvmrc
 cat .nvmrc
-# Output: 22.13.1
+# Output: 24.18.0
 
 # Setup Node version dal .nvmrc
 nvm use
-# Output: Now using node v22.13.1
+# Output: Now using node v24.18.0
 ```
 
 ---

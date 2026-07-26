@@ -14,6 +14,7 @@ import { httpLoggerStream, logger } from '@shared/utils/logger';
 // Import module routes
 import authRoutes from '@modules/auth/routes/auth';
 import gameRoutes from '@modules/game/routes';
+import characterGenConfigRoutes from '@modules/game/routes/characterGenConfig';
 import adminRoutes from '@modules/admin/routes';
 import documentsRoutes from '@modules/documents/routes';
 import forumRoutes from '@modules/forum/routes/forum';
@@ -106,6 +107,7 @@ app.use('/webhooks', inboundWebhookRoutes);
 app.use('/auth', authRoutes);
 app.use('/documents', documentsRoutes);  // Documents module (public)
 app.use('/forum', forumRoutes);
+app.use('/character-gen', characterGenConfigRoutes);  // Character Gen config (PUBLIC - no auth)
 app.use('/game', gameRoutes);
 app.use('/admin', adminRoutes);
 

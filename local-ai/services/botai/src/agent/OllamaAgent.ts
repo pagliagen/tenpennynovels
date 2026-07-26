@@ -18,7 +18,7 @@ export class OllamaAgent implements IAgent {
 
   constructor(model?: string) {
     this.host = process.env.OLLAMA_URL || 'http://localhost:11434';
-    this.model = model || process.env.OLLAMA_MODEL || 'gemma3:12b';
+    this.model = model || process.env.OLLAMA_MODEL || 'hermes3:8b';
   }
 
   private chat(params: Record<string, unknown>): Promise<OllamaChatResponse> {

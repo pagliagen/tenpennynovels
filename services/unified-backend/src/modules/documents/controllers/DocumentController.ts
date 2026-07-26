@@ -647,8 +647,7 @@ export class DocumentController {
    */
   static async aiStatus(_req: Request, res: Response): Promise<void> {
     try {
-      const { aiGatewayClient } = await import('@modules/game/services/AIGatewayClient');
-      const aiAvailable = await aiGatewayClient.isHealthy();
+      const aiAvailable = await EmbeddingService.isAiAvailable();
       res.json({ result: true, data: { aiAvailable } });
     } catch {
       res.json({ result: true, data: { aiAvailable: false } });
@@ -697,13 +696,11 @@ export class DocumentController {
         };
       }).filter(Boolean);
 
-      // Try AI-powered answer via local-ai
+      // Try AI-powered answer via embeddings-worker
       try {
-        const { aiGatewayClient } = await import('@modules/game/services/AIGatewayClient');
-
-        const healthy = await aiGatewayClient.isHealthy();
+        const healthy = await EmbeddingService.isAiAvailable();
         if (healthy && contextChunks.length > 0) {
-          const qaResponse = await aiGatewayClient.askQuestion({
+          const qaResponse = await EmbeddingService.askQuestion({
             question,
             context: contextChunks.filter((c): c is NonNullable<typeof c> => c !== null),
             options: { maxTokens: 1000, locale: locale as string },

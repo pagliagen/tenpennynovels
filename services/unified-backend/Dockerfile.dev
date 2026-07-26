@@ -3,7 +3,7 @@
 # =============================================================================
 # Development mode con tsx watch (no build, hot reload)
 
-FROM node:22-alpine
+FROM node:24-alpine
 
 # Install global tools
 RUN npm install -g tsx nodemon

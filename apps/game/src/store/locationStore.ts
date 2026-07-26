@@ -16,13 +16,13 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 import { api } from '@/lib/api/client';
-import type { AccessibleLocation, LocationsResponse } from '@/types/location';
+import type { AccessibleLocation, LocationsResponse, RootLocation, RootLocationResponse } from '@/types/location';
 import { logger } from '@/lib/logger';
 
 /**
  * Cache Configuration
  */
-const CACHE_VERSION = '1.3.0'; // Bump when ILocation schema changes (v1.3.0: imageUrl from CDN)
+const CACHE_VERSION = '1.5.0'; // Bump when ILocation schema changes (v1.5.0: rootLocation for topbar default state)
 const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 /**
@@ -32,6 +32,7 @@ interface LocationStore {
   // Data
   locations: AccessibleLocation[];
   locationTree: AccessibleLocation[];
+  rootLocation: RootLocation | null;
 
   // Cache metadata
   cacheVersion: string;
@@ -127,6 +128,7 @@ export const useLocationStore = create<LocationStore>()(
       // Initial state
       locations: [],
       locationTree: [],
+      rootLocation: null,
       cacheVersion: CACHE_VERSION,
       lastFetched: 0,
       isLoading: false,
@@ -147,7 +149,8 @@ export const useLocationStore = create<LocationStore>()(
           state.cacheVersion === CACHE_VERSION && // Schema match
           state.lastFetched > 0 && // Has been fetched before
           now - state.lastFetched < CACHE_TTL_MS && // Not expired
-          state.locations.length > 0; // Has data
+          state.locations.length > 0 && // Has data
+          state.rootLocation !== null; // Has root location (topbar default state)
 
         if (isCacheValid) {
           const cacheAgeMinutes = Math.round((now - state.lastFetched) / 1000 / 60);
@@ -170,10 +173,13 @@ export const useLocationStore = create<LocationStore>()(
         set({ isLoading: true, error: null });
 
         try {
-          const response = await api.get<{ result: boolean; data: LocationsResponse }>('/game/locations');
+          const [locationsResponse, rootLocationResponse] = await Promise.all([
+            api.get<{ result: boolean; data: LocationsResponse }>('/game/locations'),
+            api.get<{ result: boolean; data: RootLocationResponse }>('/game/locations/root'),
+          ]);
 
           // Enrich with computed fields
-          const enrichedLocations = enrichLocations(response.data.locations);
+          const enrichedLocations = enrichLocations(locationsResponse.data.locations);
 
           // Build tree structure
           const tree = buildLocationTree(enrichedLocations);
@@ -181,6 +187,7 @@ export const useLocationStore = create<LocationStore>()(
           set({
             locations: enrichedLocations,
             locationTree: tree,
+            rootLocation: rootLocationResponse.data.rootLocation,
             lastFetched: Date.now(),
             cacheVersion: CACHE_VERSION,
             isLoading: false,
@@ -208,6 +215,7 @@ export const useLocationStore = create<LocationStore>()(
         set({
           locations: [],
           locationTree: [],
+          rootLocation: null,
           lastFetched: 0,
         });
       },
@@ -221,6 +229,7 @@ export const useLocationStore = create<LocationStore>()(
         set({
           locations: [],
           locationTree: [],
+          rootLocation: null,
           cacheVersion: CACHE_VERSION,
           lastFetched: 0,
           isLoading: false,
@@ -236,6 +245,7 @@ export const useLocationStore = create<LocationStore>()(
       partialize: (state) => ({
         locations: state.locations,
         locationTree: state.locationTree,
+        rootLocation: state.rootLocation,
         cacheVersion: state.cacheVersion,
         lastFetched: state.lastFetched,
       }),

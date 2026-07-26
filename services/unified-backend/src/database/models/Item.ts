@@ -48,8 +48,10 @@ export interface IItem extends Document, SoftDeleteMethods {
   subcategory?: string;
   
   // Visual representation
-  imageUrl?: string;              // Path to generated item image
-  
+  imageUrl?: string;              // URL CDN (upload manuale via pannello gestione)
+  image?: string;                 // Filename statico in apps/game/public/items/ (es. "stetoscopio.png"),
+                                   // generato da local-tools/imagegen — stesso pattern di Occupation.image
+
   // Availability and distribution
   isPublic: boolean;              // Available in General Stores
   availableLocations: Schema.Types.ObjectId[];   // Location IDs where item can be purchased
@@ -272,7 +274,12 @@ const ItemSchema = new Schema<IItem>({
     trim: true,
     maxlength: 500
   },
-  
+  image: {
+    type: String,
+    trim: true,
+    maxlength: 255
+  },
+
   // Availability
   isPublic: {
     type: Boolean,

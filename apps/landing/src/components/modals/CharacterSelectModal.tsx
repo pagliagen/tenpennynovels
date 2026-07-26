@@ -79,8 +79,8 @@ export function CharacterSelectModal({
         }
 
         // Redirect to game with sessionId as query param
-        // NOTE: sessionStorage is NOT shared between origins (localhost:4001 vs localhost:3010)
-        const gameUrl = process.env.NEXT_PUBLIC_GAME_URL || 'http://localhost:3010';
+        // NOTE: sessionStorage is NOT shared between origins (landing vs game app)
+        const gameUrl = process.env.NEXT_PUBLIC_GAME_URL || 'http://localhost:4001';
         const sessionId = responseData?.sessionId || sessionStorage.getItem('character_session_id');
 
         if (sessionId) {

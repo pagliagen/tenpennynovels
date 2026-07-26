@@ -605,7 +605,7 @@ pm2 startup
 # Copia e incolla il comando suggerito
 
 # Esempio output:
-sudo env PATH=$PATH:/home/deploy/.nvm/versions/node/v22.13.1/bin /home/deploy/.nvm/versions/node/v22.13.1/lib/node_modules/pm2/bin/pm2 startup systemd -u deploy --hp /home/deploy
+sudo env PATH=$PATH:/home/deploy/.nvm/versions/node/v24.18.0/bin /home/deploy/.nvm/versions/node/v24.18.0/lib/node_modules/pm2/bin/pm2 startup systemd -u deploy --hp /home/deploy
 
 # Esegui il comando suggerito
 

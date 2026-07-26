@@ -38,6 +38,9 @@ export class DiceRollActionHandler extends BaseActionHandler {
     const rollResult = context.diceService.rollDice(input.diceSpec || '1d100');
     actionData.diceResult = rollResult;
 
+    // Format message as a single sentence, consistent with stat/skill checks
+    actionData.content = `${input.characterName} tira ${rollResult.dice} facendo ${rollResult.total}`;
+
     this.log('debug', `Dice roll: ${rollResult.dice} = ${rollResult.total}`, {
       characterId: input.characterId,
       locationId: input.locationId,

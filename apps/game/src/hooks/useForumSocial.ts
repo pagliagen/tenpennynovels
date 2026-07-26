@@ -11,8 +11,6 @@
  * - useForumNotifications(page) - List user notifications
  * - useMarkNotificationsRead() - Mark notifications as read
  * - useUnreadNotificationCount() - Get unread count (polling)
- * - useForumFollowing() - List followed characters
- * - useToggleFollow() - Toggle follow on a character
  *
  * @module hooks/useForumSocial
  * @since 2.0.0
@@ -23,17 +21,22 @@ import { useQuery, useMutation, useQueryClient, type UseQueryResult, type UseMut
 import { forumApi } from '@/lib/api/forum';
 import type { ForumSearchResult, ForumBookmark, ForumNotification, PaginationInfo } from '@/types/forum';
 
+export interface SearchFilters {
+  dateFrom?: string;
+  dateTo?: string;
+  isLocked?: boolean;
+}
+
 /**
  * Query Keys
  *
  * Centralized query keys for cache invalidation.
  */
 export const forumSocialKeys = {
-  search: (query: string) => ['forum', 'search', query] as const,
+  search: (query: string, filters?: SearchFilters) => ['forum', 'search', query, filters] as const,
   bookmarks: () => ['forum', 'bookmarks'] as const,
   notifications: (page?: number) => ['forum', 'notifications', page] as const,
   unreadCount: () => ['forum', 'notifications', 'unread'] as const,
-  following: () => ['forum', 'following'] as const,
 };
 
 /**
@@ -46,11 +49,12 @@ export const forumSocialKeys = {
  * @returns {UseQueryResult} Query result with search results and pagination
  */
 export function useForumSearch(
-  query: string
+  query: string,
+  filters?: SearchFilters
 ): UseQueryResult<{ list: ForumSearchResult[]; pagination: PaginationInfo }, Error> {
   return useQuery({
-    queryKey: forumSocialKeys.search(query),
-    queryFn: () => forumApi.searchForum(query),
+    queryKey: forumSocialKeys.search(query, filters),
+    queryFn: () => forumApi.searchForum(query, undefined, filters),
     enabled: query.length >= 2,
     staleTime: 30 * 1000,
     gcTime: 5 * 60 * 1000,
@@ -166,40 +170,5 @@ export function useUnreadNotificationCount(): UseQueryResult<number, Error> {
     staleTime: 30 * 1000,
     gcTime: 5 * 60 * 1000,
     refetchInterval: 60 * 1000,
-  });
-}
-
-/**
- * useForumFollowing Hook
- *
- * Fetches list of characters the current character follows.
- *
- * @returns {UseQueryResult<any[]>} Query result
- */
-export function useForumFollowing(): UseQueryResult<any[], Error> {
-  return useQuery({
-    queryKey: forumSocialKeys.following(),
-    queryFn: () => forumApi.getFollowing(),
-    staleTime: 2 * 60 * 1000,
-    gcTime: 5 * 60 * 1000,
-  });
-}
-
-/**
- * useToggleFollow Hook
- *
- * Toggles follow on a character.
- * Invalidates following cache on success.
- *
- * @returns {UseMutationResult} Mutation result
- */
-export function useToggleFollow(): UseMutationResult<void, Error, string> {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (characterId: string) => forumApi.toggleFollow(characterId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: forumSocialKeys.following() });
-    },
   });
 }

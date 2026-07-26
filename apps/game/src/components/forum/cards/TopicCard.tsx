@@ -67,8 +67,13 @@ export function TopicCard({ topic, onFavoriteToggle }: TopicCardProps) {
         {topic.icon && <span className={styles.icon}>{topic.icon}</span>}
         <div className={styles.headerContent}>
           <h2 className={styles.title}>{topic.title}</h2>
-          {badges.length > 0 && (
+          {(badges.length > 0 || topic.mode) && (
             <div className={styles.badges}>
+              {topic.mode && (
+                <span className={styles.badge} title={topic.mode === 'ON' ? 'In gioco' : 'Fuori gioco'}>
+                  {topic.mode}
+                </span>
+              )}
               {badges.map((label) => (
                 <span key={label} className={styles.badge}>
                   {label}

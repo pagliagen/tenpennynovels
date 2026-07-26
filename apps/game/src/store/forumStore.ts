@@ -4,7 +4,9 @@
  * Manages forum navigation state and URL hash synchronization.
  *
  * **URL Format** (Hash-based routing):
- * - /#bacheca → topics list
+ * - /#bacheca → categories list (root)
+ * - /#bacheca/categorie/{categorySlug} → topics list, filtered by category
+ * - /#bacheca/tutti → topics list, unfiltered (includes uncategorized topics)
  * - /#bacheca/{topicSlug} → discussions list
  * - /#bacheca/{topicSlug}/{discussionSlug} → thread view
  * - /#bacheca/{topicSlug}/{discussionSlug}/{postId} → thread + scroll to post
@@ -25,6 +27,7 @@ import type { ForumView } from '@/types/forum';
 interface ForumStore {
   isOpen: boolean;
   view: ForumView;
+  categorySlug: string | null;
   topicSlug: string | null;
   discussionSlug: string | null;
   postId: string | null;
@@ -32,7 +35,9 @@ interface ForumStore {
 
   openForum: () => void;
   closeForum: () => void;
+  navigateToCategories: () => void;
   navigateToTopics: () => void;
+  navigateToTopicsInCategory: (categorySlug: string) => void;
   navigateToDiscussions: (topicSlug: string) => void;
   navigateToThread: (topicSlug: string, discussionSlug: string) => void;
   navigateToPost: (topicSlug: string, discussionSlug: string, postId: string) => void;
@@ -47,10 +52,16 @@ interface ForumStore {
 
 const HASH_PREFIX = '#bacheca';
 
-function buildHash(state: Pick<ForumStore, 'view' | 'topicSlug' | 'discussionSlug' | 'postId' | 'searchQuery'>): string {
+type HashState = Pick<ForumStore, 'view' | 'categorySlug' | 'topicSlug' | 'discussionSlug' | 'postId' | 'searchQuery'>;
+
+function buildHash(state: HashState): string {
   switch (state.view) {
-    case 'topics':
+    case 'categories':
       return HASH_PREFIX;
+    case 'topics':
+      return state.categorySlug
+        ? `${HASH_PREFIX}/categorie/${state.categorySlug}`
+        : `${HASH_PREFIX}/tutti`;
     case 'discussions':
       return `${HASH_PREFIX}/${state.topicSlug}`;
     case 'thread':
@@ -73,7 +84,7 @@ function buildHash(state: Pick<ForumStore, 'view' | 'topicSlug' | 'discussionSlu
   }
 }
 
-function parseHash(hash: string): Partial<Pick<ForumStore, 'view' | 'topicSlug' | 'discussionSlug' | 'postId' | 'searchQuery'>> {
+function parseHash(hash: string): Partial<HashState> {
   if (!hash || !hash.startsWith(HASH_PREFIX)) return {};
 
   // Extract path and query from hash (e.g., #bacheca/search?q=test)
@@ -82,7 +93,7 @@ function parseHash(hash: string): Partial<Pick<ForumStore, 'view' | 'topicSlug' 
 
   const rest = pathPart.slice('bacheca'.length);
   if (!rest || rest === '/') {
-    return { view: 'topics', topicSlug: null, discussionSlug: null, postId: null, searchQuery: '' };
+    return { view: 'categories', categorySlug: null, topicSlug: null, discussionSlug: null, postId: null, searchQuery: '' };
   }
 
   const withoutLeadingSlash = rest.startsWith('/') ? rest.slice(1) : rest;
@@ -92,6 +103,7 @@ function parseHash(hash: string): Partial<Pick<ForumStore, 'view' | 'topicSlug' 
     return {
       view: 'search',
       searchQuery: qMatch?.[1] ? decodeURIComponent(qMatch[1]) : '',
+      categorySlug: null,
       topicSlug: null,
       discussionSlug: null,
       postId: null,
@@ -99,31 +111,39 @@ function parseHash(hash: string): Partial<Pick<ForumStore, 'view' | 'topicSlug' 
   }
 
   if (withoutLeadingSlash === 'bookmarks') {
-    return { view: 'bookmarks', topicSlug: null, discussionSlug: null, postId: null, searchQuery: '' };
+    return { view: 'bookmarks', categorySlug: null, topicSlug: null, discussionSlug: null, postId: null, searchQuery: '' };
   }
 
   if (withoutLeadingSlash === 'notifications') {
-    return { view: 'notifications', topicSlug: null, discussionSlug: null, postId: null, searchQuery: '' };
+    return { view: 'notifications', categorySlug: null, topicSlug: null, discussionSlug: null, postId: null, searchQuery: '' };
+  }
+
+  if (withoutLeadingSlash === 'tutti') {
+    return { view: 'topics', categorySlug: null, topicSlug: null, discussionSlug: null, postId: null, searchQuery: '' };
   }
 
   const segments = withoutLeadingSlash.split('/');
 
+  if (segments[0] === 'categorie' && segments.length === 2) {
+    return { view: 'topics', categorySlug: segments[1], topicSlug: null, discussionSlug: null, postId: null, searchQuery: '' };
+  }
+
   if (segments.length === 1) {
-    return { view: 'discussions', topicSlug: segments[0], discussionSlug: null, postId: null, searchQuery: '' };
+    return { view: 'discussions', categorySlug: null, topicSlug: segments[0], discussionSlug: null, postId: null, searchQuery: '' };
   }
 
   if (segments.length === 2) {
     if (segments[1] === 'nuova-discussione') {
-      return { view: 'createDiscussion', topicSlug: segments[0], discussionSlug: null, postId: null, searchQuery: '' };
+      return { view: 'createDiscussion', categorySlug: null, topicSlug: segments[0], discussionSlug: null, postId: null, searchQuery: '' };
     }
-    return { view: 'thread', topicSlug: segments[0], discussionSlug: segments[1], postId: null, searchQuery: '' };
+    return { view: 'thread', categorySlug: null, topicSlug: segments[0], discussionSlug: segments[1], postId: null, searchQuery: '' };
   }
 
   if (segments.length >= 3) {
-    return { view: 'thread', topicSlug: segments[0], discussionSlug: segments[1], postId: segments[2], searchQuery: '' };
+    return { view: 'thread', categorySlug: null, topicSlug: segments[0], discussionSlug: segments[1], postId: segments[2], searchQuery: '' };
   }
 
-  return { view: 'topics', topicSlug: null, discussionSlug: null, postId: null, searchQuery: '' };
+  return { view: 'categories', categorySlug: null, topicSlug: null, discussionSlug: null, postId: null, searchQuery: '' };
 }
 
 /**
@@ -137,7 +157,8 @@ export const useForumStore = create<ForumStore>()(
   devtools(
     (set, get) => ({
       isOpen: false,
-      view: 'topics',
+      view: 'categories',
+      categorySlug: null,
       topicSlug: null,
       discussionSlug: null,
       postId: null,
@@ -151,7 +172,8 @@ export const useForumStore = create<ForumStore>()(
       closeForum: () => {
         set({
           isOpen: false,
-          view: 'topics',
+          view: 'categories',
+          categorySlug: null,
           topicSlug: null,
           discussionSlug: null,
           postId: null,
@@ -159,8 +181,18 @@ export const useForumStore = create<ForumStore>()(
         });
       },
 
+      navigateToCategories: () => {
+        set({ view: 'categories', categorySlug: null, topicSlug: null, discussionSlug: null, postId: null, searchQuery: '' });
+        get().updateUrl();
+      },
+
       navigateToTopics: () => {
-        set({ view: 'topics', topicSlug: null, discussionSlug: null, postId: null, searchQuery: '' });
+        set({ view: 'topics', categorySlug: null, topicSlug: null, discussionSlug: null, postId: null, searchQuery: '' });
+        get().updateUrl();
+      },
+
+      navigateToTopicsInCategory: (categorySlug: string) => {
+        set({ view: 'topics', categorySlug, topicSlug: null, discussionSlug: null, postId: null });
         get().updateUrl();
       },
 
@@ -180,17 +212,17 @@ export const useForumStore = create<ForumStore>()(
       },
 
       navigateToSearch: (query?: string) => {
-        set({ view: 'search', searchQuery: query || '', topicSlug: null, discussionSlug: null, postId: null });
+        set({ view: 'search', searchQuery: query || '', categorySlug: null, topicSlug: null, discussionSlug: null, postId: null });
         get().updateUrl();
       },
 
       navigateToBookmarks: () => {
-        set({ view: 'bookmarks', topicSlug: null, discussionSlug: null, postId: null });
+        set({ view: 'bookmarks', categorySlug: null, topicSlug: null, discussionSlug: null, postId: null });
         get().updateUrl();
       },
 
       navigateToNotifications: () => {
-        set({ view: 'notifications', topicSlug: null, discussionSlug: null, postId: null });
+        set({ view: 'notifications', categorySlug: null, topicSlug: null, discussionSlug: null, postId: null });
         get().updateUrl();
       },
 
@@ -213,6 +245,7 @@ export const useForumStore = create<ForumStore>()(
         if (parsed.view) {
           set({
             view: parsed.view,
+            categorySlug: parsed.categorySlug ?? null,
             topicSlug: parsed.topicSlug ?? null,
             discussionSlug: parsed.discussionSlug ?? null,
             postId: parsed.postId ?? null,
@@ -262,6 +295,7 @@ if (typeof window !== 'undefined') {
  */
 export const useForumView = () => useForumStore((s) => s.view);
 export const useForumIsOpen = () => useForumStore((s) => s.isOpen);
+export const useForumCategorySlug = () => useForumStore((s) => s.categorySlug);
 export const useForumTopicSlug = () => useForumStore((s) => s.topicSlug);
 export const useForumDiscussionSlug = () => useForumStore((s) => s.discussionSlug);
 export const useForumPostId = () => useForumStore((s) => s.postId);
@@ -269,6 +303,7 @@ export const useForumSearchQuery = () => useForumStore((s) => s.searchQuery);
 export const useForumNavContext = () =>
   useForumStore((s) => ({
     view: s.view,
+    categorySlug: s.categorySlug,
     topicSlug: s.topicSlug,
     discussionSlug: s.discussionSlug,
     postId: s.postId,

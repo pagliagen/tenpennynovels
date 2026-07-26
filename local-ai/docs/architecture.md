@@ -31,15 +31,17 @@ caller (unified-backend, CLI, qualsiasi client)
 │  6. Proxy al servizio backend       │
 └──────────┬──────────────────────────┘
            │
-     ┌─────┼─────┐
-     ▼     ▼     ...
-  BotAI   Q&A
-  :8080   :8090
-     │     │
-     ▼     ▼
+     ┌─────┴─────┐
+     ▼           ...
+  BotAI
+  :8080
+     │
+     ▼
    Ollama (:11434)
    mistral:7b-instruct
 ```
+
+Il Q&A RAG ("Bibliotecario") non passa più da qui: vive in `services/embeddings-worker` (fuori da local-ai), chiamato direttamente da `unified-backend` senza passare dal gateway.
 
 ## Struttura del progetto
 
@@ -68,10 +70,7 @@ local-ai/
 │   │       ├── models/       # Bot, Memory, Relationship (Mongoose)
 │   │       └── callback/     # CallbackSender (retry con backoff)
 │   │
-│   └── qa/                   # Q&A RAG
-│       └── src/
-│           ├── routes.ts     # POST /ask
-│           └── services/     # RAGPipeline, OllamaChat
+│   └── character-gen/        # Generazione personaggi
 │
 ├── shared/                   # Codice condiviso
 │   ├── ollama.ts             # Client Ollama singleton

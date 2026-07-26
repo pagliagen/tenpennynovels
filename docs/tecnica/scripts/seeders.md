@@ -28,7 +28,7 @@ Il sistema di **seeders** popola il database MongoDB con dati iniziali. Supporta
 
 | Requisito | Versione | Note |
 |-----------|----------|------|
-| Node.js | 22.13.1+ | Specificata in `.nvmrc` |
+| Node.js | 24.18.0+ | Specificata in `.nvmrc` |
 | MongoDB | 7.0+ | Docker (local) o Atlas (prod) |
 | embeddings-service | Latest | Solo per DocumentSeeder (opzionale) |
 | embeddings-worker | Latest | Solo per DocumentSeeder (opzionale) |
@@ -40,7 +40,7 @@ Il sistema di **seeders** popola il database MongoDB con dati iniziali. Supporta
 
 ```bash
 cd scripts/seeders
-nvm use # Switch to Node 22.13.1
+nvm use # Switch to Node 24.18.0
 npm install
 ```
 

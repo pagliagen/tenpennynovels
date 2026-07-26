@@ -19,6 +19,8 @@ import { useRouter } from 'next/router';
 import { ReactNode, useMemo, useEffect, useCallback, useState } from 'react';
 
 import { useWebSocket } from '@/contexts/WebSocketContext';
+import { forumPreferenceKeys, useForumUnreadSummary } from '@/hooks/useForumPreferences';
+import { forumSocialKeys } from '@/hooks/useForumSocial';
 import { useOffGameUnreadCount } from '@/hooks/useOffGameChat';
 import { useOnGameUnreadCount } from '@/hooks/useOnGameMessages';
 import { useTicketNotifications } from '@/hooks/useTicketNotifications';
@@ -84,6 +86,7 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
 
   // Location store: Get all accessible locations
   const locations = useLocationStore((state) => state.locations);
+  const rootLocation = useLocationStore((state) => state.rootLocation);
 
   // Window manager: For opening mail window
   const { openWindow } = useWindowManagerStore();
@@ -100,8 +103,11 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
   // Ticket system: Unread count for player (messages from staff not read yet)
   const { data: unreadTicketsCount = 0 } = useUnreadTicketsCount();
 
+  // Forum system: bacheche with unread content, for TopBar badge
+  const { data: forumUnreadSummary } = useForumUnreadSummary();
+
   // WebSocket + QueryClient: For real-time badge updates
-  const { onMessageEvent, onGlobalEvent } = useWebSocket();
+  const { onMessageEvent, onGlobalEvent, onForumEvent } = useWebSocket();
   const queryClient = useQueryClient();
 
   // Ticket notifications: Real-time updates and invalidations
@@ -183,10 +189,13 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
    * SINGLE SOURCE OF TRUTH: currentLocationId from GameStateStore
    */
   const topBarLocationProps = useMemo(() => {
-    // Default: London (when no currentLocation set)
+    // Default: root location (London) — excluded from locationStore.locations
+    // by design (see LocationService.getAccessibleLocations), fetched separately.
     const defaultProps = {
-      locationName: 'London',
-      locationImageUrl: '/images/topbar/location-image.png',
+      locationName: rootLocation?.name || 'London',
+      locationImageUrl:
+        rootLocation?.imageUrl ||
+        (rootLocation?.image ? `/artifacts/locations/${rootLocation.image}` : '/images/topbar/location-image.png'),
       isInLondon: true,
     };
 
@@ -209,10 +218,12 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
     // Return actual location props
     return {
       locationName: currentLocation.name,
-      locationImageUrl: currentLocation.imageUrl || '/images/topbar/location-image.png',
+      locationImageUrl:
+        currentLocation.imageUrl ||
+        (currentLocation.image ? `/artifacts/locations/${currentLocation.image}` : '/images/topbar/location-image.png'),
       isInLondon: currentLocation.slug === 'londra', // Slug-based check is correct (SEO-friendly)
     };
-  }, [currentLocationId, locations]);
+  }, [currentLocationId, locations, rootLocation]);
 
   /**
    * Navigate to locations/map page
@@ -332,6 +343,28 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
     return unsubscribe;
   }, [onMessageEvent, queryClient, refreshSession]);
 
+  /**
+   * WebSocket listener for real-time forum badge updates (unread bacheche).
+   * Must work even when the forum modal is closed.
+   */
+  useEffect(() => {
+    const unsubscribe = onForumEvent((event) => {
+      if (
+        event.type === 'forum:discussion:created' ||
+        event.type === 'forum:post:created' ||
+        event.type === 'forum:notification:new'
+      ) {
+        queryClient.invalidateQueries({ queryKey: forumPreferenceKeys.unreadSummary() });
+      }
+
+      if (event.type === 'forum:notification:new') {
+        queryClient.invalidateQueries({ queryKey: forumSocialKeys.unreadCount() });
+        queryClient.invalidateQueries({ queryKey: ['forum', 'notifications'] });
+      }
+    });
+    return unsubscribe;
+  }, [onForumEvent, queryClient]);
+
   return (
     <>
       <div className={styles.gameContainer}>
@@ -409,6 +442,7 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
             onCharacterFaceClaimClick={handleCharacterFaceClaimClick}
             onLogoutClick={handleLogout}
             unreadOnGameMailCount={unreadMailCount}
+            unreadForumCount={forumUnreadSummary?.count ?? 0}
             onOffGameChatClick={handleOffGameChatClick}
             unreadOffGameChatCount={unreadOffGameChatCount}
             unreadTicketsCount={unreadTicketsCount}

@@ -1,11 +1,17 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 
-import { useForumDiscussion } from '@/hooks/useForumDiscussions';
-import { useForumPosts } from '@/hooks/useForumPosts';
+import { useWebSocket } from '@/contexts/WebSocketContext';
+import { useBroadcastDiscussion, useForumDiscussion } from '@/hooks/useForumDiscussions';
+import { forumPostKeys, useForumPosts } from '@/hooks/useForumPosts';
+import { useUpdateForumPreferences } from '@/hooks/useForumPreferences';
+import { useForumTopic } from '@/hooks/useForumTopics';
 import { useForumStore } from '@/store/forumStore';
+import { useUIStore } from '@/store/uiStore';
 import styles from '@/styles/components/forum/ThreadView.module.scss';
+import type { ForumReplyOrder } from '@/types/forum';
 
 import { PostCard } from '../cards/PostCard';
 import { Pagination } from '../ui/Pagination';
@@ -31,7 +37,9 @@ export function ThreadView(): JSX.Element {
 
   const [page, setPage] = useState(1);
   const [replyToPostId, setReplyToPostId] = useState<string | null>(null);
+  const [orderOverride, setOrderOverride] = useState<ForumReplyOrder | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const addToast = useUIStore((s) => s.addToast);
 
   const { data: discussionData, isLoading: isLoadingDiscussion } = useForumDiscussion(
     topicSlug,
@@ -40,8 +48,47 @@ export function ThreadView(): JSX.Element {
   const { data: postsData, isLoading: isLoadingPosts } = useForumPosts(
     topicSlug,
     discussionSlug,
-    page
+    page,
+    orderOverride ?? undefined
   );
+  const { data: topic } = useForumTopic(topicSlug);
+  const broadcastDiscussion = useBroadcastDiscussion();
+  const updatePreferences = useUpdateForumPreferences();
+  const { onForumEvent } = useWebSocket();
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (!topicSlug || !discussionSlug) return;
+    const unsubscribe = onForumEvent((event) => {
+      if (
+        event.type === 'forum:post:created' &&
+        event.data?.topicSlug === topicSlug &&
+        event.data?.discussionSlug === discussionSlug
+      ) {
+        queryClient.invalidateQueries({ queryKey: forumPostKeys.list(topicSlug, discussionSlug) });
+      }
+    });
+    return unsubscribe;
+  }, [onForumEvent, queryClient, topicSlug, discussionSlug]);
+
+  const replyOrder: ForumReplyOrder = postsData?.replyOrder ?? 'asc';
+
+  const handleToggleReplyOrder = () => {
+    const next: ForumReplyOrder = replyOrder === 'asc' ? 'desc' : 'asc';
+    setOrderOverride(next);
+    setPage(1);
+    updatePreferences.mutate(next);
+  };
+
+  const handleBroadcast = async () => {
+    if (!topicSlug || !discussionSlug) return;
+    try {
+      const result = await broadcastDiscussion.mutateAsync({ topicSlug, discussionSlug });
+      addToast({ type: 'success', message: `Segnalazione inviata a ${result.recipientCount} personaggi` });
+    } catch {
+      addToast({ type: 'error', message: 'Impossibile inviare la segnalazione' });
+    }
+  };
 
   useEffect(() => {
     if (postId && scrollRef.current) {
@@ -69,6 +116,10 @@ export function ThreadView(): JSX.Element {
   const discussion = discussionData;
   const posts = postsData?.list ?? [];
   const pagination = postsData?.pagination;
+  const quotedPostSource = replyToPostId ? posts.find((p) => p.id === replyToPostId) : null;
+  const quotedPost = quotedPostSource
+    ? { authorName: quotedPostSource.author.characterName, contentHtml: quotedPostSource.content }
+    : null;
 
   if (!discussion) {
     return (
@@ -94,6 +145,25 @@ export function ThreadView(): JSX.Element {
           <span>{formatDate(discussion.createdAt)}</span>
           <span>{discussion.postCount} messaggi</span>
           <span>{discussion.viewCount} visualizzazioni</span>
+          <button
+            type="button"
+            className={styles.backBtn}
+            onClick={handleToggleReplyOrder}
+            title="Inverti l'ordine delle risposte (la preferenza viene salvata)"
+          >
+            {replyOrder === 'asc' ? '↓ Meno recenti prima' : '↑ Più recenti prima'}
+          </button>
+          {topic?.mode === 'OFF' && (
+            <button
+              type="button"
+              className={styles.backBtn}
+              onClick={handleBroadcast}
+              disabled={broadcastDiscussion.isPending}
+              title="Invia una segnalazione con link a questo thread a tutti i personaggi"
+            >
+              {broadcastDiscussion.isPending ? 'Invio...' : '📢 Segnala'}
+            </button>
+          )}
         </div>
         {discussion.tags && discussion.tags.length > 0 && (
           <div className={styles.tags}>
@@ -114,6 +184,7 @@ export function ThreadView(): JSX.Element {
             <PostCard
               key={post.id}
               post={post}
+              topicMode={topic?.mode}
               onReply={(id) => setReplyToPostId(id)}
             />
           ))
@@ -126,6 +197,8 @@ export function ThreadView(): JSX.Element {
             topicSlug={topicSlug}
             discussionSlug={discussionSlug}
             replyToPostId={replyToPostId}
+            quotedPost={quotedPost}
+            allowAnonymous={topic?.mode === 'ON'}
             onSuccess={() => setReplyToPostId(null)}
           />
         </div>

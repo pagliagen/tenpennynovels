@@ -843,6 +843,14 @@ export class CharacterController {
         canEdit: isOwner && character.playerStatus === 'draft'
       };
 
+      // hiddenMarks and health params are private — strip before serializing
+      // for viewers who are neither the owner nor a master.
+      if (!permissions.canViewPrivateBackground) {
+        delete (character as any).hiddenMarks;
+        delete (character as any).currentHP;
+        delete (character as any).maxHP;
+      }
+
       // Serialize skills Map to object
       let serializedSkills: Record<string, any> = {};
       if (character.skills) {

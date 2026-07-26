@@ -20,7 +20,7 @@ export class ForumSubscriptionController {
       const { topicSlug, discussionSlug } = req.params;
       const characterId = new mongoose.Types.ObjectId(character.characterId);
 
-      const discussion = await ForumDiscussion.findOne({ topicSlug, slug: discussionSlug });
+      const discussion = await ForumDiscussion.findOne({ topicSlug, slug: discussionSlug, isDeleted: false });
       if (!discussion) {
         res.status(404).json({ success: false, error: 'Discussione non trovata', code: 'DISCUSSION_NOT_FOUND' });
         return;
@@ -79,6 +79,7 @@ export class ForumSubscriptionController {
           }
         },
         { $unwind: '$discussion' },
+        { $match: { 'discussion.isDeleted': false } },
         {
           $lookup: {
             from: 'forum_topics',

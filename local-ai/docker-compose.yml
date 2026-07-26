@@ -37,14 +37,6 @@ services:
       - default
       - tenpennynovels-network
 
-  qa:
-    build:
-      context: .
-      dockerfile: services/qa/Dockerfile
-    expose:
-      - "8090"
-    env_file: .env
-
   character-gen:
     build:
       context: .
@@ -64,7 +56,6 @@ services:
       - ./clients.json:/app/clients.json:ro
     depends_on:
       - botai
-      - qa
       - character-gen
 
 volumes:

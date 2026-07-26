@@ -48,6 +48,70 @@
   align-items: flex-end;
 }
 
+/* Social Conflict Fields (Scontro Sociale) */
+.socialConflictFields {
+  margin-bottom: $spacing-md;
+}
+
+.fieldRow {
+  display: flex;
+  gap: $spacing-md;
+}
+
+.selectInput {
+  width: 100%;
+  padding: $spacing-md $spacing-lg;
+  background: rgba(245, 245, 245, 0.05);
+  border: 1px solid $gold-30;
+  border-radius: $radius-md;
+  color: $parchment;
+  font-family: $font-serif;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all $transition-normal;
+
+  &:hover {
+    border-color: rgba(184, 134, 11, 0.6);
+    background: rgba(245, 245, 245, 0.08);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: $gold-80;
+    background: rgba(245, 245, 245, 0.1);
+  }
+
+  option {
+    background: #2a1810;
+    color: $parchment;
+  }
+}
+
+.lieTextarea {
+  width: 100%;
+  margin-bottom: $spacing-sm;
+  margin-top: $spacing-sm;
+  min-height: 80px;
+  max-height: 300px;
+  padding: $spacing-md $spacing-lg;
+  background: rgba(245, 245, 245, 0.05);
+  border: 1px solid $gold-30;
+  border-radius: $radius-md;
+  color: $parchment;
+  font-family: $font-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.lieWarning {
+  color: $parchment-50;
+  font-family: $font-serif;
+  font-size: 13px;
+  font-style: italic;
+  margin-top: $spacing-sm;
+}
+
 .textareaWrapper {
   margin-bottom: $spacing-md;
 }

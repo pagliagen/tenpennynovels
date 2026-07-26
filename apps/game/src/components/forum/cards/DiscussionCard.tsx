@@ -1,5 +1,6 @@
 'use client';
 
+import { useToggleDiscussionFavorite } from '@/hooks/useForumDiscussions';
 import { useForumStore } from '@/store/forumStore';
 import styles from '@/styles/components/forum/DiscussionCard.module.scss';
 import type { ForumDiscussion } from '@/types/forum';
@@ -22,11 +23,17 @@ function formatDate(dateStr?: string): string {
 
 export function DiscussionCard({ discussion }: DiscussionCardProps) {
   const navigateToThread = useForumStore((s) => s.navigateToThread);
+  const toggleFavorite = useToggleDiscussionFavorite();
 
   const handleClick = () => {
     if (!discussion.isLocked) {
       navigateToThread(discussion.topicSlug, discussion.slug);
     }
+  };
+
+  const handleFavoriteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    toggleFavorite.mutate({ topicSlug: discussion.topicSlug, discussionSlug: discussion.slug });
   };
 
   return (
@@ -45,6 +52,14 @@ export function DiscussionCard({ discussion }: DiscussionCardProps) {
             {discussion.isLocked && <span className={styles.badge}>Chiusa</span>}
           </div>
         )}
+        <button
+          type="button"
+          className={`${styles.favoriteBtn} ${discussion.isFavorite ? styles.favoriteActive : ''}`}
+          onClick={handleFavoriteClick}
+          aria-label={discussion.isFavorite ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti'}
+        >
+          ★
+        </button>
       </div>
       {discussion.tags && discussion.tags.length > 0 && (
         <div className={styles.tags}>

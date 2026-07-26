@@ -16,6 +16,7 @@ import mongoose from 'mongoose';
 import { PythonEmbeddingService } from './services/PythonEmbeddingService';
 import { EmbeddingsHttpServer } from './http/EmbeddingsHttpServer';
 import { EmbeddingWorker } from './workers/embedding-worker';
+import { OllamaChat } from './services/qa/OllamaChat';
 import { config } from './config';
 import { logger } from './utils/logger';
 
@@ -70,6 +71,12 @@ async function main() {
     const httpServer = new EmbeddingsHttpServer(pythonService, worker);
     await httpServer.start();
     logger.info('HTTP server listening', { port: config.http.port, host: config.http.host });
+
+    // Warm up the RAG model so it stays resident in Ollama (non-blocking: /ask
+    // still works without this, just with a cold-start delay on the first call)
+    new OllamaChat().warmup()
+      .then(() => logger.info('Ollama model warmed up and locked in memory', { model: config.services.ollama.model }))
+      .catch((err: Error) => logger.warn('Ollama warmup failed (will load on first request)', { error: err.message }));
 
     // Graceful shutdown
     const shutdown = async (signal: string) => {

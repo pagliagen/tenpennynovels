@@ -28,7 +28,7 @@ export default [
       'react-hooks/use-memo': 'off',
       'react-hooks/immutability': 'off',
       'react/no-unescaped-entities': 'warn',
-      // Usare @/lib/logger, mai console.* direttamente (vedi 00-project-wide.md)
+      // Usare @/lib/logger, mai console.* direttamente (vedi .claude/rules/00-critical.md)
       'no-console': 'error',
     },
   },

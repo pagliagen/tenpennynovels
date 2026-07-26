@@ -83,6 +83,11 @@ services:
       ELASTICSEARCH_INDEX_PREFIX: tenpennynovels
       LOG_LEVEL: info
       HUGGINGFACE_TOKEN: ${HUGGINGFACE_TOKEN:-}  # HuggingFace token for runtime
+      # RAG "Bibliotecario" (/ask, /extract-keywords, /extract-insight): Ollama gira
+      # sulla macchina host (Docker Desktop Mac/Windows), non in questo stack Docker.
+      # host.docker.internal risolve all'host da dentro il container.
+      OLLAMA_URL: http://host.docker.internal:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen3:8b}
     ports:
       - "5001:5001"  # HTTP API for embeddings
     networks:
@@ -181,6 +186,9 @@ services:
       JWT_SECRET: ${JWT_SECRET:-dev_jwt_secret_change_in_production}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-dev_refresh_secret_change_in_production}
 
+      # Character Generation Service Token
+      CHARACTER_GEN_SECRET: ${CHARACTER_GEN_SECRET:-default-chargen-secret-key-change-me}
+
       # Frontend URLs
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:4000}
       LANDING_URL: ${LANDING_URL:-http://localhost:4000}
@@ -199,12 +207,13 @@ services:
       CDN_BASE_URL: http://localhost:8000/cdn
       CDN_FTP_ENABLED: "false"
 
-      # AI Gateway (local-ai)
-      AI_GATEWAY_URL: ${AI_GATEWAY_URL:-https://onomatopoeically-unforgeable-ozie.ngrok-free.dev}
+      # AI Gateway (local-ai) — valori reali SOLO da .env (mai defaults committati).
+      # API key e URL ngrok erano hardcoded qui: rimossi e da RUOTARE.
+      AI_GATEWAY_URL: ${AI_GATEWAY_URL:-}
       AI_GATEWAY_CLIENT_ID: ${AI_GATEWAY_CLIENT_ID:-tpn-dev}
-      AI_GATEWAY_API_KEY: ${AI_GATEWAY_API_KEY:-f4af240c291f57bcc23384bff9abcc4ce89f8257974b80e6179f88edd5f4a2f9}
+      AI_GATEWAY_API_KEY: ${AI_GATEWAY_API_KEY:-}
       AI_GATEWAY_HMAC_SECRET: ${AI_GATEWAY_HMAC_SECRET:-}
-      AI_GATEWAY_WEBHOOK_SECRET: ${AI_GATEWAY_WEBHOOK_SECRET:-local-dev-webhook-secret}
+      AI_GATEWAY_WEBHOOK_SECRET: ${AI_GATEWAY_WEBHOOK_SECRET:-}
 
       # Callback base URL (usata da local-ai botai per richiamare il backend via gateway)
       API_CALLBACK_BASE_URL: http://tenpennynovels-api-gateway:8000
@@ -270,7 +279,8 @@ services:
       TRUST_PROXY: "true"
 
       # Webhook secret (per validare le callback da servizi interni come local-ai)
-      AI_GATEWAY_WEBHOOK_SECRET: ${AI_GATEWAY_WEBHOOK_SECRET:-local-dev-webhook-secret}
+      # Valore reale SOLO da .env — mai default committato.
+      AI_GATEWAY_WEBHOOK_SECRET: ${AI_GATEWAY_WEBHOOK_SECRET:-}
     ports:
       - "8000:8000"
     volumes:

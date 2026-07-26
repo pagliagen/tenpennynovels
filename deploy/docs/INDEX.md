@@ -112,7 +112,7 @@ Setup VPS Ubuntu 22.04+ da zero:
 - User creation (non-root)
 - SSH key authentication
 - Firewall (ufw)
-- Software install (Node.js 22.13.1, PM2, Nginx, MongoDB 7.0, Redis 7.2, Python)
+- Software install (Node.js 24.18.0, PM2, Nginx, MongoDB 7.0, Redis 7.2, Python)
 - Qdrant + ElasticSearch (vedi [08 - Semantic Search](./08-semantic-search-setup.md))
 - Environment variables setup
 - Build processo

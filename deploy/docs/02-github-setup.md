@@ -608,7 +608,7 @@ ssh deploy@<IP_VPS>
 
 # Verifica nvm caricato
 which node
-# Deve mostrare: /home/deploy/.nvm/versions/node/v22.13.1/bin/node
+# Deve mostrare: /home/deploy/.nvm/versions/node/v24.18.0/bin/node
 
 # Se NON caricato, aggiungi a ~/.bashrc:
 echo 'export NVM_DIR="$HOME/.nvm"' >> ~/.bashrc

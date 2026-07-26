@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { Character, Location, Chat } from '@database/models';
+import { Character, Location, ChatBackup } from '@database/models';
 import { ApiResponse } from '../types/game';
 import { logger } from '../logger';
 import { LocationService } from '../services/LocationService';
@@ -85,6 +85,50 @@ export class LocationController {
   }
 
   /**
+   * GET /game/locations/root
+   * Get the root location (London): excluded from getAccessibleLocations
+   * but needed by the frontend topbar as the default "no currentLocation" state.
+   */
+  static async getRootLocation(req: Request, res: Response): Promise<void> {
+    try {
+      const rootLocation = await LocationService.getRootLocation();
+
+      if (!rootLocation) {
+        res.status(404).json(errorResponse(
+          'Location radice non trovata',
+          'ROOT_LOCATION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      res.json(successResponse(
+        { rootLocation },
+        undefined,
+        getRequestId(req)
+      ));
+
+    } catch (error: unknown) {
+      const err = error as Error;
+      logger.error('Get root location error:', {
+        message: err.message,
+        stack: err.stack,
+        name: err.name
+      });
+
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare la location radice',
+        'GET_ROOT_LOCATION_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
+    }
+  }
+
+  /**
    * GET /game/locations/:locationId
    * Get location details with access control
    * Security: Returns 404 if character doesn't have access
@@ -144,7 +188,7 @@ export class LocationController {
       // Get chat history for the location, filtered by current session
       const sessionId = location.activeSession?.sessionId?.toString();
       const isMaster = character.gameplayRoles?.some((r: string) => ['master', 'moderatore', 'gestore'].includes(r)) || false;
-      const chatHistory = await Chat.getLocationHistory(locationId, characterId, 50, sessionId, isMaster);
+      const chatHistory = await ChatBackup.getLocationHistory(locationId, characterId, 50, sessionId, isMaster);
 
       // Get occupants from location, or populate from characters with currentLocation if empty
       let occupants = location.occupants?.map((occupant: any) => ({
@@ -967,6 +1011,151 @@ export class LocationController {
   /**
    * Get detailed access information for a location
    */
+  /**
+   * GET /locations/:locationId/pngs
+   * List location-scoped PNG personas. Restricted to master or the location owner.
+   */
+  static async listLocationPngs(req: Request<{ locationId: string }>, res: Response): Promise<void> {
+    try {
+      if (!req.character) {
+        res.status(401).json(errorResponse('Authentication required', 'UNAUTHORIZED', undefined, 401, getRequestId(req)));
+        return;
+      }
+
+      const { locationId } = req.params;
+      const characterId = req.character.characterId;
+
+      const location = await Location.findById(locationId).lean();
+      if (!location) {
+        res.status(404).json(errorResponse('Location non trovata', 'LOCATION_NOT_FOUND', undefined, 404, getRequestId(req)));
+        return;
+      }
+
+      const character = await Character.findById(characterId).lean();
+      const isMaster = character?.gameplayRoles?.includes('master') || character?.isGestore || false;
+      const isOwner = location.access?.ownerId?.toString() === characterId;
+
+      if (!isMaster && !isOwner) {
+        res.status(403).json(errorResponse('Solo il master o il proprietario della location possono gestire i PNG', 'INSUFFICIENT_PERMISSIONS', undefined, 403, getRequestId(req)));
+        return;
+      }
+
+      res.json(successResponse({
+        locationPngs: location.locationPngs || []
+      }, 'Location PNGs retrieved successfully', getRequestId(req)));
+    } catch (error) {
+      logger.error('[LocationController] listLocationPngs error:', error);
+      res.status(500).json(errorResponse('Internal server error', 'SERVER_ERROR', undefined, 500, getRequestId(req)));
+    }
+  }
+
+  /**
+   * POST /locations/:locationId/pngs
+   * Create a location-scoped PNG persona. Restricted to master or the location owner.
+   */
+  static async createLocationPng(req: Request<{ locationId: string }>, res: Response): Promise<void> {
+    try {
+      if (!req.character) {
+        res.status(401).json(errorResponse('Authentication required', 'UNAUTHORIZED', undefined, 401, getRequestId(req)));
+        return;
+      }
+
+      const { locationId } = req.params;
+      const characterId = req.character.characterId;
+      const { name, surname, avatar } = req.body;
+
+      if (!name || typeof name !== 'string' || name.trim().length < 2) {
+        res.status(400).json(errorResponse('Nome PNG non valido (minimo 2 caratteri)', 'INVALID_NAME', undefined, 400, getRequestId(req)));
+        return;
+      }
+
+      const location = await Location.findById(locationId);
+      if (!location) {
+        res.status(404).json(errorResponse('Location non trovata', 'LOCATION_NOT_FOUND', undefined, 404, getRequestId(req)));
+        return;
+      }
+
+      const character = await Character.findById(characterId).lean();
+      const isMaster = character?.gameplayRoles?.includes('master') || character?.isGestore || false;
+      const isOwner = location.access?.ownerId?.toString() === characterId;
+
+      if (!isMaster && !isOwner) {
+        res.status(403).json(errorResponse('Solo il master o il proprietario della location possono gestire i PNG', 'INSUFFICIENT_PERMISSIONS', undefined, 403, getRequestId(req)));
+        return;
+      }
+
+      if ((location.locationPngs || []).length >= 20) {
+        res.status(400).json(errorResponse('Numero massimo di PNG per location raggiunto (20)', 'MAX_LIMIT_REACHED', undefined, 400, getRequestId(req)));
+        return;
+      }
+
+      location.locationPngs = location.locationPngs || [];
+      location.locationPngs.push({
+        name: name.trim(),
+        surname: surname?.trim(),
+        avatar: avatar?.trim(),
+        createdAt: new Date(),
+        createdBy: characterId
+      } as any);
+      await location.save();
+
+      const created = location.locationPngs[location.locationPngs.length - 1];
+
+      res.status(201).json(createResponse(created, 'Location PNG created successfully', getRequestId(req)));
+    } catch (error) {
+      logger.error('[LocationController] createLocationPng error:', error);
+      res.status(500).json(errorResponse('Internal server error', 'SERVER_ERROR', undefined, 500, getRequestId(req)));
+    }
+  }
+
+  /**
+   * DELETE /locations/:locationId/pngs/:pngId
+   * Delete a location-scoped PNG persona. Restricted to master or the location owner.
+   */
+  static async deleteLocationPng(req: Request<{ locationId: string; pngId: string }>, res: Response): Promise<void> {
+    try {
+      if (!req.character) {
+        res.status(401).json(errorResponse('Authentication required', 'UNAUTHORIZED', undefined, 401, getRequestId(req)));
+        return;
+      }
+
+      const { locationId, pngId } = req.params;
+      const characterId = req.character.characterId;
+
+      const location = await Location.findById(locationId);
+      if (!location) {
+        res.status(404).json(errorResponse('Location non trovata', 'LOCATION_NOT_FOUND', undefined, 404, getRequestId(req)));
+        return;
+      }
+
+      const character = await Character.findById(characterId).lean();
+      const isMaster = character?.gameplayRoles?.includes('master') || character?.isGestore || false;
+      const isOwner = location.access?.ownerId?.toString() === characterId;
+
+      if (!isMaster && !isOwner) {
+        res.status(403).json(errorResponse('Solo il master o il proprietario della location possono gestire i PNG', 'INSUFFICIENT_PERMISSIONS', undefined, 403, getRequestId(req)));
+        return;
+      }
+
+      const initialLength = location.locationPngs?.length || 0;
+      location.locationPngs = (location.locationPngs || []).filter(
+        (p: any) => p._id?.toString() !== pngId
+      );
+
+      if (location.locationPngs.length === initialLength) {
+        res.status(404).json(errorResponse('PNG non trovato', 'NOT_FOUND', undefined, 404, getRequestId(req)));
+        return;
+      }
+
+      await location.save();
+
+      res.json(successResponse({ deleted: true }, 'Location PNG deleted successfully', getRequestId(req)));
+    } catch (error) {
+      logger.error('[LocationController] deleteLocationPng error:', error);
+      res.status(500).json(errorResponse('Internal server error', 'SERVER_ERROR', undefined, 500, getRequestId(req)));
+    }
+  }
+
   private static async getAccessInfo(location: any, character: any): Promise<any> {
     const hasAccess = await LocationController.checkLocationAccess(location, character);
     

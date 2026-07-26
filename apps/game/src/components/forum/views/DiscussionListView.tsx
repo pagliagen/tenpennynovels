@@ -1,8 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 
-import { useForumDiscussions } from '@/hooks/useForumDiscussions';
+import { useWebSocket } from '@/contexts/WebSocketContext';
+import { forumDiscussionKeys, useForumDiscussions } from '@/hooks/useForumDiscussions';
+import { useMarkTopicVisited } from '@/hooks/useForumPreferences';
 import { useForumTopic } from '@/hooks/useForumTopics';
 import { useForumStore } from '@/store/forumStore';
 import styles from '@/styles/components/forum/DiscussionListView.module.scss';
@@ -13,13 +16,34 @@ import { DiscussionCard } from '../cards/DiscussionCard';
 export function DiscussionListView() {
   const topicSlug = useForumStore((s) => s.topicSlug);
   const navigateToCreateDiscussion = useForumStore((s) => s.navigateToCreateDiscussion);
-  const navigateToTopics = useForumStore((s) => s.navigateToTopics);
+  const navigateToCategories = useForumStore((s) => s.navigateToCategories);
 
   const [page, setPage] = useState(1);
+  const markTopicVisited = useMarkTopicVisited();
+  const { onForumEvent } = useWebSocket();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     setPage(1);
   }, [topicSlug]);
+
+  useEffect(() => {
+    if (topicSlug) {
+      markTopicVisited.mutate(topicSlug);
+    }
+    // Only re-run when the topic changes - not on every markTopicVisited identity change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [topicSlug]);
+
+  useEffect(() => {
+    if (!topicSlug) return;
+    const unsubscribe = onForumEvent((event) => {
+      if (event.type === 'forum:discussion:created' && event.data?.topicSlug === topicSlug) {
+        queryClient.invalidateQueries({ queryKey: forumDiscussionKeys.list(topicSlug) });
+      }
+    });
+    return unsubscribe;
+  }, [onForumEvent, queryClient, topicSlug]);
 
   const { data, isLoading, error } = useForumDiscussions(topicSlug, page);
   const { data: topic } = useForumTopic(topicSlug);
@@ -28,7 +52,7 @@ export function DiscussionListView() {
     return (
       <div className={styles.empty}>
         Nessun argomento selezionato.{' '}
-        <button type="button" className={styles.backLink} onClick={() => navigateToTopics()}>
+        <button type="button" className={styles.backLink} onClick={() => navigateToCategories()}>
           Torna alla bacheca
         </button>
       </div>

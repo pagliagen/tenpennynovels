@@ -21,6 +21,9 @@ interface LocationRow {
   description: string;
   parentLocationName: string;
   tags: string;
+  filename: string;
+  // "prompt" esiste in locations.csv (prompt AI per local-tools/imagegen) ma NON
+  // va a DB: volutamente non incluso in questa interfaccia/mapping.
 }
 
 function slugify(text: string): string {
@@ -137,6 +140,7 @@ async function seedLocations() {
           name: row.name,
           slug: slugify(row.name),
           description: row.description,
+          image: row.filename || null,
           district: level === 'root' ? row.name : (parentDoc?.district || parentDoc?.name || ''),
           parentLocation: parentDoc?._id || undefined,
           locationLevel: level,

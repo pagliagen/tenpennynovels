@@ -40,6 +40,37 @@
   }
 }
 
+/* Master "esito riservato" target picker */
+.masterTargetLabel {
+  color: $parchment-50;
+  font-family: $font-serif;
+  font-size: 13px;
+  font-style: italic;
+  margin-bottom: $spacing-sm;
+}
+
+.masterTargetPicker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-sm $spacing-lg;
+  padding: $spacing-md;
+  background: rgba(245, 245, 245, 0.05);
+  border: 1px solid $gold-30;
+  border-radius: $radius-md;
+  max-height: 140px;
+  overflow-y: auto;
+}
+
+.masterTargetOption {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+  color: $parchment;
+  font-family: $font-serif;
+  font-size: 14px;
+  cursor: pointer;
+}
+
 /* Social Conflict Fields */
 .socialConflictFields {
   margin-bottom: $spacing-md;

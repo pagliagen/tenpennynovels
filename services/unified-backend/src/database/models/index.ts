@@ -14,6 +14,7 @@ export { Skill, SKILL_CATEGORY_LABELS, type ISkill } from './Skill';
 // Location System
 export { Location, type ILocation } from './Location';
 export { Chat, type IChat } from './Chat';
+export { ChatBackup } from './ChatBackup';
 export { CharacterNotes, type ICharacterNotes } from './CharacterNotes';
 
 // Combat & Confrontation System (TiroContrapposto)
@@ -205,15 +206,18 @@ export {
 } from './DocumentChunk';
 
 // Forum System
+export { ForumCategory, type IForumCategory } from './ForumCategory';
 export { ForumTopic, type IForumTopic } from './ForumTopic';
+export { ForumTopicPermissionOverride, type IForumTopicPermissionOverride, type ForumPermissionDecision, type ForumTopicPermissionOverrides } from './ForumTopicPermissionOverride';
 export { ForumDiscussion, type IForumDiscussion } from './ForumDiscussion';
 export { ForumPost, type IForumPost } from './ForumPost';
 export { ForumTopicFavorite, type IForumTopicFavorite } from './ForumTopicFavorite';
+export { ForumDiscussionFavorite, type IForumDiscussionFavorite } from './ForumDiscussionFavorite';
 export { ForumDiscussionSubscription, type IForumDiscussionSubscription } from './ForumDiscussionSubscription';
-export { ForumCharacterFollow, type IForumCharacterFollow } from './ForumCharacterFollow';
 export { ForumBookmark, BookmarkItemType, type IForumBookmark } from './ForumBookmark';
-export { ForumReaction, ReactionType, type IForumReaction } from './ForumReaction';
 export { ForumNotification, ForumNotificationType, type IForumNotification } from './ForumNotification';
+export { ForumCharacterPreference, type IForumCharacterPreference, type ForumReplyOrder } from './ForumCharacterPreference';
+export { ForumTopicReadState, type IForumTopicReadState } from './ForumTopicReadState';
 
 // Deleted Records Archive
 export { DeletedRecord, type IDeletedRecord } from './DeletedRecord';

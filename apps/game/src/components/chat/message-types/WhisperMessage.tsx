@@ -1,9 +1,10 @@
 /**
  * Whisper Message Component
  *
- * Private message visible only to sender, target, and masters.
- * Features brown-themed styling with lock icon indicator.
- * Contains complete message structure with avatar, menu, content, and footer.
+ * Private message visible only to sender, target(s), and masters.
+ * No avatar column — instead a header line renders
+ * "Sender sussurra a Target1, Target2: " with each name a link to its
+ * character sheet, matching how the mention parser links names inline.
  * Uses useMessageInteractions hook for shared logic.
  *
  * @module components/chat/message-types/WhisperMessage
@@ -12,13 +13,14 @@
 
 'use client';
 
+import { useWindowManagerStore } from '@/store/windowManagerStore';
 import { useMessageInteractions } from '@/hooks/useMessageInteractions';
 import styles from '@/styles/components/chat/message-types/WhisperMessage.module.scss';
 import type { ChatMessage } from '@/types/chat';
 
 import { ConfirmDeleteDialog } from '../ConfirmDeleteDialog';
+import { MessageContent } from '../MessageContent';
 import { MessageEditableContent } from '../MessageEditableContent';
-import { MessageFooter } from '../MessageFooter';
 import { MessageMenu } from '../MessageMenu';
 
 
@@ -29,12 +31,10 @@ interface WhisperMessageProps {
 
 export function WhisperMessage({ message, currentCharacterId }: WhisperMessageProps): JSX.Element {
   const interactions = useMessageInteractions(message, currentCharacterId);
+  const openWindow = useWindowManagerStore((state) => state.openWindow);
 
-  // Extract target from targetCharacters (DB field)
-  // Intentionally shows "(privato)" for privacy - master can see in full message
-  const targetName = message.targetCharacters && message.targetCharacters.length > 0
-    ? '(privato)'
-    : '(privato)';
+  const targetIds = message.whisper?.targetCharacterIds ?? [];
+  const targetNames = message.whisper?.targetCharacterNames ?? [];
 
   return (
     <>
@@ -44,28 +44,7 @@ export function WhisperMessage({ message, currentCharacterId }: WhisperMessagePr
         onCancel={interactions.handleCancelDelete}
       />
 
-      {/* Left column: Avatar + Name + Whisper Badge + Time */}
-      <div className={styles.messageCardLeft}>
-        <button
-          className={styles.messageAvatar}
-          onClick={interactions.handleAvatarClick}
-          type="button"
-          aria-label={`Apri scheda di ${message.characterName}`}
-        >
-          {message.characterAvatar ? (
-            <img src={message.characterAvatar} alt="" />
-          ) : (
-            <span className={styles.avatarPlaceholder}>
-              {message.characterName?.[0]?.toUpperCase() || '?'}
-            </span>
-          )}
-        </button>
-        <span className={styles.characterName}>{message.characterName}</span>
-        <span className={styles.whisperBadge}>🔒 {targetName}</span>
-        <time className={styles.messageTimestamp}>{interactions.formattedTime}</time>
-      </div>
-
-      {/* Right column: Content + Menu + Tag */}
+      {/* Content + Menu */}
       <div className={styles.messageCardRight}>
         {/* Menu button */}
         {interactions.canEdit && (
@@ -101,12 +80,49 @@ export function WhisperMessage({ message, currentCharacterId }: WhisperMessagePr
               onChange={interactions.setEditedContent}
             />
           ) : (
-            <div className={styles.messageContent}>{message.content}</div>
+            <div className={styles.messageContent}>
+              <p className={styles.whisperHeader}>
+                {message.isMasked ? (
+                  <span className={styles.whisperName}>{message.characterName}</span>
+                ) : (
+                  <button
+                    type="button"
+                    className={styles.whisperNameLink}
+                    onClick={interactions.handleAvatarClick}
+                  >
+                    {message.characterName}
+                  </button>
+                )}
+                {' sussurra'}
+                {targetIds.length > 0 && (
+                  <>
+                    {' a '}
+                    {targetIds.map((id, i) => (
+                      <span key={id}>
+                        <button
+                          type="button"
+                          className={styles.whisperNameLink}
+                          onClick={() =>
+                            openWindow('characterSheet', {
+                              characterId: id,
+                              characterName: targetNames[i],
+                              avatar: undefined,
+                            })
+                          }
+                        >
+                          {targetNames[i] ?? 'Sconosciuto'}
+                        </button>
+                        {i < targetIds.length - 1 && (i === targetIds.length - 2 ? ' e ' : ', ')}
+                      </span>
+                    ))}
+                  </>
+                )}
+                {': '}
+              </p>
+              <MessageContent content={message.content} />
+            </div>
           )}
         </div>
-
-        {/* Footer */}
-        <MessageFooter message={message} onTagClick={interactions.handleTagClick} />
       </div>
     </>
   );

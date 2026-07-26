@@ -6,6 +6,7 @@ export function createApp() {
   const app = express();
 
   app.use(express.json({ limit: '2mb' }));
+  app.use(express.static('public'));  // Serve le pagine di debug (character-generator.html, ...)
 
   app.get('/health', healthEndpoint('character-gen', async () => ({})));
 

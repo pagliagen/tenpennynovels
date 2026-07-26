@@ -2,7 +2,7 @@
  * Chat Types
  *
  * Frontend types for the location chat system.
- * Supports 8 message types: standard, whisper, ooc, dice_roll, skill_check, stat_check, item_use, master.
+ * Supports the message types listed in {@link ActionType}.
  *
  * @module types/chat
  * @since 2.0.0
@@ -19,6 +19,7 @@ export type ActionType =
   | 'whisper'       // Private message (only sender + target + master see)
   | 'ooc'           // Out-of-character message
   | 'dice_roll'     // Dice roll result
+  | 'skill_check'   // Skill check result (only sender + master see)
   | 'stat_check'    // Attribute check result
   | 'item_use'      // Item usage action
   | 'master'        // Master-only announcement
@@ -32,7 +33,7 @@ export type ActionType =
  * Multi-dice system: supports various dice types with modifiers
  * Format: {count}d{type}[+/-modifier] (e.g., "2d6+3", "1d20", "3d8-2")
  *
- * Also used for skill_check and stat_check results with additional fields.
+ * Also used for stat_check results (and skill-based rolls) with additional fields.
  */
 export interface DiceRollPayload {
   dice: string;              // Formula: "2d6+3", "1d20", "1d100"
@@ -41,7 +42,7 @@ export interface DiceRollPayload {
   modifier?: number;         // Modifier applied (+/- value)
   total: number;             // Final total (result + modifier)
 
-  // Skill check fields (when actionType = 'skill_check')
+  // Skill-based roll fields
   success?: boolean;         // Pass/fail
   successDegree?: string;    // critical, extreme, hard, normal, failure, fumble
   skillId?: string;          // Skill ObjectId
@@ -153,6 +154,7 @@ export interface ChatMessage {
 
   // Content
   content: string;         // DB field (was text)
+  visibility?: 'public' | 'whisper' | 'master_only';  // Backend authorization tier (see ChatMessageService.canSeeAction)
 
   // Type-specific payload (DB field names)
   diceResult?: DiceRollPayload;        // DB field (was diceRoll)
@@ -160,6 +162,10 @@ export interface ChatMessage {
   itemEffect?: ItemUsePayload;         // DB field (was itemUse)
   confrontation?: ConfrontationPayload; // TiroContrapposto - Unified confrontation system
   targetCharacters?: string[];         // DB field (was whisperVisibility) - Array of character IDs
+  whisper?: {                         // Enriched whisper target names (whisper visibility only)
+    targetCharacterIds: string[];
+    targetCharacterNames: string[];
+  };
 
   // Hidden/Defender-only fields
   hiddenContent?: string;
@@ -225,7 +231,9 @@ export interface SendMessageRequest {
   content: string;                 // DB field (was text)
   position?: string;               // DB field - Position tag (e.g., "Tavolo 1")
   targetCharacterId?: string;      // For whispers (backend converts to targetCharacters array)
-  targetCharacters?: string[];     // For whispers (backend expects array)
+  targetCharacters?: string[];     // For whispers, or for a targeted master_only "esito riservato"
+  /** Explicit visibility override. Used for master "esiti riservati": master_only + targetCharacters. */
+  visibility?: 'public' | 'whisper' | 'master_only';
   diceSpec?: string;               // For dice_roll - Format: "{count}d{type}[+/-modifier]" (e.g., "2d6+3", "1d20-2")
   statName?: string;               // For stat_check
   targetValue?: number;            // Target value for checks
@@ -234,6 +242,8 @@ export interface SendMessageRequest {
   itemUse?: ItemUsePayload;
   /** Retry invio dopo errore PENDING_REACTION_EXISTS (solo client → backend). */
   forceAbortPendingReaction?: boolean;
+  /** Override nome/avatar con un PNG scoped alla location (master o proprietario location). */
+  locationPngId?: string;
 }
 
 /**

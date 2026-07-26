@@ -35,14 +35,14 @@ Struttura di `clients.json`:
     "name": "TenPennyNovels VPS",
     "apiKey": "<chiave-prod>",
     "hmacSecret": "<hmac-prod>",
-    "permissions": ["botai", "qa"],
+    "permissions": ["botai"],
     "rateLimit": { "maxPerMinute": 30 }
   },
   {
     "id": "tpn-dev",
     "name": "Local Development",
     "apiKey": "<chiave-dev>",
-    "permissions": ["botai", "qa"],
+    "permissions": ["botai"],
     "rateLimit": { "maxPerMinute": 120 }
   }
 ]
@@ -135,7 +135,6 @@ npm install
 # 3. Avvia i servizi in dev mode (terminali separati)
 cd gateway && npm run dev
 cd services/botai && npm run dev
-cd services/qa && npm run dev
 ```
 
 Oppure tutto insieme:
@@ -144,7 +143,7 @@ Oppure tutto insieme:
 npm run dev
 ```
 
-Questo avvia gateway, botai e qa con `concurrently` e hot-reload via `tsx watch`.
+Questo avvia gateway e botai con `concurrently` e hot-reload via `tsx watch`.
 
 ## Comandi utili
 
@@ -191,7 +190,7 @@ I Dockerfile usano **multi-stage build** per separare compilazione e produzione.
 Un symlink `node_modules` viene creato a `/app/` per consentire a TypeScript di risolvere i moduli importati da `shared/`:
 
 ```dockerfile
-FROM node:22-alpine AS builder
+FROM node:24-alpine AS builder
 WORKDIR /app/services/<nome>
 COPY services/<nome>/package.json ./
 RUN npm install
@@ -202,7 +201,7 @@ COPY services/<nome>/tsconfig.json ./
 COPY services/<nome>/src/ ./src/
 RUN npx tsc
 
-FROM node:22-alpine
+FROM node:24-alpine
 WORKDIR /app/services/<nome>
 COPY services/<nome>/package.json ./
 RUN npm install --omit=dev

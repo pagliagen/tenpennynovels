@@ -15,7 +15,6 @@
  * - GET /forum/search - Search forum
  * - POST /forum/topics/:slug/favorite - Toggle topic favorite
  * - POST /forum/posts/:postId/bookmark - Toggle bookmark
- * - POST /forum/posts/:postId/reactions - Toggle reaction
  * - GET /forum/notifications - Get notifications
  *
  * @module lib/api/forum
@@ -24,14 +23,18 @@
 
 import type {
   ForumInitData,
+  ForumCategory,
   ForumTopic,
   ForumDiscussion,
+  DiscussionVisibility,
   ForumPost,
   ForumSearchResult,
   ForumBookmark,
   ForumNotification,
+  ForumPreferences,
+  ForumReplyOrder,
+  ForumUnreadSummary,
   PaginationInfo,
-  ReactionType,
 } from '@/types/forum';
 
 import { api } from './client';
@@ -46,6 +49,13 @@ export const forumApi = {
 
   async getInit(): Promise<ForumInitData> {
     const response = await api.get<{ data: ForumInitData }>('/forum/init');
+    return response.data;
+  },
+
+  // ── Categories ────────────────────────────────────────────────────
+
+  async getCategories(): Promise<ForumCategory[]> {
+    const response = await api.get<{ data: ForumCategory[] }>('/forum/categories');
     return response.data;
   },
 
@@ -88,7 +98,7 @@ export const forumApi = {
 
   async createDiscussion(
     topicSlug: string,
-    data: { title: string; content: string; tags?: string[] }
+    data: { title: string; content: string; tags?: string[]; visibility?: DiscussionVisibility; isAnonymous?: boolean }
   ): Promise<{ id: string; slug: string }> {
     const response = await api.post<{ data: { id: string; slug: string } }>(
       `/forum/topics/${topicSlug}/discussions`,
@@ -106,6 +116,21 @@ export const forumApi = {
     await api.put(`/forum/topics/${topicSlug}/discussions/${discussionSlug}`, data);
   },
 
+  async updateDiscussionVisibility(
+    topicSlug: string,
+    discussionSlug: string,
+    data: { visibility?: DiscussionVisibility; excludedCharacterIds?: string[] }
+  ): Promise<void> {
+    await api.put(`/forum/topics/${topicSlug}/discussions/${discussionSlug}/visibility`, data);
+  },
+
+  async broadcastDiscussion(topicSlug: string, discussionSlug: string): Promise<{ recipientCount: number }> {
+    const response = await api.post<{ data: { broadcasted: boolean; recipientCount: number } }>(
+      `/forum/topics/${topicSlug}/discussions/${discussionSlug}/broadcast`
+    );
+    return response.data;
+  },
+
   async deleteDiscussion(topicSlug: string, discussionSlug: string): Promise<void> {
     await api.delete(`/forum/topics/${topicSlug}/discussions/${discussionSlug}`);
   },
@@ -116,20 +141,21 @@ export const forumApi = {
     topicSlug: string,
     discussionSlug: string,
     page?: number,
-    limit?: number
-  ): Promise<{ list: ForumPost[]; pagination: PaginationInfo }> {
-    const response = await api.get<{ list: ForumPost[]; pagination: PaginationInfo }>(
+    limit?: number,
+    order?: ForumReplyOrder
+  ): Promise<{ list: ForumPost[]; pagination: PaginationInfo; replyOrder: ForumReplyOrder }> {
+    const response = await api.get<{ list: ForumPost[]; pagination: PaginationInfo; replyOrder?: ForumReplyOrder }>(
       `/forum/topics/${topicSlug}/discussions/${discussionSlug}/posts`,
-      { params: { page, limit } }
+      { params: { page, limit, order } }
     );
     const defaultPagination: PaginationInfo = { page: 1, pageSize: 20, total: 0, totalPages: 0, hasNext: false, hasPrev: false };
-    return { list: response.list ?? [], pagination: response.pagination ?? defaultPagination };
+    return { list: response.list ?? [], pagination: response.pagination ?? defaultPagination, replyOrder: response.replyOrder ?? 'asc' };
   },
 
   async createPost(
     topicSlug: string,
     discussionSlug: string,
-    data: { content: string; replyToPostId?: string }
+    data: { content: string; replyToPostId?: string; isAnonymous?: boolean }
   ): Promise<{ id: string }> {
     const response = await api.post<{ data: { id: string } }>(
       `/forum/topics/${topicSlug}/discussions/${discussionSlug}/posts`,
@@ -146,15 +172,28 @@ export const forumApi = {
     await api.delete(`/forum/posts/${postId}`);
   },
 
+  async togglePinPost(postId: string, pinned: boolean): Promise<void> {
+    await api.put(`/forum/posts/${postId}/pin`, { pinned });
+  },
+
   // ── Search ────────────────────────────────────────────────────────
 
   async searchForum(
     query: string,
-    topicSlug?: string
+    topicSlug?: string,
+    filters?: { dateFrom?: string; dateTo?: string; isLocked?: boolean }
   ): Promise<{ list: ForumSearchResult[]; pagination: PaginationInfo }> {
     const response = await api.get<{ list: ForumSearchResult[]; pagination: PaginationInfo }>(
       '/forum/search',
-      { params: { q: query, topicSlug } }
+      {
+        params: {
+          q: query,
+          topicSlug,
+          dateFrom: filters?.dateFrom,
+          dateTo: filters?.dateTo,
+          isLocked: filters?.isLocked === undefined ? undefined : String(filters.isLocked),
+        },
+      }
     );
     const defaultPagination: PaginationInfo = { page: 1, pageSize: 20, total: 0, totalPages: 0, hasNext: false, hasPrev: false };
     return { list: response.list ?? [], pagination: response.pagination ?? defaultPagination };
@@ -174,6 +213,18 @@ export const forumApi = {
     return response.data;
   },
 
+  async toggleDiscussionFavorite(topicSlug: string, discussionSlug: string): Promise<{ isFavorite: boolean }> {
+    const response = await api.post<{ data: { isFavorite: boolean } }>(
+      `/forum/topics/${topicSlug}/discussions/${discussionSlug}/favorite`
+    );
+    return response.data;
+  },
+
+  async getFavoriteDiscussions(): Promise<ForumDiscussion[]> {
+    const response = await api.get<{ data: ForumDiscussion[] }>('/forum/favorites/discussions');
+    return response.data;
+  },
+
   // ── Subscriptions ─────────────────────────────────────────────────
 
   async subscribe(topicSlug: string, discussionSlug: string): Promise<void> {
@@ -185,17 +236,6 @@ export const forumApi = {
     return response.data.subscriptions;
   },
 
-  // ── Follows ───────────────────────────────────────────────────────
-
-  async toggleFollow(characterId: string): Promise<void> {
-    await api.post(`/forum/characters/${characterId}/follow`);
-  },
-
-  async getFollowing(): Promise<any[]> {
-    const response = await api.get<{ data: { following: any[] } }>('/forum/following');
-    return response.data.following;
-  },
-
   // ── Bookmarks ─────────────────────────────────────────────────────
 
   async toggleBookmark(postId: string): Promise<void> {
@@ -205,17 +245,6 @@ export const forumApi = {
   async getBookmarks(): Promise<ForumBookmark[]> {
     const response = await api.get<{ data: { bookmarks: ForumBookmark[] } }>('/forum/bookmarks');
     return response.data.bookmarks;
-  },
-
-  // ── Reactions ─────────────────────────────────────────────────────
-
-  async toggleReaction(postId: string, reactionType: ReactionType): Promise<void> {
-    await api.post(`/forum/posts/${postId}/reactions`, { type: reactionType });
-  },
-
-  async getReactions(postId: string): Promise<any> {
-    const response = await api.get<{ data: any }>(`/forum/posts/${postId}/reactions`);
-    return response.data;
   },
 
   // ── Notifications ─────────────────────────────────────────────────
@@ -261,5 +290,28 @@ export const forumApi = {
       { params: { timeframe, limit } }
     );
     return response.data;
+  },
+
+  // ── Preferences ───────────────────────────────────────────────────
+
+  async getPreferences(): Promise<ForumPreferences> {
+    const response = await api.get<{ data: ForumPreferences }>('/forum/preferences');
+    return response.data;
+  },
+
+  async updatePreferences(replyOrder: ForumReplyOrder): Promise<ForumPreferences> {
+    const response = await api.put<{ data: ForumPreferences }>('/forum/preferences', { replyOrder });
+    return response.data;
+  },
+
+  // ── Unread summary ────────────────────────────────────────────────
+
+  async getUnreadSummary(): Promise<ForumUnreadSummary> {
+    const response = await api.get<{ data: ForumUnreadSummary }>('/forum/unread-summary');
+    return response.data;
+  },
+
+  async markTopicVisited(topicSlug: string): Promise<void> {
+    await api.post(`/forum/topics/${topicSlug}/visited`);
   },
 };

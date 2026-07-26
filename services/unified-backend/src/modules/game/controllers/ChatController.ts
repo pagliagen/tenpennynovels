@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { Types } from 'mongoose';
-import { Chat, GamingSession, Location, Character, SkillConfrontation, CombatEncounter, Skill, Item } from '@database/models';
+import { Chat, ChatBackup, GamingSession, Location, Character, SkillConfrontation, CombatEncounter, Skill, Item } from '@database/models';
 import { logger } from '../logger';
 import { successResponse, errorResponse, createResponse, listResponse, getRequestId } from '@shared/utils/apiResponse';
 import { ConfigurationService } from '@shared/services/ConfigurationService';
@@ -25,6 +25,9 @@ import { ChatMessageService } from '../services/ChatMessageService';
 
 // WebSocket Service (Centralized emissions)
 import { ChatWebSocketService } from '../services/ChatWebSocketService';
+
+// Finestra entro cui un giocatore (non master) può modificare una propria azione già inviata.
+const EDIT_TIME_WINDOW_MS = 30 * 1000;
 
 export class ChatController {
   // Singleton service instance
@@ -92,7 +95,8 @@ export class ChatController {
         statName,
         itemId,
         position,
-        isHidden
+        isHidden,
+        locationPngId // Optional: override with a location-scoped PNG persona (master/owner only)
       } = req.body;
 
       // Validate required fields
@@ -235,6 +239,32 @@ export class ChatController {
       }
       // ========== END FAKE PNG MASKING LOGIC ==========
 
+      // ========== LOCATION PNG OVERRIDE (master or location owner only) ==========
+      // Explicit per-message choice (unlike the sticky personal fakePngs above),
+      // sourced from Location.locationPngs. Takes precedence when provided.
+      if (locationPngId && location) {
+        const isMasterForLocationPng = character.gameplayRoles?.includes('master') || character.isGestore || false;
+        const isLocationOwner = location.access?.ownerId?.toString() === character.characterId;
+
+        if (isMasterForLocationPng || isLocationOwner) {
+          const locationPng = (location.locationPngs || []).find(
+            (p: any) => p._id?.toString() === locationPngId
+          );
+
+          if (locationPng) {
+            isMasked = true;
+            realCharacterName = realCharacterName || displayName; // preserve real name for admin
+            displayName = buildFullName(locationPng.name, locationPng.surname);
+            displayAvatar = locationPng.avatar;
+          } else {
+            logger.warn(`[ChatController] locationPngId ${locationPngId} not found on location ${locationId}`);
+          }
+        } else {
+          logger.warn(`[ChatController] Character ${character.characterId} attempted locationPngId override without permission`);
+        }
+      }
+      // ========== END LOCATION PNG OVERRIDE ==========
+
       // Build the location action
       let actionData: any = {
         actionType,
@@ -341,6 +371,20 @@ export class ChatController {
       if (io) {
         const roomName = `location_${locationId}`;
 
+        // Resolve whisper target names for display (sender/targets/master already
+        // authorized to see the message itself, so this adds no new exposure)
+        let whisperEnrichment: { targetCharacterIds: string[]; targetCharacterNames: string[] } | undefined;
+        if (savedAction.visibility === 'whisper' && savedAction.targetCharacters?.length) {
+          const targetChars = await Character.find({ _id: { $in: savedAction.targetCharacters } })
+            .select('_id name')
+            .lean();
+          const nameById = new Map(targetChars.map((c: any) => [c._id.toString(), c.name]));
+          whisperEnrichment = {
+            targetCharacterIds: savedAction.targetCharacters,
+            targetCharacterNames: savedAction.targetCharacters.map((id: string) => nameById.get(id) || 'Unknown')
+          };
+        }
+
         // Return DB fields directly (no mapping)
         const chatMessage = {
           _id: savedAction._id.toString(),
@@ -351,6 +395,7 @@ export class ChatController {
           position: savedAction.position || undefined,
           locationId: savedAction.locationId.toString(),
           content: savedAction.content,                 // DB field (was text)
+          visibility: savedAction.visibility,            // Needed by frontend for client-side visibility filtering
           diceResult: savedAction.diceResult || undefined,  // DB field (was diceRoll)
           // Fix: Only include socialConflict if it has properties (Mongoose creates empty {} for subdocuments)
           socialConflict: (savedAction.socialConflict && Object.keys(savedAction.socialConflict).length > 0)
@@ -359,6 +404,7 @@ export class ChatController {
           statCheck: (savedAction as unknown as Record<string, unknown>).statCheck || undefined,
           itemEffect: savedAction.itemEffect || undefined,  // DB field (was itemUse)
           targetCharacters: savedAction.targetCharacters || undefined,  // DB field (was whisperVisibility)
+          whisper: whisperEnrichment,
           hiddenContent: savedAction.hiddenContent || undefined,
           editHistory: savedAction.editHistory || [],
           timestamp: savedAction.timestamp.toISOString()  // DB field (was createdAt/updatedAt)
@@ -371,12 +417,45 @@ export class ChatController {
           locationSlug: location?.slug || null
         };
 
-        logger.debug(`ChatsController: Emitting notification to room ${roomName} with message ${chatMessage._id}`);
-        io.to(roomName).emit('location_message_notification', notification);
+        // SECURITY: Non-public messages must NEVER be broadcast to the whole
+        // location room. The full message content (whisper text, master/mod
+        // narration, hidden action-mode content) is only sent to sockets that
+        // are actually authorized to see it, mirroring ChatMessageService.canSeeAction.
+        // Broadcasting unfiltered to `roomName` would leak private content to every
+        // client's network layer regardless of what the UI chooses to render.
+        const isHiddenUntilRevealed = !!savedAction.isHidden && !savedAction.revealedAt;
 
-        // Debug: Check how many clients are in the room
-        const room = io.sockets.adapter.rooms.get(roomName);
-        logger.debug(`ChatsController: Clients in room ${roomName}: ${room ? room.size : 0}`);
+        if (savedAction.visibility === 'whisper') {
+          // "staff" reaches every connected master — canSeeAction grants master
+          // visibility into every whisper, so live delivery must match.
+          const recipientRooms = [
+            `character_${savedAction.characterId}`,
+            'staff',
+            ...(savedAction.targetCharacters || []).map((id: string) => `character_${id}`),
+          ];
+          io.to(recipientRooms).emit('location_message_notification', notification);
+          logger.debug(`ChatsController: Emitted whisper notification to ${recipientRooms.length} character room(s) + staff`, { messageId: chatMessage._id });
+        } else if (savedAction.visibility === 'master_only') {
+          // "staff" reaches every connected master; targetCharacters (if the
+          // master picked specific pg for an "esito riservato") are added on top.
+          const recipientRooms = [
+            `character_${savedAction.characterId}`,
+            'staff',
+            ...(savedAction.targetCharacters || []).map((id: string) => `character_${id}`),
+          ];
+          io.to(recipientRooms).emit('location_message_notification', notification);
+          logger.debug(`ChatsController: Emitted master_only notification to sender + staff + ${(savedAction.targetCharacters || []).length} targeted character room(s)`, { messageId: chatMessage._id });
+        } else if (isHiddenUntilRevealed) {
+          io.to(`character_${savedAction.characterId}`).emit('location_message_notification', notification);
+          logger.debug(`ChatsController: Emitted hidden action-mode notification to sender only`, { messageId: chatMessage._id });
+        } else {
+          logger.debug(`ChatsController: Emitting notification to room ${roomName} with message ${chatMessage._id}`);
+          io.to(roomName).emit('location_message_notification', notification);
+
+          // Debug: Check how many clients are in the room
+          const room = io.sockets.adapter.rooms.get(roomName);
+          logger.debug(`ChatsController: Clients in room ${roomName}: ${room ? room.size : 0}`);
+        }
       } else {
         logger.error('ChatsController: Socket.io instance not found in req.app');
       }
@@ -908,13 +987,12 @@ export class ChatController {
         return;
       }
 
-      // Check time limit: 30 seconds for non-masters (TEST - production: 5 minutes)
+      // Check time limit for non-masters
       if (!isMaster) {
-        const timeWindowMs = 30 * 1000; // 30 seconds (TEST) - Production: 5 * 60 * 1000
-        const timeWindowAgo = new Date(Date.now() - timeWindowMs);
+        const timeWindowAgo = new Date(Date.now() - EDIT_TIME_WINDOW_MS);
         if (action.timestamp < timeWindowAgo) {
           res.status(403).json(errorResponse(
-            'You can only edit actions within 30 seconds of posting',
+            `You can only edit actions within ${EDIT_TIME_WINDOW_MS / 1000} seconds of posting`,
             'EDIT_TIME_EXPIRED',
             undefined,
             403,
@@ -983,11 +1061,37 @@ export class ChatController {
         edited: true, // ← Flag to indicate this is an edit
       };
 
-      // Emit WebSocket notification with FULL enriched message
-      ChatWebSocketService.emitMessageUpdated({
-        locationId: action.locationId.toString(),
-        message: enrichedMessage,
-      });
+      // Route the broadcast the same way createMessage does — a whisper or
+      // master_only edit must reach only sender/targets/master, never the
+      // whole location room. editHistory (pre-edit content) is master-only
+      // regardless of visibility, so it's always stripped from the broadcast;
+      // the HTTP response below stays full since it only reaches the editor.
+      const broadcastMessage = { ...enrichedMessage, editHistory: [] };
+      const io = getSocketIO();
+      if (io) {
+        const notification = {
+          message: broadcastMessage,
+          locationId: action.locationId.toString(),
+        };
+
+        if (action.visibility === 'whisper') {
+          const recipientRooms = [
+            `character_${action.characterId}`,
+            'staff',
+            ...(action.targetCharacters || []).map((id: string) => `character_${id}`),
+          ];
+          io.to(recipientRooms).emit('location_message_notification', notification);
+        } else if (action.visibility === 'master_only') {
+          const recipientRooms = [
+            `character_${action.characterId}`,
+            'staff',
+            ...(action.targetCharacters || []).map((id: string) => `character_${id}`),
+          ];
+          io.to(recipientRooms).emit('location_message_notification', notification);
+        } else {
+          io.to(`location_${action.locationId}`).emit('location_message_notification', notification);
+        }
+      }
 
       logger.info(`Location action updated: ${actionId} by ${character.characterName}`);
 
@@ -1066,13 +1170,12 @@ export class ChatController {
         return;
       }
 
-      // Check time limit: 30 seconds for non-masters (TEST - production: 5 minutes)
+      // Check time limit for non-masters
       if (!isMaster) {
-        const timeWindowMs = 30 * 1000; // 30 seconds (TEST) - Production: 5 * 60 * 1000
-        const timeWindowAgo = new Date(Date.now() - timeWindowMs);
+        const timeWindowAgo = new Date(Date.now() - EDIT_TIME_WINDOW_MS);
         if (action.timestamp < timeWindowAgo) {
           res.status(403).json(errorResponse(
-            'You can only delete actions within 30 seconds of posting',
+            `You can only delete actions within ${EDIT_TIME_WINDOW_MS / 1000} seconds of posting`,
             'DELETE_TIME_EXPIRED',
             undefined,
             403,
@@ -1084,8 +1187,11 @@ export class ChatController {
 
       const locationId = action.locationId;
 
-      // Delete the action
-      await Chat.findByIdAndDelete(actionId);
+      // Soft delete: kept in the permanent archive (deletedAt set) for master/
+      // gestionale log access; the post-findOneAndUpdate hook on Chat removes
+      // the mirrored row from ChatBackup, so it disappears from the live game
+      // view immediately instead of waiting out the TTL.
+      await Chat.findByIdAndUpdate(actionId, { deletedAt: new Date() }, { new: true });
 
       // Emit WebSocket notification
       ChatWebSocketService.emitMessageDeleted({
@@ -1410,8 +1516,9 @@ export class ChatController {
         return;
       }
 
-      // Delete all actions for this location
-      const result = await Chat.deleteMany({ locationId });
+      // Clears only the live/backup view — the permanent Chat archive (and
+      // therefore the master/gestionale log) is untouched.
+      const result = await ChatBackup.deleteMany({ locationId });
 
       // Emit WebSocket notification
       ChatWebSocketService.emitChatCleared({
@@ -2163,7 +2270,7 @@ export class ChatController {
           }
 
           // Create whisper message for defender
-          await Chat.create({
+          const defenderRevealMessage = await Chat.create({
             actionType: 'social_confrontation',
             characterId: character.characterId,
             characterName: character.characterName,
@@ -2187,6 +2294,30 @@ export class ChatController {
               outcome: 'defender_wins'
             }
           });
+
+          // Live delivery to the defender + master — without this the reveal
+          // only appears on the next GET (refresh / next action), same
+          // sender+targets+staff routing as every other whisper broadcast.
+          if (io) {
+            io.to([
+              `character_${message.confrontation.defenderCharacterId}`,
+              'staff',
+            ]).emit('location_message_notification', {
+              message: {
+                _id: defenderRevealMessage._id.toString(),
+                actionType: defenderRevealMessage.actionType,
+                characterId: defenderRevealMessage.characterId,
+                characterName: defenderRevealMessage.characterName,
+                content: defenderRevealMessage.content,
+                locationId: defenderRevealMessage.locationId,
+                visibility: defenderRevealMessage.visibility,
+                targetCharacters: defenderRevealMessage.targetCharacters,
+                confrontation: defenderRevealMessage.confrontation,
+                timestamp: defenderRevealMessage.timestamp.toISOString(),
+              },
+              locationId: message.locationId,
+            });
+          }
 
           logger.info(`Raggirare detected: ${defenderCharacter.name} received message (${defenseDegree})`);
         } else {

@@ -32,7 +32,7 @@ function createAgent(role: string): IAgent {
     default: {
       const model = role === 'Analytical'
         ? (process.env.OLLAMA_ANALYTICAL_MODEL || process.env.OLLAMA_MODEL || 'qwen3:8b')
-        : (process.env.OLLAMA_MODEL || 'gemma3:12b');
+        : (process.env.OLLAMA_MODEL || 'hermes3:8b');
       logger.info(`[${role}] Using OllamaAgent (model: ${model})`);
       return new OllamaAgent(model);
     }

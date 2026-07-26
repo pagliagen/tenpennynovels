@@ -37,18 +37,21 @@ interface MessageListProps {
 }
 
 /**
- * Check if message is visible to current character based on message type
+ * Check if message is visible to current character.
  *
- * Visibility rules by type:
- * - standard: all (subject to tag dimming)
- * - ooc: all (NO dimming)
- * - whisper: only sender + target + master (NO dimming)
- * - master: all (NO dimming)
- * - moderation: all (NO dimming)
- * - dice_roll: all (subject to tag dimming)
- * - skill_check: only sender + master (NO dimming)
- * - stat_check: only sender + master (NO dimming)
- * - item_use: all (subject to tag dimming)
+ * Source of truth is `message.visibility` (mirrors backend
+ * ChatMessageService.canSeeAction), NOT `message.actionType` — several action
+ * types (e.g. confrontation_reaction_request) carry `visibility: 'whisper'`
+ * while having a different actionType, and would otherwise slip through.
+ *
+ * Visibility rules:
+ * - 'whisper': only sender + targetCharacters + master
+ * - 'master_only': master, plus targetCharacters if the master targeted an
+ *   "esito riservato" to specific characters (covers actionType 'master' and
+ *   'moderation' — moderation is always untargeted, so this is a no-op there)
+ * - 'public' / undefined: everyone, EXCEPT:
+ *   - stat_check / skill_check: only sender + master (regardless of visibility flag)
+ *   - socialConflict.visibleToDefenderOnly: only the defender + master
  *
  * @param {ChatMessage} message - Message to check
  * @param {string} currentCharacterId - Current character ID
@@ -60,23 +63,32 @@ function isMessageVisible(
   currentCharacterId: string,
   isMaster: boolean
 ): boolean {
-  switch (message.actionType) {
-    case 'whisper':
-      // Only sender + target + master can see whispers
-      return (
-        message.characterId === currentCharacterId ||
-        message.targetCharacters?.includes(currentCharacterId) ||
-        isMaster
-      );
+  if (isMaster) return true;
 
-    case 'stat_check':
-      // Only sender + master can see stat checks
-      return message.characterId === currentCharacterId || isMaster;
-
-    default:
-      // All other types visible to everyone
-      return true;
+  if (message.visibility === 'whisper') {
+    return (
+      message.characterId === currentCharacterId ||
+      !!message.targetCharacters?.includes(currentCharacterId)
+    );
   }
+
+  if (message.visibility === 'master_only') {
+    // Not master (already returned above) — visible only if explicitly targeted.
+    return !!message.targetCharacters?.includes(currentCharacterId);
+  }
+
+  // Sender-only checks, independent of the visibility flag
+  if (message.actionType === 'stat_check' || message.actionType === 'skill_check') {
+    return message.characterId === currentCharacterId;
+  }
+
+  const socialConflict = (message as unknown as { socialConflict?: { visibleToDefenderOnly?: boolean } }).socialConflict;
+  if (socialConflict?.visibleToDefenderOnly) {
+    return !!message.targetCharacters?.includes(currentCharacterId);
+  }
+
+  // Public (or unspecified, for older/legacy records): visible to everyone
+  return true;
 }
 
 /**

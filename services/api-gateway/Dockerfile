@@ -2,7 +2,7 @@
 # TenPennyNovels - API Gateway Dockerfile
 # =============================================================================
 
-FROM node:22-alpine
+FROM node:24-alpine
 
 # Install global tools for development
 RUN npm install -g tsx nodemon

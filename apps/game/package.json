@@ -22,6 +22,13 @@
   "dependencies": {
     "@tanstack/react-query": "^5.62.11",
     "@tanstack/react-virtual": "^3.13.19",
+    "@tiptap/extension-color": "^2.27.2",
+    "@tiptap/extension-image": "^2.27.2",
+    "@tiptap/extension-text-style": "^2.27.2",
+    "@tiptap/extension-underline": "^2.27.2",
+    "@tiptap/pm": "^2.27.2",
+    "@tiptap/react": "^2.27.2",
+    "@tiptap/starter-kit": "^2.27.2",
     "axios": "^1.7.9",
     "classnames": "^2.5.1",
     "cookie": "^1.1.1",
@@ -72,5 +79,12 @@
     "*.{scss,css}": [
       "prettier --write"
     ]
+  },
+  "allowScripts": {
+    "@parcel/watcher@2.6.0": true,
+    "fsevents@2.3.3": true,
+    "fsevents@2.3.2": true,
+    "sharp@0.34.5": true,
+    "unrs-resolver@1.12.2": true
   }
 }

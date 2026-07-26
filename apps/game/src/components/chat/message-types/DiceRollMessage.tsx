@@ -1,9 +1,9 @@
 /**
  * Dice Roll Message Component
  *
- * Shows dice roll with large dice icon and result display.
- * System uses 1d100 percentile rolls.
- * Contains complete message structure with avatar, menu, content, and footer.
+ * Shows dice roll as a single line: "{character} tira {formula} facendo {totale}"
+ * — the full sentence, result included, is generated server-side (DiceRollActionHandler).
+ * Compact layout: no avatar/header/footer, just content and menu (dice icon via CSS).
  * Uses useMessageInteractions hook for shared logic.
  *
  * @module components/chat/message-types/DiceRollMessage
@@ -18,7 +18,6 @@ import type { ChatMessage } from '@/types/chat';
 
 import { ConfirmDeleteDialog } from '../ConfirmDeleteDialog';
 import { MessageEditableContent } from '../MessageEditableContent';
-import { MessageFooter } from '../MessageFooter';
 import { MessageMenu } from '../MessageMenu';
 
 
@@ -29,7 +28,6 @@ interface DiceRollMessageProps {
 
 export function DiceRollMessage({ message, currentCharacterId }: DiceRollMessageProps): JSX.Element {
   const interactions = useMessageInteractions(message, currentCharacterId);
-  const diceRoll = message.diceResult;
 
   return (
     <>
@@ -39,28 +37,7 @@ export function DiceRollMessage({ message, currentCharacterId }: DiceRollMessage
         onCancel={interactions.handleCancelDelete}
       />
 
-      {/* Left column: Avatar + Dice Icon + Name + Time */}
-      <div className={styles.messageCardLeft}>
-        <button
-          className={styles.messageAvatar}
-          onClick={interactions.handleAvatarClick}
-          type="button"
-          aria-label={`Apri scheda di ${message.characterName}`}
-        >
-          {message.characterAvatar ? (
-            <img src={message.characterAvatar} alt="" />
-          ) : (
-            <span className={styles.avatarPlaceholder}>
-              {message.characterName?.[0]?.toUpperCase() || '?'}
-            </span>
-          )}
-        </button>
-        <span className={styles.characterName}>{message.characterName}</span>
-        <span className={styles.diceIcon}>🎲</span>
-        <time className={styles.messageTimestamp}>{interactions.formattedTime}</time>
-      </div>
-
-      {/* Right column: Content + Menu + Tag */}
+      {/* Content + Menu */}
       <div className={styles.messageCardRight}>
         {/* Menu button */}
         {interactions.canEdit && (
@@ -96,42 +73,11 @@ export function DiceRollMessage({ message, currentCharacterId }: DiceRollMessage
               onChange={interactions.setEditedContent}
             />
           ) : (
-            <>
-              {message.content && <div className={styles.messageContent}>{message.content}</div>}
-              {/* Dice roll result: Multi-dice system */}
-              {diceRoll && (
-                <div className={styles.diceRollResult}>
-                  {/* Formula */}
-                  {diceRoll.dice && (
-                    <div className={styles.diceFormula}>{diceRoll.dice}</div>
-                  )}
-
-                  {/* Individual rolls (if multiple dice) */}
-                  {diceRoll.rolls && diceRoll.rolls.length > 1 && (
-                    <div className={styles.diceRolls}>
-                      [{diceRoll.rolls.join(', ')}]
-                    </div>
-                  )}
-
-                  {/* Breakdown (if modifier exists) */}
-                  {diceRoll.modifier !== undefined && diceRoll.modifier !== 0 && (
-                    <div className={styles.diceBreakdown}>
-                      {diceRoll.result} {diceRoll.modifier >= 0 ? '+' : ''}{diceRoll.modifier}
-                    </div>
-                  )}
-
-                  {/* Final total */}
-                  <div className={styles.diceTotal}>
-                    {diceRoll.total !== undefined ? diceRoll.total : diceRoll.result}
-                  </div>
-                </div>
-              )}
-            </>
+            <div className={styles.messageContent}>
+              {message.content}
+            </div>
           )}
         </div>
-
-        {/* Footer */}
-        <MessageFooter message={message} onTagClick={interactions.handleTagClick} />
       </div>
     </>
   );

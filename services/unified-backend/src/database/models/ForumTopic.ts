@@ -40,9 +40,13 @@ export interface IForumTopic extends Document {
   color?: string;
   icon?: string;
   moderatorIds?: mongoose.Types.ObjectId[];
+  categoryId?: mongoose.Types.ObjectId;
+  categorySlug?: string;
+  accessRulesOverride: boolean;
+  mode: 'ON' | 'OFF';
 }
 
-const AccessRuleSchema = new Schema({
+export const AccessRuleSchema = new Schema({
   type: {
     type: String,
     enum: ['public', 'authenticated', 'corporation', 'gameplayRole'],
@@ -101,7 +105,18 @@ const ForumTopicSchema = new Schema<IForumTopic>({
     match: [/^#[0-9A-Fa-f]{6}$/, 'Color must be a valid hex code']
   },
   icon: String,
-  moderatorIds: [{ type: Schema.Types.ObjectId, ref: 'Character' }]
+  moderatorIds: [{ type: Schema.Types.ObjectId, ref: 'Character' }],
+  categoryId: { type: Schema.Types.ObjectId, ref: 'ForumCategory' },
+  categorySlug: { type: String, lowercase: true },
+  // If false (default), effective access rules are inherited from the parent
+  // ForumCategory's defaultAccessRules (when categoryId is set). If true, this
+  // topic's own accessRules are used regardless of category. See canAccessTopic
+  // in ForumAccessService.ts.
+  accessRulesOverride: { type: Boolean, default: false },
+  // ON: anonymous posting allowed, 15-minute reply edit window, no broadcast.
+  // OFF (default, for compatibility with existing topics): no anonymity,
+  // authors can always edit their own replies, staff can broadcast ("segnalare").
+  mode: { type: String, enum: ['ON', 'OFF'], default: 'OFF' }
 }, {
   collection: 'forum_topics',
   timestamps: false
@@ -111,5 +126,6 @@ const ForumTopicSchema = new Schema<IForumTopic>({
 ForumTopicSchema.index({ sortOrder: 1, isPinned: -1, lastPostAt: -1 });
 ForumTopicSchema.index({ isVisible: 1 });
 ForumTopicSchema.index({ 'accessRules.corporationId': 1 });
+ForumTopicSchema.index({ categoryId: 1 });
 
 export const ForumTopic = models.ForumTopic || model<IForumTopic>('ForumTopic', ForumTopicSchema);
