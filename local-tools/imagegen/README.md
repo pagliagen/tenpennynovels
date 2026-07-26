@@ -3,7 +3,7 @@
 Fork adattato di `cthulhucardgame/tools/imagegen`: un server locale di inferenza
 Stable Diffusion (via HuggingFace `diffusers`, girato su GPU/MPS/CPU della tua
 macchina — **nessuna chiave API, nessun costo cloud**) più uno script che legge
-`scripts/seeders/data/{tipo}.csv` e genera un'icona/scena PNG per ogni riga in
+`scripts/seeders/data/{tipo}.csv` e genera un'icona/scena WebP per ogni riga in
 `apps/game/public/artifacts/{tipo}/`.
 
 Tipi supportati oggi: `items` (icone oggetto, 400×400) e `locations` (scene
@@ -55,8 +55,8 @@ python generate_artifacts.py --type items --skip-existing
 
 ## Input: `scripts/seeders/data/{items,locations}.csv`
 
-Lo script legge le colonne `filename` (nome del file PNG di output, es.
-`stetoscopio.png` / `london.png`) e `prompt` (il prompt inglese per l'AI —
+Lo script legge le colonne `filename` (nome del file WebP di output, es.
+`stetoscopio.webp` / `london.webp`) e `prompt` (il prompt inglese per l'AI —
 **non va a DB**, esiste solo per pilotare la generazione). Righe senza
 `prompt` vengono saltate.
 
@@ -74,10 +74,13 @@ confuse.
 
 ## Output
 
-`apps/game/public/artifacts/{tipo}/{filename}` — PNG alla dimensione di
-default del tipo (items: 400×400, locations: 1024×1024, override con
-`--width`/`--height`), stile pittorico realistico coerente con
-`apps/game/public/locations/london_boroughs.png` (non cartoon/flat/vettoriale).
+`apps/game/public/artifacts/{tipo}/{filename}` — WebP (qualità 85, RGB senza
+alpha) alla dimensione di default del tipo (items: 400×400, locations:
+1024×1024, override con `--width`/`--height`), stile pittorico realistico
+coerente con `apps/game/public/locations/london_boroughs.png` (non
+cartoon/flat/vettoriale). Il server genera sempre in PNG (vedi `server.py`);
+la conversione a WebP avviene lato client in `generate_artifacts.py` prima
+del salvataggio su disco.
 
 ## Modello
 

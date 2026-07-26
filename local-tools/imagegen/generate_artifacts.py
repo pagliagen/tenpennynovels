@@ -41,6 +41,14 @@ try:
 except ImportError:
     HAS_PIL = False
 
+# Qualità WebP di export: 85 è il punto in cui non si vede differenza a occhio
+# su queste illustrazioni pittoriche, ma il file pesa una frazione del PNG
+# sorgente (verificato: location da ~2MB PNG a ~250-400KB WebP). method=6 è il
+# livello di compressione più lento/migliore di libwebp: qui va benissimo,
+# la generazione è comunque un'operazione batch offline, non real-time.
+WEBP_QUALITY = 85
+WEBP_METHOD = 6
+
 API_BASE = "http://127.0.0.1:8791"
 
 ROOT = Path(__file__).resolve().parent.parent.parent
@@ -129,6 +137,16 @@ def post_txt2img(payload, timeout, retries=2):
     return _post("txt2img", payload, timeout, retries)
 
 
+def save_as_webp(png_bytes, out_path):
+    """Il server risponde sempre in PNG (vedi server.py); qui si converte e
+    si salva in WebP, che per queste illustrazioni pesa 60-80% in meno a
+    parità di qualità percepita. Niente canale alpha: sono scene/icone
+    opache in stile pittorico, RGB piatto risparmia ulteriore spazio."""
+    img = Image.open(io.BytesIO(png_bytes)).convert("RGB")
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    img.save(out_path, "WEBP", quality=WEBP_QUALITY, method=WEBP_METHOD)
+
+
 def run_row(row, output_dir, width, height, args):
     """Genera l'artifact per una riga di CSV. Ritorna 'ok' | 'skip' | motivo."""
     filename = (row.get("filename") or "").strip()
@@ -154,8 +172,7 @@ def run_row(row, output_dir, width, height, args):
         "height": height,
     }, args.timeout)
 
-    output_dir.mkdir(parents=True, exist_ok=True)
-    out_path.write_bytes(data)
+    save_as_webp(data, out_path)
     return "ok"
 
 
