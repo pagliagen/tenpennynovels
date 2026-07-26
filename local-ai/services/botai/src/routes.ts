@@ -688,11 +688,10 @@ async function runResponsePipeline(bot: any, context: any): Promise<{
       }
 
       // Pattern detection (max 4 per relazione, dedup per keyword overlap)
-          // @ts-expect-error - botId type issue
       if (analysis.detectedPattern && characterId) {
         const existingPatterns = await Memory.find({
           botId: bot._id,
-          externalCharacterId: new Types.ObjectId(characterId),
+          externalCharacterId: characterId,
           type: 'pattern',
         }).lean();
 
@@ -770,11 +769,10 @@ async function runResponsePipeline(bot: any, context: any): Promise<{
         updatedRelState.suppressionBurden = computeSuppressionBurden(
           updatedRelState.axes, relExpressed.axes, updatedRelState.suppressionBurden || 0,
         );
-          // @ts-expect-error - botId type issue
       }
       if (characterId) {
         await Relationship.updateOne(
-          { botId: bot._id, externalCharacterId: new Types.ObjectId(characterId) },
+          { botId: bot._id, externalCharacterId: characterId },
           { $set: { emotionState: updatedRelState } },
         );
       }

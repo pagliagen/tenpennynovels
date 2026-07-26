@@ -36,7 +36,7 @@ export class MessageService {
   static async sendOnGameMessage(params: {
     senderId: mongoose.Types.ObjectId;
     recipientId: mongoose.Types.ObjectId;
-    messageType: string;
+    messageType: 'letter' | 'note' | 'telegram' | 'dispatch' | 'flyer';
     subject: string;
     content: string;
     deliveryConfig: {

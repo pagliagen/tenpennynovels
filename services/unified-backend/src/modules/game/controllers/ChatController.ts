@@ -1612,7 +1612,7 @@ export class ChatController {
         content: content.trim(),
         locationId,
         timestamp: new Date(),
-        visibility: 'public',
+        visibility: 'public' as const,
         characterRoles: botCharacter.gameplayRoles || ['personaggio'],
         tags: tags || '', // Single tag string, not array
         isHidden: false,

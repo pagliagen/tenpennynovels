@@ -126,7 +126,9 @@ export class ConfigurationService {
    * // Result: { character_stat_total_points: 400, character_max_stats_above_80: 2, ... }
    * ```
    */
-  async getConfigsBySection(section: string): Promise<Record<string, any>> {
+  async getConfigsBySection(
+    section: 'email_templates' | 'character_creation' | 'experience_system' | 'housing_system' | 'economy' | 'moderation' | 'postal_system' | 'combat_system' | 'ticket_system' | 'system'
+  ): Promise<Record<string, any>> {
     try {
       this.logger.info(`Fetching configurations for section: ${section}`);
 

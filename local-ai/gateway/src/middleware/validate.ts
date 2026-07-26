@@ -4,7 +4,7 @@ import { Request, Response, NextFunction } from 'express';
 const callbackSchema = z.object({
   url: z.string().url(),
   method: z.enum(['POST', 'PUT', 'PATCH']),
-  headers: z.record(z.string()),
+  headers: z.record(z.string(), z.string()),
 });
 
 const actionSchema = z.object({
@@ -84,7 +84,7 @@ export const botCreateSchema = z.object({
 });
 
 export const botRefineSchema = z.object({
-  hints: z.record(z.unknown()).optional(),
+  hints: z.record(z.string(), z.unknown()).optional(),
   style: z.string().optional(),
   locale: z.string().optional(),
 });
@@ -129,7 +129,7 @@ export const characterGenSchema = z.object({
     })).default([]),
     statsBudget: z.number().int().min(300).max(600).default(450),
     skillsBudget: z.number().int().min(100).max(500).default(250),
-  }).default({}),
+  }).default({ skills: [], occupations: [], statsBudget: 450, skillsBudget: 250 }),
 });
 
 type ZodSchema = z.ZodType<any, any, any>;
