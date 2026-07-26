@@ -16,7 +16,7 @@
 import type { EnrichedChatMessage, GetMessagesParams } from '../transformers/types';
 import { MessageTransformer } from '../transformers/MessageTransformer';
 import { MessageContext } from '../transformers/MessageContext';
-import { Chat, Character, Location, GamingSession } from '@database/models';
+import { ChatBackup, Character, Location, GamingSession } from '@database/models';
 import { ActionRouter } from '../actions/ActionRouter';
 import { ActionInput } from '../actions/types';
 import { logger } from '@shared/utils/logger';
@@ -59,33 +59,10 @@ export class ChatMessageService {
       offset,
     });
 
-    // Build query
-    const query = {
-      locationId,
-      timestamp: { $gte: timeThreshold },
-      $or: [
-        { visibility: 'public' },
-        {
-          visibility: 'whisper',
-          $or: [{ characterId }, { targetCharacters: { $in: [characterId] } }],
-        },
-        { visibility: 'master_only' },
-      ],
-    };
-
-    // Count total BEFORE applying pagination
-    const totalCount = await Chat.countDocuments(query);
-
-    // Query messages from DB with pagination
-    const actions = await Chat.find(query)
-      .sort({ timestamp: 1 })
-      .skip(offset)
-      .limit(limit)
-      .lean();
-
-    logger.debug(`[ChatMessageService.getMessages] Fetched ${actions.length} raw messages (total: ${totalCount})`);
-
-    // Fetch character for permission checks
+    // Fetch character + compute isMaster FIRST — the query itself must be
+    // viewer-aware so totalCount/hasMore and the fetched page never include
+    // a document this character isn't allowed to see (no metagame leak via
+    // pagination metadata, not just via message content).
     const character = await Character.findById(characterId).lean();
     if (!character) {
       logger.warn(`[ChatMessageService.getMessages] Character not found: ${characterId}`);
@@ -96,20 +73,72 @@ export class ChatMessageService {
       };
     }
 
+    const isMaster = hasGamePermission(
+      GamePermissions.CHAT_MASTER_ACTION,
+      character.playerStatus || 'approved',
+      character.isGestore || false,
+      character.gameplayRoles || [],
+      character.characterPermissions || []
+    );
+
+    // Build query — mirrors canSeeAction's visibility rules exactly, so the
+    // DB never returns (or counts) a document the viewer can't see.
+    // Reads only from ChatBackup (the ~3h TTL live view) — never from the
+    // permanent Chat archive. See the architecture comment in Chat.ts.
+    const visibilityOr: any[] = [{ visibility: 'public' }];
+    if (isMaster) {
+      // Master sees every whisper and every master_only message, targeted or not.
+      visibilityOr.push({ visibility: 'whisper' });
+      visibilityOr.push({ visibility: 'master_only' });
+    } else {
+      visibilityOr.push({
+        visibility: 'whisper',
+        $or: [{ characterId }, { targetCharacters: { $in: [characterId] } }],
+      });
+      visibilityOr.push({
+        visibility: 'master_only',
+        targetCharacters: { $in: [characterId] },
+      });
+    }
+
+    const query = {
+      locationId,
+      timestamp: { $gte: timeThreshold },
+      $or: visibilityOr,
+    };
+
+    // Count total BEFORE applying pagination
+    const totalCount = await ChatBackup.countDocuments(query);
+
+    // Query messages from DB with pagination
+    const actions = await ChatBackup.find(query)
+      .sort({ timestamp: 1 })
+      .skip(offset)
+      .limit(limit)
+      .lean();
+
+    logger.debug(`[ChatMessageService.getMessages] Fetched ${actions.length} raw messages (total: ${totalCount})`);
+
     // Check if action mode is active
     const isActionMode = await this.isActionModeActive(locationId);
 
     logger.debug('[ChatMessageService.getMessages] Action mode:', { isActionMode });
 
-    // Filter by security rules (visibility, roles, action mode)
+    // Filter by the remaining rules the query can't express as a simple visibility
+    // match: action-mode hidden actions, skill/stat check sender-only visibility,
+    // and the Raggirare visibleToDefenderOnly case. These are rarer and layered on
+    // top of an already-authorized 'public' document, so a residual (message-count-
+    // only, never content) pagination/totalCount skew can still occur for them —
+    // see the conversation notes; closing that fully means replicating this whole
+    // method in query form, which we've deliberately not done.
     const filtered = actions.filter((action) =>
       this.canSeeAction(action, character, isActionMode)
     );
 
     logger.debug(`[ChatMessageService.getMessages] ${filtered.length} messages after filtering`);
 
-    // Transform batch with context (avoids N+1)
-    const context = new MessageContext();
+    // Transform batch with context (avoids N+1) — isMaster gates editHistory visibility
+    const context = new MessageContext(isMaster);
     const enriched = await this.transformer.transformBatch(filtered, context);
 
     // Calculate hasMore
@@ -154,9 +183,14 @@ export class ChatMessageService {
       character.characterPermissions || []
     );
 
-    // Master-only messages: only masters can see
+    // Master-only messages: masters always see them; if the master targeted
+    // specific characters ("esito riservato"), those characters see it too.
     if (action.visibility === 'master_only') {
-      return isMaster;
+      if (isMaster) return true;
+      return !!(
+        action.targetCharacters &&
+        action.targetCharacters.includes(character._id.toString())
+      );
     }
 
     // Whispers: only participants can see

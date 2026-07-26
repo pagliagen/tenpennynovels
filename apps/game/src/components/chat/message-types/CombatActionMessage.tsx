@@ -66,6 +66,7 @@ export function CombatActionMessage({ message, currentCharacterId }: CombatActio
           avatar={message.characterAvatar}
           characterName={message.characterName}
           onClick={interactions.handleAvatarClick}
+          characterId={message.characterId}
         />
         <span className={styles.characterName}>{message.characterName}</span>
         <time className={styles.messageTimestamp}>{interactions.formattedTime}</time>

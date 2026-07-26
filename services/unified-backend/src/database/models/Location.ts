@@ -46,7 +46,19 @@ export interface ILocation extends Document, SoftDeleteMethods {
       minimumRole?: string;
     }[];
   };
-  
+
+  // Lightweight name+avatar personas scoped to this location, used to override
+  // the poster's displayed name/avatar (e.g. "il barista", "il maggiordomo").
+  // Usable by the location owner and by master. Distinct from `npcs` (full
+  // Character-backed PNGs) and from Character.fakePngs (per-character masking).
+  locationPngs?: {
+    name: string;
+    surname?: string;
+    avatar?: string;
+    createdAt: Date;
+    createdBy: Schema.Types.ObjectId;
+  }[];
+
   // Location limits and rules
   maxOccupants?: number;
   accessRules?: {
@@ -240,7 +252,46 @@ const LocationSchema = new Schema<ILocation>({
       minimumRole: String
     }]
   },
-  
+
+  // Location-scoped PNG personas (see ILocation.locationPngs)
+  locationPngs: {
+    type: [{
+      name: {
+        type: String,
+        required: true,
+        trim: true,
+        minlength: 2,
+        maxlength: 50
+      },
+      surname: {
+        type: String,
+        trim: true,
+        maxlength: 50
+      },
+      avatar: {
+        type: String,
+        trim: true,
+        maxlength: 500
+      },
+      createdAt: {
+        type: Date,
+        default: Date.now
+      },
+      createdBy: {
+        type: Schema.Types.ObjectId,
+        ref: 'Character',
+        required: true
+      }
+    }],
+    default: [],
+    validate: {
+      validator: function(v: any[]) {
+        return !v || v.length <= 20;
+      },
+      message: 'Maximum 20 location PNGs allowed per location'
+    }
+  },
+
   // Location rules
   maxOccupants: {
     type: Number,

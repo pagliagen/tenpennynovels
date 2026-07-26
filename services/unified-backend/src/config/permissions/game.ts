@@ -67,6 +67,8 @@ export const GamePermissions = {
   LOCATIONS_TAG_OCCUPANT: 'game:locations:tag-occupant',
   LOCATIONS_JOIN_WEBSOCKET: 'game:locations:join-websocket',
   LOCATIONS_GRANT_ACCESS: 'game:locations:grant-access', // master only
+  LOCATIONS_PNGS_READ: 'game:locations:pngs:read',     // controller further gates to master/owner
+  LOCATIONS_PNGS_MANAGE: 'game:locations:pngs:manage', // controller further gates to master/owner
 
   // Block Notes
   BLOCK_NOTES_READ: 'game:block-notes:read',
@@ -263,6 +265,8 @@ export const GameRolePermissions: Record<string, GamePermission[]> = {
     GamePermissions.LOCATIONS_LIST_OCCUPANTS,
     GamePermissions.LOCATIONS_TAG_OCCUPANT,
     GamePermissions.LOCATIONS_JOIN_WEBSOCKET,
+    GamePermissions.LOCATIONS_PNGS_READ,
+    GamePermissions.LOCATIONS_PNGS_MANAGE,
     GamePermissions.BLOCK_NOTES_READ,
     GamePermissions.BLOCK_NOTES_WRITE,
     GamePermissions.BLOCK_NOTES_DELETE,

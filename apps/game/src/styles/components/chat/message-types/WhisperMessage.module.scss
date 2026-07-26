@@ -5,3 +5,35 @@
  */
 
 @use '../MessageCard.module.scss';
+@use '../_variables' as *;
+
+.whisperHeader {
+  color: #daddc4;
+  font-family: 'Bahnschrift SemiLight', serif;
+  font-size: 14px;
+  font-style: italic;
+  margin: 0 0 $spacing-xs 0;
+}
+
+.whisperName {
+  color: $gold-80;
+  font-style: normal;
+}
+
+.whisperNameLink {
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: $gold-80;
+  font-family: inherit;
+  font-size: inherit;
+  font-style: normal;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  transition: text-decoration-color $transition-normal;
+
+  &:hover {
+    text-decoration-color: $gold-80;
+  }
+}

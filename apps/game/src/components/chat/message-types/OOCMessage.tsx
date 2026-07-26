@@ -45,6 +45,7 @@ export function OOCMessage({ message, currentCharacterId }: OOCMessageProps): JS
           avatar={message.characterAvatar}
           characterName={message.characterName}
           onClick={interactions.handleAvatarClick}
+          characterId={message.characterId}
         />
         <span className={styles.oocPrefix}>[OOC]</span>
         <span className={styles.characterName}>{message.characterName}</span>

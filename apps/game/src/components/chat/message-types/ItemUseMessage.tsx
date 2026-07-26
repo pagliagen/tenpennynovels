@@ -46,6 +46,7 @@ export function ItemUseMessage({ message, currentCharacterId }: ItemUseMessagePr
           avatar={message.characterAvatar}
           characterName={message.characterName}
           onClick={interactions.handleAvatarClick}
+          characterId={message.characterId}
         />
         <span className={styles.characterName}>{message.characterName}</span>
         <span className={styles.itemIcon}>📦</span>

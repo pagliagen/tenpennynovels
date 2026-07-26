@@ -61,6 +61,12 @@ export interface CharacterSheetData {
     // Public fields
     publicBackground?: string;
     physicalDescription?: string;
+    visibleMarks?: string;
+
+    // Present only when the viewer is the owner or a master (stripped server-side otherwise)
+    hiddenMarks?: string;
+    currentHP?: number;
+    maxHP?: number;
 
     // Private fields (visible only to owner/game masters)
     privateBackground?: string;

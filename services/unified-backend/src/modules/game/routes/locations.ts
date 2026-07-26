@@ -68,6 +68,25 @@ router.patch('/locations/:locationId/occupant-tag',
   LocationController.updateOccupantTag
 );
 
+// Location-scoped PNG personas (master or location owner only — controller enforces)
+router.get('/locations/:locationId/pngs',
+  AuthMiddleware.requireCharacterAuth,
+  requireGamePermission('game:locations:pngs:read'),
+  LocationController.listLocationPngs
+);
+
+router.post('/locations/:locationId/pngs',
+  AuthMiddleware.requireCharacterAuth,
+  requireGamePermission('game:locations:pngs:manage'),
+  LocationController.createLocationPng
+);
+
+router.delete('/locations/:locationId/pngs/:pngId',
+  AuthMiddleware.requireCharacterAuth,
+  requireGamePermission('game:locations:pngs:manage'),
+  LocationController.deleteLocationPng
+);
+
 // Chat routes REMOVED - moved to /chats route (see chats.ts)
 // Old routes:
 //   POST   /locations/chats

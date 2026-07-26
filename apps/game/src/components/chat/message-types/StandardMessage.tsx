@@ -47,6 +47,7 @@ export function StandardMessage({ message, currentCharacterId }: StandardMessage
           characterName={message.characterName}
           onClick={interactions.handleAvatarClick}
           isMasked={message.isMasked}
+          characterId={message.characterId}
         />
       </div>
 

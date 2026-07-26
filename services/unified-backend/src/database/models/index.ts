@@ -14,6 +14,7 @@ export { Skill, SKILL_CATEGORY_LABELS, type ISkill } from './Skill';
 // Location System
 export { Location, type ILocation } from './Location';
 export { Chat, type IChat } from './Chat';
+export { ChatBackup } from './ChatBackup';
 export { CharacterNotes, type ICharacterNotes } from './CharacterNotes';
 
 // Combat & Confrontation System (TiroContrapposto)

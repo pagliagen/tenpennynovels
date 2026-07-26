@@ -45,6 +45,7 @@ export function ModerationMessage({ message, currentCharacterId }: ModerationMes
           avatar={message.characterAvatar}
           characterName={message.characterName}
           onClick={interactions.handleAvatarClick}
+          characterId={message.characterId}
         />
         <span className={styles.moderationIcon}>⚠️</span>
         <span className={styles.characterName}>{message.characterName}</span>

@@ -184,6 +184,50 @@
 }
 
 /* LEFT COLUMN (Avatar + Name + Time) */
+.messageAvatarWrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.messageAvatarHoverCard {
+  position: absolute;
+  top: 50%;
+  left: calc(100% + #{$spacing-md});
+  transform: translateY(-50%);
+  z-index: 20;
+  min-width: 160px;
+  max-width: 240px;
+  background: rgba(20, 15, 10, 0.95);
+  border: 1px solid $gold-50;
+  border-radius: 6px;
+  padding: $spacing-sm $spacing-md;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+
+  // Hidden on touch devices — there is no hover there; click still opens the full scheda.
+  @media (hover: none) {
+    display: none;
+  }
+}
+
+.messageAvatarHoverLine {
+  color: #daddc4;
+  font-family: 'Bahnschrift SemiLight', serif;
+  font-size: 12px;
+  line-height: 1.4;
+  margin: 0;
+
+  & + & {
+    margin-top: $spacing-xs;
+    padding-top: $spacing-xs;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+}
+
+.messageAvatarHoverMaster {
+  color: $gold-80;
+}
+
 .messageAvatar {
   width: 80px;
   height: 80px;

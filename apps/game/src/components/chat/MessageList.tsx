@@ -46,7 +46,9 @@ interface MessageListProps {
  *
  * Visibility rules:
  * - 'whisper': only sender + targetCharacters + master
- * - 'master_only': only master (covers actionType 'master' and 'moderation')
+ * - 'master_only': master, plus targetCharacters if the master targeted an
+ *   "esito riservato" to specific characters (covers actionType 'master' and
+ *   'moderation' — moderation is always untargeted, so this is a no-op there)
  * - 'public' / undefined: everyone, EXCEPT:
  *   - stat_check / skill_check: only sender + master (regardless of visibility flag)
  *   - socialConflict.visibleToDefenderOnly: only the defender + master
@@ -71,7 +73,8 @@ function isMessageVisible(
   }
 
   if (message.visibility === 'master_only') {
-    return false; // Already returned true above if isMaster
+    // Not master (already returned above) — visible only if explicitly targeted.
+    return !!message.targetCharacters?.includes(currentCharacterId);
   }
 
   // Sender-only checks, independent of the visibility flag

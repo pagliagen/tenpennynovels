@@ -19,10 +19,12 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 
 import { fakePngApi } from '@/lib/api/fakePng';
 import { locationChatsApi } from '@/lib/api/locationChats';
+import { locationPngApi } from '@/lib/api/locationPng';
 import styles from '@/styles/components/chat/MessageInput.module.scss';
 import type { ActionType, SendMessageRequest } from '@/types/chat';
 
 import { FakePngManager } from '../fake-png/FakePngManager';
+import { LocationPngManager } from '../location-png/LocationPngManager';
 
 import { ActionTypeSelector } from './ActionTypeSelector';
 import { ConditionalSelects } from './ConditionalSelects';
@@ -93,7 +95,7 @@ interface MessageInputProps {
 }
 
 /** Maximum characters allowed */
-const MAX_CHARACTERS = 2000;
+const MAX_CHARACTERS = 1200;
 
 /**
  * Get available action types based on character data, game permissions, and
@@ -192,6 +194,8 @@ export function MessageInput({
   const [showPendingReactionModal, setShowPendingReactionModal] = useState(false);
   const [pendingMessageData, setPendingMessageData] = useState<SendMessageRequest | null>(null);
   const [showFakePngManager, setShowFakePngManager] = useState(false);
+  const [showLocationPngManager, setShowLocationPngManager] = useState(false);
+  const [selectedLocationPngId, setSelectedLocationPngId] = useState('');
 
   // Social conflict mode
   const [isSocialConflictMode, setIsSocialConflictMode] = useState(false);
@@ -235,6 +239,19 @@ export function MessageInput({
   }, [fakePngData, characterData.name, characterData.surname]);
 
   const isMasked = !!fakePngData?.activeFakePngId;
+
+  // Location-scoped PNG personas: the list endpoint itself is gated to
+  // master/owner (403 otherwise), so a successful response is the visibility
+  // signal for this UI — no separate client-side role/ownership check needed.
+  const { data: locationPngData, refetch: refetchLocationPngs } = useQuery({
+    queryKey: ['locationPngs', locationId],
+    queryFn: () => locationPngApi.list(locationId),
+    retry: false,
+  });
+  const canUseLocationPng = !!locationPngData;
+  const selectedLocationPng = locationPngData?.locationPngs.find(
+    (p) => p._id === selectedLocationPngId
+  );
 
   // Refs
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -335,6 +352,7 @@ export function MessageInput({
         actionType: 'stat_check',
         content: messageInput.trim() || `Tiro su ${displayName}`, // Default text if empty
         statName: id, // For stats, name is the ID
+        locationPngId: selectedLocationPngId || undefined,
       };
 
       await onSendMessage(data);
@@ -370,6 +388,7 @@ export function MessageInput({
         actionType: 'dice_roll',
         content: messageInput.trim() || `Tiro: ${diceSpec}`,
         diceSpec: diceSpec,
+        locationPngId: selectedLocationPngId || undefined,
       };
 
       await onSendMessage(data);
@@ -439,11 +458,19 @@ export function MessageInput({
       data = {
         actionType: selectedAction,
         content: messageInput.trim(),
+        locationPngId: selectedLocationPngId || undefined,
       };
 
       // Add action-specific fields
       if (selectedAction === 'whisper' && targetCharacters.length > 0) {
         data.targetCharacters = targetCharacters;
+      }
+
+      // Master "esito riservato": no target selected → normal public master message
+      // (default). One or more targets selected → visible only to master + those pg.
+      if (selectedAction === 'master' && targetCharacters.length > 0) {
+        data.targetCharacters = targetCharacters;
+        data.visibility = 'master_only';
       }
 
       if (selectedAction === 'dice_roll') {
@@ -644,6 +671,41 @@ export function MessageInput({
           {isMasked && <span className={styles.pngActiveBadge}>🎭</span>}
         </div>
       )}
+
+      {/* Location PNG Selector (master or location owner only — gated by API response) */}
+      {canUseLocationPng && (
+        <div className={styles.pngAvatarContainer}>
+          <select
+            value={selectedLocationPngId}
+            onChange={(e) => setSelectedLocationPngId(e.target.value)}
+            className={styles.selectInput}
+            disabled={disabled}
+            title="Posta come PNG della location"
+            aria-label="Seleziona PNG della location"
+          >
+            <option value="">— Io stesso —</option>
+            {locationPngData?.locationPngs.map((png) => (
+              <option key={png._id} value={png._id}>
+                {png.name}{png.surname ? ` ${png.surname}` : ''}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            className={`${styles.pngAvatar} ${selectedLocationPngId ? styles.pngAvatarMasked : ''}`}
+            onClick={() => setShowLocationPngManager(true)}
+            disabled={disabled}
+            title="Gestisci PNG della location"
+            aria-label="Gestisci PNG della location"
+          >
+            {selectedLocationPng?.avatar ? (
+              <img src={selectedLocationPng.avatar} alt={selectedLocationPng.name} />
+            ) : (
+              <span className={styles.pngAvatarPlaceholder}>🎭</span>
+            )}
+          </button>
+        </div>
+      )}
       </div>
 
       {/* Action Buttons */}
@@ -768,6 +830,18 @@ export function MessageInput({
           onClose={() => {
             setShowFakePngManager(false);
             refetchFakePngs(); // Refresh avatar data
+          }}
+        />
+      )}
+
+      {/* Location PNG Manager Modal */}
+      {showLocationPngManager && (
+        <LocationPngManager
+          locationId={locationId}
+          onChanged={refetchLocationPngs}
+          onClose={() => {
+            setShowLocationPngManager(false);
+            refetchLocationPngs();
           }}
         />
       )}

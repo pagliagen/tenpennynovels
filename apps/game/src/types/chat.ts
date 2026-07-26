@@ -231,7 +231,9 @@ export interface SendMessageRequest {
   content: string;                 // DB field (was text)
   position?: string;               // DB field - Position tag (e.g., "Tavolo 1")
   targetCharacterId?: string;      // For whispers (backend converts to targetCharacters array)
-  targetCharacters?: string[];     // For whispers (backend expects array)
+  targetCharacters?: string[];     // For whispers, or for a targeted master_only "esito riservato"
+  /** Explicit visibility override. Used for master "esiti riservati": master_only + targetCharacters. */
+  visibility?: 'public' | 'whisper' | 'master_only';
   diceSpec?: string;               // For dice_roll - Format: "{count}d{type}[+/-modifier]" (e.g., "2d6+3", "1d20-2")
   statName?: string;               // For stat_check
   targetValue?: number;            // Target value for checks
@@ -240,6 +242,8 @@ export interface SendMessageRequest {
   itemUse?: ItemUsePayload;
   /** Retry invio dopo errore PENDING_REACTION_EXISTS (solo client → backend). */
   forceAbortPendingReaction?: boolean;
+  /** Override nome/avatar con un PNG scoped alla location (master o proprietario location). */
+  locationPngId?: string;
 }
 
 /**

@@ -68,7 +68,8 @@ export class MessageTransformer {
       content: action.content,
       timestamp: action.timestamp.toISOString(),
       visibility: action.visibility,
-      editHistory: action.editHistory || [],
+      // editHistory contains the pre-edit content — master-only, never shown to players.
+      editHistory: context.isViewerMaster ? (action.editHistory || []) : [],
     };
 
     // Apply type-specific enrichment
