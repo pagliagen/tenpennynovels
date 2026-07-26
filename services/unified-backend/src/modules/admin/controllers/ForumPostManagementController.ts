@@ -38,13 +38,16 @@ export class ForumPostManagementController {
 
       const filter: Record<string, unknown> = {};
       if (!includeDeleted) filter.isDeleted = false;
-      if (topicSlug) filter.topicSlug = topicSlug;
-      if (discussionSlug) filter.discussionSlug = discussionSlug;
+      // typeof guard: Express parses `?topicSlug[$ne]=x` into an object, not a
+      // string — without this check that object would reach Mongo as a query
+      // operator instead of a literal value (NoSQL injection).
+      if (topicSlug && typeof topicSlug === 'string') filter.topicSlug = topicSlug;
+      if (discussionSlug && typeof discussionSlug === 'string') filter.discussionSlug = discussionSlug;
       if (authorCharacterId && mongoose.Types.ObjectId.isValid(authorCharacterId)) {
         filter['author.characterId'] = new mongoose.Types.ObjectId(authorCharacterId);
       }
       if (moderationLabel === 'toxic' || moderationLabel === 'not-toxic') filter.moderationLabel = moderationLabel;
-      if (search) {
+      if (search && typeof search === 'string') {
         const escapedSearch = escapeRegex(search);
         filter.content = { $regex: escapedSearch, $options: 'i' };
       }

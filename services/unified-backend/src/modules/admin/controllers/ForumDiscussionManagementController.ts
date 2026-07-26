@@ -40,8 +40,11 @@ export class ForumDiscussionManagementController {
 
       const filter: Record<string, unknown> = {};
       if (!includeDeleted) filter.isDeleted = false;
-      if (topicSlug) filter.topicSlug = topicSlug;
-      if (search) {
+      // typeof guard: Express parses `?topicSlug[$ne]=x` into an object, not a
+      // string — without this check that object would reach Mongo as a query
+      // operator instead of a literal value (NoSQL injection).
+      if (topicSlug && typeof topicSlug === 'string') filter.topicSlug = topicSlug;
+      if (search && typeof search === 'string') {
         const escapedSearch = escapeRegex(search);
         filter.title = { $regex: escapedSearch, $options: 'i' };
       }
