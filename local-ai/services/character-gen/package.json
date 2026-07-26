@@ -9,14 +9,17 @@
     "start": "node dist/services/character-gen/src/index.js"
   },
   "dependencies": {
-    "axios": "^1.13.4",
+    "axios": "^1.18.1",
     "express": "^4.21.2",
     "winston": "^3.19.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.0",
-    "@types/node": "^22.0.0",
-    "tsx": "^4.21.0",
+    "@types/node": "^26.1.1",
+    "tsx": "^4.23.1",
     "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=24.18.0"
   }
 }

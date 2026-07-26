@@ -300,7 +300,7 @@ export function WebSocketProvider({ children }: WebSocketProviderProps): JSX.Ele
     // Create Socket.IO connection
     const socket = io(WS_CONFIG.URL, {
       auth: {
-        sessionId: sessionId,  // NEW: Send sessionId (opaque UUID) for multi-tab support
+        sessionId: sessionId,  // NEW: Send sessionId (crypto.randomUUID()) for multi-tab support
         characterId: selectedCharacter._id, // DEPRECATED: Kept for backward compatibility
       },
       withCredentials: true, // CRITICAL: Send HTTP-only cookies (auth_token) for user authentication

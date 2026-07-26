@@ -22,7 +22,7 @@ import { createContext, useContext, useState, useCallback, ReactNode } from 'rea
  * @since 2.0.0
  */
 export interface CharacterSheetState {
-  /** Unique window instance ID (UUID) */
+  /** Unique window instance ID (crypto.randomUUID()) */
   id: string;
 
   /** Character MongoDB _id */
@@ -144,7 +144,7 @@ interface CharacterSheetsProviderProps {
 /**
  * Generate unique window ID
  *
- * Simple UUID generator for window instance IDs.
+ * Simple crypto.randomUUID() generator for window instance IDs.
  *
  * @returns {string} Unique ID
  */
