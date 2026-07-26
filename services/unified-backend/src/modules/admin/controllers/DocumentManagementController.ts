@@ -45,7 +45,7 @@ export class DocumentManagementController {
       }
 
       const allDocuments = await Document.find({
-        type,
+        type: type as 'ambientazione' | 'regolamento',
         deleted: { $ne: true }
       }).populate('subtypeId', 'slug title order').lean();
 

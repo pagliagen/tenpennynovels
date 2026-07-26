@@ -8,7 +8,7 @@
  */
 
 import { RedisClientType } from 'redis';
-import { v4 as uuidv4 } from 'uuid';
+import crypto from 'crypto';
 import {
   REDIS_CHANNELS,
   DocumentChunkEmbeddingEvent,
@@ -37,7 +37,7 @@ export class EmbeddingSeederPublisher {
     parentSlug?: string
   ): Promise<void> {
     const event: DocumentChunkEmbeddingEvent = {
-      eventId: uuidv4(),
+      eventId: crypto.randomUUID(),
       timestamp: new Date(),
       chunkId,
       documentId,

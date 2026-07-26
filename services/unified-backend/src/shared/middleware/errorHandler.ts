@@ -9,6 +9,25 @@ import {
 import { ErrorCode } from '../utils/errorCodes';
 import { logger } from '../utils/logger';
 
+const SENSITIVE_FIELD_PATTERN = /password|token|secret|apikey|authorization/i;
+
+/**
+ * Ridacta i campi sensibili (password, token, secret) prima di finire nei log.
+ * Necessario perché questo handler logga il body su ogni errore non gestito
+ * (login/registrazione/cambio password inclusi).
+ */
+function redactSensitiveFields(body: unknown): unknown {
+  if (!body || typeof body !== 'object') {
+    return body;
+  }
+  return Object.fromEntries(
+    Object.entries(body as Record<string, unknown>).map(([key, value]) => [
+      key,
+      SENSITIVE_FIELD_PATTERN.test(key) ? '[REDACTED]' : value
+    ])
+  );
+}
+
 /**
  * ✅ Error Handler Centralizzato
  *
@@ -35,7 +54,7 @@ export function errorHandler(
     stack: err.stack,
     url: req.url,
     method: req.method,
-    body: req.body,
+    body: redactSensitiveFields(req.body),
     query: req.query,
     params: req.params
   });

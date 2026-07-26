@@ -604,7 +604,7 @@ export class DocumentController {
       const { type, path } = req.params;
 
       const document = await Document.findOne({
-        type,
+        type: type as 'ambientazione' | 'regolamento',
         path,
         deletedAt: null,
         isDraft: false,

@@ -1,4 +1,4 @@
-import mongoose, { Schema, model, Document } from 'mongoose';
+import mongoose, { Schema, model, Document, QueryFilter } from 'mongoose';
 import { softDeletePlugin, SoftDeleteMethods } from '../plugins/softDeletePlugin';
 
 export interface ILocation extends Document, SoftDeleteMethods {
@@ -779,7 +779,7 @@ LocationSchema.methods.isSessionActive = function() {
 
 // Static methods
 LocationSchema.statics.findAccessibleByCharacter = function(characterId: Schema.Types.ObjectId, corporationIds: Schema.Types.ObjectId[] = []) {
-  return this.find({
+  const query: QueryFilter<ILocation> = {
     $or: [
       // Public locations
       { 'settings.visible': true, 'settings.private': false },
@@ -789,11 +789,12 @@ LocationSchema.statics.findAccessibleByCharacter = function(characterId: Schema.
       { 'access.characterAccess.characterId': characterId },
       // Character's corporations have access
       ...(corporationIds.length > 0 ? [
-        { 'access.ownerType': 'corporation', 'access.ownerId': { $in: corporationIds } },
+        { 'access.ownerType': 'corporation' as const, 'access.ownerId': { $in: corporationIds } },
         { 'access.corporationAccess.corporationId': { $in: corporationIds } }
       ] : [])
     ]
-  });
+  };
+  return this.find(query);
 };
 
 // Apply soft delete plugin
