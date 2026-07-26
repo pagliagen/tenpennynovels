@@ -135,6 +135,7 @@ module.exports = {
       env_production: {
         NODE_ENV: 'production',
         PYTHON_PATH: 'python/venv/bin/python3',
+        HTTP_BIND_HOST: '127.0.0.1',
       },
     },
   ],
