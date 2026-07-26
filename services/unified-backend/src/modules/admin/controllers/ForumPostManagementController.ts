@@ -51,10 +51,10 @@ export class ForumPostManagementController {
         const escapedSearch = escapeRegex(search);
         filter.content = { $regex: escapedSearch, $options: 'i' };
       }
-      if (dateFrom || dateTo) {
+      if ((dateFrom && typeof dateFrom === 'string') || (dateTo && typeof dateTo === 'string')) {
         const createdAt: Record<string, Date> = {};
-        if (dateFrom) createdAt.$gte = new Date(dateFrom);
-        if (dateTo) createdAt.$lte = new Date(dateTo);
+        if (dateFrom && typeof dateFrom === 'string') createdAt.$gte = new Date(dateFrom);
+        if (dateTo && typeof dateTo === 'string') createdAt.$lte = new Date(dateTo);
         filter.createdAt = createdAt;
       }
 

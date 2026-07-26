@@ -50,10 +50,10 @@ export class ForumDiscussionManagementController {
       }
       if (isLocked === 'true' || isLocked === 'false') filter.isLocked = isLocked === 'true';
       if (isPinned === 'true' || isPinned === 'false') filter.isPinned = isPinned === 'true';
-      if (dateFrom || dateTo) {
+      if ((dateFrom && typeof dateFrom === 'string') || (dateTo && typeof dateTo === 'string')) {
         const createdAt: Record<string, Date> = {};
-        if (dateFrom) createdAt.$gte = new Date(dateFrom);
-        if (dateTo) createdAt.$lte = new Date(dateTo);
+        if (dateFrom && typeof dateFrom === 'string') createdAt.$gte = new Date(dateFrom);
+        if (dateTo && typeof dateTo === 'string') createdAt.$lte = new Date(dateTo);
         filter.createdAt = createdAt;
       }
 

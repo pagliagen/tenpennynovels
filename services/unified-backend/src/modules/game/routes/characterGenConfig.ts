@@ -1,9 +1,21 @@
 import { Router, Request, Response, NextFunction } from 'express';
+import rateLimit from 'express-rate-limit';
 import { CharacterCreationController } from '../controllers/CharacterCreationController';
 import { createLogger } from '@shared/utils/logger';
 
 const logger = createLogger({ serviceName: 'CharacterGenConfig' });
 const router = Router();
+
+const charGenConfigLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 60,
+  message: {
+    result: false,
+    error: 'Troppe richieste, riprova più tardi.',
+    code: 'CHARGEN_CONFIG_RATE_LIMIT_EXCEEDED',
+    timestamp: new Date().toISOString()
+  }
+});
 
 /**
  * Middleware: Verify Character Generation Service Token
@@ -32,6 +44,7 @@ function verifyCharGenToken(req: Request, res: Response, next: NextFunction) {
  * @header X-Character-Gen-Secret - Service token
  */
 router.get('/config',
+  charGenConfigLimiter,
   verifyCharGenToken,
   CharacterCreationController.getConfig
 );
