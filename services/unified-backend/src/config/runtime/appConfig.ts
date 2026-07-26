@@ -72,7 +72,7 @@ export const appConfig = {
   },
 
   services: {
-    embeddingsUrl: 'http://127.0.0.1:5001',
+    embeddingsUrl: process.env.EMBEDDINGS_SERVICE_URL || 'http://127.0.0.1:5001',
     aiGateway: {
       url: process.env.AI_GATEWAY_URL,
       clientId: process.env.AI_GATEWAY_CLIENT_ID,

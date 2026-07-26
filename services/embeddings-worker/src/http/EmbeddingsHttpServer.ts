@@ -25,7 +25,7 @@ export class EmbeddingsHttpServer {
     private pythonService: PythonEmbeddingService,
     private worker: any = null, // EmbeddingWorker for health stats
     private port: number = config.http.port,
-    private host: string = config.http.host // SECURITY: 127.0.0.1 in prod
+    private host: string = config.http.host // see config/index.ts for the bind-host rationale
   ) {
     this.app = express();
     this.qdrant = new QdrantClient({ url: config.services.qdrant.url });

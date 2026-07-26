@@ -40,7 +40,12 @@ export const config = {
   // HTTP server
   http: {
     port: parseInt(process.env.HTTP_PORT || '5001', 10),
-    host: isProduction ? '127.0.0.1' : '0.0.0.0', // SECURITY: localhost in prod
+    // SECURITY: nel deploy bare-metal (PM2 su VPS) il default va a 127.0.0.1 via
+    // HTTP_BIND_HOST (vedi ecosystem.config.js). In Docker Compose l'isolamento è
+    // già garantito dalla rete bridge privata: bindare a 127.0.0.1 lì impedisce
+    // a qualunque altro container (incluso unified-backend) di raggiungere il
+    // servizio, perché il bind riguarda solo il network namespace del container.
+    host: process.env.HTTP_BIND_HOST || '0.0.0.0',
     logLevel: (process.env.LOG_LEVEL || 'info') as 'debug' | 'info' | 'warn' | 'error',
   },
 
