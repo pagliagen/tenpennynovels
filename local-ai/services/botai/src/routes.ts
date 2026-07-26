@@ -273,7 +273,7 @@ router.get('/bots/:id/memories/:characterId', dataFetchLimiter, async (req: Requ
     const limit = Math.min(Number(limitParam) || 30, 100);
     const memories = await Memory.find({
       botId,
-      externalCharacterId: characterId,
+      externalCharacterId: String(characterId),
     })
       .sort({ timestamp: -1 })
       .limit(limit)
@@ -655,7 +655,7 @@ async function runResponsePipeline(bot: any, context: any): Promise<{
         const conflictUpdate = updateConflictState(relForConflict, analysis, attachStyle, disgustoLevel);
         if (conflictUpdate && characterId) {
           await Relationship.updateOne(
-            { botId: bot._id, externalCharacterId: characterId },
+            { botId: bot._id, externalCharacterId: String(characterId) },
             { $set: { activeConflict: conflictUpdate } },
           );
           if (conflictUpdate.resolved) {
@@ -691,7 +691,7 @@ async function runResponsePipeline(bot: any, context: any): Promise<{
       if (analysis.detectedPattern && characterId) {
         const existingPatterns = await Memory.find({
           botId: bot._id,
-          externalCharacterId: characterId,
+          externalCharacterId: String(characterId),
           type: 'pattern',
         }).lean();
 
@@ -772,7 +772,7 @@ async function runResponsePipeline(bot: any, context: any): Promise<{
       }
       if (characterId) {
         await Relationship.updateOne(
-          { botId: bot._id, externalCharacterId: characterId },
+          { botId: bot._id, externalCharacterId: String(characterId) },
           { $set: { emotionState: updatedRelState } },
         );
       }
