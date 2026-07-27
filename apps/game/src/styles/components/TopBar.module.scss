@@ -118,11 +118,7 @@
   cursor: pointer;
   transition: all 0.2s ease;
   padding: 0;
-
-  &:hover {
-    transform: scale(1.5);
-  }
-
+ 
   &:active {
     transform: translateY(0);
   }

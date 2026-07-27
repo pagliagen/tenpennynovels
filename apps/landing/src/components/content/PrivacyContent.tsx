@@ -132,6 +132,6 @@ export const PrivacyContent: React.FC = () => (
       Garantiamo adeguate misure di protezione per tali trasferimenti.
     </p>
 
-    <p><small>Ultimo aggiornamento: Dicembre 2025</small></p>
+    <p><small>Ultimo aggiornamento: Luglio 2026</small></p>
   </div>
 );

@@ -72,7 +72,7 @@ export default function CreditsPage() {
             "In his house at R'lyeh, dead Cthulhu waits dreaming..."
           </p>
           <p>
-            © 2025 Ten Penny Novels - Piattaforma GDR Londra Vittoriana
+            © 2026 Ten Penny Novels - Piattaforma GDR Londra Vittoriana
           </p>
         </div> 
       </div>

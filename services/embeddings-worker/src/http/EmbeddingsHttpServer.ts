@@ -28,8 +28,16 @@ export class EmbeddingsHttpServer {
     private host: string = config.http.host // see config/index.ts for the bind-host rationale
   ) {
     this.app = express();
-    this.qdrant = new QdrantClient({ url: config.services.qdrant.url });
-    this.elasticsearch = new ElasticsearchClient({ node: config.services.elasticsearch.url });
+    this.qdrant = new QdrantClient({
+      url: config.services.qdrant.url,
+      apiKey: config.services.qdrant.apiKey,
+    });
+    this.elasticsearch = new ElasticsearchClient({
+      node: config.services.elasticsearch.url,
+      auth: config.services.elasticsearch.username
+        ? { username: config.services.elasticsearch.username, password: config.services.elasticsearch.password! }
+        : undefined,
+    });
     this.setupMiddleware();
     this.setupRoutes();
   }
