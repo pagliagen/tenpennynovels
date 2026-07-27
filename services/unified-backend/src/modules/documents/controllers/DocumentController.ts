@@ -703,7 +703,11 @@ export class DocumentController {
           const qaResponse = await EmbeddingService.askQuestion({
             question,
             context: contextChunks.filter((c): c is NonNullable<typeof c> => c !== null),
-            options: { maxTokens: 1000, locale: locale as string },
+            // Il system prompt del Bibliotecario chiede 2-4 frasi (~150 token):
+            // un tetto a 1000 serviva solo a far spendere tempo di inferenza al
+            // modello senza produrre risposta utile. Il budget reale lo decide
+            // embeddings-worker (config.qa.maxAnswerTokens) se non lo forziamo qui.
+            options: { maxTokens: 300, locale: locale as string },
           });
 
           if (qaResponse?.success && qaResponse.answer) {

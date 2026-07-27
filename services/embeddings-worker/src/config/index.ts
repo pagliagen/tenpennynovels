@@ -34,7 +34,23 @@ export const config = {
     ollama: {
       url: process.env.OLLAMA_URL || 'http://localhost:11434',
       model: process.env.OLLAMA_MODEL || 'qwen3:8b',
+      // I modelli reasoning (qwen3) emettono un blocco <think> prima della risposta:
+      // su inferenza CPU-only consuma l'intero budget di num_predict prima del primo
+      // token utile. Disattivato di default, riattivabile via env per confronti.
+      think: process.env.OLLAMA_THINK === 'true',
+      // Context window esplicita: senza questo Ollama applica il proprio default
+      // (2048/4096 a seconda della versione) e tronca il prompt in silenzio.
+      numCtx: parseInt(process.env.OLLAMA_NUM_CTX || '4096', 10),
     },
+  },
+
+  // RAG "Bibliotecario" — budget di prompt e risposta.
+  // Vincolo a monte: unified-backend aborta /ask dopo 60s (AbortSignal.timeout),
+  // quindi prefill + decode devono stare sotto quella soglia su hardware CPU-only.
+  qa: {
+    maxAnswerTokens: parseInt(process.env.QA_MAX_ANSWER_TOKENS || '250', 10),
+    maxContextChars: parseInt(process.env.QA_MAX_CONTEXT_CHARS || '6000', 10),
+    maxChunkChars: parseInt(process.env.QA_MAX_CHUNK_CHARS || '1500', 10),
   },
 
   // HTTP server
