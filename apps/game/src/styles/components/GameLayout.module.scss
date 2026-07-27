@@ -27,13 +27,13 @@
    ======================================== */
 
 .sidebar {
-  flex: 0 0 $sidebar-width; // Fixed width
+  flex: 0 0 var(--sidebar-width); // Fixed width
   overflow-y: auto;
   height: 100vh;
   display: flex;
   flex-direction: column;
   position: relative;
-  width: $sidebar-width;
+  width: var(--sidebar-width);
   margin-right: 5px;
 }
 
