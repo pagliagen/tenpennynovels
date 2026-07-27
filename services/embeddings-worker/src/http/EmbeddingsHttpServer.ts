@@ -201,7 +201,7 @@ export class EmbeddingsHttpServer {
           question,
           context,
           options?.locale || 'it',
-          options?.maxTokens || 800
+          options?.maxTokens || config.qa.maxAnswerTokens
         );
 
         res.json({ success: true, ...result });
