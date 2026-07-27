@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { User, Character } from '@database/models';
+import { User, Character, db } from '@database/models';
 import { CryptoUtils } from '../utils/crypto';
 import { ApiResponse } from '../types/auth';
 import { logger, logAuth } from '../logger';
@@ -14,6 +14,7 @@ export class RegistrationController {
    * Register new user with email verification
    */
   static async register(req: Request, res: Response): Promise<void> {
+    const session = await db.getConnection().startSession();
     try {
       const { username, email, password, displayName, agreeToTerms, subscribeNewsletter, referralCode } = req.body;
 
@@ -82,27 +83,33 @@ export class RegistrationController {
         }
       });
 
-      await user.save();
-
-      // Create default character for the user
+      // User + default character must exist together: without a character the
+      // player has no way to reach the wizard and no client-side path to create
+      // one later (see incidente 2026-07-27). Roll back both on any failure
+      // instead of leaving an orphaned User.
       let defaultCharacter;
+      session.startTransaction();
       try {
+        await user.save({ session });
+
         defaultCharacter = new Character({
           userId: user.id,
           name: user.username,
-          status: 'DRAFT',
-          gameplayRoles: ['personaggio'],
+          playerStatus: 'draft',
+          gameplayRoles: ['player'],
           skills: {},
           isActive: false,
           submittedAt: new Date()
         });
 
-        await defaultCharacter.save();
-        
-        logger.info(`Default character created for user ${user.username}: ${defaultCharacter.id}`);
-      } catch (characterError) {
-        logger.error(`Failed to create default character for user ${user.username}:`, characterError);
-        // Continue with registration even if character creation fails
+        await defaultCharacter.save({ session });
+
+        await session.commitTransaction();
+
+        logger.info(`User and default character created: ${user.username} / ${defaultCharacter.id}`);
+      } catch (registrationTxError) {
+        await session.abortTransaction();
+        throw registrationTxError;
       }
 
       // Send verification email
@@ -158,12 +165,14 @@ export class RegistrationController {
 
     } catch (error: any) {
       logger.error('Registration error:', error);
-      
-      res.status(400).json(errorResponse( 
+
+      res.status(400).json(errorResponse(
         'Registrazione fallita',
         'REGISTRATION_ERROR',
         undefined,
         500));
+    } finally {
+      await session.endSession();
     }
   }
 
