@@ -322,8 +322,8 @@ export class CharacterController {
         privateDescription: privateDescription || 'Personaggio bot gestito da AI',
         gender,
         userId: systemBotUserId,
-        status: 'APPROVED', // Preapproved
-        gameplayRoles: ['personaggio'],
+        playerStatus: 'approved', // Preapproved
+        gameplayRoles: ['player'],
         bot_id, // Link to bot in botai database
         stats: characterStats,
         derived,
@@ -465,8 +465,8 @@ export class CharacterController {
         privateDescription,
         gender,
         userId: systemBotUserId,
-        status: 'APPROVED', // Preapproved
-        gameplayRoles: ['personaggio'],
+        playerStatus: 'approved', // Preapproved
+        gameplayRoles: ['player'],
         bot_id, // Link to bot in botai database
         stats,
         derived,

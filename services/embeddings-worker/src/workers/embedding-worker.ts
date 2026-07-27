@@ -59,10 +59,18 @@ export class EmbeddingWorker {
     this.pythonService = pythonService;
 
     // ✅ Initialize Qdrant client
-    this.qdrant = new QdrantClient({ url: config.services.qdrant.url });
+    this.qdrant = new QdrantClient({
+      url: config.services.qdrant.url,
+      apiKey: config.services.qdrant.apiKey,
+    });
 
     // ✅ Initialize ElasticSearch client (v8 client for ES 8.x)
-    this.elasticsearch = new ElasticsearchClient({ node: config.services.elasticsearch.url });
+    this.elasticsearch = new ElasticsearchClient({
+      node: config.services.elasticsearch.url,
+      auth: config.services.elasticsearch.username
+        ? { username: config.services.elasticsearch.username, password: config.services.elasticsearch.password! }
+        : undefined,
+    });
 
     // ✅ BullMQ requires a dedicated ioredis connection with maxRetriesPerRequest: null
     const connection = new IORedis(config.database.redisUrl, {

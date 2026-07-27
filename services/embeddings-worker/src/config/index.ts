@@ -23,10 +23,15 @@ export const config = {
   services: {
     qdrant: {
       url: process.env.QDRANT_URL || 'http://localhost:6333',
+      // Opzionale: assente in locale (nessuna API key sul Qdrant di sviluppo).
+      apiKey: process.env.QDRANT_API_KEY,
     },
     elasticsearch: {
       url: process.env.ELASTICSEARCH_URL || 'http://localhost:9200',
       indexPrefix: process.env.ELASTICSEARCH_INDEX_PREFIX || 'tenpennynovels',
+      // Opzionali: assenti in locale (xpack.security disattivato in sviluppo).
+      username: process.env.ELASTICSEARCH_USERNAME,
+      password: process.env.ELASTICSEARCH_PASSWORD,
     },
     python: {
       path: process.env.PYTHON_PATH || 'python3',
