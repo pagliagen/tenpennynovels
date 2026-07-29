@@ -104,17 +104,20 @@
     margin-top: 20px;
     background-color: inherit;
     z-index: 1;
+
+    &:hover {
+      border-color: #d9ccb4;
+    }
   }
 }
 
-.iconButton {
+.iconButton, .featureHubAnchor{
   position: relative;
   width: 60px;
   height: 60px;
   border-radius: 50%;
-  background: #0f0f0f;
-  border: 1px solid var(--color-primary);
-  border-top: 2px solid var(--color-text-primary);
+  background: #000000; 
+  border-bottom: 1px solid #706558;
   cursor: pointer;
   transition: all 0.2s ease;
   padding: 0;
@@ -133,14 +136,7 @@
   height: calc(100% - 14px);
   border-radius: 100%; 
 }
-
-// Anchor for the "Utilità" feature hub popup (wraps the icon button so the
-// dropdown positions relative to it, matching the .utilityDropdown pattern)
-.featureHubAnchor {
-  position: relative;
-  display: inline-flex;
-}
-
+ 
 .featureHubDropdown {
   position: absolute;
   top: 70px;
