@@ -57,8 +57,7 @@ interface LocationsMapProps {
  */
 export function LocationsMap({
   locations,
-  onDistrictClick,
-  onLondonClick,
+  onDistrictClick 
 }: LocationsMapProps): JSX.Element {
   const [hoveredDistrict, setHoveredDistrict] = useState<string | null>(null);
 
@@ -70,20 +69,6 @@ export function LocationsMap({
   return (
     <div className={styles.mapContainer}>
       <div className={styles.mapWrapper}>
-        {/* London Label - Clickable */}
-        {onLondonClick && (
-          <div className={styles.londonLabel} onClick={onLondonClick}>
-            <Image
-              src="/locations/london_label.png"
-              alt="The City of London - Clicca per tornare a Londra"
-              width={276}
-              height={139}
-              className={styles.labelImage}
-              priority
-            />
-          </div>
-        )}
-
         {/* Main London Map Image */}
         <div className={styles.mapImageWrapper}>
           <Image

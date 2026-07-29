@@ -118,6 +118,9 @@
   cursor: pointer;
   transition: all 0.2s ease;
   padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
  
   &:active {
     transform: translateY(0);
@@ -126,12 +129,9 @@
 
 .iconImage {
   object-fit: contain;
-  width: calc(100% - 4px);
-  height: calc(100% - 4px);
-  border-radius: 100%;
-  padding: 2px;
-  border: 1px solid #706558;
-  margin: 2px;
+  width: calc(100% - 14px);
+  height: calc(100% - 14px);
+  border-radius: 100%; 
 }
 
 // Anchor for the "Utilità" feature hub popup (wraps the icon button so the
