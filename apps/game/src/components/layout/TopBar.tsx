@@ -25,7 +25,7 @@
 
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 import styles from '@/styles/components/TopBar.module.scss';
 import { logger } from '@/lib/logger';
@@ -149,6 +149,10 @@ export function TopBar({
   const [isUtilityMenuOpen, setIsUtilityMenuOpen] = useState(false);
   const utilityMenuRef = useRef<HTMLDivElement>(null);
 
+  // Auto-fit del nome location: resta su una riga e si scala per non uscire mai dal semicerchio
+  const locationNameContainerRef = useRef<HTMLDivElement>(null);
+  const locationNameTextRef = useRef<HTMLSpanElement>(null);
+
   // State per gestire apertura/chiusura del popup "Utilità" (hub funzionalità di gioco)
   const [isFeatureHubOpen, setIsFeatureHubOpen] = useState(false);
   const featureHubRef = useRef<HTMLDivElement>(null);
@@ -177,6 +181,27 @@ export function TopBar({
       isInLondon
     } });
   }, [locationName, isInLondon]);
+
+  // Scala il nome location per stare sempre su una riga dentro la larghezza fissa del semicerchio
+  useLayoutEffect(() => {
+    const container = locationNameContainerRef.current;
+    const text = locationNameTextRef.current;
+    if (!container || !text) return;
+
+    const fit = () => {
+      text.style.transform = 'scale(1)';
+      const { paddingLeft, paddingRight } = window.getComputedStyle(container);
+      const availableWidth = container.clientWidth - parseFloat(paddingLeft) - parseFloat(paddingRight);
+      const naturalWidth = text.scrollWidth;
+      const scale = naturalWidth > availableWidth ? availableWidth / naturalWidth : 1;
+      text.style.transform = `scale(${scale})`;
+    };
+
+    fit();
+
+    // Il font custom può caricare dopo il primo render, cambiando la larghezza naturale del testo
+    document.fonts?.ready.then(fit);
+  }, [locationName]);
 
   // Click outside handler per chiudere il dropdown (linguetta ☰)
   useEffect(() => {
@@ -325,7 +350,11 @@ export function TopBar({
                 alt={locationName}
                 className={styles.locationImage}
               />
-              <div className={styles.locationName}>{locationName}</div>
+              <div className={styles.locationName} ref={locationNameContainerRef}>
+                <span className={styles.locationNameText} ref={locationNameTextRef}>
+                  {locationName}
+                </span>
+              </div>
 
               {/* Conditional action buttons for non-London locations */}
               {!isInLondon && (

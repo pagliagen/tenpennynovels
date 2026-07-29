@@ -16,7 +16,6 @@
 
 'use client';
 
-import Image from 'next/image';
 import { useState } from 'react';
 
 import {
@@ -71,13 +70,12 @@ export function LocationsMap({
       <div className={styles.mapWrapper}>
         {/* Main London Map Image */}
         <div className={styles.mapImageWrapper}>
-          <Image
+          <img
             src="/locations/london.png"
             alt="Mappa di Londra 1889"
             width={1536}
             height={1024}
             className={styles.mapImage}
-            priority
           />
 
           {/* SVG Overlay with Clickable Polygons */}

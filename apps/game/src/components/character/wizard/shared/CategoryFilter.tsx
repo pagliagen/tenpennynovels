@@ -10,7 +10,6 @@
 
 'use client';
 
-import Image from 'next/image';
 import { useRef, useEffect, useState } from 'react';
 
 import styles from '@/styles/components/character/wizard/CategoryFilter.module.scss';
@@ -20,7 +19,7 @@ import { CATEGORY_LABELS } from './OccupationIconMap';
 
 function FilterIcon() {
   return (
-    <Image
+    <img
       src="/images/icons/filter_icon.png"
       alt="Filtra"
       width={16}

@@ -1,7 +1,5 @@
 'use client';
 
-import Image from 'next/image';
-
 import { Occupation } from '@/lib/api/characterCreation';
 import styles from '@/styles/components/character/wizard/OccupationCard.module.scss';
 
@@ -33,7 +31,7 @@ export function OccupationCard({ occupation, isSelected, onSelect }: OccupationC
       onClick={onSelect}
     >
       <header className={styles.header}>
-        <Image
+        <img
           src={imageSrc}
           alt={occupation.name}
           width={32}
