@@ -6,11 +6,13 @@
  * Features:
  * - Quick navigation (Map, OnGame Mail, OffGame Chat)
  * - Location display with conditional actions
- * - "Utilità" feature hub popup: Bacheca, Tickets, Documenti, Anagrafica,
- *   Prestavolto, Opzioni audio/chat, plus not-yet-built features (Mercato,
- *   Banca) shown disabled rather than omitted or silently dead
- * - Separate ☰ menu (linguetta): audio/chat options, anagrafica, prestavolto,
- *   admin panel access (conditional), logout
+ * - "Utilità" feature hub popup, split in two sections:
+ *   - Utility OnGame: character/game-world features (Mercato, Banca —
+ *     not yet built, shown disabled rather than omitted or silently dead)
+ *   - Utility OffGame: player-level features not tied to a single character
+ *     (Anagrafica, il mio Prestavolto)
+ * - Separate ☰ menu (linguetta): audio/chat options, admin panel access
+ *   (conditional), logout
  * - Admin panel access (conditional)
  * - Logout button
  *
@@ -94,6 +96,9 @@ interface TopBarProps {
 
   /** Whether current location is London */
   isInLondon?: boolean;
+
+  /** Click handler for the location display (opens location info popup) */
+  onLocationDisplayClick?: () => void;
 }
 
 /**
@@ -138,6 +143,7 @@ export function TopBar({
   locationName = 'London',
   locationImageUrl = '/images/topbar/location-image.png',
   isInLondon = true,
+  onLocationDisplayClick,
 }: TopBarProps): JSX.Element {
   // State per gestire apertura/chiusura dropdown utility (linguetta ☰)
   const [isUtilityMenuOpen, setIsUtilityMenuOpen] = useState(false);
@@ -216,6 +222,12 @@ export function TopBar({
     setIsFeatureHubOpen((prev) => !prev);
   };
 
+  // Handle feature hub item click
+  const handleFeatureHubItemClick = (action?: () => void) => {
+    action?.();
+    setIsFeatureHubOpen(false);
+  };
+
   return (
     <div className={styles.topBarContainer}>
       <div className={styles.topBar}>
@@ -291,7 +303,23 @@ export function TopBar({
 
           {/* Location Display - Center */}
           <div className={styles.locationDisplay}>
-            <div className={styles.semicerchio}>
+            <div
+              className={styles.semicerchio}
+              onClick={onLocationDisplayClick}
+              role={onLocationDisplayClick ? 'button' : undefined}
+              tabIndex={onLocationDisplayClick ? 0 : undefined}
+              onKeyDown={
+                onLocationDisplayClick
+                  ? (e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        onLocationDisplayClick();
+                      }
+                    }
+                  : undefined
+              }
+              title={onLocationDisplayClick ? 'Info sulla location' : undefined}
+            >
               <img
                 src={locationImageUrl}
                 alt={locationName}
@@ -305,7 +333,10 @@ export function TopBar({
                   {onLocationInfoClick && (
                     <button
                       type="button"
-                      onClick={onLocationInfoClick}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onLocationInfoClick();
+                      }}
                       className={styles.locationChatLink}
                       title="Apri la chat della location"
                     >
@@ -315,7 +346,10 @@ export function TopBar({
                   {onLeaveLocationClick && (
                     <button
                       type="button"
-                      onClick={onLeaveLocationClick}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onLeaveLocationClick();
+                      }}
                       className={styles.locationLeaveLink}
                       title="Torna a Londra e lascia questa location"
                     >
@@ -351,10 +385,10 @@ export function TopBar({
                 <div className={styles.featureHubDropdown} role="menu">
                   <div className={styles.featureHubTitle}>Utilità</div>
 
-                  {/* Coming soon: not implemented yet, shown disabled rather than hidden.
-                      Everything already built (Bacheca, Tickets, Documenti, Anagrafica,
-                      Prestavolto, Opzioni audio/chat) already has its own place — the
-                      dedicated topbar icons, or the ☰ menu — so it doesn't belong here too. */}
+                  {/* Utility OnGame: features tied to the character/game world. */}
+                  <div className={styles.featureHubSectionTitle}>Utility OnGame</div>
+
+                  {/* Coming soon: not implemented yet, shown disabled rather than hidden. */}
                   <div className={`${styles.featureHubItem} ${styles.featureHubItemDisabled}`} role="menuitem" aria-disabled="true">
                     <span>🏪 Mercato</span>
                     <span className={styles.featureHubComingSoon}>Presto disponibile</span>
@@ -364,6 +398,33 @@ export function TopBar({
                     <span>🏦 Banca</span>
                     <span className={styles.featureHubComingSoon}>Presto disponibile</span>
                   </div>
+
+                  <div className={styles.featureHubDivider} />
+
+                  {/* Utility OffGame: player-level features, not tied to a single character. */}
+                  <div className={styles.featureHubSectionTitle}>Utility OffGame</div>
+
+                  {onCharacterDirectoryClick && (
+                    <button
+                      type="button"
+                      onClick={() => handleFeatureHubItemClick(onCharacterDirectoryClick)}
+                      className={styles.featureHubItem}
+                      role="menuitem"
+                    >
+                      👥 Anagrafica
+                    </button>
+                  )}
+
+                  {onCharacterFaceClaimClick && (
+                    <button
+                      type="button"
+                      onClick={() => handleFeatureHubItemClick(onCharacterFaceClaimClick)}
+                      className={styles.featureHubItem}
+                      role="menuitem"
+                    >
+                      🎭 il mio prestavolto
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -467,30 +528,6 @@ export function TopBar({
                 role="menuitem"
               >
                 Opzioni chat
-              </button>
-            )}
-
-            {/* Anagrafica Personaggi */}
-            {onCharacterDirectoryClick && (
-              <button
-                type="button"
-                onClick={() => handleUtilityItemClick(onCharacterDirectoryClick)}
-                className={styles.utilityMenuItem}
-                role="menuitem"
-              >
-                👥 Anagrafica
-              </button>
-            )}
-
-            {/* il mio prestavolto */}
-            {onCharacterFaceClaimClick && (
-              <button
-                type="button"
-                onClick={() => handleUtilityItemClick(onCharacterFaceClaimClick)}
-                className={styles.utilityMenuItem}
-                role="menuitem"
-              >
-                🎭 il mio prestavolto
               </button>
             )}
 

@@ -81,6 +81,18 @@ const SOCIAL_CONFRONTATIONS = [
     requiresAdditionalMessage: true,
     additionalMessageLabel: 'Intenzione nascosta (cosa pensi davvero)',
   },
+  {
+    // Empatia attiva: un personaggio cerca consapevolmente di leggere lo stato
+    // emotivo di un altro. A differenza di Raggirare->Empatia, questo tiro NON
+    // è segreto: il bersaglio che nasconde le proprie emozioni oppone Raggirare
+    // apertamente (regola doc: "tiro contrapposto con Raggirare, che non è
+    // segreto, a differenza di quando è il raggiratore a iniziare l'azione").
+    skillName: 'Empatia',
+    category: 'social' as const,
+    counterSkills: [{ skillName: 'Raggirare', label: 'Raggirare' }],
+    rollType: 'open' as const,
+    requiresAdditionalMessage: false,
+  },
 ];
 
 const COMBAT_CONFRONTATIONS = [

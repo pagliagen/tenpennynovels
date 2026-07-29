@@ -5,7 +5,7 @@
  * - Message history (last 3 hours, backend enforced)
  * - Occupants list (real-time presence)
  * - Typing indicators
- * - Current tag (sub-chat position)
+ * - Current position (sub-chat placement)
  *
  * **No Persistence**: Chat messages are ephemeral (3-hour window).
  * State resets on page refresh - intentional for privacy/performance.
@@ -25,53 +25,53 @@ import type { ChatMessage, ChatOccupant } from '@/types/chat';
 import { logger } from '@/lib/logger';
 
 /**
- * LocalStorage Key for Location Tags
+ * LocalStorage Key for Location Positions
  */
-const LOCATION_TAGS_KEY = 'tenpennynovels-location-tags';
+const LOCATION_POSITIONS_KEY = 'tenpennynovels-location-positions';
 
 /**
- * Load Saved Tag for Location
+ * Load Saved Position for Location
  *
- * Retrieves the last selected tag for a specific location from localStorage.
+ * Retrieves the last selected position for a specific location from localStorage.
  *
  * @param locationId - Location ID
- * @returns Saved tag or null if not found
+ * @returns Saved position or null if not found
  */
-function loadTagForLocation(locationId: string): string | null {
+function loadPositionForLocation(locationId: string): string | null {
   if (typeof window === 'undefined') return null;
 
   try {
-    const saved = localStorage.getItem(LOCATION_TAGS_KEY);
+    const saved = localStorage.getItem(LOCATION_POSITIONS_KEY);
     if (!saved) return null;
 
-    const tags = JSON.parse(saved) as Record<string, string>;
-    return tags[locationId] || null;
+    const positions = JSON.parse(saved) as Record<string, string>;
+    return positions[locationId] || null;
   } catch (error) {
-    logger.error('Failed to load location tag from localStorage:', { error });
+    logger.error('Failed to load location position from localStorage:', { error });
     return null;
   }
 }
 
 /**
- * Save Tag for Location
+ * Save Position for Location
  *
- * Persists the selected tag for a specific location to localStorage.
+ * Persists the selected position for a specific location to localStorage.
  *
  * @param locationId - Location ID
- * @param tag - Tag to save
+ * @param position - Position to save
  */
-function saveTagForLocation(locationId: string, tag: string): void {
+function savePositionForLocation(locationId: string, position: string): void {
   if (typeof window === 'undefined') return;
 
   try {
-    const saved = localStorage.getItem(LOCATION_TAGS_KEY);
-    const tags = saved ? (JSON.parse(saved) as Record<string, string>) : {};
+    const saved = localStorage.getItem(LOCATION_POSITIONS_KEY);
+    const positions = saved ? (JSON.parse(saved) as Record<string, string>) : {};
 
-    tags[locationId] = tag;
+    positions[locationId] = position;
 
-    localStorage.setItem(LOCATION_TAGS_KEY, JSON.stringify(tags));
+    localStorage.setItem(LOCATION_POSITIONS_KEY, JSON.stringify(positions));
   } catch (error) {
-    logger.error('Failed to save location tag to localStorage:', { error });
+    logger.error('Failed to save location position to localStorage:', { error });
   }
 }
 
@@ -92,8 +92,8 @@ interface ChatStore {
   // Real-time presence
   occupants: ChatOccupant[];
 
-  // User's current tag (sub-chat position)
-  currentTag: string | null;
+  // User's current position (sub-chat placement)
+  currentPosition: string | null;
 
   // Typing indicators (characterId → isTyping)
   typingUsers: Map<string, boolean>;
@@ -114,8 +114,8 @@ interface ChatStore {
   removeOccupant: (characterId: string) => void;
   updateOccupant: (characterId: string, updates: Partial<ChatOccupant>) => void;
 
-  // Actions - Tags
-  setCurrentTag: (tag: string) => void;
+  // Actions - Position
+  setCurrentPosition: (position: string) => void;
 
   // Actions - Typing Indicators
   setTyping: (characterId: string, isTyping: boolean) => void;
@@ -139,8 +139,8 @@ const initialState = () => ({
   // Presence
   occupants: [],
 
-  // Tag
-  currentTag: null,
+  // Position
+  currentPosition: null,
 
   // Typing
   typingUsers: new Map<string, boolean>(),
@@ -177,7 +177,7 @@ export const useChatStore = create<ChatStore>()(
        * Initialize Chat for Location
        *
        * Sets location context and loads initial messages.
-       * Also restores the last selected tag for this location (if any).
+       * Also restores the last selected position for this location (if any).
        * Call this when user navigates to chat page.
        *
        * @param locationSlug - Location slug (from URL)
@@ -195,11 +195,11 @@ export const useChatStore = create<ChatStore>()(
           locationName,
         });
 
-        // Load saved tag for this location (if exists)
-        const savedTag = loadTagForLocation(locationId);
-        if (savedTag) {
-          set({ currentTag: savedTag });
-          logger.info(`🔖 Restored saved tag for location: ${savedTag}`);
+        // Load saved position for this location (if exists)
+        const savedPosition = loadPositionForLocation(locationId);
+        if (savedPosition) {
+          set({ currentPosition: savedPosition });
+          logger.info(`🔖 Restored saved position for location: ${savedPosition}`);
         }
 
         // Load messages
@@ -382,23 +382,23 @@ export const useChatStore = create<ChatStore>()(
       },
 
       /**
-       * Set Current Tag
+       * Set Current Position
        *
-       * Sets user's sub-chat position tag.
+       * Sets user's sub-chat position.
        * Automatically saves to localStorage for this location.
-       * Called when user selects tag in TagSelector modal.
+       * Called when user selects a position in PositionSelector modal.
        *
-       * @param tag - Tag value (e.g., "Tavolo 1", "Bancone")
+       * @param position - Position value (e.g., "Tavolo 1", "Bancone")
        */
-      setCurrentTag: (tag: string) => {
+      setCurrentPosition: (position: string) => {
         const { locationId } = get();
 
-        set({ currentTag: tag });
-        logger.info(`✅ Tag set to: ${tag}`);
+        set({ currentPosition: position });
+        logger.info(`✅ Position set to: ${position}`);
 
         // Save to localStorage for this location
         if (locationId) {
-          saveTagForLocation(locationId, tag);
+          savePositionForLocation(locationId, position);
         }
       },
 
@@ -463,7 +463,7 @@ export const useChatMessages = () => useChatStore((state) => state.messages);
 export const useChatOccupants = () => useChatStore((state) => state.occupants);
 export const useChatLoading = () => useChatStore((state) => state.isLoading);
 export const useChatError = () => useChatStore((state) => state.error);
-export const useChatCurrentTag = () => useChatStore((state) => state.currentTag);
+export const useChatCurrentPosition = () => useChatStore((state) => state.currentPosition);
 export const useChatTypingUsers = () => useChatStore((state) => state.typingUsers);
 export const useChatLocationContext = () =>
   useChatStore((state) => ({

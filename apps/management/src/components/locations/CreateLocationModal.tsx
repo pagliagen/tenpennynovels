@@ -8,6 +8,7 @@ import React, { useState, useEffect } from 'react';
 import { Modal } from '@/components/shared/Modal';
 import { FormField } from '@/components/shared/FormField';
 import { ImageUploader } from '@/components/shared/ImageUploader';
+import { PositionsEditor } from '@/components/locations/PositionsEditor';
 import { useCreateLocation, useLocations } from '@/hooks/api/useLocations';
 import { useNotificationStore } from '@/store/notificationStore';
 import type { CreateLocationData, LocationLevel } from '@/types/api/Location';
@@ -43,7 +44,6 @@ export function CreateLocationModal({
     district: '',
     parentLocation: preselectedParentId || null,
     imageUrl: '',
-    tags: [],
     positions: [],
     maxOccupants: undefined,
     settings: {
@@ -54,9 +54,6 @@ export function CreateLocationModal({
       bot_enabled: false
     }
   });
-
-  const [tagsInput, setTagsInput] = useState('');
-  const [positionsInput, setPositionsInput] = useState('');
 
   useEffect(() => {
     if (preselectedParentId) {
@@ -81,11 +78,7 @@ export function CreateLocationModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const data: CreateLocationData = {
-      ...formData,
-      tags: tagsInput ? tagsInput.split(',').map(t => t.trim()).filter(Boolean) : [],
-      positions: positionsInput ? positionsInput.split(',').map(p => p.trim()).filter(Boolean) : [],
-    };
+    const data: CreateLocationData = { ...formData };
 
     try {
       await createLocation.mutateAsync(data);
@@ -237,23 +230,15 @@ export function CreateLocationModal({
             min={1}
             max={100}
           />
-          <FormField
-            label="Tags (separati da virgola)"
-            name="tags"
-            value={tagsInput}
-            onChange={(e: any) => setTagsInput(e.target.value)}
-            placeholder="es. ospedale, pubblico, whitechapel"
-          />
         </div>
 
-        <FormField
-          label="Posizioni (separate da virgola)"
-          name="positions"
-          value={positionsInput}
-          onChange={(e: any) => setPositionsInput(e.target.value)}
-          placeholder="es. Bancone, Tavolo 1, Angolo Nord"
-          helpText="Posizioni fisiche all'interno della location"
-        />
+        <div className={styles.section}>
+          <h3>Posizioni</h3>
+          <PositionsEditor
+            positions={formData.positions || []}
+            onChange={(positions) => handleChange('positions', positions)}
+          />
+        </div>
       </form>
     </Modal>
   );

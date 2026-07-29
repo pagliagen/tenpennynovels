@@ -89,6 +89,12 @@ export interface ConfrontationPayload {
   attackerCharacterId: string;
   defenderCharacterId: string;
 
+  // Raggirare hidden result — attacker never sees the roll/outcome fields below;
+  // the backend (MessageTransformer.maskConfrontationForViewer) strips them for
+  // the attacker's own view, so they'll be undefined even though phase === 'result'.
+  hiddenResultForAttacker?: boolean;
+  visibleToAttackerOnly?: boolean;
+
   // Populated when phase = 'waiting_reaction'
   availableDefenseSkills?: Array<{
     skillName: string;
@@ -199,8 +205,8 @@ export interface ChatStoreState {
   // Occupants (real-time presence)
   occupants: ChatOccupant[];
 
-  // User's current tag (sub-chat position)
-  currentTag: string | null;
+  // User's current position (sub-chat placement)
+  currentPosition: string | null;
 
   // Typing indicators
   typingUsers: Map<string, boolean>;  // characterId -> isTyping
@@ -316,22 +322,22 @@ export interface ChatPermissionGateProps {
 }
 
 /**
- * Tag Selector Option
+ * Position Selector Option
  *
- * Available tags for sub-chat positions.
+ * Available positions for sub-chat placement.
  */
-export interface TagOption {
+export interface PositionOption {
   value: string;
   label: string;
   description?: string;
 }
 
 /**
- * Preset Tags
+ * Preset Positions
  *
- * Common tags used in location chats.
+ * Common positions used in location chats.
  */
-export const PRESET_TAGS: TagOption[] = [
+export const PRESET_POSITIONS: PositionOption[] = [
   { value: 'tavolo-1', label: 'Tavolo 1', description: 'Primo tavolo' },
   { value: 'tavolo-2', label: 'Tavolo 2', description: 'Secondo tavolo' },
   { value: 'tavolo-3', label: 'Tavolo 3', description: 'Terzo tavolo' },

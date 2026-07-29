@@ -26,17 +26,18 @@ Check `services/unified-backend/src/database/models/` for available models:
 ## Fields Updated in Character
 
 When a character is reverted to DRAFT:
-1. **status** - Set to `'DRAFT'`
+1. **playerStatus** - Set to `'draft'` (lowercase; the schema enum is `['draft', 'pending', 'approved']` — there is NO top-level `status` field on Character, only `playerStatus`)
 2. **approvedAt** - Set to `undefined` or removed
 3. **approvedBy** - Set to `undefined` or removed
-4. **reviewNote** - Set to `null` or removed
-5. **reviewHistory** - Add entry with:
+4. **reviewHistory** - Add entry with:
    - `action: 'draft'`
    - `reviewedBy` - ObjectId of system user (required by schema)
    - `note` - Optional note (can be null)
    - `reviewedAt: new Date()`
 
 **IMPORTANT**: Skills are preserved as-is. They are NOT deleted or modified.
+
+**IMPORTANT**: Must call `.save()` on the Mongoose document (not a raw `updateOne`). The model's pre-save hook (`services/unified-backend/src/database/models/Character.ts`, around line 998) runs `if (this.isModified('playerStatus') || this.isNew)` and, when `playerStatus === 'draft'`, automatically grants `characterPermissions` including `'game:character:wizard'` and `-game:character:read`. The game frontend's wizard redirect (`apps/game/src/components/layout/GameLayout.tsx`, `apps/game/src/pages/character/wizard.tsx`) requires BOTH `playerStatus === 'draft'` AND the `game:character:wizard` permission — if you set `playerStatus` via a raw driver update instead of `.save()`, the hook never runs and the wizard will not launch even though the character looks like a draft.
 
 ## Implementation Pattern
 
@@ -63,16 +64,15 @@ When user requests character revert to draft:
 4. **Validate character**:
    - Find character by ID
    - Verify it exists
-   - Optionally verify it's NOT already DRAFT (for better feedback)
+   - Optionally verify it's NOT already draft (for better feedback)
    - Return clear error if invalid
 
 5. **Update Character**:
-   - Set `status = 'DRAFT'`
+   - Set `playerStatus = 'draft'`
    - Set `approvedAt = undefined`
    - Set `approvedBy = undefined`
-   - Set `reviewNote = null`
    - Add entry to `reviewHistory` with `reviewedBy = systemUserId`
-   - Save character
+   - Save character (via `.save()`, so the pre-save hook grants the wizard permission)
 
 6. **Close connection**:
    ```typescript
@@ -100,15 +100,13 @@ try {
   await mongoose.connect(MONGODB_URI);
 
   const characterId = '693dda96dfe0250b25663311';
-  const note = null; // Optional: reason for reverting to draft
 
   // Find system user for reviewedBy
+  // NOTE: User model has no `role` field — use `canAccessAdminPanel` / `username`
   let systemUserId = null;
   const adminUser = await User.findOne({
     $or: [
-      { role: 'admin' },
-      { role: 'master' },
-      { email: 'admin@tenpennynovels.com' },
+      { canAccessAdminPanel: true },
       { username: 'admin' },
       { username: 'system' }
     ]
@@ -133,23 +131,22 @@ try {
     process.exit(1);
   }
 
-  if (character.status === 'DRAFT') {
-    console.log('Character is already DRAFT');
+  if (character.playerStatus === 'draft') {
+    console.log('Character is already draft');
     await mongoose.disconnect();
     process.exit(0);
   }
 
   // Update Character
-  character.status = 'DRAFT';
+  character.playerStatus = 'draft'; // triggers pre-save hook: grants 'game:character:wizard' permission
   character.approvedAt = undefined;
   character.approvedBy = undefined;
-  character.reviewNote = null;
 
   // Add to review history
   const reviewEntry = {
-    action: 'draft',
+    action: 'draft' as const,
     reviewedBy: systemUserId,
-    note: note || null,
+    note: null,
     reviewedAt: new Date()
   };
 
@@ -158,7 +155,7 @@ try {
 
   await character.save();
 
-  console.log('Character reverted to DRAFT successfully!');
+  console.log('Character reverted to draft successfully!');
   console.log(`ID: ${characterId}`);
   console.log(`Name: ${character.name}`);
 

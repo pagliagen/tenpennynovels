@@ -93,7 +93,7 @@ export function OOCMessage({ message, currentCharacterId }: OOCMessageProps): JS
         </div>
 
         {/* Footer */}
-        <MessageFooter message={message} onTagClick={interactions.handleTagClick} />
+        <MessageFooter message={message} onPositionClick={interactions.handlePositionClick} />
       </div>
     </>
   );

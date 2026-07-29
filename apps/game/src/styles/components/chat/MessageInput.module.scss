@@ -10,116 +10,70 @@
 .messageInput {
   flex-shrink: 0;
   padding: $spacing-xl $spacing-xxl;
-  background: $brown-10;
+  background: rgba(0,0,0,0.6);
   border-top: 2px solid $gold-30;
 }
 
-.messageInputWrapper {
-  display: flex;
+/* 3 columns: action type/position/quick actions | textarea | authorized-only (master/PNG) */
+.messageInputGrid {
+  display: grid;
+  grid-template-columns: 200px 1fr;
   gap: $spacing-lg;
-  flex-grow: 1;
-  flex-shrink: 1;
+  align-items: start;
 
-  .actionTypeWrapper {
-    flex-grow: 0;
-    flex-shrink: 0;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .actionTypeRow {
-    flex-grow: 0;
-    flex-shrink: 0;
-    display: flex;
-    flex-direction: column;
-    width: 200px;
-  }
-
-  .textareaWrapper {
-    flex-grow: 1;
-    flex-shrink: 1;
-    min-height: 90px;
+  &.hasAuthColumn {
+    grid-template-columns: 200px 1fr auto;
   }
 }
 
-.inputForm {
+.columnActions {
   display: flex;
-  gap: $spacing-lg;
-  align-items: flex-end;
-}
-
-/* Social Conflict Fields (Scontro Sociale) */
-.socialConflictFields {
-  margin-bottom: $spacing-md;
-}
-
-.fieldRow {
-  display: flex;
+  flex-direction: column;
   gap: $spacing-md;
 }
 
-.selectInput {
-  width: 100%;
-  padding: $spacing-md $spacing-lg;
-  background: rgba(245, 245, 245, 0.05);
-  border: 1px solid $gold-30;
-  border-radius: $radius-md;
-  color: $parchment;
-  font-family: $font-serif;
-  font-size: 16px;
-  cursor: pointer;
-  transition: all $transition-normal;
-
-  &:hover {
-    border-color: rgba(184, 134, 11, 0.6);
-    background: rgba(245, 245, 245, 0.08);
-  }
-
-  &:focus {
-    outline: none;
-    border-color: $gold-80;
-    background: rgba(245, 245, 245, 0.1);
-  }
-
-  option {
-    background: #2a1810;
-    color: $parchment;
+.positionWrapper {
+  .actionButton {
+    width: 100%;
+    text-align: left;
   }
 }
 
-.lieTextarea {
-  width: 100%;
-  margin-bottom: $spacing-sm;
-  margin-top: $spacing-sm;
-  min-height: 80px;
-  max-height: 300px;
-  padding: $spacing-md $spacing-lg;
-  background: rgba(245, 245, 245, 0.05);
-  border: 1px solid $gold-30;
-  border-radius: $radius-md;
-  color: $parchment;
-  font-family: $font-serif;
-  font-size: 16px;
-  line-height: 1.5;
-  resize: vertical;
+.quickActionsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-sm;
+  justify-content: space-between;
 }
 
-.lieWarning {
-  color: $parchment-50;
-  font-family: $font-serif;
-  font-size: 13px;
-  font-style: italic;
-  margin-top: $spacing-sm;
+.columnMain {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+  min-width: 0;
 }
 
-.textareaWrapper {
-  margin-bottom: $spacing-md;
+.mainFooter {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.columnAuth {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: $spacing-md;
+
+  .actionButton {
+    width: 100%;
+  }
 }
 
 .textarea {
   width: 100%;
-  height: 100%;
-  min-height: 80px;
+  min-height: 90px;
   max-height: 800px;
   padding: $spacing-md $spacing-lg;
   background: rgba(245, 245, 245, 0.05);
@@ -182,20 +136,6 @@
   }
 }
 
-.inputActions {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: $spacing-lg;
-}
-
-.leftActions,
-.rightActions {
-  display: flex;
-  align-items: center;
-  gap: $spacing-sm;
-}
-
 .actionButton {
   padding: $spacing-sm $spacing-lg;
   background: rgba(245, 245, 245, 0.05);
@@ -235,39 +175,35 @@
   }
 }
 
-// PNG Avatar Indicator (replaces PNG button)
-.pngAvatarContainer {
-  position: relative;
-  margin-left: $spacing-md;
+.iconButton {
+  width: 40px;
+  height: 40px;
+  padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: $spacing-md;
+  font-size: 18px;
+  line-height: 1;
 }
 
-.pngAvatar {
-  width: 60px;
-  height: 60px;
+// PNG Light toggle — actionButton with a small photo thumbnail
+.pngButton {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.pngButtonThumb {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   overflow: hidden;
-  border: 2px solid rgba(138, 43, 226, 0.5);
-  background: rgba(138, 43, 226, 0.1);
-  cursor: pointer;
-  padding: 0;
-  transition: all $transition-normal;
+  border: 1px solid rgba(138, 43, 226, 0.5);
+  background: rgba(138, 43, 226, 0.12);
   display: flex;
   align-items: center;
   justify-content: center;
-
-  &:hover:not(:disabled) {
-    border-color: rgba(138, 43, 226, 0.8);
-    transform: scale(1.05);
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
 
   img {
     width: 100%;
@@ -276,41 +212,11 @@
   }
 }
 
-.pngAvatarMasked {
-  border-color: rgba(138, 43, 226, 0.9);
-  box-shadow: 0 0 12px rgba(138, 43, 226, 0.5);
-  animation: pngPulse 2s ease-in-out infinite;
-}
-
-@keyframes pngPulse {
-  0%, 100% {
-    box-shadow: 0 0 12px rgba(138, 43, 226, 0.5);
-  }
-  50% {
-    box-shadow: 0 0 20px rgba(138, 43, 226, 0.8);
-  }
-}
-
-.pngAvatarPlaceholder {
-  font-size: 20px;
-  font-weight: 700;
-  color: rgba(138, 43, 226, 0.8);
-  font-family: $font-serif;
-}
-
-.pngActiveBadge {
-  position: absolute;
-  top: -4px;
-  right: -4px;
-  background: rgba(138, 43, 226, 0.9);
-  border: 2px solid $brown-10;
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.pngButtonPlaceholder {
   font-size: 12px;
+  font-weight: 700;
+  color: rgba(138, 43, 226, 0.85);
+  font-family: $font-serif;
 }
 
 @keyframes flashButton {
@@ -328,6 +234,7 @@
   color: $parchment-60;
   font-family: $font-serif;
   font-size: 14px;
+  white-space: nowrap;
 }
 
 .expandCollapseButton {
@@ -358,13 +265,19 @@
     padding: $spacing-lg $spacing-xl;
   }
 
-  .inputForm {
-    flex-direction: column;
-    gap: $spacing-md;
+  .messageInputGrid,
+  .messageInputGrid.hasAuthColumn {
+    grid-template-columns: 1fr;
+  }
+
+  .columnAuth {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-start;
   }
 
   .submitButton {
-    width: 100%;
+    flex: 1;
   }
 }
 

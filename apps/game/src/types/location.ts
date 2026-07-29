@@ -58,6 +58,7 @@ export interface AccessibleLocation {
   parentLocation?: string;
   imageUrl?: string;
   image?: string; // Filename statico in /artifacts/locations/, fallback quando imageUrl non è definito
+  descriptionImages?: string[]; // URL immagini mostrate accanto alla descrizione nel popup info location
 
   // Settings (may not be returned by backend)
   settings?: LocationSettings;
@@ -78,11 +79,8 @@ export interface AccessibleLocation {
   hasShop: boolean;    // Computed from settings.shop
   isPrivate: boolean;  // Computed from settings.private
 
-  // Tags
-  tags?: string[];
-
-  // Physical positions within location (for chat position tags)
-  positions?: string[];
+  // Physical positions within location (for chat position tags + location info popup)
+  positions?: Array<{ name: string; description?: string; image?: string }>;
 
   // Tree structure (computed on frontend)
   children?: AccessibleLocation[];
@@ -139,8 +137,11 @@ export interface RootLocation {
   _id: string;
   slug: string;
   name: string;
+  description?: string;
   imageUrl?: string;
   image?: string;
+  positions?: Array<{ name: string; description?: string; image?: string }>;
+  descriptionImages?: string[];
 }
 
 export interface RootLocationResponse {

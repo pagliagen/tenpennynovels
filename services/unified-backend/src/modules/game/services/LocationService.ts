@@ -1,4 +1,5 @@
 import { Location, Character } from '@database/models';
+import type { ILocationPosition } from '@database/models/Location';
 import { logger } from '../logger';
 
 export interface AccessibleLocation {
@@ -10,6 +11,7 @@ export interface AccessibleLocation {
   parentLocation?: string;
   imageUrl?: string;
   image?: string; // Filename statico, fallback quando imageUrl non è definito
+  descriptionImages?: string[]; // URL immagini mostrate accanto alla descrizione nel popup info location
 
   // Settings object
   settings: {
@@ -22,8 +24,8 @@ export interface AccessibleLocation {
   locationLevel: 'root' | 'district' | 'location';
   sortOrder: number;
 
-  // Physical positions within location (for chat tags)
-  positions?: string[];
+  // Physical positions within location (for chat tags + location info popup)
+  positions?: Array<{ name: string; description?: string; image?: string }>;
 
   // Backward compatibility
   hasShop: boolean;
@@ -39,8 +41,11 @@ export interface RootLocation {
   _id: string;
   slug: string;
   name: string;
+  description?: string;
   imageUrl?: string;
   image?: string;
+  positions?: Array<{ name: string; description?: string; image?: string }>;
+  descriptionImages?: string[];
 }
 
 export interface GlobalPresence {
@@ -128,6 +133,7 @@ export class LocationService {
             parentLocation: location.parentLocation?.toString(),
             imageUrl: location.imageUrl,
             image: location.image,
+            descriptionImages: location.descriptionImages || [],
 
             // Settings object (CRITICAL - frontend expects this)
             settings: {
@@ -140,8 +146,12 @@ export class LocationService {
             locationLevel: location.locationLevel,
             sortOrder: location.sortOrder,
 
-            // Physical positions within location (for chat tags)
-            positions: location.positions || [],
+            // Physical positions within location (for chat tags + location info popup)
+            positions: (location.positions || []).map((p: ILocationPosition) => ({
+              name: p.name,
+              description: p.description,
+              image: p.image
+            })),
 
             // Backward compatibility (computed from settings)
             hasShop: location.settings?.shop || false,
@@ -182,8 +192,15 @@ export class LocationService {
       _id: root._id.toString(),
       slug: root.slug,
       name: root.name,
+      description: root.description,
       imageUrl: root.imageUrl,
       image: root.image,
+      descriptionImages: root.descriptionImages || [],
+      positions: (root.positions || []).map((p: ILocationPosition) => ({
+        name: p.name,
+        description: p.description,
+        image: p.image
+      })),
     };
   }
 

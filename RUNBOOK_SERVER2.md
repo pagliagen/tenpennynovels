@@ -6,9 +6,9 @@
 
 **OVH VPS-1** — 2 vCPU · 4GB RAM · 40GB NVMe · €4.65/mese.
 
-Ospita, dopo la migrazione: MongoDB dedicato (solo db `misteryinvestigation`), backend Node di MysteryInvestigation + `keeper-discord-bot` + `keeper-server` di TheKeeperArchive — **tutti e tre su PM2**, stesso process manager di Server 1, un solo tool da conoscere su entrambe le macchine (vedi Fase 5) — 2-3 siti statici (gennaropaglia, thekeeperarchive marketing, bot.thekeeperarchive), Uptime Kuma (monitora Server 1 dall'esterno + status page pubblica). Footprint reale oggi: <400MB — il margine su 4GB è ampio anche con build occasionali e crescita del DB.
+Ospita, dopo la migrazione: MongoDB dedicato (solo db `misteryinvestigation`), backend Node di MysteryInvestigation + `keeper-discord-bot` + `keeper-server` di TheKeeperArchive — **tutti e tre su PM2**, stesso process manager di Server 1, un solo tool da conoscere su entrambe le macchine (vedi Fase 5) — 4 siti statici (gennaropaglia, susannaantonelli, thekeeperarchive marketing, bot.thekeeperarchive), Uptime Kuma (monitora Server 1 dall'esterno + status page pubblica). Footprint reale oggi: <400MB — il margine su 4GB è ampio anche con build occasionali e crescita del DB.
 
-**Nota sui domini**: si abbandonano i vecchi `misteryinvestigation.it` / `thekeeperarchive.it` / il vecchio `gennaropaglia.me`, sostituiti da nuovi domini `.com` registrati direttamente su Cloudflare (deciso in MIGRAZIONE-SERVER.md). In questo runbook uso placeholder `<mystery-domain>`, `<keeper-domain>`, `<gennaro-domain>` — sostituisci con i nomi `.com` effettivamente registrati. `susannaantonelli.me` **non** si migra (deciso: si abbandona).
+**Nota sui domini**: si abbandonano i vecchi `misteryinvestigation.it` / `thekeeperarchive.it` / il vecchio `gennaropaglia.me`, sostituiti da nuovi domini `.com` registrati direttamente su Cloudflare (deciso in MIGRAZIONE-SERVER.md). In questo runbook uso placeholder `<mystery-domain>`, `<keeper-domain>`, `<gennaro-domain>` — sostituisci con i nomi `.com` effettivamente registrati. `susannaantonelli.me` **si migra e mantiene il proprio dominio** (deciso il 28/07/2026): registrazione gratuita su Register.it, nessun transfer, scade il 17/07/2027 — quindi nel runbook uso il nome reale, non un placeholder.
 
 ---
 
@@ -436,12 +436,13 @@ Il webhook che `keeper-server` riceve da `keeper-bot` (o viceversa) va aggiornat
 
 ## Fase 8 — gennaropaglia (statico)
 
-Solo file statici (`index.html`, `styles.css`, CV pdf), nessun processo:
+Solo file statici (`index.html`, `styles.css`, CV pdf), nessun processo. I file sono già in locale in `progetti-personali/gennaropaglia.me/` (scaricati il 28/07/2026), quindi il rsync parte da qui — **escludendo `_deploy/`**, che contiene solo la config nginx del vecchio server come riferimento:
 
 ```bash
 sudo mkdir -p /var/www/<gennaro-domain>
 sudo chown -R ubuntu:ubuntu /var/www/<gennaro-domain>
-# copia i file (rsync dal vecchio server)
+# dal Mac: rsync -az --exclude '_deploy/' \
+#   ~/progetti-personali/gennaropaglia.me/ ubuntu@<nuovo-ip>:/var/www/<gennaro-domain>/
 sudo tee /etc/nginx/sites-available/<gennaro-domain>.conf <<EOF
 server {
     listen 80;
@@ -455,6 +456,32 @@ sudo ln -sf /etc/nginx/sites-available/<gennaro-domain>.conf /etc/nginx/sites-en
 sudo nginx -t && sudo systemctl reload nginx
 ```
 
+## Fase 8b — susannaantonelli (statico)
+
+Stessa forma di Fase 8: 12 file, 1.8MB, nessun processo. I file sono già in locale in `progetti-personali/susannaantonelli.me/` (scaricati dal server condiviso il 28/07/2026), quindi il rsync parte da qui, non dal vecchio server.
+
+```bash
+sudo mkdir -p /var/www/susannaantonelli.me
+sudo chown -R ubuntu:ubuntu /var/www/susannaantonelli.me
+# dal Mac: rsync -az --exclude '_deploy/' \
+#   ~/progetti-personali/susannaantonelli.me/ ubuntu@<nuovo-ip>:/var/www/susannaantonelli.me/
+sudo tee /etc/nginx/sites-available/susannaantonelli.me.conf <<EOF
+server {
+    listen 80;
+    server_name susannaantonelli.me www.susannaantonelli.me;
+    root /var/www/susannaantonelli.me;
+    index index.html;
+    location / { try_files \$uri \$uri/ =404; }
+    include snippets/security-headers.conf;
+}
+EOF
+sudo ln -sf /etc/nginx/sites-available/susannaantonelli.me.conf /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+⚠️ **Escludi `_deploy/`** dal rsync: contiene la config nginx del vecchio server come riferimento, non va servita sul web.
+Il dominio resta `susannaantonelli.me` su Register.it (gratuito, scadenza 17/07/2027): in Fase 9 va cambiato solo il record A verso il nuovo IP, nessuna registrazione né transfer. Il sito è di terzi: avvisa l'intestataria prima del cutover.
+
 ## Fase 9 — DNS
 
 Registra i nuovi domini `.com` su Cloudflare (stesso account già usato per `tenpennynovels.com`), punta i record A al nuovo IP VPS-1. `.it` vecchi restano dove sono e scadono naturalmente — **non rinnovarli**, ma prima verifica caselle email attive su di essi (checklist finale sotto).
@@ -465,6 +492,7 @@ Registra i nuovi domini `.com` su Cloudflare (stesso account già usato per `ten
 sudo certbot --nginx -d <mystery-domain> -d www.<mystery-domain> -d server.<mystery-domain>
 sudo certbot --nginx -d <keeper-domain> -d www.<keeper-domain> -d bot.<keeper-domain>
 sudo certbot --nginx -d <gennaro-domain> -d www.<gennaro-domain>
+sudo certbot --nginx -d susannaantonelli.me -d www.susannaantonelli.me
 sudo certbot renew --dry-run
 ```
 

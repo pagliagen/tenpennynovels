@@ -1,13 +1,13 @@
 @use './_variables' as *;
 
 /**
- * Tag Selector Modal Styles
- * Modal for selecting message tags.
- * @module styles/components/chat/TagSelector
+ * Position Selector Modal Styles
+ * Modal for selecting message position.
+ * @module styles/components/chat/PositionSelector
  * @since 2.0.0
  */
 
-.tagSelectorOverlay {
+.positionSelectorOverlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -20,7 +20,7 @@
   z-index: 1000;
 }
 
-.tagSelectorModal {
+.positionSelectorModal {
   background: linear-gradient(135deg, rgba(139, 69, 19, 0.95) 0%, rgba(184, 134, 11, 0.95) 100%);
   border: 2px solid $gold-80;
   border-radius: $radius-md;
@@ -30,7 +30,7 @@
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
 }
 
-.tagSelectorTitle {
+.positionSelectorTitle {
   color: #f0e68c;
   font-family: 'Thrifted Attire', serif;
   font-size: 29px;
@@ -38,7 +38,7 @@
   text-align: center;
 }
 
-.tagSelectorSubtitle {
+.positionSelectorSubtitle {
   color: rgba(232, 212, 160, 0.8);
   font-family: $font-serif;
   font-size: 15px;
@@ -47,14 +47,14 @@
   line-height: 1.5;
 }
 
-.tagList {
+.positionList {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: $spacing-md;
   margin-bottom: $spacing-xl;
 }
 
-.tagButton {
+.positionButton {
   padding: 5px 10px;
   background: rgba(245, 245, 245, 0.1);
   border: 2px solid rgba(184, 134, 11, 0.4);
@@ -79,7 +79,7 @@
   }
 }
 
-.tagSelectorActions {
+.positionSelectorActions {
   display: flex;
   gap: $spacing-lg;
   justify-content: flex-end;
@@ -124,7 +124,7 @@
 }
 
 // Divider "oppure"
-.customTagDivider {
+.customPositionDivider {
   display: flex;
   align-items: center;
   margin: $spacing-lg 0;
@@ -138,7 +138,7 @@
   }
 }
 
-.customTagDividerText {
+.customPositionDividerText {
   padding: 0 $spacing-md;
   color: rgba(232, 212, 160, 0.6);
   font-family: $font-serif;
@@ -146,12 +146,12 @@
   font-style: italic;
 }
 
-// Sezione custom tag
-.customTagSection {
+// Sezione posizione personalizzata
+.customPositionSection {
   margin-bottom: $spacing-xl;
 }
 
-.customTagLabel {
+.customPositionLabel {
   display: block;
   color: $parchment;
   font-family: $font-serif;
@@ -160,7 +160,7 @@
   font-weight: 600;
 }
 
-.customTagInput {
+.customPositionInput {
   width: 100%;
   padding: $spacing-md;
   background: rgba(245, 245, 245, 0.1);
@@ -184,7 +184,7 @@
   }
 }
 
-.customTagHint {
+.customPositionHint {
   display: flex;
   justify-content: space-between;
   align-items: center;

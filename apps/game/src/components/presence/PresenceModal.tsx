@@ -3,6 +3,7 @@
 import { useRouter } from 'next/router';
 import { useEffect, useCallback, useState, useMemo } from 'react';
 
+import { useAuthStore } from '@/store/authStore';
 import { usePresenceStore } from '@/store/presenceStore';
 import { useWindowManagerStore } from '@/store/windowManagerStore';
 import styles from '@/styles/components/presence/PresenceModal.module.scss';
@@ -13,6 +14,7 @@ export function PresenceModal(): JSX.Element | null {
   const router = useRouter();
   const { isModalOpen, closeModal, globalPresence } = usePresenceStore();
   const { openWindow } = useWindowManagerStore();
+  const { selectedCharacter, hasGamePermission } = useAuthStore();
   const [isClosing, setIsClosing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -61,6 +63,16 @@ export function PresenceModal(): JSX.Element | null {
   }, [globalPresence, searchQuery]);
 
   const handleAvatarClick = useCallback((characterId: string, characterName: string, characterSurname: string | undefined, avatar: string | undefined) => {
+    const isOwnDraftCharacter =
+      characterId === selectedCharacter?._id &&
+      selectedCharacter?.playerStatus === 'draft' &&
+      hasGamePermission('game:character:wizard');
+
+    if (isOwnDraftCharacter) {
+      router.push('/character/wizard');
+      return;
+    }
+
     // Open character sheet WITHOUT closing the modal
     const fullName = characterSurname ? `${characterName} ${characterSurname}` : characterName;
     openWindow('characterSheet', {
@@ -68,7 +80,7 @@ export function PresenceModal(): JSX.Element | null {
       characterName: fullName,
       avatar,
     });
-  }, [openWindow]);
+  }, [openWindow, selectedCharacter, hasGamePermission, router]);
 
   const handleLocationClick = (locationSlug: string, _locationName: string) => {
     if (!locationSlug) {

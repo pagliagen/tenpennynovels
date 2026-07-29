@@ -6,7 +6,7 @@
  *
  * Provides:
  * - State management (editing, delete dialog, menu, content)
- * - Event handlers (edit, save, delete, tag click, avatar click)
+ * - Event handlers (edit, save, delete, position click, avatar click)
  * - Effects (click outside, escape key)
  * - Computed values (formatted time, permissions)
  *
@@ -33,7 +33,7 @@ export function useMessageInteractions(
   const [menuOpen, setMenuOpen] = useState(false);
 
   const menuRef = useRef<HTMLDivElement>(null);
-  const { setCurrentTag } = useChatStore();
+  const { setCurrentPosition } = useChatStore();
   const { addToast } = useUIStore();
   const { openWindow } = useWindowManagerStore();
 
@@ -122,11 +122,11 @@ export function useMessageInteractions(
     setShowDeleteDialog(false);
   };
 
-  const handleTagClick = (tag: string) => {
-    setCurrentTag(tag);
+  const handlePositionClick = (position: string) => {
+    setCurrentPosition(position);
     addToast({
       type: 'success',
-      message: `Tag impostato: ${tag}`,
+      message: `Posizione impostata: ${position}`,
       duration: 2000,
     });
   };
@@ -199,7 +199,7 @@ export function useMessageInteractions(
     handleDelete,
     handleConfirmDelete,
     handleCancelDelete,
-    handleTagClick,
+    handlePositionClick,
     handleMenuToggle,
     handleAvatarClick,
     // Refs

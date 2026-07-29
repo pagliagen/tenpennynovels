@@ -1,0 +1,153 @@
+@use './_variables' as *;
+
+/**
+ * Target Selection Modal Styles
+ * Small popup shown at send-time for whisper / item_use / master targeting.
+ * @module styles/components/chat/TargetSelectionModal
+ * @since 2.1.0
+ */
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: linear-gradient(135deg, rgba(139, 69, 19, 0.95) 0%, rgba(184, 134, 11, 0.95) 100%);
+  border: 2px solid $gold-80;
+  border-radius: $radius-md;
+  padding: $spacing-xl;
+  max-width: 420px;
+  width: 90%;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.title {
+  color: #f0e68c;
+  font-family: 'Thrifted Attire', serif;
+  font-size: 24px;
+  margin-bottom: $spacing-lg;
+  text-align: center;
+}
+
+.emptyState {
+  color: $parchment-70;
+  font-family: $font-serif;
+  font-size: 14px;
+  font-style: italic;
+  text-align: center;
+  margin-bottom: $spacing-lg;
+}
+
+.selectInput {
+  width: 100%;
+  padding: $spacing-md $spacing-lg;
+  background: rgba(245, 245, 245, 0.08);
+  border: 1px solid $gold-30;
+  border-radius: $radius-md;
+  color: $parchment;
+  font-family: $font-serif;
+  font-size: 16px;
+  cursor: pointer;
+  margin-bottom: $spacing-lg;
+  transition: all $transition-normal;
+
+  &:hover {
+    border-color: rgba(184, 134, 11, 0.6);
+    background: rgba(245, 245, 245, 0.12);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: $gold-80;
+    background: rgba(245, 245, 245, 0.15);
+  }
+
+  option {
+    background: #2a1810;
+    color: $parchment;
+  }
+}
+
+.masterTargetLabel {
+  color: $parchment-70;
+  font-family: $font-serif;
+  font-size: 13px;
+  font-style: italic;
+  margin-bottom: $spacing-sm;
+}
+
+.masterTargetPicker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-sm $spacing-lg;
+  padding: $spacing-md;
+  background: rgba(245, 245, 245, 0.08);
+  border: 1px solid $gold-30;
+  border-radius: $radius-md;
+  max-height: 140px;
+  overflow-y: auto;
+  margin-bottom: $spacing-lg;
+}
+
+.masterTargetOption {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+  color: $parchment;
+  font-family: $font-serif;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.actions {
+  display: flex;
+  gap: $spacing-lg;
+  justify-content: flex-end;
+}
+
+.cancelButton,
+.confirmButton {
+  padding: $spacing-md $spacing-xl;
+  border-radius: $radius-md;
+  font-family: $font-serif;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all $transition-normal;
+}
+
+.cancelButton {
+  background: rgba(100, 100, 100, 0.3);
+  border: 1px solid rgba(150, 150, 150, 0.5);
+  color: $parchment;
+
+  &:hover {
+    background: rgba(100, 100, 100, 0.5);
+  }
+}
+
+.confirmButton {
+  background: linear-gradient(135deg, $gold-70 0%, $gold-50 100%);
+  border: 1px solid $gold-80;
+  color: #fff;
+
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, rgba(184, 134, 11, 0.9) 0%, $gold-70 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px $gold-30;
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}

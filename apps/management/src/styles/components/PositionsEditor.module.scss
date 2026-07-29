@@ -1,0 +1,59 @@
+@use '../variables' as *;
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.positionRow {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+  padding: $spacing-md;
+  background-color: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: $radius-sm;
+}
+
+.positionRowHeader {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.removeBtn {
+  padding: $spacing-xs $spacing-sm;
+  background-color: transparent;
+  color: $color-error;
+  border: 1px solid rgba(139, 26, 26, 0.4);
+  border-radius: $radius-sm;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all $transition-fast;
+
+  &:hover {
+    background-color: rgba(139, 26, 26, 0.1);
+  }
+}
+
+.addBtn {
+  align-self: flex-start;
+  padding: $spacing-sm $spacing-md;
+  background-color: transparent;
+  color: $color-primary;
+  border: 1px dashed rgba(184, 134, 11, 0.5);
+  border-radius: $radius-sm;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all $transition-fast;
+
+  &:hover {
+    background-color: rgba(184, 134, 11, 0.08);
+  }
+}
+
+.empty {
+  color: $color-text-secondary;
+  font-size: 13px;
+  margin: 0;
+}

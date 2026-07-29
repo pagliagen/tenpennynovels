@@ -71,7 +71,7 @@ export class AIWebhookController {
         // requestId might not be a valid ObjectId in edge cases — ignore
       }
       const defaultPosition = triggerPosition
-        || ((location.positions && location.positions.length > 0) ? location.positions[0] : undefined);
+        || ((location.positions && location.positions.length > 0) ? location.positions[0].name : undefined);
 
       const resolvedCharacterId = (character as any)?._id?.toString() || botCharacterId || undefined;
 

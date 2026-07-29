@@ -29,8 +29,12 @@ export class MessageContext {
   /** Whether the character requesting these messages is a master — editHistory is master-only. */
   public readonly isViewerMaster: boolean;
 
-  constructor(isViewerMaster: boolean = false) {
+  /** characterId of the character requesting these messages — needed to mask fields the viewer authored but isn't meant to see the outcome of (e.g. Raggirare rolls). */
+  public readonly viewerCharacterId: string;
+
+  constructor(isViewerMaster: boolean = false, viewerCharacterId: string = '') {
     this.isViewerMaster = isViewerMaster;
+    this.viewerCharacterId = viewerCharacterId;
   }
 
   /**

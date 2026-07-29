@@ -18,7 +18,10 @@
 
 'use client';
 
+import { useRouter } from 'next/router';
+
 import { usePresence } from '@/hooks/usePresence';
+import { useAuthStore } from '@/store/authStore';
 import { useGameStateStore } from '@/store/gameStateStore';
 import { useWindowManagerStore } from '@/store/windowManagerStore';
 import styles from '@/styles/components/PresenceSection.module.scss';
@@ -39,8 +42,10 @@ import styles from '@/styles/components/PresenceSection.module.scss';
  * ```
  */
 export function LocationPresenceList(): JSX.Element {
+  const router = useRouter();
   const { locationPresence, isLoading } = usePresence();
   const { openWindow } = useWindowManagerStore();
+  const { selectedCharacter, hasGamePermission } = useAuthStore();
 
   // Get current location from GameStateStore (SINGLE SOURCE OF TRUTH)
   const currentLocationName = useGameStateStore((state) => state.currentLocationName);
@@ -75,6 +80,16 @@ export function LocationPresenceList(): JSX.Element {
                 className={styles.playerButton}
                 aria-label={`${presence.characterName}. Clicca per vedere profilo`}
                 onClick={() => {
+                  const isOwnDraftCharacter =
+                    presence.characterId === selectedCharacter?._id &&
+                    selectedCharacter?.playerStatus === 'draft' &&
+                    hasGamePermission('game:character:wizard');
+
+                  if (isOwnDraftCharacter) {
+                    router.push('/character/wizard');
+                    return;
+                  }
+
                   openWindow('characterSheet', {
                     characterId: presence.characterId,
                     characterName: presence.characterName,

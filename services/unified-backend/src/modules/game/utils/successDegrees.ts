@@ -44,7 +44,7 @@ export function calculateSuccessDegree(rollResult: number, targetValue: number):
   }
   
   // Calculate success degrees
-  const extremeThreshold = Math.floor(targetValue * 0.20); // 1/5 (Call of Cthulhu standard)
+  const extremeThreshold = Math.floor(targetValue * 0.25); // 1/4 (house rule, not standard CoC 1/5)
   const hardThreshold = Math.floor(targetValue * 0.50); // 1/2
   
   if (rollResult <= extremeThreshold) {

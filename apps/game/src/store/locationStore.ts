@@ -22,7 +22,7 @@ import { logger } from '@/lib/logger';
 /**
  * Cache Configuration
  */
-const CACHE_VERSION = '1.5.0'; // Bump when ILocation schema changes (v1.5.0: rootLocation for topbar default state)
+const CACHE_VERSION = '1.7.0'; // Bump when ILocation schema changes (v1.7.0: added descriptionImages: string[])
 const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 /**

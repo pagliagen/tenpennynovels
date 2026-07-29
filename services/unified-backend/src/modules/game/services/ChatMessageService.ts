@@ -137,8 +137,9 @@ export class ChatMessageService {
 
     logger.debug(`[ChatMessageService.getMessages] ${filtered.length} messages after filtering`);
 
-    // Transform batch with context (avoids N+1) — isMaster gates editHistory visibility
-    const context = new MessageContext(isMaster);
+    // Transform batch with context (avoids N+1) — isMaster gates editHistory visibility,
+    // viewerCharacterId gates confrontation result fields (Raggirare hides the outcome from its own author)
+    const context = new MessageContext(isMaster, characterId);
     const enriched = await this.transformer.transformBatch(filtered, context);
 
     // Calculate hasMore
