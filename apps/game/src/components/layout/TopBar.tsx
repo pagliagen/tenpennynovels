@@ -345,11 +345,15 @@ export function TopBar({
               }
               title={onLocationDisplayClick ? 'Info sulla location' : undefined}
             >
-              <img
-                src={locationImageUrl}
-                alt={locationName}
+              <div
                 className={styles.locationImage}
-              />
+              >
+                <img
+                  src={locationImageUrl}
+                  alt={locationName}
+                  className={styles.locationImageInner}
+                />
+              </div>
               <div className={styles.locationName} ref={locationNameContainerRef}>
                 <span className={styles.locationNameText} ref={locationNameTextRef}>
                   {locationName}

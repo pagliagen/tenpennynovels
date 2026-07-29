@@ -20,6 +20,8 @@
   grid-template-columns: 200px 1fr;
   gap: $spacing-lg;
   align-items: start;
+  user-select: none;
+  -webkit-user-select: none;
 
   &.hasAuthColumn {
     grid-template-columns: 200px 1fr auto;
@@ -84,6 +86,8 @@
   font-size: 16px;
   line-height: 1.5;
   resize: vertical;
+  user-select: text;
+  -webkit-user-select: text;
 
   &::placeholder {
     color: rgba(232, 212, 160, 0.4);
