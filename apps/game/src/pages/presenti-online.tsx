@@ -18,10 +18,12 @@
 'use client';
 
 import Head from 'next/head';
+import { useRouter } from 'next/router';
 import { useState, useMemo } from 'react';
 
 import { GameLayout } from '@/components/layout/GameLayout';
 import { usePresence } from '@/hooks/usePresence';
+import { useAuthStore } from '@/store/authStore';
 import { useGameStateStore } from '@/store/gameStateStore';
 import { type GlobalPresence } from '@/store/presenceStore';
 import { useWindowManagerStore } from '@/store/windowManagerStore';
@@ -199,7 +201,9 @@ interface PresenceGroupProps {
 }
 
 function PresenceGroup({ title, players, highlight = false }: PresenceGroupProps): JSX.Element {
+  const router = useRouter();
   const { openWindow } = useWindowManagerStore();
+  const { selectedCharacter, hasGamePermission } = useAuthStore();
 
   return (
     <section className={styles.presenceGroup} aria-label={title}>
@@ -219,6 +223,16 @@ function PresenceGroup({ title, players, highlight = false }: PresenceGroupProps
                 presence.characterSurname ? ' ' + presence.characterSurname : ''
               }, in ${presence.locationName}. Clicca per profilo`}
               onClick={() => {
+                const isOwnDraftCharacter =
+                  presence.characterId === selectedCharacter?._id &&
+                  selectedCharacter?.playerStatus === 'draft' &&
+                  hasGamePermission('game:character:wizard');
+
+                if (isOwnDraftCharacter) {
+                  router.push('/character/wizard');
+                  return;
+                }
+
                 openWindow('characterSheet', {
                   characterId: presence.characterId,
                   characterName: presence.characterName,

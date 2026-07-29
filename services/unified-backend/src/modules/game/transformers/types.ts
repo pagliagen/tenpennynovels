@@ -32,6 +32,7 @@ export interface EnrichedChatMessage {
   itemEffect?: EnrichedItemEffect;
   whisper?: EnrichedWhisper;
   socialConflict?: EnrichedSocialConflict;
+  confrontation?: EnrichedConfrontation;
 
   // Optional metadata
   editHistory?: Array<{
@@ -113,6 +114,56 @@ export interface EnrichedSocialConflict {
   result: string;
   attackerSuccessDegree?: 'critical' | 'extreme' | 'hard' | 'normal' | 'failure' | 'fumble';
   defenderSuccessDegree?: 'critical' | 'extreme' | 'hard' | 'normal' | 'failure' | 'fumble';
+  messageForDefender?: string;
+  visibleToDefenderOnly?: boolean;
+}
+
+/**
+ * TiroContrapposto (unified confrontation) result — social + combat.
+ * Mirrors IChat.confrontation (database/models/Chat.ts). Result-revealing fields
+ * (attackRoll/defenseRoll/successLevels/outcome/defenseSkill) are stripped by
+ * MessageTransformer for the attacker when hiddenResultForAttacker is true —
+ * see maskConfrontationForViewer().
+ */
+export interface EnrichedConfrontation {
+  type: 'social' | 'combat';
+  encounterId?: string;
+  turnNumber?: number;
+  phase: 'rolling_initiative' | 'waiting_reaction' | 'result';
+
+  initiativeRolls?: { [characterId: string]: { roll: number; successDegree: string } };
+  firstAttacker?: string;
+
+  constitutionCheckRequired?: boolean;
+  constitutionCheckPassed?: boolean;
+  constitutionCheckRoll?: number;
+
+  hiddenResultForAttacker?: boolean;
+  visibleToAttackerOnly?: boolean;
+
+  attackerCharacterId: string;
+  defenderCharacterId: string;
+
+  availableDefenseSkills?: Array<{
+    skillName: string;
+    label: string;
+    specialRule?: string;
+  }>;
+
+  attackSkill?: string;
+  defenseSkill?: string;
+  weaponName?: string;
+  attackRoll?: number;
+  defenseRoll?: number;
+  attackSuccessLevel?: 'critical' | 'extreme' | 'hard' | 'normal' | 'failure' | 'fumble';
+  defenseSuccessLevel?: 'critical' | 'extreme' | 'hard' | 'normal' | 'failure' | 'fumble';
+
+  outcome?: 'hit' | 'miss' | 'parry' | 'dodge' | 'disarm' | 'attacker_wins' | 'defender_wins' | 'draw';
+
+  damageDealt?: number;
+  isCriticalDamage?: boolean;
+  damageFormula?: string;
+
   messageForDefender?: string;
   visibleToDefenderOnly?: boolean;
 }

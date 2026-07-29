@@ -30,11 +30,11 @@ Check `services/unified-backend/src/database/models/` for available models:
 
 When a character is approved:
 1. **equipment** - Array of ObjectIds from occupation starting items
-2. **status** - Set to `'APPROVED'`
+2. **playerStatus** - Set to `'approved'` (lowercase; there is NO top-level `status` field on Character, only `playerStatus`, enum `['draft', 'pending', 'approved']`)
 3. **approvedAt** - Set to `new Date()`
 4. **approvedBy** - Set to system user ID found in database
-5. **gameplayRoles** - Set to `['personaggio']`
-6. **reviewNote** - Optional approval note (can be null or string)
+5. **gameplayRoles** - Set to `['player']` (the enum is `['player', 'master', 'moderatore']` — `'personaggio'` is only the admin-UI display label for the `'player'` role, never the stored value; setting it verbatim fails schema validation on `.save()`)
+6. **reviewNote** - Optional approval note (mirrors the real endpoint, `CharacterApprovalController.ts`, but note this field is NOT declared in the Character schema — with default `strict` mode Mongoose silently drops it on save; the real endpoint's own code even calls it a "legacy field" for the reject path. Harmless to set for parity, but don't rely on reading it back.)
 7. **reviewHistory** - Add entry with:
    - `action: 'approve'`
    - `reviewedBy` - ObjectId of system user (required by schema)
@@ -78,13 +78,13 @@ When user requests character approval:
    ```
 
 3. **Find system user for reviewedBy**:
-   - Search for admin/master user in database
-   - If not found, search for user with admin/system email or username
+   - Search for admin user (`canAccessAdminPanel: true`) or by known `username`
+   - User model has no `role` field — don't query on it
    - Fallback: use first available user
    - If no user found, throw error (reviewedBy is required by schema)
 
 4. **Validate character**:
-   - Find character by ID with status `PENDING_APPROVAL`
+   - Find character by ID with `playerStatus: 'pending'`
    - Verify it exists
    - Return clear error if invalid
 
@@ -148,7 +148,7 @@ function getNextSunday(): Date {
 ## Key Considerations
 - **Always close connection** after use
 - **Use try/catch** for error handling
-- **Verify character exists** and is in PENDING_APPROVAL status
+- **Verify character exists** and has `playerStatus: 'pending'`
 - **Verify SocialClassConfig exists** for calculated FINANZA skill
 - **Delete existing CharacterFinances** before creating new one
 - **Handle skills format** correctly (Map vs object, with SkillBreakdown support)

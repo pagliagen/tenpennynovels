@@ -20,11 +20,23 @@ interface LocationRow {
   name: string;
   description: string;
   parentLocationName: string;
-  tags: string;
   filename: string;
   // "prompt" esiste in locations.csv (prompt AI per local-tools/imagegen) ma NON
   // va a DB: volutamente non incluso in questa interfaccia/mapping.
 }
+
+// Positions di default per ogni location: nessun dato per-location in CSV,
+// image lasciata vuota (nessun asset associato ancora).
+const DEFAULT_POSITIONS = [
+  {
+    name: 'Ingresso',
+    description: "Punto d'ingresso alla location: qui i personaggi arrivano provenendo dall'esterno."
+  },
+  {
+    name: 'Uscita',
+    description: "Punto d'uscita dalla location: da qui i personaggi possono allontanarsi verso altre zone."
+  }
+];
 
 function slugify(text: string): string {
   return text
@@ -132,10 +144,6 @@ async function seedLocations() {
           continue;
         }
 
-        const tags = row.tags
-          ? row.tags.split(',').map(t => t.trim().toLowerCase()).filter(Boolean)
-          : [];
-
         const doc = {
           name: row.name,
           slug: slugify(row.name),
@@ -144,7 +152,7 @@ async function seedLocations() {
           district: level === 'root' ? row.name : (parentDoc?.district || parentDoc?.name || ''),
           parentLocation: parentDoc?._id || undefined,
           locationLevel: level,
-          tags,
+          positions: DEFAULT_POSITIONS,
           sortOrder: sortOrder++,
           settings: {
             visible: true,

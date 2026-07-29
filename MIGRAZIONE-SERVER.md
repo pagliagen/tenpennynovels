@@ -58,6 +58,8 @@ Quanto segue è verificato sul server reale, non dedotto. Diversi punti correggo
 
 **gennaropaglia.me** — confermato: **solo file statici** (`index.html`, `styles.css`, CV in pdf), nessun processo, nessun backend. La tua descrizione ("c'è discord-bot e server") si riferisce in realtà a `thekeeperarchive.it`, non a questo dominio — vedi sotto.
 
+Copia scaricata in locale il 28/07/2026: `progetti-personali/gennaropaglia.me/` — 3 file, 128KB (`index.html`, `styles.css`, `Gennaro_Paglia_CV.pdf`) + `_deploy/nginx-gennaropaglia.me.conf` (config nginx del vecchio server, `_deploy/` **non** va copiata nella web root).
+
 **thekeeperarchive.it**:
 - Sito statico sul dominio principale (marketing page, ~44KB)
 - `keeper-bot` (Discord bot, PM2, 41MB RAM, Node richiesto `>=22.13.0` per `engines` — **ma gira in produzione su v18.20.8**, violazione del proprio vincolo)
@@ -76,7 +78,21 @@ Quanto segue è verificato sul server reale, non dedotto. Diversi punti correggo
 - Cron job dedicato: `0 6 * * * /home/ubuntu/rebootCharacterSheet.js` (reset giornaliero schede personaggio) — va migrato nel crontab del nuovo server 2
 - Nginx: due `server{}` — uno per il sito (statico + `location /rm` con `autoindex on`, da rivedere: espone il filesystem) e uno per `server.misteryinvestigation.it` che fa da reverse proxy verso `localhost:3101` con supporto WebSocket
 
-**Trovato ma non nella tua lista — `susannaantonelli.me`** (verificato: esiste solo `.me`, non `.it`): sito statico (~1.8MB, CV+portfolio PDF di terzi), certificato Let's Encrypt attivo, nginx configurato. **Deciso: si abbandona**, non va su nessuno dei due nuovi server.
+**`susannaantonelli.me` — decisione ribaltata il 28/07/2026: si migra** (era "si abbandona"). Sito statico, 12 file, 1.8MB: `index.html`, 9 immagini in `assets/`, CV e portfolio in PDF. Nessun processo, nessun backend, nessun database. Certificato Let's Encrypt attivo, nginx configurato (`try_files $uri $uri/ =404`, redirect 80→443 gestito da certbot).
+
+Copia scaricata in locale il 28/07/2026: `progetti-personali/susannaantonelli.me/` (file del sito) + `susannaantonelli.me/_deploy/nginx-susannaantonelli.me.conf` (config nginx del vecchio server, come riferimento — `_deploy/` **non** va copiata nella web root del nuovo server).
+
+**Sito riscritto il 28/07/2026 sulla base di `Susanna_Antonelli_Portfolio.pdf`** (14 pagine), su tua richiesta di aderire pedissequamente al portfolio senza inventare testi. Il vecchio `index.html` è conservato in `_deploy/index.html.pre-portfolio-2026-07-28`. Cosa è cambiato:
+- **Rimossi** dal sito i contenuti che nel portfolio non esistono: la metrica "+65% follower in 9 mesi (da 17.000 a 28.000)" su CSEN (il portfolio dice esplicitamente che il lavoro *non* è stato valutato su like/visualizzazioni), il "+30% follower in 3 mesi" su Certo Festival, il case study **diTerre**, l'intera timeline "Esperienze" con date e datori di lavoro (viene dal CV, non dal portfolio) e il riferimento "Terni / remoto"
+- **Aggiunti** i testi del portfolio che mancavano: i tre blocchi Problema/Scelte/Risultato per esteso su entrambi i case study, i sottocapitoli "Approccio show don't tell" e "Approccio educativo e normalizzante", "Perchè dovremmo lavorare insieme" e "Fun Fact"
+- **Asset estratti dal PDF** e aggiunti: la foto polaroid con la scritta "Content Strategist" (`assets/susanna-polaroid.webp`) e le 4 immagini dell'archivio visivo che sul sito mancavano (`work-10` … `work-13`): "Hai la sindrome dell'impostore?", Simanjiro/The White Lodge, copertina Certo Festival, L'Aperitologo
+- Ruolo allineato al portfolio: **"Content Strategist"**, non più "Content Strategist & Copywriter"
+- Verifica automatica eseguita: tutti gli 85 blocchi di testo del sito risultano presenti **verbatim** nel PDF (le uniche stringhe non-portfolio sono le etichette di interfaccia: voci di menu, label dei pulsanti, footer)
+- ⚠️ Il portfolio scrive **"Perchè dovremmo lavorare insieme"** senza accento corretto (andrebbe "Perché"). È riportato verbatim come da tua richiesta: da correggere in entrambi (PDF e sito) se vuoi
+
+**Dominio — deciso il 28/07/2026: si tiene `susannaantonelli.me` dov'è, su Register.it.** È una registrazione gratuita, non costa nulla lasciarla lì: nessun transfer, nessun dominio nuovo, in deroga alla logica applicata agli altri tre domini (abbandonare i vecchi, registrare nuovi `.com` su Cloudflare). La decisione si riapre **quando si avvicina la scadenza**, non prima.
+
+Dati verificati via whois il 28/07/2026: registrar **Register SPA**, nameserver `ns1/ns2.register.it`, creazione **17/07/2026**, **scadenza registry 17/07/2027**. Da rivedere entro giugno 2027 — se il rinnovo non è gratuito, allora si decide se rinnovare a pagamento, spostare o abbandonare (il sito è di terzi: la scelta va confermata con l'intestataria).
 
 **Cruft trovato sul box attuale — deciso: resta tutto indietro, non si migra nulla di questo**:
 - `/home/ubuntu/chatgpt/myenv/`: virtualenv Python da **5GB**, non referenziato da nessun servizio/cron/nginx trovato — esperimento abbandonato
@@ -98,7 +114,7 @@ Verificato oggi contro il listino ufficiale OVHcloud (VPS 2027): VPS-1 è il pia
 
 Ordine consigliato: prima le cose semplici (basso rischio, validano il nuovo server), poi MysteryInvestigation per ultimo (unico con downtime/dati reali in gioco).
 
-### 1. gennaropaglia.me e susannaantonelli.me (se confermato che restano)
+### 1. gennaropaglia.me e susannaantonelli.me
 
 Copia file statici + config nginx + certificato Let's Encrypt nuovo (il certificato attuale non è trasferibile, va riemesso sul nuovo dominio/IP). Nessun processo, nessun rollback complesso: se qualcosa non torna, il vecchio server resta lì finché non si spegne il DNS.
 
@@ -221,22 +237,40 @@ Non un elenco teorico: sono problemi reali trovati sul box condiviso oggi. Vale 
 
 Tutti e 4 i domini risolvono già verso l'IP della VPS OVH attuale (`51.83.47.109`) — nessuno è realmente servito da Serverplan oggi.
 
-| Dominio | Registrazione | Hosting | Nameserver attuali |
-|---|---|---|---|
-| tenpennynovels.com | Serverplan | Serverplan (piano "hosting condiviso", **inutilizzato** — il sito gira su OVH) | ns1/ns2.cmshigh.com |
-| misteryinvestigation.it | Serverplan | — (tutto su OVH) | ns1-3.dns4userver.com |
-| thekeeperarchive.it | Serverplan | — (tutto su OVH) | ns1/ns2.register.it |
-| gennaropaglia.me | Serverplan | — (tutto su OVH) | ns1/ns2.register.it |
+Tabella riverificata via `whois` + `dig` il **28/07/2026** — due voci erano in drift, vedi note sotto.
+
+| Dominio | Registrar | Scadenza | Hosting | Nameserver reali |
+|---|---|---|---|---|
+| tenpennynovels.com | Server Plan Srl | **18/08/2026** | Serverplan (piano "hosting condiviso", **inutilizzato** — il sito gira su OVH) | ⚠️ `elma`/`rayden.ns.cloudflare.com` — **già su Cloudflare** |
+| misteryinvestigation.it | Server Plan s.r.l. | **15/10/2026** | — (tutto su OVH) | ns1-3.dns4userver.com |
+| thekeeperarchive.it | ⚠️ **Register S.p.a.** (non più Serverplan) | **17/07/2027** | — (tutto su OVH) | ns1/ns2.register.it |
+| gennaropaglia.me | Register SPA | ⚠️ **16/10/2026** | — (tutto su OVH) | ns1/ns2.register.it |
+| susannaantonelli.me | Register SPA (**gratuito**) | 17/07/2027 | — (tutto su OVH) | ns1/ns2.register.it |
+
+**Tre cose che questa verifica ha cambiato:**
+
+1. **I nameserver di `tenpennynovels.com` sono già su Cloudflare** (`elma`/`rayden.ns.cloudflare.com`), non più `ns1/ns2.cmshigh.com` come scritto qui prima. Il passaggio è fatto: la voce corrispondente in checklist va spuntata. Resta da fare **solo** il transfer-in del registrar, che è ancora Server Plan Srl.
+2. **`thekeeperarchive.it` non è più su Serverplan**: è passato a **Register S.p.a.**, intestato a Gennaro Paglia, con scadenza spostata al 17/07/2027 (stessa data e stesso registrar di `susannaantonelli.me` — sembra un lotto di lavoro fatto il 17/07/2026). Questo lo toglie dal gruppo "domini Serverplan da declassare".
+3. **`gennaropaglia.me` scade il 16/10/2026**, cioè **fra meno di tre mesi**, e `misteryinvestigation.it` il giorno prima (15/10/2026). Il piano prevede di abbandonarli entrambi e sostituirli con nuovi `.com`, quindi la scadenza non è un problema in sé — **ma diventa la deadline reale della migrazione su Server 2**: se il 15-16 ottobre arriva prima del cutover, i due siti smettono di risolvere. Vedi nota dedicata sotto.
 
 ### Checklist prima del 18 agosto
 
 - [ ] Verificare se `privacy@tenpennynovels.com` (o altre caselle sul dominio) sono ospitate sull'hosting Serverplan — se sì, migrarle (Workspace/Zoho/forwarding) **prima** di toccare il piano
 - [ ] Esportare/fotografare la zona DNS attuale di tenpennynovels.com su Serverplan (record A, MX, TXT) come backup
 - [x] ~~Confermare se il 18 agosto è la scadenza solo dell'hosting o anche della registrazione del dominio~~ — **confermato: sono bundle, viaggiano insieme**
-- [ ] Aggiungere tenpennynovels.com a Cloudflare, cambiare nameserver
-- [ ] Avviare transfer-in della registrazione su Cloudflare Registrar (codice EPP già disponibile)
+- [x] ~~Aggiungere tenpennynovels.com a Cloudflare, cambiare nameserver~~ — **fatto**, verificato via `dig` il 28/07: i NS sono `elma`/`rayden.ns.cloudflare.com`
+- [ ] Avviare transfer-in della registrazione su Cloudflare Registrar (codice EPP già disponibile) — **l'unica cosa ancora aperta sul dominio**, il registrar è ancora Server Plan Srl
 - [ ] Checkpoint 8-10 agosto: se il transfer non è concluso, rinnovo/declassamento di sicurezza a Serverplan
-- [ ] Declassare anche gli altri 3 domini a "solo registrazione" su Serverplan (nessun hosting reale in uso lì, meno urgente perché lì hosting e dominio non erano bundle)
+- [ ] Declassare a "solo registrazione" su Serverplan **il solo `misteryinvestigation.it`** — è l'unico altro dominio rimasto lì (thekeeperarchive.it è passato a Register, i due `.me` sono già su Register)
+
+### Deadline dimenticata: 15-16 ottobre 2026
+
+`misteryinvestigation.it` scade il **15/10/2026** e `gennaropaglia.me` il **16/10/2026**. Entrambi sono destinati all'abbandono, quindi non vanno rinnovati — ma questo significa che **la migrazione su Server 2 deve essere conclusa prima**, o i siti restano irraggiungibili nella finestra fra scadenza e nuovo dominio. Da fare prima di quella data, in quest'ordine:
+
+- [ ] Registrare i nuovi domini `.com` su Cloudflare (mystery, keeper, gennaro) — non serve aspettare il provisioning di Server 2
+- [ ] Verificare caselle email attive su `misteryinvestigation.it` e `gennaropaglia.me` prima di lasciarli scadere (già in checklist finale, ma ora ha una data)
+- [ ] Cutover di MysteryInvestigation su Server 2 **entro inizio ottobre**, non a ridosso
+- [ ] Decidere se tenere i vecchi domini un ciclo in più *solo* per fare 301 verso i nuovi (costo di un rinnovo contro la perdita di link e indicizzazione) — se sì, il rinnovo va fatto **prima** del 15 ottobre, non dopo
 
 ### La domanda di oggi: spostare la registrazione su Cloudflare Registrar?
 
@@ -276,12 +310,12 @@ Verificato ora contro la lista ufficiale dei TLD supportati (cloudflare.com/tld-
 
 ## Riepilogo decisioni aperte
 
-1. **Urgente**: conferma cambio nameserver da Serverplan (ticket aperto) → transfer-in registrar appena "Active" su Cloudflare (EPP già in mano) → checkpoint 8-10 agosto con rinnovo Serverplan come rete di sicurezza se serve
+1. **Urgente**: ~~conferma cambio nameserver da Serverplan (ticket aperto)~~ — **fatto, verificato il 28/07: i NS di tenpennynovels.com sono su Cloudflare**. Resta il transfer-in del registrar (EPP già in mano, registrar ancora Server Plan Srl, dominio in scadenza 18/08/2026) → checkpoint 8-10 agosto con rinnovo Serverplan come rete di sicurezza se serve
 2. Verificare mailbox `@tenpennynovels.com` su Serverplan prima di lasciare andare l'hosting lì (confermato attivo: MX, SPF, DKIM, CalDAV/CardDAV)
-3. Verificare email/dipendenze su misteryinvestigation.it, thekeeperarchive.it, gennaropaglia.me prima di lasciarli scadere
+3. Verificare email/dipendenze su misteryinvestigation.it, thekeeperarchive.it, gennaropaglia.me prima di lasciarli scadere — **ora c'è una data: 15/10/2026 (mystery) e 16/10/2026 (gennaropaglia)**, vedi "Deadline dimenticata" nella sezione Domini. `thekeeperarchive.it` invece è al sicuro fino al 17/07/2027
 4. thekeeperarchive.it: se il bot è ancora in uso, aggiornare webhook/callback prima del cambio dominio
 5. ~~Server 2: dimensionamento~~ — **deciso: VPS-1** (2 vCPU/4GB/40GB, €4.65/mese), vedi sezione dedicata con i numeri della ricognizione del 26/07
-6. ~~`susannaantonelli.me` trovato sul server condiviso~~ — **deciso: si abbandona**, non esiste una `.it` corrispondente (verificato)
+6. ~~`susannaantonelli.me` trovato sul server condiviso~~ — **deciso il 28/07: si migra su Server 2** (ribalta la decisione precedente di abbandonarlo), file già in locale in `progetti-personali/susannaantonelli.me/`. **Dominio: resta su Register.it**, registrazione gratuita, nessun transfer — si riapre alla scadenza del **17/07/2027**
 7. ~~Elasticsearch, dual-write con Qdrant~~ — **deciso: uso reale confermato nel codice, va provisionato su server 1** e documentato in `20-backend.md`/`30-ai-services.md` (gap da chiudere, non feature da eliminare)
 8. ~~Node: v22.13.1 in produzione vs v24.18.0 in `.nvmrc`~~ — **deciso: v24.18.0 ovunque**, su entrambi i server nuovi (soddisfa anche il vincolo `>=22.13.0` di keeper-bot/keeper-server)
 9. ~~`backupovh.sql`/`importFromMySql.js`~~ — **deciso: non si portano**, relitti di una migrazione conclusa

@@ -90,7 +90,7 @@ export function StandardMessage({ message, currentCharacterId }: StandardMessage
             <div className={styles.messageContent}>
               <div className={styles.messageTimestampContainer}>
                 <time className={styles.messageTimestamp}>{interactions.formattedTime}</time>
-                <MessageFooter message={message} onTagClick={interactions.handleTagClick} />
+                <MessageFooter message={message} onPositionClick={interactions.handlePositionClick} />
               </div>
               <MessageContent content={message.content} />
             </div>

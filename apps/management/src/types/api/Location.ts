@@ -7,6 +7,12 @@
 
 export type LocationLevel = 'root' | 'district' | 'location';
 
+export interface LocationPosition {
+  name: string;
+  image?: string;
+  description?: string;
+}
+
 export interface LocationSettings {
   visible: boolean;
   chat: boolean;
@@ -40,8 +46,8 @@ export interface Location {
   parentLocationName: string | null;
   sortOrder: number;
   imageUrl: string | null;
-  tags: string[];
-  positions: string[];
+  descriptionImages: string[];
+  positions: LocationPosition[];
   maxOccupants: number | null;
   settings: LocationSettings;
   statistics: LocationStatistics;
@@ -119,8 +125,8 @@ export interface CreateLocationData {
   district?: string;
   parentLocation?: string | null;
   imageUrl?: string;
-  tags?: string[];
-  positions?: string[];
+  descriptionImages?: string[];
+  positions?: LocationPosition[];
   maxOccupants?: number;
   settings?: Partial<LocationSettings>;
 }
@@ -132,8 +138,8 @@ export interface UpdateLocationData {
   locationLevel?: LocationLevel;
   parentLocation?: string | null;
   imageUrl?: string;
-  tags?: string[];
-  positions?: string[];
+  descriptionImages?: string[];
+  positions?: LocationPosition[];
   maxOccupants?: number;
   sortOrder?: number;
   settings?: Partial<LocationSettings>;

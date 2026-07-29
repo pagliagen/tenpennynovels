@@ -105,7 +105,7 @@ export function ItemUseMessage({ message, currentCharacterId }: ItemUseMessagePr
         </div>
 
         {/* Footer */}
-        <MessageFooter message={message} onTagClick={interactions.handleTagClick} />
+        <MessageFooter message={message} onPositionClick={interactions.handlePositionClick} />
       </div>
     </>
   );

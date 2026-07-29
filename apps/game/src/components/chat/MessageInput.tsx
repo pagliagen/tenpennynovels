@@ -2,11 +2,11 @@
  * Message Input Component (REFACTORED - Phase 2+3)
  *
  * Complete message input with:
- * - Mandatory tag selection
+ * - Mandatory position selection
  * - Action type selector (dropdown for standard, whisper, ooc, item_use, master, moderation)
  * - Conditional selects (whisper target, skill, stat, item)
  * - Textarea with character counter
- * - Action buttons (Tags, Scontro Sociale, Tiro Dado, Usa Skill/Caratteristica)
+ * - Action buttons (Posizione, Scontro Sociale, Tiro Dado, Usa Skill/Caratteristica)
  *
  * @module components/chat/MessageInput
  * @since 2.0.0
@@ -18,20 +18,18 @@ import { useQuery } from '@tanstack/react-query';
 import { useState, useEffect, useRef, useMemo } from 'react';
 
 import { fakePngApi } from '@/lib/api/fakePng';
-import { locationChatsApi } from '@/lib/api/locationChats';
 import { locationPngApi } from '@/lib/api/locationPng';
 import styles from '@/styles/components/chat/MessageInput.module.scss';
 import type { ActionType, SendMessageRequest } from '@/types/chat';
 
-import { FakePngManager } from '../fake-png/FakePngManager';
-import { LocationPngManager } from '../location-png/LocationPngManager';
+import { PngPickerModal } from '../png-picker/PngPickerModal';
 
 import { ActionTypeSelector } from './ActionTypeSelector';
-import { ConditionalSelects } from './ConditionalSelects';
 import { ConfrontationModal } from './ConfrontationModal';
 import { DiceRollModal } from './DiceRollModal';
 import { SkillStatRollModal } from './SkillStatRollModal';
-import { TagSelector } from './TagSelector';
+import { PositionSelector } from './PositionSelector';
+import { TargetSelectionModal } from './TargetSelectionModal';
 import { logger } from '@/lib/logger';
 
 /**
@@ -69,8 +67,8 @@ interface MessageInputProps {
   /** Location occupants (for whisper targets) */
   occupants: Occupant[];
 
-  /** Current tag (mandatory before sending) */
-  currentTag: string | null;
+  /** Current position (mandatory before sending) */
+  currentPosition: string | null;
 
   /** Available positions for this location (from DB) */
   availablePositions?: string[];
@@ -84,8 +82,8 @@ interface MessageInputProps {
   /** Callback when user stops typing */
   onStopTyping?: () => void;
 
-  /** Callback when tag changes */
-  onTagChange: (tag: string) => void;
+  /** Callback when position changes */
+  onPositionChange: (position: string) => void;
 
   /** Disabled state */
   disabled?: boolean;
@@ -98,8 +96,11 @@ interface MessageInputProps {
 const MAX_CHARACTERS = 1200;
 
 /**
- * Get available action types based on character data, game permissions, and
- * whether there is anyone else in the chat to whisper to.
+ * Get available action types for the dropdown, based on character data,
+ * game permissions, and whether there is anyone else in the chat to whisper to.
+ *
+ * "master" is deliberately excluded: authorized characters get a dedicated
+ * toggle button instead (see `hasMasterPermission` in the component).
  */
 function getAvailableActions(characterData: CharacterData, hasWhisperTargets: boolean): ActionType[] {
   // dice_roll, stat_check moved to dedicated buttons
@@ -119,11 +120,6 @@ function getAvailableActions(characterData: CharacterData, hasWhisperTargets: bo
   // Item use (only if has equipped items)
   if (characterData.equippedItems && characterData.equippedItems.length > 0) {
     baseActions.push('item_use');
-  }
-
-  // Master actions (only if has master action permission)
-  if (hasPermission('game:chat:master-action')) {
-    baseActions.push('master');
   }
 
   // Moderation (only if has moderation action permission)
@@ -168,12 +164,12 @@ export function MessageInput({
   locationId,
   characterData,
   occupants,
-  currentTag,
+  currentPosition,
   availablePositions,
   onSendMessage,
   onStartTyping,
   onStopTyping,
-  onTagChange,
+  onPositionChange,
   disabled = false,
   placeholder,
 }: MessageInputProps): JSX.Element {
@@ -181,31 +177,34 @@ export function MessageInput({
   const [messageInput, setMessageInput] = useState('');
   const [selectedAction, setSelectedAction] = useState<ActionType>('standard');
   const [targetCharacters, setTargetCharacters] = useState<string[]>([]);
-  const [selectedSkill, setSelectedSkill] = useState('');
-  const [selectedStat, setSelectedStat] = useState('');
   const [selectedItem, setSelectedItem] = useState('');
   const [isExpanded, setIsExpanded] = useState(false);
-  const [isTagSelectorOpen, setIsTagSelectorOpen] = useState(false);
-  const [isTagButtonFlashing, setIsTagButtonFlashing] = useState(false);
+  const [isPositionSelectorOpen, setIsPositionSelectorOpen] = useState(false);
+  const [isPositionButtonFlashing, setIsPositionButtonFlashing] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [isTargetPopupOpen, setIsTargetPopupOpen] = useState(false);
   const [isSkillStatModalOpen, setIsSkillStatModalOpen] = useState(false);
   const [isDiceRollModalOpen, setIsDiceRollModalOpen] = useState(false);
   const [isConfrontationModalOpen, setIsConfrontationModalOpen] = useState(false);
   const [showPendingReactionModal, setShowPendingReactionModal] = useState(false);
   const [pendingMessageData, setPendingMessageData] = useState<SendMessageRequest | null>(null);
-  const [showFakePngManager, setShowFakePngManager] = useState(false);
-  const [showLocationPngManager, setShowLocationPngManager] = useState(false);
+  const [showPngPicker, setShowPngPicker] = useState(false);
   const [selectedLocationPngId, setSelectedLocationPngId] = useState('');
 
-  // Social conflict mode
-  const [isSocialConflictMode, setIsSocialConflictMode] = useState(false);
-  const [lieText, setLieText] = useState('');
+  const gamePermissions = characterData.gamePermissions || [];
+
+  // Master toggle (column 3, authorized characters only) — not in availableActions,
+  // see getAvailableActions
+  const hasMasterPermission = gamePermissions.includes('game:*') ||
+    gamePermissions.includes('game:chat:master-action');
+
+  const hasFakePngPermission = gamePermissions.includes('game:chat:use-fake-png');
 
   // Fake PNG query (for avatar indicator)
   const { data: fakePngData, refetch: refetchFakePngs } = useQuery({
     queryKey: ['fakePngs', characterData.characterId],
     queryFn: () => fakePngApi.list(characterData.characterId),
-    enabled: !!characterData.gamePermissions?.includes('game:chat:use-fake-png'),
+    enabled: hasFakePngPermission,
     staleTime: 30000, // 30s
   });
 
@@ -240,15 +239,17 @@ export function MessageInput({
 
   const isMasked = !!fakePngData?.activeFakePngId;
 
-  // Location-scoped PNG personas: the list endpoint itself is gated to
-  // master/owner (403 otherwise), so a successful response is the visibility
-  // signal for this UI — no separate client-side role/ownership check needed.
+  // Location-scoped PNG personas: fetched for display only (thumbnail/name of
+  // the current selection in the trigger button). Visibility of the "PNG"
+  // button/tab is decided client-side from hasMasterPermission below — never
+  // from whether this fetch succeeds, so a transient/backend failure doesn't
+  // make the feature disappear (only its content shows an inline error).
   const { data: locationPngData, refetch: refetchLocationPngs } = useQuery({
-    queryKey: ['locationPngs', locationId],
+    queryKey: ['locationPngs', locationId, characterData.characterId],
     queryFn: () => locationPngApi.list(locationId),
+    enabled: hasMasterPermission,
     retry: false,
   });
-  const canUseLocationPng = !!locationPngData;
   const selectedLocationPng = locationPngData?.locationPngs.find(
     (p) => p._id === selectedLocationPngId
   );
@@ -260,8 +261,6 @@ export function MessageInput({
   const hasWhisperTargets = occupants.some((occ) => occ.characterId !== characterData.characterId);
   const availableActions = getAvailableActions(characterData, hasWhisperTargets);
 
-  // Check social conflict permission
-  const gamePermissions = characterData.gamePermissions || [];
   const hasSocialConflictPermission = gamePermissions.includes('game:*') ||
     gamePermissions.includes('game:chat:social-clash');
 
@@ -269,26 +268,28 @@ export function MessageInput({
 
   /**
    * Fall back to 'standard' if the selected action stops being available
-   * (e.g. whisper target left the chat while composing)
+   * (e.g. whisper target left the chat while composing). 'master' is not in
+   * availableActions by design (toggle button, not a dropdown entry) so it's
+   * allowed here as long as the character still has the permission.
    */
   useEffect(() => {
-    if (!availableActions.includes(selectedAction)) {
+    const isValidAction = availableActions.includes(selectedAction) ||
+      (selectedAction === 'master' && hasMasterPermission);
+    if (!isValidAction) {
       setSelectedAction('standard');
       setTargetCharacters([]);
     }
-  }, [availableActions, selectedAction]);
+  }, [availableActions, selectedAction, hasMasterPermission]);
 
   /**
    * Reset action-specific selections when action type changes
    */
   useEffect(() => {
-    setSelectedSkill('');
-    setSelectedStat('');
     setSelectedItem('');
-    if (selectedAction !== 'whisper' && !isSocialConflictMode) {
+    if (selectedAction !== 'whisper' && selectedAction !== 'master') {
       setTargetCharacters([]);
     }
-  }, [selectedAction, isSocialConflictMode]);
+  }, [selectedAction]);
 
   /**
    * Handle input change with typing indicators
@@ -320,12 +321,12 @@ export function MessageInput({
   };
 
   /**
-   * Handle tag selection
+   * Handle position selection
    */
-  const handleTagSelect = (tag: string) => {
-    onTagChange(tag);
-    setIsTagSelectorOpen(false);
-    setIsTagButtonFlashing(false);
+  const handlePositionSelect = (position: string) => {
+    onPositionChange(position);
+    setIsPositionSelectorOpen(false);
+    setIsPositionButtonFlashing(false);
   };
 
   /**
@@ -336,10 +337,10 @@ export function MessageInput({
    * @param displayName - name to show in default message
    */
   const handleSkillStatRoll = async (_type: 'skill' | 'stat', id: string, displayName: string) => {
-    // Validate tag first
-    if (!currentTag) {
-      setIsTagButtonFlashing(true);
-      setTimeout(() => setIsTagButtonFlashing(false), 2000);
+    // Validate position first
+    if (!currentPosition) {
+      setIsPositionButtonFlashing(true);
+      setTimeout(() => setIsPositionButtonFlashing(false), 2000);
       return;
     }
 
@@ -360,8 +361,6 @@ export function MessageInput({
       // Reset form
       setMessageInput('');
       setSelectedAction('standard');
-      setSelectedSkill('');
-      setSelectedStat('');
     } catch (error) {
       logger.error('Failed to send skill/stat roll:', { error });
     } finally {
@@ -373,10 +372,10 @@ export function MessageInput({
    * Handle dice roll from modal
    */
   const handleDiceRoll = async (diceSpec: string) => {
-    // MANDATORY TAG VALIDATION
-    if (!currentTag) {
-      setIsTagButtonFlashing(true);
-      setTimeout(() => setIsTagButtonFlashing(false), 2000);
+    // MANDATORY POSITION VALIDATION
+    if (!currentPosition) {
+      setIsPositionButtonFlashing(true);
+      setTimeout(() => setIsPositionButtonFlashing(false), 2000);
       return;
     }
 
@@ -405,16 +404,16 @@ export function MessageInput({
   };
 
   /**
-   * Send message (or social conflict)
+   * Send message
    */
   const handleSendMessage = async () => {
     if (isSending || !messageInput.trim()) return;
 
-    // MANDATORY TAG VALIDATION
-    if (!currentTag) {
+    // MANDATORY POSITION VALIDATION
+    if (!currentPosition) {
       // Flash button to draw attention
-      setIsTagButtonFlashing(true);
-      setTimeout(() => setIsTagButtonFlashing(false), 2000);
+      setIsPositionButtonFlashing(true);
+      setTimeout(() => setIsPositionButtonFlashing(false), 2000);
       return;
     }
 
@@ -423,37 +422,6 @@ export function MessageInput({
     let data: SendMessageRequest | undefined;
 
     try {
-      // SOCIAL CONFLICT MODE
-      if (isSocialConflictMode) {
-        // Validate social conflict fields
-        if (!selectedSkill) {
-          logger.error('Social conflict requires a skill selection');
-          return;
-        }
-        if (targetCharacters.length === 0) {
-          logger.error('Social conflict requires a target character');
-          return;
-        }
-
-        // Call social conflict API
-        await locationChatsApi.createSocialConflict({
-          locationId,
-          attackerSkill: selectedSkill,
-          defenderCharacterId: targetCharacters[0]!,
-          content: messageInput.trim(),
-          lieText: selectedSkill === 'Raggirare' ? lieText : undefined,
-        });
-
-        // Reset form
-        setMessageInput('');
-        setIsSocialConflictMode(false);
-        setTargetCharacters([]);
-        setSelectedSkill('');
-        setLieText('');
-        return;
-      }
-
-      // STANDARD MESSAGE
       // Build request data
       data = {
         actionType: selectedAction,
@@ -479,10 +447,6 @@ export function MessageInput({
 
       // skill_check/stat_check handled by dedicated SkillStatRollModal, not via selectedAction
 
-      if (selectedAction === 'stat_check' && selectedStat) {
-        data.statName = selectedStat;
-      }
-
       if (selectedAction === 'item_use' && selectedItem) {
         data.itemId = selectedItem;
       }
@@ -493,8 +457,6 @@ export function MessageInput({
       setMessageInput('');
       setSelectedAction('standard');
       setTargetCharacters([]);
-      setSelectedSkill('');
-      setSelectedStat('');
       setSelectedItem('');
     } catch (error: any) {
       logger.error('Failed to send message:', { error });
@@ -523,8 +485,6 @@ export function MessageInput({
       setMessageInput('');
       setSelectedAction('standard');
       setTargetCharacters([]);
-      setSelectedSkill('');
-      setSelectedStat('');
       setSelectedItem('');
       setPendingMessageData(null);
     } catch (error) {
@@ -535,110 +495,125 @@ export function MessageInput({
   };
 
   /**
+   * Send-time target popup is required for whisper (mandatory recipient),
+   * item_use (mandatory item) and master (optional "esito riservato" targets).
+   */
+  const requiresTargetPopup = selectedAction === 'whisper' ||
+    selectedAction === 'item_use' ||
+    selectedAction === 'master';
+
+  /**
+   * Dispatch Invia click: open the target popup when needed, otherwise send directly.
+   */
+  const handleSendClick = () => {
+    if (isSending || !messageInput.trim()) return;
+
+    if (!currentPosition) {
+      setIsPositionButtonFlashing(true);
+      setTimeout(() => setIsPositionButtonFlashing(false), 2000);
+      return;
+    }
+
+    if (requiresTargetPopup) {
+      setIsTargetPopupOpen(true);
+      return;
+    }
+
+    handleSendMessage();
+  };
+
+  /**
+   * Confirm from the target popup: send, then close the popup regardless of outcome
+   * (a failure surfaces via the pending-reaction modal or a logged error).
+   */
+  const handleConfirmTargetPopup = async () => {
+    await handleSendMessage();
+    setIsTargetPopupOpen(false);
+  };
+
+  /**
+   * Toggle "Messaggio Master" (column 3, authorized characters only).
+   * Not a dropdown entry — see getAvailableActions.
+   */
+  const handleToggleMaster = () => {
+    setSelectedAction((prev) => (prev === 'master' ? 'standard' : 'master'));
+  };
+
+  /**
    * Handle Ctrl+Enter to send
    */
   const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
       e.preventDefault();
-      handleSendMessage();
+      handleSendClick();
     }
   };
 
+  const hasAuthColumn = hasMasterPermission || hasFakePngPermission;
+
   return (
     <div className={styles.messageInput}>
-      <div className={styles.messageInputWrapper}>
-        <div className={styles.actionTypeWrapper}>
-          {/* Action Type Selector (hidden in social conflict mode) */}
-          {!isSocialConflictMode && (
-            <div className={styles.actionTypeRow}>
-              <ActionTypeSelector
-                selectedAction={selectedAction}
-                availableActions={availableActions}
-                onActionChange={setSelectedAction}
-              />
-            </div>
-          )}
+      <div className={`${styles.messageInputGrid} ${hasAuthColumn ? styles.hasAuthColumn : ''}`}>
+        {/* Column 1 — action type, position, quick actions */}
+        <div className={styles.columnActions}>
+          <ActionTypeSelector
+            selectedAction={selectedAction}
+            availableActions={availableActions}
+            onActionChange={setSelectedAction}
+          />
 
-          {/* SOCIAL CONFLICT FIELDS */}
-          {isSocialConflictMode && (
-            <div className={styles.socialConflictFields}>
-              <div className={styles.fieldRow}>
-                {/* Target Selector */}
-                <select
-                  value={targetCharacters[0] || ''}
-                  onChange={(e) => setTargetCharacters(e.target.value ? [e.target.value] : [])}
-                  className={styles.selectInput}
-                  disabled={disabled}
-                >
-                  <option value="">Seleziona Avversario</option>
-                  {occupants
-                    .filter((occ) => occ.characterId !== characterData.characterId)
-                    .map((occupant) => (
-                      <option key={occupant.characterId} value={occupant.characterId}>
-                        {occupant.characterName}
-                      </option>
-                    ))}
-                </select>
+          <div className={styles.positionWrapper}>
+            <button
+              type="button"
+              onClick={() => setIsPositionSelectorOpen(!isPositionSelectorOpen)}
+              className={`${styles.actionButton} ${currentPosition ? styles.active : styles.mandatory} ${isPositionButtonFlashing ? styles.flashing : ''}`}
+              title={currentPosition ? `Posizione selezionata: ${currentPosition}` : 'Seleziona una posizione (OBBLIGATORIO)'}
+              disabled={disabled}
+            >
+              Posizione {!currentPosition && '⚠️'}
+            </button>
+          </div>
 
-                {/* Skill Selector (social skills only) */}
-                <select
-                  value={selectedSkill}
-                  onChange={(e) => setSelectedSkill(e.target.value)}
-                  className={styles.selectInput}
-                  disabled={disabled}
-                >
-                  <option value="">Seleziona Abilità</option>
-                  <option value="Ammaliare">Ammaliare (vs Autocontrollo)</option>
-                  <option value="Persuadere">Persuadere (vs Tempra)</option>
-                  <option value="Intimidire">Intimidire (vs Autocontrollo)</option>
-                  <option value="Oratoria">Oratoria (vs Tempra)</option>
-                  <option value="Raggirare">Raggirare (vs Empatia)</option>
-                  <option value="Empatia">Empatia (vs Raggirare)</option>
-                </select>
-              </div>
-
-              {/* Lie Text Field (only for Raggirare) */}
-              {selectedSkill === 'Raggirare' && (
-                <div className={styles.fieldRow}>
-                  <textarea
-                    value={lieText}
-                    onChange={(e) => setLieText(e.target.value)}
-                    placeholder="Intenzione nascosta (visibile solo a te e al master)..."
-                    className={styles.lieTextarea}
-                    disabled={disabled}
-                    rows={2}
-                  />
-                  <div className={styles.lieWarning}>
-                    🔒 Questo testo sarà visibile solo a te e al master. Se fallisci, l'avversario saprà che stai mentendo ma non vedrà questo testo.
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Conditional Selects (whisper target, skill, stat, item) - hidden in social conflict mode */}
-          {!isSocialConflictMode && (
-            <ConditionalSelects
-              selectedAction={selectedAction}
-              currentCharacterId={characterData.characterId}
-              occupants={occupants}
-              skills={characterData.skills}
-              stats={characterData.stats}
-              equippedItems={characterData.equippedItems}
-              targetCharacters={targetCharacters}
-              selectedSkill={selectedSkill}
-              selectedStat={selectedStat}
-              selectedItem={selectedItem}
-              onTargetChange={setTargetCharacters}
-              onSkillChange={setSelectedSkill}
-              onStatChange={setSelectedStat}
-              onItemChange={setSelectedItem}
-            />
-          )}
+          <div className={styles.quickActionsRow}>
+            <button
+              type="button"
+              onClick={() => setIsDiceRollModalOpen(true)}
+              className={`${styles.actionButton} ${styles.iconButton}`}
+              title="Tiro Dado (Configurabile)"
+              aria-label="Tiro Dado"
+              disabled={disabled}
+            >
+              🎲
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsSkillStatModalOpen(true)}
+              className={`${styles.actionButton} ${styles.iconButton}`}
+              title="Usa Abilità o Caratteristica"
+              aria-label="Tiro Skill"
+              disabled={disabled}
+            >
+              📊
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsConfrontationModalOpen(true)}
+              className={`${styles.actionButton} ${styles.iconButton}`}
+              title={
+                !canOpenConfrontations
+                  ? 'Serve almeno un altro personaggio in questa chat per avviare uno scontro'
+                  : 'Scontri (Sociali e Combattimento)'
+              }
+              aria-label="Scontro Sociale"
+              disabled={disabled || !hasSocialConflictPermission || !canOpenConfrontations}
+            >
+              ⚔️
+            </button>
+          </div>
         </div>
 
-        {/* Textarea */}
-        <div className={styles.textareaWrapper}>
+        {/* Column 2 — textarea + counter/expand/invia */}
+        <div className={styles.columnMain}>
           <textarea
             value={messageInput}
             onChange={(e) => handleInputChange(e.target.value)}
@@ -647,146 +622,103 @@ export function MessageInput({
             className={`${styles.textarea} ${isExpanded ? styles.expanded : ''}`}
             disabled={disabled}
           />
-        </div>
- 
-      {/* PNG Avatar Indicator */}
-      {characterData.gamePermissions?.includes('game:chat:use-fake-png') && (
-        <div className={styles.pngAvatarContainer}>
-          <button
-            type="button"
-            className={`${styles.pngAvatar} ${isMasked ? styles.pngAvatarMasked : ''}`}
-            onClick={() => setShowFakePngManager(true)}
-            disabled={disabled}
-            title={isMasked ? `PNG Attivo: ${currentName}` : `Personaggio Reale: ${currentName}`}
-            aria-label="Gestisci identità PNG Light"
-          >
-            {currentAvatar ? (
-              <img src={currentAvatar} alt={currentName} />
-            ) : (
-              <span className={styles.pngAvatarPlaceholder}>
-                {currentName[0]?.toUpperCase()}
-              </span>
-            )}
-          </button>
-          {isMasked && <span className={styles.pngActiveBadge}>🎭</span>}
-        </div>
-      )}
 
-      {/* Location PNG Selector (master or location owner only — gated by API response) */}
-      {canUseLocationPng && (
-        <div className={styles.pngAvatarContainer}>
-          <select
-            value={selectedLocationPngId}
-            onChange={(e) => setSelectedLocationPngId(e.target.value)}
-            className={styles.selectInput}
-            disabled={disabled}
-            title="Posta come PNG della location"
-            aria-label="Seleziona PNG della location"
-          >
-            <option value="">— Io stesso —</option>
-            {locationPngData?.locationPngs.map((png) => (
-              <option key={png._id} value={png._id}>
-                {png.name}{png.surname ? ` ${png.surname}` : ''}
-              </option>
-            ))}
-          </select>
-          <button
-            type="button"
-            className={`${styles.pngAvatar} ${selectedLocationPngId ? styles.pngAvatarMasked : ''}`}
-            onClick={() => setShowLocationPngManager(true)}
-            disabled={disabled}
-            title="Gestisci PNG della location"
-            aria-label="Gestisci PNG della location"
-          >
-            {selectedLocationPng?.avatar ? (
-              <img src={selectedLocationPng.avatar} alt={selectedLocationPng.name} />
-            ) : (
-              <span className={styles.pngAvatarPlaceholder}>🎭</span>
-            )}
-          </button>
-        </div>
-      )}
-      </div>
-
-      {/* Action Buttons */}
-      <div className={styles.inputActions}>
-        {/* Left Actions */}
-        <div className={styles.leftActions}>
-          <button
-            type="button"
-            onClick={() => setIsTagSelectorOpen(!isTagSelectorOpen)}
-            className={`${styles.actionButton} ${currentTag ? styles.active : styles.mandatory} ${isTagButtonFlashing ? styles.flashing : ''}`}
-            title={currentTag ? `Tag selezionato: ${currentTag}` : 'Seleziona un tag (OBBLIGATORIO)'}
-            disabled={disabled}
-          >
-            Tags {!currentTag && '⚠️'}
-          </button>
-          <button
-            type="button"
-            onClick={() => setIsConfrontationModalOpen(true)}
-            className={styles.actionButton}
-            title={
-              !canOpenConfrontations
-                ? 'Serve almeno un altro personaggio in questa chat per avviare uno scontro'
-                : 'Scontri (Sociali e Combattimento)'
-            }
-            disabled={disabled || !hasSocialConflictPermission || !canOpenConfrontations}
-          >
-            ⚔️ Scontri
-          </button>
-          <button
-            type="button"
-            onClick={() => setIsDiceRollModalOpen(true)}
-            className={styles.actionButton}
-            title="Tiro Dado (Configurabile)"
-            disabled={disabled || isSocialConflictMode}
-          >
-            🎲 Tiro Dado
-          </button>
-          <button
-            type="button"
-            onClick={() => setIsSkillStatModalOpen(true)}
-            className={styles.actionButton}
-            title="Usa Abilità o Caratteristica"
-            disabled={disabled || isSocialConflictMode}
-          >
-            📊 Usa Skill/Caratteristica
-          </button>
-
-        </div>
-
-        {/* Right Actions */}
-        <div className={styles.rightActions}>
-          <div className={styles.characterCounter}>
-            {messageInput.length}/{MAX_CHARACTERS}
+          <div className={styles.mainFooter}>
+            <div className={styles.characterCounter}>
+              {messageInput.length}/{MAX_CHARACTERS}
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsExpanded(!isExpanded)}
+              className={styles.expandCollapseButton}
+              aria-label={isExpanded ? 'Riduci textarea' : 'Espandi textarea'}
+              title={isExpanded ? 'Riduci textarea' : 'Espandi textarea'}
+              disabled={disabled}
+            >
+              {isExpanded ? '↑' : '↓'}
+            </button>
+            <button
+              onClick={handleSendClick}
+              disabled={!messageInput.trim() || isSending || messageInput.length > MAX_CHARACTERS || disabled}
+              className={styles.submitButton}
+            >
+              {isSending ? 'Invio...' : 'Invia'}
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={() => setIsExpanded(!isExpanded)}
-            className={styles.expandCollapseButton}
-            aria-label={isExpanded ? 'Riduci textarea' : 'Espandi textarea'}
-            title={isExpanded ? 'Riduci textarea' : 'Espandi textarea'}
-            disabled={disabled}
-          >
-            {isExpanded ? '↑' : '↓'}
-          </button>
-          <button
-            onClick={handleSendMessage}
-            disabled={!messageInput.trim() || isSending || messageInput.length > MAX_CHARACTERS || disabled}
-            className={styles.submitButton}
-          >
-            {isSending ? 'Invio...' : 'Invia'}
-          </button>
         </div>
+
+        {/* Column 3 — authorized only: master toggle, PNG */}
+        {hasAuthColumn && (
+          <div className={styles.columnAuth}>
+            {hasMasterPermission && (
+              <button
+                type="button"
+                onClick={handleToggleMaster}
+                className={`${styles.actionButton} ${selectedAction === 'master' ? styles.active : ''}`}
+                title="Componi come annuncio master"
+                disabled={disabled}
+              >
+                📢 Messaggio Master
+              </button>
+            )}
+
+            {/* PNG: single popup — PNG del personaggio + PNG di location */}
+            {(hasFakePngPermission || hasMasterPermission) && (
+              <button
+                type="button"
+                className={`${styles.actionButton} ${styles.pngButton} ${(isMasked || selectedLocationPngId) ? styles.active : ''}`}
+                onClick={() => setShowPngPicker(true)}
+                disabled={disabled}
+                title={
+                  isMasked
+                    ? `PNG Attivo: ${currentName}`
+                    : selectedLocationPng
+                    ? `PNG di location: ${selectedLocationPng.name}`
+                    : 'Gestisci PNG'
+                }
+                aria-label="Gestisci PNG"
+              >
+                <span className={styles.pngButtonThumb}>
+                  {isMasked && currentAvatar ? (
+                    <img src={currentAvatar} alt="" />
+                  ) : !isMasked && selectedLocationPng?.avatar ? (
+                    <img src={selectedLocationPng.avatar} alt="" />
+                  ) : (
+                    <span className={styles.pngButtonPlaceholder}>
+                      {(isMasked ? currentName : selectedLocationPng?.name || currentName)[0]?.toUpperCase()}
+                    </span>
+                  )}
+                </span>
+                PNG {isMasked && '🎭'}
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Tag Selector Modal */}
-      {isTagSelectorOpen && (
-        <TagSelector
-          selectedTag={currentTag}
+      {/* Send-time target popup (whisper recipient / item / master reserved targets) */}
+      {isTargetPopupOpen && (
+        <TargetSelectionModal
+          actionType={selectedAction as 'whisper' | 'item_use' | 'master'}
+          occupants={occupants}
+          currentCharacterId={characterData.characterId}
+          equippedItems={characterData.equippedItems}
+          targetCharacters={targetCharacters}
+          selectedItem={selectedItem}
+          onTargetChange={setTargetCharacters}
+          onItemChange={setSelectedItem}
+          onConfirm={handleConfirmTargetPopup}
+          onClose={() => setIsTargetPopupOpen(false)}
+        />
+      )}
+
+      {/* Position Selector Modal */}
+      {isPositionSelectorOpen && (
+        <PositionSelector
+          selectedPosition={currentPosition}
           availablePositions={availablePositions}
-          onTagChange={handleTagSelect}
-          onClose={() => setIsTagSelectorOpen(false)}
+          onPositionChange={handlePositionSelect}
+          onClose={() => setIsPositionSelectorOpen(false)}
         />
       )}
 
@@ -823,26 +755,18 @@ export function MessageInput({
         />
       )}
 
-      {/* PNG Light Manager Modal */}
-      {showFakePngManager && (
-        <FakePngManager
+      {/* PNG Picker Modal (PNG del personaggio + PNG di location, unified) */}
+      {showPngPicker && (
+        <PngPickerModal
           characterId={characterData.characterId}
-          onClose={() => {
-            setShowFakePngManager(false);
-            refetchFakePngs(); // Refresh avatar data
-          }}
-        />
-      )}
-
-      {/* Location PNG Manager Modal */}
-      {showLocationPngManager && (
-        <LocationPngManager
           locationId={locationId}
-          onChanged={refetchLocationPngs}
-          onClose={() => {
-            setShowLocationPngManager(false);
-            refetchLocationPngs();
-          }}
+          showFakeSection={hasFakePngPermission}
+          showLocationSection={hasMasterPermission}
+          selectedLocationPngId={selectedLocationPngId}
+          onSelectLocationPng={setSelectedLocationPngId}
+          onFakePngChanged={refetchFakePngs}
+          onLocationPngChanged={refetchLocationPngs}
+          onClose={() => setShowPngPicker(false)}
         />
       )}
 

@@ -46,6 +46,7 @@ import { WeatherDisplay } from '../sidebar/WeatherDisplay';
 import { MinimizedWindowsBar } from '../windows/MinimizedWindowsBar';
 import { WindowRenderer } from '../windows/WindowRenderer';
 
+import { LocationInfoModal } from './LocationInfoModal';
 import { TopBar } from './TopBar';
 import { logger } from '@/lib/logger';
 
@@ -69,12 +70,12 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
   // Utility popups state
   const [showAudioPopup, setShowAudioPopup] = useState(false);
   const [showChatPopup, setShowChatPopup] = useState(false);
+  const [showLocationInfo, setShowLocationInfo] = useState(false);
 
   // Auth store: Get current character and permissions
   const selectedCharacter = useAuthStore((state) => state.selectedCharacter);
   const user = useAuthStore((state) => state.user);
   const adminPanelAccessFromSession = useAuthStore((state) => state.adminPanelAccessFromSession);
-  const hasGamePermission = useAuthStore((state) => state.hasGamePermission);
   const setSelectedCharacter = useAuthStore((state) => state.setSelectedCharacter);
   const setGamePermissions = useAuthStore((state) => state.setGamePermissions);
   const setAdminPanelAccessFromSession = useAuthStore((state) => state.setAdminPanelAccessFromSession);
@@ -159,29 +160,25 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
   }, [selectedCharacter, characterBan, router]);
 
   /**
-   * Redirect to wizard when character has game:character:wizard (draft) and we're on game home.
-   */
-  useEffect(() => {
-    if (!selectedCharacter || !hasGamePermission('game:character:wizard') || selectedCharacter.playerStatus !== 'draft') return;
-    if (router.pathname === '/game') {
-      router.replace('/character/wizard');
-    }
-  }, [selectedCharacter, hasGamePermission, router.pathname, router]);
-
-  /**
    * Initialize locationStore on mount
    *
-   * Ensures locations are loaded from cache or fetched from API.
-   * Required for TopBar and chat entry to work correctly.
+   * Always calls initialize() — the store itself decides whether the persisted
+   * cache is still valid (cacheVersion match + TTL + non-empty) or needs a
+   * refetch; it's cheap to call when already valid (early return, one log
+   * line). Gating this on `locations.length === 0` (as before) meant anyone
+   * with a non-empty persisted cache from a previous schema version NEVER
+   * re-entered the store's own cacheVersion check, so a `positions: string[]`
+   * -> `{name,description}[]` schema change (or any future one) would leave
+   * existing users stuck on stale data indefinitely.
    */
   useEffect(() => {
-    if (selectedCharacter && locations.length === 0) {
+    if (selectedCharacter) {
       if (process.env.NODE_ENV === 'development') {
         logger.warn('[GameLayout] Initializing locationStore');
       }
       useLocationStore.getState().initialize(selectedCharacter._id);
     }
-  }, [selectedCharacter?._id, locations.length]);
+  }, [selectedCharacter?._id]);
 
   /**
    * Calculate TopBar location props from GameStateStore + locationStore
@@ -197,6 +194,9 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
         rootLocation?.imageUrl ||
         (rootLocation?.image ? `/artifacts/locations/${rootLocation.image}` : '/images/topbar/location-image.png'),
       isInLondon: true,
+      description: rootLocation?.description,
+      positions: rootLocation?.positions || [],
+      descriptionImages: rootLocation?.descriptionImages || [],
     };
 
     // Guard: No currentLocation set
@@ -222,6 +222,9 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
         currentLocation.imageUrl ||
         (currentLocation.image ? `/artifacts/locations/${currentLocation.image}` : '/images/topbar/location-image.png'),
       isInLondon: currentLocation.slug === 'londra', // Slug-based check is correct (SEO-friendly)
+      description: currentLocation.description,
+      positions: currentLocation.positions || [],
+      descriptionImages: currentLocation.descriptionImages || [],
     };
   }, [currentLocationId, locations, rootLocation]);
 
@@ -452,6 +455,7 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
             locationName={topBarLocationProps.locationName}
             locationImageUrl={topBarLocationProps.locationImageUrl}
             isInLondon={topBarLocationProps.isInLondon}
+            onLocationDisplayClick={() => setShowLocationInfo(true)}
           />
 
           {/* Body Container - Page content */}
@@ -476,6 +480,17 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
 
       {/* Presence Modal - Side drawer */}
       <PresenceModal />
+
+      {/* Location Info Modal - Name, description and points of interest */}
+      {showLocationInfo && (
+        <LocationInfoModal
+          locationName={topBarLocationProps.locationName}
+          description={topBarLocationProps.description}
+          descriptionImages={topBarLocationProps.descriptionImages}
+          positions={topBarLocationProps.positions}
+          onClose={() => setShowLocationInfo(false)}
+        />
+      )}
 
       {/* Audio Options Popup - Placeholder */}
       {showAudioPopup && (

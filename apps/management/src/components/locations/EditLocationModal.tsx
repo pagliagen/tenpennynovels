@@ -9,6 +9,7 @@ import { Modal } from '@/components/shared/Modal';
 import { FormField } from '@/components/shared/FormField';
 import { ImageUploader } from '@/components/shared/ImageUploader';
 import { GenerateImageButton } from '@/components/shared/GenerateImageButton';
+import { PositionsEditor } from '@/components/locations/PositionsEditor';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useLocation, useUpdateLocation, useLocations } from '@/hooks/api/useLocations';
 import { useNotificationStore } from '@/store/notificationStore';
@@ -38,8 +39,6 @@ export function EditLocationModal({
   const { data: locationsData } = useLocations({ showHidden: true });
 
   const [formData, setFormData] = useState<UpdateLocationData>({});
-  const [tagsInput, setTagsInput] = useState('');
-  const [positionsInput, setPositionsInput] = useState('');
   const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
@@ -52,10 +51,9 @@ export function EditLocationModal({
         parentLocation: location.parentLocation,
         imageUrl: location.imageUrl || '',
         maxOccupants: location.maxOccupants || undefined,
+        positions: location.positions || [],
         settings: { ...location.settings }
       });
-      setTagsInput((location.tags || []).join(', '));
-      setPositionsInput((location.positions || []).join(', '));
       setInitialized(true);
     }
   }, [location, initialized]);
@@ -80,11 +78,7 @@ export function EditLocationModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const data: UpdateLocationData = {
-      ...formData,
-      tags: tagsInput ? tagsInput.split(',').map(t => t.trim()).filter(Boolean) : [],
-      positions: positionsInput ? positionsInput.split(',').map(p => p.trim()).filter(Boolean) : [],
-    };
+    const data: UpdateLocationData = { ...formData };
 
     try {
       await updateLocation.mutateAsync({ id: locationId, data });
@@ -246,21 +240,16 @@ export function EditLocationModal({
               min={1}
               max={100}
             />
-            <FormField
-              label="Tags (separati da virgola)"
-              name="tags"
-              value={tagsInput}
-              onChange={(e: any) => setTagsInput(e.target.value)}
-            />
           </div>
 
-          <FormField
-            label="Posizioni (separate da virgola)"
-            name="positions"
-            value={positionsInput}
-            onChange={(e: any) => setPositionsInput(e.target.value)}
-            helpText="Posizioni fisiche all'interno della location"
-          />
+          <div className={styles.section}>
+            <h3>Posizioni</h3>
+            <PositionsEditor
+              positions={formData.positions || []}
+              onChange={(positions) => handleChange('positions', positions)}
+              locationId={locationId}
+            />
+          </div>
 
           {location && (
             <div className={styles.meta}>

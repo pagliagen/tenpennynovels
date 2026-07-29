@@ -115,7 +115,7 @@ export class LocationManagementController {
           parentLocationName: loc.parentLocation?.name || null,
           sortOrder: loc.sortOrder || 0,
           imageUrl: loc.imageUrl || null,
-          tags: loc.tags || [],
+          descriptionImages: loc.descriptionImages || [],
           positions: loc.positions || [],
           maxOccupants: loc.maxOccupants || null,
           settings: {
@@ -222,7 +222,7 @@ export class LocationManagementController {
         parentLocationName: location.parentLocation?.name || null,
         sortOrder: location.sortOrder || 0,
         imageUrl: location.imageUrl || null,
-        tags: location.tags || [],
+        descriptionImages: location.descriptionImages || [],
         positions: location.positions || [],
         maxOccupants: location.maxOccupants || null,
         childCount,
@@ -371,7 +371,7 @@ export class LocationManagementController {
     try {
       const {
         name, district, description, settings, locationLevel,
-        parentLocation, imageUrl, tags, positions, maxOccupants
+        parentLocation, imageUrl, descriptionImages, positions, maxOccupants
       } = req.body;
 
       if (!name || name.trim().length === 0) {
@@ -437,7 +437,7 @@ export class LocationManagementController {
         locationLevel,
         parentLocation: parentLocation || undefined,
         imageUrl: imageUrl || undefined,
-        tags: tags || [],
+        descriptionImages: descriptionImages || [],
         positions: positions || [],
         maxOccupants: maxOccupants || undefined,
         sortOrder: siblingCount,
@@ -499,7 +499,7 @@ export class LocationManagementController {
       const locationId = req.params.locationId;
       const {
         name, district, description, settings, locationLevel,
-        parentLocation, imageUrl, tags, positions, maxOccupants, sortOrder
+        parentLocation, imageUrl, descriptionImages, positions, maxOccupants, sortOrder
       } = req.body;
 
       const location = await Location.findById(locationId);
@@ -537,7 +537,7 @@ export class LocationManagementController {
       if (description !== undefined) updateData.description = description.trim();
       if (locationLevel !== undefined) updateData.locationLevel = locationLevel;
       if (imageUrl !== undefined) updateData.imageUrl = imageUrl || null;
-      if (tags !== undefined) updateData.tags = tags;
+      if (descriptionImages !== undefined) updateData.descriptionImages = descriptionImages;
       if (positions !== undefined) updateData.positions = positions;
       if (maxOccupants !== undefined) updateData.maxOccupants = maxOccupants;
       if (sortOrder !== undefined) updateData.sortOrder = sortOrder;

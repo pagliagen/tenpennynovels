@@ -81,48 +81,54 @@ export class FinancialUtils {
   /**
    * Initialize character finances based on social class
    */
-  static async initializeCharacterFinances(characterId: string, socialClass: SocialClassConfigData): Promise<void> {
+  static async initializeCharacterFinances(characterId: string, socialClass: SocialClassConfigData, finanzaValue: number): Promise<void> {
     try {
       const { CharacterFinances } = require('../../../database/models');
-      
+
       // Generate random initial cash within the social class range
       const initialCash = Math.floor(
         Math.random() * (socialClass.initialWealth.maxCash - socialClass.initialWealth.minCash + 1)
       ) + socialClass.initialWealth.minCash;
-      
+
       // Check if character finances already exist
       const existingFinances = await CharacterFinances.findOne({ characterId });
-      
+
       if (!existingFinances) {
         // Create new character finances
         const finances = new CharacterFinances({
           characterId,
           socialClass: socialClass.name,
+          financeSkillValue: finanzaValue,
           cash: initialCash,
           bankDeposit: 0,
-          creditLine: socialClass.weeklyCredit,
-          maxCreditLine: socialClass.weeklyCredit,
-          creditResetDate: this.getNextSundayMidnight(),
-          properties: socialClass.initialWealth.hasPrivateApartment ? 
-            [{ 
+          creditLine: {
+            maxWeekly: socialClass.weeklyCredit,
+            currentAvailable: socialClass.weeklyCredit,
+            lastResetDate: new Date(),
+            nextResetDate: this.getNextSundayMidnight()
+          },
+          properties: socialClass.initialWealth.hasPrivateApartment ?
+            [{
               type: socialClass.initialWealth.apartmentType || 'Basic Apartment',
               location: 'London',
               value: initialCash * 2 // Rough estimate
-            }] : []
+            }] : [],
+          lastCalculated: new Date()
         });
-        
+
         await finances.save();
         logger.info(`Character finances initialized for character ${characterId} with social class ${socialClass.name}`);
       } else {
         // Update existing finances if social class changed
         existingFinances.socialClass = socialClass.name;
-        existingFinances.maxCreditLine = socialClass.weeklyCredit;
-        
+        existingFinances.financeSkillValue = finanzaValue;
+        existingFinances.creditLine.maxWeekly = socialClass.weeklyCredit;
+
         // Only reset credit line if it's higher than the new max
-        if (existingFinances.creditLine > socialClass.weeklyCredit) {
-          existingFinances.creditLine = socialClass.weeklyCredit;
+        if (existingFinances.creditLine.currentAvailable > socialClass.weeklyCredit) {
+          existingFinances.creditLine.currentAvailable = socialClass.weeklyCredit;
         }
-        
+
         await existingFinances.save();
         logger.info(`Character finances updated for character ${characterId} with new social class ${socialClass.name}`);
       }

@@ -112,7 +112,12 @@ export function CombatActionMessage({ message, currentCharacterId }: CombatActio
               {message.content && <div className={styles.messageContent}>{message.content}</div>}
 
               {/* Confrontation result display */}
-              {confrontation && confrontation.phase === 'result' && (
+              {confrontation && confrontation.phase === 'result' && confrontation.hiddenResultForAttacker && confrontation.attackRoll === undefined && (
+                <div className={styles.confrontationResult}>
+                  Hai effettuato un tiro di Raggirare.
+                </div>
+              )}
+              {confrontation && confrontation.phase === 'result' && !(confrontation.hiddenResultForAttacker && confrontation.attackRoll === undefined) && (
                 <div className={styles.confrontationResult}>
                   {/* Opposed roll display */}
                   <div className={styles.opposedRoll}>
@@ -165,7 +170,7 @@ export function CombatActionMessage({ message, currentCharacterId }: CombatActio
         </div>
 
         {/* Footer */}
-        <MessageFooter message={message} onTagClick={interactions.handleTagClick} />
+        <MessageFooter message={message} onPositionClick={interactions.handlePositionClick} />
       </div>
     </>
   );

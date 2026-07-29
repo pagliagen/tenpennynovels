@@ -1,6 +1,12 @@
 import mongoose, { Schema, model, Document, QueryFilter } from 'mongoose';
 import { softDeletePlugin, SoftDeleteMethods } from '../plugins/softDeletePlugin';
 
+export interface ILocationPosition {
+  name: string;
+  image?: string;
+  description?: string;
+}
+
 export interface ILocation extends Document, SoftDeleteMethods {
   // Basic info
   name: string;
@@ -11,6 +17,7 @@ export interface ILocation extends Document, SoftDeleteMethods {
   imageUrl?: string; // URL CDN (upload manuale via pannello gestione)
   image?: string;    // Filename statico in apps/game/public/artifacts/locations/ (es. "london.png"),
                       // generato da local-tools/imagegen — stesso pattern di Item.image
+  descriptionImages: string[]; // URL immagini mostrate accanto alla descrizione nel popup info location
 
   // Location settings (control switches)
   settings: {
@@ -122,13 +129,10 @@ export interface ILocation extends Document, SoftDeleteMethods {
     lastActivityAt?: Date;
     peakHours: string[];
   };
-  
-  // Tags for location categorization
-  tags?: string[];
 
   // Physical positions/sub-locations (e.g., "Tavolo 1", "Bancone", "Angolo Nord")
   // Used in chat to indicate where character is within the location
-  positions?: string[];
+  positions?: ILocationPosition[];
 
   // Management info
   createdBy: Schema.Types.ObjectId;
@@ -180,6 +184,10 @@ const LocationSchema = new Schema<ILocation>({
     type: String,
     trim: true,
     maxlength: 255
+  },
+  descriptionImages: {
+    type: [{ type: String, trim: true, maxlength: 500 }],
+    default: []
   },
 
   // Location settings
@@ -425,20 +433,16 @@ const LocationSchema = new Schema<ILocation>({
     lastActivityAt: Date,
     peakHours: [String]
   },
-  
-  // Tags
-  tags: [{
-    type: String,
-    trim: true,
-    lowercase: true
-  }],
 
   // Physical positions within location (e.g., "Tavolo 1", "Bancone")
-  positions: [{
-    type: String,
-    trim: true,
-    maxlength: 50
-  }],
+  positions: {
+    type: [{
+      name: { type: String, required: true, trim: true, maxlength: 50 },
+      image: { type: String, trim: true, maxlength: 500 },
+      description: { type: String, trim: true, maxlength: 500 }
+    }],
+    default: []
+  },
 
   // Management
   createdBy: {

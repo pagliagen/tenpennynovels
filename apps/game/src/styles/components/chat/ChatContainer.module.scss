@@ -13,6 +13,13 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  background: linear-gradient(135deg, #1a1410 0%, #2d2416 100%);
+  border-top: 4px solid;
+  border-image: repeating-linear-gradient(
+    to bottom,
+    black 0 2px,
+    #b8860b 2px 4px
+  ) 1;
 }
 
 /* ACCESSIBILITY */

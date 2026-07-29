@@ -2215,10 +2215,14 @@ export class ChatController {
         const attackerWins = comparison > 0;
         const originalContent = message.content;
 
-        // Update main message with result (attacker won't see rolls due to hiddenResultForAttacker flag)
+        // Update main message with result. Stays 'whisper' (attacker + defender + master
+        // only) — Raggirare is a hidden roll, bystanders in the location must never see it.
+        // The attacker itself won't see the rolls/outcome either: MessageTransformer strips
+        // them per-viewer based on confrontation.hiddenResultForAttacker (see
+        // maskConfrontationForViewer in transformers/MessageTransformer.ts).
         const updateFields: any = {
           actionType: 'social_confrontation',
-          visibility: 'public',
+          visibility: 'whisper',
           'confrontation.phase': 'result',
           'confrontation.defenseSkill': defenseSkillName,
           'confrontation.attackRoll': attackRoll,
@@ -2230,7 +2234,7 @@ export class ChatController {
 
         const updated: any = await Chat.findOneAndUpdate(
           { _id: messageId, actionType: 'confrontation_reaction_request' },
-          { $set: updateFields, $unset: { targetCharacters: '', 'confrontation.availableDefenseSkills': '' } },
+          { $set: updateFields, $unset: { 'confrontation.availableDefenseSkills': '' } },
           { new: true }
         );
 

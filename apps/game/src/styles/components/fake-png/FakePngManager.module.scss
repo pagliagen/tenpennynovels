@@ -38,6 +38,49 @@
   }
 }
 
+.tabs {
+  display: flex;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-xl;
+  border-bottom: 1px solid $brown-40;
+}
+
+.tab {
+  padding: $spacing-sm $spacing-lg;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: $text-secondary;
+  font-family: $font-serif;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    color: $text-primary;
+  }
+}
+
+.tabActive {
+  color: $gold-70;
+  border-bottom-color: $gold-50;
+  font-weight: 600;
+}
+
+.sectionTitle {
+  margin: 0 0 $spacing-md;
+  color: $text-primary;
+  font-family: $font-heading;
+  font-size: 18px;
+}
+
+.sectionDescription {
+  margin: 0 0 $spacing-lg;
+  color: $text-secondary;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
 .closeButton {
   background: none;
   border: none;

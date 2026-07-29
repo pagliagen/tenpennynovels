@@ -12,7 +12,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 
-import { useChatCurrentTag } from '@/store/chatStore';
+import { useChatCurrentPosition } from '@/store/chatStore';
 import styles from '@/styles/components/chat/MessageList.module.scss';
 import type { ChatMessage } from '@/types/chat';
 
@@ -29,7 +29,7 @@ interface MessageListProps {
   /** Loading state */
   isLoading?: boolean;
 
-  /** Current character ID (for tag-based visibility) */
+  /** Current character ID (for position-based visibility) */
   currentCharacterId?: string;
 
   /** Is current character a master (for visibility rules) */
@@ -92,28 +92,28 @@ function isMessageVisible(
 }
 
 /**
- * Calculate if a message should be dimmed based on current tag
+ * Calculate if a message should be dimmed based on current position
  *
  * Logic:
- * - If no current tag selected → show all normally
- * - If message.position !== currentTag → dim
+ * - If no current position selected → show all normally
+ * - If message.position !== currentPosition → dim
  * - Applies to ALL message types without exception
  *
  * @param {ChatMessage} message - Message to check
- * @param {string | null} currentTag - Current active tag from chatStore
+ * @param {string | null} currentPosition - Current active position from chatStore
  * @returns {boolean} True if message should be dimmed
  */
 function shouldDimMessage(
   message: ChatMessage,
-  currentTag: string | null
+  currentPosition: string | null
 ): boolean {
-  // No current tag selected → show all normally
-  if (!currentTag) {
+  // No current position selected → show all normally
+  if (!currentPosition) {
     return false;
   }
 
-  // Dim if message tag doesn't match current tag
-  return message.position !== currentTag;
+  // Dim if message position doesn't match current position
+  return message.position !== currentPosition;
 }
 
 /**
@@ -125,9 +125,9 @@ function shouldDimMessage(
  * - If user scrolled up (reading old messages) → NEW message arrives → NO auto-scroll (don't lose context)
  * - If user at bottom (< 150px from bottom) → NEW message arrives → auto-scroll (following conversation)
  *
- * **Tag-Based Visibility**:
- * - Messages with tag matching currentTag → normal visibility
- * - Messages with different tag → dimmed (opacity 0.4)
+ * **Position-Based Visibility**:
+ * - Messages with position matching currentPosition → normal visibility
+ * - Messages with different position → dimmed (opacity 0.4)
  * - Applies to ALL message types without exception
  *
  * @param {MessageListProps} props - Component props
@@ -136,7 +136,7 @@ function shouldDimMessage(
 export function MessageList({ messages, isLoading, currentCharacterId, isMaster = false }: MessageListProps): JSX.Element {
   const listRef = useRef<HTMLDivElement>(null);
   const prevMessageCountRef = useRef(messages.length);
-  const currentTag = useChatCurrentTag();
+  const currentPosition = useChatCurrentPosition();
 
   // Track if user is near bottom (for smart auto-scroll)
   const [isNearBottom, setIsNearBottom] = useState(true);
@@ -250,8 +250,8 @@ export function MessageList({ messages, isLoading, currentCharacterId, isMaster 
           return isMessageVisible(message, currentCharacterId, isMaster);
         })
         .map((message) => {
-          // Calculate if message should be dimmed based on current tag
-          const isDimmed = shouldDimMessage(message, currentTag);
+          // Calculate if message should be dimmed based on current position
+          const isDimmed = shouldDimMessage(message, currentPosition);
 
           return <MessageItem key={message._id} message={message} isDimmed={isDimmed} />;
         })}

@@ -1,0 +1,160 @@
+@use '../variables' as *;
+
+/**
+ * Location Info Modal Styles
+ * Popup with location name, description and points of interest.
+ * @module styles/components/layout/LocationInfoModal
+ * @since 2.0.0
+ */
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: linear-gradient(135deg, rgba(139, 69, 19, 0.95) 0%, rgba(184, 134, 11, 0.95) 100%);
+  border: 2px solid $gold-80;
+  border-radius: $radius-md;
+  max-width: 560px;
+  width: 90%;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-xl $spacing-xxl;
+  border-bottom: 1px solid rgba(184, 134, 11, 0.3);
+}
+
+.title {
+  color: #f0e68c;
+  font-family: 'Thrifted Attire', serif;
+  font-size: 26px;
+  margin: 0;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  color: $parchment;
+  font-size: 20px;
+  cursor: pointer;
+  line-height: 1;
+  padding: $spacing-xs;
+
+  &:hover {
+    color: $gold-70;
+  }
+}
+
+.body {
+  padding: $spacing-xl $spacing-xxl;
+  overflow-y: auto;
+}
+
+.descriptionRow {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-lg;
+  margin-bottom: $spacing-xl;
+}
+
+.description {
+  flex: 1;
+  min-width: 0;
+  color: $parchment;
+  font-family: $font-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  margin: 0;
+  white-space: pre-line;
+}
+
+.descriptionImages {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.descriptionImage {
+  width: 120px;
+  height: 90px;
+  object-fit: cover;
+  border-radius: $radius-md;
+  border: 1px solid rgba(184, 134, 11, 0.4);
+}
+
+.positionsSection {
+  margin-top: $spacing-lg;
+}
+
+.positionsTitle {
+  color: #f0e68c;
+  font-family: $font-serif;
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 $spacing-md;
+  padding-top: $spacing-lg;
+  border-top: 1px solid rgba(184, 134, 11, 0.3);
+}
+
+.positionsList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.positionItem {
+  display: flex;
+  gap: $spacing-md;
+  align-items: flex-start;
+  background: rgba(245, 245, 245, 0.06);
+  border: 1px solid rgba(184, 134, 11, 0.25);
+  border-radius: $radius-md;
+  padding: $spacing-md;
+}
+
+.positionImage {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: $radius-md;
+  object-fit: cover;
+}
+
+.positionText {
+  min-width: 0;
+}
+
+.positionName {
+  color: $parchment;
+  font-family: $font-serif;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.positionDescription {
+  color: rgba(232, 212, 160, 0.8);
+  font-family: $font-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  margin-top: 2px;
+}

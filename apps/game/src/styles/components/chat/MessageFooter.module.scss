@@ -2,7 +2,7 @@
 
 /**
  * Message Footer Styles
- * Footer section with tags and edit status.
+ * Footer section with position and edit status.
  * @module styles/components/chat/MessageFooter
  * @since 2.0.0
  */
@@ -15,7 +15,7 @@
   margin-top: $spacing-xs;
 }
 
-.characterTag {
+.characterPosition {
   color: #a13925;
   font-family: 'Thrifted Attire', serif;
   font-size: 12px;  

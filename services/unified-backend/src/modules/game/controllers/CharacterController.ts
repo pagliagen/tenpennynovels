@@ -1,12 +1,12 @@
 import { Request, Response } from 'express';
-import { Types } from 'mongoose';
+import { Types, Error as MongooseError } from 'mongoose';
 import { Character, Occupation, Skill } from '@database/models';
 import type { ICharacter } from '@database/models/Character';
 import { logger } from '../logger';
 import { successResponse, errorResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '@shared/utils/apiResponse';
 
 import { CharacterVisibilityFilter } from '@shared/utils/characterVisibility';
-import { escapeRegex } from '@shared/utils/validation';
+import { escapeRegex, translateMongooseError } from '@shared/utils/validation';
 import { canReadOthersPrivate } from '@config/permissions';
 import { FinancialUtils } from '../utils/financialUtils';
 import { CharacterCreationConfigService } from '@shared/services/CharacterCreationConfigService';
@@ -1472,7 +1472,7 @@ export class CharacterController {
 
           if (socialClass) {
             // Initialize/update character finances based on social class from FINANZA skill
-            await FinancialUtils.initializeCharacterFinances(characterId, socialClass.config);
+            await FinancialUtils.initializeCharacterFinances(characterId, socialClass.config, finanzaValue);
 
             logger.info('Character finances initialized from FINANZA skill', {
               characterId,
@@ -1575,7 +1575,15 @@ export class CharacterController {
         userId: req.user?.userId,
         updates: Object.keys(req.body || {})
       });
-      
+
+      // Mongoose ValidationError (es. formato birthDate errato) è un errore dell'utente,
+      // non un errore server: va tradotto in italiano con status 400, non un 500 generico.
+      if (err.name === 'ValidationError' && err instanceof MongooseError.ValidationError) {
+        const { message, code, details } = translateMongooseError(err);
+        res.status(400).json(errorResponse(message, code, details, 400, getRequestId(req)));
+        return;
+      }
+
       res.status(500).json(errorResponse(
         'Impossibile aggiornare il personaggio',
         'CHARACTER_UPDATE_ERROR',

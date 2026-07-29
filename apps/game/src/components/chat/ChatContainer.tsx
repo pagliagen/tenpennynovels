@@ -6,7 +6,7 @@
  *
  * Features:
  * - Permission check (APPROVED characters can write, others read-only)
- * - Tag management (mandatory selection before sending)
+ * - Position management (mandatory selection before sending)
  * - Real-time WebSocket subscriptions (via useLocationChat hook)
  * - Smart auto-scroll in message list
  * - Typing indicators
@@ -22,7 +22,7 @@ import { useEffect } from 'react';
 import { useCharacterSheetData } from '@/hooks/useCharacterSheetData';
 import { useLocationChat } from '@/hooks/useLocationChat';
 import { useAuthStore } from '@/store/authStore';
-import { useChatOccupants, useChatCurrentTag, useChatStore } from '@/store/chatStore';
+import { useChatOccupants, useChatCurrentPosition, useChatStore } from '@/store/chatStore';
 import { useLocationStore } from '@/store/locationStore';
 import styles from '@/styles/components/chat/ChatContainer.module.scss';
 
@@ -68,17 +68,17 @@ export function ChatContainer({ locationSlug, locationId, locationName }: ChatCo
   // Location store: Get location positions
   const locations = useLocationStore((state) => state.locations);
   const currentLocation = locations.find((loc) => loc._id === locationId);
-  const availablePositions = currentLocation?.positions || [];
+  const availablePositions = (currentLocation?.positions || []).map((p) => p.name);
 
-  // Chat store: Occupants list and current tag
+  // Chat store: Occupants list and current position
   const occupants = useChatOccupants();
-  const currentTag = useChatCurrentTag();
+  const currentPosition = useChatCurrentPosition();
 
-  // Init tag from localStorage when entering location
+  // Init position from localStorage when entering location
   useEffect(() => {
-    const stored = localStorage.getItem(`chat-tag-${locationId}`);
+    const stored = localStorage.getItem(`chat-position-${locationId}`);
     if (stored) {
-      useChatStore.getState().setCurrentTag(stored);
+      useChatStore.getState().setCurrentPosition(stored);
     }
   }, [locationId]);
 
@@ -98,15 +98,15 @@ export function ChatContainer({ locationSlug, locationId, locationName }: ChatCo
   const isMaster = hasGamePermission('game:chat:master-action');
 
   /**
-   * Handle tag change
-   * Saves tag to localStorage (frontend persistence) and chatStore (UI state).
+   * Handle position change
+   * Saves position to localStorage (frontend persistence) and chatStore (UI state).
    */
-  const handleTagChange = (tag: string) => {
+  const handlePositionChange = (position: string) => {
     // Save to localStorage (persists across page refresh)
-    localStorage.setItem(`chat-tag-${locationId}`, tag);
+    localStorage.setItem(`chat-position-${locationId}`, position);
 
     // Save to chatStore (global UI state)
-    useChatStore.getState().setCurrentTag(tag);
+    useChatStore.getState().setCurrentPosition(position);
   };
 
   /**
@@ -184,12 +184,12 @@ export function ChatContainer({ locationSlug, locationId, locationName }: ChatCo
           locationId={locationId}
           characterData={characterData}
           occupants={occupantsList}
-          currentTag={currentTag}
+          currentPosition={currentPosition}
           availablePositions={availablePositions}
           onSendMessage={handleSendMessage}
           onStartTyping={startTyping}
           onStopTyping={stopTyping}
-          onTagChange={handleTagChange}
+          onPositionChange={handlePositionChange}
         />
       ) : (
         <PermissionBanner />

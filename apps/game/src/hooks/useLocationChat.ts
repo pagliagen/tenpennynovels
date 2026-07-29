@@ -359,19 +359,19 @@ export function useLocationChat(
         return null;
       }
 
-      // Get current tag from chatStore (user's position in location)
-      const currentTag = useChatStore.getState().currentTag;
+      // Get current position from chatStore (user's position in location)
+      const currentPosition = useChatStore.getState().currentPosition;
 
       try {
         // Include current position in payload (backend stores in position field)
         const payload: SendMessageRequest = {
           ...data,
-          position: currentTag || undefined, // Single string, undefined if not set
+          position: currentPosition || undefined, // Single string, undefined if not set
         };
 
         const message = await locationChatsApi.sendMessage(locationId, payload);
 
-        logger.info(`✅ Message sent successfully: ${message._id}${currentTag ? ` @ ${currentTag}` : ''}`);
+        logger.info(`✅ Message sent successfully: ${message._id}${currentPosition ? ` @ ${currentPosition}` : ''}`);
 
         // Message will appear via WebSocket broadcast (location_message_notification)
         // No need to manually add to store here - trust the WebSocket flow
