@@ -339,9 +339,10 @@
 .locationName {
   position: absolute;
   top: 15px;
-  left: 0;
-  right: 0;
-  text-align: center;
+  left: 10px;
+  right: 10px;
+  display: flex;
+  justify-content: center;
   color: #892012;
   text-shadow: rgb(255, 255, 255) 0 0 5px;
   font-size: 24px;
@@ -349,6 +350,13 @@
   font-family: 'Les Mysteres de Paris', serif;
   padding: 8px 16px;
   z-index: 1;
+  line-height: 50px;
+}
+
+.locationNameText {
+  display: inline-block;
+  white-space: nowrap;
+  transform-origin: center top;
 }
 
 .locationActions {
