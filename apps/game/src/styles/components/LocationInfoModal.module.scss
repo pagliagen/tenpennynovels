@@ -21,15 +21,17 @@
 }
 
 .modal {
-  background: linear-gradient(135deg, rgba(139, 69, 19, 0.95) 0%, rgba(184, 134, 11, 0.95) 100%);
-  border: 2px solid $gold-80;
-  border-radius: $radius-md;
+  background: #000000;
+  outline: 1px solid #e3ddd0;
+  outline-offset: -5px;
+  border-radius: 10px;
   max-width: 560px;
   width: 90%;
   max-height: 80vh;
   display: flex;
   flex-direction: column;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  border: none;
 }
 
 .header {
@@ -41,8 +43,8 @@
 }
 
 .title {
-  color: #f0e68c;
-  font-family: 'Thrifted Attire', serif;
+  color: #a13925;
+  font-family: 'Les Mysteres de Paris', serif;
   font-size: 26px;
   margin: 0;
 }
@@ -76,8 +78,8 @@
 .description {
   flex: 1;
   min-width: 0;
-  color: $parchment;
-  font-family: $font-serif;
+  color: #a9aa9b;
+  font-family: 'Bahnschrift', serif;
   font-size: 16px;
   line-height: 1.6;
   margin: 0;
@@ -104,13 +106,12 @@
 }
 
 .positionsTitle {
-  color: #f0e68c;
-  font-family: $font-serif;
+  color: #a13925;
+  font-family: 'Thrifted Attire', serif;
   font-size: 16px;
   font-weight: 600;
   margin: 0 0 $spacing-md;
   padding-top: $spacing-lg;
-  border-top: 1px solid rgba(184, 134, 11, 0.3);
 }
 
 .positionsList {
@@ -126,10 +127,6 @@
   display: flex;
   gap: $spacing-md;
   align-items: flex-start;
-  background: rgba(245, 245, 245, 0.06);
-  border: 1px solid rgba(184, 134, 11, 0.25);
-  border-radius: $radius-md;
-  padding: $spacing-md;
 }
 
 .positionImage {
@@ -146,14 +143,16 @@
 
 .positionName {
   color: $parchment;
-  font-family: $font-serif;
+  color: #a9aa9b;
+  font-family: 'Bahnschrift', serif;
   font-size: 15px;
   font-weight: 600;
 }
 
 .positionDescription {
   color: rgba(232, 212, 160, 0.8);
-  font-family: $font-serif;
+  color: #a9aa9b;
+  font-family: 'Bahnschrift', serif;
   font-size: 14px;
   line-height: 1.5;
   margin-top: 2px;

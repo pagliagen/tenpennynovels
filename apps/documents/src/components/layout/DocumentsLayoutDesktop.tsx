@@ -77,24 +77,30 @@ export function DocumentsLayoutDesktop({ children }: DocumentsLayoutDesktopProps
         <header className={styles.header}>
           <div className={styles.headerInner}>
             <nav className={styles.nav}>
-              <Link
-                href="/ambientazione"
-                className={`${styles.navTab} ${isActiveSection('/ambientazione') ? styles.active : ''}`}
-              >
-                Ambientazione
+              <Link href="/ambientazione" className={styles.navTab}>
+                <img
+                  src={isActiveSection('/ambientazione') ? '/images/doc_bottom_on.png' : '/images/doc_bottom_off.png'}
+                  alt=""
+                  className={styles.navTabBg}
+                />
+                <span className={styles.navTabLabel}>Ambientazione</span>
               </Link>
-              <Link
-                href="/regolamento"
-                className={`${styles.navTab} ${isActiveSection('/regolamento') ? styles.active : ''}`}
-              >
-                Regolamento
+              <Link href="/regolamento" className={styles.navTab}>
+                <img
+                  src={isActiveSection('/regolamento') ? '/images/doc_bottom_on.png' : '/images/doc_bottom_off.png'}
+                  alt=""
+                  className={styles.navTabBg}
+                />
+                <span className={styles.navTabLabel}>Regolamento</span>
               </Link>
               {isAuthenticated && (
-                <Link
-                  href="/preferiti"
-                  className={`${styles.navTab} ${isActiveSection('/preferiti') ? styles.active : ''}`}
-                >
-                  Preferiti
+                <Link href="/preferiti" className={styles.navTab}>
+                  <img
+                    src={isActiveSection('/preferiti') ? '/images/doc_bottom_on.png' : '/images/doc_bottom_off.png'}
+                    alt=""
+                    className={styles.navTabBg}
+                  />
+                  <span className={styles.navTabLabel}>Preferiti</span>
                 </Link>
               )}
             </nav>

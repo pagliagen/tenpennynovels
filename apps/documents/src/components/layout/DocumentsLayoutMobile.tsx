@@ -1,7 +1,6 @@
 'use client';
 
 import { ReactNode, useRef, useState, useEffect, useCallback } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useAuthStore } from '@/store/authStore';
@@ -88,12 +87,11 @@ export function DocumentsLayoutMobile({ children }: DocumentsLayoutMobileProps):
         <HamburgerMenu />
 
         <Link href="/" className={styles.logo}>
-          <Image
+          <img
             src="/images/title.png"
             alt="Ten Penny Novels"
             width={120}
             height={50}
-            priority
             className={styles.logoImage}
           />
         </Link>

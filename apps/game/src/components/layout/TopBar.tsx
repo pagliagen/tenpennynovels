@@ -492,16 +492,11 @@ export function TopBar({
           aria-expanded={isUtilityMenuOpen}
           aria-haspopup="true"
         >
-          <svg
+          <img
+            src="/images/topbar/icon-options.png"
+            alt="Utilità"
             className={styles.hamburgerIcon}
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <rect y="4" width="24" height="2.5" rx="1.25" />
-            <rect y="10.75" width="24" height="2.5" rx="1.25" />
-            <rect y="17.5" width="24" height="2.5" rx="1.25" />
-          </svg>
+          />
         </button>
 
         {/* Dropdown Menu */}

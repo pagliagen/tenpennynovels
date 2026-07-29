@@ -4,7 +4,9 @@
 
 ## Il server
 
-**Kimsufi KS-5** — Intel Xeon-E3 1270 v6 (Kaby Lake, 4c/8t, 3.8/4.2GHz) · 32GB RAM · 2×450GB · 300Mbps pubblica · €17.99/mese.
+**So you Start SYS-1** — Intel Xeon-E 2136 (Coffee Lake, 6c/12t, 3.3/4.5GHz) · 32GB DDR4-2666 ECC · 2×512GB · 500Mbps pubblica + 1Gbps privata · €29.99/mese.
+
+> Scelta rivista il 29/07/2026: il Kimsufi KS-5 su cui era caduta la decisione originale è stato **rimosso dal catalogo**. Motivazione completa e alternative valutate in [MIGRAZIONE-SERVER.md § Server 1](./MIGRAZIONE-SERVER.md). Ripiego se il SYS-1 non è disponibile in un DC europeo: **Kimsufi KS-3** (Xeon E3-1245 v5, 4c/8t, 32GB, €18.99) — in quel caso RAM e sizing di questo runbook restano identici, cambiano solo CPU, dischi (SATA anziché NVMe) e banda.
 
 Ospita tutto lo stack TenPennyNovels: 4 app Next.js (landing, game, documents, management), 3 backend (api-gateway, unified-backend, embeddings-worker), MongoDB, Redis, Qdrant, Elasticsearch, Ollama. **Non** ospita botai/character-gen (confermato: non andranno mai in produzione) né i progetti di Server 2.
 
@@ -15,7 +17,7 @@ Prerequisito prima di iniziare: dominio `tenpennynovels.com` con DNS già su Clo
 ## Fase 1 — Provisioning e accesso base
 
 ```bash
-ssh root@<IP_KS5>
+ssh root@<IP_SYS1>
 apt update && apt upgrade -y
 apt install -y curl wget git build-essential software-properties-common
 ```
@@ -33,7 +35,7 @@ exit
 Hostname vero, non quello di default del provider (aiuta a non confondersi tra i due server quando sei loggato su entrambi, e compare nei log/MOTD):
 
 ```bash
-sudo hostnamectl set-hostname tenpennynovels-ks5
+sudo hostnamectl set-hostname tenpennynovels-sys1
 ```
 
 **Convenzione segreti usata in tutto questo runbook**: mai una password letterale in un comando bash (finisce in `~/.bash_history` in chiaro, leggibile per sempre). Ogni volta che serve generarne una, va in un file dedicato sotto `~/.secrets/`, e viene referenziata con `$(cat ~/.secrets/<nome>)` — mai scritta a mano nei comandi successivi.
@@ -48,8 +50,8 @@ MIGRAZIONE-SERVER.md ha verificato che sul box condiviso attuale `PasswordAuthen
 
 ```bash
 # Sul tuo Mac (non sul server)
-ssh-keygen -t ed25519 -C "deploy@tenpennynovels" -f ~/.ssh/tenpennynovels_ks5
-cat ~/.ssh/tenpennynovels_ks5.pub
+ssh-keygen -t ed25519 -C "deploy@tenpennynovels" -f ~/.ssh/tenpennynovels_sys1
+cat ~/.ssh/tenpennynovels_sys1.pub
 ```
 
 ```bash
@@ -62,7 +64,7 @@ chmod 600 ~/.ssh/authorized_keys
 Testa il login via chiave **in un nuovo terminale** prima di toccare altro:
 
 ```bash
-ssh -i ~/.ssh/tenpennynovels_ks5 ubuntu@<IP_KS5>
+ssh -i ~/.ssh/tenpennynovels_sys1 ubuntu@<IP_SYS1>
 ```
 
 Poi disabilita la password — verificando che non resti un secondo file a fare override, come successo sul server attuale:
@@ -482,7 +484,7 @@ sudo nginx -t && sudo systemctl reload nginx
 
 ## Fase 15 — Swap
 
-Sul server attuale: 8GB (condiviso tra 4 progetti). Su KS-5 con 32GB dedicati a un solo progetto, una rete di sicurezza OOM più piccola basta:
+Sul server attuale: 8GB (condiviso tra 4 progetti). Su SYS-1 con 32GB dedicati a un solo progetto, una rete di sicurezza OOM più piccola basta:
 
 ```bash
 sudo fallocate -l 4G /swapfile
@@ -600,7 +602,7 @@ Alert su spazio disco basso — motivato direttamente dal log Mongo trovato senz
 
 ```bash
 # crontab -e
-# 0 * * * * df -h / | awk 'NR==2{gsub("%","",$5); if ($5+0 > 85) print "Disco al " $5 "%"}' | mail -s "Alert disco KS-5" <tua-email>
+# 0 * * * * df -h / | awk 'NR==2{gsub("%","",$5); if ($5+0 > 85) print "Disco al " $5 "%"}' | mail -s "Alert disco SYS-1" <tua-email>
 ```
 
 (Dipende da un MTA locale funzionante — se preferisci evitarlo, rimanda l'alerting disco al setup di Uptime Kuma su Server 2, vedi RUNBOOK_SERVER2.md.)
@@ -611,7 +613,7 @@ Il workflow (`.github/workflows/deploy.yml`) fa deploy via rsync+SSH usando 4 se
 
 | Secret | Nuovo valore |
 |---|---|
-| `SSH_HOST` | IP di KS-5 |
+| `SSH_HOST` | IP di SYS-1 |
 | `SSH_PORT` | porta SSH (22 se non cambiata in fase 2) |
 | `SSH_USERNAME` | `ubuntu` (o l'utente scelto in fase 1) |
 | `SSH_PRIVATE_KEY` | chiave privata generata in fase 2 (non quella del vecchio server) |
@@ -625,7 +627,7 @@ Dopo l'update, un push su `master` (o `workflow_dispatch`) esegue il deploy comp
 TTL già a 300s sui record Cloudflare (verificato). Sequenza a basso rischio dato che il sito non è ancora live (downtime accettabile, confermato):
 
 ```bash
-# Su Cloudflare, aggiorna i 7 record A da 51.83.47.109 (vecchio OVH) al nuovo IP KS-5:
+# Su Cloudflare, aggiorna i 7 record A da 51.83.47.109 (vecchio OVH) al nuovo IP SYS-1:
 # tenpennynovels.com, www, game, documenti, gestione, api, ws
 # (cdn.tenpennynovels.com resta su Serverplan, non tocca — vedi fase 10)
 ```
@@ -689,7 +691,7 @@ sudo chmod 600 /home/<tuo-nome>/.ssh/authorized_keys
 Testa il login **in un nuovo terminale** prima di continuare:
 
 ```bash
-ssh -i ~/.ssh/tenpennynovels_ks5 <tuo-nome>@<IP_KS5>
+ssh -i ~/.ssh/tenpennynovels_sys1 <tuo-nome>@<IP_SYS1>
 sudo ls /root   # verifica sudo
 ```
 
@@ -713,4 +715,4 @@ Tieni il vecchio OVH (`51.83.47.109`) accendibile per qualche giorno come rete d
 
 - **Error tracking applicativo** (Sentry/GlitchTip) — direzione decisa in MIGRAZIONE-SERVER.md, non ancora un passo eseguibile: va agganciato a Winston/error handler per servizio, richiede prima la scelta del provider.
 - **Provisioning come script versionato** — MIGRAZIONE-SERVER.md lo segna come TODO aperto ("script bash nel repo invece di rifare tutto a mano via SSH"). Questo runbook può servire da base per scriverlo, ma resta un documento, non automazione.
-- **Alerting SMTP in uscita (porta 25)** — MIGRAZIONE-SERVER.md segnala di chiedere esplicitamente a OVH se KS-5 ha la porta 25 sbloccata, prima di assumere che l'alerting via email funzioni.
+- **Alerting SMTP in uscita (porta 25)** — MIGRAZIONE-SERVER.md segnala di chiedere esplicitamente a OVH se SYS-1 ha la porta 25 sbloccata, prima di assumere che l'alerting via email funzioni.

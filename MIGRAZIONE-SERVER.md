@@ -1,6 +1,6 @@
 # Migrazione server — piano e decisioni
 
-> Documento di lavoro, non documentazione di prodotto. Riflette lo stato delle decisioni al 26/07/2026. Il runbook tecnico per il cutover DNS/CDN è un artifact separato (Cloudflare DNS & CDN — Runbook).
+> Documento di lavoro, non documentazione di prodotto. Riflette lo stato delle decisioni al 29/07/2026 (ricognizione del server condiviso attuale: 26/07/2026). Il runbook tecnico per il cutover DNS/CDN è un artifact separato (Cloudflare DNS & CDN — Runbook).
 
 ## Contesto
 
@@ -18,27 +18,61 @@ L'hosting Serverplan scade il **18 agosto 2026** — è il trigger per chiudere 
 
 ## Server 1 — tenpennynovels
 
-**Deciso: Kimsufi KS-5.**
+**Deciso: So you Start SYS-1** (revisione del 29/07/2026 — il Kimsufi KS-5 su cui era caduta la scelta originale **non è più in catalogo**, vedi § Storia della scelta).
 
 | | |
 |---|---|
-| CPU | Intel Xeon-E3 1270 v6 (Kaby Lake, desktop-class) — 4c/8t, 3.8/4.2GHz |
-| RAM | 32GB |
-| Storage | 2×450GB |
-| Banda | 300Mbps pubblica |
-| Prezzo | €17.99/mese |
+| CPU | Intel Xeon-E 2136 (Coffee Lake) — 6c/12t, 3.3/4.5GHz |
+| RAM | 32GB DDR4-2666 ECC (configurabile fino a 128GB) |
+| Storage | 2×512GB (verificare che siano NVMe, vedi checklist) |
+| Banda | 500Mbps pubblica + 1Gbps privata |
+| Prezzo | €29.99/mese (base della forbice — verificare il prezzo della config reale) |
 
-**Perché questo e non altri:**
-- **KS-1** (Xeon-D 1520, Broadwell-DE, 2.2/2.6GHz) scartato: è un chip da microserver/NAS a bassa potenza, non da calcolo. Stessa categoria della CPU Haswell che oggi impiega 3+ minuti per una risposta Ollama a modello caldo — non avrebbe risolto il problema che ci ha portato a questa analisi.
-- **KS-2** (Xeon-D 1540, 8c/16t) scartato per lo stesso motivo: più core, ma della stessa famiglia debole. L'inferenza scala poco oltre 4 thread su un modello 4B, quindi il vantaggio di più core non compensa.
-- **KS-GAME** (i7-7700K, 4.2/4.5GHz, €36.99) scartato: CPU migliore in assoluto ma il doppio del prezzo per ~10% di clock in più. Rendimento marginale decrescente.
-- **64GB RAM** (+€8/mese) scartata: botai/character-gen (gli altri due servizi AI del progetto) **non andranno mai in produzione** — confermato esplicitamente. Senza quel carico, 32GB lasciano ~15-17GB di margine reale anche con Ollama attivo (`qwen3:4b`, scelto anch'esso per adattarsi alle risorse disponibili).
+### Perché SYS-1 e non le alternative attuali
 
-**Da verificare prima dell'acquisto:**
-- [ ] Backup Agent Kimsufi è gratuito, si paga solo l'Object Storage OVHcloud usato — dimensionarlo guardando i backup attuali (~300-600MB oggi, verosimilmente marginale)
-- [ ] Stimare il picco di banda reale (asset statici, upload documenti) contro il limite di 300Mbps — mitigato comunque dal CDN, vedi sotto
+Il criterio è sempre lo stesso del 26/07: la scelta è guidata dall'inferenza Ollama in CPU, che è il motivo per cui questa migrazione esiste. Ma la metrica giusta **non è il clock**: la generazione di token è limitata dalla **banda di memoria** (i pesi vanno riletti interamente a ogni token), mentre il *prefill* del prompt è limitato dal **calcolo** e scala con i core. Il SYS-1 è l'unica offerta in listino che migliora entrambe le cose a un prezzo sensato.
 
-**Non ancora fatto:** acquisto, setup OS, migrazione app, test di inferenza Ollama a modello caldo su hardware reale (l'unico test fatto finora, su Haswell, è stato inconcludente — interrotto per lentezza eccessiva).
+| Offerta | CPU | µarch | Clock | Bus RAM | ECC | € | Esito |
+|---|---|---|---|---|---|---|---|
+| **SYS-1** | **Xeon-E 2136** | **Coffee Lake** | **3.3/4.5** | **DDR4-2666 (43 GB/s)** | ✅ | **29,99** | **scelto** |
+| KS-3 | Xeon E3-1245 v5 | Skylake | 3.5/3.9 | DDR4-2133 (34 GB/s) | ✅ | 18,99 | ripiego |
+| KS-GAME | i7-7700K | Kaby Lake | 4.2/4.5 | DDR4-2400 (38 GB/s) | ❌ | 36,99 | scartato |
+| KS-STOR | Xeon-D 1521 | Broadwell-DE | 2.4/2.7 | DDR4-2133 | ✅ | 39,99 | scartato |
+| KS-A | i7-6700K | Skylake | 4.0/4.2 | DDR4-2133 (34 GB/s) | ❌ | 54,99 | scartato |
+| KS-5-A | Xeon-E 2274G | Coffee Lake | 4.0/4.9 | DDR4-2666 (43 GB/s) | ✅ | 58,99 | scartato |
+
+- **KS-5-A** ha la stessa banda di memoria del SYS-1 (stessa piattaforma Coffee Lake) ma costa **il doppio** e ha 2 core in meno. Il SYS-1 lo rende semplicemente fuori mercato.
+- **KS-3** è il sostituto quasi esatto del KS-5 defunto: Skylake e Kaby Lake hanno IPC identico (Kaby è un refresh di clock), quindi E3-1245 v5 ≈ E3-1270 v6 meno ~8% di clock e ~11% di banda, allo stesso prezzo. Resta il ripiego valido se il SYS-1 non è disponibile in un DC europeo. Rinuncia però a: +25% di banda memoria, 2 core, NVMe, 500Mbps e la SLA.
+- **KS-STOR** è Xeon-D, **esattamente la famiglia già scartata** per KS-1/KS-2: è un box da storage (4×6TB), non da calcolo.
+- **KS-A** costa 3× il KS-3 per lo stesso bus di memoria, **un solo disco** (niente RAID1) e senza ECC. Peggiore offerta del listino, scartata senza riserve.
+- **KS-GAME** scartato come già nel 26/07: clock più alto ma meno banda del SYS-1, nessun ECC, a €7 in più.
+- **ECC**: presente su tutti gli Xeon, assente sugli i7 K-series (consumer). Su un box che ospita MongoDB con dati reali è un argomento a favore degli Xeon, secondario ma non nullo.
+- **SLA**: differenza non hardware ma sostanziale. **Kimsufi è dichiaratamente best-effort senza SLA**, So you Start ha una SLA reale. Per l'unico server di produzione del progetto, a €11/mese di differenza dal KS-3, è un argomento autonomo.
+- **RAM oltre i 32GB** scartata come già deciso: botai/character-gen **non andranno mai in produzione** — 32GB lasciano ~15-17GB di margine reale con Ollama attivo. Il SYS-1 arriva a 128GB, quindi il margine di crescita c'è se la decisione cambia.
+
+### ⚠️ Aspettativa realistica sull'inferenza — leggere prima di spendere di più
+
+Con `qwen3:8b` Q4 (~5GB di pesi) il tetto **teorico** dei token/s è banda/dimensione-modello: ~6,5 tok/s su DDR4-2133, ~8 tok/s su DDR4-2666. Nella pratica ci si attesta sul 60-70%: **4-5 tok/s sul KS-3, 5-6 tok/s sul SYS-1**. Una risposta da 300 token resta nell'ordine del minuto su *qualunque* box di questo listino.
+
+Conseguenze da tenere presenti:
+- Passare da €19 a €59 compra **circa +25% di velocità di generazione**, non un ordine di grandezza. Nessuna CPU di questo listino trasforma l'esperienza.
+- Il miglioramento reale rispetto ad oggi (3+ minuti) viene soprattutto dall'avere core **dedicati** invece che condivisi con altri 3 progetti, non dalla CPU in sé.
+- Se il requisito diventa "risponde in pochi secondi", le leve sono **un modello più piccolo**, una **GPU**, o un'**API esterna** — non un Kimsufi/SYS più caro. Da rivalutare dopo il test di inferenza su hardware reale (vedi sotto), non prima.
+
+### Da verificare prima dell'acquisto
+
+- [ ] **Confrontabilità dei prezzi**: verificare che €29.99 (SYS) e €18.99 (KS) siano sulla stessa base — IVA inclusa/esclusa e **costo di setup** (i Kimsufi dichiarano "installazione gratuita", il SYS-1 va controllato)
+- [ ] **Disponibilità in un DC europeo**: le offerte in lista sono date come disponibili in 1-2 regioni su 7-9. Kimsufi/SYS hanno spesso solo Beauharnois (Canada) libero — **+90ms di RTT verso l'Italia su ogni richiesta**, inaccettabile per un sito italiano. Se il SYS-1 è solo extra-UE, valutare il KS-3 in UE prima di prendere il SYS-1 in Canada
+- [ ] **Dischi**: confermare nel configuratore che i 2×512GB siano **NVMe** e non SATA (cambia sensibilmente le prestazioni di Mongo/Qdrant/Elasticsearch)
+- [ ] **Backup incluso**: la nota precedente riguardava il Backup Agent Kimsufi (gratuito, si paga solo l'Object Storage usato). Su So you Start lo spazio di backup incluso è diverso — verificare cosa offre il SYS-1 e dimensionarlo sui backup attuali (~300-600MB oggi, verosimilmente marginale)
+- [ ] Stimare il picco di banda reale (asset statici, upload documenti) — con 500Mbps il vincolo è più lasco di prima, e comunque mitigato dal CDN
+
+**Non ancora fatto:** acquisto, setup OS, migrazione app, test di inferenza Ollama a modello caldo su hardware reale (l'unico test fatto finora, su Haswell, è stato inconcludente — interrotto per lentezza eccessiva). Il test va fatto **subito dopo il provisioning**, prima di migrare le app: è l'unico dato che può giustificare un cambio di strategia (modello più piccolo / GPU / API).
+
+### Storia della scelta
+
+- **26/07/2026** — deciso Kimsufi KS-5 (Xeon E3-1270 v6, Kaby Lake 4c/8t 3.8/4.2GHz, 32GB, 2×450GB, €17.99). Scartati allora: **KS-1** (Xeon-D 1520, Broadwell-DE 2.2/2.6GHz) e **KS-2** (Xeon-D 1540, 8c/16t) perché chip da microserver/NAS a bassa potenza, stessa categoria della CPU Haswell che oggi impiega 3+ minuti per risposta a modello caldo; **KS-GAME** per rendimento marginale decrescente; i 64GB di RAM (+€8) per assenza del carico botai/character-gen.
+- **29/07/2026** — il **KS-5 è stato rimosso dal catalogo**. Rivalutato l'intero listino disponibile: scelto SYS-1 (gamma So you Start, non Kimsufi). Nell'occasione è stata corretta la metrica di valutazione: prima si ragionava sul clock, ora su banda di memoria (token/s) + core (prefill), che è il modello corretto per l'inferenza CPU-only.
 
 ---
 
@@ -190,7 +224,7 @@ Verificato lo stato reale sul box condiviso attuale (26/07/2026) prima di propor
 
 **Deciso come direzione, da implementare al momento del setup**: per gli errori applicativi TenPenny, usare un error tracker vero (Sentry, o GlitchTip self-hosted/gratuito, compatibile con l'SDK Sentry) invece di grep-su-file — raggruppa automaticamente occorrenze identiche in un solo alert (risolve da solo il problema dello spam da loop di errori) e manda l'email solo alla prima occorrenza di un errore nuovo. Integrazione: pochi punti di aggancio su Winston/error handler per servizio.
 
-**⚠️ Dipendenza da verificare prima di dare per scontato che l'alerting funzioni**: l'invio email sul box attuale passa da un relay SMTP esterno (`mail.misteryinvestigation.it` in `postconf`), non invio diretto. Molti hosting bloccano di default la porta 25 in uscita su IP dedicati nuovi per anti-spam — **da chiedere esplicitamente a OVH se il KS-5 nuovo (e il VPS-1 di server 2) avranno la 25 sbloccata**, altrimenti l'alerting non parte silenziosamente. In alternativa, usare un provider transazionale (Postmark/SES/Mailgun) invece di Postfix diretto — più affidabile e non dipende da un dominio (`misteryinvestigation.it`) che con questa stessa migrazione è destinato ad essere abbandonato.
+**⚠️ Dipendenza da verificare prima di dare per scontato che l'alerting funzioni**: l'invio email sul box attuale passa da un relay SMTP esterno (`mail.misteryinvestigation.it` in `postconf`), non invio diretto. Molti hosting bloccano di default la porta 25 in uscita su IP dedicati nuovi per anti-spam — **da chiedere esplicitamente a OVH se il SYS-1 nuovo (e il VPS-1 di server 2) avranno la 25 sbloccata**, altrimenti l'alerting non parte silenziosamente. In alternativa, usare un provider transazionale (Postmark/SES/Mailgun) invece di Postfix diretto — più affidabile e non dipende da un dominio (`misteryinvestigation.it`) che con questa stessa migrazione è destinato ad essere abbandonato.
 
 ### Hardening — verificato sul server attuale il 26/07/2026, da correggere sui server nuovi
 
@@ -199,7 +233,7 @@ Non un elenco teorico: sono problemi reali trovati sul box condiviso oggi. Vale 
 **Da correggere (trovati attivi/insufficienti oggi):**
 - 🔴 **Confermato, non ipotetico: SSH accetta login via password.** `sshd_config.d/50-cloud-init.conf` ha `PasswordAuthentication yes`, `60-cloudimg-settings.conf` ha `no` — file in conflitto, e la verifica con `sshd -T | grep passwordauthentication` conferma che vince il primo: **`passwordauthentication yes` è la config effettiva in produzione oggi**. Combinato col punto sotto (fail2ban spento), il server è realmente esposto a brute-force SSH in questo momento. Priorità massima sul server nuovo: un solo file di config autorevole, `PasswordAuthentication no`, solo chiavi.
 - 🔴 **fail2ban installato ma non in esecuzione** — zero protezione brute-force su SSH oggi nonostante il pacchetto sia presente. Da abilitare e configurare (jail sshd come minimo) — ancora più urgente visto il punto sopra.
-- ⚠️ **Qdrant pubblicato su `0.0.0.0:6333/6334`** via docker-proxy, non su `127.0.0.1`. `ufw` è attivo e in teoria lascia passare solo 22/80/443, ma Docker è noto per bypassare ufw inserendo le proprie regole iptables nella catena `DOCKER` prima che ufw le processi, per le porte pubblicate dai container — non dare per scontato che il firewall stia davvero proteggendo questa porta. Verificare dall'esterno con un test reale; fix robusta indipendente dal firewall: pubblicare i container solo su `127.0.0.1:PORT:PORT`, mai su tutte le interfacce, per Qdrant/Redis/Elasticsearch/Mongo. **Stesso controllo da fare su Ollama quando verrà installato sul KS-5**: il suo installer di default lega l'API a `127.0.0.1:11434`, ma va verificato esplicitamente e non assunto — è lo stesso tipo di errore.
+- ⚠️ **Qdrant pubblicato su `0.0.0.0:6333/6334`** via docker-proxy, non su `127.0.0.1`. `ufw` è attivo e in teoria lascia passare solo 22/80/443, ma Docker è noto per bypassare ufw inserendo le proprie regole iptables nella catena `DOCKER` prima che ufw le processi, per le porte pubblicate dai container — non dare per scontato che il firewall stia davvero proteggendo questa porta. Verificare dall'esterno con un test reale; fix robusta indipendente dal firewall: pubblicare i container solo su `127.0.0.1:PORT:PORT`, mai su tutte le interfacce, per Qdrant/Redis/Elasticsearch/Mongo. **Stesso controllo da fare su Ollama quando verrà installato sul SYS-1**: il suo installer di default lega l'API a `127.0.0.1:11434`, ma va verificato esplicitamente e non assunto — è lo stesso tipo di errore.
 - ⚠️ **Redis senza password** (`requirepass` non impostato in `redis.conf`) — è su localhost quindi il rischio reale è limitato a chi ha già accesso alla macchina, ma contiene dati di sessione: aggiungerla è a costo zero, difesa in profondità.
 - ⚠️ **vsftpd attivo** — se non è realmente usato per qualcosa di specifico, va eliminato (SFTP via SSH copre lo stesso bisogno, cifrato, senza un servizio in più da mantenere)
 - ⚠️ **Pannello di gestione (`gestione.tenpennynovels.com`) senza restrizione di rete**: nessuna allowlist IP, nessun basic auth a livello nginx — solo l'auth applicativa (JWT + `isGestore`, già presente). Non è un buco (l'auth applicativa c'è), ma per uno strumento admin un secondo strato (allowlist IP o VPN) è prassi normale e qui manca del tutto — valutare sul server nuovo.
@@ -209,7 +243,7 @@ Non un elenco teorico: sono problemi reali trovati sul box condiviso oggi. Vale 
 **Già a posto oggi — da replicare identici, non da reinventare:**
 - `unattended-upgrades` configurato e attivo
 - `ulimit` di mongod già a 64000 file descriptor
-- swapfile presente (8GB sul box attuale; su KS-5 con 32GB RAM ne basta uno più piccolo, 4-8GB, come rete di sicurezza OOM)
+- swapfile presente (8GB sul box attuale; su SYS-1 con 32GB RAM ne basta uno più piccolo, 4-8GB, come rete di sicurezza OOM)
 
 **Da pianificare, non verificabile sul box attuale:**
 - [ ] MongoDB: quando si abilita l'auth (deciso sopra), usare un **utente applicativo con ruolo `readWrite` scoped al proprio DB**, non un utente admin/superuser nella connection string

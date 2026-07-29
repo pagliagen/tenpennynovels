@@ -23,9 +23,7 @@ import { LocationsList } from '@/components/locations/LocationsList';
 import { LocationsMap } from '@/components/locations/LocationsMap';
 import { ViewModeSelector, ViewMode } from '@/components/locations/ViewModeSelector';
 import { useLocations } from '@/hooks/useLocations';
-import { useGameStateStore } from '@/store/gameStateStore';
 import styles from '@/styles/pages/locations.module.scss';
-import { logger } from '@/lib/logger';
 
 /**
  * Locations Page Component
@@ -66,32 +64,7 @@ export default function LocationsPage(): JSX.Element {
    */
   const handleDistrictClick = (slug: string) => {
     router.push(`/locations/${slug}`);
-  };
-
-  /**
-   * Handle London label click
-   * Returns character to London (leaves current location)
-   */
-  const handleLondonClick = async () => {
-    const currentLocationId = useGameStateStore.getState().currentLocationId;
-
-    // If not in a location, already in London - navigate to home
-    if (!currentLocationId) {
-      router.push('/game');
-      return;
-    }
-
-    // Leave current location and return to London
-    try {
-      await useGameStateStore.getState().leaveLocation();
-      logger.info('[LocationsPage] ✅ Returned to London');
-      router.push('/game'); // Redirect to London home
-    } catch (error) {
-      logger.error('[LocationsPage] ❌ Leave location failed:', { error });
-      // Still navigate (optimistic UX - state already cleared)
-      router.push('/game');
-    }
-  };
+  }; 
 
   // Loading state
   if (isLoading && locations.length === 0) {
@@ -171,8 +144,7 @@ export default function LocationsPage(): JSX.Element {
             {viewMode === 'mappa' && (
               <LocationsMap
                 locations={locations}
-                onDistrictClick={handleDistrictClick}
-                onLondonClick={handleLondonClick}
+                onDistrictClick={handleDistrictClick} 
               />
             )}
 
