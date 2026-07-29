@@ -10,8 +10,6 @@
 
 'use client';
 
-import Image from 'next/image';
-
 import { useOccupations } from '@/hooks/useCharacterCreation';
 import { useWizardStore } from '@/store/wizardStore';
 import styles from '@/styles/components/character/wizard/Step3Stats.module.scss';
@@ -59,7 +57,7 @@ export function Step3Stats(): JSX.Element {
     <>
       <div className={styles.toolbarLeft}>
         {occImage && (
-          <Image
+          <img
             src={occImage}
             alt={selectedOcc?.name || 'Occupazione'}
             width={28}
