@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useAuthStore } from '@/store/authStore';
@@ -56,12 +55,11 @@ export function Sidebar(): JSX.Element {
   return (
     <aside className={styles.sidebar}>
       <Link href="/" className={styles.logo}>
-        <Image
+        <img
           src="/images/title.png"
           alt="Ten Penny Novels"
           width={140}
           height={60}
-          priority
           className={styles.logoImage}
         />
       </Link>
