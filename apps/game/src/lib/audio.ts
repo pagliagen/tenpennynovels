@@ -24,20 +24,3 @@ export function playNotificationSound(volume: number = 0.5): void {
     logger.error('Audio playback error:', { error });
   }
 }
-
-/**
- * Play a typewriter key-click.
- * Playback rate is randomized slightly so repeated keystrokes don't sound identical.
- */
-export function playTypewriterTick(volume: number = 0.35): void {
-  try {
-    const audio = new Audio('/audio/typewriter-click.wav');
-    audio.volume = volume;
-    audio.playbackRate = 0.85 + Math.random() * 0.3;
-    audio.play().catch(err => {
-      logger.warn('Failed to play typewriter tick:', { err });
-    });
-  } catch (error) {
-    logger.warn('Typewriter tick playback error:', { error });
-  }
-}

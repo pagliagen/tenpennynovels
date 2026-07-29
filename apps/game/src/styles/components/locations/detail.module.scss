@@ -119,25 +119,6 @@
   z-index: 1;
 }
 
-.typewriterCursor {
-  display: inline-block;
-  width: 2px;
-  height: 1em;
-  margin-left: 2px;
-  background: #d4a017;
-  vertical-align: text-bottom;
-  animation: typewriterBlink 1s steps(1) infinite;
-}
-
-@keyframes typewriterBlink {
-  0%, 50% {
-    opacity: 1;
-  }
-  50.01%, 100% {
-    opacity: 0;
-  }
-}
-
 .enterButtonOverlay {
   position: absolute;
   left: 24px;

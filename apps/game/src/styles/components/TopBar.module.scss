@@ -284,6 +284,10 @@
   position: relative;
   overflow: hidden;
   cursor: pointer; 
+
+  &:hover .locationImage {
+    border-color: #892012;
+  }
 }
 
 .locationImage {
@@ -304,10 +308,6 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-  }
-
-  &:hover {
-    border-color: #892012;
   }
 }
 
