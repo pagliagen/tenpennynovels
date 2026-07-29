@@ -102,7 +102,7 @@
 
   button, a {
     margin-top: 20px;
-    background-color: inherit;
+    background: #0f0f0f; 
     z-index: 1;
 
     &:hover {
@@ -111,13 +111,13 @@
   }
 }
 
-.iconButton, .featureHubAnchor{
+.iconButton, .featureHubAnchor {
   position: relative;
   width: 60px;
   height: 60px;
   border-radius: 50%;
-  background: #000000; 
-  border-bottom: 1px solid #706558;
+  background: #0f0f0f; 
+  border-bottom: 1px solid #ffa748;
   cursor: pointer;
   transition: all 0.2s ease;
   padding: 0;
@@ -130,11 +130,21 @@
   }
 }
 
+.featureHubAnchor { 
+  height: 60px;
+  margin-top: 20px;
+
+  button {
+    height: 60px;
+    margin-top: 0;
+  }
+}
+
+
 .iconImage {
   object-fit: contain;
   width: calc(100% - 14px);
-  height: calc(100% - 14px);
-  border-radius: 100%; 
+  height: calc(100% - 14px); 
 }
  
 .featureHubDropdown {
