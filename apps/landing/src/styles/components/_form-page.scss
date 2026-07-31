@@ -40,11 +40,7 @@
 .login-form {
   width: 100%;
 
-  /* Login field styling (reference: jagged stripe, rounded top, border) */
-  --login-stripe-url: url('/images/stripe.png');
-  --login-stripe-h: 25px;
-  --login-stripe-off: -10px;
-  --login-field-br: #025951;
+  --login-field-image: url('/images/login-field.png');
 
   input {
     text-align: center;
@@ -59,33 +55,31 @@
     display: flex;
     margin-bottom: var(--spacing-lg);
     gap: 20px;
- 
+
     @media (max-width: 768px) {
       flex-direction: column;
     }
 
-    .masked-field-wrapper {
-      position: relative;
-
-      /* Jagged stripe below the input (reference design) */
-      &::after {
-        content: '';
-        position: absolute;
-        left: 0;
-        right: 0;
-        bottom: var(--login-stripe-off);
-        height: var(--login-stripe-h);
-        background: var(--login-stripe-url) repeat-x center / auto 100%;
-        z-index: 0;
-      }
+    /* Mask: visible overlay, shows the pill button artwork */
+    .masked-field__mask {
+      background: var(--login-field-image) no-repeat center / 100% 100%;
+      border: none;
+      border-radius: 5px;
     }
 
-    /* Input + mask: rounded top only, thicker top border, border color */
-    .masked-field__input,
-    .masked-field__mask {
-      border-radius: 5px 5px 0 0;
-      border: 2px solid var(--login-field-br);
-      border-top-width: 3px;
+    /* Input: invisible (opacity: 0), but sets the field's box height */
+    .masked-field__input {
+      border: 2px solid transparent;
+      border-radius: 5px;
+    }
+
+    .masked-field--disabled .masked-field__mask {
+      background: var(--login-field-image) no-repeat center / 100% 100%;
+      opacity: 0.5;
+    }
+
+    .masked-field--error .masked-field__mask {
+      box-shadow: 0 0 0 2px var(--color-error-border) inset;
     }
   }
 
