@@ -27,6 +27,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
+import { useGamePermission } from '@/hooks/useGamePermission';
 import styles from '@/styles/components/TopBar.module.scss';
 import { logger } from '@/lib/logger';
 
@@ -160,6 +161,10 @@ export function TopBar({
   // State per gestire apertura/chiusura del popup "Utilità" (hub funzionalità di gioco)
   const [isFeatureHubOpen, setIsFeatureHubOpen] = useState(false);
   const featureHubRef = useRef<HTMLDivElement>(null);
+
+  // Personaggi draft/pending non hanno accesso ai negozi (StatusRestrictions lato backend) —
+  // mostriamo il bottone Mercato disabilitato con un messaggio invece di farlo fallire silenziosamente.
+  const canAccessMarket = useGamePermission('game:shops:list');
 
   // Build URLs with sessionId for cross-origin navigation
   const [documentsUrl, setDocumentsUrl] = useState(process.env.NEXT_PUBLIC_DOCUMENTS_URL || '');
@@ -426,14 +431,26 @@ export function TopBar({
                   <div className={styles.featureHubSectionTitle}>Utility OnGame</div>
 
                   {onMarketClick && (
-                    <button
-                      type="button"
-                      onClick={() => handleFeatureHubItemClick(onMarketClick)}
-                      className={styles.featureHubItem}
-                      role="menuitem"
-                    >
-                      🏪 Mercato
-                    </button>
+                    canAccessMarket ? (
+                      <button
+                        type="button"
+                        onClick={() => handleFeatureHubItemClick(onMarketClick)}
+                        className={styles.featureHubItem}
+                        role="menuitem"
+                      >
+                        🏪 Mercato
+                      </button>
+                    ) : (
+                      <div
+                        className={`${styles.featureHubItem} ${styles.featureHubItemDisabled}`}
+                        role="menuitem"
+                        aria-disabled="true"
+                        title="Devi prima approvare il personaggio"
+                      >
+                        <span>🏪 Mercato</span>
+                        <span className={styles.featureHubComingSoon}>Richiede personaggio approvato</span>
+                      </div>
+                    )
                   )}
 
                   {/* Coming soon: not implemented yet, shown disabled rather than hidden. */}
